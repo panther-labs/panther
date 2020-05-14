@@ -55,7 +55,7 @@ func deployTemplate(
 ) (map[string]string, error) {
 
 	// 1) Generate final template, with large assets packaged in S3.
-	packagedTemplate, err := cfnPackage(templatePath, bucket)
+	packagedTemplate, err := cfnPackage(awsSession, templatePath, bucket)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func deployTemplate(
 // "aws cloudformation package"
 //
 // The bucket name can be blank if no S3 bucket is actually needed (e.g. bootstrap stack).
-func cfnPackage(templatePath, bucket string) (string, error) {
+func cfnPackage(awsSession *session.Session, templatePath, bucket string) (string, error) {
 	logger.Debugf("deploy: packaging %s assets", templatePath)
 	if bucket == "" {
 		// "sam package" requires a bucket name even if it isn't used
@@ -106,7 +106,7 @@ func cfnPackage(templatePath, bucket string) (string, error) {
 	}
 
 	return outFile, sh.Run(filepath.Join(pythonVirtualEnvPath, "bin", "sam"),
-		"package", "--s3-bucket", bucket, "-t", templatePath, "--output-template-file", outFile)
+		"package", "--s3-bucket", bucket, "-t", templatePath, "--output-template-file", outFile, "--region", *awsSession.Config.Region)
 }
 
 // Upload a CloudFormation asset to S3 if it doesn't already exist, returning s3 object key and version

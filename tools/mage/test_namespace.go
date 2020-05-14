@@ -19,6 +19,7 @@ package mage
  */
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -29,6 +30,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
+
+	"github.com/panther-labs/panther/tools/cfnparse"
 )
 
 // Test contains targets for testing code syntax, style, and correctness.
@@ -135,7 +138,66 @@ func testCfnLint() error {
 	// which CFN does not understand. So we force string values to serialize them correctly.
 	args := []string{"-x", "E3012:strict=false", "--"}
 	args = append(args, templates...)
-	return sh.RunV(pythonLibPath("cfn-lint"), args...)
+	if err := sh.RunV(pythonLibPath("cfn-lint"), args...); err != nil {
+		return err
+	}
+
+	// Panther-specific linting
+	//
+	// Every Lambda function needs to have an associated log group and metric filter
+	// defined in the same stack.
+	var errs []string
+	for _, template := range templates {
+		body, err := cfnparse.ParseTemplate(template)
+		if err != nil {
+			errs = append(errs, fmt.Sprintf("failed to parse %s: %v", template, err))
+			continue
+		}
+
+		// Map logicalID => resource type
+		resources := make(map[string]string)
+		for logicalID, resource := range body["Resources"].(map[string]interface{}) {
+			resources[logicalID] = resource.(map[string]interface{})["Type"].(string)
+		}
+
+		// Right now, we just check logicalID and type, but we can always add additional validation
+		// of the resource properties in the future if needed.
+		for logicalID, resourceType := range resources {
+			if resourceType != "AWS::Serverless::Function" {
+				continue
+			}
+
+			idPrefix := strings.TrimSuffix(logicalID, "Function")
+			if resources[idPrefix+"MetricFilters"] != "Custom::LambdaMetricFilters" {
+				errs = append(errs, fmt.Sprintf(
+					"%s needs an associated %s resource in %s",
+					logicalID, idPrefix+"MetricFilters", template))
+			}
+
+			// Backwards compatibility - these resources did not originally match the naming scheme,
+			// renaming the logical IDs would delete + recreate the log group, which usually causes
+			// deployments to fail because it tries to create a log group which already exists.
+			if template == logAnalysisTemplate {
+				switch idPrefix {
+				case "AlertsForwarder":
+					idPrefix = "AlertForwarder"
+				case "Updater":
+					idPrefix = "UpdaterFunction"
+				}
+			}
+
+			if resources[idPrefix+"LogGroup"] != "AWS::Logs::LogGroup" {
+				errs = append(errs, fmt.Sprintf(
+					"%s needs an associated %s resource in %s",
+					logicalID, idPrefix+"LogGroup", template))
+			}
+		}
+	}
+
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, "\n"))
+	}
+	return nil
 }
 
 func testGoUnit() error {

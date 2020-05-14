@@ -29,14 +29,25 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// Parameters: None
 	// Outputs:
 	//     CertificateArn: ACM or IAM certificate arn
+	// PhysicalId: (real certificate ARN)
 	"Custom::Certificate": customCertificate,
 
 	// Enforces MFA with TOTP as the only option.
 	//
 	// Parameters:
-	//     UserPoolId: String (required)
+	//     UserPoolId: string (required)
 	// Outputs: None
+	// PhysicalId: custom:cognito-user-pool:$USER_POOL_ID:mfa
 	//
 	// Deleting this resource has no effect on the user pool.
 	"Custom::CognitoUserPoolMfa": customCognitoUserPoolMfa,
+
+	// Creates error/warn/memory metric filters on a Lambda function's CloudWatch log group.
+	//
+	// Parameters:
+	//     LambdaRuntime: string ("Go" or "Python", default: "Go")
+	//     LogGroupName:  string (required)
+	// Outputs: None
+	// PhysicalId: custom:metric-filters:$LOG_GROUP_NAME
+	"Custom::LambdaMetricFilters": customLambdaMetricFilters,
 }

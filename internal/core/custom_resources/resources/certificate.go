@@ -49,12 +49,12 @@ func customCertificate(_ context.Context, event cfn.Event) (string, map[string]i
 	case cfn.RequestCreate:
 		cert, privateKey, err := generateKeys()
 		if err != nil {
-			return "-", nil, err
+			return "", nil, err
 		}
 
 		certArn, err := importCert(cert, privateKey)
 		if err != nil {
-			return "-", nil, err
+			return "", nil, err
 		}
 
 		return certArn, map[string]interface{}{"Arn": certArn}, nil
@@ -175,7 +175,9 @@ func importIamCert(cert, privateKey []byte) (string, error) {
 func deleteCert(certArn string) error {
 	parsedArn, err := arn.Parse(certArn)
 	if err != nil {
-		return fmt.Errorf("failed to parse %s as arn: %v", certArn, err)
+		// If creation fails before the cert was successfully created, the resourceID will be "error"
+		zap.L().Warn("failed to parse physicalResourceId as arn - skipping delete", zap.Error(err))
+		return nil
 	}
 
 	backoffConfig := backoff.NewExponentialBackOff()
@@ -193,14 +195,15 @@ func deleteCert(certArn string) error {
 			}
 
 			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == acm.ErrCodeResourceNotFoundException {
-				return nil // cert has already been deleted out of band
+				zap.L().Info("ACM certificate has already been deleted")
+				return nil
 			}
 
 			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == acm.ErrCodeResourceInUseException {
 				// The certificate is still in use - log a warning and try again with backoff.
 				// When the cert is deleted in the same stack it is used, it can take awhile for ACM
 				// to realize it's safe to delete.
-				zap.L().Warn("acm certificate still in use", zap.Error(err))
+				zap.L().Warn("ACM certificate still in use", zap.Error(err))
 
 				return err
 			}
@@ -226,7 +229,8 @@ func deleteCert(certArn string) error {
 			}
 
 			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == iam.ErrCodeNoSuchEntityException {
-				return nil // cert has already been deleted out of band
+				zap.L().Info("IAM server certificate has already been deleted")
+				return nil
 			}
 
 			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == iam.ErrCodeDeleteConflictException {

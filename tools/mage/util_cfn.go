@@ -44,7 +44,6 @@ var allStacks = []string{
 	frontendStack,
 	glueStack,
 	logAnalysisStack,
-	metricFilterStack,
 	onboardStack,
 }
 
@@ -150,8 +149,14 @@ func waitForStack(client *cfn.CloudFormation, stackName, successStatus string, i
 			break
 		}
 
-		// Show the stack status every few minutes
-		if time.Since(lastUserMessage) > 2*time.Minute {
+		// Show the stack status occasionally
+		if successStatus == "" && lastUserMessage == start {
+			// If we just started and the caller wants the stack to be in any terminal state,
+			// this is a standard deploy - let the user know what we're waiting on.
+			logger.Warnf("stack %s was already %s, waiting for it to finish", stackName, *stack.StackStatus)
+			lastUserMessage = time.Now()
+		} else if time.Since(lastUserMessage) > 2*time.Minute {
+			// Show progress every few minutes so it doesn't look stuck
 			logger.Infof("    ... %s is still %s (%s)", stackName, *stack.StackStatus,
 				time.Since(start).Round(time.Second).String())
 			lastUserMessage = time.Now()

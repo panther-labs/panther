@@ -28,15 +28,18 @@ import (
 	"go.uber.org/zap"
 )
 
+type CognitoUserPoolMfaProperties struct {
+	UserPoolID string `json:"UserPoolId" validate:"required"`
+}
+
 // Enforce SoftwareToken MFA (without SMS as a fallback)
 func customCognitoUserPoolMfa(_ context.Context, event cfn.Event) (physicalID string, outputs map[string]interface{}, err error) {
-	poolID, ok := event.ResourceProperties["UserPoolId"].(string)
-	physicalID = fmt.Sprintf("custom:cognito-user-pool:%s:mfa", poolID)
-	if !ok || poolID == "" {
-		err = fmt.Errorf("UserPoolId must be a non-empty string")
+	var props CognitoUserPoolMfaProperties
+	if err = parseProperties(event.ResourceProperties, &props); err != nil {
 		return
 	}
 
+	physicalID = fmt.Sprintf("custom:cognito-user-pool:%s:mfa", props.UserPoolID)
 	switch event.RequestType {
 	case cfn.RequestDelete:
 		// We could disable MFA when this resource is deleted, but we have no need for that right now.
@@ -44,13 +47,13 @@ func customCognitoUserPoolMfa(_ context.Context, event cfn.Event) (physicalID st
 
 	default:
 		// Create and Update will set the MFA config for the user pool
-		zap.L().Info("enabling TOTP for user pool", zap.String("userPoolId", poolID))
+		zap.L().Info("enabling TOTP for user pool", zap.String("userPoolId", props.UserPoolID))
 		_, err = getCognitoClient().SetUserPoolMfaConfig(&cognitoidentityprovider.SetUserPoolMfaConfigInput{
 			MfaConfiguration: aws.String("ON"),
 			SoftwareTokenMfaConfiguration: &cognitoidentityprovider.SoftwareTokenMfaConfigType{
 				Enabled: aws.Bool(true),
 			},
-			UserPoolId: &poolID,
+			UserPoolId: &props.UserPoolID,
 		})
 		return
 	}

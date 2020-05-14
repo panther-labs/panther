@@ -112,13 +112,3 @@ func resourceDocumentation() (resourceLookup map[string]struct{}) {
 	}
 	return resourceLookup
 }
-
-// Generate CloudWatch metrics as CloudFormation
-func generateMetrics() error {
-	cf, err := cloudwatchcf.GenerateMetrics(cfnFiles()...)
-	if err != nil {
-		return fmt.Errorf("failed to generate metrics CloudFormation template: %v", err)
-	}
-
-	return writeFile(filepath.Join("out", "deployments", "monitoring", "metrics.json"), cf)
-}
