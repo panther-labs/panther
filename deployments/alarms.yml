@@ -25,9 +25,6 @@ Description: Template for Panther's CloudWatch alarms
 # The nested stacks referenced here are generated with "mage build:cfn"
 
 Parameters:
-  LoadBalancerFullName:
-    Type: String
-    Description: Full name of the application load balancer
   AlarmTopicArn:
     Type: String
     Description: SNS topic for CloudWatch alarms
@@ -38,7 +35,6 @@ Resources:
     Properties:
       Parameters:
         AlarmTopicArn: !Ref AlarmTopicArn
-        LoadBalancerFullName: !Ref LoadBalancerFullName
       TemplateURL: ../out/deployments/monitoring/bootstrap_alarms.json
 
   GatewayAlarms:
