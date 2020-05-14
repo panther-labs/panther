@@ -45,8 +45,6 @@ Parameters:
     Description: API Gateway HTTPS endpoint for panther-resources-api
 
 Resources:
-  # The API is defined in bootstrap, but the alarms require a custom resource,
-  # which isn't available until after the bootstrap stacks deploy.
   AppsyncAlarms:
     Type: Custom::AppSyncAlarms
     Properties:
