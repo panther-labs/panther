@@ -29,8 +29,8 @@ import (
 	"github.com/magefile/mage/mg"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
-	"github.com/panther-labs/panther/pkg/awsglue"
 )
 
 // targets for managing Glue tables

@@ -35,7 +35,7 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// Enforces MFA with TOTP as the only option.
 	//
 	// Parameters:
-	//     UserPoolId: String (required)
+	//     UserPoolId: string (required)
 	// Outputs: None
 	// PhysicalId: custom:cognito-user-pool:$USER_POOL_ID:mfa
 	//
@@ -45,9 +45,9 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// Creates error/warn/memory metric filters on a Lambda function's CloudWatch log group.
 	//
 	// Parameters:
-	//     LambdaRuntime: String ("Go" or "Python", defaults to "Go")
-	//     LogGroupName:  String (required)
+	//     LambdaRuntime: string ("Go" or "Python", default: "Go")
+	//     LogGroupName:  string (required)
 	// Outputs: None
-	// PhysicalId: custom:metric-filters:$LOG_GROUP_NAME:$FILTER1/$FILTER2/...
+	// PhysicalId: custom:metric-filters:$LOG_GROUP_NAME
 	"Custom::LambdaMetricFilters": customLambdaMetricFilters,
 }
