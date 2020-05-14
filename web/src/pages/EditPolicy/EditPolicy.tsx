@@ -27,6 +27,7 @@ import useRouter from 'Hooks/useRouter';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { MODALS } from 'Components/utils/Modal';
 import pick from 'lodash-es/pick';
+import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage, formatJSON } from 'Helpers/utils';
 import { usePolicyDetails } from './graphql/policyDetails.generated';
 import { useUpdatePolicy } from './graphql/updatePolicy.generated';
@@ -92,15 +93,16 @@ const EditPolicyPage: React.FC = () => {
 
   if (fetchPolicyError) {
     return (
-      <Alert
-        mb={6}
-        variant="error"
-        title="Couldn't load the policy details"
-        description={
-          extractErrorMessage(fetchPolicyError) ||
-          'There was an error when performing your request, please contact support@runpanther.io'
-        }
-      />
+      <Box mb={6}>
+        <Alert
+          variant="error"
+          title="Couldn't load the policy details"
+          description={
+            extractErrorMessage(fetchPolicyError) ||
+            'There was an error when performing your request, please contact support@runpanther.io'
+          }
+        />
+      </Box>
     );
   }
 
@@ -128,18 +130,18 @@ const EditPolicyPage: React.FC = () => {
         <PolicyForm initialValues={initialValues} onSubmit={handleSubmit} />
       </Panel>
       {updateError && (
-        <Alert
-          mt={2}
-          mb={6}
-          variant="error"
-          title={
-            extractErrorMessage(updateError) ||
-            'Unknown error occured during update. Please contact support@runpanther.io'
-          }
-        />
+        <Box mt={2} mb={6}>
+          <Alert
+            variant="error"
+            title={
+              extractErrorMessage(updateError) ||
+              'Unknown error occured during update. Please contact support@runpanther.io'
+            }
+          />
+        </Box>
       )}
     </Box>
   );
 };
 
-export default EditPolicyPage;
+export default withSEO({ title: ({ match }) => `Edit ${match.params.id}` })(EditPolicyPage);

@@ -1,5 +1,3 @@
-package resources
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,25 +16,31 @@ package resources
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/aws/aws-lambda-go/cfn"
-)
+import React from 'react';
+import { Helmet } from 'react-helmet';
+import useRouter from 'Hooks/useRouter';
+import { RouteComponentProps } from 'react-router';
 
-// CustomResources map type names to their respective handler functions.
-var CustomResources = map[string]cfn.CustomResourceFunction{
-	// Creates a self-signed ACM or IAM server certificate.
-	//
-	// Parameters: None
-	// Outputs:
-	//     CertificateArn: ACM or IAM certificate arn
-	"Custom::Certificate": customCertificate,
-
-	// Enforces MFA with TOTP as the only option.
-	//
-	// Parameters:
-	//     UserPoolId: String (required)
-	// Outputs: None
-	//
-	// Deleting this resource has no effect on the user pool.
-	"Custom::CognitoUserPoolMfa": customCognitoUserPoolMfa,
+interface Options {
+  title: string | ((routerData: RouteComponentProps<any, undefined>) => string);
 }
+
+function withSEO<P>({ title }: Options) {
+  return (Component: React.FC<P>) => {
+    const ComponentWithSEO: React.FC<P> = props => {
+      const routerData = useRouter();
+
+      return (
+        <React.Fragment>
+          <Helmet titleTemplate="%s | Panther">
+            <title>{typeof title === 'string' ? title : title(routerData)}</title>
+          </Helmet>
+          <Component {...props} />
+        </React.Fragment>
+      );
+    };
+    return ComponentWithSEO;
+  };
+}
+
+export default withSEO;

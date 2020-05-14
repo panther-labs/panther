@@ -20,6 +20,7 @@ import React from 'react';
 import { Box, Button, Flex, Heading, Text } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import WarningImg from 'Assets/illustrations/warning.svg';
+import withSEO from 'Hoc/withSEO';
 
 const Page500: React.FC = () => {
   return (
@@ -51,4 +52,4 @@ const Page500: React.FC = () => {
   );
 };
 
-export default Page500;
+export default withSEO({ title: 'Internal Server Error' })(Page500);

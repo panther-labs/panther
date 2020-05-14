@@ -23,8 +23,9 @@ import AlertDetailsPageSkeleton from 'Pages/AlertDetails/AlertDetailsSkeleton';
 import AlertDetailsInfo from 'Pages/AlertDetails/AlertDetailsInfo';
 import AlertEvents from 'Pages/AlertDetails/AlertDetailsEvents';
 import Page404 from 'Pages/404';
+import withSEO from 'Hoc/withSEO';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import { extractErrorMessage } from 'Helpers/utils';
+import { extractErrorMessage, shortenId } from 'Helpers/utils';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { useAlertDetails } from './graphql/alertDetails.generated';
 import { useRuleTeaser } from './graphql/ruleTeaser.generated';
@@ -85,15 +86,16 @@ const AlertDetailsPage = () => {
 
   if (alertError) {
     return (
-      <Alert
-        variant="error"
-        title="Couldn't load alert"
-        description={
-          extractErrorMessage(alertError) ||
-          "An unknown error occurred and we couldn't load the alert details from the server"
-        }
-        mb={6}
-      />
+      <Box mb={6}>
+        <Alert
+          variant="error"
+          title="Couldn't load alert"
+          description={
+            extractErrorMessage(alertError) ||
+            "An unknown error occurred and we couldn't load the alert details from the server"
+          }
+        />
+      </Box>
     );
   }
 
@@ -102,7 +104,7 @@ const AlertDetailsPage = () => {
   }
 
   return (
-    <article>
+    <Box as="article">
       <Box mb={6}>
         <Box mb={4}>
           <ErrorBoundary>
@@ -117,8 +119,10 @@ const AlertDetailsPage = () => {
           />
         </ErrorBoundary>
       </Box>
-    </article>
+    </Box>
   );
 };
 
-export default AlertDetailsPage;
+export default withSEO({ title: ({ match }) => `Alert #${shortenId(match.params.id)}` })(
+  AlertDetailsPage
+);

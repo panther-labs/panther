@@ -186,6 +186,7 @@
   * [SQS](destinations/setup/sqs.md)
 * [Enterprise](enterprise/README.md)
   * [Role-Based Access Control](enterprise/rbac.md)
+  * [Data Explorer](enterprise/data-explorer.md)
   * [Snowflake Database Integration](enterprise/snowflake.md)
 * [Help]()
   * [Troubleshooting](troubleshooting.md)

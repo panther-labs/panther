@@ -23,6 +23,7 @@ import { extractErrorMessage } from 'Helpers/utils';
 import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import withSEO from 'Hoc/withSEO';
 import { useListAlerts } from './graphql/listAlerts.generated';
 import ListAlertsTable from './ListAlertsTable';
 import ListAlertsPageSkeleton from './Skeleton';
@@ -74,15 +75,16 @@ const ListAlerts = () => {
 
   if (error) {
     return (
-      <Alert
-        mb={6}
-        variant="error"
-        title="Couldn't load your alerts"
-        description={
-          extractErrorMessage(error) ||
-          'There was an error when performing your request, please contact support@runpanther.io'
-        }
-      />
+      <Box mb={6}>
+        <Alert
+          variant="error"
+          title="Couldn't load your alerts"
+          description={
+            extractErrorMessage(error) ||
+            'There was an error when performing your request, please contact support@runpanther.io'
+          }
+        />
+      </Box>
     );
   }
 
@@ -105,4 +107,4 @@ const ListAlerts = () => {
   );
 };
 
-export default ListAlerts;
+export default withSEO({ title: 'Alerts' })(ListAlerts);

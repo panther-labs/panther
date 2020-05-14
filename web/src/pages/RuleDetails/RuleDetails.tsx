@@ -22,6 +22,7 @@ import useRouter from 'Hooks/useRouter';
 import { Alert, Box } from 'pouncejs';
 import Panel from 'Components/Panel';
 import { extractErrorMessage } from 'Helpers/utils';
+import withSEO from 'Hoc/withSEO';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import ErrorBoundary from 'Components/ErrorBoundary';
@@ -101,15 +102,16 @@ const RuleDetailsPage = () => {
 
   if (error) {
     return (
-      <Alert
-        variant="error"
-        title="Couldn't load rule"
-        description={
-          extractErrorMessage(error) ||
-          " An unknown error occured and we couldn't load the rule details from the server"
-        }
-        mb={6}
-      />
+      <Box mb={6}>
+        <Alert
+          variant="error"
+          title="Couldn't load rule"
+          description={
+            extractErrorMessage(error) ||
+            " An unknown error occured and we couldn't load the rule details from the server"
+          }
+        />
+      </Box>
     );
   }
 
@@ -135,4 +137,4 @@ const RuleDetailsPage = () => {
   );
 };
 
-export default RuleDetailsPage;
+export default withSEO({ title: ({ match }) => match.params.id })(RuleDetailsPage);

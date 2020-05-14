@@ -29,6 +29,7 @@ import {
 } from 'Helpers/utils';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import isEmpty from 'lodash-es/isEmpty';
+import withSEO from 'Hoc/withSEO';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import ListResourcesActions from './ListResourcesActions';
 import ListResourcesTable from './ListResourcesTable';
@@ -55,15 +56,16 @@ const ListResources = () => {
 
   if (error) {
     return (
-      <Alert
-        mb={6}
-        variant="error"
-        title="Couldn't load your connected resources"
-        description={
-          extractErrorMessage(error) ||
-          'There was an error when performing your request, please contact support@runpanther.io'
-        }
-      />
+      <Box mb={6}>
+        <Alert
+          variant="error"
+          title="Couldn't load your connected resources"
+          description={
+            extractErrorMessage(error) ||
+            'There was an error when performing your request, please contact support@runpanther.io'
+          }
+        />
+      </Box>
     );
   }
 
@@ -105,4 +107,4 @@ const ListResources = () => {
   );
 };
 
-export default ListResources;
+export default withSEO({ title: 'Resources' })(ListResources);

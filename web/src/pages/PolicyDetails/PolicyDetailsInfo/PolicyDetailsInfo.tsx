@@ -18,16 +18,16 @@
 
 import React from 'react';
 import { Link as RRLink } from 'react-router-dom';
-import { Badge, Box, Button, Icon, Label, SimpleGrid, Text, Link } from 'pouncejs';
+import { Box, Button, Icon, Label, SimpleGrid, Text, Link } from 'pouncejs';
 import { capitalize, formatDatetime } from 'Helpers/utils';
 import Panel from 'Components/Panel';
 import Linkify from 'Components/Linkify';
 import { ComplianceStatusEnum, PolicyDetails } from 'Generated/schema';
-import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import urls from 'Source/urls';
 import JsonViewer from 'Components/JsonViewer';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
+import SeverityBadge from 'Components/SeverityBadge';
 
 interface ResourceDetailsInfoProps {
   policy?: PolicyDetails;
@@ -177,7 +177,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
           <Label mb={1} as="div" size="small" color="grey300">
             SEVERITY
           </Label>
-          <Badge color={SEVERITY_COLOR_MAP[policy.severity]}>{policy.severity}</Badge>
+          <SeverityBadge severity={policy.severity} />
         </Box>
         <Box my={1}>
           <Label mb={1} as="div" size="small" color="grey300">
