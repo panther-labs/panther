@@ -192,7 +192,7 @@ Resources:
             Principal:
               Service: delivery.logs.amazonaws.com
             Action: s3:PutObject
-            Resource: !Sub ${AuditLogs.Arn}/AWSLogs/${AWS::AccountId}/*
+            Resource: !Sub arn:aws:s3:::${AuditLogs}/AWSLogs/${AWS::AccountId}/*
             Condition:
               StringEquals:
                 's3:x-amz-acl': bucket-owner-full-control
@@ -207,7 +207,7 @@ Resources:
             Principal:
               Service: cloudtrail.amazonaws.com
             Action: s3:PutObject
-            Resource: !Sub ${AuditLogs.Arn}/AWSLogs/${AWS::AccountId}/*
+            Resource: !Sub arn:aws:s3:::${AuditLogs}/AWSLogs/${AWS::AccountId}/*
             Condition:
               StringEquals:
                 's3:x-amz-acl': bucket-owner-full-control
@@ -216,7 +216,7 @@ Resources:
             Principal:
               AWS: !FindInMap [ELBAccounts, !Ref 'AWS::Region', ARN]
             Action: s3:PutObject
-            Resource: !Sub ${AuditLogs.Arn}/AWSLogs/${AWS::AccountId}/*
+            Resource: !Sub arn:aws:s3:::${AuditLogs}/AWSLogs/${AWS::AccountId}/*
           - Sid: GuardDutyBucketLocation
             Effect: Allow
             Principal:
@@ -228,12 +228,12 @@ Resources:
             Principal:
               Service: guardduty.amazonaws.com
             Action: s3:PutObject
-            Resource: !Sub ${AuditLogs.Arn}/*
+            Resource: !Sub arn:aws:s3:::${AuditLogs}/*
           - Sid: ForceSSL
             Effect: Deny
             Principal: '*'
             Action: s3:GetObject
-            Resource: !Sub ${ProcessedData.Arn}/*
+            Resource: !Sub arn:aws:s3:::${AuditLogs}/*
             Condition:
               Bool:
                 aws:SecureTransport: false
@@ -275,7 +275,7 @@ Resources:
             Effect: Deny
             Principal: '*'
             Action: s3:GetObject
-            Resource: !Sub ${Source.Arn}/*
+            Resource: !Sub arn:aws:s3:::${Source}/*
             Condition:
               Bool:
                 aws:SecureTransport: false
@@ -316,7 +316,7 @@ Resources:
             Effect: Deny
             Principal: '*'
             Action: s3:GetObject
-            Resource: !Sub ${AnalysisVersions.Arn}/*
+            Resource: !Sub arn:aws:s3:::${AnalysisVersions}/*
             Condition:
               Bool:
                 aws:SecureTransport: false
@@ -365,7 +365,7 @@ Resources:
             Action:
               - s3:GetObject
               - s3:GetObjectVersion
-            Resource: !Sub ${ProcessedData.Arn}/logs/*
+            Resource: !Sub arn:aws:s3:::${ProcessedData}/logs/*
           - Sid: ReadRuleData
             Effect: Allow
             Principal:
@@ -373,12 +373,12 @@ Resources:
             Action:
               - s3:GetObject
               - s3:GetObjectVersion
-            Resource: !Sub ${ProcessedData.Arn}/rules/*
+            Resource: !Sub arn:aws:s3:::${ProcessedData}/rules/*
           - Sid: ForceSSL
             Effect: Deny
             Principal: '*'
             Action: s3:GetObject
-            Resource: !Sub ${ProcessedData.Arn}/*
+            Resource: !Sub arn:aws:s3:::${ProcessedData}/*
             Condition:
               Bool:
                 aws:SecureTransport: false
@@ -420,7 +420,7 @@ Resources:
             Effect: Deny
             Principal: '*'
             Action: s3:GetObject
-            Resource: !Sub ${AthenaResults.Arn}/*
+            Resource: !Sub arn:aws:s3:::${AthenaResults}/*
             Condition:
               Bool:
                 aws:SecureTransport: false
