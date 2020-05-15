@@ -19,7 +19,7 @@ package manager
  */
 
 const (
-	openSourceHelpersName = "panther-helpers"
+	openSourceHelpersName = "panther_helpers"
 	// nolint:lll
 	openSourceHelpersBody = `"""Utility functions provided to policies during execution."""
 import os
