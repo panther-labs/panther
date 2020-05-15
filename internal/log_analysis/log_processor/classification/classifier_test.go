@@ -103,7 +103,7 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 	repetitions := 1000
 
 	expectedResult := &ClassifierResult{
-		Events:  []*parsers.PantherLog{{}},
+		Events:  []*parsers.Result{{}},
 		LogType: aws.String("success"),
 	}
 	expectedStats := &ClassifierStats{

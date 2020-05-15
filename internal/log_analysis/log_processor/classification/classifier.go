@@ -46,7 +46,7 @@ type ClassifierResult struct {
 	// Events contains the parsed events
 	// If the classification process was not successful and the log is from an
 	// unsupported type, this will be nil
-	Events []*parsers.PantherLog
+	Events []*parsers.Result
 	// LogType is the identified type of the log
 	LogType *string
 }
@@ -79,24 +79,38 @@ func (c *Classifier) ParserStats() map[string]*ParserStats {
 }
 
 // catch panics from parsers, log and continue
-func safeLogParse(parser parsers.LogParser, log string) (parsedEvents []*parsers.PantherLog) {
+func safeLogParse(parser parsers.LogParser, log string) (results []*parsers.Result) {
 	defer func() {
 		if r := recover(); r != nil {
 			zap.L().Debug("parser panic",
 				zap.String("parser", parser.LogType()),
 				zap.Error(errors.Errorf("%v", r)),
 				zap.String("stacktrace", string(debug.Stack())))
-			parsedEvents = nil // return indicator that parse failed
+			results = nil // return indicator that parse failed
 		}
 	}()
-	parsedEvents, err := parser.Parse(log)
+	events, err := parser.Parse(log)
 	if err != nil {
 		zap.L().Debug("parser failed",
 			zap.String("parser", parser.LogType()),
 			zap.Error(err))
 		return nil
 	}
-	return parsedEvents
+	if len(events) == 0 {
+		return nil
+	}
+	results = make([]*parsers.Result, len(events))
+	for i, event := range events {
+		result, err := event.Result()
+		if err != nil {
+			zap.L().Debug("parser failed",
+				zap.String("parser", parser.LogType()),
+				zap.Error(err))
+			return nil
+		}
+		results[i] = result
+	}
+	return results
 }
 
 // Classify attempts to classify the provided log line

@@ -60,7 +60,7 @@ func Process(dataStreams chan *common.DataStream, destination destinations.Desti
 func process(dataStreams chan *common.DataStream, destination destinations.Destination,
 	newProcessorFunc func(*common.DataStream) *Processor) error {
 
-	parsedEventChannel := make(chan *parsers.PantherLog, ParsedEventBufferSize)
+	parsedEventChannel := make(chan *parsers.Result, ParsedEventBufferSize)
 	errorChannel := make(chan error)
 
 	// go routine aggregates data written to s3
@@ -104,7 +104,7 @@ func process(dataStreams chan *common.DataStream, destination destinations.Desti
 }
 
 // processStream reads the data from an S3 the dataStream, parses it and writes events to the output channel
-func (p *Processor) run(outputChan chan *parsers.PantherLog) error {
+func (p *Processor) run(outputChan chan *parsers.Result) error {
 	var err error
 	stream := bufio.NewReader(p.input.Reader)
 	for {
@@ -126,7 +126,7 @@ func (p *Processor) run(outputChan chan *parsers.PantherLog) error {
 	return err
 }
 
-func (p *Processor) processLogLine(line string, outputChan chan *parsers.PantherLog) {
+func (p *Processor) processLogLine(line string, outputChan chan *parsers.Result) {
 	classificationResult := p.classifyLogLine(line)
 	if classificationResult.LogType == nil { // unable to classify, no error, keep parsing (best effort, will be logged)
 		return
@@ -147,9 +147,9 @@ func (p *Processor) classifyLogLine(line string) *classification.ClassifierResul
 	return result
 }
 
-func (p *Processor) sendEvents(result *classification.ClassifierResult, outputChan chan *parsers.PantherLog) {
-	for _, event := range result.Events {
-		outputChan <- event
+func (p *Processor) sendEvents(result *classification.ClassifierResult, outputChan chan *parsers.Result) {
+	for _, result := range result.Events {
+		outputChan <- result
 	}
 }
 

@@ -175,7 +175,7 @@ func TestProcessDestinationError(t *testing.T) {
 	destination.On("SendEvents", mock.Anything, mock.Anything).Return().Run(func(args mock.Arguments) {
 		errChan := args.Get(1).(chan error)
 		errChan <- sendEventsErr
-		for range args.Get(0).(chan *parsers.PantherLog) {
+		for range args.Get(0).(chan *parsers.Result) {
 		} // must drain q
 	})
 
@@ -247,11 +247,13 @@ func TestProcessClassifyFailure(t *testing.T) {
 
 	// first one fails
 	mockClassifier.On("Classify", mock.Anything).Return(&classification.ClassifierResult{
-		Events:  []*parsers.PantherLog{},
+		Events:  []*parsers.Result{},
 		LogType: nil,
 	}).Once()
+	results, err := newTestLog().Results()
+	require.NoError(t, err)
 	mockClassifier.On("Classify", mock.Anything).Return(&classification.ClassifierResult{
-		Events:  []*parsers.PantherLog{newTestLog()},
+		Events:  results,
 		LogType: &testLogType,
 	})
 	mockClassifier.On("Stats", mock.Anything).Return(mockStats)
@@ -261,8 +263,7 @@ func TestProcessClassifyFailure(t *testing.T) {
 	streamChan := make(chan *common.DataStream, 1)
 	streamChan <- dataStream
 	close(streamChan)
-	err := process(streamChan, destination, newProcessorFunc)
-	require.NoError(t, err)
+	require.NoError(t, process(streamChan, destination, newProcessorFunc))
 
 	actual := logs.AllUntimed()
 	expected := []observer.LoggedEntry{
@@ -357,13 +358,13 @@ type testDestination struct {
 }
 
 // mocks override
-func (d *testDestination) SendEvents(parsedEventChannel chan *parsers.PantherLog, errChan chan error) {
+func (d *testDestination) SendEvents(parsedEventChannel chan *parsers.Result, errChan chan error) {
 	d.MethodCalled("SendEvents", parsedEventChannel, errChan) // execute mocks
 }
 
 func (d *testDestination) standardMock() *testDestination {
 	d.On("SendEvents", mock.Anything, mock.Anything).Return().Run(func(args mock.Arguments) {
-		for range args.Get(0).(chan *parsers.PantherLog) { // simulate reading
+		for range args.Get(0).(chan *parsers.Result) { // simulate reading
 			time.Sleep(sendDelay) // wait to give processor time to send events
 			d.nEvents++
 		}
@@ -393,8 +394,12 @@ func (c *testClassifier) ParserStats() map[string]*classification.ParserStats {
 
 // mocks for normal processing
 func (c *testClassifier) standardMocks(cStats *classification.ClassifierStats, pStats map[string]*classification.ParserStats) {
+	results, err := newTestLog().Results()
+	if err != nil {
+		panic(err)
+	}
 	c.On("Classify", mock.Anything).Return(&classification.ClassifierResult{
-		Events:  []*parsers.PantherLog{newTestLog()},
+		Events:  results,
 		LogType: &testLogType,
 	}).After(parseDelay)
 	c.On("Stats", mock.Anything).Return(cStats)

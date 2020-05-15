@@ -19,9 +19,11 @@ package parsers
  */
 
 import (
+	"errors"
 	"net"
 	"regexp"
 	"sort"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
 
@@ -113,6 +115,37 @@ func (pl *PantherLog) Log() *PantherLog {
 // Logs returns a slice with pointer to self, used when composed
 func (pl *PantherLog) Logs() []*PantherLog {
 	return []*PantherLog{pl}
+}
+
+func (pl *PantherLog) Results() ([]*Result, error) {
+	result, err := pl.Result()
+	if err != nil {
+		return nil, err
+	}
+	return []*Result{result}, nil
+}
+
+func (pl *PantherLog) Result() (*Result, error) {
+	event := pl.Event()
+	if event == nil {
+		return nil, errors.New("nil event")
+	}
+	if pl.PantherLogType == nil {
+		return nil, errors.New("nil log type")
+	}
+	if pl.PantherEventTime == nil {
+		return nil, errors.New("nil event time")
+	}
+	tm := ((*time.Time)(pl.PantherEventTime)).UTC()
+	data, err := JSON.Marshal(event)
+	if err != nil {
+		return nil, err
+	}
+	return &Result{
+		LogType:   *pl.PantherLogType,
+		EventTime: tm,
+		JSON:      data,
+	}, nil
 }
 
 func (pl *PantherLog) SetCoreFields(logType string, eventTime *timestamp.RFC3339, event interface{}) {
