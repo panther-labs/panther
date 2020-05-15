@@ -23,36 +23,11 @@ Reference: https://httpd.apache.org/docs/current/logs.html#combined
 <tr><td valign=top><code><b>p_row_id</b></code></td><td><code>string</code></td><td valign=top>Panther added field with unique id (within table)</td></tr>
 <tr><td valign=top><code><b>p_event_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize event time (UTC)</td></tr>
 <tr><td valign=top><code><b>p_parse_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
-<tr><td valign=top><code>p_any_ip_addresses</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
-<tr><td valign=top><code>p_any_domain_names</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
-<tr><td valign=top><code>p_any_sha1_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_md5_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_sha256_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of SHA256 hashes of any algorithm associated with the row</td></tr>
+<tr><td valign=top><code>p_any_ip_addresses</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
+<tr><td valign=top><code>p_any_domain_names</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
+<tr><td valign=top><code>p_any_sha1_hashes</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
+<tr><td valign=top><code>p_any_md5_hashes</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
+<tr><td valign=top><code>p_any_sha256_hashes</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of SHA256 hashes of any algorithm associated with the row</td></tr>
 </table>
 
 ##Apache.AccessCommon
@@ -74,35 +49,10 @@ Reference: https://httpd.apache.org/docs/current/logs.html#common
 <tr><td valign=top><code><b>p_row_id</b></code></td><td><code>string</code></td><td valign=top>Panther added field with unique id (within table)</td></tr>
 <tr><td valign=top><code><b>p_event_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize event time (UTC)</td></tr>
 <tr><td valign=top><code><b>p_parse_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
-<tr><td valign=top><code>p_any_ip_addresses</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
-<tr><td valign=top><code>p_any_domain_names</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
-<tr><td valign=top><code>p_any_sha1_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_md5_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_sha256_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of SHA256 hashes of any algorithm associated with the row</td></tr>
+<tr><td valign=top><code>p_any_ip_addresses</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
+<tr><td valign=top><code>p_any_domain_names</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
+<tr><td valign=top><code>p_any_sha1_hashes</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
+<tr><td valign=top><code>p_any_md5_hashes</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
+<tr><td valign=top><code>p_any_sha256_hashes</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of SHA256 hashes of any algorithm associated with the row</td></tr>
 </table>
 
