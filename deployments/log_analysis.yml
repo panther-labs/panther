@@ -29,9 +29,6 @@ Parameters:
   ProcessedDataTopicArn:
     Type: String
     Description: The ARN of the processed data SNS topic
-  PythonKeyValueDB:
-    Type: String
-    Description: Domain name for the key/value store available to Python rules and policies
   PythonLayerVersionArn:
     Type: String
     Description: Pip libraries for python analysis and remediation
@@ -631,7 +628,6 @@ Resources:
           S3_BUCKET: !Ref ProcessedDataBucket
           NOTIFICATIONS_TOPIC: !Ref ProcessedDataTopicArn
           ALERTS_DEDUP_TABLE: !Ref AlertsDedup
-          KEY_VALUE_DOMAIN: !Ref PythonKeyValueDB
       MemorySize: !Ref LogProcessorLambdaMemorySize # keep this the same as log processor since it has to read the output files
       Events:
         Queue:
@@ -705,8 +701,5 @@ Resources:
           Version: 2012-10-17
           Statement:
             - Effect: Allow
-              Action:
-                - sdb:*Attributes
-                - sdb:DomainMetadata
-                - sdb:Select
-              Resource: !Sub arn:${AWS::Partition}:sdb:${AWS::Region}:${AWS::AccountId}:domain/${PythonKeyValueDB}
+              Action: dynamodb:*Item
+              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-kv-store

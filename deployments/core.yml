@@ -807,3 +807,27 @@ Resources:
     Properties:
       LogGroupName: !Ref LayerManagerLogGroup
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  ##### Key-Value store for Python policies/rules #####
+  KeyValueStoreTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: panther-kv-store
+      # <cfndoc>
+      # Key-value store for Python policies/rules to use however they like
+      #
+      # Failure Impact
+      # * Custom rules / policies which leverage the table may be failing
+      # * Panther itself is not affected
+      # </cfndoc>
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: key
+          AttributeType: S
+      KeySchema:
+        - AttributeName: key
+          KeyType: HASH
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: True
+      SSESpecification:
+        SSEEnabled: True
