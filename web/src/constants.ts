@@ -85,6 +85,8 @@ export const RESOURCE_TYPES = [
 ] as const;
 
 export const LOG_TYPES = [
+  'Apache.AccessCombined',
+  'Apache.AccessCommon',
   'AWS.ALB',
   'AWS.AuroraMySQLAudit',
   'AWS.CloudTrail',
