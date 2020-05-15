@@ -21,7 +21,6 @@ package mage
 import (
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -76,10 +75,9 @@ const (
 	onboardTemplate     = "deployments/onboard.yml"
 
 	// Python layer
-	layerSourceDir        = "out/pip/analysis/python"
-	layerZipfile          = "out/layer.zip"
-	defaultGlobalID       = "panther"
-	defaultGlobalLocation = "internal/compliance/policy_engine/src/helpers.py"
+	layerSourceDir  = "out/pip/analysis/python"
+	layerZipfile    = "out/layer.zip"
+	defaultGlobalID = "panther"
 
 	mageUserID = "00000000-0000-4000-8000-000000000000" // used to indicate mage made the call, must be a valid uuid4!
 )
@@ -590,16 +588,11 @@ func initializeGlobal(awsSession *session.Session, endpoint string) error {
 		return fmt.Errorf("failed to get existing global file: %v", err)
 	}
 
-	// Setup the initial helper layer
-	content, err := ioutil.ReadFile(defaultGlobalLocation)
-	if err != nil {
-		return fmt.Errorf("failed to read default globals file: %v", err)
-	}
-
 	logger.Infof("deploy: uploading initial global helper module")
 	_, err = apiClient.Operations.CreateGlobal(&operations.CreateGlobalParams{
 		Body: &analysismodels.UpdateGlobal{
-			Body:        analysismodels.Body(string(content)),
+			// Just an example for cases where users don't have any globals defined already
+			Body:        "def returns_true():\n\treturn True",
 			Description: "A set of default helper functions.",
 			ID:          defaultGlobalID,
 			UserID:      mageUserID,
