@@ -21,7 +21,6 @@ package apachelogs
 import (
 	"regexp"
 	"strconv"
-	"strings"
 
 	"github.com/pkg/errors"
 
@@ -77,6 +76,14 @@ func (p *AccessCommonParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	return access.Logs(), nil
 }
 
+func (log *AccessCommonLog) ParseString(s string) error {
+	match := rxAccessCommon.FindStringSubmatch(s)
+	if len(match) > 1 {
+		return log.SetRow(match[1:])
+	}
+	return errors.New("invalid log format")
+}
+
 var rxAccessCommon = regexp.MustCompile(buildRx(
 	rxUnquoted,   // remoteIP
 	rxUnquoted,   // clientID
@@ -87,16 +94,6 @@ var rxAccessCommon = regexp.MustCompile(buildRx(
 	rxSize,       // responseSize
 ))
 
-func (log *AccessCommonLog) ParseString(s string) error {
-	match := rxAccessCommon.FindStringSubmatch(s)
-	if len(match) > 1 {
-		return log.SetRow(match[1:])
-	}
-	return errors.New("invalid log format")
-}
-
-const numFieldsAccessCommon = 7
-
 func (log *AccessCommonLog) SetRow(row []string) error {
 	if len(row) == numFieldsAccessCommon {
 		// Assignment in single line right after len check avoids bounds checks on fields
@@ -106,8 +103,8 @@ func (log *AccessCommonLog) SetRow(row []string) error {
 		if err != nil {
 			return err
 		}
-		req, err := parseRequestLine(requestLine)
-		if err != nil {
+		req := httpRequestLine{}
+		if err := req.ParseString(requestLine); err != nil {
 			return err
 		}
 		n, err := strconv.ParseInt(responseStatus, 10, 16)
@@ -141,56 +138,4 @@ func (event *AccessCommon) updatePantherFields(p *parsers.PantherLog) {
 		// Handle cases where apache config has resolved addresses enabled
 		p.AppendAnyDomainNamePtrs(event.RemoteHostIPAddress)
 	}
-}
-
-func nonEmptyLogField(s string) *string {
-	switch s {
-	case "", "-":
-		return nil
-	default:
-		return &s
-	}
-}
-
-// 	[day/month/year:hour:minute:second zone]
-// day = 2*digit
-// month = 3*letter
-// year = 4*digit
-// hour = 2*digit
-// minute = 2*digit
-// second = 2*digit
-// zone = (`+' | `-') 4*digit
-const layoutApacheTimestamp = `[02/Jan/2006:15:04:05 -0700]`
-
-type requestLine struct {
-	Method   string
-	URI      string
-	Protocol string
-}
-
-var rxSplitSpace = regexp.MustCompile(`\s+`)
-
-func stripQuotes(line string) string {
-	if len(line) > 0 && line[0] == '"' {
-		tail := line[1:]
-		if last := len(tail) - 1; 0 <= last && last < len(tail) && tail[last] == '"' {
-			return tail[:last]
-		}
-	}
-	return line
-}
-
-func parseRequestLine(line string) (requestLine, error) {
-	line = strings.TrimSpace(line)
-	line = stripQuotes(line)
-	line = strings.TrimSpace(line)
-	parts := rxSplitSpace.Split(line, -1)
-	if len(parts) == 3 {
-		return requestLine{
-			Method:   parts[0],
-			URI:      parts[1],
-			Protocol: parts[2],
-		}, nil
-	}
-	return requestLine{}, errors.New("invalid request line")
 }

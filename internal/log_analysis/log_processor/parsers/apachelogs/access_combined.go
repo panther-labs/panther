@@ -19,9 +19,7 @@ package apachelogs
  */
 
 import (
-	"fmt"
 	"regexp"
-	"strings"
 
 	"github.com/pkg/errors"
 
@@ -51,6 +49,19 @@ func (log *AccessCombined) ParseString(s string) error {
 	}
 	return errors.New("invalid access combined log")
 }
+
+var rxAccessCombined = regexp.MustCompile(buildRx(
+	rxUnquoted,   // remoteIP
+	rxUnquoted,   // clientID,
+	rxUnquoted,   // userID,
+	rxBrackets,   // requestTime
+	rxQuoted,     // requestLine
+	rxStatusCode, // responseStatus
+	rxSize,       // responseSize
+	rxQuoted,     // referer
+	rxQuoted,     // userAgent
+))
+
 func (log *AccessCombined) SetRow(row []string) error {
 	const fieldIndexReferer = 7
 	const fieldIndexUserAgent = 8
@@ -94,34 +105,4 @@ func (*AccessCombinedParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	}
 	combined.updatePantherFields(&combined.PantherLog)
 	return combined.Logs(), nil
-}
-
-const numFieldsAccessCombined = 9
-
-var rxAccessCombined = regexp.MustCompile(buildRx(
-	rxUnquoted,   // remoteIP
-	rxUnquoted,   // clientID,
-	rxUnquoted,   // userID,
-	rxBrackets,   // requestTime
-	rxQuoted,     // requestLine
-	rxStatusCode, // responseStatus
-	rxSize,       // responseSize
-	rxQuoted,     // referer
-	rxQuoted,     // userAgent
-))
-
-const (
-	rxUnquoted   = `[^\s]+`
-	rxBrackets   = `\[[^\]]+\]`
-	rxQuoted     = `"[^"]+"`
-	rxStatusCode = `\d{3}`
-	rxSize       = `-|\d+`
-)
-
-func buildRx(rxFields ...string) string {
-	groups := make([]string, len(rxFields))
-	for i, field := range rxFields {
-		groups[i] = fmt.Sprintf("(%s)", field)
-	}
-	return fmt.Sprintf(`^\s*%s\s*$`, strings.Join(groups, `\s+`))
 }
