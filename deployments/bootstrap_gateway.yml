@@ -16,12 +16,21 @@
 
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
-Description: API gateway and Python layer
+Description: Bootstrap resources that require the source S3 bucket to exist first
+
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: panther-community-bootstrap-gateway
+    Author: Panther Labs
+    Description: Nested SAR app for Panther Community - Detect threats with log data and improve cloud security posture
+    HomePageUrl: https://runpanther.io
+    SemanticVersion: 1.2.0
+    SourceCodeUrl: https://github.com/panther-labs/panther
 
 # This stack contains resources that need to exist before any other main stack,
 # but require S3 buckets to exist first. This is deployed right after bootstrap.yml
 #
-# - API gateways: 'mage deploy' embeds swagger definitions directly into this template,
+# - API gateways: 'mage build:cfn' embeds swagger definitions directly into this template,
 #     making the template too large to deploy without an S3 bucket
 # - Python layer: the layer source has to be uploaded to S3 before the cfn resource can be created
 # - Custom resource: the Lambda function which handles custom CFN resources
@@ -46,19 +55,13 @@ Parameters:
     AllowedValues: ['', Active, PassThrough]
     Default: ''
 
-  # If no custom layer is provided, 'mage deploy' will have uploaded a layer here:
-  SourceBucket:
+  # From the bootstrap stack:
+  AlarmTopicArn:
     Type: String
-    Description: S3 bucket for the Python analysis layer
-    Default: ''
-  PythonLayerKey:
+    Description: SNS topic for CloudWatch alarms
+  UserPoolId:
     Type: String
-    Description: S3 key for the Python analysis layer
-    Default: ''
-  PythonLayerObjectVersion:
-    Type: String
-    Description: S3 object version for the python layer zipfile
-    Default: ''
+    Description: Cognito user pool ID
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
@@ -73,10 +76,8 @@ Resources:
       CompatibleRuntimes:
         - python3.6
         - python3.7
-      Content:
-        S3Bucket: !Ref SourceBucket
-        S3Key: !Ref PythonLayerKey
-        S3ObjectVersion: !Ref PythonLayerObjectVersion
+        - python3.8
+      Content: ../layer.zip # relative to out/deployments since this template will first be swagger-embedded
       Description: Pip libraries available to the Python analysis/remediation functions
       LayerName: panther-analysis
 
@@ -107,7 +108,7 @@ Resources:
       # This function has more permissions than usual because it creates and destroys infrastructure.
       # It is used only by CloudFormation in the deploy process and not by the Panther application itself.
       Policies:
-        - Id: CertificateManagement
+        - Id: ResourceManagement
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -122,6 +123,14 @@ Resources:
               Resource: !Sub arn:${AWS::Partition}:acm:${AWS::Region}:${AWS::AccountId}:certificate/*
             - Effect: Allow
               Action:
+                - cloudwatch:PutMetricAlarm
+                - cloudwatch:DeleteAlarms
+              Resource: !Sub arn:${AWS::Partition}:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:Panther*
+            - Effect: Allow
+              Action: cognito-idp:SetUserPoolMfaConfig
+              Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}
+            - Effect: Allow
+              Action:
                 - iam:DeleteServerCertificate
                 - iam:UploadServerCertificate
               Resource:
@@ -129,12 +138,31 @@ Resources:
                 # IAM sometimes requires permissions to match the certificate name, not the full path
                 # This seems like a bug in IAM, but in any case a fresh deploy/teardown will not work without this:
                 - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/Panther*
+            - Effect: Allow
+              Action:
+                - logs:DeleteMetricFilter
+                - logs:PutMetricFilter
+              Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/panther-*
 
   CustomResourceLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/lambda/panther-cfn-custom-resources
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  CustomResourceMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref CustomResourceLogGroup
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+
+  # Enable only software MFA for the Cognito user pool - enabling MFA via native CloudFormation
+  # forces SMS as a fallback option, but the SDK does not.
+  UserPoolMfa:
+    Type: Custom::CognitoUserPoolMfa
+    Properties:
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+      UserPoolId: !Ref UserPoolId
 
   AnalysisApi:
     Type: AWS::Serverless::Api
@@ -148,6 +176,13 @@ Resources:
       StageName: v1
       TracingEnabled: !If [TracingEnabled, true, false]
 
+  AnalysisApiAlarms:
+    Type: Custom::ApiGatewayAlarms
+    Properties:
+      ApiName: panther-analysis-api
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+
   ComplianceApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -159,6 +194,13 @@ Resources:
       # </cfndoc>
       StageName: v1
       TracingEnabled: !If [TracingEnabled, true, false]
+
+  ComplianceApiAlarms:
+    Type: Custom::ApiGatewayAlarms
+    Properties:
+      ApiName: panther-compliance-api
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
 
   RemediationApi:
     Type: AWS::Serverless::Api
@@ -172,6 +214,13 @@ Resources:
       StageName: v1
       TracingEnabled: !If [TracingEnabled, true, false]
 
+  RemediationApiAlarms:
+    Type: Custom::ApiGatewayAlarms
+    Properties:
+      ApiName: panther-remediation-api
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+
   ResourcesApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -183,6 +232,13 @@ Resources:
       # </cfndoc>
       StageName: v1
       TracingEnabled: !If [TracingEnabled, true, false]
+
+  ResourcesApiAlarms:
+    Type: Custom::ApiGatewayAlarms
+    Properties:
+      ApiName: panther-resources-api
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
 
 Outputs:
   PythonLayerVersionArn:

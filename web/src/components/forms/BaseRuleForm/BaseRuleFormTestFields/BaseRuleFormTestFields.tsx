@@ -68,7 +68,7 @@ const BaseRuleFormTestFields: React.FC = () => {
   // Load the mutation that will perform the policy testing but we are not yet populating it with
   // the variables since we'll do that on "click" - time
   // prettier-ignore
-  const [testPolicy, { error, loading, data }] = useTestPolicy()
+  const [testPolicy, { error, loading, data }] = useTestPolicy();
 
   // Helper function where the only thing parameterised is the array of tests to submit to the server
   // This helps us reduce the amount of code we write when the only thing changing is the number of
@@ -274,15 +274,16 @@ const BaseRuleFormTestFields: React.FC = () => {
                       />
                     </Box>
                     {error && (
-                      <Alert
-                        variant="error"
-                        title="Internal error during testing"
-                        description={
-                          extractErrorMessage(error) ||
-                          "An unknown error occured and we couldn't run your tests"
-                        }
-                        mt={5}
-                      />
+                      <Box mt={5}>
+                        <Alert
+                          variant="error"
+                          title="Internal error during testing"
+                          description={
+                            extractErrorMessage(error) ||
+                            "An unknown error occured and we couldn't run your tests"
+                          }
+                        />
+                      </Box>
                     )}
                     {(loading || data) && (
                       <Box mt={5}>

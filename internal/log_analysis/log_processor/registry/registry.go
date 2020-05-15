@@ -20,6 +20,7 @@ package registry
 
 import (
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/apachelogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
@@ -31,7 +32,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/suricatalogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/sysloglogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/zeeklogs"
-	"github.com/panther-labs/panther/pkg/awsglue"
 )
 
 type Interface interface {

@@ -20,36 +20,11 @@ Reference: https://tools.ietf.org/html/rfc3164
 <tr><td valign=top><code><b>p_row_id</b></code></td><td><code>string</code></td><td valign=top>Panther added field with unique id (within table)</td></tr>
 <tr><td valign=top><code><b>p_event_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize event time (UTC)</td></tr>
 <tr><td valign=top><code><b>p_parse_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
-<tr><td valign=top><code>p_any_ip_addresses</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
-<tr><td valign=top><code>p_any_domain_names</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
-<tr><td valign=top><code>p_any_sha1_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_md5_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_sha256_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of SHA256 hashes of any algorithm associated with the row</td></tr>
+<tr><td valign=top><code>p_any_ip_addresses</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
+<tr><td valign=top><code>p_any_domain_names</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
+<tr><td valign=top><code>p_any_sha1_hashes</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
+<tr><td valign=top><code>p_any_md5_hashes</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
+<tr><td valign=top><code>p_any_sha256_hashes</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of SHA256 hashes of any algorithm associated with the row</td></tr>
 </table>
 
 ##Syslog.RFC5424
@@ -66,53 +41,16 @@ Reference: https://tools.ietf.org/html/rfc5424
 <tr><td valign=top><code>appname</code></td><td><code>string</code></td><td valign=top>Appname identifies the device or application that originated the syslog message.</td></tr>
 <tr><td valign=top><code>procid</code></td><td><code>string</code></td><td valign=top>ProcID is often the process ID, but can be any value used to enable log analyzers to detect discontinuities in syslog reporting.</td></tr>
 <tr><td valign=top><code>msgid</code></td><td><code>string</code></td><td valign=top>MsgID identifies the type of message. For example, a firewall might use the MsgID &#39;TCPIN&#39; for incoming TCP traffic.</td></tr>
-<tr><td valign=top><code>structured_data</code></td><td><code>{
-<br>&nbsp;&nbsp;"patternProperties": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;".*": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"patternProperties": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;".*": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "object"
-<br>&nbsp;&nbsp;&nbsp;&nbsp;}
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "object"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>StructuredData provides a mechanism to express information in a well defined and easily parsable format.</td></tr>
+<tr><td valign=top><code>structured_data</code></td><td><code>{<br>&nbps;&nbps;string:{<br>&nbps;&nbps;&nbps;&nbps;string:string<br>}<br>}</code></td><td valign=top>StructuredData provides a mechanism to express information in a well defined and easily parsable format.</td></tr>
 <tr><td valign=top><code>message</code></td><td><code>string</code></td><td valign=top>Message contains free-form text that provides information about the event.</td></tr>
 <tr><td valign=top><code><b>p_log_type</b></code></td><td><code>string</code></td><td valign=top>Panther added field with type of log</td></tr>
 <tr><td valign=top><code><b>p_row_id</b></code></td><td><code>string</code></td><td valign=top>Panther added field with unique id (within table)</td></tr>
 <tr><td valign=top><code><b>p_event_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize event time (UTC)</td></tr>
 <tr><td valign=top><code><b>p_parse_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
-<tr><td valign=top><code>p_any_ip_addresses</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
-<tr><td valign=top><code>p_any_domain_names</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
-<tr><td valign=top><code>p_any_sha1_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_md5_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
-<tr><td valign=top><code>p_any_sha256_hashes</code></td><td><code>{
-<br>&nbsp;&nbsp;"items": {
-<br>&nbsp;&nbsp;&nbsp;&nbsp;"type": "string"
-<br>&nbsp;&nbsp;},
-<br>&nbsp;&nbsp;"type": "array"
-<br>}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></td><td valign=top>Panther added field with collection of SHA256 hashes of any algorithm associated with the row</td></tr>
+<tr><td valign=top><code>p_any_ip_addresses</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
+<tr><td valign=top><code>p_any_domain_names</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
+<tr><td valign=top><code>p_any_sha1_hashes</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
+<tr><td valign=top><code>p_any_md5_hashes</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
+<tr><td valign=top><code>p_any_sha256_hashes</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of SHA256 hashes of any algorithm associated with the row</td></tr>
 </table>
 

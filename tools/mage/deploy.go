@@ -25,15 +25,13 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/magefile/mage/sh"
 
@@ -57,31 +55,29 @@ const (
 	gatewayTemplate   = apiEmbeddedTemplate
 
 	// Main stacks
-	alarmsStack          = "panther-cw-alarms"
-	alarmsTemplate       = "deployments/alarms.yml"
-	appsyncStack         = "panther-appsync"
-	appsyncTemplate      = "deployments/appsync.yml"
-	cloudsecStack        = "panther-cloud-security"
-	cloudsecTemplate     = "deployments/cloud_security.yml"
-	coreStack            = "panther-core"
-	coreTemplate         = "deployments/core.yml"
-	dashboardStack       = "panther-cw-dashboards"
-	dashboardTemplate    = "out/deployments/monitoring/dashboards.json"
-	frontendStack        = "panther-web"
-	frontendTemplate     = "deployments/web_server.yml"
-	glueStack            = "panther-glue"
-	glueTemplate         = "out/deployments/gluetables.json"
-	logAnalysisStack     = "panther-log-analysis"
-	logAnalysisTemplate  = "deployments/log_analysis.yml"
-	metricFilterStack    = "panther-cw-metric-filters"
-	metricFilterTemplate = "out/deployments/monitoring/metrics.json"
-	onboardStack         = "panther-onboard"
-	onboardTemplate      = "deployments/onboard.yml"
+	alarmsStack         = "panther-cw-alarms"
+	alarmsTemplate      = "deployments/alarms.yml"
+	appsyncStack        = "panther-appsync"
+	appsyncTemplate     = "deployments/appsync.yml"
+	cloudsecStack       = "panther-cloud-security"
+	cloudsecTemplate    = "deployments/cloud_security.yml"
+	coreStack           = "panther-core"
+	coreTemplate        = "deployments/core.yml"
+	dashboardStack      = "panther-cw-dashboards"
+	dashboardTemplate   = "out/deployments/monitoring/dashboards.json"
+	frontendStack       = "panther-web"
+	frontendTemplate    = "deployments/web_server.yml"
+	glueStack           = "panther-glue"
+	glueTemplate        = "out/deployments/gluetables.json"
+	logAnalysisStack    = "panther-log-analysis"
+	logAnalysisTemplate = "deployments/log_analysis.yml"
+	metricFilterStack   = "panther-cw-metric-filters"
+	onboardStack        = "panther-onboard"
+	onboardTemplate     = "deployments/onboard.yml"
 
 	// Python layer
 	layerSourceDir        = "out/pip/analysis/python"
 	layerZipfile          = "out/layer.zip"
-	layerS3ObjectKey      = "layers/python-analysis.zip"
 	defaultGlobalID       = "panther"
 	defaultGlobalLocation = "internal/compliance/policy_engine/src/helpers.py"
 
@@ -150,7 +146,13 @@ func Deploy() {
 		logger.Fatal(err)
 	}
 
-	logger.Infof("deploy: finished successfully in %s", time.Since(start))
+	// ***** Step 4: migrations
+	// Starting in v1.3.0, the metric-filter stack is no longer used. It can be safely deleted
+	if err := deleteStack(cloudformation.New(awsSession), aws.String(metricFilterStack)); err != nil {
+		logger.Warnf("failed to delete deprecated %s stack: %v", metricFilterStack, err)
+	}
+
+	logger.Infof("deploy: finished successfully in %s", time.Since(start).Round(time.Second))
 	logger.Infof("***** Panther URL = https://%s", outputs["LoadBalancerUrl"])
 }
 
@@ -219,6 +221,7 @@ func deployBoostrapStacks(
 		"CustomDomain":               settings.Web.CustomDomain,
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 		"TracingMode":                settings.Monitoring.TracingMode,
+		"AlarmTopicArn":              settings.Monitoring.AlarmSnsTopicArn,
 	}
 
 	outputs, err := deployTemplate(awsSession, bootstrapTemplate, "", bootstrapStack, params)
@@ -226,38 +229,21 @@ func deployBoostrapStacks(
 		return nil, err
 	}
 
-	// Enable only software MFA for the Cognito user pool - enabling MFA via CloudFormation
-	// forces SMS as a fallback option, but the SDK does not.
-	userPoolID := outputs["UserPoolId"]
-	logger.Debugf("deploy: enabling TOTP for user pool %s", userPoolID)
-	_, err = cognitoidentityprovider.New(awsSession).SetUserPoolMfaConfig(&cognitoidentityprovider.SetUserPoolMfaConfigInput{
-		MfaConfiguration: aws.String("ON"),
-		SoftwareTokenMfaConfiguration: &cognitoidentityprovider.SoftwareTokenMfaConfigType{
-			Enabled: aws.Bool(true),
-		},
-		UserPoolId: &userPoolID,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to enable TOTP for user pool %s: %v", userPoolID, err)
-	}
 	logger.Infof("    √ %s finished (1/%d)", bootstrapStack, len(allStacks))
 
 	// Now that the S3 buckets are in place, we can deploy the second bootstrap stack.
+	if err = buildLayer(settings.Infra.PipLayer); err != nil {
+		return nil, err
+	}
+
 	sourceBucket := outputs["SourceBucket"]
 	params = map[string]string{
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
+		"PythonLayerVersionArn":      settings.Infra.PythonLayerVersionArn,
 		"TracingMode":                settings.Monitoring.TracingMode,
-	}
-
-	if settings.Infra.PythonLayerVersionArn == "" {
-		// Build default layer
-		params["SourceBucket"] = sourceBucket
-		params["PythonLayerKey"] = layerS3ObjectKey
-		params["PythonLayerObjectVersion"] = uploadLayer(awsSession, settings.Infra.PipLayer, sourceBucket, layerS3ObjectKey)
-	} else {
-		// Use configured custom layer
-		params["PythonLayerVersionArn"] = settings.Infra.PythonLayerVersionArn
+		"UserPoolId":                 outputs["UserPoolId"],
+		"AlarmTopicArn":              outputs["AlarmTopicArn"],
 	}
 
 	// Deploy second bootstrap stack and merge outputs
@@ -277,29 +263,23 @@ func deployBoostrapStacks(
 	return outputs, nil
 }
 
-// Upload custom Python analysis layer to S3 (if it isn't already), returning version ID
-func uploadLayer(awsSession *session.Session, libs []string, bucket, key string) string {
-	s3Client := s3.New(awsSession)
-	head, err := s3Client.HeadObject(&s3.HeadObjectInput{Bucket: &bucket, Key: &key})
-
-	sort.Strings(libs)
-	libString := strings.Join(libs, ",")
-	if err == nil && aws.StringValue(head.Metadata["Libs"]) == libString {
-		logger.Debugf("deploy: s3://%s/%s exists and is up to date", bucket, key)
-		return *head.VersionId
+// Build standard Python analysis layer in out/layer.zip if that file doesn't already exist.
+func buildLayer(libs []string) error {
+	if _, err := os.Stat(layerZipfile); err == nil {
+		logger.Debugf("%s already exists, not rebuilding layer")
+		return nil
 	}
 
-	// The layer is re-uploaded only if it doesn't exist yet or the library versions changed.
-	logger.Info("deploy: downloading python libraries " + libString)
+	logger.Info("deploy: downloading python libraries " + strings.Join(libs, ","))
 	if err := os.RemoveAll(layerSourceDir); err != nil {
-		logger.Fatalf("failed to remove layer directory %s: %v", layerSourceDir, err)
+		return fmt.Errorf("failed to remove layer directory %s: %v", layerSourceDir, err)
 	}
 	if err := os.MkdirAll(layerSourceDir, 0755); err != nil {
-		logger.Fatalf("failed to create layer directory %s: %v", layerSourceDir, err)
+		return fmt.Errorf("failed to create layer directory %s: %v", layerSourceDir, err)
 	}
 	args := append([]string{"install", "-t", layerSourceDir}, libs...)
 	if err := sh.Run("pip3", args...); err != nil {
-		logger.Fatalf("failed to download pip libraries: %v", err)
+		return fmt.Errorf("failed to download pip libraries: %v", err)
 	}
 
 	// The package structure needs to be:
@@ -309,16 +289,11 @@ func uploadLayer(awsSession *session.Session, libs []string, bucket, key string)
 	// └ python/policyuniverse-VERSION.dist-info/
 	//
 	// https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html#configuration-layers-path
-	if err := shutil.ZipDirectory(filepath.Dir(layerSourceDir), layerZipfile, true); err != nil {
-		logger.Fatalf("failed to zip %s into %s: %v", layerSourceDir, layerZipfile, err)
+	if err := shutil.ZipDirectory(filepath.Dir(layerSourceDir), layerZipfile, false); err != nil {
+		return fmt.Errorf("failed to zip %s into %s: %v", layerSourceDir, layerZipfile, err)
 	}
 
-	// Upload to S3
-	result, err := uploadFileToS3(awsSession, layerZipfile, bucket, key, map[string]*string{"Libs": &libString})
-	if err != nil {
-		logger.Fatalf("failed to upload %s to S3: %v", layerZipfile, err)
-	}
-	return *result.VersionID
+	return nil
 }
 
 // Deploy main stacks
@@ -338,7 +313,7 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 		_, err := deployTemplate(awsSession, alarmsTemplate, sourceBucket, alarmsStack, map[string]string{
 			"AppsyncId":            outputs["GraphQLApiId"],
 			"LoadBalancerFullName": outputs["LoadBalancerFullName"],
-			"AlarmTopicArn":        settings.Monitoring.AlarmSnsTopicArn,
+			"AlarmTopicArn":        outputs["AlarmTopicArn"],
 		})
 		c <- goroutineResult{summary: alarmsStack, err: err}
 	}(results)
@@ -438,14 +413,8 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	}(results)
 
 	// Wait for stacks to finish.
-	// There are two stacks before and after this one
+	// There are two stacks before and one stack after
 	logResults(results, "deploy", 3, count+2, len(allStacks))
-
-	// Metric filters have to be deployed after all log groups have been created
-	go func(c chan goroutineResult) {
-		_, err := deployTemplate(awsSession, metricFilterTemplate, sourceBucket, metricFilterStack, nil)
-		c <- goroutineResult{summary: metricFilterStack, err: err}
-	}(results)
 
 	// Onboard Panther to scan itself
 	go func(c chan goroutineResult) {

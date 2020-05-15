@@ -19,9 +19,16 @@ package resources
  */
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/acm"
 	"github.com/aws/aws-sdk-go/service/acm/acmiface"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
+	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider/cognitoidentityprovideriface"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/iam/iamiface"
 )
@@ -30,13 +37,16 @@ import (
 var (
 	awsSession *session.Session
 
-	acmClient acmiface.ACMAPI
-	iamClient iamiface.IAMAPI
+	acmClient            acmiface.ACMAPI
+	cloudWatchClient     cloudwatchiface.CloudWatchAPI
+	cloudWatchLogsClient cloudwatchlogsiface.CloudWatchLogsAPI
+	cognitoClient        cognitoidentityprovideriface.CognitoIdentityProviderAPI
+	iamClient            iamiface.IAMAPI
 )
 
 func getSession() *session.Session {
 	if awsSession == nil {
-		awsSession = session.Must(session.NewSession())
+		awsSession = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(10)))
 	}
 	return awsSession
 }
@@ -46,6 +56,27 @@ func getAcmClient() acmiface.ACMAPI {
 		acmClient = acm.New(getSession())
 	}
 	return acmClient
+}
+
+func getCloudWatchClient() cloudwatchiface.CloudWatchAPI {
+	if cloudWatchClient == nil {
+		cloudWatchClient = cloudwatch.New(getSession())
+	}
+	return cloudWatchClient
+}
+
+func getCloudWatchLogsClient() cloudwatchlogsiface.CloudWatchLogsAPI {
+	if cloudWatchLogsClient == nil {
+		cloudWatchLogsClient = cloudwatchlogs.New(getSession())
+	}
+	return cloudWatchLogsClient
+}
+
+func getCognitoClient() cognitoidentityprovideriface.CognitoIdentityProviderAPI {
+	if cognitoClient == nil {
+		cognitoClient = cognitoidentityprovider.New(getSession())
+	}
+	return cognitoClient
 }
 
 func getIamClient() iamiface.IAMAPI {

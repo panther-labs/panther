@@ -185,6 +185,8 @@ func (b Build) lambda() error {
 func buildLambdaPackage(pkg string) error {
 	targetDir := filepath.Join("out", "bin", pkg)
 	binary := filepath.Join(targetDir, "main")
+	oldInfo, statErr := os.Stat(binary)
+	oldHash, hashErr := fileMD5(binary)
 	var buildEnv = map[string]string{"GOARCH": "amd64", "GOOS": "linux"}
 
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
@@ -192,6 +194,21 @@ func buildLambdaPackage(pkg string) error {
 	}
 	if err := sh.RunWith(buildEnv, "go", "build", "-ldflags", "-s -w", "-o", targetDir, "./"+pkg); err != nil {
 		return fmt.Errorf("go build %s failed: %v", binary, err)
+	}
+
+	if statErr == nil && hashErr == nil {
+		if hash, err := fileMD5(binary); err == nil && hash == oldHash {
+			// Optimization - if the binary contents haven't changed, reset the last modified time.
+			// The Lambda zipfile created by "sam package" includes file timestamps -
+			// if the binary is identical but the timestamp is different, the zipfile will have a
+			// different hash and will have to be re-uploaded to S3.
+			logger.Debugf("%s binary unchanged, reverting timestamp", binary)
+			modTime := oldInfo.ModTime()
+			if err = os.Chtimes(binary, modTime, modTime); err != nil {
+				// Non-critical error - the build process can continue
+				logger.Warnf("failed optimization: can't revert timestamp for %s: %v", binary, err)
+			}
+		}
 	}
 
 	return nil
@@ -299,9 +316,6 @@ func (b Build) cfn() error {
 		return err
 	}
 	if err := generateDashboards(); err != nil {
-		return err
-	}
-	if err := generateMetrics(); err != nil {
 		return err
 	}
 

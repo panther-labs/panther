@@ -93,15 +93,16 @@ const EditPolicyPage: React.FC = () => {
 
   if (fetchPolicyError) {
     return (
-      <Alert
-        mb={6}
-        variant="error"
-        title="Couldn't load the policy details"
-        description={
-          extractErrorMessage(fetchPolicyError) ||
-          'There was an error when performing your request, please contact support@runpanther.io'
-        }
-      />
+      <Box mb={6}>
+        <Alert
+          variant="error"
+          title="Couldn't load the policy details"
+          description={
+            extractErrorMessage(fetchPolicyError) ||
+            'There was an error when performing your request, please contact support@runpanther.io'
+          }
+        />
+      </Box>
     );
   }
 
@@ -129,15 +130,15 @@ const EditPolicyPage: React.FC = () => {
         <PolicyForm initialValues={initialValues} onSubmit={handleSubmit} />
       </Panel>
       {updateError && (
-        <Alert
-          mt={2}
-          mb={6}
-          variant="error"
-          title={
-            extractErrorMessage(updateError) ||
-            'Unknown error occured during update. Please contact support@runpanther.io'
-          }
-        />
+        <Box mt={2} mb={6}>
+          <Alert
+            variant="error"
+            title={
+              extractErrorMessage(updateError) ||
+              'Unknown error occured during update. Please contact support@runpanther.io'
+            }
+          />
+        </Box>
       )}
     </Box>
   );
