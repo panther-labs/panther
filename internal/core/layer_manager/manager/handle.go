@@ -104,7 +104,13 @@ func buildLayer() ([]byte, error) {
 		}
 		return nil, err
 	}
-	return packageLayer(map[string]string{globalModuleName: string(global.Payload.Body)})
+
+	// If/when we support multiple globals, we will need to re-factor this so that open source helpers
+	// are not imported for every layer
+	return packageLayer(map[string]string{
+		globalModuleName:      string(global.Payload.Body),
+		openSourceHelpersName: openSourceHelpersBody},
+	)
 }
 
 // packageLayer takes a mapping of filenames to function bodies and constructs a zip archive with the file structure

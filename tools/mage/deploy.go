@@ -556,19 +556,32 @@ func initializeAnalysisSets(awsSession *session.Session, endpoint string, settin
 	return nil
 }
 
-// Install the default global helper function if it does not already exist
+// Install the default global helper function if it does not already exist, or update it if it does exist
 func initializeGlobal(awsSession *session.Session, endpoint string) error {
 	httpClient := gatewayapi.GatewayClient(awsSession)
 	apiClient := client.NewHTTPClientWithConfig(nil, client.DefaultTransportConfig().
 		WithBasePath("/v1").WithHost(endpoint))
 
-	_, err := apiClient.Operations.GetGlobal(&operations.GetGlobalParams{
+	global, err := apiClient.Operations.GetGlobal(&operations.GetGlobalParams{
 		GlobalID:   defaultGlobalID,
 		HTTPClient: httpClient,
 	})
 	// Global already exists
 	if err == nil {
 		logger.Debug("deploy: global module already exists")
+		// This should not modify the users own custom layer packages, but should bump the panther layer packages
+		// if needed.
+		_, err = apiClient.Operations.ModifyGlobal(&operations.ModifyGlobalParams{
+			Body: &analysismodels.UpdateGlobal{
+				Body:   global.Payload.Body,
+				ID:     defaultGlobalID,
+				UserID: global.Payload.LastModifiedBy,
+			},
+			HTTPClient: httpClient,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to update existing globals file: %v", err)
+		}
 		return nil
 	}
 
