@@ -342,6 +342,7 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 			"ResourcesApiId":        outputs["ResourcesApiId"],
 			"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
 			"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
+			"PythonKeyValueDB":      outputs["PythonKeyValueDB"],
 			"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
 			"SqsKeyId":              outputs["QueueEncryptionKeyId"],
 
@@ -393,6 +394,7 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 			"AnalysisApiId":         outputs["AnalysisApiId"],
 			"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
 			"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
+			"PythonKeyValueDB":      outputs["PythonKeyValueDB"],
 			"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
 			"SqsKeyId":              outputs["QueueEncryptionKeyId"],
 

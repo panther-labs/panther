@@ -369,6 +369,12 @@ Resources:
       VersioningConfiguration:
         Status: Enabled
 
+  ########## Storage ##########
+  PythonKeyValueDB:
+    Type: AWS::SDB::Domain
+    Properties:
+      Description: Simple key/value store for Python policies and rules to use however they like
+
   ########## Cognito ##########
   # MFA is configured for the user pool via the Go SDK rather than CloudFormation.
   # Using CFN for MFA forces SMS, but we only want software tokens (SMS is not as secure)
@@ -799,6 +805,11 @@ Outputs:
   SourceBucket:
     Description: S3 bucket name for Panther CloudFormation packaging
     Value: !Ref Source
+
+  # SimpleDB
+  PythonKeyValueDB:
+    Description: Domain name for the key/value store available to Python rules and policies
+    Value: !Ref PythonKeyValueDB
 
   # Networking + elb
   SubnetOneId:

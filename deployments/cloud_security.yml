@@ -38,6 +38,9 @@ Parameters:
   ProcessedDataBucket:
     Type: String
     Description: Name of the S3 bucket for storing processed logs
+  PythonKeyValueDB:
+    Type: String
+    Description: Domain name for the key/value store available to Python rules and policies
   PythonLayerVersionArn:
     Type: String
     Description: Pip libraries for python analysis and remediation
@@ -744,7 +747,7 @@ Resources:
       Environment:
         Variables:
           LOGGING_LEVEL: !If [DebugEnabled, DEBUG, INFO]
-          MASTER_REGION: !Sub ${AWS::Region}
+          MASTER_REGION: !Ref AWS::Region
       Layers: !If
         - AttachLayers
         - !Split # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
@@ -1004,6 +1007,10 @@ Resources:
     Properties:
       CodeUri: ../internal/compliance/policy_engine
       Description: Python Policy Engine
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+          KEY_VALUE_DOMAIN: !Ref PythonKeyValueDB
       FunctionName: panther-policy-engine
       # <cfndoc>
       # This lambda executes the user-defined policies against infrastructure events.
@@ -1030,9 +1037,14 @@ Resources:
           Version: 2012-10-17
           Statement:
             - Effect: Allow
-              Action:
-                - dynamodb:GetItem
+              Action: dynamodb:GetItem
               Resource: !GetAtt ResourcesTable.Arn
+            - Effect: Allow
+              Action:
+                - sdb:*Attributes
+                - sdb:DomainMetadata
+                - sdb:Select
+              Resource: !Sub arn:${AWS::Partition}:sdb:${AWS::Region}:${AWS::AccountId}:domain/${PythonKeyValueDB}
 
   PolicyEngineLogGroup:
     Type: AWS::Logs::LogGroup
