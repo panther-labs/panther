@@ -75,15 +75,16 @@ const ListAlerts = () => {
 
   if (error) {
     return (
-      <Alert
-        mb={6}
-        variant="error"
-        title="Couldn't load your alerts"
-        description={
-          extractErrorMessage(error) ||
-          'There was an error when performing your request, please contact support@runpanther.io'
-        }
-      />
+      <Box mb={6}>
+        <Alert
+          variant="error"
+          title="Couldn't load your alerts"
+          description={
+            extractErrorMessage(error) ||
+            'There was an error when performing your request, please contact support@runpanther.io'
+          }
+        />
+      </Box>
     );
   }
 

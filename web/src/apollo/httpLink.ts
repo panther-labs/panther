@@ -17,10 +17,11 @@
  */
 
 import { createHttpLink } from '@apollo/client';
+import { pantherConfig } from 'Source/config';
 
 /**
  * Typical HTTP link to add the GraphQL URL to query
  */
-const httpLink = createHttpLink({ uri: process.env.WEB_APPLICATION_GRAPHQL_API_ENDPOINT });
+const httpLink = createHttpLink({ uri: pantherConfig.WEB_APPLICATION_GRAPHQL_API_ENDPOINT });
 
 export default httpLink;

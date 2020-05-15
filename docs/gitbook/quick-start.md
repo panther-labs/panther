@@ -29,7 +29,7 @@ Get started with 3 quick steps!
 Clone the latest release of [Panther](https://github.com/panther-labs/panther):
 
 ```bash
-git clone https://github.com/panther-labs/panther --depth 1 --branch v1.2.0
+git clone https://github.com/panther-labs/panther --depth 1 --branch v1.2.1
 cd panther
 ```
 
@@ -90,7 +90,7 @@ Congratulations! You are now ready to use Panther.
 Follow the steps below to complete your setup:
 
 1. Invite your team in `Settings` > `Users` > `Invite User`
-1. Configure [destinations](destinations/setup/) to receive generated alerts
+1. Configure [destinations](destinations) to receive generated alerts
 2. Onboard data for [real-time log analysis](log-analysis/log-processing/)
 3. Write custom [detection rules](log-analysis/rules/) based on internal business logic
 4. Onboard accounts for [cloud security scans](policies/scanning/)

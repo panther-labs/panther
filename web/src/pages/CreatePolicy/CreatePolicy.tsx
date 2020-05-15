@@ -64,15 +64,15 @@ const CreatePolicyPage: React.FC = () => {
         <PolicyForm initialValues={initialValues} onSubmit={handleSubmit} />
       </Panel>
       {error && (
-        <Alert
-          mt={2}
-          mb={6}
-          variant="error"
-          title={
-            extractErrorMessage(error) ||
-            'An unknown error occured as we were trying to create your policy'
-          }
-        />
+        <Box mt={2} mb={6}>
+          <Alert
+            variant="error"
+            title={
+              extractErrorMessage(error) ||
+              'An unknown error occured as we were trying to create your policy'
+            }
+          />
+        </Box>
       )}
     </Box>
   );

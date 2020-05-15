@@ -24,31 +24,23 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"github.com/pkg/errors"
-
-	"github.com/panther-labs/panther/api/lambda/source/models"
-	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // ScanIntegrations returns all enabled integrations based on type (if type is specified).
 // It performs a DDB scan of the entire table with a filter expression.
-func (ddb *DDB) ScanIntegrations(input *models.ListIntegrationsInput) ([]*models.SourceIntegration, error) {
-	var scanInput *dynamodb.ScanInput
-	if input.IntegrationType != nil {
-		filt := expression.Name("integrationType").Equal(expression.Value(input.IntegrationType))
-		expr, err := expression.NewBuilder().WithFilter(filt).Build()
+func (ddb *DDB) ScanIntegrations(integrationType *string) ([]*IntegrationItem, error) {
+	scanInput := &dynamodb.ScanInput{
+		TableName: aws.String(ddb.TableName),
+	}
+	if integrationType != nil {
+		filterExpression := expression.Name("integrationType").Equal(expression.Value(integrationType))
+		expr, err := expression.NewBuilder().WithFilter(filterExpression).Build()
 		if err != nil {
-			return nil, &genericapi.InternalError{Message: "failed to build dynamodb expression"}
+			return nil, errors.Wrap(err, "failed to build filter expression")
 		}
-		scanInput = &dynamodb.ScanInput{
-			FilterExpression:          expr.Filter(),
-			ExpressionAttributeNames:  expr.Names(),
-			ExpressionAttributeValues: expr.Values(),
-			TableName:                 aws.String(ddb.TableName),
-		}
-	} else { // all
-		scanInput = &dynamodb.ScanInput{
-			TableName: aws.String(ddb.TableName),
-		}
+		scanInput.FilterExpression = expr.Filter()
+		scanInput.ExpressionAttributeNames = expr.Names()
+		scanInput.ExpressionAttributeValues = expr.Values()
 	}
 
 	output, err := ddb.Client.Scan(scanInput)
@@ -56,13 +48,10 @@ func (ddb *DDB) ScanIntegrations(input *models.ListIntegrationsInput) ([]*models
 		return nil, errors.Wrap(err, "failed to scan table")
 	}
 
-	var integrations []*models.SourceIntegration
+	var integrations []*IntegrationItem
 	if err := dynamodbattribute.UnmarshalListOfMaps(output.Items, &integrations); err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal scan results")
 	}
 
-	if integrations == nil {
-		integrations = make([]*models.SourceIntegration, 0)
-	}
 	return integrations, nil
 }

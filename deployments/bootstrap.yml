@@ -60,6 +60,10 @@ Parameters:
     Description: Toggle debug logging
     Default: false
     AllowedValues: [true, false]
+  AlarmTopicArn:
+    Type: String
+    Description: An existing SNS topic for CloudWatch alarms. If not specified, one is created for you.
+    Default: ''
 
 Mappings:
   SubnetConfig:
@@ -126,6 +130,7 @@ Conditions:
   TracingEnabled: !Not [!Equals [!Ref TracingMode, '']]
   UseCustomDomain: !Not [!Equals [!Ref CustomDomain, '']]
   EnableDebug: !Equals [!Ref Debug, true]
+  CreateAlarmSNSTopic: !Equals [!Ref AlarmTopicArn, '']
 
 Resources:
   ########## S3 Buckets ##########
@@ -765,6 +770,18 @@ Resources:
             Action: sns:Subscribe
             Resource: !Ref ProcessedDataNotifications
 
+  AlarmNotifications:
+    Condition: CreateAlarmSNSTopic
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: panther-cw-alarms
+      # <cfndoc>
+      # CloudWatch alarms are configured to notify this topic
+      #
+      # Failure Impact
+      # * CloudWatch alarm notifications will not be delivered to subscribers
+      # </cfndoc>
+
 Outputs:
   # S3
   AnalysisVersionsBucket:
@@ -842,3 +859,6 @@ Outputs:
   ProcessedDataTopicArn:
     Description: SNS topic ARN for processed log data notifications
     Value: !Ref ProcessedDataNotifications
+  AlarmTopicArn:
+    Description: SNS topic ARN for CloudWatch alarms
+    Value: !If [CreateAlarmSNSTopic, !Ref AlarmNotifications, !Ref AlarmTopicArn]

@@ -56,3 +56,23 @@ func TestGlueTableTimebinNext(t *testing.T) {
 	next = tb.Next(refTime)
 	assert.Equal(t, expectedTime, next)
 }
+
+func TestGlueTableTimebinPartitionS3PathFromTime(t *testing.T) {
+	var tb GlueTableTimebin
+	refTime := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	// test hour ...
+	tb = GlueTableHourly
+	expectedPath := "year=2020/month=01/day=01/hour=00/"
+	assert.Equal(t, expectedPath, tb.PartitionS3PathFromTime(refTime))
+
+	// test day ...
+	tb = GlueTableDaily
+	expectedPath = "year=2020/month=01/day=01/"
+	assert.Equal(t, expectedPath, tb.PartitionS3PathFromTime(refTime))
+
+	// test month ... this needs to test crossing year boundaries
+	tb = GlueTableMonthly
+	expectedPath = "year=2020/month=01/"
+	assert.Equal(t, expectedPath, tb.PartitionS3PathFromTime(refTime))
+}

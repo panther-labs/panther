@@ -31,33 +31,16 @@ Parameters:
   LoadBalancerFullName:
     Type: String
     Description: Full name of the application load balancer
-
   AlarmTopicArn:
     Type: String
-    Description: An existing SNS topic for CloudWatch alarms. If not specified, one is created for you.
-    Default: ''
-
-Conditions:
-  CreateAlarmSNSTopic: !Equals [!Ref AlarmTopicArn, '']
+    Description: SNS topic for CloudWatch alarms
 
 Resources:
-  AlarmNotifications:
-    Condition: CreateAlarmSNSTopic
-    Type: AWS::SNS::Topic
-    Properties:
-      TopicName: panther-alarms
-      # <cfndoc>
-      # CloudWatch alarms are configured to notify this topic
-      #
-      # Failure Impact
-      # * CloudWatch alarm notifications will not be delivered to subscribers
-      # </cfndoc>
-
   BootstrapAlarms:
     Type: AWS::CloudFormation::Stack
     Properties:
       Parameters:
-        AlarmTopicArn: !If [CreateAlarmSNSTopic, !Ref AlarmNotifications, !Ref AlarmTopicArn]
+        AlarmTopicArn: !Ref AlarmTopicArn
         AppsyncId: !Ref AppsyncId
         LoadBalancerFullName: !Ref LoadBalancerFullName
       TemplateURL: ../out/deployments/monitoring/bootstrap_alarms.json
@@ -66,33 +49,26 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       Parameters:
-        AlarmTopicArn: !If [CreateAlarmSNSTopic, !Ref AlarmNotifications, !Ref AlarmTopicArn]
+        AlarmTopicArn: !Ref AlarmTopicArn
       TemplateURL: ../out/deployments/monitoring/bootstrap_gateway_alarms.json
 
   CloudSecurityAlarms:
     Type: AWS::CloudFormation::Stack
     Properties:
       Parameters:
-        AlarmTopicArn: !If [CreateAlarmSNSTopic, !Ref AlarmNotifications, !Ref AlarmTopicArn]
+        AlarmTopicArn: !Ref AlarmTopicArn
       TemplateURL: ../out/deployments/monitoring/cloud_security_alarms.json
 
   CoreAlarms:
     Type: AWS::CloudFormation::Stack
     Properties:
       Parameters:
-        AlarmTopicArn: !If [CreateAlarmSNSTopic, !Ref AlarmNotifications, !Ref AlarmTopicArn]
+        AlarmTopicArn: !Ref AlarmTopicArn
       TemplateURL: ../out/deployments/monitoring/core_alarms.json
 
   LogAnalysisAlarms:
     Type: AWS::CloudFormation::Stack
     Properties:
       Parameters:
-        AlarmTopicArn: !If [CreateAlarmSNSTopic, !Ref AlarmNotifications, !Ref AlarmTopicArn]
+        AlarmTopicArn: !Ref AlarmTopicArn
       TemplateURL: ../out/deployments/monitoring/log_analysis_alarms.json
-
-  SelfAlarms:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      Parameters:
-        AlarmTopicArn: !If [CreateAlarmSNSTopic, !Ref AlarmNotifications, !Ref AlarmTopicArn]
-      TemplateURL: ../out/deployments/monitoring/alarms_alarms.json

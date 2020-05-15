@@ -86,15 +86,16 @@ const AlertDetailsPage = () => {
 
   if (alertError) {
     return (
-      <Alert
-        variant="error"
-        title="Couldn't load alert"
-        description={
-          extractErrorMessage(alertError) ||
-          "An unknown error occurred and we couldn't load the alert details from the server"
-        }
-        mb={6}
-      />
+      <Box mb={6}>
+        <Alert
+          variant="error"
+          title="Couldn't load alert"
+          description={
+            extractErrorMessage(alertError) ||
+            "An unknown error occurred and we couldn't load the alert details from the server"
+          }
+        />
+      </Box>
     );
   }
 

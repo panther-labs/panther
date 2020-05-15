@@ -20,17 +20,12 @@ package mage
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"html"
 	"path/filepath"
-	"reflect"
 	"sort"
 	"strings"
 
-	"github.com/alecthomas/jsonschema"
-
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/tools/cfndoc"
 	"github.com/panther-labs/panther/tools/cfngen/gluecf"
@@ -168,122 +163,98 @@ func formatColumnName(name string) string {
 }
 
 func formatType(col gluecf.Column) string {
+	return "<code>" + prettyPrintType(col.Type, "") + "</code>"
+}
+
+const (
+	prettyPrintPrefix = "<br>"
+	prettyPrintIndent = "&nbps;&nbps;"
+)
+
+func prettyPrintType(colType, indent string) string {
 	complexTypes := []string{"array", "struct", "map"}
-	complex := false
 	for _, ct := range complexTypes {
-		if strings.HasPrefix(col.Type, ct) {
-			complex = true
-			break
+		if strings.HasPrefix(colType, ct) {
+			return prettyPrintComplexType(ct, colType, indent)
 		}
 	}
 
 	// if NOT a complex type we just use the Glue type
-	if !complex {
-		return "<code>" + col.Type + "</code>"
-	}
-
-	// complex Glue types are hard to read, so use JSON schema
-	colType := col.Field.Type
-	switch colType.String() { // handle special Panther types that will not work with JSON schema
-	case reflect.TypeOf(&parsers.PantherAnyString{}).String():
-		colType = reflect.TypeOf([]string{}) // slice of strings
-	}
-	// deference pointers
-	if colType.Kind() == reflect.Ptr {
-		colType = colType.Elem()
-	}
-
-	// we need to create a temp struct for the parser to work
-	isStruct := true
-	if colType.Kind() != reflect.Struct {
-		isStruct = false
-		fields := []reflect.StructField{
-			{
-				Name: col.Field.Name,
-				Type: colType,
-				Tag:  col.Field.Tag,
-			},
-		}
-		colType = reflect.StructOf(fields)
-	}
-
-	// we need to wrap because schema package needs Name() and PkgPath()
-	reflector := &jsonschema.Reflector{ExpandedStruct: false}
-	colSchema := reflector.ReflectFromType(&docType{Type: colType, name: col.Name})
-
-	const prefix = "<br>"
-	const indent = "&nbsp;&nbsp;"
-	const padLength = 32 // used to force width, since gitbook ignores style
-
-	var htmlBuffer bytes.Buffer
-	htmlBuffer.WriteString("<code>")
-	firstProp := true
-	// sort for consistency in output
-	var names []string
-	for name := range colSchema.Definitions {
-		names = append(names, name)
-	}
-	sort.Strings(names)
-	for _, name := range names {
-		schemaType := colSchema.Definitions[name]
-		// NOTE: we cannot use jsoniter package because it does not support prefix
-		var schemaProps interface{}
-		schemaProps = schemaType.Properties
-		if !isStruct { // we had to make a temp struct above, dereference
-			if colProps, found := schemaType.Properties.Get(col.Name); found {
-				schemaProps = colProps
-			}
-		}
-
-		jsonProps, err := json.MarshalIndent(schemaProps, prefix, indent)
-		if err != nil {
-			logger.Fatal(err)
-		}
-
-		if !firstProp {
-			htmlBuffer.WriteString("<br><br>")
-		}
-
-		jsonPropsString := (string)(jsonProps)
-		if jsonPropsString != "{}" { // skip empty
-			if name != col.Name {
-				htmlBuffer.WriteString(fmt.Sprintf(`"%s":`, name))
-			}
-			// remove junk that messes up formatting
-			jsonPropsString = strings.Replace(jsonPropsString, `"#/definitions/`, `"`, -1)
-			jsonPropsString = strings.Replace(jsonPropsString, `"$schema": "http://json-schema.org/draft-04/schema#",`, ``, -1)
-
-			htmlBuffer.WriteString(jsonPropsString)
-		} else if name == "RFC3339" { // special case for our timestamps embedded in structs
-			htmlBuffer.WriteString(fmt.Sprintf(`"%s": `, name))
-			htmlBuffer.WriteString("{" + prefix + indent + `"type": "timestamp"` + prefix + "}")
-		}
-
-		firstProp = false // clear
-	}
-	htmlBuffer.WriteString(padLine(padLength))
-	htmlBuffer.WriteString("</code>")
-	return htmlBuffer.String()
+	return colType
 }
 
-// used to force width, since gitbook ignores style
-func padLine(n int) string {
-	var padBuffer bytes.Buffer
-	for i := 0; i < n; i++ {
-		padBuffer.WriteString("&nbsp;")
+// complex hive types are ugly
+func prettyPrintComplexType(complexType, colType, indent string) (pretty string) {
+	switch complexType {
+	case "array":
+		return prettyPrintArrayType(colType, indent)
+	case "map":
+		return prettyPrintMapType(colType, indent)
+	case "struct":
+		return prettyPrintStructType(colType, indent)
+	default:
+		panic("unknown complex type: " + complexType)
 	}
-	return padBuffer.String()
 }
 
-type docType struct {
-	reflect.Type
-	name string
+func prettyPrintArrayType(colType, indent string) string {
+	fields := getTypeFields("array", colType)
+	if len(fields) != 1 {
+		panic("cannot parse array type: " + colType)
+	}
+	return "[" + prettyPrintType(fields[0], indent) + "]"
 }
 
-func (dt *docType) Name() string {
-	return dt.name
+func prettyPrintMapType(colType, indent string) string {
+	fields := getTypeFields("map", colType)
+	if len(fields) != 2 {
+		panic("cannot parse map type: " + colType)
+	}
+	keyType := fields[0]
+	valType := fields[1]
+	indent += prettyPrintIndent
+	return "{" + prettyPrintPrefix + indent + prettyPrintType(keyType, indent) + ":" +
+		prettyPrintType(valType, indent) + prettyPrintPrefix + "}"
 }
 
-func (dt *docType) PkgPath() string {
-	return "nopath" // this can be any non-empty value for the json parser to work
+func prettyPrintStructType(colType, indent string) string {
+	fields := getTypeFields("struct", colType)
+	if len(fields) == 0 {
+		panic("cannot parse struct type: " + colType)
+	}
+	indent += prettyPrintIndent
+	var fieldTypes []string
+	for _, field := range fields {
+		splitIndex := strings.Index(field, ":") // name:type (can't use Split() cuz type can have ':'
+		if splitIndex == -1 {
+			panic("could not parse struct field: " + field)
+		}
+		name := `"` + field[0:splitIndex] + `"` // make it look like JSON by quoting
+		structFieldType := field[splitIndex+1:]
+		fieldTypes = append(fieldTypes, prettyPrintPrefix+indent+name+":"+prettyPrintType(structFieldType, indent))
+	}
+	return "{" + strings.Join(fieldTypes, ",") + prettyPrintPrefix + "}"
+}
+
+func getTypeFields(complexType, colType string) (subFields []string) {
+	// strip off complexType + '<' in front and '>' on end
+	fields := colType[len(complexType)+1 : len(colType)-1]
+	// split fields into subFields around top level commas in type definition
+	startSubfieldIndex := 0
+	insideBracketCount := 0 // when non-zero we are inside a complex type
+	var index int
+	for index = range fields {
+		if fields[index] == ',' && insideBracketCount == 0 {
+			subFields = append(subFields, fields[startSubfieldIndex:index])
+			startSubfieldIndex = index + 1 // next
+		}
+		// track context
+		if fields[index] == '<' {
+			insideBracketCount++
+		} else if fields[index] == '>' {
+			insideBracketCount--
+		}
+	}
+	subFields = append(subFields, fields[startSubfieldIndex:]) // the rest
+	return subFields
 }

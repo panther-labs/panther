@@ -73,15 +73,16 @@ const PolicyDetailsPage = () => {
 
   if (error) {
     return (
-      <Alert
-        variant="error"
-        title="Couldn't load policy"
-        description={
-          extractErrorMessage(error) ||
-          "An unknown error occured and we couldn't load the policy details from the server"
-        }
-        mb={6}
-      />
+      <Box mb={6}>
+        <Alert
+          variant="error"
+          title="Couldn't load policy"
+          description={
+            extractErrorMessage(error) ||
+            "An unknown error occured and we couldn't load the policy details from the server"
+          }
+        />
+      </Box>
     );
   }
 

@@ -79,7 +79,6 @@ func inferJSONColumns(t reflect.Type, customMappingsTable map[string]string) (co
 				Type:     glueType,
 				Comment:  comment,
 				Required: required,
-				Field:    field,
 			})
 		}
 	}
