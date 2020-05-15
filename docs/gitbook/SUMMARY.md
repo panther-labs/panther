@@ -187,6 +187,7 @@
 * [Enterprise](enterprise/README.md)
   * [Role-Based Access Control](enterprise/rbac.md)
   * [Data Explorer](enterprise/data-explorer.md)
+  * [Automatic Log Compaction](enterprise/log-compaction.md)
   * [Snowflake Database Integration](enterprise/snowflake.md)
 * [Help]()
   * [Troubleshooting](troubleshooting.md)

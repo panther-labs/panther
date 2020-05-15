@@ -226,6 +226,7 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 		metadata.CWEEnabled = input.CWEEnabled
 		metadata.RemediationEnabled = input.RemediationEnabled
 		metadata.ScanIntervalMins = input.ScanIntervalMins
+		metadata.StackName = aws.String(getStackName(*input.IntegrationType, *input.IntegrationLabel))
 	case models.IntegrationTypeAWS3:
 		metadata.AWSAccountID = input.AWSAccountID
 		metadata.S3Bucket = input.S3Bucket
