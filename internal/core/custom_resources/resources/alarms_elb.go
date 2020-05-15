@@ -146,7 +146,7 @@ func putElbAlarmGroup(props ElbAlarmProperties) error {
 	input.ExtendedStatistic = aws.String("p95")
 	input.MetricName = aws.String("TargetResponseTime")
 	input.Period = aws.Int64(25 * 60)
-	input.Statistic = aws.String(cloudwatch.StatisticMaximum)
+	input.Statistic = nil
 	input.Threshold = aws.Float64(props.LatencyThresholdSeconds)
 	input.Unit = aws.String(cloudwatch.StandardUnitSeconds)
 	return putMetricAlarm(input)
