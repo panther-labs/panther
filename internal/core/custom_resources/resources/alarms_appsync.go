@@ -65,14 +65,18 @@ func putAppSyncAlarmGroup(props AppSyncAlarmProperties) error {
 		AlarmDescription: aws.String(fmt.Sprintf(
 			"AppSync %s has elevated 4XX errors. See: %s#%s",
 			props.APIName, alarmRunbook, props.APIName)),
-		AlarmName: aws.String(fmt.Sprintf("Panther-%s-%s", appSyncClientErrorAlarm, props.APIName)),
+		AlarmName:          aws.String(fmt.Sprintf("Panther-%s-%s", appSyncClientErrorAlarm, props.APIName)),
+		ComparisonOperator: aws.String(cloudwatch.ComparisonOperatorGreaterThanThreshold),
 		Dimensions: []*cloudwatch.Dimension{
 			{Name: aws.String("GraphQLAPIId"), Value: &props.APIID},
 		},
-		MetricName: aws.String("4XXError"),
-		Namespace:  aws.String("AWS/AppSync"),
-		Threshold:  aws.Float64(float64(props.ClientErrorThreshold)),
-		Unit:       aws.String(cloudwatch.StandardUnitCount),
+		EvaluationPeriods: aws.Int64(1),
+		MetricName:        aws.String("4XXError"),
+		Namespace:         aws.String("AWS/AppSync"),
+		Period:            aws.Int64(300),
+		Statistic:         aws.String(cloudwatch.StatisticSum),
+		Threshold:         aws.Float64(float64(props.ClientErrorThreshold)),
+		Unit:              aws.String(cloudwatch.StandardUnitCount),
 	}
 	if err := putMetricAlarm(input); err != nil {
 		return err

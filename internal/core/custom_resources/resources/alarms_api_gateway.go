@@ -68,14 +68,18 @@ func putGatewayAlarmGroup(props APIGatewayAlarmProperties) error {
 		AlarmDescription: aws.String(fmt.Sprintf(
 			"API Gateway %s is experiencing high integration latency. See: %s#%s",
 			props.APIName, alarmRunbook, props.APIName)),
-		AlarmName: aws.String(fmt.Sprintf("Panther-%s-%s", gatewayLatencyAlarm, props.APIName)),
+		AlarmName:          aws.String(fmt.Sprintf("Panther-%s-%s", gatewayLatencyAlarm, props.APIName)),
+		ComparisonOperator: aws.String(cloudwatch.ComparisonOperatorGreaterThanThreshold),
 		Dimensions: []*cloudwatch.Dimension{
 			{Name: aws.String("ApiName"), Value: &props.APIName},
 		},
-		MetricName: aws.String("IntegrationLatency"),
-		Namespace:  aws.String("AWS/ApiGateway"),
-		Threshold:  &props.LatencyThresholdMs,
-		Unit:       aws.String(cloudwatch.StandardUnitMilliseconds),
+		EvaluationPeriods: aws.Int64(5),
+		MetricName:        aws.String("IntegrationLatency"),
+		Namespace:         aws.String("AWS/ApiGateway"),
+		Period:            aws.Int64(60),
+		Statistic:         aws.String(cloudwatch.StatisticMaximum),
+		Threshold:         &props.LatencyThresholdMs,
+		Unit:              aws.String(cloudwatch.StandardUnitMilliseconds),
 	}
 	if err := putMetricAlarm(input); err != nil {
 		return err
@@ -85,7 +89,10 @@ func putGatewayAlarmGroup(props APIGatewayAlarmProperties) error {
 		"API Gateway %s is reporting 5XX internal errors. See: %s#%s",
 		props.APIName, alarmRunbook, props.APIName))
 	input.AlarmName = aws.String(fmt.Sprintf("Panther-%s-%s", gatewayErrorAlarm, props.APIName))
+	input.EvaluationPeriods = aws.Int64(1)
 	input.MetricName = aws.String("5XXError")
+	input.Period = aws.Int64(300)
+	input.Statistic = aws.String(cloudwatch.StatisticSum)
 	input.Threshold = aws.Float64(float64(props.ErrorThreshold))
 	input.Unit = aws.String(cloudwatch.StandardUnitCount)
 	return putMetricAlarm(input)

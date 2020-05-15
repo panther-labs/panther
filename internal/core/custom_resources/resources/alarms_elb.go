@@ -77,13 +77,17 @@ func putElbAlarmGroup(props ElbAlarmProperties) error {
 			props.LoadBalancerFriendlyName, alarmRunbook, props.LoadBalancerFriendlyName)),
 		AlarmName: aws.String(
 			fmt.Sprintf("Panther-%s-%s", elbClientErrorAlarm, props.LoadBalancerFriendlyName)),
+		ComparisonOperator: aws.String(cloudwatch.ComparisonOperatorGreaterThanThreshold),
 		Dimensions: []*cloudwatch.Dimension{
 			{Name: aws.String("LoadBalancer"), Value: &props.LoadBalancerFullName},
 		},
-		MetricName: aws.String("HTTPCode_ELB_4XX_Count"),
-		Namespace:  aws.String("AWS/ApplicationELB"),
-		Threshold:  aws.Float64(float64(props.ClientErrorThreshold)),
-		Unit:       aws.String(cloudwatch.StandardUnitCount),
+		EvaluationPeriods: aws.Int64(1),
+		MetricName:        aws.String("HTTPCode_ELB_4XX_Count"),
+		Namespace:         aws.String("AWS/ApplicationELB"),
+		Period:            aws.Int64(300),
+		Statistic:         aws.String(cloudwatch.StatisticSum),
+		Threshold:         aws.Float64(float64(props.ClientErrorThreshold)),
+		Unit:              aws.String(cloudwatch.StandardUnitCount),
 	}
 	if err := putMetricAlarm(input); err != nil {
 		return err
@@ -142,6 +146,7 @@ func putElbAlarmGroup(props ElbAlarmProperties) error {
 	input.ExtendedStatistic = aws.String("p95")
 	input.MetricName = aws.String("TargetResponseTime")
 	input.Period = aws.Int64(25 * 60)
+	input.Statistic = aws.String(cloudwatch.StatisticMaximum)
 	input.Threshold = aws.Float64(props.LatencyThresholdSeconds)
 	input.Unit = aws.String(cloudwatch.StandardUnitSeconds)
 	return putMetricAlarm(input)

@@ -32,18 +32,9 @@ const alarmRunbook = "https://docs.runpanther.io/operations/runbooks"
 // Wrapper function to reduce boilerplate for all the custom alarms.
 //
 // If not specified, fills in defaults for the following:
-//    ComparisonOperator: GreaterThanThreshold
 //    Tags:               Application=Panther
 //    TreatMissingData:   notBreaching
-//  Based on alarm unit:
-//    EvaluationPeriods:  1 (count) or 5 (latency)
-//    Period:             300 (count) or 60 (latency)
-//    Statistic:          Sum (count) or Maximum (latency)
 func putMetricAlarm(input cloudwatch.PutMetricAlarmInput) error {
-	if input.ComparisonOperator == nil {
-		input.ComparisonOperator = aws.String(cloudwatch.ComparisonOperatorGreaterThanThreshold)
-	}
-
 	if input.Tags == nil {
 		input.Tags = []*cloudwatch.Tag{
 			{Key: aws.String("Application"), Value: aws.String("Panther")},
@@ -52,30 +43,6 @@ func putMetricAlarm(input cloudwatch.PutMetricAlarmInput) error {
 
 	if input.TreatMissingData == nil {
 		input.TreatMissingData = aws.String("notBreaching")
-	}
-
-	if input.EvaluationPeriods == nil {
-		var periods int64 = 1
-		if aws.StringValue(input.Unit) != cloudwatch.StandardUnitCount {
-			periods = 5
-		}
-		input.EvaluationPeriods = aws.Int64(periods)
-	}
-
-	if input.Period == nil {
-		var period int64 = 300
-		if aws.StringValue(input.Unit) != cloudwatch.StandardUnitCount {
-			period = 60
-		}
-		input.Period = aws.Int64(period)
-	}
-
-	if input.Statistic == nil && input.ExtendedStatistic == nil {
-		statistic := cloudwatch.StatisticSum
-		if aws.StringValue(input.Unit) != cloudwatch.StandardUnitCount {
-			statistic = cloudwatch.StatisticMaximum
-		}
-		input.Statistic = aws.String(statistic)
 	}
 
 	zap.L().Info("putting metric alarm", zap.String("alarmName", *input.AlarmName))
