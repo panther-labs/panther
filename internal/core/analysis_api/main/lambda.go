@@ -43,6 +43,7 @@ var methodHandlers = map[string]gatewayapi.RequestHandler{
 	// Globals only
 	"GET /global":         handlers.GetGlobal,
 	"POST /global":        handlers.CreateGlobal,
+	"GET /global/list":    handlers.ListGlobals,
 	"POST /global/update": handlers.ModifyGlobal,
 	"POST /global/delete": handlers.DeleteGlobal,
 

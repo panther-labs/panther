@@ -748,6 +748,7 @@ Resources:
               Action: execute-api:Invoke
               Resource:
                 - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/global
+                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/global/list
         - Id: ManageEngines
           Version: 2012-10-17
           Statement:
