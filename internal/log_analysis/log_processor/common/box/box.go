@@ -1,4 +1,5 @@
-// Package box provides boxing helpers for scalar values
+// Package box provides boxing helpers for scalar values.
+// This package exists to help the transition form pointer based fields to `null` fields
 package box
 
 /**
@@ -18,6 +19,8 @@ package box
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+// All helpers are inlined by the compiler
 
 func String(s string) *string {
 	return &s
