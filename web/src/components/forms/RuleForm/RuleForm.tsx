@@ -83,7 +83,7 @@ const RuleForm: React.FC<RuleFormProps> = ({ initialValues, onSubmit }) => {
                   submitting={isSubmitting}
                   disabled={!dirty || !isValid || isSubmitting}
                 >
-                  {'id' in initialValues ? 'Update' : 'Create'}
+                  {initialValues.id ? 'Update' : 'Create'}
                 </SubmitButton>
               </Flex>
             </Flex>

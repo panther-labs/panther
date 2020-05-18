@@ -93,7 +93,7 @@ const PolicyForm: React.FC<PolicyFormProps> = ({ initialValues, onSubmit }) => {
                   submitting={isSubmitting}
                   disabled={!dirty || !isValid || isSubmitting}
                 >
-                  {'id' in initialValues ? 'Update' : 'Create'}
+                  {initialValues.id ? 'Update' : 'Create'}
                 </SubmitButton>
               </Flex>
             </Flex>
