@@ -20,6 +20,7 @@ package handlers
 
 import (
 	"errors"
+	"go.uber.org/zap"
 	"net/http"
 	"sort"
 	"strconv"
@@ -40,18 +41,14 @@ func ListGlobals(request *events.APIGatewayProxyRequest) *events.APIGatewayProxy
 	// Parse the input
 	ascending := defaultSortAscending
 	if sortDir := request.QueryStringParameters["sortDir"]; sortDir != "" {
-		switch sortDir {
-		case "ascending":
-			ascending = true
-		case "descending":
-			ascending = false
-		}
+		ascending = sortDir == "ascending"
 	}
 
 	page := defaultPage
 	if requestPage := request.QueryStringParameters["page"]; requestPage != "" {
 		page, err = strconv.Atoi(requestPage)
 		if err != nil {
+			zap.L().Error("unable to parse page query parameter", zap.String("page", requestPage))
 			return badRequest(errors.New("invalid page: " + err.Error()))
 		}
 	}
@@ -60,6 +57,7 @@ func ListGlobals(request *events.APIGatewayProxyRequest) *events.APIGatewayProxy
 	if requestPageSize := request.QueryStringParameters["pageSize"]; requestPageSize != "" {
 		pageSize, err = strconv.Atoi(requestPageSize)
 		if err != nil {
+			zap.L().Error("unable to parse pageSize query parameter", zap.String("pageSize", requestPageSize))
 			return badRequest(errors.New("invalid page: " + err.Error()))
 		}
 	}
@@ -79,6 +77,7 @@ func ListGlobals(request *events.APIGatewayProxyRequest) *events.APIGatewayProxy
 		Build()
 
 	if err != nil {
+		zap.L().Error("unable to build dynamodb scan expression", zap.Error(err))
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
 
@@ -102,6 +101,7 @@ func ListGlobals(request *events.APIGatewayProxyRequest) *events.APIGatewayProxy
 	})
 
 	if err != nil {
+		zap.L().Error("failed to scan globals", zap.Error(err))
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
 
