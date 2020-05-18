@@ -96,6 +96,9 @@ func safeLogParse(parser parsers.LogParser, log string) (results []*parsers.Resu
 			zap.Error(err))
 		return nil
 	}
+	// [WIP] Take advantage of this 'choke point' to convert `*parsers.PantherLog` to `*parsers.Result`
+	// so that destinations can handle serialized log event results without being privy to the internals
+	// of JSON serialization. In the future parsers will return `*parsers.Result` directly
 	if len(events) == 0 {
 		return nil
 	}
