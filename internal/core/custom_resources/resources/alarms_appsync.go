@@ -28,72 +28,65 @@ import (
 )
 
 const (
-	gatewayLatencyAlarm = "ApiGatewayHighIntegrationLatency"
-	gatewayErrorAlarm   = "ApiGatewayServerErrors"
+	appSyncClientErrorAlarm = "AppSyncClientErrors"
+	appSyncServerErrorAlarm = "AppSyncServerErrors"
 )
 
-type APIGatewayAlarmProperties struct {
-	APIName            string  `json:"ApiName" validate:"required"`
-	AlarmTopicArn      string  `validate:"required"`
-	ErrorThreshold     int     `json:",string" validate:"omitempty,min=0"`
-	LatencyThresholdMs float64 `json:",string" validate:"omitempty,min=1"`
+type AppSyncAlarmProperties struct {
+	APIID                string `json:"ApiId" validate:"required"`
+	APIName              string `json:"ApiName" validate:"required"`
+	AlarmTopicArn        string `validate:"required"`
+	ClientErrorThreshold int    `json:",string" validate:"omitempty,min=0"`
+	ServerErrorThreshold int    `json:",string" validate:"omitempty,min=0"`
 }
 
-func customAPIGatewayAlarms(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
-	var props APIGatewayAlarmProperties
+func customAppSyncAlarms(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
+	var props AppSyncAlarmProperties
 	if err := parseProperties(event.ResourceProperties, &props); err != nil {
 		return "", nil, err
 	}
 
-	if props.LatencyThresholdMs == 0 {
-		props.LatencyThresholdMs = 1000
-	}
-
 	switch event.RequestType {
 	case cfn.RequestCreate, cfn.RequestUpdate:
-		return "custom:alarms:api:" + props.APIName, nil, putGatewayAlarmGroup(props)
+		return "custom:alarms:appsync:" + props.APIID, nil, putAppSyncAlarmGroup(props)
 
 	case cfn.RequestDelete:
 		return event.PhysicalResourceID, nil, deleteMetricAlarms(event.PhysicalResourceID,
-			gatewayErrorAlarm, gatewayLatencyAlarm)
+			appSyncClientErrorAlarm, appSyncServerErrorAlarm)
 
 	default:
 		return "", nil, fmt.Errorf("unknown request type %s", event.RequestType)
 	}
 }
 
-func putGatewayAlarmGroup(props APIGatewayAlarmProperties) error {
+func putAppSyncAlarmGroup(props AppSyncAlarmProperties) error {
 	input := cloudwatch.PutMetricAlarmInput{
 		AlarmActions: []*string{&props.AlarmTopicArn},
 		AlarmDescription: aws.String(fmt.Sprintf(
-			"API Gateway %s is experiencing high integration latency. See: %s#%s",
+			"AppSync %s has elevated 4XX errors. See: %s#%s",
 			props.APIName, alarmRunbook, props.APIName)),
-		AlarmName:          aws.String(fmt.Sprintf("Panther-%s-%s", gatewayLatencyAlarm, props.APIName)),
+		AlarmName:          aws.String(fmt.Sprintf("Panther-%s-%s", appSyncClientErrorAlarm, props.APIName)),
 		ComparisonOperator: aws.String(cloudwatch.ComparisonOperatorGreaterThanThreshold),
 		Dimensions: []*cloudwatch.Dimension{
-			{Name: aws.String("ApiName"), Value: &props.APIName},
+			{Name: aws.String("GraphQLAPIId"), Value: &props.APIID},
 		},
-		EvaluationPeriods: aws.Int64(5),
-		MetricName:        aws.String("IntegrationLatency"),
-		Namespace:         aws.String("AWS/ApiGateway"),
-		Period:            aws.Int64(60),
-		Statistic:         aws.String(cloudwatch.StatisticMaximum),
-		Threshold:         &props.LatencyThresholdMs,
-		Unit:              aws.String(cloudwatch.StandardUnitMilliseconds),
+		EvaluationPeriods: aws.Int64(1),
+		MetricName:        aws.String("4XXError"),
+		Namespace:         aws.String("AWS/AppSync"),
+		Period:            aws.Int64(300),
+		Statistic:         aws.String(cloudwatch.StatisticSum),
+		Threshold:         aws.Float64(float64(props.ClientErrorThreshold)),
+		Unit:              aws.String(cloudwatch.StandardUnitCount),
 	}
 	if err := putMetricAlarm(input); err != nil {
 		return err
 	}
 
 	input.AlarmDescription = aws.String(fmt.Sprintf(
-		"API Gateway %s is reporting 5XX internal errors. See: %s#%s",
+		"AppSync %s is reporting server errors. See: %s#%s",
 		props.APIName, alarmRunbook, props.APIName))
-	input.AlarmName = aws.String(fmt.Sprintf("Panther-%s-%s", gatewayErrorAlarm, props.APIName))
-	input.EvaluationPeriods = aws.Int64(1)
+	input.AlarmName = aws.String(fmt.Sprintf("Panther-%s-%s", appSyncServerErrorAlarm, props.APIName))
 	input.MetricName = aws.String("5XXError")
-	input.Period = aws.Int64(300)
-	input.Statistic = aws.String(cloudwatch.StatisticSum)
-	input.Threshold = aws.Float64(float64(props.ErrorThreshold))
-	input.Unit = aws.String(cloudwatch.StandardUnitCount)
+	input.Threshold = aws.Float64(float64(props.ServerErrorThreshold))
 	return putMetricAlarm(input)
 }

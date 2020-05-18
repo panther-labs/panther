@@ -10,6 +10,7 @@
   <a href="https://docs.runpanther.io/quick-start">Quick Start</a> |
   <a href="https://docs.runpanther.io">Documentation</a> |
   <a href="https://blog.runpanther.io">Blog</a> |
+  <a href="https://angel.co/company/panther-labs/jobs" alt="Panther on AngelList">Careers</a> |
   <a href="https://slack.runpanther.io/">Chat with us on Slack!</a>
 </p>
 
@@ -121,6 +122,8 @@ Returning `True` means that a resource is compliant, and returning `False` will 
 ### Team
 
 We are a San Francisco based [startup](https://www.crunchbase.com/organization/panther-labs) comprising security practitioners who have spent years building large-scale detection and response capabilities for companies such as Amazon and Airbnb. Panther was founded by the core architect of [StreamAlert](https://github.com/airbnb/streamalert/), a cloud-native solution for automated log analysis open-sourced by Airbnb.
+
+Want to help make Panther even better? <a href="https://angel.co/company/panther-labs/jobs" alt="Panther on AngelList">We are hiring!</a>
 
 ### Why Panther?
 

@@ -21,15 +21,13 @@ package parsers
 import (
 	"strconv"
 	"strings"
-
-	"github.com/aws/aws-sdk-go/aws"
 )
 
 func CsvStringToPointer(value string) *string {
 	if value == "-" {
 		return nil
 	}
-	return aws.String(value)
+	return &value
 }
 
 func CsvStringToIntPointer(value string) *int {
@@ -40,18 +38,19 @@ func CsvStringToIntPointer(value string) *int {
 	if err != nil {
 		return nil
 	}
-	return aws.Int(result)
+	return &result
 }
 
 func CsvStringToInt16Pointer(value string) *int16 {
 	if value == "-" {
 		return nil
 	}
-	result, err := strconv.Atoi(value)
+	result, err := strconv.ParseInt(value, 10, 16)
 	if err != nil {
 		return nil
 	}
-	return aws.Int16(int16(result))
+	returnValue := int16(result)
+	return &returnValue
 }
 
 func CsvStringToFloat64Pointer(value string) *float64 {
@@ -62,7 +61,7 @@ func CsvStringToFloat64Pointer(value string) *float64 {
 	if err != nil {
 		return nil
 	}
-	return aws.Float64(result)
+	return &result
 }
 
 func CsvStringToArray(value string) []string {

@@ -674,8 +674,7 @@ Resources:
           Version: 2012-10-17
           Statement:
             - Effect: Allow
-              Action:
-                - dynamodb:UpdateItem
+              Action: dynamodb:UpdateItem
               Resource: !GetAtt AlertsDedup.Arn
         - Id: AccessKms
           Version: 2012-10-17
@@ -696,6 +695,11 @@ Resources:
           Version: 2012-10-17
           Statement:
             - Effect: Allow
-              Action:
-                - dynamodb:GetItem
+              Action: dynamodb:GetItem
               Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-resources
+        - Id: KeyValueStore
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: dynamodb:*Item
+              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-kv-store

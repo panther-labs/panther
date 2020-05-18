@@ -25,6 +25,8 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
 const (
@@ -121,6 +123,9 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 	if fieldName == "" {
 		fieldName = sf.Name
 	}
+
+	// Rewrite field the same way as the jsoniter extension to avoid invalid column names
+	fieldName = parsers.RewriteFieldName(fieldName)
 
 	comment = sf.Tag.Get("description")
 
