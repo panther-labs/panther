@@ -21,36 +21,6 @@ Transform: AWS::Serverless-2016-10-31
 Description: Test CF for generating alarms
 
 Resources:
-  # ALB
-  PublicLoadBalancer:
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-    Properties:
-      Name: web
-      Scheme: internet-facing
-      LoadBalancerAttributes:
-        - Key: idle_timeout.timeout_seconds
-          Value: '30'
-      Subnets:
-        - !Ref SubnetOneId
-        - !Ref SubnetTwoId
-      SecurityGroups:
-        - !Ref PublicLoadBalancerSecurityGroup
-
-  # AppSync
-  GraphQLApi:
-    Type: AWS::AppSync::GraphQLApi
-    Properties:
-      Name: panther-graphql-api
-      AuthenticationType: AMAZON_COGNITO_USER_POOLS
-      UserPoolConfig:
-        AwsRegion: !Ref AWS::Region
-        UserPoolId: !Ref UserPoolId
-        DefaultAction: ALLOW
-      LogConfig:
-        CloudWatchLogsRoleArn: !GetAtt AppsyncServiceRole.Arn
-        FieldLogLevel: ALL
-      XrayEnabled: !If [TracingEnabled, True, !Ref 'AWS::NoValue']
-
   # DDB
   ComplianceTable:
     Type: AWS::DynamoDB::Table

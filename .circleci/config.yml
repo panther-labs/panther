@@ -74,7 +74,7 @@ jobs:
       - checkout
       - run:
           name: Audit NPM packages
-          command: npm audit # does not require installing packages first
+          command: npm audit --production # does not require installing packages first
 
 workflows:
   version: 2

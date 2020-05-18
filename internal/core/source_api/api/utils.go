@@ -63,6 +63,7 @@ func integrationToItem(input *models.SourceIntegration) *ddb.IntegrationItem {
 		item.LastScanErrorMessage = input.LastScanErrorMessage
 		item.LastScanStartTime = input.LastScanStartTime
 		item.LastScanEndTime = input.LastScanEndTime
+		item.StackName = input.StackName
 	}
 	return item
 }
@@ -95,6 +96,7 @@ func itemToIntegration(item *ddb.IntegrationItem) *models.SourceIntegration {
 		integration.LastScanStartTime = item.LastScanStartTime
 		integration.LastScanEndTime = item.LastScanEndTime
 		integration.LastScanErrorMessage = item.LastScanErrorMessage
+		integration.StackName = item.StackName
 	}
 	return integration
 }

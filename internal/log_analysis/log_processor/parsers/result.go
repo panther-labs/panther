@@ -45,15 +45,6 @@ func (r *Result) Results() []*Result {
 	return []*Result{r}
 }
 
-// JSON is a configured jsoniter Pool for encoding events
-var JSON = func() jsoniter.API {
-	// Use same settings as jsoniter.ConfigDefault
-	api := jsoniter.Config{
-		EscapeHTML: true,
-	}.Froze()
-	return api
-}()
-
 type PantherLogEventer interface {
 	PantherLogEvent() *logs.Event
 }

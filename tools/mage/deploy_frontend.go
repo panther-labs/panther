@@ -65,9 +65,11 @@ func deployFrontend(
 	}
 
 	params := map[string]string{
+		"AlarmTopicArn":              bootstrapOutputs["AlarmTopicArn"],
 		"SubnetOneId":                bootstrapOutputs["SubnetOneId"],
 		"SubnetTwoId":                bootstrapOutputs["SubnetTwoId"],
 		"ElbArn":                     bootstrapOutputs["LoadBalancerArn"],
+		"ElbFullName":                bootstrapOutputs["LoadBalancerFullName"],
 		"ElbTargetGroup":             bootstrapOutputs["LoadBalancerTargetGroup"],
 		"SecurityGroup":              bootstrapOutputs["WebSecurityGroup"],
 		"GraphQLApiEndpoint":         bootstrapOutputs["GraphQLApiEndpoint"],

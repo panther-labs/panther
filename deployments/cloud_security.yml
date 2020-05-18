@@ -744,7 +744,7 @@ Resources:
       Environment:
         Variables:
           LOGGING_LEVEL: !If [DebugEnabled, DEBUG, INFO]
-          MASTER_REGION: !Sub ${AWS::Region}
+          MASTER_REGION: !Ref AWS::Region
       Layers: !If
         - AttachLayers
         - !Split # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
@@ -1030,9 +1030,14 @@ Resources:
           Version: 2012-10-17
           Statement:
             - Effect: Allow
-              Action:
-                - dynamodb:GetItem
+              Action: dynamodb:GetItem
               Resource: !GetAtt ResourcesTable.Arn
+        - Id: KeyValueStore
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: dynamodb:*Item
+              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-kv-store
 
   PolicyEngineLogGroup:
     Type: AWS::Logs::LogGroup

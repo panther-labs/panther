@@ -45,6 +45,13 @@ func customResourceHandler(ctx context.Context, event cfn.Event) (string, map[st
 
 	handler, ok := resources.CustomResources[event.ResourceType]
 	if !ok {
+		if event.RequestType == cfn.RequestDelete {
+			// When rolling back a new custom resource, the delete should succeed even if
+			// the type isn't registered. Otherwise, the stack will hang for several minutes.
+			zap.L().Warn("skipping delete for unsupported resource type",
+				zap.String("resourceType", event.ResourceType))
+			return defaultPhysicalID, nil, nil
+		}
 		return defaultPhysicalID, nil, fmt.Errorf("unsupported resource type: %s", event.ResourceType)
 	}
 

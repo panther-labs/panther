@@ -202,6 +202,13 @@ This is the dead letter queue for the `panther-input-data-notifications-queue`.
  When the system has recovered they should be re-queued to the `panther-input-data-notifications-queue` using
  the Panther tool `requeue`.
 
+## panther-kv-store
+Key-value store for Python policies/rules to use however they like
+
+ Failure Impact
+ * Custom rules / policies which leverage the table may be failing
+ * Panther itself is not affected
+
 ## panther-layer-manager
 This lambda manages updates to the lambda layers attached to the Panther policy and rule engines.
 
