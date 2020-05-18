@@ -22,6 +22,7 @@ import * as Yup from 'yup';
 import { Box, Button, Flex, Grid, InputElementLabel, Text } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { Field, Formik } from 'formik';
+import useFormSessionRestoration from 'Hooks/useFormSessionRestoration';
 import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';
 import useRouter from 'Hooks/useRouter';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -59,6 +60,8 @@ const GlobalModuleForm: React.FC<GlobalModuleFormProps> = ({ initialValues, onSu
           validationSchema={validationSchema}
         >
           {({ handleSubmit, isSubmitting, isValid, dirty }) => {
+            useFormSessionRestoration({ sessionId: 'global-module' });
+
             return (
               <form onSubmit={handleSubmit}>
                 <Text size="large" color="grey300" mb={4}>

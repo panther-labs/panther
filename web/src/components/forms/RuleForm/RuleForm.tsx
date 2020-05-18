@@ -24,6 +24,7 @@ import ErrorBoundary from 'Components/ErrorBoundary';
 import { BaseRuleFormCoreFields, BaseRuleFormTestFields } from 'Components/forms/BaseRuleForm';
 import { UpdateRuleVariables } from 'Pages/EditRule';
 import { Formik } from 'formik';
+import useFormSessionRestoration from 'Hooks/useFormSessionRestoration';
 import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';
 import useRouter from 'Hooks/useRouter';
 
@@ -65,6 +66,8 @@ const RuleForm: React.FC<RuleFormProps> = ({ initialValues, onSubmit }) => {
       validationSchema={validationSchema}
     >
       {({ handleSubmit, isSubmitting, isValid, dirty }) => {
+        useFormSessionRestoration({ sessionId: `rule-form-${initialValues.id || 'create'}` });
+
         return (
           <Box as="form" onSubmit={handleSubmit}>
             <Box as="article">

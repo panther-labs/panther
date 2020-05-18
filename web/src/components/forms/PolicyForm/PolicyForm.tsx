@@ -20,6 +20,7 @@ import React from 'react';
 import { PolicyUnitTest } from 'Generated/schema';
 import * as Yup from 'yup';
 import { Box, Button, Flex, Heading } from 'pouncejs';
+import useFormSessionRestoration from 'Hooks/useFormSessionRestoration';
 import { Formik } from 'formik';
 import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';
 import useRouter from 'Hooks/useRouter';
@@ -65,6 +66,8 @@ const PolicyForm: React.FC<PolicyFormProps> = ({ initialValues, onSubmit }) => {
       validationSchema={validationSchema}
     >
       {({ handleSubmit, isSubmitting, isValid, dirty }) => {
+        useFormSessionRestoration({ sessionId: `policy-form-${initialValues.id || 'create'}` });
+
         return (
           <Box as="form" onSubmit={handleSubmit}>
             <Box as="article">
