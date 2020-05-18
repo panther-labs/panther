@@ -156,6 +156,7 @@ input ListRulesInput {
 }
 
 input AddRuleInput {
+  id: ID!
   body: String!
   description: String
   displayName: String
@@ -584,6 +585,7 @@ type PolicySummary {
 }
 
 input AddPolicyInput {
+  id: ID!
   autoRemediationId: ID
   autoRemediationParameters: AWSJSON
   body: String!

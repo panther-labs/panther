@@ -30,6 +30,7 @@ import useRouter from 'Hooks/useRouter';
 import { useCreatePolicy } from './graphql/createPolicy.generated';
 
 const initialValues: Required<AddPolicyInput> = {
+  id: '',
   autoRemediationId: '',
   autoRemediationParameters: '{}',
   description: '',

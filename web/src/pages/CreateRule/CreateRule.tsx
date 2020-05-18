@@ -34,6 +34,7 @@ import useRouter from 'Hooks/useRouter';
 import { useCreateRule } from './graphql/createRule.generated';
 
 const initialValues: Required<AddRuleInput> = {
+  id: '',
   description: '',
   displayName: '',
   enabled: true,
