@@ -19,7 +19,7 @@
 import * as Yup from 'yup';
 import { SeverityEnum, DestinationConfigInput } from 'Generated/schema';
 import { Box, Flex, InputElementLabel, Text } from 'pouncejs';
-import { Field, Formik } from 'formik';
+import {Field, Form, Formik} from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import React from 'react';
@@ -112,8 +112,7 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
       validationSchema={validationSchema}
       onSubmit={onSubmitWithConvertedValues}
     >
-      {({ handleSubmit, isValid, isSubmitting, dirty }) => (
-        <form onSubmit={handleSubmit} autoComplete="off">
+        <Form  autoComplete="off">
           <Box mb={6} pb={6} borderBottom="1px solid" borderColor="grey100">
             <Field
               name="displayName"
@@ -151,15 +150,10 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
               We will only notify you on issues related to the severity types chosen above
             </Text>
           </Box>
-          <SubmitButton
-            width={1}
-            disabled={isSubmitting || !isValid || !dirty}
-            submitting={isSubmitting}
-          >
+          <SubmitButton width={1}>
             {initialValues.displayName ? 'Update' : 'Add'} Destination
           </SubmitButton>
-        </form>
-      )}
+        </Form>
     </Formik>
   );
 }

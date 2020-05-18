@@ -21,7 +21,7 @@ import { GlobalModuleDetails } from 'Generated/schema';
 import * as Yup from 'yup';
 import { Box, Button, Flex, Grid, InputElementLabel, Text } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import { Field, Formik } from 'formik';
+import {Field, Form, Formik} from 'formik';
 import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';
 import useRouter from 'Hooks/useRouter';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -58,9 +58,7 @@ const GlobalModuleForm: React.FC<GlobalModuleFormProps> = ({ initialValues, onSu
           enableReinitialize
           validationSchema={validationSchema}
         >
-          {({ handleSubmit, isSubmitting, isValid, dirty }) => {
-            return (
-              <form onSubmit={handleSubmit}>
+              <Form>
                 <Text size="large" color="grey300" mb={4}>
                   The global module allows you to define a set of re-usable functions, variables and
                   classes which can be directly imported to your Rule or Policy definition. Anything
@@ -99,17 +97,12 @@ const GlobalModuleForm: React.FC<GlobalModuleFormProps> = ({ initialValues, onSu
                     <Button variant="default" size="large" onClick={history.goBack} mr={4}>
                       Cancel
                     </Button>
-                    <SubmitButton
-                      submitting={isSubmitting}
-                      disabled={!dirty || !isValid || isSubmitting}
-                    >
+                    <SubmitButton>
                       {initialValues.id ? 'Update' : 'Create'}
                     </SubmitButton>
                   </Flex>
                 </Flex>
-              </form>
-            );
-          }}
+              </Form>
         </Formik>
       </ErrorBoundary>
     </Box>

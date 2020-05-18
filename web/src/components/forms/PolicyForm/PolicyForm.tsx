@@ -20,7 +20,7 @@ import React from 'react';
 import { AddPolicyInput, PolicyUnitTest, UpdatePolicyInput } from 'Generated/schema';
 import * as Yup from 'yup';
 import { Box, Button, Flex, Heading } from 'pouncejs';
-import { Formik } from 'formik';
+import { Form, Formik } from 'formik';
 import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';
 import useRouter from 'Hooks/useRouter';
 import {
@@ -63,43 +63,34 @@ const PolicyForm: React.FC<PolicyFormProps> = ({ initialValues, onSubmit }) => {
       enableReinitialize
       validationSchema={validationSchema}
     >
-      {({ handleSubmit, isSubmitting, isValid, dirty }) => {
-        return (
-          <Box as="form" onSubmit={handleSubmit}>
-            <Box as="article">
-              <ErrorBoundary>
-                <BaseRuleFormCoreFields type="policy" />
-              </ErrorBoundary>
-              <ErrorBoundary>
-                <PolicyFormTestFields />
-              </ErrorBoundary>
-            </Box>
-            <Box as="article" mt={10}>
-              <Heading size="medium" pb={8} borderBottom="1px solid" borderColor="grey100">
-                Auto Remediation Settings
-              </Heading>
-              <Box mt={8}>
-                <ErrorBoundary>
-                  <PolicyFormAutoRemediationFields />
-                </ErrorBoundary>
-              </Box>
-            </Box>
-            <Flex borderTop="1px solid" borderColor="grey100" pt={6} mt={10} justify="flex-end">
-              <Flex>
-                <Button variant="default" size="large" onClick={history.goBack} mr={4}>
-                  Cancel
-                </Button>
-                <SubmitButton
-                  submitting={isSubmitting}
-                  disabled={!dirty || !isValid || isSubmitting}
-                >
-                  {initialValues.id ? 'Update' : 'Create'}
-                </SubmitButton>
-              </Flex>
-            </Flex>
+      <Form>
+        <Box as="article">
+          <ErrorBoundary>
+            <BaseRuleFormCoreFields type="policy" />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <PolicyFormTestFields />
+          </ErrorBoundary>
+        </Box>
+        <Box as="article" mt={10}>
+          <Heading size="medium" pb={8} borderBottom="1px solid" borderColor="grey100">
+            Auto Remediation Settings
+          </Heading>
+          <Box mt={8}>
+            <ErrorBoundary>
+              <PolicyFormAutoRemediationFields />
+            </ErrorBoundary>
           </Box>
-        );
-      }}
+        </Box>
+        <Flex borderTop="1px solid" borderColor="grey100" pt={6} mt={10} justify="flex-end">
+          <Flex>
+            <Button variant="default" size="large" onClick={history.goBack} mr={4}>
+              Cancel
+            </Button>
+            <SubmitButton>{initialValues.id ? 'Update' : 'Create'}</SubmitButton>
+          </Flex>
+        </Flex>
+      </Form>
     </Formik>
   );
 };

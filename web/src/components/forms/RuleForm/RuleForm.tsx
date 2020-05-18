@@ -22,7 +22,7 @@ import * as Yup from 'yup';
 import { Box, Button, Flex } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { BaseRuleFormCoreFields, BaseRuleFormTestFields } from 'Components/forms/BaseRuleForm';
-import { Formik } from 'formik';
+import {Form, Formik} from 'formik';
 import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';
 import useRouter from 'Hooks/useRouter';
 
@@ -63,9 +63,7 @@ const RuleForm: React.FC<RuleFormProps> = ({ initialValues, onSubmit }) => {
       enableReinitialize
       validationSchema={validationSchema}
     >
-      {({ handleSubmit, isSubmitting, isValid, dirty }) => {
-        return (
-          <Box as="form" onSubmit={handleSubmit}>
+          <Form>
             <Box as="article">
               <ErrorBoundary>
                 <BaseRuleFormCoreFields type="rule" />
@@ -79,17 +77,12 @@ const RuleForm: React.FC<RuleFormProps> = ({ initialValues, onSubmit }) => {
                 <Button variant="default" size="large" onClick={history.goBack} mr={4}>
                   Cancel
                 </Button>
-                <SubmitButton
-                  submitting={isSubmitting}
-                  disabled={!dirty || !isValid || isSubmitting}
-                >
+                <SubmitButton>
                   {initialValues.id ? 'Update' : 'Create'}
                 </SubmitButton>
               </Flex>
             </Flex>
-          </Box>
-        );
-      }}
+          </Form>
     </Formik>
   );
 };

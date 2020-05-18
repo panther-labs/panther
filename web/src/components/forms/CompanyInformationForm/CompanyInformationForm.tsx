@@ -17,7 +17,7 @@
  */
 
 import * as React from 'react';
-import { Field, Formik } from 'formik';
+import {Field, Form, Formik} from 'formik';
 import { Box, Heading } from 'pouncejs';
 import * as Yup from 'yup';
 import SubmitButton from 'Components/buttons/SubmitButton';
@@ -54,9 +54,7 @@ export const CompanyInformationForm: React.FC<CompanyInformationFormProps> = ({
       initialValues={initialValues}
       onSubmit={onSubmit}
     >
-      {({ handleSubmit, isSubmitting, isValid, dirty }) => (
-        <Box>
-          <form onSubmit={handleSubmit}>
+          <Form>
             <Box mb={50}>
               <Heading size="medium" mb={10} color="grey500">
                 Company Information
@@ -76,16 +74,10 @@ export const CompanyInformationForm: React.FC<CompanyInformationFormProps> = ({
               </Heading>
               <ErrorReportingSection />
             </Box>
-            <SubmitButton
-              width={1}
-              disabled={!isValid || isSubmitting || !dirty}
-              submitting={isSubmitting}
-            >
+            <SubmitButton width={1}>
               Save
             </SubmitButton>
-          </form>
-        </Box>
-      )}
+          </Form>
     </Formik>
   );
 };

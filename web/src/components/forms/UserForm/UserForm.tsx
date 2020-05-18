@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Field, Formik } from 'formik';
+import {Field, Form, Formik} from 'formik';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import { Flex } from 'pouncejs';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -66,9 +66,8 @@ const UserForm: React.FC<UserFormProps> = ({ initialValues, onSubmit }) => {
       enableReinitialize
       validationSchema={validationSchema}
     >
-      {({ handleSubmit, isSubmitting, isValid, dirty }) => {
         return (
-          <form onSubmit={handleSubmit}>
+          <Form>
             <Field
               as={FormikTextInput}
               label="Email address"
@@ -94,17 +93,11 @@ const UserForm: React.FC<UserFormProps> = ({ initialValues, onSubmit }) => {
               />
             </Flex>
             <Flex borderTop="1px solid" borderColor="grey100" pt={6} mt={10} justify="flex-end">
-              <SubmitButton
-                submitting={isSubmitting}
-                disabled={!dirty || !isValid || isSubmitting}
-                width={1}
-              >
+              <SubmitButton width={1}>
                 {initialValues.id ? 'Update' : 'Invite'}
               </SubmitButton>
             </Flex>
-          </form>
-        );
-      }}
+          </Form>
     </Formik>
   );
 };

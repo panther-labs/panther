@@ -17,7 +17,7 @@
  */
 
 import * as Yup from 'yup';
-import { Field, Formik } from 'formik';
+import {Field, Form, Formik} from 'formik';
 import React from 'react';
 import { Box } from 'pouncejs';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -59,8 +59,7 @@ const SignInForm: React.FC = () => {
         })
       }
     >
-      {({ handleSubmit, isSubmitting, isValid, dirty }) => (
-        <Box width={1} as="form" onSubmit={handleSubmit}>
+        <Form>
           <Field
             as={FormikTextInput}
             label="Email"
@@ -79,15 +78,10 @@ const SignInForm: React.FC = () => {
             aria-required
             mb={6}
           />
-          <SubmitButton
-            width={1}
-            submitting={isSubmitting}
-            disabled={isSubmitting || !isValid || !dirty}
-          >
+          <SubmitButton width={1}>
             Sign in
           </SubmitButton>
-        </Box>
-      )}
+        </Form>
     </Formik>
   );
 };

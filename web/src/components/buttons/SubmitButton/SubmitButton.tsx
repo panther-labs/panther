@@ -18,23 +18,32 @@
 
 import React from 'react';
 import { Button, Spinner, Flex, ButtonProps } from 'pouncejs';
+import { useFormikContext } from 'formik';
 
-const SubmitButton: React.FC<Omit<ButtonProps, 'size' | 'variant'> & { submitting: boolean }> = ({
-  submitting,
-  disabled,
+const SubmitButton: React.FC<Omit<ButtonProps, 'size' | 'variant' | 'disabled'>> = ({
   children,
   ...rest
-}) => (
-  <Button {...rest} type="submit" size="large" variant="primary" disabled={disabled}>
-    {submitting ? (
-      <Flex align="center" justify="center">
-        <Spinner size="small" mr={2} />
-        {children}
-      </Flex>
-    ) : (
-      children
-    )}
-  </Button>
-);
+}) => {
+  const { isSubmitting, isValid, dirty } = useFormikContext<any>();
+
+  return (
+    <Button
+      {...rest}
+      type="submit"
+      size="large"
+      variant="primary"
+      disabled={isSubmitting || !isValid || !dirty}
+    >
+      {isSubmitting ? (
+        <Flex align="center" justify="center">
+          <Spinner size="small" mr={2} />
+          {children}
+        </Flex>
+      ) : (
+        children
+      )}
+    </Button>
+  );
+};
 
 export default React.memo(SubmitButton);

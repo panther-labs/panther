@@ -18,7 +18,7 @@
 
 import * as React from 'react';
 import { Alert, Box, Flex, useSnackbar } from 'pouncejs';
-import { Field, Formik } from 'formik';
+import {Field, Form, Formik} from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import useAuth from 'Hooks/useAuth';
@@ -77,8 +77,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) => {
         })
       }
     >
-      {({ handleSubmit, isSubmitting, isValid, dirty }) => (
-        <Box as="form" onSubmit={handleSubmit}>
+        <Form>
           {status && (
             <Box mb={6}>
               <Alert variant="error" title={status.title} description={status.message} />
@@ -110,15 +109,10 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) => {
               aria-required
             />
           </Flex>
-          <SubmitButton
-            width={1}
-            submitting={isSubmitting}
-            disabled={isSubmitting || !isValid || !dirty}
-          >
+          <SubmitButton width={1}>
             Update
           </SubmitButton>
-        </Box>
-      )}
+        </Form>
     </Formik>
   );
 };
