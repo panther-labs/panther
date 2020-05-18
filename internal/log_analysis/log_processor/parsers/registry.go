@@ -23,8 +23,9 @@ import (
 	"sync"
 
 	jsoniter "github.com/json-iterator/go"
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/pkg/errors"
+
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 )
 
 // LogType decsribes a log type.
