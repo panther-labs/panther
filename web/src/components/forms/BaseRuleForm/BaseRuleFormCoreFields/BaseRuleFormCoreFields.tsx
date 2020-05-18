@@ -102,7 +102,7 @@ const BaseRuleFormCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => 
           label="* ID"
           placeholder={`The unique ID of this ${type}`}
           name="id"
-          disabled={initialValues.id}
+          disabled={'id' in initialValues}
           aria-required
         />
         <Field

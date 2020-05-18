@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { PolicyUnitTest } from 'Generated/schema';
+import { AddPolicyInput, PolicyUnitTest, UpdatePolicyInput } from 'Generated/schema';
 import * as Yup from 'yup';
 import { Box, Button, Flex, Heading } from 'pouncejs';
 import { Formik } from 'formik';
@@ -28,7 +28,6 @@ import {
   BaseRuleFormCoreFields,
 } from 'Components/forms/BaseRuleForm';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import { UpdatePolicyVariables } from 'Pages/EditPolicy';
 import PolicyFormAutoRemediationFields from './PolicyFormAutoRemediationFields';
 
 // The validation checks that Formik will run
@@ -45,7 +44,7 @@ const validationSchema = Yup.object().shape({
     .unique('Test names must be unique', 'name'),
 });
 
-export type PolicyFormValues = UpdatePolicyVariables['input'];
+export type PolicyFormValues = Required<AddPolicyInput> | Required<UpdatePolicyInput>;
 export type PolicyFormProps = {
   /** The initial values of the form */
   initialValues: PolicyFormValues;
@@ -94,7 +93,7 @@ const PolicyForm: React.FC<PolicyFormProps> = ({ initialValues, onSubmit }) => {
                   submitting={isSubmitting}
                   disabled={!dirty || !isValid || isSubmitting}
                 >
-                  {initialValues.id ? 'Update' : 'Create'}
+                  {'id' in initialValues ? 'Update' : 'Create'}
                 </SubmitButton>
               </Flex>
             </Flex>

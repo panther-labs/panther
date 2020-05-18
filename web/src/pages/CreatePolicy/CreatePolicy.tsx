@@ -22,21 +22,20 @@ import { Alert, Box } from 'pouncejs';
 import urls from 'Source/urls';
 import PolicyForm from 'Components/forms/PolicyForm';
 import { ListPoliciesDocument } from 'Pages/ListPolicies';
-import { CreateOrModifyPolicyInput } from 'Generated/schema';
+import { AddPolicyInput } from 'Generated/schema';
 import { DEFAULT_POLICY_FUNCTION } from 'Source/constants';
 import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage } from 'Helpers/utils';
 import useRouter from 'Hooks/useRouter';
 import { useCreatePolicy } from './graphql/createPolicy.generated';
 
-export const initialValues: CreateOrModifyPolicyInput = {
+const initialValues: Required<AddPolicyInput> = {
   autoRemediationId: '',
   autoRemediationParameters: '{}',
   description: '',
   displayName: '',
   enabled: true,
   suppressions: [],
-  id: '',
   reference: '',
   resourceTypes: [],
   runbook: '',

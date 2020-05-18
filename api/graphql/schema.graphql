@@ -12,8 +12,8 @@ type Mutation {
   addDestination(input: DestinationInput!): Destination
   addComplianceIntegration(input: AddComplianceIntegrationInput!): ComplianceIntegration!
   addLogIntegration(input: AddLogIntegrationInput!): LogIntegration!
-  addPolicy(input: CreateOrModifyPolicyInput!): PolicyDetails
-  addRule(input: CreateOrModifyRuleInput!): RuleDetails
+  addPolicy(input: AddPolicyInput!): PolicyDetails
+  addRule(input: AddRuleInput!): RuleDetails
   deleteDestination(id: ID!): Boolean
   deleteComplianceIntegration(id: ID!): Boolean
   deleteLogIntegration(id: ID!): Boolean
@@ -29,8 +29,8 @@ type Mutation {
   updateComplianceIntegration(input: UpdateComplianceIntegrationInput!): ComplianceIntegration!
   updateLogIntegration(input: UpdateLogIntegrationInput!): LogIntegration!
   updateGeneralSettings(input: UpdateGeneralSettingsInput!): GeneralSettings!
-  updatePolicy(input: CreateOrModifyPolicyInput!): PolicyDetails
-  updateRule(input: CreateOrModifyRuleInput!): RuleDetails
+  updatePolicy(input: UpdatePolicyInput!): PolicyDetails
+  updateRule(input: UpdateRuleInput!): RuleDetails
   updateUser(input: UpdateUserInput!): User!
   uploadPolicies(input: UploadPoliciesInput!): UploadPoliciesResponse
   updateGlobalPythonlModule(input: ModifyGlobalModuleInput!): GlobalModuleDetails
@@ -155,17 +155,31 @@ input ListRulesInput {
   page: Int # defaults to `1`
 }
 
-input CreateOrModifyRuleInput {
+input AddRuleInput {
   body: String!
   description: String
   displayName: String
   enabled: Boolean!
-  id: ID!
   reference: String
   logTypes: [String]
   runbook: String
   severity: SeverityEnum!
   dedupPeriodMinutes: Int!
+  tags: [String]
+  tests: [PolicyUnitTestInput] # Rule and Policy share the same tests structure
+}
+
+input UpdateRuleInput {
+  id: ID!
+  body: String
+  description: String
+  displayName: String
+  enabled: Boolean
+  reference: String
+  logTypes: [String]
+  runbook: String
+  severity: SeverityEnum
+  dedupPeriodMinutes: Int
   tags: [String]
   tests: [PolicyUnitTestInput] # Rule and Policy share the same tests structure
 }
@@ -519,8 +533,6 @@ input PagerDutyConfigInput {
 }
 
 type PolicyDetails {
-  actionDelaySeconds: Int
-  alertSuppressSeconds: Int
   autoRemediationId: ID
   autoRemediationParameters: AWSJSON
   complianceStatus: ComplianceStatusEnum
@@ -571,9 +583,7 @@ type PolicySummary {
   tags: [String]
 }
 
-input CreateOrModifyPolicyInput {
-  actionDelaySeconds: Int
-  alertSuppressSeconds: Int
+input AddPolicyInput {
   autoRemediationId: ID
   autoRemediationParameters: AWSJSON
   body: String!
@@ -581,11 +591,27 @@ input CreateOrModifyPolicyInput {
   displayName: String
   enabled: Boolean!
   suppressions: [String]
-  id: ID!
   reference: String
   resourceTypes: [String]
   runbook: String
   severity: SeverityEnum!
+  tags: [String]
+  tests: [PolicyUnitTestInput]
+}
+
+input UpdatePolicyInput {
+  id: ID!
+  autoRemediationId: ID
+  autoRemediationParameters: AWSJSON
+  body: String
+  description: String
+  displayName: String
+  enabled: Boolean
+  suppressions: [String]
+  reference: String
+  resourceTypes: [String]
+  runbook: String
+  severity: SeverityEnum
   tags: [String]
   tests: [PolicyUnitTestInput]
 }

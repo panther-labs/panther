@@ -17,12 +17,11 @@
  */
 
 import React from 'react';
-import { PolicyUnitTest } from 'Generated/schema';
+import { AddRuleInput, PolicyUnitTest, UpdateRuleInput } from 'Generated/schema';
 import * as Yup from 'yup';
 import { Box, Button, Flex } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { BaseRuleFormCoreFields, BaseRuleFormTestFields } from 'Components/forms/BaseRuleForm';
-import { UpdateRuleVariables } from 'Pages/EditRule';
 import { Formik } from 'formik';
 import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';
 import useRouter from 'Hooks/useRouter';
@@ -45,7 +44,7 @@ const validationSchema = Yup.object().shape({
     .unique('Test names must be unique', 'name'),
 });
 
-export type RuleFormValues = UpdateRuleVariables['input'];
+export type RuleFormValues = Required<AddRuleInput> | Required<UpdateRuleInput>;
 export type RuleFormProps = {
   /** The initial values of the form */
   initialValues: RuleFormValues;
@@ -84,7 +83,7 @@ const RuleForm: React.FC<RuleFormProps> = ({ initialValues, onSubmit }) => {
                   submitting={isSubmitting}
                   disabled={!dirty || !isValid || isSubmitting}
                 >
-                  {initialValues.id ? 'Update' : 'Create'}
+                  {'id' in initialValues ? 'Update' : 'Create'}
                 </SubmitButton>
               </Flex>
             </Flex>

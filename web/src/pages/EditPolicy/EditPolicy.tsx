@@ -20,8 +20,6 @@ import React from 'react';
 import Panel from 'Components/Panel';
 import { Alert, Button, Card, Box, useSnackbar } from 'pouncejs';
 import PolicyForm from 'Components/forms/PolicyForm';
-import { CreateOrModifyPolicyInput } from 'Generated/schema';
-import { initialValues as createPolicyInitialValues } from 'Pages/CreatePolicy';
 import useModal from 'Hooks/useModal';
 import useRouter from 'Hooks/useRouter';
 import TablePlaceholder from 'Components/TablePlaceholder';
@@ -57,27 +55,6 @@ const EditPolicyPage: React.FC = () => {
     []
   );
 
-  const initialValues = React.useMemo(() => {
-    if (queryData) {
-      // format any JSON returned from the server simply because we are going to display it
-      // within an online web editor. To do that we parse the JSON and re-stringify it using proper
-      // spacings that make it pretty (The server of course doesn't store these spacings when
-      // it stores JSON, that's why we are making those here in the front-end)
-      return {
-        ...queryData.policy,
-        autoRemediationParameters: formatJSON(
-          JSON.parse(queryData.policy.autoRemediationParameters)
-        ),
-        tests: queryData.policy.tests.map(({ resource, ...restTestData }) => ({
-          ...restTestData,
-          resource: formatJSON(JSON.parse(resource)),
-        })),
-      } as CreateOrModifyPolicyInput;
-    }
-
-    return createPolicyInitialValues;
-  }, [queryData]);
-
   if (isFetchingPolicy) {
     return (
       <Card p={9}>
@@ -101,6 +78,31 @@ const EditPolicyPage: React.FC = () => {
       </Box>
     );
   }
+
+  // format any JSON returned from the server simply because we are going to display it
+  // within an online web editor. To do that we parse the JSON and re-stringify it using proper
+  // spacings that make it pretty (The server of course doesn't store these spacings when
+  // it stores JSON, that's why we are making those here in the front-end)
+  const { policy } = queryData;
+  const initialValues = {
+    id: policy.id,
+    autoRemediationId: policy.autoRemediationId,
+    autoRemediationParameters: formatJSON(JSON.parse(policy.autoRemediationParameters)),
+    body: policy.body,
+    description: policy.description,
+    displayName: policy.displayName,
+    enabled: policy.enabled,
+    suppressions: policy.suppressions,
+    reference: policy.reference,
+    resourceTypes: policy.resourceTypes,
+    runbook: policy.runbook,
+    severity: policy.severity,
+    tags: policy.tags,
+    tests: queryData.policy.tests.map(({ resource, ...restTestData }) => ({
+      ...restTestData,
+      resource: formatJSON(JSON.parse(resource)),
+    })),
+  };
 
   return (
     <Box mb={6}>

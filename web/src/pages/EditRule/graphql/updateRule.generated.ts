@@ -26,13 +26,13 @@ import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
 export type UpdateRuleVariables = {
-  input: Types.CreateOrModifyRuleInput;
+  input: Types.UpdateRuleInput;
 };
 
 export type UpdateRule = { updateRule?: Types.Maybe<RuleFull> };
 
 export const UpdateRuleDocument = gql`
-  mutation UpdateRule($input: CreateOrModifyRuleInput!) {
+  mutation UpdateRule($input: UpdateRuleInput!) {
     updateRule(input: $input) {
       ...RuleFull
     }

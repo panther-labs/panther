@@ -22,7 +22,7 @@ import { Alert, Box } from 'pouncejs';
 import urls from 'Source/urls';
 import RuleForm from 'Components/forms/RuleForm';
 import { ListRulesDocument } from 'Pages/ListRules';
-import { CreateOrModifyRuleInput } from 'Generated/schema';
+import { AddRuleInput } from 'Generated/schema';
 import withSEO from 'Hoc/withSEO';
 import {
   DEFAULT_DEDUP_FUNCTION,
@@ -33,11 +33,10 @@ import { extractErrorMessage } from 'Helpers/utils';
 import useRouter from 'Hooks/useRouter';
 import { useCreateRule } from './graphql/createRule.generated';
 
-export const initialValues: CreateOrModifyRuleInput = {
+const initialValues: Required<AddRuleInput> = {
   description: '',
   displayName: '',
   enabled: true,
-  id: '',
   reference: '',
   logTypes: [],
   runbook: '',

@@ -17,4 +17,3 @@
  */
 
 export { default } from './CreateRule';
-export * from './CreateRule';

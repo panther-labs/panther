@@ -1,21 +1,3 @@
-/**
- * Panther is a Cloud-Native SIEM for the Modern Security Team.
- * Copyright (C) 2020 Panther Labs Inc
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
 export type Maybe<T> = T | null;
 export type RequireFields<T, K extends keyof T> = { [X in Exclude<keyof T, K>]?: T[X] } &
@@ -57,6 +39,36 @@ export type AddLogIntegrationInput = {
   kmsKey?: Maybe<Scalars['String']>;
   s3Prefix?: Maybe<Scalars['String']>;
   logTypes: Array<Scalars['String']>;
+};
+
+export type AddPolicyInput = {
+  autoRemediationId?: Maybe<Scalars['ID']>;
+  autoRemediationParameters?: Maybe<Scalars['AWSJSON']>;
+  body: Scalars['String'];
+  description?: Maybe<Scalars['String']>;
+  displayName?: Maybe<Scalars['String']>;
+  enabled: Scalars['Boolean'];
+  suppressions?: Maybe<Array<Maybe<Scalars['String']>>>;
+  reference?: Maybe<Scalars['String']>;
+  resourceTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
+  runbook?: Maybe<Scalars['String']>;
+  severity: SeverityEnum;
+  tags?: Maybe<Array<Maybe<Scalars['String']>>>;
+  tests?: Maybe<Array<Maybe<PolicyUnitTestInput>>>;
+};
+
+export type AddRuleInput = {
+  body: Scalars['String'];
+  description?: Maybe<Scalars['String']>;
+  displayName?: Maybe<Scalars['String']>;
+  enabled: Scalars['Boolean'];
+  reference?: Maybe<Scalars['String']>;
+  logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
+  runbook?: Maybe<Scalars['String']>;
+  severity: SeverityEnum;
+  dedupPeriodMinutes: Scalars['Int'];
+  tags?: Maybe<Array<Maybe<Scalars['String']>>>;
+  tests?: Maybe<Array<Maybe<PolicyUnitTestInput>>>;
 };
 
 export type AlertDetails = {
@@ -144,40 +156,6 @@ export enum ComplianceStatusEnum {
   Fail = 'FAIL',
   Pass = 'PASS',
 }
-
-export type CreateOrModifyPolicyInput = {
-  actionDelaySeconds?: Maybe<Scalars['Int']>;
-  alertSuppressSeconds?: Maybe<Scalars['Int']>;
-  autoRemediationId?: Maybe<Scalars['ID']>;
-  autoRemediationParameters?: Maybe<Scalars['AWSJSON']>;
-  body: Scalars['String'];
-  description?: Maybe<Scalars['String']>;
-  displayName?: Maybe<Scalars['String']>;
-  enabled: Scalars['Boolean'];
-  suppressions?: Maybe<Array<Maybe<Scalars['String']>>>;
-  id: Scalars['ID'];
-  reference?: Maybe<Scalars['String']>;
-  resourceTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
-  runbook?: Maybe<Scalars['String']>;
-  severity: SeverityEnum;
-  tags?: Maybe<Array<Maybe<Scalars['String']>>>;
-  tests?: Maybe<Array<Maybe<PolicyUnitTestInput>>>;
-};
-
-export type CreateOrModifyRuleInput = {
-  body: Scalars['String'];
-  description?: Maybe<Scalars['String']>;
-  displayName?: Maybe<Scalars['String']>;
-  enabled: Scalars['Boolean'];
-  id: Scalars['ID'];
-  reference?: Maybe<Scalars['String']>;
-  logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
-  runbook?: Maybe<Scalars['String']>;
-  severity: SeverityEnum;
-  dedupPeriodMinutes: Scalars['Int'];
-  tags?: Maybe<Array<Maybe<Scalars['String']>>>;
-  tests?: Maybe<Array<Maybe<PolicyUnitTestInput>>>;
-};
 
 export type DeletePolicyInput = {
   policies?: Maybe<Array<Maybe<DeletePolicyInputItem>>>;
@@ -550,11 +528,11 @@ export type MutationAddLogIntegrationArgs = {
 };
 
 export type MutationAddPolicyArgs = {
-  input: CreateOrModifyPolicyInput;
+  input: AddPolicyInput;
 };
 
 export type MutationAddRuleArgs = {
-  input: CreateOrModifyRuleInput;
+  input: AddRuleInput;
 };
 
 export type MutationDeleteDestinationArgs = {
@@ -618,11 +596,11 @@ export type MutationUpdateGeneralSettingsArgs = {
 };
 
 export type MutationUpdatePolicyArgs = {
-  input: CreateOrModifyPolicyInput;
+  input: UpdatePolicyInput;
 };
 
 export type MutationUpdateRuleArgs = {
-  input: CreateOrModifyRuleInput;
+  input: UpdateRuleInput;
 };
 
 export type MutationUpdateUserArgs = {
@@ -695,8 +673,6 @@ export type PoliciesForResourceInput = {
 
 export type PolicyDetails = {
   __typename?: 'PolicyDetails';
-  actionDelaySeconds?: Maybe<Scalars['Int']>;
-  alertSuppressSeconds?: Maybe<Scalars['Int']>;
   autoRemediationId?: Maybe<Scalars['ID']>;
   autoRemediationParameters?: Maybe<Scalars['AWSJSON']>;
   complianceStatus?: Maybe<ComplianceStatusEnum>;
@@ -1011,6 +987,38 @@ export type UpdateLogIntegrationInput = {
   logTypes?: Maybe<Array<Scalars['String']>>;
 };
 
+export type UpdatePolicyInput = {
+  id: Scalars['ID'];
+  autoRemediationId?: Maybe<Scalars['ID']>;
+  autoRemediationParameters?: Maybe<Scalars['AWSJSON']>;
+  body?: Maybe<Scalars['String']>;
+  description?: Maybe<Scalars['String']>;
+  displayName?: Maybe<Scalars['String']>;
+  enabled?: Maybe<Scalars['Boolean']>;
+  suppressions?: Maybe<Array<Maybe<Scalars['String']>>>;
+  reference?: Maybe<Scalars['String']>;
+  resourceTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
+  runbook?: Maybe<Scalars['String']>;
+  severity?: Maybe<SeverityEnum>;
+  tags?: Maybe<Array<Maybe<Scalars['String']>>>;
+  tests?: Maybe<Array<Maybe<PolicyUnitTestInput>>>;
+};
+
+export type UpdateRuleInput = {
+  id: Scalars['ID'];
+  body?: Maybe<Scalars['String']>;
+  description?: Maybe<Scalars['String']>;
+  displayName?: Maybe<Scalars['String']>;
+  enabled?: Maybe<Scalars['Boolean']>;
+  reference?: Maybe<Scalars['String']>;
+  logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
+  runbook?: Maybe<Scalars['String']>;
+  severity?: Maybe<SeverityEnum>;
+  dedupPeriodMinutes?: Maybe<Scalars['Int']>;
+  tags?: Maybe<Array<Maybe<Scalars['String']>>>;
+  tests?: Maybe<Array<Maybe<PolicyUnitTestInput>>>;
+};
+
 export type UpdateUserInput = {
   id: Scalars['ID'];
   givenName?: Maybe<Scalars['String']>;
@@ -1214,9 +1222,9 @@ export type ResolversTypes = {
   AsanaConfigInput: AsanaConfigInput;
   AddComplianceIntegrationInput: AddComplianceIntegrationInput;
   AddLogIntegrationInput: AddLogIntegrationInput;
-  CreateOrModifyPolicyInput: CreateOrModifyPolicyInput;
+  AddPolicyInput: AddPolicyInput;
   PolicyUnitTestInput: PolicyUnitTestInput;
-  CreateOrModifyRuleInput: CreateOrModifyRuleInput;
+  AddRuleInput: AddRuleInput;
   DeletePolicyInput: DeletePolicyInput;
   DeletePolicyInputItem: DeletePolicyInputItem;
   DeleteRuleInput: DeleteRuleInput;
@@ -1231,6 +1239,8 @@ export type ResolversTypes = {
   UpdateComplianceIntegrationInput: UpdateComplianceIntegrationInput;
   UpdateLogIntegrationInput: UpdateLogIntegrationInput;
   UpdateGeneralSettingsInput: UpdateGeneralSettingsInput;
+  UpdatePolicyInput: UpdatePolicyInput;
+  UpdateRuleInput: UpdateRuleInput;
   UpdateUserInput: UpdateUserInput;
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: ResolverTypeWrapper<UploadPoliciesResponse>;
@@ -1327,9 +1337,9 @@ export type ResolversParentTypes = {
   AsanaConfigInput: AsanaConfigInput;
   AddComplianceIntegrationInput: AddComplianceIntegrationInput;
   AddLogIntegrationInput: AddLogIntegrationInput;
-  CreateOrModifyPolicyInput: CreateOrModifyPolicyInput;
+  AddPolicyInput: AddPolicyInput;
   PolicyUnitTestInput: PolicyUnitTestInput;
-  CreateOrModifyRuleInput: CreateOrModifyRuleInput;
+  AddRuleInput: AddRuleInput;
   DeletePolicyInput: DeletePolicyInput;
   DeletePolicyInputItem: DeletePolicyInputItem;
   DeleteRuleInput: DeleteRuleInput;
@@ -1344,6 +1354,8 @@ export type ResolversParentTypes = {
   UpdateComplianceIntegrationInput: UpdateComplianceIntegrationInput;
   UpdateLogIntegrationInput: UpdateLogIntegrationInput;
   UpdateGeneralSettingsInput: UpdateGeneralSettingsInput;
+  UpdatePolicyInput: UpdatePolicyInput;
+  UpdateRuleInput: UpdateRuleInput;
   UpdateUserInput: UpdateUserInput;
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: UploadPoliciesResponse;
@@ -1894,8 +1906,6 @@ export type PolicyDetailsResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['PolicyDetails'] = ResolversParentTypes['PolicyDetails']
 > = {
-  actionDelaySeconds?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  alertSuppressSeconds?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   autoRemediationId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   autoRemediationParameters?: Resolver<Maybe<ResolversTypes['AWSJSON']>, ParentType, ContextType>;
   complianceStatus?: Resolver<
