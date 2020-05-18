@@ -498,6 +498,33 @@ Resources:
         - given_name
         - family_name
 
+  ########## Dynamo ##########
+  DynamoScalingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: application-autoscaling.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DynamoScaling
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:DescribeTable
+                  - dynamodb:UpdateTable
+                  - cloudwatch:PutMetricAlarm
+                  - cloudwatch:DescribeAlarms
+                  - cloudwatch:GetMetricStatistics
+                  - cloudwatch:SetAlarmState
+                  - cloudwatch:DeleteAlarms
+                Resource: '*'
+
   ########## ECR + ECS ##########
   PantherWebImageRepository:
     Type: AWS::ECR::Repository
@@ -907,6 +934,11 @@ Outputs:
   AppClientId:
     Description: Cognito user pool client ID
     Value: !Ref AppClient
+
+  # Dynamo
+  DynamoScalingRoleArn:
+    Description: IAM role arn for DynamoDB auto-scaling
+    Value: !Ref DynamoScalingRole
 
   # KMS
   OutputsEncryptionKeyId:
