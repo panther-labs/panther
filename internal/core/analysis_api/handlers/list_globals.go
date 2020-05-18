@@ -20,7 +20,6 @@ package handlers
 
 import (
 	"errors"
-	"go.uber.org/zap"
 	"net/http"
 	"sort"
 	"strconv"
@@ -29,6 +28,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
