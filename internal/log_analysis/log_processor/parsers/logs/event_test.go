@@ -19,7 +19,7 @@ func TestNewEvent(t *testing.T) {
 	event.Reset()
 	require.Equal(t, "", event.LogType)
 	require.Equal(t, time.Time{}, event.Timestamp)
-	require.Empty(t, event.AppendFields(nil))
+	require.Empty(t, event.AppendFieldsTo(nil))
 }
 
 func TestEvent_Values(t *testing.T) {
@@ -35,5 +35,5 @@ func TestEvent_Values(t *testing.T) {
 	require.Equal(t, "", event.LogType)
 	require.Equal(t, time.Time{}, event.Timestamp)
 	require.Nil(t, event.Values(KindIPAddress))
-	require.Empty(t, event.AppendFields(nil))
+	require.Empty(t, event.AppendFieldsTo(nil))
 }

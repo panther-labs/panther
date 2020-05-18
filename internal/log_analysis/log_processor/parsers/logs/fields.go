@@ -50,32 +50,18 @@ const (
 	KindMD5Hash
 	KindSHA1Hash
 	KindSHA256Hash
-	KindHostname // Resolves to IPAddress or DomainName
 )
-
-// ParseFields implements FieldParser interface for registered fields
-func (k FieldKind) ParseFields(fields []Field, value string) ([]Field, error) {
-	entry, ok := fieldRegistry[k]
-	if !ok {
-		return fields, errors.Errorf("unregistered field kind %d", k)
-	}
-	field := entry.Factory(value)
-	if field.IsZero() {
-		return fields, errors.Errorf("empty field %q", entry.Name)
-	}
-	return append(fields, field), nil
-}
 
 // FieldBuffer is a reusable buffer of field values.
 // It provides helper methods to collect fields from log entries.
 // A FieldBuffer can be reset and used in a pool.
 type FieldBuffer struct {
-	scratch []Field
+	scratch []Field // a temporary field buffer for parsing fields
 	Fields  map[FieldKind]sort.StringSlice
 }
 
 // Parse uses a parser to add fields from a string value.
-// If the parser returns an error none of the fields parsed are added to the buffer.
+// If the parser returns an error *none* of the fields parsed are added to the buffer.
 func (b *FieldBuffer) Parse(value string, parser FieldParser) (err error) {
 	b.scratch, err = parser.ParseFields(b.scratch[:0], value)
 	if err == nil {
@@ -98,9 +84,9 @@ func (b *FieldBuffer) Contains(field Field) bool {
 	return false
 }
 
-// AppendFields appends all fields stored in the buffer to a slice.
+// AppendFieldsTo appends all fields stored in the buffer to a slice.
 // This is mainly useful for tests.
-func (b *FieldBuffer) AppendFields(fields []Field) []Field {
+func (b *FieldBuffer) AppendFieldsTo(fields []Field) []Field {
 	for kind, values := range b.Fields {
 		for _, value := range values {
 			fields = append(fields, Field{
@@ -141,7 +127,10 @@ func (b *FieldBuffer) Reset() {
 
 // ValuesUnsorted returns unsorted field values
 func (b *FieldBuffer) ValuesUnsorted(kind FieldKind) []string {
-	return b.Fields[kind]
+	if values := b.Fields[kind]; len(values) != 0 {
+		return values
+	}
+	return nil
 }
 
 // Values returns field values sorted
@@ -157,63 +146,11 @@ func (b *FieldBuffer) Values(kind FieldKind) []string {
 	}
 }
 
-// FieldFactory creates a field from a string value.
-// Implementations can return different kind of fields depending on input.
-// Implementations should return a zero Field value if the input value is invalid.
-type FieldFactory func(value string) Field
-
-type fieldEntry struct {
-	Name    string
-	Factory FieldFactory
-}
-
-var fieldRegistry = map[FieldKind]*fieldEntry{}
-
-func init() {
-	RegisterField(KindIPAddress, "ip_address", IPAddress)
-	RegisterField(KindDomainName, "domain", DomainName)
-	RegisterField(KindHostname, "hostname", Hostname)
-	RegisterField(KindMD5Hash, "md5", MD5Hash)
-	RegisterField(KindSHA1Hash, "sha1", SHA1Hash)
-	RegisterField(KindSHA256Hash, "sha256", SHA256Hash)
-}
-
-// RegisterField registers a field kind at init()
-// Registered fields have a name and a factory function.
-func RegisterField(kind FieldKind, name string, fac FieldFactory) {
-	name = strings.TrimSpace(name)
-	// Reserve negative field kind values
-	if kind <= 0 {
-		panic(errors.Errorf("invalid field kind %d", kind))
-	}
-	if name == "" {
-		panic(errors.Errorf("empty field name %d", kind))
-	}
-	if fac == nil {
-		panic(errors.Errorf("nil field factory %q", name))
-	}
-	if entry, duplicate := fieldRegistry[kind]; duplicate {
-		panic(errors.Errorf("duplicate field kind %d %q, %q", kind, name, entry.Name))
-	}
-	fieldRegistry[kind] = &fieldEntry{
-		Name:    name,
-		Factory: fac,
-	}
-}
-
 // IPAddress creates a new field for an ip address string
 func IPAddress(addr string) Field {
 	addr = strings.TrimSpace(addr)
 	if checkIPAddress(addr) {
 		return Field{KindIPAddress, addr}
-	}
-	return Field{}
-}
-
-// IPAddressP creates a new field for an ip address string pointer
-func IPAddressP(addr *string) Field {
-	if addr != nil {
-		return IPAddress(*addr)
 	}
 	return Field{}
 }
@@ -226,13 +163,6 @@ func SHA1Hash(hash string) Field {
 	}
 }
 
-func SHA1HashP(hash *string) Field {
-	if hash != nil {
-		return SHA1Hash(*hash)
-	}
-	return Field{}
-}
-
 // MD5Hash packs an MD5 hash value to a Field
 func MD5Hash(hash string) Field {
 	return Field{
@@ -241,28 +171,12 @@ func MD5Hash(hash string) Field {
 	}
 }
 
-// MD5HashP packs an MD5 hash pointer value to a Field
-func MD5HashP(hash *string) Field {
-	if hash != nil {
-		return MD5Hash(*hash)
-	}
-	return Field{}
-}
-
 // SHA256Hash packs an SHA256 hash value to a Field
 func SHA256Hash(hash string) Field {
 	return Field{
 		Kind:  KindSHA256Hash,
 		Value: hash,
 	}
-}
-
-// SHA256Hash packs an SHA256 hash pointer value to a Field
-func SHA256HashP(hash *string) Field {
-	if hash != nil {
-		return SHA256Hash(*hash)
-	}
-	return Field{}
 }
 
 // DomainName packs a domain name value to a Field
@@ -276,13 +190,6 @@ func DomainName(name string) Field {
 	return Field{}
 }
 
-func DomainNameP(name *string) Field {
-	if name != nil {
-		return DomainName(*name)
-	}
-	return Field{}
-}
-
 // Hostname returns either an IPAddress or a DomainName field
 func Hostname(value string) Field {
 	if value = strings.TrimSpace(value); value != "" {
@@ -290,14 +197,6 @@ func Hostname(value string) Field {
 			return Field{KindIPAddress, value}
 		}
 		return Field{KindDomainName, value}
-	}
-	return Field{}
-}
-
-// HostnameP returns either an IPAddress or a DomainName field from a pointer
-func HostnameP(value *string) Field {
-	if value != nil {
-		return Hostname(*value)
 	}
 	return Field{}
 }
@@ -380,17 +279,17 @@ func (*fieldParserIPAddress) ParseFields(fields []Field, value string) ([]Field,
 	if value == "" {
 		return fields, nil
 	}
-	if net.ParseIP(value) == nil {
-		return fields, errors.Errorf("invalid ip address %q", value)
+	if checkIPAddress(value) {
+		return append(fields, Field{
+			Kind:  KindIPAddress,
+			Value: value,
+		}), nil
 	}
-	return append(fields, Field{
-		Kind:  KindIPAddress,
-		Value: value,
-	}), nil
+	return fields, errors.Errorf("invalid ip address %q", value)
 }
 
-// HostNameParser parses a string to get either an IP address field or a domain field.
-func HostNameParser() FieldParser {
+// HostnameParser parses a string to get either an IP address field or a domain field.
+func HostnameParser() FieldParser {
 	return &fieldParserHostname{}
 }
 
@@ -403,7 +302,7 @@ func (*fieldParserHostname) ParseFields(fields []Field, value string) ([]Field, 
 	if value == "" {
 		return fields, nil
 	}
-	if net.ParseIP(value) != nil {
+	if checkIPAddress(value) {
 		return append(fields, Field{
 			Kind:  KindIPAddress,
 			Value: value,
@@ -415,6 +314,7 @@ func (*fieldParserHostname) ParseFields(fields []Field, value string) ([]Field, 
 	}), nil
 }
 
+// GJSONFieldParser extracts fields from JSON values
 type GJSONFieldParser map[string]FieldParser
 
 var _ FieldParser = (GJSONFieldParser)(nil)

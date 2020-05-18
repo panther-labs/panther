@@ -19,6 +19,7 @@ package logs_test
  */
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -39,4 +40,80 @@ func TestGJSONExtractor(t *testing.T) {
 			Value: "1.1.1.1",
 		},
 	})
+}
+
+func TestIPAddress(t *testing.T) {
+	type testCase struct {
+		Value   string
+		NonZero bool
+	}
+	for _, tc := range []testCase{
+		{"1.1.1.1", true},
+		{"  1.1.1.1", true},
+		{"  1.1.1.1  ", true},
+		{"1.1.1.1  ", true},
+		{"255.0.1.1", true},
+		{"2001:0db8:0000:0000:0000:ff00:0042:8329", true},
+		{"", false},
+		{"-", false},
+	} {
+		t.Run(tc.Value, func(t *testing.T) {
+			field := logs.IPAddress(tc.Value)
+			if field.IsZero() {
+				require.False(t, tc.NonZero, `logs.IPAddress(%q) invalid field`, tc.Value)
+			} else {
+				require.Equal(t, field.Kind, logs.KindIPAddress)
+				require.NotEmpty(t, field.Value)
+			}
+		})
+	}
+}
+
+func TestFieldSlice(t *testing.T) {
+	{
+		fields := logs.FieldSlice{
+			{Kind: logs.KindMD5Hash, Value: "595f44fec1e92a71d3e9e77456ba80d1"},
+			{Kind: logs.KindMD5Hash, Value: "71f920fa275127a7b60fa4d4d41432a3"},
+			{Kind: logs.KindDomainName, Value: "example.com"},
+			{Kind: logs.KindMD5Hash, Value: "43c191bf6d6c3f263a8cd0efd4a058ab"},
+			{Kind: logs.KindIPAddress, Value: "1.1.1.1"},
+		}
+		sort.Sort(fields)
+		require.Equal(t, logs.FieldSlice{
+			{Kind: logs.KindIPAddress, Value: "1.1.1.1"},
+			{Kind: logs.KindDomainName, Value: "example.com"},
+			{Kind: logs.KindMD5Hash, Value: "43c191bf6d6c3f263a8cd0efd4a058ab"},
+			{Kind: logs.KindMD5Hash, Value: "595f44fec1e92a71d3e9e77456ba80d1"},
+			{Kind: logs.KindMD5Hash, Value: "71f920fa275127a7b60fa4d4d41432a3"},
+		}, fields)
+	}
+}
+
+func TestNonEmptyParser(t *testing.T) {
+	p := logs.NonEmptyParser(logs.KindDomainName)
+	{
+		fields, err := p.ParseFields(nil, "foo")
+		require.NoError(t, err)
+		require.Equal(t, []logs.Field{
+			{Kind: logs.KindDomainName, Value: "foo"},
+		}, fields)
+		fields, err = p.ParseFields(fields, "bar")
+		require.NoError(t, err)
+		require.Equal(t, []logs.Field{
+			{Kind: logs.KindDomainName, Value: "foo"},
+			{Kind: logs.KindDomainName, Value: "bar"},
+		}, fields)
+		fields, err = p.ParseFields(fields, " ")
+		require.NoError(t, err)
+		require.Equal(t, []logs.Field{
+			{Kind: logs.KindDomainName, Value: "foo"},
+			{Kind: logs.KindDomainName, Value: "bar"},
+		}, fields)
+	}
+	{
+		fields, err := p.ParseFields(nil, "")
+		require.NoError(t, err)
+		require.Nil(t, fields)
+	}
+
 }
