@@ -24,7 +24,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common/logs"
 )
 
 func TestGJSONExtractor(t *testing.T) {

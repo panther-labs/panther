@@ -5,8 +5,8 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/jsontricks"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/logs"
 )
 
 type Interface interface {
