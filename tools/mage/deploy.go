@@ -360,6 +360,7 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 			"AnalysisVersionsBucket": outputs["AnalysisVersionsBucket"],
 			"AnalysisApiId":          outputs["AnalysisApiId"],
 			"ComplianceApiId":        outputs["ComplianceApiId"],
+			"DynamoScalingRoleArn":   outputs["DynamoScalingRoleArn"],
 			"OutputsKeyId":           outputs["OutputsEncryptionKeyId"],
 			"SqsKeyId":               outputs["QueueEncryptionKeyId"],
 			"UserPoolId":             outputs["UserPoolId"],
