@@ -19,14 +19,13 @@
 import React from 'react';
 import Panel from 'Components/Panel';
 import { Alert, Button, Card, Box, useSnackbar } from 'pouncejs';
-import PolicyForm, { policyEditableFields } from 'Components/forms/PolicyForm';
-import { PolicyDetails } from 'Generated/schema';
+import PolicyForm from 'Components/forms/PolicyForm';
+import { CreateOrModifyPolicyInput } from 'Generated/schema';
 import { initialValues as createPolicyInitialValues } from 'Pages/CreatePolicy';
 import useModal from 'Hooks/useModal';
 import useRouter from 'Hooks/useRouter';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { MODALS } from 'Components/utils/Modal';
-import pick from 'lodash-es/pick';
 import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage, formatJSON } from 'Helpers/utils';
 import { usePolicyDetails } from './graphql/policyDetails.generated';
@@ -60,23 +59,20 @@ const EditPolicyPage: React.FC = () => {
 
   const initialValues = React.useMemo(() => {
     if (queryData) {
-      const { tests, autoRemediationParameters, ...otherInitialValues } = pick(
-        queryData.policy,
-        policyEditableFields
-      ) as PolicyDetails;
-
       // format any JSON returned from the server simply because we are going to display it
       // within an online web editor. To do that we parse the JSON and re-stringify it using proper
       // spacings that make it pretty (The server of course doesn't store these spacings when
       // it stores JSON, that's why we are making those here in the front-end)
       return {
-        ...otherInitialValues,
-        autoRemediationParameters: formatJSON(JSON.parse(autoRemediationParameters)),
-        tests: tests.map(({ resource, ...restTestData }) => ({
+        ...queryData.policy,
+        autoRemediationParameters: formatJSON(
+          JSON.parse(queryData.policy.autoRemediationParameters)
+        ),
+        tests: queryData.policy.tests.map(({ resource, ...restTestData }) => ({
           ...restTestData,
           resource: formatJSON(JSON.parse(resource)),
         })),
-      };
+      } as CreateOrModifyPolicyInput;
     }
 
     return createPolicyInitialValues;

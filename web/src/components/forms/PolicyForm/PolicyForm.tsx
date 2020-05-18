@@ -17,26 +17,19 @@
  */
 
 import React from 'react';
-import { PolicyDetails, PolicyUnitTest } from 'Generated/schema';
+import { PolicyUnitTest } from 'Generated/schema';
 import * as Yup from 'yup';
-import { Box, Heading } from 'pouncejs';
-import BaseRuleForm, {
-  BaseRuleFormProps,
+import { Box, Button, Flex, Heading } from 'pouncejs';
+import { Formik } from 'formik';
+import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';
+import useRouter from 'Hooks/useRouter';
+import {
   BaseRuleFormTestFields as PolicyFormTestFields,
   BaseRuleFormCoreFields,
-  ruleCoreEditableFields,
 } from 'Components/forms/BaseRuleForm';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import { UpdatePolicyVariables } from 'Pages/EditPolicy';
 import PolicyFormAutoRemediationFields from './PolicyFormAutoRemediationFields';
-
-export const policyEditableFields = [
-  ...ruleCoreEditableFields,
-  'autoRemediationId',
-  'autoRemediationParameters',
-  'suppressions',
-  'resourceTypes',
-  'tests',
-] as const;
 
 // The validation checks that Formik will run
 const validationSchema = Yup.object().shape({
@@ -52,38 +45,63 @@ const validationSchema = Yup.object().shape({
     .unique('Test names must be unique', 'name'),
 });
 
-export type PolicyFormValues = Pick<PolicyDetails, typeof policyEditableFields[number]>;
-export type PolicyFormProps = Pick<
-  BaseRuleFormProps<PolicyFormValues>,
-  'initialValues' | 'onSubmit'
->;
+export type PolicyFormValues = UpdatePolicyVariables['input'];
+export type PolicyFormProps = {
+  /** The initial values of the form */
+  initialValues: PolicyFormValues;
+
+  /** callback for the submission of the form */
+  onSubmit: (values: PolicyFormValues) => void;
+};
 
 const PolicyForm: React.FC<PolicyFormProps> = ({ initialValues, onSubmit }) => {
+  const { history } = useRouter();
+
   return (
-    <BaseRuleForm<PolicyFormValues>
+    <Formik<PolicyFormValues>
       initialValues={initialValues}
       onSubmit={onSubmit}
+      enableReinitialize
       validationSchema={validationSchema}
     >
-      <Box as="article">
-        <ErrorBoundary>
-          <BaseRuleFormCoreFields type="policy" />
-        </ErrorBoundary>
-        <ErrorBoundary>
-          <PolicyFormTestFields />
-        </ErrorBoundary>
-      </Box>
-      <Box as="article" mt={10}>
-        <Heading size="medium" pb={8} borderBottom="1px solid" borderColor="grey100">
-          Auto Remediation Settings
-        </Heading>
-        <Box mt={8}>
-          <ErrorBoundary>
-            <PolicyFormAutoRemediationFields />
-          </ErrorBoundary>
-        </Box>
-      </Box>
-    </BaseRuleForm>
+      {({ handleSubmit, isSubmitting, isValid, dirty }) => {
+        return (
+          <Box as="form" onSubmit={handleSubmit}>
+            <Box as="article">
+              <ErrorBoundary>
+                <BaseRuleFormCoreFields type="policy" />
+              </ErrorBoundary>
+              <ErrorBoundary>
+                <PolicyFormTestFields />
+              </ErrorBoundary>
+            </Box>
+            <Box as="article" mt={10}>
+              <Heading size="medium" pb={8} borderBottom="1px solid" borderColor="grey100">
+                Auto Remediation Settings
+              </Heading>
+              <Box mt={8}>
+                <ErrorBoundary>
+                  <PolicyFormAutoRemediationFields />
+                </ErrorBoundary>
+              </Box>
+            </Box>
+            <Flex borderTop="1px solid" borderColor="grey100" pt={6} mt={10} justify="flex-end">
+              <Flex>
+                <Button variant="default" size="large" onClick={history.goBack} mr={4}>
+                  Cancel
+                </Button>
+                <SubmitButton
+                  submitting={isSubmitting}
+                  disabled={!dirty || !isValid || isSubmitting}
+                >
+                  {initialValues.id ? 'Update' : 'Create'}
+                </SubmitButton>
+              </Flex>
+            </Flex>
+          </Box>
+        );
+      }}
+    </Formik>
   );
 };
 
