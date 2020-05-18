@@ -1,4 +1,4 @@
-mutation CreatePolicy($input: CreateOrModifyPolicyInput!) {
+mutation CreatePolicy($input: AddPolicyInput!) {
   addPolicy(input: $input) {
     ...PolicyDetailsMain
     ...PolicyDetailsExtra
