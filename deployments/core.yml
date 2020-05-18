@@ -813,6 +813,7 @@ Resources:
 
   ##### Key-Value store for Python policies/rules #####
   # TODO: build conditionally (disabled by default) since you have to pay for provisioned capacity
+  # TODO: make capacity options configurable
   KeyValueStoreTable:
     Type: AWS::DynamoDB::Table
     Properties:

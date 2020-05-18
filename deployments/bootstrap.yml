@@ -516,14 +516,17 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - dynamodb:DescribeTable
-                  - dynamodb:UpdateTable
                   - cloudwatch:PutMetricAlarm
                   - cloudwatch:DescribeAlarms
                   - cloudwatch:GetMetricStatistics
                   - cloudwatch:SetAlarmState
                   - cloudwatch:DeleteAlarms
                 Resource: '*'
+              - Effect: Allow
+                Action:
+                  - dynamodb:DescribeTable
+                  - dynamodb:UpdateTable
+                Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-*
 
   ########## ECR + ECS ##########
   PantherWebImageRepository:
