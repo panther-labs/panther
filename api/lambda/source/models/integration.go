@@ -20,11 +20,24 @@ package models
 
 import "time"
 
-// SourceIntegration is the dynamodb item corresponding to the PutIntegration route.
+// SourceIntegration represents a Panther integration with a source.
 type SourceIntegration struct {
-	*SourceIntegrationMetadata
-	*SourceIntegrationStatus
-	*SourceIntegrationScanInformation
+	SourceIntegrationMetadata
+	SourceIntegrationStatus
+	SourceIntegrationScanInformation
+}
+
+// SourceIntegrationStatus provides context that the full scan works and that events are being received.
+type SourceIntegrationStatus struct {
+	ScanStatus  *string `json:"scanStatus"`
+	EventStatus *string `json:"eventStatus"`
+}
+
+// SourceIntegrationScanInformation is detail about the last snapshot.
+type SourceIntegrationScanInformation struct {
+	LastScanEndTime      *time.Time `json:"lastScanEndTime"`
+	LastScanErrorMessage *string    `json:"lastScanErrorMessage"`
+	LastScanStartTime    *time.Time `json:"lastScanStartTime"`
 }
 
 // SourceIntegrationMetadata is general settings and metadata for an integration.
@@ -44,19 +57,6 @@ type SourceIntegrationMetadata struct {
 	LogTypes           []*string  `json:"logTypes,omitempty"`
 	LogProcessingRole  *string    `json:"logProcessingRole,omitempty"`
 	StackName          *string    `json:"stackName,omitempty"`
-}
-
-// SourceIntegrationStatus provides context that the full scan works and that events are being received.
-type SourceIntegrationStatus struct {
-	ScanStatus  *string `json:"scanStatus"`
-	EventStatus *string `json:"eventStatus"`
-}
-
-// SourceIntegrationScanInformation is detail about the last snapshot.
-type SourceIntegrationScanInformation struct {
-	LastScanEndTime      *time.Time `json:"lastScanEndTime"`
-	LastScanErrorMessage *string    `json:"lastScanErrorMessage"`
-	LastScanStartTime    *time.Time `json:"lastScanStartTime"`
 }
 
 type SourceIntegrationHealth struct {

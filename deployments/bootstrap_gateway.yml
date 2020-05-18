@@ -56,6 +56,9 @@ Parameters:
     Default: ''
 
   # From the bootstrap stack:
+  AlarmTopicArn:
+    Type: String
+    Description: SNS topic for CloudWatch alarms
   UserPoolId:
     Type: String
     Description: Cognito user pool ID
@@ -105,7 +108,7 @@ Resources:
       # This function has more permissions than usual because it creates and destroys infrastructure.
       # It is used only by CloudFormation in the deploy process and not by the Panther application itself.
       Policies:
-        - Id: CertificateManagement
+        - Id: ResourceManagement
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -120,6 +123,14 @@ Resources:
               Resource: !Sub arn:${AWS::Partition}:acm:${AWS::Region}:${AWS::AccountId}:certificate/*
             - Effect: Allow
               Action:
+                - cloudwatch:PutMetricAlarm
+                - cloudwatch:DeleteAlarms
+              Resource: !Sub arn:${AWS::Partition}:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:Panther*
+            - Effect: Allow
+              Action: cognito-idp:SetUserPoolMfaConfig
+              Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}
+            - Effect: Allow
+              Action:
                 - iam:DeleteServerCertificate
                 - iam:UploadServerCertificate
               Resource:
@@ -127,18 +138,23 @@ Resources:
                 # IAM sometimes requires permissions to match the certificate name, not the full path
                 # This seems like a bug in IAM, but in any case a fresh deploy/teardown will not work without this:
                 - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/Panther*
-        - Id: UserPoolMfa
-          Version: 2012-10-17
-          Statement:
             - Effect: Allow
-              Action: cognito-idp:SetUserPoolMfaConfig
-              Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}
+              Action:
+                - logs:DeleteMetricFilter
+                - logs:PutMetricFilter
+              Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/panther-*
 
   CustomResourceLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/lambda/panther-cfn-custom-resources
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  CustomResourceMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref CustomResourceLogGroup
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
 
   # Enable only software MFA for the Cognito user pool - enabling MFA via native CloudFormation
   # forces SMS as a fallback option, but the SDK does not.
@@ -160,6 +176,13 @@ Resources:
       StageName: v1
       TracingEnabled: !If [TracingEnabled, true, false]
 
+  AnalysisApiAlarms:
+    Type: Custom::ApiGatewayAlarms
+    Properties:
+      ApiName: panther-analysis-api
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+
   ComplianceApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -171,6 +194,13 @@ Resources:
       # </cfndoc>
       StageName: v1
       TracingEnabled: !If [TracingEnabled, true, false]
+
+  ComplianceApiAlarms:
+    Type: Custom::ApiGatewayAlarms
+    Properties:
+      ApiName: panther-compliance-api
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
 
   RemediationApi:
     Type: AWS::Serverless::Api
@@ -184,6 +214,13 @@ Resources:
       StageName: v1
       TracingEnabled: !If [TracingEnabled, true, false]
 
+  RemediationApiAlarms:
+    Type: Custom::ApiGatewayAlarms
+    Properties:
+      ApiName: panther-remediation-api
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+
   ResourcesApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -195,6 +232,13 @@ Resources:
       # </cfndoc>
       StageName: v1
       TracingEnabled: !If [TracingEnabled, true, false]
+
+  ResourcesApiAlarms:
+    Type: Custom::ApiGatewayAlarms
+    Properties:
+      ApiName: panther-resources-api
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
 
 Outputs:
   PythonLayerVersionArn:

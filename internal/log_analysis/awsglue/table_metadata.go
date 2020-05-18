@@ -19,8 +19,6 @@ package awsglue
  */
 
 import (
-	"net/url"
-	"strings"
 	"sync"
 	"time"
 
@@ -28,37 +26,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
-)
-
-const (
-	logS3Prefix       = "logs"
-	ruleMatchS3Prefix = "rules"
-
-	LogProcessingDatabaseName        = "panther_logs"
-	LogProcessingDatabaseDescription = "Holds tables with data from Panther log processing"
-
-	RuleMatchDatabaseName        = "panther_rule_matches"
-	RuleMatchDatabaseDescription = "Holds tables with data from Panther rule matching (same table structure as panther_logs)"
-
-	ViewsDatabaseName        = "panther_views"
-	ViewsDatabaseDescription = "Holds views useful for querying Panther data"
-
-	TempDatabaseName        = "panther_temp"
-	TempDatabaseDescription = "Holds temporary tables used for processing tasks"
-)
-
-var (
-	// PantherDatabases is exposed as public var to allow code to get/lookup the Panther databases
-	PantherDatabases = map[string]string{
-		LogProcessingDatabaseName: LogProcessingDatabaseDescription,
-		RuleMatchDatabaseName:     RuleMatchDatabaseDescription,
-		ViewsDatabaseName:         ViewsDatabaseDescription,
-	}
 )
 
 type PartitionKey struct {
@@ -77,7 +48,7 @@ type GlueTableMetadata struct {
 	eventStruct  interface{}
 }
 
-// Creates a new GlueTableMetadata object
+// Creates a new GlueTableMetadata object for Panther log sources
 func NewGlueTableMetadata(
 	datatype models.DataType, logType, logDescription string, timebin GlueTableTimebin, eventStruct interface{}) *GlueTableMetadata {
 
@@ -123,6 +94,10 @@ func (gm *GlueTableMetadata) EventStruct() interface{} {
 	return gm.eventStruct
 }
 
+func (gm *GlueTableMetadata) HasPartitions(glueClient glueiface.GlueAPI) (bool, error) {
+	return TableHasPartitions(glueClient, gm.databaseName, gm.tableName)
+}
+
 // The partition keys for this table
 func (gm *GlueTableMetadata) PartitionKeys() (partitions []PartitionKey) {
 	partitions = []PartitionKey{{Name: "year", Type: "int"}}
@@ -141,44 +116,7 @@ func (gm *GlueTableMetadata) PartitionKeys() (partitions []PartitionKey) {
 
 // Based on Timebin(), return an S3 prefix for objects of this table
 func (gm *GlueTableMetadata) GetPartitionPrefix(t time.Time) string {
-	prefix := gm.Prefix()
-	return prefix + getTimePartitionPrefix(gm.timebin, t)
-}
-
-// Returns the prefix of the table in S3 or error if it failed to generate it
-func getDatabase(dataType models.DataType) string {
-	if dataType == models.LogData {
-		return LogProcessingDatabaseName
-	}
-	return RuleMatchDatabaseName
-}
-
-// Returns the prefix of the table in S3 or error if it failed to generate it
-func getTablePrefix(dataType models.DataType, tableName string) string {
-	if dataType == models.LogData {
-		return logS3Prefix + "/" + tableName + "/"
-	}
-	return ruleMatchS3Prefix + "/" + tableName + "/"
-}
-
-func GetTableName(logType string) string {
-	// clean table name to make sql friendly
-	tableName := strings.Replace(logType, ".", "_", -1) // no '.'
-	return strings.ToLower(tableName)
-}
-
-func GetDataPrefix(databaseName string) string {
-	switch databaseName {
-	case LogProcessingDatabaseName:
-		return logS3Prefix
-	case RuleMatchDatabaseName:
-		return ruleMatchS3Prefix
-	default:
-		if strings.Contains(databaseName, "test") {
-			return logS3Prefix // assume logs, used for integration tests
-		}
-		panic(databaseName + " is not associated with an s3 prefix")
-	}
+	return gm.Prefix() + gm.timebin.PartitionS3PathFromTime(t)
 }
 
 // SyncPartitions updates a table's partitions using the latest table schema. Used when schemas change.
@@ -217,19 +155,14 @@ func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Clie
 
 				values := gm.timebin.PartitionValuesFromTime(update)
 
-				getPartitionInput := &glue.GetPartitionInput{
-					DatabaseName:    aws.String(gm.databaseName),
-					TableName:       aws.String(gm.tableName),
-					PartitionValues: values,
-				}
-				getPartitionOutput, err := glueClient.GetPartition(getPartitionInput)
+				getPartitionOutput, err := GetPartition(glueClient, gm.databaseName, gm.tableName, values)
 				if err != nil {
 					// skip time period with no partition UNLESS there is data, then create
 					if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != glue.ErrCodeEntityNotFoundException {
 						failed = true
 						errChan <- err
 					} else { // no partition, check if there is data in S3, if so, create
-						if hasData, err := gm.partitionHasData(s3Client, update, tableOutput); err != nil {
+						if hasData, err := gm.timebin.PartitionHasData(s3Client, update, tableOutput); err != nil {
 							failed = true
 							errChan <- err
 						} else if hasData {
@@ -242,21 +175,15 @@ func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Clie
 					continue
 				}
 
-				// leave _everything_ the same except the schema, and the serde info
+				// leave _everything_ the same except the schema, and the serde info to get column mappings
 				storageDescriptor := *getPartitionOutput.Partition.StorageDescriptor // copy because we will mutate
 				storageDescriptor.Columns = columns
-				storageDescriptor.SerdeInfo = tableOutput.Table.StorageDescriptor.SerdeInfo
-				partitionInput := &glue.PartitionInput{
-					Values:            values,
-					StorageDescriptor: &storageDescriptor,
+				// we need to update the SerDeInfo for JSON partitions to get the column mappings
+				if IsJSONPartition(&storageDescriptor) {
+					storageDescriptor.SerdeInfo = tableOutput.Table.StorageDescriptor.SerdeInfo
 				}
-				updatePartitionInput := &glue.UpdatePartitionInput{
-					DatabaseName:       aws.String(gm.databaseName),
-					TableName:          aws.String(gm.tableName),
-					PartitionInput:     partitionInput,
-					PartitionValueList: values,
-				}
-				_, err = glueClient.UpdatePartition(updatePartitionInput)
+				_, err = UpdatePartition(glueClient, gm.databaseName, gm.tableName, values,
+					&storageDescriptor, nil)
 				if err != nil {
 					failed = true
 					errChan <- err
@@ -281,17 +208,13 @@ func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Clie
 
 func (gm *GlueTableMetadata) CreateJSONPartition(client glueiface.GlueAPI, t time.Time) (created bool, err error) {
 	// inherit StorageDescriptor from table
-	tableInput := &glue.GetTableInput{
-		DatabaseName: aws.String(gm.databaseName),
-		Name:         aws.String(gm.tableName),
-	}
-	tableOutput, err := client.GetTable(tableInput)
+	tableOutput, err := GetTable(client, gm.databaseName, gm.tableName)
 	if err != nil {
 		return false, err
 	}
 
 	// ensure this is a JSON table, use Contains() because there are multiple json serdes
-	if !strings.Contains(*tableOutput.Table.StorageDescriptor.SerdeInfo.SerializationLibrary, "json") {
+	if !IsJSONPartition(tableOutput.Table.StorageDescriptor) {
 		return false, errors.Errorf("not a JSON table: %#v", *tableOutput.Table.StorageDescriptor)
 	}
 
@@ -301,26 +224,16 @@ func (gm *GlueTableMetadata) CreateJSONPartition(client glueiface.GlueAPI, t tim
 func (gm *GlueTableMetadata) createPartition(client glueiface.GlueAPI, t time.Time,
 	tableOutput *glue.GetTableOutput) (created bool, err error) {
 
-	location, err := url.Parse(*tableOutput.Table.StorageDescriptor.Location)
+	bucket, _, err := ParseS3URL(*tableOutput.Table.StorageDescriptor.Location)
 	if err != nil {
-		return false, errors.Wrapf(err, "Cannot parse table %s.%s s3 path: %s",
-			gm.DatabaseName(), gm.TableName(),
-			*tableOutput.Table.StorageDescriptor.Location)
+		return false, err
 	}
 
 	storageDescriptor := *tableOutput.Table.StorageDescriptor // copy because we will mutate
-	storageDescriptor.Location = aws.String("s3://" + location.Host + "/" + gm.GetPartitionPrefix(t))
+	storageDescriptor.Location = aws.String("s3://" + bucket + "/" + gm.GetPartitionPrefix(t))
 
-	partitionInput := &glue.PartitionInput{
-		Values:            gm.timebin.PartitionValuesFromTime(t),
-		StorageDescriptor: &storageDescriptor,
-	}
-	input := &glue.CreatePartitionInput{
-		DatabaseName:   aws.String(gm.databaseName),
-		TableName:      aws.String(gm.tableName),
-		PartitionInput: partitionInput,
-	}
-	_, err = client.CreatePartition(input)
+	_, err = CreatePartition(client, gm.databaseName, gm.tableName, gm.timebin.PartitionValuesFromTime(t),
+		&storageDescriptor, nil)
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == glue.ErrCodeAlreadyExistsException {
 			return false, nil // no error
@@ -332,12 +245,7 @@ func (gm *GlueTableMetadata) createPartition(client glueiface.GlueAPI, t time.Ti
 
 // get partition, return nil if it does not exist
 func (gm *GlueTableMetadata) GetPartition(client glueiface.GlueAPI, t time.Time) (output *glue.GetPartitionOutput, err error) {
-	input := &glue.GetPartitionInput{
-		DatabaseName:    aws.String(gm.databaseName),
-		TableName:       aws.String(gm.tableName),
-		PartitionValues: gm.timebin.PartitionValuesFromTime(t),
-	}
-	output, err = client.GetPartition(input)
+	output, err = GetPartition(client, gm.databaseName, gm.tableName, gm.timebin.PartitionValuesFromTime(t))
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == glue.ErrCodeEntityNotFoundException {
 			return nil, nil // not there, no error
@@ -348,37 +256,5 @@ func (gm *GlueTableMetadata) GetPartition(client glueiface.GlueAPI, t time.Time)
 }
 
 func (gm *GlueTableMetadata) deletePartition(client glueiface.GlueAPI, t time.Time) (output *glue.DeletePartitionOutput, err error) {
-	input := &glue.DeletePartitionInput{
-		DatabaseName:    aws.String(gm.databaseName),
-		TableName:       aws.String(gm.tableName),
-		PartitionValues: gm.timebin.PartitionValuesFromTime(t),
-	}
-	return client.DeletePartition(input)
-}
-
-func (gm *GlueTableMetadata) partitionHasData(client s3iface.S3API, t time.Time, tableOutput *glue.GetTableOutput) (bool, error) {
-	location, err := url.Parse(*tableOutput.Table.StorageDescriptor.Location)
-	if err != nil {
-		return false, errors.Wrapf(err, "Cannot parse table %s.%s s3 path: %s",
-			gm.DatabaseName(), gm.TableName(),
-			*tableOutput.Table.StorageDescriptor.Location)
-	}
-
-	// list files w/pagination
-	inputParams := &s3.ListObjectsV2Input{
-		Bucket:  aws.String(location.Host),
-		Prefix:  aws.String(gm.GetPartitionPrefix(t)),
-		MaxKeys: aws.Int64(1), // look for at least 1
-	}
-	var hasData bool
-	err = client.ListObjectsV2Pages(inputParams, func(page *s3.ListObjectsV2Output, isLast bool) bool {
-		for _, value := range page.Contents {
-			if *value.Size > 0 { // we only care about objects with size
-				hasData = true
-			}
-		}
-		return false // "To stop iterating, return false from the fn function."
-	})
-
-	return hasData, err
+	return DeletePartition(client, gm.databaseName, gm.tableName, gm.timebin.PartitionValuesFromTime(t))
 }

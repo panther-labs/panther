@@ -50,9 +50,7 @@ func (e *AWSExtractor) Extract(key, value gjson.Result) {
 		parsedARN, err := arn.Parse(value.Str)
 		if err == nil {
 			e.pl.AppendAnyAWSARNs(value.Str)
-			if len(parsedARN.AccountID) == 12 {
-				e.pl.AppendAnyAWSAccountIds(parsedARN.AccountID)
-			}
+			e.pl.AppendAnyAWSAccountIds(parsedARN.AccountID)
 			// instanceId: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-policy-structure.html#EC2_ARN_Format
 			if strings.HasPrefix(parsedARN.Resource, "instance/") {
 				slashIndex := strings.LastIndex(parsedARN.Resource, "/")
@@ -76,9 +74,7 @@ func (e *AWSExtractor) Extract(key, value gjson.Result) {
 	}
 
 	if key.Str == "accountId" || strings.HasSuffix(key.Str, "AccountId") {
-		if len(value.Str) == 12 { // account ids are always 12 digits
-			e.pl.AppendAnyAWSAccountIds(value.Str)
-		}
+		e.pl.AppendAnyAWSAccountIds(value.Str)
 		return
 	}
 

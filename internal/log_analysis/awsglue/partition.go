@@ -19,7 +19,6 @@ package awsglue
  */
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -39,8 +38,6 @@ type GluePartition struct {
 	databaseName     string
 	tableName        string
 	s3Bucket         string
-	dataFormat       string    // Can currently be only "json"
-	compression      string    // Can only be "gzip" currently
 	time             time.Time // the time (e.g., specific hour) this partition corresponds to
 	partitionColumns []PartitionColumnInfo
 	gm               *GlueTableMetadata // this is the abstraction for dealing directly with the glue catalog
@@ -62,14 +59,6 @@ func (gp *GluePartition) GetS3Bucket() string {
 	return gp.s3Bucket
 }
 
-func (gp *GluePartition) GetDataFormat() string {
-	return gp.dataFormat
-}
-
-func (gp *GluePartition) GetCompression() string {
-	return gp.compression
-}
-
 func (gp *GluePartition) GetPartitionColumnsInfo() []PartitionColumnInfo {
 	return gp.partitionColumns
 }
@@ -79,30 +68,20 @@ func (gp *GluePartition) GetGlueTableMetadata() *GlueTableMetadata {
 }
 
 func GetPartitionPrefix(datatype models.DataType, logType string, timebin GlueTableTimebin, time time.Time) string {
-	tableName := GetTableName(logType)
-	tablePrefix := getTablePrefix(datatype, tableName)
-	return tablePrefix + getTimePartitionPrefix(timebin, time)
-}
-
-// Based on Timebin(), return an S3 prefix for objects of this table
-func getTimePartitionPrefix(timebin GlueTableTimebin, t time.Time) string {
-	switch timebin {
-	case GlueTableHourly:
-		return fmt.Sprintf("year=%d/month=%02d/day=%02d/hour=%02d/", t.Year(), t.Month(), t.Day(), t.Hour())
-	case GlueTableDaily:
-		return fmt.Sprintf("year=%d/month=%02d/day=%02d/", t.Year(), t.Month(), t.Day())
-	default:
-		return fmt.Sprintf("year=%d/month=%02d/", t.Year(), t.Month())
-	}
+	return getTablePrefix(datatype, GetTableName(logType)) + timebin.PartitionS3PathFromTime(time)
 }
 
 func (gp *GluePartition) GetPartitionLocation() string {
-	tablePrefix := getTablePrefix(gp.datatype, gp.tableName)
-	prefix := "s3://" + gp.s3Bucket + "/" + tablePrefix
-	for _, partitionField := range gp.partitionColumns {
-		prefix += partitionField.Key + "=" + partitionField.Value + "/"
+	return "s3://" + gp.s3Bucket + "/" + gp.gm.GetPartitionPrefix(gp.time)
+}
+
+// GetPartitionLocation takes an S3 path for an object and returns just the part of the patch associated with the partition
+func GetPartitionLocation(s3Path string) (string, error) {
+	gluePartition, err := GetPartitionFromS3Path(s3Path)
+	if err != nil {
+		return "", errors.Wrapf(err, "cannot parse partition path %s", s3Path)
 	}
-	return prefix
+	return gluePartition.GetPartitionLocation(), nil
 }
 
 // Contains information about partition columns
@@ -117,12 +96,6 @@ type PartitionColumnInfo struct {
 func GetPartitionFromS3(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 	partition := &GluePartition{s3Bucket: s3Bucket}
 
-	if !strings.HasSuffix(s3ObjectKey, ".json.gz") {
-		return nil, errors.New("currently only GZIP json is supported")
-	}
-	partition.compression = "gzip"
-	partition.dataFormat = "json"
-
 	s3Keys := strings.Split(s3ObjectKey, "/")
 	if len(s3Keys) < 4 {
 		return nil, errors.Errorf("s3 object key [%s] doesn't have the appropriate format", s3ObjectKey)
@@ -136,7 +109,7 @@ func GetPartitionFromS3(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 		partition.databaseName = RuleMatchDatabaseName
 		partition.datatype = models.RuleData
 	default:
-		return nil, errors.Errorf("unsupported S3 object prefix %s", s3Keys[0])
+		return nil, errors.Errorf("unsupported S3 object prefix %s from %s", s3Keys[0], s3ObjectKey)
 	}
 
 	partition.tableName = s3Keys[1]
@@ -196,6 +169,14 @@ func GetPartitionFromS3(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 	partition.gm = NewGlueTableMetadata(partition.datatype, partition.tableName, "", GlueTableHourly, nil)
 
 	return partition, nil
+}
+
+func GetPartitionFromS3Path(s3Path string) (*GluePartition, error) {
+	bucketName, key, err := ParseS3URL(s3Path)
+	if err != nil {
+		return nil, err
+	}
+	return GetPartitionFromS3(bucketName, key)
 }
 
 func inferPartitionColumnInfo(input string, partitionName string) (PartitionColumnInfo, error) {

@@ -36,7 +36,7 @@ import (
 var (
 	exampleAccounts = map[string]*models.SourceIntegration{
 		"888888888888": {
-			SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 				AWSAccountID:     aws.String("888888888888"),
 				CreatedAtTime:    aws.Time(time.Now()),
 				CreatedBy:        aws.String("96bad46d-2599-4926-a136-c6f4f7f3b1a3"),
@@ -47,7 +47,7 @@ var (
 			},
 		},
 		"111111111111": {
-			SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 				AWSAccountID:     aws.String("111111111111"),
 				CreatedAtTime:    aws.Time(time.Now()),
 				CreatedBy:        aws.String("e049e3db-8c34-46c2-b5f2-8d01332a9921"),
@@ -61,7 +61,7 @@ var (
 
 	exampleIntegrations = []*models.SourceIntegration{
 		{
-			SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 				AWSAccountID:     aws.String("888888888888"),
 				CreatedAtTime:    aws.Time(time.Now()),
 				CreatedBy:        aws.String("96bad46d-2599-4926-a136-c6f4f7f3b1a3"),
@@ -72,7 +72,7 @@ var (
 			},
 		},
 		{
-			SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 				AWSAccountID:     aws.String("111111111111"),
 				CreatedAtTime:    aws.Time(time.Now()),
 				CreatedBy:        aws.String("e049e3db-8c34-46c2-b5f2-8d01332a9921"),
@@ -86,7 +86,7 @@ var (
 
 	exampleIntegrations2 = []*models.SourceIntegration{
 		{
-			SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 				AWSAccountID:     aws.String("888888888888"),
 				CreatedAtTime:    aws.Time(time.Now()),
 				CreatedBy:        aws.String("96bad46d-2599-4926-a136-c6f4f7f3b1a3"),
@@ -97,7 +97,7 @@ var (
 			},
 		},
 		{
-			SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 				AWSAccountID:     aws.String("111111111111"),
 				CreatedAtTime:    aws.Time(time.Now()),
 				CreatedBy:        aws.String("e049e3db-8c34-46c2-b5f2-8d01332a9921"),
@@ -108,7 +108,7 @@ var (
 			},
 		},
 		{
-			SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 				AWSAccountID:     aws.String("333333333333"),
 				CreatedAtTime:    aws.Time(time.Now()),
 				CreatedBy:        aws.String("96bad46d-2599-4926-a136-c6f4f7f3b1a3"),

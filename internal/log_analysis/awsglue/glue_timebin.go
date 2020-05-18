@@ -20,9 +20,14 @@ package awsglue
 
 import (
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
+	"github.com/pkg/errors"
 )
 
 // Use this to tag the time partitioning used in a GlueTableMetadata table
@@ -76,4 +81,43 @@ func (tb GlueTableTimebin) PartitionValuesFromTime(t time.Time) (values []*strin
 		values = append(values, aws.String(fmt.Sprintf("%02d", t.Hour())))
 	}
 	return
+}
+
+// PartitionS3PathFromTime constructs the S3 path for this partition
+func (tb GlueTableTimebin) PartitionS3PathFromTime(t time.Time) (s3Path string) {
+	switch tb {
+	case GlueTableHourly:
+		return fmt.Sprintf("year=%d/month=%02d/day=%02d/hour=%02d/", t.Year(), t.Month(), t.Day(), t.Hour())
+	case GlueTableDaily:
+		return fmt.Sprintf("year=%d/month=%02d/day=%02d/", t.Year(), t.Month(), t.Day())
+	default:
+		return fmt.Sprintf("year=%d/month=%02d/", t.Year(), t.Month())
+	}
+}
+
+// PartitionHasData checks if there is at least 1 s3 object in the partition
+func (tb GlueTableTimebin) PartitionHasData(client s3iface.S3API, t time.Time, tableOutput *glue.GetTableOutput) (bool, error) {
+	location, err := url.Parse(*tableOutput.Table.StorageDescriptor.Location)
+	if err != nil {
+		return false, errors.Wrapf(err, "Cannot parse s3 path: %s",
+			*tableOutput.Table.StorageDescriptor.Location)
+	}
+
+	// list files w/pagination
+	inputParams := &s3.ListObjectsV2Input{
+		Bucket:  aws.String(location.Host),
+		Prefix:  aws.String(tb.PartitionS3PathFromTime(t)),
+		MaxKeys: aws.Int64(1), // look for at least 1
+	}
+	var hasData bool
+	err = client.ListObjectsV2Pages(inputParams, func(page *s3.ListObjectsV2Output, isLast bool) bool {
+		for _, value := range page.Contents {
+			if *value.Size > 0 { // we only care about objects with size
+				hasData = true
+			}
+		}
+		return !hasData // "To stop iterating, return false from the fn function."
+	})
+
+	return hasData, err
 }

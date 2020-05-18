@@ -111,6 +111,12 @@ Resources:
       LogGroupName: /aws/lambda/panther-alert-processor
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
+  AlertProcessorMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref AlertProcessorLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   AlertProcessorFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -211,6 +217,12 @@ Resources:
     Properties:
       LogGroupName: /aws/lambda/panther-alert-forwarder
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  AlertForwarderMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref AlertForwarderLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   AlertForwarderFunction:
     Type: AWS::Serverless::Function
@@ -346,6 +358,12 @@ Resources:
       LogGroupName: /aws/lambda/panther-aws-event-processor
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
+  EventProcessorMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref EventProcessorLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   EventProcessorFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -470,6 +488,12 @@ Resources:
     Properties:
       LogGroupName: /aws/lambda/panther-compliance-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  ComplianceApiMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref ComplianceApiLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ComplianceGatewayInvocation: # allow API gateway to invoke the compliance-api Lambda function
     Type: AWS::Lambda::Permission
@@ -616,12 +640,24 @@ Resources:
       LogGroupName: /aws/lambda/panther-remediation-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
+  RemediationApiMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref RemediationApiLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ##### Remediation Processor #####
   RemediationProcessorLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/lambda/panther-remediation-processor
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  RemediationProcessorMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref RemediationProcessorLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   RemediationProcessorFunction:
     Type: AWS::Serverless::Function
@@ -685,6 +721,13 @@ Resources:
       LogGroupName: /aws/lambda/panther-aws-remediation
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
+  RemediationMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LambdaRuntime: Python
+      LogGroupName: !Ref RemediationLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   RemediationFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -701,7 +744,7 @@ Resources:
       Environment:
         Variables:
           LOGGING_LEVEL: !If [DebugEnabled, DEBUG, INFO]
-          MASTER_REGION: !Sub ${AWS::Region}
+          MASTER_REGION: !Ref AWS::Region
       Layers: !If
         - AttachLayers
         - !Split # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
@@ -796,6 +839,12 @@ Resources:
       LogGroupName: /aws/lambda/panther-resources-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
+  ResourcesApiMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref ResourcesApiLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ResourcesTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -860,6 +909,12 @@ Resources:
     Properties:
       LogGroupName: /aws/lambda/panther-resource-processor
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  ResourceProcessorMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref ResourceProcessorLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ResourceProcessorFunction:
     Type: AWS::Serverless::Function
@@ -975,15 +1030,27 @@ Resources:
           Version: 2012-10-17
           Statement:
             - Effect: Allow
-              Action:
-                - dynamodb:GetItem
+              Action: dynamodb:GetItem
               Resource: !GetAtt ResourcesTable.Arn
+        - Id: KeyValueStore
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: dynamodb:*Item
+              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-kv-store
 
   PolicyEngineLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/lambda/panther-policy-engine
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  PolicyEngineMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LambdaRuntime: Python
+      LogGroupName: !Ref PolicyEngineLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Snapshot Poller #####
   SnapshotQueue:
@@ -1085,6 +1152,12 @@ Resources:
       LogGroupName: /aws/lambda/panther-snapshot-pollers
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
+  PollerMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref PollerLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ##### Snapshot Scheduler #####
   SnapshotSchedulerFunction:
     Type: AWS::Serverless::Function
@@ -1140,3 +1213,9 @@ Resources:
     Properties:
       LogGroupName: /aws/lambda/panther-snapshot-scheduler
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  SnapshotSchedulerMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref SnapshotSchedulerLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources

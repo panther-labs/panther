@@ -175,7 +175,8 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 		default: // makes select non-blocking
 		}
 
-		data, err := jsoniter.Marshal(event.Event())
+		// Use renaming field JSON serializer
+		data, err := parsers.JSON.Marshal(event.Event())
 		if err != nil {
 			failed = true
 			errChan <- errors.Wrap(err, "failed to marshall log parser event for S3")

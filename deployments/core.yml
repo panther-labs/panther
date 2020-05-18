@@ -100,6 +100,12 @@ Resources:
       LogGroupName: /aws/lambda/panther-users-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
+  UsersAPIMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref UsersAPILogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   UsersAPIFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -183,6 +189,12 @@ Resources:
     Properties:
       LogGroupName: /aws/lambda/panther-organization-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  OrganizationAPIMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref OrganizationAPILogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   OrganizationAPIFunction:
     Type: AWS::Serverless::Function
@@ -305,6 +317,12 @@ Resources:
       LogGroupName: /aws/lambda/panther-analysis-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
+  AnalysisApiMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref AnalysisApiLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   GatewayInvocationPermission: # allow API gateway to invoke analysis-api Lambda function
     Type: AWS::Lambda::Permission
     Properties:
@@ -425,6 +443,12 @@ Resources:
       LogGroupName: /aws/lambda/panther-outputs-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
+  OutputsApiMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref OutputsApiLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ##### Alert Delivery #####
   AlertQueue:
     Type: AWS::SQS::Queue
@@ -536,6 +560,12 @@ Resources:
       LogGroupName: /aws/lambda/panther-alert-delivery
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
+  AlertDeliveryMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref AlertDeliveryLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ##### Source API #####
   IntegrationsTable:
     Type: AWS::DynamoDB::Table
@@ -637,6 +667,12 @@ Resources:
     Properties:
       LogGroupName: /aws/lambda/panther-source-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  SourceApiMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref SourceApiLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Layer Management #####
   LayerQueue:
@@ -765,3 +801,33 @@ Resources:
     Properties:
       LogGroupName: /aws/lambda/panther-layer-manager
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  LayerManagerMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref LayerManagerLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  ##### Key-Value store for Python policies/rules #####
+  KeyValueStoreTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: panther-kv-store
+      # <cfndoc>
+      # Key-value store for Python policies/rules to use however they like
+      #
+      # Failure Impact
+      # * Custom rules / policies which leverage the table may be failing
+      # * Panther itself is not affected
+      # </cfndoc>
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: key
+          AttributeType: S
+      KeySchema:
+        - AttributeName: key
+          KeyType: HASH
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: True
+      SSESpecification:
+        SSEEnabled: True

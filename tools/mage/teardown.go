@@ -204,11 +204,7 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 			return
 		}
 
-		if strings.Contains(result.stackName, "skipped") {
-			logger.Infof("    √ %s (%d/%d)", result.stackName, finishCount, len(allStacks))
-		} else {
-			logger.Infof("    √ %s successfully deleted (%d/%d)", result.stackName, finishCount, len(allStacks))
-		}
+		logger.Infof("    √ %s deleted (%d/%d)", result.stackName, finishCount, len(allStacks))
 	}
 
 	// The stackset must be deleted before the StackSetExecutionRole and the StackSetAdminRole
@@ -228,12 +224,16 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 		frontendStack,
 		glueStack,
 		logAnalysisStack,
-		metricFilterStack,
 		onboardStack,
 	}
 	logger.Infof("deleting %d CloudFormation stacks", len(allStacks))
+
+	deleteFunc := func(client *cloudformation.CloudFormation, stack string, r chan deleteStackResult) {
+		r <- deleteStackResult{stackName: stack, err: deleteStack(client, &stack)}
+	}
+
 	for _, stack := range parallelStacks {
-		go deleteStack(client, aws.String(stack), results)
+		go deleteFunc(client, stack, results)
 	}
 
 	// Wait for all of the main stacks to finish deleting
@@ -242,8 +242,8 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 	}
 
 	// Now finish with the bootstrap stacks
-	go deleteStack(client, aws.String(bootstrapStack), results)
-	go deleteStack(client, aws.String(gatewayStack), results)
+	go deleteFunc(client, bootstrapStack, results)
+	go deleteFunc(client, gatewayStack, results)
 	for i := 0; i < 2; i++ {
 		handleResult(<-results)
 	}
@@ -302,14 +302,13 @@ func deleteStackSet(client *cloudformation.CloudFormation, identity *sts.GetCall
 }
 
 // Delete a single CFN stack and wait for it to finish
-func deleteStack(client *cloudformation.CloudFormation, stack *string, results chan deleteStackResult) {
+func deleteStack(client *cloudformation.CloudFormation, stack *string) error {
 	if _, err := client.DeleteStack(&cloudformation.DeleteStackInput{StackName: stack}); err != nil {
-		results <- deleteStackResult{stackName: *stack, err: err}
-		return
+		return err
 	}
 
 	_, err := waitForStackDelete(client, *stack)
-	results <- deleteStackResult{stackName: *stack, err: err}
+	return err
 }
 
 // Delete all objects in the given S3 buckets and then remove them.

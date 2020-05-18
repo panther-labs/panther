@@ -24,9 +24,21 @@ import (
 	"github.com/panther-labs/panther/tools/config"
 )
 
+const (
+	metricFilterNamespace = "Panther"
+
+	lambdaErrorsMetricFilterName = "errors"
+	lambdaWarnsMetricFilterName  = "warns"
+	lambdaMemoryMetricFilterName = "memory"
+)
+
 type LambdaAlarm struct {
 	Alarm
 	lambdaName string
+}
+
+func LambdaMetricFilterName(lambdaName, metricName string) string {
+	return lambdaName + "-" + metricName
 }
 
 func NewLambdaAlarm(alarmType, metricName, message string, resource map[string]interface{}) *LambdaAlarm {

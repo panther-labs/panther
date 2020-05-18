@@ -60,6 +60,10 @@ Parameters:
     Description: Toggle debug logging
     Default: false
     AllowedValues: [true, false]
+  AlarmTopicArn:
+    Type: String
+    Description: An existing SNS topic for CloudWatch alarms. If not specified, one is created for you.
+    Default: ''
 
 Mappings:
   SubnetConfig:
@@ -126,6 +130,7 @@ Conditions:
   TracingEnabled: !Not [!Equals [!Ref TracingMode, '']]
   UseCustomDomain: !Not [!Equals [!Ref CustomDomain, '']]
   EnableDebug: !Equals [!Ref Debug, true]
+  CreateAlarmSNSTopic: !Equals [!Ref AlarmTopicArn, '']
 
 Resources:
   ########## S3 Buckets ##########
@@ -186,13 +191,13 @@ Resources:
             Principal:
               Service: delivery.logs.amazonaws.com
             Action: s3:GetBucketAcl
-            Resource: !Sub arn:aws:s3:::${AuditLogs}
+            Resource: !GetAtt AuditLogs.Arn
           - Sid: VPCFlowWrite
             Effect: Allow
             Principal:
               Service: delivery.logs.amazonaws.com
             Action: s3:PutObject
-            Resource: !Sub arn:aws:s3:::${AuditLogs}/AWSLogs/${AWS::AccountId}/*
+            Resource: !Sub arn:${AWS::Partition}:s3:::${AuditLogs}/AWSLogs/${AWS::AccountId}/*
             Condition:
               StringEquals:
                 's3:x-amz-acl': bucket-owner-full-control
@@ -201,13 +206,13 @@ Resources:
             Principal:
               Service: cloudtrail.amazonaws.com
             Action: s3:GetBucketAcl
-            Resource: !Sub arn:aws:s3:::${AuditLogs}
+            Resource: !GetAtt AuditLogs.Arn
           - Sid: CloudTrailWrite
             Effect: Allow
             Principal:
               Service: cloudtrail.amazonaws.com
             Action: s3:PutObject
-            Resource: !Sub arn:aws:s3:::${AuditLogs}/AWSLogs/${AWS::AccountId}/*
+            Resource: !Sub arn:${AWS::Partition}:s3:::${AuditLogs}/AWSLogs/${AWS::AccountId}/*
             Condition:
               StringEquals:
                 's3:x-amz-acl': bucket-owner-full-control
@@ -216,19 +221,27 @@ Resources:
             Principal:
               AWS: !FindInMap [ELBAccounts, !Ref 'AWS::Region', ARN]
             Action: s3:PutObject
-            Resource: !Sub arn:aws:s3:::${AuditLogs}/AWSLogs/${AWS::AccountId}/*
+            Resource: !Sub arn:${AWS::Partition}:s3:::${AuditLogs}/AWSLogs/${AWS::AccountId}/*
           - Sid: GuardDutyBucketLocation
             Effect: Allow
             Principal:
               Service: guardduty.amazonaws.com
             Action: s3:GetBucketLocation
-            Resource: !Sub arn:aws:s3:::${AuditLogs}
+            Resource: !GetAtt AuditLogs.Arn
           - Sid: GuardDutyWrite
             Effect: Allow
             Principal:
               Service: guardduty.amazonaws.com
             Action: s3:PutObject
-            Resource: !Sub arn:aws:s3:::${AuditLogs}/*
+            Resource: !Sub arn:${AWS::Partition}:s3:::${AuditLogs}/*
+          - Sid: ForceSSL
+            Effect: Deny
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub arn:${AWS::Partition}:s3:::${AuditLogs}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: false
 
   Source: # Staging bucket for CloudFormation to upload templates, Lambda source, etc
     Type: AWS::S3::Bucket
@@ -257,6 +270,21 @@ Resources:
       VersioningConfiguration:
         Status: Enabled
 
+  SourceBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref Source
+      PolicyDocument:
+        Statement:
+          - Sid: ForceSSL
+            Effect: Deny
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub arn:${AWS::Partition}:s3:::${Source}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+
   AnalysisVersions: # analysis-api stores old python rule/policy versions here
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
@@ -282,6 +310,21 @@ Resources:
         RestrictPublicBuckets: true
       VersioningConfiguration:
         Status: Enabled
+
+  AnalysisVersionsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref AnalysisVersions
+      PolicyDocument:
+        Statement:
+          - Sid: ForceSSL
+            Effect: Deny
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub arn:${AWS::Partition}:s3:::${AnalysisVersions}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: false
 
   ProcessedData: # processed security logs
     Type: AWS::S3::Bucket
@@ -319,7 +362,7 @@ Resources:
             Principal:
               AWS: !Ref LogSubscriptionPrincipals
             Action: s3:ListBucket
-            Resource: !Sub arn:aws:s3:::${ProcessedData}
+            Resource: !GetAtt ProcessedData.Arn
           - Sid: ReadLogData
             Effect: Allow
             Principal:
@@ -327,7 +370,7 @@ Resources:
             Action:
               - s3:GetObject
               - s3:GetObjectVersion
-            Resource: !Sub arn:aws:s3:::${ProcessedData}/logs/*
+            Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedData}/logs/*
           - Sid: ReadRuleData
             Effect: Allow
             Principal:
@@ -335,7 +378,15 @@ Resources:
             Action:
               - s3:GetObject
               - s3:GetObjectVersion
-            Resource: !Sub arn:aws:s3:::${ProcessedData}/rules/*
+            Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedData}/rules/*
+          - Sid: ForceSSL
+            Effect: Deny
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedData}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: false
 
   AthenaResults: # athena query results
     Type: AWS::S3::Bucket
@@ -363,6 +414,21 @@ Resources:
       AccessControl: Private
       VersioningConfiguration:
         Status: Enabled
+
+  AthenaResultsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref AthenaResults
+      PolicyDocument:
+        Statement:
+          - Sid: ForceSSL
+            Effect: Deny
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub arn:${AWS::Partition}:s3:::${AthenaResults}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: false
 
   ########## Cognito ##########
   # MFA is configured for the user pool via the Go SDK rather than CloudFormation.
@@ -534,7 +600,7 @@ Resources:
     Type: AWS::EC2::FlowLog
     DependsOn: AuditLogsBucketPolicy
     Properties:
-      LogDestination: !Sub arn:aws:s3:::${AuditLogs}
+      LogDestination: !Sub arn:${AWS::Partition}:s3:::${AuditLogs}
       LogDestinationType: s3
       ResourceId: !Ref VPC
       ResourceType: VPC
@@ -765,6 +831,18 @@ Resources:
             Action: sns:Subscribe
             Resource: !Ref ProcessedDataNotifications
 
+  AlarmNotifications:
+    Condition: CreateAlarmSNSTopic
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: panther-cw-alarms
+      # <cfndoc>
+      # CloudWatch alarms are configured to notify this topic
+      #
+      # Failure Impact
+      # * CloudWatch alarm notifications will not be delivered to subscribers
+      # </cfndoc>
+
 Outputs:
   # S3
   AnalysisVersionsBucket:
@@ -842,3 +920,6 @@ Outputs:
   ProcessedDataTopicArn:
     Description: SNS topic ARN for processed log data notifications
     Value: !Ref ProcessedDataNotifications
+  AlarmTopicArn:
+    Description: SNS topic ARN for CloudWatch alarms
+    Value: !If [CreateAlarmSNSTopic, !Ref AlarmNotifications, !Ref AlarmTopicArn]
