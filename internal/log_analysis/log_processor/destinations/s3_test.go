@@ -497,9 +497,7 @@ func TestSendDataFailsIfSnsFails(t *testing.T) {
 
 func TestBufferSetLargest(t *testing.T) {
 	const size = 100
-	event := &parsers.PantherLog{}
-	event.PantherLogType = aws.String(testLogType)
-	event.PantherEventTime = &refTime
+	event := newTestEvent(testLogType, refTime)
 	bs := newS3EventBufferSet()
 	result, err := event.Result()
 	require.NoError(t, err)
@@ -507,7 +505,7 @@ func TestBufferSetLargest(t *testing.T) {
 	expectedLargest.bytes = size
 	for i := 0; i < size-1; i++ {
 		// incr hour so we get new buffers
-		*event.PantherEventTime = (timestamp.RFC3339)((time.Time)(*event.PantherEventTime).Add(time.Hour))
+		result.EventTime = result.EventTime.Add(time.Hour)
 		buffer := bs.getBuffer(result)
 		buffer.bytes = i
 	}
