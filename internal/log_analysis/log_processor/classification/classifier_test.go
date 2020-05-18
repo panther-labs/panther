@@ -20,13 +20,15 @@ package classification
 
 import (
 	"testing"
+	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common/box"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
 
@@ -73,12 +75,26 @@ func (r TestRegistry) LookupParser(logType string) (lpm *registry.LogParserMetad
 	return (registry.Registry)(r).LookupParser(logType) // call registry code
 }
 
+// TODO: thorough test when parsers return parsers.Result
 func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 	succeedingParser := &mockParser{}
 	failingParser1 := &mockParser{}
 	failingParser2 := &mockParser{}
 
-	succeedingParser.On("Parse", mock.Anything).Return([]*parsers.PantherLog{{}}, nil)
+	tm := time.Now().UTC()
+	successPantherLog := parsers.PantherLog{
+		PantherLogType:   box.String("success"),
+		PantherEventTime: (*timestamp.RFC3339)(&tm),
+	}
+	successPantherLog.SetEvent(struct {
+		Foo string `json:"foo"`
+	}{
+		Foo: "foo",
+	})
+
+	succeedingParser.On("Parse", mock.Anything).Return([]*parsers.PantherLog{
+		&successPantherLog,
+	}, nil)
 	succeedingParser.On("LogType").Return("success")
 	failingParser1.On("Parse", mock.Anything).Return(nil, errors.New("fail1"))
 	failingParser1.On("LogType").Return("failure1")
@@ -103,8 +119,14 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 	repetitions := 1000
 
 	expectedResult := &ClassifierResult{
-		Events:  []*parsers.Result{{}},
-		LogType: aws.String("success"),
+		LogType: box.String("success"),
+		Events: []*parsers.Result{
+			{
+				LogType:   "success",
+				EventTime: tm.UTC(),
+				JSON:      []byte(`{"foo":"foo"}`),
+			},
+		},
 	}
 	expectedStats := &ClassifierStats{
 		BytesProcessedCount:         uint64(repetitions * len(logLine)),
