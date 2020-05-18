@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import {Field, Form, Formik} from 'formik';
+import { Field, Form, Formik } from 'formik';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import { Flex } from 'pouncejs';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -66,38 +66,35 @@ const UserForm: React.FC<UserFormProps> = ({ initialValues, onSubmit }) => {
       enableReinitialize
       validationSchema={validationSchema}
     >
-        return (
-          <Form>
-            <Field
-              as={FormikTextInput}
-              label="Email address"
-              placeholder="john@doe.com"
-              name="email"
-              aria-required
-              mb={3}
-            />
-            <Flex mb={6} justify="space-between">
-              <Field
-                as={FormikTextInput}
-                label="First Name"
-                placeholder="John"
-                name="givenName"
-                aria-required
-              />
-              <Field
-                as={FormikTextInput}
-                label="Last Name"
-                placeholder="Doe"
-                name="familyName"
-                aria-required
-              />
-            </Flex>
-            <Flex borderTop="1px solid" borderColor="grey100" pt={6} mt={10} justify="flex-end">
-              <SubmitButton width={1}>
-                {initialValues.id ? 'Update' : 'Invite'}
-              </SubmitButton>
-            </Flex>
-          </Form>
+      <Form>
+        <Field
+          as={FormikTextInput}
+          label="Email address"
+          placeholder="john@doe.com"
+          name="email"
+          aria-required
+          mb={3}
+        />
+        <Flex mb={6} justify="space-between">
+          <Field
+            as={FormikTextInput}
+            label="First Name"
+            placeholder="John"
+            name="givenName"
+            aria-required
+          />
+          <Field
+            as={FormikTextInput}
+            label="Last Name"
+            placeholder="Doe"
+            name="familyName"
+            aria-required
+          />
+        </Flex>
+        <Flex borderTop="1px solid" borderColor="grey100" pt={6} mt={10} justify="flex-end">
+          <SubmitButton width={1}>{initialValues.id ? 'Update' : 'Invite'}</SubmitButton>
+        </Flex>
+      </Form>
     </Formik>
   );
 };

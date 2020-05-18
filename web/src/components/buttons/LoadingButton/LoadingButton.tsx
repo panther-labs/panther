@@ -16,6 +16,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default as RemediationButton } from './RemediationButton';
-export { default as SubmitButton } from './SubmitButton';
-export { default as SuppressButton } from './SuppressButton';
+import React from 'react';
+import { Button, Spinner, Flex, ButtonProps } from 'pouncejs';
+
+const LoadingButton: React.FC<Omit<ButtonProps, 'size' | 'variant'> & { loading?: boolean }> = ({
+  children,
+  disabled,
+  loading,
+  ...rest
+}) => {
+  return (
+    <Button {...rest} type="submit" size="large" variant="primary" disabled={disabled}>
+      {loading ? (
+        <Flex align="center" justify="center">
+          <Spinner size="small" mr={2} />
+          {children}
+        </Flex>
+      ) : (
+        children
+      )}
+    </Button>
+  );
+};
+
+export default React.memo(LoadingButton);
