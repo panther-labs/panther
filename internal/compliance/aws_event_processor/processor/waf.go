@@ -70,7 +70,7 @@ func classifyWAF(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 	case "PutLoggingConfiguration":
 		wafARN = detail.Get("requestParameters.loggingConfiguration.resourceArn").Str
 	default:
-		zap.L().Error("waf: encountered unknown event name", zap.String("eventName", metadata.eventName))
+		zap.L().Info("waf: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 

@@ -86,7 +86,7 @@ func classifyCloudTrail(detail gjson.Result, metadata *CloudTrailMetadata) []*re
 				ResourceType: schemas.CloudTrailSchema,
 			}}
 	default:
-		zap.L().Warn("cloudtrail: encountered unknown event name", zap.String("eventName", metadata.eventName))
+		zap.L().Info("cloudtrail: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 

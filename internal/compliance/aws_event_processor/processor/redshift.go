@@ -124,7 +124,7 @@ func classifyRedshift(detail gjson.Result, metadata *CloudTrailMetadata) []*reso
 		}
 		return nil
 	default:
-		zap.L().Warn("redshift: encountered unknown event name", zap.String("eventName", metadata.eventName))
+		zap.L().Info("redshift: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 

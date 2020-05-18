@@ -78,7 +78,7 @@ func classifyECS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 			ResourceType: schemas.EcsClusterSchema,
 		}}
 	default:
-		zap.L().Warn("ecs: encountered unknown event name", zap.String("eventName", metadata.eventName))
+		zap.L().Info("ecs: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
