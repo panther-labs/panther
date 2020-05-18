@@ -1,6 +1,6 @@
 scalar AWSEmail
-scalar AWSTimestamp
 scalar AWSDateTime
+scalar AWSTimestamp
 scalar AWSJSON
 
 schema {
