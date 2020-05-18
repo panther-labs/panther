@@ -113,3 +113,39 @@ func QuickParseJSON(log string, logEvent PantherLogEventer) ([]*Result, error) {
 	event.Close()
 	return result.Results(), nil
 }
+
+// Result converts a PantherLog to Result
+// NOTE: Currently in this file to help with review
+func (pl *PantherLog) Result() (*Result, error) {
+	event := pl.Event()
+	if event == nil {
+		return nil, errors.New("nil event")
+	}
+	if pl.PantherLogType == nil {
+		return nil, errors.New("nil log type")
+	}
+	if pl.PantherEventTime == nil {
+		return nil, errors.New("nil event time")
+	}
+	tm := ((*time.Time)(pl.PantherEventTime)).UTC()
+	// Use custom JSON marshaler to rewrite fields
+	data, err := JSON.Marshal(event)
+	if err != nil {
+		return nil, err
+	}
+	return &Result{
+		LogType:   *pl.PantherLogType,
+		EventTime: tm,
+		JSON:      data,
+	}, nil
+}
+
+// Results converts a PantherLog to a slice of results
+// NOTE: Currently in this file to help with review
+func (pl *PantherLog) Results() ([]*Result, error) {
+	result, err := pl.Result()
+	if err != nil {
+		return nil, err
+	}
+	return []*Result{result}, nil
+}
