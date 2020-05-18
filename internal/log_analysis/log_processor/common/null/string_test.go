@@ -64,6 +64,7 @@ func TestNullStringCodec(t *testing.T) {
 
 func BenchmarkNullString(b *testing.B) {
 	data := []byte(`{"foo":"bar","bar":"baz","baz":null}`)
+	// nolint:lll
 	data12 := []byte(`{"f01":"01","f02":"02","f03":"03","f04":"04","f05":"05","f06":"06","f07":"07","f08":"08","f09":"09","f10":"10","f11":"11","f12":null}`)
 	type A struct {
 		Foo null.String `json:"foo,omitempty"`

@@ -57,6 +57,8 @@ func TestIPAddress(t *testing.T) {
 		{"", false},
 		{"-", false},
 	} {
+		// Avoid lint
+		tc := tc
 		t.Run(tc.Value, func(t *testing.T) {
 			field := logs.IPAddress(tc.Value)
 			if field.IsZero() {
@@ -115,5 +117,4 @@ func TestNonEmptyParser(t *testing.T) {
 		require.NoError(t, err)
 		require.Nil(t, fields)
 	}
-
 }
