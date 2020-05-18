@@ -938,7 +938,7 @@ Outputs:
   # Dynamo
   DynamoScalingRoleArn:
     Description: IAM role arn for DynamoDB auto-scaling
-    Value: !Ref DynamoScalingRole
+    Value: !GetAtt DynamoScalingRole.Arn
 
   # KMS
   OutputsEncryptionKeyId:
