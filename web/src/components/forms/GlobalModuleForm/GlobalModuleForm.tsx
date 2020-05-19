@@ -62,7 +62,7 @@ const GlobalModuleForm: React.FC<GlobalModuleFormProps> = ({ initialValues, onSu
           <FormSessionRestoration sessionId="global-module">
             <Form>
               <Text size="large" color="grey300" mb={4}>
-                The global module allows you to define a set of re-usable functions, variables and
+                The global module allows you to define a set of reusable functions, variables and
                 classes which can be directly imported to your Rule or Policy definition. Anything
                 defined below can later be imported through the aws_imports module
               </Text>
