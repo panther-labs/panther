@@ -50,7 +50,7 @@ import Page404 from 'Pages/404';
 import APIErrorFallback from 'Components/utils/ApiErrorFallback';
 import LogAnalysisOverview from 'Pages/LogAnalysisOverview';
 import EditComplianceSourcePage from 'Pages/EditComplianceSource';
-import EditLogSourcePage from 'Pages/EditLogSource';
+import EditS3LogSourcePage from 'Pages/EditS3LogSource';
 import PromptController from 'Components/utils/PromptController';
 import EditGlobalModulePage from 'Pages/EditGlobaModule';
 
@@ -150,13 +150,18 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                 />
                 <Route
                   exact
-                  path={urls.logAnalysis.sources.create()}
+                  path={urls.logAnalysis.sources.create(':type')}
                   component={CreateLogSourcePage}
                 />
                 <Route
                   exact
-                  path={urls.logAnalysis.sources.edit(':id')}
-                  component={EditLogSourcePage}
+                  path={urls.logAnalysis.sources.edit(':id', 's3')}
+                  component={EditS3LogSourcePage}
+                />
+                <Redirect
+                  exact
+                  from={`${urls.logAnalysis.sources.list()}:type`}
+                  to={urls.logAnalysis.sources.list()}
                 />
                 /******************** SETTINGS ******************************/
                 <Redirect exact from={urls.settings.home()} to={urls.settings.general()} />

@@ -1,5 +1,0 @@
-query GetLogSource($id: ID!) {
-  getLogIntegration(id: $id) {
-    ...LogIntegrationDetails
-  }
-}
