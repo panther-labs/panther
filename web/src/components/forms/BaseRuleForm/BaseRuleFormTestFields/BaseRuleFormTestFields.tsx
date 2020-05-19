@@ -40,6 +40,8 @@ import FormikCombobox from 'Components/fields/ComboBox';
 import FormikRadio from 'Components/fields/Radio';
 import { PolicyFormValues } from 'Components/forms/PolicyForm';
 import { RuleFormValues } from 'Components/forms/RuleForm';
+import { MODALS } from 'Components/utils/Modal';
+import useModal from 'Hooks/useModal';
 import PolicyFormTestResultList from '../BaseRuleFormTestResultList';
 import { useTestPolicy } from './graphql/testPolicy.generated';
 
@@ -56,6 +58,8 @@ const BaseRuleFormTestFields: React.FC = () => {
     validateForm,
   } = useFormikContext<FormFields>();
   const isPolicy = resourceTypes !== undefined;
+
+  const { showModal } = useModal();
 
   // Controls which test is the active test at the moment through a simple index variable
   const [activeTabIndex, setActiveTabIndex] = React.useState(0);
@@ -135,19 +139,27 @@ const BaseRuleFormTestFields: React.FC = () => {
               // but only close it. Thus, we can't let the click event propagate.
               e.stopPropagation();
 
-              // If we are removing an item that's to the "left" of the currently active one,
-              // we will need to also move the `activeIndex` to the "left" by 1 tab
-              if (index <= activeTabIndex) {
-                setActiveTabIndex(index > 0 ? index - 1 : 0);
-              }
+              showModal({
+                modal: MODALS.DELETE_TEST,
+                props: {
+                  test: tests[index],
+                  onConfirm: () => {
+                    // If we are removing an item that's to the "left" of the currently active one,
+                    // we will need to also move the `activeIndex` to the "left" by 1 tab
+                    if (index <= activeTabIndex) {
+                      setActiveTabIndex(index > 0 ? index - 1 : 0);
+                    }
 
-              // removes the test
-              arrayHelpers.remove(index);
+                    // removes the test
+                    arrayHelpers.remove(index);
 
-              // There is currently a bug with Formik v2 and removing an item causes a wrong
-              // `errors` state to be present. We manually kick in validation to fix that.
-              // https://github.com/jaredpalmer/formik/issues/1616
-              setTimeout(validateForm, 200);
+                    // There is currently a bug with Formik v2 and removing an item causes a wrong
+                    // `errors` state to be present. We manually kick in validation to fix that.
+                    // https://github.com/jaredpalmer/formik/issues/1616
+                    setTimeout(validateForm, 200);
+                  },
+                },
+              });
             };
 
             return (
