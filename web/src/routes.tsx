@@ -53,6 +53,7 @@ import EditComplianceSourcePage from 'Pages/EditComplianceSource';
 import EditS3LogSourcePage from 'Pages/EditS3LogSource';
 import PromptController from 'Components/utils/PromptController';
 import EditGlobalModulePage from 'Pages/EditGlobaModule';
+import LogSourceOnboarding from 'Pages/LogSourceOnboarding';
 
 // Main page container for the web application, Navigation bar and Content body goes here
 const PrimaryPageLayout: React.FunctionComponent = () => {
@@ -152,6 +153,11 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   exact
                   path={urls.logAnalysis.sources.create(':type')}
                   component={CreateLogSourcePage}
+                />
+                <Route
+                  exact
+                  path={urls.logAnalysis.sources.create()}
+                  component={LogSourceOnboarding}
                 />
                 <Route
                   exact

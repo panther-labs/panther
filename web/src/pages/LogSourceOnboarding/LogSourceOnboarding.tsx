@@ -36,11 +36,13 @@ const logSourcesConfig = [
     logo: eventBridgeLogo,
     title: 'Amazon EventBridge',
     type: 'eventbridge',
+    disabled: true,
   },
   {
     logo: oktaLogo,
     title: 'Okta',
     type: 'okta',
+    disabled: true,
   },
   {
     logo: duoLogo,

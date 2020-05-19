@@ -62,7 +62,7 @@ const LogSourceCard: React.FC<ItemCardProps> = ({ logo, title, to, disabled }) =
           </Flex>
           {disabled ? (
             <Box mr={4}>
-              <Badge color="blue">Coming Soon</Badge>
+              <Badge color="blue">Enterprise Only</Badge>
             </Box>
           ) : (
             <Flex justifyContent="center" alignItems="center">
