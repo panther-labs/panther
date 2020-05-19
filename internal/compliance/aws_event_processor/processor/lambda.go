@@ -85,7 +85,7 @@ func classifyLambda(detail gjson.Result, metadata *CloudTrailMetadata) []*resour
 			return nil
 		}
 	default:
-		zap.L().Warn("lambda: encountered unknown event name", zap.String("eventName", metadata.eventName))
+		zap.L().Info("lambda: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 

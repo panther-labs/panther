@@ -102,7 +102,7 @@ func classifyDynamoDB(detail gjson.Result, metadata *CloudTrailMetadata) []*reso
 		}
 		dynamoARN = tableARN
 	default:
-		zap.L().Warn("dynamodb: encountered unknown event name", zap.String("eventName", metadata.eventName))
+		zap.L().Info("dynamodb: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 

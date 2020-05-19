@@ -15,7 +15,7 @@ Reference: https://docs.gitlab.com/ee/administration/logs.html#api_jsonlog
 <tr><td valign=top><code><b>status</b></code></td><td><code>bigint</code></td><td valign=top>The HTTP response status code</td></tr>
 <tr><td valign=top><code><b>method</b></code></td><td><code>string</code></td><td valign=top>The HTTP method of the request</td></tr>
 <tr><td valign=top><code><b>path</b></code></td><td><code>string</code></td><td valign=top>The URL path for the request</td></tr>
-<tr><td valign=top><code>params</code></td><td><code>[{<br>&nbps;&nbps;"key":string,<br>&nbps;&nbps;"value":string<br>}]</code></td><td valign=top>The URL query parameters</td></tr>
+<tr><td valign=top><code>params</code></td><td><code>[{<br>&nbsp;&nbsp;"key":string,<br>&nbsp;&nbsp;"value":string<br>}]</code></td><td valign=top>The URL query parameters</td></tr>
 <tr><td valign=top><code><b>host</b></code></td><td><code>string</code></td><td valign=top>Hostname serving the request</td></tr>
 <tr><td valign=top><code>ua</code></td><td><code>string</code></td><td valign=top>User-Agent HTTP header</td></tr>
 <tr><td valign=top><code><b>route</b></code></td><td><code>string</code></td><td valign=top>Rails route for the API endpoint</td></tr>
@@ -72,7 +72,7 @@ Reference: https://docs.gitlab.com/ee/administration/logs.html#exceptions_jsonlo
 <tr><td valign=top><code><b>severity</b></code></td><td><code>string</code></td><td valign=top>The log level</td></tr>
 <tr><td valign=top><code><b>time</b></code></td><td><code>timestamp</code></td><td valign=top>The event timestamp</td></tr>
 <tr><td valign=top><code>correlation_id</code></td><td><code>string</code></td><td valign=top>Request unique id across logs</td></tr>
-<tr><td valign=top><code>extra.server</code></td><td><code>{<br>&nbps;&nbps;"os":{<br>&nbps;&nbps;&nbps;&nbps;"name":string,<br>&nbps;&nbps;&nbps;&nbps;"version":string,<br>&nbps;&nbps;&nbps;&nbps;"build":string<br>},<br>&nbps;&nbps;"runtime":{<br>&nbps;&nbps;&nbps;&nbps;"name":string,<br>&nbps;&nbps;&nbps;&nbps;"version":string<br>}<br>}</code></td><td valign=top>Information about the server on which the exception occurred</td></tr>
+<tr><td valign=top><code>extra.server</code></td><td><code>{<br>&nbsp;&nbsp;"os":{<br>&nbsp;&nbsp;&nbsp;&nbsp;"name":string,<br>&nbsp;&nbsp;&nbsp;&nbsp;"version":string,<br>&nbsp;&nbsp;&nbsp;&nbsp;"build":string<br>},<br>&nbsp;&nbsp;"runtime":{<br>&nbsp;&nbsp;&nbsp;&nbsp;"name":string,<br>&nbsp;&nbsp;&nbsp;&nbsp;"version":string<br>}<br>}</code></td><td valign=top>Information about the server on which the exception occurred</td></tr>
 <tr><td valign=top><code>extra.project_id</code></td><td><code>bigint</code></td><td valign=top>Project id where the exception occurred</td></tr>
 <tr><td valign=top><code>extra.relation_key</code></td><td><code>string</code></td><td valign=top>Relation on which the exception occurred</td></tr>
 <tr><td valign=top><code>extra.relation_index</code></td><td><code>bigint</code></td><td valign=top>Relation index on which the exception occurred</td></tr>
@@ -149,7 +149,7 @@ Reference: https://docs.gitlab.com/ee/administration/logs.html#production_jsonlo
 <tr><td valign=top><code>view</code></td><td><code>float</code></td><td valign=top>The time spent rendering the view for the Rails controller (in milliseconds)</td></tr>
 <tr><td valign=top><code>db</code></td><td><code>float</code></td><td valign=top>The time spent quering the database (in milliseconds)</td></tr>
 <tr><td valign=top><code><b>time</b></code></td><td><code>timestamp</code></td><td valign=top>The request timestamp</td></tr>
-<tr><td valign=top><code>params</code></td><td><code>[{<br>&nbps;&nbps;"key":string,<br>&nbps;&nbps;"value":string<br>}]</code></td><td valign=top>The URL query parameters</td></tr>
+<tr><td valign=top><code>params</code></td><td><code>[{<br>&nbsp;&nbsp;"key":string,<br>&nbsp;&nbsp;"value":string<br>}]</code></td><td valign=top>The URL query parameters</td></tr>
 <tr><td valign=top><code>remote_ip</code></td><td><code>string</code></td><td valign=top>The remote IP address of the HTTP request</td></tr>
 <tr><td valign=top><code>user_id</code></td><td><code>bigint</code></td><td valign=top>The user id of the request</td></tr>
 <tr><td valign=top><code>username</code></td><td><code>string</code></td><td valign=top>The username of the request</td></tr>
