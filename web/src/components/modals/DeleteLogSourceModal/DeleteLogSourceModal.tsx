@@ -24,7 +24,7 @@ import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
 export interface DeleteLogSourceModalProps {
   source: LogIntegration;
-  description?: string;
+  description: string;
 }
 
 const DeleteLogSourceModal: React.FC<DeleteLogSourceModalProps> = ({ source, description }) => {

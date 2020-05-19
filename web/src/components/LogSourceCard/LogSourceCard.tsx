@@ -31,9 +31,7 @@ const LogSourceCard: React.FC<ItemCardProps> = ({ logo, title, to, disabled }) =
   const content = (
     <PseudoBox
       width={1}
-      as={'button'}
       mb={5}
-      cursor="pointer"
       transition="transform 0.15s ease-in-out;"
       _hover={{
         transform: 'scale3d(1.03, 1.03, 1.03)',
@@ -62,7 +60,7 @@ const LogSourceCard: React.FC<ItemCardProps> = ({ logo, title, to, disabled }) =
           </Flex>
           {disabled ? (
             <Box mr={4}>
-              <Badge color="blue">Enterprise Only</Badge>
+              <Badge color="blue">Available in Panther Enterprise</Badge>
             </Box>
           ) : (
             <Flex justifyContent="center" alignItems="center">
@@ -78,7 +76,11 @@ const LogSourceCard: React.FC<ItemCardProps> = ({ logo, title, to, disabled }) =
   if (disabled) {
     return content;
   }
-  return <RRLink to={to}>{content}</RRLink>;
+  return (
+    <RRLink to={to} style={{ textDecoration: 'none' }}>
+      {content}
+    </RRLink>
+  );
 };
 
 export default LogSourceCard;

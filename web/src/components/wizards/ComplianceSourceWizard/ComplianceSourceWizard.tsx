@@ -17,11 +17,12 @@
  */
 
 import React from 'react';
-import { AWS_ACCOUNT_ID_REGEX, SOURCE_LABEL_REGEX } from 'Source/constants';
+import { AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
 import { FetchResult } from '@apollo/client';
+import { integrationLabelValidation } from 'Helpers/utils';
 import StackDeploymentPanel from './StackDeploymentPanel';
 import SuccessPanel from './SuccessPanel';
 import SourceConfigurationPanel from './SourceConfigurationPanel';
@@ -41,10 +42,7 @@ export interface ComplianceSourceWizardValues {
 }
 
 const validationSchema = Yup.object().shape<ComplianceSourceWizardValues>({
-  integrationLabel: Yup.string()
-    .matches(SOURCE_LABEL_REGEX, 'Can only include alphanumeric characters, dashes and spaces')
-    .max(32, 'Must be at most 32 characters')
-    .required(),
+  integrationLabel: integrationLabelValidation(),
   awsAccountId: Yup.string()
     .matches(AWS_ACCOUNT_ID_REGEX, 'Must be a valid AWS Account ID')
     .required(),
