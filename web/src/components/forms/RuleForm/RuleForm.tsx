@@ -22,7 +22,7 @@ import * as Yup from 'yup';
 import { Box, Button, Flex } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { BaseRuleFormCoreFields, BaseRuleFormTestFields } from 'Components/forms/BaseRuleForm';
-import {Form, Formik} from 'formik';
+import { Form, Formik } from 'formik';
 import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';
 import useRouter from 'Hooks/useRouter';
 
@@ -63,26 +63,24 @@ const RuleForm: React.FC<RuleFormProps> = ({ initialValues, onSubmit }) => {
       enableReinitialize
       validationSchema={validationSchema}
     >
-          <Form>
-            <Box as="article">
-              <ErrorBoundary>
-                <BaseRuleFormCoreFields type="rule" />
-              </ErrorBoundary>
-              <ErrorBoundary>
-                <BaseRuleFormTestFields />
-              </ErrorBoundary>
-            </Box>
-            <Flex borderTop="1px solid" borderColor="grey100" pt={6} mt={10} justify="flex-end">
-              <Flex>
-                <Button variant="default" size="large" onClick={history.goBack} mr={4}>
-                  Cancel
-                </Button>
-                <SubmitButton>
-                  {initialValues.id ? 'Update' : 'Create'}
-                </SubmitButton>
-              </Flex>
-            </Flex>
-          </Form>
+      <Form>
+        <Box as="article">
+          <ErrorBoundary>
+            <BaseRuleFormCoreFields type="rule" />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <BaseRuleFormTestFields />
+          </ErrorBoundary>
+        </Box>
+        <Flex borderTop="1px solid" borderColor="grey100" pt={6} mt={10} justify="flex-end">
+          <Flex>
+            <Button variant="default" size="large" onClick={history.goBack} mr={4}>
+              Cancel
+            </Button>
+            <SubmitButton>{initialValues.id ? 'Update' : 'Create'}</SubmitButton>
+          </Flex>
+        </Flex>
+      </Form>
     </Formik>
   );
 };

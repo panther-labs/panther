@@ -21,7 +21,7 @@ import { GlobalModuleDetails } from 'Generated/schema';
 import * as Yup from 'yup';
 import { Box, Button, Flex, Grid, InputElementLabel, Text } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import {Field, Form, Formik} from 'formik';
+import { Field, Form, Formik } from 'formik';
 import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';
 import useRouter from 'Hooks/useRouter';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -58,51 +58,49 @@ const GlobalModuleForm: React.FC<GlobalModuleFormProps> = ({ initialValues, onSu
           enableReinitialize
           validationSchema={validationSchema}
         >
-              <Form>
-                <Text size="large" color="grey300" mb={4}>
-                  The global module allows you to define a set of re-usable functions, variables and
-                  classes which can be directly imported to your Rule or Policy definition. Anything
-                  defined below can later be imported through the aws_imports module
-                </Text>
-                <Grid gridTemplateColumns="1fr 1fr" gridRowGap={2} gridColumnGap={9}>
-                  <Field
-                    as={FormikTextInput}
-                    label="* ID"
-                    placeholder={`The unique ID of the global`}
-                    name="id"
-                    disabled={initialValues.id}
-                    aria-required
-                  />
-                  <Field
-                    as={FormikTextArea}
-                    label="Description"
-                    placeholder={`Additional context about this global module`}
-                    name="description"
-                  />
-                </Grid>
-                <Box my={6}>
-                  <InputElementLabel htmlFor="enabled">{'Module definitions'}</InputElementLabel>
-                  <Field
-                    as={FormikEditor}
-                    placeholder="# Enter the body of the global here..."
-                    name="body"
-                    width="100%"
-                    minLines={16}
-                    mode="python"
-                    aria-required
-                  />
-                </Box>
-                <Flex borderTop="1px solid" borderColor="grey100" pt={6} mt={10} justify="flex-end">
-                  <Flex>
-                    <Button variant="default" size="large" onClick={history.goBack} mr={4}>
-                      Cancel
-                    </Button>
-                    <SubmitButton>
-                      {initialValues.id ? 'Update' : 'Create'}
-                    </SubmitButton>
-                  </Flex>
-                </Flex>
-              </Form>
+          <Form>
+            <Text size="large" color="grey300" mb={4}>
+              The global module allows you to define a set of re-usable functions, variables and
+              classes which can be directly imported to your Rule or Policy definition. Anything
+              defined below can later be imported through the aws_imports module
+            </Text>
+            <Grid gridTemplateColumns="1fr 1fr" gridRowGap={2} gridColumnGap={9}>
+              <Field
+                as={FormikTextInput}
+                label="* ID"
+                placeholder={`The unique ID of the global`}
+                name="id"
+                disabled={initialValues.id}
+                aria-required
+              />
+              <Field
+                as={FormikTextArea}
+                label="Description"
+                placeholder={`Additional context about this global module`}
+                name="description"
+              />
+            </Grid>
+            <Box my={6}>
+              <InputElementLabel htmlFor="enabled">{'Module definitions'}</InputElementLabel>
+              <Field
+                as={FormikEditor}
+                placeholder="# Enter the body of the global here..."
+                name="body"
+                width="100%"
+                minLines={16}
+                mode="python"
+                aria-required
+              />
+            </Box>
+            <Flex borderTop="1px solid" borderColor="grey100" pt={6} mt={10} justify="flex-end">
+              <Flex>
+                <Button variant="default" size="large" onClick={history.goBack} mr={4}>
+                  Cancel
+                </Button>
+                <SubmitButton>{initialValues.id ? 'Update' : 'Create'}</SubmitButton>
+              </Flex>
+            </Flex>
+          </Form>
         </Formik>
       </ErrorBoundary>
     </Box>

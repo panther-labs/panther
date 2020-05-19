@@ -17,7 +17,7 @@
  */
 
 import { Alert, Box } from 'pouncejs';
-import {Field, Form, Formik} from 'formik';
+import { Field, Form, Formik } from 'formik';
 import React from 'react';
 import * as Yup from 'yup';
 import { createYupPasswordValidationSchema } from 'Helpers/utils';
@@ -103,9 +103,7 @@ const ChangePasswordForm: React.FC = () => {
             aria-required
             mb={6}
           />
-          <SubmitButton width={1}>
-            Change password
-          </SubmitButton>
+          <SubmitButton width={1}>Change password</SubmitButton>
         </Form>
       )}
     </Formik>

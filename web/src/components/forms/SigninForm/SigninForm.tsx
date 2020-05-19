@@ -17,9 +17,8 @@
  */
 
 import * as Yup from 'yup';
-import {Field, Form, Formik} from 'formik';
+import { Field, Form, Formik } from 'formik';
 import React from 'react';
-import { Box } from 'pouncejs';
 import FormikTextInput from 'Components/fields/TextInput';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import useAuth from 'Hooks/useAuth';
@@ -59,29 +58,27 @@ const SignInForm: React.FC = () => {
         })
       }
     >
-        <Form>
-          <Field
-            as={FormikTextInput}
-            label="Email"
-            placeholder="Enter your company email..."
-            type="email"
-            name="username"
-            aria-required
-            mb={6}
-          />
-          <Field
-            as={FormikTextInput}
-            label="Password"
-            placeholder="The name of your cat"
-            name="password"
-            type="password"
-            aria-required
-            mb={6}
-          />
-          <SubmitButton width={1}>
-            Sign in
-          </SubmitButton>
-        </Form>
+      <Form>
+        <Field
+          as={FormikTextInput}
+          label="Email"
+          placeholder="Enter your company email..."
+          type="email"
+          name="username"
+          aria-required
+          mb={6}
+        />
+        <Field
+          as={FormikTextInput}
+          label="Password"
+          placeholder="The name of your cat"
+          name="password"
+          type="password"
+          aria-required
+          mb={6}
+        />
+        <SubmitButton width={1}>Sign in</SubmitButton>
+      </Form>
     </Formik>
   );
 };
