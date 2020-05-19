@@ -8,7 +8,7 @@ Reference: https://www.ossec.net/docs/docs/formats/alerts.html
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>id</b></code></td><td><code>string</code></td><td valign=top>Unique id of the event.</td></tr>
-<tr><td valign=top><code><b>rule</b></code></td><td><code>{<br>&nbps;&nbps;"comment":string,<br>&nbps;&nbps;"group":string,<br>&nbps;&nbps;"level":bigint,<br>&nbps;&nbps;"sidid":bigint,<br>&nbps;&nbps;"CIS":[string],<br>&nbps;&nbps;"cve":string,<br>&nbps;&nbps;"firedtimes":bigint,<br>&nbps;&nbps;"frequency":bigint,<br>&nbps;&nbps;"groups":[string],<br>&nbps;&nbps;"info":string,<br>&nbps;&nbps;"PCI_DSS":[string]<br>}</code></td><td valign=top>Information about the rule that created the event.</td></tr>
+<tr><td valign=top><code><b>rule</b></code></td><td><code>{<br>&nbsp;&nbsp;"comment":string,<br>&nbsp;&nbsp;"group":string,<br>&nbsp;&nbsp;"level":bigint,<br>&nbsp;&nbsp;"sidid":bigint,<br>&nbsp;&nbsp;"CIS":[string],<br>&nbsp;&nbsp;"cve":string,<br>&nbsp;&nbsp;"firedtimes":bigint,<br>&nbsp;&nbsp;"frequency":bigint,<br>&nbsp;&nbsp;"groups":[string],<br>&nbsp;&nbsp;"info":string,<br>&nbsp;&nbsp;"PCI_DSS":[string]<br>}</code></td><td valign=top>Information about the rule that created the event.</td></tr>
 <tr><td valign=top><code><b>TimeStamp</b></code></td><td><code>timestamp</code></td><td valign=top>Timestamp in UTC.</td></tr>
 <tr><td valign=top><code><b>location</b></code></td><td><code>string</code></td><td valign=top>Source of the event (filename, command, etc).</td></tr>
 <tr><td valign=top><code><b>hostname</b></code></td><td><code>string</code></td><td valign=top>Hostname of the host that created the event.</td></tr>
@@ -19,7 +19,7 @@ Reference: https://www.ossec.net/docs/docs/formats/alerts.html
 <tr><td valign=top><code>command</code></td><td><code>string</code></td><td valign=top>The command extracted by the decoder.</td></tr>
 <tr><td valign=top><code>data</code></td><td><code>string</code></td><td valign=top>Additional data extracted by the decoder. For example a filename.</td></tr>
 <tr><td valign=top><code>decoder</code></td><td><code>string</code></td><td valign=top>The name of the decoder used to parse the logs.</td></tr>
-<tr><td valign=top><code>decoder_desc</code></td><td><code>{<br>&nbps;&nbps;"accumulate":bigint,<br>&nbps;&nbps;"fts":bigint,<br>&nbps;&nbps;"ftscomment":string,<br>&nbps;&nbps;"name":string,<br>&nbps;&nbps;"parent":string<br>}</code></td><td valign=top>Information about the decoder used to parse the logs.</td></tr>
+<tr><td valign=top><code>decoder_desc</code></td><td><code>{<br>&nbsp;&nbsp;"accumulate":bigint,<br>&nbsp;&nbsp;"fts":bigint,<br>&nbsp;&nbsp;"ftscomment":string,<br>&nbsp;&nbsp;"name":string,<br>&nbsp;&nbsp;"parent":string<br>}</code></td><td valign=top>Information about the decoder used to parse the logs.</td></tr>
 <tr><td valign=top><code>decoder_parent</code></td><td><code>string</code></td><td valign=top>In the case of a nested decoder, the name of it&#39;s parent.</td></tr>
 <tr><td valign=top><code>dstgeoip</code></td><td><code>string</code></td><td valign=top>GeoIP location information about the destination IP address.</td></tr>
 <tr><td valign=top><code>dstip</code></td><td><code>string</code></td><td valign=top>The destination IP address.</td></tr>
@@ -34,7 +34,7 @@ Reference: https://www.ossec.net/docs/docs/formats/alerts.html
 <tr><td valign=top><code>srcport</code></td><td><code>string</code></td><td valign=top>The source port.</td></tr>
 <tr><td valign=top><code>srcuser</code></td><td><code>string</code></td><td valign=top>The source username.</td></tr>
 <tr><td valign=top><code>status</code></td><td><code>string</code></td><td valign=top>Event status (success, failure, etc).</td></tr>
-<tr><td valign=top><code>SyscheckFile</code></td><td><code>{<br>&nbps;&nbps;"gowner_after":string,<br>&nbps;&nbps;"gowner_before":string,<br>&nbps;&nbps;"md5_after":string,<br>&nbps;&nbps;"md5_before":string,<br>&nbps;&nbps;"owner_after":string,<br>&nbps;&nbps;"owner_before":string,<br>&nbps;&nbps;"path":string,<br>&nbps;&nbps;"perm_after":bigint,<br>&nbps;&nbps;"perm_before":bigint,<br>&nbps;&nbps;"sha1_after":string,<br>&nbps;&nbps;"sha1_before":string<br>}</code></td><td valign=top>Information about a file integrity check.</td></tr>
+<tr><td valign=top><code>SyscheckFile</code></td><td><code>{<br>&nbsp;&nbsp;"gowner_after":string,<br>&nbsp;&nbsp;"gowner_before":string,<br>&nbsp;&nbsp;"md5_after":string,<br>&nbsp;&nbsp;"md5_before":string,<br>&nbsp;&nbsp;"owner_after":string,<br>&nbsp;&nbsp;"owner_before":string,<br>&nbsp;&nbsp;"path":string,<br>&nbsp;&nbsp;"perm_after":bigint,<br>&nbsp;&nbsp;"perm_before":bigint,<br>&nbsp;&nbsp;"sha1_after":string,<br>&nbsp;&nbsp;"sha1_before":string<br>}</code></td><td valign=top>Information about a file integrity check.</td></tr>
 <tr><td valign=top><code>systemname</code></td><td><code>string</code></td><td valign=top>The system name extracted by the decoder.</td></tr>
 <tr><td valign=top><code>url</code></td><td><code>string</code></td><td valign=top>URL of the event.</td></tr>
 <tr><td valign=top><code><b>p_log_type</b></code></td><td><code>string</code></td><td valign=top>Panther added field with type of log</td></tr>

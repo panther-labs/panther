@@ -126,7 +126,7 @@ func classifyWAFRegional(detail gjson.Result, metadata *CloudTrailMetadata) []*r
 		return changes
 
 	default:
-		zap.L().Warn("waf-regional: encountered unknown event name", zap.String("eventName", metadata.eventName))
+		zap.L().Info("waf-regional: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 

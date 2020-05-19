@@ -415,7 +415,7 @@ func classifyEC2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 			ec2ARN.Resource = "vpc/" + id
 			break
 		}
-		zap.L().Warn("ec2: encountered unknown event name", zap.String("eventName", metadata.eventName))
+		zap.L().Info("ec2: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 

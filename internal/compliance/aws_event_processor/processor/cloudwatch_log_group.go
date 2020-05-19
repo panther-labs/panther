@@ -43,7 +43,7 @@ func classifyCloudWatchLogGroup(detail gjson.Result, metadata *CloudTrailMetadat
 		// explanation.
 		logGroupARN.Resource += detail.Get("requestParameters.logGroupName").Str
 	default:
-		zap.L().Warn("loggroup: encountered unknown event name", zap.String("eventName", metadata.eventName))
+		zap.L().Info("loggroup: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 

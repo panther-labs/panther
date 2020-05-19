@@ -168,7 +168,7 @@ func formatType(col gluecf.Column) string {
 
 const (
 	prettyPrintPrefix = "<br>"
-	prettyPrintIndent = "&nbps;&nbps;"
+	prettyPrintIndent = "&nbsp;&nbsp;"
 )
 
 func prettyPrintType(colType, indent string) string {
