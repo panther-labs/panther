@@ -21,6 +21,10 @@ import { BadgeProps } from 'pouncejs';
 import { generateDocUrl } from 'Helpers/utils';
 import { pantherConfig } from 'Source/config';
 
+export enum LogIntegrationsEnum {
+  's3' = 'aws-s3',
+}
+
 export const AWS_ACCOUNT_ID_REGEX = new RegExp('^\\d{12}$');
 
 export const S3_BUCKET_NAME_REGEX = new RegExp(

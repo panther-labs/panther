@@ -18,11 +18,12 @@
 
 import React from 'react';
 import { Dropdown, Icon, IconButton, MenuItem } from 'pouncejs';
-import { LogIntegration } from 'Generated/schema';
+import { LogIntegration, S3LogIntegration } from 'Generated/schema';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
+import { LogIntegrationsEnum } from 'Source/constants';
 
 interface LogSourceTableRowOptionsProps {
   source: LogIntegration;
@@ -32,6 +33,15 @@ const LogSourceTableRowOptions: React.FC<LogSourceTableRowOptionsProps> = ({ sou
   const { showModal } = useModal();
   const { history } = useRouter();
 
+  let description;
+  let castedSource;
+
+  switch (source.integrationType) {
+    case LogIntegrationsEnum.s3:
+    default:
+      castedSource = source as S3LogIntegration;
+      description = `Deleting this source will not delete the associated Cloudformation stack. You will need to manually delete the stack ${castedSource.stackName} from the AWS Account ${castedSource.awsAccountId}`;
+  }
   return (
     <Dropdown
       trigger={
@@ -41,17 +51,23 @@ const LogSourceTableRowOptions: React.FC<LogSourceTableRowOptionsProps> = ({ sou
       }
     >
       <Dropdown.Item
-        onSelect={() => history.push(urls.logAnalysis.sources.edit(source.integrationId))}
+        onSelect={() => {
+          switch (source.integrationType) {
+            case LogIntegrationsEnum.s3:
+            default:
+              return history.push(urls.logAnalysis.sources.edit(source.integrationId, 's3'));
+          }
+        }}
       >
         <MenuItem variant="default">Edit</MenuItem>
       </Dropdown.Item>
       <Dropdown.Item
-        onSelect={() =>
-          showModal({
+        onSelect={() => {
+          return showModal({
             modal: MODALS.DELETE_LOG_SOURCE,
-            props: { source },
-          })
-        }
+            props: { source: castedSource, description },
+          });
+        }}
       >
         <MenuItem variant="default">Delete</MenuItem>
       </Dropdown.Item>

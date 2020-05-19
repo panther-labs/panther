@@ -33,6 +33,7 @@
   * [Osquery](log-analysis/log-processing/supported-logs/Osquery.md)
   * [OSSEC](log-analysis/log-processing/supported-logs/OSSEC.md)
   * [Syslog](log-analysis/log-processing/supported-logs/Syslog.md)
+  * [Suricata](log-analysis/log-processing/supported-logs/Suricata.md)
   * [Zeek](log-analysis/log-processing/supported-logs/Zeek.md)
 * [Cloud Security](policies/scanning/README.md)
   * [Policies](policies/policies/README.md)

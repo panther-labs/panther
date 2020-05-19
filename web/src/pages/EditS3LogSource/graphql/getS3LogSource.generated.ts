@@ -25,55 +25,56 @@ import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
-export type ListLogSourcesVariables = {};
+export type GetS3LogSourceVariables = {
+  id: Types.Scalars['ID'];
+};
 
-export type ListLogSources = { listLogIntegrations: Array<S3LogIntegrationDetails> };
+export type GetS3LogSource = { getS3LogIntegration: S3LogIntegrationDetails };
 
-export const ListLogSourcesDocument = gql`
-  query ListLogSources {
-    listLogIntegrations {
-      ... on S3LogIntegration {
-        ...S3LogIntegrationDetails
-      }
+export const GetS3LogSourceDocument = gql`
+  query GetS3LogSource($id: ID!) {
+    getS3LogIntegration(id: $id) {
+      ...S3LogIntegrationDetails
     }
   }
   ${S3LogIntegrationDetails}
 `;
 
 /**
- * __useListLogSources__
+ * __useGetS3LogSource__
  *
- * To run a query within a React component, call `useListLogSources` and pass it any options that fit your needs.
- * When your component renders, `useListLogSources` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetS3LogSource` and pass it any options that fit your needs.
+ * When your component renders, `useGetS3LogSource` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useListLogSources({
+ * const { data, loading, error } = useGetS3LogSource({
  *   variables: {
+ *      id: // value for 'id'
  *   },
  * });
  */
-export function useListLogSources(
-  baseOptions?: ApolloReactHooks.QueryHookOptions<ListLogSources, ListLogSourcesVariables>
+export function useGetS3LogSource(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<GetS3LogSource, GetS3LogSourceVariables>
 ) {
-  return ApolloReactHooks.useQuery<ListLogSources, ListLogSourcesVariables>(
-    ListLogSourcesDocument,
+  return ApolloReactHooks.useQuery<GetS3LogSource, GetS3LogSourceVariables>(
+    GetS3LogSourceDocument,
     baseOptions
   );
 }
-export function useListLogSourcesLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<ListLogSources, ListLogSourcesVariables>
+export function useGetS3LogSourceLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetS3LogSource, GetS3LogSourceVariables>
 ) {
-  return ApolloReactHooks.useLazyQuery<ListLogSources, ListLogSourcesVariables>(
-    ListLogSourcesDocument,
+  return ApolloReactHooks.useLazyQuery<GetS3LogSource, GetS3LogSourceVariables>(
+    GetS3LogSourceDocument,
     baseOptions
   );
 }
-export type ListLogSourcesHookResult = ReturnType<typeof useListLogSources>;
-export type ListLogSourcesLazyQueryHookResult = ReturnType<typeof useListLogSourcesLazyQuery>;
-export type ListLogSourcesQueryResult = ApolloReactCommon.QueryResult<
-  ListLogSources,
-  ListLogSourcesVariables
+export type GetS3LogSourceHookResult = ReturnType<typeof useGetS3LogSource>;
+export type GetS3LogSourceLazyQueryHookResult = ReturnType<typeof useGetS3LogSourceLazyQuery>;
+export type GetS3LogSourceQueryResult = ApolloReactCommon.QueryResult<
+  GetS3LogSource,
+  GetS3LogSourceVariables
 >;
