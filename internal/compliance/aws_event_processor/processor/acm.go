@@ -35,7 +35,7 @@ func classifyACM(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 	case "ImportCertificate", "RequestCertificate":
 		certARN = detail.Get("responseElements.certificateArn").Str
 	default:
-		zap.L().Warn("acm: encountered unknown event name", zap.String("eventName", metadata.eventName))
+		zap.L().Info("acm: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 

@@ -130,7 +130,7 @@ func classifyRDS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 			ResourceType: schemas.RDSInstanceSchema,
 		}}
 	default:
-		zap.L().Warn("rds: encountered unknown event name", zap.String("eventName", metadata.eventName))
+		zap.L().Info("rds: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 

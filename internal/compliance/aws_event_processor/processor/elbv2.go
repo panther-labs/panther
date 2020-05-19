@@ -125,7 +125,7 @@ func classifyELBV2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourc
 		}
 		return changes
 	default:
-		zap.L().Error("elbv2: encountered unknown event name", zap.String("eventName", metadata.eventName))
+		zap.L().Info("elbv2: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 
