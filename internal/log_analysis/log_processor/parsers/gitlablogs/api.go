@@ -19,8 +19,12 @@ package gitlablogs
  */
 
 import (
+	"time"
+
+	"github.com/aws/aws-sdk-go/aws"
 	jsoniter "github.com/json-iterator/go"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common/logs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -64,6 +68,8 @@ type API struct {
 	parsers.PantherLog
 }
 
+var _ parsers.PantherLogEventer = (*API)(nil)
+
 // APIParser parses gitlab rails logs
 type APIParser struct{}
 
@@ -100,4 +106,30 @@ func (p *APIParser) LogType() string {
 func (event *API) updatePantherFields(p *APIParser) {
 	event.SetCoreFields(p.LogType(), event.Time, event)
 	event.AppendAnyIPAddressPtr(event.RemoteIP)
+}
+
+// [WIP] PantherLogEvent implements parsers.PantherLogEventer interface.
+// This demonstrates how the current logic of embedding a PantherLog on each event struct
+// and using methods like `updatePantherFields` is formalized with this interface to
+// provide quick helpers to implement parsers in an easily testable way.
+func (event *API) PantherLogEvent() *logs.Event {
+	var tm time.Time
+	if event.Time != nil {
+		tm = *((*time.Time)(event.Time))
+	}
+	return logs.NewEvent(TypeAPI, tm.UTC(),
+		logs.IPAddress(aws.StringValue(event.RemoteIP)),
+	)
+}
+
+var _ parsers.Interface = (*APIParser)(nil)
+
+// [WIP] ParseLog returns the parsed events or nil if parsing failed
+// This is a demo use of the `parsers.QuickParseJSON` method that leverages
+// `logs.Event` to simplify parsing.
+// Currently the result is not valid since it serialized PantherLog fields twice.
+// In it's final form the `API` struct should not embed `PantherLog` and it will simply map
+// to the log entry structure.
+func (p *APIParser) ParseLog(log string) ([]*parsers.Result, error) {
+	return parsers.QuickParseJSON(log, &API{})
 }

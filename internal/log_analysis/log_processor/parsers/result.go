@@ -29,7 +29,7 @@ import (
 )
 
 type Interface interface {
-	Parse(log string) ([]*Result, error)
+	ParseLog(log string) ([]*Result, error)
 }
 
 type Result struct {
