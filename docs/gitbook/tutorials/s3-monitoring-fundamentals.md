@@ -35,9 +35,7 @@ Approach:
 
 The first step is configuring monitoring for all S3 bucket activity, including GET, LIST, and DELETE calls, which can be used to determine unauthorized access to our data.
 
-Amazon provides two mechanisms for monitoring S3 bucket calls: CloudTrail (via Data Events) and S3 Server Access Logs.
-
-**CloudTrail** is a service to monitor all API calls focused around infrastructure changes and management. **S3 Server Access Logs** provide a more detailed, web-style log on traffic to our objects and buckets. The most notable differences between the two are:
+Amazon provides two mechanisms for monitoring S3 bucket calls: CloudTrail (via Data Events) and S3 Server Access Logs. CloudTrail is a service to monitor all API calls focused around infrastructure changes and management. S3 Server Access Logs provide a more detailed, web-style log on traffic to our objects and buckets. The most notable differences between the two are:
 
 | CloudTrail          | S3 Server Access Logs |
 | :------------------ | :-------------------- |
@@ -53,7 +51,7 @@ Amazon provides two mechanisms for monitoring S3 bucket calls: CloudTrail (via D
 
 ### Comparing Logs
 
-Given the same request, we saw about a 40 minute latency difference between S3 Server Access logs and CloudTrail. The logs below show the difference in the data collected:
+Given the same request, we saw about a 40 minute difference between S3 Server Access logs and CloudTrail. The logs below show the difference in the data collected:
 
 ![CloudTrail vs Access Logs](../.gitbook/assets/tutorials/s3-logs-comparison.jpg "CloudTrail vs S3 Access Logs")
 
@@ -69,7 +67,7 @@ Next, let’s walk through the setup and analysis of these logs.
 
 To configure CloudTrail for monitoring S3 buckets, you will need to add `EventSelectors` to a new or existing CloudTrail that configures the bucket(s) to monitor. This setting also specifies whether the read or write events should be captured.
 
-This CloudFormation template below can be used for creating a new CloudTrail with the proper settings:
+The CloudFormation template below can be used for creating a new CloudTrail with the proper settings:
 
 ```yml
 Resources:
@@ -190,7 +188,12 @@ Once data begins to flow, you’ll start to see raw logs landing in the access l
 Format before:
 
 ```
-66cc22229999cccc6666eaaa333388888 test-public-bucket [11/May/2020:00:52:45 +0000] 184.72.185.254 arn:aws:sts::123456789012:assumed-role/PantherAuditRole-us-east-1/1589158343562318259 19D3A798F843E581 REST.GET.PUBLIC_ACCESS_BLOCK - "GET /?publicAccessBlock= HTTP/1.1" 404 NoSuchPublicAccessBlockConfiguration 375 - 4 - "-" "aws-sdk-go/1.30.7 (go1.13.6; linux; amd64) exec-env/AWS_Lambda_go1.x" - 5x5+sskYHUpl1/3W4mCDeoS95dEFEWliPpv1cuhUb+Zbdwt0Inlq8ZvQ44eQJI42VUqanS7YlbM= SigV4 ECDHE-RSA-AES128-GCM-SHA256 AuthHeader test-public-bucket.s3.amazonaws.com TLSv1.2
+66cc22229999cccc6666eaaa333388888 test-public-bucket [11/May/2020:00:52:45 +0000] 184.72.185.254
+arn:aws:sts::123456789012:assumed-role/PantherAuditRole-us-east-1/1589158343562318259 19D3A798F843E581
+REST.GET.PUBLIC_ACCESS_BLOCK - "GET /?publicAccessBlock= HTTP/1.1" 404 NoSuchPublicAccessBlockConfiguration 375 - 4
+- "-" "aws-sdk-go/1.30.7 (go1.13.6; linux; amd64) exec-env/AWS_Lambda_go1.x" - 5x5+sskYHUpl1/
+3W4mCDeoS95dEFEWliPpv1cuhUb+Zbdwt0Inlq8ZvQ44eQJI42VUqanS7YlbM= SigV4 ECDHE-RSA-AES128-GCM-SHA256 AuthHeader test-
+public-bucket.s3.amazonaws.com TLSv1.2
 ```
 
 Format after:
@@ -271,7 +274,7 @@ def _unknown_requester_access(event):
     return False
 ```
 
-To add your own internal flows, add your bucket pattern to the BUCKET_ROLE_MAPPING with the value being a list of IAM role patterns. By default, Panther monitors itself, and if you try to access the data directly as an IAM user or with another role, an alert will be generated.
+To add your own internal flows, add your bucket pattern to the `BUCKET_ROLE_MAPPING` with the value being a list of IAM role patterns. By default, Panther monitors itself, and if you try to access the data directly as an IAM user or with another role, an alert will be generated.
 
 Additionally, to monitor on an IP level, the rule below can be used:
 
