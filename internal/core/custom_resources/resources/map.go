@@ -47,6 +47,15 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// PhysicalId: custom:alarms:appsync:$API_ID
 	"Custom::AppSyncAlarms": customAppSyncAlarms,
 
+	// CloudWatch alarms for AppSync 4XX and 5XX errors
+	//
+	// Parameters:
+	//     AlarmTopicArn:  string (required)
+	//     TableName:      string (required)
+	// Outputs: None
+	// PhysicalId: custom:alarms:dynamodb:$TABLE_NAME
+	"Custom::DynamoDBAlarms": customDynamoDBAlarms,
+
 	// CloudWatch alarms for ELB errors, latency, and health
 	//
 	// Parameters:

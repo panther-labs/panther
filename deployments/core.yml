@@ -19,7 +19,10 @@ Transform: AWS::Serverless-2016-10-31
 Description: Shared infrastructure for both cloud security and log analysis
 
 Parameters:
-  # Passed from bootstrap.yml or api_gateway.yml
+  # Passed from one of the bootstrap stacks
+  AlarmTopicArn:
+    Type: String
+    Description: SNS topic for CloudWatch alarms
   AppDomainURL:
     Type: String
     Description: Panther App Domain used as a link for the customer in the password reset email
@@ -843,6 +846,13 @@ Resources:
       TimeToLiveSpecification:
         AttributeName: expiresAt
         Enabled: true
+
+  KeyValueStoreAlarms:
+    Type: Custom::DynamoDBAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      TableName: !Ref KeyValueStoreTable
 
   ReadCapacityScalableTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget

@@ -356,6 +356,7 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	count++
 	go func(c chan goroutineResult) {
 		_, err := deployTemplate(awsSession, coreTemplate, sourceBucket, coreStack, map[string]string{
+			"AlarmTopicArn":          outputs["AlarmTopicArn"],
 			"AppDomainURL":           outputs["LoadBalancerUrl"],
 			"AnalysisVersionsBucket": outputs["AnalysisVersionsBucket"],
 			"AnalysisApiId":          outputs["AnalysisApiId"],
