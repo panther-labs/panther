@@ -1,0 +1,5 @@
+query GetS3LogSource($id: ID!) {
+  getS3LogIntegration(id: $id) {
+    ...S3LogIntegrationDetails
+  }
+}

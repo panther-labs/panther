@@ -17,48 +17,59 @@
  */
 
 import React from 'react';
-import { AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
+import { AWS_ACCOUNT_ID_REGEX, LOG_TYPES, S3_BUCKET_NAME_REGEX } from 'Source/constants';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
 import { FetchResult } from '@apollo/client';
-import { integrationLabelValidation } from 'Helpers/utils';
+import { getArnRegexForService, integrationLabelValidation } from 'Helpers/utils';
 import StackDeploymentPanel from './StackDeploymentPanel';
 import SuccessPanel from './SuccessPanel';
-import SourceConfigurationPanel from './SourceConfigurationPanel';
+import S3SourceConfigurationPanel from './S3SourceConfigurationPanel';
 
-interface ComplianceSourceWizardProps {
-  initialValues: ComplianceSourceWizardValues;
-  onSubmit: (values: ComplianceSourceWizardValues) => Promise<FetchResult<any>>;
+interface S3LogSourceWizardProps {
+  initialValues: S3LogSourceWizardValues;
+  onSubmit: (values: S3LogSourceWizardValues) => Promise<FetchResult<any>>;
   externalErrorMessage?: string;
 }
 
-export interface ComplianceSourceWizardValues {
+export interface S3LogSourceWizardValues {
+  // for updates
   integrationId?: string;
+  initialStackName?: string;
+  // common for creation + updates
   awsAccountId: string;
   integrationLabel: string;
-  cweEnabled: boolean;
-  remediationEnabled: boolean;
+  s3Bucket: string;
+  s3Prefix: string;
+  kmsKey: string;
+  logTypes: string[];
 }
 
-const validationSchema = Yup.object().shape<ComplianceSourceWizardValues>({
+const validationSchema = Yup.object().shape<S3LogSourceWizardValues>({
   integrationLabel: integrationLabelValidation(),
   awsAccountId: Yup.string()
     .matches(AWS_ACCOUNT_ID_REGEX, 'Must be a valid AWS Account ID')
     .required(),
-  cweEnabled: Yup.boolean().required(),
-  remediationEnabled: Yup.boolean().required(),
+  s3Bucket: Yup.string()
+    .matches(S3_BUCKET_NAME_REGEX, 'Must be valid S3 Bucket name')
+    .required(),
+  logTypes: Yup.array()
+    .of(Yup.string().oneOf((LOG_TYPES as unknown) as string[]))
+    .required(),
+  s3Prefix: Yup.string(),
+  kmsKey: Yup.string().matches(getArnRegexForService('KMS'), 'Must be a valid KMS ARN'),
 });
 
 const initialStatus = { cfnTemplateDownloaded: false };
 
-const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
+const S3LogSourceWizard: React.FC<S3LogSourceWizardProps> = ({
   initialValues,
   onSubmit,
   externalErrorMessage,
 }) => {
   return (
-    <Formik<ComplianceSourceWizardValues>
+    <Formik<S3LogSourceWizardValues>
       enableReinitialize
       initialValues={initialValues}
       initialStatus={initialStatus}
@@ -75,10 +86,10 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
         return (
           <form onSubmit={handleSubmit}>
             <Wizard>
-              <Wizard.Step title="Configure Source" icon="settings">
+              <Wizard.Step title="Configure Logs Source" icon="settings">
                 <WizardPanelWrapper>
                   <WizardPanelWrapper.Content>
-                    <SourceConfigurationPanel />
+                    <S3SourceConfigurationPanel />
                   </WizardPanelWrapper.Content>
                   <WizardPanelWrapper.Actions>
                     <WizardPanelWrapper.ActionNext disabled={!dirty || !isValid} />
@@ -99,7 +110,7 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
               <Wizard.Step title="Done!" icon="check">
                 <WizardPanelWrapper>
                   <WizardPanelWrapper.Content>
-                    <SuccessPanel errorMessage={externalErrorMessage} />
+                    <SuccessPanel />
                   </WizardPanelWrapper.Content>
                   <WizardPanelWrapper.Actions>
                     <WizardPanelWrapper.ActionPrev />
@@ -114,4 +125,4 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
   );
 };
 
-export default ComplianceSourceWizard;
+export default S3LogSourceWizard;
