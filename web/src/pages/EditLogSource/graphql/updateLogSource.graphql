@@ -1,5 +1,0 @@
-mutation UpdateLogSource($input: UpdateLogIntegrationInput!) {
-  updateLogIntegration(input: $input) {
-    ...LogIntegrationDetails
-  }
-}
