@@ -195,6 +195,7 @@ var (
 		LogTypes:           []string{"AWS.CloudTrail"},
 		Severity:           "HIGH",
 		Tests:              []*models.UnitTest{},
+		Tags:               []string{"test-tag"},
 		DedupPeriodMinutes: 1440,
 	}
 
@@ -1262,6 +1263,7 @@ func getEnabledRules(t *testing.T) {
 				Severity:           rule.Severity,
 				VersionID:          rule.VersionID,
 				DedupPeriodMinutes: rule.DedupPeriodMinutes,
+				Tags:               rule.Tags,
 			},
 		},
 	}
