@@ -248,8 +248,6 @@ func alarmDispatchOnType(resourceType string, resource map[string]interface{}, s
 		return generateSNSAlarms(resource)
 	case "AWS::SQS::Queue":
 		return generateSQSAlarms(resource)
-	case "AWS::DynamoDB::Table":
-		return generateDynamoDBAlarms(resource)
 	case "AWS::Serverless::Function":
 		return generateLambdaAlarms(resource, settings)
 	case "AWS::StepFunctions::StateMachine":
