@@ -23,6 +23,8 @@ DisplayName: AlwaysTrue
 Filename: always_true.py
 PolicyID: Test:Policy
 Enabled: true
+Suppressions:
+  - 'panther.*'
 Tags: []
 Tests:
   - Name: This will be True
