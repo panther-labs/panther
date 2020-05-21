@@ -670,7 +670,7 @@ func getRule(t *testing.T) {
 	require.NoError(t, err)
 	assert.NoError(t, result.Payload.Validate(nil))
 	expectedRule := *rule
-	// these gets assigned
+	// these get assigned
 	expectedRule.CreatedBy = result.Payload.CreatedBy
 	expectedRule.LastModifiedBy = result.Payload.LastModifiedBy
 	expectedRule.CreatedAt = result.Payload.CreatedAt
@@ -760,7 +760,7 @@ func modifySuccess(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// these gets assigned
+	// these get assigned
 	expectedPolicy.CreatedBy = result.Payload.CreatedBy
 	expectedPolicy.LastModifiedBy = result.Payload.LastModifiedBy
 	expectedPolicy.CreatedAt = result.Payload.CreatedAt
