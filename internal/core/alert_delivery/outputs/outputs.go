@@ -99,7 +99,7 @@ const detailedMessageTemplate = "%s\nFor more details please visit: %s\nSeverity
 
 func generateAlertMessage(alert *alertmodels.Alert) string {
 	if aws.StringValue(alert.Type) == alertmodels.RuleType {
-		return getDisplayName(alert) + " failed"
+		return getDisplayName(alert) + " triggered"
 	}
 	return getDisplayName(alert) + " failed on new resources"
 }
