@@ -23,6 +23,9 @@ Parameters:
   AnalysisApiId:
     Type: String
     Description: API Gateway for analysis-api
+  AlarmTopicArn:
+    Type: String
+    Description: SNS topic for CloudWatch alarms
   ComplianceApiId:
     Type: String
     Description: API Gateway for compliance-api
@@ -211,6 +214,13 @@ Resources:
       TimeToLiveSpecification:
         AttributeName: expiresAt
         Enabled: true
+
+  AlertForwarderTableAlarms:
+    Type: Custom::DynamoDBAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      TableName: !Ref AlertForwarderTable
 
   AlertForwarderLogGroup:
     Type: AWS::Logs::LogGroup
@@ -539,6 +549,13 @@ Resources:
       TimeToLiveSpecification:
         AttributeName: expiresAt
         Enabled: True
+
+  ComplianceTableAlarms:
+    Type: Custom::DynamoDBAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      TableName: !Ref ComplianceTable
 
   ##### Remediation API #####
   RemediationGatewayInvocation:
@@ -871,6 +888,13 @@ Resources:
       TimeToLiveSpecification: # Deleted resources are expired after 30 days
         AttributeName: expiresAt
         Enabled: true
+
+  ResourcesTableAlarms:
+    Type: Custom::DynamoDBAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      TableName: !Ref ResourcesTable
 
   ResourcesQueue:
     Type: AWS::SQS::Queue

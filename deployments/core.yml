@@ -190,6 +190,13 @@ Resources:
       # This ddb table stores general settings about an organizations.
       # </cfndoc>
 
+  OrganizationTableAlarms:
+    Type: Custom::DynamoDBAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      TableName: !Ref OrganizationTable
+
   OrganizationAPILogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -361,6 +368,13 @@ Resources:
       # * The Panther user interface could be impacted.
       # </cfndoc>
 
+  AnalysisTableAlarms:
+    Type: Custom::DynamoDBAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      TableName: !Ref AnalysisTable
+
   ##### Outputs API #####
   OutputsTable:
     Type: AWS::DynamoDB::Table
@@ -393,6 +407,13 @@ Resources:
       # * Processing of alerts could be slowed or stopped if there are errors/throttles.
       # * The Panther user interface for managing destinations may be impacted.
       # </cfndoc>
+
+  OutputsTableAlarms:
+    Type: Custom::DynamoDBAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      TableName: !Ref OutputsTable
 
   OutputsApiFunction:
     Type: AWS::Serverless::Function
@@ -595,6 +616,13 @@ Resources:
         PointInTimeRecoveryEnabled: True
       SSESpecification: # Enable server-side encryption
         SSEEnabled: True
+
+  IntegrationsTableAlarms:
+    Type: Custom::DynamoDBAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      TableName: !Ref IntegrationsTable
 
   SourceApiFunction:
     Type: AWS::Serverless::Function
@@ -847,7 +875,7 @@ Resources:
         AttributeName: expiresAt
         Enabled: true
 
-  KeyValueStoreAlarms:
+  KeyValueStoreTableAlarms:
     Type: Custom::DynamoDBAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
