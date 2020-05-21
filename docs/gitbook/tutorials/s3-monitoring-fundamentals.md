@@ -33,7 +33,7 @@ Approach:
 
 ## Bucket Logging Overview
 
-The first step is configuring monitoring for all S3 bucket activity, including GET, LIST, and DELETE calls, which can be used to determine unauthorized access to our data.
+The first step is to configure monitoring for all S3 bucket activity, including GET, LIST, and DELETE calls, which can be used to determine unauthorized access to our data.
 
 Amazon provides two mechanisms for monitoring S3 bucket calls: CloudTrail (via Data Events) and S3 Server Access Logs. CloudTrail is a service to monitor all API calls focused around infrastructure changes and management. S3 Server Access Logs provide a more detailed, web-style log on traffic to our objects and buckets. The most notable differences between the two are:
 
@@ -49,7 +49,7 @@ Amazon provides two mechanisms for monitoring S3 bucket calls: CloudTrail (via D
 | - | HTTP Ref, Turn-Around Time, Total Time, and Object Size fields |
 | - | Logs for auth failures and lifecycle transitions |
 
-### Comparing Logs
+### Comparing CloudTrail and S3 Server Access Logs
 
 Given the same request, we saw about a 40 minute difference between S3 Server Access logs and CloudTrail. The logs below show the difference in the data collected:
 
@@ -307,7 +307,7 @@ This can be used when expecting bucket objects to only be reachable from a CDN o
 
 ### Insecure Access
 
-If bucket data is accessed with SSL, there is a potential for an attacker to intercept the traffic in plaintext to get to your sensitive data. The rule below will detect if any such connections occurred within your buckets:
+If bucket data was accessed without SSL, there's potential it was an attacker intercepting the traffic in plaintext to get to your sensitive data. The rule below will detect if any such connections occurred within your buckets:
 
 ```python
 def rule(event):
@@ -336,12 +336,12 @@ def rule(event):
 
 ## Searching Collected Logs
 
-To better inform our real-time rules, Panther has a mechanism to search through collected data using SQL. In Panther Enterprise, this happens from within the UI directly, and contains performance improvements such as Parquet compaction and more.
+To better inform our real-time rules, Panther has a mechanism to search through collected data using SQL. In [Panther Enterprise](https://runpanther.io/pricing), this happens from within the UI directly, and offers performance improvements such as Parquet compaction.
 
 The structure of data falls in 3 main databases:
 1. panther_logs: All parsed and incoming logs
 1. panther_rule_matches: All events associated with generated alerts (copies)
-1. panther_views: A set of metadata that allows for quick lookups on standard fields
+1. panther_views: A set of metadata that allows for quick lookups on standard fields (e.g. IP address)
 
 As an example, the equivalent SQL search to the error monitoring rule above in the Panther Data Lake would be:
 
@@ -357,14 +357,14 @@ ORDER BY err_count DESC
 
 ![S3 Error Query](../.gitbook/assets/tutorials/s3-error-query.png)
 
-The output of this search can be incorporated into your Python rule above by ensuring the output does not have too many results for certain patterns.
+The output of this search can be incorporated into your Python rule above to ensure the output does not have too many results for certain patterns.
 
 
 ## Bucket Hardening
 
-Let's wrap up with ensuring your S3 buckets have secure configurations.  This includes data encryption, public access blocks, bucket policies, and more. You may also define policies based on your internal business logic.
+Let's wrap up by ensuring your S3 buckets have secure configurations. This includes data encryption, public access blocks, bucket policies, and more. You may also want to define additional policies based on your internal business logic.
 
-Panther can natively scan your accounts for issues to discover any low hanging fruit in your environment that could be easily exploitable. This also provides helpful context during an incident, because vulnerable configurations can reveal root cause to attacker behaviors.
+Panther can natively scan your accounts to discover any low hanging fruit in your environment that could be easily exploitable. Cloud Security scans provide helpful context during an incident because vulnerable configurations can reveal root cause to attacker behaviors.
 
 Follow the instructions [here](policies/scanning/README.md) to configure Cloud Security scans for a helpful baseline.
 
@@ -446,7 +446,7 @@ Panther uses Python to express detections and policies as code. Resources are ex
 }
 ```
 
-As an example - let’s write a policy against all S3 buckets to enforce KMS encryption:
+As an example - here's a policy to ensure all S3 buckets enforce KMS encryption:
 
 ```python
 
@@ -463,7 +463,14 @@ This will trigger alerts to send to our team for the remediation of our resource
 
 ## Conclusion
 
-In this tutorial, we reviewed the various methods of collecting S3 access logs, creating a handful of detections, searching through collected data, and improving the cloud security posture of your buckets. The result is a more secure environment with added visibility. If you have your own helpful patterns
+In this tutorial, we reviewed: 
+
+* the various methods of collecting S3 access logs
+* creating a handful of detections
+* searching through collected data
+* and improving the cloud security posture of your buckets. 
+
+The result is a more secure environment with added visibility. 
 
 ### References
 
