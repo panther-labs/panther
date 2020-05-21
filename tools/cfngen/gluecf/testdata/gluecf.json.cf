@@ -141,6 +141,7 @@
       "mapping.p_alert_id": "p_alert_id",
       "mapping.p_alert_update_time": "p_alert_update_time",
       "mapping.p_rule_id": "p_rule_id",
+      "mapping.p_rule_reports": "p_rule_reports",
       "mapping.p_rule_tags": "p_rule_tags",
       "serialization.format": "1"
      }
@@ -189,6 +190,11 @@
      {
       "Name": "p_rule_tags",
       "Type": "array\u003cstring\u003e",
+      "Comment": "The tags of the rule that generated this alert"
+     },
+     {
+      "Name": "p_rule_reports",
+      "Type": "map\u003cstring,array\u003cstring\u003e\u003e",
       "Comment": "The tags of the rule that generated this alert"
      }
     ]

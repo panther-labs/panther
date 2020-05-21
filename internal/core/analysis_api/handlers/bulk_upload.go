@@ -232,6 +232,7 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 			Tags:          config.Tags,
 			Tests:         make([]*models.UnitTest, len(config.Tests)),
 			Type:          strings.ToUpper(config.AnalysisType),
+			Reports:       config.Reports,
 		}
 
 		typeNormalizeTableItem(&analysisItem, config)

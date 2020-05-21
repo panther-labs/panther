@@ -85,6 +85,10 @@ type Rule struct {
 	// Required: true
 	Reference Reference `json:"reference"`
 
+	// reports
+	// Required: true
+	Reports Reports `json:"reports"`
+
 	// runbook
 	// Required: true
 	Runbook Runbook `json:"runbook"`
@@ -155,6 +159,10 @@ func (m *Rule) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateReference(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateReports(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -325,6 +333,18 @@ func (m *Rule) validateReference(formats strfmt.Registry) error {
 	if err := m.Reference.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("reference")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *Rule) validateReports(formats strfmt.Registry) error {
+
+	if err := m.Reports.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("reports")
 		}
 		return err
 	}

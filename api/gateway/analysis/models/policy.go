@@ -89,6 +89,10 @@ type Policy struct {
 	// Required: true
 	Reference Reference `json:"reference"`
 
+	// reports
+	// Required: true
+	Reports Reports `json:"reports"`
+
 	// resource types
 	// Required: true
 	ResourceTypes TypeSet `json:"resourceTypes"`
@@ -171,6 +175,10 @@ func (m *Policy) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateReference(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateReports(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -357,6 +365,18 @@ func (m *Policy) validateReference(formats strfmt.Registry) error {
 	if err := m.Reference.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("reference")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *Policy) validateReports(formats strfmt.Registry) error {
+
+	if err := m.Reports.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("reports")
 		}
 		return err
 	}

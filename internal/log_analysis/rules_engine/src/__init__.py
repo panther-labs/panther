@@ -30,6 +30,7 @@ class EventMatch:
     dedup_period_mins: int
     event: Dict[str, Any]
     rule_tags: List[str] = field(default_factory=list)
+    rule_reports: Dict[str, List[str]] = field(default_factory=dict)
     title: Optional[str] = None
 
 
