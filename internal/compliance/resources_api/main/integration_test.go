@@ -19,15 +19,16 @@ package main
  */
 
 import (
+	"os"
+	"sort"
+	"strings"
+	"testing"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"os"
-	"sort"
-	"strings"
-	"testing"
 
 	"github.com/panther-labs/panther/api/gateway/resources/client"
 	"github.com/panther-labs/panther/api/gateway/resources/client/operations"
