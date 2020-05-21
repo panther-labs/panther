@@ -41,13 +41,12 @@ type AppSyncAlarmProperties struct {
 }
 
 func customAppSyncAlarms(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
-	var props AppSyncAlarmProperties
-	if err := parseProperties(event.ResourceProperties, &props); err != nil {
-		return "", nil, err
-	}
-
 	switch event.RequestType {
 	case cfn.RequestCreate, cfn.RequestUpdate:
+		var props AppSyncAlarmProperties
+		if err := parseProperties(event.ResourceProperties, &props); err != nil {
+			return "", nil, err
+		}
 		return "custom:alarms:appsync:" + props.APIID, nil, putAppSyncAlarmGroup(props)
 
 	case cfn.RequestDelete:

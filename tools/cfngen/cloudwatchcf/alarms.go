@@ -24,7 +24,6 @@ import (
 
 	"github.com/panther-labs/panther/tools/cfngen"
 	"github.com/panther-labs/panther/tools/cfnparse"
-	"github.com/panther-labs/panther/tools/config"
 )
 
 const (
@@ -201,10 +200,10 @@ func AlarmName(alarmType, resourceName string) string {
 
 // GenerateAlarms will read the CF in yml files in the cfDir, and generate CF for CloudWatch alarms for the infrastructure.
 // NOTE: this will not work for resources referenced with Refs, this code requires constant values.
-func GenerateAlarms(settings *config.PantherConfig, cfFiles ...string) ([]*Alarm, []byte, error) {
+func GenerateAlarms(cfFiles ...string) ([]*Alarm, []byte, error) {
 	var alarms []*Alarm
 	for _, path := range cfFiles {
-		fileAlarms, err := generateAlarms(path, settings)
+		fileAlarms, err := generateAlarms(path)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -228,30 +227,26 @@ func GenerateAlarms(settings *config.PantherConfig, cfFiles ...string) ([]*Alarm
 	return alarms, cf, nil
 }
 
-func generateAlarms(fileName string, settings *config.PantherConfig) (alarms []*Alarm, err error) {
+func generateAlarms(fileName string) (alarms []*Alarm, err error) {
 	obj, err := cfnparse.ParseTemplate(fileName)
 	if err != nil {
 		return nil, err
 	}
 
 	walkJSONMap(obj, func(resourceType string, resource map[string]interface{}) {
-		alarms = append(alarms, alarmDispatchOnType(resourceType, resource, settings)...)
+		alarms = append(alarms, alarmDispatchOnType(resourceType, resource)...)
 	})
 
 	return alarms, nil
 }
 
 // dispatch on "Type" to create specific alarms
-func alarmDispatchOnType(resourceType string, resource map[string]interface{}, settings *config.PantherConfig) (alarms []*Alarm) {
+func alarmDispatchOnType(resourceType string, resource map[string]interface{}) (alarms []*Alarm) {
 	switch resourceType { // this could be a map of key -> func if this gets long
 	case "AWS::SNS::Topic":
 		return generateSNSAlarms(resource)
 	case "AWS::SQS::Queue":
 		return generateSQSAlarms(resource)
-	case "AWS::DynamoDB::Table":
-		return generateDynamoDBAlarms(resource)
-	case "AWS::Serverless::Function":
-		return generateLambdaAlarms(resource, settings)
 	case "AWS::StepFunctions::StateMachine":
 		return generateSFNAlarms(resource)
 	}

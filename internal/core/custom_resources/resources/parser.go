@@ -31,8 +31,8 @@ var inputValidator = validator.New()
 //
 // Out must be a pointer to a struct with appropriate `validate` tags
 func parseProperties(params map[string]interface{}, out interface{}) error {
-	if len(params) == 0 {
-		return nil
+	if params == nil {
+		params = make(map[string]interface{})
 	}
 
 	// We could manually use reflection on the output struct, which would be marginally faster

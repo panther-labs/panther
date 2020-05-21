@@ -34,18 +34,19 @@ type CognitoUserPoolMfaProperties struct {
 
 // Enforce SoftwareToken MFA (without SMS as a fallback)
 func customCognitoUserPoolMfa(_ context.Context, event cfn.Event) (physicalID string, outputs map[string]interface{}, err error) {
-	var props CognitoUserPoolMfaProperties
-	if err = parseProperties(event.ResourceProperties, &props); err != nil {
-		return
-	}
-
-	physicalID = fmt.Sprintf("custom:cognito-user-pool:%s:mfa", props.UserPoolID)
 	switch event.RequestType {
 	case cfn.RequestDelete:
 		// We could disable MFA when this resource is deleted, but we have no need for that right now.
 		return
 
 	default:
+		var props CognitoUserPoolMfaProperties
+		if err = parseProperties(event.ResourceProperties, &props); err != nil {
+			return
+		}
+
+		physicalID = fmt.Sprintf("custom:cognito-user-pool:%s:mfa", props.UserPoolID)
+
 		// Create and Update will set the MFA config for the user pool
 		zap.L().Info("enabling TOTP for user pool", zap.String("userPoolId", props.UserPoolID))
 		_, err = getCognitoClient().SetUserPoolMfaConfig(&cognitoidentityprovider.SetUserPoolMfaConfigInput{
