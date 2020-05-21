@@ -307,7 +307,7 @@ This can be used when expecting bucket objects to only be reachable from a CDN o
 
 ### Insecure Access
 
-If bucket data was accessed without SSL, there's potential it was an attacker intercepting the traffic in plaintext to get to your sensitive data. The rule below will detect if any such connections occurred within your buckets:
+If bucket data was accessed without SSL, there's potential that an attacker could intercept the traffic in plaintext to get to your sensitive data. The rule below will detect if any such connections occurred within your buckets:
 
 ```python
 def rule(event):
@@ -463,14 +463,14 @@ This will trigger alerts to send to our team for the remediation of our resource
 
 ## Conclusion
 
-In this tutorial, we reviewed: 
+In this tutorial, we reviewed:
 
 * the various methods of collecting S3 access logs
 * creating a handful of detections
 * searching through collected data
-* and improving the cloud security posture of your buckets. 
+* and improving the cloud security posture of your buckets.
 
-The result is a more secure environment with added visibility. 
+The result is a more secure environment with added visibility.
 
 ### References
 
