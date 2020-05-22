@@ -201,6 +201,7 @@
   * [Cost](cost.md)
 * [Tutorials]()
   * [Osquery Log Analysis](tutorials/osquery-log-analysis.md)
+  * [S3 Bucket Monitoring](tutorials/s3-monitoring-fundamentals.md)
 * [Development](development.md)
   * [Parsers](log-analysis/log-processing/writing-parsers.md)
 * [Operations](operations/ops-home.md)
