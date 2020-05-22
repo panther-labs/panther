@@ -323,7 +323,7 @@ Resources:
     Type: Custom::SQSAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
-      QueueName: !Ref LogProcessorQueue
+      QueueName: !GetAtt LogProcessorQueue.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   LogProcessorDLQ:
@@ -343,7 +343,7 @@ Resources:
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
       IsDLQ: true
-      QueueName: !Ref LogProcessorDLQ
+      QueueName: !GetAtt LogProcessorDLQ.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   LogProcessorLogGroup:
@@ -503,7 +503,7 @@ Resources:
     Type: Custom::SQSAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
-      QueueName: !Ref UpdaterQueue
+      QueueName: !GetAtt UpdaterQueue.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   UpdaterDLQ:
@@ -523,7 +523,7 @@ Resources:
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
       IsDLQ: true
-      QueueName: !Ref UpdaterDLQ
+      QueueName: !GetAtt UpdaterDLQ.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   UpdaterFunctionLogGroup:
@@ -653,7 +653,7 @@ Resources:
     Type: Custom::SQSAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
-      QueueName: !Ref RulesEngineQueue
+      QueueName: !GetAtt RulesEngineQueue.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   RulesEngineDLQ:
@@ -673,7 +673,7 @@ Resources:
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
       IsDLQ: true
-      QueueName: !Ref RulesEngineDLQ
+      QueueName: !GetAtt RulesEngineDLQ.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   AlertsDedup:

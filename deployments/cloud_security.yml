@@ -138,7 +138,7 @@ Resources:
     Type: Custom::SQSAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
-      QueueName: !Ref AlertProcessorQueue
+      QueueName: !GetAtt AlertProcessorQueue.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   AlertProcessorDLQ:
@@ -159,7 +159,7 @@ Resources:
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
       IsDLQ: true
-      QueueName: !Ref AlertProcessorDLQ
+      QueueName: !GetAtt AlertProcessorDLQ.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   AlertProcessorLogGroup:
@@ -388,7 +388,7 @@ Resources:
     Type: Custom::SQSAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
-      QueueName: !Ref EventQueue
+      QueueName: !GetAtt EventQueue.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   EventDLQ:
@@ -409,7 +409,7 @@ Resources:
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
       IsDLQ: true
-      QueueName: !Ref EventDLQ
+      QueueName: !GetAtt EventDLQ.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   SnsSubscription:
@@ -769,7 +769,7 @@ Resources:
     Type: Custom::SQSAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
-      QueueName: !Ref RemediationQueue
+      QueueName: !GetAtt RemediationQueue.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   RemediationDLQ:
@@ -790,7 +790,7 @@ Resources:
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
       IsDLQ: true
-      QueueName: !Ref RemediationDLQ
+      QueueName: !GetAtt RemediationDLQ.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   RemediationProcessorLogGroup:
@@ -1076,7 +1076,7 @@ Resources:
     Type: Custom::SQSAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
-      QueueName: !Ref ResourcesQueue
+      QueueName: !GetAtt ResourcesQueue.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ResourcesDLQ:
@@ -1097,7 +1097,7 @@ Resources:
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
       IsDLQ: true
-      QueueName: !Ref ResourcesDLQ
+      QueueName: !GetAtt ResourcesDLQ.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ResourceProcessorLogGroup:
@@ -1288,7 +1288,7 @@ Resources:
     Type: Custom::SQSAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
-      QueueName: !Ref SnapshotQueue
+      QueueName: !GetAtt SnapshotQueue.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   SnapshotDLQ:
@@ -1309,7 +1309,7 @@ Resources:
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
       IsDLQ: true
-      QueueName: !Ref SnapshotDLQ
+      QueueName: !GetAtt SnapshotDLQ.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   PollerFunction:

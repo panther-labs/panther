@@ -559,7 +559,7 @@ Resources:
     Type: Custom::SQSAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
-      QueueName: !Ref AlertQueue
+      QueueName: !GetAtt AlertQueue.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   AlertDLQ:
@@ -580,7 +580,7 @@ Resources:
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
       IsDLQ: true
-      QueueName: !Ref AlertDLQ
+      QueueName: !GetAtt AlertDLQ.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   AlertDeliveryFunction:
@@ -824,7 +824,7 @@ Resources:
     Type: Custom::SQSAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
-      QueueName: !Ref LayerQueue
+      QueueName: !GetAtt LayerQueue.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   LayerDLQ:
@@ -845,7 +845,7 @@ Resources:
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
       IsDLQ: true
-      QueueName: !Ref LayerDLQ
+      QueueName: !GetAtt LayerDLQ.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   LayerManagerFunction:
