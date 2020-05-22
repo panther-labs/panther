@@ -222,6 +222,7 @@ func deployBoostrapStacks(
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 		"TracingMode":                settings.Monitoring.TracingMode,
 		"AlarmTopicArn":              settings.Monitoring.AlarmSnsTopicArn,
+		"DeployFromSource":           "true",
 	}
 
 	outputs, err := deployTemplate(awsSession, bootstrapTemplate, "", bootstrapStack, params)

@@ -30,7 +30,6 @@ Description: The very first Panther stack - static resources which don't require
 #   - The cognito user pool and appsync API
 
 Parameters:
-  # Optional
   LogSubscriptionPrincipals:
     Type: CommaDelimitedList
     Description: The list of Principal ARNs to allow read access to the ProcessedDataBucket and subscribe access to ProcessedDataTopicArn
@@ -64,6 +63,11 @@ Parameters:
     Type: String
     Description: An existing SNS topic for CloudWatch alarms. If not specified, one is created for you.
     Default: ''
+  DeployFromSource:
+    Type: String
+    Description: A few extra resources are required when deploying from source
+    Default: false
+    AllowedValues: [true, false]
 
 Mappings:
   SubnetConfig:
@@ -131,6 +135,7 @@ Conditions:
   UseCustomDomain: !Not [!Equals [!Ref CustomDomain, '']]
   EnableDebug: !Equals [!Ref Debug, true]
   CreateAlarmSNSTopic: !Equals [!Ref AlarmTopicArn, '']
+  IsDeployFromSource: !Equals [!Ref DeployFromSource, true]
 
 Resources:
   ########## S3 Buckets ##########
@@ -244,6 +249,7 @@ Resources:
                 aws:SecureTransport: false
 
   Source: # Staging bucket for CloudFormation to upload templates, Lambda source, etc
+    Condition: IsDeployFromSource
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
@@ -271,6 +277,7 @@ Resources:
         Status: Enabled
 
   SourceBucketPolicy:
+    Condition: IsDeployFromSource
     Type: AWS::S3::BucketPolicy
     Properties:
       Bucket: !Ref Source
@@ -530,6 +537,7 @@ Resources:
 
   ########## ECR + ECS ##########
   PantherWebImageRepository:
+    Condition: IsDeployFromSource
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: panther-web
@@ -624,17 +632,6 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetTwo
       RouteTableId: !Ref PublicRouteTable
-
-  # Panther monitors itself, the AuditLogsBucket is processed by the log processor
-  FlowLogs:
-    Type: AWS::EC2::FlowLog
-    DependsOn: AuditLogsBucketPolicy
-    Properties:
-      LogDestination: !Sub arn:${AWS::Partition}:s3:::${AuditLogs}
-      LogDestinationType: s3
-      ResourceId: !Ref VPC
-      ResourceType: VPC
-      TrafficType: ALL
 
   # Public load balancer, hosted in public subnets that is accessible
   # to the public, and is intended to route traffic to one or more public
@@ -888,10 +885,14 @@ Outputs:
     Description: S3 bucket name for processed log data
     Value: !Ref ProcessedData
   SourceBucket:
+    Condition: IsDeployFromSource
     Description: S3 bucket name for Panther CloudFormation packaging
     Value: !Ref Source
 
   # Networking + elb
+  VpcId:
+    Description: Web VPC ID
+    Value: !Ref VPC
   SubnetOneId:
     Description: Public subnet one
     Value: !Ref PublicSubnetOne
@@ -916,6 +917,7 @@ Outputs:
 
   # ECR
   ImageRegistry:
+    Condition: IsDeployFromSource
     Description: Docker image registry which stores web app images
     Value: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.${AWS::URLSuffix}/${PantherWebImageRepository}'
 
