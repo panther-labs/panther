@@ -141,9 +141,8 @@ func addInvalid(t *testing.T) {
 	}
 	err := genericapi.Invoke(lambdaClient, outputsAPI, &input, nil)
 	expected := &genericapi.LambdaError{
-		ErrorMessage: aws.String(
-			"Key: 'LambdaInput.AddOutput.DisplayName' " +
-				"Error:Field validation for 'DisplayName' failed on the 'required' tag"),
+		// nolint:lll
+		ErrorMessage: aws.String("DisplayName invalid, failed to satisfy the condition: required"),
 		ErrorType:    aws.String("InvalidInputError"),
 		FunctionName: outputsAPI,
 	}
@@ -233,10 +232,7 @@ func updateInvalid(t *testing.T) {
 			OutputConfig: &models.OutputConfig{Sns: sns}}}
 	err := genericapi.Invoke(lambdaClient, outputsAPI, &input, nil)
 	expected := &genericapi.LambdaError{
-		ErrorMessage: aws.String(
-			"Key: 'LambdaInput.UpdateOutput.UserID' Error:Field validation for 'UserID' failed on the 'required' tag\n" +
-				"Key: 'LambdaInput.UpdateOutput.DisplayName' Error:Field validation for 'DisplayName' failed on the 'required' tag\n" +
-				"Key: 'LambdaInput.UpdateOutput.OutputID' Error:Field validation for 'OutputID' failed on the 'required' tag"),
+		ErrorMessage: aws.String("UserID invalid, failed to satisfy the condition: required"),
 		ErrorType:    aws.String("InvalidInputError"),
 		FunctionName: outputsAPI,
 	}
@@ -316,8 +312,7 @@ func deleteInvalid(t *testing.T) {
 	input := models.LambdaInput{DeleteOutput: &models.DeleteOutputInput{}}
 	err := genericapi.Invoke(lambdaClient, outputsAPI, &input, nil)
 	expected := &genericapi.LambdaError{
-		ErrorMessage: aws.String(
-			"Key: 'LambdaInput.DeleteOutput.OutputID' Error:Field validation for 'OutputID' failed on the 'required' tag"),
+		ErrorMessage: aws.String("OutputID invalid, failed to satisfy the condition: required"),
 		ErrorType:    aws.String("InvalidInputError"),
 		FunctionName: outputsAPI,
 	}
