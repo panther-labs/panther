@@ -84,9 +84,11 @@ class Rule:
             config['tags'].sort()
             self.rule_tags = config['tags']
 
-        if not 'reports' in config:
+        if 'reports' not in config:
             self.rule_reports = dict()
         else:
+            # Reports are Dict[str, List[str]]
+            # Sorting the List before setting it
             for values in config['reports'].values():
                 values.sort()
             self.rule_reports = config['reports']

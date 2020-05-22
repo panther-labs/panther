@@ -257,6 +257,7 @@ class TestMatchedEventsBuffer(TestCase):
                 self.assertEqual(content['p_rule_id'], 'id2')
                 # Assert that tags row is not populated
                 self.assertEqual(content['p_rule_tags'], [])
+                self.assertEqual(content['p_rule_reports'], {})
                 self.assertEqual(content['p_alert_id'], hashlib.md5(b'id2:1:dedup').hexdigest())  # nosec
             else:
                 self.fail('unexpected content')
