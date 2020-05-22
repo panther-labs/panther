@@ -151,7 +151,7 @@ func (b Build) lambda() error {
 
 	// Start worker goroutines
 	compile := func(pkgs chan string, errs chan error) {
-		for pkg := <-pkgs; pkg != ""; pkg = <-pkgs {
+		for pkg := range pkgs {
 			errs <- buildLambdaPackage(pkg)
 		}
 	}
@@ -166,9 +166,7 @@ func (b Build) lambda() error {
 	for _, pkg := range packages {
 		pkgs <- pkg
 	}
-	for i := 0; i < maxWorkers; i++ {
-		pkgs <- "" // poison pill to stop each worker
-	}
+	close(pkgs)
 
 	// Read results
 	for range packages {
@@ -237,7 +235,7 @@ func (b Build) tools() error {
 	}
 
 	compile := func(inputs chan *buildInput, results chan error) {
-		for input := <-inputs; input != nil; input = <-inputs {
+		for input := range inputs {
 			outDir := filepath.Join("out", "bin", filepath.Base(filepath.Dir(input.path)),
 				input.env["GOOS"], input.env["GOARCH"], filepath.Base(filepath.Dir(input.path)))
 			results <- sh.RunWith(input.env, "go", "build", "-ldflags", "-s -w", "-o", outDir, "./"+input.path)
@@ -276,10 +274,7 @@ func (b Build) tools() error {
 	}
 
 	// Wait for results
-	for i := 0; i < maxWorkers; i++ {
-		results <- nil // send poison pill to stop each worker
-	}
-
+	close(inputs)
 	for i := 0; i < count; i++ {
 		if err = <-results; err != nil {
 			return err
