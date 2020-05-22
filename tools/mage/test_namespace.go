@@ -188,6 +188,11 @@ func testCfnLint() error {
 					err = fmt.Errorf("%s needs an associated %s resource in %s",
 						logicalID, logicalID+"Alarms", template)
 				}
+			case "AWS::SQS::Queue":
+				if resources[logicalID+"Alarms"] != "Custom::SQSAlarms" {
+					err = fmt.Errorf("%s needs an associated %s resource in %s",
+						logicalID, logicalID+"Alarms", template)
+				}
 			case "AWS::StepFunctions::StateMachine":
 				if resources[logicalID+"Alarms"] != "Custom::StateMachineAlarms" {
 					err = fmt.Errorf("%s needs an associated %s resource in %s",

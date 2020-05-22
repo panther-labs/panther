@@ -55,8 +55,6 @@ const (
 	gatewayTemplate   = apiEmbeddedTemplate
 
 	// Main stacks
-	alarmsStack         = "panther-cw-alarms"
-	alarmsTemplate      = "deployments/alarms.yml"
 	appsyncStack        = "panther-appsync"
 	appsyncTemplate     = "deployments/appsync.yml"
 	cloudsecStack       = "panther-cloud-security"
@@ -71,9 +69,12 @@ const (
 	glueTemplate        = "out/deployments/gluetables.json"
 	logAnalysisStack    = "panther-log-analysis"
 	logAnalysisTemplate = "deployments/log_analysis.yml"
-	metricFilterStack   = "panther-cw-metric-filters"
 	onboardStack        = "panther-onboard"
 	onboardTemplate     = "deployments/onboard.yml"
+
+	// Removed stacks
+	alarmsStack       = "panther-cw-alarms"
+	metricFilterStack = "panther-cw-metric-filters"
 
 	// Python layer
 	layerSourceDir        = "out/pip/analysis/python"
@@ -150,6 +151,10 @@ func Deploy() {
 	// Starting in v1.3.0, the metric-filter stack is no longer used. It can be safely deleted
 	if err := deleteStack(cloudformation.New(awsSession), aws.String(metricFilterStack)); err != nil {
 		logger.Warnf("failed to delete deprecated %s stack: %v", metricFilterStack, err)
+	}
+	// Starting in v1.4.0, the alarms stack is no longer used and can be safely deleted.
+	if err := deleteStack(cloudformation.New(awsSession), aws.String(alarmsStack)); err != nil {
+		logger.Warnf("failed to delete deprecated %s stack: %v", alarmsStack, err)
 	}
 
 	logger.Infof("deploy: finished successfully in %s", time.Since(start).Round(time.Second))
@@ -306,15 +311,6 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	sourceBucket := outputs["SourceBucket"]
 	results := make(chan goroutineResult)
 	count := 0
-
-	// Alarms
-	count++
-	go func(c chan goroutineResult) {
-		_, err := deployTemplate(awsSession, alarmsTemplate, sourceBucket, alarmsStack, map[string]string{
-			"AlarmTopicArn": outputs["AlarmTopicArn"],
-		})
-		c <- goroutineResult{summary: alarmsStack, err: err}
-	}(results)
 
 	// Appsync
 	count++

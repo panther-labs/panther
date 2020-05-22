@@ -129,4 +129,14 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// Outputs: None
 	// PhysicalId: custom:alarms:sns:$TOPIC_NAME
 	"Custom::SNSAlarms": customSNSAlarms,
+
+	// Creates an alarm for high SQS age and entries in a DLQ
+	//
+	// Parameters:
+	//     AlarmTopicArn:    string (required)
+	//     QueueName:        string (required)
+	//	   IsDLQ:            bool (default: false)
+	// Outputs: None
+	// PhysicalId: custom:alarms:sqs:$QUEUE_NAME
+	"Custom::SQSAlarms": customSQSAlarms,
 }

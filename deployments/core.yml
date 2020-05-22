@@ -526,6 +526,13 @@ Resources:
         deadLetterTargetArn: !GetAtt AlertDLQ.Arn
         maxReceiveCount: 10
 
+  AlertQueueAlarms:
+    Type: Custom::SQSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      QueueName: !Ref AlertQueue
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   AlertDLQ:
     Type: AWS::SQS::Queue
     Properties:
@@ -538,6 +545,14 @@ Resources:
       # </cfndoc>
       MessageRetentionPeriod: '1209600' # Max duration - 14 days
       VisibilityTimeout: 60
+
+  AlertDLQAlarms:
+    Type: Custom::SQSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      IsDLQ: true
+      QueueName: !Ref AlertDLQ
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   AlertDeliveryFunction:
     Type: AWS::Serverless::Function
@@ -772,6 +787,13 @@ Resources:
         deadLetterTargetArn: !GetAtt LayerDLQ.Arn
         maxReceiveCount: 10
 
+  LayerQueueAlarms:
+    Type: Custom::SQSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      QueueName: !Ref LayerQueue
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   LayerDLQ:
     Type: AWS::SQS::Queue
     Properties:
@@ -784,6 +806,14 @@ Resources:
       # </cfndoc>
       MessageRetentionPeriod: '1209600' # Max duration - 14 days
       VisibilityTimeout: 60
+
+  LayerDLQAlarms:
+    Type: Custom::SQSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      IsDLQ: true
+      QueueName: !Ref LayerDLQ
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   LayerManagerFunction:
     Type: AWS::Serverless::Function

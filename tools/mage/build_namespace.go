@@ -305,12 +305,5 @@ func (b Build) cfn() error {
 		return err
 	}
 
-	if err := generateAlarms(); err != nil {
-		return err
-	}
-	if err := generateDashboards(); err != nil {
-		return err
-	}
-
-	return nil
+	return generateDashboards()
 }
