@@ -45,23 +45,3 @@ Resources:
     Properties:
       QueueName: test-sqs-dlq
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
-
-  MyStateMachine:
-    Type: 'AWS::StepFunctions::StateMachine'
-    Properties:
-      StateMachineName: my-state-machine
-      DefinitionString: !Sub
-        - |-
-          {
-            "Comment": "A Hello World example using an AWS Lambda function",
-            "StartAt": "HelloWorld",
-            "States": {
-              "HelloWorld": {
-                "Type": "Task",
-                "Resource": "${lambdaArn}",
-                "End": true
-              }
-            }
-          }
-        - { lambdaArn: !GetAtt [MyLambdaFunction, Arn] }
-      RoleArn: !GetAtt [StatesExecutionRole, Arn]

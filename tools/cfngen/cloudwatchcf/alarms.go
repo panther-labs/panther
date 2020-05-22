@@ -247,8 +247,6 @@ func alarmDispatchOnType(resourceType string, resource map[string]interface{}) (
 		return generateSNSAlarms(resource)
 	case "AWS::SQS::Queue":
 		return generateSQSAlarms(resource)
-	case "AWS::StepFunctions::StateMachine":
-		return generateSFNAlarms(resource)
 	}
 	return alarms
 }

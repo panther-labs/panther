@@ -7,35 +7,6 @@
     }
   },
   "Resources": {
-    "PantherAlarmSFNErrormystatemachine": {
-      "Type": "AWS::CloudWatch::Alarm",
-      "Properties": {
-        "AlarmName": "PantherAlarm-SFNError-my-state-machine",
-        "AlarmDescription": "State machine my-state-machine is failing. See: https://docs.runpanther.io/operations/runbooks#my-state-machine",
-        "AlarmActions": [
-          {
-            "Ref": "AlarmTopicArn"
-          }
-        ],
-        "TreatMissingData": "notBreaching",
-        "Namespace": "AWS/States",
-        "MetricName": "ExecutionsFailed",
-        "Dimensions": [
-          {
-            "Name": "StateMachineArn",
-            "Value": {
-              "Fn::Sub": "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:my-state-machine"
-            }
-          }
-        ],
-        "ComparisonOperator": "GreaterThanThreshold",
-        "EvaluationPeriods": 1,
-        "Period": 300,
-        "Threshold": 0,
-        "Unit": "Count",
-        "Statistic": "Sum"
-      }
-    },
     "PantherAlarmSNSErrortestnotifications": {
       "Type": "AWS::CloudWatch::Alarm",
       "Properties": {

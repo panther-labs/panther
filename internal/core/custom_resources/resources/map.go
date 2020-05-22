@@ -111,4 +111,13 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// Outputs: None
 	// PhysicalId: custom:metric-filters:$LOG_GROUP_NAME
 	"Custom::LambdaMetricFilters": customLambdaMetricFilters,
+
+	// Creates an alarm for failed step function executions
+	//
+	// Parameters:
+	//     AlarmTopicArn:    string (required)
+	//     StateMachineArn:  string (required)
+	// Outputs: None
+	// PhysicalId: custom:alarms:sfn:$STATE_MACHINE_NAME
+	"Custom::StateMachineAlarms": customStateMachineAlarms,
 }
