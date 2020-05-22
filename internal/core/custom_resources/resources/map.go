@@ -91,9 +91,8 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// Parameters:
 	//     AlarmTopicArn:           string (required)
 	//     FunctionName:            string (required)
-	//
-	//     FunctionMemoryMB:        int (default: 128)
-	//     FunctionTimeoutSec:      int (default: 60)
+	//     FunctionMemoryMB:        int (required)
+	//     FunctionTimeoutSec:      int (required)
 	//
 	//     LoggedErrorThreshold:    int (default: 0)
 	//     LoggedWarnThreshold:     int (default: 25)
