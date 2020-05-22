@@ -59,7 +59,6 @@ func customLambdaAlarms(_ context.Context, event cfn.Event) (string, map[string]
 		}
 
 		// Set defaults
-		// TODO - better parsing of properties with defaults
 		if props.FunctionMemoryMB == 0 {
 			props.FunctionMemoryMB = 128
 		}
