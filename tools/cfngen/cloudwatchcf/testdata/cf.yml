@@ -21,12 +21,6 @@ Transform: AWS::Serverless-2016-10-31
 Description: Test CF for generating alarms
 
 Resources:
-  # SNS
-  Notifications:
-    Type: AWS::SNS::Topic
-    Properties:
-      TopicName: test-notifications
-
   # SQS Queue, DLQ and Lambda
   Queue:
     Type: AWS::SQS::Queue

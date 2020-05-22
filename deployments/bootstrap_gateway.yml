@@ -34,6 +34,7 @@ Metadata:
 #     making the template too large to deploy without an S3 bucket
 # - Python layer: the layer source has to be uploaded to S3 before the cfn resource can be created
 # - Custom resource: the Lambda function which handles custom CFN resources
+#      - Alarms for SNS topics in the bootstrap stack
 
 Parameters:
   # From the config file
@@ -166,6 +167,24 @@ Resources:
       LoggedWarnThreshold: 0
       ThrottleThreshold: 0
       ServiceToken: !GetAtt CustomResourceFunction.Arn
+
+  # Alarms for SNS topics in the bootstrap stack
+  ProcessedDataTopicAlarms:
+    Type: Custom::SNSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+      TopicName: panther-processed-data-notifications
+
+  AlarmTopicAlarms:
+    # This is actually configuring the alarm topic to monitor itself.
+    # It obviously might not be able to notify us about its own failures, but we still want to try.
+    # There could be transient failures that will eventually get through.
+    Type: Custom::SNSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+      TopicName: panther-cw-alarms
 
   # Enable only software MFA for the Cognito user pool - enabling MFA via native CloudFormation
   # forces SMS as a fallback option, but the SDK does not.

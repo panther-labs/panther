@@ -243,8 +243,6 @@ func generateAlarms(fileName string) (alarms []*Alarm, err error) {
 // dispatch on "Type" to create specific alarms
 func alarmDispatchOnType(resourceType string, resource map[string]interface{}) (alarms []*Alarm) {
 	switch resourceType { // this could be a map of key -> func if this gets long
-	case "AWS::SNS::Topic":
-		return generateSNSAlarms(resource)
 	case "AWS::SQS::Queue":
 		return generateSQSAlarms(resource)
 	}

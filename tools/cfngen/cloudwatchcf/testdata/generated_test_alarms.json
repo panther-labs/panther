@@ -7,28 +7,6 @@
     }
   },
   "Resources": {
-    "PantherAlarmSNSErrortestnotifications": {
-      "Type": "AWS::CloudWatch::Alarm",
-      "Properties": {
-        "AlarmName": "PantherAlarm-SNSError-test-notifications",
-        "AlarmDescription": "SNS topic test-notifications is failing. See: https://docs.runpanther.io/operations/runbooks#test-notifications",
-        "AlarmActions": [
-          {
-            "Ref": "AlarmTopicArn"
-          }
-        ],
-        "TreatMissingData": "notBreaching",
-        "Namespace": "AWS/SNS",
-        "MetricName": "NumberOfNotificationsFailed",
-        "Dimensions": [{ "Name": "TopicName", "Value": "test-notifications" }],
-        "ComparisonOperator": "GreaterThanThreshold",
-        "EvaluationPeriods": 1,
-        "Period": 300,
-        "Threshold": 0,
-        "Unit": "Count",
-        "Statistic": "Sum"
-      }
-    },
     "PantherAlarmSQSDeadLetterstestsqsdlq": {
       "Type": "AWS::CloudWatch::Alarm",
       "Properties": {

@@ -120,4 +120,13 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// Outputs: None
 	// PhysicalId: custom:alarms:sfn:$STATE_MACHINE_NAME
 	"Custom::StateMachineAlarms": customStateMachineAlarms,
+
+	// Creates an alarm for failed SNS notifications.
+	//
+	// Parameters:
+	//     AlarmTopicArn:    string (required)
+	//     TopicName:        string (required)
+	// Outputs: None
+	// PhysicalId: custom:alarms:sns:$TOPIC_NAME
+	"Custom::SNSAlarms": customSNSAlarms,
 }
