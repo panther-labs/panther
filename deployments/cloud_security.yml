@@ -1263,7 +1263,7 @@ Resources:
       AlarmTopicArn: !Ref AlarmTopicArn
       FunctionMemoryMB: !FindInMap [Functions, PolicyEngine, Memory]
       FunctionName: !Ref PolicyEngineFunction
-      FunctionTimeout: !FindInMap [Functions, PolicyEngine, Timeout]
+      FunctionTimeoutSec: !FindInMap [Functions, PolicyEngine, Timeout]
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Snapshot Poller #####

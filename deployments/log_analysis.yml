@@ -64,6 +64,24 @@ Parameters:
     AllowedValues: ['', Active, PassThrough]
     Default: ''
 
+Mappings:
+  Functions:
+    AlertsApi:
+      Memory: 256
+      Timeout: 60
+    AlertsForwarder:
+      Memory: 128
+      Timeout: 30
+    LogProcessor:
+      # Memory is a parameter above
+      Timeout: 900
+    RulesEngine:
+      # Memory is the same as log processor memory parameter
+      Timeout: 120
+    Updater:
+      Memory: 128
+      Timeout: 120
+
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
@@ -105,9 +123,9 @@ Resources:
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 256
+      MemorySize: !FindInMap [Functions, AlertsApi, Memory]
       Runtime: go1.x
-      Timeout: 60
+      Timeout: !FindInMap [Functions, AlertsApi, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: ManageAlerts
@@ -135,8 +153,9 @@ Resources:
     Type: Custom::LambdaAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
-      FunctionMemoryMB: 256
+      FunctionMemoryMB: !FindInMap [Functions, AlertsApi, Memory]
       FunctionName: !Ref AlertsApiFunction
+      FunctionTimeoutSec: !FindInMap [Functions, AlertsApi, Timeout]
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   LogAlertsTable:
@@ -239,9 +258,9 @@ Resources:
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 128
+      MemorySize: !FindInMap [Functions, AlertsForwarder, Memory]
       Runtime: go1.x
-      Timeout: 30
+      Timeout: !FindInMap [Functions, AlertsForwarder, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: SQS
@@ -274,8 +293,9 @@ Resources:
     Type: Custom::LambdaAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, AlertsForwarder, Memory]
       FunctionName: !Ref AlertsForwarderFunction
-      FunctionTimeoutSec: 30
+      FunctionTimeoutSec: !FindInMap [Functions, AlertsForwarder, Timeout]
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Log Processor #####
@@ -294,7 +314,7 @@ Resources:
       KmsMasterKeyId: !Ref SqsKeyId
       # Reference on KeyReuse: https://amzn.to/2ngIsFB
       KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
-      VisibilityTimeout: 900 # Should match log processor lambda
+      VisibilityTimeout: !FindInMap [Functions, LogProcessor, Timeout]
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt LogProcessorDLQ.Arn
         maxReceiveCount: 10
@@ -365,7 +385,7 @@ Resources:
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: !Ref LogProcessorLambdaMemorySize
       Runtime: go1.x
-      Timeout: 900 # needs to match q visibility timeout!
+      Timeout: !FindInMap [Functions, LogProcessor, Timeout]
       Environment:
         Variables:
           DEBUG: !Ref Debug
@@ -433,7 +453,7 @@ Resources:
       AlarmTopicArn: !Ref AlarmTopicArn
       FunctionMemoryMB: !Ref LogProcessorLambdaMemorySize
       FunctionName: !Ref LogProcessorFunction
-      FunctionTimeoutSec: 900
+      FunctionTimeoutSec: !FindInMap [Functions, LogProcessor, Timeout]
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   UpdaterSnsSubscription:
@@ -474,7 +494,7 @@ Resources:
       # * Users will not be able to see new events that matched some rule.
       # </cfndoc>
       KmsMasterKeyId: !Ref SqsKeyId
-      VisibilityTimeout: 120 # Should match lambda
+      VisibilityTimeout: !FindInMap [Functions, Updater, Timeout]
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt UpdaterDLQ.Arn
         maxReceiveCount: 10
@@ -535,9 +555,9 @@ Resources:
       CodeUri: ../out/bin/internal/log_analysis/datacatalog_updater/main
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 128
+      MemorySize: !FindInMap [Functions, Updater, Memory]
       Runtime: go1.x
-      Timeout: 120
+      Timeout: !FindInMap [Functions, Updater, Timeout]
       Environment:
         Variables:
           DEBUG: !Ref Debug
@@ -574,8 +594,9 @@ Resources:
     Type: Custom::LambdaAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, Updater, Memory]
       FunctionName: !Ref UpdaterFunction
-      FunctionTimeoutSec: 120
+      FunctionTimeoutSec: !FindInMap [Functions, Updater, Timeout]
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Rules Engine #####
@@ -623,7 +644,7 @@ Resources:
       KmsMasterKeyId: !Ref SqsKeyId
       # Reference on KeyReuse: https://amzn.to/2ngIsFB
       KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
-      VisibilityTimeout: 120 # Should match lambda
+      VisibilityTimeout: !FindInMap [Functions, RulesEngine, Timeout]
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt RulesEngineDLQ.Arn
         maxReceiveCount: 10
@@ -740,7 +761,7 @@ Resources:
               pip: !Ref PythonLayerVersionArn
         - [!Ref PythonLayerVersionArn]
       Runtime: python3.7
-      Timeout: 120
+      Timeout: !FindInMap [Functions, RulesEngine, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: SendToNotificationsTopic
@@ -805,5 +826,5 @@ Resources:
       AlarmTopicArn: !Ref AlarmTopicArn
       FunctionMemoryMB: !Ref LogProcessorLambdaMemorySize
       FunctionName: !Ref RulesEngineFunction
-      FunctionTimeoutSec: 120
+      FunctionTimeoutSec: !FindInMap [Functions, RulesEngine, Timeout]
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources

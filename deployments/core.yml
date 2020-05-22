@@ -94,6 +94,30 @@ Parameters:
     MinValue: 60
     MaxValue: 1209600
 
+Mappings:
+  Functions:
+    AlertDelivery:
+      Memory: 128
+      Timeout: 60
+    AnalysisAPI:
+      Memory: 512
+      Timeout: 120
+    LayerManager:
+      Memory: 512
+      Timeout: 60
+    OrganizationAPI:
+      Memory: 128
+      Timeout: 60
+    OutputsAPI:
+      Memory: 512
+      Timeout: 60
+    SourceAPI:
+      Memory: 128
+      Timeout: 60
+    UsersAPI:
+      Memory: 128
+      Timeout: 60
+
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
@@ -131,9 +155,9 @@ Resources:
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 128
+      MemorySize: !FindInMap [Functions, UsersAPI, Memory]
       Runtime: go1.x
-      Timeout: 60
+      Timeout: !FindInMap [Functions, UsersAPI, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: CognitoUserManagement
@@ -165,7 +189,9 @@ Resources:
     Type: Custom::LambdaAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, UsersAPI, Memory]
       FunctionName: !Ref UsersAPIFunction
+      FunctionTimeoutSec: !FindInMap [Functions, UsersAPI, Timeout]
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   # Allow Cognito to invoke the users-api for custom triggers
@@ -231,9 +257,9 @@ Resources:
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 128
+      MemorySize: !FindInMap [Functions, OrganizationAPI, Memory]
       Runtime: go1.x
-      Timeout: 60
+      Timeout: !FindInMap [Functions, OrganizationAPI, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: ManageOrganizationTable
@@ -249,7 +275,9 @@ Resources:
     Type: Custom::LambdaAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, OrganizationAPI, Memory]
       FunctionName: !Ref OrganizationAPIFunction
+      FunctionTimeoutSec: !FindInMap [Functions, OrganizationAPI, Timeout]
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Analysis API #####
@@ -278,10 +306,10 @@ Resources:
       # * Failure of this lambda will prevent policies/rules from being created, updated, deleted. Additionally, policies and rules will stop being evaluated by the policy/rules engines.
       # </cfndoc>
       Handler: main
-      MemorySize: 512
+      MemorySize: !FindInMap [Functions, AnalysisAPI, Memory]
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       Runtime: go1.x
-      Timeout: 120
+      Timeout: !FindInMap [Functions, AnalysisAPI, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: InvokeApis
@@ -354,9 +382,9 @@ Resources:
     Type: Custom::LambdaAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
-      FunctionMemoryMB: 512
+      FunctionMemoryMB: !FindInMap [Functions, AnalysisAPI, Memory]
       FunctionName: !Ref AnalysisApiFunction
-      FunctionTimeoutSec: 120
+      FunctionTimeoutSec: !FindInMap [Functions, AnalysisAPI, Timeout]
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   GatewayInvocationPermission: # allow API gateway to invoke analysis-api Lambda function
@@ -458,9 +486,9 @@ Resources:
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 512
+      MemorySize: !FindInMap [Functions, OutputsAPI, Memory]
       Runtime: go1.x
-      Timeout: 60
+      Timeout: !FindInMap [Functions, OutputsAPI, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: OutputsTables
@@ -503,8 +531,9 @@ Resources:
     Type: Custom::LambdaAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
-      FunctionMemoryMB: 512
+      FunctionMemoryMB: !FindInMap [Functions, OutputsAPI, Memory]
       FunctionName: !Ref OutputsApiFunction
+      FunctionTimeoutSec: !FindInMap [Functions, OutputsAPI, Timeout]
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Alert Delivery #####
@@ -521,7 +550,7 @@ Resources:
       # </cfndoc>
       MessageRetentionPeriod: !Ref AlertSqsRetentionSec
       KmsMasterKeyId: !Ref SqsKeyId
-      VisibilityTimeout: 60 # Should match lambda timeout
+      VisibilityTimeout: !FindInMap [Functions, AlertDelivery, Timeout]
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt AlertDLQ.Arn
         maxReceiveCount: 10
@@ -586,9 +615,9 @@ Resources:
       # * Failed events will go into the `panther-alerts-queue-dlq`. When the system has recovered they should be re-queued to the `panther-alerts-queue` using the Panther tool `requeue`.
       # </cfndoc>
       Handler: main
-      MemorySize: 128
+      MemorySize: !FindInMap [Functions, AlertDelivery, Memory]
       Runtime: go1.x
-      Timeout: 60
+      Timeout: !FindInMap [Functions, AlertDelivery, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: OutputsAPI
@@ -643,7 +672,9 @@ Resources:
     Type: Custom::LambdaAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, AlertDelivery, Memory]
       FunctionName: !Ref AlertDeliveryFunction
+      FunctionTimeoutSec: !FindInMap [Functions, AlertDelivery, Timeout]
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Source API #####
@@ -699,9 +730,9 @@ Resources:
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 128
+      MemorySize: !FindInMap [Functions, SourceAPI, Memory]
       Runtime: go1.x
-      Timeout: 60
+      Timeout: !FindInMap [Functions, SourceAPI, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: IntegrationsTablePermissions
@@ -765,7 +796,9 @@ Resources:
     Type: Custom::LambdaAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, SourceAPI, Memory]
       FunctionName: !Ref SourceApiFunction
+      FunctionTimeoutSec: !FindInMap [Functions, SourceAPI, Timeout]
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Layer Management #####
@@ -782,7 +815,7 @@ Resources:
       # </cfndoc>
       MessageRetentionPeriod: '86400' # 24 hours
       KmsMasterKeyId: !Ref SqsKeyId
-      VisibilityTimeout: 60 # Should match lambda timeout
+      VisibilityTimeout: !FindInMap [Functions, LayerManager, Timeout]
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt LayerDLQ.Arn
         maxReceiveCount: 10
@@ -845,9 +878,9 @@ Resources:
       # * Failed events will go into the `panther-layer-manager-queue-dlq`. When the system has recovered they should be re-queued to the `panther-layer-manager-queue` using the Panther tool `requeue`.
       # </cfndoc>
       Handler: main
-      MemorySize: 512
+      MemorySize: !FindInMap [Functions, LayerManager, Memory]
       Runtime: go1.x
-      Timeout: 60
+      Timeout: !FindInMap [Functions, LayerManager, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: GetAnalyses
@@ -922,8 +955,9 @@ Resources:
     Type: Custom::LambdaAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
-      FunctionMemoryMB: 512
+      FunctionMemoryMB: !FindInMap [Functions, LayerManager, Memory]
       FunctionName: !Ref LayerManagerFunction
+      FunctionTimeoutSec: !FindInMap [Functions, LayerManager, Timeout]
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Key-Value store for Python policies/rules #####
