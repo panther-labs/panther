@@ -51,32 +51,6 @@ var (
 	awsSession      *session.Session
 	glueClient      *glue.Glue
 	s3Client        *s3.S3
-
-	columns = []*glue.Column{
-		{
-			Name: aws.String("Col1"),
-			Type: aws.String("int"),
-		},
-	}
-
-	partitionKeys = []*glue.Column{
-		{
-			Name: aws.String("year"),
-			Type: aws.String("int"),
-		},
-		{
-			Name: aws.String("month"),
-			Type: aws.String("int"),
-		},
-		{
-			Name: aws.String("day"),
-			Type: aws.String("int"),
-		},
-		{
-			Name: aws.String("hour"),
-			Type: aws.String("int"),
-		},
-	}
 )
 
 func TestMain(m *testing.M) {
@@ -142,7 +116,7 @@ func setupTables(t *testing.T) {
 }
 
 func addTables(t *testing.T) {
-	_, err := CreateDatabase(glueClient, testDb, "integration test datbase")
+	_, err := CreateDatabase(glueClient, testDb, "integration test database")
 	require.NoError(t, err)
 
 	gm := NewGlueTableMetadata(models.RuleData, testTable, "test table", GlueTableHourly, &testEvent{})

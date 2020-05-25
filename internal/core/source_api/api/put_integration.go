@@ -89,14 +89,6 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 		}
 	}()
 
-	// Generate the new integration
-	newIntegration := generateNewIntegration(input)
-
-	item := integrationToItem(newIntegration)
-	if err != nil {
-		return nil, putIntegrationInternalError
-	}
-
 	switch aws.StringValue(input.IntegrationType) {
 	case models.IntegrationTypeAWS3:
 		permissionAdded, err = AllowExternalSnsTopicSubscription(*input.AWSAccountID)
@@ -111,8 +103,11 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 		}
 	}
 
+	// Generate the new integration
+	newIntegration := generateNewIntegration(input)
+
 	// Write to DynamoDB
-	if err = dynamoClient.PutItem(item); err != nil {
+	if err = dynamoClient.PutItem(integrationToItem(newIntegration)); err != nil {
 		err = errors.Wrap(err, "Failed to store source integration in DDB")
 		return nil, putIntegrationInternalError
 	}

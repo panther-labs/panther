@@ -52,7 +52,7 @@ func addGlueTablesForLogType(logType string) error {
 
 	_, err := logTable.CreateTable(glueClient, env.ProcessedDataBucket)
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() != glue.ErrCodeAlreadyExistsException {
+		if awsErr, ok := err.(awserr.Error); (ok && awsErr.Code() != glue.ErrCodeAlreadyExistsException) || !ok {
 			return errors.Wrapf(err, "could not create glue log table for %s", logType)
 		}
 	}
@@ -62,7 +62,7 @@ func addGlueTablesForLogType(logType string) error {
 		lpmodels.RuleData, logTable.LogType(), logTable.Description(), awsglue.GlueTableHourly, logTable.EventStruct())
 	_, err = ruleTable.CreateTable(glueClient, env.ProcessedDataBucket)
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() != glue.ErrCodeAlreadyExistsException {
+		if awsErr, ok := err.(awserr.Error); (ok && awsErr.Code() != glue.ErrCodeAlreadyExistsException) || !ok {
 			return errors.Wrapf(err, "could not create glue rule table for %s", logType)
 		}
 	}
