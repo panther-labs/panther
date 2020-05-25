@@ -24,16 +24,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/panther-labs/panther/tools/config"
 )
 
 func TestGenerateAlarms(t *testing.T) {
-	_, cf, err := GenerateAlarms(&config.PantherConfig{
-		Infra: config.Infra{
-			LogProcessorLambdaMemorySize: 256,
-		},
-	}, "./testdata/cf.yml")
+	_, cf, err := GenerateAlarms("./testdata/cf.yml")
 	require.NoError(t, err)
 
 	const expectedFile = "./testdata/generated_test_alarms.json"

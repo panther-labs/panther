@@ -37,13 +37,6 @@ Resources:
         AlarmTopicArn: !Ref AlarmTopicArn
       TemplateURL: ../out/deployments/monitoring/bootstrap_alarms.json
 
-  GatewayAlarms:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      Parameters:
-        AlarmTopicArn: !Ref AlarmTopicArn
-      TemplateURL: ../out/deployments/monitoring/bootstrap_gateway_alarms.json
-
   CloudSecurityAlarms:
     Type: AWS::CloudFormation::Stack
     Properties:

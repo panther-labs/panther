@@ -29,7 +29,7 @@ Get started with 3 quick steps!
 Clone the latest release of [Panther](https://github.com/panther-labs/panther):
 
 ```bash
-git clone https://github.com/panther-labs/panther --depth 1 --branch v1.2.1
+git clone https://github.com/panther-labs/panther --depth 1 --branch v1.3.0
 cd panther
 ```
 
@@ -59,7 +59,7 @@ Start the development environment:
 
 #### Step 3
 
-Run the following command to deploy Panther:
+Run the following command at the Docker prompt to deploy Panther:
 
 ```bash
 mage setup deploy

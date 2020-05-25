@@ -156,6 +156,17 @@ Resources:
       LogGroupName: !Ref CustomResourceLogGroup
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
+  CustomResourceAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: 256
+      FunctionName: !Ref CustomResourceFunction
+      FunctionTimeoutSec: 900
+      LoggedWarnThreshold: 0
+      ThrottleThreshold: 0
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+
   # Enable only software MFA for the Cognito user pool - enabling MFA via native CloudFormation
   # forces SMS as a fallback option, but the SDK does not.
   UserPoolMfa:

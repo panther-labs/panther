@@ -105,6 +105,11 @@ var (
 			Type:    "timestamp",
 			Comment: "The time the alert last updated (last match)",
 		},
+		{
+			Name:    "p_rule_tags",
+			Type:    "array<string>",
+			Comment: "The tags of the rule that generated this alert",
+		},
 	}
 )
 
