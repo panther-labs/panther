@@ -20,6 +20,9 @@ Description: Log processing infrastructure
 
 Parameters:
   # Passed in from bootstrap
+  AlarmTopicArn:
+    Type: String
+    Description: SNS topic for CloudWatch alarms
   AnalysisApiId:
     Type: String
     Description: API Gateway for analysis-api
@@ -128,6 +131,14 @@ Resources:
               Resource:
                 - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}*
 
+  AlertsApiAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: 256
+      FunctionName: !Ref AlertsApiFunction
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   LogAlertsTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -175,6 +186,13 @@ Resources:
         PointInTimeRecoveryEnabled: True
       SSESpecification:
         SSEEnabled: True
+
+  LogAlertsTableAlarms:
+    Type: Custom::DynamoDBAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      TableName: !Ref LogAlertsTable
 
   ##### Alert Forwarder #####
   AlertForwarderLogGroup:
@@ -251,6 +269,14 @@ Resources:
                 - dynamodb:PutItem
                 - dynamodb:UpdateItem
               Resource: !GetAtt LogAlertsTable.Arn
+
+  AlertsForwarderAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionName: !Ref AlertsForwarderFunction
+      FunctionTimeoutSec: 30
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Log Processor #####
   LogProcessorQueue:
@@ -386,6 +412,15 @@ Resources:
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
 
+  LogProcessorAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !Ref LogProcessorLambdaMemorySize
+      FunctionName: !Ref LogProcessorFunction
+      FunctionTimeoutSec: 900
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   UpdaterSnsSubscription:
     Type: AWS::SNS::Subscription
     Properties:
@@ -505,6 +540,14 @@ Resources:
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
 
+  UpdaterAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionName: !Ref UpdaterFunction
+      FunctionTimeoutSec: 120
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ##### Rules Engine #####
   RulesEngineSnsSubscription:
     Type: AWS::SNS::Subscription
@@ -589,6 +632,13 @@ Resources:
         SSEEnabled: True
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
+
+  AlertsDedupAlarms:
+    Type: Custom::DynamoDBAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      TableName: !Ref AlertsDedup
 
   RulesEngineLogGroup:
     Type: AWS::Logs::LogGroup
@@ -703,3 +753,12 @@ Resources:
             - Effect: Allow
               Action: dynamodb:*Item
               Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-kv-store
+
+  RulesEngineAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !Ref LogProcessorLambdaMemorySize
+      FunctionName: !Ref RulesEngineFunction
+      FunctionTimeoutSec: 120
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
