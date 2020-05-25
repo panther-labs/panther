@@ -20,17 +20,7 @@ package cloudwatchcf
 
 import (
 	"fmt"
-	"strconv"
 )
-
-func getResourceFloat32Property(key string, resource map[string]interface{}) float32 {
-	floatVal, err := strconv.ParseFloat(getResourceProperty(key, resource), 32)
-	if err != nil {
-		panic(fmt.Sprintf("cannot parse %s as float32: from %#v",
-			getResourceProperty(key, resource), resource))
-	}
-	return (float32)(floatVal)
-}
 
 func getResourceProperty(key string, resource map[string]interface{}) string {
 	switch props := resource["Properties"].(type) {

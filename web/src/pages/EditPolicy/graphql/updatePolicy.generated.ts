@@ -25,7 +25,7 @@ import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
 export type UpdatePolicyVariables = {
-  input: Types.CreateOrModifyPolicyInput;
+  input: Types.UpdatePolicyInput;
 };
 
 export type UpdatePolicy = {
@@ -58,7 +58,7 @@ export type UpdatePolicy = {
 };
 
 export const UpdatePolicyDocument = gql`
-  mutation UpdatePolicy($input: CreateOrModifyPolicyInput!) {
+  mutation UpdatePolicy($input: UpdatePolicyInput!) {
     updatePolicy(input: $input) {
       autoRemediationId
       autoRemediationParameters

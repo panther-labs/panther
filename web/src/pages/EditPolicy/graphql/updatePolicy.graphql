@@ -1,4 +1,4 @@
-mutation UpdatePolicy($input: CreateOrModifyPolicyInput!) {
+mutation UpdatePolicy($input: UpdatePolicyInput!) {
     updatePolicy(input: $input) {
         autoRemediationId
         autoRemediationParameters

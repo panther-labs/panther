@@ -1,0 +1,6 @@
+query GetLogCfnTemplate($input: GetS3LogIntegrationTemplateInput!) {
+  getS3LogIntegrationTemplate(input: $input) {
+    body
+    stackName
+  }
+}

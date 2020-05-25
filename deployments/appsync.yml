@@ -455,16 +455,21 @@ Resources:
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
-            "listIntegrations": {
-              "integrationType": "aws-s3"
-            }
+            "listIntegrations": {}
           })
         }
       ResponseMappingTemplate: |
         #if($context.error)
           $util.error($context.error.errorMessage, $context.error.errorType, {})
         #else
-          $util.toJson($ctx.result)
+          #set($logIntegrations = [])
+          #foreach($item in $ctx.result)
+            #if ($item.integrationType == "aws-s3")
+              $util.qr($item.put("__typename", "S3LogIntegration"))
+              $util.qr($logIntegrations.add($item))
+            #end
+          #end
+          $util.toJson($logIntegrations)
         #end
 
   ComplianceIntegrationHealthFieldResolver:
@@ -531,13 +536,13 @@ Resources:
           $util.toJson($requestedIntegration)
         #end
 
-  GetLogIntegrationResolver:
+  GetS3LogIntegrationResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
-      FieldName: getLogIntegration
+      FieldName: getS3LogIntegration
       DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
@@ -562,12 +567,12 @@ Resources:
           $util.toJson($requestedIntegration)
         #end
 
-  LogIntegrationHealthFieldResolver:
+  S3LogIntegrationHealthFieldResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
-      TypeName: LogIntegration
+      TypeName: S3LogIntegration
       FieldName: health
       DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
       RequestMappingTemplate: |
@@ -617,13 +622,13 @@ Resources:
           $util.toJson($ctx.result)
         #end
 
-  GetLogIntegrationTemplateResolver:
+  GetS3LogIntegrationTemplateResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
-      FieldName: getLogIntegrationTemplate
+      FieldName: getS3LogIntegrationTemplate
       DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
@@ -669,13 +674,13 @@ Resources:
           $util.toJson($context.result)
         #end
 
-  AddLogIntegrationResolver:
+  AddS3LogIntegrationResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
-      FieldName: addLogIntegration
+      FieldName: addS3LogIntegration
       DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $ctx.args.input)
@@ -720,13 +725,13 @@ Resources:
           $util.toJson($context.result)
         #end
 
-  UpdateLogIntegrationResolver:
+  UpdateS3LogIntegrationResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
-      FieldName: updateLogIntegration
+      FieldName: updateS3LogIntegration
       DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))

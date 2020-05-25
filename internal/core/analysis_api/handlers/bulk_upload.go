@@ -135,6 +135,14 @@ func BulkUpload(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 		}
 	}
 
+	// If at least one global was created or modified, rebuild the global layer
+	if aws.Int64Value(counts.TotalGlobals) > 0 {
+		err = updateLayer(typeGlobal)
+		if err != nil {
+			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+		}
+	}
+
 	if response != nil {
 		return response
 	}

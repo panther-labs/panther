@@ -72,7 +72,7 @@ func classifyConfig(_ gjson.Result, metadata *CloudTrailMetadata) []*resourceCha
 				ResourceType: schemas.ConfigServiceSchema,
 			}}
 	default:
-		zap.L().Warn("config: encountered unknown event name", zap.String("eventName", metadata.eventName))
+		zap.L().Info("config: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 }

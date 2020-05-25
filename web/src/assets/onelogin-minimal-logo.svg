@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="36px" height="36px" viewBox="0 0 36 36" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>icon_onelogin</title>
+    <g id="Library" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Iconography" transform="translate(-679.000000, -420.000000)">
+            <g id="icon_onelogin" transform="translate(679.000000, 420.000000)">
+                <rect id="Rectangle-Copy-2" x="0" y="0" width="36" height="36"></rect>
+                <g id="onelogin">
+                    <g id="onelogin-1" transform="translate(4.500000, 4.500000)">
+                        <circle id="Oval" fill="#FFFFFF" fill-rule="nonzero" cx="13.5" cy="13.5" r="13.5"></circle>
+                        <path d="M12.0146699,9.24205379 L10.2679218,9.24205379 C9.99317246,9.24241746 9.77053482,9.46505511 9.77017115,9.7398044 L9.77017115,11.979022 C9.77053482,12.2537713 9.99317246,12.476409 10.2679218,12.4767726 L12.0146699,12.4767726 L12.0146699,18.1183863 C12.0150336,18.3931356 12.2376712,18.6157733 12.5124205,18.6161369 L14.7516381,18.6161369 C15.0263874,18.6157733 15.2490251,18.3931356 15.2493888,18.1183863 L15.2493888,9.7398044 C15.2490251,9.46505511 15.0263874,9.24241746 14.7516381,9.24205379 L12.0146699,9.24205379 Z" id="Path" fill="#241F20" fill-rule="nonzero"></path>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

@@ -50,7 +50,39 @@ export type AddComplianceIntegrationInput = {
   cweEnabled?: Maybe<Scalars['Boolean']>;
 };
 
-export type AddLogIntegrationInput = {
+export type AddPolicyInput = {
+  id: Scalars['ID'];
+  autoRemediationId?: Maybe<Scalars['ID']>;
+  autoRemediationParameters?: Maybe<Scalars['AWSJSON']>;
+  body: Scalars['String'];
+  description?: Maybe<Scalars['String']>;
+  displayName?: Maybe<Scalars['String']>;
+  enabled: Scalars['Boolean'];
+  suppressions?: Maybe<Array<Maybe<Scalars['String']>>>;
+  reference?: Maybe<Scalars['String']>;
+  resourceTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
+  runbook?: Maybe<Scalars['String']>;
+  severity: SeverityEnum;
+  tags?: Maybe<Array<Maybe<Scalars['String']>>>;
+  tests?: Maybe<Array<Maybe<PolicyUnitTestInput>>>;
+};
+
+export type AddRuleInput = {
+  id: Scalars['ID'];
+  body: Scalars['String'];
+  description?: Maybe<Scalars['String']>;
+  displayName?: Maybe<Scalars['String']>;
+  enabled: Scalars['Boolean'];
+  reference?: Maybe<Scalars['String']>;
+  logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
+  runbook?: Maybe<Scalars['String']>;
+  severity: SeverityEnum;
+  dedupPeriodMinutes: Scalars['Int'];
+  tags?: Maybe<Array<Maybe<Scalars['String']>>>;
+  tests?: Maybe<Array<Maybe<PolicyUnitTestInput>>>;
+};
+
+export type AddS3LogIntegrationInput = {
   awsAccountId: Scalars['String'];
   integrationLabel: Scalars['String'];
   s3Bucket: Scalars['String'];
@@ -144,40 +176,6 @@ export enum ComplianceStatusEnum {
   Fail = 'FAIL',
   Pass = 'PASS',
 }
-
-export type CreateOrModifyPolicyInput = {
-  actionDelaySeconds?: Maybe<Scalars['Int']>;
-  alertSuppressSeconds?: Maybe<Scalars['Int']>;
-  autoRemediationId?: Maybe<Scalars['ID']>;
-  autoRemediationParameters?: Maybe<Scalars['AWSJSON']>;
-  body: Scalars['String'];
-  description?: Maybe<Scalars['String']>;
-  displayName?: Maybe<Scalars['String']>;
-  enabled: Scalars['Boolean'];
-  suppressions?: Maybe<Array<Maybe<Scalars['String']>>>;
-  id: Scalars['ID'];
-  reference?: Maybe<Scalars['String']>;
-  resourceTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
-  runbook?: Maybe<Scalars['String']>;
-  severity: SeverityEnum;
-  tags?: Maybe<Array<Maybe<Scalars['String']>>>;
-  tests?: Maybe<Array<Maybe<PolicyUnitTestInput>>>;
-};
-
-export type CreateOrModifyRuleInput = {
-  body: Scalars['String'];
-  description?: Maybe<Scalars['String']>;
-  displayName?: Maybe<Scalars['String']>;
-  enabled: Scalars['Boolean'];
-  id: Scalars['ID'];
-  reference?: Maybe<Scalars['String']>;
-  logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
-  runbook?: Maybe<Scalars['String']>;
-  severity: SeverityEnum;
-  dedupPeriodMinutes: Scalars['Int'];
-  tags?: Maybe<Array<Maybe<Scalars['String']>>>;
-  tests?: Maybe<Array<Maybe<PolicyUnitTestInput>>>;
-};
 
 export type DeletePolicyInput = {
   policies?: Maybe<Array<Maybe<DeletePolicyInputItem>>>;
@@ -279,15 +277,6 @@ export type GetGlobalModuleInput = {
   versionId?: Maybe<Scalars['ID']>;
 };
 
-export type GetLogIntegrationTemplateInput = {
-  awsAccountId: Scalars['String'];
-  integrationLabel: Scalars['String'];
-  s3Bucket: Scalars['String'];
-  s3Prefix?: Maybe<Scalars['String']>;
-  kmsKey?: Maybe<Scalars['String']>;
-  logTypes: Array<Scalars['String']>;
-};
-
 export type GetPolicyInput = {
   policyId: Scalars['ID'];
   versionId?: Maybe<Scalars['ID']>;
@@ -300,6 +289,15 @@ export type GetResourceInput = {
 export type GetRuleInput = {
   ruleId: Scalars['ID'];
   versionId?: Maybe<Scalars['ID']>;
+};
+
+export type GetS3LogIntegrationTemplateInput = {
+  awsAccountId: Scalars['String'];
+  integrationLabel: Scalars['String'];
+  s3Bucket: Scalars['String'];
+  s3Prefix?: Maybe<Scalars['String']>;
+  kmsKey?: Maybe<Scalars['String']>;
+  logTypes: Array<Scalars['String']>;
 };
 
 export type GithubConfig = {
@@ -471,27 +469,7 @@ export enum ListRulesSortFieldsEnum {
   Severity = 'severity',
 }
 
-export type LogIntegration = {
-  __typename?: 'LogIntegration';
-  awsAccountId: Scalars['String'];
-  createdAtTime: Scalars['AWSDateTime'];
-  createdBy: Scalars['ID'];
-  integrationId: Scalars['ID'];
-  integrationLabel: Scalars['String'];
-  s3Bucket: Scalars['String'];
-  s3Prefix?: Maybe<Scalars['String']>;
-  kmsKey?: Maybe<Scalars['String']>;
-  logTypes: Array<Scalars['String']>;
-  health: LogIntegrationHealth;
-  stackName: Scalars['String'];
-};
-
-export type LogIntegrationHealth = {
-  __typename?: 'LogIntegrationHealth';
-  processingRoleStatus: IntegrationItemHealthStatus;
-  s3BucketStatus: IntegrationItemHealthStatus;
-  kmsKeyStatus: IntegrationItemHealthStatus;
-};
+export type LogIntegration = S3LogIntegration;
 
 export type ModifyGlobalModuleInput = {
   description: Scalars['String'];
@@ -512,7 +490,7 @@ export type Mutation = {
   __typename?: 'Mutation';
   addDestination?: Maybe<Destination>;
   addComplianceIntegration: ComplianceIntegration;
-  addLogIntegration: LogIntegration;
+  addS3LogIntegration: S3LogIntegration;
   addPolicy?: Maybe<PolicyDetails>;
   addRule?: Maybe<RuleDetails>;
   deleteDestination?: Maybe<Scalars['Boolean']>;
@@ -528,7 +506,7 @@ export type Mutation = {
   testPolicy?: Maybe<TestPolicyResponse>;
   updateDestination?: Maybe<Destination>;
   updateComplianceIntegration: ComplianceIntegration;
-  updateLogIntegration: LogIntegration;
+  updateS3LogIntegration: S3LogIntegration;
   updateGeneralSettings: GeneralSettings;
   updatePolicy?: Maybe<PolicyDetails>;
   updateRule?: Maybe<RuleDetails>;
@@ -545,16 +523,16 @@ export type MutationAddComplianceIntegrationArgs = {
   input: AddComplianceIntegrationInput;
 };
 
-export type MutationAddLogIntegrationArgs = {
-  input: AddLogIntegrationInput;
+export type MutationAddS3LogIntegrationArgs = {
+  input: AddS3LogIntegrationInput;
 };
 
 export type MutationAddPolicyArgs = {
-  input: CreateOrModifyPolicyInput;
+  input: AddPolicyInput;
 };
 
 export type MutationAddRuleArgs = {
-  input: CreateOrModifyRuleInput;
+  input: AddRuleInput;
 };
 
 export type MutationDeleteDestinationArgs = {
@@ -609,8 +587,8 @@ export type MutationUpdateComplianceIntegrationArgs = {
   input: UpdateComplianceIntegrationInput;
 };
 
-export type MutationUpdateLogIntegrationArgs = {
-  input: UpdateLogIntegrationInput;
+export type MutationUpdateS3LogIntegrationArgs = {
+  input: UpdateS3LogIntegrationInput;
 };
 
 export type MutationUpdateGeneralSettingsArgs = {
@@ -618,11 +596,11 @@ export type MutationUpdateGeneralSettingsArgs = {
 };
 
 export type MutationUpdatePolicyArgs = {
-  input: CreateOrModifyPolicyInput;
+  input: UpdatePolicyInput;
 };
 
 export type MutationUpdateRuleArgs = {
-  input: CreateOrModifyRuleInput;
+  input: UpdateRuleInput;
 };
 
 export type MutationUpdateUserArgs = {
@@ -695,8 +673,6 @@ export type PoliciesForResourceInput = {
 
 export type PolicyDetails = {
   __typename?: 'PolicyDetails';
-  actionDelaySeconds?: Maybe<Scalars['Int']>;
-  alertSuppressSeconds?: Maybe<Scalars['Int']>;
   autoRemediationId?: Maybe<Scalars['ID']>;
   autoRemediationParameters?: Maybe<Scalars['AWSJSON']>;
   complianceStatus?: Maybe<ComplianceStatusEnum>;
@@ -764,8 +740,8 @@ export type Query = {
   generalSettings: GeneralSettings;
   getComplianceIntegration: ComplianceIntegration;
   getComplianceIntegrationTemplate: IntegrationTemplate;
-  getLogIntegration: LogIntegration;
-  getLogIntegrationTemplate: IntegrationTemplate;
+  getS3LogIntegration: S3LogIntegration;
+  getS3LogIntegrationTemplate: IntegrationTemplate;
   remediations?: Maybe<Scalars['AWSJSON']>;
   resource?: Maybe<ResourceDetails>;
   resources?: Maybe<ListResourcesResponse>;
@@ -802,12 +778,12 @@ export type QueryGetComplianceIntegrationTemplateArgs = {
   input: GetComplianceIntegrationTemplateInput;
 };
 
-export type QueryGetLogIntegrationArgs = {
+export type QueryGetS3LogIntegrationArgs = {
   id: Scalars['ID'];
 };
 
-export type QueryGetLogIntegrationTemplateArgs = {
-  input: GetLogIntegrationTemplateInput;
+export type QueryGetS3LogIntegrationTemplateArgs = {
+  input: GetS3LogIntegrationTemplateInput;
 };
 
 export type QueryResourceArgs = {
@@ -918,6 +894,29 @@ export type RuleSummary = {
   tags?: Maybe<Array<Maybe<Scalars['String']>>>;
 };
 
+export type S3LogIntegration = {
+  __typename?: 'S3LogIntegration';
+  awsAccountId: Scalars['String'];
+  createdAtTime: Scalars['AWSDateTime'];
+  createdBy: Scalars['ID'];
+  integrationId: Scalars['ID'];
+  integrationType: Scalars['String'];
+  integrationLabel: Scalars['String'];
+  s3Bucket: Scalars['String'];
+  s3Prefix?: Maybe<Scalars['String']>;
+  kmsKey?: Maybe<Scalars['String']>;
+  logTypes: Array<Scalars['String']>;
+  health: S3LogIntegrationHealth;
+  stackName: Scalars['String'];
+};
+
+export type S3LogIntegrationHealth = {
+  __typename?: 'S3LogIntegrationHealth';
+  processingRoleStatus: IntegrationItemHealthStatus;
+  s3BucketStatus: IntegrationItemHealthStatus;
+  kmsKeyStatus: IntegrationItemHealthStatus;
+};
+
 export type ScannedResources = {
   __typename?: 'ScannedResources';
   byType?: Maybe<Array<Maybe<ScannedResourceStats>>>;
@@ -1002,7 +1001,39 @@ export type UpdateGeneralSettingsInput = {
   errorReportingConsent?: Maybe<Scalars['Boolean']>;
 };
 
-export type UpdateLogIntegrationInput = {
+export type UpdatePolicyInput = {
+  id: Scalars['ID'];
+  autoRemediationId?: Maybe<Scalars['ID']>;
+  autoRemediationParameters?: Maybe<Scalars['AWSJSON']>;
+  body?: Maybe<Scalars['String']>;
+  description?: Maybe<Scalars['String']>;
+  displayName?: Maybe<Scalars['String']>;
+  enabled?: Maybe<Scalars['Boolean']>;
+  suppressions?: Maybe<Array<Maybe<Scalars['String']>>>;
+  reference?: Maybe<Scalars['String']>;
+  resourceTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
+  runbook?: Maybe<Scalars['String']>;
+  severity?: Maybe<SeverityEnum>;
+  tags?: Maybe<Array<Maybe<Scalars['String']>>>;
+  tests?: Maybe<Array<Maybe<PolicyUnitTestInput>>>;
+};
+
+export type UpdateRuleInput = {
+  id: Scalars['ID'];
+  body?: Maybe<Scalars['String']>;
+  description?: Maybe<Scalars['String']>;
+  displayName?: Maybe<Scalars['String']>;
+  enabled?: Maybe<Scalars['Boolean']>;
+  reference?: Maybe<Scalars['String']>;
+  logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
+  runbook?: Maybe<Scalars['String']>;
+  severity?: Maybe<SeverityEnum>;
+  dedupPeriodMinutes?: Maybe<Scalars['Int']>;
+  tags?: Maybe<Array<Maybe<Scalars['String']>>>;
+  tests?: Maybe<Array<Maybe<PolicyUnitTestInput>>>;
+};
+
+export type UpdateS3LogIntegrationInput = {
   integrationId: Scalars['String'];
   integrationLabel?: Maybe<Scalars['String']>;
   s3Bucket?: Maybe<Scalars['String']>;
@@ -1159,9 +1190,9 @@ export type ResolversTypes = {
   IntegrationItemHealthStatus: ResolverTypeWrapper<IntegrationItemHealthStatus>;
   GetComplianceIntegrationTemplateInput: GetComplianceIntegrationTemplateInput;
   IntegrationTemplate: ResolverTypeWrapper<IntegrationTemplate>;
-  LogIntegration: ResolverTypeWrapper<LogIntegration>;
-  LogIntegrationHealth: ResolverTypeWrapper<LogIntegrationHealth>;
-  GetLogIntegrationTemplateInput: GetLogIntegrationTemplateInput;
+  S3LogIntegration: ResolverTypeWrapper<S3LogIntegration>;
+  S3LogIntegrationHealth: ResolverTypeWrapper<S3LogIntegrationHealth>;
+  GetS3LogIntegrationTemplateInput: GetS3LogIntegrationTemplateInput;
   GetResourceInput: GetResourceInput;
   ResourceDetails: ResolverTypeWrapper<ResourceDetails>;
   ComplianceStatusEnum: ComplianceStatusEnum;
@@ -1186,6 +1217,7 @@ export type ResolversTypes = {
   ListPoliciesResponse: ResolverTypeWrapper<ListPoliciesResponse>;
   PolicySummary: ResolverTypeWrapper<PolicySummary>;
   PoliciesForResourceInput: PoliciesForResourceInput;
+  LogIntegration: ResolversTypes['S3LogIntegration'];
   OrganizationStatsInput: OrganizationStatsInput;
   OrganizationStatsResponse: ResolverTypeWrapper<OrganizationStatsResponse>;
   OrganizationReportBySeverity: ResolverTypeWrapper<OrganizationReportBySeverity>;
@@ -1213,10 +1245,10 @@ export type ResolversTypes = {
   MsTeamsConfigInput: MsTeamsConfigInput;
   AsanaConfigInput: AsanaConfigInput;
   AddComplianceIntegrationInput: AddComplianceIntegrationInput;
-  AddLogIntegrationInput: AddLogIntegrationInput;
-  CreateOrModifyPolicyInput: CreateOrModifyPolicyInput;
+  AddS3LogIntegrationInput: AddS3LogIntegrationInput;
+  AddPolicyInput: AddPolicyInput;
   PolicyUnitTestInput: PolicyUnitTestInput;
-  CreateOrModifyRuleInput: CreateOrModifyRuleInput;
+  AddRuleInput: AddRuleInput;
   DeletePolicyInput: DeletePolicyInput;
   DeletePolicyInputItem: DeletePolicyInputItem;
   DeleteRuleInput: DeleteRuleInput;
@@ -1229,8 +1261,10 @@ export type ResolversTypes = {
   TestPolicyResponse: ResolverTypeWrapper<TestPolicyResponse>;
   PolicyUnitTestError: ResolverTypeWrapper<PolicyUnitTestError>;
   UpdateComplianceIntegrationInput: UpdateComplianceIntegrationInput;
-  UpdateLogIntegrationInput: UpdateLogIntegrationInput;
+  UpdateS3LogIntegrationInput: UpdateS3LogIntegrationInput;
   UpdateGeneralSettingsInput: UpdateGeneralSettingsInput;
+  UpdatePolicyInput: UpdatePolicyInput;
+  UpdateRuleInput: UpdateRuleInput;
   UpdateUserInput: UpdateUserInput;
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: ResolverTypeWrapper<UploadPoliciesResponse>;
@@ -1272,9 +1306,9 @@ export type ResolversParentTypes = {
   IntegrationItemHealthStatus: IntegrationItemHealthStatus;
   GetComplianceIntegrationTemplateInput: GetComplianceIntegrationTemplateInput;
   IntegrationTemplate: IntegrationTemplate;
-  LogIntegration: LogIntegration;
-  LogIntegrationHealth: LogIntegrationHealth;
-  GetLogIntegrationTemplateInput: GetLogIntegrationTemplateInput;
+  S3LogIntegration: S3LogIntegration;
+  S3LogIntegrationHealth: S3LogIntegrationHealth;
+  GetS3LogIntegrationTemplateInput: GetS3LogIntegrationTemplateInput;
   GetResourceInput: GetResourceInput;
   ResourceDetails: ResourceDetails;
   ComplianceStatusEnum: ComplianceStatusEnum;
@@ -1299,6 +1333,7 @@ export type ResolversParentTypes = {
   ListPoliciesResponse: ListPoliciesResponse;
   PolicySummary: PolicySummary;
   PoliciesForResourceInput: PoliciesForResourceInput;
+  LogIntegration: ResolversParentTypes['S3LogIntegration'];
   OrganizationStatsInput: OrganizationStatsInput;
   OrganizationStatsResponse: OrganizationStatsResponse;
   OrganizationReportBySeverity: OrganizationReportBySeverity;
@@ -1326,10 +1361,10 @@ export type ResolversParentTypes = {
   MsTeamsConfigInput: MsTeamsConfigInput;
   AsanaConfigInput: AsanaConfigInput;
   AddComplianceIntegrationInput: AddComplianceIntegrationInput;
-  AddLogIntegrationInput: AddLogIntegrationInput;
-  CreateOrModifyPolicyInput: CreateOrModifyPolicyInput;
+  AddS3LogIntegrationInput: AddS3LogIntegrationInput;
+  AddPolicyInput: AddPolicyInput;
   PolicyUnitTestInput: PolicyUnitTestInput;
-  CreateOrModifyRuleInput: CreateOrModifyRuleInput;
+  AddRuleInput: AddRuleInput;
   DeletePolicyInput: DeletePolicyInput;
   DeletePolicyInputItem: DeletePolicyInputItem;
   DeleteRuleInput: DeleteRuleInput;
@@ -1342,8 +1377,10 @@ export type ResolversParentTypes = {
   TestPolicyResponse: TestPolicyResponse;
   PolicyUnitTestError: PolicyUnitTestError;
   UpdateComplianceIntegrationInput: UpdateComplianceIntegrationInput;
-  UpdateLogIntegrationInput: UpdateLogIntegrationInput;
+  UpdateS3LogIntegrationInput: UpdateS3LogIntegrationInput;
   UpdateGeneralSettingsInput: UpdateGeneralSettingsInput;
+  UpdatePolicyInput: UpdatePolicyInput;
+  UpdateRuleInput: UpdateRuleInput;
   UpdateUserInput: UpdateUserInput;
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: UploadPoliciesResponse;
@@ -1637,32 +1674,7 @@ export type LogIntegrationResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['LogIntegration'] = ResolversParentTypes['LogIntegration']
 > = {
-  awsAccountId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  createdAtTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
-  createdBy?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  integrationId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  integrationLabel?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  s3Bucket?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  s3Prefix?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  kmsKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  logTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  health?: Resolver<ResolversTypes['LogIntegrationHealth'], ParentType, ContextType>;
-  stackName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: isTypeOfResolverFn<ParentType>;
-};
-
-export type LogIntegrationHealthResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['LogIntegrationHealth'] = ResolversParentTypes['LogIntegrationHealth']
-> = {
-  processingRoleStatus?: Resolver<
-    ResolversTypes['IntegrationItemHealthStatus'],
-    ParentType,
-    ContextType
-  >;
-  s3BucketStatus?: Resolver<ResolversTypes['IntegrationItemHealthStatus'], ParentType, ContextType>;
-  kmsKeyStatus?: Resolver<ResolversTypes['IntegrationItemHealthStatus'], ParentType, ContextType>;
-  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+  __resolveType: TypeResolveFn<'S3LogIntegration', ParentType, ContextType>;
 };
 
 export type MsTeamsConfigResolvers<
@@ -1689,11 +1701,11 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationAddComplianceIntegrationArgs, 'input'>
   >;
-  addLogIntegration?: Resolver<
-    ResolversTypes['LogIntegration'],
+  addS3LogIntegration?: Resolver<
+    ResolversTypes['S3LogIntegration'],
     ParentType,
     ContextType,
-    RequireFields<MutationAddLogIntegrationArgs, 'input'>
+    RequireFields<MutationAddS3LogIntegrationArgs, 'input'>
   >;
   addPolicy?: Resolver<
     Maybe<ResolversTypes['PolicyDetails']>,
@@ -1785,11 +1797,11 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationUpdateComplianceIntegrationArgs, 'input'>
   >;
-  updateLogIntegration?: Resolver<
-    ResolversTypes['LogIntegration'],
+  updateS3LogIntegration?: Resolver<
+    ResolversTypes['S3LogIntegration'],
     ParentType,
     ContextType,
-    RequireFields<MutationUpdateLogIntegrationArgs, 'input'>
+    RequireFields<MutationUpdateS3LogIntegrationArgs, 'input'>
   >;
   updateGeneralSettings?: Resolver<
     ResolversTypes['GeneralSettings'],
@@ -1894,8 +1906,6 @@ export type PolicyDetailsResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['PolicyDetails'] = ResolversParentTypes['PolicyDetails']
 > = {
-  actionDelaySeconds?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  alertSuppressSeconds?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   autoRemediationId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   autoRemediationParameters?: Resolver<Maybe<ResolversTypes['AWSJSON']>, ParentType, ContextType>;
   complianceStatus?: Resolver<
@@ -2005,17 +2015,17 @@ export type QueryResolvers<
     ContextType,
     RequireFields<QueryGetComplianceIntegrationTemplateArgs, 'input'>
   >;
-  getLogIntegration?: Resolver<
-    ResolversTypes['LogIntegration'],
+  getS3LogIntegration?: Resolver<
+    ResolversTypes['S3LogIntegration'],
     ParentType,
     ContextType,
-    RequireFields<QueryGetLogIntegrationArgs, 'id'>
+    RequireFields<QueryGetS3LogIntegrationArgs, 'id'>
   >;
-  getLogIntegrationTemplate?: Resolver<
+  getS3LogIntegrationTemplate?: Resolver<
     ResolversTypes['IntegrationTemplate'],
     ParentType,
     ContextType,
-    RequireFields<QueryGetLogIntegrationTemplateArgs, 'input'>
+    RequireFields<QueryGetS3LogIntegrationTemplateArgs, 'input'>
   >;
   remediations?: Resolver<Maybe<ResolversTypes['AWSJSON']>, ParentType, ContextType>;
   resource?: Resolver<
@@ -2161,6 +2171,39 @@ export type RuleSummaryResolvers<
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
+export type S3LogIntegrationResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['S3LogIntegration'] = ResolversParentTypes['S3LogIntegration']
+> = {
+  awsAccountId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  createdAtTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
+  createdBy?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  integrationId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  integrationType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  integrationLabel?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  s3Bucket?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  s3Prefix?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  kmsKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  logTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  health?: Resolver<ResolversTypes['S3LogIntegrationHealth'], ParentType, ContextType>;
+  stackName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
+
+export type S3LogIntegrationHealthResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['S3LogIntegrationHealth'] = ResolversParentTypes['S3LogIntegrationHealth']
+> = {
+  processingRoleStatus?: Resolver<
+    ResolversTypes['IntegrationItemHealthStatus'],
+    ParentType,
+    ContextType
+  >;
+  s3BucketStatus?: Resolver<ResolversTypes['IntegrationItemHealthStatus'], ParentType, ContextType>;
+  kmsKeyStatus?: Resolver<ResolversTypes['IntegrationItemHealthStatus'], ParentType, ContextType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
+
 export type ScannedResourcesResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['ScannedResources'] = ResolversParentTypes['ScannedResources']
@@ -2273,8 +2316,7 @@ export type Resolvers<ContextType = any> = {
   ListPoliciesResponse?: ListPoliciesResponseResolvers<ContextType>;
   ListResourcesResponse?: ListResourcesResponseResolvers<ContextType>;
   ListRulesResponse?: ListRulesResponseResolvers<ContextType>;
-  LogIntegration?: LogIntegrationResolvers<ContextType>;
-  LogIntegrationHealth?: LogIntegrationHealthResolvers<ContextType>;
+  LogIntegration?: LogIntegrationResolvers;
   MsTeamsConfig?: MsTeamsConfigResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   OpsgenieConfig?: OpsgenieConfigResolvers<ContextType>;
@@ -2291,6 +2333,8 @@ export type Resolvers<ContextType = any> = {
   ResourceSummary?: ResourceSummaryResolvers<ContextType>;
   RuleDetails?: RuleDetailsResolvers<ContextType>;
   RuleSummary?: RuleSummaryResolvers<ContextType>;
+  S3LogIntegration?: S3LogIntegrationResolvers<ContextType>;
+  S3LogIntegrationHealth?: S3LogIntegrationHealthResolvers<ContextType>;
   ScannedResources?: ScannedResourcesResolvers<ContextType>;
   ScannedResourceStats?: ScannedResourceStatsResolvers<ContextType>;
   SlackConfig?: SlackConfigResolvers<ContextType>;

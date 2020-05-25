@@ -66,9 +66,9 @@ const urls = {
     },
     sources: {
       list: () => `${urls.logAnalysis.home()}sources/`,
-      create: () => `${urls.logAnalysis.sources.list()}new/`,
-      edit: (id: LogIntegration['integrationId']) =>
-        `${urls.logAnalysis.sources.list()}${id}/edit/`,
+      create: (type?: string) => `${urls.logAnalysis.sources.list()}new/${type || ''}`,
+      edit: (id: LogIntegration['integrationId'], type: string) =>
+        `${urls.logAnalysis.sources.list()}${type}/${id}/edit/`,
     },
   },
   settings: {

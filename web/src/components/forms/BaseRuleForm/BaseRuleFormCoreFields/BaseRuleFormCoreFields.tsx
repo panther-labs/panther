@@ -41,25 +41,9 @@ import { PolicyFormValues } from 'Components/forms/PolicyForm';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 
-export const ruleCoreEditableFields = [
-  'body',
-  'description',
-  'displayName',
-  'enabled',
-  'id',
-  'reference',
-  'runbook',
-  'severity',
-  'tags',
-] as const;
-
 interface BaseRuleCoreFieldsProps {
   type: 'rule' | 'policy';
 }
-
-type FormValues = Required<Pick<RuleFormValues, typeof ruleCoreEditableFields[number]>> &
-  Pick<RuleFormValues, 'logTypes'> &
-  Pick<PolicyFormValues, 'resourceTypes' | 'suppressions'>;
 
 const severityOptions = Object.values(SeverityEnum);
 const severityItemToString = severity => capitalize(severity.toLowerCase());
@@ -80,7 +64,9 @@ const logTypesInputProps = {
 const BaseRuleFormCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => {
   // Read the values from the "parent" form. We expect a formik to be declared in the upper scope
   // since this is a "partial" form. If no Formik context is found this will error out intentionally
-  const { values, errors, touched, initialValues } = useFormikContext<FormValues>();
+  const { values, errors, touched, initialValues } = useFormikContext<
+    RuleFormValues | PolicyFormValues
+  >();
 
   const tagAdditionValidation = React.useMemo(() => tag => !values.tags.includes(tag), [
     values.tags,
@@ -150,7 +136,7 @@ const BaseRuleFormCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => 
               searchable
               name="suppressions"
               label="Resource Ignore Patterns"
-              items={values.suppressions}
+              items={(values as PolicyFormValues).suppressions}
               allowAdditions
               inputProps={suppressionInputProps}
             />

@@ -584,6 +584,46 @@ paths:
         500:
           description: Internal server error
 
+  /global/list:
+    # Same as ListPolicies, but for globals
+    get:
+      operationId: ListGlobals
+      summary: Page through globals in a customer's account
+      parameters:
+        # sorting
+        - name: sortDir
+          in: query
+          description: Sort direction
+          type: string
+          enum: [ascending, descending]
+          default: ascending
+
+        # paging
+        - name: pageSize
+          in: query
+          description: Number of items in each page of results
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 25
+        - name: page
+          in: query
+          description: Which page of results to retrieve
+          type: integer
+          minimum: 1
+          default: 1
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/GlobalList'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+
   /update:
     # When users edit a policy, the frontend sends the changes to this endpoint.
     #
@@ -939,6 +979,8 @@ definitions:
         $ref: '#/definitions/versionId'
       dedupPeriodMinutes:
         $ref: '#/definitions/dedupPeriodMinutes'
+      tags:
+        $ref: '#/definitions/tags'
 
   ##### ListPolicies #####
   PolicyList:
@@ -1269,6 +1311,33 @@ definitions:
     required:
       - paging
       - rules
+
+  GlobalList:
+    type: object
+    properties:
+      paging:
+        $ref: '#/definitions/Paging'
+      globals:
+        type: array
+        items:
+          $ref: '#/definitions/GlobalSummary'
+    required:
+      - paging
+      - globals
+
+  GlobalSummary:
+    type: object
+    properties: # only the fields we need for the table in the UI
+      id:
+        $ref: '#/definitions/id'
+      lastModified:
+        $ref: '#/definitions/modifyTime'
+      tags:
+        $ref: '#/definitions/tags'
+    required:
+      - id
+      - lastModified
+      - tags
 
   RuleSummary:
     type: object

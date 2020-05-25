@@ -208,7 +208,13 @@ class TestMatchedEventsBuffer(TestCase):
         buffer = MatchedEventsBuffer()
         buffer.add_event(
             EventMatch(
-                rule_id='id1', rule_version='version', log_type='log', dedup='dedup', dedup_period_mins=100, event={'key1': 'value1'}
+                rule_id='id1',
+                rule_version='version',
+                log_type='log',
+                dedup='dedup',
+                dedup_period_mins=100,
+                event={'key1': 'value1'},
+                rule_tags=['test-tag']
             )
         )
         buffer.add_event(
@@ -240,12 +246,15 @@ class TestMatchedEventsBuffer(TestCase):
                 self.assertEqual(content['key1'], 'value1')
                 # Verify extra fields
                 self.assertEqual(content['p_rule_id'], 'id1')
+                self.assertEqual(content['p_rule_tags'], ['test-tag'])
                 self.assertEqual(content['p_alert_id'], hashlib.md5(b'id1:1:dedup').hexdigest())  # nosec
             elif 'key2' in content:
                 # Verify actual event
                 self.assertEqual(content['key2'], 'value2')
                 # Verify extra fields
                 self.assertEqual(content['p_rule_id'], 'id2')
+                # Assert that tags row is not populated
+                self.assertEqual(content['p_rule_tags'], [])
                 self.assertEqual(content['p_alert_id'], hashlib.md5(b'id2:1:dedup').hexdigest())  # nosec
             else:
                 self.fail('unexpected content')

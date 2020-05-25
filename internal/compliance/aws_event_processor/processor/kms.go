@@ -56,7 +56,7 @@ func classifyKMS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 		"UpdateKeyDescription":
 		keyARN = getKeyARN(detail)
 	default:
-		zap.L().Warn("kms: encountered unknown event name", zap.String("eventName", metadata.eventName))
+		zap.L().Info("kms: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 

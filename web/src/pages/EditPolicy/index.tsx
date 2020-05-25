@@ -17,3 +17,4 @@
  */
 
 export { default } from './EditPolicy';
+export * from './graphql/updatePolicy.generated';

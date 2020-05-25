@@ -40,17 +40,17 @@ type APIGatewayAlarmProperties struct {
 }
 
 func customAPIGatewayAlarms(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
-	var props APIGatewayAlarmProperties
-	if err := parseProperties(event.ResourceProperties, &props); err != nil {
-		return "", nil, err
-	}
-
-	if props.LatencyThresholdMs == 0 {
-		props.LatencyThresholdMs = 1000
-	}
-
 	switch event.RequestType {
 	case cfn.RequestCreate, cfn.RequestUpdate:
+		var props APIGatewayAlarmProperties
+		if err := parseProperties(event.ResourceProperties, &props); err != nil {
+			return "", nil, err
+		}
+
+		if props.LatencyThresholdMs == 0 {
+			props.LatencyThresholdMs = 1000
+		}
+
 		return "custom:alarms:api:" + props.APIName, nil, putGatewayAlarmGroup(props)
 
 	case cfn.RequestDelete:

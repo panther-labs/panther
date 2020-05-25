@@ -335,6 +335,7 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	count++
 	go func(c chan goroutineResult) {
 		_, err := deployTemplate(awsSession, cloudsecTemplate, sourceBucket, cloudsecStack, map[string]string{
+			"AlarmTopicArn":         outputs["AlarmTopicArn"],
 			"AnalysisApiId":         outputs["AnalysisApiId"],
 			"ComplianceApiId":       outputs["ComplianceApiId"],
 			"RemediationApiId":      outputs["RemediationApiId"],
@@ -356,10 +357,12 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	count++
 	go func(c chan goroutineResult) {
 		_, err := deployTemplate(awsSession, coreTemplate, sourceBucket, coreStack, map[string]string{
+			"AlarmTopicArn":          outputs["AlarmTopicArn"],
 			"AppDomainURL":           outputs["LoadBalancerUrl"],
 			"AnalysisVersionsBucket": outputs["AnalysisVersionsBucket"],
 			"AnalysisApiId":          outputs["AnalysisApiId"],
 			"ComplianceApiId":        outputs["ComplianceApiId"],
+			"DynamoScalingRoleArn":   outputs["DynamoScalingRoleArn"],
 			"OutputsKeyId":           outputs["OutputsEncryptionKeyId"],
 			"SqsKeyId":               outputs["QueueEncryptionKeyId"],
 			"UserPoolId":             outputs["UserPoolId"],
@@ -389,6 +392,7 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	count++
 	go func(c chan goroutineResult) {
 		_, err := deployTemplate(awsSession, logAnalysisTemplate, sourceBucket, logAnalysisStack, map[string]string{
+			"AlarmTopicArn":         outputs["AlarmTopicArn"],
 			"AnalysisApiId":         outputs["AnalysisApiId"],
 			"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
 			"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],

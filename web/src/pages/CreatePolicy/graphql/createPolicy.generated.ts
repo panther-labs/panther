@@ -27,13 +27,13 @@ import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
 export type CreatePolicyVariables = {
-  input: Types.CreateOrModifyPolicyInput;
+  input: Types.AddPolicyInput;
 };
 
 export type CreatePolicy = { addPolicy?: Types.Maybe<PolicyDetailsMain & PolicyDetailsExtra> };
 
 export const CreatePolicyDocument = gql`
-  mutation CreatePolicy($input: CreateOrModifyPolicyInput!) {
+  mutation CreatePolicy($input: AddPolicyInput!) {
     addPolicy(input: $input) {
       ...PolicyDetailsMain
       ...PolicyDetailsExtra

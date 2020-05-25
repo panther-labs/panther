@@ -54,6 +54,7 @@ func GetEnabledAnalyses(request *events.APIGatewayProxyRequest) *events.APIGatew
 			Suppressions:       policy.Suppressions,
 			VersionID:          policy.VersionID,
 			DedupPeriodMinutes: policy.DedupPeriodMinutes,
+			Tags:               policy.Tags,
 		})
 		return nil
 	})
@@ -77,7 +78,7 @@ func buildEnabledScan(ruleType string) (*dynamodb.ScanInput, error) {
 	filter := expression.Equal(expression.Name("enabled"), expression.Value(true))
 	filter = filter.And(expression.Equal(expression.Name("type"), expression.Value(ruleType)))
 	projection := expression.NamesList(
-		// does not include unit tests, last modified, reference, tags, etc
+		// does not include unit tests, last modified, reference, etc
 		expression.Name("body"),
 		expression.Name("id"),
 		expression.Name("resourceTypes"),
@@ -85,6 +86,7 @@ func buildEnabledScan(ruleType string) (*dynamodb.ScanInput, error) {
 		expression.Name("suppressions"),
 		expression.Name("versionId"),
 		expression.Name("dedupPeriodMinutes"),
+		expression.Name("tags"),
 	)
 
 	expr, err := expression.NewBuilder().

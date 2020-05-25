@@ -17,3 +17,4 @@
  */
 
 export { default } from './EditRule';
+export * from './graphql/updateRule.generated';

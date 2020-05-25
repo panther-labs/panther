@@ -187,7 +187,7 @@ func writeItem(item *tableItem, userID models.UserID, mustExist *bool) (int, err
 		// When policies and rules are also managed by globals, this can be moved out of the if statement,
 		// although at that point it may be desirable to move this to the caller function so as to only make the call
 		// once for BulkUpload.
-		return changeType, updateLayer(item.Type)
+		return changeType, nil
 	}
 
 	// Updated policies may require changes to the compliance status.
