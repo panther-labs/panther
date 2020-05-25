@@ -19,6 +19,8 @@ package awsglue
  */
 
 import (
+	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -39,6 +41,7 @@ type PartitionKey struct {
 
 // Metadata about Glue table
 type GlueTableMetadata struct {
+	datatype     models.DataType
 	databaseName string
 	tableName    string
 	description  string
@@ -55,6 +58,7 @@ func NewGlueTableMetadata(
 	tableName := GetTableName(logType)
 	tablePrefix := getTablePrefix(datatype, tableName)
 	return &GlueTableMetadata{
+		datatype:     datatype,
 		databaseName: getDatabase(datatype),
 		tableName:    tableName,
 		description:  logDescription,
@@ -114,6 +118,61 @@ func (gm *GlueTableMetadata) PartitionKeys() (partitions []PartitionKey) {
 	return partitions
 }
 
+func (gm *GlueTableMetadata) CreateTable(glueClient glueiface.GlueAPI, bucketName string) (*glue.CreateTableOutput, error) {
+	partitionKeys := gm.PartitionKeys()
+	partitionColumns := make([]*glue.Column, len(partitionKeys))
+	for i := range partitionKeys {
+		partitionColumns[i] = &glue.Column{
+			Name: &partitionKeys[i].Name,
+			Type: &partitionKeys[i].Type,
+		}
+	}
+
+	columns := InferJSONColumns(gm.eventStruct, GlueMappings...)
+	if gm.datatype == models.RuleData { // append the columns added by the rule engine
+		columns = append(columns, RuleMatchColumns...)
+	}
+	glueColumns := make([]*glue.Column, len(columns))
+	for i := range columns {
+		glueColumns[i] = &glue.Column{
+			Name:    &columns[i].Name,
+			Type:    &columns[i].Type,
+			Comment: &columns[i].Comment,
+		}
+	}
+
+	descriptorParameters := map[string]*string{
+		"serialization.format": aws.String("1"),
+		"case.insensitive":     aws.String("false"), // Need to be case sensitive to deal with columns that have same name but different casing
+	}
+
+	// Add mapping for column names. This is required when columns are case sensitive
+	for _, column := range glueColumns {
+		descriptorParameters[fmt.Sprintf("mapping.%s", strings.ToLower(*column.Name))] = column.Name
+	}
+
+	tableInput := &glue.CreateTableInput{
+		DatabaseName: aws.String(gm.databaseName),
+		TableInput: &glue.TableInput{
+			Name:          aws.String(gm.tableName),
+			Description:   aws.String(gm.description),
+			PartitionKeys: partitionColumns,
+			StorageDescriptor: &glue.StorageDescriptor{ // configure as JSON
+				Columns:      glueColumns,
+				Location:     aws.String("s3://" + bucketName + "/" + gm.prefix),
+				InputFormat:  aws.String("org.apache.hadoop.mapred.TextInputFormat"),
+				OutputFormat: aws.String("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"),
+				SerdeInfo: &glue.SerDeInfo{
+					SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
+					Parameters:           descriptorParameters,
+				},
+			},
+			TableType: aws.String("EXTERNAL_TABLE"),
+		},
+	}
+	return glueClient.CreateTable(tableInput)
+}
+
 // Based on Timebin(), return an S3 prefix for objects of this table
 func (gm *GlueTableMetadata) GetPartitionPrefix(t time.Time) string {
 	return gm.Prefix() + gm.timebin.PartitionS3PathFromTime(t)
@@ -122,11 +181,7 @@ func (gm *GlueTableMetadata) GetPartitionPrefix(t time.Time) string {
 // SyncPartitions updates a table's partitions using the latest table schema. Used when schemas change.
 func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Client s3iface.S3API, startDate time.Time) error {
 	// inherit StorageDescriptor from table
-	tableInput := &glue.GetTableInput{
-		DatabaseName: aws.String(gm.databaseName),
-		Name:         aws.String(gm.tableName),
-	}
-	tableOutput, err := glueClient.GetTable(tableInput)
+	tableOutput, err := GetTable(glueClient, gm.databaseName, gm.tableName)
 	if err != nil {
 		return err
 	}

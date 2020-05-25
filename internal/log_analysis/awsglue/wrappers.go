@@ -30,16 +30,29 @@ import (
 
 // Wrapper functions to reduce boiler-plate code in callers
 
+func CreateDatabase(client glueiface.GlueAPI, databaseName, databaseDescripiton string) (*glue.CreateDatabaseOutput, error) {
+	createDatabaseInput := &glue.CreateDatabaseInput{
+		DatabaseInput: &glue.DatabaseInput{
+			Name:        aws.String(databaseName),
+			Description: aws.String(databaseDescripiton),
+		},
+	}
+	return client.CreateDatabase(createDatabaseInput)
+}
+
+func DeleteDatabase(client glueiface.GlueAPI, databaseName string) (*glue.DeleteDatabaseOutput, error) {
+	deleteDatabaseInput := &glue.DeleteDatabaseInput{
+		Name: aws.String(databaseName),
+	}
+	return client.DeleteDatabase(deleteDatabaseInput)
+}
+
 func GetTable(client glueiface.GlueAPI, databaseName, tableName string) (*glue.GetTableOutput, error) {
 	tableInput := &glue.GetTableInput{
 		DatabaseName: aws.String(databaseName),
 		Name:         aws.String(tableName),
 	}
-	tableOutput, err := client.GetTable(tableInput)
-	if err != nil {
-		return nil, errors.Wrapf(err, "cannot get table: %s.%s", databaseName, tableName)
-	}
-	return tableOutput, nil
+	return client.GetTable(tableInput)
 }
 
 func DeleteTable(client glueiface.GlueAPI, databaseName, tableName string) (*glue.DeleteTableOutput, error) {

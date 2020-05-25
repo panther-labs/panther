@@ -29,10 +29,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/ecr"
+	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sts"
 
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/pkg/awsbatch/s3batch"
 )
 
@@ -87,6 +89,9 @@ func Teardown() {
 	// We destroy the buckets first because after the stacks are destroyed we will lose
 	// knowledge of which buckets belong to Panther.
 	destroyPantherBuckets(awsSession, s3Buckets)
+
+	// Glue tables are created outside of CloudFormation, remove them here via API call
+	destroyGlueDatabases(awsSession)
 
 	// Delete all CloudFormation stacks.
 	cfnErr := destroyCfnStacks(awsSession, identity)
@@ -188,6 +193,21 @@ func destroyLambdaLayers(awsSession *session.Session) {
 	}
 }
 
+func destroyGlueDatabases(awsSession *session.Session) {
+	glueClient := glue.New(awsSession)
+	for pantherDatabase := range awsglue.PantherDatabases {
+		logger.Infof("deleting database %s", pantherDatabase)
+		_, err := awsglue.DeleteDatabase(glueClient, pantherDatabase)
+		if err != nil {
+			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == glue.ErrCodeEntityNotFoundException {
+				logger.Infof("%s already deleted", pantherDatabase)
+			} else {
+				logger.Fatal(err)
+			}
+		}
+	}
+}
+
 // Destroy all Panther CloudFormation stacks
 func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdentityOutput) error {
 	results := make(chan deleteStackResult)
@@ -222,7 +242,6 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 		coreStack,
 		dashboardStack,
 		frontendStack,
-		glueStack,
 		logAnalysisStack,
 		onboardStack,
 	}

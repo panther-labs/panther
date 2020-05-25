@@ -301,10 +301,6 @@ func (b Build) cfn() error {
 		return err
 	}
 
-	if err := generateGlueTables(); err != nil {
-		return err
-	}
-
 	if err := generateAlarms(); err != nil {
 		return err
 	}

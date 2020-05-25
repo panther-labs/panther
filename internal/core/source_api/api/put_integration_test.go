@@ -116,6 +116,7 @@ func TestAddToSnapshotQueue(t *testing.T) {
 	require.NoError(t, err)
 	// Check that there is one message per service
 	assert.Len(t, sqsIn.Entries, len(awspoller.ServicePollers))
+	mockSQS.AssertExpectations(t)
 }
 
 func TestPutIntegration(t *testing.T) {
@@ -136,6 +137,7 @@ func TestPutIntegration(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotEmpty(t, out)
+	mockSQS.AssertExpectations(t)
 }
 
 func TestPutLogIntegrationExists(t *testing.T) {
@@ -168,6 +170,7 @@ func TestPutLogIntegrationExists(t *testing.T) {
 	})
 	require.Error(t, err)
 	require.Empty(t, out) // should do nothing
+	mockSQS.AssertExpectations(t)
 }
 
 func TestPutCloudSecIntegrationExists(t *testing.T) {
@@ -256,6 +259,7 @@ func TestPutIntegrationDatabaseError(t *testing.T) {
 	out, err := apiTest.PutIntegration(in)
 	assert.Error(t, err)
 	assert.Empty(t, out)
+	mockSQS.AssertExpectations(t)
 }
 
 func TestPutIntegrationDatabaseErrorRecoveryFails(t *testing.T) {
@@ -293,12 +297,15 @@ func TestPutIntegrationDatabaseErrorRecoveryFails(t *testing.T) {
 	errorLog := recordedLogs.FilterMessage("failed to remove SQS permission for integration." +
 		" SQS queue has additional permissions that have to be removed manually")
 	require.NotNil(t, errorLog)
+	mockSQS.AssertExpectations(t)
 }
 
 func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 	dynamoClient = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
 	mockSQS := &testutils.SqsMock{}
 	sqsClient = mockSQS
+	mockGlue := &testutils.GlueMock{}
+	glueClient = mockGlue
 	env.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
@@ -328,6 +335,8 @@ func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotEmpty(t, out)
+	mockSQS.AssertExpectations(t)
+	mockGlue.AssertExpectations(t)
 }
 
 func TestPutLogIntegrationUpdateSqsQueuePermissionsFailure(t *testing.T) {
@@ -350,4 +359,5 @@ func TestPutLogIntegrationUpdateSqsQueuePermissionsFailure(t *testing.T) {
 	})
 	require.Error(t, err)
 	require.Empty(t, out)
+	mockSQS.AssertExpectations(t)
 }

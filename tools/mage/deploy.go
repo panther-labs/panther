@@ -30,8 +30,10 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
+	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/magefile/mage/sh"
 
@@ -40,10 +42,10 @@ import (
 	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
 	orgmodels "github.com/panther-labs/panther/api/lambda/organization/models"
 	usermodels "github.com/panther-labs/panther/api/lambda/users/models"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/pkg/awsathena"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/shutil"
-	"github.com/panther-labs/panther/tools/athenaviews"
 	"github.com/panther-labs/panther/tools/config"
 )
 
@@ -361,8 +363,10 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 			"AppDomainURL":           outputs["LoadBalancerUrl"],
 			"AnalysisVersionsBucket": outputs["AnalysisVersionsBucket"],
 			"AnalysisApiId":          outputs["AnalysisApiId"],
+			"AthenaResultsBucket":    outputs["AthenaResultsBucket"],
 			"ComplianceApiId":        outputs["ComplianceApiId"],
 			"DynamoScalingRoleArn":   outputs["DynamoScalingRoleArn"],
+			"ProcessedDataBucket":    outputs["ProcessedDataBucket"],
 			"OutputsKeyId":           outputs["OutputsEncryptionKeyId"],
 			"SqsKeyId":               outputs["QueueEncryptionKeyId"],
 			"UserPoolId":             outputs["UserPoolId"],
@@ -434,21 +438,24 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 }
 
 func deployGlue(awsSession *session.Session, outputs map[string]string) error {
-	_, err := deployTemplate(awsSession, glueTemplate, outputs["SourceBucket"], glueStack, map[string]string{
-		"ProcessedDataBucket": outputs["ProcessedDataBucket"],
-	})
-	if err != nil {
-		return err
+	glueClient := glue.New(awsSession)
+	for pantherDatabase, pantherDatabaseDescription := range awsglue.PantherDatabases {
+		logger.Infof("creating database %s", pantherDatabase)
+		_, err := awsglue.CreateDatabase(glueClient, pantherDatabase, pantherDatabaseDescription)
+		if err != nil {
+			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == glue.ErrCodeAlreadyExistsException {
+				logger.Infof("%s already exists", pantherDatabase)
+			} else {
+				logger.Fatal(err)
+			}
+		}
 	}
 
-	// Athena views are created via API call because CF is not well supported. Workgroup "primary" is default.
+	// Workgroup "primary" is default.
 	const workgroup = "primary"
 	athenaBucket := outputs["AthenaResultsBucket"]
 	if err := awsathena.WorkgroupAssociateS3(awsSession, workgroup, athenaBucket); err != nil {
 		return fmt.Errorf("failed to associate %s Athena workgroup with %s bucket: %v", workgroup, athenaBucket, err)
-	}
-	if err := athenaviews.CreateOrReplaceViews(athenaBucket); err != nil {
-		return fmt.Errorf("failed to create/replace athena views for %s bucket: %v", athenaBucket, err)
 	}
 
 	return nil

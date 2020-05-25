@@ -112,6 +112,18 @@ func registerPantherAccount(awsSession *session.Session, settings *config.Panthe
 		return fmt.Errorf("error calling lambda to register account: %v", err)
 	}
 
+	// collect the log types configured in panther_config.yml
+	logTypes := []string{"AWS.VPCFlow", "AWS.ALB"}
+	if settings.Setup.EnableCloudTrail {
+		logTypes = append(logTypes, "AWS.CloudTrail")
+	}
+	if settings.Setup.EnableGuardDuty {
+		logTypes = append(logTypes, "AWS.GuardDuty")
+	}
+	if settings.Setup.EnableS3AccessLogs {
+		logTypes = append(logTypes, "AWS.S3ServerAccess")
+	}
+
 	// Check if registered. Technically this is not needed (PutIntegration will just fail) BUT when PutIntegration
 	// fails this generates alarms. We don't want that so we check first and give a nice message.
 	registerCloudSec, registerLogProcessing := true, true
@@ -124,7 +136,8 @@ func registerPantherAccount(awsSession *session.Session, settings *config.Panthe
 		}
 		if aws.StringValue(integration.AWSAccountID) == accountID &&
 			*integration.IntegrationType == models.IntegrationTypeAWS3 &&
-			*integration.IntegrationLabel == genLogProcessingLabel(awsSession) {
+			*integration.IntegrationLabel == genLogProcessingLabel(awsSession) &&
+			len(integration.LogTypes) == len(logTypes) {
 
 			logger.Infof("deploy: account %s is already registered for log processing", accountID)
 			registerLogProcessing = false
@@ -154,17 +167,6 @@ func registerPantherAccount(awsSession *session.Session, settings *config.Panthe
 	}
 
 	if registerLogProcessing {
-		logTypes := []string{"AWS.VPCFlow", "AWS.ALB"}
-		if settings.Setup.EnableCloudTrail {
-			logTypes = append(logTypes, "AWS.CloudTrail")
-		}
-		if settings.Setup.EnableGuardDuty {
-			logTypes = append(logTypes, "AWS.GuardDuty")
-		}
-		if settings.Setup.EnableS3AccessLogs {
-			logTypes = append(logTypes, "AWS.S3ServerAccess")
-		}
-
 		input := &models.LambdaInput{
 			PutIntegration: &models.PutIntegrationInput{
 				PutIntegrationSettings: models.PutIntegrationSettings{

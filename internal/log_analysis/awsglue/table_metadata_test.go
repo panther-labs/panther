@@ -144,8 +144,7 @@ func TestCreateJSONPartitionErrorGettingTable(t *testing.T) {
 	created, err := gm.CreateJSONPartition(glueClient, refTime)
 	assert.Error(t, err)
 	assert.False(t, created)
-	assert.Equal(t, errors.Wrapf(nonAWSError, "cannot get table: %s.%s", LogProcessingDatabaseName, "test_logs").Error(),
-		err.Error())
+	assert.Equal(t, nonAWSError, err)
 	glueClient.AssertExpectations(t)
 }
 

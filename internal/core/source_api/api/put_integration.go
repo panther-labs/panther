@@ -104,6 +104,11 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 			err = errors.Wrap(err, "Failed to add permissions to log processor queue")
 			return nil, putIntegrationInternalError
 		}
+		err = addGlueTables(input)
+		if err != nil {
+			err = errors.Wrap(err, "Failed to add glue tables to glue catalog")
+			return nil, putIntegrationInternalError
+		}
 	}
 
 	// Write to DynamoDB
@@ -148,8 +153,9 @@ func (api API) integrationAlreadyExists(input *models.PutIntegrationInput) error
 				return nil
 			case models.IntegrationTypeAWS3:
 				if *existingIntegration.AWSAccountID == *input.AWSAccountID &&
-					*existingIntegration.IntegrationLabel == *input.IntegrationLabel {
-					// Log sources for same account need to have different labels
+					*existingIntegration.IntegrationLabel == *input.IntegrationLabel &&
+					len(existingIntegration.LogTypes) == len(input.LogTypes) {
+					// Log sources for same account need to have different labels, need to update if the log types have changed
 					return &genericapi.InvalidInputError{
 						Message: fmt.Sprintf("Log source for account %s with label %s already onboarded",
 							*input.AWSAccountID,

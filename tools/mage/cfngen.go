@@ -23,24 +23,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/tools/cfndoc"
 	"github.com/panther-labs/panther/tools/cfngen/cloudwatchcf"
-	"github.com/panther-labs/panther/tools/cfngen/gluecf"
 	"github.com/panther-labs/panther/tools/dashboards"
 )
-
-// Generate Glue tables for log processor output as CloudFormation
-func generateGlueTables() error {
-	tableResources := registry.AvailableTables()
-	logger.Debugf("deploy: cfngen: loaded %d glue tables", len(tableResources))
-	cf, err := gluecf.GenerateTables(tableResources)
-	if err != nil {
-		return fmt.Errorf("failed to generate Glue Data Catalog CloudFormation template: %v", err)
-	}
-
-	return writeFile(glueTemplate, cf)
-}
 
 // Generate CloudWatch dashboards as CloudFormation
 func generateDashboards() error {
