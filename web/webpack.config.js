@@ -235,7 +235,7 @@ module.exports = {
       // simple HTML and leave those template parameters untouched. Of course, we couldn't just
       // remove this plugin entirely, since we need it for the CSS/JS tag injection
       template: isEnvDevelopment
-        ? path.resolve(__dirname, 'public/index.ejs')
+        ? `ejs-webpack-loader!${path.resolve(__dirname, 'public/index.ejs')}`
         : `html-loader!${path.resolve(__dirname, 'public/index.ejs')}`,
       filename: isEnvDevelopment ? 'index.html' : 'index.ejs',
       templateParameters: isEnvDevelopment ? getAppTemplateParams() : undefined,
