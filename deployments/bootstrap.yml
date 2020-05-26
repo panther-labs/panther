@@ -42,6 +42,7 @@ Parameters:
   LogSubscriptionPrincipals:
     Type: CommaDelimitedList
     Description: The list of Principal ARNs to allow read access to the ProcessedDataBucket and subscribe access to ProcessedDataTopicArn
+    Default: ''
   EnableS3AccessLogs:
     Type: String
     Description: Enable S3 access logging for all Panther buckets.
