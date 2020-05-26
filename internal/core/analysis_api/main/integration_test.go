@@ -60,6 +60,7 @@ var (
 
 	userID = models.UserID("521a1c7b-273f-4a03-99a7-5c661de5b0e8")
 
+	// NOTE: this gets changed by the bulk upload!
 	policy = &models.Policy{
 		AutoRemediationID:         "fix-it",
 		AutoRemediationParameters: map[string]string{"hello": "world", "emptyParameter": ""},
@@ -71,7 +72,7 @@ var (
 		ResourceTypes:             []string{"AWS.S3.Bucket"},
 		Severity:                  "MEDIUM",
 		Suppressions:              models.Suppressions{"panther.*"},
-		Tags:                      nil,
+		Tags:                      []string{"policyTag"},
 		Tests: []*models.UnitTest{
 			{
 				Name:           "This will be True",
@@ -87,6 +88,7 @@ var (
 			},
 		},
 	}
+	versionedPolicy *models.Policy // this will get set when we modify policy for use in delete testing
 
 	policyFromBulk = &models.Policy{
 		AutoRemediationParameters: map[string]string{"hello": "goodbye"},
@@ -176,7 +178,8 @@ var (
 		LastModifiedBy:            userID,
 		ResourceTypes:             []string{"AWS.S3.Bucket"},
 		Severity:                  "MEDIUM",
-		Tags:                      nil,
+		Suppressions:              []string{},
+		Tags:                      []string{},
 		Tests: []*models.UnitTest{
 			{
 				Name:           "This will be True",
@@ -195,6 +198,7 @@ var (
 		LogTypes:           []string{"AWS.CloudTrail"},
 		Severity:           "HIGH",
 		Tests:              []*models.UnitTest{},
+		Tags:               []string{"test-tag"},
 		DedupPeriodMinutes: 1440,
 	}
 
@@ -260,6 +264,8 @@ func TestIntegrationAPI(t *testing.T) {
 	apiClient = client.NewHTTPClientWithConfig(nil, client.DefaultTransportConfig().
 		WithBasePath("/v1").WithHost(endpoint))
 
+	// ORDER MATTERS!
+
 	t.Run("TestPolicies", func(t *testing.T) {
 		t.Run("TestPolicyPass", testPolicyPass)
 		t.Run("TestPolicyFail", testPolicyFail)
@@ -276,7 +282,7 @@ func TestIntegrationAPI(t *testing.T) {
 
 	t.Run("Create", func(t *testing.T) {
 		t.Run("CreatePolicyInvalid", createInvalid)
-		t.Run("CreatePolicySuccess", createSuccess)
+		t.Run("CreatePolicySuccess", createPolicySuccess)
 		t.Run("CreateRuleSuccess", createRuleSuccess)
 		// This test (and the other global tests) does trigger the layer-manager lambda to run, but since there is only
 		// support for a single global nothing changes (the version gets bumped a few times). Once multiple globals are
@@ -296,6 +302,24 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("GetGlobal", getGlobal)
 	})
 
+	// NOTE! This will mutate the original policy above!
+	t.Run("BulkUpload", func(t *testing.T) {
+		t.Run("BulkUploadInvalid", bulkUploadInvalid)
+		t.Run("BulkUploadSuccess", bulkUploadSuccess)
+	})
+	if t.Failed() {
+		return
+	}
+
+	t.Run("List", func(t *testing.T) {
+		t.Run("ListSuccess", listSuccess)
+		t.Run("ListFiltered", listFiltered)
+		t.Run("ListPaging", listPaging)
+		t.Run("ListRules", listRules)
+		t.Run("GetEnabledPolicies", getEnabledPolicies)
+		t.Run("GetEnabledRules", getEnabledRules)
+	})
+
 	t.Run("Modify", func(t *testing.T) {
 		t.Run("ModifyInvalid", modifyInvalid)
 		t.Run("ModifyNotFound", modifyNotFound)
@@ -309,25 +333,8 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("SuppressSuccess", suppressSuccess)
 	})
 
-	t.Run("BulkUpload", func(t *testing.T) {
-		t.Run("BulkUploadInvalid", bulkUploadInvalid)
-		t.Run("BulkUploadSuccess", bulkUploadSuccess)
-	})
-	if t.Failed() {
-		return
-	}
-
 	// TODO: Add integration tests for integrated pass/fail info
 	// E.g. filter + sort policies with different failure counts
-
-	t.Run("List", func(t *testing.T) {
-		t.Run("ListSuccess", listSuccess)
-		t.Run("ListFiltered", listFiltered)
-		t.Run("ListPaging", listPaging)
-		t.Run("ListRules", listRules)
-		t.Run("GetEnabledSuccess", getEnabledPolicies)
-		t.Run("GetEnabledRules", getEnabledRules)
-	})
 
 	t.Run("Delete", func(t *testing.T) {
 		t.Run("DeleteInvalid", deleteInvalid)
@@ -338,7 +345,6 @@ func TestIntegrationAPI(t *testing.T) {
 }
 
 func testPolicyPass(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
 		Body: &models.TestPolicy{
 			AnalysisType:  models.AnalysisTypePOLICY,
@@ -360,7 +366,6 @@ func testPolicyPass(t *testing.T) {
 }
 
 func testPolicyNotApplicable(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
 		Body: &models.TestPolicy{
 			AnalysisType:  models.AnalysisTypePOLICY,
@@ -394,7 +399,6 @@ func testPolicyNotApplicable(t *testing.T) {
 }
 
 func testPolicyFail(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
 		Body: &models.TestPolicy{
 			AnalysisType:  models.AnalysisTypePOLICY,
@@ -416,7 +420,6 @@ func testPolicyFail(t *testing.T) {
 }
 
 func testPolicyError(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
 		Body: &models.TestPolicy{
 			AnalysisType:  models.AnalysisTypePOLICY,
@@ -447,7 +450,6 @@ func testPolicyError(t *testing.T) {
 }
 
 func testPolicyMixed(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
 		Body: &models.TestPolicy{
 			AnalysisType:  models.AnalysisTypePOLICY,
@@ -499,15 +501,13 @@ func testPolicyMixed(t *testing.T) {
 }
 
 func createInvalid(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.CreatePolicy(&operations.CreatePolicyParams{HTTPClient: httpClient})
 	assert.Nil(t, result)
 	require.Error(t, err)
 	require.IsType(t, &operations.CreatePolicyBadRequest{}, err)
 }
 
-func createSuccess(t *testing.T) {
-	t.Parallel()
+func createPolicySuccess(t *testing.T) {
 	result, err := apiClient.Operations.CreatePolicy(&operations.CreatePolicyParams{
 		Body: &models.UpdatePolicy{
 			AutoRemediationID:         policy.AutoRemediationID,
@@ -533,17 +533,16 @@ func createSuccess(t *testing.T) {
 	assert.NotZero(t, result.Payload.CreatedAt)
 	assert.NotZero(t, result.Payload.LastModified)
 
-	policy.CreatedAt = result.Payload.CreatedAt
-	policy.CreatedBy = userID
-	policy.LastModified = result.Payload.LastModified
-	policy.LastModifiedBy = userID
-	policy.Tags = []string{} // nil was converted to empty list
-	policy.VersionID = result.Payload.VersionID
-	assert.Equal(t, policy, result.Payload)
+	expectedPolicy := *policy
+	expectedPolicy.CreatedAt = result.Payload.CreatedAt
+	expectedPolicy.CreatedBy = userID
+	expectedPolicy.LastModified = result.Payload.LastModified
+	expectedPolicy.LastModifiedBy = userID
+	expectedPolicy.VersionID = result.Payload.VersionID
+	assert.Equal(t, &expectedPolicy, result.Payload)
 }
 
 func createRuleSuccess(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.CreateRule(&operations.CreateRuleParams{
 		Body: &models.UpdateRule{
 			Body:               rule.Body,
@@ -554,6 +553,7 @@ func createRuleSuccess(t *testing.T) {
 			Severity:           rule.Severity,
 			UserID:             userID,
 			DedupPeriodMinutes: rule.DedupPeriodMinutes,
+			Tags:               rule.Tags,
 		},
 		HTTPClient: httpClient,
 	})
@@ -564,17 +564,16 @@ func createRuleSuccess(t *testing.T) {
 	assert.NotZero(t, result.Payload.CreatedAt)
 	assert.NotZero(t, result.Payload.LastModified)
 
-	rule.CreatedAt = result.Payload.CreatedAt
-	rule.CreatedBy = userID
-	rule.LastModified = result.Payload.LastModified
-	rule.LastModifiedBy = userID
-	rule.Tags = []string{} // nil was converted to empty list
-	rule.VersionID = result.Payload.VersionID
-	assert.Equal(t, rule, result.Payload)
+	expectedRule := *rule
+	expectedRule.CreatedAt = result.Payload.CreatedAt
+	expectedRule.CreatedBy = userID
+	expectedRule.LastModified = result.Payload.LastModified
+	expectedRule.LastModifiedBy = userID
+	expectedRule.VersionID = result.Payload.VersionID
+	assert.Equal(t, &expectedRule, result.Payload)
 }
 
 func createGlobalSuccess(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.CreateGlobal(&operations.CreateGlobalParams{
 		Body: &models.UpdateGlobal{
 			Body:        global.Body,
@@ -601,7 +600,6 @@ func createGlobalSuccess(t *testing.T) {
 }
 
 func getNotFound(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.GetPolicy(&operations.GetPolicyParams{
 		PolicyID:   "does-not-exist",
 		HTTPClient: httpClient,
@@ -613,44 +611,76 @@ func getNotFound(t *testing.T) {
 
 // Get the latest policy version (from Dynamo)
 func getLatest(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.GetPolicy(&operations.GetPolicyParams{
 		PolicyID:   string(policy.ID),
 		HTTPClient: httpClient,
 	})
 	require.NoError(t, err)
 	assert.NoError(t, result.Payload.Validate(nil))
-	assert.Equal(t, policy, result.Payload)
+
+	// set things that change
+	expectedPolicy := *policy
+	expectedPolicy.CreatedAt = result.Payload.CreatedAt
+	expectedPolicy.CreatedBy = userID
+	expectedPolicy.LastModified = result.Payload.LastModified
+	expectedPolicy.LastModifiedBy = userID
+	expectedPolicy.VersionID = result.Payload.VersionID
+	assert.Equal(t, &expectedPolicy, result.Payload)
 }
 
 // Get a specific policy version (from S3)
 func getVersion(t *testing.T) {
-	t.Parallel()
+	// first get the version now as latest
 	result, err := apiClient.Operations.GetPolicy(&operations.GetPolicyParams{
 		PolicyID:   string(policy.ID),
-		VersionID:  aws.String(string(policy.VersionID)),
 		HTTPClient: httpClient,
 	})
 	require.NoError(t, err)
 	assert.NoError(t, result.Payload.Validate(nil))
-	assert.Equal(t, policy, result.Payload)
+
+	versionedPolicy = result.Payload // remember for later in delete tests, since it will change
+
+	// set version we expect
+	expectedPolicy := *policy
+	expectedPolicy.VersionID = result.Payload.VersionID
+
+	// now look it up
+	result, err = apiClient.Operations.GetPolicy(&operations.GetPolicyParams{
+		PolicyID:   string(policy.ID),
+		VersionID:  aws.String(string(result.Payload.VersionID)),
+		HTTPClient: httpClient,
+	})
+	require.NoError(t, err)
+	assert.NoError(t, result.Payload.Validate(nil))
+
+	// set things that change but NOT the version
+	expectedPolicy.CreatedAt = result.Payload.CreatedAt
+	expectedPolicy.CreatedBy = userID
+	expectedPolicy.LastModified = result.Payload.LastModified
+	expectedPolicy.LastModifiedBy = userID
+	assert.Equal(t, &expectedPolicy, result.Payload)
 }
 
 // Get a rule
 func getRule(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.GetRule(&operations.GetRuleParams{
 		RuleID:     string(rule.ID),
 		HTTPClient: httpClient,
 	})
 	require.NoError(t, err)
 	assert.NoError(t, result.Payload.Validate(nil))
-	assert.Equal(t, rule, result.Payload)
+	expectedRule := *rule
+	// these get assigned
+	expectedRule.CreatedBy = result.Payload.CreatedBy
+	expectedRule.LastModifiedBy = result.Payload.LastModifiedBy
+	expectedRule.CreatedAt = result.Payload.CreatedAt
+	expectedRule.LastModified = result.Payload.LastModified
+	expectedRule.VersionID = result.Payload.VersionID
+	assert.Equal(t, &expectedRule, result.Payload)
 }
 
 // Get a global
 func getGlobal(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.GetGlobal(&operations.GetGlobalParams{
 		GlobalID:   string(global.ID),
 		HTTPClient: httpClient,
@@ -662,7 +692,6 @@ func getGlobal(t *testing.T) {
 
 // GetRule with a policy ID returns 404 not found
 func getRuleWrongType(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.GetRule(&operations.GetRuleParams{
 		RuleID:     string(policy.ID),
 		HTTPClient: httpClient,
@@ -673,7 +702,6 @@ func getRuleWrongType(t *testing.T) {
 }
 
 func modifyInvalid(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.ModifyPolicy(&operations.ModifyPolicyParams{
 		// missing fields
 		Body:       &models.UpdatePolicy{},
@@ -685,7 +713,6 @@ func modifyInvalid(t *testing.T) {
 }
 
 func modifyNotFound(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.ModifyPolicy(&operations.ModifyPolicyParams{
 		Body: &models.UpdatePolicy{
 			Body:     "def policy(resource): return False",
@@ -702,9 +729,10 @@ func modifyNotFound(t *testing.T) {
 }
 
 func modifySuccess(t *testing.T) {
-	t.Parallel()
-	policy.Description = "A new and modified description!"
-	policy.Tests = []*models.UnitTest{
+	// things we will change
+	expectedPolicy := *policy
+	expectedPolicy.Description = "A new and modified description!"
+	expectedPolicy.Tests = []*models.UnitTest{
 		{
 			Name:           "This will be True",
 			ResourceType:   "AWS.S3.Bucket",
@@ -717,7 +745,7 @@ func modifySuccess(t *testing.T) {
 			AutoRemediationID:         policy.AutoRemediationID,
 			AutoRemediationParameters: policy.AutoRemediationParameters,
 			Body:                      policy.Body,
-			Description:               policy.Description,
+			Description:               expectedPolicy.Description,
 			DisplayName:               policy.DisplayName,
 			Enabled:                   policy.Enabled,
 			ID:                        policy.ID,
@@ -725,34 +753,40 @@ func modifySuccess(t *testing.T) {
 			Severity:                  policy.Severity,
 			Suppressions:              policy.Suppressions,
 			Tags:                      policy.Tags,
-			Tests:                     policy.Tests,
+			Tests:                     expectedPolicy.Tests,
 			UserID:                    userID,
 		},
 		HTTPClient: httpClient,
 	})
 	require.NoError(t, err)
 
-	policy.LastModified = result.Payload.LastModified
-	policy.VersionID = result.Payload.VersionID
-	assert.Equal(t, policy, result.Payload)
+	// these get assigned
+	expectedPolicy.CreatedBy = result.Payload.CreatedBy
+	expectedPolicy.LastModifiedBy = result.Payload.LastModifiedBy
+	expectedPolicy.CreatedAt = result.Payload.CreatedAt
+	expectedPolicy.LastModified = result.Payload.LastModified
+	expectedPolicy.VersionID = result.Payload.VersionID
+	assert.Equal(t, &expectedPolicy, result.Payload)
 }
 
 // Modify a rule
 func modifyRule(t *testing.T) {
-	t.Parallel()
-	rule.Description = "SkyNet integration"
-	rule.DedupPeriodMinutes = 60
+	// these are changes
+	expectedRule := *rule
+	expectedRule.Description = "SkyNet integration"
+	expectedRule.DedupPeriodMinutes = 60
 
 	result, err := apiClient.Operations.ModifyRule(&operations.ModifyRuleParams{
 		Body: &models.UpdateRule{
-			Body:               rule.Body,
-			Description:        rule.Description,
-			Enabled:            rule.Enabled,
-			ID:                 rule.ID,
-			LogTypes:           rule.LogTypes,
-			Severity:           rule.Severity,
+			Body:               expectedRule.Body,
+			Description:        expectedRule.Description,
+			Enabled:            expectedRule.Enabled,
+			ID:                 expectedRule.ID,
+			LogTypes:           expectedRule.LogTypes,
+			Severity:           expectedRule.Severity,
 			UserID:             userID,
-			DedupPeriodMinutes: rule.DedupPeriodMinutes,
+			DedupPeriodMinutes: expectedRule.DedupPeriodMinutes,
+			Tags:               expectedRule.Tags,
 		},
 		HTTPClient: httpClient,
 	})
@@ -763,14 +797,16 @@ func modifyRule(t *testing.T) {
 	assert.NotZero(t, result.Payload.CreatedAt)
 	assert.NotZero(t, result.Payload.LastModified)
 
-	rule.LastModified = result.Payload.LastModified
-	rule.VersionID = result.Payload.VersionID
-	assert.Equal(t, rule, result.Payload)
+	expectedRule.CreatedBy = result.Payload.CreatedBy
+	expectedRule.LastModifiedBy = result.Payload.LastModifiedBy
+	expectedRule.CreatedAt = result.Payload.CreatedAt
+	expectedRule.LastModified = result.Payload.LastModified
+	expectedRule.VersionID = result.Payload.VersionID
+	assert.Equal(t, &expectedRule, result.Payload)
 }
 
 // Modify a global
 func modifyGlobal(t *testing.T) {
-	t.Parallel()
 	global.Description = "Now returns False"
 	global.Body = "def helper_is_true(truthy): return truthy is False\n"
 
@@ -796,7 +832,6 @@ func modifyGlobal(t *testing.T) {
 }
 
 func suppressNotFound(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.Suppress(&operations.SuppressParams{
 		Body: &models.Suppress{
 			PolicyIds:        []models.ID{"no-such-id"},
@@ -810,11 +845,10 @@ func suppressNotFound(t *testing.T) {
 }
 
 func suppressSuccess(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.Suppress(&operations.SuppressParams{
 		Body: &models.Suppress{
 			PolicyIds:        []models.ID{policy.ID},
-			ResourcePatterns: models.Suppressions{"labs.*", "dev|staging"},
+			ResourcePatterns: models.Suppressions{"new-suppression"},
 		},
 		HTTPClient: httpClient,
 	})
@@ -829,11 +863,10 @@ func suppressSuccess(t *testing.T) {
 	require.NoError(t, err)
 	sort.Strings(getResult.Payload.Suppressions)
 	// It was added to the existing suppressions
-	assert.Equal(t, models.Suppressions{"dev|staging", "labs.*", "panther.*"}, getResult.Payload.Suppressions)
+	assert.Equal(t, models.Suppressions{"new-suppression", "panther.*"}, getResult.Payload.Suppressions)
 }
 
 func bulkUploadInvalid(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.BulkUpload(
 		&operations.BulkUploadParams{HTTPClient: httpClient})
 	assert.Nil(t, result)
@@ -842,8 +875,6 @@ func bulkUploadInvalid(t *testing.T) {
 }
 
 func bulkUploadSuccess(t *testing.T) {
-	t.Parallel()
-
 	require.NoError(t, shutil.ZipDirectory(policiesRoot, policiesZipLocation, true))
 	zipFile, err := os.Open(policiesZipLocation)
 	require.NoError(t, err)
@@ -887,13 +918,22 @@ func bulkUploadSuccess(t *testing.T) {
 	assert.True(t, time.Time(getResult.Payload.LastModified).After(time.Time(policy.LastModified)))
 	assert.NotEqual(t, getResult.Payload.VersionID, policy.VersionID)
 	assert.NotEmpty(t, getResult.Payload.VersionID)
-	policy.AutoRemediationParameters = map[string]string{"hello": "goodbye"}
-	policy.Description = "Matches every resource\n"
-	policy.LastModified = getResult.Payload.LastModified
-	policy.Tests[0].Resource = `{"Bucket":"empty"}`
-	policy.Suppressions = []string{}
-	policy.VersionID = getResult.Payload.VersionID
-	assert.Equal(t, policy, getResult.Payload)
+
+	expectedPolicy := *policy
+	expectedPolicy.AutoRemediationParameters = map[string]string{"hello": "goodbye"}
+	expectedPolicy.Description = "Matches every resource\n"
+	expectedPolicy.CreatedBy = getResult.Payload.CreatedBy
+	expectedPolicy.LastModifiedBy = getResult.Payload.LastModifiedBy
+	expectedPolicy.CreatedAt = getResult.Payload.CreatedAt
+	expectedPolicy.LastModified = getResult.Payload.LastModified
+	expectedPolicy.Tests = expectedPolicy.Tests[:1]
+	expectedPolicy.Tests[0].Resource = `{"Bucket":"empty"}`
+	expectedPolicy.Tags = []string{}
+	expectedPolicy.VersionID = getResult.Payload.VersionID
+	assert.Equal(t, &expectedPolicy, getResult.Payload)
+
+	// Now reset global policy so subsequent tests have a reference
+	policy = getResult.Payload
 
 	// Verify newly created policy #1
 	getResult, err = apiClient.Operations.GetPolicy(&operations.GetPolicyParams{
@@ -934,7 +974,6 @@ func bulkUploadSuccess(t *testing.T) {
 	assert.NotZero(t, getResult.Payload.LastModified)
 	policyFromBulkJSON.CreatedAt = getResult.Payload.CreatedAt
 	policyFromBulkJSON.LastModified = getResult.Payload.LastModified
-	policyFromBulkJSON.Suppressions = []string{}
 	policyFromBulkJSON.Tags = []string{}
 	policyFromBulkJSON.VersionID = getResult.Payload.VersionID
 
@@ -952,7 +991,6 @@ func bulkUploadSuccess(t *testing.T) {
 }
 
 func listNotFound(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.ListPolicies(&operations.ListPoliciesParams{
 		HTTPClient: httpClient,
 	})
@@ -970,9 +1008,9 @@ func listNotFound(t *testing.T) {
 }
 
 func listSuccess(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.ListPolicies(&operations.ListPoliciesParams{
 		HTTPClient: httpClient,
+		SortBy:     aws.String("id"),
 	})
 	require.NoError(t, err)
 
@@ -982,7 +1020,33 @@ func listSuccess(t *testing.T) {
 			TotalItems: aws.Int64(3),
 			TotalPages: aws.Int64(1),
 		},
-		Policies: []*models.PolicySummary{ // sorted by severity descending (ID tiebreaker)
+		Policies: []*models.PolicySummary{ // sorted by id
+			{
+				AutoRemediationID:         policyFromBulkJSON.AutoRemediationID,
+				AutoRemediationParameters: policyFromBulkJSON.AutoRemediationParameters,
+				ComplianceStatus:          models.ComplianceStatusPASS,
+				DisplayName:               policyFromBulkJSON.DisplayName,
+				Enabled:                   policyFromBulkJSON.Enabled,
+				ID:                        policyFromBulkJSON.ID,
+				LastModified:              policyFromBulkJSON.LastModified,
+				ResourceTypes:             policyFromBulkJSON.ResourceTypes,
+				Severity:                  policyFromBulkJSON.Severity,
+				Suppressions:              policyFromBulkJSON.Suppressions,
+				Tags:                      []string{},
+			},
+			{
+				AutoRemediationID:         policy.AutoRemediationID,
+				AutoRemediationParameters: policy.AutoRemediationParameters,
+				ComplianceStatus:          models.ComplianceStatusPASS,
+				DisplayName:               policy.DisplayName,
+				Enabled:                   policy.Enabled,
+				ID:                        policy.ID,
+				LastModified:              result.Payload.Policies[1].LastModified, // this gets set
+				ResourceTypes:             policy.ResourceTypes,
+				Severity:                  policy.Severity,
+				Suppressions:              policy.Suppressions,
+				Tags:                      []string{},
+			},
 			{
 				AutoRemediationID:         policyFromBulk.AutoRemediationID,
 				AutoRemediationParameters: policyFromBulk.AutoRemediationParameters,
@@ -996,39 +1060,14 @@ func listSuccess(t *testing.T) {
 				Suppressions:              policyFromBulk.Suppressions,
 				Tags:                      policyFromBulk.Tags,
 			},
-			{
-				AutoRemediationID:         policy.AutoRemediationID,
-				AutoRemediationParameters: policy.AutoRemediationParameters,
-				ComplianceStatus:          models.ComplianceStatusPASS,
-				DisplayName:               policy.DisplayName,
-				Enabled:                   policy.Enabled,
-				ID:                        policy.ID,
-				LastModified:              policy.LastModified,
-				ResourceTypes:             policy.ResourceTypes,
-				Severity:                  policy.Severity,
-				Suppressions:              policy.Suppressions,
-				Tags:                      policy.Tags,
-			},
-			{
-				AutoRemediationID:         policyFromBulkJSON.AutoRemediationID,
-				AutoRemediationParameters: policyFromBulkJSON.AutoRemediationParameters,
-				ComplianceStatus:          models.ComplianceStatusPASS,
-				DisplayName:               policyFromBulkJSON.DisplayName,
-				Enabled:                   policyFromBulkJSON.Enabled,
-				ID:                        policyFromBulkJSON.ID,
-				LastModified:              policyFromBulkJSON.LastModified,
-				ResourceTypes:             policyFromBulkJSON.ResourceTypes,
-				Severity:                  policyFromBulkJSON.Severity,
-				Suppressions:              policyFromBulkJSON.Suppressions,
-				Tags:                      policyFromBulkJSON.Tags,
-			},
 		},
 	}
+
+	require.Len(t, result.Payload.Policies, len(expected.Policies))
 	assert.Equal(t, expected, result.Payload)
 }
 
 func listFiltered(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.ListPolicies(&operations.ListPoliciesParams{
 		Enabled:        aws.Bool(true),
 		HasRemediation: aws.Bool(true),
@@ -1065,7 +1104,6 @@ func listFiltered(t *testing.T) {
 }
 
 func listPaging(t *testing.T) {
-	t.Parallel()
 	// Page 1
 	result, err := apiClient.Operations.ListPolicies(&operations.ListPoliciesParams{
 		PageSize:   aws.Int64(1),
@@ -1123,7 +1161,7 @@ func listPaging(t *testing.T) {
 				DisplayName:               policy.DisplayName,
 				Enabled:                   policy.Enabled,
 				ID:                        policy.ID,
-				LastModified:              policy.LastModified,
+				LastModified:              result.Payload.Policies[0].LastModified, // this gets set
 				ResourceTypes:             policy.ResourceTypes,
 				Severity:                  policy.Severity,
 				Suppressions:              policy.Suppressions,
@@ -1170,7 +1208,6 @@ func listPaging(t *testing.T) {
 
 // List rules (not policies)
 func listRules(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.ListRules(&operations.ListRulesParams{
 		HTTPClient: httpClient,
 	})
@@ -1187,7 +1224,7 @@ func listRules(t *testing.T) {
 				DisplayName:  rule.DisplayName,
 				Enabled:      rule.Enabled,
 				ID:           rule.ID,
-				LastModified: rule.LastModified,
+				LastModified: result.Payload.Rules[0].LastModified, // this is changed
 				LogTypes:     rule.LogTypes,
 				Severity:     rule.Severity,
 				Tags:         rule.Tags,
@@ -1198,7 +1235,6 @@ func listRules(t *testing.T) {
 }
 
 func getEnabledEmpty(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.GetEnabledPolicies(&operations.GetEnabledPoliciesParams{
 		HTTPClient: httpClient,
 		Type:       string(models.AnalysisTypePOLICY),
@@ -1208,45 +1244,46 @@ func getEnabledEmpty(t *testing.T) {
 }
 
 func getEnabledPolicies(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.GetEnabledPolicies(&operations.GetEnabledPoliciesParams{
 		HTTPClient: httpClient,
 		Type:       string(models.AnalysisTypePOLICY),
 	})
 	require.NoError(t, err)
 
-	expected := &models.EnabledPolicies{
-		Policies: []*models.EnabledPolicy{
-			{
-				Body:          policy.Body,
-				ID:            policy.ID,
-				ResourceTypes: policy.ResourceTypes,
-				Severity:      policy.Severity, // Tags not included because they are empty
-				VersionID:     policy.VersionID,
-			},
-			{
-				Body:          policyFromBulkJSON.Body,
-				ID:            policyFromBulkJSON.ID,
-				ResourceTypes: policyFromBulkJSON.ResourceTypes,
-				Severity:      policyFromBulkJSON.Severity,
-				VersionID:     policyFromBulkJSON.VersionID,
-			},
-			{
-				Body:          policyFromBulk.Body,
-				ID:            policyFromBulk.ID,
-				ResourceTypes: policyFromBulk.ResourceTypes,
-				Severity:      policyFromBulk.Severity,
-				VersionID:     policyFromBulk.VersionID,
-			},
+	// use map, do not count on order
+	expected := map[models.ID]*models.EnabledPolicy{
+		policy.ID: {
+			Body:          policy.Body,
+			ID:            policy.ID,
+			ResourceTypes: policy.ResourceTypes,
+			Severity:      policy.Severity,
+			VersionID:     result.Payload.Policies[0].VersionID, // this is set
+			Suppressions:  policy.Suppressions,
+		},
+		policyFromBulkJSON.ID: {
+			Body:          policyFromBulkJSON.Body,
+			ID:            policyFromBulkJSON.ID,
+			ResourceTypes: policyFromBulkJSON.ResourceTypes,
+			Severity:      policyFromBulkJSON.Severity,
+			VersionID:     policyFromBulkJSON.VersionID,
+		},
+		policyFromBulk.ID: {
+			Body:          policyFromBulk.Body,
+			ID:            policyFromBulk.ID,
+			ResourceTypes: policyFromBulk.ResourceTypes,
+			Severity:      policyFromBulk.Severity,
+			VersionID:     policyFromBulk.VersionID,
+			Tags:          policyFromBulk.Tags,
 		},
 	}
 
-	assert.Equal(t, expected, result.Payload)
+	for _, resultPolicy := range result.Payload.Policies {
+		assert.Equal(t, expected[resultPolicy.ID], resultPolicy)
+	}
 }
 
 // Get enabled rules (instead of policies)
 func getEnabledRules(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.GetEnabledPolicies(&operations.GetEnabledPoliciesParams{
 		Type:       string(models.AnalysisTypeRULE),
 		HTTPClient: httpClient,
@@ -1260,8 +1297,9 @@ func getEnabledRules(t *testing.T) {
 				ID:                 rule.ID,
 				ResourceTypes:      rule.LogTypes,
 				Severity:           rule.Severity,
-				VersionID:          rule.VersionID,
+				VersionID:          result.Payload.Policies[0].VersionID, // this is set
 				DedupPeriodMinutes: rule.DedupPeriodMinutes,
+				Tags:               rule.Tags,
 			},
 		},
 	}
@@ -1269,7 +1307,6 @@ func getEnabledRules(t *testing.T) {
 }
 
 func deleteInvalid(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.DeletePolicies(&operations.DeletePoliciesParams{
 		Body:       &models.DeletePolicies{},
 		HTTPClient: httpClient,
@@ -1281,7 +1318,6 @@ func deleteInvalid(t *testing.T) {
 
 // Delete a set of policies that don't exist - returns OK
 func deleteNotExists(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.DeletePolicies(&operations.DeletePoliciesParams{
 		Body: &models.DeletePolicies{
 			Policies: []*models.DeleteEntry{
@@ -1300,7 +1336,6 @@ func deleteNotExists(t *testing.T) {
 }
 
 func deleteSuccess(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.DeletePolicies(&operations.DeletePoliciesParams{
 		Body: &models.DeletePolicies{
 			Policies: []*models.DeleteEntry{
@@ -1331,14 +1366,15 @@ func deleteSuccess(t *testing.T) {
 	require.Error(t, err)
 	require.IsType(t, &operations.GetPolicyNotFound{}, err)
 
-	// But retrieving an older version will still work
+	// But retrieving an older version will still work...
 	getResult, err := apiClient.Operations.GetPolicy(&operations.GetPolicyParams{
-		PolicyID:   string(policy.ID),
-		VersionID:  aws.String(string(policy.VersionID)),
+		PolicyID:   string(versionedPolicy.ID),
+		VersionID:  aws.String(string(versionedPolicy.VersionID)),
 		HTTPClient: httpClient,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, policy, getResult.Payload)
+
+	assert.Equal(t, versionedPolicy, getResult.Payload)
 
 	// List operations should be empty
 	emptyPaging := &models.Paging{
@@ -1363,7 +1399,6 @@ func deleteSuccess(t *testing.T) {
 }
 
 func deleteGlobal(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.DeleteGlobals(&operations.DeleteGlobalsParams{
 		Body: &models.DeletePolicies{
 			Policies: []*models.DeleteEntry{

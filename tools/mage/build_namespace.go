@@ -29,8 +29,6 @@ import (
 
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
-
-	"github.com/panther-labs/panther/tools/config"
 )
 
 const swaggerGlob = "api/gateway/*/api.yml"
@@ -307,12 +305,7 @@ func (b Build) cfn() error {
 		return err
 	}
 
-	settings, err := config.Settings()
-	if err != nil {
-		return err
-	}
-
-	if err := generateAlarms(settings); err != nil {
+	if err := generateAlarms(); err != nil {
 		return err
 	}
 	if err := generateDashboards(); err != nil {

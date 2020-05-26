@@ -56,9 +56,9 @@ const typePolicies: TypePolicies = {
           toReference({ __typename: 'ComplianceIntegration', integrationId: args.id })
         );
       },
-      getLogIntegration(existingData, { args, toReference }) {
+      getS3LogIntegration(existingData, { args, toReference }) {
         return (
-          existingData || toReference({ __typename: 'LogIntegration', integrationId: args.id })
+          existingData || toReference({ __typename: 'S3LogIntegration', integrationId: args.id })
         );
       },
     },
@@ -75,7 +75,7 @@ const typePolicies: TypePolicies = {
   ComplianceIntegration: {
     keyFields: ['integrationId'],
   },
-  LogIntegration: {
+  S3LogIntegration: {
     keyFields: ['integrationId'],
   },
   GeneralSettings: {

@@ -52,6 +52,9 @@ type EnabledPolicy struct {
 	// suppressions
 	Suppressions Suppressions `json:"suppressions,omitempty"`
 
+	// tags
+	Tags Tags `json:"tags,omitempty"`
+
 	// version Id
 	VersionID VersionID `json:"versionId,omitempty"`
 }
@@ -81,6 +84,10 @@ func (m *EnabledPolicy) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateSuppressions(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateTags(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -183,6 +190,22 @@ func (m *EnabledPolicy) validateSuppressions(formats strfmt.Registry) error {
 	if err := m.Suppressions.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("suppressions")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *EnabledPolicy) validateTags(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Tags) { // not required
+		return nil
+	}
+
+	if err := m.Tags.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("tags")
 		}
 		return err
 	}
