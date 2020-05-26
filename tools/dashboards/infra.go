@@ -56,7 +56,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 3,
-            "y": 25,
+            "y": 31,
             "width": 3,
             "height": 3,
             "properties": {
@@ -72,7 +72,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 6,
-            "y": 25,
+            "y": 31,
             "width": 3,
             "height": 3,
             "properties": {
@@ -90,7 +90,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 9,
-            "y": 25,
+            "y": 31,
             "width": 3,
             "height": 3,
             "properties": {
@@ -113,7 +113,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 3,
-            "y": 28,
+            "y": 34,
             "width": 3,
             "height": 3,
             "properties": {
@@ -129,7 +129,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 6,
-            "y": 28,
+            "y": 34,
             "width": 3,
             "height": 3,
             "properties": {
@@ -147,7 +147,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 9,
-            "y": 28,
+            "y": 34,
             "width": 3,
             "height": 3,
             "properties": {
@@ -170,7 +170,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 3,
-            "y": 31,
+            "y": 37,
             "width": 3,
             "height": 3,
             "properties": {
@@ -186,7 +186,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 6,
-            "y": 31,
+            "y": 37,
             "width": 3,
             "height": 3,
             "properties": {
@@ -204,7 +204,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 9,
-            "y": 31,
+            "y": 37,
             "width": 3,
             "height": 3,
             "properties": {
@@ -227,7 +227,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 3,
-            "y": 34,
+            "y": 40,
             "width": 3,
             "height": 3,
             "properties": {
@@ -243,7 +243,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 6,
-            "y": 34,
+            "y": 40,
             "width": 3,
             "height": 3,
             "properties": {
@@ -261,7 +261,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 9,
-            "y": 34,
+            "y": 40,
             "width": 3,
             "height": 3,
             "properties": {
@@ -284,7 +284,7 @@ var infraJSON = `
         {
             "type": "log",
             "x": 12,
-            "y": 25,
+            "y": 31,
             "width": 3,
             "height": 3,
             "properties": {
@@ -298,7 +298,7 @@ var infraJSON = `
         {
             "type": "log",
             "x": 15,
-            "y": 25,
+            "y": 31,
             "width": 3,
             "height": 3,
             "properties": {
@@ -312,7 +312,7 @@ var infraJSON = `
         {
             "type": "log",
             "x": 12,
-            "y": 28,
+            "y": 34,
             "width": 3,
             "height": 3,
             "properties": {
@@ -326,7 +326,7 @@ var infraJSON = `
         {
             "type": "log",
             "x": 15,
-            "y": 28,
+            "y": 34,
             "width": 3,
             "height": 3,
             "properties": {
@@ -340,7 +340,7 @@ var infraJSON = `
         {
             "type": "log",
             "x": 12,
-            "y": 31,
+            "y": 37,
             "width": 3,
             "height": 3,
             "properties": {
@@ -354,7 +354,7 @@ var infraJSON = `
         {
             "type": "log",
             "x": 15,
-            "y": 31,
+            "y": 37,
             "width": 3,
             "height": 3,
             "properties": {
@@ -368,7 +368,7 @@ var infraJSON = `
         {
             "type": "text",
             "x": 0,
-            "y": 18,
+            "y": 24,
             "width": 18,
             "height": 1,
             "properties": {
@@ -378,7 +378,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 3,
-            "y": 43,
+            "y": 49,
             "width": 3,
             "height": 3,
             "properties": {
@@ -394,7 +394,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 6,
-            "y": 43,
+            "y": 49,
             "width": 3,
             "height": 3,
             "properties": {
@@ -412,7 +412,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 9,
-            "y": 43,
+            "y": 49,
             "width": 3,
             "height": 3,
             "properties": {
@@ -435,7 +435,7 @@ var infraJSON = `
         {
             "type": "log",
             "x": 12,
-            "y": 43,
+            "y": 49,
             "width": 6,
             "height": 3,
             "properties": {
@@ -449,14 +449,14 @@ var infraJSON = `
         {
             "type": "log",
             "x": 0,
-            "y": 3,
-            "width": 9,
+            "y": 18,
+            "width": 18,
             "height": 6,
             "properties": {
-                "query": "SOURCE '/aws/lambda/panther-source-api' | SOURCE '/aws/lambda/panther-snapshot-pollers' | SOURCE '/aws/lambda/panther-snapshot-scheduler' | SOURCE '/aws/lambda/panther-aws-event-processor' | SOURCE '/aws/lambda/panther-resources-api' | SOURCE '/aws/lambda/panther-resource-processor' | SOURCE '/aws/lambda/panther-policy-engine' | SOURCE '/aws/lambda/panther-compliance-api' | SOURCE '/aws/lambda/panther-analysis-api' | filter  @message like '[ERROR]' or  @message like '[WARN]' or level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc | limit 20  ",
+                "query": "SOURCE '/aws/lambda/panther-aws-event-processor' | filter  @message like 'unknown event name'\n| fields @timestamp, eventName, msg, @message\n| sort @timestamp desc | limit 20  ",
                 "region": "us-east-2",
                 "stacked": false,
-                "title": "Most Recent 20 Errors and Warnings",
+                "title": "Unknown Events",
                 "view": "table"
             }
         },
@@ -477,7 +477,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 3,
-            "y": 40,
+            "y": 46,
             "width": 3,
             "height": 3,
             "properties": {
@@ -493,7 +493,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 6,
-            "y": 40,
+            "y": 46,
             "width": 3,
             "height": 3,
             "properties": {
@@ -511,7 +511,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 9,
-            "y": 40,
+            "y": 46,
             "width": 3,
             "height": 3,
             "properties": {
@@ -534,7 +534,7 @@ var infraJSON = `
         {
             "type": "log",
             "x": 12,
-            "y": 34,
+            "y": 40,
             "width": 3,
             "height": 3,
             "properties": {
@@ -548,7 +548,7 @@ var infraJSON = `
         {
             "type": "log",
             "x": 15,
-            "y": 34,
+            "y": 40,
             "width": 3,
             "height": 3,
             "properties": {
@@ -562,7 +562,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 3,
-            "y": 37,
+            "y": 43,
             "width": 3,
             "height": 3,
             "properties": {
@@ -578,7 +578,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 6,
-            "y": 37,
+            "y": 43,
             "width": 3,
             "height": 3,
             "properties": {
@@ -596,7 +596,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 9,
-            "y": 37,
+            "y": 43,
             "width": 3,
             "height": 3,
             "properties": {
@@ -619,7 +619,7 @@ var infraJSON = `
         {
             "type": "log",
             "x": 12,
-            "y": 37,
+            "y": 43,
             "width": 3,
             "height": 3,
             "properties": {
@@ -633,7 +633,7 @@ var infraJSON = `
         {
             "type": "log",
             "x": 15,
-            "y": 37,
+            "y": 43,
             "width": 3,
             "height": 3,
             "properties": {
@@ -687,7 +687,7 @@ var infraJSON = `
         {
             "type": "log",
             "x": 12,
-            "y": 40,
+            "y": 46,
             "width": 3,
             "height": 3,
             "properties": {
@@ -701,7 +701,7 @@ var infraJSON = `
         {
             "type": "log",
             "x": 15,
-            "y": 40,
+            "y": 46,
             "width": 3,
             "height": 3,
             "properties": {
@@ -715,7 +715,7 @@ var infraJSON = `
         {
             "type": "text",
             "x": 0,
-            "y": 43,
+            "y": 49,
             "width": 3,
             "height": 3,
             "properties": {
@@ -725,7 +725,7 @@ var infraJSON = `
         {
             "type": "text",
             "x": 0,
-            "y": 25,
+            "y": 31,
             "width": 3,
             "height": 3,
             "properties": {
@@ -735,7 +735,7 @@ var infraJSON = `
         {
             "type": "text",
             "x": 0,
-            "y": 28,
+            "y": 34,
             "width": 3,
             "height": 3,
             "properties": {
@@ -745,7 +745,7 @@ var infraJSON = `
         {
             "type": "text",
             "x": 0,
-            "y": 31,
+            "y": 37,
             "width": 3,
             "height": 3,
             "properties": {
@@ -755,7 +755,7 @@ var infraJSON = `
         {
             "type": "text",
             "x": 0,
-            "y": 34,
+            "y": 40,
             "width": 3,
             "height": 3,
             "properties": {
@@ -765,7 +765,7 @@ var infraJSON = `
         {
             "type": "text",
             "x": 0,
-            "y": 37,
+            "y": 43,
             "width": 3,
             "height": 3,
             "properties": {
@@ -775,7 +775,7 @@ var infraJSON = `
         {
             "type": "text",
             "x": 0,
-            "y": 40,
+            "y": 46,
             "width": 3,
             "height": 3,
             "properties": {
@@ -785,7 +785,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 3,
-            "y": 22,
+            "y": 28,
             "width": 3,
             "height": 3,
             "properties": {
@@ -799,7 +799,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 6,
-            "y": 22,
+            "y": 28,
             "width": 3,
             "height": 3,
             "properties": {
@@ -814,7 +814,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 9,
-            "y": 22,
+            "y": 28,
             "width": 3,
             "height": 3,
             "properties": {
@@ -835,7 +835,7 @@ var infraJSON = `
         {
             "type": "text",
             "x": 0,
-            "y": 22,
+            "y": 28,
             "width": 3,
             "height": 3,
             "properties": {
@@ -845,7 +845,7 @@ var infraJSON = `
         {
             "type": "log",
             "x": 15,
-            "y": 22,
+            "y": 28,
             "width": 3,
             "height": 3,
             "properties": {
@@ -859,7 +859,7 @@ var infraJSON = `
         {
             "type": "log",
             "x": 12,
-            "y": 22,
+            "y": 28,
             "width": 3,
             "height": 3,
             "properties": {
@@ -873,7 +873,7 @@ var infraJSON = `
         {
             "type": "text",
             "x": 0,
-            "y": 19,
+            "y": 25,
             "width": 3,
             "height": 3,
             "properties": {
@@ -883,7 +883,7 @@ var infraJSON = `
         {
             "type": "log",
             "x": 15,
-            "y": 19,
+            "y": 25,
             "width": 3,
             "height": 3,
             "properties": {
@@ -897,7 +897,7 @@ var infraJSON = `
         {
             "type": "log",
             "x": 12,
-            "y": 19,
+            "y": 25,
             "width": 3,
             "height": 3,
             "properties": {
@@ -911,7 +911,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 3,
-            "y": 19,
+            "y": 25,
             "width": 3,
             "height": 3,
             "properties": {
@@ -927,7 +927,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 6,
-            "y": 19,
+            "y": 25,
             "width": 3,
             "height": 3,
             "properties": {
@@ -945,7 +945,7 @@ var infraJSON = `
         {
             "type": "metric",
             "x": 9,
-            "y": 19,
+            "y": 25,
             "width": 3,
             "height": 3,
             "properties": {
@@ -963,6 +963,20 @@ var infraJSON = `
                 },
                 "view": "timeSeries",
                 "stacked": false
+            }
+        },
+        {
+            "type": "log",
+            "x": 0,
+            "y": 3,
+            "width": 9,
+            "height": 6,
+            "properties": {
+                "query": "SOURCE '/aws/lambda/panther-source-api' | SOURCE '/aws/lambda/panther-snapshot-pollers' | SOURCE '/aws/lambda/panther-snapshot-scheduler' | SOURCE '/aws/lambda/panther-aws-event-processor' | SOURCE '/aws/lambda/panther-resources-api' | SOURCE '/aws/lambda/panther-resource-processor' | SOURCE '/aws/lambda/panther-policy-engine' | SOURCE '/aws/lambda/panther-compliance-api' | SOURCE '/aws/lambda/panther-analysis-api' | filter  @message like '[ERROR]' or  @message like '[WARN]' or level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc | limit 20  ",
+                "region": "us-east-2",
+                "stacked": false,
+                "title": "Most Recent 20 Errors and Warnings",
+                "view": "table"
             }
         }
     ]

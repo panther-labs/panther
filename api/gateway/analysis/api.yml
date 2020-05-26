@@ -979,6 +979,8 @@ definitions:
         $ref: '#/definitions/versionId'
       dedupPeriodMinutes:
         $ref: '#/definitions/dedupPeriodMinutes'
+      tags:
+        $ref: '#/definitions/tags'
 
   ##### ListPolicies #####
   PolicyList:

@@ -1,0 +1,24 @@
+fragment S3LogIntegrationDetails on S3LogIntegration {
+  integrationId
+  integrationLabel
+  integrationType
+  createdAtTime
+  createdBy
+  awsAccountId
+  kmsKey
+  s3Bucket
+  s3Prefix
+  logTypes
+  stackName
+  health {
+    processingRoleStatus {
+      ...IntegrationItemHealthDetails
+    }
+    s3BucketStatus {
+      ...IntegrationItemHealthDetails
+    }
+    kmsKeyStatus {
+      ...IntegrationItemHealthDetails
+    }
+  }
+}

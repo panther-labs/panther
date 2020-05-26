@@ -45,16 +45,6 @@ type LambdaMetricFiltersProperties struct {
 
 // Add metric filters to a Lambda function's CloudWatch log group
 func customLambdaMetricFilters(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
-	var props LambdaMetricFiltersProperties
-	if err := parseProperties(event.ResourceProperties, &props); err != nil {
-		return "", nil, err
-	}
-
-	// If not specified, use Go as the default Lambda runtime
-	if props.LambdaRuntime == "" {
-		props.LambdaRuntime = "Go"
-	}
-
 	switch event.RequestType {
 	case cfn.RequestCreate, cfn.RequestUpdate:
 		// If the log group changed, the physicalID will change as well and CFN will automatically
@@ -62,6 +52,16 @@ func customLambdaMetricFilters(_ context.Context, event cfn.Event) (string, map[
 		//
 		// If the runtime changed, we will overwrite the existing metric filters with new values
 		// (but the same name) and the physicalID will remain the same.
+		var props LambdaMetricFiltersProperties
+		if err := parseProperties(event.ResourceProperties, &props); err != nil {
+			return "", nil, err
+		}
+
+		// If not specified, use Go as the default Lambda runtime
+		if props.LambdaRuntime == "" {
+			props.LambdaRuntime = "Go"
+		}
+
 		return fmt.Sprintf("custom:metric-filters:" + props.LogGroupName), nil, putMetricFilterGroup(
 			props.LogGroupName, props.LambdaRuntime)
 

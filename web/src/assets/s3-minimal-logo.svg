@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="36px" height="36px" viewBox="0 0 36 36" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>icon_s3</title>
+    <g id="Library" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Iconography" transform="translate(-679.000000, -258.000000)">
+            <g id="icon_s3" transform="translate(679.000000, 258.000000)">
+                <rect id="Rectangle" x="0" y="0" width="36" height="36"></rect>
+                <g id="s3">
+                    <g id="aws-s3-(1)" transform="translate(7.500000, 4.500000)">
+                        <polyline id="Path" fill="#8C3123" fill-rule="nonzero" points="1.72760084 4.49708974 0 5.36105769 0 20.5244743 1.72760084 21.3834163 1.73798789 21.3709351 1.73798789 4.50898459 1.72760084 4.49708974"></polyline>
+                        <polyline id="Path" fill="#E05243" fill-rule="nonzero" points="10.973415 19.1825346 1.72760084 21.3834163 1.72760084 4.49708974 10.973415 6.64997323 10.973415 19.1825346"></polyline>
+                        <polyline id="Path" fill="#8C3123" fill-rule="nonzero" points="6.79999908 15.7368823 10.7217803 16.2361308 10.7464077 16.179337 10.7684383 9.74858081 10.7217803 9.6983209 6.79999908 10.1903655 6.79999908 15.7368823"></polyline>
+                        <polyline id="Path" fill="#8C3123" fill-rule="nonzero" points="10.7217803 19.2072457 19.715876 21.3881072 19.7300326 21.365574 19.7297813 4.51216771 19.715541 4.49708974 10.7217803 6.67468436 10.7217803 19.2072457"></polyline>
+                        <polyline id="Path" fill="#E05243" fill-rule="nonzero" points="14.6446505 15.7368823 10.7217803 16.2361308 10.7217803 9.6983209 14.6446505 10.1903655 14.6446505 15.7368823"></polyline>
+                        <polyline id="Path" fill="#5E1F18" fill-rule="nonzero" points="14.6446505 7.50807753 10.7217803 8.22302483 6.79999908 7.50807753 10.7168381 6.48143498 14.6446505 7.50807753"></polyline>
+                        <polyline id="Path" fill="#F2B0A9" fill-rule="nonzero" points="14.6446505 18.4119663 10.7217803 17.692328 6.79999908 18.4119663 10.7170056 19.5053707 14.6446505 18.4119663"></polyline>
+                        <polyline id="Path" fill="#8C3123" fill-rule="nonzero" points="6.79999908 7.50807753 10.7217803 6.53755856 10.7535278 6.52775787 10.7535278 0.0262189228 10.7217803 0 6.79999908 1.96122568 6.79999908 7.50807753"></polyline>
+                        <polyline id="Path" fill="#E05243" fill-rule="nonzero" points="14.6446505 7.50807753 10.7217803 6.53755856 10.7217803 0 14.6446505 1.96122568 14.6446505 7.50807753"></polyline>
+                        <polyline id="Path" fill="#8C3123" fill-rule="nonzero" points="10.7217803 25.9197087 6.79958025 23.9591532 6.79958025 18.4123851 10.7217803 19.382569 10.7794955 19.4481582 10.7638311 25.8065402 10.7217803 25.9197087"></polyline>
+                        <path d="M10.7217803,25.9197087 L14.6443155,23.9591532 L14.6443155,18.4123851 L10.7217803,19.382569 L10.7217803,25.9197087 M19.715876,4.49708974 L21.4442308,5.36105769 L21.4442308,20.5244743 L19.715876,21.3881072 L19.715876,4.49708974" id="Shape" fill="#E05243" fill-rule="nonzero"></path>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

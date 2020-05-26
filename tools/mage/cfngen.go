@@ -27,7 +27,6 @@ import (
 	"github.com/panther-labs/panther/tools/cfndoc"
 	"github.com/panther-labs/panther/tools/cfngen/cloudwatchcf"
 	"github.com/panther-labs/panther/tools/cfngen/gluecf"
-	"github.com/panther-labs/panther/tools/config"
 	"github.com/panther-labs/panther/tools/dashboards"
 )
 
@@ -56,7 +55,7 @@ func generateDashboards() error {
 }
 
 // Generate CloudWatch alarms as CloudFormation
-func generateAlarms(settings *config.PantherConfig) error {
+func generateAlarms() error {
 	var alarms []*cloudwatchcf.Alarm
 	outDir := filepath.Join("out", "deployments", "monitoring")
 
@@ -67,7 +66,7 @@ func generateAlarms(settings *config.PantherConfig) error {
 		alarmsCfFilePath := filepath.Join(outDir, alarmsCfBasename) // where we will write
 
 		// generate alarms
-		fileAlarms, cf, err := cloudwatchcf.GenerateAlarms(settings, cfFile)
+		fileAlarms, cf, err := cloudwatchcf.GenerateAlarms(cfFile)
 		if err != nil {
 			return fmt.Errorf("failed to generate alarms CloudFormation template %s: %v", alarmsCfFilePath, err)
 		}

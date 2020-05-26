@@ -19,55 +19,28 @@
 import React from 'react';
 import withSEO from 'Hoc/withSEO';
 import { Card } from 'pouncejs';
-import urls from 'Source/urls';
-import { extractErrorMessage } from 'Helpers/utils';
 import useRouter from 'Hooks/useRouter';
-import LogSourceWizard from 'Components/wizards/LogSourceWizard';
-import { useAddLogSource } from './graphql/addLogSource.generated';
-
-const initialValues = {
-  integrationLabel: '',
-  awsAccountId: '',
-  s3Bucket: '',
-  s3Prefix: '',
-  kmsKey: '',
-  logTypes: [],
-};
+import Page404 from 'Pages/404';
+import CreateS3LogSource from './CreateS3LogSource';
 
 const CreateLogSource: React.FC = () => {
-  const { history } = useRouter();
-  const [addLogSource, { error }] = useAddLogSource({
-    update: (cache, { data: { addLogIntegration } }) => {
-      cache.modify('ROOT_QUERY', {
-        listLogIntegrations: (queryData, { toReference }) => {
-          const addedIntegrationCacheRef = toReference(addLogIntegration);
-          return queryData ? [addedIntegrationCacheRef, ...queryData] : [addedIntegrationCacheRef];
-        },
-      });
+  const {
+    match: {
+      params: { type },
     },
-    onCompleted: () => history.push(urls.logAnalysis.sources.list()),
-  });
+  } = useRouter();
 
+  const renderWizard = logType => {
+    switch (logType) {
+      case 'S3':
+        return <CreateS3LogSource />;
+      default:
+        return <Page404 />;
+    }
+  };
   return (
     <Card p={9} mb={6}>
-      <LogSourceWizard
-        initialValues={initialValues}
-        externalErrorMessage={error && extractErrorMessage(error)}
-        onSubmit={values =>
-          addLogSource({
-            variables: {
-              input: {
-                integrationLabel: values.integrationLabel,
-                awsAccountId: values.awsAccountId,
-                s3Bucket: values.s3Bucket,
-                logTypes: values.logTypes,
-                s3Prefix: values.s3Prefix || null,
-                kmsKey: values.kmsKey || null,
-              },
-            },
-          })
-        }
-      />
+      {renderWizard(type)}
     </Card>
   );
 };
