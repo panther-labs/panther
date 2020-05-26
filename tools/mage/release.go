@@ -32,7 +32,7 @@ import (
 	"github.com/panther-labs/panther/tools/config"
 )
 
-const tempSarVersion = "1.4.0-alpha"
+const tempSarVersion = "1.4.0-charlie"
 
 // https://docs.aws.amazon.com/serverlessrepo/latest/devguide/serverlessrepo-how-to-publish.html
 const sarReadPolicy = `{
@@ -62,11 +62,19 @@ func Release() {
 	}
 
 	logger.Infof("release: using S3 bucket %s for temporary SAR packaging", bucket)
-	if err := sarPublish(bootstrapTemplate, bucket); err != nil {
-		logger.Fatal(err)
+
+	templates := []string{
+		bootstrapTemplate,
+		gatewayTemplate,
+		appsyncTemplate,
+		coreTemplate,
+		cloudsecTemplate,
+		logAnalysisTemplate,
 	}
-	if err := sarPublish(gatewayTemplate, bucket); err != nil {
-		logger.Fatal(err)
+	for _, t := range templates {
+		if err = sarPublish(t, bucket); err != nil {
+			logger.Fatal(err)
+		}
 	}
 }
 
@@ -121,12 +129,14 @@ func sarStagingBucket() (string, error) {
 
 // Package and publish a SAR application
 func sarPublish(templatePath, bucket string) error {
+	logger.Infof("release: publishing %s version %s", templatePath, tempSarVersion)
+
 	// Note: combined size of SAR S3 artifacts cannot exceed 52428800 bytes
 	pkg, err := samPackage("us-east-1", templatePath, bucket)
 	if err != nil {
 		return err
 	}
 
-	return sh.RunV(filepath.Join(pythonVirtualEnvPath, "bin", "sam"),
+	return sh.Run(filepath.Join(pythonVirtualEnvPath, "bin", "sam"),
 		"publish", "-t", pkg, "--region", "us-east-1", "--semantic-version", tempSarVersion)
 }

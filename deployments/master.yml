@@ -49,6 +49,12 @@ Parameters:
     Type: CommaDelimitedList
     Description: List of LayerVersion ARNs to attach to each Lambda function
     Default: ''
+  LogProcessorLambdaMemorySize:
+    Type: Number
+    Description: Log processor Lambda memory allocation
+    MinValue: 256 # any smaller and we risk OOMs
+    MaxValue: 3008
+    Default: 1024
   LogSubscriptionPrincipals:
     Type: CommaDelimitedList
     Description: List of Principal ARNs to allow read access to the ProcessedDataBucket and subscribe access to ProcessedDataTopicArn
@@ -64,7 +70,12 @@ Parameters:
     Default: ''
 
 # TODO: what to use for region and account?
-# TODO: can we interpolate the version?
+# TODO: do we need to publish a SAR app in every supported region?
+
+Mappings:
+  SAR:
+    Constants:
+      Version: 1.4.0-charlie
 
 Resources:
   Bootstrap:
@@ -72,7 +83,7 @@ Resources:
     Properties:
       Location:
         ApplicationId: arn:aws:serverlessrepo:us-east-1:101802775469:applications/panther-community-bootstrap
-        SemanticVersion: 1.4.0-alpha
+        SemanticVersion: !FindInMap [SAR, Constants, Version]
       Parameters:
         AccessLogsBucket: !Ref AccessLogsBucket
         AlarmTopicArn: !Ref AlarmTopicArn
@@ -85,10 +96,9 @@ Resources:
       Tags:
         Application: Panther
         # SAM will automatically apply the following tags:
-        # TODO: does "aws cloudformation deploy" do the same?
-        # lambda:createdBy = SAM
-        # serverlessrepo:applicationId
-        # serverlessrepo:semanticVersion
+        #   lambda:createdBy = SAM
+        #   serverlessrepo:applicationId
+        #   serverlessrepo:semanticVersion
       TimeoutInMinutes: 20
 
   BootstrapGateway:
@@ -96,7 +106,7 @@ Resources:
     Properties:
       Location:
         ApplicationId: arn:aws:serverlessrepo:us-east-1:101802775469:applications/panther-community-bootstrap-gateway
-        SemanticVersion: 1.4.0-alpha
+        SemanticVersion: !FindInMap [SAR, Constants, Version]
       Parameters:
         # If the AlarmTopicArn parameter is blank, Bootstrap will create the topic.
         # That's why this uses the Bootstrap output instead of the parameter.
@@ -109,7 +119,95 @@ Resources:
         UserPoolId: !GetAtt Bootstrap.Outputs.UserPoolId
       Tags:
         Application: Panther
-      TimeoutInMinutes: 20
+      TimeoutInMinutes: 15
+
+  Appsync:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:101802775469:applications/panther-community-appsync
+        SemanticVersion: !FindInMap [SAR, Constants, Version]
+      Parameters:
+        AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
+        AnalysisApi: !Sub https://${BootstrapGateway.Outputs.AnalysisApiEndpoint}
+        ApiId: !GetAtt Bootstrap.Outputs.GraphQLApiId
+        ComplianceApi: !Sub https://${BootstrapGateway.Outputs.ComplianceApiEndpoint}
+        RemediationApi: !Sub https://${BootstrapGateway.Outputs.RemediationApiEndpoint}
+        ResourcesApi: !Sub https://${BootstrapGateway.Outputs.ResourcesApiEndpoint}
+        ServiceRole: !GetAtt Bootstrap.Outputs.AppsyncServiceRoleArn
+      Tags:
+        Application: Panther
+      TimeoutInMinutes: 15
+
+  CloudSecurity:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:101802775469:applications/panther-community-cloud-security
+        SemanticVersion: !FindInMap [SAR, Constants, Version]
+      Parameters:
+        AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
+        AnalysisApiId: !GetAtt BootstrapGateway.Outputs.AnalysisApiId
+        CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
+        ComplianceApiId: !GetAtt BootstrapGateway.Outputs.ComplianceApiId
+        Debug: !Ref Debug
+        LayerVersionArns: !Join [',', !Ref LayerVersionArns]
+        ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
+        ProcessedDataTopicArn: !GetAtt Bootstrap.Outputs.ProcessedDataTopicArn
+        PythonLayerVersionArn: !GetAtt BootstrapGateway.Outputs.PythonLayerVersionArn
+        RemediationApiId: !GetAtt BootstrapGateway.Outputs.RemediationApiId
+        ResourcesApiId: !GetAtt BootstrapGateway.Outputs.ResourcesApiId
+        SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
+        TracingMode: !Ref TracingMode
+      Tags:
+        Application: Panther
+      TimeoutInMinutes: 15
+
+  Core:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:101802775469:applications/panther-community-core
+        SemanticVersion: !FindInMap [SAR, Constants, Version]
+      Parameters:
+        AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
+        AppDomainURL: !GetAtt Bootstrap.Outputs.LoadBalancerUrl
+        AnalysisApiId: !GetAtt BootstrapGateway.Outputs.AnalysisApiId
+        AnalysisVersionsBucket: !GetAtt Bootstrap.Outputs.AnalysisVersionsBucket
+        CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
+        ComplianceApiId: !GetAtt BootstrapGateway.Outputs.ComplianceApiId
+        Debug: !Ref Debug
+        DynamoScalingRoleArn: !GetAtt Bootstrap.Outputs.DynamoScalingRoleArn
+        LayerVersionArns: !Join [',', !Ref LayerVersionArns]
+        OutputsKeyId: !GetAtt Bootstrap.Outputs.OutputsEncryptionKeyId
+        SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
+        TracingMode: !Ref TracingMode
+        UserPoolId: !GetAtt Bootstrap.Outputs.UserPoolId
+      Tags:
+        Application: Panther
+      TimeoutInMinutes: 15
+
+  LogAnalysis:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:101802775469:applications/panther-community-log-analysis
+        SemanticVersion: !FindInMap [SAR, Constants, Version]
+      Parameters:
+        AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
+        AnalysisApiId: !GetAtt BootstrapGateway.Outputs.AnalysisApiId
+        CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
+        Debug: !Ref Debug
+        LayerVersionArns: !Join [',', !Ref LayerVersionArns]
+        LogProcessorLambdaMemorySize: !Ref LogProcessorLambdaMemorySize
+        ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
+        ProcessedDataTopicArn: !GetAtt Bootstrap.Outputs.ProcessedDataTopicArn
+        PythonLayerVersionArn: !GetAtt BootstrapGateway.Outputs.PythonLayerVersionArn
+        SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
+        TracingMode: !Ref TracingMode
+      Tags:
+        Application: Panther
+      TimeoutInMinutes: 15
 
 Outputs:
   GraphQlUrl:

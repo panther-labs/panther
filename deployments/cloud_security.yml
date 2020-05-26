@@ -18,6 +18,15 @@ AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: Cloud security resource scanning
 
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: panther-community-cloud-security
+    Author: Panther Labs
+    Description: Panther Community (nested app) - Detect threats with log data and improve cloud security posture
+    HomePageUrl: https://runpanther.io
+    SpdxLicenseId: AGPL-3.0-or-later
+    SourceCodeUrl: https://github.com/panther-labs/panther
+
 Parameters:
   # Passed in from bootstrap outputs
   AnalysisApiId:

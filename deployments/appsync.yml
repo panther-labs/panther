@@ -15,7 +15,17 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
 Description: AppSync data sources and resolvers
+
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: panther-community-appsync
+    Author: Panther Labs
+    Description: Panther Community (nested app) - Detect threats with log data and improve cloud security posture
+    HomePageUrl: https://runpanther.io
+    SpdxLicenseId: AGPL-3.0-or-later
+    SourceCodeUrl: https://github.com/panther-labs/panther
 
 # The bare appsync instance is defined in bootstrap.yml so we can get its value sooner in the deploy process.
 # This template adds all the configuration: schema, data sources, resolvers
