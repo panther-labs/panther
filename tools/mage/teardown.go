@@ -235,7 +235,7 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 
 	// In v1.4.0 we removed the stack `panther-glue`, delete it (we can remove this after a few more releases)
 	if err := deleteStack(client, aws.String("panther-glue")); err != nil {
-		logger.Fatal(err)
+		logger.Warn(err)
 	}
 
 	// Trigger the deletion of the main stacks in parallel

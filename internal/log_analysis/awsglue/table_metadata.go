@@ -155,8 +155,8 @@ func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, b
 	}
 
 	tableInput := &glue.TableInput{
-		Name:          aws.String(gm.tableName),
-		Description:   aws.String(gm.description),
+		Name:          &gm.tableName,
+		Description:   &gm.description,
 		PartitionKeys: partitionColumns,
 		StorageDescriptor: &glue.StorageDescriptor{ // configure as JSON
 			Columns:      glueColumns,
@@ -172,7 +172,7 @@ func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, b
 	}
 
 	createTableInput := &glue.CreateTableInput{
-		DatabaseName: aws.String(gm.databaseName),
+		DatabaseName: &gm.databaseName,
 		TableInput:   tableInput,
 	}
 	_, err := glueClient.CreateTable(createTableInput)
@@ -180,7 +180,7 @@ func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, b
 		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == glue.ErrCodeAlreadyExistsException {
 			// need to do an update
 			updateTableInput := &glue.UpdateTableInput{
-				DatabaseName: aws.String(gm.databaseName),
+				DatabaseName: &gm.databaseName,
 				TableInput:   tableInput,
 			}
 			_, err := glueClient.UpdateTable(updateTableInput)
