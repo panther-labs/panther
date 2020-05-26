@@ -22,9 +22,10 @@ import (
 	"testing"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/stretchr/testify/require"
+
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common/null"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common/strictnull"
-	"github.com/stretchr/testify/require"
 )
 
 func TestStringCodec(t *testing.T) {
