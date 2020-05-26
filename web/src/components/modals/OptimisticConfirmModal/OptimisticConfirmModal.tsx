@@ -19,7 +19,7 @@
 import React from 'react';
 import useModal from 'Hooks/useModal';
 import { Button, Flex, Modal, Text } from 'pouncejs';
-import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';
+import LoadingButton from 'Components/buttons/LoadingButton';
 
 export interface OptimisticConfirmModalProps {
   title: string;
@@ -49,9 +49,7 @@ const OptimisticConfirmModal: React.FC<OptimisticConfirmModalProps> = ({
         <Button size="large" variant="default" onClick={hideModal} mr={3}>
           Cancel
         </Button>
-        <SubmitButton onClick={handleConfirm} submitting={false} disabled={false}>
-          Confirm
-        </SubmitButton>
+        <LoadingButton onClick={handleConfirm}>Confirm</LoadingButton>
       </Flex>
     </Modal>
   );

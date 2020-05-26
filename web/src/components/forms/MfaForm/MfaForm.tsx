@@ -16,10 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Field, Formik } from 'formik';
+import { Field, Form, Formik } from 'formik';
 import React from 'react';
 import * as Yup from 'yup';
-import { Box } from 'pouncejs';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
 import useAuth from 'Hooks/useAuth';
@@ -55,26 +54,18 @@ const MfaForm: React.FC = () => {
         })
       }
     >
-      {({ handleSubmit, isValid, isSubmitting, dirty }) => (
-        <Box as="form" width={1} onSubmit={handleSubmit}>
-          <Field
-            autoFocus
-            as={FormikTextInput}
-            placeholder="The 6-digit MFA code"
-            name="mfaCode"
-            autoComplete="off"
-            aria-required
-            mb={6}
-          />
-          <SubmitButton
-            width={1}
-            submitting={isSubmitting}
-            disabled={isSubmitting || !isValid || !dirty}
-          >
-            Sign in
-          </SubmitButton>
-        </Box>
-      )}
+      <Form>
+        <Field
+          autoFocus
+          as={FormikTextInput}
+          placeholder="The 6-digit MFA code"
+          name="mfaCode"
+          autoComplete="off"
+          aria-required
+          mb={6}
+        />
+        <SubmitButton width={1}>Sign in</SubmitButton>
+      </Form>
     </Formik>
   );
 };

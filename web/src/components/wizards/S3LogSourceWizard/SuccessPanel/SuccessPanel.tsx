@@ -23,9 +23,7 @@ import { useFormikContext } from 'formik';
 import { S3LogSourceWizardValues } from '../S3LogSourceWizard';
 
 const SuccessPanel: React.FC = () => {
-  const { isSubmitting, initialValues, setStatus, status } = useFormikContext<
-    S3LogSourceWizardValues
-  >();
+  const { initialValues, setStatus, status } = useFormikContext<S3LogSourceWizardValues>();
 
   // Reset error when the users navigate away from this stpe (so that when they come back, the
   // previous error isn't presented at them)
@@ -43,7 +41,7 @@ const SuccessPanel: React.FC = () => {
           ? 'Click the button below to validate your changes & update your source!'
           : 'After deploying your Cloudformation stack, click on the button below to complete the setup!'}
       </Text>
-      <SubmitButton width={350} disabled={isSubmitting} submitting={isSubmitting}>
+      <SubmitButton width={350}>
         {initialValues.integrationId ? 'Update Source' : 'Save Source'}
       </SubmitButton>
       <Text size="large" mt={6} color="red300">

@@ -88,10 +88,12 @@ func deployOnboardTemplate(awsSession *session.Session, settings *config.Panther
 	}
 
 	params := map[string]string{
+		"AlarmTopicArn":          bootstrapOutputs["AlarmTopicArn"],
 		"AuditLogsBucket":        bootstrapOutputs["AuditLogsBucket"],
 		"EnableCloudTrail":       strconv.FormatBool(settings.Setup.EnableCloudTrail),
 		"EnableGuardDuty":        strconv.FormatBool(settings.Setup.EnableGuardDuty),
 		"LogProcessingRoleLabel": genLogProcessingLabel(awsSession),
+		"VpcId":                  bootstrapOutputs["VpcId"],
 	}
 	onboardOutputs, err := deployTemplate(awsSession, onboardTemplate, bootstrapOutputs["SourceBucket"], onboardStack, params)
 	if err != nil {

@@ -1,5 +1,3 @@
-package cloudwatchcf
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,21 +16,4 @@ package cloudwatchcf
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-type JSONDispatcher func(resourceType string, resource map[string]interface{})
-
-// walk the tree, apply dispatcher on each resource based on Type
-func walkJSONMap(yamlObj interface{}, dispatcher JSONDispatcher) {
-	switch objVal := yamlObj.(type) {
-	case map[string]interface{}:
-		for k, v := range objVal {
-			if k == "Type" {
-				dispatcher(v.(string), objVal)
-			}
-			walkJSONMap(v, dispatcher)
-		}
-	case []interface{}:
-		for i := range objVal {
-			walkJSONMap(objVal[i], dispatcher)
-		}
-	}
-}
+export { default } from './FormSessionRestoration';

@@ -32,7 +32,7 @@ interface JsonViewerProps {
 const JsonViewer: React.FC<JsonViewerProps> = ({ data, collapsed }) => {
   const theme = useTheme();
 
-  const jsonViewerStyle = React.useMemo(() => ({ fontSize: theme.fontSizes[2] }), [theme]);
+  const jsonViewerStyle = React.useMemo(() => ({ fontSize: theme.fontSizes.medium }), [theme]);
 
   const handleCopy = React.useCallback(copy => {
     copyTextToClipboard(JSON.stringify(copy.src, null, '\t'));
