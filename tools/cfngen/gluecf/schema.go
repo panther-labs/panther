@@ -22,12 +22,11 @@ package gluecf
 
 import (
 	"fmt"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"reflect"
 	"strconv"
 	"strings"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
 const (

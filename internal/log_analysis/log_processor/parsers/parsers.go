@@ -40,5 +40,5 @@ type LogParser interface {
 // Validator can be used to validate schemas of log fields
 var Validator = validator.New()
 
-// Re-export pantherlog.JSON
+// JSON re-exports pantherlog.JSON
 var JSON = pantherlog.JSON
