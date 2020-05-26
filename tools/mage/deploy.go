@@ -62,7 +62,7 @@ const (
 	coreStack           = "panther-core"
 	coreTemplate        = "deployments/core.yml"
 	dashboardStack      = "panther-cw-dashboards"
-	dashboardTemplate   = "out/deployments/monitoring/dashboards.json"
+	dashboardTemplate   = "deployments/dashboards.yml"
 	frontendStack       = "panther-web"
 	frontendTemplate    = "deployments/web_server.yml"
 	glueStack           = "panther-glue"

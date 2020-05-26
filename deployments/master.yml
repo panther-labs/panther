@@ -69,20 +69,17 @@ Parameters:
     AllowedValues: ['', Active, PassThrough]
     Default: ''
 
-# TODO: what to use for region and account?
-# TODO: do we need to publish a SAR app in every supported region?
-
 Mappings:
   SAR:
     Constants:
-      Version: 1.4.0-charlie
+      Version: 1.4.0
 
 Resources:
   Bootstrap:
     Type: AWS::Serverless::Application
     Properties:
       Location:
-        ApplicationId: arn:aws:serverlessrepo:us-east-1:101802775469:applications/panther-community-bootstrap
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:349240696275:applications/panther-community-bootstrap
         SemanticVersion: !FindInMap [SAR, Constants, Version]
       Parameters:
         AccessLogsBucket: !Ref AccessLogsBucket
@@ -105,7 +102,7 @@ Resources:
     Type: AWS::Serverless::Application
     Properties:
       Location:
-        ApplicationId: arn:aws:serverlessrepo:us-east-1:101802775469:applications/panther-community-bootstrap-gateway
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:349240696275:applications/panther-community-bootstrap-gateway
         SemanticVersion: !FindInMap [SAR, Constants, Version]
       Parameters:
         # If the AlarmTopicArn parameter is blank, Bootstrap will create the topic.
@@ -125,7 +122,7 @@ Resources:
     Type: AWS::Serverless::Application
     Properties:
       Location:
-        ApplicationId: arn:aws:serverlessrepo:us-east-1:101802775469:applications/panther-community-appsync
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:349240696275:applications/panther-community-appsync
         SemanticVersion: !FindInMap [SAR, Constants, Version]
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
@@ -143,7 +140,7 @@ Resources:
     Type: AWS::Serverless::Application
     Properties:
       Location:
-        ApplicationId: arn:aws:serverlessrepo:us-east-1:101802775469:applications/panther-community-cloud-security
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:349240696275:applications/panther-community-cloud-security
         SemanticVersion: !FindInMap [SAR, Constants, Version]
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
@@ -167,7 +164,7 @@ Resources:
     Type: AWS::Serverless::Application
     Properties:
       Location:
-        ApplicationId: arn:aws:serverlessrepo:us-east-1:101802775469:applications/panther-community-core
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:349240696275:applications/panther-community-core
         SemanticVersion: !FindInMap [SAR, Constants, Version]
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
@@ -187,11 +184,21 @@ Resources:
         Application: Panther
       TimeoutInMinutes: 15
 
+  Dashboards:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:349240696275:applications/panther-community-dashboards
+        SemanticVersion: !FindInMap [SAR, Constants, Version]
+      Tags:
+        Application: Panther
+      TimeoutInMinutes: 15
+
   LogAnalysis:
     Type: AWS::Serverless::Application
     Properties:
       Location:
-        ApplicationId: arn:aws:serverlessrepo:us-east-1:101802775469:applications/panther-community-log-analysis
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:349240696275:applications/panther-community-log-analysis
         SemanticVersion: !FindInMap [SAR, Constants, Version]
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn

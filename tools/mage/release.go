@@ -32,8 +32,6 @@ import (
 	"github.com/panther-labs/panther/tools/config"
 )
 
-const tempSarVersion = "1.4.0-charlie"
-
 // https://docs.aws.amazon.com/serverlessrepo/latest/devguide/serverlessrepo-how-to-publish.html
 const sarReadPolicy = `{
     "Version": "2012-10-17",
@@ -52,27 +50,33 @@ const sarReadPolicy = `{
 
 // Release Publish nested SAR apps
 func Release() {
-	//if err := buildSarAssets(); err != nil {
-	//	logger.Fatal(err)
-	//}
+	version := os.Getenv("SEMVER")
+	if version == "" {
+		logger.Fatal("please set SEMVER env variable with the version you want to publish")
+	}
 
-	bucket, err := sarStagingBucket()
+	awsSession, err := session.NewSession(&aws.Config{Region: aws.String("us-east-1")})
 	if err != nil {
+		logger.Fatal(err)
+	}
+
+	bucket, err := sarStagingBucket(awsSession)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	if err := buildSarAssets(); err != nil {
 		logger.Fatal(err)
 	}
 
 	logger.Infof("release: using S3 bucket %s for temporary SAR packaging", bucket)
 
 	templates := []string{
-		bootstrapTemplate,
-		gatewayTemplate,
-		appsyncTemplate,
-		coreTemplate,
-		cloudsecTemplate,
-		logAnalysisTemplate,
+		bootstrapTemplate, gatewayTemplate, appsyncTemplate, coreTemplate,
+		cloudsecTemplate, dashboardTemplate, logAnalysisTemplate,
 	}
 	for _, t := range templates {
-		if err = sarPublish(t, bucket); err != nil {
+		if err = sarPublish(t, *awsSession.Config.Region, bucket, version); err != nil {
 			logger.Fatal(err)
 		}
 	}
@@ -104,19 +108,16 @@ func buildSarAssets() error {
 }
 
 // Get the name of the bucket for staging SAR packaging and set its policy.
-// TODO - this would be a bucket in the public account
-func sarStagingBucket() (string, error) {
+//
+// After the SAR app is created, these assets can be safely discarded.
+func sarStagingBucket(awsSession *session.Session) (string, error) {
 	bucket := os.Getenv("BUCKET")
 	if bucket == "" {
 		return "", errors.New("define BUCKET env variable " +
 			"(S3 bucket in us-east-1 for temporarily staging SAR assets)")
 	}
 
-	awsSession, err := session.NewSession(&aws.Config{Region: aws.String("us-east-1")})
-	if err != nil {
-		return "", err
-	}
-	_, err = s3.New(awsSession).PutBucketPolicy(&s3.PutBucketPolicyInput{
+	_, err := s3.New(awsSession).PutBucketPolicy(&s3.PutBucketPolicyInput{
 		Bucket: &bucket,
 		Policy: aws.String(fmt.Sprintf(sarReadPolicy, bucket)),
 	})
@@ -127,16 +128,18 @@ func sarStagingBucket() (string, error) {
 	return bucket, nil
 }
 
-// Package and publish a SAR application
-func sarPublish(templatePath, bucket string) error {
-	logger.Infof("release: publishing %s version %s", templatePath, tempSarVersion)
+// Package and publish a SAR application.
+//
+// TODO - global SAR app / publish in every supported region
+func sarPublish(templatePath, region, bucket, version string) error {
+	logger.Infof("release: publishing %s version %s", templatePath, version)
 
 	// Note: combined size of SAR S3 artifacts cannot exceed 52428800 bytes
-	pkg, err := samPackage("us-east-1", templatePath, bucket)
+	pkg, err := samPackage(region, templatePath, bucket)
 	if err != nil {
 		return err
 	}
 
 	return sh.Run(filepath.Join(pythonVirtualEnvPath, "bin", "sam"),
-		"publish", "-t", pkg, "--region", "us-east-1", "--semantic-version", tempSarVersion)
+		"publish", "-t", pkg, "--region", region, "--semantic-version", version)
 }
