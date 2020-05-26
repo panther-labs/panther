@@ -24,6 +24,7 @@ import { DeleteComplianceSourceModalProps } from 'Components/modals/DeleteCompli
 import { DeleteLogSourceModalProps } from 'Components/modals/DeleteLogSourceModal';
 import { DeleteDestinationModalProps } from 'Components/modals/DeleteDestinationModal';
 import { DeleteRuleModalProps } from 'Components/modals/DeleteRuleModal';
+import { DeleteTestModalProps } from 'Components/modals/DeleteTestModal';
 
 const SHOW_MODAL = 'SHOW_MODAL';
 const HIDE_MODAL = 'HIDE_MODAL';
@@ -33,6 +34,7 @@ export enum MODALS {
   DELETE_POLICY = 'DELETE_POLICY',
   DELETE_RULE = 'DELETE_RULE',
   DELETE_USER = 'DELETE_USER',
+  DELETE_TEST = 'DELETE_TEST',
   RESET_USER_PASS = 'RESET_USER_PASS',
   DELETE_COMPLIANCE_SOURCE = 'DELETE_COMPLIANCE_SOURCE',
   DELETE_LOG_SOURCE = 'DELETE_LOG_SOURCE',
@@ -76,6 +78,15 @@ interface ShowResetUserPasswordModalAction {
   payload: {
     modal: MODALS.RESET_USER_PASS;
     props: ResetUserPasswordProps;
+  };
+}
+
+/* Reset user password */
+interface ShowDeleteTestModalAction {
+  type: typeof SHOW_MODAL;
+  payload: {
+    modal: MODALS.DELETE_TEST;
+    props: DeleteTestModalProps;
   };
 }
 
@@ -136,6 +147,7 @@ type ModalStateAction =
   | ShowDeleteComplianceSourceModalAction
   | ShowDeleteLogSourceModalAction
   | ShowDeleteUserModalAction
+  | ShowDeleteTestModalAction
   | ShowResetUserPasswordModalAction
   | ShowPolicyModalAction
   | ShowDeleteRuleModalAction

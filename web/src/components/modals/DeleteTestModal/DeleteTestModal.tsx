@@ -1,5 +1,3 @@
-package cloudwatchcf
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,21 +16,23 @@ package cloudwatchcf
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"fmt"
-)
+import React from 'react';
+import { PolicyUnitTest, PolicyUnitTestInput } from 'Generated/schema';
+import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
-func getResourceProperty(key string, resource map[string]interface{}) string {
-	switch props := resource["Properties"].(type) {
-	case map[string]interface{}:
-		switch val := props[key].(type) {
-		case string:
-			return val
-		case float32, float64:
-			return fmt.Sprintf("%f", val)
-		case int, int32, int64:
-			return fmt.Sprintf("%d", val)
-		}
-	}
-	panic(fmt.Sprintf("Cannot find name: %s in %#v", key, resource["Properties"]))
+export interface DeleteTestModalProps {
+  test: PolicyUnitTest | PolicyUnitTestInput;
+  onConfirm: () => void;
 }
+
+const DeleteTestModal: React.FC<DeleteTestModalProps> = ({ test, onConfirm }) => {
+  return (
+    <OptimisticConfirmModal
+      title="Delete Test"
+      subtitle={`Are you sure you want to delete ${test.name}?`}
+      onConfirm={onConfirm}
+    />
+  );
+};
+
+export default DeleteTestModal;

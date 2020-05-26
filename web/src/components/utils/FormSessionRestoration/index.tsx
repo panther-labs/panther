@@ -16,6 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default as RemediationButton } from './RemediationButton';
-export { default as SubmitButton } from './SubmitButton';
-export { default as SuppressButton } from './SuppressButton';
+export { default } from './FormSessionRestoration';

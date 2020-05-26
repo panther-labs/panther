@@ -65,7 +65,7 @@ const Editor: React.FC<EditorProps> = ({ fallback = null, completions = [], ...r
       enableBasicAutocompletion: true,
       enableLiveAutocompletion: true,
       highlightActiveLine: false,
-      fontSize: theme.fontSizes[2],
+      fontSize: theme.fontSizes.medium,
       editorProps: {
         $blockScrolling: Infinity,
       },
