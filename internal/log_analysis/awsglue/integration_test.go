@@ -46,6 +46,11 @@ type testEvent struct {
 	Col1 int `description:"test field"`
 }
 
+type testEventModified struct {
+	Col1 int `description:"test field"`
+	Col2 int `description:"test field"`
+}
+
 var (
 	integrationTest bool
 	awsSession      *session.Session
@@ -77,13 +82,19 @@ func TestIntegrationGlueMetadataPartitions(t *testing.T) {
 		removeTables(t)
 	}()
 
-	gm := NewGlueTableMetadata(models.RuleData, testTable, "test table", GlueTableHourly, &testEvent{})
+	// get the meta data, note we update the schema from the one used in setupTables()
+	gm := NewGlueTableMetadata(models.RuleData, testTable, "test table", GlueTableHourly, &testEventModified{})
 	// overwriting default database
 	gm.databaseName = testDb
 
 	// this has been already created in setupTables(), this tests updating table
 	err = gm.CreateOrUpdateTable(glueClient, testBucket)
 	require.NoError(t, err)
+
+	// confirm that the new schema has been applied
+	getTableOutput, err := GetTable(glueClient, gm.databaseName, gm.tableName)
+	require.NoError(t, err)
+	require.Equal(t, "col2", *getTableOutput.Table.StorageDescriptor.Columns[1].Name) // what we added
 
 	getPartitionOutput, err := gm.GetPartition(glueClient, refTime)
 	require.NoError(t, err)

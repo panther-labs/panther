@@ -112,6 +112,11 @@ var (
 			Type:    "array<string>",
 			Comment: "The tags of the rule that generated this alert",
 		},
+		{
+			Name:    "p_rule_reports",
+			Type:    "map<string,array<string>>",
+			Comment: "The tags of the rule that generated this alert",
+		},
 	}
 )
 
