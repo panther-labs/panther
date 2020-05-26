@@ -194,6 +194,7 @@ func destroyLambdaLayers(awsSession *session.Session) {
 }
 
 func destroyGlueDatabases(awsSession *session.Session) {
+	// Delete databases and tables
 	glueClient := glue.New(awsSession)
 	for pantherDatabase := range awsglue.PantherDatabases {
 		logger.Infof("deleting database %s", pantherDatabase)
@@ -229,6 +230,11 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 
 	// The stackset must be deleted before the StackSetExecutionRole and the StackSetAdminRole
 	if err := deleteStackSet(client, identity, aws.String(realTimeEventsStackSet)); err != nil {
+		logger.Fatal(err)
+	}
+
+	// In v1.4.0 we removed the stack `panther-glue`, delete it (we can remove this after a few more releases)
+	if err := deleteStack(client, aws.String("panther-glue")); err != nil {
 		logger.Fatal(err)
 	}
 
