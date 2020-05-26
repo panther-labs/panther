@@ -17,24 +17,24 @@
  */
 
 import React from 'react';
-import { Button, Spinner, Flex, ButtonProps } from 'pouncejs';
+import { ButtonProps } from 'pouncejs';
+import { useFormikContext } from 'formik';
+import LoadingButton from 'Components/buttons/LoadingButton';
 
-const SubmitButton: React.FC<Omit<ButtonProps, 'size' | 'variant'> & { submitting: boolean }> = ({
-  submitting,
-  disabled,
-  children,
-  ...rest
-}) => (
-  <Button {...rest} type="submit" size="large" variant="primary" disabled={disabled}>
-    {submitting ? (
-      <Flex align="center" justify="center">
-        <Spinner size="small" mr={2} />
-        {children}
-      </Flex>
-    ) : (
-      children
-    )}
-  </Button>
-);
+interface SubmitButtonProps extends Omit<ButtonProps, 'size' | 'variant' | 'disabled'> {
+  allowPristineSubmission?: boolean;
+}
+
+const SubmitButton: React.FC<SubmitButtonProps> = ({ allowPristineSubmission, ...rest }) => {
+  const { isSubmitting, isValid, dirty } = useFormikContext<any>();
+
+  return (
+    <LoadingButton
+      {...rest}
+      loading={isSubmitting}
+      disabled={isSubmitting || !isValid || (!dirty && !allowPristineSubmission)}
+    />
+  );
+};
 
 export default React.memo(SubmitButton);

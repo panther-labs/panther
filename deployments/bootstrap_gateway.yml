@@ -33,6 +33,7 @@ Metadata:
 #     making the template too large to deploy without an S3 bucket
 # - Python layer: the layer source has to be uploaded to S3 before the cfn resource can be created
 # - Custom resource: the Lambda function which handles custom CFN resources
+#      - Alarms for SNS topics in the bootstrap stack
 
 Parameters:
   # From the config file
@@ -61,6 +62,12 @@ Parameters:
   UserPoolId:
     Type: String
     Description: Cognito user pool ID
+
+Mappings:
+  Functions:
+    CustomResource:
+      Memory: 256
+      Timeout: 900
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
@@ -99,9 +106,9 @@ Resources:
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 256
+      MemorySize: !FindInMap [Functions, CustomResource, Memory]
       Runtime: go1.x
-      Timeout: 900 # Maximum allowed: 15 minutes
+      Timeout: !FindInMap [Functions, CustomResource, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
 
       # This function has more permissions than usual because it creates and destroys infrastructure.
@@ -159,12 +166,30 @@ Resources:
     Type: Custom::LambdaAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
-      FunctionMemoryMB: 256
+      FunctionMemoryMB: !FindInMap [Functions, CustomResource, Memory]
       FunctionName: !Ref CustomResourceFunction
-      FunctionTimeoutSec: 900
+      FunctionTimeoutSec: !FindInMap [Functions, CustomResource, Timeout]
       LoggedWarnThreshold: 0
       ThrottleThreshold: 0
       ServiceToken: !GetAtt CustomResourceFunction.Arn
+
+  # Alarms for SNS topics in the bootstrap stack
+  ProcessedDataTopicAlarms:
+    Type: Custom::SNSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+      TopicName: panther-processed-data-notifications
+
+  AlarmTopicAlarms:
+    # This is actually configuring the alarm topic to monitor itself.
+    # It obviously might not be able to notify us about its own failures, but we still want to try.
+    # There could be transient failures that will eventually get through.
+    Type: Custom::SNSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+      TopicName: panther-cw-alarms
 
   # Enable only software MFA for the Cognito user pool - enabling MFA via native CloudFormation
   # forces SMS as a fallback option, but the SDK does not.

@@ -88,6 +88,7 @@ func deployOnboardTemplate(awsSession *session.Session, settings *config.Panther
 	}
 
 	params := map[string]string{
+		"AlarmTopicArn":          bootstrapOutputs["AlarmTopicArn"],
 		"AuditLogsBucket":        bootstrapOutputs["AuditLogsBucket"],
 		"EnableCloudTrail":       strconv.FormatBool(settings.Setup.EnableCloudTrail),
 		"EnableGuardDuty":        strconv.FormatBool(settings.Setup.EnableGuardDuty),

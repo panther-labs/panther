@@ -1,5 +1,3 @@
-package cloudwatchcf
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,23 +16,4 @@ package cloudwatchcf
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"io/ioutil"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-)
-
-func TestGenerateAlarms(t *testing.T) {
-	_, cf, err := GenerateAlarms("./testdata/cf.yml")
-	require.NoError(t, err)
-
-	const expectedFile = "./testdata/generated_test_alarms.json"
-	// uncomment to write new expected file
-	// require.NoError(t, ioutil.WriteFile(expectedFile, cf, 0644))
-
-	expected, err := ioutil.ReadFile(expectedFile)
-	require.NoError(t, err)
-	assert.JSONEq(t, string(expected), string(cf))
-}
+export { default } from './LoadingButton';

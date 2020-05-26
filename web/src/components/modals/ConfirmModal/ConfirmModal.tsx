@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Modal, Text, Flex, Button } from 'pouncejs';
-import SubmitButton from 'Components/buttons/SubmitButton';
+import LoadingButton from 'Components/buttons/LoadingButton';
 
 export interface ConfirmModalProps {
   title: string;
@@ -44,9 +44,9 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
         <Button size="large" variant="default" onClick={onClose} mr={3}>
           Cancel
         </Button>
-        <SubmitButton onClick={onConfirm} submitting={loading} disabled={loading}>
+        <LoadingButton onClick={onConfirm} loading={loading} disabled={loading}>
           Confirm
-        </SubmitButton>
+        </LoadingButton>
       </Flex>
     </Modal>
   );

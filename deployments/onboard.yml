@@ -18,6 +18,9 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Template for onboarding the Panther account into Panther itself
 
 Parameters:
+  AlarmTopicArn:
+    Type: String
+    Description: SNS topic for CloudWatch alarms
   AuditLogsBucket:
     Type: String
     Description: The name of the S3 bucket which stores Panther audit logs
@@ -188,6 +191,13 @@ Resources:
             Resource: !Ref Topic
       Topics:
         - !Ref Topic
+
+  TopicAlarms:
+    Type: Custom::SNSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      TopicName: !GetAtt Topic.TopicName
 
   # SNS Topic subscription to Panther
   Subscription:
