@@ -23,6 +23,9 @@ Parameters:
   AnalysisApiId:
     Type: String
     Description: API Gateway for analysis-api
+  AlarmTopicArn:
+    Type: String
+    Description: SNS topic for CloudWatch alarms
   ComplianceApiId:
     Type: String
     Description: API Gateway for compliance-api
@@ -183,6 +186,13 @@ Resources:
                 - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/GET/status
                 - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/policy
 
+  AlertProcessorAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionName: !Ref AlertProcessorFunction
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ##### Alert Forwarder #####
   AlertForwarderTable:
     Type: AWS::DynamoDB::Table
@@ -211,6 +221,13 @@ Resources:
       TimeToLiveSpecification:
         AttributeName: expiresAt
         Enabled: true
+
+  AlertForwarderTableAlarms:
+    Type: Custom::DynamoDBAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      TableName: !Ref AlertForwarderTable
 
   AlertForwarderLogGroup:
     Type: AWS::Logs::LogGroup
@@ -278,6 +295,13 @@ Resources:
                 - kms:Decrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
+
+  AlertForwarderAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionName: !Ref AlertForwarderFunction
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### AWS Event Processor #####
   EventQueue:
@@ -442,6 +466,14 @@ Resources:
               Action: s3:GetObject
               Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/*
 
+  EventProcessorAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionName: !Ref EventProcessorFunction
+      FunctionTimeoutSec: 120
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ##### Compliance API #####
   ComplianceApiFunction:
     Type: AWS::Serverless::Function
@@ -495,6 +527,15 @@ Resources:
       LogGroupName: !Ref ComplianceApiLogGroup
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
+  ComplianceApiAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: 512
+      FunctionName: !Ref ComplianceApiFunction
+      FunctionTimeoutSec: 180
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ComplianceGatewayInvocation: # allow API gateway to invoke the compliance-api Lambda function
     Type: AWS::Lambda::Permission
     Properties:
@@ -539,6 +580,13 @@ Resources:
       TimeToLiveSpecification:
         AttributeName: expiresAt
         Enabled: True
+
+  ComplianceTableAlarms:
+    Type: Custom::DynamoDBAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      TableName: !Ref ComplianceTable
 
   ##### Remediation API #####
   RemediationGatewayInvocation:
@@ -646,6 +694,15 @@ Resources:
       LogGroupName: !Ref RemediationApiLogGroup
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
+  RemediationApiAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: 512
+      FunctionName: !Ref RemediationApiFunction
+      FunctionTimeoutSec: 120
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ##### Remediation Processor #####
   RemediationProcessorLogGroup:
     Type: AWS::Logs::LogGroup
@@ -714,6 +771,15 @@ Resources:
               Action: lambda:InvokeFunction
               Resource: !GetAtt RemediationFunction.Arn
 
+  RemediationProcessorAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: 512
+      FunctionName: !Ref RemediationProcessorFunction
+      FunctionTimeoutSec: 120
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ##### AWS Remediation #####
   RemediationLogGroup:
     Type: AWS::Logs::LogGroup
@@ -765,6 +831,13 @@ Resources:
             - Effect: Allow
               Action: sts:AssumeRole
               Resource: !Sub arn:${AWS::Partition}:iam::*:role/PantherRemediationRole-${AWS::Region}
+
+  RemediationAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionName: !Ref RemediationFunction
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Resources API #####
   GatewayInvocationPermission:
@@ -845,6 +918,15 @@ Resources:
       LogGroupName: !Ref ResourcesApiLogGroup
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
+  ResourcesApiAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: 512
+      FunctionName: !Ref ResourcesApiFunction
+      FunctionTimeoutSec: 120
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ResourcesTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -871,6 +953,13 @@ Resources:
       TimeToLiveSpecification: # Deleted resources are expired after 30 days
         AttributeName: expiresAt
         Enabled: true
+
+  ResourcesTableAlarms:
+    Type: Custom::DynamoDBAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      TableName: !Ref ResourcesTable
 
   ResourcesQueue:
     Type: AWS::SQS::Queue
@@ -998,6 +1087,15 @@ Resources:
                 - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/GET/status
                 - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/POST/status
 
+  ResourceProcessorAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: 256
+      FunctionName: !Ref ResourceProcessorFunction
+      FunctionTimeoutSec: 180
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ##### Python Policy Engine #####
   PolicyEngineFunction:
     Type: AWS::Serverless::Function
@@ -1050,6 +1148,13 @@ Resources:
     Properties:
       LambdaRuntime: Python
       LogGroupName: !Ref PolicyEngineLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  PolicyEngineAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionName: !Ref PolicyEngineFunction
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Snapshot Poller #####
@@ -1158,6 +1263,14 @@ Resources:
       LogGroupName: !Ref PollerLogGroup
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
+  PollerAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionName: !Ref PollerFunction
+      FunctionTimeoutSec: 900
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ##### Snapshot Scheduler #####
   SnapshotSchedulerFunction:
     Type: AWS::Serverless::Function
@@ -1218,4 +1331,12 @@ Resources:
     Type: Custom::LambdaMetricFilters
     Properties:
       LogGroupName: !Ref SnapshotSchedulerLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  SnapshotSchedulerAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionName: !Ref SnapshotSchedulerFunction
+      FunctionTimeoutSec: 120
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources

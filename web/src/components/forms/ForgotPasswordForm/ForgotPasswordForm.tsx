@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Field, Formik } from 'formik';
+import { Field, Form, Formik } from 'formik';
 import * as Yup from 'yup';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -53,7 +53,7 @@ const ForgotPasswordForm: React.FC = () => {
         })
       }
     >
-      {({ handleSubmit, isSubmitting, isValid, dirty, status, values }) => {
+      {({ status, values }) => {
         if (status === 'SENT') {
           return (
             <Card bg="green100" p={5} mb={8} boxShadow="none">
@@ -66,7 +66,7 @@ const ForgotPasswordForm: React.FC = () => {
         }
 
         return (
-          <form onSubmit={handleSubmit}>
+          <Form>
             <Field
               as={FormikTextInput}
               label="Email"
@@ -76,14 +76,8 @@ const ForgotPasswordForm: React.FC = () => {
               aria-required
               mb={6}
             />
-            <SubmitButton
-              width={1}
-              submitting={isSubmitting}
-              disabled={isSubmitting || !isValid || !dirty}
-            >
-              Reset Password
-            </SubmitButton>
-          </form>
+            <SubmitButton width={1}>Reset Password</SubmitButton>
+          </Form>
         );
       }}
     </Formik>

@@ -55,6 +55,7 @@ class Engine:
                 match = EventMatch(
                     rule_id=rule.rule_id,
                     rule_version=rule.rule_version,
+                    rule_tags=rule.rule_tags,
                     log_type=log_type,
                     dedup=result.dedup_string,  # type: ignore
                     dedup_period_mins=rule.rule_dedup_period_mins,

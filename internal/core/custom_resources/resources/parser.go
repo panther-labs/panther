@@ -25,14 +25,12 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 )
 
-var inputValidator = validator.New()
-
 // Parse and validate custom resource properties, storing them in "out"
 //
 // Out must be a pointer to a struct with appropriate `validate` tags
 func parseProperties(params map[string]interface{}, out interface{}) error {
-	if len(params) == 0 {
-		return nil
+	if params == nil {
+		params = make(map[string]interface{})
 	}
 
 	// We could manually use reflection on the output struct, which would be marginally faster
@@ -48,7 +46,7 @@ func parseProperties(params map[string]interface{}, out interface{}) error {
 		return fmt.Errorf("parameter extraction failed: %v", err)
 	}
 
-	if err = inputValidator.Struct(out); err != nil {
+	if err = validator.New().Struct(out); err != nil {
 		return fmt.Errorf("parameter validation failed: %v", err)
 	}
 

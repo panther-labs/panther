@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Formik } from 'formik';
+import { Form, Formik } from 'formik';
 import * as Yup from 'yup';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import ErrorReportingSection from './ErrorReportingSection';
@@ -45,14 +45,12 @@ const AnalyticsConsentForm: React.FC<AnalyticsConsentFormProps> = ({ onSubmit })
       validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
-      {({ handleSubmit, isSubmitting, isValid }) => (
-        <form onSubmit={handleSubmit}>
-          <ErrorReportingSection />
-          <SubmitButton width={1} submitting={isSubmitting} disabled={isSubmitting || !isValid}>
-            Save
-          </SubmitButton>
-        </form>
-      )}
+      <Form>
+        <ErrorReportingSection />
+        <SubmitButton width={1} allowPristineSubmission>
+          Save
+        </SubmitButton>
+      </Form>
     </Formik>
   );
 };

@@ -163,21 +163,33 @@ func testCfnLint() error {
 		// Right now, we just check logicalID and type, but we can always add additional validation
 		// of the resource properties in the future if needed.
 		for logicalID, resourceType := range resources {
+			var err error
 			switch resourceType {
+			case "AWS::DynamoDB::Table":
+				err = cfnTestDynamo(logicalID, template, resources)
 			case "AWS::Serverless::Api":
-				if err := cfnTestAPI(logicalID, template, resources); err != nil {
-					errs = append(errs, err.Error())
-				}
+				err = cfnTestAPI(logicalID, template, resources)
 			case "AWS::Serverless::Function":
-				if err := cfnTestFunction(logicalID, template, resources); err != nil {
-					errs = append(errs, err.Error())
-				}
+				err = cfnTestFunction(logicalID, template, resources)
+			}
+
+			if err != nil {
+				errs = append(errs, err.Error())
 			}
 		}
 	}
 
 	if len(errs) > 0 {
 		return errors.New(strings.Join(errs, "\n"))
+	}
+	return nil
+}
+
+// Returns an error if an AWS::DynamoDB::Table is missing associated resources
+func cfnTestDynamo(logicalID, template string, resources map[string]string) error {
+	if resources[logicalID+"Alarms"] != "Custom::DynamoDBAlarms" {
+		return fmt.Errorf("%s needs an associated %s resource in %s",
+			logicalID, logicalID+"Alarms", template)
 	}
 	return nil
 }
@@ -197,6 +209,11 @@ func cfnTestFunction(logicalID, template string, resources map[string]string) er
 	if resources[idPrefix+"MetricFilters"] != "Custom::LambdaMetricFilters" {
 		return fmt.Errorf("%s needs an associated %s resource in %s",
 			logicalID, idPrefix+"MetricFilters", template)
+	}
+
+	if resources[idPrefix+"Alarms"] != "Custom::LambdaAlarms" {
+		return fmt.Errorf("%s needs an associated %s resource in %s",
+			logicalID, idPrefix+"Alarms", template)
 	}
 
 	// Backwards compatibility - these resources did not originally match the naming scheme,
