@@ -148,6 +148,12 @@ func testCfnLint() error {
 	// defined in the same stack.
 	var errs []string
 	for _, template := range templates {
+		if template == bootstrapTemplate || strings.HasPrefix(template, "deployments/auxiliary") {
+			// The very first bootstrap stack can't have custom resources,
+			// and the aux templates don't need them.
+			continue
+		}
+
 		body, err := cfnparse.ParseTemplate(template)
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("failed to parse %s: %v", template, err))
@@ -166,11 +172,32 @@ func testCfnLint() error {
 			var err error
 			switch resourceType {
 			case "AWS::DynamoDB::Table":
-				err = cfnTestDynamo(logicalID, template, resources)
+				if resources[logicalID+"Alarms"] != "Custom::DynamoDBAlarms" {
+					err = fmt.Errorf("%s needs an associated %s resource in %s",
+						logicalID, logicalID+"Alarms", template)
+				}
 			case "AWS::Serverless::Api":
-				err = cfnTestAPI(logicalID, template, resources)
+				if resources[logicalID+"Alarms"] != "Custom::ApiGatewayAlarms" {
+					err = fmt.Errorf("%s needs an associated %s resource in %s",
+						logicalID, logicalID+"Alarms", template)
+				}
 			case "AWS::Serverless::Function":
 				err = cfnTestFunction(logicalID, template, resources)
+			case "AWS::SNS::Topic":
+				if resources[logicalID+"Alarms"] != "Custom::SNSAlarms" {
+					err = fmt.Errorf("%s needs an associated %s resource in %s",
+						logicalID, logicalID+"Alarms", template)
+				}
+			case "AWS::SQS::Queue":
+				if resources[logicalID+"Alarms"] != "Custom::SQSAlarms" {
+					err = fmt.Errorf("%s needs an associated %s resource in %s",
+						logicalID, logicalID+"Alarms", template)
+				}
+			case "AWS::StepFunctions::StateMachine":
+				if resources[logicalID+"Alarms"] != "Custom::StateMachineAlarms" {
+					err = fmt.Errorf("%s needs an associated %s resource in %s",
+						logicalID, logicalID+"Alarms", template)
+				}
 			}
 
 			if err != nil {
@@ -181,24 +208,6 @@ func testCfnLint() error {
 
 	if len(errs) > 0 {
 		return errors.New(strings.Join(errs, "\n"))
-	}
-	return nil
-}
-
-// Returns an error if an AWS::DynamoDB::Table is missing associated resources
-func cfnTestDynamo(logicalID, template string, resources map[string]string) error {
-	if resources[logicalID+"Alarms"] != "Custom::DynamoDBAlarms" {
-		return fmt.Errorf("%s needs an associated %s resource in %s",
-			logicalID, logicalID+"Alarms", template)
-	}
-	return nil
-}
-
-// Returns an error if an AWS::Serverless::Api is missing associated resources
-func cfnTestAPI(logicalID, template string, resources map[string]string) error {
-	if resources[logicalID+"Alarms"] != "Custom::ApiGatewayAlarms" {
-		return fmt.Errorf("%s needs an associated %s resource in %s",
-			logicalID, logicalID+"Alarms", template)
 	}
 	return nil
 }

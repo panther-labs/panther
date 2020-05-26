@@ -13,6 +13,9 @@
   "ResourceTypes": ["AWS.S3.Bucket"],
   "Severity": "Medium",
   "Tags": [],
+  "Reports": {
+    "Test": ["Value1", "Value2"]
+  },
   "Tests": [
     {
       "ExpectedResult": true,

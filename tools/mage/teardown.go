@@ -242,7 +242,6 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 	//
 	// The bootstrap stacks have to be last because of the ECS cluster and custom resource Lambda.
 	parallelStacks := []string{
-		alarmsStack,
 		appsyncStack,
 		cloudsecStack,
 		coreStack,

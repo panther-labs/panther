@@ -49,6 +49,7 @@ class RuleResult:
 class Rule:
     """Panther rule metadata and imported module."""
 
+    # pylint: disable=too-many-branches
     def __init__(self, config: Dict[str, Any]):
         """Create new rule from a dict.
 
@@ -82,6 +83,15 @@ class Rule:
         else:
             config['tags'].sort()
             self.rule_tags = config['tags']
+
+        if 'reports' not in config:
+            self.rule_reports = dict()
+        else:
+            # Reports are Dict[str, List[str]]
+            # Sorting the List before setting it
+            for values in config['reports'].values():
+                values.sort()
+            self.rule_reports = config['reports']
 
         self._store_rule()
         self._module = self._import_rule_as_module()

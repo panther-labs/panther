@@ -61,6 +61,9 @@ type UpdateRule struct {
 	// reference
 	Reference Reference `json:"reference,omitempty"`
 
+	// reports
+	Reports Reports `json:"reports,omitempty"`
+
 	// runbook
 	Runbook Runbook `json:"runbook,omitempty"`
 
@@ -112,6 +115,10 @@ func (m *UpdateRule) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateReference(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateReports(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -250,6 +257,22 @@ func (m *UpdateRule) validateReference(formats strfmt.Registry) error {
 	if err := m.Reference.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("reference")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *UpdateRule) validateReports(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Reports) { // not required
+		return nil
+	}
+
+	if err := m.Reports.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("reports")
 		}
 		return err
 	}

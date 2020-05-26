@@ -37,11 +37,10 @@ const (
 )
 
 type LambdaAlarmProperties struct {
-	AlarmTopicArn string `validate:"required"`
-	FunctionName  string `validate:"required"`
-
-	FunctionMemoryMB   int `json:",string" validate:"omitempty,min=128,max=3008"`
-	FunctionTimeoutSec int `json:",string" validate:"min=0"`
+	AlarmTopicArn      string `validate:"required"`
+	FunctionName       string `validate:"required"`
+	FunctionMemoryMB   int    `json:",string" validate:"min=128,max=3008"`
+	FunctionTimeoutSec int    `json:",string" validate:"min=1"`
 
 	// These are pointers because we have to distinguish 0 from not specified
 	LoggedErrorThreshold    *int `json:",string" validate:"omitempty,min=0"`
@@ -59,12 +58,6 @@ func customLambdaAlarms(_ context.Context, event cfn.Event) (string, map[string]
 		}
 
 		// Set defaults
-		if props.FunctionMemoryMB == 0 {
-			props.FunctionMemoryMB = 128
-		}
-		if props.FunctionTimeoutSec == 0 {
-			props.FunctionTimeoutSec = 60
-		}
 		if props.LoggedErrorThreshold == nil {
 			props.LoggedErrorThreshold = aws.Int(0)
 		}
