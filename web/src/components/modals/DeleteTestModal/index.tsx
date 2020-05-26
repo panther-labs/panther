@@ -16,31 +16,5 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { Box, Link, LinkProps } from 'pouncejs';
-import { LinkifyProps } from 'linkifyjs/react';
-
-const OriginalReactLinkify = React.lazy(() =>
-  import(/* webpackChunkName: "linkify" */ 'linkifyjs/react.js')
-) as React.FC<LinkifyProps>;
-
-const linkifyOptions = {
-  defaultProtocol: 'https',
-  tagName: () => Link,
-  attributes: {
-    color: 'blue300' as const,
-    external: true,
-  } as LinkProps,
-};
-
-const Linkify: React.FC = ({ children }) => {
-  return (
-    <Box wordBreak="break-word" fontSize="medium">
-      <React.Suspense fallback={<div>{children}</div>}>
-        <OriginalReactLinkify options={linkifyOptions as any}>{children}</OriginalReactLinkify>
-      </React.Suspense>
-    </Box>
-  );
-};
-
-export default Linkify;
+export { default } from './DeleteTestModal';
+export * from './DeleteTestModal';

@@ -17,30 +17,26 @@
  */
 
 import React from 'react';
-import { Box, Link, LinkProps } from 'pouncejs';
-import { LinkifyProps } from 'linkifyjs/react';
+import { Button, Spinner, Flex, ButtonProps } from 'pouncejs';
 
-const OriginalReactLinkify = React.lazy(() =>
-  import(/* webpackChunkName: "linkify" */ 'linkifyjs/react.js')
-) as React.FC<LinkifyProps>;
-
-const linkifyOptions = {
-  defaultProtocol: 'https',
-  tagName: () => Link,
-  attributes: {
-    color: 'blue300' as const,
-    external: true,
-  } as LinkProps,
-};
-
-const Linkify: React.FC = ({ children }) => {
+const LoadingButton: React.FC<Omit<ButtonProps, 'size' | 'variant'> & { loading?: boolean }> = ({
+  children,
+  disabled,
+  loading,
+  ...rest
+}) => {
   return (
-    <Box wordBreak="break-word" fontSize="medium">
-      <React.Suspense fallback={<div>{children}</div>}>
-        <OriginalReactLinkify options={linkifyOptions as any}>{children}</OriginalReactLinkify>
-      </React.Suspense>
-    </Box>
+    <Button {...rest} type="submit" size="large" variant="primary" disabled={disabled}>
+      {loading ? (
+        <Flex align="center" justify="center">
+          <Spinner size="small" mr={2} />
+          {children}
+        </Flex>
+      ) : (
+        children
+      )}
+    </Button>
   );
 };
 
-export default Linkify;
+export default React.memo(LoadingButton);

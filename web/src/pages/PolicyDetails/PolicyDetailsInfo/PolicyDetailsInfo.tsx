@@ -187,7 +187,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
             policy.tags.map((tag, index) => (
               <Link
                 key={tag}
-                fontSize={2}
+                fontSize="medium"
                 color="blue300"
                 as={RRLink}
                 to={`${urls.compliance.policies.list()}?page=1&tags[]=${tag}`}

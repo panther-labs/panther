@@ -17,30 +17,16 @@
  */
 
 import React from 'react';
-import { Box, Link, LinkProps } from 'pouncejs';
-import { LinkifyProps } from 'linkifyjs/react';
+import useFormSessionRestoration, {
+  UseFormSessionRestorationProps,
+} from 'Hooks/useFormSessionRestoration';
 
-const OriginalReactLinkify = React.lazy(() =>
-  import(/* webpackChunkName: "linkify" */ 'linkifyjs/react.js')
-) as React.FC<LinkifyProps>;
+type FormSessionRestorationProps = UseFormSessionRestorationProps;
 
-const linkifyOptions = {
-  defaultProtocol: 'https',
-  tagName: () => Link,
-  attributes: {
-    color: 'blue300' as const,
-    external: true,
-  } as LinkProps,
+const FormSessionRestoration: React.FC<FormSessionRestorationProps> = ({ children, ...rest }) => {
+  useFormSessionRestoration(rest);
+
+  return children as React.ReactElement;
 };
 
-const Linkify: React.FC = ({ children }) => {
-  return (
-    <Box wordBreak="break-word" fontSize="medium">
-      <React.Suspense fallback={<div>{children}</div>}>
-        <OriginalReactLinkify options={linkifyOptions as any}>{children}</OriginalReactLinkify>
-      </React.Suspense>
-    </Box>
-  );
-};
-
-export default Linkify;
+export default FormSessionRestoration;
