@@ -469,17 +469,14 @@ func deployGlue(awsSession *session.Session, outputs map[string]string) error {
 		logger.Fatal(err)
 	}
 	for _, logTable := range deployedLogTables {
-		logger.Infof("deploy: creating/updating glue table %s.%s",
-			logTable.DatabaseName(), logTable.TableName())
+		logger.Infof("deploy: creating/updating glue table %s.%s", logTable.DatabaseName(), logTable.TableName())
 		err := logTable.CreateOrUpdateTable(glueClient, outputs["ProcessedDataBucket"])
 		if err != nil {
-			return errors.Wrapf(err, "could not create glue log table for %s.%s",
-				logTable.DatabaseName(), logTable.TableName())
+			return errors.Wrapf(err, "could not create glue log table for %s.%s", logTable.DatabaseName(), logTable.TableName())
 		}
 		err = logTable.SyncPartitions(glueClient, s3Client, zeroStartTime)
 		if err != nil {
-			logger.Fatalf("deploy: failed syncing %s.%s: %v",
-				logTable.DatabaseName(), logTable.TableName(), err)
+			logger.Fatalf("deploy: failed syncing %s.%s: %v", logTable.DatabaseName(), logTable.TableName(), err)
 		}
 
 		// the corresponding rule table shares the same structure as the log table + some columns
@@ -489,17 +486,13 @@ func deployGlue(awsSession *session.Session, outputs map[string]string) error {
 			ruleTable.DatabaseName(), ruleTable.TableName())
 		err = ruleTable.CreateOrUpdateTable(glueClient, outputs["ProcessedDataBucket"])
 		if err != nil {
-			return errors.Wrapf(err, "could not create glue rule table for %s.%s",
-				ruleTable.DatabaseName(), ruleTable.TableName())
+			return errors.Wrapf(err, "could not create glue rule table for %s.%s", ruleTable.DatabaseName(), ruleTable.TableName())
 		}
 		err = ruleTable.SyncPartitions(glueClient, s3Client, zeroStartTime)
 		if err != nil {
-			logger.Fatalf("deploy: failed syncing %s.%s: %v",
-				ruleTable.DatabaseName(), ruleTable.TableName(), err)
+			logger.Fatalf("deploy: failed syncing %s.%s: %v", ruleTable.DatabaseName(), ruleTable.TableName(), err)
 		}
 	}
-
-	logger.Info("deploy: DONE!")
 
 	return nil
 }
