@@ -81,6 +81,10 @@ func TestIntegrationGlueMetadataPartitions(t *testing.T) {
 	// overwriting default database
 	gm.databaseName = testDb
 
+	// this has been already created in setupTables(), this tests updating table
+	err = gm.CreateOrUpdateTable(glueClient, testBucket)
+	require.NoError(t, err)
+
 	getPartitionOutput, err := gm.GetPartition(glueClient, refTime)
 	require.NoError(t, err)
 	assert.Nil(t, getPartitionOutput) // should not be there yet
@@ -122,7 +126,7 @@ func addTables(t *testing.T) {
 	gm := NewGlueTableMetadata(models.RuleData, testTable, "test table", GlueTableHourly, &testEvent{})
 	// overwriting default database
 	gm.databaseName = testDb
-	_, err = gm.CreateTable(glueClient, testBucket)
+	err = gm.CreateOrUpdateTable(glueClient, testBucket)
 	require.NoError(t, err)
 }
 

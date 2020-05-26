@@ -23,34 +23,23 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
-	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/awsathena"
 )
 
 // CreateOrReplaceViews will update Athena with all views
 func CreateOrReplaceViews(glueClient glueiface.GlueAPI, athenaClient athenaiface.AthenaAPI) (err error) {
 	// check what tables are deployed
-	var deployedLogTables []*awsglue.GlueTableMetadata
-	for _, gm := range registry.AvailableTables() {
-		_, err := awsglue.GetTable(glueClient, gm.DatabaseName(), gm.TableName())
-		if err != nil {
-			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == glue.ErrCodeEntityNotFoundException {
-				continue
-			} else {
-				return errors.Wrapf(err, "failure checking existence of %s.%s",
-					gm.DatabaseName(), gm.TableName())
-			}
-		}
-		deployedLogTables = append(deployedLogTables, gm)
+	deployedLogTables, err := gluetables.DeployedTables(glueClient)
+	if err != nil {
+		return err
 	}
 
 	// loop over available tables, generate view over all Panther tables in glue catalog

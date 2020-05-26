@@ -202,7 +202,7 @@ func destroyGlueDatabases(awsSession *session.Session) {
 			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == glue.ErrCodeEntityNotFoundException {
 				logger.Infof("%s already deleted", pantherDatabase)
 			} else {
-				logger.Fatal(err)
+				logger.Warnf("%s failed to delete %s", pantherDatabase, err)
 			}
 		}
 	}

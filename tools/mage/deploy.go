@@ -34,15 +34,19 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/magefile/mage/sh"
+	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/gateway/analysis/client"
 	"github.com/panther-labs/panther/api/gateway/analysis/client/operations"
 	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
+	lpmodels "github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	orgmodels "github.com/panther-labs/panther/api/lambda/organization/models"
 	usermodels "github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 	"github.com/panther-labs/panther/pkg/awsathena"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/shutil"
@@ -69,8 +73,6 @@ const (
 	dashboardTemplate   = "out/deployments/monitoring/dashboards.json"
 	frontendStack       = "panther-web"
 	frontendTemplate    = "deployments/web_server.yml"
-	glueStack           = "panther-glue"
-	glueTemplate        = "out/deployments/gluetables.json"
 	logAnalysisStack    = "panther-log-analysis"
 	logAnalysisTemplate = "deployments/log_analysis.yml"
 	metricFilterStack   = "panther-cw-metric-filters"
@@ -386,12 +388,6 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 		c <- goroutineResult{summary: dashboardStack, err: err}
 	}(results)
 
-	// Glue
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{summary: glueStack, err: deployGlue(awsSession, outputs)}
-	}(results)
-
 	// Log analysis
 	count++
 	go func(c chan goroutineResult) {
@@ -419,9 +415,15 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 		c <- goroutineResult{summary: frontendStack, err: err}
 	}(results)
 
+	// Glue (not a stack!, moving to custom resource)
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{summary: "panther-glue-tables", err: deployGlue(awsSession, outputs)}
+	}(results)
+
 	// Wait for stacks to finish.
 	// There are two stacks before and one stack after
-	logResults(results, "deploy", 3, count+2, len(allStacks))
+	logResults(results, "deploy", 3, count+2, len(allStacks)+1)
 
 	// Onboard Panther to scan itself
 	go func(c chan goroutineResult) {
@@ -434,29 +436,70 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 
 	// Log stack results, counting where the last parallel group left off to give the illusion of
 	// one continuous deploy progress tracker.
-	logResults(results, "deploy", count+3, len(allStacks), len(allStacks))
+	logResults(results, "deploy", count+3, len(allStacks)+1, len(allStacks)+1)
 }
 
 func deployGlue(awsSession *session.Session, outputs map[string]string) error {
 	glueClient := glue.New(awsSession)
+	s3Client := s3.New(awsSession)
 	for pantherDatabase, pantherDatabaseDescription := range awsglue.PantherDatabases {
-		logger.Infof("creating database %s", pantherDatabase)
+		logger.Infof("deploy: creating database %s", pantherDatabase)
 		_, err := awsglue.CreateDatabase(glueClient, pantherDatabase, pantherDatabaseDescription)
 		if err != nil {
 			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == glue.ErrCodeAlreadyExistsException {
-				logger.Infof("%s already exists", pantherDatabase)
+				logger.Infof("deploy: database %s already exists", pantherDatabase)
 			} else {
 				logger.Fatal(err)
 			}
 		}
 	}
 
+	logger.Info("deploy: configuring Athena")
 	// Workgroup "primary" is default.
 	const workgroup = "primary"
 	athenaBucket := outputs["AthenaResultsBucket"]
 	if err := awsathena.WorkgroupAssociateS3(awsSession, workgroup, athenaBucket); err != nil {
 		return fmt.Errorf("failed to associate %s Athena workgroup with %s bucket: %v", workgroup, athenaBucket, err)
 	}
+
+	// update schemas for tables that are deployed
+	var zeroStartTime time.Time // setting the startTime to 0, means use createTime for the table
+	deployedLogTables, err := gluetables.DeployedTables(glueClient)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	for _, logTable := range deployedLogTables {
+		logger.Infof("deploy: creating/updating glue table %s.%s",
+			logTable.DatabaseName(), logTable.TableName())
+		err := logTable.CreateOrUpdateTable(glueClient, outputs["ProcessedDataBucket"])
+		if err != nil {
+			return errors.Wrapf(err, "could not create glue log table for %s.%s",
+				logTable.DatabaseName(), logTable.TableName())
+		}
+		err = logTable.SyncPartitions(glueClient, s3Client, zeroStartTime)
+		if err != nil {
+			logger.Fatalf("deploy: failed syncing %s.%s: %v",
+				logTable.DatabaseName(), logTable.TableName(), err)
+		}
+
+		// the corresponding rule table shares the same structure as the log table + some columns
+		ruleTable := awsglue.NewGlueTableMetadata(
+			lpmodels.RuleData, logTable.LogType(), logTable.Description(), awsglue.GlueTableHourly, logTable.EventStruct())
+		logger.Infof("deploy: creating/updating glue table %s.%s",
+			ruleTable.DatabaseName(), ruleTable.TableName())
+		err = ruleTable.CreateOrUpdateTable(glueClient, outputs["ProcessedDataBucket"])
+		if err != nil {
+			return errors.Wrapf(err, "could not create glue rule table for %s.%s",
+				ruleTable.DatabaseName(), ruleTable.TableName())
+		}
+		err = ruleTable.SyncPartitions(glueClient, s3Client, zeroStartTime)
+		if err != nil {
+			logger.Fatalf("deploy: failed syncing %s.%s: %v",
+				ruleTable.DatabaseName(), ruleTable.TableName(), err)
+		}
+	}
+
+	logger.Info("deploy: DONE!")
 
 	return nil
 }

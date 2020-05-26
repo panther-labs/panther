@@ -19,8 +19,6 @@ package api
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/pkg/errors"
 
 	lpmodels "github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
@@ -50,21 +48,17 @@ func addGlueTables(input *models.PutIntegrationInput) error {
 func addGlueTablesForLogType(logType string) error {
 	logTable := registry.AvailableParsers().LookupParser(logType).GlueTableMetadata // get the table description
 
-	_, err := logTable.CreateTable(glueClient, env.ProcessedDataBucket)
+	err := logTable.CreateOrUpdateTable(glueClient, env.ProcessedDataBucket)
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); (ok && awsErr.Code() != glue.ErrCodeAlreadyExistsException) || !ok {
-			return errors.Wrapf(err, "could not create glue log table for %s", logType)
-		}
+		return errors.Wrapf(err, "could not create glue log table for %s", logType)
 	}
 
 	// the corresponding rule table shares the same structure as the log table + some columns
 	ruleTable := awsglue.NewGlueTableMetadata(
 		lpmodels.RuleData, logTable.LogType(), logTable.Description(), awsglue.GlueTableHourly, logTable.EventStruct())
-	_, err = ruleTable.CreateTable(glueClient, env.ProcessedDataBucket)
+	err = ruleTable.CreateOrUpdateTable(glueClient, env.ProcessedDataBucket)
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); (ok && awsErr.Code() != glue.ErrCodeAlreadyExistsException) || !ok {
-			return errors.Wrapf(err, "could not create glue rule table for %s", logType)
-		}
+		return errors.Wrapf(err, "could not create glue rule table for %s", logType)
 	}
 
 	return nil
