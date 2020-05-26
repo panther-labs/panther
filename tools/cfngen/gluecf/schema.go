@@ -22,6 +22,7 @@ package gluecf
 
 import (
 	"fmt"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"reflect"
 	"strconv"
 	"strings"
@@ -125,7 +126,7 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 	}
 
 	// Rewrite field the same way as the jsoniter extension to avoid invalid column names
-	fieldName = parsers.RewriteFieldName(fieldName)
+	fieldName = pantherlog.RewriteFieldName(fieldName)
 
 	comment = sf.Tag.Get("description")
 
