@@ -1,5 +1,7 @@
 query ListLogSources {
   listLogIntegrations {
-    ...LogIntegrationDetails
+    ... on S3LogIntegration {
+      ...S3LogIntegrationDetails
+    }
   }
 }

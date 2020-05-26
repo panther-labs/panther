@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 
 # pylint: disable=too-many-instance-attributes
@@ -29,6 +29,7 @@ class EventMatch:
     dedup: str
     dedup_period_mins: int
     event: Dict[str, Any]
+    rule_tags: List[str] = field(default_factory=list)
     title: Optional[str] = None
 
 

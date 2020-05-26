@@ -11,7 +11,7 @@ schema {
 type Mutation {
   addDestination(input: DestinationInput!): Destination
   addComplianceIntegration(input: AddComplianceIntegrationInput!): ComplianceIntegration!
-  addLogIntegration(input: AddLogIntegrationInput!): LogIntegration!
+  addS3LogIntegration(input: AddS3LogIntegrationInput!): S3LogIntegration!
   addPolicy(input: AddPolicyInput!): PolicyDetails
   addRule(input: AddRuleInput!): RuleDetails
   deleteDestination(id: ID!): Boolean
@@ -27,7 +27,7 @@ type Mutation {
   testPolicy(input: TestPolicyInput): TestPolicyResponse
   updateDestination(input: DestinationInput!): Destination
   updateComplianceIntegration(input: UpdateComplianceIntegrationInput!): ComplianceIntegration!
-  updateLogIntegration(input: UpdateLogIntegrationInput!): LogIntegration!
+  updateS3LogIntegration(input: UpdateS3LogIntegrationInput!): S3LogIntegration!
   updateGeneralSettings(input: UpdateGeneralSettingsInput!): GeneralSettings!
   updatePolicy(input: UpdatePolicyInput!): PolicyDetails
   updateRule(input: UpdateRuleInput!): RuleDetails
@@ -46,8 +46,8 @@ type Query {
   getComplianceIntegrationTemplate(
     input: GetComplianceIntegrationTemplateInput!
   ): IntegrationTemplate!
-  getLogIntegration(id: ID!): LogIntegration!
-  getLogIntegrationTemplate(input: GetLogIntegrationTemplateInput!): IntegrationTemplate!
+  getS3LogIntegration(id: ID!): S3LogIntegration!
+  getS3LogIntegrationTemplate(input: GetS3LogIntegrationTemplateInput!): IntegrationTemplate!
   remediations: AWSJSON
   resource(input: GetResourceInput!): ResourceDetails
   resources(input: ListResourcesInput): ListResourcesResponse
@@ -71,7 +71,7 @@ input GetComplianceIntegrationTemplateInput {
   cweEnabled: Boolean
 }
 
-input GetLogIntegrationTemplateInput {
+input GetS3LogIntegrationTemplateInput {
   awsAccountId: String!
   integrationLabel: String!
   s3Bucket: String!
@@ -108,7 +108,7 @@ type ComplianceIntegrationHealth {
   remediationRoleStatus: IntegrationItemHealthStatus!
 }
 
-type LogIntegrationHealth {
+type S3LogIntegrationHealth {
   processingRoleStatus: IntegrationItemHealthStatus!
   s3BucketStatus: IntegrationItemHealthStatus!
   kmsKeyStatus: IntegrationItemHealthStatus!
@@ -346,17 +346,20 @@ type ComplianceIntegration {
   stackName: String!
 }
 
-type LogIntegration {
+union LogIntegration = S3LogIntegration
+
+type S3LogIntegration {
   awsAccountId: String!
   createdAtTime: AWSDateTime!
   createdBy: ID!
   integrationId: ID!
+  integrationType: String!
   integrationLabel: String!
   s3Bucket: String!
   s3Prefix: String
   kmsKey: String
   logTypes: [String!]!
-  health: LogIntegrationHealth!
+  health: S3LogIntegrationHealth!
   stackName: String!
 }
 
@@ -367,7 +370,7 @@ input AddComplianceIntegrationInput {
   cweEnabled: Boolean
 }
 
-input AddLogIntegrationInput {
+input AddS3LogIntegrationInput {
   awsAccountId: String!
   integrationLabel: String!
   s3Bucket: String!
@@ -383,7 +386,7 @@ input UpdateComplianceIntegrationInput {
   remediationEnabled: Boolean
 }
 
-input UpdateLogIntegrationInput {
+input UpdateS3LogIntegrationInput {
   integrationId: String!
   integrationLabel: String
   s3Bucket: String

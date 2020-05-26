@@ -21,38 +21,6 @@ Transform: AWS::Serverless-2016-10-31
 Description: Test CF for generating alarms
 
 Resources:
-  # DDB
-  ComplianceTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: panther-compliance
-      AttributeDefinitions:
-        - AttributeName: policyId
-          AttributeType: S
-        - AttributeName: resourceId
-          AttributeType: S
-      BillingMode: PAY_PER_REQUEST
-      GlobalSecondaryIndexes:
-        - # Add an index for policyId to efficiently search for a specific policy
-          KeySchema:
-            - AttributeName: policyId
-              KeyType: HASH
-          IndexName: policy-index
-          Projection:
-            ProjectionType: ALL
-      KeySchema:
-        - AttributeName: resourceId
-          KeyType: HASH
-        - AttributeName: policyId
-          KeyType: RANGE
-      PointInTimeRecoverySpecification:
-        PointInTimeRecoveryEnabled: True
-      SSESpecification:
-        SSEEnabled: True
-      TimeToLiveSpecification:
-        AttributeName: expiresAt
-        Enabled: True
-
   # SNS
   Notifications:
     Type: AWS::SNS::Topic
@@ -77,57 +45,6 @@ Resources:
     Properties:
       QueueName: test-sqs-dlq
       MessageRetentionPeriod: 1209600 # Max duration - 14 days
-
-  # Lambda
-  Function:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: test-lambda
-      Description: Test lambda
-      CodeUri: ../../out/bin/internal/test/main
-      Handler: main
-      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 128
-      Runtime: go1.x
-      Timeout: 60
-      Events:
-        Queue:
-          Type: SQS
-          Properties:
-            Queue: !GetAtt Queue.Arn
-            BatchSize: 10
-      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
-      Policies:
-        - Id: ReceiveFromInputSqsQueue
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - sqs:DeleteMessage
-                - sqs:GetQueueAttributes
-                - sqs:ReceiveMessage
-              Resource: !GetAtt Queue.Arn
-        - Id: OutputToS3
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action: s3:PutObject
-              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/logs*
-        - Id: NotifySns
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action: sns:Publish
-              Resource: !Ref SnsTopicArn
-        - Id: AccessSqsKms
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - kms:Decrypt
-                - kms:Encrypt
-                - kms:GenerateDataKey
-              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SQSKeyId}
 
   MyStateMachine:
     Type: 'AWS::StepFunctions::StateMachine'

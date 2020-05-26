@@ -17,7 +17,7 @@
  */
 
 import { Alert, Box } from 'pouncejs';
-import { Field, Formik } from 'formik';
+import { Field, Form, Formik } from 'formik';
 import React from 'react';
 import * as Yup from 'yup';
 import { createYupPasswordValidationSchema } from 'Helpers/utils';
@@ -66,8 +66,8 @@ const ChangePasswordForm: React.FC = () => {
         })
       }
     >
-      {({ handleSubmit, status, isSubmitting, isValid, dirty }) => (
-        <form onSubmit={handleSubmit}>
+      {({ status }) => (
+        <Form>
           <Box mb={6}>
             <Alert variant="info" title="Updating your password will log you out of all devices!" />
           </Box>
@@ -103,14 +103,8 @@ const ChangePasswordForm: React.FC = () => {
             aria-required
             mb={6}
           />
-          <SubmitButton
-            width={1}
-            submitting={isSubmitting}
-            disabled={isSubmitting || !isValid || !dirty}
-          >
-            Change password
-          </SubmitButton>
-        </form>
+          <SubmitButton width={1}>Change password</SubmitButton>
+        </Form>
       )}
     </Formik>
   );

@@ -41,13 +41,12 @@ type AppSyncAlarmProperties struct {
 }
 
 func customAppSyncAlarms(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
-	var props AppSyncAlarmProperties
-	if err := parseProperties(event.ResourceProperties, &props); err != nil {
-		return "", nil, err
-	}
-
 	switch event.RequestType {
 	case cfn.RequestCreate, cfn.RequestUpdate:
+		var props AppSyncAlarmProperties
+		if err := parseProperties(event.ResourceProperties, &props); err != nil {
+			return "", nil, err
+		}
 		return "custom:alarms:appsync:" + props.APIID, nil, putAppSyncAlarmGroup(props)
 
 	case cfn.RequestDelete:
@@ -65,7 +64,7 @@ func putAppSyncAlarmGroup(props AppSyncAlarmProperties) error {
 		AlarmDescription: aws.String(fmt.Sprintf(
 			"AppSync %s has elevated 4XX errors. See: %s#%s",
 			props.APIName, alarmRunbook, props.APIName)),
-		AlarmName:          aws.String(fmt.Sprintf("Panther-%s-%s", appSyncClientErrorAlarm, props.APIName)),
+		AlarmName:          aws.String(fmt.Sprintf("Panther-%s-%s", appSyncClientErrorAlarm, props.APIID)),
 		ComparisonOperator: aws.String(cloudwatch.ComparisonOperatorGreaterThanThreshold),
 		Dimensions: []*cloudwatch.Dimension{
 			{Name: aws.String("GraphQLAPIId"), Value: &props.APIID},
@@ -85,7 +84,7 @@ func putAppSyncAlarmGroup(props AppSyncAlarmProperties) error {
 	input.AlarmDescription = aws.String(fmt.Sprintf(
 		"AppSync %s is reporting server errors. See: %s#%s",
 		props.APIName, alarmRunbook, props.APIName))
-	input.AlarmName = aws.String(fmt.Sprintf("Panther-%s-%s", appSyncServerErrorAlarm, props.APIName))
+	input.AlarmName = aws.String(fmt.Sprintf("Panther-%s-%s", appSyncServerErrorAlarm, props.APIID))
 	input.MetricName = aws.String("5XXError")
 	input.Threshold = aws.Float64(float64(props.ServerErrorThreshold))
 	return putMetricAlarm(input)

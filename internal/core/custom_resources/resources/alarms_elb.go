@@ -46,17 +46,16 @@ type ElbAlarmProperties struct {
 }
 
 func customElbAlarms(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
-	var props ElbAlarmProperties
-	if err := parseProperties(event.ResourceProperties, &props); err != nil {
-		return "", nil, err
-	}
-
-	if props.LatencyThresholdSeconds == 0 {
-		props.LatencyThresholdSeconds = 0.5
-	}
-
 	switch event.RequestType {
 	case cfn.RequestCreate, cfn.RequestUpdate:
+		var props ElbAlarmProperties
+		if err := parseProperties(event.ResourceProperties, &props); err != nil {
+			return "", nil, err
+		}
+
+		if props.LatencyThresholdSeconds == 0 {
+			props.LatencyThresholdSeconds = 0.5
+		}
 		return "custom:alarms:elb:" + props.LoadBalancerFriendlyName, nil, putElbAlarmGroup(props)
 
 	case cfn.RequestDelete:

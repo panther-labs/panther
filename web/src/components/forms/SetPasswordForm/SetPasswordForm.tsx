@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Field, Formik } from 'formik';
+import { Field, Form, Formik } from 'formik';
 import React from 'react';
 import * as Yup from 'yup';
 import { createYupPasswordValidationSchema } from 'Helpers/utils';
@@ -62,8 +62,8 @@ const SetPasswordForm: React.FC = () => {
         })
       }
     >
-      {({ handleSubmit, status, isSubmitting, isValid, dirty }) => (
-        <Box as="form" width={1} onSubmit={handleSubmit}>
+      {({ status }) => (
+        <Form>
           {status && (
             <Box mb={6}>
               <Alert variant="error" title={status.title} description={status.message} />
@@ -87,13 +87,7 @@ const SetPasswordForm: React.FC = () => {
             aria-required
             mb={6}
           />
-          <SubmitButton
-            width={1}
-            submitting={isSubmitting}
-            disabled={isSubmitting || !isValid || !dirty}
-          >
-            Set password
-          </SubmitButton>
+          <SubmitButton width={1}>Set password</SubmitButton>
           <Text size="medium" mt={6} color="grey200">
             By continuing, you agree to Panther&apos;s&nbsp;
             <a
@@ -112,7 +106,7 @@ const SetPasswordForm: React.FC = () => {
               Privacy Policy
             </a>
           </Text>
-        </Box>
+        </Form>
       )}
     </Formik>
   );

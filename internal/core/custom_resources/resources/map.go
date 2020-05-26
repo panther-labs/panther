@@ -47,6 +47,15 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// PhysicalId: custom:alarms:appsync:$API_ID
 	"Custom::AppSyncAlarms": customAppSyncAlarms,
 
+	// CloudWatch alarms for Dynamo errors, throttles, and latency
+	//
+	// Parameters:
+	//     AlarmTopicArn:  string (required)
+	//     TableName:      string (required)
+	// Outputs: None
+	// PhysicalId: custom:alarms:dynamodb:$TABLE_NAME
+	"Custom::DynamoDBAlarms": customDynamoDBAlarms,
+
 	// CloudWatch alarms for ELB errors, latency, and health
 	//
 	// Parameters:
@@ -76,6 +85,23 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	//
 	// Deleting this resource has no effect on the user pool.
 	"Custom::CognitoUserPoolMfa": customCognitoUserPoolMfa,
+
+	// Creates alarms for lambda errors, warning, throttles, duration, and memory
+	//
+	// Parameters:
+	//     AlarmTopicArn:           string (required)
+	//     FunctionName:            string (required)
+	//
+	//     FunctionMemoryMB:        int (default: 128)
+	//     FunctionTimeoutSec:      int (default: 60)
+	//
+	//     LoggedErrorThreshold:    int (default: 0)
+	//     LoggedWarnThreshold:     int (default: 25)
+	//     ExecutionErrorThreshold: int (default: 0)
+	//     ThrottleThreshold:       int (default: 5)
+	// Outputs: None
+	// PhysicalId: custom:alarms:lambda:$FUNCTION_NAME
+	"Custom::LambdaAlarms": customLambdaAlarms,
 
 	// Creates error/warn/memory metric filters on a Lambda function's CloudWatch log group.
 	//

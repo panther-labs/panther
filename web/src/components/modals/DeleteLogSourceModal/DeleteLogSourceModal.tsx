@@ -24,9 +24,10 @@ import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
 export interface DeleteLogSourceModalProps {
   source: LogIntegration;
+  description: string;
 }
 
-const DeleteLogSourceModal: React.FC<DeleteLogSourceModalProps> = ({ source }) => {
+const DeleteLogSourceModal: React.FC<DeleteLogSourceModalProps> = ({ source, description }) => {
   const sourceDisplayName = source.integrationLabel;
   const { pushSnackbar } = useSnackbar();
   const [deleteLogSource] = useDeleteLogSource({
@@ -64,9 +65,7 @@ const DeleteLogSourceModal: React.FC<DeleteLogSourceModalProps> = ({ source }) =
           Are you sure you want to delete <b>{sourceDisplayName}</b>?
         </Text>,
         <Text size="medium" color="grey300" mt={6} key={1}>
-          Deleting this source will not delete the associated Cloudformation stack. You will need to
-          manually delete the stack <b>{source.stackName}</b> from the{' '}
-          <b>AWS Account {source.awsAccountId}</b>
+          {description}
         </Text>,
       ]}
       onConfirm={deleteLogSource}

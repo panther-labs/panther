@@ -4,7 +4,7 @@ description: How to configure and analyze osquery data with Panther
 
 # Tutorial: Osquery Log Analysis
 
-![Osquery and Panther](../.gitbook/assets/tutorials/osquery-panther.png)
+![ Panther and Osquery](../.gitbook/assets/tutorials/osquery-panther.png)
 
 ## Overview
 

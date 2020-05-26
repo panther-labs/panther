@@ -45,7 +45,8 @@ class TestEngine(TestCase):
                 'resourceTypes': ['log'],
                 'body': 'def rule(event):\n\treturn True',
                 'versionId': 'version',
-                'dedupPeriodMinutes': 120
+                'dedupPeriodMinutes': 120,
+                'tags': ['test-tag']
             },  # This rule should match the event
             {
                 'id': 'rule_id_2',
@@ -64,6 +65,7 @@ class TestEngine(TestCase):
                 log_type='log',
                 dedup='defaultDedupString:rule_id_1',
                 dedup_period_mins=120,
+                rule_tags=['test-tag'],
                 event={}
             )
         ]
