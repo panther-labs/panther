@@ -8,7 +8,7 @@ export const demoData = {
       },
       {
         timestamp: '5/15',
-        count: 5,
+        count: 50,
       },
       {
         timestamp: '5/16',
@@ -28,7 +28,7 @@ export const demoData = {
       },
       {
         timestamp: '5/20',
-        count: 4,
+        count: 42,
       },
     ],
   },

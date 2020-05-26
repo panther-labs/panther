@@ -17,3 +17,4 @@
  */
 
 export { default as TimeSeriesLines } from './TimeSeriesLines';
+export { default as TimeSeriesZoomableLines } from './TimeSeriesZoomableLines';

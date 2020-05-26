@@ -22,8 +22,7 @@ import Panel from 'Components/Panel';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage } from 'Helpers/utils';
-import Charts from 'Components/Charts';
-import { demoData } from 'Components/Charts/components/demoData';
+import Charts, { demoData } from 'Components/Charts';
 import { useGetOrganizationStats } from './graphql/getOrganizationStats.generated';
 import PoliciesBySeverityChart from './PoliciesBySeverityChart';
 import PoliciesByStatusChart from './PoliciesByStatusChart';
@@ -62,7 +61,7 @@ const ComplianceOverview: React.FC = () => {
     <Box as="article" mb={6}>
       {/* TODO Remove this */}
       <Card p={6} mb={3} width={'50%'}>
-        <Charts data={demoData} chartType="Lines" title="Policy Severity" height={150} />
+        <Charts data={demoData} chartType="Lines" title="Policy Severity" height={250} />
       </Card>
       <SimpleGrid columns={4} spacing={3} as="section" mb={3}>
         <DonutChartWrapper title="Policy Severity" icon="policy">

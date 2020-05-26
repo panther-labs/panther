@@ -17,3 +17,4 @@
  */
 
 export { default } from './Charts';
+export { demoData } from './components/demoData';

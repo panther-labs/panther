@@ -20,7 +20,7 @@ import React from 'react';
 import { Text } from 'pouncejs';
 import echarts from 'echarts';
 
-import { TimeSeriesLines } from './components';
+import { TimeSeriesLines, TimeSeriesZoomableLines } from './components';
 import { ChartsThemeEnum, ChartThemeType, ChartType, ThemeOptions } from './constants';
 
 interface ChartsProps {
@@ -55,8 +55,8 @@ interface ChartsProps {
 
 const getComponent = (type: ChartType) => {
   switch (type) {
-    // case 'ZoomableLines':
-    //   return TimeSeriesZoomableLines;
+    case 'ZoomableLines':
+      return TimeSeriesZoomableLines;
     case 'Lines':
     default:
       return TimeSeriesLines;
