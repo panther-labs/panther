@@ -42,3 +42,41 @@ var Validator = validator.New()
 
 // JSON re-exports pantherlog.JSON
 var JSON = pantherlog.JSON
+
+type Interface interface {
+	ParseLog(log string) ([]*pantherlog.Result, error)
+}
+
+type logParserAdapter struct {
+	LogParser
+}
+
+func (a *logParserAdapter) ParseLog(log string) ([]*pantherlog.Result, error) {
+	logs, err := a.LogParser.Parse(log)
+	if err != nil {
+		return nil, err
+	}
+	results := make([]*pantherlog.Result, len(logs))
+	for i := range results {
+		result, err := logs[i].Result()
+		if err != nil {
+			return nil, err
+		}
+		results[i] = result
+	}
+	return results, nil
+}
+
+func NewAdapter(parser LogParser) Interface {
+	return &logParserAdapter{
+		LogParser: parser.New(),
+	}
+}
+
+func AdapterFactory(parser LogParser) ParserFactory {
+	return func() Interface {
+		return &logParserAdapter{
+			LogParser: parser.New(),
+		}
+	}
+}

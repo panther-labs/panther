@@ -29,6 +29,7 @@ import (
 )
 
 const (
+	TypeAccess            = `Nginx.Access`
 	accessNumberOfColumns = 10
 	// User Identifier field - the second field in the logs - is always '-' for Nginx Access
 	accessUserIdentifier           = "-"
@@ -120,7 +121,7 @@ func (p *AccessParser) Parse(log string) ([]*parsers.PantherLog, error) {
 
 // LogType returns the log type supported by this parser
 func (p *AccessParser) LogType() string {
-	return "Nginx.Access"
+	return TypeAccess
 }
 
 func (event *Access) updatePantherFields(p *AccessParser) {

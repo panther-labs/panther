@@ -65,6 +65,11 @@ func NewGlueTableMetadata(
 	}
 }
 
+// NewLogTableMetadata is a convenience function to define log data table metadata with hourly resolution
+func NewLogTableMetadata(logType, desc string, eventStruct interface{}) *GlueTableMetadata {
+	return NewGlueTableMetadata(models.LogData, logType, desc, GlueTableHourly, eventStruct)
+}
+
 func (gm *GlueTableMetadata) DatabaseName() string {
 	return gm.databaseName
 }
