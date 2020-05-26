@@ -34,7 +34,7 @@ import (
 )
 
 const (
-	maxCommentLength = 255 // this is the maximum size for a column comment allowed by CloudFormation
+	maxCommentLength = 255 // this is the maximum size for a column comment (clip if larger)
 
 	GlueTimestampType = "timestamp"
 )
@@ -119,7 +119,7 @@ type Column struct {
 	Name     string
 	Type     string // this is the Glue type
 	Comment  string `json:",omitempty"`
-	Required bool   `json:"-"` // do NOT serialize! Not used for Glue CF (used for doc).
+	Required bool   `json:"-"` // do NOT serialize! Not used for Glue types (used for doc).
 }
 
 // Functions to infer schema by reflection
