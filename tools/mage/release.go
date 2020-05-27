@@ -69,7 +69,7 @@ func Release() {
 		logger.Fatal(err)
 	}
 
-	logger.Infof("release: using S3 bucket %s for temporary SAR packaging", bucket)
+	logger.Infof("release: using S3 bucket %s for SAR packaging", bucket)
 
 	templates := []string{
 		bootstrapTemplate, gatewayTemplate, appsyncTemplate, coreTemplate,
@@ -109,12 +109,12 @@ func buildSarAssets() error {
 
 // Get the name of the bucket for staging SAR packaging and set its policy.
 //
-// After the SAR app is created, these assets can be safely discarded.
+// Lambda source can be safely removed from the bucket after publishing the SAR app,
+// but other packaged assets (GraphQL schema, nested templates, etc) must remain.
 func sarStagingBucket(awsSession *session.Session) (string, error) {
 	bucket := os.Getenv("BUCKET")
 	if bucket == "" {
-		return "", errors.New("define BUCKET env variable " +
-			"(S3 bucket in us-east-1 for temporarily staging SAR assets)")
+		return "", errors.New("define BUCKET env variable (S3 bucket for staging SAR assets)")
 	}
 
 	_, err := s3.New(awsSession).PutBucketPolicy(&s3.PutBucketPolicyInput{
