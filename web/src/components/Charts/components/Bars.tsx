@@ -18,9 +18,7 @@
 
 import React from 'react';
 import echarts from 'echarts';
-import { theme as Theme } from 'pouncejs';
-import ReactEcharts from 'echarts-for-react';
-import { ChartsThemeEnum, ChartThemeType, ThemeOptions } from '../constants';
+import { Box, theme as Theme } from 'pouncejs';
 
 interface Data {
   value: number;
@@ -30,124 +28,91 @@ interface Data {
 
 interface BarsProps {
   data: Data[];
-  theme?: ChartThemeType;
-  height?: number | string;
-  width?: number | string;
-  loading?: boolean;
 }
 
-const Bars: React.FC<BarsProps> = ({
-  data,
-  theme = ChartsThemeEnum.light,
-  height,
-  width,
-  loading,
-}) => {
-  echarts.registerTheme(theme, ThemeOptions[theme]);
-  /*
-   * 'xAxisData' must be an array of values that is common for all series
-   * Must be ordered
-   * e.g. [05/14, 05/15, [04,16]
-   */
-  // const xAxisData = data[Object.keys(data)[0]].points.map(p => p.timestamp);
+const Bars: React.FC<BarsProps> = ({ data }) => {
+  const container = React.useRef<HTMLDivElement>(null);
 
-  /*
-   * 'legendData' must be an array of values that matches 'series.name'in order
-   * to display them in correct order and color
-   * e.g. [AWS.ALB]
-   */
-  const legendData = data.map(e => e.label);
+  React.useEffect(() => {
+    // We are not allowed to put async function directly in useEffect. Instead, we should define
+    // our own async function and call it within useEffect
+    (async () => {
+      /*
+       * 'legendData' must be an array of values that matches 'series.name'in order
+       * to display them in correct order and color
+       * e.g. [AWS.ALB]
+       */
+      const legendData = data.map(e => e.label);
 
-  /*
-   * 'series' must be an array of objects that includes some graph options
-   * like 'type', 'symbol' and 'itemStyle' and most importantly 'data' which
-   * is an array of values for all datapoints
-   * Must be ordered
-   */
+      /*
+       * 'series' must be an array of objects that includes some graph options
+       * like 'type', 'symbol' and 'itemStyle' and most importantly 'data' which
+       * is an array of values for all datapoints
+       * Must be ordered
+       */
+      const series = data.map((e, seriesIndex) => {
+        return {
+          name: e.label,
+          type: 'bar',
+          barWidth: 30,
+          barGap: '-100%',
+          label: {
+            show: true,
+            position: 'top',
+            color: 'black',
+          },
+          itemStyle: {
+            color: Theme.colors[e.color],
+            barBorderRadius: 24,
+          },
+          data: data.map((d, i) => (i === seriesIndex ? d.value : '-')),
+        };
+      });
 
-  const series = data.map((e, seriesIndex) => {
-    return {
-      name: e.label,
-      type: 'bar',
-      // stack: 'a',
-      barWidth: 30,
-      // progressive: 5000,
-      barGap: '-100%',
-      label: {
-        show: true,
-        position: 'top',
-        color: 'black',
-      },
-      itemStyle: {
-        color: Theme.colors[e.color],
-        barBorderRadius: 24,
-      },
-      data: data.map((d, i) => (i === seriesIndex ? d.value : '-')),
-    };
-  });
+      const options = {
+        grid: {
+          left: 100,
+          right: 20,
+          bottom: 20,
+          top: 30,
+          containLabel: true,
+        },
+        tooltip: {
+          position: pt => [pt[0], '100%'],
+          formatter: params => {
+            return `${params.seriesName} : ${params.value}`;
+          },
+        },
+        legend: {
+          type: 'scroll',
+          orient: 'vertical',
+          left: 'left',
+          icon: 'circle',
+          data: legendData,
+        },
+        xAxis: {
+          // FIXME: This probably need to change to 'time' value with real data
+          show: false,
+          type: 'category',
+          boundaryGap: true,
+          data: data.map((e, i) => i),
+        },
+        yAxis: {
+          show: false,
+          type: 'value',
+          boundaryGap: true,
+        },
+        series,
+      };
 
-  const options = {
-    grid: {
-      left: 100,
-      right: 20,
-      bottom: 20,
-      top: 30,
-      containLabel: true,
-    },
-    tooltip: {
-      // trigger: 'axis',
-      position: pt => [pt[0], '100%'],
-      // axisPointer: {
-      //   // 坐标轴指示器，坐标轴触发有效
-      //   type: 'shadow', // 默认为直线，可选为：'line' | 'shadow'
-      // },
-      formatter: params => {
-        return `${params.seriesName} : ${params.value}`;
-      },
-    },
-    legend: {
-      type: 'scroll',
-      orient: 'vertical',
-      left: 'left',
-      icon: 'circle',
-      data: legendData,
-    },
-    xAxis: {
-      // FIXME: This probably need to change to 'time' value with real data
-      show: false,
-      type: 'category',
-      boundaryGap: true,
-      data: data.map((e, i) => i),
-    },
-    yAxis: {
-      show: false,
-      type: 'value',
-      boundaryGap: true,
-    },
-    series,
-  };
-
-  /*
-   * 'loadingOption' sets up an out-of-box loading component 'echarts' is offering
-   * to show a spinning loading animation
-   */
-  const loadingOption = {
-    text: 'Loading',
-    color: '#4413c2',
-    textColor: '#270240',
-    maskColor: 'rgba(176,175,175,0.3)',
-  };
-
-  return (
-    <ReactEcharts
+      // load the bar chart
+      const barChart = echarts.init(container.current);
       // @ts-ignore
-      option={options}
-      theme={theme}
-      loadingOption={loadingOption}
-      style={{ width, height }}
-      showLoading={loading}
-    />
-  );
+      barChart.setOption(options);
+    })();
+  }, [data]);
+
+  return <Box ref={container} width="100%" height="100%" />;
 };
 
 export default Bars;
