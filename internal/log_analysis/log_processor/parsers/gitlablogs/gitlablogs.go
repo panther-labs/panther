@@ -1,5 +1,7 @@
 package gitlablogs
 
+import "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -22,3 +24,53 @@ package gitlablogs
 
 // PantherPrefix is the prefix of all logs parsed by this package
 const PantherPrefix = "GitLab"
+
+var (
+	LogTypeExceptions = parsers.LogType{
+		Name:        TypeExceptions,
+		Description: ExceptionsDesc,
+		Schema:      Exceptions{},
+		NewParser:   parsers.AdapterFactory(&ExceptionsParser{}),
+	}
+	LogTypeAPI = parsers.LogType{
+		Name:        TypeAPI,
+		Description: APIDesc,
+		Schema:      API{},
+		NewParser:   parsers.AdapterFactory(&APIParser{}),
+	}
+	LogTypeIntegrations = parsers.LogType{
+		Name:        TypeIntegrations,
+		Description: IntegrationsDesc,
+		Schema:      Integrations{},
+		NewParser:   parsers.AdapterFactory(&IntegrationsParser{}),
+	}
+	LogTypeAudit = parsers.LogType{
+		Name:        TypeAudit,
+		Description: AuditDesc,
+		Schema:      Audit{},
+		NewParser:   parsers.AdapterFactory(&AuditParser{}),
+	}
+	LogTypeGit = parsers.LogType{
+		Name:        TypeGit,
+		Description: GitDesc,
+		Schema:      Git{},
+		NewParser:   parsers.AdapterFactory(&GitParser{}),
+	}
+	LogTypeRails = parsers.LogType{
+		Name:        TypeRails,
+		Description: RailsDesc,
+		Schema:      Rails{},
+		NewParser:   parsers.AdapterFactory(&RailsParser{}),
+	}
+)
+
+func init() {
+	parsers.MustRegister(
+		LogTypeAPI,
+		LogTypeAudit,
+		LogTypeExceptions,
+		LogTypeGit,
+		LogTypeIntegrations,
+		LogTypeRails,
+	)
+}
