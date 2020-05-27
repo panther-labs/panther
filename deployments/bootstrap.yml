@@ -15,7 +15,16 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
 Description: The very first Panther stack - static resources which don't require S3 for deployment
+
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: panther-community-bootstrap
+    Author: Panther Labs
+    Description: Panther Community (nested app) - Detect threats with log data and improve cloud security posture
+    HomePageUrl: https://runpanther.io
+    SourceCodeUrl: https://github.com/panther-labs/panther
 
 # This stack has resources which take a long time or have generated IDs that we need.
 # The idea is to build such resources as early as possible to maximize parallelism later.
@@ -30,7 +39,6 @@ Description: The very first Panther stack - static resources which don't require
 #   - The cognito user pool and appsync API
 
 Parameters:
-  # Optional
   LogSubscriptionPrincipals:
     Type: CommaDelimitedList
     Description: The list of Principal ARNs to allow read access to the ProcessedDataBucket and subscribe access to ProcessedDataTopicArn
@@ -42,6 +50,10 @@ Parameters:
   AccessLogsBucket:
     Type: String
     Description: Optional external bucket for storing S3 access logs. If not specified, the Panther audit bucket is used.
+    Default: ''
+  DataReplicationBucket:
+    Type: String
+    Description: Optional external bucket for replicating processed data in s3 glacier.
     Default: ''
   CloudWatchLogRetentionDays:
     Type: Number
@@ -64,6 +76,11 @@ Parameters:
     Type: String
     Description: An existing SNS topic for CloudWatch alarms. If not specified, one is created for you.
     Default: ''
+  DeployFromSource:
+    Type: String
+    Description: A few extra resources are required when deploying from source
+    Default: false
+    AllowedValues: [true, false]
 
 Mappings:
   SubnetConfig:
@@ -127,10 +144,12 @@ Conditions:
   ConfigureLogSubscriptions: !Not [!Equals [!Select [0, !Ref LogSubscriptionPrincipals], '']]
   EnableAccessLogs: !Equals [!Ref EnableS3AccessLogs, true]
   ExternalAccessLogs: !Not [!Equals [!Ref AccessLogsBucket, '']]
+  ReplicateData: !Not [!Equals [!Ref DataReplicationBucket, '']]
   TracingEnabled: !Not [!Equals [!Ref TracingMode, '']]
   UseCustomDomain: !Not [!Equals [!Ref CustomDomain, '']]
   EnableDebug: !Equals [!Ref Debug, true]
   CreateAlarmSNSTopic: !Equals [!Ref AlarmTopicArn, '']
+  IsDeployFromSource: !Equals [!Ref DeployFromSource, true]
 
 Resources:
   ########## S3 Buckets ##########
@@ -244,6 +263,7 @@ Resources:
                 aws:SecureTransport: false
 
   Source: # Staging bucket for CloudFormation to upload templates, Lambda source, etc
+    Condition: IsDeployFromSource
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
@@ -271,6 +291,7 @@ Resources:
         Status: Enabled
 
   SourceBucketPolicy:
+    Condition: IsDeployFromSource
     Type: AWS::S3::BucketPolicy
     Properties:
       Bucket: !Ref Source
@@ -336,6 +357,16 @@ Resources:
         - DestinationBucketName: !If [ExternalAccessLogs, !Ref AccessLogsBucket, !Ref AuditLogs]
           LogFilePrefix: !Sub panther-processed-data-${AWS::AccountId}-${AWS::Region}/
         - !Ref AWS::NoValue
+      ReplicationConfiguration: !If
+        - ReplicateData
+        - Role: !Sub arn:aws:iam::${AWS::AccountId}:role/panther-data-replication-role
+          Rules:
+            - Destination:
+                Bucket: !Ref DataReplicationBucket
+                StorageClass: GLACIER
+              Prefix: ''
+              Status: Enabled
+        - !Ref AWS::NoValue
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -348,6 +379,44 @@ Resources:
       AccessControl: Private
       VersioningConfiguration:
         Status: Enabled
+
+  DataReplicationRole:
+    Condition: ReplicateData
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: panther-data-replication-role
+      Description: Role used by S3 for data replication
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Principal:
+              Service: s3.amazonaws.com
+      Policies:
+        - PolicyName: ReadData
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetReplicationConfiguration
+                  - s3:ListBucket
+                Resource: !GetAtt ProcessedData.Arn
+              - Effect: Allow
+                Action:
+                  - s3:GetObjectVersion
+                  - s3:GetObjectVersionAcl
+                  - s3:GetObjectVersionTagging
+                Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedData}/*
+        - PolicyName: ReplicateData
+          PolicyDocument:
+            Statement:
+              Effect: Allow
+              Action:
+                - s3:ReplicateObject
+                - s3:ReplicateDelete
+                - s3:ReplicateTags
+              Resource: !Sub ${DataReplicationBucket}/*
 
   ProcessedDataPolicy: # read access on processed data bucket for log subscriptions
     Condition: ConfigureLogSubscriptions
@@ -528,8 +597,9 @@ Resources:
                   - dynamodb:UpdateTable
                 Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-*
 
-  ########## ECR + ECS ##########
+  ########## ECR ##########
   PantherWebImageRepository:
+    Condition: IsDeployFromSource
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: panther-web
@@ -550,11 +620,6 @@ Resources:
               }
             ]
           }
-
-  WebApplicationCluster:
-    Type: AWS::ECS::Cluster
-    Properties:
-      ClusterName: panther-web-cluster
 
   ########## Networking ##########
   # A VPC that will be used by our stack's security group, added to our web-service
@@ -624,17 +689,6 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetTwo
       RouteTableId: !Ref PublicRouteTable
-
-  # Panther monitors itself, the AuditLogsBucket is processed by the log processor
-  FlowLogs:
-    Type: AWS::EC2::FlowLog
-    DependsOn: AuditLogsBucketPolicy
-    Properties:
-      LogDestination: !Sub arn:${AWS::Partition}:s3:::${AuditLogs}
-      LogDestinationType: s3
-      ResourceId: !Ref VPC
-      ResourceType: VPC
-      TrafficType: ALL
 
   # Public load balancer, hosted in public subnets that is accessible
   # to the public, and is intended to route traffic to one or more public
@@ -888,10 +942,14 @@ Outputs:
     Description: S3 bucket name for processed log data
     Value: !Ref ProcessedData
   SourceBucket:
+    Condition: IsDeployFromSource
     Description: S3 bucket name for Panther CloudFormation packaging
     Value: !Ref Source
 
   # Networking + elb
+  VpcId:
+    Description: Web VPC ID
+    Value: !Ref VPC
   SubnetOneId:
     Description: Public subnet one
     Value: !Ref PublicSubnetOne
@@ -916,6 +974,7 @@ Outputs:
 
   # ECR
   ImageRegistry:
+    Condition: IsDeployFromSource
     Description: Docker image registry which stores web app images
     Value: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.${AWS::URLSuffix}/${PantherWebImageRepository}'
 

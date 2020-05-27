@@ -55,8 +55,6 @@ const (
 	gatewayTemplate   = apiEmbeddedTemplate
 
 	// Main stacks
-	alarmsStack         = "panther-cw-alarms"
-	alarmsTemplate      = "deployments/alarms.yml"
 	appsyncStack        = "panther-appsync"
 	appsyncTemplate     = "deployments/appsync.yml"
 	cloudsecStack       = "panther-cloud-security"
@@ -71,9 +69,12 @@ const (
 	glueTemplate        = "out/deployments/gluetables.json"
 	logAnalysisStack    = "panther-log-analysis"
 	logAnalysisTemplate = "deployments/log_analysis.yml"
-	metricFilterStack   = "panther-cw-metric-filters"
 	onboardStack        = "panther-onboard"
 	onboardTemplate     = "deployments/onboard.yml"
+
+	// Removed stacks
+	alarmsStack       = "panther-cw-alarms"
+	metricFilterStack = "panther-cw-metric-filters"
 
 	// Python layer
 	layerSourceDir        = "out/pip/analysis/python"
@@ -130,26 +131,53 @@ func Deploy() {
 	logger.Infof("deploy: deploying Panther %s to account %s (%s)", gitVersion, accountID, *awsSession.Config.Region)
 
 	// ***** Step 1: bootstrap stacks and build artifacts
+	// Migration: in v1.4.0, the ECS cluster moved from the bootstrap stack to the web stack.
+	// Enumerate the bootstrap stack to see if this migration is necessary.
+	clusterInBootstrap := false
+	cfnClient := cloudformation.New(awsSession)
+	err = walkPantherStack(cfnClient, aws.String(bootstrapStack), func(r cfnResource) {
+		if aws.StringValue(r.Resource.ResourceType) == "AWS::ECS::Cluster" {
+			clusterInBootstrap = true
+		}
+	})
+	if err != nil {
+		// err == nil if the stack does not yet exist
+		logger.Fatalf("failed to walk bootstrap stack: %v", err)
+	}
+	if clusterInBootstrap {
+		// To delete the ECS cluster from bootstrap, the entire web stack has to be deleted first.
+		// There is no user data that needs to be preserved in that stack - it's stateless.
+		logger.Infof("migration: deleting stack %s so ECS::Cluster can be migrated out of %s",
+			frontendStack, bootstrapStack)
+		if err = deleteStack(cfnClient, aws.String(frontendStack)); err != nil {
+			logger.Fatalf("failed to delete %s: %v", frontendStack, err)
+		}
+	}
+
 	outputs := bootstrap(awsSession, settings)
 
 	// ***** Step 2: deploy remaining stacks in parallel
 	deployMainStacks(awsSession, settings, accountID, outputs)
 
 	// ***** Step 3: first-time setup if needed
-	if err := initializeAnalysisSets(awsSession, outputs["AnalysisApiEndpoint"], settings); err != nil {
+	if err = initializeAnalysisSets(awsSession, outputs["AnalysisApiEndpoint"], settings); err != nil {
 		logger.Fatal(err)
 	}
-	if err := initializeGlobal(awsSession, outputs["AnalysisApiEndpoint"]); err != nil {
+	if err = initializeGlobal(awsSession, outputs["AnalysisApiEndpoint"]); err != nil {
 		logger.Fatal(err)
 	}
-	if err := inviteFirstUser(awsSession); err != nil {
+	if err = inviteFirstUser(awsSession); err != nil {
 		logger.Fatal(err)
 	}
 
 	// ***** Step 4: migrations
 	// Starting in v1.3.0, the metric-filter stack is no longer used. It can be safely deleted
-	if err := deleteStack(cloudformation.New(awsSession), aws.String(metricFilterStack)); err != nil {
+	if err = deleteStack(cfnClient, aws.String(metricFilterStack)); err != nil {
 		logger.Warnf("failed to delete deprecated %s stack: %v", metricFilterStack, err)
+	}
+	// Starting in v1.4.0, the alarms stack is no longer used and can be safely deleted.
+	if err := deleteStack(cloudformation.New(awsSession), aws.String(alarmsStack)); err != nil {
+		logger.Warnf("failed to delete deprecated %s stack: %v", alarmsStack, err)
 	}
 
 	logger.Infof("deploy: finished successfully in %s", time.Since(start).Round(time.Second))
@@ -217,11 +245,13 @@ func deployBoostrapStacks(
 		"LogSubscriptionPrincipals":  strings.Join(settings.Setup.LogSubscriptions.PrincipalARNs, ","),
 		"EnableS3AccessLogs":         strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
 		"AccessLogsBucket":           settings.Setup.S3AccessLogsBucket,
+		"DataReplicationBucket":      settings.Setup.DataReplicationBucket,
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CustomDomain":               settings.Web.CustomDomain,
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 		"TracingMode":                settings.Monitoring.TracingMode,
 		"AlarmTopicArn":              settings.Monitoring.AlarmSnsTopicArn,
+		"DeployFromSource":           "true",
 	}
 
 	outputs, err := deployTemplate(awsSession, bootstrapTemplate, "", bootstrapStack, params)
@@ -306,15 +336,6 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	sourceBucket := outputs["SourceBucket"]
 	results := make(chan goroutineResult)
 	count := 0
-
-	// Alarms
-	count++
-	go func(c chan goroutineResult) {
-		_, err := deployTemplate(awsSession, alarmsTemplate, sourceBucket, alarmsStack, map[string]string{
-			"AlarmTopicArn": outputs["AlarmTopicArn"],
-		})
-		c <- goroutineResult{summary: alarmsStack, err: err}
-	}(results)
 
 	// Appsync
 	count++

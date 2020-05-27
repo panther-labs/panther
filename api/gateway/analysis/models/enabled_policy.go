@@ -43,6 +43,9 @@ type EnabledPolicy struct {
 	// id
 	ID ID `json:"id,omitempty"`
 
+	// reports
+	Reports Reports `json:"reports,omitempty"`
+
 	// resource types
 	ResourceTypes TypeSet `json:"resourceTypes,omitempty"`
 
@@ -72,6 +75,10 @@ func (m *EnabledPolicy) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateID(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateReports(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -142,6 +149,22 @@ func (m *EnabledPolicy) validateID(formats strfmt.Registry) error {
 	if err := m.ID.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("id")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *EnabledPolicy) validateReports(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Reports) { // not required
+		return nil
+	}
+
+	if err := m.Reports.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("reports")
 		}
 		return err
 	}

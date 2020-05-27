@@ -35,7 +35,7 @@ const linkifyOptions = {
 
 const Linkify: React.FC = ({ children }) => {
   return (
-    <Box wordBreak="break-word" fontSize={2}>
+    <Box wordBreak="break-word" fontSize="medium">
       <React.Suspense fallback={<div>{children}</div>}>
         <OriginalReactLinkify options={linkifyOptions as any}>{children}</OriginalReactLinkify>
       </React.Suspense>

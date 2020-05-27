@@ -16,6 +16,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default as RemediationButton } from './RemediationButton';
-export { default as SubmitButton } from './SubmitButton';
-export { default as SuppressButton } from './SuppressButton';
+import React from 'react';
+import { PolicyUnitTest, PolicyUnitTestInput } from 'Generated/schema';
+import OptimisticConfirmModal from '../OptimisticConfirmModal';
+
+export interface DeleteTestModalProps {
+  test: PolicyUnitTest | PolicyUnitTestInput;
+  onConfirm: () => void;
+}
+
+const DeleteTestModal: React.FC<DeleteTestModalProps> = ({ test, onConfirm }) => {
+  return (
+    <OptimisticConfirmModal
+      title="Delete Test"
+      subtitle={`Are you sure you want to delete ${test.name}?`}
+      onConfirm={onConfirm}
+    />
+  );
+};
+
+export default DeleteTestModal;

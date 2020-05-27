@@ -67,6 +67,7 @@ type tableItem struct {
 	Tests                     []*models.UnitTest               `json:"tests,omitempty"`
 	VersionID                 models.VersionID                 `json:"versionId,omitempty"`
 	DedupPeriodMinutes        models.DedupPeriodMinutes        `json:"dedupPeriodMinutes,omitempty"`
+	Reports                   models.Reports                   `json:"reports,omitempty"`
 
 	// Logic type (policy or rule)
 	Type string `json:"type"`

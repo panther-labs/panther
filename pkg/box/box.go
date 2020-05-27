@@ -1,4 +1,6 @@
-package cloudwatchcf
+// Package box provides boxing helpers for scalar values.
+// This package exists to help the transition form pointer based fields to `null` fields
+package box
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -18,21 +20,45 @@ package cloudwatchcf
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"fmt"
-)
+// All helpers are inlined by the compiler
 
-func getResourceProperty(key string, resource map[string]interface{}) string {
-	switch props := resource["Properties"].(type) {
-	case map[string]interface{}:
-		switch val := props[key].(type) {
-		case string:
-			return val
-		case float32, float64:
-			return fmt.Sprintf("%f", val)
-		case int, int32, int64:
-			return fmt.Sprintf("%d", val)
-		}
-	}
-	panic(fmt.Sprintf("Cannot find name: %s in %#v", key, resource["Properties"]))
+func String(s string) *string {
+	return &s
+}
+func Int(n int) *int {
+	return &n
+}
+func Int8(n int8) *int8 {
+	return &n
+}
+func Int16(n int16) *int16 {
+	return &n
+}
+func Int32(n int32) *int32 {
+	return &n
+}
+func Int64(n int64) *int64 {
+	return &n
+}
+func Uint(n uint) *uint {
+	return &n
+}
+func Uint8(n uint8) *uint8 {
+	return &n
+}
+func Uint16(n uint16) *uint16 {
+	return &n
+}
+func Uint32(n uint32) *uint32 {
+	return &n
+}
+func Uint64(n uint64) *uint64 {
+	return &n
+}
+
+func Bool(b bool) *bool {
+	return &b
+}
+func Byte(b byte) *byte {
+	return &b
 }

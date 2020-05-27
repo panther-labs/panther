@@ -27,9 +27,7 @@ interface SuccessPanelProps {
 }
 
 const SuccessPanel: React.FC<SuccessPanelProps> = ({ errorMessage }) => {
-  const { isSubmitting, initialValues, status, setStatus } = useFormikContext<
-    ComplianceSourceWizardValues
-  >();
+  const { initialValues, status, setStatus } = useFormikContext<ComplianceSourceWizardValues>();
 
   // Reset error when the users navigate away from this stpe (so that when they come back, the
   // previous error isn't presented at them)
@@ -47,7 +45,7 @@ const SuccessPanel: React.FC<SuccessPanelProps> = ({ errorMessage }) => {
           ? 'Click the button below to validate your changes & update your source!'
           : 'After deploying your Cloudformation stack, click on the button below to complete the setup!'}
       </Text>
-      <SubmitButton width={350} disabled={isSubmitting} submitting={isSubmitting}>
+      <SubmitButton width={350}>
         {initialValues.integrationId ? 'Update Source' : 'Save Source'}
       </SubmitButton>
       <Text size="large" mt={6} color="red300">
