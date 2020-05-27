@@ -66,7 +66,8 @@ const Bars: React.FC<BarsProps> = ({ data, horizontal }) => {
             color: Theme.colors[e.color],
             barBorderRadius: 16,
           },
-          data: data.map((d, i) => (i === seriesIndex ? d.value : '-')),
+          barMinHeight: 5,
+          data: data.map((d, i) => (i === seriesIndex ? d.value : null)),
         };
       });
 

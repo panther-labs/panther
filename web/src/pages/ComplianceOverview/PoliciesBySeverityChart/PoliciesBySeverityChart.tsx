@@ -19,17 +19,17 @@
 import React from 'react';
 import { theme } from 'pouncejs';
 import { capitalize, countPoliciesBySeverityAndStatus } from 'Helpers/utils';
-import DonutChart from 'Components/DonutChart';
 import map from 'lodash-es/map';
 import { OrganizationReportBySeverity } from 'Generated/schema';
+import { Bars } from 'Components/Charts';
 
 const severityToGrayscaleMapping: {
   [key in keyof OrganizationReportBySeverity]: keyof typeof theme['colors'];
 } = {
-  critical: 'grey500',
-  high: 'grey400',
-  medium: 'grey300',
-  low: 'grey200',
+  critical: 'red300',
+  high: 'orange300',
+  medium: 'yellow300',
+  low: 'grey300',
   info: 'grey100',
 };
 
@@ -47,9 +47,7 @@ const PoliciesBySeverityChart: React.FC<PoliciesBySeverityChartData> = ({ polici
     })
   );
 
-  return (
-    <DonutChart data={allPoliciesChartData} renderLabel={(data, index) => data[index].value} />
-  );
+  return <Bars data={allPoliciesChartData} />;
 };
 
 export default React.memo(PoliciesBySeverityChart);

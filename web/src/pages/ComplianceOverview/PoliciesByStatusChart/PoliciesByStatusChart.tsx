@@ -18,20 +18,20 @@
 
 import React from 'react';
 import { capitalize, countPoliciesBySeverityAndStatus } from 'Helpers/utils';
-import DonutChart from 'Components/DonutChart';
 import map from 'lodash-es/map';
 import sum from 'lodash-es/sum';
 import { OrganizationReportBySeverity } from 'Generated/schema';
 import { theme } from 'pouncejs';
+import { Bars } from 'Components/Charts';
 
 const severityToColorMapping: {
   [key in keyof OrganizationReportBySeverity]: keyof typeof theme['colors'];
 } = {
   critical: 'red300',
-  high: 'red200',
-  medium: 'blue100',
-  low: 'grey100',
-  info: 'grey50',
+  high: 'orange300',
+  medium: 'yellow300',
+  low: 'grey300',
+  info: 'grey100',
 };
 
 interface PoliciesByStatusChartData {
@@ -39,13 +39,6 @@ interface PoliciesByStatusChartData {
 }
 
 const PoliciesByStatusChart: React.FC<PoliciesByStatusChartData> = ({ policies }) => {
-  const severities = Object.keys(severityToColorMapping);
-  const totalPolicies = sum(
-    severities.map((severity: keyof OrganizationReportBySeverity) =>
-      countPoliciesBySeverityAndStatus(policies, severity, ['fail', 'error', 'pass'])
-    )
-  );
-
   const failingPoliciesChartData = [
     ...map(severityToColorMapping, (color, severity: keyof OrganizationReportBySeverity) => ({
       value: countPoliciesBySeverityAndStatus(policies, severity, ['fail', 'error']),
@@ -59,21 +52,11 @@ const PoliciesByStatusChart: React.FC<PoliciesByStatusChartData> = ({ policies }
         )
       ),
       label: 'Passing',
-      color: 'green100' as const,
+      color: 'green200' as const,
     },
   ];
 
-  return (
-    <DonutChart
-      data={failingPoliciesChartData}
-      renderLabel={(chartData, index) => {
-        const { value: severityGroupingValue } = chartData[index];
-        const percentage = Math.round((severityGroupingValue * 100) / totalPolicies).toFixed(0);
-
-        return `${severityGroupingValue}\n{small|${percentage}% of all}`;
-      }}
-    />
-  );
+  return <Bars data={failingPoliciesChartData} />;
 };
 
 export default React.memo(PoliciesByStatusChart);
