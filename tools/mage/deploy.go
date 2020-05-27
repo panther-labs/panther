@@ -62,7 +62,7 @@ const (
 	coreStack           = "panther-core"
 	coreTemplate        = "deployments/core.yml"
 	dashboardStack      = "panther-cw-dashboards"
-	dashboardTemplate   = "out/deployments/monitoring/dashboards.json"
+	dashboardTemplate   = "deployments/dashboards.yml"
 	frontendStack       = "panther-web"
 	frontendTemplate    = "deployments/web_server.yml"
 	logAnalysisStack    = "panther-log-analysis"
@@ -243,6 +243,7 @@ func deployBoostrapStacks(
 		"LogSubscriptionPrincipals":  strings.Join(settings.Setup.LogSubscriptions.PrincipalARNs, ","),
 		"EnableS3AccessLogs":         strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
 		"AccessLogsBucket":           settings.Setup.S3AccessLogsBucket,
+		"DataReplicationBucket":      settings.Setup.DataReplicationBucket,
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CustomDomain":               settings.Web.CustomDomain,
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),

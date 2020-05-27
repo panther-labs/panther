@@ -15,16 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 AWSTemplateFormatVersion: 2010-09-09
-Transform: AWS::Serverless-2016-10-31
 Description: The very first Panther stack - static resources which don't require S3 for deployment
-
-Metadata:
-  AWS::ServerlessRepo::Application:
-    Name: panther-community-bootstrap
-    Author: Panther Labs
-    Description: Panther Community (nested app) - Detect threats with log data and improve cloud security posture
-    HomePageUrl: https://runpanther.io
-    SourceCodeUrl: https://github.com/panther-labs/panther
 
 # This stack has resources which take a long time or have generated IDs that we need.
 # The idea is to build such resources as early as possible to maximize parallelism later.
@@ -42,6 +33,7 @@ Parameters:
   LogSubscriptionPrincipals:
     Type: CommaDelimitedList
     Description: The list of Principal ARNs to allow read access to the ProcessedDataBucket and subscribe access to ProcessedDataTopicArn
+    Default: ''
   EnableS3AccessLogs:
     Type: String
     Description: Enable S3 access logging for all Panther buckets.
@@ -50,6 +42,10 @@ Parameters:
   AccessLogsBucket:
     Type: String
     Description: Optional external bucket for storing S3 access logs. If not specified, the Panther audit bucket is used.
+    Default: ''
+  DataReplicationBucket:
+    Type: String
+    Description: Optional external bucket for replicating processed data in s3 glacier.
     Default: ''
   CloudWatchLogRetentionDays:
     Type: Number
@@ -140,6 +136,7 @@ Conditions:
   ConfigureLogSubscriptions: !Not [!Equals [!Select [0, !Ref LogSubscriptionPrincipals], '']]
   EnableAccessLogs: !Equals [!Ref EnableS3AccessLogs, true]
   ExternalAccessLogs: !Not [!Equals [!Ref AccessLogsBucket, '']]
+  ReplicateData: !Not [!Equals [!Ref DataReplicationBucket, '']]
   TracingEnabled: !Not [!Equals [!Ref TracingMode, '']]
   UseCustomDomain: !Not [!Equals [!Ref CustomDomain, '']]
   EnableDebug: !Equals [!Ref Debug, true]
@@ -352,6 +349,16 @@ Resources:
         - DestinationBucketName: !If [ExternalAccessLogs, !Ref AccessLogsBucket, !Ref AuditLogs]
           LogFilePrefix: !Sub panther-processed-data-${AWS::AccountId}-${AWS::Region}/
         - !Ref AWS::NoValue
+      ReplicationConfiguration: !If
+        - ReplicateData
+        - Role: !Sub arn:aws:iam::${AWS::AccountId}:role/panther-data-replication-role
+          Rules:
+            - Destination:
+                Bucket: !Ref DataReplicationBucket
+                StorageClass: GLACIER
+              Prefix: ''
+              Status: Enabled
+        - !Ref AWS::NoValue
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -364,6 +371,44 @@ Resources:
       AccessControl: Private
       VersioningConfiguration:
         Status: Enabled
+
+  DataReplicationRole:
+    Condition: ReplicateData
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: panther-data-replication-role
+      Description: Role used by S3 for data replication
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Principal:
+              Service: s3.amazonaws.com
+      Policies:
+        - PolicyName: ReadData
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetReplicationConfiguration
+                  - s3:ListBucket
+                Resource: !GetAtt ProcessedData.Arn
+              - Effect: Allow
+                Action:
+                  - s3:GetObjectVersion
+                  - s3:GetObjectVersionAcl
+                  - s3:GetObjectVersionTagging
+                Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedData}/*
+        - PolicyName: ReplicateData
+          PolicyDocument:
+            Statement:
+              Effect: Allow
+              Action:
+                - s3:ReplicateObject
+                - s3:ReplicateDelete
+                - s3:ReplicateTags
+              Resource: !Sub ${DataReplicationBucket}/*
 
   ProcessedDataPolicy: # read access on processed data bucket for log subscriptions
     Condition: ConfigureLogSubscriptions
