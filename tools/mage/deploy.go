@@ -408,7 +408,7 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	// Log analysis
 	count++
 	go func(c chan goroutineResult) {
-		// this computes a signature of the deployed glue table used for change detection, for SAR use the Panther version
+		// this computes a signature of the deployed glue tables used for change detection, for CF use the Panther version
 		tablesSignature, err := gluetables.DeployedTablesSignature(glue.New(awsSession))
 		if err != nil {
 			c <- goroutineResult{summary: logAnalysisStack, err: err}
