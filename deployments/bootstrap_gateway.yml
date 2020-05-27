@@ -175,6 +175,7 @@ Resources:
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
+                # the resource below is odd, I had to add to get glue:DeleteDatabase to work, I think it may be a bug in the api
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:userDefinedFunction/panther*
             - Effect: Allow
               Action: s3:List*

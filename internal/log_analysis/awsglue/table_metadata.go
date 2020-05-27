@@ -21,6 +21,7 @@ package awsglue
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -31,7 +32,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
@@ -181,7 +181,7 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput 
 
 func (gm *GlueTableMetadata) Signature() (string, error) {
 	tableInput := gm.glueTableInput("")
-	tableInputJSON, err := jsoniter.MarshalIndent(tableInput, "", "") // Indent forces sorting for consistency
+	tableInputJSON, err := json.MarshalIndent(tableInput, "", "") // Indent forces sorting for consistency
 	if err != nil {
 		return "", errors.Wrapf(err, "cannot marshal table for signature: %s.%s",
 			gm.databaseName, gm.tableName)
