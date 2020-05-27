@@ -100,7 +100,7 @@ const Bars: React.FC<BarsProps> = ({ data, horizontal, hideLegend }) => {
           },
         },
         legend: {
-          show: hideLegend,
+          show: !hideLegend,
           type: 'scroll',
           orient: 'vertical',
           left: 'left',
