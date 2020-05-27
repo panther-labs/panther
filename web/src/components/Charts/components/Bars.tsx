@@ -29,9 +29,10 @@ interface Data {
 interface BarsProps {
   data: Data[];
   horizontal?: boolean;
+  hideLegend?: boolean;
 }
 
-const Bars: React.FC<BarsProps> = ({ data, horizontal }) => {
+const Bars: React.FC<BarsProps> = ({ data, horizontal, hideLegend }) => {
   const container = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -99,6 +100,7 @@ const Bars: React.FC<BarsProps> = ({ data, horizontal }) => {
           },
         },
         legend: {
+          show: hideLegend,
           type: 'scroll',
           orient: 'vertical',
           left: 'left',
