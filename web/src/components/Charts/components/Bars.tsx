@@ -28,9 +28,10 @@ interface Data {
 
 interface BarsProps {
   data: Data[];
+  horizontal?: boolean;
 }
 
-const Bars: React.FC<BarsProps> = ({ data }) => {
+const Bars: React.FC<BarsProps> = ({ data, horizontal }) => {
   const container = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -55,27 +56,40 @@ const Bars: React.FC<BarsProps> = ({ data }) => {
           name: e.label,
           type: 'bar',
           barWidth: 30,
-          barGap: '-100%',
+          barGap: horizontal ? '100%' : '-100%',
           label: {
             show: true,
-            position: 'top',
+            position: horizontal ? 'right' : 'top',
             color: 'black',
           },
           itemStyle: {
             color: Theme.colors[e.color],
-            barBorderRadius: 24,
+            barBorderRadius: 16,
           },
           data: data.map((d, i) => (i === seriesIndex ? d.value : '-')),
         };
       });
+
+      const valueAxis = {
+        show: false,
+        type: 'value',
+      };
+
+      const categoryAxis = {
+        show: false,
+        type: 'category',
+        boundaryGap: true,
+        data: data.map((e, i) => i),
+      };
+
+      const [yAxis, xAxis] = horizontal ? [categoryAxis, valueAxis] : [valueAxis, categoryAxis];
 
       const options = {
         grid: {
           left: 100,
           right: 20,
           bottom: 20,
-          top: 30,
-          containLabel: true,
+          top: horizontal ? 0 : 30,
         },
         tooltip: {
           position: pt => [pt[0], '100%'],
@@ -90,17 +104,8 @@ const Bars: React.FC<BarsProps> = ({ data }) => {
           icon: 'circle',
           data: legendData,
         },
-        xAxis: {
-          show: false,
-          type: 'category',
-          boundaryGap: true,
-          data: data.map((e, i) => i),
-        },
-        yAxis: {
-          show: false,
-          type: 'value',
-          boundaryGap: true,
-        },
+        xAxis,
+        yAxis,
         series,
       };
 
@@ -109,7 +114,7 @@ const Bars: React.FC<BarsProps> = ({ data }) => {
       // @ts-ignore
       barChart.setOption(options);
     })();
-  }, [data]);
+  }, []);
 
   return <Box ref={container} width="100%" height="100%" />;
 };
