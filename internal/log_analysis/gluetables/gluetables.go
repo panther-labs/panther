@@ -19,16 +19,22 @@ package gluetables
  */
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"sort"
+
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
 
+	lpmodels "github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
 
-func DeployedTables(glueClient glueiface.GlueAPI) (deployedLogTables []*awsglue.GlueTableMetadata, err error) {
+// DeployedLogTables returns the glue tables from the registry that have been deployed
+func DeployedLogTables(glueClient glueiface.GlueAPI) (deployedLogTables []*awsglue.GlueTableMetadata, err error) {
 	for _, gm := range registry.AvailableTables() {
 		_, err := awsglue.GetTable(glueClient, gm.DatabaseName(), gm.TableName())
 		if err != nil {
@@ -43,4 +49,68 @@ func DeployedTables(glueClient glueiface.GlueAPI) (deployedLogTables []*awsglue.
 	}
 
 	return deployedLogTables, nil
+}
+
+// DeployedTablesSignature returns a string "signature" for the schema of the deployed tables used to detect change
+func DeployedTablesSignature(glueClient glueiface.GlueAPI) (deployedLogTablesSignature string, err error) {
+	deployedLogTables, err := DeployedLogTables(glueClient)
+	if err != nil {
+		return "", err
+	}
+
+	tableSignatures := make([]string, 0, 2*len(deployedLogTables))
+	for _, logTable := range deployedLogTables {
+		sig, err := logTable.Signature()
+		if err != nil {
+			return "", err
+		}
+		tableSignatures = append(tableSignatures, sig)
+
+		// the corresponding rule table shares the same structure as the log table + some columns
+		ruleTable := awsglue.NewGlueTableMetadata(
+			lpmodels.RuleData, logTable.LogType(), logTable.Description(), awsglue.GlueTableHourly, logTable.EventStruct())
+		sig, err = ruleTable.Signature()
+		if err != nil {
+			return "", err
+		}
+		tableSignatures = append(tableSignatures, sig)
+	}
+	sort.Strings(tableSignatures) // need consistent order
+	hash := sha256.New()
+	for i := range tableSignatures {
+		_, _ = hash.Write([]byte(tableSignatures[i]))
+	}
+	return hex.EncodeToString(hash.Sum(nil)), nil
+}
+
+// CreateOrUpdateGlueTablesForLogType uses the parser registry to get the table meta data and creates tables in the glue catalog
+func CreateOrUpdateGlueTablesForLogType(glueClient glueiface.GlueAPI, logType, bucket string) (*awsglue.GlueTableMetadata, error) {
+	logTable := registry.AvailableParsers().LookupParser(logType).GlueTableMetadata // get the table description
+	return CreateOrUpdateGlueTables(glueClient, bucket, logTable)
+}
+
+// CreateOrUpdateGlueTables, given a log meta data table, creates a log and rule table in the glue catalog
+func CreateOrUpdateGlueTables(glueClient glueiface.GlueAPI, bucket string,
+	logTable *awsglue.GlueTableMetadata) (ruleTable *awsglue.GlueTableMetadata, err error) {
+
+	if logTable.DataType() != lpmodels.LogData {
+		return nil, errors.Errorf("table must be of type log: %s.%s", logTable.DatabaseName(), logTable.TableName())
+	}
+
+	err = logTable.CreateOrUpdateTable(glueClient, bucket)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not create glue log table for %s.%s",
+			logTable.DatabaseName(), logTable.TableName())
+	}
+
+	// the corresponding rule table shares the same structure as the log table + some columns
+	ruleTable = awsglue.NewGlueTableMetadata(
+		lpmodels.RuleData, logTable.LogType(), logTable.Description(), awsglue.GlueTableHourly, logTable.EventStruct())
+	err = ruleTable.CreateOrUpdateTable(glueClient, bucket)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not create glue log table for %s.%s",
+			ruleTable.DatabaseName(), ruleTable.TableName())
+	}
+
+	return ruleTable, nil
 }

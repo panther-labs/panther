@@ -123,8 +123,8 @@ var (
 type Column struct {
 	Name     string
 	Type     string // this is the Glue type
-	Comment  string `json:",omitempty"`
-	Required bool   `json:"-"` // do NOT serialize! Not used for Glue types (used for doc).
+	Comment  string
+	Required bool
 }
 
 // Functions to infer schema by reflection

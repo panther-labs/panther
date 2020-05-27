@@ -124,7 +124,7 @@ func TestAddToSnapshotQueue(t *testing.T) {
 
 func TestPutCloudSecIntegration(t *testing.T) {
 	mockSQS := &testutils.SqsMock{}
-	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil) // called many times
+	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil) // count is hard to get due to batching
 	sqsClient = mockSQS
 	dynamoClient = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
 	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }

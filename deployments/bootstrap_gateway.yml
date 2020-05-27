@@ -36,6 +36,14 @@ Metadata:
 #      - Alarms for SNS topics in the bootstrap stack
 
 Parameters:
+  # Passed from one of the bootstrap stacks
+  AthenaResultsBucket:
+    Type: String
+    Description: Bucket created to hold Athena results
+  ProcessedDataBucket:
+    Type: String
+    Description: S3 bucket which stores processed logs
+
   # From the config file
   CloudWatchLogRetentionDays:
     Type: Number
@@ -66,8 +74,8 @@ Parameters:
 Mappings:
   Functions:
     CustomResource:
-      Memory: 256
-      Timeout: 900
+      Memory: 2048 # use a larger size to run faster, since this is used rarely the small cost difference is not a concern
+      Timeout: 900 # should as long as possible
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
@@ -149,6 +157,44 @@ Resources:
                 - logs:DeleteMetricFilter
                 - logs:PutMetricFilter
               Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/panther-*
+            - Effect: Allow
+              Action: athena:updateWorkGroup
+              # 1 API call to configure Athena
+              Resource: '*'
+            - Effect: Allow
+              Action:
+                - glue:CreateDatabase
+                - glue:DeleteDatabase
+                - glue:CreateTable
+                - glue:GetTable
+                - glue:UpdateTable
+                - glue:GetPartition
+                - glue:UpdatePartition
+              # used to keep table schemas updated
+              Resource:
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:userDefinedFunction/panther*
+            - Effect: Allow
+              Action: s3:List*
+              # used during glue sync to test for presence of data
+              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}*
+            - Effect: Allow
+              Action:
+                - athena:StartQueryExecution
+                - athena:StopQueryExecution
+                - athena:GetQuery*
+              # used to create or replace views
+              Resource: '*'
+            - Effect: Allow
+              Action:
+                - s3:GetBucketLocation
+                - s3:List*
+                - s3:GetObject
+                - s3:PutObject
+              # needed by Athena to write results
+              Resource: !Sub arn:aws:s3:::${AthenaResultsBucket}*
 
   CustomResourceLogGroup:
     Type: AWS::Logs::LogGroup

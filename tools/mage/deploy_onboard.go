@@ -129,6 +129,7 @@ func registerPantherAccount(awsSession *session.Session, settings *config.Panthe
 	// Check if registered. Technically this is not needed (PutIntegration will just fail) BUT when PutIntegration
 	// fails this generates alarms. We don't want that so we check first and give a nice message.
 	registerCloudSec, registerLogProcessing := true, true
+	var logProcessingIntegration *models.SourceIntegration
 	for _, integration := range listOutput {
 		if aws.StringValue(integration.AWSAccountID) == accountID &&
 			*integration.IntegrationType == models.IntegrationTypeAWSScan {
@@ -142,6 +143,14 @@ func registerPantherAccount(awsSession *session.Session, settings *config.Panthe
 			len(integration.LogTypes) == len(logTypes) {
 
 			logger.Infof("deploy: account %s is already registered for log processing", accountID)
+			registerLogProcessing = false
+		} else if aws.StringValue(integration.AWSAccountID) == accountID &&
+			*integration.IntegrationType == models.IntegrationTypeAWS3 &&
+			*integration.IntegrationLabel == genLogProcessingLabel(awsSession) &&
+			len(integration.LogTypes) != len(logTypes) { // log types changed
+
+			logger.Infof("deploy: account %s needs updating for log processing", accountID)
+			logProcessingIntegration = integration
 			registerLogProcessing = false
 		}
 	}
@@ -187,7 +196,25 @@ func registerPantherAccount(awsSession *session.Session, settings *config.Panthe
 
 			return fmt.Errorf("error calling lambda to register account for log processing: %v", err)
 		}
-		logger.Infof("deploy: account %s registered for log processing", accountID)
+		logger.Infof("deploy: account %s registered for log processing on bucket %s for %v",
+			accountID, auditLogsBucket, logTypes)
+	}
+
+	if logProcessingIntegration != nil { // need to update
+		input := &models.LambdaInput{
+			UpdateIntegrationSettings: &models.UpdateIntegrationSettingsInput{
+				IntegrationID:    logProcessingIntegration.IntegrationID,
+				IntegrationLabel: logProcessingIntegration.IntegrationLabel,
+				S3Bucket:         aws.String(auditLogsBucket),
+				LogTypes:         aws.StringSlice(logTypes),
+			},
+		}
+
+		if err := invokeLambda(awsSession, "panther-source-api", input, nil); err != nil {
+			return fmt.Errorf("error calling lambda to update account for log processing: %v", err)
+		}
+		logger.Infof("deploy: account %s updated for log processing on bucket %s for %v",
+			accountID, auditLogsBucket, logTypes)
 	}
 
 	return nil

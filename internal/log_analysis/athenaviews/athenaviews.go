@@ -37,11 +37,14 @@ import (
 // CreateOrReplaceViews will update Athena with all views
 func CreateOrReplaceViews(glueClient glueiface.GlueAPI, athenaClient athenaiface.AthenaAPI) (err error) {
 	// check what tables are deployed
-	deployedLogTables, err := gluetables.DeployedTables(glueClient)
+	deployedLogTables, err := gluetables.DeployedLogTables(glueClient)
 	if err != nil {
 		return err
 	}
 
+	if len(deployedLogTables) == 0 { // nothing to do
+		return nil
+	}
 	// loop over available tables, generate view over all Panther tables in glue catalog
 	sqlStatements, err := GenerateLogViews(deployedLogTables)
 	if err != nil {

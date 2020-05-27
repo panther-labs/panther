@@ -49,7 +49,6 @@ var (
 		LogProcessingDatabaseName: LogProcessingDatabaseDescription,
 		RuleMatchDatabaseName:     RuleMatchDatabaseDescription,
 		ViewsDatabaseName:         ViewsDatabaseDescription,
-		TempDatabaseName:          TempDatabaseDescription,
 	}
 )
 

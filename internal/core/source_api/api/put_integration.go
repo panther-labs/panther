@@ -93,12 +93,12 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 	case models.IntegrationTypeAWS3:
 		permissionAdded, err = AllowExternalSnsTopicSubscription(*input.AWSAccountID)
 		if err != nil {
-			err = errors.Wrap(err, "Failed to add permissions to log processor queue")
+			zap.L().Error("Failed to add permissions to log processor queue", zap.Error(errors.WithStack(err)))
 			return nil, putIntegrationInternalError
 		}
-		err = addGlueTables(input)
+		err = addGlueTables(input.LogTypes)
 		if err != nil {
-			err = errors.Wrap(err, "Failed to add glue tables to glue catalog")
+			zap.L().Error("Failed to add glue tables to glue catalog", zap.Error(errors.WithStack(err)))
 			return nil, putIntegrationInternalError
 		}
 	}
@@ -148,8 +148,7 @@ func (api API) integrationAlreadyExists(input *models.PutIntegrationInput) error
 				return nil
 			case models.IntegrationTypeAWS3:
 				if *existingIntegration.AWSAccountID == *input.AWSAccountID &&
-					*existingIntegration.IntegrationLabel == *input.IntegrationLabel &&
-					len(existingIntegration.LogTypes) == len(input.LogTypes) {
+					*existingIntegration.IntegrationLabel == *input.IntegrationLabel {
 					// Log sources for same account need to have different labels, need to update if the log types have changed
 					return &genericapi.InvalidInputError{
 						Message: fmt.Sprintf("Log source for account %s with label %s already onboarded",

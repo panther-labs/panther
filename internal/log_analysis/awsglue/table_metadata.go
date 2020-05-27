@@ -19,6 +19,8 @@ package awsglue
  */
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"sync"
@@ -29,6 +31,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
@@ -90,6 +93,10 @@ func (gm *GlueTableMetadata) Timebin() GlueTableTimebin {
 	return gm.timebin
 }
 
+func (gm *GlueTableMetadata) DataType() models.DataType {
+	return gm.datatype
+}
+
 func (gm *GlueTableMetadata) LogType() string {
 	return gm.logType
 }
@@ -118,7 +125,7 @@ func (gm *GlueTableMetadata) PartitionKeys() (partitions []PartitionKey) {
 	return partitions
 }
 
-func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, bucketName string) error {
+func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput {
 	// partition keys -> []*glue.Column
 	partitionKeys := gm.PartitionKeys()
 	partitionColumns := make([]*glue.Column, len(partitionKeys))
@@ -154,7 +161,7 @@ func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, b
 		descriptorParameters[fmt.Sprintf("mapping.%s", strings.ToLower(*column.Name))] = column.Name
 	}
 
-	tableInput := &glue.TableInput{
+	return &glue.TableInput{
 		Name:          &gm.tableName,
 		Description:   &gm.description,
 		PartitionKeys: partitionColumns,
@@ -170,6 +177,22 @@ func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, b
 		},
 		TableType: aws.String("EXTERNAL_TABLE"),
 	}
+}
+
+func (gm *GlueTableMetadata) Signature() (string, error) {
+	tableInput := gm.glueTableInput("")
+	tableInputJSON, err := jsoniter.MarshalIndent(tableInput, "", "") // Indent forces sorting for consistency
+	if err != nil {
+		return "", errors.Wrapf(err, "cannot marshal table for signature: %s.%s",
+			gm.databaseName, gm.tableName)
+	}
+	hash := sha256.New()
+	_, _ = hash.Write(tableInputJSON)
+	return hex.EncodeToString(hash.Sum(nil)), nil
+}
+
+func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, bucketName string) error {
+	tableInput := gm.glueTableInput(bucketName)
 
 	createTableInput := &glue.CreateTableInput{
 		DatabaseName: &gm.databaseName,
@@ -184,9 +207,9 @@ func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, b
 				TableInput:   tableInput,
 			}
 			_, err := glueClient.UpdateTable(updateTableInput)
-			return err
+			return errors.Wrapf(err, "failed to update table %s.%s", gm.databaseName, gm.tableName)
 		}
-		return err
+		return errors.Wrapf(err, "failed to create table %s.%s", gm.databaseName, gm.tableName)
 	}
 
 	return nil

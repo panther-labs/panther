@@ -29,6 +29,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/pkg/testutils"
@@ -108,6 +109,13 @@ func TestGlueTableMetadataRuleMatches(t *testing.T) {
 	assert.Equal(t, "rules/my_rule/", gm.Prefix())
 	assert.Equal(t, partitionTestEvent{}, gm.eventStruct)
 	assert.Equal(t, "rules/my_rule/year=2020/month=01/day=03/hour=01/", gm.GetPartitionPrefix(refTime))
+}
+
+func TestGlueTableMetadataSignature(t *testing.T) {
+	gm := NewGlueTableMetadata(models.LogData, "My.Logs.Type", "description", GlueTableHourly, partitionTestEvent{})
+	sig, err := gm.Signature()
+	require.NoError(t, err)
+	assert.Equal(t, "832ae40969c057a446a85f4b3dab1252d2e3d4e86a2cb324db73575e3b1daf47", sig)
 }
 
 func TestCreateJSONPartition(t *testing.T) {

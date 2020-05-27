@@ -82,44 +82,56 @@ func TestIntegrationGlueMetadataPartitions(t *testing.T) {
 		removeTables(t)
 	}()
 
-	// get the meta data, note we update the schema from the one used in setupTables()
-	gm := NewGlueTableMetadata(models.RuleData, testTable, "test table", GlueTableHourly, &testEventModified{})
+	// this is the table created in setupTables
+	originalTable := NewGlueTableMetadata(models.RuleData, testTable, "test table", GlueTableHourly, &testEvent{})
 	// overwriting default database
-	gm.databaseName = testDb
+	originalTable.databaseName = testDb
+
+	// get the meta data, note we update the schema from the one used in setupTables()
+	table := NewGlueTableMetadata(models.RuleData, testTable, "test table", GlueTableHourly, &testEventModified{})
+	// overwriting default database
+	table.databaseName = testDb
+
+	// confirm the signatures are different
+	originalTableSig, err := originalTable.Signature()
+	require.NoError(t, err)
+	tableSig, err := table.Signature()
+	require.NoError(t, err)
+	assert.NotEqual(t, originalTableSig, tableSig)
 
 	// this has been already created in setupTables(), this tests updating table
-	err = gm.CreateOrUpdateTable(glueClient, testBucket)
+	err = table.CreateOrUpdateTable(glueClient, testBucket)
 	require.NoError(t, err)
 
 	// confirm that the new schema has been applied
-	getTableOutput, err := GetTable(glueClient, gm.databaseName, gm.tableName)
+	getTableOutput, err := GetTable(glueClient, table.databaseName, table.tableName)
 	require.NoError(t, err)
 	require.Equal(t, "col2", *getTableOutput.Table.StorageDescriptor.Columns[1].Name) // what we added
 
-	getPartitionOutput, err := gm.GetPartition(glueClient, refTime)
+	getPartitionOutput, err := table.GetPartition(glueClient, refTime)
 	require.NoError(t, err)
 	assert.Nil(t, getPartitionOutput) // should not be there yet
 
 	expectedPath := "s3://" + testBucket + "/rules/" + testTable + "/year=2020/month=01/day=03/hour=01/"
-	created, err := gm.CreateJSONPartition(glueClient, refTime)
+	created, err := table.CreateJSONPartition(glueClient, refTime)
 	require.NoError(t, err)
 	assert.True(t, created)
 	partitionLocation := getPartitionLocation(t, []string{"2020", "01", "03", "01"})
 	require.Equal(t, expectedPath, *partitionLocation)
 
-	getPartitionOutput, err = gm.GetPartition(glueClient, refTime)
+	getPartitionOutput, err = table.GetPartition(glueClient, refTime)
 	require.NoError(t, err)
 	assert.NotNil(t, getPartitionOutput) // should be there now
 
 	// sync it (which does an update of schema)
 	var startDate time.Time // default unset
-	err = gm.SyncPartitions(glueClient, s3Client, startDate)
+	err = table.SyncPartitions(glueClient, s3Client, startDate)
 	require.NoError(t, err)
 
 	partitionLocation = getPartitionLocation(t, []string{"2020", "01", "03", "01"})
 	require.Equal(t, expectedPath, *partitionLocation)
 
-	_, err = gm.deletePartition(glueClient, refTime)
+	_, err = table.deletePartition(glueClient, refTime)
 	require.NoError(t, err)
 	partitionLocation = getPartitionLocation(t, []string{"2020", "01", "03", "01"})
 	require.Nil(t, partitionLocation)

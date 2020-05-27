@@ -1,4 +1,4 @@
-package api
+package gluetables
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -18,24 +18,8 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/panther-labs/panther/internal/log_analysis/athenaviews"
-	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
-)
+import "testing"
 
-func addGlueTables(logTypes []*string) error {
-	for _, logType := range logTypes {
-		_, err := gluetables.CreateOrUpdateGlueTablesForLogType(glueClient, *logType, env.ProcessedDataBucket)
-		if err != nil {
-			return err
-		}
-	}
-
-	// update the views with the new tables
-	err := athenaviews.CreateOrReplaceViews(glueClient, athenaClient)
-	if err != nil {
-		return err
-	}
-
-	return nil
+func TestDeployedTablesSignature(t *testing.T) {
+	// will do today
 }

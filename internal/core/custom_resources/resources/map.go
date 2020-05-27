@@ -47,6 +47,14 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// PhysicalId: custom:alarms:appsync:$API_ID
 	"Custom::AppSyncAlarms": customAppSyncAlarms,
 
+	// Initialize Athena
+	//
+	// Parameters:
+	//     AthenaResultsBucket:  string (required)
+	// Outputs: None
+	// PhysicalId: custom:athena:init
+	"Custom::AthenaInit": customAthenaInit,
+
 	// CloudWatch alarms for Dynamo errors, throttles, and latency
 	//
 	// Parameters:
@@ -85,6 +93,14 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	//
 	// Deleting this resource has no effect on the user pool.
 	"Custom::CognitoUserPoolMfa": customCognitoUserPoolMfa,
+
+	// Initialize Athena
+	//
+	// Parameters:
+	//    DeploymentId:  string (required)
+	// Outputs: None
+	// PhysicalId: custom:glue:update-tables
+	"Custom::UpdateGlueTables": customUpdateGlueTables,
 
 	// Creates alarms for lambda errors, warning, throttles, duration, and memory
 	//
