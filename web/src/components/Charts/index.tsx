@@ -18,3 +18,4 @@
 
 export { default } from './Charts';
 export { demoData } from './components/demoData';
+export { default as Bars } from './components/Bars';
