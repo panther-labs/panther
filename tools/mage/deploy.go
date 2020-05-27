@@ -268,6 +268,7 @@ func deployBoostrapStacks(
 
 	sourceBucket := outputs["SourceBucket"]
 	params = map[string]string{
+		"AuditLogsBucket":            outputs["AuditLogsBucket"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
 		"PythonLayerVersionArn":      settings.Infra.PythonLayerVersionArn,
@@ -444,7 +445,14 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	go func(c chan goroutineResult) {
 		var err error
 		if settings.Setup.OnboardSelf {
-			err = deployOnboard(awsSession, settings, accountID, outputs)
+			_, err = deployTemplate(awsSession, onboardTemplate, sourceBucket, onboardStack, map[string]string{
+				"AlarmTopicArn":          outputs["AlarmTopicArn"],
+				"AuditLogsBucket":        outputs["AuditLogsBucket"],
+				"EnableCloudTrail":       strconv.FormatBool(settings.Setup.EnableCloudTrail),
+				"EnableGuardDuty":        strconv.FormatBool(settings.Setup.EnableGuardDuty),
+				"LogProcessingRoleLabel": logProcessingLabel + "-" + *awsSession.Config.Region,
+				"VpcId":                  outputs["VpcId"],
+			})
 		}
 		c <- goroutineResult{summary: onboardStack, err: err}
 	}(results)

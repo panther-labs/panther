@@ -111,6 +111,18 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// PhysicalId: custom:metric-filters:$LOG_GROUP_NAME
 	"Custom::LambdaMetricFilters": customLambdaMetricFilters,
 
+	// When Panther onboards itself, set some GuardDuty/S3 config not possible from CFN.
+	//
+	// Parameters:
+	//     AuditLogsBucket:       string (required)
+	//     EnableGuardDuty:       bool (default: false)
+	//     GuardDutyDetectorID:   string (required if EnableGuardDuty)
+	//     GuardDutyKmsKeyArn:    string (required if EnableGuardDuty)
+	//     LogProcessingTopicArn: string (required)
+	// Outputs: None
+	// PhysicalId: custom:self-log-config:singleton
+	"Custom::SelfLogConfig": customSelfLogConfig,
+
 	// Creates an alarm for failed step function executions
 	//
 	// Parameters:

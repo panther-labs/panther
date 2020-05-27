@@ -51,6 +51,9 @@ Parameters:
   AlarmTopicArn:
     Type: String
     Description: SNS topic for CloudWatch alarms
+  AuditLogsBucket:
+    Type: String
+    Description: Bucket which holds Panther's own audit logs
   UserPoolId:
     Type: String
     Description: Cognito user pool ID
@@ -128,6 +131,17 @@ Resources:
               Action: cognito-idp:SetUserPoolMfaConfig
               Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}
             - Effect: Allow
+              Action: kms:List* # required for GuardDuty
+              Resource: '*'
+            - Effect: Allow
+              Action: guardduty:CreatePublishingDestination
+              Resource: !Sub arn:${AWS::Partition}:guardduty:${AWS::Region}:${AWS::AccountId}:detector/*
+            - Effect: Allow
+              Action:
+                - guardduty:Get*
+                - guardduty:List*
+              Resource: '*'
+            - Effect: Allow
               Action:
                 - iam:DeleteServerCertificate
                 - iam:UploadServerCertificate
@@ -141,6 +155,18 @@ Resources:
                 - logs:DeleteMetricFilter
                 - logs:PutMetricFilter
               Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/panther-*
+            - Effect: Allow
+              Action:
+                # Required for GuardDuty
+                - s3:GetBucketLocation
+                - s3:GetObject
+                - s3:ListBucket
+                - s3:PutBucketAcl
+                - s3:PutBucketNotification
+                - s3:PutBucketPolicy
+                - s3:PutBucketPublicAccessBlock
+                - s3:PutObject
+              Resource: !Sub arn:${AWS::Partition}:s3:::${AuditLogsBucket}*
 
   CustomResourceLogGroup:
     Type: AWS::Logs::LogGroup

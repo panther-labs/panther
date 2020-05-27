@@ -20,15 +20,12 @@ package mage
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"github.com/aws/aws-sdk-go/service/guardduty"
-	"github.com/aws/aws-sdk-go/service/s3"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/tools/config"
@@ -59,47 +56,19 @@ func deployOnboard(
 	bootstrapOutputs map[string]string,
 ) error {
 
-	if err := deployOnboardTemplate(awsSession, settings, bootstrapOutputs); err != nil {
-		return err
-	}
+	// registerPantherAccount
+	//
+	// Where to put Python analysis set resource?
+	//    1) Core (next to analysis-api)
+	//          - problem: rules-engine and policy-engine must exist
+	//    2) Onboard
+	//          - problem: entire onboard stack is conditional
+
 	// registerPantherAccount MUST follow the CloudSec roles being deployed
 	if err := registerPantherAccount(awsSession, settings, accountID, bootstrapOutputs["AuditLogsBucket"]); err != nil {
 		return err
 	}
 	return deployRealTimeStackSet(awsSession, accountID)
-}
-
-func deployOnboardTemplate(awsSession *session.Session, settings *config.PantherConfig, bootstrapOutputs map[string]string) error {
-	if settings.Setup.EnableCloudTrail {
-		logger.Info("deploy: enabling CloudTrail in Panther account (see panther_config.yml)")
-	}
-	if settings.Setup.EnableGuardDuty {
-		logger.Info("deploy: enabling Guard Duty in Panther account (see panther_config.yml)")
-	}
-
-	// GD is account wide, not regional. Test if some other region has already enabled GD.
-	enabled, err := guardDutyEnabledOutsidePanther(awsSession, settings)
-	if err != nil {
-		return err
-	}
-	if enabled {
-		logger.Info("deploy: Guard Duty is already enabled for this account (not by Panther)")
-		settings.Setup.EnableGuardDuty = false
-	}
-
-	params := map[string]string{
-		"AlarmTopicArn":          bootstrapOutputs["AlarmTopicArn"],
-		"AuditLogsBucket":        bootstrapOutputs["AuditLogsBucket"],
-		"EnableCloudTrail":       strconv.FormatBool(settings.Setup.EnableCloudTrail),
-		"EnableGuardDuty":        strconv.FormatBool(settings.Setup.EnableGuardDuty),
-		"LogProcessingRoleLabel": genLogProcessingLabel(awsSession),
-		"VpcId":                  bootstrapOutputs["VpcId"],
-	}
-	onboardOutputs, err := deployTemplate(awsSession, onboardTemplate, bootstrapOutputs["SourceBucket"], onboardStack, params)
-	if err != nil {
-		return err
-	}
-	return configureLogProcessingUsingAPIs(awsSession, settings, bootstrapOutputs["AuditLogsBucket"], onboardOutputs)
 }
 
 func registerPantherAccount(awsSession *session.Session, settings *config.PantherConfig, accountID, auditLogsBucket string) error {
@@ -247,87 +216,5 @@ func deployRealTimeStackSet(awsSession *session.Session, pantherAccountID string
 		return fmt.Errorf("error creating real time stack instance: %v", err)
 	}
 
-	return nil
-}
-
-func configureLogProcessingUsingAPIs(
-	awsSession *session.Session, settings *config.PantherConfig, auditLogsBucket string, onboardOutputs map[string]string) error {
-
-	// currently GuardDuty does not support this in CF
-	if err := configureLogProcessingGuardDuty(awsSession, settings, auditLogsBucket, onboardOutputs); err != nil {
-		return err
-	}
-
-	// configure notifications on the audit bucket, cannot be done via CF
-	topicArn := onboardOutputs["LogProcessingTopicArn"]
-
-	s3Client := s3.New(awsSession)
-	input := &s3.PutBucketNotificationConfigurationInput{
-		Bucket: aws.String(auditLogsBucket),
-		NotificationConfiguration: &s3.NotificationConfiguration{
-			TopicConfigurations: []*s3.TopicConfiguration{
-				{
-					Events: []*string{
-						aws.String(s3.EventS3ObjectCreated),
-					},
-					TopicArn: &topicArn,
-				},
-			},
-		},
-	}
-	_, err := s3Client.PutBucketNotificationConfiguration(input)
-	if err != nil {
-		return fmt.Errorf("failed to add s3 notifications to %s from %s: %v", auditLogsBucket, topicArn, err)
-	}
-	return nil
-}
-
-func guardDutyEnabledOutsidePanther(awsSession *session.Session, settings *config.PantherConfig) (bool, error) {
-	if !settings.Setup.EnableGuardDuty {
-		return false, nil
-	}
-	gdClient := guardduty.New(awsSession)
-	input := &guardduty.ListDetectorsInput{}
-	output, err := gdClient.ListDetectors(input)
-	if err != nil {
-		return false, fmt.Errorf("deploy: unable to check guard duty: %v", err)
-	}
-	if len(output.DetectorIds) != 1 {
-		return false, nil // we only make 1
-	}
-
-	// we need to check that it is THIS region's stack the enabled it
-	_, onboardOutput, err := describeStack(cloudformation.New(awsSession), onboardStack)
-	if err != nil {
-		if errStackDoesNotExist(err) {
-			return true, nil // not deployed anything yet in this region BUT it is enabled, must be another deployment
-		}
-		return false, fmt.Errorf("deploy: cannot check stack %s: %v", onboardStack, err)
-	}
-	// if my stack has no reference, then it must have been enabled by another deployment
-	return onboardOutput["GuardDutyDetectorId"] == "", nil
-}
-
-func configureLogProcessingGuardDuty(
-	awsSession *session.Session, settings *config.PantherConfig, auditLogsBucket string, onboardOutputs map[string]string) error {
-
-	if !settings.Setup.EnableGuardDuty {
-		return nil
-	}
-	gdClient := guardduty.New(awsSession)
-	publishInput := &guardduty.CreatePublishingDestinationInput{
-		DetectorId:      aws.String(onboardOutputs["GuardDutyDetectorId"]),
-		DestinationType: aws.String("S3"),
-		DestinationProperties: &guardduty.DestinationProperties{
-			DestinationArn: aws.String("arn:aws:s3:::" + auditLogsBucket),
-			KmsKeyArn:      aws.String(onboardOutputs["GuardDutyKmsKeyArn"]),
-		},
-	}
-	_, err := gdClient.CreatePublishingDestination(publishInput)
-	if err != nil && !strings.Contains(err.Error(), "already exists") {
-		return fmt.Errorf("failed to configure Guard Duty detector %s to use bucket %s with kms key %s: %v",
-			onboardOutputs["GuardDutyDetectorId"], auditLogsBucket,
-			onboardOutputs["GuardDutyKmsKeyArn"], err)
-	}
 	return nil
 }

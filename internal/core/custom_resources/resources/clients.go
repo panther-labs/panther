@@ -29,8 +29,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider/cognitoidentityprovideriface"
+	"github.com/aws/aws-sdk-go/service/guardduty"
+	"github.com/aws/aws-sdk-go/service/guardduty/guarddutyiface"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/iam/iamiface"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 )
 
 // Lazily build all AWS clients - each Lambda invocation usually needs at most 1 of these
@@ -42,6 +46,8 @@ var (
 	cloudWatchLogsClient cloudwatchlogsiface.CloudWatchLogsAPI
 	cognitoClient        cognitoidentityprovideriface.CognitoIdentityProviderAPI
 	iamClient            iamiface.IAMAPI
+	guardDutyClient      guarddutyiface.GuardDutyAPI
+	s3Client             s3iface.S3API
 )
 
 func getSession() *session.Session {
@@ -79,9 +85,23 @@ func getCognitoClient() cognitoidentityprovideriface.CognitoIdentityProviderAPI 
 	return cognitoClient
 }
 
+func getGuardDutyClient() guarddutyiface.GuardDutyAPI {
+	if guardDutyClient == nil {
+		guardDutyClient = guardduty.New(getSession())
+	}
+	return guardDutyClient
+}
+
 func getIamClient() iamiface.IAMAPI {
 	if iamClient == nil {
 		iamClient = iam.New(getSession())
 	}
 	return iamClient
+}
+
+func getS3Client() s3iface.S3API {
+	if s3Client == nil {
+		s3Client = s3.New(getSession())
+	}
+	return s3Client
 }

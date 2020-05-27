@@ -208,16 +208,12 @@ Resources:
       RawMessageDelivery: false
       TopicArn: !Ref Topic
 
-Outputs:
-  LogProcessingTopicArn:
-    Description: The ARN of the SNS Topic that will be notifying Panther of new data
-    Value: !Ref Topic
-  GuardDutyDetectorId:
-    Description: The id of the GuardDuty configuration
-    Value: !If [EnableGuardDuty, !Ref GuardDutyDetector, '']
-  GuardDutyKmsKeyArn:
-    Description: The ARN of the kms key for the GuardDuty configuration
-    Value: !If
-      - EnableGuardDuty
-      - !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${GuardDutyEncryptionKey}
-      - ''
+  LogProcessingConfig:
+    Type: Custom::SelfLogConfig
+    Properties:
+      AuditLogsBucket: !Ref AuditLogsBucket
+      EnableGuardDuty: !Ref EnableGuardDuty
+      GuardDutyDetectorId: !If [EnableGuardDuty, !Ref GuardDutyDetector, '']
+      GuardDutyKmsKeyArn: !If [EnableGuardDuty, !GetAtt GuardDutyEncryptionKey.Arn, '']
+      LogProcessingTopicArn: !Ref Topic
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
