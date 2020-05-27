@@ -28,7 +28,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
 
-	lpmodels "github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
@@ -67,8 +66,7 @@ func DeployedTablesSignature(glueClient glueiface.GlueAPI) (deployedLogTablesSig
 		tableSignatures = append(tableSignatures, sig)
 
 		// the corresponding rule table shares the same structure as the log table + some columns
-		ruleTable := awsglue.NewGlueTableMetadata(
-			lpmodels.RuleData, logTable.LogType(), logTable.Description(), awsglue.GlueTableHourly, logTable.EventStruct())
+		ruleTable := logTable.RuleTable()
 		sig, err = ruleTable.Signature()
 		if err != nil {
 			return "", err
