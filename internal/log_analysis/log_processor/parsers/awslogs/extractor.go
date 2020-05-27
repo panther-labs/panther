@@ -19,6 +19,8 @@ package awslogs
  */
 
 import (
+	jsoniter "github.com/json-iterator/go"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
@@ -112,4 +114,105 @@ func (e *AWSExtractor) Extract(key, value gjson.Result) {
 		"domain":         // found in GuardDuty findings
 		e.pl.AppendAnyDomainNames(value.Str)
 	}
+}
+
+// JSONScanner returns a value scanner that behaves like the AWSExtractor.
+// It accumulates pantherlog.Values by walking through a JSON object.
+// It uses jsoniter.Iterator to walk through a JSON object.
+func JSONScanner() pantherlog.ValueScanner {
+	iter := jsoniter.ConfigFastest.BorrowIterator(nil)
+	return &scanJSON{
+		iter: iter,
+	}
+}
+
+type scanJSON struct {
+	arn    scanARN
+	iter   *jsoniter.Iterator
+	Values []pantherlog.Value
+}
+
+var _ pantherlog.ValueScanner = (*scanJSON)(nil)
+
+func (js *scanJSON) Visit(iter *jsoniter.Iterator, key string) bool {
+	type tagListEntry struct {
+		Key   string `json:"key"`
+		Value string `json:"value"`
+	}
+
+	switch iter.WhatIsNext() {
+	case jsoniter.ObjectValue:
+		return iter.ReadObjectCB(js.Visit)
+	case jsoniter.StringValue:
+		val := iter.ReadString()
+		switch key {
+		case "instanceId":
+			js.Values = append(js.Values, InstanceID(val))
+		case "accountId":
+			js.Values = append(js.Values, AccountID(val))
+		case "publicIp", "privateIpAddress", "ipAddressV4":
+			js.Values = append(js.Values, pantherlog.IPAddress(val))
+		case "publicDnsName", "privateDnsName", "domain":
+			js.Values = append(js.Values, pantherlog.DomainName(val))
+		default:
+			if strings.HasSuffix(key, "InstanceId") {
+				js.Values = append(js.Values, InstanceID(val))
+			} else if strings.HasSuffix(key, "AccountId") {
+				js.Values = append(js.Values, AccountID(val))
+			} else if strings.HasPrefix(val, "arn:") {
+				js.Values, _ = js.arn.ScanValues(js.Values, val)
+			}
+		}
+	case jsoniter.ArrayValue:
+		switch key {
+		case "tags":
+			for iter.Error == nil && iter.ReadArray() {
+				tag := tagListEntry{}
+				iter.ReadVal(&tag)
+				if tag.Value != "" && tag.Key != "" {
+					js.Values = append(js.Values, pantherlog.Value{
+						Kind: KindTag,
+						Data: tag.Key + ":" + tag.Value,
+					})
+				}
+			}
+		case "ipv6Addresses":
+			for iter.Error == nil && iter.ReadArray() {
+				addr := iter.ReadString()
+				js.Values = append(js.Values, pantherlog.IPAddress(addr))
+			}
+		default:
+			for iter.ReadArray() {
+				if !iter.ReadObjectCB(js.Visit) {
+					return false
+				}
+			}
+		}
+	default:
+		iter.Skip()
+	}
+	return iter.Error == nil
+}
+
+func (js *scanJSON) Close() {
+	var iter *jsoniter.Iterator
+	if iter, js.iter = js.iter, nil; iter != nil {
+		jsoniter.ConfigFastest.ReturnIterator(iter)
+	}
+	js.Values = nil
+}
+
+func (js *scanJSON) ScanValues(values []pantherlog.Value, input string) ([]pantherlog.Value, error) {
+	js.Values = values
+	if js.iter == nil {
+		js.iter = jsoniter.ConfigFastest.BorrowIterator([]byte(input))
+	} else {
+		js.iter.ResetBytes([]byte(input))
+	}
+	js.iter.ReadObjectCB(js.Visit)
+	if err := js.iter.Error; err != nil {
+		return values, err
+	}
+	values, js.Values = js.Values, nil
+	return values, nil
 }

@@ -19,6 +19,7 @@ package awslogs
  */
 
 import (
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"testing"
 
 	jsoniter "github.com/json-iterator/go"
@@ -27,10 +28,7 @@ import (
 	"github.com/panther-labs/panther/pkg/extract"
 )
 
-func TestAWSExtractor(t *testing.T) {
-	event := AWSPantherLog{}
-	// add interesting fragments as new extractions are implemented
-	json := (jsoniter.RawMessage)(`
+const awsJSON = `
 {
 
 "accountId": "123456789012",
@@ -122,7 +120,12 @@ func TestAWSExtractor(t *testing.T) {
 }
 
 }
-`)
+`
+
+func TestAWSExtractor(t *testing.T) {
+	event := AWSPantherLog{}
+	// add interesting fragments as new extractions are implemented
+	json := jsoniter.RawMessage(awsJSON)
 
 	expectedEvent := AWSPantherLog{}
 	expectedEvent.AppendAnyAWSARNs("arn:aws:iam::123456789012:instance-profile/EC2Dev",
@@ -142,4 +145,83 @@ func TestAWSExtractor(t *testing.T) {
 	extract.Extract(&json, NewAWSExtractor(&event))
 
 	require.Equal(t, expectedEvent, event)
+}
+
+func TestJSONScanner(t *testing.T) {
+	scanner := JSONScanner()
+	event := pantherlog.Event{}
+	err := event.Scan(awsJSON, scanner)
+	require.NoError(t, err)
+	values := event.AppendValuesTo(nil)
+	values = pantherlog.ValueSlice(values).Normalized()
+	require.Equal(t, []pantherlog.Value{
+		{
+			Kind: pantherlog.KindIPAddress,
+			Data: "151.80.19.228",
+		},
+		{
+			Kind: pantherlog.KindIPAddress,
+			Data: "172.31.81.237",
+		},
+		{
+			Kind: pantherlog.KindIPAddress,
+			Data: "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+		},
+		{
+			Kind: pantherlog.KindIPAddress,
+			Data: "54.152.215.140",
+		},
+		{
+			Kind: pantherlog.KindDomainName,
+			Data: "GeneratedFindingDomainName",
+		},
+		{
+			Kind: pantherlog.KindDomainName,
+			Data: "ec2-54-152-215-140.compute-1.amazonaws.com",
+		},
+		{
+			Kind: pantherlog.KindDomainName,
+			Data: "ip-172-31-81-237.ec2.internal",
+		},
+		{
+			Kind: KindAccountID,
+			Data: "111122223333",
+		},
+		{
+			Kind: KindAccountID,
+			Data: "123456789012",
+		},
+		{
+			Kind: KindAccountID,
+			Data: "888888888888",
+		},
+		{
+			Kind: KindARN,
+			Data: "arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail",
+		},
+		{
+			Kind: KindARN,
+			Data: "arn:aws:ec2:region:111122223333:instance/",
+		},
+		{
+			Kind: KindARN,
+			Data: "arn:aws:ec2:region:111122223333:instance/i-0072230f74b3a798e",
+		},
+		{
+			Kind: KindARN,
+			Data: "arn:aws:iam::123456789012:instance-profile/EC2Dev",
+		},
+		{
+			Kind: KindInstanceID,
+			Data: "i-0072230f74b3a798e",
+		},
+		{
+			Kind: KindInstanceID,
+			Data: "i-081de1d7604b11e4a",
+		},
+		{
+			Kind: KindTag,
+			Data: "tag1:val1",
+		},
+	}, values)
 }

@@ -83,9 +83,9 @@ func (b *ValueBuffer) Contains(field Value) bool {
 	return false
 }
 
-// AppendFieldsTo appends all fields stored in the buffer to a slice.
+// AppendValuesTo appends all fields stored in the buffer to a slice.
 // This is mainly useful for tests.
-func (b *ValueBuffer) AppendFieldsTo(fields []Value) []Value {
+func (b *ValueBuffer) AppendValuesTo(fields []Value) []Value {
 	for kind, values := range b.Fields {
 		for _, value := range values {
 			fields = append(fields, Value{
@@ -219,6 +219,21 @@ func (values ValueSlice) Less(i, j int) bool {
 		return a.Data < b.Data
 	}
 	return a.Kind < b.Kind
+}
+
+func (values ValueSlice) Normalized() ValueSlice {
+	if values == nil {
+		return nil
+	}
+	norm := make([]Value, 0, len(values))
+	for _, v := range values {
+		if v.IsZero() {
+			continue
+		}
+		norm = append(norm, v)
+	}
+	sort.Stable(ValueSlice(norm))
+	return norm
 }
 
 // ValueScanner parses values from a string and appends them to a slice.

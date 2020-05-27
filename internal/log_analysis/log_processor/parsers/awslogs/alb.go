@@ -29,6 +29,8 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
+const TypeALB = "AWS.ALB"
+
 var ALBDesc = `Application Load Balancer logs Layer 7 network logs for your application load balancer.
 Reference: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html`
 
@@ -168,7 +170,7 @@ func (p *ALBParser) Parse(log string) ([]*parsers.PantherLog, error) {
 
 // LogType returns the log type supported by this parser
 func (p *ALBParser) LogType() string {
-	return "AWS.ALB"
+	return TypeALB
 }
 
 func (event *ALB) updatePantherFields(p *ALBParser) {

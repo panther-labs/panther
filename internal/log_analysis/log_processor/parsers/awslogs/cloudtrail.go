@@ -26,6 +26,8 @@ import (
 	"github.com/panther-labs/panther/pkg/extract"
 )
 
+const TypeCloudTrail = `AWS.CloudTrail`
+
 var CloudTrailDesc = `AWSCloudTrail represents the content of a CloudTrail S3 object.
 Log format & samples can be seen here: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html`
 
@@ -146,7 +148,7 @@ func (p *CloudTrailParser) Parse(log string) ([]*parsers.PantherLog, error) {
 
 // LogType returns the log type supported by this parser
 func (p *CloudTrailParser) LogType() string {
-	return "AWS.CloudTrail"
+	return TypeCloudTrail
 }
 
 func (event *CloudTrail) updatePantherFields(p *CloudTrailParser) {
