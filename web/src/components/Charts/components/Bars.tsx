@@ -115,7 +115,7 @@ const Bars: React.FC<BarsProps> = ({ data, horizontal }) => {
       // @ts-ignore
       barChart.setOption(options);
     })();
-  }, []);
+  }, [data]);
 
   return <Box ref={container} width="100%" height="100%" />;
 };

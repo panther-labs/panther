@@ -16,6 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './Charts';
-export { demoData } from './components/demoData';
-export { default as Bars } from './components/Bars';
+export * from './components';
