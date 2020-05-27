@@ -28,7 +28,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/magefile/mage/mg"
 
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
@@ -72,8 +71,7 @@ func (t Glue) Sync() {
 
 		// the rule match tables share the same structure as the logs
 		name = fmt.Sprintf("%s.%s", awsglue.RuleMatchDatabaseName, table.TableName())
-		ruleTable := awsglue.NewGlueTableMetadata(
-			models.RuleData, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
+		ruleTable := table.RuleTable()
 		logger.Infof("syncing %s", name)
 		err = ruleTable.SyncPartitions(glueClient, s3Client, startDate)
 		if err != nil {

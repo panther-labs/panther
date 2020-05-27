@@ -93,10 +93,6 @@ func CreateOrUpdateGlueTablesForLogType(glueClient glueiface.GlueAPI, logType, b
 func CreateOrUpdateGlueTables(glueClient glueiface.GlueAPI, bucket string,
 	logTable *awsglue.GlueTableMetadata) (ruleTable *awsglue.GlueTableMetadata, err error) {
 
-	if logTable.DataType() != lpmodels.LogData {
-		return nil, errors.Errorf("table must be of type log: %s.%s", logTable.DatabaseName(), logTable.TableName())
-	}
-
 	err = logTable.CreateOrUpdateTable(glueClient, bucket)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not create glue log table for %s.%s",
@@ -104,8 +100,7 @@ func CreateOrUpdateGlueTables(glueClient glueiface.GlueAPI, bucket string,
 	}
 
 	// the corresponding rule table shares the same structure as the log table + some columns
-	ruleTable = awsglue.NewGlueTableMetadata(
-		lpmodels.RuleData, logTable.LogType(), logTable.Description(), awsglue.GlueTableHourly, logTable.EventStruct())
+	ruleTable = logTable.RuleTable()
 	err = ruleTable.CreateOrUpdateTable(glueClient, bucket)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not create glue log table for %s.%s",

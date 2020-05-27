@@ -44,7 +44,7 @@ type PartitionKey struct {
 
 // Metadata about Glue table
 type GlueTableMetadata struct {
-	datatype     models.DataType
+	dataType     models.DataType
 	databaseName string
 	tableName    string
 	description  string
@@ -56,13 +56,13 @@ type GlueTableMetadata struct {
 
 // Creates a new GlueTableMetadata object for Panther log sources
 func NewGlueTableMetadata(
-	datatype models.DataType, logType, logDescription string, timebin GlueTableTimebin, eventStruct interface{}) *GlueTableMetadata {
+	dataType models.DataType, logType, logDescription string, timebin GlueTableTimebin, eventStruct interface{}) *GlueTableMetadata {
 
 	tableName := GetTableName(logType)
-	tablePrefix := getTablePrefix(datatype, tableName)
+	tablePrefix := getTablePrefix(dataType, tableName)
 	return &GlueTableMetadata{
-		datatype:     datatype,
-		databaseName: getDatabase(datatype),
+		dataType:     dataType,
+		databaseName: getDatabase(dataType),
 		tableName:    tableName,
 		description:  logDescription,
 		timebin:      timebin,
@@ -94,7 +94,7 @@ func (gm *GlueTableMetadata) Timebin() GlueTableTimebin {
 }
 
 func (gm *GlueTableMetadata) DataType() models.DataType {
-	return gm.datatype
+	return gm.dataType
 }
 
 func (gm *GlueTableMetadata) LogType() string {
@@ -125,6 +125,14 @@ func (gm *GlueTableMetadata) PartitionKeys() (partitions []PartitionKey) {
 	return partitions
 }
 
+func (gm *GlueTableMetadata) RuleTable() *GlueTableMetadata {
+	if gm.dataType == models.RuleData {
+		return gm
+	}
+	// the corresponding rule table shares the same structure as the log table + some columns
+	return NewGlueTableMetadata(models.RuleData, gm.LogType(), gm.Description(), GlueTableHourly, gm.EventStruct())
+}
+
 func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput {
 	// partition keys -> []*glue.Column
 	partitionKeys := gm.PartitionKeys()
@@ -138,7 +146,7 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput 
 
 	// columns -> []*glue.Column
 	columns := InferJSONColumns(gm.eventStruct, GlueMappings...)
-	if gm.datatype == models.RuleData { // append the columns added by the rule engine
+	if gm.dataType == models.RuleData { // append the columns added by the rule engine
 		columns = append(columns, RuleMatchColumns...)
 	}
 	glueColumns := make([]*glue.Column, len(columns))
