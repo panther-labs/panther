@@ -110,7 +110,7 @@ func buildSarAssets() error {
 // Get the name of the bucket for staging SAR packaging and set its policy.
 //
 // Lambda source can be safely removed from the bucket after publishing the SAR app,
-// but other packaged assets (GraphQL schema, nested templates, etc) must remain.
+// but other packaged assets (e.g. GraphQL schema) must remain.
 func sarStagingBucket(awsSession *session.Session) (string, error) {
 	bucket := os.Getenv("BUCKET")
 	if bucket == "" {

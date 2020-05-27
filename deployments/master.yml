@@ -18,15 +18,6 @@ AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: Master template for deploying Panther Community
 
-Metadata:
-  AWS::ServerlessRepo::Application:
-    Name: panther-community
-    Author: Panther Labs
-    Description: Panther Community - Detect threats with log data and improve cloud security posture
-    HomePageUrl: https://runpanther.io
-    SpdxLicenseId: AGPL-3.0-or-later
-    SourceCodeUrl: https://github.com/panther-labs/panther
-
 Parameters:
   AccessLogsBucket:
     Type: String
