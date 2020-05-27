@@ -110,7 +110,8 @@ Resources:
         # If the AlarmTopicArn parameter is blank, Bootstrap will create the topic.
         # That's why this uses the Bootstrap output instead of the parameter.
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
-
+        AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
+        ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         PythonLayerVersionArn: !Ref PythonLayerVersionArn
@@ -185,12 +186,14 @@ Resources:
         AppDomainURL: !GetAtt Bootstrap.Outputs.LoadBalancerUrl
         AnalysisApiId: !GetAtt BootstrapGateway.Outputs.AnalysisApiId
         AnalysisVersionsBucket: !GetAtt Bootstrap.Outputs.AnalysisVersionsBucket
+        AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         ComplianceApiId: !GetAtt BootstrapGateway.Outputs.ComplianceApiId
         Debug: !Ref Debug
         DynamoScalingRoleArn: !GetAtt Bootstrap.Outputs.DynamoScalingRoleArn
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         OutputsKeyId: !GetAtt Bootstrap.Outputs.OutputsEncryptionKeyId
+        ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
         TracingMode: !Ref TracingMode
         UserPoolId: !GetAtt Bootstrap.Outputs.UserPoolId
@@ -225,6 +228,7 @@ Resources:
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AnalysisApiId: !GetAtt BootstrapGateway.Outputs.AnalysisApiId
+        AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         Debug: !Ref Debug
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
@@ -233,6 +237,7 @@ Resources:
         ProcessedDataTopicArn: !GetAtt Bootstrap.Outputs.ProcessedDataTopicArn
         PythonLayerVersionArn: !GetAtt BootstrapGateway.Outputs.PythonLayerVersionArn
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
+        TablesSignature: !FindInMap [Constants, Panther, Version] # this changes with version, forcing table schema updates
         TracingMode: !Ref TracingMode
       Tags:
         - Key: Application
