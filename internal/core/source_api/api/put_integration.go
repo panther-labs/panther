@@ -149,7 +149,7 @@ func (api API) integrationAlreadyExists(input *models.PutIntegrationInput) error
 			case models.IntegrationTypeAWS3:
 				if *existingIntegration.AWSAccountID == *input.AWSAccountID &&
 					*existingIntegration.IntegrationLabel == *input.IntegrationLabel {
-					// Log sources for same account need to have different labels, need to update if the log types have changed
+					// Log sources for same account need to have different labels
 					return &genericapi.InvalidInputError{
 						Message: fmt.Sprintf("Log source for account %s with label %s already onboarded",
 							*input.AWSAccountID,

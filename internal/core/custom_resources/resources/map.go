@@ -94,7 +94,7 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// Deleting this resource has no effect on the user pool.
 	"Custom::CognitoUserPoolMfa": customCognitoUserPoolMfa,
 
-	// Initialize Athena
+	// Updates databases and table schemas
 	//
 	// Parameters:
 	//    DeploymentId:  string (required)

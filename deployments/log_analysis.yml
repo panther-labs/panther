@@ -43,7 +43,7 @@ Parameters:
     Description: KMS key ID for SQS encryption
   TablesSignature:
     Type: String
-    Description: Value from gluetable.DeployedTablesSignature() or the Panther version if using SAR
+    Description: Value from gluetable.DeployedTablesSignature() or the Panther version if using CF
 
   # Passed in from config file
   CloudWatchLogRetentionDays:
@@ -105,7 +105,7 @@ Resources:
     DependsOn: AthenaConfigure
     Type: Custom::UpdateGlueTables
     Properties:
-      TablesSignature: !Ref TablesSignature # this should change when tables need to be updated, for SAR this can be the Panther version
+      TablesSignature: !Ref TablesSignature # this should change when tables need to be updated, for CF this can be the Panther version
       ProcessedDataBucket: !Ref ProcessedDataBucket
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
