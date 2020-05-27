@@ -16,29 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export enum ChartsThemeEnum {
-  light = 'light',
-  dark = 'dark',
-}
-
 export const LineColors = {
   'AWS.Cloudtrail': '#FDCA00',
 };
-
-export const ThemeOptions: { [key in ChartsThemeEnum]: any } = {
-  [ChartsThemeEnum.light]: {
-    backgroundColor: '#FFFFFF',
-  },
-  [ChartsThemeEnum.dark]: {
-    backgroundColor: '#4c4c4c',
-  },
-};
-
-export enum ChartTypesEnum {
-  Lines,
-  ZoomableLines,
-}
-
-export type ChartType = keyof typeof ChartTypesEnum;
-
-export type ChartThemeType = keyof typeof ChartsThemeEnum;
