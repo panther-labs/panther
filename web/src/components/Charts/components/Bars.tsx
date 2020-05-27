@@ -91,7 +91,6 @@ const Bars: React.FC<BarsProps> = ({ data }) => {
           data: legendData,
         },
         xAxis: {
-          // FIXME: This probably need to change to 'time' value with real data
           show: false,
           type: 'category',
           boundaryGap: true,
@@ -115,4 +114,4 @@ const Bars: React.FC<BarsProps> = ({ data }) => {
   return <Box ref={container} width="100%" height="100%" />;
 };
 
-export default Bars;
+export default React.memo(Bars);
