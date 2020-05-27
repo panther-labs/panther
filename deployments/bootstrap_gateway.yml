@@ -18,15 +18,6 @@ AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: Bootstrap resources that require the source S3 bucket to exist first
 
-Metadata:
-  AWS::ServerlessRepo::Application:
-    Name: panther-community-bootstrap-gateway
-    Author: Panther Labs
-    Description: Panther Community (nested app) - Detect threats with log data and improve cloud security posture
-    HomePageUrl: https://runpanther.io
-    SpdxLicenseId: AGPL-3.0-or-later
-    SourceCodeUrl: https://github.com/panther-labs/panther
-
 # This stack contains resources that need to exist before any other main stack,
 # but require S3 buckets to exist first. This is deployed right after bootstrap.yml
 #

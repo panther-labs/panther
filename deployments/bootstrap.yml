@@ -15,17 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 AWSTemplateFormatVersion: 2010-09-09
-Transform: AWS::Serverless-2016-10-31
 Description: The very first Panther stack - static resources which don't require S3 for deployment
-
-Metadata:
-  AWS::ServerlessRepo::Application:
-    Name: panther-community-bootstrap
-    Author: Panther Labs
-    Description: Panther Community (nested app) - Detect threats with log data and improve cloud security posture
-    HomePageUrl: https://runpanther.io
-    SpdxLicenseId: AGPL-3.0-or-later
-    SourceCodeUrl: https://github.com/panther-labs/panther
 
 # This stack has resources which take a long time or have generated IDs that we need.
 # The idea is to build such resources as early as possible to maximize parallelism later.

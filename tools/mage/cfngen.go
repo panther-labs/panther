@@ -49,19 +49,7 @@ func generateDashboards() error {
 
 	template := map[string]interface{}{
 		"AWSTemplateFormatVersion": "2010-09-09",
-		"Transform":                "AWS::Serverless-2016-10-31",
 		"Description":              "Panther's CloudWatch monitoring dashboards",
-		"Metadata": map[string]interface{}{
-			"AWS::ServerlessRepo::Application": map[string]interface{}{
-				"Name":   "panther-community-dashboards",
-				"Author": "Panther Labs",
-				"Description": "Panther Community (nested app) - " +
-					"Detect threats with log data and improve cloud security posture",
-				"HomePageUrl":   "https://runpanther.io",
-				"SpdxLicenseId": "AGPL-3.0-or-later",
-				"SourceCodeUrl": "https://github.com/panther-labs/panther",
-			},
-		},
 	}
 
 	resources := make(map[string]interface{}, len(dashboardResources))
