@@ -23,6 +23,7 @@ import (
 	"compress/gzip"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -236,9 +237,13 @@ func parseS3Event(message string) (result []*S3ObjectInfo) {
 	}
 
 	for _, record := range notification.Records {
+		urlDecodedKey, err := url.PathUnescape(record.S3.Object.Key)
+		if err != nil {
+			return nil
+		}
 		info := &S3ObjectInfo{
 			S3Bucket:    record.S3.Bucket.Name,
-			S3ObjectKey: record.S3.Object.Key,
+			S3ObjectKey: urlDecodedKey,
 		}
 		result = append(result, info)
 	}
