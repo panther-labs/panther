@@ -291,5 +291,5 @@ Outputs:
     Description: The URL for the AppSync GraphQL endpoint
     Value: !GetAtt Bootstrap.Outputs.GraphQLApiEndpoint
   LoadBalancerUrl:
-    Description: Panther URL - application load balancer or custom domain
-    Value: !GetAtt Bootstrap.Outputs.LoadBalancerUrl
+    Description: Panther URL serving the web app
+    Value: !Sub https://${Bootstrap.Outputs.LoadBalancerUrl}

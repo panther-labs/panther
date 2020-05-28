@@ -52,9 +52,10 @@ Resources:
       Parameters:
         MasterAccountId: !Ref AWS::AccountId
         MasterAccountRegion: !Ref AWS::Region
-        DeployRemediation: 'true'
-        DeployCloudWatchEventSetup: 'true'
+        DeployRemediation: true
+        DeployCloudWatchEventSetup: true
       TemplateURL: auxiliary/cloudformation/panther-cloudsec-iam.yml
+
   StackSetAdminRole:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -93,12 +94,14 @@ Resources:
             Action:
               - kms:GenerateDataKey
             Resource: '*'
+
   GuardDutyEncryptionKeyAlias:
     Condition: EnableGuardDuty
     Type: AWS::KMS::Alias
     Properties:
       AliasName: alias/panther-guardduty
       TargetKeyId: !Ref GuardDutyEncryptionKey
+
   GuardDutyDetector:
     Condition: EnableGuardDuty
     Type: AWS::GuardDuty::Detector
@@ -229,3 +232,21 @@ Resources:
       EnableGuardDuty: !Ref EnableGuardDuty
       EnableS3AccessLogs: !Ref EnableS3AccessLogs
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  # Enable real-time events for cloud security scanning
+  # see: https://docs.runpanther.io/policies/scanning/real-time-events
+  RealTimeStackSet:
+    Type: Custom::StackSet
+    Properties:
+      AccountID: !Ref AWS::AccountId
+      AdminRoleArn: !GetAtt StackSetAdminRole.Outputs.CloudFormationStackSetAdminRoleArn
+      ExecutionRoleName: !GetAtt ComplianceRoles.Outputs.CloudFormationStackSetExecutionRoleName
+      Parameters:
+        - ParameterKey: MasterAccountId
+          ParameterValue: !Ref AWS::AccountId
+        - ParameterKey: QueueArn
+          # needs to match aws-events-processor in cloud_security.yml
+          ParameterValue: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-aws-events-queue
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      StackSetName: panther-real-time-events
+      TemplateURL: https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-cloudwatch-events/v0.1.8/template.yml

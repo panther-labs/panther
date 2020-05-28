@@ -124,6 +124,13 @@ Resources:
               Resource: !Sub arn:${AWS::Partition}:acm:${AWS::Region}:${AWS::AccountId}:certificate/*
             - Effect: Allow
               Action:
+                - cloudformation:CreateStackInstances
+                - cloudformation:CreateStackSet
+                - cloudformation:DeleteStackInstances
+                - cloudformation:DeleteStackSet
+              Resource: !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stackset/*
+            - Effect: Allow
+              Action:
                 - cloudwatch:PutMetricAlarm
                 - cloudwatch:DeleteAlarms
               Resource: !Sub arn:${AWS::Partition}:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:Panther*
@@ -159,7 +166,7 @@ Resources:
               Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/panther-*
             - Effect: Allow
               Action:
-                # Required for GuardDuty
+                # All required for GuardDuty
                 - s3:GetBucketLocation
                 - s3:GetObject
                 - s3:ListBucket

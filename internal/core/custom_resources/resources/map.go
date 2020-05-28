@@ -127,13 +127,28 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	//
 	// Parameters:
 	//     AccountID:          string (required)
-	//     AuditLogsBucket:    string(required)
+	//     AuditLogsBucket:    string (required)
 	//     EnableCloudTrail:   bool (default: false)
 	//     EnableGuardDuty:    bool (default: false)
 	//     EnableS3AccessLogs: bool (default: false)
 	// Outputs: None
 	// PhysicalId: custom:self-registration:singleton
 	"Custom::SelfRegistration": customSelfRegistration,
+
+	// A stack set with a single instance in the current region.
+	//
+	// Parameters:
+	//     AccountID:            string (required)
+	//     AdminRoleArn:         string (required)
+	//     ExecutionRoleName:    string (required)
+	//     Parameters:           list
+	//        - ParameterKey:    string
+	//          ParameterValue:  string
+	//     StackSetName:         string (required)
+	//     TemplateURL:          string (required)
+	// Outputs: None
+	// PhysicalId: custom:stackset:$REGION:$ACCOUNT_ID:$STACK_SET_NAME
+	"Custom::StackSet": customStackSet,
 
 	// Creates an alarm for failed step function executions
 	//
