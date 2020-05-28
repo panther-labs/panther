@@ -200,7 +200,7 @@ func registerPantherAccount(awsSession *session.Session, settings *config.Panthe
 			accountID, auditLogsBucket, logTypes)
 	}
 
-	if logProcessingIntegration != nil { // need to update
+	if logProcessingIntegration != nil { // log types have changed, we need to update the source integration
 		input := &models.LambdaInput{
 			UpdateIntegrationSettings: &models.UpdateIntegrationSettingsInput{
 				IntegrationID:    logProcessingIntegration.IntegrationID,

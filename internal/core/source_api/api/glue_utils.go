@@ -32,10 +32,5 @@ func addGlueTables(logTypes []*string) error {
 	}
 
 	// update the views with the new tables
-	err := athenaviews.CreateOrReplaceViews(glueClient, athenaClient)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return athenaviews.CreateOrReplaceViews(glueClient, athenaClient)
 }

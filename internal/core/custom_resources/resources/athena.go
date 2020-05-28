@@ -48,10 +48,8 @@ func customAthenaInit(_ context.Context, event cfn.Event) (string, map[string]in
 		}
 
 		return resourceID, nil, nil
-	case cfn.RequestDelete: // noop
-		return event.PhysicalResourceID, nil, nil
 
-	default:
-		return "", nil, fmt.Errorf("unknown request type %s", event.RequestType)
+	default: // ignore deletes
+		return event.PhysicalResourceID, nil, nil
 	}
 }
