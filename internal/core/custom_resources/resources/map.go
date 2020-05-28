@@ -148,7 +148,7 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	//     EnableGuardDuty:    bool (default: false)
 	//     EnableS3AccessLogs: bool (default: false)
 	// Outputs: None
-	// PhysicalId: custom:self-registration:singleton
+	// PhysicalId: custom:self-registration:$ACCOUNT_ID
 	"Custom::SelfRegistration": customSelfRegistration,
 
 	// A stack set with a single instance in the current region.

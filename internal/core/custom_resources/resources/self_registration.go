@@ -21,6 +21,7 @@ package resources
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/cfn"
@@ -54,11 +55,15 @@ func customSelfRegistration(_ context.Context, event cfn.Event) (string, map[str
 		if err := parseProperties(event.ResourceProperties, &props); err != nil {
 			return "", nil, err
 		}
-		return "custom:self-registration:singleton", nil, registerPantherAccount(props)
+		return "custom:self-registration:" + props.AccountID, nil, registerPantherAccount(props)
+
+	case cfn.RequestDelete:
+		split := strings.Split(event.PhysicalResourceID, ":")
+		accountID := split[len(split)-1]
+		return event.PhysicalResourceID, nil, removeSelfIntegrations(accountID)
 
 	default:
-		// ignore deletes
-		return event.PhysicalResourceID, nil, nil
+		return "", nil, fmt.Errorf("unknown request type %s", event.RequestType)
 	}
 }
 
@@ -75,6 +80,17 @@ func registerPantherAccount(props SelfRegistrationProperties) error {
 		return fmt.Errorf("error calling source-api to list integrations: %v", err)
 	}
 
+	cloudSecSource, logSource, err := getSelfIntegrations(props.AccountID)
+	if err != nil {
+		return err
+	}
+
+	if cloudSecSource == nil {
+		if err := putCloudSecurityIntegration(props.AccountID); err != nil {
+			return err
+		}
+	}
+
 	// collect the configured log types
 	logTypes := []string{"AWS.VPCFlow", "AWS.ALB"}
 	if props.EnableCloudTrail {
@@ -87,53 +103,13 @@ func registerPantherAccount(props SelfRegistrationProperties) error {
 		logTypes = append(logTypes, "AWS.S3ServerAccess")
 	}
 
-	// Check if registered
-	registerCloudSec, registerLogProcessing := true, true
-	var logProcessingIntegration *models.SourceIntegration
-	for _, integration := range listOutput {
-		if aws.StringValue(integration.AWSAccountID) == props.AccountID &&
-			*integration.IntegrationType == models.IntegrationTypeAWSScan {
-
-			zap.L().Info("account already registered for cloud security",
-				zap.String("accountID", props.AccountID))
-			registerCloudSec = false
-		}
-
-		if aws.StringValue(integration.AWSAccountID) == props.AccountID &&
-			*integration.IntegrationType == models.IntegrationTypeAWS3 &&
-			*integration.IntegrationLabel == genLogProcessingLabel() &&
-			len(integration.LogTypes) == len(logTypes) {
-
-			zap.L().Info("account already registered for log processing",
-				zap.String("accountID", props.AccountID))
-			registerLogProcessing = false
-		} else if aws.StringValue(integration.AWSAccountID) == props.AccountID &&
-			*integration.IntegrationType == models.IntegrationTypeAWS3 &&
-			*integration.IntegrationLabel == genLogProcessingLabel() &&
-			// TODO - length is not sufficient to check slice equality
-			len(integration.LogTypes) != len(logTypes) { // log types changed
-
-			zap.L().Info("account needs updating for log processing",
-				zap.String("accountID", props.AccountID))
-			logProcessingIntegration = integration
-			registerLogProcessing = false
-		}
-	}
-
-	if registerCloudSec {
-		if err := putCloudSecurityIntegration(props.AccountID); err != nil {
-			return err
-		}
-	}
-
-	if registerLogProcessing {
+	if logSource == nil {
 		if err := putLogProcessingIntegration(props.AccountID, props.AuditLogsBucket, logTypes); err != nil {
 			return err
 		}
-	}
-
-	if logProcessingIntegration != nil { // log types have changed, we need to update the source integration
-		if err := updateLogProcessingIntegration(logProcessingIntegration, logTypes); err != nil {
+	} else if !stringSliceEqual(aws.StringValueSlice(logSource.LogTypes), logTypes) {
+		// log types have changed, we need to update the source integration
+		if err := updateLogProcessingIntegration(logSource, logTypes); err != nil {
 			return err
 		}
 	}
@@ -144,6 +120,53 @@ func registerPantherAccount(props SelfRegistrationProperties) error {
 // make label regionally unique
 func genLogProcessingLabel() string {
 	return logProcessingLabel + "-" + *getSession().Config.Region
+}
+
+// Get the current Cloud Security and Log Processing self integrations from source-api.
+func getSelfIntegrations(accountID string) (*models.SourceIntegration, *models.SourceIntegration, error) {
+	var listOutput []*models.SourceIntegration
+	var listInput = &models.LambdaInput{
+		ListIntegrations: &models.ListIntegrationsInput{},
+	}
+	if err := genericapi.Invoke(getLambdaClient(), "panther-source-api", listInput, &listOutput); err != nil {
+		return nil, nil, fmt.Errorf("error calling source-api to list integrations: %v", err)
+	}
+
+	var cloudSecSource, logSource *models.SourceIntegration
+	for _, integration := range listOutput {
+		if aws.StringValue(integration.AWSAccountID) == accountID &&
+			aws.StringValue(integration.IntegrationLabel) == cloudSecLabel &&
+			aws.StringValue(integration.IntegrationType) == models.IntegrationTypeAWSScan {
+
+			cloudSecSource = integration
+		} else if aws.StringValue(integration.AWSAccountID) == accountID &&
+			aws.StringValue(integration.IntegrationType) == models.IntegrationTypeAWS3 &&
+			aws.StringValue(integration.IntegrationLabel) == genLogProcessingLabel() {
+
+			logSource = integration
+		}
+	}
+
+	return cloudSecSource, logSource, nil
+}
+
+// Returns true if the two string slices have the same elements in any order.
+//
+// The input slices may be sorted as a side effect.
+func stringSliceEqual(left, right []string) bool {
+	if len(left) != len(right) {
+		return false
+	}
+
+	sort.Strings(left)
+	sort.Strings(right)
+	for i, elem := range left {
+		if right[i] != elem {
+			return false
+		}
+	}
+
+	return true
 }
 
 func putCloudSecurityIntegration(accountID string) error {
@@ -216,4 +239,38 @@ func updateLogProcessingIntegration(source *models.SourceIntegration, logTypes [
 		zap.String("bucket", aws.StringValue(source.S3Bucket)),
 		zap.Strings("logTypes", logTypes))
 	return nil
+}
+
+func removeSelfIntegrations(accountID string) error {
+	cloudSecSource, logSource, err := getSelfIntegrations(accountID)
+	if err != nil {
+		return err
+	}
+
+	if cloudSecSource != nil {
+		if err = deleteIntegration(cloudSecSource); err != nil {
+			return err
+		}
+	}
+
+	if logSource != nil {
+		if err = deleteIntegration(logSource); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func deleteIntegration(source *models.SourceIntegration) error {
+	zap.L().Info("deleting source integration",
+		zap.String("integrationID", aws.StringValue(source.IntegrationID)),
+		zap.String("integrationLabel", aws.StringValue(source.IntegrationLabel)))
+
+	input := models.LambdaInput{
+		DeleteIntegration: &models.DeleteIntegrationInput{
+			IntegrationID: source.IntegrationID,
+		},
+	}
+	return genericapi.Invoke(getLambdaClient(), "panther-source-api", &input, nil)
 }
