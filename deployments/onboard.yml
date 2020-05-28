@@ -64,6 +64,7 @@ Resources:
         MasterAccountId: !Ref AWS::AccountId
         # RoleSuffix has to match integration label used for SelfRegistration of log source
         RoleSuffix: !Sub panther-account-${AWS::Region}
+        S3Bucket: !Ref AuditLogsBucket
       TemplateURL: auxiliary/cloudformation/panther-log-analysis-iam.yml
 
   # CloudTrail monitoring in the Panther account

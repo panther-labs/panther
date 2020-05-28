@@ -270,7 +270,9 @@ Resources:
 
   Onboard:
     Condition: OnboardSelf
-    DependsOn: [BootstrapGateway, Core] # custom-resources and source-api, respectively
+    # Onboard stack adds new source integrations, which requires custom resources (bootstrap-gateway),
+    # source-api (core), and queues from cloud-security and log-analysis to exist.
+    DependsOn: [BootstrapGateway, CloudSecurity, Core, LogAnalysis]
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: onboard.yml
