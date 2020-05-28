@@ -130,6 +130,8 @@ func Deploy() {
 	logger.Infof("deploy: deploying Panther %s to account %s (%s)", gitVersion, accountID, *awsSession.Config.Region)
 
 	// ***** Step 1: bootstrap stacks and build artifacts
+	// TODO - migration - delete stackset
+
 	// Migration: in v1.4.0, the ECS cluster moved from the bootstrap stack to the web stack.
 	// Enumerate the bootstrap stack to see if this migration is necessary.
 	clusterInBootstrap := false
@@ -458,6 +460,9 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 				"EnableS3AccessLogs": strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
 				"VpcId":              outputs["VpcId"],
 			})
+		} else {
+			// Delete the onboard stack if OnboardSelf was toggled off
+			err = deleteStack(cloudformation.New(awsSession), aws.String(onboardStack))
 		}
 		c <- goroutineResult{summary: onboardStack, err: err}
 	}(results)

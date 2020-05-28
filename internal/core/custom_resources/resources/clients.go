@@ -25,8 +25,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/acm/acmiface"
 	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
-	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"github.com/aws/aws-sdk-go/service/cloudformation/cloudformationiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
@@ -51,7 +49,6 @@ var (
 
 	acmClient            acmiface.ACMAPI
 	athenaClient         athenaiface.AthenaAPI
-	cloudFormationClient cloudformationiface.CloudFormationAPI
 	cloudWatchClient     cloudwatchiface.CloudWatchAPI
 	cloudWatchLogsClient cloudwatchlogsiface.CloudWatchLogsAPI
 	cognitoClient        cognitoidentityprovideriface.CognitoIdentityProviderAPI
@@ -81,13 +78,6 @@ func getAthenaClient() athenaiface.AthenaAPI {
 		athenaClient = athena.New(getSession())
 	}
 	return athenaClient
-}
-
-func getCloudFormationClient() cloudformationiface.CloudFormationAPI {
-	if cloudFormationClient == nil {
-		cloudFormationClient = cloudformation.New(getSession())
-	}
-	return cloudFormationClient
 }
 
 func getCloudWatchClient() cloudwatchiface.CloudWatchAPI {

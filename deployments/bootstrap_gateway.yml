@@ -69,8 +69,8 @@ Parameters:
 Mappings:
   Functions:
     CustomResource:
-      Memory: 2048 # use a larger size to run faster, since this is used rarely the small cost difference is not a concern
-      Timeout: 900 # should as long as possible
+      Memory: 1024 # use a larger size to run faster, since this is used rarely the small cost difference is not a concern
+      Timeout: 900 # 15 minutes (as long as possible)
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
@@ -139,16 +139,6 @@ Resources:
               Resource: '*'
             - Effect: Allow
               Action:
-                - cloudformation:CreateStackInstances
-                - cloudformation:CreateStackSet
-                - cloudformation:DeleteStackInstances
-                - cloudformation:DeleteStackSet
-                - cloudformation:DescribeStackInstance
-                - cloudformation:TagResource
-                - cloudformation:UntagResource
-              Resource: !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stackset/*
-            - Effect: Allow
-              Action:
                 - cloudwatch:PutMetricAlarm
                 - cloudwatch:DeleteAlarms
               Resource: !Sub arn:${AWS::Partition}:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:Panther*
@@ -176,6 +166,7 @@ Resources:
                 - guardduty:Create*
                 - guardduty:Get*
                 - guardduty:List*
+                - guardduty:DeletePublishingDestination
               Resource: '*'
             - Effect: Allow
               Action:

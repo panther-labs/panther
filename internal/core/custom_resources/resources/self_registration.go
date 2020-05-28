@@ -36,8 +36,7 @@ const (
 	// Panther user ID for deployment (must be a valid UUID4)
 	systemUserID = "00000000-0000-4000-8000-000000000000"
 
-	cloudSecLabel      = "panther-account"
-	logProcessingLabel = "panther-account" // this must be lowercase, no spaces to work correctly, see genLogProcessingLabel()
+	cloudSecLabel = "panther-account"
 )
 
 type SelfRegistrationProperties struct {
@@ -119,7 +118,7 @@ func registerPantherAccount(props SelfRegistrationProperties) error {
 
 // make label regionally unique
 func genLogProcessingLabel() string {
-	return logProcessingLabel + "-" + *getSession().Config.Region
+	return "panther-account-" + *getSession().Config.Region
 }
 
 // Get the current Cloud Security and Log Processing self integrations from source-api.

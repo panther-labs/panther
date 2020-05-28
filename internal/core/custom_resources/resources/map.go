@@ -102,6 +102,19 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// PhysicalId: custom:glue:update-tables
 	"Custom::UpdateGlueTables": customUpdateGlueTables,
 
+	// Add a GuardDuty publishing destination
+	//
+	// Parameters = guardduty.CreatePublishingDestinationInput
+	//    DetectorId:            string (required)
+	//    DestinationType:       string (required)
+	//    DestinationProperties:
+	//        DestinationArn:    string (required)
+	//        KmsKeyArn:         string
+	// Outputs:
+	//    DestinationId:         string
+	// PhysicalId: custom:guardduty:destination:$DETECTOR_ID:$DESTINATION_ID
+	"Custom::GuardDutyDestination": customGuardDutyDestination,
+
 	// Creates alarms for lambda errors, warning, throttles, duration, and memory
 	//
 	// Parameters:
@@ -129,15 +142,15 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 
 	// When Panther onboards itself, set some GuardDuty/S3 config not possible from CFN.
 	//
-	// Parameters:
-	//     AuditLogsBucket:       string (required)
-	//     EnableGuardDuty:       bool (default: false)
-	//     GuardDutyDetectorID:   string (required if EnableGuardDuty)
-	//     GuardDutyKmsKeyArn:    string (required if EnableGuardDuty)
-	//     LogProcessingTopicArn: string (required)
+	// Parameters = s3.PutBucketNotificationConfigurationInput
+	//     Bucket:                      string (required)
+	//     NotificationConfiguration:
+	//         TopicConfigurations:
+	//             - Events:            list<string>
+	//               TopicArn:          string (required)
 	// Outputs: None
-	// PhysicalId: custom:self-log-config:singleton
-	"Custom::SelfLogConfig": customSelfLogConfig,
+	// PhysicalId: custom:s3bucketnotification:$BUCKET_NAME
+	"Custom::S3BucketNotification": customS3BucketNotification,
 
 	// Panther adds itself as a cloud security and/or log processing source.
 	//
@@ -150,21 +163,6 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// Outputs: None
 	// PhysicalId: custom:self-registration:$ACCOUNT_ID
 	"Custom::SelfRegistration": customSelfRegistration,
-
-	// A stack set with a single instance in the current region.
-	//
-	// Parameters:
-	//     AccountID:            string (required)
-	//     AdminRoleArn:         string (required)
-	//     ExecutionRoleName:    string (required)
-	//     Parameters:           list
-	//        - ParameterKey:    string
-	//          ParameterValue:  string
-	//     StackSetName:         string (required)
-	//     TemplateURL:          string (required)
-	// Outputs: None
-	// PhysicalId: custom:stackset:$REGION:$ACCOUNT_ID:$STACK_SET_NAME
-	"Custom::StackSet": customStackSet,
 
 	// Creates an alarm for failed step function executions
 	//
