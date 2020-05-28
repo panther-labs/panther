@@ -128,6 +128,9 @@ Resources:
                 - cloudformation:CreateStackSet
                 - cloudformation:DeleteStackInstances
                 - cloudformation:DeleteStackSet
+                - cloudformation:DescribeStackInstance
+                - cloudformation:TagResource
+                - cloudformation:UntagResource
               Resource: !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stackset/*
             - Effect: Allow
               Action:
@@ -153,12 +156,14 @@ Resources:
                 # This seems like a bug in IAM, but in any case a fresh deploy/teardown will not work without this:
                 - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/Panther*
             - Effect: Allow
+              Action: iam:PassRole
+              Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/Panther*
+            - Effect: Allow
               Action: kms:List* # required for GuardDuty
               Resource: '*'
             - Effect: Allow
               Action: lambda:InvokeFunction
-              Resource:
-                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api
             - Effect: Allow
               Action:
                 - logs:DeleteMetricFilter
@@ -176,6 +181,9 @@ Resources:
                 - s3:PutBucketPublicAccessBlock
                 - s3:PutObject
               Resource: !Sub arn:${AWS::Partition}:s3:::${AuditLogsBucket}*
+            - Effect: Allow
+              Action: s3:Get*
+              Resource: arn:aws:s3:::panther-public-cloudformation-templates*
 
   CustomResourceLogGroup:
     Type: AWS::Logs::LogGroup

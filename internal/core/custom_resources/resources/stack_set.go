@@ -67,6 +67,7 @@ func customStackSet(_ context.Context, event cfn.Event) (string, map[string]inte
 	}
 }
 
+// Returns once parent stack set has started creation (does not wait for it to finish).
 func deployStackSet(props StackSetProperties) error {
 	zap.L().Info("deploying stack set", zap.String("name", props.StackSetName))
 	cfClient := getCloudFormationClient()
