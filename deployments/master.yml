@@ -265,7 +265,7 @@ Resources:
 
   Onboard:
     Condition: OnboardSelf
-    DependsOn: BootstrapGateway # custom-resources Lambda
+    DependsOn: [BootstrapGateway, Core] # custom-resources and source-api, respectively
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: onboard.yml
@@ -274,7 +274,7 @@ Resources:
         AuditLogsBucket: !GetAtt Bootstrap.Outputs.AuditLogsBucket
         EnableCloudTrail: !Ref EnableCloudTrail
         EnableGuardDuty: !Ref EnableGuardDuty
-        LogProcessingRoleLabel: !Sub panther-account-${AWS::Region}
+        EnableS3AccessLogs: !Ref EnableS3AccessLogs
         VpcId: !GetAtt Bootstrap.Outputs.VpcId
       Tags:
         - Key: Application

@@ -82,7 +82,8 @@ const (
 	defaultGlobalID       = "panther"
 	defaultGlobalLocation = "internal/compliance/policy_engine/src/helpers.py"
 
-	mageUserID = "00000000-0000-4000-8000-000000000000" // used to indicate mage made the call, must be a valid uuid4!
+	// Panther user ID for deployment (must be a valid UUID4)
+	mageUserID = "00000000-0000-4000-8000-000000000000"
 )
 
 // Not all AWS services are available in every region. In particular, Panther will currently NOT work in:
@@ -446,12 +447,12 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 		var err error
 		if settings.Setup.OnboardSelf {
 			_, err = deployTemplate(awsSession, onboardTemplate, sourceBucket, onboardStack, map[string]string{
-				"AlarmTopicArn":          outputs["AlarmTopicArn"],
-				"AuditLogsBucket":        outputs["AuditLogsBucket"],
-				"EnableCloudTrail":       strconv.FormatBool(settings.Setup.EnableCloudTrail),
-				"EnableGuardDuty":        strconv.FormatBool(settings.Setup.EnableGuardDuty),
-				"LogProcessingRoleLabel": logProcessingLabel + "-" + *awsSession.Config.Region,
-				"VpcId":                  outputs["VpcId"],
+				"AlarmTopicArn":      outputs["AlarmTopicArn"],
+				"AuditLogsBucket":    outputs["AuditLogsBucket"],
+				"EnableCloudTrail":   strconv.FormatBool(settings.Setup.EnableCloudTrail),
+				"EnableGuardDuty":    strconv.FormatBool(settings.Setup.EnableGuardDuty),
+				"EnableS3AccessLogs": strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
+				"VpcId":              outputs["VpcId"],
 			})
 		}
 		c <- goroutineResult{summary: onboardStack, err: err}

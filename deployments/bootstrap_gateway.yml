@@ -131,13 +131,8 @@ Resources:
               Action: cognito-idp:SetUserPoolMfaConfig
               Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}
             - Effect: Allow
-              Action: kms:List* # required for GuardDuty
-              Resource: '*'
-            - Effect: Allow
-              Action: guardduty:CreatePublishingDestination
-              Resource: !Sub arn:${AWS::Partition}:guardduty:${AWS::Region}:${AWS::AccountId}:detector/*
-            - Effect: Allow
               Action:
+                - guardduty:Create*
                 - guardduty:Get*
                 - guardduty:List*
               Resource: '*'
@@ -150,6 +145,13 @@ Resources:
                 # IAM sometimes requires permissions to match the certificate name, not the full path
                 # This seems like a bug in IAM, but in any case a fresh deploy/teardown will not work without this:
                 - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/Panther*
+            - Effect: Allow
+              Action: kms:List* # required for GuardDuty
+              Resource: '*'
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource:
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api
             - Effect: Allow
               Action:
                 - logs:DeleteMetricFilter

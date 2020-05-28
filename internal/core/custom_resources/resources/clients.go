@@ -33,6 +33,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/guardduty/guarddutyiface"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/iam/iamiface"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 )
@@ -45,8 +47,9 @@ var (
 	cloudWatchClient     cloudwatchiface.CloudWatchAPI
 	cloudWatchLogsClient cloudwatchlogsiface.CloudWatchLogsAPI
 	cognitoClient        cognitoidentityprovideriface.CognitoIdentityProviderAPI
-	iamClient            iamiface.IAMAPI
 	guardDutyClient      guarddutyiface.GuardDutyAPI
+	iamClient            iamiface.IAMAPI
+	lambdaClient         lambdaiface.LambdaAPI
 	s3Client             s3iface.S3API
 )
 
@@ -97,6 +100,13 @@ func getIamClient() iamiface.IAMAPI {
 		iamClient = iam.New(getSession())
 	}
 	return iamClient
+}
+
+func getLambdaClient() lambdaiface.LambdaAPI {
+	if lambdaClient == nil {
+		lambdaClient = lambda.New(getSession())
+	}
+	return lambdaClient
 }
 
 func getS3Client() s3iface.S3API {

@@ -123,6 +123,18 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// PhysicalId: custom:self-log-config:singleton
 	"Custom::SelfLogConfig": customSelfLogConfig,
 
+	// Panther adds itself as a cloud security and/or log processing source.
+	//
+	// Parameters:
+	//     AccountID:          string (required)
+	//     AuditLogsBucket:    string(required)
+	//     EnableCloudTrail:   bool (default: false)
+	//     EnableGuardDuty:    bool (default: false)
+	//     EnableS3AccessLogs: bool (default: false)
+	// Outputs: None
+	// PhysicalId: custom:self-registration:singleton
+	"Custom::SelfRegistration": customSelfRegistration,
+
 	// Creates an alarm for failed step function executions
 	//
 	// Parameters:

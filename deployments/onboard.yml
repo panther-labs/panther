@@ -32,9 +32,10 @@ Parameters:
     Type: String
     Description: If true, create a Panther GuardDuty in this account configured for log processing
     AllowedValues: [true, false]
-  LogProcessingRoleLabel:
+  EnableS3AccessLogs:
     Type: String
-    Description: The suffix for the log processing role
+    Description: Enable S3 access logging for all Panther buckets
+    AllowedValues: [true, false]
   VpcId:
     Type: String
     Description: Web VPC ID
@@ -109,7 +110,7 @@ Resources:
   LogProcessingRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub PantherLogProcessingRole-${LogProcessingRoleLabel}
+      RoleName: !Sub PantherLogProcessingRole-panther-account-${AWS::Region}
       Description: The Panther master account assumes this role to read log data
       MaxSessionDuration: 3600 # 1 hour
       AssumeRolePolicyDocument:
@@ -216,4 +217,15 @@ Resources:
       GuardDutyDetectorId: !If [EnableGuardDuty, !Ref GuardDutyDetector, '']
       GuardDutyKmsKeyArn: !If [EnableGuardDuty, !GetAtt GuardDutyEncryptionKey.Arn, '']
       LogProcessingTopicArn: !Ref Topic
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  SelfRegistration:
+    DependsOn: [ComplianceRoles, LogProcessingRole]
+    Type: Custom::SelfRegistration
+    Properties:
+      AccountID: !Ref AWS::AccountId
+      AuditLogsBucket: !Ref AuditLogsBucket
+      EnableCloudTrail: !Ref EnableCloudTrail
+      EnableGuardDuty: !Ref EnableGuardDuty
+      EnableS3AccessLogs: !Ref EnableS3AccessLogs
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
