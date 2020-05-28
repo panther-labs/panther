@@ -26,9 +26,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/tools/cfndoc"
-	"github.com/panther-labs/panther/tools/cfngen/gluecf"
 )
 
 // Auto-generate specific sections of documentation
@@ -130,7 +130,7 @@ func logDocs() error {
 			docsBuffer.WriteString(`<table>` + "\n")
 			docsBuffer.WriteString("<tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>\n") // nolint
 
-			columns := gluecf.InferJSONColumns(table.EventStruct(), gluecf.GlueMappings...) // get the Glue schema
+			columns := awsglue.InferJSONColumns(table.EventStruct(), awsglue.GlueMappings...) // get the Glue schema
 			for _, column := range columns {
 				colName := column.Name
 				if column.Required {
@@ -162,7 +162,7 @@ func formatColumnName(name string) string {
 	return "<code>" + name + "</code>"
 }
 
-func formatType(col gluecf.Column) string {
+func formatType(col awsglue.Column) string {
 	return "<code>" + prettyPrintType(col.Type, "") + "</code>"
 }
 

@@ -1,4 +1,4 @@
-package gluecf
+package api
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,30 +19,18 @@ package gluecf
  */
 
 import (
-	"io/ioutil"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
-	"github.com/panther-labs/panther/tools/cfngen"
+	"github.com/panther-labs/panther/internal/log_analysis/athenaviews"
+	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 )
 
-func TestDatabase(t *testing.T) {
-	dbName := "db1"
-	resources := map[string]interface{}{
-		dbName: NewDatabase("12345", dbName, "Test db"),
+func addGlueTables(logTypes []*string) error {
+	for _, logType := range logTypes {
+		_, err := gluetables.CreateOrUpdateGlueTablesForLogType(glueClient, *logType, env.ProcessedDataBucket)
+		if err != nil {
+			return err
+		}
 	}
 
-	cfTemplate := cfngen.NewTemplate("Test template", nil, resources, nil)
-	cf, err := cfTemplate.CloudFormation()
-	require.NoError(t, err)
-
-	const expectedFile = "testdata/db.template.json"
-	// uncomment to write new expected file
-	// require.NoError(t, ioutil.WriteFile(expectedFile, cf, 0644))
-
-	expected, err := ioutil.ReadFile(expectedFile)
-	require.NoError(t, err)
-	assert.JSONEq(t, string(expected), string(cf))
+	// update the views with the new tables
+	return athenaviews.CreateOrReplaceViews(glueClient, athenaClient)
 }

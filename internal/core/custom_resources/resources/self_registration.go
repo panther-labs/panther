@@ -75,8 +75,21 @@ func registerPantherAccount(props SelfRegistrationProperties) error {
 		return fmt.Errorf("error calling source-api to list integrations: %v", err)
 	}
 
+	// collect the configured log types
+	logTypes := []string{"AWS.VPCFlow", "AWS.ALB"}
+	if props.EnableCloudTrail {
+		logTypes = append(logTypes, "AWS.CloudTrail")
+	}
+	if props.EnableGuardDuty {
+		logTypes = append(logTypes, "AWS.GuardDuty")
+	}
+	if props.EnableS3AccessLogs {
+		logTypes = append(logTypes, "AWS.S3ServerAccess")
+	}
+
 	// Check if registered
 	registerCloudSec, registerLogProcessing := true, true
+	var logProcessingIntegration *models.SourceIntegration
 	for _, integration := range listOutput {
 		if aws.StringValue(integration.AWSAccountID) == props.AccountID &&
 			*integration.IntegrationType == models.IntegrationTypeAWSScan {
@@ -85,71 +98,44 @@ func registerPantherAccount(props SelfRegistrationProperties) error {
 				zap.String("accountID", props.AccountID))
 			registerCloudSec = false
 		}
+
 		if aws.StringValue(integration.AWSAccountID) == props.AccountID &&
 			*integration.IntegrationType == models.IntegrationTypeAWS3 &&
-			*integration.IntegrationLabel == genLogProcessingLabel() {
+			*integration.IntegrationLabel == genLogProcessingLabel() &&
+			len(integration.LogTypes) == len(logTypes) {
 
 			zap.L().Info("account already registered for log processing",
 				zap.String("accountID", props.AccountID))
+			registerLogProcessing = false
+		} else if aws.StringValue(integration.AWSAccountID) == props.AccountID &&
+			*integration.IntegrationType == models.IntegrationTypeAWS3 &&
+			*integration.IntegrationLabel == genLogProcessingLabel() &&
+			// TODO - length is not sufficient to check slice equality
+			len(integration.LogTypes) != len(logTypes) { // log types changed
+
+			zap.L().Info("account needs updating for log processing",
+				zap.String("accountID", props.AccountID))
+			logProcessingIntegration = integration
 			registerLogProcessing = false
 		}
 	}
 
 	if registerCloudSec {
-		input := &models.LambdaInput{
-			PutIntegration: &models.PutIntegrationInput{
-				PutIntegrationSettings: models.PutIntegrationSettings{
-					AWSAccountID:       &props.AccountID,
-					IntegrationLabel:   aws.String(cloudSecLabel),
-					IntegrationType:    aws.String(models.IntegrationTypeAWSScan),
-					ScanIntervalMins:   aws.Int(1440),
-					UserID:             aws.String(systemUserID),
-					CWEEnabled:         aws.Bool(true),
-					RemediationEnabled: aws.Bool(true),
-				},
-			},
+		if err := putCloudSecurityIntegration(props.AccountID); err != nil {
+			return err
 		}
-		if err := genericapi.Invoke(getLambdaClient(), "panther-source-api", input, nil); err != nil &&
-			!strings.Contains(err.Error(), "already onboarded") {
-
-			return fmt.Errorf("error calling source-api to register account for cloud security: %v", err)
-		}
-		zap.L().Info("account registered for cloud security",
-			zap.String("accountID", props.AccountID))
 	}
 
 	if registerLogProcessing {
-		logTypes := []string{"AWS.VPCFlow", "AWS.ALB"}
-		if props.EnableCloudTrail {
-			logTypes = append(logTypes, "AWS.CloudTrail")
+		if err := putLogProcessingIntegration(props.AccountID, props.AuditLogsBucket, logTypes); err != nil {
+			return err
 		}
-		if props.EnableGuardDuty {
-			logTypes = append(logTypes, "AWS.GuardDuty")
-		}
-		if props.EnableS3AccessLogs {
-			logTypes = append(logTypes, "AWS.S3ServerAccess")
-		}
+	}
 
-		input := &models.LambdaInput{
-			PutIntegration: &models.PutIntegrationInput{
-				PutIntegrationSettings: models.PutIntegrationSettings{
-					AWSAccountID:     &props.AccountID,
-					IntegrationLabel: aws.String(genLogProcessingLabel()),
-					IntegrationType:  aws.String(models.IntegrationTypeAWS3),
-					UserID:           aws.String(systemUserID),
-					S3Bucket:         &props.AuditLogsBucket,
-					LogTypes:         aws.StringSlice(logTypes),
-				},
-			},
+	if logProcessingIntegration != nil { // log types have changed, we need to update the source integration
+		if err := updateLogProcessingIntegration(logProcessingIntegration, logTypes); err != nil {
+			return err
 		}
-
-		if err := genericapi.Invoke(getLambdaClient(), "panther-source-api", input, nil); err != nil &&
-			!strings.Contains(err.Error(), "already onboarded") {
-
-			return fmt.Errorf("error calling source-api to register account for log processing: %v", err)
-		}
-		zap.L().Info("account registered for log processing",
-			zap.String("accountID", props.AccountID))
 	}
 
 	return nil
@@ -158,4 +144,76 @@ func registerPantherAccount(props SelfRegistrationProperties) error {
 // make label regionally unique
 func genLogProcessingLabel() string {
 	return logProcessingLabel + "-" + *getSession().Config.Region
+}
+
+func putCloudSecurityIntegration(accountID string) error {
+	input := &models.LambdaInput{
+		PutIntegration: &models.PutIntegrationInput{
+			PutIntegrationSettings: models.PutIntegrationSettings{
+				AWSAccountID:       &accountID,
+				IntegrationLabel:   aws.String(cloudSecLabel),
+				IntegrationType:    aws.String(models.IntegrationTypeAWSScan),
+				ScanIntervalMins:   aws.Int(1440),
+				UserID:             aws.String(systemUserID),
+				CWEEnabled:         aws.Bool(true),
+				RemediationEnabled: aws.Bool(true),
+			},
+		},
+	}
+
+	if err := genericapi.Invoke(getLambdaClient(), "panther-source-api", input, nil); err != nil &&
+		!strings.Contains(err.Error(), "already onboarded") {
+
+		return fmt.Errorf("error calling source-api to register account for cloud security: %v", err)
+	}
+
+	zap.L().Info("account registered for cloud security", zap.String("accountID", accountID))
+	return nil
+}
+
+func putLogProcessingIntegration(accountID, auditBucket string, logTypes []string) error {
+	input := &models.LambdaInput{
+		PutIntegration: &models.PutIntegrationInput{
+			PutIntegrationSettings: models.PutIntegrationSettings{
+				AWSAccountID:     &accountID,
+				IntegrationLabel: aws.String(genLogProcessingLabel()),
+				IntegrationType:  aws.String(models.IntegrationTypeAWS3),
+				UserID:           aws.String(systemUserID),
+				S3Bucket:         &auditBucket,
+				LogTypes:         aws.StringSlice(logTypes),
+			},
+		},
+	}
+
+	if err := genericapi.Invoke(getLambdaClient(), "panther-source-api", input, nil); err != nil &&
+		!strings.Contains(err.Error(), "already onboarded") {
+
+		return fmt.Errorf("error calling source-api to register account for log processing: %v", err)
+	}
+
+	zap.L().Info("account registered for log processing",
+		zap.String("accountID", accountID), zap.String("bucket", auditBucket),
+		zap.Strings("logTypes", logTypes))
+	return nil
+}
+
+func updateLogProcessingIntegration(source *models.SourceIntegration, logTypes []string) error {
+	input := &models.LambdaInput{
+		UpdateIntegrationSettings: &models.UpdateIntegrationSettingsInput{
+			IntegrationID:    source.IntegrationID,
+			IntegrationLabel: source.IntegrationLabel,
+			S3Bucket:         source.S3Bucket,
+			LogTypes:         aws.StringSlice(logTypes),
+		},
+	}
+
+	if err := genericapi.Invoke(getLambdaClient(), "panther-source-api", input, nil); err != nil {
+		return fmt.Errorf("error calling source-api to update account for log processing: %v", err)
+	}
+
+	zap.L().Info("account updated for log processing",
+		zap.String("accountID", aws.StringValue(source.AWSAccountID)),
+		zap.String("bucket", aws.StringValue(source.S3Bucket)),
+		zap.Strings("logTypes", logTypes))
+	return nil
 }

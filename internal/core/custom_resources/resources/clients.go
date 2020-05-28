@@ -23,6 +23,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/acm"
 	"github.com/aws/aws-sdk-go/service/acm/acmiface"
+	"github.com/aws/aws-sdk-go/service/athena"
+	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/cloudformation/cloudformationiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -31,6 +33,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider/cognitoidentityprovideriface"
+	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/aws/aws-sdk-go/service/guardduty"
 	"github.com/aws/aws-sdk-go/service/guardduty/guarddutyiface"
 	"github.com/aws/aws-sdk-go/service/iam"
@@ -46,10 +50,12 @@ var (
 	awsSession *session.Session
 
 	acmClient            acmiface.ACMAPI
+	athenaClient         athenaiface.AthenaAPI
 	cloudFormationClient cloudformationiface.CloudFormationAPI
 	cloudWatchClient     cloudwatchiface.CloudWatchAPI
 	cloudWatchLogsClient cloudwatchlogsiface.CloudWatchLogsAPI
 	cognitoClient        cognitoidentityprovideriface.CognitoIdentityProviderAPI
+	glueClient           glueiface.GlueAPI
 	guardDutyClient      guarddutyiface.GuardDutyAPI
 	iamClient            iamiface.IAMAPI
 	lambdaClient         lambdaiface.LambdaAPI
@@ -68,6 +74,13 @@ func getAcmClient() acmiface.ACMAPI {
 		acmClient = acm.New(getSession())
 	}
 	return acmClient
+}
+
+func getAthenaClient() athenaiface.AthenaAPI {
+	if athenaClient == nil {
+		athenaClient = athena.New(getSession())
+	}
+	return athenaClient
 }
 
 func getCloudFormationClient() cloudformationiface.CloudFormationAPI {
@@ -103,6 +116,13 @@ func getGuardDutyClient() guarddutyiface.GuardDutyAPI {
 		guardDutyClient = guardduty.New(getSession())
 	}
 	return guardDutyClient
+}
+
+func getGlueClient() glueiface.GlueAPI {
+	if glueClient == nil {
+		glueClient = glue.New(getSession())
+	}
+	return glueClient
 }
 
 func getIamClient() iamiface.IAMAPI {

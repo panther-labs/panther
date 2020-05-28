@@ -24,7 +24,9 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
@@ -39,6 +41,7 @@ import (
 	awspoller "github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws"
 	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 	"github.com/panther-labs/panther/internal/core/source_api/ddb/modelstest"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
@@ -116,11 +119,12 @@ func TestAddToSnapshotQueue(t *testing.T) {
 	require.NoError(t, err)
 	// Check that there is one message per service
 	assert.Len(t, sqsIn.Entries, len(awspoller.ServicePollers))
+	mockSQS.AssertExpectations(t)
 }
 
-func TestPutIntegration(t *testing.T) {
+func TestPutCloudSecIntegration(t *testing.T) {
 	mockSQS := &testutils.SqsMock{}
-	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil)
+	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil) // count is hard to get due to batching
 	sqsClient = mockSQS
 	dynamoClient = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
 	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
@@ -136,12 +140,11 @@ func TestPutIntegration(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotEmpty(t, out)
+	mockSQS.AssertExpectations(t)
 }
 
 func TestPutLogIntegrationExists(t *testing.T) {
-	mockSQS := &testutils.SqsMock{}
-	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil)
-	sqsClient = mockSQS
+	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
 	dynamoClient = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
@@ -167,12 +170,12 @@ func TestPutLogIntegrationExists(t *testing.T) {
 		},
 	})
 	require.Error(t, err)
-	require.Empty(t, out) // should do nothing
+	require.Empty(t, out)
+	assert.Equal(t, "Log source for account 123456789012 with label ProdAWS already onboarded", err.Error())
 }
 
 func TestPutCloudSecIntegrationExists(t *testing.T) {
-	mockSQS := &testutils.SqsMock{}
-	sqsClient = mockSQS
+	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
 	dynamoClient = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
@@ -180,7 +183,7 @@ func TestPutCloudSecIntegrationExists(t *testing.T) {
 				{
 					"awsAccountId":     {S: aws.String(testAccountID)},
 					"integrationType":  {S: aws.String(models.IntegrationTypeAWSScan)},
-					"integrationlabel": {S: aws.String("test label")},
+					"integrationlabel": {S: aws.String(testIntegrationLabel)},
 				},
 			},
 			TestErr: false,
@@ -198,8 +201,8 @@ func TestPutCloudSecIntegrationExists(t *testing.T) {
 		},
 	})
 	require.Error(t, err)
-	require.Empty(t, out) // should do nothing
-	mockSQS.AssertExpectations(t)
+	require.Empty(t, out)
+	assert.Equal(t, "Source account 123456789012 already onboarded", err.Error())
 }
 
 func TestPutIntegrationValidInput(t *testing.T) {
@@ -231,6 +234,8 @@ func TestPutIntegrationInvalidInput(t *testing.T) {
 }
 
 func TestPutIntegrationDatabaseError(t *testing.T) {
+	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
+
 	in := &models.PutIntegrationInput{
 		PutIntegrationSettings: models.PutIntegrationSettings{
 			AWSAccountID:     aws.String(testAccountID),
@@ -246,19 +251,15 @@ func TestPutIntegrationDatabaseError(t *testing.T) {
 		TableName: "test",
 	}
 
-	mockSQS := &testutils.SqsMock{}
-	sqsClient = mockSQS
-	mockSQS.On("AddPermission", mock.Anything).Return(&sqs.AddPermissionOutput{}, nil)
-	// RemoveRermission will be called to remove the permission that was added previously
-	// This is done as part of rollback process to bring the system in a consistent state
-	mockSQS.On("RemovePermission", mock.Anything).Return(&sqs.RemovePermissionOutput{}, nil)
-
 	out, err := apiTest.PutIntegration(in)
 	assert.Error(t, err)
 	assert.Empty(t, out)
+	assert.Equal(t, "Failed to add source. Please try again later", err.Error())
 }
 
-func TestPutIntegrationDatabaseErrorRecoveryFails(t *testing.T) {
+func TestPutIntegrationSQSErrorRecoveryFails(t *testing.T) {
+	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
+
 	// Used to capture logs for unit testing purposes
 	core, recordedLogs := observer.New(zapcore.ErrorLevel)
 	zap.ReplaceGlobals(zap.New(core))
@@ -267,24 +268,38 @@ func TestPutIntegrationDatabaseErrorRecoveryFails(t *testing.T) {
 		PutIntegrationSettings: models.PutIntegrationSettings{
 			AWSAccountID:     aws.String(testAccountID),
 			IntegrationLabel: aws.String(testIntegrationLabel),
-			IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
+			IntegrationType:  aws.String(models.IntegrationTypeAWS3),
 			ScanIntervalMins: aws.Int(60),
 			UserID:           aws.String(testUserID),
+			LogTypes:         aws.StringSlice([]string{"AWS.VPCFlow"}),
 		},
 	}
 	dynamoClient = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
-			TestErr: true,
+			TestErr: false,
 		},
 		TableName: "test",
 	}
 
 	mockSQS := &testutils.SqsMock{}
 	sqsClient = mockSQS
-	mockSQS.On("AddPermission", mock.Anything).Return(&sqs.AddPermissionOutput{}, nil)
-	// RemoveRermission will be called to remove the permission that was added previously
-	// This is done as part of rollback process to bring the system in a consistent state
-	mockSQS.On("RemovePermission", mock.Anything).Return(&sqs.RemovePermissionOutput{}, errors.New("error"))
+	mockGlue := &testutils.GlueMock{}
+	glueClient = mockGlue
+
+	mockSQS.On("GetQueueAttributes", mock.Anything).Return(&sqs.GetQueueAttributesOutput{
+		Attributes: generateQueueAttributeOutput(t, []string{}),
+	}, nil).Once() // set
+	mockSQS.On("SetQueueAttributes", mock.Anything).Return(&sqs.SetQueueAttributesOutput{},
+		nil).Once() // set
+
+	// fail the glue call to trigger the role back of permissions
+	mockGlue.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, errors.New("error")).Once()
+
+	mockSQS.On("GetQueueAttributes", mock.Anything).Return(&sqs.GetQueueAttributesOutput{
+		Attributes: generateQueueAttributeOutput(t, []string{testAccountID}),
+	}, nil).Once() // unset
+	mockSQS.On("SetQueueAttributes", mock.Anything).Return(&sqs.SetQueueAttributesOutput{},
+		errors.New("error")).Once() // unset fails
 
 	out, err := apiTest.PutIntegration(in)
 	require.Error(t, err)
@@ -292,13 +307,18 @@ func TestPutIntegrationDatabaseErrorRecoveryFails(t *testing.T) {
 
 	errorLog := recordedLogs.FilterMessage("failed to remove SQS permission for integration." +
 		" SQS queue has additional permissions that have to be removed manually")
-	require.NotNil(t, errorLog)
+	require.NotEmpty(t, errorLog.All())
+	mockSQS.AssertExpectations(t)
 }
 
 func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 	dynamoClient = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
 	mockSQS := &testutils.SqsMock{}
 	sqsClient = mockSQS
+	mockGlue := &testutils.GlueMock{}
+	glueClient = mockGlue
+	mockAthena := &testutils.AthenaMock{}
+	athenaClient = mockAthena
 	env.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
@@ -308,13 +328,31 @@ func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 	}
 	alreadyExistingAttributes := generateQueueAttributeOutput(t, []string{})
 	mockSQS.On("GetQueueAttributes", expectedGetQueueAttributesInput).
-		Return(&sqs.GetQueueAttributesOutput{Attributes: alreadyExistingAttributes}, nil)
+		Return(&sqs.GetQueueAttributesOutput{Attributes: alreadyExistingAttributes}, nil).Once()
 	expectedAttributes := generateQueueAttributeOutput(t, []string{testAccountID})
 	expectedSetAttributes := &sqs.SetQueueAttributesInput{
 		Attributes: expectedAttributes,
 		QueueUrl:   aws.String(env.LogProcessorQueueURL),
 	}
-	mockSQS.On("SetQueueAttributes", expectedSetAttributes).Return(&sqs.SetQueueAttributesOutput{}, nil)
+	mockSQS.On("SetQueueAttributes", expectedSetAttributes).Return(&sqs.SetQueueAttributesOutput{}, nil).Once()
+
+	// create the tables
+	mockGlue.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, nil).Twice()
+	// create/replace the view
+	mockGlue.On("GetTable", mock.Anything).Return(&glue.GetTableOutput{}, nil).Times(len(registry.AvailableTables()))
+	mockAthena.On("StartQueryExecution", mock.Anything).Return(&athena.StartQueryExecutionOutput{
+		QueryExecutionId: aws.String("test-query-1234"),
+	}, nil).Twice()
+	mockAthena.On("GetQueryExecution", mock.Anything).Return(&athena.GetQueryExecutionOutput{
+		QueryExecution: &athena.QueryExecution{
+			QueryExecutionId: aws.String("test-query-1234"),
+			Status: &athena.QueryExecutionStatus{
+				State: aws.String(athena.QueryExecutionStateSucceeded),
+			},
+		},
+	}, nil).Twice()
+	mockAthena.On("GetQueryResults", mock.Anything).Return(&athena.GetQueryResultsOutput{}, nil).Twice()
+
 	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
 		PutIntegrationSettings: models.PutIntegrationSettings{
 			AWSAccountID:     aws.String(testAccountID),
@@ -323,11 +361,14 @@ func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 			UserID:           aws.String(testUserID),
 			S3Bucket:         aws.String("bucket"),
 			KmsKey:           aws.String("keyarns"),
+			LogTypes:         aws.StringSlice([]string{"AWS.VPCFlow"}),
 		},
 	})
-
 	require.NoError(t, err)
 	require.NotEmpty(t, out)
+	mockSQS.AssertExpectations(t)
+	mockGlue.AssertExpectations(t)
+	mockAthena.AssertExpectations(t)
 }
 
 func TestPutLogIntegrationUpdateSqsQueuePermissionsFailure(t *testing.T) {
@@ -335,8 +376,9 @@ func TestPutLogIntegrationUpdateSqsQueuePermissionsFailure(t *testing.T) {
 	mockSQS := &testutils.SqsMock{}
 	sqsClient = mockSQS
 	env.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
-	mockSQS.On("GetQueueAttributes", mock.Anything).Return(&sqs.GetQueueAttributesOutput{}, errors.New("error"))
+	mockSQS.On("GetQueueAttributes", mock.Anything).Return(&sqs.GetQueueAttributesOutput{}, errors.New("error")).Once()
 
 	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
 		PutIntegrationSettings: models.PutIntegrationSettings{
@@ -346,8 +388,10 @@ func TestPutLogIntegrationUpdateSqsQueuePermissionsFailure(t *testing.T) {
 			UserID:           aws.String(testUserID),
 			S3Bucket:         aws.String("bucket"),
 			KmsKey:           aws.String("keyarns"),
+			LogTypes:         aws.StringSlice([]string{"AWS.VPCFlow"}),
 		},
 	})
 	require.Error(t, err)
 	require.Empty(t, out)
+	mockSQS.AssertExpectations(t)
 }

@@ -32,12 +32,18 @@ Parameters:
   AnalysisApiId:
     Type: String
     Description: Analysis API gateway ID
+  AthenaResultsBucket:
+    Type: String
+    Description: Bucket created to hold Athena results
   ComplianceApiId:
     Type: String
     Description: Compliance API gateway ID
   DynamoScalingRoleArn:
     Type: String
     Description: IAM role arn for DynamoDB auto-scaling
+  ProcessedDataBucket:
+    Type: String
+    Description: S3 bucket which stores processed logs
   OutputsKeyId:
     Type: String
     Description: KMS key for encrypting alert outputs
@@ -719,6 +725,7 @@ Resources:
           SNAPSHOT_POLLERS_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-snapshot-queue
           LOG_PROCESSOR_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-input-data-notifications-queue
           LOG_PROCESSOR_QUEUE_ARN: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-input-data-notifications-queue
+          PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
           TABLE_NAME: !Ref IntegrationsTable
       FunctionName: panther-source-api
       # <cfndoc>
@@ -779,6 +786,37 @@ Resources:
             - Effect: Allow
               Action: s3:GetObject
               Resource: arn:aws:s3:::panther-public-cloudformation-templates/*
+        - Id: CreateGlueTables # to create tables for new log sources
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - glue:CreateTable
+                - glue:GetTable
+                - glue:UpdateTable
+              Resource:
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
+        - Id: AthenaPermissions # to create views over Glue tables
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - athena:StartQueryExecution
+                - athena:StopQueryExecution
+                - athena:GetQuery*
+              Resource: '*'
+        - Id: AthenaResultsPermissions # athena writes results to S3
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetBucketLocation
+                - s3:List*
+                - s3:GetObject
+                - s3:PutObject
+              Resource: !Sub arn:aws:s3:::${AthenaResultsBucket}*
 
   SourceApiLogGroup:
     Type: AWS::Logs::LogGroup

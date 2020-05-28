@@ -32,6 +32,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
+	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/magefile/mage/sh"
 
@@ -40,10 +41,9 @@ import (
 	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
 	orgmodels "github.com/panther-labs/panther/api/lambda/organization/models"
 	usermodels "github.com/panther-labs/panther/api/lambda/users/models"
-	"github.com/panther-labs/panther/pkg/awsathena"
+	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/shutil"
-	"github.com/panther-labs/panther/tools/athenaviews"
 	"github.com/panther-labs/panther/tools/config"
 )
 
@@ -65,8 +65,6 @@ const (
 	dashboardTemplate   = "deployments/dashboards.yml"
 	frontendStack       = "panther-web"
 	frontendTemplate    = "deployments/web_server.yml"
-	glueStack           = "panther-glue"
-	glueTemplate        = "out/deployments/gluetables.json"
 	logAnalysisStack    = "panther-log-analysis"
 	logAnalysisTemplate = "deployments/log_analysis.yml"
 	onboardStack        = "panther-onboard"
@@ -269,9 +267,11 @@ func deployBoostrapStacks(
 
 	sourceBucket := outputs["SourceBucket"]
 	params = map[string]string{
+		"AthenaResultsBucket":        outputs["AthenaResultsBucket"],
 		"AuditLogsBucket":            outputs["AuditLogsBucket"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
+		"ProcessedDataBucket":        outputs["ProcessedDataBucket"],
 		"PythonLayerVersionArn":      settings.Infra.PythonLayerVersionArn,
 		"TracingMode":                settings.Monitoring.TracingMode,
 		"UserPoolId":                 outputs["UserPoolId"],
@@ -384,8 +384,10 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 			"AppDomainURL":           outputs["LoadBalancerUrl"],
 			"AnalysisVersionsBucket": outputs["AnalysisVersionsBucket"],
 			"AnalysisApiId":          outputs["AnalysisApiId"],
+			"AthenaResultsBucket":    outputs["AthenaResultsBucket"],
 			"ComplianceApiId":        outputs["ComplianceApiId"],
 			"DynamoScalingRoleArn":   outputs["DynamoScalingRoleArn"],
+			"ProcessedDataBucket":    outputs["ProcessedDataBucket"],
 			"OutputsKeyId":           outputs["OutputsEncryptionKeyId"],
 			"SqsKeyId":               outputs["QueueEncryptionKeyId"],
 			"UserPoolId":             outputs["UserPoolId"],
@@ -405,22 +407,24 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 		c <- goroutineResult{summary: dashboardStack, err: err}
 	}(results)
 
-	// Glue
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{summary: glueStack, err: deployGlue(awsSession, outputs)}
-	}(results)
-
 	// Log analysis
 	count++
 	go func(c chan goroutineResult) {
-		_, err := deployTemplate(awsSession, logAnalysisTemplate, sourceBucket, logAnalysisStack, map[string]string{
+		// this computes a signature of the deployed glue tables used for change detection, for CF use the Panther version
+		tablesSignature, err := gluetables.DeployedTablesSignature(glue.New(awsSession))
+		if err != nil {
+			c <- goroutineResult{summary: logAnalysisStack, err: err}
+			return
+		}
+		_, err = deployTemplate(awsSession, logAnalysisTemplate, sourceBucket, logAnalysisStack, map[string]string{
 			"AlarmTopicArn":         outputs["AlarmTopicArn"],
 			"AnalysisApiId":         outputs["AnalysisApiId"],
+			"AthenaResultsBucket":   outputs["AthenaResultsBucket"],
 			"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
 			"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
 			"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
 			"SqsKeyId":              outputs["QueueEncryptionKeyId"],
+			"TablesSignature":       tablesSignature,
 
 			"CloudWatchLogRetentionDays":   strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 			"Debug":                        strconv.FormatBool(settings.Monitoring.Debug),
@@ -461,27 +465,6 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	// Log stack results, counting where the last parallel group left off to give the illusion of
 	// one continuous deploy progress tracker.
 	logResults(results, "deploy", count+3, len(allStacks), len(allStacks))
-}
-
-func deployGlue(awsSession *session.Session, outputs map[string]string) error {
-	_, err := deployTemplate(awsSession, glueTemplate, outputs["SourceBucket"], glueStack, map[string]string{
-		"ProcessedDataBucket": outputs["ProcessedDataBucket"],
-	})
-	if err != nil {
-		return err
-	}
-
-	// Athena views are created via API call because CF is not well supported. Workgroup "primary" is default.
-	const workgroup = "primary"
-	athenaBucket := outputs["AthenaResultsBucket"]
-	if err := awsathena.WorkgroupAssociateS3(awsSession, workgroup, athenaBucket); err != nil {
-		return fmt.Errorf("failed to associate %s Athena workgroup with %s bucket: %v", workgroup, athenaBucket, err)
-	}
-	if err := athenaviews.CreateOrReplaceViews(athenaBucket); err != nil {
-		return fmt.Errorf("failed to create/replace athena views for %s bucket: %v", athenaBucket, err)
-	}
-
-	return nil
 }
 
 // If the users list is empty (e.g. on the initial deploy), create the first user.
