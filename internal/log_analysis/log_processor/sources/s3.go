@@ -188,12 +188,12 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 
 // ParseNotification parses a message received
 func ParseNotification(message string) ([]*S3ObjectInfo, error) {
-	s3Objects, err := parseCloudTrailNotification(message)
+	s3Objects, err := tryParseCloudTrailNotification(message)
 	if err == nil {
 		return s3Objects, nil
 	}
 
-	s3Objects, err = parseS3Event(message)
+	s3Objects, err = tryParseS3Event(message)
 	if err == nil {
 		return s3Objects, nil
 	}
@@ -206,9 +206,9 @@ func ParseNotification(message string) ([]*S3ObjectInfo, error) {
 	return nil, errors.New("notification is not of known type: " + message)
 }
 
-// parseCloudTrailNotification will try to parse input as if it was a CloudTrail notification
-// If the input was not a CloudTrail notification, it will return a empty slice
-func parseCloudTrailNotification(message string) (result []*S3ObjectInfo, err error) {
+// tryParseCloudTrailNotification will try to parse input as if it was a CloudTrail notification
+// If the message is not a CloudTrail notification, the method will return an error.
+func tryParseCloudTrailNotification(message string) (result []*S3ObjectInfo, err error) {
 	cloudTrailNotification := &cloudTrailNotification{}
 	err = jsoniter.UnmarshalFromString(message, cloudTrailNotification)
 	if err != nil {
@@ -229,9 +229,9 @@ func parseCloudTrailNotification(message string) (result []*S3ObjectInfo, err er
 	return result, nil
 }
 
-// parseS3Event will try to parse input as if it was an S3 Event (https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html)
-// If the input was not an S3 Event  notification, it will return a empty slice
-func parseS3Event(message string) (result []*S3ObjectInfo, err error) {
+// tryParseS3Event will try to parse input as if it was an S3 Event (https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html)
+// If the input was not an S3 Event  notification, it will return an error
+func tryParseS3Event(message string) (result []*S3ObjectInfo, err error) {
 	notification := &events.S3Event{}
 	err = jsoniter.UnmarshalFromString(message, notification)
 	if err != nil {
