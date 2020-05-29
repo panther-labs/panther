@@ -37,27 +37,27 @@ type PantherUserProperties struct {
 
 func customPantherUser(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
 	switch event.RequestType {
-	case cfn.RequestCreate:
+	case cfn.RequestCreate, cfn.RequestUpdate:
 		var props PantherUserProperties
-		if err := parseProperties(event.ResourceProperties, &props); err != nil {
-			return "", nil, err
+		var err error
+		if err = parseProperties(event.ResourceProperties, &props); err != nil {
+			return event.PhysicalResourceID, nil, err
 		}
 
-		userID, err := inviteUser(props)
+		var userID string
+		if event.RequestType == cfn.RequestCreate {
+			userID, err = inviteUser(props)
+		} else {
+			split := strings.Split(event.PhysicalResourceID, ":")
+			userID = split[len(split)-1]
+			err = updateUser(userID, props)
+		}
+
 		if err != nil {
-			return "", nil, err
+			return event.PhysicalResourceID, nil, err
 		}
-		return "custom:panther-user:" + userID, map[string]interface{}{"UserId": userID}, nil
-
-	case cfn.RequestUpdate:
-		var props PantherUserProperties
-		if err := parseProperties(event.ResourceProperties, &props); err != nil {
-			return "", nil, err
-		}
-
-		split := strings.Split(event.PhysicalResourceID, ":")
-		userID := split[len(split)-1]
-		return event.PhysicalResourceID, map[string]interface{}{"UserId": userID}, updateUser(userID, props)
+		outputs := map[string]interface{}{"Email": props.Email, "UserId": userID}
+		return "custom:panther-user:" + userID, outputs, nil
 
 	case cfn.RequestDelete:
 		split := strings.Split(event.PhysicalResourceID, ":")

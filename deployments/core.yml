@@ -308,6 +308,15 @@ Resources:
       Email: !Ref FirstUserEmail
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
+  # By default, use the first user's email as the "organization" email
+  PantherSettings:
+    Type: Custom::PantherSettings
+    DependsOn: OrganizationAPIFunction
+    Properties:
+      DisplayName: !Sub ${AWS::AccountId}
+      Email: !If [CreateFirstUser, !GetAtt FirstPantherUser.Email, !Ref AWS::NoValue]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ##### Analysis API #####
   AnalysisApiFunction:
     Type: AWS::Serverless::Function

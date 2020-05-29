@@ -70,15 +70,6 @@ func registerPantherAccount(props SelfRegistrationProperties) error {
 	zap.L().Info("registering account with Panther for monitoring",
 		zap.String("accountID", props.AccountID))
 
-	// avoid alarms/errors and check first if the integrations exist
-	var listOutput []*models.SourceIntegration
-	var listInput = &models.LambdaInput{
-		ListIntegrations: &models.ListIntegrationsInput{},
-	}
-	if err := genericapi.Invoke(getLambdaClient(), "panther-source-api", listInput, &listOutput); err != nil {
-		return fmt.Errorf("error calling source-api to list integrations: %v", err)
-	}
-
 	cloudSecSource, logSource, err := getSelfIntegrations(props.AccountID)
 	if err != nil {
 		return err

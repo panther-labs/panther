@@ -149,6 +149,16 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// PhysicalId: custom:metric-filters:$LOG_GROUP_NAME
 	"Custom::LambdaMetricFilters": customLambdaMetricFilters,
 
+	// Update Panther organization settings
+	//
+	// Parameters = organization-api/models/GeneralSettings
+	//     DisplayName:           string
+	//     Email:                 string
+	//     ErrorReportingConsent: bool
+	// Outputs: None
+	// PhysicalId: custom:panther-settings:singleton
+	"Custom::PantherSettings": customPantherSettings,
+
 	// Invite a new user to Panther.
 	// Updates and deletes to this resource will also be reflected in Panther.
 	//
@@ -157,6 +167,7 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	//     FamilyName:  string
 	//     Email:       string (required)
 	// Outputs:
+	//     Email        string
 	//     UserId:      string
 	// PhysicalId: custom:panther-user:$USER_ID
 	"Custom::PantherUser": customPantherUser,

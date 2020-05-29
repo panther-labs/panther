@@ -103,7 +103,9 @@ func Deploy() {
 		logger.Fatal(err)
 	}
 
-	deployPrecheck(*awsSession.Config.Region)
+	deployPreCheck(*awsSession.Config.Region)
+	setFirstUser(awsSession, settings)
+
 	identity, err := sts.New(awsSession).GetCallerIdentity(&sts.GetCallerIdentityInput{})
 	if err != nil {
 		logger.Fatalf("failed to get caller identity: %v", err)
@@ -111,26 +113,16 @@ func Deploy() {
 	accountID := *identity.Account
 	logger.Infof("deploy: deploying Panther %s to account %s (%s)", gitVersion, accountID, *awsSession.Config.Region)
 
-	setFirstUser(awsSession, settings)
-
 	migrate(awsSession, accountID)
 	outputs := bootstrap(awsSession, settings)
 	deployMainStacks(awsSession, settings, accountID, outputs)
-
-	// TODO - custom resource - organizations-api.UpdateSettings
-	//updateSettingsInput := &orgmodels.LambdaInput{
-	//	UpdateSettings: &orgmodels.UpdateSettingsInput{},
-	//}
-	//if err := invokeLambda(awsSession, "panther-organization-api", &updateSettingsInput, nil); err != nil {
-	//	logger.Fatal(err)
-	//}
 
 	logger.Infof("deploy: finished successfully in %s", time.Since(start).Round(time.Second))
 	logger.Infof("***** Panther URL = https://%s", outputs["LoadBalancerUrl"])
 }
 
 // Fail the deploy early if there is a known issue with the user's environment.
-func deployPrecheck(awsRegion string) {
+func deployPreCheck(awsRegion string) {
 	// Ensure the AWS region is supported
 	if !supportedRegions[awsRegion] {
 		logger.Fatalf("panther is not supported in %s region", awsRegion)
@@ -421,9 +413,7 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	logResults(results, "deploy", count+3, len(allStacks), len(allStacks))
 }
 
-// Prompt the user for name and email of the initial user, storing them in the settings struct.
-//
-// If left blank, mage will direct CloudFormation to use the values in the existing core stack.
+// Prompt for the name and email of the initial user if not already defined.
 func setFirstUser(awsSession *session.Session, settings *config.PantherConfig) {
 	if settings.Setup.FirstUser.Email != "" {
 		// Always use the values in the settings file first, if available
