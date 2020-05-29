@@ -70,10 +70,6 @@ const (
 	onboardStack        = "panther-onboard"
 	onboardTemplate     = "deployments/onboard.yml"
 
-	// Removed stacks
-	alarmsStack       = "panther-cw-alarms"
-	metricFilterStack = "panther-cw-metric-filters"
-
 	// Python layer
 	layerSourceDir        = "out/pip/analysis/python"
 	layerZipfile          = "out/layer.zip"
@@ -129,32 +125,10 @@ func Deploy() {
 	accountID := *identity.Account
 	logger.Infof("deploy: deploying Panther %s to account %s (%s)", gitVersion, accountID, *awsSession.Config.Region)
 
+	// ***** Step 0: migrations
+	migrate(awsSession, accountID)
+
 	// ***** Step 1: bootstrap stacks and build artifacts
-	// TODO - migration - delete stackset
-
-	// Migration: in v1.4.0, the ECS cluster moved from the bootstrap stack to the web stack.
-	// Enumerate the bootstrap stack to see if this migration is necessary.
-	clusterInBootstrap := false
-	cfnClient := cloudformation.New(awsSession)
-	err = walkPantherStack(cfnClient, aws.String(bootstrapStack), func(r cfnResource) {
-		if aws.StringValue(r.Resource.ResourceType) == "AWS::ECS::Cluster" {
-			clusterInBootstrap = true
-		}
-	})
-	if err != nil {
-		// err == nil if the stack does not yet exist
-		logger.Fatalf("failed to walk bootstrap stack: %v", err)
-	}
-	if clusterInBootstrap {
-		// To delete the ECS cluster from bootstrap, the entire web stack has to be deleted first.
-		// There is no user data that needs to be preserved in that stack - it's stateless.
-		logger.Infof("migration: deleting stack %s so ECS::Cluster can be migrated out of %s",
-			frontendStack, bootstrapStack)
-		if err = deleteStack(cfnClient, aws.String(frontendStack)); err != nil {
-			logger.Fatalf("failed to delete %s: %v", frontendStack, err)
-		}
-	}
-
 	outputs := bootstrap(awsSession, settings)
 
 	// ***** Step 2: deploy remaining stacks in parallel
@@ -169,16 +143,6 @@ func Deploy() {
 	}
 	if err = inviteFirstUser(awsSession); err != nil {
 		logger.Fatal(err)
-	}
-
-	// ***** Step 4: migrations
-	// Starting in v1.3.0, the metric-filter stack is no longer used. It can be safely deleted
-	if err = deleteStack(cfnClient, aws.String(metricFilterStack)); err != nil {
-		logger.Warnf("failed to delete deprecated %s stack: %v", metricFilterStack, err)
-	}
-	// Starting in v1.4.0, the alarms stack is no longer used and can be safely deleted.
-	if err := deleteStack(cloudformation.New(awsSession), aws.String(alarmsStack)); err != nil {
-		logger.Warnf("failed to delete deprecated %s stack: %v", alarmsStack, err)
 	}
 
 	logger.Infof("deploy: finished successfully in %s", time.Since(start).Round(time.Second))
