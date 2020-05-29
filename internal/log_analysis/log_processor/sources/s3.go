@@ -23,6 +23,7 @@ import (
 	"compress/gzip"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -189,13 +190,13 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 func ParseNotification(message string) ([]*S3ObjectInfo, error) {
 	s3Objects := parseCloudTrailNotification(message)
 
-	// If the input was not a CloudTrail notification, s3Objects will be empty slice
-	if len(s3Objects) > 0 {
+	// If the input was not a CloudTrail notification, s3Objects will be nil
+	if s3Objects != nil {
 		return s3Objects, nil
 	}
 
 	s3Objects = parseS3Event(message)
-	if len(s3Objects) > 0 {
+	if s3Objects != nil {
 		return s3Objects, nil
 	}
 
@@ -207,13 +208,17 @@ func ParseNotification(message string) ([]*S3ObjectInfo, error) {
 	return nil, errors.New("notification is not of known type: " + message)
 }
 
-// parseCloudTrailNotification will try to parse input as if it was a CloudTrail notification
-// If the input was not a CloudTrail notification, it will return a empty slice
+// The function will try to parse input as if it was a CloudTrail notification
+// If the message is not a CloudTrail notification, it returns nil
 func parseCloudTrailNotification(message string) (result []*S3ObjectInfo) {
 	cloudTrailNotification := &cloudTrailNotification{}
 	err := jsoniter.UnmarshalFromString(message, cloudTrailNotification)
 	if err != nil {
-		return result
+		return nil
+	}
+
+	if len(cloudTrailNotification.S3ObjectKey) == 0 {
+		return nil
 	}
 
 	for _, s3Key := range cloudTrailNotification.S3ObjectKey {
@@ -227,18 +232,25 @@ func parseCloudTrailNotification(message string) (result []*S3ObjectInfo) {
 }
 
 // parseS3Event will try to parse input as if it was an S3 Event (https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html)
-// If the input was not an S3 Event  notification, it will return a empty slice
+// If the input was not an S3 Event  notification it will return nil
 func parseS3Event(message string) (result []*S3ObjectInfo) {
 	notification := &events.S3Event{}
 	err := jsoniter.UnmarshalFromString(message, notification)
 	if err != nil {
-		return result
+		return nil
 	}
 
+	if len(notification.Records) == 0 {
+		return nil
+	}
 	for _, record := range notification.Records {
+		urlDecodedKey, err := url.PathUnescape(record.S3.Object.Key)
+		if err != nil {
+			return nil
+		}
 		info := &S3ObjectInfo{
 			S3Bucket:    record.S3.Bucket.Name,
-			S3ObjectKey: record.S3.Object.Key,
+			S3ObjectKey: urlDecodedKey,
 		}
 		result = append(result, info)
 	}
