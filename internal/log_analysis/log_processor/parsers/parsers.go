@@ -43,9 +43,7 @@ var Validator = validator.New()
 // JSON re-exports pantherlog.JSON
 var JSON = pantherlog.JSON
 
-type Interface interface {
-	ParseLog(log string) ([]*pantherlog.Result, error)
-}
+type Interface pantherlog.LogParser
 
 type logParserAdapter struct {
 	LogParser
@@ -73,7 +71,7 @@ func NewAdapter(parser LogParser) Interface {
 	}
 }
 
-func AdapterFactory(parser LogParser) ParserFactory {
+func AdapterFactory(parser LogParser) func() Interface {
 	return func() Interface {
 		return &logParserAdapter{
 			LogParser: parser.New(),
