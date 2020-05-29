@@ -14,13 +14,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-FROM buildpack-deps:stretch-scm
+FROM buildpack-deps:buster-scm
 
 LABEL description="An image that contains the necessary build tools to build panther"
 
 ENV PYTHON_VERSION="3.7.7"
-ENV GOLANG_VERSION="1.14.1"
-ENV NODE_VERSION="12.16.1"
+ENV GOLANG_VERSION="1.14.3"
+ENV NODE_VERSION="12.17.0"
 
 # ****************     GO     *******************
 RUN apt-get update && apt-get install -y --no-install-recommends \
