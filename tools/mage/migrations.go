@@ -20,6 +20,7 @@ package mage
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -77,6 +78,54 @@ func migrate(awsSession *session.Session, accountID string) {
 	if err := deleteStackSet(cfnClient, &accountID, aws.String(realTimeEventsStackSet)); err != nil {
 		logger.Fatal(err)
 	}
+
+	// In v1.4.0, the LogProcessingRole in onboard.yml was replaced with a reference to an aux template.
+	// CF would try to delete and create an IAM role with the same name at the same time, causing a conflict.
+	// I tried deleting just the IAM role in this migration, but CF still failed because it thought
+	// the resource still existed in the stack. So we need to delete the entire onboard stack.
+	//
+	// This means Panther may miss a few S3 notifications (the SNS topic receiving S3 notifications
+	// will be deleted), but only for its own audit log data and only for a few minutes.
+	// Normal user data is not affected, only self-onboarding (S3 access logs, GuardDuty).
+	// S3 should retry failed notifications for a short time in any case.
+	oldLogRole := false
+	err = walkPantherStack(cfnClient, aws.String(onboardStack), func(r cfnResource) {
+		if aws.StringValue(r.Resource.LogicalResourceId) == "LogProcessingRole" &&
+			aws.StringValue(r.Stack.StackName) == onboardStack && // not a nested stack
+			aws.StringValue(r.Resource.ResourceType) == "AWS::IAM::Role" {
+
+			oldLogRole = true
+		}
+	})
+	if err != nil {
+		// err == nil if the stack does not yet exist
+		logger.Fatalf("failed to walk onboard stack: %v", err)
+	}
+	if oldLogRole {
+		logger.Infof("migration: deleting stack %s (will be rebuilt)", onboardStack)
+		if err = deleteStack(cfnClient, aws.String(onboardStack)); err != nil {
+			logger.Fatalf("failed to delete %s: %v", onboardStack, err)
+		}
+	}
+
+	// In v1.4.0, the CloudWatch dashboards changed their logicalIDs, so the stack needs to be
+	// deleted before deploying or CF will fail with "dashboard already exists"
+	oldDashboard := false
+	err = walkPantherStack(cfnClient, aws.String(dashboardStack), func(r cfnResource) {
+		if strings.HasSuffix(aws.StringValue(r.Resource.LogicalResourceId), "AWSRegion") {
+			oldDashboard = true
+		}
+	})
+	if err != nil {
+		// err == nil if the stack does not yet exist
+		logger.Fatalf("failed to walk dashboard stack: %v", err)
+	}
+	if oldDashboard {
+		logger.Infof("migration: deleting stack %s (will be rebuilt)", dashboardStack)
+		if err = deleteStack(cfnClient, aws.String(dashboardStack)); err != nil {
+			logger.Fatalf("failed to delete %s: %v", dashboardStack, err)
+		}
+	}
 }
 
 // Delete a single CFN stack set and wait for it to finish (only deletes stack instances from current region)
@@ -101,7 +150,7 @@ func deleteStackSet(client *cfn.CloudFormation, accountID, stackSet *string) err
 
 	// Wait for the delete to complete
 	if exists {
-		logger.Infof("migration: deleting stack set %s (will be replaced in onboard stack)", *stackSet)
+		logger.Infof("migration: deleting stack set %s (resources will be re-added)", *stackSet)
 	}
 	for ; exists && err == nil; exists, err = stackSetInstanceExists(client, *stackSet, *accountID, *client.Config.Region) {
 		time.Sleep(pollInterval)
