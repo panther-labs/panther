@@ -140,7 +140,7 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// PhysicalId: custom:metric-filters:$LOG_GROUP_NAME
 	"Custom::LambdaMetricFilters": customLambdaMetricFilters,
 
-	// When Panther onboards itself, set some GuardDuty/S3 config not possible from CFN.
+	// Update notifications for an S3 bucket.
 	//
 	// Parameters = s3.PutBucketNotificationConfigurationInput
 	//     Bucket:                      string (required)
