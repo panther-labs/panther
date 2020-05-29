@@ -149,6 +149,18 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// PhysicalId: custom:metric-filters:$LOG_GROUP_NAME
 	"Custom::LambdaMetricFilters": customLambdaMetricFilters,
 
+	// Invite a new user to Panther.
+	// Updates and deletes to this resource will also be reflected in Panther.
+	//
+	// Parameters:
+	//     GivenName:   string
+	//     FamilyName:  string
+	//     Email:       string (required)
+	// Outputs:
+	//     UserId:      string
+	// PhysicalId: custom:panther-user:$USER_ID
+	"Custom::PantherUser": customPantherUser,
+
 	// Update notifications for an S3 bucket.
 	//
 	// Parameters = s3.PutBucketNotificationConfigurationInput

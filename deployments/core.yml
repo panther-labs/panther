@@ -67,9 +67,20 @@ Parameters:
     Default: 365
   Debug:
     Type: String
-    Default: false
     Description: Toggle debug logging
     AllowedValues: [true, false]
+    Default: false
+  FirstUserGivenName:
+    Type: String
+    Description: First (given) name of the initial Panther user
+    Default: ''
+  FirstUserFamilyName:
+    Type: String
+    Description: Family (last) name of the initial Panther user
+    Default: ''
+  FirstUserEmail:
+    Type: String
+    Description: Email of the initial Panther user
   LayerVersionArns:
     Type: CommaDelimitedList
     Description: List of LayerVersion ARNs to attach to each function
@@ -281,6 +292,15 @@ Resources:
       FunctionMemoryMB: !FindInMap [Functions, OrganizationAPI, Memory]
       FunctionName: !Ref OrganizationAPIFunction
       FunctionTimeoutSec: !FindInMap [Functions, OrganizationAPI, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  FirstPantherUser:
+    Type: Custom::PantherUser
+    DependsOn: UsersAPIFunction
+    Properties:
+      GivenName: !Ref FirstUserGivenName
+      FamilyName: !Ref FirstUserFamilyName
+      Email: !Ref FirstUserEmail
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Analysis API #####

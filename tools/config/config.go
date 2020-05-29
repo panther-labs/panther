@@ -49,6 +49,7 @@ type Monitoring struct {
 }
 
 type Setup struct {
+	FirstUser             FirstUser        `yaml:"FirstUser"`
 	OnboardSelf           bool             `yaml:"OnboardSelf"`
 	EnableS3AccessLogs    bool             `yaml:"EnableS3AccessLogs"`
 	EnableCloudTrail      bool             `yaml:"EnableCloudTrail"`
@@ -66,6 +67,12 @@ type LogSubscriptions struct {
 type Web struct {
 	CertificateArn string `yaml:"CertificateArn"`
 	CustomDomain   string `yaml:"CustomDomain"`
+}
+
+type FirstUser struct {
+	GivenName  string `yaml:"GivenName"`
+	FamilyName string `yaml:"FamilyName"`
+	Email      string `yaml:"Email"`
 }
 
 // Read settings from the config file

@@ -34,8 +34,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/magefile/mage/sh"
 
-	orgmodels "github.com/panther-labs/panther/api/lambda/organization/models"
-	usermodels "github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 	"github.com/panther-labs/panther/pkg/shutil"
 	"github.com/panther-labs/panther/tools/config"
@@ -113,14 +111,22 @@ func Deploy() {
 	accountID := *identity.Account
 	logger.Infof("deploy: deploying Panther %s to account %s (%s)", gitVersion, accountID, *awsSession.Config.Region)
 
+	// TODO - only prompt the first time
+	if settings.Setup.FirstUser.Email == "" {
+		promptFirstUser(settings)
+	}
+
 	migrate(awsSession, accountID)
 	outputs := bootstrap(awsSession, settings)
 	deployMainStacks(awsSession, settings, accountID, outputs)
 
-	// TODO: This can go in core (just needs users-api and org-api)
-	if err = inviteFirstUser(awsSession); err != nil {
-		logger.Fatal(err)
-	}
+	// TODO - custom resource - organizations-api.UpdateSettings
+	//updateSettingsInput := &orgmodels.LambdaInput{
+	//	UpdateSettings: &orgmodels.UpdateSettingsInput{},
+	//}
+	//if err := invokeLambda(awsSession, "panther-organization-api", &updateSettingsInput, nil); err != nil {
+	//	logger.Fatal(err)
+	//}
 
 	logger.Infof("deploy: finished successfully in %s", time.Since(start).Round(time.Second))
 	logger.Infof("***** Panther URL = https://%s", outputs["LoadBalancerUrl"])
@@ -331,6 +337,9 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 			"AthenaResultsBucket":     outputs["AthenaResultsBucket"],
 			"ComplianceApiId":         outputs["ComplianceApiId"],
 			"DynamoScalingRoleArn":    outputs["DynamoScalingRoleArn"],
+			"FirstUserGivenName":      settings.Setup.FirstUser.GivenName,
+			"FirstUserFamilyName":     settings.Setup.FirstUser.FamilyName,
+			"FirstUserEmail":          settings.Setup.FirstUser.Email,
 			"InitialAnalysisPackUrls": strings.Join(settings.Setup.InitialAnalysisSets, ","),
 			"ProcessedDataBucket":     outputs["ProcessedDataBucket"],
 			"OutputsKeyId":            outputs["OutputsEncryptionKeyId"],
@@ -415,47 +424,15 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	logResults(results, "deploy", count+3, len(allStacks), len(allStacks))
 }
 
-// If the users list is empty (e.g. on the initial deploy), create the first user.
-func inviteFirstUser(awsSession *session.Session) error {
-	input := &usermodels.LambdaInput{
-		ListUsers: &usermodels.ListUsersInput{},
-	}
-	var output usermodels.ListUsersOutput
-	if err := invokeLambda(awsSession, "panther-users-api", input, &output); err != nil {
-		return fmt.Errorf("failed to list users: %v", err)
-	}
-	if len(output.Users) > 0 {
-		return nil
-	}
-
-	// Prompt the user for basic information.
-	logger.Info("setting up initial Panther admin user...")
-	fmt.Println()
+// Prompt the user for name and email of the initial user, storing them in the settings struct.
+func promptFirstUser(settings *config.PantherConfig) {
+	fmt.Println("Who will be the initial Panther admin user?")
 	firstName := promptUser("First name: ", nonemptyValidator)
 	lastName := promptUser("Last name: ", nonemptyValidator)
 	email := promptUser("Email: ", emailValidator)
-	defaultOrgName := firstName + "-" + lastName
-	orgName := promptUser("Company/Team name ("+defaultOrgName+"): ", nil)
-	if orgName == "" {
-		orgName = defaultOrgName
+	settings.Setup.FirstUser = config.FirstUser{
+		GivenName:  firstName,
+		FamilyName: lastName,
+		Email:      email,
 	}
-
-	// users-api.InviteUser
-	input = &usermodels.LambdaInput{
-		InviteUser: &usermodels.InviteUserInput{
-			GivenName:  &firstName,
-			FamilyName: &lastName,
-			Email:      &email,
-		},
-	}
-	if err := invokeLambda(awsSession, "panther-users-api", input, nil); err != nil {
-		return err
-	}
-	logger.Infof("invite sent to %s: check your email! (it may be in spam)", email)
-
-	// organizations-api.UpdateSettings
-	updateSettingsInput := &orgmodels.LambdaInput{
-		UpdateSettings: &orgmodels.UpdateSettingsInput{DisplayName: &orgName, Email: &email},
-	}
-	return invokeLambda(awsSession, "panther-organization-api", &updateSettingsInput, nil)
 }

@@ -33,9 +33,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	jsoniter "github.com/json-iterator/go"
 )
 
 const (
@@ -184,33 +182,6 @@ func uploadFileToS3(awsSession *session.Session, path, bucket, key string, meta 
 		Key:      &key,
 		Metadata: meta,
 	})
-}
-
-func invokeLambda(awsSession *session.Session, functionName string, input interface{}, output interface{}) error {
-	payload, err := jsoniter.Marshal(input)
-	if err != nil {
-		return fmt.Errorf("failed to json marshal input to %s: %v", functionName, err)
-	}
-
-	response, err := lambda.New(awsSession).Invoke(&lambda.InvokeInput{
-		FunctionName: aws.String(functionName),
-		Payload:      payload,
-	})
-	if err != nil {
-		return fmt.Errorf("%s lambda invocation failed: %v", functionName, err)
-	}
-
-	if response.FunctionError != nil {
-		return fmt.Errorf("%s responded with %s error: %s",
-			functionName, *response.FunctionError, string(response.Payload))
-	}
-
-	if output != nil {
-		if err = jsoniter.Unmarshal(response.Payload, output); err != nil {
-			return fmt.Errorf("failed to json unmarshal response from %s: %v", functionName, err)
-		}
-	}
-	return nil
 }
 
 // Prompt the user for a string input.
