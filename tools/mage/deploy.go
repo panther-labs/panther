@@ -111,10 +111,7 @@ func Deploy() {
 	accountID := *identity.Account
 	logger.Infof("deploy: deploying Panther %s to account %s (%s)", gitVersion, accountID, *awsSession.Config.Region)
 
-	// TODO - only prompt the first time
-	if settings.Setup.FirstUser.Email == "" {
-		promptFirstUser(settings)
-	}
+	setFirstUser(awsSession, settings)
 
 	migrate(awsSession, accountID)
 	outputs := bootstrap(awsSession, settings)
@@ -425,14 +422,63 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 }
 
 // Prompt the user for name and email of the initial user, storing them in the settings struct.
-func promptFirstUser(settings *config.PantherConfig) {
-	fmt.Println("Who will be the initial Panther admin user?")
-	firstName := promptUser("First name: ", nonemptyValidator)
-	lastName := promptUser("Last name: ", nonemptyValidator)
-	email := promptUser("Email: ", emailValidator)
-	settings.Setup.FirstUser = config.FirstUser{
-		GivenName:  firstName,
-		FamilyName: lastName,
-		Email:      email,
+//
+// If left blank, mage will direct CloudFormation to use the values in the existing core stack.
+func setFirstUser(awsSession *session.Session, settings *config.PantherConfig) {
+	if settings.Setup.FirstUser.Email != "" {
+		// Always use the values in the settings file first, if available
+		return
 	}
+
+	response, err := cloudformation.New(awsSession).DescribeStacks(
+		&cloudformation.DescribeStacksInput{StackName: aws.String(coreStack)})
+
+	if errStackDoesNotExist(err) {
+		// If there is no setting and no core stack, we have to prompt.
+		fmt.Println("Who will be the initial Panther admin user?")
+		firstName := promptUser("First name: ", nonemptyValidator)
+		lastName := promptUser("Last name: ", nonemptyValidator)
+		email := promptUser("Email: ", emailValidator)
+		settings.Setup.FirstUser = config.FirstUser{
+			GivenName:  firstName,
+			FamilyName: lastName,
+			Email:      email,
+		}
+		return
+	}
+
+	if err != nil {
+		logger.Fatalf("failed to describe %s stack: %v", coreStack, err)
+	}
+
+	// At this point, we know the core stack has already been deployed.
+	// If it's v1.3 or earlier, the first user was created directly by mage.
+	// If it's v1.4+, there may be a non-empty FirstUser custom resource in that stack.
+	//
+	// Search the stack parameters - if we find the FirstUser settings, use the same ones again.
+	//
+	// I tried the "UsePreviousValue" setting when defining CloudFormation parameters in the deploy
+	// process, but CFN fails if you use that setting for a parameter which was not previously defined.
+	// In other words, that setting would block the v1.3 -> v1.4 migration, so we do it manually.
+	//
+	// After a few releases, we can assume existing deployments will all have the custom resource
+	// and we could simplify this by just telling CFN to use the previous parameter value.
+	for _, param := range response.Stacks[0].Parameters {
+		switch aws.StringValue(param.ParameterKey) {
+		case "FirstUserGivenName":
+			settings.Setup.FirstUser.GivenName = aws.StringValue(param.ParameterValue)
+		case "FirstUserFamilyName":
+			settings.Setup.FirstUser.FamilyName = aws.StringValue(param.ParameterValue)
+		case "FirstUserEmail":
+			settings.Setup.FirstUser.Email = aws.StringValue(param.ParameterValue)
+		}
+	}
+
+	// If the first user is empty, it must be because this is a v1.3 -> v1.4 migration, in which case
+	// we'll leave it empty and CloudFormation will skip the FirstUser custom resource.
+	//
+	// If the first user is non-empty, great! Now we'll pass the same parameters as before so that
+	// CFN doesn't try to change the existing custom resource.
+	//
+	// Either way, the settings we have now are valid to be passed directly to CloudFormation.
 }

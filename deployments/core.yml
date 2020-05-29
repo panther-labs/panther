@@ -80,7 +80,8 @@ Parameters:
     Default: ''
   FirstUserEmail:
     Type: String
-    Description: Email of the initial Panther user
+    Description: Email of the initial Panther user. If blank, no user is created
+    Default: ''
   LayerVersionArns:
     Type: CommaDelimitedList
     Description: List of LayerVersion ARNs to attach to each function
@@ -143,6 +144,7 @@ Mappings:
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
+  CreateFirstUser: !Not [!Equals ['', !Ref FirstUserEmail]]
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
@@ -296,7 +298,10 @@ Resources:
 
   FirstPantherUser:
     Type: Custom::PantherUser
+    Condition: CreateFirstUser
     DependsOn: UsersAPIFunction
+    DeletionPolicy: Retain # users-api refuses to delete the last user, which would then fail teardown
+    UpdateReplacePolicy: Retain
     Properties:
       GivenName: !Ref FirstUserGivenName
       FamilyName: !Ref FirstUserFamilyName
