@@ -247,7 +247,7 @@ type ValueScanner interface {
 	ScanValues(values []Value, input string) ([]Value, error)
 }
 
-// FieldParserFunc is a function implementing FieldParser interface
+// ScannerFunc is a function implementing FieldParser interface
 type ScannerFunc func(fields []Value, value string) ([]Value, error)
 
 var _ ValueScanner = (ScannerFunc)(nil)
@@ -267,83 +267,55 @@ type scannerNonEmpty struct {
 }
 
 // ScanValues implements ValueScanner interface
-func (p *scannerNonEmpty) ScanValues(values []Value, value string) ([]Value, error) {
-	value = strings.TrimSpace(value)
-	if value == "" {
+func (p *scannerNonEmpty) ScanValues(values []Value, input string) ([]Value, error) {
+	input = strings.TrimSpace(input)
+	if input == "" {
 		return values, nil
 	}
 	return append(values, Value{
 		Kind: p.kind,
-		Data: value,
+		Data: input,
 	}), nil
 }
 
-type scannerIPAddress struct{}
-
-// IPAddressScanner parses an IP address field.
-// It returns an error if the value is not valid IP address.
-func IPAddressScanner() ValueScanner {
-	return &scannerIPAddress{}
-}
-
-var _ ValueScanner = (*scannerIPAddress)(nil)
-
-// ScanValues implements ValueScanner interface
-func (*scannerIPAddress) ScanValues(values []Value, value string) ([]Value, error) {
-	value = strings.TrimSpace(value)
-	if value == "" {
+func ScanIPAddress(values []Value, input string) ([]Value, error) {
+	input = strings.TrimSpace(input)
+	if input == "" {
 		return values, nil
 	}
-	if checkIPAddress(value) {
+	if checkIPAddress(input) {
 		return append(values, Value{
 			Kind: KindIPAddress,
-			Data: value,
+			Data: input,
 		}), nil
 	}
-	return values, errors.Errorf("invalid ip address %q", value)
+	return values, errors.Errorf("invalid ip address %q", input)
 }
 
-// HostnameScanner parses a string to get either an IP address field or a domain field.
-func HostnameScanner() ValueScanner {
-	return &scannerHostname{}
-}
-
-var _ ValueScanner = (*scannerHostname)(nil)
-
-type scannerHostname struct{}
-
-func (*scannerHostname) ScanValues(values []Value, value string) ([]Value, error) {
-	value = strings.TrimSpace(value)
-	if value == "" {
+func ScanHostname(values []Value, input string) ([]Value, error) {
+	input = strings.TrimSpace(input)
+	if input == "" {
 		return values, nil
 	}
-	if checkIPAddress(value) {
+	if checkIPAddress(input) {
 		return append(values, Value{
 			Kind: KindIPAddress,
-			Data: value,
+			Data: input,
 		}), nil
 	}
 	return append(values, Value{
 		Kind: KindDomainName,
-		Data: value,
+		Data: input,
 	}), nil
 }
 
-// URLScanner scans a URL value for domain or ip address
-func URLScanner() ValueScanner {
-	return &scannerURL{}
-}
-
-var _ ValueScanner = (*scannerURL)(nil)
-
-type scannerURL struct{}
-
-func (*scannerURL) ScanValues(values []Value, value string) ([]Value, error) {
-	value = strings.TrimSpace(value)
-	if value == "" {
+// ScanURL scans a URL string for domain or ip address
+func ScanURL(values []Value, input string) ([]Value, error) {
+	input = strings.TrimSpace(input)
+	if input == "" {
 		return values, nil
 	}
-	u, err := url.Parse(value)
+	u, err := url.Parse(input)
 	if err != nil {
 		return values, err
 	}
@@ -354,12 +326,12 @@ func (*scannerURL) ScanValues(values []Value, value string) ([]Value, error) {
 	if checkIPAddress(host) {
 		return append(values, Value{
 			Kind: KindIPAddress,
-			Data: value,
+			Data: host,
 		}), nil
 	}
 	return append(values, Value{
 		Kind: KindDomainName,
-		Data: value,
+		Data: host,
 	}), nil
 }
 
@@ -396,4 +368,23 @@ func (g GJSONScanner) ScanValues(values []Value, value string) ([]Value, error) 
 // CheckIPAddress checks if an IP address is valid
 func checkIPAddress(addr string) bool {
 	return net.ParseIP(addr) != nil
+}
+
+// QuietScan scans for values dropping errors.
+func QuietScan(s ValueScanner) ValueScanner {
+	if s, ok := s.(*scannerQuiet); ok {
+		return s
+	}
+	return &scannerQuiet{
+		ValueScanner: s,
+	}
+}
+
+type scannerQuiet struct {
+	ValueScanner
+}
+
+func (s *scannerQuiet) ScanValues(values []Value, input string) ([]Value, error) {
+	values, _ = s.ValueScanner.ScanValues(values, input)
+	return values, nil
 }

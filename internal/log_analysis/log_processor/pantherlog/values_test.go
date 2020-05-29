@@ -30,7 +30,7 @@ import (
 func TestScannerGJSON(t *testing.T) {
 	raw := `{"foo":{"bar":42,"baz":"1.1.1.1"}}`
 	ext := pantherlog.GJSONScanner{
-		"*.baz": pantherlog.IPAddressScanner(),
+		"*.baz": pantherlog.ScannerFunc(pantherlog.ScanIPAddress),
 	}
 	fields, err := ext.ScanValues(nil, raw)
 	require.NoError(t, err)
@@ -118,6 +118,36 @@ func TestNonEmptyScanner(t *testing.T) {
 		require.Nil(t, fields)
 	}
 }
-func TestScannerURL_ScanValues(t *testing.T) {
-	s := ScanURL()
+
+func TestScanURL(t *testing.T) {
+	{
+		values, err := pantherlog.ScanURL(nil, "http://example.com/foo/bar")
+		require.NoError(t, err)
+		require.Equal(t, []pantherlog.Value{
+			{
+				Kind: pantherlog.KindDomainName,
+				Data: `example.com`,
+			},
+		}, values)
+	}
+	{
+		values, err := pantherlog.ScanURL(nil, "http://127.0.0.1/foo/bar")
+		require.NoError(t, err)
+		require.Equal(t, []pantherlog.Value{
+			{
+				Kind: pantherlog.KindIPAddress,
+				Data: `127.0.0.1`,
+			},
+		}, values)
+	}
+	{
+		values, err := pantherlog.ScanURL(nil, "file:///foo/bar")
+		require.NoError(t, err)
+		require.Nil(t, values)
+	}
+	{
+		values, err := pantherlog.ScanURL(nil, "/foo/bar")
+		require.NoError(t, err)
+		require.Nil(t, values)
+	}
 }
