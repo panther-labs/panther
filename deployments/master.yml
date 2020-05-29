@@ -58,6 +58,10 @@ Parameters:
     Description: Enable S3 access logging for all Panther buckets
     AllowedValues: [true, false]
     Default: true
+  InitialAnalysisPackUrls:
+    Type: CommaDelimitedList
+    Description: Initial Python analysis packs
+    Default: https://github.com/panther-labs/panther-analysis/releases/latest/download/panther-analysis-all.zip
   LayerVersionArns:
     Type: CommaDelimitedList
     Description: List of LayerVersion ARNs to attach to each Lambda function
@@ -203,6 +207,7 @@ Resources:
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AppDomainURL: !GetAtt Bootstrap.Outputs.LoadBalancerUrl
+        AnalysisApiEndpoint: !GeetAtt BootstrapGateway.Outputs.AnalysisApiEndpoint
         AnalysisApiId: !GetAtt BootstrapGateway.Outputs.AnalysisApiId
         AnalysisVersionsBucket: !GetAtt Bootstrap.Outputs.AnalysisVersionsBucket
         AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
@@ -210,6 +215,7 @@ Resources:
         ComplianceApiId: !GetAtt BootstrapGateway.Outputs.ComplianceApiId
         Debug: !Ref Debug
         DynamoScalingRoleArn: !GetAtt Bootstrap.Outputs.DynamoScalingRoleArn
+        InitialAnalysisPackUrls: !Ref InitialAnalysisPackUrls
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         OutputsKeyId: !GetAtt Bootstrap.Outputs.OutputsEncryptionKeyId
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket

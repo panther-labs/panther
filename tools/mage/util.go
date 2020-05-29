@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -268,23 +267,6 @@ func dateValidator(text string) error {
 		return fmt.Errorf("invalid date: %v", err)
 	}
 	return nil
-}
-
-// Download a file in memory.
-func download(url string) ([]byte, error) {
-	logger.Debug("GET " + url)
-	response, err := http.Get(url) // nolint:gosec
-	if err != nil {
-		return nil, fmt.Errorf("failed to GET %s: %v", url, err)
-	}
-	defer response.Body.Close()
-
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to download %s: %v", url, err)
-	}
-
-	return body, nil
 }
 
 // runningInCI returns true if the mage command is running inside the CI environment

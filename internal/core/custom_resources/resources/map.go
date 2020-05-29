@@ -24,6 +24,15 @@ import (
 
 // CustomResources map type names to their respective handler functions.
 var CustomResources = map[string]cfn.CustomResourceFunction{
+	// Install default Python rules/policies for a fresh deployment (singleton).
+	//
+	// Parameters:
+	//     AnaylsisApiEndpoint: string (required)
+	//     PackURLs:            list<string>
+	// Outputs: None
+	// PhysicalId: custom:analysis:init
+	"Custom::AnalysisSet": customAnalysisSet,
+
 	// CloudWatch alarms for API Gateway 5XX errors and high integration latency.
 	//
 	// Parameters:
