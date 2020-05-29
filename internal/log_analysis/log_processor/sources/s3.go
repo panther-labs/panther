@@ -188,13 +188,15 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 
 // ParseNotification parses a message received
 func ParseNotification(message string) ([]*S3ObjectInfo, error) {
-	s3Objects, err := tryParseCloudTrailNotification(message)
-	if err == nil {
+	s3Objects := parseCloudTrailNotification(message)
+
+	// If the input was not a CloudTrail notification, s3Objects will be nil
+	if s3Objects != nil {
 		return s3Objects, nil
 	}
 
-	s3Objects, err = tryParseS3Event(message)
-	if err == nil {
+	s3Objects = parseS3Event(message)
+	if s3Objects != nil {
 		return s3Objects, nil
 	}
 
@@ -206,17 +208,17 @@ func ParseNotification(message string) ([]*S3ObjectInfo, error) {
 	return nil, errors.New("notification is not of known type: " + message)
 }
 
-// tryParseCloudTrailNotification will try to parse input as if it was a CloudTrail notification
-// If the message is not a CloudTrail notification, the method will return an error.
-func tryParseCloudTrailNotification(message string) (result []*S3ObjectInfo, err error) {
+// The function will try to parse input as if it was a CloudTrail notification
+// If the message is not a CloudTrail notification, it returns nil
+func parseCloudTrailNotification(message string) (result []*S3ObjectInfo) {
 	cloudTrailNotification := &cloudTrailNotification{}
-	err = jsoniter.UnmarshalFromString(message, cloudTrailNotification)
+	err := jsoniter.UnmarshalFromString(message, cloudTrailNotification)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse CloudTrail notification")
+		return nil
 	}
 
 	if len(cloudTrailNotification.S3ObjectKey) == 0 {
-		return nil, errors.New("CloudTrail notification doesn't include valid S3 keys")
+		return nil
 	}
 
 	for _, s3Key := range cloudTrailNotification.S3ObjectKey {
@@ -226,25 +228,25 @@ func tryParseCloudTrailNotification(message string) (result []*S3ObjectInfo, err
 		}
 		result = append(result, info)
 	}
-	return result, nil
+	return result
 }
 
-// tryParseS3Event will try to parse input as if it was an S3 Event (https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html)
-// If the input was not an S3 Event  notification, it will return an error
-func tryParseS3Event(message string) (result []*S3ObjectInfo, err error) {
+// parseS3Event will try to parse input as if it was an S3 Event (https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html)
+// If the input was not an S3 Event  notification it will return nil
+func parseS3Event(message string) (result []*S3ObjectInfo) {
 	notification := &events.S3Event{}
-	err = jsoniter.UnmarshalFromString(message, notification)
+	err := jsoniter.UnmarshalFromString(message, notification)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal S3 event notification")
+		return nil
 	}
 
 	if len(notification.Records) == 0 {
-		return nil, errors.New("S3 Event notification doesn't include valid S3 records")
+		return nil
 	}
 	for _, record := range notification.Records {
 		urlDecodedKey, err := url.PathUnescape(record.S3.Object.Key)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to URL unescape S3 object key name")
+			return nil
 		}
 		info := &S3ObjectInfo{
 			S3Bucket:    record.S3.Bucket.Name,
@@ -252,7 +254,7 @@ func tryParseS3Event(message string) (result []*S3ObjectInfo, err error) {
 		}
 		result = append(result, info)
 	}
-	return result, nil
+	return result
 }
 
 // The method returns true if the received event is an S3 Test event
