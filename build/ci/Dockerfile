@@ -63,6 +63,7 @@ RUN go get github.com/magefile/mage
 
 # ****************     PYTHON     *******************
 RUN apt-get update && apt-get install -y \
+        build-essential \
         libreadline-gplv2-dev \
         libncursesw5-dev \
         libssl-dev \
@@ -74,7 +75,7 @@ RUN apt-get update && apt-get install -y \
 
 # Download the chosen Python3 version, unpack and install it
 RUN wget https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz \
-    && tar -xf Python-$PYTHON_VERSION.tar.xz \
+    && tar xf Python-$PYTHON_VERSION.tar.xz \
     && cd ./Python-$PYTHON_VERSION \
     && ./configure \
     && make \
