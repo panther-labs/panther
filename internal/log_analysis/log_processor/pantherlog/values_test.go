@@ -29,7 +29,7 @@ import (
 
 func TestScannerGJSON(t *testing.T) {
 	raw := `{"foo":{"bar":42,"baz":"1.1.1.1"}}`
-	ext := pantherlog.ScannerGJSON{
+	ext := pantherlog.GJSONScanner{
 		"*.baz": pantherlog.IPAddressScanner(),
 	}
 	fields, err := ext.ScanValues(nil, raw)
@@ -91,7 +91,7 @@ func TestFieldSlice(t *testing.T) {
 	}
 }
 
-func TestNonEmptyParser(t *testing.T) {
+func TestNonEmptyScanner(t *testing.T) {
 	p := pantherlog.NonEmptyScanner(pantherlog.KindDomainName)
 	{
 		fields, err := p.ScanValues(nil, "foo")
@@ -117,4 +117,7 @@ func TestNonEmptyParser(t *testing.T) {
 		require.NoError(t, err)
 		require.Nil(t, fields)
 	}
+}
+func TestScannerURL_ScanValues(t *testing.T) {
+	s := ScanURL()
 }

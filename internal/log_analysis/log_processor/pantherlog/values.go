@@ -20,6 +20,7 @@ package pantherlog
 
 import (
 	"net"
+	"net/url"
 	"sort"
 	"strings"
 
@@ -307,9 +308,9 @@ func HostnameScanner() ValueScanner {
 	return &scannerHostname{}
 }
 
-type scannerHostname struct{}
-
 var _ ValueScanner = (*scannerHostname)(nil)
+
+type scannerHostname struct{}
 
 func (*scannerHostname) ScanValues(values []Value, value string) ([]Value, error) {
 	value = strings.TrimSpace(value)
@@ -328,13 +329,47 @@ func (*scannerHostname) ScanValues(values []Value, value string) ([]Value, error
 	}), nil
 }
 
-// ScannerGJSON extracts fields from JSON objects
-type ScannerGJSON map[string]ValueScanner
+// URLScanner scans a URL value for domain or ip address
+func URLScanner() ValueScanner {
+	return &scannerURL{}
+}
 
-var _ ValueScanner = (ScannerGJSON)(nil)
+var _ ValueScanner = (*scannerURL)(nil)
+
+type scannerURL struct{}
+
+func (*scannerURL) ScanValues(values []Value, value string) ([]Value, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return values, nil
+	}
+	u, err := url.Parse(value)
+	if err != nil {
+		return values, err
+	}
+	host := u.Hostname()
+	if host == "" {
+		return values, nil
+	}
+	if checkIPAddress(host) {
+		return append(values, Value{
+			Kind: KindIPAddress,
+			Data: value,
+		}), nil
+	}
+	return append(values, Value{
+		Kind: KindDomainName,
+		Data: value,
+	}), nil
+}
+
+// GJSONScanner extracts values from JSON objects
+type GJSONScanner map[string]ValueScanner
+
+var _ ValueScanner = (GJSONScanner)(nil)
 
 // ScanValues implements ValueScanner interface
-func (g ScannerGJSON) ScanValues(values []Value, value string) ([]Value, error) {
+func (g GJSONScanner) ScanValues(values []Value, value string) ([]Value, error) {
 	if value == "" {
 		return values, nil
 	}
