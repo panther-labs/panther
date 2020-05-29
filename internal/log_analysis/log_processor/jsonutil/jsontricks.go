@@ -100,22 +100,3 @@ func ConcatObjects(api jsoniter.API, dst []byte, objects ...interface{}) ([]byte
 	}
 	return out[:offset+len(join)], nil
 }
-
-// var _ io.Writer = (*AppendWriter)(nil)
-
-// type AppendWriter struct {
-// 	B []byte
-// }
-
-// func (w *AppendWriter) WriteString(s string) (int, error) {
-// 	w.B = append(w.B, s...)
-// 	return len(s), nil
-// }
-// func (w *AppendWriter) WriteByte(b byte) error {
-// 	w.B = append(w.B, b)
-// 	return nil
-// }
-// func (w *AppendWriter) Write(p []byte) (int, error) {
-// 	w.B = append(w.B, p...)
-// 	return len(p), nil
-// }
