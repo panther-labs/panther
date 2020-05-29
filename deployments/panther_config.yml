@@ -89,6 +89,9 @@ Setup:
   # Has no effect if EnableS3AccessLogs=false above.
   S3AccessLogsBucket: ''
 
+  # If specified, user data is replicated to this bucket.
+  DataReplicationBucket: ''
+
   # Whether or not the Panther deployment should automatically onboard itself as a data source.
   OnboardSelf: true
 

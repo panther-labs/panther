@@ -129,13 +129,18 @@ Resources:
       ListenerArn: !Ref PublicLoadBalancerListener
       Priority: 1
 
+  WebApplicationCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: panther-web-cluster
+
   # The service that will instantiate a server task and restrict access through our ALB
   WebApplicationServer:
     Type: AWS::ECS::Service
     # The cert in the listener can't be deleted until the service has stopped.
     DependsOn: PublicLoadBalancerListener
     Properties:
-      Cluster: panther-web-cluster
+      Cluster: !Ref WebApplicationCluster
       DeploymentConfiguration:
         MaximumPercent: 200
         MinimumHealthyPercent: 50

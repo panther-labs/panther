@@ -18,7 +18,7 @@
 
 import * as React from 'react';
 import { Alert, Box, Flex, useSnackbar } from 'pouncejs';
-import { Field, Formik } from 'formik';
+import { Field, Form, Formik } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import useAuth from 'Hooks/useAuth';
@@ -77,48 +77,40 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) => {
         })
       }
     >
-      {({ handleSubmit, isSubmitting, isValid, dirty }) => (
-        <Box as="form" onSubmit={handleSubmit}>
-          {status && (
-            <Box mb={6}>
-              <Alert variant="error" title={status.title} description={status.message} />
-            </Box>
-          )}
+      <Form>
+        {status && (
+          <Box mb={6}>
+            <Alert variant="error" title={status.title} description={status.message} />
+          </Box>
+        )}
+        <Field
+          as={FormikTextInput}
+          label="Email address"
+          placeholder="john@doe.com"
+          disabled
+          name="email"
+          aria-required
+          readonly
+          mb={3}
+        />
+        <Flex mb={6} justify="space-between">
           <Field
             as={FormikTextInput}
-            label="Email address"
-            placeholder="john@doe.com"
-            disabled
-            name="email"
+            label="First Name"
+            placeholder="John"
+            name="givenName"
             aria-required
-            readonly
-            mb={3}
           />
-          <Flex mb={6} justify="space-between">
-            <Field
-              as={FormikTextInput}
-              label="First Name"
-              placeholder="John"
-              name="givenName"
-              aria-required
-            />
-            <Field
-              as={FormikTextInput}
-              label="Last Name"
-              placeholder="Doe"
-              name="familyName"
-              aria-required
-            />
-          </Flex>
-          <SubmitButton
-            width={1}
-            submitting={isSubmitting}
-            disabled={isSubmitting || !isValid || !dirty}
-          >
-            Update
-          </SubmitButton>
-        </Box>
-      )}
+          <Field
+            as={FormikTextInput}
+            label="Last Name"
+            placeholder="Doe"
+            name="familyName"
+            aria-required
+          />
+        </Flex>
+        <SubmitButton width={1}>Update</SubmitButton>
+      </Form>
     </Formik>
   );
 };

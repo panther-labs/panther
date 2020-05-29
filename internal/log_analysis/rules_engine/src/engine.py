@@ -56,6 +56,7 @@ class Engine:
                     rule_id=rule.rule_id,
                     rule_version=rule.rule_version,
                     rule_tags=rule.rule_tags,
+                    rule_reports=rule.rule_reports,
                     log_type=log_type,
                     dedup=result.dedup_string,  # type: ignore
                     dedup_period_mins=rule.rule_dedup_period_mins,

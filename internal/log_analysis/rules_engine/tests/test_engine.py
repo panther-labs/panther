@@ -46,7 +46,10 @@ class TestEngine(TestCase):
                 'body': 'def rule(event):\n\treturn True',
                 'versionId': 'version',
                 'dedupPeriodMinutes': 120,
-                'tags': ['test-tag']
+                'tags': ['test-tag'],
+                'reports': {
+                    'key': ['value']
+                }
             },  # This rule should match the event
             {
                 'id': 'rule_id_2',
@@ -66,6 +69,7 @@ class TestEngine(TestCase):
                 dedup='defaultDedupString:rule_id_1',
                 dedup_period_mins=120,
                 rule_tags=['test-tag'],
+                rule_reports={'key': ['value']},
                 event={}
             )
         ]

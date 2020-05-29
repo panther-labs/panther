@@ -36,13 +36,11 @@ var allStacks = []string{
 	bootstrapStack,
 	gatewayStack,
 
-	alarmsStack,
 	appsyncStack,
 	cloudsecStack,
 	coreStack,
 	dashboardStack,
 	frontendStack,
-	glueStack,
 	logAnalysisStack,
 	onboardStack,
 }

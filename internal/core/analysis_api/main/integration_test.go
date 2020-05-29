@@ -87,6 +87,7 @@ var (
 				Resource:       `{"nested": {}}`,
 			},
 		},
+		Reports: map[string][]string{},
 	}
 	versionedPolicy *models.Policy // this will get set when we modify policy for use in delete testing
 
@@ -99,6 +100,7 @@ var (
 		ResourceTypes:             []string{"AWS.CloudTrail"},
 		LastModifiedBy:            userID,
 		Tags:                      []string{"AWS Managed Rules - Management and Governance", "CIS"},
+		Reports:                   map[string][]string{},
 		Reference:                 "reference.link",
 		Runbook:                   "Runbook\n",
 		Severity:                  "MEDIUM",
@@ -180,6 +182,7 @@ var (
 		Severity:                  "MEDIUM",
 		Suppressions:              []string{},
 		Tags:                      []string{},
+		Reports:                   map[string][]string{},
 		Tests: []*models.UnitTest{
 			{
 				Name:           "This will be True",
@@ -199,6 +202,7 @@ var (
 		Severity:           "HIGH",
 		Tests:              []*models.UnitTest{},
 		Tags:               []string{"test-tag"},
+		Reports:            map[string][]string{},
 		DedupPeriodMinutes: 1440,
 	}
 
@@ -950,7 +954,7 @@ func bulkUploadSuccess(t *testing.T) {
 	policyFromBulk.Suppressions = []string{}
 	policyFromBulk.VersionID = getResult.Payload.VersionID
 
-	// Verify the resource string is the same as we expect, by unmarshaling it into its object map
+	// Verify the resource string is the same as we expect, by unmarshalling it into its object map
 	for i, test := range policyFromBulk.Tests {
 		var expected map[string]interface{}
 		var actual map[string]interface{}
@@ -1033,6 +1037,7 @@ func listSuccess(t *testing.T) {
 				Severity:                  policyFromBulkJSON.Severity,
 				Suppressions:              policyFromBulkJSON.Suppressions,
 				Tags:                      []string{},
+				Reports:                   map[string][]string{},
 			},
 			{
 				AutoRemediationID:         policy.AutoRemediationID,
@@ -1046,6 +1051,7 @@ func listSuccess(t *testing.T) {
 				Severity:                  policy.Severity,
 				Suppressions:              policy.Suppressions,
 				Tags:                      []string{},
+				Reports:                   map[string][]string{},
 			},
 			{
 				AutoRemediationID:         policyFromBulk.AutoRemediationID,
@@ -1059,6 +1065,7 @@ func listSuccess(t *testing.T) {
 				Severity:                  policyFromBulk.Severity,
 				Suppressions:              policyFromBulk.Suppressions,
 				Tags:                      policyFromBulk.Tags,
+				Reports:                   map[string][]string{},
 			},
 		},
 	}
@@ -1097,6 +1104,7 @@ func listFiltered(t *testing.T) {
 				Severity:                  policyFromBulkJSON.Severity,
 				Suppressions:              policyFromBulkJSON.Suppressions,
 				Tags:                      policyFromBulkJSON.Tags,
+				Reports:                   policyFromBulkJSON.Reports,
 			},
 		},
 	}
@@ -1132,6 +1140,7 @@ func listPaging(t *testing.T) {
 				Severity:                  policyFromBulkJSON.Severity,
 				Suppressions:              policyFromBulkJSON.Suppressions,
 				Tags:                      policyFromBulkJSON.Tags,
+				Reports:                   policyFromBulkJSON.Reports,
 			},
 		},
 	}
@@ -1166,6 +1175,7 @@ func listPaging(t *testing.T) {
 				Severity:                  policy.Severity,
 				Suppressions:              policy.Suppressions,
 				Tags:                      policy.Tags,
+				Reports:                   policy.Reports,
 			},
 		},
 	}
@@ -1200,6 +1210,7 @@ func listPaging(t *testing.T) {
 				Severity:                  policyFromBulk.Severity,
 				Suppressions:              policyFromBulk.Suppressions,
 				Tags:                      policyFromBulk.Tags,
+				Reports:                   policyFromBulk.Reports,
 			},
 		},
 	}
@@ -1228,6 +1239,7 @@ func listRules(t *testing.T) {
 				LogTypes:     rule.LogTypes,
 				Severity:     rule.Severity,
 				Tags:         rule.Tags,
+				Reports:      rule.Reports,
 			},
 		},
 	}
@@ -1266,6 +1278,9 @@ func getEnabledPolicies(t *testing.T) {
 			ResourceTypes: policyFromBulkJSON.ResourceTypes,
 			Severity:      policyFromBulkJSON.Severity,
 			VersionID:     policyFromBulkJSON.VersionID,
+			Reports: map[string][]string{
+				"Test": {"Value1", "Value2"},
+			},
 		},
 		policyFromBulk.ID: {
 			Body:          policyFromBulk.Body,

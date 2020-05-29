@@ -32,6 +32,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
+	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/magefile/mage/sh"
 
@@ -40,10 +41,9 @@ import (
 	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
 	orgmodels "github.com/panther-labs/panther/api/lambda/organization/models"
 	usermodels "github.com/panther-labs/panther/api/lambda/users/models"
-	"github.com/panther-labs/panther/pkg/awsathena"
+	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/shutil"
-	"github.com/panther-labs/panther/tools/athenaviews"
 	"github.com/panther-labs/panther/tools/config"
 )
 
@@ -55,8 +55,6 @@ const (
 	gatewayTemplate   = apiEmbeddedTemplate
 
 	// Main stacks
-	alarmsStack         = "panther-cw-alarms"
-	alarmsTemplate      = "deployments/alarms.yml"
 	appsyncStack        = "panther-appsync"
 	appsyncTemplate     = "deployments/appsync.yml"
 	cloudsecStack       = "panther-cloud-security"
@@ -64,16 +62,17 @@ const (
 	coreStack           = "panther-core"
 	coreTemplate        = "deployments/core.yml"
 	dashboardStack      = "panther-cw-dashboards"
-	dashboardTemplate   = "out/deployments/monitoring/dashboards.json"
+	dashboardTemplate   = "deployments/dashboards.yml"
 	frontendStack       = "panther-web"
 	frontendTemplate    = "deployments/web_server.yml"
-	glueStack           = "panther-glue"
-	glueTemplate        = "out/deployments/gluetables.json"
 	logAnalysisStack    = "panther-log-analysis"
 	logAnalysisTemplate = "deployments/log_analysis.yml"
-	metricFilterStack   = "panther-cw-metric-filters"
 	onboardStack        = "panther-onboard"
 	onboardTemplate     = "deployments/onboard.yml"
+
+	// Removed stacks
+	alarmsStack       = "panther-cw-alarms"
+	metricFilterStack = "panther-cw-metric-filters"
 
 	// Python layer
 	layerSourceDir        = "out/pip/analysis/python"
@@ -130,26 +129,53 @@ func Deploy() {
 	logger.Infof("deploy: deploying Panther %s to account %s (%s)", gitVersion, accountID, *awsSession.Config.Region)
 
 	// ***** Step 1: bootstrap stacks and build artifacts
+	// Migration: in v1.4.0, the ECS cluster moved from the bootstrap stack to the web stack.
+	// Enumerate the bootstrap stack to see if this migration is necessary.
+	clusterInBootstrap := false
+	cfnClient := cloudformation.New(awsSession)
+	err = walkPantherStack(cfnClient, aws.String(bootstrapStack), func(r cfnResource) {
+		if aws.StringValue(r.Resource.ResourceType) == "AWS::ECS::Cluster" {
+			clusterInBootstrap = true
+		}
+	})
+	if err != nil {
+		// err == nil if the stack does not yet exist
+		logger.Fatalf("failed to walk bootstrap stack: %v", err)
+	}
+	if clusterInBootstrap {
+		// To delete the ECS cluster from bootstrap, the entire web stack has to be deleted first.
+		// There is no user data that needs to be preserved in that stack - it's stateless.
+		logger.Infof("migration: deleting stack %s so ECS::Cluster can be migrated out of %s",
+			frontendStack, bootstrapStack)
+		if err = deleteStack(cfnClient, aws.String(frontendStack)); err != nil {
+			logger.Fatalf("failed to delete %s: %v", frontendStack, err)
+		}
+	}
+
 	outputs := bootstrap(awsSession, settings)
 
 	// ***** Step 2: deploy remaining stacks in parallel
 	deployMainStacks(awsSession, settings, accountID, outputs)
 
 	// ***** Step 3: first-time setup if needed
-	if err := initializeAnalysisSets(awsSession, outputs["AnalysisApiEndpoint"], settings); err != nil {
+	if err = initializeAnalysisSets(awsSession, outputs["AnalysisApiEndpoint"], settings); err != nil {
 		logger.Fatal(err)
 	}
-	if err := initializeGlobal(awsSession, outputs["AnalysisApiEndpoint"]); err != nil {
+	if err = initializeGlobal(awsSession, outputs["AnalysisApiEndpoint"]); err != nil {
 		logger.Fatal(err)
 	}
-	if err := inviteFirstUser(awsSession); err != nil {
+	if err = inviteFirstUser(awsSession); err != nil {
 		logger.Fatal(err)
 	}
 
 	// ***** Step 4: migrations
 	// Starting in v1.3.0, the metric-filter stack is no longer used. It can be safely deleted
-	if err := deleteStack(cloudformation.New(awsSession), aws.String(metricFilterStack)); err != nil {
+	if err = deleteStack(cfnClient, aws.String(metricFilterStack)); err != nil {
 		logger.Warnf("failed to delete deprecated %s stack: %v", metricFilterStack, err)
+	}
+	// Starting in v1.4.0, the alarms stack is no longer used and can be safely deleted.
+	if err := deleteStack(cloudformation.New(awsSession), aws.String(alarmsStack)); err != nil {
+		logger.Warnf("failed to delete deprecated %s stack: %v", alarmsStack, err)
 	}
 
 	logger.Infof("deploy: finished successfully in %s", time.Since(start).Round(time.Second))
@@ -217,11 +243,13 @@ func deployBoostrapStacks(
 		"LogSubscriptionPrincipals":  strings.Join(settings.Setup.LogSubscriptions.PrincipalARNs, ","),
 		"EnableS3AccessLogs":         strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
 		"AccessLogsBucket":           settings.Setup.S3AccessLogsBucket,
+		"DataReplicationBucket":      settings.Setup.DataReplicationBucket,
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CustomDomain":               settings.Web.CustomDomain,
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 		"TracingMode":                settings.Monitoring.TracingMode,
 		"AlarmTopicArn":              settings.Monitoring.AlarmSnsTopicArn,
+		"DeployFromSource":           "true",
 	}
 
 	outputs, err := deployTemplate(awsSession, bootstrapTemplate, "", bootstrapStack, params)
@@ -238,8 +266,10 @@ func deployBoostrapStacks(
 
 	sourceBucket := outputs["SourceBucket"]
 	params = map[string]string{
+		"AthenaResultsBucket":        outputs["AthenaResultsBucket"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
+		"ProcessedDataBucket":        outputs["ProcessedDataBucket"],
 		"PythonLayerVersionArn":      settings.Infra.PythonLayerVersionArn,
 		"TracingMode":                settings.Monitoring.TracingMode,
 		"UserPoolId":                 outputs["UserPoolId"],
@@ -307,15 +337,6 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	results := make(chan goroutineResult)
 	count := 0
 
-	// Alarms
-	count++
-	go func(c chan goroutineResult) {
-		_, err := deployTemplate(awsSession, alarmsTemplate, sourceBucket, alarmsStack, map[string]string{
-			"AlarmTopicArn": outputs["AlarmTopicArn"],
-		})
-		c <- goroutineResult{summary: alarmsStack, err: err}
-	}(results)
-
 	// Appsync
 	count++
 	go func(c chan goroutineResult) {
@@ -361,8 +382,10 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 			"AppDomainURL":           outputs["LoadBalancerUrl"],
 			"AnalysisVersionsBucket": outputs["AnalysisVersionsBucket"],
 			"AnalysisApiId":          outputs["AnalysisApiId"],
+			"AthenaResultsBucket":    outputs["AthenaResultsBucket"],
 			"ComplianceApiId":        outputs["ComplianceApiId"],
 			"DynamoScalingRoleArn":   outputs["DynamoScalingRoleArn"],
+			"ProcessedDataBucket":    outputs["ProcessedDataBucket"],
 			"OutputsKeyId":           outputs["OutputsEncryptionKeyId"],
 			"SqsKeyId":               outputs["QueueEncryptionKeyId"],
 			"UserPoolId":             outputs["UserPoolId"],
@@ -382,22 +405,24 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 		c <- goroutineResult{summary: dashboardStack, err: err}
 	}(results)
 
-	// Glue
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{summary: glueStack, err: deployGlue(awsSession, outputs)}
-	}(results)
-
 	// Log analysis
 	count++
 	go func(c chan goroutineResult) {
-		_, err := deployTemplate(awsSession, logAnalysisTemplate, sourceBucket, logAnalysisStack, map[string]string{
+		// this computes a signature of the deployed glue tables used for change detection, for CF use the Panther version
+		tablesSignature, err := gluetables.DeployedTablesSignature(glue.New(awsSession))
+		if err != nil {
+			c <- goroutineResult{summary: logAnalysisStack, err: err}
+			return
+		}
+		_, err = deployTemplate(awsSession, logAnalysisTemplate, sourceBucket, logAnalysisStack, map[string]string{
 			"AlarmTopicArn":         outputs["AlarmTopicArn"],
 			"AnalysisApiId":         outputs["AnalysisApiId"],
+			"AthenaResultsBucket":   outputs["AthenaResultsBucket"],
 			"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
 			"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
 			"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
 			"SqsKeyId":              outputs["QueueEncryptionKeyId"],
+			"TablesSignature":       tablesSignature,
 
 			"CloudWatchLogRetentionDays":   strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 			"Debug":                        strconv.FormatBool(settings.Monitoring.Debug),
@@ -431,27 +456,6 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	// Log stack results, counting where the last parallel group left off to give the illusion of
 	// one continuous deploy progress tracker.
 	logResults(results, "deploy", count+3, len(allStacks), len(allStacks))
-}
-
-func deployGlue(awsSession *session.Session, outputs map[string]string) error {
-	_, err := deployTemplate(awsSession, glueTemplate, outputs["SourceBucket"], glueStack, map[string]string{
-		"ProcessedDataBucket": outputs["ProcessedDataBucket"],
-	})
-	if err != nil {
-		return err
-	}
-
-	// Athena views are created via API call because CF is not well supported. Workgroup "primary" is default.
-	const workgroup = "primary"
-	athenaBucket := outputs["AthenaResultsBucket"]
-	if err := awsathena.WorkgroupAssociateS3(awsSession, workgroup, athenaBucket); err != nil {
-		return fmt.Errorf("failed to associate %s Athena workgroup with %s bucket: %v", workgroup, athenaBucket, err)
-	}
-	if err := athenaviews.CreateOrReplaceViews(athenaBucket); err != nil {
-		return fmt.Errorf("failed to create/replace athena views for %s bucket: %v", athenaBucket, err)
-	}
-
-	return nil
 }
 
 // If the users list is empty (e.g. on the initial deploy), create the first user.

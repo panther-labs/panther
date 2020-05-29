@@ -829,6 +829,8 @@ definitions:
         $ref: '#/definitions/TestSuite'
       versionId:
         $ref: '#/definitions/versionId'
+      reports:
+        $ref: '#/definitions/reports'
     required:
       - autoRemediationId
       - autoRemediationParameters
@@ -850,6 +852,7 @@ definitions:
       - tags
       - tests
       - versionId
+      - reports
 
   TypeSet:
     description: List of resource/log types to which this policy applies
@@ -981,6 +984,8 @@ definitions:
         $ref: '#/definitions/dedupPeriodMinutes'
       tags:
         $ref: '#/definitions/tags'
+      reports:
+        $ref: '#/definitions/reports'
 
   ##### ListPolicies #####
   PolicyList:
@@ -1038,6 +1043,8 @@ definitions:
         $ref: '#/definitions/tags'
       suppressions:
         $ref: '#/definitions/suppressions'
+      reports:
+        $ref: '#/definitions/reports'
     required:
       - autoRemediationId
       - autoRemediationParameters
@@ -1050,6 +1057,7 @@ definitions:
       - severity
       - tags
       - suppressions
+      - reports
 
   ##### BulkUpload #####
   BulkUpload:
@@ -1243,6 +1251,8 @@ definitions:
         $ref: '#/definitions/versionId'
       dedupPeriodMinutes:
         $ref: '#/definitions/dedupPeriodMinutes'
+      reports:
+        $ref: '#/definitions/reports'
     required:
       - body
       - createdAt
@@ -1261,6 +1271,7 @@ definitions:
       - tests
       - versionId
       - dedupPeriodMinutes
+      - reports
 
   UpdateRule:
     type: object
@@ -1291,6 +1302,8 @@ definitions:
         $ref: '#/definitions/userId'
       dedupPeriodMinutes:
         $ref: '#/definitions/dedupPeriodMinutes'
+      reports:
+        $ref: '#/definitions/reports'
     required:
       - body
       - enabled
@@ -1356,6 +1369,8 @@ definitions:
         $ref: '#/definitions/severity'
       tags:
         $ref: '#/definitions/tags'
+      reports:
+        $ref: '#/definitions/reports'
     required:
       - displayName
       - enabled
@@ -1364,6 +1379,7 @@ definitions:
       - logTypes
       - severity
       - tags
+      - reports
 
   ##### object properties #####
   autoRemediationId:
@@ -1527,3 +1543,10 @@ definitions:
     description: Policy version ID
     type: string
     pattern: '[a-zA-Z\._0-9]{32}' # 32-character alphanumeric S3 object version
+
+  reports:
+    type: object
+    additionalProperties:
+      type: array
+      items:
+        type: string

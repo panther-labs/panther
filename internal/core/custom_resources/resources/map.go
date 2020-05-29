@@ -47,6 +47,14 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// PhysicalId: custom:alarms:appsync:$API_ID
 	"Custom::AppSyncAlarms": customAppSyncAlarms,
 
+	// Initialize Athena
+	//
+	// Parameters:
+	//     AthenaResultsBucket:  string (required)
+	// Outputs: None
+	// PhysicalId: custom:athena:init
+	"Custom::AthenaInit": customAthenaInit,
+
 	// CloudWatch alarms for Dynamo errors, throttles, and latency
 	//
 	// Parameters:
@@ -86,14 +94,21 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// Deleting this resource has no effect on the user pool.
 	"Custom::CognitoUserPoolMfa": customCognitoUserPoolMfa,
 
+	// Updates databases and table schemas
+	//
+	// Parameters:
+	//    DeploymentId:  string (required)
+	// Outputs: None
+	// PhysicalId: custom:glue:update-tables
+	"Custom::UpdateGlueTables": customUpdateGlueTables,
+
 	// Creates alarms for lambda errors, warning, throttles, duration, and memory
 	//
 	// Parameters:
 	//     AlarmTopicArn:           string (required)
 	//     FunctionName:            string (required)
-	//
-	//     FunctionMemoryMB:        int (default: 128)
-	//     FunctionTimeoutSec:      int (default: 60)
+	//     FunctionMemoryMB:        int (required)
+	//     FunctionTimeoutSec:      int (required)
 	//
 	//     LoggedErrorThreshold:    int (default: 0)
 	//     LoggedWarnThreshold:     int (default: 25)
@@ -111,4 +126,32 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// Outputs: None
 	// PhysicalId: custom:metric-filters:$LOG_GROUP_NAME
 	"Custom::LambdaMetricFilters": customLambdaMetricFilters,
+
+	// Creates an alarm for failed step function executions
+	//
+	// Parameters:
+	//     AlarmTopicArn:    string (required)
+	//     StateMachineArn:  string (required)
+	// Outputs: None
+	// PhysicalId: custom:alarms:sfn:$STATE_MACHINE_NAME
+	"Custom::StateMachineAlarms": customStateMachineAlarms,
+
+	// Creates an alarm for failed SNS notifications.
+	//
+	// Parameters:
+	//     AlarmTopicArn:    string (required)
+	//     TopicName:        string (required)
+	// Outputs: None
+	// PhysicalId: custom:alarms:sns:$TOPIC_NAME
+	"Custom::SNSAlarms": customSNSAlarms,
+
+	// Creates an alarm for high SQS age and entries in a DLQ
+	//
+	// Parameters:
+	//     AlarmTopicArn:    string (required)
+	//     QueueName:        string (required)
+	//	   IsDLQ:            bool (default: false)
+	// Outputs: None
+	// PhysicalId: custom:alarms:sqs:$QUEUE_NAME
+	"Custom::SQSAlarms": customSQSAlarms,
 }
