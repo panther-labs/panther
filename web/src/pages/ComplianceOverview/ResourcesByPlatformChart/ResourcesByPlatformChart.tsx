@@ -18,36 +18,29 @@
 
 import React from 'react';
 import { ScannedResources } from 'Generated/schema';
-import { countResourcesByStatus } from 'Helpers/utils';
-import { Bars, ChartSummary } from 'Components/Charts';
 import { Flex } from 'pouncejs';
+import { Bars, ChartSummary } from 'Components/Charts';
 
-interface ResourcesByStatusChartProps {
+interface ResourcesByPlatformProps {
   resources: ScannedResources;
 }
 
-const ResourcesByStatusChart: React.FC<ResourcesByStatusChartProps> = ({ resources }) => {
-  const totalResources = countResourcesByStatus(resources, ['fail', 'error', 'pass']);
-
-  const failingResourcesChartData = [
+const ResourcesByPlatform: React.FC<ResourcesByPlatformProps> = ({ resources }) => {
+  console.log('Resources', resources);
+  const allResourcesChartData = [
     {
-      value: countResourcesByStatus(resources, ['fail', 'error']),
-      label: 'Failing',
-      color: 'red300' as const,
-    },
-    {
-      value: countResourcesByStatus(resources, ['pass']),
-      label: 'Passing',
-      color: 'green200' as const,
+      value: resources.byType.length,
+      label: 'AWS',
+      color: 'grey300' as const,
     },
   ];
 
   return (
     <Flex height="100%">
-      <ChartSummary total={totalResources} title="Total Resources" color="green200" />
-      <Bars data={failingResourcesChartData} horizontal />
+      <ChartSummary total={resources.byType.length} title="Resource Types" color="grey200" />
+      <Bars data={allResourcesChartData} horizontal />
     </Flex>
   );
 };
 
-export default React.memo(ResourcesByStatusChart);
+export default React.memo(ResourcesByPlatform);

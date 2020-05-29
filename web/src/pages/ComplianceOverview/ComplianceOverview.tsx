@@ -26,6 +26,7 @@ import { useGetOrganizationStats } from './graphql/getOrganizationStats.generate
 import PoliciesBySeverityChart from './PoliciesBySeverityChart';
 import PoliciesByStatusChart from './PoliciesByStatusChart';
 import ResourcesByStatusChart from './ResourcesByStatusChart';
+import ResourcesByPlatformChart from './ResourcesByPlatformChart';
 import BarChartWrapper from './BarChartWrapper';
 import ComplianceOverviewPageEmptyDataFallback from './EmptyDataFallback';
 import ComplianceOverviewPageSkeleton from './Skeleton';
@@ -57,15 +58,18 @@ const ComplianceOverview: React.FC = () => {
 
   return (
     <Box as="article" mb={6}>
-      <SimpleGrid columns={3} spacing={3} as="section" mb={3}>
-        <BarChartWrapper title="Policy Severity" icon="policy">
-          <PoliciesBySeverityChart policies={data.organizationStats.appliedPolicies} />
-        </BarChartWrapper>
+      <SimpleGrid columns={2} spacing={3} as="section" mb={3}>
         <BarChartWrapper title="Policy Failure" icon="policy">
           <PoliciesByStatusChart policies={data.organizationStats.appliedPolicies} />
         </BarChartWrapper>
+        <BarChartWrapper title="Policy Severity" icon="policy">
+          <PoliciesBySeverityChart policies={data.organizationStats.appliedPolicies} />
+        </BarChartWrapper>
         <BarChartWrapper title="Resource Health" icon="resource">
           <ResourcesByStatusChart resources={data.organizationStats.scannedResources} />
+        </BarChartWrapper>
+        <BarChartWrapper title="Resource Health" icon="resource">
+          <ResourcesByPlatformChart resources={data.organizationStats.scannedResources} />
         </BarChartWrapper>
       </SimpleGrid>
       <SimpleGrid columns={2} spacingX={3} spacingY={2}>

@@ -21,8 +21,8 @@ import { capitalize, countPoliciesBySeverityAndStatus } from 'Helpers/utils';
 import map from 'lodash-es/map';
 import sum from 'lodash-es/sum';
 import { OrganizationReportBySeverity } from 'Generated/schema';
-import { theme } from 'pouncejs';
-import { Bars } from 'Components/Charts';
+import { theme, Flex } from 'pouncejs';
+import { Bars, ChartSummary } from 'Components/Charts';
 
 const severityToColorMapping: {
   [key in keyof OrganizationReportBySeverity]: keyof typeof theme['colors'];
@@ -39,6 +39,13 @@ interface PoliciesByStatusChartData {
 }
 
 const PoliciesByStatusChart: React.FC<PoliciesByStatusChartData> = ({ policies }) => {
+  const severities = Object.keys(severityToColorMapping);
+  const totalFailingPolicies = sum(
+    severities.map((severity: keyof OrganizationReportBySeverity) =>
+      countPoliciesBySeverityAndStatus(policies, severity, ['fail', 'error'])
+    )
+  );
+
   const failingPoliciesChartData = [
     ...map(severityToColorMapping, (color, severity: keyof OrganizationReportBySeverity) => ({
       value: countPoliciesBySeverityAndStatus(policies, severity, ['fail', 'error']),
@@ -56,7 +63,12 @@ const PoliciesByStatusChart: React.FC<PoliciesByStatusChartData> = ({ policies }
     },
   ];
 
-  return <Bars data={failingPoliciesChartData} />;
+  return (
+    <Flex height="100%">
+      <ChartSummary total={totalFailingPolicies} title="Total Failing Policies" color="red300" />
+      <Bars data={failingPoliciesChartData} />
+    </Flex>
+  );
 };
 
 export default React.memo(PoliciesByStatusChart);
