@@ -1,4 +1,4 @@
-package gluecf
+package awsglue
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -26,12 +26,106 @@ import (
 	"strconv"
 	"strings"
 
+	jsoniter "github.com/json-iterator/go"
+
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
 const (
-	maxCommentLength = 255 // this is the maximum size for a column comment allowed by CloudFormation
+	maxCommentLength = 255 // this is the maximum size for a column comment (clip if larger)
+
+	GlueTimestampType = "timestamp"
 )
+
+var (
+
+	// GlueMappings for custom Panther types.
+	GlueMappings = []CustomMapping{
+		{
+			From: reflect.TypeOf(timestamp.RFC3339{}),
+			To:   GlueTimestampType,
+		},
+		{
+			From: reflect.TypeOf(timestamp.ANSICwithTZ{}),
+			To:   GlueTimestampType,
+		},
+		{
+			From: reflect.TypeOf(timestamp.UnixMillisecond{}),
+			To:   GlueTimestampType,
+		},
+		{
+			From: reflect.TypeOf(timestamp.FluentdTimestamp{}),
+			To:   GlueTimestampType,
+		},
+		{
+			From: reflect.TypeOf(timestamp.UnixFloat{}),
+			To:   GlueTimestampType,
+		},
+		{
+			From: reflect.TypeOf(timestamp.SuricataTimestamp{}),
+			To:   GlueTimestampType,
+		},
+		{
+			From: reflect.TypeOf(parsers.PantherAnyString{}),
+			To:   "array<string>",
+		},
+		{
+			From: reflect.TypeOf(jsoniter.RawMessage{}),
+			To:   "string",
+		},
+		{
+			From: reflect.TypeOf(*new(numerics.Integer)),
+			To:   "bigint",
+		},
+		{
+			From: reflect.TypeOf(*new(numerics.Int64)),
+			To:   "bigint",
+		},
+	}
+
+	// RuleMatchColumns are columns added by the rules engine
+	RuleMatchColumns = []Column{
+		{
+			Name:    "p_rule_id",
+			Type:    "string",
+			Comment: "Rule id",
+		},
+		{
+			Name:    "p_alert_id",
+			Type:    "string",
+			Comment: "Alert id",
+		},
+		{
+			Name:    "p_alert_creation_time",
+			Type:    "timestamp",
+			Comment: "The time the alert was initially created (first match)",
+		},
+		{
+			Name:    "p_alert_update_time",
+			Type:    "timestamp",
+			Comment: "The time the alert last updated (last match)",
+		},
+		{
+			Name:    "p_rule_tags",
+			Type:    "array<string>",
+			Comment: "The tags of the rule that generated this alert",
+		},
+		{
+			Name:    "p_rule_reports",
+			Type:    "map<string,array<string>>",
+			Comment: "The tags of the rule that generated this alert",
+		},
+	}
+)
+
+type Column struct {
+	Name     string
+	Type     string // this is the Glue type
+	Comment  string
+	Required bool
+}
 
 // Functions to infer schema by reflection
 
@@ -70,7 +164,7 @@ func inferJSONColumns(t reflect.Type, customMappingsTable map[string]string) (co
 			}
 			comment = strings.TrimSpace(comment)
 			if len(comment) == 0 {
-				panic(fmt.Sprintf("failed to generate CloudFormation for %s: %s does not have the required associated 'description' tag",
+				panic(fmt.Sprintf("failed to generate glue type for %s: %s does not have the required associated 'description' tag",
 					t.String(), fieldName))
 			}
 			if len(comment) > maxCommentLength { // clip

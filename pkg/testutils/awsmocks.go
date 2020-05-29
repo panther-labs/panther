@@ -19,6 +19,8 @@ package testutils
  */
 
 import (
+	"github.com/aws/aws-sdk-go/service/athena"
+	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/aws/aws-sdk-go/service/eventbridge"
@@ -177,6 +179,11 @@ type GlueMock struct {
 	mock.Mock
 }
 
+func (m *GlueMock) CreateTable(input *glue.CreateTableInput) (*glue.CreateTableOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*glue.CreateTableOutput), args.Error(1)
+}
+
 func (m *GlueMock) GetTable(input *glue.GetTableInput) (*glue.GetTableOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*glue.GetTableOutput), args.Error(1)
@@ -205,4 +212,24 @@ func (m *GlueMock) GetPartitions(input *glue.GetPartitionsInput) (*glue.GetParti
 func (m *GlueMock) UpdatePartition(input *glue.UpdatePartitionInput) (*glue.UpdatePartitionOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*glue.UpdatePartitionOutput), args.Error(1)
+}
+
+type AthenaMock struct {
+	athenaiface.AthenaAPI
+	mock.Mock
+}
+
+func (m *AthenaMock) StartQueryExecution(input *athena.StartQueryExecutionInput) (*athena.StartQueryExecutionOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*athena.StartQueryExecutionOutput), args.Error(1)
+}
+
+func (m *AthenaMock) GetQueryExecution(input *athena.GetQueryExecutionInput) (*athena.GetQueryExecutionOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*athena.GetQueryExecutionOutput), args.Error(1)
+}
+
+func (m *AthenaMock) GetQueryResults(input *athena.GetQueryResultsInput) (*athena.GetQueryResultsOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*athena.GetQueryResultsOutput), args.Error(1)
 }

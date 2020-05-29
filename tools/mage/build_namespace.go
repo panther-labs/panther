@@ -296,9 +296,5 @@ func (b Build) cfn() error {
 		return err
 	}
 
-	if err := generateGlueTables(); err != nil {
-		return err
-	}
-
 	return generateDashboards()
 }

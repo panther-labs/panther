@@ -19,10 +19,7 @@ package cloudwatchcf
  */
 
 import (
-	"bytes"
 	"regexp"
-
-	"github.com/panther-labs/panther/tools/cfngen"
 )
 
 var (
@@ -30,17 +27,17 @@ var (
 )
 
 type Dashboard struct {
-	Type       string
-	Properties DashboardProperties
+	Type       string              `yaml:"Type"`
+	Properties DashboardProperties `yaml:"Properties"`
 }
 
 type DashboardProperties struct {
-	DashboardBody SubString
-	DashboardName SubString
+	DashboardBody SubString `yaml:"DashboardBody"`
+	DashboardName SubString `yaml:"DashboardName"`
 }
 
 type SubString struct {
-	Sub string `json:"Fn::Sub"`
+	Sub string `yaml:"Fn::Sub"`
 }
 
 func NewDashboard(name, body string) *Dashboard {
@@ -58,18 +55,4 @@ func NewDashboard(name, body string) *Dashboard {
 			DashboardName: SubString{name + "-${AWS::Region}"},
 		},
 	}
-}
-
-func GenerateDashboards(dashboards []*Dashboard) (cf []byte, err error) {
-	resources := make(map[string]interface{})
-	for _, dashboard := range dashboards {
-		resources[cfngen.SanitizeResourceName(dashboard.Properties.DashboardName.Sub)] = dashboard
-	}
-
-	// generate CF using cfngen
-	cfTemplate := cfngen.NewTemplate("Panther Dashboards", nil, resources, nil)
-	buffer := bytes.Buffer{}
-	err = cfTemplate.WriteCloudFormation(&buffer)
-	buffer.WriteString("\n") // add trailing \n that is expected in text files
-	return buffer.Bytes(), err
 }

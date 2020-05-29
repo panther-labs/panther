@@ -63,6 +63,7 @@ Resources:
   ########## Data Sources ##########
   AlertsAPILambdaDataSource:
     Type: AWS::AppSync::DataSource
+    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       Name: PantherAlertsAPILambda
@@ -73,6 +74,7 @@ Resources:
 
   UsersAPILambdaDataSource:
     Type: AWS::AppSync::DataSource
+    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       Name: PantherUsersAPILambda
@@ -83,6 +85,7 @@ Resources:
 
   DestinationsAPILambdaDataSource:
     Type: AWS::AppSync::DataSource
+    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       Name: PantherDestinationsAPILambda
@@ -93,6 +96,7 @@ Resources:
 
   SourceAPILambdaDataSource:
     Type: AWS::AppSync::DataSource
+    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       Name: PantherSourceAPILambda
@@ -103,6 +107,7 @@ Resources:
 
   OrganizationAPILambdaDataSource:
     Type: AWS::AppSync::DataSource
+    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       Name: PantherOrganizationAPILambda
@@ -113,6 +118,7 @@ Resources:
 
   ResourcesAPIHttpDataSource:
     Type: AWS::AppSync::DataSource
+    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       Name: PantherResourcesAPIHttp
@@ -127,6 +133,7 @@ Resources:
         Endpoint: !Ref ResourcesApi
 
   ComplianceAPIHttpDataSource:
+    DependsOn: GraphQLSchema
     Type: AWS::AppSync::DataSource
     Properties:
       ApiId: !Ref ApiId
@@ -143,6 +150,7 @@ Resources:
 
   AnalysisAPIHttpDataSource:
     Type: AWS::AppSync::DataSource
+    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       Name: PantherAnalysisAPIHttp
@@ -158,6 +166,7 @@ Resources:
 
   RemediationAPIHttpDataSource:
     Type: AWS::AppSync::DataSource
+    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       Name: PantherRemediationAPIHttp
@@ -175,7 +184,6 @@ Resources:
 
   ResetUserPasswordResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -200,7 +208,6 @@ Resources:
 
   UpdateUserResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -223,7 +230,6 @@ Resources:
 
   DeleteUserResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -248,7 +254,6 @@ Resources:
 
   ListUsersResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -271,7 +276,6 @@ Resources:
 
   InviteUserResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -295,7 +299,6 @@ Resources:
 
   GetDestinationResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -320,7 +323,6 @@ Resources:
 
   ListDestinationsResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -343,7 +345,6 @@ Resources:
 
   AddDestinationResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -368,7 +369,6 @@ Resources:
 
   DeleteDestinationResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -394,7 +394,6 @@ Resources:
 
   UpdateDestinationResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -419,7 +418,6 @@ Resources:
 
   ListComplianceIntegrationsResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -444,7 +442,6 @@ Resources:
 
   ListLogIntegrationsResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -474,7 +471,6 @@ Resources:
 
   ComplianceIntegrationHealthFieldResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: ComplianceIntegration
@@ -507,7 +503,6 @@ Resources:
 
   GetComplianceIntegrationResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -538,7 +533,6 @@ Resources:
 
   GetS3LogIntegrationResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -569,7 +563,6 @@ Resources:
 
   S3LogIntegrationHealthFieldResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: S3LogIntegration
@@ -599,7 +592,6 @@ Resources:
 
   GetComplianceIntegrationTemplateResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -624,7 +616,6 @@ Resources:
 
   GetS3LogIntegrationTemplateResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -649,7 +640,6 @@ Resources:
 
   AddComplianceIntegrationResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -676,7 +666,6 @@ Resources:
 
   AddS3LogIntegrationResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -702,7 +691,6 @@ Resources:
 
   UpdateComplianceIntegrationResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -727,7 +715,6 @@ Resources:
 
   UpdateS3LogIntegrationResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -752,7 +739,6 @@ Resources:
 
   DeleteComplianceIntegrationResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -777,7 +763,6 @@ Resources:
 
   DeleteLogIntegrationResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -802,7 +787,6 @@ Resources:
 
   GetGeneralSettingsResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -825,7 +809,6 @@ Resources:
 
   UpdateGeneralSettingsResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -848,7 +831,6 @@ Resources:
 
   ListPoliciesResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -878,7 +860,6 @@ Resources:
 
   GetPolicyResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -908,7 +889,6 @@ Resources:
 
   UpdatePolicyResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -940,7 +920,6 @@ Resources:
 
   AddPolicyResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -972,7 +951,6 @@ Resources:
 
   DeletePolicyResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -1004,7 +982,6 @@ Resources:
 
   UploadPoliciesResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -1036,7 +1013,6 @@ Resources:
 
   ListResourcesResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -1067,7 +1043,6 @@ Resources:
 
   GetResourceResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -1097,7 +1072,6 @@ Resources:
 
   RemediateResourceResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -1127,7 +1101,6 @@ Resources:
 
   ListRemediationsResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -1159,7 +1132,6 @@ Resources:
 
   OrganizationStatsResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -1189,7 +1161,6 @@ Resources:
 
   ResourcesForPolicyResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -1219,7 +1190,6 @@ Resources:
 
   PoliciesForResourceResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -1249,7 +1219,6 @@ Resources:
 
   SuppressPoliciesResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -1280,7 +1249,6 @@ Resources:
 
   ListRulesResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -1310,7 +1278,6 @@ Resources:
 
   GetRuleResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -1340,7 +1307,6 @@ Resources:
 
   UpdateRuleResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -1372,7 +1338,6 @@ Resources:
 
   AddRuleResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -1404,7 +1369,6 @@ Resources:
 
   DeleteRuleResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -1436,7 +1400,6 @@ Resources:
 
   GetGlobalModuleResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -1466,7 +1429,6 @@ Resources:
 
   UpdateGlobalModuleResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
@@ -1498,7 +1460,6 @@ Resources:
 
   ListAlertsResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -1521,7 +1482,6 @@ Resources:
 
   GetAlertResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
@@ -1544,7 +1504,6 @@ Resources:
 
   TestPolicyResolver:
     Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation

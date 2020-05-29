@@ -23,14 +23,20 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/acm"
 	"github.com/aws/aws-sdk-go/service/acm/acmiface"
+	"github.com/aws/aws-sdk-go/service/athena"
+	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider/cognitoidentityprovideriface"
+	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/iam/iamiface"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 )
 
 // Lazily build all AWS clients - each Lambda invocation usually needs at most 1 of these
@@ -38,10 +44,13 @@ var (
 	awsSession *session.Session
 
 	acmClient            acmiface.ACMAPI
+	athenaClient         athenaiface.AthenaAPI
 	cloudWatchClient     cloudwatchiface.CloudWatchAPI
 	cloudWatchLogsClient cloudwatchlogsiface.CloudWatchLogsAPI
 	cognitoClient        cognitoidentityprovideriface.CognitoIdentityProviderAPI
+	glueClient           glueiface.GlueAPI
 	iamClient            iamiface.IAMAPI
+	s3Client             s3iface.S3API
 )
 
 func getSession() *session.Session {
@@ -56,6 +65,13 @@ func getAcmClient() acmiface.ACMAPI {
 		acmClient = acm.New(getSession())
 	}
 	return acmClient
+}
+
+func getAthenaClient() athenaiface.AthenaAPI {
+	if athenaClient == nil {
+		athenaClient = athena.New(getSession())
+	}
+	return athenaClient
 }
 
 func getCloudWatchClient() cloudwatchiface.CloudWatchAPI {
@@ -79,9 +95,23 @@ func getCognitoClient() cognitoidentityprovideriface.CognitoIdentityProviderAPI 
 	return cognitoClient
 }
 
+func getGlueClient() glueiface.GlueAPI {
+	if glueClient == nil {
+		glueClient = glue.New(getSession())
+	}
+	return glueClient
+}
+
 func getIamClient() iamiface.IAMAPI {
 	if iamClient == nil {
 		iamClient = iam.New(getSession())
 	}
 	return iamClient
+}
+
+func getS3Client() s3iface.S3API {
+	if s3Client == nil {
+		s3Client = s3.New(getSession())
+	}
+	return s3Client
 }

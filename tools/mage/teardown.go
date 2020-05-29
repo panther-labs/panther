@@ -212,6 +212,11 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 		logger.Fatal(err)
 	}
 
+	// In v1.4.0 we removed the stack `panther-glue`, delete it (we can remove this after a few more releases)
+	if err := deleteStack(client, aws.String("panther-glue")); err != nil {
+		logger.Warn(err)
+	}
+
 	// Trigger the deletion of the main stacks in parallel
 	//
 	// The bootstrap stacks have to be last because of the ECS cluster and custom resource Lambda.
@@ -221,7 +226,6 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 		coreStack,
 		dashboardStack,
 		frontendStack,
-		glueStack,
 		logAnalysisStack,
 		onboardStack,
 	}

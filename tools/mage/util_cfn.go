@@ -41,7 +41,6 @@ var allStacks = []string{
 	coreStack,
 	dashboardStack,
 	frontendStack,
-	glueStack,
 	logAnalysisStack,
 	onboardStack,
 }

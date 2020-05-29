@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
@@ -82,6 +83,12 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 		existingIntegrationItem.S3Prefix = input.S3Prefix
 		existingIntegrationItem.KmsKey = input.KmsKey
 		existingIntegrationItem.LogTypes = input.LogTypes
+
+		err = addGlueTables(input.LogTypes)
+		if err != nil {
+			zap.L().Error("Failed to add glue tables to glue catalog", zap.Error(errors.WithStack(err)))
+			return nil, updateIntegrationInternalError
+		}
 	}
 
 	err = dynamoClient.PutItem(existingIntegrationItem)

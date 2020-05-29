@@ -26,6 +26,9 @@ Parameters:
   AnalysisApiId:
     Type: String
     Description: API Gateway for analysis-api
+  AthenaResultsBucket:
+    Type: String
+    Description: Bucket created to hold Athena results
   ProcessedDataBucket:
     Type: String
     Description: S3 bucket which stores processed logs
@@ -38,6 +41,9 @@ Parameters:
   SqsKeyId:
     Type: String
     Description: KMS key ID for SQS encryption
+  TablesSignature:
+    Type: String
+    Description: Value from gluetable.DeployedTablesSignature() or the Panther version if using CF
 
   # Passed in from config file
   CloudWatchLogRetentionDays:
@@ -87,6 +93,22 @@ Conditions:
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
+  ##### Configure Athena #####
+  AthenaConfigure:
+    Type: Custom::AthenaInit # this will associate the bucket as the default location for results
+    Properties:
+      AthenaResultsBucket: !Ref AthenaResultsBucket
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  ###### Update Glue Table Schemas for Deployed Tables #####
+  UpdateGlueTables:
+    DependsOn: AthenaConfigure
+    Type: Custom::UpdateGlueTables
+    Properties:
+      TablesSignature: !Ref TablesSignature # this should change when tables need to be updated, for CF this can be the Panther version
+      ProcessedDataBucket: !Ref ProcessedDataBucket
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ###### Alerts API #####
   AlertsApiLogGroup:
     Type: AWS::Logs::LogGroup

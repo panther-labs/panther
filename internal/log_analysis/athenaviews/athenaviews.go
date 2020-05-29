@@ -23,31 +23,35 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/athena"
+	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
+	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/awsathena"
-	"github.com/panther-labs/panther/tools/cfngen/gluecf"
 )
 
-// CreateOrReplaceViews will update Athena with all views in the Panther view database
-func CreateOrReplaceViews(athenaResultsBucket string) (err error) {
-	sess, err := session.NewSession()
+// CreateOrReplaceViews will update Athena with all views
+func CreateOrReplaceViews(glueClient glueiface.GlueAPI, athenaClient athenaiface.AthenaAPI) (err error) {
+	// check what tables are deployed
+	deployedLogTables, err := gluetables.DeployedLogTables(glueClient)
 	if err != nil {
-		return errors.Wrap(err, "CreateOrReplaceViews() failed")
+		return err
 	}
-	s3Path := "s3://" + athenaResultsBucket + "/athena/"
-	sqlStatements, err := GenerateLogViews(registry.AvailableTables())
+
+	if len(deployedLogTables) == 0 { // nothing to do
+		return nil
+	}
+	// loop over available tables, generate view over all Panther tables in glue catalog
+	sqlStatements, err := GenerateLogViews(deployedLogTables)
 	if err != nil {
 		return err
 	}
 	for _, sql := range sqlStatements {
-		_, err := awsathena.RunQuery(athena.New(sess), awsglue.ViewsDatabaseName, sql, &s3Path) // use default bucket
+		_, err := awsathena.RunQuery(athenaClient, awsglue.ViewsDatabaseName, sql, nil) // use default bucket
 		if err != nil {
 			return errors.Wrap(err, "CreateOrReplaceViews() failed")
 		}
@@ -76,7 +80,7 @@ func GenerateLogViews(tables []*awsglue.GlueTableMetadata) (sqlStatements []stri
 
 // generateViewAllLogs creates a view over all log sources in log db using "panther" fields
 func generateViewAllLogs(tables []*awsglue.GlueTableMetadata) (sql string, err error) {
-	return generateViewAllHelper("all_logs", tables, []gluecf.Column{})
+	return generateViewAllHelper("all_logs", tables, []awsglue.Column{})
 }
 
 // generateViewAllRuleMatches creates a view over all log sources in rule match db the using "panther" fields
@@ -88,10 +92,10 @@ func generateViewAllRuleMatches(tables []*awsglue.GlueTableMetadata) (sql string
 			models.RuleData, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
 		ruleTables = append(ruleTables, ruleTable)
 	}
-	return generateViewAllHelper("all_rule_matches", ruleTables, gluecf.RuleMatchColumns)
+	return generateViewAllHelper("all_rule_matches", ruleTables, awsglue.RuleMatchColumns)
 }
 
-func generateViewAllHelper(viewName string, tables []*awsglue.GlueTableMetadata, extraColumns []gluecf.Column) (sql string, err error) {
+func generateViewAllHelper(viewName string, tables []*awsglue.GlueTableMetadata, extraColumns []awsglue.Column) (sql string, err error) {
 	// validate they all have the same partition keys
 	if len(tables) > 1 {
 		// create string of partition for comparison
@@ -135,7 +139,7 @@ type pantherViewColumns struct {
 	columnsByTable map[string]map[string]struct{} // table -> map of column names in that table
 }
 
-func newPantherViewColumns(tables []*awsglue.GlueTableMetadata, extraColumns []gluecf.Column) *pantherViewColumns {
+func newPantherViewColumns(tables []*awsglue.GlueTableMetadata, extraColumns []awsglue.Column) *pantherViewColumns {
 	pvc := &pantherViewColumns{
 		allColumnsSet:  make(map[string]struct{}),
 		columnsByTable: make(map[string]map[string]struct{}),
@@ -154,9 +158,9 @@ func newPantherViewColumns(tables []*awsglue.GlueTableMetadata, extraColumns []g
 
 	return pvc
 }
-func (pvc *pantherViewColumns) inferViewColumns(table *awsglue.GlueTableMetadata, extraColumns []gluecf.Column) {
+func (pvc *pantherViewColumns) inferViewColumns(table *awsglue.GlueTableMetadata, extraColumns []awsglue.Column) {
 	// NOTE: in the future when we tag columns for views, the mapping  would be resolved here
-	columns := gluecf.InferJSONColumns(table.EventStruct(), gluecf.GlueMappings...)
+	columns := awsglue.InferJSONColumns(table.EventStruct(), awsglue.GlueMappings...)
 	columns = append(columns, extraColumns...)
 	var selectColumns []string
 	for _, col := range columns {
