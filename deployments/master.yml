@@ -43,6 +43,16 @@ Parameters:
     Description: Toggle debug logging for all components
     AllowedValues: [true, false]
     Default: false
+  EnableCloudTrail:
+    Type: String
+    Description: Create a Panther CloudTrail in this account configured for log processing. Has no effect if OnboardSelf=false
+    AllowedValues: [true, false]
+    Default: false
+  EnableGuardDuty:
+    Type: String
+    Description: Create a Panther GuardDuty in this account configured for log processing. Has no effect if OnboardSelf=false
+    AllowedValues: [true, false]
+    Default: false
   EnableS3AccessLogs:
     Type: String
     Description: Enable S3 access logging for all Panther buckets
@@ -62,6 +72,11 @@ Parameters:
     Type: CommaDelimitedList
     Description: List of Principal ARNs to allow read access to the ProcessedDataBucket and subscribe access to ProcessedDataTopicArn
     Default: ''
+  OnboardSelf:
+    Type: String
+    Description: Panther automatically onboards itself as a data source
+    AllowedValues: [true, false]
+    Default: true
   PythonLayerVersionArn:
     Type: String
     Description: Custom Python layer for analysis and remediation. Defaults to a pre-built layer with 'policyuniverse' and 'requests' pip libraries
@@ -76,6 +91,9 @@ Mappings:
   Constants:
     Panther:
       Version: 1.4.0
+
+Conditions:
+  OnboardSelf: !Equals [!Ref OnboardSelf, true]
 
 Resources:
   Bootstrap:
@@ -111,9 +129,10 @@ Resources:
         # That's why this uses the Bootstrap output instead of the parameter.
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
-        ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
+        AuditLogsBucket: !GetAtt Bootstrap.Outputs.AuditLogsBucket
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
+        ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
         PythonLayerVersionArn: !Ref PythonLayerVersionArn
         TracingMode: !Ref TracingMode
         UserPoolId: !GetAtt Bootstrap.Outputs.UserPoolId
@@ -249,10 +268,35 @@ Resources:
         - Key: Stack
           Value: panther-log-analysis
 
+  Onboard:
+    Condition: OnboardSelf
+    # Onboard stack adds new source integrations, which requires custom resources (bootstrap-gateway),
+    # source-api (core), and queues from cloud-security and log-analysis to exist.
+    DependsOn: [BootstrapGateway, CloudSecurity, Core, LogAnalysis]
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: onboard.yml
+      Parameters:
+        AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
+        AuditLogsBucket: !GetAtt Bootstrap.Outputs.AuditLogsBucket
+        EnableCloudTrail: !Ref EnableCloudTrail
+        EnableGuardDuty: !Ref EnableGuardDuty
+        EnableS3AccessLogs: !Ref EnableS3AccessLogs
+        VpcId: !GetAtt Bootstrap.Outputs.VpcId
+      Tags:
+        - Key: Application
+          Value: Panther
+        - Key: PantherEdition
+          Value: Community
+        - Key: PantherVersion
+          Value: !FindInMap [Constants, Panther, Version]
+        - Key: Stack
+          Value: panther-onboard
+
 Outputs:
   GraphQlUrl:
     Description: The URL for the AppSync GraphQL endpoint
     Value: !GetAtt Bootstrap.Outputs.GraphQLApiEndpoint
   LoadBalancerUrl:
-    Description: Panther URL - application load balancer or custom domain
-    Value: !GetAtt Bootstrap.Outputs.LoadBalancerUrl
+    Description: Panther URL serving the web app
+    Value: !Sub https://${Bootstrap.Outputs.LoadBalancerUrl}
