@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { AWS_ACCOUNT_ID_REGEX, LOG_TYPES, S3_BUCKET_NAME_REGEX } from 'Source/constants';
-import { Formik } from 'formik';
+import { Form, Formik } from 'formik';
 import * as Yup from 'yup';
 import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
 import { FetchResult } from '@apollo/client';
@@ -76,7 +76,7 @@ const S3LogSourceWizard: React.FC<S3LogSourceWizardProps> = ({
       validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
-      {({ isValid, dirty, handleSubmit, status, setStatus }) => {
+      {({ isValid, dirty, status, setStatus }) => {
         // We want to reset the error message whenever the user goes back to a previous screen.
         // That's why we handle it through status in order to manipulate it internally
         React.useEffect(() => {
@@ -84,7 +84,7 @@ const S3LogSourceWizard: React.FC<S3LogSourceWizardProps> = ({
         }, [externalErrorMessage]);
 
         return (
-          <form onSubmit={handleSubmit}>
+          <Form>
             <Wizard>
               <Wizard.Step title="Configure Logs Source" icon="settings">
                 <WizardPanelWrapper>
@@ -118,7 +118,7 @@ const S3LogSourceWizard: React.FC<S3LogSourceWizardProps> = ({
                 </WizardPanelWrapper>
               </Wizard.Step>
             </Wizard>
-          </form>
+          </Form>
         );
       }}
     </Formik>

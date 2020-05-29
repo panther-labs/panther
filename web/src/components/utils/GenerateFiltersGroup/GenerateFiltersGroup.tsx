@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Formik, Field } from 'formik';
+import { Formik, Field, Form } from 'formik';
 import { Button, SimpleGrid } from 'pouncejs';
 import mapValues from 'lodash-es/mapValues';
 import map from 'lodash-es/map';
@@ -92,8 +92,8 @@ function GenerateFiltersGroup<T extends { [key: string]: any }>({
   // "store" that we observe on the index
   return (
     <Formik<T> initialValues={initialValuesWithDefaults} onSubmit={onSubmit}>
-      {({ handleSubmit, setValues, submitForm, resetForm }) => (
-        <form onSubmit={handleSubmit}>
+      {({ setValues, submitForm, resetForm }) => (
+        <Form>
           <SimpleGrid columns={4} spacing={6} mb={8}>
             {map(filters, (filterData, filterName) => (
               <Field
@@ -131,7 +131,7 @@ function GenerateFiltersGroup<T extends { [key: string]: any }>({
           >
             Clear all
           </Button>
-        </form>
+        </Form>
       )}
     </Formik>
   );
