@@ -22,7 +22,8 @@ import map from 'lodash-es/map';
 import sum from 'lodash-es/sum';
 import { OrganizationReportBySeverity } from 'Generated/schema';
 import { theme, Flex } from 'pouncejs';
-import { Bars, ChartSummary } from 'Components/Charts';
+import BarChart from 'Components/charts/BarChart';
+import ChartSummary from 'Components/charts/ChartSummary';
 
 const severityToColorMapping: {
   [key in keyof OrganizationReportBySeverity]: keyof typeof theme['colors'];
@@ -66,7 +67,7 @@ const PoliciesByStatusChart: React.FC<PoliciesByStatusChartData> = ({ policies }
   return (
     <Flex height="100%">
       <ChartSummary total={totalFailingPolicies} title="Total Failing Policies" color="red300" />
-      <Bars data={failingPoliciesChartData} />
+      <BarChart data={failingPoliciesChartData} />
     </Flex>
   );
 };

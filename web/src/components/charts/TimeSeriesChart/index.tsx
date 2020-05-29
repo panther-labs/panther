@@ -16,31 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { ScannedResources } from 'Generated/schema';
-import { Flex } from 'pouncejs';
-import BarChart from 'Components/charts/BarChart';
-import ChartSummary from 'Components/charts/ChartSummary';
-
-interface ResourcesByPlatformProps {
-  resources: ScannedResources;
-}
-
-const ResourcesByPlatform: React.FC<ResourcesByPlatformProps> = ({ resources }) => {
-  const allResourcesChartData = [
-    {
-      value: resources.byType.length,
-      label: 'AWS',
-      color: 'grey300' as const,
-    },
-  ];
-
-  return (
-    <Flex height="100%">
-      <ChartSummary total={resources.byType.length} title="Resource Types" color="grey200" />
-      <BarChart data={allResourcesChartData} horizontal />
-    </Flex>
-  );
-};
-
-export default React.memo(ResourcesByPlatform);
+export { default } from './TimeSeriesChart';

@@ -26,7 +26,7 @@ interface TimeSeriesLinesProps {
   data: any;
 }
 
-const TimeSeriesLines: React.FC<TimeSeriesLinesProps> = ({ data }) => {
+const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
   const container = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
     /*
@@ -104,4 +104,4 @@ const TimeSeriesLines: React.FC<TimeSeriesLinesProps> = ({ data }) => {
   return <Box ref={container} width="100%" height="100%" />;
 };
 
-export default React.memo(TimeSeriesLines);
+export default React.memo(TimeSeriesChart);

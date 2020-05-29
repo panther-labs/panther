@@ -21,11 +21,11 @@ import echarts from 'echarts';
 import { Box } from 'pouncejs';
 import { LineColors } from '../constants';
 
-interface TimeSeriesZoomableLinesProps {
+interface ZoomableTimeSeriesChartProps {
   data: any;
 }
 
-const TimeSeriesZoomableLines: React.FC<TimeSeriesZoomableLinesProps> = ({ data }) => {
+const ZoomableTimeSeriesChart: React.FC<ZoomableTimeSeriesChartProps> = ({ data }) => {
   const container = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -125,4 +125,4 @@ const TimeSeriesZoomableLines: React.FC<TimeSeriesZoomableLinesProps> = ({ data 
   return <Box ref={container} width="100%" height="100%" />;
 };
 
-export default React.memo(TimeSeriesZoomableLines);
+export default React.memo(ZoomableTimeSeriesChart);

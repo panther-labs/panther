@@ -16,7 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default as TimeSeriesLines } from './TimeSeriesLines';
-export { default as TimeSeriesZoomableLines } from './TimeSeriesZoomableLines';
-export { default as Bars } from './Bars';
-export * from './demoData';
+export { default } from './BarChart';

@@ -32,7 +32,7 @@ interface BarsProps {
   hideLegend?: boolean;
 }
 
-const Bars: React.FC<BarsProps> = ({ data, horizontal, hideLegend }) => {
+const BarChart: React.FC<BarsProps> = ({ data, horizontal, hideLegend }) => {
   const container = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -121,4 +121,4 @@ const Bars: React.FC<BarsProps> = ({ data, horizontal, hideLegend }) => {
   return <Box ref={container} width="100%" height="100%" />;
 };
 
-export default React.memo(Bars);
+export default React.memo(BarChart);

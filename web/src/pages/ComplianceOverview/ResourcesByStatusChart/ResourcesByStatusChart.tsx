@@ -17,10 +17,11 @@
  */
 
 import React from 'react';
+import { Flex } from 'pouncejs';
 import { ScannedResources } from 'Generated/schema';
 import { countResourcesByStatus } from 'Helpers/utils';
-import { Bars, ChartSummary } from 'Components/Charts';
-import { Flex } from 'pouncejs';
+import BarChart from 'Components/charts/BarChart';
+import ChartSummary from 'Components/charts/ChartSummary';
 
 interface ResourcesByStatusChartProps {
   resources: ScannedResources;
@@ -45,7 +46,7 @@ const ResourcesByStatusChart: React.FC<ResourcesByStatusChartProps> = ({ resourc
   return (
     <Flex height="100%">
       <ChartSummary total={totalResources} title="Total Resources" color="green200" />
-      <Bars data={failingResourcesChartData} horizontal />
+      <BarChart data={failingResourcesChartData} horizontal />
     </Flex>
   );
 };
