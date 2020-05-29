@@ -220,7 +220,7 @@ Resources:
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AppDomainURL: !GetAtt Bootstrap.Outputs.LoadBalancerUrl
-        AnalysisApiEndpoint: !GeetAtt BootstrapGateway.Outputs.AnalysisApiEndpoint
+        AnalysisApiEndpoint: !GetAtt BootstrapGateway.Outputs.AnalysisApiEndpoint
         AnalysisApiId: !GetAtt BootstrapGateway.Outputs.AnalysisApiId
         AnalysisVersionsBucket: !GetAtt Bootstrap.Outputs.AnalysisVersionsBucket
         AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
