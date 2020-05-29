@@ -18,12 +18,12 @@
 
 import React from 'react';
 import echarts from 'echarts';
-import { Box, theme as Theme } from 'pouncejs';
+import { Box, theme } from 'pouncejs';
 
 interface Data {
   value: number;
   label: string;
-  color?: keyof typeof Theme['colors'];
+  color?: keyof typeof theme['colors'];
 }
 
 interface BarsProps {
@@ -61,10 +61,10 @@ const Bars: React.FC<BarsProps> = ({ data, horizontal, hideLegend }) => {
           label: {
             show: true,
             position: horizontal ? 'right' : 'top',
-            color: 'black',
+            color: theme.colors.black,
           },
           itemStyle: {
-            color: Theme.colors[e.color],
+            color: theme.colors[e.color],
             barBorderRadius: 16,
           },
           barMinHeight: 5,
@@ -74,12 +74,12 @@ const Bars: React.FC<BarsProps> = ({ data, horizontal, hideLegend }) => {
 
       const valueAxis = {
         show: false,
-        type: 'value',
+        type: 'value' as const,
       };
 
       const categoryAxis = {
         show: false,
-        type: 'category',
+        type: 'category' as const,
         boundaryGap: true,
         data: data.map((e, i) => i),
       };
@@ -101,8 +101,8 @@ const Bars: React.FC<BarsProps> = ({ data, horizontal, hideLegend }) => {
         },
         legend: {
           show: !hideLegend,
-          type: 'scroll',
-          orient: 'vertical',
+          type: 'scroll' as const,
+          orient: 'vertical' as const,
           left: 'left',
           icon: 'circle',
           data: legendData,
@@ -114,7 +114,6 @@ const Bars: React.FC<BarsProps> = ({ data, horizontal, hideLegend }) => {
 
       // load the bar chart
       const barChart = echarts.init(container.current);
-      // @ts-ignore
       barChart.setOption(options);
     })();
   }, [data]);
