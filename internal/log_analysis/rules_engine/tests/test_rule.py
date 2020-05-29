@@ -19,7 +19,7 @@ from unittest import TestCase
 from ..src.rule import MAX_DEDUP_STRING_SIZE, MAX_TITLE_SIZE, Rule, RuleResult, TRUNCATED_STRING_SUFFIX
 
 
-class TestRule(TestCase):
+class TestRule(TestCase):  # pylint: disable=too-many-public-methods
 
     def test_create_rule_missing_id(self) -> None:
         exception = False
@@ -53,6 +53,28 @@ class TestRule(TestCase):
         rule = Rule({'id': 'test_rule_default_dedup_time', 'body': rule_body, 'versionId': 'versionId'})
 
         self.assertEqual(60, rule.rule_dedup_period_mins)
+
+    def test_rule_tags(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True'
+        rule = Rule({'id': 'test_rule_default_dedup_time', 'body': rule_body, 'versionId': 'versionId', 'tags': ['tag2', 'tag1']})
+
+        self.assertEqual(['tag1', 'tag2'], rule.rule_tags)
+
+    def test_rule_reports(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True'
+        rule = Rule(
+            {
+                'id': 'test_rule_default_dedup_time',
+                'body': rule_body,
+                'versionId': 'versionId',
+                'reports': {
+                    'key1': ['value2', 'value1'],
+                    'key2': ['value1']
+                }
+            }
+        )
+
+        self.assertEqual({'key1': ['value1', 'value2'], 'key2': ['value1']}, rule.rule_reports)
 
     def test_create_rule_missing_method(self) -> None:
         exception = False

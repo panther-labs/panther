@@ -43,7 +43,12 @@ const (
 )
 
 type testEvent struct {
-	Col1 int
+	Col1 int `description:"test field"`
+}
+
+type testEventModified struct {
+	Col1 int `description:"test field"`
+	Col2 int `description:"test field"`
 }
 
 var (
@@ -51,32 +56,6 @@ var (
 	awsSession      *session.Session
 	glueClient      *glue.Glue
 	s3Client        *s3.S3
-
-	columns = []*glue.Column{
-		{
-			Name: aws.String("Col1"),
-			Type: aws.String("int"),
-		},
-	}
-
-	partitionKeys = []*glue.Column{
-		{
-			Name: aws.String("year"),
-			Type: aws.String("int"),
-		},
-		{
-			Name: aws.String("month"),
-			Type: aws.String("int"),
-		},
-		{
-			Name: aws.String("day"),
-			Type: aws.String("int"),
-		},
-		{
-			Name: aws.String("hour"),
-			Type: aws.String("int"),
-		},
-	}
 )
 
 func TestMain(m *testing.M) {
@@ -103,34 +82,56 @@ func TestIntegrationGlueMetadataPartitions(t *testing.T) {
 		removeTables(t)
 	}()
 
-	gm := NewGlueTableMetadata(models.LogData, testTable, "test table", GlueTableHourly, &testEvent{})
+	// this is the table created in setupTables
+	originalTable := NewGlueTableMetadata(models.RuleData, testTable, "test table", GlueTableHourly, &testEvent{})
 	// overwriting default database
-	gm.databaseName = testDb
+	originalTable.databaseName = testDb
 
-	getPartitionOutput, err := gm.GetPartition(glueClient, refTime)
+	// get the meta data, note we update the schema from the one used in setupTables()
+	table := NewGlueTableMetadata(models.RuleData, testTable, "test table", GlueTableHourly, &testEventModified{})
+	// overwriting default database
+	table.databaseName = testDb
+
+	// confirm the signatures are different
+	originalTableSig, err := originalTable.Signature()
+	require.NoError(t, err)
+	tableSig, err := table.Signature()
+	require.NoError(t, err)
+	assert.NotEqual(t, originalTableSig, tableSig)
+
+	// this has been already created in setupTables(), this tests updating table
+	err = table.CreateOrUpdateTable(glueClient, testBucket)
+	require.NoError(t, err)
+
+	// confirm that the new schema has been applied
+	getTableOutput, err := GetTable(glueClient, table.databaseName, table.tableName)
+	require.NoError(t, err)
+	require.Equal(t, "col2", *getTableOutput.Table.StorageDescriptor.Columns[1].Name) // what we added
+
+	getPartitionOutput, err := table.GetPartition(glueClient, refTime)
 	require.NoError(t, err)
 	assert.Nil(t, getPartitionOutput) // should not be there yet
 
-	expectedPath := "s3://" + testBucket + "/logs/" + testTable + "/year=2020/month=01/day=03/hour=01/"
-	created, err := gm.CreateJSONPartition(glueClient, refTime)
+	expectedPath := "s3://" + testBucket + "/rules/" + testTable + "/year=2020/month=01/day=03/hour=01/"
+	created, err := table.CreateJSONPartition(glueClient, refTime)
 	require.NoError(t, err)
 	assert.True(t, created)
 	partitionLocation := getPartitionLocation(t, []string{"2020", "01", "03", "01"})
 	require.Equal(t, expectedPath, *partitionLocation)
 
-	getPartitionOutput, err = gm.GetPartition(glueClient, refTime)
+	getPartitionOutput, err = table.GetPartition(glueClient, refTime)
 	require.NoError(t, err)
 	assert.NotNil(t, getPartitionOutput) // should be there now
 
 	// sync it (which does an update of schema)
 	var startDate time.Time // default unset
-	err = gm.SyncPartitions(glueClient, s3Client, startDate)
+	err = table.SyncPartitions(glueClient, s3Client, startDate)
 	require.NoError(t, err)
 
 	partitionLocation = getPartitionLocation(t, []string{"2020", "01", "03", "01"})
 	require.Equal(t, expectedPath, *partitionLocation)
 
-	_, err = gm.deletePartition(glueClient, refTime)
+	_, err = table.deletePartition(glueClient, refTime)
 	require.NoError(t, err)
 	partitionLocation = getPartitionLocation(t, []string{"2020", "01", "03", "01"})
 	require.Nil(t, partitionLocation)
@@ -142,63 +143,25 @@ func setupTables(t *testing.T) {
 }
 
 func addTables(t *testing.T) {
-	var err error
-
-	dbInput := &glue.CreateDatabaseInput{
-		DatabaseInput: &glue.DatabaseInput{
-			Name: aws.String(testDb),
-		},
-	}
-	_, err = glueClient.CreateDatabase(dbInput)
+	_, err := CreateDatabase(glueClient, testDb, "integration test database")
 	require.NoError(t, err)
 
-	tableInput := &glue.CreateTableInput{
-		DatabaseName: aws.String(testDb),
-		TableInput: &glue.TableInput{
-			Name:          aws.String(testTable),
-			PartitionKeys: partitionKeys,
-			StorageDescriptor: &glue.StorageDescriptor{ // configure as JSON
-				Columns:      columns,
-				Location:     aws.String("s3://" + testBucket + "/logs/" + testTable),
-				InputFormat:  aws.String("org.apache.hadoop.mapred.TextInputFormat"),
-				OutputFormat: aws.String("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"),
-				SerdeInfo: &glue.SerDeInfo{
-					SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
-					Parameters: map[string]*string{
-						"serialization.format": aws.String("1"),
-						"case.insensitive":     aws.String("TRUE"), // treat as lower case
-					},
-				},
-			},
-			TableType: aws.String("EXTERNAL_TABLE"),
-		},
-	}
-	_, err = glueClient.CreateTable(tableInput)
+	gm := NewGlueTableMetadata(models.RuleData, testTable, "test table", GlueTableHourly, &testEvent{})
+	// overwriting default database
+	gm.databaseName = testDb
+	err = gm.CreateOrUpdateTable(glueClient, testBucket)
 	require.NoError(t, err)
 }
 
 func removeTables(t *testing.T) {
 	// best effort, no error checks
-
-	tableInput := &glue.DeleteTableInput{
-		DatabaseName: aws.String(testDb),
-		Name:         aws.String(testTable),
-	}
-	glueClient.DeleteTable(tableInput) // nolint (errcheck)
-
-	dbInput := &glue.DeleteDatabaseInput{
-		Name: aws.String(testDb),
-	}
-	glueClient.DeleteDatabase(dbInput) // nolint (errcheck)
+	DeleteTable(glueClient, testDb, testTable) // nolint (errcheck)
+	DeleteDatabase(glueClient, testDb)         // nolint (errcheck)
 }
 
 // Fetches the location of a partition. Return nil it the partition doesn't exist
 func getPartitionLocation(t *testing.T, partitionValues []string) *string {
-	response, err := glueClient.GetPartition(&glue.GetPartitionInput{
-		DatabaseName:    aws.String(testDb),
-		PartitionValues: aws.StringSlice(partitionValues),
-		TableName:       aws.String(testTable),
-	})
+	response, err := GetPartition(glueClient, testDb, testTable, aws.StringSlice(partitionValues))
 	if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == glue.ErrCodeEntityNotFoundException {
 		return nil
 	}

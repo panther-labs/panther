@@ -64,7 +64,7 @@ const DonutChart: React.FC<DonutChartProps> = ({ data, renderLabel }) => {
           bottom: 0,
           data: eChartsData.map(d => d.name),
           textStyle: {
-            fontSize: theme.fontSizes[2] as number,
+            fontSize: 14, // stupid echarts doesn't accept `rem` so I have to hardcode it
             color: theme.colors.grey400,
             fontFamily: theme.fonts.primary,
           },
@@ -90,7 +90,7 @@ const DonutChart: React.FC<DonutChartProps> = ({ data, renderLabel }) => {
                 formatter: ({ dataIndex }) => renderLabel(data, dataIndex),
                 rich: {
                   small: {
-                    fontSize: theme.fontSizes[2],
+                    fontSize: 14,
                     fontWeight: 'bold',
                   },
                 },

@@ -24,6 +24,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/athena"
+	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
+	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -45,12 +49,15 @@ var (
 	dynamoClient     *ddb.DDB
 	sqsClient        sqsiface.SQSAPI
 	templateS3Client s3iface.S3API
+	glueClient       glueiface.GlueAPI
+	athenaClient     athenaiface.AthenaAPI
 )
 
 type envConfig struct {
 	SnapshotPollersQueueURL string `required:"true" split_words:"true"`
 	LogProcessorQueueURL    string `required:"true" split_words:"true"`
 	LogProcessorQueueArn    string `required:"true" split_words:"true"`
+	ProcessedDataBucket     string `required:"true" split_words:"true"`
 	TableName               string `required:"true" split_words:"true"`
 }
 
@@ -65,6 +72,8 @@ func Setup() {
 	templateS3Client = s3.New(awsSession, &aws.Config{
 		Region: aws.String(templateBucketRegion),
 	})
+	glueClient = glue.New(awsSession)
+	athenaClient = athena.New(awsSession)
 }
 
 // API provides receiver methods for each route handler.

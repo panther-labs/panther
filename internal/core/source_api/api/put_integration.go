@@ -89,25 +89,25 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 		}
 	}()
 
-	// Generate the new integration
-	newIntegration := generateNewIntegration(input)
-
-	item := integrationToItem(newIntegration)
-	if err != nil {
-		return nil, putIntegrationInternalError
-	}
-
 	switch aws.StringValue(input.IntegrationType) {
 	case models.IntegrationTypeAWS3:
 		permissionAdded, err = AllowExternalSnsTopicSubscription(*input.AWSAccountID)
 		if err != nil {
-			err = errors.Wrap(err, "Failed to add permissions to log processor queue")
+			zap.L().Error("Failed to add permissions to log processor queue", zap.Error(errors.WithStack(err)))
+			return nil, putIntegrationInternalError
+		}
+		err = addGlueTables(input.LogTypes)
+		if err != nil {
+			zap.L().Error("Failed to add glue tables to glue catalog", zap.Error(errors.WithStack(err)))
 			return nil, putIntegrationInternalError
 		}
 	}
 
+	// Generate the new integration
+	newIntegration := generateNewIntegration(input)
+
 	// Write to DynamoDB
-	if err = dynamoClient.PutItem(item); err != nil {
+	if err = dynamoClient.PutItem(integrationToItem(newIntegration)); err != nil {
 		err = errors.Wrap(err, "Failed to store source integration in DDB")
 		return nil, putIntegrationInternalError
 	}

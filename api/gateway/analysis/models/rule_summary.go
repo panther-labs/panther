@@ -56,6 +56,10 @@ type RuleSummary struct {
 	// Required: true
 	LogTypes TypeSet `json:"logTypes"`
 
+	// reports
+	// Required: true
+	Reports Reports `json:"reports"`
+
 	// severity
 	// Required: true
 	Severity Severity `json:"severity"`
@@ -86,6 +90,10 @@ func (m *RuleSummary) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateLogTypes(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateReports(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -160,6 +168,18 @@ func (m *RuleSummary) validateLogTypes(formats strfmt.Registry) error {
 	if err := m.LogTypes.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("logTypes")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *RuleSummary) validateReports(formats strfmt.Registry) error {
+
+	if err := m.Reports.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("reports")
 		}
 		return err
 	}

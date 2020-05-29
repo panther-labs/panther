@@ -18,15 +18,6 @@ AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: Bootstrap resources that require the source S3 bucket to exist first
 
-Metadata:
-  AWS::ServerlessRepo::Application:
-    Name: panther-community-bootstrap-gateway
-    Author: Panther Labs
-    Description: Nested SAR app for Panther Community - Detect threats with log data and improve cloud security posture
-    HomePageUrl: https://runpanther.io
-    SemanticVersion: 1.2.0
-    SourceCodeUrl: https://github.com/panther-labs/panther
-
 # This stack contains resources that need to exist before any other main stack,
 # but require S3 buckets to exist first. This is deployed right after bootstrap.yml
 #
@@ -34,8 +25,17 @@ Metadata:
 #     making the template too large to deploy without an S3 bucket
 # - Python layer: the layer source has to be uploaded to S3 before the cfn resource can be created
 # - Custom resource: the Lambda function which handles custom CFN resources
+#      - Alarms for SNS topics in the bootstrap stack
 
 Parameters:
+  # Passed from one of the bootstrap stacks
+  AthenaResultsBucket:
+    Type: String
+    Description: Bucket created to hold Athena results
+  ProcessedDataBucket:
+    Type: String
+    Description: S3 bucket which stores processed logs
+
   # From the config file
   CloudWatchLogRetentionDays:
     Type: Number
@@ -62,6 +62,12 @@ Parameters:
   UserPoolId:
     Type: String
     Description: Cognito user pool ID
+
+Mappings:
+  Functions:
+    CustomResource:
+      Memory: 2048 # use a larger size to run faster, since this is used rarely the small cost difference is not a concern
+      Timeout: 900 # should as long as possible
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
@@ -100,9 +106,9 @@ Resources:
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 256
+      MemorySize: !FindInMap [Functions, CustomResource, Memory]
       Runtime: go1.x
-      Timeout: 900 # Maximum allowed: 15 minutes
+      Timeout: !FindInMap [Functions, CustomResource, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
 
       # This function has more permissions than usual because it creates and destroys infrastructure.
@@ -143,6 +149,45 @@ Resources:
                 - logs:DeleteMetricFilter
                 - logs:PutMetricFilter
               Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/panther-*
+            - Effect: Allow
+              Action: athena:updateWorkGroup
+              # 1 API call to configure Athena
+              Resource: '*'
+            - Effect: Allow
+              Action:
+                - glue:CreateDatabase
+                - glue:DeleteDatabase
+                - glue:CreateTable
+                - glue:GetTable
+                - glue:UpdateTable
+                - glue:GetPartition
+                - glue:UpdatePartition
+              # used to keep table schemas updated
+              Resource:
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
+                # the resource below is odd, I had to add to get glue:DeleteDatabase to work, I think it may be a bug in the api
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:userDefinedFunction/panther*
+            - Effect: Allow
+              Action: s3:List*
+              # used during glue sync to test for presence of data
+              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}*
+            - Effect: Allow
+              Action:
+                - athena:StartQueryExecution
+                - athena:StopQueryExecution
+                - athena:GetQuery*
+              # used to create or replace views
+              Resource: '*'
+            - Effect: Allow
+              Action:
+                - s3:GetBucketLocation
+                - s3:List*
+                - s3:GetObject
+                - s3:PutObject
+              # needed by Athena to write results
+              Resource: !Sub arn:aws:s3:::${AthenaResultsBucket}*
 
   CustomResourceLogGroup:
     Type: AWS::Logs::LogGroup
@@ -155,6 +200,35 @@ Resources:
     Properties:
       LogGroupName: !Ref CustomResourceLogGroup
       ServiceToken: !GetAtt CustomResourceFunction.Arn
+
+  CustomResourceAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, CustomResource, Memory]
+      FunctionName: !Ref CustomResourceFunction
+      FunctionTimeoutSec: !FindInMap [Functions, CustomResource, Timeout]
+      LoggedWarnThreshold: 1
+      ThrottleThreshold: 0
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+
+  # Alarms for SNS topics in the bootstrap stack
+  ProcessedDataTopicAlarms:
+    Type: Custom::SNSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+      TopicName: panther-processed-data-notifications
+
+  AlarmTopicAlarms:
+    # This is actually configuring the alarm topic to monitor itself.
+    # It obviously might not be able to notify us about its own failures, but we still want to try.
+    # There could be transient failures that will eventually get through.
+    Type: Custom::SNSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+      TopicName: panther-cw-alarms
 
   # Enable only software MFA for the Cognito user pool - enabling MFA via native CloudFormation
   # forces SMS as a fallback option, but the SDK does not.

@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Field, Formik } from 'formik';
+import { Field, Form, Formik } from 'formik';
 import * as Yup from 'yup';
 import { Alert, Box, useSnackbar } from 'pouncejs';
 import SubmitButton from 'Components/buttons/SubmitButton';
@@ -74,8 +74,8 @@ const ForgotPasswordConfirmForm: React.FC<ForgotPasswordConfirmFormProps> = ({ e
         })
       }
     >
-      {({ isValid, handleSubmit, isSubmitting, status, dirty }) => (
-        <Box as="form" width={1} onSubmit={handleSubmit}>
+      {({ status }) => (
+        <Form>
           {status && (
             <Box mb={6}>
               <Alert variant="error" title={status.title} description={status.message} />
@@ -102,14 +102,8 @@ const ForgotPasswordConfirmForm: React.FC<ForgotPasswordConfirmFormProps> = ({ e
             autoComplete="new-password"
             mb={6}
           />
-          <SubmitButton
-            width={1}
-            submitting={isSubmitting}
-            disabled={isSubmitting || !isValid || !dirty}
-          >
-            Update password
-          </SubmitButton>
-        </Box>
+          <SubmitButton width={1}>Update password</SubmitButton>
+        </Form>
       )}
     </Formik>
   );
