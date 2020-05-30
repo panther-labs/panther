@@ -231,7 +231,7 @@ Resources:
         FirstUserGivenName: !Ref FirstUserGivenName
         FirstUserFamilyName: !Ref FirstUserFamilyName
         FirstUserEmail: !Ref FirstUserEmail
-        InitialAnalysisPackUrls: !Ref InitialAnalysisPackUrls
+        InitialAnalysisPackUrls: !Join [',', !Ref InitialAnalysisPackUrls]
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         OutputsKeyId: !GetAtt Bootstrap.Outputs.OutputsEncryptionKeyId
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
