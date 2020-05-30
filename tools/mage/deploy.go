@@ -164,7 +164,7 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 	build.Lambda() // Lambda compilation required for most stacks, including bootstrap-gateway
 
 	// Deploy bootstrap stacks
-	outputs, err := deployBoostrapStacks(awsSession, settings)
+	outputs, err := deployBootstrapStacks(awsSession, settings)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -173,7 +173,7 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 }
 
 // Deploy bootstrap and bootstrap-gateway and merge their outputs
-func deployBoostrapStacks(
+func deployBootstrapStacks(
 	awsSession *session.Session,
 	settings *config.PantherConfig,
 ) (map[string]string, error) {

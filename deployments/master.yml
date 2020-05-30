@@ -18,7 +18,16 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Master template for deploying Panther Community
 
 Parameters:
-  # FirstUserEmail is the only required parameter
+  # FirstUser settings are the only required parameters
+  FirstUserGivenName:
+    Type: String
+    Description: First (given) name of the initial Panther user
+  FirstUserFamilyName:
+    Type: String
+    Description: Family (last) name of the initial Panther user
+  FirstUserEmail:
+    Type: String
+    Description: Email of the initial Panther user
 
   AccessLogsBucket:
     Type: String
@@ -60,17 +69,6 @@ Parameters:
     Description: Enable S3 access logging for all Panther buckets
     AllowedValues: [true, false]
     Default: true
-  FirstUserGivenName:
-    Type: String
-    Description: First (given) name of the initial Panther user
-    Default: ''
-  FirstUserFamilyName:
-    Type: String
-    Description: Family (last) name of the initial Panther user
-    Default: ''
-  FirstUserEmail:
-    Type: String
-    Description: Email of the initial Panther user
   InitialAnalysisPackUrls:
     Type: CommaDelimitedList
     Description: Initial Python analysis packs
