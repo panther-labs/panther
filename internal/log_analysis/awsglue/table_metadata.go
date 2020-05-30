@@ -179,7 +179,7 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput 
 			InputFormat:  aws.String("org.apache.hadoop.mapred.TextInputFormat"),
 			OutputFormat: aws.String("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"),
 			SerdeInfo: &glue.SerDeInfo{
-				SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
+				SerializationLibrary: aws.String("org.apache.hive.hcatalog.data.JsonSerDe"),
 				Parameters:           descriptorParameters,
 			},
 		},
