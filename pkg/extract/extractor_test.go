@@ -21,7 +21,6 @@ package extract
 import (
 	"testing"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
 )
@@ -59,7 +58,7 @@ func (e *TestExtractor) Extract(key, value gjson.Result) {
 }
 
 func TestExtract(t *testing.T) {
-	json := (jsoniter.RawMessage)(`
+	json := `
 {
 "key1": "value1",
 "keyToIgnore": "valueToIgnore"",
@@ -70,10 +69,10 @@ func TestExtract(t *testing.T) {
 ],
 "listToIgnore": ["a", "b", "c"]
 }
-`)
+`
 
 	testExtractor := &TestExtractor{}
-	RawMessage(&json, testExtractor)
+	Extract(json, testExtractor)
 
 	expected := &TestExtractor{
 		Key1:  "value1",

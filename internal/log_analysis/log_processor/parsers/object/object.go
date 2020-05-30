@@ -20,6 +20,10 @@ package object
 
 import (
 	"bytes"
+
+	"github.com/tidwall/gjson"
+
+	"github.com/panther-labs/panther/pkg/extract"
 )
 
 // Object is used to represent an arbitrary JSON object
@@ -56,4 +60,12 @@ func (obj *Object) UnmarshalJSON(objBytes []byte) (err error) {
 	}
 	*obj = objBytes
 	return nil
+}
+
+func (obj *Object) Extract(extractors ...extract.Extractor) {
+	if obj == nil {
+		return
+	}
+	result := gjson.ParseBytes(*obj)
+	extract.Parsed(result, extractors...)
 }

@@ -24,7 +24,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/object"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
-	"github.com/panther-labs/panther/pkg/extract"
 )
 
 var GuardDutyDesc = `Amazon GuardDuty is a threat detection service that continuously monitors for malicious activity 
@@ -103,9 +102,9 @@ func (event *GuardDuty) updatePantherFields(p *GuardDutyParser) {
 
 	// polymorphic (unparsed) fields
 	awsExtractor := NewAWSExtractor(&(event.AWSPantherLog))
-	extract.Object(event.Resource, awsExtractor)
+	event.Resource.Extract(awsExtractor)
 	if event.Service != nil {
-		extract.Object(event.Service.AdditionalInfo, awsExtractor)
-		extract.Object(event.Service.Action, awsExtractor)
+		event.Service.AdditionalInfo.Extract(awsExtractor)
+		event.Service.Action.Extract(awsExtractor)
 	}
 }

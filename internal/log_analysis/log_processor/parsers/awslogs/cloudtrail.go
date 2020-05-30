@@ -24,7 +24,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/object"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
-	"github.com/panther-labs/panther/pkg/extract"
 )
 
 var CloudTrailDesc = `AWSCloudTrail represents the content of a CloudTrail S3 object.
@@ -175,14 +174,14 @@ func (event *CloudTrail) updatePantherFields(p *CloudTrailParser) {
 
 	// polymorphic (unparsed) fields
 	awsExtractor := NewAWSExtractor(&(event.AWSPantherLog))
-	extract.Object(event.AdditionalEventData, awsExtractor)
-	extract.Object(event.RequestParameters, awsExtractor)
-	extract.Object(event.ResponseElements, awsExtractor)
-	extract.Object(event.ServiceEventDetails, awsExtractor)
+	event.AdditionalEventData.Extract(awsExtractor)
+	event.RequestParameters.Extract(awsExtractor)
+	event.ResponseElements.Extract(awsExtractor)
+	event.ServiceEventDetails.Extract(awsExtractor)
 	if event.UserIdentity != nil &&
 		event.UserIdentity.SessionContext != nil &&
 		event.UserIdentity.SessionContext.WebIDFederationData != nil {
 
-		extract.Object(event.UserIdentity.SessionContext.WebIDFederationData.Attributes, awsExtractor)
+		event.UserIdentity.SessionContext.WebIDFederationData.Attributes.Extract(awsExtractor)
 	}
 }

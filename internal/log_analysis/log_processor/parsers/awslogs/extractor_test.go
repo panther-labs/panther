@@ -24,7 +24,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/object"
-	"github.com/panther-labs/panther/pkg/extract"
 )
 
 func TestAWSExtractor(t *testing.T) {
@@ -139,7 +138,7 @@ func TestAWSExtractor(t *testing.T) {
 	expectedEvent.AppendAnyDomainNames("ec2-54-152-215-140.compute-1.amazonaws.com", "GeneratedFindingDomainName",
 		"ip-172-31-81-237.ec2.internal")
 
-	extract.Object(&json, NewAWSExtractor(&event))
+	json.Extract(NewAWSExtractor(&event))
 
 	require.Equal(t, expectedEvent, event)
 }
