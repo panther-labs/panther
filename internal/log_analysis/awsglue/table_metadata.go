@@ -22,8 +22,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -158,15 +156,8 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput 
 		}
 	}
 
-	// Need to be case sensitive to deal with columns that have same name but different casing
 	descriptorParameters := map[string]*string{
 		"serialization.format": aws.String("1"),
-		"case.insensitive":     aws.String("false"),
-	}
-
-	// Add mapping for column names. This is required when columns are case sensitive
-	for _, column := range glueColumns {
-		descriptorParameters[fmt.Sprintf("mapping.%s", strings.ToLower(*column.Name))] = column.Name
 	}
 
 	return &glue.TableInput{
@@ -179,7 +170,7 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput 
 			InputFormat:  aws.String("org.apache.hadoop.mapred.TextInputFormat"),
 			OutputFormat: aws.String("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"),
 			SerdeInfo: &glue.SerDeInfo{
-				SerializationLibrary: aws.String("org.apache.hive.hcatalog.data.JsonSerDe"),
+				SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
 				Parameters:           descriptorParameters,
 			},
 		},

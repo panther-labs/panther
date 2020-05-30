@@ -22,6 +22,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/object"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/pkg/extract"
 )
@@ -32,35 +33,35 @@ See also GuardDuty Finding Format : https://docs.aws.amazon.com/guardduty/latest
 
 // nolint:lll
 type GuardDuty struct {
-	SchemaVersion *string              `json:"schemaVersion" validate:"required" description:"The schema format version of this record."`
-	AccountID     *string              `json:"accountId" validate:"len=12,numeric" description:"The ID of the AWS account in which the activity took place that prompted GuardDuty to generate this finding."`
-	Region        *string              `json:"region" validate:"required" description:"The AWS region in which the finding was generated."`
-	Partition     *string              `json:"partition" validate:"required" description:"The AWS partition in which the finding was generated."`
-	ID            *string              `json:"id,omitempty" validate:"required" description:"A unique identifier for the finding."`
-	Arn           *string              `json:"arn" validate:"required" description:"A unique identifier formatted as an ARN for the finding."`
-	Type          *string              `json:"type" validate:"required" description:"A concise yet readable description of the potential security issue."`
-	Resource      *jsoniter.RawMessage `json:"resource" validate:"required" description:"The AWS resource against which the activity took place that prompted GuardDuty to generate this finding."`
-	Severity      *float32             `json:"severity" validate:"required,min=0" description:"The value of the severity can fall anywhere within the 0.1 to 8.9 range."`
-	CreatedAt     *timestamp.RFC3339   `json:"createdAt" validate:"required,min=0" description:"The initial creation time of the finding (UTC)."`
-	UpdatedAt     *timestamp.RFC3339   `json:"updatedAt" validate:"required,min=0" description:"The last update time of the finding (UTC)."`
-	Title         *string              `json:"title" validate:"required" description:"A short description of the finding."`
-	Description   *string              `json:"description" validate:"required" description:"A long description of the finding."`
-	Service       *GuardDutyService    `json:"service" validate:"required" description:"Additional information about the affected service."`
+	SchemaVersion *string            `json:"schemaVersion" validate:"required" description:"The schema format version of this record."`
+	AccountID     *string            `json:"accountId" validate:"len=12,numeric" description:"The ID of the AWS account in which the activity took place that prompted GuardDuty to generate this finding."`
+	Region        *string            `json:"region" validate:"required" description:"The AWS region in which the finding was generated."`
+	Partition     *string            `json:"partition" validate:"required" description:"The AWS partition in which the finding was generated."`
+	ID            *string            `json:"id,omitempty" validate:"required" description:"A unique identifier for the finding."`
+	Arn           *string            `json:"arn" validate:"required" description:"A unique identifier formatted as an ARN for the finding."`
+	Type          *string            `json:"type" validate:"required" description:"A concise yet readable description of the potential security issue."`
+	Resource      *object.Object     `json:"resource" validate:"required" description:"The AWS resource against which the activity took place that prompted GuardDuty to generate this finding."`
+	Severity      *float32           `json:"severity" validate:"required,min=0" description:"The value of the severity can fall anywhere within the 0.1 to 8.9 range."`
+	CreatedAt     *timestamp.RFC3339 `json:"createdAt" validate:"required,min=0" description:"The initial creation time of the finding (UTC)."`
+	UpdatedAt     *timestamp.RFC3339 `json:"updatedAt" validate:"required,min=0" description:"The last update time of the finding (UTC)."`
+	Title         *string            `json:"title" validate:"required" description:"A short description of the finding."`
+	Description   *string            `json:"description" validate:"required" description:"A long description of the finding."`
+	Service       *GuardDutyService  `json:"service" validate:"required" description:"Additional information about the affected service."`
 
 	// NOTE: added to end of struct to allow expansion later
 	AWSPantherLog
 }
 
 type GuardDutyService struct {
-	AdditionalInfo *jsoniter.RawMessage `json:"additionalInfo"`
-	Action         *jsoniter.RawMessage `json:"action"`
-	ServiceName    *string              `json:"serviceName" validate:"required"`
-	DetectorID     *string              `json:"detectorId" validate:"required"`
-	ResourceRole   *string              `json:"resourceRole"`
-	EventFirstSeen *timestamp.RFC3339   `json:"eventFirstSeen"`
-	EventLastSeen  *timestamp.RFC3339   `json:"eventLastSeen"`
-	Archived       *bool                `json:"archived"`
-	Count          *int                 `json:"count"`
+	AdditionalInfo *object.Object     `json:"additionalInfo"`
+	Action         *object.Object     `json:"action"`
+	ServiceName    *string            `json:"serviceName" validate:"required"`
+	DetectorID     *string            `json:"detectorId" validate:"required"`
+	ResourceRole   *string            `json:"resourceRole"`
+	EventFirstSeen *timestamp.RFC3339 `json:"eventFirstSeen"`
+	EventLastSeen  *timestamp.RFC3339 `json:"eventLastSeen"`
+	Archived       *bool              `json:"archived"`
+	Count          *int               `json:"count"`
 }
 
 // VPCFlowParser parses AWS VPC Flow Parser logs
@@ -102,9 +103,9 @@ func (event *GuardDuty) updatePantherFields(p *GuardDutyParser) {
 
 	// polymorphic (unparsed) fields
 	awsExtractor := NewAWSExtractor(&(event.AWSPantherLog))
-	extract.Extract(event.Resource, awsExtractor)
+	extract.Object(event.Resource, awsExtractor)
 	if event.Service != nil {
-		extract.Extract(event.Service.AdditionalInfo, awsExtractor)
-		extract.Extract(event.Service.Action, awsExtractor)
+		extract.Object(event.Service.AdditionalInfo, awsExtractor)
+		extract.Object(event.Service.Action, awsExtractor)
 	}
 }

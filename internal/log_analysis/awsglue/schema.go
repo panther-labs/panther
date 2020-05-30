@@ -26,10 +26,9 @@ import (
 	"strconv"
 	"strings"
 
-	jsoniter "github.com/json-iterator/go"
-
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/object"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -72,8 +71,8 @@ var (
 			To:   "array<string>",
 		},
 		{
-			From: reflect.TypeOf(jsoniter.RawMessage{}),
-			To:   "string",
+			From: reflect.TypeOf(object.Object{}),
+			To:   "map<string,string>", // map of string key to JSON as string (only works with openx json serde)
 		},
 		{
 			From: reflect.TypeOf(*new(numerics.Integer)),

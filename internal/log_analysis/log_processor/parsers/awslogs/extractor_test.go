@@ -21,16 +21,16 @@ package awslogs
 import (
 	"testing"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/object"
 	"github.com/panther-labs/panther/pkg/extract"
 )
 
 func TestAWSExtractor(t *testing.T) {
 	event := AWSPantherLog{}
 	// add interesting fragments as new extractions are implemented
-	json := (jsoniter.RawMessage)(`
+	json := (object.Object)(`
 {
 
 "accountId": "123456789012",
@@ -139,7 +139,7 @@ func TestAWSExtractor(t *testing.T) {
 	expectedEvent.AppendAnyDomainNames("ec2-54-152-215-140.compute-1.amazonaws.com", "GeneratedFindingDomainName",
 		"ip-172-31-81-237.ec2.internal")
 
-	extract.Extract(&json, NewAWSExtractor(&event))
+	extract.Object(&json, NewAWSExtractor(&event))
 
 	require.Equal(t, expectedEvent, event)
 }

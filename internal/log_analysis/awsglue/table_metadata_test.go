@@ -53,10 +53,9 @@ var (
 		Columns:  testColumns,
 		Location: aws.String("s3://testbucket/logs/table"),
 		SerdeInfo: &glue.SerDeInfo{
-			SerializationLibrary: aws.String("org.apache.hive.hcatalog.data.JsonSerDe"),
+			SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
 			Parameters: map[string]*string{
 				"serialization.format": aws.String("1"),
-				"case.insensitive":     aws.String("TRUE"),
 			},
 		},
 	}
@@ -115,7 +114,7 @@ func TestGlueTableMetadataSignature(t *testing.T) {
 	gm := NewGlueTableMetadata(models.LogData, "My.Logs.Type", "description", GlueTableHourly, partitionTestEvent{})
 	sig, err := gm.Signature()
 	require.NoError(t, err)
-	assert.Equal(t, "dacc00b57a8ac738b89d8ecbe3dc86c9beaf952abe164f6c5735de63a29552b9", sig)
+	assert.Equal(t, "b9ffec7bba76da754fb0289e6b8bd761f25c164d800a2451776c61624c58247c", sig)
 }
 
 func TestCreateJSONPartition(t *testing.T) {

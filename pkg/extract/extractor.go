@@ -21,19 +21,25 @@ package extract
 import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/object"
 )
 
 type Extractor interface {
 	Extract(key, value gjson.Result)
 }
 
-// Extract parses RAW JSON extracting tasty things by calling Parsed()
-func Extract(rawMessage *jsoniter.RawMessage, extractors ...Extractor) {
+// RawMessage parses RAW JSON extracting tasty things by calling Parsed()
+func RawMessage(rawMessage *jsoniter.RawMessage, extractors ...Extractor) {
 	if rawMessage == nil {
 		return
 	}
 	result := gjson.ParseBytes(*rawMessage)
 	Parsed(result, extractors...)
+}
+
+func Object(obj *object.Object, extractors ...Extractor) {
+	RawMessage((*jsoniter.RawMessage)(obj), extractors...)
 }
 
 // Parsed walks parsed JSON extracting tasty things (use if you already parsed the JSON)

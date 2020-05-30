@@ -1,4 +1,4 @@
-package awslogs
+package object
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -18,9 +18,42 @@ package awslogs
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import jsoniter "github.com/json-iterator/go"
+import (
+	"bytes"
+)
 
-func newRawMessage(jsonString string) *jsoniter.RawMessage {
-	rawMsg := (jsoniter.RawMessage)(jsonString)
-	return &rawMsg
+// Object is used to represent an arbitrary JSON object
+type Object []byte
+
+var (
+	emptyMap = []byte(`{}`)
+	nullMap  = []byte(`null`)
+)
+
+func NewObject(jsonString string) *Object {
+	obj := (Object)(jsonString)
+	return &obj
+}
+
+func (obj *Object) String() string {
+	if obj == nil {
+		return ""
+	}
+	return string(*obj)
+}
+
+func (obj *Object) MarshalJSON() ([]byte, error) {
+	objBytes := []byte(*obj)
+	if len(objBytes) == 0 || bytes.Equal(emptyMap, objBytes) || bytes.Equal(nullMap, objBytes) {
+		return nullMap, nil
+	}
+	return objBytes, nil
+}
+
+func (obj *Object) UnmarshalJSON(objBytes []byte) (err error) {
+	if len(objBytes) == 0 || bytes.Equal(emptyMap, objBytes) || bytes.Equal(nullMap, objBytes) {
+		return nil
+	}
+	*obj = objBytes
+	return nil
 }

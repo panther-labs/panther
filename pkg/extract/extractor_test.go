@@ -73,7 +73,7 @@ func TestExtract(t *testing.T) {
 `)
 
 	testExtractor := &TestExtractor{}
-	Extract(&json, testExtractor)
+	RawMessage(&json, testExtractor)
 
 	expected := &TestExtractor{
 		Key1:  "value1",
