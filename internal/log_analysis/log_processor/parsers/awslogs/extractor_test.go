@@ -23,13 +23,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/object"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/jsonlob"
 )
 
 func TestAWSExtractor(t *testing.T) {
 	event := AWSPantherLog{}
 	// add interesting fragments as new extractions are implemented
-	json := (object.Object)(`
+	json := (jsonlob.Object)(`
 {
 
 "accountId": "123456789012",

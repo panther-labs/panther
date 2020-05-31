@@ -27,8 +27,8 @@ import (
 	"strings"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/jsonlob"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/object"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -71,8 +71,8 @@ var (
 			To:   "array<string>",
 		},
 		{
-			From: reflect.TypeOf(object.Object{}),
-			To:   "map<string,string>", // map of string key to JSON as string (only works with openx json serde)
+			From: reflect.TypeOf(jsonlob.Object{}),
+			To:   "map<string,string>",
 		},
 		{
 			From: reflect.TypeOf(*new(numerics.Integer)),

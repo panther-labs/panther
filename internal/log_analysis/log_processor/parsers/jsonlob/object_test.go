@@ -1,4 +1,4 @@
-package object
+package jsonlob
 
 import (
 	"testing"
@@ -26,22 +26,16 @@ import (
  */
 
 func TestObjectMarshalJSON(t *testing.T) {
-	nullJSONString := "null"
+	nullJSONString := string(nullJSON)
 
-	// {} test
-	obj := NewObject("{}")
+	// empty test
+	obj := NewObject("")
 	jsonBytes, err := obj.MarshalJSON()
 	require.NoError(t, err)
 	assert.JSONEq(t, nullJSONString, (string)(jsonBytes))
 
-	// null test
-	obj = NewObject("null")
-	jsonBytes, err = obj.MarshalJSON()
-	require.NoError(t, err)
-	assert.JSONEq(t, nullJSONString, (string)(jsonBytes))
-
-	// empty test
-	obj = NewObject("")
+	// nil test
+	obj = nil
 	jsonBytes, err = obj.MarshalJSON()
 	require.NoError(t, err)
 	assert.JSONEq(t, nullJSONString, (string)(jsonBytes))
@@ -57,24 +51,19 @@ func TestObjectMarshalJSON(t *testing.T) {
 func TestObjectUnmarshalJSON(t *testing.T) {
 	obj := NewObject("")
 
-	// {} test
-	err := obj.UnmarshalJSON(emptyMap)
-	require.NoError(t, err)
-	assert.Len(t, obj.String(), 0)
-
 	// null test
-	err = obj.UnmarshalJSON(nullMap)
+	err := obj.UnmarshalJSON(nullJSON)
 	require.NoError(t, err)
-	assert.Len(t, obj.String(), 0)
+	assert.JSONEq(t, string(*obj), string(nullJSON))
 
 	// empty test
 	err = obj.UnmarshalJSON([]byte{})
 	require.NoError(t, err)
-	assert.Len(t, obj.String(), 0)
+	assert.Len(t, string(*obj), 0)
 
 	// sth test
 	jsonString := `{"foo":"bar", "baz":1}`
 	err = obj.UnmarshalJSON([]byte(jsonString))
 	require.NoError(t, err)
-	assert.JSONEq(t, jsonString, obj.String())
+	assert.JSONEq(t, jsonString, string(*obj))
 }

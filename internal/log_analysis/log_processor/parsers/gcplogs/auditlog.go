@@ -23,8 +23,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/jsonlob"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/object"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -111,17 +111,17 @@ type AuditLog struct {
 	AuthenticationInfo *AuthenticationInfo `json:"authenticationInfo,omitempty" description:"Authentication information."`
 	AuthorizationInfo  []AuthorizationInfo `json:"authorizationInfo,omitempty" validate:"omitempty,dive" description:"Authorization information. If there are multiple resources or permissions involved, then there is one AuthorizationInfo element for each {resource, permission} tuple."`
 	RequestMetadata    *RequestMetadata    `json:"requestMetadata,omitempty" description:"Metadata about the request"`
-	Request            *object.Object      `json:"request,omitempty" description:"The operation request. This may not include all request parameters, such as those that are too large, privacy-sensitive, or duplicated elsewhere in the log record. When the JSON object represented here has a proto equivalent, the proto name will be indicated in the @type property."`
-	Response           *object.Object      `json:"response,omitempty" description:"The operation response. This may not include all response parameters, such as those that are too large, privacy-sensitive, or duplicated elsewhere in the log record. When the JSON object represented here has a proto equivalent, the proto name will be indicated in the @type property."`
-	ServiceData        *object.Object      `json:"serviceData,omitempty" description:"Other service-specific data about the request, response, and other activities."`
+	Request            *jsonlob.Object     `json:"request,omitempty" description:"The operation request. This may not include all request parameters, such as those that are too large, privacy-sensitive, or duplicated elsewhere in the log record. When the JSON object represented here has a proto equivalent, the proto name will be indicated in the @type property."`
+	Response           *jsonlob.Object     `json:"response,omitempty" description:"The operation response. This may not include all response parameters, such as those that are too large, privacy-sensitive, or duplicated elsewhere in the log record. When the JSON object represented here has a proto equivalent, the proto name will be indicated in the @type property."`
+	ServiceData        *jsonlob.Object     `json:"serviceData,omitempty" description:"Other service-specific data about the request, response, and other activities."`
 }
 
 // nolint:lll
 type Status struct {
 	// https://cloud.google.com/vision/docs/reference/rpc/google.rpc#google.rpc.Code
-	Code    *int32         `json:"code,omitempty" description:"The status code, which should be an enum value of google.rpc.Code."`
-	Message *string        `json:"message,omitempty" description:"A developer-facing error message, which should be in English."`
-	Details *object.Object `json:"details,omitempty" description:"A list of messages that carry the error details. There is a common set of message types for APIs to use."`
+	Code    *int32          `json:"code,omitempty" description:"The status code, which should be an enum value of google.rpc.Code."`
+	Message *string         `json:"message,omitempty" description:"A developer-facing error message, which should be in English."`
+	Details *jsonlob.Object `json:"details,omitempty" description:"A list of messages that carry the error details. There is a common set of message types for APIs to use."`
 }
 
 // nolint:lll
@@ -140,11 +140,11 @@ type AuthorizationInfo struct {
 // nolint:lll
 // Reference https://cloud.google.com/service-infrastructure/docs/service-control/reference/rest/v1/AuditLog#RequestMetadata
 type RequestMetadata struct {
-	CallerIP                *string        `json:"callerIP,omitempty"  description:"The IP address of the caller."`
-	CallerSuppliedUserAgent *string        `json:"callerSuppliedUserAgent,omitempty"  description:"The user agent of the caller. This information is not authenticated and should be treated accordingly."`
-	CallerNetwork           *string        `json:"callerNetwork,omitempty" description:"The network of the caller. Set only if the network host project is part of the same GCP organization (or project) as the accessed resource."`
-	RequestAttributes       *object.Object `json:"requestAttributes,omitempty" description:"Request attributes used in IAM condition evaluation. This field contains request attributes like request time and access levels associated with the request."`
-	DestinationAttributes   *object.Object `json:"destinationAttributes,omitempty" description:"The destination of a network activity, such as accepting a TCP connection."`
+	CallerIP                *string         `json:"callerIP,omitempty"  description:"The IP address of the caller."`
+	CallerSuppliedUserAgent *string         `json:"callerSuppliedUserAgent,omitempty"  description:"The user agent of the caller. This information is not authenticated and should be treated accordingly."`
+	CallerNetwork           *string         `json:"callerNetwork,omitempty" description:"The network of the caller. Set only if the network host project is part of the same GCP organization (or project) as the accessed resource."`
+	RequestAttributes       *jsonlob.Object `json:"requestAttributes,omitempty" description:"Request attributes used in IAM condition evaluation. This field contains request attributes like request time and access levels associated with the request."`
+	DestinationAttributes   *jsonlob.Object `json:"destinationAttributes,omitempty" description:"The destination of a network activity, such as accepting a TCP connection."`
 }
 
 // IAM Data audit log
@@ -191,9 +191,9 @@ type v1Peer struct {
 
 // nolint
 type v1Auth struct {
-	Principal    *string        `json:"principal,omitempty" description:"The authenticated principal. Reflects the issuer (iss) and subject (sub) claims within a JWT."`
-	Audiences    []string       `json:"audiences,omitempty" description:"The intended audience(s) for this authentication information. Reflects the audience (aud) claim within a JWT."`
-	Presenter    *string        `json:"presenter,omitempty" description:"The authorized presenter of the credential. Reflects the optional Authorized Presenter (azp) claim within a JWT or the OAuth client id."`
-	AccessLevels []string       `json:"accessLevels,omitempty" description:"A list of access level resource names that allow resources to be accessed by authenticated requester. It is part of Secure GCP processing for the incoming request."`
-	Claims       *object.Object `json:"claims,omitempty" description:"Structured claims presented with the credential. JWTs include {key: value} pairs for standard and private claims."`
+	Principal    *string         `json:"principal,omitempty" description:"The authenticated principal. Reflects the issuer (iss) and subject (sub) claims within a JWT."`
+	Audiences    []string        `json:"audiences,omitempty" description:"The intended audience(s) for this authentication information. Reflects the audience (aud) claim within a JWT."`
+	Presenter    *string         `json:"presenter,omitempty" description:"The authorized presenter of the credential. Reflects the optional Authorized Presenter (azp) claim within a JWT or the OAuth client id."`
+	AccessLevels []string        `json:"accessLevels,omitempty" description:"A list of access level resource names that allow resources to be accessed by authenticated requester. It is part of Secure GCP processing for the incoming request."`
+	Claims       *jsonlob.Object `json:"claims,omitempty" description:"Structured claims presented with the credential. JWTs include {key: value} pairs for standard and private claims."`
 }

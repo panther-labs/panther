@@ -22,7 +22,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/object"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/jsonlob"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -39,7 +39,7 @@ type GuardDuty struct {
 	ID            *string            `json:"id,omitempty" validate:"required" description:"A unique identifier for the finding."`
 	Arn           *string            `json:"arn" validate:"required" description:"A unique identifier formatted as an ARN for the finding."`
 	Type          *string            `json:"type" validate:"required" description:"A concise yet readable description of the potential security issue."`
-	Resource      *object.Object     `json:"resource" validate:"required" description:"The AWS resource against which the activity took place that prompted GuardDuty to generate this finding."`
+	Resource      *jsonlob.Object    `json:"resource" validate:"required" description:"The AWS resource against which the activity took place that prompted GuardDuty to generate this finding."`
 	Severity      *float32           `json:"severity" validate:"required,min=0" description:"The value of the severity can fall anywhere within the 0.1 to 8.9 range."`
 	CreatedAt     *timestamp.RFC3339 `json:"createdAt" validate:"required,min=0" description:"The initial creation time of the finding (UTC)."`
 	UpdatedAt     *timestamp.RFC3339 `json:"updatedAt" validate:"required,min=0" description:"The last update time of the finding (UTC)."`
@@ -52,8 +52,8 @@ type GuardDuty struct {
 }
 
 type GuardDutyService struct {
-	AdditionalInfo *object.Object     `json:"additionalInfo"`
-	Action         *object.Object     `json:"action"`
+	AdditionalInfo *jsonlob.Object    `json:"additionalInfo"`
+	Action         *jsonlob.Object    `json:"action"`
 	ServiceName    *string            `json:"serviceName" validate:"required"`
 	DetectorID     *string            `json:"detectorId" validate:"required"`
 	ResourceRole   *string            `json:"resourceRole"`

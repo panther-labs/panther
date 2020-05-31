@@ -1,4 +1,4 @@
-package object
+package jsonlob
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,8 +19,6 @@ package object
  */
 
 import (
-	"bytes"
-
 	"github.com/tidwall/gjson"
 
 	"github.com/panther-labs/panther/pkg/extract"
@@ -30,8 +28,7 @@ import (
 type Object []byte
 
 var (
-	emptyMap = []byte(`{}`)
-	nullMap  = []byte(`null`)
+	nullJSON = []byte(`null`)
 )
 
 func NewObject(jsonString string) *Object {
@@ -39,25 +36,14 @@ func NewObject(jsonString string) *Object {
 	return &obj
 }
 
-func (obj *Object) String() string {
-	if obj == nil {
-		return ""
-	}
-	return string(*obj)
-}
-
 func (obj *Object) MarshalJSON() ([]byte, error) {
-	objBytes := []byte(*obj)
-	if len(objBytes) == 0 || bytes.Equal(emptyMap, objBytes) || bytes.Equal(nullMap, objBytes) {
-		return nullMap, nil
+	if obj == nil || len(*obj) == 0 {
+		return nullJSON, nil
 	}
-	return objBytes, nil
+	return *obj, nil
 }
 
 func (obj *Object) UnmarshalJSON(objBytes []byte) (err error) {
-	if len(objBytes) == 0 || bytes.Equal(emptyMap, objBytes) || bytes.Equal(nullMap, objBytes) {
-		return nil
-	}
 	*obj = objBytes
 	return nil
 }

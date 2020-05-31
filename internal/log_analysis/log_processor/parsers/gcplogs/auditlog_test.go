@@ -26,7 +26,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/go-playground/validator.v9"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/object"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/jsonlob"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -220,13 +220,13 @@ func TestAuditLogParserSystemEvent(t *testing.T) {
 			},
 			MethodName: aws.String("compute.instances.migrateOnHostMaintenance"),
 			RequestMetadata: &RequestMetadata{
-				RequestAttributes:     object.NewObject(`{}`),
-				DestinationAttributes: object.NewObject(`{}`),
+				RequestAttributes:     jsonlob.NewObject(`{}`),
+				DestinationAttributes: jsonlob.NewObject(`{}`),
 			},
 			ResourceName: aws.String("projects/project-id/zones/us-central1-f/instances/gke-cluster-default-pool-7dff1419-8v1j"),
 			ServiceName:  aws.String("compute.googleapis.com"),
 			Status:       &Status{},
-			Request:      object.NewObject(`{"@type": "type.googleapis.com/compute.instances.migrateOnHostMaintenance"}`),
+			Request:      jsonlob.NewObject(`{"@type": "type.googleapis.com/compute.instances.migrateOnHostMaintenance"}`),
 		},
 	}
 
@@ -336,7 +336,7 @@ func TestAuditLogParserActivityBug(t *testing.T) {
 					Resource:   aws.String("services/bigtable.googleapis.com/consumers/951849100836"),
 				},
 			},
-			Response: object.NewObject(`{
+			Response: jsonlob.NewObject(`{
 				"@type": "type.googleapis.com/google.api.servicemanagement.v1.ActivateServicesResponse",
 				"settings": [
 					{
@@ -353,7 +353,7 @@ func TestAuditLogParserActivityBug(t *testing.T) {
 					}
 				]
 			}`),
-			Request: object.NewObject(`{
+			Request: jsonlob.NewObject(`{
 				"@type": "type.googleapis.com/google.api.servicemanagement.v1.ActivateServicesRequest",
 				"consumerProjectId": "951849100836",
 				"serviceNames": [
