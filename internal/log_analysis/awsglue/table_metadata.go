@@ -157,9 +157,9 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput 
 	}
 
 	descriptorParameters := map[string]*string{
-		"serialization.format": aws.String("1"),
-		"case.insensitive":     aws.String("true"), // Athena requires this because it downcases all struct fields
-		"ignore.malformed.json":  aws.String("true"), // this will replace bad rows with a row of nulls
+		"serialization.format":  aws.String("1"),
+		"case.insensitive":      aws.String("true"), // Athena requires this because it downcases all struct fields
+		"ignore.malformed.json": aws.String("true"), // this will replace bad rows with a row of nulls
 	}
 
 	return &glue.TableInput{
@@ -174,7 +174,7 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput 
 			SerdeInfo: &glue.SerDeInfo{
 				SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
 				// SerializationLibrary: aws.String("org.apache.hive.hcatalog.data.JsonSerDe"),
-				Parameters:           descriptorParameters,
+				Parameters: descriptorParameters,
 			},
 		},
 		TableType: aws.String("EXTERNAL_TABLE"),
