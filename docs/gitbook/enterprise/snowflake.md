@@ -54,7 +54,7 @@ Edit `deployments/panther_config.yml` to add  `arn:aws:iam::34318291XXXX:user/k7
       - arn:aws:iam::34318291XXXX:user/k7m2-s-v2st0722
 ```
 
-Next run `mage deploy`.
+Next run `mage deploy snowflake:snowpipe`.
 
 When the deployment is done there should be a `snowpipe.sql` file created in:
 ```
