@@ -59,7 +59,7 @@ func deployFrontend(
 		return nil, fmt.Errorf("failed to write ENV variables to file %s: %v", awsEnvFile, err)
 	}
 
-	dockerImage, err := buildAndPushImageFromSource(awsSession, bootstrapOutputs["ImageRegistry"])
+	dockerImage, err := buildAndPushImageFromSource(awsSession, bootstrapOutputs["ImageRegistryUri"])
 	if err != nil {
 		return nil, err
 	}

@@ -28,8 +28,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
-	"github.com/aws/aws-sdk-go/service/ecr"
-	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sts"
 
@@ -38,8 +36,7 @@ import (
 
 const (
 	// Upper bound on the number of s3 object versions we'll delete manually.
-	s3MaxDeletes    = 10000
-	globalLayerName = "panther-engine-globals"
+	s3MaxDeletes = 10000
 )
 
 type deleteStackResult struct {
@@ -55,7 +52,7 @@ func Teardown() {
 	//
 	// This is safer than listing the services directly (e.g. find all "panther-" S3 buckets),
 	// because we can prove the resource is part of a Panther-deployed CloudFormation stack.
-	var ecrRepos, s3Buckets, logGroups []*string
+	var s3Buckets, logGroups []*string
 	err := walkPantherStacks(cloudformation.New(awsSession), func(summary cfnResource) {
 		if aws.StringValue(summary.Resource.ResourceStatus) == cloudformation.ResourceStatusDeleteComplete {
 			return
@@ -65,8 +62,6 @@ func Teardown() {
 		}
 
 		switch aws.StringValue(summary.Resource.ResourceType) {
-		case "AWS::ECR::Repository":
-			ecrRepos = append(ecrRepos, summary.Resource.PhysicalResourceId)
 		case "AWS::Logs::LogGroup":
 			logGroups = append(logGroups, summary.Resource.PhysicalResourceId)
 		case "AWS::S3::Bucket":
@@ -76,12 +71,6 @@ func Teardown() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-
-	// CFN can't delete non-empty ECR repos, so we just forcefully delete them here.
-	destroyEcrRepos(awsSession, ecrRepos)
-
-	// CFN is not used to create lambda layers, so we request the backend to handle this before tearing it down
-	destroyLambdaLayers(awsSession)
 
 	// CloudFormation will not delete any Panther S3 buckets (DeletionPolicy: Retain), we do so here.
 	// We destroy the buckets first because after the stacks are destroyed we will lose
@@ -125,67 +114,6 @@ func teardownConfirmation() *session.Session {
 	}
 
 	return awsSession
-}
-
-// Remove ECR repos and all of their images
-func destroyEcrRepos(awsSession *session.Session, repoNames []*string) {
-	client := ecr.New(awsSession)
-	for _, repo := range repoNames {
-		logger.Infof("removing ECR repository %s", *repo)
-		if _, err := client.DeleteRepository(&ecr.DeleteRepositoryInput{
-			// Force:true to remove images as well (easier than emptying the repo explicitly)
-			Force:          aws.Bool(true),
-			RepositoryName: repo,
-		}); err != nil {
-			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == ecr.ErrCodeRepositoryNotFoundException {
-				// repo doesn't exist - that's fine, nothing to do here
-				continue
-			}
-			logger.Fatalf("failed to delete ECR repository: %v", err)
-		}
-	}
-}
-
-// Remove layers created for the policy and rules engines
-func destroyLambdaLayers(awsSession *session.Session) {
-	client := lambda.New(awsSession)
-	// List all the layers
-	layers, err := client.ListLayers(&lambda.ListLayersInput{})
-	if err != nil {
-		logger.Fatalf("failed to list lambda layers: %v", err)
-	}
-
-	// Find the layers that need to be destroyed
-	var layersToDestroy []*string
-	for _, layer := range layers.Layers {
-		if aws.StringValue(layer.LayerName) == globalLayerName {
-			layersToDestroy = append(layersToDestroy, layer.LayerName)
-		}
-	}
-
-	if len(layersToDestroy) == 0 {
-		return // avoids log message if no layers were removed
-	}
-
-	// Find and destroy each version of each layer that needs to be destroyed
-	logger.Infof("removing %d versions of Lambda layer %s", len(layersToDestroy), globalLayerName)
-	for _, layer := range layersToDestroy {
-		versions, err := client.ListLayerVersions(&lambda.ListLayerVersionsInput{
-			LayerName: layer,
-		})
-		if err != nil {
-			logger.Fatalf("failed to list lambda layer versions: %v", err)
-		}
-		for _, version := range versions.LayerVersions {
-			_, err := client.DeleteLayerVersion(&lambda.DeleteLayerVersionInput{
-				LayerName:     layer,
-				VersionNumber: version.Version,
-			})
-			if err != nil {
-				logger.Fatalf("failed to delete layer version %d: %v", aws.Int64Value(version.Version), err)
-			}
-		}
-	}
 }
 
 // Destroy all Panther CloudFormation stacks

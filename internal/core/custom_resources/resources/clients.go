@@ -31,6 +31,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider/cognitoidentityprovideriface"
+	"github.com/aws/aws-sdk-go/service/ecr"
+	"github.com/aws/aws-sdk-go/service/ecr/ecriface"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/aws/aws-sdk-go/service/guardduty"
@@ -52,6 +54,7 @@ var (
 	cloudWatchClient     cloudwatchiface.CloudWatchAPI
 	cloudWatchLogsClient cloudwatchlogsiface.CloudWatchLogsAPI
 	cognitoClient        cognitoidentityprovideriface.CognitoIdentityProviderAPI
+	ecrClient            ecriface.ECRAPI
 	glueClient           glueiface.GlueAPI
 	guardDutyClient      guarddutyiface.GuardDutyAPI
 	iamClient            iamiface.IAMAPI
@@ -99,6 +102,13 @@ func getCognitoClient() cognitoidentityprovideriface.CognitoIdentityProviderAPI 
 		cognitoClient = cognitoidentityprovider.New(getSession())
 	}
 	return cognitoClient
+}
+
+func getEcrClient() ecriface.ECRAPI {
+	if ecrClient == nil {
+		ecrClient = ecr.New(getSession())
+	}
+	return ecrClient
 }
 
 func getGuardDutyClient() guarddutyiface.GuardDutyAPI {

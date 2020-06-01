@@ -3,7 +3,6 @@ module github.com/panther-labs/panther
 go 1.14
 
 require (
-	github.com/alecthomas/jsonschema v0.0.0-20200217214135-7152f22193c9
 	github.com/aws/aws-lambda-go v1.16.0
 	github.com/aws/aws-sdk-go v1.30.7
 	github.com/cenkalti/backoff/v4 v4.0.2
