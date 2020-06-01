@@ -82,9 +82,12 @@ func DeployedTablesSignature(glueClient glueiface.GlueAPI) (deployedLogTablesSig
 }
 
 // CreateOrUpdateGlueTablesForLogType uses the parser registry to get the table meta data and creates tables in the glue catalog
-func CreateOrUpdateGlueTablesForLogType(glueClient glueiface.GlueAPI, logType, bucket string) (*awsglue.GlueTableMetadata, error) {
+func CreateOrUpdateGlueTablesForLogType(glueClient glueiface.GlueAPI, logType,
+	bucket string) (*awsglue.GlueTableMetadata, *awsglue.GlueTableMetadata, error) {
+
 	logTable := registry.AvailableParsers().LookupParser(logType).GlueTableMetadata // get the table description
-	return CreateOrUpdateGlueTables(glueClient, bucket, logTable)
+	ruleTable, err := CreateOrUpdateGlueTables(glueClient, bucket, logTable)
+	return logTable, ruleTable, err
 }
 
 // CreateOrUpdateGlueTables, given a log meta data table, creates a log and rule table in the glue catalog
