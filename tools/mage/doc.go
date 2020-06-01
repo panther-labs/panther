@@ -130,7 +130,7 @@ func logDocs() error {
 			docsBuffer.WriteString(`<table>` + "\n")
 			docsBuffer.WriteString("<tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>\n") // nolint
 
-			columns := awsglue.InferJSONColumns(table.EventStruct(), awsglue.GlueMappings...) // get the Glue schema
+			columns, _ := awsglue.InferJSONColumns(table.EventStruct(), awsglue.GlueMappings...) // get the Glue schema
 			for _, column := range columns {
 				colName := column.Name
 				if column.Required {
