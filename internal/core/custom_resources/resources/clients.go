@@ -33,8 +33,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider/cognitoidentityprovideriface"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
+	"github.com/aws/aws-sdk-go/service/guardduty"
+	"github.com/aws/aws-sdk-go/service/guardduty/guarddutyiface"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/iam/iamiface"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 )
@@ -49,7 +53,9 @@ var (
 	cloudWatchLogsClient cloudwatchlogsiface.CloudWatchLogsAPI
 	cognitoClient        cognitoidentityprovideriface.CognitoIdentityProviderAPI
 	glueClient           glueiface.GlueAPI
+	guardDutyClient      guarddutyiface.GuardDutyAPI
 	iamClient            iamiface.IAMAPI
+	lambdaClient         lambdaiface.LambdaAPI
 	s3Client             s3iface.S3API
 )
 
@@ -95,6 +101,13 @@ func getCognitoClient() cognitoidentityprovideriface.CognitoIdentityProviderAPI 
 	return cognitoClient
 }
 
+func getGuardDutyClient() guarddutyiface.GuardDutyAPI {
+	if guardDutyClient == nil {
+		guardDutyClient = guardduty.New(getSession())
+	}
+	return guardDutyClient
+}
+
 func getGlueClient() glueiface.GlueAPI {
 	if glueClient == nil {
 		glueClient = glue.New(getSession())
@@ -107,6 +120,13 @@ func getIamClient() iamiface.IAMAPI {
 		iamClient = iam.New(getSession())
 	}
 	return iamClient
+}
+
+func getLambdaClient() lambdaiface.LambdaAPI {
+	if lambdaClient == nil {
+		lambdaClient = lambda.New(getSession())
+	}
+	return lambdaClient
 }
 
 func getS3Client() s3iface.S3API {

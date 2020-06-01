@@ -29,6 +29,9 @@ Parameters:
   AnalysisVersionsBucket:
     Type: String
     Description: S3 bucket for python revision history
+  AnalysisApiEndpoint:
+    Type: String
+    Description: Analysis API gateway FQDN
   AnalysisApiId:
     Type: String
     Description: Analysis API gateway ID
@@ -41,6 +44,9 @@ Parameters:
   DynamoScalingRoleArn:
     Type: String
     Description: IAM role arn for DynamoDB auto-scaling
+  InitialAnalysisPackUrls:
+    Type: CommaDelimitedList
+    Description: Initial Python analysis packs
   ProcessedDataBucket:
     Type: String
     Description: S3 bucket which stores processed logs
@@ -61,9 +67,21 @@ Parameters:
     Default: 365
   Debug:
     Type: String
-    Default: false
     Description: Toggle debug logging
     AllowedValues: [true, false]
+    Default: false
+  FirstUserGivenName:
+    Type: String
+    Description: First (given) name of the initial Panther user
+    Default: ''
+  FirstUserFamilyName:
+    Type: String
+    Description: Family (last) name of the initial Panther user
+    Default: ''
+  FirstUserEmail:
+    Type: String
+    Description: Email of the initial Panther user. If blank, no user is created
+    Default: ''
   LayerVersionArns:
     Type: CommaDelimitedList
     Description: List of LayerVersion ARNs to attach to each function
@@ -126,6 +144,7 @@ Mappings:
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
+  CreateFirstUser: !Not [!Equals ['', !Ref FirstUserEmail]]
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
@@ -181,15 +200,6 @@ Resources:
                 - cognito-idp:GetUser
                 - cognito-idp:ListUsers
               Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}
-        - Id: AppsyncManagement
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - appsync:GetGraphqlApi
-                - appsync:ListGraphqlApis
-                - appsync:UpdateGraphqlApi
-              Resource: !Sub arn:${AWS::Partition}:appsync:${AWS::Region}:${AWS::AccountId}:*
 
   UsersAPIAlarms:
     Type: Custom::LambdaAlarms
@@ -284,6 +294,27 @@ Resources:
       FunctionMemoryMB: !FindInMap [Functions, OrganizationAPI, Memory]
       FunctionName: !Ref OrganizationAPIFunction
       FunctionTimeoutSec: !FindInMap [Functions, OrganizationAPI, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  FirstPantherUser:
+    Type: Custom::PantherUser
+    Condition: CreateFirstUser
+    DependsOn: UsersAPIFunction
+    DeletionPolicy: Retain # users-api refuses to delete the last user, which would then fail teardown
+    UpdateReplacePolicy: Retain
+    Properties:
+      GivenName: !Ref FirstUserGivenName
+      FamilyName: !Ref FirstUserFamilyName
+      Email: !Ref FirstUserEmail
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  # By default, use the first user's email as the "organization" email
+  PantherSettings:
+    Type: Custom::PantherSettings
+    DependsOn: OrganizationAPIFunction
+    Properties:
+      DisplayName: !Sub ${AWS::AccountId}
+      Email: !If [CreateFirstUser, !GetAtt FirstPantherUser.Email, !Ref AWS::NoValue]
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Analysis API #####
@@ -431,6 +462,18 @@ Resources:
       AlarmTopicArn: !Ref AlarmTopicArn
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
       TableName: !Ref AnalysisTable
+
+  # Once the analysis-api is ready, upload the initial Python analysis rules/policies
+  InitialAnalysisSet:
+    Type: Custom::AnalysisSet
+    # The policy-engine and rules-engine must also exist for the layer creation to succeed,
+    # but the custom resource handler will handle that waiting so we don't have to stall
+    # this entire stack waiting for cloud-security and log-analysis to finish.
+    DependsOn: AnalysisApiFunction
+    Properties:
+      AnalysisAPIEndpoint: !Ref AnalysisApiEndpoint
+      PackURLs: !Ref InitialAnalysisPackUrls
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Outputs API #####
   OutputsTable:
