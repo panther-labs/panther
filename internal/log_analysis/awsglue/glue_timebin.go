@@ -20,7 +20,6 @@ package awsglue
 
 import (
 	"fmt"
-	"net/url"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -97,7 +96,7 @@ func (tb GlueTableTimebin) PartitionS3PathFromTime(t time.Time) (s3Path string) 
 
 // PartitionHasData checks if there is at least 1 s3 object in the partition
 func (tb GlueTableTimebin) PartitionHasData(client s3iface.S3API, t time.Time, tableOutput *glue.GetTableOutput) (bool, error) {
-	location, err := url.Parse(*tableOutput.Table.StorageDescriptor.Location)
+	bucket, prefix, err := ParseS3URL(*tableOutput.Table.StorageDescriptor.Location)
 	if err != nil {
 		return false, errors.Wrapf(err, "Cannot parse s3 path: %s",
 			*tableOutput.Table.StorageDescriptor.Location)
@@ -105,8 +104,8 @@ func (tb GlueTableTimebin) PartitionHasData(client s3iface.S3API, t time.Time, t
 
 	// list files w/pagination
 	inputParams := &s3.ListObjectsV2Input{
-		Bucket:  aws.String(location.Host),
-		Prefix:  aws.String(tb.PartitionS3PathFromTime(t)),
+		Bucket:  aws.String(bucket),
+		Prefix:  aws.String(prefix + tb.PartitionS3PathFromTime(t)),
 		MaxKeys: aws.Int64(1), // look for at least 1
 	}
 	var hasData bool
