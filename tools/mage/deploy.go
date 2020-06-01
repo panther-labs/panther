@@ -245,7 +245,7 @@ func deployBootstrapStacks(
 // Build standard Python analysis layer in out/layer.zip if that file doesn't already exist.
 func buildLayer(libs []string) error {
 	if _, err := os.Stat(layerZipfile); err == nil {
-		logger.Debugf("%s already exists, not rebuilding layer")
+		logger.Debugf("%s already exists, not rebuilding layer", layerZipfile)
 		return nil
 	}
 
