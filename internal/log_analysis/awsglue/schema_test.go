@@ -21,7 +21,6 @@ package awsglue
 import (
 	"fmt"
 	"reflect"
-	"sort"
 	"strconv"
 	"testing"
 
@@ -79,8 +78,6 @@ func TestInferJsonColumnsRemap(t *testing.T) {
 	expectedStructFieldNames := []string{"Field1", "Field2", "at_sign_remap"}
 	actualCols, structFieldNames := InferJSONColumns(obj)
 	require.Equal(t, expectedCols, actualCols)
-	// Sorting is required before comparison since they can return in random order
-	sort.Strings(structFieldNames)
 	require.Equal(t, expectedStructFieldNames, structFieldNames)
 }
 
@@ -242,8 +239,6 @@ func TestInferJsonColumns(t *testing.T) {
 	// for _, col := range cols {
 	// 	fmt.Printf(`{Name: \"%s\", Type: \"%s\",Comment: "test field"},\n`, col.Name, col.Type)
 	// }
-	// Sorting before comparing, since order by vary
-	sort.Strings(structFieldNames)
 	assert.Equal(t, expectedCols, cols, "Expected columns not found")
 	assert.Equal(t, expectedStructFieldNames, structFieldNames)
 

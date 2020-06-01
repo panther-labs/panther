@@ -23,6 +23,7 @@ package awsglue
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -134,9 +135,10 @@ type CustomMapping struct {
 	To   string       // glue type to emit
 }
 
-// Walks the object creating Glue columns using JSON Serde expected types.
-// It returns a slice with the names of all nested fields.
-// It allows passing custom mappings
+// Walks the object creating Glue columns using JSON SerDe expected types. It allows passing custom mappings.
+// It also returns a slice with the names of all nested fields. The names of the fields will be used
+// to generate the appropriate field mappings in the SERDE properties.
+// For more information see: https://aws.amazon.com/premiumsupport/knowledge-center/json-duplicate-key-error-athena-config/
 func InferJSONColumns(obj interface{}, customMappings ...CustomMapping) ([]Column, []string) {
 	customMappingsTable := make(map[string]string)
 	for _, customMapping := range customMappings {
@@ -158,11 +160,13 @@ func InferJSONColumns(obj interface{}, customMappings ...CustomMapping) ([]Colum
 	for _, name := range names {
 		stringSet[name] = struct{}{}
 	}
-	structFieldNames := make([]string, 0)
+	structFieldNames := make([]string, 0, len(stringSet))
 	for key := range stringSet {
 		structFieldNames = append(structFieldNames, key)
 	}
-
+	// Sorting field names so there are always returned in the same order
+	// It's not strong requirement, but makes the API easier to work with
+	sort.Strings(structFieldNames)
 	return cols, structFieldNames
 }
 
