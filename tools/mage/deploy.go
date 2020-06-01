@@ -133,18 +133,27 @@ func deployPreCheck(awsRegion string) {
 		logger.Fatalf("go %s not supported, upgrade to 1.13+", version)
 	}
 
+	// Check the node version (must match the version in the web server)
+	const requiredNodeVersion = "v12.16" // web server has 12.16.1, to be exact
+	nodeVersion, err := sh.Output("node", "--version")
+	if err != nil {
+		logger.Fatalf("failed to check node version: %v", err)
+	}
+	if !strings.HasPrefix(strings.TrimSpace(nodeVersion), requiredNodeVersion) {
+		logger.Fatalf("node version must be %s.X, found %s", requiredNodeVersion, nodeVersion)
+	}
+
 	// Make sure docker is running
-	if _, err := sh.Output("docker", "info"); err != nil {
+	if _, err = sh.Output("docker", "info"); err != nil {
 		logger.Fatalf("docker is not available: %v", err)
 	}
 
 	// Ensure swagger is available
-	if _, err := sh.Output(filepath.Join(setupDirectory, "swagger"), "version"); err != nil {
+	if _, err = sh.Output(filepath.Join(setupDirectory, "swagger"), "version"); err != nil {
 		logger.Fatalf("swagger is not available (%v): try 'mage setup'", err)
 	}
 
 	// Set global gitVersion, warn if not deploying a tagged release
-	var err error
 	gitVersion, err = sh.Output("git", "describe", "--tags")
 	if err != nil {
 		logger.Fatalf("git describe failed: %v", err)
