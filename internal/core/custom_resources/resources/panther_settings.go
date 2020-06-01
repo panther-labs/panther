@@ -39,7 +39,7 @@ func customPantherSettings(_ context.Context, event cfn.Event) (string, map[stri
 
 		input := models.LambdaInput{UpdateSettings: &props}
 		return "custom:panther-settings:singleton", nil, genericapi.Invoke(
-			getLambdaClient(), "panther-organization-api", &input, nil)
+			lambdaClient, "panther-organization-api", &input, nil)
 
 	default:
 		// skip deletes - settings can't be "deleted", only changed

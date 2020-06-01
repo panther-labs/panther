@@ -111,7 +111,7 @@ func lambdaNameFromLogGroup(logGroupName string) string {
 
 func putMetricFilter(logGroupName, filterPattern, metricName, metricValue string) error {
 	zap.L().Info("creating metric filter", zap.String("metricName", metricName))
-	_, err := getCloudWatchLogsClient().PutMetricFilter(&cloudwatchlogs.PutMetricFilterInput{
+	_, err := cloudWatchLogsClient.PutMetricFilter(&cloudwatchlogs.PutMetricFilterInput{
 		FilterName:    &metricName,
 		FilterPattern: &filterPattern,
 		LogGroupName:  &logGroupName,
@@ -144,11 +144,10 @@ func deleteMetricFilterGroup(physicalID string) error {
 
 	logGroupName := split[2]
 	lambdaName := lambdaNameFromLogGroup(logGroupName)
-	client := getCloudWatchLogsClient()
 
 	for _, name := range []string{lambdaName + "-memory", lambdaName + "-warns", lambdaName + "-errors"} {
 		zap.L().Info("deleting metric filter", zap.String("name", name))
-		_, err := client.DeleteMetricFilter(&cloudwatchlogs.DeleteMetricFilterInput{
+		_, err := cloudWatchLogsClient.DeleteMetricFilter(&cloudwatchlogs.DeleteMetricFilterInput{
 			FilterName:   aws.String(name),
 			LogGroupName: aws.String(logGroupName),
 		})

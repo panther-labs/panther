@@ -46,7 +46,7 @@ func putMetricAlarm(input cloudwatch.PutMetricAlarmInput) error {
 	}
 
 	zap.L().Info("putting metric alarm", zap.String("alarmName", *input.AlarmName))
-	if _, err := getCloudWatchClient().PutMetricAlarm(&input); err != nil {
+	if _, err := cloudWatchClient.PutMetricAlarm(&input); err != nil {
 		return fmt.Errorf("failed to put alarm %s: %v", *input.AlarmName, err)
 	}
 	return nil
@@ -70,7 +70,7 @@ func deleteMetricAlarms(physicalID string, alarmNames ...string) error {
 	}
 
 	zap.L().Info("deleting metric alarms", zap.Strings("alarmNames", fullAlarmNames))
-	_, err := getCloudWatchClient().DeleteAlarms(
+	_, err := cloudWatchClient.DeleteAlarms(
 		&cloudwatch.DeleteAlarmsInput{AlarmNames: aws.StringSlice(fullAlarmNames)})
 	if err != nil {
 		return fmt.Errorf("failed to delete %s alarms: %v", id, err)
