@@ -23,13 +23,21 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/athena"
+	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/magefile/mage/mg"
 
+	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/internal/log_analysis/athenaviews"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
+	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // targets for managing Glue tables
@@ -53,13 +61,13 @@ func (t Glue) Sync() {
 		startDate, _ = time.Parse("2006-01-02", startDateText) // no error check already validated
 	}
 
-	// for each table, for each time partition, update schema
-	for _, table := range registry.AvailableTables() {
+	// for each registered table, update the table, for each time partition, update the schema
+	for _, table := range updateRegisteredTables(awsSession, glueClient) {
 		name := fmt.Sprintf("%s.%s", table.DatabaseName(), table.TableName())
 		if !matchTableName.MatchString(name) {
 			continue
 		}
-		logger.Infof("syncing %s", name)
+		logger.Infof("syncing partitions for %s", name)
 		err := table.SyncPartitions(glueClient, s3Client, startDate)
 		if err != nil {
 			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == glue.ErrCodeEntityNotFoundException {
@@ -68,18 +76,52 @@ func (t Glue) Sync() {
 				logger.Fatalf("failed syncing %s: %v", name, err)
 			}
 		}
+	}
+}
 
-		// the rule match tables share the same structure as the logs
-		name = fmt.Sprintf("%s.%s", awsglue.RuleMatchDatabaseName, table.TableName())
-		ruleTable := table.RuleTable()
-		logger.Infof("syncing %s", name)
-		err = ruleTable.SyncPartitions(glueClient, s3Client, startDate)
-		if err != nil {
-			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == glue.ErrCodeEntityNotFoundException {
-				logger.Infof("%s is not deployed, skipping", name)
-			} else {
-				logger.Fatalf("failed syncing %s: %v", name, err)
+func updateRegisteredTables(awsSession *session.Session, glueClient *glue.Glue) (tables []*awsglue.GlueTableMetadata) {
+	const processDataBucketStack = bootstrapStack
+	_, stackOutputs, err := describeStack(cloudformation.New(awsSession), processDataBucketStack)
+	if err != nil {
+		logger.Fatalf("failed getting processed data bucket from stack %s: %v", processDataBucketStack, err)
+	}
+	if stackOutputs["ProcessedDataBucket"] == "" {
+		logger.Fatalf("could not find processed data bucket in %s", processDataBucketStack)
+	}
+
+	var listOutput []*models.SourceIntegration
+	var listInput = &models.LambdaInput{
+		ListIntegrations: &models.ListIntegrationsInput{},
+	}
+	if err := genericapi.Invoke(lambda.New(awsSession), "panther-source-api", listInput, &listOutput); err != nil {
+		logger.Fatalf("error calling source-api to list integrations: %v", err)
+	}
+
+	// get unique set of logTypes
+	logTypeSet := make(map[string]struct{})
+	for _, integration := range listOutput {
+		if aws.StringValue(integration.IntegrationType) == models.IntegrationTypeAWS3 {
+			for _, logType := range integration.LogTypes {
+				logTypeSet[*logType] = struct{}{}
 			}
 		}
 	}
+
+	for logType := range logTypeSet {
+		logger.Infof("updating registered tables for %s", logType)
+		logTable, ruleTable, err := gluetables.CreateOrUpdateGlueTablesForLogType(glueClient, logType, stackOutputs["ProcessedDataBucket"])
+		if err != nil {
+			logger.Fatalf("error updating table definitions: %v", err)
+		}
+		tables = append(tables, logTable)
+		tables = append(tables, ruleTable)
+	}
+
+	// update the views with the new tables
+	err = athenaviews.CreateOrReplaceViews(glueClient, athena.New(awsSession))
+	if err != nil {
+		logger.Fatalf("error updating table views: %v", err)
+	}
+
+	return tables
 }

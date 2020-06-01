@@ -319,3 +319,14 @@ func errStackDoesNotExist(err error) bool {
 	}
 	return false
 }
+
+// Returns stack status, outputs, and any error
+func describeStack(cfClient *cfn.CloudFormation, stackName string) (string, map[string]string, error) {
+	input := &cfn.DescribeStacksInput{StackName: &stackName}
+	response, err := cfClient.DescribeStacks(input)
+	if err != nil {
+		return "", nil, err
+	}
+
+	return aws.StringValue(response.Stacks[0].StackStatus), flattenStackOutputs(response.Stacks[0]), nil
+}
