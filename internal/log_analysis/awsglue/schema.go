@@ -134,7 +134,9 @@ type CustomMapping struct {
 	To   string       // glue type to emit
 }
 
-// Walk object, create columns using JSON Serde expected types, allow optional custom mappings
+// Walks the object creating Glue columns using JSON Serde expected types.
+// It returns a slice with the names of all nested fields.
+// It allows passing custom mappings
 func InferJSONColumns(obj interface{}, customMappings ...CustomMapping) ([]Column, []string) {
 	customMappingsTable := make(map[string]string)
 	for _, customMapping := range customMappings {

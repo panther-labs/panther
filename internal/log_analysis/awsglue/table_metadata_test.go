@@ -53,7 +53,7 @@ var (
 		Columns:  testColumns,
 		Location: aws.String("s3://testbucket/logs/table"),
 		SerdeInfo: &glue.SerDeInfo{
-			SerializationLibrary: aws.String("org.apache.hive.hcatalog.data.JsonSerDe"),
+			SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
 			Parameters: map[string]*string{
 				"serialization.format": aws.String("1"),
 				"case.insensitive":     aws.String("TRUE"),
