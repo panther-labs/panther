@@ -160,7 +160,7 @@ func newPantherViewColumns(tables []*awsglue.GlueTableMetadata, extraColumns []a
 }
 func (pvc *pantherViewColumns) inferViewColumns(table *awsglue.GlueTableMetadata, extraColumns []awsglue.Column) {
 	// NOTE: in the future when we tag columns for views, the mapping  would be resolved here
-	columns := awsglue.InferJSONColumns(table.EventStruct(), awsglue.GlueMappings...)
+	columns, _ := awsglue.InferJSONColumns(table.EventStruct(), awsglue.GlueMappings...)
 	columns = append(columns, extraColumns...)
 	var selectColumns []string
 	for _, col := range columns {
