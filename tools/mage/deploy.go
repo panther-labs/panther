@@ -115,7 +115,7 @@ func Deploy() {
 
 	migrate(awsSession, accountID)
 	outputs := bootstrap(awsSession, settings)
-	deployMainStacks(awsSession, settings, accountID, outputs)
+	deployMainStacks(awsSession, settings, outputs)
 
 	logger.Infof("deploy: finished successfully in %s", time.Since(start).Round(time.Second))
 	logger.Infof("***** Panther URL = https://%s", outputs["LoadBalancerUrl"])
@@ -281,7 +281,7 @@ func buildLayer(libs []string) error {
 // Then metric-filters and onboarding at the end
 //
 // nolint: funlen
-func deployMainStacks(awsSession *session.Session, settings *config.PantherConfig, accountID string, outputs map[string]string) {
+func deployMainStacks(awsSession *session.Session, settings *config.PantherConfig, outputs map[string]string) {
 	sourceBucket := outputs["SourceBucket"]
 	results := make(chan goroutineResult)
 	count := 0
@@ -390,7 +390,7 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	// Web server
 	count++
 	go func(c chan goroutineResult) {
-		_, err := deployFrontend(awsSession, accountID, sourceBucket, outputs, settings)
+		_, err := deployFrontend(awsSession, sourceBucket, outputs, settings)
 		c <- goroutineResult{summary: frontendStack, err: err}
 	}(results)
 

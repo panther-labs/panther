@@ -27,39 +27,20 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
-	"github.com/joho/godotenv"
 	"github.com/magefile/mage/sh"
 
 	"github.com/panther-labs/panther/tools/config"
 )
 
-const (
-	awsEnvFile = "out/.env.aws"
-)
-
 // Returns stack outputs
 func deployFrontend(
 	awsSession *session.Session,
-	accountID, bucket string,
+	bucket string,
 	bootstrapOutputs map[string]string,
 	settings *config.PantherConfig,
 ) (map[string]string, error) {
 
-	// Save .env file
-	if err := godotenv.Write(
-		map[string]string{
-			"AWS_REGION":                           *awsSession.Config.Region,
-			"AWS_ACCOUNT_ID":                       accountID,
-			"WEB_APPLICATION_GRAPHQL_API_ENDPOINT": bootstrapOutputs["GraphQLApiEndpoint"],
-			"WEB_APPLICATION_USER_POOL_ID":         bootstrapOutputs["UserPoolId"],
-			"WEB_APPLICATION_USER_POOL_CLIENT_ID":  bootstrapOutputs["AppClientId"],
-		},
-		awsEnvFile,
-	); err != nil {
-		return nil, fmt.Errorf("failed to write ENV variables to file %s: %v", awsEnvFile, err)
-	}
-
-	dockerImage, err := buildAndPushImageFromSource(awsSession, bootstrapOutputs["ImageRegistry"])
+	dockerImage, err := buildAndPushImageFromSource(awsSession, bootstrapOutputs["ImageRegistry"], "")
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +65,7 @@ func deployFrontend(
 }
 
 // Build a personalized docker image from source and push it to the private image repo of the user
-func buildAndPushImageFromSource(awsSession *session.Session, imageRegistry string) (string, error) {
+func buildAndPushImageFromSource(awsSession *session.Session, imageRegistry, tag string) (string, error) {
 	logger.Debug("deploy: requesting access to remote image repo")
 	response, err := ecr.New(awsSession).GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
 	if err != nil {
@@ -111,7 +92,10 @@ func buildAndPushImageFromSource(awsSession *session.Session, imageRegistry stri
 	}
 
 	localImageID := strings.Replace(dockerBuildOutput, "sha256:", "", 1)
-	remoteImage := imageRegistry + ":" + localImageID
+	if tag == "" {
+		tag = localImageID
+	}
+	remoteImage := imageRegistry + ":" + tag
 
 	if err = sh.Run("docker", "tag", localImageID, remoteImage); err != nil {
 		return "", fmt.Errorf("docker tag %s %s failed: %v", localImageID, remoteImage, err)

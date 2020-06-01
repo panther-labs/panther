@@ -18,16 +18,18 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Master template for deploying Panther Community
 
 Parameters:
-  # FirstUser settings are the only required parameters
-  FirstUserGivenName:
-    Type: String
-    Description: First (given) name of the initial Panther user
-  FirstUserFamilyName:
-    Type: String
-    Description: Family (last) name of the initial Panther user
+  # FirstUserEmail is the only required parameter
   FirstUserEmail:
     Type: String
     Description: Email of the initial Panther user
+  FirstUserGivenName:
+    Type: String
+    Description: First (given) name of the initial Panther user
+    Default: PantherUser
+  FirstUserFamilyName:
+    Type: String
+    Description: Family (last) name of the initial Panther user
+    Default: Community
 
   AccessLogsBucket:
     Type: String
@@ -36,6 +38,10 @@ Parameters:
   AlarmTopicArn:
     Type: String
     Description: An existing SNS topic for CloudWatch alarms. If not specified, one is created for you.
+    Default: ''
+  CertificateArn:
+    Type: String
+    Description: TLS certificate used by the web app. If not specified, a self-signed cert is created for you.
     Default: ''
   CloudWatchLogRetentionDays:
     Type: Number
@@ -69,6 +75,10 @@ Parameters:
     Description: Enable S3 access logging for all Panther buckets
     AllowedValues: [true, false]
     Default: true
+  ImageRegistry:
+    Type: String
+    Description: Docker image registry which stores web app images. Defaults to Panther public account
+    Default: 349240696275.dkr.ecr.us-east-1.amazonaws.com/panther-web
   InitialAnalysisPackUrls:
     Type: CommaDelimitedList
     Description: Initial Python analysis packs
@@ -312,6 +322,37 @@ Resources:
           Value: !FindInMap [Constants, Panther, Version]
         - Key: Stack
           Value: panther-onboard
+
+  Web:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: web_server.yml
+      Parameters:
+        AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
+        AppClientId: !GetAtt Bootstrap.Outputs.AppClientId
+        CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
+        CertificateArn: !Ref CertificateArn
+        ElbArn: !GetAtt Bootstrap.Outputs.LoadBalancerArn
+        ElbFullName: !GetAtt Bootstrap.Outputs.LoadBalancerFullName
+        ElbTargetGroup: !GetAtt Bootstrap.Outputs.LoadBalancerTargetGroup
+        Image: !Sub
+          - '${ImageRegistry}:${tag}'
+          - { tag: !FindInMap [Constants, Panther, Version] }
+        GraphQLApiEndpoint: !GetAtt Bootstrap.Outputs.GraphQLApiEndpoint
+        PantherVersion: !FindInMap [Constants, Panther, Version]
+        SecurityGroup: !GetAtt Bootstrap.Outputs.WebSecurityGroup
+        SubnetOneId: !GetAtt Bootstrap.Outputs.SubnetOneId
+        SubnetTwoId: !GetAtt Bootstrap.Outputs.SubnetTwoId
+        UserPoolId: !GetAtt Bootstrap.Outputs.UserPoolId
+      Tags:
+        - Key: Application
+          Value: Panther
+        - Key: PantherEdition
+          Value: Community
+        - Key: PantherVersion
+          Value: !FindInMap [Constants, Panther, Version]
+        - Key: Stack
+          Value: panther-web
 
 Outputs:
   GraphQlUrl:
