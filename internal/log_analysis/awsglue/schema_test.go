@@ -21,6 +21,7 @@ package awsglue
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"strconv"
 	"testing"
 
@@ -75,8 +76,12 @@ func TestInferJsonColumnsRemap(t *testing.T) {
 	expectedCols := []Column{
 		{Name: "Payload", Type: "struct<Field1:string,Field2:int,at_sign_remap:string>", Comment: "payload"}, // nolint
 	}
-	actualCols := InferJSONColumns(obj)
+	expectedStructFieldNames := []string{"Field1", "Field2", "at_sign_remap"}
+	actualCols, structFieldNames := InferJSONColumns(obj)
 	require.Equal(t, expectedCols, actualCols)
+	// Sorting is required before comparison since they can return in random order
+	sort.Strings(structFieldNames)
+	require.Equal(t, expectedStructFieldNames, structFieldNames)
 }
 
 func TestInferJsonColumns(t *testing.T) {
@@ -197,7 +202,7 @@ func TestInferJsonColumns(t *testing.T) {
 		To:   "bar",
 	}
 
-	excpectedCols := []Column{
+	expectedCols := []Column{
 		{Name: "BoolField", Type: "boolean", Comment: "test field", Required: true}, // test finding required tag
 		{Name: "stringField", Type: "string", Comment: "test field"},
 		{Name: "stringPtrField", Type: "string", Comment: "test field"},
@@ -229,23 +234,29 @@ func TestInferJsonColumns(t *testing.T) {
 		{Name: "CustomSliceField", Type: "baz", Comment: "test field"},
 		{Name: "CustomStructField", Type: "bar", Comment: "test field"},
 	}
+	expectedStructFieldNames := []string{"A", "B", "C", "Field1", "Field2", "InheritedField", "at_sign_remap"}
 
-	cols := InferJSONColumns(obj, customSimpleTypeMapping, customSliceTypeMapping, customStructTypeMapping)
+	cols, structFieldNames := InferJSONColumns(obj, customSimpleTypeMapping, customSliceTypeMapping, customStructTypeMapping)
 
 	// uncomment to see results
 	// for _, col := range cols {
 	// 	fmt.Printf(`{Name: \"%s\", Type: \"%s\",Comment: "test field"},\n`, col.Name, col.Type)
 	// }
-	assert.Equal(t, excpectedCols, cols, "Expected columns not found")
+	// Sorting before comparing, since order by vary
+	sort.Strings(structFieldNames)
+	assert.Equal(t, expectedCols, cols, "Expected columns not found")
+	assert.Equal(t, expectedStructFieldNames, structFieldNames)
 
 	// Test using interface
 	var testInterface TestInterface = &TestStruct{}
-	cols = InferJSONColumns(testInterface)
+	cols, structFieldNames = InferJSONColumns(testInterface)
 	assert.Equal(t, []Column{
 		{Name: "Field1", Type: "string", Comment: "test field"},
 		{Name: "Field2", Type: "int", Comment: "test field"},
 		{Name: "at_sign_remap", Type: "string", Comment: "remap field"},
 	}, cols, "Interface test failed")
+
+	assert.Equal(t, []string{}, structFieldNames)
 }
 
 type composedStruct struct {
@@ -266,11 +277,13 @@ func TestComposeStructs(t *testing.T) {
 		},
 		Bar: "bar",
 	}
-	cols := InferJSONColumns(&composition)
+	cols, structFieldNames := InferJSONColumns(&composition)
 	expectedColumns := []Column{
 		{Name: "Foo", Type: "string", Comment: "this is Foo field and it is awesome"},
 		{Name: "at_sign_remap", Type: "string", Comment: "this is Remap field and it's naughty"},
 		{Name: "Bar", Type: "string", Comment: "test field"},
 	}
+	expectedStructFieldNames := []string{}
 	require.Equal(t, expectedColumns, cols)
+	require.Equal(t, expectedStructFieldNames, structFieldNames)
 }

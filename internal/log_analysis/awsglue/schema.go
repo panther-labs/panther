@@ -135,7 +135,7 @@ type CustomMapping struct {
 }
 
 // Walk object, create columns using JSON Serde expected types, allow optional custom mappings
-func InferJSONColumns(obj interface{}, customMappings ...CustomMapping) (cols []Column) {
+func InferJSONColumns(obj interface{}, customMappings ...CustomMapping) ([]Column, []string) {
 	customMappingsTable := make(map[string]string)
 	for _, customMapping := range customMappings {
 		customMappingsTable[customMapping.From.String()] = customMapping.To
@@ -149,16 +149,30 @@ func InferJSONColumns(obj interface{}, customMappings ...CustomMapping) (cols []
 		objType = objType.Elem()
 	}
 
-	return inferJSONColumns(objType, customMappingsTable)
+	cols, names := inferJSONColumns(objType, customMappingsTable)
+
+	// Removing duplicates
+	stringSet := map[string]struct{}{}
+	for _, name := range names {
+		stringSet[name] = struct{}{}
+	}
+	structFieldNames := make([]string, 0)
+	for key := range stringSet {
+		structFieldNames = append(structFieldNames, key)
+	}
+
+	return cols, structFieldNames
 }
 
-func inferJSONColumns(t reflect.Type, customMappingsTable map[string]string) (cols []Column) {
+func inferJSONColumns(t reflect.Type, customMappingsTable map[string]string) (cols []Column, structFieldNames []string) {
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 		if field.Anonymous { // if composing a struct, treat fields as part of this struct
-			cols = append(cols, inferJSONColumns(field.Type, customMappingsTable)...)
+			nestedColumns, nestedFieldNames := inferJSONColumns(field.Type, customMappingsTable)
+			cols = append(cols, nestedColumns...)
+			structFieldNames = append(structFieldNames, nestedFieldNames...)
 		} else {
-			fieldName, glueType, comment, required, skip := inferStructFieldType(field, customMappingsTable)
+			fieldName, glueType, comment, nestedFieldNames, required, skip := inferStructFieldType(field, customMappingsTable)
 			if skip {
 				continue
 			}
@@ -176,13 +190,14 @@ func inferJSONColumns(t reflect.Type, customMappingsTable map[string]string) (co
 				Comment:  comment,
 				Required: required,
 			})
+			structFieldNames = append(structFieldNames, nestedFieldNames...)
 		}
 	}
-	return cols
+	return cols, structFieldNames
 }
 
 func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string]string) (fieldName, glueType, comment string,
-	required, skip bool) {
+	nestedFieldNames []string, required, skip bool) {
 
 	t := sf.Type
 
@@ -229,17 +244,19 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 		glueType = to
 		return
 	}
-
+	var structType string
 	switch t.Kind() { // NOTE: not all possible nestings have been implemented
 	case reflect.Slice:
 
 		sliceOfType := t.Elem()
 		switch sliceOfType.Kind() {
 		case reflect.Struct:
-			glueType = fmt.Sprintf("array<struct<%s>>", inferStruct(sliceOfType, customMappingsTable))
+			structType, nestedFieldNames = inferStruct(sliceOfType, customMappingsTable)
+			glueType = fmt.Sprintf("array<struct<%s>>", structType)
 			return
 		case reflect.Map:
-			glueType = fmt.Sprintf("array<%s>", inferMap(sliceOfType, customMappingsTable))
+			structType, nestedFieldNames = inferMap(sliceOfType, customMappingsTable)
+			glueType = fmt.Sprintf("array<%s>", structType)
 			return
 		default:
 			glueType = fmt.Sprintf("array<%s>", toGlueType(sliceOfType))
@@ -247,14 +264,15 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 		}
 
 	case reflect.Map:
-		return fieldName, inferMap(t, customMappingsTable), comment, required, skip
-
+		glueType, nestedFieldNames = inferMap(t, customMappingsTable)
+		return
 	case reflect.Struct:
 		if sf.Anonymous { // composed struct, fields part of enclosing struct
 			fieldName = ""
-			glueType = inferStruct(t, customMappingsTable)
+			glueType, nestedFieldNames = inferStruct(t, customMappingsTable)
 		} else {
-			glueType = fmt.Sprintf("struct<%s>", inferStruct(t, customMappingsTable))
+			structType, nestedFieldNames = inferStruct(t, customMappingsTable)
+			glueType = fmt.Sprintf("struct<%s>", structType)
 		}
 		return
 
@@ -271,35 +289,44 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 }
 
 // Recursively expand a struct
-func inferStruct(structType reflect.Type, customMappingsTable map[string]string) string { // return comma delimited
+// It returns the struct Glue definition and a slice of all the struct's field names (including nested field names)
+func inferStruct(structType reflect.Type, customMappingsTable map[string]string) (glueType string, structFieldNames []string) {
 	// recurse over components to get types
 	numFields := structType.NumField()
 	var keyPairs []string
 	for i := 0; i < numFields; i++ {
-		subFieldName, subFieldGlueType, _, _, subFieldSkip := inferStructFieldType(structType.Field(i), customMappingsTable)
-		if subFieldSkip {
+		subType := structType.Field(i)
+		subFieldName, subFieldGlueType, _, nestedFieldNames, _, skip := inferStructFieldType(subType, customMappingsTable)
+		structFieldNames = append(structFieldNames, nestedFieldNames...)
+		if skip {
 			continue
 		}
 		if subFieldName != "" {
+			structFieldNames = append(structFieldNames, subFieldName)
 			subFieldName += ":"
 		}
 		keyPairs = append(keyPairs, subFieldName+subFieldGlueType)
 	}
-	return strings.Join(keyPairs, ",")
+	glueType = strings.Join(keyPairs, ",")
+	return glueType, structFieldNames
 }
 
 // Recursively expand a map
-func inferMap(t reflect.Type, customMappingsTable map[string]string) (glueType string) {
+func inferMap(t reflect.Type, customMappingsTable map[string]string) (glueType string, structFieldNames []string) {
 	mapOfType := t.Elem()
 	if mapOfType.Kind() == reflect.Struct {
-		glueType = fmt.Sprintf("map<%s,struct<%s>>", t.Key(), inferStruct(mapOfType, customMappingsTable))
+		structGlueType, nestedStructFieldNames := inferStruct(mapOfType, customMappingsTable)
+		structFieldNames = append(structFieldNames, nestedStructFieldNames...)
+		glueType = fmt.Sprintf("map<%s,struct<%s>>", t.Key(), structGlueType)
 		return
 	} else if mapOfType.Kind() == reflect.Map {
-		glueType = fmt.Sprintf("map<%s,%s>", t.Key(), inferMap(mapOfType, customMappingsTable))
+		mapGlueType, nestedMapFieldNames := inferMap(mapOfType, customMappingsTable)
+		structFieldNames = append(structFieldNames, nestedMapFieldNames...)
+		glueType = fmt.Sprintf("map<%s,%s>", t.Key(), mapGlueType)
 		return
 	}
 	glueType = fmt.Sprintf("map<%s,%s>", t.Key(), toGlueType(mapOfType))
-	return
+	return glueType, structFieldNames
 }
 
 // Primitive mappings

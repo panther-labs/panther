@@ -35,6 +35,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	"github.com/panther-labs/panther/pkg/box"
 )
 
 type PartitionKey struct {
@@ -145,7 +146,7 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput 
 	}
 
 	// columns -> []*glue.Column
-	columns := InferJSONColumns(gm.eventStruct, GlueMappings...)
+	columns, structFieldNames := InferJSONColumns(gm.eventStruct, GlueMappings...)
 	if gm.dataType == models.RuleData { // append the columns added by the rule engine
 		columns = append(columns, RuleMatchColumns...)
 	}
@@ -168,6 +169,10 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput 
 	for _, column := range glueColumns {
 		descriptorParameters[fmt.Sprintf("mapping.%s", strings.ToLower(*column.Name))] = column.Name
 	}
+	// Add mapping for field names inside columns names. This is required when columns are case sensitive
+	for _, name := range structFieldNames {
+		descriptorParameters[fmt.Sprintf("mapping.%s", strings.ToLower(name))] = box.String(name)
+	}
 
 	return &glue.TableInput{
 		Name:          &gm.tableName,
@@ -179,7 +184,7 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput 
 			InputFormat:  aws.String("org.apache.hadoop.mapred.TextInputFormat"),
 			OutputFormat: aws.String("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"),
 			SerdeInfo: &glue.SerDeInfo{
-				SerializationLibrary: aws.String("org.apache.hive.hcatalog.data.JsonSerDe"),
+				SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
 				Parameters:           descriptorParameters,
 			},
 		},
