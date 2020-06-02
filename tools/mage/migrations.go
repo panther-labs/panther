@@ -56,7 +56,7 @@ func migrate(awsSession *session.Session, accountID string) {
 	// Enumerate the bootstrap stack to see if this migration is necessary.
 	clusterInBootstrap := false
 	listStackResources(cfnClient, aws.String(bootstrapStack), func(r *cfn.StackResourceSummary) bool {
-		if aws.StringValue(r.ResourceType) == "AWS::ECS::Cluster" {
+		if *r.ResourceType == "AWS::ECS::Cluster" {
 			clusterInBootstrap = true
 			return false // stop iterating
 		}

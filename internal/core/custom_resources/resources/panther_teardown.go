@@ -37,7 +37,7 @@ type PantherTeardownProperties struct {
 }
 
 func customPantherTeardown(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
-	resourceID := "custom:panther-teardown:singleton"
+	const resourceID = "custom:panther-teardown:singleton"
 
 	switch event.RequestType {
 	case cfn.RequestDelete:
