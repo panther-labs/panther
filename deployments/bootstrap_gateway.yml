@@ -34,7 +34,7 @@ Parameters:
     Description: Bucket created to hold Athena results
   ImageRegistryName:
     Type: String
-    Description: Name of the ECR repository hosting web images
+    Description: Name of the ECR repository hosting web images (blank when deploying from source)
   ProcessedDataBucket:
     Type: String
     Description: S3 bucket which stores processed logs

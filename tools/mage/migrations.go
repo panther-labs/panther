@@ -55,21 +55,20 @@ func migrate(awsSession *session.Session, accountID string) {
 	// In v1.4.0, the ECS cluster moved from the bootstrap stack to the web stack.
 	// Enumerate the bootstrap stack to see if this migration is necessary.
 	clusterInBootstrap := false
-	err := walkPantherStack(cfnClient, aws.String(bootstrapStack), func(r cfnResource) {
-		if aws.StringValue(r.Resource.ResourceType) == "AWS::ECS::Cluster" {
+	listStackResources(cfnClient, aws.String(bootstrapStack), func(r *cfn.StackResourceSummary) bool {
+		if aws.StringValue(r.ResourceType) == "AWS::ECS::Cluster" {
 			clusterInBootstrap = true
+			return false // stop iterating
 		}
+		return true
 	})
-	if err != nil {
-		// err == nil if the stack does not yet exist
-		logger.Fatalf("failed to walk bootstrap stack: %v", err)
-	}
+
 	if clusterInBootstrap {
 		// To delete the ECS cluster from bootstrap, the entire web stack has to be deleted first.
 		// There is no user data that needs to be preserved in that stack - it's stateless.
 		logger.Infof("migration: deleting stack %s so ECS::Cluster can be migrated out of %s",
 			frontendStack, bootstrapStack)
-		if err = deleteStack(cfnClient, aws.String(frontendStack)); err != nil {
+		if err := deleteStack(cfnClient, aws.String(frontendStack)); err != nil {
 			logger.Fatalf("failed to delete %s: %v", frontendStack, err)
 		}
 	}
@@ -89,21 +88,16 @@ func migrate(awsSession *session.Session, accountID string) {
 	// Normal user data is not affected, only self-onboarding (S3 access logs, GuardDuty).
 	// S3 should retry failed notifications for a short time in any case.
 	oldLogRole := false
-	err = walkPantherStack(cfnClient, aws.String(onboardStack), func(r cfnResource) {
-		if aws.StringValue(r.Resource.LogicalResourceId) == "LogProcessingRole" &&
-			aws.StringValue(r.Stack.StackName) == onboardStack && // not a nested stack
-			aws.StringValue(r.Resource.ResourceType) == "AWS::IAM::Role" {
-
+	listStackResources(cfnClient, aws.String(onboardStack), func(r *cfn.StackResourceSummary) bool {
+		if *r.LogicalResourceId == "LogProcessingRole" && *r.ResourceType == "AWS::IAM::Role" {
 			oldLogRole = true
+			return false // stop iterating
 		}
+		return true
 	})
-	if err != nil {
-		// err == nil if the stack does not yet exist
-		logger.Fatalf("failed to walk onboard stack: %v", err)
-	}
 	if oldLogRole {
 		logger.Infof("migration: deleting stack %s (will be rebuilt)", onboardStack)
-		if err = deleteStack(cfnClient, aws.String(onboardStack)); err != nil {
+		if err := deleteStack(cfnClient, aws.String(onboardStack)); err != nil {
 			logger.Fatalf("failed to delete %s: %v", onboardStack, err)
 		}
 	}
@@ -111,18 +105,16 @@ func migrate(awsSession *session.Session, accountID string) {
 	// In v1.4.0, the CloudWatch dashboards changed their logicalIDs, so the stack needs to be
 	// deleted before deploying or CF will fail with "dashboard already exists"
 	oldDashboard := false
-	err = walkPantherStack(cfnClient, aws.String(dashboardStack), func(r cfnResource) {
-		if strings.HasSuffix(aws.StringValue(r.Resource.LogicalResourceId), "AWSRegion") {
+	listStackResources(cfnClient, aws.String(dashboardStack), func(r *cfn.StackResourceSummary) bool {
+		if strings.HasSuffix(*r.LogicalResourceId, "AWSRegion") {
 			oldDashboard = true
+			return false // stop iterating
 		}
+		return true
 	})
-	if err != nil {
-		// err == nil if the stack does not yet exist
-		logger.Fatalf("failed to walk dashboard stack: %v", err)
-	}
 	if oldDashboard {
 		logger.Infof("migration: deleting stack %s (will be rebuilt)", dashboardStack)
-		if err = deleteStack(cfnClient, aws.String(dashboardStack)); err != nil {
+		if err := deleteStack(cfnClient, aws.String(dashboardStack)); err != nil {
 			logger.Fatalf("failed to delete %s: %v", dashboardStack, err)
 		}
 	}
