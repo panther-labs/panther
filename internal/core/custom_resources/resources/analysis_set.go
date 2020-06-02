@@ -50,7 +50,7 @@ func customAnalysisSet(_ context.Context, event cfn.Event) (string, map[string]i
 			return "", nil, err
 		}
 
-		httpClient := gatewayapi.GatewayClient(awsSession)
+		httpClient := gatewayapi.GatewayClient(getSession())
 		apiClient := client.NewHTTPClientWithConfig(nil, client.DefaultTransportConfig().
 			WithBasePath("/v1").WithHost(props.AnalysisAPIEndpoint))
 
