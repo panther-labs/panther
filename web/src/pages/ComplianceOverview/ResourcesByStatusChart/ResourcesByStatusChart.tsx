@@ -46,7 +46,7 @@ const ResourcesByStatusChart: React.FC<ResourcesByStatusChartProps> = ({ resourc
   return (
     <Flex height="100%">
       <ChartSummary total={totalResources} title="Total Resources" color="green200" />
-      <BarChart data={failingResourcesChartData} horizontal />
+      <BarChart data={failingResourcesChartData} alignment="horizontal" />
     </Flex>
   );
 };

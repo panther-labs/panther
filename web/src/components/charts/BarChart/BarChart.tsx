@@ -26,14 +26,14 @@ interface Data {
   color?: keyof typeof theme['colors'];
 }
 
-interface BarsProps {
+interface BarChartProps {
   data: Data[];
-  horizontal?: boolean;
-  hideLegend?: boolean;
+  alignment?: 'horizontal' | 'vertical';
 }
 
-const BarChart: React.FC<BarsProps> = ({ data, horizontal, hideLegend }) => {
+const BarChart: React.FC<BarChartProps> = ({ data, alignment = 'vertical' }) => {
   const container = React.useRef<HTMLDivElement>(null);
+  const horizontal = alignment === 'horizontal';
 
   React.useEffect(() => {
     // We are not allowed to put async function directly in useEffect. Instead, we should define
@@ -100,7 +100,6 @@ const BarChart: React.FC<BarsProps> = ({ data, horizontal, hideLegend }) => {
           },
         },
         legend: {
-          show: !hideLegend,
           type: 'scroll' as const,
           orient: 'vertical' as const,
           left: 'left',
