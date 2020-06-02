@@ -133,14 +133,13 @@ func deployPreCheck(awsRegion string) {
 		logger.Fatalf("go %s not supported, upgrade to 1.13+", version)
 	}
 
-	// Check the node version (must match the version in the web server)
-	const requiredNodeVersion = "v12.16" // web server has 12.16.1, to be exact
+	// Check the major node version
 	nodeVersion, err := sh.Output("node", "--version")
 	if err != nil {
 		logger.Fatalf("failed to check node version: %v", err)
 	}
-	if !strings.HasPrefix(strings.TrimSpace(nodeVersion), requiredNodeVersion) {
-		logger.Fatalf("node version must be %s.X, found %s", requiredNodeVersion, nodeVersion)
+	if !strings.HasPrefix(strings.TrimSpace(nodeVersion), "v12") {
+		logger.Fatalf("node version must be v12.x.x, found %s", nodeVersion)
 	}
 
 	// Make sure docker is running

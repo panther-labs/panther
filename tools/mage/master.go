@@ -25,14 +25,17 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
+	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 
 	"github.com/panther-labs/panther/tools/cfnparse"
 	"github.com/panther-labs/panther/tools/config"
 )
 
-// Deploy master template (deployments/master.yml)
-func Master() {
+type Master mg.Namespace
+
+// Deploy Deploy single master template (deployments/master.yml) nesting all other stacks
+func (Master) Deploy() {
 	awsSession, err := getSession()
 	if err != nil {
 		logger.Fatal(err)
@@ -110,6 +113,10 @@ func masterBuild(awsSession *session.Session, imgRegistry string) {
 	}
 	type m = map[string]interface{}
 	version := cfn["Mappings"].(m)["Constants"].(m)["Panther"].(m)["Version"].(string)
+
+	if version == "" {
+		logger.Fatal("Mappings:Constants:Panther:Version not found in deployments/master.yml")
+	}
 
 	dockerImage, err := buildAndPushImageFromSource(awsSession, imgRegistry, version)
 	if err != nil {
