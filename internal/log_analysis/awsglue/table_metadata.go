@@ -35,6 +35,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	"github.com/panther-labs/panther/pkg/box"
 )
 
 type PartitionKey struct {
@@ -145,7 +146,7 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput 
 	}
 
 	// columns -> []*glue.Column
-	columns := InferJSONColumns(gm.eventStruct, GlueMappings...)
+	columns, structFieldNames := InferJSONColumns(gm.eventStruct, GlueMappings...)
 	if gm.dataType == models.RuleData { // append the columns added by the rule engine
 		columns = append(columns, RuleMatchColumns...)
 	}
@@ -167,6 +168,10 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput 
 	// Add mapping for column names. This is required when columns are case sensitive
 	for _, column := range glueColumns {
 		descriptorParameters[fmt.Sprintf("mapping.%s", strings.ToLower(*column.Name))] = column.Name
+	}
+	// Add mapping for field names inside columns names. This is required when columns are case sensitive
+	for _, name := range structFieldNames {
+		descriptorParameters[fmt.Sprintf("mapping.%s", strings.ToLower(name))] = box.String(name)
 	}
 
 	return &glue.TableInput{

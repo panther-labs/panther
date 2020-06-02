@@ -67,6 +67,12 @@ Monitoring:
   TracingMode: ''
 
 Setup:
+  # The first Panther user. If left blank, you will be prompted for this when you deploy.
+  FirstUser:
+    GivenName: ''
+    FamilyName: ''
+    Email: ''
+
   # List of policy/rule sets to install if the existing ruleset is empty
   # (e.g. when Panther is first deployed).
   #

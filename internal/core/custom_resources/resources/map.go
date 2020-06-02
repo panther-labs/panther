@@ -24,6 +24,15 @@ import (
 
 // CustomResources map type names to their respective handler functions.
 var CustomResources = map[string]cfn.CustomResourceFunction{
+	// Install default Python rules/policies for a fresh deployment (singleton).
+	//
+	// Parameters:
+	//     AnaylsisApiEndpoint: string (required)
+	//     PackURLs:            list<string>
+	// Outputs: None
+	// PhysicalId: custom:analysis:init
+	"Custom::AnalysisSet": customAnalysisSet,
+
 	// CloudWatch alarms for API Gateway 5XX errors and high integration latency.
 	//
 	// Parameters:
@@ -102,6 +111,19 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// PhysicalId: custom:glue:update-tables
 	"Custom::UpdateGlueTables": customUpdateGlueTables,
 
+	// Add a GuardDuty publishing destination
+	//
+	// Parameters = guardduty.CreatePublishingDestinationInput
+	//    DetectorId:            string (required)
+	//    DestinationType:       string (required)
+	//    DestinationProperties:
+	//        DestinationArn:    string (required)
+	//        KmsKeyArn:         string
+	// Outputs:
+	//    DestinationId:         string
+	// PhysicalId: custom:guardduty:destination:$DETECTOR_ID:$DESTINATION_ID
+	"Custom::GuardDutyDestination": customGuardDutyDestination,
+
 	// Creates alarms for lambda errors, warning, throttles, duration, and memory
 	//
 	// Parameters:
@@ -126,6 +148,53 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// Outputs: None
 	// PhysicalId: custom:metric-filters:$LOG_GROUP_NAME
 	"Custom::LambdaMetricFilters": customLambdaMetricFilters,
+
+	// Update Panther organization settings
+	//
+	// Parameters = organization-api/models/GeneralSettings
+	//     DisplayName:           string
+	//     Email:                 string
+	//     ErrorReportingConsent: bool
+	// Outputs: None
+	// PhysicalId: custom:panther-settings:singleton
+	"Custom::PantherSettings": customPantherSettings,
+
+	// Invite a new user to Panther.
+	// Updates and deletes to this resource will also be reflected in Panther.
+	//
+	// Parameters:
+	//     GivenName:   string
+	//     FamilyName:  string
+	//     Email:       string (required)
+	// Outputs:
+	//     Email        string
+	//     UserId:      string
+	// PhysicalId: custom:panther-user:$USER_ID
+	"Custom::PantherUser": customPantherUser,
+
+	// Update notifications for an S3 bucket.
+	//
+	// Parameters = s3.PutBucketNotificationConfigurationInput
+	//     Bucket:                      string (required)
+	//     NotificationConfiguration:
+	//         TopicConfigurations:
+	//             - Events:            list<string>
+	//               TopicArn:          string (required)
+	// Outputs: None
+	// PhysicalId: custom:s3bucketnotification:$BUCKET_NAME
+	"Custom::S3BucketNotification": customS3BucketNotification,
+
+	// Panther adds itself as a cloud security and/or log processing source.
+	//
+	// Parameters:
+	//     AccountID:          string (required)
+	//     AuditLogsBucket:    string (required)
+	//     EnableCloudTrail:   bool (default: false)
+	//     EnableGuardDuty:    bool (default: false)
+	//     EnableS3AccessLogs: bool (default: false)
+	// Outputs: None
+	// PhysicalId: custom:self-registration:$ACCOUNT_ID
+	"Custom::SelfRegistration": customSelfRegistration,
 
 	// Creates an alarm for failed step function executions
 	//
