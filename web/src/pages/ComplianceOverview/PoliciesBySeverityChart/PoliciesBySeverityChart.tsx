@@ -17,19 +17,21 @@
  */
 
 import React from 'react';
-import { theme } from 'pouncejs';
+import { Flex, theme } from 'pouncejs';
+import sum from 'lodash-es/sum';
 import { capitalize, countPoliciesBySeverityAndStatus } from 'Helpers/utils';
-import DonutChart from 'Components/DonutChart';
 import map from 'lodash-es/map';
 import { OrganizationReportBySeverity } from 'Generated/schema';
+import BarChart from 'Components/charts/BarChart';
+import ChartSummary from 'Components/charts/ChartSummary';
 
 const severityToGrayscaleMapping: {
   [key in keyof OrganizationReportBySeverity]: keyof typeof theme['colors'];
 } = {
-  critical: 'grey500',
-  high: 'grey400',
-  medium: 'grey300',
-  low: 'grey200',
+  critical: 'red300',
+  high: 'orange300',
+  medium: 'yellow300',
+  low: 'grey300',
   info: 'grey100',
 };
 
@@ -38,6 +40,13 @@ interface PoliciesBySeverityChartData {
 }
 
 const PoliciesBySeverityChart: React.FC<PoliciesBySeverityChartData> = ({ policies }) => {
+  const severities = Object.keys(severityToGrayscaleMapping);
+  const totalPolicies = sum(
+    severities.map((severity: keyof OrganizationReportBySeverity) =>
+      countPoliciesBySeverityAndStatus(policies, severity, ['fail', 'error', 'pass'])
+    )
+  );
+
   const allPoliciesChartData = map(
     severityToGrayscaleMapping,
     (color, severity: keyof OrganizationReportBySeverity) => ({
@@ -48,7 +57,10 @@ const PoliciesBySeverityChart: React.FC<PoliciesBySeverityChartData> = ({ polici
   );
 
   return (
-    <DonutChart data={allPoliciesChartData} renderLabel={(data, index) => data[index].value} />
+    <Flex height="100%">
+      <ChartSummary total={totalPolicies} title="Total Policies" color="blue200" />
+      <BarChart data={allPoliciesChartData} />
+    </Flex>
   );
 };
 
