@@ -45,103 +45,18 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 )
 
-// Lazily build all AWS clients - each Lambda invocation usually needs at most 1 of these
 var (
-	awsSession *session.Session
+	awsSession = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(10)))
 
-	acmClient            acmiface.ACMAPI
-	athenaClient         athenaiface.AthenaAPI
-	cloudWatchClient     cloudwatchiface.CloudWatchAPI
-	cloudWatchLogsClient cloudwatchlogsiface.CloudWatchLogsAPI
-	cognitoClient        cognitoidentityprovideriface.CognitoIdentityProviderAPI
-	ecrClient            ecriface.ECRAPI
-	glueClient           glueiface.GlueAPI
-	guardDutyClient      guarddutyiface.GuardDutyAPI
-	iamClient            iamiface.IAMAPI
-	lambdaClient         lambdaiface.LambdaAPI
-	s3Client             s3iface.S3API
+	acmClient            acmiface.ACMAPI                                         = acm.New(awsSession)
+	athenaClient         athenaiface.AthenaAPI                                   = athena.New(awsSession)
+	cloudWatchClient     cloudwatchiface.CloudWatchAPI                           = cloudwatch.New(awsSession)
+	cloudWatchLogsClient cloudwatchlogsiface.CloudWatchLogsAPI                   = cloudwatchlogs.New(awsSession)
+	cognitoClient        cognitoidentityprovideriface.CognitoIdentityProviderAPI = cognitoidentityprovider.New(awsSession)
+	ecrClient            ecriface.ECRAPI                                         = ecr.New(awsSession)
+	glueClient           glueiface.GlueAPI                                       = glue.New(awsSession)
+	guardDutyClient      guarddutyiface.GuardDutyAPI                             = guardduty.New(awsSession)
+	iamClient            iamiface.IAMAPI                                         = iam.New(awsSession)
+	lambdaClient         lambdaiface.LambdaAPI                                   = lambda.New(awsSession)
+	s3Client             s3iface.S3API                                           = s3.New(awsSession)
 )
-
-func getSession() *session.Session {
-	if awsSession == nil {
-		awsSession = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(10)))
-	}
-	return awsSession
-}
-
-func getAcmClient() acmiface.ACMAPI {
-	if acmClient == nil {
-		acmClient = acm.New(getSession())
-	}
-	return acmClient
-}
-
-func getAthenaClient() athenaiface.AthenaAPI {
-	if athenaClient == nil {
-		athenaClient = athena.New(getSession())
-	}
-	return athenaClient
-}
-
-func getCloudWatchClient() cloudwatchiface.CloudWatchAPI {
-	if cloudWatchClient == nil {
-		cloudWatchClient = cloudwatch.New(getSession())
-	}
-	return cloudWatchClient
-}
-
-func getCloudWatchLogsClient() cloudwatchlogsiface.CloudWatchLogsAPI {
-	if cloudWatchLogsClient == nil {
-		cloudWatchLogsClient = cloudwatchlogs.New(getSession())
-	}
-	return cloudWatchLogsClient
-}
-
-func getCognitoClient() cognitoidentityprovideriface.CognitoIdentityProviderAPI {
-	if cognitoClient == nil {
-		cognitoClient = cognitoidentityprovider.New(getSession())
-	}
-	return cognitoClient
-}
-
-func getEcrClient() ecriface.ECRAPI {
-	if ecrClient == nil {
-		ecrClient = ecr.New(getSession())
-	}
-	return ecrClient
-}
-
-func getGuardDutyClient() guarddutyiface.GuardDutyAPI {
-	if guardDutyClient == nil {
-		guardDutyClient = guardduty.New(getSession())
-	}
-	return guardDutyClient
-}
-
-func getGlueClient() glueiface.GlueAPI {
-	if glueClient == nil {
-		glueClient = glue.New(getSession())
-	}
-	return glueClient
-}
-
-func getIamClient() iamiface.IAMAPI {
-	if iamClient == nil {
-		iamClient = iam.New(getSession())
-	}
-	return iamClient
-}
-
-func getLambdaClient() lambdaiface.LambdaAPI {
-	if lambdaClient == nil {
-		lambdaClient = lambda.New(getSession())
-	}
-	return lambdaClient
-}
-
-func getS3Client() s3iface.S3API {
-	if s3Client == nil {
-		s3Client = s3.New(getSession())
-	}
-	return s3Client
-}

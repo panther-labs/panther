@@ -17,30 +17,26 @@
  */
 
 import React from 'react';
-import { ScannedResources } from 'Generated/schema';
-import { Flex } from 'pouncejs';
-import BarChart from 'Components/charts/BarChart';
-import ChartSummary from 'Components/charts/ChartSummary';
+import { Box, Card, Flex, Icon, IconProps, Label } from 'pouncejs';
+import ErrorBoundary from 'Components/ErrorBoundary';
 
-interface ResourcesByPlatformProps {
-  resources: ScannedResources;
+interface BarChartWrapperProps {
+  title: string;
+  icon: IconProps['type'];
 }
 
-const ResourcesByPlatform: React.FC<ResourcesByPlatformProps> = ({ resources }) => {
-  const allResourcesChartData = [
-    {
-      value: resources.byType.length,
-      label: 'AWS',
-      color: 'grey300' as const,
-    },
-  ];
-
-  return (
-    <Flex height="100%">
-      <ChartSummary total={resources.byType.length} title="Resource Types" color="grey200" />
-      <BarChart data={allResourcesChartData} alignment="horizontal" />
+const BarChartWrapper: React.FC<BarChartWrapperProps> = ({ children, title, icon }) => (
+  <Card p={6} height={300}>
+    <Flex align="center" as="header" mb={6} color="grey500">
+      <Icon size="small" type={icon} mr={4} />
+      <Label size="large" as="h4">
+        {title}
+      </Label>
     </Flex>
-  );
-};
+    <Box height={220}>
+      <ErrorBoundary>{children}</ErrorBoundary>
+    </Box>
+  </Card>
+);
 
-export default React.memo(ResourcesByPlatform);
+export default BarChartWrapper;

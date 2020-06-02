@@ -109,7 +109,7 @@ func registerPantherAccount(props SelfRegistrationProperties) error {
 
 // make label regionally unique
 func genLogProcessingLabel() string {
-	return "panther-account-" + *getSession().Config.Region
+	return "panther-account-" + *awsSession.Config.Region
 }
 
 // Get the current Cloud Security and Log Processing self integrations from source-api.
@@ -118,7 +118,7 @@ func getSelfIntegrations(accountID string) (*models.SourceIntegration, *models.S
 	var listInput = &models.LambdaInput{
 		ListIntegrations: &models.ListIntegrationsInput{},
 	}
-	if err := genericapi.Invoke(getLambdaClient(), "panther-source-api", listInput, &listOutput); err != nil {
+	if err := genericapi.Invoke(lambdaClient, "panther-source-api", listInput, &listOutput); err != nil {
 		return nil, nil, fmt.Errorf("error calling source-api to list integrations: %v", err)
 	}
 
@@ -174,7 +174,7 @@ func putCloudSecurityIntegration(accountID string) error {
 		},
 	}
 
-	if err := genericapi.Invoke(getLambdaClient(), "panther-source-api", input, nil); err != nil &&
+	if err := genericapi.Invoke(lambdaClient, "panther-source-api", input, nil); err != nil &&
 		!strings.Contains(err.Error(), "already onboarded") {
 
 		return fmt.Errorf("error calling source-api to register account for cloud security: %v", err)
@@ -198,7 +198,7 @@ func putLogProcessingIntegration(accountID, auditBucket string, logTypes []strin
 		},
 	}
 
-	if err := genericapi.Invoke(getLambdaClient(), "panther-source-api", input, nil); err != nil &&
+	if err := genericapi.Invoke(lambdaClient, "panther-source-api", input, nil); err != nil &&
 		!strings.Contains(err.Error(), "already onboarded") {
 
 		return fmt.Errorf("error calling source-api to register account for log processing: %v", err)
@@ -220,7 +220,7 @@ func updateLogProcessingIntegration(source *models.SourceIntegration, logTypes [
 		},
 	}
 
-	if err := genericapi.Invoke(getLambdaClient(), "panther-source-api", input, nil); err != nil {
+	if err := genericapi.Invoke(lambdaClient, "panther-source-api", input, nil); err != nil {
 		return fmt.Errorf("error calling source-api to update account for log processing: %v", err)
 	}
 
@@ -262,5 +262,5 @@ func deleteIntegration(source *models.SourceIntegration) error {
 			IntegrationID: source.IntegrationID,
 		},
 	}
-	return genericapi.Invoke(getLambdaClient(), "panther-source-api", &input, nil)
+	return genericapi.Invoke(lambdaClient, "panther-source-api", &input, nil)
 }

@@ -133,18 +133,26 @@ func deployPreCheck(awsRegion string) {
 		logger.Fatalf("go %s not supported, upgrade to 1.13+", version)
 	}
 
+	// Check the major node version
+	nodeVersion, err := sh.Output("node", "--version")
+	if err != nil {
+		logger.Fatalf("failed to check node version: %v", err)
+	}
+	if !strings.HasPrefix(strings.TrimSpace(nodeVersion), "v12") {
+		logger.Fatalf("node version must be v12.x.x, found %s", nodeVersion)
+	}
+
 	// Make sure docker is running
-	if _, err := sh.Output("docker", "info"); err != nil {
+	if _, err = sh.Output("docker", "info"); err != nil {
 		logger.Fatalf("docker is not available: %v", err)
 	}
 
 	// Ensure swagger is available
-	if _, err := sh.Output(filepath.Join(setupDirectory, "swagger"), "version"); err != nil {
+	if _, err = sh.Output(filepath.Join(setupDirectory, "swagger"), "version"); err != nil {
 		logger.Fatalf("swagger is not available (%v): try 'mage setup'", err)
 	}
 
 	// Set global gitVersion, warn if not deploying a tagged release
-	var err error
 	gitVersion, err = sh.Output("git", "describe", "--tags")
 	if err != nil {
 		logger.Fatalf("git describe failed: %v", err)
@@ -164,7 +172,7 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 	build.Lambda() // Lambda compilation required for most stacks, including bootstrap-gateway
 
 	// Deploy bootstrap stacks
-	outputs, err := deployBoostrapStacks(awsSession, settings)
+	outputs, err := deployBootstrapStacks(awsSession, settings)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -173,7 +181,7 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 }
 
 // Deploy bootstrap and bootstrap-gateway and merge their outputs
-func deployBoostrapStacks(
+func deployBootstrapStacks(
 	awsSession *session.Session,
 	settings *config.PantherConfig,
 ) (map[string]string, error) {
@@ -237,7 +245,7 @@ func deployBoostrapStacks(
 // Build standard Python analysis layer in out/layer.zip if that file doesn't already exist.
 func buildLayer(libs []string) error {
 	if _, err := os.Stat(layerZipfile); err == nil {
-		logger.Debugf("%s already exists, not rebuilding layer")
+		logger.Debugf("%s already exists, not rebuilding layer", layerZipfile)
 		return nil
 	}
 

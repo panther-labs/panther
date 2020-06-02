@@ -63,7 +63,7 @@ func customPantherTeardown(_ context.Context, event cfn.Event) (string, map[stri
 // ECR repos can't be deleted in native CloudFormation unless they are empty.
 func destroyEcrRepo(repoName string) error {
 	zap.L().Info("removing ECR repository", zap.String("repo", repoName))
-	_, err := getEcrClient().DeleteRepository(&ecr.DeleteRepositoryInput{
+	_, err := ecrClient.DeleteRepository(&ecr.DeleteRepositoryInput{
 		// Force:true to remove images as well (easier than emptying the repo explicitly)
 		Force:          aws.Bool(true),
 		RepositoryName: &repoName,
@@ -78,14 +78,14 @@ func destroyEcrRepo(repoName string) error {
 
 // Remove layers created for the policy and rules engines
 func destroyLambdaLayers() error {
-	versions, err := getLambdaClient().ListLayerVersions(
+	versions, err := lambdaClient.ListLayerVersions(
 		&lambda.ListLayerVersionsInput{LayerName: aws.String(globalLayerName)})
 	if err != nil {
 		return fmt.Errorf("failed to remove layer %s: %v", globalLayerName, err)
 	}
 
 	for _, version := range versions.LayerVersions {
-		_, err := getLambdaClient().DeleteLayerVersion(&lambda.DeleteLayerVersionInput{
+		_, err := lambdaClient.DeleteLayerVersion(&lambda.DeleteLayerVersionInput{
 			LayerName:     aws.String(globalLayerName),
 			VersionNumber: version.Version,
 		})

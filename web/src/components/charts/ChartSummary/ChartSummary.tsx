@@ -16,4 +16,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './DonutChartWrapper';
+import React from 'react';
+import { Flex, Text, theme } from 'pouncejs';
+
+interface ChartSummaryProps {
+  total: number;
+  title: string;
+  color?: keyof typeof theme['colors'];
+}
+
+const ChartSummary: React.FC<ChartSummaryProps> = ({ total, title, color }) => {
+  return (
+    <Flex
+      width="50%"
+      flexDirection="column"
+      verticalAlign="middle"
+      alignItems="center"
+      align="center"
+      justify="center"
+      mb={10}
+      textAlign="center"
+    >
+      <Text size="large" color={color} fontWeight="bold" style={{ fontSize: 45 }}>
+        {total}
+      </Text>
+      <Text size="large">{title}</Text>
+    </Flex>
+  );
+};
+
+export default ChartSummary;

@@ -45,7 +45,7 @@ func deployFrontend(
 	settings *config.PantherConfig,
 ) (map[string]string, error) {
 
-	// Save .env file
+	// Save .env file (only used when running web server locally)
 	if err := godotenv.Write(
 		map[string]string{
 			"AWS_REGION":                           *awsSession.Config.Region,
@@ -59,7 +59,7 @@ func deployFrontend(
 		return nil, fmt.Errorf("failed to write ENV variables to file %s: %v", awsEnvFile, err)
 	}
 
-	dockerImage, err := buildAndPushImageFromSource(awsSession, bootstrapOutputs["ImageRegistryUri"])
+	dockerImage, err := buildAndPushImageFromSource(awsSession, bootstrapOutputs["ImageRegistryUri"], "")
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func deployFrontend(
 }
 
 // Build a personalized docker image from source and push it to the private image repo of the user
-func buildAndPushImageFromSource(awsSession *session.Session, imageRegistry string) (string, error) {
+func buildAndPushImageFromSource(awsSession *session.Session, imageRegistry, tag string) (string, error) {
 	logger.Debug("deploy: requesting access to remote image repo")
 	response, err := ecr.New(awsSession).GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
 	if err != nil {
@@ -111,7 +111,10 @@ func buildAndPushImageFromSource(awsSession *session.Session, imageRegistry stri
 	}
 
 	localImageID := strings.Replace(dockerBuildOutput, "sha256:", "", 1)
-	remoteImage := imageRegistry + ":" + localImageID
+	if tag == "" {
+		tag = localImageID
+	}
+	remoteImage := imageRegistry + ":" + tag
 
 	if err = sh.Run("docker", "tag", localImageID, remoteImage); err != nil {
 		return "", fmt.Errorf("docker tag %s %s failed: %v", localImageID, remoteImage, err)

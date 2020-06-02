@@ -35,6 +35,11 @@ import (
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
+const (
+	metadataTestBucket      = "testbucket"
+	metadataTestTablePrefix = "logs/table/"
+)
+
 var (
 	refTime             = time.Date(2020, 1, 3, 1, 1, 1, 0, time.UTC)
 	nonAWSError         = errors.New("nonAWSError") // nolint:golint
@@ -51,7 +56,7 @@ var (
 
 	testStorageDescriptor = &glue.StorageDescriptor{
 		Columns:  testColumns,
-		Location: aws.String("s3://testbucket/logs/table"),
+		Location: aws.String("s3://" + metadataTestBucket + "/" + metadataTestTablePrefix),
 		SerdeInfo: &glue.SerDeInfo{
 			SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
 			Parameters: map[string]*string{
@@ -221,13 +226,12 @@ func TestSyncPartitionsPartitionDoesntExistAndNoData(t *testing.T) {
 }
 
 func TestSyncPartitionsPartitionDoesntExistAndHasData(t *testing.T) {
-	var startDate time.Time // default unset
 	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
 
 	// test not exists error in GetPartition (should not fail)
 	glueClient := &testutils.GlueMock{}
 	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
-	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Times(24)
+	// confirm correct listing calls for some data found in S3
 	s3Client := &testutils.S3Mock{}
 	page := &s3.ListObjectsV2Output{
 		Contents: []*s3.Object{
@@ -236,9 +240,21 @@ func TestSyncPartitionsPartitionDoesntExistAndHasData(t *testing.T) {
 			},
 		},
 	}
-	s3Client.On("ListObjectsV2Pages", mock.Anything, mock.Anything).Return(page, nil).Times(24)      // some data found in S3
-	glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil).Times(24) // should create partitions
-	err := gm.SyncPartitions(glueClient, s3Client, startDate)
+	now := time.Now().UTC()
+	today := now.Truncate(time.Hour * 24)
+	endToday := now.Truncate(time.Hour * 24).Add(time.Hour * 23)
+	for partitionTime := today; !partitionTime.After(endToday); partitionTime = partitionTime.Add(time.Hour) {
+		expectedListPageInput := s3.ListObjectsV2Input{
+			Bucket:  aws.String(metadataTestBucket),
+			Prefix:  aws.String(metadataTestTablePrefix + GlueTableHourly.PartitionS3PathFromTime(partitionTime)),
+			MaxKeys: aws.Int64(1),
+		}
+		glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError)
+		s3Client.On("ListObjectsV2Pages", &expectedListPageInput, mock.Anything).Return(page, nil)
+		glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil)
+	}
+
+	err := gm.SyncPartitions(glueClient, s3Client, today)
 	assert.NoError(t, err)
 	glueClient.AssertExpectations(t)
 	s3Client.AssertExpectations(t)

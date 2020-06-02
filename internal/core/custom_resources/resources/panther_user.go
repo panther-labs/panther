@@ -85,7 +85,7 @@ func inviteUser(props PantherUserProperties) (string, error) {
 	}
 	var output models.InviteUserOutput
 
-	if err := genericapi.Invoke(getLambdaClient(), "panther-users-api", &input, &output); err != nil {
+	if err := genericapi.Invoke(lambdaClient, "panther-users-api", &input, &output); err != nil {
 		return "", err
 	}
 
@@ -101,12 +101,12 @@ func updateUser(userID string, props PantherUserProperties) error {
 			Email:      &props.Email,
 		},
 	}
-	return genericapi.Invoke(getLambdaClient(), "panther-users-api", &input, nil)
+	return genericapi.Invoke(lambdaClient, "panther-users-api", &input, nil)
 }
 
 func deleteUser(userID string) error {
 	input := models.LambdaInput{
 		RemoveUser: &models.RemoveUserInput{ID: &userID},
 	}
-	return genericapi.Invoke(getLambdaClient(), "panther-users-api", &input, nil)
+	return genericapi.Invoke(lambdaClient, "panther-users-api", &input, nil)
 }
