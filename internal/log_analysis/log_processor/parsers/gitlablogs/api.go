@@ -34,7 +34,6 @@ We are using the latest version of GitLab API logs.
 The previous version is available on https://docs.gitlab.com/ee/administration/logs.html#api_jsonlog`
 
 // API is a a GitLab log line from an internal API endpoint
-// TODO: Check more samples from [Lograge](https://github.com/roidrage/lograge/) JSON output to find missing fields
 // nolint: lll
 type API struct {
 	Time                  *timestamp.RFC3339 `json:"time" validate:"required" description:"The request timestamp"`
@@ -63,8 +62,6 @@ type API struct {
 	MetaRootNamespace     *string            `json:"meta.root_namespace,omitempty" description:"Root namespace"`
 	MetaCallerID          *string            `json:"meta.caller_id,omitempty" description:"Caller ID"`
 	// TODO: Check if API logs behave the same as Production logs when an exception occurs
-	// CorrelationID      *string      `json:"correlation_id,omitempty" description:"Request unique id across logs"`
-	// CPUSeconds         *float64     `json:"cpu_s,omitempty" description:"CPU seconds"` // TODO: Check what this field information is about
 	// ExceptionClass     *string      `json:"exception.class,omitempty" description:"Class name of the exception that occurred"`
 	// ExceptionMessage   *string      `json:"exception.message,omitempty" description:"Message of the exception that occurred"`
 	// ExceptionBacktrace []*string    `json:"exception.backtrace,omitempty" description:"Stack trace of the exception that occurred"`
