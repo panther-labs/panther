@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"fmt"
 	"html"
+	"math"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -108,6 +109,12 @@ func logDocs() error {
 		sort.Strings(logCategories[category])
 	}
 	sort.Strings(sortedCategories)
+
+	// allow large comment descriptions in the docs (by default they are clipped)
+	awsglue.MaxCommentLength = math.MaxInt32
+	defer func() {
+		awsglue.MaxCommentLength = awsglue.DefaultMaxCommentLength
+	}()
 
 	docCategory := func(category string) error {
 		var docsBuffer bytes.Buffer
