@@ -66,19 +66,22 @@ func deployFrontend(
 
 	params := map[string]string{
 		"AlarmTopicArn":              bootstrapOutputs["AlarmTopicArn"],
-		"SubnetOneId":                bootstrapOutputs["SubnetOneId"],
-		"SubnetTwoId":                bootstrapOutputs["SubnetTwoId"],
+		"AppClientId":                bootstrapOutputs["AppClientId"],
+		"CertificateArn":             settings.Web.CertificateArn,
+		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"ElbArn":                     bootstrapOutputs["LoadBalancerArn"],
 		"ElbFullName":                bootstrapOutputs["LoadBalancerFullName"],
 		"ElbTargetGroup":             bootstrapOutputs["LoadBalancerTargetGroup"],
-		"SecurityGroup":              bootstrapOutputs["WebSecurityGroup"],
+		"FirstUserGivenName":         settings.Setup.FirstUser.GivenName,
+		"FirstUserFamilyName":        settings.Setup.FirstUser.FamilyName,
+		"FirstUserEmail":             settings.Setup.FirstUser.Email,
 		"GraphQLApiEndpoint":         bootstrapOutputs["GraphQLApiEndpoint"],
-		"UserPoolId":                 bootstrapOutputs["UserPoolId"],
-		"AppClientId":                bootstrapOutputs["AppClientId"],
 		"Image":                      dockerImage,
-		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
-		"CertificateArn":             settings.Web.CertificateArn,
 		"PantherVersion":             gitVersion,
+		"SecurityGroup":              bootstrapOutputs["WebSecurityGroup"],
+		"SubnetOneId":                bootstrapOutputs["SubnetOneId"],
+		"SubnetTwoId":                bootstrapOutputs["SubnetTwoId"],
+		"UserPoolId":                 bootstrapOutputs["UserPoolId"],
 	}
 	return deployTemplate(awsSession, frontendTemplate, bucket, frontendStack, params)
 }
