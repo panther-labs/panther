@@ -1403,7 +1403,7 @@ Resources:
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
-      FieldName: getGlobalPythonModule
+      FieldName: listGlobalModules
       DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
       RequestMappingTemplate: |
         {
