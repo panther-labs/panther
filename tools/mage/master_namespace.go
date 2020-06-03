@@ -120,12 +120,12 @@ func (Master) Publish() {
 	if err == nil {
 		logger.Fatalf("%s already exists", s3URL)
 	}
-	if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != s3.ErrCodeNoSuchKey {
-		// Some error other than 'key does not exist'
+	if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != "NotFound" {
+		// Some error other than 'not found'
 		logger.Fatalf("failed to describe %s : %v", s3URL, err)
 	}
 
-	prompt := fmt.Sprintf("Are you sure you want to publish panther-community v%s? (yes|no)", version)
+	prompt := fmt.Sprintf("Are you sure you want to publish panther-community v%s? (yes|no) ", version)
 	result := promptUser(prompt, nonemptyValidator)
 	if strings.ToLower(result) != "yes" {
 		logger.Fatal("publish aborted")
@@ -138,8 +138,8 @@ func (Master) Publish() {
 	// Publish S3 assets and ECR docker image
 	pkg := masterPackage(awsSession, publicAssetsBucket, version, publicImageRepository)
 
-	// Publish final packaged template
-	if _, err := uploadFileToS3(awsSession, pkg, publicAssetsBucket, s3Key, nil); err != nil {
+	// Upload final packaged template
+	if _, err := uploadFileToS3(awsSession, pkg, publicAssetsBucket, s3Key); err != nil {
 		logger.Fatalf("failed to upload %s : %v", s3URL, err)
 	}
 

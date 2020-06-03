@@ -249,7 +249,7 @@ func buildLayer(libs []string) error {
 		return nil
 	}
 
-	logger.Info("deploy: downloading python libraries " + strings.Join(libs, ","))
+	logger.Info("downloading python libraries " + strings.Join(libs, ","))
 	if err := os.RemoveAll(layerSourceDir); err != nil {
 		return fmt.Errorf("failed to remove layer directory %s: %v", layerSourceDir, err)
 	}

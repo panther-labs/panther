@@ -326,6 +326,7 @@ Resources:
 
   Web:
     Type: AWS::CloudFormation::Stack
+    DependsOn: BootstrapGateway # custom-resources Lambda
     Properties:
       TemplateURL: web_server.yml
       Parameters:
