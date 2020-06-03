@@ -75,7 +75,7 @@ func migrate(awsSession *session.Session, accountID string) {
 
 	// In v1.4.0, the self-onboarding stackset was replaced with a simple nested template.
 	if err := deleteStackSet(cfnClient, &accountID, aws.String(realTimeEventsStackSet)); err != nil {
-		logger.Fatal(err)
+		logger.Warnf("failed to delete stack set %s: %v", realTimeEventsStackSet, err)
 	}
 
 	// In v1.4.0, the LogProcessingRole in onboard.yml was replaced with a reference to an aux template.

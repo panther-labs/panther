@@ -387,16 +387,15 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 		c <- goroutineResult{summary: logAnalysisStack, err: err}
 	}(results)
 
-	// Web server
-	count++
+	// Wait for stacks to finish.
+	// There are two stacks before and two stacks after.
+	logResults(results, "deploy", 3, count+2, len(allStacks))
+
 	go func(c chan goroutineResult) {
+		// Web stack requires core stack to exist first
 		_, err := deployFrontend(awsSession, accountID, sourceBucket, outputs, settings)
 		c <- goroutineResult{summary: frontendStack, err: err}
 	}(results)
-
-	// Wait for stacks to finish.
-	// There are two stacks before and one stack after
-	logResults(results, "deploy", 3, count+2, len(allStacks))
 
 	// Onboard Panther to scan itself
 	go func(c chan goroutineResult) {
@@ -429,7 +428,7 @@ func setFirstUser(awsSession *session.Session, settings *config.PantherConfig) {
 		return
 	}
 
-	var input models.ListUsersInput
+	input := models.LambdaInput{ListUsers: &models.ListUsersInput{}}
 	var output models.ListUsersOutput
 	err := genericapi.Invoke(lambda.New(awsSession), "panther-users-api", &input, &output)
 	if err != nil && !strings.Contains(err.Error(), lambda.ErrCodeResourceNotFoundException) {

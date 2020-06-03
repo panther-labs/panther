@@ -73,12 +73,11 @@ Setup:
     FamilyName: ''
     Email: ''
 
-  # List of policy/rule sets to install if the existing ruleset is empty
-  # (e.g. when Panther is first deployed).
+  # List of policy/rule sets to install when Panther is first deployed.
   #
-  # Entries can be URLs or file:// paths that point to a .zip file.
-  # If the analysis-api is non-empty, this setting is ignored and you can instead
-  # use the BulkUpload functionality from the web app to upload new or modified rule sets.
+  # Entries must be URLs that point to a .zip file.
+  # After the first deployment, you can use the BulkUpload functionality from the web app
+  # to upload new or modified rule sets.
   InitialAnalysisSets:
     - https://github.com/panther-labs/panther-analysis/releases/latest/download/panther-analysis-all.zip
 

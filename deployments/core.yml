@@ -68,11 +68,11 @@ Parameters:
   CompanyDisplayName:
     Type: String
     Description: Company name displayed in Settings > General
-    Default: ''
+    Default: AwesomeCo
   CompanyEmail:
     Type: String
     Description: Company email displayed in Settings > General (not used for anything today)
-    Default: ''
+    Default: user@example.com
   Debug:
     Type: String
     Description: Toggle debug logging
