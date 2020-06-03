@@ -159,6 +159,15 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// PhysicalId: custom:panther-settings:singleton
 	"Custom::PantherSettings": customPantherSettings,
 
+	// Teardown Panther assets which aren't managed by CloudFormation.
+	// This resource has no effect until it is deleted.
+	//
+	// Parameters:
+	//     EcrRepoName: string
+	// Outputs: None
+	// PhysicalId: custom:panther-teardown:singleton
+	"Custom::PantherTeardown": customPantherTeardown,
+
 	// Invite a new user to Panther.
 	// Updates and deletes to this resource will also be reflected in Panther.
 	//

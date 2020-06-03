@@ -44,10 +44,6 @@ func customUpdateGlueTables(_ context.Context, event cfn.Event) (string, map[str
 	const resourceID = "custom:glue:update-tables"
 	switch event.RequestType {
 	case cfn.RequestCreate, cfn.RequestUpdate:
-		glueClient := getGlueClient()
-		s3Client := getS3Client()
-		athenaClient := getAthenaClient()
-
 		var props UpdateGlueTablesProperties
 		if err := parseProperties(event.ResourceProperties, &props); err != nil {
 			return resourceID, nil, err
@@ -103,7 +99,6 @@ func customUpdateGlueTables(_ context.Context, event cfn.Event) (string, map[str
 		return resourceID, nil, nil
 
 	case cfn.RequestDelete:
-		glueClient := getGlueClient()
 		for pantherDatabase := range awsglue.PantherDatabases {
 			zap.L().Info("deleting database", zap.String("database", pantherDatabase))
 			_, err := awsglue.DeleteDatabase(glueClient, pantherDatabase)

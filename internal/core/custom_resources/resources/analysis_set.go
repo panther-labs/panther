@@ -50,7 +50,7 @@ func customAnalysisSet(_ context.Context, event cfn.Event) (string, map[string]i
 			return "", nil, err
 		}
 
-		httpClient := gatewayapi.GatewayClient(getSession())
+		httpClient := gatewayapi.GatewayClient(awsSession)
 		apiClient := client.NewHTTPClientWithConfig(nil, client.DefaultTransportConfig().
 			WithBasePath("/v1").WithHost(props.AnalysisAPIEndpoint))
 
@@ -96,7 +96,7 @@ func waitForPythonEngines() error {
 }
 
 func lambdaFunctionExists(name string) (bool, error) {
-	_, err := getLambdaClient().GetFunction(&lambda.GetFunctionInput{FunctionName: &name})
+	_, err := lambdaClient.GetFunction(&lambda.GetFunctionInput{FunctionName: &name})
 	if err == nil {
 		return true, nil
 	}

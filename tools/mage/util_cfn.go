@@ -45,12 +45,6 @@ var allStacks = []string{
 	onboardStack,
 }
 
-// Summary of a CloudFormation resource and its parent stack
-type cfnResource struct {
-	Resource *cfn.StackResourceSummary
-	Stack    *cfn.Stack
-}
-
 // Flatten CloudFormation stack outputs into a string map.
 func flattenStackOutputs(stack *cfn.Stack) map[string]string {
 	result := make(map[string]string, len(stack.Outputs))
@@ -186,73 +180,28 @@ func waitForStackUpdate(client *cfn.CloudFormation, stackName string) (*cfn.Stac
 		cfn.StackStatusUpdateInProgress, cfn.StackStatusUpdateCompleteCleanupInProgress)
 }
 
-// Traverse all Panther CFN resources (across all stacks) and apply the given handler.
-func walkPantherStacks(client *cfn.CloudFormation, handler func(cfnResource)) error {
-	logger.Info("scanning Panther CloudFormation stacks")
-	for _, stack := range allStacks {
-		if err := walkPantherStack(client, aws.String(stack), handler); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// List resources for a single Panther stack, recursively enumerating nested stacks as well.
+// List resources for a single stack, applying the given handler to each.
 //
-// The stackID can be the stack name or arn and the stack must be tagged with "Application:Panther"
-func walkPantherStack(client *cfn.CloudFormation, stackID *string, handler func(cfnResource)) error {
-	logger.Debugf("enumerating stack %s", *stackID)
-	detail, err := client.DescribeStacks(&cfn.DescribeStacksInput{StackName: stackID})
-	if err != nil {
-		if errStackDoesNotExist(err) {
-			logger.Debugf("stack %s does not exist", *stackID)
-			return nil
-		}
-
-		return fmt.Errorf("failed to describe stack %s: %v", *stackID, err)
-	}
-
-	// Double-check the stack is tagged with Application:Panther
-	stack := detail.Stacks[0]
-	foundTag := false
-	for _, tag := range stack.Tags {
-		if aws.StringValue(tag.Key) == "Application" && aws.StringValue(tag.Value) == "Panther" {
-			foundTag = true
-			break
-		}
-	}
-
-	if !foundTag {
-		logger.Warnf("skipping stack %s: no 'Application=Panther' tag found", *stackID)
-		return nil
-	}
-
-	// List stack resources
+// The stackID can be the stack name or arn.
+func listStackResources(client *cfn.CloudFormation, stackID *string, handler func(*cfn.StackResourceSummary) bool) {
 	input := &cfn.ListStackResourcesInput{StackName: stackID}
-	var nestedErr error
-	err = client.ListStackResourcesPages(input, func(page *cfn.ListStackResourcesOutput, isLast bool) bool {
+	err := client.ListStackResourcesPages(input, func(page *cfn.ListStackResourcesOutput, isLast bool) bool {
 		for _, summary := range page.StackResourceSummaries {
-			handler(cfnResource{Resource: summary, Stack: stack})
-			if aws.StringValue(summary.ResourceType) == "AWS::CloudFormation::Stack" &&
-				aws.StringValue(summary.ResourceStatus) != cfn.ResourceStatusDeleteComplete {
-
-				// Recurse into nested stack
-				if nestedErr = walkPantherStack(client, summary.PhysicalResourceId, handler); nestedErr != nil {
-					return false // stop paging, handle error outside closure
-				}
+			if !handler(summary) {
+				return false
 			}
 		}
 		return true // keep paging
 	})
 
-	if err != nil {
-		return fmt.Errorf("failed to list stack resources for %s: %v", *stackID, err)
-	}
-	if nestedErr != nil {
-		return nestedErr
+	if errStackDoesNotExist(err) {
+		logger.Debugf("stack %s does not exist", *stackID)
+		return
 	}
 
-	return nil
+	if err != nil {
+		logger.Fatalf("failed to list stack resources for %s: %v", *stackID, err)
+	}
 }
 
 // Log failed resources from the stack's event history.

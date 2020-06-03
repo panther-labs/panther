@@ -32,6 +32,9 @@ Parameters:
   AthenaResultsBucket:
     Type: String
     Description: Bucket created to hold Athena results
+  ImageRegistryName:
+    Type: String
+    Description: Name of the ECR repository hosting web images (blank when deploying from source)
   ProcessedDataBucket:
     Type: String
     Description: S3 bucket which stores processed logs
@@ -146,6 +149,9 @@ Resources:
               Action: cognito-idp:SetUserPoolMfaConfig
               Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}
             - Effect: Allow
+              Action: ecr:DeleteRepository
+              Resource: !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ImageRegistryName}
+            - Effect: Allow
               Action: execute-api:Invoke
               Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApi}/v1/POST/upload
             - Effect: Allow
@@ -198,6 +204,12 @@ Resources:
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-users-api
             - Effect: Allow
+              Action: lambda:DeleteLayerVersion
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:panther-engine-globals:*
+            - Effect: Allow
+              Action: lambda:ListLayerVersions
+              Resource: '*'
+            - Effect: Allow
               Action:
                 - logs:DeleteMetricFilter
                 - logs:PutMetricFilter
@@ -238,6 +250,15 @@ Resources:
       FunctionTimeoutSec: !FindInMap [Functions, CustomResource, Timeout]
       LoggedWarnThreshold: 1
       ThrottleThreshold: 0
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+
+  CustomTeardown:
+    # When deleted, this resource will remove Panther assets added outside of CloudFormation:
+    #   - ECR images
+    #   - Lambda layers
+    Type: Custom::PantherTeardown
+    Properties:
+      EcrRepoName: !Ref ImageRegistryName
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
   # Alarms for SNS topics in the bootstrap stack

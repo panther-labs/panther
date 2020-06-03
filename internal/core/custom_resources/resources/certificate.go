@@ -129,7 +129,7 @@ func importCert(cert, privateKey []byte) (string, error) {
 }
 
 func importAcmCert(cert, privateKey []byte) (string, error) {
-	output, err := getAcmClient().ImportCertificate(&acm.ImportCertificateInput{
+	output, err := acmClient.ImportCertificate(&acm.ImportCertificateInput{
 		Certificate: cert,
 		PrivateKey:  privateKey,
 		Tags: []*acm.Tag{
@@ -147,9 +147,9 @@ func importAcmCert(cert, privateKey []byte) (string, error) {
 }
 
 func importIamCert(cert, privateKey []byte) (string, error) {
-	output, err := getIamClient().UploadServerCertificate(&iam.UploadServerCertificateInput{
+	output, err := iamClient.UploadServerCertificate(&iam.UploadServerCertificateInput{
 		CertificateBody: aws.String(string(cert)),
-		Path:            aws.String("/panther/" + *getSession().Config.Region + "/"),
+		Path:            aws.String("/panther/" + *awsSession.Config.Region + "/"),
 		PrivateKey:      aws.String(string(privateKey)),
 		ServerCertificateName: aws.String(
 			"PantherCertificate-" + time.Now().Format("2006-01-02T15-04-05")),
@@ -189,7 +189,7 @@ func deleteCert(certArn string) error {
 		input := &acm.DeleteCertificateInput{CertificateArn: &certArn}
 
 		deleteFunc := func() error {
-			_, err := getAcmClient().DeleteCertificate(input)
+			_, err := acmClient.DeleteCertificate(input)
 			if err == nil {
 				return nil
 			}
@@ -223,7 +223,7 @@ func deleteCert(certArn string) error {
 		input := &iam.DeleteServerCertificateInput{ServerCertificateName: &name}
 
 		deleteFunc := func() error {
-			_, err := getIamClient().DeleteServerCertificate(input)
+			_, err := iamClient.DeleteServerCertificate(input)
 			if err == nil {
 				return nil
 			}
