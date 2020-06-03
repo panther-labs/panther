@@ -1,3 +1,4 @@
+pip==20.1.1
 aws-sam-cli==0.48.0
 bandit==1.6.2
 boto3==1.12.22
