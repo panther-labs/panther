@@ -23,7 +23,7 @@ import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
-import { LogIntegrationsEnum } from 'Source/constants';
+import { LogIntegrationsEnum, PANTHER_USER_ID } from 'Source/constants';
 
 interface LogSourceTableRowOptionsProps {
   source: LogIntegration;
@@ -42,6 +42,12 @@ const LogSourceTableRowOptions: React.FC<LogSourceTableRowOptionsProps> = ({ sou
       castedSource = source as S3LogIntegration;
       description = `Deleting this source will not delete the associated Cloudformation stack. You will need to manually delete the stack ${castedSource.stackName} from the AWS Account ${castedSource.awsAccountId}`;
   }
+
+  const isCreatedByPanther = source.createdBy === PANTHER_USER_ID;
+  if (isCreatedByPanther) {
+    return null;
+  }
+
   return (
     <Dropdown
       trigger={
