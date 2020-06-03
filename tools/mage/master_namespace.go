@@ -19,17 +19,26 @@ package mage
  */
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 
 	"github.com/panther-labs/panther/tools/cfnparse"
 	"github.com/panther-labs/panther/tools/config"
+)
+
+const (
+	publicAssetsBucket    = "panther-community"
+	publicImageRepository = "349240696275.dkr.ecr.us-east-1.amazonaws.com/panther-community"
 )
 
 type Master mg.Namespace
@@ -41,14 +50,9 @@ func (Master) Deploy() {
 		logger.Fatal(err)
 	}
 	region := *awsSession.Config.Region
-	bucket, firstUserEmail, ecrRegistry := masterPreCheck(awsSession)
+	bucket, firstUserEmail, ecrRegistry := masterDeployPreCheck(awsSession)
 
-	masterBuild(awsSession, ecrRegistry)
-
-	pkg, err := samPackage(region, "deployments/master.yml", bucket)
-	if err != nil {
-		logger.Fatal(err)
-	}
+	pkg := masterPackage(awsSession, bucket, getMasterVersion(), ecrRegistry)
 
 	err = sh.RunV(filepath.Join(pythonVirtualEnvPath, "bin", "sam"), "deploy",
 		"--capabilities", "CAPABILITY_IAM", "CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND",
@@ -64,7 +68,7 @@ func (Master) Deploy() {
 // Ensure environment is configured correctly for the master template.
 //
 // Returns bucket, firstUserEmail, ecrRegistry
-func masterPreCheck(awsSession *session.Session) (string, string, string) {
+func masterDeployPreCheck(awsSession *session.Session) (string, string, string) {
 	deployPreCheck(*awsSession.Config.Region)
 
 	_, err := cloudformation.New(awsSession).DescribeStacks(
@@ -90,8 +94,62 @@ func masterPreCheck(awsSession *session.Session) (string, string, string) {
 	return bucket, firstUserEmail, ecrRegistry
 }
 
-// Build assets needed for the master template.
-func masterBuild(awsSession *session.Session, imgRegistry string) {
+// Publish Publish a new version of Panther to the public account
+func (Master) Publish() {
+	awsSession, err := getSession()
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	region := *awsSession.Config.Region
+	if region != "us-east-1" {
+		logger.Fatal("AWS region must be us-east-1 for publishing")
+	}
+
+	deployPreCheck(region)
+	version := getMasterVersion()
+	s3Key := fmt.Sprintf("v%s/panther.yml", version)
+	s3URL := fmt.Sprintf("s3://%s/%s", publicAssetsBucket, s3Key) // just for logging
+
+	// Check if this version already exists - it's easy to forget to update the version
+	// in the template file and we don't want to overwrite a previous version.
+	_, err = s3.New(awsSession).HeadObject(&s3.HeadObjectInput{
+		Bucket: aws.String(publicAssetsBucket),
+		Key:    &s3Key,
+	})
+	if err == nil {
+		logger.Fatalf("%s already exists", s3URL)
+	}
+	if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != s3.ErrCodeNoSuchKey {
+		// Some error other than 'key does not exist'
+		logger.Fatalf("failed to describe %s : %v", s3URL, err)
+	}
+
+	prompt := fmt.Sprintf("Are you sure you want to publish panther-community v%s? (yes|no)", version)
+	result := promptUser(prompt, nonemptyValidator)
+	if strings.ToLower(result) != "yes" {
+		logger.Fatal("publish aborted")
+	}
+
+	// To be safe, always clean and reset the repo before building the assets
+	Clean()
+	Setup()
+
+	// Publish S3 assets and ECR docker image
+	pkg := masterPackage(awsSession, publicAssetsBucket, version, publicImageRepository)
+
+	// Publish final packaged template
+	if _, err := uploadFileToS3(awsSession, pkg, publicAssetsBucket, s3Key, nil); err != nil {
+		logger.Fatalf("failed to upload %s : %v", s3URL, err)
+	}
+
+	logger.Infof("Successfully published %s", s3URL)
+}
+
+// Package assets needed for the master template.
+//
+// Returns the path to the final generated template.
+func masterPackage(awsSession *session.Session, bucket, pantherVersion, imgRegistry string) string {
 	build.API()
 	build.Cfn()
 	build.Lambda()
@@ -106,7 +164,22 @@ func masterBuild(awsSession *session.Session, imgRegistry string) {
 		logger.Fatal(err)
 	}
 
-	// Use the version from the master template for the docker image tag
+	dockerImage, err := buildAndPushImageFromSource(awsSession, imgRegistry, pantherVersion)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	logger.Infof("successfully published docker image %s", dockerImage)
+
+	pkg, err := samPackage(*awsSession.Config.Region, "deployments/master.yml", bucket)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	return pkg
+}
+
+// Get the Panther version indicated in the master template.
+func getMasterVersion() string {
 	cfn, err := cfnparse.ParseTemplate("deployments/master.yml")
 	if err != nil {
 		logger.Fatal(err)
@@ -118,10 +191,5 @@ func masterBuild(awsSession *session.Session, imgRegistry string) {
 		logger.Fatal("Mappings:Constants:Panther:Version not found in deployments/master.yml")
 	}
 
-	dockerImage, err := buildAndPushImageFromSource(awsSession, imgRegistry, version)
-	if err != nil {
-		logger.Fatal(err)
-	}
-
-	logger.Infof("successfully published docker image %s", dockerImage)
+	return version
 }
