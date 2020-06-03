@@ -149,7 +149,9 @@ Resources:
               Action: cognito-idp:SetUserPoolMfaConfig
               Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}
             - Effect: Allow
-              Action: ecr:DeleteRepository
+              Action:
+                - ecr:BatchDeleteImage
+                - ecr:DescribeImages
               Resource: !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ImageRegistryName}
             - Effect: Allow
               Action: execute-api:Invoke

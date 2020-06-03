@@ -47,7 +47,7 @@ func customPantherTeardown(_ context.Context, event cfn.Event) (string, map[stri
 		}
 
 		if props.EcrRepoName != "" {
-			if err := destroyEcrRepo(props.EcrRepoName); err != nil {
+			if err := emptyEcrRepo(props.EcrRepoName); err != nil {
 				return resourceID, nil, err
 			}
 		}
@@ -61,19 +61,49 @@ func customPantherTeardown(_ context.Context, event cfn.Event) (string, map[stri
 }
 
 // ECR repos can't be deleted in native CloudFormation unless they are empty.
-func destroyEcrRepo(repoName string) error {
-	zap.L().Info("removing ECR repository", zap.String("repo", repoName))
-	_, err := ecrClient.DeleteRepository(&ecr.DeleteRepositoryInput{
-		// Force:true to remove images as well (easier than emptying the repo explicitly)
-		Force:          aws.Bool(true),
-		RepositoryName: &repoName,
+func emptyEcrRepo(repoName string) error {
+	zap.L().Info("emptying ECR repository", zap.String("repo", repoName))
+
+	input := &ecr.DescribeImagesInput{RepositoryName: &repoName}
+	var imageDigests []string
+	err := ecrClient.DescribeImagesPages(input, func(page *ecr.DescribeImagesOutput, isLast bool) bool {
+		for _, img := range page.ImageDetails {
+			imageDigests = append(imageDigests, *img.ImageDigest)
+		}
+		return true
 	})
 
-	if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == ecr.ErrCodeRepositoryNotFoundException {
-		// repo doesn't exist - that's fine, nothing to do here
-		err = nil
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == ecr.ErrCodeRepositoryNotFoundException {
+			// Repo doesn't exist, then we're good!
+			err = nil
+		}
+		return err
 	}
-	return err
+
+	if len(imageDigests) == 0 {
+		return nil
+	}
+
+	batchInput := &ecr.BatchDeleteImageInput{
+		ImageIds:       make([]*ecr.ImageIdentifier, 0, len(imageDigests)),
+		RepositoryName: &repoName,
+	}
+
+	for _, digest := range imageDigests {
+		batchInput.ImageIds = append(batchInput.ImageIds,
+			&ecr.ImageIdentifier{ImageDigest: aws.String(digest)})
+	}
+
+	response, err := ecrClient.BatchDeleteImage(batchInput)
+	if err != nil {
+		return err
+	}
+	if len(response.Failures) > 0 {
+		return fmt.Errorf("%d ECR images failed to delete", len(response.Failures))
+	}
+
+	return nil
 }
 
 // Remove layers created for the policy and rules engines
