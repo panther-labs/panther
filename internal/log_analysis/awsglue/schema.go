@@ -35,12 +35,14 @@ import (
 )
 
 const (
-	maxCommentLength = 255 // this is the maximum size for a column comment (clip if larger)
+	DefaultMaxCommentLength = 255
 
 	GlueTimestampType = "timestamp"
 )
 
 var (
+	// MaxCommentLength is the maximum size for a column comment (clip if larger), public var so it can be set to control output
+	MaxCommentLength = DefaultMaxCommentLength
 
 	// GlueMappings for custom Panther types.
 	GlueMappings = []CustomMapping{
@@ -182,24 +184,29 @@ func inferJSONColumns(t reflect.Type, customMappingsTable map[string]string) (co
 			if skip {
 				continue
 			}
-			comment = strings.TrimSpace(comment)
-			if len(comment) == 0 {
-				panic(fmt.Sprintf("failed to generate glue type for %s: %s does not have the required associated 'description' tag",
-					t.String(), fieldName))
-			}
-			if len(comment) > maxCommentLength { // clip
-				comment = comment[:maxCommentLength-3] + "..."
-			}
+
 			cols = append(cols, Column{
 				Name:     fieldName,
 				Type:     glueType,
-				Comment:  comment,
+				Comment:  clipComment(t, fieldName, comment), // avoid arbitrarily large comments that can break things
 				Required: required,
 			})
 			structFieldNames = append(structFieldNames, nestedFieldNames...)
 		}
 	}
 	return cols, structFieldNames
+}
+
+func clipComment(t reflect.Type, fieldName, comment string) string {
+	comment = strings.TrimSpace(comment)
+	if len(comment) == 0 {
+		panic(fmt.Sprintf("failed to generate glue type for %s: %s does not have the required associated 'description' tag",
+			t.String(), fieldName))
+	}
+	if len(comment) > MaxCommentLength { // clip
+		comment = comment[:MaxCommentLength-3] + "..."
+	}
+	return comment
 }
 
 func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string]string) (fieldName, glueType, comment string,
