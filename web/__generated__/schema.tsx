@@ -1,21 +1,3 @@
-/**
- * Panther is a Cloud-Native SIEM for the Modern Security Team.
- * Copyright (C) 2020 Panther Labs Inc
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
 export type Maybe<T> = T | null;
 export type RequireFields<T, K extends keyof T> = { [X in Exclude<keyof T, K>]?: T[X] } &
@@ -48,6 +30,11 @@ export type AddComplianceIntegrationInput = {
   integrationLabel: Scalars['String'];
   remediationEnabled?: Maybe<Scalars['Boolean']>;
   cweEnabled?: Maybe<Scalars['Boolean']>;
+};
+
+export type AddGlobalModuleInput = {
+  description: Scalars['String'];
+  body: Scalars['String'];
 };
 
 export type AddPolicyInput = {
@@ -176,6 +163,10 @@ export enum ComplianceStatusEnum {
   Fail = 'FAIL',
   Pass = 'PASS',
 }
+
+export type DeleteGlobalPythonModuleInput = {
+  id: Scalars['ID'];
+};
 
 export type DeletePolicyInput = {
   policies?: Maybe<Array<Maybe<DeletePolicyInputItem>>>;
@@ -311,8 +302,8 @@ export type GithubConfigInput = {
   token: Scalars['String'];
 };
 
-export type GlobalModuleDetails = {
-  __typename?: 'GlobalModuleDetails';
+export type GlobalModule = {
+  __typename?: 'GlobalModule';
   body: Scalars['String'];
   description: Scalars['String'];
   id: Scalars['ID'];
@@ -493,11 +484,13 @@ export type Mutation = {
   addS3LogIntegration: S3LogIntegration;
   addPolicy?: Maybe<PolicyDetails>;
   addRule?: Maybe<RuleDetails>;
+  addGlobalPythonlModule?: Maybe<GlobalModule>;
   deleteDestination?: Maybe<Scalars['Boolean']>;
   deleteComplianceIntegration?: Maybe<Scalars['Boolean']>;
   deleteLogIntegration?: Maybe<Scalars['Boolean']>;
   deletePolicy?: Maybe<Scalars['Boolean']>;
   deleteRule?: Maybe<Scalars['Boolean']>;
+  deleteGlobalPythonModule?: Maybe<Scalars['Boolean']>;
   deleteUser?: Maybe<Scalars['Boolean']>;
   inviteUser: User;
   remediateResource?: Maybe<Scalars['Boolean']>;
@@ -512,7 +505,7 @@ export type Mutation = {
   updateRule?: Maybe<RuleDetails>;
   updateUser: User;
   uploadPolicies?: Maybe<UploadPoliciesResponse>;
-  updateGlobalPythonlModule?: Maybe<GlobalModuleDetails>;
+  updateGlobalPythonlModule?: Maybe<GlobalModule>;
 };
 
 export type MutationAddDestinationArgs = {
@@ -535,6 +528,10 @@ export type MutationAddRuleArgs = {
   input: AddRuleInput;
 };
 
+export type MutationAddGlobalPythonlModuleArgs = {
+  input: AddGlobalModuleInput;
+};
+
 export type MutationDeleteDestinationArgs = {
   id: Scalars['ID'];
 };
@@ -553,6 +550,10 @@ export type MutationDeletePolicyArgs = {
 
 export type MutationDeleteRuleArgs = {
   input: DeleteRuleInput;
+};
+
+export type MutationDeleteGlobalPythonModuleArgs = {
+  input: DeleteGlobalPythonModuleInput;
 };
 
 export type MutationDeleteUserArgs = {
@@ -746,12 +747,13 @@ export type Query = {
   resource?: Maybe<ResourceDetails>;
   resources?: Maybe<ListResourcesResponse>;
   resourcesForPolicy?: Maybe<ListComplianceItemsResponse>;
-  getGlobalPythonModule?: Maybe<GlobalModuleDetails>;
+  getGlobalPythonModule?: Maybe<GlobalModule>;
   policy?: Maybe<PolicyDetails>;
   policies?: Maybe<ListPoliciesResponse>;
   policiesForResource?: Maybe<ListComplianceItemsResponse>;
   listComplianceIntegrations: Array<ComplianceIntegration>;
   listLogIntegrations: Array<LogIntegration>;
+  listGlobalModules: Array<GlobalModule>;
   organizationStats?: Maybe<OrganizationStatsResponse>;
   rule?: Maybe<RuleDetails>;
   rules?: Maybe<ListRulesResponse>;
@@ -1208,7 +1210,7 @@ export type ResolversTypes = {
   ActiveSuppressCount: ResolverTypeWrapper<ActiveSuppressCount>;
   ComplianceStatusCounts: ResolverTypeWrapper<ComplianceStatusCounts>;
   GetGlobalModuleInput: GetGlobalModuleInput;
-  GlobalModuleDetails: ResolverTypeWrapper<GlobalModuleDetails>;
+  GlobalModule: ResolverTypeWrapper<GlobalModule>;
   GetPolicyInput: GetPolicyInput;
   PolicyDetails: ResolverTypeWrapper<PolicyDetails>;
   PolicyUnitTest: ResolverTypeWrapper<PolicyUnitTest>;
@@ -1249,10 +1251,12 @@ export type ResolversTypes = {
   AddPolicyInput: AddPolicyInput;
   PolicyUnitTestInput: PolicyUnitTestInput;
   AddRuleInput: AddRuleInput;
+  AddGlobalModuleInput: AddGlobalModuleInput;
   DeletePolicyInput: DeletePolicyInput;
   DeletePolicyInputItem: DeletePolicyInputItem;
   DeleteRuleInput: DeleteRuleInput;
   DeleteRuleInputItem: DeleteRuleInputItem;
+  DeleteGlobalPythonModuleInput: DeleteGlobalPythonModuleInput;
   InviteUserInput: InviteUserInput;
   RemediateResourceInput: RemediateResourceInput;
   SuppressPoliciesInput: SuppressPoliciesInput;
@@ -1324,7 +1328,7 @@ export type ResolversParentTypes = {
   ActiveSuppressCount: ActiveSuppressCount;
   ComplianceStatusCounts: ComplianceStatusCounts;
   GetGlobalModuleInput: GetGlobalModuleInput;
-  GlobalModuleDetails: GlobalModuleDetails;
+  GlobalModule: GlobalModule;
   GetPolicyInput: GetPolicyInput;
   PolicyDetails: PolicyDetails;
   PolicyUnitTest: PolicyUnitTest;
@@ -1365,10 +1369,12 @@ export type ResolversParentTypes = {
   AddPolicyInput: AddPolicyInput;
   PolicyUnitTestInput: PolicyUnitTestInput;
   AddRuleInput: AddRuleInput;
+  AddGlobalModuleInput: AddGlobalModuleInput;
   DeletePolicyInput: DeletePolicyInput;
   DeletePolicyInputItem: DeletePolicyInputItem;
   DeleteRuleInput: DeleteRuleInput;
   DeleteRuleInputItem: DeleteRuleInputItem;
+  DeleteGlobalPythonModuleInput: DeleteGlobalPythonModuleInput;
   InviteUserInput: InviteUserInput;
   RemediateResourceInput: RemediateResourceInput;
   SuppressPoliciesInput: SuppressPoliciesInput;
@@ -1572,9 +1578,9 @@ export type GithubConfigResolvers<
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
-export type GlobalModuleDetailsResolvers<
+export type GlobalModuleResolvers<
   ContextType = any,
-  ParentType extends ResolversParentTypes['GlobalModuleDetails'] = ResolversParentTypes['GlobalModuleDetails']
+  ParentType extends ResolversParentTypes['GlobalModule'] = ResolversParentTypes['GlobalModule']
 > = {
   body?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -1719,6 +1725,12 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationAddRuleArgs, 'input'>
   >;
+  addGlobalPythonlModule?: Resolver<
+    Maybe<ResolversTypes['GlobalModule']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationAddGlobalPythonlModuleArgs, 'input'>
+  >;
   deleteDestination?: Resolver<
     Maybe<ResolversTypes['Boolean']>,
     ParentType,
@@ -1748,6 +1760,12 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationDeleteRuleArgs, 'input'>
+  >;
+  deleteGlobalPythonModule?: Resolver<
+    Maybe<ResolversTypes['Boolean']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationDeleteGlobalPythonModuleArgs, 'input'>
   >;
   deleteUser?: Resolver<
     Maybe<ResolversTypes['Boolean']>,
@@ -1834,7 +1852,7 @@ export type MutationResolvers<
     RequireFields<MutationUploadPoliciesArgs, 'input'>
   >;
   updateGlobalPythonlModule?: Resolver<
-    Maybe<ResolversTypes['GlobalModuleDetails']>,
+    Maybe<ResolversTypes['GlobalModule']>,
     ParentType,
     ContextType,
     RequireFields<MutationUpdateGlobalPythonlModuleArgs, 'input'>
@@ -2047,7 +2065,7 @@ export type QueryResolvers<
     RequireFields<QueryResourcesForPolicyArgs, 'input'>
   >;
   getGlobalPythonModule?: Resolver<
-    Maybe<ResolversTypes['GlobalModuleDetails']>,
+    Maybe<ResolversTypes['GlobalModule']>,
     ParentType,
     ContextType,
     RequireFields<QueryGetGlobalPythonModuleArgs, 'input'>
@@ -2076,6 +2094,7 @@ export type QueryResolvers<
     ContextType
   >;
   listLogIntegrations?: Resolver<Array<ResolversTypes['LogIntegration']>, ParentType, ContextType>;
+  listGlobalModules?: Resolver<Array<ResolversTypes['GlobalModule']>, ParentType, ContextType>;
   organizationStats?: Resolver<
     Maybe<ResolversTypes['OrganizationStatsResponse']>,
     ParentType,
@@ -2307,7 +2326,7 @@ export type Resolvers<ContextType = any> = {
   DestinationConfig?: DestinationConfigResolvers<ContextType>;
   GeneralSettings?: GeneralSettingsResolvers<ContextType>;
   GithubConfig?: GithubConfigResolvers<ContextType>;
-  GlobalModuleDetails?: GlobalModuleDetailsResolvers<ContextType>;
+  GlobalModule?: GlobalModuleResolvers<ContextType>;
   IntegrationItemHealthStatus?: IntegrationItemHealthStatusResolvers<ContextType>;
   IntegrationTemplate?: IntegrationTemplateResolvers<ContextType>;
   JiraConfig?: JiraConfigResolvers<ContextType>;

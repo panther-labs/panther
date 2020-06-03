@@ -14,11 +14,13 @@ type Mutation {
   addS3LogIntegration(input: AddS3LogIntegrationInput!): S3LogIntegration!
   addPolicy(input: AddPolicyInput!): PolicyDetails
   addRule(input: AddRuleInput!): RuleDetails
+  addGlobalPythonlModule(input: AddGlobalModuleInput!): GlobalModule
   deleteDestination(id: ID!): Boolean
   deleteComplianceIntegration(id: ID!): Boolean
   deleteLogIntegration(id: ID!): Boolean
   deletePolicy(input: DeletePolicyInput!): Boolean
   deleteRule(input: DeleteRuleInput!): Boolean
+  deleteGlobalPythonModule(input: DeleteGlobalPythonModuleInput!): Boolean
   deleteUser(id: ID!): Boolean
   inviteUser(input: InviteUserInput): User!
   remediateResource(input: RemediateResourceInput!): Boolean
@@ -33,7 +35,7 @@ type Mutation {
   updateRule(input: UpdateRuleInput!): RuleDetails
   updateUser(input: UpdateUserInput!): User!
   uploadPolicies(input: UploadPoliciesInput!): UploadPoliciesResponse
-  updateGlobalPythonlModule(input: ModifyGlobalModuleInput!): GlobalModuleDetails
+  updateGlobalPythonlModule(input: ModifyGlobalModuleInput!): GlobalModule
 }
 
 type Query {
@@ -52,12 +54,13 @@ type Query {
   resource(input: GetResourceInput!): ResourceDetails
   resources(input: ListResourcesInput): ListResourcesResponse
   resourcesForPolicy(input: ResourcesForPolicyInput!): ListComplianceItemsResponse
-  getGlobalPythonModule(input: GetGlobalModuleInput!): GlobalModuleDetails
+  getGlobalPythonModule(input: GetGlobalModuleInput!): GlobalModule
   policy(input: GetPolicyInput!): PolicyDetails
   policies(input: ListPoliciesInput): ListPoliciesResponse
   policiesForResource(input: PoliciesForResourceInput): ListComplianceItemsResponse
   listComplianceIntegrations: [ComplianceIntegration!]!
   listLogIntegrations: [LogIntegration!]!
+  listGlobalModules: [GlobalModule!]!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   rule(input: GetRuleInput!): RuleDetails
   rules(input: ListRulesInput): ListRulesResponse
@@ -559,7 +562,7 @@ type PolicyDetails {
   versionId: ID
 }
 
-type GlobalModuleDetails {
+type GlobalModule {
   body: String!
   description: String!
   id: ID!
@@ -635,6 +638,15 @@ input ModifyGlobalModuleInput {
   description: String!
   id: ID!
   body: String!
+}
+
+input AddGlobalModuleInput {
+  description: String!
+  body: String!
+}
+
+input DeleteGlobalPythonModuleInput {
+  id: ID!
 }
 
 input DeletePolicyInput {

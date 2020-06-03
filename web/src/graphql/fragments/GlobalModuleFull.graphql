@@ -1,4 +1,4 @@
-fragment GlobalModuleFull on GlobalModuleDetails {
+fragment GlobalModuleFull on GlobalModule {
   createdAt
   description
   id

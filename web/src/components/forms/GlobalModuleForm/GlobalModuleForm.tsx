@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { GlobalModuleDetails } from 'Generated/schema';
+import { GlobalModule } from 'Generated/schema';
 import * as Yup from 'yup';
 import { Box, Button, Flex, Grid, InputElementLabel, Text } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
@@ -38,7 +38,7 @@ const validationSchema = Yup.object().shape({
 
 const globalModuleEditableFields = ['id', 'body', 'description'] as const;
 
-type GlobalModuleFormValues = Pick<GlobalModuleDetails, typeof globalModuleEditableFields[number]>;
+type GlobalModuleFormValues = Pick<GlobalModule, typeof globalModuleEditableFields[number]>;
 
 interface GlobalModuleFormProps {
   /** The initial values of the form */
