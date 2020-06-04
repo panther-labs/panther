@@ -79,7 +79,7 @@
     "svgo-loader": "^2.2.1",
     "terser-webpack-plugin": "^2.3.4",
     "ts-loader": "^6.2.1",
-    "typescript": "^3.7.5",
+    "typescript": "~3.7.5",
     "url-loader": "^3.0.0",
     "webpack": "^4.41.5",
     "webpack-bundle-analyzer": "^3.6.0",
@@ -98,8 +98,8 @@
     "dayjs": "^1.8.19",
     "echarts": "^4.8.0",
     "ejs": "^3.1.2",
-    "express": "~4.17.1",
-    "express-static-gzip": "~2.0.6",
+    "express": "^4.17.1",
+    "express-static-gzip": "^2.0.6",
     "formik": "^2.1.3",
     "graphql": "^14.6.0",
     "history": "^4.10.1",
@@ -126,6 +126,7 @@
     "graphql-codegen:watch": "npm run graphql-codegen -- --watch",
     "eslint": "eslint --config web/.eslintrc.js \"web/**/*.{ts,js,tsx}\"",
     "tsc": "tsc -p web",
-    "validate": "npm run eslint && prettier --list-different \"web/**/*.{ts,js,tsx,md,json,yml}\" && npm run tsc"
+    "prettier": "prettier --list-different \"web/**/*.{ts,js,tsx,md,json,yml}\"",
+    "validate": "npm run eslint && npm run prettier && npm run tsc"
   }
 }
