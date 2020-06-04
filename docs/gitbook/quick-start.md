@@ -50,7 +50,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: My Panther deployment
 
 Resources:
-  Bootstrap:
+  Panther:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: https://panther-community.s3.amazonaws.com/v1.4.0/panther.yml
@@ -60,11 +60,12 @@ Resources:
         FirstUserFamilyName: Jones
 ```
 
-Or, to deploy from source, see the [development](development.md) page.
+Or, to build and deploy from source, see the [development](development.md) page.
 
 ## First Login
 
-Once the deployment has finished, you should get an invitation email (check your spam folder) with a link to the Panther web app.
+Once the deployment has finished, you will get an invitation email from `no-reply@verificationemail.com` with your temporary login credentials.
+(If you don't see it, be sure to check your spam folder.)
 
 {% hint style="warning" %}
 By default, Panther generates a self-signed certificate, which will cause most browsers to present a warning page:
@@ -76,9 +77,7 @@ Your connection _is_ encrypted, and it's generally safe to continue. However, th
 
 ## Onboarding
 
-Congratulations! You are now ready to use Panther.
-
-Follow the steps below to complete your setup:
+Congratulations! You are now ready to use Panther. Follow the steps below to complete your setup:
 
 1. Invite your team in `Settings` > `Users` > `Invite User`
 1. Configure [destinations](destinations) to receive generated alerts
@@ -88,7 +87,7 @@ Follow the steps below to complete your setup:
 5. Write [policies](policies/cloud-security-overview.md) for supported [AWS resources](policies/resources/)
 6. Query collected logs with [historical search](historical-search/README.md)
 
-### Supported Regions
+## Supported Regions
 
 Panther relies on dozens of AWS services, some of which are not yet available in every region. In particular, AppSync, Cognito, Athena, and Glue are newer services not available in us-gov, china, and other regions. At the time of writing, all Panther backend components are supported in the following:
 
@@ -106,3 +105,12 @@ Panther relies on dozens of AWS services, some of which are not yet available in
 - `us-west-2` (oregon)
 
 Consult the [AWS region table](https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/) for the source of truth about service availability in each region.
+
+## Removing Panther
+To uninstall Panther, simply delete the main "panther" stack (substituting whatever stack name you chose during deployment).
+This will automatically remove everything except:
+
+* S3 buckets and their data
+* A few empty CloudWatch log groups
+
+You can easily find and delete these manually, or you can run `mage teardown` (see [development](development.md#teardown)).
