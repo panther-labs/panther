@@ -125,8 +125,8 @@
     "graphql-codegen": "graphql-codegen --config web/codegen.yml",
     "graphql-codegen:watch": "npm run graphql-codegen -- --watch",
     "eslint": "eslint --config web/.eslintrc.js \"web/**/*.{ts,js,tsx}\"",
-    "tsc": "tsc -p web",
     "prettier": "prettier --list-different \"web/**/*.{ts,js,tsx,md,json,yml}\"",
+    "tsc": "tsc -p web",
     "validate": "npm run eslint && npm run prettier && npm run tsc"
   }
 }
