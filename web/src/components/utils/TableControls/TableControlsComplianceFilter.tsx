@@ -39,7 +39,7 @@ const TableControlsComplianceFilter: React.FC<TableControlsComplianceFilterProps
       p={2}
       color="grey300"
       borderRadius="medium"
-      backgroundColor={isActive ? 'grey50' : undefined}
+      backgroundColor={isActive ? 'grey100' : 'white'}
     >
       {text}{' '}
       <Text size="medium" color={countColor} as="span">
