@@ -20,22 +20,24 @@
 
 import * as Types from '../../../../__generated__/schema';
 
-import { GlobalModuleFull } from '../../../graphql/fragments/GlobalModuleFull.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
-export type ListGlobalModulesVariables = {};
+export type ListGlobalModulesVariables = {
+  input?: Types.Maybe<Types.ListGlobalModuleInput>;
+};
 
-export type ListGlobalModules = { listGlobalModules: Array<GlobalModuleFull> };
+export type ListGlobalModules = {
+  listGlobalModules?: Types.Maybe<Array<Types.Maybe<Pick<Types.GlobalModule, 'id'>>>>;
+};
 
 export const ListGlobalModulesDocument = gql`
-  query ListGlobalModules {
-    listGlobalModules {
-      ...GlobalModuleFull
+  query ListGlobalModules($input: ListGlobalModuleInput) {
+    listGlobalModules(input: $input) {
+      id
     }
   }
-  ${GlobalModuleFull}
 `;
 
 /**
@@ -50,6 +52,7 @@ export const ListGlobalModulesDocument = gql`
  * @example
  * const { data, loading, error } = useListGlobalModules({
  *   variables: {
+ *      input: // value for 'input'
  *   },
  * });
  */

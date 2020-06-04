@@ -60,10 +60,10 @@ type Query {
   policiesForResource(input: PoliciesForResourceInput): ListComplianceItemsResponse
   listComplianceIntegrations: [ComplianceIntegration!]!
   listLogIntegrations: [LogIntegration!]!
-  listGlobalModules: [GlobalModule!]!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   rule(input: GetRuleInput!): RuleDetails
   rules(input: ListRulesInput): ListRulesResponse
+  listGlobalModules(input: ListGlobalModuleInput): [GlobalModule]
   users: [User!]!
 }
 
@@ -627,6 +627,17 @@ input UpdatePolicyInput {
 input GetPolicyInput {
   policyId: ID!
   versionId: ID
+}
+
+input ListGlobalModuleInput {
+  nameContains: String
+  enabled: Boolean
+  # Sorting
+  #  sortBy: ListRulesSortFieldsEnum # defaults to `id`
+  sortDir: SortDirEnum # defaults to `ascending`
+  # Paging
+  pageSize: Int # defaults to `25`
+  page: Int # defaults to `1`
 }
 
 input GetGlobalModuleInput {

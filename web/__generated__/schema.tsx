@@ -374,6 +374,19 @@ export type ListComplianceItemsResponse = {
   totals?: Maybe<ActiveSuppressCount>;
 };
 
+export type ListGlobalModuleInput = {
+  nameContains?: Maybe<Scalars['String']>;
+  enabled?: Maybe<Scalars['Boolean']>;
+  /**
+   * Sorting
+   *  sortBy: ListRulesSortFieldsEnum # defaults to `id`
+   */
+  sortDir?: Maybe<SortDirEnum>;
+  /** Paging */
+  pageSize?: Maybe<Scalars['Int']>;
+  page?: Maybe<Scalars['Int']>;
+};
+
 export type ListPoliciesInput = {
   complianceStatus?: Maybe<ComplianceStatusEnum>;
   nameContains?: Maybe<Scalars['String']>;
@@ -753,10 +766,10 @@ export type Query = {
   policiesForResource?: Maybe<ListComplianceItemsResponse>;
   listComplianceIntegrations: Array<ComplianceIntegration>;
   listLogIntegrations: Array<LogIntegration>;
-  listGlobalModules: Array<GlobalModule>;
   organizationStats?: Maybe<OrganizationStatsResponse>;
   rule?: Maybe<RuleDetails>;
   rules?: Maybe<ListRulesResponse>;
+  listGlobalModules?: Maybe<Array<Maybe<GlobalModule>>>;
   users: Array<User>;
 };
 
@@ -826,6 +839,10 @@ export type QueryRuleArgs = {
 
 export type QueryRulesArgs = {
   input?: Maybe<ListRulesInput>;
+};
+
+export type QueryListGlobalModulesArgs = {
+  input?: Maybe<ListGlobalModuleInput>;
 };
 
 export type RemediateResourceInput = {
@@ -1231,6 +1248,7 @@ export type ResolversTypes = {
   ListRulesSortFieldsEnum: ListRulesSortFieldsEnum;
   ListRulesResponse: ResolverTypeWrapper<ListRulesResponse>;
   RuleSummary: ResolverTypeWrapper<RuleSummary>;
+  ListGlobalModuleInput: ListGlobalModuleInput;
   User: ResolverTypeWrapper<User>;
   AWSEmail: ResolverTypeWrapper<Scalars['AWSEmail']>;
   AWSTimestamp: ResolverTypeWrapper<Scalars['AWSTimestamp']>;
@@ -1349,6 +1367,7 @@ export type ResolversParentTypes = {
   ListRulesSortFieldsEnum: ListRulesSortFieldsEnum;
   ListRulesResponse: ListRulesResponse;
   RuleSummary: RuleSummary;
+  ListGlobalModuleInput: ListGlobalModuleInput;
   User: User;
   AWSEmail: Scalars['AWSEmail'];
   AWSTimestamp: Scalars['AWSTimestamp'];
@@ -2094,7 +2113,6 @@ export type QueryResolvers<
     ContextType
   >;
   listLogIntegrations?: Resolver<Array<ResolversTypes['LogIntegration']>, ParentType, ContextType>;
-  listGlobalModules?: Resolver<Array<ResolversTypes['GlobalModule']>, ParentType, ContextType>;
   organizationStats?: Resolver<
     Maybe<ResolversTypes['OrganizationStatsResponse']>,
     ParentType,
@@ -2112,6 +2130,12 @@ export type QueryResolvers<
     ParentType,
     ContextType,
     RequireFields<QueryRulesArgs, never>
+  >;
+  listGlobalModules?: Resolver<
+    Maybe<Array<Maybe<ResolversTypes['GlobalModule']>>>,
+    ParentType,
+    ContextType,
+    RequireFields<QueryListGlobalModulesArgs, never>
   >;
   users?: Resolver<Array<ResolversTypes['User']>, ParentType, ContextType>;
 };

@@ -52,8 +52,9 @@ import LogAnalysisOverview from 'Pages/LogAnalysisOverview';
 import EditComplianceSourcePage from 'Pages/EditComplianceSource';
 import EditS3LogSourcePage from 'Pages/EditS3LogSource';
 import PromptController from 'Components/utils/PromptController';
-import EditGlobalModulePage from 'Pages/EditGlobaModule';
 import LogSourceOnboarding from 'Pages/LogSourceOnboarding';
+import ListGlobalModulesPage from 'Pages/ListGlobalModules';
+import CreateGlobalPythonModulePage from 'Pages/CreateGlobalPythonModule';
 
 // Main page container for the web application, Navigation bar and Content body goes here
 const PrimaryPageLayout: React.FunctionComponent = () => {
@@ -172,7 +173,17 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                 /******************** SETTINGS ******************************/
                 <Redirect exact from={urls.settings.home()} to={urls.settings.general()} />
                 <Route exact path={urls.settings.general()} component={GeneralSettingsPage} />
-                <Route exact path={urls.settings.globalModule()} component={EditGlobalModulePage} />
+                <Route exact path={urls.settings.general()} component={GeneralSettingsPage} />
+                <Route
+                  exact
+                  path={urls.settings.globalModule.list()}
+                  component={ListGlobalModulesPage}
+                />
+                <Route
+                  exact
+                  path={urls.settings.globalModule.create()}
+                  component={CreateGlobalPythonModulePage}
+                />
                 <Route exact path={urls.settings.users()} component={UsersPage} />
                 <Route exact path={urls.settings.destinations()} component={DestinationsPage} />
                 <Route component={Page404} />

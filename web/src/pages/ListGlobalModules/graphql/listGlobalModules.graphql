@@ -1,5 +1,10 @@
-query ListGlobalModules {
-  listGlobalModules {
-    ...GlobalModuleFull
+query ListGlobalModules($input: ListGlobalModuleInput) {
+  listGlobalModules(input: $input) {
+    id
+    #    paging {
+    #      totalPages
+    #      thisPage
+    #      totalItems
+    #    }
   }
 }

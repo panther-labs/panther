@@ -23,13 +23,28 @@ import Panel from 'Components/Panel';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import { extractErrorMessage } from 'Helpers/utils';
+import { convertObjArrayValuesToCsv, encodeParams, extractErrorMessage } from 'Helpers/utils';
 import withSEO from 'Hoc/withSEO';
+// import { ListGlobalModuleInput } from 'Generated/schema';
+// import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
+
 import { useListGlobalModules } from './graphql/listGlobalModules.generated';
 import EmptyDataFallback from './EmptyDataFallback';
 
 const ListGlobalModules = () => {
-  const { loading, error, data } = useListGlobalModules();
+  // const {
+  //   requestParams,
+  //   updateRequestParamsAndResetPaging,
+  //   updatePagingParams,
+  // } = useRequestParamsWithPagination<ListGlobalModuleInput>();
+
+  // console.log('requestPArams', requestParams);
+  const { loading, error, data } = useListGlobalModules({
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      input: encodeParams(convertObjArrayValuesToCsv({}), ['nameContains']),
+    },
+  });
 
   if (loading && !data) {
     return (
@@ -38,6 +53,8 @@ const ListGlobalModules = () => {
       </Card>
     );
   }
+
+  console.log('DATA', data);
 
   if (error) {
     return (
@@ -76,4 +93,4 @@ const ListGlobalModules = () => {
   );
 };
 
-export default withSEO({ title: 'Log Analysis Sources' })(ListGlobalModules);
+export default withSEO({ title: 'Global Python Modules' })(ListGlobalModules);
