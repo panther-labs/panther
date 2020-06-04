@@ -1,10 +1,12 @@
 query ListGlobalModules($input: ListGlobalModuleInput) {
   listGlobalModules(input: $input) {
-    id
-    #    paging {
-    #      totalPages
-    #      thisPage
-    #      totalItems
-    #    }
+    globals {
+      id
+    }
+    paging {
+      totalPages
+      thisPage
+      totalItems
+    }
   }
 }

@@ -387,6 +387,12 @@ export type ListGlobalModuleInput = {
   page?: Maybe<Scalars['Int']>;
 };
 
+export type ListGlobalsResponse = {
+  __typename?: 'ListGlobalsResponse';
+  paging?: Maybe<PagingData>;
+  globals?: Maybe<Array<Maybe<GlobalModule>>>;
+};
+
 export type ListPoliciesInput = {
   complianceStatus?: Maybe<ComplianceStatusEnum>;
   nameContains?: Maybe<Scalars['String']>;
@@ -769,7 +775,7 @@ export type Query = {
   organizationStats?: Maybe<OrganizationStatsResponse>;
   rule?: Maybe<RuleDetails>;
   rules?: Maybe<ListRulesResponse>;
-  listGlobalModules?: Maybe<Array<Maybe<GlobalModule>>>;
+  listGlobalModules?: Maybe<ListGlobalsResponse>;
   users: Array<User>;
 };
 
@@ -1249,6 +1255,7 @@ export type ResolversTypes = {
   ListRulesResponse: ResolverTypeWrapper<ListRulesResponse>;
   RuleSummary: ResolverTypeWrapper<RuleSummary>;
   ListGlobalModuleInput: ListGlobalModuleInput;
+  ListGlobalsResponse: ResolverTypeWrapper<ListGlobalsResponse>;
   User: ResolverTypeWrapper<User>;
   AWSEmail: ResolverTypeWrapper<Scalars['AWSEmail']>;
   AWSTimestamp: ResolverTypeWrapper<Scalars['AWSTimestamp']>;
@@ -1368,6 +1375,7 @@ export type ResolversParentTypes = {
   ListRulesResponse: ListRulesResponse;
   RuleSummary: RuleSummary;
   ListGlobalModuleInput: ListGlobalModuleInput;
+  ListGlobalsResponse: ListGlobalsResponse;
   User: User;
   AWSEmail: Scalars['AWSEmail'];
   AWSTimestamp: Scalars['AWSTimestamp'];
@@ -1657,6 +1665,15 @@ export type ListComplianceItemsResponseResolvers<
   paging?: Resolver<Maybe<ResolversTypes['PagingData']>, ParentType, ContextType>;
   status?: Resolver<Maybe<ResolversTypes['ComplianceStatusEnum']>, ParentType, ContextType>;
   totals?: Resolver<Maybe<ResolversTypes['ActiveSuppressCount']>, ParentType, ContextType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+};
+
+export type ListGlobalsResponseResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['ListGlobalsResponse'] = ResolversParentTypes['ListGlobalsResponse']
+> = {
+  paging?: Resolver<Maybe<ResolversTypes['PagingData']>, ParentType, ContextType>;
+  globals?: Resolver<Maybe<Array<Maybe<ResolversTypes['GlobalModule']>>>, ParentType, ContextType>;
   __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
@@ -2132,7 +2149,7 @@ export type QueryResolvers<
     RequireFields<QueryRulesArgs, never>
   >;
   listGlobalModules?: Resolver<
-    Maybe<Array<Maybe<ResolversTypes['GlobalModule']>>>,
+    Maybe<ResolversTypes['ListGlobalsResponse']>,
     ParentType,
     ContextType,
     RequireFields<QueryListGlobalModulesArgs, never>
@@ -2356,6 +2373,7 @@ export type Resolvers<ContextType = any> = {
   JiraConfig?: JiraConfigResolvers<ContextType>;
   ListAlertsResponse?: ListAlertsResponseResolvers<ContextType>;
   ListComplianceItemsResponse?: ListComplianceItemsResponseResolvers<ContextType>;
+  ListGlobalsResponse?: ListGlobalsResponseResolvers<ContextType>;
   ListPoliciesResponse?: ListPoliciesResponseResolvers<ContextType>;
   ListResourcesResponse?: ListResourcesResponseResolvers<ContextType>;
   ListRulesResponse?: ListRulesResponseResolvers<ContextType>;

@@ -63,7 +63,7 @@ type Query {
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   rule(input: GetRuleInput!): RuleDetails
   rules(input: ListRulesInput): ListRulesResponse
-  listGlobalModules(input: ListGlobalModuleInput): [GlobalModule]
+  listGlobalModules(input: ListGlobalModuleInput): ListGlobalsResponse
   users: [User!]!
 }
 
@@ -568,6 +568,11 @@ type GlobalModule {
   id: ID!
   createdAt: AWSDateTime!
   lastModified: AWSDateTime!
+}
+
+type ListGlobalsResponse {
+  paging: PagingData
+  globals: [GlobalModule]
 }
 
 type PagingData {

@@ -29,13 +29,23 @@ export type ListGlobalModulesVariables = {
 };
 
 export type ListGlobalModules = {
-  listGlobalModules?: Types.Maybe<Array<Types.Maybe<Pick<Types.GlobalModule, 'id'>>>>;
+  listGlobalModules?: Types.Maybe<{
+    globals?: Types.Maybe<Array<Types.Maybe<Pick<Types.GlobalModule, 'id'>>>>;
+    paging?: Types.Maybe<Pick<Types.PagingData, 'totalPages' | 'thisPage' | 'totalItems'>>;
+  }>;
 };
 
 export const ListGlobalModulesDocument = gql`
   query ListGlobalModules($input: ListGlobalModuleInput) {
     listGlobalModules(input: $input) {
-      id
+      globals {
+        id
+      }
+      paging {
+        totalPages
+        thisPage
+        totalItems
+      }
     }
   }
 `;

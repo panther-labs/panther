@@ -69,7 +69,7 @@ const ListGlobalModules = () => {
     );
   }
 
-  if (!data.listGlobalModules.length) {
+  if (!data.listGlobalModules) {
     return <EmptyDataFallback />;
   }
 
