@@ -70,6 +70,7 @@ type API interface {
 	Sqs(*alertmodels.Alert, *outputmodels.SqsConfig) *AlertDeliveryError
 	Sns(*alertmodels.Alert, *outputmodels.SnsConfig) *AlertDeliveryError
 	Asana(*alertmodels.Alert, *outputmodels.AsanaConfig) *AlertDeliveryError
+	CustomWebhook(*alertmodels.Alert, *outputmodels.CustomWebhookConfig) *AlertDeliveryError
 }
 
 // OutputClient encapsulates the clients that allow sending alerts to multiple outputs
