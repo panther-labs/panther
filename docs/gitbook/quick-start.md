@@ -35,7 +35,7 @@ On the next page, choose a stack name (e.g. "panther") and configure the name an
 ![CloudFormation Parameters](.gitbook/assets/cfn-deploy-2.png)
 
 This is just the initial admin user account - you can edit the user and invite additional users after Panther is deployed.
-You can leave all other parameters with their default values.
+You can also set the CompanyDisplayName here if you like. All other parameters can be ignored.
 
 On the next page, you can skip all the advanced stack settings. Acknowledge the warnings and deploy the stack!
 
@@ -55,6 +55,7 @@ Resources:
     Properties:
       TemplateURL: https://panther-community.s3.amazonaws.com/v1.4.0/panther.yml
       Parameters:
+        CompanyDisplayName: AwesomeCo
         FirstUserEmail: user@example.com
         FirstUserGivenName: Alice
         FirstUserFamilyName: Jones
