@@ -22,6 +22,8 @@ import (
 	"math"
 	"strconv"
 	"time"
+
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 )
 
 // These objects are used to read timestamps and ensure a consistent JSON output for timestamps.
@@ -40,6 +42,15 @@ const (
 
 	suricataTimestampLayout = `"2006-01-02T15:04:05.999999999Z0700"`
 )
+
+func init() {
+	awsglue.RegisterMapping(RFC3339{}, awsglue.GlueTimestampType)
+	awsglue.RegisterMapping(ANSICwithTZ{}, awsglue.GlueTimestampType)
+	awsglue.RegisterMapping(UnixMillisecond{}, awsglue.GlueTimestampType)
+	awsglue.RegisterMapping(UnixFloat{}, awsglue.GlueTimestampType)
+	awsglue.RegisterMapping(FluentdTimestamp{}, awsglue.GlueTimestampType)
+	awsglue.RegisterMapping(SuricataTimestamp{}, awsglue.GlueTimestampType)
+}
 
 // use these functions to parse all incoming dates to ensure UTC consistency
 func Parse(layout, value string) (RFC3339, error) {

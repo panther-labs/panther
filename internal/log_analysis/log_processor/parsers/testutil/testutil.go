@@ -28,8 +28,10 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
@@ -102,4 +104,57 @@ func MustReadFileJSONLines(filename string) (lines []string) {
 		panic(errors.Wrap(scanner.Err(), "encountered issue while reading file"))
 	}
 	return
+}
+
+type ParserConfig map[string]interface{}
+
+func AlwaysFailParser(err error) *MockParser {
+	p := MockParser{}
+	p.On("Parse", mock.AnythingOfType("string")).Return(([]*pantherlog.Result)(nil), err)
+	return &p
+}
+
+type MockParser struct {
+	mock.Mock
+}
+
+func (args ParserConfig) Parser() *MockParser {
+	p := &MockParser{}
+	for log, result := range args {
+		var err error
+		var results []*pantherlog.Result
+		switch x := result.(type) {
+		case error:
+			err = x
+		case []*parsers.PantherLog:
+			results, err = parsers.ToResults(x, nil)
+		case *parsers.PantherLog:
+			results, err = x.Results()
+		case []*pantherlog.Result:
+			results = x
+		case pantherlog.Result:
+			results = x.Results()
+		case *pantherlog.Result:
+			results = x.Results()
+		}
+		p.On("Parse", log).Return(results, err)
+	}
+	p.On("Parse", mock.AnythingOfType("string")).Return(([]*pantherlog.Result)(nil), errors.New("invalid log"))
+	return p
+}
+
+func (p *MockParser) ParseLog(log string) ([]*pantherlog.Result, error) {
+	args := p.MethodCalled("Parse", log)
+	return args.Get(0).([]*pantherlog.Result), args.Error(1)
+}
+
+func (p *MockParser) RequireLessOrEqualNumberOfCalls(t *testing.T, method string, number int) {
+	t.Helper()
+	timesCalled := 0
+	for _, call := range p.Calls {
+		if call.Method == method {
+			timesCalled++
+		}
+	}
+	require.LessOrEqual(t, timesCalled, number)
 }

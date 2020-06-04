@@ -35,6 +35,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/pkg/oplog"
@@ -64,13 +65,14 @@ type testLog struct {
 	parsers.PantherLog
 }
 
-func newTestLog() *parsers.PantherLog {
+func newTestLog() *pantherlog.Result {
 	refTime := (timestamp.RFC3339)(time.Date(2020, 1, 1, 0, 1, 1, 0, time.UTC))
 	log := testLog{
 		logLine: testLogLine,
 	}
 	log.SetCoreFields(testLogType, &refTime, &log)
-	return &log.PantherLog
+	result, _ := log.Result()
+	return result
 }
 
 func TestProcess(t *testing.T) {
@@ -175,7 +177,7 @@ func TestProcessDestinationError(t *testing.T) {
 	destination.On("SendEvents", mock.Anything, mock.Anything).Return().Run(func(args mock.Arguments) {
 		errChan := args.Get(1).(chan error)
 		errChan <- sendEventsErr
-		for range args.Get(0).(chan *parsers.PantherLog) {
+		for range args.Get(0).(chan *pantherlog.Result) {
 		} // must drain q
 	})
 
@@ -247,11 +249,11 @@ func TestProcessClassifyFailure(t *testing.T) {
 
 	// first one fails
 	mockClassifier.On("Classify", mock.Anything).Return(&classification.ClassifierResult{
-		Events:  []*parsers.PantherLog{},
+		Events:  []*pantherlog.Result{},
 		LogType: nil,
 	}).Once()
 	mockClassifier.On("Classify", mock.Anything).Return(&classification.ClassifierResult{
-		Events:  []*parsers.PantherLog{newTestLog()},
+		Events:  []*pantherlog.Result{newTestLog()},
 		LogType: &testLogType,
 	})
 	mockClassifier.On("Stats", mock.Anything).Return(mockStats)
@@ -357,13 +359,13 @@ type testDestination struct {
 }
 
 // mocks override
-func (d *testDestination) SendEvents(parsedEventChannel chan *parsers.PantherLog, errChan chan error) {
+func (d *testDestination) SendEvents(parsedEventChannel chan *pantherlog.Result, errChan chan error) {
 	d.MethodCalled("SendEvents", parsedEventChannel, errChan) // execute mocks
 }
 
 func (d *testDestination) standardMock() *testDestination {
 	d.On("SendEvents", mock.Anything, mock.Anything).Return().Run(func(args mock.Arguments) {
-		for range args.Get(0).(chan *parsers.PantherLog) { // simulate reading
+		for range args.Get(0).(chan *pantherlog.Result) { // simulate reading
 			time.Sleep(sendDelay) // wait to give processor time to send events
 			d.nEvents++
 		}
@@ -394,7 +396,7 @@ func (c *testClassifier) ParserStats() map[string]*classification.ParserStats {
 // mocks for normal processing
 func (c *testClassifier) standardMocks(cStats *classification.ClassifierStats, pStats map[string]*classification.ParserStats) {
 	c.On("Classify", mock.Anything).Return(&classification.ClassifierResult{
-		Events:  []*parsers.PantherLog{newTestLog()},
+		Events:  []*pantherlog.Result{newTestLog()},
 		LogType: &testLogType,
 	}).After(parseDelay)
 	c.On("Stats", mock.Anything).Return(cStats)

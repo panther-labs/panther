@@ -1,4 +1,4 @@
-package parsers
+package pantherlog
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -48,6 +48,27 @@ var (
 	prefix = make([]byte, nodeIDSize+timeOffsetSize) // holds precomputed prefix
 )
 
+func init() {
+	// get nodeID to use in prefix of uuid
+	nif, err := getHardwareInterface()
+	if err != nil { // should never happen ... but just in case
+		zap.L().Error("Could not find hardware interface, generating random addr for uuid prefix", zap.Error(err))
+		noise := make([]byte, nodeIDSize)
+		_, _ = rand.Read(noise) // nolint (errcheck) , not checking error because there is noting else to do
+		copy(nodeID[:], noise)
+	} else {
+		zap.L().Debug("Found hardware interface for uuid prefix",
+			zap.String("ifName", nif.Name),
+			zap.String("addr", hex.EncodeToString(nif.HardwareAddr)))
+		copy(nodeID[:], nif.HardwareAddr)
+	}
+
+	// compute prefix
+	copy(prefix[:], nodeID[:])                                        // no encoding
+	timeOffsetN := binary.PutUvarint(prefix[nodeIDSize:], timeOffset) // VarInt encoding
+	prefix = prefix[:nodeIDSize+timeOffsetN]                          // clip
+}
+
 type RowID uint64
 
 // NewRowID returns a unique row id as a hex string, name spaced as nodeID + timeOffset + rowCounter
@@ -60,40 +81,24 @@ func (rid *RowID) NewRowID() string {
 	return hex.EncodeToString(id[:len(prefix)+rowCounterN])
 }
 
-func init() {
-	// get nodeID to use in prefix of uuid
-	ifName, addr := getHardwareInterface()
-	if ifName == "" { // should never happen ... but just in case
-		err := errors.Errorf("Could not find hardware interface, generating random addr for uuid prefix") // to get stacktrace
-		zap.L().Error(err.Error(), zap.Error(err))
-		noise := make([]byte, nodeIDSize)
-		rand.Read(noise) // nolint (errcheck) , not checking error because there is noting else to do
-		copy(nodeID[:], noise)
-	} else {
-		zap.L().Debug("Found hardware interface for uuid prefix",
-			zap.String("ifName", ifName),
-			zap.String("addr", hex.EncodeToString(addr)))
-		copy(nodeID[:], addr)
-	}
-
-	// compute prefix
-	copy(prefix[:], nodeID[:])                                        // no encoding
-	timeOffsetN := binary.PutUvarint(prefix[nodeIDSize:], timeOffset) // VarInt encoding
-	prefix = prefix[:nodeIDSize+timeOffsetN]                          // clip
-}
-
 // return first mac addr found
-func getHardwareInterface() (string, []byte) {
-	var err error
+func getHardwareInterface() (net.Interface, error) {
 	interfaces, err := net.Interfaces()
 	if err != nil {
-		return "", nil
+		return net.Interface{}, err
 	}
 
-	for _, ifs := range interfaces {
-		if len(ifs.HardwareAddr) >= nodeIDSize {
-			return ifs.Name, ifs.HardwareAddr
+	for _, nif := range interfaces {
+		if len(nif.HardwareAddr) >= nodeIDSize {
+			return nif, nil
 		}
 	}
-	return "", nil
+	return net.Interface{}, errors.Errorf("no valid interface found")
+}
+
+var nextRowID RowID
+
+// NextRowID returns the next row id from a package-wide id generator.
+func NextRowID() string {
+	return nextRowID.NewRowID()
 }

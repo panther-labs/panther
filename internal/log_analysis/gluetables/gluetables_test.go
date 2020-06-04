@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
@@ -78,15 +79,16 @@ func TestDeployedTablesSignature(t *testing.T) {
 	assert.Equal(t, sig, sig2)
 
 	// change the data, the sigs should be different
-	availableParsers := registry.AvailableParsers()
-	logType := "AWS.CloudTrail"
-	ct := availableParsers[logType]
-	delete(availableParsers, logType) // remove a table, which should change the hash
-	require.NotNil(t, ct)
-	defer func() {
-		availableParsers[logType] = ct // put it back to not to affect anything
-	}()
-	mockGlueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Times(numLogTables - 1)
+	_ = pantherlog.Register(pantherlog.LogType{
+		Name:         "Foo.Bar",
+		Description:  "foo",
+		ReferenceURL: "-",
+		Schema: struct {
+			Foo string `json:"foo" description:"bar"`
+		}{},
+	})
+	defer pantherlog.DefaultRegistry().Del("Foo.Bar")
+	mockGlueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Times(numLogTables + 1)
 	modifiedSig, err := DeployedTablesSignature(mockGlueClient)
 	require.NoError(t, err)
 	assert.NotEqual(t, sig, modifiedSig)

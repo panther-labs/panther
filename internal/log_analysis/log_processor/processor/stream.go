@@ -30,6 +30,7 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 )
@@ -128,7 +129,7 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 	}()
 
 	// process streamChan until closed (blocks)
-	err = processFunc(streamChan, destinations.CreateS3Destination())
+	err = processFunc(streamChan, destinations.CreateS3Destination(registry.Default()))
 	if err != nil { // prefer Process() error to readEventError
 		return 0, err
 	}

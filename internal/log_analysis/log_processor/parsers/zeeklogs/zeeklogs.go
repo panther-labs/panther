@@ -1,4 +1,4 @@
-package destinations
+package zeeklogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -20,9 +20,20 @@ package destinations
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
-// Destination defines the interface that all Destinations should follow
-type Destination interface {
-	SendEvents(parsedEventChannel chan *pantherlog.Result, errChan chan error)
+const (
+	TypeZeekDNS = "Zeek.DNS"
+)
+
+func init() {
+	pantherlog.MustRegister(
+		pantherlog.LogType{
+			Name:         TypeZeekDNS,
+			Description:  `Zeek DNS activity`,
+			ReferenceURL: `https://docs.zeek.org/en/current/scripts/base/protocols/dns/main.zeek.html#type-DNS::Info`,
+			Schema:       &ZeekDNS{},
+			NewParser:    parsers.AdapterFactory(&ZeekDNSParser{}),
+		})
 }

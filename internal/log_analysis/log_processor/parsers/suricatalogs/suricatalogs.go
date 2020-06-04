@@ -1,4 +1,4 @@
-package destinations
+package suricatalogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -20,9 +20,29 @@ package destinations
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
-// Destination defines the interface that all Destinations should follow
-type Destination interface {
-	SendEvents(parsedEventChannel chan *pantherlog.Result, errChan chan error)
+const (
+	TypeDNS     = "Suricata.DNS"
+	TypeAnomaly = "Suricata.Anomaly"
+)
+
+func init() {
+	pantherlog.MustRegister(
+		pantherlog.LogType{
+			Name:         TypeAnomaly,
+			Description:  `Suricata parser for the Anomaly event type in the EVE JSON output.`,
+			ReferenceURL: `https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json-output.html#anomaly`,
+			Schema:       Anomaly{},
+			NewParser:    parsers.AdapterFactory(&AnomalyParser{}),
+		},
+		pantherlog.LogType{
+			Name:         TypeDNS,
+			Description:  `Suricata parser for the DNS event type in the EVE JSON output.`,
+			ReferenceURL: `https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json-output.html#dns`,
+			Schema:       DNS{},
+			NewParser:    parsers.AdapterFactory(&DNSParser{}),
+		},
+	)
 }

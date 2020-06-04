@@ -26,9 +26,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-var RFC5424Desc = `Fluentd syslog parser for the RFC5424 format (ie. BSD-syslog messages)
-Reference: https://docs.fluentd.org/parser/syslog#rfc5424-log`
-
 // nolint:lll
 type RFC5424 struct {
 	Priority  *uint8                      `json:"pri,omitempty" description:"Priority is calculated by (Facility * 8 + Severity). The lower this value, the higher importance of the log message."`
@@ -73,7 +70,7 @@ func (p *RFC5424Parser) Parse(log string) ([]*parsers.PantherLog, error) {
 
 // LogType returns the log type supported by this parser
 func (p *RFC5424Parser) LogType() string {
-	return "Fluentd.Syslog5424"
+	return TypeRFC5424
 }
 
 func (event *RFC5424) updatePantherFields(p *RFC5424Parser) {

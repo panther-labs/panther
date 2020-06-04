@@ -28,7 +28,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
 // ClassifierAPI is the interface for a classifier
@@ -41,22 +41,31 @@ type ClassifierAPI interface {
 	ParserStats() map[string]*ParserStats
 }
 
+//// LogParser is a log parser marked as a classifying log parser
+//type LogParser interface {
+//	pantherlog.LogParser
+//	markClassifier()
+//}
+//
+//// LogParserMarker can be embedded into pantherlog.LogParsers to mark the parser as a classifying parser.
+//type LogParserMarker struct{}
+//
+//func (m *LogParserMarker) markClassifier() {}
+
 // ClassifierResult is the result of the ClassifierAPI#Classify method
 type ClassifierResult struct {
 	// Events contains the parsed events
 	// If the classification process was not successful and the log is from an
 	// unsupported type, this will be nil
-	Events []*parsers.PantherLog
+	Events []*pantherlog.Result
 	// LogType is the identified type of the log
 	LogType *string
 }
 
 // NewClassifier returns a new instance of a ClassifierAPI implementation
-func NewClassifier() ClassifierAPI {
-	parserQueue := &ParserPriorityQueue{}
-	parserQueue.initialize()
+func NewClassifier(logTypes ...pantherlog.LogType) ClassifierAPI {
 	return &Classifier{
-		parsers:     parserQueue,
+		parsers:     NewParserPriorityQueue(logTypes...),
 		parserStats: make(map[string]*ParserStats),
 	}
 }
@@ -79,24 +88,27 @@ func (c *Classifier) ParserStats() map[string]*ParserStats {
 }
 
 // catch panics from parsers, log and continue
-func safeLogParse(parser parsers.LogParser, log string) (parsedEvents []*parsers.PantherLog) {
+func safeLogParse(logType string, parser pantherlog.LogParser, log string) (results []*pantherlog.Result) {
 	defer func() {
 		if r := recover(); r != nil {
 			zap.L().Debug("parser panic",
-				zap.String("parser", parser.LogType()),
+				zap.String("parser", logType),
 				zap.Error(errors.Errorf("%v", r)),
 				zap.String("stacktrace", string(debug.Stack())))
-			parsedEvents = nil // return indicator that parse failed
+			results = nil // return indicator that parse failed
 		}
 	}()
-	parsedEvents, err := parser.Parse(log)
+	results, err := parser.ParseLog(log)
 	if err != nil {
 		zap.L().Debug("parser failed",
-			zap.String("parser", parser.LogType()),
+			zap.String("parser", logType),
 			zap.Error(err))
 		return nil
 	}
-	return parsedEvents
+	if len(results) == 0 {
+		return nil
+	}
+	return results
 }
 
 // Classify attempts to classify the provided log line
@@ -135,14 +147,13 @@ func (c *Classifier) Classify(log string) *ClassifierResult {
 		currentItem := c.parsers.Peek()
 
 		startParseTime := time.Now().UTC()
-		parsedEvents := safeLogParse(currentItem.parser, log)
+		logType := currentItem.logType
+		parsedEvents := safeLogParse(logType, currentItem.parser, log)
 		endParseTime := time.Now().UTC()
-
-		logType := currentItem.parser.LogType()
 
 		// Parser failed to parse event
 		if parsedEvents == nil {
-			zap.L().Debug("failed to parse event", zap.String("expectedLogType", currentItem.parser.LogType()))
+			zap.L().Debug("failed to parse event", zap.String("expectedLogType", logType))
 			// Removing parser from queue
 			popped = append(popped, heap.Pop(c.parsers))
 			// Increasing penalty of the parser

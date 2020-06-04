@@ -28,9 +28,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-var S3ServerAccessDesc = `S3ServerAccess is an AWS S3 Access Log.
-Log format & samples can be seen here: https://docs.aws.amazon.com/AmazonS3/latest/dev/LogFormat.html`
-
 const (
 	s3ServerAccessMinNumberOfColumns = 25
 )
@@ -147,7 +144,7 @@ func (p *S3ServerAccessParser) Parse(log string) ([]*parsers.PantherLog, error) 
 
 // LogType returns the log type supported by this parser
 func (p *S3ServerAccessParser) LogType() string {
-	return "AWS.S3ServerAccess"
+	return TypeS3ServerAccess
 }
 
 func (event *S3ServerAccess) updatePantherFields(p *S3ServerAccessParser) {

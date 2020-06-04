@@ -1,4 +1,4 @@
-package destinations
+package osseclogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -20,9 +20,19 @@ package destinations
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
-// Destination defines the interface that all Destinations should follow
-type Destination interface {
-	SendEvents(parsedEventChannel chan *pantherlog.Result, errChan chan error)
+const (
+	TypeEventInfo = "OSSEC.EventInfo"
+)
+
+func init() {
+	pantherlog.MustRegister(pantherlog.LogType{
+		Name:         TypeEventInfo,
+		Description:  `OSSEC EventInfo alert parser. Currently only JSON output is supported.`,
+		ReferenceURL: `https://www.ossec.net/docs/docs/formats/alerts.html`,
+		Schema:       EventInfo{},
+		NewParser:    parsers.AdapterFactory(&EventInfoParser{}),
+	})
 }

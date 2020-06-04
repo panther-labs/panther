@@ -85,7 +85,7 @@ func DeployedTablesSignature(glueClient glueiface.GlueAPI) (deployedLogTablesSig
 func CreateOrUpdateGlueTablesForLogType(glueClient glueiface.GlueAPI, logType,
 	bucket string) (*awsglue.GlueTableMetadata, *awsglue.GlueTableMetadata, error) {
 
-	logTable := registry.AvailableParsers().LookupParser(logType).GlueTableMetadata // get the table description
+	logTable := registry.Lookup(logType).GlueTableMetadata() // get the table description
 	ruleTable, err := CreateOrUpdateGlueTables(glueClient, bucket, logTable)
 	return logTable, ruleTable, err
 }

@@ -22,19 +22,23 @@ import (
 	"net"
 	"regexp"
 	"sort"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
 const (
-	PantherFieldPrefix = "p_"
+	PantherFieldPrefix = pantherlog.FieldPrefix
 )
 
 var (
 	ipv4Regex  = regexp.MustCompile(`(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])*`)
-	rowCounter RowID // number of rows generated in this lambda execution (used to generate p_row_id)
+	rowCounter pantherlog.RowID // number of rows generated in this lambda execution (used to generate p_row_id)
 )
 
 // All log parsers should extend from this to get standardized fields (all prefixed with 'p_' as JSON for uniqueness)
@@ -60,6 +64,10 @@ type PantherLog struct {
 
 type PantherAnyString struct { // needed to declare as struct (rather than map) for CF generation
 	set map[string]struct{} // map is used for uniqueness, serializes as JSON list
+}
+
+func init() {
+	awsglue.RegisterMapping(PantherAnyString{}, awsglue.GlueStringArrayType)
 }
 
 func NewPantherAnyString() *PantherAnyString {
@@ -243,4 +251,55 @@ func AppendAnyString(any *PantherAnyString, values ...string) {
 		}
 		any.set[v] = struct{}{} // new
 	}
+}
+
+// Result converts a PantherLog to Result
+// NOTE: Currently in this file to help with review
+func (pl *PantherLog) Result() (*pantherlog.Result, error) {
+	event := pl.Event()
+	if event == nil {
+		return nil, errors.New("nil event")
+	}
+	if pl.PantherLogType == nil {
+		return nil, errors.New("nil log type")
+	}
+	if pl.PantherEventTime == nil {
+		return nil, errors.New("nil event time")
+	}
+	tm := ((*time.Time)(pl.PantherEventTime)).UTC()
+	// Use custom JSON marshaler to rewrite fields
+	data, err := JSON.Marshal(event)
+	if err != nil {
+		return nil, err
+	}
+	return &pantherlog.Result{
+		LogType:   *pl.PantherLogType,
+		EventTime: tm,
+		JSON:      data,
+	}, nil
+}
+
+// Results converts a PantherLog to a slice of results
+// NOTE: Currently in this file to help with review
+func (pl *PantherLog) Results() ([]*pantherlog.Result, error) {
+	result, err := pl.Result()
+	if err != nil {
+		return nil, err
+	}
+	return []*pantherlog.Result{result}, nil
+}
+
+func ToResults(logs []*PantherLog, err error) ([]*pantherlog.Result, error) {
+	if err != nil {
+		return nil, err
+	}
+	results := make([]*pantherlog.Result, len(logs))
+	for i := range results {
+		result, err := logs[i].Result()
+		if err != nil {
+			return nil, err
+		}
+		results[i] = result
+	}
+	return results, nil
 }

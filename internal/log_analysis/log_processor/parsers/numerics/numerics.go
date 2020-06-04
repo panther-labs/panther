@@ -22,7 +22,14 @@ import (
 	"strconv"
 
 	"github.com/pkg/errors"
+
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 )
+
+func init() {
+	awsglue.RegisterMapping(Integer(0), awsglue.GlueBigintType)
+	awsglue.RegisterMapping(Int64(0), awsglue.GlueBigintType)
+}
 
 // this is an int that is read from JSON as either a string or int
 type Integer int

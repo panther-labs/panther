@@ -25,13 +25,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-// TypeProduction is the type of the GitLabRails log record
-const TypeProduction = PantherPrefix + ".Production"
-
-// ProductionDesc describes the GitLabRails log record
-var ProductionDesc = `GitLab log for Production controller requests received from GitLab
-Reference: https://docs.gitlab.com/ee/administration/logs.html#production_jsonlog`
-
 // Production is a a GitLab Production controller log line from a non-API endpoint
 // nolint:lll
 type Production struct {

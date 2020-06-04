@@ -1,4 +1,4 @@
-package parsers
+package pantherlog
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
