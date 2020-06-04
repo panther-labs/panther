@@ -21,6 +21,7 @@ package resources
 import (
 	"context"
 	"fmt"
+
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
