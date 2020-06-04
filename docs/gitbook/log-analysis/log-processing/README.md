@@ -25,11 +25,9 @@ Panther's Log Analysis is designed for analyzing high volumes of events in real-
 
 ## How to Setup Log Analysis
 
-First, the data you'd like to analyze must be sent to an S3 bucket.
+First, the data you'd like to analyze must be sent to an S3 bucket. You can onboard as many buckets as you would like from any region. 
 
-We recommend organizing incoming data by using S3 folders or multiple buckets.
-
-You can onboard as many buckets as you would like from any region.
+{% hint style="info" %} We recommend organizing incoming data by using S3 folders or multiple buckets. {% endhint %}
 
 ## IAM Setup
 
@@ -191,7 +189,7 @@ Create a subscription between your SNS topic and Panther's log processing SQS qu
 
 1. Log into the AWS Console for the account where your S3 bucket exists
 2. Navigate to the [SNS Console](https://us-west-2.console.aws.amazon.com/sns/v3/home#/topics) and select the SNS Topic currently receiving events
-3. Take Note the ARN of this SNS topic
+3. Note the ARN of this SNS topic
 4. Select the `Edit` button and scroll down to the `Access Policy` card
 5. Add the statement shown below to the topic's `Access Policy`. Populate `<PANTHER-MASTER-ACCOUNT-ID>` with the 12-digit account ID where Panther is deployed. Populate `SNS-TOPIC-ARN` with the ARN you noted on step \#3:
 
