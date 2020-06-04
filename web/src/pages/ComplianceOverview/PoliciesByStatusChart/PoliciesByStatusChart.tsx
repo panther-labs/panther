@@ -18,20 +18,21 @@
 
 import React from 'react';
 import { capitalize, countPoliciesBySeverityAndStatus } from 'Helpers/utils';
-import DonutChart from 'Components/DonutChart';
 import map from 'lodash-es/map';
 import sum from 'lodash-es/sum';
 import { OrganizationReportBySeverity } from 'Generated/schema';
-import { theme } from 'pouncejs';
+import { theme, Flex } from 'pouncejs';
+import BarChart from 'Components/charts/BarChart';
+import ChartSummary from 'Components/charts/ChartSummary';
 
 const severityToColorMapping: {
   [key in keyof OrganizationReportBySeverity]: keyof typeof theme['colors'];
 } = {
   critical: 'red300',
-  high: 'red200',
-  medium: 'blue100',
-  low: 'grey100',
-  info: 'grey50',
+  high: 'orange300',
+  medium: 'yellow300',
+  low: 'grey300',
+  info: 'grey100',
 };
 
 interface PoliciesByStatusChartData {
@@ -40,9 +41,9 @@ interface PoliciesByStatusChartData {
 
 const PoliciesByStatusChart: React.FC<PoliciesByStatusChartData> = ({ policies }) => {
   const severities = Object.keys(severityToColorMapping);
-  const totalPolicies = sum(
+  const totalFailingPolicies = sum(
     severities.map((severity: keyof OrganizationReportBySeverity) =>
-      countPoliciesBySeverityAndStatus(policies, severity, ['fail', 'error', 'pass'])
+      countPoliciesBySeverityAndStatus(policies, severity, ['fail', 'error'])
     )
   );
 
@@ -59,20 +60,15 @@ const PoliciesByStatusChart: React.FC<PoliciesByStatusChartData> = ({ policies }
         )
       ),
       label: 'Passing',
-      color: 'green100' as const,
+      color: 'green200' as const,
     },
   ];
 
   return (
-    <DonutChart
-      data={failingPoliciesChartData}
-      renderLabel={(chartData, index) => {
-        const { value: severityGroupingValue } = chartData[index];
-        const percentage = Math.round((severityGroupingValue * 100) / totalPolicies).toFixed(0);
-
-        return `${severityGroupingValue}\n{small|${percentage}% of all}`;
-      }}
-    />
+    <Flex height="100%">
+      <ChartSummary total={totalFailingPolicies} title="Total Failing Policies" color="red300" />
+      <BarChart data={failingPoliciesChartData} />
+    </Flex>
   );
 };
 

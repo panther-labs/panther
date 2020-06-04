@@ -49,7 +49,7 @@ func customCognitoUserPoolMfa(_ context.Context, event cfn.Event) (physicalID st
 
 		// Create and Update will set the MFA config for the user pool
 		zap.L().Info("enabling TOTP for user pool", zap.String("userPoolId", props.UserPoolID))
-		_, err = getCognitoClient().SetUserPoolMfaConfig(&cognitoidentityprovider.SetUserPoolMfaConfigInput{
+		_, err = cognitoClient.SetUserPoolMfaConfig(&cognitoidentityprovider.SetUserPoolMfaConfigInput{
 			MfaConfiguration: aws.String("ON"),
 			SoftwareTokenMfaConfiguration: &cognitoidentityprovider.SoftwareTokenMfaConfigType{
 				Enabled: aws.Bool(true),

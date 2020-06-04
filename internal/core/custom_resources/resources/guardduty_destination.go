@@ -38,8 +38,8 @@ func customGuardDutyDestination(_ context.Context, event cfn.Event) (string, map
 		}
 
 		// currently GuardDuty does not support this in CF
-		response, err := getGuardDutyClient().CreatePublishingDestination(&props)
-		if err != nil && !strings.Contains(err.Error(), "already exists") {
+		response, err := guardDutyClient.CreatePublishingDestination(&props)
+		if err != nil {
 			return "", nil, err
 		}
 
@@ -54,7 +54,7 @@ func customGuardDutyDestination(_ context.Context, event cfn.Event) (string, map
 			return event.PhysicalResourceID, nil, nil
 		}
 
-		_, err := getGuardDutyClient().DeletePublishingDestination(
+		_, err := guardDutyClient.DeletePublishingDestination(
 			&guardduty.DeletePublishingDestinationInput{
 				DetectorId:    &split[3],
 				DestinationId: &split[4],

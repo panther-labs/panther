@@ -42,7 +42,7 @@ func customAthenaInit(_ context.Context, event cfn.Event) (string, map[string]in
 
 		// Workgroup "primary" is default.
 		const workgroup = "primary"
-		if err := awsathena.WorkgroupAssociateS3(getSession(), workgroup, props.AthenaResultsBucket); err != nil {
+		if err := awsathena.WorkgroupAssociateS3(awsSession, workgroup, props.AthenaResultsBucket); err != nil {
 			return resourceID, nil, fmt.Errorf("failed to associate %s Athena workgroup with %s bucket: %v",
 				workgroup, props.AthenaResultsBucket, err)
 		}

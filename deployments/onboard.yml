@@ -194,6 +194,7 @@ Resources:
 
   AuditLogsNotification:
     Type: Custom::S3BucketNotification
+    DependsOn: TopicPolicy
     Properties:
       Bucket: !Ref AuditLogsBucket
       NotificationConfiguration:
