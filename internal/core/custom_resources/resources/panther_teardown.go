@@ -21,8 +21,6 @@ package resources
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -70,30 +68,11 @@ func destroyEcrRepo(repoName string) error {
 		RepositoryName: &repoName,
 	})
 
-	allowNotFound := func(err error) error {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == ecr.ErrCodeRepositoryNotFoundException {
-			// repo doesn't exist - that's fine, nothing to do here
-			err = nil
-		}
-		return err
+	if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == ecr.ErrCodeRepositoryNotFoundException {
+		// repo doesn't exist - that's fine, nothing to do here
+		err = nil
 	}
-
-	if err != nil {
-		return allowNotFound(err)
-	}
-
-	// Wait until the delete has finished
-	input := &ecr.DescribeRepositoriesInput{RepositoryNames: []*string{&repoName}}
-	for {
-		_, err = ecrClient.DescribeRepositories(input)
-		if err == nil {
-			// still exists
-			time.Sleep(3 * time.Second)
-			continue
-		}
-
-		return allowNotFound(err)
-	}
+	return err
 }
 
 // Remove layers created for the policy and rules engines

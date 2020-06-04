@@ -125,7 +125,7 @@ func buildAndPushImageFromSource(awsSession *session.Session, imageRegistry, tag
 
 	logger.Info("pushing docker image to remote repo")
 	if err := sh.Run("docker", "push", remoteImage); err != nil {
-		return "", fmt.Errorf("docker push failed: %v", err)
+		return "", err
 	}
 
 	return remoteImage, nil
