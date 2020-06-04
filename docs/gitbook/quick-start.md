@@ -8,7 +8,7 @@ description: Get started with Panther in 15 minutes
 
 What you'll need:
 
-1. An AWS Account (see [supported regions](#supported-regions))
+1. An AWS Account
 2. An IAM user or role with permissions to create and manage the necessary resources
 
 We've provided a deployment role for your convenience, but any sufficiently privileged role will work:
@@ -21,14 +21,23 @@ We recommend deploying Panther into its own dedicated AWS account.
 {% endhint %}
 
 ## Deployment
-Navigate to the AWS CloudFormation console and create a new stack.
-Set the template URL to [https://panther-community.s3.amazonaws.com/v1.4.0/panther.yml](https://panther-community.s3.amazonaws.com/v1.4.0/panther.yml) like this:
+Navigate to the AWS CloudFormation console and create a new stack. The template URL is of the following form:
+
+```
+https://panther-EDITION-REGION.s3.amazonaws.com/VERSION/panther.yml
+```
+
+where:
+
+* EDITION is `community` or `enterprise`
+* REGION is one of: `us-east-1`, `us-east-2`, or `us-west-2`
+    * Be sure the template region matches the region in which you are deploying Panther
+    * Additional regions are available when [deploying from source](development.md#supported-regions)
+* VERSION is the latest [tagged release](https://github.com/panther-labs/panther/releases)
+
+For example:
 
 ![CloudFormation Template URL](.gitbook/assets/cfn-deploy-1.png)
-
-{% hint style="info" %}
-Enterprise users: substitute `panther-enterprise` for `panther-community` in the template URL
-{% endhint %}
 
 On the next page, choose a stack name (e.g. "panther") and configure the name and email for the first Panther user:
 
@@ -53,7 +62,7 @@ Resources:
   Panther:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://panther-community.s3.amazonaws.com/v1.4.0/panther.yml
+      TemplateURL: !Sub https://panther-community-${AWS::Region}.s3.amazonaws.com/v1.4.0/panther.yml
       Parameters:
         CompanyDisplayName: AwesomeCo
         FirstUserEmail: user@example.com
@@ -88,24 +97,7 @@ Congratulations! You are now ready to use Panther. Follow the steps below to com
 5. Write [policies](policies/cloud-security-overview.md) for supported [AWS resources](policies/resources/)
 6. Query collected logs with [historical search](historical-search/README.md)
 
-## Supported Regions
 
-Panther relies on dozens of AWS services, some of which are not yet available in every region. In particular, AppSync, Cognito, Athena, and Glue are newer services not available in us-gov, china, and other regions. At the time of writing, all Panther backend components are supported in the following:
-
-- `ap-northeast-1` (tokyo)
-- `ap-northeast-2` (seoul)
-- `ap-south-1` (mumbai)
-- `ap-southeast-1` (singapore)
-- `ap-southeast-2` (sydney)
-- `ca-central-1` (canada)
-- `eu-central-1` (frankfurt)
-- `eu-west-1` (ireland)
-- `eu-west-2` (london)
-- `us-east-1` (n. virginia)
-- `us-east-2` (ohio)
-- `us-west-2` (oregon)
-
-Consult the [AWS region table](https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/) for the source of truth about service availability in each region.
 
 ## Removing Panther
 To uninstall Panther, simply delete the main "panther" stack (substituting whatever stack name you chose during deployment).

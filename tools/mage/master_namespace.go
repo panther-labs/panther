@@ -142,17 +142,17 @@ func masterBuild() {
 //
 // Returns the path to the final generated template.
 func masterPackage(awsSession *session.Session, bucket, pantherVersion, imgRegistry string) string {
+	pkg, err := samPackage(*awsSession.Config.Region, "deployments/master.yml", bucket)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
 	dockerImage, err := buildAndPushImageFromSource(awsSession, imgRegistry, pantherVersion)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
 	logger.Infof("successfully published docker image %s", dockerImage)
-
-	pkg, err := samPackage(*awsSession.Config.Region, "deployments/master.yml", bucket)
-	if err != nil {
-		logger.Fatal(err)
-	}
 	return pkg
 }
 
@@ -201,5 +201,5 @@ func publishToRegion(version, region string) {
 		logger.Fatalf("failed to upload %s : %v", s3URL, err)
 	}
 
-	logger.Infof("Successfully published %s", s3URL)
+	logger.Infof("successfully published %s", s3URL)
 }

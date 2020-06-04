@@ -125,8 +125,27 @@ Remember to follow best security practices when handling access keys:
 - Rotate access keys every 90 days
 - Enforce MFA for key access
 
-Tools like [aws-vault](https://github.com/99designs/aws-vault) can help with all of the above, check out our [blog post](https://blog.runpanther.io/secure-multi-account-aws-access/) to learn more!
+Tools like [aws-vault](https://github.com/99designs/aws-vault) can help with all the above, check out our [blog post](https://blog.runpanther.io/secure-multi-account-aws-access/) to learn more!
 {% endhint %}
+
+### Supported Regions
+
+Panther relies on dozens of AWS services, some of which are not yet available in every region. In particular, AppSync, Cognito, Athena, and Glue are newer services not available in us-gov, china, and other regions. At the time of writing, all Panther backend components are supported in the following:
+
+- `ap-northeast-1` (tokyo)
+- `ap-northeast-2` (seoul)
+- `ap-south-1` (mumbai)
+- `ap-southeast-1` (singapore)
+- `ap-southeast-2` (sydney)
+- `ca-central-1` (canada)
+- `eu-central-1` (frankfurt)
+- `eu-west-1` (ireland)
+- `eu-west-2` (london)
+- `us-east-1` (n. virginia)
+- `us-east-2` (ohio)
+- `us-west-2` (oregon)
+
+Consult the [AWS region table](https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/) for the source of truth about service availability in each region.
 
 ### Mage Deploy
 Now you can run `mage deploy`
