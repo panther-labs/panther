@@ -70,7 +70,7 @@ Targets:
   fmt                 Format source files
   glue:sync           Sync glue table partitions after schema change
   master:deploy       Deploy single master template (deployments/master.yml) nesting all other stacks
-  master:publish      Package the master template and nested assets in S3/ECR for distribution
+  master:publish      Publish a new Panther release (Panther team only)
   setup               Install all build and development dependencies
   teardown            Destroy all Panther infrastructure
   test:ci             Run all required checks for a pull request
