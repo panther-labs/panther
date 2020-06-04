@@ -21,7 +21,7 @@ For the remaining dependencies, you can either use our development image or inst
 ### Development Image
 This is the easier option, but will also lead to much slower builds.
 
-Simply export your AWS credentials as environment variables, and then run `./dev.sh`
+Simply [export your AWS credentials](#aws-credentials) as environment variables, and then run `./dev.sh`
 From here, run `mage setup` and you're good to go.
 
 ### Local Dependencies
@@ -38,6 +38,7 @@ For example, on MacOS w/ Homebrew:
 brew install go node@12 python3
 export PATH=$HOME/go/bin:$PATH
 go get github.com/magefile/mage
+go get golang.org/x/tools/cmd/goimports
 ```
 
 Then install the remaining development libraries:
@@ -69,7 +70,7 @@ Targets:
   fmt                 Format source files
   glue:sync           Sync glue table partitions after schema change
   master:deploy       Deploy single master template (deployments/master.yml) nesting all other stacks
-  master:publish      Publish a new version of Panther to the public account
+  master:publish      Package the master template and nested assets in S3/ECR for distribution
   setup               Install all build and development dependencies
   teardown            Destroy all Panther infrastructure
   test:ci             Run all required checks for a pull request
@@ -96,10 +97,14 @@ Since the majority of Panther is written in Go, the repo follows the standard [G
 
 ## Testing
 
-1. Run our test suite: `mage test:ci`
-2. Run integration tests against a live deployment: `mage test:integration`
-   - **WARNING**: integration tests will erase all Panther data stores
+Run our test suite: `mage test:ci`
+
+Run integration tests against a live deployment: `mage test:integration`
    - To run tests for only one package: `PKG=./internal/compliance/compliance-api/main mage test:integration`
+
+{% hint style="danger" %}
+Integration tests will erase all Panther data stores
+{% endhint %}
 
 ## Deploying
 
@@ -137,11 +142,11 @@ If instead you want to deploy the single master template: `mage master:deploy`
 
 You can also deploy from an EC2 instance with Docker and git installed in the same region you're deploying Panther to.
 Instead of exporting your AWS credentials as environment variables, you will need to attach the [deployment IAM role](quick-start.md#prerequisites) to your EC2 instance profile.
-Your EC2 instance needs at least 1 vCPU and 2GB of memory; the cheapest suitable instance type is a `t2.small`.
+We recommend at least an `m5.large` instance type, but even one as small as `t2.small` should be sufficient.
 
 ## Teardown
 Run `mage teardown` to remove all Panther infrastructure, including S3 buckets that are normally retained if just the CloudFormation stack were deleted.
-If you used a master stack (i.e. did *not* `mage deploy`), then `STACK=your-stack-name mage teardown`
+If you have a single top-level Panther stack, then `STACK=your-stack-name mage teardown`
 
 In summary, teardown will:
 

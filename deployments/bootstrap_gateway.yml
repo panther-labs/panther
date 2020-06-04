@@ -150,8 +150,8 @@ Resources:
               Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}
             - Effect: Allow
               Action:
-                - ecr:BatchDeleteImage
-                - ecr:DescribeImages
+                - ecr:DeleteRepository
+                - ecr:DescribeRepositories
               Resource: !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ImageRegistryName}
             - Effect: Allow
               Action: execute-api:Invoke

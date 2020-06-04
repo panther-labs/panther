@@ -94,29 +94,34 @@ func masterDeployPreCheck(awsSession *session.Session) (string, string, string) 
 	return bucket, firstUserEmail, ecrRegistry
 }
 
-// Publish Publish a new version of Panther to the public account
+// Publish Package the master template and nested assets in S3/ECR for distribution
 func (Master) Publish() {
+	// This is used by the Panther team to publish new releases, but you could also use it to publish
+	// your own internal versions by defining the BUCKET and ECR_REGISTRY environment variables.
 	awsSession, err := getSession()
 	if err != nil {
 		logger.Fatal(err)
 	}
 
 	region := *awsSession.Config.Region
-	if region != "us-east-1" {
-		logger.Fatal("AWS region must be us-east-1 for publishing")
-	}
-
 	deployPreCheck(region)
 	version := getMasterVersion()
+
+	bucket := publicAssetsBucket
+	if b := os.Getenv("BUCKET"); b != "" {
+		bucket = b
+	}
+	repository := publicImageRepository
+	if r := os.Getenv("ECR_REGISTRY"); r != "" {
+		repository = r
+	}
+
 	s3Key := fmt.Sprintf("v%s/panther.yml", version)
-	s3URL := fmt.Sprintf("s3://%s/%s", publicAssetsBucket, s3Key) // just for logging
+	s3URL := fmt.Sprintf("s3://%s/%s", bucket, s3Key) // just for logging
 
 	// Check if this version already exists - it's easy to forget to update the version
 	// in the template file and we don't want to overwrite a previous version.
-	_, err = s3.New(awsSession).HeadObject(&s3.HeadObjectInput{
-		Bucket: aws.String(publicAssetsBucket),
-		Key:    &s3Key,
-	})
+	_, err = s3.New(awsSession).HeadObject(&s3.HeadObjectInput{Bucket: &bucket, Key: &s3Key})
 	if err == nil {
 		logger.Fatalf("%s already exists", s3URL)
 	}
@@ -125,9 +130,10 @@ func (Master) Publish() {
 		logger.Fatalf("failed to describe %s : %v", s3URL, err)
 	}
 
-	prompt := fmt.Sprintf("Are you sure you want to publish panther-community v%s? (yes|no) ", version)
-	result := promptUser(prompt, nonemptyValidator)
+	logger.Infof("Publishing panther-community v%s to s3://%s and ecr:%s", version, bucket, repository)
+	result := promptUser("Are you sure you want to continue? (yes|no) ", nonemptyValidator)
 	if strings.ToLower(result) != "yes" {
+		logger.Info("Set BUCKET and ECR_REGISTRY env variables to change publication location")
 		logger.Fatal("publish aborted")
 	}
 

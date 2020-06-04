@@ -21,6 +21,7 @@ package resources
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-sdk-go/aws"
@@ -47,7 +48,7 @@ func customPantherTeardown(_ context.Context, event cfn.Event) (string, map[stri
 		}
 
 		if props.EcrRepoName != "" {
-			if err := emptyEcrRepo(props.EcrRepoName); err != nil {
+			if err := destroyEcrRepo(props.EcrRepoName); err != nil {
 				return resourceID, nil, err
 			}
 		}
@@ -60,50 +61,39 @@ func customPantherTeardown(_ context.Context, event cfn.Event) (string, map[stri
 	}
 }
 
-// ECR repos can't be deleted in native CloudFormation unless they are empty.
-func emptyEcrRepo(repoName string) error {
-	zap.L().Info("emptying ECR repository", zap.String("repo", repoName))
-
-	input := &ecr.DescribeImagesInput{RepositoryName: &repoName}
-	var imageDigests []string
-	err := ecrClient.DescribeImagesPages(input, func(page *ecr.DescribeImagesOutput, isLast bool) bool {
-		for _, img := range page.ImageDetails {
-			imageDigests = append(imageDigests, *img.ImageDigest)
-		}
-		return true
+// ECR repos can't be deleted by CloudFormation unless they are empty.
+func destroyEcrRepo(repoName string) error {
+	zap.L().Info("removing ECR repository", zap.String("repo", repoName))
+	_, err := ecrClient.DeleteRepository(&ecr.DeleteRepositoryInput{
+		// Force:true to remove images as well (easier than emptying the repo explicitly)
+		Force:          aws.Bool(true),
+		RepositoryName: &repoName,
 	})
 
-	if err != nil {
+	allowNotFound := func(err error) error {
 		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == ecr.ErrCodeRepositoryNotFoundException {
-			// Repo doesn't exist, then we're good!
+			// repo doesn't exist - that's fine, nothing to do here
 			err = nil
 		}
 		return err
 	}
 
-	if len(imageDigests) == 0 {
-		return nil
-	}
-
-	batchInput := &ecr.BatchDeleteImageInput{
-		ImageIds:       make([]*ecr.ImageIdentifier, 0, len(imageDigests)),
-		RepositoryName: &repoName,
-	}
-
-	for _, digest := range imageDigests {
-		batchInput.ImageIds = append(batchInput.ImageIds,
-			&ecr.ImageIdentifier{ImageDigest: aws.String(digest)})
-	}
-
-	response, err := ecrClient.BatchDeleteImage(batchInput)
 	if err != nil {
-		return err
-	}
-	if len(response.Failures) > 0 {
-		return fmt.Errorf("%d ECR images failed to delete", len(response.Failures))
+		return allowNotFound(err)
 	}
 
-	return nil
+	// Wait until the delete has finished
+	input := &ecr.DescribeRepositoriesInput{RepositoryNames: []*string{&repoName}}
+	for {
+		_, err = ecrClient.DescribeRepositories(input)
+		if err == nil {
+			// still exists
+			time.Sleep(3 * time.Second)
+			continue
+		}
+
+		return allowNotFound(err)
+	}
 }
 
 // Remove layers created for the policy and rules engines
