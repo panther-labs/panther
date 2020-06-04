@@ -332,6 +332,8 @@ Resources:
     DependsOn: [BootstrapGateway, Core] # custom-resources and users-api, respectively
     Properties:
       TemplateURL: web_server.yml
+      # The ECS service sometimes does not stabilize, which CFN won't realize for 3 hours
+      TimeoutInMinutes: 30
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AppClientId: !GetAtt Bootstrap.Outputs.AppClientId

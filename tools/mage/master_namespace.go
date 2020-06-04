@@ -37,8 +37,13 @@ import (
 )
 
 const (
-	publicAssetsBucket    = "panther-community"
-	publicImageRepository = "349240696275.dkr.ecr.us-east-1.amazonaws.com/panther-community"
+	// The region will be interpolated in these names
+	publicAssetsBucket    = "panther-community-%s"
+	publicImageRepository = "349240696275.dkr.ecr.%s.amazonaws.com/panther-community"
+)
+
+var (
+	publishRegions = []string{"us-east-1", "us-east-2", "us-west-2"}
 )
 
 type Master mg.Namespace
@@ -52,6 +57,7 @@ func (Master) Deploy() {
 	region := *awsSession.Config.Region
 	bucket, firstUserEmail, ecrRegistry := masterDeployPreCheck(awsSession)
 
+	masterBuild()
 	pkg := masterPackage(awsSession, bucket, getMasterVersion(), ecrRegistry)
 
 	err = sh.RunV(filepath.Join(pythonVirtualEnvPath, "bin", "sam"), "deploy",
@@ -94,68 +100,29 @@ func masterDeployPreCheck(awsSession *session.Session) (string, string, string) 
 	return bucket, firstUserEmail, ecrRegistry
 }
 
-// Publish Package the master template and nested assets in S3/ECR for distribution
+// Publish Publish a new Panther release (Panther team only)
 func (Master) Publish() {
-	// This is used by the Panther team to publish new releases, but you could also use it to publish
-	// your own internal versions by defining the BUCKET and ECR_REGISTRY environment variables.
-	awsSession, err := getSession()
-	if err != nil {
-		logger.Fatal(err)
-	}
-
-	region := *awsSession.Config.Region
-	deployPreCheck(region)
+	deployPreCheck("us-east-1")
 	version := getMasterVersion()
 
-	bucket := publicAssetsBucket
-	if b := os.Getenv("BUCKET"); b != "" {
-		bucket = b
-	}
-	repository := publicImageRepository
-	if r := os.Getenv("ECR_REGISTRY"); r != "" {
-		repository = r
-	}
-
-	s3Key := fmt.Sprintf("v%s/panther.yml", version)
-	s3URL := fmt.Sprintf("s3://%s/%s", bucket, s3Key) // just for logging
-
-	// Check if this version already exists - it's easy to forget to update the version
-	// in the template file and we don't want to overwrite a previous version.
-	_, err = s3.New(awsSession).HeadObject(&s3.HeadObjectInput{Bucket: &bucket, Key: &s3Key})
-	if err == nil {
-		logger.Fatalf("%s already exists", s3URL)
-	}
-	if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != "NotFound" {
-		// Some error other than 'not found'
-		logger.Fatalf("failed to describe %s : %v", s3URL, err)
-	}
-
-	logger.Infof("Publishing panther-community v%s to s3://%s and ecr:%s", version, bucket, repository)
+	logger.Infof("Publishing panther-community v%s to %s", version, strings.Join(publishRegions, ","))
 	result := promptUser("Are you sure you want to continue? (yes|no) ", nonemptyValidator)
 	if strings.ToLower(result) != "yes" {
-		logger.Info("Set BUCKET and ECR_REGISTRY env variables to change publication location")
 		logger.Fatal("publish aborted")
 	}
 
 	// To be safe, always clean and reset the repo before building the assets
 	Clean()
 	Setup()
+	masterBuild()
 
-	// Publish S3 assets and ECR docker image
-	pkg := masterPackage(awsSession, publicAssetsBucket, version, publicImageRepository)
-
-	// Upload final packaged template
-	if _, err := uploadFileToS3(awsSession, pkg, publicAssetsBucket, s3Key); err != nil {
-		logger.Fatalf("failed to upload %s : %v", s3URL, err)
+	for _, region := range publishRegions {
+		publishToRegion(version, region)
 	}
-
-	logger.Infof("Successfully published %s", s3URL)
 }
 
-// Package assets needed for the master template.
-//
-// Returns the path to the final generated template.
-func masterPackage(awsSession *session.Session, bucket, pantherVersion, imgRegistry string) string {
+// Compile Lambda source assets
+func masterBuild() {
 	build.API()
 	build.Cfn()
 	build.Lambda()
@@ -169,7 +136,12 @@ func masterPackage(awsSession *session.Session, bucket, pantherVersion, imgRegis
 	if err = buildLayer(defaultConfig.Infra.PipLayer); err != nil {
 		logger.Fatal(err)
 	}
+}
 
+// Package assets needed for the master template.
+//
+// Returns the path to the final generated template.
+func masterPackage(awsSession *session.Session, bucket, pantherVersion, imgRegistry string) string {
 	dockerImage, err := buildAndPushImageFromSource(awsSession, imgRegistry, pantherVersion)
 	if err != nil {
 		logger.Fatal(err)
@@ -198,4 +170,36 @@ func getMasterVersion() string {
 	}
 
 	return version
+}
+
+func publishToRegion(version, region string) {
+	logger.Infof("publishing to %s", region)
+	awsSession := session.Must(session.NewSession(
+		aws.NewConfig().WithMaxRetries(10).WithRegion(region)))
+
+	bucket := fmt.Sprintf(publicAssetsBucket, region)
+	s3Key := fmt.Sprintf("v%s/panther.yml", version)
+	s3URL := fmt.Sprintf("s3://%s/%s", bucket, s3Key) // just for logging
+
+	// Check if this version already exists - it's easy to forget to update the version
+	// in the template file and we don't want to overwrite a previous version.
+	_, err := s3.New(awsSession).HeadObject(&s3.HeadObjectInput{Bucket: &bucket, Key: &s3Key})
+	if err == nil {
+		logger.Errorf("%s already exists", s3URL)
+		return
+	}
+	if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != "NotFound" {
+		// Some error other than 'not found'
+		logger.Fatalf("failed to describe %s : %v", s3URL, err)
+	}
+
+	// Publish S3 assets and ECR docker image
+	pkg := masterPackage(awsSession, bucket, version, fmt.Sprintf(publicImageRepository, region))
+
+	// Upload final packaged template
+	if _, err := uploadFileToS3(awsSession, pkg, bucket, s3Key); err != nil {
+		logger.Fatalf("failed to upload %s : %v", s3URL, err)
+	}
+
+	logger.Infof("Successfully published %s", s3URL)
 }
