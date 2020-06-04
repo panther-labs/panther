@@ -18,6 +18,19 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Master template for deploying Panther Community
 
 Parameters:
+  # FirstUserEmail is the only required parameter
+  FirstUserEmail:
+    Type: String
+    Description: Email of the initial Panther user
+  FirstUserGivenName:
+    Type: String
+    Description: First (given) name of the initial Panther user
+    Default: PantherUser
+  FirstUserFamilyName:
+    Type: String
+    Description: Family (last) name of the initial Panther user
+    Default: Community
+
   AccessLogsBucket:
     Type: String
     Description: External bucket for storing S3 access logs. If not specified, the Panther audit bucket is used.
@@ -25,6 +38,10 @@ Parameters:
   AlarmTopicArn:
     Type: String
     Description: An existing SNS topic for CloudWatch alarms. If not specified, one is created for you.
+    Default: ''
+  CertificateArn:
+    Type: String
+    Description: TLS certificate used by the web app. If not specified, a self-signed cert is created for you.
     Default: ''
   CloudWatchLogRetentionDays:
     Type: Number
@@ -43,11 +60,29 @@ Parameters:
     Description: Toggle debug logging for all components
     AllowedValues: [true, false]
     Default: false
+  EnableCloudTrail:
+    Type: String
+    Description: Create a Panther CloudTrail in this account configured for log processing. Has no effect if OnboardSelf=false
+    AllowedValues: [true, false]
+    Default: false
+  EnableGuardDuty:
+    Type: String
+    Description: Create a Panther GuardDuty in this account configured for log processing. Has no effect if OnboardSelf=false
+    AllowedValues: [true, false]
+    Default: false
   EnableS3AccessLogs:
     Type: String
     Description: Enable S3 access logging for all Panther buckets
     AllowedValues: [true, false]
     Default: true
+  ImageRegistry:
+    Type: String
+    Description: Docker image registry which stores web app images. Defaults to Panther public account
+    Default: 349240696275.dkr.ecr.us-east-1.amazonaws.com/panther-web
+  InitialAnalysisPackUrls:
+    Type: CommaDelimitedList
+    Description: Initial Python analysis packs
+    Default: https://github.com/panther-labs/panther-analysis/releases/latest/download/panther-analysis-all.zip
   LayerVersionArns:
     Type: CommaDelimitedList
     Description: List of LayerVersion ARNs to attach to each Lambda function
@@ -62,6 +97,11 @@ Parameters:
     Type: CommaDelimitedList
     Description: List of Principal ARNs to allow read access to the ProcessedDataBucket and subscribe access to ProcessedDataTopicArn
     Default: ''
+  OnboardSelf:
+    Type: String
+    Description: Panther automatically onboards itself as a data source
+    AllowedValues: [true, false]
+    Default: true
   PythonLayerVersionArn:
     Type: String
     Description: Custom Python layer for analysis and remediation. Defaults to a pre-built layer with 'policyuniverse' and 'requests' pip libraries
@@ -76,6 +116,9 @@ Mappings:
   Constants:
     Panther:
       Version: 1.4.0
+
+Conditions:
+  OnboardSelf: !Equals [!Ref OnboardSelf, true]
 
 Resources:
   Bootstrap:
@@ -111,9 +154,11 @@ Resources:
         # That's why this uses the Bootstrap output instead of the parameter.
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
-        ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
+        AuditLogsBucket: !GetAtt Bootstrap.Outputs.AuditLogsBucket
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
+        ImageRegistryName: !GetAtt Bootstrap.Outputs.ImageRegistryName
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
+        ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
         PythonLayerVersionArn: !Ref PythonLayerVersionArn
         TracingMode: !Ref TracingMode
         UserPoolId: !GetAtt Bootstrap.Outputs.UserPoolId
@@ -184,6 +229,7 @@ Resources:
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AppDomainURL: !GetAtt Bootstrap.Outputs.LoadBalancerUrl
+        AnalysisApiEndpoint: !GetAtt BootstrapGateway.Outputs.AnalysisApiEndpoint
         AnalysisApiId: !GetAtt BootstrapGateway.Outputs.AnalysisApiId
         AnalysisVersionsBucket: !GetAtt Bootstrap.Outputs.AnalysisVersionsBucket
         AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
@@ -191,6 +237,10 @@ Resources:
         ComplianceApiId: !GetAtt BootstrapGateway.Outputs.ComplianceApiId
         Debug: !Ref Debug
         DynamoScalingRoleArn: !GetAtt Bootstrap.Outputs.DynamoScalingRoleArn
+        FirstUserGivenName: !Ref FirstUserGivenName
+        FirstUserFamilyName: !Ref FirstUserFamilyName
+        FirstUserEmail: !Ref FirstUserEmail
+        InitialAnalysisPackUrls: !Join [',', !Ref InitialAnalysisPackUrls]
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         OutputsKeyId: !GetAtt Bootstrap.Outputs.OutputsEncryptionKeyId
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
@@ -249,10 +299,66 @@ Resources:
         - Key: Stack
           Value: panther-log-analysis
 
+  Onboard:
+    Condition: OnboardSelf
+    # Onboard stack adds new source integrations, which requires custom resources (bootstrap-gateway),
+    # source-api (core), and queues from cloud-security and log-analysis to exist.
+    DependsOn: [BootstrapGateway, CloudSecurity, Core, LogAnalysis]
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: onboard.yml
+      Parameters:
+        AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
+        AuditLogsBucket: !GetAtt Bootstrap.Outputs.AuditLogsBucket
+        EnableCloudTrail: !Ref EnableCloudTrail
+        EnableGuardDuty: !Ref EnableGuardDuty
+        EnableS3AccessLogs: !Ref EnableS3AccessLogs
+        VpcId: !GetAtt Bootstrap.Outputs.VpcId
+      Tags:
+        - Key: Application
+          Value: Panther
+        - Key: PantherEdition
+          Value: Community
+        - Key: PantherVersion
+          Value: !FindInMap [Constants, Panther, Version]
+        - Key: Stack
+          Value: panther-onboard
+
+  Web:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: web_server.yml
+      Parameters:
+        AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
+        AppClientId: !GetAtt Bootstrap.Outputs.AppClientId
+        CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
+        CertificateArn: !Ref CertificateArn
+        ElbArn: !GetAtt Bootstrap.Outputs.LoadBalancerArn
+        ElbFullName: !GetAtt Bootstrap.Outputs.LoadBalancerFullName
+        ElbTargetGroup: !GetAtt Bootstrap.Outputs.LoadBalancerTargetGroup
+        Image: !Sub
+          - '${ImageRegistry}:${tag}'
+          - { tag: !FindInMap [Constants, Panther, Version] }
+        GraphQLApiEndpoint: !GetAtt Bootstrap.Outputs.GraphQLApiEndpoint
+        PantherVersion: !FindInMap [Constants, Panther, Version]
+        SecurityGroup: !GetAtt Bootstrap.Outputs.WebSecurityGroup
+        SubnetOneId: !GetAtt Bootstrap.Outputs.SubnetOneId
+        SubnetTwoId: !GetAtt Bootstrap.Outputs.SubnetTwoId
+        UserPoolId: !GetAtt Bootstrap.Outputs.UserPoolId
+      Tags:
+        - Key: Application
+          Value: Panther
+        - Key: PantherEdition
+          Value: Community
+        - Key: PantherVersion
+          Value: !FindInMap [Constants, Panther, Version]
+        - Key: Stack
+          Value: panther-web
+
 Outputs:
   GraphQlUrl:
     Description: The URL for the AppSync GraphQL endpoint
     Value: !GetAtt Bootstrap.Outputs.GraphQLApiEndpoint
   LoadBalancerUrl:
-    Description: Panther URL - application load balancer or custom domain
-    Value: !GetAtt Bootstrap.Outputs.LoadBalancerUrl
+    Description: Panther URL serving the web app
+    Value: !Sub https://${Bootstrap.Outputs.LoadBalancerUrl}

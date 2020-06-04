@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"fmt"
 	"html"
+	"math"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -109,6 +110,12 @@ func logDocs() error {
 	}
 	sort.Strings(sortedCategories)
 
+	// allow large comment descriptions in the docs (by default they are clipped)
+	awsglue.MaxCommentLength = math.MaxInt32
+	defer func() {
+		awsglue.MaxCommentLength = awsglue.DefaultMaxCommentLength
+	}()
+
 	docCategory := func(category string) error {
 		var docsBuffer bytes.Buffer
 		logTypes := logCategories[category]
@@ -130,7 +137,7 @@ func logDocs() error {
 			docsBuffer.WriteString(`<table>` + "\n")
 			docsBuffer.WriteString("<tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>\n") // nolint
 
-			columns := awsglue.InferJSONColumns(table.EventStruct(), awsglue.GlueMappings...) // get the Glue schema
+			columns, _ := awsglue.InferJSONColumns(table.EventStruct(), awsglue.GlueMappings...) // get the Glue schema
 			for _, column := range columns {
 				colName := column.Name
 				if column.Required {
@@ -138,7 +145,7 @@ func logDocs() error {
 				}
 				docsBuffer.WriteString(fmt.Sprintf("<tr><td valign=top>%s</td><td>%s</td><td valign=top>%s</td></tr>\n",
 					formatColumnName(colName),
-					formatType(column),
+					formatType(logType, column),
 					html.EscapeString(column.Comment)))
 			}
 
@@ -162,8 +169,8 @@ func formatColumnName(name string) string {
 	return "<code>" + name + "</code>"
 }
 
-func formatType(col awsglue.Column) string {
-	return "<code>" + prettyPrintType(col.Type, "") + "</code>"
+func formatType(logType string, col awsglue.Column) string {
+	return "<code>" + prettyPrintType(logType, col.Name, col.Type, "") + "</code>"
 }
 
 const (
@@ -171,11 +178,11 @@ const (
 	prettyPrintIndent = "&nbsp;&nbsp;"
 )
 
-func prettyPrintType(colType, indent string) string {
+func prettyPrintType(logType, colName, colType, indent string) string {
 	complexTypes := []string{"array", "struct", "map"}
 	for _, ct := range complexTypes {
 		if strings.HasPrefix(colType, ct) {
-			return prettyPrintComplexType(ct, colType, indent)
+			return prettyPrintComplexType(logType, colName, ct, colType, indent)
 		}
 	}
 
@@ -184,54 +191,55 @@ func prettyPrintType(colType, indent string) string {
 }
 
 // complex hive types are ugly
-func prettyPrintComplexType(complexType, colType, indent string) (pretty string) {
+func prettyPrintComplexType(logType, colName, complexType, colType, indent string) (pretty string) {
 	switch complexType {
 	case "array":
-		return prettyPrintArrayType(colType, indent)
+		return prettyPrintArrayType(logType, colName, colType, indent)
 	case "map":
-		return prettyPrintMapType(colType, indent)
+		return prettyPrintMapType(logType, colName, colType, indent)
 	case "struct":
-		return prettyPrintStructType(colType, indent)
+		return prettyPrintStructType(logType, colName, colType, indent)
 	default:
-		panic("unknown complex type: " + complexType)
+		panic("unknown complex type: " + complexType + " for " + colName + " in " + logType)
 	}
 }
 
-func prettyPrintArrayType(colType, indent string) string {
+func prettyPrintArrayType(logType, colName, colType, indent string) string {
 	fields := getTypeFields("array", colType)
 	if len(fields) != 1 {
-		panic("cannot parse array type: " + colType)
+		panic("could not parse array type `" + colType + "` for " + colName + " in " + logType)
 	}
-	return "[" + prettyPrintType(fields[0], indent) + "]"
+	return "[" + prettyPrintType(logType, colName, fields[0], indent) + "]"
 }
 
-func prettyPrintMapType(colType, indent string) string {
+func prettyPrintMapType(logType, colName, colType, indent string) string {
 	fields := getTypeFields("map", colType)
 	if len(fields) != 2 {
-		panic("cannot parse map type: " + colType)
+		panic("could not parse map type `" + colType + "` for " + colName + " in " + logType)
 	}
 	keyType := fields[0]
 	valType := fields[1]
 	indent += prettyPrintIndent
-	return "{" + prettyPrintPrefix + indent + prettyPrintType(keyType, indent) + ":" +
-		prettyPrintType(valType, indent) + prettyPrintPrefix + "}"
+	return "{" + prettyPrintPrefix + indent + prettyPrintType(logType, colName, keyType, indent) + ":" +
+		prettyPrintType(logType, colName, valType, indent) + prettyPrintPrefix + "}"
 }
 
-func prettyPrintStructType(colType, indent string) string {
+func prettyPrintStructType(logType, colName, colType, indent string) string {
 	fields := getTypeFields("struct", colType)
 	if len(fields) == 0 {
-		panic("cannot parse struct type: " + colType)
+		panic("could not parse struct type `" + colType + "` for " + colName + " in " + logType)
 	}
 	indent += prettyPrintIndent
 	var fieldTypes []string
 	for _, field := range fields {
 		splitIndex := strings.Index(field, ":") // name:type (can't use Split() cuz type can have ':'
 		if splitIndex == -1 {
-			panic("could not parse struct field: " + field)
+			panic("could not parse struct field `" + field + "` of `" + colType + "` for " + colName + " in " + logType)
 		}
 		name := `"` + field[0:splitIndex] + `"` // make it look like JSON by quoting
 		structFieldType := field[splitIndex+1:]
-		fieldTypes = append(fieldTypes, prettyPrintPrefix+indent+name+":"+prettyPrintType(structFieldType, indent))
+		fieldTypes = append(fieldTypes, prettyPrintPrefix+indent+name+":"+
+			prettyPrintType(logType, colName, structFieldType, indent))
 	}
 	return "{" + strings.Join(fieldTypes, ",") + prettyPrintPrefix + "}"
 }
@@ -255,6 +263,8 @@ func getTypeFields(complexType, colType string) (subFields []string) {
 			insideBracketCount--
 		}
 	}
-	subFields = append(subFields, fields[startSubfieldIndex:]) // the rest
+	if len(fields[startSubfieldIndex:]) > 0 { // the rest
+		subFields = append(subFields, fields[startSubfieldIndex:])
+	}
 	return subFields
 }

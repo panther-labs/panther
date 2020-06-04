@@ -39,16 +39,23 @@ To allow this question to be answered over all data sources the "any" fields bel
 
 The `all_logs` Athena view is provided over all data sources to make queries easy for users to find activity for an indicator in a single query.
 
-| Field Name             | Type             | Description                                                    |
-| ---------------------- | ---------------- | -------------------------------------------------------------- |
-| `p_any_ip_addresses`     | `array<string>` | List of ip addresses (v4 or v6 in string form) related to row. |
-| `p_any_domain_names`     | `array<string>` | List of domain names related to row.                           |
-| `p_any_aws_account_ids`  | `array<string>` | List of was account ids related to row.                        |
-| `p_any_aws_instance_ids` | `array<string>` | List of was instance ids related to row.                       |
-| `p_any_aws_arns`         | `array<string>` | List of arns related to row.                                   |
-| `p_any_aws_tags`         | `array<string>` | List of tags related to row as "key:value" pairs.              |
-| `p_any_md5_hashes`       | `array<string>` | List of MD5 hashes related to row.                             |
-| `p_any_sha1_hashes`      | `array<string>` | List of SHA1 hashes related to row.                            |
+| Field Name               | Type             | Description                                                    |
+| ------------------------ | ---------------- | -------------------------------------------------------------- |
+| `p_alert_id`             | `string`         | Id of alert related to row.                                    |
+| `p_alert_creation_time`  | `timestamp`      | Time of alert creation related to row.                         |
+| `p_alert_update_time`    | `timestamp`      | Time of last alert update related to row.                      |
+| `p_any_aws_account_ids`  | `array[string]`  | List of aws account ids related to row.                        |
+| `p_any_aws_arns`         | `array[string]`  | List of aws arns related to row.                               |
+| `p_any_aws_instance_ids` | `array[string]`  | List of aws instance ids related to row.                       |
+| `p_any_aws_tags`         | `array[string]`  | List of aws tags related to row as "key:value" pairs.          |
+| `p_any_domain_names`     | `array[string]`  | List of domain names related to row.                           |
+| `p_any_ip_addresses`     | `array[string]`  | List of ip addresses (v4 or v6 in string form) related to row. |
+| `p_any_md5_hashes`       | `array[string]`  | List of MD5 hashes related to row.                             |
+| `p_any_sha1_hashes`      | `array[string]`  | List of SHA1 hashes related to row.                            |
+| `p_any_sha256_hashes`    | `array[string]`  | List of SHA256 hashes related to row.                          |
+| `p_rule_reports`         | `map[string]array[string]` | List of user defined rule reporting tags related to row.  |
+| `p_rule_tags`            | `array[string]`  | List of user defined rule tags related to row.                 |
+
 
 ## The "all_logs" Athena View
 

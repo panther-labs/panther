@@ -133,7 +133,7 @@ func UpdatePartition(client glueiface.GlueAPI, databaseName, tableName string,
 }
 
 func IsJSONPartition(storageDescriptor *glue.StorageDescriptor) bool {
-	return strings.Contains(*storageDescriptor.SerdeInfo.SerializationLibrary, "json")
+	return strings.Contains(strings.ToLower(*storageDescriptor.SerdeInfo.SerializationLibrary), "json")
 }
 
 func ParseS3URL(s3URL string) (bucket, key string, err error) {

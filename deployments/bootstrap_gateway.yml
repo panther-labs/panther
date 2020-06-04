@@ -32,6 +32,9 @@ Parameters:
   AthenaResultsBucket:
     Type: String
     Description: Bucket created to hold Athena results
+  ImageRegistryName:
+    Type: String
+    Description: Name of the ECR repository hosting web images (blank when deploying from source)
   ProcessedDataBucket:
     Type: String
     Description: S3 bucket which stores processed logs
@@ -59,6 +62,9 @@ Parameters:
   AlarmTopicArn:
     Type: String
     Description: SNS topic for CloudWatch alarms
+  AuditLogsBucket:
+    Type: String
+    Description: Bucket which holds Panther's own audit logs
   UserPoolId:
     Type: String
     Description: Cognito user pool ID
@@ -66,8 +72,8 @@ Parameters:
 Mappings:
   Functions:
     CustomResource:
-      Memory: 2048 # use a larger size to run faster, since this is used rarely the small cost difference is not a concern
-      Timeout: 900 # should as long as possible
+      Memory: 1024 # use a larger size to run faster, since this is used rarely the small cost difference is not a concern
+      Timeout: 900 # 15 minutes (as long as possible)
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
@@ -129,6 +135,13 @@ Resources:
               Resource: !Sub arn:${AWS::Partition}:acm:${AWS::Region}:${AWS::AccountId}:certificate/*
             - Effect: Allow
               Action:
+                - athena:UpdateWorkGroup
+                - athena:StartQueryExecution
+                - athena:StopQueryExecution
+                - athena:GetQuery*
+              Resource: '*'
+            - Effect: Allow
+              Action:
                 - cloudwatch:PutMetricAlarm
                 - cloudwatch:DeleteAlarms
               Resource: !Sub arn:${AWS::Partition}:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:Panther*
@@ -136,23 +149,11 @@ Resources:
               Action: cognito-idp:SetUserPoolMfaConfig
               Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}
             - Effect: Allow
-              Action:
-                - iam:DeleteServerCertificate
-                - iam:UploadServerCertificate
-              Resource:
-                - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/panther/*
-                # IAM sometimes requires permissions to match the certificate name, not the full path
-                # This seems like a bug in IAM, but in any case a fresh deploy/teardown will not work without this:
-                - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/Panther*
+              Action: ecr:DeleteRepository
+              Resource: !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ImageRegistryName}
             - Effect: Allow
-              Action:
-                - logs:DeleteMetricFilter
-                - logs:PutMetricFilter
-              Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/panther-*
-            - Effect: Allow
-              Action: athena:updateWorkGroup
-              # 1 API call to configure Athena
-              Resource: '*'
+              Action: execute-api:Invoke
+              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApi}/v1/POST/upload
             - Effect: Allow
               Action:
                 - glue:CreateDatabase
@@ -170,24 +171,63 @@ Resources:
                 # the resource below is odd, I had to add to get glue:DeleteDatabase to work, I think it may be a bug in the api
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:userDefinedFunction/panther*
             - Effect: Allow
-              Action: s3:List*
-              # used during glue sync to test for presence of data
-              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}*
-            - Effect: Allow
               Action:
-                - athena:StartQueryExecution
-                - athena:StopQueryExecution
-                - athena:GetQuery*
-              # used to create or replace views
+                - guardduty:Create*
+                - guardduty:Get*
+                - guardduty:List*
+                - guardduty:DeletePublishingDestination
               Resource: '*'
             - Effect: Allow
               Action:
-                - s3:GetBucketLocation
+                - iam:DeleteServerCertificate
+                - iam:UploadServerCertificate
+              Resource:
+                - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/panther/*
+                # IAM sometimes requires permissions to match the certificate name, not the full path
+                # This seems like a bug in IAM, but in any case a fresh deploy/teardown will not work without this:
+                - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/Panther*
+            - Effect: Allow
+              Action: iam:PassRole
+              Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/Panther*
+            - Effect: Allow
+              Action: kms:ListAliases # required for GuardDuty
+              Resource: '*'
+            - Effect: Allow
+              Action: lambda:GetFunction
+              Resource:
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-policy-engine
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-rules-engine
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource:
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-organization-api
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-users-api
+            - Effect: Allow
+              Action: lambda:DeleteLayerVersion
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:panther-engine-globals:*
+            - Effect: Allow
+              Action: lambda:ListLayerVersions
+              Resource: '*'
+            - Effect: Allow
+              Action:
+                - logs:DeleteMetricFilter
+                - logs:PutMetricFilter
+              Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/panther-*
+            - Effect: Allow
+              Action:
+                # Needed for Athena, GuardDuty, and Glue sync
+                - s3:Get*
                 - s3:List*
-                - s3:GetObject
+                - s3:PutBucketNotification
                 - s3:PutObject
-              # needed by Athena to write results
-              Resource: !Sub arn:aws:s3:::${AthenaResultsBucket}*
+              Resource:
+                - !Sub arn:${AWS::Partition}:s3:::${AthenaResultsBucket}*
+                - !Sub arn:${AWS::Partition}:s3:::${AuditLogsBucket}*
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}*
+            - Effect: Allow
+              Action: s3:Get*
+              Resource: arn:aws:s3:::panther-public-cloudformation-templates*
 
   CustomResourceLogGroup:
     Type: AWS::Logs::LogGroup
@@ -210,6 +250,15 @@ Resources:
       FunctionTimeoutSec: !FindInMap [Functions, CustomResource, Timeout]
       LoggedWarnThreshold: 1
       ThrottleThreshold: 0
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+
+  CustomTeardown:
+    # When deleted, this resource will remove Panther assets added outside of CloudFormation:
+    #   - ECR images
+    #   - Lambda layers
+    Type: Custom::PantherTeardown
+    Properties:
+      EcrRepoName: !Ref ImageRegistryName
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
   # Alarms for SNS topics in the bootstrap stack

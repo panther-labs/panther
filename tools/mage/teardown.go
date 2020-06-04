@@ -20,6 +20,7 @@ package mage
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -28,8 +29,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
-	"github.com/aws/aws-sdk-go/service/ecr"
-	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sts"
 
@@ -38,8 +37,7 @@ import (
 
 const (
 	// Upper bound on the number of s3 object versions we'll delete manually.
-	s3MaxDeletes    = 10000
-	globalLayerName = "panther-engine-globals"
+	s3MaxDeletes = 10000
 )
 
 type deleteStackResult struct {
@@ -49,64 +47,22 @@ type deleteStackResult struct {
 
 // Teardown Destroy all Panther infrastructure
 func Teardown() {
-	awsSession, identity := teardownConfirmation()
-
-	// Find CloudFormation-managed resources we may need to modify manually.
-	//
-	// This is safer than listing the services directly (e.g. find all "panther-" S3 buckets),
-	// because we can prove the resource is part of a Panther-deployed CloudFormation stack.
-	var ecrRepos, s3Buckets, logGroups []*string
-	err := walkPantherStacks(cloudformation.New(awsSession), func(summary cfnResource) {
-		if aws.StringValue(summary.Resource.ResourceStatus) == cloudformation.ResourceStatusDeleteComplete {
-			return
-		}
-		if summary.Resource.PhysicalResourceId == nil {
-			return
-		}
-
-		switch aws.StringValue(summary.Resource.ResourceType) {
-		case "AWS::ECR::Repository":
-			ecrRepos = append(ecrRepos, summary.Resource.PhysicalResourceId)
-		case "AWS::Logs::LogGroup":
-			logGroups = append(logGroups, summary.Resource.PhysicalResourceId)
-		case "AWS::S3::Bucket":
-			s3Buckets = append(s3Buckets, summary.Resource.PhysicalResourceId)
-		}
-	})
-	if err != nil {
+	masterStack, awsSession := teardownConfirmation()
+	if err := destroyCfnStacks(masterStack, awsSession); err != nil {
 		logger.Fatal(err)
 	}
 
-	// CFN can't delete non-empty ECR repos, so we just forcefully delete them here.
-	destroyEcrRepos(awsSession, ecrRepos)
-
-	// CFN is not used to create lambda layers, so we request the backend to handle this before tearing it down
-	destroyLambdaLayers(awsSession)
-
 	// CloudFormation will not delete any Panther S3 buckets (DeletionPolicy: Retain), we do so here.
-	// We destroy the buckets first because after the stacks are destroyed we will lose
-	// knowledge of which buckets belong to Panther.
-	destroyPantherBuckets(awsSession, s3Buckets)
+	destroyPantherBuckets(awsSession)
 
-	// Delete all CloudFormation stacks.
-	cfnErr := destroyCfnStacks(awsSession, identity)
-
-	// We have to continue even if there was an error deleting the stacks because we read the names
-	// of the log groups from the CloudFormation stacks, which may now be partially deleted.
-	// If we stop here, a subsequent teardown might miss these resources.
-	//
-	// Usually, all log groups have been deleted by CloudFormation by now.
-	// However, it's possible to have buffered Lambda logs written shortly after the stacks were deleted.
-	destroyLogGroups(awsSession, logGroups)
-
-	if cfnErr != nil {
-		logger.Fatal(cfnErr)
-	}
+	// Remove any leftover log groups.
+	// Sometimes buffered lambda logs are written after CloudFormation deletes the log groups.
+	destroyLogGroups(awsSession)
 
 	logger.Info("successfully removed Panther infrastructure")
 }
 
-func teardownConfirmation() (*session.Session, *sts.GetCallerIdentityOutput) {
+func teardownConfirmation() (string, *session.Session) {
 	// Check the AWS account ID
 	awsSession, err := getSession()
 	if err != nil {
@@ -117,81 +73,37 @@ func teardownConfirmation() (*session.Session, *sts.GetCallerIdentityOutput) {
 		logger.Fatalf("failed to get caller identity: %v", err)
 	}
 
-	logger.Warnf("Teardown will destroy all Panther infrastructure in account %s (%s)",
-		*identity.Account, *awsSession.Config.Region)
+	// When deploying from source ('mage deploy'), there will be several top-level stacks.
+	// When deploying the master template, there is only one main stack whose name we do not know.
+	stack := os.Getenv("STACK")
+	if stack == "" {
+		logger.Warnf("No STACK env variable found; assuming you have %d top-level stacks from 'mage deploy'",
+			len(allStacks))
+	}
+
+	template := "Teardown will destroy all Panther infra in account %s (%s)"
+	args := []interface{}{*identity.Account, *awsSession.Config.Region}
+	if stack != "" {
+		template += " with master stack '%s'"
+		args = append(args, stack)
+	}
+
+	logger.Warnf(template, args...)
 	result := promptUser("Are you sure you want to continue? (yes|no) ", nonemptyValidator)
 	if strings.ToLower(result) != "yes" {
 		logger.Fatal("teardown aborted")
 	}
 
-	return awsSession, identity
-}
-
-// Remove ECR repos and all of their images
-func destroyEcrRepos(awsSession *session.Session, repoNames []*string) {
-	client := ecr.New(awsSession)
-	for _, repo := range repoNames {
-		logger.Infof("removing ECR repository %s", *repo)
-		if _, err := client.DeleteRepository(&ecr.DeleteRepositoryInput{
-			// Force:true to remove images as well (easier than emptying the repo explicitly)
-			Force:          aws.Bool(true),
-			RepositoryName: repo,
-		}); err != nil {
-			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == ecr.ErrCodeRepositoryNotFoundException {
-				// repo doesn't exist - that's fine, nothing to do here
-				continue
-			}
-			logger.Fatalf("failed to delete ECR repository: %v", err)
-		}
-	}
-}
-
-// Remove layers created for the policy and rules engines
-func destroyLambdaLayers(awsSession *session.Session) {
-	client := lambda.New(awsSession)
-	// List all the layers
-	layers, err := client.ListLayers(&lambda.ListLayersInput{})
-	if err != nil {
-		logger.Fatalf("failed to list lambda layers: %v", err)
-	}
-
-	// Find the layers that need to be destroyed
-	var layersToDestroy []*string
-	for _, layer := range layers.Layers {
-		if aws.StringValue(layer.LayerName) == globalLayerName {
-			layersToDestroy = append(layersToDestroy, layer.LayerName)
-		}
-	}
-
-	if len(layersToDestroy) == 0 {
-		return // avoids log message if no layers were removed
-	}
-
-	// Find and destroy each version of each layer that needs to be destroyed
-	logger.Infof("removing %d versions of Lambda layer %s", len(layersToDestroy), globalLayerName)
-	for _, layer := range layersToDestroy {
-		versions, err := client.ListLayerVersions(&lambda.ListLayerVersionsInput{
-			LayerName: layer,
-		})
-		if err != nil {
-			logger.Fatalf("failed to list lambda layer versions: %v", err)
-		}
-		for _, version := range versions.LayerVersions {
-			_, err := client.DeleteLayerVersion(&lambda.DeleteLayerVersionInput{
-				LayerName:     layer,
-				VersionNumber: version.Version,
-			})
-			if err != nil {
-				logger.Fatalf("failed to delete layer version %d: %v", aws.Int64Value(version.Version), err)
-			}
-		}
-	}
+	return stack, awsSession
 }
 
 // Destroy all Panther CloudFormation stacks
-func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdentityOutput) error {
-	results := make(chan deleteStackResult)
+func destroyCfnStacks(masterStack string, awsSession *session.Session) error {
 	client := cloudformation.New(awsSession)
+	if masterStack != "" {
+		logger.Infof("deleting master stack '%s'", masterStack)
+		return deleteStack(client, &masterStack)
+	}
 
 	// Define a common routine for processing stack delete results
 	var errCount, finishCount int
@@ -205,11 +117,6 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 		}
 
 		logger.Infof("    √ %s deleted (%d/%d)", result.stackName, finishCount, len(allStacks))
-	}
-
-	// The stackset must be deleted before the StackSetExecutionRole and the StackSetAdminRole
-	if err := deleteStackSet(client, identity, aws.String(realTimeEventsStackSet)); err != nil {
-		logger.Fatal(err)
 	}
 
 	// In v1.4.0 we removed the stack `panther-glue`, delete it (we can remove this after a few more releases)
@@ -235,6 +142,7 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 		r <- deleteStackResult{stackName: stack, err: deleteStack(client, &stack)}
 	}
 
+	results := make(chan deleteStackResult)
 	for _, stack := range parallelStacks {
 		go deleteFunc(client, stack, results)
 	}
@@ -257,53 +165,6 @@ func destroyCfnStacks(awsSession *session.Session, identity *sts.GetCallerIdenti
 	return nil
 }
 
-// Delete a single CFN stack set and wait for it to finish (only deletes stack instances from current region)
-func deleteStackSet(client *cloudformation.CloudFormation, identity *sts.GetCallerIdentityOutput, stackSet *string) error {
-	logger.Infof("deleting CloudFormation stack set %s", *stackSet)
-
-	// First, delete the stack set *instance* in this region
-	_, err := client.DeleteStackInstances(&cloudformation.DeleteStackInstancesInput{
-		StackSetName: stackSet,
-		Accounts:     []*string{identity.Account},
-		Regions:      []*string{client.Config.Region},
-		RetainStacks: aws.Bool(false),
-	})
-	exists := true
-	if err != nil {
-		if stackSetDoesNotExistError(err) {
-			exists, err = false, nil
-		} else {
-			return fmt.Errorf("failed to delete %s stack set instance in %s: %v", *stackSet, *client.Config.Region, err)
-		}
-	}
-
-	// Wait for the delete to complete
-	logger.Debugf("waiting for stack set instance to finish deleting")
-	for ; exists && err == nil; exists, err = stackSetInstanceExists(client, *stackSet, *identity.Account, *client.Config.Region) {
-		time.Sleep(pollInterval)
-	}
-	if err != nil {
-		return err
-	}
-
-	// Now delete the parent stack set
-	if _, err := client.DeleteStackSet(&cloudformation.DeleteStackSetInput{StackSetName: stackSet}); err != nil {
-		if stackSetDoesNotExistError(err) {
-			exists = false
-		} else {
-			return fmt.Errorf("failed to delete %s stack set in %s: %v", *stackSet, *client.Config.Region, err)
-		}
-	}
-
-	// Wait for the delete to complete
-	logger.Debugf("waiting for stack set to finish deleting")
-	for ; exists && err == nil; exists, err = stackSetExists(client, *stackSet) {
-		time.Sleep(pollInterval)
-	}
-
-	return err
-}
-
 // Delete a single CFN stack and wait for it to finish
 func deleteStack(client *cloudformation.CloudFormation, stack *string) error {
 	if _, err := client.DeleteStack(&cloudformation.DeleteStackInput{StackName: stack}); err != nil {
@@ -315,10 +176,35 @@ func deleteStack(client *cloudformation.CloudFormation, stack *string) error {
 }
 
 // Delete all objects in the given S3 buckets and then remove them.
-func destroyPantherBuckets(awsSession *session.Session, bucketNames []*string) {
+func destroyPantherBuckets(awsSession *session.Session) {
 	client := s3.New(awsSession)
-	for _, bucket := range bucketNames {
-		removeBucket(client, bucket)
+	response, err := client.ListBuckets(&s3.ListBucketsInput{})
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	for _, bucket := range response.Buckets {
+		response, err := client.GetBucketTagging(&s3.GetBucketTaggingInput{Bucket: bucket.Name})
+		if err != nil {
+			// wrong region, tags do not exist, etc
+			continue
+		}
+
+		var hasApplicationTag, hasStackTag bool
+		for _, tag := range response.TagSet {
+			switch aws.StringValue(tag.Key) {
+			case "Application":
+				hasApplicationTag = aws.StringValue(tag.Value) == "Panther"
+			case "Stack":
+				hasStackTag = aws.StringValue(tag.Value) == "panther-bootstrap"
+			}
+		}
+
+		// S3 bucket names are not predictable, and neither are stack names (when using master template).
+		// However, both 'mage deploy' and the master template have these tags set.
+		if hasApplicationTag && hasStackTag {
+			removeBucket(client, bucket.Name)
+		}
 	}
 }
 
@@ -414,25 +300,26 @@ func removeBucket(client *s3.S3, bucketName *string) {
 	}
 }
 
-// Destroy any leftover CloudWatch log groups
-func destroyLogGroups(awsSession *session.Session, groupNames []*string) {
+func destroyLogGroups(awsSession *session.Session) {
 	logger.Debug("checking for leftover Panther log groups")
 	client := cloudwatchlogs.New(awsSession)
-
-	errCount := 0
-	for _, name := range groupNames {
-		input := &cloudwatchlogs.DeleteLogGroupInput{LogGroupName: name}
-		if _, err := client.DeleteLogGroup(input); err != nil {
-			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == cloudwatchlogs.ErrCodeResourceNotFoundException {
-				continue // this log group has already been deleted successfully
-			}
-			logger.Errorf("failed to delete log group %s: %v", *name, err)
-			errCount++
-		}
-		logger.Infof("deleted log group %s", *name)
+	listInput := &cloudwatchlogs.DescribeLogGroupsInput{
+		LogGroupNamePrefix: aws.String("/aws/lambda/panther-"),
 	}
 
-	if errCount > 0 {
-		logger.Fatalf("%d log groups failed to delete", errCount)
+	err := client.DescribeLogGroupsPages(listInput, func(page *cloudwatchlogs.DescribeLogGroupsOutput, isLast bool) bool {
+		for _, group := range page.LogGroups {
+			logger.Infof("deleting log group %s", *group.LogGroupName)
+			_, err := client.DeleteLogGroup(&cloudwatchlogs.DeleteLogGroupInput{LogGroupName: group.LogGroupName})
+			if err != nil {
+				logger.Fatalf("failed to delete log group %s: %v", *group.LogGroupName, err)
+			}
+		}
+
+		return true
+	})
+
+	if err != nil {
+		logger.Fatalf("failed to list log groups: %v", err)
 	}
 }

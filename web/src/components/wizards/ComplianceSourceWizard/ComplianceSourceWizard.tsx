@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
-import { Formik } from 'formik';
+import { Form, Formik } from 'formik';
 import * as Yup from 'yup';
 import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
 import { FetchResult } from '@apollo/client';
@@ -65,7 +65,7 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
       validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
-      {({ isValid, dirty, handleSubmit, status, setStatus }) => {
+      {({ isValid, dirty, status, setStatus }) => {
         // We want to reset the error message whenever the user goes back to a previous screen.
         // That's why we handle it through status in order to manipulate it internally
         React.useEffect(() => {
@@ -73,7 +73,7 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
         }, [externalErrorMessage]);
 
         return (
-          <form onSubmit={handleSubmit}>
+          <Form>
             <Wizard>
               <Wizard.Step title="Configure Source" icon="settings">
                 <WizardPanelWrapper>
@@ -107,7 +107,7 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
                 </WizardPanelWrapper>
               </Wizard.Step>
             </Wizard>
-          </form>
+          </Form>
         );
       }}
     </Formik>

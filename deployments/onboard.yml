@@ -32,9 +32,10 @@ Parameters:
     Type: String
     Description: If true, create a Panther GuardDuty in this account configured for log processing
     AllowedValues: [true, false]
-  LogProcessingRoleLabel:
+  EnableS3AccessLogs:
     Type: String
-    Description: The suffix for the log processing role
+    Description: Enable S3 access logging for all Panther buckets
+    AllowedValues: [true, false]
   VpcId:
     Type: String
     Description: Web VPC ID
@@ -44,20 +45,27 @@ Conditions:
   EnableGuardDuty: !Equals [!Ref EnableGuardDuty, true]
 
 Resources:
-  # Permissions for CloudSecurity to scan this Account
+  ##### IAM Roles #####
   ComplianceRoles:
     Type: AWS::CloudFormation::Stack
     Properties:
       Parameters:
         MasterAccountId: !Ref AWS::AccountId
         MasterAccountRegion: !Ref AWS::Region
-        DeployRemediation: 'true'
-        DeployCloudWatchEventSetup: 'true'
+        DeployRemediation: true
+        DeployCloudWatchEventSetup: true
       TemplateURL: auxiliary/cloudformation/panther-cloudsec-iam.yml
-  StackSetAdminRole:
+
+  LogProcessingRole:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: auxiliary/cloudformation/panther-stackset-iam-admin-role.yml
+      Parameters:
+        KmsKey: !If [EnableGuardDuty, !GetAtt GuardDutyEncryptionKey.Arn, '']
+        MasterAccountId: !Ref AWS::AccountId
+        # RoleSuffix has to match integration label used for SelfRegistration of log source
+        RoleSuffix: !Sub panther-account-${AWS::Region}
+        S3Bucket: !Ref AuditLogsBucket
+      TemplateURL: auxiliary/cloudformation/panther-log-analysis-iam.yml
 
   # CloudTrail monitoring in the Panther account
   CloudTrail:
@@ -92,12 +100,14 @@ Resources:
             Action:
               - kms:GenerateDataKey
             Resource: '*'
+
   GuardDutyEncryptionKeyAlias:
     Condition: EnableGuardDuty
     Type: AWS::KMS::Alias
     Properties:
       AliasName: alias/panther-guardduty
       TargetKeyId: !Ref GuardDutyEncryptionKey
+
   GuardDutyDetector:
     Condition: EnableGuardDuty
     Type: AWS::GuardDuty::Detector
@@ -105,42 +115,16 @@ Resources:
       Enable: true
       FindingPublishingFrequency: FIFTEEN_MINUTES
 
-  # Configure the Log processing role and access to AuditLogsBucket
-  LogProcessingRole:
-    Type: AWS::IAM::Role
+  GuardDutyDestination:
+    Condition: EnableGuardDuty
+    Type: Custom::GuardDutyDestination
     Properties:
-      RoleName: !Sub PantherLogProcessingRole-${LogProcessingRoleLabel}
-      Description: The Panther master account assumes this role to read log data
-      MaxSessionDuration: 3600 # 1 hour
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              AWS: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
-            Action: sts:AssumeRole
-            Condition:
-              Bool:
-                aws:SecureTransport: true
-      Policies:
-        - PolicyName: ReadData
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action: s3:GetBucketLocation
-                Resource: !Sub arn:aws:s3:::${AuditLogsBucket}
-              - Effect: Allow
-                Action: s3:GetObject
-                Resource: !Sub arn:aws:s3:::${AuditLogsBucket}/*
-              - !If
-                - EnableGuardDuty
-                - Effect: Allow
-                  Action:
-                    - kms:Decrypt
-                    - kms:DescribeKey
-                  Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${GuardDutyEncryptionKey}
-                - !Ref AWS::NoValue
+      DetectorId: !Ref GuardDutyDetector
+      DestinationType: S3
+      DestinationProperties:
+        DestinationArn: !Sub arn:${AWS::Partition}:s3:::${AuditLogsBucket}
+        KmsKeyArn: !GetAtt GuardDutyEncryptionKey.Arn
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   # Panther monitors itself, the AuditLogsBucket is processed by the log processor
   FlowLogs:
@@ -208,16 +192,36 @@ Resources:
       RawMessageDelivery: false
       TopicArn: !Ref Topic
 
-Outputs:
-  LogProcessingTopicArn:
-    Description: The ARN of the SNS Topic that will be notifying Panther of new data
-    Value: !Ref Topic
-  GuardDutyDetectorId:
-    Description: The id of the GuardDuty configuration
-    Value: !If [EnableGuardDuty, !Ref GuardDutyDetector, '']
-  GuardDutyKmsKeyArn:
-    Description: The ARN of the kms key for the GuardDuty configuration
-    Value: !If
-      - EnableGuardDuty
-      - !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${GuardDutyEncryptionKey}
-      - ''
+  AuditLogsNotification:
+    Type: Custom::S3BucketNotification
+    DependsOn: TopicPolicy
+    Properties:
+      Bucket: !Ref AuditLogsBucket
+      NotificationConfiguration:
+        TopicConfigurations:
+          - Events:
+              - s3:ObjectCreated:*
+            TopicArn: !Ref Topic
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  SelfRegistration:
+    DependsOn: [ComplianceRoles, LogProcessingRole]
+    Type: Custom::SelfRegistration
+    Properties:
+      AccountID: !Ref AWS::AccountId
+      AuditLogsBucket: !Ref AuditLogsBucket
+      EnableCloudTrail: !Ref EnableCloudTrail
+      EnableGuardDuty: !Ref EnableGuardDuty
+      EnableS3AccessLogs: !Ref EnableS3AccessLogs
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  # Enable real-time events for cloud security scanning in the Panther region
+  # see: https://docs.runpanther.io/policies/scanning/real-time-events
+  RealTimeEvents:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        MasterAccountId: !Ref AWS::AccountId
+        # needs to match aws-events-processor in cloud_security.yml
+        QueueArn: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-aws-events-queue
+      TemplateURL: auxiliary/cloudformation/panther-cloudwatch-events.yml

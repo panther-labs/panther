@@ -57,7 +57,7 @@ Parameters:
     Default: 365
   CertificateArn:
     Type: String
-    Description: TLS certificate used by the web app. If not specfied, a self-signed cert is created for you.
+    Description: TLS certificate used by the web app. If not specified, a self-signed cert is created for you.
     Default: ''
 
   # Generated in deploy process

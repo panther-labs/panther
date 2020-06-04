@@ -21,7 +21,7 @@ package testutil
 // used for test code that should NOT be in production code
 
 import (
-	"io"
+	"bufio"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -91,15 +91,15 @@ func MustReadFileJSONLines(filename string) (lines []string) {
 	if err != nil {
 		panic(errors.Wrapf(err, "Failed to open file %q", filename))
 	}
-	decoder := jsoniter.NewDecoder(fd)
-	for {
-		raw := jsoniter.RawMessage{}
-		if err := decoder.Decode(&raw); err != nil {
-			if err == io.EOF {
-				return
-			}
-			panic(errors.Wrapf(err, "Invalid JSON value %q", filename))
+	scanner := bufio.NewScanner(fd)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if len(line) > 0 {
+			lines = append(lines, scanner.Text())
 		}
-		lines = append(lines, string(raw))
 	}
+	if scanner.Err() != nil {
+		panic(errors.Wrap(scanner.Err(), "encountered issue while reading file"))
+	}
+	return
 }

@@ -19,9 +19,7 @@ package mage
  */
 
 import (
-	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -36,13 +34,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/magefile/mage/sh"
 
-	"github.com/panther-labs/panther/api/gateway/analysis/client"
-	"github.com/panther-labs/panther/api/gateway/analysis/client/operations"
-	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
-	orgmodels "github.com/panther-labs/panther/api/lambda/organization/models"
-	usermodels "github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/shutil"
 	"github.com/panther-labs/panther/tools/config"
 )
@@ -70,17 +62,9 @@ const (
 	onboardStack        = "panther-onboard"
 	onboardTemplate     = "deployments/onboard.yml"
 
-	// Removed stacks
-	alarmsStack       = "panther-cw-alarms"
-	metricFilterStack = "panther-cw-metric-filters"
-
 	// Python layer
-	layerSourceDir        = "out/pip/analysis/python"
-	layerZipfile          = "out/layer.zip"
-	defaultGlobalID       = "panther"
-	defaultGlobalLocation = "internal/compliance/policy_engine/src/helpers.py"
-
-	mageUserID = "00000000-0000-4000-8000-000000000000" // used to indicate mage made the call, must be a valid uuid4!
+	layerSourceDir = "out/pip/analysis/python"
+	layerZipfile   = "out/layer.zip"
 )
 
 // Not all AWS services are available in every region. In particular, Panther will currently NOT work in:
@@ -109,7 +93,6 @@ var supportedRegions = map[string]bool{
 func Deploy() {
 	start := time.Now()
 
-	// ***** Step 0: load settings and AWS session and verify environment
 	settings, err := config.Settings()
 	if err != nil {
 		logger.Fatalf("failed to read config file %s: %v", config.Filepath, err)
@@ -120,7 +103,9 @@ func Deploy() {
 		logger.Fatal(err)
 	}
 
-	deployPrecheck(*awsSession.Config.Region)
+	deployPreCheck(*awsSession.Config.Region)
+	setFirstUser(awsSession, settings)
+
 	identity, err := sts.New(awsSession).GetCallerIdentity(&sts.GetCallerIdentityInput{})
 	if err != nil {
 		logger.Fatalf("failed to get caller identity: %v", err)
@@ -128,62 +113,16 @@ func Deploy() {
 	accountID := *identity.Account
 	logger.Infof("deploy: deploying Panther %s to account %s (%s)", gitVersion, accountID, *awsSession.Config.Region)
 
-	// ***** Step 1: bootstrap stacks and build artifacts
-	// Migration: in v1.4.0, the ECS cluster moved from the bootstrap stack to the web stack.
-	// Enumerate the bootstrap stack to see if this migration is necessary.
-	clusterInBootstrap := false
-	cfnClient := cloudformation.New(awsSession)
-	err = walkPantherStack(cfnClient, aws.String(bootstrapStack), func(r cfnResource) {
-		if aws.StringValue(r.Resource.ResourceType) == "AWS::ECS::Cluster" {
-			clusterInBootstrap = true
-		}
-	})
-	if err != nil {
-		// err == nil if the stack does not yet exist
-		logger.Fatalf("failed to walk bootstrap stack: %v", err)
-	}
-	if clusterInBootstrap {
-		// To delete the ECS cluster from bootstrap, the entire web stack has to be deleted first.
-		// There is no user data that needs to be preserved in that stack - it's stateless.
-		logger.Infof("migration: deleting stack %s so ECS::Cluster can be migrated out of %s",
-			frontendStack, bootstrapStack)
-		if err = deleteStack(cfnClient, aws.String(frontendStack)); err != nil {
-			logger.Fatalf("failed to delete %s: %v", frontendStack, err)
-		}
-	}
-
+	migrate(awsSession, accountID)
 	outputs := bootstrap(awsSession, settings)
-
-	// ***** Step 2: deploy remaining stacks in parallel
 	deployMainStacks(awsSession, settings, accountID, outputs)
-
-	// ***** Step 3: first-time setup if needed
-	if err = initializeAnalysisSets(awsSession, outputs["AnalysisApiEndpoint"], settings); err != nil {
-		logger.Fatal(err)
-	}
-	if err = initializeGlobal(awsSession, outputs["AnalysisApiEndpoint"]); err != nil {
-		logger.Fatal(err)
-	}
-	if err = inviteFirstUser(awsSession); err != nil {
-		logger.Fatal(err)
-	}
-
-	// ***** Step 4: migrations
-	// Starting in v1.3.0, the metric-filter stack is no longer used. It can be safely deleted
-	if err = deleteStack(cfnClient, aws.String(metricFilterStack)); err != nil {
-		logger.Warnf("failed to delete deprecated %s stack: %v", metricFilterStack, err)
-	}
-	// Starting in v1.4.0, the alarms stack is no longer used and can be safely deleted.
-	if err := deleteStack(cloudformation.New(awsSession), aws.String(alarmsStack)); err != nil {
-		logger.Warnf("failed to delete deprecated %s stack: %v", alarmsStack, err)
-	}
 
 	logger.Infof("deploy: finished successfully in %s", time.Since(start).Round(time.Second))
 	logger.Infof("***** Panther URL = https://%s", outputs["LoadBalancerUrl"])
 }
 
 // Fail the deploy early if there is a known issue with the user's environment.
-func deployPrecheck(awsRegion string) {
+func deployPreCheck(awsRegion string) {
 	// Ensure the AWS region is supported
 	if !supportedRegions[awsRegion] {
 		logger.Fatalf("panther is not supported in %s region", awsRegion)
@@ -194,18 +133,26 @@ func deployPrecheck(awsRegion string) {
 		logger.Fatalf("go %s not supported, upgrade to 1.13+", version)
 	}
 
+	// Check the major node version
+	nodeVersion, err := sh.Output("node", "--version")
+	if err != nil {
+		logger.Fatalf("failed to check node version: %v", err)
+	}
+	if !strings.HasPrefix(strings.TrimSpace(nodeVersion), "v12") {
+		logger.Fatalf("node version must be v12.x.x, found %s", nodeVersion)
+	}
+
 	// Make sure docker is running
-	if _, err := sh.Output("docker", "info"); err != nil {
+	if _, err = sh.Output("docker", "info"); err != nil {
 		logger.Fatalf("docker is not available: %v", err)
 	}
 
 	// Ensure swagger is available
-	if _, err := sh.Output(filepath.Join(setupDirectory, "swagger"), "version"); err != nil {
+	if _, err = sh.Output(filepath.Join(setupDirectory, "swagger"), "version"); err != nil {
 		logger.Fatalf("swagger is not available (%v): try 'mage setup'", err)
 	}
 
 	// Set global gitVersion, warn if not deploying a tagged release
-	var err error
 	gitVersion, err = sh.Output("git", "describe", "--tags")
 	if err != nil {
 		logger.Fatalf("git describe failed: %v", err)
@@ -225,7 +172,7 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 	build.Lambda() // Lambda compilation required for most stacks, including bootstrap-gateway
 
 	// Deploy bootstrap stacks
-	outputs, err := deployBoostrapStacks(awsSession, settings)
+	outputs, err := deployBootstrapStacks(awsSession, settings)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -234,7 +181,7 @@ func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[
 }
 
 // Deploy bootstrap and bootstrap-gateway and merge their outputs
-func deployBoostrapStacks(
+func deployBootstrapStacks(
 	awsSession *session.Session,
 	settings *config.PantherConfig,
 ) (map[string]string, error) {
@@ -267,7 +214,9 @@ func deployBoostrapStacks(
 	sourceBucket := outputs["SourceBucket"]
 	params = map[string]string{
 		"AthenaResultsBucket":        outputs["AthenaResultsBucket"],
+		"AuditLogsBucket":            outputs["AuditLogsBucket"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+		"ImageRegistryName":          outputs["ImageRegistryName"],
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
 		"ProcessedDataBucket":        outputs["ProcessedDataBucket"],
 		"PythonLayerVersionArn":      settings.Infra.PythonLayerVersionArn,
@@ -296,7 +245,7 @@ func deployBoostrapStacks(
 // Build standard Python analysis layer in out/layer.zip if that file doesn't already exist.
 func buildLayer(libs []string) error {
 	if _, err := os.Stat(layerZipfile); err == nil {
-		logger.Debugf("%s already exists, not rebuilding layer")
+		logger.Debugf("%s already exists, not rebuilding layer", layerZipfile)
 		return nil
 	}
 
@@ -378,17 +327,22 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	count++
 	go func(c chan goroutineResult) {
 		_, err := deployTemplate(awsSession, coreTemplate, sourceBucket, coreStack, map[string]string{
-			"AlarmTopicArn":          outputs["AlarmTopicArn"],
-			"AppDomainURL":           outputs["LoadBalancerUrl"],
-			"AnalysisVersionsBucket": outputs["AnalysisVersionsBucket"],
-			"AnalysisApiId":          outputs["AnalysisApiId"],
-			"AthenaResultsBucket":    outputs["AthenaResultsBucket"],
-			"ComplianceApiId":        outputs["ComplianceApiId"],
-			"DynamoScalingRoleArn":   outputs["DynamoScalingRoleArn"],
-			"ProcessedDataBucket":    outputs["ProcessedDataBucket"],
-			"OutputsKeyId":           outputs["OutputsEncryptionKeyId"],
-			"SqsKeyId":               outputs["QueueEncryptionKeyId"],
-			"UserPoolId":             outputs["UserPoolId"],
+			"AlarmTopicArn":           outputs["AlarmTopicArn"],
+			"AppDomainURL":            outputs["LoadBalancerUrl"],
+			"AnalysisVersionsBucket":  outputs["AnalysisVersionsBucket"],
+			"AnalysisApiEndpoint":     outputs["AnalysisApiEndpoint"],
+			"AnalysisApiId":           outputs["AnalysisApiId"],
+			"AthenaResultsBucket":     outputs["AthenaResultsBucket"],
+			"ComplianceApiId":         outputs["ComplianceApiId"],
+			"DynamoScalingRoleArn":    outputs["DynamoScalingRoleArn"],
+			"FirstUserGivenName":      settings.Setup.FirstUser.GivenName,
+			"FirstUserFamilyName":     settings.Setup.FirstUser.FamilyName,
+			"FirstUserEmail":          settings.Setup.FirstUser.Email,
+			"InitialAnalysisPackUrls": strings.Join(settings.Setup.InitialAnalysisSets, ","),
+			"ProcessedDataBucket":     outputs["ProcessedDataBucket"],
+			"OutputsKeyId":            outputs["OutputsEncryptionKeyId"],
+			"SqsKeyId":                outputs["QueueEncryptionKeyId"],
+			"UserPoolId":              outputs["UserPoolId"],
 
 			"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 			"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
@@ -448,7 +402,17 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	go func(c chan goroutineResult) {
 		var err error
 		if settings.Setup.OnboardSelf {
-			err = deployOnboard(awsSession, settings, accountID, outputs)
+			_, err = deployTemplate(awsSession, onboardTemplate, sourceBucket, onboardStack, map[string]string{
+				"AlarmTopicArn":      outputs["AlarmTopicArn"],
+				"AuditLogsBucket":    outputs["AuditLogsBucket"],
+				"EnableCloudTrail":   strconv.FormatBool(settings.Setup.EnableCloudTrail),
+				"EnableGuardDuty":    strconv.FormatBool(settings.Setup.EnableGuardDuty),
+				"EnableS3AccessLogs": strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
+				"VpcId":              outputs["VpcId"],
+			})
+		} else {
+			// Delete the onboard stack if OnboardSelf was toggled off
+			err = deleteStack(cloudformation.New(awsSession), aws.String(onboardStack))
 		}
 		c <- goroutineResult{summary: onboardStack, err: err}
 	}(results)
@@ -458,153 +422,62 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 	logResults(results, "deploy", count+3, len(allStacks), len(allStacks))
 }
 
-// If the users list is empty (e.g. on the initial deploy), create the first user.
-func inviteFirstUser(awsSession *session.Session) error {
-	input := &usermodels.LambdaInput{
-		ListUsers: &usermodels.ListUsersInput{},
-	}
-	var output usermodels.ListUsersOutput
-	if err := invokeLambda(awsSession, "panther-users-api", input, &output); err != nil {
-		return fmt.Errorf("failed to list users: %v", err)
-	}
-	if len(output.Users) > 0 {
-		return nil
+// Prompt for the name and email of the initial user if not already defined.
+func setFirstUser(awsSession *session.Session, settings *config.PantherConfig) {
+	if settings.Setup.FirstUser.Email != "" {
+		// Always use the values in the settings file first, if available
+		return
 	}
 
-	// Prompt the user for basic information.
-	logger.Info("setting up initial Panther admin user...")
-	fmt.Println()
-	firstName := promptUser("First name: ", nonemptyValidator)
-	lastName := promptUser("Last name: ", nonemptyValidator)
-	email := promptUser("Email: ", emailValidator)
-	defaultOrgName := firstName + "-" + lastName
-	orgName := promptUser("Company/Team name ("+defaultOrgName+"): ", nil)
-	if orgName == "" {
-		orgName = defaultOrgName
-	}
+	response, err := cloudformation.New(awsSession).DescribeStacks(
+		&cloudformation.DescribeStacksInput{StackName: aws.String(coreStack)})
 
-	// users-api.InviteUser
-	input = &usermodels.LambdaInput{
-		InviteUser: &usermodels.InviteUserInput{
-			GivenName:  &firstName,
-			FamilyName: &lastName,
-			Email:      &email,
-		},
-	}
-	if err := invokeLambda(awsSession, "panther-users-api", input, nil); err != nil {
-		return err
-	}
-	logger.Infof("invite sent to %s: check your email! (it may be in spam)", email)
-
-	// organizations-api.UpdateSettings
-	updateSettingsInput := &orgmodels.LambdaInput{
-		UpdateSettings: &orgmodels.UpdateSettingsInput{DisplayName: &orgName, Email: &email},
-	}
-	return invokeLambda(awsSession, "panther-organization-api", &updateSettingsInput, nil)
-}
-
-// Install Python rules/policies if they don't already exist.
-func initializeAnalysisSets(awsSession *session.Session, endpoint string, settings *config.PantherConfig) error {
-	httpClient := gatewayapi.GatewayClient(awsSession)
-	apiClient := client.NewHTTPClientWithConfig(nil, client.DefaultTransportConfig().
-		WithBasePath("/v1").WithHost(endpoint))
-
-	policies, err := apiClient.Operations.ListPolicies(&operations.ListPoliciesParams{
-		PageSize:   aws.Int64(1),
-		HTTPClient: httpClient,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to list existing policies: %v", err)
-	}
-
-	rules, err := apiClient.Operations.ListRules(&operations.ListRulesParams{
-		PageSize:   aws.Int64(1),
-		HTTPClient: httpClient,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to list existing rules: %v", err)
-	}
-
-	if len(policies.Payload.Policies) > 0 || len(rules.Payload.Rules) > 0 {
-		logger.Debug("deploy: initial analysis set ignored: policies and/or rules already exist")
-		return nil
-	}
-
-	var newRules, newPolicies int64
-	for _, path := range settings.Setup.InitialAnalysisSets {
-		logger.Info("deploy: uploading initial analysis pack " + path)
-		var contents []byte
-		if strings.HasPrefix(path, "file://") {
-			contents = readFile(strings.TrimPrefix(path, "file://"))
-		} else {
-			contents, err = download(path)
-			if err != nil {
-				return err
-			}
+	if errStackDoesNotExist(err) {
+		// If there is no setting and no core stack, we have to prompt.
+		fmt.Println("Who will be the initial Panther admin user?")
+		firstName := promptUser("First name: ", nonemptyValidator)
+		lastName := promptUser("Last name: ", nonemptyValidator)
+		email := promptUser("Email: ", emailValidator)
+		settings.Setup.FirstUser = config.FirstUser{
+			GivenName:  firstName,
+			FamilyName: lastName,
+			Email:      email,
 		}
+		return
+	}
 
-		// BulkUpload to panther-analysis-api
-		encoded := base64.StdEncoding.EncodeToString(contents)
-		response, err := apiClient.Operations.BulkUpload(&operations.BulkUploadParams{
-			Body: &analysismodels.BulkUpload{
-				Data:   analysismodels.Base64zipfile(encoded),
-				UserID: mageUserID,
-			},
-			HTTPClient: httpClient,
-		})
-		if err != nil {
-			return fmt.Errorf("failed to upload %s: %v", path, err)
+	if err != nil {
+		logger.Fatalf("failed to describe %s stack: %v", coreStack, err)
+	}
+
+	// At this point, we know the core stack has already been deployed.
+	// If it's v1.3 or earlier, the first user was created directly by mage.
+	// If it's v1.4+, there may be a non-empty FirstUser custom resource in that stack.
+	//
+	// Search the stack parameters - if we find the FirstUser settings, use the same ones again.
+	//
+	// I tried the "UsePreviousValue" setting when defining CloudFormation parameters in the deploy
+	// process, but CFN fails if you use that setting for a parameter which was not previously defined.
+	// In other words, that setting would block the v1.3 -> v1.4 migration, so we do it manually.
+	//
+	// After a few releases, we can assume existing deployments will all have the custom resource
+	// and we could simplify this by just telling CFN to use the previous parameter value.
+	for _, param := range response.Stacks[0].Parameters {
+		switch aws.StringValue(param.ParameterKey) {
+		case "FirstUserGivenName":
+			settings.Setup.FirstUser.GivenName = aws.StringValue(param.ParameterValue)
+		case "FirstUserFamilyName":
+			settings.Setup.FirstUser.FamilyName = aws.StringValue(param.ParameterValue)
+		case "FirstUserEmail":
+			settings.Setup.FirstUser.Email = aws.StringValue(param.ParameterValue)
 		}
-
-		newRules += *response.Payload.NewRules
-		newPolicies += *response.Payload.NewPolicies
 	}
 
-	logger.Infof("deploy: initialized with %d policies and %d rules", newPolicies, newRules)
-	return nil
-}
-
-// Install the default global helper function if it does not already exist
-func initializeGlobal(awsSession *session.Session, endpoint string) error {
-	httpClient := gatewayapi.GatewayClient(awsSession)
-	apiClient := client.NewHTTPClientWithConfig(nil, client.DefaultTransportConfig().
-		WithBasePath("/v1").WithHost(endpoint))
-
-	_, err := apiClient.Operations.GetGlobal(&operations.GetGlobalParams{
-		GlobalID:   defaultGlobalID,
-		HTTPClient: httpClient,
-	})
-	// Global already exists
-	if err == nil {
-		logger.Debug("deploy: global module already exists")
-		return nil
-	}
-
-	// Return errors other than 404 not found
-	if _, ok := err.(*operations.GetGlobalNotFound); !ok {
-		return fmt.Errorf("failed to get existing global file: %v", err)
-	}
-
-	// Setup the initial helper layer
-	content, err := ioutil.ReadFile(defaultGlobalLocation)
-	if err != nil {
-		return fmt.Errorf("failed to read default globals file: %v", err)
-	}
-
-	logger.Infof("deploy: uploading initial global helper module")
-	_, err = apiClient.Operations.CreateGlobal(&operations.CreateGlobalParams{
-		Body: &analysismodels.UpdateGlobal{
-			Body:        analysismodels.Body(string(content)),
-			Description: "A set of default helper functions.",
-			ID:          defaultGlobalID,
-			UserID:      mageUserID,
-		},
-		HTTPClient: httpClient,
-	})
-
-	if err != nil {
-		return fmt.Errorf("failed to upload default globals file: %v", err)
-	}
-
-	return nil
+	// If the first user is empty, it must be because this is a v1.3 -> v1.4 migration, in which case
+	// we'll leave it empty and CloudFormation will skip the FirstUser custom resource.
+	//
+	// If the first user is non-empty, great! Now we'll pass the same parameters as before so that
+	// CFN doesn't try to change the existing custom resource.
+	//
+	// Either way, the settings we have now are valid to be passed directly to CloudFormation.
 }
