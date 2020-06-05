@@ -30,7 +30,7 @@ import (
 )
 
 var customWebhookConfig = &outputmodels.CustomWebhookConfig{
-	WebhookURL: aws.String("customwebhook-url"),
+	WebhookURL: aws.String("custom-webhook-url"),
 }
 
 func TestCustomWebhookAlert(t *testing.T) {
@@ -47,9 +47,7 @@ func TestCustomWebhookAlert(t *testing.T) {
 	}
 
 	customWebhookPayload := map[string]interface{}{
-		"@context": "http://schema.org/extensions",
-		"@type":    "MessageCard",
-		"text":     "Policy Failure: policyName",
+		"text": "Policy Failure: policyName",
 		"sections": []interface{}{
 			map[string]interface{}{
 				"facts": []interface{}{
