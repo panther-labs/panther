@@ -153,11 +153,11 @@ func destroyCfnStacks(masterStack string, awsSession *session.Session) error {
 	}
 
 	// Now finish with the bootstrap stacks
-	go deleteFunc(client, bootstrapStack, results)
+	// bootstrap-gateway must be deleted first because it will empty the ECR repo
 	go deleteFunc(client, gatewayStack, results)
-	for i := 0; i < 2; i++ {
-		handleResult(<-results)
-	}
+	handleResult(<-results)
+	go deleteFunc(client, bootstrapStack, results)
+	handleResult(<-results)
 
 	if errCount > 0 {
 		return fmt.Errorf("%d stack(s) failed to delete", errCount)

@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-lambda-go/cfn"
@@ -111,6 +112,13 @@ func lambdaFunctionExists(name string) (bool, error) {
 func initializeAnalysisSets(sets []string, apiClient *client.PantherAnalysis, httpClient *http.Client) error {
 	var newRules, newPolicies int64
 	for _, url := range sets {
+		url = strings.TrimSpace(url)
+		if url == "" {
+			// blank strings can wind up here when commenting out sections of the config file
+			zap.L().Warn("skipping blank analysis set url")
+			continue
+		}
+
 		zap.L().Info("downloading analysis pack", zap.String("url", url))
 		contents, err := download(url)
 		if err != nil {
