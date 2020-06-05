@@ -95,9 +95,7 @@ Congratulations! You are now ready to use Panther. Follow the steps below to com
 3. Write custom [detection rules](log-analysis/rules/) based on internal business logic
 4. Onboard accounts for [cloud security scans](policies/scanning/)
 5. Write [policies](policies/cloud-security-overview.md) for supported [AWS resources](policies/resources/)
-6. Query collected logs with [historical search](historical-search/README.md)
-
-
+6. Query collected logs with [historical search](enterprise/data-analytics/README.md)
 
 ## Removing Panther
 To uninstall Panther, simply delete the main "panther" stack (substituting whatever stack name you chose during deployment).

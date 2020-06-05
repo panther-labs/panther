@@ -193,6 +193,6 @@ These are just two basic configurations to integrate with Panther Log Processing
 
 There are other variations and advanced configurations available for more complex use cases and considerations. For example, instead of using S3 event notifications for CloudTrail data you may have CloudTrail directly notify SNS of the new data.
 
-## Viewing the Logs
+## Viewing Collected Logs
 
-After log analysis is setup, your data can be searched with [Historical Search](../../historical-search/README.md)!
+After log sources are configured, your data can be searched with the [Data Analytics](../../ennterprise/data-analytics/README.md) page!
