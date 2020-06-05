@@ -3,6 +3,7 @@
 * [Home](README.md)
 * [Quick Start](quick-start.md)
 * [Log Analysis](log-analysis/log-processing/README.md)
+  - [Setup](log-analysis/setup.md)
   * [Rules](log-analysis/rules/README.md)
   * [Built-in Rule Runbooks]()
     * [AWS CloudTrail Modified](log-analysis/rules/aws-cis/aws-cloudtrail-modified.md)

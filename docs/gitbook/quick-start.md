@@ -2,7 +2,7 @@
 description: Get started with Panther in 15 minutes
 ---
 
-# Quick Start
+# Community Edition Quick Start
 
 ## Prerequisites
 
