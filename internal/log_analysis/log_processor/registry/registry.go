@@ -18,6 +18,15 @@ package registry
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/**
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * Panther Enterprise is licensed under the terms of a commercial license available from
+ * Panther Labs Inc ("Panther Commercial License") by contacting contact@runpanther.com.
+ * All use, distribution, and/or modification of this software, whether commercial or non-commercial,
+ * falls under the Panther Commercial License to the extent it is permitted.
+ */
+
 import (
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
@@ -26,6 +35,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/fluentdsyslogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/gitlablogs"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/juniperlogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginxlogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osquerylogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osseclogs"
@@ -107,6 +117,12 @@ var (
 			&apachelogs.AccessCombined{},
 			apachelogs.AccessCombinedDesc,
 		),
+		juniperlogs.TypeFirewall: DefaultLogParser(juniperlogs.NewFirewallParser(), &juniperlogs.Firewall{}, juniperlogs.DescFirewall),
+		juniperlogs.TypeSecurity: DefaultLogParser(juniperlogs.NewSecurityParser(), &juniperlogs.Security{}, juniperlogs.DescSecurity),
+		juniperlogs.TypeAudit:    DefaultLogParser(juniperlogs.NewAuditParser(), &juniperlogs.Audit{}, juniperlogs.DescAudit),
+		juniperlogs.TypeMWS:      DefaultLogParser(juniperlogs.NewMWSParser(), &juniperlogs.MWS{}, juniperlogs.DescMWS),
+		juniperlogs.TypePostgres: DefaultLogParser(juniperlogs.NewPostgresParser(), &juniperlogs.Postgres{}, juniperlogs.DescPostgres),
+		juniperlogs.TypeAccess:   DefaultLogParser(juniperlogs.NewAccessParser(), &juniperlogs.Access{}, juniperlogs.DescAccess),
 	}
 )
 
