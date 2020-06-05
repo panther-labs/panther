@@ -127,7 +127,7 @@ func uploadAsset(awsSession *session.Session, assetPath, bucket, stack string) (
 
 	if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NotFound" {
 		// object does not exist yet - upload it!
-		response, err := uploadFileToS3(awsSession, assetPath, bucket, s3Key, nil)
+		response, err := uploadFileToS3(awsSession, assetPath, bucket, s3Key)
 		if err != nil {
 			return "", "", fmt.Errorf("package %s: failed to upload %s: %v", stack, assetPath, err)
 		}

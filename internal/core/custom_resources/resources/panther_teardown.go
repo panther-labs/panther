@@ -60,7 +60,7 @@ func customPantherTeardown(_ context.Context, event cfn.Event) (string, map[stri
 	}
 }
 
-// ECR repos can't be deleted in native CloudFormation unless they are empty.
+// ECR repos can't be deleted by CloudFormation unless they are empty.
 func destroyEcrRepo(repoName string) error {
 	zap.L().Info("removing ECR repository", zap.String("repo", repoName))
 	_, err := ecrClient.DeleteRepository(&ecr.DeleteRepositoryInput{
