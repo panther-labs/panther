@@ -59,8 +59,8 @@ generates:
 
           /* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
     config:
-      apolloReactHooksImportFrom: @apollo/client
-      apolloReactCommonImportFrom: @apollo/client
+      apolloReactHooksImportFrom: '@apollo/client'
+      apolloReactCommonImportFrom: '@apollo/client'
       withComponent: false
       withHOC: false
       withHooks: true
