@@ -59,6 +59,18 @@ Parameters:
     Type: String
     Description: TLS certificate used by the web app. If not specified, a self-signed cert is created for you.
     Default: ''
+  FirstUserGivenName:
+    Type: String
+    Description: First (given) name of the initial Panther user
+    Default: ''
+  FirstUserFamilyName:
+    Type: String
+    Description: Family (last) name of the initial Panther user
+    Default: ''
+  FirstUserEmail:
+    Type: String
+    Description: Email of the initial Panther user. If blank, no user is created
+    Default: ''
 
   # Generated in deploy process
   Image:
@@ -83,6 +95,7 @@ Parameters:
 
 Conditions:
   CreateCertificate: !Equals [!Ref CertificateArn, '']
+  CreateFirstUser: !Not [!Equals ['', !Ref FirstUserEmail]]
 
 Resources:
   SelfSignedCertificate:
@@ -176,27 +189,8 @@ Resources:
             Principal:
               Service: ecs-tasks.amazonaws.com
             Action: sts:AssumeRole
-      Policies:
-        - PolicyName: CloudWatchLogsPolicy
-          PolicyDocument:
-            Statement:
-              - Effect: Allow
-                Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
-                Resource: '*'
-        - PolicyName: PullECRImages
-          PolicyDocument:
-            Statement:
-              - Effect: Allow
-                Action:
-                  - ecr:GetAuthorizationToken
-                  - ecr:GetDownloadUrlForLayer
-                  - ecr:BatchGetImage
-                  - ecr:ListImages
-                  - ecr:ListTagsForResource
-                Resource: '*'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
   # A log group for storing the stdout logs from the server's task definition
   LogGroup:
@@ -259,3 +253,16 @@ Resources:
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
+
+  # The link in the invite email won't work until the ECS service has finished.
+  FirstPantherUser:
+    Type: Custom::PantherUser
+    Condition: CreateFirstUser
+    DependsOn: WebApplicationServer
+    DeletionPolicy: Retain # users-api refuses to delete the last user, which would then fail teardown
+    UpdateReplacePolicy: Retain
+    Properties:
+      GivenName: !Ref FirstUserGivenName
+      FamilyName: !Ref FirstUserFamilyName
+      Email: !Ref FirstUserEmail
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
