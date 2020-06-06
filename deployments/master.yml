@@ -352,7 +352,9 @@ Resources:
               - !Sub 349240696275.dkr.ecr.${AWS::Region}.amazonaws.com/panther-community
             tag: !FindInMap [Constants, Panther, Version]
         GraphQLApiEndpoint: !GetAtt Bootstrap.Outputs.GraphQLApiEndpoint
-        PantherVersion: !FindInMap [Constants, Panther, Version]
+        PantherVersion: !Sub
+          - v${version} # has to be prefixed with 'v' for docs link in web app to work
+          - version: !FindInMap [Constants, Panther, Version]
         SecurityGroup: !GetAtt Bootstrap.Outputs.WebSecurityGroup
         SubnetOneId: !GetAtt Bootstrap.Outputs.SubnetOneId
         SubnetTwoId: !GetAtt Bootstrap.Outputs.SubnetTwoId
