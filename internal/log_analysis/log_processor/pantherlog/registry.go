@@ -49,20 +49,50 @@ func (r *Registry) MustGet(name string) *LogType {
 	panic(errors.Errorf("unregistered log type %q", name))
 }
 
+// Get returns finds an LogType entry in a registry.
+// The returned pointer should be used as a *read-only* share of the LogType.
 func (r *Registry) Get(name string) *LogType {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return r.entries[name]
 }
 
-// LogTypes returns all available log types in a registry
-func (r *Registry) LogTypes() (logTypes []LogType) {
+// Entries returns copies of LogType entries in a registry.
+// If no names are provided all entries are returned.
+func (r *Registry) Entries(names ...string) []LogType {
+	if names == nil {
+		names = r.LogTypes()
+	}
+	m := make([]LogType, 0, len(names))
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	for _, logType := range r.entries {
-		logTypes = append(logTypes, *logType)
+	for _, name := range names {
+		if entry := r.entries[name]; entry != nil {
+			m = append(m, *entry)
+		}
+	}
+	return m
+}
+
+// LogTypes returns all available log types in a registry
+func (r *Registry) LogTypes() (logTypes []string) {
+	const minLogTypesSize = 32
+	logTypes = make([]string, 0, minLogTypesSize)
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	for logType := range r.entries {
+		logTypes = append(logTypes, logType)
 	}
 	return
+}
+
+// Each calls a function for each LogType entry in the registry
+func (r *Registry) Each(fn func(entry *LogType)) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	for _, entry := range r.entries {
+		fn(entry)
+	}
 }
 
 func (r *Registry) Del(name string) *LogType {
@@ -126,7 +156,7 @@ func MustRegister(entries ...LogType) {
 	}
 }
 
-// Available log types returns the available log types
-func AvailableLogTypes() []LogType {
+// Available log types returns the available log type names
+func AvailableLogTypes() []string {
 	return defaultRegistry.LogTypes()
 }

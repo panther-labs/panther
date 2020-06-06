@@ -41,14 +41,16 @@ func Default() *pantherlog.Registry {
 func Lookup(name string) *pantherlog.LogType {
 	return pantherlog.MustGet(name)
 }
-func AvailableLogTypes() []pantherlog.LogType {
-	return pantherlog.AvailableLogTypes()
+func AvailableLogTypes() []string {
+	return pantherlog.DefaultRegistry().LogTypes()
 }
 
 // Return a slice containing just the Glue tables
 func AvailableTables() (tables []*awsglue.GlueTableMetadata) {
-	for _, logType := range pantherlog.AvailableLogTypes() {
-		tables = append(tables, logType.GlueTableMetadata())
+	for _, logType := range AvailableLogTypes() {
+		if et := pantherlog.Get(logType); et != nil {
+			tables = append(tables, et.GlueTableMetadata())
+		}
 	}
 	return
 }

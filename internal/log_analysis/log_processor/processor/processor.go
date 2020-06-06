@@ -171,11 +171,9 @@ type Processor struct {
 	operation  *oplog.Operation
 }
 
-func NewProcessor(input *common.DataStream, logTypes ...pantherlog.LogType) *Processor {
-	if logTypes == nil {
-		logTypes = pantherlog.AvailableLogTypes()
-	}
-	cls := classification.NewClassifier(logTypes...).(*classification.Classifier)
+func NewProcessor(input *common.DataStream, logTypes ...string) *Processor {
+	entries := pantherlog.DefaultRegistry().Entries(logTypes...)
+	cls := classification.NewClassifier(entries...).(*classification.Classifier)
 	return &Processor{
 		input:      input,
 		classifier: cls,
