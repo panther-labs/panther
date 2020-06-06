@@ -35,6 +35,7 @@ import (
 
 type DataCatalogEvent struct {
 	events.SQSEvent
+	process.SyncEvent
 }
 
 func handle(ctx context.Context, event DataCatalogEvent) (err error) {
@@ -45,6 +46,9 @@ func handle(ctx context.Context, event DataCatalogEvent) (err error) {
 			zap.Int("sqsMessageCount", len(event.Records)))
 	}()
 
+	if event.Sync {
+		return process.Sync(&event.SyncEvent)
+	}
 	return process.SQS(event.SQSEvent)
 }
 

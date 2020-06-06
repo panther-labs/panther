@@ -19,30 +19,38 @@ package process
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/glue"
-	"github.com/aws/aws-sdk-go/service/glue/glueiface"
-	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3iface"
-)
+	"os"
+	"strings"
+	"testing"
 
-const (
-	maxRetries = 20 // setting Max Retries to a higher number - we'd like to retry VERY hard before failing.
+	"github.com/stretchr/testify/require"
 )
 
 var (
-	awsSession   *session.Session
-	glueClient   glueiface.GlueAPI
-	lambdaClient lambdaiface.LambdaAPI
-	s3Client     s3iface.S3API
+	integrationTest bool
 )
 
-func Setup() {
-	awsSession = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries)))
-	glueClient = glue.New(awsSession)
-	lambdaClient = lambda.New(awsSession)
-	s3Client = s3.New(awsSession)
+func TestMain(m *testing.M) {
+	integrationTest = strings.ToLower(os.Getenv("INTEGRATION_TEST")) == "true"
+	if integrationTest {
+		Setup()
+	}
+	os.Exit(m.Run())
+}
+
+func TestIntegrationSynPartitions(t *testing.T) {
+	if !integrationTest {
+		t.Skip()
+	}
+
+	// this assumes the self onboarding was enables (default true)
+	syncEvent := &SyncEvent{
+		Sync:     true,
+		LogTypes: []string{"AWS.VPCFlow"},
+	}
+	err := Sync(syncEvent)
+	require.NoError(t, err)
+
+	err = InvokeSyncGluePartitions(lambdaClient, syncEvent.LogTypes)
+	require.NoError(t, err)
 }
