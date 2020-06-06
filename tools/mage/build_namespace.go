@@ -149,7 +149,6 @@ func (b Build) lambda() error {
 	logger.Infof("build:lambda: compiling %d Go Lambda functions (internal/.../main) using %s",
 		len(packages), runtime.Version())
 
-	// Send work units
 	for _, pkg := range packages {
 		if err := buildLambdaPackage(pkg); err != nil {
 			return err
