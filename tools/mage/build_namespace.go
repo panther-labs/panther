@@ -149,28 +149,9 @@ func (b Build) lambda() error {
 	logger.Infof("build:lambda: compiling %d Go Lambda functions (internal/.../main) using %s",
 		len(packages), runtime.Version())
 
-	// Start worker goroutines
-	compile := func(pkgs chan string, errs chan error) {
-		for pkg := range pkgs {
-			errs <- buildLambdaPackage(pkg)
-		}
-	}
-
-	pkgs := make(chan string, len(packages)+maxWorkers)
-	errs := make(chan error, len(packages))
-	for i := 0; i < maxWorkers; i++ {
-		go compile(pkgs, errs)
-	}
-
 	// Send work units
 	for _, pkg := range packages {
-		pkgs <- pkg
-	}
-	close(pkgs)
-
-	// Read results
-	for range packages {
-		if err := <-errs; err != nil {
+		if err := buildLambdaPackage(pkg); err != nil {
 			return err
 		}
 	}

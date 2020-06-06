@@ -268,11 +268,11 @@ func testGoUnit() error {
 	}
 
 	// unit tests and race detection
-	return runGoTest("test", "-race", "-vet", "", "-cover", "./...")
+	return runGoTest("test", "-race", "-cpu", "1", "-vet", "", "-cover", "./...")
 }
 
 func testGoLint() error {
-	args := []string{"run", "--timeout", "10m"}
+	args := []string{"run", "--timeout", "10m", "-j", "1"}
 	if mg.Verbose() {
 		args = append(args, "-v")
 	}
