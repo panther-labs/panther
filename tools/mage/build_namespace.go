@@ -209,56 +209,22 @@ func (b Build) tools() error {
 		{"GOOS": "windows", "GOARCH": "arm"},
 	}
 
-	// Define worker goroutine
-	type buildInput struct {
-		env  map[string]string
-		path string
-	}
-
-	compile := func(inputs chan *buildInput, results chan error) {
-		for input := range inputs {
-			outDir := filepath.Join("out", "bin", filepath.Base(filepath.Dir(input.path)),
-				input.env["GOOS"], input.env["GOARCH"], filepath.Base(filepath.Dir(input.path)))
-			results <- sh.RunWith(input.env, "go", "build", "-p", "1", "-ldflags", "-s -w", "-o", outDir, "./"+input.path)
+	var paths []string
+	walk("cmd", func(path string, info os.FileInfo) {
+		if !info.IsDir() && filepath.Base(path) == "main.go" {
+			paths = append(paths, path)
 		}
-	}
-
-	// Start worker goroutines (channel buffers are large enough for all input)
-	inputs := make(chan *buildInput, 100)
-	results := make(chan error, 100)
-	for i := 0; i < maxWorkers; i++ {
-		go compile(inputs, results)
-	}
-
-	count := 0
-	err := filepath.Walk("cmd", func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if info.IsDir() || filepath.Base(path) != "main.go" {
-			return nil
-		}
-
-		// Build each os/arch combination in parallel
-		logger.Infof("build:tools: compiling %s for %d os/arch combinations", path, len(buildEnvs))
-		for _, env := range buildEnvs {
-			count++
-			inputs <- &buildInput{env: env, path: path}
-		}
-
-		return nil
 	})
 
-	if err != nil {
-		return err
-	}
-
-	// Wait for results
-	close(inputs)
-	for i := 0; i < count; i++ {
-		if err = <-results; err != nil {
-			return err
+	for _, path := range paths {
+		logger.Infof("build:tools: compiling %s for %d os/arch combinations", path, len(buildEnvs))
+		for _, env := range buildEnvs {
+			outDir := filepath.Join("out", "bin", filepath.Base(filepath.Dir(path)),
+				env["GOOS"], env["GOARCH"], filepath.Base(filepath.Dir(path)))
+			err := sh.RunWith(env, "go", "build", "-p", "1", "-ldflags", "-s -w", "-o", outDir, "./"+path)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
