@@ -166,7 +166,7 @@ func getSession() (*session.Session, error) {
 }
 
 // Upload a local file to S3.
-func uploadFileToS3(awsSession *session.Session, path, bucket, key string, meta map[string]*string) (*s3manager.UploadOutput, error) {
+func uploadFileToS3(awsSession *session.Session, path, bucket, key string) (*s3manager.UploadOutput, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open %s: %v", path, err)
@@ -177,10 +177,9 @@ func uploadFileToS3(awsSession *session.Session, path, bucket, key string, meta 
 
 	logger.Debugf("uploading %s to s3://%s/%s", path, bucket, key)
 	return uploader.Upload(&s3manager.UploadInput{
-		Body:     file,
-		Bucket:   &bucket,
-		Key:      &key,
-		Metadata: meta,
+		Body:   file,
+		Bucket: &bucket,
+		Key:    &key,
 	})
 }
 
