@@ -219,7 +219,7 @@ func (b Build) tools() error {
 		for input := range inputs {
 			outDir := filepath.Join("out", "bin", filepath.Base(filepath.Dir(input.path)),
 				input.env["GOOS"], input.env["GOARCH"], filepath.Base(filepath.Dir(input.path)))
-			results <- sh.RunWith(input.env, "go", "build", "-ldflags", "-s -w", "-o", outDir, "./"+input.path)
+			results <- sh.RunWith(input.env, "go", "build", "-p", "1", "-ldflags", "-s -w", "-o", outDir, "./"+input.path)
 		}
 	}
 
