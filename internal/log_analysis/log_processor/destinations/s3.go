@@ -84,7 +84,7 @@ func CreateS3Destination(logTypes *pantherlog.Registry) Destination {
 		snsTopicArn:         common.Config.SnsTopicARN,
 		maxBufferedMemBytes: maxS3BufferMemUsageBytes(common.Config.AwsLambdaFunctionMemorySize),
 		maxDuration:         maxDuration,
-		logTypes:            logTypes,
+		eventTypes:          logTypes,
 	}
 }
 
@@ -126,7 +126,7 @@ type S3Destination struct {
 	// thresholds for ejection
 	maxBufferedMemBytes uint64 // max will hold in buffers before ejection
 	maxDuration         time.Duration
-	logTypes            *pantherlog.Registry
+	eventTypes          *pantherlog.Registry
 }
 
 // SendEvents stores events in S3.
@@ -313,7 +313,7 @@ func (destination *S3Destination) sendSNSNotification(key string, buffer *s3Even
 }
 
 func (destination *S3Destination) getS3ObjectKey(logType string, timestamp time.Time) (string, error) {
-	typ := destination.logTypes.Get(logType)
+	typ := destination.eventTypes.Get(logType)
 	if typ == nil {
 		return "", errors.Errorf(`unknown log type %q`, logType)
 	}

@@ -31,10 +31,10 @@ import (
 
 const FieldPrefix = "p_"
 
-// LogType describes a log type.
+// EventType describes a log type.
 // It provides a method to create a new parser and a schema struct to derive tables from.
 // LogTypes can be grouped in a `Registry` to have an index of available log types.
-type LogType struct {
+type EventType struct {
 	Name         string
 	Description  string
 	ReferenceURL string
@@ -51,17 +51,17 @@ type LogParser interface {
 	ParseLog(log string) ([]*Result, error)
 }
 
-func (t *LogType) GlueTableMetadata() *awsglue.GlueTableMetadata {
+func (t *EventType) GlueTableMetadata() *awsglue.GlueTableMetadata {
 	return t.glueTableMetadata
 }
 
 // Parser returns a new LogParser instance for this log type
-func (t *LogType) Parser() LogParser {
+func (t *EventType) Parser() LogParser {
 	return t.NewParser()
 }
 
 // Check verifies a log type is valid
-func (t *LogType) Check() error {
+func (t *EventType) Check() error {
 	if t == nil {
 		return errors.Errorf("nil log type entry")
 	}
@@ -103,6 +103,5 @@ func checkLogEntrySchema(logType string, schema interface{}) error {
 	if err := jsoniter.Unmarshal(data, &fields); err != nil {
 		return errors.Errorf("invalid schema struct for log type %q: %s", logType, err)
 	}
-	// TODO: [parsers] Use reflect to check provided schema struct for required panther fields
 	return nil
 }

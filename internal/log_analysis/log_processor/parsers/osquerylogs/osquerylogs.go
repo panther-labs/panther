@@ -32,28 +32,28 @@ const (
 
 func init() {
 	pantherlog.MustRegister(
-		pantherlog.LogType{
+		pantherlog.EventType{
 			Name:         TypeBatch,
 			Description:  `Batch contains all the data included in OsQuery batch logs`,
 			ReferenceURL: `https://osquery.readthedocs.io/en/stable/deployment/logging/`,
 			Schema:       Batch{},
 			NewParser:    parsers.AdapterFactory(&BatchParser{}),
 		},
-		pantherlog.LogType{
+		pantherlog.EventType{
 			Name:         TypeDifferential,
 			Description:  `Differential contains all the data included in OsQuery differential logs`,
 			ReferenceURL: `https://osquery.readthedocs.io/en/stable/deployment/logging/`,
 			Schema:       Differential{},
 			NewParser:    parsers.AdapterFactory(&DifferentialParser{}),
 		},
-		pantherlog.LogType{
+		pantherlog.EventType{
 			Name:         TypeSnapshot,
 			Description:  `Snapshot contains all the data included in OsQuery differential logs`,
 			ReferenceURL: `https://osquery.readthedocs.io/en/stable/deployment/logging/`,
 			Schema:       Snapshot{},
 			NewParser:    parsers.AdapterFactory(&SnapshotParser{}),
 		},
-		pantherlog.LogType{
+		pantherlog.EventType{
 			Name:         TypeStatus,
 			Description:  `Status is a diagnostic osquery log about the daemon.`,
 			ReferenceURL: `https://osquery.readthedocs.io/en/stable/deployment/logging/`,

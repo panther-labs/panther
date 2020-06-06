@@ -41,17 +41,6 @@ type ClassifierAPI interface {
 	ParserStats() map[string]*ParserStats
 }
 
-//// LogParser is a log parser marked as a classifying log parser
-//type LogParser interface {
-//	pantherlog.LogParser
-//	markClassifier()
-//}
-//
-//// LogParserMarker can be embedded into pantherlog.LogParsers to mark the parser as a classifying parser.
-//type LogParserMarker struct{}
-//
-//func (m *LogParserMarker) markClassifier() {}
-
 // ClassifierResult is the result of the ClassifierAPI#Classify method
 type ClassifierResult struct {
 	// Events contains the parsed events
@@ -63,7 +52,7 @@ type ClassifierResult struct {
 }
 
 // NewClassifier returns a new instance of a ClassifierAPI implementation
-func NewClassifier(logTypes ...pantherlog.LogType) ClassifierAPI {
+func NewClassifier(logTypes ...pantherlog.EventType) ClassifierAPI {
 	return &Classifier{
 		parsers:     NewParserPriorityQueue(logTypes...),
 		parserStats: make(map[string]*ParserStats),

@@ -29,7 +29,7 @@ const (
 
 func init() {
 	pantherlog.MustRegister(
-		pantherlog.LogType{
+		pantherlog.EventType{
 			Name:         TypeZeekDNS,
 			Description:  `Zeek DNS activity`,
 			ReferenceURL: `https://docs.zeek.org/en/current/scripts/base/protocols/dns/main.zeek.html#type-DNS::Info`,

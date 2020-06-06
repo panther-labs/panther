@@ -79,7 +79,7 @@ func TestDeployedTablesSignature(t *testing.T) {
 	assert.Equal(t, sig, sig2)
 
 	// change the data, the sigs should be different
-	_ = pantherlog.Register(pantherlog.LogType{
+	_ = pantherlog.Register(pantherlog.EventType{
 		Name:         "Foo.Bar",
 		Description:  "foo",
 		ReferenceURL: "-",

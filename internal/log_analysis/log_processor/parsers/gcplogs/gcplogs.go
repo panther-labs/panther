@@ -35,7 +35,7 @@ const (
 //nolint: lll
 func init() {
 	pantherlog.MustRegister(
-		pantherlog.LogType{
+		pantherlog.EventType{
 			Name: TypeAuditLog,
 			Description: `Cloud Audit Logs maintains three audit logs for each Google Cloud project, folder, and organization: Admin Activity, Data Access, and System Event.
 Google Cloud services write audit log entries to these logs to help you answer the questions of "who did what, where, and when?" within your Google Cloud resources.

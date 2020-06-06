@@ -28,7 +28,7 @@ const (
 )
 
 func init() {
-	pantherlog.MustRegister(pantherlog.LogType{
+	pantherlog.MustRegister(pantherlog.EventType{
 		Name:         TypeEventInfo,
 		Description:  `OSSEC EventInfo alert parser. Currently only JSON output is supported.`,
 		ReferenceURL: `https://www.ossec.net/docs/docs/formats/alerts.html`,

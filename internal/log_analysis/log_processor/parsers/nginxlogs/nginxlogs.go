@@ -29,7 +29,7 @@ const (
 )
 
 func init() {
-	pantherlog.MustRegister(pantherlog.LogType{
+	pantherlog.MustRegister(pantherlog.EventType{
 		Name:         TypeAccess,
 		Description:  `Access Logs for your Nginx server. We currently support Nginx 'combined' format.`,
 		ReferenceURL: `http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format`,

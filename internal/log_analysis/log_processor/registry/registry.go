@@ -38,7 +38,7 @@ import (
 func Default() *pantherlog.Registry {
 	return pantherlog.DefaultRegistry()
 }
-func Lookup(name string) *pantherlog.LogType {
+func Lookup(name string) *pantherlog.EventType {
 	return pantherlog.MustGet(name)
 }
 func AvailableLogTypes() []string {

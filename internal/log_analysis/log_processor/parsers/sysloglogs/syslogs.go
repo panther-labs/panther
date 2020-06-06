@@ -31,14 +31,14 @@ const (
 
 func init() {
 	pantherlog.MustRegister(
-		pantherlog.LogType{
+		pantherlog.EventType{
 			Name:         TypeRFC3164,
 			Description:  `Syslog parser for the RFC3164 format (ie. BSD-syslog messages)`,
 			ReferenceURL: `https://tools.ietf.org/html/rfc3164`,
 			Schema:       RFC3164{},
 			NewParser:    parsers.AdapterFactory(&RFC5424Parser{}),
 		},
-		pantherlog.LogType{
+		pantherlog.EventType{
 			Name:         TypeRFC5424,
 			Description:  `Syslog parser for the RFC5424 format.`,
 			ReferenceURL: `https://tools.ietf.org/html/rfc5424`,

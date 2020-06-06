@@ -31,14 +31,14 @@ const (
 // nolint:lll
 func init() {
 	pantherlog.MustRegister(
-		pantherlog.LogType{
+		pantherlog.EventType{
 			Name:         TypeRFC3164,
 			Description:  `Fluentd syslog parser for the RFC3164 format (ie. BSD-syslog messages)`,
 			ReferenceURL: `https://docs.fluentd.org/parser/syslog#rfc3164-log`,
 			Schema:       RFC3164{},
 			NewParser:    parsers.AdapterFactory(&RFC3164Parser{}),
 		},
-		pantherlog.LogType{
+		pantherlog.EventType{
 			Name:         TypeRFC5424,
 			Description:  `Fluentd syslog parser for the RFC5424 format (ie. BSD-syslog messages)`,
 			ReferenceURL: `https://docs.fluentd.org/parser/syslog#rfc5424-log`,

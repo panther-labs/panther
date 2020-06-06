@@ -146,7 +146,7 @@ func newS3Destination(logTypes ...string) *testS3Destination {
 			s3Uploader:          mockS3Uploader,
 			maxBufferedMemBytes: 10 * 1024 * 1024, // an arbitrary amount enough to hold default test data
 			maxDuration:         maxDuration,
-			logTypes:            newRegistry(logTypes...),
+			eventTypes:          newRegistry(logTypes...),
 		},
 		mockSns:        mockSns,
 		mockS3Uploader: mockS3Uploader,
@@ -157,7 +157,7 @@ func newRegistry(names ...string) *pantherlog.Registry {
 	names = append([]string{testLogType}, names...)
 	r := pantherlog.Registry{}
 	for _, name := range names {
-		err := r.Register(pantherlog.LogType{
+		err := r.Register(pantherlog.EventType{
 			Name:         name,
 			Description:  "description",
 			ReferenceURL: "-",

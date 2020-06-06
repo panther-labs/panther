@@ -43,7 +43,7 @@ const (
 
 func init() {
 	pantherlog.MustRegister(
-		pantherlog.LogType{
+		pantherlog.EventType{
 			Name: TypeAPI,
 			Description: `GitLab log for API requests received from GitLab.
 NOTE: We are using the latest version of GitLab API logs. Some fields differ from the official documentation`,
@@ -51,35 +51,35 @@ NOTE: We are using the latest version of GitLab API logs. Some fields differ fro
 			Schema:       API{},
 			NewParser:    parsers.AdapterFactory(&APIParser{}),
 		},
-		pantherlog.LogType{
+		pantherlog.EventType{
 			Name:         TypeAudit,
 			Description:  `GitLab log file containing changes to group or project settings`,
 			ReferenceURL: `https://docs.gitlab.com/ee/administration/logs.html#audit_jsonlog`,
 			Schema:       Audit{},
 			NewParser:    parsers.AdapterFactory(&AuditParser{}),
 		},
-		pantherlog.LogType{
+		pantherlog.EventType{
 			Name:         TypeExceptions,
 			Description:  `GitLab log file containing changes to group or project settings`,
 			ReferenceURL: `https://docs.gitlab.com/ee/administration/logs.html#exceptions_jsonlog`,
 			Schema:       Exceptions{},
 			NewParser:    parsers.AdapterFactory(&ExceptionsParser{}),
 		},
-		pantherlog.LogType{
+		pantherlog.EventType{
 			Name:         TypeGit,
 			Description:  `GitLab log file containing all failed requests from GitLab to Git repositories.`,
 			ReferenceURL: `https://docs.gitlab.com/ee/administration/logs.html#git_jsonlog`,
 			Schema:       Git{},
 			NewParser:    parsers.AdapterFactory(&GitParser{}),
 		},
-		pantherlog.LogType{
+		pantherlog.EventType{
 			Name:         TypeIntegrations,
 			Description:  `GitLab log with information about integrations activities such as Jira, Asana, and Irker services.`,
 			ReferenceURL: `https://docs.gitlab.com/ee/administration/logs.html#integrations_jsonlog`,
 			Schema:       Integrations{},
 			NewParser:    parsers.AdapterFactory(&IntegrationsParser{}),
 		},
-		pantherlog.LogType{
+		pantherlog.EventType{
 			Name:         TypeProduction,
 			Description:  `GitLab log for Production controller requests received from GitLab`,
 			ReferenceURL: `https://docs.gitlab.com/ee/administration/logs.html#production_jsonlog`,

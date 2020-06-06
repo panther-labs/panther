@@ -28,10 +28,10 @@ import (
 // It is safe to use a registry from multiple go routines.
 type Registry struct {
 	mu      sync.RWMutex
-	entries map[string]*LogType
+	entries map[string]*EventType
 }
 
-func NewRegistry(logTypes ...LogType) (*Registry, error) {
+func NewRegistry(logTypes ...EventType) (*Registry, error) {
 	r := &Registry{}
 	for _, logType := range logTypes {
 		if err := r.Register(logType); err != nil {
@@ -41,29 +41,29 @@ func NewRegistry(logTypes ...LogType) (*Registry, error) {
 	return r, nil
 }
 
-// MustGet gets a registered LogType or panics
-func (r *Registry) MustGet(name string) *LogType {
+// MustGet gets a registered EventType or panics
+func (r *Registry) MustGet(name string) *EventType {
 	if logType := r.Get(name); logType != nil {
 		return logType
 	}
 	panic(errors.Errorf("unregistered log type %q", name))
 }
 
-// Get returns finds an LogType entry in a registry.
-// The returned pointer should be used as a *read-only* share of the LogType.
-func (r *Registry) Get(name string) *LogType {
+// Get returns finds an EventType entry in a registry.
+// The returned pointer should be used as a *read-only* share of the EventType.
+func (r *Registry) Get(name string) *EventType {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return r.entries[name]
 }
 
-// Entries returns copies of LogType entries in a registry.
+// Entries returns copies of EventType entries in a registry.
 // If no names are provided all entries are returned.
-func (r *Registry) Entries(names ...string) []LogType {
+func (r *Registry) Entries(names ...string) []EventType {
 	if names == nil {
 		names = r.LogTypes()
 	}
-	m := make([]LogType, 0, len(names))
+	m := make([]EventType, 0, len(names))
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	for _, name := range names {
@@ -86,8 +86,8 @@ func (r *Registry) LogTypes() (logTypes []string) {
 	return
 }
 
-// Each calls a function for each LogType entry in the registry
-func (r *Registry) Each(fn func(entry *LogType)) {
+// Each calls a function for each EventType entry in the registry
+func (r *Registry) Each(fn func(entry *EventType)) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	for _, entry := range r.entries {
@@ -95,7 +95,7 @@ func (r *Registry) Each(fn func(entry *LogType)) {
 	}
 }
 
-func (r *Registry) Del(name string) *LogType {
+func (r *Registry) Del(name string) *EventType {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if logType, ok := r.entries[name]; ok {
@@ -105,7 +105,7 @@ func (r *Registry) Del(name string) *LogType {
 	return nil
 }
 
-func (r *Registry) Register(entry LogType) error {
+func (r *Registry) Register(entry EventType) error {
 	if err := entry.Check(); err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func (r *Registry) Register(entry LogType) error {
 		return errors.Errorf("duplicate log type entry %q", entry.Name)
 	}
 	if r.entries == nil {
-		r.entries = make(map[string]*LogType)
+		r.entries = make(map[string]*EventType)
 	}
 	r.entries[entry.Name] = &entry
 	return nil
@@ -129,18 +129,18 @@ func DefaultRegistry() *Registry {
 	return defaultRegistry
 }
 
-// Get gets a LogType entry from the package wide registry
-func Get(logType string) *LogType {
+// Get gets a EventType entry from the package wide registry
+func Get(logType string) *EventType {
 	return defaultRegistry.Get(logType)
 }
 
-// MustGet gets a LogType entry from the package wide registry and panics if `logType` is not registered
-func MustGet(logType string) *LogType {
+// MustGet gets a EventType entry from the package wide registry and panics if `logType` is not registered
+func MustGet(logType string) *EventType {
 	return defaultRegistry.MustGet(logType)
 }
 
 // Register registers log type entries to the package wide registry returning the first error it encounters
-func Register(entries ...LogType) error {
+func Register(entries ...EventType) error {
 	for _, entry := range entries {
 		if err := defaultRegistry.Register(entry); err != nil {
 			return err
@@ -150,7 +150,7 @@ func Register(entries ...LogType) error {
 }
 
 // Register registers log type entries to the package wide registry panicking if an error occurs
-func MustRegister(entries ...LogType) {
+func MustRegister(entries ...EventType) {
 	if err := Register(entries...); err != nil {
 		panic(err)
 	}

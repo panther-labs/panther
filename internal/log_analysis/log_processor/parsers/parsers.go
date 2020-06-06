@@ -27,9 +27,9 @@ import (
 // LogParser represents a parser for a supported log type
 // NOTE: We will be transitioning parsers to the `pantherlog.LogParser` interface.
 // Until all parsers are converted to the new interface the `AdapterFactory()` helper should be used
-// when registering a `pantherlog.LogType` that uses this interface.
+// when registering a `pantherlog.EventType` that uses this interface.
 type LogParser interface {
-	// LogType returns the log type supported by this parser
+	// EventType returns the log type supported by this parser
 	LogType() string
 
 	// Parse attempts to parse the provided log line
@@ -47,7 +47,7 @@ var Validator = validator.New()
 var JSON = pantherlog.JSON
 
 // AdapterFactory returns a pantherlog.LogParser factory from a parsers.Parser
-// This is used to ease transition to the new pantherlog.LogType registry.
+// This is used to ease transition to the new pantherlog.EventType registry.
 func AdapterFactory(parser LogParser) func() pantherlog.LogParser {
 	return func() pantherlog.LogParser {
 		return NewAdapter(parser)

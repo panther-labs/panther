@@ -32,8 +32,8 @@ import (
 	"github.com/panther-labs/panther/pkg/box"
 )
 
-func mockLogType(name string, parser pantherlog.LogParser) pantherlog.LogType {
-	return pantherlog.LogType{
+func mockLogType(name string, parser pantherlog.LogParser) pantherlog.EventType {
+	return pantherlog.EventType{
 		Name:        name,
 		Description: fmt.Sprintf("Mock log type %q", name),
 		NewParser: func() pantherlog.LogParser {
