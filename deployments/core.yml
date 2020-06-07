@@ -29,6 +29,9 @@ Parameters:
   AnalysisVersionsBucket:
     Type: String
     Description: S3 bucket for python revision history
+  AnalysisApiEndpoint:
+    Type: String
+    Description: Analysis API gateway FQDN
   AnalysisApiId:
     Type: String
     Description: Analysis API gateway ID
@@ -41,6 +44,9 @@ Parameters:
   DynamoScalingRoleArn:
     Type: String
     Description: IAM role arn for DynamoDB auto-scaling
+  InitialAnalysisPackUrls:
+    Type: CommaDelimitedList
+    Description: Initial Python analysis packs
   ProcessedDataBucket:
     Type: String
     Description: S3 bucket which stores processed logs
@@ -59,11 +65,19 @@ Parameters:
     Type: Number
     Description: CloudWatch log retention period
     Default: 365
+  CompanyDisplayName:
+    Type: String
+    Description: Company name displayed in Settings > General
+    Default: AwesomeCo
+  CompanyEmail:
+    Type: String
+    Description: Company email displayed in Settings > General (not used for anything today)
+    Default: user@example.com
   Debug:
     Type: String
-    Default: false
     Description: Toggle debug logging
     AllowedValues: [true, false]
+    Default: false
   LayerVersionArns:
     Type: CommaDelimitedList
     Description: List of LayerVersion ARNs to attach to each function
@@ -181,15 +195,6 @@ Resources:
                 - cognito-idp:GetUser
                 - cognito-idp:ListUsers
               Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}
-        - Id: AppsyncManagement
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - appsync:GetGraphqlApi
-                - appsync:ListGraphqlApis
-                - appsync:UpdateGraphqlApi
-              Resource: !Sub arn:${AWS::Partition}:appsync:${AWS::Region}:${AWS::AccountId}:*
 
   UsersAPIAlarms:
     Type: Custom::LambdaAlarms
@@ -284,6 +289,14 @@ Resources:
       FunctionMemoryMB: !FindInMap [Functions, OrganizationAPI, Memory]
       FunctionName: !Ref OrganizationAPIFunction
       FunctionTimeoutSec: !FindInMap [Functions, OrganizationAPI, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  PantherSettings:
+    Type: Custom::PantherSettings
+    DependsOn: OrganizationAPIFunction
+    Properties:
+      DisplayName: !Ref CompanyDisplayName
+      Email: !Ref CompanyEmail
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Analysis API #####
@@ -431,6 +444,18 @@ Resources:
       AlarmTopicArn: !Ref AlarmTopicArn
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
       TableName: !Ref AnalysisTable
+
+  # Once the analysis-api is ready, upload the initial Python analysis rules/policies
+  InitialAnalysisSet:
+    Type: Custom::AnalysisSet
+    # The policy-engine and rules-engine must also exist for the layer creation to succeed,
+    # but the custom resource handler will handle that waiting so we don't have to stall
+    # this entire stack waiting for cloud-security and log-analysis to finish.
+    DependsOn: AnalysisApiFunction
+    Properties:
+      AnalysisAPIEndpoint: !Ref AnalysisApiEndpoint
+      PackURLs: !Ref InitialAnalysisPackUrls
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Outputs API #####
   OutputsTable:

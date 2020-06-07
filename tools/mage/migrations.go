@@ -55,28 +55,36 @@ func migrate(awsSession *session.Session, accountID string) {
 	// In v1.4.0, the ECS cluster moved from the bootstrap stack to the web stack.
 	// Enumerate the bootstrap stack to see if this migration is necessary.
 	clusterInBootstrap := false
-	err := walkPantherStack(cfnClient, aws.String(bootstrapStack), func(r cfnResource) {
-		if aws.StringValue(r.Resource.ResourceType) == "AWS::ECS::Cluster" {
+	listStackResources(cfnClient, aws.String(bootstrapStack), func(r *cfn.StackResourceSummary) bool {
+		if *r.ResourceType == "AWS::ECS::Cluster" {
 			clusterInBootstrap = true
+			return false // stop iterating
 		}
+		return true
 	})
-	if err != nil {
-		// err == nil if the stack does not yet exist
-		logger.Fatalf("failed to walk bootstrap stack: %v", err)
-	}
+
 	if clusterInBootstrap {
 		// To delete the ECS cluster from bootstrap, the entire web stack has to be deleted first.
 		// There is no user data that needs to be preserved in that stack - it's stateless.
 		logger.Infof("migration: deleting stack %s so ECS::Cluster can be migrated out of %s",
 			frontendStack, bootstrapStack)
-		if err = deleteStack(cfnClient, aws.String(frontendStack)); err != nil {
+		if err := deleteStack(cfnClient, aws.String(frontendStack)); err != nil {
 			logger.Fatalf("failed to delete %s: %v", frontendStack, err)
 		}
 	}
 
 	// In v1.4.0, the self-onboarding stackset was replaced with a simple nested template.
-	if err := deleteStackSet(cfnClient, &accountID, aws.String(realTimeEventsStackSet)); err != nil {
-		logger.Fatal(err)
+	instanceErr, parentErr := deleteStackSet(cfnClient, &accountID, aws.String(realTimeEventsStackSet))
+	if instanceErr != nil {
+		// We have to delete the stack set instance in the deployment region because the onboard
+		// stack will re-create the cloud security / log processing IAM roles with the same name as before.
+		logger.Fatalf("failed to delete stack set instance %s in %s: %v",
+			realTimeEventsStackSet, *awsSession.Config.Region, instanceErr)
+	}
+	if parentErr != nil {
+		// If there are stack instances in other regions, the top-level stack set delete will fail, which
+		// is ok - we'll just log a warning and continue. The IAM roles we care about should have been deleted.
+		logger.Warnf("failed to delete stack set %s: %v", realTimeEventsStackSet, parentErr)
 	}
 
 	// In v1.4.0, the LogProcessingRole in onboard.yml was replaced with a reference to an aux template.
@@ -89,21 +97,16 @@ func migrate(awsSession *session.Session, accountID string) {
 	// Normal user data is not affected, only self-onboarding (S3 access logs, GuardDuty).
 	// S3 should retry failed notifications for a short time in any case.
 	oldLogRole := false
-	err = walkPantherStack(cfnClient, aws.String(onboardStack), func(r cfnResource) {
-		if aws.StringValue(r.Resource.LogicalResourceId) == "LogProcessingRole" &&
-			aws.StringValue(r.Stack.StackName) == onboardStack && // not a nested stack
-			aws.StringValue(r.Resource.ResourceType) == "AWS::IAM::Role" {
-
+	listStackResources(cfnClient, aws.String(onboardStack), func(r *cfn.StackResourceSummary) bool {
+		if *r.LogicalResourceId == "LogProcessingRole" && *r.ResourceType == "AWS::IAM::Role" {
 			oldLogRole = true
+			return false // stop iterating
 		}
+		return true
 	})
-	if err != nil {
-		// err == nil if the stack does not yet exist
-		logger.Fatalf("failed to walk onboard stack: %v", err)
-	}
 	if oldLogRole {
 		logger.Infof("migration: deleting stack %s (will be rebuilt)", onboardStack)
-		if err = deleteStack(cfnClient, aws.String(onboardStack)); err != nil {
+		if err := deleteStack(cfnClient, aws.String(onboardStack)); err != nil {
 			logger.Fatalf("failed to delete %s: %v", onboardStack, err)
 		}
 	}
@@ -111,25 +114,26 @@ func migrate(awsSession *session.Session, accountID string) {
 	// In v1.4.0, the CloudWatch dashboards changed their logicalIDs, so the stack needs to be
 	// deleted before deploying or CF will fail with "dashboard already exists"
 	oldDashboard := false
-	err = walkPantherStack(cfnClient, aws.String(dashboardStack), func(r cfnResource) {
-		if strings.HasSuffix(aws.StringValue(r.Resource.LogicalResourceId), "AWSRegion") {
+	listStackResources(cfnClient, aws.String(dashboardStack), func(r *cfn.StackResourceSummary) bool {
+		if strings.HasSuffix(*r.LogicalResourceId, "AWSRegion") {
 			oldDashboard = true
+			return false // stop iterating
 		}
+		return true
 	})
-	if err != nil {
-		// err == nil if the stack does not yet exist
-		logger.Fatalf("failed to walk dashboard stack: %v", err)
-	}
 	if oldDashboard {
 		logger.Infof("migration: deleting stack %s (will be rebuilt)", dashboardStack)
-		if err = deleteStack(cfnClient, aws.String(dashboardStack)); err != nil {
+		if err := deleteStack(cfnClient, aws.String(dashboardStack)); err != nil {
 			logger.Fatalf("failed to delete %s: %v", dashboardStack, err)
 		}
 	}
 }
 
-// Delete a single CFN stack set and wait for it to finish (only deletes stack instances from current region)
-func deleteStackSet(client *cfn.CloudFormation, accountID, stackSet *string) error {
+// Delete a CloudFormation stack set and wait for it to finish.
+//
+// Only deletes stack instances from the current region.
+// Returns (stack instance error, parent stack set error)
+func deleteStackSet(client *cfn.CloudFormation, accountID, stackSet *string) (error, error) {
 	logger.Debugf("deleting CloudFormation stack set %s", *stackSet)
 
 	// First, delete the stack set *instance* in this region
@@ -144,7 +148,7 @@ func deleteStackSet(client *cfn.CloudFormation, accountID, stackSet *string) err
 		if stackSetDoesNotExistError(err) {
 			exists, err = false, nil
 		} else {
-			return fmt.Errorf("failed to delete %s stack set instance in %s: %v", *stackSet, *client.Config.Region, err)
+			return err, nil
 		}
 	}
 
@@ -156,15 +160,15 @@ func deleteStackSet(client *cfn.CloudFormation, accountID, stackSet *string) err
 		time.Sleep(pollInterval)
 	}
 	if err != nil {
-		return err
+		return err, nil
 	}
 
-	// Now delete the parent stack set
+	// Now delete the parent stack set if possible
 	if _, err := client.DeleteStackSet(&cfn.DeleteStackSetInput{StackSetName: stackSet}); err != nil {
 		if stackSetDoesNotExistError(err) {
 			exists = false
 		} else {
-			return fmt.Errorf("failed to delete %s stack set in %s: %v", *stackSet, *client.Config.Region, err)
+			return nil, err
 		}
 	}
 
@@ -174,7 +178,7 @@ func deleteStackSet(client *cfn.CloudFormation, accountID, stackSet *string) err
 		time.Sleep(pollInterval)
 	}
 
-	return err
+	return nil, err
 }
 
 // Return true if CF stack set exists

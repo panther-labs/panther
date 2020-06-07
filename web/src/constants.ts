@@ -106,7 +106,7 @@ export const LOG_TYPES = [
   'GitLab.Exceptions',
   'GitLab.Git',
   'GitLab.Integrations',
-  'GitLab.Rails',
+  'GitLab.Production',
   'Nginx.Access',
   'Osquery.Batch',
   'Osquery.Differential',
@@ -141,5 +141,7 @@ export const DEFAULT_LARGE_PAGE_SIZE = 25;
 export const USER_INFO_STORAGE_KEY = 'panther.user.info';
 export const ERROR_REPORTING_CONSENT_STORAGE_KEY = 'panther.generalSettings.errorReportingConsent';
 
+// The default panther system user id
+export const PANTHER_USER_ID = '00000000-0000-4000-8000-000000000000';
 // Docs URL we use to prompt users for explanations
 export const LOG_ONBOARDING_DOC_URL = `https://docs.runpanther.io/log-processing#sns-notification-setup`;

@@ -9,7 +9,7 @@
 # python3 -m venv .setup/venv
 # source .setup/venv/bin/activate
 # pip3 install -r requirements-top-level.txt
-# pip3 freeze -r requirements-top-level.txt > requirements.txt
+# pip3 freeze --all > requirements.txt
 # deactivate
 aws-sam-cli
 bandit
@@ -17,6 +17,7 @@ boto3==1.12.22  # Matches version in Lambda: https://docs.aws.amazon.com/lambda/
 cfn-lint
 cfn-flip
 mypy
+pip==20.1.1
 pylint
 requests
 yapf

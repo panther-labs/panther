@@ -79,7 +79,7 @@
     "svgo-loader": "^2.2.1",
     "terser-webpack-plugin": "^2.3.4",
     "ts-loader": "^6.2.1",
-    "typescript": "^3.7.5",
+    "typescript": "~3.7.5",
     "url-loader": "^3.0.0",
     "webpack": "^4.41.5",
     "webpack-bundle-analyzer": "^3.6.0",
@@ -96,7 +96,7 @@
     "brace": "^0.11.1",
     "canvas-confetti": "^1.1.2",
     "dayjs": "^1.8.19",
-    "echarts": "~4.2.1",
+    "echarts": "^4.8.0",
     "ejs": "^3.1.2",
     "express": "~4.17.1",
     "express-static-gzip": "~2.0.6",
@@ -105,7 +105,7 @@
     "history": "^4.10.1",
     "linkifyjs": "^2.1.9",
     "lodash-es": "^4.17.15",
-    "pouncejs": "^0.19.0",
+    "pouncejs": "0.19.0",
     "qrcode.react": "^1.0.0",
     "query-string": "^6.10.1",
     "react": "^16.12.0",
@@ -125,7 +125,8 @@
     "graphql-codegen": "graphql-codegen --config web/codegen.yml",
     "graphql-codegen:watch": "npm run graphql-codegen -- --watch",
     "eslint": "eslint --config web/.eslintrc.js \"web/**/*.{ts,js,tsx}\"",
+    "prettier": "prettier --list-different \"web/**/*.{ts,js,tsx,md,json,yml}\"",
     "tsc": "tsc -p web",
-    "validate": "npm run eslint && prettier --list-different \"web/**/*.{ts,js,tsx,md,json,yml}\" && npm run tsc"
+    "validate": "npm run eslint && npm run prettier && npm run tsc"
   }
 }

@@ -965,7 +965,10 @@ Outputs:
     Value: !Ref WebApplicationServerSecurityGroup
 
   # ECR
-  ImageRegistry:
+  ImageRegistryName:
+    Description: Name of the ECR repository hosting web images
+    Value: !If [IsDeployFromSource, !Ref PantherWebImageRepository, '']
+  ImageRegistryUri:
     Condition: IsDeployFromSource
     Description: Docker image registry which stores web app images
     Value: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.${AWS::URLSuffix}/${PantherWebImageRepository}'

@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -34,9 +33,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	jsoniter "github.com/json-iterator/go"
 )
 
 const (
@@ -169,7 +166,7 @@ func getSession() (*session.Session, error) {
 }
 
 // Upload a local file to S3.
-func uploadFileToS3(awsSession *session.Session, path, bucket, key string, meta map[string]*string) (*s3manager.UploadOutput, error) {
+func uploadFileToS3(awsSession *session.Session, path, bucket, key string) (*s3manager.UploadOutput, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open %s: %v", path, err)
@@ -180,38 +177,10 @@ func uploadFileToS3(awsSession *session.Session, path, bucket, key string, meta 
 
 	logger.Debugf("uploading %s to s3://%s/%s", path, bucket, key)
 	return uploader.Upload(&s3manager.UploadInput{
-		Body:     file,
-		Bucket:   &bucket,
-		Key:      &key,
-		Metadata: meta,
+		Body:   file,
+		Bucket: &bucket,
+		Key:    &key,
 	})
-}
-
-func invokeLambda(awsSession *session.Session, functionName string, input interface{}, output interface{}) error {
-	payload, err := jsoniter.Marshal(input)
-	if err != nil {
-		return fmt.Errorf("failed to json marshal input to %s: %v", functionName, err)
-	}
-
-	response, err := lambda.New(awsSession).Invoke(&lambda.InvokeInput{
-		FunctionName: aws.String(functionName),
-		Payload:      payload,
-	})
-	if err != nil {
-		return fmt.Errorf("%s lambda invocation failed: %v", functionName, err)
-	}
-
-	if response.FunctionError != nil {
-		return fmt.Errorf("%s responded with %s error: %s",
-			functionName, *response.FunctionError, string(response.Payload))
-	}
-
-	if output != nil {
-		if err = jsoniter.Unmarshal(response.Payload, output); err != nil {
-			return fmt.Errorf("failed to json unmarshal response from %s: %v", functionName, err)
-		}
-	}
-	return nil
 }
 
 // Prompt the user for a string input.
@@ -268,23 +237,6 @@ func dateValidator(text string) error {
 		return fmt.Errorf("invalid date: %v", err)
 	}
 	return nil
-}
-
-// Download a file in memory.
-func download(url string) ([]byte, error) {
-	logger.Debug("GET " + url)
-	response, err := http.Get(url) // nolint:gosec
-	if err != nil {
-		return nil, fmt.Errorf("failed to GET %s: %v", url, err)
-	}
-	defer response.Body.Close()
-
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to download %s: %v", url, err)
-	}
-
-	return body, nil
 }
 
 // runningInCI returns true if the mage command is running inside the CI environment

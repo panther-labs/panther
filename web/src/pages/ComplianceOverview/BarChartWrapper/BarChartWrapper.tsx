@@ -16,4 +16,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './DonutChart';
+import React from 'react';
+import { Box, Card, Flex, Icon, IconProps, Label } from 'pouncejs';
+import ErrorBoundary from 'Components/ErrorBoundary';
+
+interface BarChartWrapperProps {
+  title: string;
+  icon: IconProps['type'];
+}
+
+const BarChartWrapper: React.FC<BarChartWrapperProps> = ({ children, title, icon }) => (
+  <Card p={6} height={300}>
+    <Flex align="center" as="header" mb={6} color="grey500">
+      <Icon size="small" type={icon} mr={4} />
+      <Label size="large" as="h4">
+        {title}
+      </Label>
+    </Flex>
+    <Box height={220}>
+      <ErrorBoundary>{children}</ErrorBoundary>
+    </Box>
+  </Card>
+);
+
+export default BarChartWrapper;

@@ -21,30 +21,27 @@ import { Box, Flex, SimpleGrid } from 'pouncejs';
 import Panel from 'Components/Panel';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import CirclePlaceholder from 'Components/CirclePlaceholder';
-import DonutChartWrapper from '../DonutChartWrapper';
+import BarChartWrapper from '../BarChartWrapper';
 
 const ChartPlaceholder: React.FC = () => (
   <Flex height="100%" align="center" justify="center">
-    <CirclePlaceholder size={150} />
+    <CirclePlaceholder size={100} />
   </Flex>
 );
 
 const ComplianceOverviewPageSkeleton: React.FC = () => {
   return (
     <Box as="article" mb={6}>
-      <SimpleGrid columns={4} spacing={3} as="section" mb={3}>
-        <DonutChartWrapper title="Policy Severity" icon="policy">
+      <SimpleGrid columns={3} spacing={3} as="section" mb={3}>
+        <BarChartWrapper title="Policy Severity" icon="policy">
           <ChartPlaceholder />
-        </DonutChartWrapper>
-        <DonutChartWrapper title="Policy Failure" icon="policy">
+        </BarChartWrapper>
+        <BarChartWrapper title="Policy Failure" icon="policy">
           <ChartPlaceholder />
-        </DonutChartWrapper>
-        <DonutChartWrapper title="Resource Type" icon="resource">
+        </BarChartWrapper>
+        <BarChartWrapper title="Resource Type" icon="resource">
           <ChartPlaceholder />
-        </DonutChartWrapper>
-        <DonutChartWrapper title="Resource Health" icon="resource">
-          <ChartPlaceholder />
-        </DonutChartWrapper>
+        </BarChartWrapper>
       </SimpleGrid>
       <SimpleGrid columns={2} spacingX={3} spacingY={2}>
         <Panel title="Top Failing Policies" size="small">

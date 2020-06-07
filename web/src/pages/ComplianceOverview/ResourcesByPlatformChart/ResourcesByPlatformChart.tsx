@@ -17,8 +17,10 @@
  */
 
 import React from 'react';
-import DonutChart from 'Components/DonutChart';
 import { ScannedResources } from 'Generated/schema';
+import { Flex } from 'pouncejs';
+import BarChart from 'Components/charts/BarChart';
+import ChartSummary from 'Components/charts/ChartSummary';
 
 interface ResourcesByPlatformProps {
   resources: ScannedResources;
@@ -29,12 +31,15 @@ const ResourcesByPlatform: React.FC<ResourcesByPlatformProps> = ({ resources }) 
     {
       value: resources.byType.length,
       label: 'AWS',
-      color: 'grey500' as const,
+      color: 'grey300' as const,
     },
   ];
 
   return (
-    <DonutChart data={allResourcesChartData} renderLabel={(data, index) => data[index].value} />
+    <Flex height="100%">
+      <ChartSummary total={resources.byType.length} title="Resource Types" color="grey200" />
+      <BarChart data={allResourcesChartData} alignment="horizontal" />
+    </Flex>
   );
 };
 

@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-lambda-go/cfn"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
@@ -38,7 +39,7 @@ func customS3BucketNotification(_ context.Context, event cfn.Event) (string, map
 		}
 
 		// CF only natively allows defining bucket notifications at the time of bucket creation.
-		if _, err := getS3Client().PutBucketNotificationConfiguration(&props); err != nil {
+		if _, err := s3Client.PutBucketNotificationConfiguration(&props); err != nil {
 			return "", nil, err
 		}
 
@@ -54,10 +55,14 @@ func customS3BucketNotification(_ context.Context, event cfn.Event) (string, map
 		bucketName := split[len(split)-1]
 
 		// You have to put an empty notification configuration to remove it
-		_, err := getS3Client().PutBucketNotificationConfiguration(&s3.PutBucketNotificationConfigurationInput{
+		_, err := s3Client.PutBucketNotificationConfiguration(&s3.PutBucketNotificationConfigurationInput{
 			Bucket:                    &bucketName,
 			NotificationConfiguration: &s3.NotificationConfiguration{},
 		})
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == s3.ErrCodeNoSuchBucket {
+			err = nil // bucket already deleted
+		}
+
 		return event.PhysicalResourceID, nil, err
 
 	default:
