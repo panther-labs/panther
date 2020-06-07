@@ -125,7 +125,7 @@ func TestIntegrationGlueMetadataPartitions(t *testing.T) {
 
 	// sync it (which does an update of schema)
 	var startDate time.Time // default unset
-	err = table.SyncPartitions(glueClient, s3Client, startDate)
+	_, err = table.SyncPartitions(glueClient, s3Client, startDate, nil)
 	require.NoError(t, err)
 
 	partitionLocation = getPartitionLocation(t, []string{"2020", "01", "03", "01"})

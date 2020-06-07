@@ -27,6 +27,8 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/box"
 )
@@ -36,37 +38,61 @@ const (
 )
 
 type SyncEvent struct {
-	Sync     bool     // if true, this is a request to sync the partitions of the registered tables
-	LogTypes []string // the log types to sync
+	Sync         bool          // if true, this is a request to sync the partitions of the registered tables
+	LogTypes     []string      // the log types to sync
+	Continuation *Continuation `json:"omitempty"` // if not nil, start here
 }
 
-func Sync(event *SyncEvent) error {
-	// Do one logType then re-invoke, this way we have 15min per logType per sync and
-	// we do not overload the glue api which has a low TPS throttle.
-	// NOTE: this can still timeout for tables with many partitions, if that happens use `mage glue:sync`
-	// FIXME: we could fix this completely if we added a deadline to SyncPartitions() and resumed
+type Continuation struct {
+	LogType           string
+	DataType          models.DataType
+	NextPartitionTime time.Time
+}
+
+// Sync does one logType then re-invokes, this way we have 15min/logType/sync and we do not overload the glue api
+func Sync(event *SyncEvent, deadline time.Time) error {
+	var zeroStartTime time.Time // setting the startTime to 0, means use createTime for the table
+
+	// first, finish any pending work
+	if event.Continuation != nil {
+		startTime := event.Continuation.NextPartitionTime
+		logType := event.Continuation.LogType
+		logTable := registry.AvailableParsers().LookupParser(logType).GlueTableMetadata // get the table description
+
+		if event.Continuation.DataType == models.RuleData { // just finish rule matches, log aleady done
+			deadlineExpired, err := syncTable(logTable.RuleTable(), event, startTime, deadline)
+			if err != nil || deadlineExpired {
+				return err
+			}
+		} else { // finish log table, then do rule table from zeroStartTime
+			deadlineExpired, err := syncTable(logTable, event, startTime, deadline)
+			if err != nil || deadlineExpired {
+				return err
+			}
+
+			deadlineExpired, err = syncTable(logTable.RuleTable(), event, zeroStartTime, deadline)
+			if err != nil || deadlineExpired {
+				return err
+			}
+		}
+
+		// advance to next log type now that we are done with continuation
+		event.LogTypes = event.LogTypes[1:]
+	}
+
 	if len(event.LogTypes) > 0 {
-		var zeroStartTime time.Time // setting the startTime to 0, means use createTime for the table
 		logType := event.LogTypes[0]
 		logTable := registry.AvailableParsers().LookupParser(logType).GlueTableMetadata // get the table description
 
-		// sync partitions
-		zap.L().Info("sync'ing partitions for table",
-			zap.String("database", logTable.DatabaseName()),
-			zap.String("table", logTable.TableName()))
-		err := logTable.SyncPartitions(glueClient, s3Client, zeroStartTime)
-		if err != nil {
-			return errors.Wrapf(err, "failed syncing %s.%s",
-				logTable.DatabaseName(), logTable.TableName())
+		// sync table and companion rule match table
+		deadlineExpired, err := syncTable(logTable, event, zeroStartTime, deadline)
+		if err != nil || deadlineExpired {
+			return err
 		}
-		ruleTable := logTable.RuleTable()
-		zap.L().Info("sync'ing partitions for table",
-			zap.String("database", ruleTable.DatabaseName()),
-			zap.String("table", ruleTable.TableName()))
-		err = ruleTable.SyncPartitions(glueClient, s3Client, zeroStartTime)
-		if err != nil {
-			return errors.Wrapf(err, "failed syncing %s.%s",
-				ruleTable.DatabaseName(), ruleTable.TableName())
+
+		deadlineExpired, err = syncTable(logTable.RuleTable(), event, zeroStartTime, deadline)
+		if err != nil || deadlineExpired {
+			return err
 		}
 
 		if len(event.LogTypes) > 1 { // more?
@@ -80,12 +106,41 @@ func Sync(event *SyncEvent) error {
 	return nil
 }
 
-func InvokeSyncGluePartitions(lambdaClient lambdaiface.LambdaAPI, logTypes []string) error {
-	zap.L().Info("invoking "+lambdaFunctionName, zap.Any("logTypes", logTypes))
+func syncTable(table *awsglue.GlueTableMetadata, event *SyncEvent, startTime, deadline time.Time) (bool, error) {
+	zap.L().Info("sync'ing partitions for table",
+		zap.String("database", table.DatabaseName()),
+		zap.String("table", table.TableName()))
+
+	nextPartitionTime, err := table.SyncPartitions(glueClient, s3Client, startTime, &deadline)
+	if err != nil {
+		return false, errors.Wrapf(err, "failed syncing %s.%s",
+			table.DatabaseName(), table.TableName())
+	}
+
+	// deadline expired
+	if nextPartitionTime != nil {
+		continuation := &Continuation{
+			LogType:           table.LogType(),
+			DataType:          table.DataType(),
+			NextPartitionTime: *nextPartitionTime,
+		}
+		err = invokeSyncGluePartitions(lambdaClient, event.LogTypes, continuation)
+		if err != nil {
+			return true, errors.Wrapf(err, "failed invoking sync on %v", event.LogTypes)
+		}
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func invokeSyncGluePartitions(lambdaClient lambdaiface.LambdaAPI, logTypes []string, continuation *Continuation) error {
+	zap.L().Info("invoking "+lambdaFunctionName, zap.Any("logTypes", logTypes), zap.Any("continuation", continuation))
 
 	event := SyncEvent{
-		Sync:     true,
-		LogTypes: logTypes,
+		Sync:         true,
+		LogTypes:     logTypes,
+		Continuation: continuation,
 	}
 
 	eventJSON, err := jsoniter.Marshal(event)
@@ -109,4 +164,8 @@ func InvokeSyncGluePartitions(lambdaClient lambdaiface.LambdaAPI, logTypes []str
 	}
 
 	return nil
+}
+
+func InvokeSyncGluePartitions(lambdaClient lambdaiface.LambdaAPI, logTypes []string) error {
+	return invokeSyncGluePartitions(lambdaClient, logTypes, nil)
 }

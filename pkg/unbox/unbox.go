@@ -1,6 +1,8 @@
 // Package unbox provides unboxing helpers for scalar values
 package unbox
 
+import "time"
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -102,4 +104,12 @@ func Byte(b *byte) byte {
 		return *b
 	}
 	return 0
+}
+
+func Time(t *time.Time) time.Time {
+	if t != nil {
+		return *t
+	}
+	var zeroTime time.Time
+	return zeroTime
 }

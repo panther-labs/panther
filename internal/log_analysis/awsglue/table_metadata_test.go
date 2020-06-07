@@ -80,6 +80,30 @@ var (
 			StorageDescriptor: testStorageDescriptor,
 		},
 	}
+
+	syncStorageDescriptor = &glue.StorageDescriptor{
+		Columns: []*glue.Column{ // this should be copied to partitions
+			{
+				Name: aws.String("updatedCol"),
+				Type: aws.String("string"),
+			},
+		},
+		Location: aws.String("s3://" + metadataTestBucket + "/" + metadataTestTablePrefix),
+		SerdeInfo: &glue.SerDeInfo{
+			SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
+			Parameters: map[string]*string{
+				"serialization.format": aws.String("1"),
+				"case.insensitive":     aws.String("TRUE"),
+			},
+		},
+	}
+
+	syncGetTableOutput = &glue.GetTableOutput{
+		Table: &glue.TableData{
+			CreateTime:        aws.Time(time.Now().UTC()), // this should cause 24 updates
+			StorageDescriptor: syncStorageDescriptor,
+		},
+	}
 )
 
 type partitionTestEvent struct{}
@@ -178,21 +202,12 @@ func TestSyncPartitions(t *testing.T) {
 	var startDate time.Time // default unset
 	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
 
-	syncGetTableOutput := *testGetTableOutput
-	syncGetTableOutput.Table.CreateTime = aws.Time(time.Now().UTC())     // this should cause 24 updates
-	syncGetTableOutput.Table.StorageDescriptor.Columns = []*glue.Column{ // this should be copied to partitions
-		{
-			Name: aws.String("updatedCol"),
-			Type: aws.String("string"),
-		},
-	}
-
 	glueClient := &testutils.GlueMock{}
-	glueClient.On("GetTable", mock.Anything).Return(&syncGetTableOutput, nil).Once()
+	glueClient.On("GetTable", mock.Anything).Return(syncGetTableOutput, nil).Once()
 	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, nil).Times(24)
 	glueClient.On("UpdatePartition", mock.Anything).Return(testUpdatePartitionOutput, nil).Times(24)
 	s3Client := &testutils.S3Mock{}
-	err := gm.SyncPartitions(glueClient, s3Client, startDate)
+	_, err := gm.SyncPartitions(glueClient, s3Client, startDate, nil)
 	assert.NoError(t, err)
 	glueClient.AssertExpectations(t)
 
@@ -211,7 +226,7 @@ func TestSyncPartitionsPartitionDoesntExistAndNoData(t *testing.T) {
 
 	// test not exists error in GetPartition (should not fail)
 	glueClient := &testutils.GlueMock{}
-	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
+	glueClient.On("GetTable", mock.Anything).Return(syncGetTableOutput, nil).Once()
 	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError).Times(24)
 	s3Client := &testutils.S3Mock{}
 	page := &s3.ListObjectsV2Output{
@@ -219,8 +234,9 @@ func TestSyncPartitionsPartitionDoesntExistAndNoData(t *testing.T) {
 	}
 	s3Client.On("ListObjectsV2Pages", mock.Anything, mock.Anything).Return(page, nil).Times(24) // no data found in S3
 	// no partitions should be created
-	err := gm.SyncPartitions(glueClient, s3Client, startDate)
+	nextPartition, err := gm.SyncPartitions(glueClient, s3Client, startDate, nil)
 	assert.NoError(t, err)
+	assert.Nil(t, nextPartition)
 	glueClient.AssertExpectations(t)
 	s3Client.AssertExpectations(t)
 }
@@ -230,7 +246,7 @@ func TestSyncPartitionsPartitionDoesntExistAndHasData(t *testing.T) {
 
 	// test not exists error in GetPartition (should not fail)
 	glueClient := &testutils.GlueMock{}
-	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
+	glueClient.On("GetTable", mock.Anything).Return(syncGetTableOutput, nil).Once()
 	// confirm correct listing calls for some data found in S3
 	s3Client := &testutils.S3Mock{}
 	page := &s3.ListObjectsV2Output{
@@ -254,8 +270,9 @@ func TestSyncPartitionsPartitionDoesntExistAndHasData(t *testing.T) {
 		glueClient.On("CreatePartition", mock.Anything).Return(testCreatePartitionOutput, nil)
 	}
 
-	err := gm.SyncPartitions(glueClient, s3Client, today)
+	nextPartition, err := gm.SyncPartitions(glueClient, s3Client, today, nil)
 	assert.NoError(t, err)
+	assert.Nil(t, nextPartition)
 	glueClient.AssertExpectations(t)
 	s3Client.AssertExpectations(t)
 }
@@ -269,8 +286,9 @@ func TestSyncPartitionsGetPartitionAWSError(t *testing.T) {
 	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, otherAWSError) // can be called many times
 	s3Client := &testutils.S3Mock{}
-	err := gm.SyncPartitions(glueClient, s3Client, startDate)
+	nextPartition, err := gm.SyncPartitions(glueClient, s3Client, startDate, nil)
 	assert.Error(t, err)
+	assert.Nil(t, nextPartition)
 	assert.Equal(t, otherAWSError.Error(), errors.Cause(err).Error())
 	glueClient.AssertExpectations(t)
 }
@@ -284,8 +302,25 @@ func TestSyncPartitionsGetPartitionNonAWSError(t *testing.T) {
 	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 	glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, nonAWSError) // can be called many times
 	s3Client := &testutils.S3Mock{}
-	err := gm.SyncPartitions(glueClient, s3Client, startDate)
+	nextPartition, err := gm.SyncPartitions(glueClient, s3Client, startDate, nil)
 	assert.Error(t, err)
+	assert.Nil(t, nextPartition)
 	assert.Equal(t, nonAWSError.Error(), errors.Cause(err).Error())
+	glueClient.AssertExpectations(t)
+}
+
+func TestSyncPartitionsDeadline(t *testing.T) {
+	var startDate time.Time // default unset
+	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
+
+	// test deadline
+	glueClient := &testutils.GlueMock{}
+	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
+	s3Client := &testutils.S3Mock{}
+	deadline := time.Now().UTC().Add(-time.Second) // 1 second in the past, so no work should be done
+	nextPartition, err := gm.SyncPartitions(glueClient, s3Client, startDate, &deadline)
+	require.NoError(t, err)
+	require.NotNil(t, nextPartition)
+	assert.Equal(t, refTime.Truncate(time.Hour*24), *nextPartition) // should be the createTime of the table truncated to the day
 	glueClient.AssertExpectations(t)
 }

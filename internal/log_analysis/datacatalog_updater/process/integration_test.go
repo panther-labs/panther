@@ -22,6 +22,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -48,7 +49,7 @@ func TestIntegrationSynPartitions(t *testing.T) {
 		Sync:     true,
 		LogTypes: []string{"AWS.VPCFlow"},
 	}
-	err := Sync(syncEvent)
+	err := Sync(syncEvent, time.Now().Add(time.Hour))
 	require.NoError(t, err)
 
 	err = InvokeSyncGluePartitions(lambdaClient, syncEvent.LogTypes)

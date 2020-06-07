@@ -20,6 +20,7 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -47,7 +48,10 @@ func handle(ctx context.Context, event DataCatalogEvent) (err error) {
 	}()
 
 	if event.Sync {
-		return process.Sync(&event.SyncEvent)
+		lambdaDeadline, _ := ctx.Deadline()
+		syncDuration := time.Since(lambdaDeadline) / 2 //  allocate a fraction of total time, this value will be negative!
+		syncDeadline := lambdaDeadline.Add(syncDuration)
+		return process.Sync(&event.SyncEvent, syncDeadline)
 	}
 	return process.SQS(event.SQSEvent)
 }
