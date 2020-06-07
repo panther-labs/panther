@@ -104,7 +104,7 @@ func TestSync(t *testing.T) {
 }
 
 func TestSyncContinuationFromLogData(t *testing.T) {
-	// this will sync 4 tables (2 from first logTYpe, 2 from 2nd) for a day
+	// this will sync 4 tables (2 from first logType, 2 from 2nd) for a day
 	nTableUpates := 4
 	nPartitionUpdates := 24 * nTableUpates
 	glueMock := &testutils.GlueMock{}
@@ -142,7 +142,7 @@ func TestSyncContinuationFromLogData(t *testing.T) {
 }
 
 func TestSyncContinuationFromRuleData(t *testing.T) {
-	// this will sync 3 tables (1 from first logTYpe, 2 from 2nd) for a day
+	// this will sync 3 tables (1 from first logType, 2 from 2nd) for a day
 	nTableUpates := 3
 	nPartitionUpdates := 24 * nTableUpates
 	glueMock := &testutils.GlueMock{}
