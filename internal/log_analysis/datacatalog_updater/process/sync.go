@@ -77,7 +77,11 @@ func Sync(event *SyncEvent, deadline time.Time) error {
 		}
 
 		// advance to next log type now that we are done with continuation
-		event.LogTypes = event.LogTypes[1:]
+		if len(event.LogTypes) > 1 {
+			event.LogTypes = event.LogTypes[1:]
+		} else {
+			return nil // done!
+		}
 	}
 
 	if len(event.LogTypes) > 0 {
@@ -107,8 +111,7 @@ func Sync(event *SyncEvent, deadline time.Time) error {
 }
 
 func syncTable(table *awsglue.GlueTableMetadata, event *SyncEvent, startTime, deadline time.Time) (bool, error) {
-	zap.L().Info("sync'ing partitions for table",
-		zap.String("database", table.DatabaseName()),
+	zap.L().Info("sync'ing partitions for table", zap.String("database", table.DatabaseName()),
 		zap.String("table", table.TableName()))
 
 	nextPartitionTime, err := table.SyncPartitions(glueClient, s3Client, startTime, &deadline)

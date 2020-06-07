@@ -210,6 +210,7 @@ func TestSyncPartitions(t *testing.T) {
 	_, err := gm.SyncPartitions(glueClient, s3Client, startDate, nil)
 	assert.NoError(t, err)
 	glueClient.AssertExpectations(t)
+	s3Client.AssertExpectations(t)
 
 	// check that schema was updated
 	for _, updateCall := range glueClient.Calls {
@@ -291,6 +292,7 @@ func TestSyncPartitionsGetPartitionAWSError(t *testing.T) {
 	assert.Nil(t, nextPartition)
 	assert.Equal(t, otherAWSError.Error(), errors.Cause(err).Error())
 	glueClient.AssertExpectations(t)
+	s3Client.AssertExpectations(t)
 }
 
 func TestSyncPartitionsGetPartitionNonAWSError(t *testing.T) {
@@ -307,6 +309,7 @@ func TestSyncPartitionsGetPartitionNonAWSError(t *testing.T) {
 	assert.Nil(t, nextPartition)
 	assert.Equal(t, nonAWSError.Error(), errors.Cause(err).Error())
 	glueClient.AssertExpectations(t)
+	s3Client.AssertExpectations(t)
 }
 
 func TestSyncPartitionsDeadline(t *testing.T) {
@@ -323,4 +326,5 @@ func TestSyncPartitionsDeadline(t *testing.T) {
 	require.NotNil(t, nextPartition)
 	assert.Equal(t, refTime.Truncate(time.Hour*24), *nextPartition) // should be the createTime of the table truncated to the day
 	glueClient.AssertExpectations(t)
+	s3Client.AssertExpectations(t)
 }
