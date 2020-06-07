@@ -65,23 +65,19 @@ Parameters:
     Type: Number
     Description: CloudWatch log retention period
     Default: 365
+  CompanyDisplayName:
+    Type: String
+    Description: Company name displayed in Settings > General
+    Default: AwesomeCo
+  CompanyEmail:
+    Type: String
+    Description: Company email displayed in Settings > General (not used for anything today)
+    Default: user@example.com
   Debug:
     Type: String
     Description: Toggle debug logging
     AllowedValues: [true, false]
     Default: false
-  FirstUserGivenName:
-    Type: String
-    Description: First (given) name of the initial Panther user
-    Default: ''
-  FirstUserFamilyName:
-    Type: String
-    Description: Family (last) name of the initial Panther user
-    Default: ''
-  FirstUserEmail:
-    Type: String
-    Description: Email of the initial Panther user. If blank, no user is created
-    Default: ''
   LayerVersionArns:
     Type: CommaDelimitedList
     Description: List of LayerVersion ARNs to attach to each function
@@ -144,7 +140,6 @@ Mappings:
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
-  CreateFirstUser: !Not [!Equals ['', !Ref FirstUserEmail]]
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
@@ -296,25 +291,12 @@ Resources:
       FunctionTimeoutSec: !FindInMap [Functions, OrganizationAPI, Timeout]
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
-  FirstPantherUser:
-    Type: Custom::PantherUser
-    Condition: CreateFirstUser
-    DependsOn: UsersAPIFunction
-    DeletionPolicy: Retain # users-api refuses to delete the last user, which would then fail teardown
-    UpdateReplacePolicy: Retain
-    Properties:
-      GivenName: !Ref FirstUserGivenName
-      FamilyName: !Ref FirstUserFamilyName
-      Email: !Ref FirstUserEmail
-      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
-
-  # By default, use the first user's email as the "organization" email
   PantherSettings:
     Type: Custom::PantherSettings
     DependsOn: OrganizationAPIFunction
     Properties:
-      DisplayName: !Sub ${AWS::AccountId}
-      Email: !If [CreateFirstUser, !GetAtt FirstPantherUser.Email, !Ref AWS::NoValue]
+      DisplayName: !Ref CompanyDisplayName
+      Email: !Ref CompanyEmail
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Analysis API #####

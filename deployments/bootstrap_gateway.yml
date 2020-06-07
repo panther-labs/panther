@@ -161,6 +161,7 @@ Resources:
                 - glue:CreateTable
                 - glue:GetTable
                 - glue:UpdateTable
+                - glue:CreatePartition
                 - glue:GetPartition
                 - glue:UpdatePartition
               # used to keep table schemas updated
