@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Flex, Box, Text, Heading, Label, SimpleGrid } from 'pouncejs';
+import { Flex, Box, Text, Heading, SimpleGrid } from 'pouncejs';
 import PantherLogoWhite from 'Assets/panther-icon--white.svg';
 
 interface AuthPageContainerComposition {
@@ -34,7 +34,7 @@ const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposit
   banner,
 }) => {
   return (
-    <SimpleGrid columns={3} height="100vh">
+    <SimpleGrid columns={3} height="100vh" backgroundColor="navyblue-900">
       <Box gridColumn="1/2" position="relative">
         <img
           src={banner}
@@ -55,13 +55,12 @@ const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposit
         >
           <img src={PantherLogoWhite} alt="Panther Logo" width="54" height="54" />
           <Flex direction="column" align="center" justify="center" m="auto">
-            <Label size="medium" mb={5} color="white" textAlign="center">
+            <Heading size="x-large" mb={3} textAlign="center">
               Panther Community Edition
-            </Label>
-            <Heading size="medium" color="white" lineHeight="relaxed" textAlign="center">
-              Detect threats with log data and improve cloud security posture
             </Heading>
-            <Text size="large" color="white" mt={5} textAlign="center">
+            <Text size="large" lineHeight="relaxed" textAlign="center">
+              Detect threats with log data and improve cloud security posture
+              <br />
               Designed for any scale
             </Text>
           </Flex>
@@ -79,11 +78,9 @@ const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposit
  */
 const AuthPageContainerCaption: AuthPageContainerComposition['Caption'] = ({ title, subtitle }) => (
   <Box mb={8}>
-    <Heading as="h1" size="medium" color="grey400">
-      {title}
-    </Heading>
+    <Heading size="large">{title}</Heading>
     {subtitle && (
-      <Text as="p" size="large" color="grey200" mt={2}>
+      <Text as="p" size="large" color="gray-300" mt={2}>
         {subtitle}
       </Text>
     )}
@@ -94,7 +91,7 @@ const AuthPageContainerCaption: AuthPageContainerComposition['Caption'] = ({ tit
  * A compounet component to act as a wrapper for any alternative options that the page can have
  */
 const AuthPageContainerAlt: AuthPageContainerComposition['AltOptions'] = ({ children }) => (
-  <Box position="absolute" right={10} top={10}>
+  <Box position="absolute" right={10} top={10} color="gray-200">
     {children}
   </Box>
 );

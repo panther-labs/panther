@@ -20,7 +20,7 @@ import { Field, Form, Formik } from 'formik';
 import React from 'react';
 import * as Yup from 'yup';
 import { createYupPasswordValidationSchema } from 'Helpers/utils';
-import { Alert, Box, Text } from 'pouncejs';
+import { Alert, Box, Link, Text } from 'pouncejs';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
 import useAuth from 'Hooks/useAuth';
@@ -65,46 +65,46 @@ const SetPasswordForm: React.FC = () => {
       {({ status }) => (
         <Form>
           {status && (
-            <Box mb={6}>
+            <Box mb={4}>
               <Alert variant="error" title={status.title} description={status.message} />
             </Box>
           )}
-          <Field
-            as={FormikTextInput}
-            label="New Password"
-            placeholder="Type your new password..."
-            type="password"
-            name="newPassword"
-            aria-required
-            mb={6}
-          />
-          <Field
-            as={FormikTextInput}
-            label="Confirm New Password"
-            placeholder="Your new password again..."
-            type="password"
-            name="confirmNewPassword"
-            aria-required
-            mb={6}
-          />
+          <Box mb={4}>
+            <Field
+              as={FormikTextInput}
+              label="New Password"
+              placeholder="Type your new password..."
+              type="password"
+              name="newPassword"
+              required
+            />
+          </Box>
+          <Box mb={4}>
+            <Field
+              as={FormikTextInput}
+              label="Confirm New Password"
+              placeholder="Your new password again..."
+              type="password"
+              name="confirmNewPassword"
+              required
+            />
+          </Box>
           <SubmitButton width={1}>Set password</SubmitButton>
-          <Text size="medium" mt={6} color="grey200">
+          <Text size="small" mt={4} color="grey200">
             By continuing, you agree to Panther&apos;s&nbsp;
-            <a
+            <Link
+              external
               href="https://panther-public-shared-assets.s3-us-west-2.amazonaws.com/EULA.pdf"
-              target="_blank"
-              rel="noopener noreferrer"
             >
               End User License Agreement
-            </a>{' '}
+            </Link>{' '}
             and acknowledge you have read the&nbsp;
-            <a
+            <Link
+              external
               href="https://panther-public-shared-assets.s3-us-west-2.amazonaws.com/PrivacyPolicy.pdf"
-              target="_blank"
-              rel="noopener noreferrer"
             >
               Privacy Policy
-            </a>
+            </Link>
           </Text>
         </Form>
       )}

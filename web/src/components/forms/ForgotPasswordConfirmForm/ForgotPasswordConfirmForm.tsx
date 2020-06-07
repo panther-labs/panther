@@ -25,6 +25,7 @@ import FormikTextInput from 'Components/fields/TextInput';
 import useRouter from 'Hooks/useRouter';
 import useAuth from 'Hooks/useAuth';
 import urls from 'Source/urls';
+import { createYupPasswordValidationSchema } from 'Helpers/utils';
 
 interface ForgotPasswordConfirmFormProps {
   email: string;
@@ -38,9 +39,10 @@ interface ForgotPasswordConfirmFormValues {
 
 const validationSchema = Yup.object().shape({
   newPassword: Yup.string().required(),
-  confirmNewPassword: Yup.string()
-    .oneOf([Yup.ref('newPassword')], 'Passwords must match')
-    .required(),
+  confirmNewPassword: createYupPasswordValidationSchema().oneOf(
+    [Yup.ref('newPassword')],
+    'Passwords must match'
+  ),
 });
 
 const ForgotPasswordConfirmForm: React.FC<ForgotPasswordConfirmFormProps> = ({ email, token }) => {
@@ -77,31 +79,32 @@ const ForgotPasswordConfirmForm: React.FC<ForgotPasswordConfirmFormProps> = ({ e
       {({ status }) => (
         <Form>
           {status && (
-            <Box mb={6}>
+            <Box mb={4}>
               <Alert variant="error" title={status.title} description={status.message} />
             </Box>
           )}
-          <Field
-            as={FormikTextInput}
-            label="New Password"
-            placeholder="Type your new password..."
-            type="password"
-            name="newPassword"
-            autoco
-            aria-required
-            autoComplete="new-password"
-            mb={6}
-          />
-          <Field
-            as={FormikTextInput}
-            label="Confirm New Password"
-            placeholder="Type your new password again..."
-            type="password"
-            name="confirmNewPassword"
-            aria-required
-            autoComplete="new-password"
-            mb={6}
-          />
+          <Box mb={4}>
+            <Field
+              as={FormikTextInput}
+              label="New Password"
+              placeholder="Type your new password..."
+              type="password"
+              name="newPassword"
+              required
+              autoComplete="new-password"
+            />
+          </Box>
+          <Box mb={4}>
+            <Field
+              as={FormikTextInput}
+              label="Confirm New Password"
+              placeholder="Type your new password again..."
+              type="password"
+              name="confirmNewPassword"
+              required
+              autoComplete="new-password"
+            />
+          </Box>
           <SubmitButton width={1}>Update password</SubmitButton>
         </Form>
       )}
