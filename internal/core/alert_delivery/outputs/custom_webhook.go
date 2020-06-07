@@ -79,7 +79,7 @@ type CustomWebhookPolicy struct {
 	Description *string `json:"description,omitempty"`
 
 	// Version is the S3 object version for the policy.
-	Version *string `json:"versionId,omitempty"`
+	Version *string `json:"version,omitempty"`
 
 	// Tags is the set of policy tags.
 	Tags []*string `json:"tags,omitempty"`
