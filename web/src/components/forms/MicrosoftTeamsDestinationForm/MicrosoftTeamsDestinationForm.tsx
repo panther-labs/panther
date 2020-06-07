@@ -43,7 +43,6 @@ const msTeamsFieldsValidationSchema = Yup.object().shape({
   }),
 });
 
-// @ts-ignore
 // We merge the two schemas together: the one deriving from the common fields, plus the custom
 // ones that change for each destination.
 // https://github.com/jquense/yup/issues/522
