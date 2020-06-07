@@ -106,7 +106,7 @@ type CustomWebhookAlert struct {
 	Link *string `json:"link" validate:"required"`
 
 	// Policy contains the policy details associated with the alert
-	Policy CustomWebhookPolicy
+	Policy CustomWebhookPolicy `json:"policy" validate:"required"`
 }
 
 //CustomWebhookOutputMessage contains the fields that will be included in the Custom Webhook message
