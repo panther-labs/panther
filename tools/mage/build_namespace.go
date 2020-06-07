@@ -216,7 +216,7 @@ func (b Build) tools() error {
 	})
 
 	for _, path := range paths {
-		logger.Infof("build:tools: compiling %s for %d os/arch combinations", path, len(buildEnvs))
+		logger.Debugf("build:tools: compiling %s for %d os/arch combinations", path, len(buildEnvs))
 		for _, env := range buildEnvs {
 			outDir := filepath.Join("out", "bin", filepath.Base(filepath.Dir(path)),
 				env["GOOS"], env["GOARCH"], filepath.Base(filepath.Dir(path)))

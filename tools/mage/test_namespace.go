@@ -82,7 +82,7 @@ func (Test) CI() {
 		defer close(done)
 		logResults(results, "test:ci", 1, len(tasks), len(tasks))
 	}()
-	logger.Info("running tests in parallel...")
+	logger.Info("running tasks in parallel...")
 	for _, task := range tasks {
 		runTask(results, task.Name, task.Task)
 	}
