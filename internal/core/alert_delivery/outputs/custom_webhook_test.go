@@ -46,23 +46,29 @@ func TestCustomWebhookAlert(t *testing.T) {
 		Severity:   aws.String("INFO"),
 	}
 
-	version := "1.0.0"
 	link := policyURLPrefix + aws.StringValue(alert.PolicyID)
 
+	customWebhookPolicy := &CustomWebhookPolicy{
+		ID:          alert.PolicyID,
+		Name:        alert.PolicyName,
+		Description: alert.PolicyDescription,
+		Version:     alert.PolicyVersionID,
+		Tags:        alert.Tags,
+	}
+
+	customWebhookAlert := &CustomWebhookAlert{
+		ID:       alert.AlertID,
+		Title:    alert.Title,
+		Type:     alert.Type,
+		Severity: alert.Severity,
+		Runbook:  alert.Runbook,
+		Link:     &link,
+		Policy:   *customWebhookPolicy,
+	}
+
 	outputMessage := &CustomWebhookOutputMessage{
-		PolicyID:          alert.PolicyID,
-		PolicyName:        alert.PolicyName,
-		PolicyDescription: alert.PolicyDescription,
-		PolicyVersionID:   alert.PolicyVersionID,
-		AlertID:           alert.AlertID,
-		Title:             alert.Title,
-		Type:              alert.Type,
-		Severity:          alert.Severity,
-		Tags:              alert.Tags,
-		Runbook:           alert.Runbook,
-		Link:              &link,
-		Version:           &version,
-		CreatedAt:         alert.CreatedAt,
+		Alert:     *customWebhookAlert,
+		CreatedAt: alert.CreatedAt,
 	}
 
 	requestURL := *customWebhookConfig.WebhookURL
@@ -70,8 +76,8 @@ func TestCustomWebhookAlert(t *testing.T) {
 	expectedPostInput := &PostInput{
 		url: requestURL,
 		body: map[string]interface{}{
-			"payload": outputMessage,
-			"version": outputMessage.Version,
+			"alert":     outputMessage.Alert,
+			"createdAt": outputMessage.CreatedAt,
 		},
 	}
 
