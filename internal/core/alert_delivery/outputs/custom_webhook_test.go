@@ -46,38 +46,33 @@ func TestCustomWebhookAlert(t *testing.T) {
 		Severity:   aws.String("INFO"),
 	}
 
-	customWebhookPayload := map[string]interface{}{
-		"text": "Policy Failure: policyName",
-		"sections": []interface{}{
-			map[string]interface{}{
-				"facts": []interface{}{
-					map[string]string{"name": "Description", "value": ""},
-					map[string]string{"name": "Runbook", "value": ""},
-					map[string]string{"name": "Severity", "value": "INFO"},
-					map[string]string{"name": "Tags", "value": ""},
-				},
-				"text": "[Click here to view in the Panther UI](https://panther.io/policies/policyId).\n",
-			},
-		},
-		"potentialAction": []interface{}{
-			map[string]interface{}{
-				"@type": "OpenUri",
-				"name":  "Click here to view in the Panther UI",
-				"targets": []interface{}{
-					map[string]string{
-						"os":  "default",
-						"uri": "https://panther.io/policies/policyId",
-					},
-				},
-			},
-		},
+	version := "1.0.0"
+	link := policyURLPrefix + aws.StringValue(alert.PolicyID)
+
+	outputMessage := &CustomWebhookOutputMessage{
+		PolicyID:          alert.PolicyID,
+		PolicyName:        alert.PolicyName,
+		PolicyDescription: alert.PolicyDescription,
+		PolicyVersionID:   alert.PolicyVersionID,
+		AlertID:           alert.AlertID,
+		Title:             alert.Title,
+		Type:              alert.Type,
+		Severity:          alert.Severity,
+		Tags:              alert.Tags,
+		Runbook:           alert.Runbook,
+		Link:              &link,
+		Version:           &version,
+		CreatedAt:         alert.CreatedAt,
 	}
 
 	requestURL := *customWebhookConfig.WebhookURL
 
 	expectedPostInput := &PostInput{
-		url:  requestURL,
-		body: customWebhookPayload,
+		url: requestURL,
+		body: map[string]interface{}{
+			"payload": outputMessage,
+			"version": outputMessage.Version,
+		},
 	}
 
 	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryError)(nil))
