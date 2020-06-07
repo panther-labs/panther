@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Flex, Box, Text, Heading, SimpleGrid } from 'pouncejs';
+import { Flex, Box, Text, Heading, SimpleGrid, FadeIn } from 'pouncejs';
 import PantherLogoWhite from 'Assets/panther-icon--white.svg';
 
 interface AuthPageContainerComposition {
@@ -34,7 +34,7 @@ const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposit
   banner,
 }) => {
   return (
-    <SimpleGrid columns={3} height="100vh" backgroundColor="navyblue-900">
+    <SimpleGrid columns={3} height="100vh" backgroundColor="navyblue-800">
       <Box gridColumn="1/2" position="relative">
         <img
           src={banner}
@@ -91,7 +91,7 @@ const AuthPageContainerCaption: AuthPageContainerComposition['Caption'] = ({ tit
  * A compounet component to act as a wrapper for any alternative options that the page can have
  */
 const AuthPageContainerAlt: AuthPageContainerComposition['AltOptions'] = ({ children }) => (
-  <Box position="absolute" right={10} top={10} color="gray-200">
+  <Box position="absolute" right={10} top={10} color="gray-200" fontSize="medium">
     {children}
   </Box>
 );

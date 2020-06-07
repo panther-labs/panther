@@ -21,28 +21,28 @@ import withSEO from 'Hoc/withSEO';
 import Banner from 'Assets/sign-up-banner.jpg';
 import AuthPageContainer from 'Components/AuthPageContainer';
 import ForgotPasswordForm from 'Components/forms/ForgotPasswordForm';
-import { Flex, Link, Text } from 'pouncejs';
+import { FadeIn, Flex, Link, Text } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 
 const ForgotPasswordPage: React.FC = () => {
   return (
     <AuthPageContainer banner={Banner}>
-      <AuthPageContainer.Caption
-        title="Forgot your password?"
-        subtitle="We'll help you reset your password and get back on track."
-      />
-      <ForgotPasswordForm />
-      <Text size="small" color="gray-300" mt={4} as="p" textAlign="center">
-        By submitting a request, you will receive an email with instructions on how to reset your
-        password
-      </Text>
+      <FadeIn delay={100}>
+        <AuthPageContainer.Caption
+          title="Forgot your password?"
+          subtitle="We'll help you reset your password and get back on track."
+        />
+        <ForgotPasswordForm />
+        <Text size="small" color="gray-300" mt={4} as="p" textAlign="center">
+          By submitting a request, you will receive an email with instructions on how to reset your
+          password
+        </Text>
+      </FadeIn>
       <AuthPageContainer.AltOptions>
         <Flex align="center">
-          <Text size="medium" as="span" mr={3}>
-            Remembered it all of a sudden?
-          </Text>
-          <Link as={RRLink} to={urls.account.auth.signIn()}>
+          Remembered it all of a sudden?
+          <Link as={RRLink} to={urls.account.auth.signIn()} ml={2}>
             Sign in
           </Link>
         </Flex>
