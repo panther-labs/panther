@@ -40,7 +40,7 @@ const (
 type SyncEvent struct {
 	Sync         bool          // if true, this is a request to sync the partitions of the registered tables
 	LogTypes     []string      // the log types to sync
-	Continuation *Continuation `json:"omitempty"` // if not nil, start here
+	Continuation *Continuation // if not nil, start here
 }
 
 type Continuation struct {
