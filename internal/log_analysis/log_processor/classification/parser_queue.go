@@ -27,19 +27,19 @@ type ParserPriorityQueue struct {
 	items []*ParserQueueItem
 }
 
-func NewParserPriorityQueue(logTypes ...pantherlog.EventType) *ParserPriorityQueue {
+func NewParserPriorityQueue(parsers map[string]pantherlog.LogParser) *ParserPriorityQueue {
 	q := ParserPriorityQueue{}
-	q.initialize(logTypes)
+	q.initialize(parsers)
 	return &q
 }
 
 // initialize adds all registered parsers to the priority queue
 // All parsers have the same priority
-func (q *ParserPriorityQueue) initialize(logTypes []pantherlog.EventType) {
-	for _, entry := range logTypes {
+func (q *ParserPriorityQueue) initialize(parsers map[string]pantherlog.LogParser) {
+	for logType, parser := range parsers {
 		q.items = append(q.items, &ParserQueueItem{
-			logType: entry.Name,
-			parser:  entry.NewParser(),
+			logType: logType,
+			parser:  parser,
 			penalty: 1,
 		})
 	}

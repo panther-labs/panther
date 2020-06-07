@@ -55,7 +55,9 @@ var (
 // and forwarding the logs to the appropriate destination. Any errors will cause Lambda invocation to fail
 func Process(dataStreams chan *common.DataStream, destination destinations.Destination) error {
 	factory := func(r *common.DataStream) *Processor {
-		return NewProcessor(r, registry.AvailableLogTypes()...)
+		// By initializing the global parsers here we can constrain the proliferation of globals throughout the code.
+		parsers := registry.AvailableParsers()
+		return NewProcessor(r, parsers)
 	}
 	return process(dataStreams, destination, factory)
 }
@@ -171,12 +173,10 @@ type Processor struct {
 	operation  *oplog.Operation
 }
 
-func NewProcessor(input *common.DataStream, logTypes ...string) *Processor {
-	entries := pantherlog.DefaultRegistry().Entries(logTypes...)
-	cls := classification.NewClassifier(entries...).(*classification.Classifier)
+func NewProcessor(input *common.DataStream, parsers map[string]pantherlog.LogParser) *Processor {
 	return &Processor{
 		input:      input,
-		classifier: cls,
+		classifier: classification.NewClassifier(parsers),
 		operation:  common.OpLogManager.Start(operationName),
 	}
 }

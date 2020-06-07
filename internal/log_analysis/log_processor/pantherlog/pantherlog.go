@@ -1,6 +1,8 @@
 // Package pantherlog defines types and functions to parse logs for Panther
 package pantherlog
 
+import "time"
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -19,89 +21,25 @@ package pantherlog
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"net/url"
-
-	jsoniter "github.com/json-iterator/go"
-	"github.com/pkg/errors"
-
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
-)
-
-const FieldPrefix = "p_"
-
-// EventType describes a log type.
-// It provides a method to create a new parser and a schema struct to derive tables from.
-// LogTypes can be grouped in a `Registry` to have an index of available log types.
-type EventType struct {
-	Name         string
-	Description  string
-	ReferenceURL string
-	// A struct value that matches the JSON in the results returned by the LogParser.
-	Schema interface{}
-	// Factory for new LogParser instances that return results for this log type.
-	NewParser func() LogParser
-
-	glueTableMetadata *awsglue.GlueTableMetadata
-}
-
 // LogParser is the interface to be used for log entry parsers.
 type LogParser interface {
 	ParseLog(log string) ([]*Result, error)
 }
 
-func (t *EventType) GlueTableMetadata() *awsglue.GlueTableMetadata {
-	return t.glueTableMetadata
+type LogParserFactory func(params interface{}) LogParser
+
+// Result is the result of parsing a log event.
+// It contains the JSON form of the pantherlog to be stored for queries.
+type Result struct {
+	LogType   string
+	EventTime time.Time
+	JSON      []byte
 }
 
-// Parser returns a new LogParser instance for this log type
-func (t *EventType) Parser() LogParser {
-	return t.NewParser()
-}
-
-// Check verifies a log type is valid
-func (t *EventType) Check() error {
-	if t == nil {
-		return errors.Errorf("nil log type entry")
+// Results wraps a single Result in a slice.
+func (r *Result) Results() []*Result {
+	if r == nil {
+		return nil
 	}
-	if t.Name == "" {
-		return errors.Errorf("missing entry log type")
-	}
-	if t.Description == "" {
-		return errors.Errorf("missing description for log type %q", t.Name)
-	}
-	if t.ReferenceURL == "" {
-		return errors.Errorf("missing reference URL for log type %q", t.Name)
-	}
-	if t.ReferenceURL != "-" {
-		u, err := url.Parse(t.ReferenceURL)
-		if err != nil {
-			return errors.Wrapf(err, "invalid reference URL for log type %q", t.Name)
-		}
-		switch u.Scheme {
-		case "http", "https":
-		default:
-			return errors.Wrapf(err, "invalid reference URL scheme %q for log type %q", u.Scheme, t.Name)
-		}
-	}
-
-	t.glueTableMetadata = awsglue.NewGlueTableMetadata(models.LogData, t.Name, t.Description, awsglue.GlueTableHourly, t.Schema)
-
-	return checkLogEntrySchema(t.Name, t.Schema)
-}
-
-func checkLogEntrySchema(logType string, schema interface{}) error {
-	if schema == nil {
-		return errors.Errorf("nil schema for log type %q", logType)
-	}
-	data, err := jsoniter.Marshal(schema)
-	if err != nil {
-		return errors.Errorf("invalid schema struct for log type %q: %s", logType, err)
-	}
-	var fields map[string]interface{}
-	if err := jsoniter.Unmarshal(data, &fields); err != nil {
-		return errors.Errorf("invalid schema struct for log type %q: %s", logType, err)
-	}
-	return nil
+	return []*Result{r}
 }

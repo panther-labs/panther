@@ -39,6 +39,7 @@ import (
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
 const (
@@ -76,7 +77,7 @@ func init() {
 	memUsedAtStartupMB = (int)(memStats.Sys/(bytesPerMB)) + 1
 }
 
-func CreateS3Destination(logTypes *pantherlog.Registry) Destination {
+func CreateS3Destination(logTypes *parsers.Registry) Destination {
 	return &S3Destination{
 		s3Uploader:          common.S3Uploader,
 		snsClient:           common.SnsClient,
@@ -126,7 +127,7 @@ type S3Destination struct {
 	// thresholds for ejection
 	maxBufferedMemBytes uint64 // max will hold in buffers before ejection
 	maxDuration         time.Duration
-	eventTypes          *pantherlog.Registry
+	eventTypes          *parsers.Registry
 }
 
 // SendEvents stores events in S3.
@@ -317,7 +318,7 @@ func (destination *S3Destination) getS3ObjectKey(logType string, timestamp time.
 	if typ == nil {
 		return "", errors.Errorf(`unknown log type %q`, logType)
 	}
-	meta := typ.GlueTableMetadata()
+	meta := typ.GlueTableMeta()
 	return fmt.Sprintf(s3ObjectKeyFormat,
 		meta.GetPartitionPrefix(timestamp.UTC()), // get the path to store the data in S3
 		timestamp.Format(S3ObjectTimestampFormat),

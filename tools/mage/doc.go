@@ -128,10 +128,11 @@ func logDocs() error {
 		// use html table to get needed control
 		for _, logType := range logTypes {
 			entry := registry.Lookup(logType)
-			table := entry.GlueTableMetadata()
-			desc := entry.Description
-			if entry.ReferenceURL != "-" {
-				desc += "\n" + "Reference: " + entry.ReferenceURL + "\n"
+			table := entry.GlueTableMeta()
+			entryDesc := entry.Describe()
+			desc := entryDesc.Description
+			if entryDesc.ReferenceURL != "-" {
+				desc += "\n" + "Reference: " + entryDesc.ReferenceURL + "\n"
 			}
 
 			description := html.EscapeString(desc)

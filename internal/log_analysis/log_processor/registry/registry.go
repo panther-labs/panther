@@ -21,6 +21,7 @@ package registry
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 
 	// Register log types in init() blocks
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/apachelogs"
@@ -35,22 +36,34 @@ import (
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/zeeklogs"
 )
 
-func Default() *pantherlog.Registry {
-	return pantherlog.DefaultRegistry()
+func Default() *parsers.Registry {
+	return parsers.DefaultRegistry()
 }
-func Lookup(name string) *pantherlog.EventType {
-	return pantherlog.MustGet(name)
+func Lookup(name string) parsers.LogTypeEntry {
+	return parsers.DefaultRegistry().MustGet(name)
 }
+
 func AvailableLogTypes() []string {
-	return pantherlog.DefaultRegistry().LogTypes()
+	return parsers.DefaultRegistry().LogTypes()
 }
 
 // Return a slice containing just the Glue tables
 func AvailableTables() (tables []*awsglue.GlueTableMetadata) {
+	reg := parsers.DefaultRegistry()
 	for _, logType := range AvailableLogTypes() {
-		if et := pantherlog.Get(logType); et != nil {
-			tables = append(tables, et.GlueTableMetadata())
+		if et := reg.Get(logType); et != nil {
+			tables = append(tables, et.GlueTableMeta())
 		}
 	}
 	return
+}
+
+// Available parsers returns log parsers for all available log types with nil parameters.
+func AvailableParsers() map[string]pantherlog.LogParser {
+	logTypes := AvailableLogTypes()
+	params := make(map[string]interface{}, len(logTypes))
+	for _, logType := range logTypes {
+		params[logType] = nil
+	}
+	return parsers.DefaultRegistry().Parsers(params)
 }

@@ -19,7 +19,6 @@ package classification
  */
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -31,17 +30,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/pkg/box"
 )
-
-func mockLogType(name string, parser pantherlog.LogParser) pantherlog.EventType {
-	return pantherlog.EventType{
-		Name:        name,
-		Description: fmt.Sprintf("Mock log type %q", name),
-		NewParser: func() pantherlog.LogParser {
-			return parser
-		},
-		Schema: struct{}{},
-	}
-}
 
 // TODO: thorough test when parsers return parsers.Result
 func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
@@ -61,15 +49,15 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 	parserFail2 := testutil.ParserConfig{
 		logLine: errors.New("fail2"),
 	}.Parser()
-	logTypeSuccess := mockLogType("success", parserSuccess)
-	logTypeFail1 := mockLogType("failure1", parserFail1)
-	logTypeFail2 := mockLogType("failure2", parserFail2)
+	//logTypeSuccess := mockLogType("success", parserSuccess)
+	//logTypeFail1 := mockLogType("failure1", parserFail1)
+	//logTypeFail2 := mockLogType("failure2", parserFail2)
 
-	classifier := NewClassifier(
-		logTypeSuccess,
-		logTypeFail1,
-		logTypeFail2,
-	)
+	classifier := NewClassifier(map[string]pantherlog.LogParser{
+		"success":  parserSuccess,
+		"failure1": parserFail1,
+		"failure2": parserFail2,
+	})
 
 	repetitions := 1000
 
@@ -122,8 +110,9 @@ func TestClassifyNoMatch(t *testing.T) {
 	failingParser := testutil.ParserConfig{
 		logLine: errors.New("fail"),
 	}.Parser()
-	logType := mockLogType("failure", failingParser)
-	classifier := NewClassifier(logType)
+	classifier := NewClassifier(map[string]pantherlog.LogParser{
+		"failure": failingParser,
+	})
 	expectedStats := &ClassifierStats{
 		BytesProcessedCount:         uint64(len(logLine)),
 		LogLineCount:                1,
@@ -154,8 +143,9 @@ func TestClassifyParserPanic(t *testing.T) {
 
 	panicParser := &testutil.MockParser{}
 	panicParser.On("Parse", mock.Anything).Run(func(args mock.Arguments) { panic("test parser panic") })
-	panicLogType := mockLogType("panic", panicParser)
-	classifier := NewClassifier(panicLogType)
+	classifier := NewClassifier(map[string]pantherlog.LogParser{
+		"panic": panicParser,
+	})
 
 	logLine := "log of death"
 
@@ -196,9 +186,10 @@ func testSkipClassify(logLine string, t *testing.T) {
 	failingParser2 := testutil.ParserConfig{
 		"failure2": ([]*pantherlog.Result)(nil),
 	}.Parser()
-	logType1 := mockLogType("failure1", failingParser1)
-	logType2 := mockLogType("failure2", failingParser2)
-	classifier := NewClassifier(logType1, logType2)
+	classifier := NewClassifier(map[string]pantherlog.LogParser{
+		"failure1": failingParser1,
+		"failure2": failingParser2,
+	})
 	repetitions := 1000
 
 	var expectedLogLineCount uint64 = 0
@@ -224,6 +215,6 @@ func testSkipClassify(logLine string, t *testing.T) {
 	require.Equal(t, expectedStats, classifier.Stats())
 
 	failingParser1.RequireLessOrEqualNumberOfCalls(t, "Parse", 1)
-	require.Nil(t, classifier.ParserStats()[logType1.Name])
-	require.Nil(t, classifier.ParserStats()[logType2.Name])
+	require.Nil(t, classifier.ParserStats()["failure1"])
+	require.Nil(t, classifier.ParserStats()["failure2"])
 }

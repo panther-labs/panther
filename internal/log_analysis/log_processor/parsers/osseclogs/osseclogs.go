@@ -19,7 +19,6 @@ package osseclogs
  */
 
 import (
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
@@ -28,7 +27,7 @@ const (
 )
 
 func init() {
-	pantherlog.MustRegister(pantherlog.EventType{
+	parsers.MustRegister(parsers.LogTypeConfig{
 		Name:         TypeEventInfo,
 		Description:  `OSSEC EventInfo alert parser. Currently only JSON output is supported.`,
 		ReferenceURL: `https://www.ossec.net/docs/docs/formats/alerts.html`,

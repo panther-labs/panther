@@ -19,7 +19,6 @@ package osquerylogs
  */
 
 import (
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
@@ -31,29 +30,29 @@ const (
 )
 
 func init() {
-	pantherlog.MustRegister(
-		pantherlog.EventType{
+	parsers.MustRegister(
+		parsers.LogTypeConfig{
 			Name:         TypeBatch,
 			Description:  `Batch contains all the data included in OsQuery batch logs`,
 			ReferenceURL: `https://osquery.readthedocs.io/en/stable/deployment/logging/`,
 			Schema:       Batch{},
 			NewParser:    parsers.AdapterFactory(&BatchParser{}),
 		},
-		pantherlog.EventType{
+		parsers.LogTypeConfig{
 			Name:         TypeDifferential,
 			Description:  `Differential contains all the data included in OsQuery differential logs`,
 			ReferenceURL: `https://osquery.readthedocs.io/en/stable/deployment/logging/`,
 			Schema:       Differential{},
 			NewParser:    parsers.AdapterFactory(&DifferentialParser{}),
 		},
-		pantherlog.EventType{
+		parsers.LogTypeConfig{
 			Name:         TypeSnapshot,
 			Description:  `Snapshot contains all the data included in OsQuery differential logs`,
 			ReferenceURL: `https://osquery.readthedocs.io/en/stable/deployment/logging/`,
 			Schema:       Snapshot{},
 			NewParser:    parsers.AdapterFactory(&SnapshotParser{}),
 		},
-		pantherlog.EventType{
+		parsers.LogTypeConfig{
 			Name:         TypeStatus,
 			Description:  `Status is a diagnostic osquery log about the daemon.`,
 			ReferenceURL: `https://osquery.readthedocs.io/en/stable/deployment/logging/`,

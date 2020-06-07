@@ -19,17 +19,20 @@ package parsers
  */
 
 import (
+	jsoniter "github.com/json-iterator/go"
 	"gopkg.in/go-playground/validator.v9"
 
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/jsonutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
 // LogParser represents a parser for a supported log type
 // NOTE: We will be transitioning parsers to the `pantherlog.LogParser` interface.
 // Until all parsers are converted to the new interface the `AdapterFactory()` helper should be used
-// when registering a `pantherlog.EventType` that uses this interface.
+// when registering a `pantherlog.EventTypeEntry` that uses this interface.
 type LogParser interface {
-	// EventType returns the log type supported by this parser
+	// EventTypeEntry returns the log type supported by this parser
 	LogType() string
 
 	// Parse attempts to parse the provided log line
@@ -43,13 +46,25 @@ type LogParser interface {
 // Validator can be used to validate schemas of log fields
 var Validator = validator.New()
 
-// JSON re-exports pantherlog.JSON
-var JSON = pantherlog.JSON
+// JSON is a custom jsoniter config to properly remap field names for compatibility with Athena views
+var JSON = func() jsoniter.API {
+	config := jsoniter.Config{
+		EscapeHTML: true,
+		// Validate raw JSON messages to make sure queries work as expected
+		ValidateJsonRawMessage: true,
+		// We don't need sorted map keys
+		SortMapKeys: false,
+	}
+	api := config.Froze()
+	rewriteFields := jsonutil.NewEncoderNamingStrategy(awsglue.RewriteFieldName)
+	api.RegisterExtension(rewriteFields)
+	return api
+}()
 
 // AdapterFactory returns a pantherlog.LogParser factory from a parsers.Parser
-// This is used to ease transition to the new pantherlog.EventType registry.
-func AdapterFactory(parser LogParser) func() pantherlog.LogParser {
-	return func() pantherlog.LogParser {
+// This is used to ease transition to the new pantherlog.EventTypeEntry registry.
+func AdapterFactory(parser LogParser) pantherlog.LogParserFactory {
+	return func(_ interface{}) pantherlog.LogParser {
 		return NewAdapter(parser)
 	}
 }
@@ -63,7 +78,6 @@ func NewAdapter(parser LogParser) pantherlog.LogParser {
 
 type logParserAdapter struct {
 	LogParser
-	//classification.LogParserMarker
 }
 
 func (a *logParserAdapter) ParseLog(log string) ([]*pantherlog.Result, error) {

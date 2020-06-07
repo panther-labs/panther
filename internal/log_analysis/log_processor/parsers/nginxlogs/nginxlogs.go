@@ -20,7 +20,6 @@ package nginxlogs
  */
 
 import (
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
@@ -29,7 +28,7 @@ const (
 )
 
 func init() {
-	pantherlog.MustRegister(pantherlog.EventType{
+	parsers.MustRegister(parsers.LogTypeConfig{
 		Name:         TypeAccess,
 		Description:  `Access Logs for your Nginx server. We currently support Nginx 'combined' format.`,
 		ReferenceURL: `http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format`,

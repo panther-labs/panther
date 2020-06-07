@@ -153,16 +153,16 @@ func newS3Destination(logTypes ...string) *testS3Destination {
 	}
 }
 
-func newRegistry(names ...string) *pantherlog.Registry {
+func newRegistry(names ...string) *parsers.Registry {
 	names = append([]string{testLogType}, names...)
-	r := pantherlog.Registry{}
+	r := parsers.Registry{}
 	for _, name := range names {
-		err := r.Register(pantherlog.EventType{
+		_, err := r.Register(parsers.LogTypeConfig{
 			Name:         name,
 			Description:  "description",
 			ReferenceURL: "-",
 			Schema:       struct{}{},
-			NewParser: func() pantherlog.LogParser {
+			NewParser: func(_ interface{}) pantherlog.LogParser {
 				return testutil.ParserConfig{}.Parser()
 			},
 		})
@@ -203,7 +203,6 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	assert.True(t, strings.HasPrefix(*uploadInput.Key, expectedS3Prefix))
 
 	// Gzipping the test event
-	// marshaledEvent, _ := jsoniter.Marshal(testEvent.Event())
 	var buffer bytes.Buffer
 	writer := gzip.NewWriter(&buffer)
 	writer.Write(testResult.JSON) //nolint:errcheck

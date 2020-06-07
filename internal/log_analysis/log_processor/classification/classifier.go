@@ -52,9 +52,9 @@ type ClassifierResult struct {
 }
 
 // NewClassifier returns a new instance of a ClassifierAPI implementation
-func NewClassifier(logTypes ...pantherlog.EventType) ClassifierAPI {
+func NewClassifier(parsers map[string]pantherlog.LogParser) ClassifierAPI {
 	return &Classifier{
-		parsers:     NewParserPriorityQueue(logTypes...),
+		parsers:     NewParserPriorityQueue(parsers),
 		parserStats: make(map[string]*ParserStats),
 	}
 }

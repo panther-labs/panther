@@ -38,6 +38,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
 
@@ -79,7 +80,7 @@ func TestProcess(t *testing.T) {
 	destination := (&testDestination{}).standardMock()
 
 	dataStream := makeDataStream()
-	p := NewProcessor(dataStream)
+	p := NewProcessor(dataStream, registry.AvailableParsers())
 	mockClassifier := &testClassifier{}
 	p.classifier = mockClassifier
 
@@ -117,7 +118,7 @@ func TestProcessDataStreamError(t *testing.T) {
 
 	destination := (&testDestination{}).standardMock()
 	dataStream := makeBadDataStream() // failure to read data, never hits classifier
-	p := NewProcessor(dataStream)
+	p := NewProcessor(dataStream, registry.AvailableParsers())
 	mockClassifier := &testClassifier{}
 	p.classifier = mockClassifier
 
@@ -182,7 +183,7 @@ func TestProcessDestinationError(t *testing.T) {
 	})
 
 	dataStream := makeDataStream()
-	p := NewProcessor(dataStream)
+	p := NewProcessor(dataStream, registry.AvailableParsers())
 	mockClassifier := &testClassifier{}
 	p.classifier = mockClassifier
 
@@ -225,7 +226,7 @@ func TestProcessClassifyFailure(t *testing.T) {
 
 	destination := (&testDestination{}).standardMock()
 	dataStream := makeDataStream()
-	p := NewProcessor(dataStream)
+	p := NewProcessor(dataStream, registry.AvailableParsers())
 	mockClassifier := &testClassifier{}
 	p.classifier = mockClassifier
 

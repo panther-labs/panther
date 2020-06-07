@@ -33,12 +33,12 @@ import (
 )
 
 const (
-	PantherFieldPrefix = pantherlog.FieldPrefix
+	PantherFieldPrefix = "p_"
 )
 
 var (
 	ipv4Regex  = regexp.MustCompile(`(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])*`)
-	rowCounter pantherlog.RowID // number of rows generated in this lambda execution (used to generate p_row_id)
+	rowCounter RowID // number of rows generated in this lambda execution (used to generate p_row_id)
 )
 
 // All log parsers should extend from this to get standardized fields (all prefixed with 'p_' as JSON for uniqueness)
