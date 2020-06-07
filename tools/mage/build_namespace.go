@@ -38,12 +38,10 @@ type Build mg.Namespace
 
 // API Generate API source files from GraphQL + Swagger
 func (b Build) API() {
-	if err := b.api(); err != nil {
-		logger.Fatal(err)
-	}
+	mg.Deps(b.generateSwaggerClients, b.generateWebTypescript)
 }
 
-func (b Build) api() error {
+func (b Build) generateSwaggerClients() error {
 	specs, err := filepath.Glob(swaggerGlob)
 	if err != nil {
 		return fmt.Errorf("failed to glob %s: %v", swaggerGlob, err)
@@ -111,7 +109,10 @@ func (b Build) api() error {
 			logger.Warnf("gofmt %s %s failed: %v", client, models, err)
 		}
 	}
+	return nil
+}
 
+func (b Build) generateWebTypescript() error {
 	logger.Info("build:api: generating web typescript from graphql")
 	if err := sh.Run("npm", "run", "graphql-codegen"); err != nil {
 		return fmt.Errorf("graphql generation failed: %v", err)
@@ -120,7 +121,6 @@ func (b Build) api() error {
 	if err := prettier("web/__generated__/*"); err != nil {
 		logger.Warnf("prettier web/__generated__/ failed: %v", err)
 	}
-
 	return nil
 }
 
