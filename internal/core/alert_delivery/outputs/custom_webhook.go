@@ -112,7 +112,7 @@ type CustomWebhookAlert struct {
 //CustomWebhookOutputMessage contains the fields that will be included in the Custom Webhook message
 type CustomWebhookOutputMessage struct {
 	// Alert contains the details of the alert
-	Alert CustomWebhookAlert
+	Alert CustomWebhookAlert `json:"alert" validate:"required"`
 
 	// CreatedAt is the creation timestamp (seconds since epoch).
 	CreatedAt *time.Time `json:"createdAt" validate:"required"`
