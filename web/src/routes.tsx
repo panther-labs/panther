@@ -54,9 +54,20 @@ import EditS3LogSourcePage from 'Pages/EditS3LogSource';
 import PromptController from 'Components/utils/PromptController';
 import EditGlobalModulePage from 'Pages/EditGlobaModule';
 import LogSourceOnboarding from 'Pages/LogSourceOnboarding';
+import { useTheme } from 'pouncejs';
 
 // Main page container for the web application, Navigation bar and Content body goes here
 const PrimaryPageLayout: React.FunctionComponent = () => {
+  const theme = useTheme();
+
+  // Whent the user scrolls beyond the layout (try scrolling aggresively near the end of the screen,
+  // Mac OS on Chrome shows flashes of the HTML's body background which by default is white. This
+  // creates a bad user experience so we correct it here
+  // This DOESN'T cause a browser reflow so it's safe to use it on-mount
+  React.useEffect(() => {
+    document.body.style.backgroundColor = theme.colors['navyblue-800'];
+  }, []);
+
   return (
     <Switch>
       <GuardedRoute

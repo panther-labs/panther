@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Flex, IconButton } from 'pouncejs';
+import { Box, Flex, Link } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import PantherIcon from 'Assets/panther-minimal-logo.svg';
@@ -60,10 +60,18 @@ const Navigation = () => {
   const isSettingsNavigationActive = secondaryNav === SETTINGS_NAV_KEY;
   const isSecondaryNavigationActive = secondaryNav !== null;
   return (
-    <Flex as="nav" boxShadow="dark50" zIndex={1} position="sticky" top={0} height="100vh">
-      <Flex direction="column" width={70} height="100%" boxShadow="dark150">
-        <Flex justify="center" pt={7} pb={2}>
-          <IconButton variant="primary" as={RRLink} to="/">
+    <Flex
+      as="nav"
+      boxShadow="dark50"
+      zIndex={1}
+      position="sticky"
+      top={0}
+      height="100vh"
+      backgroundColor="navyblue-900"
+    >
+      <Flex direction="column" width={70} height="100%">
+        <Flex justify="center" py={7}>
+          <RRLink to="/">
             <img
               src={PantherIcon}
               alt="Panther logo"
@@ -71,7 +79,7 @@ const Navigation = () => {
               height={30}
               style={{ display: 'block' }}
             />
-          </IconButton>
+          </RRLink>
         </Flex>
         <Flex direction="column" justify="center" align="center" as="ul" flex="1 0 auto">
           <Box as="li">
@@ -95,15 +103,9 @@ const Navigation = () => {
             />
           </Box>
           <Box as="li" mt="auto">
-            <NavIconButton
-              active={false}
-              icon="docs"
-              as="a"
-              href={PANTHER_SCHEMA_DOCS_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              tooltipLabel="Documentation"
-            />
+            <Link external href={PANTHER_SCHEMA_DOCS_LINK} tabIndex={-1}>
+              <NavIconButton active={false} icon="docs" tooltipLabel="Documentation" />
+            </Link>
           </Box>
           <Box as="li">
             <NavIconButton
@@ -116,7 +118,7 @@ const Navigation = () => {
         </Flex>
       </Flex>
       {isSecondaryNavigationActive && (
-        <Box width={230} height="100%">
+        <Box width={200} height="100%" borderLeft="1px solid" borderColor="navyblue-600">
           {secondaryNav === COMPLIANCE_NAV_KEY && <ComplianceNavigation />}
           {secondaryNav === LOG_ANALYSIS_NAV_KEY && <LogAnalysisNavigation />}
           {secondaryNav === SETTINGS_NAV_KEY && <SettingsNavigation />}

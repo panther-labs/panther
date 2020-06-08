@@ -23,12 +23,12 @@ import Header from 'Components/Header';
 
 const Layout: React.FC = ({ children }) => {
   return (
-    <Flex minHeight="100%" bg="white">
+    <Flex minHeight="100%" bg="navyblue-800">
       <Navigation />
-      <Box as="main" minHeight={1} flex="1 0 auto" bg="grey50">
+      <Box as="main" minHeight={1} flex="1 0 auto" bg="navyblue-800">
         <Box width={1214} mx="auto">
           <Header />
-          <Box mt={6}>{children}</Box>
+          {children}
         </Box>
       </Box>
     </Flex>
