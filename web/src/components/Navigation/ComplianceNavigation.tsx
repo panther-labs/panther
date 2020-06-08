@@ -25,7 +25,7 @@ import FadeInTrail from 'Components/utils/FadeInTrail';
 const ComplianceNavigation: React.FC = () => {
   return (
     <Box>
-      <Heading size="x-small" textAlign="center" fontWeight="bold" mt={10} mb={5}>
+      <Heading size="x-small" textAlign="center" fontWeight="bold" mt={10} mb={5} truncated>
         CLOUD SECURITY
       </Heading>
       <Flex direction="column" as="ul">
@@ -40,4 +40,4 @@ const ComplianceNavigation: React.FC = () => {
   );
 };
 
-export default ComplianceNavigation;
+export default React.memo(ComplianceNavigation);

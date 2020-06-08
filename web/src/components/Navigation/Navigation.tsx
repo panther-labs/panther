@@ -21,6 +21,7 @@ import { Box, Flex, Link } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import PantherIcon from 'Assets/panther-minimal-logo.svg';
+import { animated, useTransition } from 'react-spring';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 import useRouter from 'Hooks/useRouter';
 import NavIconButton from './NavIconButton';
@@ -28,10 +29,12 @@ import SettingsNavigation from './SettingsNavigation';
 import ComplianceNavigation from './ComplianceNavigation';
 import LogAnalysisNavigation from './LogAnalysisNavigation';
 
+type NavKeys = typeof COMPLIANCE_NAV_KEY | typeof LOG_ANALYSIS_NAV_KEY | typeof SETTINGS_NAV_KEY;
+
+const SECONDARY_NAV_WIDTH = 200;
 const COMPLIANCE_NAV_KEY = 'compliance';
 const LOG_ANALYSIS_NAV_KEY = 'logAnalysis';
 const SETTINGS_NAV_KEY = 'settings';
-type NavKeys = typeof COMPLIANCE_NAV_KEY | typeof LOG_ANALYSIS_NAV_KEY | typeof SETTINGS_NAV_KEY;
 
 const Navigation = () => {
   const {
@@ -59,6 +62,13 @@ const Navigation = () => {
   const isLogAnalysisNavigationActive = secondaryNav === LOG_ANALYSIS_NAV_KEY;
   const isSettingsNavigationActive = secondaryNav === SETTINGS_NAV_KEY;
   const isSecondaryNavigationActive = secondaryNav !== null;
+
+  const transitions = useTransition(isSecondaryNavigationActive, null, {
+    from: { width: 0, opacity: 0 },
+    enter: { width: SECONDARY_NAV_WIDTH, opacity: 1 },
+    leave: { width: 0, opacity: 0 },
+  });
+
   return (
     <Flex
       as="nav"
@@ -117,12 +127,17 @@ const Navigation = () => {
           </Box>
         </Flex>
       </Flex>
-      {isSecondaryNavigationActive && (
-        <Box width={200} height="100%" borderLeft="1px solid" borderColor="navyblue-600">
-          {secondaryNav === COMPLIANCE_NAV_KEY && <ComplianceNavigation />}
-          {secondaryNav === LOG_ANALYSIS_NAV_KEY && <LogAnalysisNavigation />}
-          {secondaryNav === SETTINGS_NAV_KEY && <SettingsNavigation />}
-        </Box>
+      {transitions.map(
+        ({ item, key, props: styles }) =>
+          item && (
+            <animated.div key={key} style={styles}>
+              <Box height="100%" borderLeft="1px solid" borderColor="navyblue-600">
+                {secondaryNav === COMPLIANCE_NAV_KEY && <ComplianceNavigation />}
+                {secondaryNav === LOG_ANALYSIS_NAV_KEY && <LogAnalysisNavigation />}
+                {secondaryNav === SETTINGS_NAV_KEY && <SettingsNavigation />}
+              </Box>
+            </animated.div>
+          )
       )}
     </Flex>
   );

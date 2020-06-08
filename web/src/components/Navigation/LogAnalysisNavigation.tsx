@@ -25,7 +25,7 @@ import NavLink from './NavLink';
 const LogAnalysisNavigation: React.FC = () => {
   return (
     <Box>
-      <Heading size="x-small" textAlign="center" fontWeight="bold" mt={10} mb={5}>
+      <Heading size="x-small" textAlign="center" fontWeight="bold" mt={10} mb={5} truncated>
         LOG ANALYSIS
       </Heading>
       <Flex direction="column" as="ul">
@@ -52,4 +52,4 @@ const LogAnalysisNavigation: React.FC = () => {
   );
 };
 
-export default LogAnalysisNavigation;
+export default React.memo(LogAnalysisNavigation);
