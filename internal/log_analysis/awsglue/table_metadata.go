@@ -234,7 +234,7 @@ func (gm *GlueTableMetadata) GetPartitionPrefix(t time.Time) string {
 }
 
 // SyncPartitions updates a table's partitions using the latest table schema. Used when schemas change.
-// If deadline is non-zero, it will stop when execution time has passed deadline and will return the
+// If deadline is non-nil, it will stop when execution time has passed the deadline and will return the
 // _next_ time period needing evaluation. Deadlines are used when this is called in Lambdas to avoid
 // running past the lambda deadline.
 func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Client s3iface.S3API,
