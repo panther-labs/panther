@@ -268,7 +268,7 @@ func testGoUnit() error {
 	}
 
 	// unit tests and race detection
-	return runGoTest("test", "-race", "-v", "-vet", "", "-cover", "./...")
+	return runGoTest("test", "-race", "-vet", "", "-cover", "./...")
 }
 
 func testGoLint() error {
