@@ -72,6 +72,7 @@
 ## Cloud Security
 
 * [Overview](cloud-security/README.md)
+* [Setup](cloud-security/setup.md)
 * [Policies](cloud-security/policies/README.md)
 * [Built-in Policy Runbooks]()
   * [AWS CloudTrail Least Privilege Access Configured](cloud-security/policies/aws/aws-cloudtrail-least-privilege-access-configured.md)

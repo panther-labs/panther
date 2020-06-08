@@ -4,7 +4,7 @@ Panther is an open source platform designed to bring security visibility at clou
 
 ![Architecture](.gitbook/assets/panther_graphic_flow.jpg)
 
-## Benefits
+### Benefits
 
 - Analyze TBs of data per day
 - Write flexible, Python-based, real-time detections
@@ -12,13 +12,13 @@ Panther is an open source platform designed to bring security visibility at clou
 - Simply deploy with infrastructure as code
 - Secure, least-privilege, and encrypted infrastructure
 
-## Components
+### Components
 
 * [Log Analysis](log-analysis/log-processing/README.md) for parsing, normalizing, and analyzing security data
 * [Cloud Security](policies/scanning/README.md) for identifying misconfigurations in AWS accounts
 * [Data Analytics](historical-search/README.md) for queries on collected log data, generated alerts, and normalized fields
 
-## Use Cases
+### Use Cases
 
 |         Use Case         | Description                                                                               |
 | :----------------------: | ----------------------------------------------------------------------------------------- |
@@ -41,5 +41,3 @@ This includes access to features such as:
 - Premium Detection Packs
 - Dedicated onboarding and operational support
 - Flexible Deployment such as Cloud Hosted or Cloud Premise
-
-## Why Panther?
