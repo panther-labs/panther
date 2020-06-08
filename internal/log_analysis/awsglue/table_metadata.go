@@ -262,6 +262,7 @@ func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Clie
 	for i := 0; i < concurrency; i++ {
 		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			failed := false
 			for update := range updateChan {
 				if failed {
@@ -305,7 +306,6 @@ func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Clie
 					continue
 				}
 			}
-			wg.Done()
 		}()
 	}
 
