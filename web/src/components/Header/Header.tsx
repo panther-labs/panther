@@ -58,21 +58,14 @@ const Header = () => {
             py={2}
             px={4}
           >
-            <Icon
-              type="user"
-              size="small"
-              mr={2}
-              borderRadius="circle"
-              bg="grey200"
-              color="white"
-            />
+            <Icon type="user" size="small" mr={2} borderRadius="circle" color="white" />
             {userInfo &&
               (userInfo.given_name && userInfo.family_name
                 ? `${userInfo.given_name} ${userInfo.family_name[0]}.`
                 : userInfo.email.split('@')[0])}
           </Flex>
         </DropdownButton>
-        <DropdownMenu>
+        <DropdownMenu alignment="match-width">
           <DropdownItem onSelect={() => showSidesheet({ sidesheet: SIDESHEETS.EDIT_ACCOUNT })}>
             Edit Profile
           </DropdownItem>
