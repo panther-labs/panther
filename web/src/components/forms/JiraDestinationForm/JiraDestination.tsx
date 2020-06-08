@@ -37,9 +37,7 @@ interface JiraDestinationFormProps {
 const jiraFieldsValidationSchema = Yup.object().shape({
   outputConfig: Yup.object().shape({
     jira: Yup.object().shape({
-      orgDomain: Yup.string()
-        .url('Must be a valid Jira domain')
-        .required(),
+      orgDomain: Yup.string().url('Must be a valid Jira domain').required(),
       userName: Yup.string(),
       projectKey: Yup.string().required(),
       apiKey: Yup.string().required(),

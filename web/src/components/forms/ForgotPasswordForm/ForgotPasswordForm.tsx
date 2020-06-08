@@ -33,9 +33,7 @@ const initialValues = {
 };
 
 const validationSchema = Yup.object().shape({
-  email: Yup.string()
-    .email('Needs to be a valid email')
-    .required(),
+  email: Yup.string().email('Needs to be a valid email').required(),
 });
 
 const ForgotPasswordForm: React.FC = () => {

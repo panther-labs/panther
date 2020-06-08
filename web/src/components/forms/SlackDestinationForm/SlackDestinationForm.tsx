@@ -36,9 +36,7 @@ interface SlackDestinationFormProps {
 const slackFieldsValidationSchema = Yup.object().shape({
   outputConfig: Yup.object().shape({
     slack: Yup.object().shape({
-      webhookURL: Yup.string()
-        .url('Must be a valid webhook URL')
-        .required(),
+      webhookURL: Yup.string().url('Must be a valid webhook URL').required(),
     }),
   }),
 });

@@ -39,9 +39,7 @@ interface SQSDestinationFormProps {
 const sqsFieldsValidationSchema = Yup.object().shape({
   outputConfig: Yup.object().shape({
     sqs: Yup.object().shape({
-      queueUrl: Yup.string()
-        .url('Queue URL must be a valid url')
-        .required('Queue URL is required'),
+      queueUrl: Yup.string().url('Queue URL must be a valid url').required('Queue URL is required'),
     }),
   }),
 });
