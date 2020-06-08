@@ -139,3 +139,21 @@ func generateURL(alert *alertmodels.Alert) string {
 	}
 	return policyURLPrefix + *alert.PolicyID
 }
+
+func getID(alert *alertmodels.Alert) string {
+	if aws.StringValue(alert.Type) == alertmodels.RuleType {
+		return aws.StringValue(alert.AlertID)
+	}
+	return aws.StringValue(alert.PolicyID)
+}
+
+func getType(alert *alertmodels.Alert) string {
+	alertType := aws.StringValue(alert.Type)
+	switch alertType {
+	case
+		alertmodels.RuleType,
+		alertmodels.PolicyType:
+		return alertType
+	}
+	return "UNKNOWN"
+}

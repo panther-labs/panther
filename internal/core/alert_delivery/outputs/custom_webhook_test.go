@@ -46,24 +46,30 @@ func TestCustomWebhookAlert(t *testing.T) {
 		Severity:   aws.String("INFO"),
 	}
 
-	link := policyURLPrefix + aws.StringValue(alert.PolicyID)
-
-	customWebhookPolicy := &CustomWebhookPolicy{
-		ID:          alert.PolicyID,
-		Name:        alert.PolicyName,
-		Description: alert.PolicyDescription,
-		Version:     alert.PolicyVersionID,
-		Tags:        alert.Tags,
+	// Get or generate concrete values
+	id := getID(alert)
+	name := getDisplayName(alert)
+	alertType := getType(alert)
+	link := generateURL(alert)
+	title := generateAlertTitle(alert)
+	description := generateDetailedAlertMessage(alert)
+	// Define an empty slice so marshaling returns "[]" instead of "null"
+	tags := []*string{}
+	if len(alert.Tags) > 0 {
+		tags = alert.Tags
 	}
 
 	customWebhookAlert := &CustomWebhookAlert{
-		ID:       alert.AlertID,
-		Title:    alert.Title,
-		Type:     alert.Type,
-		Severity: alert.Severity,
-		Runbook:  alert.Runbook,
-		Link:     &link,
-		Policy:   *customWebhookPolicy,
+		ID:          &id,
+		Name:        &name,
+		Severity:    alert.Severity,
+		Type:        &alertType,
+		Link:        &link,
+		Title:       &title,
+		Description: &description,
+		Runbook:     alert.Runbook,
+		Tags:        tags,
+		Version:     alert.PolicyVersionID,
 	}
 
 	outputMessage := &CustomWebhookOutputMessage{

@@ -21,8 +21,6 @@ package outputs
 import (
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 )
@@ -31,24 +29,30 @@ import (
 func (client *OutputClient) CustomWebhook(
 	alert *alertmodels.Alert, config *outputmodels.CustomWebhookConfig) *AlertDeliveryError {
 
-	link := policyURLPrefix + aws.StringValue(alert.PolicyID)
-
-	customWebhookPolicy := &CustomWebhookPolicy{
-		ID:          alert.PolicyID,
-		Name:        alert.PolicyName,
-		Description: alert.PolicyDescription,
-		Version:     alert.PolicyVersionID,
-		Tags:        alert.Tags,
+	// Get or generate concrete values
+	id := getID(alert)
+	name := getDisplayName(alert)
+	alertType := getType(alert)
+	link := generateURL(alert)
+	title := generateAlertTitle(alert)
+	description := generateDetailedAlertMessage(alert)
+	// Define an empty slice so marshaling returns "[]" instead of "null"
+	tags := []*string{}
+	if len(alert.Tags) > 0 {
+		tags = alert.Tags
 	}
 
 	customWebhookAlert := &CustomWebhookAlert{
-		ID:       alert.AlertID,
-		Title:    alert.Title,
-		Type:     alert.Type,
-		Severity: alert.Severity,
-		Runbook:  alert.Runbook,
-		Link:     &link,
-		Policy:   *customWebhookPolicy,
+		ID:          &id,
+		Name:        &name,
+		Severity:    alert.Severity,
+		Type:        &alertType,
+		Link:        &link,
+		Title:       &title,
+		Description: &description,
+		Runbook:     alert.Runbook,
+		Tags:        tags,
+		Version:     alert.PolicyVersionID,
 	}
 
 	outputMessage := &CustomWebhookOutputMessage{
@@ -67,46 +71,37 @@ func (client *OutputClient) CustomWebhook(
 	return client.httpWrapper.post(postInput)
 }
 
-//CustomWebhookPolicy is the internal struct describing the alert policy in the Custom Webhook message
-type CustomWebhookPolicy struct {
-	// ID is the rule that triggered the alert.
+//CustomWebhookAlert describes the details of an alert in the Custom Webhook message
+type CustomWebhookAlert struct {
+	// [REQUIRED] Either AlertID or PolicyID depending on the alert type
 	ID *string `json:"id" validate:"required"`
 
-	// The name of the policy at the time the alert was triggered.
-	Name *string `json:"name,omitempty"`
+	// [REQUIRED] The PolicyName (or PolicyID if the name doesn't exist) of the triggered alert.
+	Name *string `json:"name" validate:"required"`
 
-	// Description is the description of the rule that triggered the alert.
-	Description *string `json:"description,omitempty"`
-
-	// Version is the S3 object version for the policy.
-	Version *string `json:"version,omitempty"`
-
-	// Tags is the set of policy tags.
-	Tags []*string `json:"tags,omitempty"`
-}
-
-//CustomWebhookAlert is the internal struct describing an alert in the Custom Webhook message
-type CustomWebhookAlert struct {
-	// ID specifies the alertId that this Alert is associated with.
-	ID *string `json:"id,omitempty"`
-
-	// Title is the optional title for the alert
-	Title *string `json:"title,omitempty"`
-
-	// Type specifies if an alert is for a policy or a rule
-	Type *string `json:"type,omitempty" validate:"omitempty,oneof=RULE POLICY"`
-
-	// Severity is the alert severity at the time of creation.
+	// [REQUIRED] The severity of the alert
 	Severity *string `json:"severity" validate:"required,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 
-	// Runbook is the user-provided triage information.
-	Runbook *string `json:"runbook,omitempty"`
+	// [REQUIRED] Type specifies if an alert is for a policy or a rule
+	Type *string `json:"type" validate:"required,oneof=RULE POLICY UNKNOWN"`
 
-	// Link to the alert in Panther UI
+	// [REQUIRED] Link to the alert in Panther UI
 	Link *string `json:"link" validate:"required"`
 
-	// Policy contains the policy details associated with the alert
-	Policy CustomWebhookPolicy `json:"policy" validate:"required"`
+	// [REQUIRED] A human readable title of the alert
+	Title *string `json:"title" validate:"required"`
+
+	// [REQUIRED] A human readable description of the rule that triggered the alert
+	Description *string `json:"description"`
+
+	// Runbook is the user-provided triage information
+	Runbook *string `json:"runbook"`
+
+	// Tags is the set of policy tags
+	Tags []*string `json:"tags"`
+
+	// Version is the S3 object version for the policy
+	Version *string `json:"version"`
 }
 
 //CustomWebhookOutputMessage contains the fields that will be included in the Custom Webhook message
@@ -114,6 +109,6 @@ type CustomWebhookOutputMessage struct {
 	// Alert contains the details of the alert
 	Alert CustomWebhookAlert `json:"alert" validate:"required"`
 
-	// CreatedAt is the creation timestamp (seconds since epoch).
+	// CreatedAt is the timestamp (seconds since epoch) of the alert at creation.
 	CreatedAt *time.Time `json:"createdAt" validate:"required"`
 }
