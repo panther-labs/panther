@@ -16,16 +16,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Heading, SideSheet } from 'pouncejs';
+import { Box, Heading, SideSheet, SideSheetProps } from 'pouncejs';
 import EditProfileForm from 'Components/forms/EditProfileForm';
 import ChangePasswordForm from 'Components/forms/ChangePasswordForm';
 import React from 'react';
 import useSidesheet from 'Hooks/useSidesheet';
 
-const EditAccountSidesheet: React.FC = () => {
+const EditAccountSidesheet: React.FC<SideSheetProps> = props => {
   const { hideSidesheet } = useSidesheet();
   return (
-    <SideSheet open onClose={hideSidesheet}>
+    <SideSheet {...props}>
       <Box mx={10} mb={10}>
         <Heading pt={1} pb={8} size="medium">
           Edit Profile

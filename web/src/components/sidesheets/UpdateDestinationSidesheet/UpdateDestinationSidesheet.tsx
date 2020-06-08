@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Alert, Heading, SideSheet, useSnackbar, Box } from 'pouncejs';
+import { Alert, Heading, SideSheet, useSnackbar, Box, SideSheetProps } from 'pouncejs';
 import pick from 'lodash-es/pick';
 import useSidesheet from 'Hooks/useSidesheet';
 import { Destination, DestinationConfigInput, DestinationTypeEnum } from 'Generated/schema';
@@ -38,12 +38,13 @@ import { useUpdateDestination } from './graphql/updateDestination.generated';
 // from the Destinations table, we are able to access a `defaultForSeverities` key that the table
 // has assigned for us. Thus the `destination` that we actually received in enhanced with this
 // property.
-export interface UpdateDestinationSidesheetProps {
+export interface UpdateDestinationSidesheetProps extends SideSheetProps {
   destination: Destination;
 }
 
 export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProps> = ({
   destination,
+  ...rest
 }) => {
   const { pushSnackbar } = useSnackbar();
   const { hideSidesheet } = useSidesheet();
@@ -206,9 +207,9 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
   };
 
   return (
-    <SideSheet open onClose={hideSidesheet}>
+    <SideSheet aria-labelledby="sidesheet-title" {...rest}>
       <Box width={465}>
-        <Heading size="medium" mb={8}>
+        <Heading size="medium" mb={8} id="sidesheet-title">
           Update {destination.outputType}
         </Heading>
         {updateDestinationError && (

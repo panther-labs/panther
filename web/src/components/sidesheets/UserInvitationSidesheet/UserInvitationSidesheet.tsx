@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Heading, Text, SideSheet, useSnackbar } from 'pouncejs';
+import { Box, Heading, Text, SideSheet, useSnackbar, SideSheetProps } from 'pouncejs';
 import React from 'react';
 import useSidesheet from 'Hooks/useSidesheet';
 import { extractErrorMessage } from 'Helpers/utils';
@@ -29,7 +29,7 @@ const initialValues = {
   givenName: '',
 };
 
-const UserInvitationSidesheet: React.FC = () => {
+const UserInvitationSidesheet: React.FC<SideSheetProps> = props => {
   const { hideSidesheet } = useSidesheet();
   const { pushSnackbar } = useSnackbar();
   const [inviteUser] = useInviteUser({
@@ -68,7 +68,7 @@ const UserInvitationSidesheet: React.FC = () => {
   };
 
   return (
-    <SideSheet open onClose={hideSidesheet}>
+    <SideSheet {...props}>
       <Box width={425} m="auto">
         <Heading size="medium" mb={8}>
           Invite User

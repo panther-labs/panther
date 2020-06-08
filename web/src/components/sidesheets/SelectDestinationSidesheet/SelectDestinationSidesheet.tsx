@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Flex, Heading, SideSheet, Text } from 'pouncejs';
+import { Box, Flex, Heading, SideSheet, SideSheetProps, Text } from 'pouncejs';
 import DestinationCard from 'Components/DestinationCard';
 import useSidesheet from 'Hooks/useSidesheet';
 import slackLogo from 'Assets/slack-minimal-logo.svg';
@@ -81,17 +81,21 @@ const destinationConfigs = [
   },
 ];
 
-export const SelectDestinationSidesheet: React.FC = () => {
-  const { hideSidesheet, showSidesheet } = useSidesheet();
+export const SelectDestinationSidesheet: React.FC<SideSheetProps> = props => {
+  const { showSidesheet } = useSidesheet();
 
   return (
-    <SideSheet open onClose={hideSidesheet}>
+    <SideSheet
+      aria-labelledby="sidesheet-title"
+      aria-describedby="sidesheet-description"
+      {...props}
+    >
       <Box width={465}>
         <Box mb={8}>
-          <Heading size="medium" mb={8}>
+          <Heading size="medium" mb={8} id="sidesheet-title">
             Select an Alert Destination
           </Heading>
-          <Text size="large" color="grey400">
+          <Text size="large" color="grey400" id="sidesheet-description">
             Add a new destination below to deliver alerts to a specific application for further
             triage
           </Text>

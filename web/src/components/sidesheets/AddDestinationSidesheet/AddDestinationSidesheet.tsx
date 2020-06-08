@@ -16,12 +16,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Alert, Box, Flex, Heading, Icon, IconButton, SideSheet, useSnackbar } from 'pouncejs';
+import {
+  Alert,
+  Box,
+  Flex,
+  Heading,
+  IconButton,
+  SideSheet,
+  SideSheetProps,
+  useSnackbar,
+} from 'pouncejs';
 import React from 'react';
 
 import useSidesheet from 'Hooks/useSidesheet';
 import { SIDESHEETS } from 'Components/utils/Sidesheet';
-import { Destination, DestinationConfigInput, DestinationTypeEnum } from 'Generated/schema';
+import { DestinationConfigInput, DestinationTypeEnum } from 'Generated/schema';
 import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm';
 
 import SNSDestinationForm from 'Components/forms/SnsDestinationForm';
@@ -36,15 +45,14 @@ import AsanaDestinationForm from 'Components/forms/AsanaDestinationForm';
 import { capitalize, extractErrorMessage } from 'Helpers/utils';
 import { useAddDestination } from './graphql/addDestination.generated';
 
-interface DestinationMutationData {
-  addDestination: Destination;
-}
-
-export interface AddDestinationSidesheetProps {
+export interface AddDestinationSidesheetProps extends SideSheetProps {
   destinationType: DestinationTypeEnum;
 }
 
-const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ destinationType }) => {
+const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({
+  destinationType,
+  ...rest
+}) => {
   const { pushSnackbar } = useSnackbar();
   const { hideSidesheet, showSidesheet } = useSidesheet();
 
@@ -203,21 +211,22 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
   };
 
   return (
-    <SideSheet open onClose={hideSidesheet}>
+    <SideSheet aria-labelledby="add-destination-title" {...rest}>
       <Box width={465}>
         <Flex mb={8} align="center" mt={-2}>
           <IconButton
-            mr={4}
-            variant="default"
+            aria-label="Go to select destination screen"
+            variant="ghost"
+            icon="arrow-back"
             onClick={() =>
               showSidesheet({
                 sidesheet: SIDESHEETS.SELECT_DESTINATION,
               })
             }
-          >
-            <Icon size="large" type="arrow-back" />
-          </IconButton>
-          <Heading size="medium">{capitalize(destinationType)} Configuration</Heading>
+          />
+          <Heading size="medium" ml={4} id="add-destination-title">
+            {capitalize(destinationType)} Configuration
+          </Heading>
         </Flex>
         {addDestinationError && (
           <Box mt={2} mb={6}>

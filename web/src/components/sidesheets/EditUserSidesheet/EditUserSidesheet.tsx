@@ -17,7 +17,7 @@
  */
 
 import * as React from 'react';
-import { Box, Heading, SideSheet, useSnackbar } from 'pouncejs';
+import { Box, Heading, SideSheet, SideSheetProps, useSnackbar } from 'pouncejs';
 import { User } from 'Generated/schema';
 import { extractErrorMessage } from 'Helpers/utils';
 import UserForm, { UserFormValues } from 'Components/forms/UserForm';
@@ -25,11 +25,11 @@ import useAuth from 'Hooks/useAuth';
 import useSidesheet from 'Hooks/useSidesheet';
 import { useEditUser } from './graphql/editUser.generated';
 
-export interface EditUserSidesheetProps {
+export interface EditUserSidesheetProps extends SideSheetProps {
   user: User;
 }
 
-const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user }) => {
+const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user, ...rest }) => {
   const { pushSnackbar } = useSnackbar();
   const { hideSidesheet } = useSidesheet();
   const { refetchUserInfo, userInfo } = useAuth();
@@ -74,9 +74,9 @@ const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user }) => {
   };
 
   return (
-    <SideSheet open onClose={hideSidesheet}>
+    <SideSheet aria-labelledby="sidesheet-title" {...rest}>
       <Box width={425} m="auto">
-        <Heading pt={1} pb={8} size="medium">
+        <Heading pt={1} pb={8} size="medium" id="sidesheet-title">
           Edit Profile
         </Heading>
         <UserForm initialValues={initialValues} onSubmit={submitToServer} />

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Heading, SideSheet, useSnackbar, Text, Alert } from 'pouncejs';
+import { Box, Heading, SideSheet, useSnackbar, Text, Alert, SideSheetProps } from 'pouncejs';
 import React from 'react';
 import LoadingButton from 'Components/buttons/LoadingButton';
 
@@ -28,11 +28,11 @@ import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useUploadPolicies } from './graphql/uploadPolicies.generated';
 
-export interface PolicyBulkUploadSideSheetProps {
+export interface PolicyBulkUploadSideSheetProps extends SideSheetProps {
   type: 'policy' | 'rule';
 }
 
-const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({ type }) => {
+const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({ type, ...rest }) => {
   // We don't want to expose a file-input to the user, thus we are gonna create a hidden one and
   // map the clicks of a button to the hidden input (as if the user had clicked the hidden input).
   // To do that we need a reference to it
@@ -99,12 +99,12 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({ t
   };
 
   return (
-    <SideSheet open onClose={hideSidesheet}>
+    <SideSheet aria-labelledby="sidesheet-title" aria-describedby="sidesheet-description" {...rest}>
       <Box width={400}>
-        <Heading size="medium" mb={8}>
+        <Heading size="medium" mb={8} id="sidesheet-title">
           Upload {isPolicy ? 'Policies' : 'Rules'}
         </Heading>
-        <Text size="large" color="grey300" mb={8} as="p">
+        <Text size="large" color="grey300" mb={8} as="p" id="sidesheet-description">
           Sometimes you don{"'"}t have the luxury of creating {isPolicy ? 'policies' : 'rules'}{' '}
           one-by-one through our lovely editor page. Not to worry, as a way to speed things up, we
           also accept a single Base64-encoded zipfile containing all of your policies.

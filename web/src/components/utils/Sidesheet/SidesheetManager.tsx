@@ -29,10 +29,7 @@ import EditUserSidesheet from 'Components/sidesheets/EditUserSidesheet';
 import UserInvitationSidesheet from 'Components/sidesheets/UserInvitationSidesheet';
 
 const SidesheetManager: React.FC = () => {
-  const { state: sidesheetState } = useSidesheet();
-  if (!sidesheetState.sidesheet) {
-    return null;
-  }
+  const { state: sidesheetState, hideSidesheet } = useSidesheet();
 
   let Component;
   switch (sidesheetState.sidesheet) {
@@ -61,7 +58,13 @@ const SidesheetManager: React.FC = () => {
       break;
   }
 
-  return <Component {...sidesheetState.props} />;
+  return (
+    <Component
+      {...sidesheetState.props}
+      open={Boolean(sidesheetState.sidesheet)}
+      onClose={hideSidesheet}
+    />
+  );
 };
 
 export default SidesheetManager;
