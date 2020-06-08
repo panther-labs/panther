@@ -2,7 +2,9 @@
 
 ## Overview
 
-Panther's Log Analysis is used to parse, normalize, and analyze high volumes of log data in real-time. In order to onboard into this pipeline, data must land in an S3 bucket. Data can also be organized using S3 folders or multiple buckets.
+Panther's Log Analysis is used to parse, normalize, and analyze high volumes of log data in real-time. In order to onboard into this pipeline, data must send to  an S3 bucket. Data can also be organized using S3 folders or multiple buckets.
+
+![](../.gitbook/assets/panther_graphic_flow.png)
 
 Common events analyzed with log analysis include:
 * Authorization or authentication

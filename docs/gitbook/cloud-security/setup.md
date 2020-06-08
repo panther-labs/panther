@@ -1,8 +1,8 @@
 # Cloud Security Setup
 
-Panther can scan an unlimited number of AWS accounts. Each resource is associated with the account's label \(Prod, Dev, Test, etc\).
+Panther can scan any number of AWS accounts. Each cloud resource is associated with the related account's label \(Prod, Dev, Test, etc\).
 
-## Add Your Account
+## Add Your Accounts
 
 The first step is to add a new AWS account source by navigating to `Cloud Security` > `Sources` > `Add Account`:
 
@@ -38,7 +38,7 @@ Back in the UI, click `Next`, then `Save Source` to complete this setup:
 
 ![](../.gitbook/assets/add-new-account-5.png)
 
-## Real-Time Events
+## Configure Real-Time Monitoring
 
 The next section will detail how to monitor changes to AWS resources in real-time.
 
@@ -62,19 +62,17 @@ The `Administrator` account may also be the `Target` account. To run and scan a 
 
 ### Setup Administrator Account
 
-By default, Panther deployments create a CloudFormation StackSet "Admin" role called:
+First, create the CloudFormation StackSet Admin role in the main Panther account to manage the deployment of real-time events in your target accounts.
+
+From the CloudFormation Console, create a new stack, elect `Template is ready`, and enter the following `Amazon S3 URL`:
 
 ```
-PantherCloudFormationStackSetAdminRole-<PantherRegion>
+https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-stackset-iam-admin-role/latest/template.yml
 ```
 
-For example, if Panther is deployed in `us-west-2`:
+Click the acknowledgements and create the stack.
 
-```
-PantherCloudFormationStackSetAdminRole-us-west-2
-```
-
-This IAM role allows the StackSet to assume roles in target accounts to orchestrate the creation of real-time events in as many regions as needed:
+This IAM role allows the CloudFormation StackSet to assume roles in target accounts and orchestrate the configuration of real-time events:
 
 ```json
 {
@@ -96,7 +94,7 @@ This IAM Role is only assumable by the Panther Deployment account.
 ### Onboard Accounts
 
 {% hint style="warning" %}
-In order for target accounts to be onboarded, you must have checked the box during the account setup above!
+In order for target accounts to be onboarded, you must have checked the "Real-Time AWS Resource Scan" box during the account setup.
 {% endhint %}
 
 Login to the `Administrator` account's AWS Console, and open the [CloudFormation StackSets](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacksets) page:

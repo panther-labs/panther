@@ -1,16 +1,12 @@
 # Overview
 
-Destinations are used to notify your team about suspicious activity or vulnerable cloud infrastructure.
+Destinations are used to notify your team about suspicious activity or vulnerable cloud infrastructure. When a policy fails on a resource or a rule triggers on an event, an alert is generated and sent to the configured destination.
 
-When a policy fails on a resource or a rule triggers on an event, an alert is generated and sent to the configured destination.
+Alerts are routed based on severity. For example, if a Rule is configured with a `Critical` severity, it will dispatch alerts to the  destinations configured to handle `Critical` alerts.
 
-Alerts are routed based on severity.
+A single alert can dispatch to multiple destinations simultaneously, such as creating a Jira ticket, sending an email, and paging the on-call.
 
-For example, if a Rule is configured with a `Critical` severity, it will dispatch alerts to the  destinations configured to handle `Critical` alerts.
-
-A single alert will also dispatch to multiple destinations simultaneously, such as creating a Jira ticket, sending an email, and paging the on-call.
-
-Supported destinations:
+## Supported Destinations
 
 |         Name         | Homepage                                                                               |
 | :----------------------: | ----------------------------------------------------------------------------------------- |
@@ -22,6 +18,7 @@ Supported destinations:
 | OpsGenie | https://www.atlassian.com/software/opsgenie/what-is-opsgenie |
 | PagerDuty | https://www.pagerduty.com/ |
 | Slack | https://slack.com/ |
+
 
 ## Creating a New Destination
 

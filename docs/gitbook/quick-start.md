@@ -9,7 +9,7 @@ What you'll need:
 1. An AWS Account
 2. An IAM user or role with permissions to create and manage the necessary resources
 
-We've provided deployment roles for your convenience below:
+We've provided download links to the following deployment IAM roles below:
 
 - [AWS CloudFormation Template](https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-deployment-role/latest/template.yml)
 - [Terraform](https://github.com/panther-labs/panther/tree/master/deployments/auxiliary/terraform/panther-deployment-role.tf)
@@ -21,6 +21,12 @@ We recommend deploying Panther into its own dedicated AWS account.
 ## Deployment
 
 First, navigate to the AWS CloudFormation console and create a new stack.
+
+Use the following template URL to install the latest version in the us-east-1 region:
+
+```
+https://panther-community-us-east-1.s3.amazonaws.com/v1.4/panther.yml
+```
 
 The template URL is of the following form:
 
@@ -35,12 +41,6 @@ Where:
     * Be sure the template region matches the region in which you are deploying Panther
     * Additional regions are available when [deploying from source](development.md#supported-regions)
 * VERSION is the latest [tagged release](https://github.com/panther-labs/panther/releases)
-
-For example, to the latest available version in `us-east-1`:
-
-```
-https://panther-community-us-east-1.s3.amazonaws.com/v1.4/panther.yml
-```
 
 ![CloudFormation Template URL](.gitbook/assets/cfn-deploy-1.png)
 

@@ -4,7 +4,7 @@ Panther is an open source platform designed to bring security visibility at clou
 
 ![Architecture](.gitbook/assets/panther_graphic_flow.jpg)
 
-### Benefits
+**Benefits**
 
 - Analyze TBs of data per day
 - Write flexible, Python-based, real-time detections
@@ -12,13 +12,13 @@ Panther is an open source platform designed to bring security visibility at clou
 - Simply deploy with infrastructure as code
 - Secure, least-privilege, and encrypted infrastructure
 
-### Components
+**Components**
 
 * [Log Analysis](log-analysis/log-processing/README.md) for parsing, normalizing, and analyzing security data
 * [Cloud Security](policies/scanning/README.md) for identifying misconfigurations in AWS accounts
 * [Data Analytics](historical-search/README.md) for queries on collected log data, generated alerts, and normalized fields
 
-### Use Cases
+**Use Cases**
 
 |         Use Case         | Description                                                                               |
 | :----------------------: | ----------------------------------------------------------------------------------------- |
@@ -27,17 +27,17 @@ Panther is an open source platform designed to bring security visibility at clou
 |      Searching IOCs      | Quickly search for matches on IOCs against all collected data                    |
 | Securing Cloud Resources | Achieve compliance and model security best practices in code |
 
-## Get Started!
+## Getting Started!
 
-To deploy Panther Community Edition, continue to the [quick start](quick-start.md) guide!
+To deploy Panther Community Edition, continue to the [quick start](quick-start.md) guide.
 
-To receive a trial of Panther Enterprise, [sign up here](https://runpanther.io/request-a-demo/).
-
-This includes access to features such as:
-- Data Explorer
-- SaaS Log Collection
-- Role-based Access Control
-- Single Sign-on
-- Premium Detection Packs
+Panther also has an Enterprise Edition with access to the following features:
+- Data Explorer: Search your collected data, generated alerts, and threat hunt with SQL
+- SaaS Log Collection: Automatically load popular SaaS logs into Panther.
+- Role-based Access Control: Assign roles to your Panther users
+- Single Sign-on: Integrate solutions such as Okta to streamline and manage identities.
+- Premium Detection Packs: Built-in support for PCI and more advanced off the shelf rules.
 - Dedicated onboarding and operational support
-- Flexible Deployment such as Cloud Hosted or Cloud Premise
+- Flexible Deployments with Cloud Hosted or Cloud Premise
+
+To receive a trial of Panther Enterprise, [sign up here](https://runpanther.io/request-a-demo/)!

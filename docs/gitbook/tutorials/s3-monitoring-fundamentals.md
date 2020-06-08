@@ -1,5 +1,5 @@
 ---
-description: How to monitor and harden S3 buckets to prevent security incidents
+description: How to monitor and harden S3 buckets with Panther
 ---
 
 # Tutorial: Amazon S3 Bucket Security Monitoring with Panther
