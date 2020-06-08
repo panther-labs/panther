@@ -1,17 +1,11 @@
 # Panther's Standard Fields
 
-Panther log processing appends some fields to all log records.
+Panther's log processing applies normalization fields (IPs, domains, etc) to all log records. These fields provide standard names for attributes across all data sources enabling fast and easy data correlation.
 
-These fields provide standard names for attributes over all data sources allowing within and between data source correlation of data.
-
-For example, each data source has a name for the time an event occurred but each data source will likely not name the attribute the same nor is it guaranteed that the associated time has a time zone consistent with other data sources.
-
-The Panther attribute `p_event_time` (described below) is mapped to each data source's corresponding event time, and normalized to UTC.
-
-In this way you can query over multiple data sources joining and ordering by "p_event_time" to properly align and correlate the data despite the disparate schemas of each data source.
+For example, each data source has a time that an event occurred, but each data source will likely not name the attribute the same, nor is it guaranteed that the associated time has a timezone consistent with other data sources. The Panther attribute `p_event_time` is mapped to each data source's corresponding event time and normalized to UTC. This way you can query over multiple data sources joining and ordering by `p_event_time` to properly align and correlate the data despite the disparate schemas of each data source.
 
 {% hint style="info" %}
-All appended standard fields begin with "p\_".
+All appended standard fields begin with `p_`.
 {% endhint %}
 
 ## Required Fields

@@ -2,9 +2,7 @@
 
 ## Installation
 
-The `panther_analysis_tool` is available on pip!
-
-Simply install with:
+The `panther_analysis_tool` is available on pip and can be installed with the following command:
 
 ```bash
 pip3 install panther-analysis-tool
@@ -12,7 +10,7 @@ pip3 install panther-analysis-tool
 
 ## File Organization
 
-Navigate to the repository for your custom detections.
+It's best practice to create an internal fork of Panther's open source analysis repository. To get started, navigate your local checked out copy of your custom detections.
 
 We recommend grouping rules based on log type, such as `suricata` or `aws_cloudtrail`. Use the open source [Panther Analysis](https://github.com/panther-labs/panther-analysis) packs as a reference.
 
