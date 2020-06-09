@@ -68,7 +68,7 @@ func (t Glue) Sync() {
 			continue
 		}
 		logger.Infof("syncing partitions for %s", name)
-		err := table.SyncPartitions(glueClient, s3Client, startDate)
+		_, err := table.SyncPartitions(glueClient, s3Client, startDate, nil)
 		if err != nil {
 			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == glue.ErrCodeEntityNotFoundException {
 				logger.Infof("%s is not deployed, skipping", name)
