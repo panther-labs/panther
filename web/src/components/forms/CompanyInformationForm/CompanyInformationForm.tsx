@@ -37,9 +37,7 @@ interface CompanyInformationFormProps {
 
 const validationSchema = Yup.object({
   displayName: Yup.string().required(),
-  email: Yup.string()
-    .email()
-    .required(),
+  email: Yup.string().email().required(),
   errorReportingConsent: Yup.boolean().required(),
 });
 
