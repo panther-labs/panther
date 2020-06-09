@@ -17,36 +17,33 @@
  */
 
 import React from 'react';
-import useModal from 'Hooks/useModal';
-import { Button, Flex, Modal, Text } from 'pouncejs';
+import { Button, Flex, Modal, ModalProps, Text } from 'pouncejs';
 import LoadingButton from 'Components/buttons/LoadingButton';
 
-export interface OptimisticConfirmModalProps {
-  title: string;
+export interface OptimisticConfirmModalProps extends ModalProps {
   subtitle: React.ReactNode;
   onConfirm: () => void;
 }
 
 const OptimisticConfirmModal: React.FC<OptimisticConfirmModalProps> = ({
-  title,
   subtitle,
   onConfirm,
+  onClose,
+  ...rest
 }) => {
-  const { hideModal } = useModal();
-
   const handleConfirm = () => {
     onConfirm();
-    hideModal();
+    onClose();
   };
 
   return (
-    <Modal open onClose={hideModal} title={title}>
+    <Modal onClose={onClose} {...rest}>
       <Text size="large" color="grey500" mb={8} textAlign="center">
         {subtitle}
       </Text>
 
       <Flex justify="flex-end">
-        <Button size="large" variant="default" onClick={hideModal} mr={3}>
+        <Button size="large" variant="outline" onClick={onClose} mr={3}>
           Cancel
         </Button>
         <LoadingButton onClick={handleConfirm}>Confirm</LoadingButton>

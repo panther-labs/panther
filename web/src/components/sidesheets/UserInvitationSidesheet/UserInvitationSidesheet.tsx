@@ -18,7 +18,6 @@
 
 import { Box, Heading, Text, SideSheet, useSnackbar, SideSheetProps } from 'pouncejs';
 import React from 'react';
-import useSidesheet from 'Hooks/useSidesheet';
 import { extractErrorMessage } from 'Helpers/utils';
 import UserForm, { UserFormValues } from 'Components/forms/UserForm';
 import { useInviteUser } from './graphql/inviteUser.generated';
@@ -30,7 +29,6 @@ const initialValues = {
 };
 
 const UserInvitationSidesheet: React.FC<SideSheetProps> = props => {
-  const { hideSidesheet } = useSidesheet();
   const { pushSnackbar } = useSnackbar();
   const [inviteUser] = useInviteUser({
     update: (cache, { data: { inviteUser: newUser } }) => {
@@ -44,7 +42,7 @@ const UserInvitationSidesheet: React.FC<SideSheetProps> = props => {
   });
 
   const submitToServer = async (values: UserFormValues) => {
-    hideSidesheet();
+    props.onClose();
 
     await inviteUser({
       // optimistically hide the sidesheet

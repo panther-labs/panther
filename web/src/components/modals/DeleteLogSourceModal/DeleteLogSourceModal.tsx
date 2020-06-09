@@ -17,17 +17,21 @@
  */
 
 import React from 'react';
-import { Text, useSnackbar } from 'pouncejs';
+import { ModalProps, Text, useSnackbar } from 'pouncejs';
 import { LogIntegration } from 'Generated/schema';
 import { useDeleteLogSource } from './graphql/deleteLogSource.generated';
 import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
-export interface DeleteLogSourceModalProps {
+export interface DeleteLogSourceModalProps extends ModalProps {
   source: LogIntegration;
   description: string;
 }
 
-const DeleteLogSourceModal: React.FC<DeleteLogSourceModalProps> = ({ source, description }) => {
+const DeleteLogSourceModal: React.FC<DeleteLogSourceModalProps> = ({
+  source,
+  description,
+  ...rest
+}) => {
   const sourceDisplayName = source.integrationLabel;
   const { pushSnackbar } = useSnackbar();
   const [deleteLogSource] = useDeleteLogSource({
@@ -69,6 +73,7 @@ const DeleteLogSourceModal: React.FC<DeleteLogSourceModalProps> = ({ source, des
         </Text>,
       ]}
       onConfirm={deleteLogSource}
+      {...rest}
     />
   );
 };

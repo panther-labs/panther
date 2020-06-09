@@ -19,7 +19,6 @@
 import React from 'react';
 import { Alert, Heading, SideSheet, useSnackbar, Box, SideSheetProps } from 'pouncejs';
 import pick from 'lodash-es/pick';
-import useSidesheet from 'Hooks/useSidesheet';
 import { Destination, DestinationConfigInput, DestinationTypeEnum } from 'Generated/schema';
 import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm';
 import SNSDestinationForm from 'Components/forms/SnsDestinationForm';
@@ -44,15 +43,15 @@ export interface UpdateDestinationSidesheetProps extends SideSheetProps {
 
 export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProps> = ({
   destination,
+  onClose,
   ...rest
 }) => {
   const { pushSnackbar } = useSnackbar();
-  const { hideSidesheet } = useSidesheet();
 
   // If destination object exist, handleSubmit should call updateDestination and use attributes from the destination object for form initial values
   const [updateDestination, { error: updateDestinationError }] = useUpdateDestination({
     onCompleted: data => {
-      hideSidesheet();
+      onClose();
       pushSnackbar({
         variant: 'success',
         title: `Successfully updated ${data.updateDestination.displayName}`,
@@ -207,7 +206,7 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
   };
 
   return (
-    <SideSheet aria-labelledby="sidesheet-title" {...rest}>
+    <SideSheet aria-labelledby="sidesheet-title" onClose={onClose} {...rest}>
       <Box width={465}>
         <Heading size="medium" mb={8} id="sidesheet-title">
           Update {destination.outputType}

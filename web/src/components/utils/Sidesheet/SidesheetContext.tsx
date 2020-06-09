@@ -36,6 +36,8 @@ export enum SIDESHEETS {
   USER_INVITATION = 'USER_INVITATION',
 }
 
+type OmitControlledProps<T> = Omit<T, 'open' | 'onClose'>;
+
 /* The shape of the reducer state */
 interface SidesheetStateShape {
   sidesheet: keyof typeof SIDESHEETS | null;
@@ -53,7 +55,7 @@ interface AddDestinationSideSheetAction {
   type: typeof SHOW_SIDESHEET;
   payload: {
     sidesheet: SIDESHEETS.ADD_DESTINATION;
-    props: AddDestinationSidesheetProps;
+    props: OmitControlledProps<AddDestinationSidesheetProps>;
   };
 }
 
@@ -61,7 +63,7 @@ interface UpdateDestinationSideSheetAction {
   type: typeof SHOW_SIDESHEET;
   payload: {
     sidesheet: SIDESHEETS.UPDATE_DESTINATION;
-    props: UpdateDestinationSidesheetProps;
+    props: OmitControlledProps<UpdateDestinationSidesheetProps>;
   };
 }
 
@@ -74,7 +76,7 @@ interface PolicyBulkUploadSideSheetAction {
   type: typeof SHOW_SIDESHEET;
   payload: {
     sidesheet: SIDESHEETS.POLICY_BULK_UPLOAD;
-    props: PolicyBulkUploadSideSheetProps;
+    props: OmitControlledProps<PolicyBulkUploadSideSheetProps>;
   };
 }
 
@@ -89,7 +91,7 @@ interface EditUserSideSheetAction {
   type: typeof SHOW_SIDESHEET;
   payload: {
     sidesheet: SIDESHEETS.EDIT_USER;
-    props: EditUserSidesheetProps;
+    props: OmitControlledProps<EditUserSidesheetProps>;
   };
 }
 

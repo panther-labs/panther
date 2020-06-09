@@ -20,17 +20,15 @@ import { Box, Heading, SideSheet, SideSheetProps } from 'pouncejs';
 import EditProfileForm from 'Components/forms/EditProfileForm';
 import ChangePasswordForm from 'Components/forms/ChangePasswordForm';
 import React from 'react';
-import useSidesheet from 'Hooks/useSidesheet';
 
 const EditAccountSidesheet: React.FC<SideSheetProps> = props => {
-  const { hideSidesheet } = useSidesheet();
   return (
     <SideSheet {...props}>
       <Box mx={10} mb={10}>
         <Heading pt={1} pb={8} size="medium">
           Edit Profile
         </Heading>
-        <EditProfileForm onSuccess={hideSidesheet} />
+        <EditProfileForm onSuccess={props.onClose} />
       </Box>
       <Box borderTop="1px solid" borderColor="grey100" mx={10}>
         <Heading py={8} size="medium">

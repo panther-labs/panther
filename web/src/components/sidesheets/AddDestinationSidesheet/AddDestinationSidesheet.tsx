@@ -51,15 +51,16 @@ export interface AddDestinationSidesheetProps extends SideSheetProps {
 
 const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({
   destinationType,
+  onClose,
   ...rest
 }) => {
   const { pushSnackbar } = useSnackbar();
-  const { hideSidesheet, showSidesheet } = useSidesheet();
+  const { showSidesheet } = useSidesheet();
 
   // If destination object doesn't exist, handleSubmit should call addDestination to create a new destination and use default initial values
   const [addDestination, { error: addDestinationError }] = useAddDestination({
     onCompleted: data => {
-      hideSidesheet();
+      onClose();
       pushSnackbar({
         variant: 'success',
         title: `Successfully added ${data.addDestination.displayName}`,
@@ -211,7 +212,7 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({
   };
 
   return (
-    <SideSheet aria-labelledby="add-destination-title" {...rest}>
+    <SideSheet aria-labelledby="add-destination-title" onClose={onClose} {...rest}>
       <Box width={465}>
         <Flex mb={8} align="center" mt={-2}>
           <IconButton

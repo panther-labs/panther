@@ -17,21 +17,19 @@
  */
 
 import React from 'react';
-import { Modal, Text, Box, useSnackbar, Alert } from 'pouncejs';
-import useModal from 'Hooks/useModal';
+import { Modal, Text, Box, useSnackbar, Alert, ModalProps } from 'pouncejs';
 import AnalyticsConsentForm from 'Components/forms/AnalyticsConsentForm';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useUpdateGeneralSettingsConsents } from './graphql/updateGeneralSettingsConsents.generated';
 
-const AnalyticsConsentModal: React.FC = () => {
+const AnalyticsConsentModal: React.FC<ModalProps> = ({ onClose, ...rest }) => {
   const { pushSnackbar } = useSnackbar();
-  const { hideModal } = useModal();
   const [
     saveConsentPreferences,
     { error: updateGeneralPreferencesError },
   ] = useUpdateGeneralSettingsConsents({
     onCompleted: () => {
-      hideModal();
+      onClose();
       pushSnackbar({ variant: 'success', title: `Successfully updated your preferences` });
     },
     onError: error => {
@@ -45,15 +43,9 @@ const AnalyticsConsentModal: React.FC = () => {
   });
 
   return (
-    <Modal
-      open
-      disableBackdropClick
-      disableEscapeKeyDown
-      onClose={hideModal}
-      title="Help Improve Panther!"
-    >
-      <Box width={600} px={100} pb={25}>
-        <Text size="large" color="grey300" mb={8}>
+    <Modal onClose={() => {}} title="Help Improve Panther!" {...rest}>
+      <Box width={500} px={10}>
+        <Text size="medium" mb={8}>
           Opt-in to occasionally provide diagnostic information for improving reliability.
           <b> All information is anonymized.</b>
         </Text>

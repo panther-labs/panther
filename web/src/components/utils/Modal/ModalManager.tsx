@@ -30,48 +30,64 @@ import DeleteRuleModal from 'Components/modals/DeleteRuleModal';
 import NetworkErrorModal from 'Components/modals/NetworkErrorModal';
 import AnalyticsConsentModal from 'Components/modals/AnalyticsConsentModal';
 import DeleteTestModal from 'Components/modals/DeleteTestModal';
+import { SideSheetProps } from 'pouncejs';
 
 const ModalManager: React.FC = () => {
-  const { state: modalState } = useModal();
-  if (!modalState.modal) {
-    return null;
-  }
-  let Component;
+  const { state: modalState, hideModal } = useModal();
+
+  // There is a particular reason we are using a Ref here and it's for animations. For animations to
+  // be properly executed, the *same* component needs to render with `open=true` and `open=false`.
+  // When closing a sidesheet then the `sidesheetState.sidesheet` becomes `null`, but we still want
+  // to show the *previous* component  with `open=false` so it can properly be animated. That's
+  // why we need a Ref.
+  const ComponentRef = React.useRef<React.FC<SideSheetProps>>(null);
+
   switch (modalState.modal) {
     case MODALS.DELETE_COMPLIANCE_SOURCE:
-      Component = DeleteComplianceSourceModal;
+      ComponentRef.current = DeleteComplianceSourceModal;
       break;
     case MODALS.DELETE_LOG_SOURCE:
-      Component = DeleteLogSourceModal;
+      ComponentRef.current = DeleteLogSourceModal;
       break;
     case MODALS.DELETE_USER:
-      Component = DeleteUserModal;
+      ComponentRef.current = DeleteUserModal;
       break;
     case MODALS.RESET_USER_PASS:
-      Component = ResetUserPasswordModal;
+      ComponentRef.current = ResetUserPasswordModal;
       break;
     case MODALS.DELETE_RULE:
-      Component = DeleteRuleModal;
+      ComponentRef.current = DeleteRuleModal;
       break;
     case MODALS.DELETE_DESTINATION:
-      Component = DeleteDestinationModal;
+      ComponentRef.current = DeleteDestinationModal;
       break;
     case MODALS.NETWORK_ERROR:
-      Component = NetworkErrorModal;
+      ComponentRef.current = NetworkErrorModal;
       break;
     case MODALS.ANALYTICS_CONSENT:
-      Component = AnalyticsConsentModal;
+      ComponentRef.current = AnalyticsConsentModal;
       break;
     case MODALS.DELETE_TEST:
-      Component = DeleteTestModal;
+      ComponentRef.current = DeleteTestModal;
       break;
     case MODALS.DELETE_POLICY:
+      ComponentRef.current = DeletePolicyModal;
+      break;
     default:
-      Component = DeletePolicyModal;
       break;
   }
 
-  return <Component {...modalState.props} />;
+  if (!ComponentRef.current) {
+    return null;
+  }
+
+  return (
+    <ComponentRef.current
+      {...modalState.props}
+      open={Boolean(modalState.modal)}
+      onClose={hideModal}
+    />
+  );
 };
 
 export default ModalManager;

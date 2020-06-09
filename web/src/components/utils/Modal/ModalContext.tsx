@@ -43,6 +43,8 @@ export enum MODALS {
   ANALYTICS_CONSENT = 'ANALYTICS_CONSENT',
 }
 
+type OmitControlledProps<T> = Omit<T, 'open' | 'onClose'>;
+
 /* The shape of the reducer state */
 interface ModalStateShape {
   modal: keyof typeof MODALS | null;
@@ -54,7 +56,7 @@ interface ShowPolicyModalAction {
   type: typeof SHOW_MODAL;
   payload: {
     modal: MODALS.DELETE_POLICY;
-    props: DeletePolicyModalProps;
+    props: OmitControlledProps<DeletePolicyModalProps>;
   };
 }
 
@@ -68,7 +70,7 @@ interface ShowDeleteUserModalAction {
   type: typeof SHOW_MODAL;
   payload: {
     modal: MODALS.DELETE_USER;
-    props: DeleteUserModalProps;
+    props: OmitControlledProps<DeleteUserModalProps>;
   };
 }
 
@@ -77,7 +79,7 @@ interface ShowResetUserPasswordModalAction {
   type: typeof SHOW_MODAL;
   payload: {
     modal: MODALS.RESET_USER_PASS;
-    props: ResetUserPasswordProps;
+    props: OmitControlledProps<ResetUserPasswordProps>;
   };
 }
 
@@ -86,7 +88,7 @@ interface ShowDeleteTestModalAction {
   type: typeof SHOW_MODAL;
   payload: {
     modal: MODALS.DELETE_TEST;
-    props: DeleteTestModalProps;
+    props: OmitControlledProps<DeleteTestModalProps>;
   };
 }
 
@@ -95,7 +97,7 @@ interface ShowDeleteComplianceSourceModalAction {
   type: typeof SHOW_MODAL;
   payload: {
     modal: MODALS.DELETE_COMPLIANCE_SOURCE;
-    props: DeleteComplianceSourceModalProps;
+    props: OmitControlledProps<DeleteComplianceSourceModalProps>;
   };
 }
 
@@ -104,7 +106,7 @@ interface ShowDeleteLogSourceModalAction {
   type: typeof SHOW_MODAL;
   payload: {
     modal: MODALS.DELETE_LOG_SOURCE;
-    props: DeleteLogSourceModalProps;
+    props: OmitControlledProps<DeleteLogSourceModalProps>;
   };
 }
 
@@ -113,7 +115,7 @@ interface ShowDeleteRuleModalAction {
   type: typeof SHOW_MODAL;
   payload: {
     modal: MODALS.DELETE_RULE;
-    props: DeleteRuleModalProps;
+    props: OmitControlledProps<DeleteRuleModalProps>;
   };
 }
 
@@ -122,7 +124,7 @@ interface ShowDeleteDestinationModalAction {
   type: typeof SHOW_MODAL;
   payload: {
     modal: MODALS.DELETE_DESTINATION;
-    props: DeleteDestinationModalProps;
+    props: OmitControlledProps<DeleteDestinationModalProps>;
   };
 }
 

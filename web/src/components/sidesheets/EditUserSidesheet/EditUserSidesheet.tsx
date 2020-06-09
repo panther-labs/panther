@@ -29,9 +29,8 @@ export interface EditUserSidesheetProps extends SideSheetProps {
   user: User;
 }
 
-const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user, ...rest }) => {
+const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user, onClose, ...rest }) => {
   const { pushSnackbar } = useSnackbar();
-  const { hideSidesheet } = useSidesheet();
   const { refetchUserInfo, userInfo } = useAuth();
   const [editUser] = useEditUser({
     onError: error => pushSnackbar({ variant: 'error', title: extractErrorMessage(error) }),
@@ -52,7 +51,7 @@ const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user, ...rest }) 
 
   const submitToServer = async (values: UserFormValues) => {
     // optimistically hide the sidesheet
-    hideSidesheet();
+    onClose();
 
     await editUser({
       optimisticResponse: () => ({
@@ -74,7 +73,7 @@ const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user, ...rest }) 
   };
 
   return (
-    <SideSheet aria-labelledby="sidesheet-title" {...rest}>
+    <SideSheet aria-labelledby="sidesheet-title" onClose={onClose} {...rest}>
       <Box width={425} m="auto">
         <Heading pt={1} pb={8} size="medium" id="sidesheet-title">
           Edit Profile

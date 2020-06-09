@@ -32,17 +32,20 @@ export interface PolicyBulkUploadSideSheetProps extends SideSheetProps {
   type: 'policy' | 'rule';
 }
 
-const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({ type, ...rest }) => {
+const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({
+  type,
+  onClose,
+  ...rest
+}) => {
   // We don't want to expose a file-input to the user, thus we are gonna create a hidden one and
   // map the clicks of a button to the hidden input (as if the user had clicked the hidden input).
   // To do that we need a reference to it
   const isPolicy = type === 'policy';
   const inputRef = React.useRef<HTMLInputElement>(null);
   const { pushSnackbar } = useSnackbar();
-  const { hideSidesheet } = useSidesheet();
   const [bulkUploadPolicies, { loading, error: uploadPoliciesError }] = useUploadPolicies({
     onCompleted: data => {
-      hideSidesheet();
+      onClose();
       pushSnackbar({
         variant: 'success',
         title: `Successfully uploaded ${
@@ -99,7 +102,12 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({ t
   };
 
   return (
-    <SideSheet aria-labelledby="sidesheet-title" aria-describedby="sidesheet-description" {...rest}>
+    <SideSheet
+      aria-labelledby="sidesheet-title"
+      aria-describedby="sidesheet-description"
+      onClose={onClose}
+      {...rest}
+    >
       <Box width={400}>
         <Heading size="medium" mb={8} id="sidesheet-title">
           Upload {isPolicy ? 'Policies' : 'Rules'}

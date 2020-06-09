@@ -20,6 +20,7 @@
 import React from 'react';
 import useSidesheet from 'Hooks/useSidesheet';
 import { SIDESHEETS } from 'Components/utils/Sidesheet';
+import { SideSheetProps } from 'pouncejs';
 import PolicyBulkUploadSidesheet from 'Components/sidesheets/PolicyBulkUploadSidesheet';
 import SelectDestinationSidesheet from 'Components/sidesheets/SelectDestinationSidesheet';
 import AddDestinationSidesheet from 'Components/sidesheets/AddDestinationSidesheet';
@@ -31,35 +32,45 @@ import UserInvitationSidesheet from 'Components/sidesheets/UserInvitationSideshe
 const SidesheetManager: React.FC = () => {
   const { state: sidesheetState, hideSidesheet } = useSidesheet();
 
-  let Component;
+  // There is a particular reason we are using a Ref here and it's for animations. For animations to
+  // be properly executed, the *same* component needs to render with `open=true` and `open=false`.
+  // When closing a sidesheet then the `sidesheetState.sidesheet` becomes `null`, but we still want
+  // to show the *previous* component  with `open=false` so it can properly be animated. That's
+  // why we need a Ref.
+  const ComponentRef = React.useRef<React.FC<SideSheetProps>>(null);
+
   switch (sidesheetState.sidesheet) {
     case SIDESHEETS.ADD_DESTINATION:
-      Component = AddDestinationSidesheet;
+      ComponentRef.current = AddDestinationSidesheet;
       break;
     case SIDESHEETS.UPDATE_DESTINATION:
-      Component = UpdateDestinationSidesheet;
+      ComponentRef.current = UpdateDestinationSidesheet;
       break;
     case SIDESHEETS.SELECT_DESTINATION:
-      Component = SelectDestinationSidesheet;
+      ComponentRef.current = SelectDestinationSidesheet;
       break;
     case SIDESHEETS.POLICY_BULK_UPLOAD:
-      Component = PolicyBulkUploadSidesheet;
+      ComponentRef.current = PolicyBulkUploadSidesheet;
       break;
     case SIDESHEETS.EDIT_ACCOUNT:
-      Component = EditAccountSidesheet;
+      ComponentRef.current = EditAccountSidesheet;
       break;
     case SIDESHEETS.EDIT_USER:
-      Component = EditUserSidesheet;
+      ComponentRef.current = EditUserSidesheet;
       break;
     case SIDESHEETS.USER_INVITATION:
-      Component = UserInvitationSidesheet;
+      ComponentRef.current = UserInvitationSidesheet;
       break;
     default:
       break;
   }
 
+  if (!ComponentRef.current) {
+    return null;
+  }
+
   return (
-    <Component
+    <ComponentRef.current
       {...sidesheetState.props}
       open={Boolean(sidesheetState.sidesheet)}
       onClose={hideSidesheet}

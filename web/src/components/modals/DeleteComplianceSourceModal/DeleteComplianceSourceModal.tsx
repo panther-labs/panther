@@ -17,16 +17,16 @@
  */
 
 import React from 'react';
-import { Text, useSnackbar } from 'pouncejs';
+import {ModalProps, Text, useSnackbar} from 'pouncejs';
 import { ComplianceIntegration } from 'Generated/schema';
 import { useDeleteComplianceSource } from './graphql/deleteComplianceSource.generated';
 import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
-export interface DeleteComplianceSourceModalProps {
+export interface DeleteComplianceSourceModalProps extends ModalProps {
   source: ComplianceIntegration;
 }
 
-const DeleteSourceModal: React.FC<DeleteComplianceSourceModalProps> = ({ source }) => {
+const DeleteSourceModal: React.FC<DeleteComplianceSourceModalProps> = ({ source, ...rest }) => {
   const sourceDisplayName = source.integrationLabel;
   const { pushSnackbar } = useSnackbar();
   const [deleteComplianceSource] = useDeleteComplianceSource({
@@ -71,6 +71,7 @@ const DeleteSourceModal: React.FC<DeleteComplianceSourceModalProps> = ({ source 
         </Text>,
       ]}
       onConfirm={deleteComplianceSource}
+      {...rest}
     />
   );
 };

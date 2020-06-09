@@ -92,8 +92,8 @@ const SignInPage: React.FC = () => {
       );
     default:
       return (
-        <AuthPageContainer banner={Banner}>
-          <FadeIn delay={100}>
+        <FadeIn delay={100}>
+          <AuthPageContainer banner={Banner}>
             <AuthPageContainer.Caption title="Sign in" subtitle="to continue to Panther" />
             <SignInForm />
             <Flex justify="center" mt={6}>
@@ -101,11 +101,11 @@ const SignInPage: React.FC = () => {
                 Forgot your password?
               </Link>
             </Flex>
-          </FadeIn>
-          <AuthPageContainer.AltOptions>
-            <Flex align="center">Don{"'"}t have an account? Talk to your admin</Flex>
-          </AuthPageContainer.AltOptions>
-        </AuthPageContainer>
+            <AuthPageContainer.AltOptions>
+              <Flex align="center">Don{"'"}t have an account? Talk to your admin</Flex>
+            </AuthPageContainer.AltOptions>
+          </AuthPageContainer>
+        </FadeIn>
       );
   }
 };

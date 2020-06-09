@@ -17,31 +17,30 @@
  */
 
 import React from 'react';
-import { Modal, Text, Flex, Button } from 'pouncejs';
+import { Modal, Text, Flex, Button, ModalProps } from 'pouncejs';
 import LoadingButton from 'Components/buttons/LoadingButton';
 
-export interface ConfirmModalProps {
+export interface ConfirmModalProps extends ModalProps {
   title: string;
   subtitle: React.ReactNode;
   loading: boolean;
   onConfirm: () => void;
-  onClose: () => void;
 }
 
 const ConfirmModal: React.FC<ConfirmModalProps> = ({
-  title,
   subtitle,
   loading,
   onConfirm,
   onClose,
+  ...rest
 }) => {
   return (
-    <Modal open onClose={onClose} title={title}>
+    <Modal onClose={onClose} {...rest}>
       <Text size="large" color="grey500" mb={8} textAlign="center">
         {subtitle}
       </Text>
       <Flex justify="flex-end">
-        <Button size="large" variant="default" onClick={onClose} mr={3}>
+        <Button size="large" variant="outline" onClick={onClose} mr={3}>
           Cancel
         </Button>
         <LoadingButton onClick={onConfirm} loading={loading} disabled={loading}>
