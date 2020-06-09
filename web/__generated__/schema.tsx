@@ -165,8 +165,12 @@ export enum ComplianceStatusEnum {
   Pass = 'PASS',
 }
 
-export type DeleteGlobalPythonModuleInput = {
+export type DeleteGlobalInputItem = {
   id: Scalars['ID'];
+};
+
+export type DeleteGlobalPythonModuleInput = {
+  globals?: Maybe<Array<DeleteGlobalInputItem>>;
 };
 
 export type DeletePolicyInput = {
@@ -1277,6 +1281,7 @@ export type ResolversTypes = {
   DeleteRuleInput: DeleteRuleInput;
   DeleteRuleInputItem: DeleteRuleInputItem;
   DeleteGlobalPythonModuleInput: DeleteGlobalPythonModuleInput;
+  DeleteGlobalInputItem: DeleteGlobalInputItem;
   InviteUserInput: InviteUserInput;
   RemediateResourceInput: RemediateResourceInput;
   SuppressPoliciesInput: SuppressPoliciesInput;
@@ -1397,6 +1402,7 @@ export type ResolversParentTypes = {
   DeleteRuleInput: DeleteRuleInput;
   DeleteRuleInputItem: DeleteRuleInputItem;
   DeleteGlobalPythonModuleInput: DeleteGlobalPythonModuleInput;
+  DeleteGlobalInputItem: DeleteGlobalInputItem;
   InviteUserInput: InviteUserInput;
   RemediateResourceInput: RemediateResourceInput;
   SuppressPoliciesInput: SuppressPoliciesInput;

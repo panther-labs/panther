@@ -30,6 +30,7 @@ import DeleteRuleModal from 'Components/modals/DeleteRuleModal';
 import NetworkErrorModal from 'Components/modals/NetworkErrorModal';
 import AnalyticsConsentModal from 'Components/modals/AnalyticsConsentModal';
 import DeleteTestModal from 'Components/modals/DeleteTestModal';
+import DeleteGlobalModal from 'Components/modals/DeleteGlobalModal';
 
 const ModalManager: React.FC = () => {
   const { state: modalState } = useModal();
@@ -64,6 +65,9 @@ const ModalManager: React.FC = () => {
       break;
     case MODALS.DELETE_TEST:
       Component = DeleteTestModal;
+      break;
+    case MODALS.DELETE_GLOBAL:
+      Component = DeleteGlobalModal;
       break;
     case MODALS.DELETE_POLICY:
     default:

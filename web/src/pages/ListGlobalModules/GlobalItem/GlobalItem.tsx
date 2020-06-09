@@ -65,8 +65,8 @@ const GlobalItem: React.FC<GlobalItemProps> = ({ global }) => {
           <Dropdown.Item
             onSelect={() =>
               showModal({
-                modal: MODALS.DELETE_POLICY,
-                props: { policy: { id: global.id } },
+                modal: MODALS.DELETE_GLOBAL,
+                props: { global },
               })
             }
           >
