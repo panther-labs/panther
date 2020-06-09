@@ -69,7 +69,7 @@ func (client *OutputClient) CustomWebhook(
 // if they have `null` fields. However, we need to ensure there are no `null` arrays or
 // objects.
 type CustomWebhookOutputMessage struct {
-	// [REQUIRED] Either AlertID or PolicyID depending on the alert type
+	// [REQUIRED] The PolicyID
 	AnalysisID *string `json:"analysisId" validate:"required"`
 
 	// An AlertID that was triggered by a Rule (or in the future, a Policy)
