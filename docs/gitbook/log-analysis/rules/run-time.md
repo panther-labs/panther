@@ -1,6 +1,6 @@
 # Runtime Libraries
 
-Python provides high flexibility in defining your rules, and the following libraries are available to be used in Panther's runtime environment:
+The following libraries are available to be used in Panther's analysis environment:
 
 | Package          | Version   | Description                 | License   |
 | :--------------- | :-------- | :-------------------------- | :-------- |
@@ -23,3 +23,7 @@ Alternatively, you can override the runtime libraries by attaching a Lambda laye
 BackendParameterValues:
   PythonLayerVersionArn: 'arn:aws:lambda:us-east-2:123456789012:layer:my-layer:3'
 ```
+
+{% hint style="info" %}
+For Panther Cloud customers, file a support ticket to have a custom layer or set of libraries applied
+{% endhint %}

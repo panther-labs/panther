@@ -90,6 +90,10 @@ Make sure to configure your environment with valid AWS credentials prior to runn
 panther_analysis_tool upload --path <path-to-your-rules> --out tmp
 ```
 
-{% hint style="info" %}
+{% hint style="warning" %}
 Rules with the same ID are overwritten. Locally deleted rules will not automatically delete in the rule database and must be removed manually.
+{% endhint %}
+
+{% hint style="info" %}
+For Panther Cloud customers, file a support ticket to gain upload access to your Panther environment.
 {% endhint %}

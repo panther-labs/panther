@@ -1,10 +1,10 @@
 # Datastore
 
-Panther allows rules to cache simple values in a database during rules analysis with built-in helper functions.
+Rules can cache simple values in the `panther-kv-store` during analysis with built-in helper functions.
 
 ## Imports
 
-The first step in using the Panther Datastore is by importing the open source helpers:
+The first step is to import the open source helpers library:
 
 ```python
 import panther_oss_helpers
@@ -18,14 +18,14 @@ from panther_oss_helpers import increment_counter
 
 ## Counters
 
-To implement a simple counting rule, use one or more of the following functions:
+To implement a counter-based rule, use one or more of the following functions:
 
 - `get_counter`: Get the latest counter value
 - `increment_counter`: Add to the counter (default of 1)
 - `reset_counter`: Reset the counter to 0
 - `set_key_expiration`: Set the lifetime of the counter
 
-The example rule below provides a demonstration of using counters.
+The rule below provides a demonstration of using counters.
 
 ```python
 from panther_oss_helpers import increment_counter, set_key_expiration, reset_counter
@@ -87,6 +87,6 @@ def rule(event):
 
 ## Testing
 
-{% hint style="warn" %}
+{% hint style="warning" %}
 Currently, CLI testing does not support mocking function calls.
 {% endhint %}

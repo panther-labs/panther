@@ -2,10 +2,12 @@
 
 Panther's log processing applies normalization fields (IPs, domains, etc) to all log records. These fields provide standard names for attributes across all data sources enabling fast and easy data correlation.
 
-For example, each data source has a time that an event occurred, but each data source will likely not name the attribute the same, nor is it guaranteed that the associated time has a timezone consistent with other data sources. The Panther attribute `p_event_time` is mapped to each data source's corresponding event time and normalized to UTC. This way you can query over multiple data sources joining and ordering by `p_event_time` to properly align and correlate the data despite the disparate schemas of each data source.
+For example, each data source has a time that an event occurred, but each data source will likely not name the attribute the same, nor is it guaranteed that the associated time has a timezone consistent with other data sources.
+
+The Panther attribute `p_event_time` is mapped to each data source's corresponding event time and normalized to UTC. This way you can query over multiple data sources joining and ordering by `p_event_time` to properly align and correlate the data despite the disparate schemas of each data source.
 
 {% hint style="info" %}
-All appended standard fields begin with `p_`.
+All appended standard fields begin with `p_`
 {% endhint %}
 
 ## Required Fields
@@ -31,7 +33,7 @@ Notice that the relationship of the indicator is not a concern initially, simply
 
 To allow this question to be answered over all data sources the "any" fields below are appended to rows of data as appropriate.
 
-The `all_logs` Athena view is provided over all data sources to make queries easy for users to find activity for an indicator in a single query.
+The `all_logs` view is provided over all data sources to make queries easy for users to find activity for an indicator in a single query.
 
 | Field Name               | Type             | Description                                                    |
 | ------------------------ | ---------------- | -------------------------------------------------------------- |
@@ -51,13 +53,13 @@ The `all_logs` Athena view is provided over all data sources to make queries eas
 | `p_rule_tags`            | `array[string]`  | List of user defined rule tags related to row.                 |
 
 
-## The "all_logs" Athena View
+## The "all_logs" View
 
-Panther manages an Athena view over all data sources with standard fields.
+Panther manages a view over all data sources with standard fields.
 
-This allows you to ask questions like "Was there _any_ activity from some-bad-ip and if so where?".
+This allows you to ask questions such as "was there _any_ activity from some-bad-ip and if so where?".
 
-For example this will show how many records by log type that was associated with IP address `95.123.145.92`:
+The query below will show how many records (by log type) are associated with IP address `95.123.145.92`:
 
 ```sql
 SELECT
@@ -67,7 +69,7 @@ WHERE year=2020 AND month=1 AND day=31 AND contains(p_any_ip_addresses, '95.123.
 GROUP BY p_log_type
 ```
 
-From this information you can then explore the particular logs where activity is indicated.
+From these results, you can pivot to the specific logs where activity is indicated.
 
 ## Standard Fields in Rules
 
