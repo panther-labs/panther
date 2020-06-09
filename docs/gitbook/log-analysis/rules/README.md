@@ -1,6 +1,6 @@
 # Rules
 
-Panther enables simple aggregation, normalization, analysis, and storage of security logs. **Rules** are Python3 functions used to identify suspicious activity and generate alerts for your team to triage.
+Panther **Rules** are Python3 functions used to identify suspicious activity and generate helpful signal for your team.
 
 ## Rule Components
 
@@ -10,29 +10,23 @@ Panther enables simple aggregation, normalization, analysis, and storage of secu
 - Metadata containing context for triage
 - An association with specific log type(s)
 
-As an example, the rule below checks if unauthenticated access occurred on an S3 bucket:
+The example rule below validates if unauthenticated access occurred on an S3 bucket:
 
 ```python
-# A set of S3 buckets all access should be authenticated
-AUTH_BUCKETS = {'my-super-secret-data'}
-
-
 def rule(event):
-    if event.get('bucket') not in AUTH_BUCKETS:
-        return False
-
-    return 'requester' not in event
-
+  if event.get('bucket') not in {'my-super-secret-data'}:
+    return False
+  return 'requester' not in event
 
 def dedup(event):
-    return event.get('bucket')
-
+  return event.get('bucket')
 
 def title(event):
-    return 'Unauthenticated Access to S3 Bucket  {}'.format(event.get('bucket'))
+  return 'Unauthenticated Access to S3 Bucket  {}'.format(event.get('bucket'))
 ```
 
-- This rule will group alerts by the bucket name
+- This rule applies to the [S3 Server Access Logs](log-analysis/supported-logs/aws#aws-s-3-serveraccess) schema
+- This rule group alerts by the bucket name
 - Alerts will have a title such as `Unauthenticated Access to S3 Bucket my-super-secret-data`
 
 ## Rule Packs
@@ -45,8 +39,8 @@ By default, rules are pre-installed from Panther's [open-source packs](https://g
 - Osquery CIS
 - Osquery Samples
 
-{% hint style="info" %}
-For Enterprise customers, additional packs are provided around MITRE ATT&CK, Cisco Umbrella, GCP Audit, and more.
+{% hint style="success" %}
+For Enterprise customers, additional packs are provided for MITRE ATT&CK, Cisco Umbrella, GCP Audit, and more.
 {% endhint %}
 
 ## Workflow
