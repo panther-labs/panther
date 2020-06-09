@@ -1,4 +1,4 @@
-package parsers
+package logtypes
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -27,40 +27,106 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
-// Default registry for pantherlog package
-var defaultRegistry = &Registry{}
-
-// DefaultRegistry returns the default package wide registry for log types
-func DefaultRegistry() *Registry {
-	return defaultRegistry
+// Registry is a collection of log type entries.
+// It is safe to use a registry from multiple goroutines.
+type Registry struct {
+	mu      sync.RWMutex
+	entries map[string]Entry
 }
 
-// Register registers log type entries to the package wide registry returning the first error it encounters
-func Register(entries ...LogTypeConfig) error {
-	for _, entry := range entries {
-		if _, err := defaultRegistry.Register(entry); err != nil {
-			return err
+// MustGet gets a registered LogTypeConfig or panics
+func (r *Registry) MustGet(name string) Entry {
+	if entry := r.Get(name); entry != nil {
+		return entry
+	}
+	panic(errors.Errorf("unregistered log type %q", name))
+}
+
+// Get returns finds an LogTypeConfig entry in a registry.
+// The returned pointer should be used as a *read-only* share of the LogTypeConfig.
+func (r *Registry) Get(name string) Entry {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.entries[name]
+}
+
+// Entries returns EventType entries in a registry.
+// If no names are provided all entries are returned.
+func (r *Registry) Entries(names ...string) []Entry {
+	if names == nil {
+		names = r.LogTypes()
+	}
+	m := make([]Entry, 0, len(names))
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	for _, name := range names {
+		if entry := r.entries[name]; entry != nil {
+			m = append(m, entry)
 		}
 	}
-	return nil
+	return m
 }
 
-// Register registers log type entries to the package wide registry panicking if an error occurs
-func MustRegister(entries ...LogTypeConfig) {
-	for _, entry := range entries {
-		// nolint:errcheck
-		DefaultRegistry().MustRegister(entry)
+// LogTypes returns all available log types in a registry
+func (r *Registry) LogTypes() (logTypes []string) {
+	const minLogTypesSize = 32
+	logTypes = make([]string, 0, minLogTypesSize)
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	for logType := range r.entries {
+		logTypes = append(logTypes, logType)
 	}
+	return
+}
+
+func (r *Registry) Del(entry Entry) bool {
+	if entry == nil {
+		return false
+	}
+	name := entry.Describe().Name
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if e, ok := r.entries[name]; ok && e == entry {
+		delete(r.entries, name)
+		return true
+	}
+	return false
+}
+
+func (r *Registry) Register(config Config) (Entry, error) {
+	if err := config.Validate(); err != nil {
+		return nil, err
+	}
+	newEntry := newLogEventType(config.Describe(), config.Schema, config.NewParser)
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if oldEntry, duplicate := r.entries[newEntry.Name]; duplicate {
+		return oldEntry, errors.Errorf("duplicate log type config %q", newEntry.Name)
+	}
+	if r.entries == nil {
+		r.entries = make(map[string]Entry)
+	}
+	r.entries[newEntry.Name] = newEntry
+	return newEntry, nil
+}
+
+func (r *Registry) MustRegister(config Config) Entry {
+	entry, err := r.Register(config)
+	if err != nil {
+		panic(err)
+	}
+	return entry
 }
 
 // LogTypeEntry describes a registered log event type.
 // It provides a method to create a new parser and a schema struct to derive tables from.
 // Entries can be grouped in a `Registry` to have an index of available log types.
-type LogTypeEntry interface {
-	Describe() LogTypeDesc
-	NewParser(params interface{}) Interface
+type Entry interface {
+	Describe() Desc
+	NewParser(params interface{}) parsers.Interface
 	Schema() interface{}
 	GlueTableMeta() *awsglue.GlueTableMetadata
 }
@@ -68,16 +134,16 @@ type LogTypeEntry interface {
 // LogTypeConfig describes a log event type in a declarative way.
 // To convert to a LogTypeEntry instance it must be registered.
 // The LogTypeConfig/LogTypeEntry separation enforces mutability rules for registered log event types.
-type LogTypeConfig struct {
+type Config struct {
 	Name         string
 	Description  string
 	ReferenceURL string
 	Schema       interface{}
-	NewParser    Factory
+	NewParser    parsers.Factory
 }
 
-func (config *LogTypeConfig) Describe() LogTypeDesc {
-	return LogTypeDesc{
+func (config *Config) Describe() Desc {
+	return Desc{
 		Name:         config.Name,
 		Description:  config.Description,
 		ReferenceURL: config.ReferenceURL,
@@ -85,7 +151,7 @@ func (config *LogTypeConfig) Describe() LogTypeDesc {
 }
 
 // Validate verifies a log type is valid
-func (config *LogTypeConfig) Validate() error {
+func (config *Config) Validate() error {
 	if config == nil {
 		return errors.Errorf("nil log event type config")
 	}
@@ -100,13 +166,13 @@ func (config *LogTypeConfig) Validate() error {
 }
 
 // LogTypeDesc describes an registered log type.
-type LogTypeDesc struct {
+type Desc struct {
 	Name         string
 	Description  string
 	ReferenceURL string
 }
 
-func (desc *LogTypeDesc) Validate() error {
+func (desc *Desc) Validate() error {
 	if desc.Name == "" {
 		return errors.Errorf("missing entry log type")
 	}
@@ -130,115 +196,24 @@ func (desc *LogTypeDesc) Validate() error {
 	return nil
 }
 
-// Registry is a collection of log type entries.
-// It is safe to use a registry from multiple goroutines.
-type Registry struct {
-	mu      sync.RWMutex
-	entries map[string]LogTypeEntry
-}
-
-// MustGet gets a registered LogTypeConfig or panics
-func (r *Registry) MustGet(name string) LogTypeEntry {
-	if logType := r.Get(name); logType != nil {
-		return logType
-	}
-	panic(errors.Errorf("unregistered log type %q", name))
-}
-
-// Get returns finds an LogTypeConfig entry in a registry.
-// The returned pointer should be used as a *read-only* share of the LogTypeConfig.
-func (r *Registry) Get(name string) LogTypeEntry {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	return r.entries[name]
-}
-
-// Entries returns EventType entries in a registry.
-// If no names are provided all entries are returned.
-func (r *Registry) Entries(names ...string) []LogTypeEntry {
-	if names == nil {
-		names = r.LogTypes()
-	}
-	m := make([]LogTypeEntry, 0, len(names))
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	for _, name := range names {
-		if entry := r.entries[name]; entry != nil {
-			m = append(m, entry)
-		}
-	}
-	return m
-}
-
-// LogTypes returns all available log types in a registry
-func (r *Registry) LogTypes() (logTypes []string) {
-	const minLogTypesSize = 32
-	logTypes = make([]string, 0, minLogTypesSize)
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	for logType := range r.entries {
-		logTypes = append(logTypes, logType)
-	}
-	return
-}
-
-func (r *Registry) Del(entry LogTypeEntry) bool {
-	if entry == nil {
-		return false
-	}
-	name := entry.Describe().Name
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	if e, ok := r.entries[name]; ok && e == entry {
-		delete(r.entries, name)
-		return true
-	}
-	return false
-}
-
-func (r *Registry) Register(config LogTypeConfig) (LogTypeEntry, error) {
-	if err := config.Validate(); err != nil {
-		return nil, err
-	}
-	newEntry := newLogEventType(config.Describe(), config.Schema, config.NewParser)
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	if oldEntry, duplicate := r.entries[newEntry.Name]; duplicate {
-		return oldEntry, errors.Errorf("duplicate log type config %q", newEntry.Name)
-	}
-	if r.entries == nil {
-		r.entries = make(map[string]LogTypeEntry)
-	}
-	r.entries[newEntry.Name] = newEntry
-	return newEntry, nil
-}
-
-func (r *Registry) MustRegister(config LogTypeConfig) LogTypeEntry {
-	entry, err := r.Register(config)
-	if err != nil {
-		panic(err)
-	}
-	return entry
-}
-
 type logEventType struct {
-	LogTypeDesc
+	Desc
 	schema        interface{}
-	newParser     Factory
+	newParser     parsers.Factory
 	glueTableMeta *awsglue.GlueTableMetadata
 }
 
-func newLogEventType(desc LogTypeDesc, schema interface{}, fac Factory) *logEventType {
+func newLogEventType(desc Desc, schema interface{}, fac parsers.Factory) *logEventType {
 	return &logEventType{
-		LogTypeDesc:   desc,
+		Desc:          desc,
 		schema:        schema,
 		newParser:     fac,
 		glueTableMeta: awsglue.NewGlueTableMetadata(models.LogData, desc.Name, desc.Description, awsglue.GlueTableHourly, schema),
 	}
 }
 
-func (e *logEventType) Describe() LogTypeDesc {
-	return e.LogTypeDesc
+func (e *logEventType) Describe() Desc {
+	return e.Desc
 }
 func (e *logEventType) Schema() interface{} {
 	return e.schema
@@ -249,7 +224,7 @@ func (e *logEventType) GlueTableMeta() *awsglue.GlueTableMetadata {
 }
 
 // Parser returns a new LogParser instance for this log type
-func (e *logEventType) NewParser(params interface{}) Interface {
+func (e *logEventType) NewParser(params interface{}) parsers.Interface {
 	return e.newParser(params)
 }
 

@@ -27,7 +27,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -63,10 +62,6 @@ type PantherLog struct {
 
 type PantherAnyString struct { // needed to declare as struct (rather than map) for CF generation
 	set map[string]struct{} // map is used for uniqueness, serializes as JSON list
-}
-
-func init() {
-	awsglue.RegisterMapping(PantherAnyString{}, awsglue.GlueStringArrayType)
 }
 
 func NewPantherAnyString() *PantherAnyString {

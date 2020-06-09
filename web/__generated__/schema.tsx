@@ -391,8 +391,10 @@ export type ListPoliciesInput = {
   resourceTypes?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
   tags?: Maybe<Scalars['String']>;
+  /** Sorting */
   sortBy?: Maybe<ListPoliciesSortFieldsEnum>;
   sortDir?: Maybe<SortDirEnum>;
+  /** Paging */
   pageSize?: Maybe<Scalars['Int']>;
   page?: Maybe<Scalars['Int']>;
 };
@@ -418,8 +420,10 @@ export type ListResourcesInput = {
   idContains?: Maybe<Scalars['String']>;
   integrationId?: Maybe<Scalars['ID']>;
   types?: Maybe<Scalars['String']>;
+  /** Sorting */
   sortBy?: Maybe<ListResourcesSortFieldsEnum>;
   sortDir?: Maybe<SortDirEnum>;
+  /** Paging */
   pageSize?: Maybe<Scalars['Int']>;
   page?: Maybe<Scalars['Int']>;
 };
@@ -443,8 +447,10 @@ export type ListRulesInput = {
   logTypes?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
   tags?: Maybe<Scalars['String']>;
+  /** Sorting */
   sortBy?: Maybe<ListRulesSortFieldsEnum>;
   sortDir?: Maybe<SortDirEnum>;
+  /** Paging */
   pageSize?: Maybe<Scalars['Int']>;
   page?: Maybe<Scalars['Int']>;
 };
@@ -660,6 +666,7 @@ export type PoliciesForResourceInput = {
   severity?: Maybe<SeverityEnum>;
   status?: Maybe<ComplianceStatusEnum>;
   suppressed?: Maybe<Scalars['Boolean']>;
+  /** Paging */
   pageSize?: Maybe<Scalars['Int']>;
   page?: Maybe<Scalars['Int']>;
 };
@@ -840,6 +847,7 @@ export type ResourcesForPolicyInput = {
   policyId?: Maybe<Scalars['ID']>;
   status?: Maybe<ComplianceStatusEnum>;
   suppressed?: Maybe<Scalars['Boolean']>;
+  /** Paging */
   pageSize?: Maybe<Scalars['Int']>;
   page?: Maybe<Scalars['Int']>;
 };
@@ -1067,18 +1075,11 @@ export type User = {
 
 export type ResolverTypeWrapper<T> = Promise<T> | T;
 
-export type LegacyStitchingResolver<TResult, TParent, TContext, TArgs> = {
+export type StitchingResolver<TResult, TParent, TContext, TArgs> = {
   fragment: string;
   resolve: ResolverFn<TResult, TParent, TContext, TArgs>;
 };
 
-export type NewStitchingResolver<TResult, TParent, TContext, TArgs> = {
-  selectionSet: string;
-  resolve: ResolverFn<TResult, TParent, TContext, TArgs>;
-};
-export type StitchingResolver<TResult, TParent, TContext, TArgs> =
-  | LegacyStitchingResolver<TResult, TParent, TContext, TArgs>
-  | NewStitchingResolver<TResult, TParent, TContext, TArgs>;
 export type Resolver<TResult, TParent = {}, TContext = {}, TArgs = {}> =
   | ResolverFn<TResult, TParent, TContext, TArgs>
   | StitchingResolver<TResult, TParent, TContext, TArgs>;
@@ -1140,7 +1141,7 @@ export type TypeResolveFn<TTypes, TParent = {}, TContext = {}> = (
   info: GraphQLResolveInfo
 ) => Maybe<TTypes> | Promise<Maybe<TTypes>>;
 
-export type IsTypeOfResolverFn<T = {}> = (
+export type isTypeOfResolverFn<T = {}> = (
   obj: T,
   info: GraphQLResolveInfo
 ) => boolean | Promise<boolean>;
@@ -1393,7 +1394,7 @@ export type ActiveSuppressCountResolvers<
 > = {
   active?: Resolver<Maybe<ResolversTypes['ComplianceStatusCounts']>, ParentType, ContextType>;
   suppressed?: Resolver<Maybe<ResolversTypes['ComplianceStatusCounts']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type AlertDetailsResolvers<
@@ -1409,7 +1410,7 @@ export type AlertDetailsResolvers<
   events?: Resolver<Array<ResolversTypes['AWSJSON']>, ParentType, ContextType>;
   eventsLastEvaluatedKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   dedupString?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type AlertSummaryResolvers<
@@ -1423,7 +1424,7 @@ export type AlertSummaryResolvers<
   updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   ruleId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type AsanaConfigResolvers<
@@ -1432,7 +1433,7 @@ export type AsanaConfigResolvers<
 > = {
   personalAccessToken?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   projectGids?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export interface AwsDateTimeScalarConfig
@@ -1468,7 +1469,7 @@ export type ComplianceIntegrationResolvers<
   remediationEnabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   health?: Resolver<ResolversTypes['ComplianceIntegrationHealth'], ParentType, ContextType>;
   stackName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type ComplianceIntegrationHealthResolvers<
@@ -1486,7 +1487,7 @@ export type ComplianceIntegrationHealthResolvers<
     ParentType,
     ContextType
   >;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type ComplianceItemResolvers<
@@ -1502,7 +1503,7 @@ export type ComplianceItemResolvers<
   status?: Resolver<Maybe<ResolversTypes['ComplianceStatusEnum']>, ParentType, ContextType>;
   suppressed?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   integrationId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type ComplianceStatusCountsResolvers<
@@ -1512,7 +1513,7 @@ export type ComplianceStatusCountsResolvers<
   error?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   fail?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   pass?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type DestinationResolvers<
@@ -1533,7 +1534,7 @@ export type DestinationResolvers<
     ParentType,
     ContextType
   >;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type DestinationConfigResolvers<
@@ -1549,7 +1550,7 @@ export type DestinationConfigResolvers<
   opsgenie?: Resolver<Maybe<ResolversTypes['OpsgenieConfig']>, ParentType, ContextType>;
   msTeams?: Resolver<Maybe<ResolversTypes['MsTeamsConfig']>, ParentType, ContextType>;
   asana?: Resolver<Maybe<ResolversTypes['AsanaConfig']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type GeneralSettingsResolvers<
@@ -1559,7 +1560,7 @@ export type GeneralSettingsResolvers<
   displayName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   errorReportingConsent?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type GithubConfigResolvers<
@@ -1568,7 +1569,7 @@ export type GithubConfigResolvers<
 > = {
   repoName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   token?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type GlobalModuleDetailsResolvers<
@@ -1580,7 +1581,7 @@ export type GlobalModuleDetailsResolvers<
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   lastModified?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type IntegrationItemHealthStatusResolvers<
@@ -1589,7 +1590,7 @@ export type IntegrationItemHealthStatusResolvers<
 > = {
   healthy?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   errorMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type IntegrationTemplateResolvers<
@@ -1598,7 +1599,7 @@ export type IntegrationTemplateResolvers<
 > = {
   body?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   stackName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type JiraConfigResolvers<
@@ -1611,7 +1612,7 @@ export type JiraConfigResolvers<
   apiKey?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   assigneeId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   issueType?: Resolver<Maybe<ResolversTypes['JiraIssueTypesEnum']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type ListAlertsResponseResolvers<
@@ -1620,7 +1621,7 @@ export type ListAlertsResponseResolvers<
 > = {
   alertSummaries?: Resolver<Array<Maybe<ResolversTypes['AlertSummary']>>, ParentType, ContextType>;
   lastEvaluatedKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type ListComplianceItemsResponseResolvers<
@@ -1631,7 +1632,7 @@ export type ListComplianceItemsResponseResolvers<
   paging?: Resolver<Maybe<ResolversTypes['PagingData']>, ParentType, ContextType>;
   status?: Resolver<Maybe<ResolversTypes['ComplianceStatusEnum']>, ParentType, ContextType>;
   totals?: Resolver<Maybe<ResolversTypes['ActiveSuppressCount']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type ListPoliciesResponseResolvers<
@@ -1644,7 +1645,7 @@ export type ListPoliciesResponseResolvers<
     ParentType,
     ContextType
   >;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type ListResourcesResponseResolvers<
@@ -1657,7 +1658,7 @@ export type ListResourcesResponseResolvers<
     ParentType,
     ContextType
   >;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type ListRulesResponseResolvers<
@@ -1666,7 +1667,7 @@ export type ListRulesResponseResolvers<
 > = {
   paging?: Resolver<Maybe<ResolversTypes['PagingData']>, ParentType, ContextType>;
   rules?: Resolver<Maybe<Array<Maybe<ResolversTypes['RuleSummary']>>>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type LogIntegrationResolvers<
@@ -1681,7 +1682,7 @@ export type MsTeamsConfigResolvers<
   ParentType extends ResolversParentTypes['MsTeamsConfig'] = ResolversParentTypes['MsTeamsConfig']
 > = {
   webhookURL?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type MutationResolvers<
@@ -1845,7 +1846,7 @@ export type OpsgenieConfigResolvers<
   ParentType extends ResolversParentTypes['OpsgenieConfig'] = ResolversParentTypes['OpsgenieConfig']
 > = {
   apiKey?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type OrganizationReportBySeverityResolvers<
@@ -1857,7 +1858,7 @@ export type OrganizationReportBySeverityResolvers<
   medium?: Resolver<Maybe<ResolversTypes['ComplianceStatusCounts']>, ParentType, ContextType>;
   high?: Resolver<Maybe<ResolversTypes['ComplianceStatusCounts']>, ParentType, ContextType>;
   critical?: Resolver<Maybe<ResolversTypes['ComplianceStatusCounts']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type OrganizationStatsResponseResolvers<
@@ -1880,7 +1881,7 @@ export type OrganizationStatsResponseResolvers<
     ParentType,
     ContextType
   >;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type PagerDutyConfigResolvers<
@@ -1888,7 +1889,7 @@ export type PagerDutyConfigResolvers<
   ParentType extends ResolversParentTypes['PagerDutyConfig'] = ResolversParentTypes['PagerDutyConfig']
 > = {
   integrationKey?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type PagingDataResolvers<
@@ -1898,7 +1899,7 @@ export type PagingDataResolvers<
   thisPage?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   totalPages?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   totalItems?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type PolicyDetailsResolvers<
@@ -1929,7 +1930,7 @@ export type PolicyDetailsResolvers<
   tags?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   tests?: Resolver<Maybe<Array<Maybe<ResolversTypes['PolicyUnitTest']>>>, ParentType, ContextType>;
   versionId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type PolicySummaryResolvers<
@@ -1951,7 +1952,7 @@ export type PolicySummaryResolvers<
   resourceTypes?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
   tags?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type PolicyUnitTestResolvers<
@@ -1962,7 +1963,7 @@ export type PolicyUnitTestResolvers<
   name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   resource?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   resourceType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type PolicyUnitTestErrorResolvers<
@@ -1971,7 +1972,7 @@ export type PolicyUnitTestErrorResolvers<
 > = {
   name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   errorMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type QueryResolvers<
@@ -2112,7 +2113,7 @@ export type ResourceDetailsResolvers<
   >;
   lastModified?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type ResourceSummaryResolvers<
@@ -2129,7 +2130,7 @@ export type ResourceSummaryResolvers<
   deleted?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   lastModified?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type RuleDetailsResolvers<
@@ -2153,7 +2154,7 @@ export type RuleDetailsResolvers<
   tags?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   tests?: Resolver<Maybe<Array<Maybe<ResolversTypes['PolicyUnitTest']>>>, ParentType, ContextType>;
   versionId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type RuleSummaryResolvers<
@@ -2167,7 +2168,7 @@ export type RuleSummaryResolvers<
   logTypes?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
   tags?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type S3LogIntegrationResolvers<
@@ -2186,7 +2187,7 @@ export type S3LogIntegrationResolvers<
   logTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   health?: Resolver<ResolversTypes['S3LogIntegrationHealth'], ParentType, ContextType>;
   stackName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type S3LogIntegrationHealthResolvers<
@@ -2200,7 +2201,7 @@ export type S3LogIntegrationHealthResolvers<
   >;
   s3BucketStatus?: Resolver<ResolversTypes['IntegrationItemHealthStatus'], ParentType, ContextType>;
   kmsKeyStatus?: Resolver<ResolversTypes['IntegrationItemHealthStatus'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type ScannedResourcesResolvers<
@@ -2212,7 +2213,7 @@ export type ScannedResourcesResolvers<
     ParentType,
     ContextType
   >;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type ScannedResourceStatsResolvers<
@@ -2221,7 +2222,7 @@ export type ScannedResourceStatsResolvers<
 > = {
   count?: Resolver<Maybe<ResolversTypes['ComplianceStatusCounts']>, ParentType, ContextType>;
   type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type SlackConfigResolvers<
@@ -2229,7 +2230,7 @@ export type SlackConfigResolvers<
   ParentType extends ResolversParentTypes['SlackConfig'] = ResolversParentTypes['SlackConfig']
 > = {
   webhookURL?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type SnsConfigResolvers<
@@ -2237,7 +2238,7 @@ export type SnsConfigResolvers<
   ParentType extends ResolversParentTypes['SnsConfig'] = ResolversParentTypes['SnsConfig']
 > = {
   topicArn?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type SqsConfigResolvers<
@@ -2245,7 +2246,7 @@ export type SqsConfigResolvers<
   ParentType extends ResolversParentTypes['SqsConfig'] = ResolversParentTypes['SqsConfig']
 > = {
   queueUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type TestPolicyResponseResolvers<
@@ -2260,7 +2261,7 @@ export type TestPolicyResponseResolvers<
     ParentType,
     ContextType
   >;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type UploadPoliciesResponseResolvers<
@@ -2273,7 +2274,7 @@ export type UploadPoliciesResponseResolvers<
   totalRules?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   newRules?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   modifiedRules?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type UserResolvers<
@@ -2286,7 +2287,7 @@ export type UserResolvers<
   email?: Resolver<ResolversTypes['AWSEmail'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['AWSTimestamp'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+  __isTypeOf?: isTypeOfResolverFn<ParentType>;
 };
 
 export type Resolvers<ContextType = any> = {

@@ -43,6 +43,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
+	"github.com/panther-labs/panther/internal/log_analysis/logtypes"
 )
 
 const (
@@ -142,18 +143,18 @@ func newS3Destination(logTypes ...string) *testS3Destination {
 			s3Uploader:          mockS3Uploader,
 			maxBufferedMemBytes: 10 * 1024 * 1024, // an arbitrary amount enough to hold default test data
 			maxDuration:         maxDuration,
-			eventTypes:          newRegistry(logTypes...),
+			registry:            newRegistry(logTypes...),
 		},
 		mockSns:        mockSns,
 		mockS3Uploader: mockS3Uploader,
 	}
 }
 
-func newRegistry(names ...string) *parsers.Registry {
+func newRegistry(names ...string) *logtypes.Registry {
 	names = append([]string{testLogType}, names...)
-	r := parsers.Registry{}
+	r := logtypes.Registry{}
 	for _, name := range names {
-		_, err := r.Register(parsers.LogTypeConfig{
+		_, err := r.Register(logtypes.Config{
 			Name:         name,
 			Description:  "description",
 			ReferenceURL: "-",

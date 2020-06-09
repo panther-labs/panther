@@ -20,6 +20,7 @@ package zeeklogs
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/logtypes"
 )
 
 const (
@@ -27,8 +28,8 @@ const (
 )
 
 func init() {
-	parsers.MustRegister(
-		parsers.LogTypeConfig{
+	logtypes.MustRegister(
+		logtypes.Config{
 			Name:         TypeZeekDNS,
 			Description:  `Zeek DNS activity`,
 			ReferenceURL: `https://docs.zeek.org/en/current/scripts/base/protocols/dns/main.zeek.html#type-DNS::Info`,

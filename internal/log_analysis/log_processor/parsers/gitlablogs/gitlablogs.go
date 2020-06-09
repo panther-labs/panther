@@ -3,6 +3,7 @@ package gitlablogs
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/logtypes"
 )
 
 /**
@@ -41,8 +42,8 @@ const (
 )
 
 func init() {
-	parsers.MustRegister(
-		parsers.LogTypeConfig{
+	logtypes.MustRegister(
+		logtypes.Config{
 			Name: TypeAPI,
 			Description: `GitLab log for API requests received from GitLab.
 NOTE: We are using the latest version of GitLab API logs. Some fields differ from the official documentation`,
@@ -50,35 +51,35 @@ NOTE: We are using the latest version of GitLab API logs. Some fields differ fro
 			Schema:       API{},
 			NewParser:    parsers.AdapterFactory(&APIParser{}),
 		},
-		parsers.LogTypeConfig{
+		logtypes.Config{
 			Name:         TypeAudit,
 			Description:  `GitLab log file containing changes to group or project settings`,
 			ReferenceURL: `https://docs.gitlab.com/ee/administration/logs.html#audit_jsonlog`,
 			Schema:       Audit{},
 			NewParser:    parsers.AdapterFactory(&AuditParser{}),
 		},
-		parsers.LogTypeConfig{
+		logtypes.Config{
 			Name:         TypeExceptions,
 			Description:  `GitLab log file containing changes to group or project settings`,
 			ReferenceURL: `https://docs.gitlab.com/ee/administration/logs.html#exceptions_jsonlog`,
 			Schema:       Exceptions{},
 			NewParser:    parsers.AdapterFactory(&ExceptionsParser{}),
 		},
-		parsers.LogTypeConfig{
+		logtypes.Config{
 			Name:         TypeGit,
 			Description:  `GitLab log file containing all failed requests from GitLab to Git repositories.`,
 			ReferenceURL: `https://docs.gitlab.com/ee/administration/logs.html#git_jsonlog`,
 			Schema:       Git{},
 			NewParser:    parsers.AdapterFactory(&GitParser{}),
 		},
-		parsers.LogTypeConfig{
+		logtypes.Config{
 			Name:         TypeIntegrations,
 			Description:  `GitLab log with information about integrations activities such as Jira, Asana, and Irker services.`,
 			ReferenceURL: `https://docs.gitlab.com/ee/administration/logs.html#integrations_jsonlog`,
 			Schema:       Integrations{},
 			NewParser:    parsers.AdapterFactory(&IntegrationsParser{}),
 		},
-		parsers.LogTypeConfig{
+		logtypes.Config{
 			Name:         TypeProduction,
 			Description:  `GitLab log for Production controller requests received from GitLab`,
 			ReferenceURL: `https://docs.gitlab.com/ee/administration/logs.html#production_jsonlog`,

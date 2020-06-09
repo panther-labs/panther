@@ -25,6 +25,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
+	"github.com/panther-labs/panther/internal/log_analysis/logtypes"
 )
 
 const (
@@ -33,8 +34,8 @@ const (
 
 //nolint: lll
 func init() {
-	parsers.MustRegister(
-		parsers.LogTypeConfig{
+	logtypes.MustRegister(
+		logtypes.Config{
 			Name: TypeAuditLog,
 			Description: `Cloud Audit Logs maintains three audit logs for each Google Cloud project, folder, and organization: Admin Activity, Data Access, and System Event.
 Google Cloud services write audit log entries to these logs to help you answer the questions of "who did what, where, and when?" within your Google Cloud resources.

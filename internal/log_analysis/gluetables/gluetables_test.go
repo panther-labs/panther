@@ -28,8 +28,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
+	"github.com/panther-labs/panther/internal/log_analysis/logtypes"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
@@ -79,7 +79,7 @@ func TestDeployedTablesSignature(t *testing.T) {
 	assert.Equal(t, sig, sig2)
 
 	// change the data, the sigs should be different
-	entry, _ := parsers.DefaultRegistry().Register(parsers.LogTypeConfig{
+	entry, _ := logtypes.DefaultRegistry().Register(logtypes.Config{
 		Name:         "Foo.Bar",
 		Description:  "foo",
 		ReferenceURL: "-",
@@ -87,7 +87,7 @@ func TestDeployedTablesSignature(t *testing.T) {
 			Foo string `json:"foo" description:"bar"`
 		}{},
 	})
-	defer parsers.DefaultRegistry().Del(entry)
+	defer logtypes.DefaultRegistry().Del(entry)
 	mockGlueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Times(numLogTables + 1)
 	modifiedSig, err := DeployedTablesSignature(mockGlueClient)
 	require.NoError(t, err)

@@ -20,6 +20,7 @@ package fluentdsyslogs
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/logtypes"
 )
 
 const (
@@ -29,15 +30,15 @@ const (
 
 // nolint:lll
 func init() {
-	parsers.MustRegister(
-		parsers.LogTypeConfig{
+	logtypes.MustRegister(
+		logtypes.Config{
 			Name:         TypeRFC3164,
 			Description:  `Fluentd syslog parser for the RFC3164 format (ie. BSD-syslog messages)`,
 			ReferenceURL: `https://docs.fluentd.org/parser/syslog#rfc3164-log`,
 			Schema:       RFC3164{},
 			NewParser:    parsers.AdapterFactory(&RFC3164Parser{}),
 		},
-		parsers.LogTypeConfig{
+		logtypes.Config{
 			Name:         TypeRFC5424,
 			Description:  `Fluentd syslog parser for the RFC5424 format (ie. BSD-syslog messages)`,
 			ReferenceURL: `https://docs.fluentd.org/parser/syslog#rfc5424-log`,

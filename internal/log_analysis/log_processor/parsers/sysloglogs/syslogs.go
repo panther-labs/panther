@@ -21,6 +21,7 @@ package sysloglogs
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/logtypes"
 )
 
 const (
@@ -29,15 +30,15 @@ const (
 )
 
 func init() {
-	parsers.MustRegister(
-		parsers.LogTypeConfig{
+	logtypes.MustRegister(
+		logtypes.Config{
 			Name:         TypeRFC3164,
 			Description:  `Syslog parser for the RFC3164 format (ie. BSD-syslog messages)`,
 			ReferenceURL: `https://tools.ietf.org/html/rfc3164`,
 			Schema:       RFC3164{},
 			NewParser:    parsers.AdapterFactory(&RFC5424Parser{}),
 		},
-		parsers.LogTypeConfig{
+		logtypes.Config{
 			Name:         TypeRFC5424,
 			Description:  `Syslog parser for the RFC5424 format.`,
 			ReferenceURL: `https://tools.ietf.org/html/rfc5424`,

@@ -28,32 +28,17 @@ import (
 	"strings"
 
 	jsoniter "github.com/json-iterator/go"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
 const (
 	DefaultMaxCommentLength = 255
 
-	GlueTimestampType   = "timestamp"
-	GlueStringType      = "string"
-	GlueStringArrayType = "array<string>"
-	GlueBigintType      = "bigint"
+	GlueTimestampType = "timestamp"
 )
-
-// RegisterMapping should be run in an init() block to register a custom mapping for a value.
-func RegisterMapping(x interface{}, glueType string) {
-	// Get non-pointer value
-	from := reflect.Indirect(reflect.ValueOf(x)).Type()
-	for _, m := range GlueMappings {
-		if m.From == from {
-			panic("duplicate custom mapping")
-		}
-	}
-
-	GlueMappings = append(GlueMappings, CustomMapping{
-		From: from,
-		To:   glueType,
-	})
-}
 
 var (
 	// MaxCommentLength is the maximum size for a column comment (clip if larger), public var so it can be set to control output
@@ -62,8 +47,44 @@ var (
 	// GlueMappings for custom Panther types.
 	GlueMappings = []CustomMapping{
 		{
+			From: reflect.TypeOf(timestamp.RFC3339{}),
+			To:   GlueTimestampType,
+		},
+		{
+			From: reflect.TypeOf(timestamp.ANSICwithTZ{}),
+			To:   GlueTimestampType,
+		},
+		{
+			From: reflect.TypeOf(timestamp.UnixMillisecond{}),
+			To:   GlueTimestampType,
+		},
+		{
+			From: reflect.TypeOf(timestamp.FluentdTimestamp{}),
+			To:   GlueTimestampType,
+		},
+		{
+			From: reflect.TypeOf(timestamp.UnixFloat{}),
+			To:   GlueTimestampType,
+		},
+		{
+			From: reflect.TypeOf(timestamp.SuricataTimestamp{}),
+			To:   GlueTimestampType,
+		},
+		{
+			From: reflect.TypeOf(parsers.PantherAnyString{}),
+			To:   "array<string>",
+		},
+		{
 			From: reflect.TypeOf(jsoniter.RawMessage{}),
 			To:   "string",
+		},
+		{
+			From: reflect.TypeOf(*new(numerics.Integer)),
+			To:   "bigint",
+		},
+		{
+			From: reflect.TypeOf(*new(numerics.Int64)),
+			To:   "bigint",
 		},
 	}
 
@@ -226,7 +247,7 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 	}
 
 	// Rewrite field the same way as the jsoniter extension to avoid invalid column names
-	fieldName = RewriteFieldName(fieldName)
+	fieldName = parsers.RewriteFieldName(fieldName)
 
 	comment = sf.Tag.Get("description")
 
@@ -374,21 +395,4 @@ func parseTag(tag string) (string, string) {
 		return tag[:idx], tag[idx+1:]
 	}
 	return tag, ""
-}
-
-// NOTE: The mapping should be easy to remember (so no ASCII code etc) and complex enough
-// to avoid possible conflicts with other fields.
-var fieldNameReplacer = strings.NewReplacer(
-	"@", "_at_sign_",
-	",", "_comma_",
-	"`", "_backtick_",
-	"'", "_apostrophe_",
-)
-
-func RewriteFieldName(name string) string {
-	result := fieldNameReplacer.Replace(name)
-	if result == name {
-		return name
-	}
-	return strings.Trim(result, "_")
 }

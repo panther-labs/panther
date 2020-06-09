@@ -20,6 +20,7 @@ package suricatalogs
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/logtypes"
 )
 
 const (
@@ -28,15 +29,15 @@ const (
 )
 
 func init() {
-	parsers.MustRegister(
-		parsers.LogTypeConfig{
+	logtypes.MustRegister(
+		logtypes.Config{
 			Name:         TypeAnomaly,
 			Description:  `Suricata parser for the Anomaly event type in the EVE JSON output.`,
 			ReferenceURL: `https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json-output.html#anomaly`,
 			Schema:       Anomaly{},
 			NewParser:    parsers.AdapterFactory(&AnomalyParser{}),
 		},
-		parsers.LogTypeConfig{
+		logtypes.Config{
 			Name:         TypeDNS,
 			Description:  `Suricata parser for the DNS event type in the EVE JSON output.`,
 			ReferenceURL: `https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json-output.html#dns`,

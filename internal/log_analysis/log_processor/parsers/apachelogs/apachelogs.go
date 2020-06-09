@@ -27,6 +27,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/logtypes"
 )
 
 const (
@@ -35,15 +36,15 @@ const (
 )
 
 func init() {
-	parsers.MustRegister(
-		parsers.LogTypeConfig{
+	logtypes.MustRegister(
+		logtypes.Config{
 			Name:         TypeAccessCombined,
 			Description:  `Apache HTTP server access logs using the 'combined' format`,
 			ReferenceURL: `https://httpd.apache.org/docs/current/logs.html#combined`,
 			Schema:       AccessCombined{},
 			NewParser:    parsers.AdapterFactory(NewAccessCombinedParser()),
 		},
-		parsers.LogTypeConfig{
+		logtypes.Config{
 			Name:         TypeAccessCommon,
 			Description:  `Apache HTTP server access logs using the 'common' format`,
 			ReferenceURL: `https://httpd.apache.org/docs/current/logs.html#common`,

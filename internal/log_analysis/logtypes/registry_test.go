@@ -1,4 +1,4 @@
-package parsers
+package logtypes
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -25,6 +25,7 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
 func TestRegistry(t *testing.T) {
@@ -34,19 +35,19 @@ func TestRegistry(t *testing.T) {
 	require.Panics(t, func() {
 		r.MustGet("Foo.Bar")
 	})
-	logTypeConfig := LogTypeConfig{
+	logTypeConfig := Config{
 		Name:         "Foo.Bar",
 		Description:  "Foo.Bar logs",
 		ReferenceURL: "-",
 		Schema:       struct{}{},
-		NewParser: func(params interface{}) Interface {
+		NewParser: func(params interface{}) parsers.Interface {
 			return nil
 		},
 	}
 	api, err := r.Register(logTypeConfig)
 	require.NoError(t, err)
 	require.NotNil(t, api)
-	require.Equal(t, LogTypeDesc{
+	require.Equal(t, Desc{
 		Name:         "Foo.Bar",
 		Description:  "Foo.Bar logs",
 		ReferenceURL: "-",
@@ -73,9 +74,9 @@ func TestRegistry(t *testing.T) {
 	require.NotPanics(t, func() {
 		r.MustGet("Foo.Bar")
 	})
-	require.Equal(t, []LogTypeEntry{api}, r.Entries())
-	require.Equal(t, []LogTypeEntry{api}, r.Entries("Foo.Bar"))
-	require.Equal(t, []LogTypeEntry{}, r.Entries("Foo.Baz"))
+	require.Equal(t, []Entry{api}, r.Entries())
+	require.Equal(t, []Entry{api}, r.Entries("Foo.Bar"))
+	require.Equal(t, []Entry{}, r.Entries("Foo.Baz"))
 	require.Equal(t, []string{"Foo.Bar"}, r.LogTypes())
 	require.NotNil(t, DefaultRegistry())
 	require.NoError(t, Register(logTypeConfig))
@@ -92,33 +93,33 @@ func TestRegistry(t *testing.T) {
 }
 
 func TestDesc(t *testing.T) {
-	require.Error(t, (&LogTypeDesc{}).Validate())
-	require.Error(t, (&LogTypeDesc{
+	require.Error(t, (&Desc{}).Validate())
+	require.Error(t, (&Desc{
 		Name: "Foo",
 	}).Validate())
-	require.Error(t, (&LogTypeDesc{
+	require.Error(t, (&Desc{
 		Name:        "Foo",
 		Description: "Bar",
 	}).Validate())
-	require.Error(t, (&LogTypeDesc{
+	require.Error(t, (&Desc{
 		Name:         "Foo",
 		Description:  "Bar",
 		ReferenceURL: "invalid url",
 	}).Validate())
-	require.Error(t, (&LogTypeDesc{
+	require.Error(t, (&Desc{
 		Name:         "Foo",
 		ReferenceURL: "http://example.org",
 	}).Validate())
-	require.Error(t, (&LogTypeDesc{
+	require.Error(t, (&Desc{
 		Name:         "Foo",
 		ReferenceURL: "-",
 	}).Validate())
-	require.NoError(t, (&LogTypeDesc{
+	require.NoError(t, (&Desc{
 		Name:         "Foo",
 		Description:  "Foo bar",
 		ReferenceURL: "-",
 	}).Validate())
-	require.NoError(t, (&LogTypeDesc{
+	require.NoError(t, (&Desc{
 		Name:         "Foo",
 		Description:  "Foo bar",
 		ReferenceURL: "https://example.org",
