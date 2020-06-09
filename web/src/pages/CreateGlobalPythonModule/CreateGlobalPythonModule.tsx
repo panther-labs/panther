@@ -20,40 +20,24 @@ import React from 'react';
 import Panel from 'Components/Panel';
 import { Alert, Box } from 'pouncejs';
 import urls from 'Source/urls';
-import RuleForm from 'Components/forms/RuleForm';
-import { ListRulesDocument } from 'Pages/ListRules';
-import { AddRuleInput } from 'Generated/schema';
+import { AddGlobalModuleInput } from 'Generated/schema';
 import withSEO from 'Hoc/withSEO';
-import {
-  DEFAULT_DEDUP_FUNCTION,
-  DEFAULT_RULE_FUNCTION,
-  DEFAULT_TITLE_FUNCTION,
-} from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
 import useRouter from 'Hooks/useRouter';
+import GlobalModuleForm from 'Components/forms/GlobalModuleForm';
 import { useCreateGlobalPythonModule } from './graphql/createGlobalPythonModule.generated';
 
-const initialValues: Required<AddRuleInput> = {
+const initialValues: Required<AddGlobalModuleInput> = {
   id: '',
   description: '',
-  displayName: '',
-  enabled: true,
-  reference: '',
-  logTypes: [],
-  runbook: '',
-  severity: null,
-  dedupPeriodMinutes: 60,
-  tags: [],
-  body: `${DEFAULT_RULE_FUNCTION}\n\n${DEFAULT_TITLE_FUNCTION}\n\n${DEFAULT_DEDUP_FUNCTION}`,
-  tests: [],
+  body: '',
 };
 
 const CreateRulePage: React.FC = () => {
   const { history } = useRouter();
   const [createRule, { error }] = useCreateGlobalPythonModule({
-    refetchQueries: [{ query: ListRulesDocument, variables: { input: {} } }],
     onCompleted: data =>
-      history.push(urls.logAnalysis.rules.details(data.addGlobalPythonlModule.id)),
+      history.push(urls.settings.globalModule.edit(data.addGlobalPythonModule.id)),
   });
 
   const handleSubmit = React.useCallback(
@@ -63,8 +47,8 @@ const CreateRulePage: React.FC = () => {
 
   return (
     <Box mb={10}>
-      <Panel size="large" title="Rule Settings">
-        <RuleForm initialValues={initialValues} onSubmit={handleSubmit} />
+      <Panel size="large" title="Global Python Module">
+        <GlobalModuleForm initialValues={initialValues} onSubmit={handleSubmit} />
       </Panel>
       {error && (
         <Box mt={2} mb={6}>
@@ -72,7 +56,7 @@ const CreateRulePage: React.FC = () => {
             variant="error"
             title={
               extractErrorMessage(error) ||
-              'An unknown error occured as we were trying to create your rule'
+              'An unknown error occurred as we were trying to create your rule'
             }
           />
         </Box>
@@ -81,4 +65,4 @@ const CreateRulePage: React.FC = () => {
   );
 };
 
-export default withSEO({ title: 'New Rule' })(CreateRulePage);
+export default withSEO({ title: 'New Global Module' })(CreateRulePage);

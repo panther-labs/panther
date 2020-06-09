@@ -19,6 +19,7 @@
 import {
   AlertDetails,
   ComplianceIntegration,
+  GlobalModule,
   LogIntegration,
   PolicyDetails,
   ResourceDetails,
@@ -77,8 +78,8 @@ const urls = {
     globalModule: {
       list: () => `${urls.settings.home()}module/`,
       create: () => `${urls.settings.globalModule.list()}new/`,
-      // details: (id: Role['id']) => `${urls.settings.roles.list()}${urlEncode(id)}/`,
-      // edit: (id: Role['id']) => `${urls.settings.roles.details(id)}edit/`,
+      edit: (id: GlobalModule['id']) =>
+        `${urls.settings.globalModule.list()}${urlEncode(id)}/edit/`,
     },
     users: () => `${urls.settings.home()}users/`,
     destinations: () => `${urls.settings.home()}destinations/`,

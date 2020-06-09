@@ -14,7 +14,7 @@ type Mutation {
   addS3LogIntegration(input: AddS3LogIntegrationInput!): S3LogIntegration!
   addPolicy(input: AddPolicyInput!): PolicyDetails
   addRule(input: AddRuleInput!): RuleDetails
-  addGlobalPythonlModule(input: AddGlobalModuleInput!): GlobalModule
+  addGlobalPythonModule(input: AddGlobalModuleInput!): GlobalModule
   deleteDestination(id: ID!): Boolean
   deleteComplianceIntegration(id: ID!): Boolean
   deleteLogIntegration(id: ID!): Boolean
@@ -657,6 +657,7 @@ input ModifyGlobalModuleInput {
 }
 
 input AddGlobalModuleInput {
+  id: ID!
   description: String!
   body: String!
 }

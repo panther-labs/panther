@@ -1,0 +1,4 @@
+fragment GlobalModuleTeaser on GlobalModule {
+  id
+  lastModified
+}

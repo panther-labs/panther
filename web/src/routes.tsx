@@ -55,6 +55,7 @@ import PromptController from 'Components/utils/PromptController';
 import LogSourceOnboarding from 'Pages/LogSourceOnboarding';
 import ListGlobalModulesPage from 'Pages/ListGlobalModules';
 import CreateGlobalPythonModulePage from 'Pages/CreateGlobalPythonModule';
+import EditGlobalModulePage from 'Pages/EditGlobaModule';
 
 // Main page container for the web application, Navigation bar and Content body goes here
 const PrimaryPageLayout: React.FunctionComponent = () => {
@@ -183,6 +184,16 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   exact
                   path={urls.settings.globalModule.create()}
                   component={CreateGlobalPythonModulePage}
+                />
+                <Route
+                  exact
+                  path={urls.settings.globalModule.edit(':id')}
+                  component={EditGlobalModulePage}
+                />
+                <Redirect
+                  exact
+                  from={`${urls.settings.globalModule.list()}:id`}
+                  to={urls.settings.globalModule.edit(':id')}
                 />
                 <Route exact path={urls.settings.users()} component={UsersPage} />
                 <Route exact path={urls.settings.destinations()} component={DestinationsPage} />

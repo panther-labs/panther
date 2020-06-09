@@ -59,7 +59,7 @@ const GlobalModuleForm: React.FC<GlobalModuleFormProps> = ({ initialValues, onSu
           enableReinitialize
           validationSchema={validationSchema}
         >
-          <FormSessionRestoration sessionId="global-module">
+          <FormSessionRestoration sessionId={`global-module-${initialValues.id || 'create'}`}>
             <Form>
               <Text size="large" color="grey300" mb={4}>
                 The global module allows you to define a set of reusable functions, variables and

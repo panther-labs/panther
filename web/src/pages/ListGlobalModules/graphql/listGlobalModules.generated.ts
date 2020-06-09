@@ -20,6 +20,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
+import { GlobalModuleTeaser } from '../../../graphql/fragments/GlobalModuleTeaser.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -30,7 +31,7 @@ export type ListGlobalModulesVariables = {
 
 export type ListGlobalModules = {
   listGlobalModules?: Types.Maybe<{
-    globals?: Types.Maybe<Array<Types.Maybe<Pick<Types.GlobalModule, 'id'>>>>;
+    globals?: Types.Maybe<Array<Types.Maybe<GlobalModuleTeaser>>>;
     paging?: Types.Maybe<Pick<Types.PagingData, 'totalPages' | 'thisPage' | 'totalItems'>>;
   }>;
 };
@@ -39,7 +40,7 @@ export const ListGlobalModulesDocument = gql`
   query ListGlobalModules($input: ListGlobalModuleInput) {
     listGlobalModules(input: $input) {
       globals {
-        id
+        ...GlobalModuleTeaser
       }
       paging {
         totalPages
@@ -48,6 +49,7 @@ export const ListGlobalModulesDocument = gql`
       }
     }
   }
+  ${GlobalModuleTeaser}
 `;
 
 /**

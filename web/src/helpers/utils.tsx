@@ -17,6 +17,8 @@
  */
 
 import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+
 import * as Yup from 'yup';
 import {
   ActiveSuppressCount,
@@ -101,6 +103,14 @@ export const isHash = (str: string) => CHECK_IF_HASH_REGEX.test(str);
 /** Converts minutes integer to representative string i.e. 15 -> 15min,  120 -> 2h */
 export const minutesToString = (minutes: number) =>
   minutes < 60 ? `${minutes}min` : `${minutes / 60}h`;
+
+/**
+ * Given a server-received DateTime string, creates a proper time-ago display text for it.
+ * */
+export const getElapsedTime = (unixTimestamp: number) => {
+  dayjs.extend(relativeTime);
+  return dayjs.unix(unixTimestamp).fromNow();
+};
 
 /** Converts any value of the object that is an array to a comma-separated string */
 export const convertObjArrayValuesToCsv = (obj: { [key: string]: any }) =>

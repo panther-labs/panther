@@ -1,7 +1,7 @@
 query ListGlobalModules($input: ListGlobalModuleInput) {
   listGlobalModules(input: $input) {
     globals {
-      id
+      ...GlobalModuleTeaser
     }
     paging {
       totalPages

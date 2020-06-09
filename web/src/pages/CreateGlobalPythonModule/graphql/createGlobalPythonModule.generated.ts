@@ -29,11 +29,11 @@ export type CreateGlobalPythonModuleVariables = {
   input: Types.AddGlobalModuleInput;
 };
 
-export type CreateGlobalPythonModule = { addGlobalPythonlModule?: Types.Maybe<GlobalModuleFull> };
+export type CreateGlobalPythonModule = { addGlobalPythonModule?: Types.Maybe<GlobalModuleFull> };
 
 export const CreateGlobalPythonModuleDocument = gql`
   mutation CreateGlobalPythonModule($input: AddGlobalModuleInput!) {
-    addGlobalPythonlModule(input: $input) {
+    addGlobalPythonModule(input: $input) {
       ...GlobalModuleFull
     }
   }

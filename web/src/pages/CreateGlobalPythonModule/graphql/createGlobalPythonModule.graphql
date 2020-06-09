@@ -1,5 +1,5 @@
 mutation CreateGlobalPythonModule($input: AddGlobalModuleInput!) {
-  addGlobalPythonlModule(input: $input) {
+  addGlobalPythonModule(input: $input) {
     ...GlobalModuleFull
   }
 }

@@ -1461,7 +1461,7 @@ Resources:
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
-      FieldName: addGlobalPythonlModule
+      FieldName: addGlobalPythonModule
       DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))

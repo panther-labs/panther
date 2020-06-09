@@ -33,6 +33,7 @@ export type AddComplianceIntegrationInput = {
 };
 
 export type AddGlobalModuleInput = {
+  id: Scalars['ID'];
   description: Scalars['String'];
   body: Scalars['String'];
 };
@@ -503,7 +504,7 @@ export type Mutation = {
   addS3LogIntegration: S3LogIntegration;
   addPolicy?: Maybe<PolicyDetails>;
   addRule?: Maybe<RuleDetails>;
-  addGlobalPythonlModule?: Maybe<GlobalModule>;
+  addGlobalPythonModule?: Maybe<GlobalModule>;
   deleteDestination?: Maybe<Scalars['Boolean']>;
   deleteComplianceIntegration?: Maybe<Scalars['Boolean']>;
   deleteLogIntegration?: Maybe<Scalars['Boolean']>;
@@ -547,7 +548,7 @@ export type MutationAddRuleArgs = {
   input: AddRuleInput;
 };
 
-export type MutationAddGlobalPythonlModuleArgs = {
+export type MutationAddGlobalPythonModuleArgs = {
   input: AddGlobalModuleInput;
 };
 
@@ -1761,11 +1762,11 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationAddRuleArgs, 'input'>
   >;
-  addGlobalPythonlModule?: Resolver<
+  addGlobalPythonModule?: Resolver<
     Maybe<ResolversTypes['GlobalModule']>,
     ParentType,
     ContextType,
-    RequireFields<MutationAddGlobalPythonlModuleArgs, 'input'>
+    RequireFields<MutationAddGlobalPythonModuleArgs, 'input'>
   >;
   deleteDestination?: Resolver<
     Maybe<ResolversTypes['Boolean']>,

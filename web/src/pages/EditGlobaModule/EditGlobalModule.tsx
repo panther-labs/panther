@@ -19,6 +19,7 @@
 import React from 'react';
 import Panel from 'Components/Panel';
 import { Alert, Card, Box, useSnackbar } from 'pouncejs';
+import useRouter from 'Hooks/useRouter';
 import GlobalModuleForm from 'Components/forms/GlobalModuleForm';
 import withSEO from 'Hoc/withSEO';
 import { GlobalModule } from 'Generated/schema';
@@ -33,6 +34,7 @@ export const defaultInitialValues: Pick<GlobalModule, 'id' | 'description' | 'bo
   body: '',
 };
 const EditGlobalModulePage: React.FC = () => {
+  const { match } = useRouter<{ id: string }>();
   const { pushSnackbar } = useSnackbar();
 
   const {
@@ -43,7 +45,7 @@ const EditGlobalModulePage: React.FC = () => {
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
-        globalId: 'panther',
+        globalId: match.params.id,
       },
     },
   });

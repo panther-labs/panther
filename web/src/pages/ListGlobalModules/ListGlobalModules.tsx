@@ -18,27 +18,17 @@
 
 import React from 'react';
 import TablePlaceholder from 'Components/TablePlaceholder';
-import { Alert, Box, Button, Card, Flex, Icon } from 'pouncejs';
-import Panel from 'Components/Panel';
+import { Alert, Box, Button, Card, Flex, SimpleGrid } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { convertObjArrayValuesToCsv, encodeParams, extractErrorMessage } from 'Helpers/utils';
 import withSEO from 'Hoc/withSEO';
-// import { ListGlobalModuleInput } from 'Generated/schema';
-// import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
-
 import { useListGlobalModules } from './graphql/listGlobalModules.generated';
 import EmptyDataFallback from './EmptyDataFallback';
+import GlobalItem from './GlobalItem';
 
 const ListGlobalModules = () => {
-  // const {
-  //   requestParams,
-  //   updateRequestParamsAndResetPaging,
-  //   updatePagingParams,
-  // } = useRequestParamsWithPagination<ListGlobalModuleInput>();
-
-  // console.log('requestPArams', requestParams);
   const { loading, error, data } = useListGlobalModules({
     fetchPolicy: 'cache-and-network',
     variables: {
@@ -53,8 +43,6 @@ const ListGlobalModules = () => {
       </Card>
     );
   }
-
-  console.log('DATA', data);
 
   if (error) {
     return (
@@ -75,20 +63,24 @@ const ListGlobalModules = () => {
 
   return (
     <Box mb={6}>
-      <Panel
-        title="Log Sources"
-        size="large"
-        actions={
-          <Button size="large" variant="primary" as={RRLink} to={urls.logAnalysis.sources.create()}>
-            <Flex align="center">
-              <Icon type="add" size="small" mr={1} />
-              Add Source
-            </Flex>
-          </Button>
-        }
-      >
-        <ErrorBoundary>{/* <LogSourceTable sources={data.listGlobalModules} /> */}</ErrorBoundary>
-      </Panel>
+      <Flex justify="flex-end">
+        <Button
+          size="large"
+          variant="primary"
+          mb={8}
+          as={RRLink}
+          to={urls.settings.globalModule.create()}
+        >
+          Create New
+        </Button>
+      </Flex>
+      <ErrorBoundary>
+        <SimpleGrid columns={2} spacing={3}>
+          {data.listGlobalModules.globals.map(global => (
+            <GlobalItem key={global.id} global={global} />
+          ))}
+        </SimpleGrid>
+      </ErrorBoundary>
     </Box>
   );
 };
