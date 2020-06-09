@@ -36,14 +36,11 @@ interface CustomWebhookDestinationFormProps {
 const customWebhookFieldsValidationSchema = Yup.object().shape({
   outputConfig: Yup.object().shape({
     customWebhook: Yup.object().shape({
-      webhookURL: Yup.string()
-        .url('Must be a valid webhook URL')
-        .required(),
+      webhookURL: Yup.string().url('Must be a valid webhook URL').required(),
     }),
   }),
 });
 
-// @ts-ignore
 // We merge the two schemas together: the one deriving from the common fields, plus the custom
 // ones that change for each destination.
 // https://github.com/jquense/yup/issues/522
