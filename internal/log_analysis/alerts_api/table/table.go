@@ -36,8 +36,8 @@ const (
 // API defines the interface for the alerts table which can be used for mocking.
 type API interface {
 	GetAlert(*string) (*AlertItem, error)
-	ListByRule(string, *string, *int) ([]*AlertItem, *string, error)
-	ListAll(*string, *int) ([]*AlertItem, *string, error)
+	ListByRule(string, *string, *int, *string) ([]*AlertItem, *string, error)
+	ListAll(*string, *int, *string) ([]*AlertItem, *string, error)
 }
 
 // AlertsTable encapsulates a connection to the Dynamo alerts table.

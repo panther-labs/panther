@@ -55,13 +55,24 @@ type GetAlertOutput = Alert
 // {
 //     "listAlerts": {
 //         "ruleId": "My.Rule",
-//         "pageSize": 25
+//         "pageSize": 25,
+//         "severity": "INFO"
 //     }
 // }
 type ListAlertsInput struct {
 	RuleID            *string `json:"ruleId,omitempty"`
 	PageSize          *int    `json:"pageSize,omitempty"  validate:"omitempty,min=1,max=50"`
 	ExclusiveStartKey *string `json:"exclusiveStartKey,omitempty"`
+
+	// Filtering
+	// TODO - enforce that a relatively narrow time bound exists if SortBy is defined.
+	//   We have to sort in memory, so there needs to be a reasonable limit
+	Before   *time.Time
+	After    *time.Time
+	Severity *string `json:"severity" validate:"oneof=INFO LOW MEDIUM HIGH CRITICAL"`
+
+	// Sorting
+	SortBy *string `json:"sortBy" validate:"oneof=title"`
 }
 
 // ListAlertsOutput is the returned alert list.

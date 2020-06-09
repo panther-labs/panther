@@ -73,9 +73,10 @@ func TestListAlertsForRule(t *testing.T) {
 		RuleID:            aws.String("ruleId"),
 		PageSize:          aws.Int(10),
 		ExclusiveStartKey: aws.String("startKey"),
+		Severity:          aws.String("INFO"),
 	}
 
-	tableMock.On("ListByRule", "ruleId", aws.String("startKey"), aws.Int(10)).
+	tableMock.On("ListByRule", "ruleId", aws.String("startKey"), aws.Int(10), aws.String("INFO")).
 		Return(alertItems, aws.String("lastKey"), nil)
 	result, err := API{}.ListAlerts(input)
 	require.NoError(t, err)
@@ -95,7 +96,7 @@ func TestListAllAlerts(t *testing.T) {
 		ExclusiveStartKey: aws.String("startKey"),
 	}
 
-	tableMock.On("ListAll", aws.String("startKey"), aws.Int(10)).
+	tableMock.On("ListAll", aws.String("startKey"), aws.Int(10), (*string)(nil)).
 		Return(alertItems, aws.String("lastKey"), nil)
 	result, err := API{}.ListAlerts(input)
 	require.NoError(t, err)
@@ -171,7 +172,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 		ExclusiveStartKey: aws.String("startKey"),
 	}
 
-	tableMock.On("ListAll", aws.String("startKey"), aws.Int(10)).
+	tableMock.On("ListAll", aws.String("startKey"), aws.Int(10), (*string)(nil)).
 		Return(alertItems, aws.String("lastKey"), nil)
 	result, err := API{}.ListAlerts(input)
 	require.NoError(t, err)

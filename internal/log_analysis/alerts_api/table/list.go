@@ -28,20 +28,21 @@ import (
 	"go.uber.org/zap"
 )
 
-func (table *AlertsTable) ListByRule(ruleID string, exclusiveStartKey *string, pageSize *int) (
+// TODO - consider passing models.ListAlertInput instead of each field as separate parameters
+func (table *AlertsTable) ListByRule(ruleID string, exclusiveStartKey *string, pageSize *int, severity *string) (
 	summaries []*AlertItem, lastEvaluatedKey *string, err error) {
 
-	return table.list(RuleIDKey, ruleID, exclusiveStartKey, pageSize)
+	return table.list(RuleIDKey, ruleID, exclusiveStartKey, pageSize, severity)
 }
 
-func (table *AlertsTable) ListAll(exclusiveStartKey *string, pageSize *int) (
+func (table *AlertsTable) ListAll(exclusiveStartKey *string, pageSize *int, severity *string) (
 	summaries []*AlertItem, lastEvaluatedKey *string, err error) {
 
-	return table.list(TimePartitionKey, TimePartitionValue, exclusiveStartKey, pageSize)
+	return table.list(TimePartitionKey, TimePartitionValue, exclusiveStartKey, pageSize, severity)
 }
 
 // list returns a page of alerts ordered by creationTime, last evaluated key, any error
-func (table *AlertsTable) list(ddbKey, ddbValue string, exclusiveStartKey *string, pageSize *int) (
+func (table *AlertsTable) list(ddbKey, ddbValue string, exclusiveStartKey *string, pageSize *int, severity *string) (
 	summaries []*AlertItem, lastEvaluatedKey *string, err error) {
 
 	// pick index
@@ -57,9 +58,14 @@ func (table *AlertsTable) list(ddbKey, ddbValue string, exclusiveStartKey *strin
 	// queries require and = condition on primary key
 	keyCondition := expression.Key(ddbKey).Equal(expression.Value(&ddbValue))
 
-	queryExpression, err := expression.NewBuilder().
-		WithKeyCondition(keyCondition).
-		Build()
+	builder := expression.NewBuilder().WithKeyCondition(keyCondition)
+
+	if severity != nil {
+		filter := expression.Equal(expression.Name("severity"), expression.Value(*severity))
+		builder = builder.WithFilter(filter)
+	}
+
+	queryExpression, err := builder.Build()
 
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to build expression")
@@ -84,6 +90,7 @@ func (table *AlertsTable) list(ddbKey, ddbValue string, exclusiveStartKey *strin
 		ScanIndexForward:          aws.Bool(false),
 		ExpressionAttributeNames:  queryExpression.Names(),
 		ExpressionAttributeValues: queryExpression.Values(),
+		FilterExpression:          queryExpression.Filter(),
 		KeyConditionExpression:    queryExpression.KeyCondition(),
 		ExclusiveStartKey:         queryExclusiveStartKey,
 		IndexName:                 aws.String(index),
