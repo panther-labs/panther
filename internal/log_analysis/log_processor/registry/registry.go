@@ -20,7 +20,6 @@ package registry
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 
 	// Register log types in init() blocks
@@ -59,11 +58,11 @@ func AvailableTables() (tables []*awsglue.GlueTableMetadata) {
 }
 
 // Available parsers returns log parsers for all available log types with nil parameters.
-func AvailableParsers() map[string]pantherlog.LogParser {
-	logTypes := AvailableLogTypes()
-	params := make(map[string]interface{}, len(logTypes))
-	for _, logType := range logTypes {
-		params[logType] = nil
+func AvailableParsers() map[string]parsers.Interface {
+	entries := parsers.DefaultRegistry().Entries()
+	available := make(map[string]parsers.Interface, len(entries))
+	for _, entry := range entries {
+		available[entry.Describe().Name] = entry.NewParser(nil)
 	}
-	return parsers.DefaultRegistry().Parsers(params)
+	return available
 }

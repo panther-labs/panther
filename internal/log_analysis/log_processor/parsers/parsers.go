@@ -19,12 +19,13 @@ package parsers
  */
 
 import (
+	"time"
+
 	jsoniter "github.com/json-iterator/go"
 	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/jsonutil"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
 // LogParser represents a parser for a supported log type
@@ -61,16 +62,39 @@ var JSON = func() jsoniter.API {
 	return api
 }()
 
+// Interface is the interface to be used for log parsers.
+type Interface interface {
+	ParseLog(log string) ([]*Result, error)
+}
+
+// Result is the result of parsing a log event.
+// It contains the JSON form of the pantherlog to be stored for queries.
+type Result struct {
+	LogType   string
+	EventTime time.Time
+	JSON      []byte
+}
+
+// Results wraps a single Result in a slice.
+func (r *Result) Results() []*Result {
+	if r == nil {
+		return nil
+	}
+	return []*Result{r}
+}
+
+type Factory func(params interface{}) Interface
+
 // AdapterFactory returns a pantherlog.LogParser factory from a parsers.Parser
 // This is used to ease transition to the new pantherlog.EventTypeEntry registry.
-func AdapterFactory(parser LogParser) pantherlog.LogParserFactory {
-	return func(_ interface{}) pantherlog.LogParser {
+func AdapterFactory(parser LogParser) Factory {
+	return func(_ interface{}) Interface {
 		return NewAdapter(parser)
 	}
 }
 
 // NewAdapter creates a pantherlog.LogParser from a parsers.Parser
-func NewAdapter(parser LogParser) pantherlog.LogParser {
+func NewAdapter(parser LogParser) Interface {
 	return &logParserAdapter{
 		LogParser: parser.New(),
 	}
@@ -80,6 +104,6 @@ type logParserAdapter struct {
 	LogParser
 }
 
-func (a *logParserAdapter) ParseLog(log string) ([]*pantherlog.Result, error) {
+func (a *logParserAdapter) ParseLog(log string) ([]*Result, error) {
 	return ToResults(a.LogParser.Parse(log))
 }

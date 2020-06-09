@@ -19,7 +19,7 @@ package classification
  */
 
 import (
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
 // ParserPriorityQueue contains parsers in priority order
@@ -27,7 +27,7 @@ type ParserPriorityQueue struct {
 	items []*ParserQueueItem
 }
 
-func NewParserPriorityQueue(parsers map[string]pantherlog.LogParser) *ParserPriorityQueue {
+func NewParserPriorityQueue(parsers map[string]parsers.Interface) *ParserPriorityQueue {
 	q := ParserPriorityQueue{}
 	q.initialize(parsers)
 	return &q
@@ -35,7 +35,7 @@ func NewParserPriorityQueue(parsers map[string]pantherlog.LogParser) *ParserPrio
 
 // initialize adds all registered parsers to the priority queue
 // All parsers have the same priority
-func (q *ParserPriorityQueue) initialize(parsers map[string]pantherlog.LogParser) {
+func (q *ParserPriorityQueue) initialize(parsers map[string]parsers.Interface) {
 	for logType, parser := range parsers {
 		q.items = append(q.items, &ParserQueueItem{
 			logType: logType,
@@ -48,7 +48,7 @@ func (q *ParserPriorityQueue) initialize(parsers map[string]pantherlog.LogParser
 // ParserQueueItem contains all the information needed to initialize a schema.
 type ParserQueueItem struct {
 	logType string
-	parser  pantherlog.LogParser
+	parser  parsers.Interface
 	// The smaller the number the higher the priority of the parser in the queue
 	penalty int
 }

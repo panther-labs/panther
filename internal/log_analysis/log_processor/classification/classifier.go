@@ -28,7 +28,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
 // ClassifierAPI is the interface for a classifier
@@ -46,13 +46,13 @@ type ClassifierResult struct {
 	// Events contains the parsed events
 	// If the classification process was not successful and the log is from an
 	// unsupported type, this will be nil
-	Events []*pantherlog.Result
+	Events []*parsers.Result
 	// LogType is the identified type of the log
 	LogType *string
 }
 
 // NewClassifier returns a new instance of a ClassifierAPI implementation
-func NewClassifier(parsers map[string]pantherlog.LogParser) ClassifierAPI {
+func NewClassifier(parsers map[string]parsers.Interface) ClassifierAPI {
 	return &Classifier{
 		parsers:     NewParserPriorityQueue(parsers),
 		parserStats: make(map[string]*ParserStats),
@@ -77,7 +77,7 @@ func (c *Classifier) ParserStats() map[string]*ParserStats {
 }
 
 // catch panics from parsers, log and continue
-func safeLogParse(logType string, parser pantherlog.LogParser, log string) (results []*pantherlog.Result) {
+func safeLogParse(logType string, parser parsers.Interface, log string) (results []*parsers.Result) {
 	defer func() {
 		if r := recover(); r != nil {
 			zap.L().Debug("parser panic",

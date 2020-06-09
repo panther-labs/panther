@@ -27,7 +27,6 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
 // Default registry for pantherlog package
@@ -60,8 +59,8 @@ func MustRegister(entries ...LogTypeConfig) {
 // It provides a method to create a new parser and a schema struct to derive tables from.
 // Entries can be grouped in a `Registry` to have an index of available log types.
 type LogTypeEntry interface {
-	Describe() Desc
-	NewParser(params interface{}) pantherlog.LogParser
+	Describe() LogTypeDesc
+	NewParser(params interface{}) Interface
 	Schema() interface{}
 	GlueTableMeta() *awsglue.GlueTableMetadata
 }
@@ -74,18 +73,18 @@ type LogTypeConfig struct {
 	Description  string
 	ReferenceURL string
 	Schema       interface{}
-	NewParser    pantherlog.LogParserFactory
+	NewParser    Factory
 }
 
-func (config *LogTypeConfig) Describe() Desc {
-	return Desc{
+func (config *LogTypeConfig) Describe() LogTypeDesc {
+	return LogTypeDesc{
 		Name:         config.Name,
 		Description:  config.Description,
 		ReferenceURL: config.ReferenceURL,
 	}
 }
 
-// Check verifies a log type is valid
+// Validate verifies a log type is valid
 func (config *LogTypeConfig) Validate() error {
 	if config == nil {
 		return errors.Errorf("nil log event type config")
@@ -100,29 +99,14 @@ func (config *LogTypeConfig) Validate() error {
 	return nil
 }
 
-func checkLogEntrySchema(logType string, schema interface{}) error {
-	if schema == nil {
-		return errors.Errorf("nil schema for log type %q", logType)
-	}
-	data, err := jsoniter.Marshal(schema)
-	if err != nil {
-		return errors.Errorf("invalid schema struct for log type %q: %s", logType, err)
-	}
-	var fields map[string]interface{}
-	if err := jsoniter.Unmarshal(data, &fields); err != nil {
-		return errors.Errorf("invalid schema struct for log type %q: %s", logType, err)
-	}
-	return nil
-}
-
-// Desc describes an registered log type.
-type Desc struct {
+// LogTypeDesc describes an registered log type.
+type LogTypeDesc struct {
 	Name         string
 	Description  string
 	ReferenceURL string
 }
 
-func (desc *Desc) Validate() error {
+func (desc *LogTypeDesc) Validate() error {
 	if desc.Name == "" {
 		return errors.Errorf("missing entry log type")
 	}
@@ -140,7 +124,7 @@ func (desc *Desc) Validate() error {
 		switch u.Scheme {
 		case "http", "https":
 		default:
-			return errors.Wrapf(err, "invalid reference URL scheme %q for log type %q", u.Scheme, desc.Name)
+			return errors.Errorf("invalid reference URL scheme %q for log type %q", u.Scheme, desc.Name)
 		}
 	}
 	return nil
@@ -185,17 +169,6 @@ func (r *Registry) Entries(names ...string) []LogTypeEntry {
 	}
 	return m
 }
-func (r *Registry) Parsers(params map[string]interface{}) map[string]pantherlog.LogParser {
-	parsers := make(map[string]pantherlog.LogParser, len(params))
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	for logType, params := range params {
-		if entry := r.entries[logType]; entry != nil {
-			parsers[logType] = entry.NewParser(params)
-		}
-	}
-	return parsers
-}
 
 // LogTypes returns all available log types in a registry
 func (r *Registry) LogTypes() (logTypes []string) {
@@ -207,15 +180,6 @@ func (r *Registry) LogTypes() (logTypes []string) {
 		logTypes = append(logTypes, logType)
 	}
 	return
-}
-
-// Each calls a function for each LogTypeConfig entry in the registry
-func (r *Registry) Each(fn func(entry LogTypeEntry)) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	for _, entry := range r.entries {
-		fn(entry)
-	}
 }
 
 func (r *Registry) Del(entry LogTypeEntry) bool {
@@ -258,23 +222,23 @@ func (r *Registry) MustRegister(config LogTypeConfig) LogTypeEntry {
 }
 
 type logEventType struct {
-	Desc
+	LogTypeDesc
 	schema        interface{}
-	newParser     pantherlog.LogParserFactory
+	newParser     Factory
 	glueTableMeta *awsglue.GlueTableMetadata
 }
 
-func newLogEventType(desc Desc, schema interface{}, fac pantherlog.LogParserFactory) *logEventType {
+func newLogEventType(desc LogTypeDesc, schema interface{}, fac Factory) *logEventType {
 	return &logEventType{
-		Desc:          desc,
+		LogTypeDesc:   desc,
 		schema:        schema,
 		newParser:     fac,
 		glueTableMeta: awsglue.NewGlueTableMetadata(models.LogData, desc.Name, desc.Description, awsglue.GlueTableHourly, schema),
 	}
 }
 
-func (e *logEventType) Describe() Desc {
-	return e.Desc
+func (e *logEventType) Describe() LogTypeDesc {
+	return e.LogTypeDesc
 }
 func (e *logEventType) Schema() interface{} {
 	return e.schema
@@ -285,6 +249,21 @@ func (e *logEventType) GlueTableMeta() *awsglue.GlueTableMetadata {
 }
 
 // Parser returns a new LogParser instance for this log type
-func (e *logEventType) NewParser(params interface{}) pantherlog.LogParser {
+func (e *logEventType) NewParser(params interface{}) Interface {
 	return e.newParser(params)
+}
+
+func checkLogEntrySchema(logType string, schema interface{}) error {
+	if schema == nil {
+		return errors.Errorf("nil schema for log type %q", logType)
+	}
+	data, err := jsoniter.Marshal(schema)
+	if err != nil {
+		return errors.Errorf("invalid schema struct for log type %q: %s", logType, err)
+	}
+	var fields map[string]interface{}
+	if err := jsoniter.Unmarshal(data, &fields); err != nil {
+		return errors.Errorf("invalid schema struct for log type %q: %s", logType, err)
+	}
+	return nil
 }

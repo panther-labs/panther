@@ -40,7 +40,6 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -159,7 +158,7 @@ func newRegistry(names ...string) *parsers.Registry {
 			Description:  "description",
 			ReferenceURL: "-",
 			Schema:       struct{}{},
-			NewParser: func(_ interface{}) pantherlog.LogParser {
+			NewParser: func(_ interface{}) parsers.Interface {
 				return testutil.ParserConfig{}.Parser()
 			},
 		})
@@ -174,7 +173,7 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	initTest()
 
 	destination := newS3Destination()
-	eventChannel := make(chan *pantherlog.Result, 1)
+	eventChannel := make(chan *parsers.Result, 1)
 
 	testEvent := newSimpleTestEvent()
 	testResult, err := testEvent.Result()
@@ -200,12 +199,16 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	assert.True(t, strings.HasPrefix(*uploadInput.Key, expectedS3Prefix))
 
 	// Gzipping the test event
-	var buffer bytes.Buffer
-	writer := gzip.NewWriter(&buffer)
-	writer.Write(testResult.JSON) //nolint:errcheck
-	writer.Write([]byte("\n"))    //nolint:errcheck
-	writer.Close()                //nolint:errcheck
-	expectedBytes := buffer.Bytes()
+	var expectedBytes []byte
+	//nolint:errcheck
+	{
+		var buffer bytes.Buffer
+		writer := gzip.NewWriter(&buffer)
+		writer.Write(testResult.JSON)
+		writer.Write([]byte("\n"))
+		writer.Close()
+		expectedBytes = buffer.Bytes()
+	}
 
 	// Collect what was produced
 	bodyBytes, _ := ioutil.ReadAll(uploadInput.Body)
@@ -238,7 +241,7 @@ func TestSendDataIfTotalMemSizeLimitHasBeenReached(t *testing.T) {
 	initTest()
 
 	destination := newS3Destination()
-	eventChannel := make(chan *pantherlog.Result, 2)
+	eventChannel := make(chan *parsers.Result, 2)
 
 	testEvent := newSimpleTestEvent()
 	testResult, err := testEvent.Result()
@@ -266,7 +269,7 @@ func TestSendDataIfBufferSizeLimitHasBeenReached(t *testing.T) {
 	initTest()
 
 	destination := newS3Destination()
-	eventChannel := make(chan *pantherlog.Result, 2)
+	eventChannel := make(chan *parsers.Result, 2)
 
 	testEvent := newSimpleTestEvent()
 	testResult, err := testEvent.Result()
@@ -292,7 +295,7 @@ func TestSendDataIfBufferSizeLimitHasBeenReached(t *testing.T) {
 func TestSendDataIfTimeLimitHasBeenReached(t *testing.T) {
 	initTest()
 
-	eventChannel := make(chan *pantherlog.Result, 2)
+	eventChannel := make(chan *parsers.Result, 2)
 	doneChannel := make(chan bool, 1)
 
 	const nevents = 7
@@ -329,7 +332,7 @@ func TestSendDataIfTimeLimitHasBeenReached(t *testing.T) {
 func TestSendDataToS3FromMultipleLogTypesBeforeTerminating(t *testing.T) {
 	initTest()
 
-	eventChannel := make(chan *pantherlog.Result, 2)
+	eventChannel := make(chan *parsers.Result, 2)
 
 	logType1 := "testtype1"
 	testEvent1 := newTestEvent(logType1, refTime)
@@ -358,7 +361,7 @@ func TestSendDataToS3FromMultipleLogTypesBeforeTerminating(t *testing.T) {
 func TestSendDataToS3FromSameHourBeforeTerminating(t *testing.T) {
 	initTest()
 
-	eventChannel := make(chan *pantherlog.Result, 2)
+	eventChannel := make(chan *parsers.Result, 2)
 
 	// should write 1 file
 	testEvent1 := newTestEvent(testLogType, refTime)
@@ -386,7 +389,7 @@ func TestSendDataToS3FromSameHourBeforeTerminating(t *testing.T) {
 func TestSendDataToS3FromMultipleHoursBeforeTerminating(t *testing.T) {
 	initTest()
 
-	eventChannel := make(chan *pantherlog.Result, 2)
+	eventChannel := make(chan *parsers.Result, 2)
 
 	// should write 2 files with different time partitions
 	testEvent1 := newTestEvent(testLogType, refTime)
@@ -424,7 +427,7 @@ func TestSendDataToS3FromMultipleHoursBeforeTerminating(t *testing.T) {
 func TestSendDataFailsIfS3Fails(t *testing.T) {
 	initTest()
 
-	eventChannel := make(chan *pantherlog.Result, 1)
+	eventChannel := make(chan *parsers.Result, 1)
 
 	testEvent := newSimpleTestEvent()
 	testResult, err := testEvent.Result()
@@ -445,7 +448,7 @@ func TestSendDataFailsIfS3Fails(t *testing.T) {
 func TestSendDataFailsIfSnsFails(t *testing.T) {
 	initTest()
 
-	eventChannel := make(chan *pantherlog.Result, 1)
+	eventChannel := make(chan *parsers.Result, 1)
 
 	testEvent := newSimpleTestEvent()
 	testResult, err := testEvent.Result()
@@ -483,11 +486,11 @@ func TestBufferSetLargest(t *testing.T) {
 	require.Same(t, bs.largestBuffer(), expectedLargest)
 }
 
-func runSendEvents(t *testing.T, destination Destination, eventChannel chan *pantherlog.Result, expectErr bool) {
+func runSendEvents(t *testing.T, destination Destination, eventChannel chan *parsers.Result, expectErr bool) {
 	runSendEventsSignaled(t, destination, eventChannel, expectErr, nil)
 }
 
-func runSendEventsSignaled(t *testing.T, destination Destination, eventChannel chan *pantherlog.Result,
+func runSendEventsSignaled(t *testing.T, destination Destination, eventChannel chan *parsers.Result,
 	expectErr bool, doneChan chan bool) {
 
 	var waitErr sync.WaitGroup

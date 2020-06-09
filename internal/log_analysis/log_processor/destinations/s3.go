@@ -38,7 +38,6 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
@@ -135,7 +134,7 @@ type S3Destination struct {
 // and stores them in the appropriate S3 path. If the method encounters an error
 // it writes an error to the errorChannel and continues until channel is closed (skipping events).
 // The sendData() method is called as go routine to allow processing to continue and hide network latency.
-func (destination *S3Destination) SendEvents(parsedEventChannel chan *pantherlog.Result, errChan chan error) {
+func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Result, errChan chan error) {
 	// used to flush expired buffers
 	flushExpired := time.NewTicker(destination.maxDuration)
 	defer flushExpired.Stop()
@@ -338,7 +337,7 @@ func newS3EventBufferSet() *s3EventBufferSet {
 	}
 }
 
-func (bs *s3EventBufferSet) getBuffer(event *pantherlog.Result) *s3EventBuffer {
+func (bs *s3EventBufferSet) getBuffer(event *parsers.Result) *s3EventBuffer {
 	// bin by hour (this is our partition size)
 	hour := event.EventTime.Truncate(time.Hour)
 

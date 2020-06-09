@@ -28,7 +28,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -255,7 +254,7 @@ func AppendAnyString(any *PantherAnyString, values ...string) {
 
 // Result converts a PantherLog to Result
 // NOTE: Currently in this file to help with review
-func (pl *PantherLog) Result() (*pantherlog.Result, error) {
+func (pl *PantherLog) Result() (*Result, error) {
 	event := pl.Event()
 	if event == nil {
 		return nil, errors.New("nil event")
@@ -272,7 +271,7 @@ func (pl *PantherLog) Result() (*pantherlog.Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &pantherlog.Result{
+	return &Result{
 		LogType:   *pl.PantherLogType,
 		EventTime: tm,
 		JSON:      data,
@@ -281,19 +280,19 @@ func (pl *PantherLog) Result() (*pantherlog.Result, error) {
 
 // Results converts a PantherLog to a slice of results
 // NOTE: Currently in this file to help with review
-func (pl *PantherLog) Results() ([]*pantherlog.Result, error) {
+func (pl *PantherLog) Results() ([]*Result, error) {
 	result, err := pl.Result()
 	if err != nil {
 		return nil, err
 	}
-	return []*pantherlog.Result{result}, nil
+	return []*Result{result}, nil
 }
 
-func ToResults(logs []*PantherLog, err error) ([]*pantherlog.Result, error) {
+func ToResults(logs []*PantherLog, err error) ([]*Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	results := make([]*pantherlog.Result, len(logs))
+	results := make([]*Result, len(logs))
 	for i := range results {
 		result, err := logs[i].Result()
 		if err != nil {

@@ -26,7 +26,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/pkg/box"
 )
@@ -35,7 +35,7 @@ import (
 func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 	logLine := "log"
 	tm := time.Now().UTC()
-	expectResult := &pantherlog.Result{
+	expectResult := &parsers.Result{
 		LogType:   "success",
 		EventTime: tm,
 		JSON:      []byte(`{"p_log_type":"success"}`),
@@ -53,7 +53,7 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 	//logTypeFail1 := mockLogType("failure1", parserFail1)
 	//logTypeFail2 := mockLogType("failure2", parserFail2)
 
-	classifier := NewClassifier(map[string]pantherlog.LogParser{
+	classifier := NewClassifier(map[string]parsers.Interface{
 		"success":  parserSuccess,
 		"failure1": parserFail1,
 		"failure2": parserFail2,
@@ -63,7 +63,7 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 
 	expectedResult := &ClassifierResult{
 		LogType: box.String("success"),
-		Events: []*pantherlog.Result{
+		Events: []*parsers.Result{
 			{
 				LogType:   "success",
 				EventTime: tm.UTC(),
@@ -110,7 +110,7 @@ func TestClassifyNoMatch(t *testing.T) {
 	failingParser := testutil.ParserConfig{
 		logLine: errors.New("fail"),
 	}.Parser()
-	classifier := NewClassifier(map[string]pantherlog.LogParser{
+	classifier := NewClassifier(map[string]parsers.Interface{
 		"failure": failingParser,
 	})
 	expectedStats := &ClassifierStats{
@@ -143,7 +143,7 @@ func TestClassifyParserPanic(t *testing.T) {
 
 	panicParser := &testutil.MockParser{}
 	panicParser.On("Parse", mock.Anything).Run(func(args mock.Arguments) { panic("test parser panic") })
-	classifier := NewClassifier(map[string]pantherlog.LogParser{
+	classifier := NewClassifier(map[string]parsers.Interface{
 		"panic": panicParser,
 	})
 
@@ -181,12 +181,12 @@ func TestClassifyLogLineIsWhiteSpace(t *testing.T) {
 func testSkipClassify(logLine string, t *testing.T) {
 	// this tests the shortcut path where if log line == "" or "<whitepace>" we just skip
 	failingParser1 := testutil.ParserConfig{
-		"failure1": ([]*pantherlog.Result)(nil),
+		"failure1": ([]*parsers.Result)(nil),
 	}.Parser()
 	failingParser2 := testutil.ParserConfig{
-		"failure2": ([]*pantherlog.Result)(nil),
+		"failure2": ([]*parsers.Result)(nil),
 	}.Parser()
-	classifier := NewClassifier(map[string]pantherlog.LogParser{
+	classifier := NewClassifier(map[string]parsers.Interface{
 		"failure1": failingParser1,
 		"failure2": failingParser2,
 	})

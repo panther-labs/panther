@@ -25,28 +25,28 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
-func TestNewRegistry(t *testing.T) {
+func TestRegistry(t *testing.T) {
 	r := Registry{}
 	logTypes := r.LogTypes()
 	require.Empty(t, logTypes)
 	require.Panics(t, func() {
 		r.MustGet("Foo.Bar")
 	})
-	api, err := r.Register(LogTypeConfig{
+	logTypeConfig := LogTypeConfig{
 		Name:         "Foo.Bar",
 		Description:  "Foo.Bar logs",
 		ReferenceURL: "-",
 		Schema:       struct{}{},
-		NewParser: func(params interface{}) pantherlog.LogParser {
+		NewParser: func(params interface{}) Interface {
 			return nil
 		},
-	})
+	}
+	api, err := r.Register(logTypeConfig)
 	require.NoError(t, err)
 	require.NotNil(t, api)
-	require.Equal(t, Desc{
+	require.Equal(t, LogTypeDesc{
 		Name:         "Foo.Bar",
 		Description:  "Foo.Bar logs",
 		ReferenceURL: "-",
@@ -57,10 +57,70 @@ func TestNewRegistry(t *testing.T) {
 		awsglue.NewGlueTableMetadata(models.LogData, "Foo.Bar", "Foo.Bar logs", awsglue.GlueTableHourly, struct{}{}),
 		api.GlueTableMeta(),
 	)
+	entry, err := r.Register(logTypeConfig)
+	require.Error(t, err)
+	require.Equal(t, api, entry)
+	require.Panics(t, func() {
+		r.MustRegister(logTypeConfig)
+	})
+	require.True(t, r.Del(entry))
+	require.NotPanics(t, func() {
+		api = r.MustRegister(logTypeConfig)
+	})
+
 	getAPI := r.Get("Foo.Bar")
 	require.Equal(t, api, getAPI)
+	require.NotPanics(t, func() {
+		r.MustGet("Foo.Bar")
+	})
 	require.Equal(t, []LogTypeEntry{api}, r.Entries())
 	require.Equal(t, []LogTypeEntry{api}, r.Entries("Foo.Bar"))
 	require.Equal(t, []LogTypeEntry{}, r.Entries("Foo.Baz"))
 	require.Equal(t, []string{"Foo.Bar"}, r.LogTypes())
+	require.NotNil(t, DefaultRegistry())
+	require.NoError(t, Register(logTypeConfig))
+	globalEntry := DefaultRegistry().Get(logTypeConfig.Name)
+	require.NotNil(t, globalEntry)
+	require.Error(t, Register(logTypeConfig))
+	require.Panics(t, func() {
+		MustRegister(logTypeConfig)
+	})
+	require.True(t, DefaultRegistry().Del(globalEntry))
+	require.NotPanics(t, func() {
+		MustRegister(logTypeConfig)
+	})
+}
+
+func TestDesc(t *testing.T) {
+	require.Error(t, (&LogTypeDesc{}).Validate())
+	require.Error(t, (&LogTypeDesc{
+		Name: "Foo",
+	}).Validate())
+	require.Error(t, (&LogTypeDesc{
+		Name:        "Foo",
+		Description: "Bar",
+	}).Validate())
+	require.Error(t, (&LogTypeDesc{
+		Name:         "Foo",
+		Description:  "Bar",
+		ReferenceURL: "invalid url",
+	}).Validate())
+	require.Error(t, (&LogTypeDesc{
+		Name:         "Foo",
+		ReferenceURL: "http://example.org",
+	}).Validate())
+	require.Error(t, (&LogTypeDesc{
+		Name:         "Foo",
+		ReferenceURL: "-",
+	}).Validate())
+	require.NoError(t, (&LogTypeDesc{
+		Name:         "Foo",
+		Description:  "Foo bar",
+		ReferenceURL: "-",
+	}).Validate())
+	require.NoError(t, (&LogTypeDesc{
+		Name:         "Foo",
+		Description:  "Foo bar",
+		ReferenceURL: "https://example.org",
+	}).Validate())
 }

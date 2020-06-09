@@ -31,7 +31,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
@@ -110,7 +109,7 @@ type ParserConfig map[string]interface{}
 
 func AlwaysFailParser(err error) *MockParser {
 	p := MockParser{}
-	p.On("Parse", mock.AnythingOfType("string")).Return(([]*pantherlog.Result)(nil), err)
+	p.On("Parse", mock.AnythingOfType("string")).Return(([]*parsers.Result)(nil), err)
 	return &p
 }
 
@@ -122,7 +121,7 @@ func (args ParserConfig) Parser() *MockParser {
 	p := &MockParser{}
 	for log, result := range args {
 		var err error
-		var results []*pantherlog.Result
+		var results []*parsers.Result
 		switch x := result.(type) {
 		case error:
 			err = x
@@ -130,22 +129,22 @@ func (args ParserConfig) Parser() *MockParser {
 			results, err = parsers.ToResults(x, nil)
 		case *parsers.PantherLog:
 			results, err = x.Results()
-		case []*pantherlog.Result:
+		case []*parsers.Result:
 			results = x
-		case pantherlog.Result:
+		case parsers.Result:
 			results = x.Results()
-		case *pantherlog.Result:
+		case *parsers.Result:
 			results = x.Results()
 		}
 		p.On("Parse", log).Return(results, err)
 	}
-	p.On("Parse", mock.AnythingOfType("string")).Return(([]*pantherlog.Result)(nil), errors.New("invalid log"))
+	p.On("Parse", mock.AnythingOfType("string")).Return(([]*parsers.Result)(nil), errors.New("invalid log"))
 	return p
 }
 
-func (p *MockParser) ParseLog(log string) ([]*pantherlog.Result, error) {
+func (p *MockParser) ParseLog(log string) ([]*parsers.Result, error) {
 	args := p.MethodCalled("Parse", log)
-	return args.Get(0).([]*pantherlog.Result), args.Error(1)
+	return args.Get(0).([]*parsers.Result), args.Error(1)
 }
 
 func (p *MockParser) RequireLessOrEqualNumberOfCalls(t *testing.T, method string, number int) {

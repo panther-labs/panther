@@ -30,7 +30,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
@@ -56,8 +56,8 @@ var (
 func Process(dataStreams chan *common.DataStream, destination destinations.Destination) error {
 	factory := func(r *common.DataStream) *Processor {
 		// By initializing the global parsers here we can constrain the proliferation of globals throughout the code.
-		parsers := registry.AvailableParsers()
-		return NewProcessor(r, parsers)
+		allParsers := registry.AvailableParsers()
+		return NewProcessor(r, allParsers)
 	}
 	return process(dataStreams, destination, factory)
 }
@@ -66,7 +66,7 @@ func Process(dataStreams chan *common.DataStream, destination destinations.Desti
 func process(dataStreams chan *common.DataStream, destination destinations.Destination,
 	newProcessorFunc func(*common.DataStream) *Processor) error {
 
-	parsedEventChannel := make(chan *pantherlog.Result, ParsedEventBufferSize)
+	parsedEventChannel := make(chan *parsers.Result, ParsedEventBufferSize)
 	errorChannel := make(chan error)
 
 	// go routine aggregates data written to s3
@@ -110,7 +110,7 @@ func process(dataStreams chan *common.DataStream, destination destinations.Desti
 }
 
 // processStream reads the data from an S3 the dataStream, parses it and writes events to the output channel
-func (p *Processor) run(outputChan chan *pantherlog.Result) error {
+func (p *Processor) run(outputChan chan *parsers.Result) error {
 	var err error
 	stream := bufio.NewReader(p.input.Reader)
 	for {
@@ -132,7 +132,7 @@ func (p *Processor) run(outputChan chan *pantherlog.Result) error {
 	return err
 }
 
-func (p *Processor) processLogLine(line string, outputChan chan *pantherlog.Result) {
+func (p *Processor) processLogLine(line string, outputChan chan *parsers.Result) {
 	classificationResult := p.classifyLogLine(line)
 	if classificationResult.LogType == nil { // unable to classify, no error, keep parsing (best effort, will be logged)
 		return
@@ -153,7 +153,7 @@ func (p *Processor) classifyLogLine(line string) *classification.ClassifierResul
 	return result
 }
 
-func (p *Processor) sendEvents(result *classification.ClassifierResult, outputChan chan *pantherlog.Result) {
+func (p *Processor) sendEvents(result *classification.ClassifierResult, outputChan chan *parsers.Result) {
 	for _, event := range result.Events {
 		outputChan <- event
 	}
@@ -173,7 +173,7 @@ type Processor struct {
 	operation  *oplog.Operation
 }
 
-func NewProcessor(input *common.DataStream, parsers map[string]pantherlog.LogParser) *Processor {
+func NewProcessor(input *common.DataStream, parsers map[string]parsers.Interface) *Processor {
 	return &Processor{
 		input:      input,
 		classifier: classification.NewClassifier(parsers),
