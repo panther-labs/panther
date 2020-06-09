@@ -43,6 +43,11 @@ const (
 func RegisterMapping(x interface{}, glueType string) {
 	// Get non-pointer value
 	from := reflect.Indirect(reflect.ValueOf(x)).Type()
+	for _, m := range GlueMappings {
+		if m.From == from {
+			panic("duplicate custom mapping")
+		}
+	}
 
 	GlueMappings = append(GlueMappings, CustomMapping{
 		From: from,
