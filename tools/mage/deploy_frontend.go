@@ -66,26 +66,29 @@ func deployFrontend(
 
 	params := map[string]string{
 		"AlarmTopicArn":              bootstrapOutputs["AlarmTopicArn"],
-		"SubnetOneId":                bootstrapOutputs["SubnetOneId"],
-		"SubnetTwoId":                bootstrapOutputs["SubnetTwoId"],
+		"AppClientId":                bootstrapOutputs["AppClientId"],
+		"CertificateArn":             settings.Web.CertificateArn,
+		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"ElbArn":                     bootstrapOutputs["LoadBalancerArn"],
 		"ElbFullName":                bootstrapOutputs["LoadBalancerFullName"],
 		"ElbTargetGroup":             bootstrapOutputs["LoadBalancerTargetGroup"],
-		"SecurityGroup":              bootstrapOutputs["WebSecurityGroup"],
+		"FirstUserGivenName":         settings.Setup.FirstUser.GivenName,
+		"FirstUserFamilyName":        settings.Setup.FirstUser.FamilyName,
+		"FirstUserEmail":             settings.Setup.FirstUser.Email,
 		"GraphQLApiEndpoint":         bootstrapOutputs["GraphQLApiEndpoint"],
-		"UserPoolId":                 bootstrapOutputs["UserPoolId"],
-		"AppClientId":                bootstrapOutputs["AppClientId"],
 		"Image":                      dockerImage,
-		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
-		"CertificateArn":             settings.Web.CertificateArn,
 		"PantherVersion":             gitVersion,
+		"SecurityGroup":              bootstrapOutputs["WebSecurityGroup"],
+		"SubnetOneId":                bootstrapOutputs["SubnetOneId"],
+		"SubnetTwoId":                bootstrapOutputs["SubnetTwoId"],
+		"UserPoolId":                 bootstrapOutputs["UserPoolId"],
 	}
 	return deployTemplate(awsSession, frontendTemplate, bucket, frontendStack, params)
 }
 
 // Build a personalized docker image from source and push it to the private image repo of the user
 func buildAndPushImageFromSource(awsSession *session.Session, imageRegistry, tag string) (string, error) {
-	logger.Debug("deploy: requesting access to remote image repo")
+	logger.Debug("requesting access to remote image repo")
 	response, err := ecr.New(awsSession).GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
 	if err != nil {
 		return "", fmt.Errorf("failed to get ecr auth token: %v", err)
@@ -104,7 +107,7 @@ func buildAndPushImageFromSource(awsSession *session.Session, imageRegistry, tag
 		return "", err
 	}
 
-	logger.Info("deploy: docker build web server (deployments/Dockerfile)")
+	logger.Info("docker build web server (deployments/Dockerfile)")
 	dockerBuildOutput, err := sh.Output("docker", "build", "--file", "deployments/Dockerfile", "--quiet", ".")
 	if err != nil {
 		return "", fmt.Errorf("docker build failed: %v", err)
@@ -120,9 +123,9 @@ func buildAndPushImageFromSource(awsSession *session.Session, imageRegistry, tag
 		return "", fmt.Errorf("docker tag %s %s failed: %v", localImageID, remoteImage, err)
 	}
 
-	logger.Info("deploy: pushing docker image to remote repo")
+	logger.Info("pushing docker image to remote repo")
 	if err := sh.Run("docker", "push", remoteImage); err != nil {
-		return "", fmt.Errorf("docker push failed: %v", err)
+		return "", err
 	}
 
 	return remoteImage, nil

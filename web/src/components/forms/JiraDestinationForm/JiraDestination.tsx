@@ -37,9 +37,7 @@ interface JiraDestinationFormProps {
 const jiraFieldsValidationSchema = Yup.object().shape({
   outputConfig: Yup.object().shape({
     jira: Yup.object().shape({
-      orgDomain: Yup.string()
-        .url('Must be a valid Jira domain')
-        .required(),
+      orgDomain: Yup.string().url('Must be a valid Jira domain').required(),
       userName: Yup.string(),
       projectKey: Yup.string().required(),
       apiKey: Yup.string().required(),
@@ -51,7 +49,6 @@ const jiraFieldsValidationSchema = Yup.object().shape({
   }),
 });
 
-// @ts-ignore
 // We merge the two schemas together: the one deriving from the common fields, plus the custom
 // ones that change for each destination.
 // https://github.com/jquense/yup/issues/522

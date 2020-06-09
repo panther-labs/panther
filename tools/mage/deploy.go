@@ -31,10 +31,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/magefile/mage/sh"
 
+	"github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
+	"github.com/panther-labs/panther/pkg/genericapi"
 	"github.com/panther-labs/panther/pkg/shutil"
 	"github.com/panther-labs/panther/tools/config"
 )
@@ -249,7 +252,7 @@ func buildLayer(libs []string) error {
 		return nil
 	}
 
-	logger.Info("deploy: downloading python libraries " + strings.Join(libs, ","))
+	logger.Info("downloading python libraries " + strings.Join(libs, ","))
 	if err := os.RemoveAll(layerSourceDir); err != nil {
 		return fmt.Errorf("failed to remove layer directory %s: %v", layerSourceDir, err)
 	}
@@ -335,9 +338,6 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 			"AthenaResultsBucket":     outputs["AthenaResultsBucket"],
 			"ComplianceApiId":         outputs["ComplianceApiId"],
 			"DynamoScalingRoleArn":    outputs["DynamoScalingRoleArn"],
-			"FirstUserGivenName":      settings.Setup.FirstUser.GivenName,
-			"FirstUserFamilyName":     settings.Setup.FirstUser.FamilyName,
-			"FirstUserEmail":          settings.Setup.FirstUser.Email,
 			"InitialAnalysisPackUrls": strings.Join(settings.Setup.InitialAnalysisSets, ","),
 			"ProcessedDataBucket":     outputs["ProcessedDataBucket"],
 			"OutputsKeyId":            outputs["OutputsEncryptionKeyId"],
@@ -387,16 +387,15 @@ func deployMainStacks(awsSession *session.Session, settings *config.PantherConfi
 		c <- goroutineResult{summary: logAnalysisStack, err: err}
 	}(results)
 
-	// Web server
-	count++
+	// Wait for stacks to finish.
+	// There are two stacks before and two stacks after.
+	logResults(results, "deploy", 3, count+2, len(allStacks))
+
 	go func(c chan goroutineResult) {
+		// Web stack requires core stack to exist first
 		_, err := deployFrontend(awsSession, accountID, sourceBucket, outputs, settings)
 		c <- goroutineResult{summary: frontendStack, err: err}
 	}(results)
-
-	// Wait for stacks to finish.
-	// There are two stacks before and one stack after
-	logResults(results, "deploy", 3, count+2, len(allStacks))
 
 	// Onboard Panther to scan itself
 	go func(c chan goroutineResult) {
@@ -429,55 +428,28 @@ func setFirstUser(awsSession *session.Session, settings *config.PantherConfig) {
 		return
 	}
 
-	response, err := cloudformation.New(awsSession).DescribeStacks(
-		&cloudformation.DescribeStacksInput{StackName: aws.String(coreStack)})
+	input := models.LambdaInput{ListUsers: &models.ListUsersInput{}}
+	var output models.ListUsersOutput
+	err := genericapi.Invoke(lambda.New(awsSession), "panther-users-api", &input, &output)
+	if err != nil && !strings.Contains(err.Error(), lambda.ErrCodeResourceNotFoundException) {
+		logger.Fatalf("failed to list existing users: %v", err)
+	}
 
-	if errStackDoesNotExist(err) {
-		// If there is no setting and no core stack, we have to prompt.
-		fmt.Println("Who will be the initial Panther admin user?")
-		firstName := promptUser("First name: ", nonemptyValidator)
-		lastName := promptUser("Last name: ", nonemptyValidator)
-		email := promptUser("Email: ", emailValidator)
-		settings.Setup.FirstUser = config.FirstUser{
-			GivenName:  firstName,
-			FamilyName: lastName,
-			Email:      email,
-		}
+	if len(output.Users) > 0 {
+		// A user already exists - leave the setting blank.
+		// This will "delete" the FirstUser custom resource in the web stack, but since that resource
+		// has DeletionPolicy:Retain, CloudFormation will ignore it.
 		return
 	}
 
-	if err != nil {
-		logger.Fatalf("failed to describe %s stack: %v", coreStack, err)
+	// If there is no setting and no existing user, we have to prompt.
+	fmt.Println("Who will be the initial Panther admin user?")
+	firstName := promptUser("First name: ", nonemptyValidator)
+	lastName := promptUser("Last name: ", nonemptyValidator)
+	email := promptUser("Email: ", emailValidator)
+	settings.Setup.FirstUser = config.FirstUser{
+		GivenName:  firstName,
+		FamilyName: lastName,
+		Email:      email,
 	}
-
-	// At this point, we know the core stack has already been deployed.
-	// If it's v1.3 or earlier, the first user was created directly by mage.
-	// If it's v1.4+, there may be a non-empty FirstUser custom resource in that stack.
-	//
-	// Search the stack parameters - if we find the FirstUser settings, use the same ones again.
-	//
-	// I tried the "UsePreviousValue" setting when defining CloudFormation parameters in the deploy
-	// process, but CFN fails if you use that setting for a parameter which was not previously defined.
-	// In other words, that setting would block the v1.3 -> v1.4 migration, so we do it manually.
-	//
-	// After a few releases, we can assume existing deployments will all have the custom resource
-	// and we could simplify this by just telling CFN to use the previous parameter value.
-	for _, param := range response.Stacks[0].Parameters {
-		switch aws.StringValue(param.ParameterKey) {
-		case "FirstUserGivenName":
-			settings.Setup.FirstUser.GivenName = aws.StringValue(param.ParameterValue)
-		case "FirstUserFamilyName":
-			settings.Setup.FirstUser.FamilyName = aws.StringValue(param.ParameterValue)
-		case "FirstUserEmail":
-			settings.Setup.FirstUser.Email = aws.StringValue(param.ParameterValue)
-		}
-	}
-
-	// If the first user is empty, it must be because this is a v1.3 -> v1.4 migration, in which case
-	// we'll leave it empty and CloudFormation will skip the FirstUser custom resource.
-	//
-	// If the first user is non-empty, great! Now we'll pass the same parameters as before so that
-	// CFN doesn't try to change the existing custom resource.
-	//
-	// Either way, the settings we have now are valid to be passed directly to CloudFormation.
 }

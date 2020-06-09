@@ -268,12 +268,7 @@ func testGoUnit() error {
 	}
 
 	// unit tests and race detection
-	if err := runGoTest("test", "-race", "-vet", "", "-cover", "./..."); err != nil {
-		return err
-	}
-
-	// One package is explicitly skipped by -race, we have to run its unit tests separately
-	return runGoTest("test", "-vet", "", "-cover", "./internal/log_analysis/log_processor/destinations")
+	return runGoTest("test", "-race", "-vet", "", "-cover", "./...")
 }
 
 func testGoLint() error {

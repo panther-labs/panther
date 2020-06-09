@@ -85,7 +85,7 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
             <APIErrorFallback>
               <Switch>
                 <Route exact path="/" component={LandingPage} />
-                /******************** COMPLIANCE ******************************/
+                {/* ******************* COMPLIANCE ***************************** */}
                 <Redirect exact from={urls.compliance.home()} to={urls.compliance.overview()} />
                 <Route exact path={urls.compliance.overview()} component={OverviewPage} />
                 <Route exact path={urls.compliance.policies.list()} component={ListPoliciesPage} />
@@ -129,7 +129,7 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   path={urls.compliance.sources.edit(':id')}
                   component={EditComplianceSourcePage}
                 />
-                /******************** LOG ANALYSIS ******************************/
+                {/* ******************* LOG ANALYSIS ***************************** */}
                 <Redirect exact from={urls.logAnalysis.home()} to={urls.logAnalysis.overview()} />
                 <Route exact path={urls.logAnalysis.overview()} component={LogAnalysisOverview} />
                 <Route exact path={urls.logAnalysis.rules.list()} component={ListRulesPage} />
@@ -171,7 +171,7 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   from={`${urls.logAnalysis.sources.list()}:type`}
                   to={urls.logAnalysis.sources.list()}
                 />
-                /******************** SETTINGS ******************************/
+                {/* ******************* SETTINGS ***************************** */}
                 <Redirect exact from={urls.settings.home()} to={urls.settings.general()} />
                 <Route exact path={urls.settings.general()} component={GeneralSettingsPage} />
                 <Route exact path={urls.settings.general()} component={GeneralSettingsPage} />

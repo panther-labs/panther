@@ -106,7 +106,7 @@ export const LOG_TYPES = [
   'GitLab.Exceptions',
   'GitLab.Git',
   'GitLab.Integrations',
-  'GitLab.Rails',
+  'GitLab.Production',
   'Nginx.Access',
   'Osquery.Batch',
   'Osquery.Differential',
