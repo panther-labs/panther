@@ -23,92 +23,85 @@ import (
 
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 // CustomWebhook alert send an alert.
 func (client *OutputClient) CustomWebhook(
 	alert *alertmodels.Alert, config *outputmodels.CustomWebhookConfig) *AlertDeliveryError {
 
-	// Get or generate concrete values
-	id := getID(alert)
-	name := getDisplayName(alert)
-	alertType := getType(alert)
+	// Get a link to the Panther Dashboard to one of the following:
+	//   1. The PolicyID (if no AlertID is present)
+	//   2. The AlertID
 	link := generateURL(alert)
-	title := generateAlertTitle(alert)
-	description := generateDetailedAlertMessage(alert)
-	// Define an empty slice so marshaling returns "[]" instead of "null"
-	tags := []*string{}
-	if len(alert.Tags) > 0 {
-		tags = alert.Tags
-	}
-
-	customWebhookAlert := &CustomWebhookAlert{
-		ID:          &id,
-		Name:        &name,
-		Severity:    alert.Severity,
-		Type:        &alertType,
-		Link:        &link,
-		Title:       &title,
-		Description: &description,
-		Runbook:     alert.Runbook,
-		Tags:        tags,
-		Version:     alert.PolicyVersionID,
-	}
 
 	outputMessage := &CustomWebhookOutputMessage{
-		Alert:     *customWebhookAlert,
-		CreatedAt: alert.CreatedAt,
+		AnalysisID:  alert.PolicyID,
+		AlertID:     alert.AlertID,
+		Name:        alert.PolicyName,
+		Severity:    alert.Severity,
+		Type:        alert.Type,
+		Link:        &link,
+		Title:       alert.Title,
+		Description: alert.PolicyDescription,
+		Runbook:     alert.Runbook,
+		Tags:        alert.Tags,
+		Version:     alert.PolicyVersionID,
+		CreatedAt:   alert.CreatedAt,
 	}
+
+	// Ensure we have slices instead of `null` array fields
+	gatewayapi.ReplaceMapSliceNils(outputMessage)
 
 	requestURL := *config.WebhookURL
 	postInput := &PostInput{
 		url: requestURL,
 		body: map[string]interface{}{
-			"alert":     outputMessage.Alert,
-			"createdAt": outputMessage.CreatedAt,
+			"alert": outputMessage,
 		},
 	}
 	return client.httpWrapper.post(postInput)
 }
 
-//CustomWebhookAlert describes the details of an alert in the Custom Webhook message
-type CustomWebhookAlert struct {
+// CustomWebhookOutputMessage describes the details of an alert in a Custom Webhook message
+//
+// This struct should never use the `omitempty` attribute as we want to keep the keys even
+// if they have `null` fields. However, we need to ensure there are no `null` arrays or
+// objects.
+type CustomWebhookOutputMessage struct {
 	// [REQUIRED] Either AlertID or PolicyID depending on the alert type
-	ID *string `json:"id" validate:"required"`
+	AnalysisID *string `json:"analysisId" validate:"required"`
 
-	// [REQUIRED] The PolicyName (or PolicyID if the name doesn't exist) of the triggered alert.
-	Name *string `json:"name" validate:"required"`
+	// An AlertID that was triggered by a Rule (or in the future, a Policy)
+	AlertID *string `json:"alertId"`
 
-	// [REQUIRED] The severity of the alert
+	// The Name of the triggered alert set in Panther UI
+	Name *string `json:"name"`
+
+	// [REQUIRED] The severity enum of the alert set in Panther UI
 	Severity *string `json:"severity" validate:"required,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 
-	// [REQUIRED] Type specifies if an alert is for a policy or a rule
-	Type *string `json:"type" validate:"required,oneof=RULE POLICY UNKNOWN"`
+	// [REQUIRED] The Type enum if an alert is for a rule or policy
+	Type *string `json:"type" validate:"required,oneof=RULE POLICY"`
 
-	// [REQUIRED] Link to the alert in Panther UI
-	Link *string `json:"link" validate:"required"`
+	// Link to the alert in Panther UI
+	Link *string `json:"link"`
 
-	// [REQUIRED] A human readable title of the alert
-	Title *string `json:"title" validate:"required"`
+	// The dynamic Title set from a user-configurable python rule in Panther UI
+	Title *string `json:"title"`
 
-	// [REQUIRED] A human readable description of the rule that triggered the alert
-	Description *string `json:"description" validate:"required"`
+	// The Description of the rule set in Panther UI
+	Description *string `json:"description"`
 
-	// [REQUIRED] Runbook is the user-provided triage information
-	Runbook *string `json:"runbook" validate:"required"`
+	// The Runbook is the user-provided triage information set in Panther UI
+	Runbook *string `json:"runbook"`
 
-	// [REQUIRED] Tags is the set of policy tags
-	Tags []*string `json:"tags" validate:"required"`
+	// Tags is the set of policy tags set in Panther UI
+	Tags []*string `json:"tags"`
 
-	// [REQUIRED] Version is the S3 object version for the policy
-	Version *string `json:"version" validate:"required"`
-}
+	// Version is the S3 object version for the policy
+	Version *string `json:"version"`
 
-//CustomWebhookOutputMessage contains the fields that will be included in the Custom Webhook message
-type CustomWebhookOutputMessage struct {
-	// Alert contains the details of the alert
-	Alert CustomWebhookAlert `json:"alert" validate:"required"`
-
-	// CreatedAt is the timestamp (seconds since epoch) of the alert at creation.
+	// [REQUIRED] CreatedAt is the timestamp (RFC3339) of the alert at creation.
 	CreatedAt *time.Time `json:"createdAt" validate:"required"`
 }

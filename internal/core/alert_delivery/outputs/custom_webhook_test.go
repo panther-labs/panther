@@ -27,6 +27,7 @@ import (
 
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 var customWebhookConfig = &outputmodels.CustomWebhookConfig{
@@ -40,51 +41,45 @@ func TestCustomWebhookAlert(t *testing.T) {
 	// Define the required fields for an alert
 	// The custom webhook should be able to produce the correct
 	// output from a bare bones alert
-	var createdAtTime, _ = time.Parse(time.RFC3339, "2019-08-03T11:40:13Z")
+	createdAtTime, err := time.Parse(time.RFC3339, "2019-08-03T11:40:13Z")
+	if err != nil {
+		t.Error(err)
+	}
 	alert := &alertmodels.Alert{
 		PolicyID:  aws.String("policyId"),
 		CreatedAt: &createdAtTime,
 		Severity:  aws.String("INFO"),
 	}
 
-	// Get or generate concrete values
-	id := getID(alert)
-	name := getDisplayName(alert)
-	alertType := getType(alert)
+	// Get a link to the Panther Dashboard to one of the following:
+	//   1. The PolicyID (if no AlertID is present)
+	//   2. The AlertID
 	link := generateURL(alert)
-	title := generateAlertTitle(alert)
-	description := generateDetailedAlertMessage(alert)
-	// Define an empty slice so marshaling returns "[]" instead of "null"
-	tags := []*string{}
-	if len(alert.Tags) > 0 {
-		tags = alert.Tags
-	}
-
-	customWebhookAlert := &CustomWebhookAlert{
-		ID:          &id,
-		Name:        &name,
-		Severity:    alert.Severity,
-		Type:        &alertType,
-		Link:        &link,
-		Title:       &title,
-		Description: &description,
-		Runbook:     alert.Runbook,
-		Tags:        tags,
-		Version:     alert.PolicyVersionID,
-	}
 
 	outputMessage := &CustomWebhookOutputMessage{
-		Alert:     *customWebhookAlert,
-		CreatedAt: alert.CreatedAt,
+		AnalysisID:  alert.PolicyID,
+		AlertID:     alert.AlertID,
+		Name:        alert.PolicyName,
+		Severity:    alert.Severity,
+		Type:        alert.Type,
+		Link:        &link,
+		Title:       alert.Title,
+		Description: alert.PolicyDescription,
+		Runbook:     alert.Runbook,
+		Tags:        alert.Tags,
+		Version:     alert.PolicyVersionID,
+		CreatedAt:   alert.CreatedAt,
 	}
+
+	// Ensure we have slices instead of `null` array fields
+	gatewayapi.ReplaceMapSliceNils(outputMessage)
 
 	requestURL := *customWebhookConfig.WebhookURL
 
 	expectedPostInput := &PostInput{
 		url: requestURL,
 		body: map[string]interface{}{
-			"alert":     outputMessage.Alert,
-			"createdAt": outputMessage.CreatedAt,
+			"alert": outputMessage,
 		},
 	}
 
