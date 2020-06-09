@@ -1,6 +1,3 @@
-// Skip -race testing for this package (takes > 2 minutes)
-// +build !race
-
 package destinations
 
 /**
