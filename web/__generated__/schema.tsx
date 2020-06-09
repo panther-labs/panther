@@ -378,12 +378,7 @@ export type ListComplianceItemsResponse = {
 export type ListGlobalModuleInput = {
   nameContains?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
-  /**
-   * Sorting
-   *  sortBy: ListRulesSortFieldsEnum # defaults to `id`
-   */
   sortDir?: Maybe<SortDirEnum>;
-  /** Paging */
   pageSize?: Maybe<Scalars['Int']>;
   page?: Maybe<Scalars['Int']>;
 };
@@ -1674,7 +1669,7 @@ export type ListGlobalsResponseResolvers<
 > = {
   paging?: Resolver<Maybe<ResolversTypes['PagingData']>, ParentType, ContextType>;
   globals?: Resolver<Maybe<Array<Maybe<ResolversTypes['GlobalModule']>>>, ParentType, ContextType>;
-  __isTypeOf?: isTypeOfResolverFn<ParentType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
 export type ListPoliciesResponseResolvers<
