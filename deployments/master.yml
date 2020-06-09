@@ -89,12 +89,12 @@ Parameters:
     Default: https://github.com/panther-labs/panther-analysis/releases/latest/download/panther-analysis-all.zip
   LayerVersionArns:
     Type: CommaDelimitedList
-    Description: Comma-separated list of LayerVersion ARNs to attach to each Lambda function (e.g. if you have a serverless monitoring service)
+    Description: Comma-separated list of at most 3 LayerVersion ARNs to attach to each Lambda function (e.g. if you have a serverless monitoring service)
     Default: ''
   LogProcessorLambdaMemorySize:
     Type: Number
-    Description: Log processor Lambda memory allocation. Higher values reduce processing time, but come at a higher cost
-    MinValue: 256 # any smaller and we risk OOMs
+    Description: Log processor Lambda memory allocation. Increase to eliminate out-of-memory errors or reduce processing time (in exchange for higher cost)
+    MinValue: 256 # 128 is too small, risks OOM errors
     MaxValue: 3008
     Default: 1024
   LogSubscriptionPrincipals:
