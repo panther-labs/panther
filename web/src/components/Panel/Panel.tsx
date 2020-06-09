@@ -27,17 +27,11 @@ interface PanelProps {
 
 const Panel: React.FC<PanelProps> = ({ title, actions, size, children }) => {
   return (
-    <Card
-      as="section"
-      width={1}
-      borderBottom="1px solid"
-      borderColor="grey100"
-      p={size === 'large' ? 8 : 6}
-    >
+    <Card as="section" width={1}>
       <Flex
-        pb={size === 'large' ? 8 : 6}
+        p={size === 'large' ? 8 : 6}
         borderBottom="1px solid"
-        borderColor="grey100"
+        borderColor="navyblue-500"
         justify="space-between"
         align="center"
       >
@@ -52,7 +46,7 @@ const Panel: React.FC<PanelProps> = ({ title, actions, size, children }) => {
         )}
         {actions}
       </Flex>
-      <Box mt={size === 'large' ? 8 : 6}>{children}</Box>
+      <Box p={size === 'large' ? 8 : 6}>{children}</Box>
     </Card>
   );
 };

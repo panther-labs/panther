@@ -26,7 +26,11 @@ interface SeverityBadgeProps {
 }
 
 const SeverityBadge: React.FC<SeverityBadgeProps> = ({ severity }) => {
-  return <Badge color={SEVERITY_COLOR_MAP[severity]}>{severity}</Badge>;
+  return (
+    <Badge variant="outline" color={SEVERITY_COLOR_MAP[severity]}>
+      {severity}
+    </Badge>
+  );
 };
 
 export default SeverityBadge;
