@@ -76,7 +76,7 @@ const urls = {
     home: () => '/settings/',
     general: () => `${urls.settings.home()}general/`,
     globalModule: {
-      list: () => `${urls.settings.home()}module/`,
+      list: () => `${urls.settings.home()}modules/`,
       create: () => `${urls.settings.globalModule.list()}new/`,
       edit: (id: GlobalModule['id']) =>
         `${urls.settings.globalModule.list()}${urlEncode(id)}/edit/`,
