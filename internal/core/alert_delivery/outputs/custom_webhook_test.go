@@ -37,13 +37,14 @@ func TestCustomWebhookAlert(t *testing.T) {
 	httpWrapper := &mockHTTPWrapper{}
 	client := &OutputClient{httpWrapper: httpWrapper}
 
+	// Define the required fields for an alert
+	// The custom webhook should be able to produce the correct
+	// output from a bare bones alert
 	var createdAtTime, _ = time.Parse(time.RFC3339, "2019-08-03T11:40:13Z")
 	alert := &alertmodels.Alert{
-		PolicyID:   aws.String("policyId"),
-		CreatedAt:  &createdAtTime,
-		OutputIDs:  aws.StringSlice([]string{"output-id"}),
-		PolicyName: aws.String("policyName"),
-		Severity:   aws.String("INFO"),
+		PolicyID:  aws.String("policyId"),
+		CreatedAt: &createdAtTime,
+		Severity:  aws.String("INFO"),
 	}
 
 	// Get or generate concrete values

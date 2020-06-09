@@ -96,7 +96,7 @@ func New(sess *session.Session) *OutputClient {
 	}
 }
 
-const detailedMessageTemplate = "%s\nFor more details please visit: %s\nSeverity: %s\nRunbook: %s\nDescription:%s"
+const detailedMessageTemplate = "%s\nFor more details please visit: %s\nSeverity: %s\nRunbook: %s\nDescription: %s"
 
 func generateAlertMessage(alert *alertmodels.Alert) string {
 	if aws.StringValue(alert.Type) == alertmodels.RuleType {

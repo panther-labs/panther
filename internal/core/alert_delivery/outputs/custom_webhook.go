@@ -92,16 +92,16 @@ type CustomWebhookAlert struct {
 	Title *string `json:"title" validate:"required"`
 
 	// [REQUIRED] A human readable description of the rule that triggered the alert
-	Description *string `json:"description"`
+	Description *string `json:"description" validate:"required"`
 
-	// Runbook is the user-provided triage information
-	Runbook *string `json:"runbook"`
+	// [REQUIRED] Runbook is the user-provided triage information
+	Runbook *string `json:"runbook" validate:"required"`
 
-	// Tags is the set of policy tags
-	Tags []*string `json:"tags"`
+	// [REQUIRED] Tags is the set of policy tags
+	Tags []*string `json:"tags" validate:"required"`
 
-	// Version is the S3 object version for the policy
-	Version *string `json:"version"`
+	// [REQUIRED] Version is the S3 object version for the policy
+	Version *string `json:"version" validate:"required"`
 }
 
 //CustomWebhookOutputMessage contains the fields that will be included in the Custom Webhook message
