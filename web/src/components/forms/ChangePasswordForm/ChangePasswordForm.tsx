@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Alert, Box } from 'pouncejs';
+import { Alert, Box, SimpleGrid } from 'pouncejs';
 import { Field, Form, Formik } from 'formik';
 import React from 'react';
 import * as Yup from 'yup';
@@ -68,41 +68,43 @@ const ChangePasswordForm: React.FC = () => {
     >
       {({ status }) => (
         <Form>
-          <Box mb={6}>
-            <Alert variant="info" title="Updating your password will log you out of all devices!" />
+          <Box mb={4}>
+            <Alert
+              variant="default"
+              title="Updating your password will log you out of all devices!"
+            />
           </Box>
           {status && (
-            <Box mb={6}>
+            <Box mb={4}>
               <Alert variant="error" title={status.title} description={status.message} />
             </Box>
           )}
-          <Field
-            as={FormikTextInput}
-            label="Current Password"
-            placeholder="Enter your current password..."
-            type="password"
-            name="oldPassword"
-            aria-required
-            mb={6}
-          />
-          <Field
-            as={FormikTextInput}
-            label="New Password"
-            placeholder="Type your new password..."
-            type="password"
-            name="newPassword"
-            aria-required
-            mb={6}
-          />
-          <Field
-            as={FormikTextInput}
-            label="Confirm New Password"
-            placeholder="Type your new password again..."
-            type="password"
-            name="confirmNewPassword"
-            aria-required
-            mb={6}
-          />
+          <SimpleGrid columns={1} spacingY={4} mb={4}>
+            <Field
+              as={FormikTextInput}
+              label="Current Password"
+              placeholder="Enter your current password..."
+              type="password"
+              name="oldPassword"
+              required
+            />
+            <Field
+              as={FormikTextInput}
+              label="New Password"
+              placeholder="Type your new password..."
+              type="password"
+              name="newPassword"
+              required
+            />
+            <Field
+              as={FormikTextInput}
+              label="Confirm New Password"
+              placeholder="Type your new password again..."
+              type="password"
+              name="confirmNewPassword"
+              required
+            />
+          </SimpleGrid>
           <SubmitButton width={1}>Change password</SubmitButton>
         </Form>
       )}

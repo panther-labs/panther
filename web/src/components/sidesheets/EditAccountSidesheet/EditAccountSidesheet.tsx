@@ -24,14 +24,14 @@ import React from 'react';
 const EditAccountSidesheet: React.FC<SideSheetProps> = props => {
   return (
     <SideSheet {...props}>
-      <Box mx={10} mb={10}>
-        <Heading pt={1} pb={8} size="medium">
+      <Box as="section" my={8}>
+        <Heading as="h2" pb={4} size="medium">
           Edit Profile
         </Heading>
         <EditProfileForm onSuccess={props.onClose} />
       </Box>
-      <Box borderTop="1px solid" borderColor="grey100" mx={10}>
-        <Heading py={8} size="medium">
+      <Box as="section">
+        <Heading as="h2" pb={4} size="medium">
           Account Security
         </Heading>
         <ChangePasswordForm />
