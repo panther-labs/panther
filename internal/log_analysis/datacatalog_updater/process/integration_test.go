@@ -39,7 +39,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestIntegrationSynPartitions(t *testing.T) {
+func TestIntegrationSyncPartitions(t *testing.T) {
 	if !integrationTest {
 		t.Skip()
 	}
