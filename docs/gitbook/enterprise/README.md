@@ -2,11 +2,11 @@
 
 In addition to the open-source community edition, Panther offers an enterprise product with all the community features plus:
 
-* [Data Explorer](data-explorer.md) to search collected data
+* [Data Explorer](enterprise/data-analytics/data-explorer.md) to search collected data
 * SaaS Log Pulling
 * Data Compaction for faster queries
 * Premium Analysis Packs for PCI, AWS MITRE ATT&CK, Cisco Umbrella, and more
-* [Role-Based Access Control](rbac.md)
+* [Role-Based Access Control](enterprise/rbac.md)
 * Customer Support with SLAs
 * SSO support (coming soon)
 
@@ -16,4 +16,4 @@ Panther Enterprise can be deployed in your own AWS account (Cloud-Prem) or manag
 
 ## Upgrading from Community
 
-An existing deployment of the Panther Community Edition can be upgraded in-place to enterprise with no loss of data nor extra configuration required. The [deploy process](../quick-start.md) is the same.
+An existing deployment of the Panther Community Edition can be upgraded in-place to enterprise with no loss of data nor extra configuration required. The [deploy process](quick-start.md) is the same.
