@@ -24,12 +24,14 @@ import {
   SortDirEnum,
 } from 'Generated/schema';
 import { capitalize, formatDatetime } from 'Helpers/utils';
-import { Box, Flex, Icon, Label, Link, Table, Tooltip } from 'pouncejs';
+import { Box, Flex, Icon, Link, Table, Tooltip } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/SeverityBadge';
 import { ListPolicies } from 'Pages/ListPolicies';
 import ListPoliciesTableRowOptions from './ListPoliciesTableRowOptions';
+import FadeInTrail from 'Components/utils/FadeInTrail';
+import StatusBadge from 'Components/StatusBadge';
 
 interface ListPoliciesTableProps {
   items?: ListPolicies['policies']['policies'];
@@ -61,7 +63,6 @@ const ListPoliciesTable: React.FC<ListPoliciesTableProps> = ({
     <Table>
       <Table.Head>
         <Table.Row>
-          <Table.HeaderCell />
           <Table.SortableHeaderCell
             onClick={() => handleSort(ListPoliciesSortFieldsEnum.Id)}
             sortDir={sortBy === ListPoliciesSortFieldsEnum.Id ? sortDir : false}
@@ -76,12 +77,6 @@ const ListPoliciesTable: React.FC<ListPoliciesTableProps> = ({
           </Table.SortableHeaderCell>
           <Table.SortableHeaderCell
             align="center"
-            onClick={() => handleSort(ListPoliciesSortFieldsEnum.Enabled)}
-            sortDir={sortBy === ListPoliciesSortFieldsEnum.Enabled ? sortDir : false}
-          >
-            Enabled
-          </Table.SortableHeaderCell>
-          <Table.SortableHeaderCell
             onClick={() => handleSort(ListPoliciesSortFieldsEnum.Severity)}
             sortDir={sortBy === ListPoliciesSortFieldsEnum.Severity ? sortDir : false}
           >
@@ -104,65 +99,46 @@ const ListPoliciesTable: React.FC<ListPoliciesTableProps> = ({
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {items.map((policy, index) => (
-          <Table.Row key={policy.id}>
-            <Table.Cell>
-              <Label size="medium">{enumerationStartIndex + index + 1}</Label>
-            </Table.Cell>
-            <Table.Cell maxWidth={450} wrapText="wrap">
-              <Link as={RRLink} to={urls.compliance.policies.details(policy.id)} py={4} pr={4}>
-                {policy.id}
-              </Link>
-            </Table.Cell>
-            <Table.Cell maxWidth={225} truncated>
-              {policy.resourceTypes.length
-                ? policy.resourceTypes.map(resourceType => (
-                    <React.Fragment key={resourceType}>
-                      {resourceType} <br />
-                    </React.Fragment>
-                  ))
-                : 'All resources'}
-            </Table.Cell>
-            <Table.Cell align="center">
-              <Flex justify="center">
-                {policy.enabled ? (
-                  <Icon type="check" color="green300" size="small" />
+        <FadeInTrail as={Table.Row}>
+          {items.map(policy => (
+            <React.Fragment key={policy.id}>
+              <Table.Cell maxWidth={450} wrapText="wrap">
+                <Link as={RRLink} to={urls.compliance.policies.details(policy.id)} py={4} pr={4}>
+                  {policy.id}
+                </Link>
+              </Table.Cell>
+              <Table.Cell maxWidth={225} truncated>
+                {policy.resourceTypes.length
+                  ? policy.resourceTypes.map(resourceType => (
+                      <React.Fragment key={resourceType}>
+                        {resourceType} <br />
+                      </React.Fragment>
+                    ))
+                  : 'All resources'}
+              </Table.Cell>
+              <Table.Cell>
+                <Box my={-1}>
+                  <SeverityBadge severity={policy.severity} />
+                </Box>
+              </Table.Cell>
+              <Table.Cell align="center">
+                {policy.complianceStatus === ComplianceStatusEnum.Error ? (
+                  <Tooltip content="Policy raised an exception when evaluating a resource. Find out more in the policy's page">
+                    <StatusBadge status={policy.complianceStatus} disabled={!policy.enabled} />
+                  </Tooltip>
                 ) : (
-                  <Icon type="close" color="red300" size="small" />
+                  <StatusBadge status={policy.complianceStatus} disabled={!policy.enabled} />
                 )}
-              </Flex>
-            </Table.Cell>
-            <Table.Cell>
-              <Box my={-1}>
-                <SeverityBadge severity={policy.severity} />
-              </Box>
-            </Table.Cell>
-            <Table.Cell
-              align="center"
-              color={policy.complianceStatus === ComplianceStatusEnum.Pass ? 'green300' : 'red300'}
-            >
-              {policy.complianceStatus === ComplianceStatusEnum.Error ? (
-                <Tooltip
-                  positioning="down"
-                  content={
-                    <Label size="medium">
-                      Policy raised an exception when evaluating a resource. Find out more in the
-                      policy{"'"}s page
-                    </Label>
-                  }
-                >
-                  {`${capitalize(policy.complianceStatus.toLowerCase())} *`}
-                </Tooltip>
-              ) : (
-                capitalize(policy.complianceStatus.toLowerCase())
-              )}
-            </Table.Cell>
-            <Table.Cell>{formatDatetime(policy.lastModified)}</Table.Cell>
-            <Table.Cell>
-              <ListPoliciesTableRowOptions policy={policy} />
-            </Table.Cell>
-          </Table.Row>
-        ))}
+              </Table.Cell>
+              <Table.Cell wrapText="nowrap">{formatDatetime(policy.lastModified)}</Table.Cell>
+              <Table.Cell>
+                <Box my={-1}>
+                  <ListPoliciesTableRowOptions policy={policy} />
+                </Box>
+              </Table.Cell>
+            </React.Fragment>
+          ))}
+        </FadeInTrail>
       </Table.Body>
     </Table>
   );

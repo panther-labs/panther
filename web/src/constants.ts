@@ -119,14 +119,6 @@ export const LOG_TYPES = [
   'Syslog.RFC5424',
 ] as const;
 
-export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: BadgeProps['color'] } = {
-  [SeverityEnum.Critical]: 'red-400' as const,
-  [SeverityEnum.High]: 'orange-500' as const,
-  [SeverityEnum.Medium]: 'yellow-500' as const,
-  [SeverityEnum.Low]: 'gray-400' as const,
-  [SeverityEnum.Info]: 'gray-700' as const,
-};
-
 export const PANTHER_SCHEMA_DOCS_MASTER_LINK = 'https://docs.runpanther.io';
 
 export const PANTHER_SCHEMA_DOCS_LINK = generateDocUrl(
