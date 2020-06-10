@@ -62,7 +62,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
             </Box>
             <Box my={1}>
               <Label mb={1} as="div" size="small" color="grey300">
-                RULE
+                RULE ORIGIN
               </Label>
               <Flex align="center">
                 <Text size="medium" color="black" mr={3}>
@@ -122,7 +122,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
         </Box>
         <Box my={1}>
           <Label mb={1} as="div" size="small" color="grey300">
-            RULE
+            RULE ORIGIN
           </Label>
           {rule ? (
             <Link color="blue300" as={RRLink} to={urls.logAnalysis.rules.details(rule.id)}>
