@@ -68,11 +68,11 @@ func (Test) CI() {
 		Task func() error
 	}{
 		{"fmt", func() error { return fmtErr }},
-		{"build:cfn", build.cfn},
 		{"build:lambda", func() error { return buildLambdaErr }},
+		{"go unit tests", func() error { return goUnitErr }},
+		{"build:cfn", build.cfn},
 		{"build:tools", build.tools},
 		{"cfn lint", testCfnLint},
-		{"go unit tests", func() error { return goUnitErr }},
 		{"golangci-lint", testGoLint},
 		{"python unit tests", testPythonUnit},
 		{"pylint", testPythonLint},
