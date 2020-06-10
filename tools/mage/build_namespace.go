@@ -25,7 +25,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
-	"strconv"
 	"strings"
 
 	"github.com/magefile/mage/mg"
@@ -204,7 +203,7 @@ func (b Build) tools() error {
 		for _, env := range buildEnvs {
 			outDir := filepath.Join("out", "bin", filepath.Base(filepath.Dir(path)),
 				env["GOOS"], env["GOARCH"], filepath.Base(filepath.Dir(path)))
-			err := sh.RunWith(env, "go", "build", "-p", strconv.Itoa(maxWorkers), "-ldflags", "-s -w", "-o", outDir, "./"+path)
+			err := sh.RunWith(env, "go", "build", "-p", "1", "-ldflags", "-s -w", "-o", outDir, "./"+path)
 			if err != nil {
 				return err
 			}
