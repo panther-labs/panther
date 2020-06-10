@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Alert, Button, Card, Flex, Icon } from 'pouncejs';
+import { Alert, Button, Card, Flex } from 'pouncejs';
 import { RESOURCE_TYPES } from 'Source/constants';
 import GenerateFiltersGroup from 'Components/utils/GenerateFiltersGroup';
 import { ComplianceStatusEnum, ListResourcesInput, ComplianceIntegration } from 'Generated/schema';
@@ -149,14 +149,12 @@ const ListResourcesActions: React.FC = () => {
       {error && <Alert variant="error" title="Failed to fetch available sources" discardable />}
       <Flex justify="flex-end" mb={6} position="relative">
         <Button
-          size="large"
-          variant="default"
+          icon="filter"
+          variant="outline"
+          variantColor="navyblue"
           onClick={() => setFiltersVisibility(!areFiltersVisible)}
         >
-          <Flex>
-            <Icon type="filter" size="small" mr={3} />
-            Filter Options {filtersCount ? `(${filtersCount})` : ''}
-          </Flex>
+          Filter Options {filtersCount ? `(${filtersCount})` : ''}
         </Button>
       </Flex>
       {areFiltersVisible && (
@@ -164,7 +162,6 @@ const ListResourcesActions: React.FC = () => {
           <Card p={6} mb={6}>
             <GenerateFiltersGroup<MutatedListResourcesFiltersValues>
               filters={filters}
-              onCancel={() => setFiltersVisibility(false)}
               onSubmit={handleFiltersSubmit}
               initialValues={mutatedInitialValues}
             />

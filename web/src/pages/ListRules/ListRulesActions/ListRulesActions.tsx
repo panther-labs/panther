@@ -127,14 +127,12 @@ const ListRulesActions: React.FC = () => {
       <Flex justify="flex-end" mb={6}>
         <Box position="relative" mr={5}>
           <Button
-            size="large"
-            variant="default"
+            variant="outline"
+            variantColor="navyblue"
+            icon="filter"
             onClick={() => setFiltersVisibility(!areFiltersVisible)}
           >
-            <Flex>
-              <Icon type="filter" size="small" mr={3} />
-              Filter Options {filtersCount ? `(${filtersCount})` : ''}
-            </Flex>
+            Filter Options {filtersCount ? `(${filtersCount})` : ''}
           </Button>
         </Box>
         <CreateButton />
@@ -144,7 +142,6 @@ const ListRulesActions: React.FC = () => {
           <Card p={6} mb={6}>
             <GenerateFiltersGroup<ListRulesFiltersValues>
               filters={filters}
-              onCancel={() => setFiltersVisibility(false)}
               onSubmit={updateRequestParamsAndResetPaging}
               initialValues={initialFilterValues}
             />
