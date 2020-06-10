@@ -41,7 +41,7 @@ Where:
 * EDITION is `community` or `enterprise`
 * REGION is one of: `us-east-1`, `us-east-2`, or `us-west-2`
     * Be sure the template region matches the region in which you are deploying Panther
-    * [Additional](development.md#supported-regions) regions are available when deploying from source
+    * [Additional](development.md#supported-regions) regions are available when [deploying from source](development.md#deploying)
 * VERSION is the latest [tagged release](https://github.com/panther-labs/panther/releases)
 
 ![CloudFormation Template URL](.gitbook/assets/cfn-deploy-1.png)
