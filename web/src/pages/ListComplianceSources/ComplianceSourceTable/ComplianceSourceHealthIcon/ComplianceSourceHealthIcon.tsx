@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Icon, Label, Tooltip } from 'pouncejs';
+import { Box, Icon, Tooltip } from 'pouncejs';
 import { ComplianceIntegration } from 'Generated/schema';
 
 interface ComplianceSourceHealthIconProps {
@@ -53,7 +53,7 @@ const ComplianceSourceHealthIcon: React.FC<ComplianceSourceHealthIconProps> = ({
 
   return (
     <Box>
-      <Tooltip content={<Label size="medium">{tooltipMessage}</Label>} positioning="down">
+      <Tooltip content={tooltipMessage}>
         {icon}
       </Tooltip>
     </Box>

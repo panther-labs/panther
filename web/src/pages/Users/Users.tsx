@@ -29,17 +29,12 @@ const UsersPage: React.FC = () => {
 
   return (
     <Box mb={6}>
-      <Flex justify="flex-end">
+      <Flex justify="flex-end" mb={8}>
         <Button
-          size="large"
-          variant="primary"
+          icon="add-user"
           onClick={() => showSidesheet({ sidesheet: SIDESHEETS.USER_INVITATION })}
-          mb={8}
         >
-          <Flex align="center">
-            <Icon type="add-user" size="small" mr={2} />
-            Invite User
-          </Flex>
+          Invite User
         </Button>
       </Flex>
       <ErrorBoundary>

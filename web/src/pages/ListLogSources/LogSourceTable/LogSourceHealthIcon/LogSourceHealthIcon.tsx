@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Icon, Label, Tooltip } from 'pouncejs';
+import { Box, Icon, Tooltip } from 'pouncejs';
 import { LogIntegration } from 'Generated/schema';
 
 interface LogSourceHealthIconProps {
@@ -51,7 +51,7 @@ const LogSourceHealthIcon: React.FC<LogSourceHealthIconProps> = ({ logSourceHeal
 
   return (
     <Box>
-      <Tooltip content={<Label size="medium">{tooltipMessage}</Label>} positioning="down">
+      <Tooltip content={tooltipMessage} >
         {icon}
       </Tooltip>
     </Box>
