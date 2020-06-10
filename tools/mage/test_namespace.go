@@ -58,8 +58,7 @@ var (
 func (Test) CI() {
 	// Formatting modifies files (and may generate new ones), so we need to run this first
 	fmtErr := testFmtAndGeneratedFiles()
-	// Run these serially since each one is running operations in parallel
-	buildLambdaErr := build.lambda()
+	// Run it serially since it runs itself in multiple processors
 	goUnitErr := testGoUnit()
 
 	results := make(chan goroutineResult)
@@ -68,8 +67,8 @@ func (Test) CI() {
 		Task func() error
 	}{
 		{"fmt", func() error { return fmtErr }},
-		{"build:lambda", func() error { return buildLambdaErr }},
 		{"go unit tests", func() error { return goUnitErr }},
+		{"build:lambda", build.lambda},
 		{"build:cfn", build.cfn},
 		{"build:tools", build.tools},
 		{"cfn lint", testCfnLint},
@@ -251,7 +250,7 @@ func cfnTestFunction(logicalID, template string, resources map[string]string) er
 }
 
 func testGoUnit() error {
-	logger.Infof("running go unit tests")
+	logger.Infof("test:ci: running go unit tests")
 	runGoTest := func(args ...string) error {
 		if mg.Verbose() {
 			// verbose mode - show "go test" output (all package names)
