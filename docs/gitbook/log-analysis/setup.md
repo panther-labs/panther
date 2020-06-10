@@ -1,45 +1,14 @@
-# Log Processing
+# Log Analysis Setup
 
-## Overview
+## Set Up Permissions to Pull Data
 
-Panther's Log Analysis is designed for analyzing high volumes of events in real-time such as:
-
-* Login/Logout
-* API calls
-* Network traffic
-* Running processes
-* System changes
-* Output from IDS sensors
-
- In this guide, we'll walk through how to configure Panther to collect and analyze data with Python rules.
-
-## How It Works
-
-![](../../.gitbook/assets/logprocessingingestion-4.jpg)
-
-1. Logs are written into an S3 bucket
-2. The bucket sends an S3 event notification to an SNS Topic
-3. An SQS Queue in the Panther Master account receives the event notification
-4. A Lambda function pulls messages off the Queue, assumes an IAM Role, and downloads the log data
-6. A Lambda function sends the parsed log data for analysis
-
-## How to Setup Log Analysis
-
-First, the data you'd like to analyze must be sent to an S3 bucket. You can onboard as many buckets as you would like from any region. 
-
-{% hint style="info" %} We recommend organizing incoming data by using S3 folders or multiple buckets. {% endhint %}
-
-## IAM Setup
-
-The IAM role created below will enable access to the S3 buckets containing logs:
-
-![](../../.gitbook/assets/logingestioniam.png)
+The steps below will enable secure access for Panther to pull security logs from S3 bucket(s).
 
 From **Log Analysis**, click **Sources**, then **Onboard Your Logs**:
 
-![](../../.gitbook/assets/log-analysis-iam-1.png)
+![](../.gitbook/assets/log-analysis-iam-1.png)
 
-### Step 1 - Enter the Bucket Details
+### Step 1: Enter the Bucket Details
 
 |         Field         | Required? | Description                                                                                |
 | :----------------------: | ----------------------------------------------------------------------------------------- | --------|
@@ -50,57 +19,53 @@ From **Log Analysis**, click **Sources**, then **Onboard Your Logs**:
 | `S3 Prefix Filter`   | `No`  | The path of the files to analyze, which should not start with the `/` character   |
 | `KMS Key`   | `No`  | If your data is encrypted using KMS-SSE, provide the ARN of the KMS key  |
 
-![](../../.gitbook/assets/log-analysis-iam-2.png)
+![](../.gitbook/assets/log-analysis-iam-2.png)
 
-Once you have filled the required and optional advanced configurations, click **Next**.
+Click **Next**.
 
-### Step 2 - Deploy the IAM Role
+### Step 2: Deploy the CloudFormation Stack
 
-You can deploy the generated IAM role by either **launching the CloudFormation Stack** in the console directly, or **downloading the template** and applying it through your own pipelines.
+You can deploy the generated stack by either **launching the CloudFormation Console** or **downloading the template** and applying it through your own pipeline.
 
-![](../../.gitbook/assets/log-analysis-iam-3.png)
+![](../.gitbook/assets/log-analysis-iam-3.png)
 
-#### In The CloudFormation Console
-
-When you click the **Launch console** link, a new tab will open in your browser and take you to the AWS CloudFormation Console.
+When you click the **Launch console** link, a new tab will open in your browser and direct you to the AWS Console for the account you are currently logged into.
 
 {% hint style="info" %}
-Make sure you sign in the same AWS Account that was provided in the previous step.
+Make sure you are signed into the AWS Account where you'd like to deploy the stack.
 {% endhint %}
 
-![](../../.gitbook/assets/log-analysis-iam-4.png)
+![](../.gitbook/assets/log-analysis-iam-4.png)
 
 {% hint style="info" %}
 Make sure to check the acknowledgement in the Capabilities box on the bottom
 {% endhint %}
 
-Click the **Create stack** button. After few seconds, the stack's `Status` should change to `CREATE_COMPLETE`. If there is an error creating the stack, then an IAM role with the same name may already exist in your account.
+Click the **Create stack** button. After few seconds, the stack's `Status` should change to `CREATE_COMPLETE`. If there is an error creating the stack, then either an IAM role with the same name already exists, or you don't have enough permissions to create the role.
 
-### Step 3 - Save the Source
+### Step 3: Save the Source
 
-Go back to Panther browser tab and click on **Next,** then **Save Source** to complete the setup.
+Head back to Panther and click on **Next,** then **Save Source** to complete the setup.
 
-![](../../.gitbook/assets/log-analysis-iam-5.png)
+![](../.gitbook/assets/log-analysis-iam-5.png)
 
 {% hint style="success" %}
 Congratulations! You have granted Panther the permissions to process your logs in S3.
 {% endhint %}
 
-## SNS Notification Setup
+## Setup Notifications of New Data
 
-Now that Panther has the ability to pull data from S3, you must configure your S3 buckets to send [notifications](https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html) on new data.
+Now that Panther has the ability to pull log data, you need to configure your S3 buckets to send [notifications](https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html) when new data arrives.
 
 ### Existing S3 Buckets
 
 First, create an SNS Topic and SNS Subscription to notify Panther that new data is ready for processing:
 
-#### Create Notifications SNS Topic
+#### Create SNS Topic
 
-Log into the AWS Console of the account that owns the S3 bucket.
+Log into the AWS Console of the account that owns the S3 bucket. Select the AWS Region where your S3 buckets are located, navigate to the **CloudFormation** console, and click on **Create Stack** (with new resources).
 
-Select the AWS Region where your S3 buckets are located, navigate to the **CloudFormation** console, and click on **Create Stack** (with new resources).
-
-![](../../.gitbook/assets/create-sns-topic-1.png)
+![](../.gitbook/assets/create-sns-topic-1.png)
 
 Under the `Specify template` section, enter the following Amazon S3 URL:
 
@@ -108,26 +73,24 @@ Under the `Specify template` section, enter the following Amazon S3 URL:
 https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-log-processing-notifications/latest/template.yml
 ```
 
-![](../../.gitbook/assets/create-sns-topic-2.png)
+![](../.gitbook/assets/create-sns-topic-2.png)
 
-##### Specify Stack Details
+Specify the stack details below:
 
 |         Field         | Description                                                                                |
 | :----------------------: | ----------------------------------------------------------------------------------------- |
 | `Stack name`    | A name of your choice, e.g. `panther-log-processing-notifications-<bucket-label>` |
 | `MasterAccountId`     | The 12 digit AWS Account ID where Panther is deployed |
 | `PantherRegion`   | The region where Panther is deployed |
-| `SnsTopicName`     | The name of the SNS topic receiving the notification, by default is `panther-notifications-topic`  |
+| `SnsTopicName`     | The name of the SNS topic receiving the notification, by default this is `panther-notifications-topic`  |
 
-##### Create Stack
+Click on **Next**, **Next**, and then **Create Stack**.
 
-Click on **Next** and again **Next**. Click on **Create Stack**. This stack has one output named `SnsTopicArn`.
+This stack has one output named `SnsTopicArn`.
 
 #### Configure Event Notifications
 
-Now with the SNS Topic created, we must enable notifications from the S3 buckets.
-
-##### Using the Console
+With the SNS Topic created, the final step is to enable notifications from the S3 buckets.
 
 Navigate to the AWS [S3 Console](https://s3.console.aws.amazon.com/s3/home), select the relevant bucket, and click the `Properties` tab.
 
@@ -230,6 +193,6 @@ These are just two basic configurations to integrate with Panther Log Processing
 
 There are other variations and advanced configurations available for more complex use cases and considerations. For example, instead of using S3 event notifications for CloudTrail data you may have CloudTrail directly notify SNS of the new data.
 
-## Viewing the Logs
+## Viewing Collected Logs
 
-After log analysis is setup, your data can be searched with [Historical Search](../../historical-search/README.md)!
+After log sources are configured, your data can be searched with the [Data Analytics](../../enterprise/data-analytics/README.md) page!
