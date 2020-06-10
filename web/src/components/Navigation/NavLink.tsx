@@ -32,7 +32,7 @@ const NavLink: React.FC<NavLinkProps> = ({ icon, label, to }) => {
 
   const isActive = location.pathname.startsWith(to);
   return (
-    <Box as={RRLink} display="block" to={to} width={1} my={1} textDecoration="none">
+    <Box as={RRLink} display="block" to={to} my={1} aria-current={isActive ? 'page' : undefined}>
       <PseudoBox
         color="gray-50"
         fontSize="medium"

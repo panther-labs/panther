@@ -39,7 +39,7 @@ const Header = () => {
   const { showSidesheet } = useSidesheet();
 
   return (
-    <Flex width={1} align="center" justify="space-between" py={10}>
+    <Flex as="header" width={1} align="center" justify="space-between" py={10}>
       <Breadcrumbs />
 
       <Dropdown>

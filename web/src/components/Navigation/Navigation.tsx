@@ -71,7 +71,7 @@ const Navigation = () => {
 
   return (
     <Flex
-      as="nav"
+      as="aside"
       boxShadow="dark50"
       zIndex={1}
       position="sticky"
@@ -79,17 +79,15 @@ const Navigation = () => {
       height="100vh"
       backgroundColor="navyblue-900"
     >
-      <Flex direction="column" width={70} height="100%">
-        <Flex justify="center" py={7}>
-          <RRLink to="/">
-            <img
-              src={PantherIcon}
-              alt="Panther logo"
-              width={30}
-              height={30}
-              style={{ display: 'block' }}
-            />
-          </RRLink>
+      <Flex as="nav" direction="column" width={70} height="100%" aria-label="Main">
+        <Flex as={RRLink} to="/" justify="center" py={7}>
+          <img
+            src={PantherIcon}
+            alt="Panther logo"
+            width={30}
+            height={30}
+            style={{ display: 'block' }}
+          />
         </Flex>
         <Flex direction="column" justify="center" align="center" as="ul" flex="1 0 auto">
           <Box as="li">
