@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Combobox, ComboboxProps } from 'pouncejs';
+import { Combobox, ComboboxProps, FormError } from 'pouncejs';
 import { FieldConfig, useField } from 'formik';
 
 function FormikCombobox<T>(
@@ -26,7 +26,24 @@ function FormikCombobox<T>(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [field, meta, { setValue }] = useField(props.name);
 
-  return <Combobox {...props} onChange={setValue} />;
+  const isInvalid = meta.touched && !!meta.error;
+  const errorElementId = isInvalid ? `${props.name}-error` : undefined;
+
+  return (
+    <React.Fragment>
+      <Combobox
+        {...props}
+        invalid={isInvalid}
+        aria-describedby={errorElementId}
+        onChange={setValue}
+      />
+      {isInvalid && (
+        <FormError mt={2} id={errorElementId}>
+          {meta.error}
+        </FormError>
+      )}
+    </React.Fragment>
+  );
 }
 
 export default FormikCombobox;

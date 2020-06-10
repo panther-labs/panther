@@ -17,14 +17,29 @@
  */
 
 import React from 'react';
-import { Switch, SwitchProps } from 'pouncejs';
+import { FormError, Switch, SwitchProps } from 'pouncejs';
 import { FieldConfig, useField } from 'formik';
 
 const FormikSwitch: React.FC<SwitchProps & Required<Pick<FieldConfig, 'name'>>> = props => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [field, meta, { setValue }] = useField<boolean>(props.name);
+  const [field, meta] = useField(props.name);
 
-  return <Switch {...props} checked={field.value} onChange={setValue} />;
+  const isInvalid = meta.touched && !!meta.error;
+  const errorElementId = isInvalid ? `${props.name}-error` : undefined;
+  return (
+    <React.Fragment>
+      <Switch
+        {...props}
+        checked={field.value}
+        invalid={isInvalid}
+        aria-describedby={errorElementId}
+      />
+      {isInvalid && (
+        <FormError mt={1} id={errorElementId}>
+          {meta.error}
+        </FormError>
+      )}
+    </React.Fragment>
+  );
 };
 
 export default FormikSwitch;

@@ -17,14 +17,25 @@
  */
 
 import React from 'react';
-import { Checkbox, CheckboxProps } from 'pouncejs';
+import { Checkbox, CheckboxProps, FormError } from 'pouncejs';
 import { FieldConfig, useField } from 'formik';
 
 const FormikCheckbox: React.FC<CheckboxProps & Required<Pick<FieldConfig, 'name'>>> = props => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [field, meta, { setValue }] = useField<boolean>(props.name);
+  const [field, meta, { setValue }] = useField(props.name);
 
-  return <Checkbox {...props} checked={field.value} onChange={setValue} />;
+  const isInvalid = meta.touched && !!meta.error;
+  const errorElementId = isInvalid ? `${props.name}-error` : undefined;
+  return (
+    <React.Fragment>
+      <Checkbox
+        {...props}
+        checked={field.value}
+        invalid={isInvalid}
+        aria-describedby={errorElementId}
+      />
+      {isInvalid && <FormError id={errorElementId}>{meta.error}</FormError>}
+    </React.Fragment>
+  );
 };
 
 export default FormikCheckbox;

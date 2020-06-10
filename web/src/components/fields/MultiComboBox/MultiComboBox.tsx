@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { MultiCombobox, MultiComboboxProps } from 'pouncejs';
+import { FormError, MultiCombobox, MultiComboboxProps } from 'pouncejs';
 import { FieldConfig, useField } from 'formik';
 
 function FormikMultiCombobox<T>(
@@ -26,7 +26,24 @@ function FormikMultiCombobox<T>(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [field, meta, { setValue }] = useField(props.name);
 
-  return <MultiCombobox {...props} onChange={setValue} />;
+  const isInvalid = meta.touched && !!meta.error;
+  const errorElementId = isInvalid ? `${props.name}-error` : undefined;
+
+  return (
+    <React.Fragment>
+      <MultiCombobox
+        {...props}
+        invalid={isInvalid}
+        aria-describedby={errorElementId}
+        onChange={setValue}
+      />
+      {isInvalid && (
+        <FormError mt={2} id={errorElementId}>
+          {meta.error}
+        </FormError>
+      )}
+    </React.Fragment>
+  );
 }
 
 export default FormikMultiCombobox;
