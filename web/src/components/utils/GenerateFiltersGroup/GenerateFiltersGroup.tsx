@@ -90,7 +90,7 @@ function GenerateFiltersGroup<T extends { [key: string]: any }>({
     <Formik<T> initialValues={initialValuesWithDefaults} onSubmit={onSubmit}>
       {({ setValues, submitForm }) => (
         <Form>
-          <SimpleGrid columns={4} spacing={6} mb={8}>
+          <SimpleGrid columns={4} spacing={6} mb={6}>
             {map(filters, (filterData, filterName) => (
               <Box as="fieldset" key={filterName}>
                 <Field as={filterData.component} name={filterName} {...filterData.props} />

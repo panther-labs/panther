@@ -25,10 +25,11 @@ import {
   ResourceSummary,
   SortDirEnum,
 } from 'Generated/schema';
-import { capitalize, formatDatetime } from 'Helpers/utils';
-import { Label, Link, Table, Tooltip } from 'pouncejs';
+import { formatDatetime } from 'Helpers/utils';
+import { Link, Table, Tooltip } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
+import StatusBadge from 'Components/StatusBadge';
 
 interface ListResourcesTableProps {
   items?: Array<ResourceSummary & Pick<ComplianceIntegration, 'integrationLabel'>>;
@@ -43,7 +44,6 @@ const ListResourcesTable: React.FC<ListResourcesTableProps> = ({
   onSort,
   sortBy,
   sortDir,
-  enumerationStartIndex,
 }) => {
   const handleSort = (selectedKey: ListResourcesSortFieldsEnum) => {
     if (sortBy === selectedKey) {
@@ -60,7 +60,6 @@ const ListResourcesTable: React.FC<ListResourcesTableProps> = ({
     <Table>
       <Table.Head>
         <Table.Row>
-          <Table.HeaderCell />
           <Table.SortableHeaderCell
             onClick={() => handleSort(ListResourcesSortFieldsEnum.Id)}
             sortDir={sortBy === ListResourcesSortFieldsEnum.Id ? sortDir : false}
@@ -75,6 +74,7 @@ const ListResourcesTable: React.FC<ListResourcesTableProps> = ({
           </Table.SortableHeaderCell>
           <Table.HeaderCell>Source</Table.HeaderCell>
           <Table.SortableHeaderCell
+            align="center"
             onClick={() => handleSort(ListResourcesSortFieldsEnum.ComplianceStatus)}
             sortDir={sortBy === ListResourcesSortFieldsEnum.ComplianceStatus ? sortDir : false}
           >
@@ -89,11 +89,8 @@ const ListResourcesTable: React.FC<ListResourcesTableProps> = ({
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {items.map((resource, index) => (
+        {items.map(resource => (
           <Table.Row key={resource.id}>
-            <Table.Cell>
-              <Label size="medium">{enumerationStartIndex + index + 1}</Label>
-            </Table.Cell>
             <Table.Cell maxWidth={450} wrapText="wrap">
               <Link as={RRLink} to={urls.compliance.resources.details(resource.id)} py={4} pr={4}>
                 {resource.id}
@@ -101,25 +98,13 @@ const ListResourcesTable: React.FC<ListResourcesTableProps> = ({
             </Table.Cell>
             <Table.Cell>{resource.type}</Table.Cell>
             <Table.Cell>{resource.integrationLabel}</Table.Cell>
-            <Table.Cell
-              color={
-                resource.complianceStatus === ComplianceStatusEnum.Pass ? 'green300' : 'red300'
-              }
-            >
+            <Table.Cell>
               {resource.complianceStatus === ComplianceStatusEnum.Error ? (
-                <Tooltip
-                  positioning="down"
-                  content={
-                    <Label size="medium">
-                      Some policies have raised an exception when evaluating this resource. Find out
-                      more in the resource{"'"}s page
-                    </Label>
-                  }
-                >
-                  {`${capitalize(resource.complianceStatus.toLowerCase())} *`}
+                <Tooltip content="Some policies have raised an exception when evaluating this resource. Find out more in the resource's page">
+                  <StatusBadge status={resource.complianceStatus} />
                 </Tooltip>
               ) : (
-                capitalize(resource.complianceStatus.toLowerCase())
+                <StatusBadge status={resource.complianceStatus} />
               )}
             </Table.Cell>
             <Table.Cell>{formatDatetime(resource.lastModified)}</Table.Cell>

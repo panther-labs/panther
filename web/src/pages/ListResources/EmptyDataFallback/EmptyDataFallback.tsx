@@ -28,13 +28,13 @@ const ListResourcesPageEmptyDataFallback: React.FC = () => {
       <Box my={10}>
         <img alt="Black Canvas Illustration" src={BlankCanvasImg} width="auto" height={300} />
       </Box>
-      <Heading size="medium" color="grey300" mb={6}>
+      <Heading size="medium" mb={6}>
         No resources found
       </Heading>
-      <Text size="large" color="grey200" textAlign="center" mb={10}>
+      <Text size="large" color="gray-200" textAlign="center" mb={8}>
         You don{"'"}t have any resources connected to your Panther account
       </Text>
-      <Button size="large" variant="primary" to={urls.compliance.sources.create()} as={RRLink}>
+      <Button as={RRLink} to={urls.compliance.sources.create()}>
         Get started
       </Button>
     </Flex>

@@ -76,7 +76,7 @@ const ListPolicies = () => {
     <React.Fragment>
       <ListPoliciesActions />
       <ErrorBoundary>
-        <Card as="section" p={8} position="relative">
+        <Card as="section" px={8} py={4} position="relative">
           <ListPoliciesTable
             enumerationStartIndex={(pagingData.thisPage - 1) * DEFAULT_LARGE_PAGE_SIZE}
             items={policyItems}

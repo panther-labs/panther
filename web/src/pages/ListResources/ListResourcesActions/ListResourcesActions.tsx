@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Alert, Button, Card, Flex } from 'pouncejs';
+import { Alert, Box, Button, Card, Collapse, Flex } from 'pouncejs';
 import { RESOURCE_TYPES } from 'Source/constants';
 import GenerateFiltersGroup from 'Components/utils/GenerateFiltersGroup';
 import { ComplianceStatusEnum, ListResourcesInput, ComplianceIntegration } from 'Generated/schema';
@@ -34,6 +34,13 @@ import { useListAccountIds } from './graphql/listAccountIds.generated';
 const statusOptions = Object.values(ComplianceStatusEnum);
 
 export const filters = {
+  idContains: {
+    component: FormikTextInput,
+    props: {
+      label: 'ID / Name',
+      placeholder: 'Enter part of an id or a name...',
+    },
+  },
   types: {
     component: FormikMultiCombobox,
     props: {
@@ -66,13 +73,6 @@ export const filters = {
       inputProps: {
         placeholder: 'Choose a status...',
       },
-    },
-  },
-  idContains: {
-    component: FormikTextInput,
-    props: {
-      label: 'ID / Name',
-      placeholder: 'Enter part of an id or a name...',
     },
   },
 };
@@ -145,9 +145,9 @@ const ListResourcesActions: React.FC = () => {
   );
 
   return (
-    <React.Fragment>
+    <Box as="section" mb={6}>
       {error && <Alert variant="error" title="Failed to fetch available sources" discardable />}
-      <Flex justify="flex-end" mb={6} position="relative">
+      <Flex justify="flex-end">
         <Button
           icon="filter"
           variant="outline"
@@ -157,18 +157,20 @@ const ListResourcesActions: React.FC = () => {
           Filter Options {filtersCount ? `(${filtersCount})` : ''}
         </Button>
       </Flex>
-      {areFiltersVisible && (
-        <ErrorBoundary>
-          <Card p={6} mb={6}>
-            <GenerateFiltersGroup<MutatedListResourcesFiltersValues>
-              filters={filters}
-              onSubmit={handleFiltersSubmit}
-              initialValues={mutatedInitialValues}
-            />
-          </Card>
-        </ErrorBoundary>
-      )}
-    </React.Fragment>
+      <ErrorBoundary>
+        <Collapse open={areFiltersVisible}>
+          <Box pt={6}>
+            <Card p={8}>
+              <GenerateFiltersGroup<MutatedListResourcesFiltersValues>
+                filters={filters}
+                onSubmit={handleFiltersSubmit}
+                initialValues={mutatedInitialValues}
+              />
+            </Card>
+          </Box>
+        </Collapse>
+      </ErrorBoundary>
+    </Box>
   );
 };
 
