@@ -29,9 +29,9 @@ import (
 )
 
 func TestEmbedAPIsNoChange(t *testing.T) {
-	cfn, err := cfnparse.ParseTemplate("testdata/no-api.yml")
+	cfn, err := cfnparse.ParseTemplate(pythonVirtualEnvPath, "testdata/no-api.yml")
 	require.NoError(t, err)
-	expectedMap, err := cfnparse.ParseTemplate("testdata/no-api.yml")
+	expectedMap, err := cfnparse.ParseTemplate(pythonVirtualEnvPath, "testdata/no-api.yml")
 	require.NoError(t, err)
 
 	require.NoError(t, embedAPIs(cfn))
@@ -47,9 +47,9 @@ func TestEmbedAPIsNoChange(t *testing.T) {
 }
 
 func TestEmbedAPIs(t *testing.T) {
-	cfn, err := cfnparse.ParseTemplate("testdata/valid-api.yml")
+	cfn, err := cfnparse.ParseTemplate(pythonVirtualEnvPath, "testdata/valid-api.yml")
 	require.NoError(t, err)
-	expectedMap, err := cfnparse.ParseTemplate("testdata/valid-api-expected-output.yml")
+	expectedMap, err := cfnparse.ParseTemplate(pythonVirtualEnvPath, "testdata/valid-api-expected-output.yml")
 	require.NoError(t, err)
 
 	require.NoError(t, embedAPIs(cfn))

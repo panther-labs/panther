@@ -155,7 +155,7 @@ func masterPackage(bucket, pantherVersion, imgRegistry string) string {
 
 // Get the Panther version indicated in the master template.
 func getMasterVersion() string {
-	cfn, err := cfnparse.ParseTemplate("deployments/master.yml")
+	cfn, err := cfnparse.ParseTemplate(pythonVirtualEnvPath, "deployments/master.yml")
 	if err != nil {
 		logger.Fatal(err)
 	}

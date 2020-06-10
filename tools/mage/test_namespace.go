@@ -153,7 +153,7 @@ func testCfnLint() error {
 			continue
 		}
 
-		body, err := cfnparse.ParseTemplate(template)
+		body, err := cfnparse.ParseTemplate(pythonVirtualEnvPath, template)
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("failed to parse %s: %v", template, err))
 			continue

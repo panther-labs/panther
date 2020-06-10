@@ -76,12 +76,19 @@ Resources:
         FirstUserFamilyName: Jones
 ```
 
+When deploying this template, you will need to include all capabilities:
+
+```
+aws cloudformation deploy --template-file template.yml --stack-name panther --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
+```
+
 ### Using Terraform
 
 ```hcl
 resource "aws_cloudformation_stack" "panther" {
   name = "panther"
   template_url = "https://panther-community-<REGION>.s3.amazonaws.com/v1.4.0/panther.yml"
+  capabilities = ["CAPABILITY_IAM", "CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND"]
   parameters = {
     CompanyDisplayName = "AwesomeCo"
     FirstUserEmail = "user@example.com"
