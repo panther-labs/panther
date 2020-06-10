@@ -33,9 +33,10 @@ const (
 )
 
 type SQSAlarmProperties struct {
-	AlarmTopicArn string `validate:"required"`
-	QueueName     string `validate:"required"`
-	IsDLQ         bool   `json:",string"`
+	AlarmTopicArn       string   `validate:"required"`
+	QueueName           string   `validate:"required"`
+	IsDLQ               bool     `json:",string"`
+	AgeThresholdSeconds *float64 `json:",string"` // if present, override default
 }
 
 func customSQSAlarms(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
@@ -89,7 +90,11 @@ func putSQSAlarmGroup(props SQSAlarmProperties) error {
 			fmt.Sprintf("Panther-%s-%s", sqsAgeAlarm, props.QueueName))
 		input.MetricName = aws.String("ApproximateAgeOfOldestMessage")
 		input.Statistic = aws.String(cloudwatch.StatisticMaximum)
-		input.Threshold = aws.Float64(900)
+		var threshold float64 = 900.0
+		if props.AgeThresholdSeconds != nil {
+			threshold = *props.AgeThresholdSeconds
+		}
+		input.Threshold = &threshold
 		input.Unit = aws.String(cloudwatch.StandardUnitSeconds)
 	}
 
