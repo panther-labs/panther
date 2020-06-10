@@ -25,6 +25,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/service/sts"
@@ -57,6 +58,10 @@ var (
 func (Test) CI() {
 	// Formatting modifies files (and may generate new ones), so we need to run this first
 	fmtErr := testFmtAndGeneratedFiles()
+	// Run these serially since each one is running operations in parallel
+	buildLambdaErr := build.lambda()
+	goUnitErr := testGoUnit()
+
 	results := make(chan goroutineResult)
 	tasks := []struct {
 		Name string
@@ -64,10 +69,10 @@ func (Test) CI() {
 	}{
 		{"fmt", func() error { return fmtErr }},
 		{"build:cfn", build.cfn},
-		{"build:lambda", build.lambda},
+		{"build:lambda", func() error { return buildLambdaErr }},
 		{"build:tools", build.tools},
 		{"cfn lint", testCfnLint},
-		{"go unit tests", testGoUnit},
+		{"go unit tests", func() error { return goUnitErr }},
 		{"golangci-lint", testGoLint},
 		{"python unit tests", testPythonUnit},
 		{"pylint", testPythonLint},
@@ -246,6 +251,7 @@ func cfnTestFunction(logicalID, template string, resources map[string]string) er
 }
 
 func testGoUnit() error {
+	logger.Infof("running go unit tests")
 	runGoTest := func(args ...string) error {
 		if mg.Verbose() {
 			// verbose mode - show "go test" output (all package names)
@@ -268,7 +274,7 @@ func testGoUnit() error {
 	}
 
 	// unit tests and race detection
-	return runGoTest("test", "-race", "-p", "1", "-vet", "", "-cover", "./...")
+	return runGoTest("test", "-race", "-p", strconv.Itoa(maxWorkers), "-vet", "", "-cover", "./...")
 }
 
 func testGoLint() error {

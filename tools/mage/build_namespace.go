@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/magefile/mage/mg"
@@ -166,7 +167,7 @@ func buildLambdaPackage(pkg string) error {
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
 		return fmt.Errorf("failed to create %s directory: %v", targetDir, err)
 	}
-	if err := sh.RunWith(buildEnv, "go", "build", "-p", "1", "-ldflags", "-s -w", "-o", targetDir, "./"+pkg); err != nil {
+	if err := sh.RunWith(buildEnv, "go", "build", "-p", strconv.Itoa(maxWorkers), "-ldflags", "-s -w", "-o", targetDir, "./"+pkg); err != nil {
 		return fmt.Errorf("go build %s failed: %v", binary, err)
 	}
 
@@ -203,7 +204,7 @@ func (b Build) tools() error {
 		for _, env := range buildEnvs {
 			outDir := filepath.Join("out", "bin", filepath.Base(filepath.Dir(path)),
 				env["GOOS"], env["GOARCH"], filepath.Base(filepath.Dir(path)))
-			err := sh.RunWith(env, "go", "build", "-p", "1", "-ldflags", "-s -w", "-o", outDir, "./"+path)
+			err := sh.RunWith(env, "go", "build", "-p", strconv.Itoa(maxWorkers), "-ldflags", "-s -w", "-o", outDir, "./"+path)
 			if err != nil {
 				return err
 			}
