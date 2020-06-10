@@ -17,27 +17,29 @@
  */
 
 import React from 'react';
-import { Badge, BadgeProps } from 'pouncejs';
-import { SeverityEnum } from 'Generated/schema';
+import { Badge, BadgeProps, Box } from 'pouncejs';
+import { ComplianceStatusEnum } from 'Generated/schema';
 
-export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: BadgeProps['color'] } = {
-  [SeverityEnum.Critical]: 'red-400' as const,
-  [SeverityEnum.High]: 'orange-500' as const,
-  [SeverityEnum.Medium]: 'yellow-500' as const,
-  [SeverityEnum.Low]: 'gray-400' as const,
-  [SeverityEnum.Info]: 'gray-700' as const,
+export const STATUS_COLOR_MAP: { [key in ComplianceStatusEnum]: BadgeProps['color'] } = {
+  [ComplianceStatusEnum.Pass]: 'green-200' as const,
+  [ComplianceStatusEnum.Fail]: 'red-200' as const,
+  [ComplianceStatusEnum.Error]: 'orange-500' as const,
 };
 
-interface SeverityBadgeProps {
-  severity: SeverityEnum;
+interface StatusBadgeProps {
+  status: ComplianceStatusEnum;
+  disabled?: boolean;
 }
 
-const SeverityBadge: React.FC<SeverityBadgeProps> = ({ severity }) => {
-  return (
-    <Badge variant="outline" color={SEVERITY_COLOR_MAP[severity]}>
-      {severity}
-    </Badge>
-  );
+const StatusBadge: React.FC<StatusBadgeProps> = ({ status, disabled }) => {
+  if (disabled) {
+    return (
+      <Box opacity={0.5}>
+        <Badge color="gray-700">DISABLED</Badge>
+      </Box>
+    );
+  }
+  return <Badge color={STATUS_COLOR_MAP[status]}>{status}</Badge>;
 };
 
-export default SeverityBadge;
+export default StatusBadge;
