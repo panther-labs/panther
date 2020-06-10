@@ -287,7 +287,7 @@ func testPythonUnit() error {
 	}
 
 	for _, target := range []string{"internal/core", "internal/compliance", "internal/log_analysis"} {
-		if err := sh.Run(pythonLibPath("python3"), append(args, target)...); err != nil {
+		if err := runWithoutStderr(pythonLibPath("python3"), append(args, target)...); err != nil {
 			return fmt.Errorf("python unit tests failed: %v", err)
 		}
 	}
@@ -324,7 +324,7 @@ func testPythonBandit() error {
 	} else {
 		args = append(args, "--quiet")
 	}
-	return sh.Run(pythonLibPath("bandit"), append(args, pyTargets...)...)
+	return runWithoutStderr(pythonLibPath("bandit"), append(args, pyTargets...)...)
 }
 
 func testPythonMypy() error {

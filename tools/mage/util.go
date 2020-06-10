@@ -22,6 +22,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -34,6 +35,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/magefile/mage/mg"
+	"github.com/magefile/mage/sh"
 )
 
 // Package global set by getSession()
@@ -207,6 +210,19 @@ func promptUser(prompt string, validator func(string) error) string {
 
 		return result
 	}
+}
+
+// Run a command, hiding both stdout and stderr unless running in verbose mode.
+//
+// Almost identical to sh.Run(), except sh.Run() only hides stdout in non-verbose mode.
+func runWithoutStderr(cmd string, args ...string) error {
+	var stdout, stderr io.Writer
+	if mg.Verbose() {
+		stdout = os.Stdout
+		stderr = os.Stderr
+	}
+	_, err := sh.Exec(nil, stdout, stderr, cmd, args...)
+	return err
 }
 
 // Ensure non-empty strings.

@@ -19,6 +19,7 @@ package mage
  */
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,9 +30,9 @@ import (
 )
 
 func TestEmbedAPIsNoChange(t *testing.T) {
-	cfn, err := cfnparse.ParseTemplate(pythonVirtualEnvPath, "testdata/no-api.yml")
+	cfn, err := cfnparse.ParseTemplate(testEnvPath(), "testdata/no-api.yml")
 	require.NoError(t, err)
-	expectedMap, err := cfnparse.ParseTemplate(pythonVirtualEnvPath, "testdata/no-api.yml")
+	expectedMap, err := cfnparse.ParseTemplate(testEnvPath(), "testdata/no-api.yml")
 	require.NoError(t, err)
 
 	require.NoError(t, embedAPIs(cfn))
@@ -47,9 +48,9 @@ func TestEmbedAPIsNoChange(t *testing.T) {
 }
 
 func TestEmbedAPIs(t *testing.T) {
-	cfn, err := cfnparse.ParseTemplate(pythonVirtualEnvPath, "testdata/valid-api.yml")
+	cfn, err := cfnparse.ParseTemplate(testEnvPath(), "testdata/valid-api.yml")
 	require.NoError(t, err)
-	expectedMap, err := cfnparse.ParseTemplate(pythonVirtualEnvPath, "testdata/valid-api-expected-output.yml")
+	expectedMap, err := cfnparse.ParseTemplate(testEnvPath(), "testdata/valid-api-expected-output.yml")
 	require.NoError(t, err)
 
 	require.NoError(t, embedAPIs(cfn))
@@ -62,4 +63,10 @@ func TestEmbedAPIs(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.YAMLEq(t, string(expected), string(result))
+}
+
+// Return relative path to python env from *this* directory, not the repo root.
+// Go unit tests run from the directory of the test file.
+func testEnvPath() string {
+	return filepath.Join("..", "..", pythonVirtualEnvPath)
 }
