@@ -38,15 +38,17 @@ const OptimisticConfirmModal: React.FC<OptimisticConfirmModalProps> = ({
 
   return (
     <Modal onClose={onClose} {...rest}>
-      <Text size="large" color="grey500" mb={8} textAlign="center">
+      <Text size="large" mb={8} textAlign="center">
         {subtitle}
       </Text>
 
-      <Flex justify="flex-end">
-        <Button size="large" variant="outline" onClick={onClose} mr={3}>
+      <Flex justify="flex-end" spacing={3}>
+        <Button size="large" variant="outline" variantColor="navyblue" onClick={onClose}>
           Cancel
         </Button>
-        <LoadingButton onClick={handleConfirm}>Confirm</LoadingButton>
+        <Button variantColor="red" onClick={handleConfirm}>
+          Confirm
+        </Button>
       </Flex>
     </Modal>
   );

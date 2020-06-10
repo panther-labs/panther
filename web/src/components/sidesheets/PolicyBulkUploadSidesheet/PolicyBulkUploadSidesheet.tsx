@@ -16,11 +16,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Heading, SideSheet, useSnackbar, Text, Alert, SideSheetProps } from 'pouncejs';
+import {
+  Box,
+  Heading,
+  SideSheet,
+  useSnackbar,
+  Text,
+  Alert,
+  SideSheetProps,
+  Button,
+} from 'pouncejs';
 import React from 'react';
-import LoadingButton from 'Components/buttons/LoadingButton';
-
-import useSidesheet from 'Hooks/useSidesheet';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 import { ListPoliciesDocument } from 'Pages/ListPolicies';
 import { ListRulesDocument } from 'Pages/ListRules';
@@ -152,14 +158,14 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({
             />
           </Box>
         )}
-        <LoadingButton
+        <Button
           disabled={loading}
           loading={loading}
-          width={1}
+          fullWidth
           onClick={() => inputRef.current.click()}
         >
           {loading ? 'Uploading' : 'Select a file'}
-        </LoadingButton>
+        </Button>
       </Box>
     </SideSheet>
   );

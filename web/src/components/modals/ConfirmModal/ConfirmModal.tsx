@@ -18,7 +18,6 @@
 
 import React from 'react';
 import { Modal, Text, Flex, Button, ModalProps } from 'pouncejs';
-import LoadingButton from 'Components/buttons/LoadingButton';
 
 export interface ConfirmModalProps extends ModalProps {
   title: string;
@@ -36,16 +35,16 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 }) => {
   return (
     <Modal onClose={onClose} {...rest}>
-      <Text size="large" color="grey500" mb={8} textAlign="center">
+      <Text size="large" mb={8} textAlign="center">
         {subtitle}
       </Text>
-      <Flex justify="flex-end">
-        <Button size="large" variant="outline" onClick={onClose} mr={3}>
+      <Flex justify="flex-end" spacing={3}>
+        <Button size="large" variant="outline" variantColor="navyblue" onClick={onClose}>
           Cancel
         </Button>
-        <LoadingButton onClick={onConfirm} loading={loading} disabled={loading}>
+        <Button variantColor="red" onClick={onConfirm}>
           Confirm
-        </LoadingButton>
+        </Button>
       </Flex>
     </Modal>
   );

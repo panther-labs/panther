@@ -17,25 +17,21 @@
  */
 
 import React from 'react';
-import { Box, Flex, Modal, ModalProps, Text } from 'pouncejs';
-import LoadingButton from 'Components/buttons/LoadingButton';
+import { Box, Button, Flex, Modal, ModalProps, Text } from 'pouncejs';
 
 const NetworkErrorModal: React.FC<ModalProps> = props => {
   return (
     <Modal title="No Internet Connection" {...props}>
-      <Box width={600}>
-        <Text size="large" color="grey300" my={10} textAlign="center">
-          Somebody is watching cat videos and is preventing you from being online
-          <br />
-          <br />
-          That{"'"}s the most likely scenario anyway...
-        </Text>
-        <Flex justify="center" mb={5}>
-          <LoadingButton loading disabled>
-            Reconnecting
-          </LoadingButton>
-        </Flex>
-      </Box>
+      <Text size="large" mb={10} textAlign="center">
+        Somebody is watching cat videos and is preventing you from being online
+        <br />
+        That{"'"}s the most likely scenario anyway...
+      </Text>
+      <Flex justify="center">
+        <Button variantColor="red" loading disabled>
+          Reconnecting
+        </Button>
+      </Flex>
     </Modal>
   );
 };
