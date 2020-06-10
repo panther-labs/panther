@@ -28,7 +28,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/lambda"
@@ -96,29 +95,28 @@ var supportedRegions = map[string]bool{
 func Deploy() {
 	start := time.Now()
 
-	settings, err := config.Settings()
-	if err != nil {
-		logger.Fatalf("failed to read config file %s: %v", config.Filepath, err)
-	}
-
-	awsSession, err := getSession()
-	if err != nil {
-		logger.Fatal(err)
-	}
-
+	getSession()
 	deployPreCheck(*awsSession.Config.Region)
-	setFirstUser(awsSession, settings)
 
-	identity, err := sts.New(awsSession).GetCallerIdentity(&sts.GetCallerIdentityInput{})
-	if err != nil {
-		logger.Fatalf("failed to get caller identity: %v", err)
+	if stack := os.Getenv("STACK"); stack != "" {
+		stack = strings.ToLower(strings.TrimSpace(stack))
+		if !strings.HasPrefix(stack, "panther-") {
+			stack = "panther-" + stack
+		}
+		if err := deploySingleStack(stack); err != nil {
+			logger.Fatal(err)
+		}
+		return
 	}
-	accountID := *identity.Account
-	logger.Infof("deploy: deploying Panther %s to account %s (%s)", gitVersion, accountID, *awsSession.Config.Region)
 
-	migrate(awsSession, accountID)
-	outputs := bootstrap(awsSession, settings)
-	deployMainStacks(awsSession, settings, accountID, outputs)
+	settings := getSettings()
+	accountID := getAccountID()
+	logger.Infof("deploying Panther %s to account %s (%s)", gitVersion, accountID, *awsSession.Config.Region)
+
+	setFirstUser(settings)
+	migrate(accountID)
+	outputs := bootstrap(settings)
+	deployMainStacks(settings, accountID, outputs)
 
 	logger.Infof("deploy: finished successfully in %s", time.Since(start).Round(time.Second))
 	logger.Infof("***** Panther URL = https://%s", outputs["LoadBalancerUrl"])
@@ -166,30 +164,180 @@ func deployPreCheck(awsRegion string) {
 	}
 }
 
+func getAccountID() string {
+	identity, err := sts.New(awsSession).GetCallerIdentity(&sts.GetCallerIdentityInput{})
+	if err != nil {
+		logger.Fatalf("failed to get caller identity: %v", err)
+	}
+	return *identity.Account
+}
+
+func getSettings() *config.PantherConfig {
+	settings, err := config.Settings()
+	if err != nil {
+		logger.Fatalf("failed to read config file %s: %v", config.Filepath, err)
+	}
+	return settings
+}
+
+// Prompt for the name and email of the initial user if not already defined.
+func setFirstUser(settings *config.PantherConfig) {
+	if settings.Setup.FirstUser.Email != "" {
+		// Always use the values in the settings file first, if available
+		return
+	}
+
+	input := models.LambdaInput{ListUsers: &models.ListUsersInput{}}
+	var output models.ListUsersOutput
+	err := genericapi.Invoke(lambda.New(awsSession), "panther-users-api", &input, &output)
+	if err != nil && !strings.Contains(err.Error(), lambda.ErrCodeResourceNotFoundException) {
+		logger.Fatalf("failed to list existing users: %v", err)
+	}
+
+	if len(output.Users) > 0 {
+		// A user already exists - leave the setting blank.
+		// This will "delete" the FirstUser custom resource in the web stack, but since that resource
+		// has DeletionPolicy:Retain, CloudFormation will ignore it.
+		return
+	}
+
+	// If there is no setting and no existing user, we have to prompt.
+	fmt.Println("Who will be the initial Panther admin user?")
+	firstName := promptUser("First name: ", nonemptyValidator)
+	lastName := promptUser("Last name: ", nonemptyValidator)
+	email := promptUser("Email: ", emailValidator)
+	settings.Setup.FirstUser = config.FirstUser{
+		GivenName:  firstName,
+		FamilyName: lastName,
+		Email:      email,
+	}
+}
+
+// Deploy a single stack for rapid developer iteration.
+//
+// Can only be used to update an existing deployment.
+func deploySingleStack(stack string) error {
+	switch stack {
+	case bootstrapStack:
+		_, err := deployBootstrapStack(getSettings())
+		return err
+	case gatewayStack:
+		build.Lambda() // custom-resources
+		_, err := deployBootstrapGatewayStack(getSettings(), stackOutputs(bootstrapStack))
+		return err
+	case appsyncStack:
+		return deployAppsyncStack(stackOutputs(bootstrapStack, gatewayStack))
+	case cloudsecStack:
+		build.API()
+		build.Lambda()
+		return deployCloudSecurityStack(getSettings(), stackOutputs(bootstrapStack, gatewayStack))
+	case coreStack:
+		build.API()
+		build.Lambda()
+		return deployCoreStack(getSettings(), stackOutputs(bootstrapStack, gatewayStack))
+	case dashboardStack:
+		bucket := stackOutputs(bootstrapStack)["SourceBucket"]
+		return deployDashboardStack(bucket)
+	case frontendStack:
+		setFirstUser(getSettings())
+		return deployFrontend(getAccountID(), stackOutputs(bootstrapStack), getSettings())
+	case logAnalysisStack:
+		build.API()
+		build.Lambda()
+		return deployLogAnalysisStack(getSettings(), stackOutputs(bootstrapStack, gatewayStack))
+	case onboardStack:
+		return deployOnboardStack(getSettings(), stackOutputs(bootstrapStack))
+	default:
+		return fmt.Errorf("unknown stack '%s'", stack)
+	}
+}
+
 // Deploy bootstrap stacks and build deployment artifacts.
 //
 // Returns combined outputs from bootstrap stacks.
-func bootstrap(awsSession *session.Session, settings *config.PantherConfig) map[string]string {
+func bootstrap(settings *config.PantherConfig) map[string]string {
 	build.API()
-	build.Cfn()
 	build.Lambda() // Lambda compilation required for most stacks, including bootstrap-gateway
 
-	// Deploy bootstrap stacks
-	outputs, err := deployBootstrapStacks(awsSession, settings)
+	outputs, err := deployBootstrapStack(settings)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	logger.Infof("    √ %s finished (1/%d)", bootstrapStack, len(allStacks))
+
+	// Deploy second bootstrap stack and merge outputs
+	gatewayOutputs, err := deployBootstrapGatewayStack(settings, outputs)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
+	for k, v := range gatewayOutputs {
+		if _, exists := outputs[k]; exists {
+			logger.Fatalf("output %s exists in both bootstrap stacks", k)
+		}
+		outputs[k] = v
+	}
+
+	logger.Infof("    √ %s finished (2/%d)", gatewayStack, len(allStacks))
 	return outputs
 }
 
-// Deploy bootstrap and bootstrap-gateway and merge their outputs
-func deployBootstrapStacks(
-	awsSession *session.Session,
-	settings *config.PantherConfig,
-) (map[string]string, error) {
+// Deploy main stacks (everything after bootstrap and bootstrap-gateway)
+func deployMainStacks(settings *config.PantherConfig, accountID string, outputs map[string]string) {
+	results := make(chan goroutineResult)
+	count := 0
 
-	params := map[string]string{
+	// Appsync
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{summary: appsyncStack, err: deployAppsyncStack(outputs)}
+	}(results)
+
+	// Cloud security
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{summary: cloudsecStack, err: deployCloudSecurityStack(settings, outputs)}
+	}(results)
+
+	// Core
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{summary: coreStack, err: deployCoreStack(settings, outputs)}
+	}(results)
+
+	// Dashboards
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{summary: dashboardStack, err: deployDashboardStack(outputs["SourceBucket"])}
+	}(results)
+
+	// Log analysis
+	count++
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{summary: logAnalysisStack, err: deployLogAnalysisStack(settings, outputs)}
+	}(results)
+
+	// Wait for stacks to finish.
+	// There are two stacks before and two stacks after.
+	logResults(results, "deploy", 3, count+2, len(allStacks))
+
+	go func(c chan goroutineResult) {
+		// Web stack requires core stack to exist first
+		c <- goroutineResult{summary: frontendStack, err: deployFrontend(accountID, outputs, settings)}
+	}(results)
+
+	// Onboard Panther to scan itself
+	go func(c chan goroutineResult) {
+		c <- goroutineResult{summary: onboardStack, err: deployOnboardStack(settings, outputs)}
+	}(results)
+
+	// Log stack results, counting where the last parallel group left off to give the illusion of
+	// one continuous deploy progress tracker.
+	logResults(results, "deploy", count+3, len(allStacks), len(allStacks))
+}
+
+func deployBootstrapStack(settings *config.PantherConfig) (map[string]string, error) {
+	return deployTemplate(bootstrapTemplate, "", bootstrapStack, map[string]string{
 		"LogSubscriptionPrincipals":  strings.Join(settings.Setup.LogSubscriptions.PrincipalARNs, ","),
 		"EnableS3AccessLogs":         strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
 		"AccessLogsBucket":           settings.Setup.S3AccessLogsBucket,
@@ -200,22 +348,23 @@ func deployBootstrapStacks(
 		"TracingMode":                settings.Monitoring.TracingMode,
 		"AlarmTopicArn":              settings.Monitoring.AlarmSnsTopicArn,
 		"DeployFromSource":           "true",
-	}
+	})
+}
 
-	outputs, err := deployTemplate(awsSession, bootstrapTemplate, "", bootstrapStack, params)
-	if err != nil {
+func deployBootstrapGatewayStack(
+	settings *config.PantherConfig,
+	outputs map[string]string, // from bootstrap stack
+) (map[string]string, error) {
+
+	if err := embedAPISpec(); err != nil {
 		return nil, err
 	}
 
-	logger.Infof("    √ %s finished (1/%d)", bootstrapStack, len(allStacks))
-
-	// Now that the S3 buckets are in place, we can deploy the second bootstrap stack.
-	if err = buildLayer(settings.Infra.PipLayer); err != nil {
+	if err := buildLayer(settings.Infra.PipLayer); err != nil {
 		return nil, err
 	}
 
-	sourceBucket := outputs["SourceBucket"]
-	params = map[string]string{
+	return deployTemplate(gatewayTemplate, outputs["SourceBucket"], gatewayStack, map[string]string{
 		"AthenaResultsBucket":        outputs["AthenaResultsBucket"],
 		"AuditLogsBucket":            outputs["AuditLogsBucket"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
@@ -226,23 +375,7 @@ func deployBootstrapStacks(
 		"TracingMode":                settings.Monitoring.TracingMode,
 		"UserPoolId":                 outputs["UserPoolId"],
 		"AlarmTopicArn":              outputs["AlarmTopicArn"],
-	}
-
-	// Deploy second bootstrap stack and merge outputs
-	gatewayOutputs, err := deployTemplate(awsSession, gatewayTemplate, sourceBucket, gatewayStack, params)
-	if err != nil {
-		return nil, err
-	}
-
-	for k, v := range gatewayOutputs {
-		if _, exists := outputs[k]; exists {
-			return nil, fmt.Errorf("output %s exists in both bootstrap stacks", k)
-		}
-		outputs[k] = v
-	}
-
-	logger.Infof("    √ %s finished (2/%d)", gatewayStack, len(allStacks))
-	return outputs, nil
+	})
 }
 
 // Build standard Python analysis layer in out/layer.zip if that file doesn't already exist.
@@ -278,178 +411,113 @@ func buildLayer(libs []string) error {
 	return nil
 }
 
-// Deploy main stacks
-//
-// In parallel: alarms, appsync, cloudsec, core, dashboards, glue, log analysis, web
-// Then metric-filters and onboarding at the end
-//
-// nolint: funlen
-func deployMainStacks(awsSession *session.Session, settings *config.PantherConfig, accountID string, outputs map[string]string) {
-	sourceBucket := outputs["SourceBucket"]
-	results := make(chan goroutineResult)
-	count := 0
-
-	// Appsync
-	count++
-	go func(c chan goroutineResult) {
-		_, err := deployTemplate(awsSession, appsyncTemplate, sourceBucket, appsyncStack, map[string]string{
-			"ApiId":          outputs["GraphQLApiId"],
-			"AlarmTopicArn":  outputs["AlarmTopicArn"],
-			"ServiceRole":    outputs["AppsyncServiceRoleArn"],
-			"AnalysisApi":    "https://" + outputs["AnalysisApiEndpoint"],
-			"ComplianceApi":  "https://" + outputs["ComplianceApiEndpoint"],
-			"RemediationApi": "https://" + outputs["RemediationApiEndpoint"],
-			"ResourcesApi":   "https://" + outputs["ResourcesApiEndpoint"],
-		})
-		c <- goroutineResult{summary: appsyncStack, err: err}
-	}(results)
-
-	// Cloud security
-	count++
-	go func(c chan goroutineResult) {
-		_, err := deployTemplate(awsSession, cloudsecTemplate, sourceBucket, cloudsecStack, map[string]string{
-			"AlarmTopicArn":         outputs["AlarmTopicArn"],
-			"AnalysisApiId":         outputs["AnalysisApiId"],
-			"ComplianceApiId":       outputs["ComplianceApiId"],
-			"RemediationApiId":      outputs["RemediationApiId"],
-			"ResourcesApiId":        outputs["ResourcesApiId"],
-			"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
-			"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
-			"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
-			"SqsKeyId":              outputs["QueueEncryptionKeyId"],
-
-			"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
-			"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
-			"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
-			"TracingMode":                settings.Monitoring.TracingMode,
-		})
-		c <- goroutineResult{summary: cloudsecStack, err: err}
-	}(results)
-
-	// Core
-	count++
-	go func(c chan goroutineResult) {
-		_, err := deployTemplate(awsSession, coreTemplate, sourceBucket, coreStack, map[string]string{
-			"AlarmTopicArn":           outputs["AlarmTopicArn"],
-			"AppDomainURL":            outputs["LoadBalancerUrl"],
-			"AnalysisVersionsBucket":  outputs["AnalysisVersionsBucket"],
-			"AnalysisApiEndpoint":     outputs["AnalysisApiEndpoint"],
-			"AnalysisApiId":           outputs["AnalysisApiId"],
-			"AthenaResultsBucket":     outputs["AthenaResultsBucket"],
-			"ComplianceApiId":         outputs["ComplianceApiId"],
-			"DynamoScalingRoleArn":    outputs["DynamoScalingRoleArn"],
-			"InitialAnalysisPackUrls": strings.Join(settings.Setup.InitialAnalysisSets, ","),
-			"ProcessedDataBucket":     outputs["ProcessedDataBucket"],
-			"OutputsKeyId":            outputs["OutputsEncryptionKeyId"],
-			"SqsKeyId":                outputs["QueueEncryptionKeyId"],
-			"UserPoolId":              outputs["UserPoolId"],
-
-			"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
-			"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
-			"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
-			"TracingMode":                settings.Monitoring.TracingMode,
-		})
-		c <- goroutineResult{summary: coreStack, err: err}
-	}(results)
-
-	// Dashboards
-	count++
-	go func(c chan goroutineResult) {
-		_, err := deployTemplate(awsSession, dashboardTemplate, sourceBucket, dashboardStack, nil)
-		c <- goroutineResult{summary: dashboardStack, err: err}
-	}(results)
-
-	// Log analysis
-	count++
-	go func(c chan goroutineResult) {
-		// this computes a signature of the deployed glue tables used for change detection, for CF use the Panther version
-		tablesSignature, err := gluetables.DeployedTablesSignature(glue.New(awsSession))
-		if err != nil {
-			c <- goroutineResult{summary: logAnalysisStack, err: err}
-			return
-		}
-		_, err = deployTemplate(awsSession, logAnalysisTemplate, sourceBucket, logAnalysisStack, map[string]string{
-			"AlarmTopicArn":         outputs["AlarmTopicArn"],
-			"AnalysisApiId":         outputs["AnalysisApiId"],
-			"AthenaResultsBucket":   outputs["AthenaResultsBucket"],
-			"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
-			"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
-			"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
-			"SqsKeyId":              outputs["QueueEncryptionKeyId"],
-			"TablesSignature":       tablesSignature,
-
-			"CloudWatchLogRetentionDays":   strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
-			"Debug":                        strconv.FormatBool(settings.Monitoring.Debug),
-			"LayerVersionArns":             settings.Infra.BaseLayerVersionArns,
-			"LogProcessorLambdaMemorySize": strconv.Itoa(settings.Infra.LogProcessorLambdaMemorySize),
-			"TracingMode":                  settings.Monitoring.TracingMode,
-		})
-		c <- goroutineResult{summary: logAnalysisStack, err: err}
-	}(results)
-
-	// Wait for stacks to finish.
-	// There are two stacks before and two stacks after.
-	logResults(results, "deploy", 3, count+2, len(allStacks))
-
-	go func(c chan goroutineResult) {
-		// Web stack requires core stack to exist first
-		_, err := deployFrontend(awsSession, accountID, sourceBucket, outputs, settings)
-		c <- goroutineResult{summary: frontendStack, err: err}
-	}(results)
-
-	// Onboard Panther to scan itself
-	go func(c chan goroutineResult) {
-		var err error
-		if settings.Setup.OnboardSelf {
-			_, err = deployTemplate(awsSession, onboardTemplate, sourceBucket, onboardStack, map[string]string{
-				"AlarmTopicArn":      outputs["AlarmTopicArn"],
-				"AuditLogsBucket":    outputs["AuditLogsBucket"],
-				"EnableCloudTrail":   strconv.FormatBool(settings.Setup.EnableCloudTrail),
-				"EnableGuardDuty":    strconv.FormatBool(settings.Setup.EnableGuardDuty),
-				"EnableS3AccessLogs": strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
-				"VpcId":              outputs["VpcId"],
-			})
-		} else {
-			// Delete the onboard stack if OnboardSelf was toggled off
-			err = deleteStack(cloudformation.New(awsSession), aws.String(onboardStack))
-		}
-		c <- goroutineResult{summary: onboardStack, err: err}
-	}(results)
-
-	// Log stack results, counting where the last parallel group left off to give the illusion of
-	// one continuous deploy progress tracker.
-	logResults(results, "deploy", count+3, len(allStacks), len(allStacks))
+func deployAppsyncStack(outputs map[string]string) error {
+	_, err := deployTemplate(appsyncTemplate, outputs["SourceBucket"], appsyncStack, map[string]string{
+		"ApiId":          outputs["GraphQLApiId"],
+		"AlarmTopicArn":  outputs["AlarmTopicArn"],
+		"ServiceRole":    outputs["AppsyncServiceRoleArn"],
+		"AnalysisApi":    "https://" + outputs["AnalysisApiEndpoint"],
+		"ComplianceApi":  "https://" + outputs["ComplianceApiEndpoint"],
+		"RemediationApi": "https://" + outputs["RemediationApiEndpoint"],
+		"ResourcesApi":   "https://" + outputs["ResourcesApiEndpoint"],
+	})
+	return err
 }
 
-// Prompt for the name and email of the initial user if not already defined.
-func setFirstUser(awsSession *session.Session, settings *config.PantherConfig) {
-	if settings.Setup.FirstUser.Email != "" {
-		// Always use the values in the settings file first, if available
-		return
+func deployCloudSecurityStack(settings *config.PantherConfig, outputs map[string]string) error {
+	_, err := deployTemplate(cloudsecTemplate, outputs["SourceBucket"], cloudsecStack, map[string]string{
+		"AlarmTopicArn":         outputs["AlarmTopicArn"],
+		"AnalysisApiId":         outputs["AnalysisApiId"],
+		"ComplianceApiId":       outputs["ComplianceApiId"],
+		"RemediationApiId":      outputs["RemediationApiId"],
+		"ResourcesApiId":        outputs["ResourcesApiId"],
+		"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
+		"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
+		"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
+		"SqsKeyId":              outputs["QueueEncryptionKeyId"],
+
+		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
+		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
+		"TracingMode":                settings.Monitoring.TracingMode,
+	})
+	return err
+}
+
+func deployCoreStack(settings *config.PantherConfig, outputs map[string]string) error {
+	_, err := deployTemplate(coreTemplate, outputs["SourceBucket"], coreStack, map[string]string{
+		"AlarmTopicArn":           outputs["AlarmTopicArn"],
+		"AppDomainURL":            outputs["LoadBalancerUrl"],
+		"AnalysisVersionsBucket":  outputs["AnalysisVersionsBucket"],
+		"AnalysisApiEndpoint":     outputs["AnalysisApiEndpoint"],
+		"AnalysisApiId":           outputs["AnalysisApiId"],
+		"AthenaResultsBucket":     outputs["AthenaResultsBucket"],
+		"ComplianceApiId":         outputs["ComplianceApiId"],
+		"DynamoScalingRoleArn":    outputs["DynamoScalingRoleArn"],
+		"InitialAnalysisPackUrls": strings.Join(settings.Setup.InitialAnalysisSets, ","),
+		"ProcessedDataBucket":     outputs["ProcessedDataBucket"],
+		"OutputsKeyId":            outputs["OutputsEncryptionKeyId"],
+		"SqsKeyId":                outputs["QueueEncryptionKeyId"],
+		"UserPoolId":              outputs["UserPoolId"],
+
+		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
+		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
+		"TracingMode":                settings.Monitoring.TracingMode,
+	})
+	return err
+}
+
+func deployDashboardStack(bucket string) error {
+	if err := generateDashboards(); err != nil {
+		return err
 	}
 
-	input := models.LambdaInput{ListUsers: &models.ListUsersInput{}}
-	var output models.ListUsersOutput
-	err := genericapi.Invoke(lambda.New(awsSession), "panther-users-api", &input, &output)
-	if err != nil && !strings.Contains(err.Error(), lambda.ErrCodeResourceNotFoundException) {
-		logger.Fatalf("failed to list existing users: %v", err)
+	_, err := deployTemplate(dashboardTemplate, bucket, dashboardStack, nil)
+	return err
+}
+
+func deployLogAnalysisStack(settings *config.PantherConfig, outputs map[string]string) error {
+	// this computes a signature of the deployed glue tables used for change detection, for CF use the Panther version
+	tablesSignature, err := gluetables.DeployedTablesSignature(glue.New(awsSession))
+	if err != nil {
+		return err
 	}
 
-	if len(output.Users) > 0 {
-		// A user already exists - leave the setting blank.
-		// This will "delete" the FirstUser custom resource in the web stack, but since that resource
-		// has DeletionPolicy:Retain, CloudFormation will ignore it.
-		return
+	_, err = deployTemplate(logAnalysisTemplate, outputs["SourceBucket"], logAnalysisStack, map[string]string{
+		"AlarmTopicArn":         outputs["AlarmTopicArn"],
+		"AnalysisApiId":         outputs["AnalysisApiId"],
+		"AthenaResultsBucket":   outputs["AthenaResultsBucket"],
+		"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
+		"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
+		"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
+		"SqsKeyId":              outputs["QueueEncryptionKeyId"],
+		"TablesSignature":       tablesSignature,
+
+		"CloudWatchLogRetentionDays":   strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+		"Debug":                        strconv.FormatBool(settings.Monitoring.Debug),
+		"LayerVersionArns":             settings.Infra.BaseLayerVersionArns,
+		"LogProcessorLambdaMemorySize": strconv.Itoa(settings.Infra.LogProcessorLambdaMemorySize),
+		"TracingMode":                  settings.Monitoring.TracingMode,
+	})
+	return err
+}
+
+func deployOnboardStack(settings *config.PantherConfig, outputs map[string]string) error {
+	var err error
+	if settings.Setup.OnboardSelf {
+		_, err = deployTemplate(onboardTemplate, outputs["SourceBucket"], onboardStack, map[string]string{
+			"AlarmTopicArn":      outputs["AlarmTopicArn"],
+			"AuditLogsBucket":    outputs["AuditLogsBucket"],
+			"EnableCloudTrail":   strconv.FormatBool(settings.Setup.EnableCloudTrail),
+			"EnableGuardDuty":    strconv.FormatBool(settings.Setup.EnableGuardDuty),
+			"EnableS3AccessLogs": strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
+			"VpcId":              outputs["VpcId"],
+		})
+	} else {
+		// Delete the onboard stack if OnboardSelf was toggled off
+		err = deleteStack(cloudformation.New(awsSession), aws.String(onboardStack))
 	}
 
-	// If there is no setting and no existing user, we have to prompt.
-	fmt.Println("Who will be the initial Panther admin user?")
-	firstName := promptUser("First name: ", nonemptyValidator)
-	lastName := promptUser("Last name: ", nonemptyValidator)
-	email := promptUser("Email: ", emailValidator)
-	settings.Setup.FirstUser = config.FirstUser{
-		GivenName:  firstName,
-		FamilyName: lastName,
-		Email:      email,
-	}
+	return err
 }

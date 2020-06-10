@@ -58,14 +58,10 @@ func init() {
 //
 // Short-form functions like "!If" and "!Sub" will be replaced with "Fn::" objects.
 func ParseTemplate(path string) (map[string]interface{}, error) {
-	if err := os.MkdirAll("out", 0755); err != nil {
-		return nil, err
-	}
-
 	// The Go yaml parser doesn't understand short-form functions.
 	// So we first use cfn-flip to flip .yml to .json
 	if strings.ToLower(filepath.Ext(path)) != ".json" {
-		jsonPath := filepath.Join("out", filepath.Base(path)+".json")
+		jsonPath := filepath.Join(os.TempDir(), filepath.Base(path)+".json")
 		if err := sh.Run(filepath.Join(pythonVirtualEnvPath, "bin", "cfn-flip"), "-j", path, jsonPath); err != nil {
 			return nil, fmt.Errorf("failed to flip %s to json: %v", path, err)
 		}

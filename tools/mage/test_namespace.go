@@ -27,7 +27,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 
@@ -376,18 +375,10 @@ func testTfValidate() error {
 
 // Integration Run integration tests (integration_test.go,integration.py)
 func (t Test) Integration() {
-	// Check the AWS account ID
-	awsSession, err := getSession()
-	if err != nil {
-		logger.Fatal(err)
-	}
-	identity, err := sts.New(awsSession).GetCallerIdentity(&sts.GetCallerIdentityInput{})
-	if err != nil {
-		logger.Fatalf("failed to get caller identity: %v", err)
-	}
+	getSession()
 
 	logger.Warnf("Integration tests will erase all Panther data in account %s (%s)",
-		*identity.Account, *awsSession.Config.Region)
+		getAccountID(), *awsSession.Config.Region)
 	result := promptUser("Are you sure you want to continue? (yes|no) ", nonemptyValidator)
 	if strings.ToLower(result) != "yes" {
 		logger.Fatal("integration tests aborted")

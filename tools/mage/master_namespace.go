@@ -50,17 +50,14 @@ type Master mg.Namespace
 
 // Deploy Deploy single master template (deployments/master.yml) nesting all other stacks
 func (Master) Deploy() {
-	awsSession, err := getSession()
-	if err != nil {
-		logger.Fatal(err)
-	}
+	getSession()
 	region := *awsSession.Config.Region
-	bucket, firstUserEmail, ecrRegistry := masterDeployPreCheck(awsSession)
+	bucket, firstUserEmail, ecrRegistry := masterDeployPreCheck()
 
 	masterBuild()
-	pkg := masterPackage(awsSession, bucket, getMasterVersion(), ecrRegistry)
+	pkg := masterPackage(bucket, getMasterVersion(), ecrRegistry)
 
-	err = sh.RunV(filepath.Join(pythonVirtualEnvPath, "bin", "sam"), "deploy",
+	err := sh.RunV(filepath.Join(pythonVirtualEnvPath, "bin", "sam"), "deploy",
 		"--capabilities", "CAPABILITY_IAM", "CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND",
 		"--region", region,
 		"--stack-name", "panther-master",
@@ -74,7 +71,7 @@ func (Master) Deploy() {
 // Ensure environment is configured correctly for the master template.
 //
 // Returns bucket, firstUserEmail, ecrRegistry
-func masterDeployPreCheck(awsSession *session.Session) (string, string, string) {
+func masterDeployPreCheck() (string, string, string) {
 	deployPreCheck(*awsSession.Config.Region)
 
 	_, err := cloudformation.New(awsSession).DescribeStacks(
@@ -141,13 +138,13 @@ func masterBuild() {
 // Package assets needed for the master template.
 //
 // Returns the path to the final generated template.
-func masterPackage(awsSession *session.Session, bucket, pantherVersion, imgRegistry string) string {
+func masterPackage(bucket, pantherVersion, imgRegistry string) string {
 	pkg, err := samPackage(*awsSession.Config.Region, "deployments/master.yml", bucket)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	dockerImage, err := buildAndPushImageFromSource(awsSession, imgRegistry, pantherVersion)
+	dockerImage, err := buildAndPushImageFromSource(imgRegistry, pantherVersion)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -174,7 +171,7 @@ func getMasterVersion() string {
 
 func publishToRegion(version, region string) {
 	logger.Infof("publishing to %s", region)
-	awsSession := session.Must(session.NewSession(
+	awsSession = session.Must(session.NewSession(
 		aws.NewConfig().WithMaxRetries(10).WithRegion(region)))
 
 	bucket := fmt.Sprintf(publicAssetsBucket, region)
@@ -194,10 +191,10 @@ func publishToRegion(version, region string) {
 	}
 
 	// Publish S3 assets and ECR docker image
-	pkg := masterPackage(awsSession, bucket, version, fmt.Sprintf(publicImageRepository, region))
+	pkg := masterPackage(bucket, version, fmt.Sprintf(publicImageRepository, region))
 
 	// Upload final packaged template
-	if _, err := uploadFileToS3(awsSession, pkg, bucket, s3Key); err != nil {
+	if _, err := uploadFileToS3(pkg, bucket, s3Key); err != nil {
 		logger.Fatalf("failed to upload %s : %v", s3URL, err)
 	}
 
