@@ -86,7 +86,7 @@ Mappings:
       Timeout: 120
     Updater:
       Memory: 128
-      Timeout: 120
+      Timeout: 900 # set to max to allow syncs
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
@@ -605,12 +605,26 @@ Resources:
           Statement:
             - Effect: Allow
               Action:
-                - glue:CreatePartition
                 - glue:GetTable
+                - glue:CreatePartition
+                - glue:GetPartition
+                - glue:UpdatePartition
               Resource:
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
+        - Id: ProbeS3 # used in sync
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: s3:List*
+              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}*
+        - Id: CallLambda # used in sync
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-datacatalog-updater
 
   UpdaterAlarms:
     Type: Custom::LambdaAlarms

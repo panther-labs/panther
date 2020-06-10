@@ -82,7 +82,7 @@ func (Test) CI() {
 		defer close(done)
 		logResults(results, "test:ci", 1, len(tasks), len(tasks))
 	}()
-	logger.Info("running tests in parallel...")
+	logger.Info("running tasks in parallel...")
 	for _, task := range tasks {
 		runTask(results, task.Name, task.Task)
 	}
@@ -268,16 +268,11 @@ func testGoUnit() error {
 	}
 
 	// unit tests and race detection
-	if err := runGoTest("test", "-race", "-vet", "", "-cover", "./..."); err != nil {
-		return err
-	}
-
-	// One package is explicitly skipped by -race, we have to run its unit tests separately
-	return runGoTest("test", "-vet", "", "-cover", "./internal/log_analysis/log_processor/destinations")
+	return runGoTest("test", "-race", "-p", "1", "-vet", "", "-cover", "./...")
 }
 
 func testGoLint() error {
-	args := []string{"run", "--timeout", "10m"}
+	args := []string{"run", "--timeout", "10m", "-j", "1"}
 	if mg.Verbose() {
 		args = append(args, "-v")
 	}
