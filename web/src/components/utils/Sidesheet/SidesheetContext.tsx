@@ -42,6 +42,7 @@ type OmitControlledProps<T> = Omit<T, 'open' | 'onClose'>;
 interface SidesheetStateShape {
   sidesheet: keyof typeof SIDESHEETS | null;
   props?: { [key: string]: any };
+  isVisible: boolean;
 }
 
 interface SelectDestinationSideSheetAction {
@@ -117,6 +118,7 @@ type SidesheetStateAction =
 const initialState: SidesheetStateShape = {
   sidesheet: null,
   props: {},
+  isVisible: false,
 };
 
 const sidesheetReducer = (state: SidesheetStateShape, action: SidesheetStateAction) => {
@@ -125,9 +127,10 @@ const sidesheetReducer = (state: SidesheetStateShape, action: SidesheetStateActi
       return {
         sidesheet: action.payload.sidesheet,
         props: 'props' in action.payload ? action.payload.props : {},
+        isVisible: true,
       };
     case HIDE_SIDESHEET:
-      return { sidesheet: null, props: {} };
+      return { ...state, isVisible: false };
     default:
       return state;
   }

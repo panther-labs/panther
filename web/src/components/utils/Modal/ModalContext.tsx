@@ -49,6 +49,7 @@ type OmitControlledProps<T> = Omit<T, 'open' | 'onClose'>;
 interface ModalStateShape {
   modal: keyof typeof MODALS | null;
   props: { [key: string]: any };
+  isVisible: boolean;
 }
 
 /* 1st action */
@@ -162,6 +163,7 @@ type ModalStateAction =
 const initialState: ModalStateShape = {
   modal: null,
   props: {},
+  isVisible: false,
 };
 
 const modalReducer = (state: ModalStateShape, action: ModalStateAction) => {
@@ -170,9 +172,10 @@ const modalReducer = (state: ModalStateShape, action: ModalStateAction) => {
       return {
         modal: action.payload.modal,
         props: 'props' in action.payload ? action.payload.props : {},
+        isVisible: true,
       };
     case HIDE_MODAL:
-      return { modal: null, props: {} };
+      return { ...state, isVisible: false };
     default:
       return state;
   }
