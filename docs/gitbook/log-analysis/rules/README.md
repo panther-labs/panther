@@ -45,7 +45,7 @@ For Enterprise customers, additional packs are provided for MITRE ATT&CK, Cisco 
 
 ## Workflow
 
-Panther rules can be written, tested, and deployed either with the UI or the [panther_analysis_tool](log-analysis/rules/panther-cli.md).
+Panther rules can be written, tested, and deployed either with the UI or the [panther_analysis_tool](panther-cli.md).
 
 Each rule takes an `event` input of a given log type from the [supported logs](https://docs.runpanther.io/supported-logs) page.
 
@@ -150,7 +150,7 @@ Then, configure the built in rules by searching for the `Configuration Required`
 
 ## Writing Rules in the Panther UI
 
-Navigate to Log Analysis > Rules, and click `Create New` in the top right corner. You have the option of creating a single new rule, or uploading a zip file containing rules created with the [panther_analysis_tool](log-analysis/rules/panther-cli.md).
+Navigate to Log Analysis > Rules, and click `Create New` in the top right corner. You have the option of creating a single new rule, or uploading a zip file containing rules created with the [panther_analysis_tool](panther-cli.md).
 
 ![](../../.gitbook/assets/write-rules-ui-1.png)
 
