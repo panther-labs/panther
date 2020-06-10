@@ -84,7 +84,7 @@ Specify the stack details below:
 | `PantherRegion`   | The region where Panther is deployed |
 | `SnsTopicName`     | The name of the SNS topic receiving the notification, by default this is `panther-notifications-topic`  |
 
-Click on **Next**, **Next**, and the n**Create Stack**.
+Click on **Next**, **Next**, and then **Create Stack**.
 
 This stack has one output named `SnsTopicArn`.
 

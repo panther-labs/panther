@@ -1,8 +1,10 @@
 # Panther Analysis Tool
 
+The `panther_analysis_tool` is a Python command line interface  for testing, packaging, and deploying Panther Policies and Rules.
+
 ## Installation
 
-The `panther_analysis_tool` is available on pip and can be installed with the following command:
+Install the [panther_analysis_tool](https://github.com/panther-labs/panther_analysis_tool) with the following command:
 
 ```bash
 pip3 install panther-analysis-tool
@@ -18,7 +20,7 @@ Each rule consists of a Python file (`<my-rule>.py`) containing your detection l
 
 ## Rule Body
 
-Write your rule as you would above, and save it as `folder/my_new_rule.py`.
+[Write your rule](log-analysis/rules/README.md) and save it as `my_new_rule.py`.
 
 ## Rule Attributes
 
@@ -73,13 +75,13 @@ Tests:
 ## Running Tests
 
 ```bash
-panther_analysis_tool test --path <path-to-python-code>
+panther_analysis_tool test --path <path-to-your-rules>
 ```
 
 Filtering based on rule attributes:
 
 ```bash
-panther_analysis_tool test --path <path-to-python-code> --filter RuleID=Category.Behavior.MoreInfo
+panther_analysis_tool test --path <path-to-your-rules> --filter RuleID=Category.Behavior.MoreInfo
 ```
 
 ## Uploading to Panther

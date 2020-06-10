@@ -64,7 +64,7 @@ The `Administrator` account may also be the `Target` account. To run and scan a 
 
 First, create the CloudFormation StackSet Admin role in the main Panther account to manage the deployment of real-time events in your target accounts.
 
-From the CloudFormation Console, create a new stack, elect `Template is ready`, and enter the following `Amazon S3 URL`:
+From the CloudFormation Console, create a new stack, select `Template is ready`, and enter the following `Amazon S3 URL`:
 
 ```
 https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-stackset-iam-admin-role/latest/template.yml

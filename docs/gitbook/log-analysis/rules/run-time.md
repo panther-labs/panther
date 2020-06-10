@@ -1,20 +1,18 @@
 # Runtime Libraries
 
-The following libraries are available to be used in Panther's analysis environment:
+The following Python libraries are available to be used in Panther in addition to `boto3` provided by [AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html):
 
 | Package          | Version   | Description                 | License   |
 | :--------------- | :-------- | :-------------------------- | :-------- |
-| `boto3`          | `1.10.46` | AWS SDK for Python          | Apache v2 |
-| `policyuniverse` | `1.3.2.1` | Parse AWS ARNs and Policies | Apache v2 |
-| `requests`       | `2.22.0`  | Easy HTTP Requests          | Apache v2 |
+| `policyuniverse` | `1.3.2.2` | Parse AWS ARNs and Policies | Apache v2 |
+| `requests`       | `2.23.0`  | Easy HTTP Requests          | Apache v2 |
 
 To add more libraries, edit the `PipLayer` below in the `panther_config.yml`:
 
 ```yaml
 PipLayer:
-  - boto3==1.11.16
-  - policyuniverse==1.3.2.1
-  - requests==2.22.0
+  - policyuniverse==1.3.2.2
+  - requests==2.23.0
 ```
 
 Alternatively, you can override the runtime libraries by attaching a Lambda layer in the `panther_config.yml`:

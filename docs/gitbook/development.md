@@ -19,12 +19,14 @@ To deploy from source, install [Docker](https://docs.docker.com/install/) and ma
 For the remaining dependencies, you can either use our development image or install development dependencies locally.
 
 ### Development Image
+
 This is the easier option, but will also lead to much slower builds.
 
 Simply [export your AWS credentials](#aws-credentials) as environment variables, and then run `./dev.sh`
 From here, run `mage setup` and you're good to go.
 
 ### Local Dependencies
+
 To install dependencies locally (recommended for regular contributors):
 
 * Install [Go](https://golang.org/doc/install#install) 1.13+
@@ -148,6 +150,7 @@ Panther relies on dozens of AWS services, some of which are not yet available in
 Consult the [AWS region table](https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/) for the source of truth about service availability in each region.
 
 ### Mage Deploy
+
 Now you can run `mage deploy`
 
 - If you're using the development image, be sure to export your AWS credentials in the environment *before* running `./dev.sh`
@@ -164,6 +167,7 @@ Instead of exporting your AWS credentials as environment variables, you will nee
 We recommend at least an `m5.large` instance type, but even one as small as `t2.small` should be sufficient.
 
 ## Teardown
+
 Run `mage teardown` to remove all Panther infrastructure, including S3 buckets that are normally retained if just the CloudFormation stack were deleted.
 If you have a single top-level Panther stack, then `STACK=your-stack-name mage teardown`
 
@@ -185,7 +189,7 @@ This diagram provides additional detail to the high-level diagram above:
 
 ![Architecture diagram](.gitbook/assets/detailed-arch-diagram.png)
 
-While more detailed than the overview above, this diagram also simplifies some implementation details for clarity. For example, the majority of lambdas are not invoking each other directly but instead communicating via SQS Queues or DynamoDB streams. 
+While more detailed than the overview above, this diagram also simplifies some implementation details for clarity. For example, the majority of lambdas are not invoking each other directly but instead communicating via SQS Queues or DynamoDB streams.
 
 ### Data Flow Diagram
 

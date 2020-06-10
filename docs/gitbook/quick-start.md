@@ -2,14 +2,14 @@
 description: Get started with Panther in 15 minutes
 ---
 
-# Community Edition Quick Start
+# Quick Start
 
 What you'll need:
 
 1. An AWS Account
 2. An IAM user or role with permissions to create and manage the necessary resources
 
-We've provided download links to the following deployment IAM roles below:
+We've provided the following IAM roles for least privilege deployments:
 
 - [AWS CloudFormation Template](https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-deployment-role/latest/template.yml)
 - [Terraform](https://github.com/panther-labs/panther/tree/master/deployments/auxiliary/terraform/panther-deployment-role.tf)
@@ -18,6 +18,8 @@ We've provided download links to the following deployment IAM roles below:
 We recommend deploying Panther into its own dedicated AWS account.
 {% endhint %}
 
+The steps below use a preconfigured CloudFormation template to deploy Panther. To deploy from source, follow the instructions [here](development.md#deploying).
+
 ## Deployment
 
 First, navigate to the AWS CloudFormation console and create a new stack.
@@ -25,7 +27,7 @@ First, navigate to the AWS CloudFormation console and create a new stack.
 Use the following template URL to install the latest version in the us-east-1 region:
 
 ```
-https://panther-community-us-east-1.s3.amazonaws.com/v1.4/panther.yml
+https://panther-community-us-east-1.s3.amazonaws.com/v1.4.0/panther.yml
 ```
 
 The template URL is of the following form:
@@ -39,7 +41,7 @@ Where:
 * EDITION is `community` or `enterprise`
 * REGION is one of: `us-east-1`, `us-east-2`, or `us-west-2`
     * Be sure the template region matches the region in which you are deploying Panther
-    * Additional regions are available when [deploying from source](development.md#supported-regions)
+    * [Additional](development.md#supported-regions) regions are available when deploying from source
 * VERSION is the latest [tagged release](https://github.com/panther-labs/panther/releases)
 
 ![CloudFormation Template URL](.gitbook/assets/cfn-deploy-1.png)

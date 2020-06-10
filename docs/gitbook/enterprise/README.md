@@ -4,7 +4,7 @@ In addition to the open-source community edition, Panther offers an enterprise p
 
 * [Data Explorer](enterprise/data-analytics/data-explorer.md) to search collected data
 * SaaS Log Pulling
-* Data Compaction for faster queries
+* [Data Compaction](enterprise/data-analytics/log-compaction.md) for faster queries
 * Premium Analysis Packs for PCI, AWS MITRE ATT&CK, Cisco Umbrella, and more
 * [Role-Based Access Control](enterprise/rbac.md)
 * Customer Support with SLAs

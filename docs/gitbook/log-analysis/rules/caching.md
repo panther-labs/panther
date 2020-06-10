@@ -1,4 +1,4 @@
-# Datastore
+# Rule Caching
 
 Rules can cache simple values in the `panther-kv-store` during analysis with built-in helper functions.
 
@@ -30,23 +30,24 @@ The rule below provides a demonstration of using counters.
 ```python
 from panther_oss_helpers import increment_counter, set_key_expiration, reset_counter
 
+
 def rule(event):
-  # Filter to only analyze AccessDenied calls
-  if event.get('errorCode') != 'AccessDenied':
-      return False
+    # Filter to only analyze AccessDenied calls
+    if event.get('errorCode') != 'AccessDenied':
+        return False
 
-  # Create our counter key, which should be fairly unique
-  key = '{}-AccessDeniedCounter'.format(event['userIdentity'].get('arn'))
+    # Create our counter key, which should be fairly unique
+    key = '{}-AccessDeniedCounter'.format(event['userIdentity'].get('arn'))
 
-  # Increment the counter, and then check the current value
-  hourly_error_count = increment_counter(key)
-  if hourly_error_count == 1:
-      set_key_expiration(time.time() + 3600)
-  # If it exceeds our threshold, reset and then return an alert
-  elif failure_hourly_count >= 10:
-      reset_counter(key)
-      return True
-  return False
+    # Increment the counter, and then check the current value
+    hourly_error_count = increment_counter(key)
+    if hourly_error_count == 1:
+        set_key_expiration(time.time() + 3600)
+    elif failure_hourly_count >= 10:
+    # If it exceeds our threshold, reset and then return an alert
+        reset_counter(key)
+        return True
+    return False
 ```
 
 ## String Sets
@@ -62,27 +63,30 @@ To keep track of sets of strings, use the following functions:
 ```python
 from panther_oss_helpers import add_to_string_set
 
+
 def rule(event):
-  if event['eventName'] != 'AssumeRole':
-      return False
+    if event['eventName'] != 'AssumeRole':
+        return False
 
-  role_arn = event['requestParameters'].get('roleArn')
-  if not role_arn:
-      return False
+    role_arn = event['requestParameters'].get('roleArn')
+    if not role_arn:
+        return False
 
-  role_arn_key = '{}-UniqueSourceIPs'.format(role_arn)
-  ip_addr = event['sourceIPAddress']
+    role_arn_key = '{}-UniqueSourceIPs'.format(role_arn)
+    ip_addr = event['sourceIPAddress']
 
-  previously_seen_ips = add_to_string_set(role_arn_key, ip_addr)
+    previously_seen_ips = get_string_set(role_arn_key)
 
-  # If this the only value, trust on first use
-  if len(previously_seen_ips) == 1:
+    # If this the only value, trust on first use
+    if len(previously_seen_ips) == 0:
+        add_to_string_set(role_arn_key, ip_addr)
+        return False
+
+    if ip_addr not in previously_seen_ips:
+        return True
+
     return False
 
-  if ip_addr not in previously_seen_ips:
-    return True
-
-  return False
 ```
 
 ## Testing

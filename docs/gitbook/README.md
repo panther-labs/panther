@@ -31,7 +31,7 @@ Panther is an open source platform designed to bring security visibility at clou
 
 To deploy Panther Community Edition, continue to the [quick start](quick-start.md) guide.
 
-Panther also has an Enterprise Edition with access to the following features:
+Panther also has an [Enterprise](enterprise) Edition with access to the following features:
 - Data Explorer: Search your collected data, generated alerts, and threat hunt with SQL
 - SaaS Log Collection: Automatically load popular SaaS logs into Panther.
 - Role-based Access Control: Assign roles to your Panther users

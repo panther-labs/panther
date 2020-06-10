@@ -31,7 +31,7 @@
 * [Setup](log-analysis/setup.md)
 * [Rules](log-analysis/rules/README.md)
   * [Panther CLI](log-analysis/rules/panther-cli.md)
-  * [Data Store](log-analysis/rules/data-store.md)
+  * [Caching](log-analysis/rules/caching.md)
   * [Runtime Environment](log-analysis/rules/run-time.md)
   * [Built-in Rule Runbooks]()
     * [AWS CloudTrail Modified](log-analysis/rules/aws-cis/aws-cloudtrail-modified.md)
