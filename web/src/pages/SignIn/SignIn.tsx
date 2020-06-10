@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Flex, Text, Link, FadeIn, Box } from 'pouncejs';
+import { Flex, Text, Link, FadeIn } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import AuthPageContainer from 'Components/AuthPageContainer';
@@ -45,13 +45,11 @@ const SignInPage: React.FC = () => {
     case CHALLENGE_NAMES.SOFTWARE_TOKEN_MFA:
       return (
         <AuthPageContainer banner={Banner}>
-          <FadeIn key={currentAuthChallengeName}>
-            <AuthPageContainer.Caption
-              title="One last thing..."
-              subtitle="Enter your MFA code to complete the sign-in"
-            />
-            <MfaForm />
-          </FadeIn>
+          <AuthPageContainer.Caption
+            title="One last thing..."
+            subtitle="Enter your MFA code to complete the sign-in"
+          />
+          <MfaForm />
           <AuthPageContainer.AltOptions>
             <Text size="medium" color="grey200">
               Can{"'"}t seem to get it right?
@@ -69,25 +67,21 @@ const SignInPage: React.FC = () => {
     case CHALLENGE_NAMES.MFA_SETUP:
       return (
         <AuthPageContainer banner={Banner}>
-          <FadeIn key={currentAuthChallengeName}>
-            <AuthPageContainer.Caption
-              title="Great!"
-              subtitle="Now let's set up two-factor authentication for your account."
-            />
-            <TotpForm />
-          </FadeIn>
+          <AuthPageContainer.Caption
+            title="Great!"
+            subtitle="Now let's set up two-factor authentication for your account."
+          />
+          <TotpForm />
         </AuthPageContainer>
       );
     case CHALLENGE_NAMES.NEW_PASSWORD_REQUIRED:
       return (
         <AuthPageContainer banner={Banner}>
-          <FadeIn key={currentAuthChallengeName}>
-            <AuthPageContainer.Caption
-              title="First things first"
-              subtitle="We need to set you up with a new password."
-            />
-            <SetPasswordForm />
-          </FadeIn>
+          <AuthPageContainer.Caption
+            title="First things first"
+            subtitle="We need to set you up with a new password."
+          />
+          <SetPasswordForm />
         </AuthPageContainer>
       );
     default:

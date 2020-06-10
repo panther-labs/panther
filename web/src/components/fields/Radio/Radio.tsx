@@ -21,7 +21,7 @@ import { FormError, Radio, RadioProps } from 'pouncejs';
 import { FieldConfig, useField } from 'formik';
 
 const FormikRadio: React.FC<RadioProps & Required<Pick<FieldConfig, 'name' | 'value'>>> = props => {
-  const [field, meta, { setValue }] = useField(props.name);
+  const [field, meta] = useField(props.name);
 
   const isInvalid = meta.touched && !!meta.error;
   const errorElementId = isInvalid ? `${props.name}-error` : undefined;
