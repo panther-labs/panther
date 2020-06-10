@@ -20,7 +20,7 @@ Each rule consists of a Python file (`<my-rule>.py`) containing your detection l
 
 ## Rule Body
 
-[Write your rule](log-analysis/rules/README.md) and save it as `my_new_rule.py`.
+[Write your rule](log-analysis/rules/) and save it as `my_new_rule.py`.
 
 ## Rule Attributes
 

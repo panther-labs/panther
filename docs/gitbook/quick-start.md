@@ -109,11 +109,11 @@ Congratulations! You are now ready to use Panther. Follow the steps below to com
 
 1. Invite your team in `Settings` > `Users` > `Invite User`
 1. Configure [destinations](destinations) to receive generated alerts
-2. Onboard data for [real-time log analysis](log-analysis/log-processing/)
+2. Onboard data for [real-time log analysis](log-analysis/setup.md)
 3. Write custom [detection rules](log-analysis/rules/) based on internal business logic
-4. Onboard accounts for [cloud security scans](policies/scanning/)
-5. Write [policies](policies/cloud-security-overview.md) for supported [AWS resources](policies/resources/)
-6. Query collected logs with [historical search](enterprise/data-analytics/README.md)
+4. Onboard accounts for [cloud security scans](cloud-security/)
+5. Write [policies](cloud-security/policies/) for supported [AWS resources](policies/resources/)
+6. Query collected logs with [historical search](enterprise/data-analytics/)
 
 ## Removing Panther
 To uninstall Panther, simply delete the main "panther" stack (substituting whatever stack name you chose during deployment).

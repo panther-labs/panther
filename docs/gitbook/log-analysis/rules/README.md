@@ -25,7 +25,7 @@ def title(event):
   return 'Unauthenticated Access to S3 Bucket  {}'.format(event.get('bucket'))
 ```
 
-- This rule applies to the [S3 Server Access Logs](log-analysis/supported-logs/aws#aws-s-3-serveraccess) schema
+- This rule applies to the [S3 Server Access Logs](log-analysis/log-processing/supported-logs/aws#aws-s-3-serveraccess) schema
 - This rule group alerts by the bucket name
 - Alerts will have a title such as `Unauthenticated Access to S3 Bucket my-super-secret-data`
 

@@ -14,9 +14,9 @@ Panther is an open source platform designed to bring security visibility at clou
 
 **Components**
 
-* [Log Analysis](log-analysis/log-processing/README.md) for parsing, normalizing, and analyzing security data
-* [Cloud Security](policies/scanning/README.md) for identifying misconfigurations in AWS accounts
-* [Data Analytics](historical-search/README.md) for queries on collected log data, generated alerts, and normalized fields
+* [Log Analysis](log-analysis/README.md) for parsing, normalizing, and analyzing security data
+* [Cloud Security](cloud-security/README.md) for identifying misconfigurations in AWS accounts
+* [Data Analytics](enterprise/data-analytics/README.md) for queries on collected log data, generated alerts, and normalized fields
 
 **Use Cases**
 
