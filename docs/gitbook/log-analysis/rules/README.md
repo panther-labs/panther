@@ -178,4 +178,4 @@ Now, when any `NGINX.Access` logs are sent to Panther this rule will automatical
 
 ## Writing Rules with the Panther Analysis Tool
 
-The [panther_analysis_tool](log-analysis/rules/panther-cli/README.md) is a Python command line interface  for testing, packaging, and deploying Panther Policies and Rules. This enables teams to work in a more developer oriented workflow and track detections with version control systems such as `git`.
+The [panther_analysis_tool](panther-cli) is a Python command line interface  for testing, packaging, and deploying Panther Policies and Rules. This enables teams to work in a more developer oriented workflow and track detections with version control systems such as `git`.
