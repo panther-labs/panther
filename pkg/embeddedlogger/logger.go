@@ -63,7 +63,8 @@ func (l *Logger) Log(values map[Metric]interface{}, dimensions map[string]string
 }
 
 // LogEmbedded constructs an object in the AWS embedded metric format and logs it
-func LogEmbedded(namespace string, values map[Metric]interface{}, dimensions map[string]string, dimensionSets [][]string, timestamp int64) error {
+func LogEmbedded(namespace string, values map[Metric]interface{},
+	dimensions map[string]string, dimensionSets [][]string, timestamp int64) error {
 	// Validate input
 	if namespace == "" {
 		return errors.New("namespace is required")

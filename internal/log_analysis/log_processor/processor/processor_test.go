@@ -37,6 +37,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
+	logger "github.com/panther-labs/panther/pkg/embeddedlogger"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
 
@@ -265,6 +266,16 @@ func TestProcessClassifyFailure(t *testing.T) {
 	require.NoError(t, err)
 
 	actual := logs.AllUntimed()
+	embeddedMetric := logger.EmbeddedMetric{
+		CloudWatchMetrics: []logger.MetricDirectiveObject{
+			{
+				Namespace:  "panther/log_processor",
+				Dimensions: processorLogDimensions,
+				Metrics:    []logger.Metric{processorMetric},
+			},
+		},
+		Timestamp: p.operation.EndTime.UnixNano() / 1000000,
+	}
 	expected := []observer.LoggedEntry{
 		{
 			Entry: zapcore.Entry{
@@ -327,10 +338,25 @@ func TestProcessClassifyFailure(t *testing.T) {
 				zap.Time("endOp", p.operation.EndTime),
 			},
 		},
+		{
+			Entry: zapcore.Entry{
+				Level:   zapcore.InfoLevel,
+				Message: "metric",
+			},
+			Context: []zapcore.Field{
+				zap.Any("logType", testLogType),
+				zap.Any("bytesProcessed", 0),
+				zap.Any("_aws", embeddedMetric),
+			},
+		},
 	}
 	require.Equal(t, len(expected), len(actual))
 	for i := range expected {
+		if i == len(expected)-1 {
+			continue
+		}
 		assertLogEqual(t, expected[i], actual[i])
+		fmt.Println("done comparing")
 	}
 }
 

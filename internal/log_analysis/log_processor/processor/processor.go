@@ -37,9 +37,9 @@ import (
 
 const (
 	// oplog keys
-	operationName         = "parse"
-	statsKey              = "stats"
-	processorLogNamespace = "panther/log_processor"
+	operationName                = "parse"
+	statsKey                     = "stats"
+	processorLogNamespace string = "panther/log_processor"
 )
 
 var (
@@ -55,7 +55,7 @@ var (
 			"logType",
 		},
 	}
-	metric = logger.Metric{
+	processorMetric = logger.Metric{
 		Name: "bytesProcessed",
 		Unit: "Bytes",
 	}
@@ -171,7 +171,7 @@ func (p *Processor) logStats(err error) {
 	for _, parserStats := range p.classifier.ParserStats() {
 		p.operation.Log(err, zap.Any(statsKey, *parserStats))
 		values := map[logger.Metric]interface{}{
-			metric: parserStats.BytesProcessedCount,
+			processorMetric: parserStats.BytesProcessedCount,
 		}
 		err = eLogger.Log(values, map[string]string{"logType": parserStats.LogType})
 		if err != nil {
