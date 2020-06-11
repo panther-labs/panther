@@ -29,9 +29,10 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({ allowPristineSubmission, ..
 
   return (
     <Button
-      {...rest}
+      type="submit"
       loading={isSubmitting}
       disabled={isSubmitting || !isValid || (!dirty && !allowPristineSubmission)}
+      {...rest}
     />
   );
 };
