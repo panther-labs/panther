@@ -107,6 +107,12 @@ export const LOG_TYPES = [
   'GitLab.Git',
   'GitLab.Integrations',
   'GitLab.Production',
+  'Juniper.Access',
+  'Juniper.Audit',
+  'Juniper.Firewall',
+  'Juniper.MWS',
+  'Juniper.Postgres',
+  'Juniper.Security',
   'Nginx.Access',
   'Osquery.Batch',
   'Osquery.Differential',
@@ -117,6 +123,7 @@ export const LOG_TYPES = [
   'Suricata.DNS',
   'Syslog.RFC3164',
   'Syslog.RFC5424',
+  'Zeek.DNS',
 ] as const;
 
 export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: BadgeProps['color'] } = {
