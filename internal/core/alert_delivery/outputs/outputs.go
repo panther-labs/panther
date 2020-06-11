@@ -45,7 +45,7 @@ type HTTPWrapper struct {
 // PostInput type
 type PostInput struct {
 	url     string
-	body    map[string]interface{}
+	body    interface{}
 	headers map[string]string
 }
 

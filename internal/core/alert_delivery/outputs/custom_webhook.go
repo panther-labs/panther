@@ -55,10 +55,8 @@ func (client *OutputClient) CustomWebhook(
 
 	requestURL := *config.WebhookURL
 	postInput := &PostInput{
-		url: requestURL,
-		body: map[string]interface{}{
-			"alert": outputMessage,
-		},
+		url:  requestURL,
+		body: outputMessage,
 	}
 	return client.httpWrapper.post(postInput)
 }

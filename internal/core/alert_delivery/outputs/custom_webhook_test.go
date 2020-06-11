@@ -77,10 +77,8 @@ func TestCustomWebhookAlert(t *testing.T) {
 	requestURL := *customWebhookConfig.WebhookURL
 
 	expectedPostInput := &PostInput{
-		url: requestURL,
-		body: map[string]interface{}{
-			"alert": outputMessage,
-		},
+		url:  requestURL,
+		body: outputMessage,
 	}
 
 	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryError)(nil))
