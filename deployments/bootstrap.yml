@@ -351,7 +351,7 @@ Resources:
         - !Ref AWS::NoValue
       ReplicationConfiguration: !If
         - ReplicateData
-        - Role: !Sub arn:aws:iam::${AWS::AccountId}:role/panther-data-replication-role
+        - Role: !Sub arn:aws:iam::${AWS::AccountId}:role/panther-data-replication-role-${AWS::Region}
           Rules:
             - Destination:
                 Bucket: !Ref DataReplicationBucket
@@ -376,7 +376,7 @@ Resources:
     Condition: ReplicateData
     Type: AWS::IAM::Role
     Properties:
-      RoleName: panther-data-replication-role
+      RoleName: !Sub panther-data-replication-role-${AWS::Region}
       Description: Role used by S3 for data replication
       AssumeRolePolicyDocument:
         Version: 2012-10-17
