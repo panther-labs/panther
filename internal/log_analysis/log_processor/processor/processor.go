@@ -31,13 +31,15 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	logger "github.com/panther-labs/panther/pkg/embeddedlogger"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
 
 const (
 	// oplog keys
-	operationName = "parse"
-	statsKey      = "stats"
+	operationName         = "parse"
+	statsKey              = "stats"
+	processorLogNamespace = "panther/log_processor"
 )
 
 var (
@@ -47,7 +49,17 @@ var (
 	// temporarily busy. The writer goroutines will block writing but only when the buffer has been full - something we need
 	// to avoid using up lot of memory.
 	// see also: https://golang.org/doc/effective_go.html#channels
-	ParsedEventBufferSize = 1000
+	ParsedEventBufferSize  = 1000
+	processorLogDimensions = [][]string{
+		{
+			"logType",
+		},
+	}
+	metric = logger.Metric{
+		Name: "bytesProcessed",
+		Unit: "Bytes",
+	}
+	eLogger, _ = logger.NewLogger(processorLogNamespace, processorLogDimensions)
 )
 
 // Process orchestrates the tasks of parsing logs, classification, normalization
@@ -158,6 +170,13 @@ func (p *Processor) logStats(err error) {
 	p.operation.Log(err, zap.Any(statsKey, *p.classifier.Stats()))
 	for _, parserStats := range p.classifier.ParserStats() {
 		p.operation.Log(err, zap.Any(statsKey, *parserStats))
+		values := map[logger.Metric]interface{}{
+			metric: parserStats.BytesProcessedCount,
+		}
+		err = eLogger.Log(values, map[string]string{"logType": parserStats.LogType})
+		if err != nil {
+			zap.L().Error("unable to generate metric", zap.Error(err))
+		}
 	}
 }
 
