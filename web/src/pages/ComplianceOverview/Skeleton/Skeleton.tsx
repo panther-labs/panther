@@ -17,43 +17,45 @@
  */
 
 import React from 'react';
-import { Box, SimpleGrid } from 'pouncejs';
+import { Box, FadeIn, SimpleGrid } from 'pouncejs';
 import Panel from 'Components/Panel';
 import TablePlaceholder from 'Components/TablePlaceholder';
 
 const ComplianceOverviewPageSkeleton: React.FC = () => {
   return (
     <Box as="article" mb={6}>
-      <SimpleGrid columns={2} spacing={3} as="section" mb={3}>
-        <Panel title="Policy Severity">
-          <Box height={150}>
+      <FadeIn duration={400}>
+        <SimpleGrid columns={2} spacing={3} as="section" mb={3}>
+          <Panel title="Policy Severity">
+            <Box height={150}>
+              <TablePlaceholder />
+            </Box>
+          </Panel>
+          <Panel title="Policy Failure">
+            <Box height={150}>
+              <TablePlaceholder />
+            </Box>
+          </Panel>
+          <Panel title="Resource Type">
+            <Box height={150}>
+              <TablePlaceholder />
+            </Box>
+          </Panel>
+          <Panel title="Resource Platforms">
+            <Box height={150}>
+              <TablePlaceholder />
+            </Box>
+          </Panel>
+        </SimpleGrid>
+        <SimpleGrid columns={2} spacingX={3} spacingY={2}>
+          <Panel title="Top Failing Policies">
             <TablePlaceholder />
-          </Box>
-        </Panel>
-        <Panel title="Policy Failure">
-          <Box height={150}>
+          </Panel>
+          <Panel title="Top Failing Resources">
             <TablePlaceholder />
-          </Box>
-        </Panel>
-        <Panel title="Resource Type">
-          <Box height={150}>
-            <TablePlaceholder />
-          </Box>
-        </Panel>
-        <Panel title="Resource Platforms">
-          <Box height={150}>
-            <TablePlaceholder />
-          </Box>
-        </Panel>
-      </SimpleGrid>
-      <SimpleGrid columns={2} spacingX={3} spacingY={2}>
-        <Panel title="Top Failing Policies" size="small">
-          <TablePlaceholder />
-        </Panel>
-        <Panel title="Top Failing Resources" size="small">
-          <TablePlaceholder />
-        </Panel>
-      </SimpleGrid>
+          </Panel>
+        </SimpleGrid>
+      </FadeIn>
     </Box>
   );
 };

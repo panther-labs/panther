@@ -23,15 +23,15 @@ import {
   ListPoliciesSortFieldsEnum,
   SortDirEnum,
 } from 'Generated/schema';
-import { capitalize, formatDatetime } from 'Helpers/utils';
-import { Box, Flex, Icon, Link, Table, Tooltip } from 'pouncejs';
+import { formatDatetime } from 'Helpers/utils';
+import { Box, Link, Table, Tooltip } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/SeverityBadge';
 import { ListPolicies } from 'Pages/ListPolicies';
-import ListPoliciesTableRowOptions from './ListPoliciesTableRowOptions';
 import FadeInTrail from 'Components/utils/FadeInTrail';
 import StatusBadge from 'Components/StatusBadge';
+import ListPoliciesTableRowOptions from './ListPoliciesTableRowOptions';
 
 interface ListPoliciesTableProps {
   items?: ListPolicies['policies']['policies'];
@@ -99,7 +99,7 @@ const ListPoliciesTable: React.FC<ListPoliciesTableProps> = ({
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        <FadeInTrail as={Table.Row}>
+        <FadeInTrail as={Table.Row} duration={100}>
           {items.map(policy => (
             <React.Fragment key={policy.id}>
               <Table.Cell maxWidth={450} wrapText="wrap">

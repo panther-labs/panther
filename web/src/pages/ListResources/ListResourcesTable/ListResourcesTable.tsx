@@ -30,6 +30,7 @@ import { Link, Table, Tooltip } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import StatusBadge from 'Components/StatusBadge';
+import FadeInTrail from 'Components/utils/FadeInTrail';
 
 interface ListResourcesTableProps {
   items?: Array<ResourceSummary & Pick<ComplianceIntegration, 'integrationLabel'>>;
@@ -89,27 +90,29 @@ const ListResourcesTable: React.FC<ListResourcesTableProps> = ({
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {items.map(resource => (
-          <Table.Row key={resource.id}>
-            <Table.Cell maxWidth={450} wrapText="wrap">
-              <Link as={RRLink} to={urls.compliance.resources.details(resource.id)} py={4} pr={4}>
-                {resource.id}
-              </Link>
-            </Table.Cell>
-            <Table.Cell>{resource.type}</Table.Cell>
-            <Table.Cell>{resource.integrationLabel}</Table.Cell>
-            <Table.Cell>
-              {resource.complianceStatus === ComplianceStatusEnum.Error ? (
-                <Tooltip content="Some policies have raised an exception when evaluating this resource. Find out more in the resource's page">
+        <FadeInTrail as={Table.Row} duration={100}>
+          {items.map(resource => (
+            <React.Fragment key={resource.id}>
+              <Table.Cell maxWidth={450} wrapText="wrap">
+                <Link as={RRLink} to={urls.compliance.resources.details(resource.id)} py={4} pr={4}>
+                  {resource.id}
+                </Link>
+              </Table.Cell>
+              <Table.Cell>{resource.type}</Table.Cell>
+              <Table.Cell>{resource.integrationLabel}</Table.Cell>
+              <Table.Cell>
+                {resource.complianceStatus === ComplianceStatusEnum.Error ? (
+                  <Tooltip content="Some policies have raised an exception when evaluating this resource. Find out more in the resource's page">
+                    <StatusBadge status={resource.complianceStatus} />
+                  </Tooltip>
+                ) : (
                   <StatusBadge status={resource.complianceStatus} />
-                </Tooltip>
-              ) : (
-                <StatusBadge status={resource.complianceStatus} />
-              )}
-            </Table.Cell>
-            <Table.Cell>{formatDatetime(resource.lastModified)}</Table.Cell>
-          </Table.Row>
-        ))}
+                )}
+              </Table.Cell>
+              <Table.Cell>{formatDatetime(resource.lastModified)}</Table.Cell>
+            </React.Fragment>
+          ))}
+        </FadeInTrail>
       </Table.Body>
     </Table>
   );
