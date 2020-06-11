@@ -26,6 +26,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/fluentdsyslogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/gitlablogs"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/juniperlogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginxlogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osquerylogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osseclogs"
@@ -107,6 +108,12 @@ var (
 			&apachelogs.AccessCombined{},
 			apachelogs.AccessCombinedDesc,
 		),
+		juniperlogs.TypeFirewall: DefaultLogParser(juniperlogs.NewFirewallParser(), &juniperlogs.Firewall{}, juniperlogs.DescFirewall),
+		juniperlogs.TypeSecurity: DefaultLogParser(juniperlogs.NewSecurityParser(), &juniperlogs.Security{}, juniperlogs.DescSecurity),
+		juniperlogs.TypeAudit:    DefaultLogParser(juniperlogs.NewAuditParser(), &juniperlogs.Audit{}, juniperlogs.DescAudit),
+		juniperlogs.TypeMWS:      DefaultLogParser(juniperlogs.NewMWSParser(), &juniperlogs.MWS{}, juniperlogs.DescMWS),
+		juniperlogs.TypePostgres: DefaultLogParser(juniperlogs.NewPostgresParser(), &juniperlogs.Postgres{}, juniperlogs.DescPostgres),
+		juniperlogs.TypeAccess:   DefaultLogParser(juniperlogs.NewAccessParser(), &juniperlogs.Access{}, juniperlogs.DescAccess),
 	}
 )
 
