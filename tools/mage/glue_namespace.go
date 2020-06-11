@@ -25,9 +25,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/athena"
-	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -45,10 +43,7 @@ type Glue mg.Namespace
 
 // Sync Sync glue table partitions after schema change
 func (t Glue) Sync() {
-	awsSession, err := getSession()
-	if err != nil {
-		logger.Fatal(err)
-	}
+	getSession()
 	glueClient := glue.New(awsSession)
 	s3Client := s3.New(awsSession)
 
@@ -62,7 +57,7 @@ func (t Glue) Sync() {
 	}
 
 	// for each registered table, update the table, for each time partition, update the schema
-	for _, table := range updateRegisteredTables(awsSession, glueClient) {
+	for _, table := range updateRegisteredTables(glueClient) {
 		name := fmt.Sprintf("%s.%s", table.DatabaseName(), table.TableName())
 		if !matchTableName.MatchString(name) {
 			continue
@@ -79,14 +74,12 @@ func (t Glue) Sync() {
 	}
 }
 
-func updateRegisteredTables(awsSession *session.Session, glueClient *glue.Glue) (tables []*awsglue.GlueTableMetadata) {
+func updateRegisteredTables(glueClient *glue.Glue) (tables []*awsglue.GlueTableMetadata) {
 	const processDataBucketStack = bootstrapStack
-	_, stackOutputs, err := describeStack(cloudformation.New(awsSession), processDataBucketStack)
-	if err != nil {
-		logger.Fatalf("failed getting processed data bucket from stack %s: %v", processDataBucketStack, err)
-	}
-	if stackOutputs["ProcessedDataBucket"] == "" {
-		logger.Fatalf("could not find processed data bucket in %s", processDataBucketStack)
+	outputs := stackOutputs(processDataBucketStack)
+	var dataBucket string
+	if dataBucket = outputs["ProcessedDataBucket"]; dataBucket == "" {
+		logger.Fatalf("could not find processed data bucket in %s outputs", processDataBucketStack)
 	}
 
 	var listOutput []*models.SourceIntegration
@@ -109,7 +102,7 @@ func updateRegisteredTables(awsSession *session.Session, glueClient *glue.Glue) 
 
 	for logType := range logTypeSet {
 		logger.Infof("updating registered tables for %s", logType)
-		logTable, ruleTable, err := gluetables.CreateOrUpdateGlueTablesForLogType(glueClient, logType, stackOutputs["ProcessedDataBucket"])
+		logTable, ruleTable, err := gluetables.CreateOrUpdateGlueTablesForLogType(glueClient, logType, dataBucket)
 		if err != nil {
 			logger.Fatalf("error updating table definitions: %v", err)
 		}
@@ -118,8 +111,7 @@ func updateRegisteredTables(awsSession *session.Session, glueClient *glue.Glue) 
 	}
 
 	// update the views with the new tables
-	err = athenaviews.CreateOrReplaceViews(glueClient, athena.New(awsSession))
-	if err != nil {
+	if err := athenaviews.CreateOrReplaceViews(glueClient, athena.New(awsSession)); err != nil {
 		logger.Fatalf("error updating table views: %v", err)
 	}
 

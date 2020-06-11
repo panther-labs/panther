@@ -1,0 +1,4 @@
+Jan 22 16:14:23 my-jwas [mws-audit][INFO] [mykonos] [10.10.0.117] Logged in successfully
+Jan 23 19:16:22 my-jwas [mws-audit][INFO] [ea77722a8516b0d1135abb19b1982852] Deactivate response 1832840420318015488
+Feb 7 20:29:51 my-jwas [mws-audit][INFO] [mykonos] [10.10.0.113] Login failed. Attempt: 1
+Feb 14 19:02:54 my-jwas [mws-audit][INFO][mykonos] Changed configuration parameters: services.spotlight.enabled, services.spotlight.server_address

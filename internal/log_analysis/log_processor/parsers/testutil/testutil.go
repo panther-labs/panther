@@ -24,6 +24,7 @@ import (
 	"bufio"
 	"io/ioutil"
 	"os"
+	"strings"
 	"testing"
 
 	jsoniter "github.com/json-iterator/go"
@@ -102,4 +103,25 @@ func MustReadFileJSONLines(filename string) (lines []string) {
 		panic(errors.Wrap(scanner.Err(), "encountered issue while reading file"))
 	}
 	return
+}
+
+// Checks a parser that handle log events across multiple lines.
+func CheckPantherMultiline(t *testing.T, logs string, parser parsers.LogParser, expect ...*parsers.PantherLog) {
+	t.Helper()
+	p := parser.New()
+	scanner := bufio.NewScanner(strings.NewReader(logs))
+	var actual []*parsers.PantherLog
+	for scanner.Scan() {
+		log := scanner.Text()
+
+		results, err := p.Parse(log)
+		require.NoError(t, err)
+		require.NotNil(t, results)
+		actual = append(actual, results...)
+	}
+	require.Equal(t, len(expect), len(actual))
+	for i, result := range actual {
+		expect := expect[i]
+		EqualPantherLog(t, expect, []*parsers.PantherLog{result}, nil)
+	}
 }
