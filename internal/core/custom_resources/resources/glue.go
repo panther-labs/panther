@@ -21,7 +21,6 @@ package resources
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -31,6 +30,7 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/athenaviews"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
 	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 )
 
@@ -63,37 +63,36 @@ func customUpdateGlueTables(_ context.Context, event cfn.Event) (string, map[str
 		}
 
 		// update schemas for tables that are deployed
-		var zeroStartTime time.Time // setting the startTime to 0, means use createTime for the table
 		deployedLogTables, err := gluetables.DeployedLogTables(glueClient)
 		if err != nil {
 			return "", nil, err
 		}
-		for _, logTable := range deployedLogTables {
+		logTypes := make([]string, len(deployedLogTables))
+		for i, logTable := range deployedLogTables {
 			zap.L().Info("updating table", zap.String("database", logTable.DatabaseName()), zap.String("table", logTable.TableName()))
 
 			// update catalog
-			ruleTable, err := gluetables.CreateOrUpdateGlueTables(glueClient, props.ProcessedDataBucket, logTable)
+			_, err := gluetables.CreateOrUpdateGlueTables(glueClient, props.ProcessedDataBucket, logTable)
 			if err != nil {
 				return "", nil, err
 			}
 
-			// sync partitions
-			err = logTable.SyncPartitions(glueClient, s3Client, zeroStartTime)
-			if err != nil {
-				return "", nil, errors.Wrapf(err, "failed syncing %s.%s",
-					logTable.DatabaseName(), logTable.TableName())
-			}
-			err = ruleTable.SyncPartitions(glueClient, s3Client, zeroStartTime)
-			if err != nil {
-				return "", nil, errors.Wrapf(err, "failed syncing %s.%s",
-					ruleTable.DatabaseName(), ruleTable.TableName())
-			}
+			// collect the log types
+			logTypes[i] = logTable.LogType()
 		}
 
 		// update the views with the new tables
 		err = athenaviews.CreateOrReplaceViews(glueClient, athenaClient)
 		if err != nil {
 			return "", nil, errors.Wrap(err, "failed creating views")
+		}
+
+		// sync partitions via recursive lambda to avoid blocking the deployment
+		if len(logTypes) > 0 {
+			err = process.InvokeSyncGluePartitions(lambdaClient, logTypes)
+			if err != nil {
+				return "", nil, errors.Wrap(err, "failed invoking sync")
+			}
 		}
 
 		return resourceID, nil, nil

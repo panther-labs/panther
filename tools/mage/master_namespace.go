@@ -179,7 +179,7 @@ func publishToRegion(version, region string) {
 
 	bucket := fmt.Sprintf(publicAssetsBucket, region)
 	s3Key := fmt.Sprintf("v%s/panther.yml", version)
-	s3URL := fmt.Sprintf("s3://%s/%s", bucket, s3Key) // just for logging
+	s3URL := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucket, s3Key)
 
 	// Check if this version already exists - it's easy to forget to update the version
 	// in the template file and we don't want to overwrite a previous version.
