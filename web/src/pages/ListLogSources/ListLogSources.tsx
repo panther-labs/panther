@@ -61,7 +61,6 @@ const ListLogSources = () => {
     <Box mb={6}>
       <Panel
         title="Log Sources"
-        size="large"
         actions={
           <Button icon="add" as={RRLink} to={urls.logAnalysis.sources.create()}>
               Add Source

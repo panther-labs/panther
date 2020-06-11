@@ -122,7 +122,7 @@ const RuleDetailsPage = () => {
         <RuleDetailsInfo rule={ruleDetailsData.rule} />
       </ErrorBoundary>
       <Box mt={2} mb={6}>
-        <Panel size="large" title="Alerts">
+        <Panel title="Alerts">
           <ErrorBoundary>
             <RuleDetailsAlertsTable alerts={listAlertsData.alerts.alertSummaries} />
             {hasMoreAlerts && (

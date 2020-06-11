@@ -60,7 +60,7 @@ const CreatePolicyPage: React.FC = () => {
 
   return (
     <Box mb={6}>
-      <Panel size="large" title="Policy Settings">
+      <Panel title="Policy Settings">
         <PolicyForm initialValues={initialValues} onSubmit={handleSubmit} />
       </Panel>
       {error && (

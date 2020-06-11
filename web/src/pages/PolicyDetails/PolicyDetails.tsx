@@ -102,7 +102,6 @@ const PolicyDetailsPage = () => {
       </ErrorBoundary>
       <Box mt={2} mb={6}>
         <Panel
-          size="large"
           title="Resources"
           actions={
             <Box ml={6} mr="auto">

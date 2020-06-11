@@ -42,7 +42,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
             description="The rule that's responsible for this alert has been deleted and is no longer generating new alerts"
           />
         </Box>
-        <Panel size="large" title="Alert Details">
+        <Panel title="Alert Details">
           <SimpleGrid columns={3} spacing={6}>
             <Box my={1}>
               <Label mb={1} as="div" size="small" color="grey300">
@@ -102,7 +102,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
   }
 
   return (
-    <Panel size="large" title="Alert Details">
+    <Panel title="Alert Details">
       <SimpleGrid columns={3} spacing={6}>
         <Box my={1}>
           <Label mb={1} as="div" size="small" color="grey300">

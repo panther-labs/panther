@@ -105,13 +105,12 @@ const ResourceDetailsPage = () => {
         </Box>
       </ErrorBoundary>
       <Box mb={2}>
-        <Panel size="large" title="Attributes">
+        <Panel title="Attributes">
           <JsonViewer data={JSON.parse(enhancedResource.attributes)} />
         </Panel>
       </Box>
       <Box mb={6}>
         <Panel
-          size="large"
           title="Policies"
           actions={
             <Box ml={6} mr="auto">

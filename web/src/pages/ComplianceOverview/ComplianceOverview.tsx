@@ -58,36 +58,36 @@ const ComplianceOverview: React.FC = () => {
   return (
     <Box as="article" mb={6}>
       <SimpleGrid columns={2} spacing={3} as="section" mb={3}>
-        <Panel size="small" title="Policy Failure">
+        <Panel title="Policy Failure">
           <Box height={150}>
             <PoliciesByStatusChart policies={data.organizationStats.appliedPolicies} />
           </Box>
         </Panel>
-        <Panel size="small" title="Policy Severity">
+        <Panel title="Policy Severity">
           <Box height={150}>
             <PoliciesBySeverityChart policies={data.organizationStats.appliedPolicies} />
           </Box>
         </Panel>
-        <Panel size="small" title="Resource Health">
+        <Panel title="Resource Health">
           <Box height={150}>
             <ResourcesByStatusChart resources={data.organizationStats.scannedResources} />
           </Box>
         </Panel>
-        <Panel size="small" title="Resource Platforms">
+        <Panel title="Resource Platforms">
           <Box height={150}>
             <ResourcesByPlatformChart resources={data.organizationStats.scannedResources} />
           </Box>
         </Panel>
       </SimpleGrid>
       <SimpleGrid columns={2} spacingX={3} spacingY={2}>
-        <Panel title="Top Failing Policies" size="small">
+        <Panel title="Top Failing Policies">
           <Box my={-6}>
             <ErrorBoundary>
               <TopFailingPoliciesTable policies={data.organizationStats.topFailingPolicies} />
             </ErrorBoundary>
           </Box>
         </Panel>
-        <Panel title="Top Failing Resources" size="small">
+        <Panel title="Top Failing Resources">
           <Box my={-6}>
             <ErrorBoundary>
               <TopFailingResourcesTable resources={data.organizationStats.topFailingResources} />

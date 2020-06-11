@@ -28,7 +28,7 @@ interface ResourceDetailsInfoProps {
 
 const ResourceDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ resource }) => {
   return (
-    <Panel size="large" title="Resource Details">
+    <Panel title="Resource Details">
       <SimpleGrid columns={3} spacing={6}>
         <Box my={1}>
           <Label mb={1} as="div" size="small" color="grey300">

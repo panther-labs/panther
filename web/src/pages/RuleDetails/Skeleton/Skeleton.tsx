@@ -28,7 +28,7 @@ const RuleDetailsPageSkeleton: React.FC = () => {
         <TablePlaceholder rowCount={2} rowHeight={10} />
       </Card>
       <Box mt={2} mb={6}>
-        <Panel size="large" title="Alerts">
+        <Panel title="Alerts">
           <Box mt={6}>
             <TablePlaceholder />
           </Box>

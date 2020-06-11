@@ -39,7 +39,7 @@ const ResourceDetailsPageSkeleton: React.FC = () => {
           </ContentLoader>
         </Card>
       </Box>
-      <Panel size="large" title="Policies">
+      <Panel title="Policies">
         <Box mt={6}>
           <TablePlaceholder />
         </Box>

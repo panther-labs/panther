@@ -96,7 +96,7 @@ const EditGlobalModulePage: React.FC = () => {
 
   return (
     <Box mb={6}>
-      <Panel size="large" title="Global Module">
+      <Panel title="Global Module">
         <GlobalModuleForm initialValues={initialValues} onSubmit={handleSubmit} />
       </Panel>
       {updateError && (

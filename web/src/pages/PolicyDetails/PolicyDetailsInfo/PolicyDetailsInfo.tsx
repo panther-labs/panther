@@ -38,7 +38,6 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
 
   return (
     <Panel
-      size="large"
       title="Policy Details"
       actions={
         <Box>

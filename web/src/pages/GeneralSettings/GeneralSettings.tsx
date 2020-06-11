@@ -74,7 +74,7 @@ const GeneralSettingsPage: React.FC = () => {
     <Box mb={6}>
       <ErrorBoundary>
         <Box mb={2}>
-          <Panel title="About Panther" size="large">
+          <Panel title="About Panther" >
             <Box width={500} m="auto">
               <Flex mb={6}>
                 <Text color="grey300" size="large" width={150}>
@@ -111,7 +111,7 @@ const GeneralSettingsPage: React.FC = () => {
             </Box>
           </Panel>
         </Box>
-        <Panel title="General Settings" size="large">
+        <Panel title="General Settings" >
           <Box width={500} mx="auto" mt={10}>
             <CompanyInformationForm
               initialValues={{

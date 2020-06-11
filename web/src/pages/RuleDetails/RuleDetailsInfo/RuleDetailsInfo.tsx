@@ -37,7 +37,6 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
 
   return (
     <Panel
-      size="large"
       title="Rule Details"
       actions={
         <Box>

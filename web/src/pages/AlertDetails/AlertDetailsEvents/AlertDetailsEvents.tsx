@@ -43,7 +43,6 @@ const AlertDetailsEvents: React.FC<AlertDetailsEventsProps> = ({ events, total, 
 
   return (
     <Panel
-      size="large"
       title="Triggered Events"
       actions={
         <PaginationControls

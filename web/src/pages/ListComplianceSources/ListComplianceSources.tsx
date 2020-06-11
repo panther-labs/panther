@@ -61,7 +61,6 @@ const ListComplianceSources = () => {
     <Box mb={6}>
       <Panel
         title="Connected Accounts"
-        size="large"
         actions={
           <Button icon="add" as={RRLink} to={urls.compliance.sources.create()}>
               Add Account

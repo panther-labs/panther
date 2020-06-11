@@ -105,7 +105,6 @@ const EditRulePage: React.FC = () => {
   return (
     <Box mb={10}>
       <Panel
-        size="large"
         title="Rule Settings"
         actions={
           <Button

@@ -25,22 +25,22 @@ const ComplianceOverviewPageSkeleton: React.FC = () => {
   return (
     <Box as="article" mb={6}>
       <SimpleGrid columns={2} spacing={3} as="section" mb={3}>
-        <Panel size="small" title="Policy Severity">
+        <Panel title="Policy Severity">
           <Box height={150}>
             <TablePlaceholder />
           </Box>
         </Panel>
-        <Panel size="small" title="Policy Failure">
+        <Panel title="Policy Failure">
           <Box height={150}>
             <TablePlaceholder />
           </Box>
         </Panel>
-        <Panel size="small" title="Resource Type">
+        <Panel title="Resource Type">
           <Box height={150}>
             <TablePlaceholder />
           </Box>
         </Panel>
-        <Panel size="small" title="Resource Platforms">
+        <Panel title="Resource Platforms">
           <Box height={150}>
             <TablePlaceholder />
           </Box>

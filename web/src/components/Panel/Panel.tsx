@@ -17,36 +17,30 @@
  */
 
 import React from 'react';
-import { Box, Flex, Heading, Card, Label } from 'pouncejs';
+import { Box, Flex, Heading, Card } from 'pouncejs';
 
 interface PanelProps {
   title: string;
-  size: 'small' | 'large';
   actions?: React.ReactNode;
 }
 
-const Panel: React.FC<PanelProps> = ({ title, actions, size, children }) => {
+const Panel: React.FC<PanelProps> = ({ title, actions, children }) => {
   return (
     <Card as="section" width={1}>
       <Flex
-        p={size === 'large' ? 8 : 6}
+        p={6}
         borderBottom="1px solid"
         borderColor="navyblue-500"
         justify="space-between"
         align="center"
+        maxHeight={80}
       >
-        {size === 'large' ? (
-          <Heading size="medium" as="h2">
-            {title}
-          </Heading>
-        ) : (
-          <Label size="large" as="h4">
-            {title}
-          </Label>
-        )}
+        <Heading size="x-small" as="h4">
+          {title}
+        </Heading>
         {actions}
       </Flex>
-      <Box p={size === 'large' ? 8 : 6}>{children}</Box>
+      <Box p={6}>{children}</Box>
     </Card>
   );
 };
