@@ -34,9 +34,8 @@ import (
 )
 
 const (
-	layerPath        = "python/lib/python3.7/site-packages/"
-	layerRuntime     = "python3.7"
-	globalModuleName = "panther"
+	layerPath    = "python/lib/python3.7/site-packages/"
+	layerRuntime = "python3.7"
 )
 
 var (
@@ -91,20 +90,59 @@ func buildLayer() ([]byte, error) {
 	// TODO: talk to the analysis-api GetEnabledPolicies endpoint and build the layer for policies/rules
 	// be sure to have a means of differentiating the resource/log type of each policy/rule
 
-	// When multiple globals are supported, this can be updated to get a list
-	global, err := analysisClient.Operations.GetGlobal(&analysisoperations.GetGlobalParams{
-		GlobalID:   globalModuleName,
-		HTTPClient: httpClient,
-	})
+	globals, err := listAllGlobals()
 	if err != nil {
-		if _, ok := err.(*analysisoperations.GetGlobalNotFound); ok {
-			// In this case, the global was removed entirely and so we should delete the layer. When multiple globals
-			// are supported, this will be analogous to the last global being deleted.
-			return nil, nil
-		}
 		return nil, err
 	}
-	return packageLayer(map[string]string{globalModuleName: string(global.Payload.Body)})
+
+	// If there are no globals, delete the layer
+	if len(globals) == 0 {
+		return nil, nil
+	}
+
+	zap.L().Debug("getting each global")
+	nameBodyMap := make(map[string]string)
+	// Iterate through each global and retrieve its body
+	for _, globalName := range globals {
+		zap.L().Debug("getting global", zap.String("id", globalName))
+		global, err := analysisClient.Operations.GetGlobal(&analysisoperations.GetGlobalParams{
+			GlobalID:   globalName,
+			HTTPClient: httpClient,
+		})
+		if err != nil {
+			return nil, err
+		}
+		nameBodyMap[globalName] = string(global.Payload.Body)
+	}
+
+	return packageLayer(nameBodyMap)
+}
+
+func listAllGlobals() ([]string, error) {
+	var names []string
+	var page = int64(1)
+
+	zap.L().Debug("listing all globals")
+	for {
+		globals, err := analysisClient.Operations.ListGlobals(&analysisoperations.ListGlobalsParams{
+			Page:       aws.Int64(page),
+			HTTPClient: httpClient,
+		})
+		if err != nil {
+			return nil, err
+		}
+		for _, global := range globals.Payload.Globals {
+			names = append(names, string(global.ID))
+		}
+		if aws.Int64Value(globals.Payload.Paging.ThisPage) < aws.Int64Value(globals.Payload.Paging.TotalPages) {
+			page++
+		} else {
+			break
+		}
+	}
+	zap.L().Debug("done listing all globals")
+
+	return names, nil
 }
 
 // packageLayer takes a mapping of filenames to function bodies and constructs a zip archive with the file structure

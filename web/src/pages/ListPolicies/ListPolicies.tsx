@@ -25,6 +25,7 @@ import { TableControlsPagination } from 'Components/utils/TableControls';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import isEmpty from 'lodash-es/isEmpty';
+import withSEO from 'Hoc/withSEO';
 import ListPoliciesTable from './ListPoliciesTable';
 import ListPoliciesActions from './ListPoliciesActions';
 import ListPoliciesPageSkeleton from './Skeleton';
@@ -51,15 +52,16 @@ const ListPolicies = () => {
 
   if (error) {
     return (
-      <Alert
-        mb={6}
-        variant="error"
-        title="Couldn't load your policies"
-        description={
-          extractErrorMessage(error) ||
-          'There was an error when performing your request, please contact support@runpanther.io'
-        }
-      />
+      <Box mb={6}>
+        <Alert
+          variant="error"
+          title="Couldn't load your policies"
+          description={
+            extractErrorMessage(error) ||
+            'There was an error when performing your request, please contact support@runpanther.io'
+          }
+        />
+      </Box>
     );
   }
 
@@ -95,4 +97,4 @@ const ListPolicies = () => {
   );
 };
 
-export default ListPolicies;
+export default withSEO({ title: 'Policies' })(ListPolicies);

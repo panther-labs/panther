@@ -20,6 +20,7 @@ package api
 
 import (
 	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // ListIntegrations returns all enabled integrations across each organization.
@@ -28,5 +29,15 @@ import (
 func (API) ListIntegrations(
 	input *models.ListIntegrationsInput) ([]*models.SourceIntegration, error) {
 
-	return db.ScanIntegrations(input)
+	integrationItems, err := dynamoClient.ScanIntegrations(input.IntegrationType)
+	if err != nil {
+		return nil, &genericapi.InternalError{Message: "Failed to list integrations"}
+	}
+
+	result := make([]*models.SourceIntegration, len(integrationItems))
+	for i, item := range integrationItems {
+		result[i] = itemToIntegration(item)
+	}
+
+	return result, nil
 }

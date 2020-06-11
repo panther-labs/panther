@@ -18,7 +18,9 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "github.com/panther-labs/panther/api/lambda/organization/models"
+import (
+	"github.com/panther-labs/panther/api/lambda/organization/models"
+)
 
 // UpdateSettings updates account settings.
 func (API) UpdateSettings(input *models.UpdateSettingsInput) (*models.GeneralSettings, error) {

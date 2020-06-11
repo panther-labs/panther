@@ -25,6 +25,7 @@ import { TableControlsPagination } from 'Components/utils/TableControls';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import isEmpty from 'lodash-es/isEmpty';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import withSEO from 'Hoc/withSEO';
 import ListRulesTable from './ListRulesTable';
 import ListRulesActions from './ListRulesActions';
 import ListRulesPageSkeleton from './Skeleton';
@@ -51,15 +52,16 @@ const ListRules = () => {
 
   if (error) {
     return (
-      <Alert
-        mb={6}
-        variant="error"
-        title="Couldn't load your rules"
-        description={
-          extractErrorMessage(error) ||
-          'There was an error when performing your request, please contact support@runpanther.io'
-        }
-      />
+      <Box mb={6}>
+        <Alert
+          variant="error"
+          title="Couldn't load your rules"
+          description={
+            extractErrorMessage(error) ||
+            'There was an error when performing your request, please contact support@runpanther.io'
+          }
+        />
+      </Box>
     );
   }
 
@@ -98,4 +100,4 @@ const ListRules = () => {
   );
 };
 
-export default ListRules;
+export default withSEO({ title: 'Rules' })(ListRules);

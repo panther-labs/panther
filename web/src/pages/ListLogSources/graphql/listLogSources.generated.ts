@@ -20,22 +20,24 @@
 
 import * as Types from '../../../../__generated__/schema';
 
-import { LogIntegrationDetails } from '../../../graphql/fragments/LogIntegrationDetails.generated';
+import { S3LogIntegrationDetails } from '../../../graphql/fragments/S3LogIntegrationDetails.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
 export type ListLogSourcesVariables = {};
 
-export type ListLogSources = { listLogIntegrations: Array<LogIntegrationDetails> };
+export type ListLogSources = { listLogIntegrations: Array<S3LogIntegrationDetails> };
 
 export const ListLogSourcesDocument = gql`
   query ListLogSources {
     listLogIntegrations {
-      ...LogIntegrationDetails
+      ... on S3LogIntegration {
+        ...S3LogIntegrationDetails
+      }
     }
   }
-  ${LogIntegrationDetails}
+  ${S3LogIntegrationDetails}
 `;
 
 /**

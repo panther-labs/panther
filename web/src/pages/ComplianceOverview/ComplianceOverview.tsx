@@ -20,13 +20,14 @@ import React from 'react';
 import { Box, Alert, SimpleGrid } from 'pouncejs';
 import Panel from 'Components/Panel';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useGetOrganizationStats } from './graphql/getOrganizationStats.generated';
 import PoliciesBySeverityChart from './PoliciesBySeverityChart';
 import PoliciesByStatusChart from './PoliciesByStatusChart';
-import ResourcesByPlatformChart from './ResourcesByPlatformChart';
 import ResourcesByStatusChart from './ResourcesByStatusChart';
-import DonutChartWrapper from './DonutChartWrapper';
+import ResourcesByPlatformChart from './ResourcesByPlatformChart';
+import BarChartWrapper from './BarChartWrapper';
 import ComplianceOverviewPageEmptyDataFallback from './EmptyDataFallback';
 import ComplianceOverviewPageSkeleton from './Skeleton';
 import TopFailingPoliciesTable from './TopFailingPoliciesTable';
@@ -57,19 +58,19 @@ const ComplianceOverview: React.FC = () => {
 
   return (
     <Box as="article" mb={6}>
-      <SimpleGrid columns={4} spacing={3} as="section" mb={3}>
-        <DonutChartWrapper title="Policy Severity" icon="policy">
-          <PoliciesBySeverityChart policies={data.organizationStats.appliedPolicies} />
-        </DonutChartWrapper>
-        <DonutChartWrapper title="Policy Failure" icon="policy">
+      <SimpleGrid columns={2} spacing={3} as="section" mb={3}>
+        <BarChartWrapper title="Policy Failure" icon="policy">
           <PoliciesByStatusChart policies={data.organizationStats.appliedPolicies} />
-        </DonutChartWrapper>
-        <DonutChartWrapper title="Resource Type" icon="resource">
-          <ResourcesByPlatformChart resources={data.organizationStats.scannedResources} />
-        </DonutChartWrapper>
-        <DonutChartWrapper title="Resource Health" icon="resource">
+        </BarChartWrapper>
+        <BarChartWrapper title="Policy Severity" icon="policy">
+          <PoliciesBySeverityChart policies={data.organizationStats.appliedPolicies} />
+        </BarChartWrapper>
+        <BarChartWrapper title="Resource Health" icon="resource">
           <ResourcesByStatusChart resources={data.organizationStats.scannedResources} />
-        </DonutChartWrapper>
+        </BarChartWrapper>
+        <BarChartWrapper title="Resource Health" icon="resource">
+          <ResourcesByPlatformChart resources={data.organizationStats.scannedResources} />
+        </BarChartWrapper>
       </SimpleGrid>
       <SimpleGrid columns={2} spacingX={3} spacingY={2}>
         <Panel title="Top Failing Policies" size="small">
@@ -91,4 +92,4 @@ const ComplianceOverview: React.FC = () => {
   );
 };
 
-export default ComplianceOverview;
+export default withSEO({ title: 'Cloud Security Overview' })(ComplianceOverview);

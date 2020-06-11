@@ -19,6 +19,7 @@
 import React from 'react';
 import Auth, { CognitoUser } from '@aws-amplify/auth';
 import { USER_INFO_STORAGE_KEY } from 'Source/constants';
+import { pantherConfig } from 'Source/config';
 import storage from 'Helpers/storage';
 
 // Challenge names from Cognito from
@@ -98,12 +99,6 @@ interface SetNewPasswordParams {
   onError?: (err: AuthError) => void;
 }
 
-interface UpdateUserInfoParams {
-  newAttributes: Partial<EnhancedCognitoUser['attributes']>;
-  onSuccess?: () => void;
-  onError?: (err: AuthError) => void;
-}
-
 interface ChangePasswordParams {
   oldPassword: string;
   newPassword: string;
@@ -129,6 +124,7 @@ interface RefetchUserInfoParams {
   onSuccess?: () => void;
   onError?: (err: AuthError) => void;
 }
+
 /*
   We intentionaly use `undefined` and `null` in the interface below to showcase the possible values
  */
@@ -143,7 +139,6 @@ export interface AuthContextValue {
   verifyTotpSetup: (params: VerifyTotpSetupParams) => Promise<void>;
   requestTotpSecretCode: () => Promise<string>;
   signOut: (params?: SignOutParams) => Promise<void>;
-  updateUserInfo: (params: UpdateUserInfoParams) => Promise<void>;
   changePassword: (params: ChangePasswordParams) => Promise<void>;
   resetPassword: (params: ResetPasswordParams) => Promise<void>;
   forgotPassword: (params: ForgotPasswordParams) => Promise<void>;
@@ -156,8 +151,8 @@ const AuthContext = React.createContext<AuthContextValue>(undefined);
 // say optimistically as the token may have expired by the time they revisit. This will be handled
 // in the Amplify, since the `isAuthenticated` flag just decides which screens to show.
 const previousUserSessionExists = Boolean(
-  storage.read(
-    `CognitoIdentityServiceProvider.${process.env.WEB_APPLICATION_USER_POOL_CLIENT_ID}.LastAuthUser`
+  storage.local.read(
+    `CognitoIdentityServiceProvider.${pantherConfig.WEB_APPLICATION_USER_POOL_CLIENT_ID}.LastAuthUser`
   )
 );
 
@@ -184,7 +179,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     // if no user is present, attempt to return data from the stored session. This is true when
     // the request to get the cognito `authUser` is in flight and hasn't returned yet
     if (isAuthenticated) {
-      return storage.read<UserInfo>(USER_INFO_STORAGE_KEY);
+      return storage.local.read<UserInfo>(USER_INFO_STORAGE_KEY);
     }
 
     // if no prev session exists and the user is not logged-in, then there is no userInfo
@@ -198,9 +193,9 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
    */
   React.useEffect(() => {
     if (userInfo) {
-      storage.write(USER_INFO_STORAGE_KEY, userInfo);
+      storage.local.write(USER_INFO_STORAGE_KEY, userInfo);
     } else {
-      storage.delete(USER_INFO_STORAGE_KEY);
+      storage.local.delete(USER_INFO_STORAGE_KEY);
     }
   }, [userInfo]);
 
@@ -284,27 +279,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         const confirmedUser = await Auth.currentAuthenticatedUser();
         setAuthUser(confirmedUser);
         setAuthenticated(true);
-        onSuccess();
-      } catch (err) {
-        onError(err as AuthError);
-      }
-    },
-    [authUser]
-  );
-
-  /**
-   *
-   * @public
-   * Updates the user's personal information
-   *
-   */
-  const updateUserInfo = React.useCallback(
-    async ({ newAttributes, onSuccess = () => {}, onError = () => {} }: UpdateUserInfoParams) => {
-      try {
-        await Auth.updateUserAttributes(authUser, newAttributes);
-        const updatedUser = await Auth.currentAuthenticatedUser({ bypassCache: true });
-        setAuthUser(updatedUser);
-
         onSuccess();
       } catch (err) {
         onError(err as AuthError);
@@ -455,7 +429,6 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       isAuthenticated,
       currentAuthChallengeName: authUser?.challengeName || null,
       userInfo,
-      updateUserInfo,
       refetchUserInfo,
 
       signIn,

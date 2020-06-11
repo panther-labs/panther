@@ -23,25 +23,26 @@ package analysis
 // YAML tags required because the YAML unmarshaller needs them
 // JSON tags not present because the JSON unmarshaller is easy
 type Config struct {
-	AnalysisType              string            `yaml:"AnalysisType"`
-	AutoRemediationID         string            `yaml:"AutoRemediationID"`
-	AutoRemediationParameters map[string]string `yaml:"AutoRemediationParameters"`
-	Description               string            `yaml:"Description"`
-	DisplayName               string            `yaml:"DisplayName"`
-	Enabled                   bool              `yaml:"Enabled"`
-	Filename                  string            `yaml:"Filename"`
-	PolicyID                  string            `yaml:"PolicyID"`
-	RuleID                    string            `yaml:"RuleID"`
-	GlobalID                  string            `yaml:"GlobalID"`
-	ResourceTypes             []string          `yaml:"ResourceTypes"`
-	LogTypes                  []string          `yaml:"LogTypes"`
-	Reference                 string            `yaml:"Reference"`
-	Runbook                   string            `yaml:"Runbook"`
-	Severity                  string            `yaml:"Severity"`
-	Suppressions              []string          `yaml:"Suppressions"`
-	Tags                      []string          `yaml:"Tags"`
-	Tests                     []Test            `yaml:"Tests"`
-	DedupPeriodMinutes        int               `yaml:"DedupPeriodMinutes"`
+	AnalysisType              string              `yaml:"AnalysisType"`
+	AutoRemediationID         string              `yaml:"AutoRemediationID"`
+	AutoRemediationParameters map[string]string   `yaml:"AutoRemediationParameters"`
+	Description               string              `yaml:"Description"`
+	DisplayName               string              `yaml:"DisplayName"`
+	Enabled                   bool                `yaml:"Enabled"`
+	Filename                  string              `yaml:"Filename"`
+	PolicyID                  string              `yaml:"PolicyID"`
+	RuleID                    string              `yaml:"RuleID"`
+	GlobalID                  string              `yaml:"GlobalID"`
+	ResourceTypes             []string            `yaml:"ResourceTypes"`
+	LogTypes                  []string            `yaml:"LogTypes"`
+	Reference                 string              `yaml:"Reference"`
+	Runbook                   string              `yaml:"Runbook"`
+	Severity                  string              `yaml:"Severity"`
+	Suppressions              []string            `yaml:"Suppressions"`
+	Tags                      []string            `yaml:"Tags"`
+	Tests                     []Test              `yaml:"Tests"`
+	DedupPeriodMinutes        int                 `yaml:"DedupPeriodMinutes"`
+	Reports                   map[string][]string `yaml:"Reports"`
 }
 
 // Test is a unit test definition when parsing policies in a bulk upload.

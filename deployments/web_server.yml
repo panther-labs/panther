@@ -18,30 +18,67 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: The service that defines the front-end NodeJS server that serves the Panther web application statics
 
 Parameters:
-  # Passed in from bootstrap.yml stack
+  # Passed in from bootstrap stacks
+  AlarmTopicArn:
+    Type: String
+    Description: SNS topic for CloudWatch alarms
   SubnetOneId:
     Type: String
     Description: The ID of a subnet in the VPC above
   SubnetTwoId:
     Type: String
     Description: The ID of another subnet in the VPC above
+  ElbArn:
+    Type: String
+    Description: The ARN of the load balancer
+  ElbFullName:
+    Type: String
+    Description: The full name of the load balancer
   ElbTargetGroup:
     Type: String
     Description: The ARN of the load balancer target group
   SecurityGroup:
     Type: String
     Description: Web app security group ID
+  GraphQLApiEndpoint:
+    Type: String
+    Description: The URL of the GraphQL API that the web application uses
+  UserPoolId:
+    Type: String
+    Description: The ID of the User Pool that holds all users of the Panther web app
+  AppClientId:
+    Type: String
+    Description: The ID of the App Client that handles the sign-in for the aforementioned user pool
 
   # Passed in from config file
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
     Default: 365
+  CertificateArn:
+    Type: String
+    Description: TLS certificate used by the web app. If not specified, a self-signed cert is created for you.
+    Default: ''
+  FirstUserGivenName:
+    Type: String
+    Description: First (given) name of the initial Panther user
+    Default: ''
+  FirstUserFamilyName:
+    Type: String
+    Description: Family (last) name of the initial Panther user
+    Default: ''
+  FirstUserEmail:
+    Type: String
+    Description: Email of the initial Panther user. If blank, no user is created
+    Default: ''
 
   # Generated in deploy process
   Image:
     Type: String
     Description: The container image to use for the front-end web application server
+  PantherVersion:
+    Type: String
+    Description: The semver of the current deployment (i.e. `v1.3.0`)
 
   CPU:
     Type: Number
@@ -56,12 +93,67 @@ Parameters:
     Default: 80
     Description: The exposed port of the application, that will be used by the VPC & Container
 
+Conditions:
+  CreateCertificate: !Equals [!Ref CertificateArn, '']
+  CreateFirstUser: !Not [!Equals ['', !Ref FirstUserEmail]]
+
 Resources:
+  SelfSignedCertificate:
+    Condition: CreateCertificate
+    Type: Custom::Certificate
+    Properties:
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  LoadBalancerAlarms:
+    Type: Custom::ElbAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ClientErrorThreshold: 10 # within 5 minutes
+      LatencyThresholdSeconds: 0.5
+      LoadBalancerFriendlyName: web
+      LoadBalancerFullName: !Ref ElbFullName
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  PublicLoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      Certificates:
+        - CertificateArn:
+            !If [CreateCertificate, !GetAtt SelfSignedCertificate.Arn, !Ref CertificateArn]
+      DefaultActions:
+        - TargetGroupArn: !Ref ElbTargetGroup
+          Type: forward
+      LoadBalancerArn: !Ref ElbArn
+      Port: 443
+      Protocol: HTTPS
+      SslPolicy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
+
+  # Create a rule on the load balancer for routing traffic to the target group
+  LoadBalancerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref ElbTargetGroup
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - '*'
+      ListenerArn: !Ref PublicLoadBalancerListener
+      Priority: 1
+
+  WebApplicationCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: panther-web-cluster
+
   # The service that will instantiate a server task and restrict access through our ALB
   WebApplicationServer:
     Type: AWS::ECS::Service
+    # The cert in the listener can't be deleted until the service has stopped.
+    DependsOn: PublicLoadBalancerListener
     Properties:
-      Cluster: panther-web-cluster
+      Cluster: !Ref WebApplicationCluster
       DeploymentConfiguration:
         MaximumPercent: 200
         MinimumHealthyPercent: 50
@@ -97,27 +189,8 @@ Resources:
             Principal:
               Service: ecs-tasks.amazonaws.com
             Action: sts:AssumeRole
-      Policies:
-        - PolicyName: CloudWatchLogsPolicy
-          PolicyDocument:
-            Statement:
-              - Effect: Allow
-                Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
-                Resource: '*'
-        - PolicyName: PullECRImages
-          PolicyDocument:
-            Statement:
-              - Effect: Allow
-                Action:
-                  - ecr:GetAuthorizationToken
-                  - ecr:GetDownloadUrlForLayer
-                  - ecr:BatchGetImage
-                  - ecr:ListImages
-                  - ecr:ListTagsForResource
-                Resource: '*'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
   # A log group for storing the stdout logs from the server's task definition
   LogGroup:
@@ -137,8 +210,28 @@ Resources:
           Environment:
             - Name: SERVER_PORT
               Value: !Ref Port
+
             - Name: NODE_ENV
               Value: production # optimizes the configuration of the front-end NodeJS server
+
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+
+            - Name: AWS_ACCOUNT_ID
+              Value: !Ref AWS::AccountId
+
+            - Name: WEB_APPLICATION_GRAPHQL_API_ENDPOINT
+              Value: !Ref GraphQLApiEndpoint
+
+            - Name: WEB_APPLICATION_USER_POOL_ID
+              Value: !Ref UserPoolId
+
+            - Name: WEB_APPLICATION_USER_POOL_CLIENT_ID
+              Value: !Ref AppClientId
+
+            - Name: PANTHER_VERSION
+              Value: !Ref PantherVersion
+
           Essential: true
           Image: !Ref Image
           Interactive: false
@@ -160,3 +253,16 @@ Resources:
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
+
+  # The link in the invite email won't work until the ECS service has finished.
+  FirstPantherUser:
+    Type: Custom::PantherUser
+    Condition: CreateFirstUser
+    DependsOn: WebApplicationServer
+    DeletionPolicy: Retain # users-api refuses to delete the last user, which would then fail teardown
+    UpdateReplacePolicy: Retain
+    Properties:
+      GivenName: !Ref FirstUserGivenName
+      FamilyName: !Ref FirstUserFamilyName
+      Email: !Ref FirstUserEmail
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources

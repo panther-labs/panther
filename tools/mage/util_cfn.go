@@ -36,22 +36,13 @@ var allStacks = []string{
 	bootstrapStack,
 	gatewayStack,
 
-	alarmsStack,
 	appsyncStack,
 	cloudsecStack,
 	coreStack,
 	dashboardStack,
 	frontendStack,
-	glueStack,
 	logAnalysisStack,
-	metricFilterStack,
 	onboardStack,
-}
-
-// Summary of a CloudFormation resource and its parent stack
-type cfnResource struct {
-	Resource *cfn.StackResourceSummary
-	Stack    *cfn.Stack
 }
 
 // Flatten CloudFormation stack outputs into a string map.
@@ -150,8 +141,14 @@ func waitForStack(client *cfn.CloudFormation, stackName, successStatus string, i
 			break
 		}
 
-		// Show the stack status every few minutes
-		if time.Since(lastUserMessage) > 2*time.Minute {
+		// Show the stack status occasionally
+		if successStatus == "" && lastUserMessage == start {
+			// If we just started and the caller wants the stack to be in any terminal state,
+			// this is a standard deploy - let the user know what we're waiting on.
+			logger.Warnf("stack %s was already %s, waiting for it to finish", stackName, *stack.StackStatus)
+			lastUserMessage = time.Now()
+		} else if time.Since(lastUserMessage) > 2*time.Minute {
+			// Show progress every few minutes so it doesn't look stuck
 			logger.Infof("    ... %s is still %s (%s)", stackName, *stack.StackStatus,
 				time.Since(start).Round(time.Second).String())
 			lastUserMessage = time.Now()
@@ -183,73 +180,28 @@ func waitForStackUpdate(client *cfn.CloudFormation, stackName string) (*cfn.Stac
 		cfn.StackStatusUpdateInProgress, cfn.StackStatusUpdateCompleteCleanupInProgress)
 }
 
-// Traverse all Panther CFN resources (across all stacks) and apply the given handler.
-func walkPantherStacks(client *cfn.CloudFormation, handler func(cfnResource)) error {
-	logger.Info("scanning Panther CloudFormation stacks")
-	for _, stack := range allStacks {
-		if err := walkPantherStack(client, aws.String(stack), handler); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// List resources for a single Panther stack, recursively enumerating nested stacks as well.
+// List resources for a single stack, applying the given handler to each.
 //
-// The stackID can be the stack name or arn and the stack must be tagged with "Application:Panther"
-func walkPantherStack(client *cfn.CloudFormation, stackID *string, handler func(cfnResource)) error {
-	logger.Debugf("enumerating stack %s", *stackID)
-	detail, err := client.DescribeStacks(&cfn.DescribeStacksInput{StackName: stackID})
-	if err != nil {
-		if errStackDoesNotExist(err) {
-			logger.Debugf("stack %s does not exist", *stackID)
-			return nil
-		}
-
-		return fmt.Errorf("failed to describe stack %s: %v", *stackID, err)
-	}
-
-	// Double-check the stack is tagged with Application:Panther
-	stack := detail.Stacks[0]
-	foundTag := false
-	for _, tag := range stack.Tags {
-		if aws.StringValue(tag.Key) == "Application" && aws.StringValue(tag.Value) == "Panther" {
-			foundTag = true
-			break
-		}
-	}
-
-	if !foundTag {
-		logger.Warnf("skipping stack %s: no 'Application=Panther' tag found", *stackID)
-		return nil
-	}
-
-	// List stack resources
+// The stackID can be the stack name or arn.
+func listStackResources(client *cfn.CloudFormation, stackID *string, handler func(*cfn.StackResourceSummary) bool) {
 	input := &cfn.ListStackResourcesInput{StackName: stackID}
-	var nestedErr error
-	err = client.ListStackResourcesPages(input, func(page *cfn.ListStackResourcesOutput, isLast bool) bool {
+	err := client.ListStackResourcesPages(input, func(page *cfn.ListStackResourcesOutput, isLast bool) bool {
 		for _, summary := range page.StackResourceSummaries {
-			handler(cfnResource{Resource: summary, Stack: stack})
-			if aws.StringValue(summary.ResourceType) == "AWS::CloudFormation::Stack" &&
-				aws.StringValue(summary.ResourceStatus) != cfn.ResourceStatusDeleteComplete {
-
-				// Recurse into nested stack
-				if nestedErr = walkPantherStack(client, summary.PhysicalResourceId, handler); nestedErr != nil {
-					return false // stop paging, handle error outside closure
-				}
+			if !handler(summary) {
+				return false
 			}
 		}
 		return true // keep paging
 	})
 
-	if err != nil {
-		return fmt.Errorf("failed to list stack resources for %s: %v", *stackID, err)
-	}
-	if nestedErr != nil {
-		return nestedErr
+	if errStackDoesNotExist(err) {
+		logger.Debugf("stack %s does not exist", *stackID)
+		return
 	}
 
-	return nil
+	if err != nil {
+		logger.Fatalf("failed to list stack resources for %s: %v", *stackID, err)
+	}
 }
 
 // Log failed resources from the stack's event history.
@@ -315,39 +267,6 @@ func errStackDoesNotExist(err error) bool {
 		return true
 	}
 	return false
-}
-
-// Return true if CF stack set exists
-func stackSetExists(cfClient *cfn.CloudFormation, stackSetName string) (bool, error) {
-	input := &cfn.DescribeStackSetInput{StackSetName: aws.String(stackSetName)}
-	_, err := cfClient.DescribeStackSet(input)
-	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "StackSetNotFoundException" {
-			err = nil
-		}
-		return false, err
-	}
-	return true, nil
-}
-
-// Return true if CF stack set exists
-func stackSetInstanceExists(cfClient *cfn.CloudFormation, stackSetName, account, region string) (bool, error) {
-	input := &cfn.DescribeStackInstanceInput{
-		StackSetName:         &stackSetName,
-		StackInstanceAccount: &account,
-		StackInstanceRegion:  &region,
-	}
-	_, err := cfClient.DescribeStackInstance(input)
-	if err != nil {
-		// need to also check for "StackSetNotFoundException" if the containing stack set does not exist
-		if awsErr, ok := err.(awserr.Error); ok &&
-			(awsErr.Code() == "StackInstanceNotFoundException" || awsErr.Code() == "StackSetNotFoundException") {
-
-			err = nil
-		}
-		return false, err
-	}
-	return true, nil
 }
 
 // Returns stack status, outputs, and any error

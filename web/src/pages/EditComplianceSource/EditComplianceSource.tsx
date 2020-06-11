@@ -21,6 +21,7 @@ import { Card, useSnackbar } from 'pouncejs';
 import urls from 'Source/urls';
 import Page404 from 'Pages/404';
 import useRouter from 'Hooks/useRouter';
+import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage } from 'Helpers/utils';
 import ComplianceSourceWizard from 'Components/wizards/ComplianceSourceWizard';
 import { useGetComplianceSource } from './graphql/getComplianceSource.generated';
@@ -33,7 +34,7 @@ const EditComplianceSource: React.FC = () => {
     variables: { id: match.params.id },
     onError: error => {
       pushSnackbar({
-        title: extractErrorMessage(error) || 'An unknown error occured',
+        title: extractErrorMessage(error) || 'An unknown error occurred',
         variant: 'error',
       });
     },
@@ -81,4 +82,4 @@ const EditComplianceSource: React.FC = () => {
   );
 };
 
-export default EditComplianceSource;
+export default withSEO({ title: 'Edit Cloud Security Source' })(EditComplianceSource);

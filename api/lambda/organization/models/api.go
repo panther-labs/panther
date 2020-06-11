@@ -34,7 +34,7 @@ type UpdateSettingsInput = GeneralSettings
 
 // GeneralSettings defines basic settings for a Panther deployment.
 type GeneralSettings struct {
-	DisplayName           *string `json:"displayName" validate:"omitempty,min=1"`
+	DisplayName           *string `json:"displayName" validate:"omitempty,min=1,excludesall='<>&\""`
 	Email                 *string `genericapi:"redact" json:"email" validate:"omitempty,email"`
 	ErrorReportingConsent *bool   `json:"errorReportingConsent"`
 }

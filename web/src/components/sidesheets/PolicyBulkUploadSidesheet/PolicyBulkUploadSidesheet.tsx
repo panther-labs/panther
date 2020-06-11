@@ -18,7 +18,7 @@
 
 import { Box, Heading, SideSheet, useSnackbar, Text, Alert } from 'pouncejs';
 import React from 'react';
-import SubmitButton from 'Components/buttons/SubmitButton';
+import LoadingButton from 'Components/buttons/LoadingButton';
 
 import useSidesheet from 'Hooks/useSidesheet';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
@@ -133,24 +133,25 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({ t
           onChange={handleFileChange}
         />
         {uploadPoliciesError && (
-          <Alert
-            variant="error"
-            title="An error has occurred"
-            description={
-              extractErrorMessage(uploadPoliciesError) ||
-              'An unknown error occurred while attempting to upload your policies'
-            }
-            mb={6}
-          />
+          <Box mb={6}>
+            <Alert
+              variant="error"
+              title="An error has occurred"
+              description={
+                extractErrorMessage(uploadPoliciesError) ||
+                'An unknown error occurred while attempting to upload your policies'
+              }
+            />
+          </Box>
         )}
-        <SubmitButton
+        <LoadingButton
           disabled={loading}
-          submitting={loading}
+          loading={loading}
           width={1}
           onClick={() => inputRef.current.click()}
         >
-          {loading ? 'Uploading...' : 'Select a file'}
-        </SubmitButton>
+          {loading ? 'Uploading' : 'Select a file'}
+        </LoadingButton>
       </Box>
     </SideSheet>
   );

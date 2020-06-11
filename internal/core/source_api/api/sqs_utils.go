@@ -21,45 +21,22 @@ package api
 import (
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/sqs"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+
+	"github.com/panther-labs/panther/pkg/awssqs"
 )
-
-//
-type SqsPolicy struct {
-	Version    string               `json:"Version"`
-	Statements []SqsPolicyStatement `json:"Statement"`
-}
-
-type SqsPolicyStatement struct {
-	SID       string            `json:"Sid"`
-	Effect    string            `json:"Effect"`
-	Principal map[string]string `json:"Principal"`
-	Action    string            `json:"Action"`
-	Resource  string            `json:"Resource"`
-	Condition interface{}       `json:"Condition"`
-}
 
 const (
-	sidFormat           = "PantherSubscriptionSID-%s"
-	policyAttributeName = "Policy"
+	externalSnsTopicSubscriptionSIDFormat = "PantherSubscriptionSID-%s"
 )
 
-// AddPermissionToLogProcessorQueue modifies the SQS Queue policy of the Log Processor
+// AllowExternalSnsTopicSubscription modifies the SQS Queue policy of the Log Processor
 // to allow SNS topic from new account to subscribe to it
-func AddPermissionToLogProcessorQueue(accountID string) (bool, error) {
-	existingPolicy, err := getQueuePolicy()
+func AllowExternalSnsTopicSubscription(accountID string) (bool, error) {
+	existingPolicy, err := awssqs.GetQueuePolicy(sqsClient, env.LogProcessorQueueURL)
 	if err != nil {
 		return false, err
-	}
-	if existingPolicy == nil {
-		existingPolicy = &SqsPolicy{
-			Version:    "2008-10-17",
-			Statements: []SqsPolicyStatement{},
-		}
 	}
 
 	// queue has already been configured
@@ -69,17 +46,18 @@ func AddPermissionToLogProcessorQueue(accountID string) (bool, error) {
 	}
 
 	existingPolicy.Statements = append(existingPolicy.Statements, getStatementForAccount(accountID))
-	err = setQueuePolicy(existingPolicy)
+	err = awssqs.SetQueuePolicy(sqsClient, env.LogProcessorQueueURL, existingPolicy)
 	if err != nil {
 		zap.L().Error("failed to set policy", zap.Error(errors.Wrap(err, "failed to set policy")))
+		return false, err
 	}
-	return true, setQueuePolicy(existingPolicy)
+	return true, nil
 }
 
-// RemovePermissionFromLogProcessorQueue modifies the SQS Queue policy of the Log Processor
+// DisableExternalSnsTopicSubscription modifies the SQS Queue policy of the Log Processor
 // so that SNS topics from that account cannot subscribe to the queue
-func RemovePermissionFromLogProcessorQueue(accountID string) error {
-	existingPolicy, err := getQueuePolicy()
+func DisableExternalSnsTopicSubscription(accountID string) error {
+	existingPolicy, err := awssqs.GetQueuePolicy(sqsClient, env.LogProcessorQueueURL)
 	if err != nil {
 		return err
 	}
@@ -99,32 +77,11 @@ func RemovePermissionFromLogProcessorQueue(accountID string) error {
 	existingPolicy.Statements[statementToRemoveIndex] = existingPolicy.Statements[len(existingPolicy.Statements)-1]
 	existingPolicy.Statements = existingPolicy.Statements[:len(existingPolicy.Statements)-1]
 
-	return setQueuePolicy(existingPolicy)
+	return awssqs.SetQueuePolicy(sqsClient, env.LogProcessorQueueURL, existingPolicy)
 }
 
-func getQueuePolicy() (*SqsPolicy, error) {
-	getAttributesInput := &sqs.GetQueueAttributesInput{
-		AttributeNames: aws.StringSlice([]string{policyAttributeName}),
-		QueueUrl:       aws.String(logProcessorQueueURL),
-	}
-	attributes, err := SQSClient.GetQueueAttributes(getAttributesInput)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get queue attributes")
-	}
-	policyAttribute := attributes.Attributes[policyAttributeName]
-	if len(aws.StringValue(policyAttribute)) == 0 {
-		return nil, nil
-	}
-	var policy SqsPolicy
-	err = jsoniter.UnmarshalFromString(*policyAttribute, &policy)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshall queue policy")
-	}
-	return &policy, nil
-}
-
-func findStatementIndex(policy *SqsPolicy, accountID string) int {
-	newStatementSid := fmt.Sprintf(sidFormat, accountID)
+func findStatementIndex(policy *awssqs.SqsPolicy, accountID string) int {
+	newStatementSid := fmt.Sprintf(externalSnsTopicSubscriptionSIDFormat, accountID)
 	for i, statement := range policy.Statements {
 		if statement.SID == newStatementSid {
 			return i
@@ -133,39 +90,14 @@ func findStatementIndex(policy *SqsPolicy, accountID string) int {
 	return -1
 }
 
-func setQueuePolicy(policy *SqsPolicy) error {
-	policyAttribute := aws.String("")
-	if len(policy.Statements) > 0 {
-		marshaledPolicy, err := jsoniter.MarshalToString(policy)
-		if err != nil {
-			zap.L().Error("failed to serialize policy", zap.Error(errors.WithStack(err)))
-			return errors.WithStack(err)
-		}
-		policyAttribute = aws.String(marshaledPolicy)
-	}
-
-	setAttributesInput := &sqs.SetQueueAttributesInput{
-		QueueUrl: aws.String(logProcessorQueueURL),
-		Attributes: map[string]*string{
-			policyAttributeName: policyAttribute,
-		},
-	}
-
-	_, err := SQSClient.SetQueueAttributes(setAttributesInput)
-	if err != nil {
-		return errors.Wrap(err, "failed to set queue attributes")
-	}
-	return nil
-}
-
-func getStatementForAccount(accountID string) SqsPolicyStatement {
-	newStatementSid := fmt.Sprintf(sidFormat, accountID)
-	return SqsPolicyStatement{
+func getStatementForAccount(accountID string) awssqs.SqsPolicyStatement {
+	newStatementSid := fmt.Sprintf(externalSnsTopicSubscriptionSIDFormat, accountID)
+	return awssqs.SqsPolicyStatement{
 		SID:       newStatementSid,
 		Effect:    "Allow",
 		Principal: map[string]string{"AWS": "*"},
 		Action:    "sqs:SendMessage",
-		Resource:  logProcessorQueueArn,
+		Resource:  "*",
 		Condition: map[string]interface{}{
 			"ArnLike": map[string]string{
 				"aws:SourceArn": fmt.Sprintf("arn:aws:sns:*:%s:*", accountID),

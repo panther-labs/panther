@@ -18,6 +18,7 @@
 
 import React from 'react';
 import { Alert, Box, Card, Flex } from 'pouncejs';
+import withSEO from 'Hoc/withSEO';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useListDestinationsAndDefaults } from './graphql/listDestinationsAndDefaults.generated';
@@ -27,9 +28,7 @@ import DestinationCreateButton from './CreateButton';
 import ListDestinationsTable from './ListDestinationsTable';
 
 const ListDestinations = () => {
-  const { loading, error, data } = useListDestinationsAndDefaults({
-    fetchPolicy: 'cache-and-network',
-  });
+  const { loading, error, data } = useListDestinationsAndDefaults();
 
   if (loading && !data) {
     return <DestinationsPageSkeleton />;
@@ -66,4 +65,4 @@ const ListDestinations = () => {
   );
 };
 
-export default ListDestinations;
+export default withSEO({ title: 'Destinations' })(ListDestinations);

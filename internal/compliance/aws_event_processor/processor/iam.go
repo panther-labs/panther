@@ -245,7 +245,7 @@ func classifyIAM(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 			}
 		}
 	default:
-		zap.L().Warn("iam: encountered unknown event name", zap.String("eventName", metadata.eventName))
+		zap.L().Info("iam: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 

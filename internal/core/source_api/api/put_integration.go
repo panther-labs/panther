@@ -42,7 +42,7 @@ var (
 )
 
 // PutIntegration adds a set of new integrations in a batch.
-func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.SourceIntegrationMetadata, error) {
+func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.SourceIntegration, error) {
 	// Validate the new integration
 	reason, passing, err := evaluateIntegrationFunc(api, &models.CheckIntegrationInput{
 		AWSAccountID:      input.AWSAccountID,
@@ -77,9 +77,10 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 	permissionAdded := false
 	defer func() {
 		if err != nil {
+			zap.L().Error("failed to put integration", zap.Error(err))
 			// In case there has been any error, try to undo granting of permissions to SQS queue.
 			if permissionAdded {
-				if undoErr := RemovePermissionFromLogProcessorQueue(*input.AWSAccountID); undoErr != nil {
+				if undoErr := DisableExternalSnsTopicSubscription(*input.AWSAccountID); undoErr != nil {
 					zap.L().Error("failed to remove SQS permission for integration. SQS queue has additional permissions that have to be removed manually",
 						zap.Error(undoErr),
 						zap.Error(err))
@@ -88,11 +89,16 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 		}
 	}()
 
-	// Add appropriate permissions to the SQS queue
-	if *input.IntegrationType == models.IntegrationTypeAWS3 {
-		permissionAdded, err = AddPermissionToLogProcessorQueue(*input.AWSAccountID)
+	switch aws.StringValue(input.IntegrationType) {
+	case models.IntegrationTypeAWS3:
+		permissionAdded, err = AllowExternalSnsTopicSubscription(*input.AWSAccountID)
 		if err != nil {
-			err = errors.Wrap(err, "Failed to add permissions to log processor queue")
+			zap.L().Error("Failed to add permissions to log processor queue", zap.Error(errors.WithStack(err)))
+			return nil, putIntegrationInternalError
+		}
+		err = addGlueTables(input.LogTypes)
+		if err != nil {
+			zap.L().Error("Failed to add glue tables to glue catalog", zap.Error(errors.WithStack(err)))
 			return nil, putIntegrationInternalError
 		}
 	}
@@ -100,8 +106,8 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 	// Generate the new integration
 	newIntegration := generateNewIntegration(input)
 
-	// Batch write to DynamoDB
-	if err = db.PutSourceIntegration(newIntegration); err != nil {
+	// Write to DynamoDB
+	if err = dynamoClient.PutItem(integrationToItem(newIntegration)); err != nil {
 		err = errors.Wrap(err, "Failed to store source integration in DDB")
 		return nil, putIntegrationInternalError
 	}
@@ -112,7 +118,7 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 	}
 
 	if *input.IntegrationType == models.IntegrationTypeAWSScan {
-		err = ScanAllResources([]*models.SourceIntegrationMetadata{newIntegration})
+		err = api.FullScan(&models.FullScanInput{Integrations: []*models.SourceIntegrationMetadata{&newIntegration.SourceIntegrationMetadata}})
 		if err != nil {
 			err = errors.Wrap(err, "failed to trigger scanning of resources")
 			return nil, putIntegrationInternalError
@@ -130,21 +136,25 @@ func (api API) integrationAlreadyExists(input *models.PutIntegrationInput) error
 	}
 
 	for _, existingIntegration := range existingIntegrations {
-		if *existingIntegration.IntegrationType == *input.IntegrationType &&
-			*existingIntegration.AWSAccountID == *input.AWSAccountID {
-
-			if *input.IntegrationType == models.IntegrationTypeAWSScan {
-				// We can only have one cloudsec integration for each account
-				return &genericapi.InvalidInputError{
-					Message: fmt.Sprintf("Source account %s already onboarded", *input.AWSAccountID),
+		if *existingIntegration.IntegrationType == *input.IntegrationType {
+			switch *existingIntegration.IntegrationType {
+			case models.IntegrationTypeAWSScan:
+				if *existingIntegration.AWSAccountID == *input.AWSAccountID {
+					// We can only have one cloudsec integration for each account
+					return &genericapi.InvalidInputError{
+						Message: fmt.Sprintf("Source account %s already onboarded", *input.AWSAccountID),
+					}
 				}
-			}
-			if *existingIntegration.IntegrationLabel == *input.IntegrationLabel {
-				// Log sources for same account need to have different labels
-				return &genericapi.InvalidInputError{
-					Message: fmt.Sprintf("Log source for account %s with label %s already onboarded",
-						*input.AWSAccountID,
-						*input.IntegrationLabel),
+				return nil
+			case models.IntegrationTypeAWS3:
+				if *existingIntegration.AWSAccountID == *input.AWSAccountID &&
+					*existingIntegration.IntegrationLabel == *input.IntegrationLabel {
+					// Log sources for same account need to have different labels
+					return &genericapi.InvalidInputError{
+						Message: fmt.Sprintf("Log source for account %s with label %s already onboarded",
+							*input.AWSAccountID,
+							*input.IntegrationLabel),
+					}
 				}
 			}
 		}
@@ -153,14 +163,14 @@ func (api API) integrationAlreadyExists(input *models.PutIntegrationInput) error
 	return nil
 }
 
-// ScanAllResources schedules scans for each Resource type for each integration.
+// FullScan schedules scans for each Resource type for each integration.
 //
 // Each Resource type is sent within its own SQS message.
-func ScanAllResources(integrations []*models.SourceIntegrationMetadata) error {
+func (api API) FullScan(input *models.FullScanInput) error {
 	var sqsEntries []*sqs.SendMessageBatchRequestEntry
 
 	// For each integration, add a ScanMsg to the queue per service
-	for _, integration := range integrations {
+	for _, integration := range input.Integrations {
 		for resourceType := range awspoller.ServicePollers {
 			scanMsg := &pollermodels.ScanMsg{
 				Entries: []*pollermodels.ScanEntry{
@@ -189,40 +199,44 @@ func ScanAllResources(integrations []*models.SourceIntegrationMetadata) error {
 
 	zap.L().Info(
 		"scheduling new scans",
-		zap.String("queueUrl", snapshotPollersQueueURL),
+		zap.String("queueUrl", env.SnapshotPollersQueueURL),
 		zap.Int("count", len(sqsEntries)),
 	)
 
 	// Batch send all the messages to SQS
-	_, err := sqsbatch.SendMessageBatch(SQSClient, maxElapsedTime, &sqs.SendMessageBatchInput{
+	_, err := sqsbatch.SendMessageBatch(sqsClient, maxElapsedTime, &sqs.SendMessageBatchInput{
 		Entries:  sqsEntries,
-		QueueUrl: &snapshotPollersQueueURL,
+		QueueUrl: &env.SnapshotPollersQueueURL,
 	})
 	return err
 }
 
-func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceIntegrationMetadata {
-	var logProcessingRole *string
-	if *input.IntegrationType == models.IntegrationTypeAWS3 {
-		logProcessingRole = aws.String(generateLogProcessingRoleArn(*input.AWSAccountID, *input.IntegrationLabel))
+func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceIntegration {
+	metadata := models.SourceIntegrationMetadata{
+		CreatedAtTime:    aws.Time(time.Now()),
+		CreatedBy:        input.UserID,
+		IntegrationID:    aws.String(uuid.New().String()),
+		IntegrationLabel: input.IntegrationLabel,
+		IntegrationType:  input.IntegrationType,
 	}
 
-	return &models.SourceIntegrationMetadata{
-		AWSAccountID:       input.AWSAccountID,
-		CreatedAtTime:      aws.Time(time.Now()),
-		CreatedBy:          input.UserID,
-		IntegrationID:      aws.String(uuid.New().String()),
-		IntegrationLabel:   input.IntegrationLabel,
-		IntegrationType:    input.IntegrationType,
-		CWEEnabled:         input.CWEEnabled,
-		RemediationEnabled: input.RemediationEnabled,
-		ScanIntervalMins:   input.ScanIntervalMins,
-		// For log analysis integrations
-		S3Bucket:          input.S3Bucket,
-		S3Prefix:          input.S3Prefix,
-		KmsKey:            input.KmsKey,
-		LogTypes:          input.LogTypes,
-		LogProcessingRole: logProcessingRole,
-		StackName:         aws.String(getStackName(*input.IntegrationType, *input.IntegrationLabel)),
+	switch aws.StringValue(input.IntegrationType) {
+	case models.IntegrationTypeAWSScan:
+		metadata.AWSAccountID = input.AWSAccountID
+		metadata.CWEEnabled = input.CWEEnabled
+		metadata.RemediationEnabled = input.RemediationEnabled
+		metadata.ScanIntervalMins = input.ScanIntervalMins
+		metadata.StackName = aws.String(getStackName(*input.IntegrationType, *input.IntegrationLabel))
+	case models.IntegrationTypeAWS3:
+		metadata.AWSAccountID = input.AWSAccountID
+		metadata.S3Bucket = input.S3Bucket
+		metadata.S3Prefix = input.S3Prefix
+		metadata.KmsKey = input.KmsKey
+		metadata.LogTypes = input.LogTypes
+		metadata.StackName = aws.String(getStackName(*input.IntegrationType, *input.IntegrationLabel))
+		metadata.LogProcessingRole = aws.String(generateLogProcessingRoleArn(*input.AWSAccountID, *input.IntegrationLabel))
+	}
+	return &models.SourceIntegration{
+		SourceIntegrationMetadata: metadata,
 	}
 }

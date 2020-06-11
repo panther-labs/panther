@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -34,9 +33,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	jsoniter "github.com/json-iterator/go"
 )
 
 const (
@@ -44,7 +41,35 @@ const (
 )
 
 // For CPU-intensive operations, limit the max number of worker goroutines.
-var maxWorkers = runtime.NumCPU() - 1
+var maxWorkers = func() int {
+	n := runtime.NumCPU()
+	// Use all CPUs on CI environment
+	if runningInCI() {
+		return n
+	}
+	// Ensure we don't set maxWorkers to zero
+	if n > 1 {
+		return n - 1
+	}
+	return 1
+}()
+
+// Queue limiting concurrent tasks when using `runTask`
+var taskQueue = make(chan struct{}, maxWorkers)
+
+// Ugly task queue hack to limit concurrent tasks
+func runTask(results chan<- goroutineResult, name string, task func() error) {
+	taskQueue <- struct{}{}
+	go func() {
+		defer func() {
+			<-taskQueue
+		}()
+		results <- goroutineResult{
+			summary: name,
+			err:     task(),
+		}
+	}()
+}
 
 // Track results when executing similar tasks in parallel
 type goroutineResult struct {
@@ -108,12 +133,7 @@ func writeFile(path string, data []byte) error {
 		return fmt.Errorf("failed to create directory %s: %v", filepath.Dir(path), err)
 	}
 
-	var permissions os.FileMode = 0644
-	if strings.HasSuffix(path, ".key") || strings.HasSuffix(path, ".crt") {
-		permissions = certFilePermissions
-	}
-
-	if err := ioutil.WriteFile(path, data, permissions); err != nil {
+	if err := ioutil.WriteFile(path, data, 0644); err != nil {
 		return fmt.Errorf("failed to write file %s: %v", path, err)
 	}
 	return nil
@@ -146,7 +166,7 @@ func getSession() (*session.Session, error) {
 }
 
 // Upload a local file to S3.
-func uploadFileToS3(awsSession *session.Session, path, bucket, key string, meta map[string]*string) (*s3manager.UploadOutput, error) {
+func uploadFileToS3(awsSession *session.Session, path, bucket, key string) (*s3manager.UploadOutput, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open %s: %v", path, err)
@@ -157,38 +177,10 @@ func uploadFileToS3(awsSession *session.Session, path, bucket, key string, meta 
 
 	logger.Debugf("uploading %s to s3://%s/%s", path, bucket, key)
 	return uploader.Upload(&s3manager.UploadInput{
-		Body:     file,
-		Bucket:   &bucket,
-		Key:      &key,
-		Metadata: meta,
+		Body:   file,
+		Bucket: &bucket,
+		Key:    &key,
 	})
-}
-
-func invokeLambda(awsSession *session.Session, functionName string, input interface{}, output interface{}) error {
-	payload, err := jsoniter.Marshal(input)
-	if err != nil {
-		return fmt.Errorf("failed to json marshal input to %s: %v", functionName, err)
-	}
-
-	response, err := lambda.New(awsSession).Invoke(&lambda.InvokeInput{
-		FunctionName: aws.String(functionName),
-		Payload:      payload,
-	})
-	if err != nil {
-		return fmt.Errorf("%s lambda invocation failed: %v", functionName, err)
-	}
-
-	if response.FunctionError != nil {
-		return fmt.Errorf("%s responded with %s error: %s",
-			functionName, *response.FunctionError, string(response.Payload))
-	}
-
-	if output != nil {
-		if err = jsoniter.Unmarshal(response.Payload, output); err != nil {
-			return fmt.Errorf("failed to json unmarshal response from %s: %v", functionName, err)
-		}
-	}
-	return nil
 }
 
 // Prompt the user for a string input.
@@ -245,23 +237,6 @@ func dateValidator(text string) error {
 		return fmt.Errorf("invalid date: %v", err)
 	}
 	return nil
-}
-
-// Download a file in memory.
-func download(url string) ([]byte, error) {
-	logger.Debug("GET " + url)
-	response, err := http.Get(url) // nolint:gosec
-	if err != nil {
-		return nil, fmt.Errorf("failed to GET %s: %v", url, err)
-	}
-	defer response.Body.Close()
-
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to download %s: %v", url, err)
-	}
-
-	return body, nil
 }
 
 // runningInCI returns true if the mage command is running inside the CI environment

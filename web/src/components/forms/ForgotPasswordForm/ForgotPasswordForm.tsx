@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Field, Formik } from 'formik';
+import { Field, Form, Formik } from 'formik';
 import * as Yup from 'yup';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -33,9 +33,7 @@ const initialValues = {
 };
 
 const validationSchema = Yup.object().shape({
-  email: Yup.string()
-    .email('Needs to be a valid email')
-    .required(),
+  email: Yup.string().email('Needs to be a valid email').required(),
 });
 
 const ForgotPasswordForm: React.FC = () => {
@@ -49,22 +47,15 @@ const ForgotPasswordForm: React.FC = () => {
         forgotPassword({
           email,
           onSuccess: () => setStatus('SENT'),
-          onError: ({ code, message }) => {
-            setErrors({
-              email:
-                code === 'UserNotFoundException'
-                  ? "We couldn't find this Panther account"
-                  : message,
-            });
-          },
+          onError: ({ message }) => setErrors({ email: message }),
         })
       }
     >
-      {({ handleSubmit, isSubmitting, isValid, dirty, status, values }) => {
+      {({ status, values }) => {
         if (status === 'SENT') {
           return (
             <Card bg="green100" p={5} mb={8} boxShadow="none">
-              <Text color="green300" size="large">
+              <Text color="green300" size="medium">
                 We have successfully sent you an email with reset instructions at{' '}
                 <b>{values.email}</b>
               </Text>
@@ -73,7 +64,7 @@ const ForgotPasswordForm: React.FC = () => {
         }
 
         return (
-          <form onSubmit={handleSubmit}>
+          <Form>
             <Field
               as={FormikTextInput}
               label="Email"
@@ -83,14 +74,8 @@ const ForgotPasswordForm: React.FC = () => {
               aria-required
               mb={6}
             />
-            <SubmitButton
-              width={1}
-              submitting={isSubmitting}
-              disabled={isSubmitting || !isValid || !dirty}
-            >
-              Reset Password
-            </SubmitButton>
-          </form>
+            <SubmitButton width={1}>Reset Password</SubmitButton>
+          </Form>
         );
       }}
     </Formik>

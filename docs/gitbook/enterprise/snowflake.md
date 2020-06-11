@@ -1,27 +1,27 @@
 # [Snowflake](https://www.snowflake.com) Database Integration
-Panther can be configured to write processed log data to one or more
-AWS-based Snowflake database clusters. This allows you to join Panther processed data
-with your other data sources in Snowflake. 
 
-Integrating Panther with Snowflake enables Panther data to be used in your Business Intelligence
-tools to make dashboards tailored to you operations.  In addition you can join Panther data (e.g., Panther alerts)
-to your business data, enabling assessment of your security posture with respect to your organization.
-For example, you can tally alerts by organizational division (e.g., Human Resources) or by 
-infrastructure (e.g., Development, Test, Production).
+Panther can be configured to write processed log data to one or more AWS-based Snowflake database clusters. This allows you to join Panther processed data with your other data sources in Snowflake.
+
+Integrating Panther with Snowflake enables Panther data to be used in your Business Intelligence tools to make dashboards tailored to you operations. In addition, you can join Panther data (e.g., Panther alerts) to your business data, enabling assessment of your security posture with respect to your organization.
+
+For example, you can tally alerts by organizational division (e.g., Human Resources) or by infrastructure (e.g., Development, Test, Production).
 
 Panther uses [Snowpipe](https://docs.snowflake.com/en/user-guide/data-load-snowpipe-intro.html) to copy the data into your Snowflake cluster.
 
 ## Configuration
 
-In order to configure Panther, you need to get the `SNOWFLAKE_IAM_USER` from Snowflake. In a 
-Snowflake SQL shell execute the below sql, replacing `myaccountid` with your AWS account id
-and `myaccountregion` with the account's region:
+In order to configure Panther, you need to get the `SNOWFLAKE_IAM_USER` from Snowflake.
+
+In a Snowflake SQL shell execute the below sql, replacing `myaccountid` with your AWS account ID and `myaccountregion` with the account's region:
+
 ```sql
-select system$get_aws_sns_iam_policy('arn:aws:sns:myaccountregion:myaccountid:panther-processed-data-notifications');
+SELECT system$get_aws_sns_iam_policy('arn:aws:sns:myaccountregion:myaccountid:panther-processed-data-notifications');
 ```
-You should see a response like:
+
+You should see a response of:
+
 ```json
-{ 
+{
  "Version":"2012-10-17",
  "Statement":[
   {
@@ -33,12 +33,14 @@ You should see a response like:
     "Action":["sns:Subscribe"],
     "Resource":["arn:aws:sns:myaccountregion:myaccoundid:panther-processed-data-notifications"]
   }
- ] 
+ ]
 }
 ```
-In the above example the `SNOWFLAKE_IAM_USER` is the `AWS` attribute `arn:aws:iam::34318291XXXX:user/k7m2-s-v2st0722`.
 
-Edit `deployments/panther_config.yml` to add  `arn:aws:iam::34318291XXXX:user/k7m2-s-v2st0722` the  to Snowflake configuration:
+In the above example, the `SNOWFLAKE_IAM_USER` is the `AWS` attribute `arn:aws:iam::34318291XXXX:user/k7m2-s-v2st0722`.
+
+Edit your `deployments/panther_config.yml` to add `arn:aws:iam::34318291XXXX:user/k7m2-s-v2st0722` the to Snowflake configuration:
+
 ```yaml
  # Snowflake (https://www.snowflake.com/) Integration
   Snowflake:
@@ -54,17 +56,16 @@ Edit `deployments/panther_config.yml` to add  `arn:aws:iam::34318291XXXX:user/k7
       - arn:aws:iam::34318291XXXX:user/k7m2-s-v2st0722
 ```
 
-Next run `mage deploy`.
+Next, run `mage deploy snowflake:snowpipe`
 
-When the deployment is done there should be a `snowpipe.sql` file created in:
-```
-./out/snowflake/snowpipe.sql
-```
+When the deployment is done there should be a `snowpipe.sql` file created in `./out/snowflake/snowpipe.sql`
 
-In the Snowflake SQL shell use the `Load Script` option to load `snowpipe.sql`. 
+In the Snowflake SQL shell use the `Load Script` option to load `snowpipe.sql`
+
 ![Load](../.gitbook/assets/snowflake-upload.png)
 
-Select the `All Queries` checkbox, then click on `Run`. 
+Select the `All Queries` checkbox, then click on `Run`
+
 ![Run](../.gitbook/assets/snowflake-run.png)
 
 ## Validation
@@ -75,14 +76,10 @@ Once `snowpipe.sql` has been successfully executed, you should have three databa
 
 These are the same database names used in AWS Athena and queries should behave similarly.
 
-Assuming you have data being regularly being processed, there should be data in the tables
-in a few minutes. 
+Assuming you have data being regularly being processed, there should be data in the tables in a few minutes.
 
 You can quickly test if the data ingestion is working by running simple queries, for example:
+
 ```sql
-select count(1) as c from panther_logs.public.aws_cloudtrail ;
+SELECT count(1) AS c FROM panther_logs.public.aws_cloudtrail ;
 ```
-
-
-
-

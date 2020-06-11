@@ -20,16 +20,13 @@ import React from 'react';
 import { MultiCombobox, MultiComboboxProps } from 'pouncejs';
 import { FieldConfig, useField } from 'formik';
 
-const MemoizedMultiCombobox = React.memo(MultiCombobox);
-
 function FormikMultiCombobox<T>(
   props: MultiComboboxProps<T> & Required<Pick<FieldConfig, 'name'>>
 ): React.ReactNode {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [field, meta, { setValue }] = useField(props.name);
 
-  const onChange = React.useMemo(() => setValue, []);
-  return <MemoizedMultiCombobox {...props} onChange={onChange} />;
+  return <MultiCombobox {...props} onChange={setValue} />;
 }
 
 export default FormikMultiCombobox;

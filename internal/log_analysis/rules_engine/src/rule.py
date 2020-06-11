@@ -48,8 +48,8 @@ class RuleResult:
 # pylint: disable=too-many-instance-attributes
 class Rule:
     """Panther rule metadata and imported module."""
-    logger = get_logger()
 
+    # pylint: disable=too-many-branches
     def __init__(self, config: Dict[str, Any]):
         """Create new rule from a dict.
 
@@ -60,6 +60,7 @@ class Rule:
                 (Optional) version: The version of the rule
                 (Optional) dedup_period_mins: The period during which the events will be deduplicated
         """
+        self.logger = get_logger()
         if not ('id' in config) or not isinstance(config['id'], str):
             raise AssertionError('Field "id" of type str is required field')
         self.rule_id = config['id']
@@ -76,6 +77,21 @@ class Rule:
             self.rule_dedup_period_mins = DEFAULT_RULE_DEDUP_PERIOD_MINS
         else:
             self.rule_dedup_period_mins = config['dedupPeriodMinutes']
+
+        if not ('tags' in config) or not isinstance(config['tags'], list):
+            self.rule_tags = list()
+        else:
+            config['tags'].sort()
+            self.rule_tags = config['tags']
+
+        if 'reports' not in config:
+            self.rule_reports = dict()
+        else:
+            # Reports are Dict[str, List[str]]
+            # Sorting the List before setting it
+            for values in config['reports'].values():
+                values.sort()
+            self.rule_reports = config['reports']
 
         self._store_rule()
         self._module = self._import_rule_as_module()

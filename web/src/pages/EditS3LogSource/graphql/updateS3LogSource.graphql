@@ -1,0 +1,5 @@
+mutation UpdateS3LogSource($input: UpdateS3LogIntegrationInput!) {
+  updateS3LogIntegration(input: $input) {
+    ...S3LogIntegrationDetails
+  }
+}

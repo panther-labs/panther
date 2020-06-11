@@ -1,151 +1,125 @@
 ---
-description: Get started with Panther in 20 minutes
+description: Get started with Panther in 15 minutes
 ---
 
 # Quick Start
 
-## Prerequisites
-
 What you'll need:
 
-1. An AWS Account to deploy Panther into
+1. An AWS Account
 2. An IAM user or role with permissions to create and manage the necessary resources
 
-Use the code samples below to create the deployment roles:
+We've provided the following IAM roles for least privilege deployments:
 
-- [AWS CloudFormation Template](https://github.com/panther-labs/panther/tree/master/deployments/auxiliary/cloudformation/panther-deployment-role.yml) and [S3 URL](https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-deployment-role/latest/template.yml)
+- [AWS CloudFormation Template](https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-deployment-role/latest/template.yml)
 - [Terraform](https://github.com/panther-labs/panther/tree/master/deployments/auxiliary/terraform/panther-deployment-role.tf)
 
 {% hint style="info" %}
-We recommend deploying Panther into a dedicated AWS account via [AWS Organizations](https://aws.amazon.com/blogs/security/how-to-use-aws-organizations-to-automate-end-to-end-account-creation/). This ensures that detection infrastructure is contained within a single place.
+We recommend deploying Panther into its own dedicated AWS account.
 {% endhint %}
+
+The steps below use a preconfigured CloudFormation template to deploy Panther. To deploy from source, follow the instructions [here](development.md#deploying).
 
 ## Deployment
 
-Get started with 3 quick steps!
+First, navigate to the AWS CloudFormation console and create a new stack.
 
-#### Step 1
+Use the following template URL to install the latest version in the us-east-1 region:
 
-Clone the latest release of [Panther](https://github.com/panther-labs/panther):
-
-```bash
-git clone https://github.com/panther-labs/panther --depth 1 --branch v1.1.1
-cd panther
+```
+https://panther-community-us-east-1.s3.amazonaws.com/v1.4.0/panther.yml
 ```
 
-[Install and run Docker 17+](https://docs.docker.com/install/), then verify the service is up:
+The template URL is of the following form:
 
- ```bash
- docker info
- ```
-
- The status bar will also display the Docker Icon (on macOS):
-
-![Docker Status](.gitbook/assets/docker-status.png)
-
-For customized deployment options, [click here](quick-start.md#deployment-options).
-
-#### Step 2
-
-{% hint style="warning" %}
-Note: Your AWS credentials _must_ be exported as environment variables before running the next command.
-{% endhint %}
-
-Start the development environment:
-
-```bash
-./dev.sh
+```
+https://panther-<EDITION>-<REGION>.s3.amazonaws.com/<VERSION>/panther.yml
 ```
 
-#### Step 3
+Where:
 
-Run the following command to deploy Panther:
+* EDITION is `community` or `enterprise`
+* REGION is one of: `us-east-1`, `us-east-2`, or `us-west-2`
+    * Be sure the template region matches the region in which you are deploying Panther
+    * [Additional](development.md#supported-regions) regions are available when [deploying from source](development.md#deploying)
+* VERSION is the latest [tagged release](https://github.com/panther-labs/panther/releases)
 
-```bash
-mage setup deploy
+![CloudFormation Template URL](.gitbook/assets/cfn-deploy-1.png)
+
+On the next page, choose a stack name (e.g. "panther") and configure the name and email for the first Panther user:
+
+![CloudFormation Parameters](.gitbook/assets/cfn-deploy-2.png)
+
+This is the initial admin user account. You can edit the user and invite additional users after Panther is deployed. You can also set the `CompanyDisplayName` here if you like. All other parameters can be ignored.
+
+On the next page, you can skip all the advanced stack settings. Acknowledge the warnings and deploy the stack.
+
+![CloudFormation Finish](.gitbook/assets/cfn-deploy-3.png)
+
+Alternatively, you can deploy Panther using a nested stack in your own CloudFormation pipeline, using a Terraform template, or by building and deploying from [source](development.md#deploying).
+
+### Using a Nested CloudFormation Stack
+
+```yaml
+AWSTemplateFormatVersion: 2010-09-09
+Description: My Panther deployment
+
+Resources:
+  Panther:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://panther-community-${AWS::Region}.s3.amazonaws.com/v1.4.0/panther.yml
+      Parameters:
+        CompanyDisplayName: AwesomeCo
+        FirstUserEmail: user@example.com
+        FirstUserGivenName: Alice
+        FirstUserFamilyName: Jones
 ```
 
-- Optionally, you can `mage test:ci` before deploying to confirm that all tests are passing
-- The initial deployment will take ~10 minutes with a fast internet connection. If your credentials timeout, you can safely redeploy to pick up where you left off.
-- At the end of the deploy command, you'll be prompted for your first/last name and email to setup the first Panther user account.
-- You'll get an email from `no-reply@verificationemail.com` with your temporary password. If you don't see it, be sure to check your spam folder.
-- If you use `aws-vault`, you must be authenticated with MFA. Otherwise, IAM role creation will fail with `InvalidClientTokenId`
+### Using Terraform
 
-#### First Login
+```hcl
+resource "aws_cloudformation_stack" "panther" {
+  name = "panther"
+  template_url = "https://panther-community-<REGION>.s3.amazonaws.com/v1.4.0/panther.yml"
+  parameters = {
+    CompanyDisplayName = "AwesomeCo"
+    FirstUserEmail = "user@example.com"
+    FirstUserGivenName = "Alice"
+    FirstUserFamilyName = "Jones"
+  }
+}
+```
 
-Now you can sign into Panther! The URL is sent in the welcome email and also printed in the terminal at the end of the deploy command.
+## First Login
+
+Once the deployment has finished, you will get an invitation email from `no-reply@verificationemail.com` with your temporary login credentials. If you don't see it, be sure to check your spam folder.
 
 {% hint style="warning" %}
 By default, Panther generates a self-signed certificate, which will cause most browsers to present a warning page:
 
 ![Self-Signed Certificate Warning](.gitbook/assets/self-signed-cert-warning.png)
 
-Your connection _is_ encrypted, and it's generally safe to continue if the domain matches the output of the deploy command. However, the warning exists because self-signed certificates do not protect you from man-in-the-middle attacks; for this reason production deployments should provide their own ACM certificate in the `deployments/panther_config.yml` file.
+Your connection _is_ encrypted, and it's generally safe to continue. However, the warning exists because self-signed certificates do not protect you from man-in-the-middle attacks; for this reason production deployments should provide their own `CertificateArn` parameter value.
 {% endhint %}
 
 ## Onboarding
 
-Congratulations! You are now ready to use Panther.
-
-Follow the steps below to complete your setup:
+Congratulations! You are now ready to use Panther. Follow the steps below to complete your setup:
 
 1. Invite your team in `Settings` > `Users` > `Invite User`
-1. Configure [destinations](destinations/setup/) to receive generated alerts
-2. Onboard data for [real-time log analysis](log-analysis/log-processing/)
+1. Configure [destinations](destinations) to receive generated alerts
+2. Onboard data for [real-time log analysis](log-analysis/setup.md)
 3. Write custom [detection rules](log-analysis/rules/) based on internal business logic
-4. Onboard accounts for [cloud security scans](policies/scanning/)
-5. Write [policies](policies/cloud-security-overview.md) for supported [AWS resources](policies/resources/)
-6. Query collected logs with [historical search](historical-search/README.md)
+4. Onboard accounts for [cloud security scans](cloud-security/)
+5. Write [policies](cloud-security/policies/) for supported [AWS resources](policies/resources/)
+6. Query collected logs with [historical search](enterprise/data-analytics/)
 
-## Deployment Options
+## Removing Panther
+To uninstall Panther, simply delete the main "panther" stack (substituting whatever stack name you chose during deployment).
+This will automatically remove everything except:
 
-Rather than deploying from within a docker container, you can instead configure your [development environment](development.md#dependencies) locally. This will take more time initially but will lead to faster deployments.
+* S3 buckets and their data
+* A few empty CloudWatch log groups
 
-You can also deploy from an EC2 instance with Docker and git installed in the same region you're deploying Panther to. This is typically the fastest option since it minimizes the latency when communicating with AWS services. Instead of exporting your AWS credentials as environment variables, you will need to attach the [deployment IAM role](#prerequisites) to your EC2 instance profile. Your EC2 instance needs at least 1 vCPU and 2GB of memory; the cheapest suitable instance type is a `t2.small`.
-
-### Supported Regions
-
-Panther relies on dozens of AWS services, some of which are not yet available in every region. In particular, AppSync, Cognito, Athena, and Glue are newer services not available in us-gov, china, and other regions. At the time of writing, all Panther backend components are supported in the following:
-
-- `ap-northeast-1` (tokyo)
-- `ap-northeast-2` (seoul)
-- `ap-south-1` (mumbai)
-- `ap-southeast-1` (singapore)
-- `ap-southeast-2` (sydney)
-- `ca-central-1` (canada)
-- `eu-central-1` (frankfurt)
-- `eu-west-1` (ireland)
-- `eu-west-2` (london)
-- `us-east-1` (n. virginia)
-- `us-east-2` (ohio)
-- `us-west-2` (oregon)
-
-Consult the [AWS region table](https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/) for the source of truth about service availability in each region.
-
-### AWS Credentials
-
-Configure your AWS credentials and deployment region:
-
-```bash
-export AWS_REGION=us-east-1  # Choose your region from the list above
-export AWS_ACCESS_KEY_ID=...
-export AWS_SECRET_ACCESS_KEY=...
-```
-
-If you've already configured your credentials with the AWS CLI (you have a `~/.aws/credentials` file), you can easily add them to the environment:
-
-```bash
-export AWS_ACCESS_KEY_ID=`aws configure get aws_access_key_id`
-export AWS_SECRET_ACCESS_KEY=`aws configure get aws_secret_access_key`
-```
-
-{% hint style="warning" %}
-Remember to follow best security practices when handling access keys:
-
-- Avoid storing them in plaintext files
-- Use IAM roles with temporary session credentials
-- Rotate access keys every 90 days
-- Enforce MFA for key access
-
-Tools like [aws-vault](https://github.com/99designs/aws-vault) can help with all of the above, check out our [blog post](https://blog.runpanther.io/secure-multi-account-aws-access/) to learn more!
-{% endhint %}
+You can easily find and delete these manually, or you can run `mage teardown` (see [development](development.md#teardown)).

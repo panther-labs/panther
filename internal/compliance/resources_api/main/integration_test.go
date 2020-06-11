@@ -136,7 +136,6 @@ func TestIntegrationAPI(t *testing.T) {
 }
 
 func addEmpty(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.AddResources(
 		&operations.AddResourcesParams{HTTPClient: httpClient})
 	assert.Nil(t, result)
@@ -148,7 +147,6 @@ func addEmpty(t *testing.T) {
 }
 
 func addInvalid(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.AddResources(
 		&operations.AddResourcesParams{
 			Body: &models.AddResources{
@@ -175,7 +173,6 @@ func addInvalid(t *testing.T) {
 }
 
 func addSuccess(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.AddResources(
 		&operations.AddResourcesParams{
 			Body: &models.AddResources{
@@ -239,7 +236,6 @@ func getInvalid(t *testing.T) {
 }
 
 func getNotFound(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.GetResource(
 		&operations.GetResourceParams{
 			ResourceID: "arn:aws:s3:::no-such-bucket",
@@ -251,7 +247,6 @@ func getNotFound(t *testing.T) {
 }
 
 func getSuccess(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.GetResource(
 		&operations.GetResourceParams{
 			ResourceID: string(bucket.ID),
@@ -266,7 +261,6 @@ func getSuccess(t *testing.T) {
 }
 
 func listAll(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.ListResources(
 		&operations.ListResourcesParams{
 			HTTPClient: httpClient,
@@ -316,7 +310,6 @@ func listAll(t *testing.T) {
 }
 
 func listPaged(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.ListResources(
 		&operations.ListResourcesParams{
 			PageSize:   aws.Int64(1),
@@ -407,7 +400,6 @@ func listPaged(t *testing.T) {
 }
 
 func listFiltered(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.ListResources(
 		&operations.ListResourcesParams{
 			Deleted:         aws.Bool(false),
@@ -439,7 +431,6 @@ func listFiltered(t *testing.T) {
 }
 
 func orgOverview(t *testing.T) {
-	t.Parallel()
 	params := &operations.GetOrgOverviewParams{
 		HTTPClient: httpClient,
 	}
@@ -471,7 +462,6 @@ func orgOverview(t *testing.T) {
 }
 
 func deleteInvalid(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.DeleteResources(&operations.DeleteResourcesParams{
 		Body: &models.DeleteResources{
 			Resources: []*models.DeleteEntry{},
@@ -490,7 +480,6 @@ func deleteInvalid(t *testing.T) {
 
 // No error is returned if deletes are requested for resources that don't exist
 func deleteNotFound(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.DeleteResources(&operations.DeleteResourcesParams{
 		Body: &models.DeleteResources{
 			Resources: []*models.DeleteEntry{
@@ -504,7 +493,6 @@ func deleteNotFound(t *testing.T) {
 }
 
 func deleteSuccess(t *testing.T) {
-	t.Parallel()
 	result, err := apiClient.Operations.DeleteResources(&operations.DeleteResourcesParams{
 		Body: &models.DeleteResources{
 			Resources: []*models.DeleteEntry{

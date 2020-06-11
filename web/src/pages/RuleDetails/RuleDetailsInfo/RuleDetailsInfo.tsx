@@ -18,15 +18,15 @@
 
 import React from 'react';
 import { Link as RRLink } from 'react-router-dom';
-import { Badge, Box, Button, Icon, Label, SimpleGrid, Text, Link } from 'pouncejs';
+import { Box, Button, Icon, Label, SimpleGrid, Text, Link } from 'pouncejs';
 import { formatDatetime, minutesToString } from 'Helpers/utils';
 import Panel from 'Components/Panel';
 import Linkify from 'Components/Linkify';
 import { RuleDetails } from 'Generated/schema';
-import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import urls from 'Source/urls';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
+import SeverityBadge from 'Components/SeverityBadge';
 
 interface ResourceDetailsInfoProps {
   rule?: RuleDetails;
@@ -149,7 +149,7 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
           <Label mb={1} as="div" size="small" color="grey300">
             SEVERITY
           </Label>
-          <Badge color={SEVERITY_COLOR_MAP[rule.severity]}>{rule.severity}</Badge>
+          <SeverityBadge severity={rule.severity} />
         </Box>
         <Box my={1}>
           <Label mb={1} as="div" size="small" color="grey300">
@@ -159,7 +159,7 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
             rule.tags.map((tag, index) => (
               <Link
                 key={tag}
-                fontSize={2}
+                fontSize="medium"
                 color="blue300"
                 as={RRLink}
                 to={`${urls.logAnalysis.rules.list()}?page=1&tags[]=${tag}`}

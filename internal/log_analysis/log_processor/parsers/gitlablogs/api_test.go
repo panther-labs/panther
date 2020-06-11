@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
@@ -34,9 +35,9 @@ func TestGitLabAPI(t *testing.T) {
 	log := `{
   "time":"2018-10-29T12:49:42.123Z",
   "severity":"INFO",
-  "duration":709.08,
-  "db":14.59,
-  "view":694.49,
+  "duration_s":709.08,
+  "db_duration_s":14.59,
+  "view_duration_s":694.49,
   "status":200,
   "method":"GET",
   "path":"/api/v4/projects",
@@ -47,36 +48,50 @@ func TestGitLabAPI(t *testing.T) {
   "route":"/api/:version/projects",
   "user_id":1,
   "username":"root",
-  "queue_duration":100.31,
+  "queue_duration_s":100.31,
   "gitaly_calls":30,
-  "gitaly_duration":5.36
+  "gitaly_duration_s":5.36,
+  "redis_calls": 10,
+  "redis_duration_s": 5.1,
+  "correlation_id": "895c51dc-96c8-4f18-8be4-65252b17a324",
+  "meta.user":"testuser",
+  "meta.project":"testuser/jumbotron",
+  "meta.root_namespace":"testnamespace",
+  "meta.caller_id":"/api/:version/internal/post_receive"
 }`
 
 	expectedTime := time.Date(2018, 10, 29, 12, 49, 42, int(123*time.Millisecond), time.UTC)
 	expectedEvent := &API{
-		Time:     (*timestamp.RFC3339)(&expectedTime),
-		Severity: aws.String("INFO"),
-		Duration: aws.Float32(709.08),
-		DB:       aws.Float32(14.59),
-		View:     aws.Float32(694.49),
-		Status:   aws.Int(200),
-		Method:   aws.String("GET"),
-		Path:     aws.String("/api/v4/projects"),
+		Time:                (*timestamp.RFC3339)(&expectedTime),
+		Severity:            aws.String("INFO"),
+		DurationSeconds:     aws.Float32(709.08),
+		DBDurationSeconds:   aws.Float32(14.59),
+		ViewDurationSeconds: aws.Float32(694.49),
+		Status:              aws.Int16(200),
+		Method:              aws.String("GET"),
+		Path:                aws.String("/api/v4/projects"),
 		Params: []QueryParam{
-			{Key: aws.String("action"), Value: aws.String("git-upload-pack")},
-			{Key: aws.String("changes"), Value: aws.String("_any")},
-			{Key: aws.String("key_id"), Value: aws.String("secret")},
-			{Key: aws.String("secret_token"), Value: aws.String("[FILTERED]")},
+			{Key: aws.String("action"), Value: []byte("\"git-upload-pack\"")},
+			{Key: aws.String("changes"), Value: []byte("\"_any\"")},
+			{Key: aws.String("key_id"), Value: []byte("\"secret\"")},
+			{Key: aws.String("secret_token"), Value: []byte("\"[FILTERED]\"")},
 		},
-		Host:           aws.String("localhost"),
-		UserAgent:      aws.String("Ruby"),
-		Route:          aws.String("/api/:version/projects"),
-		RemoteIP:       aws.String("::1"),
-		UserID:         aws.Int64(1),
-		UserName:       aws.String("root"),
-		GitalyCalls:    aws.Int(30),
-		GitalyDuration: aws.Float32(5.36),
-		QueueDuration:  aws.Float32(100.31),
+		Host:                  aws.String("localhost"),
+		UserAgent:             aws.String("Ruby"),
+		Route:                 aws.String("/api/:version/projects"),
+		RemoteIP:              aws.String("::1"),
+		UserID:                aws.Int64(1),
+		UserName:              aws.String("root"),
+		GitalyCalls:           aws.Int(30),
+		GitalyDurationSeconds: aws.Float32(5.36),
+		QueueDuration:         aws.Float32(100.31),
+		CorrelationID:         aws.String("895c51dc-96c8-4f18-8be4-65252b17a324"),
+		MetaCallerID:          aws.String("/api/:version/internal/post_receive"),
+		MetaProject:           aws.String("testuser/jumbotron"),
+		MetaRootNamespace:     aws.String("testnamespace"),
+		MetaUser:              aws.String("testuser"),
+		RedisCalls:            aws.Int(10),
+		RedisDurationSeconds:  aws.Float32(5.1),
 	}
 
 	// panther fields
@@ -88,6 +103,15 @@ func TestGitLabAPI(t *testing.T) {
 func TestGitLabAPIType(t *testing.T) {
 	parser := (&APIParser{}).New()
 	require.Equal(t, "GitLab.API", parser.LogType())
+}
+
+func TestGitLabAPISamples(t *testing.T) {
+	samples := testutil.MustReadFileJSONLines("testdata/apilog_samples.jsonl")
+	parser := (&APIParser{}).New()
+	for i, sample := range samples {
+		_, err := parser.Parse(sample)
+		assert.NoErrorf(t, err, "failed to parse line %d", i)
+	}
 }
 
 func checkGitLabAPI(t *testing.T, log string, expectedEvent *API) {

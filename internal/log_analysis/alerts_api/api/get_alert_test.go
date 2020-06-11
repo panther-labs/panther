@@ -76,6 +76,9 @@ type tableMock struct {
 
 func (m *tableMock) GetAlert(input *string) (*table.AlertItem, error) {
 	args := m.Called(input)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
 	return args.Get(0).(*table.AlertItem), args.Error(1)
 }
 
@@ -95,20 +98,33 @@ func init() {
 	}
 }
 
-func TestGetAlert(t *testing.T) {
+func TestGetAlertDoesNotExist(t *testing.T) {
 	tableMock := &tableMock{}
 	alertsDB = tableMock
-
-	s3Mock := &s3Mock{}
-	s3Client = s3Mock
-	// The S3 object keys returned by S3 List objects command
-	s3Mock.listObjectsOutput = &s3.ListObjectsV2Output{
-		Contents: []*s3.Object{{Key: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/20200101T010100Z-uuid4.json.gz")}},
-	}
 
 	input := &models.GetAlertInput{
 		AlertID:        aws.String("alertId"),
 		EventsPageSize: aws.Int(5),
+	}
+
+	tableMock.On("GetAlert", aws.String("alertId")).Return(nil, nil)
+	api := API{}
+	result, err := api.GetAlert(input)
+	require.Nil(t, result)
+	require.NoError(t, err)
+}
+
+func TestGetAlert(t *testing.T) {
+	tableMock, s3Mock := initTest()
+
+	// The S3 object keys returned by S3 List objects command
+	s3Mock.listObjectsOutput = &s3.ListObjectsV2Output{
+		Contents: []*s3.Object{{Key: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/rule_id=ruleId/20200101T010100Z-uuid4.json.gz")}}, // nolint:lll
+	}
+
+	input := &models.GetAlertInput{
+		AlertID:        aws.String("alertId"),
+		EventsPageSize: aws.Int(1),
 	}
 
 	alertItem := &table.AlertItem{
@@ -124,13 +140,13 @@ func TestGetAlert(t *testing.T) {
 	}
 
 	expectedListObjectsRequest := &s3.ListObjectsV2Input{
-		Bucket: aws.String("bucket"),
+		Bucket: aws.String(env.ProcessedDataBucket),
 		Prefix: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/rule_id=ruleId/"),
 	}
 
 	expectedSelectObjectInput := &s3.SelectObjectContentInput{
-		Bucket: aws.String("bucket"),
-		Key:    aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/20200101T010100Z-uuid4.json.gz"),
+		Bucket: aws.String(env.ProcessedDataBucket),
+		Key:    aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/rule_id=ruleId/20200101T010100Z-uuid4.json.gz"),
 		InputSerialization: &s3.InputSerialization{
 			CompressionType: aws.String(s3.CompressionTypeGzip),
 			JSON:            &s3.JSONInput{Type: aws.String(s3.JSONTypeLines)},
@@ -150,9 +166,9 @@ func TestGetAlert(t *testing.T) {
 		},
 	}
 
-	tableMock.On("GetAlert", aws.String("alertId")).Return(alertItem, nil)
-	s3Mock.On("ListObjectsV2Pages", expectedListObjectsRequest, mock.Anything).Return(nil)
-	s3Mock.On("SelectObjectContent", expectedSelectObjectInput).Return(selectObjectOutput, nil)
+	tableMock.On("GetAlert", aws.String("alertId")).Return(alertItem, nil).Once()
+	s3Mock.On("ListObjectsV2Pages", expectedListObjectsRequest, mock.Anything).Return(nil).Once()
+	s3Mock.On("SelectObjectContent", expectedSelectObjectInput).Return(selectObjectOutput, nil).Once()
 	mockS3EventReader.On("Events").Return(eventChannel)
 	mockS3EventReader.On("Err").Return(nil)
 	api := API{}
@@ -173,27 +189,77 @@ func TestGetAlert(t *testing.T) {
 		Events: aws.StringSlice([]string{"testEvent"}),
 		EventsLastEvaluatedKey:
 		// nolint
-		aws.String("eyJsb2dUeXBlVG9Ub2tlbiI6eyJsb2d0eXBlIjp7InMzT2JqZWN0S2V5IjoicnVsZXMvbG9ndHlwZS95ZWFyPTIwMjAvbW9udGg9MDEvZGF5PTAxL2hvdXI9MDEvMjAyMDAxMDFUMDEwMTAwWi11dWlkNC5qc29uLmd6IiwiZXZlbnRJbmRleCI6MX19fQ=="),
+		aws.String("eyJsb2dUeXBlVG9Ub2tlbiI6eyJsb2d0eXBlIjp7InMzT2JqZWN0S2V5IjoicnVsZXMvbG9ndHlwZS95ZWFyPTIwMjAvbW9udGg9MDEvZGF5PTAxL2hvdXI9MDEvcnVsZV9pZD1ydWxlSWQvMjAyMDAxMDFUMDEwMTAwWi11dWlkNC5qc29uLmd6IiwiZXZlbnRJbmRleCI6MX19fQ=="),
 	}, result)
+	s3Mock.AssertExpectations(t)
+	tableMock.AssertExpectations(t)
+
+	// now test paging...
+
+	tableMock, s3Mock = initTest() // reset mocks
+
+	input.EventsExclusiveStartKey = result.EventsLastEvaluatedKey // set paginator
+
+	expectedPagedListObjectsRequest := &s3.ListObjectsV2Input{
+		Bucket:     aws.String(env.ProcessedDataBucket),
+		Prefix:     aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/rule_id=ruleId/"),
+		StartAfter: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/rule_id=ruleId/20200101T010100Z-uuid4.json.gz"),
+	}
+
+	// returns nothing
+	noopMockS3EventReader := &s3SelectStreamReaderMock{}
+	noopSelectObjectOutput := &s3.SelectObjectContentOutput{
+		EventStream: &s3.SelectObjectContentEventStream{
+			Reader: noopMockS3EventReader,
+		},
+	}
+	noopMockS3EventReader.On("Events").Return(getChannel())
+	noopMockS3EventReader.On("Err").Return(nil)
+
+	// nothing comes back from the listing
+	s3Mock.listObjectsOutput = &s3.ListObjectsV2Output{}
+
+	tableMock.On("GetAlert", aws.String("alertId")).Return(alertItem, nil).Once()
+	s3Mock.On("SelectObjectContent", expectedSelectObjectInput).Return(noopSelectObjectOutput, nil).Once()
+	s3Mock.On("ListObjectsV2Pages", expectedPagedListObjectsRequest, mock.Anything).Return(nil).Once()
+	result, err = api.GetAlert(input)
+	require.NoError(t, err)
+	require.Equal(t, &models.GetAlertOutput{
+		AlertSummary: models.AlertSummary{
+			AlertID:       aws.String("alertId"),
+			RuleID:        aws.String("ruleId"),
+			RuleVersion:   aws.String("ruleVersion"),
+			Severity:      aws.String("INFO"),
+			Title:         aws.String("ruleId"),
+			DedupString:   aws.String("dedupString"),
+			CreationTime:  aws.Time(time.Date(2020, 1, 1, 1, 0, 0, 0, time.UTC)),
+			UpdateTime:    aws.Time(time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)),
+			EventsMatched: aws.Int(5),
+		},
+		Events: aws.StringSlice([]string{}),
+		EventsLastEvaluatedKey:
+		// nolint
+		aws.String("eyJsb2dUeXBlVG9Ub2tlbiI6eyJsb2d0eXBlIjp7InMzT2JqZWN0S2V5IjoicnVsZXMvbG9ndHlwZS95ZWFyPTIwMjAvbW9udGg9MDEvZGF5PTAxL2hvdXI9MDEvcnVsZV9pZD1ydWxlSWQvMjAyMDAxMDFUMDEwMTAwWi11dWlkNC5qc29uLmd6IiwiZXZlbnRJbmRleCI6MH19fQ=="),
+	}, result)
+
+	s3Mock.AssertExpectations(t)
+	tableMock.AssertExpectations(t)
 }
 
 func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
-	tableMock := &tableMock{}
-	alertsDB = tableMock
+	tableMock, s3Mock := initTest()
 
-	s3Mock := &s3Mock{}
-	s3Client = s3Mock
 	// The S3 object keys returned by S3 List objects command
 	s3Mock.listObjectsOutput = &s3.ListObjectsV2Output{
 		Contents: []*s3.Object{
 			// The object was created at year=2020, month=01, day=01, hour=01, minute=02, second=00, which is before the alert was created
 			// We should skip this object
-			{Key: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/20200101T010200Z-uuid4.json.gz")},
+			{Key: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/rule_id=ruleId/20200101T010200Z-uuid4.json.gz")},
 			// The object was created at year=2020, month=01, day=01, hour=01, minute=05, second=00
-			{Key: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/20200101T010500Z-uuid4.json.gz")},
+			{Key: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/rule_id=ruleId/20200101T010500Z-uuid4.json.gz")},
 			// The object was created at year=2020, month=01, day=01, hour=01, minute=10, second=00, which is after the alert was update
 			// We should skip this object
-			{Key: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/20200101T010200Z-uuid4.json.gz")},
+			{Key: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/rule_id=ruleId/20200101T010200Z-uuid4.json.gz")},
 		},
 	}
 
@@ -222,9 +288,9 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 		},
 	}
 
-	tableMock.On("GetAlert", aws.String("alertId")).Return(alertItem, nil)
-	s3Mock.On("ListObjectsV2Pages", mock.Anything, mock.Anything).Return(nil)
-	s3Mock.On("SelectObjectContent", mock.Anything).Return(selectObjectOutput, nil)
+	tableMock.On("GetAlert", aws.String("alertId")).Return(alertItem, nil).Once()
+	s3Mock.On("ListObjectsV2Pages", mock.Anything, mock.Anything).Return(nil).Once()
+	s3Mock.On("SelectObjectContent", mock.Anything).Return(selectObjectOutput, nil).Once()
 	mockS3EventReader.On("Events").Return(eventChannel)
 	mockS3EventReader.On("Err").Return(nil)
 	api := API{}
@@ -245,8 +311,10 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 		Events: aws.StringSlice([]string{"testEvent"}),
 		EventsLastEvaluatedKey:
 		// nolint
-		aws.String("eyJsb2dUeXBlVG9Ub2tlbiI6eyJsb2d0eXBlIjp7InMzT2JqZWN0S2V5IjoicnVsZXMvbG9ndHlwZS95ZWFyPTIwMjAvbW9udGg9MDEvZGF5PTAxL2hvdXI9MDEvMjAyMDAxMDFUMDEwNTAwWi11dWlkNC5qc29uLmd6IiwiZXZlbnRJbmRleCI6MX19fQ=="),
+		aws.String("eyJsb2dUeXBlVG9Ub2tlbiI6eyJsb2d0eXBlIjp7InMzT2JqZWN0S2V5IjoicnVsZXMvbG9ndHlwZS95ZWFyPTIwMjAvbW9udGg9MDEvZGF5PTAxL2hvdXI9MDEvcnVsZV9pZD1ydWxlSWQvMjAyMDAxMDFUMDEwNTAwWi11dWlkNC5qc29uLmd6IiwiZXZlbnRJbmRleCI6MX19fQ=="),
 	}, result)
+	s3Mock.AssertExpectations(t)
+	tableMock.AssertExpectations(t)
 }
 
 // Returns an channel that emulated S3 Select channel
@@ -259,4 +327,14 @@ func getChannel(events ...string) <-chan s3.SelectObjectContentEventStreamEvent 
 	}
 	close(channel)
 	return channel
+}
+
+func initTest() (*tableMock, *s3Mock) {
+	tableMock := &tableMock{}
+	alertsDB = tableMock
+
+	s3Mock := &s3Mock{}
+	s3Client = s3Mock
+
+	return tableMock, s3Mock
 }

@@ -19,7 +19,7 @@
 import React from 'react';
 import { Box, Flex, Modal, Text } from 'pouncejs';
 import useModal from 'Hooks/useModal';
-import SubmitButton from 'Components/buttons/SubmitButton';
+import LoadingButton from 'Components/buttons/LoadingButton';
 
 const NetworkErrorModal: React.FC = () => {
   const { hideModal } = useModal();
@@ -33,9 +33,9 @@ const NetworkErrorModal: React.FC = () => {
           That{"'"}s the most likely scenario anyway...
         </Text>
         <Flex justify="center" mb={5}>
-          <SubmitButton submitting disabled>
+          <LoadingButton loading disabled>
             Reconnecting
-          </SubmitButton>
+          </LoadingButton>
         </Flex>
       </Box>
     </Modal>

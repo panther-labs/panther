@@ -19,8 +19,17 @@
 import { SeverityEnum } from 'Generated/schema';
 import { BadgeProps } from 'pouncejs';
 import { generateDocUrl } from 'Helpers/utils';
+import { pantherConfig } from 'Source/config';
+
+export enum LogIntegrationsEnum {
+  's3' = 'aws-s3',
+}
 
 export const AWS_ACCOUNT_ID_REGEX = new RegExp('^\\d{12}$');
+
+export const S3_BUCKET_NAME_REGEX = new RegExp(
+  '(?=^.{3,63}$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)'
+);
 
 export const INCLUDE_DIGITS_REGEX = new RegExp('(?=.*[0-9])');
 
@@ -80,6 +89,8 @@ export const RESOURCE_TYPES = [
 ] as const;
 
 export const LOG_TYPES = [
+  'Apache.AccessCombined',
+  'Apache.AccessCommon',
   'AWS.ALB',
   'AWS.AuroraMySQLAudit',
   'AWS.CloudTrail',
@@ -95,7 +106,7 @@ export const LOG_TYPES = [
   'GitLab.Exceptions',
   'GitLab.Git',
   'GitLab.Integrations',
-  'GitLab.Rails',
+  'GitLab.Production',
   'Nginx.Access',
   'Osquery.Batch',
   'Osquery.Differential',
@@ -120,7 +131,7 @@ export const PANTHER_SCHEMA_DOCS_MASTER_LINK = 'https://docs.runpanther.io';
 
 export const PANTHER_SCHEMA_DOCS_LINK = generateDocUrl(
   PANTHER_SCHEMA_DOCS_MASTER_LINK,
-  process.env.PANTHER_VERSION
+  pantherConfig.PANTHER_VERSION
 );
 
 export const DEFAULT_SMALL_PAGE_SIZE = 10;
@@ -129,3 +140,8 @@ export const DEFAULT_LARGE_PAGE_SIZE = 25;
 // The key under which User-related data will be stored in the storage
 export const USER_INFO_STORAGE_KEY = 'panther.user.info';
 export const ERROR_REPORTING_CONSENT_STORAGE_KEY = 'panther.generalSettings.errorReportingConsent';
+
+// The default panther system user id
+export const PANTHER_USER_ID = '00000000-0000-4000-8000-000000000000';
+// Docs URL we use to prompt users for explanations
+export const LOG_ONBOARDING_DOC_URL = `https://docs.runpanther.io/log-processing#sns-notification-setup`;

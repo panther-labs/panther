@@ -17,11 +17,13 @@
  */
 
 import React from 'react';
-import { Alert, Box, Card, Spinner } from 'pouncejs';
+import { Alert, Box, Card } from 'pouncejs';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
 import useInfiniteScroll from 'Hooks/useInfiniteScroll';
+import TablePlaceholder from 'Components/TablePlaceholder';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import withSEO from 'Hoc/withSEO';
 import { useListAlerts } from './graphql/listAlerts.generated';
 import ListAlertsTable from './ListAlertsTable';
 import ListAlertsPageSkeleton from './Skeleton';
@@ -29,7 +31,6 @@ import ListAlertsPageEmptyDataFallback from './EmptyDataFallback';
 
 const ListAlerts = () => {
   const { loading, error, data, fetchMore } = useListAlerts({
-    notifyOnNetworkStatusChange: true, // Adding notifyOnNetworkStatusChange will enable 'loading' to update its status during fetchMore requests as well
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
@@ -40,35 +41,27 @@ const ListAlerts = () => {
 
   const alertItems = data?.alerts.alertSummaries || [];
   const lastEvaluatedKey = data?.alerts.lastEvaluatedKey || null;
-  const { infiniteRef, setHasNextPage } = useInfiniteScroll({
-    loading,
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    onLoadMore: () => {
-      // Even though we're setting hasNextPage as false when exclusiveStartKey is null
-      // the react-infinite-scroll-hook library still makes one last request before finally stopping
-      // We're adding this redundant check explicitly just to be sure
-      if (!lastEvaluatedKey) {
-        return;
-      }
+  const hasNextPage = !!data?.alerts?.lastEvaluatedKey;
 
+  const { sentinelRef } = useInfiniteScroll<HTMLDivElement>({
+    loading,
+    threshold: 500,
+    onLoadMore: () => {
       fetchMore({
         variables: {
           input: { pageSize: DEFAULT_LARGE_PAGE_SIZE, exclusiveStartKey: lastEvaluatedKey },
         },
         updateQuery: (previousResult, { fetchMoreResult }) => {
-          if (!fetchMoreResult) {
-            return previousResult;
-          }
-          const newAlertSummaries = fetchMoreResult.alerts.alertSummaries;
-          const newLastEvaluatedKey = fetchMoreResult.alerts.lastEvaluatedKey;
-          if (!newLastEvaluatedKey) {
-            setHasNextPage(false); // newLastEvaluatedKey being null means there are no more items to query
-          }
+          // FIXME: Centralize this behavior for alert pagination, when apollo fixes a bug which
+          // causes wrong params to be passed to the merge function in type policies
+          // https://github.com/apollographql/apollo-client/issues/5951
           return {
             alerts: {
-              ...previousResult.alerts,
-              alertSummaries: [...previousResult.alerts.alertSummaries, ...newAlertSummaries],
-              lastEvaluatedKey: newLastEvaluatedKey,
+              ...fetchMoreResult.alerts,
+              alertSummaries: [
+                ...previousResult.alerts.alertSummaries,
+                ...fetchMoreResult.alerts.alertSummaries,
+              ],
             },
           };
         },
@@ -82,15 +75,16 @@ const ListAlerts = () => {
 
   if (error) {
     return (
-      <Alert
-        mb={6}
-        variant="error"
-        title="Couldn't load your alerts"
-        description={
-          extractErrorMessage(error) ||
-          'There was an error when performing your request, please contact support@runpanther.io'
-        }
-      />
+      <Box mb={6}>
+        <Alert
+          variant="error"
+          title="Couldn't load your alerts"
+          description={
+            extractErrorMessage(error) ||
+            'There was an error when performing your request, please contact support@runpanther.io'
+          }
+        />
+      </Box>
     );
   }
 
@@ -101,18 +95,16 @@ const ListAlerts = () => {
   //  Check how many active filters exist by checking how many columns keys exist in the URL
   return (
     <ErrorBoundary>
-      <div ref={infiniteRef}>
-        <Card mb={8}>
-          <ListAlertsTable items={alertItems} />
-        </Card>
-        {loading && (
-          <Box mb={8}>
-            <Spinner size="large" margin="auto" />
+      <Card mb={8}>
+        <ListAlertsTable items={alertItems} />
+        {hasNextPage && (
+          <Box p={8} ref={sentinelRef}>
+            <TablePlaceholder rowCount={10} />
           </Box>
         )}
-      </div>
+      </Card>
     </ErrorBoundary>
   );
 };
 
-export default ListAlerts;
+export default withSEO({ title: 'Alerts' })(ListAlerts);

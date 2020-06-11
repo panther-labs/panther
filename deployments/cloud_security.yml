@@ -23,6 +23,9 @@ Parameters:
   AnalysisApiId:
     Type: String
     Description: API Gateway for analysis-api
+  AlarmTopicArn:
+    Type: String
+    Description: SNS topic for CloudWatch alarms
   ComplianceApiId:
     Type: String
     Description: API Gateway for compliance-api
@@ -65,6 +68,45 @@ Parameters:
     AllowedValues: ['', Active, PassThrough]
     Default: ''
 
+Mappings:
+  Functions:
+    AlertForwarder:
+      Memory: 128
+      Timeout: 60
+    AlertProcessor:
+      Memory: 128
+      Timeout: 60
+    ComplianceApi:
+      Memory: 512
+      Timeout: 180
+    EventProcessor:
+      Memory: 128
+      Timeout: 120
+    PolicyEngine:
+      Memory: 128
+      Timeout: 60
+    Poller:
+      Memory: 128
+      Timeout: 900
+    Remediation:
+      Memory: 128
+      Timeout: 60
+    RemediationApi:
+      Memory: 512
+      Timeout: 120
+    RemediationProcessor:
+      Memory: 512
+      Timeout: 120
+    ResourceProcessor:
+      Memory: 256
+      Timeout: 180
+    ResourcesApi:
+      Memory: 512
+      Timeout: 120
+    SnapshotScheduler:
+      Memory: 128
+      Timeout: 120
+
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
   DebugEnabled: !Equals [!Ref Debug, true]
@@ -87,10 +129,17 @@ Resources:
       # </cfndoc>
       MessageRetentionPeriod: '1209600' # Max duration - 14 days
       KmsMasterKeyId: !Ref SqsKeyId
-      VisibilityTimeout: 60 # Should match lambda timeout
+      VisibilityTimeout: !FindInMap [Functions, AlertProcessor, Timeout]
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt AlertProcessorDLQ.Arn
         maxReceiveCount: 10
+
+  AlertProcessorQueueAlarms:
+    Type: Custom::SQSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      QueueName: !GetAtt AlertProcessorQueue.QueueName
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   AlertProcessorDLQ:
     Type: AWS::SQS::Queue
@@ -105,11 +154,25 @@ Resources:
       MessageRetentionPeriod: '1209600' # Max duration - 14 days
       VisibilityTimeout: 60
 
+  AlertProcessorDLQAlarms:
+    Type: Custom::SQSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      IsDLQ: true
+      QueueName: !GetAtt AlertProcessorDLQ.QueueName
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   AlertProcessorLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/lambda/panther-alert-processor
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  AlertProcessorMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref AlertProcessorLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   AlertProcessorFunction:
     Type: AWS::Serverless::Function
@@ -144,9 +207,9 @@ Resources:
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 128
+      MemorySize: !FindInMap [Functions, AlertProcessor, Memory]
       Runtime: go1.x
-      Timeout: 60
+      Timeout: !FindInMap [Functions, AlertProcessor, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: ReadFromSQS
@@ -177,6 +240,15 @@ Resources:
                 - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/GET/status
                 - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/policy
 
+  AlertProcessorAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, AlertProcessor, Memory]
+      FunctionName: !Ref AlertProcessorFunction
+      FunctionTimeoutSec: !FindInMap [Functions, AlertProcessor, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ##### Alert Forwarder #####
   AlertForwarderTable:
     Type: AWS::DynamoDB::Table
@@ -206,11 +278,24 @@ Resources:
         AttributeName: expiresAt
         Enabled: true
 
+  AlertForwarderTableAlarms:
+    Type: Custom::DynamoDBAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      TableName: !Ref AlertForwarderTable
+
   AlertForwarderLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/lambda/panther-alert-forwarder
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  AlertForwarderMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref AlertForwarderLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   AlertForwarderFunction:
     Type: AWS::Serverless::Function
@@ -238,10 +323,10 @@ Resources:
       # * There will be no data loss until events are purged from the ddb stream (24 hours).
       # </cfndoc>
       Handler: main
-      MemorySize: 128
+      MemorySize: !FindInMap [Functions, AlertForwarder, Memory]
       Runtime: go1.x
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      Timeout: 60
+      Timeout: !FindInMap [Functions, AlertForwarder, Timeout]
       Policies:
         - Id: ReadTableStreams
           Version: 2012-10-17
@@ -267,6 +352,15 @@ Resources:
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
 
+  AlertForwarderAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, AlertForwarder, Memory]
+      FunctionName: !Ref AlertForwarderFunction
+      FunctionTimeoutSec: !FindInMap [Functions, AlertForwarder, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ##### AWS Event Processor #####
   EventQueue:
     Type: AWS::SQS::Queue
@@ -288,7 +382,14 @@ Resources:
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt EventDLQ.Arn
         maxReceiveCount: 10
-      VisibilityTimeout: 120 # Should match lambda timeout
+      VisibilityTimeout: !FindInMap [Functions, EventProcessor, Timeout]
+
+  EventQueueAlarms:
+    Type: Custom::SQSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      QueueName: !GetAtt EventQueue.QueueName
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   EventDLQ:
     Type: AWS::SQS::Queue
@@ -302,6 +403,14 @@ Resources:
       # the Panther tool `requeue`.
       # </cfndoc>
       VisibilityTimeout: 60
+
+  EventDLQAlarms:
+    Type: Custom::SQSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      IsDLQ: true
+      QueueName: !GetAtt EventDLQ.QueueName
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   SnsSubscription:
     Type: AWS::SNS::Subscription
@@ -346,6 +455,12 @@ Resources:
       LogGroupName: /aws/lambda/panther-aws-event-processor
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
+  EventProcessorMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref EventProcessorLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   EventProcessorFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -375,9 +490,9 @@ Resources:
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 128
+      MemorySize: !FindInMap [Functions, EventProcessor, Memory]
       Runtime: go1.x
-      Timeout: 120
+      Timeout: !FindInMap [Functions, EventProcessor, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: SendAndReceiveSqsMessages
@@ -424,6 +539,15 @@ Resources:
               Action: s3:GetObject
               Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/*
 
+  EventProcessorAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, EventProcessor, Memory]
+      FunctionName: !Ref EventProcessorFunction
+      FunctionTimeoutSec: !FindInMap [Functions, EventProcessor, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ##### Compliance API #####
   ComplianceApiFunction:
     Type: AWS::Serverless::Function
@@ -445,10 +569,10 @@ Resources:
       # * Policy failures are no longer be recorded.
       # </cfndoc>
       Handler: main
-      MemorySize: 512
+      MemorySize: !FindInMap [Functions, ComplianceApi, Memory]
       Runtime: go1.x
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      Timeout: 180
+      Timeout: !FindInMap [Functions, ComplianceApi, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: DynamoManageItems
@@ -470,6 +594,21 @@ Resources:
     Properties:
       LogGroupName: /aws/lambda/panther-compliance-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  ComplianceApiMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref ComplianceApiLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  ComplianceApiAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, ComplianceApi, Memory]
+      FunctionName: !Ref ComplianceApiFunction
+      FunctionTimeoutSec: !FindInMap [Functions, ComplianceApi, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ComplianceGatewayInvocation: # allow API gateway to invoke the compliance-api Lambda function
     Type: AWS::Lambda::Permission
@@ -516,6 +655,13 @@ Resources:
         AttributeName: expiresAt
         Enabled: True
 
+  ComplianceTableAlarms:
+    Type: Custom::DynamoDBAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      TableName: !Ref ComplianceTable
+
   ##### Remediation API #####
   RemediationGatewayInvocation:
     Type: AWS::Lambda::Permission
@@ -524,38 +670,6 @@ Resources:
       FunctionName: !Ref RemediationApiFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${RemediationApiId}/*
-
-  RemediationQueue:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: panther-remediation-queue
-      # <cfndoc>
-      # This sqs queue has remediation request events that are
-      # processed by the `panther-remediation-processor` lambda.
-      #
-      # Failure Impact
-      # * Failure of this sqs queue will impact the remediation of policy violations.
-      # * Failed events will go into the `panther-remediation-queue`. When the system has recovered they should be re-queued to the `panther-remediation-queue-dlq` using the Panther tool `requeue`.
-      # </cfndoc>
-      MessageRetentionPeriod: '1209600' # Max duration - 14 days
-      KmsMasterKeyId: !Ref SqsKeyId
-      VisibilityTimeout: 120 # Should match lambda
-      RedrivePolicy:
-        deadLetterTargetArn: !GetAtt RemediationDLQ.Arn
-        maxReceiveCount: 10
-
-  RemediationDLQ:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: panther-remediation-queue-dlq
-      # <cfndoc>
-      # This is the dead letter queue for the `panther-remediation-queue`.
-      # Items are in this queue due to a failure of the `panther-remediation-processor` lambda.
-      # When the system has recovered they should be re-queued to the `panther-remediation-queue` using
-      # the Panther tool `requeue`.
-      # </cfndoc>
-      MessageRetentionPeriod: '1209600' # Max duration - 14 days
-      VisibilityTimeout: 60
 
   RemediationApiFunction:
     Type: AWS::Serverless::Function
@@ -580,9 +694,9 @@ Resources:
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 512
+      MemorySize: !FindInMap [Functions, RemediationApi, Memory]
       Runtime: go1.x
-      Timeout: 120
+      Timeout: !FindInMap [Functions, RemediationApi, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: SendSqsMessages
@@ -616,12 +730,80 @@ Resources:
       LogGroupName: /aws/lambda/panther-remediation-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
+  RemediationApiMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref RemediationApiLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  RemediationApiAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, RemediationApi, Memory]
+      FunctionName: !Ref RemediationApiFunction
+      FunctionTimeoutSec: !FindInMap [Functions, RemediationApi, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ##### Remediation Processor #####
+  RemediationQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-remediation-queue
+      # <cfndoc>
+      # This sqs queue has remediation request events that are
+      # processed by the `panther-remediation-processor` lambda.
+      #
+      # Failure Impact
+      # * Failure of this sqs queue will impact the remediation of policy violations.
+      # * Failed events will go into the `panther-remediation-queue`. When the system has recovered they should be re-queued to the `panther-remediation-queue-dlq` using the Panther tool `requeue`.
+      # </cfndoc>
+      MessageRetentionPeriod: '1209600' # Max duration - 14 days
+      KmsMasterKeyId: !Ref SqsKeyId
+      VisibilityTimeout: !FindInMap [Functions, RemediationProcessor, Timeout]
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt RemediationDLQ.Arn
+        maxReceiveCount: 10
+
+  RemediationQueueAlarms:
+    Type: Custom::SQSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      QueueName: !GetAtt RemediationQueue.QueueName
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  RemediationDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: panther-remediation-queue-dlq
+      # <cfndoc>
+      # This is the dead letter queue for the `panther-remediation-queue`.
+      # Items are in this queue due to a failure of the `panther-remediation-processor` lambda.
+      # When the system has recovered they should be re-queued to the `panther-remediation-queue` using
+      # the Panther tool `requeue`.
+      # </cfndoc>
+      MessageRetentionPeriod: '1209600' # Max duration - 14 days
+      VisibilityTimeout: 60
+
+  RemediationDLQAlarms:
+    Type: Custom::SQSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      IsDLQ: true
+      QueueName: !GetAtt RemediationDLQ.QueueName
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   RemediationProcessorLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/lambda/panther-remediation-processor
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  RemediationProcessorMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref RemediationProcessorLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   RemediationProcessorFunction:
     Type: AWS::Serverless::Function
@@ -653,9 +835,9 @@ Resources:
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 512
+      MemorySize: !FindInMap [Functions, RemediationProcessor, Memory]
       Runtime: go1.x
-      Timeout: 120
+      Timeout: !FindInMap [Functions, RemediationProcessor, Timeout]
       Policies:
         - Id: ReceiveAndDeleteSQSMessages
           Version: 2012-10-17
@@ -678,12 +860,28 @@ Resources:
               Action: lambda:InvokeFunction
               Resource: !GetAtt RemediationFunction.Arn
 
+  RemediationProcessorAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, RemediationProcessor, Memory]
+      FunctionName: !Ref RemediationProcessorFunction
+      FunctionTimeoutSec: !FindInMap [Functions, RemediationProcessor, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ##### AWS Remediation #####
   RemediationLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/lambda/panther-aws-remediation
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  RemediationMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LambdaRuntime: Python
+      LogGroupName: !Ref RemediationLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   RemediationFunction:
     Type: AWS::Serverless::Function
@@ -701,7 +899,7 @@ Resources:
       Environment:
         Variables:
           LOGGING_LEVEL: !If [DebugEnabled, DEBUG, INFO]
-          MASTER_REGION: !Sub ${AWS::Region}
+          MASTER_REGION: !Ref AWS::Region
       Layers: !If
         - AttachLayers
         - !Split # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
@@ -711,9 +909,9 @@ Resources:
             - base: !Join [',', !Ref LayerVersionArns]
               pip: !Ref PythonLayerVersionArn
         - [!Ref PythonLayerVersionArn]
-      MemorySize: 128
+      MemorySize: !FindInMap [Functions, Remediation, Memory]
       Runtime: python3.7
-      Timeout: 60
+      Timeout: !FindInMap [Functions, Remediation, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: AssumeRemediationRole
@@ -722,6 +920,15 @@ Resources:
             - Effect: Allow
               Action: sts:AssumeRole
               Resource: !Sub arn:${AWS::Partition}:iam::*:role/PantherRemediationRole-${AWS::Region}
+
+  RemediationAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, Remediation, Memory]
+      FunctionName: !Ref RemediationFunction
+      FunctionTimeoutSec: !FindInMap [Functions, Remediation, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Resources API #####
   GatewayInvocationPermission:
@@ -754,9 +961,9 @@ Resources:
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 512
+      MemorySize: !FindInMap [Functions, ResourcesApi, Memory]
       Runtime: go1.x
-      Timeout: 120
+      Timeout: !FindInMap [Functions, ResourcesApi, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: AccessComplianceApi
@@ -796,6 +1003,21 @@ Resources:
       LogGroupName: /aws/lambda/panther-resources-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
+  ResourcesApiMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref ResourcesApiLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  ResourcesApiAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, ResourcesApi, Memory]
+      FunctionName: !Ref ResourcesApiFunction
+      FunctionTimeoutSec: !FindInMap [Functions, ResourcesApi, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ResourcesTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -823,6 +1045,14 @@ Resources:
         AttributeName: expiresAt
         Enabled: true
 
+  ResourcesTableAlarms:
+    Type: Custom::DynamoDBAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      TableName: !Ref ResourcesTable
+
+  ##### Resource Processor #####
   ResourcesQueue:
     Type: AWS::SQS::Queue
     Properties:
@@ -840,7 +1070,14 @@ Resources:
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt ResourcesDLQ.Arn
         maxReceiveCount: 10
-      VisibilityTimeout: 180 # Should match lambda
+      VisibilityTimeout: !FindInMap [Functions, ResourceProcessor, Timeout]
+
+  ResourcesQueueAlarms:
+    Type: Custom::SQSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      QueueName: !GetAtt ResourcesQueue.QueueName
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ResourcesDLQ:
     Type: AWS::SQS::Queue
@@ -855,11 +1092,25 @@ Resources:
       # </cfndoc>
       VisibilityTimeout: 60
 
+  ResourcesDLQAlarms:
+    Type: Custom::SQSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      IsDLQ: true
+      QueueName: !GetAtt ResourcesDLQ.QueueName
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ResourceProcessorLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/lambda/panther-resource-processor
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  ResourceProcessorMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref ResourceProcessorLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ResourceProcessorFunction:
     Type: AWS::Serverless::Function
@@ -895,9 +1146,9 @@ Resources:
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 256
+      MemorySize: !FindInMap [Functions, ResourceProcessor, Memory]
       Runtime: go1.x
-      Timeout: 180
+      Timeout: !FindInMap [Functions, ResourceProcessor, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: SendAndReceiveSqsMessages
@@ -943,6 +1194,15 @@ Resources:
                 - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/GET/status
                 - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/POST/status
 
+  ResourceProcessorAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, ResourceProcessor, Memory]
+      FunctionName: !Ref ResourceProcessorFunction
+      FunctionTimeoutSec: !FindInMap [Functions, ResourceProcessor, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ##### Python Policy Engine #####
   PolicyEngineFunction:
     Type: AWS::Serverless::Function
@@ -957,7 +1217,7 @@ Resources:
       # * Failure of this lambda will impact evaluating policies.
       # </cfndoc>
       Handler: src.main.lambda_handler
-      MemorySize: 128
+      MemorySize: !FindInMap [Functions, PolicyEngine, Memory]
       Layers: !If
         - AttachLayers
         - !Split # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
@@ -968,22 +1228,43 @@ Resources:
               pip: !Ref PythonLayerVersionArn
         - [!Ref PythonLayerVersionArn]
       Runtime: python3.7
-      Timeout: 60
+      Timeout: !FindInMap [Functions, PolicyEngine, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: ResourceLookup
           Version: 2012-10-17
           Statement:
             - Effect: Allow
-              Action:
-                - dynamodb:GetItem
+              Action: dynamodb:GetItem
               Resource: !GetAtt ResourcesTable.Arn
+        - Id: KeyValueStore
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: dynamodb:*Item
+              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-kv-store
 
   PolicyEngineLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/lambda/panther-policy-engine
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  PolicyEngineMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LambdaRuntime: Python
+      LogGroupName: !Ref PolicyEngineLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  PolicyEngineAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, PolicyEngine, Memory]
+      FunctionName: !Ref PolicyEngineFunction
+      FunctionTimeoutSec: !FindInMap [Functions, PolicyEngine, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Snapshot Poller #####
   SnapshotQueue:
@@ -998,10 +1279,17 @@ Resources:
       # * Failed events will go into the `panther-snapshot-queue-dlq`. When the system has recovered they should be re-queued to the `panther-snapshot-queue` using the Panther tool `requeue`.
       # </cfndoc>
       KmsMasterKeyId: !Ref SqsKeyId
-      VisibilityTimeout: 900 # Should match lambda
+      VisibilityTimeout: !FindInMap [Functions, Poller, Timeout]
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt SnapshotDLQ.Arn
         maxReceiveCount: 10
+
+  SnapshotQueueAlarms:
+    Type: Custom::SQSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      QueueName: !GetAtt SnapshotQueue.QueueName
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   SnapshotDLQ:
     Type: AWS::SQS::Queue
@@ -1015,6 +1303,14 @@ Resources:
       # </cfndoc>
       MessageRetentionPeriod: '1209600' # Max duration - 14 days
       VisibilityTimeout: 60
+
+  SnapshotDLQAlarms:
+    Type: Custom::SQSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      IsDLQ: true
+      QueueName: !GetAtt SnapshotDLQ.QueueName
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   PollerFunction:
     Type: AWS::Serverless::Function
@@ -1045,9 +1341,9 @@ Resources:
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 128
+      MemorySize: !FindInMap [Functions, Poller, Memory]
       Runtime: go1.x
-      Timeout: 900
+      Timeout: !FindInMap [Functions, Poller, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: ManageSQSMessages
@@ -1085,6 +1381,21 @@ Resources:
       LogGroupName: /aws/lambda/panther-snapshot-pollers
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
+  PollerMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref PollerLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  PollerAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, Poller, Memory]
+      FunctionName: !Ref PollerFunction
+      FunctionTimeoutSec: !FindInMap [Functions, Poller, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ##### Snapshot Scheduler #####
   SnapshotSchedulerFunction:
     Type: AWS::Serverless::Function
@@ -1110,9 +1421,9 @@ Resources:
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 128
+      MemorySize: !FindInMap [Functions, SnapshotScheduler, Memory]
       Runtime: go1.x
-      Timeout: 120
+      Timeout: !FindInMap [Functions, SnapshotScheduler, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: InvokeSnapshotAPI
@@ -1140,3 +1451,18 @@ Resources:
     Properties:
       LogGroupName: /aws/lambda/panther-snapshot-scheduler
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  SnapshotSchedulerMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref SnapshotSchedulerLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  SnapshotSchedulerAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, SnapshotScheduler, Memory]
+      FunctionName: !Ref SnapshotSchedulerFunction
+      FunctionTimeoutSec: !FindInMap [Functions, SnapshotScheduler, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources

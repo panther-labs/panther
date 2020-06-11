@@ -22,20 +22,21 @@ import { Alert, Box } from 'pouncejs';
 import urls from 'Source/urls';
 import PolicyForm from 'Components/forms/PolicyForm';
 import { ListPoliciesDocument } from 'Pages/ListPolicies';
-import { PolicyDetails } from 'Generated/schema';
+import { AddPolicyInput } from 'Generated/schema';
 import { DEFAULT_POLICY_FUNCTION } from 'Source/constants';
+import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage } from 'Helpers/utils';
 import useRouter from 'Hooks/useRouter';
 import { useCreatePolicy } from './graphql/createPolicy.generated';
 
-export const initialValues: PolicyDetails = {
+const initialValues: Required<AddPolicyInput> = {
+  id: '',
   autoRemediationId: '',
   autoRemediationParameters: '{}',
   description: '',
   displayName: '',
   enabled: true,
   suppressions: [],
-  id: '',
   reference: '',
   resourceTypes: [],
   runbook: '',
@@ -63,18 +64,18 @@ const CreatePolicyPage: React.FC = () => {
         <PolicyForm initialValues={initialValues} onSubmit={handleSubmit} />
       </Panel>
       {error && (
-        <Alert
-          mt={2}
-          mb={6}
-          variant="error"
-          title={
-            extractErrorMessage(error) ||
-            'An unknown error occured as we were trying to create your policy'
-          }
-        />
+        <Box mt={2} mb={6}>
+          <Alert
+            variant="error"
+            title={
+              extractErrorMessage(error) ||
+              'An unknown error occured as we were trying to create your policy'
+            }
+          />
+        </Box>
       )}
     </Box>
   );
 };
 
-export default CreatePolicyPage;
+export default withSEO({ title: 'New Policy' })(CreatePolicyPage);

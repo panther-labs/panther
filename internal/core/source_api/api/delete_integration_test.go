@@ -26,7 +26,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
@@ -38,35 +37,18 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/core/source_api/ddb"
+	"github.com/panther-labs/panther/pkg/awssqs"
 	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/pkg/testutils"
 )
 
-type mockDDBClient struct {
-	dynamodbiface.DynamoDBAPI
-	mock.Mock
-}
-
-func (client *mockDDBClient) GetItem(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
-	args := client.Called(input)
-	return args.Get(0).(*dynamodb.GetItemOutput), args.Error(1)
-}
-
-func (client *mockDDBClient) DeleteItem(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
-	args := client.Called(input)
-	return args.Get(0).(*dynamodb.DeleteItemOutput), args.Error(1)
-}
-
-func (client *mockDDBClient) Scan(input *dynamodb.ScanInput) (*dynamodb.ScanOutput, error) {
-	args := client.Called(input)
-	return args.Get(0).(*dynamodb.ScanOutput), args.Error(1)
-}
-
 func TestDeleteIntegrationItem(t *testing.T) {
-	mockClient := &mockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	mockClient := &testutils.DynamoDBMock{}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 
 	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
-	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWSScan), nil)
+	mockClient.On("GetItem", mock.Anything).
+		Return(generateGetItemOutput(models.IntegrationTypeAWSScan), nil)
 
 	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
 		IntegrationID: aws.String(testIntegrationID),
@@ -77,16 +59,17 @@ func TestDeleteIntegrationItem(t *testing.T) {
 }
 
 func TestDeleteLogIntegration(t *testing.T) {
-	mockClient := &mockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	mockClient := &testutils.DynamoDBMock{}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 
-	mockSqs := &mockSQSClient{}
-	SQSClient = mockSqs
-	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	mockSqs := &testutils.SqsMock{}
+	sqsClient = mockSqs
+
+	env.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	expectedGetQueueAttributesInput := &sqs.GetQueueAttributesInput{
 		AttributeNames: aws.StringSlice([]string{"Policy"}),
-		QueueUrl:       aws.String(logProcessorQueueURL),
+		QueueUrl:       aws.String(env.LogProcessorQueueURL),
 	}
 
 	scanResult := &dynamodb.ScanOutput{
@@ -105,7 +88,7 @@ func TestDeleteLogIntegration(t *testing.T) {
 	expectedAttributes := generateQueueAttributeOutput(t, []string{})
 	expectedSetAttributes := &sqs.SetQueueAttributesInput{
 		Attributes: expectedAttributes,
-		QueueUrl:   aws.String(logProcessorQueueURL),
+		QueueUrl:   aws.String(env.LogProcessorQueueURL),
 	}
 	mockSqs.On("SetQueueAttributes", expectedSetAttributes).Return(&sqs.SetQueueAttributesOutput{}, nil)
 
@@ -121,12 +104,12 @@ func TestDeleteLogIntegrationKeepSqsQueuePermissions(t *testing.T) {
 	// This scenario tests the case where we delete a source
 	// but another source for that account exists. In that case we
 	// should remove the SQS permissions for that account
-	mockClient := &mockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	mockClient := &testutils.DynamoDBMock{}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 
-	mockSqs := &mockSQSClient{}
-	SQSClient = mockSqs
-	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	mockSqs := &testutils.SqsMock{}
+	sqsClient = mockSqs
+	env.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	additionLogSourceEntry := generateDDBAttributes(models.IntegrationTypeAWS3)
 	additionLogSourceEntry["integrationId"] = &dynamodb.AttributeValue{
@@ -155,8 +138,8 @@ func TestDeleteLogIntegrationKeepSqsQueuePermissions(t *testing.T) {
 }
 
 func TestDeleteIntegrationItemError(t *testing.T) {
-	mockClient := &mockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	mockClient := &testutils.DynamoDBMock{}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 
 	mockErr := awserr.New(
 		"ErrCodeInternalServerError",
@@ -174,16 +157,16 @@ func TestDeleteIntegrationItemError(t *testing.T) {
 	mockClient.AssertExpectations(t)
 }
 func TestDeleteIntegrationPolicyNotFound(t *testing.T) {
-	mockClient := &mockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	mockClient := &testutils.DynamoDBMock{}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 
-	mockSqs := &mockSQSClient{}
-	SQSClient = mockSqs
-	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	mockSqs := &testutils.SqsMock{}
+	sqsClient = mockSqs
+	env.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	expectedGetQueueAttributesInput := &sqs.GetQueueAttributesInput{
 		AttributeNames: aws.StringSlice([]string{"Policy"}),
-		QueueUrl:       aws.String(logProcessorQueueURL),
+		QueueUrl:       aws.String(env.LogProcessorQueueURL),
 	}
 
 	scanResult := &dynamodb.ScanOutput{
@@ -201,7 +184,7 @@ func TestDeleteIntegrationPolicyNotFound(t *testing.T) {
 	expectedAttributes := generateQueueAttributeOutput(t, []string{})
 	expectedSetAttributes := &sqs.SetQueueAttributesInput{
 		Attributes: expectedAttributes,
-		QueueUrl:   aws.String(logProcessorQueueURL),
+		QueueUrl:   aws.String(env.LogProcessorQueueURL),
 	}
 	mockSqs.On("SetQueueAttributes", expectedSetAttributes).Return(&sqs.SetQueueAttributesOutput{}, nil)
 
@@ -214,8 +197,8 @@ func TestDeleteIntegrationPolicyNotFound(t *testing.T) {
 }
 
 func TestDeleteIntegrationItemDoesNotExist(t *testing.T) {
-	mockClient := &mockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	mockClient := &testutils.DynamoDBMock{}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 
 	mockClient.On("GetItem", mock.Anything).Return(&dynamodb.GetItemOutput{}, nil)
 
@@ -229,12 +212,12 @@ func TestDeleteIntegrationItemDoesNotExist(t *testing.T) {
 }
 
 func TestDeleteIntegrationDeleteOfItemFails(t *testing.T) {
-	mockClient := &mockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	mockClient := &testutils.DynamoDBMock{}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 
-	mockSqs := &mockSQSClient{}
-	SQSClient = mockSqs
-	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	mockSqs := &testutils.SqsMock{}
+	sqsClient = mockSqs
+	env.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	scanResult := &dynamodb.ScanOutput{
 		Items: []map[string]*dynamodb.AttributeValue{
@@ -263,12 +246,12 @@ func TestDeleteIntegrationDeleteRecoveryFails(t *testing.T) {
 	core, recordedLogs := observer.New(zapcore.ErrorLevel)
 	zap.ReplaceGlobals(zap.New(core))
 
-	mockClient := &mockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	mockClient := &testutils.DynamoDBMock{}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 
-	mockSqs := &mockSQSClient{}
-	SQSClient = mockSqs
-	logProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	mockSqs := &testutils.SqsMock{}
+	sqsClient = mockSqs
+	env.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	scanResult := &dynamodb.ScanOutput{
 		Items: []map[string]*dynamodb.AttributeValue{
@@ -313,14 +296,14 @@ func generateDDBAttributes(integrationType string) map[string]*dynamodb.Attribut
 func generateQueueAttributeOutput(t *testing.T, accountIDs []string) map[string]*string {
 	policyAttribute := aws.String("")
 	if len(accountIDs) > 0 {
-		statements := make([]SqsPolicyStatement, len(accountIDs))
+		statements := make([]awssqs.SqsPolicyStatement, len(accountIDs))
 		for i, accountID := range accountIDs {
-			statements[i] = SqsPolicyStatement{
+			statements[i] = awssqs.SqsPolicyStatement{
 				SID:       fmt.Sprintf("PantherSubscriptionSID-%s", accountID),
 				Effect:    "Allow",
 				Principal: map[string]string{"AWS": "*"},
 				Action:    "sqs:SendMessage",
-				Resource:  logProcessorQueueArn,
+				Resource:  "*",
 				Condition: map[string]interface{}{
 					"ArnLike": map[string]string{
 						"aws:SourceArn": fmt.Sprintf("arn:aws:sns:*:%s:*", accountID),
@@ -328,7 +311,7 @@ func generateQueueAttributeOutput(t *testing.T, accountIDs []string) map[string]
 				},
 			}
 		}
-		policy := SqsPolicy{
+		policy := awssqs.SqsPolicy{
 			Version:    "2008-10-17",
 			Statements: statements,
 		}

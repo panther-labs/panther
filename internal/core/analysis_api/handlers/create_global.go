@@ -51,6 +51,10 @@ func CreateGlobal(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
 
+	if err = updateLayer(typeGlobal); err != nil {
+		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+	}
+
 	return gatewayapi.MarshalResponse(item.Global(), http.StatusCreated)
 }
 

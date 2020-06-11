@@ -21,9 +21,13 @@ package testutil
 // used for test code that should NOT be in production code
 
 import (
+	"bufio"
+	"io/ioutil"
+	"os"
 	"testing"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -72,4 +76,30 @@ func CheckPantherParser(t *testing.T, log string, parser parsers.LogParser, expe
 		expect := expectMore[i]
 		EqualPantherLog(t, expect, []*parsers.PantherLog{result}, nil)
 	}
+}
+
+func MustReadFileString(filename string) string {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		panic(err)
+	}
+	return string(data)
+}
+
+func MustReadFileJSONLines(filename string) (lines []string) {
+	fd, err := os.Open(filename)
+	if err != nil {
+		panic(errors.Wrapf(err, "Failed to open file %q", filename))
+	}
+	scanner := bufio.NewScanner(fd)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if len(line) > 0 {
+			lines = append(lines, scanner.Text())
+		}
+	}
+	if scanner.Err() != nil {
+		panic(errors.Wrap(scanner.Err(), "encountered issue while reading file"))
+	}
+	return
 }

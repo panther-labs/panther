@@ -22,6 +22,7 @@ import (
 	"crypto/sha1" // nolint: gosec
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -31,10 +32,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"gopkg.in/yaml.v2"
-
-	"github.com/panther-labs/panther/pkg/shutil"
-	"github.com/panther-labs/panther/tools/cfnparse"
+	"github.com/magefile/mage/sh"
 )
 
 const (
@@ -57,7 +55,7 @@ func deployTemplate(
 ) (map[string]string, error) {
 
 	// 1) Generate final template, with large assets packaged in S3.
-	template, err := cfnPackage(awsSession, templatePath, bucket, stack)
+	packagedTemplate, err := samPackage(*awsSession.Config.Region, templatePath, bucket)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +73,7 @@ func deployTemplate(
 		changeSetType = "UPDATE"
 	}
 
-	changeID, err := createChangeSet(awsSession, bucket, stack, changeSetType, template, params)
+	changeID, err := createChangeSet(awsSession, bucket, stack, changeSetType, packagedTemplate, params)
 	if err != nil {
 		return nil, err
 	}
@@ -88,103 +86,27 @@ func deployTemplate(
 	return executeChangeSet(awsSession, changeID, changeSetType, stack)
 }
 
-// Upload resources to S3 and return the modified CloudFormation template.
+// Package resources in S3 and return the path to the modified CloudFormation template.
 //
-// This is similar to the "aws cloudformation package" CLI command, but our implementation
-// is more robust and performant. Differences include:
+// This uses "sam package" to be compatible with SAR, which is also more complete and robust than
+// "aws cloudformation package"
 //
-//    - We include S3 versions when possible so CFN can quickly check if an asset is identical
-//    - We generate zipfiles with hashes that do not depend on timestamps
-//    - AWS CLI suffers from a region bug when writing S3 URLs
-//        (possibly related to https://github.com/aws/aws-cli/issues/4372)
-//
-// Resources currently supported:
-//    - AWS::AppSync::GraphQLSchema - DefinitionS3Location
-//    - AWS::CloudFormation::Stack - TemplateURL
-//    - AWS::Serverless::Function - CodeUri
-//
-// The bucket parameter can be "" to skip S3 packaging (e.g. for the bootstrap stack) -
-// in that case, we still parse the template and re-emit it to strip comments / extra spaces
-func cfnPackage(awsSession *session.Session, templatePath, bucket, stack string) ([]byte, error) {
-	cfnBody, err := cfnparse.ParseTemplate(templatePath)
-	if err != nil {
-		return nil, err
-	}
-
-	if bucket == "" {
-		// No S3 packaging - just emit the template in standard form
-		return yaml.Marshal(cfnBody)
-	}
-
+// The bucket name can be blank if no S3 bucket is actually needed (e.g. bootstrap stack).
+func samPackage(region, templatePath, bucket string) (string, error) {
 	logger.Debugf("deploy: packaging %s assets", templatePath)
-	for _, resource := range cfnBody["Resources"].(map[string]interface{}) {
-		r := resource.(map[string]interface{})
-		switch r["Type"].(string) {
-		// Note: filepaths are relative to the template, but mage is running from the repo root
-
-		case "AWS::AppSync::GraphQLSchema":
-			properties := r["Properties"].(map[string]interface{})
-			if path, ok := properties["DefinitionS3Location"].(string); ok && !strings.HasPrefix(path, "s3://") {
-				// This GraphQLSchema resource has a file location specified instead of S3 - upload it
-				assetPath := filepath.Join(filepath.Dir(templatePath), path)
-				key, _, err := uploadAsset(awsSession, assetPath, bucket, stack)
-				if err != nil {
-					return nil, err
-				}
-				properties["DefinitionS3Location"] = fmt.Sprintf("s3://%s/%s", bucket, key)
-			}
-
-		case "AWS::CloudFormation::Stack":
-			properties := r["Properties"].(map[string]interface{})
-			if path, ok := properties["TemplateURL"].(string); ok && !strings.HasPrefix(path, "https://") {
-				// This TemplateURL resource has a file location instead of S3 - package it
-
-				// Recursively package nested template assets
-				nestedTemplatePath := filepath.Join(filepath.Dir(templatePath), path)
-				body, err := cfnPackage(awsSession, nestedTemplatePath, bucket, stack)
-				if err != nil {
-					return nil, err
-				}
-
-				// Save the final nested template locally and upload to S3
-				savePath := filepath.Join("out", "deployments",
-					fmt.Sprintf("%s-nested-%s.yml", stack, filepath.Base(path)))
-				if err = writeFile(savePath, body); err != nil {
-					return nil, err
-				}
-
-				key, _, err := uploadAsset(awsSession, savePath, bucket, stack)
-				if err != nil {
-					return nil, err
-				}
-				properties["TemplateURL"] = fmt.Sprintf("https://s3.amazonaws.com/%s/%s", bucket, key)
-			}
-
-		case "AWS::Serverless::Function":
-			properties := r["Properties"].(map[string]interface{})
-			if path, ok := properties["CodeUri"].(string); ok && !strings.HasPrefix(path, "s3://") {
-				// This CodeUri resource has a file location specified instead of S3 - upload it
-				assetPath := filepath.Join(filepath.Dir(templatePath), path)
-
-				zipPath := filepath.Join("out", "deployments", "zip", properties["FunctionName"].(string)+".zip")
-				if err = shutil.ZipDirectory(assetPath, zipPath, false); err != nil {
-					return nil, fmt.Errorf("failed to zip %s: %v", assetPath, err)
-				}
-
-				key, version, err := uploadAsset(awsSession, zipPath, bucket, stack)
-				if err != nil {
-					return nil, err
-				}
-				properties["CodeUri"] = map[string]interface{}{
-					"Bucket":  bucket,
-					"Key":     key,
-					"Version": version,
-				}
-			}
-		}
+	if bucket == "" {
+		// "sam package" requires a bucket name even if it isn't used
+		// Put a default value that can't be possibly be a real bucket (names must have 3+ characters)
+		bucket = "NA"
 	}
 
-	return yaml.Marshal(cfnBody)
+	outFile := filepath.Join("out", "deployments", "package."+filepath.Base(templatePath))
+	if err := os.MkdirAll(filepath.Dir(outFile), 0755); err != nil {
+		return "", fmt.Errorf("failed to create out/deployments: %v", err)
+	}
+
+	return outFile, sh.Run(filepath.Join(pythonVirtualEnvPath, "bin", "sam"),
+		"package", "--s3-bucket", bucket, "-t", templatePath, "--output-template-file", outFile, "--region", region)
 }
 
 // Upload a CloudFormation asset to S3 if it doesn't already exist, returning s3 object key and version
@@ -205,7 +127,7 @@ func uploadAsset(awsSession *session.Session, assetPath, bucket, stack string) (
 
 	if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NotFound" {
 		// object does not exist yet - upload it!
-		response, err := uploadFileToS3(awsSession, assetPath, bucket, s3Key, nil)
+		response, err := uploadFileToS3(awsSession, assetPath, bucket, s3Key)
 		if err != nil {
 			return "", "", fmt.Errorf("package %s: failed to upload %s: %v", stack, assetPath, err)
 		}
@@ -221,6 +143,7 @@ func uploadAsset(awsSession *session.Session, assetPath, bucket, stack string) (
 // If the stack is ROLLBACK_COMPLETE or otherwise failed to create, it will be deleted automatically.
 // If the stack is still in progress, this will wait until it finishes.
 // If the stack exists, its outputs are returned to the caller (once complete).
+//     A return of (nil, nil) means the stack does not exist.
 func prepareStack(awsSession *session.Session, stackName string) (map[string]string, error) {
 	client := cfn.New(awsSession)
 
@@ -248,7 +171,7 @@ func prepareStack(awsSession *session.Session, stackName string) (map[string]str
 
 		if stackName == bootstrapStack {
 			// If the very first stack failed to create, we need to do a full teardown before trying again.
-			// Otherwise, there may be orphaned S3 buckets and an ACM cert that will never be used.
+			// Otherwise, there may be orphaned S3 buckets that will never be used.
 			logger.Warnf("The very first %s stack never created successfully (%s)", bootstrapStack, status)
 			logger.Warnf("Running 'mage teardown' to fully remove orphaned resources before trying again")
 			Teardown()
@@ -259,12 +182,12 @@ func prepareStack(awsSession *session.Session, stackName string) (map[string]str
 		if _, err := client.DeleteStack(&cfn.DeleteStackInput{StackName: &stackName}); err != nil {
 			return nil, fmt.Errorf("failed to start stack %s deletion: %v", stackName, err)
 		}
-		if _, err := waitForStackDelete(client, stackName); err != nil {
-			return nil, err
-		}
-	}
+		_, err = waitForStackDelete(client, stackName)
+		return nil, err // stack deleted - there are no outputs
 
-	return flattenStackOutputs(stack), nil
+	default:
+		return flattenStackOutputs(stack), nil
+	}
 }
 
 // Create a CloudFormation change set, returning its id.
@@ -274,7 +197,7 @@ func createChangeSet(
 	awsSession *session.Session,
 	bucket, stack string,
 	changeSetType string, // "CREATE" or "UPDATE"
-	template []byte,
+	templatePath string,
 	params map[string]string,
 ) (*string, error) {
 
@@ -304,22 +227,22 @@ func createChangeSet(
 		StackName:     &stack,
 		Tags: []*cfn.Tag{ // Tags are propagated to every supported resource in the stack
 			{Key: aws.String("Application"), Value: aws.String("Panther")},
+			{Key: aws.String("PantherEdition"), Value: aws.String("Community")},
 			{Key: aws.String("PantherVersion"), Value: &pantherVersion},
 			{Key: aws.String("Stack"), Value: &stack},
 		},
 	}
 
-	// Always save the final template to help with troubleshooting a failed deployment.
-	path := filepath.Join("out", "deployments", stack+".yml")
-	if err := writeFile(path, template); err != nil {
-		return nil, err
+	template, err := ioutil.ReadFile(templatePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read template %s: %v", templatePath, err)
 	}
 
 	if len(template) <= maxTemplateSize {
 		createInput.SetTemplateBody(string(template))
 	} else {
 		// Upload to S3 (if it doesn't already exist)
-		key, _, err := uploadAsset(awsSession, path, bucket, stack)
+		key, _, err := uploadAsset(awsSession, templatePath, bucket, stack)
 		if err != nil {
 			return nil, err
 		}

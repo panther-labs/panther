@@ -18,10 +18,12 @@
 
 import * as React from 'react';
 import { Alert, Box, Flex, useSnackbar } from 'pouncejs';
-import { Field, Formik } from 'formik';
+import { Field, Form, Formik } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import useAuth from 'Hooks/useAuth';
+import { useEditUser } from 'Components/sidesheets/EditUserSidesheet/graphql/editUser.generated';
+import { extractErrorMessage } from 'Helpers/utils';
 
 interface EditProfileFormProps {
   onSuccess: () => void;
@@ -34,8 +36,25 @@ interface EditProfileFormValues {
 }
 
 const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) => {
-  const { userInfo, updateUserInfo } = useAuth();
+  const { userInfo, refetchUserInfo } = useAuth();
   const { pushSnackbar } = useSnackbar();
+  const [status, setStatus] = React.useState(null);
+
+  const [editUser] = useEditUser({
+    onCompleted: () => {
+      onSuccess();
+      pushSnackbar({
+        variant: 'success',
+        title: 'User profile updated successfully',
+      });
+      return refetchUserInfo();
+    },
+    onError: updateUserError =>
+      setStatus({
+        title: 'Unable to update profile',
+        message: extractErrorMessage(updateUserError) || 'An unknown error occurred',
+      }),
+  });
 
   const initialValues = {
     email: userInfo.email || '',
@@ -46,64 +65,52 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) => {
   return (
     <Formik<EditProfileFormValues>
       initialValues={initialValues}
-      onSubmit={async ({ givenName, familyName }, { setStatus }) =>
-        updateUserInfo({
-          newAttributes: {
-            given_name: givenName,
-            family_name: familyName,
+      onSubmit={async values =>
+        editUser({
+          variables: {
+            input: {
+              id: userInfo.sub,
+              familyName: values.familyName,
+              givenName: values.givenName,
+            },
           },
-          onSuccess: () => {
-            onSuccess();
-            pushSnackbar({ title: 'Successfully updated profile!', variant: 'success' });
-          },
-          onError: ({ message }) =>
-            setStatus({
-              title: 'Unable to update profile',
-              message,
-            }),
         })
       }
     >
-      {({ handleSubmit, status, isSubmitting, isValid, dirty }) => (
-        <Box as="form" onSubmit={handleSubmit}>
-          {status && (
-            <Alert variant="error" title={status.title} description={status.message} mb={6} />
-          )}
+      <Form>
+        {status && (
+          <Box mb={6}>
+            <Alert variant="error" title={status.title} description={status.message} />
+          </Box>
+        )}
+        <Field
+          as={FormikTextInput}
+          label="Email address"
+          placeholder="john@doe.com"
+          disabled
+          name="email"
+          aria-required
+          readonly
+          mb={3}
+        />
+        <Flex mb={6} justify="space-between">
           <Field
             as={FormikTextInput}
-            label="Email address"
-            placeholder="john@doe.com"
-            disabled
-            name="email"
+            label="First Name"
+            placeholder="John"
+            name="givenName"
             aria-required
-            readonly
-            mb={3}
           />
-          <Flex mb={6} justify="space-between">
-            <Field
-              as={FormikTextInput}
-              label="First Name"
-              placeholder="John"
-              name="givenName"
-              aria-required
-            />
-            <Field
-              as={FormikTextInput}
-              label="Last Name"
-              placeholder="Doe"
-              name="familyName"
-              aria-required
-            />
-          </Flex>
-          <SubmitButton
-            width={1}
-            submitting={isSubmitting}
-            disabled={isSubmitting || !isValid || !dirty}
-          >
-            Update
-          </SubmitButton>
-        </Box>
-      )}
+          <Field
+            as={FormikTextInput}
+            label="Last Name"
+            placeholder="Doe"
+            name="familyName"
+            aria-required
+          />
+        </Flex>
+        <SubmitButton width={1}>Update</SubmitButton>
+      </Form>
     </Formik>
   );
 };

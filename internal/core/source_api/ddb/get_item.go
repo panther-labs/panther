@@ -22,13 +22,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-// GetIntegration returns an integration by its ID
-func (ddb *DDB) GetIntegration(integrationID *string) (*models.SourceIntegrationMetadata, error) {
+// GetItem returns an integration by its ID
+func (ddb *DDB) GetItem(integrationID *string) (*IntegrationItem, error) {
 	output, err := ddb.Client.GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(ddb.TableName),
 		Key: map[string]*dynamodb.AttributeValue{
@@ -39,12 +39,12 @@ func (ddb *DDB) GetIntegration(integrationID *string) (*models.SourceIntegration
 		return nil, &genericapi.AWSError{Err: err, Method: "Dynamodb.GetItem"}
 	}
 
-	var integration models.SourceIntegrationMetadata
+	var integration IntegrationItem
 	if output.Item == nil {
-		return nil, err
+		return nil, nil
 	}
 	if err := dynamodbattribute.UnmarshalMap(output.Item, &integration); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to unmarshal DDB item")
 	}
 
 	return &integration, nil

@@ -50,8 +50,10 @@ import Page404 from 'Pages/404';
 import APIErrorFallback from 'Components/utils/ApiErrorFallback';
 import LogAnalysisOverview from 'Pages/LogAnalysisOverview';
 import EditComplianceSourcePage from 'Pages/EditComplianceSource';
-import EditLogSourcePage from 'Pages/EditLogSource';
+import EditS3LogSourcePage from 'Pages/EditS3LogSource';
 import PromptController from 'Components/utils/PromptController';
+import EditGlobalModulePage from 'Pages/EditGlobaModule';
+import LogSourceOnboarding from 'Pages/LogSourceOnboarding';
 
 // Main page container for the web application, Navigation bar and Content body goes here
 const PrimaryPageLayout: React.FunctionComponent = () => {
@@ -81,7 +83,7 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
             <APIErrorFallback>
               <Switch>
                 <Route exact path="/" component={LandingPage} />
-                /******************** COMPLIANCE ******************************/
+                {/* ******************* COMPLIANCE ***************************** */}
                 <Redirect exact from={urls.compliance.home()} to={urls.compliance.overview()} />
                 <Route exact path={urls.compliance.overview()} component={OverviewPage} />
                 <Route exact path={urls.compliance.policies.list()} component={ListPoliciesPage} />
@@ -125,7 +127,7 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   path={urls.compliance.sources.edit(':id')}
                   component={EditComplianceSourcePage}
                 />
-                /******************** LOG ANALYSIS ******************************/
+                {/* ******************* LOG ANALYSIS ***************************** */}
                 <Redirect exact from={urls.logAnalysis.home()} to={urls.logAnalysis.overview()} />
                 <Route exact path={urls.logAnalysis.overview()} component={LogAnalysisOverview} />
                 <Route exact path={urls.logAnalysis.rules.list()} component={ListRulesPage} />
@@ -149,17 +151,28 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                 />
                 <Route
                   exact
-                  path={urls.logAnalysis.sources.create()}
+                  path={urls.logAnalysis.sources.create(':type')}
                   component={CreateLogSourcePage}
                 />
                 <Route
                   exact
-                  path={urls.logAnalysis.sources.edit(':id')}
-                  component={EditLogSourcePage}
+                  path={urls.logAnalysis.sources.create()}
+                  component={LogSourceOnboarding}
                 />
-                /******************** SETTINGS ******************************/
+                <Route
+                  exact
+                  path={urls.logAnalysis.sources.edit(':id', 's3')}
+                  component={EditS3LogSourcePage}
+                />
+                <Redirect
+                  exact
+                  from={`${urls.logAnalysis.sources.list()}:type`}
+                  to={urls.logAnalysis.sources.list()}
+                />
+                {/* ******************* SETTINGS ***************************** */}
                 <Redirect exact from={urls.settings.home()} to={urls.settings.general()} />
                 <Route exact path={urls.settings.general()} component={GeneralSettingsPage} />
+                <Route exact path={urls.settings.globalModule()} component={EditGlobalModulePage} />
                 <Route exact path={urls.settings.users()} component={UsersPage} />
                 <Route exact path={urls.settings.destinations()} component={DestinationsPage} />
                 <Route component={Page404} />

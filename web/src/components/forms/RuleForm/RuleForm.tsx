@@ -17,23 +17,15 @@
  */
 
 import React from 'react';
-import { RuleDetails, PolicyUnitTest } from 'Generated/schema';
+import { AddRuleInput, PolicyUnitTest, UpdateRuleInput } from 'Generated/schema';
 import * as Yup from 'yup';
-import { Box } from 'pouncejs';
+import { Box, Button, Flex } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import BaseRuleForm, {
-  BaseRuleFormProps,
-  ruleCoreEditableFields,
-  BaseRuleFormCoreFields,
-  BaseRuleFormTestFields,
-} from 'Components/forms/BaseRuleForm';
-
-export const ruleEditableFields = [
-  ...ruleCoreEditableFields,
-  'dedupPeriodMinutes',
-  'logTypes',
-  'tests',
-] as const;
+import { BaseRuleFormCoreFields, BaseRuleFormTestFields } from 'Components/forms/BaseRuleForm';
+import { Form, Formik } from 'formik';
+import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';
+import FormSessionRestoration from 'Components/utils/FormSessionRestoration';
+import useRouter from 'Hooks/useRouter';
 
 // The validation checks that Formik will run
 const validationSchema = Yup.object().shape({
@@ -41,9 +33,7 @@ const validationSchema = Yup.object().shape({
   body: Yup.string().required(),
   severity: Yup.string().required(),
   dedupPeriodMinutes: Yup.number().integer(),
-  logTypes: Yup.array()
-    .of(Yup.string())
-    .required(),
+  logTypes: Yup.array().of(Yup.string()).required(),
   tests: Yup.array<PolicyUnitTest>()
     .of(
       Yup.object().shape({
@@ -53,25 +43,46 @@ const validationSchema = Yup.object().shape({
     .unique('Test names must be unique', 'name'),
 });
 
-export type RuleFormValues = Pick<RuleDetails, typeof ruleEditableFields[number]>;
-export type RuleFormProps = Pick<BaseRuleFormProps<RuleFormValues>, 'initialValues' | 'onSubmit'>;
+export type RuleFormValues = Required<AddRuleInput> | Required<UpdateRuleInput>;
+export type RuleFormProps = {
+  /** The initial values of the form */
+  initialValues: RuleFormValues;
+
+  /** callback for the submission of the form */
+  onSubmit: (values: RuleFormValues) => void;
+};
 
 const RuleForm: React.FC<RuleFormProps> = ({ initialValues, onSubmit }) => {
+  const { history } = useRouter();
+
   return (
-    <BaseRuleForm<RuleFormValues>
+    <Formik<RuleFormValues>
       initialValues={initialValues}
       onSubmit={onSubmit}
+      enableReinitialize
       validationSchema={validationSchema}
     >
-      <Box as="article">
-        <ErrorBoundary>
-          <BaseRuleFormCoreFields type="rule" />
-        </ErrorBoundary>
-        <ErrorBoundary>
-          <BaseRuleFormTestFields />
-        </ErrorBoundary>
-      </Box>
-    </BaseRuleForm>
+      <FormSessionRestoration sessionId={`rule-form-${initialValues.id || 'create'}`}>
+        <Form>
+          <Box as="article">
+            <ErrorBoundary>
+              <BaseRuleFormCoreFields type="rule" />
+            </ErrorBoundary>
+            <ErrorBoundary>
+              <BaseRuleFormTestFields />
+            </ErrorBoundary>
+          </Box>
+          <Flex borderTop="1px solid" borderColor="grey100" pt={6} mt={10} justify="flex-end">
+            <Flex>
+              <Button variant="default" size="large" onClick={history.goBack} mr={4}>
+                Cancel
+              </Button>
+              <SubmitButton>{initialValues.id ? 'Update' : 'Create'}</SubmitButton>
+            </Flex>
+          </Flex>
+        </Form>
+      </FormSessionRestoration>
+    </Formik>
   );
 };
 

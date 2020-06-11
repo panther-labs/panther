@@ -77,7 +77,7 @@ func classifyGuardDuty(_ gjson.Result, metadata *CloudTrailMetadata) []*resource
 				ResourceType: schemas.GuardDutySchema,
 			}}
 	default:
-		zap.L().Warn("guardduty: encountered unknown event name", zap.String("eventName", metadata.eventName))
+		zap.L().Info("guardduty: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 }

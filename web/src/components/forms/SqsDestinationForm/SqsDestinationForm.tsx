@@ -27,6 +27,7 @@ import BaseDestinationForm, {
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
 import JsonViewer from 'Components/JsonViewer';
+import { pantherConfig } from 'Source/config';
 
 type SQSFieldValues = Pick<DestinationConfigInput, 'sqs'>;
 
@@ -38,9 +39,7 @@ interface SQSDestinationFormProps {
 const sqsFieldsValidationSchema = Yup.object().shape({
   outputConfig: Yup.object().shape({
     sqs: Yup.object().shape({
-      queueUrl: Yup.string()
-        .url('Queue URL must be a valid url')
-        .required('Queue URL is required'),
+      queueUrl: Yup.string().url('Queue URL must be a valid url').required('Queue URL is required'),
     }),
   }),
 });
@@ -53,14 +52,13 @@ const SQS_QUEUE_POLICY = {
       Effect: 'Allow',
       Action: 'sqs:SendMessage',
       Principal: {
-        AWS: `arn:aws:iam::${process.env.AWS_ACCOUNT_ID}:root`,
+        AWS: `arn:aws:iam::${pantherConfig.AWS_ACCOUNT_ID}:root`,
       },
       Resource: '<Destination-SQS-Queue-ARN>',
     },
   ],
 };
 
-// @ts-ignore
 // We merge the two schemas together: the one deriving from the common fields, plus the custom
 // ones that change for each destination.
 // https://github.com/jquense/yup/issues/522

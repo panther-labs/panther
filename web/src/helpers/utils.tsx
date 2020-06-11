@@ -31,11 +31,14 @@ import {
   INCLUDE_SPECIAL_CHAR_REGEX,
   INCLUDE_UPPERCASE_REGEX,
   CHECK_IF_HASH_REGEX,
+  SOURCE_LABEL_REGEX,
 } from 'Source/constants';
 import mapValues from 'lodash-es/mapValues';
 import sum from 'lodash-es/sum';
 import { ErrorResponse } from 'apollo-link-error';
 import { ApolloError } from '@apollo/client';
+
+export const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
 // Generate a new secret code that contains metadata of issuer and user email
 export const formatSecretCode = (code: string, email: string): string => {
@@ -50,11 +53,17 @@ export const getArnRegexForService = (awsService: string) => {
 export const createYupPasswordValidationSchema = () =>
   Yup.string()
     .required()
-    .min(14)
+    .min(14, 'Must be at least 14 characters')
     .matches(INCLUDE_DIGITS_REGEX, 'Include at least 1 digit')
     .matches(INCLUDE_LOWERCASE_REGEX, 'Include at least 1 lowercase character')
     .matches(INCLUDE_UPPERCASE_REGEX, 'Include at least 1 uppercase character')
     .matches(INCLUDE_SPECIAL_CHAR_REGEX, 'Include at least 1 special character');
+
+export const integrationLabelValidation = () =>
+  Yup.string()
+    .required()
+    .matches(SOURCE_LABEL_REGEX, 'Can only include alphanumeric characters, dashes and spaces')
+    .max(32, 'Must be at most 32 characters');
 
 /**
  * checks whether the input is a valid UUID

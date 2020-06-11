@@ -22,7 +22,8 @@ import { Alert, Box } from 'pouncejs';
 import urls from 'Source/urls';
 import RuleForm from 'Components/forms/RuleForm';
 import { ListRulesDocument } from 'Pages/ListRules';
-import { RuleDetails } from 'Generated/schema';
+import { AddRuleInput } from 'Generated/schema';
+import withSEO from 'Hoc/withSEO';
 import {
   DEFAULT_DEDUP_FUNCTION,
   DEFAULT_RULE_FUNCTION,
@@ -32,11 +33,11 @@ import { extractErrorMessage } from 'Helpers/utils';
 import useRouter from 'Hooks/useRouter';
 import { useCreateRule } from './graphql/createRule.generated';
 
-export const initialValues: RuleDetails = {
+const initialValues: Required<AddRuleInput> = {
+  id: '',
   description: '',
   displayName: '',
   enabled: true,
-  id: '',
   reference: '',
   logTypes: [],
   runbook: '',
@@ -65,18 +66,18 @@ const CreateRulePage: React.FC = () => {
         <RuleForm initialValues={initialValues} onSubmit={handleSubmit} />
       </Panel>
       {error && (
-        <Alert
-          mt={2}
-          mb={6}
-          variant="error"
-          title={
-            extractErrorMessage(error) ||
-            'An unknown error occured as we were trying to create your rule'
-          }
-        />
+        <Box mt={2} mb={6}>
+          <Alert
+            variant="error"
+            title={
+              extractErrorMessage(error) ||
+              'An unknown error occured as we were trying to create your rule'
+            }
+          />
+        </Box>
       )}
     </Box>
   );
 };
 
-export default CreateRulePage;
+export default withSEO({ title: 'New Rule' })(CreateRulePage);

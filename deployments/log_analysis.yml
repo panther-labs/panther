@@ -20,18 +20,15 @@ Description: Log processing infrastructure
 
 Parameters:
   # Passed in from bootstrap
+  AlarmTopicArn:
+    Type: String
+    Description: SNS topic for CloudWatch alarms
   AnalysisApiId:
     Type: String
     Description: API Gateway for analysis-api
   AthenaResultsBucket:
     Type: String
     Description: Bucket created to hold Athena results
-  GraphQLApiEndpoint:
-    Type: String
-    Description: The URL to the Appsync GraphQL Endpoint
-  GraphQLApiId:
-    Type: String
-    Description: The id of the Appsync GraphQL Endpoint
   ProcessedDataBucket:
     Type: String
     Description: S3 bucket which stores processed logs
@@ -44,13 +41,11 @@ Parameters:
   SqsKeyId:
     Type: String
     Description: KMS key ID for SQS encryption
+  TablesSignature:
+    Type: String
+    Description: Value from gluetable.DeployedTablesSignature() or the Panther version if using CF
 
   # Passed in from config file
-  AthenaPantherTablesOnly:
-    Type: String
-    Default: true
-    Description: If true, access only Panther tables in Athena API
-    AllowedValues: [true, false]
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
@@ -75,17 +70,57 @@ Parameters:
     AllowedValues: ['', Active, PassThrough]
     Default: ''
 
+Mappings:
+  Functions:
+    AlertsApi:
+      Memory: 256
+      Timeout: 60
+    AlertsForwarder:
+      Memory: 128
+      Timeout: 30
+    LogProcessor:
+      # Memory is a parameter above
+      Timeout: 900
+    RulesEngine:
+      # Memory is the same as log processor memory parameter
+      Timeout: 120
+    Updater:
+      Memory: 128
+      Timeout: 900 # set to max to allow syncs
+
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
+  ##### Configure Athena #####
+  AthenaConfigure:
+    Type: Custom::AthenaInit # this will associate the bucket as the default location for results
+    Properties:
+      AthenaResultsBucket: !Ref AthenaResultsBucket
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  ###### Update Glue Table Schemas for Deployed Tables #####
+  UpdateGlueTables:
+    DependsOn: AthenaConfigure
+    Type: Custom::UpdateGlueTables
+    Properties:
+      TablesSignature: !Ref TablesSignature # this should change when tables need to be updated, for CF this can be the Panther version
+      ProcessedDataBucket: !Ref ProcessedDataBucket
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ###### Alerts API #####
   AlertsApiLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/lambda/panther-alerts-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  AlertsApiMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref AlertsApiLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   AlertsApiFunction:
     Type: AWS::Serverless::Function
@@ -110,9 +145,9 @@ Resources:
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 256
+      MemorySize: !FindInMap [Functions, AlertsApi, Memory]
       Runtime: go1.x
-      Timeout: 60
+      Timeout: !FindInMap [Functions, AlertsApi, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: ManageAlerts
@@ -135,6 +170,15 @@ Resources:
                 - s3:GetObject
               Resource:
                 - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}*
+
+  AlertsApiAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, AlertsApi, Memory]
+      FunctionName: !Ref AlertsApiFunction
+      FunctionTimeoutSec: !FindInMap [Functions, AlertsApi, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   LogAlertsTable:
     Type: AWS::DynamoDB::Table
@@ -184,12 +228,25 @@ Resources:
       SSESpecification:
         SSEEnabled: True
 
+  LogAlertsTableAlarms:
+    Type: Custom::DynamoDBAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      TableName: !Ref LogAlertsTable
+
   ##### Alert Forwarder #####
   AlertForwarderLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/lambda/panther-log-alert-forwarder
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  AlertsForwarderMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref AlertForwarderLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   AlertsForwarderFunction:
     Type: AWS::Serverless::Function
@@ -223,9 +280,9 @@ Resources:
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 128
+      MemorySize: !FindInMap [Functions, AlertsForwarder, Memory]
       Runtime: go1.x
-      Timeout: 30
+      Timeout: !FindInMap [Functions, AlertsForwarder, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: SQS
@@ -254,6 +311,15 @@ Resources:
                 - dynamodb:UpdateItem
               Resource: !GetAtt LogAlertsTable.Arn
 
+  AlertsForwarderAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, AlertsForwarder, Memory]
+      FunctionName: !Ref AlertsForwarderFunction
+      FunctionTimeoutSec: !FindInMap [Functions, AlertsForwarder, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ##### Log Processor #####
   LogProcessorQueue:
     Type: AWS::SQS::Queue
@@ -270,10 +336,17 @@ Resources:
       KmsMasterKeyId: !Ref SqsKeyId
       # Reference on KeyReuse: https://amzn.to/2ngIsFB
       KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
-      VisibilityTimeout: 360 # Should match lambda
+      VisibilityTimeout: !FindInMap [Functions, LogProcessor, Timeout]
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt LogProcessorDLQ.Arn
         maxReceiveCount: 10
+
+  LogProcessorQueueAlarms:
+    Type: Custom::SQSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      QueueName: !GetAtt LogProcessorQueue.QueueName
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   LogProcessorDLQ:
     Type: AWS::SQS::Queue
@@ -287,11 +360,25 @@ Resources:
       # </cfndoc>
       MessageRetentionPeriod: '1209600' # Max duration - 14 days
 
+  LogProcessorDLQAlarms:
+    Type: Custom::SQSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      IsDLQ: true
+      QueueName: !GetAtt LogProcessorDLQ.QueueName
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   LogProcessorLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/lambda/panther-log-processor
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  LogProcessorMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref LogProcessorLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   LogProcessorFunction:
     Type: AWS::Serverless::Function
@@ -310,7 +397,8 @@ Resources:
       #
       # Failure Impact
       # * Failure of this lambda will cause log processing and rule processing (because rules match processed logs) to stop.
-      # * Failed events will go into the `panther-input-data-notifications-queue-dlq`. When the system has recovered they should be re-queued to the `panther-input-data-notifications-queue` using the Panther tool `requeue`.
+      # * Failed events will go into the `panther-input-data-notifications-queue-dlq`. When the system has recovered they should be
+      # * re-queued to the `panther-input-data-notifications-queue` using the Panther tool `requeue`.
       # * There is the possibility of duplicate data ingested if the failures had partial results.
       # </cfndoc>
       Description: Downloads security logs from S3 for Panther analysis
@@ -319,12 +407,13 @@ Resources:
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
       MemorySize: !Ref LogProcessorLambdaMemorySize
       Runtime: go1.x
-      Timeout: 360
+      Timeout: !FindInMap [Functions, LogProcessor, Timeout]
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          S3_BUCKET: !Ref ProcessedDataBucket
+          PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
           SNS_TOPIC_ARN: !Ref ProcessedDataTopicArn
+          SQS_QUEUE_URL: !Ref LogProcessorQueue
       Events:
         Queue:
           Type: SQS
@@ -379,18 +468,15 @@ Resources:
                 - kms:Encrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
-        - Id: WriteGluePartitions
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - glue:GetPartition
-                - glue:CreatePartition
-                - glue:GetTable
-              Resource:
-                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
-                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
-                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
+
+  LogProcessorAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !Ref LogProcessorLambdaMemorySize
+      FunctionName: !Ref LogProcessorFunction
+      FunctionTimeoutSec: !FindInMap [Functions, LogProcessor, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   UpdaterSnsSubscription:
     Type: AWS::SNS::Subscription
@@ -416,6 +502,7 @@ Resources:
             Condition:
               ArnLike:
                 aws:SourceArn: !Ref ProcessedDataTopicArn
+
   UpdaterQueue:
     Type: AWS::SQS::Queue
     Properties:
@@ -429,10 +516,17 @@ Resources:
       # * Users will not be able to see new events that matched some rule.
       # </cfndoc>
       KmsMasterKeyId: !Ref SqsKeyId
-      VisibilityTimeout: 120 # Should match lambda
+      VisibilityTimeout: !FindInMap [Functions, Updater, Timeout]
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt UpdaterDLQ.Arn
         maxReceiveCount: 10
+
+  UpdaterQueueAlarms:
+    Type: Custom::SQSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      QueueName: !GetAtt UpdaterQueue.QueueName
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   UpdaterDLQ:
     Type: AWS::SQS::Queue
@@ -446,11 +540,25 @@ Resources:
       # </cfndoc>
       MessageRetentionPeriod: '1209600' # Max duration - 14 days
 
+  UpdaterDLQAlarms:
+    Type: Custom::SQSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      IsDLQ: true
+      QueueName: !GetAtt UpdaterDLQ.QueueName
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   UpdaterFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/lambda/panther-datacatalog-updater
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  UpdaterMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref UpdaterFunctionLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   UpdaterFunction:
     Type: AWS::Serverless::Function
@@ -469,9 +577,9 @@ Resources:
       CodeUri: ../out/bin/internal/log_analysis/datacatalog_updater/main
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 128
+      MemorySize: !FindInMap [Functions, Updater, Memory]
       Runtime: go1.x
-      Timeout: 120
+      Timeout: !FindInMap [Functions, Updater, Timeout]
       Environment:
         Variables:
           DEBUG: !Ref Debug
@@ -497,13 +605,35 @@ Resources:
           Statement:
             - Effect: Allow
               Action:
-                - glue:GetPartition
-                - glue:CreatePartition
                 - glue:GetTable
+                - glue:CreatePartition
+                - glue:GetPartition
+                - glue:UpdatePartition
               Resource:
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
+        - Id: ProbeS3 # used in sync
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: s3:List*
+              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}*
+        - Id: CallLambda # used in sync
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-datacatalog-updater
+
+  UpdaterAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, Updater, Memory]
+      FunctionName: !Ref UpdaterFunction
+      FunctionTimeoutSec: !FindInMap [Functions, Updater, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Rules Engine #####
   RulesEngineSnsSubscription:
@@ -550,10 +680,17 @@ Resources:
       KmsMasterKeyId: !Ref SqsKeyId
       # Reference on KeyReuse: https://amzn.to/2ngIsFB
       KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
-      VisibilityTimeout: 120 # Should match lambda
+      VisibilityTimeout: !FindInMap [Functions, RulesEngine, Timeout]
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt RulesEngineDLQ.Arn
         maxReceiveCount: 10
+
+  RulesEngineQueueAlarms:
+    Type: Custom::SQSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      QueueName: !GetAtt RulesEngineQueue.QueueName
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   RulesEngineDLQ:
     Type: AWS::SQS::Queue
@@ -566,6 +703,14 @@ Resources:
       # the Panther tool `requeue`.
       # </cfndoc>
       MessageRetentionPeriod: '1209600' # Max duration - 14 days
+
+  RulesEngineDLQAlarms:
+    Type: Custom::SQSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      IsDLQ: true
+      QueueName: !GetAtt RulesEngineDLQ.QueueName
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   AlertsDedup:
     Type: AWS::DynamoDB::Table
@@ -590,11 +735,25 @@ Resources:
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
 
+  AlertsDedupAlarms:
+    Type: Custom::DynamoDBAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      TableName: !Ref AlertsDedup
+
   RulesEngineLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/lambda/panther-rules-engine
       RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  RulesEngineMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LambdaRuntime: Python
+      LogGroupName: !Ref RulesEngineLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   RulesEngineFunction:
     Type: AWS::Serverless::Function
@@ -621,7 +780,7 @@ Resources:
           S3_BUCKET: !Ref ProcessedDataBucket
           NOTIFICATIONS_TOPIC: !Ref ProcessedDataTopicArn
           ALERTS_DEDUP_TABLE: !Ref AlertsDedup
-      MemorySize: 512
+      MemorySize: !Ref LogProcessorLambdaMemorySize # keep this the same as log processor since it has to read the output files
       Events:
         Queue:
           Type: SQS
@@ -638,7 +797,7 @@ Resources:
               pip: !Ref PythonLayerVersionArn
         - [!Ref PythonLayerVersionArn]
       Runtime: python3.7
-      Timeout: 120
+      Timeout: !FindInMap [Functions, RulesEngine, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: SendToNotificationsTopic
@@ -667,8 +826,7 @@ Resources:
           Version: 2012-10-17
           Statement:
             - Effect: Allow
-              Action:
-                - dynamodb:UpdateItem
+              Action: dynamodb:UpdateItem
               Resource: !GetAtt AlertsDedup.Arn
         - Id: AccessKms
           Version: 2012-10-17
@@ -685,222 +843,24 @@ Resources:
             - Effect: Allow
               Action: execute-api:Invoke
               Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/enabled
+        - Id: ResourceLookup
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: dynamodb:GetItem
+              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-resources
+        - Id: KeyValueStore
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: dynamodb:*Item
+              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-kv-store
 
-  ##### Athena API #####
-  AthenaApiFunction:
-    Type: AWS::Serverless::Function
+  RulesEngineAlarms:
+    Type: Custom::LambdaAlarms
     Properties:
-      CodeUri: ../out/bin/internal/core/database_api/athena/driver/main
-      Description: Executes Athena and Glue queries
-      Environment:
-        Variables:
-          ATHENA_BUCKET: !Ref AthenaResultsBucket
-          ATHENA_STATEMACHINE_ARN: !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:panther-athena-workflow
-          DEBUG: !Ref Debug
-          GRAPHQL_ENDPOINT: !Ref GraphQLApiEndpoint
-          PANTHER_TABLES_ONLY: !Ref AthenaPantherTablesOnly
-      FunctionName: panther-athena-api
-      # <cfndoc>
-      # The `panther-athena-api` lambda is used by AppSync to query Athena and Glue.
-      #
-      # Failure Impact
-      # * Failure of this lambda will stop the Panther UI from doing Athena queries.
-      # </cfndoc>
-      Handler: main
-      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      MemorySize: 128
-      Runtime: go1.x
-      Timeout: 900 # we want this as long as possible
-      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
-      Policies:
-        - Id: AthenaPermissions
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - athena:StartQueryExecution
-                - athena:StopQueryExecution
-                - athena:GetQuery*
-              Resource: '*'
-        - Id: GluePermissions # used for all table metadata queries
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - glue:GetDatabase*
-                - glue:GetTable*
-                - glue:GetPartition*
-              Resource: '*'
-        - Id: S3ResultsPermissions # athena writes results to S3
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - s3:GetBucketLocation
-                - s3:List*
-                - s3:GetObject
-                - s3:PutObject
-              Resource: !Sub arn:aws:s3:::${AthenaResultsBucket}*
-        - Id: PantherS3ReadPermissions # athena reads from S3, restrict to our processed data buckets
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - s3:GetBucketLocation
-                - s3:List*
-                - s3:GetObject
-              Resource:
-                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}*
-                - arn:aws:s3:::panther-athena-api-processeddata-test-* # used for integration tests
-        - Id: StepsPermissions # start an async workflow that tracks the query execution
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - states:StartExecution
-              Resource: !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:panther-athena-workflow
-        - Id: InvokePantherLambdas # allow calling other panther lambdas
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - lambda:InvokeFunction
-              Resource: # list lambdas that can be called below
-                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-athena-api
-        - Id: CallAppSync # allow calling appsync mutation 'queryDone()' for notify support
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - appsync:GraphQL
-              Resource: !Sub arn:${AWS::Partition}:appsync:${AWS::Region}:${AWS::AccountId}:apis/${GraphQLApiId}/types/Mutation/fields/queryDone
-
-  AthenaApiLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: /aws/lambda/panther-athena-api
-      RetentionInDays: !Ref CloudWatchLogRetentionDays
-
-  AthenaStepFunctionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      Description: Role used by Step Functions to run Athena queries
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Action: sts:AssumeRole
-            Principal:
-              Service: !Sub states.${AWS::Region}.amazonaws.com
-      Policies:
-        - PolicyName: InvokeAthenaLambda
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action: lambda:InvokeFunction
-                Resource: !GetAtt AthenaApiFunction.Arn
-
-  AthenaQueryStateMachine:
-    Type: AWS::StepFunctions::StateMachine
-    Properties:
-      StateMachineName: panther-athena-workflow
-      # <cfndoc>
-      # The `panther-athena-workflow` is a Step Functions state machine used execute Athena queries and notify callers when done.
-      #
-      # Failure Impact
-      # * Failure of this state machine will stop the Panther UI from doing Athena queries.
-      # </cfndoc>
-      DefinitionString: !Sub |
-        {
-             "Comment": "Run Athena query. Parameters are: userId, userData, delay, databaseName, sql, lambdaName, methodName",
-             "StartAt": "delay",
-             "States": {
-               "delay": {
-                "Comment": "Configurable delay to start",
-                "Type": "Wait",
-                "SecondsPath": "$.delaySeconds",
-                "Next": "query"
-               },
-               "query": {
-                 "Type": "Task",
-                 "Resource": "arn:aws:states:::lambda:invoke",
-                 "Parameters": {
-                   "FunctionName": "${AthenaApiFunction.Arn}",
-                   "Payload": {
-                     "executeAsyncQuery": {
-                       "userId.$": "$.userId",
-                       "databaseName.$": "$.databaseName",
-                       "sql.$": "$.sql"
-                     }
-                   }
-                 },
-                 "ResultPath": "$.queryResults",
-                 "Next": "status"
-               },
-               "running (wait)": {
-                 "Comment": "Pause to allow query to run.",
-                 "Type": "Wait",
-                 "Seconds": 2,
-                 "Next": "status"
-               },
-               "status": {
-                 "Type": "Task",
-                 "Resource": "arn:aws:states:::lambda:invoke",
-                 "Parameters": {
-                   "FunctionName": "${AthenaApiFunction.Arn}",
-                   "Payload": {
-                     "getQueryStatus": {
-                       "queryId.$": "$.queryResults.Payload.queryId"
-                     }
-                   }
-                 },
-                 "ResultPath": "$.queryStatus",
-                 "Next": "done?"
-               },
-               "done?": {
-                 "Type": "Choice",
-                 "Choices": [
-                 {
-                   "Variable": "$.queryStatus.Payload.status",
-                   "StringEquals": "succeeded",
-                   "Next": "succeeded"
-                 },
-                 {
-                   "Variable": "$.queryStatus.Payload.status",
-                   "StringEquals": "failed",
-                   "Next": "failed"
-                 }
-                 ],
-                 "Default": "running (wait)"
-               },
-               "succeeded": {
-                 "Type": "Pass",
-                 "Next": "notify"
-               },
-               "failed": {
-                 "Type": "Pass",
-                 "Next": "notify"
-               },
-               "notify": {
-                 "Comment": "Call lambdaName.methodName with userData, queryId and workflowId to notify done",
-                 "Type": "Task",
-                 "Resource": "arn:aws:states:::lambda:invoke",
-                 "Parameters": {
-                   "FunctionName": "${AthenaApiFunction.Arn}",
-                   "Payload": {
-                     "invokeNotifyLambda": {
-                       "userData.$": "$.userData",
-                       "queryId.$": "$.queryResults.Payload.queryId",
-                       "workflowId.$": "$$.Execution.Id",
-                       "lambdaName.$": "$.lambdaName",
-                       "methodName.$": "$.methodName"
-                     }
-                   }
-                 },
-                 "ResultPath": "$.notifyOutput",
-                 "End": true
-               }
-             }
-        }
-      RoleArn: !GetAtt AthenaStepFunctionRole.Arn
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !Ref LogProcessorLambdaMemorySize
+      FunctionName: !Ref RulesEngineFunction
+      FunctionTimeoutSec: !FindInMap [Functions, RulesEngine, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources

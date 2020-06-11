@@ -97,6 +97,10 @@ func classifyEC2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 		deleteResource = true
 		ec2Type = aws.Ec2SecurityGroupSchema
 		ec2ARN.Resource = "security-group/" + detail.Get("requestParameters.groupId").Str
+	case "DeleteVpc":
+		deleteResource = true
+		ec2Type = aws.Ec2VpcSchema
+		ec2ARN.Resource = "vpc/" + detail.Get("requestParameters.vpcId").Str
 	case "DeleteNetworkAcl":
 		deleteResource = true
 		ec2Type = aws.Ec2NetworkAclSchema
@@ -411,7 +415,7 @@ func classifyEC2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 			ec2ARN.Resource = "vpc/" + id
 			break
 		}
-		zap.L().Warn("ec2: encountered unknown event name", zap.String("eventName", metadata.eventName))
+		zap.L().Info("ec2: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 

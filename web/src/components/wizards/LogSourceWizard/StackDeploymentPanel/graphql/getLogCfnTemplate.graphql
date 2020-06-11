@@ -1,6 +1,0 @@
-query GetLogCfnTemplate($input: GetLogIntegrationTemplateInput!) {
-  getLogIntegrationTemplate(input: $input) {
-    body
-    stackName
-  }
-}

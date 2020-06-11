@@ -30,15 +30,21 @@ Infra:
   # the larger sizes may be required for adequate performance or large files.
   LogProcessorLambdaMemorySize: 1024 # 256 - 3008, in 64MB increments
 
-  # Create a Python layer with these pip library versions.
+  # Create a Python layer with these pip library versions for analysis and remediation.
   #
-  # This makes it easy to add your own pip libraries for analysis and remediation.
-  # Natively compiled libraries (e.g. numpy) are not currently supported: build a custom layer instead.
+  # "mage deploy" will download and package these libraries, generating the "out/layer.zip" file.
+  # Natively compiled libraries (e.g. numpy) must be deployed from linux to work correctly, or
+  # you can provide your own custom layer via PythonLayerVersionArn.
+  #
+  # Be sure to remove "out/layer.zip" or run "mage clean" to force a new build of the layer if you
+  # change this setting.
   #
   # This setting has no effect if PythonLayerVersionArn is set below.
+  #
+  # Contributors, take note: the default layer (packaged with Panther releases) bundled in the
+  # bootstrap-gateway stack must fit within the ~50MB SAR package limit. boto3, for example, is too big
   PipLayer:
-    - boto3==1.12.24
-    - policyuniverse==1.3.2.1
+    - policyuniverse==1.3.2.2
     - requests==2.23.0
 
   # Custom layer attached to every Python Lambda function for analysis and remediation.
@@ -61,12 +67,17 @@ Monitoring:
   TracingMode: ''
 
 Setup:
-  # List of policy/rule sets to install if the existing ruleset is empty
-  # (e.g. when Panther is first deployed).
+  # The first Panther user. If left blank, you will be prompted for this when you deploy.
+  FirstUser:
+    GivenName: ''
+    FamilyName: ''
+    Email: ''
+
+  # List of policy/rule sets to install when Panther is first deployed.
   #
-  # Entries can be URLs or file:// paths that point to a .zip file.
-  # If the analysis-api is non-empty, this setting is ignored and you can instead
-  # use the BulkUpload functionality from the web app to upload new or modified rule sets.
+  # Entries must be URLs that point to a .zip file.
+  # After the first deployment, you can use the BulkUpload functionality from the web app
+  # to upload new or modified rule sets.
   InitialAnalysisSets:
     - https://github.com/panther-labs/panther-analysis/releases/latest/download/panther-analysis-all.zip
 
@@ -82,6 +93,9 @@ Setup:
   #
   # Has no effect if EnableS3AccessLogs=false above.
   S3AccessLogsBucket: ''
+
+  # If specified, user data is replicated to this bucket.
+  DataReplicationBucket: ''
 
   # Whether or not the Panther deployment should automatically onboard itself as a data source.
   OnboardSelf: true

@@ -17,7 +17,7 @@
  */
 
 import { Alert, Box, Text, Flex } from 'pouncejs';
-import { Field, Formik } from 'formik';
+import { Field, Form, Formik } from 'formik';
 import QRCode from 'qrcode.react';
 import * as React from 'react';
 import * as Yup from 'yup';
@@ -65,10 +65,12 @@ export const TotpForm: React.FC = () => {
         })
       }
     >
-      {({ handleSubmit, isSubmitting, status, isValid, dirty }) => (
-        <Box as="form" width="100%" onSubmit={handleSubmit}>
+      {({ status }) => (
+        <Form>
           {status && (
-            <Alert variant="error" title={status.title} description={status.message} mb={6} />
+            <Box mb={6}>
+              <Alert variant="error" title={status.title} description={status.message} />
+            </Box>
           )}
           <Flex justify="center" mb={6} width={1}>
             <QRCode value={formatSecretCode(code, userInfo.email)} />
@@ -82,13 +84,7 @@ export const TotpForm: React.FC = () => {
             aria-required
             mb={6}
           />
-          <SubmitButton
-            width={1}
-            submitting={isSubmitting}
-            disabled={isSubmitting || !isValid || !dirty}
-          >
-            Verify
-          </SubmitButton>
+          <SubmitButton width={1}>Verify</SubmitButton>
           <Text color="grey200" size="small" mt={10} textAlign="center">
             Open any two-factor authentication app, scan the barcode and then enter the MFA code to
             complete the sign-in. Popular software options include{' '}
@@ -125,7 +121,7 @@ export const TotpForm: React.FC = () => {
             </a>
             .
           </Text>
-        </Box>
+        </Form>
       )}
     </Formik>
   );

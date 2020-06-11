@@ -91,7 +91,7 @@ func classifyCloudFormation(detail gjson.Result, metadata *CloudTrailMetadata) [
 			ResourceType: schemas.CloudFormationStackSchema,
 		}}
 	default:
-		zap.L().Warn("cloudformation: encountered unknown event name", zap.String("eventName", metadata.eventName))
+		zap.L().Info("cloudformation: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
 

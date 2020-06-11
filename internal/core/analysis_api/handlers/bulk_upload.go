@@ -39,6 +39,7 @@ import (
 	"github.com/panther-labs/panther/api/gateway/analysis"
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 type writeResult struct {
@@ -134,6 +135,14 @@ func BulkUpload(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 		}
 	}
 
+	// If at least one global was created or modified, rebuild the global layer
+	if aws.Int64Value(counts.TotalGlobals) > 0 {
+		err = updateLayer(typeGlobal)
+		if err != nil {
+			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+		}
+	}
+
 	if response != nil {
 		return response
 	}
@@ -223,6 +232,7 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 			Tags:          config.Tags,
 			Tests:         make([]*models.UnitTest, len(config.Tests)),
 			Type:          strings.ToUpper(config.AnalysisType),
+			Reports:       config.Reports,
 		}
 
 		typeNormalizeTableItem(&analysisItem, config)
@@ -350,5 +360,10 @@ func validateUploadedPolicy(item *tableItem, userID models.UserID) error {
 	if err := policy.Validate(nil); err != nil {
 		return fmt.Errorf("policy ID %s is invalid: %s", policy.ID, err)
 	}
+
+	if genericapi.ContainsHTML(string(policy.DisplayName)) {
+		return fmt.Errorf("policy ID %s invalid: display name: %v", policy.ID, genericapi.ErrContainsHTML)
+	}
+
 	return nil
 }

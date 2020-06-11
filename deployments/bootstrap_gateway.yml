@@ -16,43 +16,69 @@
 
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
-Description: API gateway and Python layer
+Description: Bootstrap resources that require the source S3 bucket to exist first
 
 # This stack contains resources that need to exist before any other main stack,
 # but require S3 buckets to exist first. This is deployed right after bootstrap.yml
 #
-# - API gateways: 'mage deploy' embeds swagger definitions directly into this template,
+# - API gateways: 'mage build:cfn' embeds swagger definitions directly into this template,
 #     making the template too large to deploy without an S3 bucket
 # - Python layer: the layer source has to be uploaded to S3 before the cfn resource can be created
+# - Custom resource: the Lambda function which handles custom CFN resources
+#      - Alarms for SNS topics in the bootstrap stack
 
 Parameters:
+  # Passed from one of the bootstrap stacks
+  AthenaResultsBucket:
+    Type: String
+    Description: Bucket created to hold Athena results
+  ImageRegistryName:
+    Type: String
+    Description: Name of the ECR repository hosting web images (blank when deploying from source)
+  ProcessedDataBucket:
+    Type: String
+    Description: S3 bucket which stores processed logs
+
   # From the config file
+  CloudWatchLogRetentionDays:
+    Type: Number
+    Description: CloudWatch log retention period
+    Default: 365
+  LayerVersionArns:
+    Type: CommaDelimitedList
+    Description: List of LayerVersion ARNs to attach to each function
+    Default: ''
   PythonLayerVersionArn:
     Type: String
     Description: Custom Python layer for analysis and remediation
     Default: ''
-  TracingEnabled:
+  TracingMode:
     Type: String
-    Description: Enable XRay tracing on API Gateway
-    AllowedValues: [true, false]
-    Default: false
+    Description: Enable XRay tracing on Lambda and API Gateway
+    AllowedValues: ['', Active, PassThrough]
+    Default: ''
 
-  # If no custom layer is provided, 'mage deploy' will have uploaded a layer here:
-  SourceBucket:
+  # From the bootstrap stack:
+  AlarmTopicArn:
     Type: String
-    Description: S3 bucket for the Python analysis layer
-    Default: ''
-  PythonLayerKey:
+    Description: SNS topic for CloudWatch alarms
+  AuditLogsBucket:
     Type: String
-    Description: S3 key for the Python analysis layer
-    Default: ''
-  PythonLayerObjectVersion:
+    Description: Bucket which holds Panther's own audit logs
+  UserPoolId:
     Type: String
-    Description: S3 object version for the python layer zipfile
-    Default: ''
+    Description: Cognito user pool ID
+
+Mappings:
+  Functions:
+    CustomResource:
+      Memory: 1024 # use a larger size to run faster, since this is used rarely the small cost difference is not a concern
+      Timeout: 900 # 15 minutes (as long as possible)
 
 Conditions:
+  AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
   CreatePythonLayer: !Equals [!Ref PythonLayerVersionArn, '']
+  TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
   PythonLayer:
@@ -62,12 +88,203 @@ Resources:
       CompatibleRuntimes:
         - python3.6
         - python3.7
-      Content:
-        S3Bucket: !Ref SourceBucket
-        S3Key: !Ref PythonLayerKey
-        S3ObjectVersion: !Ref PythonLayerObjectVersion
+        - python3.8
+      Content: ../layer.zip # relative to out/deployments since this template will first be swagger-embedded
       Description: Pip libraries available to the Python analysis/remediation functions
       LayerName: panther-analysis
+
+  # When deploying from source, the S3 "source" bucket must exist before this function can be packaged.
+  # That is why this resource is here instead of in the very first "bootstrap" stack.
+  CustomResourceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../bin/internal/core/custom_resources/main
+      Description: Custom CloudFormation resources when deploying Panther
+      Environment:
+        Variables:
+          DEBUG: true
+      FunctionName: panther-cfn-custom-resources
+      # <cfndoc>
+      # Used by CloudFormation when deploying or updating Panther.
+      #
+      # Failure Impact
+      # * Panther itself will not be affected, but deployments may be failing
+      # </cfndoc>
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: !FindInMap [Functions, CustomResource, Memory]
+      Runtime: go1.x
+      Timeout: !FindInMap [Functions, CustomResource, Timeout]
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+
+      # This function has more permissions than usual because it creates and destroys infrastructure.
+      # It is used only by CloudFormation in the deploy process and not by the Panther application itself.
+      Policies:
+        - Id: ResourceManagement
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - acm:AddTagsToCertificate
+                - acm:DeleteCertificate
+                - acm:ImportCertificate
+                - acm:RemoveTagsFromCertificate
+              # ACM certificate IDs are random and at the time of writing, DeleteCertificate does
+              # not support using resource tags as a condition.
+              # So this is as narrow as this resource can get:
+              Resource: !Sub arn:${AWS::Partition}:acm:${AWS::Region}:${AWS::AccountId}:certificate/*
+            - Effect: Allow
+              Action:
+                - athena:UpdateWorkGroup
+                - athena:StartQueryExecution
+                - athena:StopQueryExecution
+                - athena:GetQuery*
+              Resource: '*'
+            - Effect: Allow
+              Action:
+                - cloudwatch:PutMetricAlarm
+                - cloudwatch:DeleteAlarms
+              Resource: !Sub arn:${AWS::Partition}:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:Panther*
+            - Effect: Allow
+              Action: cognito-idp:SetUserPoolMfaConfig
+              Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}
+            - Effect: Allow
+              Action: ecr:DeleteRepository
+              Resource: !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ImageRegistryName}
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApi}/v1/POST/upload
+            - Effect: Allow
+              Action:
+                - glue:CreateDatabase
+                - glue:DeleteDatabase
+                - glue:CreateTable
+                - glue:GetTable
+                - glue:UpdateTable
+              # used to keep table schemas updated
+              Resource:
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
+                # the resource below is odd, I had to add to get glue:DeleteDatabase to work, I think it may be a bug in the api
+                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:userDefinedFunction/panther*
+            - Effect: Allow
+              Action:
+                - guardduty:Create*
+                - guardduty:Get*
+                - guardduty:List*
+                - guardduty:DeletePublishingDestination
+              Resource: '*'
+            - Effect: Allow
+              Action:
+                - iam:DeleteServerCertificate
+                - iam:UploadServerCertificate
+              Resource:
+                - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/panther/*
+                # IAM sometimes requires permissions to match the certificate name, not the full path
+                # This seems like a bug in IAM, but in any case a fresh deploy/teardown will not work without this:
+                - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/Panther*
+            - Effect: Allow
+              Action: iam:PassRole
+              Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/Panther*
+            - Effect: Allow
+              Action: kms:ListAliases # required for GuardDuty
+              Resource: '*'
+            - Effect: Allow
+              Action: lambda:GetFunction
+              Resource:
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-policy-engine
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-rules-engine
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource:
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-organization-api
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-users-api
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-datacatalog-updater
+            - Effect: Allow
+              Action: lambda:DeleteLayerVersion
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:panther-engine-globals:*
+            - Effect: Allow
+              Action: lambda:ListLayerVersions
+              Resource: '*'
+            - Effect: Allow
+              Action:
+                - logs:DeleteMetricFilter
+                - logs:PutMetricFilter
+              Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/panther-*
+            - Effect: Allow
+              Action:
+                # Needed for Athena, GuardDuty
+                - s3:Get*
+                - s3:List*
+                - s3:PutBucketNotification
+                - s3:PutObject
+              Resource:
+                - !Sub arn:${AWS::Partition}:s3:::${AthenaResultsBucket}*
+                - !Sub arn:${AWS::Partition}:s3:::${AuditLogsBucket}*
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}*
+            - Effect: Allow
+              Action: s3:Get*
+              Resource: arn:aws:s3:::panther-public-cloudformation-templates*
+
+  CustomResourceLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-cfn-custom-resources
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  CustomResourceMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref CustomResourceLogGroup
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+
+  CustomResourceAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      FunctionMemoryMB: !FindInMap [Functions, CustomResource, Memory]
+      FunctionName: !Ref CustomResourceFunction
+      FunctionTimeoutSec: !FindInMap [Functions, CustomResource, Timeout]
+      LoggedWarnThreshold: 1
+      ThrottleThreshold: 0
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+
+  CustomTeardown:
+    # When deleted, this resource will remove Panther assets added outside of CloudFormation:
+    #   - ECR images
+    #   - Lambda layers
+    Type: Custom::PantherTeardown
+    Properties:
+      EcrRepoName: !Ref ImageRegistryName
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+
+  # Alarms for SNS topics in the bootstrap stack
+  ProcessedDataTopicAlarms:
+    Type: Custom::SNSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+      TopicName: panther-processed-data-notifications
+
+  AlarmTopicAlarms:
+    # This is actually configuring the alarm topic to monitor itself.
+    # It obviously might not be able to notify us about its own failures, but we still want to try.
+    # There could be transient failures that will eventually get through.
+    Type: Custom::SNSAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+      TopicName: panther-cw-alarms
+
+  # Enable only software MFA for the Cognito user pool - enabling MFA via native CloudFormation
+  # forces SMS as a fallback option, but the SDK does not.
+  UserPoolMfa:
+    Type: Custom::CognitoUserPoolMfa
+    Properties:
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+      UserPoolId: !Ref UserPoolId
 
   AnalysisApi:
     Type: AWS::Serverless::Api
@@ -79,7 +296,14 @@ Resources:
       # The `panther-analysis-api` API Gateway calls the `panther-analysis-api` lambda.
       # </cfndoc>
       StageName: v1
-      TracingEnabled: !Ref TracingEnabled
+      TracingEnabled: !If [TracingEnabled, true, false]
+
+  AnalysisApiAlarms:
+    Type: Custom::ApiGatewayAlarms
+    Properties:
+      ApiName: panther-analysis-api
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
 
   ComplianceApi:
     Type: AWS::Serverless::Api
@@ -91,7 +315,14 @@ Resources:
       # The `panther-compliance-api` API Gateway calls the `panther-compliance-api` lambda.
       # </cfndoc>
       StageName: v1
-      TracingEnabled: !Ref TracingEnabled
+      TracingEnabled: !If [TracingEnabled, true, false]
+
+  ComplianceApiAlarms:
+    Type: Custom::ApiGatewayAlarms
+    Properties:
+      ApiName: panther-compliance-api
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
 
   RemediationApi:
     Type: AWS::Serverless::Api
@@ -103,7 +334,14 @@ Resources:
       # The `panther-remediation-api` API Gateway calls the `panther-remediation-api` lambda.
       # </cfndoc>
       StageName: v1
-      TracingEnabled: !Ref TracingEnabled
+      TracingEnabled: !If [TracingEnabled, true, false]
+
+  RemediationApiAlarms:
+    Type: Custom::ApiGatewayAlarms
+    Properties:
+      ApiName: panther-remediation-api
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
 
   ResourcesApi:
     Type: AWS::Serverless::Api
@@ -115,7 +353,14 @@ Resources:
       # The `panther-resources-api` API Gateway calls the `panther-resources-api` lambda.
       # </cfndoc>
       StageName: v1
-      TracingEnabled: !Ref TracingEnabled
+      TracingEnabled: !If [TracingEnabled, true, false]
+
+  ResourcesApiAlarms:
+    Type: Custom::ApiGatewayAlarms
+    Properties:
+      ApiName: panther-resources-api
+      AlarmTopicArn: !Ref AlarmTopicArn
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
 
 Outputs:
   PythonLayerVersionArn:

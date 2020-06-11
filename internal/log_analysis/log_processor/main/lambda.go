@@ -20,6 +20,7 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -27,35 +28,30 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
 func main() {
+	common.Setup()
 	lambda.Start(handle)
 }
 
 func handle(ctx context.Context, event events.SQSEvent) error {
 	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
-	return process(lc, event)
+	deadline, _ := ctx.Deadline()
+	return process(lc, deadline, event)
 }
 
-func process(lc *lambdacontext.LambdaContext, event events.SQSEvent) (err error) {
+func process(lc *lambdacontext.LambdaContext, deadline time.Time, event events.SQSEvent) (err error) {
 	operation := common.OpLogManager.Start(lc.InvokedFunctionArn, common.OpLogLambdaServiceDim).WithMemUsed(lambdacontext.MemoryLimitInMB)
+
+	var sqsMessageCount int
+
 	defer func() {
-		operation.Stop().Log(err, zap.Int("sqsMessageCount", len(event.Records)))
+		operation.Stop().Log(err, zap.Int("sqsMessageCount", sqsMessageCount))
 	}()
 
-	messages := make([]string, len(event.Records))
-	for i, record := range event.Records {
-		messages[i] = record.Body
-	}
-	dataStreams, err := sources.ReadSnsMessages(messages)
-	if err != nil {
-		return err
-	}
-	err = processor.Process(dataStreams, destinations.CreateDestination())
+	sqsMessageCount, err = processor.StreamEvents(common.SqsClient, deadline, event)
 	return err
 }

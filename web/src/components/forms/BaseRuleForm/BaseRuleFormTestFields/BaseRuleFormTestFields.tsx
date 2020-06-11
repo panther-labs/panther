@@ -29,6 +29,8 @@ import {
   TabList,
   TabPanel,
   Alert,
+  SimpleGrid,
+  Label,
 } from 'pouncejs';
 import { LOG_TYPES, RESOURCE_TYPES } from 'Source/constants';
 import { formatJSON, extractErrorMessage } from 'Helpers/utils';
@@ -38,6 +40,8 @@ import FormikCombobox from 'Components/fields/ComboBox';
 import FormikRadio from 'Components/fields/Radio';
 import { PolicyFormValues } from 'Components/forms/PolicyForm';
 import { RuleFormValues } from 'Components/forms/RuleForm';
+import { MODALS } from 'Components/utils/Modal';
+import useModal from 'Hooks/useModal';
 import PolicyFormTestResultList from '../BaseRuleFormTestResultList';
 import { useTestPolicy } from './graphql/testPolicy.generated';
 
@@ -55,6 +59,8 @@ const BaseRuleFormTestFields: React.FC = () => {
   } = useFormikContext<FormFields>();
   const isPolicy = resourceTypes !== undefined;
 
+  const { showModal } = useModal();
+
   // Controls which test is the active test at the moment through a simple index variable
   const [activeTabIndex, setActiveTabIndex] = React.useState(0);
 
@@ -66,7 +72,7 @@ const BaseRuleFormTestFields: React.FC = () => {
   // Load the mutation that will perform the policy testing but we are not yet populating it with
   // the variables since we'll do that on "click" - time
   // prettier-ignore
-  const [testPolicy, { error, loading, data }] = useTestPolicy()
+  const [testPolicy, { error, loading, data }] = useTestPolicy();
 
   // Helper function where the only thing parameterised is the array of tests to submit to the server
   // This helps us reduce the amount of code we write when the only thing changing is the number of
@@ -95,7 +101,9 @@ const BaseRuleFormTestFields: React.FC = () => {
   const testsCount = tests.length;
   return (
     <section>
-      <InputElementLabel htmlFor="enabled">Test Record</InputElementLabel>
+      <Label size="large" color="grey500">
+        Test Record
+      </Label>
       <Box mt={6}>
         <FieldArray
           name="tests"
@@ -131,19 +139,27 @@ const BaseRuleFormTestFields: React.FC = () => {
               // but only close it. Thus, we can't let the click event propagate.
               e.stopPropagation();
 
-              // If we are removing an item that's to the "left" of the currently active one,
-              // we will need to also move the `activeIndex` to the "left" by 1 tab
-              if (index <= activeTabIndex) {
-                setActiveTabIndex(index > 0 ? index - 1 : 0);
-              }
+              showModal({
+                modal: MODALS.DELETE_TEST,
+                props: {
+                  test: tests[index],
+                  onConfirm: () => {
+                    // If we are removing an item that's to the "left" of the currently active one,
+                    // we will need to also move the `activeIndex` to the "left" by 1 tab
+                    if (index <= activeTabIndex) {
+                      setActiveTabIndex(index > 0 ? index - 1 : 0);
+                    }
 
-              // removes the test
-              arrayHelpers.remove(index);
+                    // removes the test
+                    arrayHelpers.remove(index);
 
-              // There is currently a bug with Formik v2 and removing an item causes a wrong
-              // `errors` state to be present. We manually kick in validation to fix that.
-              // https://github.com/jaredpalmer/formik/issues/1616
-              setTimeout(validateForm, 200);
+                    // There is currently a bug with Formik v2 and removing an item causes a wrong
+                    // `errors` state to be present. We manually kick in validation to fix that.
+                    // https://github.com/jaredpalmer/formik/issues/1616
+                    setTimeout(validateForm, 200);
+                  },
+                },
+              });
             };
 
             return (
@@ -185,39 +201,56 @@ const BaseRuleFormTestFields: React.FC = () => {
                 </TabList>
                 {testsCount > 0 && (
                   <TabPanel selected aria-labelledby={tests[activeTabIndex].name}>
-                    <Flex
-                      justify="space-around"
+                    <SimpleGrid
+                      columns={3}
+                      gap={10}
                       py={3}
                       borderTop="1px solid"
                       borderBottom="1px solid"
                       borderColor="grey50"
                     >
                       <Flex mt={5}>
-                        <InputElementLabel htmlFor="severity" mr={6}>
+                        <InputElementLabel
+                          htmlFor={`tests[${activeTabIndex}].name`}
+                          mr={6}
+                          whiteSpace="nowrap"
+                        >
                           * Name
                         </InputElementLabel>
-                        <Field
-                          as={FormikTextInput}
-                          name={`tests[${activeTabIndex}].name`}
-                          placeholder="The name of your test"
-                        />
+                        <Box flexGrow={1}>
+                          <Field
+                            as={FormikTextInput}
+                            id={`tests[${activeTabIndex}].name`}
+                            name={`tests[${activeTabIndex}].name`}
+                            placeholder="The name of your test"
+                          />
+                        </Box>
                       </Flex>
                       <Flex mt={5}>
-                        <InputElementLabel htmlFor="severity" mr={6}>
+                        <InputElementLabel
+                          htmlFor={`tests[${activeTabIndex}].resourceType`}
+                          mr={6}
+                          whiteSpace="nowrap"
+                        >
                           * {isPolicy ? 'Resource' : 'Log'} Type
                         </InputElementLabel>
-                        <Field
-                          as={FormikCombobox}
-                          searchable
-                          name={`tests[${activeTabIndex}].resourceType`}
-                          items={isPolicy ? RESOURCE_TYPES : LOG_TYPES}
-                          inputProps={resourceTypeInputProps}
-                        />
+                        <Box flexGrow={1}>
+                          <Field
+                            as={FormikCombobox}
+                            searchable
+                            id={`tests[${activeTabIndex}].resourceType`}
+                            name={`tests[${activeTabIndex}].resourceType`}
+                            items={isPolicy ? RESOURCE_TYPES : LOG_TYPES}
+                            inputProps={resourceTypeInputProps}
+                          />
+                        </Box>
                       </Flex>
                       <Box>
-                        <Flex justify="space-between" width={225}>
+                        <Flex justify="space-between">
                           <InputElementLabel htmlFor="expected-result-true">
-                            Evaluate to True
+                            {isPolicy
+                              ? 'Test resource should be compliant'
+                              : 'Test event should trigger an alert'}
                           </InputElementLabel>
                           <Field
                             as={FormikRadio}
@@ -226,9 +259,11 @@ const BaseRuleFormTestFields: React.FC = () => {
                             value={true}
                           />
                         </Flex>
-                        <Flex justify="space-between" width={225}>
+                        <Flex justify="space-between">
                           <InputElementLabel htmlFor="expected-result-false">
-                            Evaluate to False
+                            {isPolicy
+                              ? 'Test resource should be non-compliant'
+                              : 'Test event should not trigger an alert'}
                           </InputElementLabel>
                           <Field
                             as={FormikRadio}
@@ -238,7 +273,7 @@ const BaseRuleFormTestFields: React.FC = () => {
                           />
                         </Flex>
                       </Box>
-                    </Flex>
+                    </SimpleGrid>
                     <Box mt={10} hidden={!tests.length}>
                       <Field
                         disabled={true}
@@ -251,15 +286,16 @@ const BaseRuleFormTestFields: React.FC = () => {
                       />
                     </Box>
                     {error && (
-                      <Alert
-                        variant="error"
-                        title="Internal error during testing"
-                        description={
-                          extractErrorMessage(error) ||
-                          "An unknown error occured and we couldn't run your tests"
-                        }
-                        mt={5}
-                      />
+                      <Box mt={5}>
+                        <Alert
+                          variant="error"
+                          title="Internal error during testing"
+                          description={
+                            extractErrorMessage(error) ||
+                            "An unknown error occured and we couldn't run your tests"
+                          }
+                        />
+                      </Box>
                     )}
                     {(loading || data) && (
                       <Box mt={5}>

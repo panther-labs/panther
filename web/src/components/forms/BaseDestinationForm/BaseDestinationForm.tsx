@@ -18,13 +18,13 @@
 
 import * as Yup from 'yup';
 import { SeverityEnum, DestinationConfigInput } from 'Generated/schema';
-import { Badge, Box, Flex, InputElementLabel, Text } from 'pouncejs';
-import { Field, Formik } from 'formik';
+import { Box, Flex, InputElementLabel, Text } from 'pouncejs';
+import { Field, Form, Formik } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
-import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import React from 'react';
 import FormikCheckbox from 'Components/fields/Checkbox';
+import SeverityBadge from 'Components/SeverityBadge';
 
 export interface BaseDestinationFormValues<
   AdditionalValues extends Partial<DestinationConfigInput>
@@ -55,7 +55,7 @@ interface BaseDestinationFormProps<AdditionalValues extends Partial<DestinationC
    * The validation schema for the form
    */
   validationSchema?: Yup.ObjectSchema<
-    Yup.Shape<object, Partial<BaseDestinationFormValues<AdditionalValues>>>
+    Yup.Shape<object, Partial<PrivateBaseDestinationFormValues<AdditionalValues>>>
   >;
 
   /** callback for the submission of the form */
@@ -65,7 +65,7 @@ interface BaseDestinationFormProps<AdditionalValues extends Partial<DestinationC
 // The validation checks that Formik will run
 export const defaultValidationSchema = Yup.object().shape({
   displayName: Yup.string().required(),
-  defaultForSeverity: Yup.object().test(
+  defaultForSeverity: Yup.object<{ [key in SeverityEnum]: boolean }>().test(
     'atLeastOneSeverity',
     'You need to select at least one severity type',
     val => Object.values(val).some(checked => checked)
@@ -112,54 +112,48 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
       validationSchema={validationSchema}
       onSubmit={onSubmitWithConvertedValues}
     >
-      {({ handleSubmit, isValid, isSubmitting, dirty }) => (
-        <form onSubmit={handleSubmit} autoComplete="off">
-          <Box mb={6} pb={6} borderBottom="1px solid" borderColor="grey100">
-            <Field
-              name="displayName"
-              as={FormikTextInput}
-              label="Display Name"
-              placeholder="A nickname to recognise this destination"
-              mb={6}
-              aria-required
-            />
-            {children}
-            <InputElementLabel>Severity Types</InputElementLabel>
-            {Object.values(SeverityEnum)
-              .reverse()
-              .map(severity => (
-                <Field name="defaultForSeverity" key={severity}>
-                  {() => (
-                    <Flex align="center">
-                      <Field
-                        as={FormikCheckbox}
-                        name={`defaultForSeverity.${severity}`}
-                        id={severity}
-                      />
-                      <InputElementLabel
-                        htmlFor={severity}
-                        ml={2}
-                        style={{ display: 'inline-block' }} // needed since we have non-text content
-                      >
-                        <Badge color={SEVERITY_COLOR_MAP[severity]}>{severity}</Badge>
-                      </InputElementLabel>
-                    </Flex>
-                  )}
-                </Field>
-              ))}
-            <Text size="small" color="grey300" mt={2}>
-              We will only notify you on issues related to the severity types chosen above
-            </Text>
-          </Box>
-          <SubmitButton
-            width={1}
-            disabled={isSubmitting || !isValid || !dirty}
-            submitting={isSubmitting}
-          >
-            {initialValues.displayName ? 'Update' : 'Add'} Destination
-          </SubmitButton>
-        </form>
-      )}
+      <Form autoComplete="off">
+        <Box mb={6} pb={6} borderBottom="1px solid" borderColor="grey100">
+          <Field
+            name="displayName"
+            as={FormikTextInput}
+            label="Display Name"
+            placeholder="A nickname to recognise this destination"
+            mb={6}
+            aria-required
+          />
+          {children}
+          <InputElementLabel>Severity Types</InputElementLabel>
+          {Object.values(SeverityEnum)
+            .reverse()
+            .map(severity => (
+              <Field name="defaultForSeverity" key={severity}>
+                {() => (
+                  <Flex align="center">
+                    <Field
+                      as={FormikCheckbox}
+                      name={`defaultForSeverity.${severity}`}
+                      id={severity}
+                    />
+                    <InputElementLabel
+                      htmlFor={severity}
+                      ml={2}
+                      style={{ display: 'inline-block' }} // needed since we have non-text content
+                    >
+                      <SeverityBadge severity={severity} />
+                    </InputElementLabel>
+                  </Flex>
+                )}
+              </Field>
+            ))}
+          <Text size="small" color="grey300" mt={2}>
+            We will only notify you on issues related to the severity types chosen above
+          </Text>
+        </Box>
+        <SubmitButton width={1}>
+          {initialValues.displayName ? 'Update' : 'Add'} Destination
+        </SubmitButton>
+      </Form>
     </Formik>
   );
 }

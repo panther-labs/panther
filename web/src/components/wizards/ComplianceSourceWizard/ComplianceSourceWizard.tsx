@@ -17,11 +17,12 @@
  */
 
 import React from 'react';
-import { AWS_ACCOUNT_ID_REGEX, SOURCE_LABEL_REGEX } from 'Source/constants';
-import { Formik } from 'formik';
+import { AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
+import { Form, Formik } from 'formik';
 import * as Yup from 'yup';
 import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
 import { FetchResult } from '@apollo/client';
+import { integrationLabelValidation } from 'Helpers/utils';
 import StackDeploymentPanel from './StackDeploymentPanel';
 import SuccessPanel from './SuccessPanel';
 import SourceConfigurationPanel from './SourceConfigurationPanel';
@@ -41,10 +42,7 @@ export interface ComplianceSourceWizardValues {
 }
 
 const validationSchema = Yup.object().shape<ComplianceSourceWizardValues>({
-  integrationLabel: Yup.string()
-    .matches(SOURCE_LABEL_REGEX, 'Can only include alphanumeric characters, dashes and spaces')
-    .max(32, 'Must be at most 32 characters')
-    .required(),
+  integrationLabel: integrationLabelValidation(),
   awsAccountId: Yup.string()
     .matches(AWS_ACCOUNT_ID_REGEX, 'Must be a valid AWS Account ID')
     .required(),
@@ -67,7 +65,7 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
       validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
-      {({ isValid, dirty, handleSubmit, status, setStatus }) => {
+      {({ isValid, dirty, status, setStatus }) => {
         // We want to reset the error message whenever the user goes back to a previous screen.
         // That's why we handle it through status in order to manipulate it internally
         React.useEffect(() => {
@@ -75,7 +73,7 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
         }, [externalErrorMessage]);
 
         return (
-          <form onSubmit={handleSubmit}>
+          <Form>
             <Wizard>
               <Wizard.Step title="Configure Source" icon="settings">
                 <WizardPanelWrapper>
@@ -94,7 +92,7 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
                   </WizardPanelWrapper.Content>
                   <WizardPanelWrapper.Actions>
                     <WizardPanelWrapper.ActionPrev />
-                    <WizardPanelWrapper.ActionNext disabled={!status.cfnTemplateDownloaded} />
+                    <WizardPanelWrapper.ActionNext />
                   </WizardPanelWrapper.Actions>
                 </WizardPanelWrapper>
               </Wizard.Step>
@@ -109,7 +107,7 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
                 </WizardPanelWrapper>
               </Wizard.Step>
             </Wizard>
-          </form>
+          </Form>
         );
       }}
     </Formik>

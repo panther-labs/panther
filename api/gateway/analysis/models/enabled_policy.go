@@ -43,6 +43,9 @@ type EnabledPolicy struct {
 	// id
 	ID ID `json:"id,omitempty"`
 
+	// reports
+	Reports Reports `json:"reports,omitempty"`
+
 	// resource types
 	ResourceTypes TypeSet `json:"resourceTypes,omitempty"`
 
@@ -51,6 +54,9 @@ type EnabledPolicy struct {
 
 	// suppressions
 	Suppressions Suppressions `json:"suppressions,omitempty"`
+
+	// tags
+	Tags Tags `json:"tags,omitempty"`
 
 	// version Id
 	VersionID VersionID `json:"versionId,omitempty"`
@@ -72,6 +78,10 @@ func (m *EnabledPolicy) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateReports(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateResourceTypes(formats); err != nil {
 		res = append(res, err)
 	}
@@ -81,6 +91,10 @@ func (m *EnabledPolicy) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateSuppressions(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateTags(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -142,6 +156,22 @@ func (m *EnabledPolicy) validateID(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *EnabledPolicy) validateReports(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Reports) { // not required
+		return nil
+	}
+
+	if err := m.Reports.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("reports")
+		}
+		return err
+	}
+
+	return nil
+}
+
 func (m *EnabledPolicy) validateResourceTypes(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.ResourceTypes) { // not required
@@ -183,6 +213,22 @@ func (m *EnabledPolicy) validateSuppressions(formats strfmt.Registry) error {
 	if err := m.Suppressions.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("suppressions")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *EnabledPolicy) validateTags(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Tags) { // not required
+		return nil
+	}
+
+	if err := m.Tags.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("tags")
 		}
 		return err
 	}

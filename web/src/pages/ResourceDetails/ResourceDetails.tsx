@@ -35,6 +35,7 @@ import {
 } from 'Components/utils/TableControls';
 import pick from 'lodash-es/pick';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import withSEO from 'Hoc/withSEO';
 import { DEFAULT_SMALL_PAGE_SIZE } from 'Source/constants';
 import ResourceDetailsTable from './ResourceDetailsTable';
 import ResourceDetailsInfo from './ResourceDetailsInfo';
@@ -73,15 +74,16 @@ const ResourceDetailsPage = () => {
 
   if (error) {
     return (
-      <Alert
-        variant="error"
-        title="Couldn't load resource"
-        description={
-          extractErrorMessage(error) ||
-          "An unknown error occured and we couldn't load the resource details from the server"
-        }
-        mb={6}
-      />
+      <Box mb={6}>
+        <Alert
+          variant="error"
+          title="Couldn't load resource"
+          description={
+            extractErrorMessage(error) ||
+            "An unknown error occured and we couldn't load the resource details from the server"
+          }
+        />
+      </Box>
     );
   }
 
@@ -131,7 +133,7 @@ const ResourceDetailsPage = () => {
                 onClick={() =>
                   setRequestParamsAndResetPaging({
                     status: ComplianceStatusEnum.Fail,
-                    suppressed: undefined,
+                    suppressed: false,
                   })
                 }
               />
@@ -144,7 +146,7 @@ const ResourceDetailsPage = () => {
                 onClick={() =>
                   setRequestParamsAndResetPaging({
                     status: ComplianceStatusEnum.Pass,
-                    suppressed: undefined,
+                    suppressed: false,
                   })
                 }
               />
@@ -187,4 +189,4 @@ const ResourceDetailsPage = () => {
   );
 };
 
-export default ResourceDetailsPage;
+export default withSEO({ title: ({ match }) => match.params.id })(ResourceDetailsPage);

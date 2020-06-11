@@ -19,6 +19,7 @@ package mage
  */
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -29,6 +30,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
+
+	"github.com/panther-labs/panther/tools/cfnparse"
 )
 
 // Test contains targets for testing code syntax, style, and correctness.
@@ -51,85 +54,39 @@ var (
 )
 
 // CI Run all required checks for a pull request
-func (t Test) CI() {
+func (Test) CI() {
 	// Formatting modifies files (and may generate new ones), so we need to run this first
 	fmtErr := testFmtAndGeneratedFiles()
-
 	results := make(chan goroutineResult)
-	count := 0
-
-	logger.Info("running tests in parallel...")
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"fmt", fmtErr}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"build:cfn", build.cfn()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"build:lambda", build.lambda()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"build:tools", build.tools()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"cfn-lint", testCfnLint()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"go unit tests", testGoUnit()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"golangci-lint", testGoLint()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"python unit tests", testPythonUnit()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"pylint", testPythonLint()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"bandit (python security linting)", testPythonBandit()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"mypy (python type checking)", testPythonMypy()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"npm run eslint", testWebEslint()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"npm run tsc", testWebTsc()}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"terraform validate", testTfValidate()}
-	}(results)
-
-	logResults(results, "test:ci", 1, count, count)
+	tasks := []struct {
+		Name string
+		Task func() error
+	}{
+		{"fmt", func() error { return fmtErr }},
+		{"build:cfn", build.cfn},
+		{"build:lambda", build.lambda},
+		{"build:tools", build.tools},
+		{"cfn lint", testCfnLint},
+		{"go unit tests", testGoUnit},
+		{"golangci-lint", testGoLint},
+		{"python unit tests", testPythonUnit},
+		{"pylint", testPythonLint},
+		{"bandit (python security linting)", testPythonBandit},
+		{"mypy (python type checking)", testPythonMypy},
+		{"npm run eslint", testWebEslint},
+		{"npm run tsc", testWebTsc},
+		{"terraform validate", testTfValidate},
+	}
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		logResults(results, "test:ci", 1, len(tasks), len(tasks))
+	}()
+	logger.Info("running tasks in parallel...")
+	for _, task := range tasks {
+		runTask(results, task.Name, task.Task)
+	}
+	<-done
 }
 
 // Format source files and build APIs and check for changes.
@@ -181,7 +138,111 @@ func testCfnLint() error {
 	// which CFN does not understand. So we force string values to serialize them correctly.
 	args := []string{"-x", "E3012:strict=false", "--"}
 	args = append(args, templates...)
-	return sh.RunV(pythonLibPath("cfn-lint"), args...)
+	if err := sh.RunV(pythonLibPath("cfn-lint"), args...); err != nil {
+		return err
+	}
+
+	// Panther-specific linting
+	//
+	// Every Lambda function needs to have an associated log group and metric filter
+	// defined in the same stack.
+	var errs []string
+	for _, template := range templates {
+		if template == bootstrapTemplate || strings.HasPrefix(template, "deployments/auxiliary") {
+			// The very first bootstrap stack can't have custom resources,
+			// and the aux templates don't need them.
+			continue
+		}
+
+		body, err := cfnparse.ParseTemplate(template)
+		if err != nil {
+			errs = append(errs, fmt.Sprintf("failed to parse %s: %v", template, err))
+			continue
+		}
+
+		// Map logicalID => resource type
+		resources := make(map[string]string)
+		for logicalID, resource := range body["Resources"].(map[string]interface{}) {
+			resources[logicalID] = resource.(map[string]interface{})["Type"].(string)
+		}
+
+		// Right now, we just check logicalID and type, but we can always add additional validation
+		// of the resource properties in the future if needed.
+		for logicalID, resourceType := range resources {
+			var err error
+			switch resourceType {
+			case "AWS::DynamoDB::Table":
+				if resources[logicalID+"Alarms"] != "Custom::DynamoDBAlarms" {
+					err = fmt.Errorf("%s needs an associated %s resource in %s",
+						logicalID, logicalID+"Alarms", template)
+				}
+			case "AWS::Serverless::Api":
+				if resources[logicalID+"Alarms"] != "Custom::ApiGatewayAlarms" {
+					err = fmt.Errorf("%s needs an associated %s resource in %s",
+						logicalID, logicalID+"Alarms", template)
+				}
+			case "AWS::Serverless::Function":
+				err = cfnTestFunction(logicalID, template, resources)
+			case "AWS::SNS::Topic":
+				if resources[logicalID+"Alarms"] != "Custom::SNSAlarms" {
+					err = fmt.Errorf("%s needs an associated %s resource in %s",
+						logicalID, logicalID+"Alarms", template)
+				}
+			case "AWS::SQS::Queue":
+				if resources[logicalID+"Alarms"] != "Custom::SQSAlarms" {
+					err = fmt.Errorf("%s needs an associated %s resource in %s",
+						logicalID, logicalID+"Alarms", template)
+				}
+			case "AWS::StepFunctions::StateMachine":
+				if resources[logicalID+"Alarms"] != "Custom::StateMachineAlarms" {
+					err = fmt.Errorf("%s needs an associated %s resource in %s",
+						logicalID, logicalID+"Alarms", template)
+				}
+			}
+
+			if err != nil {
+				errs = append(errs, err.Error())
+			}
+		}
+	}
+
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, "\n"))
+	}
+	return nil
+}
+
+// Returns an error if an AWS::Serverless::Function is missing associated resources
+func cfnTestFunction(logicalID, template string, resources map[string]string) error {
+	idPrefix := strings.TrimSuffix(logicalID, "Function")
+	if resources[idPrefix+"MetricFilters"] != "Custom::LambdaMetricFilters" {
+		return fmt.Errorf("%s needs an associated %s resource in %s",
+			logicalID, idPrefix+"MetricFilters", template)
+	}
+
+	if resources[idPrefix+"Alarms"] != "Custom::LambdaAlarms" {
+		return fmt.Errorf("%s needs an associated %s resource in %s",
+			logicalID, idPrefix+"Alarms", template)
+	}
+
+	// Backwards compatibility - these resources did not originally match the naming scheme,
+	// renaming the logical IDs would delete + recreate the log group, which usually causes
+	// deployments to fail because it tries to create a log group which already exists.
+	if template == logAnalysisTemplate {
+		switch idPrefix {
+		case "AlertsForwarder":
+			idPrefix = "AlertForwarder"
+		case "Updater":
+			idPrefix = "UpdaterFunction"
+		}
+	}
+
+	if resources[idPrefix+"LogGroup"] != "AWS::Logs::LogGroup" {
+		return fmt.Errorf("%s needs an associated %s resource in %s",
+			logicalID, idPrefix+"LogGroup", template)
+	}
+
+	return nil
 }
 
 func testGoUnit() error {
@@ -207,16 +268,11 @@ func testGoUnit() error {
 	}
 
 	// unit tests and race detection
-	if err := runGoTest("test", "-race", "-vet", "", "-cover", "./..."); err != nil {
-		return err
-	}
-
-	// One package is explicitly skipped by -race, we have to run its unit tests separately
-	return runGoTest("test", "-vet", "", "-cover", "./internal/log_analysis/log_processor/destinations")
+	return runGoTest("test", "-race", "-p", "1", "-vet", "", "-cover", "./...")
 }
 
 func testGoLint() error {
-	args := []string{"run", "--timeout", "10m"}
+	args := []string{"run", "--timeout", "10m", "-j", "1"}
 	if mg.Verbose() {
 		args = append(args, "-v")
 	}

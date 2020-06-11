@@ -23,44 +23,43 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/core/source_api/ddb"
-	"github.com/panther-labs/panther/internal/core/source_api/ddb/modelstest"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
+	"github.com/panther-labs/panther/pkg/testutils"
 )
 
-func TestUpdateIntegrationSettings(t *testing.T) {
-	mockClient := &modelstest.MockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+func TestUpdateIntegrationSettingsAwsScanType(t *testing.T) {
+	mockClient := &testutils.DynamoDBMock{}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
 	getResponse := &dynamodb.GetItemOutput{Item: map[string]*dynamodb.AttributeValue{
-		"AWSAccountID":  {S: aws.String("123456789012")},
-		"IntegrationID": {S: aws.String("1111111")},
+		"integrationId":   {S: aws.String(testIntegrationID)},
+		"integrationType": {S: aws.String("aws-scan")},
 	}}
 	mockClient.On("GetItem", mock.Anything).Return(getResponse, nil)
-
-	updateResponse := &dynamodb.UpdateItemOutput{Attributes: map[string]*dynamodb.AttributeValue{
-		"awsAccountId": {
-			S: aws.String("123456789012"),
-		},
-	}}
-	mockClient.On("UpdateItem", mock.Anything).Return(updateResponse, nil)
+	mockClient.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
 		IntegrationID:    aws.String(testIntegrationID),
-		IntegrationLabel: aws.String("NewAWSTestingAccount"),
+		IntegrationLabel: aws.String("new-label"),
 		ScanIntervalMins: aws.Int(1440),
 	})
 
 	expected := &models.SourceIntegration{
-		SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
-			AWSAccountID: aws.String("123456789012"),
+		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
+			IntegrationID:    aws.String(testIntegrationID),
+			IntegrationType:  aws.String("aws-scan"),
+			IntegrationLabel: aws.String("new-label"),
+			ScanIntervalMins: aws.Int(1440),
 		},
 	}
 	assert.NoError(t, err)
@@ -69,27 +68,56 @@ func TestUpdateIntegrationSettings(t *testing.T) {
 }
 
 func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
-	mockClient := &modelstest.MockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	mockClient := &testutils.DynamoDBMock{}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
+	mockGlue := &testutils.GlueMock{}
+	glueClient = mockGlue
+	mockAthena := &testutils.AthenaMock{}
+	athenaClient = mockAthena
 
 	getResponse := &dynamodb.GetItemOutput{Item: map[string]*dynamodb.AttributeValue{
-		"AWSAccountID":  {S: aws.String("123456789012")},
-		"IntegrationID": {S: aws.String("1111111")},
+		"integrationId":   {S: aws.String(testIntegrationID)},
+		"integrationType": {S: aws.String("aws-s3")},
 	}}
 	mockClient.On("GetItem", mock.Anything).Return(getResponse, nil)
+	mockClient.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
 
-	resp := &dynamodb.UpdateItemOutput{}
-	mockClient.On("UpdateItem", mock.Anything).Return(resp, nil)
+	// create the tables
+	mockGlue.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, nil).Twice()
+	// create/replace the view
+	mockGlue.On("GetTable", mock.Anything).Return(&glue.GetTableOutput{}, nil).Times(len(registry.AvailableTables()))
+	mockAthena.On("StartQueryExecution", mock.Anything).Return(&athena.StartQueryExecutionOutput{
+		QueryExecutionId: aws.String("test-query-1234"),
+	}, nil).Twice()
+	mockAthena.On("GetQueryExecution", mock.Anything).Return(&athena.GetQueryExecutionOutput{
+		QueryExecution: &athena.QueryExecution{
+			QueryExecutionId: aws.String("test-query-1234"),
+			Status: &athena.QueryExecutionStatus{
+				State: aws.String(athena.QueryExecutionStateSucceeded),
+			},
+		},
+	}, nil).Twice()
+	mockAthena.On("GetQueryResults", mock.Anything).Return(&athena.GetQueryResultsOutput{}, nil).Twice()
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
 		S3Bucket: aws.String("test-bucket-1"),
 		S3Prefix: aws.String("prefix/"),
 		KmsKey:   aws.String("arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329"),
-		LogTypes: aws.StringSlice([]string{"logType1", "logType2"}),
+		LogTypes: aws.StringSlice([]string{"AWS.VPCFlow"}),
 	})
 
+	expected := &models.SourceIntegration{
+		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
+			IntegrationID:   aws.String(testIntegrationID),
+			IntegrationType: aws.String("aws-s3"),
+			S3Bucket:        aws.String("test-bucket-1"),
+			S3Prefix:        aws.String("prefix/"),
+			KmsKey:          aws.String("arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329"),
+			LogTypes:        aws.StringSlice([]string{"AWS.VPCFlow"}),
+		},
+	}
 	assert.NoError(t, err)
-	assert.NotNil(t, result)
+	assert.Equal(t, expected, result)
 	mockClient.AssertExpectations(t)
 }
 
@@ -105,63 +133,42 @@ func TestUpdateIntegrationValidTime(t *testing.T) {
 }
 
 func TestUpdateIntegrationLastScanStart(t *testing.T) {
-	mockClient := &modelstest.MockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	mockClient := &testutils.DynamoDBMock{}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 
-	resp := &dynamodb.UpdateItemOutput{}
-	mockClient.On("UpdateItem", mock.Anything).Return(resp, nil)
+	getResponse := &dynamodb.GetItemOutput{Item: map[string]*dynamodb.AttributeValue{
+		"integrationId": {S: aws.String(testIntegrationID)},
+	}}
+	mockClient.On("GetItem", mock.Anything).Return(getResponse, nil)
+	mockClient.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
 
 	lastScanEndTime, err := time.Parse(time.RFC3339, "2009-11-10T23:00:00Z")
 	require.NoError(t, err)
 
-	result, err := apiTest.UpdateIntegrationLastScanStart(&models.UpdateIntegrationLastScanStartInput{
+	err = apiTest.UpdateIntegrationLastScanStart(&models.UpdateIntegrationLastScanStartInput{
 		IntegrationID:     aws.String(testIntegrationID),
 		LastScanStartTime: &lastScanEndTime,
 		ScanStatus:        aws.String(models.StatusOK),
 	})
 
 	assert.NoError(t, err)
-	assert.NotNil(t, result)
 	mockClient.AssertExpectations(t)
 }
 
 func TestUpdateIntegrationLastScanEnd(t *testing.T) {
-	mockClient := &modelstest.MockDDBClient{}
-	db = &ddb.DDB{Client: mockClient, TableName: "test"}
+	mockClient := &testutils.DynamoDBMock{}
+	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
 
-	resp := &dynamodb.UpdateItemOutput{}
-
-	update := expression.Set(
-		expression.Name("lastScanEndTime"),
-		expression.Value("2009-11-10T23:00:00Z"),
-	)
-	update = update.Set(
-		expression.Name("lastScanErrorMessage"),
-		expression.Value("something went wrong"),
-	)
-	update = update.Set(
-		expression.Name("scanStatus"),
-		expression.Value(models.StatusError),
-	)
-	expr, err := expression.NewBuilder().WithUpdate(update).Build()
-	require.NoError(t, err)
-
-	expected := &dynamodb.UpdateItemInput{
-		ExpressionAttributeNames:  expr.Names(),
-		ExpressionAttributeValues: expr.Values(),
-		Key: map[string]*dynamodb.AttributeValue{
-			"integrationId": {S: aws.String(testIntegrationID)},
-		},
-		ReturnValues:     aws.String("ALL_NEW"),
-		TableName:        aws.String("test"),
-		UpdateExpression: expr.Update(),
-	}
-	mockClient.On("UpdateItem", expected).Return(resp, nil)
+	getResponse := &dynamodb.GetItemOutput{Item: map[string]*dynamodb.AttributeValue{
+		"integrationId": {S: aws.String(testIntegrationID)},
+	}}
+	mockClient.On("GetItem", mock.Anything).Return(getResponse, nil)
+	mockClient.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
 
 	lastScanEndTime, err := time.Parse(time.RFC3339, "2009-11-10T23:00:00Z")
 	require.NoError(t, err)
 
-	result, err := apiTest.UpdateIntegrationLastScanEnd(&models.UpdateIntegrationLastScanEndInput{
+	err = apiTest.UpdateIntegrationLastScanEnd(&models.UpdateIntegrationLastScanEndInput{
 		IntegrationID:        aws.String(testIntegrationID),
 		LastScanEndTime:      &lastScanEndTime,
 		LastScanErrorMessage: aws.String("something went wrong"),
@@ -169,6 +176,5 @@ func TestUpdateIntegrationLastScanEnd(t *testing.T) {
 	})
 
 	assert.NoError(t, err)
-	assert.NotNil(t, result)
 	mockClient.AssertExpectations(t)
 }

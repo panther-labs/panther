@@ -40,7 +40,7 @@ func TestListIntegrations(t *testing.T) {
 	lastScanStartTime, err := time.Parse(time.RFC3339, "2019-04-10T22:59:00Z")
 	require.NoError(t, err)
 
-	db = &ddb.DDB{
+	dynamoClient = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
 			MockScanAttributes: []map[string]*dynamodb.AttributeValue{
 				{
@@ -62,18 +62,18 @@ func TestListIntegrations(t *testing.T) {
 	}
 
 	expected := &models.SourceIntegration{
-		SourceIntegrationMetadata: &models.SourceIntegrationMetadata{
+		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 			AWSAccountID:     aws.String("123456789012"),
 			IntegrationID:    aws.String(testIntegrationID),
 			IntegrationLabel: aws.String(testIntegrationLabel),
 			IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
 			ScanIntervalMins: aws.Int(1440),
 		},
-		SourceIntegrationStatus: &models.SourceIntegrationStatus{
+		SourceIntegrationStatus: models.SourceIntegrationStatus{
 			ScanStatus:  aws.String(models.StatusOK),
 			EventStatus: aws.String(models.StatusOK),
 		},
-		SourceIntegrationScanInformation: &models.SourceIntegrationScanInformation{
+		SourceIntegrationScanInformation: models.SourceIntegrationScanInformation{
 			LastScanEndTime:      &lastScanEndTime,
 			LastScanErrorMessage: aws.String(""),
 			LastScanStartTime:    &lastScanStartTime,
@@ -89,7 +89,7 @@ func TestListIntegrations(t *testing.T) {
 
 // An empty list of integrations is returned instead of null
 func TestListIntegrationsEmpty(t *testing.T) {
-	db = &ddb.DDB{
+	dynamoClient = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
 			MockScanAttributes: []map[string]*dynamodb.AttributeValue{},
 			TestErr:            false,
@@ -104,7 +104,7 @@ func TestListIntegrationsEmpty(t *testing.T) {
 }
 
 func TestHandleListIntegrationsScanError(t *testing.T) {
-	db = &ddb.DDB{
+	dynamoClient = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
 			MockScanAttributes: []map[string]*dynamodb.AttributeValue{},
 			TestErr:            true,

@@ -19,7 +19,15 @@
 import React from 'react';
 import { Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
-import { InputElementLabel, Flex, Box, InputElementErrorLabel, Text, SimpleGrid } from 'pouncejs';
+import {
+  InputElementLabel,
+  Flex,
+  Box,
+  InputElementErrorLabel,
+  Text,
+  SimpleGrid,
+  Link,
+} from 'pouncejs';
 import { SeverityEnum } from 'Generated/schema';
 import { capitalize, minutesToString } from 'Helpers/utils';
 import FormikTextArea from 'Components/fields/TextArea';
@@ -30,26 +38,12 @@ import FormikEditor from 'Components/fields/Editor';
 import { LOG_TYPES, RESOURCE_TYPES } from 'Source/constants';
 import { RuleFormValues } from 'Components/forms/RuleForm';
 import { PolicyFormValues } from 'Components/forms/PolicyForm';
-
-export const ruleCoreEditableFields = [
-  'body',
-  'description',
-  'displayName',
-  'enabled',
-  'id',
-  'reference',
-  'runbook',
-  'severity',
-  'tags',
-] as const;
+import { Link as RRLink } from 'react-router-dom';
+import urls from 'Source/urls';
 
 interface BaseRuleCoreFieldsProps {
   type: 'rule' | 'policy';
 }
-
-type FormValues = Required<Pick<RuleFormValues, typeof ruleCoreEditableFields[number]>> &
-  Pick<RuleFormValues, 'logTypes'> &
-  Pick<PolicyFormValues, 'resourceTypes' | 'suppressions'>;
 
 const severityOptions = Object.values(SeverityEnum);
 const severityItemToString = severity => capitalize(severity.toLowerCase());
@@ -70,7 +64,9 @@ const logTypesInputProps = {
 const BaseRuleFormCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => {
   // Read the values from the "parent" form. We expect a formik to be declared in the upper scope
   // since this is a "partial" form. If no Formik context is found this will error out intentionally
-  const { values, errors, touched, initialValues } = useFormikContext<FormValues>();
+  const { values, errors, touched, initialValues } = useFormikContext<
+    RuleFormValues | PolicyFormValues
+  >();
 
   const tagAdditionValidation = React.useMemo(() => tag => !values.tags.includes(tag), [
     values.tags,
@@ -140,7 +136,7 @@ const BaseRuleFormCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => 
               searchable
               name="suppressions"
               label="Resource Ignore Patterns"
-              items={values.suppressions}
+              items={(values as PolicyFormValues).suppressions}
               allowAdditions
               inputProps={suppressionInputProps}
             />
@@ -189,8 +185,18 @@ const BaseRuleFormCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => 
           </React.Fragment>
         )}
       </SimpleGrid>
-      <Box my={6}>
-        <InputElementLabel htmlFor="enabled">{`* ${capitalize(type)} Function`}</InputElementLabel>
+      <Box my={3}>
+        <Flex align="center">
+          <InputElementLabel htmlFor={'body'} mr={1}>
+            {`* ${capitalize(type)} Function`} -
+          </InputElementLabel>
+          <Text size="small" color="grey300" mr={1}>
+            Need to define re-usable functions? Define them in the
+          </Text>
+          <Link color="blue300" as={RRLink} to={urls.settings.globalModule()}>
+            <Text size="small"> global module</Text>
+          </Link>
+        </Flex>
         <Field
           as={FormikEditor}
           placeholder={`# Enter the body of the ${type} here...`}
