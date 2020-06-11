@@ -4,12 +4,11 @@ Please note that all queries should be qualified with partition columns (year, m
 
 ## Did this IP address have any activity in my network (and in what logs)?
 
-This is often one of the first questions asked in an investigation. Given there is some known bad indicator such
-as an IP address, then if there is related activity in your network/systems, a detailed investigation will be needed.
-Panther makes asking such questions easy using the 'all_logs' Athena view which will search all data for the
-indicator of interest. Since most often the answers to these question are negative, making this a fast and efficient
-operation reduces investigation time. In this example the Panther field `p_any_ip_addresses` is used. Panther extracts
-a number of common indicator fields over all data sources into standard fields (see [Panther Fields](./panther-fields.md)).
+This is often one of the first questions asked in an investigation. Given there is some known bad indicator such as an IP address, then if there is related activity in your network/systems, a detailed investigation will be needed.
+
+Panther makes asking such questions easy using the 'all_logs' Athena view which will search all data for the indicator of interest. Since most often the answers to these question are negative, making this a fast and efficient operation reduces investigation time.
+
+In this example the Panther field `p_any_ip_addresses` is used. Panther extracts a number of common indicator fields over all data sources into standard fields (see [Panther Fields](log-analysis/panther-fields.md)).
 
 ```sql
 SELECT
@@ -68,7 +67,7 @@ a standard procedure to identify specific actor activity.
 ```sql
 SELECT
  *
-FROM panther_tables.aws_vpcflow
+FROM panther_logs.aws_vpcflow
 WHERE
   year=2020 AND month=1 AND day=23
   AND
@@ -85,7 +84,7 @@ can indicate which resources are likely to be compromised.
 ```sql
 SELECT
  *
-FROM panther_tables.aws_vpcflow
+FROM panther_logs.aws_vpcflow
 WHERE year=2020 AND month=1 AND day=31 AND contains(p_any_ip_addresses, '1.2.3.4')
 ORDER BY p_event_time ASC
 ```
@@ -103,7 +102,7 @@ an unauthorized actor is accessing account resources.
 WITH cloudTrailIPs as
 (SELECT
   DISTINCT sourceIPAddress AS ip
- FROM panther_tables.aws_cloudtrail
+ FROM panther_logs.aws_cloudtrail
  WHERE
     year=2020 AND month=2 AND day=1
     AND
@@ -111,7 +110,7 @@ WITH cloudTrailIPs as
 )
 SELECT
  *
-FROM  cloudTrailIPs ips JOIN panther_tables.aws_vpcflow flow ON (ips.ip = flow.srcaddr OR ips.ip = flow.dstaddr)
+FROM  cloudTrailIPs ips JOIN panther_logs.aws_vpcflow flow ON (ips.ip = flow.srcaddr OR ips.ip = flow.dstaddr)
 WHERE
   year=2020 AND month=2 AND day=1
 ORDER BY p_event_time ASC
@@ -124,7 +123,7 @@ The root account should almost never sign into the AWS console; find all such si
 ```sql
 SELECT
  *
-FROM panther_tables.aws_cloudtrail
+FROM panther_logs.aws_cloudtrail
 WHERE
   year=2020 AND month=1 AND day=23
   AND
@@ -144,7 +143,7 @@ anomalous behaviors.
 SELECT
  sourceipaddress,
  count(1) as total_rows
-FROM panther_tables.aws_cloudtrail
+FROM panther_logs.aws_cloudtrail
 WHERE
   year=2020 AND month=1 AND day=23
   AND
@@ -162,7 +161,7 @@ any related activity.
 ```sql
 SELECT
  *
-FROM panther_tables.aws_cloudtrail
+FROM panther_logs.aws_cloudtrail
 WHERE year=2020 AND month=1 AND contains(p_any_aws_instance_ids, 'i-0c4f541ef2f82481c')
 ORDER BY p_event_time ASC
 ```
@@ -175,10 +174,9 @@ all CloudTrail activity related to an ARN of interest (perhaps an ARN of role kn
 ```sql
 SELECT
  *
-FROM panther_tables.aws_cloudtrail
+FROM panther_logs.aws_cloudtrail
 WHERE year=2020 AND month=1 AND contains(p_any_aws_arns, 'arn:aws:iam::123456789012:role/SomeRole')
 ORDER BY p_event_time ASC
-
 ```
 
 ## Show CloudTrail activity related to an AWS account id
@@ -189,7 +187,7 @@ data related to an account of interest using `p_any_aws_account_ids` (perhaps th
 ```sql
 SELECT
  *
-FROM panther_tables.aws_cloudtrail
+FROM panther_logs.aws_cloudtrail
 WHERE year=2020 AND month=1 AND contains(p_any_aws_account_ids, '123456789012')
 ORDER BY p_event_time ASC
 ```
@@ -204,7 +202,7 @@ have been known to spin-up large numbers of GPU instances for bitcoin mining in 
 SELECT
  p_event_time,
  p_any_aws_instance_ids
-FROM panther_tables.aws_cloudtrail
+FROM panther_logs.aws_cloudtrail
 WHERE year=2020 AND month=1 AND eventname = 'RunInstances'
 ORDER BY p_event_time ASC
 ```
@@ -219,7 +217,7 @@ an account.
 SELECT
  severity,
  count(1) AS total_rows
-FROM panther_tables.aws_guardduty
+FROM panther_logs.aws_guardduty
 WHERE year=2020 AND month=1
 GROUP BY severity
 ORDER BY total_rows DESC
@@ -233,7 +231,7 @@ Similar to the above example, but in this example the query characterizes the fi
 SELECT
  json_extract(resource, '$.resourcetype') AS resource_type,
  count(1) AS total_rows
-FROM panther_tables.aws_guardduty
+FROM panther_logs.aws_guardduty
 WHERE year=2020 AND month=1
 GROUP BY json_extract(resource, '$.resourcetype')
 ORDER BY total_rows DESC
@@ -250,7 +248,7 @@ outside your organization (**if so, you may have had a data leak**).
 SELECT
  remoteip,
  count(1) AS total_rows
-FROM panther_tables.aws_s3serveraccess
+FROM panther_logs.aws_s3serveraccess
 WHERE
   year=2020 AND month=1
   AND
@@ -273,7 +271,7 @@ FROM (
 SELECT
  useragent,
  count(1) AS row_count
-FROM panther_tables.aws_alb
+FROM panther_logs.aws_alb
 WHERE year=2020 AND month=1 AND day=31
 GROUP BY useragent
 
@@ -282,7 +280,7 @@ UNION ALL
 SELECT
  httpuseragent AS useragent,
  count(1) AS row_count
-FROM panther_tables.nginx_access
+FROM panther_logs.nginx_access
 WHERE year=2020 AND month=1 AND day=31
 GROUP BY httpuseragent
 )
