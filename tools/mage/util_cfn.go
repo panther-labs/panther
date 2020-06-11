@@ -269,13 +269,22 @@ func errStackDoesNotExist(err error) bool {
 	return false
 }
 
-// Returns stack status, outputs, and any error
-func describeStack(cfClient *cfn.CloudFormation, stackName string) (string, map[string]string, error) {
-	input := &cfn.DescribeStacksInput{StackName: &stackName}
-	response, err := cfClient.DescribeStacks(input)
-	if err != nil {
-		return "", nil, err
+// Returns combined outputs from one or more stacks. Treats errors as fatal.
+func stackOutputs(stacks ...string) map[string]string {
+	result := make(map[string]string)
+	client := cfn.New(awsSession)
+
+	for _, stack := range stacks {
+		input := &cfn.DescribeStacksInput{StackName: aws.String(stack)}
+		response, err := client.DescribeStacks(input)
+		if err != nil {
+			logger.Fatal(err)
+		}
+
+		for k, v := range flattenStackOutputs(response.Stacks[0]) {
+			result[k] = v
+		}
 	}
 
-	return aws.StringValue(response.Stacks[0].StackStatus), flattenStackOutputs(response.Stacks[0]), nil
+	return result
 }
