@@ -80,10 +80,21 @@ input GetS3LogIntegrationTemplateInput {
   logTypes: [String!]!
 }
 
+# TODO - filtering / sorting changes
 input ListAlertsInput {
   ruleId: ID
-  pageSize: Int
+  pageSize: Int # defaults to `25`
   exclusiveStartKey: String
+  severity: SeverityEnum
+
+  # Coppied some fields from ListRulesInput
+  # nameContains: String
+  # Sorting
+  # sortBy: ListRulesSortFieldsEnum # defaults to `id`
+  # sortDir: SortDirEnum # defaults to `ascending`
+  # Paging
+  # pageSize: Int # defaults to `25`
+  # page: Int # defaults to `1`
 }
 
 input GetAlertInput {
