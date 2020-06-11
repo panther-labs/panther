@@ -356,7 +356,6 @@ func TestProcessClassifyFailure(t *testing.T) {
 			continue
 		}
 		assertLogEqual(t, expected[i], actual[i])
-		fmt.Println("done comparing")
 	}
 }
 
