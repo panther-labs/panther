@@ -94,10 +94,10 @@ func (p *AuditLogParser) Parse(log string) ([]*parsers.PantherLog, error) {
 // nolint:lll
 type AuditLog struct {
 	PayloadType        *string             `json:"@type" validate:"required,eq=type.googleapis.com/google.cloud.audit.AuditLog" description:"The type of payload"`
-	ServiceName        *string             `json:"serviceName,omitempty" description:"The name of the LogTypeEntry service performing the operation"`
-	MethodName         *string             `json:"methodName,omitempty" description:"The name of the service method or operation. For LogTypeEntry calls, this should be the name of the LogTypeEntry method."`
-	ResourceName       *string             `json:"resourceName,omitempty" description:"The resource or collection that is the target of the operation. The name is a scheme-less URI, not including the LogTypeEntry service name."`
-	NumResponseItems   *numerics.Int64     `json:"numResponseItems,omitempty" description:"The number of items returned from a List or Query LogTypeEntry method, if applicable."`
+	ServiceName        *string             `json:"serviceName,omitempty" description:"The name of the API service performing the operation"`
+	MethodName         *string             `json:"methodName,omitempty" description:"The name of the service method or operation. For API calls, this should be the name of the API method."`
+	ResourceName       *string             `json:"resourceName,omitempty" description:"The resource or collection that is the target of the operation. The name is a scheme-less URI, not including the API service name."`
+	NumResponseItems   *numerics.Int64     `json:"numResponseItems,omitempty" description:"The number of items returned from a List or Query API method, if applicable."`
 	Status             *Status             `json:"status,omitempty" description:" The status of the overall operation."`
 	AuthenticationInfo *AuthenticationInfo `json:"authenticationInfo,omitempty" description:"Authentication information."`
 	AuthorizationInfo  []AuthorizationInfo `json:"authorizationInfo,omitempty" validate:"omitempty,dive" description:"Authorization information. If there are multiple resources or permissions involved, then there is one AuthorizationInfo element for each {resource, permission} tuple."`
