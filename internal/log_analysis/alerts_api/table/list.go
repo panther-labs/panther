@@ -77,13 +77,6 @@ func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAle
 	}
 }
 
-// filterByRuleID - fiters by a specific RuleID
-func filterByRuleID(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
-	if input.RuleID != nil {
-		*filter = filter.And(expression.Equal(expression.Name("ruleId"), expression.Value(*input.RuleID)))
-	}
-}
-
 // filterByNameContains - fiters by a name that contains a string
 func filterByNameContains(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
 	// Because we return to the frontend a `title` which could be comprised of three attributes,
@@ -117,7 +110,6 @@ func (table *AlertsTable) applyFilters(builder *expression.Builder, input *model
 
 	// Then, apply our filters
 	filterBySeverity(&filter, input)
-	filterByRuleID(&filter, input)
 	filterByNameContains(&filter, input)
 	filterByEventCount(&filter, input)
 
