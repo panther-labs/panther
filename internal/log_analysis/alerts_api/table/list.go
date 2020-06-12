@@ -70,9 +70,6 @@ func (table *AlertsTable) getKeyCondition(input *models.ListAlertsInput) (keyCon
 	return keyCondition
 }
 
-//	// Queries require an 'equal' condition on theprimary key
-// keyCondition := expression.Key(ddbKey).Equal(expression.Value(&ddbValue))
-
 // filterBySeverity - filters by a Severity level
 func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
 	if input.Severity != nil {
@@ -117,6 +114,7 @@ func filterByEventCount(filter *expression.ConditionBuilder, input *models.ListA
 func (table *AlertsTable) applyFilters(builder *expression.Builder, input *models.ListAlertsInput) {
 	// Start with an empty filter for a known attribute
 	filter := expression.AttributeExists(expression.Name("id"))
+
 	// Then, apply our filters
 	filterBySeverity(&filter, input)
 	filterByRuleID(&filter, input)
