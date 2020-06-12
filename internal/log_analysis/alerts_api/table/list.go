@@ -117,7 +117,7 @@ func (table *AlertsTable) applyFilters(builder *expression.Builder, input *model
 
 	// Then, apply our filters
 	filterBySeverity(&filter, input)
-	filterByRuleID(&filter, input)
+	// filterByRuleID(&filter, input)
 	filterByNameContains(&filter, input)
 	filterByEventCount(&filter, input)
 
