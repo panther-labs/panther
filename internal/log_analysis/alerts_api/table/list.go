@@ -46,8 +46,8 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 
 // getIndex - gets the primary index to query
 //
-// If a `ruleID` has been specified, then we need to create the KeyCondition based on this field.
-// Otherwise, we use the default time partition
+// If a `RuleID` is present, then create the index based on this field.
+// Otherwise, use the default time partition index
 func (table *AlertsTable) getIndex(input *models.ListAlertsInput) (index *string) {
 	if input.RuleID != nil {
 		index = aws.String(table.RuleIDCreationTimeIndexName)
@@ -56,6 +56,22 @@ func (table *AlertsTable) getIndex(input *models.ListAlertsInput) (index *string
 	index = aws.String(table.TimePartitionCreationTimeIndexName)
 	return index
 }
+
+// getKeyCondition - gets the appropriate key condition for a query
+//
+// If a `RuleID` is present, then create the KeyCondition based on this field.
+// Otherwise, use the default time partition key condition
+func (table *AlertsTable) getKeyCondition(input *models.ListAlertsInput) (keyCondition expression.KeyConditionBuilder) {
+	if input.RuleID != nil {
+		keyCondition = expression.Key(RuleIDKey).Equal(expression.Value(*input.RuleID))
+		return keyCondition
+	}
+	keyCondition = expression.Key(TimePartitionKey).Equal(expression.Value(TimePartitionValue))
+	return keyCondition
+}
+
+//	// Queries require an 'equal' condition on theprimary key
+// keyCondition := expression.Key(ddbKey).Equal(expression.Value(&ddbValue))
 
 // filterBySeverity - filters by a Severity level
 func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
@@ -115,10 +131,11 @@ func (table *AlertsTable) applyFilters(builder *expression.Builder, input *model
 func (table *AlertsTable) list(ddbKey, ddbValue string, input *models.ListAlertsInput) (
 	summaries []*AlertItem, lastEvaluatedKey *string, err error) {
 
+	// Get the primary key index to query by
 	index := table.getIndex(input)
 
-	// Queries require an 'equal' condition on theprimary key
-	keyCondition := expression.Key(ddbKey).Equal(expression.Value(&ddbValue))
+	// Get the key condition for the query
+	keyCondition := table.getKeyCondition(input)
 
 	// Construct a new builder instance with the above index as our key condition
 	builder := expression.NewBuilder().WithKeyCondition(keyCondition)
