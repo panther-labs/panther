@@ -28,12 +28,12 @@ const queryStringOptions = {
 };
 
 function useUrlParams<T extends { [key: string]: any }>() {
-  const { history } = useRouter();
+  const { history, location } = useRouter();
 
   /**
    * parses the query params of a URL and returns an object with params in the correct typo
    */
-  const urlParams = queryString.parse(history.location.search, queryStringOptions) as T;
+  const urlParams = queryString.parse(location.search, queryStringOptions) as T;
 
   /**
    * stringifies an object and adds it to the existing query params of a URL
@@ -50,12 +50,10 @@ function useUrlParams<T extends { [key: string]: any }>() {
       v => !v && !['number', 'boolean'].includes(typeof v)
     );
 
-    history.replace(
-      `${history.location.pathname}?${queryString.stringify(
-        cleanedMergedQueryParams,
-        queryStringOptions
-      )}`
-    );
+    history.replace({
+      ...location,
+      search: queryString.stringify(cleanedMergedQueryParams, queryStringOptions),
+    });
   };
 
   // Cache those values as long as URL parameters are the same
