@@ -91,6 +91,7 @@ input ListAlertsInput {
   contains: String # matches against ruleId, ruleDisplayName, and title
   eventCountMin: Int
   eventCountMax: Int
+
   # Coppied some fields from ListRulesInput
   # nameContains: String
   # Sorting

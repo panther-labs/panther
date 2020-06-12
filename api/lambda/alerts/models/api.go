@@ -72,15 +72,15 @@ type ListAlertsInput struct {
 	// Filtering
 	// TODO - enforce that a relatively narrow time bound exists if SortBy is defined.
 	//   We have to sort in memory, so there needs to be a reasonable limit
-	Before        *time.Time `json:"before"`
-	After         *time.Time `json:"after"`
-	Severity      *string    `json:"severity" validate:"oneof=INFO LOW MEDIUM HIGH CRITICAL"`
-	Contains      *string    `json:"contains"`
-	EventCountMin *int       `json:"eventCountMin" validate:"min=0"`
-	EventCountMax *int       `json:"eventCountMax" validate:"min=0"`
+	Before        *time.Time `json:"before,omitempty"`
+	After         *time.Time `json:"after,omitempty"`
+	Severity      *string    `json:"severity,omitempty" validate:"omitempty,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
+	Contains      *string    `json:"contains,omitempty"`
+	EventCountMin *int       `json:"eventCountMin,omitempty" validate:"omitempty,min=0"`
+	EventCountMax *int       `json:"eventCountMax,omitempty" validate:"omitempty,min=0"`
 
 	// Sorting
-	SortBy *string `json:"sortBy" validate:"oneof=title"`
+	SortBy *string `json:"sortBy,omitempty" validate:"omitempty,oneof=title"`
 }
 
 // ListAlertsOutput is the returned alert list.
