@@ -62,6 +62,7 @@ func (API) UpdateOutput(input *models.UpdateOutputInput) (*models.UpdateOutputOu
 	if alertOutput, err = ItemToAlertOutput(alertOutputItem); err != nil {
 		return nil, err
 	}
+	redactOutput(alertOutput.OutputConfig)
 
 	return alertOutput, nil
 }

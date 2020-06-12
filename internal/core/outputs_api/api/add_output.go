@@ -62,6 +62,7 @@ func (API) AddOutput(input *models.AddOutputInput) (*models.AddOutputOutput, err
 	if err != nil {
 		return nil, err
 	}
+	redactOutput(alertOutput.OutputConfig)
 
 	if err = outputsTable.PutOutput(alertOutputItem); err != nil {
 		return nil, err

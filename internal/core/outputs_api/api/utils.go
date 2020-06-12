@@ -73,8 +73,6 @@ func ItemToAlertOutput(input *table.AlertOutputItem) (alertOutput *models.AlertO
 		return nil, err
 	}
 
-	// Redact the output before returning to the caller
-	redactOutput(alertOutput.OutputConfig)
 	return alertOutput, nil
 }
 
