@@ -60,7 +60,7 @@ func TestSendSns(t *testing.T) {
 	expectedSnsMessage := &snsMessage{
 		DefaultMessage: `{"id":"policyId","name":"policyName","description":"policyDescription","runbook":"runbook","severity":"severity"}`,
 		EmailMessage: "policyName failed on new resources\nFor more details please visit: https://panther.io/policies/policyId\n" +
-			"Severity: severity\nRunbook: runbook\nDescription:policyDescription",
+			"Severity: severity\nRunbook: runbook\nDescription: policyDescription",
 	}
 	expectedSerializedSnsMessage, _ := jsoniter.MarshalToString(expectedSnsMessage)
 	expectedSnsPublishInput := &sns.PublishInput{

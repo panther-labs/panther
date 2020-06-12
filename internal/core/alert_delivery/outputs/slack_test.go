@@ -68,9 +68,9 @@ func TestSlackAlert(t *testing.T) {
 			},
 		},
 	}
-	requestEndpoint := "slack-channel-url"
+	requestURL := *slackConfig.WebhookURL
 	expectedPostInput := &PostInput{
-		url:  requestEndpoint,
+		url:  requestURL,
 		body: expectedPostPayload,
 	}
 

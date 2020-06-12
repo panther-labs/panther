@@ -27,7 +27,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 
@@ -154,7 +153,7 @@ func testCfnLint() error {
 			continue
 		}
 
-		body, err := cfnparse.ParseTemplate(template)
+		body, err := cfnparse.ParseTemplate(pythonVirtualEnvPath, template)
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("failed to parse %s: %v", template, err))
 			continue
@@ -288,7 +287,7 @@ func testPythonUnit() error {
 	}
 
 	for _, target := range []string{"internal/core", "internal/compliance", "internal/log_analysis"} {
-		if err := sh.Run(pythonLibPath("python3"), append(args, target)...); err != nil {
+		if err := runWithoutStderr(pythonLibPath("python3"), append(args, target)...); err != nil {
 			return fmt.Errorf("python unit tests failed: %v", err)
 		}
 	}
@@ -325,7 +324,7 @@ func testPythonBandit() error {
 	} else {
 		args = append(args, "--quiet")
 	}
-	return sh.Run(pythonLibPath("bandit"), append(args, pyTargets...)...)
+	return runWithoutStderr(pythonLibPath("bandit"), append(args, pyTargets...)...)
 }
 
 func testPythonMypy() error {
@@ -376,18 +375,10 @@ func testTfValidate() error {
 
 // Integration Run integration tests (integration_test.go,integration.py)
 func (t Test) Integration() {
-	// Check the AWS account ID
-	awsSession, err := getSession()
-	if err != nil {
-		logger.Fatal(err)
-	}
-	identity, err := sts.New(awsSession).GetCallerIdentity(&sts.GetCallerIdentityInput{})
-	if err != nil {
-		logger.Fatalf("failed to get caller identity: %v", err)
-	}
+	getSession()
 
 	logger.Warnf("Integration tests will erase all Panther data in account %s (%s)",
-		*identity.Account, *awsSession.Config.Region)
+		getAccountID(), *awsSession.Config.Region)
 	result := promptUser("Are you sure you want to continue? (yes|no) ", nonemptyValidator)
 	if strings.ToLower(result) != "yes" {
 		logger.Fatal("integration tests aborted")

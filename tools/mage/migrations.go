@@ -25,7 +25,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
 	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
 )
 
@@ -39,7 +38,7 @@ const (
 // Migrations which run before the main deploy.
 //
 // These can be removed a few releases after they have been added.
-func migrate(awsSession *session.Session, accountID string) {
+func migrate(accountID string) {
 	cfnClient := cfn.New(awsSession)
 
 	// In v1.3.0, the metric filter stack was replaced with custom resources.

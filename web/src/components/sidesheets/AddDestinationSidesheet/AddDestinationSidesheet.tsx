@@ -33,6 +33,7 @@ import MicrosoftTeamsDestinationForm from 'Components/forms/MicrosoftTeamsDestin
 import JiraDestinationForm from 'Components/forms/JiraDestinationForm';
 import GithubDestinationForm from 'Components/forms/GithubDestinationForm';
 import AsanaDestinationForm from 'Components/forms/AsanaDestinationForm';
+import CustomWebhookDestinationForm from 'Components/forms/CustomWebhookDestinationForm';
 import { capitalize, extractErrorMessage } from 'Helpers/utils';
 import { useAddDestination } from './graphql/addDestination.generated';
 
@@ -194,6 +195,13 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
               ...commonInitialValues,
               outputConfig: { asana: { personalAccessToken: '', projectGids: [] } },
             }}
+            onSubmit={handleSubmit}
+          />
+        );
+      case DestinationTypeEnum.Customwebhook:
+        return (
+          <CustomWebhookDestinationForm
+            initialValues={{ ...commonInitialValues, outputConfig: { customWebhook: { webhookURL: '' } } }} // prettier-ignore
             onSubmit={handleSubmit}
           />
         );
