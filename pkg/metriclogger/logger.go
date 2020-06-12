@@ -1,4 +1,4 @@
-package embeddedlogger
+package metriclogger
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -46,6 +46,14 @@ type Logger struct {
 	dimensions [][]string
 }
 
+func MustLogger(namespace string, dimensions [][]string) *Logger {
+	logger, err := NewLogger(namespace, dimensions)
+	if err != nil {
+		panic(err)
+	}
+	return logger
+}
+
 // Create a new logger for a given namespace and set of dimensions
 func NewLogger(namespace string, dimensions [][]string) (*Logger, error) {
 	if namespace == "" || dimensions == nil {
@@ -58,8 +66,11 @@ func NewLogger(namespace string, dimensions [][]string) (*Logger, error) {
 }
 
 // Log sends a log to the CloudWatch log group formatted in the CloudWatch embedded metric format
-func (l *Logger) Log(values map[Metric]interface{}, dimensions map[string]string) error {
-	return LogEmbedded(l.namespace, values, dimensions, l.dimensions, 0)
+func (l *Logger) Log(values map[Metric]interface{}, dimensions map[string]string) {
+	err := LogEmbedded(l.namespace, values, dimensions, l.dimensions, 0)
+	if err != nil {
+		zap.L().Error("metric failed", zap.Error(err))
+	}
 }
 
 // LogEmbedded constructs an object in the AWS embedded metric format and logs it

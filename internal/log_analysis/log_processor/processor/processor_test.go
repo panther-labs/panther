@@ -37,7 +37,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
-	logger "github.com/panther-labs/panther/pkg/embeddedlogger"
+	logger "github.com/panther-labs/panther/pkg/metriclogger"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
 

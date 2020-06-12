@@ -31,7 +31,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	logger "github.com/panther-labs/panther/pkg/embeddedlogger"
+	logger "github.com/panther-labs/panther/pkg/metriclogger"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
 
@@ -59,7 +59,7 @@ var (
 		Name: "bytesProcessed",
 		Unit: "Bytes",
 	}
-	eLogger, _ = logger.NewLogger(processorLogNamespace, processorLogDimensions)
+	eLogger = logger.MustLogger(processorLogNamespace, processorLogDimensions)
 )
 
 // Process orchestrates the tasks of parsing logs, classification, normalization
@@ -173,10 +173,7 @@ func (p *Processor) logStats(err error) {
 		values := map[logger.Metric]interface{}{
 			processorMetric: parserStats.BytesProcessedCount,
 		}
-		err = eLogger.Log(values, map[string]string{"logType": parserStats.LogType})
-		if err != nil {
-			zap.L().Error("unable to generate metric", zap.Error(err))
-		}
+		eLogger.Log(values, map[string]string{"logType": parserStats.LogType})
 	}
 }
 
