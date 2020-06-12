@@ -24,6 +24,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+
+	"github.com/panther-labs/panther/api/lambda/alerts/models"
 )
 
 const (
@@ -36,8 +38,8 @@ const (
 // API defines the interface for the alerts table which can be used for mocking.
 type API interface {
 	GetAlert(*string) (*AlertItem, error)
-	ListByRule(string, *string, *int, *string) ([]*AlertItem, *string, error)
-	ListAll(*string, *int, *string) ([]*AlertItem, *string, error)
+	ListByRule(*models.ListAlertsInput) ([]*AlertItem, *string, error)
+	ListAll(*models.ListAlertsInput) ([]*AlertItem, *string, error)
 }
 
 // AlertsTable encapsulates a connection to the Dynamo alerts table.

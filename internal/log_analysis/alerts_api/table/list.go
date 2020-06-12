@@ -26,65 +26,137 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+
+	"github.com/panther-labs/panther/api/lambda/alerts/models"
 )
 
-// TODO - consider passing models.ListAlertInput instead of each field as separate parameters
-func (table *AlertsTable) ListByRule(ruleID string, exclusiveStartKey *string, pageSize *int, severity *string) (
+// ListByRule - lists all alerts belonging to a specific ruleID
+func (table *AlertsTable) ListByRule(input *models.ListAlertsInput) (
 	summaries []*AlertItem, lastEvaluatedKey *string, err error) {
 
-	return table.list(RuleIDKey, ruleID, exclusiveStartKey, pageSize, severity)
+	return table.list(RuleIDKey, *input.RuleID, input)
 }
 
-func (table *AlertsTable) ListAll(exclusiveStartKey *string, pageSize *int, severity *string) (
+// ListAll - lists all alerts (default sort by creation time)
+func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 	summaries []*AlertItem, lastEvaluatedKey *string, err error) {
 
-	return table.list(TimePartitionKey, TimePartitionValue, exclusiveStartKey, pageSize, severity)
+	return table.list(TimePartitionKey, TimePartitionValue, input)
 }
 
-// list returns a page of alerts ordered by creationTime, last evaluated key, any error
-func (table *AlertsTable) list(ddbKey, ddbValue string, exclusiveStartKey *string, pageSize *int, severity *string) (
-	summaries []*AlertItem, lastEvaluatedKey *string, err error) {
-
-	// pick index
-	var index string
+// getIndex - gets the primary index to query
+//
+// This currently supports two indices:
+//  1. By the rule ID index name
+//  2. By the time partition index name
+func (table *AlertsTable) getIndex(ddbKey string) (index *string, err error) {
 	if ddbKey == RuleIDKey {
-		index = table.RuleIDCreationTimeIndexName
+		index = aws.String(table.RuleIDCreationTimeIndexName)
+		return index, nil
 	} else if ddbKey == TimePartitionKey {
-		index = table.TimePartitionCreationTimeIndexName
+		index = aws.String(table.TimePartitionCreationTimeIndexName)
+		return index, nil
 	} else {
-		return nil, nil, errors.New("unknown key" + ddbKey)
+		return nil, errors.New("unknown key" + ddbKey)
+	}
+}
+
+// filterBySeverity - filters by a Severity level
+func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
+	if input.Severity != nil {
+		*filter = filter.And(expression.Equal(expression.Name("severity"), expression.Value(*input.Severity)))
+	}
+}
+
+// filterByRuleID - fiters by list of RuleIDs
+func filterByRuleID(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
+	if input.RuleID != nil {
+		*filter = filter.And(expression.Equal(expression.Name("ruleID"), expression.Value(*input.RuleID)))
+	}
+}
+
+// filterByNameContains - fiters by a name that
+func filterByNameContains(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
+	// Because we return to the frontend a `title` which could be comprised of three attributes,
+	// we query across those three attributes.
+	if input.Contains != nil {
+		*filter = filter.And(
+			expression.Or(
+				expression.Contains(expression.Name("title"), *input.Contains),
+				expression.Contains(expression.Name("ruleId"), *input.Contains),
+				expression.Contains(expression.Name("ruleDisplayName"), *input.Contains),
+			),
+		)
+	}
+}
+
+// filterByEventCount - fiters by list of RuleIDs
+func filterByEventCount(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
+	// Ensure we are checking for valid inputs that are within an acceptable range
+	if input.EventCountMax != nil && input.EventCountMin != nil && *input.EventCountMin >= 0 && *input.EventCountMax >= *input.EventCountMin {
+		*filter = filter.And(
+			expression.GreaterThanEqual(expression.Name("eventCount"), expression.Value(*input.EventCountMin)),
+			expression.LessThanEqual(expression.Name("eventCount"), expression.Value(*input.EventCountMax)),
+		)
+	}
+}
+
+// applyFilters - adds filters onto an expression
+func (table *AlertsTable) applyFilters(builder *expression.Builder, input *models.ListAlertsInput) {
+	// Start with an empty filter
+	filter := expression.ConditionBuilder{}
+
+	// Then, apply our filters
+	filterBySeverity(&filter, input)
+	filterByRuleID(&filter, input)
+	filterByNameContains(&filter, input)
+	filterByEventCount(&filter, input)
+
+	// Finally, overwrite the existing condition filter on the builder
+	*builder = builder.WithFilter(filter)
+}
+
+// list - returns a page of alerts ordered by creationTime, last evaluated key, any error
+func (table *AlertsTable) list(ddbKey, ddbValue string, input *models.ListAlertsInput) (
+	summaries []*AlertItem, lastEvaluatedKey *string, err error) {
+
+	index, err := table.getIndex(ddbKey)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "failed to determine partition key")
 	}
 
-	// queries require and = condition on primary key
+	// Queries require an 'equal' condition on theprimary key
 	keyCondition := expression.Key(ddbKey).Equal(expression.Value(&ddbValue))
 
+	// Construct a new builder instance with the above index as our key condition
 	builder := expression.NewBuilder().WithKeyCondition(keyCondition)
 
-	if severity != nil {
-		filter := expression.Equal(expression.Name("severity"), expression.Value(*severity))
-		builder = builder.WithFilter(filter)
-	}
+	// Apply the all applicable filters specified by the input
+	table.applyFilters(&builder, input)
 
+	// Construct a query expression
 	queryExpression, err := builder.Build()
-
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to build expression")
 	}
 
+	// Optionally limit the returned results to the page size
 	var queryResultsLimit *int64
-	if pageSize != nil {
-		queryResultsLimit = aws.Int64(int64(*pageSize))
+	if input.PageSize != nil {
+		queryResultsLimit = aws.Int64(int64(*input.PageSize))
 	}
 
+	// Optionally continue the query from the "primary key of the item where the [previous] operation stopped"
 	var queryExclusiveStartKey map[string]*dynamodb.AttributeValue
-	if exclusiveStartKey != nil {
+	if input.ExclusiveStartKey != nil {
 		queryExclusiveStartKey = make(map[string]*dynamodb.AttributeValue)
-		err = jsoniter.UnmarshalFromString(*exclusiveStartKey, &queryExclusiveStartKey)
+		err = jsoniter.UnmarshalFromString(*input.ExclusiveStartKey, &queryExclusiveStartKey)
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "failed to Unmarshal ExclusiveStartKey")
 		}
 	}
 
+	// Construct the full query
 	var queryInput = &dynamodb.QueryInput{
 		TableName:                 &table.AlertsTableName,
 		ScanIndexForward:          aws.Bool(false),
@@ -93,10 +165,11 @@ func (table *AlertsTable) list(ddbKey, ddbValue string, exclusiveStartKey *strin
 		FilterExpression:          queryExpression.Filter(),
 		KeyConditionExpression:    queryExpression.KeyCondition(),
 		ExclusiveStartKey:         queryExclusiveStartKey,
-		IndexName:                 aws.String(index),
+		IndexName:                 index,
 		Limit:                     queryResultsLimit,
 	}
 
+	// Get the results of the query
 	queryOutput, err := table.Client.Query(queryInput)
 	if err != nil {
 		// this deserves detailed logging for debugging
@@ -104,6 +177,7 @@ func (table *AlertsTable) list(ddbKey, ddbValue string, exclusiveStartKey *strin
 		return nil, nil, errors.Wrapf(err, "QueryInput() failed for %s,%s", ddbKey, ddbValue)
 	}
 
+	// Unmarshal the raw items unto the `summaries`
 	err = dynamodbattribute.UnmarshalListOfMaps(queryOutput.Items, &summaries)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "UnmarshalListOfMaps() failed")

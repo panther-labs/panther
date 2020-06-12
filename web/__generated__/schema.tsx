@@ -379,6 +379,12 @@ export type ListAlertsInput = {
   ruleId?: Maybe<Scalars['ID']>;
   pageSize?: Maybe<Scalars['Int']>;
   exclusiveStartKey?: Maybe<Scalars['String']>;
+  severity?: Maybe<SeverityEnum>;
+  before?: Maybe<Scalars['AWSDateTime']>;
+  after?: Maybe<Scalars['AWSDateTime']>;
+  contains?: Maybe<Scalars['String']>;
+  eventCountMin?: Maybe<Scalars['Int']>;
+  eventCountMax?: Maybe<Scalars['Int']>;
 };
 
 export type ListAlertsResponse = {
@@ -1178,9 +1184,9 @@ export type ResolversTypes = {
   AWSDateTime: ResolverTypeWrapper<Scalars['AWSDateTime']>;
   AWSJSON: ResolverTypeWrapper<Scalars['AWSJSON']>;
   ListAlertsInput: ListAlertsInput;
+  SeverityEnum: SeverityEnum;
   ListAlertsResponse: ResolverTypeWrapper<ListAlertsResponse>;
   AlertSummary: ResolverTypeWrapper<AlertSummary>;
-  SeverityEnum: SeverityEnum;
   Destination: ResolverTypeWrapper<Destination>;
   DestinationTypeEnum: DestinationTypeEnum;
   DestinationConfig: ResolverTypeWrapper<DestinationConfig>;
@@ -1296,9 +1302,9 @@ export type ResolversParentTypes = {
   AWSDateTime: Scalars['AWSDateTime'];
   AWSJSON: Scalars['AWSJSON'];
   ListAlertsInput: ListAlertsInput;
+  SeverityEnum: SeverityEnum;
   ListAlertsResponse: ListAlertsResponse;
   AlertSummary: AlertSummary;
-  SeverityEnum: SeverityEnum;
   Destination: Destination;
   DestinationTypeEnum: DestinationTypeEnum;
   DestinationConfig: DestinationConfig;

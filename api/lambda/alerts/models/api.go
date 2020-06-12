@@ -56,20 +56,28 @@ type GetAlertOutput = Alert
 //     "listAlerts": {
 //         "ruleId": "My.Rule",
 //         "pageSize": 25,
-//         "severity": "INFO"
+//         "exclusiveStartKey": "abcdef",
+//         "before": "2019-01-01T00:00:00Z",
+//         "after": "2018-01-01T00:00:00Z",
+//         "severity": "INFO",
+//         "eventCountMin": "0",
+//         "eventCountMax": "500",
 //     }
 // }
 type ListAlertsInput struct {
 	RuleID            *string `json:"ruleId,omitempty"`
-	PageSize          *int    `json:"pageSize,omitempty"  validate:"omitempty,min=1,max=50"`
+	PageSize          *int    `json:"pageSize,omitempty" validate:"omitempty,min=1,max=50"`
 	ExclusiveStartKey *string `json:"exclusiveStartKey,omitempty"`
 
 	// Filtering
 	// TODO - enforce that a relatively narrow time bound exists if SortBy is defined.
 	//   We have to sort in memory, so there needs to be a reasonable limit
-	Before   *time.Time
-	After    *time.Time
-	Severity *string `json:"severity" validate:"oneof=INFO LOW MEDIUM HIGH CRITICAL"`
+	Before        *time.Time `json:"before"`
+	After         *time.Time `json:"after"`
+	Severity      *string    `json:"severity" validate:"oneof=INFO LOW MEDIUM HIGH CRITICAL"`
+	Contains      *string    `json:"contains"`
+	EventCountMin *int       `json:"eventCountMin" validate:"min=0"`
+	EventCountMax *int       `json:"eventCountMax" validate:"min=0"`
 
 	// Sorting
 	SortBy *string `json:"sortBy" validate:"oneof=title"`

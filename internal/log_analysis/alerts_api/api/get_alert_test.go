@@ -82,13 +82,13 @@ func (m *tableMock) GetAlert(input *string) (*table.AlertItem, error) {
 	return args.Get(0).(*table.AlertItem), args.Error(1)
 }
 
-func (m *tableMock) ListByRule(rule string, startKey *string, pageSize *int, severity *string) ([]*table.AlertItem, *string, error) {
-	args := m.Called(rule, startKey, pageSize, severity)
+func (m *tableMock) ListByRule(input *models.ListAlertsInput) ([]*table.AlertItem, *string, error) {
+	args := m.Called(input)
 	return args.Get(0).([]*table.AlertItem), args.Get(1).(*string), args.Error(2)
 }
 
-func (m *tableMock) ListAll(startKey *string, pageSize *int, severity *string) ([]*table.AlertItem, *string, error) {
-	args := m.Called(startKey, pageSize, severity)
+func (m *tableMock) ListAll(input *models.ListAlertsInput) ([]*table.AlertItem, *string, error) {
+	args := m.Called(input)
 	return args.Get(0).([]*table.AlertItem), args.Get(1).(*string), args.Error(2)
 }
 
