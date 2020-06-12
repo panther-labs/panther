@@ -46,19 +46,15 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 
 // getIndex - gets the primary index to query
 //
-// This currently supports two indices:
-//  1. By the rule ID index name
-//  2. By the time partition index name
-func (table *AlertsTable) getIndex(ddbKey string) (index *string, err error) {
-	if ddbKey == RuleIDKey {
+// If a `ruleID` has been specified, then we need to create the KeyCondition based on this field.
+// Otherwise, we use the default time partition
+func (table *AlertsTable) getIndex(input *models.ListAlertsInput) (index *string) {
+	if input.RuleID != nil {
 		index = aws.String(table.RuleIDCreationTimeIndexName)
-		return index, nil
-	} else if ddbKey == TimePartitionKey {
-		index = aws.String(table.TimePartitionCreationTimeIndexName)
-		return index, nil
-	} else {
-		return nil, errors.New("unknown key" + ddbKey)
+		return index
 	}
+	index = aws.String(table.TimePartitionCreationTimeIndexName)
+	return index
 }
 
 // filterBySeverity - filters by a Severity level
@@ -71,7 +67,7 @@ func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAle
 // filterByRuleID - fiters by a specific RuleID
 func filterByRuleID(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
 	if input.RuleID != nil {
-		*filter = filter.And(expression.Equal(expression.Name("ruleId"), expression.Value(*input.RuleID)))
+		*filter = filter.And(expression.Equal(expression.Name("ruleID"), expression.Value(*input.RuleID)))
 	}
 }
 
@@ -105,7 +101,6 @@ func filterByEventCount(filter *expression.ConditionBuilder, input *models.ListA
 func (table *AlertsTable) applyFilters(builder *expression.Builder, input *models.ListAlertsInput) {
 	// Start with an empty filter for a known attribute
 	filter := expression.AttributeExists(expression.Name("id"))
-
 	// Then, apply our filters
 	filterBySeverity(&filter, input)
 	filterByRuleID(&filter, input)
@@ -120,10 +115,7 @@ func (table *AlertsTable) applyFilters(builder *expression.Builder, input *model
 func (table *AlertsTable) list(ddbKey, ddbValue string, input *models.ListAlertsInput) (
 	summaries []*AlertItem, lastEvaluatedKey *string, err error) {
 
-	index, err := table.getIndex(ddbKey)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed to determine partition key")
-	}
+	index := table.getIndex(input)
 
 	// Queries require an 'equal' condition on theprimary key
 	keyCondition := expression.Key(ddbKey).Equal(expression.Value(&ddbValue))
