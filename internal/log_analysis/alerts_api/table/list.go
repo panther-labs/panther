@@ -103,8 +103,8 @@ func filterByEventCount(filter *expression.ConditionBuilder, input *models.ListA
 
 // applyFilters - adds filters onto an expression
 func (table *AlertsTable) applyFilters(builder *expression.Builder, input *models.ListAlertsInput) {
-	// Start with an empty filter
-	filter := expression.ConditionBuilder{}
+	// Start with an empty filter for a known attribute
+	filter := expression.AttributeExists(expression.Name("id"))
 
 	// Then, apply our filters
 	filterBySeverity(&filter, input)
