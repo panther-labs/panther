@@ -81,10 +81,11 @@ type DeleteOutputInput struct {
 // }
 type UpdateOutputInput struct {
 	UserID             *string       `json:"userId" validate:"required,uuid4"`
-	DisplayName        *string       `json:"displayName" validate:"required,min=1,excludesall='<>&\""`
+	DisplayName        *string       `json:"displayName" validate:"min=1,excludesall='<>&\""`
 	OutputID           *string       `json:"outputId" validate:"required,uuid4"`
-	OutputConfig       *OutputConfig `json:"outputConfig" validate:"required"`
+	OutputConfig       *OutputConfig `json:"outputConfig"`
 	DefaultForSeverity []*string     `json:"defaultForSeverity"`
+	Type               *string       `json:"type" validate:"required"`
 }
 
 // UpdateOutputOutput returns the new updated output

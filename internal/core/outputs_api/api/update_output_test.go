@@ -35,6 +35,7 @@ var mockUpdateOutputInput = &models.UpdateOutputInput{
 	UserID:             aws.String("userId"),
 	OutputConfig:       &models.OutputConfig{Sns: &models.SnsConfig{}},
 	DefaultForSeverity: aws.StringSlice([]string{"CRITICAL", "HIGH"}),
+	Type:               aws.String("sns"),
 }
 
 func TestUpdateOutput(t *testing.T) {

@@ -27,6 +27,8 @@ import (
 	"github.com/panther-labs/panther/internal/core/outputs_api/table"
 )
 
+var redacted = aws.String("********")
+
 // AlertOutputToItem converts an AlertOutput to an AlertOutputItem
 func AlertOutputToItem(input *models.AlertOutput) (*table.AlertOutputItem, error) {
 	item := &table.AlertOutputItem{
@@ -64,14 +66,43 @@ func ItemToAlertOutput(input *table.AlertOutputItem) (alertOutput *models.AlertO
 		DefaultForSeverity: input.DefaultForSeverity,
 	}
 
+	// Decrypt the output before returning to the caller
 	alertOutput.OutputConfig = &models.OutputConfig{}
 	err = encryptionKey.DecryptConfig(input.EncryptedConfig, alertOutput.OutputConfig)
-
 	if err != nil {
 		return nil, err
 	}
 
+	// Redact the output before returning to the caller
+	redactOutput(alertOutput.OutputConfig)
 	return alertOutput, nil
+}
+
+func redactOutput(outputConfig *models.OutputConfig) {
+	if outputConfig.Slack != nil {
+		outputConfig.Slack.WebhookURL = redacted
+	}
+	if outputConfig.PagerDuty != nil {
+		outputConfig.PagerDuty.IntegrationKey = redacted
+	}
+	if outputConfig.Github != nil {
+		outputConfig.Github.Token = redacted
+	}
+	if outputConfig.Jira != nil {
+		outputConfig.Jira.APIKey = redacted
+	}
+	if outputConfig.Opsgenie != nil {
+		outputConfig.Opsgenie.APIKey = redacted
+	}
+	if outputConfig.MsTeams != nil {
+		outputConfig.MsTeams.WebhookURL = redacted
+	}
+	if outputConfig.Asana != nil {
+		outputConfig.Asana.PersonalAccessToken = redacted
+	}
+	if outputConfig.CustomWebhook != nil {
+		outputConfig.CustomWebhook.WebhookURL = redacted
+	}
 }
 
 func getOutputType(outputConfig *models.OutputConfig) (*string, error) {
