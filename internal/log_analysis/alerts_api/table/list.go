@@ -68,14 +68,14 @@ func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAle
 	}
 }
 
-// filterByRuleID - fiters by list of RuleIDs
+// filterByRuleID - fiters by a specific RuleID
 func filterByRuleID(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
 	if input.RuleID != nil {
 		*filter = filter.And(expression.Equal(expression.Name("ruleID"), expression.Value(*input.RuleID)))
 	}
 }
 
-// filterByNameContains - fiters by a name that
+// filterByNameContains - fiters by a name that contains a string
 func filterByNameContains(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
 	// Because we return to the frontend a `title` which could be comprised of three attributes,
 	// we query across those three attributes.
@@ -90,7 +90,7 @@ func filterByNameContains(filter *expression.ConditionBuilder, input *models.Lis
 	}
 }
 
-// filterByEventCount - fiters by list of RuleIDs
+// filterByEventCount - fiters by an eventCount defined by a range of two numbers
 func filterByEventCount(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
 	// Ensure we are checking for valid inputs that are within an acceptable range
 	if input.EventCountMax != nil && input.EventCountMin != nil && *input.EventCountMin >= 0 && *input.EventCountMax >= *input.EventCountMin {
