@@ -45,7 +45,6 @@ func (API) UpdateOutput(input *models.UpdateOutputInput) (*models.UpdateOutputOu
 		LastModifiedBy:     input.UserID,
 		LastModifiedTime:   aws.String(time.Now().Format(time.RFC3339)),
 		OutputID:           input.OutputID,
-		OutputType:         input.Type,
 		OutputConfig:       input.OutputConfig,
 		DefaultForSeverity: input.DefaultForSeverity,
 	}

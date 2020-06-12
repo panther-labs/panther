@@ -85,7 +85,6 @@ type UpdateOutputInput struct {
 	OutputID           *string       `json:"outputId" validate:"required,uuid4"`
 	OutputConfig       *OutputConfig `json:"outputConfig"`
 	DefaultForSeverity []*string     `json:"defaultForSeverity"`
-	Type               *string       `json:"type" validate:"required"`
 }
 
 // UpdateOutputOutput returns the new updated output

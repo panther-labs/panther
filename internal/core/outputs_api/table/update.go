@@ -33,8 +33,7 @@ func (table *OutputsTable) UpdateOutput(alertOutput *AlertOutputItem) (*AlertOut
 	// These fields will always be sent
 	updateExpression := expression.
 		Set(expression.Name("lastModifiedBy"), expression.Value(alertOutput.LastModifiedBy)).
-		Set(expression.Name("lastModifiedTime"), expression.Value(alertOutput.LastModifiedTime)).
-		Set(expression.Name("outputType"), expression.Value(alertOutput.OutputType))
+		Set(expression.Name("lastModifiedTime"), expression.Value(alertOutput.LastModifiedTime))
 
 	if alertOutput.DisplayName != nil {
 		updateExpression.Set(expression.Name("displayName"), expression.Value(alertOutput.DisplayName))

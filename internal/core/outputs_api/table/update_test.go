@@ -55,7 +55,6 @@ func TestUpdateOutput(t *testing.T) {
 	expectedUpdateExpression := expression.
 		Set(expression.Name("lastModifiedBy"), expression.Value(mockUpdateItemAlertOutput.LastModifiedBy)).
 		Set(expression.Name("lastModifiedTime"), expression.Value(mockUpdateItemAlertOutput.LastModifiedTime)).
-		Set(expression.Name("outputType"), expression.Value(mockUpdateItemAlertOutput.OutputType)).
 		Set(expression.Name("displayName"), expression.Value(mockUpdateItemAlertOutput.DisplayName)).
 		Set(expression.Name("encryptedConfig"), expression.Value(mockUpdateItemAlertOutput.EncryptedConfig)).
 		Set(expression.Name("defaultForSeverity"), expression.Value(mockUpdateItemAlertOutput.DefaultForSeverity))
