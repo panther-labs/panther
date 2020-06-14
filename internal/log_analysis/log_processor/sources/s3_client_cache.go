@@ -121,31 +121,26 @@ func getS3Client(s3Object *S3ObjectInfo) (s3iface.S3API, string, error) {
 			awsRegion: bucketRegion.(string),
 		}
 
-		var client interface{}
-		client, ok := s3ClientCache.Get(cacheKey)
-		if !ok {
+		if client, ok := s3ClientCache.Get(cacheKey); !ok {
 			zap.L().Debug("s3 client was not cached, creating it")
 			client = newS3ClientFunc(box.String(cacheKey.awsRegion), awsCreds)
 			s3ClientCache.Add(cacheKey, client)
+		} else {
+			return client.(s3iface.S3API), *sourceInfo.IntegrationType, nil
 		}
-		return client.(s3iface.S3API), *sourceInfo.IntegrationType, nil
 	}
 
 	// must be cached
 	zap.L().Debug("found bucket region", zap.Any("region", bucketRegion))
-	cacheKey := s3ClientCacheKey{
+	client, ok := s3ClientCache.Get(s3ClientCacheKey{
 		roleArn:   roleArn,
 		awsRegion: bucketRegion.(string),
-	}
-
-	var client interface{}
-	client, ok = s3ClientCache.Get(cacheKey)
+	})
 	if !ok {
 		err = errors.Errorf("s3 client was not cached when expected for %s,%#v",
 			roleArn, s3Object)
 		return nil, "", err
 	}
-
 	return client.(s3iface.S3API), *sourceInfo.IntegrationType, nil
 }
 
