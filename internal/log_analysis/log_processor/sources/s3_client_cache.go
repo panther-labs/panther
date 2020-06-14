@@ -34,6 +34,7 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	"github.com/panther-labs/panther/pkg/box"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -100,36 +101,51 @@ func getS3Client(s3Object *S3ObjectInfo) (s3iface.S3API, string, error) {
 		return nil, "", errors.Errorf("there is no source configured for S3 object %#v", s3Object)
 	}
 	roleArn := getSourceLogProcessingRole(sourceInfo)
-	awsCreds := getAwsCredentials(roleArn)
-	if awsCreds == nil {
-		return nil, "", errors.Errorf("failed to fetch credentials for assumed role to read %#v", s3Object)
-	}
 
 	bucketRegion, ok := bucketCache.Get(s3Object.S3Bucket)
 	if !ok {
 		zap.L().Debug("bucket region was not cached, fetching it", zap.String("bucket", s3Object.S3Bucket))
+		awsCreds := getAwsCredentials(roleArn)
+		if awsCreds == nil {
+			return nil, "", errors.Errorf("failed to fetch credentials for assumed role %s to read %#v",
+				roleArn, s3Object)
+		}
 		bucketRegion, err = getBucketRegion(s3Object.S3Bucket, awsCreds)
 		if err != nil {
 			return nil, "", err
 		}
 		bucketCache.Add(s3Object.S3Bucket, bucketRegion)
+
+		cacheKey := s3ClientCacheKey{
+			roleArn:   roleArn,
+			awsRegion: bucketRegion.(string),
+		}
+
+		var client interface{}
+		client, ok := s3ClientCache.Get(cacheKey)
+		if !ok {
+			zap.L().Debug("s3 client was not cached, creating it")
+			client = newS3ClientFunc(box.String(cacheKey.awsRegion), awsCreds)
+			s3ClientCache.Add(cacheKey, client)
+		}
+		return client.(s3iface.S3API), *sourceInfo.IntegrationType, nil
 	}
 
+	// must be cached
 	zap.L().Debug("found bucket region", zap.Any("region", bucketRegion))
-
-	bucketRegionString := bucketRegion.(string)
 	cacheKey := s3ClientCacheKey{
 		roleArn:   roleArn,
-		awsRegion: bucketRegionString,
+		awsRegion: bucketRegion.(string),
 	}
 
 	var client interface{}
 	client, ok = s3ClientCache.Get(cacheKey)
 	if !ok {
-		zap.L().Debug("s3 client was not cached, creating it")
-		client = newS3ClientFunc(aws.String(bucketRegionString), awsCreds)
-		s3ClientCache.Add(cacheKey, client)
+		err = errors.Errorf("s3 client was not cached when expected for %s,%#v",
+			roleArn, s3Object)
+		return nil, "", err
 	}
+
 	return client.(s3iface.S3API), *sourceInfo.IntegrationType, nil
 }
 
@@ -156,6 +172,7 @@ func getAwsCredentials(roleArn string) *credentials.Credentials {
 	zap.L().Debug("fetching new credentials from assumed role", zap.String("roleArn", roleArn))
 	return newCredentialsFunc(common.Session, roleArn, func(p *stscreds.AssumeRoleProvider) {
 		p.Duration = time.Duration(sessionDurationSeconds) * time.Second
+		p.ExpiryWindow = p.Duration / 2 // give plenty of time to refresh
 	})
 }
 
