@@ -100,12 +100,13 @@ func getS3Client(s3Object *S3ObjectInfo) (s3iface.S3API, string, error) {
 	if sourceInfo == nil {
 		return nil, "", errors.Errorf("there is no source configured for S3 object %#v", s3Object)
 	}
+	var awsCreds *credentials.Credentials // lazy create below
 	roleArn := getSourceLogProcessingRole(sourceInfo)
 
 	bucketRegion, ok := bucketCache.Get(s3Object.S3Bucket)
 	if !ok {
 		zap.L().Debug("bucket region was not cached, fetching it", zap.String("bucket", s3Object.S3Bucket))
-		awsCreds := getAwsCredentials(roleArn)
+		awsCreds = getAwsCredentials(roleArn)
 		if awsCreds == nil {
 			return nil, "", errors.Errorf("failed to fetch credentials for assumed role %s to read %#v",
 				roleArn, s3Object)
@@ -115,31 +116,26 @@ func getS3Client(s3Object *S3ObjectInfo) (s3iface.S3API, string, error) {
 			return nil, "", err
 		}
 		bucketCache.Add(s3Object.S3Bucket, bucketRegion)
-
-		cacheKey := s3ClientCacheKey{
-			roleArn:   roleArn,
-			awsRegion: bucketRegion.(string),
-		}
-
-		if client, ok := s3ClientCache.Get(cacheKey); !ok {
-			zap.L().Debug("s3 client was not cached, creating it")
-			client = newS3ClientFunc(box.String(cacheKey.awsRegion), awsCreds)
-			s3ClientCache.Add(cacheKey, client)
-		} else {
-			return client.(s3iface.S3API), *sourceInfo.IntegrationType, nil
-		}
 	}
 
-	// must be cached
 	zap.L().Debug("found bucket region", zap.Any("region", bucketRegion))
-	client, ok := s3ClientCache.Get(s3ClientCacheKey{
+
+	cacheKey := s3ClientCacheKey{
 		roleArn:   roleArn,
 		awsRegion: bucketRegion.(string),
-	})
+	}
+	client, ok := s3ClientCache.Get(cacheKey)
 	if !ok {
-		err = errors.Errorf("s3 client was not cached when expected for %s,%#v",
-			roleArn, s3Object)
-		return nil, "", err
+		zap.L().Debug("s3 client was not cached, creating it")
+		if awsCreds == nil {
+			awsCreds = getAwsCredentials(roleArn)
+			if awsCreds == nil {
+				return nil, "", errors.Errorf("failed to fetch credentials for assumed role %s to read %#v",
+					roleArn, s3Object)
+			}
+		}
+		client = newS3ClientFunc(box.String(cacheKey.awsRegion), awsCreds)
+		s3ClientCache.Add(cacheKey, client)
 	}
 	return client.(s3iface.S3API), *sourceInfo.IntegrationType, nil
 }
