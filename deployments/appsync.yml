@@ -1398,6 +1398,157 @@ Resources:
             $util.error($ctx.result.body, $statusCode, $ctx.args)
         #end
 
+  ListGlobalPythonModulesResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Query
+      FieldName: listGlobalPythonModules
+      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2018-05-29",
+          "method": "GET",
+          "resourcePath": "/v1/global/list",
+          "params": {
+            "query": $util.toJson($ctx.args.input),
+            "headers": {
+              "Content-Type": "application/json"
+            }
+          }
+        }
+      ResponseMappingTemplate: |
+        #set ($statusCode = $ctx.result.statusCode)
+        #if($statusCode == 200)
+            $ctx.result.body
+        #elseif($statusCode >= 400 && $statusCode < 500)
+            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
+        #else
+            $util.error($ctx.result.body, "$statusCode", $input)
+        #end
+
+  GetGlobalPythonModuleResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Query
+      FieldName: getGlobalPythonModule
+      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2018-05-29",
+          "method": "GET",
+          "resourcePath": "/v1/global",
+          "params": {
+            "query": $util.toJson($ctx.args.input),
+            "headers": {
+              "Content-Type": "application/json"
+            }
+          }
+        }
+      ResponseMappingTemplate: |
+        #set ($statusCode = $ctx.result.statusCode)
+        #if($statusCode == 200)
+            $ctx.result.body
+        #elseif($statusCode >= 400 && $statusCode < 500)
+            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
+        #else
+            $util.error($ctx.result.body, "$statusCode", $input)
+        #end
+
+  AddGlobalPythonModuleResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: addGlobalPythonModule
+      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      RequestMappingTemplate: |
+        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        $util.qr($input.put("userId", $ctx.identity.sub))
+        {
+          "version": "2018-05-29",
+          "method": "POST",
+          "resourcePath": "/v1/global",
+          "params": {
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": $util.toJson($input)
+          }
+        }
+      ResponseMappingTemplate: |
+        #set ($statusCode = $ctx.result.statusCode)
+        #if($statusCode == 201)
+            $ctx.result.body
+        #elseif($statusCode >= 400 && $statusCode < 500)
+            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
+        #else
+            $util.error($ctx.result.body, "$statusCode", $input)
+        #end
+
+  UpdateGlobalPythonModuleResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: updateGlobalPythonlModule
+      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      RequestMappingTemplate: |
+        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        $util.qr($input.put("userId", $ctx.identity.sub))
+        {
+          "version": "2018-05-29",
+          "method": "POST",
+          "resourcePath": "/v1/global/update",
+          "params": {
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": $util.toJson($input)
+          }
+        }
+      ResponseMappingTemplate: |
+        #set ($statusCode = $ctx.result.statusCode)
+        #if($statusCode == 200)
+            $ctx.result.body
+        #elseif($statusCode >= 400 && $statusCode < 500)
+            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
+        #else
+            $util.error($ctx.result.body, "$statusCode", $input)
+        #end
+
+  DeleteGlobalPythonModuleResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: deleteGlobalPythonModule
+      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2018-05-29",
+          "method": "POST",
+          "resourcePath": "/v1/global/delete",
+          "params": {
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": $util.toJson({
+              "policies": $ctx.args.input.globals
+            })
+          }
+        }
+      ResponseMappingTemplate: |
+        #set ($statusCode = $ctx.result.statusCode)
+        #if($statusCode == 200)
+            true
+        #elseif($statusCode >= 400 && $statusCode < 500)
+            $util.error($util.parseJson($ctx.result.body).message, $statusCode, $ctx.args)
+        #else
+            $util.error($ctx.result.body, $statusCode, $ctx.args)
+        #end
+
   ListAlertsResolver:
     Type: AWS::AppSync::Resolver
     Properties:
