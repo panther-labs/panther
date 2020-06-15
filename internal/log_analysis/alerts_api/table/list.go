@@ -19,6 +19,8 @@ package table
  */
 
 import (
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -77,11 +79,14 @@ func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAle
 	}
 }
 
-// filterByTitleContains - fiters by a name that contains a string
+// filterByTitleContains - fiters by a name that contains a string (case insensitive)
 func filterByTitleContains(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
 	if input.Contains != nil {
 		*filter = filter.And(
-			expression.Contains(expression.Name("title"), *input.Contains),
+			expression.Or(
+				expression.Contains(expression.Name("title"), strings.ToLower(*input.Contains)),
+				expression.Contains(expression.Name("title"), *input.Contains),
+			),
 		)
 	}
 }
@@ -180,6 +185,11 @@ func (table *AlertsTable) list(ddbKey, ddbValue string, input *models.ListAlerts
 
 	// If DDB returned a LastEvaluatedKey (the "primary key of the item where the operation stopped"),
 	// it means there are more alerts to be returned. Return populated `lastEvaluatedKey` JSON blob in the response.
+	//
+	// NOTE:
+	// "A `Query` operation can return an empty result set and a `LastEvaluatedKey` if all the items read for
+	// the page of results are filtered out."
+	// (https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html)
 	if len(queryOutput.LastEvaluatedKey) > 0 {
 		lastEvaluatedKeySerialized, err := jsoniter.MarshalToString(queryOutput.LastEvaluatedKey)
 		if err != nil {

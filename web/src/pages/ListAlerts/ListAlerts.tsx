@@ -39,7 +39,10 @@ const ListAlerts = () => {
   const { loading, error, data, fetchMore } = useListAlerts({
     fetchPolicy: 'cache-and-network',
     variables: {
-      input: { ...requestParams },
+      input: {
+        ...requestParams,
+        pageSize: DEFAULT_LARGE_PAGE_SIZE,
+      },
     },
   });
 
@@ -53,8 +56,8 @@ const ListAlerts = () => {
     onLoadMore: () => {
       fetchMore({
         variables: {
-          // TODO: Update this value with the previous inputs
           input: {
+            ...requestParams,
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
             exclusiveStartKey: lastEvaluatedKey,
           },
