@@ -141,21 +141,34 @@ func testCfnLint() error {
 		return err
 	}
 
-	// Panther-specific linting
+	// Panther-specific linting for main stacks
 	//
-	// Every Lambda function needs to have an associated log group and metric filter
-	// defined in the same stack.
+	// - Required custom resources
+	// - No default parameter values
 	var errs []string
 	for _, template := range templates {
-		if template == bootstrapTemplate || strings.HasPrefix(template, "deployments/auxiliary") {
-			// The very first bootstrap stack can't have custom resources,
-			// and the aux templates don't need them.
+		if template == "deployments/master.yml" || strings.HasPrefix(template, "deployments/auxiliary") {
 			continue
 		}
 
 		body, err := cfnparse.ParseTemplate(pythonVirtualEnvPath, template)
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("failed to parse %s: %v", template, err))
+			continue
+		}
+
+		// Parameter defaults should not be defined in the nested stacks. Defaults are defined in:
+		//   - the config file, when deploying from source
+		//   - the master template, for pre-packaged deployments
+		//
+		// Allowing defaults in nested stacks is confusing and leads to bugs where a parameter is
+		// defined but never passed through during deployment.
+		if err = cfnDefaultParameters(body); err != nil {
+			errs = append(errs, fmt.Sprintf("%s: %v", template, err))
+		}
+
+		if template == bootstrapTemplate {
+			// Custom resources can't be in the bootstrap stack, skip remaining checks
 			continue
 		}
 
@@ -208,6 +221,23 @@ func testCfnLint() error {
 	if len(errs) > 0 {
 		return errors.New(strings.Join(errs, "\n"))
 	}
+	return nil
+}
+
+// Returns an error if there is a parameter with a default value.
+func cfnDefaultParameters(template map[string]interface{}) error {
+	params, ok := template["Parameters"].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	for name, options := range params {
+		if _, exists := options.(map[string]interface{})["Default"]; exists {
+			return fmt.Errorf("parameter '%s' should not have a default value. "+
+				"Either pass the value from the config file and master stack or use a Mapping", name)
+		}
+	}
+
 	return nil
 }
 

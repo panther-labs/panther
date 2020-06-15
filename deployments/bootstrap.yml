@@ -32,11 +32,6 @@ Description: The very first Panther stack - static resources which don't require
 Parameters:
   # Alphabetize parameters so it's easy to compare side-by-side with other code that passes values
   # and because the CloudFormation console always shows parameters in alphabetical order.
-  #
-  # Do NOT specify any parameter defaults here, defaults are defined in:
-  #   - the config file, when deploying from source
-  #   - the master template, for pre-packaged deployments
-
   AccessLogsBucket:
     Type: String
     Description: Optional external bucket for storing S3 access logs. If blank, the Panther audit bucket is used.
