@@ -163,7 +163,7 @@ func getAwsCredentials(roleArn string) *credentials.Credentials {
 	zap.L().Debug("fetching new credentials from assumed role", zap.String("roleArn", roleArn))
 	return newCredentialsFunc(common.Session, roleArn, func(p *stscreds.AssumeRoleProvider) {
 		p.Duration = time.Duration(sessionDurationSeconds) * time.Second
-		p.ExpiryWindow = p.Duration / 2 // give plenty of time to refresh
+		p.ExpiryWindow = time.Minute // give plenty of time to refresh
 	})
 }
 
