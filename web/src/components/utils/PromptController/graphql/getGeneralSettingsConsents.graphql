@@ -1,0 +1,7 @@
+query GetGeneralSettingsConsents {
+  generalSettings {
+    displayName
+    email
+    errorReportingConsent
+  }
+}

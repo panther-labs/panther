@@ -1,7 +1,0 @@
-query GetErrorReportingConsent {
-    generalSettings {
-        displayName
-        email
-        errorReportingConsent
-    }
-}

@@ -24,7 +24,7 @@ import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 
 const ErrorReportingSection: React.FC = () => {
   return (
-    <Flex align="flex-start" mb={10}>
+    <Flex align="flex-start">
       <Field as={FormikCheckbox} name="errorReportingConsent" id="errorReportingConsent" />
       <Box ml={2}>
         <InputElementLabel htmlFor="errorReportingConsent">
