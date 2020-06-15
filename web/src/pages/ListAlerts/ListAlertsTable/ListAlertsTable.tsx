@@ -35,10 +35,10 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items }) => {
         <Table.Row>
           <Table.HeaderCell />
           <Table.HeaderCell>Title</Table.HeaderCell>
-          <Table.HeaderCell>Created At</Table.HeaderCell>
           <Table.HeaderCell>Severity</Table.HeaderCell>
-          <Table.HeaderCell>Alert ID</Table.HeaderCell>
           <Table.HeaderCell align="right">Events</Table.HeaderCell>
+          <Table.HeaderCell>Alert ID</Table.HeaderCell>
+          <Table.HeaderCell>Created At</Table.HeaderCell>
           <Table.HeaderCell>Last Matched At</Table.HeaderCell>
         </Table.Row>
       </Table.Head>
@@ -53,14 +53,14 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items }) => {
                 {alert.title}
               </Link>
             </Table.Cell>
-            <Table.Cell>{formatDatetime(alert.creationTime)}</Table.Cell>
             <Table.Cell>
               <Box my={-1}>
                 {alert.severity ? <SeverityBadge severity={alert.severity} /> : 'Not available'}
               </Box>
             </Table.Cell>
-            <Table.Cell>{shortenId(alert.alertId)}</Table.Cell>
             <Table.Cell align="right">{alert.eventsMatched}</Table.Cell>
+            <Table.Cell>{shortenId(alert.alertId)}</Table.Cell>
+            <Table.Cell>{formatDatetime(alert.creationTime)}</Table.Cell>
             <Table.Cell>{formatDatetime(alert.updateTime)}</Table.Cell>
           </Table.Row>
         ))}

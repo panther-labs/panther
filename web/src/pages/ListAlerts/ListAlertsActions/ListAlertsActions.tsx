@@ -57,6 +57,7 @@ export const filters = {
       label: 'Event count (min)',
       placeholder: 'Enter number...',
       type: 'number',
+      min: 0,
     },
   },
   eventCountMax: {
@@ -65,6 +66,7 @@ export const filters = {
       label: 'Event count (max)',
       placeholder: 'Enter number...',
       type: 'number',
+      min: 0,
     },
   },
 };
