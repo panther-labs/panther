@@ -36,13 +36,7 @@ const GlobalPythonModuleItem: React.FC<GlobalItemProps> = ({ globalPythonModule 
   const lastModifiedTime = Math.floor(new Date(globalPythonModule.lastModified).getTime() / 1000);
   return (
     <Card p={9} key={globalPythonModule.id}>
-      <Flex
-        align="flex-start"
-        justify="space-between"
-        borderBottom="1px solid"
-        borderColor="grey100"
-        pb={3}
-      >
+      <Flex align="flex-start" justify="space-between">
         <Box>
           <Heading size="medium" color="grey500" mb={2}>
             {globalPythonModule.id}
