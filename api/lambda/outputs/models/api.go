@@ -22,12 +22,12 @@ package models
 //
 // Exactly one action must be specified.
 type LambdaInput struct {
-	AddOutput            *AddOutputInput            `json:"addOutput"`
-	UpdateOutput         *UpdateOutputInput         `json:"updateOutput"`
-	GetOutput            *GetOutputInput            `json:"getOutput"`
-	DeleteOutput         *DeleteOutputInput         `json:"deleteOutput"`
-	GetOutputs           *GetOutputsInput           `json:"getOutputs"`
-	GetOutputsUnredacted *GetOutputsUnredactedInput `json:"getOutputsUnredacted"`
+	AddOutput             *AddOutputInput             `json:"addOutput"`
+	UpdateOutput          *UpdateOutputInput          `json:"updateOutput"`
+	GetOutput             *GetOutputInput             `json:"getOutput"`
+	DeleteOutput          *DeleteOutputInput          `json:"deleteOutput"`
+	GetOutputs            *GetOutputsInput            `json:"getOutputs"`
+	GetOutputsWithSecrets *GetOutputsWithSecretsInput `json:"getOutputsWithSecrets"`
 }
 
 // AddOutputInput adds a new encrypted alert output to DynamoDB.
@@ -106,7 +106,7 @@ type GetOutputInput struct {
 // GetOutputOutput contains the configuration for an alert
 type GetOutputOutput = AlertOutput
 
-// GetOrganizationOutputsInput fetches all alert output configuration for one organization
+// GetOutputsInput fetches all alert output configuration for one organization
 //
 // Example:
 // {
@@ -116,12 +116,12 @@ type GetOutputOutput = AlertOutput
 type GetOutputsInput struct {
 }
 
-// GetOrganizationOutputsInput fetches all alert output configuration for one organization
+// GetOutputsWithSecretsInput fetches all alert output configuration for one organization
 // without redacting their secrets
-type GetOutputsUnredactedInput struct {
+type GetOutputsWithSecretsInput struct {
 }
 
-// GetOrganizationOutputsOutput returns all the alert outputs for one organization
+// GetOutputsOutput returns all the alert outputs for one organization
 //
 // Example:
 // {

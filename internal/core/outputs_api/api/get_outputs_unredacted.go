@@ -22,10 +22,10 @@ import (
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
-// GetOutputsUnredacted returns all the alert outputs configured for one organization without
+// GetOutputsWithSecrets returns all the alert outputs configured for one organization without
 // redacting the secrets.
 // This endpoint should only be reachable from internal services.
-func (API) GetOutputsUnredacted(_ *models.GetOutputsUnredactedInput) (models.GetOutputsOutput, error) {
+func (API) GetOutputsWithSecrets(_ *models.GetOutputsWithSecretsInput) (models.GetOutputsOutput, error) {
 	outputItems, err := outputsTable.GetOutputs()
 	if err != nil {
 		return nil, err

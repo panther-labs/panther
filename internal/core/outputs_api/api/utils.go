@@ -21,13 +21,12 @@ package api
 import (
 	"errors"
 
-	"github.com/aws/aws-sdk-go/aws"
-
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/core/outputs_api/table"
+	"github.com/panther-labs/panther/pkg/box"
 )
 
-var redacted = aws.String("********")
+var redacted = box.String("********")
 
 // AlertOutputToItem converts an AlertOutput to an AlertOutputItem
 func AlertOutputToItem(input *models.AlertOutput) (*table.AlertOutputItem, error) {
@@ -105,34 +104,34 @@ func redactOutput(outputConfig *models.OutputConfig) {
 
 func getOutputType(outputConfig *models.OutputConfig) (*string, error) {
 	if outputConfig.Slack != nil {
-		return aws.String("slack"), nil
+		return box.String("slack"), nil
 	}
 	if outputConfig.PagerDuty != nil {
-		return aws.String("pagerduty"), nil
+		return box.String("pagerduty"), nil
 	}
 	if outputConfig.Github != nil {
-		return aws.String("github"), nil
+		return box.String("github"), nil
 	}
 	if outputConfig.Jira != nil {
-		return aws.String("jira"), nil
+		return box.String("jira"), nil
 	}
 	if outputConfig.Opsgenie != nil {
-		return aws.String("opsgenie"), nil
+		return box.String("opsgenie"), nil
 	}
 	if outputConfig.MsTeams != nil {
-		return aws.String("msteams"), nil
+		return box.String("msteams"), nil
 	}
 	if outputConfig.Sns != nil {
-		return aws.String("sns"), nil
+		return box.String("sns"), nil
 	}
 	if outputConfig.Sqs != nil {
-		return aws.String("sqs"), nil
+		return box.String("sqs"), nil
 	}
 	if outputConfig.Asana != nil {
-		return aws.String("asana"), nil
+		return box.String("asana"), nil
 	}
 	if outputConfig.CustomWebhook != nil {
-		return aws.String("customwebhook"), nil
+		return box.String("customwebhook"), nil
 	}
 
 	return nil, errors.New("no valid output configuration specified for alert output")
