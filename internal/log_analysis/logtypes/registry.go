@@ -117,7 +117,7 @@ func (r *Registry) MustRegister(config Config) Entry {
 	return entry
 }
 
-// LogTypeEntry describes a registered log event type.
+// Entry describes a registered log event type.
 // It provides a method to create a new parser and a schema struct to derive tables from.
 // Entries can be grouped in a `Registry` to have an index of available log types.
 type Entry interface {
@@ -128,8 +128,8 @@ type Entry interface {
 }
 
 // LogTypeConfig describes a log event type in a declarative way.
-// To convert to a LogTypeEntry instance it must be registered.
-// The LogTypeConfig/LogTypeEntry separation enforces mutability rules for registered log event types.
+// To convert to an Entry instance it must be registered.
+// The Config/Entry separation enforces mutability rules for registered log event types.
 type Config struct {
 	Name         string
 	Description  string
