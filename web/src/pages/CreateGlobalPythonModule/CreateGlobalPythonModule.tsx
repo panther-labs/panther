@@ -35,13 +35,13 @@ const initialValues: Required<AddGlobalPythonModuleInput> = {
 
 const CreateGlobalPythonModulePage: React.FC = () => {
   const { history } = useRouter();
-  const [createRule, { error }] = useCreateGlobalPythonModule({
+  const [createGlobalPythonModule, { error }] = useCreateGlobalPythonModule({
     onCompleted: data =>
       history.push(urls.settings.globalModule.edit(data.addGlobalPythonModule.id)),
   });
 
   const handleSubmit = React.useCallback(
-    values => createRule({ variables: { input: values } }),
+    values => createGlobalPythonModule({ variables: { input: values } }),
     []
   );
 

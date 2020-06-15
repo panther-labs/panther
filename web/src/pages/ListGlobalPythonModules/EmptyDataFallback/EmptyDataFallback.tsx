@@ -31,10 +31,10 @@ const EmptyDataFallback: React.FC = () => (
       It{"'"}s empty in here
     </Heading>
     <Text size="large" color="grey200" textAlign="center" mb={10}>
-      You don{"'"}t seem to have any Log sources connected to our system. <br />
+      You don{"'"}t seem to have any Global Python module set yet. <br />
     </Text>
-    <Button size="large" variant="primary" as={RRLink} to={urls.logAnalysis.sources.create()}>
-      Onboard your logs
+    <Button size="large" variant="primary" as={RRLink} to={urls.settings.globalModule.create()}>
+      Create a Global Python Module
     </Button>
   </Flex>
 );

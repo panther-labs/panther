@@ -76,8 +76,8 @@ const ListGlobalPythonModules = () => {
       </Flex>
       <ErrorBoundary>
         <SimpleGrid columns={2} spacing={3}>
-          {data.listGlobalPythonModules.globals.map(global => (
-            <GlobalPythonModuleItem key={global.id} global={global} />
+          {data.listGlobalPythonModules.globals.map(globalModule => (
+            <GlobalPythonModuleItem key={globalModule.id} globalModule={globalModule} />
           ))}
         </SimpleGrid>
       </ErrorBoundary>

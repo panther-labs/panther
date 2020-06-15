@@ -38,7 +38,7 @@ const SettingsNavigation: React.FC = () => {
           <NavLink icon="output" to={urls.settings.destinations()} label="Destinations" />
         </Flex>
         <Flex as="li">
-          <NavLink icon="wrench" to={urls.settings.globalModule.list()} label="Global Module" />
+          <NavLink icon="wrench" to={urls.settings.globalModule.list()} label="Global Modules" />
         </Flex>
       </Flex>
     </Box>
