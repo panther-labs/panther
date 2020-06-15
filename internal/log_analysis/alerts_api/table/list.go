@@ -133,10 +133,12 @@ func (table *AlertsTable) list(ddbKey, ddbValue string, input *models.ListAlerts
 		return nil, nil, errors.Wrap(err, "failed to build expression")
 	}
 
-	// Optionally limit the returned results to the page size
+	// Limit the returned results to the specified page size or max default
 	var queryResultsLimit *int64
 	if input.PageSize != nil {
 		queryResultsLimit = aws.Int64(int64(*input.PageSize))
+	} else {
+		queryResultsLimit = aws.Int64(int64(25))
 	}
 
 	// Optionally continue the query from the "primary key of the item where the [previous] operation stopped"
