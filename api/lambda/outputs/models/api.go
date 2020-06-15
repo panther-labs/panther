@@ -185,6 +185,9 @@ type OutputConfig struct {
 
 	// AsanaConfig contains the configuration for Asana alert output
 	Asana *AsanaConfig `json:"asana,omitempty"`
+
+	// CustomWebhook contains the configuration for a Custom Webhook alert output
+	CustomWebhook *CustomWebhookConfig `json:"customWebhook,omitempty"`
 }
 
 // SlackConfig defines options for each Slack output.
@@ -223,7 +226,7 @@ type OpsgenieConfig struct {
 	APIKey *string `json:"apiKey" validate:"required"`
 }
 
-// MsTeamsConfig defines options for each MsTeamsConfig output
+// MsTeamsConfig defines options for each MsTeams output
 type MsTeamsConfig struct {
 	WebhookURL *string `json:"webhookURL" validate:"required,url"`
 }
@@ -237,6 +240,11 @@ type SqsConfig struct {
 type AsanaConfig struct {
 	PersonalAccessToken *string   `json:"personalAccessToken" validate:"required,min=1"`
 	ProjectGids         []*string `json:"projectGids" validate:"required,min=1,dive,required"`
+}
+
+// CustomWebhookConfig defines options for each CustomWebhook output
+type CustomWebhookConfig struct {
+	WebhookURL *string `json:"webhookURL" validate:"required,url"`
 }
 
 // DefaultOutputs is the structure holding the information about default outputs for severity

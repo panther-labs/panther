@@ -25,7 +25,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/joho/godotenv"
 	"github.com/magefile/mage/sh"
@@ -33,18 +32,9 @@ import (
 	"github.com/panther-labs/panther/tools/config"
 )
 
-const (
-	awsEnvFile = "out/.env.aws"
-)
+const awsEnvFile = "out/.env.aws"
 
-// Returns stack outputs
-func deployFrontend(
-	awsSession *session.Session,
-	accountID, bucket string,
-	bootstrapOutputs map[string]string,
-	settings *config.PantherConfig,
-) (map[string]string, error) {
-
+func deployFrontend(accountID string, bootstrapOutputs map[string]string, settings *config.PantherConfig) error {
 	// Save .env file (only used when running web server locally)
 	if err := godotenv.Write(
 		map[string]string{
@@ -56,12 +46,12 @@ func deployFrontend(
 		},
 		awsEnvFile,
 	); err != nil {
-		return nil, fmt.Errorf("failed to write ENV variables to file %s: %v", awsEnvFile, err)
+		return fmt.Errorf("failed to write ENV variables to file %s: %v", awsEnvFile, err)
 	}
 
-	dockerImage, err := buildAndPushImageFromSource(awsSession, bootstrapOutputs["ImageRegistryUri"], "")
+	dockerImage, err := buildAndPushImageFromSource(bootstrapOutputs["ImageRegistryUri"], "")
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	params := map[string]string{
@@ -83,11 +73,12 @@ func deployFrontend(
 		"SubnetTwoId":                bootstrapOutputs["SubnetTwoId"],
 		"UserPoolId":                 bootstrapOutputs["UserPoolId"],
 	}
-	return deployTemplate(awsSession, frontendTemplate, bucket, frontendStack, params)
+	_, err = deployTemplate(frontendTemplate, bootstrapOutputs["SourceBucket"], frontendStack, params)
+	return err
 }
 
 // Build a personalized docker image from source and push it to the private image repo of the user
-func buildAndPushImageFromSource(awsSession *session.Session, imageRegistry, tag string) (string, error) {
+func buildAndPushImageFromSource(imageRegistry, tag string) (string, error) {
 	logger.Debug("requesting access to remote image repo")
 	response, err := ecr.New(awsSession).GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
 	if err != nil {

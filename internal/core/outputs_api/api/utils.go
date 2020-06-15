@@ -102,6 +102,9 @@ func getOutputType(outputConfig *models.OutputConfig) (*string, error) {
 	if outputConfig.Asana != nil {
 		return aws.String("asana"), nil
 	}
+	if outputConfig.CustomWebhook != nil {
+		return aws.String("customwebhook"), nil
+	}
 
 	return nil, errors.New("no valid output configuration specified for alert output")
 }

@@ -45,7 +45,7 @@ type HTTPWrapper struct {
 // PostInput type
 type PostInput struct {
 	url     string
-	body    map[string]interface{}
+	body    interface{}
 	headers map[string]string
 }
 
@@ -70,6 +70,7 @@ type API interface {
 	Sqs(*alertmodels.Alert, *outputmodels.SqsConfig) *AlertDeliveryError
 	Sns(*alertmodels.Alert, *outputmodels.SnsConfig) *AlertDeliveryError
 	Asana(*alertmodels.Alert, *outputmodels.AsanaConfig) *AlertDeliveryError
+	CustomWebhook(*alertmodels.Alert, *outputmodels.CustomWebhookConfig) *AlertDeliveryError
 }
 
 // OutputClient encapsulates the clients that allow sending alerts to multiple outputs
@@ -95,7 +96,7 @@ func New(sess *session.Session) *OutputClient {
 	}
 }
 
-const detailedMessageTemplate = "%s\nFor more details please visit: %s\nSeverity: %s\nRunbook: %s\nDescription:%s"
+const detailedMessageTemplate = "%s\nFor more details please visit: %s\nSeverity: %s\nRunbook: %s\nDescription: %s"
 
 func generateAlertMessage(alert *alertmodels.Alert) string {
 	if aws.StringValue(alert.Type) == alertmodels.RuleType {

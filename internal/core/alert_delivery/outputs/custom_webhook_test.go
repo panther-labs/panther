@@ -27,46 +27,62 @@ import (
 
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-func TestAsanaAlert(t *testing.T) {
+var customWebhookConfig = &outputmodels.CustomWebhookConfig{
+	WebhookURL: aws.String("custom-webhook-url"),
+}
+
+func TestCustomWebhookAlert(t *testing.T) {
 	httpWrapper := &mockHTTPWrapper{}
 	client := &OutputClient{httpWrapper: httpWrapper}
 
+	// Define the required fields for an alert
+	// The custom webhook should be able to produce the correct
+	// output from a bare bones alert
 	createdAtTime, err := time.Parse(time.RFC3339, "2019-08-03T11:40:13Z")
-	require.NoError(t, err)
+	if err != nil {
+		t.Error(err)
+	}
 	alert := &alertmodels.Alert{
-		PolicyID:          aws.String("ruleId"),
-		CreatedAt:         &createdAtTime,
-		OutputIDs:         aws.StringSlice([]string{"output-id"}),
-		PolicyDescription: aws.String("description"),
-		PolicyName:        aws.String("policy_name"),
-		Severity:          aws.String("INFO"),
+		PolicyID:  aws.String("policyId"),
+		CreatedAt: &createdAtTime,
+		Severity:  aws.String("INFO"),
 	}
 
-	asanaConfig := &outputmodels.AsanaConfig{PersonalAccessToken: aws.String("token"), ProjectGids: aws.StringSlice([]string{"projectGid"})}
+	// Get a link to the Panther Dashboard to one of the following:
+	//   1. The PolicyID (if no AlertID is present)
+	//   2. The AlertID
+	link := generateURL(alert)
 
-	asanaRequest := map[string]interface{}{
-		"data": map[string]interface{}{
-			"name": "Policy Failure: policy_name",
-			"notes": "policy_name failed on new resources\n" +
-				"For more details please visit: https://panther.io/policies/ruleId\nSeverity: INFO\nRunbook: \nDescription: description",
-			"projects": aws.StringSlice([]string{"projectGid"}),
-		},
+	outputMessage := &CustomWebhookOutputMessage{
+		AnalysisID:  alert.PolicyID,
+		AlertID:     alert.AlertID,
+		Name:        alert.PolicyName,
+		Severity:    alert.Severity,
+		Type:        alert.Type,
+		Link:        &link,
+		Title:       alert.Title,
+		Description: alert.PolicyDescription,
+		Runbook:     alert.Runbook,
+		Tags:        alert.Tags,
+		Version:     alert.PolicyVersionID,
+		CreatedAt:   alert.CreatedAt,
 	}
 
-	authorization := "Bearer " + *asanaConfig.PersonalAccessToken
-	requestHeader := map[string]string{
-		AuthorizationHTTPHeader: authorization,
-	}
+	// Ensure we have slices instead of `null` array fields
+	gatewayapi.ReplaceMapSliceNils(outputMessage)
+
+	requestURL := *customWebhookConfig.WebhookURL
+
 	expectedPostInput := &PostInput{
-		url:     asanaCreateTaskURL,
-		body:    asanaRequest,
-		headers: requestHeader,
+		url:  requestURL,
+		body: outputMessage,
 	}
 
 	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryError)(nil))
 
-	require.Nil(t, client.Asana(alert, asanaConfig))
+	require.Nil(t, client.CustomWebhook(alert, customWebhookConfig))
 	httpWrapper.AssertExpectations(t)
 }

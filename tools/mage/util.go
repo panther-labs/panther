@@ -22,6 +22,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -34,7 +35,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/magefile/mage/mg"
+	"github.com/magefile/mage/sh"
 )
+
+// Package global set by getSession()
+var awsSession *session.Session
 
 const (
 	maxRetries = 20 // try very hard, avoid throttles
@@ -139,34 +145,34 @@ func writeFile(path string, data []byte) error {
 	return nil
 }
 
-// Build the AWS session from the environment or a credentials file.
-func getSession() (*session.Session, error) {
-	awsSession, err := session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries))
+// Build awsSession global from the environment or a credentials file
+func getSession() {
+	var err error
+	awsSession, err = session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create AWS session: %v", err)
+		logger.Fatalf("failed to create AWS session: %v", err)
 	}
 	if aws.StringValue(awsSession.Config.Region) == "" {
-		return nil, errors.New("no region specified, set AWS_REGION or AWS_DEFAULT_REGION")
+		logger.Fatalf("no region specified, set AWS_REGION or AWS_DEFAULT_REGION")
 	}
 
 	// Load and cache credentials now so we can report a meaningful error
 	creds, err := awsSession.Config.Credentials.Get()
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NoCredentialProviders" {
-			return nil, errors.New("no AWS credentials found, set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY")
+			logger.Fatalf("no AWS credentials found, set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY")
 		}
-		return nil, fmt.Errorf("failed to load AWS credentials: %v", err)
+		logger.Fatalf("failed to load AWS credentials: %v", err)
 	}
 
 	logger.Debugw("loaded AWS credentials",
 		"provider", creds.ProviderName,
 		"region", awsSession.Config.Region,
 		"accessKeyId", creds.AccessKeyID)
-	return awsSession, nil
 }
 
 // Upload a local file to S3.
-func uploadFileToS3(awsSession *session.Session, path, bucket, key string) (*s3manager.UploadOutput, error) {
+func uploadFileToS3(path, bucket, key string) (*s3manager.UploadOutput, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open %s: %v", path, err)
@@ -204,6 +210,19 @@ func promptUser(prompt string, validator func(string) error) string {
 
 		return result
 	}
+}
+
+// Run a command, hiding both stdout and stderr unless running in verbose mode.
+//
+// Almost identical to sh.Run(), except sh.Run() only hides stdout in non-verbose mode.
+func runWithoutStderr(cmd string, args ...string) error {
+	var stdout, stderr io.Writer
+	if mg.Verbose() {
+		stdout = os.Stdout
+		stderr = os.Stderr
+	}
+	_, err := sh.Exec(nil, stdout, stderr, cmd, args...)
+	return err
 }
 
 // Ensure non-empty strings.

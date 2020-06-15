@@ -123,6 +123,7 @@ export const LOG_TYPES = [
   'Suricata.DNS',
   'Syslog.RFC3164',
   'Syslog.RFC5424',
+  'Zeek.DNS',
 ] as const;
 
 export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: BadgeProps['color'] } = {
