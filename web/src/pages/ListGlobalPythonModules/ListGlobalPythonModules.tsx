@@ -26,7 +26,7 @@ import { convertObjArrayValuesToCsv, encodeParams, extractErrorMessage } from 'H
 import withSEO from 'Hoc/withSEO';
 import { useListGlobalPythonModules } from './graphql/listGlobalPythonModules.generated';
 import EmptyDataFallback from './EmptyDataFallback';
-import GlobalItem from './GlobalItem';
+import GlobalPythonModuleItem from './GlobalPythonModuleItem';
 
 const ListGlobalPythonModules = () => {
   const { loading, error, data } = useListGlobalPythonModules({
@@ -77,7 +77,7 @@ const ListGlobalPythonModules = () => {
       <ErrorBoundary>
         <SimpleGrid columns={2} spacing={3}>
           {data.listGlobalPythonModules.globals.map(global => (
-            <GlobalItem key={global.id} global={global} />
+            <GlobalPythonModuleItem key={global.id} global={global} />
           ))}
         </SimpleGrid>
       </ErrorBoundary>

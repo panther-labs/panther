@@ -66,7 +66,7 @@ const ModalManager: React.FC = () => {
     case MODALS.DELETE_TEST:
       Component = DeleteTestModal;
       break;
-    case MODALS.DELETE_GLOBAL:
+    case MODALS.DELETE_GLOBAL_PYTHON_MODULE:
       Component = DeleteGlobalPythonModuleModal;
       break;
     case MODALS.DELETE_POLICY:

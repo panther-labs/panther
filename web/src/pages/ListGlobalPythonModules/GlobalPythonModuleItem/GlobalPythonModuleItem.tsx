@@ -29,7 +29,7 @@ interface GlobalItemProps {
   global: GlobalPythonModuleTeaser;
 }
 
-const GlobalItem: React.FC<GlobalItemProps> = ({ global }) => {
+const GlobalPythonModuleItem: React.FC<GlobalItemProps> = ({ global }) => {
   const { showModal } = useModal();
   const { history } = useRouter();
 
@@ -65,7 +65,7 @@ const GlobalItem: React.FC<GlobalItemProps> = ({ global }) => {
           <Dropdown.Item
             onSelect={() =>
               showModal({
-                modal: MODALS.DELETE_GLOBAL,
+                modal: MODALS.DELETE_GLOBAL_PYTHON_MODULE,
                 props: { global },
               })
             }
@@ -78,4 +78,4 @@ const GlobalItem: React.FC<GlobalItemProps> = ({ global }) => {
   );
 };
 
-export default React.memo(GlobalItem);
+export default React.memo(GlobalPythonModuleItem);
