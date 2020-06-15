@@ -16,5 +16,5 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './GlobalModuleForm';
-export * from './GlobalModuleForm';
+export { default } from './GlobalPythonModuleForm';
+export * from './GlobalPythonModuleForm';

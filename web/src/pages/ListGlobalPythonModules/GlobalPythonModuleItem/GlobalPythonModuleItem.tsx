@@ -26,16 +26,16 @@ import urls from 'Source/urls';
 import { MODALS } from 'Components/utils/Modal';
 
 interface GlobalItemProps {
-  globalModule: GlobalPythonModuleTeaser;
+  globalPythonModule: GlobalPythonModuleTeaser;
 }
 
-const GlobalPythonModuleItem: React.FC<GlobalItemProps> = ({ globalModule }) => {
+const GlobalPythonModuleItem: React.FC<GlobalItemProps> = ({ globalPythonModule }) => {
   const { showModal } = useModal();
   const { history } = useRouter();
 
-  const lastModifiedTime = Math.floor(new Date(globalModule.lastModified).getTime() / 1000);
+  const lastModifiedTime = Math.floor(new Date(globalPythonModule.lastModified).getTime() / 1000);
   return (
-    <Card p={9} key={globalModule.id}>
+    <Card p={9} key={globalPythonModule.id}>
       <Flex
         align="flex-start"
         justify="space-between"
@@ -45,7 +45,7 @@ const GlobalPythonModuleItem: React.FC<GlobalItemProps> = ({ globalModule }) => 
       >
         <Box>
           <Heading size="medium" color="grey500" mb={2}>
-            {globalModule.id}
+            {globalPythonModule.id}
           </Heading>
           <Text size="small" color="grey200">
             Last updated {getElapsedTime(lastModifiedTime)}
@@ -60,7 +60,9 @@ const GlobalPythonModuleItem: React.FC<GlobalItemProps> = ({ globalModule }) => 
           }
         >
           <Dropdown.Item
-            onSelect={() => history.push(urls.settings.globalModule.edit(globalModule.id))}
+            onSelect={() =>
+              history.push(urls.settings.globalPythonModules.edit(globalPythonModule.id))
+            }
           >
             <MenuItem variant="default">Edit</MenuItem>
           </Dropdown.Item>
@@ -68,7 +70,7 @@ const GlobalPythonModuleItem: React.FC<GlobalItemProps> = ({ globalModule }) => 
             onSelect={() =>
               showModal({
                 modal: MODALS.DELETE_GLOBAL_PYTHON_MODULE,
-                props: { globalModule },
+                props: { globalPythonModule },
               })
             }
           >

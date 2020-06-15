@@ -33,7 +33,12 @@ const EmptyDataFallback: React.FC = () => (
     <Text size="large" color="grey200" textAlign="center" mb={10}>
       You don{"'"}t seem to have any Global Python module set yet. <br />
     </Text>
-    <Button size="large" variant="primary" as={RRLink} to={urls.settings.globalModule.create()}>
+    <Button
+      size="large"
+      variant="primary"
+      as={RRLink}
+      to={urls.settings.globalPythonModules.create()}
+    >
       Create a Global Python Module
     </Button>
   </Flex>

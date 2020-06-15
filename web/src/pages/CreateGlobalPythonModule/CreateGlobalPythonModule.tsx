@@ -24,7 +24,7 @@ import { AddGlobalPythonModuleInput } from 'Generated/schema';
 import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage } from 'Helpers/utils';
 import useRouter from 'Hooks/useRouter';
-import GlobalModuleForm from 'Components/forms/GlobalModuleForm';
+import GlobalPythonModuleForm from 'Components/forms/GlobalPythonModuleForm';
 import { useCreateGlobalPythonModule } from './graphql/createGlobalPythonModule.generated';
 
 const initialValues: Required<AddGlobalPythonModuleInput> = {
@@ -37,7 +37,7 @@ const CreateGlobalPythonModulePage: React.FC = () => {
   const { history } = useRouter();
   const [createGlobalPythonModule, { error }] = useCreateGlobalPythonModule({
     onCompleted: data =>
-      history.push(urls.settings.globalModule.edit(data.addGlobalPythonModule.id)),
+      history.push(urls.settings.globalPythonModules.edit(data.addGlobalPythonModule.id)),
   });
 
   const handleSubmit = React.useCallback(
@@ -48,7 +48,7 @@ const CreateGlobalPythonModulePage: React.FC = () => {
   return (
     <Box mb={10}>
       <Panel size="large" title="Global Python Module">
-        <GlobalModuleForm initialValues={initialValues} onSubmit={handleSubmit} />
+        <GlobalPythonModuleForm initialValues={initialValues} onSubmit={handleSubmit} />
       </Panel>
       {error && (
         <Box mt={2} mb={6}>

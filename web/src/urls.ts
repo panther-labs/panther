@@ -75,11 +75,11 @@ const urls = {
   settings: {
     home: () => '/settings/',
     general: () => `${urls.settings.home()}general/`,
-    globalModule: {
-      list: () => `${urls.settings.home()}modules/`,
-      create: () => `${urls.settings.globalModule.list()}new/`,
+    globalPythonModules: {
+      list: () => `${urls.settings.home()}global-python-modules/`,
+      create: () => `${urls.settings.globalPythonModules.list()}new/`,
       edit: (id: GlobalPythonModule['id']) =>
-        `${urls.settings.globalModule.list()}${urlEncode(id)}/edit/`,
+        `${urls.settings.globalPythonModules.list()}${urlEncode(id)}/edit/`,
     },
     users: () => `${urls.settings.home()}users/`,
     destinations: () => `${urls.settings.home()}destinations/`,

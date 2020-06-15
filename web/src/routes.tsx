@@ -177,23 +177,23 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                 <Route exact path={urls.settings.general()} component={GeneralSettingsPage} />
                 <Route
                   exact
-                  path={urls.settings.globalModule.list()}
+                  path={urls.settings.globalPythonModules.list()}
                   component={ListGlobalPythonModulesPage}
                 />
                 <Route
                   exact
-                  path={urls.settings.globalModule.create()}
+                  path={urls.settings.globalPythonModules.create()}
                   component={CreateGlobalPythonModulePage}
                 />
                 <Route
                   exact
-                  path={urls.settings.globalModule.edit(':id')}
+                  path={urls.settings.globalPythonModules.edit(':id')}
                   component={EditGlobalPythonModulePage}
                 />
                 <Redirect
                   exact
-                  from={`${urls.settings.globalModule.list()}:id`}
-                  to={urls.settings.globalModule.edit(':id')}
+                  from={`${urls.settings.globalPythonModules.list()}:id`}
+                  to={urls.settings.globalPythonModules.edit(':id')}
                 />
                 <Route exact path={urls.settings.users()} component={UsersPage} />
                 <Route exact path={urls.settings.destinations()} component={DestinationsPage} />

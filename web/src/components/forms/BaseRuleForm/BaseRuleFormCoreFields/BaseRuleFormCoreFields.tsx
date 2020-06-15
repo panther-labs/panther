@@ -193,7 +193,7 @@ const BaseRuleFormCoreFields: React.FC<BaseRuleCoreFieldsProps> = ({ type }) => 
           <Text size="small" color="grey300" mr={1}>
             Need to define re-usable functions? Define them in a
           </Text>
-          <Link color="blue300" as={RRLink} to={urls.settings.globalModule.list()}>
+          <Link color="blue300" as={RRLink} to={urls.settings.globalPythonModules.list()}>
             <Text size="small"> global module</Text>
           </Link>
         </Flex>

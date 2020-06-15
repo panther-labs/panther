@@ -47,7 +47,7 @@ interface GlobalModuleFormProps {
   onSubmit: (values: GlobalModuleFormValues) => void;
 }
 
-const GlobalModuleForm: React.FC<GlobalModuleFormProps> = ({ initialValues, onSubmit }) => {
+const GlobalPythonModuleForm: React.FC<GlobalModuleFormProps> = ({ initialValues, onSubmit }) => {
   const { history } = useRouter();
 
   return (
@@ -110,4 +110,4 @@ const GlobalModuleForm: React.FC<GlobalModuleFormProps> = ({ initialValues, onSu
   );
 };
 
-export default GlobalModuleForm;
+export default GlobalPythonModuleForm;

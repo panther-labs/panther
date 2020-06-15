@@ -20,7 +20,7 @@ import React from 'react';
 import Panel from 'Components/Panel';
 import { Alert, Card, Box, useSnackbar } from 'pouncejs';
 import useRouter from 'Hooks/useRouter';
-import GlobalModuleForm from 'Components/forms/GlobalModuleForm';
+import GlobalPythonModuleForm from 'Components/forms/GlobalPythonModuleForm';
 import withSEO from 'Hoc/withSEO';
 import { GlobalPythonModule } from 'Generated/schema';
 import TablePlaceholder from 'Components/TablePlaceholder';
@@ -33,7 +33,7 @@ export const defaultInitialValues: Pick<GlobalPythonModule, 'id' | 'description'
   id: '',
   body: '',
 };
-const EditGlobalModulePage: React.FC = () => {
+const EditGlobalPythonModulePage: React.FC = () => {
   const { match } = useRouter<{ id: string }>();
   const { pushSnackbar } = useSnackbar();
 
@@ -99,7 +99,7 @@ const EditGlobalModulePage: React.FC = () => {
   return (
     <Box mb={6}>
       <Panel size="large" title="Global Module">
-        <GlobalModuleForm initialValues={initialValues} onSubmit={handleSubmit} />
+        <GlobalPythonModuleForm initialValues={initialValues} onSubmit={handleSubmit} />
       </Panel>
       {updateError && (
         <Box mt={2} mb={6}>
@@ -116,4 +116,4 @@ const EditGlobalModulePage: React.FC = () => {
   );
 };
 
-export default withSEO({ title: 'Global Module' })(EditGlobalModulePage);
+export default withSEO({ title: 'Global Module' })(EditGlobalPythonModulePage);

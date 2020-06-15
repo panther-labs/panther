@@ -69,15 +69,18 @@ const ListGlobalPythonModules = () => {
           variant="primary"
           mb={8}
           as={RRLink}
-          to={urls.settings.globalModule.create()}
+          to={urls.settings.globalPythonModules.create()}
         >
           Create New
         </Button>
       </Flex>
       <ErrorBoundary>
         <SimpleGrid columns={2} spacing={3}>
-          {data.listGlobalPythonModules.globals.map(globalModule => (
-            <GlobalPythonModuleItem key={globalModule.id} globalModule={globalModule} />
+          {data.listGlobalPythonModules.globals.map(globalPythonModule => (
+            <GlobalPythonModuleItem
+              key={globalPythonModule.id}
+              globalPythonModule={globalPythonModule}
+            />
           ))}
         </SimpleGrid>
       </ErrorBoundary>

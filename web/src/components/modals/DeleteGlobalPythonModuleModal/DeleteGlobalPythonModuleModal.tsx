@@ -26,19 +26,21 @@ import { useDeleteGlobalPythonModule } from './graphql/deleteGlobalPythonModule.
 import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
 export interface DeleteGlobalPythonModuleModalProps {
-  globalModule: GlobalPythonModuleTeaser | GlobalPythonModuleFull;
+  globalPythonModule: GlobalPythonModuleTeaser | GlobalPythonModuleFull;
 }
 
-const DeleteGlobalModal: React.FC<DeleteGlobalPythonModuleModalProps> = ({ globalModule }) => {
+const DeleteGlobalModal: React.FC<DeleteGlobalPythonModuleModalProps> = ({
+  globalPythonModule,
+}) => {
   const { location, history } = useRouter<{ id?: string }>();
   const { pushSnackbar } = useSnackbar();
-  const globalName = globalModule.id;
+  const globalName = globalPythonModule.id;
   const [confirm] = useDeleteGlobalPythonModule({
     variables: {
       input: {
         globals: [
           {
-            id: globalModule.id,
+            id: globalPythonModule.id,
           },
         ],
       },
@@ -49,10 +51,7 @@ const DeleteGlobalModal: React.FC<DeleteGlobalPythonModuleModalProps> = ({ globa
     update: async cache => {
       cache.modify('ROOT_QUERY', {
         listGlobalPythonModules: (data, helpers) => {
-          const globalRef = helpers.toReference({
-            __typename: 'GlobalModule',
-            id: globalModule.id,
-          });
+          const globalRef = helpers.toReference(globalPythonModule);
           return {
             ...data,
             globals: data.globals.filter(p => p.__ref !== globalRef.__ref),
@@ -77,9 +76,9 @@ const DeleteGlobalModal: React.FC<DeleteGlobalPythonModuleModalProps> = ({ globa
   });
 
   function onConfirm() {
-    if (location.pathname.includes(globalModule.id)) {
+    if (location.pathname.includes(globalPythonModule.id)) {
       // if we were on the particular policy's details page or edit page --> redirect on delete
-      history.push(urls.settings.globalModule.list());
+      history.push(urls.settings.globalPythonModules.list());
     }
     return confirm();
   }
