@@ -19,8 +19,6 @@ package table
  */
 
 import (
-	"strings"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -75,18 +73,17 @@ func (table *AlertsTable) getKeyCondition(input *models.ListAlertsInput) (keyCon
 // filterBySeverity - filters by a Severity level
 func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
 	if input.Severity != nil {
-		*filter = filter.And(expression.Equal(expression.Name("severity"), expression.Value(*input.Severity)))
+		*filter = filter.And(
+			expression.Equal(expression.Name("severity"), expression.Value(*input.Severity)),
+		)
 	}
 }
 
-// filterByTitleContains - fiters by a name that contains a string (case insensitive)
+// filterByTitleContains - fiters by a name that contains a string (case sensitive)
 func filterByTitleContains(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
 	if input.Contains != nil {
 		*filter = filter.And(
-			expression.Or(
-				expression.Contains(expression.Name("title"), strings.ToLower(*input.Contains)),
-				expression.Contains(expression.Name("title"), *input.Contains),
-			),
+			expression.Contains(expression.Name("title"), *input.Contains),
 		)
 	}
 }
