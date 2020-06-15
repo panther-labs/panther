@@ -20,13 +20,21 @@
 
 import * as Types from '../../../__generated__/schema';
 
+import { GlobalPythonModuleTeaser } from './GlobalPythonModuleTeaser.generated';
 import gql from 'graphql-tag';
 
-export type GlobalModuleTeaser = Pick<Types.GlobalModule, 'id' | 'lastModified'>;
+export type GlobalPythonModuleFull = Pick<
+  Types.GlobalPythonModule,
+  'createdAt' | 'description' | 'body'
+> &
+  GlobalPythonModuleTeaser;
 
-export const GlobalModuleTeaser = gql`
-  fragment GlobalModuleTeaser on GlobalModule {
-    id
-    lastModified
+export const GlobalPythonModuleFull = gql`
+  fragment GlobalPythonModuleFull on GlobalPythonModule {
+    ...GlobalPythonModuleTeaser
+    createdAt
+    description
+    body
   }
+  ${GlobalPythonModuleTeaser}
 `;

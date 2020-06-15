@@ -21,12 +21,12 @@ import { Card, Box, Heading, Flex, Text, Dropdown, Icon, IconButton, MenuItem } 
 import { getElapsedTime } from 'Helpers/utils';
 import useRouter from 'Hooks/useRouter';
 import useModal from 'Hooks/useModal';
-import { GlobalModuleTeaser } from 'Source/graphql/fragments/GlobalModuleTeaser.generated';
+import { GlobalPythonModuleTeaser } from 'Source/graphql/fragments/GlobalPythonModuleTeaser.generated';
 import urls from 'Source/urls';
 import { MODALS } from 'Components/utils/Modal';
 
 interface GlobalItemProps {
-  global: GlobalModuleTeaser;
+  global: GlobalPythonModuleTeaser;
 }
 
 const GlobalItem: React.FC<GlobalItemProps> = ({ global }) => {

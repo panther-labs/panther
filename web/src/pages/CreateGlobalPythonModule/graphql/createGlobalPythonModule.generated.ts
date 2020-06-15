@@ -20,24 +20,24 @@
 
 import * as Types from '../../../../__generated__/schema';
 
-import { GlobalModuleFull } from '../../../graphql/fragments/GlobalModuleFull.generated';
+import { GlobalPythonModuleFull } from '../../../graphql/fragments/GlobalPythonModuleFull.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
 export type CreateGlobalPythonModuleVariables = {
-  input: Types.AddGlobalModuleInput;
+  input: Types.AddGlobalPythonModuleInput;
 };
 
-export type CreateGlobalPythonModule = { addGlobalPythonModule?: Types.Maybe<GlobalModuleFull> };
+export type CreateGlobalPythonModule = { addGlobalPythonModule: GlobalPythonModuleFull };
 
 export const CreateGlobalPythonModuleDocument = gql`
-  mutation CreateGlobalPythonModule($input: AddGlobalModuleInput!) {
+  mutation CreateGlobalPythonModule($input: AddGlobalPythonModuleInput!) {
     addGlobalPythonModule(input: $input) {
-      ...GlobalModuleFull
+      ...GlobalPythonModuleFull
     }
   }
-  ${GlobalModuleFull}
+  ${GlobalPythonModuleFull}
 `;
 export type CreateGlobalPythonModuleMutationFn = ApolloReactCommon.MutationFunction<
   CreateGlobalPythonModule,

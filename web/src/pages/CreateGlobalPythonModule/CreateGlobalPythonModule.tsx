@@ -20,20 +20,20 @@ import React from 'react';
 import Panel from 'Components/Panel';
 import { Alert, Box } from 'pouncejs';
 import urls from 'Source/urls';
-import { AddGlobalModuleInput } from 'Generated/schema';
+import { AddGlobalPythonModuleInput } from 'Generated/schema';
 import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage } from 'Helpers/utils';
 import useRouter from 'Hooks/useRouter';
 import GlobalModuleForm from 'Components/forms/GlobalModuleForm';
 import { useCreateGlobalPythonModule } from './graphql/createGlobalPythonModule.generated';
 
-const initialValues: Required<AddGlobalModuleInput> = {
+const initialValues: Required<AddGlobalPythonModuleInput> = {
   id: '',
   description: '',
   body: '',
 };
 
-const CreateRulePage: React.FC = () => {
+const CreateGlobalPythonModulePage: React.FC = () => {
   const { history } = useRouter();
   const [createRule, { error }] = useCreateGlobalPythonModule({
     onCompleted: data =>
@@ -65,4 +65,4 @@ const CreateRulePage: React.FC = () => {
   );
 };
 
-export default withSEO({ title: 'New Global Module' })(CreateRulePage);
+export default withSEO({ title: 'New Global Module' })(CreateGlobalPythonModulePage);

@@ -24,53 +24,55 @@ import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
-export type DeleteGlobalModuleVariables = {
+export type DeleteGlobalPythonModuleVariables = {
   input: Types.DeleteGlobalPythonModuleInput;
 };
 
-export type DeleteGlobalModule = Pick<Types.Mutation, 'deleteGlobalPythonModule'>;
+export type DeleteGlobalPythonModule = Pick<Types.Mutation, 'deleteGlobalPythonModule'>;
 
-export const DeleteGlobalModuleDocument = gql`
-  mutation DeleteGlobalModule($input: DeleteGlobalPythonModuleInput!) {
+export const DeleteGlobalPythonModuleDocument = gql`
+  mutation DeleteGlobalPythonModule($input: DeleteGlobalPythonModuleInput!) {
     deleteGlobalPythonModule(input: $input)
   }
 `;
-export type DeleteGlobalModuleMutationFn = ApolloReactCommon.MutationFunction<
-  DeleteGlobalModule,
-  DeleteGlobalModuleVariables
+export type DeleteGlobalPythonModuleMutationFn = ApolloReactCommon.MutationFunction<
+  DeleteGlobalPythonModule,
+  DeleteGlobalPythonModuleVariables
 >;
 
 /**
- * __useDeleteGlobalModule__
+ * __useDeleteGlobalPythonModule__
  *
- * To run a mutation, you first call `useDeleteGlobalModule` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteGlobalModule` returns a tuple that includes:
+ * To run a mutation, you first call `useDeleteGlobalPythonModule` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteGlobalPythonModule` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [deleteGlobalModule, { data, loading, error }] = useDeleteGlobalModule({
+ * const [deleteGlobalPythonModule, { data, loading, error }] = useDeleteGlobalPythonModule({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useDeleteGlobalModule(
+export function useDeleteGlobalPythonModule(
   baseOptions?: ApolloReactHooks.MutationHookOptions<
-    DeleteGlobalModule,
-    DeleteGlobalModuleVariables
+    DeleteGlobalPythonModule,
+    DeleteGlobalPythonModuleVariables
   >
 ) {
-  return ApolloReactHooks.useMutation<DeleteGlobalModule, DeleteGlobalModuleVariables>(
-    DeleteGlobalModuleDocument,
+  return ApolloReactHooks.useMutation<DeleteGlobalPythonModule, DeleteGlobalPythonModuleVariables>(
+    DeleteGlobalPythonModuleDocument,
     baseOptions
   );
 }
-export type DeleteGlobalModuleHookResult = ReturnType<typeof useDeleteGlobalModule>;
-export type DeleteGlobalModuleMutationResult = ApolloReactCommon.MutationResult<DeleteGlobalModule>;
-export type DeleteGlobalModuleMutationOptions = ApolloReactCommon.BaseMutationOptions<
-  DeleteGlobalModule,
-  DeleteGlobalModuleVariables
+export type DeleteGlobalPythonModuleHookResult = ReturnType<typeof useDeleteGlobalPythonModule>;
+export type DeleteGlobalPythonModuleMutationResult = ApolloReactCommon.MutationResult<
+  DeleteGlobalPythonModule
+>;
+export type DeleteGlobalPythonModuleMutationOptions = ApolloReactCommon.BaseMutationOptions<
+  DeleteGlobalPythonModule,
+  DeleteGlobalPythonModuleVariables
 >;

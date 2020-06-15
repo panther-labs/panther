@@ -20,20 +20,20 @@ import React from 'react';
 import { useSnackbar } from 'pouncejs';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
-import { GlobalModuleTeaser } from 'Source/graphql/fragments/GlobalModuleTeaser.generated';
-import { GlobalModuleFull } from 'Source/graphql/fragments/GlobalModuleFull.generated';
-import { useDeleteGlobalModule } from './graphql/deleteGlobalModule.generated';
+import { GlobalPythonModuleTeaser } from 'Source/graphql/fragments/GlobalPythonModuleTeaser.generated';
+import { GlobalPythonModuleFull } from 'Source/graphql/fragments/GlobalPythonModuleFull.generated';
+import { useDeleteGlobalPythonModule } from './graphql/deleteGlobalPythonModule.generated';
 import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
-export interface DeleteGlobalModalProps {
-  global: GlobalModuleTeaser | GlobalModuleFull;
+export interface DeleteGlobalPythonModuleModalProps {
+  global: GlobalPythonModuleTeaser | GlobalPythonModuleFull;
 }
 
-const DeleteGlobalModal: React.FC<DeleteGlobalModalProps> = ({ global }) => {
+const DeleteGlobalModal: React.FC<DeleteGlobalPythonModuleModalProps> = ({ global }) => {
   const { location, history } = useRouter<{ id?: string }>();
   const { pushSnackbar } = useSnackbar();
   const globalName = global.id;
-  const [confirm] = useDeleteGlobalModule({
+  const [confirm] = useDeleteGlobalPythonModule({
     variables: {
       input: {
         globals: [

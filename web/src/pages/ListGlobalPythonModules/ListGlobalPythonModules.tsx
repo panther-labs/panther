@@ -24,12 +24,12 @@ import urls from 'Source/urls';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { convertObjArrayValuesToCsv, encodeParams, extractErrorMessage } from 'Helpers/utils';
 import withSEO from 'Hoc/withSEO';
-import { useListGlobalModules } from './graphql/listGlobalModules.generated';
+import { useListGlobalPythonModules } from './graphql/listGlobalPythonModules.generated';
 import EmptyDataFallback from './EmptyDataFallback';
 import GlobalItem from './GlobalItem';
 
-const ListGlobalModules = () => {
-  const { loading, error, data } = useListGlobalModules({
+const ListGlobalPythonModules = () => {
+  const { loading, error, data } = useListGlobalPythonModules({
     fetchPolicy: 'cache-and-network',
     variables: {
       input: encodeParams(convertObjArrayValuesToCsv({}), ['nameContains']),
@@ -57,7 +57,7 @@ const ListGlobalModules = () => {
     );
   }
 
-  if (!data.listGlobalModules) {
+  if (!data.listGlobalPythonModules) {
     return <EmptyDataFallback />;
   }
 
@@ -76,7 +76,7 @@ const ListGlobalModules = () => {
       </Flex>
       <ErrorBoundary>
         <SimpleGrid columns={2} spacing={3}>
-          {data.listGlobalModules.globals.map(global => (
+          {data.listGlobalPythonModules.globals.map(global => (
             <GlobalItem key={global.id} global={global} />
           ))}
         </SimpleGrid>
@@ -85,4 +85,4 @@ const ListGlobalModules = () => {
   );
 };
 
-export default withSEO({ title: 'Global Python Modules' })(ListGlobalModules);
+export default withSEO({ title: 'Global Python Modules' })(ListGlobalPythonModules);

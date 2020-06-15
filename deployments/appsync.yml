@@ -1398,12 +1398,12 @@ Resources:
             $util.error($ctx.result.body, $statusCode, $ctx.args)
         #end
 
-  ListGlobalModulesResolver:
+  ListGlobalPythonModulesResolver:
     Type: AWS::AppSync::Resolver
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
-      FieldName: listGlobalModules
+      FieldName: listGlobalPythonModules
       DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
       RequestMappingTemplate: |
         {
@@ -1427,7 +1427,7 @@ Resources:
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
 
-  GetGlobalModuleResolver:
+  GetGlobalPythonModuleResolver:
     Type: AWS::AppSync::Resolver
     Properties:
       ApiId: !Ref ApiId
@@ -1487,7 +1487,7 @@ Resources:
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
 
-  UpdateGlobalModuleResolver:
+  UpdateGlobalPythonModuleResolver:
     Type: AWS::AppSync::Resolver
     Properties:
       ApiId: !Ref ApiId
@@ -1518,7 +1518,7 @@ Resources:
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
 
-  DeleteGlobalModuleResolver:
+  DeleteGlobalPythonModuleResolver:
     Type: AWS::AppSync::Resolver
     Properties:
       ApiId: !Ref ApiId

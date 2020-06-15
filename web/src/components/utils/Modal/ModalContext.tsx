@@ -25,7 +25,7 @@ import { DeleteLogSourceModalProps } from 'Components/modals/DeleteLogSourceModa
 import { DeleteDestinationModalProps } from 'Components/modals/DeleteDestinationModal';
 import { DeleteRuleModalProps } from 'Components/modals/DeleteRuleModal';
 import { DeleteTestModalProps } from 'Components/modals/DeleteTestModal';
-import { DeleteGlobalModalProps } from 'Components/modals/DeleteGlobalModal';
+import { DeleteGlobalPythonModuleModalProps } from 'Components/modals/DeleteGlobalPythonModuleModal';
 
 const SHOW_MODAL = 'SHOW_MODAL';
 const HIDE_MODAL = 'HIDE_MODAL';
@@ -69,7 +69,7 @@ interface ShowGlobalModalAction {
   type: typeof SHOW_MODAL;
   payload: {
     modal: MODALS.DELETE_GLOBAL;
-    props: DeleteGlobalModalProps;
+    props: DeleteGlobalPythonModuleModalProps;
   };
 }
 /* Delete User action */

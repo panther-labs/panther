@@ -14,7 +14,7 @@ type Mutation {
   addS3LogIntegration(input: AddS3LogIntegrationInput!): S3LogIntegration!
   addPolicy(input: AddPolicyInput!): PolicyDetails
   addRule(input: AddRuleInput!): RuleDetails
-  addGlobalPythonModule(input: AddGlobalModuleInput!): GlobalModule
+  addGlobalPythonModule(input: AddGlobalPythonModuleInput!): GlobalPythonModule!
   deleteDestination(id: ID!): Boolean
   deleteComplianceIntegration(id: ID!): Boolean
   deleteLogIntegration(id: ID!): Boolean
@@ -35,7 +35,7 @@ type Mutation {
   updateRule(input: UpdateRuleInput!): RuleDetails
   updateUser(input: UpdateUserInput!): User!
   uploadPolicies(input: UploadPoliciesInput!): UploadPoliciesResponse
-  updateGlobalPythonlModule(input: ModifyGlobalModuleInput!): GlobalModule
+  updateGlobalPythonlModule(input: ModifyGlobalPythonModuleInput!): GlobalPythonModule!
 }
 
 type Query {
@@ -54,7 +54,7 @@ type Query {
   resource(input: GetResourceInput!): ResourceDetails
   resources(input: ListResourcesInput): ListResourcesResponse
   resourcesForPolicy(input: ResourcesForPolicyInput!): ListComplianceItemsResponse
-  getGlobalPythonModule(input: GetGlobalModuleInput!): GlobalModule
+  getGlobalPythonModule(input: GetGlobalPythonModuleInput!): GlobalPythonModule!
   policy(input: GetPolicyInput!): PolicyDetails
   policies(input: ListPoliciesInput): ListPoliciesResponse
   policiesForResource(input: PoliciesForResourceInput): ListComplianceItemsResponse
@@ -63,7 +63,7 @@ type Query {
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   rule(input: GetRuleInput!): RuleDetails
   rules(input: ListRulesInput): ListRulesResponse
-  listGlobalModules(input: ListGlobalModuleInput): ListGlobalsResponse
+  listGlobalPythonModules(input: ListGlobalPythonModuleInput!): ListGlobalPythonModulesResponse!
   users: [User!]!
 }
 
@@ -562,7 +562,7 @@ type PolicyDetails {
   versionId: ID
 }
 
-type GlobalModule {
+type GlobalPythonModule {
   body: String!
   description: String!
   id: ID!
@@ -570,9 +570,9 @@ type GlobalModule {
   lastModified: AWSDateTime!
 }
 
-type ListGlobalsResponse {
+type ListGlobalPythonModulesResponse {
   paging: PagingData
-  globals: [GlobalModule]
+  globals: [GlobalPythonModule]
 }
 
 type PagingData {
@@ -634,7 +634,7 @@ input GetPolicyInput {
   versionId: ID
 }
 
-input ListGlobalModuleInput {
+input ListGlobalPythonModuleInput {
   nameContains: String
   enabled: Boolean
   # Sorting
@@ -645,28 +645,28 @@ input ListGlobalModuleInput {
   page: Int # defaults to `1`
 }
 
-input GetGlobalModuleInput {
+input GetGlobalPythonModuleInput {
   globalId: ID!
   versionId: ID
 }
 
-input ModifyGlobalModuleInput {
+input ModifyGlobalPythonModuleInput {
   description: String!
   id: ID!
   body: String!
 }
 
-input AddGlobalModuleInput {
+input AddGlobalPythonModuleInput {
   id: ID!
   description: String!
   body: String!
 }
 
 input DeleteGlobalPythonModuleInput {
-  globals: [DeleteGlobalInputItem!]
+  globals: [DeleteGlobalPythonInputItem!]
 }
 
-input DeleteGlobalInputItem {
+input DeleteGlobalPythonInputItem {
   id: ID!
 }
 

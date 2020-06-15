@@ -16,5 +16,5 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './DeleteGlobalModal';
-export * from './DeleteGlobalModal';
+export { default } from './ListGlobalPythonModules';
+export * from './graphql/listGlobalPythonModules.generated';

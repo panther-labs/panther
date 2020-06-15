@@ -19,7 +19,7 @@
 import {
   AlertDetails,
   ComplianceIntegration,
-  GlobalModule,
+  GlobalPythonModule,
   LogIntegration,
   PolicyDetails,
   ResourceDetails,
@@ -78,7 +78,7 @@ const urls = {
     globalModule: {
       list: () => `${urls.settings.home()}modules/`,
       create: () => `${urls.settings.globalModule.list()}new/`,
-      edit: (id: GlobalModule['id']) =>
+      edit: (id: GlobalPythonModule['id']) =>
         `${urls.settings.globalModule.list()}${urlEncode(id)}/edit/`,
     },
     users: () => `${urls.settings.home()}users/`,

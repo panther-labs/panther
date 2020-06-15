@@ -20,61 +20,63 @@
 
 import * as Types from '../../../../__generated__/schema';
 
-import { GlobalModuleFull } from '../../../graphql/fragments/GlobalModuleFull.generated';
+import { GlobalPythonModuleFull } from '../../../graphql/fragments/GlobalPythonModuleFull.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
-export type UpdateGlobalModuleVariables = {
-  input: Types.ModifyGlobalModuleInput;
+export type UpdateGlobalPythonModuleVariables = {
+  input: Types.ModifyGlobalPythonModuleInput;
 };
 
-export type UpdateGlobalModule = { updateGlobalPythonlModule?: Types.Maybe<GlobalModuleFull> };
+export type UpdateGlobalPythonModule = { updateGlobalPythonlModule: GlobalPythonModuleFull };
 
-export const UpdateGlobalModuleDocument = gql`
-  mutation UpdateGlobalModule($input: ModifyGlobalModuleInput!) {
+export const UpdateGlobalPythonModuleDocument = gql`
+  mutation UpdateGlobalPythonModule($input: ModifyGlobalPythonModuleInput!) {
     updateGlobalPythonlModule(input: $input) {
-      ...GlobalModuleFull
+      ...GlobalPythonModuleFull
     }
   }
-  ${GlobalModuleFull}
+  ${GlobalPythonModuleFull}
 `;
-export type UpdateGlobalModuleMutationFn = ApolloReactCommon.MutationFunction<
-  UpdateGlobalModule,
-  UpdateGlobalModuleVariables
+export type UpdateGlobalPythonModuleMutationFn = ApolloReactCommon.MutationFunction<
+  UpdateGlobalPythonModule,
+  UpdateGlobalPythonModuleVariables
 >;
 
 /**
- * __useUpdateGlobalModule__
+ * __useUpdateGlobalPythonModule__
  *
- * To run a mutation, you first call `useUpdateGlobalModule` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateGlobalModule` returns a tuple that includes:
+ * To run a mutation, you first call `useUpdateGlobalPythonModule` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateGlobalPythonModule` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [updateGlobalModule, { data, loading, error }] = useUpdateGlobalModule({
+ * const [updateGlobalPythonModule, { data, loading, error }] = useUpdateGlobalPythonModule({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useUpdateGlobalModule(
+export function useUpdateGlobalPythonModule(
   baseOptions?: ApolloReactHooks.MutationHookOptions<
-    UpdateGlobalModule,
-    UpdateGlobalModuleVariables
+    UpdateGlobalPythonModule,
+    UpdateGlobalPythonModuleVariables
   >
 ) {
-  return ApolloReactHooks.useMutation<UpdateGlobalModule, UpdateGlobalModuleVariables>(
-    UpdateGlobalModuleDocument,
+  return ApolloReactHooks.useMutation<UpdateGlobalPythonModule, UpdateGlobalPythonModuleVariables>(
+    UpdateGlobalPythonModuleDocument,
     baseOptions
   );
 }
-export type UpdateGlobalModuleHookResult = ReturnType<typeof useUpdateGlobalModule>;
-export type UpdateGlobalModuleMutationResult = ApolloReactCommon.MutationResult<UpdateGlobalModule>;
-export type UpdateGlobalModuleMutationOptions = ApolloReactCommon.BaseMutationOptions<
-  UpdateGlobalModule,
-  UpdateGlobalModuleVariables
+export type UpdateGlobalPythonModuleHookResult = ReturnType<typeof useUpdateGlobalPythonModule>;
+export type UpdateGlobalPythonModuleMutationResult = ApolloReactCommon.MutationResult<
+  UpdateGlobalPythonModule
+>;
+export type UpdateGlobalPythonModuleMutationOptions = ApolloReactCommon.BaseMutationOptions<
+  UpdateGlobalPythonModule,
+  UpdateGlobalPythonModuleVariables
 >;

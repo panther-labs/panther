@@ -22,13 +22,13 @@ import { Alert, Card, Box, useSnackbar } from 'pouncejs';
 import useRouter from 'Hooks/useRouter';
 import GlobalModuleForm from 'Components/forms/GlobalModuleForm';
 import withSEO from 'Hoc/withSEO';
-import { GlobalModule } from 'Generated/schema';
+import { GlobalPythonModule } from 'Generated/schema';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { extractErrorMessage } from 'Helpers/utils';
-import { useGlobalModuleDetails } from './graphql/globalModuleDetails.generated';
-import { useUpdateGlobalModule } from './graphql/updateGlobalModule.generated';
+import { useGlobalPythonModuleDetails } from './graphql/globalPythonModuleDetails.generated';
+import { useUpdateGlobalPythonModule } from './graphql/updateGlobalPythonModule.generated';
 
-export const defaultInitialValues: Pick<GlobalModule, 'id' | 'description' | 'body'> = {
+export const defaultInitialValues: Pick<GlobalPythonModule, 'id' | 'description' | 'body'> = {
   description: '',
   id: '',
   body: '',
@@ -41,7 +41,7 @@ const EditGlobalModulePage: React.FC = () => {
     error: fetchPolicyError,
     data: queryData,
     loading: isFetchingPolicy,
-  } = useGlobalModuleDetails({
+  } = useGlobalPythonModuleDetails({
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
@@ -50,7 +50,7 @@ const EditGlobalModulePage: React.FC = () => {
     },
   });
 
-  const [updateGlobalModule, { error: updateError }] = useUpdateGlobalModule({
+  const [updateGlobalPythonModule, { error: updateError }] = useUpdateGlobalPythonModule({
     onCompleted: () =>
       pushSnackbar({
         variant: 'success',
@@ -59,7 +59,7 @@ const EditGlobalModulePage: React.FC = () => {
   });
 
   const handleSubmit = React.useCallback(
-    values => updateGlobalModule({ variables: { input: values } }),
+    values => updateGlobalPythonModule({ variables: { input: values } }),
     []
   );
 

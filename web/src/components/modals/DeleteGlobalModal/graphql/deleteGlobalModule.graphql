@@ -1,3 +1,0 @@
-mutation DeleteGlobalModule($input: DeleteGlobalPythonModuleInput!) {
-  deleteGlobalPythonModule(input: $input)
-}

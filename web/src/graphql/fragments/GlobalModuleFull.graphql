@@ -1,7 +1,0 @@
-fragment GlobalModuleFull on GlobalModule {
-  createdAt
-  description
-  id
-  lastModified
-  body
-}

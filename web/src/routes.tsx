@@ -53,9 +53,9 @@ import EditComplianceSourcePage from 'Pages/EditComplianceSource';
 import EditS3LogSourcePage from 'Pages/EditS3LogSource';
 import PromptController from 'Components/utils/PromptController';
 import LogSourceOnboarding from 'Pages/LogSourceOnboarding';
-import ListGlobalModulesPage from 'Pages/ListGlobalModules';
+import ListGlobalPythonModulesPage from 'Pages/ListGlobalPythonModules';
 import CreateGlobalPythonModulePage from 'Pages/CreateGlobalPythonModule';
-import EditGlobalModulePage from 'Pages/EditGlobaModule';
+import EditGlobalPythonModulePage from 'Pages/EditGlobalPythonModule';
 
 // Main page container for the web application, Navigation bar and Content body goes here
 const PrimaryPageLayout: React.FunctionComponent = () => {
@@ -178,7 +178,7 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                 <Route
                   exact
                   path={urls.settings.globalModule.list()}
-                  component={ListGlobalModulesPage}
+                  component={ListGlobalPythonModulesPage}
                 />
                 <Route
                   exact
@@ -188,7 +188,7 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                 <Route
                   exact
                   path={urls.settings.globalModule.edit(':id')}
-                  component={EditGlobalModulePage}
+                  component={EditGlobalPythonModulePage}
                 />
                 <Redirect
                   exact
