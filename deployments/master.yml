@@ -19,18 +19,6 @@ Description: Master template for deploying Panther Community
 
 Parameters:
   # FirstUserEmail is the only required parameter
-  FirstUserEmail:
-    Type: String
-    Description: Initial Panther user - email address
-  FirstUserGivenName:
-    Type: String
-    Description: Initial Panther user - first name
-    Default: PantherUser
-  FirstUserFamilyName:
-    Type: String
-    Description: Initial Panther user - last name
-    Default: Community
-
   AccessLogsBucketName:
     Type: String
     Description: S3 bucket for storing S3 access logs. Has no effect if EnableS3AccessLogs=false. Defaults to the Panther audit bucket, created automatically.
@@ -79,6 +67,17 @@ Parameters:
     Description: Enable S3 access logging for all Panther buckets. This is strongly recommended for security, but comes at an additional cost.
     AllowedValues: [true, false]
     Default: true
+  FirstUserEmail:
+    Type: String
+    Description: Initial Panther user - email address
+  FirstUserFamilyName:
+    Type: String
+    Description: Initial Panther user - last name
+    Default: Community
+  FirstUserGivenName:
+    Type: String
+    Description: Initial Panther user - first name
+    Default: PantherUser
   ImageRegistry:
     Type: String
     Description: Docker image registry which stores web app images. Used only when deploying from source and otherwise defaults to the Panther public account.
@@ -137,6 +136,7 @@ Resources:
         CustomDomain: !Ref CustomDomain
         DataReplicationBucket: !Ref DataReplicationBucketName
         Debug: !Ref Debug
+        DeployFromSource: false
         EnableS3AccessLogs: !Ref EnableS3AccessLogs
         LogSubscriptionPrincipals: !Join [',', !Ref LogSubscriptionPrincipals]
         TracingMode: !Ref TracingMode

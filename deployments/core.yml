@@ -19,102 +19,77 @@ Transform: AWS::Serverless-2016-10-31
 Description: Shared infrastructure for both cloud security and log analysis
 
 Parameters:
-  # Passed from one of the bootstrap stacks
   AlarmTopicArn:
     Type: String
     Description: SNS topic for CloudWatch alarms
   AppDomainURL:
     Type: String
     Description: Panther App Domain used as a link for the customer in the password reset email
-  AnalysisVersionsBucket:
-    Type: String
-    Description: S3 bucket for python revision history
   AnalysisApiEndpoint:
     Type: String
     Description: Analysis API gateway FQDN
   AnalysisApiId:
     Type: String
     Description: Analysis API gateway ID
+  AnalysisVersionsBucket:
+    Type: String
+    Description: S3 bucket for python revision history
   AthenaResultsBucket:
     Type: String
     Description: Bucket created to hold Athena results
+  CloudWatchLogRetentionDays:
+    Type: Number
+    Description: CloudWatch log retention period
+  CompanyDisplayName:
+    Type: String
+    Description: Company name displayed in Settings > General
+  CompanyEmail:
+    Type: String
+    Description: Company email displayed in Settings > General
   ComplianceApiId:
     Type: String
     Description: Compliance API gateway ID
+  Debug:
+    Type: String
+    Description: Toggle debug logging
+    AllowedValues: [true, false]
   DynamoScalingRoleArn:
     Type: String
     Description: IAM role arn for DynamoDB auto-scaling
   InitialAnalysisPackUrls:
     Type: CommaDelimitedList
     Description: Initial Python analysis packs
-  ProcessedDataBucket:
-    Type: String
-    Description: S3 bucket which stores processed logs
-  OutputsKeyId:
-    Type: String
-    Description: KMS key for encrypting alert outputs
-  SqsKeyId:
-    Type: String
-    Description: KMS key for encrypting SQS queues
-  UserPoolId:
-    Type: String
-    Description: Cognito user pool ID
-
-  # Options from config file
-  CloudWatchLogRetentionDays:
-    Type: Number
-    Description: CloudWatch log retention period
-    Default: 365
-  CompanyDisplayName:
-    Type: String
-    Description: Company name displayed in Settings > General
-    Default: AwesomeCo
-  CompanyEmail:
-    Type: String
-    Description: Company email displayed in Settings > General (not used for anything today)
-    Default: user@example.com
-  Debug:
-    Type: String
-    Description: Toggle debug logging
-    AllowedValues: [true, false]
-    Default: false
   LayerVersionArns:
     Type: CommaDelimitedList
     Description: List of LayerVersion ARNs to attach to each function
-    Default: ''
+  OutputsKeyId:
+    Type: String
+    Description: KMS key for encrypting alert outputs
+  ProcessedDataBucket:
+    Type: String
+    Description: S3 bucket which stores processed logs
+  SqsKeyId:
+    Type: String
+    Description: KMS key for encrypting SQS queues
   TracingMode:
     Type: String
     Description: Enable XRay tracing on Lambda and API Gateway
     AllowedValues: ['', Active, PassThrough]
-    Default: ''
-
-  # Other
-  AlertRetryDurationMins:
-    Type: Number
-    Description: Alerts which fail to send will be retried for this duration
-    Default: 30
-    MinValue: 5
-    MaxValue: 10080 # 1 week
-  MinRetryDelaySecs:
-    Type: Number
-    Description: Wait at least this long before retrying a failed alert
-    Default: 30
-    MinValue: 1
-    MaxValue: 86400 # 1 day
-  MaxRetryDelaySecs:
-    Type: Number
-    Description: Wait at most this long before retrying a failed alert
-    Default: 300 # 5 mins
-    MinValue: 1
-    MaxValue: 86400 # 1 day
-  AlertSqsRetentionSec:
-    Type: Number
-    Description: Number of seconds SQS will retain a message in the alerts queue
-    Default: 259200 # 3 days
-    MinValue: 60
-    MaxValue: 1209600
+  UserPoolId:
+    Type: String
+    Description: Cognito user pool ID
 
 Mappings:
+  Alerts:
+    QueueRetention:
+      Seconds: 259200 # (3 days) How long SQS will retain messages in the alerts queue
+    RetryDuration:
+      Minutes: 30 # Alerts which fail to send will be retried for this duration
+    MinRetryDelay:
+      Seconds: 30 # Wait at least this long before retrying a failed alert
+    MaxRetryDelay:
+      Seconds: 300 # Wait at most this long before retrying a failed alert
+
   Functions:
     AlertDelivery:
       Memory: 128
@@ -579,7 +554,7 @@ Resources:
       # * Failure of this sqs q will impact delivery of alerts to output destinations.
       # * Failed events will go into the `panther-alerts-queue-dlq`. When the system has recovered they should be re-queued to the `panther-alerts-queue` using the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: !Ref AlertSqsRetentionSec
+      MessageRetentionPeriod: !FindInMap [Alerts, QueueRetention, Seconds]
       KmsMasterKeyId: !Ref SqsKeyId
       VisibilityTimeout: !FindInMap [Functions, AlertDelivery, Timeout]
       RedrivePolicy:
@@ -623,10 +598,10 @@ Resources:
         Variables:
           DEBUG: !Ref Debug
           ALERT_QUEUE_URL: !Ref AlertQueue
-          ALERT_RETRY_DURATION_MINS: !Ref AlertRetryDurationMins
+          ALERT_RETRY_DURATION_MINS: !FindInMap [Alerts, RetryDuration, Minutes]
           ALERT_URL_PREFIX: !Sub https://${AppDomainURL}/log-analysis/alerts/
-          MAX_RETRY_DELAY_SECS: !Ref MaxRetryDelaySecs
-          MIN_RETRY_DELAY_SECS: !Ref MinRetryDelaySecs
+          MAX_RETRY_DELAY_SECS: !FindInMap [Alerts, MaxRetryDelay, Seconds]
+          MIN_RETRY_DELAY_SECS: !FindInMap [Alerts, MinRetryDelay, Seconds]
           OUTPUTS_API: panther-outputs-api
           OUTPUTS_REFRESH_INTERVAL_MIN: '5'
           POLICY_URL_PREFIX: !Sub https://${AppDomainURL}/cloud-security/policies/

@@ -338,16 +338,16 @@ func deployMainStacks(settings *config.PantherConfig, accountID string, outputs 
 
 func deployBootstrapStack(settings *config.PantherConfig) (map[string]string, error) {
 	return deployTemplate(bootstrapTemplate, "", bootstrapStack, map[string]string{
-		"LogSubscriptionPrincipals":  strings.Join(settings.Setup.LogSubscriptions.PrincipalARNs, ","),
-		"EnableS3AccessLogs":         strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
 		"AccessLogsBucket":           settings.Setup.S3AccessLogsBucket,
-		"DataReplicationBucket":      settings.Setup.DataReplicationBucket,
+		"AlarmTopicArn":              settings.Monitoring.AlarmSnsTopicArn,
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CustomDomain":               settings.Web.CustomDomain,
+		"DataReplicationBucket":      settings.Setup.DataReplicationBucket,
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
-		"TracingMode":                settings.Monitoring.TracingMode,
-		"AlarmTopicArn":              settings.Monitoring.AlarmSnsTopicArn,
 		"DeployFromSource":           "true",
+		"EnableS3AccessLogs":         strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
+		"LogSubscriptionPrincipals":  strings.Join(settings.Setup.LogSubscriptions.PrincipalARNs, ","),
+		"TracingMode":                settings.Monitoring.TracingMode,
 	})
 }
 
@@ -365,6 +365,7 @@ func deployBootstrapGatewayStack(
 	}
 
 	return deployTemplate(gatewayTemplate, outputs["SourceBucket"], gatewayStack, map[string]string{
+		"AlarmTopicArn":              outputs["AlarmTopicArn"],
 		"AthenaResultsBucket":        outputs["AthenaResultsBucket"],
 		"AuditLogsBucket":            outputs["AuditLogsBucket"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
@@ -374,7 +375,6 @@ func deployBootstrapGatewayStack(
 		"PythonLayerVersionArn":      settings.Infra.PythonLayerVersionArn,
 		"TracingMode":                settings.Monitoring.TracingMode,
 		"UserPoolId":                 outputs["UserPoolId"],
-		"AlarmTopicArn":              outputs["AlarmTopicArn"],
 	})
 }
 
@@ -413,32 +413,31 @@ func buildLayer(libs []string) error {
 
 func deployAppsyncStack(outputs map[string]string) error {
 	_, err := deployTemplate(appsyncTemplate, outputs["SourceBucket"], appsyncStack, map[string]string{
-		"ApiId":          outputs["GraphQLApiId"],
 		"AlarmTopicArn":  outputs["AlarmTopicArn"],
-		"ServiceRole":    outputs["AppsyncServiceRoleArn"],
 		"AnalysisApi":    "https://" + outputs["AnalysisApiEndpoint"],
+		"ApiId":          outputs["GraphQLApiId"],
 		"ComplianceApi":  "https://" + outputs["ComplianceApiEndpoint"],
 		"RemediationApi": "https://" + outputs["RemediationApiEndpoint"],
 		"ResourcesApi":   "https://" + outputs["ResourcesApiEndpoint"],
+		"ServiceRole":    outputs["AppsyncServiceRoleArn"],
 	})
 	return err
 }
 
 func deployCloudSecurityStack(settings *config.PantherConfig, outputs map[string]string) error {
 	_, err := deployTemplate(cloudsecTemplate, outputs["SourceBucket"], cloudsecStack, map[string]string{
-		"AlarmTopicArn":         outputs["AlarmTopicArn"],
-		"AnalysisApiId":         outputs["AnalysisApiId"],
-		"ComplianceApiId":       outputs["ComplianceApiId"],
-		"RemediationApiId":      outputs["RemediationApiId"],
-		"ResourcesApiId":        outputs["ResourcesApiId"],
-		"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
-		"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
-		"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
-		"SqsKeyId":              outputs["QueueEncryptionKeyId"],
-
+		"AlarmTopicArn":              outputs["AlarmTopicArn"],
+		"AnalysisApiId":              outputs["AnalysisApiId"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+		"ComplianceApiId":            outputs["ComplianceApiId"],
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
+		"ProcessedDataBucket":        outputs["ProcessedDataBucket"],
+		"ProcessedDataTopicArn":      outputs["ProcessedDataTopicArn"],
+		"PythonLayerVersionArn":      outputs["PythonLayerVersionArn"],
+		"RemediationApiId":           outputs["RemediationApiId"],
+		"ResourcesApiId":             outputs["ResourcesApiId"],
+		"SqsKeyId":                   outputs["QueueEncryptionKeyId"],
 		"TracingMode":                settings.Monitoring.TracingMode,
 	})
 	return err
@@ -446,24 +445,25 @@ func deployCloudSecurityStack(settings *config.PantherConfig, outputs map[string
 
 func deployCoreStack(settings *config.PantherConfig, outputs map[string]string) error {
 	_, err := deployTemplate(coreTemplate, outputs["SourceBucket"], coreStack, map[string]string{
-		"AlarmTopicArn":           outputs["AlarmTopicArn"],
-		"AppDomainURL":            outputs["LoadBalancerUrl"],
-		"AnalysisVersionsBucket":  outputs["AnalysisVersionsBucket"],
-		"AnalysisApiEndpoint":     outputs["AnalysisApiEndpoint"],
-		"AnalysisApiId":           outputs["AnalysisApiId"],
-		"AthenaResultsBucket":     outputs["AthenaResultsBucket"],
-		"ComplianceApiId":         outputs["ComplianceApiId"],
-		"DynamoScalingRoleArn":    outputs["DynamoScalingRoleArn"],
-		"InitialAnalysisPackUrls": strings.Join(settings.Setup.InitialAnalysisSets, ","),
-		"ProcessedDataBucket":     outputs["ProcessedDataBucket"],
-		"OutputsKeyId":            outputs["OutputsEncryptionKeyId"],
-		"SqsKeyId":                outputs["QueueEncryptionKeyId"],
-		"UserPoolId":              outputs["UserPoolId"],
-
+		"AlarmTopicArn":              outputs["AlarmTopicArn"],
+		"AppDomainURL":               outputs["LoadBalancerUrl"],
+		"AnalysisApiEndpoint":        outputs["AnalysisApiEndpoint"],
+		"AnalysisApiId":              outputs["AnalysisApiId"],
+		"AnalysisVersionsBucket":     outputs["AnalysisVersionsBucket"],
+		"AthenaResultsBucket":        outputs["AthenaResultsBucket"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+		"CompanyDisplayName":         settings.Setup.Company.DisplayName,
+		"CompanyEmail":               settings.Setup.Company.Email,
+		"ComplianceApiId":            outputs["ComplianceApiId"],
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
+		"DynamoScalingRoleArn":       outputs["DynamoScalingRoleArn"],
+		"InitialAnalysisPackUrls":    strings.Join(settings.Setup.InitialAnalysisSets, ","),
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
+		"OutputsKeyId":               outputs["OutputsEncryptionKeyId"],
+		"ProcessedDataBucket":        outputs["ProcessedDataBucket"],
+		"SqsKeyId":                   outputs["QueueEncryptionKeyId"],
 		"TracingMode":                settings.Monitoring.TracingMode,
+		"UserPoolId":                 outputs["UserPoolId"],
 	})
 	return err
 }
@@ -485,19 +485,18 @@ func deployLogAnalysisStack(settings *config.PantherConfig, outputs map[string]s
 	}
 
 	_, err = deployTemplate(logAnalysisTemplate, outputs["SourceBucket"], logAnalysisStack, map[string]string{
-		"AlarmTopicArn":         outputs["AlarmTopicArn"],
-		"AnalysisApiId":         outputs["AnalysisApiId"],
-		"AthenaResultsBucket":   outputs["AthenaResultsBucket"],
-		"ProcessedDataBucket":   outputs["ProcessedDataBucket"],
-		"ProcessedDataTopicArn": outputs["ProcessedDataTopicArn"],
-		"PythonLayerVersionArn": outputs["PythonLayerVersionArn"],
-		"SqsKeyId":              outputs["QueueEncryptionKeyId"],
-		"TablesSignature":       tablesSignature,
-
+		"AlarmTopicArn":                outputs["AlarmTopicArn"],
+		"AnalysisApiId":                outputs["AnalysisApiId"],
+		"AthenaResultsBucket":          outputs["AthenaResultsBucket"],
 		"CloudWatchLogRetentionDays":   strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"Debug":                        strconv.FormatBool(settings.Monitoring.Debug),
 		"LayerVersionArns":             settings.Infra.BaseLayerVersionArns,
 		"LogProcessorLambdaMemorySize": strconv.Itoa(settings.Infra.LogProcessorLambdaMemorySize),
+		"ProcessedDataBucket":          outputs["ProcessedDataBucket"],
+		"ProcessedDataTopicArn":        outputs["ProcessedDataTopicArn"],
+		"PythonLayerVersionArn":        outputs["PythonLayerVersionArn"],
+		"SqsKeyId":                     outputs["QueueEncryptionKeyId"],
+		"TablesSignature":              tablesSignature,
 		"TracingMode":                  settings.Monitoring.TracingMode,
 	})
 	return err
