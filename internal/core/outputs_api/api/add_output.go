@@ -70,5 +70,6 @@ func (API) AddOutput(input *models.AddOutputInput) (*models.AddOutputOutput, err
 	zap.L().Debug("stored new alert output",
 		zap.String("outputId", *alertOutput.OutputID))
 
+	redactOutput(alertOutput.OutputConfig)
 	return alertOutput, nil
 }

@@ -22,18 +22,23 @@ import (
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
-// GetOutput retrieves a single alert output
-func (API) GetOutput(input *models.GetOutputInput) (*models.GetOutputOutput, error) {
-	item, err := outputsTable.GetOutput(input.OutputID)
+// GetOutputsWithSecrets returns all the alert outputs configured for one organization without
+// redacting the secrets.
+// This endpoint should only be reachable from internal services.
+func (API) GetOutputsWithSecrets(_ *models.GetOutputsWithSecretsInput) (models.GetOutputsOutput, error) {
+	outputItems, err := outputsTable.GetOutputs()
 	if err != nil {
 		return nil, err
 	}
 
-	alertOutput, err := ItemToAlertOutput(item)
-	if err != nil {
-		return nil, err
+	outputs := make([]*models.AlertOutput, len(outputItems))
+	for i, item := range outputItems {
+		alertOutput, err := ItemToAlertOutput(item)
+		if err != nil {
+			return nil, err
+		}
+		outputs[i] = alertOutput
 	}
-	redactOutput(alertOutput.OutputConfig)
 
-	return alertOutput, nil
+	return outputs, nil
 }
