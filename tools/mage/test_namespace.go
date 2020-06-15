@@ -440,7 +440,7 @@ func (t Test) Integration() {
 		errCount++
 	}
 
-	if errCount > 1 {
+	if errCount > 0 {
 		logger.Fatalf("%d integration test(s) failed", errCount)
 	}
 }
