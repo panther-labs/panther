@@ -82,15 +82,11 @@ func (r *Registry) LogTypes() (logTypes []string) {
 	return
 }
 
-func (r *Registry) Del(entry Entry) bool {
-	if entry == nil {
-		return false
-	}
-	name := entry.Describe().Name
+func (r *Registry) Del(logType string) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	if e, ok := r.entries[name]; ok && e == entry {
-		delete(r.entries, name)
+	if _, ok := r.entries[logType]; ok {
+		delete(r.entries, logType)
 		return true
 	}
 	return false

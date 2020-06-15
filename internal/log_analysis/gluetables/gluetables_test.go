@@ -87,7 +87,7 @@ func TestDeployedTablesSignature(t *testing.T) {
 			Foo string `json:"foo" description:"bar"`
 		}{},
 	})
-	defer logtypes.DefaultRegistry().Del(entry)
+	defer logtypes.DefaultRegistry().Del("Foo.Bar")
 	mockGlueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Times(numLogTables + 1)
 	modifiedSig, err := DeployedTablesSignature(mockGlueClient)
 	require.NoError(t, err)

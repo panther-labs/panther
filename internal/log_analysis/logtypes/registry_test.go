@@ -64,7 +64,7 @@ func TestRegistry(t *testing.T) {
 	require.Panics(t, func() {
 		r.MustRegister(logTypeConfig)
 	})
-	require.True(t, r.Del(entry))
+	require.True(t, r.Del(logTypeConfig.Name))
 	require.NotPanics(t, func() {
 		api = r.MustRegister(logTypeConfig)
 	})
@@ -86,7 +86,7 @@ func TestRegistry(t *testing.T) {
 	require.Panics(t, func() {
 		MustRegister(logTypeConfig)
 	})
-	require.True(t, DefaultRegistry().Del(globalEntry))
+	require.True(t, DefaultRegistry().Del(logTypeConfig.Name))
 	require.NotPanics(t, func() {
 		MustRegister(logTypeConfig)
 	})
