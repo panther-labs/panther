@@ -30,9 +30,9 @@ const ErrorReportingSection: React.FC = () => {
         <InputElementLabel htmlFor="errorReportingConsent">
           Report Web Application Errors
         </InputElementLabel>
-        <Flex color="grey300">
-          <Text size="medium">
-            Crashes and runtime exceptions.{' '}
+        <Flex>
+          <Text size="medium" color="grey300">
+            Send anonymized runtime exception reports to Panther to improve its reliability.{' '}
             <Link
               external
               textDecoration="underline"
