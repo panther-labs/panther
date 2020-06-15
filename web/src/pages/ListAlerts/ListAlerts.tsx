@@ -20,22 +20,26 @@ import React from 'react';
 import { Alert, Box, Card } from 'pouncejs';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
+import { ListAlertsInput } from 'Generated/schema';
 import useInfiniteScroll from 'Hooks/useInfiniteScroll';
+import useRequestParamsWithInfiniteScroll from 'Hooks/useRequestParamsWithInfiniteScroll';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import isEmpty from 'lodash-es/isEmpty';
 import withSEO from 'Hoc/withSEO';
 import { useListAlerts } from './graphql/listAlerts.generated';
 import ListAlertsTable from './ListAlertsTable';
+import ListAlertsActions from './ListAlertsActions';
 import ListAlertsPageSkeleton from './Skeleton';
 import ListAlertsPageEmptyDataFallback from './EmptyDataFallback';
 
 const ListAlerts = () => {
+  const { requestParams } = useRequestParamsWithInfiniteScroll<ListAlertsInput>();
+
   const { loading, error, data, fetchMore } = useListAlerts({
     fetchPolicy: 'cache-and-network',
     variables: {
-      input: {
-        pageSize: DEFAULT_LARGE_PAGE_SIZE,
-      },
+      input: { ...requestParams },
     },
   });
 
@@ -49,7 +53,11 @@ const ListAlerts = () => {
     onLoadMore: () => {
       fetchMore({
         variables: {
-          input: { pageSize: DEFAULT_LARGE_PAGE_SIZE, exclusiveStartKey: lastEvaluatedKey },
+          // TODO: Update this value with the previous inputs
+          input: {
+            pageSize: DEFAULT_LARGE_PAGE_SIZE,
+            exclusiveStartKey: lastEvaluatedKey,
+          },
         },
         updateQuery: (previousResult, { fetchMoreResult }) => {
           // FIXME: Centralize this behavior for alert pagination, when apollo fixes a bug which
@@ -88,13 +96,14 @@ const ListAlerts = () => {
     );
   }
 
-  if (!alertItems.length) {
+  if (!alertItems.length && isEmpty(requestParams)) {
     return <ListAlertsPageEmptyDataFallback />;
   }
 
   //  Check how many active filters exist by checking how many columns keys exist in the URL
   return (
     <ErrorBoundary>
+      <ListAlertsActions />
       <Card mb={8}>
         <ListAlertsTable items={alertItems} />
         {hasNextPage && (

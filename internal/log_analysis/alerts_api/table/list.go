@@ -59,8 +59,8 @@ func (table *AlertsTable) getIndex(input *models.ListAlertsInput) (index *string
 
 // getKeyCondition - gets the appropriate key condition for a query
 //
-// If a `RuleID` is present, then create the KeyCondition based on this field.
-// Otherwise, use the default time partition key condition
+// If a `RuleID` is present, then create the KeyCondition based for this field.
+// Otherwise, use the default time partition KeyCondition
 func (table *AlertsTable) getKeyCondition(input *models.ListAlertsInput) (keyCondition expression.KeyConditionBuilder) {
 	if input.RuleID != nil {
 		keyCondition = expression.Key(RuleIDKey).Equal(expression.Value(*input.RuleID))
@@ -77,17 +77,11 @@ func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAle
 	}
 }
 
-// filterByNameContains - fiters by a name that contains a string
-func filterByNameContains(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
-	// Because we return to the frontend a `title` which could be comprised of three attributes,
-	// we query across those three attributes.
+// filterByTitleContains - fiters by a name that contains a string
+func filterByTitleContains(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
 	if input.Contains != nil {
 		*filter = filter.And(
-			expression.Or(
-				expression.Contains(expression.Name("title"), *input.Contains),
-				expression.Contains(expression.Name("ruleId"), *input.Contains),
-				expression.Contains(expression.Name("ruleDisplayName"), *input.Contains),
-			),
+			expression.Contains(expression.Name("title"), *input.Contains),
 		)
 	}
 }
@@ -110,7 +104,7 @@ func (table *AlertsTable) applyFilters(builder *expression.Builder, input *model
 
 	// Then, apply our filters
 	filterBySeverity(&filter, input)
-	filterByNameContains(&filter, input)
+	filterByTitleContains(&filter, input)
 	filterByEventCount(&filter, input)
 
 	// Finally, overwrite the existing condition filter on the builder
