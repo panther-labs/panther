@@ -1,0 +1,6 @@
+Feb 24 14:58:08 webappsecure postgres[7694]: [10-1] 42701 530b5e00.1e0e ERROR: column "requests" of relation "sessiongroup" already exists
+Feb 24 14:58:08 webappsecure postgres[7694]: [10-2] 42701 530b5e00.1e0e STATEMENT: ALTER TABLE sessiongroup ADD COLUMN requests bigint DEFAULT 0;
+Feb 24 16:52:41 webappsecure postgres[12501]: [48-1] 42703 530b7873.30d5 ERROR: column it.description does not exist at character 35
+Feb 24 16:52:41 webappsecure postgres[12501]: [48-2] 42703 530b7873.30d5 STATEMENT: SELECT it.itid, it.code, it.name, it.description FROM incidenttype AS it
+Mar 4 16:18:00 webappsecure postgres[13931]: [743-1] 01000 5315d18a.366b WARNING: skipping "pg_tablespace" --- only superuser can vacuum it
+Mar 5 13:12:40 webappsecure postgres[21640]: [20-1] 08P01 531647dc.5488 LOG: unexpected EOF on client connection

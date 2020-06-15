@@ -165,6 +165,15 @@ export enum ComplianceStatusEnum {
   Pass = 'PASS',
 }
 
+export type CustomWebhookConfig = {
+  __typename?: 'CustomWebhookConfig';
+  webhookURL: Scalars['String'];
+};
+
+export type CustomWebhookConfigInput = {
+  webhookURL: Scalars['String'];
+};
+
 export type DeleteGlobalPythonInputItem = {
   id: Scalars['ID'];
 };
@@ -214,6 +223,7 @@ export type DestinationConfig = {
   opsgenie?: Maybe<OpsgenieConfig>;
   msTeams?: Maybe<MsTeamsConfig>;
   asana?: Maybe<AsanaConfig>;
+  customWebhook?: Maybe<CustomWebhookConfig>;
 };
 
 export type DestinationConfigInput = {
@@ -226,6 +236,7 @@ export type DestinationConfigInput = {
   opsgenie?: Maybe<OpsgenieConfigInput>;
   msTeams?: Maybe<MsTeamsConfigInput>;
   asana?: Maybe<AsanaConfigInput>;
+  customWebhook?: Maybe<CustomWebhookConfigInput>;
 };
 
 export type DestinationInput = {
@@ -246,6 +257,7 @@ export enum DestinationTypeEnum {
   Sns = 'sns',
   Sqs = 'sqs',
   Asana = 'asana',
+  Customwebhook = 'customwebhook',
 }
 
 export type GeneralSettings = {
@@ -1207,6 +1219,7 @@ export type ResolversTypes = {
   OpsgenieConfig: ResolverTypeWrapper<OpsgenieConfig>;
   MsTeamsConfig: ResolverTypeWrapper<MsTeamsConfig>;
   AsanaConfig: ResolverTypeWrapper<AsanaConfig>;
+  CustomWebhookConfig: ResolverTypeWrapper<CustomWebhookConfig>;
   GeneralSettings: ResolverTypeWrapper<GeneralSettings>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
   ComplianceIntegration: ResolverTypeWrapper<ComplianceIntegration>;
@@ -1270,6 +1283,7 @@ export type ResolversTypes = {
   OpsgenieConfigInput: OpsgenieConfigInput;
   MsTeamsConfigInput: MsTeamsConfigInput;
   AsanaConfigInput: AsanaConfigInput;
+  CustomWebhookConfigInput: CustomWebhookConfigInput;
   AddComplianceIntegrationInput: AddComplianceIntegrationInput;
   AddS3LogIntegrationInput: AddS3LogIntegrationInput;
   AddPolicyInput: AddPolicyInput;
@@ -1328,6 +1342,7 @@ export type ResolversParentTypes = {
   OpsgenieConfig: OpsgenieConfig;
   MsTeamsConfig: MsTeamsConfig;
   AsanaConfig: AsanaConfig;
+  CustomWebhookConfig: CustomWebhookConfig;
   GeneralSettings: GeneralSettings;
   Boolean: Scalars['Boolean'];
   ComplianceIntegration: ComplianceIntegration;
@@ -1391,6 +1406,7 @@ export type ResolversParentTypes = {
   OpsgenieConfigInput: OpsgenieConfigInput;
   MsTeamsConfigInput: MsTeamsConfigInput;
   AsanaConfigInput: AsanaConfigInput;
+  CustomWebhookConfigInput: CustomWebhookConfigInput;
   AddComplianceIntegrationInput: AddComplianceIntegrationInput;
   AddS3LogIntegrationInput: AddS3LogIntegrationInput;
   AddPolicyInput: AddPolicyInput;
@@ -1550,6 +1566,14 @@ export type ComplianceStatusCountsResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
+export type CustomWebhookConfigResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['CustomWebhookConfig'] = ResolversParentTypes['CustomWebhookConfig']
+> = {
+  webhookURL?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
 export type DestinationResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['Destination'] = ResolversParentTypes['Destination']
@@ -1584,6 +1608,7 @@ export type DestinationConfigResolvers<
   opsgenie?: Resolver<Maybe<ResolversTypes['OpsgenieConfig']>, ParentType, ContextType>;
   msTeams?: Resolver<Maybe<ResolversTypes['MsTeamsConfig']>, ParentType, ContextType>;
   asana?: Resolver<Maybe<ResolversTypes['AsanaConfig']>, ParentType, ContextType>;
+  customWebhook?: Resolver<Maybe<ResolversTypes['CustomWebhookConfig']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2368,6 +2393,7 @@ export type Resolvers<ContextType = any> = {
   ComplianceIntegrationHealth?: ComplianceIntegrationHealthResolvers<ContextType>;
   ComplianceItem?: ComplianceItemResolvers<ContextType>;
   ComplianceStatusCounts?: ComplianceStatusCountsResolvers<ContextType>;
+  CustomWebhookConfig?: CustomWebhookConfigResolvers<ContextType>;
   Destination?: DestinationResolvers<ContextType>;
   DestinationConfig?: DestinationConfigResolvers<ContextType>;
   GeneralSettings?: GeneralSettingsResolvers<ContextType>;

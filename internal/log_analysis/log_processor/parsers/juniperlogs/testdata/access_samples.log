@@ -1,0 +1,29 @@
+Mar 19 21:11:47 webappsecure [INFO][mws-access][se-request-6] key:da5a23dd-8367-476e-97ca-d734ab56244d,PHASE_REQUEST_PRE_PROCESS,127.0.0.1,http://zach-vm.jwas.jsec.net:80/genericelectronics
+Mar 19 19:48:14 webappsecure [INFO][mws-access][se-request-25] key:12521298-13f1-4019-8e21-c6046cf2dac7,PHASE_REQUEST_POST_PROCESS,127.0.0.1,http://10.20.0.53:80/
+GET / HTTP/1.1
+host: 10.20.0.53
+x-forwarded-for: 213.85.244.190, 10.20.1.23
+x-myk-request-info: http, HTTP/1.1, 80
+x-myk-appid: default
+x-myk-port: 80
+x-myk-use-ssl: false
+x-myk-ssl: false
+connection: close
+user-agent: Mozilla/5.0 (X11 U Linux x86_64 en-us) AppleWebKit/532+ (KHTML, like Gecko) Safari/419.3 Midori/0.1.8
+x-myk-access-log-id: 12521298-13f1-4019-8e21-c6046cf2dac7
+Mar 19 19:48:14 webappsecure [INFO][mws-access][se-request-13] key:cfde0089-2b93-4bad-a8f5-555ac29ef4b6,PHASE_REQUEST_POST_PROCESS,127.0.0.1,http://10.20.0.53:80/
+POST / HTTP/1.1
+host: 10.20.0.53
+x-forwarded-for: 213.85.244.190, 10.20.1.23
+x-myk-request-info: http, HTTP/1.1, 80
+x-myk-appid: default
+x-myk-port: 80
+x-myk-use-ssl: false
+x-myk-ssl: false
+connection: close
+user-agent: tsung
+content-type: application/x-www-form-urlencoded
+content-length: 3009
+x-myk-access-log-id: cfde0089-2b93-4bad-a8f5-555ac29ef4b6
+
+data=bWltZXR5cGVzOjI2MzowLHBsdWdpbnM6MTA5NjowLHRpbWV6b25lOjM6MCxjb25zb2xlOjQ1Oj
