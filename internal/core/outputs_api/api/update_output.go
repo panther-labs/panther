@@ -40,17 +40,11 @@ func (API) UpdateOutput(input *models.UpdateOutputInput) (*models.UpdateOutputOu
 			Message: "A destination with the name" + *input.DisplayName + " already exists, please choose another display name"}
 	}
 
-	outputType, err := getOutputType(input.OutputConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	alertOutput := &models.AlertOutput{
 		DisplayName:        input.DisplayName,
 		LastModifiedBy:     input.UserID,
 		LastModifiedTime:   aws.String(time.Now().Format(time.RFC3339)),
 		OutputID:           input.OutputID,
-		OutputType:         outputType,
 		OutputConfig:       input.OutputConfig,
 		DefaultForSeverity: input.DefaultForSeverity,
 	}
@@ -68,6 +62,7 @@ func (API) UpdateOutput(input *models.UpdateOutputInput) (*models.UpdateOutputOu
 	if alertOutput, err = ItemToAlertOutput(alertOutputItem); err != nil {
 		return nil, err
 	}
+	redactOutput(alertOutput.OutputConfig)
 
 	return alertOutput, nil
 }
