@@ -51,9 +51,28 @@ export const filters = {
       },
     },
   },
+  eventCountMin: {
+    component: FormikTextInput,
+    props: {
+      label: 'Event count (min)',
+      placeholder: 'Enter number...',
+      type: 'number',
+    },
+  },
+  eventCountMax: {
+    component: FormikTextInput,
+    props: {
+      label: 'Event count (max)',
+      placeholder: 'Enter number...',
+      type: 'number',
+    },
+  },
 };
 
-export type ListAlertsFiltersValues = Pick<ListAlertsInput, 'severity' | 'contains'>;
+export type ListAlertsFiltersValues = Pick<
+  ListAlertsInput,
+  'severity' | 'eventCountMin' | 'eventCountMax' | 'contains'
+>;
 
 const ListAlertsActions: React.FC = () => {
   const [areFiltersVisible, setFiltersVisibility] = React.useState(false);

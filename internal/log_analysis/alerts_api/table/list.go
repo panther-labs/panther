@@ -96,6 +96,14 @@ func filterByEventCount(filter *expression.ConditionBuilder, input *models.ListA
 			expression.GreaterThanEqual(expression.Name("eventCount"), expression.Value(*input.EventCountMin)),
 			expression.LessThanEqual(expression.Name("eventCount"), expression.Value(*input.EventCountMax)),
 		)
+	} else if input.EventCountMax != nil && input.EventCountMin == nil && *input.EventCountMax >= 0 {
+		*filter = filter.And(
+			expression.LessThanEqual(expression.Name("eventCount"), expression.Value(*input.EventCountMax)),
+		)
+	} else if input.EventCountMin != nil && input.EventCountMax == nil && *input.EventCountMin >= 0 {
+		*filter = filter.And(
+			expression.GreaterThanEqual(expression.Name("eventCount"), expression.Value(*input.EventCountMin)),
+		)
 	}
 }
 
