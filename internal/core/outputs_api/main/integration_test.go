@@ -102,7 +102,6 @@ func TestIntegrationAPI(t *testing.T) {
 	// Update each output in parallel.
 	t.Run("Update", func(t *testing.T) {
 		t.Run("UpdateInvalid", updateInvalid)
-		t.Run("UpdateSlack", updateSlack)
 		t.Run("UpdateSns", updateSns)
 	})
 	if t.Failed() {
@@ -240,29 +239,6 @@ func updateInvalid(t *testing.T) {
 	assert.Equal(t, expected, err)
 }
 
-func updateSlack(t *testing.T) {
-	t.Parallel()
-	slack.WebhookURL = aws.String("https://hooks.slack.com/services/DDDDDDDDD/EEEEEEEEE/" +
-		"abcdefghijklmnopqrstuvwx")
-	input := models.LambdaInput{
-		UpdateOutput: &models.UpdateOutputInput{
-			UserID:             userID,
-			OutputID:           slackOutputID,
-			DisplayName:        aws.String("alert-channel-new"),
-			OutputConfig:       &models.OutputConfig{Slack: slack},
-			DefaultForSeverity: aws.StringSlice([]string{"CRITICAL"}),
-		},
-	}
-	var output models.UpdateOutputOutput
-	require.NoError(t, genericapi.Invoke(lambdaClient, outputsAPI, &input, &output))
-	require.Equal(t, slackOutputID, output.OutputID)
-	require.Equal(t, aws.String("alert-channel-new"), output.DisplayName)
-	require.Equal(t, slack, output.OutputConfig.Slack)
-	require.Equal(t, aws.String("slack"), output.OutputType)
-	require.Nil(t, output.OutputConfig.Sns)
-	require.Equal(t, aws.StringSlice([]string{"CRITICAL"}), output.DefaultForSeverity)
-}
-
 func updateSns(t *testing.T) {
 	t.Parallel()
 	sns.TopicArn = aws.String("arn:aws:sns:us-west-2:123456789012:MyTopic")
@@ -374,7 +350,7 @@ func getOutputs(t *testing.T) {
 	assert.Equal(t, aws.String("alert-channel"), output[1].DisplayName)
 	assert.Nil(t, output[1].OutputConfig.Sns)
 	assert.Nil(t, output[1].OutputConfig.PagerDuty)
-	assert.Equal(t, slack, output[1].OutputConfig.Slack)
+	assert.Equal(t, aws.String("********"), output[1].OutputConfig.Slack.WebhookURL)
 	assert.Equal(t, aws.StringSlice([]string{"HIGH"}), output[1].DefaultForSeverity)
 
 	assert.Equal(t, pagerDutyOutputID, output[2].OutputID)
@@ -384,7 +360,7 @@ func getOutputs(t *testing.T) {
 	assert.Equal(t, aws.String("pagerduty-integration"), output[2].DisplayName)
 	assert.Nil(t, output[2].OutputConfig.Slack)
 	assert.Nil(t, output[2].OutputConfig.Sns)
-	assert.Equal(t, pagerDuty, output[2].OutputConfig.PagerDuty)
+	assert.Equal(t, aws.String("********"), output[2].OutputConfig.PagerDuty.IntegrationKey)
 	assert.Equal(t, aws.StringSlice([]string{}), output[2].DefaultForSeverity)
 }
 
