@@ -28,6 +28,8 @@ Description: Bootstrap resources that require the source S3 bucket to exist firs
 #      - Alarms for SNS topics in the bootstrap stack
 
 Parameters:
+  # Alphabetize parameters so it's easy to compare side-by-side with other code that passes values
+  # and because the CloudFormation console always shows parameters in alphabetical order.
   AlarmTopicArn:
     Type: String
     Description: SNS topic for CloudWatch alarms

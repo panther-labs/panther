@@ -18,6 +18,8 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: The service that defines the front-end NodeJS server that serves the Panther web application statics
 
 Parameters:
+  # Alphabetize parameters so it's easy to compare side-by-side with other code that passes values
+  # and because the CloudFormation console always shows parameters in alphabetical order.
   AlarmTopicArn:
     Type: String
     Description: SNS topic for CloudWatch alarms

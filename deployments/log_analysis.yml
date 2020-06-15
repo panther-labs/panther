@@ -19,6 +19,8 @@ Transform: AWS::Serverless-2016-10-31
 Description: Log processing infrastructure
 
 Parameters:
+  # Alphabetize parameters so it's easy to compare side-by-side with other code that passes values
+  # and because the CloudFormation console always shows parameters in alphabetical order.
   AlarmTopicArn:
     Type: String
     Description: SNS topic for CloudWatch alarms

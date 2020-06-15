@@ -19,6 +19,9 @@ Description: Master template for deploying Panther Community
 
 Parameters:
   # FirstUserEmail is the only required parameter
+
+  # Alphabetize parameters so it's easy to compare side-by-side with other code that passes values
+  # and because the CloudFormation console always shows parameters in alphabetical order.
   AccessLogsBucketName:
     Type: String
     Description: S3 bucket for storing S3 access logs. Has no effect if EnableS3AccessLogs=false. Defaults to the Panther audit bucket, created automatically.

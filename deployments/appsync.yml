@@ -21,6 +21,8 @@ Description: AppSync data sources and resolvers
 # This template adds all the configuration: schema, data sources, resolvers
 
 Parameters:
+  # Alphabetize parameters so it's easy to compare side-by-side with other code that passes values
+  # and because the CloudFormation console always shows parameters in alphabetical order.
   AlarmTopicArn:
     Type: String
     Description: SNS topic for CloudWatch alarms
