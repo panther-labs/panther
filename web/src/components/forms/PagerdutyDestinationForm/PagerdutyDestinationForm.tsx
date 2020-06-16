@@ -58,6 +58,7 @@ const PagerDutyDestinationForm: React.FC<PagerDutyDestinationFormProps> = ({
     >
       <Field
         as={FormikTextInput}
+        type="password"
         name="outputConfig.pagerDuty.integrationKey"
         label="Integration Key"
         placeholder="What's your PagerDuty Integration Key?"

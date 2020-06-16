@@ -58,6 +58,7 @@ const OpsgenieDestinationForm: React.FC<OpsgenieDestinationFormProps> = ({
     >
       <Field
         as={FormikTextInput}
+        type="password"
         name="outputConfig.opsgenie.apiKey"
         label="Opsgenie API key"
         placeholder="What's your organization's Opsgenie API key?"

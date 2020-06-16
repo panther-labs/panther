@@ -67,6 +67,7 @@ const GithubDestinationForm: React.FC<GithubDestinationFormProps> = ({
       />
       <Field
         as={FormikTextInput}
+        type="password"
         name="outputConfig.github.token"
         label="Token"
         placeholder="What's your Github API token?"

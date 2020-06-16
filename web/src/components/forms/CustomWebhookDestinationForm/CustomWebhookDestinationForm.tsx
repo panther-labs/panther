@@ -58,6 +58,7 @@ const CustomWebhookDestinationForm: React.FC<CustomWebhookDestinationFormProps> 
     >
       <Field
         as={FormikTextInput}
+        type="password"
         name="outputConfig.customWebhook.webhookURL"
         label="Custom Webhook URL"
         placeholder="Where should we send a push notification to?"

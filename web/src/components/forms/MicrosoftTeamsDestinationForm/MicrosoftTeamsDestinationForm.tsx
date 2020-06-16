@@ -58,6 +58,7 @@ const MicrosoftTeamsDestinationForm: React.FC<MicrosoftTeamsDestinationFormProps
     >
       <Field
         as={FormikTextInput}
+        type="password"
         name="outputConfig.msTeams.webhookURL"
         label="Microsoft Teams Webhook URL"
         placeholder="Where should we send a push notification to?"

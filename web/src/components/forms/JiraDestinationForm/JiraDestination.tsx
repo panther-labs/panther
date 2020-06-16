@@ -87,6 +87,7 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
       />
       <Field
         as={FormikTextInput}
+        type="password"
         name="outputConfig.jira.apiKey"
         label="Jira API Key"
         placeholder="What's the API key of the related Jira account"

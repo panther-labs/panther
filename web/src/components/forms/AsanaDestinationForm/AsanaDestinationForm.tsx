@@ -59,6 +59,7 @@ const AsanaDestinationForm: React.FC<AsanaDestinationFormProps> = ({ onSubmit, i
     >
       <Field
         as={FormikTextInput}
+        type="password"
         name="outputConfig.asana.personalAccessToken"
         label="Access Token"
         placeholder="Your personal Asana access token"
