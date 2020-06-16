@@ -153,7 +153,7 @@ func mergeOutputConfigs(old *models.OutputConfig, new *models.OutputConfigUpdate
 			old.Github.Token = new.Github.Token
 		}
 		if new.Github.RepoName != nil {
-			old.Github.RepoName = new.Github.Token
+			old.Github.RepoName = new.Github.RepoName
 		}
 	}
 	if new.Jira != nil {
