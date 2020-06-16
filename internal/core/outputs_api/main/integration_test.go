@@ -50,6 +50,7 @@ var (
 			"abcdefghijklmnopqrstuvwx"),
 	}
 	sns       = &models.SnsConfig{TopicArn: aws.String("arn:aws:sns:us-west-2:123456789012:MyTopic")}
+	snsUpdate = &models.SnsConfigUpdate{TopicArn: aws.String("arn:aws:sns:us-west-2:123456789012:MyTopic")}
 	pagerDuty = &models.PagerDutyConfig{IntegrationKey: aws.String("7a08481fbc0746c9a8a487f90d737e05")}
 	snsType   = aws.String("sns")
 	userID    = aws.String("43808de4-fbae-4f90-a9b4-1e4982d65287")
@@ -230,7 +231,7 @@ func updateInvalid(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
 		UpdateOutput: &models.UpdateOutputInput{
-			OutputConfig: &models.OutputConfig{Sns: sns}}}
+			OutputConfig: &models.OutputConfigUpdate{Sns: snsUpdate}}}
 	err := genericapi.Invoke(lambdaClient, outputsAPI, &input, nil)
 	expected := &genericapi.LambdaError{
 		ErrorMessage: aws.String("UserID invalid, failed to satisfy the condition: required"),
@@ -261,9 +262,11 @@ func updateSlack(t *testing.T) {
 		DisplayName:        input.UpdateOutput.DisplayName,
 		LastModifiedBy:     userID,
 		LastModifiedTime:   output.LastModifiedTime,
-		OutputConfig:       &models.OutputConfig{}, // no webhook URL in response
-		OutputID:           slackOutputID,
-		OutputType:         aws.String("slack"),
+		OutputConfig: &models.OutputConfig{
+			Slack: &models.SlackConfig{WebhookURL: aws.String("********")},
+		}, // no webhook URL in response
+		OutputID:   slackOutputID,
+		OutputType: aws.String("slack"),
 	}
 	assert.Equal(t, expected, output)
 }
@@ -276,7 +279,7 @@ func updateSns(t *testing.T) {
 			UserID:       userID,
 			OutputID:     snsOutputID,
 			DisplayName:  aws.String("alert-topic"),
-			OutputConfig: &models.OutputConfig{Sns: sns},
+			OutputConfig: &models.OutputConfigUpdate{Sns: snsUpdate},
 		},
 	}
 	var output models.UpdateOutputOutput
@@ -295,7 +298,7 @@ func updateSnsEmpty(t *testing.T) {
 			UserID:       userID,
 			OutputID:     snsOutputID,
 			DisplayName:  aws.String("alert-topic-new"),
-			OutputConfig: &models.OutputConfig{Sns: sns},
+			OutputConfig: &models.OutputConfigUpdate{Sns: snsUpdate},
 		},
 	}
 	var output models.UpdateOutputOutput

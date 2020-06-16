@@ -137,3 +137,79 @@ func getOutputType(outputConfig *models.OutputConfig) (*string, error) {
 
 	return nil, errors.New("no valid output configuration specified for alert output")
 }
+
+// mergeOuutputConfigs takes two outputConfigs, and condenses them into one based on updating
+func mergeOutputConfigs(old *models.OutputConfig, new *models.OutputConfigUpdate) *models.OutputConfig {
+	if new.Asana != nil {
+		if new.Asana.PersonalAccessToken != nil {
+			old.Asana.PersonalAccessToken = new.Asana.PersonalAccessToken
+		}
+		if new.Asana.ProjectGids != nil {
+			old.Asana.ProjectGids = new.Asana.ProjectGids
+		}
+	}
+	if new.Github != nil {
+		if new.Github.Token != nil {
+			old.Github.Token = new.Github.Token
+		}
+		if new.Github.RepoName != nil {
+			old.Github.RepoName = new.Github.Token
+		}
+	}
+	if new.Jira != nil {
+		if new.Jira.Type != nil {
+			old.Jira.Type = new.Jira.Type
+		}
+		if new.Jira.APIKey != nil {
+			old.Jira.APIKey = new.Jira.APIKey
+		}
+		if new.Jira.AssigneeID != nil {
+			old.Jira.AssigneeID = new.Jira.AssigneeID
+		}
+		if new.Jira.OrgDomain != nil {
+			old.Jira.OrgDomain = new.Jira.OrgDomain
+		}
+		if new.Jira.ProjectKey != nil {
+			old.Jira.ProjectKey = new.Jira.ProjectKey
+		}
+		if new.Jira.UserName != nil {
+			old.Jira.UserName = new.Jira.UserName
+		}
+	}
+	if new.Slack != nil {
+		if new.Slack.WebhookURL != nil {
+			old.Slack.WebhookURL = new.Slack.WebhookURL
+		}
+	}
+	if new.PagerDuty != nil {
+		if new.PagerDuty.IntegrationKey != nil {
+			old.PagerDuty.IntegrationKey = new.PagerDuty.IntegrationKey
+		}
+	}
+	if new.Opsgenie != nil {
+		if new.Opsgenie.APIKey != nil {
+			old.Opsgenie.APIKey = new.Opsgenie.APIKey
+		}
+	}
+	if new.MsTeams != nil {
+		if new.MsTeams.WebhookURL != nil {
+			old.MsTeams.WebhookURL = new.MsTeams.WebhookURL
+		}
+	}
+	if new.Sns != nil {
+		if new.Sns.TopicArn != nil {
+			old.Sns.TopicArn = new.Sns.TopicArn
+		}
+	}
+	if new.Sqs != nil {
+		if new.Sqs.QueueURL != nil {
+			old.Sqs.QueueURL = new.Sqs.QueueURL
+		}
+	}
+	if new.CustomWebhook != nil {
+		if new.CustomWebhook.WebhookURL != nil {
+			old.CustomWebhook.WebhookURL = new.CustomWebhook.WebhookURL
+		}
+	}
+	return old
+}
