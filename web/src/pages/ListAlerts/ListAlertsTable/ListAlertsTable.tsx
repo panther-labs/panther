@@ -17,7 +17,6 @@
  */
 
 import React from 'react';
-import { formatDatetime } from 'Helpers/utils';
 import { Box, Label, Link, Table } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
@@ -60,8 +59,8 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items }) => {
             </Table.Cell>
             <Table.Cell align="right">{alert.eventsMatched}</Table.Cell>
             <Table.Cell>{alert.ruleId}</Table.Cell>
-            <Table.Cell>{formatDatetime(alert.creationTime)}</Table.Cell>
-            <Table.Cell>{formatDatetime(alert.updateTime)}</Table.Cell>
+            <Table.Cell>{new Date(alert.creationTime).toUTCString()}</Table.Cell>
+            <Table.Cell>{new Date(alert.updateTime).toUTCString()}</Table.Cell>
           </Table.Row>
         ))}
       </Table.Body>
