@@ -380,11 +380,11 @@ export type ListAlertsInput = {
   pageSize?: Maybe<Scalars['Int']>;
   exclusiveStartKey?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
-  before?: Maybe<Scalars['AWSDateTime']>;
-  after?: Maybe<Scalars['AWSDateTime']>;
   contains?: Maybe<Scalars['String']>;
   eventCountMin?: Maybe<Scalars['Int']>;
   eventCountMax?: Maybe<Scalars['Int']>;
+  sortBy?: Maybe<ListAlertsSortFieldsEnum>;
+  sortDir?: Maybe<SortDirEnum>;
 };
 
 export type ListAlertsResponse = {
@@ -392,6 +392,15 @@ export type ListAlertsResponse = {
   alertSummaries: Array<Maybe<AlertSummary>>;
   lastEvaluatedKey?: Maybe<Scalars['String']>;
 };
+
+export enum ListAlertsSortFieldsEnum {
+  Title = 'title',
+  Severity = 'severity',
+  Events = 'events',
+  RuleId = 'ruleId',
+  CreatedAt = 'createdAt',
+  UpdatedAt = 'updatedAt',
+}
 
 export type ListComplianceItemsResponse = {
   __typename?: 'ListComplianceItemsResponse';
@@ -1185,6 +1194,8 @@ export type ResolversTypes = {
   AWSJSON: ResolverTypeWrapper<Scalars['AWSJSON']>;
   ListAlertsInput: ListAlertsInput;
   SeverityEnum: SeverityEnum;
+  ListAlertsSortFieldsEnum: ListAlertsSortFieldsEnum;
+  SortDirEnum: SortDirEnum;
   ListAlertsResponse: ResolverTypeWrapper<ListAlertsResponse>;
   AlertSummary: ResolverTypeWrapper<AlertSummary>;
   Destination: ResolverTypeWrapper<Destination>;
@@ -1216,7 +1227,6 @@ export type ResolversTypes = {
   ComplianceStatusEnum: ComplianceStatusEnum;
   ListResourcesInput: ListResourcesInput;
   ListResourcesSortFieldsEnum: ListResourcesSortFieldsEnum;
-  SortDirEnum: SortDirEnum;
   ListResourcesResponse: ResolverTypeWrapper<ListResourcesResponse>;
   PagingData: ResolverTypeWrapper<PagingData>;
   ResourceSummary: ResolverTypeWrapper<ResourceSummary>;
@@ -1303,6 +1313,8 @@ export type ResolversParentTypes = {
   AWSJSON: Scalars['AWSJSON'];
   ListAlertsInput: ListAlertsInput;
   SeverityEnum: SeverityEnum;
+  ListAlertsSortFieldsEnum: ListAlertsSortFieldsEnum;
+  SortDirEnum: SortDirEnum;
   ListAlertsResponse: ListAlertsResponse;
   AlertSummary: AlertSummary;
   Destination: Destination;
@@ -1334,7 +1346,6 @@ export type ResolversParentTypes = {
   ComplianceStatusEnum: ComplianceStatusEnum;
   ListResourcesInput: ListResourcesInput;
   ListResourcesSortFieldsEnum: ListResourcesSortFieldsEnum;
-  SortDirEnum: SortDirEnum;
   ListResourcesResponse: ListResourcesResponse;
   PagingData: PagingData;
   ResourceSummary: ResourceSummary;
