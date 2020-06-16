@@ -102,7 +102,7 @@ func TestAddOutputSlack(t *testing.T) {
 		OutputType:         aws.String("slack"),
 		LastModifiedBy:     aws.String("userId"),
 		CreatedBy:          aws.String("userId"),
-		OutputConfig:       &models.OutputConfig{Slack: &models.SlackConfig{WebhookURL: aws.String("hooks.slack.com")}},
+		OutputConfig:       &models.OutputConfig{Slack: &models.SlackConfig{WebhookURL: aws.String("********")}},
 		OutputID:           result.OutputID,
 		CreationTime:       result.CreationTime,
 		LastModifiedTime:   result.LastModifiedTime,
@@ -178,7 +178,7 @@ func TestAddOutputPagerDuty(t *testing.T) {
 		CreatedBy:      aws.String("userId"),
 		OutputConfig: &models.OutputConfig{
 			PagerDuty: &models.PagerDutyConfig{
-				IntegrationKey: aws.String("93ee508cbfea4604afe1c77c2d9b5bbd"),
+				IntegrationKey: aws.String("********"),
 			},
 		},
 		OutputID:         result.OutputID,
@@ -265,7 +265,7 @@ func TestAddOutputAsana(t *testing.T) {
 		CreatedBy:      aws.String("userId"),
 		OutputConfig: &models.OutputConfig{
 			Asana: &models.AsanaConfig{
-				PersonalAccessToken: aws.String("0/8c26ac5222d539ca0ad7000000000000"),
+				PersonalAccessToken: aws.String("********"),
 				ProjectGids:         aws.StringSlice([]string{""}),
 			},
 		},

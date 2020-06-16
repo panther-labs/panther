@@ -28,43 +28,36 @@ Description: Bootstrap resources that require the source S3 bucket to exist firs
 #      - Alarms for SNS topics in the bootstrap stack
 
 Parameters:
-  # Passed from one of the bootstrap stacks
+  # Alphabetize parameters so it's easy to compare side-by-side with other code that passes values
+  # and because the CloudFormation console always shows parameters in alphabetical order.
+  AlarmTopicArn:
+    Type: String
+    Description: SNS topic for CloudWatch alarms
   AthenaResultsBucket:
     Type: String
     Description: Bucket created to hold Athena results
-  ImageRegistryName:
+  AuditLogsBucket:
     Type: String
-    Description: Name of the ECR repository hosting web images (blank when deploying from source)
-  ProcessedDataBucket:
-    Type: String
-    Description: S3 bucket which stores processed logs
-
-  # From the config file
+    Description: Bucket which holds Panther's own audit logs
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
-    Default: 365
+  ImageRegistryName:
+    Type: String
+    Description: Name of the ECR repository hosting web images (blank when deploying from source)
   LayerVersionArns:
     Type: CommaDelimitedList
     Description: List of LayerVersion ARNs to attach to each function
-    Default: ''
+  ProcessedDataBucket:
+    Type: String
+    Description: S3 bucket which stores processed logs
   PythonLayerVersionArn:
     Type: String
     Description: Custom Python layer for analysis and remediation
-    Default: ''
   TracingMode:
     Type: String
     Description: Enable XRay tracing on Lambda and API Gateway
     AllowedValues: ['', Active, PassThrough]
-    Default: ''
-
-  # From the bootstrap stack:
-  AlarmTopicArn:
-    Type: String
-    Description: SNS topic for CloudWatch alarms
-  AuditLogsBucket:
-    Type: String
-    Description: Bucket which holds Panther's own audit logs
   UserPoolId:
     Type: String
     Description: Cognito user pool ID

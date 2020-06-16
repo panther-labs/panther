@@ -67,6 +67,11 @@ Monitoring:
   TracingMode: ''
 
 Setup:
+  # The company name/email displayed in Settings > General (not used anywhere else today)
+  Company:
+    DisplayName: AwesomeCo
+    Email: user@example.com
+
   # The first Panther user. If left blank, you will be prompted for this when you deploy.
   FirstUser:
     GivenName: ''
