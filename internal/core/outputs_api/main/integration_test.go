@@ -254,11 +254,6 @@ func updateSlack(t *testing.T) {
 	var output models.UpdateOutputOutput
 	require.NoError(t, genericapi.Invoke(lambdaClient, outputsAPI, &input, &output))
 
-	assert.Equal(t, aws.StringSlice([]string{"CRITICAL"}), output.DefaultForSeverity)
-	assert.Equal(t, slackOutputID, output.OutputID)
-	assert.Equal(t, aws.String("alert-channel-new"), output.DisplayName)
-	assert.Equal(t, aws.String("slack"), output.OutputType)
-
 	expected := models.UpdateOutputOutput{
 		CreatedBy:          userID,
 		CreationTime:       output.CreationTime,
@@ -270,7 +265,6 @@ func updateSlack(t *testing.T) {
 		OutputID:           slackOutputID,
 		OutputType:         aws.String("slack"),
 	}
-
 	assert.Equal(t, expected, output)
 }
 
@@ -357,12 +351,12 @@ func deleteSnsEmpty(t *testing.T) {
 }
 
 func getOutputs(t *testing.T) {
-	//t.Parallel()
+	t.Parallel()
 	verifyListOutputs(t, false)
 }
 
 func getOutputsWithSecrets(t *testing.T) {
-	//t.Parallel()
+	t.Parallel()
 	verifyListOutputs(t, true)
 }
 
