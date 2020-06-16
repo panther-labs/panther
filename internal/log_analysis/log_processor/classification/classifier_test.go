@@ -49,9 +49,6 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 	parserFail2 := testutil.ParserConfig{
 		logLine: errors.New("fail2"),
 	}.Parser()
-	//logTypeSuccess := mockLogType("success", parserSuccess)
-	//logTypeFail1 := mockLogType("failure1", parserFail1)
-	//logTypeFail2 := mockLogType("failure2", parserFail2)
 
 	classifier := NewClassifier(map[string]parsers.Interface{
 		"success":  parserSuccess,
