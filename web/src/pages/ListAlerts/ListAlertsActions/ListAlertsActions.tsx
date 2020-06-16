@@ -136,7 +136,6 @@ const ListAlertsActions: React.FC = () => {
   const desanitizeDates = React.useCallback(
     (parms: Partial<ListAlertsFiltersValues>) =>
       Object.entries(parms).reduce((acc, [k, v]) => {
-        console.log('asdf');
         if (typeof v === 'string' && Date.parse(v)) {
           acc[k] = /Z$/.test(v) ? v.replace('Z', '') : v;
           return acc;
