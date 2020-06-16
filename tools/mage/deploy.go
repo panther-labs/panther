@@ -446,10 +446,10 @@ func deployCloudSecurityStack(settings *config.PantherConfig, outputs map[string
 func deployCoreStack(settings *config.PantherConfig, outputs map[string]string) error {
 	_, err := deployTemplate(coreTemplate, outputs["SourceBucket"], coreStack, map[string]string{
 		"AlarmTopicArn":              outputs["AlarmTopicArn"],
-		"AppDomainURL":               outputs["LoadBalancerUrl"],
 		"AnalysisApiEndpoint":        outputs["AnalysisApiEndpoint"],
 		"AnalysisApiId":              outputs["AnalysisApiId"],
 		"AnalysisVersionsBucket":     outputs["AnalysisVersionsBucket"],
+		"AppDomainURL":               outputs["LoadBalancerUrl"],
 		"AthenaResultsBucket":        outputs["AthenaResultsBucket"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CompanyDisplayName":         settings.Setup.Company.DisplayName,

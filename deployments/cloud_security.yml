@@ -40,12 +40,6 @@ Parameters:
   LayerVersionArns:
     Type: CommaDelimitedList
     Description: List of base LayerVersion ARNs to attach to every Lambda function
-  RemediationApiId:
-    Type: String
-    Description: API Gateway for remediation-api
-  ResourcesApiId:
-    Type: String
-    Description: API Gateway for resources-api
   ProcessedDataBucket:
     Type: String
     Description: Name of the S3 bucket for storing processed logs
@@ -55,6 +49,12 @@ Parameters:
   PythonLayerVersionArn:
     Type: String
     Description: Pip libraries for python analysis and remediation
+  RemediationApiId:
+    Type: String
+    Description: API Gateway for remediation-api
+  ResourcesApiId:
+    Type: String
+    Description: API Gateway for resources-api
   SqsKeyId:
     Type: String
     Description: KMS key ID for SQS encryption

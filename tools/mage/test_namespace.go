@@ -418,24 +418,35 @@ func (t Test) Integration() {
 
 	if pkg := os.Getenv("PKG"); pkg != "" {
 		// One specific package requested: run integration tests just for that
-		goPkgIntegrationTest(pkg)
+		if err := goPkgIntegrationTest(pkg); err != nil {
+			logger.Fatal(err)
+		}
 		return
 	}
 
+	errCount := 0
 	walk(".", func(path string, info os.FileInfo) {
 		if filepath.Base(path) == "integration_test.go" {
-			goPkgIntegrationTest("./" + filepath.Dir(path))
+			if err := goPkgIntegrationTest("./" + filepath.Dir(path)); err != nil {
+				logger.Error(err)
+				errCount++
+			}
 		}
 	})
 
 	logger.Info("test:integration: python policy engine")
 	if err := sh.RunV(pythonLibPath("python3"), "internal/compliance/policy_engine/tests/integration.py"); err != nil {
-		logger.Fatalf("python integration test failed: %v", err)
+		logger.Errorf("python integration test failed: %v", err)
+		errCount++
+	}
+
+	if errCount > 0 {
+		logger.Fatalf("%d integration test(s) failed", errCount)
 	}
 }
 
 // Run integration tests for a single Go package.
-func goPkgIntegrationTest(pkg string) {
+func goPkgIntegrationTest(pkg string) error {
 	if err := os.Setenv("INTEGRATION_TEST", "True"); err != nil {
 		logger.Fatalf("failed to set INTEGRATION_TEST environment variable: %v", err)
 	}
@@ -447,7 +458,6 @@ func goPkgIntegrationTest(pkg string) {
 	if mg.Verbose() {
 		args = append(args, "-v")
 	}
-	if err := sh.RunV("go", args...); err != nil {
-		logger.Fatalf("go test %s failed: %v", pkg, err)
-	}
+
+	return sh.RunV("go", args...)
 }

@@ -236,10 +236,10 @@ Resources:
       TemplateURL: core.yml
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
-        AppDomainURL: !GetAtt Bootstrap.Outputs.LoadBalancerUrl
         AnalysisApiEndpoint: !GetAtt BootstrapGateway.Outputs.AnalysisApiEndpoint
         AnalysisApiId: !GetAtt BootstrapGateway.Outputs.AnalysisApiId
         AnalysisVersionsBucket: !GetAtt Bootstrap.Outputs.AnalysisVersionsBucket
+        AppDomainURL: !GetAtt Bootstrap.Outputs.LoadBalancerUrl
         AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         CompanyDisplayName: !Ref CompanyDisplayName
@@ -339,14 +339,15 @@ Resources:
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AppClientId: !GetAtt Bootstrap.Outputs.AppClientId
-        CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         CertificateArn: !Ref CertificateArn
+        CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         ElbArn: !GetAtt Bootstrap.Outputs.LoadBalancerArn
         ElbFullName: !GetAtt Bootstrap.Outputs.LoadBalancerFullName
         ElbTargetGroup: !GetAtt Bootstrap.Outputs.LoadBalancerTargetGroup
-        FirstUserGivenName: !Ref FirstUserGivenName
-        FirstUserFamilyName: !Ref FirstUserFamilyName
         FirstUserEmail: !Ref FirstUserEmail
+        FirstUserFamilyName: !Ref FirstUserFamilyName
+        FirstUserGivenName: !Ref FirstUserGivenName
+        GraphQLApiEndpoint: !GetAtt Bootstrap.Outputs.GraphQLApiEndpoint
         Image: !Sub
           - '${registry}:${tag}'
           - registry: !If
@@ -354,7 +355,6 @@ Resources:
               - !Ref ImageRegistry
               - !Sub 349240696275.dkr.ecr.${AWS::Region}.amazonaws.com/panther-community
             tag: !FindInMap [Constants, Panther, Version]
-        GraphQLApiEndpoint: !GetAtt Bootstrap.Outputs.GraphQLApiEndpoint
         PantherVersion: !Sub
           - v${version} # has to be prefixed with 'v' for docs link in web app to work
           - version: !FindInMap [Constants, Panther, Version]

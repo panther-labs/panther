@@ -24,9 +24,6 @@ Parameters:
   AlarmTopicArn:
     Type: String
     Description: SNS topic for CloudWatch alarms
-  AppDomainURL:
-    Type: String
-    Description: Panther App Domain used as a link for the customer in the password reset email
   AnalysisApiEndpoint:
     Type: String
     Description: Analysis API gateway FQDN
@@ -36,6 +33,9 @@ Parameters:
   AnalysisVersionsBucket:
     Type: String
     Description: S3 bucket for python revision history
+  AppDomainURL:
+    Type: String
+    Description: Panther App Domain used as a link for the customer in the password reset email
   AthenaResultsBucket:
     Type: String
     Description: Bucket created to hold Athena results
