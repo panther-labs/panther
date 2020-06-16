@@ -80,14 +80,14 @@ func (table *AlertsTable) getKeyCondition(keyBuilder *expression.KeyBuilder,
 			keyCondition = keyBuilder.Equal(expression.Value(*input.RuleID)).
 				And(
 					expression.Key(CreatedAtKey).Between(
-						expression.Value(*input.CreatedAtBefore), expression.Value(*input.CreatedAtAfter),
+						expression.Value(*input.CreatedAtAfter), expression.Value(*input.CreatedAtBefore),
 					),
 				)
 			return keyCondition
 		} else if input.CreatedAtAfter != nil && input.CreatedAtBefore == nil {
 			keyCondition = keyBuilder.Equal(expression.Value(*input.RuleID)).
 				And(
-					expression.Key(CreatedAtKey).LessThanEqual(
+					expression.Key(CreatedAtKey).GreaterThanEqual(
 						expression.Value(*input.CreatedAtAfter),
 					),
 				)
@@ -95,7 +95,7 @@ func (table *AlertsTable) getKeyCondition(keyBuilder *expression.KeyBuilder,
 		} else if input.CreatedAtBefore != nil && input.CreatedAtAfter == nil {
 			keyCondition = keyBuilder.Equal(expression.Value(*input.RuleID)).
 				And(
-					expression.Key(CreatedAtKey).GreaterThanEqual(
+					expression.Key(CreatedAtKey).LessThanEqual(
 						expression.Value(*input.CreatedAtBefore),
 					),
 				)
@@ -118,7 +118,7 @@ func (table *AlertsTable) getKeyCondition(keyBuilder *expression.KeyBuilder,
 	} else if input.CreatedAtAfter != nil && input.CreatedAtBefore == nil {
 		keyCondition = keyBuilder.Equal(expression.Value(TimePartitionValue)).
 			And(
-				expression.Key(CreatedAtKey).LessThanEqual(
+				expression.Key(CreatedAtKey).GreaterThanEqual(
 					expression.Value(*input.CreatedAtAfter),
 				),
 			)
@@ -126,7 +126,7 @@ func (table *AlertsTable) getKeyCondition(keyBuilder *expression.KeyBuilder,
 	} else if input.CreatedAtBefore != nil && input.CreatedAtAfter == nil {
 		keyCondition = keyBuilder.Equal(expression.Value(TimePartitionValue)).
 			And(
-				expression.Key(CreatedAtKey).GreaterThanEqual(
+				expression.Key(CreatedAtKey).LessThanEqual(
 					expression.Value(*input.CreatedAtBefore),
 				),
 			)

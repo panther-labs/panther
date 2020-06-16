@@ -76,7 +76,7 @@ export const filters = {
       min: 0,
     },
   },
-  createdAtBefore: {
+  createdAtAfter: {
     component: FormikTextInput,
     props: {
       label: 'Created After',
@@ -84,7 +84,7 @@ export const filters = {
       step: 1,
     },
   },
-  createdAtAfter: {
+  createdAtBefore: {
     component: FormikTextInput,
     props: {
       label: 'Created Before',
