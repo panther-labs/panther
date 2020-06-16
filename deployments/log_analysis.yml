@@ -856,6 +856,12 @@ Resources:
             - Effect: Allow
               Action: secretsmanager:GetSecretValue
               Resource: !Sub arn:aws:secretsmanager:*:${AWS::AccountId}:secret:panther-rules/*
+        - Id: GetPantherAnalysisSecrets
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: secretsmanager:GetSecretValue
+              Resource: !Sub arn:aws:secretsmanager:*:${AWS::AccountId}:secret:panther-analysis/*
 
   RulesEngineAlarms:
     Type: Custom::LambdaAlarms
