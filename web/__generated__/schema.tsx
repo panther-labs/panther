@@ -1027,7 +1027,7 @@ export type UpdateComplianceIntegrationInput = {
 export type UpdateDestinationInput = {
   outputId?: Maybe<Scalars['ID']>;
   displayName: Scalars['String'];
-  outputConfig: EditDestinationConfigInput;
+  outputConfig?: Maybe<EditDestinationConfigInput>;
   outputType: Scalars['String'];
   defaultForSeverity: Array<Maybe<SeverityEnum>>;
 };

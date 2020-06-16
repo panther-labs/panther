@@ -489,7 +489,7 @@ input AddDestinationInput {
 input UpdateDestinationInput {
   outputId: ID
   displayName: String!
-  outputConfig: EditDestinationConfigInput!
+  outputConfig: EditDestinationConfigInput
   outputType: String!
   defaultForSeverity: [SeverityEnum]!
 }
