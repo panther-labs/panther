@@ -90,7 +90,7 @@ input ListAlertsInput {
   eventCountMax: Int
   createdAtBefore: AWSDateTime
   createdAtAfter: AWSDateTime
-  sortDir: SortDirEnum # defaults to `ascending` (always on `createdAt` field)
+  sortDir: SortDirEnum # defaults to `descending` (always on `createdAt` field)
 }
 
 input GetAlertInput {

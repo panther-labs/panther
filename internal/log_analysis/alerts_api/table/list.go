@@ -67,10 +67,7 @@ func (table *AlertsTable) getKeyBuilder(input *models.ListAlertsInput) (keyBuild
 	return keyBuilder
 }
 
-// getKeyCondition - gets the appropriate key condition for a query
-//
-// If a `RuleID` is present, then create the KeyCondition based for this field.
-// Otherwise, use the default time partition KeyCondition
+// getKeyCondition - gets the key condition for a query
 func (table *AlertsTable) getKeyCondition(keyBuilder *expression.KeyBuilder,
 	input *models.ListAlertsInput) (keyCondition expression.KeyConditionBuilder) {
 
@@ -188,6 +185,15 @@ func (table *AlertsTable) applyFilters(builder *expression.Builder, input *model
 	*builder = builder.WithFilter(filter)
 }
 
+// getSortDirection - gets the direction to sort the data
+func (table *AlertsTable) getSortDirection(input *models.ListAlertsInput) bool {
+	// By default, sort descending
+	if input.SortDir == nil {
+		return false
+	}
+	return *input.SortDir == "ascending"
+}
+
 // list - returns a page of alerts ordered by creationTime, last evaluated key, any error
 func (table *AlertsTable) list(ddbKey, ddbValue string, input *models.ListAlertsInput) (
 	summaries []*AlertItem, lastEvaluatedKey *string, err error) {
@@ -206,6 +212,9 @@ func (table *AlertsTable) list(ddbKey, ddbValue string, input *models.ListAlerts
 
 	// Apply the all applicable filters specified by the input
 	table.applyFilters(&builder, input)
+
+	// Get the sort direction
+	direction := table.getSortDirection(input)
 
 	// Construct a query expression
 	queryExpression, err := builder.Build()
@@ -234,7 +243,7 @@ func (table *AlertsTable) list(ddbKey, ddbValue string, input *models.ListAlerts
 	// Construct the full query
 	var queryInput = &dynamodb.QueryInput{
 		TableName:                 &table.AlertsTableName,
-		ScanIndexForward:          aws.Bool(false),
+		ScanIndexForward:          aws.Bool(direction),
 		ExpressionAttributeNames:  queryExpression.Names(),
 		ExpressionAttributeValues: queryExpression.Values(),
 		FilterExpression:          queryExpression.Filter(),
