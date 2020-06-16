@@ -1238,6 +1238,12 @@ Resources:
             - Effect: Allow
               Action: dynamodb:*Item
               Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-kv-store
+        - Id: GetPantherPolicySecrets
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: secretsmanager:GetSecretValue
+              Resource: !Sub arn:aws:secretsmanager:*:${AWS::AccountId}:secret:panther-policies/*
 
   PolicyEngineLogGroup:
     Type: AWS::Logs::LogGroup
