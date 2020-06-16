@@ -81,6 +81,7 @@ export const filters = {
     props: {
       label: 'Created Before',
       placeholder: 'Enter a date...',
+      type: 'date',
     },
   },
   createdAtBefore: {
@@ -88,6 +89,7 @@ export const filters = {
     props: {
       label: 'Created After',
       placeholder: 'Enter a date...',
+      type: 'date',
     },
   },
 };
