@@ -118,7 +118,7 @@ func (table *AlertsTable) getKeyCondition(keyBuilder *expression.KeyBuilder,
 	} else if input.CreatedAtAfter != nil && input.CreatedAtBefore == nil {
 		keyCondition = keyBuilder.Equal(expression.Value(TimePartitionValue)).
 			And(
-				expression.Key(CreatedAtKey).GreaterThanEqual(
+				expression.Key(CreatedAtKey).LessThanEqual(
 					expression.Value(*input.CreatedAtAfter),
 				),
 			)
@@ -126,7 +126,7 @@ func (table *AlertsTable) getKeyCondition(keyBuilder *expression.KeyBuilder,
 	} else if input.CreatedAtBefore != nil && input.CreatedAtAfter == nil {
 		keyCondition = keyBuilder.Equal(expression.Value(TimePartitionValue)).
 			And(
-				expression.Key(CreatedAtKey).LessThanEqual(
+				expression.Key(CreatedAtKey).GreaterThanEqual(
 					expression.Value(*input.CreatedAtBefore),
 				),
 			)
