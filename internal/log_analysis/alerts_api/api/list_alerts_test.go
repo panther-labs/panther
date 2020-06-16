@@ -98,6 +98,9 @@ func TestListAllAlerts(t *testing.T) {
 		Contains:          aws.String("title"),
 		EventCountMin:     aws.Int(0),
 		EventCountMax:     aws.Int(100),
+		CreatedAtAfter:    aws.Time(time.Now()),
+		CreatedAtBefore:   aws.Time(time.Now()),
+		SortDir:           aws.String("ascending"),
 	}
 
 	tableMock.On("ListAll", input).
