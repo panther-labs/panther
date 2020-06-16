@@ -35,8 +35,8 @@ export const filters = {
   contains: {
     component: FormikTextInput,
     props: {
-      label: 'Name contains',
-      placeholder: 'Enter an alert name...',
+      label: 'Title contains',
+      placeholder: 'Enter an alert title...',
     },
   },
   severity: {
@@ -49,6 +49,13 @@ export const filters = {
       inputProps: {
         placeholder: 'Choose a severity...',
       },
+    },
+  },
+  ruleId: {
+    component: FormikTextInput,
+    props: {
+      label: 'Rule ID',
+      placeholder: 'Enter a rule ID...',
     },
   },
   eventCountMin: {
@@ -73,7 +80,7 @@ export const filters = {
 
 export type ListAlertsFiltersValues = Pick<
   ListAlertsInput,
-  'severity' | 'eventCountMin' | 'eventCountMax' | 'contains'
+  'severity' | 'ruleId' | 'eventCountMin' | 'eventCountMax' | 'contains'
 >;
 
 const ListAlertsActions: React.FC = () => {

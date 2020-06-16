@@ -107,6 +107,17 @@ func filterByEventCount(filter *expression.ConditionBuilder, input *models.ListA
 	}
 }
 
+// TODO
+// filterByLastUpdatedRange - fiters by a date range for the last updated event attached to the alert
+// func filterByLastUpdatedRange(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
+// 	if input.Contains != nil {
+// 		*filter = filter.And(
+// 			expression.GreaterThanEqual(expression.Name("updateTime"), expression.Value(*input.EventCountMin)),
+// 			expression.LessThanEqual(expression.Name("updateTime"), expression.Value(*input.EventCountMax)),
+// 		)
+// 	}
+// }
+
 // applyFilters - adds filters onto an expression
 func (table *AlertsTable) applyFilters(builder *expression.Builder, input *models.ListAlertsInput) {
 	// Start with an empty filter for a known attribute
