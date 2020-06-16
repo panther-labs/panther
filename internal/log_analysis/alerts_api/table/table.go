@@ -31,6 +31,7 @@ import (
 const (
 	RuleIDKey          = "ruleId"
 	AlertIDKey         = "id"
+	CreatedAtKey       = "createdAt"
 	TimePartitionKey   = "timePartition"
 	TimePartitionValue = "defaultPartition"
 )

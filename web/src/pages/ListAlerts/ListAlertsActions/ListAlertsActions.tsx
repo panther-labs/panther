@@ -76,11 +76,31 @@ export const filters = {
       min: 0,
     },
   },
+  createdAtAfter: {
+    component: FormikTextInput,
+    props: {
+      label: 'Created Before',
+      placeholder: 'Enter a date...',
+    },
+  },
+  createdAtBefore: {
+    component: FormikTextInput,
+    props: {
+      label: 'Created After',
+      placeholder: 'Enter a date...',
+    },
+  },
 };
 
 export type ListAlertsFiltersValues = Pick<
   ListAlertsInput,
-  'severity' | 'ruleId' | 'eventCountMin' | 'eventCountMax' | 'contains'
+  | 'severity'
+  | 'ruleId'
+  | 'eventCountMin'
+  | 'eventCountMax'
+  | 'contains'
+  | 'createdAtAfter'
+  | 'createdAtBefore'
 >;
 
 const ListAlertsActions: React.FC = () => {

@@ -72,13 +72,14 @@ type ListAlertsInput struct {
 	ExclusiveStartKey *string `json:"exclusiveStartKey,omitempty"`
 
 	// Filtering
-	Severity      *string `json:"severity,omitempty" validate:"omitempty,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
-	Contains      *string `json:"contains,omitempty"`
-	EventCountMin *int    `json:"eventCountMin,omitempty" validate:"omitempty,min=0"`
-	EventCountMax *int    `json:"eventCountMax,omitempty" validate:"omitempty,min=0"`
+	Severity        *string    `json:"severity,omitempty" validate:"omitempty,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
+	Contains        *string    `json:"contains,omitempty"`
+	EventCountMin   *int       `json:"eventCountMin,omitempty" validate:"omitempty,min=0"`
+	EventCountMax   *int       `json:"eventCountMax,omitempty" validate:"omitempty,min=0"`
+	CreatedAtBefore *time.Time `json:"createdAtBefore,omitempty" validate:"omitempty"`
+	CreatedAtAfter  *time.Time `json:"createdAtAfter,omitempty" validate:"omitempty"`
 
 	// Sorting
-	SortBy  *string `json:"sortBy,omitempty" validate:"omitempty,oneof=title severity events ruleId createdAt updatedAt"`
 	SortDir *string `json:"sortDir,omitempty" validate:"omitempty,oneof=ascending descending"`
 }
 

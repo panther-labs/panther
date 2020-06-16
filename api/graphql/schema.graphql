@@ -88,8 +88,9 @@ input ListAlertsInput {
   contains: String # matches against title
   eventCountMin: Int
   eventCountMax: Int
-  sortBy: ListAlertsSortFieldsEnum # defaults to `createdAt`
-  sortDir: SortDirEnum # defaults to `ascending`
+  createdAtBefore: AWSDateTime
+  createdAtAfter: AWSDateTime
+  sortDir: SortDirEnum # defaults to `ascending` (always on `createdAt` field)
 }
 
 input GetAlertInput {
@@ -809,15 +810,6 @@ enum ListRulesSortFieldsEnum {
   lastModified
   logTypes
   severity
-}
-
-enum ListAlertsSortFieldsEnum {
-  title
-  severity
-  events
-  ruleId
-  createdAt
-  updatedAt
 }
 
 enum SortDirEnum {
