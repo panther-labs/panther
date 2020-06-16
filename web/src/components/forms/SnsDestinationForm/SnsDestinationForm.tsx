@@ -21,7 +21,7 @@ import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
 import { Text, Box } from 'pouncejs';
-import { DestinationConfigInput } from 'Generated/schema';
+import { AddDestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
@@ -45,7 +45,7 @@ const SNS_TOPIC_POLICY = {
   ],
 };
 
-type SNSFieldValues = Pick<DestinationConfigInput, 'sns'>;
+type SNSFieldValues = Pick<AddDestinationConfigInput, 'sns'>;
 
 interface SNSDestinationFormProps {
   initialValues: BaseDestinationFormValues<SNSFieldValues>;

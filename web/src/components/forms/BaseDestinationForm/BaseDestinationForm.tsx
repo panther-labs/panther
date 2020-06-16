@@ -17,7 +17,7 @@
  */
 
 import * as Yup from 'yup';
-import { SeverityEnum, DestinationConfigInput } from 'Generated/schema';
+import { SeverityEnum, AddDestinationConfigInput } from 'Generated/schema';
 import { Box, Flex, InputElementLabel, Text } from 'pouncejs';
 import { Field, Form, Formik } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -27,7 +27,7 @@ import FormikCheckbox from 'Components/fields/Checkbox';
 import SeverityBadge from 'Components/SeverityBadge';
 
 export interface BaseDestinationFormValues<
-  AdditionalValues extends Partial<DestinationConfigInput>
+  AdditionalValues extends Partial<AddDestinationConfigInput>
 > {
   displayName: string;
   outputConfig: AdditionalValues;
@@ -38,12 +38,12 @@ export interface BaseDestinationFormValues<
 // internally within the form. Essentially converts ['CRITICAL', 'LOW'] to
 // { CRITICAL: true, LOW: true }
 interface PrivateBaseDestinationFormValues<
-  AdditionalValues extends Partial<DestinationConfigInput>
+  AdditionalValues extends Partial<AddDestinationConfigInput>
 > extends Omit<BaseDestinationFormValues<AdditionalValues>, 'defaultForSeverity'> {
   defaultForSeverity: { [key in SeverityEnum]: boolean };
 }
 
-interface BaseDestinationFormProps<AdditionalValues extends Partial<DestinationConfigInput>> {
+interface BaseDestinationFormProps<AdditionalValues extends Partial<AddDestinationConfigInput>> {
   /**
    * The initial values of the form. `DefaultForSeverity` is given as a list of severity values,
    * while internally the form will treat them as an object with the keys being the severities and
@@ -72,7 +72,7 @@ export const defaultValidationSchema = Yup.object().shape({
   ),
 });
 
-function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigInput>>({
+function BaseDestinationForm<AdditionalValues extends Partial<AddDestinationConfigInput>>({
   initialValues,
   validationSchema,
   onSubmit,

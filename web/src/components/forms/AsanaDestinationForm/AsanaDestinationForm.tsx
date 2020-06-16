@@ -20,7 +20,7 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
-import { DestinationConfigInput } from 'Generated/schema';
+import { AddDestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
@@ -29,7 +29,7 @@ import { isNumber } from 'Helpers/utils';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import { Text } from 'pouncejs';
 
-type AsanaFieldValues = Pick<DestinationConfigInput, 'asana'>;
+type AsanaFieldValues = Pick<AddDestinationConfigInput, 'asana'>;
 
 interface AsanaDestinationFormProps {
   initialValues: BaseDestinationFormValues<AsanaFieldValues>;

@@ -20,13 +20,13 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
-import { DestinationConfigInput } from 'Generated/schema';
+import { AddDestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
 
-type CustomWebhookFieldValues = Pick<DestinationConfigInput, 'customWebhook'>;
+type CustomWebhookFieldValues = Pick<AddDestinationConfigInput, 'customWebhook'>;
 
 interface CustomWebhookDestinationFormProps {
   initialValues: BaseDestinationFormValues<CustomWebhookFieldValues>;
@@ -58,7 +58,6 @@ const CustomWebhookDestinationForm: React.FC<CustomWebhookDestinationFormProps> 
     >
       <Field
         as={FormikTextInput}
-        type="password"
         name="outputConfig.customWebhook.webhookURL"
         label="Custom Webhook URL"
         placeholder="Where should we send a push notification to?"

@@ -21,7 +21,7 @@ import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
 import { Box, Text } from 'pouncejs';
-import { DestinationConfigInput } from 'Generated/schema';
+import { AddDestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
@@ -29,7 +29,7 @@ import BaseDestinationForm, {
 import JsonViewer from 'Components/JsonViewer';
 import { pantherConfig } from 'Source/config';
 
-type SQSFieldValues = Pick<DestinationConfigInput, 'sqs'>;
+type SQSFieldValues = Pick<AddDestinationConfigInput, 'sqs'>;
 
 interface SQSDestinationFormProps {
   initialValues: BaseDestinationFormValues<SQSFieldValues>;

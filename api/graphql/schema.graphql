@@ -9,7 +9,7 @@ schema {
 }
 
 type Mutation {
-  addDestination(input: DestinationInput!): Destination
+  addDestination(input: AddDestinationInput!): Destination
   addComplianceIntegration(input: AddComplianceIntegrationInput!): ComplianceIntegration!
   addS3LogIntegration(input: AddS3LogIntegrationInput!): S3LogIntegration!
   addPolicy(input: AddPolicyInput!): PolicyDetails
@@ -25,7 +25,7 @@ type Mutation {
   resetUserPassword(id: ID!): User!
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
   testPolicy(input: TestPolicyInput): TestPolicyResponse
-  updateDestination(input: DestinationInput!): Destination
+  updateDestination(input: UpdateDestinationInput!): Destination
   updateComplianceIntegration(input: UpdateComplianceIntegrationInput!): ComplianceIntegration!
   updateS3LogIntegration(input: UpdateS3LogIntegrationInput!): S3LogIntegration!
   updateGeneralSettings(input: UpdateGeneralSettingsInput!): GeneralSettings!
@@ -478,24 +478,41 @@ type PagerDutyConfig {
   integrationKey: String!
 }
 
-input DestinationInput {
+input AddDestinationInput {
   outputId: ID
   displayName: String!
-  outputConfig: DestinationConfigInput!
+  outputConfig: AddDestinationConfigInput!
   outputType: String!
   defaultForSeverity: [SeverityEnum]!
 }
 
-input DestinationConfigInput {
-  slack: SlackConfigInput
+input UpdateDestinationInput {
+  outputId: ID
+  displayName: String!
+  outputConfig: EditDestinationConfigInput!
+  outputType: String!
+  defaultForSeverity: [SeverityEnum]!
+}
+
+input EditDestinationConfigInput {
   sns: SnsConfigInput
   sqs: SQSConfigInput
-  pagerDuty: PagerDutyConfigInput
-  github: GithubConfigInput
-  jira: JiraConfigInput
-  opsgenie: OpsgenieConfigInput
-  msTeams: MsTeamsConfigInput
-  asana: AsanaConfigInput
+  github: EditGithubConfigInput
+  jira: EditJiraConfigInput
+  asana: EditAsanaConfigInput
+  customWebhook: CustomWebhookConfigInput
+}
+
+input AddDestinationConfigInput {
+  slack: AddSlackConfigInput
+  sns: SnsConfigInput
+  sqs: SQSConfigInput
+  pagerDuty: AddPagerDutyConfigInput
+  github: AddGithubConfigInput
+  jira: AddJiraConfigInput
+  opsgenie: AddOpsgenieConfigInput
+  msTeams: AddMsTeamsConfigInput
+  asana: AddAsanaConfigInput
   customWebhook: CustomWebhookConfigInput
 }
 
@@ -503,15 +520,15 @@ input SQSConfigInput {
   queueUrl: String!
 }
 
-input OpsgenieConfigInput {
+input AddOpsgenieConfigInput {
   apiKey: String!
 }
 
-input MsTeamsConfigInput {
+input AddMsTeamsConfigInput {
   webhookURL: String!
 }
 
-input JiraConfigInput {
+input AddJiraConfigInput {
   orgDomain: String!
   projectKey: String!
   userName: String!
@@ -520,8 +537,20 @@ input JiraConfigInput {
   issueType: JiraIssueTypesEnum
 }
 
-input AsanaConfigInput {
+input EditJiraConfigInput {
+  orgDomain: String!
+  projectKey: String!
+  userName: String!
+  assigneeId: String
+  issueType: JiraIssueTypesEnum
+}
+
+input AddAsanaConfigInput {
   personalAccessToken: String!
+  projectGids: [String!]!
+}
+
+input EditAsanaConfigInput {
   projectGids: [String!]!
 }
 
@@ -529,12 +558,16 @@ input CustomWebhookConfigInput {
   webhookURL: String!
 }
 
-input GithubConfigInput {
+input AddGithubConfigInput {
   repoName: String!
   token: String!
 }
 
-input SlackConfigInput {
+input EditGithubConfigInput {
+  repoName: String!
+}
+
+input AddSlackConfigInput {
   webhookURL: String!
 }
 
@@ -542,7 +575,7 @@ input SnsConfigInput {
   topicArn: String!
 }
 
-input PagerDutyConfigInput {
+input AddPagerDutyConfigInput {
   integrationKey: String!
 }
 

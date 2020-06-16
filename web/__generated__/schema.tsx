@@ -43,11 +43,63 @@ export type ActiveSuppressCount = {
   suppressed?: Maybe<ComplianceStatusCounts>;
 };
 
+export type AddAsanaConfigInput = {
+  personalAccessToken: Scalars['String'];
+  projectGids: Array<Scalars['String']>;
+};
+
 export type AddComplianceIntegrationInput = {
   awsAccountId: Scalars['String'];
   integrationLabel: Scalars['String'];
   remediationEnabled?: Maybe<Scalars['Boolean']>;
   cweEnabled?: Maybe<Scalars['Boolean']>;
+};
+
+export type AddDestinationConfigInput = {
+  slack?: Maybe<AddSlackConfigInput>;
+  sns?: Maybe<SnsConfigInput>;
+  sqs?: Maybe<SqsConfigInput>;
+  pagerDuty?: Maybe<AddPagerDutyConfigInput>;
+  github?: Maybe<AddGithubConfigInput>;
+  jira?: Maybe<AddJiraConfigInput>;
+  opsgenie?: Maybe<AddOpsgenieConfigInput>;
+  msTeams?: Maybe<AddMsTeamsConfigInput>;
+  asana?: Maybe<AddAsanaConfigInput>;
+  customWebhook?: Maybe<CustomWebhookConfigInput>;
+};
+
+export type AddDestinationInput = {
+  outputId?: Maybe<Scalars['ID']>;
+  displayName: Scalars['String'];
+  outputConfig: AddDestinationConfigInput;
+  outputType: Scalars['String'];
+  defaultForSeverity: Array<Maybe<SeverityEnum>>;
+};
+
+export type AddGithubConfigInput = {
+  repoName: Scalars['String'];
+  token: Scalars['String'];
+};
+
+export type AddJiraConfigInput = {
+  orgDomain: Scalars['String'];
+  projectKey: Scalars['String'];
+  userName: Scalars['String'];
+  apiKey: Scalars['String'];
+  assigneeId?: Maybe<Scalars['String']>;
+  issueType?: Maybe<JiraIssueTypesEnum>;
+};
+
+export type AddMsTeamsConfigInput = {
+  webhookURL: Scalars['String'];
+};
+
+export type AddOpsgenieConfigInput = {
+  apiKey: Scalars['String'];
+};
+
+export type AddPagerDutyConfigInput = {
+  integrationKey: Scalars['String'];
 };
 
 export type AddPolicyInput = {
@@ -91,6 +143,10 @@ export type AddS3LogIntegrationInput = {
   logTypes: Array<Scalars['String']>;
 };
 
+export type AddSlackConfigInput = {
+  webhookURL: Scalars['String'];
+};
+
 export type AlertDetails = {
   __typename?: 'AlertDetails';
   alertId: Scalars['ID'];
@@ -122,11 +178,6 @@ export enum AnalysisTypeEnum {
 
 export type AsanaConfig = {
   __typename?: 'AsanaConfig';
-  personalAccessToken: Scalars['String'];
-  projectGids: Array<Scalars['String']>;
-};
-
-export type AsanaConfigInput = {
   personalAccessToken: Scalars['String'];
   projectGids: Array<Scalars['String']>;
 };
@@ -230,27 +281,6 @@ export type DestinationConfig = {
   customWebhook?: Maybe<CustomWebhookConfig>;
 };
 
-export type DestinationConfigInput = {
-  slack?: Maybe<SlackConfigInput>;
-  sns?: Maybe<SnsConfigInput>;
-  sqs?: Maybe<SqsConfigInput>;
-  pagerDuty?: Maybe<PagerDutyConfigInput>;
-  github?: Maybe<GithubConfigInput>;
-  jira?: Maybe<JiraConfigInput>;
-  opsgenie?: Maybe<OpsgenieConfigInput>;
-  msTeams?: Maybe<MsTeamsConfigInput>;
-  asana?: Maybe<AsanaConfigInput>;
-  customWebhook?: Maybe<CustomWebhookConfigInput>;
-};
-
-export type DestinationInput = {
-  outputId?: Maybe<Scalars['ID']>;
-  displayName: Scalars['String'];
-  outputConfig: DestinationConfigInput;
-  outputType: Scalars['String'];
-  defaultForSeverity: Array<Maybe<SeverityEnum>>;
-};
-
 export enum DestinationTypeEnum {
   Slack = 'slack',
   Pagerduty = 'pagerduty',
@@ -263,6 +293,31 @@ export enum DestinationTypeEnum {
   Asana = 'asana',
   Customwebhook = 'customwebhook',
 }
+
+export type EditAsanaConfigInput = {
+  projectGids: Array<Scalars['String']>;
+};
+
+export type EditDestinationConfigInput = {
+  sns?: Maybe<SnsConfigInput>;
+  sqs?: Maybe<SqsConfigInput>;
+  github?: Maybe<EditGithubConfigInput>;
+  jira?: Maybe<EditJiraConfigInput>;
+  asana?: Maybe<EditAsanaConfigInput>;
+  customWebhook?: Maybe<CustomWebhookConfigInput>;
+};
+
+export type EditGithubConfigInput = {
+  repoName: Scalars['String'];
+};
+
+export type EditJiraConfigInput = {
+  orgDomain: Scalars['String'];
+  projectKey: Scalars['String'];
+  userName: Scalars['String'];
+  assigneeId?: Maybe<Scalars['String']>;
+  issueType?: Maybe<JiraIssueTypesEnum>;
+};
 
 export type GeneralSettings = {
   __typename?: 'GeneralSettings';
@@ -318,11 +373,6 @@ export type GithubConfig = {
   token: Scalars['String'];
 };
 
-export type GithubConfigInput = {
-  repoName: Scalars['String'];
-  token: Scalars['String'];
-};
-
 export type GlobalModuleDetails = {
   __typename?: 'GlobalModuleDetails';
   body: Scalars['String'];
@@ -352,15 +402,6 @@ export type InviteUserInput = {
 
 export type JiraConfig = {
   __typename?: 'JiraConfig';
-  orgDomain: Scalars['String'];
-  projectKey: Scalars['String'];
-  userName: Scalars['String'];
-  apiKey: Scalars['String'];
-  assigneeId?: Maybe<Scalars['String']>;
-  issueType?: Maybe<JiraIssueTypesEnum>;
-};
-
-export type JiraConfigInput = {
   orgDomain: Scalars['String'];
   projectKey: Scalars['String'];
   userName: Scalars['String'];
@@ -488,10 +529,6 @@ export type MsTeamsConfig = {
   webhookURL: Scalars['String'];
 };
 
-export type MsTeamsConfigInput = {
-  webhookURL: Scalars['String'];
-};
-
 export type Mutation = {
   __typename?: 'Mutation';
   addDestination?: Maybe<Destination>;
@@ -522,7 +559,7 @@ export type Mutation = {
 };
 
 export type MutationAddDestinationArgs = {
-  input: DestinationInput;
+  input: AddDestinationInput;
 };
 
 export type MutationAddComplianceIntegrationArgs = {
@@ -586,7 +623,7 @@ export type MutationTestPolicyArgs = {
 };
 
 export type MutationUpdateDestinationArgs = {
-  input: DestinationInput;
+  input: UpdateDestinationInput;
 };
 
 export type MutationUpdateComplianceIntegrationArgs = {
@@ -626,10 +663,6 @@ export type OpsgenieConfig = {
   apiKey: Scalars['String'];
 };
 
-export type OpsgenieConfigInput = {
-  apiKey: Scalars['String'];
-};
-
 export type OrganizationReportBySeverity = {
   __typename?: 'OrganizationReportBySeverity';
   info?: Maybe<ComplianceStatusCounts>;
@@ -653,10 +686,6 @@ export type OrganizationStatsResponse = {
 
 export type PagerDutyConfig = {
   __typename?: 'PagerDutyConfig';
-  integrationKey: Scalars['String'];
-};
-
-export type PagerDutyConfigInput = {
   integrationKey: Scalars['String'];
 };
 
@@ -945,10 +974,6 @@ export type SlackConfig = {
   webhookURL: Scalars['String'];
 };
 
-export type SlackConfigInput = {
-  webhookURL: Scalars['String'];
-};
-
 export type SnsConfig = {
   __typename?: 'SnsConfig';
   topicArn: Scalars['String'];
@@ -997,6 +1022,14 @@ export type UpdateComplianceIntegrationInput = {
   integrationLabel?: Maybe<Scalars['String']>;
   cweEnabled?: Maybe<Scalars['Boolean']>;
   remediationEnabled?: Maybe<Scalars['Boolean']>;
+};
+
+export type UpdateDestinationInput = {
+  outputId?: Maybe<Scalars['ID']>;
+  displayName: Scalars['String'];
+  outputConfig: EditDestinationConfigInput;
+  outputType: Scalars['String'];
+  defaultForSeverity: Array<Maybe<SeverityEnum>>;
 };
 
 export type UpdateGeneralSettingsInput = {
@@ -1245,17 +1278,17 @@ export type ResolversTypes = {
   AWSEmail: ResolverTypeWrapper<Scalars['AWSEmail']>;
   AWSTimestamp: ResolverTypeWrapper<Scalars['AWSTimestamp']>;
   Mutation: ResolverTypeWrapper<{}>;
-  DestinationInput: DestinationInput;
-  DestinationConfigInput: DestinationConfigInput;
-  SlackConfigInput: SlackConfigInput;
+  AddDestinationInput: AddDestinationInput;
+  AddDestinationConfigInput: AddDestinationConfigInput;
+  AddSlackConfigInput: AddSlackConfigInput;
   SnsConfigInput: SnsConfigInput;
   SQSConfigInput: SqsConfigInput;
-  PagerDutyConfigInput: PagerDutyConfigInput;
-  GithubConfigInput: GithubConfigInput;
-  JiraConfigInput: JiraConfigInput;
-  OpsgenieConfigInput: OpsgenieConfigInput;
-  MsTeamsConfigInput: MsTeamsConfigInput;
-  AsanaConfigInput: AsanaConfigInput;
+  AddPagerDutyConfigInput: AddPagerDutyConfigInput;
+  AddGithubConfigInput: AddGithubConfigInput;
+  AddJiraConfigInput: AddJiraConfigInput;
+  AddOpsgenieConfigInput: AddOpsgenieConfigInput;
+  AddMsTeamsConfigInput: AddMsTeamsConfigInput;
+  AddAsanaConfigInput: AddAsanaConfigInput;
   CustomWebhookConfigInput: CustomWebhookConfigInput;
   AddComplianceIntegrationInput: AddComplianceIntegrationInput;
   AddS3LogIntegrationInput: AddS3LogIntegrationInput;
@@ -1273,6 +1306,11 @@ export type ResolversTypes = {
   AnalysisTypeEnum: AnalysisTypeEnum;
   TestPolicyResponse: ResolverTypeWrapper<TestPolicyResponse>;
   PolicyUnitTestError: ResolverTypeWrapper<PolicyUnitTestError>;
+  UpdateDestinationInput: UpdateDestinationInput;
+  EditDestinationConfigInput: EditDestinationConfigInput;
+  EditGithubConfigInput: EditGithubConfigInput;
+  EditJiraConfigInput: EditJiraConfigInput;
+  EditAsanaConfigInput: EditAsanaConfigInput;
   UpdateComplianceIntegrationInput: UpdateComplianceIntegrationInput;
   UpdateS3LogIntegrationInput: UpdateS3LogIntegrationInput;
   UpdateGeneralSettingsInput: UpdateGeneralSettingsInput;
@@ -1363,17 +1401,17 @@ export type ResolversParentTypes = {
   AWSEmail: Scalars['AWSEmail'];
   AWSTimestamp: Scalars['AWSTimestamp'];
   Mutation: {};
-  DestinationInput: DestinationInput;
-  DestinationConfigInput: DestinationConfigInput;
-  SlackConfigInput: SlackConfigInput;
+  AddDestinationInput: AddDestinationInput;
+  AddDestinationConfigInput: AddDestinationConfigInput;
+  AddSlackConfigInput: AddSlackConfigInput;
   SnsConfigInput: SnsConfigInput;
   SQSConfigInput: SqsConfigInput;
-  PagerDutyConfigInput: PagerDutyConfigInput;
-  GithubConfigInput: GithubConfigInput;
-  JiraConfigInput: JiraConfigInput;
-  OpsgenieConfigInput: OpsgenieConfigInput;
-  MsTeamsConfigInput: MsTeamsConfigInput;
-  AsanaConfigInput: AsanaConfigInput;
+  AddPagerDutyConfigInput: AddPagerDutyConfigInput;
+  AddGithubConfigInput: AddGithubConfigInput;
+  AddJiraConfigInput: AddJiraConfigInput;
+  AddOpsgenieConfigInput: AddOpsgenieConfigInput;
+  AddMsTeamsConfigInput: AddMsTeamsConfigInput;
+  AddAsanaConfigInput: AddAsanaConfigInput;
   CustomWebhookConfigInput: CustomWebhookConfigInput;
   AddComplianceIntegrationInput: AddComplianceIntegrationInput;
   AddS3LogIntegrationInput: AddS3LogIntegrationInput;
@@ -1391,6 +1429,11 @@ export type ResolversParentTypes = {
   AnalysisTypeEnum: AnalysisTypeEnum;
   TestPolicyResponse: TestPolicyResponse;
   PolicyUnitTestError: PolicyUnitTestError;
+  UpdateDestinationInput: UpdateDestinationInput;
+  EditDestinationConfigInput: EditDestinationConfigInput;
+  EditGithubConfigInput: EditGithubConfigInput;
+  EditJiraConfigInput: EditJiraConfigInput;
+  EditAsanaConfigInput: EditAsanaConfigInput;
   UpdateComplianceIntegrationInput: UpdateComplianceIntegrationInput;
   UpdateS3LogIntegrationInput: UpdateS3LogIntegrationInput;
   UpdateGeneralSettingsInput: UpdateGeneralSettingsInput;

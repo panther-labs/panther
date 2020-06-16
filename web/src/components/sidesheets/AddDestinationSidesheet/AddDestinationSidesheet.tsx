@@ -21,7 +21,7 @@ import React from 'react';
 
 import useSidesheet from 'Hooks/useSidesheet';
 import { SIDESHEETS } from 'Components/utils/Sidesheet';
-import { Destination, DestinationConfigInput, DestinationTypeEnum } from 'Generated/schema';
+import { Destination, AddDestinationConfigInput, DestinationTypeEnum } from 'Generated/schema';
 import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm';
 
 import SNSDestinationForm from 'Components/forms/SnsDestinationForm';
@@ -69,12 +69,12 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
   });
 
   // The typescript on `values` simply says that we expect to have DestinationFormValues with an
-  // `outputType` that partially implements the DestinationConfigInput (we say partially since each
+  // `outputType` that partially implements the AddDestinationConfigInput (we say partially since each
   // integration will add each own config). Ideally we would want to say "exactly 1". We can't
   // specify the exact one since `const` are not allowed to have generics and `useCallback` can only
   // be assigned to a const
   const handleSubmit = React.useCallback(
-    async (values: BaseDestinationFormValues<Partial<DestinationConfigInput>>) => {
+    async (values: BaseDestinationFormValues<Partial<AddDestinationConfigInput>>) => {
       const { displayName, defaultForSeverity, outputConfig } = values;
       await addDestination({
         variables: {

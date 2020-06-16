@@ -26,13 +26,13 @@ import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
 export type AddDestinationVariables = {
-  input: Types.DestinationInput;
+  input: Types.AddDestinationInput;
 };
 
 export type AddDestination = { addDestination?: Types.Maybe<DestinationFull> };
 
 export const AddDestinationDocument = gql`
-  mutation AddDestination($input: DestinationInput!) {
+  mutation AddDestination($input: AddDestinationInput!) {
     addDestination(input: $input) {
       ...DestinationFull
     }
