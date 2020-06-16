@@ -80,26 +80,16 @@ input GetS3LogIntegrationTemplateInput {
   logTypes: [String!]!
 }
 
-# TODO - filtering / sorting changes
 input ListAlertsInput {
   ruleId: ID
   pageSize: Int # defaults to `25`
   exclusiveStartKey: String
   severity: SeverityEnum
-  before:   AWSDateTime
-	after:    AWSDateTime
-  contains: String # matches against ruleId, ruleDisplayName, and title
+  contains: String # matches against title
   eventCountMin: Int
   eventCountMax: Int
-
-  # Coppied some fields from ListRulesInput
-  # nameContains: String
-  # Sorting
-  # sortBy: ListRulesSortFieldsEnum # defaults to `id`
-  # sortDir: SortDirEnum # defaults to `ascending`
-  # Paging
-  # pageSize: Int # defaults to `25`
-  # page: Int # defaults to `1`
+  sortBy: ListAlertsSortFieldsEnum # defaults to `createdAt`
+  sortDir: SortDirEnum # defaults to `ascending`
 }
 
 input GetAlertInput {
@@ -819,6 +809,15 @@ enum ListRulesSortFieldsEnum {
   lastModified
   logTypes
   severity
+}
+
+enum ListAlertsSortFieldsEnum {
+  title
+  severity
+  events
+  ruleId
+  createdAt
+  updatedAt
 }
 
 enum SortDirEnum {

@@ -57,30 +57,29 @@ type GetAlertOutput = Alert
 //         "ruleId": "My.Rule",
 //         "pageSize": 25,
 //         "exclusiveStartKey": "abcdef",
-//         "before": "2019-01-01T00:00:00Z",
-//         "after": "2018-01-01T00:00:00Z",
 //         "severity": "INFO",
 //         "eventCountMin": "0",
 //         "eventCountMax": "500",
+//         "sortBy": "createdAt",
+//         "sortDir": "ascending",
 //     }
 // }
 type ListAlertsInput struct {
-	RuleID            *string `json:"ruleId,omitempty"`
-	PageSize          *int    `json:"pageSize,omitempty" validate:"omitempty,min=1,max=50"`
+	RuleID   *string `json:"ruleId,omitempty"`
+	PageSize *int    `json:"pageSize,omitempty" validate:"omitempty,min=1,max=50"`
+
+	// Infinite scroll/pagination query key
 	ExclusiveStartKey *string `json:"exclusiveStartKey,omitempty"`
 
 	// Filtering
-	// TODO - enforce that a relatively narrow time bound exists if SortBy is defined.
-	//   We have to sort in memory, so there needs to be a reasonable limit
-	Before        *time.Time `json:"before,omitempty"`
-	After         *time.Time `json:"after,omitempty"`
-	Severity      *string    `json:"severity,omitempty" validate:"omitempty,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
-	Contains      *string    `json:"contains,omitempty"`
-	EventCountMin *int       `json:"eventCountMin,omitempty" validate:"omitempty,min=0"`
-	EventCountMax *int       `json:"eventCountMax,omitempty" validate:"omitempty,min=0"`
+	Severity      *string `json:"severity,omitempty" validate:"omitempty,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
+	Contains      *string `json:"contains,omitempty"`
+	EventCountMin *int    `json:"eventCountMin,omitempty" validate:"omitempty,min=0"`
+	EventCountMax *int    `json:"eventCountMax,omitempty" validate:"omitempty,min=0"`
 
 	// Sorting
-	SortBy *string `json:"sortBy,omitempty" validate:"omitempty,oneof=title"`
+	SortBy  *string `json:"sortBy,omitempty" validate:"omitempty,oneof=title severity events ruleId createdAt updatedAt"`
+	SortDir *string `json:"sortDir,omitempty" validate:"omitempty,oneof=ascending descending"`
 }
 
 // ListAlertsOutput is the returned alert list.
