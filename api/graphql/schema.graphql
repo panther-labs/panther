@@ -90,6 +90,7 @@ input ListAlertsInput {
   eventCountMax: Int
   createdAtBefore: AWSDateTime
   createdAtAfter: AWSDateTime
+  sortBy: ListAlertsSortFieldsEnum # defaults to `createdAt`
   sortDir: SortDirEnum # defaults to `descending` (always on `createdAt` field)
 }
 
@@ -810,6 +811,10 @@ enum ListRulesSortFieldsEnum {
   lastModified
   logTypes
   severity
+}
+
+enum ListAlertsSortFieldsEnum {
+  createdAt
 }
 
 enum SortDirEnum {

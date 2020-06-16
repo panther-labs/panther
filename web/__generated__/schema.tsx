@@ -385,6 +385,7 @@ export type ListAlertsInput = {
   eventCountMax?: Maybe<Scalars['Int']>;
   createdAtBefore?: Maybe<Scalars['AWSDateTime']>;
   createdAtAfter?: Maybe<Scalars['AWSDateTime']>;
+  sortBy?: Maybe<ListAlertsSortFieldsEnum>;
   sortDir?: Maybe<SortDirEnum>;
 };
 
@@ -393,6 +394,10 @@ export type ListAlertsResponse = {
   alertSummaries: Array<Maybe<AlertSummary>>;
   lastEvaluatedKey?: Maybe<Scalars['String']>;
 };
+
+export enum ListAlertsSortFieldsEnum {
+  CreatedAt = 'createdAt',
+}
 
 export type ListComplianceItemsResponse = {
   __typename?: 'ListComplianceItemsResponse';
@@ -1186,6 +1191,7 @@ export type ResolversTypes = {
   AWSJSON: ResolverTypeWrapper<Scalars['AWSJSON']>;
   ListAlertsInput: ListAlertsInput;
   SeverityEnum: SeverityEnum;
+  ListAlertsSortFieldsEnum: ListAlertsSortFieldsEnum;
   SortDirEnum: SortDirEnum;
   ListAlertsResponse: ResolverTypeWrapper<ListAlertsResponse>;
   AlertSummary: ResolverTypeWrapper<AlertSummary>;
@@ -1304,6 +1310,7 @@ export type ResolversParentTypes = {
   AWSJSON: Scalars['AWSJSON'];
   ListAlertsInput: ListAlertsInput;
   SeverityEnum: SeverityEnum;
+  ListAlertsSortFieldsEnum: ListAlertsSortFieldsEnum;
   SortDirEnum: SortDirEnum;
   ListAlertsResponse: ListAlertsResponse;
   AlertSummary: AlertSummary;

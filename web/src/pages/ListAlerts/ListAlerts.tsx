@@ -19,8 +19,8 @@
 import React from 'react';
 import { Alert, Box, Card } from 'pouncejs';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
-import { extractErrorMessage } from 'Helpers/utils';
-import { ListAlertsInput } from 'Generated/schema';
+import { extractErrorMessage, sanitizeDates } from 'Helpers/utils';
+import { ListAlertsInput, SortDirEnum, ListAlertsSortFieldsEnum } from 'Generated/schema';
 import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import useRequestParamsWithInfiniteScroll from 'Hooks/useRequestParamsWithInfiniteScroll';
 import TablePlaceholder from 'Components/TablePlaceholder';
@@ -34,7 +34,9 @@ import ListAlertsPageSkeleton from './Skeleton';
 import ListAlertsPageEmptyDataFallback from './EmptyDataFallback';
 
 const ListAlerts = () => {
-  const { requestParams } = useRequestParamsWithInfiniteScroll<ListAlertsInput>();
+  const { requestParams, updateRequestParams } = useRequestParamsWithInfiniteScroll<
+    ListAlertsInput
+  >();
 
   const { loading, error, data, fetchMore } = useListAlerts({
     fetchPolicy: 'cache-and-network',
@@ -108,7 +110,12 @@ const ListAlerts = () => {
     <ErrorBoundary>
       <ListAlertsActions />
       <Card mb={8}>
-        <ListAlertsTable items={alertItems} />
+        <ListAlertsTable
+          items={alertItems}
+          onSort={newParams => updateRequestParams(sanitizeDates(newParams))}
+          sortBy={ListAlertsSortFieldsEnum.CreatedAt}
+          sortDir={requestParams.sortDir || SortDirEnum.Ascending}
+        />
         {hasNextPage && (
           <Box p={8} ref={sentinelRef}>
             <TablePlaceholder rowCount={10} />

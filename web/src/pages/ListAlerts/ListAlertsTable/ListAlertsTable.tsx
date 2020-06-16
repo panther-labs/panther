@@ -22,12 +22,27 @@ import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/SeverityBadge';
 import { ListAlerts } from 'Pages/ListAlerts/graphql/listAlerts.generated';
+import { ListAlertsInput, ListAlertsSortFieldsEnum, SortDirEnum } from 'Generated/schema';
 
 type ListAlertsTableProps = {
   items: ListAlerts['alerts']['alertSummaries'];
+  sortBy: ListAlertsSortFieldsEnum;
+  sortDir: SortDirEnum;
+  onSort: (params: Partial<ListAlertsInput>) => void;
 };
 
-const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items }) => {
+const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDir, onSort }) => {
+  const handleSort = (selectedKey: ListAlertsSortFieldsEnum) => {
+    if (sortBy === selectedKey) {
+      onSort({
+        sortBy,
+        sortDir: sortDir === SortDirEnum.Ascending ? SortDirEnum.Descending : SortDirEnum.Ascending,
+      });
+    } else {
+      onSort({ sortBy: selectedKey, sortDir: SortDirEnum.Ascending });
+    }
+  };
+
   return (
     <Table>
       <Table.Head>
@@ -37,7 +52,12 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items }) => {
           <Table.HeaderCell>Severity</Table.HeaderCell>
           <Table.HeaderCell align="right">Events</Table.HeaderCell>
           <Table.HeaderCell>Rule ID</Table.HeaderCell>
-          <Table.HeaderCell>Created At</Table.HeaderCell>
+          <Table.SortableHeaderCell
+            onClick={() => handleSort(ListAlertsSortFieldsEnum.CreatedAt)}
+            sortDir={sortBy === ListAlertsSortFieldsEnum.CreatedAt ? sortDir : false}
+          >
+            Created At
+          </Table.SortableHeaderCell>
           <Table.HeaderCell>Last Matched At</Table.HeaderCell>
         </Table.Row>
       </Table.Head>

@@ -253,3 +253,27 @@ export const generateDocUrl = (baseUrl: string, version: string) => {
 export const isNumber = (value: string) => /^-{0,1}\d+$/.test(value);
 
 export const toStackNameFormat = (val: string) => val.replace(/ /g, '-').toLowerCase();
+
+// Adds a 'Z' suffix to a date string
+// Used to sanitize date string going to backend
+export const sanitizeDates = (parms: Partial<any>) =>
+  Object.entries(parms).reduce((acc, [k, v]) => {
+    if (typeof v === 'string' && Date.parse(v)) {
+      acc[k] = /Z$/.test(v) ? v : `${v}Z`;
+      return acc;
+    }
+    acc[k] = v;
+    return acc;
+  }, {});
+
+// Removes the 'Z' suffix from a date string
+// Used to sanitize date string going to the frontend form
+export const desanitizeDates = (parms: Partial<any>) =>
+  Object.entries(parms).reduce((acc, [k, v]) => {
+    if (typeof v === 'string' && Date.parse(v)) {
+      acc[k] = /Z$/.test(v) ? v.replace('Z', '') : v;
+      return acc;
+    }
+    acc[k] = v;
+    return acc;
+  }, {});

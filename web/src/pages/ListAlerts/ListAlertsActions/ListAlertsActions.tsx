@@ -19,7 +19,7 @@
 import React from 'react';
 import { SeverityEnum, ListAlertsInput } from 'Generated/schema';
 import GenerateFiltersGroup from 'Components/utils/GenerateFiltersGroup';
-import { capitalize } from 'Helpers/utils';
+import { capitalize, sanitizeDates, desanitizeDates } from 'Helpers/utils';
 import FormikTextInput from 'Components/fields/TextInput';
 import FormikCombobox from 'Components/fields/ComboBox';
 import useRequestParamsWithInfiniteScroll from 'Hooks/useRequestParamsWithInfiniteScroll';
@@ -113,38 +113,6 @@ const ListAlertsActions: React.FC = () => {
 
   const filterKeys = Object.keys(filters) as (keyof ListAlertsInput)[];
   const filtersCount = filterKeys.filter(key => !isEmpty(requestParams[key])).length;
-
-  // If we detect date times, we need to sanitize them for the Go lambda to
-  // correctly parse the time. This essentially ensures there is
-  // a 'Z' at the end of the date string.
-  const sanitizeDates = React.useCallback(
-    (parms: Partial<ListAlertsFiltersValues>) =>
-      Object.entries(parms).reduce((acc, [k, v]) => {
-        if (typeof v === 'string' && Date.parse(v)) {
-          acc[k] = /Z$/.test(v) ? v : `${v}Z`;
-          return acc;
-        }
-        acc[k] = v;
-        return acc;
-      }, {}),
-    [requestParams]
-  );
-
-  // If we detect date times, we need to desanitize them for the frontend
-  // to populate the date-time form correctly by removing any trailing
-  // 'Z' at the end of the date string.
-  const desanitizeDates = React.useCallback(
-    (parms: Partial<ListAlertsFiltersValues>) =>
-      Object.entries(parms).reduce((acc, [k, v]) => {
-        if (typeof v === 'string' && Date.parse(v)) {
-          acc[k] = /Z$/.test(v) ? v.replace('Z', '') : v;
-          return acc;
-        }
-        acc[k] = v;
-        return acc;
-      }, {}),
-    [requestParams]
-  );
 
   // If there is at least one filter set visibility to true
   React.useEffect(() => {
