@@ -42,13 +42,13 @@ func AlertOutputToItem(input *models.AlertOutput) (*table.AlertOutputItem, error
 		DefaultForSeverity: input.DefaultForSeverity,
 	}
 
-	encryptedConfig, err := encryptionKey.EncryptConfig(input.OutputConfig)
-
-	if err != nil {
-		return nil, err
+	if input.OutputConfig != nil {
+		encryptedConfig, err := encryptionKey.EncryptConfig(input.OutputConfig)
+		if err != nil {
+			return nil, err
+		}
+		item.EncryptedConfig = encryptedConfig
 	}
-
-	item.EncryptedConfig = encryptedConfig
 
 	return item, nil
 }
