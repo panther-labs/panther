@@ -22,9 +22,7 @@ import useUrlParams from 'Hooks/useUrlParams';
 function useRequestParamsWithInfiniteScroll<AvailableParams>() {
   const { urlParams, updateUrlParams } = useUrlParams<Partial<AvailableParams>>();
 
-  // This is our typical function that updates the parameters with the addition of resetting the
-  // page to `1`. The only time where we don't wanna do that, is when changing pages. In this
-  // scenario, we want to change the params but not reset the page.
+  // This is our typical function that updates the parameters
   const updateRequestParams = React.useCallback(
     (newParams: Partial<AvailableParams>) => {
       updateUrlParams({ ...urlParams, ...newParams });
