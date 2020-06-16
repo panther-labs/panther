@@ -428,6 +428,7 @@ type DestinationConfig {
   opsgenie: OpsgenieConfig
   msTeams: MsTeamsConfig
   asana: AsanaConfig
+  customWebhook: CustomWebhookConfig
 }
 
 type SqsConfig {
@@ -454,6 +455,10 @@ type JiraConfig {
 type AsanaConfig {
   personalAccessToken: String!
   projectGids: [String!]!
+}
+
+type CustomWebhookConfig {
+  webhookURL: String!
 }
 
 type GithubConfig {
@@ -491,6 +496,7 @@ input DestinationConfigInput {
   opsgenie: OpsgenieConfigInput
   msTeams: MsTeamsConfigInput
   asana: AsanaConfigInput
+  customWebhook: CustomWebhookConfigInput
 }
 
 input SQSConfigInput {
@@ -517,6 +523,10 @@ input JiraConfigInput {
 input AsanaConfigInput {
   personalAccessToken: String!
   projectGids: [String!]!
+}
+
+input CustomWebhookConfigInput {
+  webhookURL: String!
 }
 
 input GithubConfigInput {
@@ -828,6 +838,7 @@ enum DestinationTypeEnum {
   sns
   sqs
   asana
+  customwebhook
 }
 
 enum AnalysisTypeEnum {

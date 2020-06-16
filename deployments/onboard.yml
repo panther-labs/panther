@@ -18,6 +18,8 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Template for onboarding the Panther account into Panther itself
 
 Parameters:
+  # Alphabetize parameters so it's easy to compare side-by-side with other code that passes values
+  # and because the CloudFormation console always shows parameters in alphabetical order.
   AlarmTopicArn:
     Type: String
     Description: SNS topic for CloudWatch alarms

@@ -76,6 +76,8 @@ func send(alert *alertmodels.Alert, output *outputmodels.AlertOutput, statusChan
 		alertDeliveryError = outputClient.Sns(alert, output.OutputConfig.Sns)
 	case "asana":
 		alertDeliveryError = outputClient.Asana(alert, output.OutputConfig.Asana)
+	case "customwebhook":
+		alertDeliveryError = outputClient.CustomWebhook(alert, output.OutputConfig.CustomWebhook)
 	default:
 		zap.L().Warn("unsupported output type", commonFields...)
 		statusChannel <- outputStatus{outputID: *output.OutputID, success: false, needsRetry: false}

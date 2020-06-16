@@ -156,6 +156,7 @@ Now you can run `mage deploy`
 - If you're using the development image, be sure to export your AWS credentials in the environment *before* running `./dev.sh`
 - If your credentials timeout, you can safely redeploy to pick up where you left off.
 - If you use `aws-vault`, you must be authenticated with MFA. Otherwise, IAM role creation will fail with `InvalidClientTokenId`
+- You can also update a single stack in an existing deployment: `STACK=appsync mage deploy`
 
 This will deploy the main CloudFormation stacks independently and is optimized for development.
 If instead you want to deploy the single master template: `mage master:deploy`
