@@ -79,6 +79,7 @@ func testInput() *kinesis.PutRecordsInput {
 }
 
 func TestPutRecords(t *testing.T) {
+	t.Parallel()
 	client := &mockKinesis{}
 	assert.Nil(t, PutRecords(client, 5*time.Second, testInput()))
 	assert.Equal(t, 1, client.callCount)
@@ -86,6 +87,7 @@ func TestPutRecords(t *testing.T) {
 
 // Unprocessed items are retried
 func TestPutRecordsBackoff(t *testing.T) {
+	t.Parallel()
 	client := &mockKinesis{unprocessedItems: true}
 	assert.Nil(t, PutRecords(client, 5*time.Second, testInput()))
 	assert.Equal(t, 2, client.callCount)
@@ -93,6 +95,7 @@ func TestPutRecordsBackoff(t *testing.T) {
 
 // An unusual error is not retried
 func TestPutRecordsPermanentError(t *testing.T) {
+	t.Parallel()
 	client := &mockKinesis{err: errors.New("permanent")}
 	assert.NotNil(t, PutRecords(client, 5*time.Second, testInput()))
 	assert.Equal(t, 1, client.callCount)
@@ -100,6 +103,7 @@ func TestPutRecordsPermanentError(t *testing.T) {
 
 // A temporary error is retried
 func TestPutRecordsTemporaryError(t *testing.T) {
+	t.Parallel()
 	client := &mockKinesis{
 		err: awserr.New(kinesis.ErrCodeProvisionedThroughputExceededException, "try again later", nil),
 	}
@@ -109,6 +113,7 @@ func TestPutRecordsTemporaryError(t *testing.T) {
 
 // A large number of records are broken into multiple requests
 func TestPutRecordsPagination(t *testing.T) {
+	t.Parallel()
 	client := &mockKinesis{}
 	input := &kinesis.PutRecordsInput{
 		Records: make([]*kinesis.PutRecordsRequestEntry, maxRecords*2+1),
