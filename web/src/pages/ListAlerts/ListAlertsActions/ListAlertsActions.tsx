@@ -80,6 +80,7 @@ export const filters = {
     component: FormikTextInput,
     props: {
       label: 'Created After',
+      placeholder: 'YYYY-MM-DDTHH:MM:SSZ',
       type: 'datetime-local',
       step: 1,
     },
@@ -88,6 +89,7 @@ export const filters = {
     component: FormikTextInput,
     props: {
       label: 'Created Before',
+      placeholder: 'YYYY-MM-DDTHH:MM:SSZ',
       type: 'datetime-local',
       step: 1,
     },
