@@ -73,7 +73,7 @@ func (table *AlertsTable) getKeyCondition(keyBuilder *expression.KeyBuilder,
 
 	// If we have a ruleId, set the primary key and allow for filtering by createdAt
 	if input.RuleID != nil {
-		if input.CreatedAtBefore != nil && input.CreatedAtAfter != nil && input.CreatedAtAfter.After(*input.CreatedAtBefore) {
+		if input.CreatedAtBefore != nil && input.CreatedAtAfter != nil && input.CreatedAtAfter.Before(*input.CreatedAtBefore) {
 			keyCondition = keyBuilder.Equal(expression.Value(*input.RuleID)).
 				And(
 					expression.Key(CreatedAtKey).Between(
@@ -104,11 +104,11 @@ func (table *AlertsTable) getKeyCondition(keyBuilder *expression.KeyBuilder,
 	}
 
 	// Otherwise, set the primary key for the time partition and allow for filtering by createdAt
-	if input.CreatedAtBefore != nil && input.CreatedAtAfter != nil && input.CreatedAtAfter.After(*input.CreatedAtBefore) {
+	if input.CreatedAtBefore != nil && input.CreatedAtAfter != nil && input.CreatedAtAfter.Before(*input.CreatedAtBefore) {
 		keyCondition = keyBuilder.Equal(expression.Value(TimePartitionValue)).
 			And(
 				expression.Key(CreatedAtKey).Between(
-					expression.Value(*input.CreatedAtBefore), expression.Value(*input.CreatedAtAfter),
+					expression.Value(*input.CreatedAtAfter), expression.Value(*input.CreatedAtBefore),
 				),
 			)
 		return keyCondition

@@ -114,7 +114,7 @@ const ListAlerts = () => {
           items={alertItems}
           onSort={newParams => updateRequestParams(sanitizeDates(newParams))}
           sortBy={ListAlertsSortFieldsEnum.CreatedAt}
-          sortDir={requestParams.sortDir || SortDirEnum.Ascending}
+          sortDir={requestParams.sortDir || SortDirEnum.Descending}
         />
         {hasNextPage && (
           <Box p={8} ref={sentinelRef}>

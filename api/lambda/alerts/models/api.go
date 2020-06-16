@@ -60,7 +60,8 @@ type GetAlertOutput = Alert
 //         "severity": "INFO",
 //         "eventCountMin": "0",
 //         "eventCountMax": "500",
-//         "sortBy": "createdAt",
+//         "createdAtAfter": "2020-06-17T15:49:40Z",
+//         "createdAtBefore": "2020-06-17T15:49:40Z",
 //         "sortDir": "ascending",
 //     }
 // }

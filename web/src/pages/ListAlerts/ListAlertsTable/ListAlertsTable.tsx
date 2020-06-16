@@ -35,11 +35,10 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
   const handleSort = (selectedKey: ListAlertsSortFieldsEnum) => {
     if (sortBy === selectedKey) {
       onSort({
-        sortBy,
         sortDir: sortDir === SortDirEnum.Ascending ? SortDirEnum.Descending : SortDirEnum.Ascending,
       });
     } else {
-      onSort({ sortBy: selectedKey, sortDir: SortDirEnum.Ascending });
+      onSort({ sortDir: SortDirEnum.Ascending });
     }
   };
 
@@ -54,7 +53,9 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
           <Table.HeaderCell>Rule ID</Table.HeaderCell>
           <Table.SortableHeaderCell
             onClick={() => handleSort(ListAlertsSortFieldsEnum.CreatedAt)}
-            sortDir={sortBy === ListAlertsSortFieldsEnum.CreatedAt ? sortDir : false}
+            sortDir={
+              sortBy === ListAlertsSortFieldsEnum.CreatedAt ? sortDir : SortDirEnum.Descending
+            }
           >
             Created At
           </Table.SortableHeaderCell>
