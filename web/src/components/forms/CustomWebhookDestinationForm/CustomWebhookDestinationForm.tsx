@@ -50,14 +50,18 @@ const CustomWebhookDestinationForm: React.FC<CustomWebhookDestinationFormProps> 
   onSubmit,
   initialValues,
 }) => {
+  const existing = initialValues.displayName.length;
+  const validationSchema = existing ? defaultValidationSchema : mergedValidationSchema;
   return (
     <BaseDestinationForm<CustomWebhookFieldValues>
       initialValues={initialValues}
-      validationSchema={mergedValidationSchema}
+      validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
       <Field
         as={FormikTextInput}
+        disabled={existing}
+        type="password"
         name="outputConfig.customWebhook.webhookURL"
         label="Custom Webhook URL"
         placeholder="Where should we send a push notification to?"

@@ -33,28 +33,35 @@ interface GithubDestinationFormProps {
   onSubmit: (values: BaseDestinationFormValues<GithubFieldValues>) => void;
 }
 
+const baseGithubShapeObject = {
+  repoName: Yup.string().required(),
+};
+
 const githubFieldsValidationSchema = Yup.object().shape({
   outputConfig: Yup.object().shape({
-    github: Yup.object().shape({
-      repoName: Yup.string().required(),
-      token: Yup.string().required(),
-    }),
+    github: Yup.object().shape({ ...baseGithubShapeObject, token: Yup.string().required() }),
   }),
 });
 
-// We merge the two schemas together: the one deriving from the common fields, plus the custom
-// ones that change for each destination.
-// https://github.com/jquense/yup/issues/522
-const mergedValidationSchema = defaultValidationSchema.concat(githubFieldsValidationSchema);
+const editGithubFieldsValidationSchema = Yup.object().shape({
+  outputConfig: Yup.object().shape({
+    github: Yup.object().shape(baseGithubShapeObject),
+  }),
+});
 
 const GithubDestinationForm: React.FC<GithubDestinationFormProps> = ({
   onSubmit,
   initialValues,
 }) => {
+  const existing = initialValues.displayName.length;
+  const validationSchema = existing
+    ? defaultValidationSchema.concat(editGithubFieldsValidationSchema)
+    : defaultValidationSchema.concat(githubFieldsValidationSchema);
+
   return (
     <BaseDestinationForm<GithubFieldValues>
       initialValues={initialValues}
-      validationSchema={mergedValidationSchema}
+      validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
       <Field
@@ -68,6 +75,7 @@ const GithubDestinationForm: React.FC<GithubDestinationFormProps> = ({
       <Field
         as={FormikTextInput}
         type="password"
+        disabled={existing}
         name="outputConfig.github.token"
         label="Token"
         placeholder="What's your Github API token?"

@@ -304,7 +304,6 @@ export type EditDestinationConfigInput = {
   github?: Maybe<EditGithubConfigInput>;
   jira?: Maybe<EditJiraConfigInput>;
   asana?: Maybe<EditAsanaConfigInput>;
-  customWebhook?: Maybe<CustomWebhookConfigInput>;
 };
 
 export type EditGithubConfigInput = {

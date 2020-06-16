@@ -50,14 +50,18 @@ const MicrosoftTeamsDestinationForm: React.FC<MicrosoftTeamsDestinationFormProps
   onSubmit,
   initialValues,
 }) => {
+  const existing = initialValues.displayName.length;
+  const validationSchema = existing ? defaultValidationSchema : mergedValidationSchema;
+
   return (
     <BaseDestinationForm<MicrosoftTeamsFieldValues>
       initialValues={initialValues}
-      validationSchema={mergedValidationSchema}
+      validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
       <Field
         as={FormikTextInput}
+        disabled={existing}
         type="password"
         name="outputConfig.msTeams.webhookURL"
         label="Microsoft Teams Webhook URL"

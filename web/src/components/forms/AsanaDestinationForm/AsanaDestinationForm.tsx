@@ -36,30 +36,41 @@ interface AsanaDestinationFormProps {
   onSubmit: (values: BaseDestinationFormValues<AsanaFieldValues>) => void;
 }
 
+const baseAsanaShapeObject = {
+  projectGids: Yup.array().of(Yup.number()).required(),
+};
+
 const asanaFieldsValidationSchema = Yup.object().shape({
   outputConfig: Yup.object().shape({
     asana: Yup.object().shape({
+      ...baseAsanaShapeObject,
       personalAccessToken: Yup.string().required(),
-      projectGids: Yup.array().of(Yup.number()).required(),
     }),
   }),
 });
 
-// We merge the two schemas together: the one deriving from the common fields, plus the custom
-// ones that change for each destination.
-// https://github.com/jquense/yup/issues/522
-const mergedValidationSchema = defaultValidationSchema.concat(asanaFieldsValidationSchema);
+const editGithubFieldsValidationSchema = Yup.object().shape({
+  outputConfig: Yup.object().shape({
+    asana: Yup.object().shape(baseAsanaShapeObject),
+  }),
+});
 
 const AsanaDestinationForm: React.FC<AsanaDestinationFormProps> = ({ onSubmit, initialValues }) => {
+  const existing = initialValues.displayName.length;
+  const validationSchema = existing
+    ? defaultValidationSchema.concat(editGithubFieldsValidationSchema)
+    : defaultValidationSchema.concat(asanaFieldsValidationSchema);
+
   return (
     <BaseDestinationForm<AsanaFieldValues>
       initialValues={initialValues}
-      validationSchema={mergedValidationSchema}
+      validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
       <Field
         as={FormikTextInput}
         type="password"
+        disabled={existing}
         name="outputConfig.asana.personalAccessToken"
         label="Access Token"
         placeholder="Your personal Asana access token"

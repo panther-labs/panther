@@ -500,7 +500,6 @@ input EditDestinationConfigInput {
   github: EditGithubConfigInput
   jira: EditJiraConfigInput
   asana: EditAsanaConfigInput
-  customWebhook: CustomWebhookConfigInput
 }
 
 input AddDestinationConfigInput {

@@ -50,14 +50,18 @@ const OpsgenieDestinationForm: React.FC<OpsgenieDestinationFormProps> = ({
   onSubmit,
   initialValues,
 }) => {
+  const existing = initialValues.displayName.length;
+  const validationSchema = existing ? defaultValidationSchema : mergedValidationSchema;
+
   return (
     <BaseDestinationForm<OpsgenieFieldValues>
       initialValues={initialValues}
-      validationSchema={mergedValidationSchema}
+      validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
       <Field
         as={FormikTextInput}
+        disabled={existing}
         type="password"
         name="outputConfig.opsgenie.apiKey"
         label="Opsgenie API key"

@@ -78,6 +78,7 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
       delete outputConfig.jira?.apiKey;
       delete outputConfig.opsgenie;
       delete outputConfig.msTeams;
+      delete outputConfig.customWebhook;
       delete outputConfig.asana?.personalAccessToken;
 
       await updateDestination({
