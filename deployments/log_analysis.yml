@@ -19,7 +19,8 @@ Transform: AWS::Serverless-2016-10-31
 Description: Log processing infrastructure
 
 Parameters:
-  # Passed in from bootstrap
+  # Alphabetize parameters so it's easy to compare side-by-side with other code that passes values
+  # and because the CloudFormation console always shows parameters in alphabetical order.
   AlarmTopicArn:
     Type: String
     Description: SNS topic for CloudWatch alarms
@@ -29,6 +30,21 @@ Parameters:
   AthenaResultsBucket:
     Type: String
     Description: Bucket created to hold Athena results
+  CloudWatchLogRetentionDays:
+    Type: Number
+    Description: CloudWatch log retention period
+  Debug:
+    Type: String
+    Description: Toggle debug logging
+    AllowedValues: [true, false]
+  LayerVersionArns:
+    Type: CommaDelimitedList
+    Description: List of base LayerVersion ARNs to attach to every Lambda function
+  LogProcessorLambdaMemorySize:
+    Type: Number
+    Description: Log processor Lambda memory allocation
+    MinValue: 256 # 128 is too small, risks OOM errors
+    MaxValue: 3008
   ProcessedDataBucket:
     Type: String
     Description: S3 bucket which stores processed logs
@@ -44,31 +60,10 @@ Parameters:
   TablesSignature:
     Type: String
     Description: Value from gluetable.DeployedTablesSignature() or the Panther version if using CF
-
-  # Passed in from config file
-  CloudWatchLogRetentionDays:
-    Type: Number
-    Description: CloudWatch log retention period
-    Default: 365
-  Debug:
-    Type: String
-    Description: Toggle debug logging
-    Default: false
-    AllowedValues: [true, false]
-  LayerVersionArns:
-    Type: CommaDelimitedList
-    Description: List of base LayerVersion ARNs to attach to every Lambda function
-    Default: ''
-  LogProcessorLambdaMemorySize:
-    Type: Number
-    Description: Log processor Lambda memory allocation
-    MinValue: 256 # any smaller and we risk OOMs
-    MaxValue: 3008
   TracingMode:
     Type: String
     Description: Enable XRay tracing on Lambda and API Gateway
     AllowedValues: ['', Active, PassThrough]
-    Default: ''
 
 Mappings:
   Functions:

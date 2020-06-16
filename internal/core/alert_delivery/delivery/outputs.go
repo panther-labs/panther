@@ -53,7 +53,7 @@ var (
 func getAlertOutputs(alert *alertmodels.Alert) ([]*outputmodels.AlertOutput, error) {
 	if cache == nil || time.Since(cache.Timestamp) > refreshInterval {
 		zap.L().Debug("getting cached default outputs")
-		input := outputmodels.LambdaInput{GetOutputs: &outputmodels.GetOutputsInput{}}
+		input := outputmodels.LambdaInput{GetOutputsWithSecrets: &outputmodels.GetOutputsWithSecretsInput{}}
 		var outputs outputmodels.GetOutputsOutput
 		if err := genericapi.Invoke(lambdaClient, outputsAPI, &input, &outputs); err != nil {
 			return nil, err

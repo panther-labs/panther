@@ -20,7 +20,7 @@ import { Text, Box, Heading, Spinner, Flex, Link } from 'pouncejs';
 import React from 'react';
 import { extractErrorMessage, toStackNameFormat } from 'Helpers/utils';
 import { useFormikContext } from 'formik';
-import { LOG_ONBOARDING_DOC_URL } from 'Source/constants';
+import { LOG_ONBOARDING_SNS_DOC_URL } from 'Source/constants';
 import { pantherConfig } from 'Source/config';
 import { useGetLogCfnTemplate } from './graphql/getLogCfnTemplate.generated';
 import { S3LogSourceWizardValues } from '../S3LogSourceWizard';
@@ -126,7 +126,7 @@ const StackDeployment: React.FC = () => {
               external
               color="blue300"
               title="SNS Notification Setup"
-              href={LOG_ONBOARDING_DOC_URL}
+              href={LOG_ONBOARDING_SNS_DOC_URL}
             >
               here
             </Link>{' '}
