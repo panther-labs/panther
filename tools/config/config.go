@@ -49,6 +49,7 @@ type Monitoring struct {
 }
 
 type Setup struct {
+	Company               Company          `yaml:"Company"`
 	FirstUser             FirstUser        `yaml:"FirstUser"`
 	OnboardSelf           bool             `yaml:"OnboardSelf"`
 	EnableS3AccessLogs    bool             `yaml:"EnableS3AccessLogs"`
@@ -58,6 +59,11 @@ type Setup struct {
 	DataReplicationBucket string           `yaml:"DataReplicationBucket"`
 	InitialAnalysisSets   []string         `yaml:"InitialAnalysisSets"`
 	LogSubscriptions      LogSubscriptions `yaml:"LogSubscriptions"`
+}
+
+type Company struct {
+	DisplayName string `yaml:"DisplayName"`
+	Email       string `yaml:"Email"`
 }
 
 type LogSubscriptions struct {

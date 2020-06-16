@@ -27,6 +27,10 @@ import (
 
 // EncryptConfig uses KMS to encrypt an output configuration.
 func (key *Key) EncryptConfig(config interface{}) ([]byte, error) {
+	// Allow an empty config to be specified
+	if config == nil {
+		return nil, nil
+	}
 	body, err := jsoniter.Marshal(config)
 	if err != nil {
 		return nil, &genericapi.InternalError{
