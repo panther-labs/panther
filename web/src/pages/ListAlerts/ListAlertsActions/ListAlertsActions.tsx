@@ -76,20 +76,20 @@ export const filters = {
       min: 0,
     },
   },
-  createdAtAfter: {
-    component: FormikTextInput,
-    props: {
-      label: 'Created Before',
-      placeholder: 'Enter a date...',
-      type: 'date',
-    },
-  },
   createdAtBefore: {
     component: FormikTextInput,
     props: {
       label: 'Created After',
-      placeholder: 'Enter a date...',
-      type: 'date',
+      type: 'datetime-local',
+      step: 1,
+    },
+  },
+  createdAtAfter: {
+    component: FormikTextInput,
+    props: {
+      label: 'Created Before',
+      type: 'datetime-local',
+      step: 1,
     },
   },
 };
@@ -114,6 +114,39 @@ const ListAlertsActions: React.FC = () => {
   const filterKeys = Object.keys(filters) as (keyof ListAlertsInput)[];
   const filtersCount = filterKeys.filter(key => !isEmpty(requestParams[key])).length;
 
+  // If we detect date times, we need to sanitize them for the Go lambda to
+  // correctly parse the time. This essentially ensures there is
+  // a 'Z' at the end of the date string.
+  const sanitizeDates = React.useCallback(
+    (parms: Partial<ListAlertsFiltersValues>) =>
+      Object.entries(parms).reduce((acc, [k, v]) => {
+        if (typeof v === 'string' && Date.parse(v)) {
+          acc[k] = /Z$/.test(v) ? v : `${v}Z`;
+          return acc;
+        }
+        acc[k] = v;
+        return acc;
+      }, {}),
+    [requestParams]
+  );
+
+  // If we detect date times, we need to desanitize them for the frontend
+  // to populate the date-time form correctly by removing any trailing
+  // 'Z' at the end of the date string.
+  const desanitizeDates = React.useCallback(
+    (parms: Partial<ListAlertsFiltersValues>) =>
+      Object.entries(parms).reduce((acc, [k, v]) => {
+        console.log('asdf');
+        if (typeof v === 'string' && Date.parse(v)) {
+          acc[k] = /Z$/.test(v) ? v.replace('Z', '') : v;
+          return acc;
+        }
+        acc[k] = v;
+        return acc;
+      }, {}),
+    [requestParams]
+  );
+
   // If there is at least one filter set visibility to true
   React.useEffect(() => {
     if (filtersCount > 0) {
@@ -124,7 +157,7 @@ const ListAlertsActions: React.FC = () => {
   // The initial filter values for when the filters component first renders. If you see down below,
   // we mount and unmount it depending on whether it's visible or not
   const initialFilterValues = React.useMemo(
-    () => pick(requestParams, filterKeys) as ListAlertsFiltersValues,
+    () => desanitizeDates(pick(requestParams, filterKeys) as ListAlertsFiltersValues),
     [requestParams]
   );
 
@@ -151,7 +184,7 @@ const ListAlertsActions: React.FC = () => {
             <GenerateFiltersGroup<ListAlertsFiltersValues>
               filters={filters}
               onCancel={() => setFiltersVisibility(false)}
-              onSubmit={updateRequestParams}
+              onSubmit={newParams => updateRequestParams(sanitizeDates(newParams))}
               initialValues={initialFilterValues}
             />
           </Card>
