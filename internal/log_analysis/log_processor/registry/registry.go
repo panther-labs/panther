@@ -19,9 +19,11 @@ package registry
  */
 
 import (
+	"github.com/pkg/errors"
+
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	"github.com/panther-labs/panther/internal/log_analysis/logtypes"
 
 	// Register log types in init() blocks
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/apachelogs"
@@ -37,34 +39,44 @@ import (
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/zeeklogs"
 )
 
+// Default returns the default log type registry
 func Default() *logtypes.Registry {
 	return logtypes.DefaultRegistry()
 }
+
+// Lookup finds a log type entry or panics
+// Panics if the name is not registered
 func Lookup(name string) logtypes.Entry {
 	return logtypes.DefaultRegistry().MustGet(name)
 }
 
+// AvailableLogTypes returns all available log types in the default registry
 func AvailableLogTypes() []string {
 	return logtypes.DefaultRegistry().LogTypes()
 }
 
-// Return a slice containing just the Glue tables
+// AvailableTables returns a slice containing the Glue tables for all available log types
 func AvailableTables() (tables []*awsglue.GlueTableMetadata) {
-	reg := logtypes.DefaultRegistry()
-	for _, logType := range AvailableLogTypes() {
-		if et := reg.Get(logType); et != nil {
-			tables = append(tables, et.GlueTableMeta())
-		}
+	entries := logtypes.DefaultRegistry().Entries()
+	tables = make([]*awsglue.GlueTableMetadata, len(entries))
+	for i, entry := range entries {
+		tables[i] = entry.GlueTableMeta()
 	}
 	return
 }
 
 // Available parsers returns log parsers for all available log types with nil parameters.
+// Panics if a parser factory in the default registry fails with nil params.
 func AvailableParsers() map[string]parsers.Interface {
 	entries := logtypes.DefaultRegistry().Entries()
 	available := make(map[string]parsers.Interface, len(entries))
 	for _, entry := range entries {
-		available[entry.Describe().Name] = entry.NewParser(nil)
+		logType := entry.Describe().Name
+		parser, err := entry.NewParser(nil)
+		if err != nil {
+			panic(errors.Errorf("failed to create %q parser with nil params", logType))
+		}
+		available[logType] = parser
 	}
 	return available
 }

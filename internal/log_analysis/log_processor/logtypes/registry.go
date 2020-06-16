@@ -53,7 +53,7 @@ func (r *Registry) Get(name string) Entry {
 	return r.entries[name]
 }
 
-// Entries returns EventType entries in a registry.
+// Entries returns log type entries in a registry.
 // If no names are provided all entries are returned.
 func (r *Registry) Entries(names ...string) []Entry {
 	if names == nil {
@@ -72,6 +72,7 @@ func (r *Registry) Entries(names ...string) []Entry {
 
 // LogTypes returns all available log types in a registry
 func (r *Registry) LogTypes() (logTypes []string) {
+	// Avoid allocation under lock
 	const minLogTypesSize = 32
 	logTypes = make([]string, 0, minLogTypesSize)
 	r.mu.RLock()
@@ -96,14 +97,14 @@ func (r *Registry) Register(config Config) (Entry, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
-	newEntry := newLogEventType(config.Describe(), config.Schema, config.NewParser)
+	newEntry := newEntry(config.Describe(), config.Schema, config.NewParser)
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	if oldEntry, duplicate := r.entries[newEntry.Name]; duplicate {
-		return oldEntry, errors.Errorf("duplicate log type config %q", newEntry.Name)
-	}
 	if r.entries == nil {
 		r.entries = make(map[string]Entry)
+	}
+	if oldEntry, duplicate := r.entries[newEntry.Name]; duplicate {
+		return oldEntry, errors.Errorf("duplicate log type config %q", newEntry.Name)
 	}
 	r.entries[newEntry.Name] = newEntry
 	return newEntry, nil
@@ -122,12 +123,12 @@ func (r *Registry) MustRegister(config Config) Entry {
 // Entries can be grouped in a `Registry` to have an index of available log types.
 type Entry interface {
 	Describe() Desc
-	NewParser(params interface{}) parsers.Interface
+	NewParser(params interface{}) (parsers.Interface, error)
 	Schema() interface{}
 	GlueTableMeta() *awsglue.GlueTableMetadata
 }
 
-// LogTypeConfig describes a log event type in a declarative way.
+// Config describes a log event type in a declarative way.
 // To convert to an Entry instance it must be registered.
 // The Config/Entry separation enforces mutability rules for registered log event types.
 type Config struct {
@@ -161,7 +162,7 @@ func (config *Config) Validate() error {
 	return nil
 }
 
-// LogTypeDesc describes an registered log type.
+// Desc describes an registered log type.
 type Desc struct {
 	Name         string
 	Description  string
@@ -192,15 +193,15 @@ func (desc *Desc) Validate() error {
 	return nil
 }
 
-type logEventType struct {
+type entry struct {
 	Desc
 	schema        interface{}
 	newParser     parsers.Factory
 	glueTableMeta *awsglue.GlueTableMetadata
 }
 
-func newLogEventType(desc Desc, schema interface{}, fac parsers.Factory) *logEventType {
-	return &logEventType{
+func newEntry(desc Desc, schema interface{}, fac parsers.Factory) *entry {
+	return &entry{
 		Desc:          desc,
 		schema:        schema,
 		newParser:     fac,
@@ -208,19 +209,20 @@ func newLogEventType(desc Desc, schema interface{}, fac parsers.Factory) *logEve
 	}
 }
 
-func (e *logEventType) Describe() Desc {
+func (e *entry) Describe() Desc {
 	return e.Desc
 }
-func (e *logEventType) Schema() interface{} {
+func (e *entry) Schema() interface{} {
 	return e.schema
 }
 
-func (e *logEventType) GlueTableMeta() *awsglue.GlueTableMetadata {
+// GlueTableMeta returns the glue table metadata for this entry
+func (e *entry) GlueTableMeta() *awsglue.GlueTableMetadata {
 	return e.glueTableMeta
 }
 
-// Parser returns a new LogParser instance for this log type
-func (e *logEventType) NewParser(params interface{}) parsers.Interface {
+// Parser returns a new parsers.Interface instance for this log type
+func (e *entry) NewParser(params interface{}) (parsers.Interface, error) {
 	return e.newParser(params)
 }
 

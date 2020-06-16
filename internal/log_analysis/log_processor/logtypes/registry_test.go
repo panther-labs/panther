@@ -40,8 +40,8 @@ func TestRegistry(t *testing.T) {
 		Description:  "Foo.Bar logs",
 		ReferenceURL: "-",
 		Schema:       struct{}{},
-		NewParser: func(params interface{}) parsers.Interface {
-			return nil
+		NewParser: func(params interface{}) (parsers.Interface, error) {
+			return nil, nil
 		},
 	}
 	api, err := r.Register(logTypeConfig)

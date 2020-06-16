@@ -2,8 +2,8 @@
 package gitlablogs
 
 import (
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	"github.com/panther-labs/panther/internal/log_analysis/logtypes"
 )
 
 /**

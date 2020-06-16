@@ -40,10 +40,10 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
-	"github.com/panther-labs/panther/internal/log_analysis/logtypes"
 )
 
 const (
@@ -159,8 +159,8 @@ func newRegistry(names ...string) *logtypes.Registry {
 			Description:  "description",
 			ReferenceURL: "-",
 			Schema:       struct{}{},
-			NewParser: func(_ interface{}) parsers.Interface {
-				return testutil.ParserConfig{}.Parser()
+			NewParser: func(_ interface{}) (parsers.Interface, error) {
+				return testutil.ParserConfig{}.Parser(), nil
 			},
 		})
 		if err != nil {

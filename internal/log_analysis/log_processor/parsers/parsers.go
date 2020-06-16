@@ -100,13 +100,15 @@ func (r *Result) Results() []*Result {
 	return []*Result{r}
 }
 
-type Factory func(params interface{}) Interface
+// Factory creates new parser instances.
+// The params argument defines parameters for a parser.
+type Factory func(params interface{}) (Interface, error)
 
 // AdapterFactory returns a pantherlog.LogParser factory from a parsers.Parser
 // This is used to ease transition to the new pantherlog.EventTypeEntry registry.
 func AdapterFactory(parser LogParser) Factory {
-	return func(_ interface{}) Interface {
-		return NewAdapter(parser)
+	return func(_ interface{}) (Interface, error) {
+		return NewAdapter(parser), nil
 	}
 }
 
