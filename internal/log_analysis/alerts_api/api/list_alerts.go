@@ -46,19 +46,6 @@ func (API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAlertsO
 		return nil, err
 	}
 
-	// TODO - the table already has a RANGE key for creationTime.
-	//    Sorting by time could happen in the table query directly, instead of here
-	// switch aws.StringValue(input.SortBy) {
-	// case "title":
-	// 	sort.Slice(alertItems, func(i, j int) bool {
-	// 		return aws.StringValue(result.Alerts[i].Title) < aws.StringValue(result.Alerts[j].Title)
-	// 	})
-	// }
-
-	// TODO - The returned pagination key is currently not valid when sorting.
-	//    It is currently returned by Dynamo as the last key that was scanned.
-	//    But Dynamo can't sort (except by time), so we need to construct the pagination key manually
-
 	result.Alerts = alertItemsToAlertSummary(alertItems)
 
 	gatewayapi.ReplaceMapSliceNils(result)
