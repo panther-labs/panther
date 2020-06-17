@@ -106,7 +106,7 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
   // on  lodash's pick, it messes typings and TS fails cause it thinks it doesn't have all the
   // fields it needs. We use `commonInitialValues` to satisfy this exact constraint that was set by
   // the `initialValues` prop of each form.
-  const commonInitialValues = pick(destination, ['displayName', 'defaultForSeverity']);
+  const commonInitialValues = pick(destination, ['outputId', 'displayName', 'defaultForSeverity']);
 
   const renderFullDestinationForm = () => {
     switch (destination.outputType) {

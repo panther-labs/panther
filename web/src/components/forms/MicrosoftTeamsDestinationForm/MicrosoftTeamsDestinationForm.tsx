@@ -50,7 +50,7 @@ const MicrosoftTeamsDestinationForm: React.FC<MicrosoftTeamsDestinationFormProps
   onSubmit,
   initialValues,
 }) => {
-  const existing = initialValues.displayName.length;
+  const existing = initialValues.outputId;
   const validationSchema = existing ? defaultValidationSchema : mergedValidationSchema;
 
   return (

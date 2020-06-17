@@ -17,7 +17,11 @@
  */
 
 import * as Yup from 'yup';
-import { SeverityEnum, AddDestinationConfigInput } from 'Generated/schema';
+import {
+  SeverityEnum,
+  AddDestinationConfigInput,
+  EditDestinationConfigInput,
+} from 'Generated/schema';
 import { Box, Flex, InputElementLabel, Text } from 'pouncejs';
 import { Field, Form, Formik } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -27,8 +31,9 @@ import FormikCheckbox from 'Components/fields/Checkbox';
 import SeverityBadge from 'Components/SeverityBadge';
 
 export interface BaseDestinationFormValues<
-  AdditionalValues extends Partial<AddDestinationConfigInput>
+  AdditionalValues extends Partial<AddDestinationConfigInput | EditDestinationConfigInput>
 > {
+  outputId?: string;
   displayName: string;
   outputConfig: AdditionalValues;
   defaultForSeverity: SeverityEnum[];
@@ -38,12 +43,14 @@ export interface BaseDestinationFormValues<
 // internally within the form. Essentially converts ['CRITICAL', 'LOW'] to
 // { CRITICAL: true, LOW: true }
 interface PrivateBaseDestinationFormValues<
-  AdditionalValues extends Partial<AddDestinationConfigInput>
+  AdditionalValues extends Partial<AddDestinationConfigInput | EditDestinationConfigInput>
 > extends Omit<BaseDestinationFormValues<AdditionalValues>, 'defaultForSeverity'> {
   defaultForSeverity: { [key in SeverityEnum]: boolean };
 }
 
-interface BaseDestinationFormProps<AdditionalValues extends Partial<AddDestinationConfigInput>> {
+interface BaseDestinationFormProps<
+  AdditionalValues extends Partial<AddDestinationConfigInput | EditDestinationConfigInput>
+> {
   /**
    * The initial values of the form. `DefaultForSeverity` is given as a list of severity values,
    * while internally the form will treat them as an object with the keys being the severities and
@@ -55,7 +62,7 @@ interface BaseDestinationFormProps<AdditionalValues extends Partial<AddDestinati
    * The validation schema for the form
    */
   validationSchema?: Yup.ObjectSchema<
-    Yup.Shape<object, Partial<PrivateBaseDestinationFormValues<AdditionalValues>>>
+    Yup.Shape<Record<string, unknown>, Partial<PrivateBaseDestinationFormValues<AdditionalValues>>>
   >;
 
   /** callback for the submission of the form */
@@ -72,7 +79,9 @@ export const defaultValidationSchema = Yup.object().shape({
   ),
 });
 
-function BaseDestinationForm<AdditionalValues extends Partial<AddDestinationConfigInput>>({
+function BaseDestinationForm<
+  AdditionalValues extends Partial<AddDestinationConfigInput | EditDestinationConfigInput>
+>({
   initialValues,
   validationSchema,
   onSubmit,
@@ -151,7 +160,7 @@ function BaseDestinationForm<AdditionalValues extends Partial<AddDestinationConf
           </Text>
         </Box>
         <SubmitButton width={1}>
-          {initialValues.displayName ? 'Update' : 'Add'} Destination
+          {initialValues.outputId ? 'Update' : 'Add'} Destination
         </SubmitButton>
       </Form>
     </Formik>
