@@ -21,9 +21,10 @@ package outputs
 import (
 	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
+
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
-	"github.com/panther-labs/panther/pkg/unbox"
 )
 
 // MsTeams alert send an alert.
@@ -39,8 +40,8 @@ func (client *OutputClient) MsTeams(
 		"sections": []interface{}{
 			map[string]interface{}{
 				"facts": []interface{}{
-					map[string]string{"name": "Description", "value": unbox.String(alert.AnalysisDescription)},
-					map[string]string{"name": "Runbook", "value": unbox.String(alert.Runbook)},
+					map[string]string{"name": "Description", "value": aws.StringValue(alert.AnalysisDescription)},
+					map[string]string{"name": "Runbook", "value": aws.StringValue(alert.Runbook)},
 					map[string]string{"name": "Severity", "value": alert.Severity},
 					map[string]string{"name": "Tags", "value": strings.Join(alert.Tags, ", ")},
 				},

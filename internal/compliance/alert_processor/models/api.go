@@ -28,10 +28,10 @@ type ComplianceNotification struct {
 	//ResourceID is the ID specific to the resource
 	ResourceID *string `json:"resourceId" validate:"required,min=1"`
 
-	//AnalysisID is the id of the policy that triggered
+	//PolicyID is the id of the policy that triggered
 	PolicyID *string `json:"policyId" validate:"required,min=1"`
 
-	//Version is the version of policy when the alert triggered
+	//PolicyVersionID is the version of policy when the alert triggered
 	PolicyVersionID *string `json:"policyVersionId"`
 
 	//ShouldAlert indicates whether this notification should cause an alert to be send to the customer

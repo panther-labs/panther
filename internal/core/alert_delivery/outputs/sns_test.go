@@ -31,7 +31,6 @@ import (
 
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
-	"github.com/panther-labs/panther/pkg/box"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
@@ -45,20 +44,20 @@ func TestSendSns(t *testing.T) {
 
 	createdAtTime := time.Now()
 	alert := &alertmodels.Alert{
-		AnalysisName:        box.String("policyName"),
+		AnalysisName:        aws.String("policyName"),
 		AnalysisID:          "policyId",
-		AnalysisDescription: box.String("policyDescription"),
+		AnalysisDescription: aws.String("policyDescription"),
 		Severity:            "severity",
-		Runbook:             box.String("runbook"),
+		Runbook:             aws.String("runbook"),
 		CreatedAt:           createdAtTime,
 	}
 
 	defaultMessage := Notification{
 		AnalysisID:   "policyId",
-		AnalysisName: box.String("policyName"),
-		Description:  box.String("policyDescription"),
+		AnalysisName: aws.String("policyName"),
+		Description:  aws.String("policyDescription"),
 		Severity:     "severity",
-		Runbook:      box.String("runbook"),
+		Runbook:      aws.String("runbook"),
 		CreatedAt:    createdAtTime,
 		Link:         "https://panther.io/policies/policyId",
 		Title:        "Policy Failure: policyName",

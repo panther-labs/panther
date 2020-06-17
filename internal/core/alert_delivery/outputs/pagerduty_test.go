@@ -29,7 +29,6 @@ import (
 
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
-	"github.com/panther-labs/panther/pkg/box"
 )
 
 var createdAtTime, _ = time.Parse(time.RFC3339, "2019-05-03T11:40:13Z")
@@ -60,8 +59,8 @@ func TestSendPagerDutyAlert(t *testing.T) {
 				Type:         alertmodels.PolicyType,
 				Link:         "https://panther.io/policies/policyId",
 				Title:        "Policy Failure: policyName",
-				AnalysisName: box.String("policyName"),
-				Runbook:      box.String("runbook"),
+				AnalysisName: aws.String("policyName"),
+				Runbook:      aws.String("runbook"),
 				Tags:         []string{},
 			},
 			"severity":  "info",

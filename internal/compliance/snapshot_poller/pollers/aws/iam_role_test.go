@@ -46,7 +46,7 @@ func TestIAMRolesListError(t *testing.T) {
 func TestIAMRolesGetPolicy(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvc([]string{"GetRolePolicy"})
 
-	out := getRolePolicy(mockSvc, aws.String("RoleName"), aws.String("AnalysisName"))
+	out := getRolePolicy(mockSvc, aws.String("RoleName"), aws.String("PolicyName"))
 	assert.NotEmpty(t, out)
 }
 

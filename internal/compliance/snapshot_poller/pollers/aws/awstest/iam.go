@@ -387,7 +387,7 @@ var (
 
 	ExampleGetRolePolicy = &iam.GetRolePolicyOutput{
 		RoleName:       aws.String("ExampleRole"),
-		PolicyName:     aws.String("AnalysisName"),
+		PolicyName:     aws.String("PolicyName"),
 		PolicyDocument: aws.String("JSON POLICY DOCUMENT"),
 	}
 

@@ -19,9 +19,10 @@ package outputs
  */
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
+
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
-	"github.com/panther-labs/panther/pkg/unbox"
 )
 
 var (
@@ -40,9 +41,9 @@ var pantherToOpsGeniePriority = map[string]string{
 func (client *OutputClient) Opsgenie(
 	alert *alertmodels.Alert, config *outputmodels.OpsgenieConfig) *AlertDeliveryError {
 
-	description := "<strong>Description:</strong> " + unbox.String(alert.AnalysisDescription)
+	description := "<strong>Description:</strong> " + aws.StringValue(alert.AnalysisDescription)
 	link := "\n<a href=\"" + generateURL(alert) + "\">Click here to view in the Panther UI</a>"
-	runBook := "\n <strong>Runbook:</strong> " + unbox.String(alert.Runbook)
+	runBook := "\n <strong>Runbook:</strong> " + aws.StringValue(alert.Runbook)
 	severity := "\n <strong>Severity:</strong> " + alert.Severity
 
 	opsgenieRequest := map[string]interface{}{
