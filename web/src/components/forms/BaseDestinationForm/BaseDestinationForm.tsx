@@ -55,7 +55,7 @@ interface BaseDestinationFormProps<AdditionalValues extends Partial<AddDestinati
    * The validation schema for the form
    */
   validationSchema?: Yup.ObjectSchema<
-    Yup.Shape<object, Partial<PrivateBaseDestinationFormValues<AdditionalValues>>>
+    Yup.Shape<Record<string, unknown>, Partial<PrivateBaseDestinationFormValues<AdditionalValues>>>
   >;
 
   /** callback for the submission of the form */
