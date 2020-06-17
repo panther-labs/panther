@@ -30,168 +30,11 @@ import (
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 )
 
-// ListByRule - lists all alerts belonging to a specific ruleID
-func (table *AlertsTable) ListByRule(input *models.ListAlertsInput) (
-	summaries []*AlertItem, lastEvaluatedKey *string, err error) {
-
-	return table.list(RuleIDKey, *input.RuleID, input)
-}
-
-// ListAll - lists all alerts (default sort by creation time)
+// ListAll - lists all alerts and apply filtering, sorting logic
 func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 	summaries []*AlertItem, lastEvaluatedKey *string, err error) {
 
 	return table.list(TimePartitionKey, TimePartitionValue, input)
-}
-
-// getIndex - gets the primary index to query
-//
-// If a `RuleID` is present, then create the index based on this field.
-// Otherwise, use the default time partition index
-func (table *AlertsTable) getIndex(input *models.ListAlertsInput) (index *string) {
-	if input.RuleID != nil {
-		index = aws.String(table.RuleIDCreationTimeIndexName)
-		return index
-	}
-	index = aws.String(table.TimePartitionCreationTimeIndexName)
-	return index
-}
-
-// getKeyBuilder - gets the appropriate key builder
-func (table *AlertsTable) getKeyBuilder(input *models.ListAlertsInput) (keyBuilder expression.KeyBuilder) {
-	if input.RuleID != nil {
-		keyBuilder = expression.Key(RuleIDKey)
-		return keyBuilder
-	}
-	keyBuilder = expression.Key(TimePartitionKey)
-	return keyBuilder
-}
-
-// getKeyCondition - gets the key condition for a query
-func (table *AlertsTable) getKeyCondition(keyBuilder *expression.KeyBuilder,
-	input *models.ListAlertsInput) (keyCondition expression.KeyConditionBuilder) {
-
-	// If we have a ruleId, set the primary key and allow for filtering by createdAt
-	if input.RuleID != nil {
-		if input.CreatedAtBefore != nil && input.CreatedAtAfter != nil && input.CreatedAtAfter.Before(*input.CreatedAtBefore) {
-			keyCondition = keyBuilder.Equal(expression.Value(*input.RuleID)).
-				And(
-					expression.Key(CreatedAtKey).Between(
-						expression.Value(*input.CreatedAtAfter), expression.Value(*input.CreatedAtBefore),
-					),
-				)
-			return keyCondition
-		} else if input.CreatedAtAfter != nil && input.CreatedAtBefore == nil {
-			keyCondition = keyBuilder.Equal(expression.Value(*input.RuleID)).
-				And(
-					expression.Key(CreatedAtKey).GreaterThanEqual(
-						expression.Value(*input.CreatedAtAfter),
-					),
-				)
-			return keyCondition
-		} else if input.CreatedAtBefore != nil && input.CreatedAtAfter == nil {
-			keyCondition = keyBuilder.Equal(expression.Value(*input.RuleID)).
-				And(
-					expression.Key(CreatedAtKey).LessThanEqual(
-						expression.Value(*input.CreatedAtBefore),
-					),
-				)
-			return keyCondition
-		}
-
-		keyCondition = keyBuilder.Equal(expression.Value(*input.RuleID))
-		return keyCondition
-	}
-
-	// Otherwise, set the primary key for the time partition and allow for filtering by createdAt
-	if input.CreatedAtBefore != nil && input.CreatedAtAfter != nil && input.CreatedAtAfter.Before(*input.CreatedAtBefore) {
-		keyCondition = keyBuilder.Equal(expression.Value(TimePartitionValue)).
-			And(
-				expression.Key(CreatedAtKey).Between(
-					expression.Value(*input.CreatedAtAfter), expression.Value(*input.CreatedAtBefore),
-				),
-			)
-		return keyCondition
-	} else if input.CreatedAtAfter != nil && input.CreatedAtBefore == nil {
-		keyCondition = keyBuilder.Equal(expression.Value(TimePartitionValue)).
-			And(
-				expression.Key(CreatedAtKey).GreaterThanEqual(
-					expression.Value(*input.CreatedAtAfter),
-				),
-			)
-		return keyCondition
-	} else if input.CreatedAtBefore != nil && input.CreatedAtAfter == nil {
-		keyCondition = keyBuilder.Equal(expression.Value(TimePartitionValue)).
-			And(
-				expression.Key(CreatedAtKey).LessThanEqual(
-					expression.Value(*input.CreatedAtBefore),
-				),
-			)
-		return keyCondition
-	}
-
-	keyCondition = keyBuilder.Equal(expression.Value(TimePartitionValue))
-	return keyCondition
-}
-
-// filterBySeverity - filters by a Severity level
-func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
-	if input.Severity != nil {
-		*filter = filter.And(
-			expression.Equal(expression.Name("severity"), expression.Value(*input.Severity)),
-		)
-	}
-}
-
-// filterByTitleContains - fiters by a name that contains a string (case sensitive)
-func filterByTitleContains(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
-	if input.Contains != nil {
-		*filter = filter.And(
-			expression.Contains(expression.Name("title"), *input.Contains),
-		)
-	}
-}
-
-// filterByEventCount - fiters by an eventCount defined by a range of two numbers
-func filterByEventCount(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
-	// Ensure we are checking for valid inputs that are within an acceptable range
-	if input.EventCountMax != nil && input.EventCountMin != nil && *input.EventCountMin >= 0 && *input.EventCountMax >= *input.EventCountMin {
-		*filter = filter.And(
-			expression.GreaterThanEqual(expression.Name("eventCount"), expression.Value(*input.EventCountMin)),
-			expression.LessThanEqual(expression.Name("eventCount"), expression.Value(*input.EventCountMax)),
-		)
-	} else if input.EventCountMax != nil && input.EventCountMin == nil && *input.EventCountMax >= 0 {
-		*filter = filter.And(
-			expression.LessThanEqual(expression.Name("eventCount"), expression.Value(*input.EventCountMax)),
-		)
-	} else if input.EventCountMin != nil && input.EventCountMax == nil && *input.EventCountMin >= 0 {
-		*filter = filter.And(
-			expression.GreaterThanEqual(expression.Name("eventCount"), expression.Value(*input.EventCountMin)),
-		)
-	}
-}
-
-// applyFilters - adds filters onto an expression
-func (table *AlertsTable) applyFilters(builder *expression.Builder, input *models.ListAlertsInput) {
-	// Start with an empty filter for a known attribute
-	filter := expression.AttributeExists(expression.Name("id"))
-
-	// Then, apply our filters
-	filterBySeverity(&filter, input)
-	filterByTitleContains(&filter, input)
-	filterByEventCount(&filter, input)
-
-	// Finally, overwrite the existing condition filter on the builder
-	*builder = builder.WithFilter(filter)
-}
-
-// getSortDirection - gets the direction to sort the data
-func (table *AlertsTable) getSortDirection(input *models.ListAlertsInput) bool {
-	// By default, sort descending
-	if input.SortDir == nil {
-		return false
-	}
-	return *input.SortDir == "ascending"
 }
 
 // list - returns a page of alerts ordered by creationTime, last evaluated key, any error
@@ -201,11 +44,8 @@ func (table *AlertsTable) list(ddbKey, ddbValue string, input *models.ListAlerts
 	// Get the primary key index to query by
 	index := table.getIndex(input)
 
-	// Get the key builder for the query
-	keyBuilder := table.getKeyBuilder(input)
-
 	// Get the key condition for the query
-	keyCondition := table.getKeyCondition(&keyBuilder, input)
+	keyCondition := table.getKeyCondition(input)
 
 	// Construct a new builder instance with the above index as our key condition
 	builder := expression.NewBuilder().WithKeyCondition(keyCondition)
@@ -214,7 +54,7 @@ func (table *AlertsTable) list(ddbKey, ddbValue string, input *models.ListAlerts
 	table.applyFilters(&builder, input)
 
 	// Get the sort direction
-	direction := table.getSortDirection(input)
+	direction := table.isAscendingOrder(input)
 
 	// Construct a query expression
 	queryExpression, err := builder.Build()
@@ -283,4 +123,85 @@ func (table *AlertsTable) list(ddbKey, ddbValue string, input *models.ListAlerts
 	}
 
 	return summaries, lastEvaluatedKey, nil
+}
+
+// getIndex - gets the primary index to query
+func (table *AlertsTable) getIndex(input *models.ListAlertsInput) *string {
+	if input.RuleID != nil {
+		return aws.String(table.RuleIDCreationTimeIndexName)
+	}
+	return aws.String(table.TimePartitionCreationTimeIndexName)
+}
+
+// getKeyCondition - gets the key condition for a query
+func (table *AlertsTable) getKeyCondition(input *models.ListAlertsInput) (
+	keyCondition expression.KeyConditionBuilder) {
+
+	if input.RuleID != nil {
+		keyCondition = expression.Key(RuleIDKey).Equal(expression.Value(*input.RuleID))
+	} else {
+		keyCondition = expression.Key(TimePartitionKey).Equal(expression.Value(TimePartitionValue))
+	}
+
+	if input.CreatedAtAfter != nil {
+		keyCondition = keyCondition.And(
+			expression.Key(CreatedAtKey).GreaterThanEqual(expression.Value(*input.CreatedAtAfter)))
+	}
+
+	if input.CreatedAtBefore != nil {
+		keyCondition = keyCondition.And(
+			expression.Key(CreatedAtKey).LessThanEqual(expression.Value(*input.CreatedAtBefore)))
+	}
+	return keyCondition
+}
+
+// filterBySeverity - filters by a Severity level
+func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
+	if input.Severity != nil {
+		filter.And(
+			expression.Equal(expression.Name(Severity), expression.Value(*input.Severity)),
+		)
+	}
+}
+
+// filterByTitleContains - fiters by a name that contains a string (case sensitive)
+func filterByTitleContains(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
+	if input.NameContains != nil {
+		filter.And(
+			expression.Contains(expression.Name(Title), *input.NameContains),
+		)
+	}
+}
+
+// filterByEventCount - fiters by an eventCount defined by a range of two numbers
+func filterByEventCount(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
+	if input.EventCountMax != nil {
+		filter.And(expression.LessThanEqual(expression.Name(EventCount), expression.Value(*input.EventCountMax)))
+	}
+	if input.EventCountMin != nil {
+		filter.And(expression.GreaterThanEqual(expression.Name(EventCount), expression.Value(*input.EventCountMin)))
+	}
+}
+
+// applyFilters - adds filters onto an expression
+func (table *AlertsTable) applyFilters(builder *expression.Builder, input *models.ListAlertsInput) {
+	// Start with an empty filter for a known attribute
+	filter := expression.AttributeExists(expression.Name(AlertIDKey))
+
+	// Then, apply our filters
+	filterBySeverity(&filter, input)
+	filterByTitleContains(&filter, input)
+	filterByEventCount(&filter, input)
+
+	// Finally, overwrite the existing condition filter on the builder
+	*builder = builder.WithFilter(filter)
+}
+
+// isAscendingOrder - determines which direction to sort the data
+func (table *AlertsTable) isAscendingOrder(input *models.ListAlertsInput) bool {
+	// By default, sort descending
+	if input.SortDir == nil {
+		return false
+	}
+	return *input.SortDir == "ascending"
 }

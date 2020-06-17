@@ -32,7 +32,7 @@ import pick from 'lodash-es/pick';
 const severityOptions = Object.values(SeverityEnum);
 
 export const filters = {
-  contains: {
+  nameContains: {
     component: FormikTextInput,
     props: {
       label: 'Title contains',
@@ -102,7 +102,7 @@ export type ListAlertsFiltersValues = Pick<
   | 'ruleId'
   | 'eventCountMin'
   | 'eventCountMax'
-  | 'contains'
+  | 'nameContains'
   | 'createdAtAfter'
   | 'createdAtBefore'
 >;

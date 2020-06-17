@@ -35,13 +35,15 @@ func (API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAlertsO
 
 	result = &models.ListAlertsOutput{}
 	var alertItems []*table.AlertItem
-	if input.RuleID != nil {
-		// list per specific ruleId
-		alertItems, result.LastEvaluatedKey, err = alertsDB.ListByRule(input)
-	} else {
-		// list all alerts time desc order
-		alertItems, result.LastEvaluatedKey, err = alertsDB.ListAll(input)
-	}
+
+	// TODO: apply input sanitization
+	// PageSize
+	// CreatedAtAfter/Before
+	// EventCountMin/Max
+	//
+	// Fetch all alerts. The results will have filters, sorting applied.
+	alertItems, result.LastEvaluatedKey, err = alertsDB.ListAll(input)
+
 	if err != nil {
 		return nil, err
 	}

@@ -85,7 +85,7 @@ input ListAlertsInput {
   pageSize: Int # defaults to `25`
   exclusiveStartKey: String
   severity: SeverityEnum
-  contains: String # matches against title
+  nameContains: String
   eventCountMin: Int
   eventCountMax: Int
   createdAtBefore: AWSDateTime

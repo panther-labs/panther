@@ -34,12 +34,14 @@ const (
 	CreatedAtKey       = "creationTime"
 	TimePartitionKey   = "timePartition"
 	TimePartitionValue = "defaultPartition"
+	Title              = "title"
+	Severity           = "severity"
+	EventCount         = "eventCount"
 )
 
 // API defines the interface for the alerts table which can be used for mocking.
 type API interface {
 	GetAlert(*string) (*AlertItem, error)
-	ListByRule(*models.ListAlertsInput) ([]*AlertItem, *string, error)
 	ListAll(*models.ListAlertsInput) ([]*AlertItem, *string, error)
 }
 

@@ -76,7 +76,7 @@ func TestListAlertsForRule(t *testing.T) {
 		Severity:          aws.String("INFO"),
 	}
 
-	tableMock.On("ListByRule", input).
+	tableMock.On("ListAll", input).
 		Return(alertItems, aws.String("lastKey"), nil)
 	result, err := API{}.ListAlerts(input)
 	require.NoError(t, err)
@@ -95,7 +95,7 @@ func TestListAllAlerts(t *testing.T) {
 		PageSize:          aws.Int(10),
 		ExclusiveStartKey: aws.String("startKey"),
 		Severity:          aws.String("INFO"),
-		Contains:          aws.String("title"),
+		NameContains:      aws.String("title"),
 		EventCountMin:     aws.Int(0),
 		EventCountMax:     aws.Int(100),
 		CreatedAtAfter:    aws.Time(time.Now()),
