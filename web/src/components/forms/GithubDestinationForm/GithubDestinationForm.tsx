@@ -33,35 +33,27 @@ interface GithubDestinationFormProps {
   onSubmit: (values: BaseDestinationFormValues<GithubFieldValues>) => void;
 }
 
-const baseGithubShapeObject = {
-  repoName: Yup.string().required(),
-};
-
-const githubFieldsValidationSchema = Yup.object().shape({
-  outputConfig: Yup.object().shape({
-    github: Yup.object().shape({ ...baseGithubShapeObject, token: Yup.string().required() }),
-  }),
-});
-
-const editGithubFieldsValidationSchema = Yup.object().shape({
-  outputConfig: Yup.object().shape({
-    github: Yup.object().shape(baseGithubShapeObject),
-  }),
-});
-
 const GithubDestinationForm: React.FC<GithubDestinationFormProps> = ({
   onSubmit,
   initialValues,
 }) => {
   const existing = initialValues.outputId;
-  const validationSchema = existing
-    ? defaultValidationSchema.concat(editGithubFieldsValidationSchema)
-    : defaultValidationSchema.concat(githubFieldsValidationSchema);
+
+  const githubFieldsValidationSchema = Yup.object().shape({
+    outputConfig: Yup.object().shape({
+      github: Yup.object().shape({
+        repoName: Yup.string().required(),
+        token: existing ? Yup.string() : Yup.string().required(),
+      }),
+    }),
+  });
+
+  const mergedValidationSchema = defaultValidationSchema.concat(githubFieldsValidationSchema);
 
   return (
     <BaseDestinationForm<GithubFieldValues>
       initialValues={initialValues}
-      validationSchema={validationSchema}
+      validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
       <Field
@@ -75,10 +67,9 @@ const GithubDestinationForm: React.FC<GithubDestinationFormProps> = ({
       <Field
         as={FormikTextInput}
         type="password"
-        disabled={existing}
         name="outputConfig.github.token"
         label="Token"
-        placeholder="What's your Github API token?"
+        placeholder={existing ? '<hidden information>' : "What's your Github API token?"}
         mb={6}
         aria-required
         autoComplete="new-password"

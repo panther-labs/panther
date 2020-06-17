@@ -34,38 +34,30 @@ interface JiraDestinationFormProps {
   onSubmit: (values: BaseDestinationFormValues<JiraFieldValues>) => void;
 }
 
-const baseJiraShapeObject = {
-  orgDomain: Yup.string().url('Must be a valid Jira domain').required(),
-  userName: Yup.string(),
-  projectKey: Yup.string().required(),
-  assigneeId: Yup.string(),
-  issueType: Yup.string().test('oneOf', 'Please select a valid value', value =>
-    Object.values(JiraIssueTypesEnum).includes(value)
-  ),
-};
-
-const jiraFieldsValidationSchema = Yup.object().shape({
-  outputConfig: Yup.object().shape({
-    jira: Yup.object().shape({ ...baseJiraShapeObject, apiKey: Yup.string().required() }),
-  }),
-});
-
-const editJiraFieldsValidationSchema = Yup.object().shape({
-  outputConfig: Yup.object().shape({
-    jira: Yup.object().shape(baseJiraShapeObject),
-  }),
-});
-
 const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, initialValues }) => {
   const existing = initialValues.outputId;
-  const validationSchema = existing
-    ? defaultValidationSchema.concat(editJiraFieldsValidationSchema)
-    : defaultValidationSchema.concat(jiraFieldsValidationSchema);
+
+  const jiraFieldsValidationSchema = Yup.object().shape({
+    outputConfig: Yup.object().shape({
+      jira: Yup.object().shape({
+        orgDomain: Yup.string().url('Must be a valid Jira domain').required(),
+        userName: Yup.string(),
+        projectKey: Yup.string().required(),
+        assigneeId: Yup.string(),
+        issueType: Yup.string().test('oneOf', 'Please select a valid value', value =>
+          Object.values(JiraIssueTypesEnum).includes(value)
+        ),
+        apiKey: existing ? Yup.string() : Yup.string().required(),
+      }),
+    }),
+  });
+
+  const mergedValidationSchema = defaultValidationSchema.concat(jiraFieldsValidationSchema);
 
   return (
     <BaseDestinationForm<JiraFieldValues>
       initialValues={initialValues}
-      validationSchema={validationSchema}
+      validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
       <Field
@@ -94,11 +86,12 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
       />
       <Field
         as={FormikTextInput}
-        disabled={existing}
         type="password"
         name="outputConfig.jira.apiKey"
         label="Jira API Key"
-        placeholder="What's the API key of the related Jira account"
+        placeholder={
+          existing ? '<hidden information>' : "What's the API key of the related Jira account"
+        }
         mb={6}
         aria-required
         autoComplete="new-password"

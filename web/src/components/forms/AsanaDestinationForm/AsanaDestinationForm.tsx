@@ -36,44 +36,32 @@ interface AsanaDestinationFormProps {
   onSubmit: (values: BaseDestinationFormValues<AsanaFieldValues>) => void;
 }
 
-const baseAsanaShapeObject = {
-  projectGids: Yup.array().of(Yup.number()).required(),
-};
-
-const asanaFieldsValidationSchema = Yup.object().shape({
-  outputConfig: Yup.object().shape({
-    asana: Yup.object().shape({
-      ...baseAsanaShapeObject,
-      personalAccessToken: Yup.string().required(),
-    }),
-  }),
-});
-
-const editAsanaFieldsValidationSchema = Yup.object().shape({
-  outputConfig: Yup.object().shape({
-    asana: Yup.object().shape(baseAsanaShapeObject),
-  }),
-});
-
 const AsanaDestinationForm: React.FC<AsanaDestinationFormProps> = ({ onSubmit, initialValues }) => {
   const existing = initialValues.outputId;
-  const validationSchema = existing
-    ? defaultValidationSchema.concat(editAsanaFieldsValidationSchema)
-    : defaultValidationSchema.concat(asanaFieldsValidationSchema);
+
+  const asanaFieldsValidationSchema = Yup.object().shape({
+    outputConfig: Yup.object().shape({
+      asana: Yup.object().shape({
+        projectGids: Yup.array().of(Yup.number()).required(),
+        personalAccessToken: existing ? Yup.string() : Yup.string().required(),
+      }),
+    }),
+  });
+
+  const mergedValidationSchema = defaultValidationSchema.concat(asanaFieldsValidationSchema);
 
   return (
     <BaseDestinationForm<AsanaFieldValues>
       initialValues={initialValues}
-      validationSchema={validationSchema}
+      validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
       <Field
         as={FormikTextInput}
         type="password"
-        disabled={existing}
         name="outputConfig.asana.personalAccessToken"
         label="Access Token"
-        placeholder="Your personal Asana access token"
+        placeholder={existing ? '<hidden information>' : 'Your personal Asana access token'}
         mb={6}
         aria-required
       />

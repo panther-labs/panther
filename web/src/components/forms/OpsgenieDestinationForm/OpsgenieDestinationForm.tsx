@@ -33,39 +33,36 @@ interface OpsgenieDestinationFormProps {
   onSubmit: (values: BaseDestinationFormValues<OpsgenieFieldValues>) => void;
 }
 
-const opsgenieFieldsValidationSchema = Yup.object().shape({
-  outputConfig: Yup.object().shape({
-    opsgenie: Yup.object().shape({
-      apiKey: Yup.string().required(),
-    }),
-  }),
-});
-
-// We merge the two schemas together: the one deriving from the common fields, plus the custom
-// ones that change for each destination.
-// https://github.com/jquense/yup/issues/522
-const mergedValidationSchema = defaultValidationSchema.concat(opsgenieFieldsValidationSchema);
-
 const OpsgenieDestinationForm: React.FC<OpsgenieDestinationFormProps> = ({
   onSubmit,
   initialValues,
 }) => {
   const existing = initialValues.outputId;
-  const validationSchema = existing ? defaultValidationSchema : mergedValidationSchema;
+
+  const opsgenieFieldsValidationSchema = Yup.object().shape({
+    outputConfig: Yup.object().shape({
+      opsgenie: Yup.object().shape({
+        apiKey: existing ? Yup.string() : Yup.string().required(),
+      }),
+    }),
+  });
+
+  const mergedValidationSchema = defaultValidationSchema.concat(opsgenieFieldsValidationSchema);
 
   return (
     <BaseDestinationForm<OpsgenieFieldValues>
       initialValues={initialValues}
-      validationSchema={validationSchema}
+      validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
       <Field
         as={FormikTextInput}
-        disabled={existing}
         type="password"
         name="outputConfig.opsgenie.apiKey"
         label="Opsgenie API key"
-        placeholder="What's your organization's Opsgenie API key?"
+        placeholder={
+          existing ? '<hidden information>' : "What's your organization's Opsgenie API key?"
+        }
         mb={6}
         aria-required
         autoComplete="new-password"

@@ -33,39 +33,35 @@ interface PagerDutyDestinationFormProps {
   onSubmit: (values: BaseDestinationFormValues<PagerDutyFieldValues>) => void;
 }
 
-const pagerDutyFieldsValidationSchema = Yup.object().shape({
-  outputConfig: Yup.object().shape({
-    pagerDuty: Yup.object().shape({
-      integrationKey: Yup.string().length(32, 'Must be exactly 32 characters').required(),
-    }),
-  }),
-});
-
-// We merge the two schemas together: the one deriving from the common fields, plus the custom
-// ones that change for each destination.
-// https://github.com/jquense/yup/issues/522
-const mergedValidationSchema = defaultValidationSchema.concat(pagerDutyFieldsValidationSchema);
-
 const PagerDutyDestinationForm: React.FC<PagerDutyDestinationFormProps> = ({
   onSubmit,
   initialValues,
 }) => {
   const existing = initialValues.outputId;
-  const validationSchema = existing ? defaultValidationSchema : mergedValidationSchema;
+
+  const pagerDutyKey = Yup.string().length(32, 'Must be exactly 32 characters');
+  const pagerDutyFieldsValidationSchema = Yup.object().shape({
+    outputConfig: Yup.object().shape({
+      pagerDuty: Yup.object().shape({
+        integrationKey: existing ? pagerDutyKey : pagerDutyKey.required(),
+      }),
+    }),
+  });
+
+  const mergedValidationSchema = defaultValidationSchema.concat(pagerDutyFieldsValidationSchema);
 
   return (
     <BaseDestinationForm<PagerDutyFieldValues>
       initialValues={initialValues}
-      validationSchema={validationSchema}
+      validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
       <Field
         as={FormikTextInput}
-        disabled={existing}
         type="password"
         name="outputConfig.pagerDuty.integrationKey"
         label="Integration Key"
-        placeholder="What's your PagerDuty Integration Key?"
+        placeholder={existing ? '<hidden information>' : "What's your PagerDuty Integration Key?"}
         mb={6}
         aria-required
         autoComplete="new-password"

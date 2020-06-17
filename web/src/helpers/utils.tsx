@@ -65,6 +65,7 @@ export const integrationLabelValidation = () =>
     .matches(SOURCE_LABEL_REGEX, 'Can only include alphanumeric characters, dashes and spaces')
     .max(32, 'Must be at most 32 characters');
 
+export const webhookValidation = () => Yup.string().url('Must be a valid webhook URL');
 /**
  * checks whether the input is a valid UUID
  */
