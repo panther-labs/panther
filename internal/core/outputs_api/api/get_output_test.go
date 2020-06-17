@@ -62,7 +62,7 @@ func TestGetOutput(t *testing.T) {
 		DisplayName:        aws.String("displayName"),
 		LastModifiedBy:     aws.String("lastModifiedBy"),
 		LastModifiedTime:   aws.String("lastModifiedTime"),
-		OutputConfig:       &models.OutputConfig{},
+		OutputConfig:       &models.OutputConfig{Slack: &models.SlackConfig{WebhookURL: redacted}},
 		DefaultForSeverity: aws.StringSlice([]string{"HIGH", "CRITICAL"}),
 	}
 

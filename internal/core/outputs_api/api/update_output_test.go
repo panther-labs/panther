@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/core/outputs_api/table"
@@ -33,7 +34,7 @@ var mockUpdateOutputInput = &models.UpdateOutputInput{
 	OutputID:           aws.String("outputId"),
 	DisplayName:        aws.String("displayName"),
 	UserID:             aws.String("userId"),
-	OutputConfig:       &models.OutputConfigUpdate{},
+	OutputConfig:       &models.OutputConfig{},
 	DefaultForSeverity: aws.StringSlice([]string{"CRITICAL", "HIGH"}),
 }
 
@@ -62,6 +63,7 @@ func TestUpdateOutput(t *testing.T) {
 	result, err := (API{}).UpdateOutput(mockUpdateOutputInput)
 
 	assert.NoError(t, err)
+	require.NotNil(t, result)
 	assert.Equal(t, aws.String("outputId"), result.OutputID)
 	assert.Equal(t, aws.String("displayName"), result.DisplayName)
 	assert.Equal(t, aws.String("createdBy"), result.CreatedBy)
@@ -117,6 +119,7 @@ func TestUpdateSameOutputOutput(t *testing.T) {
 	result, err := (API{}).UpdateOutput(mockUpdateOutputInput)
 
 	assert.NoError(t, err)
+	require.NotNil(t, result)
 	assert.Equal(t, aws.String("outputId"), result.OutputID)
 	assert.Equal(t, aws.String("displayName"), result.DisplayName)
 	assert.Equal(t, aws.String("createdBy"), result.CreatedBy)

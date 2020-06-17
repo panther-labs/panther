@@ -19,6 +19,7 @@ package api
  */
 
 import (
+	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/panther-labs/panther/internal/core/outputs_api/table"
@@ -71,6 +72,8 @@ type mockEncryptionKey struct {
 
 func (m *mockEncryptionKey) DecryptConfig(ciphertext []byte, config interface{}) error {
 	args := m.Called(ciphertext, config)
+	plaintext := []byte(`{"slack": {"webhookURL": "https://hooks.slack.com/services/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"}}`)
+	_ = jsoniter.Unmarshal(plaintext, config)
 	return args.Error(0)
 }
 

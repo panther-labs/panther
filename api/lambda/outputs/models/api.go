@@ -81,11 +81,11 @@ type DeleteOutputInput struct {
 //     }
 // }
 type UpdateOutputInput struct {
-	UserID             *string             `json:"userId" validate:"required,uuid4"`
-	DisplayName        *string             `json:"displayName" validate:"omitempty,min=1,excludesall='<>&\""`
-	OutputID           *string             `json:"outputId" validate:"required,uuid4"`
-	OutputConfig       *OutputConfigUpdate `json:"outputConfig"`
-	DefaultForSeverity []*string           `json:"defaultForSeverity"`
+	UserID             *string       `json:"userId" validate:"required,uuid4"`
+	DisplayName        *string       `json:"displayName" validate:"omitempty,min=1,excludesall='<>&\""`
+	OutputID           *string       `json:"outputId" validate:"required,uuid4"`
+	OutputConfig       *OutputConfig `json:"outputConfig"`
+	DefaultForSeverity []*string     `json:"defaultForSeverity"`
 }
 
 // UpdateOutputOutput returns the new updated output
@@ -196,83 +196,29 @@ type OutputConfig struct {
 	CustomWebhook *CustomWebhookConfig `json:"customWebhook,omitempty"`
 }
 
-// OutputConfigUpdate contains the configuration for the output
-type OutputConfigUpdate struct {
-	// SlackConfig contains the configuration for Slack alert output
-	Slack *SlackConfigUpdate `json:"slack,omitempty"`
-
-	// SnsConfig contains the configuration for SNS alert output
-	Sns *SnsConfigUpdate `json:"sns,omitempty"`
-
-	// PagerDuty contains the configuration for PagerDuty alert output
-	PagerDuty *PagerDutyConfigUpdate `json:"pagerDuty,omitempty"`
-
-	// Github contains the configuration for Github alert output
-	Github *GithubConfigUpdate `json:"github,omitempty"`
-
-	// Jira contains the configuration for Jira alert output
-	Jira *JiraConfigUpdate `json:"jira,omitempty"`
-
-	// Opsgenie contains the configuration for Opsgenie alert output
-	Opsgenie *OpsgenieConfigUpdate `json:"opsgenie,omitempty"`
-
-	// MsTeams contains the configuration for MsTeams alert output
-	MsTeams *MsTeamsConfigUpdate `json:"msTeams,omitempty"`
-
-	// SqsConfig contains the configuration for SQS alert output
-	Sqs *SqsConfigUpdate `json:"sqs,omitempty"`
-
-	// AsanaConfig contains the configuration for Asana alert output
-	Asana *AsanaConfigUpdate `json:"asana,omitempty"`
-
-	// CustomWebhook contains the configuration for a Custom Webhook alert output
-	CustomWebhook *CustomWebhookConfigUpdate `json:"customWebhook,omitempty"`
-}
-
 // SlackConfig defines options for each Slack output.
 type SlackConfig struct {
-	WebhookURL *string `json:"webhookURL" validate:"required,url"` // https://hooks.slack.com/services/...
-}
-type SlackConfigUpdate struct {
 	WebhookURL *string `json:"webhookURL" validate:"omitempty,url"` // https://hooks.slack.com/services/...
 }
 
 // SnsConfig defines options for each SNS topic output
 type SnsConfig struct {
-	TopicArn *string `json:"topicArn" validate:"required,snsArn"`
-}
-type SnsConfigUpdate struct {
 	TopicArn *string `json:"topicArn" validate:"omitempty,snsArn"`
 }
 
 // PagerDutyConfig defines options for each PagerDuty output
 type PagerDutyConfig struct {
-	IntegrationKey *string `json:"integrationKey" validate:"required,hexadecimal,len=32"`
-}
-type PagerDutyConfigUpdate struct {
 	IntegrationKey *string `json:"integrationKey" validate:"omitempty,hexadecimal,len=32"`
 }
 
 // GithubConfig defines options for each Github output
 type GithubConfig struct {
-	RepoName *string `json:"repoName" validate:"required"`
-	Token    *string `json:"token" validate:"required"`
-}
-type GithubConfigUpdate struct {
 	RepoName *string `json:"repoName"`
 	Token    *string `json:"token"`
 }
 
 // JiraConfig defines options for each Jira output
 type JiraConfig struct {
-	OrgDomain  *string `json:"orgDomain" validate:"required"`
-	ProjectKey *string `json:"projectKey" validate:"required"`
-	UserName   *string `json:"userName" validate:"required"`
-	APIKey     *string `json:"apiKey" validate:"required"`
-	AssigneeID *string `json:"assigneeId"`
-	Type       *string `json:"issueType"`
-}
-type JiraConfigUpdate struct {
 	OrgDomain  *string `json:"orgDomain"`
 	ProjectKey *string `json:"projectKey"`
 	UserName   *string `json:"userName"`
@@ -283,43 +229,27 @@ type JiraConfigUpdate struct {
 
 // OpsgenieConfig defines options for each Opsgenie output
 type OpsgenieConfig struct {
-	APIKey *string `json:"apiKey" validate:"required"`
-}
-type OpsgenieConfigUpdate struct {
 	APIKey *string `json:"apiKey"`
 }
 
 // MsTeamsConfig defines options for each MsTeams output
 type MsTeamsConfig struct {
-	WebhookURL *string `json:"webhookURL" validate:"required,url"`
-}
-type MsTeamsConfigUpdate struct {
 	WebhookURL *string `json:"webhookURL" validate:"omitempty,url"`
 }
 
 // SqsConfig defines options for each Sqs topic output
 type SqsConfig struct {
-	QueueURL *string `json:"queueUrl" validate:"required,url"`
-}
-type SqsConfigUpdate struct {
 	QueueURL *string `json:"queueUrl" validate:"omitempty,url"`
 }
 
 // AsanaConfig defines options for each Asana output
 type AsanaConfig struct {
-	PersonalAccessToken *string   `json:"personalAccessToken" validate:"required,min=1"`
-	ProjectGids         []*string `json:"projectGids" validate:"required,min=1,dive,required"`
-}
-type AsanaConfigUpdate struct {
 	PersonalAccessToken *string   `json:"personalAccessToken" validate:"omitempty,min=1"`
 	ProjectGids         []*string `json:"projectGids" validate:"omitempty,min=1,dive,required"`
 }
 
 // CustomWebhookConfig defines options for each CustomWebhook output
 type CustomWebhookConfig struct {
-	WebhookURL *string `json:"webhookURL" validate:"required,url"`
-}
-type CustomWebhookConfigUpdate struct {
 	WebhookURL *string `json:"webhookURL" validate:"omitempty,url"`
 }
 

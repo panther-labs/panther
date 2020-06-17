@@ -43,12 +43,13 @@ func (API) UpdateOutput(input *models.UpdateOutputInput) (*models.UpdateOutputOu
 	// Next check the outputConfig, this is to support partial updates of the outputConfig
 	var newConfig *models.OutputConfig
 	if input.OutputConfig != nil {
+		// Get the existing configuration
 		existingOutput, err = outputsTable.GetOutput(input.OutputID)
 		if err != nil {
 			return nil, &genericapi.DoesNotExistError{
 				Message: "A destination with the ID " + *input.OutputID + " does not exist."}
 		}
-
+		// Decrypt the existing configuration
 		decryptedConfig := &models.OutputConfig{}
 		err = encryptionKey.DecryptConfig(existingOutput.EncryptedConfig, decryptedConfig)
 		if err != nil {
@@ -56,7 +57,11 @@ func (API) UpdateOutput(input *models.UpdateOutputInput) (*models.UpdateOutputOu
 				Message: "Unable to decrypt existing configuration for output " + *input.DisplayName,
 			}
 		}
-		newConfig = mergeOutputConfigs(decryptedConfig, input.OutputConfig)
+		// Merge the old config with the new config
+		newConfig, err = mergeConfigs(decryptedConfig, input.OutputConfig)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	alertOutput := &models.AlertOutput{
