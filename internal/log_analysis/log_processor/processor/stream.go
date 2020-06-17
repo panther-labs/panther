@@ -214,7 +214,8 @@ func highMemoryUsage() (heapUsedMB, memAvailableMB float32, isHigh bool) {
 	)
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
-	heapUsedMB = float32(memStats.HeapAlloc / bytesPerMB) // NOTE: HeapAlloc is used be it tracks release better than Sys
+	// NOTE: HeapAlloc is used because it tracks memory release better/faster than Sys
+	heapUsedMB = float32(memStats.HeapAlloc / bytesPerMB)
 	memAvailableMB = float32(common.Config.AwsLambdaFunctionMemorySize)
 	return heapUsedMB, memAvailableMB, heapUsedMB/memAvailableMB > threshold
 }
