@@ -137,6 +137,7 @@ func (table *AlertsTable) getIndex(input *models.ListAlertsInput) *string {
 func (table *AlertsTable) getKeyCondition(input *models.ListAlertsInput) expression.KeyConditionBuilder {
 	var keyCondition expression.KeyConditionBuilder
 
+	// Define the primary key to use.
 	if input.RuleID != nil {
 		keyCondition = expression.Key(RuleIDKey).Equal(expression.Value(*input.RuleID))
 	} else {
@@ -153,18 +154,30 @@ func (table *AlertsTable) getKeyCondition(input *models.ListAlertsInput) express
 			),
 		)
 	}
-
 	if input.CreatedAtAfter != nil && input.CreatedAtBefore == nil {
 		keyCondition = keyCondition.And(
 			expression.Key(CreatedAtKey).GreaterThanEqual(expression.Value(*input.CreatedAtAfter)))
 	}
-
 	if input.CreatedAtAfter == nil && input.CreatedAtBefore != nil {
 		keyCondition = keyCondition.And(
 			expression.Key(CreatedAtKey).LessThanEqual(expression.Value(*input.CreatedAtBefore)))
 	}
 
 	return keyCondition
+}
+
+// applyFilters - adds filters onto an expression
+func (table *AlertsTable) applyFilters(builder *expression.Builder, input *models.ListAlertsInput) {
+	// Start with an empty filter for a known attribute
+	filter := expression.AttributeExists(expression.Name(AlertIDKey))
+
+	// Then, apply our filters
+	filterBySeverity(&filter, input)
+	filterByTitleContains(&filter, input)
+	filterByEventCount(&filter, input)
+
+	// Finally, overwrite the existing condition filter on the builder
+	*builder = builder.WithFilter(filter)
 }
 
 // filterBySeverity - filters by a Severity level
@@ -201,20 +214,6 @@ func filterByEventCount(filter *expression.ConditionBuilder, input *models.ListA
 	if input.EventCountMax == nil && input.EventCountMin != nil {
 		*filter = filter.And(expression.GreaterThanEqual(expression.Name(EventCount), expression.Value(*input.EventCountMin)))
 	}
-}
-
-// applyFilters - adds filters onto an expression
-func (table *AlertsTable) applyFilters(builder *expression.Builder, input *models.ListAlertsInput) {
-	// Start with an empty filter for a known attribute
-	filter := expression.AttributeExists(expression.Name(AlertIDKey))
-
-	// Then, apply our filters
-	filterBySeverity(&filter, input)
-	filterByTitleContains(&filter, input)
-	filterByEventCount(&filter, input)
-
-	// Finally, overwrite the existing condition filter on the builder
-	*builder = builder.WithFilter(filter)
 }
 
 // isAscendingOrder - determines which direction to sort the data
