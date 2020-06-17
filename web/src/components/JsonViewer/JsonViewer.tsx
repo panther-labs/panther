@@ -25,7 +25,7 @@ const ReactJSONView = React.lazy(() =>
 );
 
 interface JsonViewerProps {
-  data: { [key: string]: string | object | number };
+  data: Record<string, unknown>;
   collapsed?: boolean;
 }
 

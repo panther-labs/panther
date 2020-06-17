@@ -28,6 +28,7 @@ import (
 )
 
 func TestDeleteMessageBatch(t *testing.T) {
+	t.Parallel()
 	queueURL := "fakeqURL"
 
 	// 1 event, 1 batch
