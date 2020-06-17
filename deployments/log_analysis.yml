@@ -75,12 +75,12 @@ Mappings:
       Timeout: 30
     LogProcessor:
       # Memory is a parameter above
-      Timeout: 900
+      Timeout: 900 # max!
     RulesEngine:
       # Memory is the same as log processor memory parameter
-      Timeout: 120
+      Timeout: 900 # max!
     Updater:
-      Memory: 128
+      Memory: 512
       Timeout: 900 # set to max to allow syncs
 
 Conditions:
