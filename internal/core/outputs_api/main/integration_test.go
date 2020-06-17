@@ -46,14 +46,14 @@ var (
 	lambdaClient    = lambda.New(awsSession)
 
 	slack = &models.SlackConfig{
-		WebhookURL: aws.String("https://hooks.slack.com/services/AAAAAAAAA/BBBBBBBBB/" +
-			"abcdefghijklmnopqrstuvwx"),
+		WebhookURL: "https://hooks.slack.com/services/AAAAAAAAA/BBBBBBBBB/" +
+			"abcdefghijklmnopqrstuvwx",
 	}
-	sns       = &models.SnsConfig{TopicArn: aws.String("arn:aws:sns:us-west-2:123456789012:MyTopic")}
-	pagerDuty = &models.PagerDutyConfig{IntegrationKey: aws.String("7a08481fbc0746c9a8a487f90d737e05")}
+	sns       = &models.SnsConfig{TopicArn: "arn:aws:sns:us-west-2:123456789012:MyTopic"}
+	pagerDuty = &models.PagerDutyConfig{IntegrationKey: "7a08481fbc0746c9a8a487f90d737e05"}
 	gitHub    = &models.GithubConfig{
-		RepoName: aws.String("myRepo"),
-		Token:    aws.String("abc123"),
+		RepoName: "myRepo",
+		Token:    "abc123",
 	}
 	snsType = aws.String("sns")
 	userID  = aws.String("43808de4-fbae-4f90-a9b4-1e4982d65287")
@@ -63,7 +63,7 @@ var (
 	snsOutputID       *string
 	pagerDutyOutputID *string
 	gitHubOutputID    *string
-	redacted          = aws.String("********")
+	redacted          = ""
 )
 
 func TestMain(m *testing.M) {
@@ -298,7 +298,7 @@ func updateSlack(t *testing.T) {
 		LastModifiedBy:     userID,
 		LastModifiedTime:   output.LastModifiedTime,
 		OutputConfig: &models.OutputConfig{
-			Slack: &models.SlackConfig{WebhookURL: aws.String("********")},
+			Slack: &models.SlackConfig{WebhookURL: ""},
 		}, // no webhook URL in response
 		OutputID:   slackOutputID,
 		OutputType: aws.String("slack"),
@@ -308,7 +308,7 @@ func updateSlack(t *testing.T) {
 
 func updateSns(t *testing.T) {
 	t.Parallel()
-	sns.TopicArn = aws.String("arn:aws:sns:us-west-2:123456789012:MyTopic")
+	sns.TopicArn = "arn:aws:sns:us-west-2:123456789012:MyTopic"
 	input := models.LambdaInput{
 		UpdateOutput: &models.UpdateOutputInput{
 			UserID:       userID,
@@ -358,7 +358,7 @@ func partialUpdateConfig(t *testing.T) {
 			OutputConfig: &models.OutputConfig{
 				Github: &models.GithubConfig{
 					// RepoName: nil, don't set the repo name
-					Token: aws.String("xyz897"),
+					Token: "xyz897",
 				},
 			},
 		},

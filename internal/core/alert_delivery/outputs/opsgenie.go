@@ -54,7 +54,7 @@ func (client *OutputClient) Opsgenie(
 		"tags":        tagsItem,
 		"priority":    pantherToOpsGeniePriority[aws.StringValue(alert.Severity)],
 	}
-	authorization := "GenieKey " + *config.APIKey
+	authorization := "GenieKey " + config.APIKey
 	requestHeader := map[string]string{
 		AuthorizationHTTPHeader: authorization,
 	}

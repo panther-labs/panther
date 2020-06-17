@@ -31,7 +31,7 @@ import (
 )
 
 var customWebhookConfig = &outputmodels.CustomWebhookConfig{
-	WebhookURL: aws.String("custom-webhook-url"),
+	WebhookURL: "custom-webhook-url",
 }
 
 func TestCustomWebhookAlert(t *testing.T) {
@@ -74,7 +74,7 @@ func TestCustomWebhookAlert(t *testing.T) {
 	// Ensure we have slices instead of `null` array fields
 	gatewayapi.ReplaceMapSliceNils(outputMessage)
 
-	requestURL := *customWebhookConfig.WebhookURL
+	requestURL := customWebhookConfig.WebhookURL
 
 	expectedPostInput := &PostInput{
 		url:  requestURL,

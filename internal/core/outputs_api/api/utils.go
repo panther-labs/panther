@@ -29,7 +29,7 @@ import (
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-var redacted = aws.String("********")
+const redacted = ""
 
 // AlertOutputToItem converts an AlertOutput to an AlertOutputItem
 func AlertOutputToItem(input *models.AlertOutput) (*table.AlertOutputItem, error) {
@@ -152,7 +152,7 @@ func mergeConfigs(oldConfig, newConfig *models.OutputConfig) (*models.OutputConf
 		}
 	}
 	// Turn the bytes into a map so we can work with it more easily
-	var oldMap map[string]map[string]*string
+	var oldMap map[string]map[string]string
 	err = jsoniter.Unmarshal(oldBytes, &oldMap)
 	if err != nil {
 		return nil, &genericapi.InternalError{
@@ -167,7 +167,7 @@ func mergeConfigs(oldConfig, newConfig *models.OutputConfig) (*models.OutputConf
 			Message: "Unable to extract the new configuration",
 		}
 	}
-	var newMap map[string]map[string]*string
+	var newMap map[string]map[string]string
 	err = jsoniter.Unmarshal(newBytes, &newMap)
 	if err != nil {
 		return nil, &genericapi.InternalError{
@@ -178,7 +178,7 @@ func mergeConfigs(oldConfig, newConfig *models.OutputConfig) (*models.OutputConf
 	// Overwrite the existing configurations with the new configurations
 	for configType, configMap := range newMap {
 		for configKey, configValue := range configMap {
-			if configValue == nil {
+			if configValue == "" {
 				continue
 			}
 			oldMap[configType][configKey] = configValue
@@ -208,44 +208,44 @@ func mergeConfigs(oldConfig, newConfig *models.OutputConfig) (*models.OutputConf
 func validateConfigByType(config *models.OutputConfig, outputType *string) error {
 	switch *outputType {
 	case "slack":
-		if config.Slack.WebhookURL != nil {
+		if config.Slack.WebhookURL != "" {
 			return nil
 		}
 	case "pagerduty":
-		if config.PagerDuty.IntegrationKey != nil {
+		if config.PagerDuty.IntegrationKey != "" {
 			return nil
 		}
 	case "github":
-		if config.Github.RepoName != nil && config.Github.Token != nil {
+		if config.Github.RepoName != "" && config.Github.Token != "" {
 			return nil
 		}
 	case "jira":
 		// The Type and AssigneeId are apparently optional, although the frontend requires them
-		if config.Jira.APIKey != nil && config.Jira.UserName != nil && config.Jira.ProjectKey != nil && config.Jira.OrgDomain != nil {
+		if config.Jira.APIKey != "" && config.Jira.UserName != "" && config.Jira.ProjectKey != "" && config.Jira.OrgDomain != "" {
 			return nil
 		}
 	case "opsgenie":
-		if config.Opsgenie.APIKey != nil {
+		if config.Opsgenie.APIKey != "" {
 			return nil
 		}
 	case "msteams":
-		if config.MsTeams.WebhookURL != nil {
+		if config.MsTeams.WebhookURL != "" {
 			return nil
 		}
 	case "sns":
-		if config.Sns.TopicArn != nil {
+		if config.Sns.TopicArn != "" {
 			return nil
 		}
 	case "sqs":
-		if config.Sqs.QueueURL != nil {
+		if config.Sqs.QueueURL != "" {
 			return nil
 		}
 	case "asana":
-		if config.Asana.ProjectGids != nil && config.Asana.PersonalAccessToken != nil {
+		if len(config.Asana.ProjectGids) != 0 && config.Asana.PersonalAccessToken != "" {
 			return nil
 		}
 	case "customwebhook":
-		if config.CustomWebhook.WebhookURL != nil {
+		if config.CustomWebhook.WebhookURL != "" {
 			return nil
 		}
 	}

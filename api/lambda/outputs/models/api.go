@@ -198,59 +198,59 @@ type OutputConfig struct {
 
 // SlackConfig defines options for each Slack output.
 type SlackConfig struct {
-	WebhookURL *string `json:"webhookURL" validate:"omitempty,url"` // https://hooks.slack.com/services/...
+	WebhookURL string `json:"webhookURL" validate:"omitempty,url"` // https://hooks.slack.com/services/...
 }
 
 // SnsConfig defines options for each SNS topic output
 type SnsConfig struct {
-	TopicArn *string `json:"topicArn" validate:"omitempty,snsArn"`
+	TopicArn string `json:"topicArn" validate:"omitempty,snsArn"`
 }
 
 // PagerDutyConfig defines options for each PagerDuty output
 type PagerDutyConfig struct {
-	IntegrationKey *string `json:"integrationKey" validate:"omitempty,hexadecimal,len=32"`
+	IntegrationKey string `json:"integrationKey" validate:"omitempty,hexadecimal,len=32"`
 }
 
 // GithubConfig defines options for each Github output
 type GithubConfig struct {
-	RepoName *string `json:"repoName"`
-	Token    *string `json:"token"`
+	RepoName string `json:"repoName"`
+	Token    string `json:"token"`
 }
 
 // JiraConfig defines options for each Jira output
 type JiraConfig struct {
-	OrgDomain  *string `json:"orgDomain"`
-	ProjectKey *string `json:"projectKey"`
-	UserName   *string `json:"userName"`
-	APIKey     *string `json:"apiKey"`
-	AssigneeID *string `json:"assigneeId"`
-	Type       *string `json:"issueType"`
+	OrgDomain  string `json:"orgDomain"`
+	ProjectKey string `json:"projectKey"`
+	UserName   string `json:"userName"`
+	APIKey     string `json:"apiKey"`
+	AssigneeID string `json:"assigneeId"`
+	Type       string `json:"issueType"`
 }
 
 // OpsgenieConfig defines options for each Opsgenie output
 type OpsgenieConfig struct {
-	APIKey *string `json:"apiKey"`
+	APIKey string `json:"apiKey"`
 }
 
 // MsTeamsConfig defines options for each MsTeams output
 type MsTeamsConfig struct {
-	WebhookURL *string `json:"webhookURL" validate:"omitempty,url"`
+	WebhookURL string `json:"webhookURL" validate:"omitempty,url"`
 }
 
 // SqsConfig defines options for each Sqs topic output
 type SqsConfig struct {
-	QueueURL *string `json:"queueUrl" validate:"omitempty,url"`
+	QueueURL string `json:"queueUrl" validate:"omitempty,url"`
 }
 
 // AsanaConfig defines options for each Asana output
 type AsanaConfig struct {
-	PersonalAccessToken *string   `json:"personalAccessToken" validate:"omitempty,min=1"`
-	ProjectGids         []*string `json:"projectGids" validate:"omitempty,min=1,dive,required"`
+	PersonalAccessToken string   `json:"personalAccessToken" validate:"omitempty,min=1"`
+	ProjectGids         []string `json:"projectGids" validate:"omitempty,min=1,dive,required"`
 }
 
 // CustomWebhookConfig defines options for each CustomWebhook output
 type CustomWebhookConfig struct {
-	WebhookURL *string `json:"webhookURL" validate:"omitempty,url"`
+	WebhookURL string `json:"webhookURL" validate:"omitempty,url"`
 }
 
 // DefaultOutputs is the structure holding the information about default outputs for severity

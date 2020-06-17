@@ -42,7 +42,7 @@ func TestAddOutputNoName(t *testing.T) {
 	err = validator.Struct(&models.AddOutputInput{
 		UserID:       aws.String("3601990c-b566-404b-b367-3c6eacd6fe60"),
 		DisplayName:  aws.String(""),
-		OutputConfig: &models.OutputConfig{Slack: &models.SlackConfig{WebhookURL: aws.String("https://hooks.slack.com")}},
+		OutputConfig: &models.OutputConfig{Slack: &models.SlackConfig{WebhookURL: "https://hooks.slack.com"}},
 	})
 	require.Error(t, err)
 	assert.Equal(t, expectedMsg("AddOutputInput", "DisplayName", "min"), err.Error())
@@ -55,7 +55,7 @@ func TestAddOutputValid(t *testing.T) {
 		UserID:      aws.String("3601990c-b566-404b-b367-3c6eacd6fe60"),
 		DisplayName: aws.String("mychannel"),
 		OutputConfig: &models.OutputConfig{
-			Slack: &models.SlackConfig{WebhookURL: aws.String("https://hooks.slack.com")},
+			Slack: &models.SlackConfig{WebhookURL: "https://hooks.slack.com"},
 		},
 	}))
 }
@@ -67,7 +67,7 @@ func TestAddInvalidArn(t *testing.T) {
 		UserID:      aws.String("3601990c-b566-404b-b367-3c6eacd6fe60"),
 		DisplayName: aws.String("mytopic"),
 		OutputConfig: &models.OutputConfig{
-			Sns: &models.SnsConfig{TopicArn: aws.String("arn:aws:sns:invalidarn:MyTopic")},
+			Sns: &models.SnsConfig{TopicArn: "arn:aws:sns:invalidarn:MyTopic"},
 		},
 	})
 	require.Error(t, err)
@@ -81,7 +81,7 @@ func TestAddNonSnsArn(t *testing.T) {
 		UserID:      aws.String("3601990c-b566-404b-b367-3c6eacd6fe60"),
 		DisplayName: aws.String("mytopic"),
 		OutputConfig: &models.OutputConfig{
-			Sns: &models.SnsConfig{TopicArn: aws.String("arn:aws:s3:::test-s3-bucket")},
+			Sns: &models.SnsConfig{TopicArn: "arn:aws:s3:::test-s3-bucket"},
 		},
 	})
 	require.Error(t, err)

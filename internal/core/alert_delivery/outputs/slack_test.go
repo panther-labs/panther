@@ -29,7 +29,7 @@ import (
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 )
 
-var slackConfig = &outputmodels.SlackConfig{WebhookURL: aws.String("slack-channel-url")}
+var slackConfig = &outputmodels.SlackConfig{WebhookURL: "slack-channel-url"}
 
 func TestSlackAlert(t *testing.T) {
 	httpWrapper := &mockHTTPWrapper{}
@@ -68,7 +68,7 @@ func TestSlackAlert(t *testing.T) {
 			},
 		},
 	}
-	requestURL := *slackConfig.WebhookURL
+	requestURL := slackConfig.WebhookURL
 	expectedPostInput := &PostInput{
 		url:  requestURL,
 		body: expectedPostPayload,

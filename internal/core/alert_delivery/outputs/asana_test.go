@@ -44,18 +44,18 @@ func TestAsanaAlert(t *testing.T) {
 		Severity:          aws.String("INFO"),
 	}
 
-	asanaConfig := &outputmodels.AsanaConfig{PersonalAccessToken: aws.String("token"), ProjectGids: aws.StringSlice([]string{"projectGid"})}
+	asanaConfig := &outputmodels.AsanaConfig{PersonalAccessToken: "token", ProjectGids: []string{"projectGid"}}
 
 	asanaRequest := map[string]interface{}{
 		"data": map[string]interface{}{
 			"name": "Policy Failure: policy_name",
 			"notes": "policy_name failed on new resources\n" +
 				"For more details please visit: https://panther.io/policies/ruleId\nSeverity: INFO\nRunbook: \nDescription: description",
-			"projects": aws.StringSlice([]string{"projectGid"}),
+			"projects": []string{"projectGid"},
 		},
 	}
 
-	authorization := "Bearer " + *asanaConfig.PersonalAccessToken
+	authorization := "Bearer " + asanaConfig.PersonalAccessToken
 	requestHeader := map[string]string{
 		AuthorizationHTTPHeader: authorization,
 	}
