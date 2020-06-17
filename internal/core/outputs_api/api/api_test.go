@@ -72,7 +72,7 @@ type mockEncryptionKey struct {
 
 func (m *mockEncryptionKey) DecryptConfig(ciphertext []byte, config interface{}) error {
 	args := m.Called(ciphertext, config)
-	plaintext := []byte(`{"slack": {"webhookURL": "https://hooks.slack.com/services/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"}}`)
+	plaintext := []byte(`{"slack": {"webhookURL": "https://hooks.slack.com/services/bb/aa/11"}}`)
 	_ = jsoniter.Unmarshal(plaintext, config)
 	return args.Error(0)
 }
