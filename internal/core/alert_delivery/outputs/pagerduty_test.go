@@ -29,16 +29,18 @@ import (
 
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	"github.com/panther-labs/panther/pkg/box"
 )
 
 var createdAtTime, _ = time.Parse(time.RFC3339, "2019-05-03T11:40:13Z")
 
 var pagerDutyAlert = &alertmodels.Alert{
-	PolicyName: aws.String("policyName"),
-	PolicyID:   aws.String("policyId"),
-	Severity:   aws.String("INFO"),
-	Runbook:    aws.String("runbook"),
-	CreatedAt:  &createdAtTime,
+	AnalysisName: aws.String("policyName"),
+	AnalysisID:   "policyId",
+	Severity:     "INFO",
+	Runbook:      aws.String("runbook"),
+	CreatedAt:    createdAtTime,
+	Type:         alertmodels.PolicyType,
 }
 var pagerDutyConfig = &outputmodels.PagerDutyConfig{
 	IntegrationKey: "integrationKey",
@@ -51,9 +53,16 @@ func TestSendPagerDutyAlert(t *testing.T) {
 	expectedPostPayload := map[string]interface{}{
 		"event_action": "trigger",
 		"payload": map[string]interface{}{
-			"custom_details": map[string]string{
-				"description": "",
-				"runbook":     "runbook",
+			"custom_details": Notification{
+				AnalysisID:   "policyId",
+				CreatedAt:    createdAtTime,
+				Severity:     "INFO",
+				Type:         alertmodels.PolicyType,
+				Link:         "https://panther.io/policies/policyId",
+				Title:        "Policy Failure: policyName",
+				AnalysisName: box.String("policyName"),
+				Runbook:      box.String("runbook"),
+				Tags:         []string{},
 			},
 			"severity":  "info",
 			"source":    "pantherlabs",

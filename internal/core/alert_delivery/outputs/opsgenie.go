@@ -19,10 +19,9 @@ package outputs
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	"github.com/panther-labs/panther/pkg/unbox"
 )
 
 var (
@@ -41,18 +40,16 @@ var pantherToOpsGeniePriority = map[string]string{
 func (client *OutputClient) Opsgenie(
 	alert *alertmodels.Alert, config *outputmodels.OpsgenieConfig) *AlertDeliveryError {
 
-	tagsItem := aws.StringValueSlice(alert.Tags)
-
-	description := "<strong>Description:</strong> " + aws.StringValue(alert.PolicyDescription)
+	description := "<strong>Description:</strong> " + unbox.String(alert.AnalysisDescription)
 	link := "\n<a href=\"" + generateURL(alert) + "\">Click here to view in the Panther UI</a>"
-	runBook := "\n <strong>Runbook:</strong> " + aws.StringValue(alert.Runbook)
-	severity := "\n <strong>Severity:</strong> " + aws.StringValue(alert.Severity)
+	runBook := "\n <strong>Runbook:</strong> " + unbox.String(alert.Runbook)
+	severity := "\n <strong>Severity:</strong> " + alert.Severity
 
 	opsgenieRequest := map[string]interface{}{
 		"message":     generateAlertTitle(alert),
 		"description": description + link + runBook + severity,
-		"tags":        tagsItem,
-		"priority":    pantherToOpsGeniePriority[aws.StringValue(alert.Severity)],
+		"tags":        alert.Tags,
+		"priority":    pantherToOpsGeniePriority[alert.Severity],
 	}
 	authorization := "GenieKey " + config.APIKey
 	requestHeader := map[string]string{

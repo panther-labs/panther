@@ -21,23 +21,16 @@ package outputs
 import (
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	"github.com/panther-labs/panther/pkg/unbox"
 )
 
 // MsTeams alert send an alert.
 func (client *OutputClient) MsTeams(
 	alert *alertmodels.Alert, config *outputmodels.MsTeamsConfig) *AlertDeliveryError {
 
-	var tagsItem = aws.StringValueSlice(alert.Tags)
-
-	link := "[Click here to view in the Panther UI](" + policyURLPrefix + aws.StringValue(alert.PolicyID) + ").\n"
-	runBook := aws.StringValue(alert.Runbook)
-	ruleDescription := aws.StringValue(alert.PolicyDescription)
-	severity := aws.StringValue(alert.Severity)
-	tags := strings.Join(tagsItem, ", ")
+	link := "[Click here to view in the Panther UI](" + policyURLPrefix + alert.AnalysisID + ").\n"
 
 	msTeamsRequestBody := map[string]interface{}{
 		"@context": "http://schema.org/extensions",
@@ -46,10 +39,10 @@ func (client *OutputClient) MsTeams(
 		"sections": []interface{}{
 			map[string]interface{}{
 				"facts": []interface{}{
-					map[string]string{"name": "Description", "value": ruleDescription},
-					map[string]string{"name": "Runbook", "value": runBook},
-					map[string]string{"name": "Severity", "value": severity},
-					map[string]string{"name": "Tags", "value": tags},
+					map[string]string{"name": "Description", "value": unbox.String(alert.AnalysisDescription)},
+					map[string]string{"name": "Runbook", "value": unbox.String(alert.Runbook)},
+					map[string]string{"name": "Severity", "value": alert.Severity},
+					map[string]string{"name": "Tags", "value": strings.Join(alert.Tags, ", ")},
 				},
 				"text": link,
 			},
@@ -68,9 +61,8 @@ func (client *OutputClient) MsTeams(
 		},
 	}
 
-	requestURL := config.WebhookURL
 	postInput := &PostInput{
-		url:  requestURL,
+		url:  config.WebhookURL,
 		body: msTeamsRequestBody,
 	}
 	return client.httpWrapper.post(postInput)

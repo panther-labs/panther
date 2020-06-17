@@ -21,10 +21,9 @@ package outputs
 import (
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	"github.com/panther-labs/panther/pkg/unbox"
 )
 
 // Severity colors match those in the Panther UI
@@ -37,13 +36,11 @@ const (
 func (client *OutputClient) Github(
 	alert *alertmodels.Alert, config *outputmodels.GithubConfig) *AlertDeliveryError {
 
-	var tagsItem = aws.StringValueSlice(alert.Tags)
-
-	description := "**Description:** " + aws.StringValue(alert.PolicyDescription)
+	description := "**Description:** " + unbox.String(alert.AnalysisDescription)
 	link := "\n [Click here to view in the Panther UI](" + generateURL(alert) + ")"
-	runBook := "\n **Runbook:** " + aws.StringValue(alert.Runbook)
-	severity := "\n **Severity:** " + aws.StringValue(alert.Severity)
-	tags := "\n **Tags:** " + strings.Join(tagsItem, ", ")
+	runBook := "\n **Runbook:** " + unbox.String(alert.Runbook)
+	severity := "\n **Severity:** " + alert.Severity
+	tags := "\n **Tags:** " + strings.Join(alert.Tags, ", ")
 
 	githubRequest := map[string]interface{}{
 		"title": generateAlertTitle(alert),

@@ -37,31 +37,11 @@ type snsMessage struct {
 	EmailMessage string `json:"email"`
 }
 
-//snsOutputMessage contains the fields that will be included in the  default SNS message
-type snsDefaultMessage struct {
-	ID          *string   `json:"id"`
-	Name        *string   `json:"name,omitempty"`
-	VersionID   *string   `json:"versionId,omitempty"`
-	Description *string   `json:"description,omitempty"`
-	Runbook     *string   `json:"runbook,omitempty"`
-	Severity    *string   `json:"severity"`
-	Tags        []*string `json:"tags,omitempty"`
-}
-
 // Sns sends an alert to an SNS Topic.
 // nolint: dupl
 func (client *OutputClient) Sns(alert *alertmodels.Alert, config *outputmodels.SnsConfig) *AlertDeliveryError {
-	snsDefaultMessage := snsDefaultMessage{
-		ID:          alert.PolicyID,
-		Name:        alert.PolicyName,
-		VersionID:   alert.PolicyVersionID,
-		Description: alert.PolicyDescription,
-		Runbook:     alert.Runbook,
-		Severity:    alert.Severity,
-		Tags:        alert.Tags,
-	}
-
-	serializedDefaultMessage, err := jsoniter.MarshalToString(snsDefaultMessage)
+	notification := generateNotificationFromAlert(alert)
+	serializedDefaultMessage, err := jsoniter.MarshalToString(notification)
 	if err != nil {
 		errorMsg := "Failed to serialize default message"
 		zap.L().Error(errorMsg, zap.Error(errors.WithStack(err)))

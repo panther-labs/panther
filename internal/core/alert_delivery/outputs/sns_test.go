@@ -20,52 +20,63 @@ package outputs
 
 import (
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sns/snsiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	"github.com/panther-labs/panther/pkg/box"
+	"github.com/panther-labs/panther/pkg/testutils"
 )
 
-type mockSnsClient struct {
-	snsiface.SNSAPI
-	mock.Mock
-}
-
-func (m *mockSnsClient) Publish(input *sns.PublishInput) (*sns.PublishOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*sns.PublishOutput), args.Error(1)
-}
-
 func TestSendSns(t *testing.T) {
-	client := &mockSnsClient{}
+	client := &testutils.SnsMock{}
 	outputClient := &OutputClient{snsClients: map[string]snsiface.SNSAPI{"us-west-2": client}}
 
 	snsOutputConfig := &outputmodels.SnsConfig{
 		TopicArn: "arn:aws:sns:us-west-2:123456789012:test-sns-output",
 	}
+
+	createdAtTime := time.Now()
 	alert := &alertmodels.Alert{
-		PolicyName:        aws.String("policyName"),
-		PolicyID:          aws.String("policyId"),
-		PolicyDescription: aws.String("policyDescription"),
-		Severity:          aws.String("severity"),
-		Runbook:           aws.String("runbook"),
+		AnalysisName:        box.String("policyName"),
+		AnalysisID:          "policyId",
+		AnalysisDescription: box.String("policyDescription"),
+		Severity:            "severity",
+		Runbook:             box.String("runbook"),
+		CreatedAt:           createdAtTime,
 	}
 
+	defaultMessage := Notification{
+		AnalysisID:   "policyId",
+		AnalysisName: box.String("policyName"),
+		Description:  box.String("policyDescription"),
+		Severity:     "severity",
+		Runbook:      box.String("runbook"),
+		CreatedAt:    createdAtTime,
+		Link:         "https://panther.io/policies/policyId",
+		Title:        "Policy Failure: policyName",
+		Tags:         []string{},
+	}
+
+	defaultSerializedMessage, err := jsoniter.MarshalToString(defaultMessage)
+	require.NoError(t, err)
+
 	expectedSnsMessage := &snsMessage{
-		DefaultMessage: `{"id":"policyId","name":"policyName","description":"policyDescription","runbook":"runbook","severity":"severity"}`,
+		DefaultMessage: defaultSerializedMessage,
 		EmailMessage: "policyName failed on new resources\nFor more details please visit: https://panther.io/policies/policyId\n" +
 			"Severity: severity\nRunbook: runbook\nDescription: policyDescription",
 	}
 	expectedSerializedSnsMessage, _ := jsoniter.MarshalToString(expectedSnsMessage)
 	expectedSnsPublishInput := &sns.PublishInput{
-		TopicArn:         aws.String(snsOutputConfig.TopicArn),
-		Message:          aws.String(expectedSerializedSnsMessage),
+		TopicArn:         &snsOutputConfig.TopicArn,
+		Message:          &expectedSerializedSnsMessage,
 		MessageStructure: aws.String("json"),
 		Subject:          aws.String("Policy Failure: policyName"),
 	}

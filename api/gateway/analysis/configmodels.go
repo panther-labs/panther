@@ -30,7 +30,7 @@ type Config struct {
 	DisplayName               string              `yaml:"DisplayName"`
 	Enabled                   bool                `yaml:"Enabled"`
 	Filename                  string              `yaml:"Filename"`
-	PolicyID                  string              `yaml:"PolicyID"`
+	PolicyID                  string              `yaml:"AnalysisID"`
 	RuleID                    string              `yaml:"RuleID"`
 	GlobalID                  string              `yaml:"GlobalID"`
 	ResourceTypes             []string            `yaml:"ResourceTypes"`

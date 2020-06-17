@@ -22,12 +22,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 var customWebhookConfig = &outputmodels.CustomWebhookConfig{
@@ -46,39 +44,29 @@ func TestCustomWebhookAlert(t *testing.T) {
 		t.Error(err)
 	}
 	alert := &alertmodels.Alert{
-		PolicyID:  aws.String("policyId"),
-		CreatedAt: &createdAtTime,
-		Severity:  aws.String("INFO"),
+		AnalysisID: "policyId",
+		CreatedAt:  createdAtTime,
+		Severity:   "INFO",
 	}
 
-	// Get a link to the Panther Dashboard to one of the following:
-	//   1. The PolicyID (if no AlertID is present)
-	//   2. The AlertID
-	link := generateURL(alert)
-
-	outputMessage := &CustomWebhookOutputMessage{
-		AnalysisID:  alert.PolicyID,
-		AlertID:     alert.AlertID,
-		Name:        alert.PolicyName,
-		Severity:    alert.Severity,
-		Type:        alert.Type,
-		Link:        &link,
-		Title:       alert.Title,
-		Description: alert.PolicyDescription,
-		Runbook:     alert.Runbook,
-		Tags:        alert.Tags,
-		Version:     alert.PolicyVersionID,
-		CreatedAt:   alert.CreatedAt,
+	expectedNotification := Notification{
+		AnalysisID:   alert.AnalysisID,
+		AlertID:      alert.AlertID,
+		AnalysisName: alert.AnalysisName,
+		Severity:     alert.Severity,
+		Type:         alert.Type,
+		Link:         "https://panther.io/policies/policyId",
+		Title:        "Policy Failure: policyId",
+		Description:  alert.AnalysisDescription,
+		Runbook:      alert.Runbook,
+		Tags:         []string{},
+		Version:      alert.Version,
+		CreatedAt:    alert.CreatedAt,
 	}
-
-	// Ensure we have slices instead of `null` array fields
-	gatewayapi.ReplaceMapSliceNils(outputMessage)
-
-	requestURL := customWebhookConfig.WebhookURL
 
 	expectedPostInput := &PostInput{
-		url:  requestURL,
-		body: outputMessage,
+		url:  "custom-webhook-url",
+		body: expectedNotification,
 	}
 
 	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryError)(nil))

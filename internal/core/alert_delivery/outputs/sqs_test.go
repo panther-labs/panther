@@ -26,48 +26,43 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	"github.com/panther-labs/panther/pkg/testutils"
 )
 
-type mockSqsClient struct {
-	sqsiface.SQSAPI
-	mock.Mock
-}
-
-func (m *mockSqsClient) SendMessage(input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*sqs.SendMessageOutput), args.Error(1)
-}
-
 func TestSendSqs(t *testing.T) {
-	client := &mockSqsClient{}
+	client := &testutils.SqsMock{}
 	outputClient := &OutputClient{sqsClients: map[string]sqsiface.SQSAPI{"us-west-2": client}}
 
 	sqsOutputConfig := &outputmodels.SqsConfig{
 		QueueURL: "https://sqs.us-west-2.amazonaws.com/123456789012/test-output",
 	}
 	alert := &alertmodels.Alert{
-		PolicyName:        aws.String("policyName"),
-		PolicyID:          aws.String("policyId"),
-		PolicyDescription: aws.String("policyDescription"),
-		Severity:          aws.String("severity"),
-		Runbook:           aws.String("runbook"),
+		AnalysisName:        aws.String("policyName"),
+		AnalysisID:          "policyId",
+		AnalysisDescription: aws.String("policyDescription"),
+		Severity:            "severity",
+		Runbook:             aws.String("runbook"),
 	}
 
-	expectedSqsMessage := &sqsOutputMessage{
-		ID:          alert.PolicyID,
-		Name:        alert.PolicyName,
-		Description: alert.PolicyDescription,
-		Severity:    alert.Severity,
-		Runbook:     alert.Runbook,
+	expectedSqsMessage := &Notification{
+		AnalysisID:   alert.AnalysisID,
+		AnalysisName: alert.AnalysisName,
+		Description:  alert.AnalysisDescription,
+		Severity:     alert.Severity,
+		Runbook:      alert.Runbook,
+		Link:         "https://panther.io/policies/policyId",
+		Title:        "Policy Failure: policyName",
+		Tags:         []string{},
 	}
-	expectedSerializedSqsMessage, _ := jsoniter.MarshalToString(expectedSqsMessage)
+	expectedSerializedSqsMessage, err := jsoniter.MarshalToString(expectedSqsMessage)
+	require.NoError(t, err)
 	expectedSqsSendMessageInput := &sqs.SendMessageInput{
-		QueueUrl:    aws.String(sqsOutputConfig.QueueURL),
-		MessageBody: aws.String(expectedSerializedSqsMessage),
+		QueueUrl:    &sqsOutputConfig.QueueURL,
+		MessageBody: &expectedSerializedSqsMessage,
 	}
 
 	client.On("SendMessage", expectedSqsSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
