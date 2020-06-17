@@ -20,14 +20,14 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
-import { AddDestinationConfigInput } from 'Generated/schema';
+import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
 import { webhookValidation } from 'Helpers/utils';
 
-type CustomWebhookFieldValues = Pick<AddDestinationConfigInput, 'customWebhook'>;
+type CustomWebhookFieldValues = Pick<DestinationConfigInput, 'customWebhook'>;
 
 interface CustomWebhookDestinationFormProps {
   initialValues: BaseDestinationFormValues<CustomWebhookFieldValues>;

@@ -21,13 +21,13 @@ import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
 import FormikCombobox from 'Components/fields/ComboBox';
-import { AddDestinationConfigInput, JiraIssueTypesEnum } from 'Generated/schema';
+import { DestinationConfigInput, JiraIssueTypesEnum } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
 
-type JiraFieldValues = Pick<AddDestinationConfigInput, 'jira'>;
+type JiraFieldValues = Pick<DestinationConfigInput, 'jira'>;
 
 interface JiraDestinationFormProps {
   initialValues: BaseDestinationFormValues<JiraFieldValues>;

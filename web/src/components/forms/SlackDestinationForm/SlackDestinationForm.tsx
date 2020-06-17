@@ -20,14 +20,14 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
-import { AddDestinationConfigInput } from 'Generated/schema';
+import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
 import { webhookValidation } from 'Helpers/utils';
 
-type SlackFieldValues = Pick<AddDestinationConfigInput, 'slack'>;
+type SlackFieldValues = Pick<DestinationConfigInput, 'slack'>;
 
 interface SlackDestinationFormProps {
   initialValues: BaseDestinationFormValues<SlackFieldValues>;
@@ -46,6 +46,7 @@ const SlackDestinationForm: React.FC<SlackDestinationFormProps> = ({ onSubmit, i
   });
 
   const mergedValidationSchema = defaultValidationSchema.concat(slackFieldsValidationSchema);
+
   return (
     <BaseDestinationForm<SlackFieldValues>
       initialValues={initialValues}
@@ -54,7 +55,6 @@ const SlackDestinationForm: React.FC<SlackDestinationFormProps> = ({ onSubmit, i
     >
       <Field
         as={FormikTextInput}
-        disabled={existing}
         type="password"
         name="outputConfig.slack.webhookURL"
         label="Slack Webhook URL"

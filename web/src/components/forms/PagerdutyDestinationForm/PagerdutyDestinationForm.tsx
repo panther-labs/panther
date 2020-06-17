@@ -20,13 +20,13 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
-import { AddDestinationConfigInput } from 'Generated/schema';
+import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
 
-type PagerDutyFieldValues = Pick<AddDestinationConfigInput, 'pagerDuty'>;
+type PagerDutyFieldValues = Pick<DestinationConfigInput, 'pagerDuty'>;
 
 interface PagerDutyDestinationFormProps {
   initialValues: BaseDestinationFormValues<PagerDutyFieldValues>;

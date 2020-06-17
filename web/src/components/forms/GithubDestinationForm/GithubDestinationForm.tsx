@@ -20,13 +20,13 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
-import { AddDestinationConfigInput } from 'Generated/schema';
+import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
 
-type GithubFieldValues = Pick<AddDestinationConfigInput, 'github'>;
+type GithubFieldValues = Pick<DestinationConfigInput, 'github'>;
 
 interface GithubDestinationFormProps {
   initialValues: BaseDestinationFormValues<GithubFieldValues>;

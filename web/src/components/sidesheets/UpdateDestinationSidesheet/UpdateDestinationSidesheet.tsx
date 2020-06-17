@@ -20,7 +20,7 @@ import React from 'react';
 import { Alert, Heading, SideSheet, useSnackbar, Box } from 'pouncejs';
 import pick from 'lodash-es/pick';
 import useSidesheet from 'Hooks/useSidesheet';
-import { Destination, AddDestinationConfigInput, DestinationTypeEnum } from 'Generated/schema';
+import { Destination, DestinationConfigInput, DestinationTypeEnum } from 'Generated/schema';
 import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm';
 import SNSDestinationForm from 'Components/forms/SnsDestinationForm';
 import SQSDestinationForm from 'Components/forms/SqsDestinationForm';
@@ -69,17 +69,8 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
   });
 
   const handleSubmit = React.useCallback(
-    async (values: BaseDestinationFormValues<Partial<AddDestinationConfigInput>>) => {
+    async (values: BaseDestinationFormValues<Partial<DestinationConfigInput>>) => {
       const { displayName, defaultForSeverity, outputConfig } = values;
-
-      delete outputConfig.slack;
-      delete outputConfig.pagerDuty;
-      delete outputConfig.github?.token;
-      delete outputConfig.jira?.apiKey;
-      delete outputConfig.opsgenie;
-      delete outputConfig.msTeams;
-      delete outputConfig.customWebhook;
-      delete outputConfig.asana?.personalAccessToken;
 
       await updateDestination({
         variables: {

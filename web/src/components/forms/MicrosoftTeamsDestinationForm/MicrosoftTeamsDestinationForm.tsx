@@ -20,14 +20,14 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
-import { AddDestinationConfigInput } from 'Generated/schema';
+import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
 import { webhookValidation } from 'Helpers/utils';
 
-type MicrosoftTeamsFieldValues = Pick<AddDestinationConfigInput, 'msTeams'>;
+type MicrosoftTeamsFieldValues = Pick<DestinationConfigInput, 'msTeams'>;
 
 interface MicrosoftTeamsDestinationFormProps {
   initialValues: BaseDestinationFormValues<MicrosoftTeamsFieldValues>;
