@@ -88,7 +88,7 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 			streamChan <- dataStream
 		}
 
-		// continue to read until either there are no sqs messages or we have exceeded the processing time limit
+		// continue to read until either there are no sqs messages or we have exceeded the processing time/file limit
 		highMemoryCounter := 0
 		for isProcessingTimeRemaining(processingDeadlineTime) && len(accumulatedMessageReceipts) < processingMaxFilesLimit {
 			// if we push too fast we can oom
