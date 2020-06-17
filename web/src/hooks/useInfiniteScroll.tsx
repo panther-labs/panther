@@ -22,7 +22,7 @@ interface UseInfiniteScrollProps {
   // Some sort of "fetching" info of the request.
   loading: boolean;
   // The callback function to execute when the threshold is exceeded.
-  onLoadMore: Function;
+  onLoadMore: () => void;
   // Maximum distance to bottom of the window/parent to trigger the callback. Default is 150.
   threshold?: number;
   // May be `"window"` or `"parent"`. Default is `"window"`. If you want to use a scrollable parent for the infinite list, use `"parent"`.
