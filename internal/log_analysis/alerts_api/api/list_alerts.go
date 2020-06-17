@@ -36,11 +36,6 @@ func (API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAlertsO
 	result = &models.ListAlertsOutput{}
 	var alertItems []*table.AlertItem
 
-	// TODO: apply input sanitization
-	// PageSize
-	// CreatedAtAfter/Before
-	// EventCountMin/Max
-	//
 	// Fetch all alerts. The results will have filters, sorting applied.
 	alertItems, result.LastEvaluatedKey, err = alertsDB.ListAll(input)
 

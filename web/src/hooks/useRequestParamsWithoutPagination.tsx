@@ -19,8 +19,8 @@
 import React from 'react';
 import useUrlParams from 'Hooks/useUrlParams';
 
-function useRequestParamsWithInfiniteScroll<AvailableParams>() {
-  const { urlParams, updateUrlParams } = useUrlParams<Partial<AvailableParams>>();
+function useRequestParamsWithoutPagination<AvailableParams>() {
+  const { urlParams, updateUrlParams, setUrlParams } = useUrlParams<Partial<AvailableParams>>();
 
   // This is our typical function that updates the parameters
   const updateRequestParams = React.useCallback(
@@ -34,7 +34,7 @@ function useRequestParamsWithInfiniteScroll<AvailableParams>() {
   // new parameters, it clears all the parameters and just sets the parameters passed as an argument
   const setRequestParams = React.useCallback(
     (newParams: Partial<AvailableParams>) => {
-      updateUrlParams({ ...newParams });
+      setUrlParams({ ...newParams });
     },
     [urlParams]
   );
@@ -48,4 +48,4 @@ function useRequestParamsWithInfiniteScroll<AvailableParams>() {
     [urlParams]
   );
 }
-export default useRequestParamsWithInfiniteScroll;
+export default useRequestParamsWithoutPagination;

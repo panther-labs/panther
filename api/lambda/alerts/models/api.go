@@ -67,21 +67,21 @@ type GetAlertOutput = Alert
 // }
 type ListAlertsInput struct {
 	RuleID   *string `json:"ruleId"`
-	PageSize *int    `json:"pageSize" validate:"min=1,max=50"`
+	PageSize *int    `json:"pageSize" validate:"omitempty,min=1,max=50"`
 
 	// Infinite scroll/pagination query key
 	ExclusiveStartKey *string `json:"exclusiveStartKey"`
 
 	// Filtering
-	Severity        *string    `json:"severity" validate:"oneof=INFO LOW MEDIUM HIGH CRITICAL"`
+	Severity        *string    `json:"severity" validate:"omitempty,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 	NameContains    *string    `json:"nameContains"`
-	EventCountMin   *int       `json:"eventCountMin" validate:"min=0"`
-	EventCountMax   *int       `json:"eventCountMax" validate:"min=1"`
+	EventCountMin   *int       `json:"eventCountMin" validate:"omitempty,min=0"`
+	EventCountMax   *int       `json:"eventCountMax" validate:"omitempty,min=1"`
 	CreatedAtBefore *time.Time `json:"createdAtBefore"`
 	CreatedAtAfter  *time.Time `json:"createdAtAfter"`
 
 	// Sorting
-	SortDir *string `json:"sortDir," validate:"oneof=ascending descending"`
+	SortDir *string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
 }
 
 // ListAlertsOutput is the returned alert list.

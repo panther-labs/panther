@@ -22,7 +22,7 @@ import GenerateFiltersGroup from 'Components/utils/GenerateFiltersGroup';
 import { capitalize, sanitizeDates, desanitizeDates } from 'Helpers/utils';
 import FormikTextInput from 'Components/fields/TextInput';
 import FormikCombobox from 'Components/fields/ComboBox';
-import useRequestParamsWithInfiniteScroll from 'Hooks/useRequestParamsWithInfiniteScroll';
+import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import { Box, Button, Card, Flex, Icon } from 'pouncejs';
 import CreateButton from 'Pages/ListPolicies/CreateButton';
 import ErrorBoundary from 'Components/ErrorBoundary';
@@ -109,7 +109,7 @@ export type ListAlertsFiltersValues = Pick<
 
 const ListAlertsActions: React.FC = () => {
   const [areFiltersVisible, setFiltersVisibility] = React.useState(false);
-  const { requestParams, updateRequestParams } = useRequestParamsWithInfiniteScroll<
+  const { requestParams, updateRequestParams } = useRequestParamsWithoutPagination<
     ListAlertsInput
   >();
 

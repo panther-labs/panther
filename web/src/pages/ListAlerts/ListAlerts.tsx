@@ -22,7 +22,7 @@ import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { extractErrorMessage, sanitizeDates } from 'Helpers/utils';
 import { ListAlertsInput, SortDirEnum, ListAlertsSortFieldsEnum } from 'Generated/schema';
 import useInfiniteScroll from 'Hooks/useInfiniteScroll';
-import useRequestParamsWithInfiniteScroll from 'Hooks/useRequestParamsWithInfiniteScroll';
+import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import isEmpty from 'lodash-es/isEmpty';
@@ -34,7 +34,7 @@ import ListAlertsPageSkeleton from './Skeleton';
 import ListAlertsPageEmptyDataFallback from './EmptyDataFallback';
 
 const ListAlerts = () => {
-  const { requestParams, updateRequestParams } = useRequestParamsWithInfiniteScroll<
+  const { requestParams, updateRequestParams } = useRequestParamsWithoutPagination<
     ListAlertsInput
   >();
 
