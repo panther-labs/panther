@@ -53,7 +53,7 @@ const GithubDestinationForm: React.FC<GithubDestinationFormProps> = ({
   onSubmit,
   initialValues,
 }) => {
-  const existing = initialValues.displayName.length;
+  const existing = initialValues.outputId;
   const validationSchema = existing
     ? defaultValidationSchema.concat(editGithubFieldsValidationSchema)
     : defaultValidationSchema.concat(githubFieldsValidationSchema);

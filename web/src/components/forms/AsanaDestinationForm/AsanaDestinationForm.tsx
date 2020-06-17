@@ -49,16 +49,16 @@ const asanaFieldsValidationSchema = Yup.object().shape({
   }),
 });
 
-const editGithubFieldsValidationSchema = Yup.object().shape({
+const editAsanaFieldsValidationSchema = Yup.object().shape({
   outputConfig: Yup.object().shape({
     asana: Yup.object().shape(baseAsanaShapeObject),
   }),
 });
 
 const AsanaDestinationForm: React.FC<AsanaDestinationFormProps> = ({ onSubmit, initialValues }) => {
-  const existing = initialValues.displayName.length;
+  const existing = initialValues.outputId;
   const validationSchema = existing
-    ? defaultValidationSchema.concat(editGithubFieldsValidationSchema)
+    ? defaultValidationSchema.concat(editAsanaFieldsValidationSchema)
     : defaultValidationSchema.concat(asanaFieldsValidationSchema);
 
   return (

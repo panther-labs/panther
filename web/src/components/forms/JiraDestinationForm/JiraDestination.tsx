@@ -57,7 +57,7 @@ const editJiraFieldsValidationSchema = Yup.object().shape({
 });
 
 const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, initialValues }) => {
-  const existing = initialValues.displayName.length;
+  const existing = initialValues.outputId;
   const validationSchema = existing
     ? defaultValidationSchema.concat(editJiraFieldsValidationSchema)
     : defaultValidationSchema.concat(jiraFieldsValidationSchema);

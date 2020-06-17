@@ -50,7 +50,7 @@ const OpsgenieDestinationForm: React.FC<OpsgenieDestinationFormProps> = ({
   onSubmit,
   initialValues,
 }) => {
-  const existing = initialValues.displayName.length;
+  const existing = initialValues.outputId;
   const validationSchema = existing ? defaultValidationSchema : mergedValidationSchema;
 
   return (
