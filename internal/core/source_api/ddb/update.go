@@ -21,24 +21,29 @@ package ddb
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"github.com/pkg/errors"
 )
 
-// PutItem adds a source integration to the database
-func (ddb *DDB) PutItem(input *Integration) error {
-	item, err := dynamodbattribute.MarshalMap(input)
+func (ddb *DDB) UpdateStatus(integrationID string, status IntegrationStatus) error {
+	updateExpression := expression.Set(expression.Name("lastEventReceived"), expression.Value(status.LastEventReceived))
+	expr, err := expression.NewBuilder().WithUpdate(updateExpression).Build()
 	if err != nil {
-		return errors.Wrapf(err, "failed to marshal integration metadata")
+		return errors.Wrap(err, "failed to generate update expression")
+	}
+	updateRequest := &dynamodb.UpdateItemInput{
+		TableName: aws.String(ddb.TableName),
+		Key: map[string]*dynamodb.AttributeValue{
+			hashKey: {S: &integrationID},
+		},
+		UpdateExpression:          expr.Update(),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
 	}
 
-	putRequest := &dynamodb.PutItemInput{
-		TableName: aws.String(ddb.TableName),
-		Item:      item,
-	}
-	_, err = ddb.Client.PutItem(putRequest)
+	_, err = ddb.Client.UpdateItem(updateRequest)
 	if err != nil {
-		return errors.Wrap(err, "failed to put item")
+		return errors.Wrap(err, "failed to update item")
 	}
 	return nil
 }

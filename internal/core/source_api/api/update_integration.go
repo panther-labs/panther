@@ -133,7 +133,7 @@ func (API) UpdateIntegrationLastScanEnd(input *models.UpdateIntegrationLastScanE
 	return nil
 }
 
-func getItem(integrationID *string) (*ddb.IntegrationItem, error) {
+func getItem(integrationID *string) (*ddb.Integration, error) {
 	item, err := dynamoClient.GetItem(integrationID)
 	if err != nil {
 		return nil, &genericapi.InternalError{Message: "Encountered issue while updating integration"}

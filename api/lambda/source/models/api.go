@@ -34,7 +34,8 @@ type LambdaInput struct {
 	UpdateIntegrationLastScanEnd   *UpdateIntegrationLastScanEndInput   `json:"updateIntegrationLastScanEnd"`
 	UpdateIntegrationLastScanStart *UpdateIntegrationLastScanStartInput `json:"updateIntegrationLastScanStart"`
 
-	FullScan *FullScanInput `json:"fullScan"`
+	FullScan     *FullScanInput     `json:"fullScan"`
+	UpdateStatus *UpdateStatusInput `json:"updateIntegrationStatusInput"`
 }
 
 //
@@ -152,4 +153,16 @@ type UpdateIntegrationLastScanEndInput struct {
 	LastScanEndTime      *time.Time `json:"lastScanEndTime" validate:"required"`
 	LastScanErrorMessage *string    `json:"lastScanErrorMessage"`
 	ScanStatus           *string    `json:"scanStatus" validate:"required,oneof=ok error scanning"`
+}
+
+// Updates the status of an integration
+// Sample request:
+// {
+// 	"integrationId": "uuid",
+//	"lastEventReceived":"2020-10-10T05:03:01Z"
+//}
+//
+type UpdateStatusInput struct {
+	IntegrationID     string    `json:"integrationId" validate:"required,uuid4"`
+	LastEventReceived time.Time `json:"lastEventReceived" validate:"required"`
 }

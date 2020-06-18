@@ -27,30 +27,31 @@ type SourceIntegration struct {
 	SourceIntegrationScanInformation
 }
 
-// SourceIntegrationStatus provides context that the full scan works and that events are being received.
+// SourceIntegrationStatus provides information about the status of a source
 type SourceIntegrationStatus struct {
-	ScanStatus  *string `json:"scanStatus"`
-	EventStatus *string `json:"eventStatus"`
+	ScanStatus        *string   `json:"scanStatus,omitempty"`
+	EventStatus       *string   `json:"eventStatus,omitempty"`
+	LastEventReceived time.Time `json:"lastEventReceived,omitempty"`
 }
 
 // SourceIntegrationScanInformation is detail about the last snapshot.
 type SourceIntegrationScanInformation struct {
-	LastScanEndTime      *time.Time `json:"lastScanEndTime"`
-	LastScanErrorMessage *string    `json:"lastScanErrorMessage"`
-	LastScanStartTime    *time.Time `json:"lastScanStartTime"`
+	LastScanEndTime      *time.Time `json:"lastScanEndTime,omitempty"`
+	LastScanErrorMessage *string    `json:"lastScanErrorMessage,omitempty"`
+	LastScanStartTime    *time.Time `json:"lastScanStartTime,omitempty"`
 }
 
 // SourceIntegrationMetadata is general settings and metadata for an integration.
 type SourceIntegrationMetadata struct {
-	AWSAccountID       *string    `json:"awsAccountId"`
-	CreatedAtTime      *time.Time `json:"createdAtTime"`
-	CreatedBy          *string    `json:"createdBy"`
-	IntegrationID      *string    `json:"integrationId"`
-	IntegrationLabel   *string    `json:"integrationLabel"`
-	IntegrationType    *string    `json:"integrationType"`
-	RemediationEnabled *bool      `json:"remediationEnabled"`
-	CWEEnabled         *bool      `json:"cweEnabled"`
-	ScanIntervalMins   *int       `json:"scanIntervalMins"`
+	AWSAccountID       *string    `json:"awsAccountId,omitempty"`
+	CreatedAtTime      *time.Time `json:"createdAtTime,omitempty"`
+	CreatedBy          *string    `json:"createdBy,omitempty"`
+	IntegrationID      *string    `json:"integrationId,omitempty"`
+	IntegrationLabel   *string    `json:"integrationLabel,omitempty"`
+	IntegrationType    *string    `json:"integrationType,omitempty"`
+	RemediationEnabled *bool      `json:"remediationEnabled,omitempty"`
+	CWEEnabled         *bool      `json:"cweEnabled,omitempty"`
+	ScanIntervalMins   *int       `json:"scanIntervalMins,omitempty"`
 	S3Bucket           *string    `json:"s3Bucket,omitempty"`
 	S3Prefix           *string    `json:"s3Prefix,omitempty"`
 	KmsKey             *string    `json:"kmsKey,omitempty"`
@@ -64,19 +65,19 @@ type SourceIntegrationHealth struct {
 	IntegrationType string `json:"integrationType"`
 
 	// Checks for cloudsec integrations
-	AuditRoleStatus       SourceIntegrationItemStatus `json:"auditRoleStatus"`
-	CWERoleStatus         SourceIntegrationItemStatus `json:"cweRoleStatus"`
-	RemediationRoleStatus SourceIntegrationItemStatus `json:"remediationRoleStatus"`
+	AuditRoleStatus       SourceIntegrationItemStatus `json:"auditRoleStatus,omitempty"`
+	CWERoleStatus         SourceIntegrationItemStatus `json:"cweRoleStatus,omitempty"`
+	RemediationRoleStatus SourceIntegrationItemStatus `json:"remediationRoleStatus,omitempty"`
 
 	// Checks for log analysis integrations
-	ProcessingRoleStatus SourceIntegrationItemStatus `json:"processingRoleStatus"`
-	S3BucketStatus       SourceIntegrationItemStatus `json:"s3BucketStatus"`
-	KMSKeyStatus         SourceIntegrationItemStatus `json:"kmsKeyStatus"`
+	ProcessingRoleStatus SourceIntegrationItemStatus `json:"processingRoleStatus,omitempty"`
+	S3BucketStatus       SourceIntegrationItemStatus `json:"s3BucketStatus,omitempty"`
+	KMSKeyStatus         SourceIntegrationItemStatus `json:"kmsKeyStatus,omitempty"`
 }
 
 type SourceIntegrationItemStatus struct {
-	Healthy      *bool   `json:"healthy"`
-	ErrorMessage *string `json:"errorMessage"`
+	Healthy      *bool   `json:"healthy,omitempty"`
+	ErrorMessage *string `json:"errorMessage,omitempty"`
 }
 
 type SourceIntegrationTemplate struct {

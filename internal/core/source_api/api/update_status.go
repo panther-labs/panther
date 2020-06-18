@@ -1,4 +1,4 @@
-package ddb
+package api
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,26 +19,25 @@ package ddb
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/pkg/errors"
+	"go.uber.org/zap"
+
+	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/internal/core/source_api/ddb"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-// PutItem adds a source integration to the database
-func (ddb *DDB) PutItem(input *Integration) error {
-	item, err := dynamodbattribute.MarshalMap(input)
-	if err != nil {
-		return errors.Wrapf(err, "failed to marshal integration metadata")
-	}
+var (
+	updateStatusInternalError = &genericapi.InternalError{Message: "Failed to update source status, please try again later"}
+)
 
-	putRequest := &dynamodb.PutItemInput{
-		TableName: aws.String(ddb.TableName),
-		Item:      item,
+func (api API) UpdateStatus(input *models.UpdateStatusInput) error {
+	status := ddb.IntegrationStatus{
+		LastEventReceived: input.LastEventReceived,
 	}
-	_, err = ddb.Client.PutItem(putRequest)
+	err := dynamoClient.UpdateStatus(input.IntegrationID, status)
 	if err != nil {
-		return errors.Wrap(err, "failed to put item")
+		zap.L().Error("failed to update integration status", zap.Error(err), zap.String("integrationId", input.IntegrationID))
+		return updateStatusInternalError
 	}
 	return nil
 }
