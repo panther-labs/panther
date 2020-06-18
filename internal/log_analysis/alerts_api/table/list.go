@@ -19,6 +19,8 @@ package table
  */
 
 import (
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -107,6 +109,10 @@ func (table *AlertsTable) list(ddbKey, ddbValue string, input *models.ListAlerts
 		return nil, nil, errors.Wrap(err, "UnmarshalListOfMaps() failed")
 	}
 
+	// Perform post-filtering data returned from ddb to provide case-insensitive filtering
+	summaries = filterByTitleContains(input, &summaries)
+	summaries = filterByRuleContains(input, &summaries)
+
 	// If DDB returned a LastEvaluatedKey (the "primary key of the item where the operation stopped"),
 	// it means there are more alerts to be returned. Return populated `lastEvaluatedKey` JSON blob in the response.
 	//
@@ -172,8 +178,6 @@ func (table *AlertsTable) applyFilters(builder *expression.Builder, input *model
 
 	// Then, apply our filters
 	filterBySeverity(&filter, input)
-	filterByTitleContains(&filter, input)
-	filterByRuleContains(&filter, input)
 	filterByEventCount(&filter, input)
 
 	// Finally, overwrite the existing condition filter on the builder
@@ -189,22 +193,36 @@ func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAle
 	}
 }
 
-// filterByTitleContains - fiters by a name that contains a string (case sensitive)
-func filterByTitleContains(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
-	if input.NameContains != nil {
-		*filter = filter.And(
-			expression.Contains(expression.Name(TitleKey), *input.NameContains),
-		)
+// filterByTitleContains - fiters by a name that contains a string (case insensitive)
+func filterByTitleContains(input *models.ListAlertsInput, summaries *[]*AlertItem) (filtered []*AlertItem) {
+	if input.NameContains == nil {
+		return *summaries
 	}
+	for _, summary := range *summaries {
+		if strings.Contains(
+			strings.ToLower(*summary.Title),
+			strings.ToLower(*input.NameContains),
+		) {
+			filtered = append(filtered, summary)
+		}
+	}
+	return filtered
 }
 
-// filterByRuleContains - fiters by a name that contains a string (case sensitive)
-func filterByRuleContains(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
-	if input.RuleContains != nil {
-		*filter = filter.And(
-			expression.Contains(expression.Name(RuleIDKey), *input.RuleContains),
-		)
+// filterByRuleContains - fiters by a name that contains a string (case insensitive)
+func filterByRuleContains(input *models.ListAlertsInput, summaries *[]*AlertItem) (filtered []*AlertItem) {
+	if input.RuleContains == nil {
+		return *summaries
 	}
+	for _, summary := range *summaries {
+		if strings.Contains(
+			strings.ToLower(summary.RuleID),
+			strings.ToLower(*input.RuleContains),
+		) {
+			filtered = append(filtered, summary)
+		}
+	}
+	return filtered
 }
 
 // filterByEventCount - fiters by an eventCount defined by a range of two numbers
