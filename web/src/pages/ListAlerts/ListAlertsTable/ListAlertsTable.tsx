@@ -23,6 +23,7 @@ import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/SeverityBadge';
 import { ListAlerts } from 'Pages/ListAlerts/graphql/listAlerts.generated';
 import { ListAlertsInput, ListAlertsSortFieldsEnum, SortDirEnum } from 'Generated/schema';
+import { formatDatetime } from 'Helpers/utils';
 
 type ListAlertsTableProps = {
   items: ListAlerts['alerts']['alertSummaries'];
@@ -51,6 +52,7 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
           <Table.HeaderCell>Severity</Table.HeaderCell>
           <Table.HeaderCell align="right">Events</Table.HeaderCell>
           <Table.HeaderCell>Rule ID</Table.HeaderCell>
+          <Table.HeaderCell>Last Matched At</Table.HeaderCell>
           <Table.SortableHeaderCell
             onClick={() => handleSort(ListAlertsSortFieldsEnum.CreatedAt)}
             sortDir={
@@ -59,7 +61,6 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
           >
             Created At
           </Table.SortableHeaderCell>
-          <Table.HeaderCell>Last Matched At</Table.HeaderCell>
         </Table.Row>
       </Table.Head>
       <Table.Body>
@@ -80,8 +81,8 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
             </Table.Cell>
             <Table.Cell align="right">{alert.eventsMatched}</Table.Cell>
             <Table.Cell>{alert.ruleId}</Table.Cell>
-            <Table.Cell>{new Date(alert.creationTime).toUTCString()}</Table.Cell>
-            <Table.Cell>{new Date(alert.updateTime).toUTCString()}</Table.Cell>
+            <Table.Cell>{formatDatetime(alert.updateTime)}</Table.Cell>
+            <Table.Cell>{formatDatetime(alert.creationTime)}</Table.Cell>
           </Table.Row>
         ))}
       </Table.Body>

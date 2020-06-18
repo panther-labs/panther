@@ -19,7 +19,7 @@
 import React from 'react';
 import { Alert, Box, Card } from 'pouncejs';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
-import { extractErrorMessage, sanitizeDates } from 'Helpers/utils';
+import { extractErrorMessage } from 'Helpers/utils';
 import { ListAlertsInput, SortDirEnum, ListAlertsSortFieldsEnum } from 'Generated/schema';
 import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
@@ -86,33 +86,31 @@ const ListAlerts = () => {
     return <ListAlertsPageSkeleton />;
   }
 
-  if (error) {
-    return (
-      <Box mb={6}>
-        <Alert
-          variant="error"
-          title="Couldn't load your alerts"
-          description={
-            extractErrorMessage(error) ||
-            'There was an error when performing your request, please contact support@runpanther.io'
-          }
-        />
-      </Box>
-    );
-  }
-
   if (!alertItems.length && isEmpty(requestParams)) {
     return <ListAlertsPageEmptyDataFallback />;
   }
 
-  //  Check how many active filters exist by checking how many columns keys exist in the URL
+  const showIfError = Boolean(error);
+
   return (
     <ErrorBoundary>
-      <ListAlertsActions />
+      {showIfError && (
+        <Box mb={6}>
+          <Alert
+            variant="error"
+            title="Couldn't load your alerts"
+            description={
+              extractErrorMessage(error) ||
+              'There was an error when performing your request, please contact support@runpanther.io'
+            }
+          />
+        </Box>
+      )}
+      <ListAlertsActions showActions={showIfError} />
       <Card mb={8}>
         <ListAlertsTable
           items={alertItems}
-          onSort={newParams => updateRequestParams(sanitizeDates(newParams))}
+          onSort={updateRequestParams}
           sortBy={ListAlertsSortFieldsEnum.CreatedAt}
           sortDir={requestParams.sortDir || SortDirEnum.Descending}
         />

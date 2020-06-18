@@ -17,6 +17,7 @@
  */
 
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import * as Yup from 'yup';
 import {
   ActiveSuppressCount,
@@ -37,6 +38,9 @@ import mapValues from 'lodash-es/mapValues';
 import sum from 'lodash-es/sum';
 import { ErrorResponse } from 'apollo-link-error';
 import { ApolloError } from '@apollo/client';
+
+// Add the plugin
+dayjs.extend(utc);
 
 export const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
@@ -90,6 +94,39 @@ export const formatDatetime = (datetime: string) => {
   return dayjs(datetime).format(
     `YYYY-MM-DD HH:mm G[M]T${utcOffset > 0 ? '+' : ''}${utcOffset !== 0 ? utcOffset : ''}`
   );
+};
+
+/**
+ * Given a dayjs format string, create a partial that accepts a datestring that can convert
+ * UTC -> Local time and from Local time -> UTC.
+ *
+ * This is primarily used when converting local time in a frontend form with URL parameters in UTC.
+ */
+export const formatTime = (format?: string) => (
+  datetime: string,
+  utcIn?: boolean,
+  utcOut?: boolean
+) => {
+  // Set the initial date context as utc or local
+  let date = utcIn ? dayjs.utc(datetime) : dayjs(datetime);
+
+  // Calculate offset in hours for the default format string
+  const utcOffsetHours = dayjs(datetime).utcOffset() / 60;
+
+  // Perform the proper conversion of time units
+  if (!utcIn && utcOut) {
+    date = date.subtract(date.utcOffset(), 'minute');
+  }
+
+  // Use the provided partial or our default
+  const fmt =
+    format ||
+    `YYYY-MM-DD HH:mm G[M]T${utcOffsetHours > 0 ? '+' : ''}${
+      utcOffsetHours !== 0 ? utcOffsetHours : ''
+    }`;
+
+  // Finally, return the time in UTC or Local time
+  return utcOut ? date.format(fmt) : date.local().format(fmt);
 };
 
 /** Slice text to 7 characters, mostly used for hashIds */
@@ -253,27 +290,3 @@ export const generateDocUrl = (baseUrl: string, version: string) => {
 export const isNumber = (value: string) => /^-{0,1}\d+$/.test(value);
 
 export const toStackNameFormat = (val: string) => val.replace(/ /g, '-').toLowerCase();
-
-// Adds a 'Z' suffix to a date string
-// Used to sanitize date string going to backend
-export const sanitizeDates = (parms: Partial<any>) =>
-  Object.entries(parms).reduce((acc, [k, v]) => {
-    if (typeof v === 'string' && Date.parse(v)) {
-      acc[k] = /Z$/.test(v) ? v : `${v}Z`;
-      return acc;
-    }
-    acc[k] = v;
-    return acc;
-  }, {});
-
-// Removes the 'Z' suffix from a date string
-// Used to sanitize date string going to the frontend form
-export const desanitizeDates = (parms: Partial<any>) =>
-  Object.entries(parms).reduce((acc, [k, v]) => {
-    if (typeof v === 'string' && Date.parse(v)) {
-      acc[k] = /Z$/.test(v) ? v.replace('Z', '') : v;
-      return acc;
-    }
-    acc[k] = v;
-    return acc;
-  }, {});
