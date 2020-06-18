@@ -16,16 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {
-  Box,
-  Heading,
-  SideSheet,
-  useSnackbar,
-  Text,
-  Alert,
-  SideSheetProps,
-  Button,
-} from 'pouncejs';
+import { Box, Heading, SideSheet, useSnackbar, Text, SideSheetProps, Button, Link } from 'pouncejs';
 import React from 'react';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 import { ListPoliciesDocument } from 'Pages/ListPolicies';
@@ -62,9 +53,10 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({
     onError: error => {
       pushSnackbar({
         variant: 'error',
-        title:
-          extractErrorMessage(error) ||
-          'An unknown error occurred while attempting to upload your policies',
+        duration: 10000,
+        title: `Couldn't upload your ${isPolicy ? 'policies' : 'rules'}`,
+        description:
+          extractErrorMessage(error) || 'An unknown error occurred while during the upload',
       });
     },
   });
@@ -118,7 +110,7 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({
         <Heading size="medium" mb={8} id="sidesheet-title">
           Upload {isPolicy ? 'Policies' : 'Rules'}
         </Heading>
-        <Text size="large" color="grey300" mb={8} as="p" id="sidesheet-description">
+        <Text size="large" color="gray-100" mb={8} as="p" id="sidesheet-description">
           Sometimes you don{"'"}t have the luxury of creating {isPolicy ? 'policies' : 'rules'}{' '}
           one-by-one through our lovely editor page. Not to worry, as a way to speed things up, we
           also accept a single Base64-encoded zipfile containing all of your policies.
@@ -127,13 +119,9 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({
           Supposing you have a collection of {isPolicy ? 'policy' : 'rule'} files, simply zip them
           together using any zip method you prefer. You can find a detailed description of the
           process in our{' '}
-          <a
-            href={`${PANTHER_SCHEMA_DOCS_LINK}/policies/uploading`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <Link external href={`${PANTHER_SCHEMA_DOCS_LINK}/policies/uploading`}>
             designated docs page
-          </a>
+          </Link>
           .
           <br />
           <br />
@@ -146,18 +134,6 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({
           hidden
           onChange={handleFileChange}
         />
-        {uploadPoliciesError && (
-          <Box mb={6}>
-            <Alert
-              variant="error"
-              title="An error has occurred"
-              description={
-                extractErrorMessage(uploadPoliciesError) ||
-                'An unknown error occurred while attempting to upload your policies'
-              }
-            />
-          </Box>
-        )}
         <Button
           disabled={loading}
           loading={loading}
