@@ -173,6 +173,7 @@ func (table *AlertsTable) applyFilters(builder *expression.Builder, input *model
 	// Then, apply our filters
 	filterBySeverity(&filter, input)
 	filterByTitleContains(&filter, input)
+	filterByRuleContains(&filter, input)
 	filterByEventCount(&filter, input)
 
 	// Finally, overwrite the existing condition filter on the builder
@@ -193,6 +194,15 @@ func filterByTitleContains(filter *expression.ConditionBuilder, input *models.Li
 	if input.NameContains != nil {
 		*filter = filter.And(
 			expression.Contains(expression.Name(TitleKey), *input.NameContains),
+		)
+	}
+}
+
+// filterByRuleContains - fiters by a name that contains a string (case sensitive)
+func filterByRuleContains(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
+	if input.RuleContains != nil {
+		*filter = filter.And(
+			expression.Contains(expression.Name(RuleIDKey), *input.RuleContains),
 		)
 	}
 }

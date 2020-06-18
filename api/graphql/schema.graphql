@@ -86,6 +86,7 @@ input ListAlertsInput {
   exclusiveStartKey: String
   severity: SeverityEnum
   nameContains: String
+  ruleContains: String
   eventCountMin: Int
   eventCountMax: Int
   createdAtBefore: AWSDateTime

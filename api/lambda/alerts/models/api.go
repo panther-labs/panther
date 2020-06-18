@@ -75,6 +75,7 @@ type ListAlertsInput struct {
 	// Filtering
 	Severity        *string    `json:"severity" validate:"omitempty,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 	NameContains    *string    `json:"nameContains"`
+	RuleContains    *string    `json:"ruleContains"`
 	EventCountMin   *int       `json:"eventCountMin" validate:"omitempty,min=0"`
 	EventCountMax   *int       `json:"eventCountMax" validate:"omitempty,min=1"`
 	CreatedAtBefore *time.Time `json:"createdAtBefore"`

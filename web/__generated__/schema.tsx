@@ -381,6 +381,7 @@ export type ListAlertsInput = {
   exclusiveStartKey?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
   nameContains?: Maybe<Scalars['String']>;
+  ruleContains?: Maybe<Scalars['String']>;
   eventCountMin?: Maybe<Scalars['Int']>;
   eventCountMax?: Maybe<Scalars['Int']>;
   createdAtBefore?: Maybe<Scalars['AWSDateTime']>;

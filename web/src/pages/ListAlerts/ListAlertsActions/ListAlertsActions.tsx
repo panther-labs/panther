@@ -52,10 +52,10 @@ export const filters = {
       },
     },
   },
-  ruleId: {
+  ruleContains: {
     component: FormikTextInput,
     props: {
-      label: 'Rule ID',
+      label: 'Rule ID contains',
       placeholder: 'Enter a rule ID...',
     },
   },
@@ -100,7 +100,7 @@ export const filters = {
 export type ListAlertsFiltersValues = Pick<
   ListAlertsInput,
   | 'severity'
-  | 'ruleId'
+  | 'ruleContains'
   | 'eventCountMin'
   | 'eventCountMax'
   | 'nameContains'
