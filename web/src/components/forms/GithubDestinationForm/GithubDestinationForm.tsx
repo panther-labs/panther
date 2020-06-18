@@ -62,7 +62,7 @@ const GithubDestinationForm: React.FC<GithubDestinationFormProps> = ({
         label="Repository name"
         placeholder="What's the name of your Github repository?"
         mb={6}
-        aria-required
+        aria-required={!existing}
       />
       <Field
         as={FormikTextInput}

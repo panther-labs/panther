@@ -93,7 +93,7 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
           existing ? '<hidden information>' : "What's the API key of the related Jira account"
         }
         mb={6}
-        aria-required
+        aria-required={!existing}
         autoComplete="new-password"
       />
 

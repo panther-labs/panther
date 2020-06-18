@@ -67,7 +67,7 @@ const CustomWebhookDestinationForm: React.FC<CustomWebhookDestinationFormProps> 
           existing ? '<hidden information>' : 'Where should we send a push notification to?'
         }
         mb={6}
-        aria-required
+        aria-required={!existing}
       />
     </BaseDestinationForm>
   );

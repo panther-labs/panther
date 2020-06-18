@@ -63,7 +63,7 @@ const AsanaDestinationForm: React.FC<AsanaDestinationFormProps> = ({ onSubmit, i
         label="Access Token"
         placeholder={existing ? '<hidden information>' : 'Your personal Asana access token'}
         mb={6}
-        aria-required
+        aria-required={!existing}
       />
       <Field
         name="outputConfig.asana.projectGids"
