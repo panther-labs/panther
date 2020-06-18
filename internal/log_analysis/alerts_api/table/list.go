@@ -112,6 +112,7 @@ func (table *AlertsTable) list(ddbKey, ddbValue string, input *models.ListAlerts
 	// Perform post-filtering data returned from ddb to provide case-insensitive filtering
 	summaries = filterByTitleContains(input, &summaries)
 	summaries = filterByRuleContains(input, &summaries)
+	summaries = filterByAlertIDContains(input, &summaries)
 
 	// If DDB returned a LastEvaluatedKey (the "primary key of the item where the operation stopped"),
 	// it means there are more alerts to be returned. Return populated `lastEvaluatedKey` JSON blob in the response.
@@ -203,6 +204,7 @@ func filterByTitleContains(input *models.ListAlertsInput, summaries *[]*AlertIte
 			strings.ToLower(*summary.Title),
 			strings.ToLower(*input.NameContains),
 		) {
+
 			filtered = append(filtered, summary)
 		}
 	}
@@ -219,6 +221,24 @@ func filterByRuleContains(input *models.ListAlertsInput, summaries *[]*AlertItem
 			strings.ToLower(summary.RuleID),
 			strings.ToLower(*input.RuleContains),
 		) {
+
+			filtered = append(filtered, summary)
+		}
+	}
+	return filtered
+}
+
+// filterByAlertIDContains - fiters by a name that contains a string (case insensitive)
+func filterByAlertIDContains(input *models.ListAlertsInput, summaries *[]*AlertItem) (filtered []*AlertItem) {
+	if input.AlertIDContains == nil {
+		return *summaries
+	}
+	for _, summary := range *summaries {
+		if strings.Contains(
+			strings.ToLower(summary.AlertID),
+			strings.ToLower(*input.AlertIDContains),
+		) {
+
 			filtered = append(filtered, summary)
 		}
 	}

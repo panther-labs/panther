@@ -24,7 +24,6 @@ import FormikTextInput from 'Components/fields/TextInput';
 import FormikCombobox from 'Components/fields/ComboBox';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import { Box, Button, Card, Flex, Icon } from 'pouncejs';
-import CreateButton from 'Pages/ListPolicies/CreateButton';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import isEmpty from 'lodash-es/isEmpty';
 import isNumber from 'lodash-es/isNumber';
@@ -33,13 +32,6 @@ import pick from 'lodash-es/pick';
 const severityOptions = Object.values(SeverityEnum);
 
 export const filters = {
-  nameContains: {
-    component: FormikTextInput,
-    props: {
-      label: 'Title contains',
-      placeholder: 'Enter an alert title...',
-    },
-  },
   severity: {
     component: FormikCombobox,
     props: {
@@ -52,29 +44,11 @@ export const filters = {
       },
     },
   },
-  ruleContains: {
+  nameContains: {
     component: FormikTextInput,
     props: {
-      label: 'Rule ID contains',
-      placeholder: 'Enter a rule ID...',
-    },
-  },
-  eventCountMin: {
-    component: FormikTextInput,
-    props: {
-      label: 'Event count (min)',
-      placeholder: 'Enter number...',
-      type: 'number',
-      min: 0,
-    },
-  },
-  eventCountMax: {
-    component: FormikTextInput,
-    props: {
-      label: 'Event count (max)',
-      placeholder: 'Enter number...',
-      type: 'number',
-      min: 0,
+      label: 'Title',
+      placeholder: 'Enter an alert title...',
     },
   },
   createdAtAfter: {
@@ -95,17 +69,50 @@ export const filters = {
       step: 1,
     },
   },
+  ruleContains: {
+    component: FormikTextInput,
+    props: {
+      label: 'Rule',
+      placeholder: 'Enter a rule ID...',
+    },
+  },
+  alertIdContains: {
+    component: FormikTextInput,
+    props: {
+      label: 'Alert',
+      placeholder: 'Enter an alert ID...',
+    },
+  },
+  eventCountMin: {
+    component: FormikTextInput,
+    props: {
+      label: 'Event Count (min)',
+      placeholder: 'Enter a number...',
+      type: 'number',
+      min: 0,
+    },
+  },
+  eventCountMax: {
+    component: FormikTextInput,
+    props: {
+      label: 'Event Count (max)',
+      placeholder: 'Enter a number...',
+      type: 'number',
+      min: 1,
+    },
+  },
 };
 
 export type ListAlertsFiltersValues = Pick<
   ListAlertsInput,
   | 'severity'
-  | 'ruleContains'
-  | 'eventCountMin'
-  | 'eventCountMax'
   | 'nameContains'
   | 'createdAtAfter'
   | 'createdAtBefore'
+  | 'ruleContains'
+  | 'alertIdContains'
+  | 'eventCountMin'
+  | 'eventCountMax'
 >;
 
 type ListAlertsActionsProps = {
@@ -171,7 +178,7 @@ const ListAlertsActions: React.FC<ListAlertsActionsProps> = ({ showActions }) =>
   return (
     <Box>
       <Flex justify="flex-end" mb={6}>
-        <Box position="relative" mr={5}>
+        <Box position="relative">
           <Button
             size="large"
             variant="default"
@@ -183,7 +190,6 @@ const ListAlertsActions: React.FC<ListAlertsActionsProps> = ({ showActions }) =>
             </Flex>
           </Button>
         </Box>
-        <CreateButton />
       </Flex>
       {areFiltersVisible && (
         <ErrorBoundary>

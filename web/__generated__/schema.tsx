@@ -381,11 +381,12 @@ export type ListAlertsInput = {
   exclusiveStartKey?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
   nameContains?: Maybe<Scalars['String']>;
-  ruleContains?: Maybe<Scalars['String']>;
-  eventCountMin?: Maybe<Scalars['Int']>;
-  eventCountMax?: Maybe<Scalars['Int']>;
   createdAtBefore?: Maybe<Scalars['AWSDateTime']>;
   createdAtAfter?: Maybe<Scalars['AWSDateTime']>;
+  ruleContains?: Maybe<Scalars['String']>;
+  alertIdContains?: Maybe<Scalars['String']>;
+  eventCountMin?: Maybe<Scalars['Int']>;
+  eventCountMax?: Maybe<Scalars['Int']>;
   sortBy?: Maybe<ListAlertsSortFieldsEnum>;
   sortDir?: Maybe<SortDirEnum>;
 };

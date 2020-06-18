@@ -86,11 +86,12 @@ input ListAlertsInput {
   exclusiveStartKey: String
   severity: SeverityEnum
   nameContains: String
-  ruleContains: String
-  eventCountMin: Int
-  eventCountMax: Int
   createdAtBefore: AWSDateTime
   createdAtAfter: AWSDateTime
+  ruleContains: String
+  alertIdContains: String
+  eventCountMin: Int
+  eventCountMax: Int
   sortBy: ListAlertsSortFieldsEnum # defaults to `createdAt`
   sortDir: SortDirEnum # defaults to `descending` (always on `createdAt` field)
 }
