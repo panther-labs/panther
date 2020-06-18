@@ -34,9 +34,9 @@ const (
 	CreatedAtKey       = "creationTime"
 	TimePartitionKey   = "timePartition"
 	TimePartitionValue = "defaultPartition"
-	Title              = "title"
-	Severity           = "severity"
-	EventCount         = "eventCount"
+	TitleKey           = "title"
+	SeverityKey        = "severity"
+	EventCountKey      = "eventCount"
 )
 
 // API defines the interface for the alerts table which can be used for mocking.

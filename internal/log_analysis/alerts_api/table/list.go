@@ -183,7 +183,7 @@ func (table *AlertsTable) applyFilters(builder *expression.Builder, input *model
 func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
 	if input.Severity != nil {
 		*filter = filter.And(
-			expression.Equal(expression.Name(Severity), expression.Value(*input.Severity)),
+			expression.Equal(expression.Name(SeverityKey), expression.Value(*input.Severity)),
 		)
 	}
 }
@@ -192,7 +192,7 @@ func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAle
 func filterByTitleContains(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
 	if input.NameContains != nil {
 		*filter = filter.And(
-			expression.Contains(expression.Name(Title), *input.NameContains),
+			expression.Contains(expression.Name(TitleKey), *input.NameContains),
 		)
 	}
 }
@@ -202,15 +202,15 @@ func filterByEventCount(filter *expression.ConditionBuilder, input *models.ListA
 	// We are allowing either Min -or- Max to work together or independently
 	if input.EventCountMax != nil && input.EventCountMin != nil {
 		*filter = filter.And(
-			expression.LessThanEqual(expression.Name(EventCount), expression.Value(*input.EventCountMax)),
-			expression.GreaterThanEqual(expression.Name(EventCount), expression.Value(*input.EventCountMin)),
+			expression.LessThanEqual(expression.Name(EventCountKey), expression.Value(*input.EventCountMax)),
+			expression.GreaterThanEqual(expression.Name(EventCountKey), expression.Value(*input.EventCountMin)),
 		)
 	}
 	if input.EventCountMax != nil && input.EventCountMin == nil {
-		*filter = filter.And(expression.LessThanEqual(expression.Name(EventCount), expression.Value(*input.EventCountMax)))
+		*filter = filter.And(expression.LessThanEqual(expression.Name(EventCountKey), expression.Value(*input.EventCountMax)))
 	}
 	if input.EventCountMax == nil && input.EventCountMin != nil {
-		*filter = filter.And(expression.GreaterThanEqual(expression.Name(EventCount), expression.Value(*input.EventCountMin)))
+		*filter = filter.And(expression.GreaterThanEqual(expression.Name(EventCountKey), expression.Value(*input.EventCountMin)))
 	}
 }
 
