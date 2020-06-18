@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { SeverityEnum } from 'Generated/schema';
-import { BadgeProps } from 'pouncejs';
 import { generateDocUrl } from 'Helpers/utils';
 import { pantherConfig } from 'Source/config';
 
@@ -107,6 +105,12 @@ export const LOG_TYPES = [
   'GitLab.Git',
   'GitLab.Integrations',
   'GitLab.Production',
+  'Juniper.Access',
+  'Juniper.Audit',
+  'Juniper.Firewall',
+  'Juniper.MWS',
+  'Juniper.Postgres',
+  'Juniper.Security',
   'Nginx.Access',
   'Osquery.Batch',
   'Osquery.Differential',
@@ -117,6 +121,7 @@ export const LOG_TYPES = [
   'Suricata.DNS',
   'Syslog.RFC3164',
   'Syslog.RFC5424',
+  'Zeek.DNS',
 ] as const;
 
 export const PANTHER_SCHEMA_DOCS_MASTER_LINK = 'https://docs.runpanther.io';
@@ -125,6 +130,9 @@ export const PANTHER_SCHEMA_DOCS_LINK = generateDocUrl(
   PANTHER_SCHEMA_DOCS_MASTER_LINK,
   pantherConfig.PANTHER_VERSION
 );
+
+export const LOG_ONBOARDING_SNS_DOC_URL = `${PANTHER_SCHEMA_DOCS_LINK}/log-processing#sns-notification-setup`;
+// End of doc URLs section
 
 export const DEFAULT_SMALL_PAGE_SIZE = 10;
 export const DEFAULT_LARGE_PAGE_SIZE = 25;
@@ -135,5 +143,3 @@ export const ERROR_REPORTING_CONSENT_STORAGE_KEY = 'panther.generalSettings.erro
 
 // The default panther system user id
 export const PANTHER_USER_ID = '00000000-0000-4000-8000-000000000000';
-// Docs URL we use to prompt users for explanations
-export const LOG_ONBOARDING_DOC_URL = `https://docs.runpanther.io/log-processing#sns-notification-setup`;

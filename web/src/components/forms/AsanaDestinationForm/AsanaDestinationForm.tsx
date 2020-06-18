@@ -40,9 +40,7 @@ const asanaFieldsValidationSchema = Yup.object().shape({
   outputConfig: Yup.object().shape({
     asana: Yup.object().shape({
       personalAccessToken: Yup.string().required(),
-      projectGids: Yup.array()
-        .of(Yup.number())
-        .required(),
+      projectGids: Yup.array().of(Yup.number()).required(),
     }),
   }),
 });

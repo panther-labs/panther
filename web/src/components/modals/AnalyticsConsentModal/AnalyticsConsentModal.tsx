@@ -43,11 +43,11 @@ const AnalyticsConsentModal: React.FC<ModalProps> = ({ onClose, ...rest }) => {
   });
 
   return (
-    <Modal onClose={() => {}} title="Help Improve Panther!" {...rest}>
+    <Modal onClose={() => {}} title="Welcome to Panther!" {...rest}>
       <Box width={500} px={10}>
         <Text size="medium" mb={8}>
-          Opt-in to occasionally provide diagnostic information for improving reliability.
-          <b> All information is anonymized.</b>
+          We know you {"'"}re excited to begin securing your organization, but first, we need your
+          consent on a couple of things
         </Text>
         {updateGeneralPreferencesError ? (
           <Alert

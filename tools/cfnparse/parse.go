@@ -30,43 +30,15 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var pythonVirtualEnvPath string
-
-func init() {
-	// When mage runs, the working directory is the root of the repo.
-	// But when unit tests run, the working directory at the time of compilation is the package under test.
-	//
-	// We have to find the repo root to know where the python env (with cfn-flip) lives.
-	path := "."
-	for i := 1; i <= 10; i++ {
-		if _, err := os.Stat(filepath.Join(path, "magefile.go")); err == nil {
-			pythonVirtualEnvPath, err = filepath.Abs(filepath.Join(path, ".setup", "venv"))
-			if err != nil {
-				panic(err)
-			}
-			return
-		}
-
-		// Work our way up the file hierarchy
-		path = filepath.Join(path, "..")
-	}
-
-	panic("couldn't find repo root")
-}
-
 // Parse a CloudFormation template, returning a json map.
 //
 // Short-form functions like "!If" and "!Sub" will be replaced with "Fn::" objects.
-func ParseTemplate(path string) (map[string]interface{}, error) {
-	if err := os.MkdirAll("out", 0755); err != nil {
-		return nil, err
-	}
-
+func ParseTemplate(pyEnv, path string) (map[string]interface{}, error) {
 	// The Go yaml parser doesn't understand short-form functions.
 	// So we first use cfn-flip to flip .yml to .json
 	if strings.ToLower(filepath.Ext(path)) != ".json" {
-		jsonPath := filepath.Join("out", filepath.Base(path)+".json")
-		if err := sh.Run(filepath.Join(pythonVirtualEnvPath, "bin", "cfn-flip"), "-j", path, jsonPath); err != nil {
+		jsonPath := filepath.Join(os.TempDir(), filepath.Base(path)+".json")
+		if err := sh.Run(filepath.Join(pyEnv, "bin", "cfn-flip"), "-j", path, jsonPath); err != nil {
 			return nil, fmt.Errorf("failed to flip %s to json: %v", path, err)
 		}
 		defer os.Remove(jsonPath)

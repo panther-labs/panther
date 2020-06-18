@@ -24,7 +24,7 @@ import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 
 const ErrorReportingSection: React.FC = () => {
   return (
-    <Box mb={10}>
+    <Box>
       <Field
         as={FormikCheckbox}
         name="errorReportingConsent"
@@ -32,7 +32,7 @@ const ErrorReportingSection: React.FC = () => {
         aria-describedby="error-reporting-section-helper"
       />
       <FormHelperText ml={2} id="error-reporting-section-helper">
-        Crashes and runtime exceptions.
+        Send anonymized runtime exception reports to Panther to improve its reliability.{' '}
         <Link
           external
           textDecoration="underline"

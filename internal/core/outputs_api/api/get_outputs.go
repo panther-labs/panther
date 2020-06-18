@@ -23,7 +23,7 @@ import (
 )
 
 // GetOutputs returns all the alert outputs configured for one organization
-func (API) GetOutputs(input *models.GetOutputsInput) (models.GetOutputsOutput, error) {
+func (API) GetOutputs(_ *models.GetOutputsInput) (models.GetOutputsOutput, error) {
 	outputItems, err := outputsTable.GetOutputs()
 	if err != nil {
 		return nil, err
@@ -35,7 +35,9 @@ func (API) GetOutputs(input *models.GetOutputsInput) (models.GetOutputsOutput, e
 		if err != nil {
 			return nil, err
 		}
+		redactOutput(alertOutput.OutputConfig)
 		outputs[i] = alertOutput
 	}
+
 	return outputs, nil
 }

@@ -35,9 +35,7 @@ const initialValues = {
 };
 
 const validationSchema = Yup.object().shape({
-  username: Yup.string()
-    .email('Needs to be a valid email')
-    .required(),
+  username: Yup.string().email('Needs to be a valid email').required(),
   password: Yup.string().required(),
 });
 

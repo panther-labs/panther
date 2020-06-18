@@ -29,7 +29,7 @@ import (
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
-const outputSet = "Slack|Sns|PagerDuty|Github|Jira|Opsgenie|MsTeams|Sqs|Asana"
+const outputSet = "Slack|Sns|PagerDuty|Github|Jira|Opsgenie|MsTeams|Sqs|Asana|CustomWebhook"
 
 func expectedMsg(structName string, fieldName string, tagName string) string {
 	return fmt.Sprintf(

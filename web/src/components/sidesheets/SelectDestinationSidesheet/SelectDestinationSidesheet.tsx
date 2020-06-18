@@ -29,6 +29,7 @@ import jiraLogo from 'Assets/jira-minimal-logo.svg';
 import snsLogo from 'Assets/aws-sns-minimal-logo.svg';
 import sqsLogo from 'Assets/aws-sqs-minimal-logo.svg';
 import asanaLogo from 'Assets/asana-minimal-logo.svg';
+import customWebhook from 'Assets/custom-webhook-minimal-logo.svg';
 
 import { SIDESHEETS } from 'Components/utils/Sidesheet';
 import { DestinationTypeEnum } from 'Generated/schema';
@@ -78,6 +79,11 @@ const destinationConfigs = [
     logo: asanaLogo,
     title: 'Asana',
     destinationType: DestinationTypeEnum.Asana,
+  },
+  {
+    logo: customWebhook,
+    title: 'Custom Webhook',
+    destinationType: DestinationTypeEnum.Customwebhook,
   },
 ];
 

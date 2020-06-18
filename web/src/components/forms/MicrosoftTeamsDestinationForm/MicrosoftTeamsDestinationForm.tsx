@@ -36,9 +36,7 @@ interface MicrosoftTeamsDestinationFormProps {
 const msTeamsFieldsValidationSchema = Yup.object().shape({
   outputConfig: Yup.object().shape({
     msTeams: Yup.object().shape({
-      webhookURL: Yup.string()
-        .url('Must be a valid webhook URL')
-        .required(),
+      webhookURL: Yup.string().url('Must be a valid webhook URL').required(),
     }),
   }),
 });

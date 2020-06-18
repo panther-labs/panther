@@ -36,9 +36,7 @@ interface PagerDutyDestinationFormProps {
 const pagerDutyFieldsValidationSchema = Yup.object().shape({
   outputConfig: Yup.object().shape({
     pagerDuty: Yup.object().shape({
-      integrationKey: Yup.string()
-        .length(32, 'Must be exactly 32 characters')
-        .required(),
+      integrationKey: Yup.string().length(32, 'Must be exactly 32 characters').required(),
     }),
   }),
 });

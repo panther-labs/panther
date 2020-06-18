@@ -19,54 +19,49 @@ Transform: AWS::Serverless-2016-10-31
 Description: Cloud security resource scanning
 
 Parameters:
-  # Passed in from bootstrap outputs
-  AnalysisApiId:
-    Type: String
-    Description: API Gateway for analysis-api
+  # Alphabetize parameters so it's easy to compare side-by-side with other code that passes values
+  # and because the CloudFormation console always shows parameters in alphabetical order.
   AlarmTopicArn:
     Type: String
     Description: SNS topic for CloudWatch alarms
+  AnalysisApiId:
+    Type: String
+    Description: API Gateway for analysis-api
+  CloudWatchLogRetentionDays:
+    Type: Number
+    Description: CloudWatch log retention period
   ComplianceApiId:
     Type: String
     Description: API Gateway for compliance-api
+  Debug:
+    Type: String
+    Description: Toggle debug logging
+    AllowedValues: [true, false]
+  LayerVersionArns:
+    Type: CommaDelimitedList
+    Description: List of base LayerVersion ARNs to attach to every Lambda function
+  ProcessedDataBucket:
+    Type: String
+    Description: Name of the S3 bucket for storing processed logs
+  ProcessedDataTopicArn:
+    Type: String
+    Description: The ARN of the processed data SNS topic
+  PythonLayerVersionArn:
+    Type: String
+    Description: Pip libraries for python analysis and remediation
   RemediationApiId:
     Type: String
     Description: API Gateway for remediation-api
   ResourcesApiId:
     Type: String
     Description: API Gateway for resources-api
-  ProcessedDataTopicArn:
-    Type: String
-    Description: The ARN of the processed data SNS topic
-  ProcessedDataBucket:
-    Type: String
-    Description: Name of the S3 bucket for storing processed logs
-  PythonLayerVersionArn:
-    Type: String
-    Description: Pip libraries for python analysis and remediation
   SqsKeyId:
     Type: String
     Description: KMS key ID for SQS encryption
-
-  # Passed in from config file
-  CloudWatchLogRetentionDays:
-    Type: Number
-    Description: CloudWatch log retention period
-    Default: 365
-  Debug:
-    Type: String
-    Description: Toggle debug logging
-    Default: false
-    AllowedValues: [true, false]
-  LayerVersionArns:
-    Type: CommaDelimitedList
-    Description: List of base LayerVersion ARNs to attach to every Lambda function
-    Default: ''
   TracingMode:
     Type: String
     Description: Enable XRay tracing on Lambda and API Gateway
     AllowedValues: ['', Active, PassThrough]
-    Default: ''
 
 Mappings:
   Functions:
@@ -1243,6 +1238,18 @@ Resources:
             - Effect: Allow
               Action: dynamodb:*Item
               Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-kv-store
+        - Id: GetPantherPolicySecrets
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: secretsmanager:GetSecretValue
+              Resource: !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:panther-policies/*
+        - Id: GetPantherAnalysisSecrets
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: secretsmanager:GetSecretValue
+              Resource: !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:panther-analysis/*
 
   PolicyEngineLogGroup:
     Type: AWS::Logs::LogGroup
