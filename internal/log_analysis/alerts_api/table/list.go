@@ -144,9 +144,8 @@ func (table *AlertsTable) getKeyCondition(input *models.ListAlertsInput) express
 		keyCondition = expression.Key(TimePartitionKey).Equal(expression.Value(TimePartitionValue))
 	}
 
-	// Unless we create a custom validator, this is the way we will allow for conditionals
 	// We are allowing either Before -or- After to work together or independently
-	if input.CreatedAtAfter != nil && input.CreatedAtBefore != nil && input.CreatedAtBefore.After(*input.CreatedAtAfter) {
+	if input.CreatedAtAfter != nil && input.CreatedAtBefore != nil {
 		keyCondition = keyCondition.And(
 			expression.Key(CreatedAtKey).Between(
 				expression.Value(*input.CreatedAtAfter),
@@ -200,9 +199,8 @@ func filterByTitleContains(filter *expression.ConditionBuilder, input *models.Li
 
 // filterByEventCount - fiters by an eventCount defined by a range of two numbers
 func filterByEventCount(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
-	// Unless we create a custom validator, this is the way we will allow for conditionals
 	// We are allowing either Min -or- Max to work together or independently
-	if input.EventCountMax != nil && input.EventCountMin != nil && *input.EventCountMax >= *input.EventCountMin {
+	if input.EventCountMax != nil && input.EventCountMin != nil {
 		*filter = filter.And(
 			expression.LessThanEqual(expression.Name(EventCount), expression.Value(*input.EventCountMax)),
 			expression.GreaterThanEqual(expression.Name(EventCount), expression.Value(*input.EventCountMin)),
