@@ -80,7 +80,7 @@ func putElbAlarmGroup(props ElbAlarmProperties) error {
 		Dimensions: []*cloudwatch.Dimension{
 			{Name: aws.String("LoadBalancer"), Value: &props.LoadBalancerFullName},
 		},
-		EvaluationPeriods: aws.Int64(1),
+		EvaluationPeriods: aws.Int64(3),
 		MetricName:        aws.String("HTTPCode_ELB_4XX_Count"),
 		Namespace:         aws.String("AWS/ApplicationELB"),
 		Period:            aws.Int64(300),
