@@ -51,11 +51,11 @@ func (client *OutputClient) Sqs(alert *alertmodels.Alert, config *outputmodels.S
 	}
 
 	sqsSendMessageInput := &sqs.SendMessageInput{
-		QueueUrl:    config.QueueURL,
+		QueueUrl:    aws.String(config.QueueURL),
 		MessageBody: aws.String(serializedMessage),
 	}
 
-	sqsClient := client.getSqsClient(*config.QueueURL)
+	sqsClient := client.getSqsClient(config.QueueURL)
 
 	_, err = sqsClient.SendMessage(sqsSendMessageInput)
 	if err != nil {

@@ -48,16 +48,16 @@ func (client *OutputClient) Jira(
 		"summary":     generateAlertTitle(alert),
 		"description": description + link + runBook + severity + tags,
 		"project": map[string]*string{
-			"key": config.ProjectKey,
+			"key": aws.String(config.ProjectKey),
 		},
 		"issuetype": map[string]*string{
-			"name": config.Type,
+			"name": aws.String(config.Type),
 		},
 	}
 
-	if aws.StringValue(config.AssigneeID) != "" {
+	if config.AssigneeID != "" {
 		fields["assignee"] = map[string]*string{
-			"id": config.AssigneeID,
+			"id": aws.String(config.AssigneeID),
 		}
 	}
 
@@ -65,9 +65,9 @@ func (client *OutputClient) Jira(
 		"fields": fields,
 	}
 
-	auth := *config.UserName + ":" + *config.APIKey
+	auth := config.UserName + ":" + config.APIKey
 	basicAuthToken := "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))
-	jiraRestURL := *config.OrgDomain + jiraEndpoint
+	jiraRestURL := config.OrgDomain + jiraEndpoint
 	requestHeader := map[string]string{
 		AuthorizationHTTPHeader: basicAuthToken,
 	}

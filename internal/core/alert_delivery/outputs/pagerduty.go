@@ -67,7 +67,7 @@ func (client *OutputClient) PagerDuty(alert *alertmodels.Alert, config *outputmo
 
 	pagerDutyRequest := map[string]interface{}{
 		"payload":      payload,
-		"routing_key":  *config.IntegrationKey,
+		"routing_key":  config.IntegrationKey,
 		"event_action": triggerEventAction,
 	}
 

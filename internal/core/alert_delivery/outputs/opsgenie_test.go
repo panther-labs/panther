@@ -30,7 +30,7 @@ import (
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 )
 
-var opsgenieConfig = &outputmodels.OpsgenieConfig{APIKey: aws.String("apikey")}
+var opsgenieConfig = &outputmodels.OpsgenieConfig{APIKey: "apikey"}
 
 func TestOpsgenieAlert(t *testing.T) {
 	httpWrapper := &mockHTTPWrapper{}
@@ -57,7 +57,7 @@ func TestOpsgenieAlert(t *testing.T) {
 		"priority": "P1",
 	}
 
-	authorization := "GenieKey " + *opsgenieConfig.APIKey
+	authorization := "GenieKey " + opsgenieConfig.APIKey
 
 	requestHeader := map[string]string{
 		AuthorizationHTTPHeader: authorization,

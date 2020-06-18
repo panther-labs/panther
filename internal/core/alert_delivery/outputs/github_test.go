@@ -29,7 +29,7 @@ import (
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 )
 
-var githubConfig = &outputmodels.GithubConfig{RepoName: aws.String("profile/reponame"), Token: aws.String("github-token")}
+var githubConfig = &outputmodels.GithubConfig{RepoName: "profile/reponame", Token: "github-token"}
 
 func TestGithubAlert(t *testing.T) {
 	httpWrapper := &mockHTTPWrapper{}
@@ -52,7 +52,7 @@ func TestGithubAlert(t *testing.T) {
 			" **Runbook:** \n **Severity:** INFO\n **Tags:** ",
 	}
 
-	authorization := "token " + *githubConfig.Token
+	authorization := "token " + githubConfig.Token
 	requestHeader := map[string]string{
 		AuthorizationHTTPHeader: authorization,
 	}
