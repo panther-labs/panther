@@ -164,6 +164,7 @@ Resources:
         AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
         AuditLogsBucket: !GetAtt Bootstrap.Outputs.AuditLogsBucket
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
+        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         ImageRegistryName: !GetAtt Bootstrap.Outputs.ImageRegistryName
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
@@ -189,6 +190,7 @@ Resources:
         AnalysisApi: !Sub https://${BootstrapGateway.Outputs.AnalysisApiEndpoint}
         ApiId: !GetAtt Bootstrap.Outputs.GraphQLApiId
         ComplianceApi: !Sub https://${BootstrapGateway.Outputs.ComplianceApiEndpoint}
+        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         RemediationApi: !Sub https://${BootstrapGateway.Outputs.RemediationApiEndpoint}
         ResourcesApi: !Sub https://${BootstrapGateway.Outputs.ResourcesApiEndpoint}
         ServiceRole: !GetAtt Bootstrap.Outputs.AppsyncServiceRoleArn
@@ -211,6 +213,7 @@ Resources:
         AnalysisApiId: !GetAtt BootstrapGateway.Outputs.AnalysisApiId
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         ComplianceApiId: !GetAtt BootstrapGateway.Outputs.ComplianceApiId
+        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         Debug: !Ref Debug
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
@@ -245,6 +248,7 @@ Resources:
         CompanyDisplayName: !Ref CompanyDisplayName
         CompanyEmail: !Ref FirstUserEmail
         ComplianceApiId: !GetAtt BootstrapGateway.Outputs.ComplianceApiId
+        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         Debug: !Ref Debug
         DynamoScalingRoleArn: !GetAtt Bootstrap.Outputs.DynamoScalingRoleArn
         InitialAnalysisPackUrls: !Join [',', !Ref InitialAnalysisPackUrls]
@@ -287,6 +291,7 @@ Resources:
         AnalysisApiId: !GetAtt BootstrapGateway.Outputs.AnalysisApiId
         AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
+        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         Debug: !Ref Debug
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         LogProcessorLambdaMemorySize: !Ref LogProcessorLambdaMemorySize
@@ -317,6 +322,7 @@ Resources:
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AuditLogsBucket: !GetAtt Bootstrap.Outputs.AuditLogsBucket
+        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         EnableCloudTrail: !Ref EnableCloudTrail
         EnableGuardDuty: !Ref EnableGuardDuty
         EnableS3AccessLogs: !Ref EnableS3AccessLogs
@@ -341,6 +347,7 @@ Resources:
         AppClientId: !GetAtt Bootstrap.Outputs.AppClientId
         CertificateArn: !Ref CertificateArn
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
+        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         ElbArn: !GetAtt Bootstrap.Outputs.LoadBalancerArn
         ElbFullName: !GetAtt Bootstrap.Outputs.LoadBalancerFullName
         ElbTargetGroup: !GetAtt Bootstrap.Outputs.LoadBalancerTargetGroup

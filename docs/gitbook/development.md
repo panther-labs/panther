@@ -161,6 +161,11 @@ Now you can run `mage deploy`
 This will deploy the main CloudFormation stacks independently and is optimized for development.
 If instead you want to deploy the single master template: `mage master:deploy`
 
+Panther relies on a number of [custom CloudFormation resources](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-custom-resources.html). Like any
+CloudFormation resource, these will not be updated unless the input parameters have changed.
+To force an update of most custom resources: `FORCE_CUSTOM_RESOURCE_UPDATE=1 mage deploy`
+This will, for example, recreate every CloudWatch metric filter and alarm.
+
 ### From an EC2 Instance
 
 You can also deploy from an EC2 instance with Docker and git installed in the same region you're deploying Panther to.
