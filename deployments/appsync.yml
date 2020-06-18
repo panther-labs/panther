@@ -1399,7 +1399,7 @@ Resources:
             $util.error($ctx.result.body, $statusCode, $ctx.args)
         #end
 
-  GetGlobalPythonModuleResolver:
+  GetGlobalModuleResolver:
     Type: AWS::AppSync::Resolver
     Properties:
       ApiId: !Ref ApiId
@@ -1428,7 +1428,7 @@ Resources:
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
 
-  UpdateGlobalPythonModuleResolver:
+  UpdateGlobalModuleResolver:
     Type: AWS::AppSync::Resolver
     Properties:
       ApiId: !Ref ApiId
