@@ -25,6 +25,7 @@ import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
+import { webhookValidation } from 'Helpers/utils';
 
 type CustomWebhookFieldValues = Pick<DestinationConfigInput, 'customWebhook'>;
 
@@ -33,23 +34,24 @@ interface CustomWebhookDestinationFormProps {
   onSubmit: (values: BaseDestinationFormValues<CustomWebhookFieldValues>) => void;
 }
 
-const customWebhookFieldsValidationSchema = Yup.object().shape({
-  outputConfig: Yup.object().shape({
-    customWebhook: Yup.object().shape({
-      webhookURL: Yup.string().url('Must be a valid webhook URL').required(),
-    }),
-  }),
-});
-
-// We merge the two schemas together: the one deriving from the common fields, plus the custom
-// ones that change for each destination.
-// https://github.com/jquense/yup/issues/522
-const mergedValidationSchema = defaultValidationSchema.concat(customWebhookFieldsValidationSchema);
-
 const CustomWebhookDestinationForm: React.FC<CustomWebhookDestinationFormProps> = ({
   onSubmit,
   initialValues,
 }) => {
+  const existing = initialValues.outputId;
+
+  const customWebhookFieldsValidationSchema = Yup.object().shape({
+    outputConfig: Yup.object().shape({
+      customWebhook: Yup.object().shape({
+        webhookURL: existing ? webhookValidation() : webhookValidation().required(),
+      }),
+    }),
+  });
+
+  const mergedValidationSchema = defaultValidationSchema.concat(
+    customWebhookFieldsValidationSchema
+  );
+
   return (
     <BaseDestinationForm<CustomWebhookFieldValues>
       initialValues={initialValues}
@@ -58,11 +60,14 @@ const CustomWebhookDestinationForm: React.FC<CustomWebhookDestinationFormProps> 
     >
       <Field
         as={FormikTextInput}
+        type="password"
         name="outputConfig.customWebhook.webhookURL"
         label="Custom Webhook URL"
-        placeholder="Where should we send a push notification to?"
+        placeholder={
+          existing ? '<hidden information>' : 'Where should we send a push notification to?'
+        }
         mb={6}
-        aria-required
+        aria-required={!existing}
       />
     </BaseDestinationForm>
   );

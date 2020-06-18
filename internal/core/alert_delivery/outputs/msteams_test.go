@@ -30,7 +30,7 @@ import (
 )
 
 var msTeamConfig = &outputmodels.MsTeamsConfig{
-	WebhookURL: aws.String("msteam-url"),
+	WebhookURL: "msteam-url",
 }
 
 func TestMsTeamsAlert(t *testing.T) {
@@ -75,7 +75,7 @@ func TestMsTeamsAlert(t *testing.T) {
 		},
 	}
 
-	requestURL := *msTeamConfig.WebhookURL
+	requestURL := msTeamConfig.WebhookURL
 
 	expectedPostInput := &PostInput{
 		url:  requestURL,

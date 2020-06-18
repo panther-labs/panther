@@ -53,7 +53,7 @@ func (client *OutputClient) CustomWebhook(
 	// Ensure we have slices instead of `null` array fields
 	gatewayapi.ReplaceMapSliceNils(outputMessage)
 
-	requestURL := *config.WebhookURL
+	requestURL := config.WebhookURL
 	postInput := &PostInput{
 		url:  requestURL,
 		body: outputMessage,

@@ -21,7 +21,6 @@ package outputs
 import (
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
 
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
@@ -48,7 +47,7 @@ func (client *OutputClient) Asana(alert *alertmodels.Alert, config *outputmodels
 		url:  asanaCreateTaskURL,
 		body: payload,
 		headers: map[string]string{
-			AuthorizationHTTPHeader: fmt.Sprintf(asanaAuthorizationHeaderFormat, aws.StringValue(config.PersonalAccessToken)),
+			AuthorizationHTTPHeader: fmt.Sprintf(asanaAuthorizationHeaderFormat, config.PersonalAccessToken),
 		},
 	}
 	return client.httpWrapper.post(postInput)

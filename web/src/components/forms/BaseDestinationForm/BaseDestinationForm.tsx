@@ -29,6 +29,7 @@ import SeverityBadge from 'Components/SeverityBadge';
 export interface BaseDestinationFormValues<
   AdditionalValues extends Partial<DestinationConfigInput>
 > {
+  outputId?: string;
   displayName: string;
   outputConfig: AdditionalValues;
   defaultForSeverity: SeverityEnum[];
@@ -151,7 +152,7 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
           </Text>
         </Box>
         <SubmitButton width={1}>
-          {initialValues.displayName ? 'Update' : 'Add'} Destination
+          {initialValues.outputId ? 'Update' : 'Add'} Destination
         </SubmitButton>
       </Form>
     </Formik>
