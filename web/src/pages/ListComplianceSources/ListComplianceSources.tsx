@@ -63,7 +63,7 @@ const ListComplianceSources = () => {
         title="Connected Accounts"
         actions={
           <Button icon="add" as={RRLink} to={urls.compliance.sources.create()}>
-              Add Account
+            Add Account
           </Button>
         }
       >

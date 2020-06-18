@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Flex, Heading, Text } from 'pouncejs';
+import { Flex, FormError, Heading, Text } from 'pouncejs';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import { useFormikContext } from 'formik';
 import { ComplianceSourceWizardValues } from '../ComplianceSourceWizard';
@@ -36,21 +36,19 @@ const SuccessPanel: React.FC<SuccessPanelProps> = ({ errorMessage }) => {
   }, []);
 
   return (
-    <Flex justify="center" align="center" direction="column" my={190} mx="auto" width={350}>
-      <Heading size="medium" m="auto" mb={5} color="grey400">
+    <Flex justify="center" align="center" direction="column" my={190} mx="auto" width={400}>
+      <Heading size="medium" m="auto" mb={5}>
         Almost done!
       </Heading>
-      <Text size="large" color="grey300" mb={10} textAlign="center">
+      <Text size="large" color="gray-100" mb={5} textAlign="center">
         {initialValues.integrationId
           ? 'Click the button below to validate your changes & update your source!'
           : 'After deploying your Cloudformation stack, click on the button below to complete the setup!'}
       </Text>
-      <SubmitButton width={350}>
-        {initialValues.integrationId ? 'Update Source' : 'Save Source'}
-      </SubmitButton>
-      <Text size="large" mt={6} color="red300">
-        {errorMessage}
-      </Text>
+      <Flex width={350} justify="center">
+        <SubmitButton>{initialValues.integrationId ? 'Update Source' : 'Save Source'}</SubmitButton>
+      </Flex>
+      {errorMessage && <FormError mt={6}>{errorMessage}</FormError>}
     </Flex>
   );
 };
