@@ -36,13 +36,6 @@ import (
 func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 	summaries []*AlertItem, lastEvaluatedKey *string, err error) {
 
-	return table.list(TimePartitionKey, TimePartitionValue, input)
-}
-
-// list - returns a page of alerts ordered by creationTime, last evaluated key, any error
-func (table *AlertsTable) list(ddbKey, ddbValue string, input *models.ListAlertsInput) (
-	summaries []*AlertItem, lastEvaluatedKey *string, err error) {
-
 	// Get the primary key index to query by
 	index := table.getIndex(input)
 
@@ -92,27 +85,52 @@ func (table *AlertsTable) list(ddbKey, ddbValue string, input *models.ListAlerts
 		KeyConditionExpression:    queryExpression.KeyCondition(),
 		ExclusiveStartKey:         queryExclusiveStartKey,
 		IndexName:                 index,
-		Limit:                     queryResultsLimit,
+		Limit:                     aws.Int64(*queryResultsLimit * 4), //optimization accounting for filtering
 	}
 
-	// Get the results of the query
-	queryOutput, err := table.Client.Query(queryInput)
+	// Define placeholder for the last key that we will send back to the frontend
+	var lastKey DynamoItem
+	// Continuously query until we have enough results for the requested page size
+	err = table.Client.QueryPages(queryInput, func(page *dynamodb.QueryOutput, isLast bool) bool {
+		for _, item := range page.Items {
+			// Define temp container
+			var alert *AlertItem
+			// Unmarshal each item to an alert
+			err = dynamodbattribute.UnmarshalMap(item, &alert)
+			if err != nil {
+				return false
+			}
+
+			// Perform post-filtering data returned from ddb
+			alert = filterByTitleContains(input, alert)
+			alert = filterByRuleContains(input, alert)
+			alert = filterByAlertIDContains(input, alert)
+
+			if alert != nil {
+				// Add the item to our list
+				summaries = append(summaries, alert)
+			}
+
+			// If we've reached the page size defined by (default 25)
+			if int64(len(summaries)) == *queryResultsLimit {
+				lastKey = DynamoItem{
+					TimePartitionKey: item[TimePartitionKey],
+					CreatedAtKey:     item[CreatedAtKey],
+					AlertIDKey:       item[AlertIDKey],
+				}
+				return false // we are done, stop paging
+			}
+		}
+		return true // keep paging
+	})
 	if err != nil {
 		// this deserves detailed logging for debugging
-		zap.L().Error("Query()", zap.Error(err), zap.Any("input", queryInput), zap.Any("startKey", queryExclusiveStartKey))
-		return nil, nil, errors.Wrapf(err, "QueryInput() failed for %s,%s", ddbKey, ddbValue)
+		zap.L().Error("QueryPages()", zap.Error(err), zap.Any("input", queryInput), zap.Any("startKey", queryExclusiveStartKey))
+		if input.RuleID != nil {
+			return nil, nil, errors.Wrapf(err, "QueryPages() failed for %s,%s", RuleIDKey, *input.RuleID)
+		}
+		return nil, nil, errors.Wrapf(err, "QueryPages() failed for %s,%s", TimePartitionKey, TimePartitionValue)
 	}
-
-	// Unmarshal the raw items unto the `summaries`
-	err = dynamodbattribute.UnmarshalListOfMaps(queryOutput.Items, &summaries)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "UnmarshalListOfMaps() failed")
-	}
-
-	// Perform post-filtering data returned from ddb to provide case-insensitive filtering
-	summaries = filterByTitleContains(input, &summaries)
-	summaries = filterByRuleContains(input, &summaries)
-	summaries = filterByAlertIDContains(input, &summaries)
 
 	// If DDB returned a LastEvaluatedKey (the "primary key of the item where the operation stopped"),
 	// it means there are more alerts to be returned. Return populated `lastEvaluatedKey` JSON blob in the response.
@@ -121,8 +139,8 @@ func (table *AlertsTable) list(ddbKey, ddbValue string, input *models.ListAlerts
 	// "A `Query` operation can return an empty result set and a `LastEvaluatedKey` if all the items read for
 	// the page of results are filtered out."
 	// (https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html)
-	if len(queryOutput.LastEvaluatedKey) > 0 {
-		lastEvaluatedKeySerialized, err := jsoniter.MarshalToString(queryOutput.LastEvaluatedKey)
+	if len(lastKey) > 0 {
+		lastEvaluatedKeySerialized, err := jsoniter.MarshalToString(lastKey)
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "failed to Marshal LastEvaluatedKey)")
 		}
@@ -195,54 +213,39 @@ func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAle
 }
 
 // filterByTitleContains - fiters by a name that contains a string (case insensitive)
-func filterByTitleContains(input *models.ListAlertsInput, summaries *[]*AlertItem) (filtered []*AlertItem) {
-	if input.NameContains == nil {
-		return *summaries
-	}
-	for _, summary := range *summaries {
-		if strings.Contains(
-			strings.ToLower(*summary.Title),
-			strings.ToLower(*input.NameContains),
-		) {
+func filterByTitleContains(input *models.ListAlertsInput, alert *AlertItem) *AlertItem {
+	if alert != nil && input.NameContains != nil && !strings.Contains(
+		strings.ToLower(*alert.Title),
+		strings.ToLower(*input.NameContains),
+	) {
 
-			filtered = append(filtered, summary)
-		}
+		return nil
 	}
-	return filtered
+	return alert
 }
 
 // filterByRuleContains - fiters by a name that contains a string (case insensitive)
-func filterByRuleContains(input *models.ListAlertsInput, summaries *[]*AlertItem) (filtered []*AlertItem) {
-	if input.RuleContains == nil {
-		return *summaries
-	}
-	for _, summary := range *summaries {
-		if strings.Contains(
-			strings.ToLower(summary.RuleID),
-			strings.ToLower(*input.RuleContains),
-		) {
+func filterByRuleContains(input *models.ListAlertsInput, alert *AlertItem) *AlertItem {
+	if alert != nil && input.RuleContains != nil && !strings.Contains(
+		strings.ToLower(alert.RuleID),
+		strings.ToLower(*input.RuleContains),
+	) {
 
-			filtered = append(filtered, summary)
-		}
+		return nil
 	}
-	return filtered
+	return alert
 }
 
 // filterByAlertIDContains - fiters by a name that contains a string (case insensitive)
-func filterByAlertIDContains(input *models.ListAlertsInput, summaries *[]*AlertItem) (filtered []*AlertItem) {
-	if input.AlertIDContains == nil {
-		return *summaries
-	}
-	for _, summary := range *summaries {
-		if strings.Contains(
-			strings.ToLower(summary.AlertID),
-			strings.ToLower(*input.AlertIDContains),
-		) {
+func filterByAlertIDContains(input *models.ListAlertsInput, alert *AlertItem) *AlertItem {
+	if alert != nil && input.AlertIDContains != nil && !strings.Contains(
+		strings.ToLower(alert.AlertID),
+		strings.ToLower(*input.AlertIDContains),
+	) {
 
-			filtered = append(filtered, summary)
-		}
+		return nil
 	}
-	return filtered
+	return alert
 }
 
 // filterByEventCount - fiters by an eventCount defined by a range of two numbers
