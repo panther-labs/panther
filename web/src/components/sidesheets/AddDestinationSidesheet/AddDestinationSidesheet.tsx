@@ -89,10 +89,12 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({ desti
           },
         },
         update: (cache, { data: { addDestination: newDestination } }) => {
-          cache.modify('ROOT_QUERY', {
-            destinations: (queryData, { toReference }) => {
-              const addDestinationRef = toReference(newDestination);
-              return queryData ? [addDestinationRef, ...queryData] : [addDestinationRef];
+          cache.modify({
+            fields: {
+              destinations: (queryData, { toReference }) => {
+                const addDestinationRef = toReference(newDestination);
+                return queryData ? [addDestinationRef, ...queryData] : [addDestinationRef];
+              },
             },
           });
         },
