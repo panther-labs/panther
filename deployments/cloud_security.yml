@@ -1216,6 +1216,7 @@ Resources:
       Runtime: python3.7
       Timeout: !FindInMap [Functions, PolicyEngine, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Layers: !GetAtt PolicyEngineLayers.LayerArns
       Policies:
         - Id: ResourceLookup
           Version: 2012-10-17
@@ -1245,15 +1246,16 @@ Resources:
   PolicyEngineLayers:
     Type: Custom::LayerAttachment
     Properties:
-      FunctionArn: !GetAtt PolicyEngineFunction.Arn
+      FunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-policy-engine
       LayerArns: !If
         - AttachLayers
         - !Split # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
           - ','
           - !Sub
-            - '${base},${pip}'
+            - '${base},${pip},${global}'
             - base: !Join [',', !Ref LayerVersionArns]
               pip: !Ref PythonLayerVersionArn
+              global: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:panther-engine-globals:LATEST
         - [!Ref PythonLayerVersionArn]
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
