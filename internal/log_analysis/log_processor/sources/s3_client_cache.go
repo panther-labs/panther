@@ -201,7 +201,7 @@ func getSourceInfo(s3Object *S3ObjectInfo) (result *models.SourceIntegration, er
 		}
 	}
 
-	//
+	// If the incoming notification maps to a known source, update the source information
 	if result != nil {
 		previousTime := lastEventReceived[*result.IntegrationID]
 		if previousTime.Add(statusUpdateFrequency).Before(now) {

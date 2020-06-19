@@ -29,9 +29,9 @@ type SourceIntegration struct {
 
 // SourceIntegrationStatus provides information about the status of a source
 type SourceIntegrationStatus struct {
-	ScanStatus        *string   `json:"scanStatus,omitempty"`
-	EventStatus       *string   `json:"eventStatus,omitempty"`
-	LastEventReceived time.Time `json:"lastEventReceived,omitempty"`
+	ScanStatus        *string    `json:"scanStatus,omitempty"`
+	EventStatus       *string    `json:"eventStatus,omitempty"`
+	LastEventReceived *time.Time `json:"lastEventReceived,omitempty"`
 }
 
 // SourceIntegrationScanInformation is detail about the last snapshot.

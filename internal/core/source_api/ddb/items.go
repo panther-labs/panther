@@ -47,7 +47,7 @@ type Integration struct {
 }
 
 type IntegrationStatus struct {
-	ScanStatus        *string   `json:"scanStatus"`
-	EventStatus       *string   `json:"eventStatus"`
-	LastEventReceived time.Time `json:"lastEventReceived"`
+	ScanStatus        *string    `json:"scanStatus"`
+	EventStatus       *string    `json:"eventStatus"`
+	LastEventReceived *time.Time `json:"lastEventReceived"`
 }

@@ -35,7 +35,7 @@ type LambdaInput struct {
 	UpdateIntegrationLastScanStart *UpdateIntegrationLastScanStartInput `json:"updateIntegrationLastScanStart"`
 
 	FullScan     *FullScanInput     `json:"fullScan"`
-	UpdateStatus *UpdateStatusInput `json:"updateIntegrationStatusInput"`
+	UpdateStatus *UpdateStatusInput `json:"updateStatus"`
 }
 
 //
@@ -158,8 +158,10 @@ type UpdateIntegrationLastScanEndInput struct {
 // Updates the status of an integration
 // Sample request:
 // {
-// 	"integrationId": "uuid",
-//	"lastEventReceived":"2020-10-10T05:03:01Z"
+//	"updateStatus": {
+// 		"integrationId": "uuid",
+//		"lastEventReceived":"2020-10-10T05:03:01Z"
+// 	}
 //}
 //
 type UpdateStatusInput struct {
