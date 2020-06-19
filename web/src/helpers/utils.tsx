@@ -17,7 +17,6 @@
  */
 
 import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
 import * as Yup from 'yup';
 import {
   ActiveSuppressCount,
@@ -38,9 +37,6 @@ import mapValues from 'lodash-es/mapValues';
 import sum from 'lodash-es/sum';
 import { ErrorResponse } from 'apollo-link-error';
 import { ApolloError } from '@apollo/client';
-
-// Add the plugin
-dayjs.extend(utc);
 
 export const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 

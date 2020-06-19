@@ -90,11 +90,11 @@ const ListAlerts = () => {
     return <ListAlertsPageEmptyDataFallback />;
   }
 
-  const showIfError = Boolean(error);
+  const hasError = Boolean(error);
 
   return (
     <ErrorBoundary>
-      {showIfError && (
+      {hasError && (
         <Box mb={6}>
           <Alert
             variant="error"
@@ -106,7 +106,7 @@ const ListAlerts = () => {
           />
         </Box>
       )}
-      <ListAlertsActions showActions={showIfError} />
+      <ListAlertsActions showActions={hasError} />
       <Card mb={8}>
         <ListAlertsTable
           items={alertItems}
