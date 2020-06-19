@@ -159,6 +159,18 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// PhysicalId: custom:panther-settings:singleton
 	"Custom::PantherSettings": customPantherSettings,
 
+	// Attach layers to a lambda function without removing existing ones.
+	//
+	// Parameters:
+	//     FunctionArn:           string
+	//     Layers:
+	//         - FunctionArn      string
+	//           FunctionVersion  int
+	//
+	// Outputs: None
+	// PhysicalId: custom:lambda:layerattachment:$FUNCTION_ARN
+	"Custom::LayerAttachment": customLayerAttachment,
+
 	// Teardown Panther assets which aren't managed by CloudFormation.
 	// This resource has no effect until it is deleted.
 	//

@@ -782,15 +782,6 @@ Resources:
           Properties:
             Queue: !GetAtt RulesEngineQueue.Arn
             BatchSize: 10
-      Layers: !If
-        - AttachLayers
-        - !Split # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
-          - ','
-          - !Sub
-            - '${base},${pip}'
-            - base: !Join [',', !Ref LayerVersionArns]
-              pip: !Ref PythonLayerVersionArn
-        - [!Ref PythonLayerVersionArn]
       Runtime: python3.7
       Timeout: !FindInMap [Functions, RulesEngine, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
@@ -870,4 +861,19 @@ Resources:
       FunctionMemoryMB: !Ref LogProcessorLambdaMemorySize
       FunctionName: !Ref RulesEngineFunction
       FunctionTimeoutSec: !FindInMap [Functions, RulesEngine, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  RulesEngineLayers:
+    Type: Custom::LayerAttachment
+    Properties:
+      FunctionArn: !GetAtt RulesEngineFunction.Arn
+      LayerArns: !If
+        - AttachLayers
+        - !Split # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
+          - ','
+          - !Sub
+            - '${base},${pip}'
+            - base: !Join [',', !Ref LayerVersionArns]
+              pip: !Ref PythonLayerVersionArn
+        - [!Ref PythonLayerVersionArn]
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources

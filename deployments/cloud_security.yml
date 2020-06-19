@@ -1213,15 +1213,6 @@ Resources:
       # </cfndoc>
       Handler: src.main.lambda_handler
       MemorySize: !FindInMap [Functions, PolicyEngine, Memory]
-      Layers: !If
-        - AttachLayers
-        - !Split # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
-          - ','
-          - !Sub
-            - '${base},${pip}'
-            - base: !Join [',', !Ref LayerVersionArns]
-              pip: !Ref PythonLayerVersionArn
-        - [!Ref PythonLayerVersionArn]
       Runtime: python3.7
       Timeout: !FindInMap [Functions, PolicyEngine, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
@@ -1250,6 +1241,21 @@ Resources:
             - Effect: Allow
               Action: secretsmanager:GetSecretValue
               Resource: !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:panther-analysis/*
+
+  PolicyEngineLayers:
+    Type: Custom::LayerAttachment
+    Properties:
+      FunctionArn: !GetAtt PolicyEngineFunction.Arn
+      LayerArns: !If
+        - AttachLayers
+        - !Split # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
+          - ','
+          - !Sub
+            - '${base},${pip}'
+            - base: !Join [',', !Ref LayerVersionArns]
+              pip: !Ref PythonLayerVersionArn
+        - [!Ref PythonLayerVersionArn]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   PolicyEngineLogGroup:
     Type: AWS::Logs::LogGroup
