@@ -37,10 +37,7 @@ type LayerAttachmentProperties struct {
 func customLayerAttachment(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
 	switch event.RequestType {
 	case cfn.RequestCreate, cfn.RequestUpdate:
-		x, y, z := handleCreateUpdateRequests(event)
-		if z != nil {
-		}
-		return x, y, z
+		return handleCreateUpdateRequests(event)
 	case cfn.RequestDelete:
 		return handleDeleteRequests(event)
 	default:
