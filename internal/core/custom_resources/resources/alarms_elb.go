@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"go.uber.org/zap"
 )
 
 const (
@@ -55,7 +56,18 @@ func customElbAlarms(_ context.Context, event cfn.Event) (string, map[string]int
 		if props.LatencyThresholdSeconds == 0 {
 			props.LatencyThresholdSeconds = 0.5
 		}
-		return "custom:alarms:elb:" + props.LoadBalancerFriendlyName, nil, putElbAlarmGroup(props)
+
+		physicalID := "custom:alarms:elb:" + props.LoadBalancerFriendlyName
+		if err := putElbAlarmGroup(props); err != nil {
+			return physicalID, nil, err
+		}
+
+		// Migration: In v1.5.0, the elbTargetClientErrorAlarm was removed
+		if err := deleteMetricAlarms(event.PhysicalResourceID, elbClientErrorAlarm); err != nil {
+			zap.L().Error("failed to remove deprecated alarm", zap.Error(err))
+		}
+
+		return physicalID, nil, nil
 
 	case cfn.RequestDelete:
 		return event.PhysicalResourceID, nil, deleteMetricAlarms(event.PhysicalResourceID,
