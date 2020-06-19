@@ -775,6 +775,7 @@ Resources:
           S3_BUCKET: !Ref ProcessedDataBucket
           NOTIFICATIONS_TOPIC: !Ref ProcessedDataTopicArn
           ALERTS_DEDUP_TABLE: !Ref AlertsDedup
+      Layers: !GetAtt RulesEngineLayers.LayerArns
       MemorySize: !Ref LogProcessorLambdaMemorySize # keep this the same as log processor since it has to read the output files
       Events:
         Queue:
@@ -866,14 +867,20 @@ Resources:
   RulesEngineLayers:
     Type: Custom::LayerAttachment
     Properties:
-      FunctionArn: !GetAtt RulesEngineFunction.Arn
+      FunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-rules-engine
       LayerArns: !If
         - AttachLayers
         - !Split # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
           - ','
           - !Sub
-            - '${base},${pip}'
+            - '${base},${pip},${global}'
             - base: !Join [',', !Ref LayerVersionArns]
               pip: !Ref PythonLayerVersionArn
-        - [!Ref PythonLayerVersionArn]
+              global: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:panther-engine-globals:LATEST
+        - !Split # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
+          - ','
+          - !Sub
+            - '${pip},${global}'
+            - pip: !Ref PythonLayerVersionArn
+              global: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:panther-engine-globals:LATEST
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
