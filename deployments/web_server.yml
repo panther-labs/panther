@@ -94,7 +94,6 @@ Resources:
     Type: Custom::ElbAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
-      ClientErrorThreshold: 10 # within 5 minutes
       LatencyThresholdSeconds: 0.5
       LoadBalancerFriendlyName: web
       LoadBalancerFullName: !Ref ElbFullName
