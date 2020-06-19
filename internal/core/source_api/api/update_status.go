@@ -30,6 +30,7 @@ var (
 	updateStatusInternalError = &genericapi.InternalError{Message: "Failed to update source status, please try again later"}
 )
 
+// It updates the status of an integration
 func (api API) UpdateStatus(input *models.UpdateStatusInput) error {
 	status := ddb.IntegrationStatus{
 		LastEventReceived: input.LastEventReceived,

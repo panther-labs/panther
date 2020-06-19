@@ -73,6 +73,11 @@ var (
 	//used to simplify mocking during testing
 	newCredentialsFunc = stscreds.NewCredentials
 	newS3ClientFunc    = getNewS3Client
+
+	// Map from integrationId -> last time an event was received
+	lastEventReceived = make(map[string]time.Time)
+	// How frequently to update the status
+	statusUpdateFrequency = 1 * time.Minute
 )
 
 func init() {
@@ -170,7 +175,7 @@ func getAwsCredentials(roleArn string) *credentials.Credentials {
 // Returns the source configuration for this S3 object.
 // It will return error if it encountered an issue retrieving the role.
 // It will return nil result if no source exists for this object.
-func getSourceInfo(s3Object *S3ObjectInfo) (*models.SourceIntegration, error) {
+func getSourceInfo(s3Object *S3ObjectInfo) (result *models.SourceIntegration, err error) {
 	now := time.Now() // No need to be UTC. We care about relative time
 	if sourceCache.cacheUpdateTime.Add(sourceCacheDuration).Before(now) {
 		// we need to update the cache
@@ -178,7 +183,7 @@ func getSourceInfo(s3Object *S3ObjectInfo) (*models.SourceIntegration, error) {
 			ListIntegrations: &models.ListIntegrationsInput{},
 		}
 		var output []*models.SourceIntegration
-		err := genericapi.Invoke(common.LambdaClient, sourceAPIFunctionName, input, &output)
+		err = genericapi.Invoke(common.LambdaClient, sourceAPIFunctionName, input, &output)
 		if err != nil {
 			return nil, err
 		}
@@ -190,11 +195,37 @@ func getSourceInfo(s3Object *S3ObjectInfo) (*models.SourceIntegration, error) {
 		integrationBucket, integrationPrefix := getSourceS3Info(source)
 		if aws.StringValue(integrationBucket) == s3Object.S3Bucket {
 			if strings.HasPrefix(s3Object.S3ObjectKey, aws.StringValue(integrationPrefix)) {
-				return source, nil
+				result = source
+				break
 			}
 		}
 	}
-	return nil, nil
+
+	//
+	if result != nil {
+		previousTime := lastEventReceived[*result.IntegrationID]
+		if previousTime.Add(statusUpdateFrequency).Before(now) {
+			updateIntegrationStatus(*result.IntegrationID, now)
+			lastEventReceived[*result.IntegrationID] = now
+		}
+	}
+
+	return result, nil
+}
+
+func updateIntegrationStatus(integrationID string, timestamp time.Time) {
+	input := &models.LambdaInput{
+		UpdateStatus: &models.UpdateStatusInput{
+			IntegrationID:     integrationID,
+			LastEventReceived: timestamp,
+		},
+	}
+	// We are setting the `output` parameter to `nil` since we don't care about the returned value
+	err := genericapi.Invoke(common.LambdaClient, sourceAPIFunctionName, input, nil)
+	// best effort - if we fail to update the status, just log a warning
+	if err != nil {
+		zap.L().Warn("failed to update status for integrationID", zap.String("integrationID", integrationID))
+	}
 }
 
 func getNewS3Client(region *string, creds *credentials.Credentials) (result s3iface.S3API) {
