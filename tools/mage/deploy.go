@@ -530,8 +530,8 @@ func deployOnboardStack(settings *config.PantherConfig, outputs map[string]strin
 // Determine the custom resource "version" - if this value changes, it will force an update for
 // most of our CloudFormation custom resources.
 func customResourceVersion() string {
-	if os.Getenv("FORCE_CUSTOM_RESOURCE_UPDATE") == "1" {
-		return strconv.FormatInt(time.Now().UnixNano(), 10) // random number
+	if v := os.Getenv("CUSTOM_RESOURCE_VERSION"); v != "" {
+		return v
 	}
 
 	// By default, just use the major release version so developers do not have to trigger every

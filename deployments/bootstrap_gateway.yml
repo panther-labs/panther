@@ -44,7 +44,7 @@ Parameters:
     Description: CloudWatch log retention period
   CustomResourceVersion:
     Type: String
-    Description: Dummy parameter which forces updates to custom resources when changed
+    Description: Forces updates to custom resources when changed
   ImageRegistryName:
     Type: String
     Description: Name of the ECR repository hosting web images (blank when deploying from source)

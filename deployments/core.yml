@@ -53,7 +53,7 @@ Parameters:
     Description: Compliance API gateway ID
   CustomResourceVersion:
     Type: String
-    Description: Dummy parameter which forces updates to custom resources when changed
+    Description: Forces updates to custom resources when changed
   Debug:
     Type: String
     Description: Toggle debug logging
