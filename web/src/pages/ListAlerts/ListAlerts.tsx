@@ -25,7 +25,6 @@ import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import isEmpty from 'lodash-es/isEmpty';
 import withSEO from 'Hoc/withSEO';
 import { useListAlerts } from './graphql/listAlerts.generated';
 import ListAlertsTable from './ListAlertsTable';
@@ -86,10 +85,6 @@ const ListAlerts = () => {
     return <ListAlertsPageSkeleton />;
   }
 
-  if (!alertItems.length && isEmpty(requestParams)) {
-    return <ListAlertsPageEmptyDataFallback />;
-  }
-
   const showIfError = Boolean(error);
 
   return (
@@ -108,12 +103,15 @@ const ListAlerts = () => {
       )}
       <ListAlertsActions showActions={showIfError} />
       <Card mb={8}>
-        <ListAlertsTable
-          items={alertItems}
-          onSort={updateRequestParams}
-          sortBy={ListAlertsSortFieldsEnum.CreatedAt}
-          sortDir={requestParams.sortDir || SortDirEnum.Descending}
-        />
+        {!alertItems.length && <ListAlertsPageEmptyDataFallback />}
+        {!!alertItems.length && (
+          <ListAlertsTable
+            items={alertItems}
+            onSort={updateRequestParams}
+            sortBy={ListAlertsSortFieldsEnum.CreatedAt}
+            sortDir={requestParams.sortDir || SortDirEnum.Descending}
+          />
+        )}
         {hasNextPage && (
           <Box p={8} ref={sentinelRef}>
             <TablePlaceholder rowCount={10} />
