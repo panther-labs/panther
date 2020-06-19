@@ -54,7 +54,7 @@ export const filters = {
   createdAtAfter: {
     component: FormikTextInput,
     props: {
-      label: 'Created After',
+      label: 'Date Start',
       placeholder: 'YYYY-MM-DDTHH:mm:ss',
       type: 'datetime-local',
       step: 1,
@@ -63,7 +63,7 @@ export const filters = {
   createdAtBefore: {
     component: FormikTextInput,
     props: {
-      label: 'Created Before',
+      label: 'Date End',
       placeholder: 'YYYY-MM-DDTHH:mm:ss',
       type: 'datetime-local',
       step: 1,
