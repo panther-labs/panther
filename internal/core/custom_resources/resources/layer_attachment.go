@@ -48,15 +48,15 @@ func customLayerAttachment(_ context.Context, event cfn.Event) (string, map[stri
 }
 
 func handleCreateUpdateRequests(event cfn.Event) (string, map[string]interface{}, error) {
-	var newProps LayerAttachmentProperties
+	var props LayerAttachmentProperties
 	// Parse the properties
-	err := parseProperties(event.ResourceProperties, &newProps)
+	err := parseProperties(event.ResourceProperties, &props)
 	if err != nil {
 		return "", nil, err
 	}
 
-	var finalLayers []*string
-	for _, layer := range newProps.LayerArns {
+	var layers []*string
+	for _, layer := range props.LayerArns {
 		pieces := strings.Split(*layer, ":")
 		// Check if the version (the last section of the arn) is equal to latest
 		version := pieces[len(pieces)-1]
@@ -73,14 +73,14 @@ func handleCreateUpdateRequests(event cfn.Event) (string, map[string]interface{}
 			continue
 		}
 		versionedArn := arn + ":" + version
-		finalLayers = append(finalLayers, &versionedArn)
+		layers= append(layers, &versionedArn)
 	}
 
-	zap.L().Info("adding layers", zap.Any("finalLayers", finalLayers))
+	zap.L().Info("adding layers", zap.Any("finalLayers", layers))
 	resourceID := fmt.Sprintf("custom:lambda:layerattachment:%s",
-		*newProps.FunctionArn)
+		*props.FunctionArn)
 
-	return resourceID, map[string]interface{}{"LayerArns": finalLayers}, nil
+	return resourceID, map[string]interface{}{"LayerArns": layers}, nil
 }
 
 func getLatestLayerVersion(layerArn string) (string, error) {
