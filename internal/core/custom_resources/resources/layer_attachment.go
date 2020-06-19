@@ -73,7 +73,7 @@ func handleCreateUpdateRequests(event cfn.Event) (string, map[string]interface{}
 			continue
 		}
 		versionedArn := arn + ":" + version
-		layers= append(layers, &versionedArn)
+		layers = append(layers, &versionedArn)
 	}
 
 	zap.L().Info("adding layers", zap.Any("finalLayers", layers))
