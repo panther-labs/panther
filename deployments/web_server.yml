@@ -32,6 +32,9 @@ Parameters:
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
+  CustomResourceVersion:
+    Type: String
+    Description: Forces updates to custom resources when changed
   ElbArn:
     Type: String
     Description: The ARN of the load balancer
@@ -88,12 +91,14 @@ Resources:
     Condition: CreateCertificate
     Type: Custom::Certificate
     Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   LoadBalancerAlarms:
     Type: Custom::ElbAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       LatencyThresholdSeconds: 0.5
       LoadBalancerFriendlyName: web
       LoadBalancerFullName: !Ref ElbFullName
@@ -247,6 +252,8 @@ Resources:
     DeletionPolicy: Retain # users-api refuses to delete the last user, which would then fail teardown
     UpdateReplacePolicy: Retain
     Properties:
+      # No CustomResourceVersion here because that would reset the first user on every upgrade.
+      # The user might have changed their name or email through the web app, we don't want to revert.
       GivenName: !Ref FirstUserGivenName
       FamilyName: !Ref FirstUserFamilyName
       Email: !Ref FirstUserEmail
