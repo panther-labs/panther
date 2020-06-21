@@ -35,7 +35,7 @@ function useRequestParamsWithPagination<AvailableParams extends { page?: number 
   // This is a similar function like the above but instead of updating the existing params with the
   // new parameters, it clears all the parameters and just sets the parameters passed as an argument
   const setRequestParamsAndResetPaging = React.useCallback(
-    (newParams: Partial<AvailableParams> = {}) => {
+    (newParams: Partial<AvailableParams>) => {
       setUrlParams({ ...newParams, page: 1 });
     },
     [urlParams]

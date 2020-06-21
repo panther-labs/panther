@@ -111,7 +111,7 @@ const PolicyDetailsPage = () => {
                 count={getComplianceItemsTotalCount(totalCounts)}
                 text="All"
                 isActive={!requestParams.status && !requestParams.suppressed}
-                onClick={() => setRequestParamsAndResetPaging()}
+                onClick={() => setRequestParamsAndResetPaging({})}
               />
               <TableControlsComplianceFilter
                 mr={1}
