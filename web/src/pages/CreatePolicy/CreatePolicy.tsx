@@ -17,7 +17,6 @@
  */
 
 import React from 'react';
-import Panel from 'Components/Panel';
 import { Alert, Box } from 'pouncejs';
 import urls from 'Source/urls';
 import PolicyForm from 'Components/forms/PolicyForm';
@@ -60,14 +59,13 @@ const CreatePolicyPage: React.FC = () => {
 
   return (
     <Box mb={6}>
-      <Panel title="Policy Settings">
-        <PolicyForm initialValues={initialValues} onSubmit={handleSubmit} />
-      </Panel>
+      <PolicyForm initialValues={initialValues} onSubmit={handleSubmit} />
       {error && (
         <Box mt={2} mb={6}>
           <Alert
             variant="error"
-            title={
+            title="Couldn't create your policy"
+            description={
               extractErrorMessage(error) ||
               'An unknown error occured as we were trying to create your policy'
             }

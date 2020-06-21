@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { FormError, Switch, SwitchProps } from 'pouncejs';
+import { Box, FormError, Switch, SwitchProps } from 'pouncejs';
 import { FieldConfig, useField } from 'formik';
 
 const FormikSwitch: React.FC<SwitchProps & Required<Pick<FieldConfig, 'name'>>> = props => {
@@ -26,19 +26,19 @@ const FormikSwitch: React.FC<SwitchProps & Required<Pick<FieldConfig, 'name'>>> 
   const isInvalid = meta.touched && !!meta.error;
   const errorElementId = isInvalid ? `${props.name}-error` : undefined;
   return (
-    <React.Fragment>
+    <Box>
       <Switch
         {...props}
         checked={field.value}
         invalid={isInvalid}
-        aria-describedby={errorElementId}
+        aria-describedby={isInvalid ? errorElementId : undefined}
       />
       {isInvalid && (
         <FormError mt={1} id={errorElementId}>
           {meta.error}
         </FormError>
       )}
-    </React.Fragment>
+    </Box>
   );
 };
 

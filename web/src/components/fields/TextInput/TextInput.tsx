@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { FormError, TextInput, TextInputProps } from 'pouncejs';
+import { Box, FormError, TextInput, TextInputProps } from 'pouncejs';
 import { FieldConfig, useField } from 'formik';
 
 const FormikTextInput: React.FC<TextInputProps & Required<Pick<FieldConfig, 'name'>>> = props => {
@@ -28,14 +28,18 @@ const FormikTextInput: React.FC<TextInputProps & Required<Pick<FieldConfig, 'nam
   const errorElementId = isInvalid ? `${props.name}-error` : undefined;
 
   return (
-    <React.Fragment>
-      <TextInput invalid={isInvalid} aria-describedby={errorElementId} {...props} />
+    <Box>
+      <TextInput
+        invalid={isInvalid}
+        aria-describedby={isInvalid ? errorElementId : undefined}
+        {...props}
+      />
       {isInvalid && (
         <FormError mt={2} id={errorElementId}>
           {meta.error}
         </FormError>
       )}
-    </React.Fragment>
+    </Box>
   );
 };
 

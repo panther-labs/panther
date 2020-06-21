@@ -30,7 +30,7 @@ const Panel: React.FC<PanelProps> = ({ title, actions, children }) => {
       <Flex
         p={6}
         borderBottom="1px solid"
-        borderColor="navyblue-500"
+        borderColor={children ? 'navyblue-500' : 'transparent'}
         justify="space-between"
         align="center"
         maxHeight={80}
@@ -40,7 +40,7 @@ const Panel: React.FC<PanelProps> = ({ title, actions, children }) => {
         </Heading>
         {actions}
       </Flex>
-      <Box p={6}>{children}</Box>
+      {children && <Box p={6}>{children}</Box>}
     </Card>
   );
 };

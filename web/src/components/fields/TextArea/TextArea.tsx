@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { FormError, TextArea, TextAreaProps } from 'pouncejs';
+import { Box, FormError, TextArea, TextAreaProps } from 'pouncejs';
 import { FieldConfig, useField } from 'formik';
 
 const FormikTextArea: React.FC<TextAreaProps & Required<Pick<FieldConfig, 'name'>>> = props => {
@@ -27,14 +27,18 @@ const FormikTextArea: React.FC<TextAreaProps & Required<Pick<FieldConfig, 'name'
   const isInvalid = meta.touched && !!meta.error;
   const errorElementId = isInvalid ? `${props.name}-error` : undefined;
   return (
-    <React.Fragment>
-      <TextArea invalid={isInvalid} aria-describedby={errorElementId} {...props} />
+    <Box>
+      <TextArea
+        invalid={isInvalid}
+        aria-describedby={isInvalid ? errorElementId : undefined}
+        {...props}
+      />
       {isInvalid && (
         <FormError mt={2} id={errorElementId}>
           {meta.error}
         </FormError>
       )}
-    </React.Fragment>
+    </Box>
   );
 };
 

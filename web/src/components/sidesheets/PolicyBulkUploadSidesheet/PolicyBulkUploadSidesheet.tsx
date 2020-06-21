@@ -40,7 +40,7 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({
   const isPolicy = type === 'policy';
   const inputRef = React.useRef<HTMLInputElement>(null);
   const { pushSnackbar } = useSnackbar();
-  const [bulkUploadPolicies, { loading, error: uploadPoliciesError }] = useUploadPolicies({
+  const [bulkUploadPolicies, { loading }] = useUploadPolicies({
     onCompleted: data => {
       onClose();
       pushSnackbar({

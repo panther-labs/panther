@@ -17,8 +17,7 @@
  */
 
 import React from 'react';
-import Panel from 'Components/Panel';
-import { Alert, Button, Card, Box, useSnackbar } from 'pouncejs';
+import { Alert, Button, Card, Box, useSnackbar, Flex, FadeIn } from 'pouncejs';
 import PolicyForm from 'Components/forms/PolicyForm';
 import useModal from 'Hooks/useModal';
 import useRouter from 'Hooks/useRouter';
@@ -57,10 +56,17 @@ const EditPolicyPage: React.FC = () => {
 
   if (isFetchingPolicy) {
     return (
-      <Card p={9}>
-        <TablePlaceholder rowCount={5} rowHeight={15} />
-        <TablePlaceholder rowCount={1} rowHeight={100} />
-      </Card>
+      <FadeIn from="bottom">
+        <Card p={6} mb={5}>
+          <TablePlaceholder rowCount={5} />
+        </Card>
+        <Card p={6} mb={5}>
+          <TablePlaceholder rowCount={1} rowHeight={100} />
+        </Card>
+        <Card p={6} mb={5}>
+          <TablePlaceholder rowCount={5} />
+        </Card>
+      </FadeIn>
     );
   }
 
@@ -106,32 +112,26 @@ const EditPolicyPage: React.FC = () => {
 
   return (
     <Box mb={6}>
-      <Panel
-        size="large"
-        title="Policy Settings"
-        actions={
-          <Button
-            variant="default"
-            size="large"
-            color="red300"
-            onClick={() =>
-              showModal({
-                modal: MODALS.DELETE_POLICY,
-                props: { policy: queryData.policy },
-              })
-            }
-          >
-            Delete
-          </Button>
-        }
-      >
-        <PolicyForm initialValues={initialValues} onSubmit={handleSubmit} />
-      </Panel>
+      <Flex justify="flex-end" mb={5}>
+        <Button
+          variantColor="red"
+          onClick={() =>
+            showModal({
+              modal: MODALS.DELETE_POLICY,
+              props: { policy: queryData.policy },
+            })
+          }
+        >
+          Delete
+        </Button>
+      </Flex>
+      <PolicyForm initialValues={initialValues} onSubmit={handleSubmit} />
       {updateError && (
         <Box mt={2} mb={6}>
           <Alert
             variant="error"
-            title={
+            title="Couldn't update your policy"
+            description={
               extractErrorMessage(updateError) ||
               'Unknown error occured during update. Please contact support@runpanther.io'
             }

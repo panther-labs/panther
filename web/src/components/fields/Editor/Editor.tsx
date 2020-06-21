@@ -18,9 +18,10 @@
 
 import React from 'react';
 import Editor, { EditorProps } from 'Components/Editor';
-import { FieldConfig, useField } from 'formik';
+import { FieldConfig } from 'formik';
 import debounce from 'lodash-es/debounce';
-import { FormError } from 'pouncejs';
+import {Box, FormError} from 'pouncejs';
+import useFastField from 'Hooks/useFastField';
 
 const FormikEditor: React.FC<EditorProps & Required<Pick<FieldConfig, 'name'>>> = ({
   // we destruct `onBlur` since we shouldn't pass it as a prop to `Editor`. This is becase we are
@@ -31,7 +32,7 @@ const FormikEditor: React.FC<EditorProps & Required<Pick<FieldConfig, 'name'>>> 
   ...rest
 }) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [field, meta, { setValue }] = useField(rest.name);
+  const [field, meta, { setValue }] = useFastField(rest.name);
 
   const isInvalid = meta.touched && !!meta.error;
   const errorElementId = isInvalid ? `${rest.name}-error` : undefined;
@@ -49,14 +50,18 @@ const FormikEditor: React.FC<EditorProps & Required<Pick<FieldConfig, 'name'>>> 
   );
 
   return (
-    <React.Fragment>
-      <Editor {...rest} onChange={syncValueFromEditor} />
+    <Box>
+      <Editor
+        {...rest}
+        aria-describedby={isInvalid ? errorElementId : undefined}
+        onChange={syncValueFromEditor}
+      />
       {isInvalid && (
         <FormError mt={2} id={errorElementId}>
           {meta.error}
         </FormError>
       )}
-    </React.Fragment>
+    </Box>
   );
 };
 

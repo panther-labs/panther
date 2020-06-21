@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { FormError, Radio, RadioProps } from 'pouncejs';
+import { Box, FormError, Radio, RadioProps } from 'pouncejs';
 import { FieldConfig, useField } from 'formik';
 
 const FormikRadio: React.FC<RadioProps & Required<Pick<FieldConfig, 'name' | 'value'>>> = props => {
@@ -25,16 +25,17 @@ const FormikRadio: React.FC<RadioProps & Required<Pick<FieldConfig, 'name' | 'va
 
   const isInvalid = meta.touched && !!meta.error;
   const errorElementId = isInvalid ? `${props.name}-error` : undefined;
+
   return (
-    <React.Fragment>
+    <Box>
       <Radio
         {...props}
-        checked={field.value}
+        checked={String(field.value) === String(props.value)}
         invalid={isInvalid}
-        aria-describedby={errorElementId}
+        aria-describedby={isInvalid ? errorElementId : undefined}
       />
       {isInvalid && <FormError id={errorElementId}>{meta.error}</FormError>}
-    </React.Fragment>
+    </Box>
   );
 };
 

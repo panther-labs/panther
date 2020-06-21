@@ -271,3 +271,8 @@ export function slugify(text: string) {
 export const isNumber = (value: string) => /^-{0,1}\d+$/.test(value);
 
 export const toStackNameFormat = (val: string) => val.replace(/ /g, '-').toLowerCase();
+
+/**
+ * Generates a random HEX color
+ */
+export const generateRandomColor = () => Math.floor(Math.random() * 16777215).toString(16);

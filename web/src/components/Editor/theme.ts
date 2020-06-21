@@ -34,7 +34,7 @@ ace.define(
   } 
     
   .ace-panther .ace_gutter {
-    background: #17364c;
+    background: ${theme.colors['navyblue-700']};
     color: white
   }
   
@@ -58,7 +58,7 @@ ace.define(
   }
   
   .ace-panther {
-    background-color: #2d4e66;
+    background-color: ${theme.colors['navyblue-700']};
     color: #FFFFFF
   }
   

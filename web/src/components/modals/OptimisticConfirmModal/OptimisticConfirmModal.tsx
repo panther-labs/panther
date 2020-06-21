@@ -18,7 +18,6 @@
 
 import React from 'react';
 import { Button, Flex, Modal, ModalProps, Text } from 'pouncejs';
-import LoadingButton from 'Components/buttons/LoadingButton';
 
 export interface OptimisticConfirmModalProps extends ModalProps {
   subtitle: React.ReactNode;
@@ -32,8 +31,8 @@ const OptimisticConfirmModal: React.FC<OptimisticConfirmModalProps> = ({
   ...rest
 }) => {
   const handleConfirm = () => {
-    onConfirm();
     onClose();
+    onConfirm();
   };
 
   return (
