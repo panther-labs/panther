@@ -17,8 +17,7 @@
  */
 
 import React from 'react';
-import Panel from 'Components/Panel';
-import { Alert, Button, Card, Box, useSnackbar } from 'pouncejs';
+import { Alert, Button, Card, Box, useSnackbar, FadeIn, Flex } from 'pouncejs';
 import RuleForm from 'Components/forms/RuleForm';
 import useModal from 'Hooks/useModal';
 import useRouter from 'Hooks/useRouter';
@@ -57,10 +56,17 @@ const EditRulePage: React.FC = () => {
 
   if (isFetchingRule) {
     return (
-      <Card p={9}>
-        <TablePlaceholder rowCount={5} rowHeight={15} />
-        <TablePlaceholder rowCount={1} rowHeight={100} />
-      </Card>
+      <FadeIn from="bottom">
+        <Card p={6} mb={5}>
+          <TablePlaceholder rowCount={5} />
+        </Card>
+        <Card p={6} mb={5}>
+          <TablePlaceholder rowCount={1} rowHeight={100} />
+        </Card>
+        <Card p={6} mb={5}>
+          <TablePlaceholder rowCount={5} />
+        </Card>
+      </FadeIn>
     );
   }
 
@@ -103,27 +109,21 @@ const EditRulePage: React.FC = () => {
   };
 
   return (
-    <Box mb={10}>
-      <Panel
-        title="Rule Settings"
-        actions={
-          <Button
-            variant="default"
-            size="large"
-            color="red300"
-            onClick={() =>
-              showModal({
-                modal: MODALS.DELETE_RULE,
-                props: { rule: queryData.rule },
-              })
-            }
-          >
-            Delete
-          </Button>
-        }
-      >
-        <RuleForm initialValues={initialValues} onSubmit={handleSubmit} />
-      </Panel>
+    <Box mb={6}>
+      <Flex justify="flex-end" mb={5}>
+        <Button
+          variantColor="red"
+          onClick={() =>
+            showModal({
+              modal: MODALS.DELETE_RULE,
+              props: { rule: queryData.rule },
+            })
+          }
+        >
+          Delete
+        </Button>
+      </Flex>
+      <RuleForm initialValues={initialValues} onSubmit={handleSubmit} />
       {updateError && (
         <Box mt={2} mb={6}>
           <Alert

@@ -61,10 +61,8 @@ const CreateRulePage: React.FC = () => {
   );
 
   return (
-    <Box mb={10}>
-      <Panel title="Rule Settings">
-        <RuleForm initialValues={initialValues} onSubmit={handleSubmit} />
-      </Panel>
+    <Box mb={6}>
+      <RuleForm initialValues={initialValues} onSubmit={handleSubmit} />
       {error && (
         <Box mt={2} mb={6}>
           <Alert
