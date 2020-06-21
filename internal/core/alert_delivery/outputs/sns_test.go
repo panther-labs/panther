@@ -47,7 +47,7 @@ func TestSendSns(t *testing.T) {
 	outputClient := &OutputClient{snsClients: map[string]snsiface.SNSAPI{"us-west-2": client}}
 
 	snsOutputConfig := &outputmodels.SnsConfig{
-		TopicArn: aws.String("arn:aws:sns:us-west-2:123456789012:test-sns-output"),
+		TopicArn: "arn:aws:sns:us-west-2:123456789012:test-sns-output",
 	}
 	alert := &alertmodels.Alert{
 		PolicyName:        aws.String("policyName"),
@@ -64,7 +64,7 @@ func TestSendSns(t *testing.T) {
 	}
 	expectedSerializedSnsMessage, _ := jsoniter.MarshalToString(expectedSnsMessage)
 	expectedSnsPublishInput := &sns.PublishInput{
-		TopicArn:         snsOutputConfig.TopicArn,
+		TopicArn:         aws.String(snsOutputConfig.TopicArn),
 		Message:          aws.String(expectedSerializedSnsMessage),
 		MessageStructure: aws.String("json"),
 		Subject:          aws.String("Policy Failure: policyName"),

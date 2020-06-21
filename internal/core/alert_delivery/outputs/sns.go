@@ -81,14 +81,14 @@ func (client *OutputClient) Sns(alert *alertmodels.Alert, config *outputmodels.S
 	}
 
 	snsMessageInput := &sns.PublishInput{
-		TopicArn: config.TopicArn,
+		TopicArn: aws.String(config.TopicArn),
 		Message:  aws.String(serializedMessage),
 		// Subject is optional in case the topic is subscribed to Email
 		Subject:          aws.String(generateAlertTitle(alert)),
 		MessageStructure: aws.String("json"),
 	}
 
-	snsClient, err := client.getSnsClient(*config.TopicArn)
+	snsClient, err := client.getSnsClient(config.TopicArn)
 	if err != nil {
 		errorMsg := "Failed to create SNS client for topic"
 		zap.L().Error(errorMsg, zap.Error(errors.WithStack(err)))

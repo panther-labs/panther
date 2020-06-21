@@ -68,7 +68,7 @@ func (client *OutputClient) MsTeams(
 		},
 	}
 
-	requestURL := *config.WebhookURL
+	requestURL := config.WebhookURL
 	postInput := &PostInput{
 		url:  requestURL,
 		body: msTeamsRequestBody,

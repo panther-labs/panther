@@ -22,10 +22,14 @@ import (
 	"errors"
 
 	"github.com/aws/aws-sdk-go/aws"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/core/outputs_api/table"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
+
+const redacted = ""
 
 // AlertOutputToItem converts an AlertOutput to an AlertOutputItem
 func AlertOutputToItem(input *models.AlertOutput) (*table.AlertOutputItem, error) {
@@ -40,13 +44,13 @@ func AlertOutputToItem(input *models.AlertOutput) (*table.AlertOutputItem, error
 		DefaultForSeverity: input.DefaultForSeverity,
 	}
 
-	encryptedConfig, err := encryptionKey.EncryptConfig(input.OutputConfig)
-
-	if err != nil {
-		return nil, err
+	if input.OutputConfig != nil {
+		encryptedConfig, err := encryptionKey.EncryptConfig(input.OutputConfig)
+		if err != nil {
+			return nil, err
+		}
+		item.EncryptedConfig = encryptedConfig
 	}
-
-	item.EncryptedConfig = encryptedConfig
 
 	return item, nil
 }
@@ -64,14 +68,41 @@ func ItemToAlertOutput(input *table.AlertOutputItem) (alertOutput *models.AlertO
 		DefaultForSeverity: input.DefaultForSeverity,
 	}
 
+	// Decrypt the output before returning to the caller
 	alertOutput.OutputConfig = &models.OutputConfig{}
 	err = encryptionKey.DecryptConfig(input.EncryptedConfig, alertOutput.OutputConfig)
-
 	if err != nil {
 		return nil, err
 	}
 
 	return alertOutput, nil
+}
+
+func redactOutput(outputConfig *models.OutputConfig) {
+	if outputConfig.Slack != nil {
+		outputConfig.Slack.WebhookURL = redacted
+	}
+	if outputConfig.PagerDuty != nil {
+		outputConfig.PagerDuty.IntegrationKey = redacted
+	}
+	if outputConfig.Github != nil {
+		outputConfig.Github.Token = redacted
+	}
+	if outputConfig.Jira != nil {
+		outputConfig.Jira.APIKey = redacted
+	}
+	if outputConfig.Opsgenie != nil {
+		outputConfig.Opsgenie.APIKey = redacted
+	}
+	if outputConfig.MsTeams != nil {
+		outputConfig.MsTeams.WebhookURL = redacted
+	}
+	if outputConfig.Asana != nil {
+		outputConfig.Asana.PersonalAccessToken = redacted
+	}
+	if outputConfig.CustomWebhook != nil {
+		outputConfig.CustomWebhook.WebhookURL = redacted
+	}
 }
 
 func getOutputType(outputConfig *models.OutputConfig) (*string, error) {
@@ -107,4 +138,117 @@ func getOutputType(outputConfig *models.OutputConfig) (*string, error) {
 	}
 
 	return nil, errors.New("no valid output configuration specified for alert output")
+}
+
+// mergeConfigs combines an old config with a new config based on the following rules:
+// 1. For every value in the new config, use it
+// 2. For every value in the old config, keep it if it is not overwritten by the new config
+func mergeConfigs(oldConfig, newConfig *models.OutputConfig) (*models.OutputConfig, error) {
+	// Convert the old config into bytes so we can merge it with the new config
+	oldBytes, err := jsoniter.Marshal(oldConfig)
+	if err != nil {
+		return nil, &genericapi.InternalError{
+			Message: "Unable to extract existing configuration from dynamo",
+		}
+	}
+	// Turn the bytes into a map so we can work with it more easily
+	var oldMap map[string]map[string]string
+	err = jsoniter.Unmarshal(oldBytes, &oldMap)
+	if err != nil {
+		return nil, &genericapi.InternalError{
+			Message: "Unable to process existing configuration from dynamo",
+		}
+	}
+
+	// Repeat for the new config
+	newBytes, err := jsoniter.Marshal(newConfig)
+	if err != nil {
+		return nil, &genericapi.InternalError{
+			Message: "Unable to extract the new configuration",
+		}
+	}
+	var newMap map[string]map[string]string
+	err = jsoniter.Unmarshal(newBytes, &newMap)
+	if err != nil {
+		return nil, &genericapi.InternalError{
+			Message: "Unable to process the new configuration",
+		}
+	}
+
+	// Overwrite the existing configurations with the new configurations
+	for configType, configMap := range newMap {
+		for configKey, configValue := range configMap {
+			if configValue == "" {
+				continue
+			}
+			oldMap[configType][configKey] = configValue
+		}
+	}
+
+	// Turn the map back into bytes
+	combinedBytes, err := jsoniter.Marshal(oldMap)
+	if err != nil {
+		return nil, &genericapi.InternalError{
+			Message: "Unable to marshal the combined configuration",
+		}
+	}
+
+	// Turn the bytes back into a struct
+	combinedConfig := &models.OutputConfig{}
+	err = jsoniter.Unmarshal(combinedBytes, combinedConfig)
+	if err != nil {
+		return nil, &genericapi.InternalError{
+			Message: "Unable to process the combined configuration",
+		}
+	}
+
+	return combinedConfig, nil
+}
+
+func validateConfigByType(config *models.OutputConfig, outputType *string) error {
+	switch *outputType {
+	case "slack":
+		if config.Slack.WebhookURL != "" {
+			return nil
+		}
+	case "pagerduty":
+		if config.PagerDuty.IntegrationKey != "" {
+			return nil
+		}
+	case "github":
+		if config.Github.RepoName != "" && config.Github.Token != "" {
+			return nil
+		}
+	case "jira":
+		// The Type and AssigneeId are apparently optional, although the frontend requires them
+		if config.Jira.APIKey != "" && config.Jira.UserName != "" && config.Jira.ProjectKey != "" && config.Jira.OrgDomain != "" {
+			return nil
+		}
+	case "opsgenie":
+		if config.Opsgenie.APIKey != "" {
+			return nil
+		}
+	case "msteams":
+		if config.MsTeams.WebhookURL != "" {
+			return nil
+		}
+	case "sns":
+		if config.Sns.TopicArn != "" {
+			return nil
+		}
+	case "sqs":
+		if config.Sqs.QueueURL != "" {
+			return nil
+		}
+	case "asana":
+		if len(config.Asana.ProjectGids) != 0 && config.Asana.PersonalAccessToken != "" {
+			return nil
+		}
+	case "customwebhook":
+		if config.CustomWebhook.WebhookURL != "" {
+			return nil
+		}
+	}
+
+	return errors.New("invalid output configuration specified for alert output, missing required fields")
 }

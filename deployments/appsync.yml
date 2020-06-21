@@ -21,28 +21,32 @@ Description: AppSync data sources and resolvers
 # This template adds all the configuration: schema, data sources, resolvers
 
 Parameters:
-  ApiId:
-    Type: String
-    Description: Appsync GraphQL API ID
+  # Alphabetize parameters so it's easy to compare side-by-side with other code that passes values
+  # and because the CloudFormation console always shows parameters in alphabetical order.
   AlarmTopicArn:
     Type: String
     Description: SNS topic for CloudWatch alarms
-  ServiceRole:
-    Type: String
-    Description: Appsync IAM service role ARN
-
   AnalysisApi:
     Type: String
     Description: API Gateway HTTPS endpoint for panther-analysis-api
+  ApiId:
+    Type: String
+    Description: Appsync GraphQL API ID
   ComplianceApi:
     Type: String
     Description: API Gateway HTTPS endpoint for panther-compliance-api
+  CustomResourceVersion:
+    Type: String
+    Description: Forces updates to custom resources when changed
   RemediationApi:
     Type: String
     Description: API Gateway HTTPS endpoint for panther-remediation-api
   ResourcesApi:
     Type: String
     Description: API Gateway HTTPS endpoint for panther-resources-api
+  ServiceRole:
+    Type: String
+    Description: Appsync IAM service role ARN
 
 Resources:
   AppsyncAlarms:
@@ -52,6 +56,7 @@ Resources:
       ApiName: panther-graphql-api
       AlarmTopicArn: !Ref AlarmTopicArn
       ClientErrorThreshold: 20 # per 5-minute window
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   GraphQLSchema:

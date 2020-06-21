@@ -48,7 +48,7 @@ var alertOutput = &outputmodels.AlertOutput{
 	OutputType:  aws.String("slack"),
 	DisplayName: aws.String("slack:alerts"),
 	OutputConfig: &outputmodels.OutputConfig{
-		Slack: &outputmodels.SlackConfig{WebhookURL: aws.String("https://slack.com")},
+		Slack: &outputmodels.SlackConfig{WebhookURL: "https://slack.com"},
 	},
 	OutputID: aws.String("output-id"),
 }

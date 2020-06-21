@@ -19,18 +19,9 @@ Description: Master template for deploying Panther Community
 
 Parameters:
   # FirstUserEmail is the only required parameter
-  FirstUserEmail:
-    Type: String
-    Description: Initial Panther user - email address
-  FirstUserGivenName:
-    Type: String
-    Description: Initial Panther user - first name
-    Default: PantherUser
-  FirstUserFamilyName:
-    Type: String
-    Description: Initial Panther user - last name
-    Default: Community
 
+  # Alphabetize parameters so it's easy to compare side-by-side with other code that passes values
+  # and because the CloudFormation console always shows parameters in alphabetical order.
   AccessLogsBucketName:
     Type: String
     Description: S3 bucket for storing S3 access logs. Has no effect if EnableS3AccessLogs=false. Defaults to the Panther audit bucket, created automatically.
@@ -79,6 +70,17 @@ Parameters:
     Description: Enable S3 access logging for all Panther buckets. This is strongly recommended for security, but comes at an additional cost.
     AllowedValues: [true, false]
     Default: true
+  FirstUserEmail:
+    Type: String
+    Description: Initial Panther user - email address
+  FirstUserFamilyName:
+    Type: String
+    Description: Initial Panther user - last name
+    Default: Community
+  FirstUserGivenName:
+    Type: String
+    Description: Initial Panther user - first name
+    Default: PantherUser
   ImageRegistry:
     Type: String
     Description: Docker image registry which stores web app images. Used only when deploying from source and otherwise defaults to the Panther public account.
@@ -137,6 +139,7 @@ Resources:
         CustomDomain: !Ref CustomDomain
         DataReplicationBucket: !Ref DataReplicationBucketName
         Debug: !Ref Debug
+        DeployFromSource: false
         EnableS3AccessLogs: !Ref EnableS3AccessLogs
         LogSubscriptionPrincipals: !Join [',', !Ref LogSubscriptionPrincipals]
         TracingMode: !Ref TracingMode
@@ -161,6 +164,7 @@ Resources:
         AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
         AuditLogsBucket: !GetAtt Bootstrap.Outputs.AuditLogsBucket
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
+        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         ImageRegistryName: !GetAtt Bootstrap.Outputs.ImageRegistryName
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
@@ -186,6 +190,7 @@ Resources:
         AnalysisApi: !Sub https://${BootstrapGateway.Outputs.AnalysisApiEndpoint}
         ApiId: !GetAtt Bootstrap.Outputs.GraphQLApiId
         ComplianceApi: !Sub https://${BootstrapGateway.Outputs.ComplianceApiEndpoint}
+        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         RemediationApi: !Sub https://${BootstrapGateway.Outputs.RemediationApiEndpoint}
         ResourcesApi: !Sub https://${BootstrapGateway.Outputs.ResourcesApiEndpoint}
         ServiceRole: !GetAtt Bootstrap.Outputs.AppsyncServiceRoleArn
@@ -208,6 +213,7 @@ Resources:
         AnalysisApiId: !GetAtt BootstrapGateway.Outputs.AnalysisApiId
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         ComplianceApiId: !GetAtt BootstrapGateway.Outputs.ComplianceApiId
+        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         Debug: !Ref Debug
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
@@ -233,15 +239,16 @@ Resources:
       TemplateURL: core.yml
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
-        AppDomainURL: !GetAtt Bootstrap.Outputs.LoadBalancerUrl
         AnalysisApiEndpoint: !GetAtt BootstrapGateway.Outputs.AnalysisApiEndpoint
         AnalysisApiId: !GetAtt BootstrapGateway.Outputs.AnalysisApiId
         AnalysisVersionsBucket: !GetAtt Bootstrap.Outputs.AnalysisVersionsBucket
+        AppDomainURL: !GetAtt Bootstrap.Outputs.LoadBalancerUrl
         AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         CompanyDisplayName: !Ref CompanyDisplayName
         CompanyEmail: !Ref FirstUserEmail
         ComplianceApiId: !GetAtt BootstrapGateway.Outputs.ComplianceApiId
+        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         Debug: !Ref Debug
         DynamoScalingRoleArn: !GetAtt Bootstrap.Outputs.DynamoScalingRoleArn
         InitialAnalysisPackUrls: !Join [',', !Ref InitialAnalysisPackUrls]
@@ -284,6 +291,7 @@ Resources:
         AnalysisApiId: !GetAtt BootstrapGateway.Outputs.AnalysisApiId
         AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
+        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         Debug: !Ref Debug
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         LogProcessorLambdaMemorySize: !Ref LogProcessorLambdaMemorySize
@@ -314,6 +322,7 @@ Resources:
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AuditLogsBucket: !GetAtt Bootstrap.Outputs.AuditLogsBucket
+        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         EnableCloudTrail: !Ref EnableCloudTrail
         EnableGuardDuty: !Ref EnableGuardDuty
         EnableS3AccessLogs: !Ref EnableS3AccessLogs
@@ -336,14 +345,16 @@ Resources:
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AppClientId: !GetAtt Bootstrap.Outputs.AppClientId
-        CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         CertificateArn: !Ref CertificateArn
+        CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
+        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         ElbArn: !GetAtt Bootstrap.Outputs.LoadBalancerArn
         ElbFullName: !GetAtt Bootstrap.Outputs.LoadBalancerFullName
         ElbTargetGroup: !GetAtt Bootstrap.Outputs.LoadBalancerTargetGroup
-        FirstUserGivenName: !Ref FirstUserGivenName
-        FirstUserFamilyName: !Ref FirstUserFamilyName
         FirstUserEmail: !Ref FirstUserEmail
+        FirstUserFamilyName: !Ref FirstUserFamilyName
+        FirstUserGivenName: !Ref FirstUserGivenName
+        GraphQLApiEndpoint: !GetAtt Bootstrap.Outputs.GraphQLApiEndpoint
         Image: !Sub
           - '${registry}:${tag}'
           - registry: !If
@@ -351,7 +362,6 @@ Resources:
               - !Ref ImageRegistry
               - !Sub 349240696275.dkr.ecr.${AWS::Region}.amazonaws.com/panther-community
             tag: !FindInMap [Constants, Panther, Version]
-        GraphQLApiEndpoint: !GetAtt Bootstrap.Outputs.GraphQLApiEndpoint
         PantherVersion: !Sub
           - v${version} # has to be prefixed with 'v' for docs link in web app to work
           - version: !FindInMap [Constants, Panther, Version]

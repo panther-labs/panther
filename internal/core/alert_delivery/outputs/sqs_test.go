@@ -47,7 +47,7 @@ func TestSendSqs(t *testing.T) {
 	outputClient := &OutputClient{sqsClients: map[string]sqsiface.SQSAPI{"us-west-2": client}}
 
 	sqsOutputConfig := &outputmodels.SqsConfig{
-		QueueURL: aws.String("https://sqs.us-west-2.amazonaws.com/123456789012/test-output"),
+		QueueURL: "https://sqs.us-west-2.amazonaws.com/123456789012/test-output",
 	}
 	alert := &alertmodels.Alert{
 		PolicyName:        aws.String("policyName"),
@@ -66,7 +66,7 @@ func TestSendSqs(t *testing.T) {
 	}
 	expectedSerializedSqsMessage, _ := jsoniter.MarshalToString(expectedSqsMessage)
 	expectedSqsSendMessageInput := &sqs.SendMessageInput{
-		QueueUrl:    sqsOutputConfig.QueueURL,
+		QueueUrl:    aws.String(sqsOutputConfig.QueueURL),
 		MessageBody: aws.String(expectedSerializedSqsMessage),
 	}
 

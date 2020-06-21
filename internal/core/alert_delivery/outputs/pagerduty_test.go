@@ -41,7 +41,7 @@ var pagerDutyAlert = &alertmodels.Alert{
 	CreatedAt:  &createdAtTime,
 }
 var pagerDutyConfig = &outputmodels.PagerDutyConfig{
-	IntegrationKey: aws.String("integrationKey"),
+	IntegrationKey: "integrationKey",
 }
 
 func TestSendPagerDutyAlert(t *testing.T) {

@@ -1,4 +1,4 @@
-package validator
+package api
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,20 +19,26 @@ package validator
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws/arn"
-	"gopkg.in/go-playground/validator.v9"
+	"github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
-// Validator builds a custom struct validator.
-func Validator() (*validator.Validate, error) {
-	result := validator.New()
-	if err := result.RegisterValidation("snsArn", validateAwsArn); err != nil {
+// GetOutputsWithSecrets returns all the alert outputs configured for one organization without
+// redacting the secrets.
+// This endpoint should only be reachable from internal services.
+func (API) GetOutputsWithSecrets(_ *models.GetOutputsWithSecretsInput) (models.GetOutputsOutput, error) {
+	outputItems, err := outputsTable.GetOutputs()
+	if err != nil {
 		return nil, err
 	}
-	return result, nil
-}
 
-func validateAwsArn(fl validator.FieldLevel) bool {
-	fieldArn, err := arn.Parse(fl.Field().String())
-	return err == nil && fieldArn.Service == "sns"
+	outputs := make([]*models.AlertOutput, len(outputItems))
+	for i, item := range outputItems {
+		alertOutput, err := ItemToAlertOutput(item)
+		if err != nil {
+			return nil, err
+		}
+		outputs[i] = alertOutput
+	}
+
+	return outputs, nil
 }
