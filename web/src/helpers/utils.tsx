@@ -95,6 +95,39 @@ export const formatDatetime = (datetime: string) => {
   );
 };
 
+/**
+ * Given a dayjs format string, create a partial that accepts a datestring that can convert
+ * UTC -> Local time and from Local time -> UTC.
+ *
+ * This is primarily used when converting local time in a frontend form with URL parameters in UTC.
+ */
+export const formatTime = (format?: string) => (
+  datetime: string,
+  utcIn?: boolean,
+  utcOut?: boolean
+) => {
+  // Set the initial date context as utc or local
+  let date = utcIn ? dayjs.utc(datetime) : dayjs(datetime);
+
+  // Calculate offset in hours for the default format string
+  const utcOffsetHours = dayjs(datetime).utcOffset() / 60;
+
+  // Perform the proper conversion of time units
+  if (!utcIn && utcOut) {
+    date = date.subtract(date.utcOffset(), 'minute');
+  }
+
+  // Use the provided partial or our default
+  const fmt =
+    format ||
+    `YYYY-MM-DD HH:mm G[M]T${utcOffsetHours > 0 ? '+' : ''}${
+      utcOffsetHours !== 0 ? utcOffsetHours : ''
+    }`;
+
+  // Finally, return the time in UTC or Local time
+  return utcOut ? date.format(fmt) : date.local().format(fmt);
+};
+
 /** Slice text to 7 characters, mostly used for hashIds */
 export const shortenId = (id: string) => id.slice(0, 7);
 

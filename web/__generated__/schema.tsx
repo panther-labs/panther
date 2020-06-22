@@ -393,6 +393,16 @@ export type ListAlertsInput = {
   ruleId?: Maybe<Scalars['ID']>;
   pageSize?: Maybe<Scalars['Int']>;
   exclusiveStartKey?: Maybe<Scalars['String']>;
+  severity?: Maybe<Array<Maybe<SeverityEnum>>>;
+  nameContains?: Maybe<Scalars['String']>;
+  createdAtBefore?: Maybe<Scalars['AWSDateTime']>;
+  createdAtAfter?: Maybe<Scalars['AWSDateTime']>;
+  ruleIdContains?: Maybe<Scalars['String']>;
+  alertIdContains?: Maybe<Scalars['String']>;
+  eventCountMin?: Maybe<Scalars['Int']>;
+  eventCountMax?: Maybe<Scalars['Int']>;
+  sortBy?: Maybe<ListAlertsSortFieldsEnum>;
+  sortDir?: Maybe<SortDirEnum>;
 };
 
 export type ListAlertsResponse = {
@@ -400,6 +410,10 @@ export type ListAlertsResponse = {
   alertSummaries: Array<Maybe<AlertSummary>>;
   lastEvaluatedKey?: Maybe<Scalars['String']>;
 };
+
+export enum ListAlertsSortFieldsEnum {
+  CreatedAt = 'createdAt',
+}
 
 export type ListComplianceItemsResponse = {
   __typename?: 'ListComplianceItemsResponse';
@@ -1221,9 +1235,11 @@ export type ResolversTypes = {
   AWSDateTime: ResolverTypeWrapper<Scalars['AWSDateTime']>;
   AWSJSON: ResolverTypeWrapper<Scalars['AWSJSON']>;
   ListAlertsInput: ListAlertsInput;
+  SeverityEnum: SeverityEnum;
+  ListAlertsSortFieldsEnum: ListAlertsSortFieldsEnum;
+  SortDirEnum: SortDirEnum;
   ListAlertsResponse: ResolverTypeWrapper<ListAlertsResponse>;
   AlertSummary: ResolverTypeWrapper<AlertSummary>;
-  SeverityEnum: SeverityEnum;
   Destination: ResolverTypeWrapper<Destination>;
   DestinationTypeEnum: DestinationTypeEnum;
   DestinationConfig: ResolverTypeWrapper<DestinationConfig>;
@@ -1253,7 +1269,6 @@ export type ResolversTypes = {
   ComplianceStatusEnum: ComplianceStatusEnum;
   ListResourcesInput: ListResourcesInput;
   ListResourcesSortFieldsEnum: ListResourcesSortFieldsEnum;
-  SortDirEnum: SortDirEnum;
   ListResourcesResponse: ResolverTypeWrapper<ListResourcesResponse>;
   PagingData: ResolverTypeWrapper<PagingData>;
   ResourceSummary: ResolverTypeWrapper<ResourceSummary>;
@@ -1344,9 +1359,11 @@ export type ResolversParentTypes = {
   AWSDateTime: Scalars['AWSDateTime'];
   AWSJSON: Scalars['AWSJSON'];
   ListAlertsInput: ListAlertsInput;
+  SeverityEnum: SeverityEnum;
+  ListAlertsSortFieldsEnum: ListAlertsSortFieldsEnum;
+  SortDirEnum: SortDirEnum;
   ListAlertsResponse: ListAlertsResponse;
   AlertSummary: AlertSummary;
-  SeverityEnum: SeverityEnum;
   Destination: Destination;
   DestinationTypeEnum: DestinationTypeEnum;
   DestinationConfig: DestinationConfig;
@@ -1376,7 +1393,6 @@ export type ResolversParentTypes = {
   ComplianceStatusEnum: ComplianceStatusEnum;
   ListResourcesInput: ListResourcesInput;
   ListResourcesSortFieldsEnum: ListResourcesSortFieldsEnum;
-  SortDirEnum: SortDirEnum;
   ListResourcesResponse: ListResourcesResponse;
   PagingData: PagingData;
   ResourceSummary: ResourceSummary;
