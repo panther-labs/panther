@@ -80,8 +80,8 @@ type ListAlertsInput struct {
 	NameContains    *string    `json:"nameContains"`
 	CreatedAtBefore *time.Time `json:"createdAtBefore"`
 	CreatedAtAfter  *time.Time `json:"createdAtAfter"`
-	RuleContains    *string    `json:"ruleContains"`
-	AlertIDContains *string    `json:"alertIDContains"`
+	RuleIDContains  *string    `json:"ruleIdContains"`
+	AlertIDContains *string    `json:"alertIdContains"`
 	EventCountMin   *int       `json:"eventCountMin" validate:"omitempty,min=0"`
 	EventCountMax   *int       `json:"eventCountMax" validate:"omitempty,min=1"`
 

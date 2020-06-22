@@ -68,7 +68,7 @@ export const filters = {
       step: 1,
     },
   },
-  ruleContains: {
+  ruleIdContains: {
     component: FormikTextInput,
     props: {
       label: 'Rule',
@@ -108,7 +108,7 @@ export type ListAlertsFiltersValues = Pick<
   | 'nameContains'
   | 'createdAtAfter'
   | 'createdAtBefore'
-  | 'ruleContains'
+  | 'ruleIdContains'
   | 'alertIdContains'
   | 'eventCountMin'
   | 'eventCountMax'

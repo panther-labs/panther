@@ -43,7 +43,7 @@ func (API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAlertsO
 	}
 
 	if input.EventCountMax != nil && input.EventCountMin != nil && *input.EventCountMax < *input.EventCountMin {
-		return nil, &genericapi.InternalError{Message: "Invalid range, event count 'max' must be greather or equal to 'min'"}
+		return nil, &genericapi.InternalError{Message: "Invalid range, event count 'max' must be greater or equal to 'min'"}
 	}
 
 	// Fetch all alerts. The results will have filters, sorting applied.

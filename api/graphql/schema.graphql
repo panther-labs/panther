@@ -88,7 +88,7 @@ input ListAlertsInput {
   nameContains: String
   createdAtBefore: AWSDateTime
   createdAtAfter: AWSDateTime
-  ruleContains: String
+  ruleIdContains: String
   alertIdContains: String
   eventCountMin: Int
   eventCountMax: Int

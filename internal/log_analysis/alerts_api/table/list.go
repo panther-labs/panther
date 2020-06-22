@@ -88,26 +88,26 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 		Limit:                     aws.Int64(*queryResultsLimit * 4), //optimization accounting for filtering
 	}
 
-	// Define placeholder for the last key that we will send back to the frontend
 	var lastKey DynamoItem
+	var errMarshal error
 	// Continuously query until we have enough results for the requested page size
 	err = table.Client.QueryPages(queryInput, func(page *dynamodb.QueryOutput, isLast bool) bool {
 		for _, item := range page.Items {
 			// Define temp container
 			var alert *AlertItem
 			// Unmarshal each item to an alert
-			err = dynamodbattribute.UnmarshalMap(item, &alert)
-			if err != nil {
+			if err = dynamodbattribute.UnmarshalMap(item, &alert); err != nil {
+				// Something is wrong with this Dynamo item
+				errMarshal = err
 				return false
 			}
 
 			// Perform post-filtering data returned from ddb
 			alert = filterByTitleContains(input, alert)
-			alert = filterByRuleContains(input, alert)
+			alert = filterByRuleIDContains(input, alert)
 			alert = filterByAlertIDContains(input, alert)
 
 			if alert != nil {
-				// Add the item to our list
 				summaries = append(summaries, alert)
 			}
 
@@ -119,19 +119,26 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 		}
 		return true // keep paging
 	})
-	if err != nil {
-		// this deserves detailed logging for debugging
-		zap.L().Error("QueryPages()", zap.Error(err), zap.Any("input", queryInput), zap.Any("startKey", queryExclusiveStartKey))
-		if input.RuleID != nil {
-			return nil, nil, errors.Wrapf(err, "QueryPages() failed for %s,%s", RuleIDKey, *input.RuleID)
+
+	// Check for any errors from the query or unmarshaling
+	if err != nil || errMarshal != nil {
+		var reportErr error
+		if err != nil {
+			reportErr = err
+		} else {
+			reportErr = errMarshal
 		}
-		return nil, nil, errors.Wrapf(err, "QueryPages() failed for %s,%s", TimePartitionKey, TimePartitionValue)
+		// this deserves detailed logging for debugging
+		zap.L().Error("QueryPages()", zap.Error(reportErr), zap.Any("input", queryInput), zap.Any("startKey", queryExclusiveStartKey))
+		if input.RuleID != nil {
+			return nil, nil, errors.Wrapf(reportErr, "QueryPages() failed for %s,%s", RuleIDKey, *input.RuleID)
+		}
+		return nil, nil, errors.Wrapf(reportErr, "QueryPages() failed for %s,%s", TimePartitionKey, TimePartitionValue)
 	}
 
 	// If DDB returned a LastEvaluatedKey (the "primary key of the item where the operation stopped"),
 	// it means there are more alerts to be returned. Return populated `lastEvaluatedKey` JSON blob in the response.
 	//
-	// NOTE:
 	// "A `Query` operation can return an empty result set and a `LastEvaluatedKey` if all the items read for
 	// the page of results are filtered out."
 	// (https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html)
@@ -184,19 +191,18 @@ func (table *AlertsTable) getKeyCondition(input *models.ListAlertsInput) express
 	}
 
 	// We are allowing either Before -or- After to work together or independently
-	if input.CreatedAtAfter != nil && input.CreatedAtBefore != nil {
+	switch {
+	case input.CreatedAtAfter != nil && input.CreatedAtBefore != nil:
 		keyCondition = keyCondition.And(
 			expression.Key(CreatedAtKey).Between(
 				expression.Value(*input.CreatedAtAfter),
 				expression.Value(*input.CreatedAtBefore),
 			),
 		)
-	}
-	if input.CreatedAtAfter != nil && input.CreatedAtBefore == nil {
+	case input.CreatedAtAfter != nil && input.CreatedAtBefore == nil:
 		keyCondition = keyCondition.And(
 			expression.Key(CreatedAtKey).GreaterThanEqual(expression.Value(*input.CreatedAtAfter)))
-	}
-	if input.CreatedAtAfter == nil && input.CreatedAtBefore != nil {
+	case input.CreatedAtAfter == nil && input.CreatedAtBefore != nil:
 		keyCondition = keyCondition.And(
 			expression.Key(CreatedAtKey).LessThanEqual(expression.Value(*input.CreatedAtBefore)))
 	}
@@ -228,9 +234,7 @@ func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAle
 			multiFilter = multiFilter.Or(expression.Name(SeverityKey).Equal(expression.Value(*severityLevel)))
 		}
 
-		*filter = filter.And(
-			multiFilter,
-		)
+		*filter = filter.And(multiFilter)
 	}
 }
 
@@ -246,11 +250,11 @@ func filterByTitleContains(input *models.ListAlertsInput, alert *AlertItem) *Ale
 	return alert
 }
 
-// filterByRuleContains - fiters by a name that contains a string (case insensitive)
-func filterByRuleContains(input *models.ListAlertsInput, alert *AlertItem) *AlertItem {
-	if alert != nil && input.RuleContains != nil && !strings.Contains(
+// filterByRuleIDContains - fiters by a name that contains a string (case insensitive)
+func filterByRuleIDContains(input *models.ListAlertsInput, alert *AlertItem) *AlertItem {
+	if alert != nil && input.RuleIDContains != nil && !strings.Contains(
 		strings.ToLower(alert.RuleID),
-		strings.ToLower(*input.RuleContains),
+		strings.ToLower(*input.RuleIDContains),
 	) {
 
 		return nil
