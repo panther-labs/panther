@@ -37,11 +37,11 @@ func TestSlackAlert(t *testing.T) {
 
 	createdAtTime := time.Now()
 	alert := &alertmodels.Alert{
-		PolicyID:   aws.String("policyId"),
-		CreatedAt:  &createdAtTime,
-		OutputIDs:  aws.StringSlice([]string{"output-id"}),
-		PolicyName: aws.String("policyName"),
-		Severity:   aws.String("INFO"),
+		AnalysisID:   "policyId",
+		CreatedAt:    createdAtTime,
+		OutputIDs:    []string{"output-id"},
+		AnalysisName: aws.String("policyName"),
+		Severity:     "INFO",
 	}
 
 	expectedPostPayload := map[string]interface{}{

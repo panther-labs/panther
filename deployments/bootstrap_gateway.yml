@@ -42,6 +42,9 @@ Parameters:
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
+  CustomResourceVersion:
+    Type: String
+    Description: Forces updates to custom resources when changed
   ImageRegistryName:
     Type: String
     Description: Name of the ECR repository hosting web images (blank when deploying from source)
@@ -235,6 +238,7 @@ Resources:
   CustomResourceMetricFilters:
     Type: Custom::LambdaMetricFilters
     Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
       LogGroupName: !Ref CustomResourceLogGroup
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
@@ -242,6 +246,7 @@ Resources:
     Type: Custom::LambdaAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       FunctionMemoryMB: !FindInMap [Functions, CustomResource, Memory]
       FunctionName: !Ref CustomResourceFunction
       FunctionTimeoutSec: !FindInMap [Functions, CustomResource, Timeout]
@@ -255,6 +260,7 @@ Resources:
     #   - Lambda layers
     Type: Custom::PantherTeardown
     Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
       EcrRepoName: !Ref ImageRegistryName
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
@@ -263,6 +269,7 @@ Resources:
     Type: Custom::SNSAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
       TopicName: panther-processed-data-notifications
 
@@ -273,6 +280,7 @@ Resources:
     Type: Custom::SNSAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
       TopicName: panther-cw-alarms
 
@@ -281,6 +289,7 @@ Resources:
   UserPoolMfa:
     Type: Custom::CognitoUserPoolMfa
     Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
       UserPoolId: !Ref UserPoolId
 
@@ -301,6 +310,7 @@ Resources:
     Properties:
       ApiName: panther-analysis-api
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
   ComplianceApi:
@@ -320,6 +330,7 @@ Resources:
     Properties:
       ApiName: panther-compliance-api
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
   RemediationApi:
@@ -339,6 +350,7 @@ Resources:
     Properties:
       ApiName: panther-remediation-api
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
   ResourcesApi:
@@ -358,6 +370,7 @@ Resources:
     Properties:
       ApiName: panther-resources-api
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
 Outputs:
