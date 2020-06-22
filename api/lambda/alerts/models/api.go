@@ -58,10 +58,13 @@ type GetAlertOutput = Alert
 //         "pageSize": 25,
 //         "exclusiveStartKey": "abcdef",
 //         "severity": ["INFO"],
-//         "eventCountMin": "0",
-//         "eventCountMax": "500",
+//         "nameContains": "string in alert title",
 //         "createdAtAfter": "2020-06-17T15:49:40Z",
 //         "createdAtBefore": "2020-06-17T15:49:40Z",
+//         "ruleIdContains": "string in rule id",
+//         "alertIdContains": "string in alert id",
+//         "eventCountMin": "0",
+//         "eventCountMax": "500",
 //         "sortDir": "ascending",
 //     }
 // }
