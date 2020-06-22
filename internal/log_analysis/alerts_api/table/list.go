@@ -113,11 +113,7 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 
 			// If we've reached the page size defined by (default 25)
 			if int64(len(summaries)) == *queryResultsLimit {
-				lastKey = DynamoItem{
-					TimePartitionKey: item[TimePartitionKey],
-					CreatedAtKey:     item[CreatedAtKey],
-					AlertIDKey:       item[AlertIDKey],
-				}
+				lastKey = getLastKey(input, item)
 				return false // we are done, stop paging
 			}
 		}
@@ -148,6 +144,23 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 	}
 
 	return summaries, lastEvaluatedKey, nil
+}
+
+// getLastKey - manually constructs the lastEvaluatedKey to be returned to the frontend
+func getLastKey(input *models.ListAlertsInput, item DynamoItem) DynamoItem {
+	// Here we manually construct the Determine what kind of query was initiated
+	if input.RuleID != nil {
+		return DynamoItem{
+			RuleIDKey:    item[RuleIDKey],
+			CreatedAtKey: item[CreatedAtKey],
+			AlertIDKey:   item[AlertIDKey],
+		}
+	}
+	return DynamoItem{
+		TimePartitionKey: item[TimePartitionKey],
+		CreatedAtKey:     item[CreatedAtKey],
+		AlertIDKey:       item[AlertIDKey],
+	}
 }
 
 // getIndex - gets the primary index to query
@@ -203,11 +216,19 @@ func (table *AlertsTable) applyFilters(builder *expression.Builder, input *model
 	*builder = builder.WithFilter(filter)
 }
 
-// filterBySeverity - filters by a Severity level
+// filterBySeverity - filters by Severity level(s)
 func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
-	if input.Severity != nil {
+	if len(input.Severity) > 0 {
+		// Start with the first known key
+		multiFilter := expression.Name(SeverityKey).Equal(expression.Value(*input.Severity[0]))
+
+		// Then add or conditions starting at a new slice from the second index
+		for _, severityLevel := range input.Severity[1:] {
+			multiFilter = multiFilter.Or(expression.Name(SeverityKey).Equal(expression.Value(*severityLevel)))
+		}
+
 		*filter = filter.And(
-			expression.Equal(expression.Name(SeverityKey), expression.Value(*input.Severity)),
+			multiFilter,
 		)
 	}
 }

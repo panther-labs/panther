@@ -379,7 +379,7 @@ export type ListAlertsInput = {
   ruleId?: Maybe<Scalars['ID']>;
   pageSize?: Maybe<Scalars['Int']>;
   exclusiveStartKey?: Maybe<Scalars['String']>;
-  severity?: Maybe<SeverityEnum>;
+  severity?: Maybe<Array<Maybe<SeverityEnum>>>;
   nameContains?: Maybe<Scalars['String']>;
   createdAtBefore?: Maybe<Scalars['AWSDateTime']>;
   createdAtAfter?: Maybe<Scalars['AWSDateTime']>;

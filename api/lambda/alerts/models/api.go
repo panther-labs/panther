@@ -76,7 +76,7 @@ type ListAlertsInput struct {
 	ExclusiveStartKey *string `json:"exclusiveStartKey"`
 
 	// Filtering
-	Severity        *string    `json:"severity" validate:"omitempty,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
+	Severity        []*string  `json:"severity" validate:"omitempty,dive,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 	NameContains    *string    `json:"nameContains"`
 	CreatedAtBefore *time.Time `json:"createdAtBefore"`
 	CreatedAtAfter  *time.Time `json:"createdAtAfter"`

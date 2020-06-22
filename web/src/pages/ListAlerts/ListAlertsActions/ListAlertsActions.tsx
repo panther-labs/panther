@@ -21,24 +21,23 @@ import { SeverityEnum, ListAlertsInput } from 'Generated/schema';
 import GenerateFiltersGroup from 'Components/utils/GenerateFiltersGroup';
 import { capitalize, formatTime } from 'Helpers/utils';
 import FormikTextInput from 'Components/fields/TextInput';
-import FormikCombobox from 'Components/fields/ComboBox';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import { Box, Button, Card, Flex, Icon } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import isEmpty from 'lodash-es/isEmpty';
 import isNumber from 'lodash-es/isNumber';
 import pick from 'lodash-es/pick';
+import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 
 const severityOptions = Object.values(SeverityEnum);
 
 export const filters = {
   severity: {
-    component: FormikCombobox,
+    component: FormikMultiCombobox,
     props: {
       label: 'Severity',
-      items: ['', ...severityOptions],
-      itemToString: (severity: SeverityEnum | '') =>
-        severity === '' ? 'All' : capitalize(severity.toLowerCase()),
+      items: severityOptions,
+      itemToString: (severity: SeverityEnum) => capitalize(severity.toLowerCase()),
       inputProps: {
         placeholder: 'Choose a severity...',
       },

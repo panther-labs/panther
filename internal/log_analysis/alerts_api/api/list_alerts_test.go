@@ -73,7 +73,7 @@ func TestListAlertsForRule(t *testing.T) {
 		RuleID:            aws.String("ruleId"),
 		PageSize:          aws.Int(10),
 		ExclusiveStartKey: aws.String("startKey"),
-		Severity:          aws.String("INFO"),
+		Severity:          []*string{aws.String("INFO")},
 	}
 
 	tableMock.On("ListAll", input).
@@ -94,7 +94,7 @@ func TestListAllAlerts(t *testing.T) {
 	input := &models.ListAlertsInput{
 		PageSize:          aws.Int(10),
 		ExclusiveStartKey: aws.String("startKey"),
-		Severity:          aws.String("INFO"),
+		Severity:          []*string{aws.String("INFO")},
 		NameContains:      aws.String("title"),
 		EventCountMin:     aws.Int(0),
 		EventCountMax:     aws.Int(100),

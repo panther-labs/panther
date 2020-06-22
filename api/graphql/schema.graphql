@@ -84,7 +84,7 @@ input ListAlertsInput {
   ruleId: ID
   pageSize: Int # defaults to `25`
   exclusiveStartKey: String
-  severity: SeverityEnum
+  severity: [SeverityEnum]
   nameContains: String
   createdAtBefore: AWSDateTime
   createdAtAfter: AWSDateTime
