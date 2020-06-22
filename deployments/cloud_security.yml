@@ -1278,6 +1278,7 @@ Resources:
   PolicyEngineLayers:
     Type: Custom::LayerAttachment
     Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
       LayerArns:
         !Split # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
         - ','
