@@ -23,6 +23,17 @@ import (
 	"strings"
 )
 
+// Returns true if log looks like a CSV log.
+// It can be used to fail fast for logs that are no CSV
+func LooksLikeCSV(log string) bool {
+	if len(log) == 0 {
+		return false
+	}
+	// If the first character is `{`, the log is most likely a JSON log
+	// but definitely it cannot be a CSV log
+	return log[0] != '{'
+}
+
 func CsvStringToPointer(value string) *string {
 	if value == "-" {
 		return nil

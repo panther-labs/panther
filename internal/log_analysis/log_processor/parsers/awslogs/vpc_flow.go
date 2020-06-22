@@ -138,7 +138,7 @@ var (
 // Parse returns the parsed events or nil if parsing failed
 func (p *VPCFlowParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	// CloudTrail can be detected as VPCFlow due to lucky token matching, skip JSON looking things here!
-	if parsers.LooksLikeJSON(log) {
+	if !parsers.LooksLikeCSV(log) {
 		return nil, errors.New("log is not CSV")
 	}
 	if p.columnMap == nil { // must be first log line in file
