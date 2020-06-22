@@ -32,15 +32,16 @@ import (
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
+	"github.com/panther-labs/panther/pkg/box"
 )
 
 func sampleAlert() *alertmodels.Alert {
 	return &alertmodels.Alert{
-		OutputIDs:  aws.StringSlice([]string{"output-id"}),
-		Severity:   aws.String("INFO"),
-		PolicyID:   aws.String("test-rule-id"),
-		PolicyName: aws.String("test_rule_name"),
-		CreatedAt:  aws.Time(time.Now().UTC()),
+		OutputIDs:    []string{"output-id"},
+		Severity:     "INFO",
+		AnalysisID:   "test-rule-id",
+		AnalysisName: box.String("test_rule_name"),
+		CreatedAt:    time.Now().UTC(),
 	}
 }
 

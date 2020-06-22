@@ -13,7 +13,7 @@
 # deactivate
 aws-sam-cli
 bandit
-boto3==1.12.22  # Matches version in Lambda: https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html
+boto3==1.12.49  # Matches version in Lambda: https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html
 cfn-lint
 cfn-flip
 mypy

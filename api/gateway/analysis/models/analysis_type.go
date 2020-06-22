@@ -62,7 +62,7 @@ func init() {
 }
 
 func (m AnalysisType) validateAnalysisTypeEnum(path, location string, value AnalysisType) error {
-	if err := validate.Enum(path, location, value, analysisTypeEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, analysisTypeEnum, true); err != nil {
 		return err
 	}
 	return nil
