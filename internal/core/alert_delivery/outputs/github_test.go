@@ -37,12 +37,12 @@ func TestGithubAlert(t *testing.T) {
 
 	var createdAtTime, _ = time.Parse(time.RFC3339, "2019-08-03T11:40:13Z")
 	alert := &alertmodels.Alert{
-		PolicyID:          aws.String("ruleId"),
-		CreatedAt:         &createdAtTime,
-		OutputIDs:         aws.StringSlice([]string{"output-id"}),
-		PolicyDescription: aws.String("description"),
-		PolicyName:        aws.String("rule_name"),
-		Severity:          aws.String("INFO"),
+		AnalysisID:          "ruleId",
+		CreatedAt:           createdAtTime,
+		OutputIDs:           []string{"output-id"},
+		AnalysisDescription: aws.String("description"),
+		AnalysisName:        aws.String("rule_name"),
+		Severity:            "INFO",
 	}
 
 	githubRequest := map[string]interface{}{
