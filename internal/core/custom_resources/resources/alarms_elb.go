@@ -62,8 +62,8 @@ func customElbAlarms(_ context.Context, event cfn.Event) (string, map[string]int
 			return physicalID, nil, err
 		}
 
-		// Migration: In v1.5.0, the elbTargetClientErrorAlarm was removed
-		if err := deleteMetricAlarms(event.PhysicalResourceID, elbClientErrorAlarm); err != nil {
+		// Migration: In v1.5.0, the client error alarms were removed
+		if err := deleteMetricAlarms(event.PhysicalResourceID, elbTargetClientErrorAlarm, elbClientErrorAlarm); err != nil {
 			zap.L().Error("failed to remove deprecated alarm", zap.Error(err))
 		}
 
