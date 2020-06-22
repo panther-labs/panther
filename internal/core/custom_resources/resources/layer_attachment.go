@@ -32,18 +32,15 @@ import (
 const latest = "LATEST"
 
 type LayerAttachmentProperties struct {
-	FunctionArn *string
-	LayerArns   []*string
+	LayerArns []*string
 }
 
 func customLayerAttachment(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
 	switch event.RequestType {
 	case cfn.RequestCreate, cfn.RequestUpdate:
 		return handleCreateUpdateRequests(event)
-	case cfn.RequestDelete:
-		return event.PhysicalResourceID, nil, nil
 	default:
-		return "", nil, fmt.Errorf("unknown request type %s", event.RequestType)
+		return event.PhysicalResourceID, nil, nil
 	}
 }
 
@@ -77,8 +74,7 @@ func handleCreateUpdateRequests(event cfn.Event) (string, map[string]interface{}
 	}
 
 	zap.L().Info("adding layers", zap.Any("finalLayers", layers))
-	resourceID := fmt.Sprintf("custom:lambda:layerattachment:%s",
-		*props.FunctionArn)
+	resourceID := fmt.Sprintf("custom:lambda:layerattachment")
 
 	return resourceID, map[string]interface{}{"LayerArns": layers}, nil
 }
