@@ -135,11 +135,11 @@ func readFile(path string) []byte {
 
 // Wrapper around ioutil.WriteFile, creating the parent directories if needed.
 func writeFile(path string, data []byte) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
 		return fmt.Errorf("failed to create directory %s: %v", filepath.Dir(path), err)
 	}
 
-	if err := ioutil.WriteFile(path, data, 0644); err != nil {
+	if err := ioutil.WriteFile(path, data, 0600); err != nil {
 		return fmt.Errorf("failed to write file %s: %v", path, err)
 	}
 	return nil

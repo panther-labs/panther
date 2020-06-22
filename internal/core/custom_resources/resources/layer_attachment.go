@@ -20,7 +20,6 @@ package resources
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -73,10 +72,8 @@ func handleCreateUpdateRequests(event cfn.Event) (string, map[string]interface{}
 		layers = append(layers, &versionedArn)
 	}
 
-	zap.L().Info("adding layers", zap.Any("finalLayers", layers))
-	resourceID := fmt.Sprintf("custom:lambda:layerattachment")
-
-	return resourceID, map[string]interface{}{"LayerArns": layers}, nil
+	zap.L().Info("returning layers", zap.Any("finalLayers", layers))
+	return "custom:lambda:layerattachment", map[string]interface{}{"LayerArns": layers}, nil
 }
 
 func getLatestLayerVersion(layerArn string) (string, error) {
