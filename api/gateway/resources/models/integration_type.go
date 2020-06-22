@@ -56,7 +56,7 @@ func init() {
 }
 
 func (m IntegrationType) validateIntegrationTypeEnum(path, location string, value IntegrationType) error {
-	if err := validate.Enum(path, location, value, integrationTypeEnum); err != nil {
+	if err := validate.EnumCase(path, location, value, integrationTypeEnum, true); err != nil {
 		return err
 	}
 	return nil
