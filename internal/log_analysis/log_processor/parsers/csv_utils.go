@@ -24,7 +24,7 @@ import (
 )
 
 // Returns true if log looks like a CSV log.
-// It can be used to fail fast for logs that are no CSV
+// It can be used to fail fast for logs that are not CSV
 func LooksLikeCSV(log string) bool {
 	if len(log) == 0 {
 		return false
