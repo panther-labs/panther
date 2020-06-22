@@ -106,9 +106,9 @@ func handleNotificationMessage(notification *SnsNotification) (result []*common.
 		var dataStream *common.DataStream
 		dataStream, err = readS3Object(s3Object)
 		if err != nil {
-			var unsupportedErr *ErrUnsupportedFileType
-			if errors.As(err, unsupportedErr) {
+			if _, ok := err.(*ErrUnsupportedFileType); ok {
 				// If the incoming message is not of a supported type, just skip it
+				err = nil
 				continue
 			}
 			return
