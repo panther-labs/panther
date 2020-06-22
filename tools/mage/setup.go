@@ -34,7 +34,7 @@ const (
 
 	golangciVersion  = "1.23.6"
 	swaggerVersion   = "0.23.0"
-	terraformVersion = "0.12.24"
+	terraformVersion = "0.12.26"
 )
 
 var (
