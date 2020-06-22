@@ -36,13 +36,11 @@ const (
 func (client *OutputClient) Jira(
 	alert *alertmodels.Alert, config *outputmodels.JiraConfig) *AlertDeliveryError {
 
-	var tagsItem = aws.StringValueSlice(alert.Tags)
-
-	description := "*Description:* " + aws.StringValue(alert.PolicyDescription)
+	description := "*Description:* " + aws.StringValue(alert.AnalysisDescription)
 	link := "\n [Click here to view in the Panther UI](" + generateURL(alert) + ")"
 	runBook := "\n *Runbook:* " + aws.StringValue(alert.Runbook)
-	severity := "\n *Severity:* " + aws.StringValue(alert.Severity)
-	tags := "\n *Tags:* " + strings.Join(tagsItem, ", ")
+	severity := "\n *Severity:* " + alert.Severity
+	tags := "\n *Tags:* " + strings.Join(alert.Tags, ", ")
 
 	fields := map[string]interface{}{
 		"summary":     generateAlertTitle(alert),

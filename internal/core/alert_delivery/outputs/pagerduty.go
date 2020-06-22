@@ -21,8 +21,6 @@ package outputs
 import (
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 )
@@ -32,21 +30,6 @@ var (
 	triggerEventAction = "trigger"
 )
 
-func pantherSeverityToPagerDuty(severity *string) (*string, *AlertDeliveryError) {
-	switch *severity {
-	case "INFO", "LOW":
-		return aws.String("info"), nil
-	case "MEDIUM":
-		return aws.String("warning"), nil
-	case "HIGH":
-		return aws.String("error"), nil
-	case "CRITICAL":
-		return aws.String("critical"), nil
-	default:
-		return nil, &AlertDeliveryError{Message: "unknown severity" + aws.StringValue(severity)}
-	}
-}
-
 // PagerDuty sends an alert to a pager duty integration endpoint.
 func (client *OutputClient) PagerDuty(alert *alertmodels.Alert, config *outputmodels.PagerDutyConfig) *AlertDeliveryError {
 	severity, err := pantherSeverityToPagerDuty(alert.Severity)
@@ -55,14 +38,11 @@ func (client *OutputClient) PagerDuty(alert *alertmodels.Alert, config *outputmo
 	}
 
 	payload := map[string]interface{}{
-		"summary":   generateAlertTitle(alert),
-		"severity":  aws.StringValue(severity),
-		"timestamp": alert.CreatedAt.Format(time.RFC3339),
-		"source":    "pantherlabs",
-		"custom_details": map[string]string{
-			"description": aws.StringValue(alert.PolicyDescription),
-			"runbook":     aws.StringValue(alert.Runbook),
-		},
+		"summary":        generateAlertTitle(alert),
+		"severity":       severity,
+		"timestamp":      alert.CreatedAt.Format(time.RFC3339),
+		"source":         "pantherlabs",
+		"custom_details": generateNotificationFromAlert(alert),
 	}
 
 	pagerDutyRequest := map[string]interface{}{
@@ -77,4 +57,19 @@ func (client *OutputClient) PagerDuty(alert *alertmodels.Alert, config *outputmo
 	}
 
 	return client.httpWrapper.post(postInput)
+}
+
+func pantherSeverityToPagerDuty(severity string) (string, *AlertDeliveryError) {
+	switch severity {
+	case "INFO", "LOW":
+		return "info", nil
+	case "MEDIUM":
+		return "warning", nil
+	case "HIGH":
+		return "error", nil
+	case "CRITICAL":
+		return "critical", nil
+	default:
+		return "", &AlertDeliveryError{Message: "unknown severity" + severity}
+	}
 }
