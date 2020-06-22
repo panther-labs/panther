@@ -40,7 +40,7 @@ const EditGlobalPythonModulePage: React.FC = () => {
   const {
     error: fetchPolicyError,
     data: queryData,
-    loading: isFetchingPolicy,
+    loading: isFetchingGlobalPythonModule,
   } = useGlobalPythonModuleDetails({
     fetchPolicy: 'cache-and-network',
     variables: {
@@ -72,7 +72,7 @@ const EditGlobalPythonModulePage: React.FC = () => {
     return defaultInitialValues;
   }, [queryData]);
 
-  if (isFetchingPolicy) {
+  if (isFetchingGlobalPythonModule) {
     return (
       <Card p={9}>
         <TablePlaceholder rowCount={5} rowHeight={15} />

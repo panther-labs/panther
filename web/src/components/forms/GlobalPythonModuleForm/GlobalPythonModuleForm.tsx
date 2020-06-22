@@ -28,6 +28,7 @@ import useRouter from 'Hooks/useRouter';
 import FormikTextInput from 'Components/fields/TextInput';
 import FormikTextArea from 'Components/fields/TextArea';
 import FormikEditor from 'Components/fields/Editor';
+import urls from 'Source/urls';
 
 // The validation checks that Formik will run
 const validationSchema = Yup.object().shape({
@@ -96,7 +97,12 @@ const GlobalPythonModuleForm: React.FC<GlobalModuleFormProps> = ({ initialValues
               </Box>
               <Flex borderTop="1px solid" borderColor="grey100" pt={6} mt={10} justify="flex-end">
                 <Flex>
-                  <Button variant="default" size="large" onClick={history.goBack} mr={4}>
+                  <Button
+                    variant="default"
+                    size="large"
+                    onClick={() => history.push(urls.settings.globalPythonModules.list())}
+                    mr={4}
+                  >
                     Cancel
                   </Button>
                   <SubmitButton>{initialValues.id ? 'Update' : 'Create'}</SubmitButton>
