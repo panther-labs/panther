@@ -57,7 +57,7 @@ type GetAlertOutput = Alert
 //         "ruleId": "My.Rule",
 //         "pageSize": 25,
 //         "exclusiveStartKey": "abcdef",
-//         "severity": "INFO",
+//         "severity": ["INFO"],
 //         "eventCountMin": "0",
 //         "eventCountMax": "500",
 //         "createdAtAfter": "2020-06-17T15:49:40Z",
