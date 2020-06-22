@@ -49,14 +49,14 @@ func TestSendSqs(t *testing.T) {
 	}
 
 	expectedSqsMessage := &Notification{
-		AnalysisID:   alert.AnalysisID,
-		AnalysisName: alert.AnalysisName,
-		Description:  alert.AnalysisDescription,
-		Severity:     alert.Severity,
-		Runbook:      alert.Runbook,
-		Link:         "https://panther.io/policies/policyId",
-		Title:        "Policy Failure: policyName",
-		Tags:         []string{},
+		ID:          alert.AnalysisID,
+		Name:        alert.AnalysisName,
+		Description: alert.AnalysisDescription,
+		Severity:    alert.Severity,
+		Runbook:     alert.Runbook,
+		Link:        "https://panther.io/policies/policyId",
+		Title:       "Policy Failure: policyName",
+		Tags:        []string{},
 	}
 	expectedSerializedSqsMessage, err := jsoniter.MarshalToString(expectedSqsMessage)
 	require.NoError(t, err)

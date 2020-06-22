@@ -107,7 +107,7 @@ const detailedMessageTemplate = "%s\nFor more details please visit: %s\nSeverity
 // objects.
 type Notification struct {
 	// [REQUIRED] The Policy or Rule ID
-	AnalysisID string `json:"analysisId"`
+	ID string `json:"id"`
 
 	// [REQUIRED] The timestamp (RFC3339) of the alert at creation.
 	CreatedAt time.Time `json:"createdAt"`
@@ -125,7 +125,7 @@ type Notification struct {
 	Title string `json:"title"`
 
 	// [REQUIRED] The Name of the Rule or Policy
-	AnalysisName *string `json:"analysisName"`
+	Name *string `json:"name"`
 
 	// An AlertID that was triggered by a Rule. It will be `null` in case of policies
 	AlertID *string `json:"alertId"`
@@ -145,18 +145,18 @@ type Notification struct {
 
 func generateNotificationFromAlert(alert *alertmodels.Alert) Notification {
 	notification := Notification{
-		AnalysisID:   alert.AnalysisID,
-		AlertID:      alert.AlertID,
-		AnalysisName: alert.AnalysisName,
-		Severity:     alert.Severity,
-		Type:         alert.Type,
-		Link:         generateURL(alert),
-		Title:        generateAlertTitle(alert),
-		Description:  alert.AnalysisDescription,
-		Runbook:      alert.Runbook,
-		Tags:         alert.Tags,
-		Version:      alert.Version,
-		CreatedAt:    alert.CreatedAt,
+		ID:          alert.AnalysisID,
+		AlertID:     alert.AlertID,
+		Name:        alert.AnalysisName,
+		Severity:    alert.Severity,
+		Type:        alert.Type,
+		Link:        generateURL(alert),
+		Title:       generateAlertTitle(alert),
+		Description: alert.AnalysisDescription,
+		Runbook:     alert.Runbook,
+		Tags:        alert.Tags,
+		Version:     alert.Version,
+		CreatedAt:   alert.CreatedAt,
 	}
 	gatewayapi.ReplaceMapSliceNils(&notification)
 	return notification

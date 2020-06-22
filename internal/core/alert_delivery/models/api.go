@@ -30,7 +30,7 @@ const (
 
 // Alert is the schema for each row in the Dynamo alerts table.
 type Alert struct {
-	// AnalysisID is the rule that triggered the alert.
+	// ID is the rule that triggered the alert.
 	AnalysisID string `json:"analysisId" validate:"required"`
 
 	// Type specifies if an alert is for a policy or a rule
@@ -48,7 +48,7 @@ type Alert struct {
 	// AnalysisDescription is the description of the rule that triggered the alert.
 	AnalysisDescription *string `json:"analysisDescription,omitempty"`
 
-	// AnalysisName is the name of the policy at the time the alert was triggered.
+	// Name is the name of the policy at the time the alert was triggered.
 	AnalysisName *string `json:"analysisName,omitempty"`
 
 	// Version is the S3 object version for the policy.

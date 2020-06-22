@@ -50,18 +50,18 @@ func TestCustomWebhookAlert(t *testing.T) {
 	}
 
 	expectedNotification := Notification{
-		AnalysisID:   alert.AnalysisID,
-		AlertID:      alert.AlertID,
-		AnalysisName: alert.AnalysisName,
-		Severity:     alert.Severity,
-		Type:         alert.Type,
-		Link:         "https://panther.io/policies/policyId",
-		Title:        "Policy Failure: policyId",
-		Description:  alert.AnalysisDescription,
-		Runbook:      alert.Runbook,
-		Tags:         []string{},
-		Version:      alert.Version,
-		CreatedAt:    alert.CreatedAt,
+		ID:          alert.AnalysisID,
+		AlertID:     alert.AlertID,
+		Name:        alert.AnalysisName,
+		Severity:    alert.Severity,
+		Type:        alert.Type,
+		Link:        "https://panther.io/policies/policyId",
+		Title:       "Policy Failure: policyId",
+		Description: alert.AnalysisDescription,
+		Runbook:     alert.Runbook,
+		Tags:        []string{},
+		Version:     alert.Version,
+		CreatedAt:   alert.CreatedAt,
 	}
 
 	expectedPostInput := &PostInput{

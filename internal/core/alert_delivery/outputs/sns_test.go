@@ -53,15 +53,15 @@ func TestSendSns(t *testing.T) {
 	}
 
 	defaultMessage := Notification{
-		AnalysisID:   "policyId",
-		AnalysisName: aws.String("policyName"),
-		Description:  aws.String("policyDescription"),
-		Severity:     "severity",
-		Runbook:      aws.String("runbook"),
-		CreatedAt:    createdAtTime,
-		Link:         "https://panther.io/policies/policyId",
-		Title:        "Policy Failure: policyName",
-		Tags:         []string{},
+		ID:          "policyId",
+		Name:        aws.String("policyName"),
+		Description: aws.String("policyDescription"),
+		Severity:    "severity",
+		Runbook:     aws.String("runbook"),
+		CreatedAt:   createdAtTime,
+		Link:        "https://panther.io/policies/policyId",
+		Title:       "Policy Failure: policyName",
+		Tags:        []string{},
 	}
 
 	defaultSerializedMessage, err := jsoniter.MarshalToString(defaultMessage)
