@@ -53,32 +53,32 @@ func TestGenerateAlertTitleReturnGivenTitle(t *testing.T) {
 
 func TestGenerateAlertTitleRulePolicyName(t *testing.T) {
 	alert := &alertModel.Alert{
-		Type:       aws.String(alertModel.RuleType),
-		PolicyName: aws.String("rule name"),
+		Type:         alertModel.RuleType,
+		AnalysisName: aws.String("rule name"),
 	}
 	assert.Equal(t, "New Alert: rule name", generateAlertTitle(alert))
 }
 
 func TestGenerateAlertTitleRulePolicyId(t *testing.T) {
 	alert := &alertModel.Alert{
-		Type:       aws.String(alertModel.RuleType),
-		PolicyName: aws.String("rule.id"),
+		Type:         alertModel.RuleType,
+		AnalysisName: aws.String("rule.id"),
 	}
 	assert.Equal(t, "New Alert: rule.id", generateAlertTitle(alert))
 }
 
 func TestGenerateAlertTitlePolicyName(t *testing.T) {
 	alert := &alertModel.Alert{
-		Type:       aws.String(alertModel.PolicyType),
-		PolicyName: aws.String("policy name"),
+		Type:         alertModel.PolicyType,
+		AnalysisName: aws.String("policy name"),
 	}
 	assert.Equal(t, "Policy Failure: policy name", generateAlertTitle(alert))
 }
 
 func TestGenerateAlertTitlePolicyId(t *testing.T) {
 	alert := &alertModel.Alert{
-		Type:       aws.String(alertModel.PolicyType),
-		PolicyName: aws.String("policy.id"),
+		Type:         alertModel.PolicyType,
+		AnalysisName: aws.String("policy.id"),
 	}
 	assert.Equal(t, "Policy Failure: policy.id", generateAlertTitle(alert))
 }

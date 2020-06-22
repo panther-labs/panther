@@ -82,8 +82,18 @@ input GetS3LogIntegrationTemplateInput {
 
 input ListAlertsInput {
   ruleId: ID
-  pageSize: Int
+  pageSize: Int # defaults to `25`
   exclusiveStartKey: String
+  severity: [SeverityEnum]
+  nameContains: String
+  createdAtBefore: AWSDateTime
+  createdAtAfter: AWSDateTime
+  ruleIdContains: String
+  alertIdContains: String
+  eventCountMin: Int
+  eventCountMax: Int
+  sortBy: ListAlertsSortFieldsEnum # defaults to `createdAt`
+  sortDir: SortDirEnum # defaults to `descending` (always on `createdAt` field)
 }
 
 input GetAlertInput {
@@ -803,6 +813,10 @@ enum ListRulesSortFieldsEnum {
   lastModified
   logTypes
   severity
+}
+
+enum ListAlertsSortFieldsEnum {
+  createdAt
 }
 
 enum SortDirEnum {

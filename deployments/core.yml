@@ -51,6 +51,9 @@ Parameters:
   ComplianceApiId:
     Type: String
     Description: Compliance API gateway ID
+  CustomResourceVersion:
+    Type: String
+    Description: Forces updates to custom resources when changed
   Debug:
     Type: String
     Description: Toggle debug logging
@@ -130,6 +133,7 @@ Resources:
   UsersAPIMetricFilters:
     Type: Custom::LambdaMetricFilters
     Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
       LogGroupName: !Ref UsersAPILogGroup
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
@@ -177,6 +181,7 @@ Resources:
     Type: Custom::LambdaAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       FunctionMemoryMB: !FindInMap [Functions, UsersAPI, Memory]
       FunctionName: !Ref UsersAPIFunction
       FunctionTimeoutSec: !FindInMap [Functions, UsersAPI, Timeout]
@@ -215,6 +220,7 @@ Resources:
     Type: Custom::DynamoDBAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
       TableName: !Ref OrganizationTable
 
@@ -227,6 +233,7 @@ Resources:
   OrganizationAPIMetricFilters:
     Type: Custom::LambdaMetricFilters
     Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
       LogGroupName: !Ref OrganizationAPILogGroup
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
@@ -263,6 +270,7 @@ Resources:
     Type: Custom::LambdaAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       FunctionMemoryMB: !FindInMap [Functions, OrganizationAPI, Memory]
       FunctionName: !Ref OrganizationAPIFunction
       FunctionTimeoutSec: !FindInMap [Functions, OrganizationAPI, Timeout]
@@ -272,6 +280,8 @@ Resources:
     Type: Custom::PantherSettings
     DependsOn: OrganizationAPIFunction
     Properties:
+      # No CustomResourceVersion here because then every release would overwrite these settings,
+      # which the user might have changed from the general settings page in the web app.
       DisplayName: !Ref CompanyDisplayName
       Email: !Ref CompanyEmail
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
@@ -371,6 +381,7 @@ Resources:
   AnalysisApiMetricFilters:
     Type: Custom::LambdaMetricFilters
     Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
       LogGroupName: !Ref AnalysisApiLogGroup
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
@@ -378,6 +389,7 @@ Resources:
     Type: Custom::LambdaAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       FunctionMemoryMB: !FindInMap [Functions, AnalysisAPI, Memory]
       FunctionName: !Ref AnalysisApiFunction
       FunctionTimeoutSec: !FindInMap [Functions, AnalysisAPI, Timeout]
@@ -419,6 +431,7 @@ Resources:
     Type: Custom::DynamoDBAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
       TableName: !Ref AnalysisTable
 
@@ -471,6 +484,7 @@ Resources:
     Type: Custom::DynamoDBAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
       TableName: !Ref OutputsTable
 
@@ -532,6 +546,7 @@ Resources:
   OutputsApiMetricFilters:
     Type: Custom::LambdaMetricFilters
     Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
       LogGroupName: !Ref OutputsApiLogGroup
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
@@ -539,6 +554,7 @@ Resources:
     Type: Custom::LambdaAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       FunctionMemoryMB: !FindInMap [Functions, OutputsAPI, Memory]
       FunctionName: !Ref OutputsApiFunction
       FunctionTimeoutSec: !FindInMap [Functions, OutputsAPI, Timeout]
@@ -567,6 +583,7 @@ Resources:
     Type: Custom::SQSAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       QueueName: !GetAtt AlertQueue.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
@@ -587,6 +604,7 @@ Resources:
     Type: Custom::SQSAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       IsDLQ: true
       QueueName: !GetAtt AlertDLQ.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
@@ -673,6 +691,7 @@ Resources:
   AlertDeliveryMetricFilters:
     Type: Custom::LambdaMetricFilters
     Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
       LogGroupName: !Ref AlertDeliveryLogGroup
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
@@ -680,6 +699,7 @@ Resources:
     Type: Custom::LambdaAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       FunctionMemoryMB: !FindInMap [Functions, AlertDelivery, Memory]
       FunctionName: !Ref AlertDeliveryFunction
       FunctionTimeoutSec: !FindInMap [Functions, AlertDelivery, Timeout]
@@ -713,6 +733,7 @@ Resources:
     Type: Custom::DynamoDBAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
       TableName: !Ref IntegrationsTable
 
@@ -829,6 +850,7 @@ Resources:
   SourceApiMetricFilters:
     Type: Custom::LambdaMetricFilters
     Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
       LogGroupName: !Ref SourceApiLogGroup
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
@@ -836,6 +858,7 @@ Resources:
     Type: Custom::LambdaAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       FunctionMemoryMB: !FindInMap [Functions, SourceAPI, Memory]
       FunctionName: !Ref SourceApiFunction
       FunctionTimeoutSec: !FindInMap [Functions, SourceAPI, Timeout]
@@ -864,6 +887,7 @@ Resources:
     Type: Custom::SQSAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       QueueName: !GetAtt LayerQueue.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
@@ -884,6 +908,7 @@ Resources:
     Type: Custom::SQSAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       IsDLQ: true
       QueueName: !GetAtt LayerDLQ.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
@@ -988,6 +1013,7 @@ Resources:
   LayerManagerMetricFilters:
     Type: Custom::LambdaMetricFilters
     Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
       LogGroupName: !Ref LayerManagerLogGroup
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
@@ -995,6 +1021,7 @@ Resources:
     Type: Custom::LambdaAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       FunctionMemoryMB: !FindInMap [Functions, LayerManager, Memory]
       FunctionName: !Ref LayerManagerFunction
       FunctionTimeoutSec: !FindInMap [Functions, LayerManager, Timeout]
@@ -1036,6 +1063,7 @@ Resources:
     Type: Custom::DynamoDBAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
       TableName: !Ref KeyValueStoreTable
 

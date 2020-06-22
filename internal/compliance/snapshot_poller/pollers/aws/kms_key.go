@@ -134,7 +134,17 @@ func listResourceTags(kmsSvc kmsiface.KMSAPI, keyID *string) ([]*kms.Tag, error)
 func describeKey(kmsSvc kmsiface.KMSAPI, keyID *string) (metadata *kms.KeyMetadata, err error) {
 	out, err := kmsSvc.DescribeKey(&kms.DescribeKeyInput{KeyId: keyID})
 	if err != nil {
-		return
+		if awsErr, ok := err.(awserr.Error); ok {
+			if awsErr.Code() == "AccessDeniedException" {
+				zap.L().Info(
+					"AccessDeniedException, additional permissions were not granted or key is in another account",
+					zap.String("API", "KMS.DescribeKey"),
+					zap.String("key", *keyID))
+				return nil, err
+			}
+		}
+		utils.LogAWSError("KMS.DescribeKey", err)
+		return nil, err
 	}
 
 	metadata = out.KeyMetadata
@@ -162,7 +172,7 @@ func buildKmsKeySnapshot(kmsSvc kmsiface.KMSAPI, key *kms.KeyListEntry) *awsmode
 	metadata, err := describeKey(kmsSvc, key.KeyId)
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "NotFoundException" {
+			if awsErr.Code() == kms.ErrCodeNotFoundException {
 				zap.L().Warn("tried to scan non-existent resource",
 					zap.String("resource", *key.KeyId),
 					zap.String("resourceType", awsmodels.KmsKeySchema))
@@ -172,11 +182,17 @@ func buildKmsKeySnapshot(kmsSvc kmsiface.KMSAPI, key *kms.KeyListEntry) *awsmode
 		utils.LogAWSError("KMS.DescribeKey", err)
 		return nil
 	}
+
+	if metadata == nil {
+		zap.L().Error("KMS key metadata is nil", zap.String("resource", *key.KeyId))
+		return nil
+	}
+
 	kmsKey := &awsmodels.KmsKey{
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   key.KeyArn,
 			ResourceType: aws.String(awsmodels.KmsKeySchema),
-			TimeCreated:  utils.DateTimeFormat(*metadata.CreationDate),
+			TimeCreated:  utils.DateTimeFormat(aws.TimeValue(metadata.CreationDate)),
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{
 			ARN: key.KeyArn,
@@ -206,7 +222,7 @@ func buildKmsKeySnapshot(kmsSvc kmsiface.KMSAPI, key *kms.KeyListEntry) *awsmode
 	}
 
 	// Check that the key was created by the customer's account and not AWS
-	if metadata != nil && *metadata.KeyManager == customerKeyManager {
+	if *metadata.KeyManager == customerKeyManager {
 		rotationStatus, err := getKeyRotationStatus(kmsSvc, key.KeyId)
 		if err != nil {
 			utils.LogAWSError("KMS.GetKeyRotationStatus", err)

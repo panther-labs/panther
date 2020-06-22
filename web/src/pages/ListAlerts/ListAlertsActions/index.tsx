@@ -1,5 +1,3 @@
-package outputs
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,18 +16,4 @@ package outputs
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
-)
-
-// CustomWebhook alert send an alert.
-func (client *OutputClient) CustomWebhook(
-	alert *alertmodels.Alert, config *outputmodels.CustomWebhookConfig) *AlertDeliveryError {
-
-	postInput := &PostInput{
-		url:  config.WebhookURL,
-		body: generateNotificationFromAlert(alert),
-	}
-	return client.httpWrapper.post(postInput)
-}
+export { default } from './ListAlertsActions';

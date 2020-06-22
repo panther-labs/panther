@@ -34,27 +34,26 @@ interface JiraDestinationFormProps {
   onSubmit: (values: BaseDestinationFormValues<JiraFieldValues>) => void;
 }
 
-const jiraFieldsValidationSchema = Yup.object().shape({
-  outputConfig: Yup.object().shape({
-    jira: Yup.object().shape({
-      orgDomain: Yup.string().url('Must be a valid Jira domain').required(),
-      userName: Yup.string(),
-      projectKey: Yup.string().required(),
-      apiKey: Yup.string().required(),
-      assigneeId: Yup.string(),
-      issueType: Yup.string().test('oneOf', 'Please select a valid value', value =>
-        Object.values(JiraIssueTypesEnum).includes(value)
-      ),
-    }),
-  }),
-});
-
-// We merge the two schemas together: the one deriving from the common fields, plus the custom
-// ones that change for each destination.
-// https://github.com/jquense/yup/issues/522
-const mergedValidationSchema = defaultValidationSchema.concat(jiraFieldsValidationSchema);
-
 const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, initialValues }) => {
+  const existing = initialValues.outputId;
+
+  const jiraFieldsValidationSchema = Yup.object().shape({
+    outputConfig: Yup.object().shape({
+      jira: Yup.object().shape({
+        orgDomain: Yup.string().url('Must be a valid Jira domain').required(),
+        userName: Yup.string(),
+        projectKey: Yup.string().required(),
+        assigneeId: Yup.string(),
+        issueType: Yup.string().test('oneOf', 'Please select a valid value', value =>
+          Object.values(JiraIssueTypesEnum).includes(value)
+        ),
+        apiKey: existing ? Yup.string() : Yup.string().required(),
+      }),
+    }),
+  });
+
+  const mergedValidationSchema = defaultValidationSchema.concat(jiraFieldsValidationSchema);
+
   return (
     <BaseDestinationForm<JiraFieldValues>
       initialValues={initialValues}
@@ -87,11 +86,14 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
       />
       <Field
         as={FormikTextInput}
+        type="password"
         name="outputConfig.jira.apiKey"
         label="Jira API Key"
-        placeholder="What's the API key of the related Jira account"
+        placeholder={
+          existing ? '<hidden information>' : "What's the API key of the related Jira account"
+        }
         mb={6}
-        aria-required
+        aria-required={!existing}
         autoComplete="new-password"
       />
 

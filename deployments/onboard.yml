@@ -26,6 +26,9 @@ Parameters:
   AuditLogsBucket:
     Type: String
     Description: The name of the S3 bucket which stores Panther audit logs
+  CustomResourceVersion:
+    Type: String
+    Description: Forces updates to custom resources when changed
   EnableCloudTrail:
     Type: String
     Description: If true, create a Panther CloudTrail in this account configured for log processing
@@ -121,6 +124,7 @@ Resources:
     Condition: EnableGuardDuty
     Type: Custom::GuardDutyDestination
     Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
       DetectorId: !Ref GuardDutyDetector
       DestinationType: S3
       DestinationProperties:
@@ -182,6 +186,7 @@ Resources:
     Type: Custom::SNSAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
       TopicName: !GetAtt Topic.TopicName
 
@@ -199,6 +204,7 @@ Resources:
     DependsOn: TopicPolicy
     Properties:
       Bucket: !Ref AuditLogsBucket
+      CustomResourceVersion: !Ref CustomResourceVersion
       NotificationConfiguration:
         TopicConfigurations:
           - Events:
@@ -212,6 +218,7 @@ Resources:
     Properties:
       AccountID: !Ref AWS::AccountId
       AuditLogsBucket: !Ref AuditLogsBucket
+      CustomResourceVersion: !Ref CustomResourceVersion
       EnableCloudTrail: !Ref EnableCloudTrail
       EnableGuardDuty: !Ref EnableGuardDuty
       EnableS3AccessLogs: !Ref EnableS3AccessLogs
