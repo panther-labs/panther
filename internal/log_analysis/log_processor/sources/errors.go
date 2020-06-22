@@ -1,4 +1,4 @@
-package outputs
+package sources
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,17 +19,15 @@ package outputs
  */
 
 import (
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	"fmt"
 )
 
-// CustomWebhook alert send an alert.
-func (client *OutputClient) CustomWebhook(
-	alert *alertmodels.Alert, config *outputmodels.CustomWebhookConfig) *AlertDeliveryError {
+// ErrUnsupportedFileType is returned when the log processor encounters a file type
+// that is not supported and cannot process
+type ErrUnsupportedFileType struct {
+	Type string
+}
 
-	postInput := &PostInput{
-		url:  config.WebhookURL,
-		body: generateNotificationFromAlert(alert),
-	}
-	return client.httpWrapper.post(postInput)
+func (e *ErrUnsupportedFileType) Error() string {
+	return fmt.Sprintf("unsupported file type %s", e.Type)
 }

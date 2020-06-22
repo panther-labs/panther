@@ -53,7 +53,7 @@ func (client *OutputClient) Slack(alert *alertmodels.Alert, config *outputmodels
 		},
 		{
 			"title": "Severity",
-			"value": aws.StringValue(alert.Severity),
+			"value": alert.Severity,
 			"short": true,
 		},
 	}
@@ -62,15 +62,14 @@ func (client *OutputClient) Slack(alert *alertmodels.Alert, config *outputmodels
 		"attachments": []map[string]interface{}{
 			{
 				"fallback": generateAlertTitle(alert),
-				"color":    severityColors[aws.StringValue(alert.Severity)],
+				"color":    severityColors[alert.Severity],
 				"title":    generateAlertTitle(alert),
 				"fields":   fields,
 			},
 		},
 	}
-	requestEndpoint := config.WebhookURL
 	postInput := &PostInput{
-		url:  requestEndpoint,
+		url:  config.WebhookURL,
 		body: payload,
 	}
 

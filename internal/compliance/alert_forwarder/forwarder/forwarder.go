@@ -39,7 +39,7 @@ var (
 
 // Handle forwards an alert to the alert delivery SQS queue
 func Handle(event *models.Alert) error {
-	zap.L().Info("received alert", zap.String("policyId", *event.PolicyID))
+	zap.L().Info("received alert", zap.String("policyId", event.AnalysisID))
 
 	msgBody, err := jsoniter.Marshal(event)
 	if err != nil {
