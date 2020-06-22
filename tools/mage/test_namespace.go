@@ -396,7 +396,7 @@ func testTfValidate() error {
 		}
 
 		dir := filepath.Join(root, info.Name())
-		if err := sh.RunV(terraformPath, "init", "-backend=false", "-input=false", dir); err != nil {
+		if err := sh.Run(terraformPath, "init", "-backend=false", "-input=false", dir); err != nil {
 			return fmt.Errorf("tf init %s failed: %v", dir, err)
 		}
 

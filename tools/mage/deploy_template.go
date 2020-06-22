@@ -99,7 +99,7 @@ func samPackage(region, templatePath, bucket string) (string, error) {
 	}
 
 	outFile := filepath.Join("out", "deployments", "package."+filepath.Base(templatePath))
-	if err := os.MkdirAll(filepath.Dir(outFile), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(outFile), 0700); err != nil {
 		return "", fmt.Errorf("failed to create out/deployments: %v", err)
 	}
 

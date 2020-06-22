@@ -30,10 +30,10 @@ import (
 
 const (
 	// Use the commit from the latest tagged release of https://github.com/golang/tools/releases
-	goimportsVersion = "5fc56a9" // gopls/v0.4.0
+	goimportsVersion = "967c054" // gopls/v0.4.1
 
-	golangciVersion  = "1.23.6"
-	swaggerVersion   = "0.23.0"
+	golangciVersion  = "1.27.0"
+	swaggerVersion   = "0.24.0"
 	terraformVersion = "0.12.26"
 )
 
