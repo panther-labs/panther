@@ -29,20 +29,6 @@ def title(event):
 - This rule group alerts by the bucket name
 - Alerts will have a title such as `Unauthenticated Access to S3 Bucket my-super-secret-data`
 
-## Rule Packs
-
-By default, rules are pre-installed from Panther's [open-source packs](https://github.com/panther-labs/panther-analysis) and cover baseline detections and examples across supported log types:
-
-- AWS CIS
-- AWS Best Practices
-- AWS Samples (VPC, S3, CloudTrail, and more)
-- Osquery CIS
-- Osquery Samples
-
-{% hint style="success" %}
-For Enterprise customers, additional packs are provided for MITRE ATT&CK, Cisco Umbrella, GCP Audit, and more.
-{% endhint %}
-
 ## Workflow
 
 Panther rules can be written, tested, and deployed either with the UI or the [panther_analysis_tool](panther-cli.md).

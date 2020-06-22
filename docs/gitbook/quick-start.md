@@ -115,12 +115,12 @@ Your connection _is_ encrypted, and it's generally safe to continue. However, th
 Congratulations! You are now ready to use Panther. Follow the steps below to complete your setup:
 
 1. Invite your team in `Settings` > `Users` > `Invite User`
-1. Configure [destinations](destinations) to receive generated alerts
-2. Onboard data for [real-time log analysis](log-analysis/setup.md)
-3. Write custom [detection rules](log-analysis/rules/) based on internal business logic
-4. Onboard accounts for [cloud security scans](cloud-security/)
-5. Write [policies](cloud-security/policies/) for supported [AWS resources](policies/resources/)
-6. Query collected logs with [historical search](enterprise/data-analytics/)
+2. Configure [destinations](destinations) to receive generated alerts
+3. Onboard data for [real-time log analysis](log-analysis/setup.md)
+4. Write custom [rules](log-analysis/rules/) based on internal business logic
+5. Onboard AWS accounts for [cloud security scans](cloud-security/)
+6. Write custom [policies](cloud-security/policies/) for supported [AWS resources](policies/resources/)
+7. Enterprise Only: Query collected logs with [data explorer](enterprise/data-analytics/)
 
 ## Removing Panther
 To uninstall Panther, simply delete the main "panther" stack (substituting whatever stack name you chose during deployment).
