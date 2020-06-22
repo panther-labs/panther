@@ -390,7 +390,7 @@ func buildLayer(libs []string) error {
 	if err := os.RemoveAll(layerSourceDir); err != nil {
 		return fmt.Errorf("failed to remove layer directory %s: %v", layerSourceDir, err)
 	}
-	if err := os.MkdirAll(layerSourceDir, 0755); err != nil {
+	if err := os.MkdirAll(layerSourceDir, 0700); err != nil {
 		return fmt.Errorf("failed to create layer directory %s: %v", layerSourceDir, err)
 	}
 	args := append([]string{"install", "-t", layerSourceDir}, libs...)

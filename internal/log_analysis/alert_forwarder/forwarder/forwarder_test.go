@@ -107,17 +107,17 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 	policyClient = policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
 
 	expectedAlertNotification := &alertModel.Alert{
-		CreatedAt:         aws.Time(newAlertDedupEvent.CreationTime),
-		PolicyDescription: aws.String(string(testRuleResponse.Description)),
-		PolicyID:          aws.String(newAlertDedupEvent.RuleID),
-		PolicyVersionID:   aws.String(newAlertDedupEvent.RuleVersion),
-		PolicyName:        aws.String(string(testRuleResponse.DisplayName)),
-		Runbook:           aws.String(string(testRuleResponse.Runbook)),
-		Severity:          aws.String(string(testRuleResponse.Severity)),
-		Tags:              aws.StringSlice([]string{"Tag"}),
-		Type:              aws.String(alertModel.RuleType),
-		AlertID:           aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
-		Title:             newAlertDedupEvent.GeneratedTitle,
+		CreatedAt:           newAlertDedupEvent.CreationTime,
+		AnalysisDescription: aws.String(string(testRuleResponse.Description)),
+		AnalysisID:          newAlertDedupEvent.RuleID,
+		Version:             aws.String(newAlertDedupEvent.RuleVersion),
+		AnalysisName:        aws.String(string(testRuleResponse.DisplayName)),
+		Runbook:             aws.String(string(testRuleResponse.Runbook)),
+		Severity:            string(testRuleResponse.Severity),
+		Tags:                []string{"Tag"},
+		Type:                alertModel.RuleType,
+		AlertID:             aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
+		Title:               newAlertDedupEvent.GeneratedTitle,
 	}
 	expectedMarshaledAlertNotification, err := jsoniter.MarshalToString(expectedAlertNotification)
 	require.NoError(t, err)
@@ -180,16 +180,16 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 	}
 
 	expectedAlertNotification := &alertModel.Alert{
-		CreatedAt:         aws.Time(newAlertDedupEventWithoutTitle.CreationTime),
-		PolicyDescription: aws.String(string(testRuleResponse.Description)),
-		PolicyID:          aws.String(newAlertDedupEventWithoutTitle.RuleID),
-		PolicyVersionID:   aws.String(newAlertDedupEventWithoutTitle.RuleVersion),
-		Runbook:           aws.String(string(testRuleResponse.Runbook)),
-		Severity:          aws.String(string(testRuleResponse.Severity)),
-		Tags:              aws.StringSlice([]string{"Tag"}),
-		Type:              aws.String(alertModel.RuleType),
-		AlertID:           aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
-		Title:             aws.String(newAlertDedupEventWithoutTitle.RuleID),
+		CreatedAt:           newAlertDedupEventWithoutTitle.CreationTime,
+		AnalysisDescription: aws.String(string(testRuleResponse.Description)),
+		AnalysisID:          newAlertDedupEventWithoutTitle.RuleID,
+		Version:             aws.String(newAlertDedupEventWithoutTitle.RuleVersion),
+		Runbook:             aws.String(string(testRuleResponse.Runbook)),
+		Severity:            string(testRuleResponse.Severity),
+		Tags:                []string{"Tag"},
+		Type:                alertModel.RuleType,
+		AlertID:             aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
+		Title:               aws.String(newAlertDedupEventWithoutTitle.RuleID),
 	}
 	expectedMarshaledAlertNotification, err := jsoniter.MarshalToString(expectedAlertNotification)
 	require.NoError(t, err)
@@ -248,17 +248,17 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 	policyClient = policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
 
 	expectedAlertNotification := &alertModel.Alert{
-		CreatedAt:         aws.Time(newAlertDedupEvent.CreationTime),
-		PolicyDescription: aws.String(string(testRuleResponse.Description)),
-		PolicyID:          aws.String(newAlertDedupEvent.RuleID),
-		PolicyVersionID:   aws.String(newAlertDedupEvent.RuleVersion),
-		PolicyName:        aws.String(string(testRuleResponse.DisplayName)),
-		Runbook:           aws.String(string(testRuleResponse.Runbook)),
-		Severity:          aws.String(string(testRuleResponse.Severity)),
-		Tags:              aws.StringSlice([]string{"Tag"}),
-		Type:              aws.String(alertModel.RuleType),
-		AlertID:           aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
-		Title:             aws.String("DisplayName"),
+		CreatedAt:           newAlertDedupEvent.CreationTime,
+		AnalysisDescription: aws.String(string(testRuleResponse.Description)),
+		AnalysisID:          newAlertDedupEvent.RuleID,
+		Version:             aws.String(newAlertDedupEvent.RuleVersion),
+		AnalysisName:        aws.String(string(testRuleResponse.DisplayName)),
+		Runbook:             aws.String(string(testRuleResponse.Runbook)),
+		Severity:            string(testRuleResponse.Severity),
+		Tags:                []string{"Tag"},
+		Type:                alertModel.RuleType,
+		AlertID:             aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
+		Title:               aws.String("DisplayName"),
 	}
 	expectedMarshaledAlertNotification, err := jsoniter.MarshalToString(expectedAlertNotification)
 	require.NoError(t, err)
@@ -321,17 +321,17 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 	policyClient = policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
 
 	expectedAlertNotification := &alertModel.Alert{
-		CreatedAt:         aws.Time(newAlertDedupEvent.CreationTime),
-		PolicyDescription: aws.String(string(testRuleResponse.Description)),
-		PolicyID:          aws.String(newAlertDedupEvent.RuleID),
-		PolicyName:        aws.String(string(testRuleResponse.DisplayName)),
-		PolicyVersionID:   aws.String(newAlertDedupEvent.RuleVersion),
-		Runbook:           aws.String(string(testRuleResponse.Runbook)),
-		Severity:          aws.String(string(testRuleResponse.Severity)),
-		Tags:              aws.StringSlice([]string{"Tag"}),
-		Type:              aws.String(alertModel.RuleType),
-		AlertID:           aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
-		Title:             newAlertDedupEvent.GeneratedTitle,
+		CreatedAt:           newAlertDedupEvent.CreationTime,
+		AnalysisDescription: aws.String(string(testRuleResponse.Description)),
+		AnalysisID:          newAlertDedupEvent.RuleID,
+		AnalysisName:        aws.String(string(testRuleResponse.DisplayName)),
+		Version:             aws.String(newAlertDedupEvent.RuleVersion),
+		Runbook:             aws.String(string(testRuleResponse.Runbook)),
+		Severity:            string(testRuleResponse.Severity),
+		Tags:                []string{"Tag"},
+		Type:                alertModel.RuleType,
+		AlertID:             aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
+		Title:               newAlertDedupEvent.GeneratedTitle,
 	}
 	expectedMarshaledAlertNotification, err := jsoniter.MarshalToString(expectedAlertNotification)
 	require.NoError(t, err)

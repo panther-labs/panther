@@ -24,34 +24,24 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	"github.com/panther-labs/panther/pkg/testutils"
 )
-
-type mockSqsClient struct {
-	sqsiface.SQSAPI
-	mock.Mock
-}
-
-func (m *mockSqsClient) SendMessage(input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*sqs.SendMessageOutput), args.Error(1)
-}
 
 func init() {
 	alertQueueURL = "alertQueueURL"
 }
 
 func TestHandleAlert(t *testing.T) {
-	mockSqsClient := &mockSqsClient{}
+	mockSqsClient := &testutils.SqsMock{}
 	sqsClient = mockSqsClient
 
 	input := &models.Alert{
-		PolicyID: aws.String("policyId"),
+		AnalysisID: "policyId",
 	}
 
 	expectedMsgBody, err := jsoniter.MarshalToString(input)
@@ -67,11 +57,11 @@ func TestHandleAlert(t *testing.T) {
 }
 
 func TestHandleAlertSqsError(t *testing.T) {
-	mockSqsClient := &mockSqsClient{}
+	mockSqsClient := &testutils.SqsMock{}
 	sqsClient = mockSqsClient
 
 	input := &models.Alert{
-		PolicyID: aws.String("policyId"),
+		AnalysisID: "policyId",
 	}
 
 	mockSqsClient.On("SendMessage", mock.Anything).Return(&sqs.SendMessageOutput{}, errors.New("error"))
