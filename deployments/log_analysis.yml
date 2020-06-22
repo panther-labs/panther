@@ -797,6 +797,7 @@ Resources:
           S3_BUCKET: !Ref ProcessedDataBucket
           NOTIFICATIONS_TOPIC: !Ref ProcessedDataTopicArn
           ALERTS_DEDUP_TABLE: !Ref AlertsDedup
+      Layers: !GetAtt RulesEngineLayers.LayerArns
       MemorySize: !Ref LogProcessorLambdaMemorySize # keep this the same as log processor since it has to read the output files
       Events:
         Queue:
@@ -804,15 +805,6 @@ Resources:
           Properties:
             Queue: !GetAtt RulesEngineQueue.Arn
             BatchSize: 10
-      Layers: !If
-        - AttachLayers
-        - !Split # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
-          - ','
-          - !Sub
-            - '${base},${pip}'
-            - base: !Join [',', !Ref LayerVersionArns]
-              pip: !Ref PythonLayerVersionArn
-        - [!Ref PythonLayerVersionArn]
       Runtime: python3.7
       Timeout: !FindInMap [Functions, RulesEngine, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
@@ -893,4 +885,19 @@ Resources:
       FunctionMemoryMB: !Ref LogProcessorLambdaMemorySize
       FunctionName: !Ref RulesEngineFunction
       FunctionTimeoutSec: !FindInMap [Functions, RulesEngine, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  RulesEngineLayers:
+    Type: Custom::LayerAttachment
+    Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
+      LayerArns:
+        !Split # CFN doesn't have list append, so convert to/from CSV string to prepend base layers
+        - ','
+        - !Sub
+          - '${base}${comma}${pip},${global}'
+          - base: !Join [',', !Ref LayerVersionArns]
+            comma: !If [AttachLayers, ',', ''] # add comma after base layers if applicable
+            pip: !Ref PythonLayerVersionArn
+            global: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:panther-engine-globals:LATEST
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources

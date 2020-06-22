@@ -187,10 +187,15 @@ Resources:
               Action: kms:ListAliases # required for GuardDuty
               Resource: '*'
             - Effect: Allow
-              Action: lambda:GetFunction
+              Action:
+                - lambda:GetFunction
               Resource:
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-policy-engine
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-rules-engine
+            - Effect: Allow
+              Action:
+                - lambda:ListLayerVersions
+              Resource: '*'
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource:
