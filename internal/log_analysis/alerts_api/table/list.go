@@ -148,7 +148,8 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 
 // getLastKey - manually constructs the lastEvaluatedKey to be returned to the frontend
 func getLastKey(input *models.ListAlertsInput, item DynamoItem) DynamoItem {
-	// Here we manually construct the Determine what kind of query was initiated
+	// There are two types of queries, one from the list alerts page (by time partition)
+	// and the other when listing alerts by viewing the rule details (by rule id)
 	if input.RuleID != nil {
 		return DynamoItem{
 			RuleIDKey:    item[RuleIDKey],
