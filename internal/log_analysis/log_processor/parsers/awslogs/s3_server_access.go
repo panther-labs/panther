@@ -86,6 +86,9 @@ func (p *S3ServerAccessParser) New() parsers.LogParser {
 
 // Parse returns the parsed events or nil if parsing failed
 func (p *S3ServerAccessParser) Parse(log string) ([]*parsers.PantherLog, error) {
+	if parsers.LooksLikeJSON(log) {
+		return nil, errors.New("log is not CSV")
+	}
 	record, err := p.CSVReader.Parse(log)
 	if err != nil {
 		return nil, err

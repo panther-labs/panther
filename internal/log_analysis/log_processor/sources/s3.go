@@ -106,6 +106,11 @@ func handleNotificationMessage(notification *SnsNotification) (result []*common.
 		var dataStream *common.DataStream
 		dataStream, err = readS3Object(s3Object)
 		if err != nil {
+			var unsupportedErr *ErrUnsupportedFileType
+			if errors.As(err, unsupportedErr) {
+				// If the incoming message is not of a supported type, just skip it
+				continue
+			}
 			return
 		}
 		result = append(result, dataStream)
@@ -171,6 +176,9 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 			return nil, err
 		}
 		streamReader = gzipReader
+	} else {
+		err = &ErrUnsupportedFileType{Type: contentType}
+		return nil, err
 	}
 
 	dataStream = &common.DataStream{
