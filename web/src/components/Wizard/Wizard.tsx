@@ -80,7 +80,7 @@ const Wizard: React.FC & WizardComposition = ({ children }) => {
           {steps.map((step, index) => {
             const isComplete = currentStepIndex > index || currentStepIndex === steps.length - 1;
 
-            let labelColor: keyof Theme['colors'] = 'gray-400';
+            let labelColor: keyof Theme['colors'] = 'gray-500';
             if (currentStepIndex === index) {
               labelColor = 'gray-100';
             }

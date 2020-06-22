@@ -19,14 +19,13 @@
 import React from 'react';
 import {
   ComplianceIntegration,
-  ComplianceStatusEnum,
   ListResourcesInput,
   ListResourcesSortFieldsEnum,
   ResourceSummary,
   SortDirEnum,
 } from 'Generated/schema';
 import { formatDatetime } from 'Helpers/utils';
-import { Link, Table, Tooltip } from 'pouncejs';
+import { Link, Table } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import StatusBadge from 'Components/StatusBadge';
@@ -37,7 +36,6 @@ interface ListResourcesTableProps {
   sortBy: ListResourcesSortFieldsEnum;
   sortDir: SortDirEnum;
   onSort: (params: Partial<ListResourcesInput>) => void;
-  enumerationStartIndex: number;
 }
 
 const ListResourcesTable: React.FC<ListResourcesTableProps> = ({
@@ -101,13 +99,7 @@ const ListResourcesTable: React.FC<ListResourcesTableProps> = ({
               <Table.Cell>{resource.type}</Table.Cell>
               <Table.Cell>{resource.integrationLabel}</Table.Cell>
               <Table.Cell>
-                {resource.complianceStatus === ComplianceStatusEnum.Error ? (
-                  <Tooltip content="Some policies have raised an exception when evaluating this resource. Find out more in the resource's page">
-                    <StatusBadge status={resource.complianceStatus} />
-                  </Tooltip>
-                ) : (
-                  <StatusBadge status={resource.complianceStatus} />
-                )}
+                <StatusBadge status={resource.complianceStatus} />
               </Table.Cell>
               <Table.Cell>{formatDatetime(resource.lastModified)}</Table.Cell>
             </React.Fragment>

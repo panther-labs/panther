@@ -17,14 +17,9 @@
  */
 
 import React from 'react';
-import {
-  ComplianceStatusEnum,
-  ListPoliciesInput,
-  ListPoliciesSortFieldsEnum,
-  SortDirEnum,
-} from 'Generated/schema';
+import { ListPoliciesInput, ListPoliciesSortFieldsEnum, SortDirEnum } from 'Generated/schema';
 import { formatDatetime } from 'Helpers/utils';
-import { Box, Link, Table, Tooltip } from 'pouncejs';
+import { Box, Link, Table } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/SeverityBadge';
@@ -38,7 +33,6 @@ interface ListPoliciesTableProps {
   sortBy: ListPoliciesSortFieldsEnum;
   sortDir: SortDirEnum;
   onSort: (params: Partial<ListPoliciesInput>) => void;
-  enumerationStartIndex: number;
 }
 
 const ListPoliciesTable: React.FC<ListPoliciesTableProps> = ({
@@ -46,7 +40,6 @@ const ListPoliciesTable: React.FC<ListPoliciesTableProps> = ({
   onSort,
   sortBy,
   sortDir,
-  enumerationStartIndex,
 }) => {
   const handleSort = (selectedKey: ListPoliciesSortFieldsEnum) => {
     if (sortBy === selectedKey) {
@@ -122,13 +115,7 @@ const ListPoliciesTable: React.FC<ListPoliciesTableProps> = ({
                 </Box>
               </Table.Cell>
               <Table.Cell align="center">
-                {policy.complianceStatus === ComplianceStatusEnum.Error ? (
-                  <Tooltip content="Policy raised an exception when evaluating a resource. Find out more in the policy's page">
-                    <StatusBadge status={policy.complianceStatus} disabled={!policy.enabled} />
-                  </Tooltip>
-                ) : (
-                  <StatusBadge status={policy.complianceStatus} disabled={!policy.enabled} />
-                )}
+                <StatusBadge status={policy.complianceStatus} disabled={!policy.enabled} />
               </Table.Cell>
               <Table.Cell wrapText="nowrap">{formatDatetime(policy.lastModified)}</Table.Cell>
               <Table.Cell>

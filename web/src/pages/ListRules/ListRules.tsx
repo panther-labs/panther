@@ -79,9 +79,6 @@ const ListRules = () => {
       <ErrorBoundary>
         <Card>
           <ListRulesTable
-            enumerationStartIndex={
-              pagingData ? (pagingData.thisPage - 1) * DEFAULT_LARGE_PAGE_SIZE : 0
-            }
             items={ruleItems}
             onSort={updateRequestParamsAndResetPaging}
             sortBy={requestParams.sortBy || ListRulesSortFieldsEnum.Id}

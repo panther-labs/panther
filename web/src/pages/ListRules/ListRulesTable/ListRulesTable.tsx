@@ -19,7 +19,7 @@
 import React from 'react';
 import { ListRulesInput, ListRulesSortFieldsEnum, SortDirEnum } from 'Generated/schema';
 import { formatDatetime } from 'Helpers/utils';
-import { Box, Flex, Icon, Label, Link, Table } from 'pouncejs';
+import { Box, Flex, Icon, Link, Table } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/SeverityBadge';
@@ -31,16 +31,9 @@ interface ListRulesTableProps {
   sortBy: ListRulesSortFieldsEnum;
   sortDir: SortDirEnum;
   onSort: (params: Partial<ListRulesInput>) => void;
-  enumerationStartIndex: number;
 }
 
-const ListRulesTable: React.FC<ListRulesTableProps> = ({
-  items,
-  onSort,
-  sortBy,
-  sortDir,
-  enumerationStartIndex,
-}) => {
+const ListRulesTable: React.FC<ListRulesTableProps> = ({ items, onSort, sortBy, sortDir }) => {
   const handleSort = (selectedKey: ListRulesSortFieldsEnum) => {
     if (sortBy === selectedKey) {
       onSort({
@@ -56,7 +49,6 @@ const ListRulesTable: React.FC<ListRulesTableProps> = ({
     <Table>
       <Table.Head>
         <Table.Row>
-          <Table.HeaderCell />
           <Table.SortableHeaderCell
             onClick={() => handleSort(ListRulesSortFieldsEnum.Id)}
             sortDir={sortBy === ListRulesSortFieldsEnum.Id ? sortDir : false}
@@ -92,11 +84,8 @@ const ListRulesTable: React.FC<ListRulesTableProps> = ({
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {items.map((rule, index) => (
+        {items.map(rule => (
           <Table.Row key={rule.id}>
-            <Table.Cell>
-              <Label size="medium">{enumerationStartIndex + index + 1}</Label>
-            </Table.Cell>
             <Table.Cell maxWidth={450} wrapText="wrap">
               <Link as={RRLink} to={urls.logAnalysis.rules.details(rule.id)} py={4} pr={4}>
                 {rule.displayName || rule.id}
