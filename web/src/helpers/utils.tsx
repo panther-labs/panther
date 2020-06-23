@@ -276,3 +276,10 @@ export const toStackNameFormat = (val: string) => val.replace(/ /g, '-').toLower
  * Generates a random HEX color
  */
 export const generateRandomColor = () => Math.floor(Math.random() * 16777215).toString(16);
+
+/**
+ * Converts a rem measurement (i.e. `0.29rem`) to pixels. Returns the number of pixels
+ */
+export const remToPx = (rem: string) => {
+  return parseFloat(rem) * parseFloat(getComputedStyle(document.documentElement).fontSize);
+};

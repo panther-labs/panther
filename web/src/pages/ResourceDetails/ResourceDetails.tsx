@@ -28,7 +28,7 @@ import {
   getComplianceItemsTotalCount,
   extractErrorMessage,
 } from 'Helpers/utils';
-import { Alert, Box, Flex } from 'pouncejs';
+import { Alert, Box, Flex, Card } from 'pouncejs';
 import {
   TableControlsPagination,
   TableControlsComplianceFilter,
@@ -41,6 +41,7 @@ import ResourceDetailsTable from './ResourceDetailsTable';
 import ResourceDetailsInfo from './ResourceDetailsInfo';
 import ResourceDetailsPageSkeleton from './Skeleton';
 import { useResourceDetails } from './graphql/resourceDetails.generated';
+import ResourceDetailsAttributes from "Pages/ResourceDetails/ResourceDetailsAttributes";
 
 const acceptedRequestParams = ['page', 'status', 'pageSize', 'suppressed'] as const;
 
@@ -105,9 +106,7 @@ const ResourceDetailsPage = () => {
         </Box>
       </ErrorBoundary>
       <Box mb={5}>
-        <Panel title="Attributes">
-          <JsonViewer data={JSON.parse(enhancedResource.attributes)} />
-        </Panel>
+        <ResourceDetailsAttributes resource={enhancedResource} />
       </Box>
       <Box mb={6}>
         <Panel
