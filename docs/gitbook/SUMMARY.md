@@ -60,6 +60,7 @@
   * [Fluentd](log-analysis/log-processing/supported-logs/Fluentd.md)
   * [GCP](log-analysis/log-processing/supported-logs/GCP.md)
   * [GitLab](log-analysis/log-processing/supported-logs/GitLab.md)
+  * [GSuite](log-analysis/log-processing/supported-logs/GSuite.md)
   * [Nginx](log-analysis/log-processing/supported-logs/Nginx.md)
   * [Okta](log-analysis/log-processing/supported-logs/Okta.md)
   * [OneLogin](log-analysis/log-processing/supported-logs/OneLogin.md)
