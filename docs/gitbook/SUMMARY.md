@@ -57,6 +57,7 @@
 * [Supported Logs]()
   * [Apache](log-analysis/log-processing/supported-logs/Apache.md)
   * [AWS](log-analysis/log-processing/supported-logs/AWS.md)
+  * [Cisco Umbrella](log-analysis/log-processing/supported-logs/CiscoUmbrella.md)
   * [Fluentd](log-analysis/log-processing/supported-logs/Fluentd.md)
   * [GCP](log-analysis/log-processing/supported-logs/GCP.md)
   * [GitLab](log-analysis/log-processing/supported-logs/GitLab.md)
