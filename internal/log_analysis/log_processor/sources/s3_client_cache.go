@@ -177,7 +177,7 @@ func getAwsCredentials(roleArn string) *credentials.Credentials {
 // It will return nil result if no source exists for this object.
 func getSourceInfo(s3Object *S3ObjectInfo) (result *models.SourceIntegration, err error) {
 	currentTime := time.Now() // No need to be UTC. We care about relative time
-	if sourceCache.cacheUpdateTime.Add(sourceCacheDuration).Before(currentTime) {
+	if currentTime.Sub(sourceCache.cacheUpdateTime) > sourceCacheDuration {
 		// we need to update the cache
 		input := &models.LambdaInput{
 			ListIntegrations: &models.ListIntegrationsInput{},
@@ -203,9 +203,9 @@ func getSourceInfo(s3Object *S3ObjectInfo) (result *models.SourceIntegration, er
 
 	// If the incoming notification maps to a known source, update the source information
 	if result != nil {
-		previousTime := lastEventReceived[*result.IntegrationID]
+		eventUpdateTime := lastEventReceived[*result.IntegrationID]
 		// if more than 'statusUpdateFrequency' time has passed, update status
-		if currentTime.Sub(previousTime) > statusUpdateFrequency {
+		if currentTime.Sub(eventUpdateTime) > statusUpdateFrequency {
 			updateIntegrationStatus(*result.IntegrationID, currentTime)
 			lastEventReceived[*result.IntegrationID] = currentTime
 		}
