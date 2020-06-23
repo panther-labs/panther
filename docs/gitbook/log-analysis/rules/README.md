@@ -33,7 +33,7 @@ def title(event):
 
 ## Workflow
 
-Panther rules can be written, tested, and deployed either with the UI or the [panther_analysis_tool](analysis/panther-cli.md).
+Panther rules can be written, tested, and deployed either with the UI or the [panther_analysis_tool](analysis/panther-analysis-tool.md).
 
 Each rule takes an `event` input of a given log type from the [supported logs](log-analysis/supported-logs) page.
 
@@ -157,6 +157,6 @@ Then, configure the built in rules by searching for the `Configuration Required`
 
 ## Writing Rules with the Panther Analysis Tool
 
-The [panther_analysis_tool](panther-cli.md) is a Python command line interface for testing, packaging, and deploying Panther Policies and Rules. This enables teams to work in a more developer oriented workflow and track detections with version control systems such as `git`.
+The [panther_analysis_tool](panther-analysis-tool.md) is a Python command line interface for testing, packaging, and deploying Panther Policies and Rules. This enables teams to work in a more developer oriented workflow and track detections with version control systems such as `git`.
 
-To learn more about this workflow, check out the guide [here](analysis/panther-cli.md).
+To learn more about this workflow, check out the guide [here](analysis/panther-analysis-tool.md).
