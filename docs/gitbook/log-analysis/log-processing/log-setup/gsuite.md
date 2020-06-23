@@ -1,12 +1,12 @@
 # GSuite
 
-In order for Panther to be able to access the Report logs of your organization, you will need to create a new GSuite application with permissions to access Reports of your organization. 
-Panther will use the credentials of this application in order to pull the logs periodically (every 1 minute).
+In order for Panther to be able to access the Reports of your organization, you will need to create a new GSuite application with the necessary permissions. 
+Panther will use this application to pull the logs periodically (every 1 minute).
 
 ## Setting up a GSuite application
 {% hint style="info" %}
 The steps below can only be performed if your GSuite user has permissions to see your organization's Reports. If your user doesn't have such permissions, 
-you can follow the steps [here](https://support.google.com/a/answer/2406043) in order to create a new role with Permissions access and assign your user this role. 
+you can follow the steps [here](https://support.google.com/a/answer/2406043) in order to create a new role with Reports access and assign the role to your user. 
 {% endhint %}
 
 

@@ -54,7 +54,7 @@
     * [AWS Root Access Key Created](log-analysis/rules/aws-cis/aws-root-access-key-created.md)
     * [AWS Root Console Login](log-analysis/rules/aws-cis/aws-root-console-login.md)
     * [AWS Root Password Changed](log-analysis/rules/aws-cis/aws-root-password-changed.md)
-* [Supported Log Schemas]()
+* [Supported Logs]()
   * [Apache](log-analysis/log-processing/supported-logs/Apache.md)
   * [AWS](log-analysis/log-processing/supported-logs/AWS.md)
   * [Cisco Umbrella](log-analysis/log-processing/supported-logs/CiscoUmbrella.md)
