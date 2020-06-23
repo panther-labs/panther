@@ -7,7 +7,7 @@
 * [Operations](operations/ops-home.md)
   * [Run-books](operations/runbooks.md)
 
-## User Guides
+## User Guide
 
 * [Destinations](destinations/README.md)
   * [Asana](destinations/asana.md)
