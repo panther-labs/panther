@@ -29,9 +29,4 @@ you can follow the steps [here](https://support.google.com/a/answer/2406043) in 
 1. Click on **Create**
 
 Keep note of the ClientID and Client Secret! You will need to provide them to Panther in order for Panther to pull your reports.
-Note that you will still have to authorize Panther to pull your logs using a standard OAuth flow. Panther UI will guide you through the steps.  
-
-
-
- 
- 
+Note that you will still have to authorize Panther to pull your logs using a standard OAuth flow. Panther UI will guide you through the steps.
