@@ -3,8 +3,9 @@
 # GSuite
 {% hint style="info" %}Required fields are in <b>bold</b>.{% endhint %}
 ##GSuite.Reports
-Batch contains all the data included in OsQuery batch logs
-Reference : https://osquery.readthedocs.io/en/stable/deployment/logging/
+Contains the activity events for a specific account and application such as the Admin console application 
+or the Google Drive application.
+Reference : https://developers.google.com/admin-sdk/reports/v1/reference/activities/list#response
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>id</b></code></td><td><code>{<br>&nbsp;&nbsp;"applicationName":string,<br>&nbsp;&nbsp;"customerId":string,<br>&nbsp;&nbsp;"time":timestamp,<br>&nbsp;&nbsp;"uniqueQualifier":string<br>}</code></td><td valign=top>Unique identifier for each activity record.</td></tr>
