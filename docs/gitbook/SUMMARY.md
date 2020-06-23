@@ -54,7 +54,7 @@
     * [AWS Root Access Key Created](log-analysis/rules/aws-cis/aws-root-access-key-created.md)
     * [AWS Root Console Login](log-analysis/rules/aws-cis/aws-root-console-login.md)
     * [AWS Root Password Changed](log-analysis/rules/aws-cis/aws-root-password-changed.md)
-* [Supported Logs]()
+* [Supported Log Schemas]()
   * [Apache](log-analysis/log-processing/supported-logs/Apache.md)
   * [AWS](log-analysis/log-processing/supported-logs/AWS.md)
   * [Cisco Umbrella](log-analysis/log-processing/supported-logs/CiscoUmbrella.md)
@@ -70,6 +70,8 @@
   * [Suricata](log-analysis/log-processing/supported-logs/Suricata.md)
   * [Syslog](log-analysis/log-processing/supported-logs/Syslog.md)
   * [Zeek](log-analysis/log-processing/supported-logs/Zeek.md)
+* [SaaS logs setup]()
+  * [GSuite](log-analysis/log-processing/log-setup/gsuite.md)
 * [Standard Fields](log-analysis/panther-fields.md)
 
 ## Cloud Security
