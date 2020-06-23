@@ -2,7 +2,9 @@
 
 Panther enables easy scanning, evaluating, and remediation of cloud infrastructure configurations.
 
-**Policies** are Python3 functions used to identify misconfigured infrastructure and generate alerts for your team. Optionally, policies can call automatic remediations to fix insecure infrastructure.
+**Policies** are Python3 functions used to identify misconfigured infrastructure and generate alerts for your team.
+
+Optionally, policies can call automatic remediations to fix insecure infrastructure.
 
 ## Policy Components
 

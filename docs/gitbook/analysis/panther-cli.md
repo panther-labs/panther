@@ -1,10 +1,8 @@
 # Panther Analysis Tool
 
-The `panther_analysis_tool` is a Python command line interface  for testing, packaging, and deploying Panther Policies and Rules.
+The `panther_analysis_tool` is an [open source](https://github.com/panther-labs/panther_analysis_tool) Python utility for testing, packaging, and deploying Panther rules/policies to your Panther installation. It's designed to enable developer-centric workflows, such as managing your Panther analysis packs with CI/CD pipelines.
 
 ## Installation
-
-Install the [panther_analysis_tool](https://github.com/panther-labs/panther_analysis_tool) with the following command:
 
 ```bash
 pip3 install panther-analysis-tool
@@ -12,65 +10,75 @@ pip3 install panther-analysis-tool
 
 ## File Organization
 
+{% hint style="info" %}
 It's best practice to create a fork of Panther's open source analysis repository.
+{% endhint %}
 
-To get started, navigate your local checked out copy of your custom detections.
+To get started, navigate the locally checked out copy of your custom detections.
 
-We recommend grouping rules based on log type, such as `suricata` or `aws_cloudtrail`. Use the open source [Panther Analysis](https://github.com/panther-labs/panther-analysis) packs as a reference.
+We recommend grouping rules based on log type, such as `suricata_rules` or `aws_cloudtrail_rules`. Use the open source [Panther Analysis](https://github.com/panther-labs/panther-analysis) packs as a reference.
 
-Each rule consists of a Python file (`<my_analysis_file>.py`) containing your detection/audit logic and a YAML/JSON specification (`<my_analysis_file>.yml`) with the given metadata and attributes.
+Each rule consists of:
+
+1. A Python file containing your detection/audit logic
+2. A valid YAML or JSON specification file of the same filename as the Python file with metadata and attributes
 
 ## Writing Rules
 
-[Write your rule](log-analysis/rules/) and save it as `my_new_rule.py`.
+[Write your rule](log-analysis/rules/README.md) and save it as `my_new_rule.py`:
 
-The specification file MUST:
+```python
+def rule(event):
+  return 'prod' in event.get('hostName')
+```
 
-* Be valid JSON or YAML
-* Define an `AnalysisType` field with the value `rule`
-
-Define the additional following fields:
-* `Enabled`
-* `FileName`
-* `RuleID`
-* `LogTypes`
-* `Severity`
-
-An example specification file:
+Add the specification and set the `AnalysisType` to `rule`, for example:
 
 ```yml
 AnalysisType: rule
+DedupPeriodMinutes: 60 # 1 hour
+DisplayName: Example Rule to Check the Format of the Spec
 Enabled: true
 Filename: my_new_rule.py
-RuleID: Category.Behavior.MoreInfo
-DisplayName: Example Rule to Check the Format of the Spec
-DedupPeriodMinutes: 60 # 1 hour
-LogTypes:
-  - Log.Type.Here
+RuleID: Type.Behavior.MoreContext
 Severity: Info, Low, Medium, High, or Critical
+LogTypes:
+  - LogType.GoesHere
+Reports:
+  ReportName (like CIS, MITRE ATT&CK):
+    - The specific report section relevant to this rule
 Tags:
   - Tags
   - Go
   - Here
-Runbook: Find out who changed the spec format.
-Reference: https://www.link-to-info.io
+Description: >
+  This rule exists to validate the CLI workflows of the Panther CLI
+Runbook: >
+  First, find out who wrote this the spec format, then notify them with feedback.
+Reference: https://www.a-clickable-link-to-more-info.com
 ```
 
 ### Rule Tests
 
-In your spec file, add the following key:
+Tests can help validate that your Rules behave as intended. In your spec file, add the `Tests` key:
 
 ```yml
 Tests:
   -
     Name: Name to describe our first test.
-    LogType: Log.Type.Here
-    ExpectedResult: true/false
+    LogType: LogType.GoesHere
+    ExpectedResult: true or false
     Log:
-      Key: Values
-      For: Our Log
-      Based: On the Schema
+      {
+        "hostName": "test-01.prod.acme.io",
+        "user": "martin_smith",
+        "eventTime": "June 22 5:50:52 PM"
+      }
 ```
+
+{% hint style="info" %}
+Try to cover as many test cases as possible, including false and true positives.
+{% endhint %}
 
 ## Writing Policies
 
