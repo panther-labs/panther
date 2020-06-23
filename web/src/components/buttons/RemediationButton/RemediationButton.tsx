@@ -18,7 +18,6 @@
 
 import React from 'react';
 import { Button, ButtonProps, useSnackbar } from 'pouncejs';
-
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import { ResourceDetailsDocument } from 'Pages/ResourceDetails';
 import { PolicyDetailsDocument } from 'Pages/PolicyDetails';

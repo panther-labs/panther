@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Badge, BadgeProps, Box } from 'pouncejs';
+import { Badge, BadgeProps, Box, Tooltip } from 'pouncejs';
 import { ComplianceStatusEnum } from 'Generated/schema';
 
 export const STATUS_COLOR_MAP: { [key in ComplianceStatusEnum]: BadgeProps['color'] } = {
@@ -29,14 +29,29 @@ export const STATUS_COLOR_MAP: { [key in ComplianceStatusEnum]: BadgeProps['colo
 interface StatusBadgeProps {
   status: ComplianceStatusEnum;
   disabled?: boolean;
+  errorMessage?: string;
+  disabledLabel?: string;
 }
 
-const StatusBadge: React.FC<StatusBadgeProps> = ({ status, disabled }) => {
+const StatusBadge: React.FC<StatusBadgeProps> = ({
+  status,
+  disabled,
+  errorMessage = "An exception has been raised during a scheduled run. You'll find more information in the related details page",
+  disabledLabel = 'DISABLED',
+}) => {
   if (disabled) {
     return (
       <Box opacity={0.5}>
-        <Badge color="gray-700">DISABLED</Badge>
+        <Badge color="gray-800">{disabledLabel}</Badge>
       </Box>
+    );
+  }
+
+  if (status === ComplianceStatusEnum.Error) {
+    return (
+      <Tooltip content={errorMessage}>
+        <Badge color={STATUS_COLOR_MAP[status]}>{status}</Badge>
+      </Tooltip>
     );
   }
   return <Badge color={STATUS_COLOR_MAP[status]}>{status}</Badge>;
