@@ -326,7 +326,6 @@ Resources:
         EnableCloudTrail: !Ref EnableCloudTrail
         EnableGuardDuty: !Ref EnableGuardDuty
         EnableS3AccessLogs: !Ref EnableS3AccessLogs
-        VpcId: !GetAtt Bootstrap.Outputs.VpcId
       Tags:
         - Key: Application
           Value: Panther

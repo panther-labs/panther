@@ -517,7 +517,6 @@ func deployOnboardStack(settings *config.PantherConfig, outputs map[string]strin
 			"EnableCloudTrail":      strconv.FormatBool(settings.Setup.EnableCloudTrail),
 			"EnableGuardDuty":       strconv.FormatBool(settings.Setup.EnableGuardDuty),
 			"EnableS3AccessLogs":    strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
-			"VpcId":                 outputs["VpcId"],
 		})
 	} else {
 		// Delete the onboard stack if OnboardSelf was toggled off
