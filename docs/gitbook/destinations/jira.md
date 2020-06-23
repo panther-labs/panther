@@ -6,7 +6,7 @@ The Jira Destination requires an `Organization Domain`, `Project Key`, `User Nam
 
 ![](../.gitbook/assets/screen-shot-2019-10-21-at-12.51.45-pm.png)
 
-The Jira Destination is integrated through use of a Jira user account. To perform the Jira integration, first select a user to be the reporter of the issue. If possible, a service account should be created specifically for this purpose in order to ensure continuity. Most of the fields can be filled out based on the Project URL and a few usernames. The example project URL we will use is:
+The Jira Destination is integrated through the use of a Jira user account. To perform the Jira integration, first select a user to be the reporter of the issue. If possible, a service account should be created specifically for this purpose in order to ensure continuity. Most of the fields can be filled out based on the Project URL and a few usernames. The example project URL we will use is:
 
 `https://example.atlassian.net/projects/PROJ`
 

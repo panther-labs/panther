@@ -10,11 +10,7 @@ To configure an OpsGenie Destination, start by navigating to your team's dashboa
 
 ![](../.gitbook/assets/screen-shot-2019-10-23-at-9.28.46-am.png)
 
-After selecting the team you to which you wish to send alerts, select the integrations tab on the left:
-
-![](../.gitbook/assets/screen-shot-2019-10-23-at-9.31.08-am%20%281%29.png)
-
-Select the `Add integration` button:
+After selecting the team you to which you wish to send alerts, select the integrations tab on the left, and then the `Add integration` button:
 
 ![](../.gitbook/assets/screen-shot-2019-10-23-at-9.35.22-am.png)
 

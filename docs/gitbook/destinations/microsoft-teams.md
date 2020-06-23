@@ -2,7 +2,7 @@
 
 This page will walk you through configuring MS Teams as a Destination for your Panther alerts.
 
-The MS Teams Destination requires a `Microsoft Teams Webhook URL`. When an alert is forwarded to an MS Teams Destination, it sends a message to the specified Webhook url:
+The MS Teams Destination requires a `Microsoft Teams Webhook URL`. When an alert is forwarded to an MS Teams Destination, it sends a message to the specified Webhook URL:
 
 ![](../.gitbook/assets/screen-shot-2019-10-21-at-1.00.38-pm.png)
 
