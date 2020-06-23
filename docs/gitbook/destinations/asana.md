@@ -2,11 +2,11 @@
 
 This page will walk you through configuring [Asana](https://asana.com) as a destination for your Panther alerts.
 
-The Asana destination requires an `Access Token` and one or more `Project GID`. When an alert is forwarded to an Asana destination, a new task is created in the the specified project(s):
+The Asana destination requires an `Access Token` and one or more `Project GID`. When an alert is forwarded to an Asana destination, a new task is created in the specified project(s):
 
 ![Asana destination settings](../.gitbook/assets/add_asana_destination.png)
 
-The Asana Destination requires the use of an Asana user account. To add an Asana destination, first select a user to be the reporter of the issue. If possible and in order to ensure continuity, a service account should be created specifically for this purpose.
+The Asana Destination requires the use of an Asana user account. To add an Asana destination, first, select a user to be the reporter of the issue. If possible and in order to ensure continuity, a service account should be created specifically for this purpose.
 
 A `Project GID` is a unique identifier for the project where Panther will be creating new issues. The easiest way is to retrieve it from the project's URL.
 Select the project you want and click `Copy Project Link`:
