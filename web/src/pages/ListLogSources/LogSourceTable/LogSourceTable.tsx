@@ -18,7 +18,6 @@
 
 import React from 'react';
 import { Box, Flex, Label, Table } from 'pouncejs';
-import dayjs from 'dayjs';
 import { ListLogSources } from 'Pages/ListLogSources';
 import LogSourceHealthIcon from './LogSourceHealthIcon';
 import LogSourceTableRowOptionsProps from './LogSourceTableRowOptions';
@@ -59,11 +58,6 @@ const LogSourceTable: React.FC<LogSourceTableProps> = ({ sources }) => {
             <Table.Cell>{source.s3Bucket}</Table.Cell>
             <Table.Cell>{source.s3Prefix || 'None'}</Table.Cell>
             <Table.Cell>{source.lastEventReceived || 'N/A'}</Table.Cell>
-            <Table.Cell>
-              {source.lastEventReceived
-                ? dayjs(source.lastEventReceived * 1000).format('MM/DD/YYYY, HH:mm G[M]TZZ')
-                : 'N/A'}
-            </Table.Cell>
             <Table.Cell>
               <Flex justify="center">
                 <LogSourceHealthIcon logSourceHealth={source.health} />

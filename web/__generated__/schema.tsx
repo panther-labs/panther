@@ -29,8 +29,8 @@ export type Scalars = {
   Float: number;
   AWSDateTime: string;
   AWSJSON: string;
-  AWSTimestamp: number;
   AWSEmail: string;
+  AWSTimestamp: number;
 };
 
 export enum AccountTypeEnum {
@@ -963,7 +963,7 @@ export type S3LogIntegration = {
   integrationId: Scalars['ID'];
   integrationType: Scalars['String'];
   integrationLabel: Scalars['String'];
-  lastEventReceived?: Maybe<Scalars['AWSTimestamp']>;
+  lastEventReceived?: Maybe<Scalars['AWSDateTime']>;
   s3Bucket: Scalars['String'];
   s3Prefix?: Maybe<Scalars['String']>;
   kmsKey?: Maybe<Scalars['String']>;
@@ -1263,7 +1263,6 @@ export type ResolversTypes = {
   GetComplianceIntegrationTemplateInput: GetComplianceIntegrationTemplateInput;
   IntegrationTemplate: ResolverTypeWrapper<IntegrationTemplate>;
   S3LogIntegration: ResolverTypeWrapper<S3LogIntegration>;
-  AWSTimestamp: ResolverTypeWrapper<Scalars['AWSTimestamp']>;
   S3LogIntegrationHealth: ResolverTypeWrapper<S3LogIntegrationHealth>;
   GetS3LogIntegrationTemplateInput: GetS3LogIntegrationTemplateInput;
   GetResourceInput: GetResourceInput;
@@ -1305,6 +1304,7 @@ export type ResolversTypes = {
   ListGlobalPythonModulesResponse: ResolverTypeWrapper<ListGlobalPythonModulesResponse>;
   User: ResolverTypeWrapper<User>;
   AWSEmail: ResolverTypeWrapper<Scalars['AWSEmail']>;
+  AWSTimestamp: ResolverTypeWrapper<Scalars['AWSTimestamp']>;
   Mutation: ResolverTypeWrapper<{}>;
   DestinationInput: DestinationInput;
   DestinationConfigInput: DestinationConfigInput;
@@ -1387,7 +1387,6 @@ export type ResolversParentTypes = {
   GetComplianceIntegrationTemplateInput: GetComplianceIntegrationTemplateInput;
   IntegrationTemplate: IntegrationTemplate;
   S3LogIntegration: S3LogIntegration;
-  AWSTimestamp: Scalars['AWSTimestamp'];
   S3LogIntegrationHealth: S3LogIntegrationHealth;
   GetS3LogIntegrationTemplateInput: GetS3LogIntegrationTemplateInput;
   GetResourceInput: GetResourceInput;
@@ -1429,6 +1428,7 @@ export type ResolversParentTypes = {
   ListGlobalPythonModulesResponse: ListGlobalPythonModulesResponse;
   User: User;
   AWSEmail: Scalars['AWSEmail'];
+  AWSTimestamp: Scalars['AWSTimestamp'];
   Mutation: {};
   DestinationInput: DestinationInput;
   DestinationConfigInput: DestinationConfigInput;
@@ -2306,7 +2306,7 @@ export type S3LogIntegrationResolvers<
   integrationId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   integrationType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   integrationLabel?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  lastEventReceived?: Resolver<Maybe<ResolversTypes['AWSTimestamp']>, ParentType, ContextType>;
+  lastEventReceived?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   s3Bucket?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   s3Prefix?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   kmsKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
