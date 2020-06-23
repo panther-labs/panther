@@ -3,13 +3,13 @@ import { Box, Dropdown, DropdownButton, DropdownItem, DropdownMenu, IconButton }
 import usePolicySuppression from 'Hooks/usePolicySuppression';
 import useResourceRemediation from 'Hooks/useResourceRemediation';
 import { ComplianceStatusEnum } from 'Generated/schema';
-import { PolicyDetailsTableItem } from './PolicyDetailsTable';
+import { ResourceDetailsTableItem } from './ResourceDetailsTable';
 
-interface PolicyDetailsTableRowOptionsProps {
-  complianceItem: PolicyDetailsTableItem;
+interface ResourceDetailsTableRowOptionsProps {
+  complianceItem: ResourceDetailsTableItem;
 }
 
-const PolicyDetailsTableRowOptions: React.FC<PolicyDetailsTableRowOptionsProps> = ({
+const ResourceDetailsTableRowOptions: React.FC<ResourceDetailsTableRowOptionsProps> = ({
   complianceItem,
 }) => {
   const { suppressPolicies } = usePolicySuppression({
@@ -29,7 +29,7 @@ const PolicyDetailsTableRowOptions: React.FC<PolicyDetailsTableRowOptionsProps> 
         icon="more"
         variant="ghost"
         size="small"
-        aria-label="Resource Options"
+        aria-label="Policy Options"
       />
       <DropdownMenu>
         <DropdownItem disabled={complianceItem.suppressed} onSelect={suppressPolicies}>
@@ -46,4 +46,4 @@ const PolicyDetailsTableRowOptions: React.FC<PolicyDetailsTableRowOptionsProps> 
   );
 };
 
-export default PolicyDetailsTableRowOptions;
+export default ResourceDetailsTableRowOptions;

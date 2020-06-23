@@ -159,13 +159,11 @@ const PolicyDetailsPage = () => {
           <ErrorBoundary>
             <PolicyDetailsTable items={enhancedResources} />
           </ErrorBoundary>
-          <Box my={6}>
-            <TableControlsPagination
-              page={pagingData.thisPage}
-              totalPages={pagingData.totalPages}
-              onPageChange={updatePagingParams}
-            />
-          </Box>
+          <TableControlsPagination
+            page={pagingData.thisPage}
+            totalPages={pagingData.totalPages}
+            onPageChange={updatePagingParams}
+          />
         </Panel>
       </Box>
     </article>

@@ -25,7 +25,7 @@ import {
   SortDirEnum,
 } from 'Generated/schema';
 import { formatDatetime } from 'Helpers/utils';
-import { Link, Table } from 'pouncejs';
+import { Box, Link, Table } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import StatusBadge from 'Components/StatusBadge';
@@ -99,7 +99,9 @@ const ListResourcesTable: React.FC<ListResourcesTableProps> = ({
               <Table.Cell>{resource.type}</Table.Cell>
               <Table.Cell>{resource.integrationLabel}</Table.Cell>
               <Table.Cell>
-                <StatusBadge status={resource.complianceStatus} />
+                <Box my={-1} display="inline-block">
+                  <StatusBadge status={resource.complianceStatus} />
+                </Box>
               </Table.Cell>
               <Table.Cell>{formatDatetime(resource.lastModified)}</Table.Cell>
             </React.Fragment>

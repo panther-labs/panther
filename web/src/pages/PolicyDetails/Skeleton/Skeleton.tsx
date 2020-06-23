@@ -31,9 +31,7 @@ const PolicyDetailsPageSkeleton: React.FC = () => {
       </Card>
       <Box mt={5} mb={6}>
         <Panel title="Resources">
-          <Box mt={6}>
-            <TablePlaceholder />
-          </Box>
+          <TablePlaceholder />
         </Panel>
       </Box>
     </FadeIn>

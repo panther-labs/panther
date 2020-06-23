@@ -47,7 +47,7 @@ const TopFailingPoliciesTable: React.FC<TopFailingPoliciesTableProps> = ({ polic
               </Link>
             </Table.Cell>
             <Table.Cell align="center">
-              <Box m={-1} display="inline-block">
+              <Box my={-1} display="inline-block">
                 <SeverityBadge severity={policy.severity} />
               </Box>
             </Table.Cell>

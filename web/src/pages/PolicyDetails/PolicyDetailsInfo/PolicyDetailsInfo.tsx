@@ -68,7 +68,9 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
       </Flex>
       <Card as="article" p={6}>
         <Flex as="header" align="center" mb={4} spacing={4}>
-          <Heading size="large">{policy.displayName || policy.id}</Heading>
+          <Heading fontWeight="bold" wordBreak="break-word">
+            {policy.displayName || policy.id}
+          </Heading>
           <Tooltip
             content={
               <Flex spacing={3}>
@@ -160,7 +162,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
             </Flex>
           </SimpleGrid>
         </Card>
-        <Card variant="dark" as="section" p={6}>
+        <Card variant="dark" as="section" p={4}>
           <SimpleGrid columns={2} spacing={5} fontSize="small-medium">
             <Flex spacing={5}>
               <Flex direction="column" spacing={2} color="gray-450" flexShrink={0}>

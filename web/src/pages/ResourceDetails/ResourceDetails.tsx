@@ -28,7 +28,7 @@ import {
   getComplianceItemsTotalCount,
   extractErrorMessage,
 } from 'Helpers/utils';
-import { Alert, Box } from 'pouncejs';
+import { Alert, Box, Flex } from 'pouncejs';
 import {
   TableControlsPagination,
   TableControlsComplianceFilter,
@@ -100,11 +100,11 @@ const ResourceDetailsPage = () => {
   return (
     <article>
       <ErrorBoundary>
-        <Box mb={2}>
+        <Box mb={5}>
           <ResourceDetailsInfo resource={enhancedResource} />
         </Box>
       </ErrorBoundary>
-      <Box mb={2}>
+      <Box mb={5}>
         <Panel title="Attributes">
           <JsonViewer data={JSON.parse(enhancedResource.attributes)} />
         </Panel>
@@ -113,7 +113,7 @@ const ResourceDetailsPage = () => {
         <Panel
           title="Policies"
           actions={
-            <Box ml={6} mr="auto">
+            <Flex spacing={1}>
               <TableControlsComplianceFilter
                 mr={1}
                 count={getComplianceItemsTotalCount(totalCounts)}
@@ -126,7 +126,7 @@ const ResourceDetailsPage = () => {
               <TableControlsComplianceFilter
                 mr={1}
                 count={totalCounts.active.fail}
-                countColor="red300"
+                countColor="red-200"
                 text="Failing"
                 isActive={requestParams.status === ComplianceStatusEnum.Fail}
                 onClick={() =>
@@ -138,7 +138,7 @@ const ResourceDetailsPage = () => {
               />
               <TableControlsComplianceFilter
                 mr={1}
-                countColor="green300"
+                countColor="green-200"
                 count={totalCounts.active.pass}
                 text="Passing"
                 isActive={requestParams.status === ComplianceStatusEnum.Pass}
@@ -151,7 +151,7 @@ const ResourceDetailsPage = () => {
               />
               <TableControlsComplianceFilter
                 mr={1}
-                countColor="orange300"
+                countColor="yellow-500"
                 count={
                   totalCounts.suppressed.fail +
                   totalCounts.suppressed.pass +
@@ -166,22 +166,17 @@ const ResourceDetailsPage = () => {
                   })
                 }
               />
-            </Box>
+            </Flex>
           }
         >
           <ErrorBoundary>
-            <ResourceDetailsTable
-              policies={policies}
-              enumerationStartIndex={(pagingData.thisPage - 1) * DEFAULT_SMALL_PAGE_SIZE}
-            />
+            <ResourceDetailsTable policies={policies} />
           </ErrorBoundary>
-          <Box my={6}>
-            <TableControlsPagination
-              page={pagingData.thisPage}
-              totalPages={pagingData.totalPages}
-              onPageChange={updatePagingParams}
-            />
-          </Box>
+          <TableControlsPagination
+            page={pagingData.thisPage}
+            totalPages={pagingData.totalPages}
+            onPageChange={updatePagingParams}
+          />
         </Panel>
       </Box>
     </article>

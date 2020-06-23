@@ -17,13 +17,11 @@
  */
 
 import React from 'react';
-import { ComplianceItem, ComplianceIntegration, ComplianceStatusEnum } from 'Generated/schema';
-import { Box, Flex, Link, Table } from 'pouncejs';
+import { ComplianceItem, ComplianceIntegration } from 'Generated/schema';
+import { Box, Link, Table } from 'pouncejs';
 import urls from 'Source/urls';
 import { formatDatetime } from 'Helpers/utils';
 import { Link as RRLink } from 'react-router-dom';
-import RemediationButton from 'Components/buttons/RemediationButton/RemediationButton';
-import SuppressButton from 'Components/buttons/SuppressButton/SuppressButton';
 import StatusBadge from 'Components/StatusBadge';
 import PolicyDetailsTableRowOptions from './PolicyDetailsTableRowOptions';
 
@@ -40,8 +38,8 @@ const PolicyDetailsTable: React.FC<PolicyDetailsTableProps> = ({ items }) => {
       <Table.Head>
         <Table.Row>
           <Table.HeaderCell>Resource</Table.HeaderCell>
-          <Table.HeaderCell>Status</Table.HeaderCell>
           <Table.HeaderCell>Source</Table.HeaderCell>
+          <Table.HeaderCell align="center">Status</Table.HeaderCell>
           <Table.HeaderCell>Last Modified</Table.HeaderCell>
           <Table.HeaderCell />
         </Table.Row>
@@ -60,16 +58,18 @@ const PolicyDetailsTable: React.FC<PolicyDetailsTableProps> = ({ items }) => {
               </Link>
             </Table.Cell>
             <Table.Cell>{resource.integrationLabel}</Table.Cell>
-            <Table.Cell>
-              <StatusBadge
-                status={resource.status}
-                disabled={resource.suppressed}
-                errorMessage={resource.errorMessage}
-                disabledLabel="IGNORED"
-              />
+            <Table.Cell align="center">
+              <Box my={-1} display="inline-block">
+                <StatusBadge
+                  status={resource.status}
+                  disabled={resource.suppressed}
+                  errorMessage={resource.errorMessage}
+                  disabledLabel="IGNORED"
+                />
+              </Box>
             </Table.Cell>
             <Table.Cell>{formatDatetime(resource.lastUpdated)}</Table.Cell>
-            <Table.Cell>
+            <Table.Cell align="right">
               <Box my={-1}>
                 <PolicyDetailsTableRowOptions complianceItem={resource} />
               </Box>

@@ -110,15 +110,17 @@ const ListPoliciesTable: React.FC<ListPoliciesTableProps> = ({
                   : 'All resources'}
               </Table.Cell>
               <Table.Cell>
-                <Box my={-1}>
+                <Box my={-1} display="inline-block">
                   <SeverityBadge severity={policy.severity} />
                 </Box>
               </Table.Cell>
               <Table.Cell align="center">
-                <StatusBadge status={policy.complianceStatus} disabled={!policy.enabled} />
+                <Box my={-1} display="inline-block">
+                  <StatusBadge status={policy.complianceStatus} disabled={!policy.enabled} />
+                </Box>
               </Table.Cell>
               <Table.Cell wrapText="nowrap">{formatDatetime(policy.lastModified)}</Table.Cell>
-              <Table.Cell>
+              <Table.Cell align="right">
                 <Box my={-1}>
                   <ListPoliciesTableRowOptions policy={policy} />
                 </Box>
