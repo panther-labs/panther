@@ -4,7 +4,7 @@ This page details the steps to writing Panther rules with the built-in UI. For a
 
 Navigate to `Log Analysis` > `Rules`, and click `Create New` in the top right corner.
 
-You have the option of creating a single new rule, or bulk uploading a zip file containing rules created with the [panther_analysis_tool](panther-cli.md):
+You have the option of creating a single new rule, or bulk uploading a zip file containing rules created with the [panther_analysis_tool](panther-analysis-tool.md):
 
 ![](../../.gitbook/assets/write-rules-ui-1.png)
 
