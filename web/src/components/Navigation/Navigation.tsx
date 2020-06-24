@@ -29,34 +29,45 @@ import SettingsNavigation from './SettingsNavigation';
 import ComplianceNavigation from './ComplianceNavigation';
 import LogAnalysisNavigation from './LogAnalysisNavigation';
 
-type NavKeys = typeof COMPLIANCE_NAV_KEY | typeof LOG_ANALYSIS_NAV_KEY | typeof SETTINGS_NAV_KEY;
-
 const SECONDARY_NAV_WIDTH = 200;
 const COMPLIANCE_NAV_KEY = 'compliance';
 const LOG_ANALYSIS_NAV_KEY = 'logAnalysis';
 const SETTINGS_NAV_KEY = 'settings';
+
+type NavKeys = typeof COMPLIANCE_NAV_KEY | typeof LOG_ANALYSIS_NAV_KEY | typeof SETTINGS_NAV_KEY;
 
 const Navigation = () => {
   const {
     location: { pathname },
   } = useRouter();
 
-  const isCompliancePage = pathname.includes(urls.compliance.home());
-  const isLogAnalysisPage = pathname.includes(urls.logAnalysis.home());
-  const isSettingsPage = pathname.includes(urls.settings.home());
-  const [secondaryNav, setSecondaryNav] = React.useState<NavKeys>(null);
+  // Normally we woulnd't be neeeding the code below in a separate function. It would just be inside
+  // a `React.useEffect`. We add this here cause it's important to give React.useState the proper
+  // initial value, so that the animation of the Navbar doesn't kick on the initial render. If it
+  // wasn't for that, we wouldn't have "abstracted" this function here and we would just have an
+  // initial value of `null` which would instantly be updated from the code in `React.useEffect`
+  const getSecondaryNavKey = () => {
+    const isCompliancePage = pathname.includes(urls.compliance.home());
+    const isLogAnalysisPage = pathname.includes(urls.logAnalysis.home());
+    const isSettingsPage = pathname.includes(urls.settings.home());
+
+    if (isCompliancePage) {
+      return COMPLIANCE_NAV_KEY;
+    }
+    if (isLogAnalysisPage) {
+      return LOG_ANALYSIS_NAV_KEY;
+    }
+    if (isSettingsPage) {
+      return SETTINGS_NAV_KEY;
+    }
+    return null;
+  };
+
+  const [secondaryNav, setSecondaryNav] = React.useState<NavKeys>(getSecondaryNavKey());
 
   React.useEffect(() => {
-    if (isCompliancePage) {
-      setSecondaryNav(COMPLIANCE_NAV_KEY);
-    } else if (isLogAnalysisPage) {
-      setSecondaryNav(LOG_ANALYSIS_NAV_KEY);
-    } else if (isSettingsPage) {
-      setSecondaryNav(SETTINGS_NAV_KEY);
-    } else {
-      setSecondaryNav(null);
-    }
-  }, [isSettingsPage, isCompliancePage, isLogAnalysisPage]);
+    setSecondaryNav(getSecondaryNavKey());
+  }, [pathname]);
 
   const isComplianceNavigationActive = secondaryNav === COMPLIANCE_NAV_KEY;
   const isLogAnalysisNavigationActive = secondaryNav === LOG_ANALYSIS_NAV_KEY;
@@ -64,6 +75,7 @@ const Navigation = () => {
   const isSecondaryNavigationActive = secondaryNav !== null;
 
   const transitions = useTransition(isSecondaryNavigationActive, null, {
+    initial: { width: SECONDARY_NAV_WIDTH, opacity: 0 },
     from: { width: 0, opacity: 0 },
     enter: { width: SECONDARY_NAV_WIDTH, opacity: 1 },
     leave: { width: 0, opacity: 0 },
@@ -128,7 +140,7 @@ const Navigation = () => {
       {transitions.map(
         ({ item, key, props: styles }) =>
           item && (
-            <animated.div key={key} style={styles}>
+            <animated.div key={key} style={{ width: 0, ...styles }}>
               <Box height="100%" borderLeft="1px solid" borderColor="navyblue-600">
                 {secondaryNav === COMPLIANCE_NAV_KEY && <ComplianceNavigation />}
                 {secondaryNav === LOG_ANALYSIS_NAV_KEY && <LogAnalysisNavigation />}
