@@ -28,7 +28,7 @@ const ListResourcesPageEmptyDataFallback: React.FC = () => {
       <Box my={10}>
         <img alt="Black Canvas Illustration" src={BlankCanvasImg} width="auto" height={300} />
       </Box>
-      <Heading size="medium" mb={6}>
+      <Heading mb={6}>
         No resources found
       </Heading>
       <Text size="large" color="gray-200" textAlign="center" mb={8}>

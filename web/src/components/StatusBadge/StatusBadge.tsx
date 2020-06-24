@@ -20,14 +20,15 @@ import React from 'react';
 import { Badge, BadgeProps, Box, Tooltip } from 'pouncejs';
 import { ComplianceStatusEnum } from 'Generated/schema';
 
-export const STATUS_COLOR_MAP: { [key in ComplianceStatusEnum]: BadgeProps['color'] } = {
+export const STATUS_COLOR_MAP: { [key in StatusBadgeProps['status']]: BadgeProps['color'] } = {
   [ComplianceStatusEnum.Pass]: 'green-200' as const,
   [ComplianceStatusEnum.Fail]: 'red-200' as const,
   [ComplianceStatusEnum.Error]: 'orange-500' as const,
+  ENABLED: 'turquoise-300' as const,
 };
 
 interface StatusBadgeProps {
-  status: ComplianceStatusEnum;
+  status: ComplianceStatusEnum | 'ENABLED';
   disabled?: boolean;
   errorMessage?: string;
   disabledLabel?: string;

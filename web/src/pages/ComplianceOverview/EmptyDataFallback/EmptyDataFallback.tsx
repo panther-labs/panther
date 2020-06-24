@@ -28,7 +28,7 @@ const ComplianceEmptyDataFallback: React.FC = () => (
       <Box m={10}>
         <img alt="Empty data illustration" src={EmptyDataImg} width="auto" height={400} />
       </Box>
-      <Heading size="medium" mb={6}>
+      <Heading mb={6}>
         It{"'"}s empty in here
       </Heading>
       <Text size="large" color="gray-200" textAlign="center" mb={8}>

@@ -35,7 +35,7 @@ const CreateButton: React.FC = () => {
 
   return (
     <Dropdown>
-      <DropdownButton as={Button} icon="add" size="small">
+      <DropdownButton as={Button} icon="add">
         Create new
       </DropdownButton>
       <DropdownMenu alignment="match-width">
