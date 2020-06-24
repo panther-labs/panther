@@ -42,7 +42,7 @@ func TestGetItemAwsError(t *testing.T) {
 		(*dynamodb.GetItemOutput)(nil), errors.New("service unavailable"))
 	table := &OrganizationsTable{client: mockClient, Name: aws.String("test-table")}
 
-	result, err := table.Get()
+	result, err := table.GetGeneralSettings()
 	mockClient.AssertExpectations(t)
 	assert.Nil(t, result)
 	assert.Error(t, err)
@@ -60,7 +60,7 @@ func TestGetItemUnmarshalError(t *testing.T) {
 	mockClient.On("GetItem", mock.Anything).Return(output, nil)
 	table := &OrganizationsTable{client: mockClient, Name: aws.String("test-table")}
 
-	result, err := table.Get()
+	result, err := table.GetGeneralSettings()
 	mockClient.AssertExpectations(t)
 	assert.Nil(t, result)
 	assert.Error(t, err)
@@ -80,7 +80,7 @@ func TestGetItem(t *testing.T) {
 	mockClient.On("GetItem", expectedInput).Return(output, nil)
 	table := &OrganizationsTable{client: mockClient, Name: aws.String("test-table")}
 
-	_, err := table.Get()
+	_, err := table.GetGeneralSettings()
 	mockClient.AssertExpectations(t)
 	require.NoError(t, err)
 }

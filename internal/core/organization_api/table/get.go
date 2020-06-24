@@ -21,15 +21,12 @@ package table
 import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/organization/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-// Get retrieves account details from the table.
-func (table *OrganizationsTable) Get() (*models.GeneralSettings, error) {
-	zap.L().Debug("retrieving general settings from dynamo")
+func (table *OrganizationsTable) GetGeneralSettings() (*models.GeneralSettings, error) {
 	response, err := table.client.GetItem(&dynamodb.GetItemInput{Key: settingsKey, TableName: table.Name})
 	if err != nil {
 		return nil, &genericapi.AWSError{Method: "dynamodb.GetItem", Err: err}
