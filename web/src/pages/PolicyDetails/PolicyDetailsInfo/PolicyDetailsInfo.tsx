@@ -49,7 +49,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
   const { showModal } = useModal();
 
   return (
-    <Box as="article">
+    <React.Fragment>
       <Flex spacing={4} mb={6} justify="flex-end">
         <Button as={RRLink} to={urls.compliance.policies.edit(policy.id)}>
           Edit
@@ -215,7 +215,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
           </SimpleGrid>
         </Card>
       </Card>
-    </Box>
+    </React.Fragment>
   );
 };
 

@@ -36,7 +36,7 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
   const { showModal } = useModal();
 
   return (
-    <Box as="article">
+    <React.Fragment>
       <Flex spacing={4} mb={6} justify="flex-end">
         <Button as={RRLink} to={urls.logAnalysis.rules.edit(rule.id)}>
           Edit
@@ -127,7 +127,7 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
             <Flex spacing={5}>
               <Flex direction="column" spacing={2} color="gray-450" flexShrink={0}>
                 <Box aria-describedby="tags-list">Tags</Box>
-                <Box aria-describedby="deduplication-period">Ignore Pattens</Box>
+                <Box aria-describedby="deduplication-period">Deduplication Period</Box>
               </Flex>
               <Flex direction="column" spacing={2}>
                 {rule.tags.length > 0 ? (
@@ -164,7 +164,7 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
           </SimpleGrid>
         </Card>
       </Card>
-    </Box>
+    </React.Fragment>
   );
 };
 
