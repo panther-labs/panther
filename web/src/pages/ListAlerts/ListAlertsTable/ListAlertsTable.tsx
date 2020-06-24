@@ -59,6 +59,7 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
           >
             Created At
           </Table.SortableHeaderCell>
+          <Table.HeaderCell align="right">Last Matched At</Table.HeaderCell>
         </Table.Row>
       </Table.Head>
       <Table.Body>
@@ -92,6 +93,7 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
               </Box>
             </Table.Cell>
             <Table.Cell align="right">{formatDatetime(alert.creationTime)}</Table.Cell>
+            <Table.Cell align="right">{formatDatetime(alert.updateTime)}</Table.Cell>
           </Table.Row>
         ))}
       </Table.Body>

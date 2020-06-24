@@ -22,7 +22,7 @@ import GenerateFiltersGroup from 'Components/utils/GenerateFiltersGroup';
 import { capitalize, formatTime } from 'Helpers/utils';
 import FormikTextInput from 'Components/fields/TextInput';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
-import { Box, Button, Card, Collapse, Flex, Icon } from 'pouncejs';
+import { Box, Button, Card, Collapse, Flex } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import isEmpty from 'lodash-es/isEmpty';
 import isNumber from 'lodash-es/isNumber';
@@ -55,8 +55,13 @@ export const filters = {
     props: {
       label: 'Date Start',
       placeholder: 'YYYY-MM-DDTHH:mm:ss',
-      type: 'datetime-local',
-      step: 1,
+      height: 46,
+      onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
+        e.target.type = 'datetime-local';
+      },
+      onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
+        e.target.type = 'text';
+      },
     },
   },
   createdAtBefore: {
@@ -64,8 +69,13 @@ export const filters = {
     props: {
       label: 'Date End',
       placeholder: 'YYYY-MM-DDTHH:mm:ss',
-      type: 'datetime-local',
-      step: 1,
+      height: 46,
+      onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
+        e.target.type = 'datetime-local';
+      },
+      onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
+        e.target.type = 'text';
+      },
     },
   },
   ruleIdContains: {
