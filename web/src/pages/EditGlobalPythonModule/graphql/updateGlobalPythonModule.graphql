@@ -1,0 +1,5 @@
+mutation UpdateGlobalPythonModule($input: ModifyGlobalPythonModuleInput!) {
+  updateGlobalPythonlModule(input: $input) {
+    ...GlobalPythonModuleFull
+  }
+}

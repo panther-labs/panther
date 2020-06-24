@@ -59,7 +59,7 @@ const BaseRuleFormEditorSection: React.FC<BaseRuleFormEditorSectionProps> = ({ t
           />
           <Text size="small" color="gray-200" mt={3}>
             Need to define re-usable functions? Define them in a
-            <Link ml={1} as={RRLink} to={urls.settings.globalModule()}>
+            <Link ml={1} as={RRLink} to={urls.settings.globalPythonModules.list()}>
               global module
             </Link>
           </Text>

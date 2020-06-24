@@ -615,6 +615,16 @@ Resources:
       EnableDnsHostnames: true
       CidrBlock: !FindInMap [SubnetConfig, VPC, CIDR]
 
+  FlowLogs:
+    DependsOn: AuditLogsBucketPolicy
+    Type: AWS::EC2::FlowLog
+    Properties:
+      LogDestination: !Sub ${AuditLogs.Arn}/${VPC}/
+      LogDestinationType: s3
+      ResourceId: !Ref VPC
+      ResourceType: VPC
+      TrafficType: ALL
+
   # We define a public subnet so that we can access our web server from a public IP. The empty
   # string in !GetAZs is equivalent to AWS::Region
   PublicSubnetOne:
@@ -932,9 +942,6 @@ Outputs:
     Value: !Ref Source
 
   # Networking + elb
-  VpcId:
-    Description: Web VPC ID
-    Value: !Ref VPC
   SubnetOneId:
     Description: Public subnet one
     Value: !Ref PublicSubnetOne

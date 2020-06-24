@@ -1,3 +1,5 @@
+package sources
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,23 +18,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
+import (
+	"fmt"
+)
 
-import * as Types from '../../../__generated__/schema';
+// ErrUnsupportedFileType is returned when the log processor encounters a file type
+// that is not supported and cannot process
+type ErrUnsupportedFileType struct {
+	Type string
+}
 
-import gql from 'graphql-tag';
-
-export type GlobalModuleFull = Pick<
-  Types.GlobalModuleDetails,
-  'createdAt' | 'description' | 'id' | 'lastModified' | 'body'
->;
-
-export const GlobalModuleFull = gql`
-  fragment GlobalModuleFull on GlobalModuleDetails {
-    createdAt
-    description
-    id
-    lastModified
-    body
-  }
-`;
+func (e *ErrUnsupportedFileType) Error() string {
+	return fmt.Sprintf("unsupported file type %s", e.Type)
+}

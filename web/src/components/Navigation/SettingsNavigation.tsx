@@ -33,7 +33,7 @@ const SettingsNavigation: React.FC = () => {
           <NavLink icon="settings-alt" to={urls.settings.general()} label="General" />
           <NavLink icon="organization" to={urls.settings.users()} label="Users" />
           <NavLink icon="output" to={urls.settings.destinations()} label="Destinations" />
-          <NavLink icon="wrench" to={urls.settings.globalModule()} label="Global Module" />
+          <NavLink icon="wrench" to={urls.settings.globalPythonModules.list()} label="Global Modules" />
         </FadeInTrail>
       </Flex>
     </Box>

@@ -34,28 +34,20 @@ import (
 // Sqs sends an alert to an SQS Queue.
 // nolint: dupl
 func (client *OutputClient) Sqs(alert *alertmodels.Alert, config *outputmodels.SqsConfig) *AlertDeliveryError {
-	outputMessage := &sqsOutputMessage{
-		ID:          alert.PolicyID,
-		Name:        alert.PolicyName,
-		VersionID:   alert.PolicyVersionID,
-		Description: alert.PolicyDescription,
-		Runbook:     alert.Runbook,
-		Severity:    alert.Severity,
-		Tags:        alert.Tags,
-	}
+	notification := generateNotificationFromAlert(alert)
 
-	serializedMessage, err := jsoniter.MarshalToString(outputMessage)
+	serializedMessage, err := jsoniter.MarshalToString(notification)
 	if err != nil {
 		zap.L().Error("Failed to serialize message", zap.Error(err))
 		return &AlertDeliveryError{Message: "Failed to serialize message"}
 	}
 
 	sqsSendMessageInput := &sqs.SendMessageInput{
-		QueueUrl:    config.QueueURL,
+		QueueUrl:    aws.String(config.QueueURL),
 		MessageBody: aws.String(serializedMessage),
 	}
 
-	sqsClient := client.getSqsClient(*config.QueueURL)
+	sqsClient := client.getSqsClient(config.QueueURL)
 
 	_, err = sqsClient.SendMessage(sqsSendMessageInput)
 	if err != nil {
@@ -63,17 +55,6 @@ func (client *OutputClient) Sqs(alert *alertmodels.Alert, config *outputmodels.S
 		return &AlertDeliveryError{Message: "Failed to send message to SQS queue"}
 	}
 	return nil
-}
-
-//sqsOutputMessage contains the fields that will be included in the SQS message
-type sqsOutputMessage struct {
-	ID          *string   `json:"id"`
-	Name        *string   `json:"name,omitempty"`
-	VersionID   *string   `json:"versionId,omitempty"`
-	Description *string   `json:"description,omitempty"`
-	Runbook     *string   `json:"runbook,omitempty"`
-	Severity    *string   `json:"severity"`
-	Tags        []*string `json:"tags,omitempty"`
 }
 
 func (client *OutputClient) getSqsClient(queueURL string) sqsiface.SQSAPI {

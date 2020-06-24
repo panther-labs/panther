@@ -19,7 +19,6 @@ package delivery
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
 
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
@@ -40,7 +39,7 @@ type outputStatus struct {
 func send(alert *alertmodels.Alert, output *outputmodels.AlertOutput, statusChannel chan outputStatus) {
 	commonFields := []zap.Field{
 		zap.String("outputID", *output.OutputID),
-		zap.String("policyId", *alert.PolicyID),
+		zap.String("policyId", alert.AnalysisID),
 	}
 	defer func() {
 		// If we panic when sending an alert, log an error and report back to the channel.
@@ -102,8 +101,8 @@ func dispatch(alert *alertmodels.Alert) bool {
 
 	if err != nil {
 		zap.L().Warn("failed to get the outputs for the alert",
-			zap.String("policyId", *alert.PolicyID),
-			zap.String("severity", *alert.Severity),
+			zap.String("policyId", alert.AnalysisID),
+			zap.String("severity", alert.Severity),
 			zap.Error(err),
 		)
 		return false
@@ -111,8 +110,8 @@ func dispatch(alert *alertmodels.Alert) bool {
 
 	if len(outputs) == 0 {
 		zap.L().Info("no outputs configured",
-			zap.String("policyId", *alert.PolicyID),
-			zap.String("severity", *alert.Severity),
+			zap.String("policyId", alert.AnalysisID),
+			zap.String("severity", alert.Severity),
 		)
 		return true
 	}
@@ -125,11 +124,11 @@ func dispatch(alert *alertmodels.Alert) bool {
 	}
 
 	// Wait until all outputs have finished, gathering any that need to be retried.
-	var retryOutputs []*string
+	var retryOutputs []string
 	for range outputs {
 		status := <-statusChannel
 		if status.needsRetry {
-			retryOutputs = append(retryOutputs, aws.String(status.outputID))
+			retryOutputs = append(retryOutputs, status.outputID)
 		} else if !status.success {
 			zap.L().Error(
 				"permanently failed to send alert to output",

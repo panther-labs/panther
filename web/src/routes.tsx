@@ -52,9 +52,11 @@ import LogAnalysisOverview from 'Pages/LogAnalysisOverview';
 import EditComplianceSourcePage from 'Pages/EditComplianceSource';
 import EditS3LogSourcePage from 'Pages/EditS3LogSource';
 import PromptController from 'Components/utils/PromptController';
-import EditGlobalModulePage from 'Pages/EditGlobaModule';
 import LogSourceOnboarding from 'Pages/LogSourceOnboarding';
 import { useTheme } from 'pouncejs';
+import ListGlobalPythonModulesPage from 'Pages/ListGlobalPythonModules';
+import CreateGlobalPythonModulePage from 'Pages/CreateGlobalPythonModule';
+import EditGlobalPythonModulePage from 'Pages/EditGlobalPythonModule';
 
 // Main page container for the web application, Navigation bar and Content body goes here
 const PrimaryPageLayout: React.FunctionComponent = () => {
@@ -183,7 +185,27 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                 {/* ******************* SETTINGS ***************************** */}
                 <Redirect exact from={urls.settings.home()} to={urls.settings.general()} />
                 <Route exact path={urls.settings.general()} component={GeneralSettingsPage} />
-                <Route exact path={urls.settings.globalModule()} component={EditGlobalModulePage} />
+                <Route exact path={urls.settings.general()} component={GeneralSettingsPage} />
+                <Route
+                  exact
+                  path={urls.settings.globalPythonModules.list()}
+                  component={ListGlobalPythonModulesPage}
+                />
+                <Route
+                  exact
+                  path={urls.settings.globalPythonModules.create()}
+                  component={CreateGlobalPythonModulePage}
+                />
+                <Route
+                  exact
+                  path={urls.settings.globalPythonModules.edit(':id')}
+                  component={EditGlobalPythonModulePage}
+                />
+                <Redirect
+                  exact
+                  from={`${urls.settings.globalPythonModules.list()}:id`}
+                  to={urls.settings.globalPythonModules.edit(':id')}
+                />
                 <Route exact path={urls.settings.users()} component={UsersPage} />
                 <Route exact path={urls.settings.destinations()} component={DestinationsPage} />
                 <Route component={Page404} />

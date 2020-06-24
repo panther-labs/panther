@@ -123,11 +123,11 @@ func generateViewAllHelper(viewName string, tables []*awsglue.GlueTableMetadata,
 		sqlLines = append(sqlLines, fmt.Sprintf("select %s from %s.%s",
 			pantherViewColumns.viewColumns(table), table.DatabaseName(), table.TableName()))
 		if i < len(tables)-1 {
-			sqlLines = append(sqlLines, fmt.Sprintf("\tunion all"))
+			sqlLines = append(sqlLines, "\tunion all")
 		}
 	}
 
-	sqlLines = append(sqlLines, fmt.Sprintf(";\n"))
+	sqlLines = append(sqlLines, ";\n")
 
 	return strings.Join(sqlLines, "\n"), nil
 }

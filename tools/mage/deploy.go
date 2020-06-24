@@ -369,6 +369,7 @@ func deployBootstrapGatewayStack(
 		"AthenaResultsBucket":        outputs["AthenaResultsBucket"],
 		"AuditLogsBucket":            outputs["AuditLogsBucket"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+		"CustomResourceVersion":      customResourceVersion(),
 		"ImageRegistryName":          outputs["ImageRegistryName"],
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
 		"ProcessedDataBucket":        outputs["ProcessedDataBucket"],
@@ -389,7 +390,7 @@ func buildLayer(libs []string) error {
 	if err := os.RemoveAll(layerSourceDir); err != nil {
 		return fmt.Errorf("failed to remove layer directory %s: %v", layerSourceDir, err)
 	}
-	if err := os.MkdirAll(layerSourceDir, 0755); err != nil {
+	if err := os.MkdirAll(layerSourceDir, 0700); err != nil {
 		return fmt.Errorf("failed to create layer directory %s: %v", layerSourceDir, err)
 	}
 	args := append([]string{"install", "-t", layerSourceDir}, libs...)
@@ -413,13 +414,14 @@ func buildLayer(libs []string) error {
 
 func deployAppsyncStack(outputs map[string]string) error {
 	_, err := deployTemplate(appsyncTemplate, outputs["SourceBucket"], appsyncStack, map[string]string{
-		"AlarmTopicArn":  outputs["AlarmTopicArn"],
-		"AnalysisApi":    "https://" + outputs["AnalysisApiEndpoint"],
-		"ApiId":          outputs["GraphQLApiId"],
-		"ComplianceApi":  "https://" + outputs["ComplianceApiEndpoint"],
-		"RemediationApi": "https://" + outputs["RemediationApiEndpoint"],
-		"ResourcesApi":   "https://" + outputs["ResourcesApiEndpoint"],
-		"ServiceRole":    outputs["AppsyncServiceRoleArn"],
+		"AlarmTopicArn":         outputs["AlarmTopicArn"],
+		"AnalysisApi":           "https://" + outputs["AnalysisApiEndpoint"],
+		"ApiId":                 outputs["GraphQLApiId"],
+		"ComplianceApi":         "https://" + outputs["ComplianceApiEndpoint"],
+		"CustomResourceVersion": customResourceVersion(),
+		"RemediationApi":        "https://" + outputs["RemediationApiEndpoint"],
+		"ResourcesApi":          "https://" + outputs["ResourcesApiEndpoint"],
+		"ServiceRole":           outputs["AppsyncServiceRoleArn"],
 	})
 	return err
 }
@@ -430,6 +432,7 @@ func deployCloudSecurityStack(settings *config.PantherConfig, outputs map[string
 		"AnalysisApiId":              outputs["AnalysisApiId"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"ComplianceApiId":            outputs["ComplianceApiId"],
+		"CustomResourceVersion":      customResourceVersion(),
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
 		"ProcessedDataBucket":        outputs["ProcessedDataBucket"],
@@ -455,6 +458,7 @@ func deployCoreStack(settings *config.PantherConfig, outputs map[string]string) 
 		"CompanyDisplayName":         settings.Setup.Company.DisplayName,
 		"CompanyEmail":               settings.Setup.Company.Email,
 		"ComplianceApiId":            outputs["ComplianceApiId"],
+		"CustomResourceVersion":      customResourceVersion(),
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 		"DynamoScalingRoleArn":       outputs["DynamoScalingRoleArn"],
 		"InitialAnalysisPackUrls":    strings.Join(settings.Setup.InitialAnalysisSets, ","),
@@ -489,6 +493,7 @@ func deployLogAnalysisStack(settings *config.PantherConfig, outputs map[string]s
 		"AnalysisApiId":                outputs["AnalysisApiId"],
 		"AthenaResultsBucket":          outputs["AthenaResultsBucket"],
 		"CloudWatchLogRetentionDays":   strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+		"CustomResourceVersion":        customResourceVersion(),
 		"Debug":                        strconv.FormatBool(settings.Monitoring.Debug),
 		"LayerVersionArns":             settings.Infra.BaseLayerVersionArns,
 		"LogProcessorLambdaMemorySize": strconv.Itoa(settings.Infra.LogProcessorLambdaMemorySize),
@@ -506,12 +511,12 @@ func deployOnboardStack(settings *config.PantherConfig, outputs map[string]strin
 	var err error
 	if settings.Setup.OnboardSelf {
 		_, err = deployTemplate(onboardTemplate, outputs["SourceBucket"], onboardStack, map[string]string{
-			"AlarmTopicArn":      outputs["AlarmTopicArn"],
-			"AuditLogsBucket":    outputs["AuditLogsBucket"],
-			"EnableCloudTrail":   strconv.FormatBool(settings.Setup.EnableCloudTrail),
-			"EnableGuardDuty":    strconv.FormatBool(settings.Setup.EnableGuardDuty),
-			"EnableS3AccessLogs": strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
-			"VpcId":              outputs["VpcId"],
+			"AlarmTopicArn":         outputs["AlarmTopicArn"],
+			"AuditLogsBucket":       outputs["AuditLogsBucket"],
+			"CustomResourceVersion": customResourceVersion(),
+			"EnableCloudTrail":      strconv.FormatBool(settings.Setup.EnableCloudTrail),
+			"EnableGuardDuty":       strconv.FormatBool(settings.Setup.EnableGuardDuty),
+			"EnableS3AccessLogs":    strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
 		})
 	} else {
 		// Delete the onboard stack if OnboardSelf was toggled off
@@ -519,4 +524,17 @@ func deployOnboardStack(settings *config.PantherConfig, outputs map[string]strin
 	}
 
 	return err
+}
+
+// Determine the custom resource "version" - if this value changes, it will force an update for
+// most of our CloudFormation custom resources.
+func customResourceVersion() string {
+	if v := os.Getenv("CUSTOM_RESOURCE_VERSION"); v != "" {
+		return v
+	}
+
+	// By default, just use the major release version so developers do not have to trigger every
+	// custom resource on every deploy.
+	// The gitVersion is "v0.3.0" on tagged release, otherwise something like "v0.3.0-128-g77fd9ff"
+	return strings.Split(gitVersion, "-")[0]
 }

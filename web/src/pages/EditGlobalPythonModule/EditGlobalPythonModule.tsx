@@ -19,36 +19,38 @@
 import React from 'react';
 import Panel from 'Components/Panel';
 import { Alert, Card, Box, useSnackbar } from 'pouncejs';
-import GlobalModuleForm from 'Components/forms/GlobalModuleForm';
+import useRouter from 'Hooks/useRouter';
+import GlobalPythonModuleForm from 'Components/forms/GlobalPythonModuleForm';
 import withSEO from 'Hoc/withSEO';
-import { GlobalModuleDetails } from 'Generated/schema';
+import { GlobalPythonModule } from 'Generated/schema';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { extractErrorMessage } from 'Helpers/utils';
-import { useGlobalModuleDetails } from './graphql/globalModuleDetails.generated';
-import { useUpdateGlobalModule } from './graphql/updateGlobalModule.generated';
+import { useGlobalPythonModuleDetails } from './graphql/globalPythonModuleDetails.generated';
+import { useUpdateGlobalPythonModule } from './graphql/updateGlobalPythonModule.generated';
 
-export const defaultInitialValues: Pick<GlobalModuleDetails, 'id' | 'description' | 'body'> = {
+export const defaultInitialValues: Pick<GlobalPythonModule, 'id' | 'description' | 'body'> = {
   description: '',
   id: '',
   body: '',
 };
-const EditGlobalModulePage: React.FC = () => {
+const EditGlobalPythonModulePage: React.FC = () => {
+  const { match } = useRouter<{ id: string }>();
   const { pushSnackbar } = useSnackbar();
 
   const {
     error: fetchPolicyError,
     data: queryData,
-    loading: isFetchingPolicy,
-  } = useGlobalModuleDetails({
+    loading: isFetchingGlobalPythonModule,
+  } = useGlobalPythonModuleDetails({
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
-        globalId: 'panther',
+        globalId: match.params.id,
       },
     },
   });
 
-  const [updateGlobalModule, { error: updateError }] = useUpdateGlobalModule({
+  const [updateGlobalPythonModule, { error: updateError }] = useUpdateGlobalPythonModule({
     onCompleted: () =>
       pushSnackbar({
         variant: 'success',
@@ -57,7 +59,7 @@ const EditGlobalModulePage: React.FC = () => {
   });
 
   const handleSubmit = React.useCallback(
-    values => updateGlobalModule({ variables: { input: values } }),
+    values => updateGlobalPythonModule({ variables: { input: values } }),
     []
   );
 
@@ -70,7 +72,7 @@ const EditGlobalModulePage: React.FC = () => {
     return defaultInitialValues;
   }, [queryData]);
 
-  if (isFetchingPolicy) {
+  if (isFetchingGlobalPythonModule) {
     return (
       <Card p={9}>
         <TablePlaceholder rowCount={5} rowHeight={15} />
@@ -97,7 +99,7 @@ const EditGlobalModulePage: React.FC = () => {
   return (
     <Box mb={6}>
       <Panel title="Global Module">
-        <GlobalModuleForm initialValues={initialValues} onSubmit={handleSubmit} />
+        <GlobalPythonModuleForm initialValues={initialValues} onSubmit={handleSubmit} />
       </Panel>
       {updateError && (
         <Box mt={2} mb={6}>
@@ -114,4 +116,4 @@ const EditGlobalModulePage: React.FC = () => {
   );
 };
 
-export default withSEO({ title: 'Global Module' })(EditGlobalModulePage);
+export default withSEO({ title: 'Global Module' })(EditGlobalPythonModulePage);

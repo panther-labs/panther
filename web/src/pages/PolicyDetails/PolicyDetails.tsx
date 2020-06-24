@@ -109,9 +109,7 @@ const PolicyDetailsPage = () => {
                 count={getComplianceItemsTotalCount(totalCounts)}
                 text="All"
                 isActive={!requestParams.status && !requestParams.suppressed}
-                onClick={() =>
-                  setRequestParamsAndResetPaging({ status: undefined, suppressed: undefined })
-                }
+                onClick={() => setRequestParamsAndResetPaging({})}
               />
               <TableControlsComplianceFilter
                 count={totalCounts.active.fail}
@@ -148,7 +146,6 @@ const PolicyDetailsPage = () => {
                 isActive={!requestParams.status && requestParams.suppressed}
                 onClick={() =>
                   setRequestParamsAndResetPaging({
-                    status: undefined,
                     suppressed: true,
                   })
                 }
