@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Label, Link, Table } from 'pouncejs';
+import { AbstractButton, Box, Link, Table } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/SeverityBadge';
@@ -47,10 +47,11 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
     <Table>
       <Table.Head>
         <Table.Row>
-          <Table.HeaderCell />
-          <Table.HeaderCell>Severity</Table.HeaderCell>
-          <Table.HeaderCell>Title</Table.HeaderCell>
+          <Table.HeaderCell>Alert</Table.HeaderCell>
+          <Table.HeaderCell align="right">Event Count</Table.HeaderCell>
+          <Table.HeaderCell align="center">Severity</Table.HeaderCell>
           <Table.SortableHeaderCell
+            align="right"
             onClick={() => handleSort(ListAlertsSortFieldsEnum.CreatedAt)}
             sortDir={
               sortBy === ListAlertsSortFieldsEnum.CreatedAt ? sortDir : SortDirEnum.Descending
@@ -58,33 +59,39 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
           >
             Created At
           </Table.SortableHeaderCell>
-          <Table.HeaderCell>Rule ID</Table.HeaderCell>
-          <Table.HeaderCell>Alert ID</Table.HeaderCell>
-          <Table.HeaderCell align="right">Event Count</Table.HeaderCell>
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {items.map((alert, index) => (
+        {items.map(alert => (
           <Table.Row key={alert.alertId}>
-            <Table.Cell>
-              <Label color="grey200" size="small">
-                {index + 1}
-              </Label>
+            <Table.Cell maxWidth={400} truncated title={alert.title}>
+              <Link as={RRLink} to={urls.logAnalysis.alerts.details(alert.alertId)} py={4} mr={4}>
+                {alert.title} #{shortenId(alert.alertId)}
+              </Link>
+              <AbstractButton
+                as={RRLink}
+                to={urls.logAnalysis.rules.details(alert.ruleId)}
+                fontSize="small"
+                borderRadius="pill"
+                border="1px solid"
+                borderColor="navyblue-450"
+                _hover={{
+                  backgroundColor: 'navyblue-450',
+                }}
+                my={-1}
+                py={1}
+                px={4}
+              >
+                View Rule
+              </AbstractButton>
             </Table.Cell>
-            <Table.Cell>
-              <Box my={-1}>
-                {alert.severity ? <SeverityBadge severity={alert.severity} /> : 'Not available'}
+            <Table.Cell align="right">{alert.eventsMatched}</Table.Cell>
+            <Table.Cell align="center">
+              <Box my={-1} display="inline-block">
+                <SeverityBadge severity={alert.severity} />
               </Box>
             </Table.Cell>
-            <Table.Cell maxWidth={400} truncated title={alert.title}>
-              <Link as={RRLink} to={urls.logAnalysis.alerts.details(alert.alertId)} py={4} pr={4}>
-                {alert.title}
-              </Link>
-            </Table.Cell>
-            <Table.Cell>{formatDatetime(alert.creationTime)}</Table.Cell>
-            <Table.Cell>{alert.ruleId}</Table.Cell>
-            <Table.Cell>{shortenId(alert.alertId)}</Table.Cell>
-            <Table.Cell align="right">{alert.eventsMatched}</Table.Cell>
+            <Table.Cell align="right">{formatDatetime(alert.creationTime)}</Table.Cell>
           </Table.Row>
         ))}
       </Table.Body>

@@ -17,11 +17,12 @@
  */
 
 import React from 'react';
-import { Label, Link, Table } from 'pouncejs';
+import { AbstractButton, Box, Link, Table } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import { formatDatetime, shortenId } from 'Helpers/utils';
 import { ListAlertsForRule } from '../graphql/listAlertsForRule.generated';
+import SeverityBadge from 'Components/SeverityBadge';
 
 interface RuleDetailsAlertsTableProps {
   alerts: ListAlertsForRule['alerts']['alertSummaries'];
@@ -32,7 +33,6 @@ const RuleDetailsAlertsTable: React.FC<RuleDetailsAlertsTableProps> = ({ alerts 
     <Table>
       <Table.Head>
         <Table.Row>
-          <Table.HeaderCell />
           <Table.HeaderCell>Title</Table.HeaderCell>
           <Table.HeaderCell>Created At</Table.HeaderCell>
           <Table.HeaderCell>Alert ID</Table.HeaderCell>
@@ -41,20 +41,20 @@ const RuleDetailsAlertsTable: React.FC<RuleDetailsAlertsTableProps> = ({ alerts 
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {alerts.map((alert, index) => (
+        {alerts.map(alert => (
           <Table.Row key={alert.alertId}>
-            <Table.Cell>
-              <Label size="medium">{index + 1}</Label>
-            </Table.Cell>
-            <Table.Cell maxWidth={450} truncated title={alert.title}>
+            <Table.Cell maxWidth={400} truncated title={alert.title}>
               <Link as={RRLink} to={urls.logAnalysis.alerts.details(alert.alertId)} py={4} pr={4}>
-                {alert.title}
+                {alert.title} #{shortenId(alert.alertId)}
               </Link>
             </Table.Cell>
-            <Table.Cell>{formatDatetime(alert.creationTime)}</Table.Cell>
-            <Table.Cell>{shortenId(alert.alertId)}</Table.Cell>
             <Table.Cell align="right">{alert.eventsMatched}</Table.Cell>
-            <Table.Cell>{formatDatetime(alert.updateTime)}</Table.Cell>
+            <Table.Cell align="center">
+              <Box my={-1} display="inline-block">
+                <SeverityBadge severity={alert.severity} />
+              </Box>
+            </Table.Cell>
+            <Table.Cell align="right">{formatDatetime(alert.creationTime)}</Table.Cell>
           </Table.Row>
         ))}
       </Table.Body>

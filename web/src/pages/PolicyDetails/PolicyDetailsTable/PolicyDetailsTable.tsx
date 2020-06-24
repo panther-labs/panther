@@ -40,7 +40,7 @@ const PolicyDetailsTable: React.FC<PolicyDetailsTableProps> = ({ items }) => {
           <Table.HeaderCell>Resource</Table.HeaderCell>
           <Table.HeaderCell>Source</Table.HeaderCell>
           <Table.HeaderCell align="center">Status</Table.HeaderCell>
-          <Table.HeaderCell>Last Modified</Table.HeaderCell>
+          <Table.HeaderCell align="right">Last Modified</Table.HeaderCell>
           <Table.HeaderCell />
         </Table.Row>
       </Table.Head>
@@ -68,7 +68,7 @@ const PolicyDetailsTable: React.FC<PolicyDetailsTableProps> = ({ items }) => {
                 />
               </Box>
             </Table.Cell>
-            <Table.Cell>{formatDatetime(resource.lastUpdated)}</Table.Cell>
+            <Table.Cell align="right">{formatDatetime(resource.lastUpdated)}</Table.Cell>
             <Table.Cell align="right">
               <Box my={-1}>
                 <PolicyDetailsTableRowOptions complianceItem={resource} />

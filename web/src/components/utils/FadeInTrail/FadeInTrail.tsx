@@ -7,7 +7,7 @@ const FadeInTrail: React.FC<FadeInTrailProps> = ({ children, ...rest }) => {
   return (
     <React.Fragment>
       {React.Children.map(children, (child, index) => (
-        <FadeIn delay={50 * index} {...rest}>
+        <FadeIn delay={30 * index} {...rest}>
           {child}
         </FadeIn>
       ))}

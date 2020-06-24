@@ -121,7 +121,7 @@ const RuleDetailsPage = () => {
       <ErrorBoundary>
         <RuleDetailsInfo rule={ruleDetailsData.rule} />
       </ErrorBoundary>
-      <Box mt={2} mb={6}>
+      <Box mt={5} mb={6}>
         <Panel title="Alerts">
           <ErrorBoundary>
             <RuleDetailsAlertsTable alerts={listAlertsData.alerts.alertSummaries} />

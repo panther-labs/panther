@@ -116,7 +116,7 @@ const ListRulesActions: React.FC = () => {
 
   return (
     <Box mb={6} as="section">
-      <Flex justify="flex-end" mb={6}>
+      <Flex justify="flex-end">
         <Flex spacing={5} justify="flex-end">
           <Button
             variant="outline"

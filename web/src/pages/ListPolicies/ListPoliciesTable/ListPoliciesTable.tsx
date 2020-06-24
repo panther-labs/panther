@@ -85,6 +85,7 @@ const ListPoliciesTable: React.FC<ListPoliciesTableProps> = ({
           <Table.SortableHeaderCell
             onClick={() => handleSort(ListPoliciesSortFieldsEnum.LastModified)}
             sortDir={sortBy === ListPoliciesSortFieldsEnum.LastModified ? sortDir : false}
+            align="right"
           >
             Last Modified
           </Table.SortableHeaderCell>
@@ -119,7 +120,7 @@ const ListPoliciesTable: React.FC<ListPoliciesTableProps> = ({
                   <StatusBadge status={policy.complianceStatus} disabled={!policy.enabled} />
                 </Box>
               </Table.Cell>
-              <Table.Cell wrapText="nowrap">{formatDatetime(policy.lastModified)}</Table.Cell>
+              <Table.Cell wrapText="nowrap" align="right">{formatDatetime(policy.lastModified)}</Table.Cell>
               <Table.Cell align="right">
                 <Box my={-1}>
                   <ListPoliciesTableRowOptions policy={policy} />

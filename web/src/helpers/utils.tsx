@@ -328,9 +328,3 @@ export const remToPx = (rem: string) => {
   return parseFloat(rem) * parseFloat(getComputedStyle(document.documentElement).fontSize);
 };
 
-/**
- * Converts a rem measurement (i.e. `0.29rem`) to pixels. Returns the number of pixels
- */
-export const remToPx = (rem: string) => {
-  return parseFloat(rem) * parseFloat(getComputedStyle(document.documentElement).fontSize);
-};

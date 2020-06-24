@@ -26,6 +26,7 @@ import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/SeverityBadge';
 import { ListRules } from 'Pages/ListRules';
 import ListRulesTableRowOptions from './ListRulesTableRowOptions';
+import FadeInTrail from 'Components/utils/FadeInTrail';
 
 interface ListRulesTableProps {
   items?: ListRules['rules']['rules'];
@@ -79,6 +80,7 @@ const ListRulesTable: React.FC<ListRulesTableProps> = ({ items, onSort, sortBy, 
           <Table.SortableHeaderCell
             onClick={() => handleSort(ListRulesSortFieldsEnum.LastModified)}
             sortDir={sortBy === ListRulesSortFieldsEnum.LastModified ? sortDir : false}
+            align="right"
           >
             Last Modified
           </Table.SortableHeaderCell>
@@ -86,40 +88,42 @@ const ListRulesTable: React.FC<ListRulesTableProps> = ({ items, onSort, sortBy, 
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {items.map(rule => (
-          <Table.Row key={rule.id}>
-            <Table.Cell maxWidth={450} wrapText="wrap">
-              <Link as={RRLink} to={urls.logAnalysis.rules.details(rule.id)} py={4} pr={4}>
-                {rule.displayName || rule.id}
-              </Link>
-            </Table.Cell>
-            <Table.Cell maxWidth={225} truncated>
-              {rule.logTypes.length
-                ? rule.logTypes.map(logType => (
-                    <React.Fragment key={logType}>
-                      {logType} <br />
-                    </React.Fragment>
-                  ))
-                : 'All resources'}
-            </Table.Cell>
-            <Table.Cell align="center">
-              <Box my={-1} display="inline-block">
-                <StatusBadge status="ENABLED" disabled={!rule.enabled} />
-              </Box>
-            </Table.Cell>
-            <Table.Cell align="center">
-              <Box my={-1} display="inline-block">
-                <SeverityBadge severity={rule.severity} />
-              </Box>
-            </Table.Cell>
-            <Table.Cell>{formatDatetime(rule.lastModified)}</Table.Cell>
-            <Table.Cell>
-              <Box my={-1}>
-                <ListRulesTableRowOptions rule={rule} />
-              </Box>
-            </Table.Cell>
-          </Table.Row>
-        ))}
+        <FadeInTrail as={Table.Row} duration={100}>
+          {items.map(rule => (
+            <React.Fragment key={rule.id}>
+              <Table.Cell maxWidth={450} wrapText="wrap">
+                <Link as={RRLink} to={urls.logAnalysis.rules.details(rule.id)} py={4} pr={4}>
+                  {rule.displayName || rule.id}
+                </Link>
+              </Table.Cell>
+              <Table.Cell maxWidth={225} truncated>
+                {rule.logTypes.length
+                  ? rule.logTypes.map(logType => (
+                      <React.Fragment key={logType}>
+                        {logType} <br />
+                      </React.Fragment>
+                    ))
+                  : 'All resources'}
+              </Table.Cell>
+              <Table.Cell align="center">
+                <Box my={-1} display="inline-block">
+                  <StatusBadge status="ENABLED" disabled={!rule.enabled} />
+                </Box>
+              </Table.Cell>
+              <Table.Cell align="center">
+                <Box my={-1} display="inline-block">
+                  <SeverityBadge severity={rule.severity} />
+                </Box>
+              </Table.Cell>
+              <Table.Cell align="right">{formatDatetime(rule.lastModified)}</Table.Cell>
+              <Table.Cell>
+                <Box my={-1}>
+                  <ListRulesTableRowOptions rule={rule} />
+                </Box>
+              </Table.Cell>
+            </React.Fragment>
+          ))}
+        </FadeInTrail>
       </Table.Body>
     </Table>
   );

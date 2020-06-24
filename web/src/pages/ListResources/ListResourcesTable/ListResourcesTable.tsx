@@ -82,6 +82,7 @@ const ListResourcesTable: React.FC<ListResourcesTableProps> = ({
           <Table.SortableHeaderCell
             onClick={() => handleSort(ListResourcesSortFieldsEnum.LastModified)}
             sortDir={sortBy === ListResourcesSortFieldsEnum.LastModified ? sortDir : false}
+            align="right"
           >
             Last Modified
           </Table.SortableHeaderCell>
@@ -103,7 +104,7 @@ const ListResourcesTable: React.FC<ListResourcesTableProps> = ({
                   <StatusBadge status={resource.complianceStatus} />
                 </Box>
               </Table.Cell>
-              <Table.Cell>{formatDatetime(resource.lastModified)}</Table.Cell>
+              <Table.Cell align="right">{formatDatetime(resource.lastModified)}</Table.Cell>
             </React.Fragment>
           ))}
         </FadeInTrail>
