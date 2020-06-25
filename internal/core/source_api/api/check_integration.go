@@ -193,7 +193,7 @@ func evaluateIntegration(api API, integration *models.CheckIntegrationInput) (st
 		}
 
 		if !status.KMSKeyStatus.Healthy {
-			return "log processing role cannot access kms key", status.KMSKeyStatus.Healthy, nil
+			return "log processing role cannot access kms key", false, nil
 		}
 		return "", true, nil
 	default:
