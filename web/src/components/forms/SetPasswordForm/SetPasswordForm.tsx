@@ -90,7 +90,7 @@ const SetPasswordForm: React.FC = () => {
             />
           </Box>
           <SubmitButton fullWidth>Set password</SubmitButton>
-          <Text size="small" mt={4} color="grey200">
+          <Text size="small" mt={4} color="gray-200">
             By continuing, you agree to Panther&apos;s&nbsp;
             <Link
               external

@@ -107,7 +107,7 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({
       {...rest}
     >
       <Box width={400}>
-        <Heading size="medium" mb={8} id="sidesheet-title">
+        <Heading mb={8} id="sidesheet-title">
           Upload {isPolicy ? 'Policies' : 'Rules'}
         </Heading>
         <Text size="large" color="gray-100" mb={8} as="p" id="sidesheet-description">

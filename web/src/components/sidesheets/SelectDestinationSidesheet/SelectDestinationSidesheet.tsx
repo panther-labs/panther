@@ -98,7 +98,7 @@ export const SelectDestinationSidesheet: React.FC<SideSheetProps> = props => {
     >
       <Box width={465}>
         <Box mb={8}>
-          <Heading size="medium" mb={8} id="sidesheet-title">
+          <Heading mb={8} id="sidesheet-title">
             Select an Alert Destination
           </Heading>
           <Text size="large" color="grey400" id="sidesheet-description">

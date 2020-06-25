@@ -146,7 +146,7 @@ const StackDeployment: React.FC = () => {
 
   return (
     <Box>
-      <Heading size="medium" m="auto" mb={2}>
+      <Heading m="auto" mb={2}>
         Deploy your configured stack
       </Heading>
       <Text size="large" color="gray-300" as="p" mb={10}>

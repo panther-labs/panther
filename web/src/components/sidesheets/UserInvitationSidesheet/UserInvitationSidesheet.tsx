@@ -56,7 +56,7 @@ const UserInvitationSidesheet: React.FC<SideSheetProps> = props => {
   return (
     <SideSheet {...props}>
       <Box width={425} m="auto">
-        <Heading size="medium" mb={8} aria-labelledby="role-disclaimer">
+        <Heading mb={8} aria-labelledby="role-disclaimer">
           Invite User
         </Heading>
         <Text size="large" color="gray-200" mb={8}>

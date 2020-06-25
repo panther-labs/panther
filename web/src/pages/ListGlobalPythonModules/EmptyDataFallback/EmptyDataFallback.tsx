@@ -27,15 +27,13 @@ const EmptyDataFallback: React.FC = () => (
     <Box m={10}>
       <img alt="Empty data illustration" src={EmptyDataImg} width="auto" height={400} />
     </Box>
-    <Heading size="medium" color="grey400" mb={6}>
+    <Heading  mb={6}>
       It{"'"}s empty in here
     </Heading>
     <Text size="large" color="grey200" textAlign="center" mb={10}>
       You don{"'"}t seem to have any Global Python module set yet. <br />
     </Text>
     <Button
-      size="large"
-      variant="primary"
       as={RRLink}
       to={urls.settings.globalPythonModules.create()}
     >

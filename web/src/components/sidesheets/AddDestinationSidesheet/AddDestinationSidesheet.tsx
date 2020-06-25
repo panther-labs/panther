@@ -233,7 +233,7 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({
               })
             }
           />
-          <Heading size="medium" ml={4} id="add-destination-title">
+          <Heading ml={4} id="add-destination-title">
             {capitalize(destinationType)} Configuration
           </Heading>
         </Flex>

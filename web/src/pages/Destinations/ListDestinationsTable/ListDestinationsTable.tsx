@@ -30,7 +30,6 @@ const ListDestinationsTable: React.FC<ListDestinationsTableProps> = ({ destinati
     <Table>
       <Table.Head>
         <Table.Row>
-          <Table.HeaderCell />
           <Table.HeaderCell>Display Name</Table.HeaderCell>
           <Table.HeaderCell>Integrated Service</Table.HeaderCell>
           <Table.HeaderCell>Associated Severities</Table.HeaderCell>
@@ -39,11 +38,8 @@ const ListDestinationsTable: React.FC<ListDestinationsTableProps> = ({ destinati
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {destinations.map((destination, index) => (
+        {destinations.map((destination) => (
           <Table.Row key={destination.outputId}>
-            <Table.Cell>
-              <Label size="medium">{index + 1}</Label>
-            </Table.Cell>
             <Table.Cell>{destination.displayName}</Table.Cell>
             <Table.Cell>{destination.outputType}</Table.Cell>
             <Table.Cell>

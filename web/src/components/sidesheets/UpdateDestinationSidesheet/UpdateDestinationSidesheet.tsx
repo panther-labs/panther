@@ -219,7 +219,7 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
   return (
     <SideSheet aria-labelledby="sidesheet-title" onClose={onClose} {...rest}>
       <Box width={465}>
-        <Heading size="medium" mb={8} id="sidesheet-title">
+        <Heading mb={8} id="sidesheet-title">
           Update {destination.outputType}
         </Heading>
         {updateDestinationError && (
