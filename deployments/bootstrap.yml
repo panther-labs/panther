@@ -539,19 +539,6 @@ Resources:
         AdvancedSecurityMode: ENFORCED
       UserPoolName: panther-users
 
-  AppClient:
-    Type: AWS::Cognito::UserPoolClient
-    Properties:
-      ClientName: Panther
-      GenerateSecret: false
-      RefreshTokenValidity: 1
-      UserPoolId: !Ref UserPool
-      PreventUserExistenceErrors: ENABLED
-      WriteAttributes:
-        - email
-        - given_name
-        - family_name
-
   ########## Dynamo ##########
   DynamoScalingRole:
     Type: AWS::IAM::Role
@@ -988,9 +975,6 @@ Outputs:
   UserPoolId:
     Description: Cognito user pool ID
     Value: !Ref UserPool
-  AppClientId:
-    Description: Cognito user pool client ID
-    Value: !Ref AppClient
 
   # Dynamo
   DynamoScalingRoleArn:

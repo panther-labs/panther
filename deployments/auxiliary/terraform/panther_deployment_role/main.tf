@@ -113,6 +113,7 @@ resource "aws_iam_policy" "deployment" {
           "lambda:*EventSourceMapping",
           "lambda:List*",
           "logs:*",
+          "s3:ListAllMyBuckets",
           "sns:List*",
           "sqs:List*",
           "states:CreateStateMachine",
