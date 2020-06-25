@@ -37,7 +37,7 @@ const ResourcesByPlatform: React.FC<ResourcesByPlatformProps> = ({ resources }) 
 
   return (
     <Flex height="100%">
-      <ChartSummary total={resources.byType.length} title="Resource Types" color="grey200" />
+      <ChartSummary total={resources.byType.length} title="Resource Types" color="gray-200" />
       <BarChart data={allResourcesChartData} alignment="horizontal" />
     </Flex>
   );

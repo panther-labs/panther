@@ -77,7 +77,7 @@ export const TotpForm: React.FC = () => {
           />
         </Box>
         <SubmitButton fullWidth>Verify</SubmitButton>
-        <Text color="grey200" size="small" mt={10} textAlign="center">
+        <Text color="gray-200" size="small" mt={10} textAlign="center">
           Open any two-factor authentication app, scan the barcode and then enter the MFA code to
           complete the sign-in. Popular software options include{' '}
           <Link

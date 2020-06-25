@@ -51,7 +51,7 @@ const SignInPage: React.FC = () => {
           />
           <MfaForm />
           <AuthPageContainer.AltOptions>
-            <Text size="medium" color="grey200">
+            <Text size="medium" color="gray-200">
               Can{"'"}t seem to get it right?
               <Link
                 ml={2}

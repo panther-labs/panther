@@ -68,7 +68,7 @@ const DeleteLogSourceModal: React.FC<DeleteLogSourceModalProps> = ({
         <Text size="large" key={0}>
           Are you sure you want to delete <b>{sourceDisplayName}</b>?
         </Text>,
-        <Text size="medium" color="grey300" mt={6} key={1}>
+        <Text size="medium" mt={6} key={1}>
           {description}
         </Text>,
       ]}
