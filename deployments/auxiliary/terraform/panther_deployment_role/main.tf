@@ -160,6 +160,11 @@ resource "aws_iam_policy" "deployment" {
       },
       {
         Effect : "Allow",
+        Action : "firehose:*",
+        Resource : "arn:${var.aws_partition}:firehose:*:${var.aws_account_id}:deliverystream/panther-*"
+      },
+      {
+        Effect : "Allow",
         Action : "iam:*",
         Resource : [
           "arn:${var.aws_partition}:iam::${var.aws_account_id}:role/AWSServiceRole*",

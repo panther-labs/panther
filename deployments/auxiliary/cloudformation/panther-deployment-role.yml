@@ -150,6 +150,10 @@ Resources:
             Action: execute-api:Invoke
             Resource: !Sub arn:${AWS::Partition}:execute-api:*:${AWS::AccountId}:*
           - Effect: Allow
+            Action: firehose:*
+            Resource:
+              - !Sub arn:${AWS::Partition}:firehose:*:${AWS::AccountId}:deliverystream/panther-*
+          - Effect: Allow
             Action: iam:*
             Resource:
               - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/AWSServiceRole*
