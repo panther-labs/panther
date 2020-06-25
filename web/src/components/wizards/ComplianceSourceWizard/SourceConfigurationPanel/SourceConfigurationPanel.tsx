@@ -30,7 +30,7 @@ const SourceConfigurationPanel: React.FC = () => {
 
   return (
     <Box width={460} m="auto">
-      <Heading size="medium" m="auto" mb={2}>
+      <Heading m="auto" mb={2}>
         {initialValues.integrationId ? 'Update source' : 'First things first'}
       </Heading>
       <Text size="large" color="gray-200" mb={10} as="p">

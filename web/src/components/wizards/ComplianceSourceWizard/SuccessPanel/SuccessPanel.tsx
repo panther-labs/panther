@@ -22,11 +22,7 @@ import SubmitButton from 'Components/buttons/SubmitButton';
 import { useFormikContext } from 'formik';
 import { ComplianceSourceWizardValues } from '../ComplianceSourceWizard';
 
-interface SuccessPanelProps {
-  errorMessage?: string;
-}
-
-const SuccessPanel: React.FC<SuccessPanelProps> = ({ errorMessage }) => {
+const SuccessPanel: React.FC = () => {
   const { initialValues, status, setStatus } = useFormikContext<ComplianceSourceWizardValues>();
 
   // Reset error when the users navigate away from this stpe (so that when they come back, the
@@ -37,18 +33,18 @@ const SuccessPanel: React.FC<SuccessPanelProps> = ({ errorMessage }) => {
 
   return (
     <Flex justify="center" align="center" direction="column" my={190} mx="auto" width={400}>
-      <Heading size="medium" m="auto" mb={5}>
+      <Heading m="auto" mb={5}>
         Almost done!
       </Heading>
-      <Text size="large" color="gray-100" mb={5} textAlign="center">
+      <Text size="large" color="gray-300" mb={8} textAlign="center">
         {initialValues.integrationId
           ? 'Click the button below to validate your changes & update your source!'
           : 'After deploying your Cloudformation stack, click on the button below to complete the setup!'}
       </Text>
-      <Flex width={350} justify="center">
-        <SubmitButton>{initialValues.integrationId ? 'Update Source' : 'Save Source'}</SubmitButton>
-      </Flex>
-      {errorMessage && <FormError mt={6}>{errorMessage}</FormError>}
+      <SubmitButton fullWidth>
+        {initialValues.integrationId ? 'Update Source' : 'Save Source'}
+      </SubmitButton>
+      {status.errorMessage && <FormError mt={6}>{status.errorMessage}</FormError>}
     </Flex>
   );
 };

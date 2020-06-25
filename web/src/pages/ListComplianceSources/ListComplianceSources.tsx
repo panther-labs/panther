@@ -17,8 +17,7 @@
  */
 
 import React from 'react';
-import TablePlaceholder from 'Components/TablePlaceholder';
-import { Alert, Box, Button, Card, Flex, Icon } from 'pouncejs';
+import { Alert, Box, Button } from 'pouncejs';
 import { extractErrorMessage } from 'Helpers/utils';
 import Panel from 'Components/Panel';
 import { Link as RRLink } from 'react-router-dom';
@@ -28,16 +27,13 @@ import withSEO from 'Hoc/withSEO';
 import { useListComplianceSources } from './graphql/listComplianceSources.generated';
 import EmptyDataFallback from './EmptyDataFallback';
 import ComplianceSourceTable from './ComplianceSourceTable';
+import Skeleton from './Skeleton';
 
 const ListComplianceSources = () => {
   const { loading, error, data } = useListComplianceSources();
 
   if (loading) {
-    return (
-      <Card p={9}>
-        <TablePlaceholder />
-      </Card>
-    );
+    return <Skeleton />;
   }
 
   if (error) {

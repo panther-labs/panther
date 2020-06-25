@@ -41,7 +41,7 @@ const LogSourceTable: React.FC<LogSourceTableProps> = ({ sources }) => {
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {sources.map((source, index) => (
+        {sources.map(source => (
           <Table.Row key={source.integrationId}>
             <Table.Cell>{source.integrationLabel}</Table.Cell>
             <Table.Cell>{source.awsAccountId}</Table.Cell>
@@ -58,7 +58,9 @@ const LogSourceTable: React.FC<LogSourceTableProps> = ({ sources }) => {
               </Flex>
             </Table.Cell>
             <Table.Cell>
-              <LogSourceTableRowOptionsProps source={source} />
+              <Box my={-1}>
+                <LogSourceTableRowOptionsProps source={source} />
+              </Box>
             </Table.Cell>
           </Table.Row>
         ))}

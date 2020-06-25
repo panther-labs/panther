@@ -35,7 +35,7 @@ const TopFailingResourcesTable: React.FC<TopFailingResourcesTableProps> = ({ res
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {resources.map((resource) => (
+        {resources.map(resource => (
           <Table.Row key={resource.id}>
             <Table.Cell>
               <Link as={RRLink} to={urls.compliance.resources.details(resource.id)} py={4} pr={4}>

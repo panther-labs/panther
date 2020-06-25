@@ -17,10 +17,10 @@
  */
 
 import React from 'react';
-import { Flex, Table } from 'pouncejs';
+import { Box, Flex, Table } from 'pouncejs';
 import { ListComplianceSources } from 'Pages/ListComplianceSources';
 import ComplianceSourceHealthIcon from './ComplianceSourceHealthIcon';
-import ComplianceSourceTableRowOptionsProps from './ComplianceSourceTableRowOptions';
+import ComplianceSourceTableRowOptions from './ComplianceSourceTableRowOptions';
 
 type ComplianceSourceTableProps = {
   sources: ListComplianceSources['listComplianceIntegrations'];
@@ -52,7 +52,9 @@ const ComplianceSourceTable: React.FC<ComplianceSourceTableProps> = ({ sources }
               </Flex>
             </Table.Cell>
             <Table.Cell>
-              <ComplianceSourceTableRowOptionsProps source={source} />
+              <Box my={-1}>
+                <ComplianceSourceTableRowOptions source={source} />
+              </Box>
             </Table.Cell>
           </Table.Row>
         ))}
