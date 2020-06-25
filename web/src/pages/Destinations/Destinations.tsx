@@ -26,6 +26,7 @@ import DestinationsPageSkeleton from './Skeleton';
 import DestinationsPageEmptyDataFallback from './EmptyDataFallback';
 import DestinationCreateButton from './CreateButton';
 import ListDestinationsTable from './ListDestinationsTable';
+import Panel from 'Components/Panel';
 
 const ListDestinations = () => {
   const { loading, error, data } = useListDestinationsAndDefaults();
@@ -53,14 +54,11 @@ const ListDestinations = () => {
 
   return (
     <Box mb={6}>
-      <Flex justify="flex-end">
-        <DestinationCreateButton />
-      </Flex>
-      <Card>
-        <ErrorBoundary>
+      <ErrorBoundary>
+        <Panel title="Destinations" actions={<DestinationCreateButton />}>
           <ListDestinationsTable destinations={data.destinations} />
-        </ErrorBoundary>
-      </Card>
+        </Panel>
+      </ErrorBoundary>
     </Box>
   );
 };

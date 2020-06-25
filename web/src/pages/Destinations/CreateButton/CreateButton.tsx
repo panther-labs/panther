@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { SIDESHEETS } from 'Components/utils/Sidesheet';
-import { Button  } from 'pouncejs';
+import { Button } from 'pouncejs';
 import useSidesheet from 'Hooks/useSidesheet';
 
 const DestinationCreateButton: React.FC = () => {
@@ -33,7 +33,7 @@ const DestinationCreateButton: React.FC = () => {
         })
       }
     >
-        Add Destination
+      Add Destination
     </Button>
   );
 };

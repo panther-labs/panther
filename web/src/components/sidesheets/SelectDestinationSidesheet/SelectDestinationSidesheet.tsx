@@ -18,74 +18,13 @@
 
 import React from 'react';
 import { Box, Flex, Heading, SideSheet, SideSheetProps, Text } from 'pouncejs';
+import { DESTINATIONS } from 'Source/constants';
 import DestinationCard from 'Components/DestinationCard';
 import useSidesheet from 'Hooks/useSidesheet';
-import slackLogo from 'Assets/slack-minimal-logo.svg';
-import msTeamsLogo from 'Assets/ms-teams-minimal-logo.svg';
-import opsgenieLogo from 'Assets/opsgenie-minimal-logo.svg';
-import githubLogo from 'Assets/github-minimal-logo.svg';
-import pagerDutyLogo from 'Assets/pagerduty-minimal-logo.svg';
-import jiraLogo from 'Assets/jira-minimal-logo.svg';
-import snsLogo from 'Assets/aws-sns-minimal-logo.svg';
-import sqsLogo from 'Assets/aws-sqs-minimal-logo.svg';
-import asanaLogo from 'Assets/asana-minimal-logo.svg';
-import customWebhook from 'Assets/custom-webhook-minimal-logo.svg';
 
 import { SIDESHEETS } from 'Components/utils/Sidesheet';
-import { DestinationTypeEnum } from 'Generated/schema';
 
-const destinationConfigs = [
-  {
-    logo: slackLogo,
-    title: 'Slack',
-    destinationType: DestinationTypeEnum.Slack,
-  },
-  {
-    logo: msTeamsLogo,
-    title: 'Microsoft Teams',
-    destinationType: DestinationTypeEnum.Msteams,
-  },
-  {
-    logo: opsgenieLogo,
-    title: 'Opsgenie',
-    destinationType: DestinationTypeEnum.Opsgenie,
-  },
-  {
-    logo: jiraLogo,
-    title: 'Jira',
-    destinationType: DestinationTypeEnum.Jira,
-  },
-  {
-    logo: githubLogo,
-    title: 'Github',
-    destinationType: DestinationTypeEnum.Github,
-  },
-  {
-    logo: pagerDutyLogo,
-    title: 'PagerDuty',
-    destinationType: DestinationTypeEnum.Pagerduty,
-  },
-  {
-    logo: snsLogo,
-    title: 'AWS SNS',
-    destinationType: DestinationTypeEnum.Sns,
-  },
-  {
-    logo: sqsLogo,
-    title: 'AWS SQS',
-    destinationType: DestinationTypeEnum.Sqs,
-  },
-  {
-    logo: asanaLogo,
-    title: 'Asana',
-    destinationType: DestinationTypeEnum.Asana,
-  },
-  {
-    logo: customWebhook,
-    title: 'Custom Webhook',
-    destinationType: DestinationTypeEnum.Customwebhook,
-  },
-];
+const destinationConfigs = Object.values(DESTINATIONS);
 
 export const SelectDestinationSidesheet: React.FC<SideSheetProps> = props => {
   const { showSidesheet } = useSidesheet();
@@ -101,7 +40,7 @@ export const SelectDestinationSidesheet: React.FC<SideSheetProps> = props => {
           <Heading mb={8} id="sidesheet-title">
             Select an Alert Destination
           </Heading>
-          <Text size="large" color="grey400" id="sidesheet-description">
+          <Text size="large" color="gray-300" id="sidesheet-description">
             Add a new destination below to deliver alerts to a specific application for further
             triage
           </Text>
@@ -116,7 +55,7 @@ export const SelectDestinationSidesheet: React.FC<SideSheetProps> = props => {
                   showSidesheet({
                     sidesheet: SIDESHEETS.ADD_DESTINATION,
                     props: {
-                      destinationType: destinationConfig.destinationType,
+                      destinationType: destinationConfig.type,
                     },
                   })
                 }
