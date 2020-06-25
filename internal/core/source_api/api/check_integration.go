@@ -90,10 +90,10 @@ func checkAwsS3Integration(input *models.CheckIntegrationInput) *models.SourceIn
 	return out
 }
 
-func checkKey(roleCredentials *credentials.Credentials, key string) *models.SourceIntegrationItemStatus {
+func checkKey(roleCredentials *credentials.Credentials, key string) models.SourceIntegrationItemStatus {
 	if len(key) == 0 {
 		// KMS key is optional
-		return &models.SourceIntegrationItemStatus{
+		return models.SourceIntegrationItemStatus{
 			Healthy: true,
 		}
 	}
@@ -101,7 +101,7 @@ func checkKey(roleCredentials *credentials.Credentials, key string) *models.Sour
 
 	info, err := kmsClient.DescribeKey(&kms.DescribeKeyInput{KeyId: &key})
 	if err != nil {
-		return &models.SourceIntegrationItemStatus{
+		return models.SourceIntegrationItemStatus{
 			Healthy:      false,
 			ErrorMessage: err.Error(),
 		}
@@ -109,34 +109,34 @@ func checkKey(roleCredentials *credentials.Credentials, key string) *models.Sour
 
 	if !aws.BoolValue(info.KeyMetadata.Enabled) {
 		// If the key is disabled, we should fail as well
-		return &models.SourceIntegrationItemStatus{
+		return models.SourceIntegrationItemStatus{
 			Healthy:      false,
 			ErrorMessage: "key disabled",
 		}
 	}
 
-	return &models.SourceIntegrationItemStatus{
+	return models.SourceIntegrationItemStatus{
 		Healthy: true,
 	}
 }
 
-func checkBucket(roleCredentials *credentials.Credentials, bucket string) *models.SourceIntegrationItemStatus {
+func checkBucket(roleCredentials *credentials.Credentials, bucket string) models.SourceIntegrationItemStatus {
 	s3Client := s3.New(awsSession, &aws.Config{Credentials: roleCredentials})
 
 	_, err := s3Client.GetBucketLocation(&s3.GetBucketLocationInput{Bucket: &bucket})
 	if err != nil {
-		return &models.SourceIntegrationItemStatus{
+		return models.SourceIntegrationItemStatus{
 			Healthy:      false,
 			ErrorMessage: err.Error(),
 		}
 	}
 
-	return &models.SourceIntegrationItemStatus{
+	return models.SourceIntegrationItemStatus{
 		Healthy: true,
 	}
 }
 
-func getCredentialsWithStatus(roleARN string) (*credentials.Credentials, *models.SourceIntegrationItemStatus) {
+func getCredentialsWithStatus(roleARN string) (*credentials.Credentials, models.SourceIntegrationItemStatus) {
 	zap.L().Debug("checking role", zap.String("roleArn", roleARN))
 	// Setup new credentials with the role
 	roleCredentials := stscreds.NewCredentials(
@@ -148,13 +148,13 @@ func getCredentialsWithStatus(roleARN string) (*credentials.Credentials, *models
 	stsClient := sts.New(awsSession, aws.NewConfig().WithCredentials(roleCredentials))
 	_, err := stsClient.GetCallerIdentity(&sts.GetCallerIdentityInput{})
 	if err != nil {
-		return roleCredentials, &models.SourceIntegrationItemStatus{
+		return roleCredentials, models.SourceIntegrationItemStatus{
 			Healthy:      false,
 			ErrorMessage: err.Error(),
 		}
 	}
 
-	return roleCredentials, &models.SourceIntegrationItemStatus{
+	return roleCredentials, models.SourceIntegrationItemStatus{
 		Healthy: true,
 	}
 }
