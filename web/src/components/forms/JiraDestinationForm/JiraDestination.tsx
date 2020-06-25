@@ -20,8 +20,7 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
-import FormikCombobox from 'Components/fields/ComboBox';
-import { DestinationConfigInput, JiraIssueTypesEnum } from 'Generated/schema';
+import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
@@ -44,9 +43,7 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
         userName: Yup.string(),
         projectKey: Yup.string().required(),
         assigneeId: Yup.string(),
-        issueType: Yup.string().test('oneOf', 'Please select a valid value', value =>
-          Object.values(JiraIssueTypesEnum).includes(value)
-        ),
+        issueType: Yup.string().required(),
         apiKey: existing ? Yup.string() : Yup.string().required(),
       }),
     }),
@@ -63,7 +60,7 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
       <Field
         as={FormikTextInput}
         name="outputConfig.jira.orgDomain"
-        label="Organization Domain"
+        label="Organization Domain*"
         placeholder="What's your organization's Jira domain?"
         mb={6}
         aria-required
@@ -71,7 +68,7 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
       <Field
         as={FormikTextInput}
         name="outputConfig.jira.projectKey"
-        label="Project Key"
+        label="Project Key*"
         placeholder="What's your Jira Project key?"
         mb={6}
         aria-required
@@ -88,7 +85,7 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
         as={FormikTextInput}
         type="password"
         name="outputConfig.jira.apiKey"
-        label="Jira API Key"
+        label="Jira API Key*"
         placeholder={
           existing ? '<hidden information>' : "What's the API key of the related Jira account"
         }
@@ -105,13 +102,12 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
         mb={6}
       />
       <Field
-        as={FormikCombobox}
+        as={FormikTextInput}
         name="outputConfig.jira.issueType"
-        label="Issue Type"
+        label="Issue Type*"
         mb={6}
         aria-required
-        items={Object.keys(JiraIssueTypesEnum)}
-        inputProps={{ placeholder: 'Select a type of issue' }}
+        placeholder="What type of issue you want us to create? i.e. 'Bug'"
       />
     </BaseDestinationForm>
   );
