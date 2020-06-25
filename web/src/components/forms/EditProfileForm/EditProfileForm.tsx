@@ -108,7 +108,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) => {
             required
           />
         </SimpleGrid>
-        <SubmitButton width={1}>Update</SubmitButton>
+        <SubmitButton fullWidth>Update</SubmitButton>
       </Form>
     </Formik>
   );

@@ -78,7 +78,7 @@ const SignInForm: React.FC = () => {
             required
           />
         </Box>
-        <SubmitButton width={1}>Sign in</SubmitButton>
+        <SubmitButton fullWidth>Sign in</SubmitButton>
       </Form>
     </Formik>
   );

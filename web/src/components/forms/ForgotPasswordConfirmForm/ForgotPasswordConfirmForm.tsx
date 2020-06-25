@@ -105,7 +105,7 @@ const ForgotPasswordConfirmForm: React.FC<ForgotPasswordConfirmFormProps> = ({ e
               autoComplete="new-password"
             />
           </Box>
-          <SubmitButton width={1}>Update password</SubmitButton>
+          <SubmitButton fullWidth>Update password</SubmitButton>
         </Form>
       )}
     </Formik>

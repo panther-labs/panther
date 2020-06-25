@@ -47,7 +47,7 @@ const CreateGlobalPythonModulePage: React.FC = () => {
 
   return (
     <Box mb={10}>
-      <Panel size="large" title="Global Python Module">
+      <Panel title="Global Python Module">
         <GlobalPythonModuleForm initialValues={initialValues} onSubmit={handleSubmit} />
       </Panel>
       {error && (

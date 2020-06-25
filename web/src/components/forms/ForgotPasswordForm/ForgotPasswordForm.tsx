@@ -73,7 +73,7 @@ const ForgotPasswordForm: React.FC = () => {
                 required
               />
             </Box>
-            <SubmitButton width={1}>Reset Password</SubmitButton>
+            <SubmitButton fullWidth>Reset Password</SubmitButton>
           </Form>
         );
       }}

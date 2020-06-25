@@ -105,7 +105,7 @@ const ChangePasswordForm: React.FC = () => {
               required
             />
           </SimpleGrid>
-          <SubmitButton width={1}>Change password</SubmitButton>
+          <SubmitButton fullWidth>Change password</SubmitButton>
         </Form>
       )}
     </Formik>

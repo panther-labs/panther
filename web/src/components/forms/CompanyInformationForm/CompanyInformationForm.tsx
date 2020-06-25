@@ -72,7 +72,7 @@ export const CompanyInformationForm: React.FC<CompanyInformationFormProps> = ({
           </Heading>
           <ErrorReportingSection />
         </Box>
-        <SubmitButton width={1}>Save</SubmitButton>
+        <SubmitButton fullWidth>Save</SubmitButton>
       </Form>
     </Formik>
   );

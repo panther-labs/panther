@@ -68,7 +68,7 @@ const MfaForm: React.FC = () => {
           />
         </Box>
 
-        <SubmitButton width={1}>Sign in</SubmitButton>
+        <SubmitButton fullWidth>Sign in</SubmitButton>
       </Form>
     </Formik>
   );

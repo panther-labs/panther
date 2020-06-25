@@ -89,7 +89,7 @@ const SetPasswordForm: React.FC = () => {
               required
             />
           </Box>
-          <SubmitButton width={1}>Set password</SubmitButton>
+          <SubmitButton fullWidth>Set password</SubmitButton>
           <Text size="small" mt={4} color="grey200">
             By continuing, you agree to Panther&apos;s&nbsp;
             <Link

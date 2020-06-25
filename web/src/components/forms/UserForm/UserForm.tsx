@@ -92,7 +92,7 @@ const UserForm: React.FC<UserFormProps> = ({ initialValues, onSubmit }) => {
           />
         </Flex>
         <Flex borderTop="1px solid" borderColor="grey100" pt={6} mt={10} justify="flex-end">
-          <SubmitButton width={1}>{initialValues.id ? 'Update' : 'Invite'}</SubmitButton>
+          <SubmitButton fullWidth>{initialValues.id ? 'Update' : 'Invite'}</SubmitButton>
         </Flex>
       </Form>
     </Formik>
