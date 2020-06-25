@@ -25,7 +25,6 @@ import (
 	"strings"
 
 	"github.com/aws/aws-lambda-go/cfn"
-	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
@@ -97,7 +96,7 @@ func registerPantherAccount(props SelfRegistrationProperties) error {
 		if err := putLogProcessingIntegration(props.AccountID, props.AuditLogsBucket, logTypes); err != nil {
 			return err
 		}
-	} else if !stringSliceEqual(aws.StringValueSlice(logSource.LogTypes), logTypes) {
+	} else if !stringSliceEqual(logSource.LogTypes, logTypes) {
 		// log types have changed, we need to update the source integration
 		if err := updateLogProcessingIntegration(logSource, logTypes); err != nil {
 			return err
@@ -124,14 +123,14 @@ func getSelfIntegrations(accountID string) (*models.SourceIntegration, *models.S
 
 	var cloudSecSource, logSource *models.SourceIntegration
 	for _, integration := range listOutput {
-		if aws.StringValue(integration.AWSAccountID) == accountID &&
-			aws.StringValue(integration.IntegrationLabel) == cloudSecLabel &&
-			aws.StringValue(integration.IntegrationType) == models.IntegrationTypeAWSScan {
+		if integration.AWSAccountID == accountID &&
+			integration.IntegrationLabel == cloudSecLabel &&
+			integration.IntegrationType == models.IntegrationTypeAWSScan {
 
 			cloudSecSource = integration
-		} else if aws.StringValue(integration.AWSAccountID) == accountID &&
-			aws.StringValue(integration.IntegrationType) == models.IntegrationTypeAWS3 &&
-			aws.StringValue(integration.IntegrationLabel) == genLogProcessingLabel() {
+		} else if integration.AWSAccountID == accountID &&
+			integration.IntegrationType == models.IntegrationTypeAWS3 &&
+			integration.IntegrationLabel == genLogProcessingLabel() {
 
 			logSource = integration
 		}
@@ -163,13 +162,13 @@ func putCloudSecurityIntegration(accountID string) error {
 	input := &models.LambdaInput{
 		PutIntegration: &models.PutIntegrationInput{
 			PutIntegrationSettings: models.PutIntegrationSettings{
-				AWSAccountID:       &accountID,
-				IntegrationLabel:   aws.String(cloudSecLabel),
-				IntegrationType:    aws.String(models.IntegrationTypeAWSScan),
-				ScanIntervalMins:   aws.Int(1440),
-				UserID:             aws.String(systemUserID),
-				CWEEnabled:         aws.Bool(true),
-				RemediationEnabled: aws.Bool(true),
+				AWSAccountID:       accountID,
+				IntegrationLabel:   cloudSecLabel,
+				IntegrationType:    models.IntegrationTypeAWSScan,
+				ScanIntervalMins:   1440,
+				UserID:             systemUserID,
+				CWEEnabled:         true,
+				RemediationEnabled: true,
 			},
 		},
 	}
@@ -188,12 +187,12 @@ func putLogProcessingIntegration(accountID, auditBucket string, logTypes []strin
 	input := &models.LambdaInput{
 		PutIntegration: &models.PutIntegrationInput{
 			PutIntegrationSettings: models.PutIntegrationSettings{
-				AWSAccountID:     &accountID,
-				IntegrationLabel: aws.String(genLogProcessingLabel()),
-				IntegrationType:  aws.String(models.IntegrationTypeAWS3),
-				UserID:           aws.String(systemUserID),
-				S3Bucket:         &auditBucket,
-				LogTypes:         aws.StringSlice(logTypes),
+				AWSAccountID:     accountID,
+				IntegrationLabel: genLogProcessingLabel(),
+				IntegrationType:  models.IntegrationTypeAWS3,
+				UserID:           systemUserID,
+				S3Bucket:         auditBucket,
+				LogTypes:         logTypes,
 			},
 		},
 	}
@@ -216,7 +215,7 @@ func updateLogProcessingIntegration(source *models.SourceIntegration, logTypes [
 			IntegrationID:    source.IntegrationID,
 			IntegrationLabel: source.IntegrationLabel,
 			S3Bucket:         source.S3Bucket,
-			LogTypes:         aws.StringSlice(logTypes),
+			LogTypes:         logTypes,
 		},
 	}
 
@@ -225,8 +224,8 @@ func updateLogProcessingIntegration(source *models.SourceIntegration, logTypes [
 	}
 
 	zap.L().Info("account updated for log processing",
-		zap.String("accountID", aws.StringValue(source.AWSAccountID)),
-		zap.String("bucket", aws.StringValue(source.S3Bucket)),
+		zap.String("accountID", source.AWSAccountID),
+		zap.String("bucket", source.S3Bucket),
 		zap.Strings("logTypes", logTypes))
 	return nil
 }
@@ -254,8 +253,8 @@ func removeSelfIntegrations(accountID string) error {
 
 func deleteIntegration(source *models.SourceIntegration) error {
 	zap.L().Info("deleting source integration",
-		zap.String("integrationID", aws.StringValue(source.IntegrationID)),
-		zap.String("integrationLabel", aws.StringValue(source.IntegrationLabel)))
+		zap.String("integrationID", source.IntegrationID),
+		zap.String("integrationLabel", source.IntegrationLabel))
 
 	input := models.LambdaInput{
 		DeleteIntegration: &models.DeleteIntegrationInput{

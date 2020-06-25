@@ -21,7 +21,6 @@ package api
 import (
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -68,11 +67,11 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 			zap.Any("input", input))
 		return nil, &genericapi.InvalidInputError{
 			Message: fmt.Sprintf("existingIntegrationItem %s did not pass configuration check because of %s",
-				*existingIntegrationItem.AWSAccountID, reason),
+				existingIntegrationItem.AWSAccountID, reason),
 		}
 	}
 
-	switch aws.StringValue(existingIntegrationItem.IntegrationType) {
+	switch existingIntegrationItem.IntegrationType {
 	case models.IntegrationTypeAWSScan:
 		existingIntegrationItem.IntegrationLabel = input.IntegrationLabel
 		existingIntegrationItem.ScanIntervalMins = input.ScanIntervalMins
@@ -133,7 +132,7 @@ func (API) UpdateIntegrationLastScanEnd(input *models.UpdateIntegrationLastScanE
 	return nil
 }
 
-func getItem(integrationID *string) (*ddb.Integration, error) {
+func getItem(integrationID string) (*ddb.Integration, error) {
 	item, err := dynamoClient.GetItem(integrationID)
 	if err != nil {
 		return nil, &genericapi.InternalError{Message: "Encountered issue while updating integration"}

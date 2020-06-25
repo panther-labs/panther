@@ -21,7 +21,6 @@ package models
 import (
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 )
 
@@ -29,9 +28,9 @@ func TestValidateIntegrationLabelSucceeds(t *testing.T) {
 	validator, err := Validator()
 	require.NoError(t, err)
 	err = validator.Struct(&GetIntegrationTemplateInput{
-		AWSAccountID:     aws.String("123456789012"),
-		IntegrationLabel: aws.String("Test12- "),
-		IntegrationType:  aws.String(IntegrationTypeAWS3),
+		AWSAccountID:     "123456789012",
+		IntegrationLabel: "Test12- ",
+		IntegrationType:  IntegrationTypeAWS3,
 	})
 	require.NoError(t, err)
 }
@@ -40,9 +39,9 @@ func TestValidateIntegrationLabelFails(t *testing.T) {
 	validator, err := Validator()
 	require.NoError(t, err)
 	err = validator.Struct(&GetIntegrationTemplateInput{
-		AWSAccountID:     aws.String("123456789012"),
-		IntegrationLabel: aws.String(" "),
-		IntegrationType:  aws.String(IntegrationTypeAWS3),
+		AWSAccountID:     "123456789012",
+		IntegrationLabel: " ",
+		IntegrationType:  IntegrationTypeAWS3,
 	})
 	errorMsg := "Key: 'GetIntegrationTemplateInput.IntegrationLabel'" +
 		" Error:Field validation for 'IntegrationLabel' failed on the 'integrationLabel' tag"
@@ -54,11 +53,11 @@ func TestValidateNotKmsKey(t *testing.T) {
 	require.NoError(t, err)
 	err = validator.Struct(&PutIntegrationInput{
 		PutIntegrationSettings: PutIntegrationSettings{
-			AWSAccountID:     aws.String("123456789012"),
-			IntegrationLabel: aws.String("Test12- "),
-			IntegrationType:  aws.String(IntegrationTypeAWS3),
-			UserID:           aws.String("cb7663c7-80ed-420b-a287-ed7dc50a0bf7"),
-			KmsKey:           aws.String("not-a-key"),
+			AWSAccountID:     "123456789012",
+			IntegrationLabel: "Test12- ",
+			IntegrationType:  IntegrationTypeAWS3,
+			UserID:           "cb7663c7-80ed-420b-a287-ed7dc50a0bf7",
+			KmsKey:           "not-a-key",
 		},
 	})
 
@@ -72,11 +71,11 @@ func TestValidateKmsKey(t *testing.T) {
 	require.NoError(t, err)
 	err = validator.Struct(&PutIntegrationInput{
 		PutIntegrationSettings: PutIntegrationSettings{
-			AWSAccountID:     aws.String("123456789012"),
-			IntegrationLabel: aws.String("Test12- "),
-			IntegrationType:  aws.String(IntegrationTypeAWS3),
-			UserID:           aws.String("cb7663c7-80ed-420b-a287-ed7dc50a0bf7"),
-			KmsKey:           aws.String("arn:aws:kms:eu-west-1:111111111111:key/7abf9aaf-0228-4c09-ae6c-c9a0c65e4894"),
+			AWSAccountID:     "123456789012",
+			IntegrationLabel: "Test12- ",
+			IntegrationType:  IntegrationTypeAWS3,
+			UserID:           "cb7663c7-80ed-420b-a287-ed7dc50a0bf7",
+			KmsKey:           "arn:aws:kms:eu-west-1:111111111111:key/7abf9aaf-0228-4c09-ae6c-c9a0c65e4894",
 		},
 	})
 	require.NoError(t, err)

@@ -387,7 +387,7 @@ func processCloudTrailLog(detail gjson.Result, metadata *CloudTrailMetadata, cha
 	// One event could require multiple scans (e.g. a new VPC peering connection between two VPCs)
 	for _, change := range newChanges {
 		change.EventTime = eventTime
-		change.IntegrationID = *integration.IntegrationID
+		change.IntegrationID = integration.IntegrationID
 		zap.L().Info("resource scan required", zap.Any("changeDetail", change))
 		// Prevents the following from being de-duped mistakenly:
 		//
