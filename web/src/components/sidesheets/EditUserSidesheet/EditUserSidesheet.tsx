@@ -22,7 +22,6 @@ import { User } from 'Generated/schema';
 import { extractErrorMessage } from 'Helpers/utils';
 import UserForm, { UserFormValues } from 'Components/forms/UserForm';
 import useAuth from 'Hooks/useAuth';
-import useSidesheet from 'Hooks/useSidesheet';
 import { useEditUser } from './graphql/editUser.generated';
 
 export interface EditUserSidesheetProps extends SideSheetProps {
@@ -39,6 +38,8 @@ const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user, onClose, ..
       if (user.id === userInfo.sub) {
         refetchUserInfo();
       }
+
+      pushSnackbar({ variant: 'success', title: 'User updated successfully!' });
     },
   });
 

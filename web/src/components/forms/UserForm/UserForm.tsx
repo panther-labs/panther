@@ -67,33 +67,32 @@ const UserForm: React.FC<UserFormProps> = ({ initialValues, onSubmit }) => {
       validationSchema={validationSchema}
     >
       <Form>
-        <Field
-          as={FormikTextInput}
-          label="Email address"
-          placeholder="john@doe.com"
-          name="email"
-          aria-required
-          mb={3}
-        />
-        <Flex mb={6} justify="space-between">
+        <Flex direction="column" spacing={4}>
           <Field
             as={FormikTextInput}
-            label="First Name"
-            placeholder="John"
-            name="givenName"
-            aria-required
+            label="Email address"
+            placeholder="john@doe.com"
+            name="email"
+            required
           />
-          <Field
-            as={FormikTextInput}
-            label="Last Name"
-            placeholder="Doe"
-            name="familyName"
-            aria-required
-          />
+          <Flex mb={6} justify="space-between">
+            <Field
+              as={FormikTextInput}
+              label="First Name"
+              placeholder="John"
+              name="givenName"
+              required
+            />
+            <Field
+              as={FormikTextInput}
+              label="Last Name"
+              placeholder="Doe"
+              name="familyName"
+              required
+            />
+          </Flex>
         </Flex>
-        <Flex borderTop="1px solid" borderColor="grey100" pt={6} mt={10} justify="flex-end">
-          <SubmitButton fullWidth>{initialValues.id ? 'Update' : 'Invite'}</SubmitButton>
-        </Flex>
+        <SubmitButton fullWidth>{initialValues.id ? 'Update' : 'Invite'}</SubmitButton>
       </Form>
     </Formik>
   );

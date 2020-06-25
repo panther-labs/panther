@@ -17,31 +17,51 @@
  */
 
 import React from 'react';
-import { Box, Button, Flex, Icon } from 'pouncejs';
-import withSEO from 'Hoc/withSEO';
+import { Alert, Button } from 'pouncejs';
+import { extractErrorMessage } from 'Helpers/utils';
+import Panel from 'Components/Panel';
 import useSidesheet from 'Hooks/useSidesheet';
 import { SIDESHEETS } from 'Components/utils/Sidesheet';
-import ErrorBoundary from 'Components/ErrorBoundary';
-import ListUsers from './ListUsers';
+import { useListUsers } from './graphql/listUsers.generated';
+import ListUsersTable from './ListUsersTable';
+import Skeleton from './Skeleton';
 
-const UsersPage: React.FC = () => {
+const ListUsersPage = () => {
   const { showSidesheet } = useSidesheet();
+  const { loading, error, data } = useListUsers();
+
+  if (loading && !data) {
+    return <Skeleton />;
+  }
+
+  if (error) {
+    return (
+      <Alert
+        variant="error"
+        title="Couldn't load users"
+        description={
+          extractErrorMessage(error) ||
+          'There was an error when performing your request, please contact support@runpanther.io'
+        }
+      />
+    );
+  }
 
   return (
-    <Box mb={6}>
-      <Flex justify="flex-end" mb={8}>
+    <Panel
+      title="Users"
+      actions={
         <Button
           icon="add-user"
           onClick={() => showSidesheet({ sidesheet: SIDESHEETS.USER_INVITATION })}
         >
           Invite User
         </Button>
-      </Flex>
-      <ErrorBoundary>
-        <ListUsers />
-      </ErrorBoundary>
-    </Box>
+      }
+    >
+      <ListUsersTable users={data.users} />
+    </Panel>
   );
 };
 
-export default withSEO({ title: 'Users' })(UsersPage);
+export default ListUsersPage;
