@@ -18,21 +18,21 @@
 
 import React from 'react';
 import { Field } from 'formik';
-import FormikCheckbox from 'Components/fields/Checkbox';
 import { Box, FormHelperText, Link } from 'pouncejs';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
+import FormikSwitch from 'Components/fields/Switch';
 
 const ErrorReportingSection: React.FC = () => {
   return (
     <Box>
       <Field
-        as={FormikCheckbox}
+        as={FormikSwitch}
         name="errorReportingConsent"
         label="Report Web Application Errors"
         aria-describedby="error-reporting-section-helper"
       />
-      <FormHelperText ml={2} id="error-reporting-section-helper">
-        Send anonymized runtime exception reports to Panther to improve its reliability.{' '}
+      <FormHelperText mt={2} id="error-reporting-section-helper">
+        Send anonymized runtime exception reports <br /> to improve Panther{"'"}s reliability.
         <Link
           external
           textDecoration="underline"

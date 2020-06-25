@@ -156,12 +156,12 @@ const LandingPage: React.FC = () => {
               <Text size="medium" as="p" color="gray-200" mb={6} maxWidth={275}>
                 Use AWS Athena to write complex queries against normalized log data
               </Text>
-              <Button
-                as="a"
+              <Link
+                external
                 href={`https://${pantherConfig.AWS_REGION}.console.aws.amazon.com/athena/`}
               >
-                Launch Athena
-              </Button>
+                <Button as="div">Launch Athena</Button>
+              </Link>
             </Flex>
           </SimpleGrid>
         </Card>
