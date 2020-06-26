@@ -58,7 +58,7 @@ const BarChart: React.FC<BarChartProps> = ({ data, alignment = 'vertical' }) => 
           name: e.label,
           type: 'bar',
           barWidth: 30,
-          barGap: horizontal ? '100%' : '-100%',
+          barGap: horizontal ? '-20%' : '-110%',
           label: {
             show: true,
             position: horizontal ? 'right' : 'top',

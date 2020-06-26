@@ -28,7 +28,7 @@ const DestinationsPageEmptyDataFallback: React.FC = () => {
         <img alt="Mobile & Envelope illustration" src={DestinationImg} width="auto" height={350} />
       </Box>
       <Heading mb={6}>Help us reach you</Heading>
-      <Text size="large" color="grey200" textAlign="center" mb={8}>
+      <Text size="large" color="gray-200" textAlign="center" mb={8}>
         You don{"'"}t seem to have any destinations setup yet. <br />
         Adding destinations will help you get notified when irregularities occur.
       </Text>

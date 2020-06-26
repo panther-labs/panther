@@ -31,7 +31,7 @@ interface ErrorBoundaryState {
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   static defaultProps: Partial<ErrorBoundaryProps>;
 
-  state = { hasError: false };
+  state = { hasError: true };
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     // Display fallback UI
@@ -55,9 +55,9 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
         return null;
       case 'placeholder':
         return (
-          <Card bg="red100" width="100%" height="100%">
+          <Card bg="red-700" width="100%" height="100%">
             <Flex align="center" justify="center" width="100%" height="100%">
-              <Text size="large" color="red300" py={5} px={4}>
+              <Text as="p" size="large" py={5} px={4}>
                 Something went wrong and we could not correctly display this content
               </Text>
             </Flex>

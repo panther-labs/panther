@@ -19,6 +19,7 @@
 import React from 'react';
 import { useTheme } from 'pouncejs';
 import { IAceEditorProps } from 'react-ace';
+import { remToPx } from 'Helpers/utils';
 
 // Lazy-load the ace editor. Make sure that both editor and modes get bundled under the same chunk
 const AceEditor = React.lazy(() => import(/* webpackChunkName: "ace-editor" */ 'react-ace'));
@@ -65,7 +66,7 @@ const Editor: React.FC<EditorProps> = ({ fallback = null, completions = [], ...r
       enableBasicAutocompletion: true,
       enableLiveAutocompletion: true,
       highlightActiveLine: false,
-      fontSize: theme.fontSizes.medium,
+      fontSize: remToPx(theme.fontSizes['small-medium']),
       editorProps: {
         $blockScrolling: Infinity,
       },

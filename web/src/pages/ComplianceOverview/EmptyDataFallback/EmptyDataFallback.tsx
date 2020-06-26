@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Button, FadeIn, Flex, Heading, Link, Text } from 'pouncejs';
+import { Box, Button, FadeIn, Flex, Heading, Text } from 'pouncejs';
 import EmptyDataImg from 'Assets/illustrations/empty-box.svg';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
@@ -28,9 +28,7 @@ const ComplianceEmptyDataFallback: React.FC = () => (
       <Box m={10}>
         <img alt="Empty data illustration" src={EmptyDataImg} width="auto" height={400} />
       </Box>
-      <Heading mb={6}>
-        It{"'"}s empty in here
-      </Heading>
+      <Heading mb={6}>It{"'"}s empty in here</Heading>
       <Text size="large" color="gray-200" textAlign="center" mb={8}>
         You don{"'"}t seem to have any Cloud Security sources connected to our system. <br />
         When you do, a high level overview of your system{"'"}s health will appear here.

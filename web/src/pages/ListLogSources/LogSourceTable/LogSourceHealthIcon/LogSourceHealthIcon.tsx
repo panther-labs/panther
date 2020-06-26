@@ -44,9 +44,9 @@ const LogSourceHealthIcon: React.FC<LogSourceHealthIconProps> = ({ logSourceHeal
 
   const tooltipMessage = isHealthy ? 'Everything looks fine from our end!' : errorMessage;
   const icon = isHealthy ? (
-    <Icon type="check" size="small" color="green300" />
+    <Icon type="check" size="small" color="green-200" />
   ) : (
-    <Icon type="close" size="small" color="red300" />
+    <Icon type="close" size="small" color="red-200" />
   );
 
   return (

@@ -31,7 +31,7 @@ const ResourcesByPlatform: React.FC<ResourcesByPlatformProps> = ({ resources }) 
     {
       value: resources.byType.length,
       label: 'AWS',
-      color: 'grey300' as const,
+      color: 'gray-600' as const,
     },
   ];
 
