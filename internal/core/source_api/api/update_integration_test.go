@@ -85,7 +85,7 @@ func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 	// create the tables
 	mockGlue.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, nil).Twice()
 	// create/replace the view
-	mockGlue.On("GetTable", mock.Anything).Return(&glue.GetTableOutput{}, nil).Times(len(registry.AvailableTables()))
+	mockGlue.On("GetTable", mock.Anything).Return(&glue.GetTableOutput{}, nil).Times(len(registry.AvailableLogTypes()))
 	mockAthena.On("StartQueryExecution", mock.Anything).Return(&athena.StartQueryExecutionOutput{
 		QueryExecutionId: aws.String("test-query-1234"),
 	}, nil).Twice()

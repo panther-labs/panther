@@ -25,7 +25,7 @@ import (
 )
 
 var (
-	awsAccountIDRegex = regexp.MustCompile(`\d{12}`)
+	awsAccountIDRegex = regexp.MustCompile(`^\d{12}$`)
 )
 
 // nolint(lll)

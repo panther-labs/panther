@@ -3,8 +3,9 @@
 # Nginx
 {% hint style="info" %}Required fields are in <b>bold</b>.{% endhint %}
 ##Nginx.Access
-Access Logs for your Nginx server. We currently support Nginx &#39;combined&#39; format. 
+Access Logs for your Nginx server. We currently support Nginx &#39;combined&#39; format.
 Reference: http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code>remoteAddr</code></td><td><code>string</code></td><td valign=top>The IP address of the client (remote host) which made the request to the server.</td></tr>

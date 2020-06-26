@@ -1,4 +1,5 @@
-package destinations
+// Package sysloglogs provides parsers for syslog messages.
+package sysloglogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,10 +20,30 @@ package destinations
  */
 
 import (
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
-// Destination defines the interface that all Destinations should follow
-type Destination interface {
-	SendEvents(parsedEventChannel chan *parsers.Result, errChan chan error)
+const (
+	TypeRFC5424 = "Syslog.RFC5424"
+	TypeRFC3164 = "Syslog.RFC3164"
+)
+
+func init() {
+	logtypes.MustRegister(
+		logtypes.Config{
+			Name:         TypeRFC3164,
+			Description:  `Syslog parser for the RFC3164 format (ie. BSD-syslog messages)`,
+			ReferenceURL: `https://tools.ietf.org/html/rfc3164`,
+			Schema:       RFC3164{},
+			NewParser:    parsers.AdapterFactory(&RFC5424Parser{}),
+		},
+		logtypes.Config{
+			Name:         TypeRFC5424,
+			Description:  `Syslog parser for the RFC5424 format.`,
+			ReferenceURL: `https://tools.ietf.org/html/rfc5424`,
+			Schema:       RFC5424{},
+			NewParser:    parsers.AdapterFactory(&RFC5424Parser{}),
+		},
+	)
 }

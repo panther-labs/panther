@@ -14,6 +14,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
 
 /*
@@ -96,7 +97,7 @@ func main() {
 	}
 	zap.ReplaceGlobals(logger)
 
-	err = processor.Process(streamChan, destinations.CreateS3Destination())
+	err = processor.Process(streamChan, destinations.CreateS3Destination(registry.Default()))
 	if err != nil {
 		log.Fatal(err)
 	}

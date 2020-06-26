@@ -25,13 +25,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-// TypeAudit is the log type of Audit log records
-const TypeAudit = PantherPrefix + ".Audit"
-
-// AuditDesc describes the Git log record
-var AuditDesc = `GitLab log file containing changes to group or project settings 
-Reference: https://docs.gitlab.com/ee/administration/logs.html#audit_jsonlog`
-
 // Audit is a a GitLab log line from a failed interaction with git
 // nolint: lll
 type Audit struct {

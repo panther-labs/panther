@@ -1,4 +1,4 @@
-package registry
+package logtypes
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -18,12 +18,28 @@ package registry
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"testing"
+// Default registry for pantherlog package
+var defaultRegistry = &Registry{}
 
-	"github.com/stretchr/testify/assert"
-)
+// DefaultRegistry returns the default package wide registry for log types
+func DefaultRegistry() *Registry {
+	return defaultRegistry
+}
 
-func TestPanic(t *testing.T) {
-	assert.Panics(t, func() { Lookup("doesnotexist") }, "Failed to panic, this is very dangerous!")
+// Register registers log type entries to the package wide registry returning the first error it encounters
+func Register(entries ...Config) error {
+	for _, entry := range entries {
+		if _, err := defaultRegistry.Register(entry); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Register registers log type entries to the package wide registry panicking if an error occurs
+func MustRegister(entries ...Config) {
+	for _, entry := range entries {
+		// nolint:errcheck
+		DefaultRegistry().MustRegister(entry)
+	}
 }
