@@ -25,9 +25,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-var EventInfoDesc = `OSSEC EventInfo alert parser. Currently only JSON output is supported.
-Reference: https://www.ossec.net/docs/docs/formats/alerts.html`
-
 // nolint:lll
 type EventInfo struct {
 	// Required
@@ -142,7 +139,7 @@ func (p *EventInfoParser) Parse(log string) ([]*parsers.PantherLog, error) {
 
 // LogType returns the log type supported by this parser
 func (p *EventInfoParser) LogType() string {
-	return "OSSEC.EventInfo"
+	return TypeEventInfo
 }
 
 func (event *EventInfo) updatePantherFields(p *EventInfoParser) {

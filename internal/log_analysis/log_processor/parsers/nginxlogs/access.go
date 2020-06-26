@@ -35,9 +35,6 @@ const (
 	accessTimestampFormatTimeLocal = "[2/Jan/2006:15:04:05-0700]"
 )
 
-var AccessDesc = `Access Logs for your Nginx server. We currently support Nginx 'combined' format. 
-Reference: http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format`
-
 // nolint:lll
 type Access struct {
 	RemoteAddress *string            `json:"remoteAddr,omitempty" description:"The IP address of the client (remote host) which made the request to the server."`
@@ -120,7 +117,7 @@ func (p *AccessParser) Parse(log string) ([]*parsers.PantherLog, error) {
 
 // LogType returns the log type supported by this parser
 func (p *AccessParser) LogType() string {
-	return "Nginx.Access"
+	return TypeAccess
 }
 
 func (event *Access) updatePantherFields(p *AccessParser) {

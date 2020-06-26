@@ -5,6 +5,7 @@
 ##Syslog.RFC3164
 Syslog parser for the RFC3164 format (ie. BSD-syslog messages)
 Reference: https://tools.ietf.org/html/rfc3164
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>priority</b></code></td><td><code>smallint</code></td><td valign=top>Priority is calculated by (Facility * 8 + Severity). The lower this value, the higher importance of the log message.</td></tr>
@@ -30,6 +31,7 @@ Reference: https://tools.ietf.org/html/rfc3164
 ##Syslog.RFC5424
 Syslog parser for the RFC5424 format.
 Reference: https://tools.ietf.org/html/rfc5424
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>priority</b></code></td><td><code>smallint</code></td><td valign=top>Priority is calculated by (Facility * 8 + Severity). The lower this value, the higher importance of the log message.</td></tr>

@@ -1,4 +1,4 @@
-package registry
+package zeeklogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,11 +19,21 @@ package registry
  */
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
-func TestPanic(t *testing.T) {
-	assert.Panics(t, func() { Lookup("doesnotexist") }, "Failed to panic, this is very dangerous!")
+const (
+	TypeZeekDNS = "Zeek.DNS"
+)
+
+func init() {
+	logtypes.MustRegister(
+		logtypes.Config{
+			Name:         TypeZeekDNS,
+			Description:  `Zeek DNS activity`,
+			ReferenceURL: `https://docs.zeek.org/en/current/scripts/base/protocols/dns/main.zeek.html#type-DNS::Info`,
+			Schema:       &ZeekDNS{},
+			NewParser:    parsers.AdapterFactory(&ZeekDNSParser{}),
+		})
 }
