@@ -29,7 +29,7 @@ const PolicyDetailsPageSkeleton: React.FC = () => {
       <Card p={6}>
         <TablePlaceholder rowCount={2} rowHeight={10} />
       </Card>
-      <Box mt={5} mb={6}>
+      <Box mt={5}>
         <Panel title="Resources">
           <TablePlaceholder />
         </Panel>

@@ -16,4 +16,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './AlertDetailsSkeleton';
+import React from 'react';
+import TablePlaceholder from 'Components/TablePlaceholder';
+import { FadeIn, Flex } from 'pouncejs';
+import Panel from 'Components/Panel';
+
+const EditPolicyPageSkeleton: React.FC = () => {
+  return (
+    <FadeIn from="bottom">
+      <Flex direction="column" spacing={5}>
+        <Panel title="Policy Settings">
+          <TablePlaceholder rowCount={5} />
+        </Panel>
+        <Panel title="Policy Body">
+          <TablePlaceholder rowCount={1} rowHeight={100} />
+        </Panel>
+        <Panel title="Test Record">
+          <TablePlaceholder rowCount={5} />
+        </Panel>
+      </Flex>
+    </FadeIn>
+  );
+};
+
+export default EditPolicyPageSkeleton;

@@ -16,29 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import TablePlaceholder from 'Components/TablePlaceholder';
-import { Box, Card, FadeIn } from 'pouncejs';
-import Panel from 'Components/Panel';
-
-const ResourceDetailsPageSkeleton: React.FC = () => {
-  return (
-    <FadeIn from="bottom">
-      <Card p={6}>
-        <TablePlaceholder rowCount={2} rowHeight={10} />
-      </Card>
-      <Box mt={5}>
-        <Panel title="Attributes">
-          <TablePlaceholder />
-        </Panel>
-      </Box>
-      <Box mt={5}>
-        <Panel title="Resources">
-          <TablePlaceholder />
-        </Panel>
-      </Box>
-    </FadeIn>
-  );
-};
-
-export default ResourceDetailsPageSkeleton;
+export { default } from './Skeleton';

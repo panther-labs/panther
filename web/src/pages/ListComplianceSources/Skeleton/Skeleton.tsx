@@ -1,13 +1,14 @@
 import TablePlaceholder from 'Components/TablePlaceholder';
-import { Card, FadeIn } from 'pouncejs';
+import { FadeIn } from 'pouncejs';
+import Panel from 'Components/Panel';
 import React from 'react';
 
 const Skeleton: React.FC = () => {
   return (
     <FadeIn from="bottom">
-      <Card p={9}>
+      <Panel title="Connected Accounts">
         <TablePlaceholder />
-      </Card>
+      </Panel>
     </FadeIn>
   );
 };

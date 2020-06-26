@@ -17,14 +17,14 @@
  */
 
 import React from 'react';
-import { Alert, Button, Card, Box, useSnackbar, FadeIn, Flex } from 'pouncejs';
+import { Alert, Button, Box, useSnackbar, Flex } from 'pouncejs';
 import RuleForm from 'Components/forms/RuleForm';
 import useModal from 'Hooks/useModal';
 import useRouter from 'Hooks/useRouter';
-import TablePlaceholder from 'Components/TablePlaceholder';
 import { MODALS } from 'Components/utils/Modal';
 import { extractErrorMessage, formatJSON } from 'Helpers/utils';
 import withSEO from 'Hoc/withSEO';
+import Skeleton from './Skeleton';
 import { useRuleDetails } from './graphql/ruleDetails.generated';
 import { useUpdateRule } from './graphql/updateRule.generated';
 
@@ -55,19 +55,7 @@ const EditRulePage: React.FC = () => {
   );
 
   if (isFetchingRule) {
-    return (
-      <FadeIn from="bottom">
-        <Card p={6} mb={5}>
-          <TablePlaceholder rowCount={5} />
-        </Card>
-        <Card p={6} mb={5}>
-          <TablePlaceholder rowCount={1} rowHeight={100} />
-        </Card>
-        <Card p={6} mb={5}>
-          <TablePlaceholder rowCount={5} />
-        </Card>
-      </FadeIn>
-    );
+    return <Skeleton />;
   }
 
   if (fetchRuleError) {

@@ -17,16 +17,16 @@
  */
 
 import React from 'react';
-import { Alert, Button, Card, Box, useSnackbar, Flex, FadeIn } from 'pouncejs';
+import { Alert, Button, Box, useSnackbar, Flex } from 'pouncejs';
 import PolicyForm from 'Components/forms/PolicyForm';
 import useModal from 'Hooks/useModal';
 import useRouter from 'Hooks/useRouter';
-import TablePlaceholder from 'Components/TablePlaceholder';
 import { MODALS } from 'Components/utils/Modal';
 import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage, formatJSON } from 'Helpers/utils';
 import { usePolicyDetails } from './graphql/policyDetails.generated';
 import { useUpdatePolicy } from './graphql/updatePolicy.generated';
+import Skeleton from './Skeleton';
 
 const EditPolicyPage: React.FC = () => {
   const { match } = useRouter<{ id: string }>();
@@ -55,19 +55,7 @@ const EditPolicyPage: React.FC = () => {
   );
 
   if (isFetchingPolicy) {
-    return (
-      <FadeIn from="bottom">
-        <Card p={6} mb={5}>
-          <TablePlaceholder rowCount={5} />
-        </Card>
-        <Card p={6} mb={5}>
-          <TablePlaceholder rowCount={1} rowHeight={100} />
-        </Card>
-        <Card p={6} mb={5}>
-          <TablePlaceholder rowCount={5} />
-        </Card>
-      </FadeIn>
-    );
+    return <Skeleton />;
   }
 
   if (fetchPolicyError) {

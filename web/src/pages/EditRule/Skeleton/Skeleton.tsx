@@ -18,27 +18,25 @@
 
 import React from 'react';
 import TablePlaceholder from 'Components/TablePlaceholder';
-import { Box, Card, FadeIn } from 'pouncejs';
+import { FadeIn, Flex } from 'pouncejs';
 import Panel from 'Components/Panel';
 
-const ResourceDetailsPageSkeleton: React.FC = () => {
+const EditRulePageSkeleton: React.FC = () => {
   return (
     <FadeIn from="bottom">
-      <Card p={6}>
-        <TablePlaceholder rowCount={2} rowHeight={10} />
-      </Card>
-      <Box mt={5}>
-        <Panel title="Attributes">
-          <TablePlaceholder />
+      <Flex direction="column" spacing={5}>
+        <Panel title="Rule Settings">
+          <TablePlaceholder rowCount={5} />
         </Panel>
-      </Box>
-      <Box mt={5}>
-        <Panel title="Resources">
-          <TablePlaceholder />
+        <Panel title="Rule Body">
+          <TablePlaceholder rowCount={1} rowHeight={100} />
         </Panel>
-      </Box>
+        <Panel title="Test Record">
+          <TablePlaceholder rowCount={5} />
+        </Panel>
+      </Flex>
     </FadeIn>
   );
 };
 
-export default ResourceDetailsPageSkeleton;
+export default EditRulePageSkeleton;

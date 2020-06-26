@@ -19,7 +19,7 @@
 import React from 'react';
 import useRouter from 'Hooks/useRouter';
 import { Alert, Box } from 'pouncejs';
-import AlertDetailsPageSkeleton from 'Pages/AlertDetails/AlertDetailsSkeleton';
+import Skeleton from 'Pages/AlertDetails/Skeleton';
 import AlertDetailsInfo from 'Pages/AlertDetails/AlertDetailsInfo';
 import AlertEvents from 'Pages/AlertDetails/AlertDetailsEvents';
 import Page404 from 'Pages/404';
@@ -81,7 +81,7 @@ const AlertDetailsPage = () => {
   }, [fetchMore, variables, alertData]);
 
   if ((alertLoading && !alertData) || (ruleLoading && !ruleData)) {
-    return <AlertDetailsPageSkeleton />;
+    return <Skeleton />;
   }
 
   if (alertError) {
