@@ -39,7 +39,7 @@ const AlertDetailsEvents: React.FC<AlertDetailsEventsProps> = ({ events, total, 
     if (eventDisplayIndex - 1 === events.length - DEFAULT_LARGE_PAGE_SIZE) {
       fetchMore();
     }
-  }, [eventDisplayIndex]);
+  }, [eventDisplayIndex, events.length]);
 
   return (
     <Panel

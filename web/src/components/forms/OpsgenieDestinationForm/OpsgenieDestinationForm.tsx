@@ -63,8 +63,7 @@ const OpsgenieDestinationForm: React.FC<OpsgenieDestinationFormProps> = ({
         placeholder={
           existing ? '<hidden information>' : "What's your organization's Opsgenie API key?"
         }
-        mb={6}
-        aria-required={!existing}
+        required={!existing}
         autoComplete="new-password"
       />
     </BaseDestinationForm>

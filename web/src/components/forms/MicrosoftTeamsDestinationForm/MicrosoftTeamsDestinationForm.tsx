@@ -64,8 +64,7 @@ const MicrosoftTeamsDestinationForm: React.FC<MicrosoftTeamsDestinationFormProps
         placeholder={
           existing ? '<hidden information>' : 'Where should we send a push notification to?'
         }
-        mb={6}
-        aria-required={!existing}
+        required={!existing}
       />
     </BaseDestinationForm>
   );

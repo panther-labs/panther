@@ -62,8 +62,7 @@ const PagerDutyDestinationForm: React.FC<PagerDutyDestinationFormProps> = ({
         name="outputConfig.pagerDuty.integrationKey"
         label="Integration Key"
         placeholder={existing ? '<hidden information>' : "What's your PagerDuty Integration Key?"}
-        mb={6}
-        aria-required={!existing}
+        required={!existing}
         autoComplete="new-password"
       />
     </BaseDestinationForm>

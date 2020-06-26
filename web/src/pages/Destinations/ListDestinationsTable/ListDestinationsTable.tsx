@@ -51,8 +51,8 @@ const ListDestinationsTable: React.FC<ListDestinationsTableProps> = ({ destinati
                     my={-4}
                     src={destinationConfig.logo}
                     alt={`${destinationConfig.title} Logo`}
-                    nativeHeight={30}
-                    nativeWidth={30}
+                    nativeHeight={25}
+                    nativeWidth={25}
                     mr={2}
                   />
                   <Box as="span">{destinationConfig.title}</Box>

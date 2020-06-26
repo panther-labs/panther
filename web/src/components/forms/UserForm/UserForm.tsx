@@ -75,7 +75,7 @@ const UserForm: React.FC<UserFormProps> = ({ initialValues, onSubmit }) => {
             name="email"
             required
           />
-          <Flex mb={6} justify="space-between">
+          <Flex justify="space-between">
             <Field
               as={FormikTextInput}
               label="First Name"

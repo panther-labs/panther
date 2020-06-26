@@ -65,16 +65,14 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
         name="outputConfig.jira.orgDomain"
         label="Organization Domain"
         placeholder="What's your organization's Jira domain?"
-        mb={6}
-        aria-required
+        required
       />
       <Field
         as={FormikTextInput}
         name="outputConfig.jira.projectKey"
         label="Project Key"
         placeholder="What's your Jira Project key?"
-        mb={6}
-        aria-required
+        required
         autoComplete="new-password"
       />
       <Field
@@ -82,7 +80,6 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
         name="outputConfig.jira.userName"
         label="Email"
         placeholder="What's the email of the reporting user?"
-        mb={6}
       />
       <Field
         as={FormikTextInput}
@@ -92,8 +89,7 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
         placeholder={
           existing ? '<hidden information>' : "What's the API key of the related Jira account"
         }
-        mb={6}
-        aria-required={!existing}
+        required={!existing}
         autoComplete="new-password"
       />
 
@@ -102,16 +98,14 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
         name="outputConfig.jira.assigneeId"
         label="Assignee ID"
         placeholder="Who should we assign this to?"
-        mb={6}
       />
       <Field
         as={FormikCombobox}
         name="outputConfig.jira.issueType"
         label="Issue Type"
-        mb={6}
-        aria-required
+        required
         items={Object.keys(JiraIssueTypesEnum)}
-        inputProps={{ placeholder: 'Select a type of issue' }}
+        placeholder="Select a type of issue"
       />
     </BaseDestinationForm>
   );

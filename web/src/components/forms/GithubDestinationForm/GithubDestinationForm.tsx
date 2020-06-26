@@ -61,8 +61,7 @@ const GithubDestinationForm: React.FC<GithubDestinationFormProps> = ({
         name="outputConfig.github.repoName"
         label="Repository name"
         placeholder="What's the name of your Github repository?"
-        mb={6}
-        aria-required={!existing}
+        required={!existing}
       />
       <Field
         as={FormikTextInput}
@@ -70,9 +69,8 @@ const GithubDestinationForm: React.FC<GithubDestinationFormProps> = ({
         name="outputConfig.github.token"
         label="Token"
         placeholder={existing ? '<hidden information>' : "What's your Github API token?"}
-        mb={6}
-        aria-required
         autoComplete="new-password"
+        required
       />
     </BaseDestinationForm>
   );

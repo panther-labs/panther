@@ -61,8 +61,7 @@ const SlackDestinationForm: React.FC<SlackDestinationFormProps> = ({ onSubmit, i
         placeholder={
           existing ? '<hidden information>' : 'Where should we send a push notification to?'
         }
-        mb={6}
-        aria-required={!existing}
+        required
       />
     </BaseDestinationForm>
   );
