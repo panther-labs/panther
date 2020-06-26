@@ -48,7 +48,7 @@ const S3SourceConfigurationPanel: React.FC = () => {
             as={FormikTextInput}
             label="Name"
             placeholder="A nickname for this log analysis source"
-            aria-required
+            required
           />
           <Field
             name="awsAccountId"

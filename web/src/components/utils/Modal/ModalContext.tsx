@@ -72,7 +72,7 @@ interface ShowGlobalPythonModuleModalAction {
   type: typeof SHOW_MODAL;
   payload: {
     modal: MODALS.DELETE_GLOBAL_PYTHON_MODULE;
-    props: DeleteGlobalPythonModuleModalProps;
+    props: OmitControlledProps<DeleteGlobalPythonModuleModalProps>;
   };
 }
 /* Delete User action */

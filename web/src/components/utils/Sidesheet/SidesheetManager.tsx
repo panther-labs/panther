@@ -21,7 +21,6 @@ import React from 'react';
 import useSidesheet from 'Hooks/useSidesheet';
 import { SIDESHEETS } from 'Components/utils/Sidesheet';
 import PolicyBulkUploadSidesheet from 'Components/sidesheets/PolicyBulkUploadSidesheet';
-import SelectDestinationSidesheet from 'Components/sidesheets/SelectDestinationSidesheet';
 import AddDestinationSidesheet from 'Components/sidesheets/AddDestinationSidesheet';
 import UpdateDestinationSidesheet from 'Components/sidesheets/UpdateDestinationSidesheet';
 import EditAccountSidesheet from 'Components/sidesheets/EditAccountSidesheet';
