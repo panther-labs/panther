@@ -4,8 +4,9 @@
 {% hint style="info" %}Required fields are in <b>bold</b>.{% endhint %}
 ##GitLab.API
 GitLab log for API requests received from GitLab.
-We are using the latest version of GitLab API logs. 
-The previous version is available on https://docs.gitlab.com/ee/administration/logs.html#api_jsonlog
+NOTE: We are using the latest version of GitLab API logs. Some fields differ from the official documentation
+Reference: https://docs.gitlab.com/ee/administration/logs.html#api_jsonlog
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>time</b></code></td><td><code>timestamp</code></td><td valign=top>The request timestamp</td></tr>
@@ -45,8 +46,9 @@ The previous version is available on https://docs.gitlab.com/ee/administration/l
 </table>
 
 ##GitLab.Audit
-GitLab log file containing changes to group or project settings 
+GitLab log file containing changes to group or project settings
 Reference: https://docs.gitlab.com/ee/administration/logs.html#audit_jsonlog
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>severity</b></code></td><td><code>string</code></td><td valign=top>The log level</td></tr>
@@ -73,8 +75,9 @@ Reference: https://docs.gitlab.com/ee/administration/logs.html#audit_jsonlog
 </table>
 
 ##GitLab.Exceptions
-GitLab log file containing changes to group or project settings 
+GitLab log file containing changes to group or project settings
 Reference: https://docs.gitlab.com/ee/administration/logs.html#exceptions_jsonlog
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>severity</b></code></td><td><code>string</code></td><td valign=top>The log level</td></tr>
@@ -101,6 +104,7 @@ Reference: https://docs.gitlab.com/ee/administration/logs.html#exceptions_jsonlo
 ##GitLab.Git
 GitLab log file containing all failed requests from GitLab to Git repositories.
 Reference: https://docs.gitlab.com/ee/administration/logs.html#git_jsonlog
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>severity</b></code></td><td><code>string</code></td><td valign=top>The log level</td></tr>
@@ -121,6 +125,7 @@ Reference: https://docs.gitlab.com/ee/administration/logs.html#git_jsonlog
 ##GitLab.Integrations
 GitLab log with information about integrations activities such as Jira, Asana, and Irker services.
 Reference: https://docs.gitlab.com/ee/administration/logs.html#integrations_jsonlog
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>severity</b></code></td><td><code>string</code></td><td valign=top>The log level</td></tr>
@@ -145,6 +150,7 @@ Reference: https://docs.gitlab.com/ee/administration/logs.html#integrations_json
 ##GitLab.Production
 GitLab log for Production controller requests received from GitLab
 Reference: https://docs.gitlab.com/ee/administration/logs.html#production_jsonlog
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>method</b></code></td><td><code>string</code></td><td valign=top>The HTTP method of the request</td></tr>

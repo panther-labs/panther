@@ -4,7 +4,8 @@
 {% hint style="info" %}Required fields are in <b>bold</b>.{% endhint %}
 ##Osquery.Batch
 Batch contains all the data included in OsQuery batch logs
-Reference : https://osquery.readthedocs.io/en/stable/deployment/logging/
+Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>calendarTime</b></code></td><td><code>timestamp</code></td><td valign=top>The time of the event (UTC).</td></tr>
@@ -29,6 +30,7 @@ Reference : https://osquery.readthedocs.io/en/stable/deployment/logging/
 ##Osquery.Differential
 Differential contains all the data included in OsQuery differential logs
 Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>action</b></code></td><td><code>string</code></td><td valign=top>Action</td></tr>
@@ -57,6 +59,7 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
 ##Osquery.Snapshot
 Snapshot contains all the data included in OsQuery differential logs
 Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>action</b></code></td><td><code>string</code></td><td valign=top>Action</td></tr>
@@ -82,6 +85,7 @@ Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
 ##Osquery.Status
 Status is a diagnostic osquery log about the daemon.
 Reference: https://osquery.readthedocs.io/en/stable/deployment/logging/
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>calendarTime</b></code></td><td><code>timestamp</code></td><td valign=top>The time of the event (UTC).</td></tr>

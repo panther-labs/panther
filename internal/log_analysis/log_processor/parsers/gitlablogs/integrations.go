@@ -25,13 +25,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-// TypeIntegrations is the log type of GitLabIntegrations
-const TypeIntegrations = PantherPrefix + ".Integrations"
-
-// IntegrationsDesc describes the GitLabIntegrations log record
-var IntegrationsDesc = `GitLab log with information about integrations activities such as Jira, Asana, and Irker services.
-Reference: https://docs.gitlab.com/ee/administration/logs.html#integrations_jsonlog`
-
 // Integrations is a a GitLab log line from an integrated gitlab activity
 type Integrations struct {
 	Severity     *string            `json:"severity" validate:"required" description:"The log level"`

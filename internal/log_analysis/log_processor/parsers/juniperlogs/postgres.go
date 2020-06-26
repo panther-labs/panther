@@ -33,12 +33,6 @@ import (
 
 const TypePostgres = `Juniper.Postgres`
 
-// nolint:lll
-const DescPostgres = TypePostgres + ` contains logs of manipulations on the schema of the database that WebApp Secure uses, as well as any errors that occurred during database operations.
-
-Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-postgres-log.html
-`
-
 var _ parsers.LogParser = (*PostgresParser)(nil)
 
 type PostgresParser struct {

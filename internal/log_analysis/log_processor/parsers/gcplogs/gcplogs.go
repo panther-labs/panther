@@ -1,3 +1,4 @@
+// Package gcplogs has log parsers for Google Cloud Platform
 package gcplogs
 
 /**
@@ -21,11 +22,30 @@ package gcplogs
 import (
 	"strings"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-// Package gcplogs has log parsers for Google Cloud Platform
+const (
+	TypeAuditLog = "GCP.AuditLog"
+)
+
+//nolint: lll
+func init() {
+	logtypes.MustRegister(
+		logtypes.Config{
+			Name: TypeAuditLog,
+			Description: `Cloud Audit Logs maintains three audit logs for each Google Cloud project, folder, and organization: Admin Activity, Data Access, and System Event.
+Google Cloud services write audit log entries to these logs to help you answer the questions of "who did what, where, and when?" within your Google Cloud resources.
+`,
+			ReferenceURL: `https://cloud.google.com/logging/docs/audit`,
+			Schema:       AuditLog{},
+			NewParser:    parsers.AdapterFactory(&AuditLogParser{}),
+		},
+	)
+}
 
 // nolint:lll
 type LogEntry struct {
