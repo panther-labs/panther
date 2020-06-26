@@ -18,6 +18,17 @@
 
 import { generateDocUrl } from 'Helpers/utils';
 import { pantherConfig } from 'Source/config';
+import slackLogo from 'Assets/slack-minimal-logo.svg';
+import { DestinationTypeEnum } from 'Generated/schema';
+import msTeamsLogo from 'Assets/ms-teams-minimal-logo.svg';
+import opsgenieLogo from 'Assets/opsgenie-minimal-logo.svg';
+import jiraLogo from 'Assets/jira-minimal-logo.svg';
+import githubLogo from 'Assets/github-minimal-logo.svg';
+import pagerDutyLogo from 'Assets/pagerduty-minimal-logo.svg';
+import snsLogo from 'Assets/aws-sns-minimal-logo.svg';
+import sqsLogo from 'Assets/aws-sqs-minimal-logo.svg';
+import asanaLogo from 'Assets/asana-minimal-logo.svg';
+import customWebhook from 'Assets/custom-webhook-minimal-logo.svg';
 
 export enum LogIntegrationsEnum {
   's3' = 'aws-s3',
@@ -143,3 +154,59 @@ export const ERROR_REPORTING_CONSENT_STORAGE_KEY = 'panther.generalSettings.erro
 
 // The default panther system user id
 export const PANTHER_USER_ID = '00000000-0000-4000-8000-000000000000';
+
+export const DESTINATIONS: Record<
+  DestinationTypeEnum,
+  { logo: string; title: string; type: DestinationTypeEnum }
+> = {
+  [DestinationTypeEnum.Slack]: {
+    logo: slackLogo,
+    title: 'Slack',
+    type: DestinationTypeEnum.Slack,
+  },
+  [DestinationTypeEnum.Msteams]: {
+    logo: msTeamsLogo,
+    title: 'Microsoft Teams',
+    type: DestinationTypeEnum.Msteams,
+  },
+  [DestinationTypeEnum.Opsgenie]: {
+    logo: opsgenieLogo,
+    title: 'Opsgenie',
+    type: DestinationTypeEnum.Opsgenie,
+  },
+  [DestinationTypeEnum.Jira]: {
+    logo: jiraLogo,
+    title: 'Jira',
+    type: DestinationTypeEnum.Jira,
+  },
+  [DestinationTypeEnum.Github]: {
+    logo: githubLogo,
+    title: 'Github',
+    type: DestinationTypeEnum.Github,
+  },
+  [DestinationTypeEnum.Pagerduty]: {
+    logo: pagerDutyLogo,
+    title: 'PagerDuty',
+    type: DestinationTypeEnum.Pagerduty,
+  },
+  [DestinationTypeEnum.Sns]: {
+    logo: snsLogo,
+    title: 'AWS SNS',
+    type: DestinationTypeEnum.Sns,
+  },
+  [DestinationTypeEnum.Sqs]: {
+    logo: sqsLogo,
+    title: 'AWS SQS',
+    type: DestinationTypeEnum.Sqs,
+  },
+  [DestinationTypeEnum.Asana]: {
+    logo: asanaLogo,
+    title: 'Asana',
+    type: DestinationTypeEnum.Asana,
+  },
+  [DestinationTypeEnum.Customwebhook]: {
+    logo: customWebhook,
+    title: 'Custom Webhook',
+    type: DestinationTypeEnum.Customwebhook,
+  },
+};
