@@ -5,6 +5,7 @@
 ##OSSEC.EventInfo
 OSSEC EventInfo alert parser. Currently only JSON output is supported.
 Reference: https://www.ossec.net/docs/docs/formats/alerts.html
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>id</b></code></td><td><code>string</code></td><td valign=top>Unique id of the event.</td></tr>

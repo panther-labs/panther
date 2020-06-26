@@ -5,6 +5,7 @@
 ##Fluentd.Syslog3164
 Fluentd syslog parser for the RFC3164 format (ie. BSD-syslog messages)
 Reference: https://docs.fluentd.org/parser/syslog#rfc3164-log
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code>pri</code></td><td><code>smallint</code></td><td valign=top>Priority is calculated by (Facility * 8 + Severity). The lower this value, the higher importance of the log message.</td></tr>
@@ -28,6 +29,7 @@ Reference: https://docs.fluentd.org/parser/syslog#rfc3164-log
 ##Fluentd.Syslog5424
 Fluentd syslog parser for the RFC5424 format (ie. BSD-syslog messages)
 Reference: https://docs.fluentd.org/parser/syslog#rfc5424-log
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code>pri</code></td><td><code>smallint</code></td><td valign=top>Priority is calculated by (Facility * 8 + Severity). The lower this value, the higher importance of the log message.</td></tr>

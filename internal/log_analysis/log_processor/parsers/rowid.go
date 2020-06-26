@@ -62,18 +62,17 @@ func (rid *RowID) NewRowID() string {
 
 func init() {
 	// get nodeID to use in prefix of uuid
-	ifName, addr := getHardwareInterface()
-	if ifName == "" { // should never happen ... but just in case
-		err := errors.Errorf("Could not find hardware interface, generating random addr for uuid prefix") // to get stacktrace
-		zap.L().Error(err.Error(), zap.Error(err))
+	nif, err := getHardwareInterface()
+	if err != nil { // should never happen ... but just in case
+		zap.L().Error("Could not find hardware interface, generating random addr for uuid prefix", zap.Error(err))
 		noise := make([]byte, nodeIDSize)
-		rand.Read(noise) // nolint (errcheck) , not checking error because there is noting else to do
+		rand.Read(noise) // nolint errcheck, not checking error because there is noting else to do
 		copy(nodeID[:], noise)
 	} else {
 		zap.L().Debug("Found hardware interface for uuid prefix",
-			zap.String("ifName", ifName),
-			zap.String("addr", hex.EncodeToString(addr)))
-		copy(nodeID[:], addr)
+			zap.String("ifName", nif.Name),
+			zap.String("addr", hex.EncodeToString(nif.HardwareAddr)))
+		copy(nodeID[:], nif.HardwareAddr)
 	}
 
 	// compute prefix
@@ -83,17 +82,16 @@ func init() {
 }
 
 // return first mac addr found
-func getHardwareInterface() (string, []byte) {
-	var err error
+func getHardwareInterface() (net.Interface, error) {
 	interfaces, err := net.Interfaces()
 	if err != nil {
-		return "", nil
+		return net.Interface{}, err
 	}
 
-	for _, ifs := range interfaces {
-		if len(ifs.HardwareAddr) >= nodeIDSize {
-			return ifs.Name, ifs.HardwareAddr
+	for _, nif := range interfaces {
+		if len(nif.HardwareAddr) >= nodeIDSize {
+			return nif, nil
 		}
 	}
-	return "", nil
+	return net.Interface{}, errors.Errorf("no valid interface found")
 }

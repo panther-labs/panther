@@ -344,7 +344,7 @@ Resources:
       VisibilityTimeout: !FindInMap [Functions, LogProcessor, Timeout]
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt LogProcessorDLQ.Arn
-        maxReceiveCount: 10
+        maxReceiveCount: 4 # Retry for 4 x 15' timeout = 60'
 
   LogProcessorQueueAlarms:
     Type: Custom::SQSAlarms

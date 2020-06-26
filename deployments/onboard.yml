@@ -41,9 +41,6 @@ Parameters:
     Type: String
     Description: Enable S3 access logging for all Panther buckets
     AllowedValues: [true, false]
-  VpcId:
-    Type: String
-    Description: Web VPC ID
 
 Conditions:
   EnableCloudTrail: !Equals [!Ref EnableCloudTrail, true]
@@ -131,16 +128,6 @@ Resources:
         DestinationArn: !Sub arn:${AWS::Partition}:s3:::${AuditLogsBucket}
         KmsKeyArn: !GetAtt GuardDutyEncryptionKey.Arn
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
-
-  # Panther monitors itself, the AuditLogsBucket is processed by the log processor
-  FlowLogs:
-    Type: AWS::EC2::FlowLog
-    Properties:
-      LogDestination: !Sub arn:${AWS::Partition}:s3:::${AuditLogsBucket}
-      LogDestinationType: s3
-      ResourceId: !Ref VpcId
-      ResourceType: VPC
-      TrafficType: ALL
 
   # Configure SNS Topic to receive bucket notifications
   # This topic is used to notify the log processor queue whenever new data is written to the auditing bucket.

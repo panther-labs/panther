@@ -5,6 +5,7 @@
 ##Zeek.DNS
 Zeek DNS activity
 Reference: https://docs.zeek.org/en/current/scripts/base/protocols/dns/main.zeek.html#type-DNS::Info
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>ts</b></code></td><td><code>timestamp</code></td><td valign=top>The earliest time at which a DNS protocol message over the associated connection is observed.</td></tr>

@@ -4,8 +4,8 @@
 {% hint style="info" %}Required fields are in <b>bold</b>.{% endhint %}
 ##Juniper.Access
 Juniper.Access logs for all traffic coming to and from the box.
-
 Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-access-log.html
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>timestamp</b></code></td><td><code>timestamp</code></td><td valign=top>Log entry timestamp</td></tr>
@@ -30,8 +30,8 @@ Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/referenc
 
 ##Juniper.Audit
 Juniper.Audit The audit log contains log entries that indicate non-idempotent (state changing) actions performed on WebApp Secure.
-
 Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-incident-log-format.html
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>timestamp</b></code></td><td><code>timestamp</code></td><td valign=top>Log entry timestamp</td></tr>
@@ -53,9 +53,8 @@ Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/referenc
 </table>
 
 ##Juniper.Firewall
-Juniper.Firewall stores information about dropped packets from the iptables firewall. 
-
-Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-profile-log-format.html
+Juniper.Firewall stores information about dropped packets from the iptables firewall.
+Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-incident-log-format.html
 
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
@@ -92,8 +91,7 @@ Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/referenc
 
 ##Juniper.MWS
 Juniper.MWS is the main log file for most WebApp Secure logging needs. All messages that don&#39;t have a specific log location are sent, by default, to mws.log.
-
-Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-mws-log.html 
+Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-mws-log.html
 
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
@@ -116,7 +114,6 @@ Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/referenc
 
 ##Juniper.Postgres
 Juniper.Postgres contains logs of manipulations on the schema of the database that WebApp Secure uses, as well as any errors that occurred during database operations.
-
 Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-postgres-log.html
 
 <table>
@@ -145,8 +142,8 @@ Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/referenc
 Juniper.Security Webapp Secure is configured to log security incidents to mws-security.log.
 All security alerts should be sent to security.log (previously named security-alert.log).
 There are different types of security incidents that will be a part of this log: new profiles, security incidents, new counter responses.
-
 Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-log-format.html
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>timestamp</b></code></td><td><code>timestamp</code></td><td valign=top>Log entry timestamp</td></tr>

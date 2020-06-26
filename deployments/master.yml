@@ -121,7 +121,7 @@ Parameters:
 Mappings:
   Constants:
     Panther:
-      Version: 1.4.0
+      Version: 1.5.0
 
 Conditions:
   RegistryProvided: !Not [!Equals [!Ref ImageRegistry, '']]
@@ -326,7 +326,6 @@ Resources:
         EnableCloudTrail: !Ref EnableCloudTrail
         EnableGuardDuty: !Ref EnableGuardDuty
         EnableS3AccessLogs: !Ref EnableS3AccessLogs
-        VpcId: !GetAtt Bootstrap.Outputs.VpcId
       Tags:
         - Key: Application
           Value: Panther
@@ -339,12 +338,12 @@ Resources:
 
   Web:
     Type: AWS::CloudFormation::Stack
-    DependsOn: [BootstrapGateway, Core] # custom-resources and users-api, respectively
+    DependsOn: Core # users-api
     Properties:
       TemplateURL: web_server.yml
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
-        AppClientId: !GetAtt Bootstrap.Outputs.AppClientId
+        AppClientId: !GetAtt BootstrapGateway.Outputs.AppClientId
         CertificateArn: !Ref CertificateArn
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         CustomResourceVersion: !FindInMap [Constants, Panther, Version]

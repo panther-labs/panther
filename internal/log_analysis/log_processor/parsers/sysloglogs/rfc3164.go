@@ -29,9 +29,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-var RFC3164Desc = `Syslog parser for the RFC3164 format (ie. BSD-syslog messages)
-Reference: https://tools.ietf.org/html/rfc3164`
-
 // nolint:lll
 type RFC3164 struct {
 	Priority  *uint8             `json:"priority" validate:"required" description:"Priority is calculated by (Facility * 8 + Severity). The lower this value, the higher importance of the log message."`
@@ -101,7 +98,7 @@ func (p *RFC3164Parser) Parse(log string) ([]*parsers.PantherLog, error) {
 
 // LogType returns the log type supported by this parser
 func (p *RFC3164Parser) LogType() string {
-	return "Syslog.RFC3164"
+	return TypeRFC3164
 }
 
 func (event *RFC3164) updatePantherFields(p *RFC3164Parser) {
