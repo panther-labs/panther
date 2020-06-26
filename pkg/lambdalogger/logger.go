@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-lambda-go/lambdacontext"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -88,6 +89,10 @@ func ConfigureGlobal(
 		log.Panic("failed to build zap logger: " + err.Error())
 	}
 
+	// Sync the current global logger so we don't miss any log lines
+	if err := zap.L().Sync(); err != nil {
+		panic(errors.Wrap(err, "failed to sync logger"))
+	}
 	zap.ReplaceGlobals(logger)
 	return lc, logger
 }
