@@ -39,9 +39,6 @@ const SidesheetManager: React.FC = () => {
     case SIDESHEETS.UPDATE_DESTINATION:
       Component = UpdateDestinationSidesheet;
       break;
-    case SIDESHEETS.SELECT_DESTINATION:
-      Component = SelectDestinationSidesheet;
-      break;
     case SIDESHEETS.POLICY_BULK_UPLOAD:
       Component = PolicyBulkUploadSidesheet;
       break;

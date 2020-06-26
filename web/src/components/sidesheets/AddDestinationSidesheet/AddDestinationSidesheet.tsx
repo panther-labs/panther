@@ -16,35 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {
-  Alert,
-  Box,
-  Flex,
-  Heading,
-  IconButton,
-  SideSheet,
-  SideSheetProps,
-  useSnackbar,
-} from 'pouncejs';
+import { Box, FadeIn, SideSheet, SideSheetProps } from 'pouncejs';
 import React from 'react';
-
-import useSidesheet from 'Hooks/useSidesheet';
-import { SIDESHEETS } from 'Components/utils/Sidesheet';
-import { DestinationConfigInput, DestinationTypeEnum } from 'Generated/schema';
-import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm';
-
-import SNSDestinationForm from 'Components/forms/SnsDestinationForm';
-import SQSDestinationForm from 'Components/forms/SqsDestinationForm';
-import SlackDestinationForm from 'Components/forms/SlackDestinationForm';
-import PagerDutyDestinationForm from 'Components/forms/PagerdutyDestinationForm';
-import OpsgenieDestinationForm from 'Components/forms/OpsgenieDestinationForm';
-import MicrosoftTeamsDestinationForm from 'Components/forms/MicrosoftTeamsDestinationForm';
-import JiraDestinationForm from 'Components/forms/JiraDestinationForm';
-import GithubDestinationForm from 'Components/forms/GithubDestinationForm';
-import AsanaDestinationForm from 'Components/forms/AsanaDestinationForm';
-import CustomWebhookDestinationForm from 'Components/forms/CustomWebhookDestinationForm';
-import { capitalize, extractErrorMessage } from 'Helpers/utils';
-import { useAddDestination } from './graphql/addDestination.generated';
+import { DestinationTypeEnum } from 'Generated/schema';
+import ChooseDestinationScreen from './ChooseDestinationScreen';
+import ConfigureDestinationScreen from './ConfigureDestinationScreen';
 
 export interface AddDestinationSidesheetProps extends SideSheetProps {
   destinationType: DestinationTypeEnum;
@@ -55,201 +31,33 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({
   onClose,
   ...rest
 }) => {
-  const { pushSnackbar } = useSnackbar();
-  const { showSidesheet } = useSidesheet();
+  const [chosenDestination, chooseDestination] = React.useState<DestinationTypeEnum>(null);
 
-  // If destination object doesn't exist, handleSubmit should call addDestination to create a new destination and use default initial values
-  const [addDestination, { error: addDestinationError }] = useAddDestination({
-    onCompleted: data => {
-      onClose();
-      pushSnackbar({
-        variant: 'success',
-        title: `Successfully added ${data.addDestination.displayName}`,
-      });
-    },
-    onError: error => {
-      pushSnackbar({
-        variant: 'error',
-        title:
-          extractErrorMessage(error) ||
-          "An unknown error occurred and we couldn't add your new destination",
-      });
-    },
-  });
-
-  // The typescript on `values` simply says that we expect to have DestinationFormValues with an
-  // `outputType` that partially implements the DestinationConfigInput (we say partially since each
-  // integration will add each own config). Ideally we would want to say "exactly 1". We can't
-  // specify the exact one since `const` are not allowed to have generics and `useCallback` can only
-  // be assigned to a const
-  const handleSubmit = React.useCallback(
-    async (values: BaseDestinationFormValues<Partial<DestinationConfigInput>>) => {
-      const { displayName, defaultForSeverity, outputConfig } = values;
-      await addDestination({
-        variables: {
-          input: {
-            // form values that are present in all Destinations
-            displayName,
-            defaultForSeverity,
-
-            // dynamic form values that depend on the selected destination
-            outputType: destinationType,
-            outputConfig,
-          },
-        },
-        update: (cache, { data: { addDestination: newDestination } }) => {
-          cache.modify('ROOT_QUERY', {
-            destinations: (queryData, { toReference }) => {
-              const addDestinationRef = toReference(newDestination);
-              return queryData ? [addDestinationRef, ...queryData] : [addDestinationRef];
-            },
-          });
-        },
-      });
-    },
-    []
-  );
-
-  const commonInitialValues = {
-    displayName: '',
-    defaultForSeverity: [],
-  };
-
-  const renderFullDestinationForm = () => {
-    switch (destinationType) {
-      case DestinationTypeEnum.Pagerduty:
-        return (
-          <PagerDutyDestinationForm
-            initialValues={{
-              ...commonInitialValues,
-              outputConfig: { pagerDuty: { integrationKey: '' } },
-            }}
-            onSubmit={handleSubmit}
-          />
-        );
-      case DestinationTypeEnum.Github:
-        return (
-          <GithubDestinationForm
-            initialValues={{
-              ...commonInitialValues,
-              outputConfig: { github: { repoName: '', token: '' } },
-            }}
-            onSubmit={handleSubmit}
-          />
-        );
-      case DestinationTypeEnum.Jira:
-        return (
-          <JiraDestinationForm
-            initialValues={{
-              ...commonInitialValues,
-              outputConfig: {
-                jira: {
-                  orgDomain: '',
-                  projectKey: '',
-                  userName: '',
-                  apiKey: '',
-                  assigneeId: '',
-                  issueType: null,
-                },
-              },
-            }}
-            onSubmit={handleSubmit}
-          />
-        );
-      case DestinationTypeEnum.Opsgenie:
-        return (
-          <OpsgenieDestinationForm
-            initialValues={{ ...commonInitialValues, outputConfig: { opsgenie: { apiKey: '' } } }}
-            onSubmit={handleSubmit}
-          />
-        );
-      case DestinationTypeEnum.Msteams:
-        return (
-          <MicrosoftTeamsDestinationForm
-            initialValues={{ ...commonInitialValues, outputConfig: { msTeams: { webhookURL: '' } } }} // prettier-ignore
-            onSubmit={handleSubmit}
-          />
-        );
-      case DestinationTypeEnum.Slack:
-        return (
-          <SlackDestinationForm
-            initialValues={{ ...commonInitialValues, outputConfig: { slack: { webhookURL: '' } } }}
-            onSubmit={handleSubmit}
-          />
-        );
-      case DestinationTypeEnum.Sns:
-        return (
-          <SNSDestinationForm
-            initialValues={{
-              ...commonInitialValues,
-              outputConfig: { sns: { topicArn: '' } },
-            }}
-            onSubmit={handleSubmit}
-          />
-        );
-      case DestinationTypeEnum.Sqs:
-        return (
-          <SQSDestinationForm
-            initialValues={{
-              ...commonInitialValues,
-              outputConfig: { sqs: { queueUrl: '' } },
-            }}
-            onSubmit={handleSubmit}
-          />
-        );
-      case DestinationTypeEnum.Asana:
-        return (
-          <AsanaDestinationForm
-            initialValues={{
-              ...commonInitialValues,
-              outputConfig: { asana: { personalAccessToken: '', projectGids: [] } },
-            }}
-            onSubmit={handleSubmit}
-          />
-        );
-      case DestinationTypeEnum.Customwebhook:
-        return (
-          <CustomWebhookDestinationForm
-            initialValues={{ ...commonInitialValues, outputConfig: { customWebhook: { webhookURL: '' } } }} // prettier-ignore
-            onSubmit={handleSubmit}
-          />
-        );
-      default:
-        return null;
-    }
-  };
+  const resetDestinationSelection = React.useCallback(() => chooseDestination(null), [
+    chooseDestination,
+  ]);
 
   return (
-    <SideSheet aria-labelledby="add-destination-title" onClose={onClose} {...rest}>
+    <SideSheet
+      aria-labelledby="destination-title"
+      aria-describedby="destination-description"
+      onClose={onClose}
+      {...rest}
+    >
       <Box width={465}>
-        <Flex mb={8} align="center" mt={-2}>
-          <IconButton
-            aria-label="Go to select destination screen"
-            variant="ghost"
-            icon="arrow-back"
-            onClick={() =>
-              showSidesheet({
-                sidesheet: SIDESHEETS.SELECT_DESTINATION,
-              })
-            }
-          />
-          <Heading ml={4} id="add-destination-title">
-            {capitalize(destinationType)} Configuration
-          </Heading>
-        </Flex>
-        {addDestinationError && (
-          <Box mt={2} mb={6}>
-            <Alert
-              variant="error"
-              title="Destination not added"
-              description={
-                extractErrorMessage(addDestinationError) ||
-                "An unknown error occured and we couldn't add your new destination"
-              }
+        {chosenDestination ? (
+          <FadeIn from="right">
+            <ConfigureDestinationScreen
+              destination={chosenDestination}
+              onReset={resetDestinationSelection}
+              onSuccess={onClose}
             />
-          </Box>
+          </FadeIn>
+        ) : (
+          <FadeIn from="bottom" offset={10}>
+            <ChooseDestinationScreen chooseDestination={chooseDestination} />
+          </FadeIn>
         )}
-        {renderFullDestinationForm()}
       </Box>
     </SideSheet>
   );

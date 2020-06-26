@@ -29,7 +29,7 @@ const DestinationCreateButton: React.FC = () => {
       icon="add"
       onClick={() =>
         showSidesheet({
-          sidesheet: SIDESHEETS.SELECT_DESTINATION,
+          sidesheet: SIDESHEETS.ADD_DESTINATION,
         })
       }
     >
