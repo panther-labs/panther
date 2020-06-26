@@ -57,9 +57,11 @@
 * [Supported Logs]()
   * [Apache](log-analysis/log-processing/supported-logs/Apache.md)
   * [AWS](log-analysis/log-processing/supported-logs/AWS.md)
+  * [Cisco Umbrella](log-analysis/log-processing/supported-logs/CiscoUmbrella.md)
   * [Fluentd](log-analysis/log-processing/supported-logs/Fluentd.md)
   * [GCP](log-analysis/log-processing/supported-logs/GCP.md)
   * [GitLab](log-analysis/log-processing/supported-logs/GitLab.md)
+  * [GSuite](log-analysis/log-processing/supported-logs/GSuite.md)
   * [Nginx](log-analysis/log-processing/supported-logs/Nginx.md)
   * [Okta](log-analysis/log-processing/supported-logs/Okta.md)
   * [OneLogin](log-analysis/log-processing/supported-logs/OneLogin.md)
@@ -68,6 +70,8 @@
   * [Suricata](log-analysis/log-processing/supported-logs/Suricata.md)
   * [Syslog](log-analysis/log-processing/supported-logs/Syslog.md)
   * [Zeek](log-analysis/log-processing/supported-logs/Zeek.md)
+* [SaaS logs setup]()
+  * [GSuite](log-analysis/log-processing/log-setup/gsuite.md)
 * [Standard Fields](log-analysis/panther-fields.md)
 
 ## Cloud Security

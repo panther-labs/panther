@@ -14,11 +14,13 @@ type Mutation {
   addS3LogIntegration(input: AddS3LogIntegrationInput!): S3LogIntegration!
   addPolicy(input: AddPolicyInput!): PolicyDetails
   addRule(input: AddRuleInput!): RuleDetails
+  addGlobalPythonModule(input: AddGlobalPythonModuleInput!): GlobalPythonModule!
   deleteDestination(id: ID!): Boolean
   deleteComplianceIntegration(id: ID!): Boolean
   deleteLogIntegration(id: ID!): Boolean
   deletePolicy(input: DeletePolicyInput!): Boolean
   deleteRule(input: DeleteRuleInput!): Boolean
+  deleteGlobalPythonModule(input: DeleteGlobalPythonModuleInput!): Boolean
   deleteUser(id: ID!): Boolean
   inviteUser(input: InviteUserInput): User!
   remediateResource(input: RemediateResourceInput!): Boolean
@@ -33,7 +35,7 @@ type Mutation {
   updateRule(input: UpdateRuleInput!): RuleDetails
   updateUser(input: UpdateUserInput!): User!
   uploadPolicies(input: UploadPoliciesInput!): UploadPoliciesResponse
-  updateGlobalPythonlModule(input: ModifyGlobalModuleInput!): GlobalModuleDetails
+  updateGlobalPythonlModule(input: ModifyGlobalPythonModuleInput!): GlobalPythonModule!
 }
 
 type Query {
@@ -52,7 +54,7 @@ type Query {
   resource(input: GetResourceInput!): ResourceDetails
   resources(input: ListResourcesInput): ListResourcesResponse
   resourcesForPolicy(input: ResourcesForPolicyInput!): ListComplianceItemsResponse
-  getGlobalPythonModule(input: GetGlobalModuleInput!): GlobalModuleDetails
+  getGlobalPythonModule(input: GetGlobalPythonModuleInput!): GlobalPythonModule!
   policy(input: GetPolicyInput!): PolicyDetails
   policies(input: ListPoliciesInput): ListPoliciesResponse
   policiesForResource(input: PoliciesForResourceInput): ListComplianceItemsResponse
@@ -61,6 +63,7 @@ type Query {
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   rule(input: GetRuleInput!): RuleDetails
   rules(input: ListRulesInput): ListRulesResponse
+  listGlobalPythonModules(input: ListGlobalPythonModuleInput!): ListGlobalPythonModulesResponse!
   users: [User!]!
 }
 
@@ -82,8 +85,18 @@ input GetS3LogIntegrationTemplateInput {
 
 input ListAlertsInput {
   ruleId: ID
-  pageSize: Int
+  pageSize: Int # defaults to `25`
   exclusiveStartKey: String
+  severity: [SeverityEnum]
+  nameContains: String
+  createdAtBefore: AWSDateTime
+  createdAtAfter: AWSDateTime
+  ruleIdContains: String
+  alertIdContains: String
+  eventCountMin: Int
+  eventCountMax: Int
+  sortBy: ListAlertsSortFieldsEnum # defaults to `createdAt`
+  sortDir: SortDirEnum # defaults to `descending` (always on `createdAt` field)
 }
 
 input GetAlertInput {
@@ -428,6 +441,7 @@ type DestinationConfig {
   opsgenie: OpsgenieConfig
   msTeams: MsTeamsConfig
   asana: AsanaConfig
+  customWebhook: CustomWebhookConfig
 }
 
 type SqsConfig {
@@ -454,6 +468,10 @@ type JiraConfig {
 type AsanaConfig {
   personalAccessToken: String!
   projectGids: [String!]!
+}
+
+type CustomWebhookConfig {
+  webhookURL: String!
 }
 
 type GithubConfig {
@@ -491,6 +509,7 @@ input DestinationConfigInput {
   opsgenie: OpsgenieConfigInput
   msTeams: MsTeamsConfigInput
   asana: AsanaConfigInput
+  customWebhook: CustomWebhookConfigInput
 }
 
 input SQSConfigInput {
@@ -517,6 +536,10 @@ input JiraConfigInput {
 input AsanaConfigInput {
   personalAccessToken: String!
   projectGids: [String!]!
+}
+
+input CustomWebhookConfigInput {
+  webhookURL: String!
 }
 
 input GithubConfigInput {
@@ -559,12 +582,17 @@ type PolicyDetails {
   versionId: ID
 }
 
-type GlobalModuleDetails {
+type GlobalPythonModule {
   body: String!
   description: String!
   id: ID!
   createdAt: AWSDateTime!
   lastModified: AWSDateTime!
+}
+
+type ListGlobalPythonModulesResponse {
+  paging: PagingData
+  globals: [GlobalPythonModule]
 }
 
 type PagingData {
@@ -626,15 +654,40 @@ input GetPolicyInput {
   versionId: ID
 }
 
-input GetGlobalModuleInput {
+input ListGlobalPythonModuleInput {
+  nameContains: String
+  enabled: Boolean
+  # Sorting
+  #  sortBy: ListRulesSortFieldsEnum # defaults to `id`
+  sortDir: SortDirEnum # defaults to `ascending`
+  # Paging
+  pageSize: Int # defaults to `25`
+  page: Int # defaults to `1`
+}
+
+input GetGlobalPythonModuleInput {
   globalId: ID!
   versionId: ID
 }
 
-input ModifyGlobalModuleInput {
+input ModifyGlobalPythonModuleInput {
   description: String!
   id: ID!
   body: String!
+}
+
+input AddGlobalPythonModuleInput {
+  id: ID!
+  description: String!
+  body: String!
+}
+
+input DeleteGlobalPythonModuleInput {
+  globals: [DeleteGlobalPythonInputItem!]
+}
+
+input DeleteGlobalPythonInputItem {
+  id: ID!
 }
 
 input DeletePolicyInput {
@@ -795,6 +848,10 @@ enum ListRulesSortFieldsEnum {
   severity
 }
 
+enum ListAlertsSortFieldsEnum {
+  createdAt
+}
+
 enum SortDirEnum {
   ascending
   descending
@@ -828,6 +885,7 @@ enum DestinationTypeEnum {
   sns
   sqs
   asana
+  customwebhook
 }
 
 enum AnalysisTypeEnum {

@@ -31,6 +31,7 @@ import MicrosoftTeamsDestinationForm from 'Components/forms/MicrosoftTeamsDestin
 import JiraDestinationForm from 'Components/forms/JiraDestinationForm';
 import GithubDestinationForm from 'Components/forms/GithubDestinationForm';
 import AsanaDestinationForm from 'Components/forms/AsanaDestinationForm';
+import CustomWebhookDestinationForm from 'Components/forms/CustomWebhookDestinationForm';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useUpdateDestination } from './graphql/updateDestination.generated';
 
@@ -96,7 +97,7 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
   // on  lodash's pick, it messes typings and TS fails cause it thinks it doesn't have all the
   // fields it needs. We use `commonInitialValues` to satisfy this exact constraint that was set by
   // the `initialValues` prop of each form.
-  const commonInitialValues = pick(destination, ['displayName', 'defaultForSeverity']);
+  const commonInitialValues = pick(destination, ['outputId', 'displayName', 'defaultForSeverity']);
 
   const renderFullDestinationForm = () => {
     switch (destination.outputType) {
@@ -196,6 +197,16 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
                 'asana.personalAccessToken',
                 'asana.projectGids',
               ]),
+            }}
+            onSubmit={handleSubmit}
+          />
+        );
+      case DestinationTypeEnum.Customwebhook:
+        return (
+          <CustomWebhookDestinationForm
+            initialValues={{
+              ...commonInitialValues,
+              outputConfig: pick(destination.outputConfig, 'customWebhook.webhookURL'),
             }}
             onSubmit={handleSubmit}
           />

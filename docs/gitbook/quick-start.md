@@ -27,7 +27,7 @@ First, navigate to the AWS CloudFormation console and create a new stack.
 Use the following template URL to install the latest version in the us-east-1 region:
 
 ```
-https://panther-community-us-east-1.s3.amazonaws.com/v1.4.0/panther.yml
+https://panther-community-us-east-1.s3.amazonaws.com/v1.5.0/panther.yml
 ```
 
 The template URL is of the following form:
@@ -68,7 +68,7 @@ Resources:
   Panther:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://panther-community-${AWS::Region}.s3.amazonaws.com/v1.4.0/panther.yml
+      TemplateURL: !Sub https://panther-community-${AWS::Region}.s3.amazonaws.com/v1.5.0/panther.yml
       Parameters:
         CompanyDisplayName: AwesomeCo
         FirstUserEmail: user@example.com
@@ -76,12 +76,19 @@ Resources:
         FirstUserFamilyName: Jones
 ```
 
+When deploying this template, you will need to include all capabilities:
+
+```
+aws cloudformation deploy --template-file template.yml --stack-name panther --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
+```
+
 ### Using Terraform
 
 ```hcl
 resource "aws_cloudformation_stack" "panther" {
   name = "panther"
-  template_url = "https://panther-community-<REGION>.s3.amazonaws.com/v1.4.0/panther.yml"
+  template_url = "https://panther-community-<REGION>.s3.amazonaws.com/v1.5.0/panther.yml"
+  capabilities = ["CAPABILITY_IAM", "CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND"]
   parameters = {
     CompanyDisplayName = "AwesomeCo"
     FirstUserEmail = "user@example.com"

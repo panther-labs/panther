@@ -49,6 +49,7 @@ export type DestinationFull = { __typename: 'Destination' } & Pick<
       msTeams?: Types.Maybe<Pick<Types.MsTeamsConfig, 'webhookURL'>>;
       sqs?: Types.Maybe<Pick<Types.SqsConfig, 'queueUrl'>>;
       asana?: Types.Maybe<Pick<Types.AsanaConfig, 'personalAccessToken' | 'projectGids'>>;
+      customWebhook?: Types.Maybe<Pick<Types.CustomWebhookConfig, 'webhookURL'>>;
     };
   };
 
@@ -95,6 +96,9 @@ export const DestinationFull = gql`
       asana {
         personalAccessToken
         projectGids
+      }
+      customWebhook {
+        webhookURL
       }
     }
     verificationStatus

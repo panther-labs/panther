@@ -50,6 +50,12 @@ export type AddComplianceIntegrationInput = {
   cweEnabled?: Maybe<Scalars['Boolean']>;
 };
 
+export type AddGlobalPythonModuleInput = {
+  id: Scalars['ID'];
+  description: Scalars['String'];
+  body: Scalars['String'];
+};
+
 export type AddPolicyInput = {
   id: Scalars['ID'];
   autoRemediationId?: Maybe<Scalars['ID']>;
@@ -177,6 +183,23 @@ export enum ComplianceStatusEnum {
   Pass = 'PASS',
 }
 
+export type CustomWebhookConfig = {
+  __typename?: 'CustomWebhookConfig';
+  webhookURL: Scalars['String'];
+};
+
+export type CustomWebhookConfigInput = {
+  webhookURL: Scalars['String'];
+};
+
+export type DeleteGlobalPythonInputItem = {
+  id: Scalars['ID'];
+};
+
+export type DeleteGlobalPythonModuleInput = {
+  globals?: Maybe<Array<DeleteGlobalPythonInputItem>>;
+};
+
 export type DeletePolicyInput = {
   policies?: Maybe<Array<Maybe<DeletePolicyInputItem>>>;
 };
@@ -218,6 +241,7 @@ export type DestinationConfig = {
   opsgenie?: Maybe<OpsgenieConfig>;
   msTeams?: Maybe<MsTeamsConfig>;
   asana?: Maybe<AsanaConfig>;
+  customWebhook?: Maybe<CustomWebhookConfig>;
 };
 
 export type DestinationConfigInput = {
@@ -230,6 +254,7 @@ export type DestinationConfigInput = {
   opsgenie?: Maybe<OpsgenieConfigInput>;
   msTeams?: Maybe<MsTeamsConfigInput>;
   asana?: Maybe<AsanaConfigInput>;
+  customWebhook?: Maybe<CustomWebhookConfigInput>;
 };
 
 export type DestinationInput = {
@@ -250,6 +275,7 @@ export enum DestinationTypeEnum {
   Sns = 'sns',
   Sqs = 'sqs',
   Asana = 'asana',
+  Customwebhook = 'customwebhook',
 }
 
 export type GeneralSettings = {
@@ -272,7 +298,7 @@ export type GetComplianceIntegrationTemplateInput = {
   cweEnabled?: Maybe<Scalars['Boolean']>;
 };
 
-export type GetGlobalModuleInput = {
+export type GetGlobalPythonModuleInput = {
   globalId: Scalars['ID'];
   versionId?: Maybe<Scalars['ID']>;
 };
@@ -311,8 +337,8 @@ export type GithubConfigInput = {
   token: Scalars['String'];
 };
 
-export type GlobalModuleDetails = {
-  __typename?: 'GlobalModuleDetails';
+export type GlobalPythonModule = {
+  __typename?: 'GlobalPythonModule';
   body: Scalars['String'];
   description: Scalars['String'];
   id: Scalars['ID'];
@@ -367,6 +393,16 @@ export type ListAlertsInput = {
   ruleId?: Maybe<Scalars['ID']>;
   pageSize?: Maybe<Scalars['Int']>;
   exclusiveStartKey?: Maybe<Scalars['String']>;
+  severity?: Maybe<Array<Maybe<SeverityEnum>>>;
+  nameContains?: Maybe<Scalars['String']>;
+  createdAtBefore?: Maybe<Scalars['AWSDateTime']>;
+  createdAtAfter?: Maybe<Scalars['AWSDateTime']>;
+  ruleIdContains?: Maybe<Scalars['String']>;
+  alertIdContains?: Maybe<Scalars['String']>;
+  eventCountMin?: Maybe<Scalars['Int']>;
+  eventCountMax?: Maybe<Scalars['Int']>;
+  sortBy?: Maybe<ListAlertsSortFieldsEnum>;
+  sortDir?: Maybe<SortDirEnum>;
 };
 
 export type ListAlertsResponse = {
@@ -375,12 +411,30 @@ export type ListAlertsResponse = {
   lastEvaluatedKey?: Maybe<Scalars['String']>;
 };
 
+export enum ListAlertsSortFieldsEnum {
+  CreatedAt = 'createdAt',
+}
+
 export type ListComplianceItemsResponse = {
   __typename?: 'ListComplianceItemsResponse';
   items?: Maybe<Array<Maybe<ComplianceItem>>>;
   paging?: Maybe<PagingData>;
   status?: Maybe<ComplianceStatusEnum>;
   totals?: Maybe<ActiveSuppressCount>;
+};
+
+export type ListGlobalPythonModuleInput = {
+  nameContains?: Maybe<Scalars['String']>;
+  enabled?: Maybe<Scalars['Boolean']>;
+  sortDir?: Maybe<SortDirEnum>;
+  pageSize?: Maybe<Scalars['Int']>;
+  page?: Maybe<Scalars['Int']>;
+};
+
+export type ListGlobalPythonModulesResponse = {
+  __typename?: 'ListGlobalPythonModulesResponse';
+  paging?: Maybe<PagingData>;
+  globals?: Maybe<Array<Maybe<GlobalPythonModule>>>;
 };
 
 export type ListPoliciesInput = {
@@ -465,7 +519,7 @@ export enum ListRulesSortFieldsEnum {
 
 export type LogIntegration = S3LogIntegration;
 
-export type ModifyGlobalModuleInput = {
+export type ModifyGlobalPythonModuleInput = {
   description: Scalars['String'];
   id: Scalars['ID'];
   body: Scalars['String'];
@@ -487,11 +541,13 @@ export type Mutation = {
   addS3LogIntegration: S3LogIntegration;
   addPolicy?: Maybe<PolicyDetails>;
   addRule?: Maybe<RuleDetails>;
+  addGlobalPythonModule: GlobalPythonModule;
   deleteDestination?: Maybe<Scalars['Boolean']>;
   deleteComplianceIntegration?: Maybe<Scalars['Boolean']>;
   deleteLogIntegration?: Maybe<Scalars['Boolean']>;
   deletePolicy?: Maybe<Scalars['Boolean']>;
   deleteRule?: Maybe<Scalars['Boolean']>;
+  deleteGlobalPythonModule?: Maybe<Scalars['Boolean']>;
   deleteUser?: Maybe<Scalars['Boolean']>;
   inviteUser: User;
   remediateResource?: Maybe<Scalars['Boolean']>;
@@ -506,7 +562,7 @@ export type Mutation = {
   updateRule?: Maybe<RuleDetails>;
   updateUser: User;
   uploadPolicies?: Maybe<UploadPoliciesResponse>;
-  updateGlobalPythonlModule?: Maybe<GlobalModuleDetails>;
+  updateGlobalPythonlModule: GlobalPythonModule;
 };
 
 export type MutationAddDestinationArgs = {
@@ -529,6 +585,10 @@ export type MutationAddRuleArgs = {
   input: AddRuleInput;
 };
 
+export type MutationAddGlobalPythonModuleArgs = {
+  input: AddGlobalPythonModuleInput;
+};
+
 export type MutationDeleteDestinationArgs = {
   id: Scalars['ID'];
 };
@@ -547,6 +607,10 @@ export type MutationDeletePolicyArgs = {
 
 export type MutationDeleteRuleArgs = {
   input: DeleteRuleInput;
+};
+
+export type MutationDeleteGlobalPythonModuleArgs = {
+  input: DeleteGlobalPythonModuleInput;
 };
 
 export type MutationDeleteUserArgs = {
@@ -606,7 +670,7 @@ export type MutationUploadPoliciesArgs = {
 };
 
 export type MutationUpdateGlobalPythonlModuleArgs = {
-  input: ModifyGlobalModuleInput;
+  input: ModifyGlobalPythonModuleInput;
 };
 
 export type OpsgenieConfig = {
@@ -739,7 +803,7 @@ export type Query = {
   resource?: Maybe<ResourceDetails>;
   resources?: Maybe<ListResourcesResponse>;
   resourcesForPolicy?: Maybe<ListComplianceItemsResponse>;
-  getGlobalPythonModule?: Maybe<GlobalModuleDetails>;
+  getGlobalPythonModule: GlobalPythonModule;
   policy?: Maybe<PolicyDetails>;
   policies?: Maybe<ListPoliciesResponse>;
   policiesForResource?: Maybe<ListComplianceItemsResponse>;
@@ -748,6 +812,7 @@ export type Query = {
   organizationStats?: Maybe<OrganizationStatsResponse>;
   rule?: Maybe<RuleDetails>;
   rules?: Maybe<ListRulesResponse>;
+  listGlobalPythonModules: ListGlobalPythonModulesResponse;
   users: Array<User>;
 };
 
@@ -792,7 +857,7 @@ export type QueryResourcesForPolicyArgs = {
 };
 
 export type QueryGetGlobalPythonModuleArgs = {
-  input: GetGlobalModuleInput;
+  input: GetGlobalPythonModuleInput;
 };
 
 export type QueryPolicyArgs = {
@@ -817,6 +882,10 @@ export type QueryRuleArgs = {
 
 export type QueryRulesArgs = {
   input?: Maybe<ListRulesInput>;
+};
+
+export type QueryListGlobalPythonModulesArgs = {
+  input: ListGlobalPythonModuleInput;
 };
 
 export type RemediateResourceInput = {
@@ -1166,9 +1235,11 @@ export type ResolversTypes = {
   AWSDateTime: ResolverTypeWrapper<Scalars['AWSDateTime']>;
   AWSJSON: ResolverTypeWrapper<Scalars['AWSJSON']>;
   ListAlertsInput: ListAlertsInput;
+  SeverityEnum: SeverityEnum;
+  ListAlertsSortFieldsEnum: ListAlertsSortFieldsEnum;
+  SortDirEnum: SortDirEnum;
   ListAlertsResponse: ResolverTypeWrapper<ListAlertsResponse>;
   AlertSummary: ResolverTypeWrapper<AlertSummary>;
-  SeverityEnum: SeverityEnum;
   Destination: ResolverTypeWrapper<Destination>;
   DestinationTypeEnum: DestinationTypeEnum;
   DestinationConfig: ResolverTypeWrapper<DestinationConfig>;
@@ -1182,6 +1253,7 @@ export type ResolversTypes = {
   OpsgenieConfig: ResolverTypeWrapper<OpsgenieConfig>;
   MsTeamsConfig: ResolverTypeWrapper<MsTeamsConfig>;
   AsanaConfig: ResolverTypeWrapper<AsanaConfig>;
+  CustomWebhookConfig: ResolverTypeWrapper<CustomWebhookConfig>;
   GeneralSettings: ResolverTypeWrapper<GeneralSettings>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
   ComplianceIntegration: ResolverTypeWrapper<ComplianceIntegration>;
@@ -1197,7 +1269,6 @@ export type ResolversTypes = {
   ComplianceStatusEnum: ComplianceStatusEnum;
   ListResourcesInput: ListResourcesInput;
   ListResourcesSortFieldsEnum: ListResourcesSortFieldsEnum;
-  SortDirEnum: SortDirEnum;
   ListResourcesResponse: ResolverTypeWrapper<ListResourcesResponse>;
   PagingData: ResolverTypeWrapper<PagingData>;
   ResourceSummary: ResolverTypeWrapper<ResourceSummary>;
@@ -1206,8 +1277,8 @@ export type ResolversTypes = {
   ComplianceItem: ResolverTypeWrapper<ComplianceItem>;
   ActiveSuppressCount: ResolverTypeWrapper<ActiveSuppressCount>;
   ComplianceStatusCounts: ResolverTypeWrapper<ComplianceStatusCounts>;
-  GetGlobalModuleInput: GetGlobalModuleInput;
-  GlobalModuleDetails: ResolverTypeWrapper<GlobalModuleDetails>;
+  GetGlobalPythonModuleInput: GetGlobalPythonModuleInput;
+  GlobalPythonModule: ResolverTypeWrapper<GlobalPythonModule>;
   GetPolicyInput: GetPolicyInput;
   PolicyDetails: ResolverTypeWrapper<PolicyDetails>;
   PolicyUnitTest: ResolverTypeWrapper<PolicyUnitTest>;
@@ -1228,6 +1299,8 @@ export type ResolversTypes = {
   ListRulesSortFieldsEnum: ListRulesSortFieldsEnum;
   ListRulesResponse: ResolverTypeWrapper<ListRulesResponse>;
   RuleSummary: ResolverTypeWrapper<RuleSummary>;
+  ListGlobalPythonModuleInput: ListGlobalPythonModuleInput;
+  ListGlobalPythonModulesResponse: ResolverTypeWrapper<ListGlobalPythonModulesResponse>;
   User: ResolverTypeWrapper<User>;
   AWSEmail: ResolverTypeWrapper<Scalars['AWSEmail']>;
   AWSTimestamp: ResolverTypeWrapper<Scalars['AWSTimestamp']>;
@@ -1243,15 +1316,19 @@ export type ResolversTypes = {
   OpsgenieConfigInput: OpsgenieConfigInput;
   MsTeamsConfigInput: MsTeamsConfigInput;
   AsanaConfigInput: AsanaConfigInput;
+  CustomWebhookConfigInput: CustomWebhookConfigInput;
   AddComplianceIntegrationInput: AddComplianceIntegrationInput;
   AddS3LogIntegrationInput: AddS3LogIntegrationInput;
   AddPolicyInput: AddPolicyInput;
   PolicyUnitTestInput: PolicyUnitTestInput;
   AddRuleInput: AddRuleInput;
+  AddGlobalPythonModuleInput: AddGlobalPythonModuleInput;
   DeletePolicyInput: DeletePolicyInput;
   DeletePolicyInputItem: DeletePolicyInputItem;
   DeleteRuleInput: DeleteRuleInput;
   DeleteRuleInputItem: DeleteRuleInputItem;
+  DeleteGlobalPythonModuleInput: DeleteGlobalPythonModuleInput;
+  DeleteGlobalPythonInputItem: DeleteGlobalPythonInputItem;
   InviteUserInput: InviteUserInput;
   RemediateResourceInput: RemediateResourceInput;
   SuppressPoliciesInput: SuppressPoliciesInput;
@@ -1267,7 +1344,7 @@ export type ResolversTypes = {
   UpdateUserInput: UpdateUserInput;
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: ResolverTypeWrapper<UploadPoliciesResponse>;
-  ModifyGlobalModuleInput: ModifyGlobalModuleInput;
+  ModifyGlobalPythonModuleInput: ModifyGlobalPythonModuleInput;
   AccountTypeEnum: AccountTypeEnum;
 };
 
@@ -1282,9 +1359,11 @@ export type ResolversParentTypes = {
   AWSDateTime: Scalars['AWSDateTime'];
   AWSJSON: Scalars['AWSJSON'];
   ListAlertsInput: ListAlertsInput;
+  SeverityEnum: SeverityEnum;
+  ListAlertsSortFieldsEnum: ListAlertsSortFieldsEnum;
+  SortDirEnum: SortDirEnum;
   ListAlertsResponse: ListAlertsResponse;
   AlertSummary: AlertSummary;
-  SeverityEnum: SeverityEnum;
   Destination: Destination;
   DestinationTypeEnum: DestinationTypeEnum;
   DestinationConfig: DestinationConfig;
@@ -1298,6 +1377,7 @@ export type ResolversParentTypes = {
   OpsgenieConfig: OpsgenieConfig;
   MsTeamsConfig: MsTeamsConfig;
   AsanaConfig: AsanaConfig;
+  CustomWebhookConfig: CustomWebhookConfig;
   GeneralSettings: GeneralSettings;
   Boolean: Scalars['Boolean'];
   ComplianceIntegration: ComplianceIntegration;
@@ -1313,7 +1393,6 @@ export type ResolversParentTypes = {
   ComplianceStatusEnum: ComplianceStatusEnum;
   ListResourcesInput: ListResourcesInput;
   ListResourcesSortFieldsEnum: ListResourcesSortFieldsEnum;
-  SortDirEnum: SortDirEnum;
   ListResourcesResponse: ListResourcesResponse;
   PagingData: PagingData;
   ResourceSummary: ResourceSummary;
@@ -1322,8 +1401,8 @@ export type ResolversParentTypes = {
   ComplianceItem: ComplianceItem;
   ActiveSuppressCount: ActiveSuppressCount;
   ComplianceStatusCounts: ComplianceStatusCounts;
-  GetGlobalModuleInput: GetGlobalModuleInput;
-  GlobalModuleDetails: GlobalModuleDetails;
+  GetGlobalPythonModuleInput: GetGlobalPythonModuleInput;
+  GlobalPythonModule: GlobalPythonModule;
   GetPolicyInput: GetPolicyInput;
   PolicyDetails: PolicyDetails;
   PolicyUnitTest: PolicyUnitTest;
@@ -1344,6 +1423,8 @@ export type ResolversParentTypes = {
   ListRulesSortFieldsEnum: ListRulesSortFieldsEnum;
   ListRulesResponse: ListRulesResponse;
   RuleSummary: RuleSummary;
+  ListGlobalPythonModuleInput: ListGlobalPythonModuleInput;
+  ListGlobalPythonModulesResponse: ListGlobalPythonModulesResponse;
   User: User;
   AWSEmail: Scalars['AWSEmail'];
   AWSTimestamp: Scalars['AWSTimestamp'];
@@ -1359,15 +1440,19 @@ export type ResolversParentTypes = {
   OpsgenieConfigInput: OpsgenieConfigInput;
   MsTeamsConfigInput: MsTeamsConfigInput;
   AsanaConfigInput: AsanaConfigInput;
+  CustomWebhookConfigInput: CustomWebhookConfigInput;
   AddComplianceIntegrationInput: AddComplianceIntegrationInput;
   AddS3LogIntegrationInput: AddS3LogIntegrationInput;
   AddPolicyInput: AddPolicyInput;
   PolicyUnitTestInput: PolicyUnitTestInput;
   AddRuleInput: AddRuleInput;
+  AddGlobalPythonModuleInput: AddGlobalPythonModuleInput;
   DeletePolicyInput: DeletePolicyInput;
   DeletePolicyInputItem: DeletePolicyInputItem;
   DeleteRuleInput: DeleteRuleInput;
   DeleteRuleInputItem: DeleteRuleInputItem;
+  DeleteGlobalPythonModuleInput: DeleteGlobalPythonModuleInput;
+  DeleteGlobalPythonInputItem: DeleteGlobalPythonInputItem;
   InviteUserInput: InviteUserInput;
   RemediateResourceInput: RemediateResourceInput;
   SuppressPoliciesInput: SuppressPoliciesInput;
@@ -1383,7 +1468,7 @@ export type ResolversParentTypes = {
   UpdateUserInput: UpdateUserInput;
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: UploadPoliciesResponse;
-  ModifyGlobalModuleInput: ModifyGlobalModuleInput;
+  ModifyGlobalPythonModuleInput: ModifyGlobalPythonModuleInput;
   AccountTypeEnum: AccountTypeEnum;
 };
 
@@ -1515,6 +1600,14 @@ export type ComplianceStatusCountsResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
+export type CustomWebhookConfigResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['CustomWebhookConfig'] = ResolversParentTypes['CustomWebhookConfig']
+> = {
+  webhookURL?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
 export type DestinationResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['Destination'] = ResolversParentTypes['Destination']
@@ -1549,6 +1642,7 @@ export type DestinationConfigResolvers<
   opsgenie?: Resolver<Maybe<ResolversTypes['OpsgenieConfig']>, ParentType, ContextType>;
   msTeams?: Resolver<Maybe<ResolversTypes['MsTeamsConfig']>, ParentType, ContextType>;
   asana?: Resolver<Maybe<ResolversTypes['AsanaConfig']>, ParentType, ContextType>;
+  customWebhook?: Resolver<Maybe<ResolversTypes['CustomWebhookConfig']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -1571,9 +1665,9 @@ export type GithubConfigResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
-export type GlobalModuleDetailsResolvers<
+export type GlobalPythonModuleResolvers<
   ContextType = any,
-  ParentType extends ResolversParentTypes['GlobalModuleDetails'] = ResolversParentTypes['GlobalModuleDetails']
+  ParentType extends ResolversParentTypes['GlobalPythonModule'] = ResolversParentTypes['GlobalPythonModule']
 > = {
   body?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -1631,6 +1725,19 @@ export type ListComplianceItemsResponseResolvers<
   paging?: Resolver<Maybe<ResolversTypes['PagingData']>, ParentType, ContextType>;
   status?: Resolver<Maybe<ResolversTypes['ComplianceStatusEnum']>, ParentType, ContextType>;
   totals?: Resolver<Maybe<ResolversTypes['ActiveSuppressCount']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type ListGlobalPythonModulesResponseResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['ListGlobalPythonModulesResponse'] = ResolversParentTypes['ListGlobalPythonModulesResponse']
+> = {
+  paging?: Resolver<Maybe<ResolversTypes['PagingData']>, ParentType, ContextType>;
+  globals?: Resolver<
+    Maybe<Array<Maybe<ResolversTypes['GlobalPythonModule']>>>,
+    ParentType,
+    ContextType
+  >;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -1718,6 +1825,12 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationAddRuleArgs, 'input'>
   >;
+  addGlobalPythonModule?: Resolver<
+    ResolversTypes['GlobalPythonModule'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationAddGlobalPythonModuleArgs, 'input'>
+  >;
   deleteDestination?: Resolver<
     Maybe<ResolversTypes['Boolean']>,
     ParentType,
@@ -1747,6 +1860,12 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationDeleteRuleArgs, 'input'>
+  >;
+  deleteGlobalPythonModule?: Resolver<
+    Maybe<ResolversTypes['Boolean']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationDeleteGlobalPythonModuleArgs, 'input'>
   >;
   deleteUser?: Resolver<
     Maybe<ResolversTypes['Boolean']>,
@@ -1833,7 +1952,7 @@ export type MutationResolvers<
     RequireFields<MutationUploadPoliciesArgs, 'input'>
   >;
   updateGlobalPythonlModule?: Resolver<
-    Maybe<ResolversTypes['GlobalModuleDetails']>,
+    ResolversTypes['GlobalPythonModule'],
     ParentType,
     ContextType,
     RequireFields<MutationUpdateGlobalPythonlModuleArgs, 'input'>
@@ -2046,7 +2165,7 @@ export type QueryResolvers<
     RequireFields<QueryResourcesForPolicyArgs, 'input'>
   >;
   getGlobalPythonModule?: Resolver<
-    Maybe<ResolversTypes['GlobalModuleDetails']>,
+    ResolversTypes['GlobalPythonModule'],
     ParentType,
     ContextType,
     RequireFields<QueryGetGlobalPythonModuleArgs, 'input'>
@@ -2092,6 +2211,12 @@ export type QueryResolvers<
     ParentType,
     ContextType,
     RequireFields<QueryRulesArgs, never>
+  >;
+  listGlobalPythonModules?: Resolver<
+    ResolversTypes['ListGlobalPythonModulesResponse'],
+    ParentType,
+    ContextType,
+    RequireFields<QueryListGlobalPythonModulesArgs, 'input'>
   >;
   users?: Resolver<Array<ResolversTypes['User']>, ParentType, ContextType>;
 };
@@ -2302,16 +2427,18 @@ export type Resolvers<ContextType = any> = {
   ComplianceIntegrationHealth?: ComplianceIntegrationHealthResolvers<ContextType>;
   ComplianceItem?: ComplianceItemResolvers<ContextType>;
   ComplianceStatusCounts?: ComplianceStatusCountsResolvers<ContextType>;
+  CustomWebhookConfig?: CustomWebhookConfigResolvers<ContextType>;
   Destination?: DestinationResolvers<ContextType>;
   DestinationConfig?: DestinationConfigResolvers<ContextType>;
   GeneralSettings?: GeneralSettingsResolvers<ContextType>;
   GithubConfig?: GithubConfigResolvers<ContextType>;
-  GlobalModuleDetails?: GlobalModuleDetailsResolvers<ContextType>;
+  GlobalPythonModule?: GlobalPythonModuleResolvers<ContextType>;
   IntegrationItemHealthStatus?: IntegrationItemHealthStatusResolvers<ContextType>;
   IntegrationTemplate?: IntegrationTemplateResolvers<ContextType>;
   JiraConfig?: JiraConfigResolvers<ContextType>;
   ListAlertsResponse?: ListAlertsResponseResolvers<ContextType>;
   ListComplianceItemsResponse?: ListComplianceItemsResponseResolvers<ContextType>;
+  ListGlobalPythonModulesResponse?: ListGlobalPythonModulesResponseResolvers<ContextType>;
   ListPoliciesResponse?: ListPoliciesResponseResolvers<ContextType>;
   ListResourcesResponse?: ListResourcesResponseResolvers<ContextType>;
   ListRulesResponse?: ListRulesResponseResolvers<ContextType>;

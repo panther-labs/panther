@@ -33,7 +33,7 @@ interface GuardedRouteProps extends RouteProps {
  */
 const GuardedRoute: React.FC<GuardedRouteProps> = ({ limitAccessTo, ...rest }) => {
   const { isAuthenticated } = useAuth();
-  const { location } = useRouter<{}, { referrer: Location }>();
+  const { location } = useRouter<Record<string, string | number>, { referrer: Location }>();
 
   if (
     (limitAccessTo === 'anonymous' && !isAuthenticated) ||

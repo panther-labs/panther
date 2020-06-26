@@ -34,6 +34,7 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	"github.com/panther-labs/panther/pkg/box"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -72,6 +73,11 @@ var (
 	//used to simplify mocking during testing
 	newCredentialsFunc = stscreds.NewCredentials
 	newS3ClientFunc    = getNewS3Client
+
+	// Map from integrationId -> last time an event was received
+	lastEventReceived = make(map[string]time.Time)
+	// How frequently to update the status
+	statusUpdateFrequency = 1 * time.Minute
 )
 
 func init() {
@@ -99,15 +105,17 @@ func getS3Client(s3Object *S3ObjectInfo) (s3iface.S3API, string, error) {
 	if sourceInfo == nil {
 		return nil, "", errors.Errorf("there is no source configured for S3 object %#v", s3Object)
 	}
+	var awsCreds *credentials.Credentials // lazy create below
 	roleArn := getSourceLogProcessingRole(sourceInfo)
-	awsCreds := getAwsCredentials(roleArn)
-	if awsCreds == nil {
-		return nil, "", errors.Errorf("failed to fetch credentials for assumed role to read %#v", s3Object)
-	}
 
 	bucketRegion, ok := bucketCache.Get(s3Object.S3Bucket)
 	if !ok {
 		zap.L().Debug("bucket region was not cached, fetching it", zap.String("bucket", s3Object.S3Bucket))
+		awsCreds = getAwsCredentials(roleArn)
+		if awsCreds == nil {
+			return nil, "", errors.Errorf("failed to fetch credentials for assumed role %s to read %#v",
+				roleArn, s3Object)
+		}
 		bucketRegion, err = getBucketRegion(s3Object.S3Bucket, awsCreds)
 		if err != nil {
 			return nil, "", err
@@ -117,17 +125,21 @@ func getS3Client(s3Object *S3ObjectInfo) (s3iface.S3API, string, error) {
 
 	zap.L().Debug("found bucket region", zap.Any("region", bucketRegion))
 
-	bucketRegionString := bucketRegion.(string)
 	cacheKey := s3ClientCacheKey{
 		roleArn:   roleArn,
-		awsRegion: bucketRegionString,
+		awsRegion: bucketRegion.(string),
 	}
-
-	var client interface{}
-	client, ok = s3ClientCache.Get(cacheKey)
+	client, ok := s3ClientCache.Get(cacheKey)
 	if !ok {
 		zap.L().Debug("s3 client was not cached, creating it")
-		client = newS3ClientFunc(aws.String(bucketRegionString), awsCreds)
+		if awsCreds == nil {
+			awsCreds = getAwsCredentials(roleArn)
+			if awsCreds == nil {
+				return nil, "", errors.Errorf("failed to fetch credentials for assumed role %s to read %#v",
+					roleArn, s3Object)
+			}
+		}
+		client = newS3ClientFunc(box.String(cacheKey.awsRegion), awsCreds)
 		s3ClientCache.Add(cacheKey, client)
 	}
 	return client.(s3iface.S3API), *sourceInfo.IntegrationType, nil
@@ -156,13 +168,14 @@ func getAwsCredentials(roleArn string) *credentials.Credentials {
 	zap.L().Debug("fetching new credentials from assumed role", zap.String("roleArn", roleArn))
 	return newCredentialsFunc(common.Session, roleArn, func(p *stscreds.AssumeRoleProvider) {
 		p.Duration = time.Duration(sessionDurationSeconds) * time.Second
+		p.ExpiryWindow = time.Minute // give plenty of time to refresh
 	})
 }
 
 // Returns the source configuration for this S3 object.
 // It will return error if it encountered an issue retrieving the role.
 // It will return nil result if no source exists for this object.
-func getSourceInfo(s3Object *S3ObjectInfo) (*models.SourceIntegration, error) {
+func getSourceInfo(s3Object *S3ObjectInfo) (result *models.SourceIntegration, err error) {
 	now := time.Now() // No need to be UTC. We care about relative time
 	if sourceCache.cacheUpdateTime.Add(sourceCacheDuration).Before(now) {
 		// we need to update the cache
@@ -170,7 +183,7 @@ func getSourceInfo(s3Object *S3ObjectInfo) (*models.SourceIntegration, error) {
 			ListIntegrations: &models.ListIntegrationsInput{},
 		}
 		var output []*models.SourceIntegration
-		err := genericapi.Invoke(common.LambdaClient, sourceAPIFunctionName, input, &output)
+		err = genericapi.Invoke(common.LambdaClient, sourceAPIFunctionName, input, &output)
 		if err != nil {
 			return nil, err
 		}
@@ -182,11 +195,38 @@ func getSourceInfo(s3Object *S3ObjectInfo) (*models.SourceIntegration, error) {
 		integrationBucket, integrationPrefix := getSourceS3Info(source)
 		if aws.StringValue(integrationBucket) == s3Object.S3Bucket {
 			if strings.HasPrefix(s3Object.S3ObjectKey, aws.StringValue(integrationPrefix)) {
-				return source, nil
+				result = source
+				break
 			}
 		}
 	}
-	return nil, nil
+
+	// If the incoming notification maps to a known source, update the source information
+	if result != nil {
+		deadline := lastEventReceived[*result.IntegrationID].Add(statusUpdateFrequency)
+		// if more than 'statusUpdateFrequency' time has passed, update status
+		if now.After(deadline) {
+			updateIntegrationStatus(*result.IntegrationID, now)
+			lastEventReceived[*result.IntegrationID] = now
+		}
+	}
+
+	return result, nil
+}
+
+func updateIntegrationStatus(integrationID string, timestamp time.Time) {
+	input := &models.LambdaInput{
+		UpdateStatus: &models.UpdateStatusInput{
+			IntegrationID:     integrationID,
+			LastEventReceived: timestamp,
+		},
+	}
+	// We are setting the `output` parameter to `nil` since we don't care about the returned value
+	err := genericapi.Invoke(common.LambdaClient, sourceAPIFunctionName, input, nil)
+	// best effort - if we fail to update the status, just log a warning
+	if err != nil {
+		zap.L().Warn("failed to update status for integrationID", zap.String("integrationID", integrationID))
+	}
 }
 
 func getNewS3Client(region *string, creds *credentials.Credentials) (result s3iface.S3API) {

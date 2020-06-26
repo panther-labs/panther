@@ -26,7 +26,7 @@ import (
 )
 
 // PutItem adds a source integration to the database
-func (ddb *DDB) PutItem(input *IntegrationItem) error {
+func (ddb *DDB) PutItem(input *Integration) error {
 	item, err := dynamodbattribute.MarshalMap(input)
 	if err != nil {
 		return errors.Wrapf(err, "failed to marshal integration metadata")

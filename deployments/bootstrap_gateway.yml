@@ -28,43 +28,39 @@ Description: Bootstrap resources that require the source S3 bucket to exist firs
 #      - Alarms for SNS topics in the bootstrap stack
 
 Parameters:
-  # Passed from one of the bootstrap stacks
+  # Alphabetize parameters so it's easy to compare side-by-side with other code that passes values
+  # and because the CloudFormation console always shows parameters in alphabetical order.
+  AlarmTopicArn:
+    Type: String
+    Description: SNS topic for CloudWatch alarms
   AthenaResultsBucket:
     Type: String
     Description: Bucket created to hold Athena results
-  ImageRegistryName:
+  AuditLogsBucket:
     Type: String
-    Description: Name of the ECR repository hosting web images (blank when deploying from source)
-  ProcessedDataBucket:
-    Type: String
-    Description: S3 bucket which stores processed logs
-
-  # From the config file
+    Description: Bucket which holds Panther's own audit logs
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
-    Default: 365
+  CustomResourceVersion:
+    Type: String
+    Description: Forces updates to custom resources when changed
+  ImageRegistryName:
+    Type: String
+    Description: Name of the ECR repository hosting web images (blank when deploying from source)
   LayerVersionArns:
     Type: CommaDelimitedList
     Description: List of LayerVersion ARNs to attach to each function
-    Default: ''
+  ProcessedDataBucket:
+    Type: String
+    Description: S3 bucket which stores processed logs
   PythonLayerVersionArn:
     Type: String
     Description: Custom Python layer for analysis and remediation
-    Default: ''
   TracingMode:
     Type: String
     Description: Enable XRay tracing on Lambda and API Gateway
     AllowedValues: ['', Active, PassThrough]
-    Default: ''
-
-  # From the bootstrap stack:
-  AlarmTopicArn:
-    Type: String
-    Description: SNS topic for CloudWatch alarms
-  AuditLogsBucket:
-    Type: String
-    Description: Bucket which holds Panther's own audit logs
   UserPoolId:
     Type: String
     Description: Cognito user pool ID
@@ -191,10 +187,15 @@ Resources:
               Action: kms:ListAliases # required for GuardDuty
               Resource: '*'
             - Effect: Allow
-              Action: lambda:GetFunction
+              Action:
+                - lambda:GetFunction
               Resource:
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-policy-engine
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-rules-engine
+            - Effect: Allow
+              Action:
+                - lambda:ListLayerVersions
+              Resource: '*'
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource:
@@ -237,6 +238,7 @@ Resources:
   CustomResourceMetricFilters:
     Type: Custom::LambdaMetricFilters
     Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
       LogGroupName: !Ref CustomResourceLogGroup
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
@@ -244,6 +246,7 @@ Resources:
     Type: Custom::LambdaAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       FunctionMemoryMB: !FindInMap [Functions, CustomResource, Memory]
       FunctionName: !Ref CustomResourceFunction
       FunctionTimeoutSec: !FindInMap [Functions, CustomResource, Timeout]
@@ -257,6 +260,7 @@ Resources:
     #   - Lambda layers
     Type: Custom::PantherTeardown
     Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
       EcrRepoName: !Ref ImageRegistryName
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
@@ -265,6 +269,7 @@ Resources:
     Type: Custom::SNSAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
       TopicName: panther-processed-data-notifications
 
@@ -275,6 +280,7 @@ Resources:
     Type: Custom::SNSAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
       TopicName: panther-cw-alarms
 
@@ -283,8 +289,22 @@ Resources:
   UserPoolMfa:
     Type: Custom::CognitoUserPoolMfa
     Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
       UserPoolId: !Ref UserPoolId
+
+  AppClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: Panther
+      GenerateSecret: false
+      RefreshTokenValidity: 1
+      UserPoolId: !Ref UserPoolId
+      PreventUserExistenceErrors: ENABLED
+      WriteAttributes:
+        - email
+        - given_name
+        - family_name
 
   AnalysisApi:
     Type: AWS::Serverless::Api
@@ -303,6 +323,7 @@ Resources:
     Properties:
       ApiName: panther-analysis-api
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
   ComplianceApi:
@@ -322,6 +343,7 @@ Resources:
     Properties:
       ApiName: panther-compliance-api
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
   RemediationApi:
@@ -341,6 +363,7 @@ Resources:
     Properties:
       ApiName: panther-remediation-api
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
   ResourcesApi:
@@ -360,12 +383,17 @@ Resources:
     Properties:
       ApiName: panther-resources-api
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
 Outputs:
+  AppClientId:
+    Description: Cognito user pool client ID
+    Value: !Ref AppClient
   PythonLayerVersionArn:
     Description: Python layer version
     Value: !If [CreatePythonLayer, !Ref PythonLayer, !Ref PythonLayerVersionArn]
+
   AnalysisApiId:
     Description: Analysis API Gateway ID
     Value: !Ref AnalysisApi

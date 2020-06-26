@@ -37,21 +37,19 @@ const (
 func (client *OutputClient) Github(
 	alert *alertmodels.Alert, config *outputmodels.GithubConfig) *AlertDeliveryError {
 
-	var tagsItem = aws.StringValueSlice(alert.Tags)
-
-	description := "**Description:** " + aws.StringValue(alert.PolicyDescription)
+	description := "**Description:** " + aws.StringValue(alert.AnalysisDescription)
 	link := "\n [Click here to view in the Panther UI](" + generateURL(alert) + ")"
 	runBook := "\n **Runbook:** " + aws.StringValue(alert.Runbook)
-	severity := "\n **Severity:** " + aws.StringValue(alert.Severity)
-	tags := "\n **Tags:** " + strings.Join(tagsItem, ", ")
+	severity := "\n **Severity:** " + alert.Severity
+	tags := "\n **Tags:** " + strings.Join(alert.Tags, ", ")
 
 	githubRequest := map[string]interface{}{
 		"title": generateAlertTitle(alert),
 		"body":  description + link + runBook + severity + tags,
 	}
 
-	token := "token " + *config.Token
-	repoURL := githubEndpoint + *config.RepoName + requestType
+	token := "token " + config.Token
+	repoURL := githubEndpoint + config.RepoName + requestType
 	requestHeader := map[string]string{
 		AuthorizationHTTPHeader: token,
 	}

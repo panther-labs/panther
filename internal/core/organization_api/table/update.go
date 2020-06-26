@@ -23,77 +23,39 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/organization/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // Update updates account details and returns the updated item
-func (table *OrganizationsTable) Update(settings *models.GeneralSettings) (*models.GeneralSettings, error) {
-	expr, err := buildUpdateExpression(settings)
+func (table *OrganizationsTable) UpdateGeneralSettings(settings *models.GeneralSettings) (*models.GeneralSettings, error) {
+	expr, err := buildGeneralSettingsExpression(settings)
 	if err != nil {
 		return nil, err
 	}
 
-	input := &dynamodb.UpdateItemInput{
-		ExpressionAttributeNames:  expr.Names(),
-		ExpressionAttributeValues: expr.Values(),
-		Key:                       settingsKey,
-		ReturnValues:              aws.String("ALL_NEW"),
-		TableName:                 table.Name,
-		UpdateExpression:          expr.Update(),
-	}
-
-	zap.L().Debug("updating general settings in dynamo")
-	response, err := table.client.UpdateItem(input)
-
-	if err != nil {
-		return nil, &genericapi.AWSError{Method: "dynamodb.UpdateItem", Err: err}
-	}
-
 	var newSettings models.GeneralSettings
-	if err = dynamodbattribute.UnmarshalMap(response.Attributes, &newSettings); err != nil {
-		return nil, &genericapi.InternalError{
-			Message: "failed to unmarshal dynamo item to GeneralSettings: " + err.Error()}
+	if err = table.update(settingsKey, expr, &newSettings); err != nil {
+		return nil, err
 	}
 
 	return &newSettings, nil
 }
 
 // Update only the fields listed in the request.
-func buildUpdateExpression(settings *models.GeneralSettings) (expression.Expression, error) {
-	var update expression.UpdateBuilder
-	updateInitialized := false
+func buildGeneralSettingsExpression(settings *models.GeneralSettings) (expression.Expression, error) {
+	// Initialize update with a no-op (raw expression.UpdateBuilder does not work)
+	update := expression.Remove(expression.Name("noSuchName"))
 
 	if settings.DisplayName != nil {
-		update = expression.Set(expression.Name("displayName"), expression.Value(settings.DisplayName))
-		updateInitialized = true
+		update = update.Set(expression.Name("displayName"), expression.Value(*settings.DisplayName))
 	}
-
 	if settings.Email != nil {
-		if updateInitialized {
-			update = update.Set(expression.Name("email"), expression.Value(settings.Email))
-		} else {
-			update = expression.Set(expression.Name("email"), expression.Value(settings.Email))
-			updateInitialized = true
-		}
+		update = update.Set(expression.Name("email"), expression.Value(*settings.Email))
 	}
-
 	if settings.ErrorReportingConsent != nil {
-		if updateInitialized {
-			update = update.Set(expression.Name("errorReportingConsent"), expression.Value(settings.ErrorReportingConsent))
-		} else {
-			update = expression.Set(expression.Name("errorReportingConsent"), expression.Value(settings.ErrorReportingConsent))
-			updateInitialized = true
-		}
-	}
-
-	var expr expression.Expression
-	if !updateInitialized {
-		return expr, &genericapi.InvalidInputError{
-			Message: "at least one setting is required to update",
-		}
+		update = update.Set(expression.Name("errorReportingConsent"), expression.Value(*settings.ErrorReportingConsent))
 	}
 
 	expr, err := expression.NewBuilder().WithUpdate(update).Build()
@@ -102,4 +64,24 @@ func buildUpdateExpression(settings *models.GeneralSettings) (expression.Express
 			Message: "failed to build update expression: " + err.Error()}
 	}
 	return expr, nil
+}
+
+func (table *OrganizationsTable) update(key DynamoItem, expr expression.Expression, newItem interface{}) error {
+	response, err := table.client.UpdateItem(&dynamodb.UpdateItemInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		Key:                       key,
+		ReturnValues:              aws.String("ALL_NEW"),
+		TableName:                 table.Name,
+		UpdateExpression:          expr.Update(),
+	})
+
+	if err != nil {
+		return &genericapi.AWSError{Method: "dynamodb.UpdateItem", Err: err}
+	}
+
+	if err = dynamodbattribute.UnmarshalMap(response.Attributes, newItem); err != nil {
+		return &genericapi.InternalError{Message: "failed to unmarshal dynamo item: " + err.Error()}
+	}
+	return nil
 }

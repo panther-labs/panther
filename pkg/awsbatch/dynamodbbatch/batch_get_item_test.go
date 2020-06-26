@@ -71,6 +71,7 @@ func TestBatchGetItemCount(t *testing.T) {
 }
 
 func TestBatchGetItem(t *testing.T) {
+	t.Parallel()
 	client := &mockDynamo{}
 	result, err := BatchGetItem(client, mockGetInput())
 	require.Nil(t, err)
@@ -82,6 +83,7 @@ func TestBatchGetItem(t *testing.T) {
 
 // An error is returned
 func TestBatchGetItemError(t *testing.T) {
+	t.Parallel()
 	client := &mockDynamo{err: errors.New("internal service error")}
 	result, err := BatchGetItem(client, mockGetInput())
 	assert.Nil(t, result)
@@ -90,6 +92,7 @@ func TestBatchGetItemError(t *testing.T) {
 
 // A large number of records are broken into multiple requests
 func TestBatchGetItemPaging(t *testing.T) {
+	t.Parallel()
 	input := &dynamodb.BatchGetItemInput{
 		RequestItems: map[string]*dynamodb.KeysAndAttributes{
 			mockTableName: {

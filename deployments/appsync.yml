@@ -21,28 +21,32 @@ Description: AppSync data sources and resolvers
 # This template adds all the configuration: schema, data sources, resolvers
 
 Parameters:
-  ApiId:
-    Type: String
-    Description: Appsync GraphQL API ID
+  # Alphabetize parameters so it's easy to compare side-by-side with other code that passes values
+  # and because the CloudFormation console always shows parameters in alphabetical order.
   AlarmTopicArn:
     Type: String
     Description: SNS topic for CloudWatch alarms
-  ServiceRole:
-    Type: String
-    Description: Appsync IAM service role ARN
-
   AnalysisApi:
     Type: String
     Description: API Gateway HTTPS endpoint for panther-analysis-api
+  ApiId:
+    Type: String
+    Description: Appsync GraphQL API ID
   ComplianceApi:
     Type: String
     Description: API Gateway HTTPS endpoint for panther-compliance-api
+  CustomResourceVersion:
+    Type: String
+    Description: Forces updates to custom resources when changed
   RemediationApi:
     Type: String
     Description: API Gateway HTTPS endpoint for panther-remediation-api
   ResourcesApi:
     Type: String
     Description: API Gateway HTTPS endpoint for panther-resources-api
+  ServiceRole:
+    Type: String
+    Description: Appsync IAM service role ARN
 
 Resources:
   AppsyncAlarms:
@@ -52,6 +56,7 @@ Resources:
       ApiName: panther-graphql-api
       AlarmTopicArn: !Ref AlarmTopicArn
       ClientErrorThreshold: 20 # per 5-minute window
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   GraphQLSchema:
@@ -1456,6 +1461,97 @@ Resources:
             $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
+        #end
+
+  ListGlobalPythonModulesResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Query
+      FieldName: listGlobalPythonModules
+      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2018-05-29",
+          "method": "GET",
+          "resourcePath": "/v1/global/list",
+          "params": {
+            "query": $util.toJson($ctx.args.input),
+            "headers": {
+              "Content-Type": "application/json"
+            }
+          }
+        }
+      ResponseMappingTemplate: |
+        #set ($statusCode = $ctx.result.statusCode)
+        #if($statusCode == 200)
+            $ctx.result.body
+        #elseif($statusCode >= 400 && $statusCode < 500)
+            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
+        #else
+            $util.error($ctx.result.body, "$statusCode", $input)
+        #end
+
+  AddGlobalPythonModuleResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: addGlobalPythonModule
+      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      RequestMappingTemplate: |
+        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        $util.qr($input.put("userId", $ctx.identity.sub))
+        {
+          "version": "2018-05-29",
+          "method": "POST",
+          "resourcePath": "/v1/global",
+          "params": {
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": $util.toJson($input)
+          }
+        }
+      ResponseMappingTemplate: |
+        #set ($statusCode = $ctx.result.statusCode)
+        #if($statusCode == 201)
+            $ctx.result.body
+        #elseif($statusCode >= 400 && $statusCode < 500)
+            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
+        #else
+            $util.error($ctx.result.body, "$statusCode", $input)
+        #end
+
+  DeleteGlobalPythonModuleResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: deleteGlobalPythonModule
+      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2018-05-29",
+          "method": "POST",
+          "resourcePath": "/v1/global/delete",
+          "params": {
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": $util.toJson({
+              "policies": $ctx.args.input.globals
+            })
+          }
+        }
+      ResponseMappingTemplate: |
+        #set ($statusCode = $ctx.result.statusCode)
+        #if($statusCode == 200)
+            true
+        #elseif($statusCode >= 400 && $statusCode < 500)
+            $util.error($util.parseJson($ctx.result.body).message, $statusCode, $ctx.args)
+        #else
+            $util.error($ctx.result.body, $statusCode, $ctx.args)
         #end
 
   ListAlertsResolver:

@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/core/outputs_api/table"
@@ -33,7 +34,7 @@ var mockUpdateOutputInput = &models.UpdateOutputInput{
 	OutputID:           aws.String("outputId"),
 	DisplayName:        aws.String("displayName"),
 	UserID:             aws.String("userId"),
-	OutputConfig:       &models.OutputConfig{Sns: &models.SnsConfig{}},
+	OutputConfig:       &models.OutputConfig{},
 	DefaultForSeverity: aws.StringSlice([]string{"CRITICAL", "HIGH"}),
 }
 
@@ -55,12 +56,14 @@ func TestUpdateOutput(t *testing.T) {
 
 	mockOutputsTable.On("UpdateOutput", mock.Anything).Return(alertOutputItem, nil)
 	mockOutputsTable.On("GetOutputByName", aws.String("displayName")).Return(nil, nil)
+	mockOutputsTable.On("GetOutput", aws.String("outputId")).Return(alertOutputItem, nil)
 	mockEncryptionKey.On("EncryptConfig", mock.Anything).Return(make([]byte, 1), nil)
 	mockEncryptionKey.On("DecryptConfig", mock.Anything, mock.Anything).Return(nil)
 
 	result, err := (API{}).UpdateOutput(mockUpdateOutputInput)
 
 	assert.NoError(t, err)
+	require.NotNil(t, result)
 	assert.Equal(t, aws.String("outputId"), result.OutputID)
 	assert.Equal(t, aws.String("displayName"), result.DisplayName)
 	assert.Equal(t, aws.String("createdBy"), result.CreatedBy)
@@ -87,7 +90,7 @@ func TestUpdateOutputOtherItemExists(t *testing.T) {
 	mockOutputsTable.AssertExpectations(t)
 }
 
-func TestUpdateSameOutpuOutput(t *testing.T) {
+func TestUpdateSameOutputOutput(t *testing.T) {
 	mockOutputsTable := &mockOutputTable{}
 	outputsTable = mockOutputsTable
 	mockEncryptionKey := &mockEncryptionKey{}
@@ -109,12 +112,14 @@ func TestUpdateSameOutpuOutput(t *testing.T) {
 
 	mockOutputsTable.On("UpdateOutput", mock.Anything).Return(alertOutputItem, nil)
 	mockOutputsTable.On("GetOutputByName", aws.String("displayName")).Return(preExistingAlertItem, nil)
+	mockOutputsTable.On("GetOutput", aws.String("outputId")).Return(preExistingAlertItem, nil)
 	mockEncryptionKey.On("EncryptConfig", mock.Anything).Return(make([]byte, 1), nil)
 	mockEncryptionKey.On("DecryptConfig", mock.Anything, mock.Anything).Return(nil)
 
 	result, err := (API{}).UpdateOutput(mockUpdateOutputInput)
 
 	assert.NoError(t, err)
+	require.NotNil(t, result)
 	assert.Equal(t, aws.String("outputId"), result.OutputID)
 	assert.Equal(t, aws.String("displayName"), result.DisplayName)
 	assert.Equal(t, aws.String("createdBy"), result.CreatedBy)
