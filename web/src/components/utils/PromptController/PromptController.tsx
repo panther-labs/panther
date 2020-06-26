@@ -20,14 +20,15 @@ import React from 'react';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
 import shootFireworks from 'Helpers/fireworks';
-import { useGetErrorReportingConsent } from './graphql/getErrorReportingConsent.generated';
+import { useGetGeneralSettingsConsents } from './graphql/getGeneralSettingsConsents.generated';
 
 const PromptController: React.FC = () => {
   const { showModal } = useModal();
   // We are intentionally over-fetching, in order to proactively add this data to the cache
-  useGetErrorReportingConsent({
+  useGetGeneralSettingsConsents({
     onCompleted: data => {
-      if (data?.generalSettings.errorReportingConsent === null) {
+      const shouldShowConsentModal = data.generalSettings.errorReportingConsent === null;
+      if (shouldShowConsentModal) {
         // Show analytics consent modal
         showModal({ modal: MODALS.ANALYTICS_CONSENT });
 

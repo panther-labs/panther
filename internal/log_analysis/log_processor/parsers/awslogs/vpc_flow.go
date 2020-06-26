@@ -134,6 +134,10 @@ var (
 
 // Parse returns the parsed events or nil if parsing failed
 func (p *VPCFlowParser) Parse(log string) ([]*parsers.PantherLog, error) {
+	// CloudTrail can be detected as VPCFlow due to lucky token matching, skip JSON looking things here!
+	if !parsers.LooksLikeCSV(log) {
+		return nil, errors.New("log is not CSV")
+	}
 	if p.columnMap == nil { // must be first log line in file
 		if p.isVpcFlowHeader(log) { // if this is a header, return success but no events and setup p.columnMap
 			return []*parsers.PantherLog{}, nil
@@ -163,10 +167,6 @@ func (p *VPCFlowParser) LogType() string {
 }
 
 func (p *VPCFlowParser) isVpcFlowHeader(log string) bool {
-	// CloudTrail can be detected as VPCFlow due to lucky token matching, skip JSON looking things here!
-	if len(log) > 0 && log[0] == '{' {
-		return false
-	}
 	headers := strings.Split(log, " ")
 	matchCount := 0
 	for _, header := range headers {

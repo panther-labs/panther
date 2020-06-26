@@ -16,5 +16,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './GlobalModuleForm';
-export * from './GlobalModuleForm';
+/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
+
+import * as Types from '../../../__generated__/schema';
+
+import gql from 'graphql-tag';
+
+export type GlobalPythonModuleTeaser = Pick<Types.GlobalPythonModule, 'id' | 'lastModified'>;
+
+export const GlobalPythonModuleTeaser = gql`
+  fragment GlobalPythonModuleTeaser on GlobalPythonModule {
+    id
+    lastModified
+  }
+`;

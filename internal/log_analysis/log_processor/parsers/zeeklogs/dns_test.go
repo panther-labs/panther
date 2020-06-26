@@ -35,7 +35,7 @@ func TestZeekDNS(t *testing.T) {
 
 	expectedTime := time.Date(2018, 10, 31, 16, 0, 0, 580233097, time.UTC)
 	expectedEvent := &ZeekDNS{
-		Ts:        (*timestamp.UnixFloat)(&expectedTime),
+		TS:        (*timestamp.UnixFloat)(&expectedTime),
 		UID:       aws.String("CpR9AY39cUCZ0t5qq6"),
 		IDOrigH:   aws.String("172.16.2.16"),
 		IDOrigP:   aws.Uint16(43720),

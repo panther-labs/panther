@@ -1,0 +1,4 @@
+fragment GlobalPythonModuleTeaser on GlobalPythonModule {
+  id
+  lastModified
+}

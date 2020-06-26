@@ -19,6 +19,7 @@ package processor
  */
 
 import (
+	"runtime"
 	"strconv"
 	"time"
 
@@ -27,6 +28,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
@@ -36,11 +38,11 @@ import (
 )
 
 const (
-	processingTimeLimitScalar = 0.8 // the processing runtime should be shorter than lambda timeout to make room to flush buffers
+	processingMaxFilesLimit   = 5000 // limit this so there is time to delete from the queue at the end
+	processingTimeLimitScalar = 0.5  // the processing runtime should be shorter than lambda timeout to make room to flush buffers
 
-	sqsMaxBatchSize       = 10              // max messages per read for SQS (can't find an sqs constant to refer to)
-	sqsWaitTimeSeconds    = 20              //  note: 20 is max for sqs
-	sqsQueueSizeThreshold = sqsMaxBatchSize // above this will trigger reading from the queue directly to improve aggregation
+	sqsMaxBatchSize    = 10 // max messages per read for SQS (can't find an sqs constant to refer to)
+	sqsWaitTimeSeconds = 20 //  note: 20 is max for sqs
 )
 
 /*
@@ -87,15 +89,29 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 			streamChan <- dataStream
 		}
 
-		// continue to read until either there are no sqs messages or we have exceeded the processing time limit
-		for isProcessingTimeRemaining(processingDeadlineTime) {
+		// continue to read until either there are no sqs messages or we have exceeded the processing time/file limit
+		highMemoryCounter := 0
+		for isProcessingTimeRemaining(processingDeadlineTime) && len(accumulatedMessageReceipts) < processingMaxFilesLimit {
+			// if we push too fast we can oom
+			if heapUsedMB, memAvailableMB, isHigh := highMemoryUsage(); isHigh {
+				if highMemoryCounter%100 == 0 { // limit logging
+					zap.L().Warn("high memory usage",
+						zap.Float32("heapUsedDB", heapUsedMB),
+						zap.Float32("memAvailableDB", memAvailableMB),
+						zap.Int("sqsMessagesRead", len(accumulatedMessageReceipts)))
+				}
+				time.Sleep(time.Second)
+				highMemoryCounter++
+				continue
+			}
+
 			// under low load we do not read from the sqs queue and just exit
 			numberOfQueuedMessages, err := queueDepth(sqsClient)
 			if err != nil {
 				readEventErrorChan <- err
 				return
 			}
-			if numberOfQueuedMessages < sqsQueueSizeThreshold {
+			if numberOfQueuedMessages == 0 {
 				break
 			}
 
@@ -106,7 +122,7 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 				return
 			}
 
-			if len(messages) == 0 { // no more work
+			if len(messages) == 0 { // no work OR reached the max sqs messages allowed in flight, either way need to break
 				break
 			}
 
@@ -190,4 +206,17 @@ func queueDepth(sqsClient sqsiface.SQSAPI) (numberOfQueuedMessages int, err erro
 		return 0, err
 	}
 	return numberOfQueuedMessages, err
+}
+
+func highMemoryUsage() (heapUsedMB, memAvailableMB float32, isHigh bool) {
+	const (
+		threshold  = 0.8
+		bytesPerMB = 1024 * 1024
+	)
+	var memStats runtime.MemStats
+	runtime.ReadMemStats(&memStats)
+	// NOTE: HeapAlloc is used because it tracks memory release better/faster than Sys
+	heapUsedMB = float32(memStats.HeapAlloc / bytesPerMB)
+	memAvailableMB = float32(common.Config.AwsLambdaFunctionMemorySize)
+	return heapUsedMB, memAvailableMB, heapUsedMB/memAvailableMB > threshold
 }

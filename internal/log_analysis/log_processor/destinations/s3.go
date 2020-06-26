@@ -56,7 +56,7 @@ const (
 
 	messageAttributeDataType = "String"
 
-	//  maximum time to hold an s3 buffer in memory (controls latency of rules engine which processes this output
+	//  maximum time to hold an s3 buffer in memory (controls latency of rules engine which processes this output)
 	maxDuration = 2 * time.Minute
 
 	bytesPerMB                  = 1024 * 1024
@@ -105,7 +105,7 @@ func maxS3BufferMemUsageBytes(lambdaSizeMB int) uint64 {
 		largestAllInMemFileMB     = 45
 		processingExpansionFactor = 4
 		memoryFootprint           = largestAllInMemFileMB * processingExpansionFactor
-		minimumScratchMemMB       = 5 // how much overhead is needed to process a file
+		minimumScratchMemMB       = 5 // how much overhead is needed to process
 	)
 	maxBufferUsageMB := lambdaSizeMB - memUsedAtStartupMB - memoryFootprint - minimumScratchMemMB
 	if maxBufferUsageMB < 5 {

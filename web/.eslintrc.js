@@ -41,23 +41,17 @@ module.exports = {
     'import/no-extraneous-dependencies': 0,
     '@typescript-eslint/no-var-requires': 0,
     '@typescript-eslint/no-empty-function': 0,
-    '@typescript-eslint/ban-ts-ignore': 0,
+    '@typescript-eslint/ban-ts-comment': 0,
     '@typescript-eslint/explicit-function-return-type': 0,
     '@typescript-eslint/no-explicit-any': 0,
     '@typescript-eslint/explicit-member-accessibility': 0,
-    '@typescript-eslint/interface-name-prefix': ['error', 'never'],
+    '@typescript-eslint/explicit-module-boundary-types': 0,
     '@typescript-eslint/no-unused-vars': [
       'error',
       {
         vars: 'all',
         args: 'after-used',
         ignoreRestSiblings: true,
-      },
-    ],
-    '@typescript-eslint/camelcase': [
-      'error',
-      {
-        properties: 'never',
       },
     ],
     'import/extensions': [
@@ -83,8 +77,4 @@ module.exports = {
     },
   },
   parser: '@typescript-eslint/parser',
-  parserOptions: {
-    project: './tsconfig.json',
-    tsconfigRootDir: __dirname,
-  },
 };

@@ -36,28 +36,26 @@ const (
 func (client *OutputClient) Jira(
 	alert *alertmodels.Alert, config *outputmodels.JiraConfig) *AlertDeliveryError {
 
-	var tagsItem = aws.StringValueSlice(alert.Tags)
-
-	description := "*Description:* " + aws.StringValue(alert.PolicyDescription)
+	description := "*Description:* " + aws.StringValue(alert.AnalysisDescription)
 	link := "\n [Click here to view in the Panther UI](" + generateURL(alert) + ")"
 	runBook := "\n *Runbook:* " + aws.StringValue(alert.Runbook)
-	severity := "\n *Severity:* " + aws.StringValue(alert.Severity)
-	tags := "\n *Tags:* " + strings.Join(tagsItem, ", ")
+	severity := "\n *Severity:* " + alert.Severity
+	tags := "\n *Tags:* " + strings.Join(alert.Tags, ", ")
 
 	fields := map[string]interface{}{
 		"summary":     generateAlertTitle(alert),
 		"description": description + link + runBook + severity + tags,
 		"project": map[string]*string{
-			"key": config.ProjectKey,
+			"key": aws.String(config.ProjectKey),
 		},
 		"issuetype": map[string]*string{
-			"name": config.Type,
+			"name": aws.String(config.Type),
 		},
 	}
 
-	if aws.StringValue(config.AssigneeID) != "" {
+	if config.AssigneeID != "" {
 		fields["assignee"] = map[string]*string{
-			"id": config.AssigneeID,
+			"id": aws.String(config.AssigneeID),
 		}
 	}
 
@@ -65,9 +63,9 @@ func (client *OutputClient) Jira(
 		"fields": fields,
 	}
 
-	auth := *config.UserName + ":" + *config.APIKey
+	auth := config.UserName + ":" + config.APIKey
 	basicAuthToken := "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))
-	jiraRestURL := *config.OrgDomain + jiraEndpoint
+	jiraRestURL := config.OrgDomain + jiraEndpoint
 	requestHeader := map[string]string{
 		AuthorizationHTTPHeader: basicAuthToken,
 	}

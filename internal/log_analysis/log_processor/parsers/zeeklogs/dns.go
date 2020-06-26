@@ -33,7 +33,7 @@ const (
 
 // nolint:lll
 type ZeekDNS struct {
-	Ts         *timestamp.UnixFloat `json:"ts,omitempty" validate:"required" description:"The earliest time at which a DNS protocol message over the associated connection is observed."`
+	TS         *timestamp.UnixFloat `json:"ts,omitempty" validate:"required" description:"The earliest time at which a DNS protocol message over the associated connection is observed."`
 	UID        *string              `json:"uid,omitempty" validate:"required" description:"A unique identifier of the connection over which DNS messages are being transferred."`
 	IDOrigH    *string              `json:"id.orig_h" validate:"required" description:"The originator’s IP address."`
 	IDOrigP    *uint16              `json:"id.orig_p" validate:"required" description:"The originator’s port number."`
@@ -92,7 +92,7 @@ func (p *ZeekDNSParser) LogType() string {
 }
 
 func (event *ZeekDNS) updatePantherFields(p *ZeekDNSParser) {
-	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.Ts), event)
+	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.TS), event)
 
 	event.AppendAnyIPAddressPtr(event.IDOrigH)
 	event.AppendAnyIPAddressPtr(event.IDRespH)

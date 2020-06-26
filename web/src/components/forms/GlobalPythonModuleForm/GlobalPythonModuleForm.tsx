@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { GlobalModuleDetails } from 'Generated/schema';
+import { GlobalPythonModule } from 'Generated/schema';
 import * as Yup from 'yup';
 import { Box, Button, Flex, Grid, InputElementLabel, Text } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
@@ -28,6 +28,7 @@ import useRouter from 'Hooks/useRouter';
 import FormikTextInput from 'Components/fields/TextInput';
 import FormikTextArea from 'Components/fields/TextArea';
 import FormikEditor from 'Components/fields/Editor';
+import urls from 'Source/urls';
 
 // The validation checks that Formik will run
 const validationSchema = Yup.object().shape({
@@ -38,7 +39,7 @@ const validationSchema = Yup.object().shape({
 
 const globalModuleEditableFields = ['id', 'body', 'description'] as const;
 
-type GlobalModuleFormValues = Pick<GlobalModuleDetails, typeof globalModuleEditableFields[number]>;
+type GlobalModuleFormValues = Pick<GlobalPythonModule, typeof globalModuleEditableFields[number]>;
 
 interface GlobalModuleFormProps {
   /** The initial values of the form */
@@ -47,7 +48,7 @@ interface GlobalModuleFormProps {
   onSubmit: (values: GlobalModuleFormValues) => void;
 }
 
-const GlobalModuleForm: React.FC<GlobalModuleFormProps> = ({ initialValues, onSubmit }) => {
+const GlobalPythonModuleForm: React.FC<GlobalModuleFormProps> = ({ initialValues, onSubmit }) => {
   const { history } = useRouter();
 
   return (
@@ -59,7 +60,7 @@ const GlobalModuleForm: React.FC<GlobalModuleFormProps> = ({ initialValues, onSu
           enableReinitialize
           validationSchema={validationSchema}
         >
-          <FormSessionRestoration sessionId="global-module">
+          <FormSessionRestoration sessionId={`global-module-${initialValues.id || 'create'}`}>
             <Form>
               <Text size="large" color="grey300" mb={4}>
                 The global module allows you to define a set of reusable functions, variables and
@@ -96,7 +97,12 @@ const GlobalModuleForm: React.FC<GlobalModuleFormProps> = ({ initialValues, onSu
               </Box>
               <Flex borderTop="1px solid" borderColor="grey100" pt={6} mt={10} justify="flex-end">
                 <Flex>
-                  <Button variant="default" size="large" onClick={history.goBack} mr={4}>
+                  <Button
+                    variant="default"
+                    size="large"
+                    onClick={() => history.push(urls.settings.globalPythonModules.list())}
+                    mr={4}
+                  >
                     Cancel
                   </Button>
                   <SubmitButton>{initialValues.id ? 'Update' : 'Create'}</SubmitButton>
@@ -110,4 +116,4 @@ const GlobalModuleForm: React.FC<GlobalModuleFormProps> = ({ initialValues, onSu
   );
 };
 
-export default GlobalModuleForm;
+export default GlobalPythonModuleForm;

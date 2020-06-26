@@ -33,6 +33,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager/s3manageriface"
+	"github.com/aws/aws-sdk-go/service/sns"
+	"github.com/aws/aws-sdk-go/service/sns/snsiface"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/stretchr/testify/mock"
@@ -232,4 +234,14 @@ func (m *AthenaMock) GetQueryExecution(input *athena.GetQueryExecutionInput) (*a
 func (m *AthenaMock) GetQueryResults(input *athena.GetQueryResultsInput) (*athena.GetQueryResultsOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*athena.GetQueryResultsOutput), args.Error(1)
+}
+
+type SnsMock struct {
+	snsiface.SNSAPI
+	mock.Mock
+}
+
+func (m *SnsMock) Publish(input *sns.PublishInput) (*sns.PublishOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*sns.PublishOutput), args.Error(1)
 }

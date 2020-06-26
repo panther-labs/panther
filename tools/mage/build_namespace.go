@@ -163,7 +163,7 @@ func buildLambdaPackage(pkg string) error {
 	binary := filepath.Join(targetDir, "main")
 	var buildEnv = map[string]string{"GOARCH": "amd64", "GOOS": "linux"}
 
-	if err := os.MkdirAll(targetDir, 0755); err != nil {
+	if err := os.MkdirAll(targetDir, 0700); err != nil {
 		return fmt.Errorf("failed to create %s directory: %v", targetDir, err)
 	}
 	if err := sh.RunWith(buildEnv, "go", "build", "-p", "1", "-ldflags", "-s -w", "-o", targetDir, "./"+pkg); err != nil {
