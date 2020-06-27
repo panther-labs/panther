@@ -22,7 +22,7 @@ import React from 'react';
 import FormikTextInput from 'Components/fields/TextInput';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import useAuth from 'Hooks/useAuth';
-import { Box } from 'pouncejs';
+import { Flex } from 'pouncejs';
 
 interface SignInFormValues {
   username: string;
@@ -58,7 +58,7 @@ const SignInForm: React.FC = () => {
       }
     >
       <Form>
-        <Box mb={4}>
+        <Flex direction="column" spacing={4}>
           <Field
             as={FormikTextInput}
             label="Email"
@@ -67,8 +67,6 @@ const SignInForm: React.FC = () => {
             name="username"
             required
           />
-        </Box>
-        <Box mb={4}>
           <Field
             as={FormikTextInput}
             label="Password"
@@ -77,8 +75,8 @@ const SignInForm: React.FC = () => {
             type="password"
             required
           />
-        </Box>
-        <SubmitButton fullWidth>Sign in</SubmitButton>
+          <SubmitButton fullWidth>Sign in</SubmitButton>
+        </Flex>
       </Form>
     </Formik>
   );

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Text, Flex, Link } from 'pouncejs';
+import {Box, Text, Flex, Link, FormHelperText} from 'pouncejs';
 import { Field, Form, Formik } from 'formik';
 import QRCode from 'qrcode.react';
 import * as React from 'react';
@@ -62,7 +62,7 @@ export const TotpForm: React.FC = () => {
       }
     >
       <Form>
-        <Flex justify="center" mb={6} width={1}>
+        <Flex justify="center" mb={6} width={1} aria-describedby="totp-helper-text">
           <QRCode value={formatSecretCode(code, userInfo.email)} />
         </Flex>
         <Box mb={4}>
@@ -77,7 +77,7 @@ export const TotpForm: React.FC = () => {
           />
         </Box>
         <SubmitButton fullWidth>Verify</SubmitButton>
-        <Text color="gray-200" size="small" mt={10} textAlign="center">
+        <FormHelperText id="totp-helper-text" mt={10} textAlign="center">
           Open any two-factor authentication app, scan the barcode and then enter the MFA code to
           complete the sign-in. Popular software options include{' '}
           <Link

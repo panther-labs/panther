@@ -88,7 +88,7 @@ const SignInPage: React.FC = () => {
           <AuthPageContainer banner={Banner}>
             <AuthPageContainer.Caption title="Sign in" subtitle="to continue to Panther" />
             <SignInForm />
-            <Flex justify="center" mt={6}>
+            <Flex justify="center" mt={4}>
               <Link as={RRLink} p={4} to={urls.account.auth.forgotPassword()} fontSize="medium">
                 Forgot your password?
               </Link>

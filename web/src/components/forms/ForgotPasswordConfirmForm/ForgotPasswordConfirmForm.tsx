@@ -19,7 +19,7 @@
 import React from 'react';
 import { Field, Form, Formik } from 'formik';
 import * as Yup from 'yup';
-import { Alert, Box, useSnackbar } from 'pouncejs';
+import { Alert, Flex, useSnackbar } from 'pouncejs';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
 import useRouter from 'Hooks/useRouter';
@@ -78,12 +78,8 @@ const ForgotPasswordConfirmForm: React.FC<ForgotPasswordConfirmFormProps> = ({ e
     >
       {({ status }) => (
         <Form>
-          {status && (
-            <Box mb={4}>
-              <Alert variant="error" title={status.title} description={status.message} />
-            </Box>
-          )}
-          <Box mb={4}>
+          <Flex direction="column" spacing={4}>
+            {status && <Alert variant="error" title={status.title} description={status.message} />}
             <Field
               as={FormikTextInput}
               label="New Password"
@@ -93,8 +89,6 @@ const ForgotPasswordConfirmForm: React.FC<ForgotPasswordConfirmFormProps> = ({ e
               required
               autoComplete="new-password"
             />
-          </Box>
-          <Box mb={4}>
             <Field
               as={FormikTextInput}
               label="Confirm New Password"
@@ -104,8 +98,8 @@ const ForgotPasswordConfirmForm: React.FC<ForgotPasswordConfirmFormProps> = ({ e
               required
               autoComplete="new-password"
             />
-          </Box>
-          <SubmitButton fullWidth>Update password</SubmitButton>
+            <SubmitButton fullWidth>Update password</SubmitButton>
+          </Flex>
         </Form>
       )}
     </Formik>
