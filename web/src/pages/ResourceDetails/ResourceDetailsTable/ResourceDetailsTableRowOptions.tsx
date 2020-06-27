@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Dropdown, DropdownButton, DropdownItem, DropdownMenu, IconButton } from 'pouncejs';
+import { Dropdown, DropdownButton, DropdownItem, DropdownMenu, IconButton } from 'pouncejs';
 import usePolicySuppression from 'Hooks/usePolicySuppression';
 import useResourceRemediation from 'Hooks/useResourceRemediation';
 import { ComplianceStatusEnum } from 'Generated/schema';

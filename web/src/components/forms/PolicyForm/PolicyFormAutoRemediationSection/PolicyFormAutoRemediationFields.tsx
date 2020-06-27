@@ -55,7 +55,6 @@ const PolicyFormAutoRemediationFields: React.FC<PolicyFormAutoRemediationFieldsP
   const remediationTuples = React.useMemo(
     () =>
       Object.entries(
-
         JSON.parse(remediations)
       ).map(([id, params]: [string, { [key: string]: string }]) => [id, formatJSON(params)]),
     [remediations]

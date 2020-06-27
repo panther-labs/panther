@@ -20,7 +20,7 @@ import React from 'react';
 import Editor, { EditorProps } from 'Components/Editor';
 import { FieldConfig } from 'formik';
 import debounce from 'lodash-es/debounce';
-import {Box, FormError} from 'pouncejs';
+import { Box, FormError } from 'pouncejs';
 import useFastField from 'Hooks/useFastField';
 
 const FormikEditor: React.FC<EditorProps & Required<Pick<FieldConfig, 'name'>>> = ({

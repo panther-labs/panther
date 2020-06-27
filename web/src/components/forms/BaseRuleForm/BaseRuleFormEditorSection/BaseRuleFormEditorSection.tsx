@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { FastField } from 'formik';
-import { Text, Link, IconButton, FormHelperText } from 'pouncejs';
+import { Link, IconButton, FormHelperText } from 'pouncejs';
 import FormikEditor from 'Components/fields/Editor';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';

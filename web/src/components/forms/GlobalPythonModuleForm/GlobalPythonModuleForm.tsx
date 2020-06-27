@@ -19,7 +19,7 @@
 import React from 'react';
 import { GlobalPythonModule } from 'Generated/schema';
 import * as Yup from 'yup';
-import { Box, Button, Flex, Grid, SimpleGrid, Text } from 'pouncejs';
+import { Box, Button, Flex, SimpleGrid } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { Field, Form, Formik } from 'formik';
 import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';

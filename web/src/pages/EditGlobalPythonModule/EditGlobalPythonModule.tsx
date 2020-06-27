@@ -72,9 +72,7 @@ const EditGlobalPythonModulePage: React.FC = () => {
   }, [queryData]);
 
   if (isFetchingGlobalPythonModule) {
-    return (
-      <Skeleton />
-    );
+    return <Skeleton />;
   }
 
   if (fetchPolicyError) {

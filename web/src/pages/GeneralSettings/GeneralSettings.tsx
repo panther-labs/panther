@@ -22,7 +22,6 @@ import ErrorBoundary from 'Components/ErrorBoundary';
 import { pantherConfig } from 'Source/config';
 import { extractErrorMessage } from 'Helpers/utils';
 import CompanyInformationForm from 'Components/forms/CompanyInformationForm';
-import Panel from 'Components/Panel';
 import withSEO from 'Hoc/withSEO';
 import { useGetGeneralSettings } from './graphql/getGeneralSettings.generated';
 import { useUpdateGeneralSettings } from './graphql/updateGeneralSettings.generated';

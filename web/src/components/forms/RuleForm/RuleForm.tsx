@@ -19,7 +19,7 @@
 import React from 'react';
 import { AddRuleInput, PolicyUnitTest, UpdateRuleInput } from 'Generated/schema';
 import * as Yup from 'yup';
-import { Box, Button, Flex } from 'pouncejs';
+import { Button, Flex } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import {
   BaseRuleFormCoreSection,

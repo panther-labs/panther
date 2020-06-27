@@ -316,4 +316,3 @@ export const generateRandomColor = () => Math.floor(Math.random() * 16777215).to
 export const remToPx = (rem: string) => {
   return parseFloat(rem) * parseFloat(getComputedStyle(document.documentElement).fontSize);
 };
-

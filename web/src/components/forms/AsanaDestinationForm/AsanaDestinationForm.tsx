@@ -27,7 +27,7 @@ import BaseDestinationForm, {
 } from 'Components/forms/BaseDestinationForm';
 import { isNumber } from 'Helpers/utils';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
-import {Box, FormHelperText, Text} from 'pouncejs';
+import { Box, FormHelperText } from 'pouncejs';
 
 type AsanaFieldValues = Pick<DestinationConfigInput, 'asana'>;
 

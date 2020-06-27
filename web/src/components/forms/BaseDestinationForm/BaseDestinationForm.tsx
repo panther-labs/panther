@@ -18,7 +18,7 @@
 
 import * as Yup from 'yup';
 import { SeverityEnum, DestinationConfigInput } from 'Generated/schema';
-import { Box, Flex, FormHelperText, Heading, Text } from 'pouncejs';
+import { Box, Flex, FormHelperText } from 'pouncejs';
 import { Field, Form, Formik } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import SubmitButton from 'Components/buttons/SubmitButton';
@@ -126,7 +126,7 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
         </Flex>
 
         <Box my={6} aria-describedby="severity-disclaimer">
-            Associated Severities
+          Associated Severities
           <FormHelperText id="severity-disclaimer" mt={1} mb={4}>
             We will only notify you on issues related to the severity types chosen above
           </FormHelperText>

@@ -51,9 +51,7 @@ const LogSourceHealthIcon: React.FC<LogSourceHealthIconProps> = ({ logSourceHeal
 
   return (
     <Box>
-      <Tooltip content={tooltipMessage} >
-        {icon}
-      </Tooltip>
+      <Tooltip content={tooltipMessage}>{icon}</Tooltip>
     </Box>
   );
 };

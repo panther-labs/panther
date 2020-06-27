@@ -20,7 +20,6 @@ import React from 'react';
 import useRouter from 'Hooks/useRouter';
 import { ComplianceStatusEnum, PoliciesForResourceInput } from 'Generated/schema';
 import Panel from 'Components/Panel';
-import JsonViewer from 'Components/JsonViewer';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import {
   convertObjArrayValuesToCsv,
@@ -28,7 +27,7 @@ import {
   getComplianceItemsTotalCount,
   extractErrorMessage,
 } from 'Helpers/utils';
-import { Alert, Box, Flex, Card } from 'pouncejs';
+import { Alert, Box, Flex } from 'pouncejs';
 import {
   TableControlsPagination,
   TableControlsComplianceFilter,
@@ -37,11 +36,11 @@ import pick from 'lodash-es/pick';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import withSEO from 'Hoc/withSEO';
 import { DEFAULT_SMALL_PAGE_SIZE } from 'Source/constants';
+import ResourceDetailsAttributes from 'Pages/ResourceDetails/ResourceDetailsAttributes';
 import ResourceDetailsTable from './ResourceDetailsTable';
 import ResourceDetailsInfo from './ResourceDetailsInfo';
 import ResourceDetailsPageSkeleton from './Skeleton';
 import { useResourceDetails } from './graphql/resourceDetails.generated';
-import ResourceDetailsAttributes from "Pages/ResourceDetails/ResourceDetailsAttributes";
 
 const acceptedRequestParams = ['page', 'status', 'pageSize', 'suppressed'] as const;
 

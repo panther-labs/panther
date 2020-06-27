@@ -17,12 +17,12 @@
  */
 
 import React from 'react';
-import { AbstractButton, Box, Link, Table } from 'pouncejs';
+import { Box, Link, Table } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import { formatDatetime, shortenId } from 'Helpers/utils';
-import { ListAlertsForRule } from '../graphql/listAlertsForRule.generated';
 import SeverityBadge from 'Components/SeverityBadge';
+import { ListAlertsForRule } from '../graphql/listAlertsForRule.generated';
 
 interface RuleDetailsAlertsTableProps {
   alerts: ListAlertsForRule['alerts']['alertSummaries'];

@@ -17,7 +17,7 @@
  */
 
 import * as React from 'react';
-import { Box, Card, AbstractButton, Img, PseudoBox, Flex, Heading } from 'pouncejs';
+import { Box, AbstractButton, Img, Flex } from 'pouncejs';
 
 interface ItemCardProps {
   logo: string;

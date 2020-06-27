@@ -87,40 +87,40 @@ const ListRulesTable: React.FC<ListRulesTableProps> = ({ items, onSort, sortBy, 
         </Table.Row>
       </Table.Head>
       <Table.Body>
-          {items.map(rule => (
-            <Table.Row key={rule.id}>
-              <Table.Cell maxWidth={450} wrapText="wrap">
-                <Link as={RRLink} to={urls.logAnalysis.rules.details(rule.id)} py={4} pr={4}>
-                  {rule.displayName || rule.id}
-                </Link>
-              </Table.Cell>
-              <Table.Cell maxWidth={225} truncated>
-                {rule.logTypes.length
-                  ? rule.logTypes.map(logType => (
-                      <React.Fragment key={logType}>
-                        {logType} <br />
-                      </React.Fragment>
-                    ))
-                  : 'All resources'}
-              </Table.Cell>
-              <Table.Cell align="center">
-                <Box my={-1} display="inline-block">
-                  <StatusBadge status="ENABLED" disabled={!rule.enabled} />
-                </Box>
-              </Table.Cell>
-              <Table.Cell align="center">
-                <Box my={-1} display="inline-block">
-                  <SeverityBadge severity={rule.severity} />
-                </Box>
-              </Table.Cell>
-              <Table.Cell align="right">{formatDatetime(rule.lastModified)}</Table.Cell>
-              <Table.Cell>
-                <Box my={-1}>
-                  <ListRulesTableRowOptions rule={rule} />
-                </Box>
-              </Table.Cell>
-            </Table.Row>
-          ))}
+        {items.map(rule => (
+          <Table.Row key={rule.id}>
+            <Table.Cell maxWidth={450} wrapText="wrap">
+              <Link as={RRLink} to={urls.logAnalysis.rules.details(rule.id)} py={4} pr={4}>
+                {rule.displayName || rule.id}
+              </Link>
+            </Table.Cell>
+            <Table.Cell maxWidth={225} truncated>
+              {rule.logTypes.length
+                ? rule.logTypes.map(logType => (
+                    <React.Fragment key={logType}>
+                      {logType} <br />
+                    </React.Fragment>
+                  ))
+                : 'All resources'}
+            </Table.Cell>
+            <Table.Cell align="center">
+              <Box my={-1} display="inline-block">
+                <StatusBadge status="ENABLED" disabled={!rule.enabled} />
+              </Box>
+            </Table.Cell>
+            <Table.Cell align="center">
+              <Box my={-1} display="inline-block">
+                <SeverityBadge severity={rule.severity} />
+              </Box>
+            </Table.Cell>
+            <Table.Cell align="right">{formatDatetime(rule.lastModified)}</Table.Cell>
+            <Table.Cell>
+              <Box my={-1}>
+                <ListRulesTableRowOptions rule={rule} />
+              </Box>
+            </Table.Cell>
+          </Table.Row>
+        ))}
       </Table.Body>
     </Table>
   );

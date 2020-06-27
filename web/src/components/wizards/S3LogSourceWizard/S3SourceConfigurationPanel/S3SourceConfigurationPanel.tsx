@@ -36,7 +36,7 @@ const S3SourceConfigurationPanel: React.FC = () => {
       <Heading as="h2" m="auto" mb={2}>
         {initialValues.integrationId ? 'Update source' : "Let's start with the basics"}
       </Heading>
-      <Text color="gray-300" mb={10} >
+      <Text color="gray-300" mb={10}>
         {initialValues.integrationId
           ? 'Feel free to make any changes to your log source'
           : 'We need to know where to get your logs from'}

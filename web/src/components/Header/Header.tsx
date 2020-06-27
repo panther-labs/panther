@@ -19,11 +19,8 @@
 import React from 'react';
 import Breadcrumbs from 'Components/Breadcrumbs';
 import {
-  Button,
   Flex,
   Icon,
-  IconButton,
-  Text,
   Dropdown,
   DropdownMenu,
   DropdownItem,

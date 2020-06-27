@@ -19,8 +19,8 @@
 import React from 'react';
 import { Box, Flex, Heading } from 'pouncejs';
 import urls from 'Source/urls';
-import NavLink from './NavLink';
 import FadeInTrail from 'Components/utils/FadeInTrail';
+import NavLink from './NavLink';
 
 const ComplianceNavigation: React.FC = () => {
   return (

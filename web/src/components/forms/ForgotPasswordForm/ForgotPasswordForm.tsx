@@ -22,7 +22,7 @@ import * as Yup from 'yup';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
 import useAuth from 'Hooks/useAuth';
-import { Box, Card, Flex, FormHelperText } from 'pouncejs';
+import { Card, Flex, FormHelperText } from 'pouncejs';
 
 interface ForgotPasswordFormValues {
   email: string;

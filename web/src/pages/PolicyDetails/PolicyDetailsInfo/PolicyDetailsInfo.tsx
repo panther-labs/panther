@@ -128,7 +128,11 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
           )}
         </Flex>
         <Card variant="dark" as="section" p={4} mb={4}>
-          <Text id="policy-description" fontStyle={!policy.description ? 'italic' : 'normal'} mb={6}>
+          <Text
+            id="policy-description"
+            fontStyle={!policy.description ? 'italic' : 'normal'}
+            mb={6}
+          >
             {policy.description || 'No description found for policy'}
           </Text>
           <SimpleGrid columns={2} spacing={5}>

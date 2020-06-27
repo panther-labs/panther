@@ -49,7 +49,7 @@ const BaseRuleFormTestResultList: React.FC<PolicyFormTestResultsProps> = ({ runn
             />
           ))}
           {results.testsErrored.map(({ name: testName, errorMessage }) => (
-            <Box>
+            <Box key={testName}>
               <PolicyFormTestResult
                 testName={testName}
                 status={ComplianceStatusEnum.Error}

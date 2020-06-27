@@ -53,9 +53,7 @@ const ComplianceSourceHealthIcon: React.FC<ComplianceSourceHealthIconProps> = ({
 
   return (
     <Box>
-      <Tooltip content={tooltipMessage}>
-        {icon}
-      </Tooltip>
+      <Tooltip content={tooltipMessage}>{icon}</Tooltip>
     </Box>
   );
 };

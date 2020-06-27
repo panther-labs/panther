@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import {AbstractButton, AbstractButtonProps, Box, theme} from 'pouncejs';
+import { AbstractButton, AbstractButtonProps, Box, theme } from 'pouncejs';
 
 interface TableControlsComplianceFilterProps extends AbstractButtonProps {
   text: string;

@@ -17,7 +17,7 @@
  */
 
 import * as React from 'react';
-import { Badge, Box, Card, Flex, Icon, Img, PseudoBox, Text } from 'pouncejs';
+import { Badge, Box, Flex, Icon, Img, PseudoBox } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import { slugify } from 'Helpers/utils';
 

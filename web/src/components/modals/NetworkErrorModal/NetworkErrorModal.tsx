@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Button, Flex, Modal, ModalProps, Text } from 'pouncejs';
+import { Button, Flex, Modal, ModalProps, Text } from 'pouncejs';
 
 const NetworkErrorModal: React.FC<ModalProps> = props => {
   return (

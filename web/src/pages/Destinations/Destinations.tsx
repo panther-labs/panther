@@ -17,16 +17,16 @@
  */
 
 import React from 'react';
-import { Alert, Box, Card, Flex } from 'pouncejs';
+import { Alert, Box } from 'pouncejs';
 import withSEO from 'Hoc/withSEO';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
+import Panel from 'Components/Panel';
 import { useListDestinationsAndDefaults } from './graphql/listDestinationsAndDefaults.generated';
 import DestinationsPageSkeleton from './Skeleton';
 import DestinationsPageEmptyDataFallback from './EmptyDataFallback';
 import DestinationCreateButton from './CreateButton';
 import ListDestinationsTable from './ListDestinationsTable';
-import Panel from 'Components/Panel';
 
 const ListDestinations = () => {
   const { loading, error, data } = useListDestinationsAndDefaults();

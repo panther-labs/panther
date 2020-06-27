@@ -53,7 +53,6 @@ import EditComplianceSourcePage from 'Pages/EditComplianceSource';
 import EditS3LogSourcePage from 'Pages/EditS3LogSource';
 import PromptController from 'Components/utils/PromptController';
 import LogSourceOnboarding from 'Pages/LogSourceOnboarding';
-import { useTheme } from 'pouncejs';
 import ListGlobalPythonModulesPage from 'Pages/ListGlobalPythonModules';
 import CreateGlobalPythonModulePage from 'Pages/CreateGlobalPythonModule';
 import EditGlobalPythonModulePage from 'Pages/EditGlobalPythonModule';

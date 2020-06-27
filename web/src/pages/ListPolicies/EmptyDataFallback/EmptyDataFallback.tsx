@@ -27,9 +27,7 @@ const ListPoliciesPageEmptyDataFallback: React.FC = () => {
       <Box my={10}>
         <img alt="Empty Notepad Illustration" src={EmptyNotepadImg} width="auto" height={300} />
       </Box>
-      <Heading mb={6}>
-        No policies found
-      </Heading>
+      <Heading mb={6}>No policies found</Heading>
 
       <Text color="gray-200" textAlign="center" mb={8}>
         Writing policies is the only way to secure your infrastructure against misconfigurations

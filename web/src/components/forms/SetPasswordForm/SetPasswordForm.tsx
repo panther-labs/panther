@@ -20,7 +20,7 @@ import { Field, Form, Formik } from 'formik';
 import React from 'react';
 import * as Yup from 'yup';
 import { createYupPasswordValidationSchema } from 'Helpers/utils';
-import { Alert, Box, Flex, FormHelperText, Link } from 'pouncejs';
+import { Alert, Flex, FormHelperText, Link } from 'pouncejs';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
 import useAuth from 'Hooks/useAuth';

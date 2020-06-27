@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import {Flex, Box, Text, Heading, SimpleGrid, Img} from 'pouncejs';
+import { Flex, Box, Text, Heading, SimpleGrid, Img } from 'pouncejs';
 import PantherLogoWhite from 'Assets/panther-icon--white.svg';
 
 interface AuthPageContainerComposition {

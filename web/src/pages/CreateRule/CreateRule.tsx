@@ -17,7 +17,6 @@
  */
 
 import React from 'react';
-import Panel from 'Components/Panel';
 import { Alert, Box } from 'pouncejs';
 import urls from 'Source/urls';
 import RuleForm from 'Components/forms/RuleForm';

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Flex, Icon, IconButtonProps, IconProps, PseudoBox } from 'pouncejs';
+import { Box, Icon, IconProps, PseudoBox } from 'pouncejs';
 import React from 'react';
 import useRouter from 'Hooks/useRouter';
 import { Link as RRLink } from 'react-router-dom';
