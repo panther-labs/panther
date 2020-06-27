@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Flex, Text, Link, FadeIn } from 'pouncejs';
+import { Flex, Link, FadeIn } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import AuthPageContainer from 'Components/AuthPageContainer';
@@ -51,16 +51,14 @@ const SignInPage: React.FC = () => {
           />
           <MfaForm />
           <AuthPageContainer.AltOptions>
-            <Text size="medium" color="gray-200">
-              Can{"'"}t seem to get it right?
-              <Link
-                ml={2}
-                external
-                href={`mailto:support@runpanther.io?subject=MFA issues for ${userInfo?.email}`}
-              >
-                Email us
-              </Link>
-            </Text>
+            Can{"'"}t seem to get it right?
+            <Link
+              ml={2}
+              external
+              href={`mailto:support@runpanther.io?subject=MFA issues for ${userInfo?.email}`}
+            >
+              Email us
+            </Link>
           </AuthPageContainer.AltOptions>
         </AuthPageContainer>
       );
@@ -96,7 +94,7 @@ const SignInPage: React.FC = () => {
               </Link>
             </Flex>
             <AuthPageContainer.AltOptions>
-              <Flex align="center">Don{"'"}t have an account? Talk to your admin</Flex>
+              Don{"'"}t have an account? Talk to your admin
             </AuthPageContainer.AltOptions>
           </AuthPageContainer>
         </FadeIn>

@@ -43,9 +43,14 @@ const AnalyticsConsentModal: React.FC<ModalProps> = ({ onClose, ...rest }) => {
   });
 
   return (
-    <Modal onClose={() => {}} title="Welcome to Panther!" {...rest}>
+    <Modal
+      onClose={() => {}}
+      title="Welcome to Panther!"
+      aria-describedby="modal-subtitle"
+      {...rest}
+    >
       <Box width={500} px={10}>
-        <Text size="medium" mb={8}>
+        <Text fontSize="medium" mb={8} id="modal-subtitle">
           We know you {"'"}re excited to begin securing your organization, but first, we need your
           consent on a couple of things
         </Text>

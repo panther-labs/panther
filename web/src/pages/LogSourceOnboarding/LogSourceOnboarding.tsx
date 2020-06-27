@@ -53,11 +53,11 @@ const logSourcesConfig = [
 ];
 const LogSourceOnboarding: React.FC = () => {
   return (
-    <FadeIn from="bottom">
+    <FadeIn>
       <Card p={9} mb={6}>
         <Box width={600} m="auto" textAlign="center">
           <Heading mb={4}>Select a Source Type</Heading>
-          <Text size="large" color="gray-300" mb={8} as="p">
+          <Text color="gray-300" mb={8}>
             Please select the source type you want to configure from the list below
           </Text>
           {logSourcesConfig.map(config => (

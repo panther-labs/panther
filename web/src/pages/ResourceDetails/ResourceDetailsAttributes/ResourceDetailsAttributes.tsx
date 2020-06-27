@@ -9,7 +9,7 @@
         />
  */
 import React from 'react';
-import { Text, Box, Card, Flex, IconButton } from 'pouncejs';
+import { Box, Card, Flex, IconButton } from 'pouncejs';
 import JsonViewer from 'Components/JsonViewer';
 import Panel from 'Components/Panel';
 import { ComplianceIntegration, ResourceDetails } from 'Generated/schema';
@@ -37,9 +37,9 @@ const ResourceDetailsAttributes: React.FC<ResourceDetailsAttributesProps> = ({ r
           {open ? (
             <JsonViewer data={JSON.parse(resource.attributes)} />
           ) : (
-            <Text as="span" size="small" color="gray-300">
+            <Box as="span" fontSize="small" color="gray-300">
               Click to expand
-            </Text>
+            </Box>
           )}
         </Flex>
       </Card>

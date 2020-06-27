@@ -20,7 +20,7 @@ import { Field, Form, Formik } from 'formik';
 import React from 'react';
 import * as Yup from 'yup';
 import { createYupPasswordValidationSchema } from 'Helpers/utils';
-import { Alert, Box, Link, Text } from 'pouncejs';
+import { Alert, Box, Flex, FormHelperText, Link } from 'pouncejs';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
 import useAuth from 'Hooks/useAuth';
@@ -64,12 +64,8 @@ const SetPasswordForm: React.FC = () => {
     >
       {({ status }) => (
         <Form>
-          {status && (
-            <Box mb={4}>
-              <Alert variant="error" title={status.title} description={status.message} />
-            </Box>
-          )}
-          <Box mb={4}>
+          <Flex direction="column" spacing={4}>
+            {status && <Alert variant="error" title={status.title} description={status.message} />}
             <Field
               as={FormikTextInput}
               label="New Password"
@@ -78,8 +74,6 @@ const SetPasswordForm: React.FC = () => {
               name="newPassword"
               required
             />
-          </Box>
-          <Box mb={4}>
             <Field
               as={FormikTextInput}
               label="Confirm New Password"
@@ -88,24 +82,26 @@ const SetPasswordForm: React.FC = () => {
               name="confirmNewPassword"
               required
             />
-          </Box>
-          <SubmitButton fullWidth>Set password</SubmitButton>
-          <Text size="small" mt={4} color="gray-200">
-            By continuing, you agree to Panther&apos;s&nbsp;
-            <Link
-              external
-              href="https://panther-public-shared-assets.s3-us-west-2.amazonaws.com/EULA.pdf"
-            >
-              End User License Agreement
-            </Link>{' '}
-            and acknowledge you have read the&nbsp;
-            <Link
-              external
-              href="https://panther-public-shared-assets.s3-us-west-2.amazonaws.com/PrivacyPolicy.pdf"
-            >
-              Privacy Policy
-            </Link>
-          </Text>
+            <SubmitButton aria-describedby="policy-disclaimer" fullWidth>
+              Set password
+            </SubmitButton>
+            <FormHelperText id="policy-disclaimer" textAlign="center">
+              By continuing, you agree to Panther&apos;s&nbsp;
+              <Link
+                external
+                href="https://panther-public-shared-assets.s3-us-west-2.amazonaws.com/EULA.pdf"
+              >
+                End User License Agreement
+              </Link>{' '}
+              and acknowledge you have read the&nbsp;
+              <Link
+                external
+                href="https://panther-public-shared-assets.s3-us-west-2.amazonaws.com/PrivacyPolicy.pdf"
+              >
+                Privacy Policy
+              </Link>
+            </FormHelperText>
+          </Flex>
         </Form>
       )}
     </Formik>

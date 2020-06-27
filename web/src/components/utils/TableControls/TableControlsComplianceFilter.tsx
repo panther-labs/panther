@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { AbstractButton, AbstractButtonProps, Text, theme } from 'pouncejs';
+import {AbstractButton, AbstractButtonProps, Box, theme} from 'pouncejs';
 
 interface TableControlsComplianceFilterProps extends AbstractButtonProps {
   text: string;
@@ -50,9 +50,9 @@ const TableControlsComplianceFilter: React.FC<TableControlsComplianceFilterProps
       }}
     >
       {text}{' '}
-      <Text size="medium" color={countColor} as="span">
+      <Box fontSize="medium" color={countColor} as="span">
         {count}
-      </Text>
+      </Box>
     </AbstractButton>
   );
 };

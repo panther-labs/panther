@@ -126,9 +126,7 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
         </Flex>
 
         <Box my={6} aria-describedby="severity-disclaimer">
-          <Text as="p" size="large">
             Associated Severities
-          </Text>
           <FormHelperText id="severity-disclaimer" mt={1} mb={4}>
             We will only notify you on issues related to the severity types chosen above
           </FormHelperText>

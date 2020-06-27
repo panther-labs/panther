@@ -31,7 +31,7 @@ const ListResourcesPageEmptyDataFallback: React.FC = () => {
       <Heading mb={6}>
         No resources found
       </Heading>
-      <Text size="large" color="gray-200" textAlign="center" mb={8}>
+      <Text color="gray-200" textAlign="center" mb={8}>
         You don{"'"}t have any resources connected to your Panther account
       </Text>
       <Button as={RRLink} to={urls.compliance.sources.create()}>

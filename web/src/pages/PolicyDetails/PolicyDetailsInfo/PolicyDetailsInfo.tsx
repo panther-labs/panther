@@ -68,7 +68,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
       </Flex>
       <Card as="article" p={6}>
         <Flex as="header" align="center" mb={4} spacing={4}>
-          <Heading fontWeight="bold" wordBreak="break-word">
+          <Heading fontWeight="bold" wordBreak="break-word" aria-describedby="policy-description">
             {policy.displayName || policy.id}
           </Heading>
           <Tooltip
@@ -128,7 +128,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
           )}
         </Flex>
         <Card variant="dark" as="section" p={4} mb={4}>
-          <Text as="p" size="large" fontStyle={!policy.description ? 'italic' : 'normal'} mb={6}>
+          <Text id="policy-description" fontStyle={!policy.description ? 'italic' : 'normal'} mb={6}>
             {policy.description || 'No description found for policy'}
           </Text>
           <SimpleGrid columns={2} spacing={5}>

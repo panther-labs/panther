@@ -49,7 +49,7 @@ const GlobalPythonModuleItem: React.FC<GlobalItemProps> = ({ globalPythonModule 
     <Card variant="dark" p={6} key={globalPythonModule.id}>
       <Flex align="flex-start" justify="space-between">
         <Box>
-          <Heading as="h2" size="x-small">
+          <Heading as="h4" size="x-small">
             <Link
               as={RRLink}
               to={urls.settings.globalPythonModules.edit(globalPythonModule.id)}

@@ -30,7 +30,7 @@ const EmptyDataFallback: React.FC = () => (
     <Heading mb={6}>
       It{"'"}s empty in here
     </Heading>
-    <Text size="large" color="gray-200" textAlign="center" mb={8}>
+    <Text color="gray-200" textAlign="center" mb={8}>
       You don{"'"}t seem to have any Log sources connected to our system. <br />
     </Text>
     <Button as={RRLink} to={urls.logAnalysis.sources.create()}>

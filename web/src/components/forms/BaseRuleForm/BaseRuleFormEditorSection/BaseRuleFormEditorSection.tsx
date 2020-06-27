@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { FastField } from 'formik';
-import { Text, Link, IconButton } from 'pouncejs';
+import { Text, Link, IconButton, FormHelperText } from 'pouncejs';
 import FormikEditor from 'Components/fields/Editor';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
@@ -56,13 +56,14 @@ const BaseRuleFormEditorSection: React.FC<BaseRuleFormEditorSectionProps> = ({ t
             minLines={16}
             mode="python"
             required
+            aria-describedby="editor-helper-text"
           />
-          <Text size="small" color="gray-200" mt={3}>
+          <FormHelperText id="editor-helper-text" mt={3}>
             Need to define re-usable functions? Define them in a
             <Link ml={1} as={RRLink} to={urls.settings.globalPythonModules.list()}>
               global module
             </Link>
-          </Text>
+          </FormHelperText>
         </React.Fragment>
       )}
     </Panel>

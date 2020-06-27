@@ -37,7 +37,7 @@ export const ChooseDestinationScreen: React.FC<ChooseDestinationScreenProps> = (
         <Heading mb={6} id="sidesheet-title">
           Select an Alert Destination
         </Heading>
-        <Text size="large" color="gray-300" id="sidesheet-description">
+        <Text color="gray-300" id="sidesheet-description">
           Add a new destination below to deliver alerts to a specific application for further triage
         </Text>
       </Box>

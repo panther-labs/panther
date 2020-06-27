@@ -29,7 +29,7 @@ interface ChartSummaryProps {
 const ChartSummary: React.FC<ChartSummaryProps> = ({ total, title, color }) => {
   return (
     <Flex width="50%" direction="column" align="center" justify="center" mb={10}>
-      <Heading size="3x-large" color={color} fontWeight="bold" aria-describedby={slugify(title)}>
+      <Heading as="h2" size="3x-large" color={color} fontWeight="bold" aria-describedby={slugify(title)}>
         {total}
       </Heading>
       <Box id={slugify(title)} fontSize="medium">

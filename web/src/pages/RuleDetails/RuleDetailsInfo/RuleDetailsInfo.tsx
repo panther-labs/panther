@@ -55,7 +55,7 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
       </Flex>
       <Card as="article" p={6}>
         <Flex as="header" align="center" mb={4} spacing={4}>
-          <Heading fontWeight="bold" wordBreak="break-word">
+          <Heading fontWeight="bold" wordBreak="break-word" aria-describedby="rule-description">
             {rule.displayName || rule.id}
           </Heading>
           <Tooltip
@@ -88,7 +88,7 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
           </Box>
         </Flex>
         <Card variant="dark" as="section" p={4} mb={4}>
-          <Text as="p" size="large" fontStyle={!rule.description ? 'italic' : 'normal'} mb={6}>
+          <Text id="rule-description" fontStyle={!rule.description ? 'italic' : 'normal'} mb={6}>
             {rule.description || 'No description found for rule'}
           </Text>
           <SimpleGrid columns={2} spacing={5}>

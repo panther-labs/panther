@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Button, Flex } from 'pouncejs';
+import { Box, Button, FadeIn, Flex } from 'pouncejs';
 import { useWizardContext } from './WizardContext';
 
 interface WizardPanelWrapperAction {
@@ -42,7 +42,7 @@ const WizardPanelWrapper: React.FC & WizardPanelWrapperComposition = ({ children
 const WizardPanelWrapperContent: React.FC = ({ children }) => {
   return (
     <Box width={600} m="auto">
-      {children}
+      <FadeIn>{children}</FadeIn>
     </Box>
   );
 };

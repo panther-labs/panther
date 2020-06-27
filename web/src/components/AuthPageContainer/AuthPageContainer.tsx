@@ -58,7 +58,7 @@ const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposit
             <Heading size="x-large" mb={3} textAlign="center">
               Panther Community Edition
             </Heading>
-            <Text size="large" lineHeight="relaxed" textAlign="center">
+            <Text lineHeight="relaxed" textAlign="center">
               Detect threats with log data and improve cloud security posture
               <br />
               Designed for any scale
@@ -80,7 +80,7 @@ const AuthPageContainerCaption: AuthPageContainerComposition['Caption'] = ({ tit
   <Box mb={8}>
     <Heading size="large">{title}</Heading>
     {subtitle && (
-      <Text as="p" size="large" color="gray-300" mt={2}>
+      <Text color="gray-300" mt={2}>
         {subtitle}
       </Text>
     )}

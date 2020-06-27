@@ -38,7 +38,7 @@ const Page404: React.FC = () => {
         <img alt="Page not found illustration" src={NotFoundImg} width="auto" height={400} />
       </Box>
       <Heading mb={2}>Not all who wander are lost...</Heading>
-      <Text size="large" color="gray-200" as="p" mb={10}>
+      <Text color="gray-200"  mb={10}>
         ( You definitely are though )
       </Text>
       <Button as={RRLink} to="/">

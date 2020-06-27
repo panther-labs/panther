@@ -21,7 +21,7 @@ import withSEO from 'Hoc/withSEO';
 import Banner from 'Assets/sign-up-banner.jpg';
 import AuthPageContainer from 'Components/AuthPageContainer';
 import ForgotPasswordForm from 'Components/forms/ForgotPasswordForm';
-import { FadeIn, Flex, Link, Text } from 'pouncejs';
+import { FadeIn, Link } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 
@@ -34,18 +34,12 @@ const ForgotPasswordPage: React.FC = () => {
           subtitle="We'll help you reset your password and get back on track."
         />
         <ForgotPasswordForm />
-        <Text size="small" color="gray-300" mt={4} as="p" textAlign="center">
-          By submitting a request, you will receive an email with instructions on how to reset your
-          password
-        </Text>
       </FadeIn>
       <AuthPageContainer.AltOptions>
-        <Flex align="center">
-          Remembered it all of a sudden?
-          <Link as={RRLink} to={urls.account.auth.signIn()} ml={2}>
-            Sign in
-          </Link>
-        </Flex>
+        Remembered it all of a sudden?
+        <Link as={RRLink} to={urls.account.auth.signIn()} ml={2}>
+          Sign in
+        </Link>
       </AuthPageContainer.AltOptions>
     </AuthPageContainer>
   );

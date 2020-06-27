@@ -25,7 +25,6 @@ const DestinationCreateButton: React.FC = () => {
   const { showSidesheet } = useSidesheet();
   return (
     <Button
-      size="large"
       icon="add"
       onClick={() =>
         showSidesheet({

@@ -19,6 +19,7 @@
 import * as React from 'react';
 import { Badge, Box, Card, Flex, Icon, Img, PseudoBox, Text } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
+import { slugify } from 'Helpers/utils';
 
 interface ItemCardProps {
   logo: string;
@@ -28,6 +29,8 @@ interface ItemCardProps {
 }
 
 const LogSourceCard: React.FC<ItemCardProps> = ({ logo, title, to, disabled }) => {
+  const titleId = slugify(title);
+
   const content = (
     <PseudoBox
       aria-disabled={disabled}
@@ -40,13 +43,22 @@ const LogSourceCard: React.FC<ItemCardProps> = ({ logo, title, to, disabled }) =
       _focus={{ backgroundColor: 'navyblue-700', borderColor: 'navyblue-700' }}
     >
       <Flex alignItems="center" py={3} px={6}>
-        <Img src={logo} alt={title} objectFit="contain" nativeHeight={50} nativeWidth={50} />
-        <Text size="large" px={4} py={3} textAlign="center">
+        <Img
+          aria-labelledby={titleId}
+          src={logo}
+          alt={title}
+          objectFit="contain"
+          nativeHeight={50}
+          nativeWidth={50}
+        />
+        <Box id={titleId} px={4} py={3} textAlign="center">
           {title}
-        </Text>
+        </Box>
         <Box ml="auto">
           {disabled ? (
-            <Badge color="violet-300">AVAILABLE IN PANTHER ENTERPRISE</Badge>
+            <Badge color="violet-300" aria-labelledby={titleId}>
+              AVAILABLE IN PANTHER ENTERPRISE
+            </Badge>
           ) : (
             <Icon type="arrow-forward" />
           )}

@@ -22,7 +22,7 @@ import { Box, Button, Flex, Modal, ModalProps, Text } from 'pouncejs';
 const NetworkErrorModal: React.FC<ModalProps> = props => {
   return (
     <Modal title="No Internet Connection" {...props}>
-      <Text size="large" mb={10} textAlign="center">
+      <Text mb={10} textAlign="center">
         Somebody is watching cat videos and is preventing you from being online
         <br />
         That{"'"}s the most likely scenario anyway...

@@ -22,7 +22,7 @@ import * as Yup from 'yup';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
 import useAuth from 'Hooks/useAuth';
-import { Box, Card } from 'pouncejs';
+import { Box, Card, Flex, FormHelperText } from 'pouncejs';
 
 interface ForgotPasswordFormValues {
   email: string;
@@ -63,7 +63,7 @@ const ForgotPasswordForm: React.FC = () => {
 
         return (
           <Form>
-            <Box mb={4}>
+            <Flex direction="column" spacing={4}>
               <Field
                 as={FormikTextInput}
                 label="Email"
@@ -72,8 +72,14 @@ const ForgotPasswordForm: React.FC = () => {
                 name="email"
                 required
               />
-            </Box>
-            <SubmitButton fullWidth>Reset Password</SubmitButton>
+              <SubmitButton fullWidth aria-describedby="forgot-password-description">
+                Reset Password
+              </SubmitButton>
+              <FormHelperText id="forgot-password-description" textAlign="center">
+                By submitting a request, you will receive an email with instructions on how to reset
+                your password
+              </FormHelperText>
+            </Flex>
           </Form>
         );
       }}
