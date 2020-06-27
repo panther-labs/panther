@@ -170,6 +170,7 @@ Resources:
                 - guardduty:Get*
                 - guardduty:List*
                 - guardduty:DeletePublishingDestination
+                - guardduty:UpdatePublishingDestination
               Resource: '*'
             - Effect: Allow
               Action:
@@ -293,6 +294,19 @@ Resources:
       ServiceToken: !GetAtt CustomResourceFunction.Arn
       UserPoolId: !Ref UserPoolId
 
+  AppClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: Panther
+      GenerateSecret: false
+      RefreshTokenValidity: 1
+      UserPoolId: !Ref UserPoolId
+      PreventUserExistenceErrors: ENABLED
+      WriteAttributes:
+        - email
+        - given_name
+        - family_name
+
   AnalysisApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -374,9 +388,13 @@ Resources:
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
 Outputs:
+  AppClientId:
+    Description: Cognito user pool client ID
+    Value: !Ref AppClient
   PythonLayerVersionArn:
     Description: Python layer version
     Value: !If [CreatePythonLayer, !Ref PythonLayer, !Ref PythonLayerVersionArn]
+
   AnalysisApiId:
     Description: Analysis API Gateway ID
     Value: !Ref AnalysisApi

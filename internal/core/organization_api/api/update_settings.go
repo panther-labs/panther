@@ -24,5 +24,5 @@ import (
 
 // UpdateSettings updates account settings.
 func (API) UpdateSettings(input *models.UpdateSettingsInput) (*models.GeneralSettings, error) {
-	return orgTable.Update(input)
+	return orgTable.UpdateGeneralSettings(input)
 }

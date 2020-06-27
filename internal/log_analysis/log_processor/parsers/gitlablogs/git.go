@@ -25,13 +25,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-// TypeGit is the log type of Git log records
-const TypeGit = PantherPrefix + ".Git"
-
-// GitDesc describes the Git log record
-var GitDesc = `GitLab log file containing all failed requests from GitLab to Git repositories.
-Reference: https://docs.gitlab.com/ee/administration/logs.html#git_jsonlog`
-
 // Git is a a GitLab log line from a failed interaction with git
 type Git struct {
 	Severity      *string            `json:"severity" validate:"required" description:"The log level"`

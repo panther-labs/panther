@@ -28,7 +28,7 @@ import (
 )
 
 // GetItem returns an integration by its ID
-func (ddb *DDB) GetItem(integrationID *string) (*IntegrationItem, error) {
+func (ddb *DDB) GetItem(integrationID *string) (*Integration, error) {
 	output, err := ddb.Client.GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(ddb.TableName),
 		Key: map[string]*dynamodb.AttributeValue{
@@ -39,7 +39,7 @@ func (ddb *DDB) GetItem(integrationID *string) (*IntegrationItem, error) {
 		return nil, &genericapi.AWSError{Err: err, Method: "Dynamodb.GetItem"}
 	}
 
-	var integration IntegrationItem
+	var integration Integration
 	if output.Item == nil {
 		return nil, nil
 	}

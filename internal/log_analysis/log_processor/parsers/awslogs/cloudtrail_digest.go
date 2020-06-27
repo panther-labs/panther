@@ -25,11 +25,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-// CloudTrailDigestDesc describes a cloud trail digest log
-// nolint:lll
-var CloudTrailDigestDesc = `AWSCloudTrailDigest contains the names of the log files that were delivered to your Amazon S3 bucket during the last hour, the hash values for those log files, and the signature of the previous digest file. 
-Log format & samples can be seen here: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-digest-file-structure.html`
-
 // nolint:lll
 type CloudTrailDigest struct {
 	AWSAccountID                *string                   `json:"awsAccountId" validate:"required" description:"The AWS account ID for which the digest file has been delivered."`
@@ -89,7 +84,7 @@ func (p *CloudTrailDigestParser) Parse(log string) ([]*parsers.PantherLog, error
 
 // LogType returns the log type supported by this parser
 func (p *CloudTrailDigestParser) LogType() string {
-	return "AWS.CloudTrailDigest"
+	return TypeCloudTrailDigest
 }
 
 func (event *CloudTrailDigest) updatePantherFields(p *CloudTrailDigestParser) {

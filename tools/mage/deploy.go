@@ -240,7 +240,7 @@ func deploySingleStack(stack string) error {
 		return deployDashboardStack(bucket)
 	case frontendStack:
 		setFirstUser(getSettings())
-		return deployFrontend(getAccountID(), stackOutputs(bootstrapStack), getSettings())
+		return deployFrontend(getAccountID(), stackOutputs(bootstrapStack, gatewayStack), getSettings())
 	case logAnalysisStack:
 		build.API()
 		build.Lambda()
