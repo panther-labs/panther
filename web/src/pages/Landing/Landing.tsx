@@ -17,7 +17,19 @@
  */
 
 import React from 'react';
-import { Box, Flex, Card, Icon, Text, Heading, SimpleGrid, Link, Button, FadeIn } from 'pouncejs';
+import {
+  Box,
+  Flex,
+  Card,
+  Icon,
+  Text,
+  Heading,
+  SimpleGrid,
+  Link,
+  Button,
+  FadeIn,
+  Img
+} from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import logo from 'Source/assets/panther-minimal-logo.svg';
 import urls from 'Source/urls';
@@ -31,7 +43,7 @@ const LandingPage: React.FC = () => {
       <Box as="article" textAlign="center">
         <Box my={60}>
           <Flex width={1} justify="center">
-            <img src={logo} alt="Panther logo" width="60" height="60" />
+            <Img src={logo} alt="Panther logo" nativeWidth="60" nativeHeight="60" />
           </Flex>
           <Heading size="2x-large" mb={2} mt={5}>
             Welcome!

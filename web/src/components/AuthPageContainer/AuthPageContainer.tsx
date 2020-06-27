@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Flex, Box, Text, Heading, SimpleGrid, FadeIn } from 'pouncejs';
+import {Flex, Box, Text, Heading, SimpleGrid, Img} from 'pouncejs';
 import PantherLogoWhite from 'Assets/panther-icon--white.svg';
 
 interface AuthPageContainerComposition {
@@ -36,12 +36,12 @@ const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposit
   return (
     <SimpleGrid columns={3} height="100vh" backgroundColor="navyblue-800">
       <Box gridColumn="1/2" position="relative">
-        <img
+        <Img
           src={banner}
           alt="Generic security illustrations"
           width="100%"
           height="100%"
-          style={{ objectFit: 'cover' }}
+          objectFit="cover"
         />
         <Flex
           position="absolute"
@@ -53,7 +53,7 @@ const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposit
           height="100%"
           direction="column"
         >
-          <img src={PantherLogoWhite} alt="Panther Logo" width="54" height="54" />
+          <Img src={PantherLogoWhite} alt="Panther Logo" nativeWidth="54" nativeHeight="54" />
           <Flex direction="column" align="center" justify="center" m="auto">
             <Heading size="x-large" mb={3} textAlign="center">
               Panther Community Edition

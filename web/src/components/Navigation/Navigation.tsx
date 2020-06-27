@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Flex, Link } from 'pouncejs';
+import { Box, Flex, Img, Link } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import PantherIcon from 'Assets/panther-minimal-logo.svg';
@@ -92,13 +92,13 @@ const Navigation = () => {
       backgroundColor="navyblue-900"
     >
       <Flex as="nav" direction="column" width={70} height="100%" aria-label="Main">
-        <Flex as={RRLink} to="/" justify="center" py={7}>
-          <img
+        <Flex as={RRLink} to="/" justify="center" py={3} my={6}>
+          <Img
             src={PantherIcon}
             alt="Panther logo"
-            width={30}
-            height={30}
-            style={{ display: 'block' }}
+            nativeWidth={30}
+            nativeHeight={30}
+            display="block"
           />
         </Flex>
         <Flex direction="column" justify="center" align="center" as="ul" flex="1 0 auto">
