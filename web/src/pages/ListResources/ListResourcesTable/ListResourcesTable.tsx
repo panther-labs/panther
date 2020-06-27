@@ -89,9 +89,8 @@ const ListResourcesTable: React.FC<ListResourcesTableProps> = ({
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        <FadeInTrail as={Table.Row} duration={100}>
           {items.map(resource => (
-            <React.Fragment key={resource.id}>
+            <Table.Row key={resource.id}>
               <Table.Cell maxWidth={450} wrapText="wrap">
                 <Link as={RRLink} to={urls.compliance.resources.details(resource.id)} py={4} pr={4}>
                   {resource.id}
@@ -105,9 +104,8 @@ const ListResourcesTable: React.FC<ListResourcesTableProps> = ({
                 </Box>
               </Table.Cell>
               <Table.Cell align="right">{formatDatetime(resource.lastModified)}</Table.Cell>
-            </React.Fragment>
+            </Table.Row>
           ))}
-        </FadeInTrail>
       </Table.Body>
     </Table>
   );

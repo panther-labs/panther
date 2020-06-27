@@ -19,14 +19,13 @@
 import React from 'react';
 import { ListRulesInput, ListRulesSortFieldsEnum, SortDirEnum } from 'Generated/schema';
 import { formatDatetime } from 'Helpers/utils';
-import { Badge, Box, Link, Table } from 'pouncejs';
+import { Box, Link, Table } from 'pouncejs';
 import StatusBadge from 'Components/StatusBadge';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/SeverityBadge';
 import { ListRules } from 'Pages/ListRules';
 import ListRulesTableRowOptions from './ListRulesTableRowOptions';
-import FadeInTrail from 'Components/utils/FadeInTrail';
 
 interface ListRulesTableProps {
   items?: ListRules['rules']['rules'];
@@ -88,9 +87,8 @@ const ListRulesTable: React.FC<ListRulesTableProps> = ({ items, onSort, sortBy, 
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        <FadeInTrail as={Table.Row} duration={100}>
           {items.map(rule => (
-            <React.Fragment key={rule.id}>
+            <Table.Row key={rule.id}>
               <Table.Cell maxWidth={450} wrapText="wrap">
                 <Link as={RRLink} to={urls.logAnalysis.rules.details(rule.id)} py={4} pr={4}>
                   {rule.displayName || rule.id}
@@ -121,9 +119,8 @@ const ListRulesTable: React.FC<ListRulesTableProps> = ({ items, onSort, sortBy, 
                   <ListRulesTableRowOptions rule={rule} />
                 </Box>
               </Table.Cell>
-            </React.Fragment>
+            </Table.Row>
           ))}
-        </FadeInTrail>
       </Table.Body>
     </Table>
   );

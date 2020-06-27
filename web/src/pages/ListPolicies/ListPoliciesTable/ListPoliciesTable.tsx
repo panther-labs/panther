@@ -24,7 +24,6 @@ import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/SeverityBadge';
 import { ListPolicies } from 'Pages/ListPolicies';
-import FadeInTrail from 'Components/utils/FadeInTrail';
 import StatusBadge from 'Components/StatusBadge';
 import ListPoliciesTableRowOptions from './ListPoliciesTableRowOptions';
 
@@ -66,7 +65,7 @@ const ListPoliciesTable: React.FC<ListPoliciesTableProps> = ({
             onClick={() => handleSort(ListPoliciesSortFieldsEnum.ResourceTypes)}
             sortDir={sortBy === ListPoliciesSortFieldsEnum.ResourceTypes ? sortDir : false}
           >
-            Resource Types
+            ` Resource Types
           </Table.SortableHeaderCell>
           <Table.SortableHeaderCell
             align="center"
@@ -93,42 +92,42 @@ const ListPoliciesTable: React.FC<ListPoliciesTableProps> = ({
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        <FadeInTrail as={Table.Row} duration={100}>
-          {items.map(policy => (
-            <React.Fragment key={policy.id}>
-              <Table.Cell maxWidth={450} wrapText="wrap">
-                <Link as={RRLink} to={urls.compliance.policies.details(policy.id)} py={4} pr={4}>
-                  {policy.id}
-                </Link>
-              </Table.Cell>
-              <Table.Cell maxWidth={225} truncated>
-                {policy.resourceTypes.length
-                  ? policy.resourceTypes.map(resourceType => (
-                      <React.Fragment key={resourceType}>
-                        {resourceType} <br />
-                      </React.Fragment>
-                    ))
-                  : 'All resources'}
-              </Table.Cell>
-              <Table.Cell>
-                <Box my={-1} display="inline-block">
-                  <SeverityBadge severity={policy.severity} />
-                </Box>
-              </Table.Cell>
-              <Table.Cell align="center">
-                <Box my={-1} display="inline-block">
-                  <StatusBadge status={policy.complianceStatus} disabled={!policy.enabled} />
-                </Box>
-              </Table.Cell>
-              <Table.Cell wrapText="nowrap" align="right">{formatDatetime(policy.lastModified)}</Table.Cell>
-              <Table.Cell align="right">
-                <Box my={-1}>
-                  <ListPoliciesTableRowOptions policy={policy} />
-                </Box>
-              </Table.Cell>
-            </React.Fragment>
-          ))}
-        </FadeInTrail>
+        {items.map(policy => (
+          <Table.Row key={policy.id}>
+            <Table.Cell maxWidth={450} wrapText="wrap">
+              <Link as={RRLink} to={urls.compliance.policies.details(policy.id)} py={4} pr={4}>
+                {policy.id}
+              </Link>
+            </Table.Cell>
+            <Table.Cell maxWidth={225} truncated>
+              {policy.resourceTypes.length
+                ? policy.resourceTypes.map(resourceType => (
+                    <React.Fragment key={resourceType}>
+                      {resourceType} <br />
+                    </React.Fragment>
+                  ))
+                : 'All resources'}
+            </Table.Cell>
+            <Table.Cell>
+              <Box my={-1} display="inline-block">
+                <SeverityBadge severity={policy.severity} />
+              </Box>
+            </Table.Cell>
+            <Table.Cell align="center">
+              <Box my={-1} display="inline-block">
+                <StatusBadge status={policy.complianceStatus} disabled={!policy.enabled} />
+              </Box>
+            </Table.Cell>
+            <Table.Cell wrapText="nowrap" align="right">
+              {formatDatetime(policy.lastModified)}
+            </Table.Cell>
+            <Table.Cell align="right">
+              <Box my={-1}>
+                <ListPoliciesTableRowOptions policy={policy} />
+              </Box>
+            </Table.Cell>
+          </Table.Row>
+        ))}
       </Table.Body>
     </Table>
   );
