@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Box, Text, Flex, Link, FormHelperText} from 'pouncejs';
+import { Box, Flex, Link, FormHelperText } from 'pouncejs';
 import { Field, Form, Formik } from 'formik';
 import QRCode from 'qrcode.react';
 import * as React from 'react';
@@ -102,7 +102,7 @@ export const TotpForm: React.FC = () => {
             1Password
           </Link>
           .
-        </Text>
+        </FormHelperText>
       </Form>
     </Formik>
   );
