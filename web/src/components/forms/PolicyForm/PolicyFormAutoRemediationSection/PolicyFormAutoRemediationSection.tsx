@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Alert } from 'pouncejs';
+import { Alert, Link } from 'pouncejs';
 import { useFormikContext } from 'formik';
 import { extractErrorMessage } from 'Helpers/utils';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
@@ -55,14 +55,13 @@ const PolicyFormAutoRemediationSection: React.FC = () => {
         description={[
           extractErrorMessage(error),
           '. For more info, please consult the ',
-          <a
-            key="docs"
+          <Link
+            external
             href={`${PANTHER_SCHEMA_DOCS_LINK}/amazon-web-services/aws-setup/automatic-remediation`}
-            target="_blank"
-            rel="noopener noreferrer"
+            key="docs"
           >
             related docs
-          </a>,
+          </Link>,
         ]}
       />
     );
