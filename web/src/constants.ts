@@ -16,7 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { generateDocUrl } from 'Helpers/utils';
 import { pantherConfig } from 'Source/config';
 import slackLogo from 'Assets/slack-minimal-logo.svg';
 import { DestinationTypeEnum } from 'Generated/schema';
@@ -137,10 +136,8 @@ export const LOG_TYPES = [
 
 export const PANTHER_SCHEMA_DOCS_MASTER_LINK = 'https://docs.runpanther.io';
 
-export const PANTHER_SCHEMA_DOCS_LINK = generateDocUrl(
-  PANTHER_SCHEMA_DOCS_MASTER_LINK,
-  pantherConfig.PANTHER_VERSION
-);
+export const STABLE_PANTHER_VERSION = pantherConfig.PANTHER_VERSION.split('-')[0];
+export const PANTHER_SCHEMA_DOCS_LINK = `${PANTHER_SCHEMA_DOCS_MASTER_LINK}/v/${STABLE_PANTHER_VERSION}-docs`;
 
 export const LOG_ONBOARDING_SNS_DOC_URL = `${PANTHER_SCHEMA_DOCS_LINK}/log-processing#sns-notification-setup`;
 // End of doc URLs section
