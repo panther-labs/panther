@@ -141,7 +141,7 @@ func findRequest(lambdaInput interface{}) (*request, error) {
 		break
 	case 0:
 		return nil, &InvalidInputError{
-			Route: "nil", Message: fmt.Sprintf("exactly one route must be specified: found none"),
+			Route: "nil", Message: "exactly one route must be specified: found none",
 		}
 	default:
 		// There is more than one route
