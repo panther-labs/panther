@@ -24,6 +24,7 @@ import (
 	"reflect"
 
 	"github.com/aws/aws-lambda-go/lambdacontext"
+	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
 
@@ -77,6 +78,13 @@ func (r *Router) Handle(input interface{}) (output interface{}, err error) {
 	defer func() {
 		operation.Stop().Log(err, zap.Any("input", redactedInput(req.input)))
 	}()
+
+	if req.route == "executeQueryWithQueryId" || req.route == "ExecuteQueryWithQueryID" {
+		eventJSON, _ := jsoniter.MarshalToString(input)
+		zap.L().Info("executeQueryWithQueryId",
+			zap.String("source", "genericapi"),
+			zap.String("event", eventJSON))
+	}
 
 	if err = r.validate.Struct(input); err != nil {
 		var msg string
@@ -135,31 +143,48 @@ func findRequest(lambdaInput interface{}) (*request, error) {
 	structValue := reflect.Indirect(reflect.ValueOf(lambdaInput))
 
 	// Check the name and value of each field in the input struct - only one should be non-nil.
-	var result *request
+	requests := findNonNullPtrs(structValue)
+	switch len(requests) {
+	case 1:
+		break
+	case 0:
+		return nil, &InvalidInputError{
+			Route: "nil", Message: fmt.Sprintf("exactly one route must be specified: found none"),
+		}
+	default:
+		// There is more than one route
+		var routes []string
+		for _, request := range requests {
+			routes = append(routes, request.route)
+		}
+		return nil, &InvalidInputError{
+			Route:   "",
+			Message: fmt.Sprintf("exactly one route must be specified: %v", routes),
+		}
+	}
+
+	return &requests[0], nil
+}
+
+func findNonNullPtrs(structValue reflect.Value) (requests []request) {
 	for i := 0; i < structValue.NumField(); i++ {
 		fieldValue := structValue.Field(i)
+
+		// embedded structs are used for API composition
+		if fieldValue.Type().Kind() == reflect.Struct {
+			requests = append(requests, findNonNullPtrs(fieldValue)...)
+			continue
+		}
+
 		if fieldValue.IsNil() {
 			continue
 		}
 
 		fieldName := structValue.Type().Field(i).Name
-		if result == nil {
-			// We found the first defined route
-			result = &request{route: fieldName, input: fieldValue}
-		} else {
-			// There is more than one route
-			return nil, &InvalidInputError{
-				Route:   result.route,
-				Message: "exactly one route must be specified: also found " + fieldName,
-			}
-		}
+		requests = append(requests, request{route: fieldName, input: fieldValue})
 	}
 
-	if result == nil {
-		return nil, &InvalidInputError{
-			Route: "nil", Message: "exactly one route must be specified: found none"}
-	}
-	return result, nil
+	return requests
 }
 
 // Convert a return value into an error, injecting the route name if applicable.
