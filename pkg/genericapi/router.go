@@ -24,7 +24,6 @@ import (
 	"reflect"
 
 	"github.com/aws/aws-lambda-go/lambdacontext"
-	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
 
@@ -78,13 +77,6 @@ func (r *Router) Handle(input interface{}) (output interface{}, err error) {
 	defer func() {
 		operation.Stop().Log(err, zap.Any("input", redactedInput(req.input)))
 	}()
-
-	if req.route == "executeQueryWithQueryId" || req.route == "ExecuteQueryWithQueryID" {
-		eventJSON, _ := jsoniter.MarshalToString(input)
-		zap.L().Info("executeQueryWithQueryId",
-			zap.String("source", "genericapi"),
-			zap.String("event", eventJSON))
-	}
 
 	if err = r.validate.Struct(input); err != nil {
 		var msg string
