@@ -46,8 +46,8 @@ func TestCloudSecTemplate(t *testing.T) {
 		AWSAccountID:       "123456789012",
 		IntegrationType:    models.IntegrationTypeAWSScan,
 		IntegrationLabel:   "TestLabel-",
-		CWEEnabled:         true,
-		RemediationEnabled: true,
+		CWEEnabled:         aws.Bool(true),
+		RemediationEnabled: aws.Bool(true),
 	}
 
 	template, err := ioutil.ReadFile("../../../../deployments/auxiliary/cloudformation/panther-cloudsec-iam.yml")

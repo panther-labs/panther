@@ -29,8 +29,8 @@ type Integration struct {
 	IntegrationType  string    `json:"integrationType"`
 
 	AWSAccountID       string `json:"awsAccountId"`
-	RemediationEnabled bool   `json:"remediationEnabled"`
-	CWEEnabled         bool   `json:"cweEnabled"`
+	RemediationEnabled *bool  `json:"remediationEnabled"`
+	CWEEnabled         *bool  `json:"cweEnabled"`
 
 	LastScanEndTime      time.Time `json:"lastScanEndTime"`
 	LastScanErrorMessage string    `json:"lastScanErrorMessage"`

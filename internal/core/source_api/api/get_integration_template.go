@@ -92,9 +92,9 @@ func (API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput) (*m
 		formattedTemplate = strings.Replace(formattedTemplate, regionFind,
 			fmt.Sprintf(regionReplace, *awsSession.Config.Region), 1)
 		formattedTemplate = strings.Replace(formattedTemplate, cweFind,
-			fmt.Sprintf(cweReplace, input.CWEEnabled), 1)
+			fmt.Sprintf(cweReplace, aws.BoolValue(input.CWEEnabled)), 1)
 		formattedTemplate = strings.Replace(formattedTemplate, remediationFind,
-			fmt.Sprintf(remediationReplace, input.RemediationEnabled), 1)
+			fmt.Sprintf(remediationReplace, aws.BoolValue(input.RemediationEnabled)), 1)
 	} else {
 		// Log Analysis replacements
 		formattedTemplate = strings.Replace(formattedTemplate, roleSuffixIDFind,

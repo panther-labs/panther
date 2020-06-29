@@ -49,8 +49,8 @@ type SourceIntegrationMetadata struct {
 	IntegrationID      string    `json:"integrationId,omitempty"`
 	IntegrationLabel   string    `json:"integrationLabel,omitempty"`
 	IntegrationType    string    `json:"integrationType,omitempty"`
-	RemediationEnabled bool      `json:"remediationEnabled,omitempty"`
-	CWEEnabled         bool      `json:"cweEnabled,omitempty"`
+	RemediationEnabled *bool     `json:"remediationEnabled,omitempty"`
+	CWEEnabled         *bool     `json:"cweEnabled,omitempty"`
 	ScanIntervalMins   int       `json:"scanIntervalMins,omitempty"`
 	S3Bucket           string    `json:"s3Bucket,omitempty"`
 	S3Prefix           string    `json:"s3Prefix,omitempty"`

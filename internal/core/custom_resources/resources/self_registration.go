@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-lambda-go/cfn"
+	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
@@ -167,8 +168,8 @@ func putCloudSecurityIntegration(accountID string) error {
 				IntegrationType:    models.IntegrationTypeAWSScan,
 				ScanIntervalMins:   1440,
 				UserID:             systemUserID,
-				CWEEnabled:         true,
-				RemediationEnabled: true,
+				CWEEnabled:         aws.Bool(true),
+				RemediationEnabled: aws.Bool(true),
 			},
 		},
 	}

@@ -65,11 +65,11 @@ func checkAwsScanIntegration(input *models.CheckIntegrationInput) *models.Source
 	}
 	_, out.AuditRoleStatus = getCredentialsWithStatus(fmt.Sprintf(auditRoleFormat,
 		input.AWSAccountID, *awsSession.Config.Region))
-	if input.EnableCWESetup {
+	if aws.BoolValue(input.EnableCWESetup) {
 		_, out.CWERoleStatus = getCredentialsWithStatus(fmt.Sprintf(cweRoleFormat,
 			input.AWSAccountID, *awsSession.Config.Region))
 	}
-	if input.EnableRemediation {
+	if aws.BoolValue(input.EnableRemediation) {
 		_, out.RemediationRoleStatus = getCredentialsWithStatus(fmt.Sprintf(remediationRoleFormat,
 			input.AWSAccountID, *awsSession.Config.Region))
 	}
@@ -175,11 +175,11 @@ func evaluateIntegration(api API, integration *models.CheckIntegrationInput) (st
 			return "cannot assume audit role", false, nil
 		}
 
-		if integration.EnableRemediation && !status.RemediationRoleStatus.Healthy {
+		if aws.BoolValue(integration.EnableRemediation) && !status.RemediationRoleStatus.Healthy {
 			return "cannot assume remediation role", false, nil
 		}
 
-		if integration.EnableCWESetup && !status.CWERoleStatus.Healthy {
+		if aws.BoolValue(integration.EnableCWESetup) && !status.CWERoleStatus.Healthy {
 			return "cannot assume cwe role", false, nil
 		}
 		return "", true, nil

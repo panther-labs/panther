@@ -49,8 +49,8 @@ type CheckIntegrationInput struct {
 	IntegrationLabel string `json:"integrationLabel" validate:"required,integrationLabel"`
 
 	// Checks for cloudsec integrations
-	EnableCWESetup    bool `json:"enableCWESetup"`
-	EnableRemediation bool `json:"enableRemediation"`
+	EnableCWESetup    *bool `json:"enableCWESetup"`
+	EnableRemediation *bool `json:"enableRemediation"`
 
 	// Checks for log analysis integrations
 	S3Bucket string `json:"s3Bucket"`
@@ -73,8 +73,8 @@ type PutIntegrationSettings struct {
 	IntegrationType    string   `json:"integrationType" validate:"required,oneof=aws-scan aws-s3"`
 	UserID             string   `json:"userId" validate:"required,uuid4"`
 	AWSAccountID       string   `genericapi:"redact" json:"awsAccountId" validate:"omitempty,len=12,numeric"`
-	CWEEnabled         bool     `json:"cweEnabled"`
-	RemediationEnabled bool     `json:"remediationEnabled"`
+	CWEEnabled         *bool    `json:"cweEnabled"`
+	RemediationEnabled *bool    `json:"remediationEnabled"`
 	ScanIntervalMins   int      `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
 	S3Bucket           string   `json:"s3Bucket"`
 	S3Prefix           string   `json:"s3Prefix" validate:"omitempty,min=1"`
@@ -95,8 +95,8 @@ type ListIntegrationsInput struct {
 type UpdateIntegrationSettingsInput struct {
 	IntegrationID      string   `json:"integrationId" validate:"required,uuid4"`
 	IntegrationLabel   string   `json:"integrationLabel" validate:"required,integrationLabel,excludesall='<>&\""`
-	CWEEnabled         bool     `json:"cweEnabled"`
-	RemediationEnabled bool     `json:"remediationEnabled"`
+	CWEEnabled         *bool    `json:"cweEnabled"`
+	RemediationEnabled *bool    `json:"remediationEnabled"`
 	ScanIntervalMins   int      `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
 	S3Bucket           string   `json:"s3Bucket" validate:"omitempty,min=1"`
 	S3Prefix           string   `json:"s3Prefix" validate:"omitempty,min=1"`
@@ -127,8 +127,8 @@ type GetIntegrationTemplateInput struct {
 	AWSAccountID       string `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
 	IntegrationType    string `json:"integrationType" validate:"oneof=aws-scan aws-s3"`
 	IntegrationLabel   string `json:"integrationLabel" validate:"required,integrationLabel"`
-	RemediationEnabled bool   `json:"remediationEnabled"`
-	CWEEnabled         bool   `json:"cweEnabled"`
+	RemediationEnabled *bool  `json:"remediationEnabled"`
+	CWEEnabled         *bool  `json:"cweEnabled"`
 	S3Bucket           string `json:"s3Bucket" validate:"omitempty,min=1"`
 	S3Prefix           string `json:"s3Prefix" validate:"omitempty,min=1"`
 	KmsKey             string `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
