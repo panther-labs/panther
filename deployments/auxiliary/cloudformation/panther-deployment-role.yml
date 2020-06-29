@@ -18,7 +18,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: IAM role for deploying Panther
 
 Metadata:
-  Version: v1.4.0
+  Version: v1.5.0
 
 Resources:
   DeploymentRole:
@@ -118,6 +118,7 @@ Resources:
               - lambda:*EventSourceMapping
               - lambda:List*
               - logs:*
+              - s3:ListAllMyBuckets
               - sns:List*
               - sqs:List*
               - states:CreateStateMachine
@@ -148,6 +149,9 @@ Resources:
           - Effect: Allow
             Action: execute-api:Invoke
             Resource: !Sub arn:${AWS::Partition}:execute-api:*:${AWS::AccountId}:*
+          - Effect: Allow
+            Action: firehose:*
+            Resource: !Sub arn:${AWS::Partition}:firehose:*:${AWS::AccountId}:deliverystream/panther-*
           - Effect: Allow
             Action: iam:*
             Resource:

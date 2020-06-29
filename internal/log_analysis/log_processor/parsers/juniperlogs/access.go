@@ -31,9 +31,6 @@ import (
 )
 
 const TypeAccess = `Juniper.Access`
-const DescAccess = TypeAccess + ` logs for all traffic coming to and from the box.
-
-Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-access-log.html`
 
 var _ parsers.LogParser = (*AccessParser)(nil)
 

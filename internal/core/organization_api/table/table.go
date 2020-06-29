@@ -33,8 +33,8 @@ var settingsKey = DynamoItem{"id": {S: aws.String("generalSettings")}}
 
 // API defines the interface for the table which can be used for mocking.
 type API interface {
-	Get() (*models.GeneralSettings, error)
-	Update(settings *models.GeneralSettings) (*models.GeneralSettings, error)
+	GetGeneralSettings() (*models.GeneralSettings, error)
+	UpdateGeneralSettings(*models.GeneralSettings) (*models.GeneralSettings, error)
 }
 
 // OrganizationsTable encapsulates a connection to the Dynamo table.

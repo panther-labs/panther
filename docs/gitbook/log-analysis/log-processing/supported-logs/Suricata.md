@@ -5,6 +5,7 @@
 ##Suricata.Anomaly
 Suricata parser for the Anomaly event type in the EVE JSON output.
 Reference: https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json-output.html#anomaly
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>anomaly</b></code></td><td><code>{<br>&nbsp;&nbsp;"code":bigint,<br>&nbsp;&nbsp;"event":string,<br>&nbsp;&nbsp;"layer":string,<br>&nbsp;&nbsp;"type":string<br>}</code></td><td valign=top>Suricata Anomaly Anomaly</td></tr>
@@ -41,6 +42,7 @@ Reference: https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json
 ##Suricata.DNS
 Suricata parser for the DNS event type in the EVE JSON output.
 Reference: https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json-output.html#dns
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code>community_id</code></td><td><code>string</code></td><td valign=top>Suricata DNS CommunityID</td></tr>

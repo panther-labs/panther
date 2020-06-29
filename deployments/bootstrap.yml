@@ -539,19 +539,6 @@ Resources:
         AdvancedSecurityMode: ENFORCED
       UserPoolName: panther-users
 
-  AppClient:
-    Type: AWS::Cognito::UserPoolClient
-    Properties:
-      ClientName: Panther
-      GenerateSecret: false
-      RefreshTokenValidity: 1
-      UserPoolId: !Ref UserPool
-      PreventUserExistenceErrors: ENABLED
-      WriteAttributes:
-        - email
-        - given_name
-        - family_name
-
   ########## Dynamo ##########
   DynamoScalingRole:
     Type: AWS::IAM::Role
@@ -614,6 +601,16 @@ Resources:
       EnableDnsSupport: true
       EnableDnsHostnames: true
       CidrBlock: !FindInMap [SubnetConfig, VPC, CIDR]
+
+  FlowLogs:
+    DependsOn: AuditLogsBucketPolicy
+    Type: AWS::EC2::FlowLog
+    Properties:
+      LogDestination: !Sub ${AuditLogs.Arn}/${VPC}/
+      LogDestinationType: s3
+      ResourceId: !Ref VPC
+      ResourceType: VPC
+      TrafficType: ALL
 
   # We define a public subnet so that we can access our web server from a public IP. The empty
   # string in !GetAZs is equivalent to AWS::Region
@@ -932,9 +929,6 @@ Outputs:
     Value: !Ref Source
 
   # Networking + elb
-  VpcId:
-    Description: Web VPC ID
-    Value: !Ref VPC
   SubnetOneId:
     Description: Public subnet one
     Value: !Ref PublicSubnetOne
@@ -981,9 +975,6 @@ Outputs:
   UserPoolId:
     Description: Cognito user pool ID
     Value: !Ref UserPool
-  AppClientId:
-    Description: Cognito user pool client ID
-    Value: !Ref AppClient
 
   # Dynamo
   DynamoScalingRoleArn:

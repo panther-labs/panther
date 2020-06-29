@@ -33,13 +33,6 @@ import (
 
 const TypeSecurity = `Juniper.Security`
 
-// nolint:lll
-const DescSecurity = TypeSecurity + ` Webapp Secure is configured to log security incidents to mws-security.log.
-All security alerts should be sent to security.log (previously named security-alert.log).
-There are different types of security incidents that will be a part of this log: new profiles, security incidents, new counter responses.
-
-Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-log-format.html`
-
 type SecurityParser struct {
 	timestampParser
 }

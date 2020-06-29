@@ -32,11 +32,6 @@ import (
 
 const TypeAudit = `Juniper.Audit`
 
-// nolint:lll
-const DescAudit = TypeAudit + ` The audit log contains log entries that indicate non-idempotent (state changing) actions performed on WebApp Secure.
-
-Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-incident-log-format.html`
-
 type AuditParser struct {
 	timestampParser
 }

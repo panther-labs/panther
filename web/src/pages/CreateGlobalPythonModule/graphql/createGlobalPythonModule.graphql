@@ -1,0 +1,5 @@
+mutation CreateGlobalPythonModule($input: AddGlobalPythonModuleInput!) {
+  addGlobalPythonModule(input: $input) {
+    ...GlobalPythonModuleFull
+  }
+}

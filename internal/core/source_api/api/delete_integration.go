@@ -48,7 +48,7 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) (err error) {
 		}
 	}()
 
-	var integrationItem *ddb.IntegrationItem
+	var integrationItem *ddb.Integration
 	integrationItem, err = dynamoClient.GetItem(input.IntegrationID)
 	if err != nil {
 		errMsg := "failed to get integrationItem"

@@ -31,10 +31,6 @@ import (
 )
 
 const TypeFirewall = `Juniper.Firewall`
-const DescFirewall = TypeFirewall + ` stores information about dropped packets from the iptables firewall. 
-
-Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-profile-log-format.html
-`
 
 type FirewallParser struct {
 	timestampParser

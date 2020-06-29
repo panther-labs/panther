@@ -25,13 +25,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-// TypeExceptions is the log type of Exceptions log records
-const TypeExceptions = PantherPrefix + ".Exceptions"
-
-// ExceptionsDesc describes the Git log record
-var ExceptionsDesc = `GitLab log file containing changes to group or project settings 
-Reference: https://docs.gitlab.com/ee/administration/logs.html#exceptions_jsonlog`
-
 // Exceptions is a a GitLab log line from a failed interaction with git
 // nolint: lll
 type Exceptions struct {

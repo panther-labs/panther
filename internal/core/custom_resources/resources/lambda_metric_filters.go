@@ -33,9 +33,9 @@ import (
 const (
 	memoryFilter      = `[ report_label="REPORT", ..., label="Used:", max_memory_used_value, unit="MB" ]`
 	warnFilterGo      = `{ $.level = "warn" }`
-	warnFilterPython  = `[ level="[WARN]" ]`
+	warnFilterPython  = `"[WARN]"`
 	errorFilterGo     = `{ $.level = "error" }`
-	errorFilterPython = `[ level="[ERROR]" ]`
+	errorFilterPython = `"[ERROR]"`
 )
 
 type LambdaMetricFiltersProperties struct {

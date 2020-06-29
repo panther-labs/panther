@@ -59,6 +59,7 @@ func deployFrontend(accountID string, bootstrapOutputs map[string]string, settin
 		"AppClientId":                bootstrapOutputs["AppClientId"],
 		"CertificateArn":             settings.Web.CertificateArn,
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+		"CustomResourceVersion":      customResourceVersion(),
 		"ElbArn":                     bootstrapOutputs["LoadBalancerArn"],
 		"ElbFullName":                bootstrapOutputs["LoadBalancerFullName"],
 		"ElbTargetGroup":             bootstrapOutputs["LoadBalancerTargetGroup"],

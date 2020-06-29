@@ -36,13 +36,15 @@ func TestOpsgenieAlert(t *testing.T) {
 	httpWrapper := &mockHTTPWrapper{}
 	client := &OutputClient{httpWrapper: httpWrapper}
 
-	var createdAtTime, _ = time.Parse(time.RFC3339, "2019-08-03T11:40:13Z")
+	var createdAtTime, err = time.Parse(time.RFC3339, "2019-08-03T11:40:13Z")
+	require.NoError(t, err)
 	alert := &alertmodels.Alert{
-		PolicyID:   aws.String("policyId"),
-		CreatedAt:  &createdAtTime,
-		OutputIDs:  aws.StringSlice([]string{"output-id"}),
-		PolicyName: aws.String("policyName"),
-		Severity:   aws.String("CRITICAL"),
+		AnalysisID:   "policyId",
+		CreatedAt:    createdAtTime,
+		OutputIDs:    []string{"output-id"},
+		AnalysisName: aws.String("policyName"),
+		Severity:     "CRITICAL",
+		Tags:         []string{"tag"},
 	}
 
 	opsgenieRequest := map[string]interface{}{
@@ -53,7 +55,7 @@ func TestOpsgenieAlert(t *testing.T) {
 			" <strong>Runbook:</strong> ",
 			" <strong>Severity:</strong> CRITICAL",
 		}, "\n"),
-		"tags":     []string{},
+		"tags":     []string{"tag"},
 		"priority": "P1",
 	}
 
