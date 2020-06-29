@@ -81,7 +81,7 @@ const GeneralSettingsPage: React.FC = () => {
                 errorReportingConsent,
               }}
               onSubmit={values => updateGeneralSettings({ variables: { input: values } })}
-            />{' '}
+            />
           </ErrorBoundary>
         </Card>
       </Box>
@@ -123,7 +123,7 @@ const GeneralSettingsPage: React.FC = () => {
               <Box fontWeight="medium">{pantherConfig.AWS_REGION}</Box>
             </Box>
           </Flex>
-        </Card>{' '}
+        </Card>
       </Box>
     </SimpleGrid>
   );
