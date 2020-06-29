@@ -169,7 +169,7 @@ func destroyPantherBuckets() {
 	client := s3.New(awsSession)
 	response, err := client.ListBuckets(&s3.ListBucketsInput{})
 	if err != nil {
-		logger.Fatal(err)
+		logger.Fatalf("failed to list S3 buckets: %v", err)
 	}
 
 	for _, bucket := range response.Buckets {

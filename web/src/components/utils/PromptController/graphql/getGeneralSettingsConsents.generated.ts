@@ -24,14 +24,14 @@ import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
-export type GetErrorReportingConsentVariables = {};
+export type GetGeneralSettingsConsentsVariables = {};
 
-export type GetErrorReportingConsent = {
+export type GetGeneralSettingsConsents = {
   generalSettings: Pick<Types.GeneralSettings, 'displayName' | 'email' | 'errorReportingConsent'>;
 };
 
-export const GetErrorReportingConsentDocument = gql`
-  query GetErrorReportingConsent {
+export const GetGeneralSettingsConsentsDocument = gql`
+  query GetGeneralSettingsConsents {
     generalSettings {
       displayName
       email
@@ -41,47 +41,47 @@ export const GetErrorReportingConsentDocument = gql`
 `;
 
 /**
- * __useGetErrorReportingConsent__
+ * __useGetGeneralSettingsConsents__
  *
- * To run a query within a React component, call `useGetErrorReportingConsent` and pass it any options that fit your needs.
- * When your component renders, `useGetErrorReportingConsent` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetGeneralSettingsConsents` and pass it any options that fit your needs.
+ * When your component renders, `useGetGeneralSettingsConsents` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetErrorReportingConsent({
+ * const { data, loading, error } = useGetGeneralSettingsConsents({
  *   variables: {
  *   },
  * });
  */
-export function useGetErrorReportingConsent(
+export function useGetGeneralSettingsConsents(
   baseOptions?: ApolloReactHooks.QueryHookOptions<
-    GetErrorReportingConsent,
-    GetErrorReportingConsentVariables
+    GetGeneralSettingsConsents,
+    GetGeneralSettingsConsentsVariables
   >
 ) {
-  return ApolloReactHooks.useQuery<GetErrorReportingConsent, GetErrorReportingConsentVariables>(
-    GetErrorReportingConsentDocument,
+  return ApolloReactHooks.useQuery<GetGeneralSettingsConsents, GetGeneralSettingsConsentsVariables>(
+    GetGeneralSettingsConsentsDocument,
     baseOptions
   );
 }
-export function useGetErrorReportingConsentLazyQuery(
+export function useGetGeneralSettingsConsentsLazyQuery(
   baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
-    GetErrorReportingConsent,
-    GetErrorReportingConsentVariables
+    GetGeneralSettingsConsents,
+    GetGeneralSettingsConsentsVariables
   >
 ) {
-  return ApolloReactHooks.useLazyQuery<GetErrorReportingConsent, GetErrorReportingConsentVariables>(
-    GetErrorReportingConsentDocument,
-    baseOptions
-  );
+  return ApolloReactHooks.useLazyQuery<
+    GetGeneralSettingsConsents,
+    GetGeneralSettingsConsentsVariables
+  >(GetGeneralSettingsConsentsDocument, baseOptions);
 }
-export type GetErrorReportingConsentHookResult = ReturnType<typeof useGetErrorReportingConsent>;
-export type GetErrorReportingConsentLazyQueryHookResult = ReturnType<
-  typeof useGetErrorReportingConsentLazyQuery
+export type GetGeneralSettingsConsentsHookResult = ReturnType<typeof useGetGeneralSettingsConsents>;
+export type GetGeneralSettingsConsentsLazyQueryHookResult = ReturnType<
+  typeof useGetGeneralSettingsConsentsLazyQuery
 >;
-export type GetErrorReportingConsentQueryResult = ApolloReactCommon.QueryResult<
-  GetErrorReportingConsent,
-  GetErrorReportingConsentVariables
+export type GetGeneralSettingsConsentsQueryResult = ApolloReactCommon.QueryResult<
+  GetGeneralSettingsConsents,
+  GetGeneralSettingsConsentsVariables
 >;

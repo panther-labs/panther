@@ -1,0 +1,12 @@
+query ListGlobalPythonModules($input: ListGlobalPythonModuleInput!) {
+  listGlobalPythonModules(input: $input) {
+    globals {
+      ...GlobalPythonModuleTeaser
+    }
+    paging {
+      totalPages
+      thisPage
+      totalItems
+    }
+  }
+}

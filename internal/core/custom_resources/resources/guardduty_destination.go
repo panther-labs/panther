@@ -24,11 +24,13 @@ import (
 	"strings"
 
 	"github.com/aws/aws-lambda-go/cfn"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/guardduty"
 )
 
 type GuardDutyDestinationProperties = guardduty.CreatePublishingDestinationInput
 
+// Currently, GuardDuty does not support destinations in CloudFormation
 func customGuardDutyDestination(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
 	switch event.RequestType {
 	case cfn.RequestCreate, cfn.RequestUpdate:
@@ -37,7 +39,21 @@ func customGuardDutyDestination(_ context.Context, event cfn.Event) (string, map
 			return "", nil, err
 		}
 
-		// currently GuardDuty does not support this in CF
+		detectorID, destinationID := parseGuardDutyPhysicalID(event.PhysicalResourceID)
+		if event.RequestType == cfn.RequestUpdate && aws.StringValue(props.DetectorId) == detectorID {
+			// The new and old detectorIDs are the same - this is an update
+			_, err := guardDutyClient.UpdatePublishingDestination(&guardduty.UpdatePublishingDestinationInput{
+				DestinationId:         &destinationID,
+				DestinationProperties: props.DestinationProperties,
+				DetectorId:            &detectorID,
+			})
+			return event.PhysicalResourceID, map[string]interface{}{"DestinationId": destinationID}, err
+		}
+
+		// This is either a create (existing detectorID is blank), OR
+		// this could be an update where the detectorID changed.
+		// Either way, we need to create a new destination for this detector.
+		// (CloudFormation will automatically delete the old destination if the detector changed.)
 		response, err := guardDutyClient.CreatePublishingDestination(&props)
 		if err != nil {
 			return "", nil, err
@@ -48,20 +64,30 @@ func customGuardDutyDestination(_ context.Context, event cfn.Event) (string, map
 		return resourceID, map[string]interface{}{"DestinationId": *response.DestinationId}, nil
 
 	case cfn.RequestDelete:
-		split := strings.Split(event.PhysicalResourceID, ":")
-		if len(split) < 5 {
+		detectorID, destinationID := parseGuardDutyPhysicalID(event.PhysicalResourceID)
+		if detectorID == "" || destinationID == "" {
 			// invalid resourceID (e.g. CREATE_FAILED) - skip delete
 			return event.PhysicalResourceID, nil, nil
 		}
 
-		_, err := guardDutyClient.DeletePublishingDestination(
-			&guardduty.DeletePublishingDestinationInput{
-				DetectorId:    &split[3],
-				DestinationId: &split[4],
-			})
+		_, err := guardDutyClient.DeletePublishingDestination(&guardduty.DeletePublishingDestinationInput{
+			DetectorId:    &detectorID,
+			DestinationId: &destinationID,
+		})
 		return event.PhysicalResourceID, nil, err
 
 	default:
 		return "", nil, fmt.Errorf("unknown request type %s", event.RequestType)
 	}
+}
+
+// Returns DetectorId, DestinationId, parsed from the custom resource physical ID
+func parseGuardDutyPhysicalID(id string) (string, string) {
+	// "custom:guardduty:destination:DETECTOR_ID:DESTINATION_ID"
+	split := strings.Split(id, ":")
+	if len(split) < 5 {
+		// invalid resourceID (e.g. CREATE_FAILED) - skip delete
+		return "", ""
+	}
+	return split[3], split[4]
 }

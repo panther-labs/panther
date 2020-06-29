@@ -25,9 +25,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-var ZeekDNSDesc = `Zeek DNS activity
-Reference: https://docs.zeek.org/en/current/scripts/base/protocols/dns/main.zeek.html#type-DNS::Info`
-
 // https://docs.zeek.org/en/current/scripts/base/protocols/dns/consts.zeek.html#id-DNS::query_types
 const (
 	aQueryType    = uint64(1)
@@ -36,7 +33,7 @@ const (
 
 // nolint:lll
 type ZeekDNS struct {
-	Ts         *timestamp.UnixFloat `json:"ts,omitempty" validate:"required" description:"The earliest time at which a DNS protocol message over the associated connection is observed."`
+	TS         *timestamp.UnixFloat `json:"ts,omitempty" validate:"required" description:"The earliest time at which a DNS protocol message over the associated connection is observed."`
 	UID        *string              `json:"uid,omitempty" validate:"required" description:"A unique identifier of the connection over which DNS messages are being transferred."`
 	IDOrigH    *string              `json:"id.orig_h" validate:"required" description:"The originator’s IP address."`
 	IDOrigP    *uint16              `json:"id.orig_p" validate:"required" description:"The originator’s port number."`
@@ -91,11 +88,11 @@ func (p *ZeekDNSParser) Parse(log string) ([]*parsers.PantherLog, error) {
 
 // LogType returns the log type supported by this parser
 func (p *ZeekDNSParser) LogType() string {
-	return "Zeek.DNS"
+	return TypeZeekDNS
 }
 
 func (event *ZeekDNS) updatePantherFields(p *ZeekDNSParser) {
-	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.Ts), event)
+	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.TS), event)
 
 	event.AppendAnyIPAddressPtr(event.IDOrigH)
 	event.AppendAnyIPAddressPtr(event.IDRespH)

@@ -113,6 +113,7 @@ resource "aws_iam_policy" "deployment" {
           "lambda:*EventSourceMapping",
           "lambda:List*",
           "logs:*",
+          "s3:ListAllMyBuckets",
           "sns:List*",
           "sqs:List*",
           "states:CreateStateMachine",
@@ -156,6 +157,11 @@ resource "aws_iam_policy" "deployment" {
         Effect : "Allow",
         Action : "execute-api:Invoke",
         Resource : "arn:${var.aws_partition}:execute-api:*:${var.aws_account_id}:*"
+      },
+      {
+        Effect : "Allow",
+        Action : "firehose:*",
+        Resource : "arn:${var.aws_partition}:firehose:*:${var.aws_account_id}:deliverystream/panther-*"
       },
       {
         Effect : "Allow",

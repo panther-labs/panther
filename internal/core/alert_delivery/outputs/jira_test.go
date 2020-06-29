@@ -31,12 +31,12 @@ import (
 )
 
 var jiraConfig = &outputmodels.JiraConfig{
-	APIKey:     aws.String("apikey"),
-	AssigneeID: aws.String("ae393k930390"),
-	OrgDomain:  aws.String("https://panther-labs.atlassian.net"),
-	ProjectKey: aws.String("QR"),
-	Type:       aws.String("Task"),
-	UserName:   aws.String("username"),
+	APIKey:     "apikey",
+	AssigneeID: "ae393k930390",
+	OrgDomain:  "https://panther-labs.atlassian.net",
+	ProjectKey: "QR",
+	Type:       "Task",
+	UserName:   "username",
 }
 
 func TestJiraAlert(t *testing.T) {
@@ -45,11 +45,11 @@ func TestJiraAlert(t *testing.T) {
 
 	var createdAtTime, _ = time.Parse(time.RFC3339, "2019-08-03T11:40:13Z")
 	alert := &alertmodels.Alert{
-		PolicyID:          aws.String("ruleId"),
-		CreatedAt:         &createdAtTime,
-		OutputIDs:         aws.StringSlice([]string{"output-id"}),
-		PolicyDescription: aws.String("policyDescription"),
-		Severity:          aws.String("INFO"),
+		AnalysisID:          "ruleId",
+		CreatedAt:           createdAtTime,
+		OutputIDs:           []string{"output-id"},
+		AnalysisDescription: aws.String("policyDescription"),
+		Severity:            "INFO",
 	}
 
 	jiraPayload := map[string]interface{}{
@@ -59,17 +59,17 @@ func TestJiraAlert(t *testing.T) {
 				"[Click here to view in the Panther UI](https://panther.io/policies/ruleId)\n" +
 				" *Runbook:* \n *Severity:* INFO\n *Tags:* ",
 			"project": map[string]*string{
-				"key": jiraConfig.ProjectKey,
+				"key": aws.String(jiraConfig.ProjectKey),
 			},
 			"issuetype": map[string]*string{
-				"name": jiraConfig.Type,
+				"name": aws.String(jiraConfig.Type),
 			},
 			"assignee": map[string]*string{
-				"id": jiraConfig.AssigneeID,
+				"id": aws.String(jiraConfig.AssigneeID),
 			},
 		},
 	}
-	auth := *jiraConfig.UserName + ":" + *jiraConfig.APIKey
+	auth := jiraConfig.UserName + ":" + jiraConfig.APIKey
 	basicAuthToken := "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))
 	requestHeader := map[string]string{
 		AuthorizationHTTPHeader: basicAuthToken,

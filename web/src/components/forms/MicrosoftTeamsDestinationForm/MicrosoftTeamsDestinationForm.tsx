@@ -25,6 +25,7 @@ import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
+import { webhookValidation } from 'Helpers/utils';
 
 type MicrosoftTeamsFieldValues = Pick<DestinationConfigInput, 'msTeams'>;
 
@@ -33,23 +34,22 @@ interface MicrosoftTeamsDestinationFormProps {
   onSubmit: (values: BaseDestinationFormValues<MicrosoftTeamsFieldValues>) => void;
 }
 
-const msTeamsFieldsValidationSchema = Yup.object().shape({
-  outputConfig: Yup.object().shape({
-    msTeams: Yup.object().shape({
-      webhookURL: Yup.string().url('Must be a valid webhook URL').required(),
-    }),
-  }),
-});
-
-// We merge the two schemas together: the one deriving from the common fields, plus the custom
-// ones that change for each destination.
-// https://github.com/jquense/yup/issues/522
-const mergedValidationSchema = defaultValidationSchema.concat(msTeamsFieldsValidationSchema);
-
 const MicrosoftTeamsDestinationForm: React.FC<MicrosoftTeamsDestinationFormProps> = ({
   onSubmit,
   initialValues,
 }) => {
+  const existing = initialValues.outputId;
+
+  const msTeamsFieldsValidationSchema = Yup.object().shape({
+    outputConfig: Yup.object().shape({
+      msTeams: Yup.object().shape({
+        webhookURL: existing ? webhookValidation() : webhookValidation().required(),
+      }),
+    }),
+  });
+
+  const mergedValidationSchema = defaultValidationSchema.concat(msTeamsFieldsValidationSchema);
+
   return (
     <BaseDestinationForm<MicrosoftTeamsFieldValues>
       initialValues={initialValues}
@@ -58,11 +58,14 @@ const MicrosoftTeamsDestinationForm: React.FC<MicrosoftTeamsDestinationFormProps
     >
       <Field
         as={FormikTextInput}
+        type="password"
         name="outputConfig.msTeams.webhookURL"
         label="Microsoft Teams Webhook URL"
-        placeholder="Where should we send a push notification to?"
+        placeholder={
+          existing ? '<hidden information>' : 'Where should we send a push notification to?'
+        }
         mb={6}
-        aria-required
+        aria-required={!existing}
       />
     </BaseDestinationForm>
   );

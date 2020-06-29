@@ -19,7 +19,10 @@
 import React from 'react';
 import { __RouterContext as RouterContext, RouteComponentProps } from 'react-router';
 
-function useRouter<Params = {}, StateShape = {}>() {
+function useRouter<
+  Params = Record<string, string | number>,
+  StateShape = Record<string, unknown>
+>() {
   return React.useContext(RouterContext) as RouteComponentProps<Params, undefined, StateShape>;
 }
 

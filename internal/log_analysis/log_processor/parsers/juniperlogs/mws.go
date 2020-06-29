@@ -31,12 +31,6 @@ import (
 
 const TypeMWS = `Juniper.MWS`
 
-// nolint:lll
-const DescMWS = TypeMWS + ` is the main log file for most WebApp Secure logging needs. All messages that don't have a specific log location are sent, by default, to mws.log.
-
-Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-mws-log.html 
-`
-
 type MWSParser struct {
 	timestampParser
 }

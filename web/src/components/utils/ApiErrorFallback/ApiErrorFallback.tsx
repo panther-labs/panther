@@ -30,7 +30,7 @@ export interface LocationErrorState {
 }
 
 const ApiErrorFallback: React.FC = ({ children }) => {
-  const { location } = useRouter<{}, LocationErrorState>();
+  const { location } = useRouter<Record<string, string | number>, LocationErrorState>();
   const { showModal, hideModal } = useModal();
   const { isAuthenticated, signOut } = useAuth();
 

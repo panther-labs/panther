@@ -57,7 +57,7 @@ func Sync(event *SyncEvent, deadline time.Time) error {
 	if event.Continuation != nil {
 		startTime := event.Continuation.NextPartitionTime
 		logType := event.Continuation.LogType
-		logTable := registry.AvailableParsers().LookupParser(logType).GlueTableMetadata // get the table description
+		logTable := registry.Lookup(logType).GlueTableMeta() // get the table description
 
 		if event.Continuation.DataType == models.RuleData { // just finish rule matches, log aleady done
 			deadlineExpired, err := syncTable(logTable.RuleTable(), event, startTime, deadline)
@@ -86,7 +86,7 @@ func Sync(event *SyncEvent, deadline time.Time) error {
 
 	if len(event.LogTypes) > 0 {
 		logType := event.LogTypes[0]
-		logTable := registry.AvailableParsers().LookupParser(logType).GlueTableMetadata // get the table description
+		logTable := registry.Lookup(logType).GlueTableMeta() // get the table description
 
 		// sync table and companion rule match table
 		deadlineExpired, err := syncTable(logTable, event, zeroStartTime, deadline)

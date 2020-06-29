@@ -38,7 +38,7 @@ import (
 const (
 	testBucket       = "panther-public-cloudformation-templates" // this is a public Panther bucket with CF files we can use to list
 	testBucketRegion = "us-west-2"                               // region of above bucket
-	testDb           = "panther_glue_test_db"
+	testDB           = "panther_glue_test_db"
 	testTable        = "panther_glue_test_table"
 )
 
@@ -85,12 +85,12 @@ func TestIntegrationGlueMetadataPartitions(t *testing.T) {
 	// this is the table created in setupTables
 	originalTable := NewGlueTableMetadata(models.RuleData, testTable, "test table", GlueTableHourly, &testEvent{})
 	// overwriting default database
-	originalTable.databaseName = testDb
+	originalTable.databaseName = testDB
 
 	// get the meta data, note we update the schema from the one used in setupTables()
 	table := NewGlueTableMetadata(models.RuleData, testTable, "test table", GlueTableHourly, &testEventModified{})
 	// overwriting default database
-	table.databaseName = testDb
+	table.databaseName = testDB
 
 	// confirm the signatures are different
 	originalTableSig, err := originalTable.Signature()
@@ -143,25 +143,25 @@ func setupTables(t *testing.T) {
 }
 
 func addTables(t *testing.T) {
-	_, err := CreateDatabase(glueClient, testDb, "integration test database")
+	_, err := CreateDatabase(glueClient, testDB, "integration test database")
 	require.NoError(t, err)
 
 	gm := NewGlueTableMetadata(models.RuleData, testTable, "test table", GlueTableHourly, &testEvent{})
 	// overwriting default database
-	gm.databaseName = testDb
+	gm.databaseName = testDB
 	err = gm.CreateOrUpdateTable(glueClient, testBucket)
 	require.NoError(t, err)
 }
 
 func removeTables(t *testing.T) {
 	// best effort, no error checks
-	DeleteTable(glueClient, testDb, testTable) // nolint (errcheck)
-	DeleteDatabase(glueClient, testDb)         // nolint (errcheck)
+	DeleteTable(glueClient, testDB, testTable) // nolint (errcheck)
+	DeleteDatabase(glueClient, testDB)         // nolint (errcheck)
 }
 
 // Fetches the location of a partition. Return nil it the partition doesn't exist
 func getPartitionLocation(t *testing.T, partitionValues []string) *string {
-	response, err := GetPartition(glueClient, testDb, testTable, aws.StringSlice(partitionValues))
+	response, err := GetPartition(glueClient, testDB, testTable, aws.StringSlice(partitionValues))
 	if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == glue.ErrCodeEntityNotFoundException {
 		return nil
 	}

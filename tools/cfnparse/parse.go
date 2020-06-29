@@ -65,5 +65,5 @@ func WriteTemplate(cfn map[string]interface{}, path string) error {
 		return fmt.Errorf("yaml marshal failed: %v", err)
 	}
 
-	return ioutil.WriteFile(path, contents, 0644)
+	return ioutil.WriteFile(path, contents, 0600)
 }

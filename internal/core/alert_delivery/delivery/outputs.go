@@ -53,7 +53,7 @@ var (
 func getAlertOutputs(alert *alertmodels.Alert) ([]*outputmodels.AlertOutput, error) {
 	if cache == nil || time.Since(cache.Timestamp) > refreshInterval {
 		zap.L().Debug("getting cached default outputs")
-		input := outputmodels.LambdaInput{GetOutputs: &outputmodels.GetOutputsInput{}}
+		input := outputmodels.LambdaInput{GetOutputsWithSecrets: &outputmodels.GetOutputsWithSecretsInput{}}
 		var outputs outputmodels.GetOutputsOutput
 		if err := genericapi.Invoke(lambdaClient, outputsAPI, &input, &outputs); err != nil {
 			return nil, err
@@ -72,7 +72,7 @@ func getAlertOutputs(alert *alertmodels.Alert) ([]*outputmodels.AlertOutput, err
 	result := []*outputmodels.AlertOutput{}
 	for _, output := range cache.Outputs {
 		for _, alertOutputID := range alert.OutputIDs {
-			if *output.OutputID == *alertOutputID {
+			if *output.OutputID == alertOutputID {
 				result = append(result, output)
 			}
 		}
@@ -80,7 +80,7 @@ func getAlertOutputs(alert *alertmodels.Alert) ([]*outputmodels.AlertOutput, err
 	return result, nil
 }
 
-func getOutputsBySeverity(severity *string) []*outputmodels.AlertOutput {
+func getOutputsBySeverity(severity string) []*outputmodels.AlertOutput {
 	result := []*outputmodels.AlertOutput{}
 	if cache == nil {
 		return result
@@ -88,7 +88,7 @@ func getOutputsBySeverity(severity *string) []*outputmodels.AlertOutput {
 
 	for _, output := range cache.Outputs {
 		for _, outputSeverity := range output.DefaultForSeverity {
-			if *severity == *outputSeverity {
+			if severity == *outputSeverity {
 				result = append(result, output)
 			}
 		}

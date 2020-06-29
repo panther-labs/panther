@@ -25,15 +25,16 @@ import (
 	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 )
 
-func integrationToItem(input *models.SourceIntegration) *ddb.IntegrationItem {
+func integrationToItem(input *models.SourceIntegration) *ddb.Integration {
 	// Initializing the fields common for all integration types
-	item := &ddb.IntegrationItem{
+	item := &ddb.Integration{
 		CreatedAtTime:    input.CreatedAtTime,
 		CreatedBy:        input.CreatedBy,
 		IntegrationID:    input.IntegrationID,
 		IntegrationLabel: input.IntegrationLabel,
 		IntegrationType:  input.IntegrationType,
 	}
+	item.LastEventReceived = input.LastEventReceived
 
 	switch aws.StringValue(input.IntegrationType) {
 	case models.IntegrationTypeAWS3:
@@ -59,7 +60,7 @@ func integrationToItem(input *models.SourceIntegration) *ddb.IntegrationItem {
 	return item
 }
 
-func itemToIntegration(item *ddb.IntegrationItem) *models.SourceIntegration {
+func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 	// Initializing the fields common for all integration types
 	integration := &models.SourceIntegration{}
 	integration.IntegrationID = item.IntegrationID
@@ -67,6 +68,7 @@ func itemToIntegration(item *ddb.IntegrationItem) *models.SourceIntegration {
 	integration.IntegrationLabel = item.IntegrationLabel
 	integration.CreatedAtTime = item.CreatedAtTime
 	integration.CreatedBy = item.CreatedBy
+	integration.LastEventReceived = item.LastEventReceived
 
 	switch aws.StringValue(item.IntegrationType) {
 	case models.IntegrationTypeAWS3:
