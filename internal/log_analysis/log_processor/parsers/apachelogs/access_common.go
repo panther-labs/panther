@@ -28,12 +28,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-const TypeAccessCommon = `Apache.AccessCommon`
-
-const AccessCommonDesc = `Apache HTTP server access logs using the 'common' format
-
-Reference: https://httpd.apache.org/docs/current/logs.html#common`
-
 // LogFormat "%h %l %u %t \"%r\" %>s %b" common
 // nolint:lll
 type AccessCommon struct {

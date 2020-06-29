@@ -1,4 +1,4 @@
-package destinations
+package fluentdsyslogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,10 +19,31 @@ package destinations
  */
 
 import (
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
-// Destination defines the interface that all Destinations should follow
-type Destination interface {
-	SendEvents(parsedEventChannel chan *parsers.Result, errChan chan error)
+const (
+	TypeRFC3164 = "Fluentd.Syslog3164"
+	TypeRFC5424 = "Fluentd.Syslog5424"
+)
+
+// nolint:lll
+func init() {
+	logtypes.MustRegister(
+		logtypes.Config{
+			Name:         TypeRFC3164,
+			Description:  `Fluentd syslog parser for the RFC3164 format (ie. BSD-syslog messages)`,
+			ReferenceURL: `https://docs.fluentd.org/parser/syslog#rfc3164-log`,
+			Schema:       RFC3164{},
+			NewParser:    parsers.AdapterFactory(&RFC3164Parser{}),
+		},
+		logtypes.Config{
+			Name:         TypeRFC5424,
+			Description:  `Fluentd syslog parser for the RFC5424 format (ie. BSD-syslog messages)`,
+			ReferenceURL: `https://docs.fluentd.org/parser/syslog#rfc5424-log`,
+			Schema:       RFC5424{},
+			NewParser:    parsers.AdapterFactory(&RFC5424Parser{}),
+		},
+	)
 }

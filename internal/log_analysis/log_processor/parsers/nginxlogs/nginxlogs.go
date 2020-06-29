@@ -1,4 +1,5 @@
-package registry
+// Package nginxlogs provides parsers for NGINX server logs
+package nginxlogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,11 +20,20 @@ package registry
  */
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
-func TestPanic(t *testing.T) {
-	assert.Panics(t, func() { Lookup("doesnotexist") }, "Failed to panic, this is very dangerous!")
+const (
+	TypeAccess = `Nginx.Access`
+)
+
+func init() {
+	logtypes.MustRegister(logtypes.Config{
+		Name:         TypeAccess,
+		Description:  `Access Logs for your Nginx server. We currently support Nginx 'combined' format.`,
+		ReferenceURL: `http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format`,
+		Schema:       Access{},
+		NewParser:    parsers.AdapterFactory(&AccessParser{}),
+	})
 }

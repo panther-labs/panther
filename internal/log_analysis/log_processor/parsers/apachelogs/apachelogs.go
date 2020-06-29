@@ -25,7 +25,34 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
+
+const (
+	TypeAccessCombined = `Apache.AccessCombined`
+	TypeAccessCommon   = `Apache.AccessCommon`
+)
+
+func init() {
+	logtypes.MustRegister(
+		logtypes.Config{
+			Name:         TypeAccessCombined,
+			Description:  `Apache HTTP server access logs using the 'combined' format`,
+			ReferenceURL: `https://httpd.apache.org/docs/current/logs.html#combined`,
+			Schema:       AccessCombined{},
+			NewParser:    parsers.AdapterFactory(NewAccessCombinedParser()),
+		},
+		logtypes.Config{
+			Name:         TypeAccessCommon,
+			Description:  `Apache HTTP server access logs using the 'common' format`,
+			ReferenceURL: `https://httpd.apache.org/docs/current/logs.html#common`,
+			Schema:       AccessCommon{},
+			NewParser:    parsers.AdapterFactory(NewAccessCommonParser()),
+		},
+	)
+}
 
 // 	[day/month/year:hour:minute:second zone]
 // day = 2*digit

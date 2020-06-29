@@ -19,145 +19,64 @@ package registry
  */
 
 import (
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	"github.com/pkg/errors"
+
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/apachelogs"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/fluentdsyslogs"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/gitlablogs"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/juniperlogs"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginxlogs"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osquerylogs"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osseclogs"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/suricatalogs"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/sysloglogs"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/zeeklogs"
+
+	// Register log types in init() blocks
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/apachelogs"
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/fluentdsyslogs"
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/gitlablogs"
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/juniperlogs"
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginxlogs"
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osquerylogs"
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osseclogs"
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/suricatalogs"
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/sysloglogs"
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/zeeklogs"
 )
 
-type Interface interface {
-	Elements() map[string]*LogParserMetadata
-	LookupParser(logType string) (lpm *LogParserMetadata)
+// Default returns the default log type registry
+func Default() *logtypes.Registry {
+	return logtypes.DefaultRegistry()
 }
 
-// Don't forget to register new parsers!
-var (
-	// mapping of LogType -> LogParserMetadata
-	parsersRegistry = Registry{
-		(&awslogs.CloudTrailParser{}).LogType(): DefaultLogParser(&awslogs.CloudTrailParser{},
-			&awslogs.CloudTrail{}, awslogs.CloudTrailDesc),
-		(&awslogs.S3ServerAccessParser{}).LogType(): DefaultLogParser(&awslogs.S3ServerAccessParser{},
-			&awslogs.S3ServerAccess{}, awslogs.S3ServerAccessDesc),
-		(&awslogs.VPCFlowParser{}).LogType(): DefaultLogParser(&awslogs.VPCFlowParser{},
-			&awslogs.VPCFlow{}, awslogs.VPCFlowDesc),
-		(&awslogs.ALBParser{}).LogType(): DefaultLogParser(&awslogs.ALBParser{},
-			&awslogs.ALB{}, awslogs.ALBDesc),
-		(&awslogs.AuroraMySQLAuditParser{}).LogType(): DefaultLogParser(&awslogs.AuroraMySQLAuditParser{},
-			&awslogs.AuroraMySQLAudit{}, awslogs.AuroraMySQLAuditDesc),
-		(&awslogs.GuardDutyParser{}).LogType(): DefaultLogParser(&awslogs.GuardDutyParser{},
-			&awslogs.GuardDuty{}, awslogs.GuardDutyDesc),
-		(&nginxlogs.AccessParser{}).LogType(): DefaultLogParser(&nginxlogs.AccessParser{},
-			&nginxlogs.Access{}, nginxlogs.AccessDesc),
-		(&osquerylogs.DifferentialParser{}).LogType(): DefaultLogParser(&osquerylogs.DifferentialParser{},
-			&osquerylogs.Differential{}, osquerylogs.DifferentialDesc),
-		(&osquerylogs.BatchParser{}).LogType(): DefaultLogParser(&osquerylogs.BatchParser{},
-			&osquerylogs.Batch{}, osquerylogs.BatchDesc),
-		(&osquerylogs.StatusParser{}).LogType(): DefaultLogParser(&osquerylogs.StatusParser{},
-			&osquerylogs.Status{}, osquerylogs.StatusDesc),
-		(&osquerylogs.SnapshotParser{}).LogType(): DefaultLogParser(&osquerylogs.SnapshotParser{},
-			&osquerylogs.Snapshot{}, osquerylogs.SnapshotDesc),
-		(&osseclogs.EventInfoParser{}).LogType(): DefaultLogParser(&osseclogs.EventInfoParser{},
-			&osseclogs.EventInfo{}, osseclogs.EventInfoDesc),
-		(&sysloglogs.RFC3164Parser{}).LogType(): DefaultLogParser(&sysloglogs.RFC3164Parser{},
-			&sysloglogs.RFC3164{}, sysloglogs.RFC3164Desc),
-		(&sysloglogs.RFC5424Parser{}).LogType(): DefaultLogParser(&sysloglogs.RFC5424Parser{},
-			&sysloglogs.RFC5424{}, sysloglogs.RFC5424Desc),
-		(&fluentdsyslogs.RFC3164Parser{}).LogType(): DefaultLogParser(&fluentdsyslogs.RFC3164Parser{},
-			&fluentdsyslogs.RFC3164{}, fluentdsyslogs.RFC3164Desc),
-		(&fluentdsyslogs.RFC5424Parser{}).LogType(): DefaultLogParser(&fluentdsyslogs.RFC5424Parser{},
-			&fluentdsyslogs.RFC5424{}, fluentdsyslogs.RFC5424Desc),
-		(&zeeklogs.ZeekDNSParser{}).LogType(): DefaultLogParser(&zeeklogs.ZeekDNSParser{},
-			&zeeklogs.ZeekDNS{}, zeeklogs.ZeekDNSDesc),
-		(&suricatalogs.AnomalyParser{}).LogType(): DefaultLogParser(&suricatalogs.AnomalyParser{},
-			&suricatalogs.Anomaly{}, suricatalogs.AnomalyDesc),
-		(&gitlablogs.APIParser{}).LogType(): DefaultLogParser(&gitlablogs.APIParser{},
-			&gitlablogs.API{}, gitlablogs.APIDesc),
-		(&gitlablogs.ProductionParser{}).LogType(): DefaultLogParser(&gitlablogs.ProductionParser{},
-			&gitlablogs.Production{}, gitlablogs.ProductionDesc),
-		(&gitlablogs.IntegrationsParser{}).LogType(): DefaultLogParser(&gitlablogs.IntegrationsParser{},
-			&gitlablogs.Integrations{}, gitlablogs.IntegrationsDesc),
-		(&gitlablogs.GitParser{}).LogType(): DefaultLogParser(&gitlablogs.GitParser{},
-			&gitlablogs.Git{}, gitlablogs.GitDesc),
-		(&gitlablogs.AuditParser{}).LogType(): DefaultLogParser(&gitlablogs.AuditParser{},
-			&gitlablogs.Audit{}, gitlablogs.AuditDesc),
-		(&gitlablogs.ExceptionsParser{}).LogType(): DefaultLogParser(&gitlablogs.ExceptionsParser{},
-			&gitlablogs.Exceptions{}, gitlablogs.ExceptionsDesc),
-		(&awslogs.CloudTrailInsightParser{}).LogType(): DefaultLogParser(&awslogs.CloudTrailInsightParser{},
-			&awslogs.CloudTrailInsight{}, awslogs.CloudTrailInsightDesc),
-		(&awslogs.CloudTrailDigestParser{}).LogType(): DefaultLogParser(&awslogs.CloudTrailDigestParser{},
-			&awslogs.CloudTrailDigest{}, awslogs.CloudTrailDigestDesc),
-		(&suricatalogs.DNSParser{}).LogType(): DefaultLogParser(&suricatalogs.DNSParser{},
-			&suricatalogs.DNS{}, suricatalogs.DNSDesc),
-		apachelogs.TypeAccessCommon: DefaultLogParser(
-			apachelogs.NewAccessCommonParser(),
-			&apachelogs.AccessCommon{},
-			apachelogs.AccessCommonDesc,
-		),
-		apachelogs.TypeAccessCombined: DefaultLogParser(
-			apachelogs.NewAccessCombinedParser(),
-			&apachelogs.AccessCombined{},
-			apachelogs.AccessCombinedDesc,
-		),
-		juniperlogs.TypeFirewall: DefaultLogParser(juniperlogs.NewFirewallParser(), &juniperlogs.Firewall{}, juniperlogs.DescFirewall),
-		juniperlogs.TypeSecurity: DefaultLogParser(juniperlogs.NewSecurityParser(), &juniperlogs.Security{}, juniperlogs.DescSecurity),
-		juniperlogs.TypeAudit:    DefaultLogParser(juniperlogs.NewAuditParser(), &juniperlogs.Audit{}, juniperlogs.DescAudit),
-		juniperlogs.TypeMWS:      DefaultLogParser(juniperlogs.NewMWSParser(), &juniperlogs.MWS{}, juniperlogs.DescMWS),
-		juniperlogs.TypePostgres: DefaultLogParser(juniperlogs.NewPostgresParser(), &juniperlogs.Postgres{}, juniperlogs.DescPostgres),
-		juniperlogs.TypeAccess:   DefaultLogParser(juniperlogs.NewAccessParser(), &juniperlogs.Access{}, juniperlogs.DescAccess),
-	}
-)
-
-type Registry map[string]*LogParserMetadata
-
-// Most parsers follow this structure, these are currently assumed to all be JSON based, using LogType() as tableName
-func DefaultLogParser(p parsers.LogParser, eventStruct interface{}, description string) *LogParserMetadata {
-	// describes Glue table over processed data in S3
-	gm := awsglue.NewGlueTableMetadata(models.LogData, p.LogType(), description, awsglue.GlueTableHourly, eventStruct)
-	return &LogParserMetadata{
-		Parser:            p,
-		GlueTableMetadata: gm,
-	}
+// Lookup finds a log type entry or panics
+// Panics if the name is not registered
+func Lookup(name string) logtypes.Entry {
+	return logtypes.DefaultRegistry().MustGet(name)
 }
 
-// Describes each parser
-type LogParserMetadata struct {
-	Parser            parsers.LogParser          // does the work
-	GlueTableMetadata *awsglue.GlueTableMetadata // describes associated AWS Glue table (used to generate CF)
+// AvailableLogTypes returns all available log types in the default registry
+func AvailableLogTypes() []string {
+	return logtypes.DefaultRegistry().LogTypes()
 }
 
-// Return a map containing all the available parsers
-func AvailableParsers() Registry {
-	return parsersRegistry
-}
-
-// Return a slice containing just the Glue tables
+// AvailableTables returns a slice containing the Glue tables for all available log types
 func AvailableTables() (tables []*awsglue.GlueTableMetadata) {
-	for _, lpm := range parsersRegistry {
-		tables = append(tables, lpm.GlueTableMetadata)
+	entries := logtypes.DefaultRegistry().Entries()
+	tables = make([]*awsglue.GlueTableMetadata, len(entries))
+	for i, entry := range entries {
+		tables[i] = entry.GlueTableMeta()
 	}
 	return
 }
 
-// Provides access to underlying type so 'range' will work
-func (r Registry) Elements() map[string]*LogParserMetadata {
-	return r
-}
-
-// Provides mapping from LogType -> metadata (panics!), used in core code to ensure ALL parsers are registered
-func (r Registry) LookupParser(logType string) (lpm *LogParserMetadata) {
-	lpm, found := r[logType]
-	if !found {
-		panic("Cannot find LogType: " + logType) // super serious error, die die die
+// Available parsers returns log parsers for all available log types with nil parameters.
+// Panics if a parser factory in the default registry fails with nil params.
+func AvailableParsers() map[string]parsers.Interface {
+	entries := logtypes.DefaultRegistry().Entries()
+	available := make(map[string]parsers.Interface, len(entries))
+	for _, entry := range entries {
+		logType := entry.Describe().Name
+		parser, err := entry.NewParser(nil)
+		if err != nil {
+			panic(errors.Errorf("failed to create %q parser with nil params", logType))
+		}
+		available[logType] = parser
 	}
-	return
+	return available
 }
