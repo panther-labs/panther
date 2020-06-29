@@ -114,7 +114,6 @@ func Deploy() {
 	logger.Infof("deploying Panther %s to account %s (%s)", gitVersion, accountID, *awsSession.Config.Region)
 
 	setFirstUser(settings)
-	migrate(accountID)
 	outputs := bootstrap(settings)
 	deployMainStacks(settings, accountID, outputs)
 

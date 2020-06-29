@@ -180,30 +180,6 @@ func waitForStackUpdate(client *cfn.CloudFormation, stackName string) (*cfn.Stac
 		cfn.StackStatusUpdateInProgress, cfn.StackStatusUpdateCompleteCleanupInProgress)
 }
 
-// List resources for a single stack, applying the given handler to each.
-//
-// The stackID can be the stack name or arn.
-func listStackResources(client *cfn.CloudFormation, stackID *string, handler func(*cfn.StackResourceSummary) bool) {
-	input := &cfn.ListStackResourcesInput{StackName: stackID}
-	err := client.ListStackResourcesPages(input, func(page *cfn.ListStackResourcesOutput, isLast bool) bool {
-		for _, summary := range page.StackResourceSummaries {
-			if !handler(summary) {
-				return false
-			}
-		}
-		return true // keep paging
-	})
-
-	if errStackDoesNotExist(err) {
-		logger.Debugf("stack %s does not exist", *stackID)
-		return
-	}
-
-	if err != nil {
-		logger.Fatalf("failed to list stack resources for %s: %v", *stackID, err)
-	}
-}
-
 // Log failed resources from the stack's event history.
 //
 // Use this after a stack create/update/delete fails to understand why the stack failed.
