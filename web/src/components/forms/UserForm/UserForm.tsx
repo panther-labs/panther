@@ -91,8 +91,8 @@ const UserForm: React.FC<UserFormProps> = ({ initialValues, onSubmit }) => {
               required
             />
           </Flex>
+          <SubmitButton fullWidth>{initialValues.id ? 'Update' : 'Invite'}</SubmitButton>
         </Flex>
-        <SubmitButton fullWidth>{initialValues.id ? 'Update' : 'Invite'}</SubmitButton>
       </Form>
     </Formik>
   );

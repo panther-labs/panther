@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Flex, Link, FormHelperText } from 'pouncejs';
+import { Box, Flex, Link, FormHelperText, useTheme } from 'pouncejs';
 import { Field, Form, Formik } from 'formik';
 import QRCode from 'qrcode.react';
 import * as React from 'react';
@@ -41,6 +41,7 @@ const validationSchema = Yup.object().shape({
 });
 
 export const TotpForm: React.FC = () => {
+  const theme = useTheme();
   const [code, setCode] = React.useState('');
   const { userInfo, verifyTotpSetup, requestTotpSecretCode } = useAuth();
 
@@ -63,7 +64,11 @@ export const TotpForm: React.FC = () => {
     >
       <Form>
         <Flex justify="center" mb={6} width={1} aria-describedby="totp-helper-text">
-          <QRCode value={formatSecretCode(code, userInfo.email)} />
+          <QRCode
+            value={formatSecretCode(code, userInfo.email)}
+            fgColor={theme.colors['gray-50']}
+            bgColor={theme.colors['navyblue-800']}
+          />
         </Flex>
         <Box mb={4}>
           <Field

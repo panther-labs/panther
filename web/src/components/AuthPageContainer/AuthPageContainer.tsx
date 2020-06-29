@@ -39,8 +39,8 @@ const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposit
         <Img
           src={banner}
           alt="Generic security illustrations"
-          width="100%"
-          height="100%"
+          nativeWidth="100%"
+          nativeHeight="100%"
           objectFit="cover"
         />
         <Flex
@@ -53,7 +53,7 @@ const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposit
           height="100%"
           direction="column"
         >
-          <Img src={PantherLogoWhite} alt="Panther Logo" nativeWidth="54" nativeHeight="54" />
+          <Img src={PantherLogoWhite} alt="Panther Logo" nativeWidth={54} nativeHeight={54} />
           <Flex direction="column" align="center" justify="center" m="auto">
             <Heading size="x-large" mb={3} textAlign="center">
               Panther Community Edition
