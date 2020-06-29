@@ -19,7 +19,6 @@ package ddb
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
@@ -30,7 +29,7 @@ import (
 // It performs a DDB scan of the entire table with a filter expression.
 func (ddb *DDB) ScanIntegrations(integrationType *string) ([]*Integration, error) {
 	scanInput := &dynamodb.ScanInput{
-		TableName: aws.String(ddb.TableName),
+		TableName: &ddb.TableName,
 	}
 	if integrationType != nil {
 		filterExpression := expression.Name("integrationType").Equal(expression.Value(integrationType))

@@ -65,6 +65,7 @@ var (
 		"waf-regional.amazonaws.com":         classifyWAFRegional,
 	}
 
+	// Events to ignore in the services we support
 	ignoredEvents = map[string]struct{}{
 		// acm
 		"ExportCertificate":     {},
@@ -286,13 +287,13 @@ func preprocessCloudTrailLog(detail gjson.Result) (*CloudTrailMetadata, error) {
 	eventName := detail.Get("eventName")
 	if !eventName.Exists() {
 		return nil, errors.Errorf("unable to extract CloudTrail eventName field for eventSource '%s'",
-			detail.Get("evenSource").Str) // best effort to add context
+			detail.Get("eventSource").Str) // best effort to add context
 	}
 
 	// If this is an ignored event, immediately halt processing
 	if isIgnoredEvent(eventName.Str) {
 		zap.L().Debug("ignoring read only event",
-			zap.String("evenSource", detail.Get("evenSource").Str), // best effort to add context
+			zap.String("eventSource", detail.Get("eventSource").Str), // best effort to add context
 			zap.String("eventName", eventName.Str))
 		return nil, nil
 	}
@@ -301,6 +302,14 @@ func preprocessCloudTrailLog(detail gjson.Result) (*CloudTrailMetadata, error) {
 	if !eventSource.Exists() {
 		return nil, errors.Errorf("unable to extract CloudTrail eventSource field for eventName %s",
 			eventName.Str)
+	}
+
+	// Check if the service is supported
+	if _, ok := classifiers[eventSource.Str]; !ok {
+		zap.L().Debug("ignoring event from unsupported source",
+			zap.String("eventSource", eventSource.Str),
+			zap.String("eventName", eventName.Str))
+		return nil, nil
 	}
 
 	accountID := detail.Get("userIdentity.accountId")
@@ -353,13 +362,7 @@ func processCloudTrailLog(detail gjson.Result, metadata *CloudTrailMetadata, cha
 	}
 
 	// Determine the AWS service the modified resource belongs to
-	classifier, ok := classifiers[metadata.eventSource]
-	if !ok {
-		zap.L().Debug("dropping event from unsupported source",
-			zap.String("eventSource", metadata.eventSource),
-			zap.String("eventName", metadata.eventName))
-		return nil
-	}
+	classifier := classifiers[metadata.eventSource]
 
 	// Drop failed events, as they do not result in a resource change
 	if errorCode := detail.Get("errorCode").Str; errorCode != "" {
@@ -387,7 +390,7 @@ func processCloudTrailLog(detail gjson.Result, metadata *CloudTrailMetadata, cha
 	// One event could require multiple scans (e.g. a new VPC peering connection between two VPCs)
 	for _, change := range newChanges {
 		change.EventTime = eventTime
-		change.IntegrationID = *integration.IntegrationID
+		change.IntegrationID = integration.IntegrationID
 		zap.L().Info("resource scan required", zap.Any("changeDetail", change))
 		// Prevents the following from being de-duped mistakenly:
 		//
