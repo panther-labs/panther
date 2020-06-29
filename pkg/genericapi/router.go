@@ -138,7 +138,7 @@ func findRequest(lambdaInput interface{}) (*request, error) {
 	requests := findNonNullPtrs(structValue)
 	switch len(requests) {
 	case 1:
-		break
+		return &requests[0], nil
 	case 0:
 		return nil, &InvalidInputError{
 			Route: "nil", Message: "exactly one route must be specified: found none",
@@ -154,8 +154,6 @@ func findRequest(lambdaInput interface{}) (*request, error) {
 			Message: fmt.Sprintf("exactly one route must be specified: %v", routes),
 		}
 	}
-
-	return &requests[0], nil
 }
 
 func findNonNullPtrs(structValue reflect.Value) (requests []request) {
