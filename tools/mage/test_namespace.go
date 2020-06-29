@@ -172,7 +172,16 @@ func testCfnLint() error {
 		}
 
 		if template == bootstrapTemplate {
-			// Custom resources can't be in the bootstrap stack, skip remaining checks
+			// Custom resources can't be in the bootstrap stack
+			for logicalID, resource := range body["Resources"].(map[string]interface{}) {
+				t := resource.(map[string]interface{})["Type"].(string)
+				if strings.HasPrefix(t, "Custom::") {
+					return fmt.Errorf("%s: %s: custom resources will not work in this stack - use bootstrap-gateway instead",
+						template, logicalID)
+				}
+			}
+
+			// Skip remaining checks
 			continue
 		}
 
