@@ -54,12 +54,16 @@ const UserInvitationSidesheet: React.FC<SideSheetProps> = props => {
   });
 
   return (
-    <SideSheet {...props}>
+    <SideSheet
+      aria-labelledby="sidesheet-title"
+      aria-describedby="sidesheet-description role-disclaimer"
+      {...props}
+    >
       <Box width={425} m="auto">
-        <Heading mb={8} aria-labelledby="role-disclaimer">
+        <Heading mb={8} id="sidesheet-title">
           Invite User
         </Heading>
-        <Text color="gray-200" mb={8}>
+        <Text color="gray-200" mb={8} id="sidesheet-description">
           By inviting users to join your organization, they will receive an email with temporary
           credentials that they can use to sign in to the platform
         </Text>

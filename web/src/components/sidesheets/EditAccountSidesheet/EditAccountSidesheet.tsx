@@ -23,7 +23,7 @@ import React from 'react';
 
 const EditAccountSidesheet: React.FC<SideSheetProps> = props => {
   return (
-    <SideSheet {...props}>
+    <SideSheet aria-label="Profile & Account Settings" {...props}>
       <Box as="section" my={8}>
         <Heading as="h2" pb={4} size="medium">
           Edit Profile

@@ -19,7 +19,7 @@
 import React from 'react';
 import { Field, Form, Formik } from 'formik';
 import SubmitButton from 'Components/buttons/SubmitButton';
-import { Flex } from 'pouncejs';
+import { Flex, SimpleGrid } from 'pouncejs';
 import FormikTextInput from 'Components/fields/TextInput';
 import * as Yup from 'yup';
 import { useListUsers } from 'Pages/Users';
@@ -75,7 +75,7 @@ const UserForm: React.FC<UserFormProps> = ({ initialValues, onSubmit }) => {
             name="email"
             required
           />
-          <Flex justify="space-between">
+          <SimpleGrid columns={2} spacing={4}>
             <Field
               as={FormikTextInput}
               label="First Name"
@@ -90,7 +90,7 @@ const UserForm: React.FC<UserFormProps> = ({ initialValues, onSubmit }) => {
               name="familyName"
               required
             />
-          </Flex>
+          </SimpleGrid>
           <SubmitButton fullWidth>{initialValues.id ? 'Update' : 'Invite'}</SubmitButton>
         </Flex>
       </Form>
