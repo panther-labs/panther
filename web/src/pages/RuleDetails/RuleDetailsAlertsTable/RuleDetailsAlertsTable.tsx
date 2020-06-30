@@ -48,7 +48,9 @@ const RuleDetailsAlertsTable: React.FC<RuleDetailsAlertsTableProps> = ({ alerts 
                 {alert.title} #{shortenId(alert.alertId)}
               </Link>
             </Table.Cell>
-            <Table.Cell align="right">{alert.eventsMatched}</Table.Cell>
+            <Table.Cell align="right" mono>
+              {alert.eventsMatched}
+            </Table.Cell>
             <Table.Cell align="center">
               <Box my={-1} display="inline-block">
                 <SeverityBadge severity={alert.severity} />

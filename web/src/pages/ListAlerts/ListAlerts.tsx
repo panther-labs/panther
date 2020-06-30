@@ -107,7 +107,7 @@ const ListAlerts = () => {
         </Box>
       )}
       <ListAlertsActions showActions={hasError} />
-      <Card as="section" px={8} py={4} position="relative">
+      <Card as="section" px={8} py={4} mb={6} position="relative">
         <ListAlertsTable
           items={alertItems}
           onSort={updateRequestParams}

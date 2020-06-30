@@ -17,13 +17,14 @@
  */
 
 import React from 'react';
-import { AbstractButton, Box, Link, Table } from 'pouncejs';
+import { Box, Link, Table, Flex, Icon, PseudoBox } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/SeverityBadge';
 import { ListAlerts } from 'Pages/ListAlerts/graphql/listAlerts.generated';
 import { ListAlertsInput, ListAlertsSortFieldsEnum, SortDirEnum } from 'Generated/schema';
 import { shortenId, formatDatetime } from 'Helpers/utils';
+import useRouter from 'Hooks/useRouter';
 
 type ListAlertsTableProps = {
   items: ListAlerts['alerts']['alertSummaries'];
@@ -33,6 +34,7 @@ type ListAlertsTableProps = {
 };
 
 const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDir, onSort }) => {
+  const { location } = useRouter();
   const handleSort = (selectedKey: ListAlertsSortFieldsEnum) => {
     if (sortBy === selectedKey) {
       onSort({
@@ -47,9 +49,10 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
     <Table>
       <Table.Head>
         <Table.Row>
-          <Table.HeaderCell>Alert</Table.HeaderCell>
-          <Table.HeaderCell align="right">Event Count</Table.HeaderCell>
           <Table.HeaderCell align="center">Severity</Table.HeaderCell>
+          <Table.HeaderCell>Alert</Table.HeaderCell>
+          <Table.HeaderCell>ID</Table.HeaderCell>
+          <Table.HeaderCell align="right">Events</Table.HeaderCell>
           <Table.SortableHeaderCell
             align="right"
             onClick={() => handleSort(ListAlertsSortFieldsEnum.CreatedAt)}
@@ -65,32 +68,49 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
       <Table.Body>
         {items.map(alert => (
           <Table.Row key={alert.alertId}>
-            <Table.Cell maxWidth={400} truncated title={alert.title}>
-              <Link as={RRLink} to={urls.logAnalysis.alerts.details(alert.alertId)} py={4} mr={4}>
-                {alert.title} #{shortenId(alert.alertId)}
-              </Link>
-              <AbstractButton
-                as={RRLink}
-                to={urls.logAnalysis.rules.details(alert.ruleId)}
-                fontSize="small"
-                borderRadius="pill"
-                border="1px solid"
-                borderColor="navyblue-450"
-                _hover={{
-                  backgroundColor: 'navyblue-450',
-                }}
-                my={-1}
-                py={1}
-                px={4}
-              >
-                View Rule
-              </AbstractButton>
-            </Table.Cell>
-            <Table.Cell align="right">{alert.eventsMatched}</Table.Cell>
             <Table.Cell align="center">
               <Box my={-1} display="inline-block">
                 <SeverityBadge severity={alert.severity} />
               </Box>
+            </Table.Cell>
+            <Table.Cell maxWidth={400} truncated title={alert.title}>
+              <Flex align="center" my={-4}>
+                <Link
+                  as={RRLink}
+                  to={urls.logAnalysis.alerts.details(alert.alertId)}
+                  py={4}
+                  mr={4}
+                  truncated
+                >
+                  {alert.title}
+                </Link>
+                <PseudoBox
+                  as="a"
+                  target="_blank"
+                  display="flex"
+                  alignItems="center"
+                  rel="noopener noreferrer"
+                  href={`https://${location}${urls.logAnalysis.rules.details(alert.ruleId)}`}
+                  fontSize="small"
+                  borderRadius="pill"
+                  transition="background-color 0.1s ease-in-out"
+                  backgroundColor="rgba(255,255,255,0.1)"
+                  _hover={{
+                    backgroundColor: 'rgba(255,255,255,0.15)',
+                  }}
+                  my={-1}
+                  py={1}
+                  px={4}
+                >
+                  View Rule
+                  <Icon type="external-link" size="x-small" ml={1} />
+                </PseudoBox>
+              </Flex>
+            </Table.Cell>
+
+            <Table.Cell>{shortenId(alert.alertId)}</Table.Cell>
+            <Table.Cell align="right" mono>
+              {alert.eventsMatched}
             </Table.Cell>
             <Table.Cell align="right">{formatDatetime(alert.creationTime)}</Table.Cell>
             <Table.Cell align="right">{formatDatetime(alert.updateTime)}</Table.Cell>
