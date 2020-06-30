@@ -18,7 +18,6 @@
 
 import React from 'react';
 import withSEO from 'Hoc/withSEO';
-import Banner from 'Assets/sign-up-banner.jpg';
 import AuthPageContainer from 'Components/AuthPageContainer';
 import ForgotPasswordForm from 'Components/forms/ForgotPasswordForm';
 import { FadeIn, Link } from 'pouncejs';
@@ -27,7 +26,7 @@ import { Link as RRLink } from 'react-router-dom';
 
 const ForgotPasswordPage: React.FC = () => {
   return (
-    <AuthPageContainer banner={Banner}>
+    <AuthPageContainer>
       <FadeIn delay={100}>
         <AuthPageContainer.Caption
           title="Forgot your password?"

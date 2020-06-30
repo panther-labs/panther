@@ -18,54 +18,35 @@
 
 import React from 'react';
 import { Flex, Box, Text, Heading, SimpleGrid, Img } from 'pouncejs';
-import PantherLogoWhite from 'Assets/panther-icon--white.svg';
+import PantherLogoWhite from 'Assets/panther-minimal-logo.svg';
 
 interface AuthPageContainerComposition {
   Caption: React.FC<{ title: string; subtitle?: string }>;
   AltOptions: React.FC;
 }
 
-interface AuthPageContainer {
-  banner?: string;
-}
-
-const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposition = ({
-  children,
-  banner,
-}) => {
+const AuthPageContainer: React.FC & AuthPageContainerComposition = ({ children }) => {
   return (
     <SimpleGrid columns={3} height="100vh" backgroundColor="navyblue-800">
-      <Box gridColumn="1/2" position="relative">
-        <Img
-          src={banner}
-          alt="Generic security illustrations"
-          nativeWidth="100%"
-          nativeHeight="100%"
-          objectFit="cover"
-        />
-        <Flex
-          position="absolute"
-          top="0"
-          left="0"
-          align="center"
-          py={150}
-          width="100%"
-          height="100%"
-          direction="column"
-        >
-          <Img src={PantherLogoWhite} alt="Panther Logo" nativeWidth={54} nativeHeight={54} />
-          <Flex direction="column" align="center" justify="center" m="auto">
-            <Heading size="x-large" mb={3} textAlign="center">
-              Panther Community Edition
-            </Heading>
-            <Text lineHeight="relaxed" textAlign="center">
-              Detect threats with log data and improve cloud security posture
-              <br />
-              Designed for any scale
-            </Text>
-          </Flex>
-        </Flex>
-      </Box>
+      <Flex
+        gridColumn="1/2"
+        width="100%"
+        height="100%"
+        direction="column"
+        justify="center"
+        align="center"
+        backgroundColor="navyblue-900"
+      >
+        <Img src={PantherLogoWhite} alt="Panther Logo" nativeWidth={54} nativeHeight={54} mb={6} />
+        <Heading size="x-large" mb={3} textAlign="center">
+          Panther Community Edition
+        </Heading>
+        <Text lineHeight="relaxed" textAlign="center">
+          Detect threats with log data and improve cloud security posture
+          <br />
+          Designed for any scale
+        </Text>
+      </Flex>
       <Flex gridColumn="2/4" justify="center" align="center">
         <Box width={460}>{children}</Box>
       </Flex>

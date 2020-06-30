@@ -21,7 +21,6 @@ import { Flex, Link, FadeIn } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import AuthPageContainer from 'Components/AuthPageContainer';
-import Banner from 'Assets/sign-in-banner.jpg';
 import SetPasswordForm from 'Components/forms/SetPasswordForm';
 import MfaForm from 'Components/forms/MfaForm';
 import TotpForm from 'Components/forms/TotpForm';
@@ -44,7 +43,7 @@ const SignInPage: React.FC = () => {
   switch (currentAuthChallengeName) {
     case CHALLENGE_NAMES.SOFTWARE_TOKEN_MFA:
       return (
-        <AuthPageContainer banner={Banner}>
+        <AuthPageContainer>
           <AuthPageContainer.Caption
             title="One last thing..."
             subtitle="Enter your MFA code to complete the sign-in"
@@ -64,7 +63,7 @@ const SignInPage: React.FC = () => {
       );
     case CHALLENGE_NAMES.MFA_SETUP:
       return (
-        <AuthPageContainer banner={Banner}>
+        <AuthPageContainer>
           <AuthPageContainer.Caption
             title="Great!"
             subtitle="Now let's set up two-factor authentication for your account."
@@ -74,7 +73,7 @@ const SignInPage: React.FC = () => {
       );
     case CHALLENGE_NAMES.NEW_PASSWORD_REQUIRED:
       return (
-        <AuthPageContainer banner={Banner}>
+        <AuthPageContainer>
           <AuthPageContainer.Caption
             title="First things first"
             subtitle="We need to set you up with a new password."
@@ -85,7 +84,7 @@ const SignInPage: React.FC = () => {
     default:
       return (
         <FadeIn delay={100}>
-          <AuthPageContainer banner={Banner}>
+          <AuthPageContainer>
             <AuthPageContainer.Caption title="Sign in" subtitle="to continue to Panther" />
             <SignInForm />
             <Flex justify="center" mt={4}>
