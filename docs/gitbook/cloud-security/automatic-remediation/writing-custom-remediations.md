@@ -4,7 +4,7 @@ To write a new remediation, follow the steps below.
 
 ## Code Structure
 
-In the [`./internal/compliance/remediation_aws/src/app/remediations`](https://github.com/panther-labs/panther/tree/master/internal/compliance/remediation_aws/src/app/remediations) folder inside the [Panther repo](https://github.com/panther-labs/panther), add a Python file called `aws_<service>_name_of_remediation` with the following structure:
+In the [`./internal/compliance/remediation_aws/src/app/remediations`](https://github.com/panther-labs/panther/tree/master/internal/compliance/remediation_aws/src/app/remediations) folder inside the [Panther repo](https://github.com/panther-labs/panther), add a Python file called `aws_<service>_name_of_remediation` with the following structure: (test)
 
 ```python
 from typing import Any, Dict
