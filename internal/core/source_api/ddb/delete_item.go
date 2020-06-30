@@ -19,18 +19,17 @@ package ddb
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/pkg/errors"
 )
 
 // DeleteItem deletes an integration from the database based on the integration ID
-func (ddb *DDB) DeleteItem(integrationID *string) error {
+func (ddb *DDB) DeleteItem(integrationID string) error {
 	_, err := ddb.Client.DeleteItem(&dynamodb.DeleteItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
-			hashKey: {S: integrationID},
+			hashKey: {S: &integrationID},
 		},
-		TableName: aws.String(ddb.TableName),
+		TableName: &ddb.TableName,
 	})
 	if err != nil {
 		return errors.Wrap(err, "failed to delete item from DDB")

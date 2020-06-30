@@ -19,8 +19,6 @@ package api
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 )
@@ -36,7 +34,7 @@ func integrationToItem(input *models.SourceIntegration) *ddb.Integration {
 	}
 	item.LastEventReceived = input.LastEventReceived
 
-	switch aws.StringValue(input.IntegrationType) {
+	switch input.IntegrationType {
 	case models.IntegrationTypeAWS3:
 		item.AWSAccountID = input.AWSAccountID
 		item.S3Bucket = input.S3Bucket
@@ -44,7 +42,7 @@ func integrationToItem(input *models.SourceIntegration) *ddb.Integration {
 		item.KmsKey = input.KmsKey
 		item.LogTypes = input.LogTypes
 		item.StackName = input.StackName
-		item.LogProcessingRole = aws.String(generateLogProcessingRoleArn(*input.AWSAccountID, *input.IntegrationLabel))
+		item.LogProcessingRole = generateLogProcessingRoleArn(input.AWSAccountID, input.IntegrationLabel)
 	case models.IntegrationTypeAWSScan:
 		item.AWSAccountID = input.AWSAccountID
 		item.CWEEnabled = input.CWEEnabled
@@ -70,7 +68,7 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 	integration.CreatedBy = item.CreatedBy
 	integration.LastEventReceived = item.LastEventReceived
 
-	switch aws.StringValue(item.IntegrationType) {
+	switch item.IntegrationType {
 	case models.IntegrationTypeAWS3:
 		integration.AWSAccountID = item.AWSAccountID
 		integration.S3Bucket = item.S3Bucket
