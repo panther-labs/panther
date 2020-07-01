@@ -20,11 +20,9 @@ package classification
 
 import (
 	"container/heap"
-	"runtime/debug"
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -77,27 +75,24 @@ func (c *Classifier) ParserStats() map[string]*ParserStats {
 }
 
 // catch panics from parsers, log and continue
-func safeLogParse(logType string, parser parsers.Interface, log string) (results []*parsers.Result) {
+func safeLogParse(logType string, parser parsers.Interface, log string) (results []*parsers.Result, err error) {
 	defer func() {
 		if r := recover(); r != nil {
+			err = errors.New("parser panic")
+			results = nil
 			zap.L().Debug("parser panic",
 				zap.String("parser", logType),
-				zap.Error(errors.Errorf("%v", r)),
-				zap.String("stacktrace", string(debug.Stack())))
-			results = nil // return indicator that parse failed
+				zap.Error(err))
 		}
 	}()
-	results, err := parser.ParseLog(log)
+	results, err = parser.ParseLog(log)
 	if err != nil {
 		zap.L().Debug("parser failed",
 			zap.String("parser", logType),
 			zap.Error(err))
-		return nil
+		return nil, err
 	}
-	if len(results) == 0 {
-		return nil
-	}
-	return results
+	return results, nil
 }
 
 // Classify attempts to classify the provided log line
@@ -137,11 +132,11 @@ func (c *Classifier) Classify(log string) *ClassifierResult {
 
 		startParseTime := time.Now().UTC()
 		logType := currentItem.logType
-		parsedEvents := safeLogParse(logType, currentItem.parser, log)
+		parsedEvents, err := safeLogParse(logType, currentItem.parser, log)
 		endParseTime := time.Now().UTC()
 
 		// Parser failed to parse event
-		if parsedEvents == nil {
+		if err != nil {
 			zap.L().Debug("failed to parse event", zap.String("expectedLogType", logType))
 			// Removing parser from queue
 			popped = append(popped, heap.Pop(c.parsers))
@@ -155,7 +150,7 @@ func (c *Classifier) Classify(log string) *ClassifierResult {
 		// Since the parsing was successful, remove all penalty from the parser
 		// The parser will be higher priority in the queue
 		currentItem.penalty = 0
-		result.LogType = aws.String(logType)
+		result.LogType = &logType
 		result.Events = parsedEvents
 
 		// update per-parser stats

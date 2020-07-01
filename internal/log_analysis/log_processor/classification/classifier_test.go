@@ -164,6 +164,41 @@ func TestClassifyParserPanic(t *testing.T) {
 	panicParser.AssertNumberOfCalls(t, "Parse", 1)
 }
 
+func TestClassifyParserReturningEmptyResults(t *testing.T) {
+	// uncomment to see the logs produced
+	/*
+		logger := zap.NewExample()
+		defer logger.Sync()
+		undo := zap.ReplaceGlobals(logger)
+		defer undo()
+	*/
+
+	parser := &testutil.MockParser{}
+	parser.On("Parse", mock.Anything).Return([]*parsers.Result{}, nil).Once()
+	classifier := NewClassifier(map[string]parsers.Interface{
+		"parser": parser,
+	})
+
+	logLine := "log of death"
+
+	expectedStats := &ClassifierStats{
+		BytesProcessedCount:         uint64(len(logLine)),
+		LogLineCount:                1,
+		EventCount:                  0,
+		SuccessfullyClassifiedCount: 1,
+		ClassificationFailureCount:  0,
+	}
+
+	result := classifier.Classify(logLine)
+
+	// skipping specifically validating the times
+	expectedStats.ClassifyTimeMicroseconds = classifier.Stats().ClassifyTimeMicroseconds
+	require.Equal(t, expectedStats, classifier.Stats())
+
+	require.Equal(t, &ClassifierResult{Events: []*parsers.Result{}, LogType: box.String("parser")}, result)
+	parser.AssertExpectations(t)
+}
+
 func TestClassifyNoLogline(t *testing.T) {
 	testSkipClassify("", t)
 }
