@@ -33,7 +33,7 @@ var (
 // It updates the status of an integration
 func (api API) UpdateStatus(input *models.UpdateStatusInput) error {
 	status := ddb.IntegrationStatus{
-		LastEventReceived: input.LastEventReceived,
+		LastEventReceived: &input.LastEventReceived,
 	}
 	err := dynamoClient.UpdateStatus(input.IntegrationID, status)
 	if err != nil {

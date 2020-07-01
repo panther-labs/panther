@@ -29,16 +29,16 @@ type SourceIntegration struct {
 
 // SourceIntegrationStatus provides information about the status of a source
 type SourceIntegrationStatus struct {
-	ScanStatus        string    `json:"scanStatus,omitempty"`
-	EventStatus       string    `json:"eventStatus,omitempty"`
-	LastEventReceived time.Time `json:"lastEventReceived,omitempty"`
+	ScanStatus        string     `json:"scanStatus,omitempty"`
+	EventStatus       string     `json:"eventStatus,omitempty"`
+	LastEventReceived *time.Time `json:"lastEventReceived,omitempty"`
 }
 
 // SourceIntegrationScanInformation is detail about the last snapshot.
 type SourceIntegrationScanInformation struct {
-	LastScanEndTime      time.Time `json:"lastScanEndTime,omitempty"`
-	LastScanErrorMessage string    `json:"lastScanErrorMessage,omitempty"`
-	LastScanStartTime    time.Time `json:"lastScanStartTime,omitempty"`
+	LastScanStartTime    *time.Time `json:"lastScanStartTime,omitempty"`
+	LastScanEndTime      *time.Time `json:"lastScanEndTime,omitempty"`
+	LastScanErrorMessage string     `json:"lastScanErrorMessage,omitempty"`
 }
 
 // SourceIntegrationMetadata is general settings and metadata for an integration.
