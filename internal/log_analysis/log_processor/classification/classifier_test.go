@@ -165,14 +165,6 @@ func TestClassifyParserPanic(t *testing.T) {
 }
 
 func TestClassifyParserReturningEmptyResults(t *testing.T) {
-	// uncomment to see the logs produced
-	/*
-		logger := zap.NewExample()
-		defer logger.Sync()
-		undo := zap.ReplaceGlobals(logger)
-		defer undo()
-	*/
-
 	parser := &testutil.MockParser{}
 	parser.On("Parse", mock.Anything).Return([]*parsers.Result{}, nil).Once()
 	classifier := NewClassifier(map[string]parsers.Interface{
