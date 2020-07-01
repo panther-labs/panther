@@ -29,9 +29,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-var AuroraMySQLAuditDesc = `AuroraMySQLAudit is an RDS Aurora audit log which contains context around database calls.
-Reference: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Auditing.html`
-
 // FIXME: SQL statement can cause MIS parsing, needs review and testing.
 const (
 	auroraMySQLAuditMinNumberOfColumns = 9
@@ -113,7 +110,7 @@ func (p *AuroraMySQLAuditParser) Parse(log string) ([]*parsers.PantherLog, error
 
 // LogType returns the log type supported by this parser
 func (p *AuroraMySQLAuditParser) LogType() string {
-	return "AWS.AuroraMySQLAudit"
+	return TypeAuroraMySQLAudit
 }
 
 func (event *AuroraMySQLAudit) updatePantherFields(p *AuroraMySQLAuditParser) {

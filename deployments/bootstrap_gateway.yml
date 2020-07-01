@@ -170,6 +170,7 @@ Resources:
                 - guardduty:Get*
                 - guardduty:List*
                 - guardduty:DeletePublishingDestination
+                - guardduty:UpdatePublishingDestination
               Resource: '*'
             - Effect: Allow
               Action:

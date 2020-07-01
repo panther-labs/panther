@@ -25,5 +25,5 @@ import (
 )
 
 func TestPanic(t *testing.T) {
-	assert.Panics(t, func() { AvailableParsers().LookupParser("doesnotexist") }, "Failed to panic, this is very dangerous!")
+	assert.Panics(t, func() { Lookup("doesnotexist") }, "Failed to panic, this is very dangerous!")
 }

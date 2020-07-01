@@ -22,8 +22,10 @@ import (
 	"net"
 	"regexp"
 	"sort"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -243,4 +245,55 @@ func AppendAnyString(any *PantherAnyString, values ...string) {
 		}
 		any.set[v] = struct{}{} // new
 	}
+}
+
+// Result converts a PantherLog to Result
+// NOTE: Currently in this file to help with review
+func (pl *PantherLog) Result() (*Result, error) {
+	event := pl.Event()
+	if event == nil {
+		return nil, errors.New("nil event")
+	}
+	if pl.PantherLogType == nil {
+		return nil, errors.New("nil log type")
+	}
+	if pl.PantherEventTime == nil {
+		return nil, errors.New("nil event time")
+	}
+	tm := ((*time.Time)(pl.PantherEventTime)).UTC()
+	// Use custom JSON marshaler to rewrite fields
+	data, err := JSON.Marshal(event)
+	if err != nil {
+		return nil, err
+	}
+	return &Result{
+		LogType:   *pl.PantherLogType,
+		EventTime: tm,
+		JSON:      data,
+	}, nil
+}
+
+// Results converts a PantherLog to a slice of results
+// NOTE: Currently in this file to help with review
+func (pl *PantherLog) Results() ([]*Result, error) {
+	result, err := pl.Result()
+	if err != nil {
+		return nil, err
+	}
+	return []*Result{result}, nil
+}
+
+func ToResults(logs []*PantherLog, err error) ([]*Result, error) {
+	if err != nil {
+		return nil, err
+	}
+	results := make([]*Result, len(logs))
+	for i := range results {
+		result, err := logs[i].Result()
+		if err != nil {
+			return nil, err
+		}
+		results[i] = result
+	}
+	return results, nil
 }

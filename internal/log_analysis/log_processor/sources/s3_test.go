@@ -127,10 +127,11 @@ func TestHandleUnsupportedFileType(t *testing.T) {
 
 	integration = &models.SourceIntegration{
 		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-			AWSAccountID:      aws.String("1234567890123"),
-			S3Bucket:          aws.String("mybucket"),
-			IntegrationType:   aws.String(models.IntegrationTypeAWS3),
-			LogProcessingRole: aws.String("arn:aws:iam::123456789012:role/PantherLogProcessingRole-suffix"),
+			AWSAccountID:      "1234567890123",
+			S3Bucket:          "mybucket",
+			IntegrationType:   models.IntegrationTypeAWS3,
+			LogProcessingRole: "arn:aws:iam::123456789012:role/PantherLogProcessingRole-suffix",
+			IntegrationID:     "3e4b1734-e678-4581-b291-4b8a17621999",
 		},
 	}
 
@@ -140,7 +141,10 @@ func TestHandleUnsupportedFileType(t *testing.T) {
 		Payload: marshaledResult,
 	}
 
+	// First invocation should be to get the list of available sources
 	lambdaMock.On("Invoke", mock.Anything).Return(lambdaOutput, nil).Once()
+	// Second invocation would be to update the status
+	lambdaMock.On("Invoke", mock.Anything).Return(&lambda.InvokeOutput{}, nil).Once()
 	s3Mock.On("GetBucketLocation", mock.Anything).Return(
 		&s3.GetBucketLocationOutput{LocationConstraint: aws.String("us-west-2")}, nil).Once()
 

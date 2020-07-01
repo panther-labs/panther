@@ -1,4 +1,10 @@
+// Package gitlablogs parses GitLab JSON logs.
 package gitlablogs
+
+import (
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+)
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -18,7 +24,67 @@ package gitlablogs
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// Package gitlablogs parses GitLab JSON logs.
+const (
+	// PantherPrefix is the prefix of all logs parsed by this package
+	PantherPrefix = "GitLab"
+	// TypeAPI is the type of the GitLabAPI log record
+	TypeAPI = PantherPrefix + ".API"
+	// TypeAudit is the log type of Audit log records
+	TypeAudit = PantherPrefix + ".Audit"
+	// TypeExceptions is the log type of Exceptions log records
+	TypeExceptions = PantherPrefix + ".Exceptions"
+	// TypeGit is the log type of Git log records
+	TypeGit = PantherPrefix + ".Git"
+	// TypeIntegrations is the log type of GitLabIntegrations
+	TypeIntegrations = PantherPrefix + ".Integrations"
+	// TypeProduction is the type of the GitLabRails log record
+	TypeProduction = PantherPrefix + ".Production"
+)
 
-// PantherPrefix is the prefix of all logs parsed by this package
-const PantherPrefix = "GitLab"
+func init() {
+	logtypes.MustRegister(
+		logtypes.Config{
+			Name: TypeAPI,
+			Description: `GitLab log for API requests received from GitLab.
+NOTE: We are using the latest version of GitLab API logs. Some fields differ from the official documentation`,
+			ReferenceURL: `https://docs.gitlab.com/ee/administration/logs.html#api_jsonlog`,
+			Schema:       API{},
+			NewParser:    parsers.AdapterFactory(&APIParser{}),
+		},
+		logtypes.Config{
+			Name:         TypeAudit,
+			Description:  `GitLab log file containing changes to group or project settings`,
+			ReferenceURL: `https://docs.gitlab.com/ee/administration/logs.html#audit_jsonlog`,
+			Schema:       Audit{},
+			NewParser:    parsers.AdapterFactory(&AuditParser{}),
+		},
+		logtypes.Config{
+			Name:         TypeExceptions,
+			Description:  `GitLab log file containing changes to group or project settings`,
+			ReferenceURL: `https://docs.gitlab.com/ee/administration/logs.html#exceptions_jsonlog`,
+			Schema:       Exceptions{},
+			NewParser:    parsers.AdapterFactory(&ExceptionsParser{}),
+		},
+		logtypes.Config{
+			Name:         TypeGit,
+			Description:  `GitLab log file containing all failed requests from GitLab to Git repositories.`,
+			ReferenceURL: `https://docs.gitlab.com/ee/administration/logs.html#git_jsonlog`,
+			Schema:       Git{},
+			NewParser:    parsers.AdapterFactory(&GitParser{}),
+		},
+		logtypes.Config{
+			Name:         TypeIntegrations,
+			Description:  `GitLab log with information about integrations activities such as Jira, Asana, and Irker services.`,
+			ReferenceURL: `https://docs.gitlab.com/ee/administration/logs.html#integrations_jsonlog`,
+			Schema:       Integrations{},
+			NewParser:    parsers.AdapterFactory(&IntegrationsParser{}),
+		},
+		logtypes.Config{
+			Name:         TypeProduction,
+			Description:  `GitLab log for Production controller requests received from GitLab`,
+			ReferenceURL: `https://docs.gitlab.com/ee/administration/logs.html#production_jsonlog`,
+			Schema:       Production{},
+			NewParser:    parsers.AdapterFactory(&ProductionParser{}),
+		},
+	)
+}

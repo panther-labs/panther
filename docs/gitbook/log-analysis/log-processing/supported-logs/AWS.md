@@ -5,6 +5,7 @@
 ##AWS.ALB
 Application Load Balancer logs Layer 7 network logs for your application load balancer.
 Reference: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code>type</code></td><td><code>string</code></td><td valign=top>The type of request or connection.</td></tr>
@@ -54,6 +55,7 @@ Reference: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/l
 ##AWS.AuroraMySQLAudit
 AuroraMySQLAudit is an RDS Aurora audit log which contains context around database calls.
 Reference: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Auditing.html
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code>timestamp</code></td><td><code>timestamp</code></td><td valign=top>The timestamp for the logged event with microsecond precision (UTC).</td></tr>
@@ -83,7 +85,8 @@ Reference: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMy
 
 ##AWS.CloudTrail
 AWSCloudTrail represents the content of a CloudTrail S3 object.
-Log format &amp; samples can be seen here: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html
+Reference: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code>additionalEventData</code></td><td><code>string</code></td><td valign=top>Additional data about the event that was not part of the request or response.</td></tr>
@@ -126,8 +129,9 @@ Log format &amp; samples can be seen here: https://docs.aws.amazon.com/awscloudt
 </table>
 
 ##AWS.CloudTrailDigest
-AWSCloudTrailDigest contains the names of the log files that were delivered to your Amazon S3 bucket during the last hour, the hash values for those log files, and the signature of the previous digest file. 
-Log format &amp; samples can be seen here: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-digest-file-structure.html
+AWSCloudTrailDigest contains the names of the log files that were delivered to your Amazon S3 bucket during the last hour, the hash values for those log files, and the signature of the previous digest file.
+Reference: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-digest-file-structure.html
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>awsAccountId</b></code></td><td><code>string</code></td><td valign=top>The AWS account ID for which the digest file has been delivered.</td></tr>
@@ -162,7 +166,8 @@ Log format &amp; samples can be seen here: https://docs.aws.amazon.com/awscloudt
 
 ##AWS.CloudTrailInsight
 AWSCloudTrailInsight represents the content of a CloudTrail Insight event record S3 object.
-Log format &amp; samples can be seen here: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html
+Reference: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>eventVersion</b></code></td><td><code>string</code></td><td valign=top>The version of the log event format.</td></tr>
@@ -190,9 +195,9 @@ Log format &amp; samples can be seen here: https://docs.aws.amazon.com/awscloudt
 </table>
 
 ##AWS.GuardDuty
-Amazon GuardDuty is a threat detection service that continuously monitors for malicious activity 
-and unauthorized behavior inside AWS Accounts. 
-See also GuardDuty Finding Format : https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_finding-format.html
+Amazon GuardDuty is a threat detection service that continuously monitors for malicious activity and unauthorized behavior inside AWS Accounts.
+Reference: https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_finding-format.html
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>schemaVersion</b></code></td><td><code>string</code></td><td valign=top>The schema format version of this record.</td></tr>
@@ -226,7 +231,8 @@ See also GuardDuty Finding Format : https://docs.aws.amazon.com/guardduty/latest
 
 ##AWS.S3ServerAccess
 S3ServerAccess is an AWS S3 Access Log.
-Log format &amp; samples can be seen here: https://docs.aws.amazon.com/AmazonS3/latest/dev/LogFormat.html
+Reference: https://docs.aws.amazon.com/AmazonS3/latest/dev/LogFormat.html
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>bucketowner</b></code></td><td><code>string</code></td><td valign=top>The canonical user ID of the owner of the source bucket. The canonical user ID is another form of the AWS account ID.</td></tr>
@@ -271,7 +277,8 @@ Log format &amp; samples can be seen here: https://docs.aws.amazon.com/AmazonS3/
 
 ##AWS.VPCFlow
 VPCFlow is a VPC NetFlow log, which is a layer 3 representation of network traffic in EC2.
-Log format &amp; samples can be seen here: https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-records-examples.html
+Reference: https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-records-examples.html
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code>version</code></td><td><code>bigint</code></td><td valign=top>The VPC Flow Logs version. If you use the default format, the version is 2. If you specify a custom format, the version is 3.</td></tr>

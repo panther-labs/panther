@@ -4,8 +4,8 @@
 {% hint style="info" %}Required fields are in <b>bold</b>.{% endhint %}
 ##Apache.AccessCombined
 Apache HTTP server access logs using the &#39;combined&#39; format
-
 Reference: https://httpd.apache.org/docs/current/logs.html#combined
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code>remote_host_ip_address</code></td><td><code>string</code></td><td valign=top>This is the IP address of the client (remote host) which made the request to the server. If HostnameLookups is set to On, then the server will try to determine the hostname and log it in place of the IP address.</td></tr>
@@ -32,8 +32,8 @@ Reference: https://httpd.apache.org/docs/current/logs.html#combined
 
 ##Apache.AccessCommon
 Apache HTTP server access logs using the &#39;common&#39; format
-
 Reference: https://httpd.apache.org/docs/current/logs.html#common
+
 <table>
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code>remote_host_ip_address</code></td><td><code>string</code></td><td valign=top>This is the IP address of the client (remote host) which made the request to the server. If HostnameLookups is set to On, then the server will try to determine the hostname and log it in place of the IP address.</td></tr>

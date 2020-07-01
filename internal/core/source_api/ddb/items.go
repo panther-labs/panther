@@ -20,29 +20,34 @@ package ddb
 
 import "time"
 
-// IntegrationItem represents an integration item as it is stored in DynamoDB.
-type IntegrationItem struct {
-	CreatedAtTime    *time.Time `json:"createdAtTime"`
-	CreatedBy        *string    `json:"createdBy"`
-	IntegrationID    *string    `json:"integrationId"`
-	IntegrationLabel *string    `json:"integrationLabel"`
-	IntegrationType  *string    `json:"integrationType"`
+// Integration represents an integration item as it is stored in DynamoDB.
+type Integration struct {
+	CreatedAtTime    time.Time `json:"createdAtTime"`
+	CreatedBy        string    `json:"createdBy"`
+	IntegrationID    string    `json:"integrationId"`
+	IntegrationLabel string    `json:"integrationLabel"`
+	IntegrationType  string    `json:"integrationType"`
 
-	AWSAccountID       *string `json:"awsAccountId"`
-	RemediationEnabled *bool   `json:"remediationEnabled"`
-	CWEEnabled         *bool   `json:"cweEnabled"`
+	AWSAccountID       string `json:"awsAccountId"`
+	RemediationEnabled *bool  `json:"remediationEnabled"`
+	CWEEnabled         *bool  `json:"cweEnabled"`
 
-	LastScanEndTime      *time.Time `json:"lastScanEndTime"`
-	LastScanErrorMessage *string    `json:"lastScanErrorMessage"`
-	LastScanStartTime    *time.Time `json:"lastScanStartTime"`
-	ScanStatus           *string    `json:"scanStatus"`
-	EventStatus          *string    `json:"eventStatus"`
-	ScanIntervalMins     *int       `json:"scanIntervalMins"`
+	LastScanEndTime      time.Time `json:"lastScanEndTime"`
+	LastScanErrorMessage string    `json:"lastScanErrorMessage"`
+	LastScanStartTime    time.Time `json:"lastScanStartTime"`
+	ScanIntervalMins     int       `json:"scanIntervalMins"`
+	IntegrationStatus
 
-	S3Bucket          *string   `json:"s3Bucket"`
-	S3Prefix          *string   `json:"s3Prefix"`
-	KmsKey            *string   `json:"kmsKey"`
-	LogTypes          []*string `json:"logTypes" dynamodbav:"logTypes,stringset"`
-	StackName         *string   `json:"stackName,omitempty"`
-	LogProcessingRole *string   `json:"logProcessingRole,omitempty"`
+	S3Bucket          string   `json:"s3Bucket"`
+	S3Prefix          string   `json:"s3Prefix"`
+	KmsKey            string   `json:"kmsKey"`
+	LogTypes          []string `json:"logTypes" dynamodbav:"logTypes,stringset"`
+	StackName         string   `json:"stackName"`
+	LogProcessingRole string   `json:"logProcessingRole"`
+}
+
+type IntegrationStatus struct {
+	ScanStatus        string    `json:"scanStatus"`
+	EventStatus       string    `json:"eventStatus"`
+	LastEventReceived time.Time `json:"lastEventReceived"`
 }
