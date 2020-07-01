@@ -39,9 +39,9 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) (err error) {
 		if err != nil && integrationForDeletePermissions != nil {
 			// In case we have already removed the Permissions from SQS but some other operation failed
 			// re-add the permissions
-			if _, undoErr := AllowExternalSnsTopicSubscription(*integrationForDeletePermissions.AWSAccountID); undoErr != nil {
+			if _, undoErr := AllowExternalSnsTopicSubscription(integrationForDeletePermissions.AWSAccountID); undoErr != nil {
 				zap.L().Error("failed to re-add SQS permission for integrationItem. SQS is missing permissions that have to be added manually",
-					zap.String("integrationId", *integrationForDeletePermissions.IntegrationID),
+					zap.String("integrationId", integrationForDeletePermissions.IntegrationID),
 					zap.Error(undoErr),
 					zap.Error(err))
 			}
@@ -55,7 +55,7 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) (err error) {
 		err = errors.Wrap(err, errMsg)
 
 		zap.L().Error(errMsg,
-			zap.String("integrationId", *input.IntegrationID),
+			zap.String("integrationId", input.IntegrationID),
 			zap.Error(err))
 		return deleteIntegrationInternalError
 	}
@@ -64,7 +64,7 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) (err error) {
 		return &genericapi.DoesNotExistError{Message: "Integration does not exist"}
 	}
 
-	switch *integrationItem.IntegrationType {
+	switch integrationItem.IntegrationType {
 	case models.IntegrationTypeAWS3:
 		existingIntegrations, err := dynamoClient.ScanIntegrations(aws.String(models.IntegrationTypeAWS3))
 		if err != nil {
@@ -73,8 +73,8 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) (err error) {
 
 		shouldRemovePermissions := true
 		for _, existingIntegration := range existingIntegrations {
-			if *existingIntegration.AWSAccountID == *integrationItem.AWSAccountID &&
-				*existingIntegration.IntegrationID != *integrationItem.IntegrationID {
+			if existingIntegration.AWSAccountID == integrationItem.AWSAccountID &&
+				existingIntegration.IntegrationID != integrationItem.IntegrationID {
 				// if another integrationItem exists for the same account
 				// don't remove queue permissions. Allow the account to keep sending
 				// us SQS notifications
@@ -84,9 +84,9 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) (err error) {
 		}
 
 		if shouldRemovePermissions {
-			if err = DisableExternalSnsTopicSubscription(*integrationItem.AWSAccountID); err != nil {
+			if err = DisableExternalSnsTopicSubscription(integrationItem.AWSAccountID); err != nil {
 				zap.L().Error("failed to remove permission from SQS queue for integrationItem",
-					zap.String("integrationId", *input.IntegrationID),
+					zap.String("integrationId", input.IntegrationID),
 					zap.Error(errors.Wrap(err, "failed to remove permission from SQS queue for integrationItem")))
 				return deleteIntegrationInternalError
 			}

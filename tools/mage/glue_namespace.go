@@ -23,7 +23,6 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/glue"
@@ -93,9 +92,9 @@ func updateRegisteredTables(glueClient *glue.Glue) (tables []*awsglue.GlueTableM
 	// get unique set of logTypes
 	logTypeSet := make(map[string]struct{})
 	for _, integration := range listOutput {
-		if aws.StringValue(integration.IntegrationType) == models.IntegrationTypeAWS3 {
+		if integration.IntegrationType == models.IntegrationTypeAWS3 {
 			for _, logType := range integration.LogTypes {
-				logTypeSet[*logType] = struct{}{}
+				logTypeSet[logType] = struct{}{}
 			}
 		}
 	}
