@@ -47,6 +47,7 @@ const (
 	maxCredReportBackoff                = 1 * time.Minute
 	rootAccountNameCredReport           = "<root_account>"
 	rootDeviceSerialSuffix              = ":mfa/root-account-mfa-device"
+	throttlingErrorCode                 = "Throttling"
 )
 
 var (
@@ -80,7 +81,7 @@ func PollIAMUser(
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {
 			// Check if we got rate limited, happens sometimes when the credential report takes a long time to generate
-			if awsErr.Code() == iam.ErrCodeLimitExceededException {
+			if awsErr.Code() == throttlingErrorCode {
 				zap.L().Debug("credential report lookup rate limited during single user scan", zap.String("resourceId", *scanRequest.ResourceID))
 				utils.Requeue(pollermodels.ScanMsg{
 					Entries: []*pollermodels.ScanEntry{scanRequest},
@@ -538,7 +539,7 @@ func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddR
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {
 			// Check if we got rate limited, happens sometimes when the credential report takes a long time to generate
-			if awsErr.Code() == iam.ErrCodeLimitExceededException {
+			if awsErr.Code() == throttlingErrorCode {
 				zap.L().Debug(
 					"credential report lookup rate limited during all users scan",
 					zap.String("accountId", pollerInput.AuthSourceParsedARN.AccountID))

@@ -25,14 +25,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-// TypeAPI is the type of the GitLabAPI log record
-const TypeAPI = PantherPrefix + ".API"
-
-// APIDesc describes the GitLabAPI log record
-var APIDesc = `GitLab log for API requests received from GitLab.
-We are using the latest version of GitLab API logs. 
-The previous version is available on https://docs.gitlab.com/ee/administration/logs.html#api_jsonlog`
-
 // API is a a GitLab log line from an internal API endpoint
 // nolint: lll
 type API struct {

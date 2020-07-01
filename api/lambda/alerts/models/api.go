@@ -55,13 +55,41 @@ type GetAlertOutput = Alert
 // {
 //     "listAlerts": {
 //         "ruleId": "My.Rule",
-//         "pageSize": 25
+//         "pageSize": 25,
+//         "exclusiveStartKey": "abcdef",
+//         "severity": ["INFO"],
+//         "nameContains": "string in alert title",
+//         "createdAtAfter": "2020-06-17T15:49:40Z",
+//         "createdAtBefore": "2020-06-17T15:49:40Z",
+//         "ruleIdContains": "string in rule id",
+//         "alertIdContains": "string in alert id",
+//         "eventCountMin": "0",
+//         "eventCountMax": "500",
+//         "sortDir": "ascending",
 //     }
 // }
 type ListAlertsInput struct {
-	RuleID            *string `json:"ruleId,omitempty"`
-	PageSize          *int    `json:"pageSize,omitempty"  validate:"omitempty,min=1,max=50"`
-	ExclusiveStartKey *string `json:"exclusiveStartKey,omitempty"`
+	// Used for searching as secondary index
+	RuleID *string `json:"ruleId"`
+
+	// Number of results to return per query
+	PageSize *int `json:"pageSize" validate:"omitempty,min=1,max=50"`
+
+	// Infinite scroll/pagination query key
+	ExclusiveStartKey *string `json:"exclusiveStartKey"`
+
+	// Filtering
+	Severity        []*string  `json:"severity" validate:"omitempty,dive,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
+	NameContains    *string    `json:"nameContains"`
+	CreatedAtBefore *time.Time `json:"createdAtBefore"`
+	CreatedAtAfter  *time.Time `json:"createdAtAfter"`
+	RuleIDContains  *string    `json:"ruleIdContains"`
+	AlertIDContains *string    `json:"alertIdContains"`
+	EventCountMin   *int       `json:"eventCountMin" validate:"omitempty,min=0"`
+	EventCountMax   *int       `json:"eventCountMax" validate:"omitempty,min=1"`
+
+	// Sorting
+	SortDir *string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
 }
 
 // ListAlertsOutput is the returned alert list.

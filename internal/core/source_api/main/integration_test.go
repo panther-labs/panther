@@ -43,7 +43,7 @@ const (
 )
 
 type generatedIDs struct {
-	integrationID *string
+	integrationID string
 }
 
 var (
@@ -89,33 +89,30 @@ func TestIntegration(t *testing.T) {
 func putIntegrations(t *testing.T) {
 	putIntegrations := []*models.PutIntegrationInput{
 		{
-			SkipScanQueue: aws.Bool(true),
 			PutIntegrationSettings: models.PutIntegrationSettings{
-				AWSAccountID:     aws.String("888888888888"),
-				IntegrationLabel: aws.String("ThisAccount"),
-				IntegrationType:  aws.String("aws-scan"),
-				ScanIntervalMins: aws.Int(60),
-				UserID:           aws.String(testUserID),
+				AWSAccountID:     "888888888888",
+				IntegrationLabel: "ThisAccount",
+				IntegrationType:  models.IntegrationTypeAWSScan,
+				ScanIntervalMins: 60,
+				UserID:           testUserID,
 			},
 		},
 		{
-			SkipScanQueue: aws.Bool(true),
 			PutIntegrationSettings: models.PutIntegrationSettings{
-				AWSAccountID:     aws.String("111111111111"),
-				IntegrationLabel: aws.String("TestAWS"),
-				IntegrationType:  aws.String("aws-scan"),
-				ScanIntervalMins: aws.Int(60),
-				UserID:           aws.String(testUserID),
+				AWSAccountID:     "111111111111",
+				IntegrationLabel: "TestAWS",
+				IntegrationType:  models.IntegrationTypeAWSScan,
+				ScanIntervalMins: 60,
+				UserID:           testUserID,
 			},
 		},
 		{
-			SkipScanQueue: aws.Bool(true),
 			PutIntegrationSettings: models.PutIntegrationSettings{
-				AWSAccountID:     aws.String("555555555555"),
-				IntegrationLabel: aws.String("StageAWS"),
-				IntegrationType:  aws.String("aws-scan"),
-				ScanIntervalMins: aws.Int(1440),
-				UserID:           aws.String(testUserID2),
+				AWSAccountID:     "555555555555",
+				IntegrationLabel: "StageAWS",
+				IntegrationType:  models.IntegrationTypeAWSScan,
+				ScanIntervalMins: 1440,
+				UserID:           testUserID2,
 			},
 		},
 	}
@@ -175,7 +172,7 @@ func deleteSingleIntegrationThatDoesNotExist(t *testing.T) {
 	input := &models.LambdaInput{
 		DeleteIntegration: &models.DeleteIntegrationInput{
 			// Random UUID that shouldn't exist in the table should not throw an error
-			IntegrationID: aws.String("e87f7365-c927-441a-bd38-99de521a4fd6"),
+			IntegrationID: "e87f7365-c927-441a-bd38-99de521a4fd6",
 		},
 	}
 	assert.Error(t, genericapi.Invoke(lambdaClient, functionName, input, nil))
@@ -189,8 +186,8 @@ func updateIntegrationSettings(t *testing.T) {
 	input := &models.LambdaInput{
 		UpdateIntegrationSettings: &models.UpdateIntegrationSettingsInput{
 			IntegrationID:    integrationToUpdate.integrationID,
-			IntegrationLabel: &newLabel,
-			ScanIntervalMins: &newScanInterval,
+			IntegrationLabel: newLabel,
+			ScanIntervalMins: newScanInterval,
 		},
 	}
 	var result models.SourceIntegration
@@ -203,9 +200,9 @@ func updateIntegrationSettings(t *testing.T) {
 			CreatedAtTime:    result.CreatedAtTime,
 			CreatedBy:        result.CreatedBy,
 			IntegrationID:    integrationToUpdate.integrationID,
-			IntegrationLabel: &newLabel,
-			IntegrationType:  aws.String("aws-scan"),
-			ScanIntervalMins: aws.Int(180),
+			IntegrationLabel: newLabel,
+			IntegrationType:  models.IntegrationTypeAWSScan,
+			ScanIntervalMins: 180,
 		},
 	}
 	assert.Equal(t, expected, result)
@@ -223,10 +220,10 @@ func updateIntegrationSettings(t *testing.T) {
 		}
 
 		require.NotNil(t, integration.SourceIntegrationMetadata.ScanIntervalMins)
-		assert.Equal(t, newScanInterval, *integration.SourceIntegrationMetadata.ScanIntervalMins)
+		assert.Equal(t, newScanInterval, integration.SourceIntegrationMetadata.ScanIntervalMins)
 
 		require.NotNil(t, integration.SourceIntegrationMetadata.IntegrationLabel)
-		assert.Equal(t, newLabel, *integration.SourceIntegrationMetadata.IntegrationLabel)
+		assert.Equal(t, newLabel, integration.SourceIntegrationMetadata.IntegrationLabel)
 
 		// Ensure other fields still exist after update
 		assert.NotNil(t, integration.IntegrationType)
@@ -243,8 +240,8 @@ func updateIntegrationLastScanStart(t *testing.T) {
 	input := &models.LambdaInput{
 		UpdateIntegrationLastScanStart: &models.UpdateIntegrationLastScanStartInput{
 			IntegrationID:     integrationToUpdate.integrationID,
-			LastScanStartTime: &scanStartTime,
-			ScanStatus:        &status,
+			LastScanStartTime: scanStartTime,
+			ScanStatus:        status,
 		},
 	}
 	require.NoError(t, genericapi.Invoke(lambdaClient, functionName, input, nil))
@@ -262,8 +259,8 @@ func updateIntegrationLastScanStart(t *testing.T) {
 		if integration.IntegrationID != integrationToUpdate.integrationID {
 			continue
 		}
-		assert.Equal(t, status, *integration.SourceIntegrationStatus.ScanStatus)
-		assert.Equal(t, scanStartTime, *integration.SourceIntegrationScanInformation.LastScanEndTime)
+		assert.Equal(t, status, integration.SourceIntegrationStatus.ScanStatus)
+		assert.Equal(t, scanStartTime, integration.SourceIntegrationScanInformation.LastScanEndTime)
 	}
 }
 
@@ -274,10 +271,10 @@ func updateIntegrationLastScanEnd(t *testing.T) {
 
 	input := &models.LambdaInput{
 		UpdateIntegrationLastScanEnd: &models.UpdateIntegrationLastScanEndInput{
-			EventStatus:     &status,
+			EventStatus:     status,
 			IntegrationID:   integrationToUpdate.integrationID,
-			LastScanEndTime: &scanEndTime,
-			ScanStatus:      &status,
+			LastScanEndTime: scanEndTime,
+			ScanStatus:      status,
 		},
 	}
 	require.NoError(t, genericapi.Invoke(lambdaClient, functionName, input, nil))
@@ -293,8 +290,8 @@ func updateIntegrationLastScanEnd(t *testing.T) {
 		if integration.IntegrationID != integrationToUpdate.integrationID {
 			continue
 		}
-		assert.Equal(t, status, *integration.SourceIntegrationStatus.ScanStatus)
-		assert.Equal(t, scanEndTime, *integration.SourceIntegrationScanInformation.LastScanEndTime)
+		assert.Equal(t, status, integration.SourceIntegrationStatus.ScanStatus)
+		assert.Equal(t, scanEndTime, integration.SourceIntegrationScanInformation.LastScanEndTime)
 	}
 }
 
@@ -306,11 +303,11 @@ func updateIntegrationLastScanEndWithError(t *testing.T) {
 
 	input := &models.LambdaInput{
 		UpdateIntegrationLastScanEnd: &models.UpdateIntegrationLastScanEndInput{
-			EventStatus:          &status,
+			EventStatus:          status,
 			IntegrationID:        integrationToUpdate.integrationID,
-			LastScanEndTime:      &scanEndTime,
-			LastScanErrorMessage: &errorMessage,
-			ScanStatus:           &status,
+			LastScanEndTime:      scanEndTime,
+			LastScanErrorMessage: errorMessage,
+			ScanStatus:           status,
 		},
 	}
 	require.NoError(t, genericapi.Invoke(lambdaClient, functionName, input, nil))
@@ -326,7 +323,7 @@ func updateIntegrationLastScanEndWithError(t *testing.T) {
 		if integration.IntegrationID != integrationToUpdate.integrationID {
 			continue
 		}
-		assert.Equal(t, status, *integration.SourceIntegrationStatus.ScanStatus)
-		assert.Equal(t, scanEndTime, *integration.SourceIntegrationScanInformation.LastScanEndTime)
+		assert.Equal(t, status, integration.SourceIntegrationStatus.ScanStatus)
+		assert.Equal(t, scanEndTime, integration.SourceIntegrationScanInformation.LastScanEndTime)
 	}
 }

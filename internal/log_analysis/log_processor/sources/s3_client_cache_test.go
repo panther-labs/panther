@@ -42,11 +42,12 @@ import (
 var (
 	integration = &models.SourceIntegration{
 		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-			AWSAccountID:      aws.String("1234567890123"),
-			S3Bucket:          aws.String("test-bucket"),
-			S3Prefix:          aws.String("prefix"),
-			IntegrationType:   aws.String(models.IntegrationTypeAWS3),
-			LogProcessingRole: aws.String("arn:aws:iam::123456789012:role/PantherLogProcessingRole-suffix"),
+			AWSAccountID:      "1234567890123",
+			S3Bucket:          "test-bucket",
+			S3Prefix:          "prefix",
+			IntegrationType:   models.IntegrationTypeAWS3,
+			LogProcessingRole: "arn:aws:iam::123456789012:role/PantherLogProcessingRole-suffix",
+			IntegrationID:     "3e4b1734-e678-4581-b291-4b8a176219e9",
 		},
 	}
 )
@@ -69,7 +70,10 @@ func TestGetS3Client(t *testing.T) {
 
 	expectedGetBucketLocationInput := &s3.GetBucketLocationInput{Bucket: aws.String("test-bucket")}
 
+	// First invocation should be to get the list of available sources
 	lambdaMock.On("Invoke", mock.Anything).Return(lambdaOutput, nil).Once()
+	// Second invocation would be to update the status
+	lambdaMock.On("Invoke", mock.Anything).Return(&lambda.InvokeOutput{}, nil).Once()
 	s3Mock.On("GetBucketLocation", expectedGetBucketLocationInput).Return(
 		&s3.GetBucketLocationOutput{LocationConstraint: aws.String("us-west-2")}, nil).Once()
 
@@ -92,6 +96,14 @@ func TestGetS3Client(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	require.Equal(t, models.IntegrationTypeAWS3, sourceType)
+
+	// verify that we have updated the source with the last time scanned status
+	updateStatusInvokeInput := lambdaMock.Calls[1].Arguments.Get(0).(*lambda.InvokeInput)
+	var updateStatusInput models.LambdaInput
+	require.NoError(t, jsoniter.Unmarshal(updateStatusInvokeInput.Payload, &updateStatusInput))
+	require.Equal(t, "3e4b1734-e678-4581-b291-4b8a176219e9", updateStatusInput.UpdateStatus.IntegrationID)
+	// Verify that the status was updated within the last 1 minute
+	require.True(t, updateStatusInput.UpdateStatus.LastEventReceived.After(time.Now().Add(-1*time.Minute)))
 
 	s3Mock.AssertExpectations(t)
 	lambdaMock.AssertExpectations(t)
@@ -146,10 +158,11 @@ func TestGetS3ClientSourceNoPrefix(t *testing.T) {
 
 	integration = &models.SourceIntegration{
 		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-			AWSAccountID:      aws.String("1234567890123"),
-			S3Bucket:          aws.String("test-bucket"),
-			LogProcessingRole: aws.String("arn:aws:iam::123456789012:role/PantherLogProcessingRole-suffix"),
-			IntegrationType:   aws.String(models.IntegrationTypeAWS3),
+			AWSAccountID:      "1234567890123",
+			S3Bucket:          "test-bucket",
+			LogProcessingRole: "arn:aws:iam::123456789012:role/PantherLogProcessingRole-suffix",
+			IntegrationType:   models.IntegrationTypeAWS3,
+			IntegrationID:     "189cddfa-6fd5-419e-8b0e-668105b67dc0",
 		},
 	}
 
@@ -159,7 +172,10 @@ func TestGetS3ClientSourceNoPrefix(t *testing.T) {
 		Payload: marshaledResult,
 	}
 
+	// First invocation should be to get the list of available sources
 	lambdaMock.On("Invoke", mock.Anything).Return(lambdaOutput, nil).Once()
+	// Second invocation would be to update the status
+	lambdaMock.On("Invoke", mock.Anything).Return(&lambda.InvokeOutput{}, nil).Once()
 
 	expectedGetBucketLocationInput := &s3.GetBucketLocationInput{Bucket: aws.String("test-bucket")}
 	s3Mock.On("GetBucketLocation", expectedGetBucketLocationInput).Return(

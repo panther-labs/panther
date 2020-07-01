@@ -28,7 +28,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/remediation/models"
-	remediationmodels "github.com/panther-labs/panther/api/gateway/remediation/models"
 	"github.com/panther-labs/panther/internal/compliance/remediation_api/remediation"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/genericapi"
@@ -46,7 +45,7 @@ func RemediateResource(request *events.APIGatewayProxyRequest) *events.APIGatewa
 	if err := invoker.Remediate(remediateResource); err != nil {
 		if err == remediation.ErrNotFound {
 			return gatewayapi.MarshalResponse(
-				&remediationmodels.Error{Message: aws.String(err.Error())}, http.StatusBadRequest)
+				&models.Error{Message: aws.String(err.Error())}, http.StatusBadRequest)
 		}
 		if _, ok := err.(*genericapi.DoesNotExistError); ok {
 			return gatewayapi.MarshalResponse(RemediationLambdaNotFound, http.StatusNotFound)

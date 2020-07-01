@@ -60,7 +60,7 @@ func (Master) Deploy() {
 	err := sh.RunV(filepath.Join(pythonVirtualEnvPath, "bin", "sam"), "deploy",
 		"--capabilities", "CAPABILITY_IAM", "CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND",
 		"--region", region,
-		"--stack-name", "panther-master",
+		"--stack-name", "panther",
 		"-t", pkg,
 		"--parameter-overrides", "FirstUserEmail="+firstUserEmail, "ImageRegistry="+ecrRegistry)
 	if err != nil {

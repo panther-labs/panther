@@ -19,7 +19,6 @@ package ddb
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
@@ -28,9 +27,9 @@ import (
 
 // ScanIntegrations returns all enabled integrations based on type (if type is specified).
 // It performs a DDB scan of the entire table with a filter expression.
-func (ddb *DDB) ScanIntegrations(integrationType *string) ([]*IntegrationItem, error) {
+func (ddb *DDB) ScanIntegrations(integrationType *string) ([]*Integration, error) {
 	scanInput := &dynamodb.ScanInput{
-		TableName: aws.String(ddb.TableName),
+		TableName: &ddb.TableName,
 	}
 	if integrationType != nil {
 		filterExpression := expression.Name("integrationType").Equal(expression.Value(integrationType))
@@ -48,7 +47,7 @@ func (ddb *DDB) ScanIntegrations(integrationType *string) ([]*IntegrationItem, e
 		return nil, errors.Wrap(err, "failed to scan table")
 	}
 
-	var integrations []*IntegrationItem
+	var integrations []*Integration
 	if err := dynamodbattribute.UnmarshalListOfMaps(output.Items, &integrations); err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal scan results")
 	}

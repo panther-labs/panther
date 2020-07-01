@@ -36,21 +36,20 @@ interface AsanaDestinationFormProps {
   onSubmit: (values: BaseDestinationFormValues<AsanaFieldValues>) => void;
 }
 
-const asanaFieldsValidationSchema = Yup.object().shape({
-  outputConfig: Yup.object().shape({
-    asana: Yup.object().shape({
-      personalAccessToken: Yup.string().required(),
-      projectGids: Yup.array().of(Yup.number()).required(),
-    }),
-  }),
-});
-
-// We merge the two schemas together: the one deriving from the common fields, plus the custom
-// ones that change for each destination.
-// https://github.com/jquense/yup/issues/522
-const mergedValidationSchema = defaultValidationSchema.concat(asanaFieldsValidationSchema);
-
 const AsanaDestinationForm: React.FC<AsanaDestinationFormProps> = ({ onSubmit, initialValues }) => {
+  const existing = initialValues.outputId;
+
+  const asanaFieldsValidationSchema = Yup.object().shape({
+    outputConfig: Yup.object().shape({
+      asana: Yup.object().shape({
+        projectGids: Yup.array().of(Yup.number()).required(),
+        personalAccessToken: existing ? Yup.string() : Yup.string().required(),
+      }),
+    }),
+  });
+
+  const mergedValidationSchema = defaultValidationSchema.concat(asanaFieldsValidationSchema);
+
   return (
     <BaseDestinationForm<AsanaFieldValues>
       initialValues={initialValues}
@@ -59,11 +58,12 @@ const AsanaDestinationForm: React.FC<AsanaDestinationFormProps> = ({ onSubmit, i
     >
       <Field
         as={FormikTextInput}
+        type="password"
         name="outputConfig.asana.personalAccessToken"
         label="Access Token"
-        placeholder="Your personal Asana access token"
+        placeholder={existing ? '<hidden information>' : 'Your personal Asana access token'}
         mb={6}
-        aria-required
+        aria-required={!existing}
       />
       <Field
         name="outputConfig.asana.projectGids"

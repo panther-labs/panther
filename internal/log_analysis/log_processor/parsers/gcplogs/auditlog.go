@@ -35,14 +35,6 @@ type LogEntryAuditLog struct {
 }
 
 const (
-	TypeAuditLog = "GCP.AuditLog"
-
-	// nolint:lll
-	AuditLogDesc = `Cloud Audit Logs maintains three audit logs for each Google Cloud project, folder, and organization: Admin Activity, Data Access, and System Event.
-Google Cloud services write audit log entries to these logs to help you answer the questions of "who did what, where, and when?" within your Google Cloud resources.
-
-Reference: https://cloud.google.com/logging/docs/audit
-`
 	AuditLogActivityLogID = "cloudaudit.googleapis.com%2Factivity"
 	AuditLogDataLogID     = "cloudaudit.googleapis.com%2Fdata_access"
 	AuditLogSystemLogID   = "cloudaudit.googleapis.com%2Fsystem_event"

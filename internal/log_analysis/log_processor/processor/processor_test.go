@@ -38,6 +38,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	logger "github.com/panther-labs/panther/pkg/metriclogger"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
 
@@ -65,20 +66,21 @@ type testLog struct {
 	parsers.PantherLog
 }
 
-func newTestLog() *parsers.PantherLog {
+func newTestLog() *parsers.Result {
 	refTime := (timestamp.RFC3339)(time.Date(2020, 1, 1, 0, 1, 1, 0, time.UTC))
 	log := testLog{
 		logLine: testLogLine,
 	}
 	log.SetCoreFields(testLogType, &refTime, &log)
-	return &log.PantherLog
+	result, _ := log.Result()
+	return result
 }
 
 func TestProcess(t *testing.T) {
 	destination := (&testDestination{}).standardMock()
 
 	dataStream := makeDataStream()
-	p := NewProcessor(dataStream)
+	p := NewProcessor(dataStream, registry.AvailableParsers())
 	mockClassifier := &testClassifier{}
 	p.classifier = mockClassifier
 
@@ -116,7 +118,7 @@ func TestProcessDataStreamError(t *testing.T) {
 
 	destination := (&testDestination{}).standardMock()
 	dataStream := makeBadDataStream() // failure to read data, never hits classifier
-	p := NewProcessor(dataStream)
+	p := NewProcessor(dataStream, registry.AvailableParsers())
 	mockClassifier := &testClassifier{}
 	p.classifier = mockClassifier
 
@@ -176,12 +178,12 @@ func TestProcessDestinationError(t *testing.T) {
 	destination.On("SendEvents", mock.Anything, mock.Anything).Return().Run(func(args mock.Arguments) {
 		errChan := args.Get(1).(chan error)
 		errChan <- sendEventsErr
-		for range args.Get(0).(chan *parsers.PantherLog) {
+		for range args.Get(0).(chan *parsers.Result) {
 		} // must drain q
 	})
 
 	dataStream := makeDataStream()
-	p := NewProcessor(dataStream)
+	p := NewProcessor(dataStream, registry.AvailableParsers())
 	mockClassifier := &testClassifier{}
 	p.classifier = mockClassifier
 
@@ -224,7 +226,7 @@ func TestProcessClassifyFailure(t *testing.T) {
 
 	destination := (&testDestination{}).standardMock()
 	dataStream := makeDataStream()
-	p := NewProcessor(dataStream)
+	p := NewProcessor(dataStream, registry.AvailableParsers())
 	mockClassifier := &testClassifier{}
 	p.classifier = mockClassifier
 
@@ -248,11 +250,11 @@ func TestProcessClassifyFailure(t *testing.T) {
 
 	// first one fails
 	mockClassifier.On("Classify", mock.Anything).Return(&classification.ClassifierResult{
-		Events:  []*parsers.PantherLog{},
+		Events:  []*parsers.Result{},
 		LogType: nil,
 	}).Once()
 	mockClassifier.On("Classify", mock.Anything).Return(&classification.ClassifierResult{
-		Events:  []*parsers.PantherLog{newTestLog()},
+		Events:  []*parsers.Result{newTestLog()},
 		LogType: &testLogType,
 	})
 	mockClassifier.On("Stats", mock.Anything).Return(mockStats)
@@ -382,13 +384,13 @@ type testDestination struct {
 }
 
 // mocks override
-func (d *testDestination) SendEvents(parsedEventChannel chan *parsers.PantherLog, errChan chan error) {
+func (d *testDestination) SendEvents(parsedEventChannel chan *parsers.Result, errChan chan error) {
 	d.MethodCalled("SendEvents", parsedEventChannel, errChan) // execute mocks
 }
 
 func (d *testDestination) standardMock() *testDestination {
 	d.On("SendEvents", mock.Anything, mock.Anything).Return().Run(func(args mock.Arguments) {
-		for range args.Get(0).(chan *parsers.PantherLog) { // simulate reading
+		for range args.Get(0).(chan *parsers.Result) { // simulate reading
 			time.Sleep(sendDelay) // wait to give processor time to send events
 			d.nEvents++
 		}
@@ -419,7 +421,7 @@ func (c *testClassifier) ParserStats() map[string]*classification.ParserStats {
 // mocks for normal processing
 func (c *testClassifier) standardMocks(cStats *classification.ClassifierStats, pStats map[string]*classification.ParserStats) {
 	c.On("Classify", mock.Anything).Return(&classification.ClassifierResult{
-		Events:  []*parsers.PantherLog{newTestLog()},
+		Events:  []*parsers.Result{newTestLog()},
 		LogType: &testLogType,
 	}).After(parseDelay)
 	c.On("Stats", mock.Anything).Return(cStats)
@@ -443,7 +445,7 @@ var errFailingReader = errors.New("failed")
 
 type failingReader struct{}
 
-func (fr *failingReader) Read(b []byte) (int, error) {
+func (fr *failingReader) Read(_ []byte) (int, error) {
 	return 0, errFailingReader
 }
 

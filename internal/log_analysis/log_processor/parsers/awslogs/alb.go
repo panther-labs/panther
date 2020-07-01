@@ -29,9 +29,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-var ALBDesc = `Application Load Balancer logs Layer 7 network logs for your application load balancer.
-Reference: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html`
-
 const (
 	albMinNumberOfColumns = 25
 )
@@ -90,6 +87,9 @@ func (p *ALBParser) New() parsers.LogParser {
 
 // Parse returns the parsed events or nil if parsing failed
 func (p *ALBParser) Parse(log string) ([]*parsers.PantherLog, error) {
+	if !parsers.LooksLikeCSV(log) {
+		return nil, errors.New("log is not CSV")
+	}
 	record, err := p.CSVReader.Parse(log)
 	if err != nil {
 		return nil, err
@@ -168,7 +168,7 @@ func (p *ALBParser) Parse(log string) ([]*parsers.PantherLog, error) {
 
 // LogType returns the log type supported by this parser
 func (p *ALBParser) LogType() string {
-	return "AWS.ALB"
+	return TypeALB
 }
 
 func (event *ALB) updatePantherFields(p *ALBParser) {

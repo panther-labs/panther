@@ -25,6 +25,7 @@ import { DeleteLogSourceModalProps } from 'Components/modals/DeleteLogSourceModa
 import { DeleteDestinationModalProps } from 'Components/modals/DeleteDestinationModal';
 import { DeleteRuleModalProps } from 'Components/modals/DeleteRuleModal';
 import { DeleteTestModalProps } from 'Components/modals/DeleteTestModal';
+import { DeleteGlobalPythonModuleModalProps } from 'Components/modals/DeleteGlobalPythonModuleModal';
 
 const SHOW_MODAL = 'SHOW_MODAL';
 const HIDE_MODAL = 'HIDE_MODAL';
@@ -33,6 +34,7 @@ const HIDE_MODAL = 'HIDE_MODAL';
 export enum MODALS {
   DELETE_POLICY = 'DELETE_POLICY',
   DELETE_RULE = 'DELETE_RULE',
+  DELETE_GLOBAL_PYTHON_MODULE = 'DELETE_GLOBAL_PYTHON_MODULE',
   DELETE_USER = 'DELETE_USER',
   DELETE_TEST = 'DELETE_TEST',
   RESET_USER_PASS = 'RESET_USER_PASS',
@@ -62,7 +64,14 @@ interface ShowPolicyModalAction {
 interface HideModalAction {
   type: typeof HIDE_MODAL;
 }
-
+/* Delete Global Module action */
+interface ShowGlobalPythonModuleModalAction {
+  type: typeof SHOW_MODAL;
+  payload: {
+    modal: MODALS.DELETE_GLOBAL_PYTHON_MODULE;
+    props: DeleteGlobalPythonModuleModalProps;
+  };
+}
 /* Delete User action */
 interface ShowDeleteUserModalAction {
   type: typeof SHOW_MODAL;
@@ -146,6 +155,7 @@ interface ShowAnalyticsConsentModalAction {
 type ModalStateAction =
   | ShowDeleteComplianceSourceModalAction
   | ShowDeleteLogSourceModalAction
+  | ShowGlobalPythonModuleModalAction
   | ShowDeleteUserModalAction
   | ShowDeleteTestModalAction
   | ShowResetUserPasswordModalAction

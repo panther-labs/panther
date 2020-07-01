@@ -19,21 +19,20 @@ package ddb
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/pkg/errors"
 )
 
 // PutItem adds a source integration to the database
-func (ddb *DDB) PutItem(input *IntegrationItem) error {
+func (ddb *DDB) PutItem(input *Integration) error {
 	item, err := dynamodbattribute.MarshalMap(input)
 	if err != nil {
 		return errors.Wrapf(err, "failed to marshal integration metadata")
 	}
 
 	putRequest := &dynamodb.PutItemInput{
-		TableName: aws.String(ddb.TableName),
+		TableName: &ddb.TableName,
 		Item:      item,
 	}
 	_, err = ddb.Client.PutItem(putRequest)

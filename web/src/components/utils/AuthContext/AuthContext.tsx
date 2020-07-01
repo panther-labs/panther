@@ -44,18 +44,22 @@ interface AuthError {
 interface EnhancedCognitoUser extends CognitoUser {
   challengeParam: {
     userAttributes: {
+      /* eslint-disable  camelcase  */
       email: string;
       given_name?: string;
       family_name?: string;
+      /* eslint-enable  camelcase  */
     };
   };
   challengeName?: CHALLENGE_NAMES;
   attributes: {
+    /* eslint-disable  camelcase  */
     email: string;
     email_verified: boolean;
     family_name?: string;
     given_name?: string;
     sub: string;
+    /* eslint-enable  camelcase  */
   };
   signInUserSession?: {
     accessToken?: {

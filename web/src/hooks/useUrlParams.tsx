@@ -56,11 +56,25 @@ function useUrlParams<T extends { [key: string]: any }>() {
     });
   };
 
+  /**
+   * stringifies an object and replaces the query params of a URL
+   */
+  const setUrlParams = (params: Partial<T>) => {
+    // Remove any falsy value apart from the value `0` (number) and the value `false` (boolean)
+    const cleanedQueryParams = omitBy(params, v => !v && !['number', 'boolean'].includes(typeof v));
+
+    history.replace({
+      ...location,
+      search: queryString.stringify(cleanedQueryParams, queryStringOptions),
+    });
+  };
+
   // Cache those values as long as URL parameters are the same
   return React.useMemo(
     () => ({
       urlParams,
       updateUrlParams,
+      setUrlParams,
     }),
     [history.location.search]
   );

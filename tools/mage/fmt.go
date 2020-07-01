@@ -135,7 +135,7 @@ func removeImportNewlines(path string) error {
 		newLines = append(newLines, line)
 	}
 
-	return ioutil.WriteFile(path, bytes.Join(newLines, []byte("\n")), 0644)
+	return ioutil.WriteFile(path, bytes.Join(newLines, []byte("\n")), 0600)
 }
 
 // Tidy go.mod/go.sum

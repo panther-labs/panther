@@ -18,16 +18,23 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: The service that defines the front-end NodeJS server that serves the Panther web application statics
 
 Parameters:
-  # Passed in from bootstrap stacks
+  # Alphabetize parameters so it's easy to compare side-by-side with other code that passes values
+  # and because the CloudFormation console always shows parameters in alphabetical order.
   AlarmTopicArn:
     Type: String
     Description: SNS topic for CloudWatch alarms
-  SubnetOneId:
+  AppClientId:
     Type: String
-    Description: The ID of a subnet in the VPC above
-  SubnetTwoId:
+    Description: The ID of the App Client that handles the sign-in for the aforementioned user pool
+  CertificateArn:
     Type: String
-    Description: The ID of another subnet in the VPC above
+    Description: TLS certificate used by the web app. If not specified, a self-signed cert is created for you.
+  CloudWatchLogRetentionDays:
+    Type: Number
+    Description: CloudWatch log retention period
+  CustomResourceVersion:
+    Type: String
+    Description: Forces updates to custom resources when changed
   ElbArn:
     Type: String
     Description: The ARN of the load balancer
@@ -37,61 +44,43 @@ Parameters:
   ElbTargetGroup:
     Type: String
     Description: The ARN of the load balancer target group
-  SecurityGroup:
-    Type: String
-    Description: Web app security group ID
-  GraphQLApiEndpoint:
-    Type: String
-    Description: The URL of the GraphQL API that the web application uses
-  UserPoolId:
-    Type: String
-    Description: The ID of the User Pool that holds all users of the Panther web app
-  AppClientId:
-    Type: String
-    Description: The ID of the App Client that handles the sign-in for the aforementioned user pool
-
-  # Passed in from config file
-  CloudWatchLogRetentionDays:
-    Type: Number
-    Description: CloudWatch log retention period
-    Default: 365
-  CertificateArn:
-    Type: String
-    Description: TLS certificate used by the web app. If not specified, a self-signed cert is created for you.
-    Default: ''
-  FirstUserGivenName:
-    Type: String
-    Description: First (given) name of the initial Panther user
-    Default: ''
-  FirstUserFamilyName:
-    Type: String
-    Description: Family (last) name of the initial Panther user
-    Default: ''
   FirstUserEmail:
     Type: String
     Description: Email of the initial Panther user. If blank, no user is created
-    Default: ''
-
-  # Generated in deploy process
+  FirstUserFamilyName:
+    Type: String
+    Description: Family (last) name of the initial Panther user
+  FirstUserGivenName:
+    Type: String
+    Description: First (given) name of the initial Panther user
+  GraphQLApiEndpoint:
+    Type: String
+    Description: The URL of the GraphQL API that the web application uses
   Image:
     Type: String
     Description: The container image to use for the front-end web application server
   PantherVersion:
     Type: String
     Description: The semver of the current deployment (i.e. `v1.3.0`)
+  SecurityGroup:
+    Type: String
+    Description: Web app security group ID
+  SubnetOneId:
+    Type: String
+    Description: The ID of a subnet in the VPC above
+  SubnetTwoId:
+    Type: String
+    Description: The ID of another subnet in the VPC above
+  UserPoolId:
+    Type: String
+    Description: The ID of the User Pool that holds all users of the Panther web app
 
-  CPU:
-    Type: Number
-    Description: The size of the CPU allocated to the server
-    Default: 512
-  Memory:
-    Type: Number
-    Description: The MB of memory allocated to the server
-    Default: 1024
-  Port:
-    Type: Number
-    Default: 80
-    Description: The exposed port of the application, that will be used by the VPC & Container
+Mappings:
+  ECS:
+    Task:
+      CPU: 512
+      Memory: 1024
+      Port: 80
 
 Conditions:
   CreateCertificate: !Equals [!Ref CertificateArn, '']
@@ -102,13 +91,14 @@ Resources:
     Condition: CreateCertificate
     Type: Custom::Certificate
     Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   LoadBalancerAlarms:
     Type: Custom::ElbAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
-      ClientErrorThreshold: 10 # within 5 minutes
+      CustomResourceVersion: !Ref CustomResourceVersion
       LatencyThresholdSeconds: 0.5
       LoadBalancerFriendlyName: web
       LoadBalancerFullName: !Ref ElbFullName
@@ -176,7 +166,7 @@ Resources:
       TaskDefinition: !Ref WebApplicationServerDefinition
       LoadBalancers:
         - ContainerName: panther-web
-          ContainerPort: !Ref Port
+          ContainerPort: !FindInMap [ECS, Task, Port]
           TargetGroupArn: !Ref ElbTargetGroup
 
   # The role that allows the containers in the task to pull images and publish logs to CloudWatch
@@ -205,11 +195,11 @@ Resources:
     Properties:
       ContainerDefinitions:
         - Name: panther-web
-          Cpu: !Ref CPU
+          Cpu: !FindInMap [ECS, Task, CPU]
           DisableNetworking: false
           Environment:
             - Name: SERVER_PORT
-              Value: !Ref Port
+              Value: !FindInMap [ECS, Task, Port]
 
             - Name: NODE_ENV
               Value: production # optimizes the configuration of the front-end NodeJS server
@@ -241,15 +231,15 @@ Resources:
               awslogs-group: !Ref LogGroup
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: panther-web
-          Memory: !Ref Memory
-          MemoryReservation: !Ref Memory
+          Memory: !FindInMap [ECS, Task, Memory]
+          MemoryReservation: !FindInMap [ECS, Task, Memory]
           PortMappings:
-            - ContainerPort: !Ref Port
+            - ContainerPort: !FindInMap [ECS, Task, Port]
           ReadonlyRootFilesystem: false
-      Cpu: !Ref CPU
+      Cpu: !FindInMap [ECS, Task, CPU]
       ExecutionRoleArn: !GetAtt WebApplicationServerExecutionRole.Arn
       Family: panther-web
-      Memory: !Ref Memory
+      Memory: !FindInMap [ECS, Task, Memory]
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
@@ -262,6 +252,8 @@ Resources:
     DeletionPolicy: Retain # users-api refuses to delete the last user, which would then fail teardown
     UpdateReplacePolicy: Retain
     Properties:
+      # No CustomResourceVersion here because that would reset the first user on every upgrade.
+      # The user might have changed their name or email through the web app, we don't want to revert.
       GivenName: !Ref FirstUserGivenName
       FamilyName: !Ref FirstUserFamilyName
       Email: !Ref FirstUserEmail

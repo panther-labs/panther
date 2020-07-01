@@ -20,7 +20,7 @@ import React from 'react';
 import useUrlParams from 'Hooks/useUrlParams';
 
 function useRequestParamsWithPagination<AvailableParams extends { page?: number }>() {
-  const { urlParams, updateUrlParams } = useUrlParams<Partial<AvailableParams>>();
+  const { urlParams, updateUrlParams, setUrlParams } = useUrlParams<Partial<AvailableParams>>();
 
   // This is our typical function that updates the parameters with the addition of resetting the
   // page to `1`. The only time where we don't wanna do that, is when changing pages. In this
@@ -36,7 +36,7 @@ function useRequestParamsWithPagination<AvailableParams extends { page?: number 
   // new parameters, it clears all the parameters and just sets the parameters passed as an argument
   const setRequestParamsAndResetPaging = React.useCallback(
     (newParams: Partial<AvailableParams>) => {
-      updateUrlParams({ ...newParams, page: 1 });
+      setUrlParams({ ...newParams, page: 1 });
     },
     [urlParams]
   );
