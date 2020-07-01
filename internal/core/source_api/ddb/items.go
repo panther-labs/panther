@@ -32,10 +32,10 @@ type Integration struct {
 	RemediationEnabled *bool  `json:"remediationEnabled"`
 	CWEEnabled         *bool  `json:"cweEnabled"`
 
-	LastScanEndTime      time.Time `json:"lastScanEndTime"`
-	LastScanErrorMessage string    `json:"lastScanErrorMessage"`
-	LastScanStartTime    time.Time `json:"lastScanStartTime"`
-	ScanIntervalMins     int       `json:"scanIntervalMins"`
+	LastScanStartTime    *time.Time `json:"lastScanStartTime"`
+	LastScanEndTime      *time.Time `json:"lastScanEndTime"`
+	LastScanErrorMessage string     `json:"lastScanErrorMessage"`
+	ScanIntervalMins     int        `json:"scanIntervalMins"`
 	IntegrationStatus
 
 	S3Bucket          string   `json:"s3Bucket"`
@@ -47,7 +47,7 @@ type Integration struct {
 }
 
 type IntegrationStatus struct {
-	ScanStatus        string    `json:"scanStatus"`
-	EventStatus       string    `json:"eventStatus"`
-	LastEventReceived time.Time `json:"lastEventReceived"`
+	ScanStatus        string     `json:"scanStatus"`
+	EventStatus       string     `json:"eventStatus"`
+	LastEventReceived *time.Time `json:"lastEventReceived"`
 }
