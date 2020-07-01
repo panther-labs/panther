@@ -169,7 +169,6 @@ func CheckPantherMultiline(t *testing.T, logs string, parser parsers.LogParser, 
 
 		results, err := p.Parse(log)
 		require.NoError(t, err)
-		require.NotNil(t, results)
 		actual = append(actual, results...)
 	}
 	require.Equal(t, len(expect), len(actual))
