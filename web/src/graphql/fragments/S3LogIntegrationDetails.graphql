@@ -5,6 +5,7 @@ fragment S3LogIntegrationDetails on S3LogIntegration {
   createdAtTime
   createdBy
   awsAccountId
+  lastEventReceived
   kmsKey
   s3Bucket
   s3Prefix
