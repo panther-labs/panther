@@ -102,10 +102,10 @@ func scanIsNotOngoing(integration *models.SourceIntegration) bool {
 
 // scanIntervalElapsed determines if a new scan needs to be started based on the configured interval.
 func scanIntervalElapsed(integration *models.SourceIntegration) bool {
-	if integration.LastScanEndTime.IsZero() {
+	if integration.LastScanEndTime == nil {
 		return true
 	}
 
 	intervalMins := time.Duration(integration.ScanIntervalMins) * time.Minute
-	return time.Since(integration.LastScanEndTime) >= intervalMins
+	return time.Since(*integration.LastScanEndTime) >= intervalMins
 }

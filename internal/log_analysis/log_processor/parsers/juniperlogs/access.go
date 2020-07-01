@@ -64,8 +64,8 @@ func (p *AccessParser) Parse(log string) ([]*parsers.PantherLog, error) {
 		// All subsequent lines describing event headers and body should be skipped without an error if we have managed
 		// to match at least one log line previously.
 		if p.rxMatchedOnce {
-			// Return empty result and no error
-			return []*parsers.PantherLog{}, nil
+			// Return nil result and no error
+			return nil, nil
 		}
 		// No lines were previously matched, the file is not a Juniper.Access log file.
 		return nil, errors.New("invalid log line")

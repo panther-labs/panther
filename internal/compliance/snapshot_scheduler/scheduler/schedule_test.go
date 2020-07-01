@@ -32,6 +32,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/pkg/box"
 )
 
 //
@@ -102,8 +103,8 @@ var (
 				ScanStatus: models.StatusOK,
 			},
 			SourceIntegrationScanInformation: models.SourceIntegrationScanInformation{
-				LastScanEndTime:   time.Now().Add(time.Duration(-15) * time.Minute),
-				LastScanStartTime: time.Now().Add(time.Duration(-20) * time.Minute),
+				LastScanEndTime:   box.Time(time.Now().Add(time.Duration(-15) * time.Minute)),
+				LastScanStartTime: box.Time(time.Now().Add(time.Duration(-20) * time.Minute)),
 			},
 		},
 		{
@@ -117,8 +118,8 @@ var (
 				ScanStatus: models.StatusOK,
 			},
 			SourceIntegrationScanInformation: models.SourceIntegrationScanInformation{
-				LastScanEndTime:   time.Now().Add(time.Duration(-35) * time.Minute),
-				LastScanStartTime: time.Now().Add(time.Duration(-40) * time.Minute),
+				LastScanEndTime:   box.Time(time.Now().Add(time.Duration(-35) * time.Minute)),
+				LastScanStartTime: box.Time(time.Now().Add(time.Duration(-40) * time.Minute)),
 			},
 		},
 		// A new integration that was recently added that has never been scanned.
@@ -142,7 +143,7 @@ var (
 				ScanStatus: models.StatusScanning,
 			},
 			SourceIntegrationScanInformation: models.SourceIntegrationScanInformation{
-				LastScanStartTime: time.Now().Add(time.Duration(-20) * time.Minute),
+				LastScanStartTime: box.Time(time.Now().Add(time.Duration(-20) * time.Minute)),
 			},
 		},
 		// An integration with a scan in progress, stuck.
@@ -157,9 +158,9 @@ var (
 				ScanStatus: models.StatusScanning,
 			},
 			SourceIntegrationScanInformation: models.SourceIntegrationScanInformation{
-				LastScanStartTime: time.Now().Add(time.Duration(-65) * time.Minute),
+				LastScanStartTime: box.Time(time.Now().Add(time.Duration(-65) * time.Minute)),
 				// Last time it scanned was a day ago.
-				LastScanEndTime: time.Now().Add(time.Duration(-24) * time.Hour),
+				LastScanEndTime: box.Time(time.Now().Add(time.Duration(-24) * time.Hour)),
 			},
 		},
 	}
@@ -206,7 +207,7 @@ func TestScanIntervalElapsed(t *testing.T) {
 			ScanIntervalMins: 30,
 		},
 		SourceIntegrationScanInformation: models.SourceIntegrationScanInformation{
-			LastScanEndTime: time.Now().Add(time.Duration(-60) * time.Minute),
+			LastScanEndTime: box.Time(time.Now().Add(time.Duration(-60) * time.Minute)),
 		},
 	}))
 }
@@ -217,7 +218,7 @@ func TestNewScanNotNeeded(t *testing.T) {
 			ScanIntervalMins: 30,
 		},
 		SourceIntegrationScanInformation: models.SourceIntegrationScanInformation{
-			LastScanEndTime: time.Now().Add(time.Duration(-15) * time.Minute),
+			LastScanEndTime: box.Time(time.Now().Add(time.Duration(-15) * time.Minute)),
 		},
 	}))
 }
