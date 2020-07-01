@@ -161,6 +161,17 @@ func deployPreCheck(awsRegion string) {
 	if strings.Contains(gitVersion, "-") {
 		logger.Warnf("%s is not a tagged release, proceed at your own risk", gitVersion)
 	}
+
+	// There were mage migrations to help with v1.3 and v1.4 source deployments,
+	// but these were removed in v1.6. As a result, old deployments first need to upgrade to v1.5.1
+	bootstrapVersion, err := stackVersion(bootstrapStack)
+	if err != nil {
+		logger.Warnf("failed to describe stack %s: %v", bootstrapStack, err)
+	}
+	if bootstrapVersion != "" && bootstrapVersion < "v1.4.0" {
+		logger.Fatalf("trying to upgrade from %s to %s will not work - upgrade to v1.5.1 first",
+			bootstrapVersion, gitVersion)
+	}
 }
 
 func getAccountID() string {
