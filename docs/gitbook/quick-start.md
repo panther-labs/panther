@@ -12,7 +12,7 @@ What you'll need:
 We've provided the following IAM roles for least privilege deployments:
 
 - [AWS CloudFormation Template](https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-deployment-role/latest/template.yml)
-- [Terraform](https://github.com/panther-labs/panther/tree/master/deployments/auxiliary/terraform/panther-deployment-role.tf)
+- [Terraform](https://github.com/panther-labs/panther/tree/master/deployments/auxiliary/terraform/panther_deployment_role)
 
 {% hint style="info" %}
 We recommend deploying Panther into its own dedicated AWS account.
