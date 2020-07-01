@@ -78,18 +78,12 @@ func (c *Classifier) ParserStats() map[string]*ParserStats {
 func safeLogParse(logType string, parser parsers.Interface, log string) (results []*parsers.Result, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = errors.New("parser panic")
+			err = errors.Errorf("parser %q panic: %v", logType, r)
 			results = nil
-			zap.L().Debug("parser panic",
-				zap.String("parser", logType),
-				zap.Error(err))
 		}
 	}()
 	results, err = parser.ParseLog(log)
 	if err != nil {
-		zap.L().Debug("parser failed",
-			zap.String("parser", logType),
-			zap.Error(err))
 		return nil, err
 	}
 	return results, nil
@@ -137,7 +131,7 @@ func (c *Classifier) Classify(log string) *ClassifierResult {
 
 		// Parser failed to parse event
 		if err != nil {
-			zap.L().Debug("failed to parse event", zap.String("expectedLogType", logType))
+			zap.L().Debug("failed to parse event", zap.String("expectedLogType", logType), zap.Error(err))
 			// Removing parser from queue
 			popped = append(popped, heap.Pop(c.parsers))
 			// Increasing penalty of the parser
