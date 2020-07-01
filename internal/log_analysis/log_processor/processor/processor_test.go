@@ -37,8 +37,8 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
-	logger "github.com/panther-labs/panther/pkg/metriclogger"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
+	"github.com/panther-labs/panther/pkg/metrics"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
 
@@ -268,12 +268,12 @@ func TestProcessClassifyFailure(t *testing.T) {
 	require.NoError(t, err)
 
 	actual := logs.AllUntimed()
-	embeddedMetric := logger.EmbeddedMetric{
-		CloudWatchMetrics: []logger.MetricDirectiveObject{
+	embeddedMetric := metrics.EmbeddedMetric{
+		CloudWatchMetrics: []metrics.MetricDirectiveObject{
 			{
 				Namespace:  "panther/log_processor",
 				Dimensions: processorLogDimensions,
-				Metrics:    []logger.Metric{processorMetric},
+				Metrics:    []metrics.Metric{processorMetric},
 			},
 		},
 		Timestamp: p.operation.EndTime.UnixNano() / 1000000,

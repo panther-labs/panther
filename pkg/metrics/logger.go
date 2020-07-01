@@ -1,4 +1,4 @@
-package metriclogger
+package metrics
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.

@@ -31,8 +31,9 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	logger "github.com/panther-labs/panther/pkg/metriclogger"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
+	logger "github.com/panther-labs/panther/pkg/metriclogger"
+	"github.com/panther-labs/panther/pkg/metrics"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
 
@@ -56,11 +57,11 @@ var (
 			"logType",
 		},
 	}
-	processorMetric = logger.Metric{
+	processorMetric = metrics.Metric{
 		Name: "bytesProcessed",
 		Unit: "Bytes",
 	}
-	eLogger = logger.MustLogger(processorLogNamespace, processorLogDimensions)
+	eLogger = metrics.MustLogger(processorLogNamespace, processorLogDimensions)
 )
 
 // Process orchestrates the tasks of parsing logs, classification, normalization
