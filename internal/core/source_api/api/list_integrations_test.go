@@ -74,8 +74,8 @@ func TestListIntegrations(t *testing.T) {
 			EventStatus: models.StatusOK,
 		},
 		SourceIntegrationScanInformation: models.SourceIntegrationScanInformation{
-			LastScanEndTime:   lastScanEndTime,
-			LastScanStartTime: lastScanStartTime,
+			LastScanEndTime:   &lastScanEndTime,
+			LastScanStartTime: &lastScanStartTime,
 		},
 	}
 	out, err := apiTest.ListIntegrations(&models.ListIntegrationsInput{})

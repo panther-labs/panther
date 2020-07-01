@@ -19,6 +19,7 @@
 import React from 'react';
 import { Box, Flex, Table } from 'pouncejs';
 import { ListLogSources } from 'Pages/ListLogSources';
+import { formatDatetime } from 'Helpers/utils';
 import LogSourceHealthIcon from './LogSourceHealthIcon';
 import LogSourceTableRowOptionsProps from './LogSourceTableRowOptions';
 
@@ -36,6 +37,7 @@ const LogSourceTable: React.FC<LogSourceTableProps> = ({ sources }) => {
           <Table.HeaderCell>Log Types</Table.HeaderCell>
           <Table.HeaderCell>S3 Bucket</Table.HeaderCell>
           <Table.HeaderCell>S3 Objects Prefix</Table.HeaderCell>
+          <Table.HeaderCell>Last Received Event</Table.HeaderCell>
           <Table.HeaderCell align="center">Healthy</Table.HeaderCell>
           <Table.HeaderCell />
         </Table.Row>
@@ -52,6 +54,9 @@ const LogSourceTable: React.FC<LogSourceTableProps> = ({ sources }) => {
             </Table.Cell>
             <Table.Cell>{source.s3Bucket}</Table.Cell>
             <Table.Cell>{source.s3Prefix || 'None'}</Table.Cell>
+            <Table.Cell>
+              {source.lastEventReceived ? formatDatetime(source.lastEventReceived) : 'N/A'}
+            </Table.Cell>
             <Table.Cell>
               <Flex justify="center">
                 <LogSourceHealthIcon logSourceHealth={source.health} />
