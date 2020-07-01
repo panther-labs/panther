@@ -89,7 +89,7 @@ const StackDeployment: React.FC = () => {
             <b>{values.awsAccountId}</b>.{' '}
             {!initialValues.integrationId
               ? 'This will create a ReadOnly IAM Role to access the logs.'
-              : 'This will update the existing ReadOnly IAM Role.'}
+              : 'This will override the existing ReadOnly IAM Role.'}
           </Text>
           <Text color="gray-300" mt={2} mb={2}>
             The quickest way to do it is through the AWS console
@@ -139,7 +139,7 @@ const StackDeployment: React.FC = () => {
           <b>{values.awsAccountId}</b>.{' '}
           {!initialValues.integrationId
             ? 'This will create a ReadOnly IAM Role to access the logs.'
-            : 'This will update the existing ReadOnly IAM Role.'}
+            : 'This will override the existing ReadOnly IAM Role.'}
         </Text>
         <Box as="ol">
           <Flex as="li" align="center" mb={3}>

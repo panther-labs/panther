@@ -64,7 +64,9 @@ const CustomWebhookDestinationForm: React.FC<CustomWebhookDestinationFormProps> 
         name="outputConfig.customWebhook.webhookURL"
         label="Custom Webhook URL"
         placeholder={
-          existing ? '<hidden information>' : 'Where should we send a push notification to?'
+          existing
+            ? 'Information is hidden. New values will override the existing ones.'
+            : 'Where should we send a push notification to?'
         }
         required={!existing}
       />

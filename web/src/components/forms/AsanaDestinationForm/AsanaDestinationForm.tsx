@@ -61,7 +61,11 @@ const AsanaDestinationForm: React.FC<AsanaDestinationFormProps> = ({ onSubmit, i
         type="password"
         name="outputConfig.asana.personalAccessToken"
         label="Access Token"
-        placeholder={existing ? '<hidden information>' : 'Your personal Asana access token'}
+        placeholder={
+          existing
+            ? 'Information is hidden. New values will override the existing ones.'
+            : 'Your personal Asana access token'
+        }
         required={!existing}
       />
       <Box as="fieldset">

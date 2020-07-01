@@ -73,6 +73,7 @@ const Editor: React.FC<EditorProps> = ({ fallback = null, completions = [], ...r
       wrapEnabled: true,
       theme: 'panther',
       maxLines: Infinity,
+      showPrintMargin: false,
       style: {
         zIndex: 0,
       },

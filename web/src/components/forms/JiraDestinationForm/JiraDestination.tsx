@@ -87,7 +87,9 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
         name="outputConfig.jira.apiKey"
         label="Jira API Key"
         placeholder={
-          existing ? '<hidden information>' : "What's the API key of the related Jira account"
+          existing
+            ? 'Information is hidden. New values will override the existing ones.'
+            : "What's the API key of the related Jira account"
         }
         required={!existing}
         autoComplete="new-password"
