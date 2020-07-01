@@ -139,8 +139,8 @@ func (p *VPCFlowParser) Parse(log string) ([]*parsers.PantherLog, error) {
 		return nil, errors.New("log is not CSV")
 	}
 	if p.columnMap == nil { // must be first log line in file
-		if p.isVpcFlowHeader(log) { // if this is a header, return success but no events and setup p.columnMap
-			return []*parsers.PantherLog{}, nil
+		if p.inspectVpcFlowLogHeader(log) { // if this is a header, return success but no events and setup p.columnMap
+			return nil, nil
 		}
 		return nil, errors.New("invalid header")
 	}
@@ -166,7 +166,8 @@ func (p *VPCFlowParser) LogType() string {
 	return TypeVPCFlow
 }
 
-func (p *VPCFlowParser) isVpcFlowHeader(log string) bool {
+// Returns true if the file is a VPC FL header
+func (p *VPCFlowParser) inspectVpcFlowLogHeader(log string) bool {
 	headers := strings.Split(log, " ")
 	matchCount := 0
 	for _, header := range headers {
