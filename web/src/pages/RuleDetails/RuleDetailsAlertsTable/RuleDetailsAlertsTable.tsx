@@ -33,30 +33,31 @@ const RuleDetailsAlertsTable: React.FC<RuleDetailsAlertsTableProps> = ({ alerts 
     <Table>
       <Table.Head>
         <Table.Row>
-          <Table.HeaderCell>Title</Table.HeaderCell>
-          <Table.HeaderCell>Created At</Table.HeaderCell>
-          <Table.HeaderCell>Alert ID</Table.HeaderCell>
+          <Table.HeaderCell align="center">Severity</Table.HeaderCell>
+          <Table.HeaderCell>Alert</Table.HeaderCell>
+          <Table.HeaderCell align="right">Created At</Table.HeaderCell>
+          <Table.HeaderCell align="right">Last Matched At</Table.HeaderCell>
           <Table.HeaderCell align="right">Events</Table.HeaderCell>
-          <Table.HeaderCell>Last Matched At</Table.HeaderCell>
         </Table.Row>
       </Table.Head>
       <Table.Body>
         {alerts.map(alert => (
           <Table.Row key={alert.alertId}>
-            <Table.Cell maxWidth={400} truncated title={alert.title}>
-              <Link as={RRLink} to={urls.logAnalysis.alerts.details(alert.alertId)} py={4} pr={4}>
-                {alert.title} #{shortenId(alert.alertId)}
-              </Link>
-            </Table.Cell>
-            <Table.Cell align="right" mono>
-              {alert.eventsMatched}
-            </Table.Cell>
             <Table.Cell align="center">
               <Box my={-1} display="inline-block">
                 <SeverityBadge severity={alert.severity} />
               </Box>
             </Table.Cell>
+            <Table.Cell maxWidth={400} truncated title={alert.title}>
+              <Link as={RRLink} to={urls.logAnalysis.alerts.details(alert.alertId)} py={4} pr={4}>
+                #{shortenId(alert.alertId)} {alert.title}
+              </Link>
+            </Table.Cell>
             <Table.Cell align="right">{formatDatetime(alert.creationTime)}</Table.Cell>
+            <Table.Cell align="right">{formatDatetime(alert.updateTime)}</Table.Cell>
+            <Table.Cell align="right" mono>
+              {alert.eventsMatched}
+            </Table.Cell>
           </Table.Row>
         ))}
       </Table.Body>

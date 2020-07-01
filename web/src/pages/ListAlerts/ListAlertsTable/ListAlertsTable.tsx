@@ -17,14 +17,13 @@
  */
 
 import React from 'react';
-import { Box, Link, Table, Flex, Icon, PseudoBox } from 'pouncejs';
+import { Box, Link, Table, Icon, PseudoBox } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/SeverityBadge';
 import { ListAlerts } from 'Pages/ListAlerts/graphql/listAlerts.generated';
 import { ListAlertsInput, ListAlertsSortFieldsEnum, SortDirEnum } from 'Generated/schema';
 import { shortenId, formatDatetime } from 'Helpers/utils';
-import useRouter from 'Hooks/useRouter';
 
 type ListAlertsTableProps = {
   items: ListAlerts['alerts']['alertSummaries'];
@@ -34,7 +33,6 @@ type ListAlertsTableProps = {
 };
 
 const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDir, onSort }) => {
-  const { location } = useRouter();
   const handleSort = (selectedKey: ListAlertsSortFieldsEnum) => {
     if (sortBy === selectedKey) {
       onSort({
@@ -51,8 +49,7 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
         <Table.Row>
           <Table.HeaderCell align="center">Severity</Table.HeaderCell>
           <Table.HeaderCell>Alert</Table.HeaderCell>
-          <Table.HeaderCell>ID</Table.HeaderCell>
-          <Table.HeaderCell align="right">Events</Table.HeaderCell>
+          <Table.HeaderCell />
           <Table.SortableHeaderCell
             align="right"
             onClick={() => handleSort(ListAlertsSortFieldsEnum.CreatedAt)}
@@ -63,6 +60,7 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
             Created At
           </Table.SortableHeaderCell>
           <Table.HeaderCell align="right">Last Matched At</Table.HeaderCell>
+          <Table.HeaderCell align="right">Events</Table.HeaderCell>
         </Table.Row>
       </Table.Head>
       <Table.Body>
@@ -74,46 +72,44 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
               </Box>
             </Table.Cell>
             <Table.Cell maxWidth={400} truncated title={alert.title}>
-              <Flex align="center" my={-4}>
-                <Link
-                  as={RRLink}
-                  to={urls.logAnalysis.alerts.details(alert.alertId)}
-                  py={4}
-                  mr={4}
-                  truncated
-                >
-                  {alert.title}
-                </Link>
-                <PseudoBox
-                  as="a"
-                  target="_blank"
-                  display="flex"
-                  alignItems="center"
-                  rel="noopener noreferrer"
-                  href={`https://${location}${urls.logAnalysis.rules.details(alert.ruleId)}`}
-                  fontSize="small"
-                  borderRadius="pill"
-                  transition="background-color 0.1s ease-in-out"
-                  backgroundColor="rgba(255,255,255,0.1)"
-                  _hover={{
-                    backgroundColor: 'rgba(255,255,255,0.15)',
-                  }}
-                  my={-1}
-                  py={1}
-                  px={4}
-                >
-                  View Rule
-                  <Icon type="external-link" size="x-small" ml={1} />
-                </PseudoBox>
-              </Flex>
+              <Link
+                as={RRLink}
+                to={urls.logAnalysis.alerts.details(alert.alertId)}
+                py={4}
+                mr={4}
+                truncated
+              >
+                #{shortenId(alert.alertId)} {alert.title}
+              </Link>
             </Table.Cell>
-
-            <Table.Cell>{shortenId(alert.alertId)}</Table.Cell>
-            <Table.Cell align="right" mono>
-              {alert.eventsMatched}
+            <Table.Cell>
+              <PseudoBox
+                as="a"
+                target="_blank"
+                rel="noopener noreferrer"
+                display="flex"
+                alignItems="center"
+                href={`${window.location.origin}${urls.logAnalysis.rules.details(alert.ruleId)}`}
+                fontSize="small"
+                borderRadius="pill"
+                transition="background-color 0.1s ease-in-out"
+                backgroundColor="rgba(255,255,255,0.1)"
+                _hover={{
+                  backgroundColor: 'rgba(255,255,255,0.15)',
+                }}
+                my={-1}
+                py={1}
+                px={4}
+              >
+                View Rule
+                <Icon type="external-link" size="x-small" ml={1} />
+              </PseudoBox>
             </Table.Cell>
             <Table.Cell align="right">{formatDatetime(alert.creationTime)}</Table.Cell>
             <Table.Cell align="right">{formatDatetime(alert.updateTime)}</Table.Cell>
+            <Table.Cell align="right" mono>
+              {alert.eventsMatched}
+            </Table.Cell>
           </Table.Row>
         ))}
       </Table.Body>
