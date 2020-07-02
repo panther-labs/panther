@@ -62,9 +62,9 @@ Reference: https://www.a-clickable-link-to-more-info.com
 
 When this rule is uploaded, each of the fields you would normally populate in the UI will be auto-filled.
 
-### Rule Spec Fields
+### Rule Specification Reference
 
-For a complete list of rule specification fields, see the table below.
+A complete list of rule specification fields:
 
 | Field Name                  | Required | Description                                                                                           | Expected Value                                                        |
 | :-------------------------- | :------- | :---------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------- |
@@ -80,12 +80,11 @@ For a complete list of rule specification fields, see the table below.
 | `Runbook`                   | No       | The actions to be carried out if this rule returns an alert, often a link to documentation                     | String                                                                |
 | `Tags`                      | No       | Tags used to categorize this rule                                                                   | List of strings                                                       |
 | `Tests`                     | No       | Unit tests for this rule.    | List of maps                                                          |
+| `DedupPeriodMinutes`   | No  | The period in which similar events of an alert will be grouped together  | `15m`,`30m`,`1h`,`3h`,`12h`, or `24h` |
 
 ### Rule Tests
 
-Tests help validate that your rule will behave as intended.
-
-In your spec file, add the `Tests` key:
+Tests help validate that your rule will behave as intended and detect the early signs of a breach. In your spec file, add the `Tests` key with sample cases:
 
 ```yml
 Tests:
@@ -135,9 +134,9 @@ Runbook: Find out who changed the spec format.
 Reference: https://www.link-to-info.io
 ```
 
-### Policy Spec Fields
+### Policy Specification Reference
 
-The complete list of accepted fields for the policy specification file are detailed below.
+A complete list of policy specification fields:
 
 | Field Name                  | Required | Description                                                                                           | Expected Value                                                        |
 | :-------------------------- | :------- | :---------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------- |
