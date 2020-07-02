@@ -18,13 +18,13 @@
 
 import React from 'react';
 import { ModalProps, useSnackbar } from 'pouncejs';
-import { User } from 'Generated/schema';
 import useAuth from 'Hooks/useAuth';
+import { UserDetails } from 'Source/graphql/fragments/UserDetails.generated';
 import { useDeleteUser } from './graphql/deleteUser.generated';
 import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
 export interface DeleteUserModalProps extends ModalProps {
-  user: User;
+  user: UserDetails;
 }
 
 const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ user, ...rest }) => {

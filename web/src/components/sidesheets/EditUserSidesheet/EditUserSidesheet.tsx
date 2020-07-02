@@ -18,14 +18,14 @@
 
 import * as React from 'react';
 import { Box, Heading, SideSheet, SideSheetProps, useSnackbar } from 'pouncejs';
-import { User } from 'Generated/schema';
 import { extractErrorMessage } from 'Helpers/utils';
 import UserForm, { UserFormValues } from 'Components/forms/UserForm';
 import useAuth from 'Hooks/useAuth';
+import { UserDetails } from 'Source/graphql/fragments/UserDetails.generated';
 import { useEditUser } from './graphql/editUser.generated';
 
 export interface EditUserSidesheetProps extends SideSheetProps {
-  user: User;
+  user: UserDetails;
 }
 
 const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user, onClose, ...rest }) => {
