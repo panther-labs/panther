@@ -32,7 +32,7 @@ type API interface {
 	CreateUser(*models.InviteUserInput) (*models.User, error)
 	DeleteUser(*string) error
 	GetUser(*string) (*models.User, error)
-	ListUsers(*models.ListUsersInput) ([]*models.User, error)
+	ListUsers(*models.ListUsersInput) ([]models.User, error)
 	ResetUserPassword(*string) error
 	UpdateUser(*models.UpdateUserInput) error
 }
