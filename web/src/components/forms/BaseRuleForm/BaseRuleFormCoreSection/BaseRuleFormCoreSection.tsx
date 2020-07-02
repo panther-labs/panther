@@ -191,7 +191,7 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
           validateAddition={tagAdditionValidation}
           placeholder="i.e. Bucket Security (separate with <Enter>)"
         />
-        <Box>
+        <Box as="fieldset">
           <Field
             as={FormikMultiCombobox}
             disabled={disableDestinationField}
