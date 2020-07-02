@@ -63,7 +63,7 @@ const LogSourceTableRowOptions: React.FC<LogSourceTableRowOptionsProps> = ({ sou
         icon="more"
         variant="ghost"
         size="small"
-        aria-label="Policy Options"
+        aria-label="Source Options"
       />
       <DropdownMenu>
         <DropdownLink as={RRLink} to={logSourceEditUrl}>

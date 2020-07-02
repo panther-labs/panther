@@ -41,7 +41,7 @@ const ListDestinationsTableRowOptions: React.FC<ListDestinationsTableRowOptionsP
         icon="more"
         variant="ghost"
         size="small"
-        aria-label="Policy Options"
+        aria-label="Destination Options"
       />
       <DropdownMenu>
         <DropdownItem

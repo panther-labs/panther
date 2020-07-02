@@ -45,7 +45,7 @@ const ListRulesTableRowOptions: React.FC<ListPoliciesTableRowOptionsProps> = ({ 
         icon="more"
         variant="ghost"
         size="small"
-        aria-label="Policy Options"
+        aria-label="Rule Options"
       />
       <DropdownMenu>
         <DropdownLink as={RRLink} to={urls.logAnalysis.rules.edit(rule.id)}>

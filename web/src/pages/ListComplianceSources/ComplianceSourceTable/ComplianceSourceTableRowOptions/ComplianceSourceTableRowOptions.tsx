@@ -47,7 +47,7 @@ const ComplianceSourceTableRowOptions: React.FC<ComplianceSourceTableRowOptionsP
         icon="more"
         variant="ghost"
         size="small"
-        aria-label="Policy Options"
+        aria-label="Source Options"
       />
       <DropdownMenu>
         <DropdownLink as={RRLink} to={urls.compliance.sources.edit(source.integrationId)}>

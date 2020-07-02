@@ -39,7 +39,7 @@ const ListUsersTableRowOptions: React.FC<ListUsersTableRowOptionsProps> = ({ use
         icon="more"
         variant="ghost"
         size="small"
-        aria-label="Policy Options"
+        aria-label="User Options"
       />
       <DropdownMenu>
         <DropdownItem
