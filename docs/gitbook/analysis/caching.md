@@ -2,7 +2,7 @@
 
 Panther's real-time analysis engine examines events one-by-one, and sometimes it's helpful to keep state across invocations.
 
-To accomodate stateful checks, rules can cache values by using built-in helper functions.
+To accommodate stateful checks, rules can cache values by using built-in helper functions.
 
 ## Importing the Helpers
 

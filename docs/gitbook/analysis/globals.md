@@ -30,4 +30,14 @@ def title(event):
 
 ## Adding New Globals
 
-(TODO) JACK
+New globals can be created either with the Panther Analysis Tool (found [here](analysis/panther-analysis-tool.md#globals)) or from within the Panther UI.
+
+To create a new global, navigate to `Settings` > `Global Modules`:
+
+![List Globals](../.gitbook/assets/globals/list-globals.png)
+
+Click `CREATE NEW`:
+
+![Create New Global](../.gitbook/assets/globals/create-new-global.png)
+
+Type your Python functions, then click `CREATE`. This global can now be imported in your rules or policies.

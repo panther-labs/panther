@@ -111,16 +111,16 @@ The `dedupPeriodMinutes` may be set to either:
 * `12h`
 * `24h`
 
-{% hint style="warn" %}
-The deduplication string is limited to `1000` characters and will truncate if it goes over.
-{% endhint %}
-
 To modify the deduplication key, use the `dedup()` function in your rule body:
 
 ```python
 def dedup(event):
   return event.get('remoteAddr')
 ```
+
+{% hint style="warn" %}
+The returned `dedup` string is limited to `1000` characters and will be truncated.
+{% endhint %}
 
 The same parsed log `event` is passed into this function, and you may use any logic desired to calculate the `dedupString`.
 
@@ -130,7 +130,7 @@ If a Falsy value is returned from `dedup()`, then the default string will be use
 
 ### Alert Titles
 
-Alert titles sent to our destinations are the default value of `New Alert: ${Rule Description}`. To override this message, use the `title()` function in your rule:
+Alert titles sent to our destinations are the default value of `New Alert: ${Display Name or ID}`. To override this message, use the `title()` function in your rule:
 
 ```python
 def title(event):

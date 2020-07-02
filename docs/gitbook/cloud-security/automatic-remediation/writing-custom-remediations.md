@@ -2,6 +2,8 @@
 
 To write a new remediation, follow the steps below.
 
+Currently custom automatic remediations are only possible with "from source" deployments. If you have a pre-packaged deployment, you may deploy on top of it with a "from-source" deployment.
+
 ## Code Structure
 
 In the [`./internal/compliance/remediation_aws/src/app/remediations`](https://github.com/panther-labs/panther/tree/master/internal/compliance/remediation_aws/src/app/remediations) folder inside the [Panther repo](https://github.com/panther-labs/panther), add a Python file called `aws_<service>_name_of_remediation` with the following structure:
