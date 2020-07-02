@@ -107,7 +107,7 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
         label="Issue Type*"
         mb={6}
         aria-required
-        placeholder="What type of issue you want us to create? i.e. 'Bug'"
+        placeholder="What type of issue you want us to create? i.e. Bug"
       />
     </BaseDestinationForm>
   );
