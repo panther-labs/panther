@@ -32,7 +32,7 @@ const TableControlsPagination: React.FC<TableControlsPagination> = ({
 }) => {
   return (
     <Flex align="center" justify="center">
-      <Flex mr={9} align="center">
+      <Flex align="center">
         <IconButton
           aria-label="Go to previous page"
           variant="ghost"
