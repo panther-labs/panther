@@ -54,7 +54,7 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
       title={isPolicy ? 'Policy Settings' : 'Rule Settings'}
       actions={
         <Flex align="center" spacing={6}>
-          <FastField as={FormikSwitch} name="enabled" label="Enabled" />
+          <FastField as={FormikSwitch} name="enabled" label="Status" />
           <FastField
             as={FormikCombobox}
             name="severity"
