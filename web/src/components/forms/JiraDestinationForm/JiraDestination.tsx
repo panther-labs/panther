@@ -40,7 +40,7 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
     outputConfig: Yup.object().shape({
       jira: Yup.object().shape({
         orgDomain: Yup.string().url('Must be a valid Jira domain').required(),
-        userName: Yup.string(),
+        userName: Yup.string().required(),
         projectKey: Yup.string().required(),
         assigneeId: Yup.string(),
         issueType: Yup.string().required(),
@@ -77,7 +77,7 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
       <Field
         as={FormikTextInput}
         name="outputConfig.jira.userName"
-        label="Email"
+        label="Email*"
         placeholder="What's the email of the reporting user?"
         mb={6}
       />
