@@ -22,6 +22,7 @@
 * [Analysis]()
   * [Built-in Packs](analysis/built-in-packs.md)
   * [Caching](analysis/caching.md)
+  * [Globals](analysis/globals.md)
   * [Panther Analysis Tool](analysis/panther-analysis-tool.md)
   * [Runtime Environment](analysis/run-time.md)
 * [Tutorials]()
