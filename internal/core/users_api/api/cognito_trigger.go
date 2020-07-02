@@ -19,12 +19,14 @@ package api
  */
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html"
 	"net/url"
 
 	"github.com/aws/aws-lambda-go/events"
+	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 )
 
@@ -46,20 +48,22 @@ const passwordResetTemplate = `
 <br /><small>Copyright © 2020 Panther Labs Inc. All rights reserved.</small>
 `
 
-// Instead of the standard API call, the users-api was invoked by Cognito as a custom message trigger
-func CognitoTrigger(event *events.CognitoEventUserPoolsCustomMessage) (*events.CognitoEventUserPoolsCustomMessage, error) {
-	zap.L().Info("handling cognito trigger", zap.String("source", event.TriggerSource))
+func CognitoTrigger(header events.CognitoEventUserPoolsHeader, input json.RawMessage) (interface{}, error) {
+	zap.L().Info("handling cognito trigger", zap.Any("header", header))
 
-	switch ts := event.TriggerSource; ts {
-	case "CustomMessage_ForgotPassword":
-		return handleForgotPassword(event)
-	default:
-		return event, nil
+	if header.TriggerSource == "CustomMessage_ForgotPassword" {
+		return handleForgotPassword(input)
 	}
+
+	// Ignore other types of triggers
+	return input, nil
 }
 
-func handleForgotPassword(event *events.CognitoEventUserPoolsCustomMessage) (*events.CognitoEventUserPoolsCustomMessage, error) {
-	zap.L().Info("generating forget password email for:" + event.UserName)
+func handleForgotPassword(input json.RawMessage) (*events.CognitoEventUserPoolsCustomMessage, error) {
+	var event events.CognitoEventUserPoolsCustomMessage
+	if err := jsoniter.Unmarshal(input, &event); err != nil {
+		return nil, err
+	}
 
 	// Name defaults to blank if for some reason it isn't defined
 	givenName, _ := event.Request.UserAttributes["given_name"].(string)
@@ -79,5 +83,5 @@ func handleForgotPassword(event *events.CognitoEventUserPoolsCustomMessage) (*ev
 		url.QueryEscape(email),
 	)
 	event.Response.EmailSubject = "Panther Password Reset"
-	return event, nil
+	return &event, nil
 }
