@@ -406,7 +406,7 @@ export type ListAlertsInput = {
   createdAtAfter?: Maybe<Scalars['AWSDateTime']>;
   ruleIdContains?: Maybe<Scalars['String']>;
   alertIdContains?: Maybe<Scalars['String']>;
-  status?: Maybe<AlertStatusFieldsEnum>;
+  status?: Maybe<Array<Maybe<AlertStatusFieldsEnum>>>;
   eventCountMin?: Maybe<Scalars['Int']>;
   eventCountMax?: Maybe<Scalars['Int']>;
   sortBy?: Maybe<ListAlertsSortFieldsEnum>;

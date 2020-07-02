@@ -239,10 +239,18 @@ func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAle
 	}
 }
 
-// filterByStatus - filters by the Status level
+// filterByStatus - filters by Status level(s)
 func filterByStatus(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
-	if input.Status != nil {
-		*filter = filter.And(expression.Equal(expression.Name(StatusKey), expression.Value(*input.Status)))
+	if len(input.Status) > 0 {
+		// Start with the first known key
+		multiFilter := expression.Name(StatusKey).Equal(expression.Value(*input.Status[0]))
+
+		// Then add or conditions starting at a new slice from the second index
+		for _, statusSetting := range input.Status[1:] {
+			multiFilter = multiFilter.Or(expression.Name(StatusKey).Equal(expression.Value(*statusSetting)))
+		}
+
+		*filter = filter.And(multiFilter)
 	}
 }
 

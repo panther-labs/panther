@@ -28,7 +28,6 @@ import isEmpty from 'lodash-es/isEmpty';
 import isNumber from 'lodash-es/isNumber';
 import pick from 'lodash-es/pick';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
-import FormikCombobox from 'Components/fields/ComboBox';
 
 const severityOptions = Object.values(SeverityEnum);
 const statusOptions = Object.values(AlertStatusFieldsEnum);
@@ -44,7 +43,7 @@ export const filters = {
     },
   },
   status: {
-    component: FormikCombobox,
+    component: FormikMultiCombobox,
     props: {
       label: 'Status',
       items: ['', ...statusOptions],
