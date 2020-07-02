@@ -93,7 +93,7 @@ input ListAlertsInput {
   createdAtAfter: AWSDateTime
   ruleIdContains: String
   alertIdContains: String
-  Status: AlertStatusFieldsEnum
+  status: AlertStatusFieldsEnum
   eventCountMin: Int
   eventCountMax: Int
   sortBy: ListAlertsSortFieldsEnum # defaults to `createdAt`
@@ -153,6 +153,7 @@ type AlertSummary {
   updateTime: AWSDateTime!
   ruleId: String
   severity: SeverityEnum
+  status: AlertStatusFieldsEnum
 }
 
 input ListRulesInput {

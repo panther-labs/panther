@@ -49,7 +49,7 @@ export const filters = {
       label: 'Status',
       items: ['', ...statusOptions],
       itemToString: (status: AlertStatusFieldsEnum | '') =>
-        status === '' ? 'open' : capitalize(status.toLowerCase()),
+        status === '' ? 'Open' : capitalize(status.toLowerCase()),
       placeholder: 'Choose a status...',
     },
   },
@@ -125,6 +125,7 @@ export const filters = {
 export type ListAlertsFiltersValues = Pick<
   ListAlertsInput,
   | 'severity'
+  | 'status'
   | 'nameContains'
   | 'createdAtAfter'
   | 'createdAtBefore'
