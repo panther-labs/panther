@@ -4,14 +4,14 @@ description: Get started with Panther in 15 minutes
 
 # Quick Start
 
-What you'll need:
+To get started with Panther, you'll need:
 
-1. An AWS Account
-2. An IAM user or role with permissions to create and manage the necessary resources
+1. An AWS account (preferably dedicated to Panther)
+2. An IAM user/role with permissions to create and manage the necessary resources
 
 We've provided the following IAM roles for least privilege deployments:
 
-- [AWS CloudFormation Template](https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-deployment-role/latest/template.yml)
+- [AWS CloudFormation Template](https://github.com/panther-labs/panther/blob/master/deployments/auxiliary/cloudformation/panther-deployment-role.yml)
 - [Terraform](https://github.com/panther-labs/panther/tree/master/deployments/auxiliary/terraform/panther_deployment_role)
 
 {% hint style="info" %}
@@ -44,7 +44,7 @@ Where:
     * [Additional](development.md#supported-regions) regions are available when [deploying from source](development.md#deploying)
 * VERSION is the latest [tagged release](https://github.com/panther-labs/panther/releases)
 
-![CloudFormation Template URL](.gitbook/assets/cfn-deploy-1.png)
+![CloudFormation Console](.gitbook/assets/cfn-deploy-1.png)
 
 On the next page, choose a stack name (e.g. "panther") and configure the name and email for the first Panther user:
 
@@ -54,7 +54,7 @@ This is the initial admin user account. You can edit the user and invite additio
 
 On the next page, you can skip all the advanced stack settings. Acknowledge the warnings and deploy the stack.
 
-![CloudFormation Finish](.gitbook/assets/cfn-deploy-3.png)
+![CloudFormation Capabilities](.gitbook/assets/cfn-deploy-3.png)
 
 Alternatively, you can deploy Panther using a nested stack in your own CloudFormation pipeline, using a Terraform template, or by building and deploying from [source](development.md#deploying).
 

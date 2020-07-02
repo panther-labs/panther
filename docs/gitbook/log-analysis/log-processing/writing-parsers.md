@@ -1,8 +1,8 @@
 # Writing a New Parser
 
-You can add support for a new log type by writing a custom **Parser**, which controls how Panther converts raw strings into parsed events for analysis by the rules engine.
+To add support for a new log type, write a custom **Parser**, which controls how Panther converts raw strings into parsed events for analysis by the rules engine.
 
-The instructions below provide a developer's guide for writing a new Parser.
+Follow the developer guide below to write a new Parser.
 
 ## Getting Started
 
@@ -54,21 +54,21 @@ import (
 )
 
 type ExampleLog struct {
-	Time     *timestamp.RFC3339 `json:"time,omitempty" description:"The time of the IDS alert"`
-	UserUUID *string            `json:"user_uuid,omitempty" validate:"required" description:"The user who executed the command"`
-	Hostname *string            `json:"hostname,omitempty" validate:"required" description:"The hostname where the log came from"`
-	Details  *ExampleLogDetails `json:"details,omitempty" validate:"required" description:"Metadata about the alert"`
-  Context  *jsoniter.RawMessage `json:"context,omitempty" description:"Contextual information about the alert"`
+	Time     *timestamp.RFC3339   `json:"time,omitempty" description:"The time of the IDS alert"`
+	UserUUID *string              `json:"user_uuid,omitempty" validate:"required" description:"The user who executed the command"`
+	Hostname *string              `json:"hostname,omitempty" validate:"required" description:"The hostname where the log came from"`
+	Details  *ExampleLogDetails   `json:"details,omitempty" validate:"required" description:"Metadata about the alert"`
+	Context  *jsoniter.RawMessage `json:"context,omitempty" description:"Contextual information about the alert"`
 }
 
 type ExampleLogDetails struct {
-  Name    *string  `json:"name,omitempty" description:"The name of the IDS alert"`
-  Command *string  `json:"command" description:"The command executed on the host"`
-  Score   *float64 `json:"score" description:""`
+	Name    *string  `json:"name,omitempty" description:"The name of the IDS alert"`
+	Command *string  `json:"command" description:"The command executed on the host"`
+	Score   *float64 `json:"score" description:""`
 }
 ```
 
-Tips:
+#### Tips
 
 1. Use the `validate` tag as appropriate to represent the expected field values. If the field is mandatory, mark is as `validate:"required"`.
 1. Always include a `description` tag with a short summary of each field which is viewable in the Panther documentation and Data Explorer.
@@ -84,8 +84,8 @@ For more information on the `validate` functionality, check out the [godoc](http
 
 The Parser must include the following methods:
 
-- [New()](https://github.com/panther-labs/panther/blob/master/internal/log_analysis/log_processor/parsers/awslogs/cloudtrail.go#L122): Instantiates the Parser.
-- [Parse()](https://github.com/panther-labs/panther/blob/master/internal/log_analysis/log_processor/parsers/awslogs/cloudtrail.go#L127): Unmarshalling, validating, and extracting the Panther fields.
+- [New()](https://github.com/panther-labs/panther/blob/master/internal/log_analysis/log_processor/parsers/awslogs/cloudtrail.go#L122): Instantiates the Parser
+- [Parse()](https://github.com/panther-labs/panther/blob/master/internal/log_analysis/log_processor/parsers/awslogs/cloudtrail.go#L127): Unmarshalling, validating, and extracting the Panther fields
 - [LogType()](https://github.com/panther-labs/panther/blob/master/internal/log_analysis/log_processor/parsers/awslogs/cloudtrail.go#L151): Returns a string in the form of `Type.Subtype`
 
 ### Finalizing
@@ -102,12 +102,7 @@ Again, use the [CloudTrail Parser](https://github.com/panther-labs/panther/blob/
 
 * Ensure your code is formatted, run `mage fmt`
 * Ensure all tests pass `mage test:ci`
-* Be sure to checkin the documentation that will be automatically generated and
-update [SUMMARY.md](https://github.com/panther-labs/panther/blob/master/docs/gitbook/SUMMARY.md) if you add a new type of log.
-* Deploy Panther. You should be able to see a new table with your added parser in Glue Data Catalog!
-![Log List from Glue Catalog](../../.gitbook/assets/glue-catalog.png)
-* Do an end to end test. You can use [s3queue](../../operations/ops-home.md#tools) to copy test files
-into the `panther-bootstrap-auditlogs-<id>` bucket to drive log processing or use the
-development tool `./out/bin/devtools/<os>/<arch>/logprocessor` to read files from the local file system.
-Query Athena to confirm your data is available.
-* Update the [constants](https://github.com/panther-labs/panther/blob/master/web/src/constants.ts#L79) table to register with UI.
+* Be sure to checkin the documentation that will be automatically generated and update the [SUMMARY.md](https://github.com/panther-labs/panther/blob/master/docs/gitbook/SUMMARY.md) if you added a new family of log.
+* Deploy Panther. You should be able to see a new table with your added parser in Glue Data Catalog
+* Do an end-to-end test. You can use [s3queue](../../operations/ops-home.md#tools) to copy test files into the `panther-bootstrap-auditlogs-<id>` bucket to drive log processing or use the development tool `./out/bin/devtools/<os>/<arch>/logprocessor` to read files from the local file system.
+* Write a test rule for the new type to ensure data is flowing.
