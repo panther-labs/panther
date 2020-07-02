@@ -45,7 +45,7 @@ const ListUsersTableRowOptions: React.FC<ListUsersTableRowOptionsProps> = ({ use
         <DropdownItem
           onSelect={() => showSidesheet({ sidesheet: SIDESHEETS.EDIT_USER, props: { user } })}
         >
-          Edit Profile
+          Edit
         </DropdownItem>
         {user.status !== 'FORCE_CHANGE_PASSWORD' && (
           <DropdownItem
