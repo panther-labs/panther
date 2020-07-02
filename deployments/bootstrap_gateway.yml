@@ -121,21 +121,28 @@ Resources:
           Statement:
             - Effect: Allow
               Action:
+                - acm:ImportCertificate
+                - athena:GetQuery*
+                - athena:StartQueryExecution
+                - athena:StopQueryExecution
+                - athena:UpdateWorkGroup
+                - guardduty:Create*
+                - guardduty:DeletePublishingDestination
+                - guardduty:Get*
+                - guardduty:List*
+                - guardduty:UpdatePublishingDestination
+                - kms:ListAliases # required for GuardDuty
+                - lambda:ListLayerVersions
+              Resource: '*'
+            - Effect: Allow
+              Action:
                 - acm:AddTagsToCertificate
                 - acm:DeleteCertificate
-                - acm:ImportCertificate
                 - acm:RemoveTagsFromCertificate
               # ACM certificate IDs are random and at the time of writing, DeleteCertificate does
               # not support using resource tags as a condition.
               # So this is as narrow as this resource can get:
               Resource: !Sub arn:${AWS::Partition}:acm:${AWS::Region}:${AWS::AccountId}:certificate/*
-            - Effect: Allow
-              Action:
-                - athena:UpdateWorkGroup
-                - athena:StartQueryExecution
-                - athena:StopQueryExecution
-                - athena:GetQuery*
-              Resource: '*'
             - Effect: Allow
               Action:
                 - cloudwatch:PutMetricAlarm
@@ -166,14 +173,6 @@ Resources:
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:userDefinedFunction/panther*
             - Effect: Allow
               Action:
-                - guardduty:Create*
-                - guardduty:Get*
-                - guardduty:List*
-                - guardduty:DeletePublishingDestination
-                - guardduty:UpdatePublishingDestination
-              Resource: '*'
-            - Effect: Allow
-              Action:
                 - iam:DeleteServerCertificate
                 - iam:UploadServerCertificate
               Resource:
@@ -185,18 +184,10 @@ Resources:
               Action: iam:PassRole
               Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/Panther*
             - Effect: Allow
-              Action: kms:ListAliases # required for GuardDuty
-              Resource: '*'
-            - Effect: Allow
-              Action:
-                - lambda:GetFunction
+              Action: lambda:GetFunction
               Resource:
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-policy-engine
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-rules-engine
-            - Effect: Allow
-              Action:
-                - lambda:ListLayerVersions
-              Resource: '*'
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource:
@@ -207,9 +198,6 @@ Resources:
             - Effect: Allow
               Action: lambda:DeleteLayerVersion
               Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:panther-engine-globals:*
-            - Effect: Allow
-              Action: lambda:ListLayerVersions
-              Resource: '*'
             - Effect: Allow
               Action:
                 - logs:DeleteMetricFilter

@@ -43,23 +43,23 @@ func TestUpdateIntegrationSettingsAwsScanType(t *testing.T) {
 
 	getResponse := &dynamodb.GetItemOutput{Item: map[string]*dynamodb.AttributeValue{
 		"integrationId":   {S: aws.String(testIntegrationID)},
-		"integrationType": {S: aws.String("aws-scan")},
+		"integrationType": {S: aws.String(models.IntegrationTypeAWSScan)},
 	}}
 	mockClient.On("GetItem", mock.Anything).Return(getResponse, nil)
 	mockClient.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
-		IntegrationID:    aws.String(testIntegrationID),
-		IntegrationLabel: aws.String("new-label"),
-		ScanIntervalMins: aws.Int(1440),
+		IntegrationID:    testIntegrationID,
+		IntegrationLabel: "new-label",
+		ScanIntervalMins: 1440,
 	})
 
 	expected := &models.SourceIntegration{
 		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-			IntegrationID:    aws.String(testIntegrationID),
-			IntegrationType:  aws.String("aws-scan"),
-			IntegrationLabel: aws.String("new-label"),
-			ScanIntervalMins: aws.Int(1440),
+			IntegrationID:    testIntegrationID,
+			IntegrationType:  models.IntegrationTypeAWSScan,
+			IntegrationLabel: "new-label",
+			ScanIntervalMins: 1440,
 		},
 	}
 	assert.NoError(t, err)
@@ -77,7 +77,7 @@ func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 
 	getResponse := &dynamodb.GetItemOutput{Item: map[string]*dynamodb.AttributeValue{
 		"integrationId":   {S: aws.String(testIntegrationID)},
-		"integrationType": {S: aws.String("aws-s3")},
+		"integrationType": {S: aws.String(models.IntegrationTypeAWS3)},
 	}}
 	mockClient.On("GetItem", mock.Anything).Return(getResponse, nil)
 	mockClient.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
@@ -100,20 +100,20 @@ func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 	mockAthena.On("GetQueryResults", mock.Anything).Return(&athena.GetQueryResultsOutput{}, nil).Twice()
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
-		S3Bucket: aws.String("test-bucket-1"),
-		S3Prefix: aws.String("prefix/"),
-		KmsKey:   aws.String("arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329"),
-		LogTypes: aws.StringSlice([]string{"AWS.VPCFlow"}),
+		S3Bucket: "test-bucket-1",
+		S3Prefix: "prefix/",
+		KmsKey:   "arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329",
+		LogTypes: []string{"AWS.VPCFlow"},
 	})
 
 	expected := &models.SourceIntegration{
 		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-			IntegrationID:   aws.String(testIntegrationID),
-			IntegrationType: aws.String("aws-s3"),
-			S3Bucket:        aws.String("test-bucket-1"),
-			S3Prefix:        aws.String("prefix/"),
-			KmsKey:          aws.String("arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329"),
-			LogTypes:        aws.StringSlice([]string{"AWS.VPCFlow"}),
+			IntegrationID:   testIntegrationID,
+			IntegrationType: models.IntegrationTypeAWS3,
+			S3Bucket:        "test-bucket-1",
+			S3Prefix:        "prefix/",
+			KmsKey:          "arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329",
+			LogTypes:        []string{"AWS.VPCFlow"},
 		},
 	}
 	assert.NoError(t, err)
@@ -126,9 +126,9 @@ func TestUpdateIntegrationValidTime(t *testing.T) {
 	validator, err := models.Validator()
 	require.NoError(t, err)
 	assert.NoError(t, validator.Struct(&models.UpdateIntegrationLastScanStartInput{
-		IntegrationID:     aws.String(testIntegrationID),
-		ScanStatus:        aws.String(models.StatusOK),
-		LastScanStartTime: &now,
+		IntegrationID:     testIntegrationID,
+		ScanStatus:        models.StatusOK,
+		LastScanStartTime: now,
 	}))
 }
 
@@ -146,9 +146,9 @@ func TestUpdateIntegrationLastScanStart(t *testing.T) {
 	require.NoError(t, err)
 
 	err = apiTest.UpdateIntegrationLastScanStart(&models.UpdateIntegrationLastScanStartInput{
-		IntegrationID:     aws.String(testIntegrationID),
-		LastScanStartTime: &lastScanEndTime,
-		ScanStatus:        aws.String(models.StatusOK),
+		IntegrationID:     testIntegrationID,
+		LastScanStartTime: lastScanEndTime,
+		ScanStatus:        models.StatusOK,
 	})
 
 	assert.NoError(t, err)
@@ -169,10 +169,10 @@ func TestUpdateIntegrationLastScanEnd(t *testing.T) {
 	require.NoError(t, err)
 
 	err = apiTest.UpdateIntegrationLastScanEnd(&models.UpdateIntegrationLastScanEndInput{
-		IntegrationID:        aws.String(testIntegrationID),
-		LastScanEndTime:      &lastScanEndTime,
-		LastScanErrorMessage: aws.String("something went wrong"),
-		ScanStatus:           aws.String(models.StatusError),
+		IntegrationID:        testIntegrationID,
+		LastScanEndTime:      lastScanEndTime,
+		LastScanErrorMessage: "something went wrong",
+		ScanStatus:           models.StatusError,
 	})
 
 	assert.NoError(t, err)

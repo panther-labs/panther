@@ -57,8 +57,8 @@ func generateMockSQSBatchInputOutput(integration models.SourceIntegrationMetadat
 	out := &sqs.SendMessageBatchOutput{
 		Successful: []*sqs.SendMessageBatchResultEntry{
 			{
-				Id:               integration.IntegrationID,
-				MessageId:        integration.IntegrationID,
+				Id:               &integration.IntegrationID,
+				MessageId:        &integration.IntegrationID,
 				MD5OfMessageBody: aws.String("f6255bb01c648fe967714d52a89e8e9c"),
 			},
 		},
@@ -69,22 +69,22 @@ func generateMockSQSBatchInputOutput(integration models.SourceIntegrationMetadat
 		scanMsg := &pollermodels.ScanMsg{
 			Entries: []*pollermodels.ScanEntry{
 				{
-					AWSAccountID:  integration.AWSAccountID,
-					IntegrationID: integration.IntegrationID,
+					AWSAccountID:  &integration.AWSAccountID,
+					IntegrationID: &integration.IntegrationID,
 					ResourceType:  aws.String(resourceType),
 				},
 			},
 		}
 
-		var messageBodyBytes []byte
-		messageBodyBytes, err = jsoniter.Marshal(scanMsg)
+		var messageBody string
+		messageBody, err = jsoniter.MarshalToString(scanMsg)
 		if err != nil {
 			break
 		}
 
 		sqsEntries = append(sqsEntries, &sqs.SendMessageBatchRequestEntry{
-			Id:          integration.IntegrationID,
-			MessageBody: aws.String(string(messageBodyBytes)),
+			Id:          &integration.IntegrationID,
+			MessageBody: &messageBody,
 		})
 	}
 
@@ -97,13 +97,13 @@ func generateMockSQSBatchInputOutput(integration models.SourceIntegrationMetadat
 func TestAddToSnapshotQueue(t *testing.T) {
 	env.SnapshotPollersQueueURL = "test-url"
 	testIntegration := models.SourceIntegrationMetadata{
-		AWSAccountID:     aws.String(testAccountID),
-		CreatedAtTime:    aws.Time(time.Time{}),
-		CreatedBy:        aws.String("Bobert"),
-		IntegrationID:    aws.String(testIntegrationID),
-		IntegrationLabel: aws.String("BobertTest"),
-		IntegrationType:  aws.String("aws-scan"),
-		ScanIntervalMins: aws.Int(60),
+		AWSAccountID:     testAccountID,
+		CreatedAtTime:    time.Now(),
+		CreatedBy:        "Bobert",
+		IntegrationID:    testIntegrationID,
+		IntegrationLabel: "BobertTest",
+		IntegrationType:  models.IntegrationTypeAWSScan,
+		ScanIntervalMins: 60,
 	}
 
 	sqsIn, sqsOut, err := generateMockSQSBatchInputOutput(testIntegration)
@@ -131,11 +131,11 @@ func TestPutCloudSecIntegration(t *testing.T) {
 
 	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
 		PutIntegrationSettings: models.PutIntegrationSettings{
-			AWSAccountID:     aws.String(testAccountID),
-			IntegrationLabel: aws.String(testIntegrationLabel),
-			IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
-			ScanIntervalMins: aws.Int(60),
-			UserID:           aws.String(testUserID),
+			AWSAccountID:     testAccountID,
+			IntegrationLabel: testIntegrationLabel,
+			IntegrationType:  models.IntegrationTypeAWSScan,
+			ScanIntervalMins: 60,
+			UserID:           testUserID,
 		},
 	})
 	require.NoError(t, err)
@@ -162,11 +162,11 @@ func TestPutLogIntegrationExists(t *testing.T) {
 
 	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
 		PutIntegrationSettings: models.PutIntegrationSettings{
-			AWSAccountID:     aws.String(testAccountID),
-			IntegrationLabel: aws.String(testIntegrationLabel),
-			IntegrationType:  aws.String(models.IntegrationTypeAWS3),
-			ScanIntervalMins: aws.Int(60),
-			UserID:           aws.String(testUserID),
+			AWSAccountID:     testAccountID,
+			IntegrationLabel: testIntegrationLabel,
+			IntegrationType:  models.IntegrationTypeAWS3,
+			ScanIntervalMins: 60,
+			UserID:           testUserID,
 		},
 	})
 	require.Error(t, err)
@@ -193,11 +193,11 @@ func TestPutCloudSecIntegrationExists(t *testing.T) {
 
 	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
 		PutIntegrationSettings: models.PutIntegrationSettings{
-			AWSAccountID:     aws.String(testAccountID),
-			IntegrationLabel: aws.String(testIntegrationLabel),
-			IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
-			ScanIntervalMins: aws.Int(60),
-			UserID:           aws.String(testUserID),
+			AWSAccountID:     testAccountID,
+			IntegrationLabel: testIntegrationLabel,
+			IntegrationType:  models.IntegrationTypeAWSScan,
+			ScanIntervalMins: 60,
+			UserID:           testUserID,
 		},
 	})
 	require.Error(t, err)
@@ -210,11 +210,11 @@ func TestPutIntegrationValidInput(t *testing.T) {
 	require.NoError(t, err)
 	assert.NoError(t, validator.Struct(&models.PutIntegrationInput{
 		PutIntegrationSettings: models.PutIntegrationSettings{
-			AWSAccountID:     aws.String(testAccountID),
-			IntegrationLabel: aws.String(testIntegrationLabel),
-			IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
-			ScanIntervalMins: aws.Int(60),
-			UserID:           aws.String(testUserID),
+			AWSAccountID:     testAccountID,
+			IntegrationLabel: testIntegrationLabel,
+			IntegrationType:  models.IntegrationTypeAWSScan,
+			ScanIntervalMins: 60,
+			UserID:           testUserID,
 		},
 	}))
 }
@@ -224,11 +224,11 @@ func TestPutIntegrationInvalidInput(t *testing.T) {
 	require.NoError(t, err)
 	assert.Error(t, validator.Struct(&models.PutIntegrationInput{
 		PutIntegrationSettings: models.PutIntegrationSettings{
-			AWSAccountID:     aws.String(testAccountID),
-			IntegrationLabel: aws.String(testIntegrationLabel),
-			IntegrationType:  aws.String("type doesn't exist"),
-			ScanIntervalMins: aws.Int(60),
-			UserID:           aws.String(testUserID),
+			AWSAccountID:     testAccountID,
+			IntegrationLabel: testIntegrationLabel,
+			IntegrationType:  "type doesn't exist",
+			ScanIntervalMins: 60,
+			UserID:           testUserID,
 		},
 	}))
 }
@@ -238,10 +238,10 @@ func TestPutIntegrationDatabaseError(t *testing.T) {
 
 	in := &models.PutIntegrationInput{
 		PutIntegrationSettings: models.PutIntegrationSettings{
-			AWSAccountID:     aws.String(testAccountID),
-			IntegrationLabel: aws.String(testIntegrationLabel),
-			IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
-			UserID:           aws.String(testUserID),
+			AWSAccountID:     testAccountID,
+			IntegrationLabel: testIntegrationLabel,
+			IntegrationType:  models.IntegrationTypeAWSScan,
+			UserID:           testUserID,
 		},
 	}
 	dynamoClient = &ddb.DDB{
@@ -266,12 +266,12 @@ func TestPutIntegrationSQSErrorRecoveryFails(t *testing.T) {
 
 	in := &models.PutIntegrationInput{
 		PutIntegrationSettings: models.PutIntegrationSettings{
-			AWSAccountID:     aws.String(testAccountID),
-			IntegrationLabel: aws.String(testIntegrationLabel),
-			IntegrationType:  aws.String(models.IntegrationTypeAWS3),
-			ScanIntervalMins: aws.Int(60),
-			UserID:           aws.String(testUserID),
-			LogTypes:         aws.StringSlice([]string{"AWS.VPCFlow"}),
+			AWSAccountID:     testAccountID,
+			IntegrationLabel: testIntegrationLabel,
+			IntegrationType:  models.IntegrationTypeAWS3,
+			ScanIntervalMins: 60,
+			UserID:           testUserID,
+			LogTypes:         []string{"AWS.VPCFlow"},
 		},
 	}
 	dynamoClient = &ddb.DDB{
@@ -355,13 +355,13 @@ func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 
 	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
 		PutIntegrationSettings: models.PutIntegrationSettings{
-			AWSAccountID:     aws.String(testAccountID),
-			IntegrationLabel: aws.String(testIntegrationLabel),
-			IntegrationType:  aws.String(models.IntegrationTypeAWS3),
-			UserID:           aws.String(testUserID),
-			S3Bucket:         aws.String("bucket"),
-			KmsKey:           aws.String("keyarns"),
-			LogTypes:         aws.StringSlice([]string{"AWS.VPCFlow"}),
+			AWSAccountID:     testAccountID,
+			IntegrationLabel: testIntegrationLabel,
+			IntegrationType:  models.IntegrationTypeAWS3,
+			UserID:           testUserID,
+			S3Bucket:         "bucket",
+			KmsKey:           "keyarns",
+			LogTypes:         []string{"AWS.VPCFlow"},
 		},
 	})
 	require.NoError(t, err)
@@ -382,13 +382,13 @@ func TestPutLogIntegrationUpdateSqsQueuePermissionsFailure(t *testing.T) {
 
 	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
 		PutIntegrationSettings: models.PutIntegrationSettings{
-			AWSAccountID:     aws.String(testAccountID),
-			IntegrationLabel: aws.String(testIntegrationLabel),
-			IntegrationType:  aws.String(models.IntegrationTypeAWS3),
-			UserID:           aws.String(testUserID),
-			S3Bucket:         aws.String("bucket"),
-			KmsKey:           aws.String("keyarns"),
-			LogTypes:         aws.StringSlice([]string{"AWS.VPCFlow"}),
+			AWSAccountID:     testAccountID,
+			IntegrationLabel: testIntegrationLabel,
+			IntegrationType:  models.IntegrationTypeAWS3,
+			UserID:           testUserID,
+			S3Bucket:         "bucket",
+			KmsKey:           "keyarns",
+			LogTypes:         []string{"AWS.VPCFlow"},
 		},
 	})
 	require.Error(t, err)
