@@ -76,7 +76,7 @@ const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user, onClose, ..
   return (
     <SideSheet aria-labelledby="sidesheet-title" onClose={onClose} {...rest}>
       <Box width={425} m="auto">
-        <Heading pt={1} pb={8} size="medium" id="sidesheet-title">
+        <Heading pt={1} pb={8} id="sidesheet-title">
           Edit Profile
         </Heading>
         <UserForm initialValues={initialValues} onSubmit={submitToServer} />

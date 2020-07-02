@@ -25,13 +25,13 @@ const EditAccountSidesheet: React.FC<SideSheetProps> = props => {
   return (
     <SideSheet aria-label="Profile & Account Settings" {...props}>
       <Box as="section" my={8}>
-        <Heading as="h2" pb={4} size="medium">
+        <Heading as="h2" pb={4}>
           Edit Profile
         </Heading>
         <EditProfileForm onSuccess={props.onClose} />
       </Box>
       <Box as="section">
-        <Heading as="h2" pb={4} size="medium">
+        <Heading as="h2" pb={4}>
           Account Security
         </Heading>
         <ChangePasswordForm />
