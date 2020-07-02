@@ -47,9 +47,7 @@ export const filters = {
       items: RESOURCE_TYPES,
       label: 'Types',
       searchable: true,
-      inputProps: {
-        placeholder: 'Start typing resources...',
-      },
+      placeholder: 'Start typing resources...',
     },
   },
   integrationId: {
@@ -59,9 +57,7 @@ export const filters = {
       searchable: true,
       items: [] as Array<Pick<ComplianceIntegration, 'integrationId' | 'integrationLabel'>>,
       itemToString: (integration: ComplianceIntegration) => integration.integrationLabel,
-      inputProps: {
-        placeholder: 'Choose a source...',
-      },
+      placeholder: 'Choose a source...',
     },
   },
   complianceStatus: {
@@ -70,9 +66,7 @@ export const filters = {
       label: 'Status',
       itemToString: (status: ComplianceStatusEnum) => capitalize(status.toLowerCase()),
       items: statusOptions,
-      inputProps: {
-        placeholder: 'Choose a status...',
-      },
+      placeholder: 'Choose a status...',
     },
   },
 };

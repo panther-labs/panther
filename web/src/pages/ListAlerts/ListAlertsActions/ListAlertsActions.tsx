@@ -38,9 +38,7 @@ export const filters = {
       label: 'Severity',
       items: severityOptions,
       itemToString: (severity: SeverityEnum) => capitalize(severity.toLowerCase()),
-      inputProps: {
-        placeholder: 'Choose a severity...',
-      },
+      placeholder: 'Choose a severity...',
     },
   },
   nameContains: {
