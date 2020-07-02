@@ -48,7 +48,7 @@ func queuePolicy(policy *tableItem) error {
 //
 // Currently only the global type is supported, but in the future we may support other types as
 // well.
-func updateLayer(_ string) error {
+func updateLayer() error {
 	_, err := sqsClient.SendMessage(&sqs.SendMessageInput{
 		MessageBody: aws.String(typeGlobal),
 		QueueUrl:    aws.String(env.LayerManagerQueueURL),
