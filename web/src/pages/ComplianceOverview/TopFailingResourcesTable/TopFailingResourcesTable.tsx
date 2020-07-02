@@ -31,12 +31,15 @@ const TopFailingResourcesTable: React.FC<TopFailingResourcesTableProps> = ({ res
     <Table>
       <Table.Head>
         <Table.Row>
+          <Table.HeaderCell />
           <Table.HeaderCell>Resource</Table.HeaderCell>
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {resources.map(resource => (
+        {resources.map((resource, index) => (
           <Table.Row key={resource.id}>
+            <Table.Cell>{index + 1}</Table.Cell>
+
             <Table.Cell>
               <Link as={RRLink} to={urls.compliance.resources.details(resource.id)} py={4} pr={4}>
                 {resource.id}
