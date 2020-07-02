@@ -39,17 +39,21 @@ ace.define(
   }
   
   .ace-panther.ace_editor.ace_autocomplete {
-    background: #3e6079;
+    background: ${theme.colors['navyblue-600']};
     color: white;
     border: none;
   }
   
   .ace-panther.ace_editor.ace_autocomplete .ace_completion-highlight {
-    color: ${theme.colors['blue-600']}
+    color: ${theme.colors['blue-400']};
   }
   
   .ace-panther.ace_editor.ace_autocomplete .ace_marker-layer .ace_active-line {
-    background-color: #477BA1
+    background-color: ${theme.colors['navyblue-450']};
+  }
+  
+  .ace-panther.ace_editor.ace_autocomplete .ace_marker-layer .ace_line-hover {
+    background-color: ${theme.colors['navyblue-450']};
   }
   
   .ace-panther .ace_print-margin {
