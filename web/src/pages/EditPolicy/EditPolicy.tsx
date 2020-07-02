@@ -79,18 +79,19 @@ const EditPolicyPage: React.FC = () => {
   // it stores JSON, that's why we are making those here in the front-end)
   const { policy } = queryData;
   const initialValues = {
-    id: policy.id,
     autoRemediationId: policy.autoRemediationId,
     autoRemediationParameters: formatJSON(JSON.parse(policy.autoRemediationParameters)),
     body: policy.body,
     description: policy.description,
     displayName: policy.displayName,
     enabled: policy.enabled,
-    suppressions: policy.suppressions,
+    id: policy.id,
+    outputIds: policy.outputIds,
     reference: policy.reference,
     resourceTypes: policy.resourceTypes,
     runbook: policy.runbook,
     severity: policy.severity,
+    suppressions: policy.suppressions,
     tags: policy.tags,
     tests: queryData.policy.tests.map(({ resource, ...restTestData }) => ({
       ...restTestData,

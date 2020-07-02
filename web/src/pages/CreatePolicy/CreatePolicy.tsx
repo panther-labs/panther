@@ -29,19 +29,20 @@ import useRouter from 'Hooks/useRouter';
 import { useCreatePolicy } from './graphql/createPolicy.generated';
 
 const initialValues: Required<AddPolicyInput> = {
-  id: '',
+  body: DEFAULT_POLICY_FUNCTION,
   autoRemediationId: '',
   autoRemediationParameters: '{}',
   description: '',
   displayName: '',
   enabled: true,
-  suppressions: [],
+  id: '',
+  outputIds: [],
   reference: '',
   resourceTypes: [],
   runbook: '',
   severity: null,
+  suppressions: [],
   tags: [],
-  body: DEFAULT_POLICY_FUNCTION,
   tests: [],
 };
 

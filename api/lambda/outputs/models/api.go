@@ -252,9 +252,3 @@ type AsanaConfig struct {
 type CustomWebhookConfig struct {
 	WebhookURL string `json:"webhookURL" validate:"omitempty,url"`
 }
-
-// DefaultOutputs is the structure holding the information about default outputs for severity
-type DefaultOutputs struct {
-	Severity  *string   `json:"severity"`
-	OutputIDs []*string `json:"outputIds"`
-}

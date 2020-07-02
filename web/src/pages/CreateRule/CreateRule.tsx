@@ -33,17 +33,18 @@ import useRouter from 'Hooks/useRouter';
 import { useCreateRule } from './graphql/createRule.generated';
 
 const initialValues: Required<AddRuleInput> = {
-  id: '',
+  body: `${DEFAULT_RULE_FUNCTION}\n\n${DEFAULT_TITLE_FUNCTION}\n\n${DEFAULT_DEDUP_FUNCTION}`,
+  dedupPeriodMinutes: 60,
   description: '',
   displayName: '',
   enabled: true,
-  reference: '',
+  id: '',
   logTypes: [],
+  outputIds: [],
+  reference: '',
   runbook: '',
   severity: null,
-  dedupPeriodMinutes: 60,
   tags: [],
-  body: `${DEFAULT_RULE_FUNCTION}\n\n${DEFAULT_TITLE_FUNCTION}\n\n${DEFAULT_DEDUP_FUNCTION}`,
   tests: [],
 };
 
