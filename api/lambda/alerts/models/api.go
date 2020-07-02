@@ -58,7 +58,7 @@ type GetAlertOutput = Alert
 //         "pageSize": 25,
 //         "exclusiveStartKey": "abcdef",
 //         "severity": ["INFO"],
-//         "status": "TRIAGED",
+//         "status": ["TRIAGED"],
 //         "nameContains": "string in alert title",
 //         "createdAtAfter": "2020-06-17T15:49:40Z",
 //         "createdAtBefore": "2020-06-17T15:49:40Z",
