@@ -24,7 +24,7 @@ import FormikSwitch from 'Components/fields/Switch';
 
 const ErrorReportingSection: React.FC = () => {
   return (
-    <Box>
+    <Box as="fieldset">
       <Field
         as={FormikSwitch}
         name="errorReportingConsent"
