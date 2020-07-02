@@ -57,6 +57,9 @@ type Alert struct {
 	// Runbook is the user-provided triage information.
 	Runbook *string `json:"runbook,omitempty"`
 
+	// Status is the user-provided status level.
+	Status string `json:"status,omitempty" validate:"omitempty,oneof=TRIAGED CLOSED RESOLVED"`
+
 	// Tags is the set of policy tags.
 	Tags []string `json:"tags,omitempty"`
 

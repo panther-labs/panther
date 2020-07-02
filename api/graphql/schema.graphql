@@ -93,6 +93,7 @@ input ListAlertsInput {
   createdAtAfter: AWSDateTime
   ruleIdContains: String
   alertIdContains: String
+  Status: AlertStatusFieldsEnum
   eventCountMin: Int
   eventCountMax: Int
   sortBy: ListAlertsSortFieldsEnum # defaults to `createdAt`
@@ -851,6 +852,12 @@ enum ListRulesSortFieldsEnum {
 
 enum ListAlertsSortFieldsEnum {
   createdAt
+}
+
+enum AlertStatusFieldsEnum {
+  TRIAGED
+  CLOSED
+  RESOLVED
 }
 
 enum SortDirEnum {

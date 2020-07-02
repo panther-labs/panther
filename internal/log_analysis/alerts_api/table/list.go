@@ -217,6 +217,7 @@ func (table *AlertsTable) applyFilters(builder *expression.Builder, input *model
 
 	// Then, apply our filters
 	filterBySeverity(&filter, input)
+	filterByStatus(&filter, input)
 	filterByEventCount(&filter, input)
 
 	// Finally, overwrite the existing condition filter on the builder
@@ -235,6 +236,13 @@ func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAle
 		}
 
 		*filter = filter.And(multiFilter)
+	}
+}
+
+// filterByStatus - filters by the Status level
+func filterByStatus(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
+	if input.Status != nil {
+		*filter = filter.And(expression.Equal(expression.Name(StatusKey), expression.Value(*input.Status)))
 	}
 }
 

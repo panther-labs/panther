@@ -117,6 +117,7 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 		Tags:                []string{"Tag"},
 		Type:                alertModel.RuleType,
 		AlertID:             aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
+		Status:              "",
 		Title:               newAlertDedupEvent.GeneratedTitle,
 	}
 	expectedMarshaledAlertNotification, err := jsoniter.MarshalToString(expectedAlertNotification)
@@ -131,6 +132,7 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 
 	expectedAlert := &Alert{
 		ID:              "b25dc23fb2a0b362da8428dbec1381a8",
+		Status:          "",
 		TimePartition:   "defaultPartition",
 		Severity:        string(testRuleResponse.Severity),
 		RuleDisplayName: aws.String(string(testRuleResponse.DisplayName)),
@@ -189,6 +191,7 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 		Tags:                []string{"Tag"},
 		Type:                alertModel.RuleType,
 		AlertID:             aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
+		Status:              "",
 		Title:               aws.String(newAlertDedupEventWithoutTitle.RuleID),
 	}
 	expectedMarshaledAlertNotification, err := jsoniter.MarshalToString(expectedAlertNotification)
@@ -211,6 +214,7 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 
 	expectedAlert := &Alert{
 		ID:              "b25dc23fb2a0b362da8428dbec1381a8",
+		Status:          "",
 		TimePartition:   "defaultPartition",
 		Severity:        string(testRuleResponse.Severity),
 		Title:           newAlertDedupEventWithoutTitle.RuleID,
@@ -258,6 +262,7 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 		Tags:                []string{"Tag"},
 		Type:                alertModel.RuleType,
 		AlertID:             aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
+		Status:              "",
 		Title:               aws.String("DisplayName"),
 	}
 	expectedMarshaledAlertNotification, err := jsoniter.MarshalToString(expectedAlertNotification)
@@ -272,6 +277,7 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 
 	expectedAlert := &Alert{
 		ID:              "b25dc23fb2a0b362da8428dbec1381a8",
+		Status:          "",
 		TimePartition:   "defaultPartition",
 		Severity:        string(testRuleResponse.Severity),
 		RuleDisplayName: aws.String(string(testRuleResponse.DisplayName)),
@@ -331,6 +337,7 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 		Tags:                []string{"Tag"},
 		Type:                alertModel.RuleType,
 		AlertID:             aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
+		Status:              "",
 		Title:               newAlertDedupEvent.GeneratedTitle,
 	}
 	expectedMarshaledAlertNotification, err := jsoniter.MarshalToString(expectedAlertNotification)
@@ -345,6 +352,7 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 
 	expectedAlert := &Alert{
 		ID:              "b25dc23fb2a0b362da8428dbec1381a8",
+		Status:          "",
 		TimePartition:   "defaultPartition",
 		Severity:        string(testRuleResponse.Severity),
 		Title:           aws.StringValue(newAlertDedupEvent.GeneratedTitle),

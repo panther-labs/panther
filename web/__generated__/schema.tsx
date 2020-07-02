@@ -110,6 +110,12 @@ export type AlertDetails = {
   dedupString: Scalars['String'];
 };
 
+export enum AlertStatusFieldsEnum {
+  Triaged = 'TRIAGED',
+  Closed = 'CLOSED',
+  Resolved = 'RESOLVED',
+}
+
 export type AlertSummary = {
   __typename?: 'AlertSummary';
   alertId: Scalars['String'];
@@ -399,6 +405,7 @@ export type ListAlertsInput = {
   createdAtAfter?: Maybe<Scalars['AWSDateTime']>;
   ruleIdContains?: Maybe<Scalars['String']>;
   alertIdContains?: Maybe<Scalars['String']>;
+  Status?: Maybe<AlertStatusFieldsEnum>;
   eventCountMin?: Maybe<Scalars['Int']>;
   eventCountMax?: Maybe<Scalars['Int']>;
   sortBy?: Maybe<ListAlertsSortFieldsEnum>;
@@ -1237,6 +1244,7 @@ export type ResolversTypes = {
   AWSJSON: ResolverTypeWrapper<Scalars['AWSJSON']>;
   ListAlertsInput: ListAlertsInput;
   SeverityEnum: SeverityEnum;
+  AlertStatusFieldsEnum: AlertStatusFieldsEnum;
   ListAlertsSortFieldsEnum: ListAlertsSortFieldsEnum;
   SortDirEnum: SortDirEnum;
   ListAlertsResponse: ResolverTypeWrapper<ListAlertsResponse>;
@@ -1361,6 +1369,7 @@ export type ResolversParentTypes = {
   AWSJSON: Scalars['AWSJSON'];
   ListAlertsInput: ListAlertsInput;
   SeverityEnum: SeverityEnum;
+  AlertStatusFieldsEnum: AlertStatusFieldsEnum;
   ListAlertsSortFieldsEnum: ListAlertsSortFieldsEnum;
   SortDirEnum: SortDirEnum;
   ListAlertsResponse: ListAlertsResponse;

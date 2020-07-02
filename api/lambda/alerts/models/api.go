@@ -58,6 +58,7 @@ type GetAlertOutput = Alert
 //         "pageSize": 25,
 //         "exclusiveStartKey": "abcdef",
 //         "severity": ["INFO"],
+//         "status": "TRIAGED",
 //         "nameContains": "string in alert title",
 //         "createdAtAfter": "2020-06-17T15:49:40Z",
 //         "createdAtBefore": "2020-06-17T15:49:40Z",
@@ -81,6 +82,7 @@ type ListAlertsInput struct {
 	// Filtering
 	Severity        []*string  `json:"severity" validate:"omitempty,dive,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 	NameContains    *string    `json:"nameContains"`
+	Status          *string    `json:"status" validate:"omitempty,oneof=TRIAGED CLOSED RESOLVED"`
 	CreatedAtBefore *time.Time `json:"createdAtBefore"`
 	CreatedAtAfter  *time.Time `json:"createdAtAfter"`
 	RuleIDContains  *string    `json:"ruleIdContains"`
@@ -106,6 +108,7 @@ type ListAlertsOutput struct {
 // AlertSummary contains summary information for an alert
 type AlertSummary struct {
 	AlertID         *string    `json:"alertId" validate:"required"`
+	Status          *string    `json:"status,omitempty"`
 	RuleID          *string    `json:"ruleId" validate:"required"`
 	RuleDisplayName *string    `json:"ruleDisplayName,omitempty"`
 	RuleVersion     *string    `json:"ruleVersion" validate:"required"`

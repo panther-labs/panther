@@ -37,6 +37,7 @@ const (
 	TitleKey           = "title"
 	SeverityKey        = "severity"
 	EventCountKey      = "eventCount"
+	StatusKey          = "status"
 )
 
 // API defines the interface for the alerts table which can be used for mocking.
@@ -62,6 +63,7 @@ type DynamoItem = map[string]*dynamodb.AttributeValue
 // AlertItem is a DDB representation of an Alert
 type AlertItem struct {
 	AlertID         string    `json:"id"`
+	Status          string    `json:"status"`
 	RuleID          string    `json:"ruleId"`
 	RuleVersion     string    `json:"ruleVersion"`
 	RuleDisplayName *string   `json:"ruleDisplayName"`

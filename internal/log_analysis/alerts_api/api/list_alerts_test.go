@@ -37,6 +37,7 @@ var (
 		{
 			RuleID:          "ruleId",
 			AlertID:         "alertId",
+			Status:          "TRIAGED",
 			UpdateTime:      timeInTest,
 			CreationTime:    timeInTest,
 			Severity:        "INFO",
@@ -55,6 +56,7 @@ var (
 			RuleVersion:     aws.String("ruleVersion"),
 			RuleDisplayName: aws.String("ruleDisplayName"),
 			AlertID:         aws.String("alertId"),
+			Status:          aws.String("TRIAGED"),
 			UpdateTime:      aws.Time(timeInTest),
 			CreationTime:    aws.Time(timeInTest),
 			Severity:        aws.String("INFO"),
@@ -71,6 +73,7 @@ func TestListAlertsForRule(t *testing.T) {
 
 	input := &models.ListAlertsInput{
 		RuleID:            aws.String("ruleId"),
+		Status:            aws.String("TRIAGED"),
 		PageSize:          aws.Int(10),
 		ExclusiveStartKey: aws.String("startKey"),
 		Severity:          []*string{aws.String("INFO")},
@@ -94,6 +97,7 @@ func TestListAllAlerts(t *testing.T) {
 	input := &models.ListAlertsInput{
 		PageSize:          aws.Int(10),
 		ExclusiveStartKey: aws.String("startKey"),
+		Status:            aws.String("TRIAGED"),
 		Severity:          []*string{aws.String("INFO")},
 		NameContains:      aws.String("title"),
 		EventCountMin:     aws.Int(0),
@@ -124,6 +128,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 		{
 			RuleID:       "ruleId",
 			AlertID:      "alertId",
+			Status:       "TRIAGED",
 			UpdateTime:   timeInTest,
 			CreationTime: timeInTest,
 			Severity:     "INFO",
@@ -135,6 +140,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 		{ // Alert with Display Name for rule
 			RuleID:          "ruleId",
 			AlertID:         "alertId",
+			Status:          "TRIAGED",
 			UpdateTime:      timeInTest,
 			CreationTime:    timeInTest,
 			Severity:        "INFO",
@@ -151,6 +157,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			RuleID:        aws.String("ruleId"),
 			RuleVersion:   aws.String("ruleVersion"),
 			AlertID:       aws.String("alertId"),
+			Status:        aws.String("TRIAGED"),
 			UpdateTime:    aws.Time(timeInTest),
 			CreationTime:  aws.Time(timeInTest),
 			Severity:      aws.String("INFO"),
@@ -162,6 +169,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			RuleID:          aws.String("ruleId"),
 			RuleVersion:     aws.String("ruleVersion"),
 			AlertID:         aws.String("alertId"),
+			Status:          aws.String("TRIAGED"),
 			UpdateTime:      aws.Time(timeInTest),
 			CreationTime:    aws.Time(timeInTest),
 			Severity:        aws.String("INFO"),
