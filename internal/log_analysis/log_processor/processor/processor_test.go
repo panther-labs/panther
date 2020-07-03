@@ -272,12 +272,18 @@ func TestProcessClassifyFailure(t *testing.T) {
 		CloudWatchMetrics: []metrics.MetricDirectiveObject{
 			{
 				Namespace:  "panther/log_processor",
-				Dimensions: processorLogDimensions,
-				Metrics:    []metrics.Metric{processorMetric},
+				Dimensions: []metrics.DimensionSet{{"logType"}},
+				Metrics: []metrics.Metric{
+					{
+						Name: "bytesProcessed",
+						Unit: metrics.UnitBytes,
+					},
+				},
 			},
 		},
 		Timestamp: p.operation.EndTime.UnixNano() / 1000000,
 	}
+
 	expected := []observer.LoggedEntry{
 		{
 			Entry: zapcore.Entry{
@@ -346,15 +352,33 @@ func TestProcessClassifyFailure(t *testing.T) {
 				Message: "metric",
 			},
 			Context: []zapcore.Field{
-				zap.Any("logType", testLogType),
-				zap.Any("bytesProcessed", 0),
-				zap.Any("_aws", embeddedMetric),
+				{
+					Key:    "logType",
+					String: testLogType,
+				},
+				{
+					Key:       "bytesProcessed",
+					Interface: uint64(7996),
+				},
+				{
+					Key:       "_aws",
+					Interface: embeddedMetric,
+				},
 			},
 		},
 	}
 	require.Equal(t, len(expected), len(actual))
 	for i := range expected {
 		if i == len(expected)-1 {
+			assert.Equal(t, expected[i].Entry.Level, actual[i].Entry.Level)
+			assert.Equal(t, expected[i].Entry.Message, actual[i].Entry.Message)
+			require.Equal(t, len(expected[i].Context), len(actual[i].Context))
+			for j := range expected[i].Context {
+				assert.Equal(t, expected[i].Context[j].Key, actual[i].Context[j].Key)
+				assert.Equal(t, expected[i].Context[j].Interface, actual[i].Context[j].Interface)
+				assert.Equal(t, expected[i].Context[j].String, actual[i].Context[j].String)
+				assert.Equal(t, expected[i].Context[j].Integer, actual[i].Context[j].Integer)
+			}
 			continue
 		}
 		assertLogEqual(t, expected[i], actual[i])
