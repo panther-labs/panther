@@ -34,7 +34,7 @@ func TestListUsersGatewayErr(t *testing.T) {
 	mockGateway := &cognito.MockUserGateway{}
 	userGateway = mockGateway
 	mockGateway.On("ListUsers", &models.ListUsersInput{}).Return(
-		([]*models.User)(nil), &genericapi.AWSError{})
+		([]models.User)(nil), &genericapi.AWSError{})
 
 	result, err := (API{}).ListUsers(&models.ListUsersInput{})
 	assert.Nil(t, result)
@@ -45,7 +45,7 @@ func TestListUsersGatewayErr(t *testing.T) {
 func TestListUsers(t *testing.T) {
 	mockGateway := &cognito.MockUserGateway{}
 	userGateway = mockGateway
-	users := []*models.User{{ID: aws.String("test-user-id")}}
+	users := []models.User{{ID: aws.String("test-user-id")}}
 	mockGateway.On("ListUsers", &models.ListUsersInput{}).Return(users, nil)
 
 	result, err := (API{}).ListUsers(&models.ListUsersInput{})

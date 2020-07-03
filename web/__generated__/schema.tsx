@@ -957,6 +957,7 @@ export type S3LogIntegration = {
   integrationId: Scalars['ID'];
   integrationType: Scalars['String'];
   integrationLabel: Scalars['String'];
+  lastEventReceived?: Maybe<Scalars['AWSDateTime']>;
   s3Bucket: Scalars['String'];
   s3Prefix?: Maybe<Scalars['String']>;
   kmsKey?: Maybe<Scalars['String']>;
@@ -2297,6 +2298,7 @@ export type S3LogIntegrationResolvers<
   integrationId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   integrationType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   integrationLabel?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  lastEventReceived?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   s3Bucket?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   s3Prefix?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   kmsKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;

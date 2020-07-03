@@ -368,6 +368,7 @@ type S3LogIntegration {
   integrationId: ID!
   integrationType: String!
   integrationLabel: String!
+  lastEventReceived: AWSDateTime
   s3Bucket: String!
   s3Prefix: String
   kmsKey: String

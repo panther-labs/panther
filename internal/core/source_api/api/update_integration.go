@@ -106,7 +106,7 @@ func (API) UpdateIntegrationLastScanStart(input *models.UpdateIntegrationLastSca
 		return err
 	}
 
-	existingIntegration.LastScanStartTime = input.LastScanStartTime
+	existingIntegration.LastScanStartTime = &input.LastScanStartTime
 	existingIntegration.ScanStatus = input.ScanStatus
 	err = dynamoClient.PutItem(existingIntegration)
 	if err != nil {
@@ -122,7 +122,7 @@ func (API) UpdateIntegrationLastScanEnd(input *models.UpdateIntegrationLastScanE
 		return err
 	}
 
-	existingIntegration.LastScanEndTime = input.LastScanEndTime
+	existingIntegration.LastScanEndTime = &input.LastScanEndTime
 	existingIntegration.LastScanErrorMessage = input.LastScanErrorMessage
 	existingIntegration.ScanStatus = input.ScanStatus
 	err = dynamoClient.PutItem(existingIntegration)
