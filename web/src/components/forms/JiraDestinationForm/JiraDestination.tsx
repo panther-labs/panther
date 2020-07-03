@@ -25,6 +25,7 @@ import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
+import { Box, FormHelperText } from 'pouncejs';
 
 type JiraFieldValues = Pick<DestinationConfigInput, 'jira'>;
 
@@ -98,13 +99,18 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
         label="Assignee ID"
         placeholder="Who should we assign this to?"
       />
-      <Field
-        as={FormikTextInput}
-        name="outputConfig.jira.issueType"
-        label="* Issue Type"
-        placeholder="What type of issue you want us to create? i.e. Bug"
-        required
-      />
+      <Box as="fieldset">
+        <Field
+          as={FormikTextInput}
+          name="outputConfig.jira.issueType"
+          label="* Issue Type"
+          placeholder="What type of issue you want us to create?"
+          required
+        />
+        <FormHelperText id="issueType-helper" mt={2}>
+          Can be Bug, Story, Task or any custom type
+        </FormHelperText>
+      </Box>
     </BaseDestinationForm>
   );
 };
