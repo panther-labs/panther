@@ -19,7 +19,7 @@
 import React from 'react';
 import { FastField, useFormikContext, Field } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
-import { Flex, Box, SimpleGrid, FormHelperText, Link } from 'pouncejs';
+import { Flex, Box, SimpleGrid, FormHelperText, Link, FormError } from 'pouncejs';
 import { SeverityEnum } from 'Generated/schema';
 import { capitalize, minutesToString } from 'Helpers/utils';
 import FormikTextArea from 'Components/fields/TextArea';
@@ -65,14 +65,14 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
   const generateHelperText = React.useCallback(() => {
     if (destinationsError) {
       return (
-        <FormHelperText id="outputIds-description" color="red-200" mt={3}>
+        <FormError id="outputIds-description" mt={2}>
           There was a problem loading your destinations!
-        </FormHelperText>
+        </FormError>
       );
     }
     if (!availableOutputIds.length && !destinationsLoading) {
       return (
-        <FormHelperText id="outputIds-description" mt={3} mr={1}>
+        <FormHelperText id="outputIds-description" mt={2} mr={1}>
           You have not configured any destinations, create one
           <Link ml={1} as={RRLink} to={urls.settings.destinations()}>
             here
@@ -82,14 +82,14 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
     }
     if (destinationsLoading) {
       return (
-        <FormHelperText id="outputIds-description" mt={3}>
+        <FormHelperText id="outputIds-description" mt={2}>
           Loading your destinations...
         </FormHelperText>
       );
     }
     return (
-      <FormHelperText id="outputIds-description" mt={3}>
-        Send an alert to these destinations regardless of their severity level settings
+      <FormHelperText id="outputIds-description" mt={2}>
+        Send alerts to these destinations regardless of their severity level settings
       </FormHelperText>
     );
   }, [destinationsError, destinationsLoading, availableOutputIds]);
@@ -140,20 +140,22 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
           placeholder={`Additional context about this ${type}`}
           name="description"
         />
-        <FastField
-          as={FormikTextArea}
-          label="Runbook"
-          placeholder={`Procedures and operations related to this ${type}`}
-          name="runbook"
-        />
-        <FastField
-          as={FormikTextArea}
-          label="Reference"
-          placeholder={`An external link to why this ${type} exists`}
-          name="reference"
-        />
+        <SimpleGrid columns={2} spacing={5}>
+          <FastField
+            as={FormikTextArea}
+            label="Runbook"
+            placeholder={`Procedures and operations related to this ${type}`}
+            name="runbook"
+          />
+          <FastField
+            as={FormikTextArea}
+            label="Reference"
+            placeholder={`An external link to why this ${type} exists`}
+            name="reference"
+          />
+        </SimpleGrid>
       </SimpleGrid>
-      <SimpleGrid columns={3} spacing={5}>
+      <SimpleGrid columns={4} spacing={5}>
         {isPolicy && (
           <React.Fragment>
             <Box>
@@ -163,7 +165,7 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
                 label="Resource Types"
                 name="resourceTypes"
                 items={RESOURCE_TYPES}
-                placeholder="Filter affected resource types"
+                placeholder="Where should the policy apply?"
                 aria-describedby="resourceTypes-description"
               />
               <FormHelperText id="resourceTypes-description" mt={2}>
@@ -189,9 +191,10 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
           items={values.tags}
           allowAdditions
           validateAddition={tagAdditionValidation}
-          placeholder="i.e. Bucket Security (separate with <Enter>)"
+          placeholder="i.e. HIPAA (separate with <Enter>)"
         />
         <Box as="fieldset">
+          {/* FIXME: We have an issue with FastField here. We shouldn't be setting props like that  on FastField or Field elements */}
           <Field
             as={FormikMultiCombobox}
             disabled={disableDestinationField}
@@ -214,7 +217,7 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
               label="* Log Types"
               name="logTypes"
               items={LOG_TYPES}
-              placeholder="Filter affected log types"
+              placeholder="Where should the rule apply?"
             />
             <FastField
               as={FormikCombobox}
