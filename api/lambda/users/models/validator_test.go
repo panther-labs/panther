@@ -40,15 +40,17 @@ func TestUpdateUserBlankField(t *testing.T) {
 
 func TestUpdateUserOneField(t *testing.T) {
 	assert.NoError(t, Validator().Struct(&UpdateUserInput{
-		ID:        mockID,
-		GivenName: aws.String("panther"),
+		RequesterID: mockID,
+		ID:          mockID,
+		GivenName:   aws.String("panther"),
 	}))
 }
 
 func TestUpdateUserAllFields(t *testing.T) {
 	assert.NoError(t, Validator().Struct(&UpdateUserInput{
-		ID:         mockID,
-		GivenName:  aws.String("given-name"),
-		FamilyName: aws.String("family-name"),
+		RequesterID: mockID,
+		ID:          mockID,
+		GivenName:   aws.String("given-name"),
+		FamilyName:  aws.String("family-name"),
 	}))
 }
