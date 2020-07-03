@@ -72,7 +72,6 @@ const S3SourceConfigurationPanel: React.FC = () => {
             name="logTypes"
             items={LOG_TYPES}
             placeholder="The types of logs that are collected"
-            required
           />
         </Flex>
         <Flex justify="center" my={4}>
