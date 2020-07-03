@@ -63,4 +63,4 @@ const AddDestinationSidesheet: React.FC<AddDestinationSidesheetProps> = ({
   );
 };
 
-export default AddDestinationSidesheet;
+export default React.memo(AddDestinationSidesheet);

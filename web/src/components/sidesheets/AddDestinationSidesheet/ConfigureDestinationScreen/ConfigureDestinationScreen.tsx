@@ -244,4 +244,4 @@ const ConfigureDestinationScreen: React.FC<ConfigureDestinationScreenProps> = ({
   );
 };
 
-export default ConfigureDestinationScreen;
+export default React.memo(ConfigureDestinationScreen);
