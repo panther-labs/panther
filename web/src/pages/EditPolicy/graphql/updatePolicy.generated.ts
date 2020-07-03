@@ -34,17 +34,18 @@ export type UpdatePolicy = {
       Types.PolicyDetails,
       | 'autoRemediationId'
       | 'autoRemediationParameters'
+      | 'body'
       | 'description'
       | 'displayName'
       | 'enabled'
-      | 'suppressions'
       | 'id'
+      | 'outputIds'
       | 'reference'
       | 'resourceTypes'
       | 'runbook'
       | 'severity'
+      | 'suppressions'
       | 'tags'
-      | 'body'
     > & {
       tests?: Types.Maybe<
         Array<
@@ -62,17 +63,18 @@ export const UpdatePolicyDocument = gql`
     updatePolicy(input: $input) {
       autoRemediationId
       autoRemediationParameters
+      body
       description
       displayName
       enabled
-      suppressions
       id
+      outputIds
       reference
       resourceTypes
       runbook
       severity
+      suppressions
       tags
-      body
       tests {
         expectedResult
         name

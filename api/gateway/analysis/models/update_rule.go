@@ -58,6 +58,9 @@ type UpdateRule struct {
 	// log types
 	LogTypes TypeSet `json:"logTypes,omitempty"`
 
+	// output ids
+	OutputIds OutputIds `json:"outputIds,omitempty"`
+
 	// reference
 	Reference Reference `json:"reference,omitempty"`
 
@@ -111,6 +114,10 @@ func (m *UpdateRule) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateLogTypes(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateOutputIds(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -241,6 +248,22 @@ func (m *UpdateRule) validateLogTypes(formats strfmt.Registry) error {
 	if err := m.LogTypes.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("logTypes")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *UpdateRule) validateOutputIds(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.OutputIds) { // not required
+		return nil
+	}
+
+	if err := m.OutputIds.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("outputIds")
 		}
 		return err
 	}

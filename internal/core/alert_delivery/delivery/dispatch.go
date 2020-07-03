@@ -138,7 +138,7 @@ func dispatch(alert *alertmodels.Alert) bool {
 	}
 
 	if len(retryOutputs) > 0 {
-		alert.OutputIDs = retryOutputs // Replace the outputs with the set that failed
+		alert.OutputIds = retryOutputs // Replace the outputs with the set that failed
 		return false
 	}
 

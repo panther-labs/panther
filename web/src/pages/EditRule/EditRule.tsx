@@ -79,16 +79,17 @@ const EditRulePage: React.FC = () => {
   // it stores JSON, that's why we are making those here in the front-end)
   const { rule } = queryData;
   const initialValues = {
-    id: rule.id,
     body: rule.body,
+    dedupPeriodMinutes: rule.dedupPeriodMinutes,
     description: rule.description,
     displayName: rule.displayName,
     enabled: rule.enabled,
-    reference: rule.reference,
+    id: rule.id,
     logTypes: rule.logTypes,
+    outputIds: rule.outputIds,
+    reference: rule.reference,
     runbook: rule.runbook,
     severity: rule.severity,
-    dedupPeriodMinutes: rule.dedupPeriodMinutes,
     tags: rule.tags,
     tests: rule.tests.map(({ resource, ...restTestData }) => ({
       ...restTestData,

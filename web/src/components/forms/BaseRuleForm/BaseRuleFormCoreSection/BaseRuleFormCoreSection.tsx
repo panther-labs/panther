@@ -17,9 +17,9 @@
  */
 
 import React from 'react';
-import { FastField, useFormikContext } from 'formik';
+import { FastField, useFormikContext, Field } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
-import { Flex, Box, SimpleGrid, FormHelperText } from 'pouncejs';
+import { Flex, Box, SimpleGrid, FormHelperText, Link } from 'pouncejs';
 import { SeverityEnum } from 'Generated/schema';
 import { capitalize, minutesToString } from 'Helpers/utils';
 import FormikTextArea from 'Components/fields/TextArea';
@@ -30,13 +30,16 @@ import { LOG_TYPES, RESOURCE_TYPES } from 'Source/constants';
 import { RuleFormValues } from 'Components/forms/RuleForm';
 import { PolicyFormValues } from 'Components/forms/PolicyForm';
 import Panel from 'Components/Panel';
+import urls from 'Source/urls';
+import { Link as RRLink } from 'react-router-dom';
+import useListAvailableDestinations from '../useListAvailableDestinations';
 
 interface BaseRuleFormCoreSectionProps {
   type: 'rule' | 'policy';
 }
 
 const severityOptions = Object.values(SeverityEnum);
-const severityItemToString = severity => capitalize(severity.toLowerCase());
+const severityItemToString = (severity: string) => capitalize(severity.toLowerCase());
 const dedupPeriodMinutesOptions = [15, 30, 60, 180, 720, 1440];
 
 const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type }) => {
@@ -44,8 +47,57 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
   // since this is a "partial" form. If no Formik context is found this will error out intentionally
   const { values, initialValues } = useFormikContext<RuleFormValues | PolicyFormValues>();
 
-  const tagAdditionValidation = React.useMemo(() => tag => !values.tags.includes(tag), [
+  const tagAdditionValidation = React.useMemo(() => (tag: string) => !values.tags.includes(tag), [
     values.tags,
+  ]);
+
+  const {
+    loading: destinationsLoading,
+    destinationOutputIds: availableOutputIds,
+    destinationIdToDisplayName: destIdToDisplayName,
+    validOutputIds: listValidOutputIds,
+    disabled: disableDestinationField,
+    error: destinationsError,
+  } = useListAvailableDestinations({
+    outputIds: values.outputIds,
+  });
+
+  const generateHelperText = React.useCallback(() => {
+    if (destinationsError) {
+      return (
+        <FormHelperText id="outputIds-description" color="red-200" mt={3}>
+          There was a problem loading your destinations!
+        </FormHelperText>
+      );
+    }
+    if (!availableOutputIds.length && !destinationsLoading) {
+      return (
+        <FormHelperText id="outputIds-description-1" mt={3} mr={1}>
+          You have not configured any destinations, create one
+          <Link ml={1} as={RRLink} to={urls.settings.destinations()}>
+            here
+          </Link>
+        </FormHelperText>
+      );
+    }
+    if (destinationsLoading) {
+      return (
+        <FormHelperText id="outputIds-description" mt={3}>
+          Loading your destinations...
+        </FormHelperText>
+      );
+    }
+    return (
+      <FormHelperText id="outputIds-description" mt={3}>
+        Send an alert to these destinations regardless of their severity level settings
+      </FormHelperText>
+    );
+  }, [destinationsError, destinationsLoading, availableOutputIds]);
+
+  const destinationHelperText = React.useMemo(() => generateHelperText(), [
+    destinationsError,
+    destinationsLoading,
+    availableOutputIds,
   ]);
 
   const isPolicy = type === 'policy';
@@ -139,6 +191,20 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
           validateAddition={tagAdditionValidation}
           placeholder="i.e. Bucket Security (separate with <Enter>)"
         />
+        <Box as="fieldset">
+          <Field
+            as={FormikMultiCombobox}
+            disabled={disableDestinationField}
+            searchable
+            label="Destination Overrides"
+            name="outputIds"
+            value={listValidOutputIds}
+            items={availableOutputIds}
+            itemToString={destIdToDisplayName}
+            placeholder="Select destinations"
+          />
+          {destinationHelperText}
+        </Box>
         {!isPolicy && (
           <React.Fragment>
             <FastField
