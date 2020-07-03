@@ -16,12 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Flex, Link, FormHelperText, useTheme } from 'pouncejs';
+import { Box, Flex, Link, FormHelperText, useTheme, Tooltip } from 'pouncejs';
 import { Field, Form, Formik } from 'formik';
 import QRCode from 'qrcode.react';
 import * as React from 'react';
 import * as Yup from 'yup';
-import { formatSecretCode } from 'Helpers/utils';
+import { copyTextToClipboard, formatSecretCode } from 'Helpers/utils';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
 import useAuth from 'Hooks/useAuth';
@@ -70,9 +70,16 @@ export const TotpForm: React.FC = () => {
             bgColor={theme.colors['navyblue-800']}
           />
         </Flex>
+        <Box color="gray-200" textAlign="center" my={8}>
+          Or enter manually the secret code:
+          <Tooltip content={'Click to copy'}>
+            <Box mt={2} cursor="pointer" onClick={() => copyTextToClipboard(code)}>
+              {code}
+            </Box>
+          </Tooltip>
+        </Box>
         <Box mb={4}>
           <Field
-            autoFocus
             as={FormikTextInput}
             placeholder="The 6-digit MFA code"
             name="mfaCode"
