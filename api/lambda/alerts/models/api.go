@@ -108,7 +108,7 @@ type ListAlertsOutput struct {
 // AlertSummary contains summary information for an alert
 type AlertSummary struct {
 	AlertID         *string    `json:"alertId" validate:"required"`
-	Status          *string    `json:"status,omitempty"`
+	Status          *string    `json:"status" validate:"required"`
 	RuleID          *string    `json:"ruleId" validate:"required"`
 	RuleDisplayName *string    `json:"ruleDisplayName,omitempty"`
 	RuleVersion     *string    `json:"ruleVersion" validate:"required"`
