@@ -72,7 +72,7 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
     }
     if (!availableOutputIds.length && !destinationsLoading) {
       return (
-        <FormHelperText id="outputIds-description-1" mt={3} mr={1}>
+        <FormHelperText id="outputIds-description" mt={3} mr={1}>
           You have not configured any destinations, create one
           <Link ml={1} as={RRLink} to={urls.settings.destinations()}>
             here
@@ -202,6 +202,7 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
             items={availableOutputIds}
             itemToString={destIdToDisplayName}
             placeholder="Select destinations"
+            aria-describedby="outputIds-description"
           />
           {destinationHelperText}
         </Box>
