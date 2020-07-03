@@ -18,40 +18,41 @@
 
 import React from 'react';
 import urls from 'Source/urls';
-import { Button, Dropdown, Flex, Icon, MenuItem } from 'pouncejs';
-import useRouter from 'Hooks/useRouter';
+import {
+  Button,
+  Dropdown,
+  DropdownItem,
+  DropdownLink,
+  DropdownMenu,
+  DropdownButton,
+} from 'pouncejs';
 import useSidesheet from 'Hooks/useSidesheet';
 import { SIDESHEETS } from 'Components/utils/Sidesheet';
+import { Link as RRLink } from 'react-router-dom';
 
 const CreateButton: React.FC = () => {
-  const { history } = useRouter();
   const { showSidesheet } = useSidesheet();
 
   return (
-    <Dropdown
-      width={1}
-      trigger={
-        <Button size="large" variant="primary" as="div">
-          <Flex>
-            <Icon type="add" size="small" mr={2} />
-            Create new
-          </Flex>
-        </Button>
-      }
-    >
-      <Dropdown.Item onSelect={() => history.push(urls.logAnalysis.rules.create())}>
-        <MenuItem variant="default">Single</MenuItem>
-      </Dropdown.Item>
-      <Dropdown.Item
-        onSelect={() =>
-          showSidesheet({
-            sidesheet: SIDESHEETS.POLICY_BULK_UPLOAD,
-            props: { type: 'rule' },
-          })
-        }
-      >
-        <MenuItem variant="default">Bulk Upload</MenuItem>
-      </Dropdown.Item>
+    <Dropdown>
+      <DropdownButton as={Button} icon="add">
+        Create new
+      </DropdownButton>
+      <DropdownMenu alignment="match-width">
+        <DropdownLink as={RRLink} to={urls.logAnalysis.rules.create()}>
+          Single
+        </DropdownLink>
+        <DropdownItem
+          onSelect={() =>
+            showSidesheet({
+              sidesheet: SIDESHEETS.POLICY_BULK_UPLOAD,
+              props: { type: 'rule' },
+            })
+          }
+        >
+          Bulk
+        </DropdownItem>
+      </DropdownMenu>
     </Dropdown>
   );
 };

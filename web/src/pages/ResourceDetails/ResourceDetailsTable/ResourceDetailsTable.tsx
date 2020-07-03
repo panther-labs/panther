@@ -17,43 +17,35 @@
  */
 
 import React from 'react';
-import { ComplianceStatusEnum } from 'Generated/schema';
-import { Box, Flex, Label, Link, Table, Tooltip } from 'pouncejs';
+import { Box, Link, Table } from 'pouncejs';
 import urls from 'Source/urls';
-import { capitalize } from 'Helpers/utils';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/SeverityBadge';
-import { ResourceDetails } from 'Pages/ResourceDetails';
-import RemediationButton from 'Components/buttons/RemediationButton/RemediationButton';
-import SuppressButton from 'Components/buttons/SuppressButton/SuppressButton';
+import StatusBadge from 'Components/StatusBadge';
+import { ResourceDetails } from '../graphql/resourceDetails.generated';
+import ResourceDetailsTableRowOptions from './ResourceDetailsTableRowOptions';
+
+export type ResourceDetailsTableItem = ResourceDetails['policiesForResource']['items'][0];
 
 interface ResourcesDetailsTableProps {
-  policies?: ResourceDetails['policiesForResource']['items'];
-  enumerationStartIndex: number;
+  policies?: ResourceDetailsTableItem[];
 }
 
-const ResourcesDetailsTable: React.FC<ResourcesDetailsTableProps> = ({
-  enumerationStartIndex,
-  policies,
-}) => {
+const ResourcesDetailsTable: React.FC<ResourcesDetailsTableProps> = ({ policies }) => {
   return (
     <Table>
       <Table.Head>
         <Table.Row>
-          <Table.HeaderCell />
           <Table.HeaderCell>Policy</Table.HeaderCell>
-          <Table.HeaderCell>Status</Table.HeaderCell>
-          <Table.HeaderCell>Severity</Table.HeaderCell>
+          <Table.HeaderCell align="center">Status</Table.HeaderCell>
+          <Table.HeaderCell align="center">Severity</Table.HeaderCell>
           <Table.HeaderCell />
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {policies.map((policy, index) => (
+        {policies.map(policy => (
           <Table.Row key={policy.policyId}>
-            <Table.Cell>
-              <Label size="medium">{enumerationStartIndex + index + 1}</Label>
-            </Table.Cell>
-            <Table.Cell maxWidth={450} truncated title={policy.policyId}>
+            <Table.Cell truncated title={policy.policyId}>
               <Link
                 as={RRLink}
                 to={urls.compliance.policies.details(policy.policyId)}
@@ -63,46 +55,25 @@ const ResourcesDetailsTable: React.FC<ResourcesDetailsTableProps> = ({
                 {policy.policyId}
               </Link>
             </Table.Cell>
-            <Table.Cell color={policy.status === ComplianceStatusEnum.Pass ? 'green300' : 'red300'}>
-              {policy.errorMessage ? (
-                <Tooltip
-                  positioning="down"
-                  content={<Label size="medium">{policy.errorMessage}</Label>}
-                >
-                  {`${capitalize(policy.status.toLowerCase())} *`}
-                </Tooltip>
-              ) : (
-                capitalize(policy.status.toLowerCase())
-              )}
+            <Table.Cell align="center">
+              <Box my={-1} display="inline-block">
+                <StatusBadge
+                  status={policy.status}
+                  disabled={policy.suppressed}
+                  errorMessage={policy.errorMessage}
+                  disabledLabel="IGNORED"
+                />
+              </Box>
             </Table.Cell>
-            <Table.Cell>
-              <Box m={-1}>
+            <Table.Cell align="center">
+              <Box my={-1} display="inline-block">
                 <SeverityBadge severity={policy.policySeverity} />
               </Box>
             </Table.Cell>
-            <Table.Cell width={250}>
-              <Flex my={-4} justify="flex-end">
-                {policy.status !== ComplianceStatusEnum.Pass && (
-                  <Box mr={4}>
-                    <RemediationButton
-                      buttonVariant="default"
-                      policyId={policy.policyId}
-                      resourceId={policy.resourceId}
-                    />
-                  </Box>
-                )}
-                {!policy.suppressed ? (
-                  <SuppressButton
-                    buttonVariant="default"
-                    policyIds={[policy.policyId]}
-                    resourcePatterns={[policy.resourceId]}
-                  />
-                ) : (
-                  <Label color="orange300" size="medium">
-                    IGNORED
-                  </Label>
-                )}
-              </Flex>
+            <Table.Cell align="right">
+              <Box my={-1}>
+                <ResourceDetailsTableRowOptions complianceItem={policy} />
+              </Box>
             </Table.Cell>
           </Table.Row>
         ))}

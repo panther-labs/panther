@@ -17,21 +17,19 @@
  */
 
 import React from 'react';
-import { useSnackbar } from 'pouncejs';
-import { User } from 'Generated/schema';
+import { ModalProps, useSnackbar } from 'pouncejs';
 import { ListUsersDocument } from 'Pages/Users';
 import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import ConfirmModal from 'Components/modals/ConfirmModal';
-import useModal from 'Hooks/useModal';
+import { UserDetails } from 'Source/graphql/fragments/UserDetails.generated';
 import { useResetUserPassword } from './graphql/resetUserPassword.generated';
 
-export interface ResetUserPasswordProps {
-  user: User;
+export interface ResetUserPasswordProps extends ModalProps {
+  user: UserDetails;
 }
 
-const ResetUserPasswordModal: React.FC<ResetUserPasswordProps> = ({ user }) => {
+const ResetUserPasswordModal: React.FC<ResetUserPasswordProps> = ({ user, onClose, ...rest }) => {
   const { pushSnackbar } = useSnackbar();
-  const { hideModal } = useModal();
   const userDisplayName = `${user.givenName} ${user.familyName}` || user.id;
   const [resetUserPassword, { loading }] = useResetUserPassword({
     variables: {
@@ -40,14 +38,14 @@ const ResetUserPasswordModal: React.FC<ResetUserPasswordProps> = ({ user }) => {
     awaitRefetchQueries: true,
     refetchQueries: [getOperationName(ListUsersDocument)],
     onCompleted: () => {
-      hideModal();
+      onClose();
       pushSnackbar({
         variant: 'success',
         title: `Successfully forced a password change for ${userDisplayName}`,
       });
     },
     onError: () => {
-      hideModal();
+      onClose();
       pushSnackbar({ variant: 'error', title: `Failed to reset password for ${userDisplayName}` });
     },
   });
@@ -55,10 +53,11 @@ const ResetUserPasswordModal: React.FC<ResetUserPasswordProps> = ({ user }) => {
   return (
     <ConfirmModal
       onConfirm={resetUserPassword}
-      onClose={hideModal}
+      onClose={onClose}
       loading={loading}
       title={`Force a password change for ${userDisplayName}`}
       subtitle={`Are you sure you want to reset password for ${userDisplayName}?`}
+      {...rest}
     />
   );
 };

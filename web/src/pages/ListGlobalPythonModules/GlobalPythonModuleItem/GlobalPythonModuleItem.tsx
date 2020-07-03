@@ -17,13 +17,25 @@
  */
 
 import React from 'react';
-import { Card, Box, Heading, Flex, Text, Dropdown, Icon, IconButton, MenuItem } from 'pouncejs';
+import {
+  Card,
+  Box,
+  Heading,
+  Flex,
+  Dropdown,
+  IconButton,
+  DropdownButton,
+  DropdownMenu,
+  DropdownLink,
+  DropdownItem,
+  Link,
+} from 'pouncejs';
 import { getElapsedTime } from 'Helpers/utils';
-import useRouter from 'Hooks/useRouter';
 import useModal from 'Hooks/useModal';
 import { GlobalPythonModuleTeaser } from 'Source/graphql/fragments/GlobalPythonModuleTeaser.generated';
 import urls from 'Source/urls';
 import { MODALS } from 'Components/utils/Modal';
+import { Link as RRLink } from 'react-router-dom';
 
 interface GlobalItemProps {
   globalPythonModule: GlobalPythonModuleTeaser;
@@ -31,45 +43,51 @@ interface GlobalItemProps {
 
 const GlobalPythonModuleItem: React.FC<GlobalItemProps> = ({ globalPythonModule }) => {
   const { showModal } = useModal();
-  const { history } = useRouter();
 
   const lastModifiedTime = Math.floor(new Date(globalPythonModule.lastModified).getTime() / 1000);
   return (
-    <Card p={9} key={globalPythonModule.id}>
+    <Card variant="dark" p={6} key={globalPythonModule.id}>
       <Flex align="flex-start" justify="space-between">
         <Box>
-          <Heading size="medium" color="grey500" mb={2}>
-            {globalPythonModule.id}
+          <Heading as="h4" size="x-small">
+            <Link
+              as={RRLink}
+              to={urls.settings.globalPythonModules.edit(globalPythonModule.id)}
+              py={1}
+            >
+              {globalPythonModule.id}
+            </Link>
           </Heading>
-          <Text size="small" color="grey200">
+          <Box as="time" fontSize="small" color="gray-300">
             Last updated {getElapsedTime(lastModifiedTime)}
-          </Text>
+          </Box>
         </Box>
-        <Dropdown
-          position="relative"
-          trigger={
-            <IconButton as="div" variant="default" my={-2}>
-              <Icon type="more" size="small" />
-            </IconButton>
-          }
-        >
-          <Dropdown.Item
-            onSelect={() =>
-              history.push(urls.settings.globalPythonModules.edit(globalPythonModule.id))
-            }
-          >
-            <MenuItem variant="default">Edit</MenuItem>
-          </Dropdown.Item>
-          <Dropdown.Item
-            onSelect={() =>
-              showModal({
-                modal: MODALS.DELETE_GLOBAL_PYTHON_MODULE,
-                props: { globalPythonModule },
-              })
-            }
-          >
-            <MenuItem variant="default">Delete</MenuItem>
-          </Dropdown.Item>
+        <Dropdown>
+          <DropdownButton
+            as={IconButton}
+            icon="more"
+            variant="ghost"
+            size="small"
+            aria-label="Global Python Module Options"
+          />
+          <DropdownMenu>
+            <DropdownLink
+              as={RRLink}
+              to={urls.settings.globalPythonModules.edit(globalPythonModule.id)}
+            >
+              Edit
+            </DropdownLink>
+            <DropdownItem
+              onSelect={() => {
+                showModal({
+                  modal: MODALS.DELETE_GLOBAL_PYTHON_MODULE,
+                  props: { globalPythonModule },
+                });
+              }}
+            >
+              Delete
+            </DropdownItem>
+          </DropdownMenu>
         </Dropdown>
       </Flex>
     </Card>

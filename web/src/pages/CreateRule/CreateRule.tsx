@@ -17,7 +17,6 @@
  */
 
 import React from 'react';
-import Panel from 'Components/Panel';
 import { Alert, Box } from 'pouncejs';
 import urls from 'Source/urls';
 import RuleForm from 'Components/forms/RuleForm';
@@ -34,17 +33,18 @@ import useRouter from 'Hooks/useRouter';
 import { useCreateRule } from './graphql/createRule.generated';
 
 const initialValues: Required<AddRuleInput> = {
-  id: '',
+  body: `${DEFAULT_RULE_FUNCTION}\n\n${DEFAULT_TITLE_FUNCTION}\n\n${DEFAULT_DEDUP_FUNCTION}`,
+  dedupPeriodMinutes: 60,
   description: '',
   displayName: '',
   enabled: true,
-  reference: '',
+  id: '',
   logTypes: [],
+  outputIds: [],
+  reference: '',
   runbook: '',
   severity: null,
-  dedupPeriodMinutes: 60,
   tags: [],
-  body: `${DEFAULT_RULE_FUNCTION}\n\n${DEFAULT_TITLE_FUNCTION}\n\n${DEFAULT_DEDUP_FUNCTION}`,
   tests: [],
 };
 
@@ -61,10 +61,8 @@ const CreateRulePage: React.FC = () => {
   );
 
   return (
-    <Box mb={10}>
-      <Panel size="large" title="Rule Settings">
-        <RuleForm initialValues={initialValues} onSubmit={handleSubmit} />
-      </Panel>
+    <Box mb={6}>
+      <RuleForm initialValues={initialValues} onSubmit={handleSubmit} />
       {error && (
         <Box mt={2} mb={6}>
           <Alert

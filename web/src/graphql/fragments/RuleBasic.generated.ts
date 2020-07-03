@@ -24,7 +24,7 @@ import gql from 'graphql-tag';
 
 export type RuleBasic = Pick<
   Types.RuleDetails,
-  'id' | 'description' | 'displayName' | 'logTypes' | 'runbook' | 'severity' | 'tags'
+  'id' | 'description' | 'displayName' | 'logTypes' | 'outputIds' | 'runbook' | 'severity' | 'tags'
 >;
 
 export const RuleBasic = gql`
@@ -33,6 +33,7 @@ export const RuleBasic = gql`
     description
     displayName
     logTypes
+    outputIds
     runbook
     severity
     tags

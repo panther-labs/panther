@@ -17,20 +17,22 @@
  */
 
 import React from 'react';
+import { ModalProps } from 'pouncejs';
 import { PolicyUnitTest, PolicyUnitTestInput } from 'Generated/schema';
 import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
-export interface DeleteTestModalProps {
+export interface DeleteTestModalProps extends ModalProps {
   test: PolicyUnitTest | PolicyUnitTestInput;
   onConfirm: () => void;
 }
 
-const DeleteTestModal: React.FC<DeleteTestModalProps> = ({ test, onConfirm }) => {
+const DeleteTestModal: React.FC<DeleteTestModalProps> = ({ test, onConfirm, ...rest }) => {
   return (
     <OptimisticConfirmModal
       title="Delete Test"
       subtitle={`Are you sure you want to delete ${test.name}?`}
       onConfirm={onConfirm}
+      {...rest}
     />
   );
 };

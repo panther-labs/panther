@@ -31,13 +31,14 @@ export type PolicyDetailsMain = Pick<
   | 'description'
   | 'displayName'
   | 'enabled'
-  | 'suppressions'
   | 'id'
   | 'lastModified'
+  | 'outputIds'
   | 'reference'
   | 'resourceTypes'
   | 'runbook'
   | 'severity'
+  | 'suppressions'
   | 'tags'
 >;
 
@@ -50,13 +51,14 @@ export const PolicyDetailsMain = gql`
     description
     displayName
     enabled
-    suppressions
     id
     lastModified
+    outputIds
     reference
     resourceTypes
     runbook
     severity
+    suppressions
     tags
   }
 `;

@@ -31,13 +31,13 @@ const ResourcesByPlatform: React.FC<ResourcesByPlatformProps> = ({ resources }) 
     {
       value: resources.byType.length,
       label: 'AWS',
-      color: 'grey300' as const,
+      color: 'gray-600' as const,
     },
   ];
 
   return (
     <Flex height="100%">
-      <ChartSummary total={resources.byType.length} title="Resource Types" color="grey200" />
+      <ChartSummary total={resources.byType.length} title="Resource Types" color="gray-200" />
       <BarChart data={allResourcesChartData} alignment="horizontal" />
     </Flex>
   );

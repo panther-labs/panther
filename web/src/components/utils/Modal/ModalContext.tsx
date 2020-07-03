@@ -45,10 +45,13 @@ export enum MODALS {
   ANALYTICS_CONSENT = 'ANALYTICS_CONSENT',
 }
 
+type OmitControlledProps<T> = Omit<T, 'open' | 'onClose'>;
+
 /* The shape of the reducer state */
 interface ModalStateShape {
   modal: keyof typeof MODALS | null;
   props: { [key: string]: any };
+  isVisible: boolean;
 }
 
 /* 1st action */
@@ -56,7 +59,7 @@ interface ShowPolicyModalAction {
   type: typeof SHOW_MODAL;
   payload: {
     modal: MODALS.DELETE_POLICY;
-    props: DeletePolicyModalProps;
+    props: OmitControlledProps<DeletePolicyModalProps>;
   };
 }
 
@@ -69,7 +72,7 @@ interface ShowGlobalPythonModuleModalAction {
   type: typeof SHOW_MODAL;
   payload: {
     modal: MODALS.DELETE_GLOBAL_PYTHON_MODULE;
-    props: DeleteGlobalPythonModuleModalProps;
+    props: OmitControlledProps<DeleteGlobalPythonModuleModalProps>;
   };
 }
 /* Delete User action */
@@ -77,7 +80,7 @@ interface ShowDeleteUserModalAction {
   type: typeof SHOW_MODAL;
   payload: {
     modal: MODALS.DELETE_USER;
-    props: DeleteUserModalProps;
+    props: OmitControlledProps<DeleteUserModalProps>;
   };
 }
 
@@ -86,7 +89,7 @@ interface ShowResetUserPasswordModalAction {
   type: typeof SHOW_MODAL;
   payload: {
     modal: MODALS.RESET_USER_PASS;
-    props: ResetUserPasswordProps;
+    props: OmitControlledProps<ResetUserPasswordProps>;
   };
 }
 
@@ -95,7 +98,7 @@ interface ShowDeleteTestModalAction {
   type: typeof SHOW_MODAL;
   payload: {
     modal: MODALS.DELETE_TEST;
-    props: DeleteTestModalProps;
+    props: OmitControlledProps<DeleteTestModalProps>;
   };
 }
 
@@ -104,7 +107,7 @@ interface ShowDeleteComplianceSourceModalAction {
   type: typeof SHOW_MODAL;
   payload: {
     modal: MODALS.DELETE_COMPLIANCE_SOURCE;
-    props: DeleteComplianceSourceModalProps;
+    props: OmitControlledProps<DeleteComplianceSourceModalProps>;
   };
 }
 
@@ -113,7 +116,7 @@ interface ShowDeleteLogSourceModalAction {
   type: typeof SHOW_MODAL;
   payload: {
     modal: MODALS.DELETE_LOG_SOURCE;
-    props: DeleteLogSourceModalProps;
+    props: OmitControlledProps<DeleteLogSourceModalProps>;
   };
 }
 
@@ -122,7 +125,7 @@ interface ShowDeleteRuleModalAction {
   type: typeof SHOW_MODAL;
   payload: {
     modal: MODALS.DELETE_RULE;
-    props: DeleteRuleModalProps;
+    props: OmitControlledProps<DeleteRuleModalProps>;
   };
 }
 
@@ -131,7 +134,7 @@ interface ShowDeleteDestinationModalAction {
   type: typeof SHOW_MODAL;
   payload: {
     modal: MODALS.DELETE_DESTINATION;
-    props: DeleteDestinationModalProps;
+    props: OmitControlledProps<DeleteDestinationModalProps>;
   };
 }
 
@@ -170,6 +173,7 @@ type ModalStateAction =
 const initialState: ModalStateShape = {
   modal: null,
   props: {},
+  isVisible: false,
 };
 
 const modalReducer = (state: ModalStateShape, action: ModalStateAction) => {
@@ -178,9 +182,10 @@ const modalReducer = (state: ModalStateShape, action: ModalStateAction) => {
       return {
         modal: action.payload.modal,
         props: 'props' in action.payload ? action.payload.props : {},
+        isVisible: true,
       };
     case HIDE_MODAL:
-      return { modal: null, props: {} };
+      return { ...state, isVisible: false };
     default:
       return state;
   }

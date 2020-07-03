@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Label } from 'pouncejs';
+import { Box, Flex } from 'pouncejs';
 import { ComplianceStatusEnum, TestPolicyResponse } from 'Generated/schema';
 import PolicyFormTestResult, { mapTestStatusToColor } from '../BaseRuleFormTestResult';
 
@@ -28,46 +28,44 @@ interface PolicyFormTestResultsProps {
 
 const BaseRuleFormTestResultList: React.FC<PolicyFormTestResultsProps> = ({ running, results }) => {
   return (
-    // @ts-ignore
-    <Box bg="#FEF5ED" p={5}>
-      {running && (
-        <Label size="medium" as="p">
-          Running your tests...
-        </Label>
-      )}
+    <Box bg="navyblue-500" fontSize="medium" fontWeight="medium" p={5}>
+      {running && 'Running your tests...'}
       {!running && results && (
-        <React.Fragment>
+        <Flex direction="column" spacing={2}>
           {results.testsPassed.map(testName => (
-            <Box mb={1} key={testName}>
-              <PolicyFormTestResult
-                testName={testName}
-                status={ComplianceStatusEnum.Pass}
-                text="Test Passed"
-              />
-            </Box>
+            <PolicyFormTestResult
+              key={testName}
+              testName={testName}
+              status={ComplianceStatusEnum.Pass}
+              text="Test Passed"
+            />
           ))}
           {results.testsFailed.map(testName => (
-            <Box mb={1} key={testName}>
-              <PolicyFormTestResult
-                testName={testName}
-                status={ComplianceStatusEnum.Fail}
-                text="Test Failed"
-              />
-            </Box>
+            <PolicyFormTestResult
+              key={testName}
+              testName={testName}
+              status={ComplianceStatusEnum.Fail}
+              text="Test Failed"
+            />
           ))}
           {results.testsErrored.map(({ name: testName, errorMessage }) => (
-            <Box key={testName} mb={1}>
+            <Box key={testName}>
               <PolicyFormTestResult
                 testName={testName}
                 status={ComplianceStatusEnum.Error}
                 text="Error"
               />
-              <Label size="small" as="pre" color={mapTestStatusToColor[ComplianceStatusEnum.Error]}>
+              <Box
+                fontSize="x-small"
+                fontWeight="bold"
+                as="pre"
+                color={mapTestStatusToColor[ComplianceStatusEnum.Error]}
+              >
                 {errorMessage}
-              </Label>
+              </Box>
             </Box>
           ))}
-        </React.Fragment>
+        </Flex>
       )}
     </Box>
   );

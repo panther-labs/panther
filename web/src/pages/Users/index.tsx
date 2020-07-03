@@ -16,5 +16,5 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './Users';
-export * from './ListUsers/graphql/listUsers.generated';
+export { default } from './ListUsers';
+export * from './graphql/listUsers.generated';

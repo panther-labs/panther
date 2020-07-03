@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { AbstractButton, Box, Heading, Text } from 'pouncejs';
+import { AbstractButton, Box, Collapse, Flex, Heading, Text } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -33,77 +33,76 @@ const S3SourceConfigurationPanel: React.FC = () => {
 
   return (
     <Box width={460} m="auto">
-      <Heading size="medium" m="auto" mb={2} color="grey400">
+      <Heading as="h2" m="auto" mb={2}>
         {initialValues.integrationId ? 'Update source' : "Let's start with the basics"}
       </Heading>
-      <Text size="large" color="grey200" mb={10} as="p">
+      <Text color="gray-300" mb={10}>
         {initialValues.integrationId
           ? 'Feel free to make any changes to your log source'
           : 'We need to know where to get your logs from'}
       </Text>
       <ErrorBoundary>
-        <Field
-          name="integrationLabel"
-          as={FormikTextInput}
-          label="Name"
-          placeholder="A nickname for this log analysis source"
-          aria-required
-          mb={6}
-        />
-        <Field
-          name="awsAccountId"
-          as={FormikTextInput}
-          label="Account ID"
-          placeholder="The AWS Account ID that the S3 log bucket lives in"
-          disabled={!!initialValues.integrationId}
-          aria-required
-          mb={6}
-        />
-        <Field
-          name="s3Bucket"
-          as={FormikTextInput}
-          label="Bucket Name"
-          aria-required
-          placeholder="The name of the S3 bucket that holds the logs"
-          mb={6}
-        />
-        <Field
-          as={FormikMultiCombobox}
-          searchable
-          label="Log Types"
-          name="logTypes"
-          items={LOG_TYPES}
-          inputProps={{ placeholder: 'The types of logs that are collected' }}
-          aria-required
-          mb={6}
-        />
-        <AbstractButton
-          color="blue300"
-          onClick={() => showAdvancedConfig(!isAdvancedConfigVisible)}
-          my={6}
-          py={3}
-        >
-          {isAdvancedConfigVisible ? 'Hide advanced configuration' : 'Show advanced configuration'}
-        </AbstractButton>
-        {isAdvancedConfigVisible && (
-          <React.Fragment>
+        <Flex direction="column" spacing={4}>
+          <Field
+            name="integrationLabel"
+            as={FormikTextInput}
+            label="Name"
+            placeholder="A nickname for this log analysis source"
+            required
+          />
+          <Field
+            name="awsAccountId"
+            as={FormikTextInput}
+            label="Account ID"
+            placeholder="The AWS Account ID that the S3 log bucket lives in"
+            disabled={!!initialValues.integrationId}
+            required
+          />
+          <Field
+            name="s3Bucket"
+            as={FormikTextInput}
+            label="Bucket Name"
+            required
+            placeholder="The name of the S3 bucket that holds the logs"
+          />
+          <Field
+            as={FormikMultiCombobox}
+            searchable
+            label="Log Types"
+            name="logTypes"
+            items={LOG_TYPES}
+            placeholder="The types of logs that are collected"
+          />
+        </Flex>
+        <Flex justify="center" my={4}>
+          <AbstractButton
+            color="blue-600"
+            onClick={() => showAdvancedConfig(!isAdvancedConfigVisible)}
+            p={3}
+          >
+            {isAdvancedConfigVisible
+              ? 'Hide advanced configuration'
+              : 'Show advanced configuration'}
+          </AbstractButton>
+        </Flex>
+        <Collapse open={isAdvancedConfigVisible}>
+          <Flex direction="column" spacing={4}>
             <Field
               name="s3Prefix"
               as={FormikTextInput}
               label="S3 Prefix Filter"
-              aria-required
+              required
               placeholder="Limit logs to objects that start with matching characters"
-              mb={6}
             />
             <Field
               name="kmsKey"
               as={FormikTextInput}
               label="KMS Key"
-              aria-required
+              required
               placeholder="For encrypted logs, add the KMS ARN for decryption"
             />
-          </React.Fragment>
-        )}
+          </Flex>
+        </Collapse>
       </ErrorBoundary>
     </Box>
   );

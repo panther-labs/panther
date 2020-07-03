@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Link, LinkProps } from 'pouncejs';
+import { Link, LinkProps } from 'pouncejs';
 import { LinkifyProps } from 'linkifyjs/react';
 
 const OriginalReactLinkify = React.lazy(() =>
@@ -28,18 +28,18 @@ const linkifyOptions = {
   defaultProtocol: 'https',
   tagName: () => Link,
   attributes: {
-    color: 'blue300' as const,
     external: true,
+    wordBreak: 'break-word',
   } as LinkProps,
 };
 
-const Linkify: React.FC = ({ children }) => {
+const Linkify: React.FC<LinkProps> = ({ children, ...rest }) => {
   return (
-    <Box wordBreak="break-word" fontSize="medium">
-      <React.Suspense fallback={<div>{children}</div>}>
-        <OriginalReactLinkify options={linkifyOptions as any}>{children}</OriginalReactLinkify>
-      </React.Suspense>
-    </Box>
+    <React.Suspense fallback={<p>{children}</p>}>
+      <OriginalReactLinkify tagName="p" options={linkifyOptions as any} {...rest}>
+        {children}
+      </OriginalReactLinkify>
+    </React.Suspense>
   );
 };
 

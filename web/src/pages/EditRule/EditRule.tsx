@@ -17,15 +17,14 @@
  */
 
 import React from 'react';
-import Panel from 'Components/Panel';
-import { Alert, Button, Card, Box, useSnackbar } from 'pouncejs';
+import { Alert, Button, Box, useSnackbar, Flex } from 'pouncejs';
 import RuleForm from 'Components/forms/RuleForm';
 import useModal from 'Hooks/useModal';
 import useRouter from 'Hooks/useRouter';
-import TablePlaceholder from 'Components/TablePlaceholder';
 import { MODALS } from 'Components/utils/Modal';
 import { extractErrorMessage, formatJSON } from 'Helpers/utils';
 import withSEO from 'Hoc/withSEO';
+import Skeleton from './Skeleton';
 import { useRuleDetails } from './graphql/ruleDetails.generated';
 import { useUpdateRule } from './graphql/updateRule.generated';
 
@@ -56,12 +55,7 @@ const EditRulePage: React.FC = () => {
   );
 
   if (isFetchingRule) {
-    return (
-      <Card p={9}>
-        <TablePlaceholder rowCount={5} rowHeight={15} />
-        <TablePlaceholder rowCount={1} rowHeight={100} />
-      </Card>
-    );
+    return <Skeleton />;
   }
 
   if (fetchRuleError) {
@@ -85,16 +79,17 @@ const EditRulePage: React.FC = () => {
   // it stores JSON, that's why we are making those here in the front-end)
   const { rule } = queryData;
   const initialValues = {
-    id: rule.id,
     body: rule.body,
+    dedupPeriodMinutes: rule.dedupPeriodMinutes,
     description: rule.description,
     displayName: rule.displayName,
     enabled: rule.enabled,
-    reference: rule.reference,
+    id: rule.id,
     logTypes: rule.logTypes,
+    outputIds: rule.outputIds,
+    reference: rule.reference,
     runbook: rule.runbook,
     severity: rule.severity,
-    dedupPeriodMinutes: rule.dedupPeriodMinutes,
     tags: rule.tags,
     tests: rule.tests.map(({ resource, ...restTestData }) => ({
       ...restTestData,
@@ -103,28 +98,21 @@ const EditRulePage: React.FC = () => {
   };
 
   return (
-    <Box mb={10}>
-      <Panel
-        size="large"
-        title="Rule Settings"
-        actions={
-          <Button
-            variant="default"
-            size="large"
-            color="red300"
-            onClick={() =>
-              showModal({
-                modal: MODALS.DELETE_RULE,
-                props: { rule: queryData.rule },
-              })
-            }
-          >
-            Delete
-          </Button>
-        }
-      >
-        <RuleForm initialValues={initialValues} onSubmit={handleSubmit} />
-      </Panel>
+    <Box mb={6}>
+      <Flex justify="flex-end" mb={5}>
+        <Button
+          variantColor="red"
+          onClick={() =>
+            showModal({
+              modal: MODALS.DELETE_RULE,
+              props: { rule: queryData.rule },
+            })
+          }
+        >
+          Delete
+        </Button>
+      </Flex>
+      <RuleForm initialValues={initialValues} onSubmit={handleSubmit} />
       {updateError && (
         <Box mt={2} mb={6}>
           <Alert

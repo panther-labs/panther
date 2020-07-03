@@ -19,7 +19,8 @@
 import React from 'react';
 import { ListRulesInput, ListRulesSortFieldsEnum, SortDirEnum } from 'Generated/schema';
 import { formatDatetime } from 'Helpers/utils';
-import { Box, Flex, Icon, Label, Link, Table } from 'pouncejs';
+import { Box, Link, Table } from 'pouncejs';
+import StatusBadge from 'Components/StatusBadge';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/SeverityBadge';
@@ -31,16 +32,9 @@ interface ListRulesTableProps {
   sortBy: ListRulesSortFieldsEnum;
   sortDir: SortDirEnum;
   onSort: (params: Partial<ListRulesInput>) => void;
-  enumerationStartIndex: number;
 }
 
-const ListRulesTable: React.FC<ListRulesTableProps> = ({
-  items,
-  onSort,
-  sortBy,
-  sortDir,
-  enumerationStartIndex,
-}) => {
+const ListRulesTable: React.FC<ListRulesTableProps> = ({ items, onSort, sortBy, sortDir }) => {
   const handleSort = (selectedKey: ListRulesSortFieldsEnum) => {
     if (sortBy === selectedKey) {
       onSort({
@@ -56,7 +50,6 @@ const ListRulesTable: React.FC<ListRulesTableProps> = ({
     <Table>
       <Table.Head>
         <Table.Row>
-          <Table.HeaderCell />
           <Table.SortableHeaderCell
             onClick={() => handleSort(ListRulesSortFieldsEnum.Id)}
             sortDir={sortBy === ListRulesSortFieldsEnum.Id ? sortDir : false}
@@ -74,17 +67,19 @@ const ListRulesTable: React.FC<ListRulesTableProps> = ({
             onClick={() => handleSort(ListRulesSortFieldsEnum.Enabled)}
             sortDir={sortBy === ListRulesSortFieldsEnum.Enabled ? sortDir : false}
           >
-            Enabled
+            Status
           </Table.SortableHeaderCell>
           <Table.SortableHeaderCell
             onClick={() => handleSort(ListRulesSortFieldsEnum.Severity)}
             sortDir={sortBy === ListRulesSortFieldsEnum.Severity ? sortDir : false}
+            align="center"
           >
             Severity
           </Table.SortableHeaderCell>
           <Table.SortableHeaderCell
             onClick={() => handleSort(ListRulesSortFieldsEnum.LastModified)}
             sortDir={sortBy === ListRulesSortFieldsEnum.LastModified ? sortDir : false}
+            align="right"
           >
             Last Modified
           </Table.SortableHeaderCell>
@@ -92,11 +87,8 @@ const ListRulesTable: React.FC<ListRulesTableProps> = ({
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {items.map((rule, index) => (
+        {items.map(rule => (
           <Table.Row key={rule.id}>
-            <Table.Cell>
-              <Label size="medium">{enumerationStartIndex + index + 1}</Label>
-            </Table.Cell>
             <Table.Cell maxWidth={450} wrapText="wrap">
               <Link as={RRLink} to={urls.logAnalysis.rules.details(rule.id)} py={4} pr={4}>
                 {rule.displayName || rule.id}
@@ -112,22 +104,20 @@ const ListRulesTable: React.FC<ListRulesTableProps> = ({
                 : 'All resources'}
             </Table.Cell>
             <Table.Cell align="center">
-              <Flex justify="center">
-                {rule.enabled ? (
-                  <Icon type="check" color="green300" size="small" />
-                ) : (
-                  <Icon type="close" color="red300" size="small" />
-                )}
-              </Flex>
+              <Box my={-1} display="inline-block">
+                <StatusBadge status="ENABLED" disabled={!rule.enabled} />
+              </Box>
             </Table.Cell>
-            <Table.Cell>
-              <Box my={-1}>
+            <Table.Cell align="center">
+              <Box my={-1} display="inline-block">
                 <SeverityBadge severity={rule.severity} />
               </Box>
             </Table.Cell>
-            <Table.Cell>{formatDatetime(rule.lastModified)}</Table.Cell>
+            <Table.Cell align="right">{formatDatetime(rule.lastModified)}</Table.Cell>
             <Table.Cell>
-              <ListRulesTableRowOptions rule={rule} />
+              <Box my={-1}>
+                <ListRulesTableRowOptions rule={rule} />
+              </Box>
             </Table.Cell>
           </Table.Row>
         ))}

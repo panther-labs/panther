@@ -224,6 +224,7 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 			DisplayName:   models.DisplayName(config.DisplayName),
 			Enabled:       models.Enabled(config.Enabled),
 			ID:            models.ID(config.PolicyID),
+			OutputIds:     models.OutputIds(config.OutputIds),
 			Reference:     models.Reference(config.Reference),
 			ResourceTypes: config.ResourceTypes,
 			Runbook:       models.Runbook(config.Runbook),

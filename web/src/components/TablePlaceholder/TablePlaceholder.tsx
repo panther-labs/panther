@@ -18,6 +18,7 @@
 
 import React from 'react';
 import ContentLoader from 'react-content-loader';
+import { useTheme } from 'pouncejs';
 
 interface TablePlaceholderProps {
   /** The number of rows that the placeholder component should render. Defaults to 5 */
@@ -34,20 +35,27 @@ const TablePlaceholder: React.FC<TablePlaceholderProps> = ({
   rowCount = 5,
   rowHeight = 10,
   rowGap = 5,
-}) => (
-  <ContentLoader height={rowCount * (rowHeight + rowGap)}>
-    {[...Array(rowCount)].map((__, index) => (
-      <rect
-        key={index}
-        x="0"
-        y={index * (rowHeight + rowGap)}
-        rx="1"
-        ry="1"
-        width="100%"
-        height={rowHeight}
-      />
-    ))}
-  </ContentLoader>
-);
+}) => {
+  const theme = useTheme();
+  return (
+    <ContentLoader
+      height={rowCount * (rowHeight + rowGap)}
+      primaryColor={theme.colors['navyblue-700']}
+      secondaryColor={theme.colors['navyblue-800']}
+    >
+      {[...Array(rowCount)].map((__, index) => (
+        <rect
+          key={index}
+          x="0"
+          y={index * (rowHeight + rowGap)}
+          rx="1"
+          ry="1"
+          width="100%"
+          height={rowHeight}
+        />
+      ))}
+    </ContentLoader>
+  );
+};
 
 export default TablePlaceholder;

@@ -27,18 +27,11 @@ const EmptyDataFallback: React.FC = () => (
     <Box m={10}>
       <img alt="Empty data illustration" src={EmptyDataImg} width="auto" height={400} />
     </Box>
-    <Heading size="medium" color="grey400" mb={6}>
-      It{"'"}s empty in here
-    </Heading>
-    <Text size="large" color="grey200" textAlign="center" mb={10}>
-      You don{"'"}t seem to have any Global Python module set yet. <br />
+    <Heading mb={6}>It{"'"}s empty in here</Heading>
+    <Text color="gray-200" textAlign="center" mb={8}>
+      Python modules allow you to define re-usable code elements for your rules and policies
     </Text>
-    <Button
-      size="large"
-      variant="primary"
-      as={RRLink}
-      to={urls.settings.globalPythonModules.create()}
-    >
+    <Button as={RRLink} to={urls.settings.globalPythonModules.create()}>
       Create a Global Python Module
     </Button>
   </Flex>

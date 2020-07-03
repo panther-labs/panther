@@ -27,7 +27,6 @@ import PoliciesBySeverityChart from './PoliciesBySeverityChart';
 import PoliciesByStatusChart from './PoliciesByStatusChart';
 import ResourcesByStatusChart from './ResourcesByStatusChart';
 import ResourcesByPlatformChart from './ResourcesByPlatformChart';
-import BarChartWrapper from './BarChartWrapper';
 import ComplianceOverviewPageEmptyDataFallback from './EmptyDataFallback';
 import ComplianceOverviewPageSkeleton from './Skeleton';
 import TopFailingPoliciesTable from './TopFailingPoliciesTable';
@@ -59,29 +58,37 @@ const ComplianceOverview: React.FC = () => {
   return (
     <Box as="article" mb={6}>
       <SimpleGrid columns={2} spacing={3} as="section" mb={3}>
-        <BarChartWrapper title="Policy Failure" icon="policy">
-          <PoliciesByStatusChart policies={data.organizationStats.appliedPolicies} />
-        </BarChartWrapper>
-        <BarChartWrapper title="Policy Severity" icon="policy">
-          <PoliciesBySeverityChart policies={data.organizationStats.appliedPolicies} />
-        </BarChartWrapper>
-        <BarChartWrapper title="Resource Health" icon="resource">
-          <ResourcesByStatusChart resources={data.organizationStats.scannedResources} />
-        </BarChartWrapper>
-        <BarChartWrapper title="Resource Health" icon="resource">
-          <ResourcesByPlatformChart resources={data.organizationStats.scannedResources} />
-        </BarChartWrapper>
+        <Panel title="Policy Failure">
+          <Box height={150}>
+            <PoliciesByStatusChart policies={data.organizationStats.appliedPolicies} />
+          </Box>
+        </Panel>
+        <Panel title="Policy Severity">
+          <Box height={150}>
+            <PoliciesBySeverityChart policies={data.organizationStats.appliedPolicies} />
+          </Box>
+        </Panel>
+        <Panel title="Resource Health">
+          <Box height={150}>
+            <ResourcesByStatusChart resources={data.organizationStats.scannedResources} />
+          </Box>
+        </Panel>
+        <Panel title="Resource Platforms">
+          <Box height={150}>
+            <ResourcesByPlatformChart resources={data.organizationStats.scannedResources} />
+          </Box>
+        </Panel>
       </SimpleGrid>
       <SimpleGrid columns={2} spacingX={3} spacingY={2}>
-        <Panel title="Top Failing Policies" size="small">
-          <Box m={-6}>
+        <Panel title="Top Failing Policies">
+          <Box my={-6}>
             <ErrorBoundary>
               <TopFailingPoliciesTable policies={data.organizationStats.topFailingPolicies} />
             </ErrorBoundary>
           </Box>
         </Panel>
-        <Panel title="Top Failing Resources" size="small">
-          <Box m={-6}>
+        <Panel title="Top Failing Resources">
+          <Box my={-6}>
             <ErrorBoundary>
               <TopFailingResourcesTable resources={data.organizationStats.topFailingResources} />
             </ErrorBoundary>

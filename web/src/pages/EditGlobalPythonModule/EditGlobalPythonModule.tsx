@@ -17,16 +17,15 @@
  */
 
 import React from 'react';
-import Panel from 'Components/Panel';
-import { Alert, Card, Box, useSnackbar } from 'pouncejs';
+import { Alert, Box, useSnackbar } from 'pouncejs';
 import useRouter from 'Hooks/useRouter';
 import GlobalPythonModuleForm from 'Components/forms/GlobalPythonModuleForm';
 import withSEO from 'Hoc/withSEO';
 import { GlobalPythonModule } from 'Generated/schema';
-import TablePlaceholder from 'Components/TablePlaceholder';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useGlobalPythonModuleDetails } from './graphql/globalPythonModuleDetails.generated';
 import { useUpdateGlobalPythonModule } from './graphql/updateGlobalPythonModule.generated';
+import Skeleton from './Skeleton';
 
 export const defaultInitialValues: Pick<GlobalPythonModule, 'id' | 'description' | 'body'> = {
   description: '',
@@ -73,12 +72,7 @@ const EditGlobalPythonModulePage: React.FC = () => {
   }, [queryData]);
 
   if (isFetchingGlobalPythonModule) {
-    return (
-      <Card p={9}>
-        <TablePlaceholder rowCount={5} rowHeight={15} />
-        <TablePlaceholder rowCount={1} rowHeight={100} />
-      </Card>
-    );
+    return <Skeleton />;
   }
 
   if (fetchPolicyError) {
@@ -98,9 +92,7 @@ const EditGlobalPythonModulePage: React.FC = () => {
 
   return (
     <Box mb={6}>
-      <Panel size="large" title="Global Module">
-        <GlobalPythonModuleForm initialValues={initialValues} onSubmit={handleSubmit} />
-      </Panel>
+      <GlobalPythonModuleForm initialValues={initialValues} onSubmit={handleSubmit} />
       {updateError && (
         <Box mt={2} mb={6}>
           <Alert
