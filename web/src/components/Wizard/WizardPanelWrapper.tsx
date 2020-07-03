@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Button, Flex } from 'pouncejs';
+import { Box, Button, FadeIn, Flex } from 'pouncejs';
 import { useWizardContext } from './WizardContext';
 
 interface WizardPanelWrapperAction {
@@ -42,19 +42,23 @@ const WizardPanelWrapper: React.FC & WizardPanelWrapperComposition = ({ children
 const WizardPanelWrapperContent: React.FC = ({ children }) => {
   return (
     <Box width={600} m="auto">
-      {children}
+      <FadeIn>{children}</FadeIn>
     </Box>
   );
 };
 
 const WizardPanelWrapperActions: React.FC = ({ children }) => {
-  return <Flex justify="flex-end">{children}</Flex>;
+  return (
+    <Flex justify="flex-end" spacing={3}>
+      {children}
+    </Flex>
+  );
 };
 
 const WizardPanelActionPrev: React.FC<WizardPanelWrapperAction> = ({ disabled }) => {
   const { goToPrevStep } = useWizardContext();
   return (
-    <Button size="large" variant="default" onClick={goToPrevStep} mr={3} disabled={disabled}>
+    <Button variant="outline" variantColor="navyblue" onClick={goToPrevStep} disabled={disabled}>
       Back
     </Button>
   );
@@ -63,7 +67,7 @@ const WizardPanelActionPrev: React.FC<WizardPanelWrapperAction> = ({ disabled })
 const WizardPanelActionNext: React.FC<WizardPanelWrapperAction> = ({ disabled }) => {
   const { goToNextStep } = useWizardContext();
   return (
-    <Button size="large" variant="primary" onClick={goToNextStep} disabled={disabled}>
+    <Button onClick={goToNextStep} disabled={disabled}>
       Next
     </Button>
   );

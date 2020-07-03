@@ -26,9 +26,9 @@ import (
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-// DeleteUser calls cognito api delete user from a user pool
 func (g *UsersGateway) DeleteUser(id *string) error {
-	if _, err := g.userPoolClient.AdminDeleteUser(&provider.AdminDeleteUserInput{
+	// Invalidate refresh token (access tokens are still valid for 1h)
+	if _, err := g.userPoolClient.AdminUserGlobalSignOut(&provider.AdminUserGlobalSignOutInput{
 		Username:   id,
 		UserPoolId: g.userPoolID,
 	}); err != nil {
@@ -36,6 +36,13 @@ func (g *UsersGateway) DeleteUser(id *string) error {
 			zap.L().Warn("user is already deleted", zap.String("userId", *id))
 			return nil
 		}
+		return &genericapi.AWSError{Method: "cognito.AdminUserGlobalSignOut", Err: err}
+	}
+
+	if _, err := g.userPoolClient.AdminDeleteUser(&provider.AdminDeleteUserInput{
+		Username:   id,
+		UserPoolId: g.userPoolID,
+	}); err != nil {
 		return &genericapi.AWSError{Method: "cognito.AdminDeleteUser", Err: err}
 	}
 

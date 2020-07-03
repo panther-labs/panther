@@ -55,7 +55,7 @@ func TestListUsers(t *testing.T) {
 	result, err := gw.ListUsers(&models.ListUsersInput{})
 	require.NoError(t, err)
 
-	expected := []*models.User{
+	expected := []models.User{
 		{
 			CreatedAt:  aws.Int64(now.Unix()),
 			Email:      aws.String("joe.blow@example.com"),

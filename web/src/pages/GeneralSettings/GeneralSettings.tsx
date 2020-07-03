@@ -17,12 +17,11 @@
  */
 
 import React from 'react';
-import { Alert, Box, useSnackbar, Text, Flex } from 'pouncejs';
+import { Alert, Box, useSnackbar, Flex, Heading, Card, SimpleGrid, Button, Link } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { pantherConfig } from 'Source/config';
 import { extractErrorMessage } from 'Helpers/utils';
 import CompanyInformationForm from 'Components/forms/CompanyInformationForm';
-import Panel from 'Components/Panel';
 import withSEO from 'Hoc/withSEO';
 import { useGetGeneralSettings } from './graphql/getGeneralSettings.generated';
 import { useUpdateGeneralSettings } from './graphql/updateGeneralSettings.generated';
@@ -71,48 +70,10 @@ const GeneralSettingsPage: React.FC = () => {
 
   const { displayName, email, errorReportingConsent } = getGeneralSettingsData.generalSettings;
   return (
-    <Box mb={6}>
-      <ErrorBoundary>
-        <Box mb={2}>
-          <Panel title="About Panther" size="large">
-            <Box width={500} m="auto">
-              <Flex mb={6}>
-                <Text color="grey300" size="large" width={150}>
-                  Plan
-                </Text>
-                <Text color="grey500" size="large" fontWeight="bold">
-                  Community
-                </Text>
-              </Flex>
-              <Flex mb={6}>
-                <Text color="grey300" size="large" width={150}>
-                  Version
-                </Text>
-                <Text color="grey500" size="large" fontWeight="bold">
-                  {pantherConfig.PANTHER_VERSION || 'N/A'}
-                </Text>
-              </Flex>
-              <Flex mb={6}>
-                <Text color="grey300" size="large" width={150}>
-                  AWS Account ID
-                </Text>
-                <Text color="grey500" size="large" fontWeight="bold">
-                  {pantherConfig.AWS_ACCOUNT_ID || 'N/A'}
-                </Text>
-              </Flex>
-              <Flex>
-                <Text color="grey300" size="large" width={150}>
-                  AWS Region
-                </Text>
-                <Text color="grey500" size="large" fontWeight="bold">
-                  {pantherConfig.AWS_REGION || 'N/A'}
-                </Text>
-              </Flex>
-            </Box>
-          </Panel>
-        </Box>
-        <Panel title="General Settings" size="large">
-          <Box width={500} mx="auto" mt={10}>
+    <SimpleGrid columns={3} spacing={5}>
+      <Box as="article">
+        <Card px={6} py={9}>
+          <ErrorBoundary>
             <CompanyInformationForm
               initialValues={{
                 displayName,
@@ -121,10 +82,50 @@ const GeneralSettingsPage: React.FC = () => {
               }}
               onSubmit={values => updateGeneralSettings({ variables: { input: values } })}
             />
-          </Box>
-        </Panel>
-      </ErrorBoundary>
-    </Box>
+          </ErrorBoundary>
+        </Card>
+      </Box>
+      <Box as="article">
+        <Card p={6}>
+          <Flex direction="column" spacing={6}>
+            <Heading as="h2" size="x-small" mt={2}>
+              About Panther
+            </Heading>
+            <Flex as="section" align="center" justify="space-between">
+              <Box>
+                <Box color="gray-450" fontSize="small" mb={1}>
+                  Plan
+                </Box>
+                <Box fontWeight="medium">Community</Box>
+              </Box>
+              <Link external href="https://runpanther.io/pricing/">
+                <Button as="div" variantColor="navyblue" variant="outline">
+                  Change
+                </Button>
+              </Link>
+            </Flex>
+            <Box as="section">
+              <Box color="gray-450" fontSize="small" mb={1}>
+                Version
+              </Box>
+              <Box fontWeight="medium">{pantherConfig.PANTHER_VERSION || 'N/A'}</Box>
+            </Box>
+            <Box as="section">
+              <Box color="gray-450" fontSize="small" mb={1}>
+                AWS Account ID
+              </Box>
+              <Box fontWeight="medium">{pantherConfig.AWS_ACCOUNT_ID}</Box>
+            </Box>
+            <Box as="section">
+              <Box color="gray-450" fontSize="small" mb={1}>
+                AWS Region
+              </Box>
+              <Box fontWeight="medium">{pantherConfig.AWS_REGION}</Box>
+            </Box>
+          </Flex>
+        </Card>
+      </Box>
+    </SimpleGrid>
   );
 };
 

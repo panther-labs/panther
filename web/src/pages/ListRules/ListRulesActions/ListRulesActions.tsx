@@ -24,7 +24,7 @@ import { LOG_TYPES } from 'Source/constants';
 import FormikCombobox from 'Components/fields/ComboBox';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import FormikTextInput from 'Components/fields/TextInput';
-import { Box, Button, Card, Flex, Icon } from 'pouncejs';
+import { Box, Button, Card, Collapse, Flex } from 'pouncejs';
 import CreateButton from 'Pages/ListRules/CreateButton';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
@@ -47,9 +47,7 @@ export const filters = {
       searchable: true,
       items: LOG_TYPES,
       label: 'Log Types',
-      inputProps: {
-        placeholder: 'Start typing logs...',
-      },
+      placeholder: 'Start typing logs...',
     },
   },
   severity: {
@@ -59,9 +57,7 @@ export const filters = {
       items: ['', ...severityOptions],
       itemToString: (severity: SeverityEnum | '') =>
         severity === '' ? 'All' : capitalize(severity.toLowerCase()),
-      inputProps: {
-        placeholder: 'Choose a severity...',
-      },
+      placeholder: 'Choose a severity...',
     },
   },
   tags: {
@@ -71,9 +67,7 @@ export const filters = {
       searchable: true,
       allowAdditions: true,
       items: [] as string[],
-      inputProps: {
-        placeholder: 'Filter with tags...',
-      },
+      placeholder: 'Filter with tags...',
     },
   },
   enabled: {
@@ -87,9 +81,7 @@ export const filters = {
         }
         return item === 'true' ? 'Yes' : 'No';
       },
-      inputProps: {
-        placeholder: 'Show only enabled?',
-      },
+      placeholder: 'Show only enabled?',
     },
   },
 };
@@ -123,35 +115,34 @@ const ListRulesActions: React.FC = () => {
   );
 
   return (
-    <React.Fragment>
-      <Flex justify="flex-end" mb={6}>
-        <Box position="relative" mr={5}>
+    <Box mb={6} as="section">
+      <Flex justify="flex-end">
+        <Flex spacing={5} justify="flex-end">
           <Button
-            size="large"
-            variant="default"
+            variant="outline"
+            variantColor="navyblue"
+            icon="filter"
             onClick={() => setFiltersVisibility(!areFiltersVisible)}
           >
-            <Flex>
-              <Icon type="filter" size="small" mr={3} />
-              Filter Options {filtersCount ? `(${filtersCount})` : ''}
-            </Flex>
+            Filter Options {filtersCount ? `(${filtersCount})` : ''}
           </Button>
-        </Box>
-        <CreateButton />
+          <CreateButton />
+        </Flex>
       </Flex>
-      {areFiltersVisible && (
-        <ErrorBoundary>
-          <Card p={6} mb={6}>
-            <GenerateFiltersGroup<ListRulesFiltersValues>
-              filters={filters}
-              onCancel={() => setFiltersVisibility(false)}
-              onSubmit={updateRequestParamsAndResetPaging}
-              initialValues={initialFilterValues}
-            />
-          </Card>
-        </ErrorBoundary>
-      )}
-    </React.Fragment>
+      <ErrorBoundary>
+        <Collapse open={areFiltersVisible}>
+          <Box pt={6}>
+            <Card p={8}>
+              <GenerateFiltersGroup<ListRulesFiltersValues>
+                filters={filters}
+                onSubmit={updateRequestParamsAndResetPaging}
+                initialValues={initialFilterValues}
+              />
+            </Card>
+          </Box>
+        </Collapse>
+      </ErrorBoundary>
+    </Box>
   );
 };
 

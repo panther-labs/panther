@@ -200,6 +200,7 @@ Resources:
           "operation": "Invoke",
           "payload": $util.toJson({
             "resetUserPassword": {
+              "requesterId": $ctx.identity.sub,
               "id": $ctx.args.id
             }
           })
@@ -219,6 +220,8 @@ Resources:
       FieldName: updateUser
       DataSourceName: !GetAtt UsersAPILambdaDataSource.Name
       RequestMappingTemplate: |
+        #set ($input = $ctx.args.input)
+        $util.qr($input.put("requesterId", $ctx.identity.sub))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
@@ -246,6 +249,7 @@ Resources:
           "operation": "Invoke",
           "payload": $util.toJson({
             "removeUser": {
+              "requesterId": $ctx.identity.sub,
               "id": $ctx.args.id
             }
           })
@@ -288,6 +292,7 @@ Resources:
       DataSourceName: !GetAtt UsersAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        $util.qr($input.put("requesterId", $ctx.identity.sub))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",

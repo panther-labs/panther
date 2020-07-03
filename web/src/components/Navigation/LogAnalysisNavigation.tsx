@@ -17,35 +17,40 @@
  */
 
 import React from 'react';
-import { Badge, Box, Flex, Heading } from 'pouncejs';
+import { Box, Flex, Heading } from 'pouncejs';
 import urls from 'Source/urls';
+import FadeInTrail from 'Components/utils/FadeInTrail';
 import NavLink from './NavLink';
 
 const LogAnalysisNavigation: React.FC = () => {
   return (
     <Box>
-      <Heading size="medium" textAlign="center" mt={10} mb={5}>
-        <b>LOG ANALYSIS</b>
+      <Heading size="x-small" textAlign="center" fontWeight="bold" mt={10} mb={5} truncated>
+        LOG ANALYSIS
       </Heading>
       <Flex direction="column" as="ul">
-        <Flex as="li" position="relative">
-          <NavLink icon="dashboard-alt" to={urls.logAnalysis.overview()} label="Overview" />
-          <Box position="absolute" right="10px" top="23px">
-            <Badge color="blue">Coming Soon</Badge>
-          </Box>
-        </Flex>
-        <Flex as="li">
+        <FadeInTrail as="li">
+          <React.Fragment>
+            <NavLink icon="dashboard-alt" to={urls.logAnalysis.overview()} label="Overview" />
+            <Box
+              as="span"
+              position="absolute"
+              top={21}
+              right={42}
+              color="blue-600"
+              fontSize="x-small"
+              pointerEvents="none"
+            >
+              Soon
+            </Box>
+          </React.Fragment>
           <NavLink icon="rule" to={urls.logAnalysis.rules.list()} label="Rules" />
-        </Flex>
-        <Flex as="li">
           <NavLink icon="alert" to={urls.logAnalysis.alerts.list()} label="Alerts" />
-        </Flex>
-        <Flex as="li">
           <NavLink icon="log-source" to={urls.logAnalysis.sources.list()} label="Sources" />
-        </Flex>
+        </FadeInTrail>
       </Flex>
     </Box>
   );
 };
 
-export default LogAnalysisNavigation;
+export default React.memo(LogAnalysisNavigation);

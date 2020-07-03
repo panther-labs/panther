@@ -85,6 +85,10 @@ type Policy struct {
 	// Required: true
 	LastModifiedBy UserID `json:"lastModifiedBy"`
 
+	// output ids
+	// Required: true
+	OutputIds OutputIds `json:"outputIds"`
+
 	// reference
 	// Required: true
 	Reference Reference `json:"reference"`
@@ -171,6 +175,10 @@ func (m *Policy) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateLastModifiedBy(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateOutputIds(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -353,6 +361,22 @@ func (m *Policy) validateLastModifiedBy(formats strfmt.Registry) error {
 	if err := m.LastModifiedBy.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("lastModifiedBy")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *Policy) validateOutputIds(formats strfmt.Registry) error {
+
+	if err := validate.Required("outputIds", "body", m.OutputIds); err != nil {
+		return err
+	}
+
+	if err := m.OutputIds.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("outputIds")
 		}
 		return err
 	}

@@ -17,14 +17,17 @@
  */
 
 import React from 'react';
-import { Card } from 'pouncejs';
+import { FadeIn } from 'pouncejs';
+import Panel from 'Components/Panel';
 import TablePlaceholder from 'Components/TablePlaceholder';
 
 const DestinationsPageSkeleton: React.FC = () => {
   return (
-    <Card p={9}>
-      <TablePlaceholder />
-    </Card>
+    <FadeIn from="bottom">
+      <Panel title="Destinations">
+        <TablePlaceholder />
+      </Panel>
+    </FadeIn>
   );
 };
 

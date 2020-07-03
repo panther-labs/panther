@@ -17,10 +17,11 @@
  */
 
 import React from 'react';
-import { Box, Flex, IconButton } from 'pouncejs';
+import { Box, Flex, Img, Link } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import PantherIcon from 'Assets/panther-minimal-logo.svg';
+import { animated, useTransition } from 'react-spring';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 import useRouter from 'Hooks/useRouter';
 import NavIconButton from './NavIconButton';
@@ -28,9 +29,11 @@ import SettingsNavigation from './SettingsNavigation';
 import ComplianceNavigation from './ComplianceNavigation';
 import LogAnalysisNavigation from './LogAnalysisNavigation';
 
+const SECONDARY_NAV_WIDTH = 200;
 const COMPLIANCE_NAV_KEY = 'compliance';
 const LOG_ANALYSIS_NAV_KEY = 'logAnalysis';
 const SETTINGS_NAV_KEY = 'settings';
+
 type NavKeys = typeof COMPLIANCE_NAV_KEY | typeof LOG_ANALYSIS_NAV_KEY | typeof SETTINGS_NAV_KEY;
 
 const Navigation = () => {
@@ -38,40 +41,65 @@ const Navigation = () => {
     location: { pathname },
   } = useRouter();
 
-  const isCompliancePage = pathname.includes(urls.compliance.home());
-  const isLogAnalysisPage = pathname.includes(urls.logAnalysis.home());
-  const isSettingsPage = pathname.includes(urls.settings.home());
-  const [secondaryNav, setSecondaryNav] = React.useState<NavKeys>(null);
+  // Normally we woulnd't be neeeding the code below in a separate function. It would just be inside
+  // a `React.useEffect`. We add this here cause it's important to give React.useState the proper
+  // initial value, so that the animation of the Navbar doesn't kick on the initial render. If it
+  // wasn't for that, we wouldn't have "abstracted" this function here and we would just have an
+  // initial value of `null` which would instantly be updated from the code in `React.useEffect`
+  const getSecondaryNavKey = () => {
+    const isCompliancePage = pathname.includes(urls.compliance.home());
+    const isLogAnalysisPage = pathname.includes(urls.logAnalysis.home());
+    const isSettingsPage = pathname.includes(urls.settings.home());
+
+    if (isCompliancePage) {
+      return COMPLIANCE_NAV_KEY;
+    }
+    if (isLogAnalysisPage) {
+      return LOG_ANALYSIS_NAV_KEY;
+    }
+    if (isSettingsPage) {
+      return SETTINGS_NAV_KEY;
+    }
+    return null;
+  };
+
+  const [secondaryNav, setSecondaryNav] = React.useState<NavKeys>(getSecondaryNavKey());
 
   React.useEffect(() => {
-    if (isCompliancePage) {
-      setSecondaryNav(COMPLIANCE_NAV_KEY);
-    } else if (isLogAnalysisPage) {
-      setSecondaryNav(LOG_ANALYSIS_NAV_KEY);
-    } else if (isSettingsPage) {
-      setSecondaryNav(SETTINGS_NAV_KEY);
-    } else {
-      setSecondaryNav(null);
-    }
-  }, [isSettingsPage, isCompliancePage, isLogAnalysisPage]);
+    setSecondaryNav(getSecondaryNavKey());
+  }, [pathname]);
 
   const isComplianceNavigationActive = secondaryNav === COMPLIANCE_NAV_KEY;
   const isLogAnalysisNavigationActive = secondaryNav === LOG_ANALYSIS_NAV_KEY;
   const isSettingsNavigationActive = secondaryNav === SETTINGS_NAV_KEY;
   const isSecondaryNavigationActive = secondaryNav !== null;
+
+  const transitions = useTransition(isSecondaryNavigationActive, null, {
+    initial: { width: SECONDARY_NAV_WIDTH, opacity: 0 },
+    from: { width: 0, opacity: 0 },
+    enter: { width: SECONDARY_NAV_WIDTH, opacity: 1 },
+    leave: { width: 0, opacity: 0 },
+  });
+
   return (
-    <Flex as="nav" boxShadow="dark50" zIndex={1} position="sticky" top={0} height="100vh">
-      <Flex direction="column" width={70} height="100%" boxShadow="dark150">
-        <Flex justify="center" pt={7} pb={2}>
-          <IconButton variant="primary" as={RRLink} to="/">
-            <img
-              src={PantherIcon}
-              alt="Panther logo"
-              width={30}
-              height={30}
-              style={{ display: 'block' }}
-            />
-          </IconButton>
+    <Flex
+      as="aside"
+      boxShadow="dark50"
+      zIndex={1}
+      position="sticky"
+      top={0}
+      height="100vh"
+      backgroundColor="navyblue-900"
+    >
+      <Flex as="nav" direction="column" width={70} height="100%" aria-label="Main">
+        <Flex as={RRLink} to="/" justify="center" py={3} my={6}>
+          <Img
+            src={PantherIcon}
+            alt="Panther logo"
+            nativeWidth={30}
+            nativeHeight={30}
+            display="block"
+          />
         </Flex>
         <Flex direction="column" justify="center" align="center" as="ul" flex="1 0 auto">
           <Box as="li">
@@ -95,15 +123,9 @@ const Navigation = () => {
             />
           </Box>
           <Box as="li" mt="auto">
-            <NavIconButton
-              active={false}
-              icon="docs"
-              as="a"
-              href={PANTHER_SCHEMA_DOCS_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              tooltipLabel="Documentation"
-            />
+            <Link external href={PANTHER_SCHEMA_DOCS_LINK} tabIndex={-1}>
+              <NavIconButton active={false} icon="docs" tooltipLabel="Documentation" />
+            </Link>
           </Box>
           <Box as="li">
             <NavIconButton
@@ -115,12 +137,17 @@ const Navigation = () => {
           </Box>
         </Flex>
       </Flex>
-      {isSecondaryNavigationActive && (
-        <Box width={230} height="100%">
-          {secondaryNav === COMPLIANCE_NAV_KEY && <ComplianceNavigation />}
-          {secondaryNav === LOG_ANALYSIS_NAV_KEY && <LogAnalysisNavigation />}
-          {secondaryNav === SETTINGS_NAV_KEY && <SettingsNavigation />}
-        </Box>
+      {transitions.map(
+        ({ item, key, props: styles }) =>
+          item && (
+            <animated.div key={key} style={{ width: 0, ...styles }}>
+              <Box height="100%" borderLeft="1px solid" borderColor="navyblue-600">
+                {secondaryNav === COMPLIANCE_NAV_KEY && <ComplianceNavigation />}
+                {secondaryNav === LOG_ANALYSIS_NAV_KEY && <LogAnalysisNavigation />}
+                {secondaryNav === SETTINGS_NAV_KEY && <SettingsNavigation />}
+              </Box>
+            </animated.div>
+          )
       )}
     </Flex>
   );

@@ -17,8 +17,7 @@
  */
 
 import React from 'react';
-import TablePlaceholder from 'Components/TablePlaceholder';
-import { Alert, Box, Button, Card, Flex, Icon } from 'pouncejs';
+import { Alert, Box, Button } from 'pouncejs';
 import { extractErrorMessage } from 'Helpers/utils';
 import Panel from 'Components/Panel';
 import { Link as RRLink } from 'react-router-dom';
@@ -28,16 +27,13 @@ import withSEO from 'Hoc/withSEO';
 import { useListComplianceSources } from './graphql/listComplianceSources.generated';
 import EmptyDataFallback from './EmptyDataFallback';
 import ComplianceSourceTable from './ComplianceSourceTable';
+import Skeleton from './Skeleton';
 
 const ListComplianceSources = () => {
   const { loading, error, data } = useListComplianceSources();
 
   if (loading) {
-    return (
-      <Card p={9}>
-        <TablePlaceholder />
-      </Card>
-    );
+    return <Skeleton />;
   }
 
   if (error) {
@@ -61,13 +57,9 @@ const ListComplianceSources = () => {
     <Box mb={6}>
       <Panel
         title="Connected Accounts"
-        size="large"
         actions={
-          <Button size="large" variant="primary" as={RRLink} to={urls.compliance.sources.create()}>
-            <Flex align="center">
-              <Icon type="add" size="small" mr={1} />
-              Add Account
-            </Flex>
+          <Button icon="add" as={RRLink} to={urls.compliance.sources.create()}>
+            Add Account
           </Button>
         }
       >

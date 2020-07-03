@@ -17,16 +17,27 @@
  */
 
 import React from 'react';
-import { SEVERITY_COLOR_MAP } from 'Source/constants';
-import { Badge } from 'pouncejs';
+import { Badge, BadgeProps } from 'pouncejs';
 import { SeverityEnum } from 'Generated/schema';
+
+export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: BadgeProps['color'] } = {
+  [SeverityEnum.Critical]: 'red-400' as const,
+  [SeverityEnum.High]: 'orange-500' as const,
+  [SeverityEnum.Medium]: 'yellow-500' as const,
+  [SeverityEnum.Low]: 'gray-500' as const,
+  [SeverityEnum.Info]: 'gray-800' as const,
+};
 
 interface SeverityBadgeProps {
   severity: SeverityEnum;
 }
 
 const SeverityBadge: React.FC<SeverityBadgeProps> = ({ severity }) => {
-  return <Badge color={SEVERITY_COLOR_MAP[severity]}>{severity}</Badge>;
+  return (
+    <Badge variant="outline" color={SEVERITY_COLOR_MAP[severity]}>
+      {severity}
+    </Badge>
+  );
 };
 
 export default SeverityBadge;

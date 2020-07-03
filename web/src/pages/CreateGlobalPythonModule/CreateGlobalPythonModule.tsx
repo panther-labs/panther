@@ -17,15 +17,17 @@
  */
 
 import React from 'react';
-import Panel from 'Components/Panel';
 import { Alert, Box } from 'pouncejs';
 import urls from 'Source/urls';
 import { AddGlobalPythonModuleInput } from 'Generated/schema';
 import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage } from 'Helpers/utils';
 import useRouter from 'Hooks/useRouter';
+import storage from 'Helpers/storage';
 import GlobalPythonModuleForm from 'Components/forms/GlobalPythonModuleForm';
 import { useCreateGlobalPythonModule } from './graphql/createGlobalPythonModule.generated';
+
+const GLOBAL_PYTHON_MODULE_INFOBOX_STORAGE_KEY = 'panther.globalPythonModule.isInfoboxSeen';
 
 const initialValues: Required<AddGlobalPythonModuleInput> = {
   id: '',
@@ -45,11 +47,27 @@ const CreateGlobalPythonModulePage: React.FC = () => {
     []
   );
 
+  const handleInformationBoxDiscard = React.useCallback(() => {
+    storage.local.write(GLOBAL_PYTHON_MODULE_INFOBOX_STORAGE_KEY, true);
+  }, []);
+
+  const shouldShowInfobox = storage.local.read<boolean>(GLOBAL_PYTHON_MODULE_INFOBOX_STORAGE_KEY);
   return (
-    <Box mb={10}>
-      <Panel size="large" title="Global Python Module">
-        <GlobalPythonModuleForm initialValues={initialValues} onSubmit={handleSubmit} />
-      </Panel>
+    <Box as="article" mb={6}>
+      {!shouldShowInfobox && (
+        <Box as="section" pb={5}>
+          <Alert
+            title="What is this?"
+            description="Global modules allow you to define reusable functions, variables and classes
+            which can later be used within any Rule or Policy body definition. Anything defined below
+            can be directly imported as a normal Python module using the module name you defined below."
+            variant="default"
+            discardable
+            onClose={handleInformationBoxDiscard}
+          />
+        </Box>
+      )}
+      <GlobalPythonModuleForm initialValues={initialValues} onSubmit={handleSubmit} />
       {error && (
         <Box mt={2} mb={6}>
           <Alert

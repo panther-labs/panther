@@ -17,9 +17,9 @@
  */
 
 import React from 'react';
-import { AbstractButton, Text, TextProps, theme } from 'pouncejs';
+import { AbstractButton, AbstractButtonProps, Box, theme } from 'pouncejs';
 
-interface TableControlsComplianceFilterProps extends Omit<TextProps, 'size'> {
+interface TableControlsComplianceFilterProps extends AbstractButtonProps {
   text: string;
   isActive: boolean;
   count?: number;
@@ -36,15 +36,23 @@ const TableControlsComplianceFilter: React.FC<TableControlsComplianceFilterProps
   return (
     <AbstractButton
       {...rest}
-      p={2}
-      color="grey300"
+      py={2}
+      px={3}
+      color={isActive ? 'inherit' : 'gray-200'}
       borderRadius="medium"
-      backgroundColor={isActive ? 'grey100' : 'white'}
+      outline="none"
+      backgroundColor={isActive ? 'navyblue-450' : 'transparent'}
+      _hover={{
+        backgroundColor: isActive ? 'navyblue-450' : 'navyblue-700',
+      }}
+      _focus={{
+        backgroundColor: isActive ? 'navyblue-450' : 'navyblue-700',
+      }}
     >
       {text}{' '}
-      <Text size="medium" color={countColor} as="span">
+      <Box fontSize="medium" color={countColor} as="span">
         {count}
-      </Text>
+      </Box>
     </AbstractButton>
   );
 };

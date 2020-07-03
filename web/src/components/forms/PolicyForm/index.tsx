@@ -18,5 +18,5 @@
 
 export { default } from './PolicyForm';
 export * from './PolicyForm';
-export * from './PolicyFormAutoRemediationFields';
+export * from './PolicyFormAutoRemediationSection';
 export * from './graphql/listRemediations.generated';
