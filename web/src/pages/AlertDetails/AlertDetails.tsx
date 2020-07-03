@@ -112,11 +112,7 @@ const AlertDetailsPage = () => {
           </ErrorBoundary>
         </Box>
         <ErrorBoundary>
-          <AlertEvents
-            events={alertData.alert.events}
-            total={alertData.alert.eventsMatched}
-            fetchMore={fetchMoreEvents}
-          />
+          <AlertEvents alert={alertData.alert} fetchMore={fetchMoreEvents} />
         </ErrorBoundary>
       </Box>
     </Box>
