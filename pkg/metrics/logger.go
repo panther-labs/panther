@@ -125,7 +125,7 @@ func NewLogger(namespace string, dimensions []DimensionSet) (*Logger, error) {
 
 // Log sends a log formatted in the CloudWatch embedded metric format
 func (l *Logger) Log(values map[Metric]interface{}, dimensions map[string]string) {
-	err := LogEmbedded(l.namespace, values, dimensions, l.dimensions, 0)
+	err := LogEmbedded(l.namespace, values, dimensions, l.dimensions)
 	if err != nil {
 		zap.L().Error("metric failed", zap.Error(err))
 	}
@@ -133,7 +133,7 @@ func (l *Logger) Log(values map[Metric]interface{}, dimensions map[string]string
 
 // LogEmbedded constructs an object in the AWS embedded metric format and logs it
 func LogEmbedded(namespace string, values map[Metric]interface{},
-	dimensions map[string]string, dimensionSets []DimensionSet, timestamp int64) error {
+	dimensions map[string]string, dimensionSets []DimensionSet) error {
 	// Validate input
 	if namespace == "" {
 		return errors.New("namespace is required")
@@ -146,10 +146,7 @@ func LogEmbedded(namespace string, values map[Metric]interface{},
 		return errors.New("max number of metrics exceeded")
 	}
 
-	// Set timestamp to current time if one is not provided
-	if timestamp == 0 {
-		timestamp = time.Now().UnixNano() / 1000000 // Nanosecond -> Millisecond conversion
-	}
+	timestamp := time.Now().UnixNano() / 1000000 // Nanosecond -> Millisecond conversion
 
 	for _, dimensionSet := range dimensionSets {
 		for _, dimensionKey := range dimensionSet {
@@ -222,8 +219,8 @@ func MustMonoLogger(namespace string, dimensionSet DimensionSet, metric Metric) 
 // NewLogger create a new logger for a given namespace and set of dimensions, returning an error if
 // the namespace or dimensions are invalid
 func NewMonoLogger(namespace string, dimensionSet DimensionSet, metric Metric) (*MonoLogger, error) {
-	if namespace == "" || dimensionSet == nil || metric.Name == "" || metric.Unit == "" {
-		return nil, errors.New("namespace, dimension, metric name, and metric unit cannot be empty")
+	if namespace == "" || metric.Name == "" || metric.Unit == "" {
+		return nil, errors.New("namespace, metric name, and metric unit cannot be empty")
 	}
 
 	// Enforced by AWS specification
@@ -238,6 +235,12 @@ func NewMonoLogger(namespace string, dimensionSet DimensionSet, metric Metric) (
 			Metrics:    []Metric{metric},
 		},
 	}
+
+	// Don't include any of the dimensionSet boilerplate if there are no dimensions
+	if dimensionSet == nil {
+		directive[0].Dimensions = nil
+	}
+
 	return &MonoLogger{
 		directive: directive,
 	}, nil
