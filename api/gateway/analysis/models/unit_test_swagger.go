@@ -45,10 +45,6 @@ type UnitTest struct {
 	// resource
 	// Required: true
 	Resource TestResource `json:"resource"`
-
-	// resource type
-	// Required: true
-	ResourceType TestResourceType `json:"resourceType"`
 }
 
 // Validate validates this unit test
@@ -64,10 +60,6 @@ func (m *UnitTest) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateResource(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateResourceType(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -106,18 +98,6 @@ func (m *UnitTest) validateResource(formats strfmt.Registry) error {
 	if err := m.Resource.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("resource")
-		}
-		return err
-	}
-
-	return nil
-}
-
-func (m *UnitTest) validateResourceType(formats strfmt.Registry) error {
-
-	if err := m.ResourceType.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("resourceType")
 		}
 		return err
 	}

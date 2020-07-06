@@ -20,11 +20,9 @@ import React, { MouseEvent } from 'react';
 import { AnalysisTypeEnum, PolicyUnitTest, PolicyUnitTestInput } from 'Generated/schema';
 import { FieldArray, FastField as Field, useFormikContext } from 'formik';
 import { Button, Flex, Icon, Grid, Box, Alert, AbstractButton } from 'pouncejs';
-import { LOG_TYPES, RESOURCE_TYPES } from 'Source/constants';
 import { formatJSON, extractErrorMessage, generateRandomColor } from 'Helpers/utils';
 import FormikTextInput from 'Components/fields/TextInput';
 import FormikEditor from 'Components/fields/Editor';
-import FormikCombobox from 'Components/fields/ComboBox';
 import FormikRadio from 'Components/fields/Radio';
 import { PolicyFormValues } from 'Components/forms/PolicyForm';
 import { RuleFormValues } from 'Components/forms/RuleForm';
@@ -90,7 +88,6 @@ const BaseRuleFormTestSection: React.FC = () => {
             name: `Test-${generateRandomColor()}`,
             expectedResult: true,
             resource: formatJSON({}),
-            resourceType: isPolicy ? RESOURCE_TYPES[0] : LOG_TYPES[0],
           };
 
           // adds a test
@@ -174,15 +171,6 @@ const BaseRuleFormTestSection: React.FC = () => {
                     placeholder="The name of your test"
                     label="Name"
                   />
-                  <Field
-                    as={FormikCombobox}
-                    searchable
-                    name={`tests[${activeTabIndex}].resourceType`}
-                    items={isPolicy ? RESOURCE_TYPES : LOG_TYPES}
-                    label={`${isPolicy ? 'Resource' : 'Log'} Type`}
-                    placeholder={`Select a ${isPolicy ? 'resource' : 'log'} type to test`}
-                  />
-
                   <Flex align="center" spacing={5}>
                     <Box fontSize="medium" fontWeight="medium" flexGrow={1} textAlign="right">
                       {isPolicy
