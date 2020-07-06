@@ -152,9 +152,9 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 	ddbMock.On("PutItem", expectedPutItemRequest).Return(&dynamodb.PutItemOutput{}, nil)
 	assert.NoError(t, Handle(oldAlertDedupEvent, newAlertDedupEvent))
 
-	// ddbMock.AssertExpectations(t)
-	// sqsMock.AssertExpectations(t)
-	// mockRoundTripper.AssertExpectations(t)
+	ddbMock.AssertExpectations(t)
+	sqsMock.AssertExpectations(t)
+	mockRoundTripper.AssertExpectations(t)
 }
 
 func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
