@@ -249,8 +249,8 @@ func filterByStatus(filter *expression.ConditionBuilder, input *models.ListAlert
 		if *input.Status[0] == models.OpenStatus {
 			multiFilter = expression.
 				Or(
-					expression.Name(StatusKey).Equal(expression.Value(models.OpenStatus)),
-					expression.Name(StatusKey).Equal(expression.Value(models.EmptyStatus)),
+					expression.Name(StatusKey).Equal(expression.Value(aws.String(models.OpenStatus))),
+					expression.Name(StatusKey).Equal(expression.Value(aws.String(models.EmptyStatus))),
 				)
 		} else {
 			multiFilter = expression.Name(StatusKey).Equal(expression.Value(*input.Status[0]))
@@ -262,8 +262,8 @@ func filterByStatus(filter *expression.ConditionBuilder, input *models.ListAlert
 			if *input.Status[0] == models.OpenStatus {
 				multiFilter = multiFilter.
 					Or(
-						expression.Name(StatusKey).Equal(expression.Value(models.OpenStatus)),
-						expression.Name(StatusKey).Equal(expression.Value(models.EmptyStatus)),
+						expression.Name(StatusKey).Equal(expression.Value(aws.String(models.OpenStatus))),
+						expression.Name(StatusKey).Equal(expression.Value(aws.String(models.EmptyStatus))),
 					)
 			} else {
 				multiFilter = multiFilter.Or(expression.Name(StatusKey).Equal(expression.Value(*statusSetting)))
