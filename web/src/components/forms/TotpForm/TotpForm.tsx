@@ -81,6 +81,7 @@ export const TotpForm: React.FC = () => {
         <Box mb={4}>
           <Field
             as={FormikTextInput}
+            maxLength="6"
             placeholder="The 6-digit MFA code"
             name="mfaCode"
             autoComplete="off"
