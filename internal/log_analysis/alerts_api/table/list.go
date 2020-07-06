@@ -239,19 +239,36 @@ func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAle
 	}
 }
 
-// filterByStatus - filters by Status level(s)
+// filterByStatus - filters by Status(es)
 func filterByStatus(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
-	if len(input.Status) > 0 {
+	// Filter out any "OPEN" status requests because records could be stored
+	// both with _and_ without this field set. We are effectively ignoring the
+	// request to filter by "OPEN" so that it will always return OPEN || <Empty> from ddb.
+	validFilters := Filter(input.Status, func(val string) bool {
+		return val != models.OpenStatus
+	})
+	if len(validFilters) > 0 {
 		// Start with the first known key
-		multiFilter := expression.Name(StatusKey).Equal(expression.Value(*input.Status[0]))
+		multiFilter := expression.Name(StatusKey).Equal(expression.Value(*validFilters[0]))
 
 		// Then add or conditions starting at a new slice from the second index
-		for _, statusSetting := range input.Status[1:] {
+		for _, statusSetting := range validFilters[1:] {
 			multiFilter = multiFilter.Or(expression.Name(StatusKey).Equal(expression.Value(*statusSetting)))
 		}
 
 		*filter = filter.And(multiFilter)
 	}
+}
+
+// Filter - filters an array by a string condition
+func Filter(arr []*string, cond func(string) bool) []*string {
+	result := []*string{}
+	for i := range arr {
+		if cond(*arr[i]) {
+			result = append(result, arr[i])
+		}
+	}
+	return result
 }
 
 // filterByTitleContains - fiters by a name that contains a string (case insensitive)

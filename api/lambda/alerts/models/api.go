@@ -33,7 +33,7 @@ type LambdaInput struct {
 // Example:
 // {
 //     "getAlert": {
-// 	    "alertId": "ruleId-2",
+//         "alertId": "ruleId-2",
 //         "eventsPageSize": 20
 //     }
 // }
@@ -82,7 +82,7 @@ type ListAlertsInput struct {
 	// Filtering
 	Severity        []*string  `json:"severity" validate:"omitempty,dive,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 	NameContains    *string    `json:"nameContains"`
-	Status          []*string  `json:"status" validate:"omitempty,dive,oneof=TRIAGED CLOSED RESOLVED"`
+	Status          []*string  `json:"status" validate:"omitempty,dive,oneof=OPEN TRIAGED CLOSED RESOLVED"`
 	CreatedAtBefore *time.Time `json:"createdAtBefore"`
 	CreatedAtAfter  *time.Time `json:"createdAtAfter"`
 	RuleIDContains  *string    `json:"ruleIdContains"`
@@ -93,6 +93,24 @@ type ListAlertsInput struct {
 	// Sorting
 	SortDir *string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
 }
+
+// Constants defined for alert statuses
+const (
+	// Empty is the default value for an alert status and is used to create an alert
+	EmptyStatus = ""
+
+	// Open is the default value for an alert status and is used to filter alerts
+	OpenStatus = "OPEN"
+
+	// Triaged sets the alert to actively investigating
+	TriagedStatus = "TRIAGED"
+
+	// Closed is set for false positive or anything other reason than resolved
+	ClosedStatus = "CLOSED"
+
+	// Resolved is set when the issue was found and remediated
+	ResolvedStatus = "RESOLVED"
+)
 
 // ListAlertsOutput is the returned alert list.
 type ListAlertsOutput struct {
@@ -108,7 +126,6 @@ type ListAlertsOutput struct {
 // AlertSummary contains summary information for an alert
 type AlertSummary struct {
 	AlertID         *string    `json:"alertId" validate:"required"`
-	Status          *string    `json:"status" validate:"required"`
 	RuleID          *string    `json:"ruleId" validate:"required"`
 	RuleDisplayName *string    `json:"ruleDisplayName,omitempty"`
 	RuleVersion     *string    `json:"ruleVersion" validate:"required"`
@@ -117,6 +134,7 @@ type AlertSummary struct {
 	UpdateTime      *time.Time `json:"updateTime" validate:"required"`
 	EventsMatched   *int       `json:"eventsMatched" validate:"required"`
 	Severity        *string    `json:"severity" validate:"required"`
+	Status          *string    `json:"status,omitempty"`
 	Title           *string    `json:"title" validate:"required"`
 }
 

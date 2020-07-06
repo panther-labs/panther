@@ -153,5 +153,6 @@ func getNewTestCase() map[string]events.DynamoDBAttributeValue {
 		"eventCount":        events.NewNumberAttribute("100"),
 		"logTypes":          events.NewStringSetAttribute([]string{"Log.Type.1", "Log.Type.2"}),
 		"title":             events.NewStringAttribute("test title"),
+		"status":            events.NewStringAttribute("OPEN"),
 	}
 }

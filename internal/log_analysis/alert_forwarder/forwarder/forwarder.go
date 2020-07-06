@@ -32,7 +32,8 @@ import (
 	"github.com/pkg/errors"
 
 	policiesoperations "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	ruleModel "github.com/panther-labs/panther/api/gateway/analysis/models"
+	statusModel "github.com/panther-labs/panther/api/lambda/alerts/models"
 	alertModel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 )
 
@@ -92,13 +93,14 @@ func updateExistingAlert(event *AlertDedupEvent) error {
 	return nil
 }
 
-func storeNewAlert(rule *models.Rule, alertDedup *AlertDedupEvent) error {
+func storeNewAlert(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) error {
 	alert := &Alert{
 		ID:              generateAlertID(alertDedup),
 		TimePartition:   defaultTimePartition,
 		Severity:        string(rule.Severity),
 		RuleDisplayName: getRuleDisplayName(rule),
 		Title:           getAlertTitle(rule, alertDedup),
+		Status:          statusModel.OpenStatus, // Default status
 		AlertDedupEvent: *alertDedup,
 	}
 
@@ -117,7 +119,7 @@ func storeNewAlert(rule *models.Rule, alertDedup *AlertDedupEvent) error {
 	return nil
 }
 
-func sendAlertNotification(rule *models.Rule, alertDedup *AlertDedupEvent) error {
+func sendAlertNotification(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) error {
 	alertNotification := &alertModel.Alert{
 		CreatedAt:           alertDedup.CreationTime,
 		AnalysisDescription: aws.String(string(rule.Description)),
@@ -130,6 +132,7 @@ func sendAlertNotification(rule *models.Rule, alertDedup *AlertDedupEvent) error
 		Type:                alertModel.RuleType,
 		AlertID:             aws.String(generateAlertID(alertDedup)),
 		Title:               aws.String(getAlertTitle(rule, alertDedup)),
+		Status:              statusModel.OpenStatus, // Default status
 	}
 
 	msgBody, err := jsoniter.MarshalToString(alertNotification)
@@ -148,7 +151,7 @@ func sendAlertNotification(rule *models.Rule, alertDedup *AlertDedupEvent) error
 	return nil
 }
 
-func getAlertTitle(rule *models.Rule, alertDedup *AlertDedupEvent) string {
+func getAlertTitle(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) string {
 	if alertDedup.GeneratedTitle != nil {
 		return *alertDedup.GeneratedTitle
 	}
@@ -159,7 +162,7 @@ func getAlertTitle(rule *models.Rule, alertDedup *AlertDedupEvent) string {
 	return string(rule.ID)
 }
 
-func getRuleDisplayName(rule *models.Rule) *string {
+func getRuleDisplayName(rule *ruleModel.Rule) *string {
 	if len(rule.DisplayName) > 0 {
 		return aws.String(string(rule.DisplayName))
 	}
@@ -172,7 +175,7 @@ func generateAlertID(event *AlertDedupEvent) string {
 	return hex.EncodeToString(keyHash[:])
 }
 
-func getRuleInfo(event *AlertDedupEvent) (*models.Rule, error) {
+func getRuleInfo(event *AlertDedupEvent) (*ruleModel.Rule, error) {
 	rule, err := policyClient.Operations.GetRule(&policiesoperations.GetRuleParams{
 		RuleID:     event.RuleID,
 		VersionID:  aws.String(event.RuleVersion),

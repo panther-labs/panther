@@ -53,6 +53,7 @@ func TestGetAlert(t *testing.T) {
 		CreationTime: time.Now().UTC(),
 		UpdateTime:   time.Now().UTC(),
 		Severity:     "INFO",
+		Status:       "TRIAGED",
 		EventCount:   10,
 		LogTypes:     []string{"logtype"},
 	}

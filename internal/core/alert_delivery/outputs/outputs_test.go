@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	alertModel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 )
 
@@ -49,6 +50,28 @@ func TestGenerateAlertTitleReturnGivenTitle(t *testing.T) {
 	}
 
 	assert.Equal(t, "New Alert: my title", generateAlertTitle(alert))
+}
+
+func TestGenerateAlertWithNoStatusReturnGivenEmptyStatus(t *testing.T) {
+	alert := &alertModel.Alert{}
+
+	assert.Equal(t, "", alert.Status)
+}
+
+func TestGenerateAlertStatusOpenReturnGivenStatusOpen(t *testing.T) {
+	alert := &alertModel.Alert{
+		Status: "",
+	}
+
+	assert.Equal(t, "", alert.Status)
+}
+
+func TestGenerateAlertStatusReturnGivenStatus(t *testing.T) {
+	alert := &alertModel.Alert{
+		Status: models.TriagedStatus,
+	}
+
+	assert.Equal(t, "TRIAGED", alert.Status)
 }
 
 func TestGenerateAlertTitleRulePolicyName(t *testing.T) {

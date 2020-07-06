@@ -93,7 +93,7 @@ input ListAlertsInput {
   createdAtAfter: AWSDateTime
   ruleIdContains: String
   alertIdContains: String
-  status: [AlertStatusFieldsEnum]
+  status: [AlertStatusesEnum]
   eventCountMin: Int
   eventCountMax: Int
   sortBy: ListAlertsSortFieldsEnum # defaults to `createdAt`
@@ -138,6 +138,7 @@ type AlertDetails {
   events: [AWSJSON!]!
   eventsLastEvaluatedKey: String
   dedupString: String!
+  status: String
 }
 
 type ListAlertsResponse {
@@ -153,7 +154,7 @@ type AlertSummary {
   updateTime: AWSDateTime!
   ruleId: String
   severity: SeverityEnum
-  status: AlertStatusFieldsEnum
+  status: String
 }
 
 input ListRulesInput {
@@ -855,7 +856,8 @@ enum ListAlertsSortFieldsEnum {
   createdAt
 }
 
-enum AlertStatusFieldsEnum {
+enum AlertStatusesEnum {
+  OPEN
   TRIAGED
   CLOSED
   RESOLVED
