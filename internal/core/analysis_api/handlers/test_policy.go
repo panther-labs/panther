@@ -116,12 +116,9 @@ func TestPolicy(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 			testResults.TestsPassed = append(testResults.TestsPassed, string(test.Name))
 
 		default:
-			// The test case had a resource type that the policy did not apply to, consider an error for now.
-			testResults.TestsErrored = append(testResults.TestsErrored, &models.TestErrorResult{
-				ErrorMessage: "test resource type " + string(test.ResourceType) + " is not applicable to this policy",
-				Name:         string(test.Name),
-			})
-			testResults.TestSummary = false
+			// This test didn't run (result.{Errored, Failed, Passed} are all empty). This must not happen absent a bug.
+			zap.L().Error("unable to run test for resourceID", zap.String("resourceID", result.ID))
+			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 		}
 	}
 
@@ -143,7 +140,7 @@ func getRuleResults(input *models.TestPolicy) (*enginemodels.RulesEngineOutput, 
 		inputEvents[i] = enginemodels.Event{
 			Data: attrs,
 			ID:   testResourceID + strconv.Itoa(i),
-			Type: string(test.ResourceType),
+			Type: input.ResourceTypes[0],
 		}
 	}
 
@@ -196,7 +193,7 @@ func getPolicyResults(input *models.TestPolicy) (*enginemodels.PolicyEngineOutpu
 		resources[i] = enginemodels.Resource{
 			Attributes: attrs,
 			ID:         testResourceID + strconv.Itoa(i),
-			Type:       string(test.ResourceType),
+			Type:       input.ResourceTypes[0],
 		}
 	}
 

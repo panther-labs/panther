@@ -77,13 +77,11 @@ var (
 		Tests: []*models.UnitTest{
 			{
 				Name:           "This will be True",
-				ResourceType:   "AWS.S3.Bucket",
 				ExpectedResult: true,
 				Resource:       `{}`,
 			},
 			{
 				Name:           "This will also be True",
-				ResourceType:   "AWS.S3.Bucket",
 				ExpectedResult: true,
 				Resource:       `{"nested": {}}`,
 			},
@@ -110,7 +108,6 @@ var (
 		Tests: []*models.UnitTest{
 			{
 				Name:           "Log File Validation Disabled",
-				ResourceType:   "AWS.CloudTrail",
 				ExpectedResult: false,
 				Resource: `{
         "Info": {
@@ -132,7 +129,6 @@ var (
 			},
 			{
 				Name:           "Log File Validation Enabled",
-				ResourceType:   "AWS.CloudTrail",
 				ExpectedResult: true,
 				Resource: `{
         "Info": {
@@ -189,7 +185,6 @@ var (
 		Tests: []*models.UnitTest{
 			{
 				Name:           "This will be True",
-				ResourceType:   "AWS.S3.Bucket",
 				ExpectedResult: true,
 				Resource:       `{"Bucket": "empty"}`,
 			},
@@ -278,7 +273,6 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("TestPolicyPass", testPolicyPass)
 		t.Run("TestPolicyFail", testPolicyFail)
 		t.Run("TestPolicyError", testPolicyError)
-		t.Run("TestPolicyNotApplicable", testPolicyNotApplicable)
 		t.Run("TestPolicyMixed", testPolicyMixed)
 	})
 
@@ -373,39 +367,6 @@ func testPolicyPass(t *testing.T) {
 	assert.Equal(t, expected, result.Payload)
 }
 
-func testPolicyNotApplicable(t *testing.T) {
-	result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
-		Body: &models.TestPolicy{
-			AnalysisType:  models.AnalysisTypePOLICY,
-			Body:          policy.Body,
-			ResourceTypes: policy.ResourceTypes,
-			Tests: models.TestSuite{
-				{
-					ExpectedResult: policy.Tests[0].ExpectedResult,
-					Name:           policy.Tests[0].Name,
-					Resource:       policy.Tests[0].Resource,
-					ResourceType:   "Wrong Resource Type",
-				},
-			},
-		},
-		HTTPClient: httpClient,
-	})
-
-	require.NoError(t, err)
-	expected := &models.TestPolicyResult{
-		TestSummary: false,
-		TestsErrored: models.TestsErrored{
-			{
-				ErrorMessage: "test resource type Wrong Resource Type is not applicable to this policy",
-				Name:         string(policy.Tests[0].Name),
-			},
-		},
-		TestsFailed: models.TestsFailed{},
-		TestsPassed: models.TestsPassed{},
-	}
-	assert.Equal(t, expected, result.Payload)
-}
-
 func testPolicyFail(t *testing.T) {
 	result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
 		Body: &models.TestPolicy{
@@ -468,25 +429,21 @@ func testPolicyMixed(t *testing.T) {
 					ExpectedResult: true,
 					Name:           "test-1",
 					Resource:       `{"Hello": true}`,
-					ResourceType:   "AWS.S3.Bucket",
 				},
 				{
 					ExpectedResult: false,
 					Name:           "test-2",
 					Resource:       `{"Hello": false}`,
-					ResourceType:   "AWS.S3.Bucket",
 				},
 				{
 					ExpectedResult: true,
 					Name:           "test-3",
 					Resource:       `{"Hello": false}`,
-					ResourceType:   "AWS.S3.Bucket",
 				},
 				{
 					ExpectedResult: true,
 					Name:           "test-4",
 					Resource:       `{"Goodbye": false}`,
-					ResourceType:   "AWS.S3.Bucket",
 				},
 			},
 		},
@@ -745,7 +702,6 @@ func modifySuccess(t *testing.T) {
 	expectedPolicy.Tests = []*models.UnitTest{
 		{
 			Name:           "This will be True",
-			ResourceType:   "AWS.S3.Bucket",
 			ExpectedResult: true,
 			Resource:       `{}`,
 		},

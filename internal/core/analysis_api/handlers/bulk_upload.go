@@ -310,7 +310,6 @@ func buildRuleTest(test analysis.Test) (*models.UnitTest, error) {
 		ExpectedResult: models.TestExpectedResult(test.ExpectedResult),
 		Name:           models.TestName(test.Name),
 		Resource:       models.TestResource(log),
-		ResourceType:   models.TestResourceType(test.LogType),
 	}, nil
 }
 
@@ -324,7 +323,6 @@ func buildPolicyTest(test analysis.Test) (*models.UnitTest, error) {
 		ExpectedResult: models.TestExpectedResult(test.ExpectedResult),
 		Name:           models.TestName(test.Name),
 		Resource:       models.TestResource(resource),
-		ResourceType:   models.TestResourceType(test.ResourceType),
 	}, nil
 }
 

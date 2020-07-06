@@ -19,6 +19,8 @@ package main
  */
 
 import (
+	"fmt"
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 
 	"github.com/panther-labs/panther/internal/core/analysis_api/handlers"
@@ -51,6 +53,16 @@ var methodHandlers = map[string]gatewayapi.RequestHandler{
 	"POST /delete": handlers.DeletePolicies,
 	"GET /enabled": handlers.GetEnabledAnalyses,
 	"POST /test":   handlers.TestPolicy,
+
+	"GET /local": local,
+}
+
+func local(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
+	fmt.Println(request)
+	return &events.APIGatewayProxyResponse{
+		Body:       `{"hello":"json"}`,
+		StatusCode: 200,
+	}
 }
 
 func main() {
