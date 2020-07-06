@@ -17,27 +17,21 @@
  */
 
 import React from 'react';
-import { Box, Flex, Modal, Text } from 'pouncejs';
-import useModal from 'Hooks/useModal';
-import LoadingButton from 'Components/buttons/LoadingButton';
+import { Button, Flex, Modal, ModalProps, Text } from 'pouncejs';
 
-const NetworkErrorModal: React.FC = () => {
-  const { hideModal } = useModal();
+const NetworkErrorModal: React.FC<ModalProps> = props => {
   return (
-    <Modal open onClose={hideModal} title="No Internet Connection">
-      <Box width={600}>
-        <Text size="large" color="grey300" my={10} textAlign="center">
-          Somebody is watching cat videos and is preventing you from being online
-          <br />
-          <br />
-          That{"'"}s the most likely scenario anyway...
-        </Text>
-        <Flex justify="center" mb={5}>
-          <LoadingButton loading disabled>
-            Reconnecting
-          </LoadingButton>
-        </Flex>
-      </Box>
+    <Modal title="No Internet Connection" {...props}>
+      <Text mb={10} textAlign="center">
+        Somebody is watching cat videos and is preventing you from being online
+        <br />
+        That{"'"}s the most likely scenario anyway...
+      </Text>
+      <Flex justify="center">
+        <Button variantColor="red" loading disabled>
+          Reconnecting
+        </Button>
+      </Flex>
     </Modal>
   );
 };

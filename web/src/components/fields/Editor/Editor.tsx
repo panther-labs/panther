@@ -18,8 +18,10 @@
 
 import React from 'react';
 import Editor, { EditorProps } from 'Components/Editor';
-import { useFormikContext, FieldConfig } from 'formik';
+import { FieldConfig } from 'formik';
 import debounce from 'lodash-es/debounce';
+import { Box, FormError } from 'pouncejs';
+import useFastField from 'Hooks/useFastField';
 
 const FormikEditor: React.FC<EditorProps & Required<Pick<FieldConfig, 'name'>>> = ({
   // we destruct `onBlur` since we shouldn't pass it as a prop to `Editor`. This is becase we are
@@ -29,7 +31,11 @@ const FormikEditor: React.FC<EditorProps & Required<Pick<FieldConfig, 'name'>>> 
   onBlur,
   ...rest
 }) => {
-  const { setFieldValue } = useFormikContext<any>();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [field, meta, { setValue }] = useFastField(rest.name);
+
+  const isInvalid = meta.touched && !!meta.error;
+  const errorElementId = isInvalid ? `${rest.name}-error` : undefined;
 
   // For performance enhancing reasons, we are debouncing the syncing of the editor value to
   // the formik controller. The editor is *not* a controlled component by nature, so we are
@@ -38,12 +44,25 @@ const FormikEditor: React.FC<EditorProps & Required<Pick<FieldConfig, 'name'>>> 
   // folder, since they are controlled
   const syncValueFromEditor = React.useCallback(
     debounce((value: string) => {
-      setFieldValue(rest.name, value);
+      setValue(value);
     }, 200),
-    [setFieldValue, rest.name]
+    [rest.name]
   );
 
-  return <Editor {...rest} onChange={syncValueFromEditor} />;
+  return (
+    <Box>
+      <Editor
+        {...rest}
+        aria-describedby={isInvalid ? errorElementId : undefined}
+        onChange={syncValueFromEditor}
+      />
+      {isInvalid && (
+        <FormError mt={2} id={errorElementId}>
+          {meta.error}
+        </FormError>
+      )}
+    </Box>
+  );
 };
 
 export default FormikEditor;

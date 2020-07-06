@@ -17,10 +17,11 @@
  */
 
 import React from 'react';
-import { Alert, Box, Card, Flex } from 'pouncejs';
+import { Alert, Box } from 'pouncejs';
 import withSEO from 'Hoc/withSEO';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
+import Panel from 'Components/Panel';
 import { useListDestinationsAndDefaults } from './graphql/listDestinationsAndDefaults.generated';
 import DestinationsPageSkeleton from './Skeleton';
 import DestinationsPageEmptyDataFallback from './EmptyDataFallback';
@@ -53,14 +54,11 @@ const ListDestinations = () => {
 
   return (
     <Box mb={6}>
-      <Flex justify="flex-end">
-        <DestinationCreateButton />
-      </Flex>
-      <Card>
-        <ErrorBoundary>
+      <ErrorBoundary>
+        <Panel title="Destinations" actions={<DestinationCreateButton />}>
           <ListDestinationsTable destinations={data.destinations} />
-        </ErrorBoundary>
-      </Card>
+        </Panel>
+      </ErrorBoundary>
     </Box>
   );
 };

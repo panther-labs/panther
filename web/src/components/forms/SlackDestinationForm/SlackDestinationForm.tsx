@@ -59,10 +59,11 @@ const SlackDestinationForm: React.FC<SlackDestinationFormProps> = ({ onSubmit, i
         name="outputConfig.slack.webhookURL"
         label="Slack Webhook URL"
         placeholder={
-          existing ? '<hidden information>' : 'Where should we send a push notification to?'
+          existing
+            ? 'Information is hidden. New values will override the existing ones.'
+            : 'Where should we send a push notification to?'
         }
-        mb={6}
-        aria-required={!existing}
+        required={!existing}
       />
     </BaseDestinationForm>
   );

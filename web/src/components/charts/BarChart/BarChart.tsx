@@ -18,12 +18,12 @@
 
 import React from 'react';
 import echarts from 'echarts';
-import { Box, theme } from 'pouncejs';
+import { Box, Theme, useTheme } from 'pouncejs';
 
 interface Data {
   value: number;
   label: string;
-  color?: keyof typeof theme['colors'];
+  color?: keyof Theme['colors'];
 }
 
 interface BarChartProps {
@@ -34,6 +34,7 @@ interface BarChartProps {
 const BarChart: React.FC<BarChartProps> = ({ data, alignment = 'vertical' }) => {
   const container = React.useRef<HTMLDivElement>(null);
   const horizontal = alignment === 'horizontal';
+  const theme = useTheme();
 
   React.useEffect(() => {
     // We are not allowed to put async function directly in useEffect. Instead, we should define
@@ -57,11 +58,11 @@ const BarChart: React.FC<BarChartProps> = ({ data, alignment = 'vertical' }) => 
           name: e.label,
           type: 'bar',
           barWidth: 30,
-          barGap: horizontal ? '100%' : '-100%',
+          barGap: horizontal ? '-20%' : '-110%',
           label: {
             show: true,
             position: horizontal ? 'right' : 'top',
-            color: theme.colors.black,
+            color: theme.colors['gray-50'],
           },
           itemStyle: {
             color: theme.colors[e.color],
@@ -105,6 +106,9 @@ const BarChart: React.FC<BarChartProps> = ({ data, alignment = 'vertical' }) => 
           left: 'left',
           icon: 'circle',
           data: legendData,
+          textStyle: {
+            color: theme.colors['gray-50'],
+          },
         },
         xAxis,
         yAxis,

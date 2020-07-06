@@ -18,35 +18,30 @@
 
 import React from 'react';
 import { Box, Flex, Heading } from 'pouncejs';
+import FadeInTrail from 'Components/utils/FadeInTrail';
 import urls from 'Source/urls';
 import NavLink from './NavLink';
 
 const SettingsNavigation: React.FC = () => {
   return (
     <Box>
-      <Heading size="medium" textAlign="center" mt={10} mb={5}>
-        <b>SETTINGS</b>
+      <Heading size="x-small" textAlign="center" fontWeight="bold" mt={10} mb={5}>
+        SETTINGS
       </Heading>
       <Flex direction="column" as="ul">
-        <Flex as="li">
+        <FadeInTrail as="li">
           <NavLink icon="settings-alt" to={urls.settings.general()} label="General" />
-        </Flex>
-        <Flex as="li">
           <NavLink icon="organization" to={urls.settings.users()} label="Users" />
-        </Flex>
-        <Flex as="li">
           <NavLink icon="output" to={urls.settings.destinations()} label="Destinations" />
-        </Flex>
-        <Flex as="li">
           <NavLink
             icon="wrench"
             to={urls.settings.globalPythonModules.list()}
             label="Global Modules"
           />
-        </Flex>
+        </FadeInTrail>
       </Flex>
     </Box>
   );
 };
 
-export default SettingsNavigation;
+export default React.memo(SettingsNavigation);

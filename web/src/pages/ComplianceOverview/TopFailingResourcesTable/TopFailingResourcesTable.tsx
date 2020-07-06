@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Label, Link, Table } from 'pouncejs';
+import { Link, Table } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import React from 'react';
@@ -38,9 +38,8 @@ const TopFailingResourcesTable: React.FC<TopFailingResourcesTableProps> = ({ res
       <Table.Body>
         {resources.map((resource, index) => (
           <Table.Row key={resource.id}>
-            <Table.Cell>
-              <Label size="medium">{index + 1}</Label>
-            </Table.Cell>
+            <Table.Cell>{index + 1}</Table.Cell>
+
             <Table.Cell>
               <Link as={RRLink} to={urls.compliance.resources.details(resource.id)} py={4} pr={4}>
                 {resource.id}

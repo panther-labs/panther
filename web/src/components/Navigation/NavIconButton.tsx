@@ -16,21 +16,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Flex, Icon, IconButton, IconButtonProps, IconProps, Label, Tooltip } from 'pouncejs';
+import { Flex, IconButton, IconButtonProps, Tooltip } from 'pouncejs';
 import React from 'react';
 
-type NavIconButtonProps = Omit<IconButtonProps, 'variant'> &
+type NavIconButtonProps = Omit<IconButtonProps, 'variant' | 'aria-label'> &
   React.AnchorHTMLAttributes<HTMLButtonElement> & {
-    icon: IconProps['type'];
     tooltipLabel: string;
   };
 
 const NavIconButton: React.FC<NavIconButtonProps> = ({ icon, active, tooltipLabel, ...rest }) => (
-  <Tooltip content={<Label size="medium">{tooltipLabel}</Label>}>
-    <Flex>
-      <IconButton {...rest} variant="primary" my={4} active={active} aria-label={tooltipLabel}>
-        <Icon type={icon} size="small" />
-      </IconButton>
+  <Tooltip content={tooltipLabel}>
+    <Flex mb={3}>
+      <IconButton {...rest} variant="ghost" icon={icon} active={active} aria-label={tooltipLabel} />
     </Flex>
   </Tooltip>
 );

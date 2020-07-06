@@ -17,10 +17,12 @@
  */
 
 import React from 'react';
-import { Box, Label, SimpleGrid, Text } from 'pouncejs';
-import Panel from 'Components/Panel';
-import { capitalize, formatDatetime } from 'Helpers/utils';
-import { ComplianceStatusEnum, ComplianceIntegration, ResourceDetails } from 'Generated/schema';
+import { Box, Card, Flex, Heading, Link, SimpleGrid } from 'pouncejs';
+import urls from 'Source/urls';
+import { Link as RRLink } from 'react-router-dom';
+import { formatDatetime } from 'Helpers/utils';
+import { ComplianceIntegration, ResourceDetails } from 'Generated/schema';
+import StatusBadge from 'Components/StatusBadge';
 
 interface ResourceDetailsInfoProps {
   resource?: ResourceDetails & Pick<ComplianceIntegration, 'integrationLabel'>;
@@ -28,53 +30,52 @@ interface ResourceDetailsInfoProps {
 
 const ResourceDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ resource }) => {
   return (
-    <Panel size="large" title="Resource Details">
-      <SimpleGrid columns={3} spacing={6}>
-        <Box my={1}>
-          <Label mb={1} as="div" size="small" color="grey300">
-            ID
-          </Label>
-          <Text size="medium" color="black">
-            {resource.id}
-          </Text>
+    <Card as="article" p={6}>
+      <Flex as="header" align="center" mb={4} spacing={4}>
+        <Heading fontWeight="bold" wordBreak="break-word">
+          {resource.id}
+        </Heading>
+      </Flex>
+      <Flex spacing={4} as="ul" mb={6}>
+        <Box as="li">
+          <StatusBadge status={resource.complianceStatus} />
         </Box>
-        <Box my={1}>
-          <Label mb={1} as="div" size="small" color="grey300">
-            TYPE
-          </Label>
-          <Text size="medium" color="black">
-            {resource.type}
-          </Text>
-        </Box>
-        <Box my={1}>
-          <Label mb={1} as="div" size="small" color="grey300">
-            SOURCE
-          </Label>
-          <Text size="medium" color="black">
-            {resource.integrationLabel}
-          </Text>
-        </Box>
-        <Box my={1}>
-          <Label mb={1} as="div" size="small" color="grey300">
-            STATUS
-          </Label>
-          <Text
-            size="medium"
-            color={resource.complianceStatus === ComplianceStatusEnum.Pass ? 'green300' : 'red300'}
-          >
-            {capitalize(resource.complianceStatus.toLowerCase())}
-          </Text>
-        </Box>
-        <Box my={1}>
-          <Label mb={1} as="div" size="small" color="grey300">
-            LAST MODIFIED
-          </Label>
-          <Text size="medium" color="black">
-            {formatDatetime(resource.lastModified)}
-          </Text>
-        </Box>
-      </SimpleGrid>
-    </Panel>
+      </Flex>
+      <Card variant="dark" as="section" p={4}>
+        <SimpleGrid columns={3} fontSize="small-medium">
+          <Flex spacing={5}>
+            <Box id="type-label" color="gray-450">
+              Type
+            </Box>
+            <Link
+              aria-labelledby="type-label"
+              as={RRLink}
+              to={`${urls.compliance.resources.list()}?types[]=${resource.type}`}
+            >
+              {resource.type}
+            </Link>
+          </Flex>
+          <Flex spacing={5}>
+            <Box id="source-label" color="gray-450">
+              Source
+            </Box>
+            <Link
+              aria-labelledby="source-label"
+              as={RRLink}
+              to={`${urls.compliance.resources.list()}?integrationId=${resource.integrationId}`}
+            >
+              {resource.integrationLabel}
+            </Link>
+          </Flex>
+          <Flex spacing={5}>
+            <Box id="updated-at" color="gray-450">
+              Modified
+            </Box>
+            <Box id="updated-at">{formatDatetime(resource.lastModified)}</Box>
+          </Flex>
+        </SimpleGrid>
+      </Card>
+    </Card>
   );
 };
 

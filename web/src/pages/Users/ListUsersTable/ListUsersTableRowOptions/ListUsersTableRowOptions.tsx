@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Dropdown, Icon, IconButton, MenuItem } from 'pouncejs';
+import { Dropdown, DropdownButton, DropdownItem, DropdownMenu, IconButton } from 'pouncejs';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
 import { SIDESHEETS } from 'Components/utils/Sidesheet';
@@ -33,41 +33,43 @@ const ListUsersTableRowOptions: React.FC<ListUsersTableRowOptionsProps> = ({ use
   const { showSidesheet } = useSidesheet();
 
   return (
-    <Dropdown
-      position="relative"
-      trigger={
-        <IconButton as="div" variant="default" my={-4}>
-          <Icon type="more" size="small" />
-        </IconButton>
-      }
-    >
-      <Dropdown.Item
-        onSelect={() => showSidesheet({ sidesheet: SIDESHEETS.EDIT_USER, props: { user } })}
-      >
-        <MenuItem variant="default">Edit Profile</MenuItem>
-      </Dropdown.Item>
-      <Dropdown.Item
-        onSelect={() =>
-          showModal({
-            modal: MODALS.RESET_USER_PASS,
-            props: { user },
-          })
-        }
-      >
+    <Dropdown>
+      <DropdownButton
+        as={IconButton}
+        icon="more"
+        variant="ghost"
+        size="small"
+        aria-label="User Options"
+      />
+      <DropdownMenu>
+        <DropdownItem
+          onSelect={() => showSidesheet({ sidesheet: SIDESHEETS.EDIT_USER, props: { user } })}
+        >
+          Edit
+        </DropdownItem>
         {user.status !== 'FORCE_CHANGE_PASSWORD' && (
-          <MenuItem variant="default">Force password reset</MenuItem>
+          <DropdownItem
+            onSelect={() =>
+              showModal({
+                modal: MODALS.RESET_USER_PASS,
+                props: { user },
+              })
+            }
+          >
+            Force password reset
+          </DropdownItem>
         )}
-      </Dropdown.Item>
-      <Dropdown.Item
-        onSelect={() =>
-          showModal({
-            modal: MODALS.DELETE_USER,
-            props: { user },
-          })
-        }
-      >
-        <MenuItem variant="default">Delete</MenuItem>
-      </Dropdown.Item>
+        <DropdownItem
+          onSelect={() =>
+            showModal({
+              modal: MODALS.DELETE_USER,
+              props: { user },
+            })
+          }
+        >
+          Delete
+        </DropdownItem>
+      </DropdownMenu>
     </Dropdown>
   );
 };

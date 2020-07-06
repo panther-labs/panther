@@ -9,6 +9,7 @@
   "DisplayName": "AlwaysTrue",
   "Enabled": true,
   "Filename": "always_true.py",
+  "OutputIds": [],
   "PolicyID": "Test:Policy:JSON",
   "ResourceTypes": ["AWS.S3.Bucket"],
   "Severity": "Medium",

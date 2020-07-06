@@ -18,32 +18,31 @@
 
 import React from 'react';
 import { Field } from 'formik';
-import FormikCheckbox from 'Components/fields/Checkbox';
-import { Box, Flex, InputElementLabel, Link, Text } from 'pouncejs';
+import { Box, FormHelperText, Link } from 'pouncejs';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
+import FormikSwitch from 'Components/fields/Switch';
 
 const ErrorReportingSection: React.FC = () => {
   return (
-    <Flex align="flex-start">
-      <Field as={FormikCheckbox} name="errorReportingConsent" id="errorReportingConsent" />
-      <Box ml={2}>
-        <InputElementLabel htmlFor="errorReportingConsent">
-          Report Web Application Errors
-        </InputElementLabel>
-        <Flex>
-          <Text size="medium" color="grey300">
-            Send anonymized runtime exception reports to Panther to improve its reliability.{' '}
-            <Link
-              external
-              textDecoration="underline"
-              href={`${PANTHER_SCHEMA_DOCS_LINK}/security-privacy#privacy`}
-            >
-              Read more
-            </Link>
-          </Text>
-        </Flex>
-      </Box>
-    </Flex>
+    <Box as="fieldset">
+      <Field
+        as={FormikSwitch}
+        name="errorReportingConsent"
+        label="Report Web Application Errors"
+        aria-describedby="error-reporting-section-helper"
+      />
+      <FormHelperText mt={2} id="error-reporting-section-helper">
+        Send anonymized runtime exception reports <br /> to improve Panther{"'"}s reliability.
+        <Link
+          external
+          textDecoration="underline"
+          ml={1}
+          href={`${PANTHER_SCHEMA_DOCS_LINK}/security-privacy#privacy`}
+        >
+          Read more
+        </Link>
+      </FormHelperText>
+    </Box>
   );
 };
 

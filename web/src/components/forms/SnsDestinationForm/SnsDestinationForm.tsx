@@ -20,7 +20,7 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
-import { Text, Box } from 'pouncejs';
+import { Box, FormHelperText } from 'pouncejs';
 import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
@@ -74,20 +74,22 @@ const SnsDestinationForm: React.FC<SNSDestinationFormProps> = ({ onSubmit, initi
       validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
-      <Field
-        as={FormikTextInput}
-        name="outputConfig.sns.topicArn"
-        label="Topic ARN"
-        placeholder="Where should we publish a notification to?"
-        mb={2}
-        aria-required
-      />
-      <Box mb={6}>
-        <Text size="small" color="grey400" mb={2}>
+      <Box as="fieldset">
+        <Field
+          as={FormikTextInput}
+          name="outputConfig.sns.topicArn"
+          label="Topic ARN"
+          placeholder="Where should we publish a notification to?"
+          required
+          aria-describedby="topicArn-label topicArn-policy"
+        />
+        <FormHelperText id="topicArn-label" mt={2}>
           <b>Note</b>: You would need to allow Panther <b>sns:Publish</b> access to send alert
           messages to your SNS topic
-        </Text>
-        <JsonViewer data={SNS_TOPIC_POLICY} collapsed={false} />
+        </FormHelperText>
+        <Box my={4} id="topicArn-policy">
+          <JsonViewer data={SNS_TOPIC_POLICY} collapsed={false} />
+        </Box>
       </Box>
     </BaseDestinationForm>
   );

@@ -21,6 +21,7 @@ AutoRemediationParameters:
   hello: goodbye
 DisplayName: AlwaysTrue
 Filename: always_true.py
+OutputIds: []
 PolicyID: Test:Policy
 Enabled: true
 Suppressions:

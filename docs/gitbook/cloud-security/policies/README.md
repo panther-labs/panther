@@ -255,10 +255,11 @@ The complete list of accepted fields for the policy specification file are detai
 | `AutoRemediationParameters` | No       | What parameters to pass to the auto-remediation, if one is configured                                 | Map                                                                   |
 | `Description`               | No       | A brief description of the policy                                                                     | String                                                                |
 | `DisplayName`               | No       | What name to display in the UI and alerts. The `PolicyID` will be displayed if this field is not set. | String                                                                |
+| `OutputIds`                 | No       | What destinations an alert will be sent to regardless of the severity rating in the destination       | List of `destination` IDs                                             |
 | `Reference`                 | No       | The reason this policy exists, often a link to documentation                                          | String                                                                |
 | `Runbook`                   | No       | The actions to be carried out if this policy fails, often a link to documentation                     | String                                                                |
 | `Tags`                      | No       | Tags used to categorize this policy                                                                   | List of strings                                                       |
-| `Tests`                     | No       | Unit tests for this policy.    | List of maps                                                          |
+| `Tests`                     | No       | Unit tests for this policy.                                                                           | List of maps                                                          |
 
 #### Automatic Remediation
 

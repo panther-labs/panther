@@ -27,7 +27,7 @@ import BaseDestinationForm, {
 } from 'Components/forms/BaseDestinationForm';
 import { isNumber } from 'Helpers/utils';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
-import { Text } from 'pouncejs';
+import { Box, FormHelperText } from 'pouncejs';
 
 type AsanaFieldValues = Pick<DestinationConfigInput, 'asana'>;
 
@@ -61,26 +61,29 @@ const AsanaDestinationForm: React.FC<AsanaDestinationFormProps> = ({ onSubmit, i
         type="password"
         name="outputConfig.asana.personalAccessToken"
         label="Access Token"
-        placeholder={existing ? '<hidden information>' : 'Your personal Asana access token'}
-        mb={6}
-        aria-required={!existing}
+        placeholder={
+          existing
+            ? 'Information is hidden. New values will override the existing ones.'
+            : 'Your personal Asana access token'
+        }
+        required={!existing}
       />
-      <Field
-        name="outputConfig.asana.projectGids"
-        as={FormikMultiCombobox}
-        label="Project GIDs"
-        aria-required
-        allowAdditions
-        validateAddition={isNumber}
-        searchable
-        items={[]}
-        inputProps={{
-          placeholder: 'The GIDs of the projects that will receive the task',
-        }}
-      />
-      <Text size="small" color="grey200" mt={2}>
-        Add by pressing the {'<'}Enter{'>'} key
-      </Text>
+      <Box as="fieldset">
+        <Field
+          name="outputConfig.asana.projectGids"
+          as={FormikMultiCombobox}
+          label="Project GIDs"
+          aria-describedby="projectGids-helper"
+          allowAdditions
+          validateAddition={isNumber}
+          searchable
+          items={[]}
+          placeholder="The GIDs of the projects that will receive the task"
+        />
+        <FormHelperText id="projectGids-helper" mt={2}>
+          Add by pressing the {'<'}Enter{'>'} key
+        </FormHelperText>
+      </Box>
     </BaseDestinationForm>
   );
 };

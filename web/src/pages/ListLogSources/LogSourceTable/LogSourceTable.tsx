@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Flex, Label, Table } from 'pouncejs';
+import { Box, Flex, Table } from 'pouncejs';
 import { ListLogSources } from 'Pages/ListLogSources';
 import { formatDatetime } from 'Helpers/utils';
 import LogSourceHealthIcon from './LogSourceHealthIcon';
@@ -32,7 +32,6 @@ const LogSourceTable: React.FC<LogSourceTableProps> = ({ sources }) => {
     <Table>
       <Table.Head>
         <Table.Row>
-          <Table.HeaderCell />
           <Table.HeaderCell>Label</Table.HeaderCell>
           <Table.HeaderCell>AWS Account ID</Table.HeaderCell>
           <Table.HeaderCell>Log Types</Table.HeaderCell>
@@ -44,11 +43,8 @@ const LogSourceTable: React.FC<LogSourceTableProps> = ({ sources }) => {
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {sources.map((source, index) => (
+        {sources.map(source => (
           <Table.Row key={source.integrationId}>
-            <Table.Cell>
-              <Label size="medium">{index + 1}</Label>
-            </Table.Cell>
             <Table.Cell>{source.integrationLabel}</Table.Cell>
             <Table.Cell>{source.awsAccountId}</Table.Cell>
             <Table.Cell>
@@ -67,7 +63,9 @@ const LogSourceTable: React.FC<LogSourceTableProps> = ({ sources }) => {
               </Flex>
             </Table.Cell>
             <Table.Cell>
-              <LogSourceTableRowOptionsProps source={source} />
+              <Box my={-1}>
+                <LogSourceTableRowOptionsProps source={source} />
+              </Box>
             </Table.Cell>
           </Table.Row>
         ))}
