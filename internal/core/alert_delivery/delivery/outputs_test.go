@@ -32,7 +32,7 @@ import (
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
-func TestGetAlertOutputs(t *testing.T) {
+func TestGetAlertOutputsFromDefaultSeverity(t *testing.T) {
 	mockClient := &mockLambdaClient{}
 	lambdaClient = mockClient
 
@@ -57,7 +57,7 @@ func TestGetAlertOutputs(t *testing.T) {
 	cache = nil // Clear the cache
 	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
 	alert := sampleAlert()
-	alert.OutputIDs = nil
+	alert.OutputIds = nil
 
 	expectedResult := []*outputmodels.AlertOutput{{
 		OutputID:           aws.String("default-info-1"),
@@ -75,6 +75,48 @@ func TestGetAlertOutputs(t *testing.T) {
 	result, err = getAlertOutputs(alert)
 	require.NoError(t, err)
 	assert.Equal(t, expectedResult, result)
+	mockClient.AssertExpectations(t)
+}
+
+func TestGetAlertOutputsFromOutputIds(t *testing.T) {
+	mockClient := &mockLambdaClient{}
+	lambdaClient = mockClient
+
+	output := &outputmodels.GetOutputsOutput{
+		{
+			OutputID:           aws.String("output-id"),
+			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
+		},
+		{
+			OutputID:           aws.String("output-id-2"),
+			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
+		},
+		{
+			OutputID:           aws.String("output-id-3"),
+			DefaultForSeverity: aws.StringSlice([]string{"MEDIUM"}),
+		},
+	}
+	payload, err := jsoniter.Marshal(output)
+	require.NoError(t, err)
+	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
+
+	cache = nil // Clear the cache
+	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
+	alert := sampleAlert()
+	alert.OutputIds = []string{"output-id", "output-id-3", "output-id-not"}
+
+	expectedResult := []*outputmodels.AlertOutput{{
+		OutputID:           aws.String("output-id"),
+		DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
+	}, {
+		OutputID:           aws.String("output-id-3"),
+		DefaultForSeverity: aws.StringSlice([]string{"MEDIUM"}),
+	}}
+
+	result, err := getAlertOutputs(alert)
+	require.NoError(t, err)
+	assert.Equal(t, expectedResult, result)
+
 	mockClient.AssertExpectations(t)
 }
 

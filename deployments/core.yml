@@ -171,6 +171,7 @@ Resources:
                 - cognito-idp:AdminGetUser
                 - cognito-idp:AdminResetUserPassword
                 - cognito-idp:AdminUpdateUserAttributes
+                - cognito-idp:AdminUserGlobalSignOut
                 - cognito-idp:ListUsers
               Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}
 

@@ -24,6 +24,10 @@ import (
 
 // UpdateUser modifies user attributes.
 func (API) UpdateUser(input *models.UpdateUserInput) (*models.UpdateUserOutput, error) {
+	if err := validateRequester(input.RequesterID); err != nil {
+		return nil, err
+	}
+
 	if err := userGateway.UpdateUser(input); err != nil {
 		return nil, err
 	}

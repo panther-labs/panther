@@ -42,8 +42,8 @@ type Alert struct {
 	// Severity is the alert severity at the time of creation.
 	Severity string `json:"severity" validate:"oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 
-	// OutputIDs is the set of outputs for this alert.
-	OutputIDs []string `json:"outputIds,omitempty"`
+	// OutputIds is the set of outputs for this alert.
+	OutputIds []string `json:"outputIds,omitempty"`
 
 	// AnalysisDescription is the description of the rule that triggered the alert.
 	AnalysisDescription *string `json:"analysisDescription,omitempty"`

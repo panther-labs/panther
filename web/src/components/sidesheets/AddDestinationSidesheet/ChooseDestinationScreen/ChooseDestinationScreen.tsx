@@ -56,4 +56,4 @@ export const ChooseDestinationScreen: React.FC<ChooseDestinationScreenProps> = (
   );
 };
 
-export default ChooseDestinationScreen;
+export default React.memo(ChooseDestinationScreen);

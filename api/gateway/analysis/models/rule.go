@@ -81,6 +81,10 @@ type Rule struct {
 	// Required: true
 	LogTypes TypeSet `json:"logTypes"`
 
+	// output ids
+	// Required: true
+	OutputIds OutputIds `json:"outputIds"`
+
 	// reference
 	// Required: true
 	Reference Reference `json:"reference"`
@@ -155,6 +159,10 @@ func (m *Rule) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateLogTypes(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateOutputIds(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -321,6 +329,22 @@ func (m *Rule) validateLogTypes(formats strfmt.Registry) error {
 	if err := m.LogTypes.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("logTypes")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *Rule) validateOutputIds(formats strfmt.Registry) error {
+
+	if err := validate.Required("outputIds", "body", m.OutputIds); err != nil {
+		return err
+	}
+
+	if err := m.OutputIds.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("outputIds")
 		}
 		return err
 	}

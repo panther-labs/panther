@@ -3,6 +3,7 @@ fragment RuleBasic on RuleDetails {
   description
   displayName
   logTypes
+  outputIds
   runbook
   severity
   tags

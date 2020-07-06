@@ -79,7 +79,6 @@ const AsanaDestinationForm: React.FC<AsanaDestinationFormProps> = ({ onSubmit, i
           searchable
           items={[]}
           placeholder="The GIDs of the projects that will receive the task"
-          required
         />
         <FormHelperText id="projectGids-helper" mt={2}>
           Add by pressing the {'<'}Enter{'>'} key

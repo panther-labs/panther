@@ -32,17 +32,18 @@ export type RuleDetails = {
   rule?: Types.Maybe<
     Pick<
       Types.RuleDetails,
+      | 'body'
+      | 'dedupPeriodMinutes'
       | 'description'
       | 'displayName'
       | 'enabled'
       | 'id'
-      | 'reference'
       | 'logTypes'
+      | 'outputIds'
+      | 'reference'
       | 'runbook'
       | 'severity'
-      | 'dedupPeriodMinutes'
       | 'tags'
-      | 'body'
     > & {
       tests?: Types.Maybe<
         Array<
@@ -58,17 +59,18 @@ export type RuleDetails = {
 export const RuleDetailsDocument = gql`
   query RuleDetails($input: GetRuleInput!) {
     rule(input: $input) {
+      body
+      dedupPeriodMinutes
       description
       displayName
       enabled
       id
-      reference
       logTypes
+      outputIds
+      reference
       runbook
       severity
-      dedupPeriodMinutes
       tags
-      body
       tests {
         expectedResult
         name

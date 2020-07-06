@@ -39,7 +39,7 @@ func TestSlackAlert(t *testing.T) {
 	alert := &alertmodels.Alert{
 		AnalysisID:   "policyId",
 		CreatedAt:    createdAtTime,
-		OutputIDs:    []string{"output-id"},
+		OutputIds:    []string{"output-id"},
 		AnalysisName: aws.String("policyName"),
 		Severity:     "INFO",
 	}

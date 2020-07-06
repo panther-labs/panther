@@ -141,6 +141,7 @@ func (r *batchResults) analyzeUpdatedPolicy(policy *analysismodels.Policy) error
 		string(policy.ID): &analysismodels.EnabledPolicy{
 			Body:          policy.Body,
 			ID:            policy.ID,
+			OutputIds:     policy.OutputIds,
 			ResourceTypes: policy.ResourceTypes,
 			Severity:      policy.Severity,
 			Suppressions:  policy.Suppressions,
@@ -239,6 +240,7 @@ func (r *batchResults) analyze(resources resourceMap, policies policyMap) error 
 
 			// Every failed policy, if not suppressed, will trigger the remediation flow
 			complianceNotification := &alertmodels.ComplianceNotification{
+				OutputIds:       policy.OutputIds,
 				ResourceID:      aws.String(string(resource.ID)),
 				PolicyID:        aws.String(string(policy.ID)),
 				PolicyVersionID: aws.String(string(policy.VersionID)),

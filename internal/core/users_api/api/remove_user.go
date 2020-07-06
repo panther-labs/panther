@@ -25,6 +25,10 @@ import (
 
 // RemoveUser deletes a user from cognito.
 func (API) RemoveUser(input *models.RemoveUserInput) (*models.RemoveUserOutput, error) {
+	if err := validateRequester(input.RequesterID); err != nil {
+		return nil, err
+	}
+
 	users, err := userGateway.ListUsers(&models.ListUsersInput{})
 	if err != nil {
 		return nil, err
