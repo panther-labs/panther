@@ -45,6 +45,7 @@ const LandingPage: React.FC = () => {
           <Flex width={1} justify="center">
             <Img src={logo} alt="Panther logo" nativeWidth="60" nativeHeight="60" />
           </Flex>
+
           <Heading size="2x-large" mb={2} mt={5}>
             Welcome!
           </Heading>

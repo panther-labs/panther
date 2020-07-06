@@ -140,20 +140,22 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
           placeholder={`Additional context about this ${type}`}
           name="description"
         />
-        <FastField
-          as={FormikTextArea}
-          label="Runbook"
-          placeholder={`Procedures and operations related to this ${type}`}
-          name="runbook"
-        />
-        <FastField
-          as={FormikTextArea}
-          label="Reference"
-          placeholder={`An external link to why this ${type} exists`}
-          name="reference"
-        />
+        <SimpleGrid columns={2} spacing={5}>
+          <FastField
+            as={FormikTextArea}
+            label="Runbook"
+            placeholder={`Procedures and operations related to this ${type}`}
+            name="runbook"
+          />
+          <FastField
+            as={FormikTextArea}
+            label="Reference"
+            placeholder={`An external link to why this ${type} exists`}
+            name="reference"
+          />
+        </SimpleGrid>
       </SimpleGrid>
-      <SimpleGrid columns={3} spacing={5}>
+      <SimpleGrid columns={4} spacing={5}>
         {isPolicy && (
           <React.Fragment>
             <Box>
@@ -163,7 +165,7 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
                 label="Resource Types"
                 name="resourceTypes"
                 items={RESOURCE_TYPES}
-                placeholder="Filter affected resource types"
+                placeholder="Where should the policy apply?"
                 aria-describedby="resourceTypes-description"
               />
               <FormHelperText id="resourceTypes-description" mt={2}>
@@ -189,7 +191,7 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
           items={values.tags}
           allowAdditions
           validateAddition={tagAdditionValidation}
-          placeholder="i.e. Bucket Security (separate with <Enter>)"
+          placeholder="i.e. HIPAA (separate with <Enter>)"
         />
         <Box as="fieldset">
           {/* FIXME: We have an issue with FastField here. We shouldn't be setting props like that on FastField or Field elements */}
@@ -215,7 +217,7 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
               label="* Log Types"
               name="logTypes"
               items={LOG_TYPES}
-              placeholder="Filter affected log types"
+              placeholder="Where should the rule apply?"
             />
             <FastField
               as={FormikCombobox}
