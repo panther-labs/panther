@@ -140,7 +140,7 @@ func getRuleResults(input *models.TestPolicy) (*enginemodels.RulesEngineOutput, 
 		inputEvents[i] = enginemodels.Event{
 			Data: attrs,
 			ID:   testResourceID + strconv.Itoa(i),
-			Type: input.ResourceTypes[0],
+			Type: input.ResourceTypes[0], // TODO(giorgosp): Seems not used by the rules engine
 		}
 	}
 
@@ -193,7 +193,9 @@ func getPolicyResults(input *models.TestPolicy) (*enginemodels.PolicyEngineOutpu
 		resources[i] = enginemodels.Resource{
 			Attributes: attrs,
 			ID:         testResourceID + strconv.Itoa(i),
-			Type:       input.ResourceTypes[0],
+			// The engine picks a policy to run based on the input resource type. To make the engine run the
+			// input policy, we just pass one of its resource types in the input resource.
+			Type: input.ResourceTypes[0],
 		}
 	}
 
