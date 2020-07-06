@@ -32,15 +32,13 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
-	"github.com/panther-labs/panther/pkg/metrics"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
 
 const (
 	// oplog keys
-	operationName                = "parse"
-	statsKey                     = "stats"
-	processorLogNamespace string = "panther/log_processor"
+	operationName = "parse"
+	statsKey      = "stats"
 )
 
 var (
@@ -51,15 +49,6 @@ var (
 	// to avoid using up lot of memory.
 	// see also: https://golang.org/doc/effective_go.html#channels
 	ParsedEventBufferSize = 1000
-	eLogger               = metrics.MustMonoLogger(processorLogNamespace, metrics.DimensionSet{
-		"logType",
-	}, metrics.Metric{
-		Name: "bytesProcessed",
-		Unit: metrics.UnitBytes,
-	})
-	dimension = metrics.Dimension{
-		Name: "logType",
-	}
 )
 
 // Process orchestrates the tasks of parsing logs, classification, normalization
@@ -175,8 +164,8 @@ func (p *Processor) logStats(err error) {
 	p.operation.Log(err, zap.Any(statsKey, *p.classifier.Stats()))
 	for _, parserStats := range p.classifier.ParserStats() {
 		p.operation.Log(err, zap.Any(statsKey, *parserStats))
-		dimension.Value = parserStats.LogType
-		eLogger.Log(parserStats.BytesProcessedCount, dimension)
+		common.BytesProcessedDimension.Value = parserStats.LogType
+		common.BytesProcessedLogger.Log(parserStats.BytesProcessedCount, common.BytesProcessedDimension)
 	}
 }
 

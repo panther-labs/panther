@@ -357,8 +357,8 @@ func TestProcessClassifyFailure(t *testing.T) {
 					String: testLogType,
 				},
 				{
-					Key:       "bytesProcessed",
-					Interface: uint64(7996),
+					Key:     "bytesProcessed",
+					Integer: 7996,
 				},
 				{
 					Key:       "_aws",
@@ -375,6 +375,12 @@ func TestProcessClassifyFailure(t *testing.T) {
 			require.Equal(t, len(expected[i].Context), len(actual[i].Context))
 			for j := range expected[i].Context {
 				assert.Equal(t, expected[i].Context[j].Key, actual[i].Context[j].Key)
+				if actual[i].Context[j].Key == "_aws" {
+					actualTyped := actual[i].Context[j].Interface.(metrics.EmbeddedMetric)
+					actualTyped.Timestamp = p.operation.EndTime.UnixNano() / 1000000
+					assert.Equal(t, expected[i].Context[j].Interface, actualTyped)
+					continue
+				}
 				assert.Equal(t, expected[i].Context[j].Interface, actual[i].Context[j].Interface)
 				assert.Equal(t, expected[i].Context[j].String, actual[i].Context[j].String)
 				assert.Equal(t, expected[i].Context[j].Integer, actual[i].Context[j].Integer)

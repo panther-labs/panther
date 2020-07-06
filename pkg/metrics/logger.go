@@ -262,17 +262,11 @@ func fastLogEmbedded(directive []MetricDirectiveObject, value interface{}, dimen
 	// Add each dimension to the list of top level fields
 	fields := make([]zap.Field, 0, len(dimensions)+2) // +1 for the metric value, +1 for the _aws node
 	for _, dimension := range dimensions {
-		fields = append(fields, zap.Field{
-			Key:    dimension.Name,
-			String: dimension.Value,
-		})
+		fields = append(fields, zap.String(dimension.Name, dimension.Value))
 	}
 
 	// Add the only metric name & value
-	fields = append(fields, zap.Field{
-		Key:       directive[0].Metrics[0].Name,
-		Interface: value,
-	})
+	fields = append(fields, zap.Any(directive[0].Metrics[0].Name, value))
 
 	// Construct the embedded metric metadata object per AWS standards
 	// https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format_Specification.html
@@ -281,10 +275,7 @@ func fastLogEmbedded(directive []MetricDirectiveObject, value interface{}, dimen
 		Timestamp:         timestamp,
 	}
 
-	fields = append(fields, zap.Field{
-		Key:       "_aws",
-		Interface: embeddedMetric,
-	})
+	fields = append(fields, zap.Any("_aws", embeddedMetric))
 
 	zap.L().Info("metric", fields...)
 }
