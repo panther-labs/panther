@@ -241,19 +241,33 @@ func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAle
 
 // filterByStatus - filters by Status(es)
 func filterByStatus(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
-	// Filter out any "OPEN" status requests because records could be stored
-	// both with _and_ without this field set. We are effectively ignoring the
-	// request to filter by "OPEN" so that it will always return OPEN || <Empty> from ddb.
-	validFilters := Filter(input.Status, func(val string) bool {
-		return val != models.OpenStatus
-	})
-	if len(validFilters) > 0 {
+	if len(input.Status) > 0 {
 		// Start with the first known key
-		multiFilter := expression.Name(StatusKey).Equal(expression.Value(*validFilters[0]))
+		var multiFilter expression.ConditionBuilder
+
+		// Alerts that have OPEN or "" status are considered open.
+		if *input.Status[0] == models.OpenStatus {
+			multiFilter = expression.
+				Or(
+					expression.Name(StatusKey).Equal(expression.Value(models.OpenStatus)),
+					expression.Name(StatusKey).Equal(expression.Value(models.EmptyStatus)),
+				)
+		} else {
+			multiFilter = expression.Name(StatusKey).Equal(expression.Value(*input.Status[0]))
+		}
 
 		// Then add or conditions starting at a new slice from the second index
-		for _, statusSetting := range validFilters[1:] {
-			multiFilter = multiFilter.Or(expression.Name(StatusKey).Equal(expression.Value(*statusSetting)))
+		for _, statusSetting := range input.Status[1:] {
+			// Alerts that have OPEN or "" status are considered open.
+			if *input.Status[0] == models.OpenStatus {
+				multiFilter = multiFilter.
+					Or(
+						expression.Name(StatusKey).Equal(expression.Value(models.OpenStatus)),
+						expression.Name(StatusKey).Equal(expression.Value(models.EmptyStatus)),
+					)
+			} else {
+				multiFilter = multiFilter.Or(expression.Name(StatusKey).Equal(expression.Value(*statusSetting)))
+			}
 		}
 
 		*filter = filter.And(multiFilter)
