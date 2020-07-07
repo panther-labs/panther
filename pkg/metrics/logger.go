@@ -81,6 +81,8 @@ type Metric struct {
 	// Kilobytes/Second | Megabytes/Second | Gigabytes/Second | Terabytes/Second | Bits/Second |
 	// Kilobits/Second | Megabits/Second | Gigabits/Second | Terabits/Second | Count/Second | None
 	Unit string
+
+	Value interface{} `json:"-"`
 }
 
 // Values that AWS understands as Metric Units
