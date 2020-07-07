@@ -155,7 +155,7 @@ Reference: https://docs.gitlab.com/ee/administration/logs.html#production_jsonlo
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>method</b></code></td><td><code>string</code></td><td valign=top>The HTTP method of the request</td></tr>
 <tr><td valign=top><code><b>path</b></code></td><td><code>string</code></td><td valign=top>The URL path for the request</td></tr>
-<tr><td valign=top><code><b>format</b></code></td><td><code>string</code></td><td valign=top>The response output format</td></tr>
+<tr><td valign=top><code>format</code></td><td><code>string</code></td><td valign=top>The response output format</td></tr>
 <tr><td valign=top><code>controller</code></td><td><code>string</code></td><td valign=top>The Production controller class name</td></tr>
 <tr><td valign=top><code>action</code></td><td><code>string</code></td><td valign=top>The Production controller action</td></tr>
 <tr><td valign=top><code><b>status</b></code></td><td><code>bigint</code></td><td valign=top>The HTTP response status code</td></tr>

@@ -30,7 +30,7 @@ import (
 type Production struct {
 	Method                *string            `json:"method" validate:"required" description:"The HTTP method of the request"`
 	Path                  *string            `json:"path" validate:"required" description:"The URL path for the request"`
-	Format                *string            `json:"format" validate:"required" description:"The response output format"`
+	Format                *string            `json:"format" description:"The response output format"`
 	Controller            *string            `json:"controller,omitempty" description:"The Production controller class name"`
 	Action                *string            `json:"action,omitempty" description:"The Production controller action"`
 	Status                *int               `json:"status" validate:"required" description:"The HTTP response status code"`
