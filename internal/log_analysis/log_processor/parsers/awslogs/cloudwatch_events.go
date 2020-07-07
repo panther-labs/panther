@@ -70,7 +70,7 @@ func (p *CloudWatchEventParser) Parse(log string) ([]*parsers.PantherLog, error)
 
 // LogType returns the log type supported by this parser
 func (p *CloudWatchEventParser) LogType() string {
-	return TypeCloudwatchEvents
+	return TypeCloudWatchEvents
 }
 
 func (event *CloudWatchEvent) updatePantherFields(p *CloudWatchEventParser) {

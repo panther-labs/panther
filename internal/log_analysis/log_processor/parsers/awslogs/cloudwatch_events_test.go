@@ -59,7 +59,7 @@ func TestCloudWatchEventEC2Instance(t *testing.T) {
 		Detail:     newRawMessage(`{"instance-id": " i-1234567890abcdef0","state": "terminated"}`),
 	}
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&tm)
-	expectedEvent.PantherLogType = box.String(TypeCloudwatchEvents)
+	expectedEvent.PantherLogType = box.String(TypeCloudWatchEvents)
 	expectedEvent.SetEvent(expectedEvent)
 	expectedEvent.AppendAnyAWSARNs("arn:aws:ec2:us-west-1:123456789012:instance/ i-1234567890abcdef0")
 	expectedEvent.AppendAnyAWSAccountIds("111122223333")
@@ -124,7 +124,7 @@ func TestCloudWatchEventCloudTrail(t *testing.T) {
 		Detail:     newRawMessage(logDetail),
 	}
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&tm)
-	expectedEvent.PantherLogType = box.String(TypeCloudwatchEvents)
+	expectedEvent.PantherLogType = box.String(TypeCloudWatchEvents)
 	expectedEvent.SetEvent(expectedEvent)
 	expectedEvent.AppendAnyAWSAccountIds("123456789012")
 	expectedEvent.AppendAnyAWSARNs("arn:aws:iam::123456789012:root")

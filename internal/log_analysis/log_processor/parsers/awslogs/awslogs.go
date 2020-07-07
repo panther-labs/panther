@@ -30,7 +30,7 @@ const (
 	TypeCloudTrail        = `AWS.CloudTrail`
 	TypeCloudTrailDigest  = "AWS.CloudTrailDigest"
 	TypeCloudTrailInsight = "AWS.CloudTrailInsight"
-	TypeCloudwatchEvents  = "AWS.CloudWatchEvents"
+	TypeCloudWatchEvents  = "AWS.CloudWatchEvents"
 	TypeGuardDuty         = "AWS.GuardDuty"
 	TypeS3ServerAccess    = "AWS.S3ServerAccess"
 	TypeVPCFlow           = "AWS.VPCFlow"
@@ -68,7 +68,7 @@ func init() {
 			NewParser:    parsers.AdapterFactory(&CloudTrailDigestParser{}),
 		},
 		logtypes.Config{
-			Name:         TypeCloudwatchEvents,
+			Name:         TypeCloudWatchEvents,
 			Description:  `Amazon CloudWatch Events describe a change in Amazon Web Services (AWS) resources.`,
 			ReferenceURL: `https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CloudWatchEventsandEventPatterns.html`,
 			Schema:       CloudWatchEvent{},
