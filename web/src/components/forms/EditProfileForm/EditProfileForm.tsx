@@ -56,11 +56,13 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) => {
       }),
   });
 
+  /* eslint-disable camelcase */
   const initialValues = {
-    email: userInfo.email || '',
-    familyName: userInfo.family_name || '',
-    givenName: userInfo.given_name || '',
+    email: userInfo?.email || '',
+    familyName: userInfo?.family_name || '',
+    givenName: userInfo?.given_name || '',
   };
+  /* eslint-enable camelcase */
 
   return (
     <Formik<EditProfileFormValues>
