@@ -43,8 +43,9 @@ import (
 )
 
 var (
-	parseDelay = time.Millisecond / 2 // time it takes to process a log line
-	sendDelay  = time.Millisecond / 2 // time it takes to send event to destination
+	parseDelay                      = time.Millisecond / 2 // time it takes to process a log line
+	sendDelay                       = time.Millisecond / 2 // time it takes to send event to destination
+	nanoSecondsPerMillisecond int64 = 1000000
 
 	testLogType          = "testLogType"
 	testLogLine          = "line"
@@ -281,7 +282,7 @@ func TestProcessClassifyFailure(t *testing.T) {
 				},
 			},
 		},
-		Timestamp: p.operation.EndTime.UnixNano() / 1000000,
+		Timestamp: p.operation.EndTime.UnixNano() / nanoSecondsPerMillisecond,
 	}
 
 	expected := []observer.LoggedEntry{
@@ -377,7 +378,7 @@ func TestProcessClassifyFailure(t *testing.T) {
 				assert.Equal(t, expected[i].Context[j].Key, actual[i].Context[j].Key)
 				if actual[i].Context[j].Key == "_aws" {
 					actualTyped := actual[i].Context[j].Interface.(metrics.EmbeddedMetric)
-					actualTyped.Timestamp = p.operation.EndTime.UnixNano() / 1000000
+					actualTyped.Timestamp = p.operation.EndTime.UnixNano() / nanoSecondsPerMillisecond
 					assert.Equal(t, expected[i].Context[j].Interface, actualTyped)
 					continue
 				}

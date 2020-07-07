@@ -52,8 +52,11 @@ type MetricDirectiveObject struct {
 	Metrics []Metric
 }
 
-// Per the AWS specification, a single metric directive can have at most 100 metric values
-const maxMetricsPerDirective = 100
+const (
+	// Per the AWS specification, a single metric directive can have at most 100 metric values
+	maxMetricsPerDirective = 100
+	namespace              = "Panther"
+)
 
 // DimensionSet is a slice of strings containing the dimension names that will be applied to all
 // metrics logged. The values within this slice MUST also be members on the root node, referred to
@@ -103,8 +106,8 @@ type Logger struct {
 }
 
 // MustLogger creates a new Logger based on the given input, and panics if the input is invalid
-func MustLogger(namespace string, dimensionSets []DimensionSet) *Logger {
-	logger, err := NewLogger(namespace, dimensionSets)
+func MustLogger(dimensionSets []DimensionSet) *Logger {
+	logger, err := NewLogger(dimensionSets)
 	if err != nil {
 		panic(err)
 	}
@@ -113,11 +116,7 @@ func MustLogger(namespace string, dimensionSets []DimensionSet) *Logger {
 
 // NewLogger create a new logger for a given namespace and set of dimensions, returning an error if
 // the namespace or dimensions are invalid
-func NewLogger(namespace string, dimensionSets []DimensionSet) (*Logger, error) {
-	if namespace == "" {
-		return nil, errors.New("namespace cannot be empty")
-	}
-
+func NewLogger(dimensionSets []DimensionSet) (*Logger, error) {
 	// Enforced by AWS specification
 	for _, dimensionSet := range dimensionSets {
 		if len(dimensionSet) > maxDimensionsKeys {
@@ -212,8 +211,8 @@ type MonoLogger struct {
 }
 
 // MustMonoLogger creates a new MonoLogger based on the given input, and panics if the input is invalid
-func MustMonoLogger(namespace string, dimensionSet DimensionSet, metric Metric) *MonoLogger {
-	logger, err := NewMonoLogger(namespace, dimensionSet, metric)
+func MustMonoLogger(dimensionSet DimensionSet, metric Metric) *MonoLogger {
+	logger, err := NewMonoLogger(dimensionSet, metric)
 	if err != nil {
 		panic(err)
 	}
@@ -222,9 +221,9 @@ func MustMonoLogger(namespace string, dimensionSet DimensionSet, metric Metric) 
 
 // NewLogger create a new logger for a given namespace and set of dimensions, returning an error if
 // the namespace or dimensions are invalid
-func NewMonoLogger(namespace string, dimensionSet DimensionSet, metric Metric) (*MonoLogger, error) {
-	if namespace == "" || metric.Name == "" || metric.Unit == "" {
-		return nil, errors.New("namespace, metric name, and metric unit cannot be empty")
+func NewMonoLogger(dimensionSet DimensionSet, metric Metric) (*MonoLogger, error) {
+	if metric.Name == "" || metric.Unit == "" {
+		return nil, errors.New("metric name, and metric unit cannot be empty")
 	}
 
 	// Enforced by AWS specification

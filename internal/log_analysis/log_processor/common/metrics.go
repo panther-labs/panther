@@ -22,16 +22,11 @@ import (
 	"github.com/panther-labs/panther/pkg/metrics"
 )
 
-const processorLogNamespace string = "panther/log_processor"
-
 var (
-	BytesProcessedLogger = metrics.MustMonoLogger(processorLogNamespace, metrics.DimensionSet{
-		"logType",
+	BytesProcessedLogger = metrics.MustMonoLogger(metrics.DimensionSet{
+		"LogType",
 	}, metrics.Metric{
-		Name: "bytesProcessed",
+		Name: "BytesProcessed",
 		Unit: metrics.UnitBytes,
 	})
-	BytesProcessedDimension = metrics.Dimension{
-		Name: "logType",
-	}
 )
