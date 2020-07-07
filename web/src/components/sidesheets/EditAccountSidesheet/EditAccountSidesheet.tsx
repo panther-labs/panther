@@ -34,7 +34,7 @@ const EditAccountSidesheet: React.FC<SideSheetProps> = props => {
         <Heading as="h2" pb={4}>
           Account Security
         </Heading>
-        <ChangePasswordForm />
+        <ChangePasswordForm onSuccess={props.onClose} />
       </Box>
     </SideSheet>
   );
