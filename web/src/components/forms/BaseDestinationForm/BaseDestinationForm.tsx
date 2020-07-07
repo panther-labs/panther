@@ -118,7 +118,7 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
           <Field
             name="displayName"
             as={FormikTextInput}
-            label="Display Name"
+            label="* Display Name"
             placeholder="A nickname to recognise this destination"
             required
           />

@@ -20,12 +20,12 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
-import FormikCombobox from 'Components/fields/ComboBox';
-import { DestinationConfigInput, JiraIssueTypesEnum } from 'Generated/schema';
+import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
+import { Box, FormHelperText } from 'pouncejs';
 
 type JiraFieldValues = Pick<DestinationConfigInput, 'jira'>;
 
@@ -41,12 +41,10 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
     outputConfig: Yup.object().shape({
       jira: Yup.object().shape({
         orgDomain: Yup.string().url('Must be a valid Jira domain').required(),
-        userName: Yup.string(),
+        userName: Yup.string().required(),
         projectKey: Yup.string().required(),
         assigneeId: Yup.string(),
-        issueType: Yup.string().test('oneOf', 'Please select a valid value', value =>
-          Object.values(JiraIssueTypesEnum).includes(value)
-        ),
+        issueType: Yup.string().required(),
         apiKey: existing ? Yup.string() : Yup.string().required(),
       }),
     }),
@@ -63,14 +61,14 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
       <Field
         as={FormikTextInput}
         name="outputConfig.jira.orgDomain"
-        label="Organization Domain"
+        label="* Organization Domain"
         placeholder="What's your organization's Jira domain?"
         required
       />
       <Field
         as={FormikTextInput}
         name="outputConfig.jira.projectKey"
-        label="Project Key"
+        label="* Project Key"
         placeholder="What's your Jira Project key?"
         required
         autoComplete="new-password"
@@ -78,14 +76,14 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
       <Field
         as={FormikTextInput}
         name="outputConfig.jira.userName"
-        label="Email"
+        label="* Email"
         placeholder="What's the email of the reporting user?"
       />
       <Field
         as={FormikTextInput}
         type="password"
         name="outputConfig.jira.apiKey"
-        label="Jira API Key"
+        label="* Jira API Key"
         placeholder={
           existing
             ? 'Information is hidden. New values will override the existing ones.'
@@ -101,14 +99,18 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
         label="Assignee ID"
         placeholder="Who should we assign this to?"
       />
-      <Field
-        as={FormikCombobox}
-        name="outputConfig.jira.issueType"
-        label="Issue Type"
-        required
-        items={Object.keys(JiraIssueTypesEnum)}
-        placeholder="Select a type of issue"
-      />
+      <Box as="fieldset">
+        <Field
+          as={FormikTextInput}
+          name="outputConfig.jira.issueType"
+          label="* Issue Type"
+          placeholder="What type of issue you want us to create?"
+          required
+        />
+        <FormHelperText id="issueType-helper" mt={2}>
+          Can be Bug, Story, Task or any custom type
+        </FormHelperText>
+      </Box>
     </BaseDestinationForm>
   );
 };
