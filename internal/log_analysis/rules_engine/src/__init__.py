@@ -32,7 +32,6 @@ class EventMatch:
     rule_tags: List[str] = field(default_factory=list)
     rule_reports: Dict[str, List[str]] = field(default_factory=dict)
     title: Optional[str] = None
-    status: str = ""  # Set the default alert status to be stored
 
 
 @dataclass
