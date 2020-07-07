@@ -35,7 +35,8 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
-// used by log parsers to validate records
+// DEPRECATED - use `CheckPantherParser` instead
+// Used by log parsers to validate records
 func EqualPantherLog(t *testing.T, expectedEvent *parsers.PantherLog, events []*parsers.PantherLog, parseErr error) {
 	require.NoError(t, parseErr)
 	require.Equal(t, 1, len(events))
@@ -171,6 +172,7 @@ func CheckPantherMultiline(t *testing.T, logs string, parser parsers.LogParser, 
 		require.NoError(t, err)
 		actual = append(actual, results...)
 	}
+	require.NoError(t, scanner.Err(), "failed to read multiline log")
 	require.Equal(t, len(expect), len(actual))
 	for i, result := range actual {
 		expect := expect[i]

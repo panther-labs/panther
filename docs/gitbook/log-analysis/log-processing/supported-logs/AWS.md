@@ -194,6 +194,36 @@ Reference: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail
 <tr><td valign=top><code>p_any_aws_tags</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of aws tags associated with the row</td></tr>
 </table>
 
+##AWS.CloudwatchEvents
+Amazon CloudWatch Events describe a change in Amazon Web Services (AWS) resources.
+Reference: https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CloudWatchEventsandEventPatterns.html
+
+<table>
+<tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
+<tr><td valign=top><code><b>id</b></code></td><td><code>string</code></td><td valign=top>A unique value is generated for every event. This can be helpful in tracing events as they move through rules to targets, and are processed.</td></tr>
+<tr><td valign=top><code><b>account</b></code></td><td><code>string</code></td><td valign=top>The 12-digit number identifying an AWS account.</td></tr>
+<tr><td valign=top><code><b>source</b></code></td><td><code>string</code></td><td valign=top>Identifies the service that sourced the event. All events sourced from within AWS begin with &#39;aws&#39;. Customer-generated events can have any value here, as long as it doesn&#39;t begin with &#39;aws&#39;. We recommend the use of Java package-name style reverse domain-name strings.</td></tr>
+<tr><td valign=top><code><b>resources</b></code></td><td><code>[string]</code></td><td valign=top>This JSON array contains ARNs that identify resources that are involved in the event. Inclusion of these ARNs is at the discretion of the service. For example, Amazon EC2 instance state-changes include Amazon EC2 instance ARNs, Auto Scaling events include ARNs for both instances and Auto Scaling groups, but API calls with AWS CloudTrail do not include resource ARNs.</td></tr>
+<tr><td valign=top><code><b>region</b></code></td><td><code>string</code></td><td valign=top>Identifies the AWS region where the event originated.</td></tr>
+<tr><td valign=top><code><b>detail-type</b></code></td><td><code>string</code></td><td valign=top>Identifies, in combination with the source field, the fields and values that appear in the detail field.</td></tr>
+<tr><td valign=top><code><b>version</b></code></td><td><code>string</code></td><td valign=top>By default, this is set to 0 (zero) in all events.</td></tr>
+<tr><td valign=top><code><b>time</b></code></td><td><code>timestamp</code></td><td valign=top>The event timestamp, which can be specified by the service originating the event. If the event spans a time interval, the service might choose to report the start time, so this value can be noticeably before the time the event is actually received.</td></tr>
+<tr><td valign=top><code><b>detail</b></code></td><td><code>string</code></td><td valign=top>A JSON object, whose content is at the discretion of the service originating the event. The detail content in the example above is very simple, just two fields. AWS API call events have detail objects with around 50 fields nested several levels deep.</td></tr>
+<tr><td valign=top><code><b>p_log_type</b></code></td><td><code>string</code></td><td valign=top>Panther added field with type of log</td></tr>
+<tr><td valign=top><code><b>p_row_id</b></code></td><td><code>string</code></td><td valign=top>Panther added field with unique id (within table)</td></tr>
+<tr><td valign=top><code><b>p_event_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize event time (UTC)</td></tr>
+<tr><td valign=top><code><b>p_parse_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
+<tr><td valign=top><code>p_any_ip_addresses</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
+<tr><td valign=top><code>p_any_domain_names</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
+<tr><td valign=top><code>p_any_sha1_hashes</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
+<tr><td valign=top><code>p_any_md5_hashes</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of MD5 hashes associated with the row</td></tr>
+<tr><td valign=top><code>p_any_sha256_hashes</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of SHA256 hashes of any algorithm associated with the row</td></tr>
+<tr><td valign=top><code>p_any_aws_account_ids</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of aws account ids associated with the row</td></tr>
+<tr><td valign=top><code>p_any_aws_instance_ids</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of aws instance ids associated with the row</td></tr>
+<tr><td valign=top><code>p_any_aws_arns</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of aws arns associated with the row</td></tr>
+<tr><td valign=top><code>p_any_aws_tags</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of aws tags associated with the row</td></tr>
+</table>
+
 ##AWS.GuardDuty
 Amazon GuardDuty is a threat detection service that continuously monitors for malicious activity and unauthorized behavior inside AWS Accounts.
 Reference: https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_finding-format.html

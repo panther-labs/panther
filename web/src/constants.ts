@@ -104,6 +104,7 @@ export const LOG_TYPES = [
   'AWS.CloudTrail',
   'AWS.CloudTrailDigest',
   'AWS.CloudTrailInsight',
+  'AWS.CloudWatchEvents',
   'AWS.GuardDuty',
   'AWS.S3ServerAccess',
   'AWS.VPCFlow',
