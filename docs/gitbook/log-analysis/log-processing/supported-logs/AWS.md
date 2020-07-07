@@ -194,7 +194,7 @@ Reference: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail
 <tr><td valign=top><code>p_any_aws_tags</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of aws tags associated with the row</td></tr>
 </table>
 
-##AWS.CloudwatchEvents
+##AWS.CloudWatchEvents
 Amazon CloudWatch Events describe a change in Amazon Web Services (AWS) resources.
 Reference: https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CloudWatchEventsandEventPatterns.html
 

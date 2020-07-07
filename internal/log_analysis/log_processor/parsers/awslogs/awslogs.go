@@ -30,7 +30,7 @@ const (
 	TypeCloudTrail        = `AWS.CloudTrail`
 	TypeCloudTrailDigest  = "AWS.CloudTrailDigest"
 	TypeCloudTrailInsight = "AWS.CloudTrailInsight"
-	TypeCloudwatchEvents  = "AWS.CloudwatchEvents"
+	TypeCloudwatchEvents  = "AWS.CloudWatchEvents"
 	TypeGuardDuty         = "AWS.GuardDuty"
 	TypeS3ServerAccess    = "AWS.S3ServerAccess"
 	TypeVPCFlow           = "AWS.VPCFlow"
