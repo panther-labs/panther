@@ -43,9 +43,8 @@ import (
 )
 
 var (
-	parseDelay                      = time.Millisecond / 2 // time it takes to process a log line
-	sendDelay                       = time.Millisecond / 2 // time it takes to send event to destination
-	nanosecondsPerMillisecond int64 = 1000000
+	parseDelay = time.Millisecond / 2 // time it takes to process a log line
+	sendDelay  = time.Millisecond / 2 // time it takes to send event to destination
 
 	testLogType          = "testLogType"
 	testLogLine          = "line"
@@ -273,7 +272,7 @@ func TestProcessClassifyFailure(t *testing.T) {
 		CloudWatchMetrics: []metrics.MetricDirectiveObject{
 			{
 				Namespace:  "Panther",
-				Dimensions: []metrics.DimensionSet{{"LogType"}},
+				Dimensions: []metrics.DimensionSet{{"Component", "LogType"}},
 				Metrics: []metrics.Metric{
 					{
 						Name: "BytesProcessed",
@@ -282,7 +281,7 @@ func TestProcessClassifyFailure(t *testing.T) {
 				},
 			},
 		},
-		Timestamp: p.operation.EndTime.UnixNano() / nanosecondsPerMillisecond,
+		Timestamp: p.operation.EndTime.UnixNano() / metrics.NanosecondsPerMillisecond,
 	}
 
 	expected := []observer.LoggedEntry{
@@ -354,6 +353,10 @@ func TestProcessClassifyFailure(t *testing.T) {
 			},
 			Context: []zapcore.Field{
 				{
+					Key:    "Component",
+					String: "LogProcessor",
+				},
+				{
 					Key:    "LogType",
 					String: testLogType,
 				},
@@ -378,7 +381,7 @@ func TestProcessClassifyFailure(t *testing.T) {
 				assert.Equal(t, expected[i].Context[j].Key, actual[i].Context[j].Key)
 				if actual[i].Context[j].Key == "_aws" {
 					actualTyped := actual[i].Context[j].Interface.(metrics.EmbeddedMetric)
-					actualTyped.Timestamp = p.operation.EndTime.UnixNano() / nanosecondsPerMillisecond
+					actualTyped.Timestamp = p.operation.EndTime.UnixNano() / metrics.NanosecondsPerMillisecond
 					assert.Equal(t, expected[i].Context[j].Interface, actualTyped)
 					continue
 				}

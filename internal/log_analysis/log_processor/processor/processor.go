@@ -163,13 +163,11 @@ func (p *Processor) sendEvents(result *classification.ClassifierResult, outputCh
 func (p *Processor) logStats(err error) {
 	p.operation.Stop()
 	p.operation.Log(err, zap.Any(statsKey, *p.classifier.Stats()))
-	logType := metrics.Dimension{
-		Name: "LogType",
-	}
+	logType := metrics.Dimension{Name: "LogType"}
 	for _, parserStats := range p.classifier.ParserStats() {
 		p.operation.Log(err, zap.Any(statsKey, *parserStats))
 		logType.Value = parserStats.LogType
-		common.BytesProcessedLogger.Log(parserStats.BytesProcessedCount, logType)
+		common.BytesProcessedLogger.Log(parserStats.BytesProcessedCount, common.Component, logType)
 	}
 }
 

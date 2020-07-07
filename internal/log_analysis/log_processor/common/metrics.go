@@ -23,10 +23,17 @@ import (
 )
 
 var (
-	BytesProcessedLogger = metrics.MustMonoLogger(metrics.DimensionSet{
-		"LogType",
+	BytesProcessedLogger = metrics.MustMonoLogger([]metrics.DimensionSet{
+		{
+			"Component",
+			"LogType",
+		},
 	}, metrics.Metric{
 		Name: "BytesProcessed",
 		Unit: metrics.UnitBytes,
 	})
+	Component = metrics.Dimension{
+		Name:  "Component",
+		Value: "LogProcessor",
+	}
 )
