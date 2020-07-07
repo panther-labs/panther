@@ -76,6 +76,7 @@ func testInput() *sqs.SendMessageBatchInput {
 }
 
 func TestSendMessageBatch(t *testing.T) {
+	t.Parallel()
 	client := &mockSQS{}
 	failures, err := SendMessageBatch(client, 5*time.Second, testInput())
 	assert.NoError(t, err)
@@ -85,6 +86,7 @@ func TestSendMessageBatch(t *testing.T) {
 
 // Unprocessed items are retried
 func TestSendMessageBatchBackoff(t *testing.T) {
+	t.Parallel()
 	client := &mockSQS{unprocessedItems: true}
 	failures, err := SendMessageBatch(client, 5*time.Second, testInput())
 	assert.NoError(t, err)
@@ -94,6 +96,7 @@ func TestSendMessageBatchBackoff(t *testing.T) {
 
 // Client errors are not retried
 func TestSendMessageBatchPermanentError(t *testing.T) {
+	t.Parallel()
 	client := &mockSQS{err: errors.New("permanent")}
 	failures, err := SendMessageBatch(client, 5*time.Second, testInput())
 	assert.Error(t, err)
@@ -103,6 +106,7 @@ func TestSendMessageBatchPermanentError(t *testing.T) {
 
 // a large number of records are broken into multiple requests
 func TestSendMessageBatchLargePagination(t *testing.T) {
+	t.Parallel()
 	client := &mockSQS{}
 	firstBody := ""
 	secondBody := ""
@@ -134,6 +138,7 @@ func TestSendMessageBatchLargePagination(t *testing.T) {
 
 // a single request that is too large will error
 func TestSendMessageBatchLargePaginationError(t *testing.T) {
+	t.Parallel()
 	client := &mockSQS{}
 	secondBody := ""
 
@@ -159,6 +164,7 @@ func TestSendMessageBatchLargePaginationError(t *testing.T) {
 
 // A small number of records that are large are broken into multiple requests
 func TestSendMessageBatchPagination(t *testing.T) {
+	t.Parallel()
 	client := &mockSQS{}
 	entries := make([]*sqs.SendMessageBatchRequestEntry, 2*maxMessages+1)
 	for i := 0; i < len(entries); i++ {

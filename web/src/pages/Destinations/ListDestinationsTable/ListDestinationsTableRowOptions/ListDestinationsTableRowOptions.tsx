@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Dropdown, Icon, IconButton, MenuItem } from 'pouncejs';
+import { Dropdown, DropdownButton, DropdownItem, DropdownMenu, IconButton } from 'pouncejs';
 import useSidesheet from 'Hooks/useSidesheet';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
@@ -35,33 +35,36 @@ const ListDestinationsTableRowOptions: React.FC<ListDestinationsTableRowOptionsP
   const { showSidesheet } = useSidesheet();
 
   return (
-    <Dropdown
-      trigger={
-        <IconButton as="div" variant="default" my={-4}>
-          <Icon type="more" size="small" />
-        </IconButton>
-      }
-    >
-      <Dropdown.Item
-        onSelect={() =>
-          showSidesheet({
-            sidesheet: SIDESHEETS.UPDATE_DESTINATION,
-            props: { destination },
-          })
-        }
-      >
-        <MenuItem variant="default">Edit</MenuItem>
-      </Dropdown.Item>
-      <Dropdown.Item
-        onSelect={() =>
-          showModal({
-            modal: MODALS.DELETE_DESTINATION,
-            props: { destination },
-          })
-        }
-      >
-        <MenuItem variant="default">Delete</MenuItem>
-      </Dropdown.Item>
+    <Dropdown>
+      <DropdownButton
+        as={IconButton}
+        icon="more"
+        variant="ghost"
+        size="small"
+        aria-label="Destination Options"
+      />
+      <DropdownMenu>
+        <DropdownItem
+          onSelect={() =>
+            showSidesheet({
+              sidesheet: SIDESHEETS.UPDATE_DESTINATION,
+              props: { destination },
+            })
+          }
+        >
+          Edit
+        </DropdownItem>
+        <DropdownItem
+          onSelect={() =>
+            showModal({
+              modal: MODALS.DELETE_DESTINATION,
+              props: { destination },
+            })
+          }
+        >
+          Delete
+        </DropdownItem>
+      </DropdownMenu>
     </Dropdown>
   );
 };

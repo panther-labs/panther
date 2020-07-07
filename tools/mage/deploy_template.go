@@ -29,7 +29,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
 	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/magefile/mage/sh"
@@ -49,7 +48,6 @@ var (
 //
 // The bucket parameter can be empty to skip S3 packaging.
 func deployTemplate(
-	awsSession *session.Session,
 	templatePath, bucket, stack string,
 	params map[string]string,
 ) (map[string]string, error) {
@@ -61,7 +59,7 @@ func deployTemplate(
 	}
 
 	// 2) If the stack already exists, wait for it to reach a steady state.
-	outputs, err := prepareStack(awsSession, stack)
+	outputs, err := prepareStack(stack)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +71,7 @@ func deployTemplate(
 		changeSetType = "UPDATE"
 	}
 
-	changeID, err := createChangeSet(awsSession, bucket, stack, changeSetType, packagedTemplate, params)
+	changeID, err := createChangeSet(bucket, stack, changeSetType, packagedTemplate, params)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +81,7 @@ func deployTemplate(
 	}
 
 	// 4) Execute the change set
-	return executeChangeSet(awsSession, changeID, changeSetType, stack)
+	return executeChangeSet(changeID, changeSetType, stack)
 }
 
 // Package resources in S3 and return the path to the modified CloudFormation template.
@@ -101,7 +99,7 @@ func samPackage(region, templatePath, bucket string) (string, error) {
 	}
 
 	outFile := filepath.Join("out", "deployments", "package."+filepath.Base(templatePath))
-	if err := os.MkdirAll(filepath.Dir(outFile), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(outFile), 0700); err != nil {
 		return "", fmt.Errorf("failed to create out/deployments: %v", err)
 	}
 
@@ -110,7 +108,7 @@ func samPackage(region, templatePath, bucket string) (string, error) {
 }
 
 // Upload a CloudFormation asset to S3 if it doesn't already exist, returning s3 object key and version
-func uploadAsset(awsSession *session.Session, assetPath, bucket, stack string) (string, string, error) {
+func uploadAsset(assetPath, bucket, stack string) (string, string, error) {
 	contents, err := ioutil.ReadFile(assetPath)
 	if err != nil {
 		return "", "", fmt.Errorf("package %s: failed to open %s: %v", stack, assetPath, err)
@@ -119,15 +117,14 @@ func uploadAsset(awsSession *session.Session, assetPath, bucket, stack string) (
 	// We are using SHA1 for caching / asset lookup, we don't need strong cryptographic guarantees
 	hash := sha1.Sum(contents) // nolint: gosec
 	s3Key := fmt.Sprintf("%s/%x", stack, hash)
-	client := s3.New(awsSession)
-	response, err := client.HeadObject(&s3.HeadObjectInput{Bucket: &bucket, Key: &s3Key})
+	response, err := s3.New(awsSession).HeadObject(&s3.HeadObjectInput{Bucket: &bucket, Key: &s3Key})
 	if err == nil {
 		return s3Key, *response.VersionId, nil // object already exists in S3 with the same hash
 	}
 
 	if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NotFound" {
 		// object does not exist yet - upload it!
-		response, err := uploadFileToS3(awsSession, assetPath, bucket, s3Key)
+		response, err := uploadFileToS3(assetPath, bucket, s3Key)
 		if err != nil {
 			return "", "", fmt.Errorf("package %s: failed to upload %s: %v", stack, assetPath, err)
 		}
@@ -144,7 +141,7 @@ func uploadAsset(awsSession *session.Session, assetPath, bucket, stack string) (
 // If the stack is still in progress, this will wait until it finishes.
 // If the stack exists, its outputs are returned to the caller (once complete).
 //     A return of (nil, nil) means the stack does not exist.
-func prepareStack(awsSession *session.Session, stackName string) (map[string]string, error) {
+func prepareStack(stackName string) (map[string]string, error) {
 	client := cfn.New(awsSession)
 
 	// Wait for the stack to reach a terminal state
@@ -194,7 +191,6 @@ func prepareStack(awsSession *session.Session, stackName string) (map[string]str
 //
 // If there are no changes, the change set is deleted and (nil, nil) is returned.
 func createChangeSet(
-	awsSession *session.Session,
 	bucket, stack string,
 	changeSetType string, // "CREATE" or "UPDATE"
 	templatePath string,
@@ -242,7 +238,7 @@ func createChangeSet(
 		createInput.SetTemplateBody(string(template))
 	} else {
 		// Upload to S3 (if it doesn't already exist)
-		key, _, err := uploadAsset(awsSession, templatePath, bucket, stack)
+		key, _, err := uploadAsset(templatePath, bucket, stack)
 		if err != nil {
 			return nil, err
 		}
@@ -298,7 +294,7 @@ func waitForChangeSet(client *cfn.CloudFormation, changeSetName, stack string) (
 }
 
 // Execute a change set, blocking until the stack has finished updating and then returning its outputs.
-func executeChangeSet(awsSession *session.Session, changeSet *string, changeSetType string, stackName string) (map[string]string, error) {
+func executeChangeSet(changeSet *string, changeSetType string, stackName string) (map[string]string, error) {
 	client := cfn.New(awsSession)
 	_, err := client.ExecuteChangeSet(&cfn.ExecuteChangeSetInput{ChangeSetName: changeSet, StackName: &stackName})
 	if err != nil {

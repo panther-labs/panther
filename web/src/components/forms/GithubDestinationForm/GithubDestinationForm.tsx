@@ -33,25 +33,23 @@ interface GithubDestinationFormProps {
   onSubmit: (values: BaseDestinationFormValues<GithubFieldValues>) => void;
 }
 
-const githubFieldsValidationSchema = Yup.object().shape({
-  outputConfig: Yup.object().shape({
-    github: Yup.object().shape({
-      repoName: Yup.string().required(),
-      token: Yup.string().required(),
-    }),
-  }),
-});
-
-// @ts-ignore
-// We merge the two schemas together: the one deriving from the common fields, plus the custom
-// ones that change for each destination.
-// https://github.com/jquense/yup/issues/522
-const mergedValidationSchema = defaultValidationSchema.concat(githubFieldsValidationSchema);
-
 const GithubDestinationForm: React.FC<GithubDestinationFormProps> = ({
   onSubmit,
   initialValues,
 }) => {
+  const existing = initialValues.outputId;
+
+  const githubFieldsValidationSchema = Yup.object().shape({
+    outputConfig: Yup.object().shape({
+      github: Yup.object().shape({
+        repoName: Yup.string().required(),
+        token: existing ? Yup.string() : Yup.string().required(),
+      }),
+    }),
+  });
+
+  const mergedValidationSchema = defaultValidationSchema.concat(githubFieldsValidationSchema);
+
   return (
     <BaseDestinationForm<GithubFieldValues>
       initialValues={initialValues}
@@ -63,17 +61,20 @@ const GithubDestinationForm: React.FC<GithubDestinationFormProps> = ({
         name="outputConfig.github.repoName"
         label="Repository name"
         placeholder="What's the name of your Github repository?"
-        mb={6}
-        aria-required
+        required
       />
       <Field
         as={FormikTextInput}
+        type="password"
         name="outputConfig.github.token"
         label="Token"
-        placeholder="What's your Github API token?"
-        mb={6}
-        aria-required
+        placeholder={
+          existing
+            ? 'Information is hidden. New values will override the existing ones.'
+            : "What's your Github API token?"
+        }
         autoComplete="new-password"
+        required={!existing}
       />
     </BaseDestinationForm>
   );

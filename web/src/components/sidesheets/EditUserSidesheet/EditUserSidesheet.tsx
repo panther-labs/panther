@@ -17,21 +17,19 @@
  */
 
 import * as React from 'react';
-import { Box, Heading, SideSheet, useSnackbar } from 'pouncejs';
-import { User } from 'Generated/schema';
+import { Box, Heading, SideSheet, SideSheetProps, useSnackbar } from 'pouncejs';
 import { extractErrorMessage } from 'Helpers/utils';
 import UserForm, { UserFormValues } from 'Components/forms/UserForm';
 import useAuth from 'Hooks/useAuth';
-import useSidesheet from 'Hooks/useSidesheet';
+import { UserDetails } from 'Source/graphql/fragments/UserDetails.generated';
 import { useEditUser } from './graphql/editUser.generated';
 
-export interface EditUserSidesheetProps {
-  user: User;
+export interface EditUserSidesheetProps extends SideSheetProps {
+  user: UserDetails;
 }
 
-const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user }) => {
+const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user, onClose, ...rest }) => {
   const { pushSnackbar } = useSnackbar();
-  const { hideSidesheet } = useSidesheet();
   const { refetchUserInfo, userInfo } = useAuth();
   const [editUser] = useEditUser({
     onError: error => pushSnackbar({ variant: 'error', title: extractErrorMessage(error) }),
@@ -40,6 +38,8 @@ const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user }) => {
       if (user.id === userInfo.sub) {
         refetchUserInfo();
       }
+
+      pushSnackbar({ variant: 'success', title: 'User updated successfully!' });
     },
   });
 
@@ -52,7 +52,7 @@ const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user }) => {
 
   const submitToServer = async (values: UserFormValues) => {
     // optimistically hide the sidesheet
-    hideSidesheet();
+    onClose();
 
     await editUser({
       optimisticResponse: () => ({
@@ -74,9 +74,9 @@ const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user }) => {
   };
 
   return (
-    <SideSheet open onClose={hideSidesheet}>
+    <SideSheet aria-labelledby="sidesheet-title" onClose={onClose} {...rest}>
       <Box width={425} m="auto">
-        <Heading pt={1} pb={8} size="medium">
+        <Heading pt={1} pb={8} id="sidesheet-title">
           Edit Profile
         </Heading>
         <UserForm initialValues={initialValues} onSubmit={submitToServer} />

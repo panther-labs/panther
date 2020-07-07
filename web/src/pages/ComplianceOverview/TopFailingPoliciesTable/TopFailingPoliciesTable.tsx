@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Label, Link, Table } from 'pouncejs';
+import { Box, Link, Table } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import SeverityBadge from 'Components/SeverityBadge';
@@ -34,22 +34,20 @@ const TopFailingPoliciesTable: React.FC<TopFailingPoliciesTableProps> = ({ polic
         <Table.Row>
           <Table.HeaderCell />
           <Table.HeaderCell>Policy</Table.HeaderCell>
-          <Table.HeaderCell>Severity</Table.HeaderCell>
+          <Table.HeaderCell align="center">Severity</Table.HeaderCell>
         </Table.Row>
       </Table.Head>
       <Table.Body>
         {policies.map((policy, index) => (
           <Table.Row key={policy.id}>
-            <Table.Cell>
-              <Label size="medium">{index + 1}</Label>
-            </Table.Cell>
+            <Table.Cell>{index + 1}</Table.Cell>
             <Table.Cell>
               <Link as={RRLink} to={urls.compliance.policies.details(policy.id)} py={4} pr={4}>
                 {policy.id}
               </Link>
             </Table.Cell>
-            <Table.Cell>
-              <Box m={-1}>
+            <Table.Cell align="center">
+              <Box my={-1} display="inline-block">
                 <SeverityBadge severity={policy.severity} />
               </Box>
             </Table.Cell>

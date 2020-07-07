@@ -17,8 +17,7 @@
  */
 
 import * as React from 'react';
-import { css } from '@emotion/react';
-import { Box, Card, Text } from 'pouncejs';
+import { Box, AbstractButton, Img, Flex } from 'pouncejs';
 
 interface ItemCardProps {
   logo: string;
@@ -27,27 +26,33 @@ interface ItemCardProps {
 }
 
 const DestinationCard: React.FunctionComponent<ItemCardProps> = ({ logo, title, onClick }) => (
-  <Card
+  <AbstractButton
+    p={3}
     width={1}
-    as="button"
     onClick={onClick}
-    css={css`
-      cursor: pointer;
-      transition: transform 0.15s ease-in-out;
-      &:hover {
-        transform: scale3d(1.03, 1.03, 1.03);
-      }
-    `}
+    outline="none"
+    border="1px solid"
+    borderRadius="medium"
+    borderColor="navyblue-450"
+    transition="all 0.15s ease-in-out"
+    _hover={{ backgroundColor: 'navyblue-700', borderColor: 'navyblue-700' }}
+    _focus={{ backgroundColor: 'navyblue-700', borderColor: 'navyblue-700' }}
   >
-    <Box height={92} px={10}>
-      <img src={logo} alt={title} style={{ objectFit: 'contain' }} width="100%" height="100%" />
-    </Box>
-    <Box borderTopStyle="solid" borderTopWidth="1px" borderColor="grey50">
-      <Text size="medium" px={4} py={3} color="grey500" textAlign="left">
+    <Flex align="center">
+      <Img
+        aria-labelledby={title}
+        src={logo}
+        alt={title}
+        objectFit="contain"
+        nativeWidth={30}
+        nativeHeight={30}
+        mr={2}
+      />
+      <Box id={title} as="span">
         {title}
-      </Text>
-    </Box>
-  </Card>
+      </Box>
+    </Flex>
+  </AbstractButton>
 );
 
 export default DestinationCard;

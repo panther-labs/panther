@@ -6,12 +6,13 @@ fragment PolicyDetailsMain on PolicyDetails {
   description
   displayName
   enabled
-  suppressions
   id
   lastModified
+  outputIds
   reference
   resourceTypes
   runbook
-  severity
+  severity  
+  suppressions
   tags
 }

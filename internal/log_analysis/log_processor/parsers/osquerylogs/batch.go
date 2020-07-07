@@ -26,9 +26,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-var BatchDesc = `Batch contains all the data included in OsQuery batch logs
-Reference : https://osquery.readthedocs.io/en/stable/deployment/logging/`
-
 // nolint:lll
 type Batch struct { // FIXME: field descriptions need updating!
 	CalendarTime *timestamp.ANSICwithTZ `json:"calendarTime,omitempty" validate:"required" description:"The time of the event (UTC)."`
@@ -78,7 +75,7 @@ func (p *BatchParser) Parse(log string) ([]*parsers.PantherLog, error) {
 
 // LogType returns the log type supported by this parser
 func (p *BatchParser) LogType() string {
-	return "Osquery.Batch"
+	return TypeBatch
 }
 
 func (event *Batch) updatePantherFields(p *BatchParser) {

@@ -20,20 +20,29 @@ import React from 'react';
 import { Alert, Box, Card } from 'pouncejs';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
+import { ListAlertsInput, SortDirEnum, ListAlertsSortFieldsEnum } from 'Generated/schema';
 import useInfiniteScroll from 'Hooks/useInfiniteScroll';
+import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import isEmpty from 'lodash-es/isEmpty';
 import withSEO from 'Hoc/withSEO';
 import { useListAlerts } from './graphql/listAlerts.generated';
 import ListAlertsTable from './ListAlertsTable';
+import ListAlertsActions from './ListAlertsActions';
 import ListAlertsPageSkeleton from './Skeleton';
 import ListAlertsPageEmptyDataFallback from './EmptyDataFallback';
 
 const ListAlerts = () => {
+  const { requestParams, updateRequestParams } = useRequestParamsWithoutPagination<
+    ListAlertsInput
+  >();
+
   const { loading, error, data, fetchMore } = useListAlerts({
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
+        ...requestParams,
         pageSize: DEFAULT_LARGE_PAGE_SIZE,
       },
     },
@@ -49,7 +58,11 @@ const ListAlerts = () => {
     onLoadMore: () => {
       fetchMore({
         variables: {
-          input: { pageSize: DEFAULT_LARGE_PAGE_SIZE, exclusiveStartKey: lastEvaluatedKey },
+          input: {
+            ...requestParams,
+            pageSize: DEFAULT_LARGE_PAGE_SIZE,
+            exclusiveStartKey: lastEvaluatedKey,
+          },
         },
         updateQuery: (previousResult, { fetchMoreResult }) => {
           // FIXME: Centralize this behavior for alert pagination, when apollo fixes a bug which
@@ -73,32 +86,36 @@ const ListAlerts = () => {
     return <ListAlertsPageSkeleton />;
   }
 
-  if (error) {
-    return (
-      <Box mb={6}>
-        <Alert
-          variant="error"
-          title="Couldn't load your alerts"
-          description={
-            extractErrorMessage(error) ||
-            'There was an error when performing your request, please contact support@runpanther.io'
-          }
-        />
-      </Box>
-    );
-  }
-
-  if (!alertItems.length) {
+  if (!alertItems.length && isEmpty(requestParams)) {
     return <ListAlertsPageEmptyDataFallback />;
   }
 
-  //  Check how many active filters exist by checking how many columns keys exist in the URL
+  const hasError = Boolean(error);
+
   return (
     <ErrorBoundary>
-      <Card mb={8}>
-        <ListAlertsTable items={alertItems} />
+      {hasError && (
+        <Box mb={6}>
+          <Alert
+            variant="error"
+            title="Couldn't load your alerts"
+            description={
+              extractErrorMessage(error) ||
+              'There was an error when performing your request, please contact support@runpanther.io'
+            }
+          />
+        </Box>
+      )}
+      <ListAlertsActions showActions={hasError} />
+      <Card as="section" px={8} py={4} mb={6} position="relative">
+        <ListAlertsTable
+          items={alertItems}
+          onSort={updateRequestParams}
+          sortBy={ListAlertsSortFieldsEnum.CreatedAt}
+          sortDir={requestParams.sortDir || SortDirEnum.Descending}
+        />
         {hasNextPage && (
-          <Box p={8} ref={sentinelRef}>
+          <Box py={8} ref={sentinelRef}>
             <TablePlaceholder rowCount={10} />
           </Box>
         )}

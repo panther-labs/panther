@@ -73,6 +73,7 @@ var (
 		Severity:                  "MEDIUM",
 		Suppressions:              models.Suppressions{"panther.*"},
 		Tags:                      []string{"policyTag"},
+		OutputIds:                 []string{"policyOutput"},
 		Tests: []*models.UnitTest{
 			{
 				Name:           "This will be True",
@@ -100,6 +101,7 @@ var (
 		ResourceTypes:             []string{"AWS.CloudTrail"},
 		LastModifiedBy:            userID,
 		Tags:                      []string{"AWS Managed Rules - Management and Governance", "CIS"},
+		OutputIds:                 []string{"621a1c7b-273f-4a03-99a7-5c661de5b0e8"},
 		Reports:                   map[string][]string{},
 		Reference:                 "reference.link",
 		Runbook:                   "Runbook\n",
@@ -182,6 +184,7 @@ var (
 		Severity:                  "MEDIUM",
 		Suppressions:              []string{},
 		Tags:                      []string{},
+		OutputIds:                 []string{},
 		Reports:                   map[string][]string{},
 		Tests: []*models.UnitTest{
 			{
@@ -202,6 +205,7 @@ var (
 		Severity:           "HIGH",
 		Tests:              []*models.UnitTest{},
 		Tags:               []string{"test-tag"},
+		OutputIds:          []string{"test-output1", "test-output2"},
 		Reports:            map[string][]string{},
 		DedupPeriodMinutes: 1440,
 	}
@@ -525,6 +529,7 @@ func createPolicySuccess(t *testing.T) {
 			Severity:                  policy.Severity,
 			Suppressions:              policy.Suppressions,
 			Tags:                      policy.Tags,
+			OutputIds:                 policy.OutputIds,
 			UserID:                    userID,
 			Tests:                     policy.Tests,
 		},
@@ -558,6 +563,7 @@ func createRuleSuccess(t *testing.T) {
 			UserID:             userID,
 			DedupPeriodMinutes: rule.DedupPeriodMinutes,
 			Tags:               rule.Tags,
+			OutputIds:          rule.OutputIds,
 		},
 		HTTPClient: httpClient,
 	})
@@ -757,6 +763,7 @@ func modifySuccess(t *testing.T) {
 			Severity:                  policy.Severity,
 			Suppressions:              policy.Suppressions,
 			Tags:                      policy.Tags,
+			OutputIds:                 policy.OutputIds,
 			Tests:                     expectedPolicy.Tests,
 			UserID:                    userID,
 		},
@@ -791,6 +798,7 @@ func modifyRule(t *testing.T) {
 			UserID:             userID,
 			DedupPeriodMinutes: expectedRule.DedupPeriodMinutes,
 			Tags:               expectedRule.Tags,
+			OutputIds:          expectedRule.OutputIds,
 		},
 		HTTPClient: httpClient,
 	})
@@ -933,6 +941,7 @@ func bulkUploadSuccess(t *testing.T) {
 	expectedPolicy.Tests = expectedPolicy.Tests[:1]
 	expectedPolicy.Tests[0].Resource = `{"Bucket":"empty"}`
 	expectedPolicy.Tags = []string{}
+	expectedPolicy.OutputIds = []string{}
 	expectedPolicy.VersionID = getResult.Payload.VersionID
 	assert.Equal(t, &expectedPolicy, getResult.Payload)
 
@@ -979,6 +988,7 @@ func bulkUploadSuccess(t *testing.T) {
 	policyFromBulkJSON.CreatedAt = getResult.Payload.CreatedAt
 	policyFromBulkJSON.LastModified = getResult.Payload.LastModified
 	policyFromBulkJSON.Tags = []string{}
+	policyFromBulkJSON.OutputIds = []string{}
 	policyFromBulkJSON.VersionID = getResult.Payload.VersionID
 
 	// Verify the resource string is the same as we expect, by unmarshaling it into its object map
@@ -1289,6 +1299,7 @@ func getEnabledPolicies(t *testing.T) {
 			Severity:      policyFromBulk.Severity,
 			VersionID:     policyFromBulk.VersionID,
 			Tags:          policyFromBulk.Tags,
+			OutputIds:     policyFromBulk.OutputIds,
 		},
 	}
 
@@ -1315,6 +1326,7 @@ func getEnabledRules(t *testing.T) {
 				VersionID:          result.Payload.Policies[0].VersionID, // this is set
 				DedupPeriodMinutes: rule.DedupPeriodMinutes,
 				Tags:               rule.Tags,
+				OutputIds:          rule.OutputIds,
 			},
 		},
 	}

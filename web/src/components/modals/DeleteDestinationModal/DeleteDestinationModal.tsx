@@ -17,16 +17,19 @@
  */
 
 import React from 'react';
-import { useSnackbar } from 'pouncejs';
+import { ModalProps, useSnackbar } from 'pouncejs';
 import { Destination } from 'Generated/schema';
 import { useDeleteOutput } from './graphql/deleteOutput.generated';
 import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
-export interface DeleteDestinationModalProps {
+export interface DeleteDestinationModalProps extends ModalProps {
   destination: Destination;
 }
 
-const DeleteDestinationModal: React.FC<DeleteDestinationModalProps> = ({ destination }) => {
+const DeleteDestinationModal: React.FC<DeleteDestinationModalProps> = ({
+  destination,
+  ...rest
+}) => {
   const destinationDisplayName = destination.displayName || destination.outputId;
   const { pushSnackbar } = useSnackbar();
   const [deleteDestination] = useDeleteOutput({
@@ -64,6 +67,7 @@ const DeleteDestinationModal: React.FC<DeleteDestinationModalProps> = ({ destina
       title={`Delete ${destinationDisplayName}`}
       subtitle={`Are you sure you want to delete ${destinationDisplayName}?`}
       onConfirm={deleteDestination}
+      {...rest}
     />
   );
 };

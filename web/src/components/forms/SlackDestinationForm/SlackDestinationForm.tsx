@@ -25,6 +25,7 @@ import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
+import { webhookValidation } from 'Helpers/utils';
 
 type SlackFieldValues = Pick<DestinationConfigInput, 'slack'>;
 
@@ -33,23 +34,19 @@ interface SlackDestinationFormProps {
   onSubmit: (values: BaseDestinationFormValues<SlackFieldValues>) => void;
 }
 
-const slackFieldsValidationSchema = Yup.object().shape({
-  outputConfig: Yup.object().shape({
-    slack: Yup.object().shape({
-      webhookURL: Yup.string()
-        .url('Must be a valid webhook URL')
-        .required(),
-    }),
-  }),
-});
-
-// @ts-ignore
-// We merge the two schemas together: the one deriving from the common fields, plus the custom
-// ones that change for each destination.
-// https://github.com/jquense/yup/issues/522
-const mergedValidationSchema = defaultValidationSchema.concat(slackFieldsValidationSchema);
-
 const SlackDestinationForm: React.FC<SlackDestinationFormProps> = ({ onSubmit, initialValues }) => {
+  const existing = initialValues.outputId;
+
+  const slackFieldsValidationSchema = Yup.object().shape({
+    outputConfig: Yup.object().shape({
+      slack: Yup.object().shape({
+        webhookURL: existing ? webhookValidation() : webhookValidation().required(),
+      }),
+    }),
+  });
+
+  const mergedValidationSchema = defaultValidationSchema.concat(slackFieldsValidationSchema);
+
   return (
     <BaseDestinationForm<SlackFieldValues>
       initialValues={initialValues}
@@ -58,11 +55,15 @@ const SlackDestinationForm: React.FC<SlackDestinationFormProps> = ({ onSubmit, i
     >
       <Field
         as={FormikTextInput}
+        type="password"
         name="outputConfig.slack.webhookURL"
         label="Slack Webhook URL"
-        placeholder="Where should we send a push notification to?"
-        mb={6}
-        aria-required
+        placeholder={
+          existing
+            ? 'Information is hidden. New values will override the existing ones.'
+            : 'Where should we send a push notification to?'
+        }
+        required={!existing}
       />
     </BaseDestinationForm>
   );

@@ -41,6 +41,9 @@ fragment DestinationFull on Destination {
       personalAccessToken
       projectGids
     }
+    customWebhook {
+      webhookURL
+    }
   }
   verificationStatus
   defaultForSeverity

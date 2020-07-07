@@ -26,11 +26,9 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/sts"
 
 	"github.com/panther-labs/panther/pkg/awsbatch/s3batch"
 )
@@ -47,32 +45,23 @@ type deleteStackResult struct {
 
 // Teardown Destroy all Panther infrastructure
 func Teardown() {
-	masterStack, awsSession := teardownConfirmation()
-	if err := destroyCfnStacks(masterStack, awsSession); err != nil {
+	getSession()
+	masterStack := teardownConfirmation()
+	if err := destroyCfnStacks(masterStack); err != nil {
 		logger.Fatal(err)
 	}
 
 	// CloudFormation will not delete any Panther S3 buckets (DeletionPolicy: Retain), we do so here.
-	destroyPantherBuckets(awsSession)
+	destroyPantherBuckets()
 
 	// Remove any leftover log groups.
 	// Sometimes buffered lambda logs are written after CloudFormation deletes the log groups.
-	destroyLogGroups(awsSession)
+	destroyLogGroups()
 
 	logger.Info("successfully removed Panther infrastructure")
 }
 
-func teardownConfirmation() (string, *session.Session) {
-	// Check the AWS account ID
-	awsSession, err := getSession()
-	if err != nil {
-		logger.Fatal(err)
-	}
-	identity, err := sts.New(awsSession).GetCallerIdentity(&sts.GetCallerIdentityInput{})
-	if err != nil {
-		logger.Fatalf("failed to get caller identity: %v", err)
-	}
-
+func teardownConfirmation() string {
 	// When deploying from source ('mage deploy'), there will be several top-level stacks.
 	// When deploying the master template, there is only one main stack whose name we do not know.
 	stack := os.Getenv("STACK")
@@ -82,7 +71,7 @@ func teardownConfirmation() (string, *session.Session) {
 	}
 
 	template := "Teardown will destroy all Panther infra in account %s (%s)"
-	args := []interface{}{*identity.Account, *awsSession.Config.Region}
+	args := []interface{}{getAccountID(), *awsSession.Config.Region}
 	if stack != "" {
 		template += " with master stack '%s'"
 		args = append(args, stack)
@@ -94,11 +83,11 @@ func teardownConfirmation() (string, *session.Session) {
 		logger.Fatal("teardown aborted")
 	}
 
-	return stack, awsSession
+	return stack
 }
 
 // Destroy all Panther CloudFormation stacks
-func destroyCfnStacks(masterStack string, awsSession *session.Session) error {
+func destroyCfnStacks(masterStack string) error {
 	client := cloudformation.New(awsSession)
 	if masterStack != "" {
 		logger.Infof("deleting master stack '%s'", masterStack)
@@ -117,11 +106,6 @@ func destroyCfnStacks(masterStack string, awsSession *session.Session) error {
 		}
 
 		logger.Infof("    √ %s deleted (%d/%d)", result.stackName, finishCount, len(allStacks))
-	}
-
-	// In v1.4.0 we removed the stack `panther-glue`, delete it (we can remove this after a few more releases)
-	if err := deleteStack(client, aws.String("panther-glue")); err != nil {
-		logger.Warn(err)
 	}
 
 	// Trigger the deletion of the main stacks in parallel
@@ -176,11 +160,11 @@ func deleteStack(client *cloudformation.CloudFormation, stack *string) error {
 }
 
 // Delete all objects in the given S3 buckets and then remove them.
-func destroyPantherBuckets(awsSession *session.Session) {
+func destroyPantherBuckets() {
 	client := s3.New(awsSession)
 	response, err := client.ListBuckets(&s3.ListBucketsInput{})
 	if err != nil {
-		logger.Fatal(err)
+		logger.Fatalf("failed to list S3 buckets: %v", err)
 	}
 
 	for _, bucket := range response.Buckets {
@@ -300,7 +284,7 @@ func removeBucket(client *s3.S3, bucketName *string) {
 	}
 }
 
-func destroyLogGroups(awsSession *session.Session) {
+func destroyLogGroups() {
 	logger.Debug("checking for leftover Panther log groups")
 	client := cloudwatchlogs.New(awsSession)
 	listInput := &cloudwatchlogs.DescribeLogGroupsInput{

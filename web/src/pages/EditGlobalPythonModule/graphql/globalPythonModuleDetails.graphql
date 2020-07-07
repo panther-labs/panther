@@ -1,0 +1,5 @@
+query GlobalPythonModuleDetails($input: GetGlobalPythonModuleInput!) {
+  getGlobalPythonModule(input: $input) {
+    ...GlobalPythonModuleFull
+  }
+}

@@ -18,6 +18,11 @@
 
 import * as Yup from 'yup';
 import Auth from '@aws-amplify/auth';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+
+// Extend dayjs to allow for better conversions between UTC and local time
+dayjs.extend(utc);
 
 // read the NodeJS-injected configuration and parse it back from JSON -> JS object. During development,
 // the NodeJS server doesn't contribute in that at all, but instead the HtmlWebpackLoader injects
@@ -44,6 +49,7 @@ Auth.configure({
 Yup.setLocale({
   mixed: {
     required: 'This field is required',
+    notType: 'Must have a value',
   },
 });
 

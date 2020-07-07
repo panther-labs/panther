@@ -27,7 +27,7 @@ import BaseDestinationForm, {
 } from 'Components/forms/BaseDestinationForm';
 import { isNumber } from 'Helpers/utils';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
-import { Text } from 'pouncejs';
+import { Box, FormHelperText } from 'pouncejs';
 
 type AsanaFieldValues = Pick<DestinationConfigInput, 'asana'>;
 
@@ -36,24 +36,20 @@ interface AsanaDestinationFormProps {
   onSubmit: (values: BaseDestinationFormValues<AsanaFieldValues>) => void;
 }
 
-const asanaFieldsValidationSchema = Yup.object().shape({
-  outputConfig: Yup.object().shape({
-    asana: Yup.object().shape({
-      personalAccessToken: Yup.string().required(),
-      projectGids: Yup.array()
-        .of(Yup.number())
-        .required(),
-    }),
-  }),
-});
-
-// @ts-ignore
-// We merge the two schemas together: the one deriving from the common fields, plus the custom
-// ones that change for each destination.
-// https://github.com/jquense/yup/issues/522
-const mergedValidationSchema = defaultValidationSchema.concat(asanaFieldsValidationSchema);
-
 const AsanaDestinationForm: React.FC<AsanaDestinationFormProps> = ({ onSubmit, initialValues }) => {
+  const existing = initialValues.outputId;
+
+  const asanaFieldsValidationSchema = Yup.object().shape({
+    outputConfig: Yup.object().shape({
+      asana: Yup.object().shape({
+        projectGids: Yup.array().of(Yup.number()).required(),
+        personalAccessToken: existing ? Yup.string() : Yup.string().required(),
+      }),
+    }),
+  });
+
+  const mergedValidationSchema = defaultValidationSchema.concat(asanaFieldsValidationSchema);
+
   return (
     <BaseDestinationForm<AsanaFieldValues>
       initialValues={initialValues}
@@ -62,28 +58,32 @@ const AsanaDestinationForm: React.FC<AsanaDestinationFormProps> = ({ onSubmit, i
     >
       <Field
         as={FormikTextInput}
+        type="password"
         name="outputConfig.asana.personalAccessToken"
         label="Access Token"
-        placeholder="Your personal Asana access token"
-        mb={6}
-        aria-required
+        placeholder={
+          existing
+            ? 'Information is hidden. New values will override the existing ones.'
+            : 'Your personal Asana access token'
+        }
+        required={!existing}
       />
-      <Field
-        name="outputConfig.asana.projectGids"
-        as={FormikMultiCombobox}
-        label="Project GIDs"
-        aria-required
-        allowAdditions
-        validateAddition={isNumber}
-        searchable
-        items={[]}
-        inputProps={{
-          placeholder: 'The GIDs of the projects that will receive the task',
-        }}
-      />
-      <Text size="small" color="grey200" mt={2}>
-        Add by pressing the {'<'}Enter{'>'} key
-      </Text>
+      <Box as="fieldset">
+        <Field
+          name="outputConfig.asana.projectGids"
+          as={FormikMultiCombobox}
+          label="Project GIDs"
+          aria-describedby="projectGids-helper"
+          allowAdditions
+          validateAddition={isNumber}
+          searchable
+          items={[]}
+          placeholder="The GIDs of the projects that will receive the task"
+        />
+        <FormHelperText id="projectGids-helper" mt={2}>
+          Add by pressing the {'<'}Enter{'>'} key
+        </FormHelperText>
+      </Box>
     </BaseDestinationForm>
   );
 };

@@ -16,10 +16,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { SeverityEnum } from 'Generated/schema';
-import { BadgeProps } from 'pouncejs';
-import { generateDocUrl } from 'Helpers/utils';
 import { pantherConfig } from 'Source/config';
+import slackLogo from 'Assets/slack-minimal-logo.svg';
+import { DestinationTypeEnum } from 'Generated/schema';
+import msTeamsLogo from 'Assets/ms-teams-minimal-logo.svg';
+import opsgenieLogo from 'Assets/opsgenie-minimal-logo.svg';
+import jiraLogo from 'Assets/jira-minimal-logo.svg';
+import githubLogo from 'Assets/github-minimal-logo.svg';
+import pagerDutyLogo from 'Assets/pagerduty-minimal-logo.svg';
+import snsLogo from 'Assets/aws-sns-minimal-logo.svg';
+import sqsLogo from 'Assets/aws-sqs-minimal-logo.svg';
+import asanaLogo from 'Assets/asana-minimal-logo.svg';
+import customWebhook from 'Assets/custom-webhook-minimal-logo.svg';
 
 export enum LogIntegrationsEnum {
   's3' = 'aws-s3',
@@ -107,6 +115,12 @@ export const LOG_TYPES = [
   'GitLab.Git',
   'GitLab.Integrations',
   'GitLab.Production',
+  'Juniper.Access',
+  'Juniper.Audit',
+  'Juniper.Firewall',
+  'Juniper.MWS',
+  'Juniper.Postgres',
+  'Juniper.Security',
   'Nginx.Access',
   'Osquery.Batch',
   'Osquery.Differential',
@@ -117,22 +131,16 @@ export const LOG_TYPES = [
   'Suricata.DNS',
   'Syslog.RFC3164',
   'Syslog.RFC5424',
+  'Zeek.DNS',
 ] as const;
-
-export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: BadgeProps['color'] } = {
-  [SeverityEnum.Critical]: 'red' as const,
-  [SeverityEnum.High]: 'pink' as const,
-  [SeverityEnum.Medium]: 'blue' as const,
-  [SeverityEnum.Low]: 'grey' as const,
-  [SeverityEnum.Info]: 'neutral' as const,
-};
 
 export const PANTHER_SCHEMA_DOCS_MASTER_LINK = 'https://docs.runpanther.io';
 
-export const PANTHER_SCHEMA_DOCS_LINK = generateDocUrl(
-  PANTHER_SCHEMA_DOCS_MASTER_LINK,
-  pantherConfig.PANTHER_VERSION
-);
+export const STABLE_PANTHER_VERSION = pantherConfig.PANTHER_VERSION.split('-')[0];
+export const PANTHER_SCHEMA_DOCS_LINK = `${PANTHER_SCHEMA_DOCS_MASTER_LINK}/v/${STABLE_PANTHER_VERSION}-docs`;
+
+export const LOG_ONBOARDING_SNS_DOC_URL = `${PANTHER_SCHEMA_DOCS_LINK}/log-processing#sns-notification-setup`;
+// End of doc URLs section
 
 export const DEFAULT_SMALL_PAGE_SIZE = 10;
 export const DEFAULT_LARGE_PAGE_SIZE = 25;
@@ -143,5 +151,59 @@ export const ERROR_REPORTING_CONSENT_STORAGE_KEY = 'panther.generalSettings.erro
 
 // The default panther system user id
 export const PANTHER_USER_ID = '00000000-0000-4000-8000-000000000000';
-// Docs URL we use to prompt users for explanations
-export const LOG_ONBOARDING_DOC_URL = `https://docs.runpanther.io/log-processing#sns-notification-setup`;
+
+export const DESTINATIONS: Record<
+  DestinationTypeEnum,
+  { logo: string; title: string; type: DestinationTypeEnum }
+> = {
+  [DestinationTypeEnum.Slack]: {
+    logo: slackLogo,
+    title: 'Slack',
+    type: DestinationTypeEnum.Slack,
+  },
+  [DestinationTypeEnum.Msteams]: {
+    logo: msTeamsLogo,
+    title: 'Microsoft Teams',
+    type: DestinationTypeEnum.Msteams,
+  },
+  [DestinationTypeEnum.Opsgenie]: {
+    logo: opsgenieLogo,
+    title: 'Opsgenie',
+    type: DestinationTypeEnum.Opsgenie,
+  },
+  [DestinationTypeEnum.Jira]: {
+    logo: jiraLogo,
+    title: 'Jira',
+    type: DestinationTypeEnum.Jira,
+  },
+  [DestinationTypeEnum.Github]: {
+    logo: githubLogo,
+    title: 'Github',
+    type: DestinationTypeEnum.Github,
+  },
+  [DestinationTypeEnum.Pagerduty]: {
+    logo: pagerDutyLogo,
+    title: 'PagerDuty',
+    type: DestinationTypeEnum.Pagerduty,
+  },
+  [DestinationTypeEnum.Sns]: {
+    logo: snsLogo,
+    title: 'AWS SNS',
+    type: DestinationTypeEnum.Sns,
+  },
+  [DestinationTypeEnum.Sqs]: {
+    logo: sqsLogo,
+    title: 'AWS SQS',
+    type: DestinationTypeEnum.Sqs,
+  },
+  [DestinationTypeEnum.Asana]: {
+    logo: asanaLogo,
+    title: 'Asana',
+    type: DestinationTypeEnum.Asana,
+  },
+  [DestinationTypeEnum.Customwebhook]: {
+    logo: customWebhook,
+    title: 'Custom Webhook',
+    type: DestinationTypeEnum.Customwebhook,
+  },
+};

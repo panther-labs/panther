@@ -53,9 +53,9 @@ const (
 # Panther Application Run Books
 
 Refer to the 
-[Cloud Security](https://docs.runpanther.io/policies/scanning#how-it-works)
+[Cloud Security](https://docs.runpanther.io/cloud-security/cloud-security)
 and
-[Log Analysis](https://docs.runpanther.io/log-analysis/log-processing#how-it-works)
+[Log Analysis](https://docs.runpanther.io/log-analysis/log-analysis)
 architecture diagrams for context.
 
 Resource names below refer to resources in the Cloud Formation templates in Panther.
@@ -127,9 +127,15 @@ func logDocs() error {
 
 		// use html table to get needed control
 		for _, logType := range logTypes {
-			table := registry.AvailableParsers().LookupParser(logType).GlueTableMetadata
+			entry := registry.Lookup(logType)
+			table := entry.GlueTableMeta()
+			entryDesc := entry.Describe()
+			desc := entryDesc.Description
+			if entryDesc.ReferenceURL != "-" {
+				desc += "\n" + "Reference: " + entryDesc.ReferenceURL + "\n"
+			}
 
-			description := html.EscapeString(table.Description())
+			description := html.EscapeString(desc)
 
 			docsBuffer.WriteString(fmt.Sprintf("##%s\n%s\n", logType, description))
 

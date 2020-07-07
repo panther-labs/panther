@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Breadcrumbs as PounceBreadcrumbs } from 'pouncejs';
+import { Breadcrumbs as PounceBreadcrumbs } from 'pouncejs';
 import * as React from 'react';
 import { isGuid, capitalize, shortenId, isHash } from 'Helpers/utils';
 import { Link as RRLink } from 'react-router-dom';
@@ -40,34 +40,27 @@ const Breadcrumbs: React.FC = () => {
     // is before-and-including our key). The key is essentially the URL path itself just prettified
     // for displat
     if (!pathKeys.length) {
-      return [
-        {
-          href: '/',
-          text: 'Home',
-        },
-      ];
+      return [];
     }
 
-    return pathKeys.map(key => ({
-      href: `${pathname.substr(0, pathname.indexOf(`/${key}/`))}/${key}/`,
-      text: decodeURIComponent(key)
-        .replace(/([-_])+/g, ' ')
-        .split(' ')
-        .map(capitalize)
-        .join(' '),
-    }));
+    return [
+      {
+        href: '/',
+        text: 'Home',
+      },
+      ...pathKeys.map(key => ({
+        href: `${pathname.substr(0, pathname.indexOf(`/${key}/`))}/${key}/`,
+        text: decodeURIComponent(key)
+          .replace(/([-_])+/g, ' ')
+          .split(' ')
+          .map(capitalize)
+          .map(transformBreadcrumbText)
+          .join(' '),
+      })),
+    ];
   }, [pathname]);
 
-  return (
-    <PounceBreadcrumbs
-      items={fragments}
-      itemRenderer={item => (
-        <Box as={RRLink} to={item.href} display="block" maxWidth="450px" truncated>
-          {transformBreadcrumbText(item.text)}
-        </Box>
-      )}
-    />
-  );
+  return <PounceBreadcrumbs items={fragments} as={RRLink} />;
 };
 
 export default Breadcrumbs;

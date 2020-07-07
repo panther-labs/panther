@@ -22,5 +22,5 @@ import "github.com/panther-labs/panther/api/lambda/organization/models"
 
 // GetSettings retrieves account settings.
 func (API) GetSettings(_ *models.GetSettingsInput) (*models.GeneralSettings, error) {
-	return orgTable.Get()
+	return orgTable.GetGeneralSettings()
 }

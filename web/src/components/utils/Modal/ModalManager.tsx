@@ -30,12 +30,11 @@ import DeleteRuleModal from 'Components/modals/DeleteRuleModal';
 import NetworkErrorModal from 'Components/modals/NetworkErrorModal';
 import AnalyticsConsentModal from 'Components/modals/AnalyticsConsentModal';
 import DeleteTestModal from 'Components/modals/DeleteTestModal';
+import DeleteGlobalPythonModuleModal from 'Components/modals/DeleteGlobalPythonModuleModal';
 
 const ModalManager: React.FC = () => {
-  const { state: modalState } = useModal();
-  if (!modalState.modal) {
-    return null;
-  }
+  const { state: modalState, hideModal } = useModal();
+
   let Component;
   switch (modalState.modal) {
     case MODALS.DELETE_COMPLIANCE_SOURCE:
@@ -65,13 +64,21 @@ const ModalManager: React.FC = () => {
     case MODALS.DELETE_TEST:
       Component = DeleteTestModal;
       break;
+    case MODALS.DELETE_GLOBAL_PYTHON_MODULE:
+      Component = DeleteGlobalPythonModuleModal;
+      break;
     case MODALS.DELETE_POLICY:
-    default:
       Component = DeletePolicyModal;
       break;
+    default:
+      Component = null;
   }
 
-  return <Component {...modalState.props} />;
+  if (!Component) {
+    return null;
+  }
+
+  return <Component {...modalState.props} open={modalState.isVisible} onClose={hideModal} />;
 };
 
 export default ModalManager;

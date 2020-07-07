@@ -26,11 +26,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
-const TypeAccessCombined = `Apache.AccessCombined`
-const AccessCombinedDesc = `Apache HTTP server access logs using the 'combined' format
-
-Reference: https://httpd.apache.org/docs/current/logs.html#combined`
-
 // LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\"" combined
 // https://httpd.apache.org/docs/current/mod/mod_log_config.html#formats
 // nolint:lll

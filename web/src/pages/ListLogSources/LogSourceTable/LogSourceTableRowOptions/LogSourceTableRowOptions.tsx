@@ -17,13 +17,20 @@
  */
 
 import React from 'react';
-import { Dropdown, Icon, IconButton, MenuItem } from 'pouncejs';
+import {
+  Dropdown,
+  DropdownButton,
+  DropdownMenu,
+  IconButton,
+  DropdownItem,
+  DropdownLink,
+} from 'pouncejs';
 import { LogIntegration, S3LogIntegration } from 'Generated/schema';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
-import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
 import { LogIntegrationsEnum, PANTHER_USER_ID } from 'Source/constants';
+import { Link as RRLink } from 'react-router-dom';
 
 interface LogSourceTableRowOptionsProps {
   source: LogIntegration;
@@ -31,52 +38,48 @@ interface LogSourceTableRowOptionsProps {
 
 const LogSourceTableRowOptions: React.FC<LogSourceTableRowOptionsProps> = ({ source }) => {
   const { showModal } = useModal();
-  const { history } = useRouter();
-
-  let description;
-  let castedSource;
-
-  switch (source.integrationType) {
-    case LogIntegrationsEnum.s3:
-    default:
-      castedSource = source as S3LogIntegration;
-      description = `Deleting this source will not delete the associated Cloudformation stack. You will need to manually delete the stack ${castedSource.stackName} from the AWS Account ${castedSource.awsAccountId}`;
-  }
 
   const isCreatedByPanther = source.createdBy === PANTHER_USER_ID;
   if (isCreatedByPanther) {
     return null;
   }
 
+  let description;
+  let castedSource;
+  let logSourceEditUrl;
+
+  switch (source.integrationType) {
+    case LogIntegrationsEnum.s3:
+    default:
+      castedSource = source as S3LogIntegration;
+      description = `Deleting this source will not delete the associated Cloudformation stack. You will need to manually delete the stack ${castedSource.stackName} from the AWS Account ${castedSource.awsAccountId}`;
+      logSourceEditUrl = urls.logAnalysis.sources.edit(source.integrationId, 's3');
+  }
+
   return (
-    <Dropdown
-      trigger={
-        <IconButton as="div" variant="default" my={-4}>
-          <Icon type="more" size="small" />
-        </IconButton>
-      }
-    >
-      <Dropdown.Item
-        onSelect={() => {
-          switch (source.integrationType) {
-            case LogIntegrationsEnum.s3:
-            default:
-              return history.push(urls.logAnalysis.sources.edit(source.integrationId, 's3'));
-          }
-        }}
-      >
-        <MenuItem variant="default">Edit</MenuItem>
-      </Dropdown.Item>
-      <Dropdown.Item
-        onSelect={() => {
-          return showModal({
-            modal: MODALS.DELETE_LOG_SOURCE,
-            props: { source: castedSource, description },
-          });
-        }}
-      >
-        <MenuItem variant="default">Delete</MenuItem>
-      </Dropdown.Item>
+    <Dropdown>
+      <DropdownButton
+        as={IconButton}
+        icon="more"
+        variant="ghost"
+        size="small"
+        aria-label="Source Options"
+      />
+      <DropdownMenu>
+        <DropdownLink as={RRLink} to={logSourceEditUrl}>
+          Edit
+        </DropdownLink>
+        <DropdownItem
+          onSelect={() => {
+            return showModal({
+              modal: MODALS.DELETE_LOG_SOURCE,
+              props: { source: castedSource, description },
+            });
+          }}
+        >
+          Delete
+        </DropdownItem>
+      </DropdownMenu>
     </Dropdown>
   );
 };

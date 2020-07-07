@@ -28,43 +28,39 @@ Description: Bootstrap resources that require the source S3 bucket to exist firs
 #      - Alarms for SNS topics in the bootstrap stack
 
 Parameters:
-  # Passed from one of the bootstrap stacks
+  # Alphabetize parameters so it's easy to compare side-by-side with other code that passes values
+  # and because the CloudFormation console always shows parameters in alphabetical order.
+  AlarmTopicArn:
+    Type: String
+    Description: SNS topic for CloudWatch alarms
   AthenaResultsBucket:
     Type: String
     Description: Bucket created to hold Athena results
-  ImageRegistryName:
+  AuditLogsBucket:
     Type: String
-    Description: Name of the ECR repository hosting web images (blank when deploying from source)
-  ProcessedDataBucket:
-    Type: String
-    Description: S3 bucket which stores processed logs
-
-  # From the config file
+    Description: Bucket which holds Panther's own audit logs
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
-    Default: 365
+  CustomResourceVersion:
+    Type: String
+    Description: Forces updates to custom resources when changed
+  ImageRegistryName:
+    Type: String
+    Description: Name of the ECR repository hosting web images (blank when deploying from source)
   LayerVersionArns:
     Type: CommaDelimitedList
     Description: List of LayerVersion ARNs to attach to each function
-    Default: ''
+  ProcessedDataBucket:
+    Type: String
+    Description: S3 bucket which stores processed logs
   PythonLayerVersionArn:
     Type: String
     Description: Custom Python layer for analysis and remediation
-    Default: ''
   TracingMode:
     Type: String
     Description: Enable XRay tracing on Lambda and API Gateway
     AllowedValues: ['', Active, PassThrough]
-    Default: ''
-
-  # From the bootstrap stack:
-  AlarmTopicArn:
-    Type: String
-    Description: SNS topic for CloudWatch alarms
-  AuditLogsBucket:
-    Type: String
-    Description: Bucket which holds Panther's own audit logs
   UserPoolId:
     Type: String
     Description: Cognito user pool ID
@@ -125,21 +121,28 @@ Resources:
           Statement:
             - Effect: Allow
               Action:
+                - acm:ImportCertificate
+                - athena:GetQuery*
+                - athena:StartQueryExecution
+                - athena:StopQueryExecution
+                - athena:UpdateWorkGroup
+                - guardduty:Create*
+                - guardduty:DeletePublishingDestination
+                - guardduty:Get*
+                - guardduty:List*
+                - guardduty:UpdatePublishingDestination
+                - kms:ListAliases # required for GuardDuty
+                - lambda:ListLayerVersions
+              Resource: '*'
+            - Effect: Allow
+              Action:
                 - acm:AddTagsToCertificate
                 - acm:DeleteCertificate
-                - acm:ImportCertificate
                 - acm:RemoveTagsFromCertificate
               # ACM certificate IDs are random and at the time of writing, DeleteCertificate does
               # not support using resource tags as a condition.
               # So this is as narrow as this resource can get:
               Resource: !Sub arn:${AWS::Partition}:acm:${AWS::Region}:${AWS::AccountId}:certificate/*
-            - Effect: Allow
-              Action:
-                - athena:UpdateWorkGroup
-                - athena:StartQueryExecution
-                - athena:StopQueryExecution
-                - athena:GetQuery*
-              Resource: '*'
             - Effect: Allow
               Action:
                 - cloudwatch:PutMetricAlarm
@@ -161,9 +164,6 @@ Resources:
                 - glue:CreateTable
                 - glue:GetTable
                 - glue:UpdateTable
-                - glue:CreatePartition
-                - glue:GetPartition
-                - glue:UpdatePartition
               # used to keep table schemas updated
               Resource:
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
@@ -171,13 +171,6 @@ Resources:
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
                 # the resource below is odd, I had to add to get glue:DeleteDatabase to work, I think it may be a bug in the api
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:userDefinedFunction/panther*
-            - Effect: Allow
-              Action:
-                - guardduty:Create*
-                - guardduty:Get*
-                - guardduty:List*
-                - guardduty:DeletePublishingDestination
-              Resource: '*'
             - Effect: Allow
               Action:
                 - iam:DeleteServerCertificate
@@ -191,9 +184,6 @@ Resources:
               Action: iam:PassRole
               Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/Panther*
             - Effect: Allow
-              Action: kms:ListAliases # required for GuardDuty
-              Resource: '*'
-            - Effect: Allow
               Action: lambda:GetFunction
               Resource:
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-policy-engine
@@ -204,12 +194,10 @@ Resources:
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-organization-api
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-users-api
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-datacatalog-updater
             - Effect: Allow
               Action: lambda:DeleteLayerVersion
               Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:panther-engine-globals:*
-            - Effect: Allow
-              Action: lambda:ListLayerVersions
-              Resource: '*'
             - Effect: Allow
               Action:
                 - logs:DeleteMetricFilter
@@ -217,7 +205,7 @@ Resources:
               Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/panther-*
             - Effect: Allow
               Action:
-                # Needed for Athena, GuardDuty, and Glue sync
+                # Needed for Athena, GuardDuty
                 - s3:Get*
                 - s3:List*
                 - s3:PutBucketNotification
@@ -239,6 +227,7 @@ Resources:
   CustomResourceMetricFilters:
     Type: Custom::LambdaMetricFilters
     Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
       LogGroupName: !Ref CustomResourceLogGroup
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
@@ -246,6 +235,7 @@ Resources:
     Type: Custom::LambdaAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       FunctionMemoryMB: !FindInMap [Functions, CustomResource, Memory]
       FunctionName: !Ref CustomResourceFunction
       FunctionTimeoutSec: !FindInMap [Functions, CustomResource, Timeout]
@@ -259,6 +249,7 @@ Resources:
     #   - Lambda layers
     Type: Custom::PantherTeardown
     Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
       EcrRepoName: !Ref ImageRegistryName
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
@@ -267,6 +258,7 @@ Resources:
     Type: Custom::SNSAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
       TopicName: panther-processed-data-notifications
 
@@ -277,6 +269,7 @@ Resources:
     Type: Custom::SNSAlarms
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
       TopicName: panther-cw-alarms
 
@@ -285,8 +278,22 @@ Resources:
   UserPoolMfa:
     Type: Custom::CognitoUserPoolMfa
     Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
       UserPoolId: !Ref UserPoolId
+
+  AppClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: Panther
+      GenerateSecret: false
+      RefreshTokenValidity: 1
+      UserPoolId: !Ref UserPoolId
+      PreventUserExistenceErrors: ENABLED
+      WriteAttributes:
+        - email
+        - given_name
+        - family_name
 
   AnalysisApi:
     Type: AWS::Serverless::Api
@@ -305,6 +312,7 @@ Resources:
     Properties:
       ApiName: panther-analysis-api
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
   ComplianceApi:
@@ -324,6 +332,7 @@ Resources:
     Properties:
       ApiName: panther-compliance-api
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
   RemediationApi:
@@ -343,6 +352,7 @@ Resources:
     Properties:
       ApiName: panther-remediation-api
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
   ResourcesApi:
@@ -362,12 +372,17 @@ Resources:
     Properties:
       ApiName: panther-resources-api
       AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
 Outputs:
+  AppClientId:
+    Description: Cognito user pool client ID
+    Value: !Ref AppClient
   PythonLayerVersionArn:
     Description: Python layer version
     Value: !If [CreatePythonLayer, !Ref PythonLayer, !Ref PythonLayerVersionArn]
+
   AnalysisApiId:
     Description: Analysis API Gateway ID
     Value: !Ref AnalysisApi

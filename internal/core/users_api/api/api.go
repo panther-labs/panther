@@ -31,6 +31,9 @@ import (
 // The API has receiver methods for each of the handlers.
 type API struct{}
 
+// RequesterID when the backend is requesting users-api operations, e.g. first deployment.
+const systemUserID = "00000000-0000-4000-8000-000000000000"
+
 var (
 	awsSession               = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(10)))
 	appDomainURL             = os.Getenv("APP_DOMAIN_URL")

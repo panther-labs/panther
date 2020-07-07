@@ -46,18 +46,24 @@ var (
 	lambdaClient    = lambda.New(awsSession)
 
 	slack = &models.SlackConfig{
-		WebhookURL: aws.String("https://hooks.slack.com/services/AAAAAAAAA/BBBBBBBBB/" +
-			"abcdefghijklmnopqrstuvwx"),
+		WebhookURL: "https://hooks.slack.com/services/AAAAAAAAA/BBBBBBBBB/" +
+			"abcdefghijklmnopqrstuvwx",
 	}
-	sns       = &models.SnsConfig{TopicArn: aws.String("arn:aws:sns:us-west-2:123456789012:MyTopic")}
-	pagerDuty = &models.PagerDutyConfig{IntegrationKey: aws.String("7a08481fbc0746c9a8a487f90d737e05")}
-	snsType   = aws.String("sns")
-	userID    = aws.String("43808de4-fbae-4f90-a9b4-1e4982d65287")
+	sns       = &models.SnsConfig{TopicArn: "arn:aws:sns:us-west-2:123456789012:MyTopic"}
+	pagerDuty = &models.PagerDutyConfig{IntegrationKey: "7a08481fbc0746c9a8a487f90d737e05"}
+	gitHub    = &models.GithubConfig{
+		RepoName: "myRepo",
+		Token:    "abc123",
+	}
+	snsType = aws.String("sns")
+	userID  = aws.String("43808de4-fbae-4f90-a9b4-1e4982d65287")
 
 	// Remember the generated output IDs
 	slackOutputID     *string
 	snsOutputID       *string
 	pagerDutyOutputID *string
+	gitHubOutputID    *string
+	redacted          = ""
 )
 
 func TestMain(m *testing.M) {
@@ -78,6 +84,7 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("AddInvalid", addInvalid)
 		t.Run("AddSlack", addSlack)
 		t.Run("AddSns", addSns)
+		t.Run("AddGitHub", addGitHub)
 		t.Run("AddPagerDuty", addPagerDuty)
 	})
 	if t.Failed() {
@@ -93,6 +100,7 @@ func TestIntegrationAPI(t *testing.T) {
 	// Get outputs in parallel
 	t.Run("Get", func(t *testing.T) {
 		t.Run("GetOutputs", getOutputs)
+		t.Run("GetOutputsWithSecrets", getOutputsWithSecrets)
 		t.Run("GetOutput", getOutput)
 	})
 	if t.Failed() {
@@ -104,6 +112,15 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("UpdateInvalid", updateInvalid)
 		t.Run("UpdateSlack", updateSlack)
 		t.Run("UpdateSns", updateSns)
+	})
+	if t.Failed() {
+		return
+	}
+
+	// Perform a partial update and then verify that secrets aren't changed
+	t.Run("PartialUpdate", func(t *testing.T) {
+		t.Run("PartialUpdateDisplayName", partialUpdateDisplayName)
+		t.Run("PartialUpdateConfig", partialUpdateConfig)
 	})
 	if t.Failed() {
 		return
@@ -167,6 +184,26 @@ func addSlack(t *testing.T) {
 	assert.Equal(t, aws.StringSlice([]string{"HIGH"}), output.DefaultForSeverity)
 
 	slackOutputID = output.OutputID
+}
+
+func addGitHub(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		AddOutput: &models.AddOutputInput{
+			UserID:             userID,
+			DisplayName:        aws.String("git-issues"),
+			OutputConfig:       &models.OutputConfig{Github: gitHub},
+			DefaultForSeverity: aws.StringSlice([]string{"HIGH"}),
+		},
+	}
+	var output models.AddOutputOutput
+	assert.NoError(t, genericapi.Invoke(lambdaClient, outputsAPI, &input, &output))
+	assert.NotNil(t, output.OutputID)
+	assert.Equal(t, aws.String("git-issues"), output.DisplayName)
+	assert.Equal(t, aws.String("github"), output.OutputType)
+	assert.Equal(t, aws.StringSlice([]string{"HIGH"}), output.DefaultForSeverity)
+
+	gitHubOutputID = output.OutputID
 }
 
 func addSns(t *testing.T) {
@@ -242,30 +279,36 @@ func updateInvalid(t *testing.T) {
 
 func updateSlack(t *testing.T) {
 	t.Parallel()
-	slack.WebhookURL = aws.String("https://hooks.slack.com/services/DDDDDDDDD/EEEEEEEEE/" +
-		"abcdefghijklmnopqrstuvwx")
 	input := models.LambdaInput{
 		UpdateOutput: &models.UpdateOutputInput{
 			UserID:             userID,
 			OutputID:           slackOutputID,
 			DisplayName:        aws.String("alert-channel-new"),
-			OutputConfig:       &models.OutputConfig{Slack: slack},
 			DefaultForSeverity: aws.StringSlice([]string{"CRITICAL"}),
 		},
 	}
 	var output models.UpdateOutputOutput
 	require.NoError(t, genericapi.Invoke(lambdaClient, outputsAPI, &input, &output))
-	require.Equal(t, slackOutputID, output.OutputID)
-	require.Equal(t, aws.String("alert-channel-new"), output.DisplayName)
-	require.Equal(t, slack, output.OutputConfig.Slack)
-	require.Equal(t, aws.String("slack"), output.OutputType)
-	require.Nil(t, output.OutputConfig.Sns)
-	require.Equal(t, aws.StringSlice([]string{"CRITICAL"}), output.DefaultForSeverity)
+
+	expected := models.UpdateOutputOutput{
+		CreatedBy:          userID,
+		CreationTime:       output.CreationTime,
+		DefaultForSeverity: input.UpdateOutput.DefaultForSeverity,
+		DisplayName:        input.UpdateOutput.DisplayName,
+		LastModifiedBy:     userID,
+		LastModifiedTime:   output.LastModifiedTime,
+		OutputConfig: &models.OutputConfig{
+			Slack: &models.SlackConfig{WebhookURL: ""},
+		}, // no webhook URL in response
+		OutputID:   slackOutputID,
+		OutputType: aws.String("slack"),
+	}
+	assert.Equal(t, expected, output)
 }
 
 func updateSns(t *testing.T) {
 	t.Parallel()
-	sns.TopicArn = aws.String("arn:aws:sns:us-west-2:123456789012:MyTopic")
+	sns.TopicArn = "arn:aws:sns:us-west-2:123456789012:MyTopic"
 	input := models.LambdaInput{
 		UpdateOutput: &models.UpdateOutputInput{
 			UserID:       userID,
@@ -281,6 +324,60 @@ func updateSns(t *testing.T) {
 	assert.Equal(t, aws.String("sns"), output.OutputType)
 	assert.Equal(t, sns, output.OutputConfig.Sns)
 	assert.Nil(t, output.OutputConfig.Slack)
+}
+
+func partialUpdateDisplayName(t *testing.T) {
+	input := models.LambdaInput{
+		UpdateOutput: &models.UpdateOutputInput{
+			UserID:       userID,
+			OutputID:     pagerDutyOutputID,
+			DisplayName:  aws.String("pagerduty-integration-updated"),
+			OutputConfig: nil, // Don't set an output config at all
+		},
+	}
+	var output models.UpdateOutputOutput
+	require.NoError(t, genericapi.Invoke(lambdaClient, outputsAPI, &input, &output))
+	assert.Equal(t, pagerDutyOutputID, output.OutputID)
+	assert.Equal(t, aws.String("pagerduty-integration-updated"), output.DisplayName)
+	assert.Equal(t, aws.String("pagerduty"), output.OutputType)
+	assert.Equal(t, redacted, output.OutputConfig.PagerDuty.IntegrationKey)
+	assert.Nil(t, output.OutputConfig.Slack)
+
+	// Verify that the secrets didn't change
+	withSecrets, err := getOutputWithSecretsInternal(pagerDutyOutputID)
+	require.NoError(t, err)
+	assert.Equal(t, withSecrets.OutputConfig.PagerDuty.IntegrationKey, pagerDuty.IntegrationKey)
+}
+
+func partialUpdateConfig(t *testing.T) {
+	input := models.LambdaInput{
+		UpdateOutput: &models.UpdateOutputInput{
+			UserID:      userID,
+			OutputID:    gitHubOutputID,
+			DisplayName: aws.String("git-issues"),
+			OutputConfig: &models.OutputConfig{
+				Github: &models.GithubConfig{
+					// RepoName: nil, don't set the repo name
+					Token: "xyz897",
+				},
+			},
+		},
+	}
+	var output models.UpdateOutputOutput
+	require.NoError(t, genericapi.Invoke(lambdaClient, outputsAPI, &input, &output))
+	assert.Equal(t, gitHubOutputID, output.OutputID)
+	assert.Equal(t, aws.String("git-issues"), output.DisplayName)
+	assert.Equal(t, aws.String("github"), output.OutputType)
+	// Token should be redacted
+	assert.Equal(t, redacted, output.OutputConfig.Github.Token)
+	// Repo name should not be updated
+	assert.Equal(t, gitHub.RepoName, output.OutputConfig.Github.RepoName)
+	assert.Nil(t, output.OutputConfig.Slack)
+
+	// Verify that the secrets changed
+	withSecrets, err := getOutputWithSecretsInternal(gitHubOutputID)
+	require.NoError(t, err)
+	assert.Equal(t, withSecrets.OutputConfig.Github.Token, input.UpdateOutput.OutputConfig.Github.Token)
 }
 
 func updateSnsEmpty(t *testing.T) {
@@ -347,45 +444,99 @@ func deleteSnsEmpty(t *testing.T) {
 
 func getOutputs(t *testing.T) {
 	t.Parallel()
-	input := models.LambdaInput{GetOutputs: &models.GetOutputsInput{}}
-	var output models.GetOutputsOutput
-	require.NoError(t, genericapi.Invoke(lambdaClient, outputsAPI, &input, &output))
+	verifyListOutputs(t, false)
+}
+
+func getOutputsWithSecrets(t *testing.T) {
+	t.Parallel()
+	verifyListOutputs(t, true)
+}
+
+func verifyListOutputs(t *testing.T, withSecrets bool) {
+	var input models.LambdaInput
+	if withSecrets {
+		input.GetOutputsWithSecrets = &models.GetOutputsWithSecretsInput{}
+	} else {
+		input.GetOutputs = &models.GetOutputsInput{}
+	}
+
+	var outputs models.GetOutputsOutput
+	require.NoError(t, genericapi.Invoke(lambdaClient, outputsAPI, &input, &outputs))
 
 	// We need to sort the output because order of returned outputItems is not guaranteed by DDB
-	sort.Slice(output, func(i, j int) bool {
-		return *output[i].OutputType > *output[j].OutputType
+	sort.Slice(outputs, func(i, j int) bool {
+		return *outputs[i].OutputType > *outputs[j].OutputType
 	})
-	assert.Len(t, output, 3)
+	assert.Len(t, outputs, 4)
 
-	assert.Equal(t, snsOutputID, output[0].OutputID)
-	assert.Equal(t, aws.String("sns"), output[0].OutputType)
-	assert.Equal(t, userID, output[0].CreatedBy)
-	assert.Equal(t, userID, output[0].LastModifiedBy)
-	assert.Equal(t, aws.String("alert-topic"), output[0].DisplayName)
-	assert.Nil(t, output[0].OutputConfig.Slack)
-	assert.Nil(t, output[0].OutputConfig.PagerDuty)
-	assert.Equal(t, sns, output[0].OutputConfig.Sns)
-	assert.Equal(t, []*string{}, output[0].DefaultForSeverity)
+	// Verify timestamps and ids since we don't know their value ahead of time
+	for _, output := range outputs {
+		assert.NotNil(t, output.CreationTime)
+		assert.NotNil(t, output.OutputID)
+	}
 
-	assert.Equal(t, slackOutputID, output[1].OutputID)
-	assert.Equal(t, aws.String("slack"), output[1].OutputType)
-	assert.Equal(t, userID, output[1].CreatedBy)
-	assert.Equal(t, userID, output[1].LastModifiedBy)
-	assert.Equal(t, aws.String("alert-channel"), output[1].DisplayName)
-	assert.Nil(t, output[1].OutputConfig.Sns)
-	assert.Nil(t, output[1].OutputConfig.PagerDuty)
-	assert.Equal(t, slack, output[1].OutputConfig.Slack)
-	assert.Equal(t, aws.StringSlice([]string{"HIGH"}), output[1].DefaultForSeverity)
+	expected := models.GetOutputsOutput{
+		{
+			CreatedBy:          userID,
+			CreationTime:       outputs[0].CreationTime,
+			DefaultForSeverity: []*string{},
+			DisplayName:        aws.String("alert-topic"),
+			LastModifiedBy:     userID,
+			LastModifiedTime:   outputs[0].LastModifiedTime,
+			OutputID:           outputs[0].OutputID,
+			OutputType:         aws.String("sns"),
+			OutputConfig:       &models.OutputConfig{Sns: sns},
+		},
+		{
+			CreatedBy:          userID,
+			CreationTime:       outputs[1].CreationTime,
+			DefaultForSeverity: aws.StringSlice([]string{"HIGH"}),
+			DisplayName:        aws.String("alert-channel"),
+			LastModifiedBy:     userID,
+			LastModifiedTime:   outputs[1].LastModifiedTime,
+			OutputID:           outputs[1].OutputID,
+			OutputType:         aws.String("slack"),
+			OutputConfig:       &models.OutputConfig{Slack: slack},
+		},
+		{
+			CreatedBy:          userID,
+			CreationTime:       outputs[2].CreationTime,
+			DefaultForSeverity: []*string{},
+			DisplayName:        aws.String("pagerduty-integration"),
+			LastModifiedBy:     userID,
+			LastModifiedTime:   outputs[2].LastModifiedTime,
+			OutputID:           outputs[2].OutputID,
+			OutputType:         aws.String("pagerduty"),
+			OutputConfig:       &models.OutputConfig{PagerDuty: pagerDuty},
+		},
+		{
+			CreatedBy:          userID,
+			CreationTime:       outputs[3].CreationTime,
+			DefaultForSeverity: aws.StringSlice([]string{"HIGH"}),
+			DisplayName:        aws.String("git-issues"),
+			LastModifiedBy:     userID,
+			LastModifiedTime:   outputs[3].LastModifiedTime,
+			OutputID:           outputs[3].OutputID,
+			OutputType:         aws.String("github"),
+			OutputConfig:       &models.OutputConfig{Github: gitHub},
+		},
+	}
 
-	assert.Equal(t, pagerDutyOutputID, output[2].OutputID)
-	assert.Equal(t, aws.String("pagerduty"), output[2].OutputType)
-	assert.Equal(t, userID, output[2].CreatedBy)
-	assert.Equal(t, userID, output[2].LastModifiedBy)
-	assert.Equal(t, aws.String("pagerduty-integration"), output[2].DisplayName)
-	assert.Nil(t, output[2].OutputConfig.Slack)
-	assert.Nil(t, output[2].OutputConfig.Sns)
-	assert.Equal(t, pagerDuty, output[2].OutputConfig.PagerDuty)
-	assert.Equal(t, aws.StringSlice([]string{}), output[2].DefaultForSeverity)
+	if !withSecrets {
+		// Credentials are obfuscated
+		expected[1].OutputConfig.Slack = &models.SlackConfig{
+			WebhookURL: redacted,
+		}
+		expected[2].OutputConfig.PagerDuty = &models.PagerDutyConfig{
+			IntegrationKey: redacted,
+		}
+		expected[3].OutputConfig.Github = &models.GithubConfig{
+			RepoName: gitHub.RepoName,
+			Token:    redacted,
+		}
+	}
+
+	assert.Equal(t, expected, outputs)
 }
 
 func getOutput(t *testing.T) {
@@ -412,4 +563,19 @@ func getOutputInternal(outputID *string) (models.GetOutputOutput, error) {
 	var output models.GetOutputOutput
 	err := genericapi.Invoke(lambdaClient, outputsAPI, &input, &output)
 	return output, err
+}
+
+func getOutputWithSecretsInternal(outputID *string) (*models.AlertOutput, error) {
+	input := models.LambdaInput{
+		GetOutputsWithSecrets: &models.GetOutputsWithSecretsInput{},
+	}
+
+	var outputs models.GetOutputsOutput
+	err := genericapi.Invoke(lambdaClient, outputsAPI, &input, &outputs)
+	for _, output := range outputs {
+		if *output.OutputID == *outputID {
+			return output, nil
+		}
+	}
+	return nil, err
 }
