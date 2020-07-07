@@ -416,7 +416,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
    */
   React.useEffect(() => {
     if (previousUserSessionExists) {
-      Auth.currentAuthenticatedUser()
+      Auth.currentAuthenticatedUser({ bypassCache: true })
         .then(setAuthUser)
         .catch(() => signOut());
     }

@@ -66,7 +66,9 @@ const Header = () => {
           <DropdownItem onSelect={() => showSidesheet({ sidesheet: SIDESHEETS.EDIT_ACCOUNT })}>
             Edit Profile
           </DropdownItem>
-          <DropdownItem onSelect={() => signOut({ onError: alert })}>Logout</DropdownItem>
+          <DropdownItem onSelect={() => signOut({ global: true, onError: alert })}>
+            Logout
+          </DropdownItem>
         </DropdownMenu>
       </Dropdown>
     </Flex>
