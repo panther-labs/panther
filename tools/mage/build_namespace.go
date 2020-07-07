@@ -38,12 +38,10 @@ type Build mg.Namespace
 
 // API Generate API source files from GraphQL + Swagger
 func (b Build) API() {
-	if err := b.api(); err != nil {
-		logger.Fatal(err)
-	}
+	mg.Deps(b.generateSwaggerClients, b.generateWebTypescript)
 }
 
-func (b Build) api() error {
+func (b Build) generateSwaggerClients() error {
 	specs, err := filepath.Glob(swaggerGlob)
 	if err != nil {
 		return fmt.Errorf("failed to glob %s: %v", swaggerGlob, err)
@@ -111,7 +109,10 @@ func (b Build) api() error {
 			logger.Warnf("gofmt %s %s failed: %v", client, models, err)
 		}
 	}
+	return nil
+}
 
+func (b Build) generateWebTypescript() error {
 	logger.Info("build:api: generating web typescript from graphql")
 	if err := sh.Run("npm", "run", "graphql-codegen"); err != nil {
 		return fmt.Errorf("graphql generation failed: %v", err)
@@ -120,7 +121,6 @@ func (b Build) api() error {
 	if err := prettier("web/__generated__/*"); err != nil {
 		logger.Warnf("prettier web/__generated__/ failed: %v", err)
 	}
-
 	return nil
 }
 
@@ -149,28 +149,8 @@ func (b Build) lambda() error {
 	logger.Infof("build:lambda: compiling %d Go Lambda functions (internal/.../main) using %s",
 		len(packages), runtime.Version())
 
-	// Start worker goroutines
-	compile := func(pkgs chan string, errs chan error) {
-		for pkg := range pkgs {
-			errs <- buildLambdaPackage(pkg)
-		}
-	}
-
-	pkgs := make(chan string, len(packages)+maxWorkers)
-	errs := make(chan error, len(packages))
-	for i := 0; i < maxWorkers; i++ {
-		go compile(pkgs, errs)
-	}
-
-	// Send work units
 	for _, pkg := range packages {
-		pkgs <- pkg
-	}
-	close(pkgs)
-
-	// Read results
-	for range packages {
-		if err := <-errs; err != nil {
+		if err := buildLambdaPackage(pkg); err != nil {
 			return err
 		}
 	}
@@ -181,30 +161,13 @@ func (b Build) lambda() error {
 func buildLambdaPackage(pkg string) error {
 	targetDir := filepath.Join("out", "bin", pkg)
 	binary := filepath.Join(targetDir, "main")
-	oldInfo, statErr := os.Stat(binary)
-	oldHash, hashErr := fileMD5(binary)
 	var buildEnv = map[string]string{"GOARCH": "amd64", "GOOS": "linux"}
 
-	if err := os.MkdirAll(targetDir, 0755); err != nil {
+	if err := os.MkdirAll(targetDir, 0700); err != nil {
 		return fmt.Errorf("failed to create %s directory: %v", targetDir, err)
 	}
-	if err := sh.RunWith(buildEnv, "go", "build", "-ldflags", "-s -w", "-o", targetDir, "./"+pkg); err != nil {
+	if err := sh.RunWith(buildEnv, "go", "build", "-p", "1", "-ldflags", "-s -w", "-o", targetDir, "./"+pkg); err != nil {
 		return fmt.Errorf("go build %s failed: %v", binary, err)
-	}
-
-	if statErr == nil && hashErr == nil {
-		if hash, err := fileMD5(binary); err == nil && hash == oldHash {
-			// Optimization - if the binary contents haven't changed, reset the last modified time.
-			// The Lambda zipfile created by "sam package" includes file timestamps -
-			// if the binary is identical but the timestamp is different, the zipfile will have a
-			// different hash and will have to be re-uploaded to S3.
-			logger.Debugf("%s binary unchanged, reverting timestamp", binary)
-			modTime := oldInfo.ModTime()
-			if err = os.Chtimes(binary, modTime, modTime); err != nil {
-				// Non-critical error - the build process can continue
-				logger.Warnf("failed optimization: can't revert timestamp for %s: %v", binary, err)
-			}
-		}
 	}
 
 	return nil
@@ -228,56 +191,22 @@ func (b Build) tools() error {
 		{"GOOS": "windows", "GOARCH": "arm"},
 	}
 
-	// Define worker goroutine
-	type buildInput struct {
-		env  map[string]string
-		path string
-	}
-
-	compile := func(inputs chan *buildInput, results chan error) {
-		for input := range inputs {
-			outDir := filepath.Join("out", "bin", filepath.Base(filepath.Dir(input.path)),
-				input.env["GOOS"], input.env["GOARCH"], filepath.Base(filepath.Dir(input.path)))
-			results <- sh.RunWith(input.env, "go", "build", "-ldflags", "-s -w", "-o", outDir, "./"+input.path)
+	var paths []string
+	walk("cmd", func(path string, info os.FileInfo) {
+		if !info.IsDir() && filepath.Base(path) == "main.go" {
+			paths = append(paths, path)
 		}
-	}
-
-	// Start worker goroutines (channel buffers are large enough for all input)
-	inputs := make(chan *buildInput, 100)
-	results := make(chan error, 100)
-	for i := 0; i < maxWorkers; i++ {
-		go compile(inputs, results)
-	}
-
-	count := 0
-	err := filepath.Walk("cmd", func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if info.IsDir() || filepath.Base(path) != "main.go" {
-			return nil
-		}
-
-		// Build each os/arch combination in parallel
-		logger.Infof("build:tools: compiling %s for %d os/arch combinations", path, len(buildEnvs))
-		for _, env := range buildEnvs {
-			count++
-			inputs <- &buildInput{env: env, path: path}
-		}
-
-		return nil
 	})
 
-	if err != nil {
-		return err
-	}
-
-	// Wait for results
-	close(inputs)
-	for i := 0; i < count; i++ {
-		if err = <-results; err != nil {
-			return err
+	for _, path := range paths {
+		logger.Infof("build:tools: compiling %s for %d os/arch combinations", path, len(buildEnvs))
+		for _, env := range buildEnvs {
+			outDir := filepath.Join("out", "bin", filepath.Base(filepath.Dir(path)),
+				env["GOOS"], env["GOARCH"], filepath.Base(filepath.Dir(path)))
+			err := sh.RunWith(env, "go", "build", "-p", "1", "-ldflags", "-s -w", "-o", outDir, "./"+path)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

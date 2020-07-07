@@ -20,7 +20,7 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
-import { Box, Text } from 'pouncejs';
+import { Box, FormHelperText } from 'pouncejs';
 import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
@@ -39,9 +39,7 @@ interface SQSDestinationFormProps {
 const sqsFieldsValidationSchema = Yup.object().shape({
   outputConfig: Yup.object().shape({
     sqs: Yup.object().shape({
-      queueUrl: Yup.string()
-        .url('Queue URL must be a valid url')
-        .required('Queue URL is required'),
+      queueUrl: Yup.string().url('Queue URL must be a valid url').required('Queue URL is required'),
     }),
   }),
 });
@@ -61,7 +59,6 @@ const SQS_QUEUE_POLICY = {
   ],
 };
 
-// @ts-ignore
 // We merge the two schemas together: the one deriving from the common fields, plus the custom
 // ones that change for each destination.
 // https://github.com/jquense/yup/issues/522
@@ -74,20 +71,22 @@ const SqsDestinationForm: React.FC<SQSDestinationFormProps> = ({ onSubmit, initi
       validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
-      <Field
-        as={FormikTextInput}
-        name="outputConfig.sqs.queueUrl"
-        label="Queue URL"
-        placeholder="Where should we send the queue data to?"
-        mb={2}
-        aria-required
-      />
-      <Box mb={6}>
-        <Text size="small" color="grey400" mb={2}>
+      <Box as="fieldset">
+        <Field
+          as={FormikTextInput}
+          name="outputConfig.sqs.queueUrl"
+          label="Queue URL"
+          placeholder="Where should we send the queue data to?"
+          required
+          aria-describedby="queueUrl-label queueUrl-policy"
+        />
+        <FormHelperText id="queueUrl-label" mt={2}>
           <b>Note</b>: You would need to allow Panther <b>sqs:SendMessage</b> access to send alert
           messages to your SQS queue
-        </Text>
-        <JsonViewer data={SQS_QUEUE_POLICY} collapsed={false} />
+        </FormHelperText>
+        <Box my={4} id="queueUrl-policy">
+          <JsonViewer data={SQS_QUEUE_POLICY} collapsed={false} />
+        </Box>
       </Box>
     </BaseDestinationForm>
   );

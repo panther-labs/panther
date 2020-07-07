@@ -17,17 +17,16 @@
  */
 
 import React from 'react';
-import Panel from 'Components/Panel';
-import { Alert, Button, Card, Box, useSnackbar } from 'pouncejs';
+import { Alert, Button, Box, useSnackbar, Flex } from 'pouncejs';
 import PolicyForm from 'Components/forms/PolicyForm';
 import useModal from 'Hooks/useModal';
 import useRouter from 'Hooks/useRouter';
-import TablePlaceholder from 'Components/TablePlaceholder';
 import { MODALS } from 'Components/utils/Modal';
 import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage, formatJSON } from 'Helpers/utils';
 import { usePolicyDetails } from './graphql/policyDetails.generated';
 import { useUpdatePolicy } from './graphql/updatePolicy.generated';
+import Skeleton from './Skeleton';
 
 const EditPolicyPage: React.FC = () => {
   const { match } = useRouter<{ id: string }>();
@@ -56,12 +55,7 @@ const EditPolicyPage: React.FC = () => {
   );
 
   if (isFetchingPolicy) {
-    return (
-      <Card p={9}>
-        <TablePlaceholder rowCount={5} rowHeight={15} />
-        <TablePlaceholder rowCount={1} rowHeight={100} />
-      </Card>
-    );
+    return <Skeleton />;
   }
 
   if (fetchPolicyError) {
@@ -85,18 +79,19 @@ const EditPolicyPage: React.FC = () => {
   // it stores JSON, that's why we are making those here in the front-end)
   const { policy } = queryData;
   const initialValues = {
-    id: policy.id,
     autoRemediationId: policy.autoRemediationId,
     autoRemediationParameters: formatJSON(JSON.parse(policy.autoRemediationParameters)),
     body: policy.body,
     description: policy.description,
     displayName: policy.displayName,
     enabled: policy.enabled,
-    suppressions: policy.suppressions,
+    id: policy.id,
+    outputIds: policy.outputIds,
     reference: policy.reference,
     resourceTypes: policy.resourceTypes,
     runbook: policy.runbook,
     severity: policy.severity,
+    suppressions: policy.suppressions,
     tags: policy.tags,
     tests: queryData.policy.tests.map(({ resource, ...restTestData }) => ({
       ...restTestData,
@@ -106,32 +101,26 @@ const EditPolicyPage: React.FC = () => {
 
   return (
     <Box mb={6}>
-      <Panel
-        size="large"
-        title="Policy Settings"
-        actions={
-          <Button
-            variant="default"
-            size="large"
-            color="red300"
-            onClick={() =>
-              showModal({
-                modal: MODALS.DELETE_POLICY,
-                props: { policy: queryData.policy },
-              })
-            }
-          >
-            Delete
-          </Button>
-        }
-      >
-        <PolicyForm initialValues={initialValues} onSubmit={handleSubmit} />
-      </Panel>
+      <Flex justify="flex-end" mb={5}>
+        <Button
+          variantColor="red"
+          onClick={() =>
+            showModal({
+              modal: MODALS.DELETE_POLICY,
+              props: { policy: queryData.policy },
+            })
+          }
+        >
+          Delete
+        </Button>
+      </Flex>
+      <PolicyForm initialValues={initialValues} onSubmit={handleSubmit} />
       {updateError && (
         <Box mt={2} mb={6}>
           <Alert
             variant="error"
-            title={
+            title="Couldn't update your policy"
+            description={
               extractErrorMessage(updateError) ||
               'Unknown error occured during update. Please contact support@runpanther.io'
             }

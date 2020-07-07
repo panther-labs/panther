@@ -17,42 +17,51 @@
  */
 
 import React from 'react';
-import { Dropdown, Icon, IconButton, MenuItem } from 'pouncejs';
-import useRouter from 'Hooks/useRouter';
+import {
+  Dropdown,
+  DropdownButton,
+  DropdownItem,
+  DropdownLink,
+  DropdownMenu,
+  IconButton,
+} from 'pouncejs';
 import { PolicySummary } from 'Generated/schema';
 import urls from 'Source/urls';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
+import { Link as RRLink } from 'react-router-dom';
 
 interface ListPoliciesTableRowOptionsProps {
   policy: PolicySummary;
 }
 
 const ListPoliciesTableRowOptions: React.FC<ListPoliciesTableRowOptionsProps> = ({ policy }) => {
-  const { history } = useRouter();
   const { showModal } = useModal();
 
   return (
-    <Dropdown
-      trigger={
-        <IconButton as="div" variant="default" my={-4}>
-          <Icon type="more" size="small" />
-        </IconButton>
-      }
-    >
-      <Dropdown.Item onSelect={() => history.push(urls.compliance.policies.edit(policy.id))}>
-        <MenuItem variant="default">Edit</MenuItem>
-      </Dropdown.Item>
-      <Dropdown.Item
-        onSelect={() =>
-          showModal({
-            modal: MODALS.DELETE_POLICY,
-            props: { policy },
-          })
-        }
-      >
-        <MenuItem variant="default">Delete</MenuItem>
-      </Dropdown.Item>
+    <Dropdown>
+      <DropdownButton
+        as={IconButton}
+        icon="more"
+        variant="ghost"
+        size="small"
+        aria-label="Policy Options"
+      />
+      <DropdownMenu>
+        <DropdownLink as={RRLink} to={urls.compliance.policies.edit(policy.id)}>
+          Edit
+        </DropdownLink>
+        <DropdownItem
+          onSelect={() =>
+            showModal({
+              modal: MODALS.DELETE_POLICY,
+              props: { policy },
+            })
+          }
+        >
+          Delete
+        </DropdownItem>
+      </DropdownMenu>
     </Dropdown>
   );
 };

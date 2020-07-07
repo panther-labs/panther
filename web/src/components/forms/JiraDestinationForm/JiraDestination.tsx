@@ -20,12 +20,12 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
-import FormikCombobox from 'Components/fields/ComboBox';
-import { DestinationConfigInput, JiraIssueTypesEnum } from 'Generated/schema';
+import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
+import { Box, FormHelperText } from 'pouncejs';
 
 type JiraFieldValues = Pick<DestinationConfigInput, 'jira'>;
 
@@ -34,30 +34,24 @@ interface JiraDestinationFormProps {
   onSubmit: (values: BaseDestinationFormValues<JiraFieldValues>) => void;
 }
 
-const jiraFieldsValidationSchema = Yup.object().shape({
-  outputConfig: Yup.object().shape({
-    jira: Yup.object().shape({
-      orgDomain: Yup.string()
-        .url('Must be a valid Jira domain')
-        .required(),
-      userName: Yup.string(),
-      projectKey: Yup.string().required(),
-      apiKey: Yup.string().required(),
-      assigneeId: Yup.string(),
-      issueType: Yup.string().test('oneOf', 'Please select a valid value', value =>
-        Object.values(JiraIssueTypesEnum).includes(value)
-      ),
-    }),
-  }),
-});
-
-// @ts-ignore
-// We merge the two schemas together: the one deriving from the common fields, plus the custom
-// ones that change for each destination.
-// https://github.com/jquense/yup/issues/522
-const mergedValidationSchema = defaultValidationSchema.concat(jiraFieldsValidationSchema);
-
 const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, initialValues }) => {
+  const existing = initialValues.outputId;
+
+  const jiraFieldsValidationSchema = Yup.object().shape({
+    outputConfig: Yup.object().shape({
+      jira: Yup.object().shape({
+        orgDomain: Yup.string().url('Must be a valid Jira domain').required(),
+        userName: Yup.string().required(),
+        projectKey: Yup.string().required(),
+        assigneeId: Yup.string(),
+        issueType: Yup.string().required(),
+        apiKey: existing ? Yup.string() : Yup.string().required(),
+      }),
+    }),
+  });
+
+  const mergedValidationSchema = defaultValidationSchema.concat(jiraFieldsValidationSchema);
+
   return (
     <BaseDestinationForm<JiraFieldValues>
       initialValues={initialValues}
@@ -67,34 +61,35 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
       <Field
         as={FormikTextInput}
         name="outputConfig.jira.orgDomain"
-        label="Organization Domain"
+        label="* Organization Domain"
         placeholder="What's your organization's Jira domain?"
-        mb={6}
-        aria-required
+        required
       />
       <Field
         as={FormikTextInput}
         name="outputConfig.jira.projectKey"
-        label="Project Key"
+        label="* Project Key"
         placeholder="What's your Jira Project key?"
-        mb={6}
-        aria-required
+        required
         autoComplete="new-password"
       />
       <Field
         as={FormikTextInput}
         name="outputConfig.jira.userName"
-        label="Email"
+        label="* Email"
         placeholder="What's the email of the reporting user?"
-        mb={6}
       />
       <Field
         as={FormikTextInput}
+        type="password"
         name="outputConfig.jira.apiKey"
-        label="Jira API Key"
-        placeholder="What's the API key of the related Jira account"
-        mb={6}
-        aria-required
+        label="* Jira API Key"
+        placeholder={
+          existing
+            ? 'Information is hidden. New values will override the existing ones.'
+            : "What's the API key of the related Jira account"
+        }
+        required={!existing}
         autoComplete="new-password"
       />
 
@@ -103,17 +98,19 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
         name="outputConfig.jira.assigneeId"
         label="Assignee ID"
         placeholder="Who should we assign this to?"
-        mb={6}
       />
-      <Field
-        as={FormikCombobox}
-        name="outputConfig.jira.issueType"
-        label="Issue Type"
-        mb={6}
-        aria-required
-        items={Object.keys(JiraIssueTypesEnum)}
-        inputProps={{ placeholder: 'Select a type of issue' }}
-      />
+      <Box as="fieldset">
+        <Field
+          as={FormikTextInput}
+          name="outputConfig.jira.issueType"
+          label="* Issue Type"
+          placeholder="What type of issue you want us to create?"
+          required
+        />
+        <FormHelperText id="issueType-helper" mt={2}>
+          Can be Bug, Story, Task or any custom type
+        </FormHelperText>
+      </Box>
     </BaseDestinationForm>
   );
 };

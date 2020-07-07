@@ -25,9 +25,9 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 
@@ -57,17 +57,20 @@ var (
 func (Test) CI() {
 	// Formatting modifies files (and may generate new ones), so we need to run this first
 	fmtErr := testFmtAndGeneratedFiles()
+	// Run it serially since it runs itself in multiple processors
+	goUnitErr := testGoUnit()
+
 	results := make(chan goroutineResult)
 	tasks := []struct {
 		Name string
 		Task func() error
 	}{
 		{"fmt", func() error { return fmtErr }},
-		{"build:cfn", build.cfn},
+		{"go unit tests", func() error { return goUnitErr }},
 		{"build:lambda", build.lambda},
+		{"build:cfn", build.cfn},
 		{"build:tools", build.tools},
 		{"cfn lint", testCfnLint},
-		{"go unit tests", testGoUnit},
 		{"golangci-lint", testGoLint},
 		{"python unit tests", testPythonUnit},
 		{"pylint", testPythonLint},
@@ -82,7 +85,7 @@ func (Test) CI() {
 		defer close(done)
 		logResults(results, "test:ci", 1, len(tasks), len(tasks))
 	}()
-	logger.Info("running tests in parallel...")
+	logger.Info("running tasks in parallel...")
 	for _, task := range tasks {
 		runTask(results, task.Name, task.Task)
 	}
@@ -142,21 +145,43 @@ func testCfnLint() error {
 		return err
 	}
 
-	// Panther-specific linting
+	// Panther-specific linting for main stacks
 	//
-	// Every Lambda function needs to have an associated log group and metric filter
-	// defined in the same stack.
+	// - Required custom resources
+	// - No default parameter values
 	var errs []string
 	for _, template := range templates {
-		if template == bootstrapTemplate || strings.HasPrefix(template, "deployments/auxiliary") {
-			// The very first bootstrap stack can't have custom resources,
-			// and the aux templates don't need them.
+		if template == "deployments/master.yml" || strings.HasPrefix(template, "deployments/auxiliary") {
 			continue
 		}
 
-		body, err := cfnparse.ParseTemplate(template)
+		body, err := cfnparse.ParseTemplate(pythonVirtualEnvPath, template)
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("failed to parse %s: %v", template, err))
+			continue
+		}
+
+		// Parameter defaults should not be defined in the nested stacks. Defaults are defined in:
+		//   - the config file, when deploying from source
+		//   - the master template, for pre-packaged deployments
+		//
+		// Allowing defaults in nested stacks is confusing and leads to bugs where a parameter is
+		// defined but never passed through during deployment.
+		if err = cfnDefaultParameters(body); err != nil {
+			errs = append(errs, fmt.Sprintf("%s: %v", template, err))
+		}
+
+		if template == bootstrapTemplate {
+			// Custom resources can't be in the bootstrap stack
+			for logicalID, resource := range body["Resources"].(map[string]interface{}) {
+				t := resource.(map[string]interface{})["Type"].(string)
+				if strings.HasPrefix(t, "Custom::") {
+					return fmt.Errorf("%s: %s: custom resources will not work in this stack - use bootstrap-gateway instead",
+						template, logicalID)
+				}
+			}
+
+			// Skip remaining checks
 			continue
 		}
 
@@ -212,6 +237,23 @@ func testCfnLint() error {
 	return nil
 }
 
+// Returns an error if there is a parameter with a default value.
+func cfnDefaultParameters(template map[string]interface{}) error {
+	params, ok := template["Parameters"].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	for name, options := range params {
+		if _, exists := options.(map[string]interface{})["Default"]; exists {
+			return fmt.Errorf("parameter '%s' should not have a default value. "+
+				"Either pass the value from the config file and master stack or use a Mapping", name)
+		}
+	}
+
+	return nil
+}
+
 // Returns an error if an AWS::Serverless::Function is missing associated resources
 func cfnTestFunction(logicalID, template string, resources map[string]string) error {
 	idPrefix := strings.TrimSuffix(logicalID, "Function")
@@ -246,6 +288,7 @@ func cfnTestFunction(logicalID, template string, resources map[string]string) er
 }
 
 func testGoUnit() error {
+	logger.Infof("test:ci: running go unit tests")
 	runGoTest := func(args ...string) error {
 		if mg.Verbose() {
 			// verbose mode - show "go test" output (all package names)
@@ -268,11 +311,11 @@ func testGoUnit() error {
 	}
 
 	// unit tests and race detection
-	return runGoTest("test", "-race", "-v", "-vet", "", "-cover", "./...")
+	return runGoTest("test", "-race", "-p", strconv.Itoa(maxWorkers), "-vet", "", "-cover", "./...")
 }
 
 func testGoLint() error {
-	args := []string{"run", "--timeout", "10m"}
+	args := []string{"run", "--timeout", "10m", "-j", "1"}
 	if mg.Verbose() {
 		args = append(args, "-v")
 	}
@@ -288,7 +331,7 @@ func testPythonUnit() error {
 	}
 
 	for _, target := range []string{"internal/core", "internal/compliance", "internal/log_analysis"} {
-		if err := sh.Run(pythonLibPath("python3"), append(args, target)...); err != nil {
+		if err := runWithoutStderr(pythonLibPath("python3"), append(args, target)...); err != nil {
 			return fmt.Errorf("python unit tests failed: %v", err)
 		}
 	}
@@ -325,7 +368,7 @@ func testPythonBandit() error {
 	} else {
 		args = append(args, "--quiet")
 	}
-	return sh.Run(pythonLibPath("bandit"), append(args, pyTargets...)...)
+	return runWithoutStderr(pythonLibPath("bandit"), append(args, pyTargets...)...)
 }
 
 func testPythonMypy() error {
@@ -362,7 +405,7 @@ func testTfValidate() error {
 		}
 
 		dir := filepath.Join(root, info.Name())
-		if err := sh.Run(terraformPath, "init", "-backend=false", dir); err != nil {
+		if err := sh.Run(terraformPath, "init", "-backend=false", "-input=false", dir); err != nil {
 			return fmt.Errorf("tf init %s failed: %v", dir, err)
 		}
 
@@ -376,18 +419,10 @@ func testTfValidate() error {
 
 // Integration Run integration tests (integration_test.go,integration.py)
 func (t Test) Integration() {
-	// Check the AWS account ID
-	awsSession, err := getSession()
-	if err != nil {
-		logger.Fatal(err)
-	}
-	identity, err := sts.New(awsSession).GetCallerIdentity(&sts.GetCallerIdentityInput{})
-	if err != nil {
-		logger.Fatalf("failed to get caller identity: %v", err)
-	}
+	getSession()
 
 	logger.Warnf("Integration tests will erase all Panther data in account %s (%s)",
-		*identity.Account, *awsSession.Config.Region)
+		getAccountID(), *awsSession.Config.Region)
 	result := promptUser("Are you sure you want to continue? (yes|no) ", nonemptyValidator)
 	if strings.ToLower(result) != "yes" {
 		logger.Fatal("integration tests aborted")
@@ -397,24 +432,35 @@ func (t Test) Integration() {
 
 	if pkg := os.Getenv("PKG"); pkg != "" {
 		// One specific package requested: run integration tests just for that
-		goPkgIntegrationTest(pkg)
+		if err := goPkgIntegrationTest(pkg); err != nil {
+			logger.Fatal(err)
+		}
 		return
 	}
 
+	errCount := 0
 	walk(".", func(path string, info os.FileInfo) {
 		if filepath.Base(path) == "integration_test.go" {
-			goPkgIntegrationTest("./" + filepath.Dir(path))
+			if err := goPkgIntegrationTest("./" + filepath.Dir(path)); err != nil {
+				logger.Error(err)
+				errCount++
+			}
 		}
 	})
 
 	logger.Info("test:integration: python policy engine")
 	if err := sh.RunV(pythonLibPath("python3"), "internal/compliance/policy_engine/tests/integration.py"); err != nil {
-		logger.Fatalf("python integration test failed: %v", err)
+		logger.Errorf("python integration test failed: %v", err)
+		errCount++
+	}
+
+	if errCount > 0 {
+		logger.Fatalf("%d integration test(s) failed", errCount)
 	}
 }
 
 // Run integration tests for a single Go package.
-func goPkgIntegrationTest(pkg string) {
+func goPkgIntegrationTest(pkg string) error {
 	if err := os.Setenv("INTEGRATION_TEST", "True"); err != nil {
 		logger.Fatalf("failed to set INTEGRATION_TEST environment variable: %v", err)
 	}
@@ -426,7 +472,6 @@ func goPkgIntegrationTest(pkg string) {
 	if mg.Verbose() {
 		args = append(args, "-v")
 	}
-	if err := sh.RunV("go", args...); err != nil {
-		logger.Fatalf("go test %s failed: %v", pkg, err)
-	}
+
+	return sh.RunV("go", args...)
 }

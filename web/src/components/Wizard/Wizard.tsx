@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Flex, IconProps, Icon, Label, ProgressBar, Theme, SimpleGrid } from 'pouncejs';
+import { Box, Flex, IconProps, Icon, ProgressBar, Theme, SimpleGrid, Heading } from 'pouncejs';
 import { WizardContext } from './WizardContext';
 
 export interface WizardStepProps {
@@ -70,22 +70,22 @@ const Wizard: React.FC & WizardComposition = ({ children }) => {
       <Box position="relative" mb={6}>
         <Box
           position="absolute"
-          bottom={20}
+          bottom={17}
           width={(steps.length - 1) / steps.length}
           ml={`${100 / (steps.length * 2)}%`}
         >
-          <ProgressBar progressColor="green200" progress={currentStepIndex / (steps.length - 1)} />
+          <ProgressBar color="teal-300" progress={currentStepIndex / (steps.length - 1)} />
         </Box>
         <SimpleGrid as="ul" columns={steps.length} width={1} zIndex={2}>
           {steps.map((step, index) => {
             const isComplete = currentStepIndex > index || currentStepIndex === steps.length - 1;
 
-            let labelColor: keyof Theme['colors'] = 'grey100';
+            let labelColor: keyof Theme['colors'] = 'gray-500';
             if (currentStepIndex === index) {
-              labelColor = 'grey400';
+              labelColor = 'gray-100';
             }
             if (isComplete) {
-              labelColor = 'green300';
+              labelColor = 'teal-300';
             }
 
             return (
@@ -97,22 +97,18 @@ const Wizard: React.FC & WizardComposition = ({ children }) => {
                 key={step.props.title}
                 zIndex={2}
               >
-                <Label as="h3" size="large" color={labelColor} mb={2}>
+                <Heading as="h3" color={labelColor} size="x-small" mb={4}>
                   {index + 1}. {step.props.title}
-                </Label>
+                </Heading>
                 <Flex
                   borderRadius="circle"
                   justify="center"
                   align="center"
                   width={40}
                   height={40}
-                  backgroundColor={isComplete ? 'green200' : 'grey50'}
+                  backgroundColor={isComplete ? 'teal-300' : 'navyblue-450'}
                 >
-                  <Icon
-                    type={isComplete ? 'check' : step.props.icon}
-                    size="small"
-                    color={isComplete ? 'white' : 'grey200'}
-                  />
+                  <Icon type={isComplete ? 'check' : step.props.icon} size="small" />
                 </Flex>
               </Flex>
             );

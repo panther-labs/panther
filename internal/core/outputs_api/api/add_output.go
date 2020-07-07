@@ -46,6 +46,11 @@ func (API) AddOutput(input *models.AddOutputInput) (*models.AddOutputOutput, err
 		return nil, &genericapi.InvalidInputError{Message: err.Error()}
 	}
 
+	err = validateConfigByType(input.OutputConfig, outputType)
+	if err != nil {
+		return nil, &genericapi.InvalidInputError{Message: err.Error()}
+	}
+
 	alertOutput := &models.AlertOutput{
 		OutputID:           aws.String(uuid.New().String()),
 		DisplayName:        input.DisplayName,
@@ -70,5 +75,6 @@ func (API) AddOutput(input *models.AddOutputInput) (*models.AddOutputOutput, err
 	zap.L().Debug("stored new alert output",
 		zap.String("outputId", *alertOutput.OutputID))
 
+	redactOutput(alertOutput.OutputConfig)
 	return alertOutput, nil
 }

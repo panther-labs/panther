@@ -234,11 +234,16 @@ func (gm *GlueTableMetadata) GetPartitionPrefix(t time.Time) string {
 }
 
 // SyncPartitions updates a table's partitions using the latest table schema. Used when schemas change.
-func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Client s3iface.S3API, startDate time.Time) error {
+// If deadline is non-nil, it will stop when execution time has passed the deadline and will return the
+// _next_ time period needing evaluation. Deadlines are used when this is called in Lambdas to avoid
+// running past the lambda deadline.
+func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Client s3iface.S3API,
+	startDate time.Time, deadline *time.Time) (*time.Time, error) {
+
 	// inherit StorageDescriptor from table
 	tableOutput, err := GetTable(glueClient, gm.databaseName, gm.tableName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	columns := tableOutput.Table.StorageDescriptor.Columns
@@ -257,6 +262,7 @@ func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Clie
 	for i := 0; i < concurrency; i++ {
 		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			failed := false
 			for update := range updateChan {
 				if failed {
@@ -300,12 +306,25 @@ func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Clie
 					continue
 				}
 			}
-			wg.Done()
 		}()
 	}
 
-	// loop over each partition updating
+	var nextTimeBin *time.Time // set and returned if deadline passed
+	var isDeadlinePassed func() bool
+	if deadline != nil {
+		isDeadlinePassed = func() bool {
+			return time.Now().UTC().After(*deadline)
+		}
+	} else {
+		isDeadlinePassed = func() bool { return false }
+	}
+
+	// loop over each partition updating, stop if past deadline
 	for timeBin := startDate; !timeBin.After(endDay); timeBin = gm.Timebin().Next(timeBin) {
+		if isDeadlinePassed() {
+			nextTimeBin = box.Time(timeBin)
+			break
+		}
 		updateChan <- timeBin
 	}
 
@@ -313,7 +332,7 @@ func (gm *GlueTableMetadata) SyncPartitions(glueClient glueiface.GlueAPI, s3Clie
 	wg.Wait()
 
 	close(errChan)
-	return <-errChan
+	return nextTimeBin, <-errChan
 }
 
 func (gm *GlueTableMetadata) CreateJSONPartition(client glueiface.GlueAPI, t time.Time) (created bool, err error) {

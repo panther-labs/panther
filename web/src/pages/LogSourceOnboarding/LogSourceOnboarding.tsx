@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Card, Heading, Text } from 'pouncejs';
+import { Box, Card, FadeIn, Heading, Text } from 'pouncejs';
 import urls from 'Source/urls';
 import LogSourceCard from 'Components/LogSourceCard';
 import s3Logo from 'Assets/s3-minimal-logo.svg';
@@ -53,25 +53,25 @@ const logSourcesConfig = [
 ];
 const LogSourceOnboarding: React.FC = () => {
   return (
-    <Card p={9} mb={6}>
-      <Box width={600} m="auto">
-        <Heading size="medium" mb={4} color="grey400">
-          Select a Source Type
-        </Heading>
-        <Text size="large" color="grey200" mb={8} as="p">
-          Please select the source type you want to configure from the list below
-        </Text>
-        {logSourcesConfig.map(config => (
-          <LogSourceCard
-            key={config.title}
-            logo={config.logo}
-            title={config.title}
-            disabled={config.disabled}
-            to={`${urls.logAnalysis.sources.create(config.type)}`}
-          />
-        ))}
-      </Box>
-    </Card>
+    <FadeIn>
+      <Card p={9} mb={6}>
+        <Box width={600} m="auto" textAlign="center">
+          <Heading mb={4}>Select a Source Type</Heading>
+          <Text color="gray-300" mb={8}>
+            Please select the source type you want to configure from the list below
+          </Text>
+          {logSourcesConfig.map(config => (
+            <LogSourceCard
+              key={config.title}
+              logo={config.logo}
+              title={config.title}
+              disabled={config.disabled}
+              to={`${urls.logAnalysis.sources.create(config.type)}`}
+            />
+          ))}
+        </Box>
+      </Card>
+    </FadeIn>
   );
 };
 

@@ -38,8 +38,8 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
 
 const (
@@ -56,7 +56,7 @@ const (
 
 	messageAttributeDataType = "String"
 
-	//  maximum time to hold an s3 buffer in memory (controls latency of rules engine which processes this output
+	//  maximum time to hold an s3 buffer in memory (controls latency of rules engine which processes this output)
 	maxDuration = 2 * time.Minute
 
 	bytesPerMB                  = 1024 * 1024
@@ -68,8 +68,6 @@ var (
 
 	newLineDelimiter = []byte("\n")
 
-	parserRegistry registry.Interface = registry.AvailableParsers() // initialize
-
 	memUsedAtStartupMB int // set in init(), used to size memory buffers for S3 write
 )
 
@@ -79,7 +77,7 @@ func init() {
 	memUsedAtStartupMB = (int)(memStats.Sys/(bytesPerMB)) + 1
 }
 
-func CreateS3Destination() Destination {
+func CreateS3Destination(registry *logtypes.Registry) Destination {
 	return &S3Destination{
 		s3Uploader:          common.S3Uploader,
 		snsClient:           common.SnsClient,
@@ -87,6 +85,7 @@ func CreateS3Destination() Destination {
 		snsTopicArn:         common.Config.SnsTopicARN,
 		maxBufferedMemBytes: maxS3BufferMemUsageBytes(common.Config.AwsLambdaFunctionMemorySize),
 		maxDuration:         maxDuration,
+		registry:            registry,
 	}
 }
 
@@ -106,7 +105,7 @@ func maxS3BufferMemUsageBytes(lambdaSizeMB int) uint64 {
 		largestAllInMemFileMB     = 45
 		processingExpansionFactor = 4
 		memoryFootprint           = largestAllInMemFileMB * processingExpansionFactor
-		minimumScratchMemMB       = 5 // how much overhead is needed to process a file
+		minimumScratchMemMB       = 5 // how much overhead is needed to process
 	)
 	maxBufferUsageMB := lambdaSizeMB - memUsedAtStartupMB - memoryFootprint - minimumScratchMemMB
 	if maxBufferUsageMB < 5 {
@@ -128,6 +127,7 @@ type S3Destination struct {
 	// thresholds for ejection
 	maxBufferedMemBytes uint64 // max will hold in buffers before ejection
 	maxDuration         time.Duration
+	registry            *logtypes.Registry
 }
 
 // SendEvents stores events in S3.
@@ -135,7 +135,7 @@ type S3Destination struct {
 // and stores them in the appropriate S3 path. If the method encounters an error
 // it writes an error to the errorChannel and continues until channel is closed (skipping events).
 // The sendData() method is called as go routine to allow processing to continue and hide network latency.
-func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.PantherLog, errChan chan error) {
+func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Result, errChan chan error) {
 	// used to flush expired buffers
 	flushExpired := time.NewTicker(destination.maxDuration)
 	defer flushExpired.Stop()
@@ -175,17 +175,9 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Pa
 		default: // makes select non-blocking
 		}
 
-		// Use renaming field JSON serializer
-		data, err := parsers.JSON.Marshal(event.Event())
-		if err != nil {
-			failed = true
-			errChan <- errors.Wrap(err, "failed to marshall log parser event for S3")
-			continue
-		}
-
 		buffer := bufferSet.getBuffer(event)
 
-		err = bufferSet.addEvent(buffer, data)
+		err := bufferSet.addEvent(buffer, event.JSON)
 		if err != nil {
 			failed = true
 			errChan <- err
@@ -237,10 +229,11 @@ func (destination *S3Destination) sendData(buffer *s3EventBuffer, errChan chan e
 		return
 	}
 
-	var err error
-	var contentLength int64 = 0
-
-	key := getS3ObjectKey(buffer.logType, buffer.hour)
+	var (
+		err           error
+		contentLength int64
+		key           string
+	)
 
 	operation := common.OpLogManager.Start("sendData", common.OpLogS3ServiceDim)
 	defer func() {
@@ -251,6 +244,12 @@ func (destination *S3Destination) sendData(buffer *s3EventBuffer, errChan chan e
 			zap.String("bucket", destination.s3Bucket),
 			zap.String("key", key))
 	}()
+
+	key, err = destination.getS3ObjectKey(buffer.logType, buffer.hour)
+	if err != nil {
+		errChan <- err
+		return
+	}
 
 	payload, err := buffer.read()
 	if err != nil {
@@ -314,11 +313,17 @@ func (destination *S3Destination) sendSNSNotification(key string, buffer *s3Even
 	return err
 }
 
-func getS3ObjectKey(logType string, timestamp time.Time) string {
+func (destination *S3Destination) getS3ObjectKey(logType string, timestamp time.Time) (string, error) {
+	typ := destination.registry.Get(logType)
+	if typ == nil {
+		return "", errors.Errorf(`unknown log type %q`, logType)
+	}
+	meta := typ.GlueTableMeta()
 	return fmt.Sprintf(s3ObjectKeyFormat,
-		parserRegistry.LookupParser(logType).GlueTableMetadata.GetPartitionPrefix(timestamp.UTC()), // get the path to store the data in S3
+		meta.GetPartitionPrefix(timestamp.UTC()), // get the path to store the data in S3
 		timestamp.Format(S3ObjectTimestampFormat),
-		uuid.New().String())
+		uuid.New().String(),
+	), nil
 }
 
 // s3BufferSet is a group of buffers associated with hour time bins, pointing to maps logtype->s3EventBuffer
@@ -333,9 +338,9 @@ func newS3EventBufferSet() *s3EventBufferSet {
 	}
 }
 
-func (bs *s3EventBufferSet) getBuffer(event *parsers.PantherLog) *s3EventBuffer {
+func (bs *s3EventBufferSet) getBuffer(event *parsers.Result) *s3EventBuffer {
 	// bin by hour (this is our partition size)
-	hour := (time.Time)(*event.PantherEventTime).Truncate(time.Hour)
+	hour := event.EventTime.Truncate(time.Hour)
 
 	logTypeToBuffer, ok := bs.set[hour]
 	if !ok {
@@ -343,7 +348,7 @@ func (bs *s3EventBufferSet) getBuffer(event *parsers.PantherLog) *s3EventBuffer 
 		bs.set[hour] = logTypeToBuffer
 	}
 
-	logType := *event.PantherLogType
+	logType := event.LogType
 	buffer, ok := logTypeToBuffer[logType]
 	if !ok {
 		buffer = newS3EventBuffer(logType, hour)

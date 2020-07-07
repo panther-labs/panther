@@ -17,12 +17,19 @@
  */
 
 import React from 'react';
-import { Dropdown, Icon, IconButton, MenuItem } from 'pouncejs';
+import {
+  Dropdown,
+  DropdownButton,
+  DropdownItem,
+  DropdownLink,
+  DropdownMenu,
+  IconButton,
+} from 'pouncejs';
 import { ComplianceIntegration } from 'Generated/schema';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
-import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
+import { Link as RRLink } from 'react-router-dom';
 
 interface ComplianceSourceTableRowOptionsProps {
   source: ComplianceIntegration;
@@ -32,31 +39,31 @@ const ComplianceSourceTableRowOptions: React.FC<ComplianceSourceTableRowOptionsP
   source,
 }) => {
   const { showModal } = useModal();
-  const { history } = useRouter();
 
   return (
-    <Dropdown
-      trigger={
-        <IconButton as="div" variant="default" my={-4}>
-          <Icon type="more" size="small" />
-        </IconButton>
-      }
-    >
-      <Dropdown.Item
-        onSelect={() => history.push(urls.compliance.sources.edit(source.integrationId))}
-      >
-        <MenuItem variant="default">Edit</MenuItem>
-      </Dropdown.Item>
-      <Dropdown.Item
-        onSelect={() =>
-          showModal({
-            modal: MODALS.DELETE_COMPLIANCE_SOURCE,
-            props: { source },
-          })
-        }
-      >
-        <MenuItem variant="default">Delete</MenuItem>
-      </Dropdown.Item>
+    <Dropdown>
+      <DropdownButton
+        as={IconButton}
+        icon="more"
+        variant="ghost"
+        size="small"
+        aria-label="Source Options"
+      />
+      <DropdownMenu>
+        <DropdownLink as={RRLink} to={urls.compliance.sources.edit(source.integrationId)}>
+          Edit
+        </DropdownLink>
+        <DropdownItem
+          onSelect={() =>
+            showModal({
+              modal: MODALS.DELETE_COMPLIANCE_SOURCE,
+              props: { source },
+            })
+          }
+        >
+          Delete
+        </DropdownItem>
+      </DropdownMenu>
     </Dropdown>
   );
 };

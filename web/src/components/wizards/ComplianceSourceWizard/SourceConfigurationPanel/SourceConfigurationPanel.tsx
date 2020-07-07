@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Flex, Heading, InputElementLabel, Text } from 'pouncejs';
+import { Box, FormHelperText, Heading, Link, Text } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -30,70 +30,71 @@ const SourceConfigurationPanel: React.FC = () => {
 
   return (
     <Box width={460} m="auto">
-      <Heading size="medium" m="auto" mb={2} color="grey400">
+      <Heading as="h2" m="auto" mb={2}>
         {initialValues.integrationId ? 'Update source' : 'First things first'}
       </Heading>
-      <Text size="large" color="grey200" mb={10} as="p">
+      <Text color="gray-200" mb={10}>
         {initialValues.integrationId
           ? 'Feel free to make any changes to your Cloud Security source'
           : "Let's configure your Cloud Security Source"}
       </Text>
       <ErrorBoundary>
-        <Field
-          name="integrationLabel"
-          as={FormikTextInput}
-          label="Name"
-          placeholder="A nickname for the AWS account you're onboarding"
-          aria-required
-          mb={6}
-        />
-        <Field
-          name="awsAccountId"
-          as={FormikTextInput}
-          label="AWS Account ID"
-          placeholder="Your 12-digit AWS Account ID"
-          aria-required
-          disabled={!!initialValues.integrationId}
-          mb={6}
-        />
+        <Box mb={4}>
+          <Field
+            name="integrationLabel"
+            as={FormikTextInput}
+            label="Name"
+            placeholder="A nickname for the AWS account you're onboarding"
+            required
+          />
+        </Box>
+        <Box mb={8}>
+          <Field
+            name="awsAccountId"
+            as={FormikTextInput}
+            label="AWS Account ID"
+            placeholder="Your 12-digit AWS Account ID"
+            required
+            disabled={!!initialValues.integrationId}
+          />
+        </Box>
         <Box ml={-2}>
-          <Flex align="flex-start" mb={6}>
-            <Field as={FormikCheckbox} name="cweEnabled" id="cweEnabled" />
-            <Box ml={2}>
-              <InputElementLabel htmlFor="cweEnabled">
-                Real-Time AWS Resource Scans
-              </InputElementLabel>
-              <Text color="grey300" size="medium" as="p">
-                Configure Panther to monitor all AWS resource changes in real-time through
-                CloudWatch Events.{' '}
-                <a
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href={`${PANTHER_SCHEMA_DOCS_LINK}/amazon-web-services/aws-setup/real-time-events`}
-                >
-                  Read more
-                </a>
-              </Text>
-            </Box>
-          </Flex>
-          <Flex align="flex-start" mb={6}>
-            <Field as={FormikCheckbox} name="remediationEnabled" id="remediationEnabled" />
-            <Box ml={2}>
-              <InputElementLabel htmlFor="remediationEnabled">
-                AWS Automatic Remediations
-              </InputElementLabel>
-              <Text color="grey300" size="medium" as="p">
-                Allow Panther to fix misconfigured infrastructure as soon as it is detected.{' '}
-                <a
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href={`${PANTHER_SCHEMA_DOCS_LINK}/amazon-web-services/aws-setup/automatic-remediation`}
-                >
-                  Read more
-                </a>
-              </Text>
-            </Box>
-          </Flex>
+          <Box as="fieldset" mb={8}>
+            <Field
+              as={FormikCheckbox}
+              name="cweEnabled"
+              aria-describedby="cweEnabled-description"
+              label="Real-Time AWS Resource Scans"
+            />
+            <FormHelperText id="cweEnabled-description" ml={2}>
+              Configure Panther to monitor all AWS resource changes in real-time through CloudWatch
+              Events.{' '}
+              <Link
+                external
+                href={`${PANTHER_SCHEMA_DOCS_LINK}/amazon-web-services/aws-setup/real-time-events`}
+              >
+                Read more
+              </Link>
+            </FormHelperText>
+          </Box>
+          <Box as="fieldset" mb={8}>
+            <Field
+              as={FormikCheckbox}
+              name="remediationEnabled"
+              aria-describedby="remediationEnabled-description"
+              label="AWS Automatic Remediations"
+            />
+            <FormHelperText id="remediationEnabled-description" ml={2}>
+              Allow Panther to fix misconfigured infrastructure as soon as it is detected.
+              <br />
+              <Link
+                external
+                href={`${PANTHER_SCHEMA_DOCS_LINK}/amazon-web-services/aws-setup/automatic-remediation`}
+              >
+                Read more
+              </Link>
+            </FormHelperText>
+          </Box>
         </Box>
       </ErrorBoundary>
     </Box>

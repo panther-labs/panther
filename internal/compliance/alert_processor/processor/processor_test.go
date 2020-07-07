@@ -27,7 +27,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -36,17 +35,8 @@ import (
 	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
 	compliancemodels "github.com/panther-labs/panther/api/gateway/compliance/models"
 	"github.com/panther-labs/panther/internal/compliance/alert_processor/models"
+	"github.com/panther-labs/panther/pkg/testutils"
 )
-
-type mockDdbClient struct {
-	dynamodbiface.DynamoDBAPI
-	mock.Mock
-}
-
-func (m *mockDdbClient) UpdateItem(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*dynamodb.UpdateItemOutput), args.Error(1)
-}
 
 type mockRoundTripper struct {
 	http.RoundTripper
@@ -59,7 +49,7 @@ func (m *mockRoundTripper) RoundTrip(request *http.Request) (*http.Response, err
 }
 
 func TestHandleEventWithAlert(t *testing.T) {
-	mockDdbClient := &mockDdbClient{}
+	mockDdbClient := &testutils.DynamoDBMock{}
 	ddbClient = mockDdbClient
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient = &http.Client{Transport: mockRoundTripper}
@@ -69,6 +59,7 @@ func TestHandleEventWithAlert(t *testing.T) {
 		PolicyID:        aws.String("test-policy"),
 		PolicyVersionID: aws.String("test-version"),
 		ShouldAlert:     aws.Bool(true),
+		Timestamp:       aws.Time(time.Now()),
 	}
 
 	complianceResponse := &compliancemodels.ComplianceStatus{
@@ -104,7 +95,7 @@ func TestHandleEventWithAlert(t *testing.T) {
 }
 
 func TestHandleEventWithAlertButNoAutoRemediationID(t *testing.T) {
-	mockDdbClient := &mockDdbClient{}
+	mockDdbClient := &testutils.DynamoDBMock{}
 	ddbClient = mockDdbClient
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient = &http.Client{Transport: mockRoundTripper}
@@ -114,6 +105,7 @@ func TestHandleEventWithAlertButNoAutoRemediationID(t *testing.T) {
 		PolicyID:        aws.String("test-policy"),
 		PolicyVersionID: aws.String("test-version"),
 		ShouldAlert:     aws.Bool(true),
+		Timestamp:       aws.Time(time.Now()),
 	}
 
 	complianceResponse := &compliancemodels.ComplianceStatus{
@@ -147,7 +139,7 @@ func TestHandleEventWithAlertButNoAutoRemediationID(t *testing.T) {
 }
 
 func TestHandleEventWithoutAlert(t *testing.T) {
-	mockDdbClient := &mockDdbClient{}
+	mockDdbClient := &testutils.DynamoDBMock{}
 	ddbClient = mockDdbClient
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient = &http.Client{Transport: mockRoundTripper}
@@ -183,7 +175,7 @@ func TestHandleEventWithoutAlert(t *testing.T) {
 }
 
 func TestSkipActionsIfResourceIsNotFailing(t *testing.T) {
-	mockDdbClient := &mockDdbClient{}
+	mockDdbClient := &testutils.DynamoDBMock{}
 	ddbClient = mockDdbClient
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient = &http.Client{Transport: mockRoundTripper}
@@ -213,7 +205,7 @@ func TestSkipActionsIfResourceIsNotFailing(t *testing.T) {
 }
 
 func TestSkipActionsIfLookupFailed(t *testing.T) {
-	mockDdbClient := &mockDdbClient{}
+	mockDdbClient := &testutils.DynamoDBMock{}
 	ddbClient = mockDdbClient
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient = &http.Client{Transport: mockRoundTripper}

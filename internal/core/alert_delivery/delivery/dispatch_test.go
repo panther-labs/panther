@@ -32,15 +32,16 @@ import (
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
+	"github.com/panther-labs/panther/pkg/box"
 )
 
 func sampleAlert() *alertmodels.Alert {
 	return &alertmodels.Alert{
-		OutputIDs:  aws.StringSlice([]string{"output-id"}),
-		Severity:   aws.String("INFO"),
-		PolicyID:   aws.String("test-rule-id"),
-		PolicyName: aws.String("test_rule_name"),
-		CreatedAt:  aws.Time(time.Now().UTC()),
+		OutputIds:    []string{"output-id"},
+		Severity:     "INFO",
+		AnalysisID:   "test-rule-id",
+		AnalysisName: box.String("test_rule_name"),
+		CreatedAt:    time.Now().UTC(),
 	}
 }
 
@@ -48,7 +49,7 @@ var alertOutput = &outputmodels.AlertOutput{
 	OutputType:  aws.String("slack"),
 	DisplayName: aws.String("slack:alerts"),
 	OutputConfig: &outputmodels.OutputConfig{
-		Slack: &outputmodels.SlackConfig{WebhookURL: aws.String("https://slack.com")},
+		Slack: &outputmodels.SlackConfig{WebhookURL: "https://slack.com"},
 	},
 	OutputID: aws.String("output-id"),
 }
@@ -132,7 +133,7 @@ func TestDispatchUseCachedDefault(t *testing.T) {
 
 	setCaches()
 	alert := sampleAlert()
-	alert.OutputIDs = nil //Setting OutputIds in the alert to nil, in order to fetch default outputs
+	alert.OutputIds = nil //Setting OutputIds in the alert to nil, in order to fetch default outputs
 
 	assert.True(t, dispatch(alert))
 	mockLambdaClient.AssertExpectations(t)
@@ -157,7 +158,7 @@ func TestDispatchUseNonCachedDefault(t *testing.T) {
 
 	mockLambdaClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil)
 	alert := sampleAlert()
-	alert.OutputIDs = nil //Setting OutputIds in the alert to nil, in order to fetch default outputs
+	alert.OutputIds = nil //Setting OutputIds in the alert to nil, in order to fetch default outputs
 	cache = nil           // Setting cache to nil, so we fetch latest outputs IDs from Lambda
 	assert.True(t, dispatch(alert))
 	mockLambdaClient.AssertExpectations(t)
@@ -186,7 +187,7 @@ func TestAllGoRoutinesShouldComplete(t *testing.T) {
 	// Invoke once to get all outpts
 	mockLambdaClient.On("Invoke", mock.Anything).Return(mockGetOutputsResponse, nil).Once()
 	alert := sampleAlert()
-	alert.OutputIDs = nil //Setting OutputIds in the alert to nil, in order to fetch default outputs
+	alert.OutputIds = nil //Setting OutputIds in the alert to nil, in order to fetch default outputs
 	cache = nil           // Clearing the default output ids cache
 
 	assert.True(t, dispatch(alert))

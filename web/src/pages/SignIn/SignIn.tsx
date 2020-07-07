@@ -17,11 +17,10 @@
  */
 
 import React from 'react';
-import { Flex, Text, Link } from 'pouncejs';
+import { Flex, Link, FadeIn } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import AuthPageContainer from 'Components/AuthPageContainer';
-import Banner from 'Assets/sign-in-banner.jpg';
 import SetPasswordForm from 'Components/forms/SetPasswordForm';
 import MfaForm from 'Components/forms/MfaForm';
 import TotpForm from 'Components/forms/TotpForm';
@@ -44,28 +43,27 @@ const SignInPage: React.FC = () => {
   switch (currentAuthChallengeName) {
     case CHALLENGE_NAMES.SOFTWARE_TOKEN_MFA:
       return (
-        <AuthPageContainer banner={Banner}>
+        <AuthPageContainer>
           <AuthPageContainer.Caption
             title="One last thing..."
             subtitle="Enter your MFA code to complete the sign-in"
           />
           <MfaForm />
           <AuthPageContainer.AltOptions>
-            <Text size="medium" color="grey200">
-              Can{"'"}t seem to get it right?{' '}
-              <a
-                href={`mailto:support@runpanther.io?subject=MFA issues for ${userInfo?.email}`}
-                rel="noopener noreferrer"
-              >
-                Email us
-              </a>
-            </Text>
+            Can{"'"}t seem to get it right?
+            <Link
+              ml={2}
+              external
+              href={`mailto:support@runpanther.io?subject=MFA issues for ${userInfo?.email}`}
+            >
+              Email us
+            </Link>
           </AuthPageContainer.AltOptions>
         </AuthPageContainer>
       );
     case CHALLENGE_NAMES.MFA_SETUP:
       return (
-        <AuthPageContainer banner={Banner}>
+        <AuthPageContainer>
           <AuthPageContainer.Caption
             title="Great!"
             subtitle="Now let's set up two-factor authentication for your account."
@@ -75,7 +73,7 @@ const SignInPage: React.FC = () => {
       );
     case CHALLENGE_NAMES.NEW_PASSWORD_REQUIRED:
       return (
-        <AuthPageContainer banner={Banner}>
+        <AuthPageContainer>
           <AuthPageContainer.Caption
             title="First things first"
             subtitle="We need to set you up with a new password."
@@ -85,22 +83,20 @@ const SignInPage: React.FC = () => {
       );
     default:
       return (
-        <AuthPageContainer banner={Banner}>
-          <AuthPageContainer.Caption title="Sign in" subtitle="to continue to Panther" />
-          <SignInForm />
-          <Flex justify="center" mt={6}>
-            <Link as={RRLink} p={4} color="grey200" to={urls.account.auth.forgotPassword()}>
-              Forgot your password?
-            </Link>
-          </Flex>
-          <AuthPageContainer.AltOptions>
-            <Flex align="center">
-              <Text size="medium" color="grey200" as="span" mr={3}>
-                Don{"'"}t have an account? Talk to your admin
-              </Text>
+        <FadeIn delay={100}>
+          <AuthPageContainer>
+            <AuthPageContainer.Caption title="Sign in" subtitle="to continue to Panther" />
+            <SignInForm />
+            <Flex justify="center" mt={4}>
+              <Link as={RRLink} p={4} to={urls.account.auth.forgotPassword()} fontSize="medium">
+                Forgot your password?
+              </Link>
             </Flex>
-          </AuthPageContainer.AltOptions>
-        </AuthPageContainer>
+            <AuthPageContainer.AltOptions>
+              Don{"'"}t have an account? Talk to your admin
+            </AuthPageContainer.AltOptions>
+          </AuthPageContainer>
+        </FadeIn>
       );
   }
 };

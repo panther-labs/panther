@@ -21,14 +21,14 @@ import JsonViewer from 'Components/JsonViewer';
 import Panel from 'Components/Panel';
 import { TableControlsPagination as PaginationControls } from 'Components/utils/TableControls';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
+import { AlertDetails } from '../graphql/alertDetails.generated';
 
 interface AlertDetailsEventsProps {
-  events: string[];
-  total: number;
+  alert: AlertDetails['alert'];
   fetchMore: () => void;
 }
 
-const AlertDetailsEvents: React.FC<AlertDetailsEventsProps> = ({ events, total, fetchMore }) => {
+const AlertDetailsEvents: React.FC<AlertDetailsEventsProps> = ({ alert, fetchMore }) => {
   // because we are going to use that in PaginationControls we are starting an indexing starting
   // from 1 instead of 0. That's why we are using `eventDisplayIndex - 1` when selecting the proper event.
   // Normally the `PaginationControls` are used for displaying pages so they are built with a
@@ -36,24 +36,23 @@ const AlertDetailsEvents: React.FC<AlertDetailsEventsProps> = ({ events, total, 
   const [eventDisplayIndex, setEventDisplayIndex] = React.useState(1);
 
   React.useEffect(() => {
-    if (eventDisplayIndex - 1 === events.length - DEFAULT_LARGE_PAGE_SIZE) {
+    if (eventDisplayIndex - 1 === alert.events.length - DEFAULT_LARGE_PAGE_SIZE) {
       fetchMore();
     }
-  }, [eventDisplayIndex]);
+  }, [eventDisplayIndex, alert.events.length]);
 
   return (
     <Panel
-      size="large"
-      title="Triggered Events"
+      title="Events"
       actions={
         <PaginationControls
           page={eventDisplayIndex}
-          totalPages={total}
+          totalPages={alert.eventsMatched}
           onPageChange={setEventDisplayIndex}
         />
       }
     >
-      <JsonViewer data={JSON.parse(JSON.parse(events[eventDisplayIndex - 1]))} />
+      <JsonViewer data={JSON.parse(JSON.parse(alert.events[eventDisplayIndex - 1]))} />
     </Panel>
   );
 };

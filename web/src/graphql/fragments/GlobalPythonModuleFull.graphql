@@ -1,0 +1,6 @@
+fragment GlobalPythonModuleFull on GlobalPythonModule {
+  ...GlobalPythonModuleTeaser
+  createdAt
+  description
+  body
+}

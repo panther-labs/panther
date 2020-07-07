@@ -17,56 +17,36 @@
  */
 
 import React from 'react';
-import { Flex, Box, Text, Heading, Label, SimpleGrid } from 'pouncejs';
-import PantherLogoWhite from 'Assets/panther-icon--white.svg';
+import { Flex, Box, Text, Heading, SimpleGrid, Img } from 'pouncejs';
+import PantherLogoWhite from 'Assets/panther-minimal-logo.svg';
 
 interface AuthPageContainerComposition {
   Caption: React.FC<{ title: string; subtitle?: string }>;
   AltOptions: React.FC;
 }
 
-interface AuthPageContainer {
-  banner?: string;
-}
-
-const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposition = ({
-  children,
-  banner,
-}) => {
+const AuthPageContainer: React.FC & AuthPageContainerComposition = ({ children }) => {
   return (
-    <SimpleGrid columns={3} height="100vh">
-      <Box gridColumn="1/2" position="relative">
-        <img
-          src={banner}
-          alt="Generic security illustrations"
-          width="100%"
-          height="100%"
-          style={{ objectFit: 'cover' }}
-        />
-        <Flex
-          position="absolute"
-          top="0"
-          left="0"
-          align="center"
-          py={150}
-          width="100%"
-          height="100%"
-          direction="column"
-        >
-          <img src={PantherLogoWhite} alt="Panther Logo" width="54" height="54" />
-          <Flex direction="column" align="center" justify="center" m="auto">
-            <Label size="medium" mb={5} color="white" textAlign="center">
-              Panther Community Edition
-            </Label>
-            <Heading size="medium" color="white" lineHeight="relaxed" textAlign="center">
-              Detect threats with log data and improve cloud security posture
-            </Heading>
-            <Text size="large" color="white" mt={5} textAlign="center">
-              Designed for any scale
-            </Text>
-          </Flex>
-        </Flex>
-      </Box>
+    <SimpleGrid columns={3} height="100vh" backgroundColor="navyblue-800">
+      <Flex
+        gridColumn="1/2"
+        width="100%"
+        height="100%"
+        direction="column"
+        justify="center"
+        align="center"
+        backgroundColor="navyblue-900"
+      >
+        <Img src={PantherLogoWhite} alt="Panther Logo" nativeWidth={54} nativeHeight={54} mb={6} />
+        <Heading size="x-large" mb={3} textAlign="center">
+          Panther Community Edition
+        </Heading>
+        <Text lineHeight="relaxed" textAlign="center">
+          Detect threats with log data and improve cloud security posture
+          <br />
+          Designed for any scale
+        </Text>
+      </Flex>
       <Flex gridColumn="2/4" justify="center" align="center">
         <Box width={460}>{children}</Box>
       </Flex>
@@ -79,11 +59,9 @@ const AuthPageContainer: React.FC<AuthPageContainer> & AuthPageContainerComposit
  */
 const AuthPageContainerCaption: AuthPageContainerComposition['Caption'] = ({ title, subtitle }) => (
   <Box mb={8}>
-    <Heading as="h1" size="medium" color="grey400">
-      {title}
-    </Heading>
+    <Heading size="large">{title}</Heading>
     {subtitle && (
-      <Text as="p" size="large" color="grey200" mt={2}>
+      <Text color="gray-300" mt={2}>
         {subtitle}
       </Text>
     )}
@@ -94,7 +72,7 @@ const AuthPageContainerCaption: AuthPageContainerComposition['Caption'] = ({ tit
  * A compounet component to act as a wrapper for any alternative options that the page can have
  */
 const AuthPageContainerAlt: AuthPageContainerComposition['AltOptions'] = ({ children }) => (
-  <Box position="absolute" right={10} top={10}>
+  <Box position="absolute" right={10} top={10} color="gray-200" fontSize="medium">
     {children}
   </Box>
 );

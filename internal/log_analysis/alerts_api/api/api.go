@@ -51,7 +51,7 @@ type envConfig struct {
 	ProcessedDataBucket string `required:"true" split_words:"true"`
 }
 
-// Setup parses the environment and builds the AWS and http clients.
+// Setup - parses the environment and builds the AWS and http clients.
 func Setup() {
 	envconfig.MustProcess("", &env)
 
@@ -65,12 +65,12 @@ func Setup() {
 	s3Client = s3.New(awsSession)
 }
 
-// Token used for paginating through the events in an alert
+// EventPaginationToken - token used for paginating through the events in an alert
 type EventPaginationToken struct {
 	LogTypeToToken map[string]*LogTypeToken `json:"logTypeToToken"`
 }
 
-// Token used for paginating in the events of a specific log type
+// LogTypeToken - token used for paginating in the events of a specific log type
 type LogTypeToken struct {
 	S3ObjectKey string `json:"s3ObjectKey"`
 	EventIndex  int    `json:"eventIndex"`

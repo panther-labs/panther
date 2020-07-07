@@ -18,6 +18,7 @@
 
 import React from 'react';
 import { Form, Formik } from 'formik';
+import { Box } from 'pouncejs';
 import * as Yup from 'yup';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import ErrorReportingSection from './ErrorReportingSection';
@@ -46,8 +47,10 @@ const AnalyticsConsentForm: React.FC<AnalyticsConsentFormProps> = ({ onSubmit })
       onSubmit={onSubmit}
     >
       <Form>
-        <ErrorReportingSection />
-        <SubmitButton width={1} allowPristineSubmission>
+        <Box mb={10}>
+          <ErrorReportingSection />
+        </Box>
+        <SubmitButton fullWidth allowPristineSubmission>
           Save
         </SubmitButton>
       </Form>

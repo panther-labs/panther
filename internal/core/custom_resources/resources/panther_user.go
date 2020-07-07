@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-lambda-go/cfn"
+	"github.com/aws/aws-sdk-go/aws"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
@@ -78,9 +79,10 @@ func customPantherUser(_ context.Context, event cfn.Event) (string, map[string]i
 func inviteUser(props PantherUserProperties) (string, error) {
 	input := models.LambdaInput{
 		InviteUser: &models.InviteUserInput{
-			GivenName:  &props.GivenName,
-			FamilyName: &props.FamilyName,
-			Email:      &props.Email,
+			RequesterID: aws.String(systemUserID),
+			GivenName:   &props.GivenName,
+			FamilyName:  &props.FamilyName,
+			Email:       &props.Email,
 		},
 	}
 	var output models.InviteUserOutput
@@ -95,10 +97,11 @@ func inviteUser(props PantherUserProperties) (string, error) {
 func updateUser(userID string, props PantherUserProperties) error {
 	input := models.LambdaInput{
 		UpdateUser: &models.UpdateUserInput{
-			ID:         &userID,
-			GivenName:  &props.GivenName,
-			FamilyName: &props.FamilyName,
-			Email:      &props.Email,
+			RequesterID: aws.String(systemUserID),
+			ID:          &userID,
+			GivenName:   &props.GivenName,
+			FamilyName:  &props.FamilyName,
+			Email:       &props.Email,
 		},
 	}
 	return genericapi.Invoke(lambdaClient, "panther-users-api", &input, nil)
@@ -106,7 +109,10 @@ func updateUser(userID string, props PantherUserProperties) error {
 
 func deleteUser(userID string) error {
 	input := models.LambdaInput{
-		RemoveUser: &models.RemoveUserInput{ID: &userID},
+		RemoveUser: &models.RemoveUserInput{
+			RequesterID: aws.String(systemUserID),
+			ID:          &userID,
+		},
 	}
 	return genericapi.Invoke(lambdaClient, "panther-users-api", &input, nil)
 }

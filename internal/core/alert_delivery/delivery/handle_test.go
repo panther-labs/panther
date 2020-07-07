@@ -43,7 +43,7 @@ func TestHandleAlertsPermanentlyFailed(t *testing.T) {
 	setCaches()
 	os.Setenv("ALERT_RETRY_DURATION_MINS", "5")
 	alert := sampleAlert()
-	alert.CreatedAt = &createdAtTime
+	alert.CreatedAt = createdAtTime
 	alerts := []*models.Alert{alert, alert, alert}
 	sqsMessages = 0
 
@@ -63,7 +63,7 @@ func TestHandleAlertsTemporarilyFailed(t *testing.T) {
 	os.Setenv("MIN_RETRY_DELAY_SECS", "10")
 	os.Setenv("MAX_RETRY_DELAY_SECS", "30")
 	alert := sampleAlert()
-	alert.CreatedAt = &createdAtTime
+	alert.CreatedAt = createdAtTime
 	alerts := []*models.Alert{alert, alert, alert}
 	sqsMessages = 0
 

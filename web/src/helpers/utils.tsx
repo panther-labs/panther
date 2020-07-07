@@ -17,6 +17,8 @@
  */
 
 import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+
 import * as Yup from 'yup';
 import {
   ActiveSuppressCount,
@@ -65,6 +67,7 @@ export const integrationLabelValidation = () =>
     .matches(SOURCE_LABEL_REGEX, 'Can only include alphanumeric characters, dashes and spaces')
     .max(32, 'Must be at most 32 characters');
 
+export const webhookValidation = () => Yup.string().url('Must be a valid webhook URL');
 /**
  * checks whether the input is a valid UUID
  */
@@ -92,6 +95,39 @@ export const formatDatetime = (datetime: string) => {
   );
 };
 
+/**
+ * Given a dayjs format string, create a partial that accepts a datestring that can convert
+ * UTC -> Local time and from Local time -> UTC.
+ *
+ * This is primarily used when converting local time in a frontend form with URL parameters in UTC.
+ */
+export const formatTime = (format?: string) => (
+  datetime: string,
+  utcIn?: boolean,
+  utcOut?: boolean
+) => {
+  // Set the initial date context as utc or local
+  let date = utcIn ? dayjs.utc(datetime) : dayjs(datetime);
+
+  // Calculate offset in hours for the default format string
+  const utcOffsetHours = dayjs(datetime).utcOffset() / 60;
+
+  // Perform the proper conversion of time units
+  if (!utcIn && utcOut) {
+    date = date.subtract(date.utcOffset(), 'minute');
+  }
+
+  // Use the provided partial or our default
+  const fmt =
+    format ||
+    `YYYY-MM-DD HH:mm G[M]T${utcOffsetHours > 0 ? '+' : ''}${
+      utcOffsetHours !== 0 ? utcOffsetHours : ''
+    }`;
+
+  // Finally, return the time in UTC or Local time
+  return utcOut ? date.format(fmt) : date.local().format(fmt);
+};
+
 /** Slice text to 7 characters, mostly used for hashIds */
 export const shortenId = (id: string) => id.slice(0, 7);
 
@@ -101,6 +137,14 @@ export const isHash = (str: string) => CHECK_IF_HASH_REGEX.test(str);
 /** Converts minutes integer to representative string i.e. 15 -> 15min,  120 -> 2h */
 export const minutesToString = (minutes: number) =>
   minutes < 60 ? `${minutes}min` : `${minutes / 60}h`;
+
+/**
+ * Given a server-received DateTime string, creates a proper time-ago display text for it.
+ * */
+export const getElapsedTime = (unixTimestamp: number) => {
+  dayjs.extend(relativeTime);
+  return dayjs.unix(unixTimestamp).fromNow();
+};
 
 /** Converts any value of the object that is an array to a comma-separated string */
 export const convertObjArrayValuesToCsv = (obj: { [key: string]: any }) =>
@@ -239,17 +283,36 @@ export const copyTextToClipboard = (text: string) => {
   }
 };
 
-// Extracts stable version from git tag, i.e "v1.0.1-abc" returns "v1.0.1"
-export const getStableVersion = (version: string) =>
-  version.indexOf('-') > 0 ? version.substring(0, version.indexOf('-')) : version;
-
-export const generateDocUrl = (baseUrl: string, version: string) => {
-  if (version) {
-    return `${baseUrl}/v/${getStableVersion(version)}-docs`;
-  }
-  return baseUrl;
-};
+/**
+ * A function that takes a text and returns a valid slug for it. Useful for filename and url
+ * creation
+ *
+ * @param {String} text A string to slugify
+ * @returns {String} A slugified string
+ */
+export function slugify(text: string) {
+  return text
+    .toString()
+    .toLowerCase()
+    .replace(/\s+/g, '-') // Replace spaces with -
+    .replace(/[^\w-]+/g, '') // Remove all non-word chars
+    .replace(/--+/g, '-') // Replace multiple - with single -
+    .replace(/^-+/, '') // Trim - from start of text
+    .replace(/-+$/, ''); // Trim - from end of text
+}
 
 export const isNumber = (value: string) => /^-{0,1}\d+$/.test(value);
 
 export const toStackNameFormat = (val: string) => val.replace(/ /g, '-').toLowerCase();
+
+/**
+ * Generates a random HEX color
+ */
+export const generateRandomColor = () => Math.floor(Math.random() * 16777215).toString(16);
+
+/**
+ * Converts a rem measurement (i.e. `0.29rem`) to pixels. Returns the number of pixels
+ */
+export const remToPx = (rem: string) => {
+  return parseFloat(rem) * parseFloat(getComputedStyle(document.documentElement).fontSize);
+};

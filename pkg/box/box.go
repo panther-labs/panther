@@ -2,6 +2,8 @@
 // This package exists to help the transition form pointer based fields to `null` fields
 package box
 
+import "time"
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -61,4 +63,8 @@ func Bool(b bool) *bool {
 }
 func Byte(b byte) *byte {
 	return &b
+}
+
+func Time(t time.Time) *time.Time {
+	return &t
 }

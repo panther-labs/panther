@@ -17,9 +17,8 @@
  */
 
 import React from 'react';
-import { Alert, Heading, SideSheet, useSnackbar, Box } from 'pouncejs';
+import { Alert, Heading, SideSheet, useSnackbar, Box, SideSheetProps } from 'pouncejs';
 import pick from 'lodash-es/pick';
-import useSidesheet from 'Hooks/useSidesheet';
 import { Destination, DestinationConfigInput, DestinationTypeEnum } from 'Generated/schema';
 import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm';
 import SNSDestinationForm from 'Components/forms/SnsDestinationForm';
@@ -31,6 +30,7 @@ import MicrosoftTeamsDestinationForm from 'Components/forms/MicrosoftTeamsDestin
 import JiraDestinationForm from 'Components/forms/JiraDestinationForm';
 import GithubDestinationForm from 'Components/forms/GithubDestinationForm';
 import AsanaDestinationForm from 'Components/forms/AsanaDestinationForm';
+import CustomWebhookDestinationForm from 'Components/forms/CustomWebhookDestinationForm';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useUpdateDestination } from './graphql/updateDestination.generated';
 
@@ -38,20 +38,21 @@ import { useUpdateDestination } from './graphql/updateDestination.generated';
 // from the Destinations table, we are able to access a `defaultForSeverities` key that the table
 // has assigned for us. Thus the `destination` that we actually received in enhanced with this
 // property.
-export interface UpdateDestinationSidesheetProps {
+export interface UpdateDestinationSidesheetProps extends SideSheetProps {
   destination: Destination;
 }
 
 export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProps> = ({
   destination,
+  onClose,
+  ...rest
 }) => {
   const { pushSnackbar } = useSnackbar();
-  const { hideSidesheet } = useSidesheet();
 
   // If destination object exist, handleSubmit should call updateDestination and use attributes from the destination object for form initial values
   const [updateDestination, { error: updateDestinationError }] = useUpdateDestination({
     onCompleted: data => {
-      hideSidesheet();
+      onClose();
       pushSnackbar({
         variant: 'success',
         title: `Successfully updated ${data.updateDestination.displayName}`,
@@ -96,7 +97,7 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
   // on  lodash's pick, it messes typings and TS fails cause it thinks it doesn't have all the
   // fields it needs. We use `commonInitialValues` to satisfy this exact constraint that was set by
   // the `initialValues` prop of each form.
-  const commonInitialValues = pick(destination, ['displayName', 'defaultForSeverity']);
+  const commonInitialValues = pick(destination, ['outputId', 'displayName', 'defaultForSeverity']);
 
   const renderFullDestinationForm = () => {
     switch (destination.outputType) {
@@ -200,15 +201,25 @@ export const UpdateDestinationSidesheet: React.FC<UpdateDestinationSidesheetProp
             onSubmit={handleSubmit}
           />
         );
+      case DestinationTypeEnum.Customwebhook:
+        return (
+          <CustomWebhookDestinationForm
+            initialValues={{
+              ...commonInitialValues,
+              outputConfig: pick(destination.outputConfig, 'customWebhook.webhookURL'),
+            }}
+            onSubmit={handleSubmit}
+          />
+        );
       default:
         return null;
     }
   };
 
   return (
-    <SideSheet open onClose={hideSidesheet}>
+    <SideSheet aria-labelledby="sidesheet-title" onClose={onClose} {...rest}>
       <Box width={465}>
-        <Heading size="medium" mb={8}>
+        <Heading mb={8} id="sidesheet-title">
           Update {destination.outputType}
         </Heading>
         {updateDestinationError && (

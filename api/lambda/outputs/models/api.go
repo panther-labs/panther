@@ -22,11 +22,12 @@ package models
 //
 // Exactly one action must be specified.
 type LambdaInput struct {
-	AddOutput    *AddOutputInput    `json:"addOutput"`
-	UpdateOutput *UpdateOutputInput `json:"updateOutput"`
-	GetOutput    *GetOutputInput    `json:"getOutput"`
-	DeleteOutput *DeleteOutputInput `json:"deleteOutput"`
-	GetOutputs   *GetOutputsInput   `json:"getOutputs"`
+	AddOutput             *AddOutputInput             `json:"addOutput"`
+	UpdateOutput          *UpdateOutputInput          `json:"updateOutput"`
+	GetOutput             *GetOutputInput             `json:"getOutput"`
+	DeleteOutput          *DeleteOutputInput          `json:"deleteOutput"`
+	GetOutputs            *GetOutputsInput            `json:"getOutputs"`
+	GetOutputsWithSecrets *GetOutputsWithSecretsInput `json:"getOutputsWithSecrets"`
 }
 
 // AddOutputInput adds a new encrypted alert output to DynamoDB.
@@ -81,9 +82,9 @@ type DeleteOutputInput struct {
 // }
 type UpdateOutputInput struct {
 	UserID             *string       `json:"userId" validate:"required,uuid4"`
-	DisplayName        *string       `json:"displayName" validate:"required,min=1,excludesall='<>&\""`
+	DisplayName        *string       `json:"displayName" validate:"omitempty,min=1,excludesall='<>&\""`
 	OutputID           *string       `json:"outputId" validate:"required,uuid4"`
-	OutputConfig       *OutputConfig `json:"outputConfig" validate:"required"`
+	OutputConfig       *OutputConfig `json:"outputConfig"`
 	DefaultForSeverity []*string     `json:"defaultForSeverity"`
 }
 
@@ -105,7 +106,7 @@ type GetOutputInput struct {
 // GetOutputOutput contains the configuration for an alert
 type GetOutputOutput = AlertOutput
 
-// GetOrganizationOutputsInput fetches all alert output configuration for one organization
+// GetOutputsInput fetches all alert output configuration for one organization
 //
 // Example:
 // {
@@ -115,7 +116,12 @@ type GetOutputOutput = AlertOutput
 type GetOutputsInput struct {
 }
 
-// GetOrganizationOutputsOutput returns all the alert outputs for one organization
+// GetOutputsWithSecretsInput fetches all alert output configuration for one organization
+// without redacting their secrets
+type GetOutputsWithSecretsInput struct {
+}
+
+// GetOutputsOutput returns all the alert outputs for one organization
 //
 // Example:
 // {
@@ -185,62 +191,64 @@ type OutputConfig struct {
 
 	// AsanaConfig contains the configuration for Asana alert output
 	Asana *AsanaConfig `json:"asana,omitempty"`
+
+	// CustomWebhook contains the configuration for a Custom Webhook alert output
+	CustomWebhook *CustomWebhookConfig `json:"customWebhook,omitempty"`
 }
 
 // SlackConfig defines options for each Slack output.
 type SlackConfig struct {
-	WebhookURL *string `json:"webhookURL" validate:"required,url"` // https://hooks.slack.com/services/...
+	WebhookURL string `json:"webhookURL" validate:"omitempty,url"` // https://hooks.slack.com/services/...
 }
 
 // SnsConfig defines options for each SNS topic output
 type SnsConfig struct {
-	TopicArn *string `json:"topicArn" validate:"required,snsArn"`
+	TopicArn string `json:"topicArn" validate:"omitempty,snsArn"`
 }
 
 // PagerDutyConfig defines options for each PagerDuty output
 type PagerDutyConfig struct {
-	IntegrationKey *string `json:"integrationKey" validate:"required,hexadecimal,len=32"`
+	IntegrationKey string `json:"integrationKey" validate:"omitempty,hexadecimal,len=32"`
 }
 
 // GithubConfig defines options for each Github output
 type GithubConfig struct {
-	RepoName *string `json:"repoName" validate:"required"`
-	Token    *string `json:"token" validate:"required"`
+	RepoName string `json:"repoName"`
+	Token    string `json:"token"`
 }
 
 // JiraConfig defines options for each Jira output
 type JiraConfig struct {
-	OrgDomain  *string `json:"orgDomain" validate:"required"`
-	ProjectKey *string `json:"projectKey" validate:"required"`
-	UserName   *string `json:"userName" validate:"required"`
-	APIKey     *string `json:"apiKey" validate:"required"`
-	AssigneeID *string `json:"assigneeId"`
-	Type       *string `json:"issueType"`
+	OrgDomain  string `json:"orgDomain"`
+	ProjectKey string `json:"projectKey"`
+	UserName   string `json:"userName"`
+	APIKey     string `json:"apiKey"`
+	AssigneeID string `json:"assigneeId"`
+	Type       string `json:"issueType"`
 }
 
 // OpsgenieConfig defines options for each Opsgenie output
 type OpsgenieConfig struct {
-	APIKey *string `json:"apiKey" validate:"required"`
+	APIKey string `json:"apiKey"`
 }
 
-// MsTeamsConfig defines options for each MsTeamsConfig output
+// MsTeamsConfig defines options for each MsTeams output
 type MsTeamsConfig struct {
-	WebhookURL *string `json:"webhookURL" validate:"required,url"`
+	WebhookURL string `json:"webhookURL" validate:"omitempty,url"`
 }
 
 // SqsConfig defines options for each Sqs topic output
 type SqsConfig struct {
-	QueueURL *string `json:"queueUrl" validate:"required,url"`
+	QueueURL string `json:"queueUrl" validate:"omitempty,url"`
 }
 
 // AsanaConfig defines options for each Asana output
 type AsanaConfig struct {
-	PersonalAccessToken *string   `json:"personalAccessToken" validate:"required,min=1"`
-	ProjectGids         []*string `json:"projectGids" validate:"required,min=1,dive,required"`
+	PersonalAccessToken string   `json:"personalAccessToken" validate:"omitempty,min=1"`
+	ProjectGids         []string `json:"projectGids" validate:"omitempty,min=1,dive,required"`
 }
 
-// DefaultOutputs is the structure holding the information about default outputs for severity
-type DefaultOutputs struct {
-	Severity  *string   `json:"severity"`
-	OutputIDs []*string `json:"outputIds"`
+// CustomWebhookConfig defines options for each CustomWebhook output
+type CustomWebhookConfig struct {
+	WebhookURL string `json:"webhookURL" validate:"omitempty,url"`
 }

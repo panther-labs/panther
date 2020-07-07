@@ -21,8 +21,11 @@ package handlers
 import (
 	"sort"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/panther-labs/panther/api/gateway/analysis/models"
 )
 
 func TestLowerSet(t *testing.T) {
@@ -51,6 +54,50 @@ func TestSetEquality(t *testing.T) {
 	assert.True(t, setEquality([]string{"panther", "labs", "inc"}, []string{"inc", "labs", "panther"}))
 	assert.False(t, setEquality([]string{"panther"}, []string{"panther", "labs"}))
 	assert.False(t, setEquality([]string{"panther", "labs"}, []string{"panther", "inc"}))
+}
+
+func TestPoliciesEqual(t *testing.T) {
+	first := &tableItem{
+		Body:          "def policy(resource): return True",
+		ID:            "My:Favorite:Policy",
+		ResourceTypes: nil,
+		OutputIds:     []string{"My Slack Channel", "Custom Webhook"},
+		Tags:          []string{"AWS", "pci", "S3"},
+		Tests: []*models.UnitTest{
+			{
+				ExpectedResult: true,
+				Resource:       `{"first": "a", "second": "b", "third": "c"}`,
+			},
+		},
+
+		// These fields shouldn't matter for equality testing
+		CreatedAt: models.ModifyTime(time.Now()),
+		CreatedBy: "austin",
+		VersionID: "version-the-first",
+		LowerID:   "my:favorite:policy",
+		LowerTags: []string{"aws", "pci", "s3"},
+	}
+	second := &tableItem{
+		Body:          first.Body,
+		ID:            first.ID,
+		ResourceTypes: []string{},
+		OutputIds:     []string{"Custom Webhook", "My Slack Channel"}, // same destinations, different order
+		Tags:          []string{"pci", "S3", "AWS"},                   // same tags, different order
+		Tests: []*models.UnitTest{
+			{
+				ExpectedResult: true,
+				Resource:       `{"second":"b","first":"a","third":"c"}`, // same resource, different order
+			},
+		},
+	}
+	equal, err := policiesEqual(first, second)
+	assert.True(t, equal)
+	assert.NoError(t, err)
+
+	second.Body = "def policy(resource): return False"
+	equal, err = policiesEqual(first, second)
+	assert.False(t, equal)
+	assert.NoError(t, err)
 }
 
 func TestSortCaseInsensitive(t *testing.T) {

@@ -23,6 +23,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // ListAlerts retrieves alert and event details.
@@ -35,11 +36,19 @@ func (API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAlertsO
 
 	result = &models.ListAlertsOutput{}
 	var alertItems []*table.AlertItem
-	if input.RuleID != nil { // list per specific ruleId
-		alertItems, result.LastEvaluatedKey, err = alertsDB.ListByRule(*input.RuleID, input.ExclusiveStartKey, input.PageSize)
-	} else { // list all alerts time desc order
-		alertItems, result.LastEvaluatedKey, err = alertsDB.ListAll(input.ExclusiveStartKey, input.PageSize)
+
+	// Perform some validation here for items that do not have custom validators implemented
+	if input.CreatedAtAfter != nil && input.CreatedAtBefore != nil && input.CreatedAtBefore.Before(*input.CreatedAtAfter) {
+		return nil, &genericapi.InternalError{Message: "Invalid range, created at 'before' must be greater than 'after'"}
 	}
+
+	if input.EventCountMax != nil && input.EventCountMin != nil && *input.EventCountMax < *input.EventCountMin {
+		return nil, &genericapi.InternalError{Message: "Invalid range, event count 'max' must be greater or equal to 'min'"}
+	}
+
+	// Fetch all alerts. The results will have filters, sorting applied.
+	alertItems, result.LastEvaluatedKey, err = alertsDB.ListAll(input)
+
 	if err != nil {
 		return nil, err
 	}

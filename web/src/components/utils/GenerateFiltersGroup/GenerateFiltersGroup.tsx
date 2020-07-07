@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Formik, Field, Form } from 'formik';
-import { Button, SimpleGrid } from 'pouncejs';
+import { Box, Button, SimpleGrid } from 'pouncejs';
 import mapValues from 'lodash-es/mapValues';
 import map from 'lodash-es/map';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -41,9 +41,6 @@ interface FiltersGroupData<T> {
 interface GenerateFiltersGroupProps<T> {
   /** The initial values of the filters group */
   initialValues: T;
-
-  /** A callback for when the `cancel` button is clicked */
-  onCancel: () => void;
 
   /** A callback for when the `apply` button is clicked or - in general - the filters are applied */
   onSubmit: (values: T) => void;
@@ -69,7 +66,6 @@ const getFilterGroupDefaultValue = (
 
 function GenerateFiltersGroup<T extends { [key: string]: any }>({
   filters,
-  onCancel,
   onSubmit,
   initialValues,
 }: GenerateFiltersGroupProps<T>): React.ReactElement<GenerateFiltersGroupProps<T>> {
@@ -92,45 +88,27 @@ function GenerateFiltersGroup<T extends { [key: string]: any }>({
   // "store" that we observe on the index
   return (
     <Formik<T> initialValues={initialValuesWithDefaults} onSubmit={onSubmit}>
-      {({ setValues, submitForm, resetForm }) => (
+      {({ setValues, submitForm }) => (
         <Form>
-          <SimpleGrid columns={4} spacing={6} mb={8}>
+          <SimpleGrid columns={4} spacing={6} mb={6}>
             {map(filters, (filterData, filterName) => (
-              <Field
-                key={filterName}
-                as={filterData.component}
-                name={filterName}
-                {...filterData.props}
-              />
+              <Box as="fieldset" key={filterName}>
+                <Field as={filterData.component} name={filterName} {...filterData.props} />
+              </Box>
             ))}
           </SimpleGrid>
-          <Button type="submit" size="large" variant="primary" mr={4}>
-            Apply
-          </Button>
-          <Button
-            type="button"
-            size="large"
-            variant="default"
-            mr={4}
-            onClick={() => {
-              resetForm();
-              onCancel();
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            size="large"
-            variant="default"
-            color="red300"
-            onClick={() => {
-              setValues(defaultValues);
-              submitForm();
-            }}
-          >
-            Clear all
-          </Button>
+          <SimpleGrid inline columns={2} spacingX={4}>
+            <Button type="submit">Apply</Button>
+            <Button
+              variantColor="red"
+              onClick={() => {
+                setValues(defaultValues);
+                submitForm();
+              }}
+            >
+              Clear all
+            </Button>
+          </SimpleGrid>
         </Form>
       )}
     </Formik>

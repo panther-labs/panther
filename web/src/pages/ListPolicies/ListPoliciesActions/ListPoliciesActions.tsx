@@ -25,7 +25,7 @@ import FormikTextInput from 'Components/fields/TextInput';
 import FormikCombobox from 'Components/fields/ComboBox';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
-import { Box, Button, Card, Flex, Icon } from 'pouncejs';
+import { Box, Button, Card, Collapse, Flex } from 'pouncejs';
 import CreateButton from 'Pages/ListPolicies/CreateButton';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import isEmpty from 'lodash-es/isEmpty';
@@ -48,21 +48,7 @@ export const filters = {
       searchable: true,
       items: RESOURCE_TYPES,
       label: 'Resource Types',
-      inputProps: {
-        placeholder: 'Start typing resources...',
-      },
-    },
-  },
-  severity: {
-    component: FormikCombobox,
-    props: {
-      label: 'Severity',
-      items: ['', ...severityOptions],
-      itemToString: (severity: SeverityEnum | '') =>
-        severity === '' ? 'All' : capitalize(severity.toLowerCase()),
-      inputProps: {
-        placeholder: 'Choose a severity...',
-      },
+      placeholder: 'Start typing resources...',
     },
   },
   tags: {
@@ -72,9 +58,17 @@ export const filters = {
       searchable: true,
       allowAdditions: true,
       items: [] as string[],
-      inputProps: {
-        placeholder: 'Filter with tags...',
-      },
+      placeholder: 'Filter with tags...',
+    },
+  },
+  severity: {
+    component: FormikCombobox,
+    props: {
+      label: 'Severity',
+      items: ['', ...severityOptions],
+      itemToString: (severity: SeverityEnum | '') =>
+        severity === '' ? 'All' : capitalize(severity.toLowerCase()),
+      placeholder: 'Choose a severity...',
     },
   },
   complianceStatus: {
@@ -84,9 +78,7 @@ export const filters = {
       items: ['', ...statusOptions],
       itemToString: (status: ComplianceStatusEnum | '') =>
         status === '' ? 'All' : capitalize(status.toLowerCase()),
-      inputProps: {
-        placeholder: 'Choose a status...',
-      },
+      placeholder: 'Choose a status...',
     },
   },
   enabled: {
@@ -100,9 +92,7 @@ export const filters = {
         }
         return item === 'true' ? 'Yes' : 'No';
       },
-      inputProps: {
-        placeholder: 'Show only enabled?',
-      },
+      placeholder: 'Show only enabled?',
     },
   },
   hasRemediation: {
@@ -116,9 +106,7 @@ export const filters = {
         }
         return item === 'true' ? 'Configured' : 'Not Configured';
       },
-      inputProps: {
-        placeholder: 'Choose a status...',
-      },
+      placeholder: 'Choose a status...',
     },
   },
 };
@@ -152,34 +140,32 @@ const ListPoliciesActions: React.FC = () => {
   );
 
   return (
-    <Box>
-      <Flex justify="flex-end" mb={6}>
-        <Box position="relative" mr={5}>
-          <Button
-            size="large"
-            variant="default"
-            onClick={() => setFiltersVisibility(!areFiltersVisible)}
-          >
-            <Flex>
-              <Icon type="filter" size="small" mr={3} />
-              Filter Options {filtersCount ? `(${filtersCount})` : ''}
-            </Flex>
-          </Button>
-        </Box>
+    <Box mb={6} as="section">
+      <Flex spacing={5} justify="flex-end">
+        <Button
+          active={areFiltersVisible}
+          icon="filter"
+          variant="outline"
+          variantColor="navyblue"
+          onClick={() => setFiltersVisibility(!areFiltersVisible)}
+        >
+          Filter Options {filtersCount ? `(${filtersCount})` : ''}
+        </Button>
         <CreateButton />
       </Flex>
-      {areFiltersVisible && (
-        <ErrorBoundary>
-          <Card p={6} mb={6}>
-            <GenerateFiltersGroup<ListPoliciesFiltersValues>
-              filters={filters}
-              onCancel={() => setFiltersVisibility(false)}
-              onSubmit={updateRequestParamsAndResetPaging}
-              initialValues={initialFilterValues}
-            />
-          </Card>
-        </ErrorBoundary>
-      )}
+      <ErrorBoundary>
+        <Collapse open={areFiltersVisible}>
+          <Box pt={6}>
+            <Card p={8}>
+              <GenerateFiltersGroup<ListPoliciesFiltersValues>
+                filters={filters}
+                onSubmit={updateRequestParamsAndResetPaging}
+                initialValues={initialFilterValues}
+              />
+            </Card>
+          </Box>
+        </Collapse>
+      </ErrorBoundary>
     </Box>
   );
 };
