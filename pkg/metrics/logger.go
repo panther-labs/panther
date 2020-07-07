@@ -36,6 +36,7 @@ type EmbeddedMetric struct {
 	// A slice of MetricDirectiveObjects used to instruct CloudWatch to extract metrics from the
 	// root node of the LogEvent.
 	CloudWatchMetrics []MetricDirectiveObject
+
 	// A number representing the time stamp used for metrics extracted from the event. Values MUST
 	// be expressed as the number of milliseconds after Jan 1, 1970 00:00:00 UTC.
 	Timestamp int64
@@ -50,8 +51,10 @@ const NanosecondsPerMillisecond int64 = 1000000
 type MetricDirectiveObject struct {
 	// A string representing the CloudWatch namespace for the metric.
 	Namespace string
+
 	// A slice representing the collection of DimensionSets for the metric
 	Dimensions []DimensionSet
+
 	// A slice of Metric values and units. This slice MUST NOT contain more than 100 Metrics.
 	Metrics []Metric
 }
@@ -79,6 +82,7 @@ const maxDimensionsKeys = 9
 type Metric struct {
 	// A reference to a metric Target Member. Each Metric Name must also be a top level member.
 	Name string
+
 	// Valid Unit values (defaults to None):
 	// Seconds | Microseconds | Milliseconds | Bytes | Kilobytes | Megabytes | Gigabytes | Terabytes
 	// Bits | Kilobits | Megabits | Gigabits | Terabits | Percent | Count | Bytes/Second |
@@ -86,6 +90,9 @@ type Metric struct {
 	// Kilobits/Second | Megabits/Second | Gigabits/Second | Terabits/Second | Count/Second | None
 	Unit string
 
+	// This value is not marshalled to JSON as it is not part of the AWS embedded metric format. We
+	// simply include it here for convenience when calling the loggers defined here, so that it is
+	// not required to consider the value of a metric separate from its Name and Unit.
 	Value *interface{} `json:"-"`
 }
 
@@ -104,10 +111,9 @@ type Dimension struct {
 	Value string
 }
 
-// A Logger conveniently stores repeatedly used embedded metric format configurations such as
-// namespace and dimensions so that they do not need to be specified for each log.
+// Logger conveniently stores repeatedly used embedded metric format configurations such as
+// dimensions so that they do not need to be specified for each log.
 type Logger struct {
-	namespace     string
 	dimensionSets []DimensionSet
 	dimensionKeys map[string]struct{}
 }
@@ -121,8 +127,7 @@ func MustLogger(dimensionSets []DimensionSet) *Logger {
 	return logger
 }
 
-// NewLogger create a new logger for a given namespace and set of dimensions, returning an error if
-// dimensions are invalid
+// NewLogger create a new logger for a set of dimensions, returning an error if dimensions are invalid
 func NewLogger(dimensionSets []DimensionSet) (*Logger, error) {
 	dimensionKeys, err := buildDimensionKeys(dimensionSets)
 	if err != nil {
@@ -130,7 +135,6 @@ func NewLogger(dimensionSets []DimensionSet) (*Logger, error) {
 	}
 
 	return &Logger{
-		namespace:     namespace,
 		dimensionSets: dimensionSets,
 		dimensionKeys: dimensionKeys,
 	}, nil
@@ -152,7 +156,7 @@ func (l *Logger) LogSingle(value Metric, dimensions []Dimension) {
 	}
 }
 
-// LogEmbedded constructs an object in the AWS embedded metric format and logs it
+// logEmbedded constructs an object in the AWS embedded metric format and logs it
 func (l *Logger) logEmbedded(values []Metric, dimensions []Dimension) error {
 	// Validate input
 	if len(values) == 0 {
@@ -165,22 +169,8 @@ func (l *Logger) logEmbedded(values []Metric, dimensions []Dimension) error {
 
 	timestamp := time.Now().UnixNano() / NanosecondsPerMillisecond
 
-	// Verify that each dimension key required by a dimension set is present. This is mandated by
-	// the AWS specification.
-	//
-	// The inverse is not checked, but if a caller specifies a dimension that is not present
-	// in any dimensionSet it will be logged but ignored by AWS.
-	for dimensionKey := range l.dimensionKeys {
-		found := false
-		for _, dimension := range dimensions {
-			if dimension.Name == dimensionKey {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return errors.New("missing value for dimension field " + dimensionKey)
-		}
+	if err := validateDimensions(l.dimensionKeys, dimensions); err != nil {
+		return err
 	}
 
 	// Add each dimension to the list of top level fields
@@ -215,9 +205,9 @@ func (l *Logger) logEmbedded(values []Metric, dimensions []Dimension) error {
 	return nil
 }
 
-// A MonoLogger conveniently stores repeatedly used embedded metric format configurations such as
-// namespace and dimensions so that they do not need to be specified each time. MonoLogger only
-// supports one dimension set and one metric which must be set at initialization.
+// MonoLogger conveniently stores repeatedly used embedded metric format configurations such as
+// dimensionSets and metric name/unit so that they do not need to be specified each time. MonoLogger
+// only supports one dimension set and one metric which must be set at initialization.
 //
 // These limitations still allow for 90% of use cases, and are more suitable for performance
 // critical parts of the code than the Logger.
@@ -235,11 +225,11 @@ func MustMonoLogger(dimensionSets []DimensionSet, metric Metric) *MonoLogger {
 	return logger
 }
 
-// NewLogger create a new logger for a given namespace and set of dimensions, returning an error if
-// the namespace or dimensions are invalid
+// NewMonoLogger create a new logger for a given set of dimensions and metric, returning an error if
+// the dimensions or metric are invalid
 func NewMonoLogger(dimensionSets []DimensionSet, metric Metric) (*MonoLogger, error) {
 	if metric.Name == "" || metric.Unit == "" {
-		return nil, errors.New("metric name, and metric unit cannot be empty")
+		return nil, errors.New("metric name and metric unit cannot be empty")
 	}
 
 	// Enforced by AWS specification
@@ -276,8 +266,7 @@ func (l *MonoLogger) fastLogEmbedded(value interface{}, dimensions ...Dimension)
 	// Set timestamp to current time
 	timestamp := time.Now().UnixNano() / NanosecondsPerMillisecond
 
-	err := validateDimensions(l.dimensionKeys, dimensions)
-	if err != nil {
+	if err := validateDimensions(l.dimensionKeys, dimensions); err != nil {
 		return err
 	}
 
@@ -303,6 +292,9 @@ func (l *MonoLogger) fastLogEmbedded(value interface{}, dimensions ...Dimension)
 	return nil
 }
 
+// validateDimensions takes a set of required dimensions and a slice of dimension structs and
+// verifies that each required key is present in the list of provided dimensions. Unfortunately
+// checking the inverse is not sufficient or this would be simpler.
 func validateDimensions(dimensionKeys map[string]struct{}, dimensions []Dimension) error {
 	for dimensionKey := range dimensionKeys {
 		found := false
@@ -319,6 +311,9 @@ func validateDimensions(dimensionKeys map[string]struct{}, dimensions []Dimensio
 	return nil
 }
 
+// buildDimensionKeys creates a set of each unique dimension name found a slice of DimensionSets.
+// This map is used to more easily verify that all the required dimensions are present for each call
+// to Log.
 func buildDimensionKeys(dimensionSets []DimensionSet) (map[string]struct{}, error) {
 	dimensionKeys := make(map[string]struct{})
 	for _, dimensionSet := range dimensionSets {
