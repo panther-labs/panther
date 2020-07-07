@@ -271,6 +271,7 @@ func TestIntegrationAPI(t *testing.T) {
 
 	t.Run("TestPolicies", func(t *testing.T) {
 		t.Run("TestPolicyPass", testPolicyPass)
+		t.Run("TestPolicyPassAllResourceTypes", testPolicyPassAllResourceTypes)
 		t.Run("TestPolicyFail", testPolicyFail)
 		t.Run("TestPolicyError", testPolicyError)
 		t.Run("TestPolicyMixed", testPolicyMixed)
@@ -353,6 +354,27 @@ func testPolicyPass(t *testing.T) {
 			Body:          policy.Body,
 			ResourceTypes: policy.ResourceTypes,
 			Tests:         policy.Tests,
+		},
+		HTTPClient: httpClient,
+	})
+
+	require.NoError(t, err)
+	expected := &models.TestPolicyResult{
+		TestSummary:  true,
+		TestsErrored: models.TestsErrored{},
+		TestsFailed:  models.TestsFailed{},
+		TestsPassed:  models.TestsPassed{string(policy.Tests[0].Name), string(policy.Tests[1].Name)},
+	}
+	assert.Equal(t, expected, result.Payload)
+}
+
+func testPolicyPassAllResourceTypes(t *testing.T) {
+	result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
+		Body: &models.TestPolicy{
+			AnalysisType:  models.AnalysisTypePOLICY,
+			Body:          "def policy(resource): return True",
+			ResourceTypes: []string{},   // Means applicable to all resource types
+			Tests:         policy.Tests, // just reuse from the example policy
 		},
 		HTTPClient: httpClient,
 	})
@@ -873,7 +895,7 @@ func bulkUploadSuccess(t *testing.T) {
 		NewGlobals:      aws.Int64(0),
 		TotalGlobals:    aws.Int64(0),
 	}
-	assert.Equal(t, expected, result.Payload)
+	require.Equal(t, expected, result.Payload)
 
 	// Verify the existing policy was updated - the created fields were unchanged
 	getResult, err := apiClient.Operations.GetPolicy(&operations.GetPolicyParams{

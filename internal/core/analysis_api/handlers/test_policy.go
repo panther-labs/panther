@@ -193,9 +193,7 @@ func getPolicyResults(input *models.TestPolicy) (*enginemodels.PolicyEngineOutpu
 		resources[i] = enginemodels.Resource{
 			Attributes: attrs,
 			ID:         testResourceID + strconv.Itoa(i),
-			// The engine picks a policy to run based on the input resource type. To make the engine run the
-			// input policy, we just pass one of its resource types in the input resource.
-			Type: input.ResourceTypes[0],
+			Type:       policyTestType(input),
 		}
 	}
 
@@ -245,4 +243,16 @@ func parseTestPolicy(request *events.APIGatewayProxyRequest) (*models.TestPolicy
 	}
 
 	return &result, nil
+}
+
+// policyTestType returns the resource type to use as the input to the policy engine.
+// The engine picks the policy to run based on the input resource type. To make the engine run the
+// input policy, we just pass one of its resource types in the input resource.
+// If the policy is applicable for all resource types, a placeholder value is returned since the engine will
+// run it for any resource type input.
+func policyTestType(input *models.TestPolicy) string {
+	if len(input.ResourceTypes) > 0 {
+		return input.ResourceTypes[0]
+	}
+	return "__ALL__"
 }
