@@ -245,25 +245,29 @@ func filterByStatus(filter *expression.ConditionBuilder, input *models.ListAlert
 		// Start with the first known key
 		var multiFilter expression.ConditionBuilder
 
-		// Alerts that have OPEN or "" status are considered open.
+		// Alerts that have any other status other than Triaged, Closed, or Resolved are considered open.
 		if *input.Status[0] == models.OpenStatus {
-			multiFilter = expression.
-				Or(
-					expression.Name(StatusKey).Equal(expression.Value(aws.String(models.OpenStatus))),
-					expression.Name(StatusKey).Equal(expression.Value(aws.String(models.EmptyStatus))),
-				)
+			multiFilter = expression.Name(StatusKey).
+				In(
+					expression.Value(models.TriagedStatus),
+					expression.Value(models.ClosedStatus),
+					expression.Value(models.ResolvedStatus),
+				).Not()
 		} else {
 			multiFilter = expression.Name(StatusKey).Equal(expression.Value(*input.Status[0]))
 		}
 
 		// Then add or conditions starting at a new slice from the second index
 		for _, statusSetting := range input.Status[1:] {
-			// Alerts that have OPEN or "" status are considered open.
-			if *input.Status[0] == models.OpenStatus {
+			// Alerts that have any other status other than Triaged, Closed, or Resolved are considered open.
+			if *statusSetting == models.OpenStatus {
 				multiFilter = multiFilter.
 					Or(
-						expression.Name(StatusKey).Equal(expression.Value(aws.String(models.OpenStatus))),
-						expression.Name(StatusKey).Equal(expression.Value(aws.String(models.EmptyStatus))),
+						expression.Name(StatusKey).In(
+							expression.Value(models.TriagedStatus),
+							expression.Value(models.ClosedStatus),
+							expression.Value(models.ResolvedStatus),
+						).Not(),
 					)
 			} else {
 				multiFilter = multiFilter.Or(expression.Name(StatusKey).Equal(expression.Value(*statusSetting)))
