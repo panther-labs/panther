@@ -50,6 +50,7 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
           <Table.HeaderCell align="center">Severity</Table.HeaderCell>
           <Table.HeaderCell>Alert</Table.HeaderCell>
           <Table.HeaderCell />
+          <Table.HeaderCell align="center">Status</Table.HeaderCell>
           <Table.SortableHeaderCell
             align="right"
             onClick={() => handleSort(ListAlertsSortFieldsEnum.CreatedAt)}
@@ -105,6 +106,7 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
                 <Icon type="external-link" size="x-small" ml={1} />
               </PseudoBox>
             </Table.Cell>
+            <Table.Cell align="center">{alert.status || 'OPEN'}</Table.Cell>
             <Table.Cell align="right">{formatDatetime(alert.creationTime)}</Table.Cell>
             <Table.Cell align="right">{formatDatetime(alert.updateTime)}</Table.Cell>
             <Table.Cell align="right" mono>

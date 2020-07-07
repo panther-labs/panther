@@ -35,6 +35,7 @@ const RuleDetailsAlertsTable: React.FC<RuleDetailsAlertsTableProps> = ({ alerts 
         <Table.Row>
           <Table.HeaderCell align="center">Severity</Table.HeaderCell>
           <Table.HeaderCell>Alert</Table.HeaderCell>
+          <Table.HeaderCell align="center">Status</Table.HeaderCell>
           <Table.HeaderCell align="right">Created At</Table.HeaderCell>
           <Table.HeaderCell align="right">Last Matched At</Table.HeaderCell>
           <Table.HeaderCell align="right">Events</Table.HeaderCell>
@@ -53,6 +54,7 @@ const RuleDetailsAlertsTable: React.FC<RuleDetailsAlertsTableProps> = ({ alerts 
                 #{shortenId(alert.alertId)} {alert.title}
               </Link>
             </Table.Cell>
+            <Table.Cell align="center">{alert.status || 'OPEN'}</Table.Cell>
             <Table.Cell align="right">{formatDatetime(alert.creationTime)}</Table.Cell>
             <Table.Cell align="right">{formatDatetime(alert.updateTime)}</Table.Cell>
             <Table.Cell align="right" mono>
