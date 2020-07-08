@@ -177,6 +177,8 @@ Reference: https://docs.gitlab.com/ee/administration/logs.html#production_jsonlo
 <tr><td valign=top><code>db_duration_s</code></td><td><code>float</code></td><td valign=top>Total time to retrieve data from PostgreSQL</td></tr>
 <tr><td valign=top><code>view_duration_s</code></td><td><code>float</code></td><td valign=top>Total time taken inside the Rails views</td></tr>
 <tr><td valign=top><code><b>duration_s</b></code></td><td><code>float</code></td><td valign=top>Total time taken to retrieve the request</td></tr>
+<tr><td valign=top><code>meta.caller_id</code></td><td><code>string</code></td><td valign=top>Caller ID</td></tr>
+<tr><td valign=top><code>location</code></td><td><code>string</code></td><td valign=top>(Applies only to redirects) The redirect URL</td></tr>
 <tr><td valign=top><code>exception.class</code></td><td><code>string</code></td><td valign=top>Class name of the exception that occurred</td></tr>
 <tr><td valign=top><code>exception.message</code></td><td><code>string</code></td><td valign=top>Message of the exception that occurred</td></tr>
 <tr><td valign=top><code>exception.backtrace</code></td><td><code>[string]</code></td><td valign=top>Stack trace of the exception that occurred</td></tr>

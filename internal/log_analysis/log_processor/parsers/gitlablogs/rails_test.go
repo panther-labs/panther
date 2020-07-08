@@ -22,12 +22,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
+	"github.com/panther-labs/panther/pkg/box"
 )
 
 func TestGitLabProduction(t *testing.T) {
@@ -62,34 +62,34 @@ func TestGitLabProduction(t *testing.T) {
 	expectedTime := time.Date(2017, 8, 8, 20, 15, 54, int(821*time.Millisecond), time.UTC)
 	expectedEvent := &Production{
 		Time:            (*timestamp.RFC3339)(&expectedTime),
-		Method:          aws.String("GET"),
-		Path:            aws.String("/gitlab/gitlab-foss/issues/1234"),
-		Format:          aws.String("html"),
-		Controller:      aws.String("Projects::IssuesController"),
-		Action:          aws.String("show"),
-		Status:          aws.Int(200),
-		DurationSeconds: aws.Float32(20.54),
-		CorrelationID:   aws.String("O1SdybnnIq7"),
+		Method:          box.String("GET"),
+		Path:            box.String("/gitlab/gitlab-foss/issues/1234"),
+		Format:          box.String("html"),
+		Controller:      box.String("Projects::IssuesController"),
+		Action:          box.String("show"),
+		Status:          box.Int(200),
+		DurationSeconds: box.Float32(20.54),
+		CorrelationID:   box.String("O1SdybnnIq7"),
 		Params: []QueryParam{
-			{Key: aws.String("param_key"), Value: []byte("\"param_value\"")},
+			{Key: box.String("param_key"), Value: []byte("\"param_value\"")},
 		},
-		RemoteIP:              aws.String("18.245.0.1"),
-		UserID:                aws.Int64(1),
-		UserName:              aws.String("admin"),
-		GitalyCalls:           aws.Int(16),
-		GitalyDurationSeconds: aws.Float32(0.16),
-		QueueDurationSeconds:  aws.Float32(0),
-		CPUSeconds:            aws.Float32(17.5),
-		DBDurationSeconds:     aws.Float32(0.08),
-		RedisCalls:            aws.Int(115),
-		RedisDurationSeconds:  aws.Float32(0.13),
-		RedisReadBytes:        aws.Int64(1507378),
-		RedisWriteBytes:       aws.Int64(2920),
-		ViewDurationSeconds:   aws.Float32(2.39),
+		RemoteIP:              box.String("18.245.0.1"),
+		UserID:                box.Int64(1),
+		UserName:              box.String("admin"),
+		GitalyCalls:           box.Int(16),
+		GitalyDurationSeconds: box.Float32(0.16),
+		QueueDurationSeconds:  box.Float32(0),
+		CPUSeconds:            box.Float32(17.5),
+		DBDurationSeconds:     box.Float32(0.08),
+		RedisCalls:            box.Int(115),
+		RedisDurationSeconds:  box.Float32(0.13),
+		RedisReadBytes:        box.Int64(1507378),
+		RedisWriteBytes:       box.Int64(2920),
+		ViewDurationSeconds:   box.Float32(2.39),
 	}
 
 	// panther fields
-	expectedEvent.PantherLogType = aws.String("GitLab.Production")
+	expectedEvent.PantherLogType = box.String("GitLab.Production")
 	expectedEvent.AppendAnyIPAddressPtr(expectedEvent.RemoteIP)
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
 	checkGitLabProduction(t, log, expectedEvent)
@@ -130,41 +130,105 @@ func TestGitLabProductionException(t *testing.T) {
 	expectedTime := time.Date(2019, 11, 14, 13, 12, 46, int(156*time.Millisecond), time.UTC)
 	expectedEvent := &Production{
 		Time:                  (*timestamp.RFC3339)(&expectedTime),
-		Method:                aws.String("GET"),
-		Path:                  aws.String("/admin"),
-		Format:                aws.String("html"),
-		Controller:            aws.String("Admin::DashboardController"),
-		Action:                aws.String("index"),
-		Status:                aws.Int(500),
-		DurationSeconds:       aws.Float32(20.54),
+		Method:                box.String("GET"),
+		Path:                  box.String("/admin"),
+		Format:                box.String("html"),
+		Controller:            box.String("Admin::DashboardController"),
+		Action:                box.String("index"),
+		Status:                box.Int(500),
+		DurationSeconds:       box.Float32(20.54),
 		Params:                []QueryParam{},
-		RemoteIP:              aws.String("127.0.0.1"),
-		UserID:                aws.Int64(1),
-		UserName:              aws.String("root"),
-		UserAgent:             aws.String("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:70.0) Gecko/20100101 Firefox/70.0"),
-		QueueDurationSeconds:  aws.Float32(0),
-		CorrelationID:         aws.String("O1SdybnnIq7"),
-		CPUSeconds:            aws.Float32(17.5),
-		DBDurationSeconds:     aws.Float32(0.08),
-		GitalyCalls:           aws.Int(16),
-		GitalyDurationSeconds: aws.Float32(0.16),
-		RedisCalls:            aws.Int(115),
-		RedisDurationSeconds:  aws.Float32(0.13),
-		ViewDurationSeconds:   aws.Float32(2.39),
+		RemoteIP:              box.String("127.0.0.1"),
+		UserID:                box.Int64(1),
+		UserName:              box.String("root"),
+		UserAgent:             box.String("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:70.0) Gecko/20100101 Firefox/70.0"),
+		QueueDurationSeconds:  box.Float32(0),
+		CorrelationID:         box.String("O1SdybnnIq7"),
+		CPUSeconds:            box.Float32(17.5),
+		DBDurationSeconds:     box.Float32(0.08),
+		GitalyCalls:           box.Int(16),
+		GitalyDurationSeconds: box.Float32(0.16),
+		RedisCalls:            box.Int(115),
+		RedisDurationSeconds:  box.Float32(0.13),
+		ViewDurationSeconds:   box.Float32(2.39),
 
-		ExceptionClass:   aws.String("NameError"),
-		ExceptionMessage: aws.String("undefined local variable or method for #<Admin::DashboardController:0x00007ff3c9648588>"),
+		ExceptionClass:   box.String("NameError"),
+		ExceptionMessage: box.String("undefined local variable or method for #<Admin::DashboardController:0x00007ff3c9648588>"),
 		ExceptionBacktrace: []string{
 			"ee/lib/gitlab/jira/middleware.rb:19:in call",
 		},
 	}
 
 	// panther fields
-	expectedEvent.PantherLogType = aws.String("GitLab.Production")
+	expectedEvent.PantherLogType = box.String("GitLab.Production")
 	expectedEvent.AppendAnyIPAddressPtr(expectedEvent.RemoteIP)
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
 	checkGitLabProduction(t, log, expectedEvent)
 }
+
+func TestGitLabProductionRedirect(t *testing.T) {
+	log := `
+{
+  "method":"GET",
+  "path":"/index.php",
+  "format":null,
+  "controller":"ApplicationController",
+  "action":"route_not_found",
+  "status":302,
+  "location":"http://34.222.254.254/users/sign_in",
+  "time":"2020-07-05T19:35:32.337Z",
+  "params":[{"key":"vars","value":{"0":"md5","1":["HelloThinkPHP"]}}],
+  "remote_ip":"195.54.254.254",
+  "user_id":null,
+  "username":null,
+  "ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)",
+  "queue_duration_s":0.007208,
+  "correlation_id":"DScuWzVUYA5",
+  "meta.caller_id":"ApplicationController#route_not_found",
+  "redis_calls":1,
+  "redis_duration_s":0.000292,
+  "cpu_s":0.02,
+  "db_duration_s":0.0,
+  "view_duration_s":0.0,
+  "duration_s":0.00341,
+  "tag":"test"
+}
+`
+	expectedTime := time.Date(2020, 7, 5, 19, 35, 32, int(337*time.Millisecond), time.UTC)
+	expectedEvent := &Production{
+		Time:            (*timestamp.RFC3339)(&expectedTime),
+		Method:          box.String("GET"),
+		Path:            box.String("/index.php"),
+		Controller:      box.String("ApplicationController"),
+		Action:          box.String("route_not_found"),
+		Status:          box.Int(302),
+		DurationSeconds: box.Float32(0.00341),
+		Params: []QueryParam{
+			{
+				Key:   box.String("vars"),
+				Value: *testutil.NewRawMessage(`{"0":"md5","1":["HelloThinkPHP"]}`),
+			},
+		},
+		RemoteIP:             box.String("195.54.254.254"),
+		UserAgent:            box.String("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"),
+		QueueDurationSeconds: box.Float32(0.007208),
+		CorrelationID:        box.String("DScuWzVUYA5"),
+		CPUSeconds:           box.Float32(0.02),
+		DBDurationSeconds:    box.Float32(0.0),
+		RedisCalls:           box.Int(1),
+		RedisDurationSeconds: box.Float32(0.000292),
+		ViewDurationSeconds:  box.Float32(0.0),
+		MetaCallerID:         box.String("ApplicationController#route_not_found"),
+		Location:             box.String("http://34.222.254.254/users/sign_in"),
+	}
+
+	// panther fields
+	expectedEvent.PantherLogType = box.String("GitLab.Production")
+	expectedEvent.AppendAnyIPAddressPtr(expectedEvent.RemoteIP)
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+	checkGitLabProduction(t, log, expectedEvent)
+}
+
 func TestGitLabProductionType(t *testing.T) {
 	parser := (&ProductionParser{}).New()
 	require.Equal(t, "GitLab.Production", parser.LogType())

@@ -60,7 +60,7 @@ func TestCloudTrailLogGenerateDataKey(t *testing.T) {
 		RecipientAccountID: aws.String("777777777777"),
 		SharedEventID:      aws.String("238c190c-1a30-4756-8e08-19fc36ad1b9f"),
 		//nolint:lll
-		RequestParameters: newRawMessage(`{"keySpec":"AES_256","encryptionContext":{"aws:cloudtrail:arn":"arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail","aws:s3:arn":"arn:aws:s3:::panther-lab-cloudtrail/AWSLogs/888888888888/CloudTrail/us-west-2/2018/08/26/888888888888_CloudTrail_us-west-2_20180826T1410Z_inUwlhwpSGtlqmIN.json.gz"},"keyId":"arn:aws:kms:us-west-2:888888888888:key/72c37aae-1000-4058-93d4-86374c0fe9a0"}`),
+		RequestParameters: testutil.NewRawMessage(`{"keySpec":"AES_256","encryptionContext":{"aws:cloudtrail:arn":"arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail","aws:s3:arn":"arn:aws:s3:::panther-lab-cloudtrail/AWSLogs/888888888888/CloudTrail/us-west-2/2018/08/26/888888888888_CloudTrail_us-west-2_20180826T1410Z_inUwlhwpSGtlqmIN.json.gz"},"keyId":"arn:aws:kms:us-west-2:888888888888:key/72c37aae-1000-4058-93d4-86374c0fe9a0"}`),
 	}
 
 	// panther fields
@@ -122,7 +122,7 @@ func TestCloudTrailLogDecrypt(t *testing.T) {
 		},
 		EventType: aws.String("AwsApiCall"),
 		//nolint:lll
-		RequestParameters: newRawMessage(`{"encryptionContext":{"aws:lambda:FunctionArn":"arn:aws:lambda:us-east-1:888888888888:function:panther-log-processor"},"encryptionAlgorithm":"SYMMETRIC_DEFAULT"}`),
+		RequestParameters: testutil.NewRawMessage(`{"encryptionContext":{"aws:lambda:FunctionArn":"arn:aws:lambda:us-east-1:888888888888:function:panther-log-processor"},"encryptionAlgorithm":"SYMMETRIC_DEFAULT"}`),
 	}
 
 	// panther fields

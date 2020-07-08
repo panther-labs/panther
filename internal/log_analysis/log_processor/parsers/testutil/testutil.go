@@ -178,3 +178,8 @@ func CheckPantherMultiline(t *testing.T, logs string, parser parsers.LogParser, 
 		EqualPantherLog(t, expect, []*parsers.PantherLog{result}, nil)
 	}
 }
+
+func NewRawMessage(jsonString string) *jsoniter.RawMessage {
+	rawMsg := (jsoniter.RawMessage)(jsonString)
+	return &rawMsg
+}
