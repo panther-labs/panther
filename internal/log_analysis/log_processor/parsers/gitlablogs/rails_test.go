@@ -206,7 +206,7 @@ func TestGitLabProductionRedirect(t *testing.T) {
 		Params: []QueryParam{
 			{
 				Key:   box.String("vars"),
-				Value: *testutil.NewRawMessage(`{"0":"md5","1":["HelloThinkPHP"]}`),
+				Value: []byte(`{"0":"md5","1":["HelloThinkPHP"]}`),
 			},
 		},
 		RemoteIP:             box.String("195.54.254.254"),
