@@ -73,7 +73,7 @@ type ExampleLogDetails struct {
 1. Use the `validate` tag as appropriate to represent the expected field values. If the field is mandatory, mark is as `validate:"required"`.
 1. Always include a `description` tag with a short summary of each field which is viewable in the Panther documentation and Data Explorer.
 1. Pick the right [datatype](https://tour.golang.org/basics/11) for each field and make sure it's a pointer. For numbers, use specific-length types (like `int32` versus `int`). Use `uintX` types only when it makes sense for the value of the field (like `ports`).
-1. Express time fields as `*timestamp.RFC3339` for the most consistency in the data lake.
+1. Express time fields as `*timestamp.RFC3339`.
 1. When parsing dynamic fields, such as request or response parameters, use the `*jsoniter.RawMessage` type.
 
 {% hint style="info" %}
