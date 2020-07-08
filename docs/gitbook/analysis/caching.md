@@ -1,10 +1,12 @@
 # Rule Caching
 
-Rules can cache simple values in the `panther-kv-store` during analysis with built-in helper functions.
+Panther's real-time analysis engine examines events one-by-one, and sometimes it's helpful to keep state across invocations.
 
-## Imports
+To accommodate stateful checks, rules can cache values by using built-in helper functions.
 
-The first step is to import the open source helpers library:
+## Importing the Helpers
+
+The first step is to import the open source helpers library that contains caching functions:
 
 ```python
 import panther_oss_helpers

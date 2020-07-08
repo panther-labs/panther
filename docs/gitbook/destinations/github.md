@@ -10,7 +10,7 @@ The integration is most useful when infrastructure is defined in code such as wi
 
 ![](../.gitbook/assets/screen-shot-2019-10-21-at-12.48.52-pm.png)
 
-Follow GitHub's documentation available [here](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line) on generating an API tokens. Before you start, we recommend creating a dedicated Panther Alerts service account on GitHub.
+Follow GitHub's documentation available [here](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line) on generating an API token. Before you start, we recommend creating a dedicated Panther Alerts service account on GitHub.
 
 First enter the repository name into the Panther destination configuration. This will be in the form `owner/repo_name`
 

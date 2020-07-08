@@ -116,12 +116,9 @@ func TestPolicy(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 			testResults.TestsPassed = append(testResults.TestsPassed, string(test.Name))
 
 		default:
-			// The test case had a resource type that the policy did not apply to, consider an error for now.
-			testResults.TestsErrored = append(testResults.TestsErrored, &models.TestErrorResult{
-				ErrorMessage: "test resource type " + string(test.ResourceType) + " is not applicable to this policy",
-				Name:         string(test.Name),
-			})
-			testResults.TestSummary = false
+			// This test didn't run (result.{Errored, Failed, Passed} are all empty). This must not happen absent a bug.
+			zap.L().Error("unable to run test for resourceID", zap.String("resourceID", result.ID))
+			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 		}
 	}
 
@@ -143,7 +140,6 @@ func getRuleResults(input *models.TestPolicy) (*enginemodels.RulesEngineOutput, 
 		inputEvents[i] = enginemodels.Event{
 			Data: attrs,
 			ID:   testResourceID + strconv.Itoa(i),
-			Type: string(test.ResourceType),
 		}
 	}
 
@@ -196,7 +192,7 @@ func getPolicyResults(input *models.TestPolicy) (*enginemodels.PolicyEngineOutpu
 		resources[i] = enginemodels.Resource{
 			Attributes: attrs,
 			ID:         testResourceID + strconv.Itoa(i),
-			Type:       string(test.ResourceType),
+			Type:       policyTestType(input),
 		}
 	}
 
@@ -246,4 +242,16 @@ func parseTestPolicy(request *events.APIGatewayProxyRequest) (*models.TestPolicy
 	}
 
 	return &result, nil
+}
+
+// policyTestType returns the resource type to use as the input to the policy engine.
+// The engine picks the policy to run based on the input resource type. To make the engine run the
+// input policy, we just pass one of its resource types in the input resource.
+// If the policy is applicable for all resource types, a placeholder value is returned since the engine will
+// run it for any resource type input.
+func policyTestType(input *models.TestPolicy) string {
+	if len(input.ResourceTypes) > 0 {
+		return input.ResourceTypes[0]
+	}
+	return "__ALL__"
 }
