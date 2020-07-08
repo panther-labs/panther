@@ -54,7 +54,7 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ user, ...rest }) => {
         title: `Successfully deleted user: ${userDisplayName}`,
       });
       // Checking if user deleted is the same as the user signed in
-      if (userInfo.sub === user.id) await signOut();
+      if (userInfo.sub === user.id) await signOut({ global: true });
     },
     onError: () => {
       pushSnackbar({
