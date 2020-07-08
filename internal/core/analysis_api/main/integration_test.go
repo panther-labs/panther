@@ -348,45 +348,71 @@ func TestIntegrationAPI(t *testing.T) {
 }
 
 func testPolicyPass(t *testing.T) {
-	result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
-		Body: &models.TestPolicy{
+	for _, tp := range []models.TestPolicy{
+		{
 			AnalysisType:  models.AnalysisTypePOLICY,
 			Body:          policy.Body,
 			ResourceTypes: policy.ResourceTypes,
 			Tests:         policy.Tests,
 		},
-		HTTPClient: httpClient,
-	})
+		{
+			AnalysisType:  models.AnalysisTypeRULE,
+			Body:          "def rule(e): return True",
+			ResourceTypes: policy.ResourceTypes,
+			Tests:         policy.Tests,
+		},
+	} {
+		tp := tp
+		t.Run(string(tp.AnalysisType), func(t *testing.T) {
+			result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
+				Body:       &tp,
+				HTTPClient: httpClient,
+			})
 
-	require.NoError(t, err)
-	expected := &models.TestPolicyResult{
-		TestSummary:  true,
-		TestsErrored: models.TestsErrored{},
-		TestsFailed:  models.TestsFailed{},
-		TestsPassed:  models.TestsPassed{string(policy.Tests[0].Name), string(policy.Tests[1].Name)},
+			require.NoError(t, err)
+			expected := &models.TestPolicyResult{
+				TestSummary:  true,
+				TestsErrored: models.TestsErrored{},
+				TestsFailed:  models.TestsFailed{},
+				TestsPassed:  models.TestsPassed{string(tp.Tests[0].Name), string(tp.Tests[1].Name)},
+			}
+			assert.Equal(t, expected, result.Payload)
+		})
 	}
-	assert.Equal(t, expected, result.Payload)
 }
 
 func testPolicyPassAllResourceTypes(t *testing.T) {
-	result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
-		Body: &models.TestPolicy{
+	for _, tp := range []models.TestPolicy{
+		{
 			AnalysisType:  models.AnalysisTypePOLICY,
 			Body:          "def policy(resource): return True",
-			ResourceTypes: []string{},   // Means applicable to all resource types
+			ResourceTypes: []string{},   // means applicable to all resource types
 			Tests:         policy.Tests, // just reuse from the example policy
 		},
-		HTTPClient: httpClient,
-	})
+		{
+			AnalysisType:  models.AnalysisTypeRULE,
+			Body:          "def rule(e): return True",
+			ResourceTypes: []string{},   // means applicable to all resource types
+			Tests:         policy.Tests, // just reuse from the example policy
+		},
+	} {
+		tp := tp
+		t.Run(string(tp.AnalysisType), func(t *testing.T) {
+			result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
+				Body:       &tp,
+				HTTPClient: httpClient,
+			})
 
-	require.NoError(t, err)
-	expected := &models.TestPolicyResult{
-		TestSummary:  true,
-		TestsErrored: models.TestsErrored{},
-		TestsFailed:  models.TestsFailed{},
-		TestsPassed:  models.TestsPassed{string(policy.Tests[0].Name), string(policy.Tests[1].Name)},
+			require.NoError(t, err)
+			expected := &models.TestPolicyResult{
+				TestSummary:  true,
+				TestsErrored: models.TestsErrored{},
+				TestsFailed:  models.TestsFailed{},
+				TestsPassed:  models.TestsPassed{string(tp.Tests[0].Name), string(tp.Tests[1].Name)},
+			}
+			assert.Equal(t, expected, result.Payload)
+		})
 	}
-	assert.Equal(t, expected, result.Payload)
 }
 
 func testPolicyFail(t *testing.T) {

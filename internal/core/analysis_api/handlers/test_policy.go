@@ -140,7 +140,6 @@ func getRuleResults(input *models.TestPolicy) (*enginemodels.RulesEngineOutput, 
 		inputEvents[i] = enginemodels.Event{
 			Data: attrs,
 			ID:   testResourceID + strconv.Itoa(i),
-			Type: input.ResourceTypes[0], // TODO(giorgosp): Seems not used by the rules engine
 		}
 	}
 
