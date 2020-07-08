@@ -164,7 +164,7 @@ const BaseRuleFormTestSection: React.FC = () => {
                     </Box>
                   ))}
                 </Flex>
-                <Grid columnGap={5} templateColumns="1fr 1fr 2fr" mt={2} mb={6}>
+                <Grid columnGap={5} templateColumns="1fr 2fr" mt={2} mb={6}>
                   <Field
                     as={FormikTextInput}
                     name={`tests[${activeTabIndex}].name`}
