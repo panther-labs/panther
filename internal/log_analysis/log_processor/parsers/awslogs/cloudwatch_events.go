@@ -19,9 +19,9 @@ package awslogs
  */
 
 import (
-	"errors"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -57,7 +57,7 @@ func (p *CloudWatchEventParser) New() parsers.LogParser {
 func (p *CloudWatchEventParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	var event CloudWatchEvent
 	if err := jsoniter.UnmarshalFromString(log, &event); err != nil {
-		return nil, errors.New("failed to parse event")
+		return nil, errors.Wrap(err, "failed to parse event")
 	}
 	event.updatePantherFields(p)
 
