@@ -109,6 +109,10 @@ type Rule struct {
 	// Required: true
 	Tests TestSuite `json:"tests"`
 
+	// threshold
+	// Required: true
+	Threshold Threshold `json:"threshold"`
+
 	// version Id
 	// Required: true
 	VersionID VersionID `json:"versionId"`
@@ -187,6 +191,10 @@ func (m *Rule) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateTests(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateThreshold(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -425,6 +433,18 @@ func (m *Rule) validateTests(formats strfmt.Registry) error {
 	if err := m.Tests.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("tests")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *Rule) validateThreshold(formats strfmt.Registry) error {
+
+	if err := m.Threshold.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("threshold")
 		}
 		return err
 	}

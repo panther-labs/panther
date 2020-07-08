@@ -24,39 +24,22 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"strconv"
-
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/validate"
 )
 
-// OutputIds A list of destinations IDs to send an alert that overrides the severity rating triggers set in the destination itself.
+// Threshold The threshold (number of events) that will have to be reached during the dedupPeriodMinutes in order for the rule to fire an alarm
 //
-//
-// swagger:model outputIds
-type OutputIds []string
+// swagger:model threshold
+type Threshold int64
 
-// Validate validates this output ids
-func (m OutputIds) Validate(formats strfmt.Registry) error {
+// Validate validates this threshold
+func (m Threshold) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	iOutputIdsSize := int64(len(m))
-
-	if err := validate.MaxItems("", "body", iOutputIdsSize, 500); err != nil {
+	if err := validate.MinimumInt("", "body", int64(m), 0, false); err != nil {
 		return err
-	}
-
-	if err := validate.UniqueItems("", "body", m); err != nil {
-		return err
-	}
-
-	for i := 0; i < len(m); i++ {
-
-		if err := validate.Pattern(strconv.Itoa(i), "body", string(m[i]), `[a-zA-Z0-9\-\. ]{1,200}`); err != nil {
-			return err
-		}
-
 	}
 
 	if len(res) > 0 {

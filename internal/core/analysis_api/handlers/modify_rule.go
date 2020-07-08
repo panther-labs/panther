@@ -46,6 +46,7 @@ func ModifyRule(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 	item := &tableItem{
 		Body:               input.Body,
 		DedupPeriodMinutes: input.DedupPeriodMinutes,
+		Threshold:          input.Threshold,
 		Description:        input.Description,
 		DisplayName:        input.DisplayName,
 		Enabled:            input.Enabled,
