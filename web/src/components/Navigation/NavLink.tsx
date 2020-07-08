@@ -19,6 +19,7 @@
 import { Box, Icon, IconProps, PseudoBox } from 'pouncejs';
 import React from 'react';
 import useRouter from 'Hooks/useRouter';
+import { addTrailingSlash } from 'Helpers/utils';
 import { Link as RRLink } from 'react-router-dom';
 
 type NavLinkProps = {
@@ -29,8 +30,10 @@ type NavLinkProps = {
 
 const NavLink: React.FC<NavLinkProps> = ({ icon, label, to }) => {
   const { location } = useRouter();
+  const pathname = addTrailingSlash(location.pathname);
+  const destination = addTrailingSlash(to);
+  const isActive = pathname.startsWith(destination);
 
-  const isActive = location.pathname.startsWith(to);
   return (
     <Box as={RRLink} display="block" to={to} my={1} aria-current={isActive ? 'page' : undefined}>
       <PseudoBox
