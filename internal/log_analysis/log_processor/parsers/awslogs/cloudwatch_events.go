@@ -19,7 +19,6 @@ package awslogs
  */
 
 import (
-
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
