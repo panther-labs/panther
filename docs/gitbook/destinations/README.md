@@ -1,8 +1,10 @@
 # Overview
 
-Destinations are used to notify your team about suspicious activity or vulnerable cloud infrastructure. When a policy fails on a resource or a rule triggers on an event, an alert is generated and sent to the configured destination.
+Destinations are used to send alerts to your team.
 
-Alerts are routed based on severity. For example, if a Rule is configured with a `Critical` severity, it will dispatch alerts to the  destinations configured to handle `Critical` alerts.
+When a policy fails on a resource or a rule triggers on an event, an alert is generated and sent to the configured destination. Alerts are routed based on severity.
+
+For example, if a Rule is configured with a `Critical` severity, it will dispatch alerts to the  destinations configured to handle `Critical` alerts.
 
 A single alert can dispatch to multiple destinations simultaneously, such as creating a Jira ticket, sending an email, and paging the on-call.
 

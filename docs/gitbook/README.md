@@ -1,8 +1,8 @@
 # What is Panther?
 
-Panther is an open source platform designed to bring security visibility at cloud-scale. It's a modern and flexible solution to the challenges of collection, analysis, and retention of critical security data. Panther detects threats, improves cloud security posture, and powers investigations.
+#### Panther is an open source platform for detecting threats, improving cloud security posture, and powering investigations.
 
-![Architecture](.gitbook/assets/panther_graphic_flow.jpg)
+![Architecture](.gitbook/assets/diagrams/panther_overview_transparent.png)
 
 **Benefits**
 
@@ -31,13 +31,13 @@ Panther is an open source platform designed to bring security visibility at clou
 
 To deploy Panther Community Edition, continue to the [quick start](quick-start.md) guide.
 
-Panther also has an [Enterprise](enterprise) Edition with access to the following features:
+### Premium
+
+Panther provides additional features in its [Enterprise](enterprise) edition for advanced teams:
 - Data Explorer: Search your collected data, generated alerts, and threat hunt with SQL
-- SaaS Log Collection: Automatically load popular SaaS logs into Panther.
+- SaaS Log Collection: Automatically load popular SaaS logs into Panther such as Okta, G Suite, and more.
 - Role-based Access Control: Assign roles to your Panther users
 - Single Sign-on: Integrate solutions such as Okta to streamline and manage identities.
 - Premium Detection Packs: Built-in support for PCI and more advanced off the shelf rules.
-- Dedicated onboarding and operational support
-- Flexible Deployments with Cloud Hosted or Cloud Premise
 
 To receive a trial of Panther Enterprise, [sign up here](https://runpanther.io/request-a-demo/)!

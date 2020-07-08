@@ -15,7 +15,7 @@ PipLayer:
   - requests==2.23.0
 ```
 
-Alternatively, you can override the runtime libraries by attaching a Lambda layer in the `panther_config.yml`:
+Alternatively, you can override the runtime libraries by attaching a custom Lambda layer in the `panther_config.yml`:
 
 ```yaml
 BackendParameterValues:

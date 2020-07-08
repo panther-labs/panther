@@ -18,7 +18,6 @@ mutation UpdatePolicy($input: UpdatePolicyInput!) {
             expectedResult
             name
             resource
-            resourceType
         }
     }
 }

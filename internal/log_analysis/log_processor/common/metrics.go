@@ -1,3 +1,5 @@
+package common
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,25 +18,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
+import (
+	"github.com/panther-labs/panther/pkg/metrics"
+)
 
-import * as Types from '../../../__generated__/schema';
-
-import gql from 'graphql-tag';
-
-export type PolicyDetailsExtra = Pick<Types.PolicyDetails, 'body'> & {
-  tests?: Types.Maybe<
-    Array<Types.Maybe<Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource'>>>
-  >;
-};
-
-export const PolicyDetailsExtra = gql`
-  fragment PolicyDetailsExtra on PolicyDetails {
-    body
-    tests {
-      expectedResult
-      name
-      resource
-    }
-  }
-`;
+var (
+	BytesProcessedLogger = metrics.MustMonoLogger([]metrics.DimensionSet{
+		{
+			"Component",
+			"LogType",
+		},
+	}, metrics.Metric{
+		Name: "BytesProcessed",
+		Unit: metrics.UnitBytes,
+	})
+	Component = metrics.Dimension{
+		Name:  "Component",
+		Value: "LogProcessor",
+	}
+)

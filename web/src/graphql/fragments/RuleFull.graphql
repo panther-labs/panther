@@ -6,6 +6,5 @@ fragment RuleFull on RuleDetails {
     expectedResult
     name
     resource
-    resourceType
   }
 }

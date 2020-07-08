@@ -42,9 +42,8 @@ const validationSchema = Yup.object().shape({
     .of(
       Yup.object().shape({
         name: Yup.string().required(),
-        boolean: Yup.boolean().required(),
+        expectedResult: Yup.boolean().required(),
         resource: Yup.string().required(),
-        resourceType: Yup.string().required(),
       })
     )
     .unique('Test names must be unique', 'name'),
