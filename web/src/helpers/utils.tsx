@@ -316,3 +316,13 @@ export const generateRandomColor = () => Math.floor(Math.random() * 16777215).to
 export const remToPx = (rem: string) => {
   return parseFloat(rem) * parseFloat(getComputedStyle(document.documentElement).fontSize);
 };
+
+/**
+ * Appends a trailing slash if missing from a url.
+ *
+ * @param {String} url A URL to check
+ * @returns {String} A URL with a trailing slash
+ */
+export const addTrailingSlash = (url: string) => {
+  return url.endsWith('/') ? url : `${url}/`;
+};
