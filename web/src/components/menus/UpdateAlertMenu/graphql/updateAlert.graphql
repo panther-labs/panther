@@ -1,0 +1,5 @@
+mutation UpdateAlert($input: UpdateAlertInput!) {
+  updateAlert(input: $input) {
+    ...AlertSummaryFull
+  }
+}

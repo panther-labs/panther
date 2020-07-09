@@ -27,6 +27,7 @@ type Mutation {
   resetUserPassword(id: ID!): User!
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
   testPolicy(input: TestPolicyInput): TestPolicyResponse
+  updateAlert(input: UpdateAlertInput!): AlertSummary
   updateDestination(input: DestinationInput!): Destination
   updateComplianceIntegration(input: UpdateComplianceIntegrationInput!): ComplianceIntegration!
   updateS3LogIntegration(input: UpdateS3LogIntegrationInput!): S3LogIntegration!
@@ -155,6 +156,12 @@ type AlertSummary {
   ruleId: String
   severity: SeverityEnum
   status: String
+  updatedBy: ID
+}
+
+input UpdateAlertInput {
+  alertId: String!
+  status: AlertStatusesEnum!
 }
 
 input ListRulesInput {

@@ -22,8 +22,9 @@ import "time"
 
 // LambdaInput is the request structure for the alerts-api Lambda function.
 type LambdaInput struct {
-	GetAlert   *GetAlertInput   `json:"getAlert"`
-	ListAlerts *ListAlertsInput `json:"listAlerts"`
+	GetAlert    *GetAlertInput    `json:"getAlert"`
+	ListAlerts  *ListAlertsInput  `json:"listAlerts"`
+	UpdateAlert *UpdateAlertInput `json:"updateAlert"`
 }
 
 // GetAlertInput retrieves details for a single alert.
@@ -94,6 +95,28 @@ type ListAlertsInput struct {
 	SortDir *string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
 }
 
+// UpdateAlertInput updates an alert by its ID
+// {
+//     "updateAlert": {
+//         "alertId": "84c3e4b27c702a1c31e6eb412fc377f6",
+//         "status": "CLOSED"
+//         "userId": ""5f54cf4a-ec56-44c2-83bc-8b742600f307""
+//     }
+// }
+type UpdateAlertInput struct {
+	// ID of the alert to update
+	AlertID *string `json:"alertId" validate:"required"`
+
+	// Variables that we allow updating:
+	Status *string `json:"status" validate:"required,oneof=OPEN TRIAGED CLOSED RESOLVED"`
+
+	// User who made the change
+	RequesterID *string `json:"requesterId" validate:"required,uuid4"`
+}
+
+// UpdateAlertOutput the returne alert summary after an update
+type UpdateAlertOutput = AlertSummary
+
 // Constants defined for alert statuses
 const (
 	// Empty is the default value for an alert status and is used to create an alert
@@ -136,6 +159,7 @@ type AlertSummary struct {
 	Severity        *string    `json:"severity" validate:"required"`
 	Status          *string    `json:"status,omitempty"`
 	Title           *string    `json:"title" validate:"required"`
+	UpdatedBy       *string    `json:"updatedBy"`
 }
 
 // Alert contains the details of an alert

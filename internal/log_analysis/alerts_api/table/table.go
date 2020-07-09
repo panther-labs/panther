@@ -38,12 +38,14 @@ const (
 	SeverityKey        = "severity"
 	EventCountKey      = "eventCount"
 	StatusKey          = "status"
+	UpdatedByKey       = "updatedBy"
 )
 
 // API defines the interface for the alerts table which can be used for mocking.
 type API interface {
 	GetAlert(*string) (*AlertItem, error)
 	ListAll(*models.ListAlertsInput) ([]*AlertItem, *string, error)
+	UpdateAlert(*models.UpdateAlertInput) (*AlertItem, error)
 }
 
 // AlertsTable encapsulates a connection to the Dynamo alerts table.
@@ -74,4 +76,5 @@ type AlertItem struct {
 	Status          string    `json:"status"`
 	EventCount      int       `json:"eventCount"`
 	LogTypes        []string  `json:"logTypes"`
+	UpdatedBy       string    `json:"updatedBy"`
 }

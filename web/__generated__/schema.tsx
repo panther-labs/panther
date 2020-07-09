@@ -130,6 +130,7 @@ export type AlertSummary = {
   ruleId?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
   status?: Maybe<Scalars['String']>;
+  updatedBy?: Maybe<Scalars['ID']>;
 };
 
 export enum AnalysisTypeEnum {
@@ -560,6 +561,7 @@ export type Mutation = {
   resetUserPassword: User;
   suppressPolicies?: Maybe<Scalars['Boolean']>;
   testPolicy?: Maybe<TestPolicyResponse>;
+  updateAlert?: Maybe<AlertSummary>;
   updateDestination?: Maybe<Destination>;
   updateComplianceIntegration: ComplianceIntegration;
   updateS3LogIntegration: S3LogIntegration;
@@ -641,6 +643,10 @@ export type MutationSuppressPoliciesArgs = {
 
 export type MutationTestPolicyArgs = {
   input?: Maybe<TestPolicyInput>;
+};
+
+export type MutationUpdateAlertArgs = {
+  input: UpdateAlertInput;
 };
 
 export type MutationUpdateDestinationArgs = {
@@ -1058,6 +1064,11 @@ export type TestPolicyResponse = {
   testsErrored?: Maybe<Array<Maybe<PolicyUnitTestError>>>;
 };
 
+export type UpdateAlertInput = {
+  alertId: Scalars['String'];
+  status: AlertStatusesEnum;
+};
+
 export type UpdateComplianceIntegrationInput = {
   integrationId: Scalars['String'];
   integrationLabel?: Maybe<Scalars['String']>;
@@ -1347,6 +1358,7 @@ export type ResolversTypes = {
   AnalysisTypeEnum: AnalysisTypeEnum;
   TestPolicyResponse: ResolverTypeWrapper<TestPolicyResponse>;
   PolicyUnitTestError: ResolverTypeWrapper<PolicyUnitTestError>;
+  UpdateAlertInput: UpdateAlertInput;
   UpdateComplianceIntegrationInput: UpdateComplianceIntegrationInput;
   UpdateS3LogIntegrationInput: UpdateS3LogIntegrationInput;
   UpdateGeneralSettingsInput: UpdateGeneralSettingsInput;
@@ -1471,6 +1483,7 @@ export type ResolversParentTypes = {
   AnalysisTypeEnum: AnalysisTypeEnum;
   TestPolicyResponse: TestPolicyResponse;
   PolicyUnitTestError: PolicyUnitTestError;
+  UpdateAlertInput: UpdateAlertInput;
   UpdateComplianceIntegrationInput: UpdateComplianceIntegrationInput;
   UpdateS3LogIntegrationInput: UpdateS3LogIntegrationInput;
   UpdateGeneralSettingsInput: UpdateGeneralSettingsInput;
@@ -1521,6 +1534,7 @@ export type AlertSummaryResolvers<
   ruleId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
   status?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  updatedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -1915,6 +1929,12 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationTestPolicyArgs, never>
+  >;
+  updateAlert?: Resolver<
+    Maybe<ResolversTypes['AlertSummary']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationUpdateAlertArgs, 'input'>
   >;
   updateDestination?: Resolver<
     Maybe<ResolversTypes['Destination']>,

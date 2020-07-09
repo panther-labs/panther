@@ -59,25 +59,30 @@ func (API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAlertsO
 	return result, nil
 }
 
-// alertItemsToAlertSummary converts a DDB Alert Item to an Alert Summary that will be returned by the API
+// alertItemsToAlertSummary converts a list of DDB Alert Items to a Alert Summaries
 func alertItemsToAlertSummary(items []*table.AlertItem) []*models.AlertSummary {
 	result := make([]*models.AlertSummary, len(items))
 
 	for i, item := range items {
-		result[i] = &models.AlertSummary{
-			AlertID:         &item.AlertID,
-			RuleID:          &item.RuleID,
-			Status:          &item.Status,
-			DedupString:     &item.DedupString,
-			CreationTime:    &item.CreationTime,
-			Severity:        &item.Severity,
-			UpdateTime:      &item.UpdateTime,
-			EventsMatched:   &item.EventCount,
-			RuleDisplayName: item.RuleDisplayName,
-			Title:           getAlertTitle(item),
-			RuleVersion:     &item.RuleVersion,
-		}
+		result[i] = alertItemToAlertSummary(item)
 	}
 
 	return result
+}
+
+// alertItemToAlertSummary converts a DDB Alert Item to an Alert Summary
+func alertItemToAlertSummary(item *table.AlertItem) *models.AlertSummary {
+	return &models.AlertSummary{
+		AlertID:         &item.AlertID,
+		RuleID:          &item.RuleID,
+		Status:          &item.Status,
+		DedupString:     &item.DedupString,
+		CreationTime:    &item.CreationTime,
+		Severity:        &item.Severity,
+		UpdateTime:      &item.UpdateTime,
+		EventsMatched:   &item.EventCount,
+		RuleDisplayName: item.RuleDisplayName,
+		Title:           getAlertTitle(item),
+		RuleVersion:     &item.RuleVersion,
+	}
 }
