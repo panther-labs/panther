@@ -21,7 +21,7 @@ import { PolicyDetails, ResourceDetails } from 'Generated/schema';
 import { useSnackbar } from 'pouncejs';
 import { ResourceDetailsDocument } from 'Pages/ResourceDetails';
 import { PolicyDetailsDocument } from 'Pages/PolicyDetails';
-import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
+import { getOperationName } from 'apollo-utilities';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useSuppressPolicy } from './graphql/suppressPolicy.generated';
 
