@@ -58,12 +58,12 @@ const ComplianceOverview: React.FC = () => {
   return (
     <Box as="article" mb={6}>
       <SimpleGrid columns={2} spacing={3} as="section" mb={3}>
-        <Panel title="Policy Failure">
+        <Panel title="Failing Policies">
           <Box height={150}>
             <PoliciesByStatusChart policies={data.organizationStats.appliedPolicies} />
           </Box>
         </Panel>
-        <Panel title="Policy Severity">
+        <Panel title="Enabled Policies">
           <Box height={150}>
             <PoliciesBySeverityChart policies={data.organizationStats.appliedPolicies} />
           </Box>
