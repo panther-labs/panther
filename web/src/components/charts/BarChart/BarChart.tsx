@@ -42,10 +42,13 @@ const BarChart: React.FC<BarChartProps> = ({ data, alignment = 'vertical' }) => 
     (async () => {
       /*
        * 'legendData' must be an array of values that matches 'series.name'in order
-       * to display them in correct order and color
+       * to display them in correct order and color.
+       * For horizontal charts we shall reverse the order as we want the legend data to
+       * match the chart series.
        * e.g. [AWS.ALB]
        */
-      const legendData = data.map(e => e.label);
+      const labels = data.map(e => e.label);
+      const legendData = horizontal ? [...labels].reverse() : [...labels];
 
       /*
        * 'series' must be an array of objects that includes some graph options

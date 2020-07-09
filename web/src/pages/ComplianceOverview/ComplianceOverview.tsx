@@ -26,7 +26,7 @@ import { useGetOrganizationStats } from './graphql/getOrganizationStats.generate
 import PoliciesBySeverityChart from './PoliciesBySeverityChart';
 import PoliciesByStatusChart from './PoliciesByStatusChart';
 import ResourcesByStatusChart from './ResourcesByStatusChart';
-import ResourcesByPlatformChart from './ResourcesByPlatformChart';
+import PoliciesOverviewChart from './PoliciesOverviewChart';
 import ComplianceOverviewPageEmptyDataFallback from './EmptyDataFallback';
 import ComplianceOverviewPageSkeleton from './Skeleton';
 import TopFailingPoliciesTable from './TopFailingPoliciesTable';
@@ -58,14 +58,14 @@ const ComplianceOverview: React.FC = () => {
   return (
     <Box as="article" mb={6}>
       <SimpleGrid columns={2} spacing={3} as="section" mb={3}>
+        <Panel title="Policy Health">
+          <Box height={150}>
+            <PoliciesOverviewChart policies={data.organizationStats.appliedPolicies} />
+          </Box>
+        </Panel>
         <Panel title="Failing Policies">
           <Box height={150}>
             <PoliciesByStatusChart policies={data.organizationStats.appliedPolicies} />
-          </Box>
-        </Panel>
-        <Panel title="Enabled Policies">
-          <Box height={150}>
-            <PoliciesBySeverityChart policies={data.organizationStats.appliedPolicies} />
           </Box>
         </Panel>
         <Panel title="Resource Health">
@@ -73,9 +73,9 @@ const ComplianceOverview: React.FC = () => {
             <ResourcesByStatusChart resources={data.organizationStats.scannedResources} />
           </Box>
         </Panel>
-        <Panel title="Resource Platforms">
+        <Panel title="Enabled Policies">
           <Box height={150}>
-            <ResourcesByPlatformChart resources={data.organizationStats.scannedResources} />
+            <PoliciesBySeverityChart policies={data.organizationStats.appliedPolicies} />
           </Box>
         </Panel>
       </SimpleGrid>
