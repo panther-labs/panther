@@ -466,7 +466,7 @@ type JiraConfig {
   userName: String!
   apiKey: String!
   assigneeId: String
-  issueType: JiraIssueTypesEnum
+  issueType: String!
 }
 
 type AsanaConfig {
@@ -534,7 +534,7 @@ input JiraConfigInput {
   userName: String!
   apiKey: String!
   assigneeId: String
-  issueType: JiraIssueTypesEnum
+  issueType: String!
 }
 
 input AsanaConfigInput {
@@ -752,14 +752,12 @@ type PolicyUnitTest {
   expectedResult: Boolean
   name: String
   resource: String # The `attributes` field of the Resource in stringified JSON format
-  resourceType: String # The `resourceType` of the unit test
 }
 
 input PolicyUnitTestInput {
   expectedResult: Boolean
   name: String
   resource: String # The `attributes` field of the Resource in stringified JSON format
-  resourceType: String # The `resourceType` of the unit test
 }
 
 input UpdateUserInput {
@@ -870,12 +868,6 @@ enum SeverityEnum {
   MEDIUM
   HIGH
   CRITICAL
-}
-
-enum JiraIssueTypesEnum {
-  Bug
-  Story
-  Task
 }
 
 enum AccountTypeEnum {

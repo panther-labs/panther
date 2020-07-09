@@ -48,11 +48,7 @@ export type UpdatePolicy = {
       | 'tags'
     > & {
       tests?: Types.Maybe<
-        Array<
-          Types.Maybe<
-            Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource' | 'resourceType'>
-          >
-        >
+        Array<Types.Maybe<Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource'>>>
       >;
     }
   >;
@@ -79,7 +75,6 @@ export const UpdatePolicyDocument = gql`
         expectedResult
         name
         resource
-        resourceType
       }
     }
   }

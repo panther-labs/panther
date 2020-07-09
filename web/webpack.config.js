@@ -30,7 +30,6 @@ const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
-const { getAppTemplateParams } = require('./scripts/utils');
 
 const isEnvDevelopment = process.env.NODE_ENV === 'development';
 const isEnvProduction = process.env.NODE_ENV === 'production';
@@ -43,6 +42,11 @@ module.exports = {
   bail: isEnvProduction,
   // add a proper source map in order to debug the code easier through the sources tab.
   devtool: isEnvProduction ? 'source-map' : isEnvDevelopment && 'cheap-module-source-map',
+  // Dont'watch changes in node_modules
+  watchOptions: {
+    ignored: /node_modules/,
+  },
+
   output: {
     // This will prevent webpack-dev-server from loading incorrectly because of react-router-v4.
     publicPath: '/',
@@ -68,35 +72,6 @@ module.exports = {
       : isEnvDevelopment && (info => path.resolve(info.absoluteResourcePath).replace(/\\/g, '/')),
   },
   entry: path.resolve(__dirname, 'src/index.tsx'),
-  // When we are developing locally, we want to add a `devServer` configuration
-  devServer: isEnvDevelopment
-    ? {
-        host: '0.0.0.0',
-        publicPath: '/',
-        historyApiFallback: {
-          disableDotRule: true,
-        },
-        // Where will the webpack-dev-server attempt to load the content from. We add public
-        // so that we can have access to files that don't pass through webpack (i.e. they are not
-        // imported through Javascript)
-        contentBase: path.join(__dirname, 'public'),
-        // Enable gzip compression of generated files.
-        compress: true,
-        // By default files from `contentBase` will not trigger a page reload.
-        watchContentBase: true,
-        // Enable hot reloading server. It will provide /sockjs-node/ endpoint
-        // for the WebpackDevServer client so it can learn when the files were
-        // updated. Note that only changes to CSS are currently hot reloaded.
-        // JS changes will refresh the browser.
-        hot: true,
-        // WebpackDevServer is noisy by default. We make it a bit "quiter" for the devs
-        quiet: true,
-        // Dont'watch changes in node_modules
-        watchOptions: {
-          ignored: /node_modules/,
-        },
-      }
-    : undefined,
   optimization: {
     minimize: isEnvProduction,
     minimizer: [
@@ -234,11 +209,8 @@ module.exports = {
       // only way to bypass that is to force HtmlWebpackPlugin to treat this template as a
       // simple HTML and leave those template parameters untouched. Of course, we couldn't just
       // remove this plugin entirely, since we need it for the CSS/JS tag injection
-      template: isEnvDevelopment
-        ? `ejs-webpack-loader!${path.resolve(__dirname, 'public/index.ejs')}`
-        : `html-loader!${path.resolve(__dirname, 'public/index.ejs')}`,
-      filename: isEnvDevelopment ? 'index.html' : 'index.ejs',
-      templateParameters: isEnvDevelopment ? getAppTemplateParams() : undefined,
+      template: `html-loader!${path.resolve(__dirname, 'public/index.ejs')}`,
+      filename: 'index.ejs',
       minify: isEnvProduction
         ? {
             removeComments: true,
@@ -259,7 +231,8 @@ module.exports = {
     // This is currently an experimental feature supported only by react-native, but released
     // through the official React repo. Up until now we utilise a custom webpack-plugin (since
     // the official one exists only for react-native's Metro)
-    isEnvDevelopment && new ReactRefreshWebpackPlugin({ disableRefreshCheck: true }),
+    isEnvDevelopment && new webpack.HotModuleReplacementPlugin(),
+    isEnvDevelopment && new ReactRefreshWebpackPlugin({ overlay: { sockIntegration: 'whm' } }),
     // Generate a manifest file which contains a mapping of all asset filenames
     // to their corresponding output file so that tools can pick it up without
     // having to parse `index.html`.

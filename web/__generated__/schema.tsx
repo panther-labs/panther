@@ -373,7 +373,7 @@ export type JiraConfig = {
   userName: Scalars['String'];
   apiKey: Scalars['String'];
   assigneeId?: Maybe<Scalars['String']>;
-  issueType?: Maybe<JiraIssueTypesEnum>;
+  issueType: Scalars['String'];
 };
 
 export type JiraConfigInput = {
@@ -382,14 +382,8 @@ export type JiraConfigInput = {
   userName: Scalars['String'];
   apiKey: Scalars['String'];
   assigneeId?: Maybe<Scalars['String']>;
-  issueType?: Maybe<JiraIssueTypesEnum>;
+  issueType: Scalars['String'];
 };
-
-export enum JiraIssueTypesEnum {
-  Bug = 'Bug',
-  Story = 'Story',
-  Task = 'Task',
-}
 
 export type ListAlertsInput = {
   ruleId?: Maybe<Scalars['ID']>;
@@ -775,7 +769,6 @@ export type PolicyUnitTest = {
   expectedResult?: Maybe<Scalars['Boolean']>;
   name?: Maybe<Scalars['String']>;
   resource?: Maybe<Scalars['String']>;
-  resourceType?: Maybe<Scalars['String']>;
 };
 
 export type PolicyUnitTestError = {
@@ -788,7 +781,6 @@ export type PolicyUnitTestInput = {
   expectedResult?: Maybe<Scalars['Boolean']>;
   name?: Maybe<Scalars['String']>;
   resource?: Maybe<Scalars['String']>;
-  resourceType?: Maybe<Scalars['String']>;
 };
 
 export type Query = {
@@ -1256,7 +1248,6 @@ export type ResolversTypes = {
   PagerDutyConfig: ResolverTypeWrapper<PagerDutyConfig>;
   GithubConfig: ResolverTypeWrapper<GithubConfig>;
   JiraConfig: ResolverTypeWrapper<JiraConfig>;
-  JiraIssueTypesEnum: JiraIssueTypesEnum;
   OpsgenieConfig: ResolverTypeWrapper<OpsgenieConfig>;
   MsTeamsConfig: ResolverTypeWrapper<MsTeamsConfig>;
   AsanaConfig: ResolverTypeWrapper<AsanaConfig>;
@@ -1380,7 +1371,6 @@ export type ResolversParentTypes = {
   PagerDutyConfig: PagerDutyConfig;
   GithubConfig: GithubConfig;
   JiraConfig: JiraConfig;
-  JiraIssueTypesEnum: JiraIssueTypesEnum;
   OpsgenieConfig: OpsgenieConfig;
   MsTeamsConfig: MsTeamsConfig;
   AsanaConfig: AsanaConfig;
@@ -1711,7 +1701,7 @@ export type JiraConfigResolvers<
   userName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   apiKey?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   assigneeId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  issueType?: Resolver<Maybe<ResolversTypes['JiraIssueTypesEnum']>, ParentType, ContextType>;
+  issueType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2088,7 +2078,6 @@ export type PolicyUnitTestResolvers<
   expectedResult?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   resource?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  resourceType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 

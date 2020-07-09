@@ -30,6 +30,7 @@ const (
 	TypeCloudTrail        = `AWS.CloudTrail`
 	TypeCloudTrailDigest  = "AWS.CloudTrailDigest"
 	TypeCloudTrailInsight = "AWS.CloudTrailInsight"
+	TypeCloudWatchEvents  = "AWS.CloudWatchEvents"
 	TypeGuardDuty         = "AWS.GuardDuty"
 	TypeS3ServerAccess    = "AWS.S3ServerAccess"
 	TypeVPCFlow           = "AWS.VPCFlow"
@@ -65,6 +66,13 @@ func init() {
 			ReferenceURL: `https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-digest-file-structure.html`,
 			Schema:       CloudTrailDigest{},
 			NewParser:    parsers.AdapterFactory(&CloudTrailDigestParser{}),
+		},
+		logtypes.Config{
+			Name:         TypeCloudWatchEvents,
+			Description:  `Amazon CloudWatch Events describe a change in Amazon Web Services (AWS) resources.`,
+			ReferenceURL: `https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CloudWatchEventsandEventPatterns.html`,
+			Schema:       CloudWatchEvent{},
+			NewParser:    parsers.AdapterFactory(&CloudWatchEventParser{}),
 		},
 		logtypes.Config{
 			Name:         TypeCloudTrailInsight,
