@@ -35,10 +35,9 @@ const (
 	eventsProcessedMetric = "EventsProcessed"
 )
 
-var metricsInternalError = &genericapi.InternalError{Message: "Failed to generate requested metrics. Please try again later"}
-
 var (
-	metricResolvers = map[string]func(input *models.GetMetricsInput) (*models.MetricResult, error){
+	metricsInternalError = &genericapi.InternalError{Message: "Failed to generate requested metrics. Please try again later"}
+	metricResolvers      = map[string]func(input *models.GetMetricsInput) (*models.MetricResult, error){
 		"eventsProcessed": getEventsProcessed,
 	}
 )
@@ -103,7 +102,7 @@ func getEventsProcessed(input *models.GetMetricsInput) (*models.MetricResult, er
 			ReturnData: aws.Bool(true), // whether to return data or just calculate results for other expressions to use
 		}
 	}
-	zap.L().Debug("prepared metric queries", zap.Any("queries", queries), zap.Any("toDate", input.ToDate), zap.Any("fromDate", input.FromDate), zap.Int64("max data points", maxSeriesDataPoints))
+	zap.L().Debug("prepared metric queries", zap.Any("queries", queries), zap.Any("toDate", input.ToDate), zap.Any("fromDate", input.FromDate))
 
 	response, err := cloudwatchClient.GetMetricData(&cloudwatch.GetMetricDataInput{
 		EndTime:           aws.Time(input.ToDate),
@@ -117,12 +116,9 @@ func getEventsProcessed(input *models.GetMetricsInput) (*models.MetricResult, er
 		return nil, metricsInternalError
 	}
 
-	zap.L().Debug("received metric data", zap.Any("metric data", response.MetricDataResults))
-	zap.L().Debug("received messages", zap.Any("message data", response.Messages))
-
 	results := make(map[string]*models.TimeSeriesResponse, len(response.MetricDataResults))
 	for _, metricData := range response.MetricDataResults {
-		results[aws.StringValue(metricData.Id)] = &models.TimeSeriesResponse{
+		results[aws.StringValue(metricData.Label)] = &models.TimeSeriesResponse{
 			Timestamps: metricData.Timestamps,
 			Values:     metricData.Values,
 		}

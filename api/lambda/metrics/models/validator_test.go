@@ -25,7 +25,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestValidateIntegrationLabelSucceeds(t *testing.T) {
+func TestValidateSucceeds(t *testing.T) {
 	validator, err := Validator()
 	require.NoError(t, err)
 	err = validator.Struct(&GetMetricsInput{

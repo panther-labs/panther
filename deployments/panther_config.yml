@@ -64,7 +64,7 @@ Monitoring:
   CloudWatchLogRetentionDays: 365
 
   # Enable DEBUG logging for all Lambda functions.
-  Debug: true
+  Debug: false
 
   # XRay tracing mode for API Gateway and Lambda: '', 'Active', or 'PassThrough'
   TracingMode: ''
