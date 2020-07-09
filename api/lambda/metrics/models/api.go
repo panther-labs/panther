@@ -22,7 +22,7 @@ import "time"
 
 // LambdaInput is the collection of all possible args to the Lambda function.
 type LambdaInput struct {
-	GetMetrics *GetMetricsInput `json:"getMetricsInput"`
+	GetMetrics *GetMetricsInput `json:"getMetrics"`
 }
 
 //

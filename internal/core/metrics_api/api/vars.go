@@ -30,7 +30,6 @@ var (
 )
 
 // Setup parses the environment and constructs AWS and http clients on a cold Lambda start.
-// All required environment variables must be present or this function will panic.
 func Setup() {
 	awsSession = session.Must(session.NewSession())
 	cloudwatchClient = cloudwatch.New(awsSession)

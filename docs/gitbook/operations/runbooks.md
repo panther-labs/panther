@@ -270,6 +270,13 @@ The lambda function that processes S3 files from
  * re-queued to the `panther-input-data-notifications-queue` using the Panther tool `requeue`.
  * There is the possibility of duplicate data ingested if the failures had partial results.
 
+## panther-metrics-api
+The `panther-metrics-api` lambda handles requests for metric data by properly translating
+ them to CloudWatch requests and then translating the results back.
+
+ Failure Impact
+ * Failure of this lambda will prevent requests for metric data.
+
 ## panther-organization
 This ddb table stores general settings about an organizations.
 
