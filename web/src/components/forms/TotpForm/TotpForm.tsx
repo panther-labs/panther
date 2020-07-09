@@ -16,12 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Flex, Link, FormHelperText, useTheme, Tooltip } from 'pouncejs';
+import { Box, Flex, Link, FormHelperText, useTheme, AbstractButton, Text } from 'pouncejs';
 import { Field, Form, Formik } from 'formik';
 import QRCode from 'qrcode.react';
 import * as React from 'react';
 import * as Yup from 'yup';
-import { copyTextToClipboard, formatSecretCode } from 'Helpers/utils';
+import { formatSecretCode } from 'Helpers/utils';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
 import useAuth from 'Hooks/useAuth';
@@ -43,6 +43,8 @@ const validationSchema = Yup.object().shape({
 export const TotpForm: React.FC = () => {
   const theme = useTheme();
   const [code, setCode] = React.useState('');
+  const [showCode, setShowCode] = React.useState(false);
+
   const { userInfo, verifyTotpSetup, requestTotpSecretCode } = useAuth();
 
   React.useEffect(() => {
@@ -70,13 +72,24 @@ export const TotpForm: React.FC = () => {
             bgColor={theme.colors['navyblue-800']}
           />
         </Flex>
-        <Box color="gray-200" textAlign="center" my={8}>
-          Or enter manually the secret code:
-          <Tooltip content={'Click to copy'}>
-            <Box mt={2} cursor="pointer" onClick={() => copyTextToClipboard(code)}>
+        <Text color="gray-300" textAlign="center" my={2}>
+          Or enter the code manually:
+        </Text>
+        <Box justify="center" textAlign="center" mb={6}>
+          <AbstractButton
+            borderRadius="medium"
+            px={2}
+            py={2}
+            bg="blue-600"
+            onClick={() => setShowCode(!showCode)}
+          >
+            {showCode ? 'Hide Code' : 'Show Code'}
+          </AbstractButton>
+          {showCode && (
+            <Text color="gray-300" my={2}>
               {code}
-            </Box>
-          </Tooltip>
+            </Text>
+          )}
         </Box>
         <Box mb={4}>
           <Field
