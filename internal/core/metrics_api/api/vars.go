@@ -24,8 +24,7 @@ import (
 )
 
 var (
-	awsSession *session.Session
-
+	awsSession       *session.Session
 	cloudwatchClient *cloudwatch.CloudWatch
 )
 

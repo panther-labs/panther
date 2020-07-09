@@ -42,7 +42,7 @@ var (
 	}
 )
 
-// GetMetrics adds a set of new integrations in a batch.
+// GetMetrics builds a routes the requests for various metric data to the correct handlers
 func (API) GetMetrics(input *models.GetMetricsInput) (*models.GetMetricsOutput, error) {
 	zap.L().Debug("beginning metric generation")
 	response := &models.GetMetricsOutput{
@@ -66,6 +66,9 @@ func (API) GetMetrics(input *models.GetMetricsInput) (*models.GetMetricsOutput, 
 	return response, nil
 }
 
+// getEventsProcessed returns the count of events processed by the log processor per log type
+//
+// This is a time series metric.
 func getEventsProcessed(input *models.GetMetricsInput) (*models.MetricResult, error) {
 	// First determine applicable metric dimensions
 	listMetricsResponse, err := cloudwatchClient.ListMetrics(&cloudwatch.ListMetricsInput{
