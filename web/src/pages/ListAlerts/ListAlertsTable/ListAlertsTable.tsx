@@ -29,7 +29,7 @@ import {
   AlertStatusesEnum,
 } from 'Generated/schema';
 import { shortenId, formatDatetime } from 'Helpers/utils';
-import UpdateAlertMenu from 'Components/dropdowns/UpdateAlertDropdown';
+import UpdateAlertDropdown from 'Components/dropdowns/UpdateAlertDropdown';
 
 type ListAlertsTableProps = {
   items: ListAlerts['alerts']['alertSummaries'];
@@ -113,7 +113,10 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
               </PseudoBox>
             </Table.Cell>
             <Table.Cell align="center">
-              <UpdateAlertMenu status={alert.status as AlertStatusesEnum} alertId={alert.alertId} />
+              <UpdateAlertDropdown
+                status={alert.status as AlertStatusesEnum}
+                alertId={alert.alertId}
+              />
             </Table.Cell>
             <Table.Cell align="right">{formatDatetime(alert.creationTime)}</Table.Cell>
             <Table.Cell align="right">{formatDatetime(alert.updateTime)}</Table.Cell>

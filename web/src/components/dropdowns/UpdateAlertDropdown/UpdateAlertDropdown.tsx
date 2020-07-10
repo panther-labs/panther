@@ -30,12 +30,12 @@ import AlertStatusBadge from 'Components/AlertStatusBadge';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useUpdateAlert } from './graphql/updateAlert.generated';
 
-export interface UpdateAlertMenuProps {
+interface UpdateAlertDropdownProps {
   status: AlertStatusesEnum;
   alertId: string;
 }
 
-const UpdateAlertMenu: React.FC<UpdateAlertMenuProps> = ({ status, alertId }) => {
+const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ status, alertId }) => {
   const { pushSnackbar } = useSnackbar();
 
   const [updateAlert] = useUpdateAlert({
@@ -82,4 +82,4 @@ const UpdateAlertMenu: React.FC<UpdateAlertMenuProps> = ({ status, alertId }) =>
   );
 };
 
-export default UpdateAlertMenu;
+export default UpdateAlertDropdown;
