@@ -27,6 +27,7 @@ import {
 } from 'pouncejs';
 import { AlertStatusesEnum } from 'Generated/schema';
 import AlertStatusBadge from 'Components/AlertStatusBadge';
+import { extractErrorMessage } from 'Helpers/utils';
 import { useUpdateAlert } from './graphql/updateAlert.generated';
 
 export interface UpdateAlertMenuProps {
@@ -53,12 +54,13 @@ const UpdateAlertMenu: React.FC<UpdateAlertMenuProps> = ({ status, alertId }) =>
     onError: error => {
       pushSnackbar({
         variant: 'error',
-        title: `Failed to update alert ${error}`,
+        title: `Failed to update alert`,
+        description: extractErrorMessage(error),
       });
     },
   });
 
-  const availableStatusesEntries = Object.entries(AlertStatusesEnum);
+  const availableStatusesEntries = React.useMemo(() => Object.entries(AlertStatusesEnum), []);
 
   return (
     <Dropdown>
@@ -70,7 +72,7 @@ const UpdateAlertMenu: React.FC<UpdateAlertMenuProps> = ({ status, alertId }) =>
           <DropdownItem
             key={index}
             disabled={status === statusVal}
-            onSelect={() => updateAlert({ variables: { input: { status, alertId } } })}
+            onSelect={() => updateAlert({ variables: { input: { status: statusVal, alertId } } })}
           >
             {statusKey}
           </DropdownItem>

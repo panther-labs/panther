@@ -16,5 +16,5 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './UpdateAlertMenu';
-export * from './UpdateAlertMenu';
+export { default } from './UpdateAlertDropdown';
+export * from './UpdateAlertDropdown';

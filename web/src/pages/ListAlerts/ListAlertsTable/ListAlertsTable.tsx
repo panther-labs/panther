@@ -29,7 +29,7 @@ import {
   AlertStatusesEnum,
 } from 'Generated/schema';
 import { shortenId, formatDatetime } from 'Helpers/utils';
-import UpdateAlertMenu from 'Components/menus/UpdateAlertMenu';
+import UpdateAlertMenu from 'Components/dropdowns/UpdateAlertDropdown';
 
 type ListAlertsTableProps = {
   items: ListAlerts['alerts']['alertSummaries'];
