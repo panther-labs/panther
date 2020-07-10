@@ -53,6 +53,12 @@ func (API) GetMetrics(input *models.GetMetricsInput) (*models.GetMetricsOutput, 
 		ToDate:        input.ToDate,
 		IntervalHours: input.IntervalHours,
 	}
+
+	// If a namespace was not specified, default to the Panther namespace
+	if input.Namespace == "" {
+		input.Namespace = metrics.Namespace
+	}
+
 	for i, metricName := range input.MetricNames {
 		resolver, ok := metricResolvers[metricName]
 		if !ok {
@@ -76,8 +82,8 @@ func getEventsProcessed(input *models.GetMetricsInput) (*models.MetricResult, er
 	var listMetricsResponse []*cloudwatch.Metric
 	err := cloudwatchClient.ListMetricsPages(&cloudwatch.ListMetricsInput{
 		MetricName: aws.String(eventsProcessedMetric),
-		Namespace:  aws.String(metrics.Namespace),
-	}, func(page *cloudwatch.ListMetricsOutput, keepPaging bool) bool {
+		Namespace:  aws.String(input.Namespace),
+	}, func(page *cloudwatch.ListMetricsOutput, _ bool) bool {
 		listMetricsResponse = append(listMetricsResponse, page.Metrics...)
 		return true
 	})
@@ -141,17 +147,18 @@ func getMetricData(input *models.GetMetricsInput, queries []*cloudwatch.MetricDa
 	}
 
 	responses := make([]*cloudwatch.MetricDataResult, 0, queryCount)
+	request := &cloudwatch.GetMetricDataInput{
+		EndTime:       &input.ToDate,
+		MaxDatapoints: aws.Int64(maxSeriesDataPoints),
+		StartTime:     &input.FromDate,
+	}
 	for start := 0; start < queryCount; start += maxMetricsPerRequest {
 		end := start + maxMetricsPerRequest
 		if end > queryCount {
 			end = queryCount
 		}
-		err := cloudwatchClient.GetMetricDataPages(&cloudwatch.GetMetricDataInput{
-			EndTime:           aws.Time(input.ToDate),
-			MaxDatapoints:     aws.Int64(maxSeriesDataPoints),
-			MetricDataQueries: queries[start:end],
-			StartTime:         aws.Time(input.FromDate),
-		}, func(page *cloudwatch.GetMetricDataOutput, _ bool) bool {
+		request.MetricDataQueries = queries[start:end]
+		err := cloudwatchClient.GetMetricDataPages(request, func(page *cloudwatch.GetMetricDataOutput, _ bool) bool {
 			responses = append(responses, page.MetricDataResults...)
 			return true
 		})
