@@ -28,22 +28,48 @@ import {
 import { AlertStatusesEnum } from 'Generated/schema';
 import AlertStatusBadge from 'Components/AlertStatusBadge';
 import { extractErrorMessage } from 'Helpers/utils';
+import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 import { useUpdateAlert } from './graphql/updateAlert.generated';
 
 interface UpdateAlertDropdownProps {
   status: AlertStatusesEnum;
-  alertId: string;
+  alert: AlertSummaryFull;
 }
 
-const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ status, alertId }) => {
+const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ status, alert }) => {
   const { pushSnackbar } = useSnackbar();
 
   const [updateAlert] = useUpdateAlert({
     variables: {
       input: {
         status,
-        alertId,
+        alertId: alert.alertId,
       },
+    },
+
+    // This hook ensures we update the AlertDetails object in the cache
+    // instead of refetching from the network
+    update: (cache, { data }) => {
+      cache.modify({
+        id: cache.identify({
+          __typename: 'AlertDetails',
+          alertId: data.updateAlert.alertId,
+        }),
+        fields: {
+          status: () => data.updateAlert.status,
+        },
+      });
+      cache.gc();
+    },
+
+    // We want to simulate an instant change in the UI
+    optimisticResponse: data => {
+      return {
+        updateAlert: {
+          ...alert,
+          status: data.input.status,
+        },
+      };
     },
     onCompleted: () => {
       pushSnackbar({
@@ -72,7 +98,9 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ status, alert
           <DropdownItem
             key={index}
             disabled={status === statusVal}
-            onSelect={() => updateAlert({ variables: { input: { status: statusVal, alertId } } })}
+            onSelect={() =>
+              updateAlert({ variables: { input: { status: statusVal, alertId: alert.alertId } } })
+            }
           >
             {statusKey}
           </DropdownItem>

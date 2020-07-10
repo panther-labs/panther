@@ -25,6 +25,7 @@ import { formatDatetime } from 'Helpers/utils';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/SeverityBadge';
 import UpdateAlertDropdown from 'Components/dropdowns/UpdateAlertDropdown';
+import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 
 interface AlertDetailsInfoProps {
   alert: AlertDetails;
@@ -80,7 +81,6 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
     );
   }
 
-  console.log('ALERT:', alert);
   return (
     <Card as="article" p={6}>
       <SimpleGrid columns={2} spacing={5}>
@@ -120,7 +120,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
           <Box aria-describedby="alert-status">
             <UpdateAlertDropdown
               status={alert.status as AlertStatusesEnum}
-              alertId={alert.alertId}
+              alert={alert as AlertSummaryFull}
             />
           </Box>
         </Flex>

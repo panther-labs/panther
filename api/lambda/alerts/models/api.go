@@ -105,7 +105,7 @@ type ListAlertsInput struct {
 // }
 type UpdateAlertInput struct {
 	// ID of the alert to update
-	AlertID *string `json:"alertId" validate:"required"`
+	AlertID *string `json:"alertId" validate:"required,hexadecimal,len=32"` // AlertID is an MD5 hash
 
 	// Variables that we allow updating:
 	Status *string `json:"status" validate:"required,oneof=OPEN TRIAGED CLOSED RESOLVED"`

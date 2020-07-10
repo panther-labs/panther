@@ -7,4 +7,5 @@ fragment AlertSummaryFull on AlertSummary {
   creationTime
   eventsMatched
   updateTime
+  updatedBy
 }

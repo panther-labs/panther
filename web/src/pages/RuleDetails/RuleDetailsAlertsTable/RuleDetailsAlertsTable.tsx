@@ -57,10 +57,7 @@ const RuleDetailsAlertsTable: React.FC<RuleDetailsAlertsTableProps> = ({ alerts 
               </Link>
             </Table.Cell>
             <Table.Cell align="center">
-              <UpdateAlertDropdown
-                status={alert.status as AlertStatusesEnum}
-                alertId={alert.alertId}
-              />
+              <UpdateAlertDropdown status={alert.status as AlertStatusesEnum} alert={alert} />
             </Table.Cell>
             <Table.Cell align="right">{formatDatetime(alert.creationTime)}</Table.Cell>
             <Table.Cell align="right">{formatDatetime(alert.updateTime)}</Table.Cell>
