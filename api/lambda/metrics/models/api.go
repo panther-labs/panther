@@ -29,27 +29,38 @@ type LambdaInput struct {
 // GetMetricsInput: Used by the UI to request a series of data points
 //
 
-// GetMetricsInput is used to request data points for a number of metrics over a given time frame and periods
+// GetMetricsInput is used to request data points for a number of metrics over a given time frame
 type GetMetricsInput struct {
-	MetricNames []string  `json:"metricNames" validate:"required"`
-	FromDate    time.Time `json:"fromDate" validate:"required"`
-	ToDate      time.Time `json:"toDate" validate:"required"`
-	Period      int64     `json:"period" validate:"required"`
+	MetricNames   []string  `json:"metricNames" validate:"required"`
+	FromDate      time.Time `json:"fromDate" validate:"required"`
+	ToDate        time.Time `json:"toDate" validate:"required,gtfield=FromDate"`
+	IntervalHours int64     `json:"intervalHours" validate:"required,gt=0"`
 }
 
+// GetMetricsOutput contains data points for a number of metrics over the specified time frame
 type GetMetricsOutput struct {
-	MetricResults map[string]*MetricResult `json:"metricNames" validate:"required"`
-	FromDate      time.Time                `json:"fromDate"`
-	ToDate        time.Time                `json:"toDate"`
-	Period        int64                    `json:"period"`
+	MetricResults []MetricResult `json:"metricNames" validate:"required"`
+	FromDate      time.Time      `json:"fromDate"`
+	ToDate        time.Time      `json:"toDate"`
+	IntervalHours int64          `json:"intervalHours"`
 }
 
+// MetricResult is either a single data point or a series of timestamped data points
 type MetricResult = struct {
-	SingleValue *int64                         `json:"singleValue,omitempty"`
-	SeriesData  map[string]*TimeSeriesResponse `json:"seriesData"`
+	MetricName  string
+	SingleValue []SingleMetricValue  `json:"singleValue,omitempty"`
+	SeriesData  []TimeSeriesResponse `json:"seriesData,omitempty"`
 }
 
+type SingleMetricValue struct {
+	Label *string
+	Value int64
+}
+
+// TimeSeriesResponse contains the pertinent fields from the GetMetricData response to be passed
+// back to the frontend
 type TimeSeriesResponse struct {
+	Label      *string
 	Timestamps []*time.Time
 	Values     []*float64
 }

@@ -105,6 +105,10 @@ Mappings:
     LayerManager:
       Memory: 512
       Timeout: 60
+    # The metrics API has a slightly higher timeout and memory size than most functions. The metrics
+    # API is only invoked based on user activity so should be called relatively infrequently, but
+    # when it is called it may make several AWS API calls and may need to hold several hundred
+    # thousand data points in memory before returning them.
     MetricsAPI:
       Memory: 256
       Timeout: 180

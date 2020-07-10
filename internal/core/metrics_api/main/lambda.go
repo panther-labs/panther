@@ -32,11 +32,7 @@ import (
 var router *genericapi.Router
 
 func init() {
-	validator, err := models.Validator()
-	if err != nil {
-		panic(err)
-	}
-	router = genericapi.NewRouter("core", "metrics_api", validator, api.API{})
+	router = genericapi.NewRouter("core", "metrics_api", nil, api.API{})
 }
 
 func lambdaHandler(ctx context.Context, request *models.LambdaInput) (interface{}, error) {

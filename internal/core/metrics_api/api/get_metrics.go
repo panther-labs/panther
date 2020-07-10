@@ -31,7 +31,9 @@ import (
 )
 
 const (
-	maxSeriesDataPoints   = 100000
+	// These limits are enforced by AWS
+	maxSeriesDataPoints   = 100800
+	maxMetricsPerRequest  = 500
 	eventsProcessedMetric = "EventsProcessed"
 )
 
@@ -46,12 +48,12 @@ var (
 func (API) GetMetrics(input *models.GetMetricsInput) (*models.GetMetricsOutput, error) {
 	zap.L().Debug("beginning metric generation")
 	response := &models.GetMetricsOutput{
-		MetricResults: make(map[string]*models.MetricResult, len(input.MetricNames)),
+		MetricResults: make([]models.MetricResult, len(input.MetricNames)),
 		FromDate:      input.FromDate,
 		ToDate:        input.ToDate,
-		Period:        input.Period,
+		IntervalHours: input.IntervalHours,
 	}
-	for _, metricName := range input.MetricNames {
+	for i, metricName := range input.MetricNames {
 		resolver, ok := metricResolvers[metricName]
 		if !ok {
 			return nil, &genericapi.InvalidInputError{Message: "unexpected metric [" + metricName + "] requested"}
@@ -60,7 +62,7 @@ func (API) GetMetrics(input *models.GetMetricsInput) (*models.GetMetricsOutput, 
 		if err != nil {
 			return nil, err
 		}
-		response.MetricResults[metricName] = metricData
+		response.MetricResults[i] = *metricData
 	}
 
 	return response, nil
@@ -71,34 +73,28 @@ func (API) GetMetrics(input *models.GetMetricsInput) (*models.GetMetricsOutput, 
 // This is a time series metric.
 func getEventsProcessed(input *models.GetMetricsInput) (*models.MetricResult, error) {
 	// First determine applicable metric dimensions
-	listMetricsResponse, err := cloudwatchClient.ListMetrics(&cloudwatch.ListMetricsInput{
+	var listMetricsResponse []*cloudwatch.Metric
+	err := cloudwatchClient.ListMetricsPages(&cloudwatch.ListMetricsInput{
 		MetricName: aws.String(eventsProcessedMetric),
 		Namespace:  aws.String(metrics.Namespace),
+	}, func(page *cloudwatch.ListMetricsOutput, keepPaging bool) bool {
+		listMetricsResponse = append(listMetricsResponse, page.Metrics...)
+		return true
 	})
 	if err != nil {
 		zap.L().Error("unable to list metrics", zap.String("metric", eventsProcessedMetric))
 		return nil, metricsInternalError
 	}
-	zap.L().Debug("found applicable metrics", zap.Any("metrics", listMetricsResponse.Metrics))
-
-	// Validate that we can this request in our maximum data point threshold
-	duration := input.ToDate.Sub(input.FromDate)
-	samples := int64(duration.Hours()) / input.Period
-	if samples*int64(len(listMetricsResponse.Metrics)) > maxSeriesDataPoints {
-		return nil, &genericapi.InvalidInputError{Message: "too many data points requested please narrow query scope"}
-	}
+	zap.L().Debug("found applicable metrics", zap.Any("metrics", listMetricsResponse))
 
 	// Build the query based on the applicable metric dimensions
-	//
-	// This will fail if there are more than 100 log types. If we get to the point where we expect
-	// users will have over 100 log types, this will have to be batched then merged.
-	queries := make([]*cloudwatch.MetricDataQuery, len(listMetricsResponse.Metrics))
-	for i, metric := range listMetricsResponse.Metrics {
+	queries := make([]*cloudwatch.MetricDataQuery, len(listMetricsResponse))
+	for i, metric := range listMetricsResponse {
 		queries[i] = &cloudwatch.MetricDataQuery{
 			Id: aws.String("query" + strconv.Itoa(i)),
 			MetricStat: &cloudwatch.MetricStat{
 				Metric: metric,
-				Period: aws.Int64(input.Period * 3600), // number of seconds, must be multiple of 60
+				Period: aws.Int64(input.IntervalHours * 3600), // number of seconds, must be multiple of 60
 				Stat:   aws.String("Sum"),
 				Unit:   aws.String("Count"),
 			},
@@ -107,27 +103,62 @@ func getEventsProcessed(input *models.GetMetricsInput) (*models.MetricResult, er
 	}
 	zap.L().Debug("prepared metric queries", zap.Any("queries", queries), zap.Any("toDate", input.ToDate), zap.Any("fromDate", input.FromDate))
 
-	response, err := cloudwatchClient.GetMetricData(&cloudwatch.GetMetricDataInput{
-		EndTime:           aws.Time(input.ToDate),
-		MaxDatapoints:     aws.Int64(maxSeriesDataPoints),
-		MetricDataQueries: queries,
-		StartTime:         aws.Time(input.FromDate),
-	})
+	metricData, err := getMetricData(input, queries)
 
 	if err != nil {
 		zap.L().Error("unable to query metric data", zap.Any("queries", queries), zap.Error(err))
 		return nil, metricsInternalError
 	}
 
-	results := make(map[string]*models.TimeSeriesResponse, len(response.MetricDataResults))
-	for _, metricData := range response.MetricDataResults {
-		results[aws.StringValue(metricData.Label)] = &models.TimeSeriesResponse{
+	results := make([]models.TimeSeriesResponse, len(metricData))
+	for i, metricData := range metricData {
+		results[i] = models.TimeSeriesResponse{
+			Label:      metricData.Label,
 			Timestamps: metricData.Timestamps,
 			Values:     metricData.Values,
 		}
 	}
 
 	return &models.MetricResult{
+		MetricName: eventsProcessedMetric,
 		SeriesData: results,
 	}, nil
+}
+
+// getMetricData handles generic batching & validation while making GetMetricData API calls
+func getMetricData(input *models.GetMetricsInput, queries []*cloudwatch.MetricDataQuery) ([]*cloudwatch.MetricDataResult, error) {
+	queryCount := len(queries)
+
+	// Validate that we can fit this request in our maximum data point threshold
+	duration := input.ToDate.Sub(input.FromDate)
+	samples := int64(duration.Hours()) / input.IntervalHours
+	metricsPerCall := queryCount
+	if metricsPerCall > maxMetricsPerRequest {
+		metricsPerCall = maxMetricsPerRequest
+	}
+	if samples*int64(metricsPerCall) > maxSeriesDataPoints {
+		return nil, &genericapi.InvalidInputError{Message: "too many data points requested please narrow query scope"}
+	}
+
+	responses := make([]*cloudwatch.MetricDataResult, 0, queryCount)
+	for start := 0; start < queryCount; start += maxMetricsPerRequest {
+		end := start + maxMetricsPerRequest
+		if end > queryCount {
+			end = queryCount
+		}
+		err := cloudwatchClient.GetMetricDataPages(&cloudwatch.GetMetricDataInput{
+			EndTime:           aws.Time(input.ToDate),
+			MaxDatapoints:     aws.Int64(maxSeriesDataPoints),
+			MetricDataQueries: queries[start:end],
+			StartTime:         aws.Time(input.FromDate),
+		}, func(page *cloudwatch.GetMetricDataOutput, _ bool) bool {
+			responses = append(responses, page.MetricDataResults...)
+			return true
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return responses, nil
 }
