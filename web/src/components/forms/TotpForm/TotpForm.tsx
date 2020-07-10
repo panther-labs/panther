@@ -76,19 +76,12 @@ export const TotpForm: React.FC = () => {
           Or enter the code manually:
         </Text>
         <Box justify="center" textAlign="center" mb={6}>
-          <AbstractButton
-            borderRadius="medium"
-            px={2}
-            py={2}
-            bg="blue-600"
-            onClick={() => setShowCode(!showCode)}
-          >
-            {showCode ? 'Hide Code' : 'Show Code'}
-          </AbstractButton>
-          {showCode && (
+          {showCode ? (
             <Text color="gray-300" my={2}>
               {code}
             </Text>
+          ) : (
+            <AbstractButton onClick={() => setShowCode(true)}>Show Code</AbstractButton>
           )}
         </Box>
         <Box mb={4}>
