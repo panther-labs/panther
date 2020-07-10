@@ -34,6 +34,7 @@ function getAppTemplateParams() {
     WEB_APPLICATION_GRAPHQL_API_ENDPOINT: process.env.WEB_APPLICATION_GRAPHQL_API_ENDPOINT,
     WEB_APPLICATION_USER_POOL_CLIENT_ID: process.env.WEB_APPLICATION_USER_POOL_CLIENT_ID,
     WEB_APPLICATION_USER_POOL_ID: process.env.WEB_APPLICATION_USER_POOL_ID,
+    NODE_ENV: process.env.NODE_ENV,
   };
 
   const missingKeys = Object.keys(PANTHER_CONFIG).filter(key => PANTHER_CONFIG[key] === undefined);
@@ -44,4 +45,16 @@ function getAppTemplateParams() {
   return { PANTHER_CONFIG };
 }
 
-module.exports = { loadDotEnvVars, getAppTemplateParams };
+const getCacheControlForFileType = filepath => {
+  if (/favicon.*\.(png|svg|ico)/.test(filepath)) {
+    return 'max-age=604800,public,stale-while-revalidate=604800';
+  }
+
+  if (/\.(.*\.js|svg|jpg)/.test(filepath)) {
+    return 'max-age=31536000,public,immutable';
+  }
+
+  return 'no-cache';
+};
+
+module.exports = { loadDotEnvVars, getAppTemplateParams, getCacheControlForFileType };

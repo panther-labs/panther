@@ -286,7 +286,7 @@ func itemUpdated(oldItem, newItem *tableItem) bool {
 	for _, newTest := range newItem.Tests {
 		oldTest, ok := oldTests[newTest.Name]
 		// First check if the meta data of the test is equal
-		if !ok || oldTest.ResourceType != newTest.ResourceType || oldTest.ExpectedResult != newTest.ExpectedResult {
+		if !ok || oldTest.ExpectedResult != newTest.ExpectedResult {
 			// Something changed, so this item has been updated
 			return true
 		}

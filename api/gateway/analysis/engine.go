@@ -76,7 +76,6 @@ type Rule struct {
 type Event struct {
 	Data interface{} `json:"data"`
 	ID   string      `json:"id"`
-	Type string      `json:"type"`
 }
 
 // RulesEngineOutput is the response returned when invoking in log analysis mode.

@@ -77,13 +77,11 @@ var (
 		Tests: []*models.UnitTest{
 			{
 				Name:           "This will be True",
-				ResourceType:   "AWS.S3.Bucket",
 				ExpectedResult: true,
 				Resource:       `{}`,
 			},
 			{
 				Name:           "This will also be True",
-				ResourceType:   "AWS.S3.Bucket",
 				ExpectedResult: true,
 				Resource:       `{"nested": {}}`,
 			},
@@ -110,7 +108,6 @@ var (
 		Tests: []*models.UnitTest{
 			{
 				Name:           "Log File Validation Disabled",
-				ResourceType:   "AWS.CloudTrail",
 				ExpectedResult: false,
 				Resource: `{
         "Info": {
@@ -132,7 +129,6 @@ var (
 			},
 			{
 				Name:           "Log File Validation Enabled",
-				ResourceType:   "AWS.CloudTrail",
 				ExpectedResult: true,
 				Resource: `{
         "Info": {
@@ -189,7 +185,6 @@ var (
 		Tests: []*models.UnitTest{
 			{
 				Name:           "This will be True",
-				ResourceType:   "AWS.S3.Bucket",
 				ExpectedResult: true,
 				Resource:       `{"Bucket": "empty"}`,
 			},
@@ -276,9 +271,9 @@ func TestIntegrationAPI(t *testing.T) {
 
 	t.Run("TestPolicies", func(t *testing.T) {
 		t.Run("TestPolicyPass", testPolicyPass)
+		t.Run("TestPolicyPassAllResourceTypes", testPolicyPassAllResourceTypes)
 		t.Run("TestPolicyFail", testPolicyFail)
 		t.Run("TestPolicyError", testPolicyError)
-		t.Run("TestPolicyNotApplicable", testPolicyNotApplicable)
 		t.Run("TestPolicyMixed", testPolicyMixed)
 	})
 
@@ -353,57 +348,71 @@ func TestIntegrationAPI(t *testing.T) {
 }
 
 func testPolicyPass(t *testing.T) {
-	result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
-		Body: &models.TestPolicy{
+	for _, tp := range []models.TestPolicy{
+		{
 			AnalysisType:  models.AnalysisTypePOLICY,
 			Body:          policy.Body,
 			ResourceTypes: policy.ResourceTypes,
 			Tests:         policy.Tests,
 		},
-		HTTPClient: httpClient,
-	})
+		{
+			AnalysisType:  models.AnalysisTypeRULE,
+			Body:          "def rule(e): return True",
+			ResourceTypes: policy.ResourceTypes,
+			Tests:         policy.Tests,
+		},
+	} {
+		tp := tp
+		t.Run(string(tp.AnalysisType), func(t *testing.T) {
+			result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
+				Body:       &tp,
+				HTTPClient: httpClient,
+			})
 
-	require.NoError(t, err)
-	expected := &models.TestPolicyResult{
-		TestSummary:  true,
-		TestsErrored: models.TestsErrored{},
-		TestsFailed:  models.TestsFailed{},
-		TestsPassed:  models.TestsPassed{string(policy.Tests[0].Name), string(policy.Tests[1].Name)},
+			require.NoError(t, err)
+			expected := &models.TestPolicyResult{
+				TestSummary:  true,
+				TestsErrored: models.TestsErrored{},
+				TestsFailed:  models.TestsFailed{},
+				TestsPassed:  models.TestsPassed{string(tp.Tests[0].Name), string(tp.Tests[1].Name)},
+			}
+			assert.Equal(t, expected, result.Payload)
+		})
 	}
-	assert.Equal(t, expected, result.Payload)
 }
 
-func testPolicyNotApplicable(t *testing.T) {
-	result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
-		Body: &models.TestPolicy{
+func testPolicyPassAllResourceTypes(t *testing.T) {
+	for _, tp := range []models.TestPolicy{
+		{
 			AnalysisType:  models.AnalysisTypePOLICY,
-			Body:          policy.Body,
-			ResourceTypes: policy.ResourceTypes,
-			Tests: models.TestSuite{
-				{
-					ExpectedResult: policy.Tests[0].ExpectedResult,
-					Name:           policy.Tests[0].Name,
-					Resource:       policy.Tests[0].Resource,
-					ResourceType:   "Wrong Resource Type",
-				},
-			},
+			Body:          "def policy(resource): return True",
+			ResourceTypes: []string{},   // means applicable to all resource types
+			Tests:         policy.Tests, // just reuse from the example policy
 		},
-		HTTPClient: httpClient,
-	})
+		{
+			AnalysisType:  models.AnalysisTypeRULE,
+			Body:          "def rule(e): return True",
+			ResourceTypes: []string{},   // means applicable to all resource types
+			Tests:         policy.Tests, // just reuse from the example policy
+		},
+	} {
+		tp := tp
+		t.Run(string(tp.AnalysisType), func(t *testing.T) {
+			result, err := apiClient.Operations.TestPolicy(&operations.TestPolicyParams{
+				Body:       &tp,
+				HTTPClient: httpClient,
+			})
 
-	require.NoError(t, err)
-	expected := &models.TestPolicyResult{
-		TestSummary: false,
-		TestsErrored: models.TestsErrored{
-			{
-				ErrorMessage: "test resource type Wrong Resource Type is not applicable to this policy",
-				Name:         string(policy.Tests[0].Name),
-			},
-		},
-		TestsFailed: models.TestsFailed{},
-		TestsPassed: models.TestsPassed{},
+			require.NoError(t, err)
+			expected := &models.TestPolicyResult{
+				TestSummary:  true,
+				TestsErrored: models.TestsErrored{},
+				TestsFailed:  models.TestsFailed{},
+				TestsPassed:  models.TestsPassed{string(tp.Tests[0].Name), string(tp.Tests[1].Name)},
+			}
+			assert.Equal(t, expected, result.Payload)
+		})
 	}
-	assert.Equal(t, expected, result.Payload)
 }
 
 func testPolicyFail(t *testing.T) {
@@ -468,25 +477,21 @@ func testPolicyMixed(t *testing.T) {
 					ExpectedResult: true,
 					Name:           "test-1",
 					Resource:       `{"Hello": true}`,
-					ResourceType:   "AWS.S3.Bucket",
 				},
 				{
 					ExpectedResult: false,
 					Name:           "test-2",
 					Resource:       `{"Hello": false}`,
-					ResourceType:   "AWS.S3.Bucket",
 				},
 				{
 					ExpectedResult: true,
 					Name:           "test-3",
 					Resource:       `{"Hello": false}`,
-					ResourceType:   "AWS.S3.Bucket",
 				},
 				{
 					ExpectedResult: true,
 					Name:           "test-4",
 					Resource:       `{"Goodbye": false}`,
-					ResourceType:   "AWS.S3.Bucket",
 				},
 			},
 		},
@@ -745,7 +750,6 @@ func modifySuccess(t *testing.T) {
 	expectedPolicy.Tests = []*models.UnitTest{
 		{
 			Name:           "This will be True",
-			ResourceType:   "AWS.S3.Bucket",
 			ExpectedResult: true,
 			Resource:       `{}`,
 		},
@@ -917,7 +921,7 @@ func bulkUploadSuccess(t *testing.T) {
 		NewGlobals:      aws.Int64(0),
 		TotalGlobals:    aws.Int64(0),
 	}
-	assert.Equal(t, expected, result.Payload)
+	require.Equal(t, expected, result.Payload)
 
 	// Verify the existing policy was updated - the created fields were unchanged
 	getResult, err := apiClient.Operations.GetPolicy(&operations.GetPolicyParams{

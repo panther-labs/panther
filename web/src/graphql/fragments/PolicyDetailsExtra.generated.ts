@@ -24,11 +24,7 @@ import gql from 'graphql-tag';
 
 export type PolicyDetailsExtra = Pick<Types.PolicyDetails, 'body'> & {
   tests?: Types.Maybe<
-    Array<
-      Types.Maybe<
-        Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource' | 'resourceType'>
-      >
-    >
+    Array<Types.Maybe<Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource'>>>
   >;
 };
 
@@ -39,7 +35,6 @@ export const PolicyDetailsExtra = gql`
       expectedResult
       name
       resource
-      resourceType
     }
   }
 `;

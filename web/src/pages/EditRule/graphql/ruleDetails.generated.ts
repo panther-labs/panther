@@ -46,11 +46,7 @@ export type RuleDetails = {
       | 'tags'
     > & {
       tests?: Types.Maybe<
-        Array<
-          Types.Maybe<
-            Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource' | 'resourceType'>
-          >
-        >
+        Array<Types.Maybe<Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource'>>>
       >;
     }
   >;
@@ -75,7 +71,6 @@ export const RuleDetailsDocument = gql`
         expectedResult
         name
         resource
-        resourceType
       }
     }
   }

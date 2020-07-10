@@ -26,11 +26,7 @@ import gql from 'graphql-tag';
 
 export type RuleFull = Pick<Types.RuleDetails, 'body'> & {
   tests?: Types.Maybe<
-    Array<
-      Types.Maybe<
-        Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource' | 'resourceType'>
-      >
-    >
+    Array<Types.Maybe<Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource'>>>
   >;
 } & RuleBasic &
   RuleDates;
@@ -44,7 +40,6 @@ export const RuleFull = gql`
       expectedResult
       name
       resource
-      resourceType
     }
   }
   ${RuleBasic}

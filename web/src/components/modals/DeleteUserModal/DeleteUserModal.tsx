@@ -40,10 +40,12 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ user, ...rest }) => {
       deleteUser: true,
     },
     update: async cache => {
-      cache.modify('ROOT_QUERY', {
-        users: (data, helpers) => {
-          const userRef = helpers.toReference(user);
-          return data.filter(u => u.__ref !== userRef.__ref);
+      cache.modify({
+        fields: {
+          users: (data, helpers) => {
+            const userRef = helpers.toReference(user);
+            return data.filter(u => u.__ref !== userRef.__ref);
+          },
         },
       });
       cache.gc();
@@ -54,7 +56,7 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ user, ...rest }) => {
         title: `Successfully deleted user: ${userDisplayName}`,
       });
       // Checking if user deleted is the same as the user signed in
-      if (userInfo.sub === user.id) await signOut();
+      if (userInfo.sub === user.id) await signOut({ global: true });
     },
     onError: () => {
       pushSnackbar({
