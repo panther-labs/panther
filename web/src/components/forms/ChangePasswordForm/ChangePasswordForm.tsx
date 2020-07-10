@@ -25,6 +25,10 @@ import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
 import useAuth from 'Hooks/useAuth';
 
+interface ChangePasswordFormProps {
+  onSuccess: () => void;
+}
+
 interface ChangePasswordFormValues {
   oldPassword: string;
   confirmNewPassword: string;
@@ -46,7 +50,7 @@ const validationSchema = Yup.object().shape({
   ),
 });
 
-const ChangePasswordForm: React.FC = () => {
+const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ onSuccess }) => {
   const { changePassword, signOut } = useAuth();
 
   return (
@@ -57,7 +61,10 @@ const ChangePasswordForm: React.FC = () => {
         changePassword({
           oldPassword,
           newPassword,
-          onSuccess: () => signOut({ global: true }),
+          onSuccess: () => {
+            signOut({ global: true });
+            onSuccess();
+          },
           onError: ({ message }) =>
             setStatus({
               title: 'Update password failed.',

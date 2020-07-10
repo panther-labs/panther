@@ -65,7 +65,7 @@ const ListPoliciesTable: React.FC<ListPoliciesTableProps> = ({
             onClick={() => handleSort(ListPoliciesSortFieldsEnum.ResourceTypes)}
             sortDir={sortBy === ListPoliciesSortFieldsEnum.ResourceTypes ? sortDir : false}
           >
-            ` Resource Types
+            Resource Types
           </Table.SortableHeaderCell>
           <Table.SortableHeaderCell
             align="center"

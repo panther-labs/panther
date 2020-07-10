@@ -1,5 +1,5 @@
 ---
-description: How to configure and analyze osquery data with Panther
+description: Onboard and analyze osquery logs with Panther
 ---
 
 # Tutorial: Osquery Log Analysis
@@ -16,11 +16,11 @@ For the purpose of this tutorial, we will assume an osquery installation on Ubun
 
 ## Installation
 
-To install osquery, follow the instructions [here](https://osquery.io/downloads/official/4.2.0). Osquery can be installed on Mac, Linux, or Windows.
+To install osquery, follow the instructions [here](https://osquery.io/downloads/official/4.3.0). Osquery can be installed on Mac, Linux, or Windows.
 
 ## How It Works
 
-Osquery periodically reports data by querying [specific tables](https://osquery.io/schema/4.2.0) and sending results in JSON format to the configured `logger_plugin(s)`, which can be the filesystem, a TLS endpoint, or AWS. The `osquery.conf` controls these settings, including other daemon (`osqueryd`) behaviors.
+Osquery periodically reports data by querying [specific tables](https://osquery.io/schema/4.3.0) and sending results in JSON format to the configured `logger_plugin(s)`, which can be the filesystem, a TLS endpoint, or AWS. The `osquery.conf` controls these settings, including other daemon (`osqueryd`) behaviors.
 
 For example, the following query output can display all currently logged in users:
 

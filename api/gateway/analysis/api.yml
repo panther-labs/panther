@@ -175,7 +175,6 @@ paths:
     #             "resource": {
     #                 "hello": "world"
     #             },
-    #             "type": "AWS.S3.Bucket"
     #         }
     #     ],
     #     "versionId": "TsKejJ6GGi_KdH65g2iu9bcww8JxkkwI"
@@ -876,13 +875,10 @@ definitions:
         $ref: '#/definitions/testName'
       resource:
         $ref: '#/definitions/testResource'
-      resourceType:
-        $ref: '#/definitions/testResourceType'
     required:
       - expectedResult
       - name
       - resource
-      - resourceType
 
   TestSuite:
     type: array
@@ -1521,11 +1517,6 @@ definitions:
 
   testName:
     description: The name of a unit test
-    type: string
-    minLength: 1
-
-  testResourceType:
-    description: The resource or log type of an individual unit test
     type: string
     minLength: 1
 

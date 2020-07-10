@@ -785,7 +785,6 @@ export type PolicyUnitTest = {
   expectedResult?: Maybe<Scalars['Boolean']>;
   name?: Maybe<Scalars['String']>;
   resource?: Maybe<Scalars['String']>;
-  resourceType?: Maybe<Scalars['String']>;
 };
 
 export type PolicyUnitTestError = {
@@ -798,7 +797,6 @@ export type PolicyUnitTestInput = {
   expectedResult?: Maybe<Scalars['Boolean']>;
   name?: Maybe<Scalars['String']>;
   resource?: Maybe<Scalars['String']>;
-  resourceType?: Maybe<Scalars['String']>;
 };
 
 export type Query = {
@@ -2114,7 +2112,6 @@ export type PolicyUnitTestResolvers<
   expectedResult?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   resource?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  resourceType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 

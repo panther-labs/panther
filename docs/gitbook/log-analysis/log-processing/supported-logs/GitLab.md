@@ -155,7 +155,7 @@ Reference: https://docs.gitlab.com/ee/administration/logs.html#production_jsonlo
 <tr><th align=center>Column</th><th align=center>Type</th><th align=center>Description</th></tr>
 <tr><td valign=top><code><b>method</b></code></td><td><code>string</code></td><td valign=top>The HTTP method of the request</td></tr>
 <tr><td valign=top><code><b>path</b></code></td><td><code>string</code></td><td valign=top>The URL path for the request</td></tr>
-<tr><td valign=top><code><b>format</b></code></td><td><code>string</code></td><td valign=top>The response output format</td></tr>
+<tr><td valign=top><code>format</code></td><td><code>string</code></td><td valign=top>The response output format</td></tr>
 <tr><td valign=top><code>controller</code></td><td><code>string</code></td><td valign=top>The Production controller class name</td></tr>
 <tr><td valign=top><code>action</code></td><td><code>string</code></td><td valign=top>The Production controller action</td></tr>
 <tr><td valign=top><code><b>status</b></code></td><td><code>bigint</code></td><td valign=top>The HTTP response status code</td></tr>
@@ -177,6 +177,8 @@ Reference: https://docs.gitlab.com/ee/administration/logs.html#production_jsonlo
 <tr><td valign=top><code>db_duration_s</code></td><td><code>float</code></td><td valign=top>Total time to retrieve data from PostgreSQL</td></tr>
 <tr><td valign=top><code>view_duration_s</code></td><td><code>float</code></td><td valign=top>Total time taken inside the Rails views</td></tr>
 <tr><td valign=top><code><b>duration_s</b></code></td><td><code>float</code></td><td valign=top>Total time taken to retrieve the request</td></tr>
+<tr><td valign=top><code>meta.caller_id</code></td><td><code>string</code></td><td valign=top>Caller ID</td></tr>
+<tr><td valign=top><code>location</code></td><td><code>string</code></td><td valign=top>(Applies only to redirects) The redirect URL</td></tr>
 <tr><td valign=top><code>exception.class</code></td><td><code>string</code></td><td valign=top>Class name of the exception that occurred</td></tr>
 <tr><td valign=top><code>exception.message</code></td><td><code>string</code></td><td valign=top>Message of the exception that occurred</td></tr>
 <tr><td valign=top><code>exception.backtrace</code></td><td><code>[string]</code></td><td valign=top>Stack trace of the exception that occurred</td></tr>

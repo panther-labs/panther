@@ -1,4 +1,4 @@
-package awslogs
+package common
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -18,9 +18,22 @@ package awslogs
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import jsoniter "github.com/json-iterator/go"
+import (
+	"github.com/panther-labs/panther/pkg/metrics"
+)
 
-func newRawMessage(jsonString string) *jsoniter.RawMessage {
-	rawMsg := (jsoniter.RawMessage)(jsonString)
-	return &rawMsg
-}
+var (
+	BytesProcessedLogger = metrics.MustMonoLogger([]metrics.DimensionSet{
+		{
+			"Component",
+			"LogType",
+		},
+	}, metrics.Metric{
+		Name: "BytesProcessed",
+		Unit: metrics.UnitBytes,
+	})
+	Component = metrics.Dimension{
+		Name:  "Component",
+		Value: "LogProcessor",
+	}
+)

@@ -4,6 +4,5 @@ fragment PolicyDetailsExtra on PolicyDetails {
     expectedResult
     name
     resource
-    resourceType
   }
 }

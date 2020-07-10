@@ -30,7 +30,7 @@ import (
 type Production struct {
 	Method                *string            `json:"method" validate:"required" description:"The HTTP method of the request"`
 	Path                  *string            `json:"path" validate:"required" description:"The URL path for the request"`
-	Format                *string            `json:"format" validate:"required" description:"The response output format"`
+	Format                *string            `json:"format" description:"The response output format"`
 	Controller            *string            `json:"controller,omitempty" description:"The Production controller class name"`
 	Action                *string            `json:"action,omitempty" description:"The Production controller action"`
 	Status                *int               `json:"status" validate:"required" description:"The HTTP response status code"`
@@ -52,6 +52,8 @@ type Production struct {
 	DBDurationSeconds     *float32           `json:"db_duration_s,omitempty" description:"Total time to retrieve data from PostgreSQL"`
 	ViewDurationSeconds   *float32           `json:"view_duration_s,omitempty" description:" Total time taken inside the Rails views"`
 	DurationSeconds       *float32           `json:"duration_s" validate:"required" description:"Total time taken to retrieve the request"`
+	MetaCallerID          *string            `json:"meta.caller_id,omitempty" description:"Caller ID"`
+	Location              *string            `json:"location" description:"(Applies only to redirects) The redirect URL"`
 	ExceptionClass        *string            `json:"exception.class,omitempty" description:"Class name of the exception that occurred"`
 	ExceptionMessage      *string            `json:"exception.message,omitempty" description:"Message of the exception that occurred"`
 	ExceptionBacktrace    []string           `json:"exception.backtrace,omitempty" description:"Stack trace of the exception that occurred"`

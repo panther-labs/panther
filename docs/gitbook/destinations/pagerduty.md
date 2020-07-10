@@ -12,7 +12,7 @@ To configure the PagerDuty Destination, go to the PagerDuty Service Directory co
 
 ![](../.gitbook/assets/screen-shot-2019-10-22-at-10.12.23-am.png)
 
-You will be presented with a service configuration page. Select the `Use our API directly` option for the Integration Type, then configure the service with a name, description, escalation policy and any other settings as you see fit:
+You will be presented with a service configuration page. Select the `Use our API directly` option for the Integration Type, then configure the service with a name, description, escalation policy, and any other settings as you see fit:
 
 ![](../.gitbook/assets/screen-shot-2019-10-22-at-10.13.49-am.png)
 

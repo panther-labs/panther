@@ -16,7 +16,6 @@ query RuleDetails($input: GetRuleInput!) {
       expectedResult
       name
       resource
-      resourceType
     }
   }
 }
