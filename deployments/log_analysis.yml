@@ -157,6 +157,7 @@ Resources:
             - Effect: Allow
               Action:
                 - dynamodb:GetItem
+                - dynamodb:UpdateItem
                 - dynamodb:Query
                 - dynamodb:Scan
               Resource:
