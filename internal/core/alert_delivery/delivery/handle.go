@@ -51,7 +51,7 @@ func HandleAlerts(alerts []*models.Alert) {
 			if time.Since(alert.CreatedAt) > getMaxRetryDuration() {
 				zap.L().Error(
 					"alert delivery permanently failed, exceeded max retry duration",
-					zap.Strings("failedOutputs", alert.OutputIDs),
+					zap.Strings("failedOutputs", alert.OutputIds),
 					zap.Time("alertCreatedAt", alert.CreatedAt),
 					zap.String("policyId", alert.AnalysisID),
 					zap.String("severity", alert.Severity),

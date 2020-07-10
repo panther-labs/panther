@@ -49,7 +49,7 @@ var (
 // CheckIntegration adds a set of new integrations in a batch.
 func (API) CheckIntegration(input *models.CheckIntegrationInput) (*models.SourceIntegrationHealth, error) {
 	zap.L().Debug("beginning source configuration check")
-	switch aws.StringValue(input.IntegrationType) {
+	switch input.IntegrationType {
 	case models.IntegrationTypeAWSScan:
 		return checkAwsScanIntegration(input), nil
 	case models.IntegrationTypeAWS3:
@@ -61,80 +61,78 @@ func (API) CheckIntegration(input *models.CheckIntegrationInput) (*models.Source
 
 func checkAwsScanIntegration(input *models.CheckIntegrationInput) *models.SourceIntegrationHealth {
 	out := &models.SourceIntegrationHealth{
-		AWSAccountID:    aws.StringValue(input.AWSAccountID),
-		IntegrationType: aws.StringValue(input.IntegrationType),
+		IntegrationType: input.IntegrationType,
 	}
 	_, out.AuditRoleStatus = getCredentialsWithStatus(fmt.Sprintf(auditRoleFormat,
-		*input.AWSAccountID, *awsSession.Config.Region))
+		input.AWSAccountID, *awsSession.Config.Region))
 	if aws.BoolValue(input.EnableCWESetup) {
 		_, out.CWERoleStatus = getCredentialsWithStatus(fmt.Sprintf(cweRoleFormat,
-			*input.AWSAccountID, *awsSession.Config.Region))
+			input.AWSAccountID, *awsSession.Config.Region))
 	}
 	if aws.BoolValue(input.EnableRemediation) {
 		_, out.RemediationRoleStatus = getCredentialsWithStatus(fmt.Sprintf(remediationRoleFormat,
-			*input.AWSAccountID, *awsSession.Config.Region))
+			input.AWSAccountID, *awsSession.Config.Region))
 	}
 	return out
 }
 
 func checkAwsS3Integration(input *models.CheckIntegrationInput) *models.SourceIntegrationHealth {
 	out := &models.SourceIntegrationHealth{
-		AWSAccountID:    aws.StringValue(input.AWSAccountID),
-		IntegrationType: aws.StringValue(input.IntegrationType),
+		IntegrationType: input.IntegrationType,
 	}
 	var roleCreds *credentials.Credentials
-	logProcessingRole := generateLogProcessingRoleArn(*input.AWSAccountID, *input.IntegrationLabel)
+	logProcessingRole := generateLogProcessingRoleArn(input.AWSAccountID, input.IntegrationLabel)
 	roleCreds, out.ProcessingRoleStatus = getCredentialsWithStatus(logProcessingRole)
-	if aws.BoolValue(out.ProcessingRoleStatus.Healthy) {
+	if out.ProcessingRoleStatus.Healthy {
 		out.S3BucketStatus = checkBucket(roleCreds, input.S3Bucket)
 		out.KMSKeyStatus = checkKey(roleCreds, input.KmsKey)
 	}
 	return out
 }
 
-func checkKey(roleCredentials *credentials.Credentials, key *string) models.SourceIntegrationItemStatus {
-	if key == nil {
+func checkKey(roleCredentials *credentials.Credentials, key string) models.SourceIntegrationItemStatus {
+	if len(key) == 0 {
 		// KMS key is optional
 		return models.SourceIntegrationItemStatus{
-			Healthy: aws.Bool(true),
+			Healthy: true,
 		}
 	}
 	kmsClient := kms.New(awsSession, &aws.Config{Credentials: roleCredentials})
 
-	info, err := kmsClient.DescribeKey(&kms.DescribeKeyInput{KeyId: key})
+	info, err := kmsClient.DescribeKey(&kms.DescribeKeyInput{KeyId: &key})
 	if err != nil {
 		return models.SourceIntegrationItemStatus{
-			Healthy:      aws.Bool(false),
-			ErrorMessage: aws.String(err.Error()),
+			Healthy:      false,
+			ErrorMessage: err.Error(),
 		}
 	}
 
-	if !*info.KeyMetadata.Enabled {
+	if !aws.BoolValue(info.KeyMetadata.Enabled) {
 		// If the key is disabled, we should fail as well
 		return models.SourceIntegrationItemStatus{
-			Healthy:      aws.Bool(false),
-			ErrorMessage: aws.String("key disabled"),
+			Healthy:      false,
+			ErrorMessage: "key disabled",
 		}
 	}
 
 	return models.SourceIntegrationItemStatus{
-		Healthy: aws.Bool(true),
+		Healthy: true,
 	}
 }
 
-func checkBucket(roleCredentials *credentials.Credentials, bucket *string) models.SourceIntegrationItemStatus {
+func checkBucket(roleCredentials *credentials.Credentials, bucket string) models.SourceIntegrationItemStatus {
 	s3Client := s3.New(awsSession, &aws.Config{Credentials: roleCredentials})
 
-	_, err := s3Client.GetBucketLocation(&s3.GetBucketLocationInput{Bucket: bucket})
+	_, err := s3Client.GetBucketLocation(&s3.GetBucketLocationInput{Bucket: &bucket})
 	if err != nil {
 		return models.SourceIntegrationItemStatus{
-			Healthy:      aws.Bool(false),
-			ErrorMessage: aws.String(err.Error()),
+			Healthy:      false,
+			ErrorMessage: err.Error(),
 		}
 	}
 
 	return models.SourceIntegrationItemStatus{
-		Healthy: aws.Bool(true),
+		Healthy: true,
 	}
 }
 
@@ -151,13 +149,13 @@ func getCredentialsWithStatus(roleARN string) (*credentials.Credentials, models.
 	_, err := stsClient.GetCallerIdentity(&sts.GetCallerIdentityInput{})
 	if err != nil {
 		return roleCredentials, models.SourceIntegrationItemStatus{
-			Healthy:      aws.Bool(false),
-			ErrorMessage: aws.String(err.Error()),
+			Healthy:      false,
+			ErrorMessage: err.Error(),
 		}
 	}
 
 	return roleCredentials, models.SourceIntegrationItemStatus{
-		Healthy: aws.Bool(true),
+		Healthy: true,
 	}
 }
 
@@ -171,31 +169,31 @@ func evaluateIntegration(api API, integration *models.CheckIntegrationInput) (st
 		return "", false, err
 	}
 
-	switch aws.StringValue(integration.IntegrationType) {
+	switch integration.IntegrationType {
 	case models.IntegrationTypeAWSScan:
-		if !aws.BoolValue(status.AuditRoleStatus.Healthy) {
+		if !status.AuditRoleStatus.Healthy {
 			return "cannot assume audit role", false, nil
 		}
 
-		if aws.BoolValue(integration.EnableRemediation) && !aws.BoolValue(status.RemediationRoleStatus.Healthy) {
+		if aws.BoolValue(integration.EnableRemediation) && !status.RemediationRoleStatus.Healthy {
 			return "cannot assume remediation role", false, nil
 		}
 
-		if aws.BoolValue(integration.EnableCWESetup) && !aws.BoolValue(status.CWERoleStatus.Healthy) {
+		if aws.BoolValue(integration.EnableCWESetup) && !status.CWERoleStatus.Healthy {
 			return "cannot assume cwe role", false, nil
 		}
 		return "", true, nil
 	case models.IntegrationTypeAWS3:
-		if !aws.BoolValue(status.ProcessingRoleStatus.Healthy) {
+		if !status.ProcessingRoleStatus.Healthy {
 			return "cannot assume log processing role", false, nil
 		}
 
-		if !aws.BoolValue(status.S3BucketStatus.Healthy) {
+		if !status.S3BucketStatus.Healthy {
 			return "log processing role cannot access s3 bucket", false, nil
 		}
 
-		if integration.KmsKey != nil {
-			return "log processing role cannot access kms key", aws.BoolValue(status.KMSKeyStatus.Healthy), nil
+		if !status.KMSKeyStatus.Healthy {
+			return "log processing role cannot access kms key", false, nil
 		}
 		return "", true, nil
 	default:

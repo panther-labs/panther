@@ -57,7 +57,7 @@ func PollAndIssueNewScans() error {
 		if (scanIntervalElapsed(integration) && scanIsNotOngoing(integration)) || scanIsStuck(integration) {
 			integrationsToScan = append(integrationsToScan, &integration.SourceIntegrationMetadata)
 		} else {
-			zap.L().Debug("skipping integration", zap.String("integrationID", *integration.IntegrationID))
+			zap.L().Debug("skipping integration", zap.String("integrationID", integration.IntegrationID))
 		}
 	}
 
@@ -88,16 +88,16 @@ func getEnabledIntegrations() (integrations []*models.SourceIntegration, err err
 // scanIsStuck checks if an integration's is stuck in the "scanning" state.
 func scanIsStuck(integration *models.SourceIntegration) bool {
 	// Accounts for a new integration that has not completed a scan
-	if integration.LastScanEndTime == nil {
+	if integration.LastScanEndTime.IsZero() {
 		return false
 	}
 
-	return aws.StringValue(integration.ScanStatus) == models.StatusScanning && scanIntervalElapsed(integration)
+	return integration.ScanStatus == models.StatusScanning && scanIntervalElapsed(integration)
 }
 
 // scanIsNotOngoing checks if an integration's snapshot is currently running.
 func scanIsNotOngoing(integration *models.SourceIntegration) bool {
-	return aws.StringValue(integration.ScanStatus) != models.StatusScanning
+	return integration.ScanStatus != models.StatusScanning
 }
 
 // scanIntervalElapsed determines if a new scan needs to be started based on the configured interval.
@@ -106,6 +106,6 @@ func scanIntervalElapsed(integration *models.SourceIntegration) bool {
 		return true
 	}
 
-	intervalMins := time.Duration(*integration.ScanIntervalMins) * time.Minute
+	intervalMins := time.Duration(integration.ScanIntervalMins) * time.Minute
 	return time.Since(*integration.LastScanEndTime) >= intervalMins
 }

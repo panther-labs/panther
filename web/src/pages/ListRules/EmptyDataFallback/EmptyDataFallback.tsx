@@ -27,10 +27,8 @@ const ListRulesPageEmptyDataFallback: React.FC = () => {
       <Box my={10}>
         <img alt="Empty Notepad illustration" src={EmptyNotepadImg} width="auto" height={300} />
       </Box>
-      <Heading size="medium" color="grey300" mb={6}>
-        No rules found
-      </Heading>
-      <Text size="large" color="grey200" textAlign="center" mb={10}>
+      <Heading mb={6}>No rules found</Heading>
+      <Text color="gray-200" textAlign="center" mb={8}>
         Writing rules will allow you to get alerts about suspicious activity in your system
       </Text>
       <RuleCreateButton />

@@ -44,18 +44,18 @@ type LambdaInput struct {
 
 // CheckIntegrationInput is used to check the health of a potential configuration.
 type CheckIntegrationInput struct {
-	AWSAccountID     *string `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
-	IntegrationType  *string `json:"integrationType" validate:"required,oneof=aws-scan aws-s3"`
-	IntegrationLabel *string `json:"integrationLabel" validate:"required,integrationLabel"`
+	AWSAccountID     string `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
+	IntegrationType  string `json:"integrationType" validate:"required,oneof=aws-scan aws-s3"`
+	IntegrationLabel string `json:"integrationLabel" validate:"required,integrationLabel"`
 
 	// Checks for cloudsec integrations
 	EnableCWESetup    *bool `json:"enableCWESetup"`
 	EnableRemediation *bool `json:"enableRemediation"`
 
 	// Checks for log analysis integrations
-	S3Bucket *string `json:"s3Bucket,omitempty"`
-	S3Prefix *string `json:"s3Prefix,omitempty"`
-	KmsKey   *string `json:"kmsKey,omitempty"`
+	S3Bucket string `json:"s3Bucket"`
+	S3Prefix string `json:"s3Prefix"`
+	KmsKey   string `json:"kmsKey"`
 }
 
 //
@@ -65,22 +65,21 @@ type CheckIntegrationInput struct {
 // PutIntegrationInput is used to add one or many integrations.
 type PutIntegrationInput struct {
 	PutIntegrationSettings
-	SkipScanQueue *bool `json:"skipScanQueue"`
 }
 
 // PutIntegrationSettings are all the settings for the new integration.
 type PutIntegrationSettings struct {
-	AWSAccountID       *string   `genericapi:"redact" json:"awsAccountId,omitempty" validate:"required,len=12,numeric"`
-	IntegrationLabel   *string   `json:"integrationLabel,omitempty" validate:"required,integrationLabel,excludesall='<>&\""`
-	IntegrationType    *string   `json:"integrationType" validate:"required,oneof=aws-scan aws-s3"`
-	CWEEnabled         *bool     `json:"cweEnabled,omitempty"`
-	RemediationEnabled *bool     `json:"remediationEnabled,omitempty"`
-	ScanIntervalMins   *int      `json:"scanIntervalMins,omitempty" validate:"omitempty,oneof=60 180 360 720 1440"`
-	UserID             *string   `json:"userId" validate:"required,uuid4"`
-	S3Bucket           *string   `json:"s3Bucket,omitempty"`
-	S3Prefix           *string   `json:"s3Prefix,omitempty" validate:"omitempty,min=1"`
-	KmsKey             *string   `json:"kmsKey,omitempty" validate:"omitempty,kmsKeyArn"`
-	LogTypes           []*string `json:"logTypes,omitempty" validate:"omitempty,min=1"`
+	IntegrationLabel   string   `json:"integrationLabel" validate:"required,integrationLabel,excludesall='<>&\""`
+	IntegrationType    string   `json:"integrationType" validate:"required,oneof=aws-scan aws-s3"`
+	UserID             string   `json:"userId" validate:"required,uuid4"`
+	AWSAccountID       string   `genericapi:"redact" json:"awsAccountId" validate:"omitempty,len=12,numeric"`
+	CWEEnabled         *bool    `json:"cweEnabled"`
+	RemediationEnabled *bool    `json:"remediationEnabled"`
+	ScanIntervalMins   int      `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
+	S3Bucket           string   `json:"s3Bucket"`
+	S3Prefix           string   `json:"s3Prefix" validate:"omitempty,min=1"`
+	KmsKey             string   `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
+	LogTypes           []string `json:"logTypes" validate:"omitempty,min=1"`
 }
 
 //
@@ -94,20 +93,20 @@ type ListIntegrationsInput struct {
 
 // UpdateIntegrationSettingsInput is used to update integration settings.
 type UpdateIntegrationSettingsInput struct {
-	IntegrationID      *string   `json:"integrationId" validate:"required,uuid4"`
-	IntegrationLabel   *string   `json:"integrationLabel,omitempty" validate:"required,integrationLabel,excludesall='<>&\""`
-	CWEEnabled         *bool     `json:"cweEnabled,omitempty"`
-	RemediationEnabled *bool     `json:"remediationEnabled,omitempty"`
-	ScanIntervalMins   *int      `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
-	S3Bucket           *string   `json:"s3Bucket,omitempty" validate:"omitempty,min=1"`
-	S3Prefix           *string   `json:"s3Prefix,omitempty" validate:"omitempty,min=1"`
-	KmsKey             *string   `json:"kmsKey,omitempty" validate:"omitempty,kmsKeyArn"`
-	LogTypes           []*string `json:"logTypes,omitempty" validate:"omitempty,min=1"`
+	IntegrationID      string   `json:"integrationId" validate:"required,uuid4"`
+	IntegrationLabel   string   `json:"integrationLabel" validate:"required,integrationLabel,excludesall='<>&\""`
+	CWEEnabled         *bool    `json:"cweEnabled"`
+	RemediationEnabled *bool    `json:"remediationEnabled"`
+	ScanIntervalMins   int      `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
+	S3Bucket           string   `json:"s3Bucket" validate:"omitempty,min=1"`
+	S3Prefix           string   `json:"s3Prefix" validate:"omitempty,min=1"`
+	KmsKey             string   `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
+	LogTypes           []string `json:"logTypes" validate:"omitempty,min=1"`
 }
 
 // DeleteIntegrationInput is used to delete a specific item from the database.
 type DeleteIntegrationInput struct {
-	IntegrationID *string `json:"integrationId" validate:"required,uuid4"`
+	IntegrationID string `json:"integrationId" validate:"required,uuid4"`
 }
 
 //
@@ -125,14 +124,14 @@ type FullScanInput struct {
 
 // GetIntegrationTemplateInput allows specification of what resources should be enabled/disabled in the template
 type GetIntegrationTemplateInput struct {
-	AWSAccountID       *string `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
-	IntegrationType    *string `json:"integrationType" validate:"oneof=aws-scan aws-s3"`
-	IntegrationLabel   *string `json:"integrationLabel" validate:"required,integrationLabel"`
-	RemediationEnabled *bool   `json:"remediationEnabled,omitempty"`
-	CWEEnabled         *bool   `json:"cweEnabled,omitempty"`
-	S3Bucket           *string `json:"s3Bucket,omitempty" validate:"omitempty,min=1"`
-	S3Prefix           *string `json:"s3Prefix,omitempty" validate:"omitempty,min=1"`
-	KmsKey             *string `json:"kmsKey,omitempty" validate:"omitempty,kmsKeyArn"`
+	AWSAccountID       string `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
+	IntegrationType    string `json:"integrationType" validate:"oneof=aws-scan aws-s3"`
+	IntegrationLabel   string `json:"integrationLabel" validate:"required,integrationLabel"`
+	RemediationEnabled *bool  `json:"remediationEnabled"`
+	CWEEnabled         *bool  `json:"cweEnabled"`
+	S3Bucket           string `json:"s3Bucket" validate:"omitempty,min=1"`
+	S3Prefix           string `json:"s3Prefix" validate:"omitempty,min=1"`
+	KmsKey             string `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
 }
 
 //
@@ -141,18 +140,18 @@ type GetIntegrationTemplateInput struct {
 
 // UpdateIntegrationLastScanStartInput is used to update scan information at the beginning of a scan.
 type UpdateIntegrationLastScanStartInput struct {
-	IntegrationID     *string    `json:"integrationId" validate:"required,uuid4"`
-	LastScanStartTime *time.Time `json:"lastScanStartTime" validate:"required"`
-	ScanStatus        *string    `json:"scanStatus" validate:"required,oneof=ok error scanning"`
+	IntegrationID     string    `json:"integrationId" validate:"required,uuid4"`
+	LastScanStartTime time.Time `json:"lastScanStartTime" validate:"required"`
+	ScanStatus        string    `json:"scanStatus" validate:"required,oneof=ok error scanning"`
 }
 
 // UpdateIntegrationLastScanEndInput is used to update scan information at the end of a scan.
 type UpdateIntegrationLastScanEndInput struct {
-	EventStatus          *string    `json:"eventStatus"`
-	IntegrationID        *string    `json:"integrationId" validate:"required,uuid4"`
-	LastScanEndTime      *time.Time `json:"lastScanEndTime" validate:"required"`
-	LastScanErrorMessage *string    `json:"lastScanErrorMessage"`
-	ScanStatus           *string    `json:"scanStatus" validate:"required,oneof=ok error scanning"`
+	ScanStatus           string    `json:"scanStatus" validate:"required,oneof=ok error scanning"`
+	IntegrationID        string    `json:"integrationId" validate:"required,uuid4"`
+	LastScanEndTime      time.Time `json:"lastScanEndTime" validate:"required"`
+	EventStatus          string    `json:"eventStatus"`
+	LastScanErrorMessage string    `json:"lastScanErrorMessage"`
 }
 
 // Updates the status of an integration

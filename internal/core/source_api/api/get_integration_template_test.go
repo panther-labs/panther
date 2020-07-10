@@ -43,9 +43,9 @@ func TestCloudSecTemplate(t *testing.T) {
 		},
 	}
 	input := &models.GetIntegrationTemplateInput{
-		AWSAccountID:       aws.String("123456789012"),
-		IntegrationType:    aws.String(models.IntegrationTypeAWSScan),
-		IntegrationLabel:   aws.String("TestLabel-"),
+		AWSAccountID:       "123456789012",
+		IntegrationType:    models.IntegrationTypeAWSScan,
+		IntegrationLabel:   "TestLabel-",
 		CWEEnabled:         aws.Bool(true),
 		RemediationEnabled: aws.Bool(true),
 	}
@@ -58,20 +58,20 @@ func TestCloudSecTemplate(t *testing.T) {
 	require.NoError(t, err)
 	expectedTemplate, err := ioutil.ReadFile("./testdata/panther-cloudsec-iam-updated.yml")
 	require.NoError(t, err)
-	require.YAMLEq(t, string(expectedTemplate), *result.Body)
-	require.Equal(t, "panther-cloudsec-setup", *result.StackName)
+	require.YAMLEq(t, string(expectedTemplate), result.Body)
+	require.Equal(t, "panther-cloudsec-setup", result.StackName)
 }
 
 func TestLogAnalysisTemplate(t *testing.T) {
 	s3Mock := &testutils.S3Mock{}
 	templateS3Client = s3Mock
 	input := &models.GetIntegrationTemplateInput{
-		AWSAccountID:     aws.String("123456789012"),
-		IntegrationType:  aws.String(models.IntegrationTypeAWS3),
-		IntegrationLabel: aws.String("TestLabel-"),
-		S3Bucket:         aws.String("test-bucket"),
-		S3Prefix:         aws.String("prefix"),
-		KmsKey:           aws.String("key-arn"),
+		AWSAccountID:     "123456789012",
+		IntegrationType:  models.IntegrationTypeAWS3,
+		IntegrationLabel: "TestLabel-",
+		S3Bucket:         "test-bucket",
+		S3Prefix:         "prefix",
+		KmsKey:           "key-arn",
 	}
 
 	template, err := ioutil.ReadFile("../../../../deployments/auxiliary/cloudformation/panther-log-analysis-iam.yml")
@@ -82,6 +82,6 @@ func TestLogAnalysisTemplate(t *testing.T) {
 	require.NoError(t, err)
 	expectedTemplate, err := ioutil.ReadFile("./testdata/panther-log-analysis-iam-updated.yml")
 	require.NoError(t, err)
-	require.YAMLEq(t, string(expectedTemplate), *result.Body)
-	require.Equal(t, "panther-log-analysis-setup-testlabel-", *result.StackName)
+	require.YAMLEq(t, string(expectedTemplate), result.Body)
+	require.Equal(t, "panther-log-analysis-setup-testlabel-", result.StackName)
 }

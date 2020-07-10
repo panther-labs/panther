@@ -42,7 +42,8 @@ const (
 	backendStack         = "panther-bootstrap"
 	userPoolIDOutputName = "UserPoolId"
 
-	usersAPI = "panther-users-api"
+	usersAPI     = "panther-users-api"
+	systemUserID = "00000000-0000-4000-8000-000000000000"
 
 	// The integration test will only create and delete resources with this prefix
 	resourcePrefix = "integration-test-"
@@ -137,6 +138,7 @@ func TestIntegrationAPI(t *testing.T) {
 	t.Run("InviteUser", func(t *testing.T) {
 		t.Run("InviteUserAlice", testInviteUserAlice)
 		t.Run("InviteUserBob", testInviteUserBob)
+		t.Run("InviteUserInvalidRequester", testInviteUserInvalidRequester)
 	})
 	if t.Failed() {
 		return
@@ -175,6 +177,7 @@ func testInviteUserAlice(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
 		InviteUser: &models.InviteUserInput{
+			RequesterID:   aws.String(systemUserID),
 			GivenName:     aws.String("Alice"),
 			FamilyName:    aws.String("Panther"),
 			Email:         aws.String(resourcePrefix + "alice@runpanther.io"),
@@ -202,6 +205,7 @@ func testInviteUserBob(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
 		InviteUser: &models.InviteUserInput{
+			RequesterID:   aws.String(systemUserID),
 			GivenName:     aws.String("Bob"),
 			FamilyName:    aws.String("Panther"),
 			Email:         aws.String(resourcePrefix + "bob@runpanther.io"),
@@ -223,6 +227,32 @@ func testInviteUserBob(t *testing.T) {
 	}
 	require.Equal(t, expected, output)
 	bobUser = output
+}
+
+func testInviteUserInvalidRequester(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		InviteUser: &models.InviteUserInput{
+			// random requesterID - this user does not exist, so the request should be rejected
+			RequesterID: aws.String("f3b71d8d-441b-4ce7-85e3-04cb531862cc"),
+
+			GivenName:     aws.String("Chelsea"),
+			FamilyName:    aws.String("Panther"),
+			Email:         aws.String(resourcePrefix + "chelsea@runpanther.io"),
+			MessageAction: aws.String("SUPPRESS"), // don't send a real invite email
+		},
+	}
+
+	err := genericapi.Invoke(lambdaClient, usersAPI, &input, nil)
+	require.Error(t, err)
+	expected := &genericapi.LambdaError{
+		ErrorMessage: aws.String(fmt.Sprintf(
+			"failed to validate the user making the request: userID=%s does not exist",
+			*input.InviteUser.RequesterID)),
+		ErrorType:    aws.String("InvalidInputError"),
+		FunctionName: usersAPI,
+	}
+	assert.Equal(t, expected, err)
 }
 
 func testGetUser(t *testing.T) {
@@ -265,7 +295,7 @@ func testListUsers(t *testing.T) {
 	require.NoError(t, genericapi.Invoke(lambdaClient, usersAPI, &input, &output))
 	expected := models.ListUsersOutput{
 		// sort by emails ascending (alice < bob)
-		Users: []*models.User{&aliceUser, &bobUser},
+		Users: []models.User{aliceUser, bobUser},
 	}
 	assert.Equal(t, expected, output)
 }
@@ -282,7 +312,7 @@ func testListUsersNoMatch(t *testing.T) {
 
 	require.NoError(t, genericapi.Invoke(lambdaClient, usersAPI, &input, &output))
 	expected := models.ListUsersOutput{
-		Users: []*models.User{},
+		Users: []models.User{},
 	}
 	assert.Equal(t, expected, output)
 }
@@ -301,7 +331,7 @@ func testListUsersSortDescending(t *testing.T) {
 	require.NoError(t, genericapi.Invoke(lambdaClient, usersAPI, &input, &output))
 	expected := models.ListUsersOutput{
 		// sort by name descending: bob > alice
-		Users: []*models.User{&bobUser, &aliceUser},
+		Users: []models.User{bobUser, aliceUser},
 	}
 	assert.Equal(t, expected, output)
 }
@@ -311,8 +341,9 @@ func testUpdateUser(t *testing.T) {
 	input := models.LambdaInput{
 		// only change last name
 		UpdateUser: &models.UpdateUserInput{
-			ID:         aliceUser.ID,
-			FamilyName: aws.String("updated-family-name"),
+			RequesterID: aws.String(systemUserID),
+			ID:          aliceUser.ID,
+			FamilyName:  aws.String("updated-family-name"),
 		},
 	}
 	var output models.UpdateUserOutput
@@ -328,8 +359,9 @@ func testUpdateUserDoesNotExist(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
 		UpdateUser: &models.UpdateUserInput{
-			ID:         &testUserID, // no such user ID
-			FamilyName: aws.String("updated-family-name"),
+			RequesterID: aws.String(systemUserID),
+			ID:          &testUserID, // no such user ID
+			FamilyName:  aws.String("updated-family-name"),
 		},
 	}
 
@@ -385,7 +417,10 @@ func testUnknownTrigger(t *testing.T) {
 func testRemoveUser(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
-		RemoveUser: &models.RemoveUserInput{ID: bobUser.ID},
+		RemoveUser: &models.RemoveUserInput{
+			RequesterID: aws.String(systemUserID),
+			ID:          bobUser.ID,
+		},
 	}
 	var output models.RemoveUserOutput
 	require.NoError(t, genericapi.Invoke(lambdaClient, usersAPI, &input, &output))
@@ -401,7 +436,10 @@ func testRemoveUser(t *testing.T) {
 func testRemoveUserDoesNotExist(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
-		RemoveUser: &models.RemoveUserInput{ID: &testUserID}, // does not exist
+		RemoveUser: &models.RemoveUserInput{
+			RequesterID: aws.String(systemUserID),
+			ID:          &testUserID, // does not exist
+		},
 	}
 
 	// No error trying to remove a user which has already been deleted

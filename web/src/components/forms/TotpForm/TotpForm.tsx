@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Alert, Box, Text, Flex } from 'pouncejs';
+import { Box, Flex, Link, FormHelperText, useTheme } from 'pouncejs';
 import { Field, Form, Formik } from 'formik';
 import QRCode from 'qrcode.react';
 import * as React from 'react';
@@ -41,6 +41,7 @@ const validationSchema = Yup.object().shape({
 });
 
 export const TotpForm: React.FC = () => {
+  const theme = useTheme();
   const [code, setCode] = React.useState('');
   const { userInfo, verifyTotpSetup, requestTotpSecretCode } = useAuth();
 
@@ -54,75 +55,60 @@ export const TotpForm: React.FC = () => {
     <Formik<TotpFormValues>
       initialValues={initialValues}
       validationSchema={validationSchema}
-      onSubmit={async ({ mfaCode }, { setStatus }) =>
+      onSubmit={async ({ mfaCode }, { setFieldError }) =>
         verifyTotpSetup({
           mfaCode,
-          onError: ({ message }) =>
-            setStatus({
-              title: 'Authentication failed',
-              message,
-            }),
+          onError: ({ message }) => setFieldError('mfaCode', message),
         })
       }
     >
-      {({ status }) => (
-        <Form>
-          {status && (
-            <Box mb={6}>
-              <Alert variant="error" title={status.title} description={status.message} />
-            </Box>
-          )}
-          <Flex justify="center" mb={6} width={1}>
-            <QRCode value={formatSecretCode(code, userInfo.email)} />
-          </Flex>
+      <Form>
+        <Flex justify="center" mb={6} width={1} aria-describedby="totp-helper-text">
+          <QRCode
+            value={formatSecretCode(code, userInfo.email)}
+            fgColor={theme.colors['gray-50']}
+            bgColor={theme.colors['navyblue-800']}
+          />
+        </Flex>
+        <Box mb={4}>
           <Field
             autoFocus
             as={FormikTextInput}
             placeholder="The 6-digit MFA code"
             name="mfaCode"
             autoComplete="off"
-            aria-required
-            mb={6}
+            required
+            label="MFA Code"
           />
-          <SubmitButton width={1}>Verify</SubmitButton>
-          <Text color="grey200" size="small" mt={10} textAlign="center">
-            Open any two-factor authentication app, scan the barcode and then enter the MFA code to
-            complete the sign-in. Popular software options include{' '}
-            <a
-              href="https://duo.com/product/trusted-users/two-factor-authentication/duo-mobile"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Duo
-            </a>
-            ,{' '}
-            <a
-              href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&hl=en"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Google authenticator
-            </a>
-            ,{' '}
-            <a
-              href="https://lastpass.com/misc_download2.php"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              LastPass
-            </a>{' '}
-            and{' '}
-            <a
-              href="https://1password.com/downloads/mac/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              1Password
-            </a>
-            .
-          </Text>
-        </Form>
-      )}
+        </Box>
+        <SubmitButton fullWidth>Verify</SubmitButton>
+        <FormHelperText id="totp-helper-text" mt={10} textAlign="center">
+          Open any two-factor authentication app, scan the barcode and then enter the MFA code to
+          complete the sign-in. Popular software options include{' '}
+          <Link
+            external
+            href="https://duo.com/product/trusted-users/two-factor-authentication/duo-mobile"
+          >
+            Duo
+          </Link>
+          ,{' '}
+          <Link
+            external
+            href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&hl=en"
+          >
+            Google authenticator
+          </Link>
+          ,{' '}
+          <Link external href="https://lastpass.com/misc_download2.php">
+            LastPass
+          </Link>{' '}
+          and{' '}
+          <Link external href="https://1password.com/downloads/mac/">
+            1Password
+          </Link>
+          .
+        </FormHelperText>
+      </Form>
     </Formik>
   );
 };

@@ -32,7 +32,10 @@ import (
 func TestUpdateUser(t *testing.T) {
 	mockGateway := &cognito.MockUserGateway{}
 	userGateway = mockGateway
-	input := &models.UpdateUserInput{ID: aws.String("user-id")}
+	input := &models.UpdateUserInput{
+		RequesterID: aws.String(systemUserID),
+		ID:          aws.String("user-id"),
+	}
 	mockGateway.On("UpdateUser", input).Return(nil)
 	mockGateway.On("GetUser", input.ID).Return(
 		&models.User{ID: aws.String("user-id")}, nil)

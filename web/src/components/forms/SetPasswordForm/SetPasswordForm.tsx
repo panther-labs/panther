@@ -20,7 +20,7 @@ import { Field, Form, Formik } from 'formik';
 import React from 'react';
 import * as Yup from 'yup';
 import { createYupPasswordValidationSchema } from 'Helpers/utils';
-import { Alert, Box, Text } from 'pouncejs';
+import { Alert, Flex, FormHelperText, Link } from 'pouncejs';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
 import useAuth from 'Hooks/useAuth';
@@ -64,48 +64,44 @@ const SetPasswordForm: React.FC = () => {
     >
       {({ status }) => (
         <Form>
-          {status && (
-            <Box mb={6}>
-              <Alert variant="error" title={status.title} description={status.message} />
-            </Box>
-          )}
-          <Field
-            as={FormikTextInput}
-            label="New Password"
-            placeholder="Type your new password..."
-            type="password"
-            name="newPassword"
-            aria-required
-            mb={6}
-          />
-          <Field
-            as={FormikTextInput}
-            label="Confirm New Password"
-            placeholder="Your new password again..."
-            type="password"
-            name="confirmNewPassword"
-            aria-required
-            mb={6}
-          />
-          <SubmitButton width={1}>Set password</SubmitButton>
-          <Text size="medium" mt={6} color="grey200">
-            By continuing, you agree to Panther&apos;s&nbsp;
-            <a
-              href="https://panther-public-shared-assets.s3-us-west-2.amazonaws.com/EULA.pdf"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              End User License Agreement
-            </a>{' '}
-            and acknowledge you have read the&nbsp;
-            <a
-              href="https://panther-public-shared-assets.s3-us-west-2.amazonaws.com/PrivacyPolicy.pdf"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Privacy Policy
-            </a>
-          </Text>
+          <Flex direction="column" spacing={4}>
+            {status && <Alert variant="error" title={status.title} description={status.message} />}
+            <Field
+              as={FormikTextInput}
+              label="New Password"
+              placeholder="Type your new password..."
+              type="password"
+              name="newPassword"
+              required
+            />
+            <Field
+              as={FormikTextInput}
+              label="Confirm New Password"
+              placeholder="Your new password again..."
+              type="password"
+              name="confirmNewPassword"
+              required
+            />
+            <SubmitButton aria-describedby="policy-disclaimer" fullWidth>
+              Set password
+            </SubmitButton>
+            <FormHelperText id="policy-disclaimer" textAlign="center">
+              By continuing, you agree to Panther&apos;s&nbsp;
+              <Link
+                external
+                href="https://panther-public-shared-assets.s3-us-west-2.amazonaws.com/EULA.pdf"
+              >
+                End User License Agreement
+              </Link>{' '}
+              and acknowledge you have read the&nbsp;
+              <Link
+                external
+                href="https://panther-public-shared-assets.s3-us-west-2.amazonaws.com/PrivacyPolicy.pdf"
+              >
+                Privacy Policy
+              </Link>
+            </FormHelperText>
+          </Flex>
         </Form>
       )}
     </Formik>

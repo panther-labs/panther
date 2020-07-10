@@ -2,22 +2,22 @@ mutation UpdatePolicy($input: UpdatePolicyInput!) {
     updatePolicy(input: $input) {
         autoRemediationId
         autoRemediationParameters
+        body
         description
         displayName
         enabled
-        suppressions
         id
+        outputIds
         reference
         resourceTypes
         runbook
         severity
+        suppressions
         tags
-        body
         tests {
             expectedResult
             name
             resource
-            resourceType
         }
     }
 }

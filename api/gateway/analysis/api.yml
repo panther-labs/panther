@@ -156,6 +156,7 @@ paths:
     #     "createdAt":                 "2019-08-26T00:00:00.000Z",
     #     "createdBy":                 "5f54cf4a-ec56-44c2-83bc-8b742600f307",
     #     "description":               "This policy is always compliant",
+    #     "outputIds":                 ["5f54cf4a-ec56-44c2-83bc-8b742600f307", "1f54cf4a-ec56-44c2-83bc-8b742600f307"],
     #     "displayName":               "My Test Policy",
     #     "enabled":                   true,
     #     "id":                        "BucketEncryptionEnabled",
@@ -174,7 +175,6 @@ paths:
     #             "resource": {
     #                 "hello": "world"
     #             },
-    #             "type": "AWS.S3.Bucket"
     #         }
     #     ],
     #     "versionId": "TsKejJ6GGi_KdH65g2iu9bcww8JxkkwI"
@@ -813,6 +813,8 @@ definitions:
         $ref: '#/definitions/modifyTime'
       lastModifiedBy:
         $ref: '#/definitions/userId'
+      outputIds:
+        $ref: '#/definitions/outputIds'
       reference:
         $ref: '#/definitions/reference'
       resourceTypes:
@@ -844,6 +846,7 @@ definitions:
       - id
       - lastModified
       - lastModifiedBy
+      - outputIds
       - reference
       - resourceTypes
       - runbook
@@ -872,13 +875,10 @@ definitions:
         $ref: '#/definitions/testName'
       resource:
         $ref: '#/definitions/testResource'
-      resourceType:
-        $ref: '#/definitions/testResourceType'
     required:
       - expectedResult
       - name
       - resource
-      - resourceType
 
   TestSuite:
     type: array
@@ -909,6 +909,8 @@ definitions:
         $ref: '#/definitions/enabled'
       id:
         $ref: '#/definitions/id'
+      outputIds:
+        $ref: '#/definitions/outputIds'
       reference:
         $ref: '#/definitions/reference'
       resourceTypes:
@@ -970,22 +972,24 @@ definitions:
     properties: # only the fields we need for backend processing
       body:
         $ref: '#/definitions/body'
+      dedupPeriodMinutes:
+        $ref: '#/definitions/dedupPeriodMinutes'
       id:
         $ref: '#/definitions/id'
+      outputIds:
+        $ref: '#/definitions/outputIds'
+      reports:
+        $ref: '#/definitions/reports'
       resourceTypes:
         $ref: '#/definitions/TypeSet'
       severity:
         $ref: '#/definitions/severity'
       suppressions:
         $ref: '#/definitions/suppressions'
-      versionId:
-        $ref: '#/definitions/versionId'
-      dedupPeriodMinutes:
-        $ref: '#/definitions/dedupPeriodMinutes'
       tags:
         $ref: '#/definitions/tags'
-      reports:
-        $ref: '#/definitions/reports'
+      versionId:
+        $ref: '#/definitions/versionId'
 
   ##### ListPolicies #####
   PolicyList:
@@ -1237,6 +1241,8 @@ definitions:
         $ref: '#/definitions/userId'
       logTypes:
         $ref: '#/definitions/TypeSet'
+      outputIds:
+        $ref: '#/definitions/outputIds'
       reference:
         $ref: '#/definitions/reference'
       runbook:
@@ -1264,6 +1270,7 @@ definitions:
       - lastModified
       - lastModifiedBy
       - logTypes
+      - outputIds
       - reference
       - runbook
       - severity
@@ -1288,6 +1295,8 @@ definitions:
         $ref: '#/definitions/id'
       logTypes:
         $ref: '#/definitions/TypeSet'
+      outputIds:
+        $ref: '#/definitions/outputIds'
       reference:
         $ref: '#/definitions/reference'
       runbook:
@@ -1414,6 +1423,13 @@ definitions:
       - FAIL # Policy failed on at least one resource
       - PASS # Policy passed for all applicable resources
 
+  dedupPeriodMinutes:
+    description: The time in minutes for which we deduplicate events when generating alerts for log analysis
+    type: integer
+    minimum: 15
+    maximum: 1440 # 1 day in minutes
+    default: 60
+
   description:
     description: Summary of the policy and its purpose
     type: string
@@ -1438,21 +1454,42 @@ definitions:
     type: string
     format: date-time
 
+  outputIds:
+    description: >
+      A list of destinations IDs to send an alert that overrides the 
+      severity rating triggers set in the destination itself.
+    type: array
+    maxItems: 500
+    uniqueItems: true
+    items:
+      type: string
+      pattern: '[a-zA-Z0-9\-\. ]{1,200}'
+
   reference:
     description: External documentation motivating the need for this policy
     type: string
     maxLength: 5000
 
+  reports:
+    type: object
+    additionalProperties:
+      type: array
+      items:
+        type: string
+
   runbook:
     description: Internal documenation about what to do when a policy fails
     type: string
 
-  dedupPeriodMinutes:
-    description: The time in minutes for which we deduplicate events when generating alerts for log analysis
-    type: integer
-    minimum: 15
-    maximum: 1440 # 1 day in minutes
-    default: 60
+  severity:
+    description: Policy severity
+    type: string
+    enum:
+      - INFO
+      - LOW
+      - MEDIUM
+      - HIGH
+      - CRITICAL
 
   suppressions:
     description: >
@@ -1465,6 +1502,15 @@ definitions:
       type: string
       maxLength: 1000
 
+  tags:
+    description: List of tags to categorize the policy
+    type: array
+    maxItems: 500
+    uniqueItems: true
+    items:
+      type: string
+      maxLength: 200
+
   testExpectedResult:
     description: The expected outcome when running a unit test
     type: boolean
@@ -1474,34 +1520,10 @@ definitions:
     type: string
     minLength: 1
 
-  testResourceType:
-    description: The resource or log type of an individual unit test
-    type: string
-    minLength: 1
-
   testResource:
     description: The resource (or log event) the unit test is running against
     type: string
     minLength: 2
-
-  severity:
-    description: Policy severity
-    type: string
-    enum:
-      - INFO
-      - LOW
-      - MEDIUM
-      - HIGH
-      - CRITICAL
-
-  tags:
-    description: List of tags to categorize the policy
-    type: array
-    maxItems: 500
-    uniqueItems: true
-    items:
-      type: string
-      maxLength: 200
 
   testSummary:
     description: True if all tests passed
@@ -1543,10 +1565,3 @@ definitions:
     description: Policy version ID
     type: string
     pattern: '[a-zA-Z\._0-9]{32}' # 32-character alphanumeric S3 object version
-
-  reports:
-    type: object
-    additionalProperties:
-      type: array
-      items:
-        type: string

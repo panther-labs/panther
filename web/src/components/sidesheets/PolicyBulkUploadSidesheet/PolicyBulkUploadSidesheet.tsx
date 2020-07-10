@@ -16,11 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Heading, SideSheet, useSnackbar, Text, Alert } from 'pouncejs';
+import { Box, Heading, SideSheet, useSnackbar, Text, SideSheetProps, Button, Link } from 'pouncejs';
 import React from 'react';
-import LoadingButton from 'Components/buttons/LoadingButton';
-
-import useSidesheet from 'Hooks/useSidesheet';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 import { ListPoliciesDocument } from 'Pages/ListPolicies';
 import { ListRulesDocument } from 'Pages/ListRules';
@@ -28,21 +25,24 @@ import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useUploadPolicies } from './graphql/uploadPolicies.generated';
 
-export interface PolicyBulkUploadSideSheetProps {
+export interface PolicyBulkUploadSideSheetProps extends SideSheetProps {
   type: 'policy' | 'rule';
 }
 
-const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({ type }) => {
+const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({
+  type,
+  onClose,
+  ...rest
+}) => {
   // We don't want to expose a file-input to the user, thus we are gonna create a hidden one and
   // map the clicks of a button to the hidden input (as if the user had clicked the hidden input).
   // To do that we need a reference to it
   const isPolicy = type === 'policy';
   const inputRef = React.useRef<HTMLInputElement>(null);
   const { pushSnackbar } = useSnackbar();
-  const { hideSidesheet } = useSidesheet();
-  const [bulkUploadPolicies, { loading, error: uploadPoliciesError }] = useUploadPolicies({
+  const [bulkUploadPolicies, { loading }] = useUploadPolicies({
     onCompleted: data => {
-      hideSidesheet();
+      onClose();
       pushSnackbar({
         variant: 'success',
         title: `Successfully uploaded ${
@@ -53,9 +53,10 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({ t
     onError: error => {
       pushSnackbar({
         variant: 'error',
-        title:
-          extractErrorMessage(error) ||
-          'An unknown error occurred while attempting to upload your policies',
+        duration: 10000,
+        title: `Couldn't upload your ${isPolicy ? 'policies' : 'rules'}`,
+        description:
+          extractErrorMessage(error) || 'An unknown error occurred while during the upload',
       });
     },
   });
@@ -99,12 +100,17 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({ t
   };
 
   return (
-    <SideSheet open onClose={hideSidesheet}>
+    <SideSheet
+      aria-labelledby="sidesheet-title"
+      aria-describedby="sidesheet-description"
+      onClose={onClose}
+      {...rest}
+    >
       <Box width={400}>
-        <Heading size="medium" mb={8}>
+        <Heading mb={8} id="sidesheet-title">
           Upload {isPolicy ? 'Policies' : 'Rules'}
         </Heading>
-        <Text size="large" color="grey300" mb={8} as="p">
+        <Text color="gray-100" mb={8} id="sidesheet-description">
           Sometimes you don{"'"}t have the luxury of creating {isPolicy ? 'policies' : 'rules'}{' '}
           one-by-one through our lovely editor page. Not to worry, as a way to speed things up, we
           also accept a single Base64-encoded zipfile containing all of your policies.
@@ -113,13 +119,9 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({ t
           Supposing you have a collection of {isPolicy ? 'policy' : 'rule'} files, simply zip them
           together using any zip method you prefer. You can find a detailed description of the
           process in our{' '}
-          <a
-            href={`${PANTHER_SCHEMA_DOCS_LINK}/policies/uploading`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <Link external href={`${PANTHER_SCHEMA_DOCS_LINK}/policies/uploading`}>
             designated docs page
-          </a>
+          </Link>
           .
           <br />
           <br />
@@ -132,26 +134,14 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({ t
           hidden
           onChange={handleFileChange}
         />
-        {uploadPoliciesError && (
-          <Box mb={6}>
-            <Alert
-              variant="error"
-              title="An error has occurred"
-              description={
-                extractErrorMessage(uploadPoliciesError) ||
-                'An unknown error occurred while attempting to upload your policies'
-              }
-            />
-          </Box>
-        )}
-        <LoadingButton
+        <Button
           disabled={loading}
           loading={loading}
-          width={1}
+          fullWidth
           onClick={() => inputRef.current.click()}
         >
           {loading ? 'Uploading' : 'Select a file'}
-        </LoadingButton>
+        </Button>
       </Box>
     </SideSheet>
   );

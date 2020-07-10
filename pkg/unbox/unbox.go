@@ -92,6 +92,20 @@ func Uint64(n *uint64) uint64 {
 	return 0
 }
 
+func Float32(n *float32) float32 {
+	if n != nil {
+		return *n
+	}
+	return 0
+}
+
+func Float64(n *float64) float64 {
+	if n != nil {
+		return *n
+	}
+	return 0
+}
+
 func Bool(b *bool) bool {
 	if b != nil {
 		return *b

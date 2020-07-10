@@ -36,7 +36,7 @@ var (
 		region:      "us-west-2",
 		accountID:   "111111111111",
 		eventName:   "Example",
-		eventSource: "aws.nuka",
+		eventSource: "acm.amazonaws.com",
 	}
 )
 
@@ -47,7 +47,7 @@ func exampleChanges() map[string]*resourceChange {
 // test the pre-processor
 func TestPreProcessCloudTrail(t *testing.T) {
 	event := `{ 
-"eventSource": "aws.nuka", 
+"eventSource": "acm.amazonaws.com", 
 "awsRegion": "us-west-2", 
 "userIdentity": { "accountId" : "111111111111" }, 
 "eventName": "Example" 
@@ -71,7 +71,7 @@ func TestPreProcessCloudTrailFailNoEventSource(t *testing.T) {
 // test the pre-processor on an event with no event name
 func TestPreProcessCloudTrailFailNoEventName(t *testing.T) {
 	event := `{
-"eventSource": "aws.nuka", 
+"eventSource": "acm.amazonaws.com", 
 "userIdentity": { "accountId" : "111111111111" } 
 }`
 	actual, err := preprocessCloudTrailLog(gjson.Parse(event))
@@ -82,7 +82,7 @@ func TestPreProcessCloudTrailFailNoEventName(t *testing.T) {
 // test the pre-processor on an event with no account id
 func TestPreProcessCloudTrailFailNoAccountId(t *testing.T) {
 	event := `{
-"eventSource": "aws.nuka", 
+"eventSource": "acm.amazonaws.com", 
 "eventName": "Example" 
 }`
 	actual, err := preprocessCloudTrailLog(gjson.Parse(event))
@@ -93,7 +93,7 @@ func TestPreProcessCloudTrailFailNoAccountId(t *testing.T) {
 // test the pre-processor on an event with no region
 func TestPreProcessCloudTrailFailNoRegion(t *testing.T) {
 	event := `{ 
-"eventSource": "aws.nuka", 
+"eventSource": "acm.amazonaws.com", 
 "userIdentity": { "accountId" : "111111111111" }, 
 "eventName": "Example" 
 }`
@@ -118,7 +118,7 @@ func TestPreProcessIgnoredEvent(t *testing.T) {
 }
 
 // drop event if the source is not supported
-func TestProcessCloudTrailBadSource(t *testing.T) {
+func TestPreProcessCloudTrailBadSource(t *testing.T) {
 	logs := mockLogger()
 	accounts = exampleAccounts
 	event := `{ 
@@ -129,12 +129,10 @@ func TestProcessCloudTrailBadSource(t *testing.T) {
 }`
 	metadata, err := preprocessCloudTrailLog(gjson.Parse(event))
 	require.Nil(t, err)
-	require.NotNil(t, metadata)
-	require.Nil(t, processCloudTrailLog(gjson.Parse(event), metadata, exampleChanges()))
-
+	require.Nil(t, metadata)
 	expected := []observer.LoggedEntry{
 		{
-			Entry: zapcore.Entry{Level: zapcore.DebugLevel, Message: "dropping event from unsupported source"},
+			Entry: zapcore.Entry{Level: zapcore.DebugLevel, Message: "ignoring event from unsupported source"},
 			Context: []zapcore.Field{
 				zap.String("eventSource", "aws.nuka"),
 				zap.String("eventName", "Example"),

@@ -127,11 +127,11 @@ func TestHandleUnsupportedFileType(t *testing.T) {
 
 	integration = &models.SourceIntegration{
 		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-			AWSAccountID:      aws.String("1234567890123"),
-			S3Bucket:          aws.String("mybucket"),
-			IntegrationType:   aws.String(models.IntegrationTypeAWS3),
-			LogProcessingRole: aws.String("arn:aws:iam::123456789012:role/PantherLogProcessingRole-suffix"),
-			IntegrationID:     aws.String("3e4b1734-e678-4581-b291-4b8a17621999"),
+			AWSAccountID:      "1234567890123",
+			S3Bucket:          "mybucket",
+			IntegrationType:   models.IntegrationTypeAWS3,
+			LogProcessingRole: "arn:aws:iam::123456789012:role/PantherLogProcessingRole-suffix",
+			IntegrationID:     "3e4b1734-e678-4581-b291-4b8a17621999",
 		},
 	}
 

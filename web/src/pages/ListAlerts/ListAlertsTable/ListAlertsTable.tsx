@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Label, Link, Table } from 'pouncejs';
+import { Box, Link, Table, Icon, PseudoBox } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/SeverityBadge';
@@ -47,10 +47,11 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
     <Table>
       <Table.Head>
         <Table.Row>
+          <Table.HeaderCell align="center">Severity</Table.HeaderCell>
+          <Table.HeaderCell>Alert</Table.HeaderCell>
           <Table.HeaderCell />
-          <Table.HeaderCell>Severity</Table.HeaderCell>
-          <Table.HeaderCell>Title</Table.HeaderCell>
           <Table.SortableHeaderCell
+            align="right"
             onClick={() => handleSort(ListAlertsSortFieldsEnum.CreatedAt)}
             sortDir={
               sortBy === ListAlertsSortFieldsEnum.CreatedAt ? sortDir : SortDirEnum.Descending
@@ -58,33 +59,57 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
           >
             Created At
           </Table.SortableHeaderCell>
-          <Table.HeaderCell>Rule ID</Table.HeaderCell>
-          <Table.HeaderCell>Alert ID</Table.HeaderCell>
-          <Table.HeaderCell align="right">Event Count</Table.HeaderCell>
+          <Table.HeaderCell align="right">Last Matched At</Table.HeaderCell>
+          <Table.HeaderCell align="right">Events</Table.HeaderCell>
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {items.map((alert, index) => (
+        {items.map(alert => (
           <Table.Row key={alert.alertId}>
-            <Table.Cell>
-              <Label color="grey200" size="small">
-                {index + 1}
-              </Label>
-            </Table.Cell>
-            <Table.Cell>
-              <Box my={-1}>
-                {alert.severity ? <SeverityBadge severity={alert.severity} /> : 'Not available'}
+            <Table.Cell align="center">
+              <Box my={-1} display="inline-block">
+                <SeverityBadge severity={alert.severity} />
               </Box>
             </Table.Cell>
             <Table.Cell maxWidth={400} truncated title={alert.title}>
-              <Link as={RRLink} to={urls.logAnalysis.alerts.details(alert.alertId)} py={4} pr={4}>
-                {alert.title}
+              <Link
+                as={RRLink}
+                to={urls.logAnalysis.alerts.details(alert.alertId)}
+                py={4}
+                mr={4}
+                truncated
+              >
+                #{shortenId(alert.alertId)} {alert.title}
               </Link>
             </Table.Cell>
-            <Table.Cell>{formatDatetime(alert.creationTime)}</Table.Cell>
-            <Table.Cell>{alert.ruleId}</Table.Cell>
-            <Table.Cell>{shortenId(alert.alertId)}</Table.Cell>
-            <Table.Cell align="right">{alert.eventsMatched}</Table.Cell>
+            <Table.Cell>
+              <PseudoBox
+                as="a"
+                target="_blank"
+                rel="noopener noreferrer"
+                display="inline-flex"
+                alignItems="center"
+                href={`${window.location.origin}${urls.logAnalysis.rules.details(alert.ruleId)}`}
+                fontSize="small"
+                borderRadius="pill"
+                transition="background-color 0.1s ease-in-out"
+                backgroundColor="rgba(255,255,255,0.1)"
+                _hover={{
+                  backgroundColor: 'rgba(255,255,255,0.15)',
+                }}
+                my={-1}
+                py={1}
+                px={4}
+              >
+                View Rule
+                <Icon type="external-link" size="x-small" ml={1} />
+              </PseudoBox>
+            </Table.Cell>
+            <Table.Cell align="right">{formatDatetime(alert.creationTime)}</Table.Cell>
+            <Table.Cell align="right">{formatDatetime(alert.updateTime)}</Table.Cell>
+            <Table.Cell align="right" mono>
+              {alert.eventsMatched}
+            </Table.Cell>
           </Table.Row>
         ))}
       </Table.Body>

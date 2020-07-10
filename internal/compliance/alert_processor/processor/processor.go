@@ -230,15 +230,16 @@ func getAlertConfigPolicy(event *models.ComplianceNotification) (*alertmodel.Ale
 	}
 
 	return &alertmodel.Alert{
-			CreatedAt:           *event.Timestamp,
 			AnalysisDescription: aws.String(string(policy.Payload.Description)),
 			AnalysisID:          *event.PolicyID,
 			AnalysisName:        aws.String(string(policy.Payload.DisplayName)),
-			Version:             event.PolicyVersionID,
+			CreatedAt:           *event.Timestamp,
+			OutputIds:           event.OutputIds,
 			Runbook:             aws.String(string(policy.Payload.Runbook)),
 			Severity:            string(policy.Payload.Severity),
 			Tags:                policy.Payload.Tags,
 			Type:                alertmodel.PolicyType,
+			Version:             event.PolicyVersionID,
 		},
 		policy.Payload.AutoRemediationID != "", // means we can remediate
 		nil

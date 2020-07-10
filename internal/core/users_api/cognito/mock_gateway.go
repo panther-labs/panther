@@ -53,9 +53,9 @@ func (m *MockUserGateway) GetUser(id *string) (*models.User, error) {
 }
 
 // ListUsers mocks ListUsers for testing
-func (m *MockUserGateway) ListUsers(input *models.ListUsersInput) ([]*models.User, error) {
+func (m *MockUserGateway) ListUsers(input *models.ListUsersInput) ([]models.User, error) {
 	args := m.Called(input)
-	return args.Get(0).([]*models.User), args.Error(1)
+	return args.Get(0).([]models.User), args.Error(1)
 }
 
 // ResetUserPassword mocks ResetUserPassword for testing

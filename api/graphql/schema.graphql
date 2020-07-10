@@ -169,31 +169,33 @@ input ListRulesInput {
 }
 
 input AddRuleInput {
-  id: ID!
   body: String!
+  dedupPeriodMinutes: Int!
   description: String
   displayName: String
   enabled: Boolean!
-  reference: String
+  id: ID!
   logTypes: [String]
+  outputIds: [ID]
+  reference: String
   runbook: String
   severity: SeverityEnum!
-  dedupPeriodMinutes: Int!
   tags: [String]
   tests: [PolicyUnitTestInput] # Rule and Policy share the same tests structure
 }
 
 input UpdateRuleInput {
-  id: ID!
   body: String
+  dedupPeriodMinutes: Int
   description: String
   displayName: String
   enabled: Boolean
-  reference: String
+  id: ID!
   logTypes: [String]
+  outputIds: [ID]
+  reference: String
   runbook: String
   severity: SeverityEnum
-  dedupPeriodMinutes: Int
   tags: [String]
   tests: [PolicyUnitTestInput] # Rule and Policy share the same tests structure
 }
@@ -230,6 +232,7 @@ type RuleDetails {
   body: String
   createdAt: AWSDateTime
   createdBy: ID
+  dedupPeriodMinutes: Int!
   description: String
   displayName: String
   enabled: Boolean
@@ -237,10 +240,10 @@ type RuleDetails {
   lastModified: AWSDateTime
   lastModifiedBy: ID
   logTypes: [String]
+  outputIds: [ID]
   reference: String
   runbook: String
   severity: SeverityEnum
-  dedupPeriodMinutes: Int!
   tags: [String]
   tests: [PolicyUnitTest] # Policy and Rule have the same tests structure so we reuse the struct here
   versionId: ID
@@ -368,6 +371,7 @@ type S3LogIntegration {
   integrationId: ID!
   integrationType: String!
   integrationLabel: String!
+  lastEventReceived: AWSDateTime
   s3Bucket: String!
   s3Prefix: String
   kmsKey: String
@@ -462,7 +466,7 @@ type JiraConfig {
   userName: String!
   apiKey: String!
   assigneeId: String
-  issueType: JiraIssueTypesEnum
+  issueType: String!
 }
 
 type AsanaConfig {
@@ -530,7 +534,7 @@ input JiraConfigInput {
   userName: String!
   apiKey: String!
   assigneeId: String
-  issueType: JiraIssueTypesEnum
+  issueType: String!
 }
 
 input AsanaConfigInput {
@@ -562,21 +566,22 @@ input PagerDutyConfigInput {
 type PolicyDetails {
   autoRemediationId: ID
   autoRemediationParameters: AWSJSON
-  complianceStatus: ComplianceStatusEnum
   body: String
+  complianceStatus: ComplianceStatusEnum
   createdAt: AWSDateTime
   createdBy: ID
   description: String
   displayName: String
   enabled: Boolean
-  suppressions: [String]
   id: ID!
   lastModified: AWSDateTime
   lastModifiedBy: ID
+  outputIds: [ID]
   reference: String
   resourceTypes: [String]
   runbook: String
   severity: SeverityEnum
+  suppressions: [String]
   tags: [String]
   tests: [PolicyUnitTest]
   versionId: ID
@@ -616,35 +621,37 @@ type PolicySummary {
 }
 
 input AddPolicyInput {
-  id: ID!
   autoRemediationId: ID
   autoRemediationParameters: AWSJSON
   body: String!
   description: String
   displayName: String
   enabled: Boolean!
-  suppressions: [String]
+  id: ID!
+  outputIds: [ID]
   reference: String
   resourceTypes: [String]
   runbook: String
   severity: SeverityEnum!
+  suppressions: [String]
   tags: [String]
   tests: [PolicyUnitTestInput]
 }
 
 input UpdatePolicyInput {
-  id: ID!
   autoRemediationId: ID
   autoRemediationParameters: AWSJSON
   body: String
   description: String
   displayName: String
   enabled: Boolean
-  suppressions: [String]
+  id: ID!
+  outputIds: [ID]
   reference: String
   resourceTypes: [String]
   runbook: String
   severity: SeverityEnum
+  suppressions: [String]
   tags: [String]
   tests: [PolicyUnitTestInput]
 }
@@ -745,14 +752,12 @@ type PolicyUnitTest {
   expectedResult: Boolean
   name: String
   resource: String # The `attributes` field of the Resource in stringified JSON format
-  resourceType: String # The `resourceType` of the unit test
 }
 
 input PolicyUnitTestInput {
   expectedResult: Boolean
   name: String
   resource: String # The `attributes` field of the Resource in stringified JSON format
-  resourceType: String # The `resourceType` of the unit test
 }
 
 input UpdateUserInput {
@@ -863,12 +868,6 @@ enum SeverityEnum {
   MEDIUM
   HIGH
   CRITICAL
-}
-
-enum JiraIssueTypesEnum {
-  Bug
-  Story
-  Task
 }
 
 enum AccountTypeEnum {

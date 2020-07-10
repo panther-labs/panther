@@ -18,33 +18,26 @@
 
 import React from 'react';
 import TablePlaceholder from 'Components/TablePlaceholder';
-import { Box, Card } from 'pouncejs';
+import { Box, Card, FadeIn } from 'pouncejs';
 import Panel from 'Components/Panel';
-import ContentLoader from 'react-content-loader';
 
 const ResourceDetailsPageSkeleton: React.FC = () => {
   return (
-    <React.Fragment>
-      <Box mb={2}>
-        <Card p={6} mb={2}>
-          <ContentLoader height={30}>
-            <rect x="0" y={0} rx="1" ry="1" width="100%" height="10" />
-            <rect x="0" y={15} rx="1" ry="1" width="100%" height="10" />
-          </ContentLoader>
-        </Card>
-        <Card p={6} mb={2}>
-          <ContentLoader height={30}>
-            <rect x="0" y={0} rx="1" ry="1" width="100%" height="10" />
-            <rect x="0" y={15} rx="1" ry="1" width="100%" height="10" />
-          </ContentLoader>
-        </Card>
-      </Box>
-      <Panel size="large" title="Policies">
-        <Box mt={6}>
+    <FadeIn from="bottom">
+      <Card p={6}>
+        <TablePlaceholder rowCount={2} rowHeight={10} />
+      </Card>
+      <Box mt={5}>
+        <Panel title="Attributes">
           <TablePlaceholder />
-        </Box>
-      </Panel>
-    </React.Fragment>
+        </Panel>
+      </Box>
+      <Box mt={5}>
+        <Panel title="Resources">
+          <TablePlaceholder />
+        </Panel>
+      </Box>
+    </FadeIn>
   );
 };
 

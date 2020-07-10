@@ -283,17 +283,46 @@ export const copyTextToClipboard = (text: string) => {
   }
 };
 
-// Extracts stable version from git tag, i.e "v1.0.1-abc" returns "v1.0.1"
-export const getStableVersion = (version: string) =>
-  version.indexOf('-') > 0 ? version.substring(0, version.indexOf('-')) : version;
-
-export const generateDocUrl = (baseUrl: string, version: string) => {
-  if (version) {
-    return `${baseUrl}/v/${getStableVersion(version)}-docs`;
-  }
-  return baseUrl;
-};
+/**
+ * A function that takes a text and returns a valid slug for it. Useful for filename and url
+ * creation
+ *
+ * @param {String} text A string to slugify
+ * @returns {String} A slugified string
+ */
+export function slugify(text: string) {
+  return text
+    .toString()
+    .toLowerCase()
+    .replace(/\s+/g, '-') // Replace spaces with -
+    .replace(/[^\w-]+/g, '') // Remove all non-word chars
+    .replace(/--+/g, '-') // Replace multiple - with single -
+    .replace(/^-+/, '') // Trim - from start of text
+    .replace(/-+$/, ''); // Trim - from end of text
+}
 
 export const isNumber = (value: string) => /^-{0,1}\d+$/.test(value);
 
 export const toStackNameFormat = (val: string) => val.replace(/ /g, '-').toLowerCase();
+
+/**
+ * Generates a random HEX color
+ */
+export const generateRandomColor = () => Math.floor(Math.random() * 16777215).toString(16);
+
+/**
+ * Converts a rem measurement (i.e. `0.29rem`) to pixels. Returns the number of pixels
+ */
+export const remToPx = (rem: string) => {
+  return parseFloat(rem) * parseFloat(getComputedStyle(document.documentElement).fontSize);
+};
+
+/**
+ * Appends a trailing slash if missing from a url.
+ *
+ * @param {String} url A URL to check
+ * @returns {String} A URL with a trailing slash
+ */
+export const addTrailingSlash = (url: string) => {
+  return url.endsWith('/') ? url : `${url}/`;
+};

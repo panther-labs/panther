@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { useSnackbar } from 'pouncejs';
+import { ModalProps, useSnackbar } from 'pouncejs';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
 import { GlobalPythonModuleTeaser } from 'Source/graphql/fragments/GlobalPythonModuleTeaser.generated';
@@ -25,12 +25,13 @@ import { GlobalPythonModuleFull } from 'Source/graphql/fragments/GlobalPythonMod
 import { useDeleteGlobalPythonModule } from './graphql/deleteGlobalPythonModule.generated';
 import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
-export interface DeleteGlobalPythonModuleModalProps {
+export interface DeleteGlobalPythonModuleModalProps extends ModalProps {
   globalPythonModule: GlobalPythonModuleTeaser | GlobalPythonModuleFull;
 }
 
 const DeleteGlobalModal: React.FC<DeleteGlobalPythonModuleModalProps> = ({
   globalPythonModule,
+  ...rest
 }) => {
   const { location, history } = useRouter<{ id?: string }>();
   const { pushSnackbar } = useSnackbar();
@@ -88,6 +89,7 @@ const DeleteGlobalModal: React.FC<DeleteGlobalPythonModuleModalProps> = ({
       title={`Delete ${globalName}`}
       subtitle={`Are you sure you want to delete ${globalName}?`}
       onConfirm={onConfirm}
+      {...rest}
     />
   );
 };

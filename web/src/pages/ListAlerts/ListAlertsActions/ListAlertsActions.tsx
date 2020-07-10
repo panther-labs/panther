@@ -22,7 +22,7 @@ import GenerateFiltersGroup from 'Components/utils/GenerateFiltersGroup';
 import { capitalize, formatTime } from 'Helpers/utils';
 import FormikTextInput from 'Components/fields/TextInput';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
-import { Box, Button, Card, Flex, Icon } from 'pouncejs';
+import { Box, Button, Card, Collapse, Flex } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import isEmpty from 'lodash-es/isEmpty';
 import isNumber from 'lodash-es/isNumber';
@@ -38,9 +38,7 @@ export const filters = {
       label: 'Severity',
       items: severityOptions,
       itemToString: (severity: SeverityEnum) => capitalize(severity.toLowerCase()),
-      inputProps: {
-        placeholder: 'Choose a severity...',
-      },
+      placeholder: 'Choose a severity...',
     },
   },
   nameContains: {
@@ -55,8 +53,13 @@ export const filters = {
     props: {
       label: 'Date Start',
       placeholder: 'YYYY-MM-DDTHH:mm:ss',
-      type: 'datetime-local',
-      step: 1,
+      height: 46,
+      onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
+        e.target.type = 'datetime-local';
+      },
+      onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
+        e.target.type = 'text';
+      },
     },
   },
   createdAtBefore: {
@@ -64,8 +67,13 @@ export const filters = {
     props: {
       label: 'Date End',
       placeholder: 'YYYY-MM-DDTHH:mm:ss',
-      type: 'datetime-local',
-      step: 1,
+      height: 46,
+      onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
+        e.target.type = 'datetime-local';
+      },
+      onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
+        e.target.type = 'text';
+      },
     },
   },
   ruleIdContains: {
@@ -175,33 +183,31 @@ const ListAlertsActions: React.FC<ListAlertsActionsProps> = ({ showActions }) =>
   );
 
   return (
-    <Box>
-      <Flex justify="flex-end" mb={6}>
-        <Box position="relative">
-          <Button
-            size="large"
-            variant="default"
-            onClick={() => setFiltersVisibility(!areFiltersVisible)}
-          >
-            <Flex>
-              <Icon type="filter" size="small" mr={3} />
-              Filter Options {filtersCount ? `(${filtersCount})` : ''}
-            </Flex>
-          </Button>
-        </Box>
+    <Box mb={6} as="section">
+      <Flex justify="flex-end">
+        <Button
+          active={areFiltersVisible}
+          icon="filter"
+          variant="outline"
+          variantColor="navyblue"
+          onClick={() => setFiltersVisibility(!areFiltersVisible)}
+        >
+          Filter Options {filtersCount ? `(${filtersCount})` : ''}
+        </Button>
       </Flex>
-      {areFiltersVisible && (
-        <ErrorBoundary>
-          <Card p={6} mb={6}>
-            <GenerateFiltersGroup<ListAlertsFiltersValues>
-              filters={filters}
-              onCancel={() => setFiltersVisibility(false)}
-              onSubmit={newParams => updateRequestParams(postProcessDate(newParams))}
-              initialValues={initialFilterValues}
-            />
-          </Card>
-        </ErrorBoundary>
-      )}
+      <ErrorBoundary>
+        <Collapse open={areFiltersVisible}>
+          <Box pt={6}>
+            <Card p={8}>
+              <GenerateFiltersGroup<ListAlertsFiltersValues>
+                filters={filters}
+                onSubmit={newParams => updateRequestParams(postProcessDate(newParams))}
+                initialValues={initialFilterValues}
+              />
+            </Card>
+          </Box>
+        </Collapse>
+      </ErrorBoundary>
     </Box>
   );
 };

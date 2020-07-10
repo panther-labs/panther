@@ -62,10 +62,11 @@ const MicrosoftTeamsDestinationForm: React.FC<MicrosoftTeamsDestinationFormProps
         name="outputConfig.msTeams.webhookURL"
         label="Microsoft Teams Webhook URL"
         placeholder={
-          existing ? '<hidden information>' : 'Where should we send a push notification to?'
+          existing
+            ? 'Information is hidden. New values will override the existing ones.'
+            : 'Where should we send a push notification to?'
         }
-        mb={6}
-        aria-required={!existing}
+        required={!existing}
       />
     </BaseDestinationForm>
   );

@@ -168,12 +168,10 @@ Resources:
               Action:
                 - cognito-idp:AdminCreateUser
                 - cognito-idp:AdminDeleteUser
-                - cognito-idp:AdminDisableUser
-                - cognito-idp:AdminEnableUser
                 - cognito-idp:AdminGetUser
                 - cognito-idp:AdminResetUserPassword
                 - cognito-idp:AdminUpdateUserAttributes
-                - cognito-idp:GetUser
+                - cognito-idp:AdminUserGlobalSignOut
                 - cognito-idp:ListUsers
               Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}
 

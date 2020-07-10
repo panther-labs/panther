@@ -39,7 +39,7 @@ func TestGithubAlert(t *testing.T) {
 	alert := &alertmodels.Alert{
 		AnalysisID:          "ruleId",
 		CreatedAt:           createdAtTime,
-		OutputIDs:           []string{"output-id"},
+		OutputIds:           []string{"output-id"},
 		AnalysisDescription: aws.String("description"),
 		AnalysisName:        aws.String("rule_name"),
 		Severity:            "INFO",

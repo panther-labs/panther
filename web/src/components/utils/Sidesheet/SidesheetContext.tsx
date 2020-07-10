@@ -17,7 +17,6 @@
  */
 
 import React from 'react';
-import { AddDestinationSidesheetProps } from 'Components/sidesheets/AddDestinationSidesheet';
 import { UpdateDestinationSidesheetProps } from 'Components/sidesheets/UpdateDestinationSidesheet';
 import { PolicyBulkUploadSideSheetProps } from 'Components/sidesheets/PolicyBulkUploadSidesheet';
 import { EditUserSidesheetProps } from 'Components/sidesheets/EditUserSidesheet';
@@ -28,7 +27,6 @@ const HIDE_SIDESHEET = 'HIDE_SIDESHEET';
 /* The available list of sidesheets to dispatch */
 export enum SIDESHEETS {
   POLICY_BULK_UPLOAD = 'POLICY_BULK_UPLOAD',
-  SELECT_DESTINATION = 'SELECT_DESTINATION',
   ADD_DESTINATION = 'ADD_DESTINATION',
   UPDATE_DESTINATION = 'UPDATE_DESTINATION',
   EDIT_ACCOUNT = 'EDIT_ACCOUNT',
@@ -36,24 +34,19 @@ export enum SIDESHEETS {
   USER_INVITATION = 'USER_INVITATION',
 }
 
+type OmitControlledProps<T> = Omit<T, 'open' | 'onClose'>;
+
 /* The shape of the reducer state */
 interface SidesheetStateShape {
   sidesheet: keyof typeof SIDESHEETS | null;
   props?: { [key: string]: any };
-}
-
-interface SelectDestinationSideSheetAction {
-  type: typeof SHOW_SIDESHEET;
-  payload: {
-    sidesheet: SIDESHEETS.SELECT_DESTINATION;
-  };
+  isVisible: boolean;
 }
 
 interface AddDestinationSideSheetAction {
   type: typeof SHOW_SIDESHEET;
   payload: {
     sidesheet: SIDESHEETS.ADD_DESTINATION;
-    props: AddDestinationSidesheetProps;
   };
 }
 
@@ -61,7 +54,7 @@ interface UpdateDestinationSideSheetAction {
   type: typeof SHOW_SIDESHEET;
   payload: {
     sidesheet: SIDESHEETS.UPDATE_DESTINATION;
-    props: UpdateDestinationSidesheetProps;
+    props: OmitControlledProps<UpdateDestinationSidesheetProps>;
   };
 }
 
@@ -74,7 +67,7 @@ interface PolicyBulkUploadSideSheetAction {
   type: typeof SHOW_SIDESHEET;
   payload: {
     sidesheet: SIDESHEETS.POLICY_BULK_UPLOAD;
-    props: PolicyBulkUploadSideSheetProps;
+    props: OmitControlledProps<PolicyBulkUploadSideSheetProps>;
   };
 }
 
@@ -89,7 +82,7 @@ interface EditUserSideSheetAction {
   type: typeof SHOW_SIDESHEET;
   payload: {
     sidesheet: SIDESHEETS.EDIT_USER;
-    props: EditUserSidesheetProps;
+    props: OmitControlledProps<EditUserSidesheetProps>;
   };
 }
 
@@ -103,7 +96,6 @@ interface UserInvitationSideSheetAction {
 /* The available actions that can be dispatched */
 type SidesheetStateAction =
   | PolicyBulkUploadSideSheetAction
-  | SelectDestinationSideSheetAction
   | AddDestinationSideSheetAction
   | UpdateDestinationSideSheetAction
   | EditAccountSideSheetAction
@@ -115,6 +107,7 @@ type SidesheetStateAction =
 const initialState: SidesheetStateShape = {
   sidesheet: null,
   props: {},
+  isVisible: false,
 };
 
 const sidesheetReducer = (state: SidesheetStateShape, action: SidesheetStateAction) => {
@@ -123,9 +116,10 @@ const sidesheetReducer = (state: SidesheetStateShape, action: SidesheetStateActi
       return {
         sidesheet: action.payload.sidesheet,
         props: 'props' in action.payload ? action.payload.props : {},
+        isVisible: true,
       };
     case HIDE_SIDESHEET:
-      return { sidesheet: null, props: {} };
+      return { ...state, isVisible: false };
     default:
       return state;
   }

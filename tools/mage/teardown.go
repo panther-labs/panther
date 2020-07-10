@@ -108,11 +108,6 @@ func destroyCfnStacks(masterStack string) error {
 		logger.Infof("    √ %s deleted (%d/%d)", result.stackName, finishCount, len(allStacks))
 	}
 
-	// In v1.4.0 we removed the stack `panther-glue`, delete it (we can remove this after a few more releases)
-	if err := deleteStack(client, aws.String("panther-glue")); err != nil {
-		logger.Warn(err)
-	}
-
 	// Trigger the deletion of the main stacks in parallel
 	//
 	// The bootstrap stacks have to be last because of the ECS cluster and custom resource Lambda.

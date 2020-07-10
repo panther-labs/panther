@@ -58,6 +58,9 @@ type UpdatePolicy struct {
 	// Required: true
 	ID ID `json:"id"`
 
+	// output ids
+	OutputIds OutputIds `json:"outputIds,omitempty"`
+
 	// reference
 	Reference Reference `json:"reference,omitempty"`
 
@@ -114,6 +117,10 @@ func (m *UpdatePolicy) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateID(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateOutputIds(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -248,6 +255,22 @@ func (m *UpdatePolicy) validateID(formats strfmt.Registry) error {
 	if err := m.ID.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("id")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *UpdatePolicy) validateOutputIds(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.OutputIds) { // not required
+		return nil
+	}
+
+	if err := m.OutputIds.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("outputIds")
 		}
 		return err
 	}

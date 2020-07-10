@@ -26,31 +26,32 @@ type Config struct {
 	AnalysisType              string              `yaml:"AnalysisType"`
 	AutoRemediationID         string              `yaml:"AutoRemediationID"`
 	AutoRemediationParameters map[string]string   `yaml:"AutoRemediationParameters"`
+	DedupPeriodMinutes        int                 `yaml:"DedupPeriodMinutes"`
 	Description               string              `yaml:"Description"`
 	DisplayName               string              `yaml:"DisplayName"`
 	Enabled                   bool                `yaml:"Enabled"`
 	Filename                  string              `yaml:"Filename"`
-	PolicyID                  string              `yaml:"PolicyID"`
-	RuleID                    string              `yaml:"RuleID"`
 	GlobalID                  string              `yaml:"GlobalID"`
-	ResourceTypes             []string            `yaml:"ResourceTypes"`
 	LogTypes                  []string            `yaml:"LogTypes"`
+	OutputIds                 []string            `yaml:"OutputIds"`
+	PolicyID                  string              `yaml:"PolicyID"`
 	Reference                 string              `yaml:"Reference"`
+	Reports                   map[string][]string `yaml:"Reports"`
+	ResourceTypes             []string            `yaml:"ResourceTypes"`
+	RuleID                    string              `yaml:"RuleID"`
 	Runbook                   string              `yaml:"Runbook"`
 	Severity                  string              `yaml:"Severity"`
 	Suppressions              []string            `yaml:"Suppressions"`
 	Tags                      []string            `yaml:"Tags"`
 	Tests                     []Test              `yaml:"Tests"`
-	DedupPeriodMinutes        int                 `yaml:"DedupPeriodMinutes"`
-	Reports                   map[string][]string `yaml:"Reports"`
 }
 
 // Test is a unit test definition when parsing policies in a bulk upload.
 type Test struct {
 	ExpectedResult bool        `yaml:"ExpectedResult"`
+	Log            interface{} `yaml:"Log"`
+	LogType        string      `yaml:"LogType"`
 	Name           string      `yaml:"Name"`
 	Resource       interface{} `yaml:"Resource"`
-	Log            interface{} `yaml:"Log"`
 	ResourceType   string      `yaml:"ResourceType"`
-	LogType        string      `yaml:"LogType"`
 }

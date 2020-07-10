@@ -18,42 +18,27 @@
 
 import React from 'react';
 import withSEO from 'Hoc/withSEO';
-import Banner from 'Assets/sign-up-banner.jpg';
 import AuthPageContainer from 'Components/AuthPageContainer';
 import ForgotPasswordForm from 'Components/forms/ForgotPasswordForm';
-import { Button, Flex, Text } from 'pouncejs';
+import { FadeIn, Link } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 
 const ForgotPasswordPage: React.FC = () => {
   return (
-    <AuthPageContainer banner={Banner}>
-      <AuthPageContainer.Caption
-        title="Forgot your password?"
-        subtitle="We'll help you reset your password and get back on track."
-      />
-      <ForgotPasswordForm />
-      <Text size="small" color="grey200" mt={8} as="p" textAlign="center">
-        <i>
-          By submitting a request, you will receive an email with instructions on how to reset your
-          password
-        </i>
-      </Text>
+    <AuthPageContainer>
+      <FadeIn delay={100}>
+        <AuthPageContainer.Caption
+          title="Forgot your password?"
+          subtitle="We'll help you reset your password and get back on track."
+        />
+        <ForgotPasswordForm />
+      </FadeIn>
       <AuthPageContainer.AltOptions>
-        <Flex align="center">
-          <Text size="medium" color="grey200" as="span" mr={3}>
-            Remembered it all of a sudden?
-          </Text>
-          <Button
-            size="small"
-            variant="default"
-            as={RRLink}
-            to={urls.account.auth.signIn()}
-            style={{ textDecoration: 'none' }}
-          >
-            Sign in
-          </Button>
-        </Flex>
+        Remembered it all of a sudden?
+        <Link as={RRLink} to={urls.account.auth.signIn()} ml={2}>
+          Sign in
+        </Link>
       </AuthPageContainer.AltOptions>
     </AuthPageContainer>
   );

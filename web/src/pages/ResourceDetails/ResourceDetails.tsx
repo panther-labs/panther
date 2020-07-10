@@ -20,7 +20,6 @@ import React from 'react';
 import useRouter from 'Hooks/useRouter';
 import { ComplianceStatusEnum, PoliciesForResourceInput } from 'Generated/schema';
 import Panel from 'Components/Panel';
-import JsonViewer from 'Components/JsonViewer';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import {
   convertObjArrayValuesToCsv,
@@ -28,7 +27,7 @@ import {
   getComplianceItemsTotalCount,
   extractErrorMessage,
 } from 'Helpers/utils';
-import { Alert, Box } from 'pouncejs';
+import { Alert, Box, Flex } from 'pouncejs';
 import {
   TableControlsPagination,
   TableControlsComplianceFilter,
@@ -37,6 +36,7 @@ import pick from 'lodash-es/pick';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import withSEO from 'Hoc/withSEO';
 import { DEFAULT_SMALL_PAGE_SIZE } from 'Source/constants';
+import ResourceDetailsAttributes from 'Pages/ResourceDetails/ResourceDetailsAttributes';
 import ResourceDetailsTable from './ResourceDetailsTable';
 import ResourceDetailsInfo from './ResourceDetailsInfo';
 import ResourceDetailsPageSkeleton from './Skeleton';
@@ -100,21 +100,18 @@ const ResourceDetailsPage = () => {
   return (
     <article>
       <ErrorBoundary>
-        <Box mb={2}>
+        <Box mb={5}>
           <ResourceDetailsInfo resource={enhancedResource} />
         </Box>
       </ErrorBoundary>
-      <Box mb={2}>
-        <Panel size="large" title="Attributes">
-          <JsonViewer data={JSON.parse(enhancedResource.attributes)} />
-        </Panel>
+      <Box mb={5}>
+        <ResourceDetailsAttributes resource={enhancedResource} />
       </Box>
       <Box mb={6}>
         <Panel
-          size="large"
           title="Policies"
           actions={
-            <Box ml={6} mr="auto">
+            <Flex spacing={1}>
               <TableControlsComplianceFilter
                 mr={1}
                 count={getComplianceItemsTotalCount(totalCounts)}
@@ -125,7 +122,7 @@ const ResourceDetailsPage = () => {
               <TableControlsComplianceFilter
                 mr={1}
                 count={totalCounts.active.fail}
-                countColor="red300"
+                countColor="red-200"
                 text="Failing"
                 isActive={requestParams.status === ComplianceStatusEnum.Fail}
                 onClick={() =>
@@ -137,7 +134,7 @@ const ResourceDetailsPage = () => {
               />
               <TableControlsComplianceFilter
                 mr={1}
-                countColor="green300"
+                countColor="green-200"
                 count={totalCounts.active.pass}
                 text="Passing"
                 isActive={requestParams.status === ComplianceStatusEnum.Pass}
@@ -150,7 +147,7 @@ const ResourceDetailsPage = () => {
               />
               <TableControlsComplianceFilter
                 mr={1}
-                countColor="orange300"
+                countColor="yellow-500"
                 count={
                   totalCounts.suppressed.fail +
                   totalCounts.suppressed.pass +
@@ -164,22 +161,17 @@ const ResourceDetailsPage = () => {
                   })
                 }
               />
-            </Box>
+            </Flex>
           }
         >
           <ErrorBoundary>
-            <ResourceDetailsTable
-              policies={policies}
-              enumerationStartIndex={(pagingData.thisPage - 1) * DEFAULT_SMALL_PAGE_SIZE}
-            />
+            <ResourceDetailsTable policies={policies} />
           </ErrorBoundary>
-          <Box my={6}>
-            <TableControlsPagination
-              page={pagingData.thisPage}
-              totalPages={pagingData.totalPages}
-              onPageChange={updatePagingParams}
-            />
-          </Box>
+          <TableControlsPagination
+            page={pagingData.thisPage}
+            totalPages={pagingData.totalPages}
+            onPageChange={updatePagingParams}
+          />
         </Panel>
       </Box>
     </article>

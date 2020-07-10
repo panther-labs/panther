@@ -35,7 +35,8 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
-// used by log parsers to validate records
+// For new parser tests use `CheckPantherParser` instead
+// Used by log parsers to validate records
 func EqualPantherLog(t *testing.T, expectedEvent *parsers.PantherLog, events []*parsers.PantherLog, parseErr error) {
 	require.NoError(t, parseErr)
 	require.Equal(t, 1, len(events))
@@ -169,7 +170,6 @@ func CheckPantherMultiline(t *testing.T, logs string, parser parsers.LogParser, 
 
 		results, err := p.Parse(log)
 		require.NoError(t, err)
-		require.NotNil(t, results)
 		actual = append(actual, results...)
 	}
 	require.Equal(t, len(expect), len(actual))
@@ -177,4 +177,9 @@ func CheckPantherMultiline(t *testing.T, logs string, parser parsers.LogParser, 
 		expect := expect[i]
 		EqualPantherLog(t, expect, []*parsers.PantherLog{result}, nil)
 	}
+}
+
+func NewRawMessage(jsonString string) *jsoniter.RawMessage {
+	rawMsg := (jsoniter.RawMessage)(jsonString)
+	return &rawMsg
 }

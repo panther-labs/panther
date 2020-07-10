@@ -124,6 +124,47 @@ func setEquality(first, second []string) bool {
 	return true
 }
 
+// Rewrite test resource json in alphabetical order.
+func standardizeTests(p *models.Policy) error {
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
+	for _, test := range p.Tests {
+		var data map[string]interface{}
+		if err := json.UnmarshalFromString(string(test.Resource), &data); err != nil {
+			return err
+		}
+		normalized, err := json.MarshalToString(&data)
+		if err != nil {
+			return err
+		}
+		test.Resource = models.TestResource(normalized)
+	}
+
+	return nil
+}
+
+// Returns true if the two policies are logically equivalent.
+func policiesEqual(first, second *tableItem) (bool, error) {
+	p1, p2 := first.Policy(""), second.Policy("")
+	p1.CreatedAt = p2.CreatedAt
+	p1.CreatedBy = p2.CreatedBy
+	p1.LastModified = p2.LastModified
+	p1.LastModifiedBy = p2.LastModifiedBy
+	p1.VersionID = p2.VersionID
+
+	// Test resources are json strings which may not be serialized in the same order
+	if err := standardizeTests(p1); err != nil {
+		zap.L().Warn("failed to marshal/unmarshal test json", zap.Error(err))
+		return false, err
+	}
+	if err := standardizeTests(p2); err != nil {
+		zap.L().Warn("failed to marshal/unmarshal test json", zap.Error(err))
+		return false, err
+	}
+
+	return reflect.DeepEqual(p1, p2), nil
+}
+
 // Create/update a policy or rule.
 //
 // The following fields are set automatically (need not be set by the caller):
@@ -158,6 +199,14 @@ func writeItem(item *tableItem, userID models.UserID, mustExist *bool) (int, err
 		if oldItem.Type != item.Type {
 			return changeType, errWrongType
 		}
+
+		if equal, err := policiesEqual(oldItem, item); equal && err != nil {
+			zap.L().Info("no changes necessary",
+				zap.String("policyId", string(item.ID)))
+			return changeType, nil
+		}
+		// If there was an error evaluating equality, just assume they are not equal and continue
+		// with the update as normal.
 
 		item.CreatedAt = oldItem.CreatedAt
 		item.CreatedBy = oldItem.CreatedBy
@@ -207,7 +256,9 @@ func writeItem(item *tableItem, userID models.UserID, mustExist *bool) (int, err
 // purpose it serves, which is informing users that their bulk operation did or did not change something.
 func itemUpdated(oldItem, newItem *tableItem) bool {
 	itemsEqual := oldItem.AutoRemediationID == newItem.AutoRemediationID && oldItem.Body == newItem.Body &&
-		oldItem.Description == newItem.Description && oldItem.DisplayName == newItem.DisplayName &&
+		oldItem.Description == newItem.Description &&
+		setEquality(oldItem.OutputIds, newItem.OutputIds) &&
+		oldItem.DisplayName == newItem.DisplayName &&
 		oldItem.Enabled == newItem.Enabled && oldItem.Reference == newItem.Reference &&
 		oldItem.Runbook == newItem.Runbook && oldItem.Severity == newItem.Severity &&
 		oldItem.DedupPeriodMinutes == newItem.DedupPeriodMinutes &&
@@ -235,7 +286,7 @@ func itemUpdated(oldItem, newItem *tableItem) bool {
 	for _, newTest := range newItem.Tests {
 		oldTest, ok := oldTests[newTest.Name]
 		// First check if the meta data of the test is equal
-		if !ok || oldTest.ResourceType != newTest.ResourceType || oldTest.ExpectedResult != newTest.ExpectedResult {
+		if !ok || oldTest.ExpectedResult != newTest.ExpectedResult {
 			// Something changed, so this item has been updated
 			return true
 		}

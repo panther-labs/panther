@@ -45,7 +45,7 @@ Edit your `deployments/panther_config.yml` to add `arn:aws:iam::34318291XXXX:use
  # Snowflake (https://www.snowflake.com/) Integration
   Snowflake:
     # List of Snowflake cluster IAM ARNs which will ingest the output of Panther log processing.
-    # If this list is non-empty, a file will be produced by `mage deploy`
+    # If this list is non-empty, a file will be produced by `mage snowflake:snowpipe`
     # called './out/snowflake/showpipe.sql' that should be run in your snowflake cluster
     # to configure Snowpipe and declare the Panther tables.
     # For example:

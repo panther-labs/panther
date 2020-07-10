@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Alert, Box } from 'pouncejs';
+import { Alert, Flex } from 'pouncejs';
 import { Field, Form, Formik } from 'formik';
 import React from 'react';
 import * as Yup from 'yup';
@@ -24,6 +24,10 @@ import { createYupPasswordValidationSchema } from 'Helpers/utils';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
 import useAuth from 'Hooks/useAuth';
+
+interface ChangePasswordFormProps {
+  onSuccess: () => void;
+}
 
 interface ChangePasswordFormValues {
   oldPassword: string;
@@ -46,7 +50,7 @@ const validationSchema = Yup.object().shape({
   ),
 });
 
-const ChangePasswordForm: React.FC = () => {
+const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ onSuccess }) => {
   const { changePassword, signOut } = useAuth();
 
   return (
@@ -57,7 +61,10 @@ const ChangePasswordForm: React.FC = () => {
         changePassword({
           oldPassword,
           newPassword,
-          onSuccess: () => signOut({ global: true }),
+          onSuccess: () => {
+            signOut({ global: true });
+            onSuccess();
+          },
           onError: ({ message }) =>
             setStatus({
               title: 'Update password failed.',
@@ -68,42 +75,38 @@ const ChangePasswordForm: React.FC = () => {
     >
       {({ status }) => (
         <Form>
-          <Box mb={6}>
-            <Alert variant="info" title="Updating your password will log you out of all devices!" />
-          </Box>
-          {status && (
-            <Box mb={6}>
-              <Alert variant="error" title={status.title} description={status.message} />
-            </Box>
-          )}
-          <Field
-            as={FormikTextInput}
-            label="Current Password"
-            placeholder="Enter your current password..."
-            type="password"
-            name="oldPassword"
-            aria-required
-            mb={6}
-          />
-          <Field
-            as={FormikTextInput}
-            label="New Password"
-            placeholder="Type your new password..."
-            type="password"
-            name="newPassword"
-            aria-required
-            mb={6}
-          />
-          <Field
-            as={FormikTextInput}
-            label="Confirm New Password"
-            placeholder="Type your new password again..."
-            type="password"
-            name="confirmNewPassword"
-            aria-required
-            mb={6}
-          />
-          <SubmitButton width={1}>Change password</SubmitButton>
+          <Flex direction="column" spacing={4}>
+            <Alert
+              variant="default"
+              title="Updating your password will log you out of all devices!"
+            />
+            {status && <Alert variant="error" title={status.title} description={status.message} />}
+            <Field
+              as={FormikTextInput}
+              label="Current Password"
+              placeholder="Enter your current password..."
+              type="password"
+              name="oldPassword"
+              required
+            />
+            <Field
+              as={FormikTextInput}
+              label="New Password"
+              placeholder="Type your new password..."
+              type="password"
+              name="newPassword"
+              required
+            />
+            <Field
+              as={FormikTextInput}
+              label="Confirm New Password"
+              placeholder="Type your new password again..."
+              type="password"
+              name="confirmNewPassword"
+              required
+            />
+            <SubmitButton fullWidth>Change password</SubmitButton>
+          </Flex>
         </Form>
       )}
     </Formik>

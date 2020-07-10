@@ -32,20 +32,17 @@ const Page500: React.FC = () => {
       position="fixed"
       left={0}
       top={0}
-      bg="white"
       direction="column"
     >
       <Box mb={10}>
         <img alt="Page crash illustration" src={WarningImg} width="auto" height={350} />
       </Box>
-      <Heading size="medium" color="grey300" mb={4}>
-        Something went terribly wrong
-      </Heading>
-      <Text size="medium" color="grey200" as="p" mb={10}>
+      <Heading mb={2}>Something went terribly wrong</Heading>
+      <Text fontSize="medium" color="gray-200" mb={10}>
         This would normally be an internal server error, but we are fully serverless. Feel free to
         laugh.
       </Text>
-      <Button size="small" variant="default" as={RRLink} to="/">
+      <Button as={RRLink} to="/">
         Back to somewhere stable
       </Button>
     </Flex>

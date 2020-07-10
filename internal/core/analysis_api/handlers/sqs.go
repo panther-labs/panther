@@ -43,10 +43,14 @@ func queuePolicy(policy *tableItem) error {
 	return err
 }
 
-// updateLayer sends a message to the layer manager lambda indicating a layer of a certain type needs to be re-built
-func updateLayer(analysisType string) error {
+// updateLayer sends a message to the layer manager lambda indicating a layer of a certain type
+// needs to be re-built
+//
+// Currently only the global type is supported, but in the future we may support other types as
+// well.
+func updateLayer() error {
 	_, err := sqsClient.SendMessage(&sqs.SendMessageInput{
-		MessageBody: aws.String(analysisType),
+		MessageBody: aws.String(typeGlobal),
 		QueueUrl:    aws.String(env.LayerManagerQueueURL),
 	})
 	return err

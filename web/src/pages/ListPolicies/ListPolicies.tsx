@@ -18,7 +18,6 @@
 
 import React from 'react';
 import { Alert, Box, Card } from 'pouncejs';
-import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { convertObjArrayValuesToCsv, encodeParams, extractErrorMessage } from 'Helpers/utils';
 import { ListPoliciesInput, SortDirEnum, ListPoliciesSortFieldsEnum } from 'Generated/schema';
 import { TableControlsPagination } from 'Components/utils/TableControls';
@@ -76,9 +75,8 @@ const ListPolicies = () => {
     <React.Fragment>
       <ListPoliciesActions />
       <ErrorBoundary>
-        <Card>
+        <Card as="section" px={8} py={4} position="relative">
           <ListPoliciesTable
-            enumerationStartIndex={(pagingData.thisPage - 1) * DEFAULT_LARGE_PAGE_SIZE}
             items={policyItems}
             onSort={updateRequestParamsAndResetPaging}
             sortBy={requestParams.sortBy || ListPoliciesSortFieldsEnum.Id}

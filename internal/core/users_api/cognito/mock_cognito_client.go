@@ -50,6 +50,14 @@ func (m *mockCognitoClient) AdminResetUserPassword(
 	args := m.Called(input)
 	return args.Get(0).(*provider.AdminResetUserPasswordOutput), args.Error(1)
 }
+
+func (m *mockCognitoClient) AdminUserGlobalSignOut(
+	input *provider.AdminUserGlobalSignOutInput) (*provider.AdminUserGlobalSignOutOutput, error) {
+
+	args := m.Called(input)
+	return args.Get(0).(*provider.AdminUserGlobalSignOutOutput), args.Error(1)
+}
+
 func (m *mockCognitoClient) AdminUpdateUserAttributes(
 	input *provider.AdminUpdateUserAttributesInput) (*provider.AdminUpdateUserAttributesOutput, error) {
 

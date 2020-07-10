@@ -20,9 +20,11 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/internal/core/users_api/api"
@@ -32,20 +34,23 @@ import (
 
 var router = genericapi.NewRouter("api", "users", models.Validator(), &api.API{})
 
-// The users-api also handles custom Cognito triggers
-type lambdaInput struct {
-	models.LambdaInput
-	events.CognitoEventUserPoolsCustomMessage
-}
-
-func lambdaHandler(ctx context.Context, input *lambdaInput) (interface{}, error) {
+func lambdaHandler(ctx context.Context, input json.RawMessage) (interface{}, error) {
 	lambdalogger.ConfigureGlobal(ctx, nil)
 
-	if input.TriggerSource != "" {
-		return api.CognitoTrigger(&input.CognitoEventUserPoolsCustomMessage)
+	// There are two different kinds of requests handled by this function:
+	// Cognito triggers and standard users-api direct invocations
+	var header events.CognitoEventUserPoolsHeader
+	if err := jsoniter.Unmarshal(input, &header); err == nil && header.TriggerSource != "" {
+		return api.CognitoTrigger(header, input)
 	}
 
-	return router.Handle(&input.LambdaInput)
+	var apiRequest models.LambdaInput
+	if err := jsoniter.Unmarshal(input, &apiRequest); err != nil {
+		return nil, &genericapi.InvalidInputError{
+			Message: "json unmarshal of request failed: " + err.Error()}
+	}
+
+	return router.Handle(&apiRequest)
 }
 
 func main() {

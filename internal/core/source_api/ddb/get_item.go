@@ -19,7 +19,6 @@ package ddb
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/pkg/errors"
@@ -28,11 +27,11 @@ import (
 )
 
 // GetItem returns an integration by its ID
-func (ddb *DDB) GetItem(integrationID *string) (*Integration, error) {
+func (ddb *DDB) GetItem(integrationID string) (*Integration, error) {
 	output, err := ddb.Client.GetItem(&dynamodb.GetItemInput{
-		TableName: aws.String(ddb.TableName),
+		TableName: &ddb.TableName,
 		Key: map[string]*dynamodb.AttributeValue{
-			hashKey: {S: integrationID},
+			hashKey: {S: &integrationID},
 		},
 	})
 	if err != nil {

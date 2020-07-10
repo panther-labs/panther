@@ -17,18 +17,18 @@
  */
 
 import React from 'react';
-import { useSnackbar } from 'pouncejs';
+import { ModalProps, useSnackbar } from 'pouncejs';
 import { PolicySummary, PolicyDetails } from 'Generated/schema';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
 import { useDeletePolicy } from './graphql/deletePolicy.generated';
 import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
-export interface DeletePolicyModalProps {
+export interface DeletePolicyModalProps extends ModalProps {
   policy: PolicyDetails | PolicySummary;
 }
 
-const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy }) => {
+const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy, ...rest }) => {
   const { location, history } = useRouter<{ id?: string }>();
   const { pushSnackbar } = useSnackbar();
   const policyDisplayName = policy.displayName || policy.id;
@@ -99,6 +99,7 @@ const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy }) => {
       title={`Delete ${policyDisplayName}`}
       subtitle={`Are you sure you want to delete ${policyDisplayName}?`}
       onConfirm={onConfirm}
+      {...rest}
     />
   );
 };

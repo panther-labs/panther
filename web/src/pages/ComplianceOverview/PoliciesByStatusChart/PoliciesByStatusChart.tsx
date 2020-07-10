@@ -28,11 +28,11 @@ import ChartSummary from 'Components/charts/ChartSummary';
 const severityToColorMapping: {
   [key in keyof OrganizationReportBySeverity]: keyof typeof theme['colors'];
 } = {
-  critical: 'red300',
-  high: 'orange300',
-  medium: 'yellow300',
-  low: 'grey300',
-  info: 'grey100',
+  critical: 'red-400',
+  high: 'orange-500',
+  medium: 'yellow-500',
+  low: 'gray-500',
+  info: 'gray-800',
 };
 
 interface PoliciesByStatusChartData {
@@ -60,13 +60,13 @@ const PoliciesByStatusChart: React.FC<PoliciesByStatusChartData> = ({ policies }
         )
       ),
       label: 'Passing',
-      color: 'green200' as const,
+      color: 'green-200' as const,
     },
   ];
 
   return (
     <Flex height="100%">
-      <ChartSummary total={totalFailingPolicies} title="Total Failing Policies" color="red300" />
+      <ChartSummary total={totalFailingPolicies} title="Total Failing Policies" color="red-200" />
       <BarChart data={failingPoliciesChartData} />
     </Flex>
   );

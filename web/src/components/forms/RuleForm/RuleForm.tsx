@@ -19,9 +19,13 @@
 import React from 'react';
 import { AddRuleInput, PolicyUnitTest, UpdateRuleInput } from 'Generated/schema';
 import * as Yup from 'yup';
-import { Box, Button, Flex } from 'pouncejs';
+import { Button, Flex } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import { BaseRuleFormCoreFields, BaseRuleFormTestFields } from 'Components/forms/BaseRuleForm';
+import {
+  BaseRuleFormCoreSection,
+  BaseRuleFormEditorSection,
+  BaseRuleFormTestSection,
+} from 'Components/forms/BaseRuleForm';
 import { Form, Formik } from 'formik';
 import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';
 import FormSessionRestoration from 'Components/utils/FormSessionRestoration';
@@ -38,6 +42,8 @@ const validationSchema = Yup.object().shape({
     .of(
       Yup.object().shape({
         name: Yup.string().required(),
+        expectedResult: Yup.boolean().required(),
+        resource: Yup.string().required(),
       })
     )
     .unique('Test names must be unique', 'name'),
@@ -64,21 +70,22 @@ const RuleForm: React.FC<RuleFormProps> = ({ initialValues, onSubmit }) => {
     >
       <FormSessionRestoration sessionId={`rule-form-${initialValues.id || 'create'}`}>
         <Form>
-          <Box as="article">
+          <Flex direction="column" as="article" spacing={5}>
             <ErrorBoundary>
-              <BaseRuleFormCoreFields type="rule" />
+              <BaseRuleFormCoreSection type="rule" />
             </ErrorBoundary>
             <ErrorBoundary>
-              <BaseRuleFormTestFields />
+              <BaseRuleFormEditorSection type="rule" />
             </ErrorBoundary>
-          </Box>
-          <Flex borderTop="1px solid" borderColor="grey100" pt={6} mt={10} justify="flex-end">
-            <Flex>
-              <Button variant="default" size="large" onClick={history.goBack} mr={4}>
-                Cancel
-              </Button>
-              <SubmitButton>{initialValues.id ? 'Update' : 'Create'}</SubmitButton>
-            </Flex>
+            <ErrorBoundary>
+              <BaseRuleFormTestSection />
+            </ErrorBoundary>
+          </Flex>
+          <Flex spacing={4} mt={5} justify="flex-end">
+            <Button variant="outline" variantColor="navyblue" onClick={history.goBack}>
+              Cancel
+            </Button>
+            <SubmitButton>{initialValues.id ? 'Update' : 'Create'}</SubmitButton>
           </Flex>
         </Form>
       </FormSessionRestoration>

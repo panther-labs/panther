@@ -17,21 +17,19 @@
  */
 
 import React from 'react';
-import { Modal, Text, Box, useSnackbar, Alert } from 'pouncejs';
-import useModal from 'Hooks/useModal';
+import { Modal, Text, Box, useSnackbar, Alert, ModalProps } from 'pouncejs';
 import AnalyticsConsentForm from 'Components/forms/AnalyticsConsentForm';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useUpdateGeneralSettingsConsents } from './graphql/updateGeneralSettingsConsents.generated';
 
-const AnalyticsConsentModal: React.FC = () => {
+const AnalyticsConsentModal: React.FC<ModalProps> = ({ onClose, ...rest }) => {
   const { pushSnackbar } = useSnackbar();
-  const { hideModal } = useModal();
   const [
     saveConsentPreferences,
     { error: updateGeneralPreferencesError },
   ] = useUpdateGeneralSettingsConsents({
     onCompleted: () => {
-      hideModal();
+      onClose();
       pushSnackbar({ variant: 'success', title: `Successfully updated your preferences` });
     },
     onError: error => {
@@ -46,14 +44,13 @@ const AnalyticsConsentModal: React.FC = () => {
 
   return (
     <Modal
-      open
-      disableBackdropClick
-      disableEscapeKeyDown
-      onClose={hideModal}
+      onClose={() => {}}
       title="Welcome to Panther!"
+      aria-describedby="modal-subtitle"
+      {...rest}
     >
-      <Box width={600} px={100} pb={25}>
-        <Text size="large" color="grey300" mb={8} textAlign="center">
+      <Box width={500} px={10}>
+        <Text fontSize="medium" mb={8} id="modal-subtitle">
           We know you {"'"}re excited to begin securing your organization, but first, we need your
           consent on a couple of things
         </Text>

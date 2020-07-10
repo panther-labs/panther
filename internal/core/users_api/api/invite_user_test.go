@@ -30,9 +30,10 @@ import (
 )
 
 var inviteInput = &models.InviteUserInput{
-	GivenName:  aws.String("Joe"),
-	Email:      aws.String("joe.blow@panther.io"),
-	FamilyName: aws.String("Blow"),
+	RequesterID: aws.String(systemUserID),
+	GivenName:   aws.String("Joe"),
+	Email:       aws.String("joe.blow@panther.io"),
+	FamilyName:  aws.String("Blow"),
 }
 var userID = aws.String("1234-5678-9012")
 

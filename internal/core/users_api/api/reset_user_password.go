@@ -24,6 +24,10 @@ import (
 
 // ResetUserPassword resets a user password.
 func (API) ResetUserPassword(input *models.ResetUserPasswordInput) (*models.ResetUserPasswordOutput, error) {
+	if err := validateRequester(input.RequesterID); err != nil {
+		return nil, err
+	}
+
 	// Resetting a password will cause cognito to trigger the custom email message, which
 	// will invoke this same Lambda function (cognito_trigger.go).
 	if err := userGateway.ResetUserPassword(input.ID); err != nil {

@@ -16,11 +16,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Heading, Text, SideSheet, useSnackbar } from 'pouncejs';
+import {
+  Box,
+  Heading,
+  Text,
+  SideSheet,
+  useSnackbar,
+  SideSheetProps,
+  FormHelperText,
+} from 'pouncejs';
 import React from 'react';
-import useSidesheet from 'Hooks/useSidesheet';
 import { extractErrorMessage } from 'Helpers/utils';
-import UserForm, { UserFormValues } from 'Components/forms/UserForm';
+import UserForm from 'Components/forms/UserForm';
 import { useInviteUser } from './graphql/inviteUser.generated';
 
 const initialValues = {
@@ -29,8 +36,7 @@ const initialValues = {
   givenName: '',
 };
 
-const UserInvitationSidesheet: React.FC = () => {
-  const { hideSidesheet } = useSidesheet();
+const UserInvitationSidesheet: React.FC<SideSheetProps> = props => {
   const { pushSnackbar } = useSnackbar();
   const [inviteUser] = useInviteUser({
     update: (cache, { data: { inviteUser: newUser } }) => {
@@ -42,49 +48,36 @@ const UserInvitationSidesheet: React.FC = () => {
         },
       });
     },
+    onCompleted: () => {
+      props.onClose();
+      pushSnackbar({ variant: 'success', title: 'User invited successfully' });
+    },
     onError: error => pushSnackbar({ variant: 'error', title: extractErrorMessage(error) }),
   });
 
-  const submitToServer = async (values: UserFormValues) => {
-    hideSidesheet();
-
-    await inviteUser({
-      // optimistically hide the sidesheet
-      optimisticResponse: () => ({
-        inviteUser: {
-          id: '',
-          createdAt: new Date().getTime() / 1000,
-          status: 'FORCE_CHANGE_PASSWORD',
-          __typename: 'User',
-          ...values,
-        },
-      }),
-      variables: {
-        input: {
-          email: values.email,
-          familyName: values.familyName,
-          givenName: values.givenName,
-        },
-      },
-    });
-  };
-
   return (
-    <SideSheet open onClose={hideSidesheet}>
+    <SideSheet
+      aria-labelledby="sidesheet-title"
+      aria-describedby="sidesheet-description role-disclaimer"
+      {...props}
+    >
       <Box width={425} m="auto">
-        <Heading size="medium" mb={8}>
+        <Heading mb={8} id="sidesheet-title">
           Invite User
         </Heading>
-        <Text size="large" color="grey200" mb={8}>
+        <Text color="gray-200" mb={8} id="sidesheet-description">
           By inviting users to join your organization, they will receive an email with temporary
           credentials that they can use to sign in to the platform
         </Text>
-        <UserForm initialValues={initialValues} onSubmit={submitToServer} />
-        <Text size="small" color="grey300" textAlign="center" mt={6}>
+        <UserForm
+          initialValues={initialValues}
+          onSubmit={values => inviteUser({ variables: { input: values } })}
+        />
+        <FormHelperText id="role-disclaimer" textAlign="center" mt={4}>
           All users in the Open-Source version of Panther are admins in the system.
           <br />
           Role-based access is a feature available in the Enterprise version.
-        </Text>
+        </FormHelperText>
       </Box>
     </SideSheet>
   );

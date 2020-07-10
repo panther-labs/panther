@@ -17,8 +17,9 @@
  */
 
 import React from 'react';
-import { Label, SimpleGrid, Table } from 'pouncejs';
+import { Flex, Table, Img, Box } from 'pouncejs';
 import SeverityBadge from 'Components/SeverityBadge';
+import { DESTINATIONS } from 'Source/constants';
 import { formatDatetime } from 'Helpers/utils';
 import { ListDestinationsAndDefaults } from 'Pages/Destinations';
 import ListDestinationsTableRowOptionsProps from './ListDestinationsTableRowOptions';
@@ -30,40 +31,49 @@ const ListDestinationsTable: React.FC<ListDestinationsTableProps> = ({ destinati
     <Table>
       <Table.Head>
         <Table.Row>
-          <Table.HeaderCell />
           <Table.HeaderCell>Display Name</Table.HeaderCell>
           <Table.HeaderCell>Integrated Service</Table.HeaderCell>
-          <Table.HeaderCell>Associated Severities</Table.HeaderCell>
-          <Table.HeaderCell>Created at</Table.HeaderCell>
+          <Table.HeaderCell align="center">Associated Severities</Table.HeaderCell>
+          <Table.HeaderCell>Created</Table.HeaderCell>
           <Table.HeaderCell />
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {destinations.map((destination, index) => (
-          <Table.Row key={destination.outputId}>
-            <Table.Cell>
-              <Label size="medium">{index + 1}</Label>
-            </Table.Cell>
-            <Table.Cell>{destination.displayName}</Table.Cell>
-            <Table.Cell>{destination.outputType}</Table.Cell>
-            <Table.Cell>
-              <SimpleGrid
-                inline
-                spacingX={1}
-                my={-1}
-                columns={destination.defaultForSeverity.length}
-              >
-                {destination.defaultForSeverity.map(severity => (
-                  <SeverityBadge severity={severity} key={severity} />
-                ))}
-              </SimpleGrid>
-            </Table.Cell>
-            <Table.Cell>{formatDatetime(destination.creationTime)}</Table.Cell>
-            <Table.Cell>
-              <ListDestinationsTableRowOptionsProps destination={destination} />
-            </Table.Cell>
-          </Table.Row>
-        ))}
+        {destinations.map(destination => {
+          const destinationConfig = DESTINATIONS[destination.outputType];
+
+          return (
+            <Table.Row key={destination.outputId}>
+              <Table.Cell>{destination.displayName}</Table.Cell>
+              <Table.Cell>
+                <Flex align="center">
+                  <Img
+                    my={-4}
+                    src={destinationConfig.logo}
+                    alt={`${destinationConfig.title} Logo`}
+                    nativeHeight={25}
+                    nativeWidth={25}
+                    mr={2}
+                  />
+                  <Box as="span">{destinationConfig.title}</Box>
+                </Flex>
+              </Table.Cell>
+              <Table.Cell>
+                <Flex spacing={2} my={-1} justify="center">
+                  {destination.defaultForSeverity.map(severity => (
+                    <SeverityBadge severity={severity} key={severity} />
+                  ))}
+                </Flex>
+              </Table.Cell>
+              <Table.Cell>{formatDatetime(destination.creationTime)}</Table.Cell>
+              <Table.Cell>
+                <Box my={-1}>
+                  <ListDestinationsTableRowOptionsProps destination={destination} />
+                </Box>
+              </Table.Cell>
+            </Table.Row>
+          );
+        })}
       </Table.Body>
     </Table>
   );

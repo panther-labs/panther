@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Flex, Heading, Text } from 'pouncejs';
+import { Flex, FormError, Heading, Text } from 'pouncejs';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import { useFormikContext } from 'formik';
 import { S3LogSourceWizardValues } from '../S3LogSourceWizard';
@@ -32,21 +32,19 @@ const SuccessPanel: React.FC = () => {
   }, []);
 
   return (
-    <Flex justify="center" align="center" direction="column" my={190} mx="auto" width={350}>
-      <Heading size="medium" m="auto" mb={5} color="grey400">
+    <Flex justify="center" align="center" direction="column" my={190} mx="auto" width={400}>
+      <Heading as="h2" m="auto" mb={5}>
         Almost done!
       </Heading>
-      <Text size="large" color="grey300" mb={10} textAlign="center">
+      <Text color="gray-300" mb={8} textAlign="center">
         {initialValues.integrationId
           ? 'Click the button below to validate your changes & update your source!'
           : 'After deploying your Cloudformation stack, click on the button below to complete the setup!'}
       </Text>
-      <SubmitButton width={350}>
+      <SubmitButton fullWidth>
         {initialValues.integrationId ? 'Update Source' : 'Save Source'}
       </SubmitButton>
-      <Text size="large" mt={6} color="red300">
-        {status.errorMessage}
-      </Text>
+      {status.errorMessage && <FormError mt={6}>{status.errorMessage}</FormError>}
     </Flex>
   );
 };

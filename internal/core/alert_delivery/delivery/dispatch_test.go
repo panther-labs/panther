@@ -37,7 +37,7 @@ import (
 
 func sampleAlert() *alertmodels.Alert {
 	return &alertmodels.Alert{
-		OutputIDs:    []string{"output-id"},
+		OutputIds:    []string{"output-id"},
 		Severity:     "INFO",
 		AnalysisID:   "test-rule-id",
 		AnalysisName: box.String("test_rule_name"),
@@ -133,7 +133,7 @@ func TestDispatchUseCachedDefault(t *testing.T) {
 
 	setCaches()
 	alert := sampleAlert()
-	alert.OutputIDs = nil //Setting OutputIds in the alert to nil, in order to fetch default outputs
+	alert.OutputIds = nil //Setting OutputIds in the alert to nil, in order to fetch default outputs
 
 	assert.True(t, dispatch(alert))
 	mockLambdaClient.AssertExpectations(t)
@@ -158,7 +158,7 @@ func TestDispatchUseNonCachedDefault(t *testing.T) {
 
 	mockLambdaClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil)
 	alert := sampleAlert()
-	alert.OutputIDs = nil //Setting OutputIds in the alert to nil, in order to fetch default outputs
+	alert.OutputIds = nil //Setting OutputIds in the alert to nil, in order to fetch default outputs
 	cache = nil           // Setting cache to nil, so we fetch latest outputs IDs from Lambda
 	assert.True(t, dispatch(alert))
 	mockLambdaClient.AssertExpectations(t)
@@ -187,7 +187,7 @@ func TestAllGoRoutinesShouldComplete(t *testing.T) {
 	// Invoke once to get all outpts
 	mockLambdaClient.On("Invoke", mock.Anything).Return(mockGetOutputsResponse, nil).Once()
 	alert := sampleAlert()
-	alert.OutputIDs = nil //Setting OutputIds in the alert to nil, in order to fetch default outputs
+	alert.OutputIds = nil //Setting OutputIds in the alert to nil, in order to fetch default outputs
 	cache = nil           // Clearing the default output ids cache
 
 	assert.True(t, dispatch(alert))

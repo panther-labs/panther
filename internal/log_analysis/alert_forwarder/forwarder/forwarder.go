@@ -119,17 +119,18 @@ func storeNewAlert(rule *models.Rule, alertDedup *AlertDedupEvent) error {
 
 func sendAlertNotification(rule *models.Rule, alertDedup *AlertDedupEvent) error {
 	alertNotification := &alertModel.Alert{
-		CreatedAt:           alertDedup.CreationTime,
+		AlertID:             aws.String(generateAlertID(alertDedup)),
 		AnalysisDescription: aws.String(string(rule.Description)),
 		AnalysisID:          alertDedup.RuleID,
-		Version:             aws.String(alertDedup.RuleVersion),
+		CreatedAt:           alertDedup.CreationTime,
+		OutputIds:           rule.OutputIds,
 		AnalysisName:        getRuleDisplayName(rule),
 		Runbook:             aws.String(string(rule.Runbook)),
 		Severity:            string(rule.Severity),
 		Tags:                rule.Tags,
 		Type:                alertModel.RuleType,
-		AlertID:             aws.String(generateAlertID(alertDedup)),
 		Title:               aws.String(getAlertTitle(rule, alertDedup)),
+		Version:             aws.String(alertDedup.RuleVersion),
 	}
 
 	msgBody, err := jsoniter.MarshalToString(alertNotification)

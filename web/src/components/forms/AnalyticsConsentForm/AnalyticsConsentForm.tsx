@@ -50,7 +50,7 @@ const AnalyticsConsentForm: React.FC<AnalyticsConsentFormProps> = ({ onSubmit })
         <Box mb={10}>
           <ErrorReportingSection />
         </Box>
-        <SubmitButton width={1} allowPristineSubmission>
+        <SubmitButton fullWidth allowPristineSubmission>
           Save
         </SubmitButton>
       </Form>

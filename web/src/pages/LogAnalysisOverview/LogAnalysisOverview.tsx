@@ -27,10 +27,8 @@ const LogAnalysisOverview: React.FC = () => {
       <Box m={10}>
         <img alt="Construction works" src={WarningImg} width="auto" height={400} />
       </Box>
-      <Heading size="medium" color="grey400" mb={6}>
-        Log analysis overview is not available
-      </Heading>
-      <Text size="large" color="grey200" textAlign="center" mb={10}>
+      <Heading mb={2}>Log analysis overview is not available</Heading>
+      <Text color="gray-200" textAlign="center" mb={10}>
         We are currently developing this page and will release it in the near future
       </Text>
     </Flex>

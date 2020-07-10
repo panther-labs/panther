@@ -18,16 +18,16 @@
 
 import React from 'react';
 import { ComplianceStatusEnum } from 'Generated/schema';
-import { Card, theme, Flex, Label } from 'pouncejs';
+import { Card, theme, Flex, Box } from 'pouncejs';
 
 // A mapping from status to background color for our test results (background color of where it says
 // 'pass', 'fail' or 'error'
 export const mapTestStatusToColor: {
   [key in ComplianceStatusEnum]: keyof typeof theme['colors'];
 } = {
-  [ComplianceStatusEnum.Pass]: 'green200',
-  [ComplianceStatusEnum.Fail]: 'red300',
-  [ComplianceStatusEnum.Error]: 'orange300',
+  [ComplianceStatusEnum.Pass]: 'green-200',
+  [ComplianceStatusEnum.Fail]: 'red-200',
+  [ComplianceStatusEnum.Error]: 'orange-500',
 };
 
 interface BaseRuleFormTestResultProps {
@@ -48,20 +48,19 @@ const BaseRuleFormTestResult: React.FC<BaseRuleFormTestResultProps> = ({
 }) => (
   <Flex align="center">
     <Card bg={mapTestStatusToColor[status]} mr={2} width={90} py={1}>
-      <Label
-        size="small"
-        color="white"
+      <Box
+        fontSize="small"
+        fontWeight="bold"
         mx="auto"
-        as="div"
         textAlign="center"
         textTransform="uppercase"
       >
         {text}
-      </Label>
+      </Box>
     </Card>
-    <Label size="medium" color="grey400">
+    <Box fontSize="medium" fontWeight="medium">
       {testName}
-    </Label>
+    </Box>
   </Flex>
 );
 

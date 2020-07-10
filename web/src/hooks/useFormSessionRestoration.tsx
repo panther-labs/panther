@@ -39,13 +39,11 @@ function useFormSessionRestoration<FormValues>({ sessionId }: UseFormSessionRest
   }, [sessionId, setValues]);
 
   React.useEffect(() => {
-    return () => {
-      if (dirty) {
-        storage.session.write(sessionId, values);
-      } else {
-        storage.session.delete(sessionId);
-      }
-    };
+    if (dirty) {
+      storage.session.write(sessionId, values);
+    } else {
+      storage.session.delete(sessionId);
+    }
   }, [values, dirty]);
 }
 

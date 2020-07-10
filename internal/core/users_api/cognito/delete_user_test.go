@@ -30,6 +30,12 @@ func TestDeleteUser(t *testing.T) {
 	mockCognitoClient := &mockCognitoClient{}
 	gw := &UsersGateway{userPoolClient: mockCognitoClient}
 
+	mockCognitoClient.On("AdminUserGlobalSignOut",
+		&provider.AdminUserGlobalSignOutInput{
+			Username:   mockUserID,
+			UserPoolId: gw.userPoolID,
+		},
+	).Return((*provider.AdminUserGlobalSignOutOutput)(nil), nil)
 	mockCognitoClient.On(
 		"AdminDeleteUser",
 		&provider.AdminDeleteUserInput{
@@ -46,6 +52,12 @@ func TestDeleteUserFailed(t *testing.T) {
 	mockCognitoClient := &mockCognitoClient{}
 	gw := &UsersGateway{userPoolClient: mockCognitoClient}
 
+	mockCognitoClient.On("AdminUserGlobalSignOut",
+		&provider.AdminUserGlobalSignOutInput{
+			Username:   mockUserID,
+			UserPoolId: gw.userPoolID,
+		},
+	).Return((*provider.AdminUserGlobalSignOutOutput)(nil), nil)
 	mockCognitoClient.On(
 		"AdminDeleteUser",
 		&provider.AdminDeleteUserInput{

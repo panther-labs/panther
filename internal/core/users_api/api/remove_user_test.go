@@ -36,7 +36,7 @@ func TestRemoveUser(t *testing.T) {
 	mockGateway := &cognito.MockUserGateway{}
 	userGateway = mockGateway
 	mockGateway.On("ListUsers", &models.ListUsersInput{}).Return(
-		[]*models.User{
+		[]models.User{
 			{ID: userID},
 			{ID: otherUserID},
 		},
@@ -45,7 +45,10 @@ func TestRemoveUser(t *testing.T) {
 
 	mockGateway.On("DeleteUser", userID).Return(nil)
 
-	result, err := API{}.RemoveUser(&models.RemoveUserInput{ID: userID})
+	result, err := API{}.RemoveUser(&models.RemoveUserInput{
+		RequesterID: aws.String(systemUserID),
+		ID:          userID,
+	})
 	require.NoError(t, err)
 	assert.Equal(t, &models.RemoveUserOutput{ID: userID}, result)
 	mockGateway.AssertExpectations(t)

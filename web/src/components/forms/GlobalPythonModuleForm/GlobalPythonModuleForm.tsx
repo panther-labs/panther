@@ -19,7 +19,7 @@
 import React from 'react';
 import { GlobalPythonModule } from 'Generated/schema';
 import * as Yup from 'yup';
-import { Box, Button, Flex, Grid, InputElementLabel, Text } from 'pouncejs';
+import { Box, Button, Flex, SimpleGrid } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { Field, Form, Formik } from 'formik';
 import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';
@@ -29,6 +29,7 @@ import FormikTextInput from 'Components/fields/TextInput';
 import FormikTextArea from 'Components/fields/TextArea';
 import FormikEditor from 'Components/fields/Editor';
 import urls from 'Source/urls';
+import Panel from 'Components/Panel';
 
 // The validation checks that Formik will run
 const validationSchema = Yup.object().shape({
@@ -62,51 +63,46 @@ const GlobalPythonModuleForm: React.FC<GlobalModuleFormProps> = ({ initialValues
         >
           <FormSessionRestoration sessionId={`global-module-${initialValues.id || 'create'}`}>
             <Form>
-              <Text size="large" color="grey300" mb={4}>
-                The global module allows you to define a set of reusable functions, variables and
-                classes which can be directly imported to your Rule or Policy definition. Anything
-                defined below can later be imported through the `panther` module
-              </Text>
-              <Grid gridTemplateColumns="1fr 1fr" gridRowGap={2} gridColumnGap={9}>
-                <Field
-                  as={FormikTextInput}
-                  label="* ID"
-                  placeholder={`The unique ID of the global`}
-                  name="id"
-                  disabled={initialValues.id}
-                  aria-required
-                />
-                <Field
-                  as={FormikTextArea}
-                  label="Description"
-                  placeholder={`Additional context about this global module`}
-                  name="description"
-                />
-              </Grid>
-              <Box my={6}>
-                <InputElementLabel htmlFor="enabled">{'Module definitions'}</InputElementLabel>
-                <Field
-                  as={FormikEditor}
-                  placeholder="# Enter the body of the global here..."
-                  name="body"
-                  width="100%"
-                  minLines={16}
-                  mode="python"
-                  aria-required
-                />
-              </Box>
-              <Flex borderTop="1px solid" borderColor="grey100" pt={6} mt={10} justify="flex-end">
-                <Flex>
-                  <Button
-                    variant="default"
-                    size="large"
-                    onClick={() => history.push(urls.settings.globalPythonModules.list())}
-                    mr={4}
-                  >
-                    Cancel
-                  </Button>
-                  <SubmitButton>{initialValues.id ? 'Update' : 'Create'}</SubmitButton>
-                </Flex>
+              <Flex direction="column" spacing={5}>
+                <Panel title="Module Settings">
+                  <SimpleGrid columns={2} spacing={5}>
+                    <Field
+                      as={FormikTextInput}
+                      label="Module Name"
+                      placeholder="The name that this module will be imported as"
+                      name="id"
+                      disabled={!!initialValues.id}
+                      required
+                    />
+                    <Field
+                      as={FormikTextArea}
+                      label="Description"
+                      placeholder="Additional context about this global module"
+                      name="description"
+                      required
+                    />
+                  </SimpleGrid>
+                </Panel>
+                <Panel title="Module Definition">
+                  <Field
+                    as={FormikEditor}
+                    placeholder="# Enter the body of the global here..."
+                    name="body"
+                    width="100%"
+                    minLines={16}
+                    mode="python"
+                    required
+                  />
+                </Panel>
+              </Flex>
+              <Flex pt={6} justify="flex-end" spacing={4}>
+                <Button
+                  variantColor="red"
+                  onClick={() => history.push(urls.settings.globalPythonModules.list())}
+                >
+                  Cancel
+                </Button>
+                <SubmitButton>{initialValues.id ? 'Update' : 'Create'}</SubmitButton>
               </Flex>
             </Form>
           </FormSessionRestoration>

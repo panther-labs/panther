@@ -18,7 +18,6 @@
 
 import React from 'react';
 import { Alert, Box, Card } from 'pouncejs';
-import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { ListResourcesInput, ListResourcesSortFieldsEnum, SortDirEnum } from 'Generated/schema';
 import { TableControlsPagination } from 'Components/utils/TableControls';
 import {
@@ -86,9 +85,8 @@ const ListResources = () => {
     <React.Fragment>
       <ListResourcesActions />
       <ErrorBoundary>
-        <Card>
+        <Card as="section" px={8} py={4} position="relative">
           <ListResourcesTable
-            enumerationStartIndex={(pagingData.thisPage - 1) * DEFAULT_LARGE_PAGE_SIZE}
             items={enhancedResourceItems}
             onSort={updateRequestParamsAndResetPaging}
             sortBy={requestParams.sortBy || ListResourcesSortFieldsEnum.Id}

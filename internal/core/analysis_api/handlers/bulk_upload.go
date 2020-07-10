@@ -137,7 +137,7 @@ func BulkUpload(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 
 	// If at least one global was created or modified, rebuild the global layer
 	if aws.Int64Value(counts.TotalGlobals) > 0 {
-		err = updateLayer(typeGlobal)
+		err = updateLayer()
 		if err != nil {
 			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 		}
@@ -224,6 +224,7 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 			DisplayName:   models.DisplayName(config.DisplayName),
 			Enabled:       models.Enabled(config.Enabled),
 			ID:            models.ID(config.PolicyID),
+			OutputIds:     models.OutputIds(config.OutputIds),
 			Reference:     models.Reference(config.Reference),
 			ResourceTypes: config.ResourceTypes,
 			Runbook:       models.Runbook(config.Runbook),
@@ -309,7 +310,6 @@ func buildRuleTest(test analysis.Test) (*models.UnitTest, error) {
 		ExpectedResult: models.TestExpectedResult(test.ExpectedResult),
 		Name:           models.TestName(test.Name),
 		Resource:       models.TestResource(log),
-		ResourceType:   models.TestResourceType(test.LogType),
 	}, nil
 }
 
@@ -323,7 +323,6 @@ func buildPolicyTest(test analysis.Test) (*models.UnitTest, error) {
 		ExpectedResult: models.TestExpectedResult(test.ExpectedResult),
 		Name:           models.TestName(test.Name),
 		Resource:       models.TestResource(resource),
-		ResourceType:   models.TestResourceType(test.ResourceType),
 	}, nil
 }
 

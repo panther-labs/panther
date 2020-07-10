@@ -18,7 +18,7 @@
 
 import * as React from 'react';
 import { Field, Form, Formik } from 'formik';
-import { Box, Heading } from 'pouncejs';
+import { Box, Flex, Heading } from 'pouncejs';
 import * as Yup from 'yup';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -53,26 +53,34 @@ export const CompanyInformationForm: React.FC<CompanyInformationFormProps> = ({
       onSubmit={onSubmit}
     >
       <Form>
-        <Box mb={50}>
-          <Heading size="medium" mb={10} color="grey500">
+        <Box as="section" mb={6}>
+          <Heading as="h2" size="x-small" mb={6}>
             Company Information
           </Heading>
-          <Field
-            as={FormikTextInput}
-            name="displayName"
-            label="Company Name"
-            aria-required
-            mb={6}
-          />
-          <Field as={FormikTextInput} name="email" label="Email" aria-required mb={6} />
+          <Flex direction="column" spacing={4}>
+            <Field
+              as={FormikTextInput}
+              name="displayName"
+              label="Company Name"
+              placeholder="The name of the company"
+              required
+            />
+            <Field
+              as={FormikTextInput}
+              name="email"
+              label="Email"
+              placeholder="The company's email"
+              required
+            />
+          </Flex>
         </Box>
-        <Box mb={50}>
-          <Heading size="medium" mb={6} color="grey500">
+        <Box as="section" mb={6}>
+          <Heading as="h2" size="x-small" mb={4}>
             Preferences
           </Heading>
           <ErrorReportingSection />
         </Box>
-        <SubmitButton width={1}>Save</SubmitButton>
+        <SubmitButton fullWidth>Save</SubmitButton>
       </Form>
     </Formik>
   );

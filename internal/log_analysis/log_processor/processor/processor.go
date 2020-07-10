@@ -32,6 +32,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
+	"github.com/panther-labs/panther/pkg/metrics"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
 
@@ -162,8 +163,11 @@ func (p *Processor) sendEvents(result *classification.ClassifierResult, outputCh
 func (p *Processor) logStats(err error) {
 	p.operation.Stop()
 	p.operation.Log(err, zap.Any(statsKey, *p.classifier.Stats()))
+	logType := metrics.Dimension{Name: "LogType"}
 	for _, parserStats := range p.classifier.ParserStats() {
 		p.operation.Log(err, zap.Any(statsKey, *parserStats))
+		logType.Value = parserStats.LogType
+		common.BytesProcessedLogger.Log(parserStats.BytesProcessedCount, common.Component, logType)
 	}
 }
 

@@ -30,9 +30,9 @@ import (
 )
 
 // ListUsers calls cognito api to list users that belongs to a user pool
-func (g *UsersGateway) ListUsers(input *models.ListUsersInput) ([]*models.User, error) {
+func (g *UsersGateway) ListUsers(input *models.ListUsersInput) ([]models.User, error) {
 	cognitoInput := &provider.ListUsersInput{UserPoolId: g.userPoolID}
-	var result []*models.User
+	var result []models.User
 
 	// There will almost always be 1 page of users and there is no paging for this in the frontend.
 	// In the very unlikely event there is more than 1 page, we loop over all pages here.
@@ -52,7 +52,7 @@ func (g *UsersGateway) ListUsers(input *models.ListUsersInput) ([]*models.User, 
 				}
 			}
 
-			result = append(result, user)
+			result = append(result, *user)
 		}
 		return true
 	})

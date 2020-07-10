@@ -107,7 +107,7 @@ const ListAlerts = () => {
         </Box>
       )}
       <ListAlertsActions showActions={hasError} />
-      <Card mb={8}>
+      <Card as="section" px={8} py={4} mb={6} position="relative">
         <ListAlertsTable
           items={alertItems}
           onSort={updateRequestParams}
@@ -115,7 +115,7 @@ const ListAlerts = () => {
           sortDir={requestParams.sortDir || SortDirEnum.Descending}
         />
         {hasNextPage && (
-          <Box p={8} ref={sentinelRef}>
+          <Box py={8} ref={sentinelRef}>
             <TablePlaceholder rowCount={10} />
           </Box>
         )}

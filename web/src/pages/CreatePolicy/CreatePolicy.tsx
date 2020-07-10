@@ -17,7 +17,6 @@
  */
 
 import React from 'react';
-import Panel from 'Components/Panel';
 import { Alert, Box } from 'pouncejs';
 import urls from 'Source/urls';
 import PolicyForm from 'Components/forms/PolicyForm';
@@ -30,19 +29,20 @@ import useRouter from 'Hooks/useRouter';
 import { useCreatePolicy } from './graphql/createPolicy.generated';
 
 const initialValues: Required<AddPolicyInput> = {
-  id: '',
+  body: DEFAULT_POLICY_FUNCTION,
   autoRemediationId: '',
   autoRemediationParameters: '{}',
   description: '',
   displayName: '',
   enabled: true,
-  suppressions: [],
+  id: '',
+  outputIds: [],
   reference: '',
   resourceTypes: [],
   runbook: '',
   severity: null,
+  suppressions: [],
   tags: [],
-  body: DEFAULT_POLICY_FUNCTION,
   tests: [],
 };
 
@@ -60,14 +60,13 @@ const CreatePolicyPage: React.FC = () => {
 
   return (
     <Box mb={6}>
-      <Panel size="large" title="Policy Settings">
-        <PolicyForm initialValues={initialValues} onSubmit={handleSubmit} />
-      </Panel>
+      <PolicyForm initialValues={initialValues} onSubmit={handleSubmit} />
       {error && (
         <Box mt={2} mb={6}>
           <Alert
             variant="error"
-            title={
+            title="Couldn't create your policy"
+            description={
               extractErrorMessage(error) ||
               'An unknown error occured as we were trying to create your policy'
             }

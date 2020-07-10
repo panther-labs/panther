@@ -17,8 +17,9 @@
  */
 
 import React from 'react';
-import { Box, Flex, Label, Table } from 'pouncejs';
+import { Box, Flex, Table } from 'pouncejs';
 import { ListLogSources } from 'Pages/ListLogSources';
+import { formatDatetime } from 'Helpers/utils';
 import LogSourceHealthIcon from './LogSourceHealthIcon';
 import LogSourceTableRowOptionsProps from './LogSourceTableRowOptions';
 
@@ -31,22 +32,19 @@ const LogSourceTable: React.FC<LogSourceTableProps> = ({ sources }) => {
     <Table>
       <Table.Head>
         <Table.Row>
-          <Table.HeaderCell />
           <Table.HeaderCell>Label</Table.HeaderCell>
           <Table.HeaderCell>AWS Account ID</Table.HeaderCell>
           <Table.HeaderCell>Log Types</Table.HeaderCell>
           <Table.HeaderCell>S3 Bucket</Table.HeaderCell>
           <Table.HeaderCell>S3 Objects Prefix</Table.HeaderCell>
+          <Table.HeaderCell>Last Received Event</Table.HeaderCell>
           <Table.HeaderCell align="center">Healthy</Table.HeaderCell>
           <Table.HeaderCell />
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {sources.map((source, index) => (
+        {sources.map(source => (
           <Table.Row key={source.integrationId}>
-            <Table.Cell>
-              <Label size="medium">{index + 1}</Label>
-            </Table.Cell>
             <Table.Cell>{source.integrationLabel}</Table.Cell>
             <Table.Cell>{source.awsAccountId}</Table.Cell>
             <Table.Cell>
@@ -57,12 +55,17 @@ const LogSourceTable: React.FC<LogSourceTableProps> = ({ sources }) => {
             <Table.Cell>{source.s3Bucket}</Table.Cell>
             <Table.Cell>{source.s3Prefix || 'None'}</Table.Cell>
             <Table.Cell>
+              {source.lastEventReceived ? formatDatetime(source.lastEventReceived) : 'N/A'}
+            </Table.Cell>
+            <Table.Cell>
               <Flex justify="center">
                 <LogSourceHealthIcon logSourceHealth={source.health} />
               </Flex>
             </Table.Cell>
             <Table.Cell>
-              <LogSourceTableRowOptionsProps source={source} />
+              <Box my={-1}>
+                <LogSourceTableRowOptionsProps source={source} />
+              </Box>
             </Table.Cell>
           </Table.Row>
         ))}

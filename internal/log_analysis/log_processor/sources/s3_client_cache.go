@@ -142,7 +142,7 @@ func getS3Client(s3Object *S3ObjectInfo) (s3iface.S3API, string, error) {
 		client = newS3ClientFunc(box.String(cacheKey.awsRegion), awsCreds)
 		s3ClientCache.Add(cacheKey, client)
 	}
-	return client.(s3iface.S3API), *sourceInfo.IntegrationType, nil
+	return client.(s3iface.S3API), sourceInfo.IntegrationType, nil
 }
 
 func getBucketRegion(s3Bucket string, awsCreds *credentials.Credentials) (string, error) {
@@ -193,8 +193,8 @@ func getSourceInfo(s3Object *S3ObjectInfo) (result *models.SourceIntegration, er
 
 	for _, source := range sourceCache.sources {
 		integrationBucket, integrationPrefix := getSourceS3Info(source)
-		if aws.StringValue(integrationBucket) == s3Object.S3Bucket {
-			if strings.HasPrefix(s3Object.S3ObjectKey, aws.StringValue(integrationPrefix)) {
+		if integrationBucket == s3Object.S3Bucket {
+			if strings.HasPrefix(s3Object.S3ObjectKey, integrationPrefix) {
 				result = source
 				break
 			}
@@ -203,11 +203,11 @@ func getSourceInfo(s3Object *S3ObjectInfo) (result *models.SourceIntegration, er
 
 	// If the incoming notification maps to a known source, update the source information
 	if result != nil {
-		deadline := lastEventReceived[*result.IntegrationID].Add(statusUpdateFrequency)
+		deadline := lastEventReceived[result.IntegrationID].Add(statusUpdateFrequency)
 		// if more than 'statusUpdateFrequency' time has passed, update status
 		if now.After(deadline) {
-			updateIntegrationStatus(*result.IntegrationID, now)
-			lastEventReceived[*result.IntegrationID] = now
+			updateIntegrationStatus(result.IntegrationID, now)
+			lastEventReceived[result.IntegrationID] = now
 		}
 	}
 
@@ -238,18 +238,18 @@ func getNewS3Client(region *string, creds *credentials.Credentials) (result s3if
 }
 
 // Returns the configured S3 bucket and S3 object prefix for this source
-func getSourceS3Info(source *models.SourceIntegration) (*string, *string) {
-	switch *source.IntegrationType {
+func getSourceS3Info(source *models.SourceIntegration) (string, string) {
+	switch source.IntegrationType {
 	case models.IntegrationTypeAWS3:
 		return source.S3Bucket, source.S3Prefix
 	}
-	return nil, nil
+	return "", ""
 }
 
 func getSourceLogProcessingRole(source *models.SourceIntegration) (roleArn string) {
-	switch *source.IntegrationType {
+	switch source.IntegrationType {
 	case models.IntegrationTypeAWS3:
-		roleArn = *source.LogProcessingRole
+		roleArn = source.LogProcessingRole
 	}
 	return roleArn
 }

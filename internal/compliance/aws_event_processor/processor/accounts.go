@@ -90,7 +90,7 @@ func refreshAccounts() error {
 	}
 
 	for _, integration := range output {
-		accounts[*integration.AWSAccountID] = integration
+		accounts[integration.AWSAccountID] = integration
 	}
 	accountsLastUpdated = time.Now()
 

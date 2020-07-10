@@ -17,16 +17,34 @@
  */
 
 import React from 'react';
-import { MultiCombobox, MultiComboboxProps } from 'pouncejs';
-import { FieldConfig, useField } from 'formik';
+import { Box, FormError, MultiCombobox, MultiComboboxProps } from 'pouncejs';
+import { FieldConfig } from 'formik';
+import useFastField from 'Hooks/useFastField';
 
 function FormikMultiCombobox<T>(
   props: MultiComboboxProps<T> & Required<Pick<FieldConfig, 'name'>>
 ): React.ReactNode {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [field, meta, { setValue }] = useField(props.name);
+  const [field, meta, { setValue }] = useFastField(props.name);
 
-  return <MultiCombobox {...props} onChange={setValue} />;
+  const isInvalid = meta.touched && !!meta.error;
+  const errorElementId = isInvalid ? `${props.name}-error` : undefined;
+
+  return (
+    <Box>
+      <MultiCombobox
+        {...props}
+        invalid={isInvalid}
+        aria-describedby={isInvalid ? errorElementId : undefined}
+        onChange={setValue}
+      />
+      {isInvalid && (
+        <FormError mt={2} id={errorElementId}>
+          {meta.error}
+        </FormError>
+      )}
+    </Box>
+  );
 }
 
 export default FormikMultiCombobox;

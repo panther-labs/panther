@@ -4,15 +4,15 @@ description: Get started with Panther in 15 minutes
 
 # Quick Start
 
-What you'll need:
+To get started with Panther, you'll need:
 
-1. An AWS Account
-2. An IAM user or role with permissions to create and manage the necessary resources
+1. An AWS account (preferably dedicated to Panther)
+2. An IAM user/role with permissions to create and manage the necessary resources
 
 We've provided the following IAM roles for least privilege deployments:
 
-- [AWS CloudFormation Template](https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-deployment-role/latest/template.yml)
-- [Terraform](https://github.com/panther-labs/panther/tree/master/deployments/auxiliary/terraform/panther-deployment-role.tf)
+- [AWS CloudFormation Template](https://github.com/panther-labs/panther/blob/master/deployments/auxiliary/cloudformation/panther-deployment-role.yml)
+- [Terraform](https://github.com/panther-labs/panther/tree/master/deployments/auxiliary/terraform/panther_deployment_role)
 
 {% hint style="info" %}
 We recommend deploying Panther into its own dedicated AWS account.
@@ -27,7 +27,7 @@ First, navigate to the AWS CloudFormation console and create a new stack.
 Use the following template URL to install the latest version in the us-east-1 region:
 
 ```
-https://panther-community-us-east-1.s3.amazonaws.com/v1.5.0/panther.yml
+https://panther-community-us-east-1.s3.amazonaws.com/v1.5.1/panther.yml
 ```
 
 The template URL is of the following form:
@@ -44,7 +44,7 @@ Where:
     * [Additional](development.md#supported-regions) regions are available when [deploying from source](development.md#deploying)
 * VERSION is the latest [tagged release](https://github.com/panther-labs/panther/releases)
 
-![CloudFormation Template URL](.gitbook/assets/cfn-deploy-1.png)
+![CloudFormation Console](.gitbook/assets/cfn-deploy-1.png)
 
 On the next page, choose a stack name (e.g. "panther") and configure the name and email for the first Panther user:
 
@@ -54,7 +54,7 @@ This is the initial admin user account. You can edit the user and invite additio
 
 On the next page, you can skip all the advanced stack settings. Acknowledge the warnings and deploy the stack.
 
-![CloudFormation Finish](.gitbook/assets/cfn-deploy-3.png)
+![CloudFormation Capabilities](.gitbook/assets/cfn-deploy-3.png)
 
 Alternatively, you can deploy Panther using a nested stack in your own CloudFormation pipeline, using a Terraform template, or by building and deploying from [source](development.md#deploying).
 
@@ -68,7 +68,7 @@ Resources:
   Panther:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://panther-community-${AWS::Region}.s3.amazonaws.com/v1.5.0/panther.yml
+      TemplateURL: !Sub https://panther-community-${AWS::Region}.s3.amazonaws.com/v1.5.1/panther.yml
       Parameters:
         CompanyDisplayName: AwesomeCo
         FirstUserEmail: user@example.com
@@ -87,7 +87,7 @@ aws cloudformation deploy --template-file template.yml --stack-name panther --ca
 ```hcl
 resource "aws_cloudformation_stack" "panther" {
   name = "panther"
-  template_url = "https://panther-community-<REGION>.s3.amazonaws.com/v1.5.0/panther.yml"
+  template_url = "https://panther-community-<REGION>.s3.amazonaws.com/v1.5.1/panther.yml"
   capabilities = ["CAPABILITY_IAM", "CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND"]
   parameters = {
     CompanyDisplayName = "AwesomeCo"
@@ -115,12 +115,12 @@ Your connection _is_ encrypted, and it's generally safe to continue. However, th
 Congratulations! You are now ready to use Panther. Follow the steps below to complete your setup:
 
 1. Invite your team in `Settings` > `Users` > `Invite User`
-1. Configure [destinations](destinations) to receive generated alerts
-2. Onboard data for [real-time log analysis](log-analysis/setup.md)
-3. Write custom [detection rules](log-analysis/rules/) based on internal business logic
-4. Onboard accounts for [cloud security scans](cloud-security/)
-5. Write [policies](cloud-security/policies/) for supported [AWS resources](policies/resources/)
-6. Query collected logs with [historical search](enterprise/data-analytics/)
+2. Configure [destinations](destinations) to receive generated alerts
+3. Onboard data for [real-time log analysis](log-analysis/setup.md)
+4. Write custom [rules](log-analysis/rules/) based on internal business logic
+5. Onboard AWS accounts for [cloud security scans](cloud-security/)
+6. Write custom [policies](cloud-security/policies/) for supported [AWS resources](policies/resources/)
+7. Enterprise Only: Query collected logs with [data explorer](enterprise/data-analytics/)
 
 ## Removing Panther
 To uninstall Panther, simply delete the main "panther" stack (substituting whatever stack name you chose during deployment).

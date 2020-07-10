@@ -65,13 +65,13 @@ func getAlertOutputs(alert *alertmodels.Alert) ([]*outputmodels.AlertOutput, err
 	}
 
 	// If alert doesn't have outputs IDs specified, return the defaults for the severity
-	if len(alert.OutputIDs) == 0 {
+	if len(alert.OutputIds) == 0 {
 		return getOutputsBySeverity(alert.Severity), nil
 	}
 
 	result := []*outputmodels.AlertOutput{}
 	for _, output := range cache.Outputs {
-		for _, alertOutputID := range alert.OutputIDs {
+		for _, alertOutputID := range alert.OutputIds {
 			if *output.OutputID == alertOutputID {
 				result = append(result, output)
 			}

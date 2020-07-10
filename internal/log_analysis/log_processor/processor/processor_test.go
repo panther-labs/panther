@@ -38,6 +38,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
+	"github.com/panther-labs/panther/pkg/metrics"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
 
@@ -267,6 +268,22 @@ func TestProcessClassifyFailure(t *testing.T) {
 	require.NoError(t, err)
 
 	actual := logs.AllUntimed()
+	embeddedMetric := metrics.EmbeddedMetric{
+		CloudWatchMetrics: []metrics.MetricDirectiveObject{
+			{
+				Namespace:  "Panther",
+				Dimensions: []metrics.DimensionSet{{"Component", "LogType"}},
+				Metrics: []metrics.Metric{
+					{
+						Name: "BytesProcessed",
+						Unit: metrics.UnitBytes,
+					},
+				},
+			},
+		},
+		Timestamp: p.operation.EndTime.UnixNano() / metrics.NanosecondsPerMillisecond,
+	}
+
 	expected := []observer.LoggedEntry{
 		{
 			Entry: zapcore.Entry{
@@ -329,9 +346,51 @@ func TestProcessClassifyFailure(t *testing.T) {
 				zap.Time("endOp", p.operation.EndTime),
 			},
 		},
+		{
+			Entry: zapcore.Entry{
+				Level:   zapcore.InfoLevel,
+				Message: "metric",
+			},
+			Context: []zapcore.Field{
+				{
+					Key:    "Component",
+					String: "LogProcessor",
+				},
+				{
+					Key:    "LogType",
+					String: testLogType,
+				},
+				{
+					Key:     "BytesProcessed",
+					Integer: 7996,
+				},
+				{
+					Key:       "_aws",
+					Interface: embeddedMetric,
+				},
+			},
+		},
 	}
 	require.Equal(t, len(expected), len(actual))
 	for i := range expected {
+		if i == len(expected)-1 {
+			assert.Equal(t, expected[i].Entry.Level, actual[i].Entry.Level)
+			assert.Equal(t, expected[i].Entry.Message, actual[i].Entry.Message)
+			require.Equal(t, len(expected[i].Context), len(actual[i].Context))
+			for j := range expected[i].Context {
+				assert.Equal(t, expected[i].Context[j].Key, actual[i].Context[j].Key)
+				if actual[i].Context[j].Key == "_aws" {
+					actualTyped := actual[i].Context[j].Interface.(metrics.EmbeddedMetric)
+					actualTyped.Timestamp = p.operation.EndTime.UnixNano() / metrics.NanosecondsPerMillisecond
+					assert.Equal(t, expected[i].Context[j].Interface, actualTyped)
+					continue
+				}
+				assert.Equal(t, expected[i].Context[j].Interface, actual[i].Context[j].Interface)
+				assert.Equal(t, expected[i].Context[j].String, actual[i].Context[j].String)
+				assert.Equal(t, expected[i].Context[j].Integer, actual[i].Context[j].Integer)
+			}
+			continue
+		}
 		assertLogEqual(t, expected[i], actual[i])
 	}
 }

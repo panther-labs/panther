@@ -17,18 +17,18 @@
  */
 
 import React from 'react';
-import { useSnackbar } from 'pouncejs';
+import { ModalProps, useSnackbar } from 'pouncejs';
 import { RuleSummary, RuleDetails } from 'Generated/schema';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
 import { useDeleteRule } from './graphql/deleteRule.generated';
 import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
-export interface DeleteRuleModalProps {
+export interface DeleteRuleModalProps extends ModalProps {
   rule: RuleDetails | RuleSummary;
 }
 
-const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule }) => {
+const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule, ...rest }) => {
   const { location, history } = useRouter<{ id?: string }>();
   const { pushSnackbar } = useSnackbar();
   const ruleDisplayName = rule.displayName || rule.id;
@@ -96,6 +96,7 @@ const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule }) => {
       title={`Delete ${ruleDisplayName}`}
       subtitle={`Are you sure you want to delete ${ruleDisplayName}?`}
       onConfirm={onConfirm}
+      {...rest}
     />
   );
 };

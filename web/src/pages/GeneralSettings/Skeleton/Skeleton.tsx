@@ -18,13 +18,20 @@
 
 import React from 'react';
 import TablePlaceholder from 'Components/TablePlaceholder';
-import { Card } from 'pouncejs';
+import { Card, FadeIn, SimpleGrid } from 'pouncejs';
 
 const GeneralSettingsPageSkeleton: React.FC = () => {
   return (
-    <Card p={9}>
-      <TablePlaceholder />
-    </Card>
+    <FadeIn from="bottom">
+      <SimpleGrid columns={3} spacing={5}>
+        <Card p={6}>
+          <TablePlaceholder />
+        </Card>
+        <Card p={6}>
+          <TablePlaceholder rowCount={3} />
+        </Card>
+      </SimpleGrid>
+    </FadeIn>
   );
 };
 

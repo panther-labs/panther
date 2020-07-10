@@ -17,7 +17,7 @@
  */
 
 import * as React from 'react';
-import { Alert, Box, Flex, useSnackbar } from 'pouncejs';
+import { Alert, Box, SimpleGrid, useSnackbar } from 'pouncejs';
 import { Field, Form, Formik } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import SubmitButton from 'Components/buttons/SubmitButton';
@@ -56,11 +56,13 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) => {
       }),
   });
 
+  /* eslint-disable camelcase */
   const initialValues = {
-    email: userInfo.email || '',
-    familyName: userInfo.family_name || '',
-    givenName: userInfo.given_name || '',
+    email: userInfo?.email || '',
+    familyName: userInfo?.family_name || '',
+    givenName: userInfo?.given_name || '',
   };
+  /* eslint-enable camelcase */
 
   return (
     <Formik<EditProfileFormValues>
@@ -79,7 +81,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) => {
     >
       <Form>
         {status && (
-          <Box mb={6}>
+          <Box mb={4}>
             <Alert variant="error" title={status.title} description={status.message} />
           </Box>
         )}
@@ -89,27 +91,26 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) => {
           placeholder="john@doe.com"
           disabled
           name="email"
-          aria-required
+          required
           readonly
-          mb={3}
         />
-        <Flex mb={6} justify="space-between">
+        <SimpleGrid my={4} columns={2} gap={4}>
           <Field
             as={FormikTextInput}
             label="First Name"
             placeholder="John"
             name="givenName"
-            aria-required
+            required
           />
           <Field
             as={FormikTextInput}
             label="Last Name"
             placeholder="Doe"
             name="familyName"
-            aria-required
+            required
           />
-        </Flex>
-        <SubmitButton width={1}>Update</SubmitButton>
+        </SimpleGrid>
+        <SubmitButton fullWidth>Update</SubmitButton>
       </Form>
     </Formik>
   );

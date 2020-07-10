@@ -52,30 +52,33 @@ type tableItem struct {
 	Body                      models.Body                      `json:"body"`
 	CreatedAt                 models.ModifyTime                `json:"createdAt"`
 	CreatedBy                 models.UserID                    `json:"createdBy"`
+	DedupPeriodMinutes        models.DedupPeriodMinutes        `json:"dedupPeriodMinutes,omitempty"`
 	Description               models.Description               `json:"description,omitempty"`
 	DisplayName               models.DisplayName               `json:"displayName,omitempty"`
 	Enabled                   models.Enabled                   `json:"enabled"`
 	ID                        models.ID                        `json:"id"`
 	LastModified              models.ModifyTime                `json:"lastModified"`
 	LastModifiedBy            models.UserID                    `json:"lastModifiedBy"`
-	Reference                 models.Reference                 `json:"reference,omitempty"`
-	ResourceTypes             models.TypeSet                   `json:"resourceTypes,omitempty" dynamodbav:"resourceTypes,stringset,omitempty"`
-	Runbook                   models.Runbook                   `json:"runbook,omitempty"`
-	Severity                  models.Severity                  `json:"severity"`
-	Suppressions              models.Suppressions              `json:"suppressions,omitempty" dynamodbav:"suppressions,stringset,omitempty"`
-	Tags                      models.Tags                      `json:"tags,omitempty" dynamodbav:"tags,stringset,omitempty"`
-	Tests                     []*models.UnitTest               `json:"tests,omitempty"`
-	VersionID                 models.VersionID                 `json:"versionId,omitempty"`
-	DedupPeriodMinutes        models.DedupPeriodMinutes        `json:"dedupPeriodMinutes,omitempty"`
-	Reports                   models.Reports                   `json:"reports,omitempty"`
-
-	// Logic type (policy or rule)
-	Type string `json:"type"`
 
 	// Lowercase versions of string fields for easy filtering
 	LowerDisplayName string   `json:"lowerDisplayName,omitempty"`
 	LowerID          string   `json:"lowerId,omitempty"`
 	LowerTags        []string `json:"lowerTags,omitempty" dynamodbav:"lowerTags,stringset,omitempty"`
+
+	OutputIds     models.OutputIds    `json:"outputIds,omitempty" dynamodbav:"outputIds,stringset,omitempty"`
+	Reference     models.Reference    `json:"reference,omitempty"`
+	Reports       models.Reports      `json:"reports,omitempty"`
+	ResourceTypes models.TypeSet      `json:"resourceTypes,omitempty" dynamodbav:"resourceTypes,stringset,omitempty"`
+	Runbook       models.Runbook      `json:"runbook,omitempty"`
+	Severity      models.Severity     `json:"severity"`
+	Suppressions  models.Suppressions `json:"suppressions,omitempty" dynamodbav:"suppressions,stringset,omitempty"`
+	Tags          models.Tags         `json:"tags,omitempty" dynamodbav:"tags,stringset,omitempty"`
+	Tests         []*models.UnitTest  `json:"tests,omitempty"`
+
+	// Logic type (policy or rule)
+	Type string `json:"type"`
+
+	VersionID models.VersionID `json:"versionId,omitempty"`
 }
 
 // Add extra internal filtering fields before serializing to Dynamo
@@ -87,6 +90,7 @@ func (r *tableItem) addExtraFields() {
 
 // Sort string sets before converting to an external Rule/Policy model.
 func (r *tableItem) normalize() {
+	sortCaseInsensitive(r.OutputIds)
 	sortCaseInsensitive(r.ResourceTypes)
 	sortCaseInsensitive(r.Suppressions)
 	sortCaseInsensitive(r.Tags)
@@ -108,6 +112,7 @@ func (r *tableItem) Policy(status models.ComplianceStatus) *models.Policy {
 		ID:                        r.ID,
 		LastModified:              r.LastModified,
 		LastModifiedBy:            r.LastModifiedBy,
+		OutputIds:                 r.OutputIds,
 		Reference:                 r.Reference,
 		ResourceTypes:             r.ResourceTypes,
 		Runbook:                   r.Runbook,
@@ -155,6 +160,7 @@ func (r *tableItem) Rule() *models.Rule {
 		LastModified:       r.LastModified,
 		LastModifiedBy:     r.LastModifiedBy,
 		LogTypes:           r.ResourceTypes,
+		OutputIds:          r.OutputIds,
 		Reference:          r.Reference,
 		Runbook:            r.Runbook,
 		Severity:           r.Severity,

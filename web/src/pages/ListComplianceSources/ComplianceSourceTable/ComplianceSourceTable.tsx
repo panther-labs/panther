@@ -17,10 +17,10 @@
  */
 
 import React from 'react';
-import { Flex, Label, Table } from 'pouncejs';
+import { Box, Flex, Table } from 'pouncejs';
 import { ListComplianceSources } from 'Pages/ListComplianceSources';
 import ComplianceSourceHealthIcon from './ComplianceSourceHealthIcon';
-import ComplianceSourceTableRowOptionsProps from './ComplianceSourceTableRowOptions';
+import ComplianceSourceTableRowOptions from './ComplianceSourceTableRowOptions';
 
 type ComplianceSourceTableProps = {
   sources: ListComplianceSources['listComplianceIntegrations'];
@@ -31,7 +31,6 @@ const ComplianceSourceTable: React.FC<ComplianceSourceTableProps> = ({ sources }
     <Table>
       <Table.Head>
         <Table.Row>
-          <Table.HeaderCell />
           <Table.HeaderCell>Label</Table.HeaderCell>
           <Table.HeaderCell>AWS Account ID</Table.HeaderCell>
           <Table.HeaderCell>Real-Time Updates</Table.HeaderCell>
@@ -41,11 +40,8 @@ const ComplianceSourceTable: React.FC<ComplianceSourceTableProps> = ({ sources }
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {sources.map((source, index) => (
+        {sources.map(source => (
           <Table.Row key={source.integrationId}>
-            <Table.Cell>
-              <Label size="medium">{index + 1}</Label>
-            </Table.Cell>
             <Table.Cell>{source.integrationLabel}</Table.Cell>
             <Table.Cell>{source.awsAccountId}</Table.Cell>
             <Table.Cell>{source.cweEnabled ? 'Enabled' : 'Disabled'}</Table.Cell>
@@ -56,7 +52,9 @@ const ComplianceSourceTable: React.FC<ComplianceSourceTableProps> = ({ sources }
               </Flex>
             </Table.Cell>
             <Table.Cell>
-              <ComplianceSourceTableRowOptionsProps source={source} />
+              <Box my={-1}>
+                <ComplianceSourceTableRowOptions source={source} />
+              </Box>
             </Table.Cell>
           </Table.Row>
         ))}

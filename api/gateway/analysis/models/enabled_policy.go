@@ -43,6 +43,9 @@ type EnabledPolicy struct {
 	// id
 	ID ID `json:"id,omitempty"`
 
+	// output ids
+	OutputIds OutputIds `json:"outputIds,omitempty"`
+
 	// reports
 	Reports Reports `json:"reports,omitempty"`
 
@@ -75,6 +78,10 @@ func (m *EnabledPolicy) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateID(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateOutputIds(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -149,6 +156,22 @@ func (m *EnabledPolicy) validateID(formats strfmt.Registry) error {
 	if err := m.ID.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("id")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *EnabledPolicy) validateOutputIds(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.OutputIds) { // not required
+		return nil
+	}
+
+	if err := m.OutputIds.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("outputIds")
 		}
 		return err
 	}

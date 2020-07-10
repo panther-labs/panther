@@ -17,13 +17,29 @@
  */
 
 import React from 'react';
-import { TextArea, TextAreaProps } from 'pouncejs';
+import { Box, FormError, TextArea, TextAreaProps } from 'pouncejs';
 import { FieldConfig, useField } from 'formik';
 
 const FormikTextArea: React.FC<TextAreaProps & Required<Pick<FieldConfig, 'name'>>> = props => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [field, meta] = useField(props.name);
-  return <TextArea {...props} error={meta.touched && meta.error} />;
+
+  const isInvalid = meta.touched && !!meta.error;
+  const errorElementId = isInvalid ? `${props.name}-error` : undefined;
+  return (
+    <Box>
+      <TextArea
+        invalid={isInvalid}
+        aria-describedby={isInvalid ? errorElementId : undefined}
+        {...props}
+      />
+      {isInvalid && (
+        <FormError mt={2} id={errorElementId}>
+          {meta.error}
+        </FormError>
+      )}
+    </Box>
+  );
 };
 
 export default FormikTextArea;

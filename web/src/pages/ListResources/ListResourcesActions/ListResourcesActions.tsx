@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Alert, Button, Card, Flex, Icon } from 'pouncejs';
+import { Alert, Box, Button, Card, Collapse, Flex } from 'pouncejs';
 import { RESOURCE_TYPES } from 'Source/constants';
 import GenerateFiltersGroup from 'Components/utils/GenerateFiltersGroup';
 import { ComplianceStatusEnum, ListResourcesInput, ComplianceIntegration } from 'Generated/schema';
@@ -34,15 +34,20 @@ import { useListAccountIds } from './graphql/listAccountIds.generated';
 const statusOptions = Object.values(ComplianceStatusEnum);
 
 export const filters = {
+  idContains: {
+    component: FormikTextInput,
+    props: {
+      label: 'ID / Name',
+      placeholder: 'Enter part of an id or a name...',
+    },
+  },
   types: {
     component: FormikMultiCombobox,
     props: {
       items: RESOURCE_TYPES,
       label: 'Types',
       searchable: true,
-      inputProps: {
-        placeholder: 'Start typing resources...',
-      },
+      placeholder: 'Start typing resources...',
     },
   },
   integrationId: {
@@ -52,9 +57,7 @@ export const filters = {
       searchable: true,
       items: [] as Array<Pick<ComplianceIntegration, 'integrationId' | 'integrationLabel'>>,
       itemToString: (integration: ComplianceIntegration) => integration.integrationLabel,
-      inputProps: {
-        placeholder: 'Choose a source...',
-      },
+      placeholder: 'Choose a source...',
     },
   },
   complianceStatus: {
@@ -63,16 +66,7 @@ export const filters = {
       label: 'Status',
       itemToString: (status: ComplianceStatusEnum) => capitalize(status.toLowerCase()),
       items: statusOptions,
-      inputProps: {
-        placeholder: 'Choose a status...',
-      },
-    },
-  },
-  idContains: {
-    component: FormikTextInput,
-    props: {
-      label: 'ID / Name',
-      placeholder: 'Enter part of an id or a name...',
+      placeholder: 'Choose a status...',
     },
   },
 };
@@ -145,33 +139,32 @@ const ListResourcesActions: React.FC = () => {
   );
 
   return (
-    <React.Fragment>
+    <Box as="section" mb={6}>
       {error && <Alert variant="error" title="Failed to fetch available sources" discardable />}
-      <Flex justify="flex-end" mb={6} position="relative">
+      <Flex justify="flex-end">
         <Button
-          size="large"
-          variant="default"
+          icon="filter"
+          variant="outline"
+          variantColor="navyblue"
           onClick={() => setFiltersVisibility(!areFiltersVisible)}
         >
-          <Flex>
-            <Icon type="filter" size="small" mr={3} />
-            Filter Options {filtersCount ? `(${filtersCount})` : ''}
-          </Flex>
+          Filter Options {filtersCount ? `(${filtersCount})` : ''}
         </Button>
       </Flex>
-      {areFiltersVisible && (
-        <ErrorBoundary>
-          <Card p={6} mb={6}>
-            <GenerateFiltersGroup<MutatedListResourcesFiltersValues>
-              filters={filters}
-              onCancel={() => setFiltersVisibility(false)}
-              onSubmit={handleFiltersSubmit}
-              initialValues={mutatedInitialValues}
-            />
-          </Card>
-        </ErrorBoundary>
-      )}
-    </React.Fragment>
+      <ErrorBoundary>
+        <Collapse open={areFiltersVisible}>
+          <Box pt={6}>
+            <Card p={8}>
+              <GenerateFiltersGroup<MutatedListResourcesFiltersValues>
+                filters={filters}
+                onSubmit={handleFiltersSubmit}
+                initialValues={mutatedInitialValues}
+              />
+            </Card>
+          </Box>
+        </Collapse>
+      </ErrorBoundary>
+    </Box>
   );
 };
 

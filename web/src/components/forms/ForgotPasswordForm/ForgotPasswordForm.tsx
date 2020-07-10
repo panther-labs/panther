@@ -22,7 +22,7 @@ import * as Yup from 'yup';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
 import useAuth from 'Hooks/useAuth';
-import { Card, Text } from 'pouncejs';
+import { Card, Flex, FormHelperText } from 'pouncejs';
 
 interface ForgotPasswordFormValues {
   email: string;
@@ -54,27 +54,32 @@ const ForgotPasswordForm: React.FC = () => {
       {({ status, values }) => {
         if (status === 'SENT') {
           return (
-            <Card bg="green100" p={5} mb={8} boxShadow="none">
-              <Text color="green300" size="medium">
-                We have successfully sent you an email with reset instructions at{' '}
-                <b>{values.email}</b>
-              </Text>
+            <Card bg="teal-300" p={5} mb={8} boxShadow="none" fontSize="medium">
+              We have successfully sent you an email with reset instructions at{' '}
+              <b>{values.email}</b>
             </Card>
           );
         }
 
         return (
           <Form>
-            <Field
-              as={FormikTextInput}
-              label="Email"
-              placeholder="Enter your company email..."
-              type="email"
-              name="email"
-              aria-required
-              mb={6}
-            />
-            <SubmitButton width={1}>Reset Password</SubmitButton>
+            <Flex direction="column" spacing={4}>
+              <Field
+                as={FormikTextInput}
+                label="Email"
+                placeholder="Enter your company email..."
+                type="email"
+                name="email"
+                required
+              />
+              <SubmitButton fullWidth aria-describedby="forgot-password-description">
+                Reset Password
+              </SubmitButton>
+              <FormHelperText id="forgot-password-description" textAlign="center">
+                By submitting a request, you will receive an email with instructions on how to reset
+                your password
+              </FormHelperText>
+            </Flex>
           </Form>
         );
       }}

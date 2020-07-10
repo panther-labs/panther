@@ -23,9 +23,9 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 )
 
-func addGlueTables(logTypes []*string) error {
+func addGlueTables(logTypes []string) error {
 	for _, logType := range logTypes {
-		_, _, err := gluetables.CreateOrUpdateGlueTablesForLogType(glueClient, *logType, env.ProcessedDataBucket)
+		_, _, err := gluetables.CreateOrUpdateGlueTablesForLogType(glueClient, logType, env.ProcessedDataBucket)
 		if err != nil {
 			return err
 		}

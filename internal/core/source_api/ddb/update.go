@@ -19,7 +19,6 @@ package ddb
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"github.com/pkg/errors"
@@ -32,7 +31,7 @@ func (ddb *DDB) UpdateStatus(integrationID string, status IntegrationStatus) err
 		return errors.Wrap(err, "failed to generate update expression")
 	}
 	updateRequest := &dynamodb.UpdateItemInput{
-		TableName: aws.String(ddb.TableName),
+		TableName: &ddb.TableName,
 		Key: map[string]*dynamodb.AttributeValue{
 			hashKey: {S: &integrationID},
 		},

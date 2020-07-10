@@ -31,6 +31,7 @@ export type S3LogIntegrationDetails = Pick<
   | 'createdAtTime'
   | 'createdBy'
   | 'awsAccountId'
+  | 'lastEventReceived'
   | 'kmsKey'
   | 's3Bucket'
   | 's3Prefix'
@@ -52,6 +53,7 @@ export const S3LogIntegrationDetails = gql`
     createdAtTime
     createdBy
     awsAccountId
+    lastEventReceived
     kmsKey
     s3Bucket
     s3Prefix

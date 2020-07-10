@@ -51,7 +51,7 @@ func TestDeleteIntegrationItem(t *testing.T) {
 		Return(generateGetItemOutput(models.IntegrationTypeAWSScan), nil)
 
 	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
-		IntegrationID: aws.String(testIntegrationID),
+		IntegrationID: testIntegrationID,
 	})
 
 	assert.NoError(t, result)
@@ -93,7 +93,7 @@ func TestDeleteLogIntegration(t *testing.T) {
 	mockSqs.On("SetQueueAttributes", expectedSetAttributes).Return(&sqs.SetQueueAttributesOutput{}, nil)
 
 	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
-		IntegrationID: aws.String(testIntegrationID),
+		IntegrationID: testIntegrationID,
 	})
 
 	assert.NoError(t, result)
@@ -128,7 +128,7 @@ func TestDeleteLogIntegrationKeepSqsQueuePermissions(t *testing.T) {
 	mockClient.On("Scan", mock.Anything).Return(scanResult, nil)
 
 	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
-		IntegrationID: aws.String(testIntegrationID),
+		IntegrationID: testIntegrationID,
 	})
 
 	assert.NoError(t, result)
@@ -150,7 +150,7 @@ func TestDeleteIntegrationItemError(t *testing.T) {
 	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, mockErr)
 
 	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
-		IntegrationID: aws.String(testIntegrationID),
+		IntegrationID: testIntegrationID,
 	})
 
 	assert.Error(t, result)
@@ -189,7 +189,7 @@ func TestDeleteIntegrationPolicyNotFound(t *testing.T) {
 	mockSqs.On("SetQueueAttributes", expectedSetAttributes).Return(&sqs.SetQueueAttributesOutput{}, nil)
 
 	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
-		IntegrationID: aws.String(testIntegrationID),
+		IntegrationID: testIntegrationID,
 	})
 
 	assert.NoError(t, result)
@@ -203,7 +203,7 @@ func TestDeleteIntegrationItemDoesNotExist(t *testing.T) {
 	mockClient.On("GetItem", mock.Anything).Return(&dynamodb.GetItemOutput{}, nil)
 
 	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
-		IntegrationID: aws.String(testIntegrationID),
+		IntegrationID: testIntegrationID,
 	})
 
 	assert.Error(t, result)
@@ -234,7 +234,7 @@ func TestDeleteIntegrationDeleteOfItemFails(t *testing.T) {
 	mockSqs.On("SetQueueAttributes", mock.Anything).Return(&sqs.SetQueueAttributesOutput{}, nil).Twice()
 
 	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
-		IntegrationID: aws.String(testIntegrationID),
+		IntegrationID: testIntegrationID,
 	})
 
 	assert.Error(t, result)
@@ -268,7 +268,7 @@ func TestDeleteIntegrationDeleteRecoveryFails(t *testing.T) {
 	mockSqs.On("SetQueueAttributes", mock.Anything).Return(&sqs.SetQueueAttributesOutput{}, errors.New("error")).Once()
 
 	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
-		IntegrationID: aws.String(testIntegrationID),
+		IntegrationID: testIntegrationID,
 	})
 
 	require.Error(t, result)
@@ -288,7 +288,7 @@ func generateGetItemOutput(integrationType string) *dynamodb.GetItemOutput {
 func generateDDBAttributes(integrationType string) map[string]*dynamodb.AttributeValue {
 	return map[string]*dynamodb.AttributeValue{
 		"integrationId":   {S: aws.String(testIntegrationID)},
-		"integrationType": {S: aws.String(integrationType)},
+		"integrationType": {S: &integrationType},
 		"awsAccountId":    {S: aws.String(testAccountID)},
 	}
 }

@@ -50,7 +50,17 @@ type lambdaInput struct {
 	UpdateRule *updateRuleInput
 }
 
+type enhanceRuleInput deleteRuleInput
+
+// this is how APIs are composed
+type composedLambdaInput struct {
+	lambdaInput
+	EnhanceRule *enhanceRuleInput
+}
+
 type routes struct{}
+
+type composedRoutes struct{}
 
 func (*routes) AddRule(input *addRuleInput) (*addRuleOutput, error) {
 	if input.Name != nil && *input.Name == "AlreadyExists" {
@@ -67,7 +77,26 @@ func (*routes) UpdateRule(input *updateRuleInput) error {
 	return errors.New("manual error")
 }
 
-var testRouter = NewRouter("testNamespace", "testComponent", nil, &routes{})
+func (*composedRoutes) AddRule(input *addRuleInput) (*addRuleOutput, error) {
+	return &addRuleOutput{RuleID: aws.String(mockID)}, nil
+}
+
+func (*composedRoutes) DeleteRule(input *deleteRuleInput) error {
+	return nil
+}
+
+func (*composedRoutes) UpdateRule(input *updateRuleInput) error {
+	return nil
+}
+
+func (*composedRoutes) EnhanceRule(input *enhanceRuleInput) error {
+	return nil
+}
+
+var (
+	testRouter            = NewRouter("testNamespace", "testComponent", nil, &routes{})
+	testComposedAPIRouter = NewRouter("testNamespace", "testComponent", nil, &composedRoutes{})
+)
 
 func TestHandleNoAction(t *testing.T) {
 	result, err := testRouter.Handle(&lambdaInput{})
@@ -84,7 +113,7 @@ func TestHandleTwoActions(t *testing.T) {
 	assert.Nil(t, result)
 
 	errExpected := &InvalidInputError{
-		Route: "AddRule", Message: "exactly one route must be specified: also found DeleteRule"}
+		Route: "", Message: "exactly one route must be specified: [AddRule DeleteRule]"}
 	assert.Equal(t, errExpected, err)
 }
 
@@ -125,6 +154,16 @@ func TestHandleTwoReturnValuesError(t *testing.T) {
 	result, err := testRouter.Handle(input)
 	assert.Nil(t, result)
 	assert.Equal(t, &AlreadyExistsError{Route: "AddRule"}, err) // route name was injected
+}
+
+func TestHandleComposedStruct(t *testing.T) {
+	input := &composedLambdaInput{
+		lambdaInput: lambdaInput{},
+		EnhanceRule: &enhanceRuleInput{RuleID: aws.String(mockID)},
+	}
+	result, err := testComposedAPIRouter.Handle(input)
+	assert.Nil(t, result)
+	assert.NoError(t, err)
 }
 
 // How expensive is it to look up a method by name?

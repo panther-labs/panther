@@ -38,6 +38,7 @@ To build:
 mage build:tools
 ```
 
-* **requeue**: a tool to copy messages from a dead letter queue back to the originating queue.
-* **s3queue**: a tool to list files under an S3 path and send to the log processor input queue for processing (useful for backfill of data)
+* **compact**: a tool to back fill JSON to Parquet conversion of log data (used when upgrading to Panther Enterprise)
+* **requeue**: a tool to copy messages from a dead letter queue back to the originating queue for reprocessing
+* **s3queue**: a tool to list files under an S3 path and send to the log processor input queue for processing (useful for back fill of data)
 

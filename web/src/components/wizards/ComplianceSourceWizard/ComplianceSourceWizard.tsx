@@ -99,7 +99,7 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
               <Wizard.Step title="Done!" icon="check">
                 <WizardPanelWrapper>
                   <WizardPanelWrapper.Content>
-                    <SuccessPanel errorMessage={externalErrorMessage} />
+                    <SuccessPanel />
                   </WizardPanelWrapper.Content>
                   <WizardPanelWrapper.Actions>
                     <WizardPanelWrapper.ActionPrev />

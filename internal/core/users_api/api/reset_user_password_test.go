@@ -36,7 +36,10 @@ func TestResetUserPasswordGatewayErr(t *testing.T) {
 	userID := aws.String("test-id")
 	mockGateway.On("ResetUserPassword", userID).Return(&genericapi.AWSError{})
 
-	result, err := (API{}).ResetUserPassword(&models.ResetUserPasswordInput{ID: userID})
+	result, err := (API{}).ResetUserPassword(&models.ResetUserPasswordInput{
+		RequesterID: aws.String(systemUserID),
+		ID:          userID,
+	})
 	assert.Nil(t, result)
 	assert.Error(t, err)
 	mockGateway.AssertExpectations(t)
@@ -47,7 +50,10 @@ func TestResetUserPassword(t *testing.T) {
 	userGateway = mockGateway
 	mockGateway.On("ResetUserPassword", userID).Return(nil)
 
-	result, err := (API{}).ResetUserPassword(&models.ResetUserPasswordInput{ID: userID})
+	result, err := (API{}).ResetUserPassword(&models.ResetUserPasswordInput{
+		RequesterID: aws.String(systemUserID),
+		ID:          userID,
+	})
 	require.NoError(t, err)
 	assert.Equal(t, &models.ResetUserPasswordOutput{ID: userID}, result)
 	mockGateway.AssertExpectations(t)

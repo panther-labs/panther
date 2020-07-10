@@ -1,21 +1,21 @@
 query RuleDetails($input: GetRuleInput!) {
   rule(input: $input) {
+    body
+    dedupPeriodMinutes
     description
     displayName
     enabled
     id
-    reference
     logTypes
+    outputIds
+    reference
     runbook
     severity
-    dedupPeriodMinutes
     tags
-    body
     tests {
       expectedResult
       name
       resource
-      resourceType
     }
   }
 }

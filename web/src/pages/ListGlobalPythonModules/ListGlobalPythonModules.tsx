@@ -17,16 +17,17 @@
  */
 
 import React from 'react';
-import TablePlaceholder from 'Components/TablePlaceholder';
-import { Alert, Box, Button, Card, Flex, SimpleGrid } from 'pouncejs';
+import { Alert, Button, SimpleGrid } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { convertObjArrayValuesToCsv, encodeParams, extractErrorMessage } from 'Helpers/utils';
 import withSEO from 'Hoc/withSEO';
+import Panel from 'Components/Panel';
 import { useListGlobalPythonModules } from './graphql/listGlobalPythonModules.generated';
 import EmptyDataFallback from './EmptyDataFallback';
 import GlobalPythonModuleItem from './GlobalPythonModuleItem';
+import Skeleton from './Skeleton';
 
 const ListGlobalPythonModules = () => {
   const { loading, error, data } = useListGlobalPythonModules({
@@ -37,11 +38,7 @@ const ListGlobalPythonModules = () => {
   });
 
   if (loading && !data) {
-    return (
-      <Card p={9}>
-        <TablePlaceholder />
-      </Card>
-    );
+    return <Skeleton />;
   }
 
   if (error) {
@@ -62,18 +59,14 @@ const ListGlobalPythonModules = () => {
   }
 
   return (
-    <Box mb={6}>
-      <Flex justify="flex-end">
-        <Button
-          size="large"
-          variant="primary"
-          mb={8}
-          as={RRLink}
-          to={urls.settings.globalPythonModules.create()}
-        >
+    <Panel
+      title="Python Modules"
+      actions={
+        <Button as={RRLink} to={urls.settings.globalPythonModules.create()}>
           Create New
         </Button>
-      </Flex>
+      }
+    >
       <ErrorBoundary>
         <SimpleGrid columns={2} spacing={3}>
           {data.listGlobalPythonModules.globals.map(globalPythonModule => (
@@ -84,7 +77,7 @@ const ListGlobalPythonModules = () => {
           ))}
         </SimpleGrid>
       </ErrorBoundary>
-    </Box>
+    </Panel>
   );
 };
 

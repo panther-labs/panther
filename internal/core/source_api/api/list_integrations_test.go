@@ -63,20 +63,19 @@ func TestListIntegrations(t *testing.T) {
 
 	expected := &models.SourceIntegration{
 		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-			AWSAccountID:     aws.String("123456789012"),
-			IntegrationID:    aws.String(testIntegrationID),
-			IntegrationLabel: aws.String(testIntegrationLabel),
-			IntegrationType:  aws.String(models.IntegrationTypeAWSScan),
-			ScanIntervalMins: aws.Int(1440),
+			AWSAccountID:     "123456789012",
+			IntegrationID:    testIntegrationID,
+			IntegrationLabel: testIntegrationLabel,
+			IntegrationType:  models.IntegrationTypeAWSScan,
+			ScanIntervalMins: 1440,
 		},
 		SourceIntegrationStatus: models.SourceIntegrationStatus{
-			ScanStatus:  aws.String(models.StatusOK),
-			EventStatus: aws.String(models.StatusOK),
+			ScanStatus:  models.StatusOK,
+			EventStatus: models.StatusOK,
 		},
 		SourceIntegrationScanInformation: models.SourceIntegrationScanInformation{
-			LastScanEndTime:      &lastScanEndTime,
-			LastScanErrorMessage: aws.String(""),
-			LastScanStartTime:    &lastScanStartTime,
+			LastScanEndTime:   &lastScanEndTime,
+			LastScanStartTime: &lastScanStartTime,
 		},
 	}
 	out, err := apiTest.ListIntegrations(&models.ListIntegrationsInput{})

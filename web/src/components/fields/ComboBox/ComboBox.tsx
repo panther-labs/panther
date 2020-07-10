@@ -17,16 +17,34 @@
  */
 
 import React from 'react';
-import { Combobox, ComboboxProps } from 'pouncejs';
-import { FieldConfig, useField } from 'formik';
+import { Box, Combobox, ComboboxProps, FormError } from 'pouncejs';
+import { FieldConfig } from 'formik';
+import useFastField from 'Hooks/useFastField';
 
 function FormikCombobox<T>(
   props: ComboboxProps<T> & Required<Pick<FieldConfig, 'name'>>
 ): React.ReactNode {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [field, meta, { setValue }] = useField(props.name);
+  const [field, meta, { setValue }] = useFastField(props.name);
 
-  return <Combobox {...props} onChange={setValue} />;
+  const isInvalid = meta.touched && !!meta.error;
+  const errorElementId = isInvalid ? `${props.name}-error` : undefined;
+
+  return (
+    <Box>
+      <Combobox
+        {...props}
+        invalid={isInvalid}
+        aria-describedby={isInvalid ? errorElementId : undefined}
+        onChange={setValue}
+      />
+      {isInvalid && (
+        <FormError mt={2} id={errorElementId}>
+          {meta.error}
+        </FormError>
+      )}
+    </Box>
+  );
 }
 
 export default FormikCombobox;

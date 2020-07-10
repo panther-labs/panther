@@ -49,6 +49,7 @@ Auth.configure({
 Yup.setLocale({
   mixed: {
     required: 'This field is required',
+    notType: 'Must have a value',
   },
 });
 

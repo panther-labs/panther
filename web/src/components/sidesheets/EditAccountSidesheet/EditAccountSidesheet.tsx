@@ -16,27 +16,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Heading, SideSheet } from 'pouncejs';
+import { Box, Heading, SideSheet, SideSheetProps } from 'pouncejs';
 import EditProfileForm from 'Components/forms/EditProfileForm';
 import ChangePasswordForm from 'Components/forms/ChangePasswordForm';
 import React from 'react';
-import useSidesheet from 'Hooks/useSidesheet';
 
-const EditAccountSidesheet: React.FC = () => {
-  const { hideSidesheet } = useSidesheet();
+const EditAccountSidesheet: React.FC<SideSheetProps> = props => {
   return (
-    <SideSheet open onClose={hideSidesheet}>
-      <Box mx={10} mb={10}>
-        <Heading pt={1} pb={8} size="medium">
+    <SideSheet aria-label="Profile & Account Settings" {...props}>
+      <Box as="section" my={8}>
+        <Heading as="h2" pb={4}>
           Edit Profile
         </Heading>
-        <EditProfileForm onSuccess={hideSidesheet} />
+        <EditProfileForm onSuccess={props.onClose} />
       </Box>
-      <Box borderTop="1px solid" borderColor="grey100" mx={10}>
-        <Heading py={8} size="medium">
+      <Box as="section">
+        <Heading as="h2" pb={4}>
           Account Security
         </Heading>
-        <ChangePasswordForm />
+        <ChangePasswordForm onSuccess={props.onClose} />
       </Box>
     </SideSheet>
   );

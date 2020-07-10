@@ -19,17 +19,18 @@
 import React from 'react';
 import { AddPolicyInput, PolicyUnitTest, UpdatePolicyInput } from 'Generated/schema';
 import * as Yup from 'yup';
-import { Box, Button, Flex, Heading } from 'pouncejs';
+import { Button, Flex } from 'pouncejs';
 import { Form, Formik } from 'formik';
 import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';
 import useRouter from 'Hooks/useRouter';
 import {
-  BaseRuleFormTestFields as PolicyFormTestFields,
-  BaseRuleFormCoreFields,
+  BaseRuleFormTestSection as PolicyFormTestSection,
+  BaseRuleFormCoreSection,
+  BaseRuleFormEditorSection,
 } from 'Components/forms/BaseRuleForm';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import FormSessionRestoration from 'Components/utils/FormSessionRestoration';
-import PolicyFormAutoRemediationFields from './PolicyFormAutoRemediationFields';
+import PolicyFormAutoRemediationSection from './PolicyFormAutoRemediationSection';
 
 // The validation checks that Formik will run
 const validationSchema = Yup.object().shape({
@@ -40,6 +41,8 @@ const validationSchema = Yup.object().shape({
     .of(
       Yup.object().shape({
         name: Yup.string().required(),
+        expectedResult: Yup.boolean().required(),
+        resource: Yup.string().required(),
       })
     )
     .unique('Test names must be unique', 'name'),
@@ -66,31 +69,25 @@ const PolicyForm: React.FC<PolicyFormProps> = ({ initialValues, onSubmit }) => {
     >
       <FormSessionRestoration sessionId={`policy-form-${initialValues.id || 'create'}`}>
         <Form>
-          <Box as="article">
+          <Flex direction="column" as="article" spacing={5}>
             <ErrorBoundary>
-              <BaseRuleFormCoreFields type="policy" />
+              <BaseRuleFormCoreSection type="policy" />
             </ErrorBoundary>
             <ErrorBoundary>
-              <PolicyFormTestFields />
+              <BaseRuleFormEditorSection type="policy" />
             </ErrorBoundary>
-          </Box>
-          <Box as="article" mt={10}>
-            <Heading size="medium" pb={8} borderBottom="1px solid" borderColor="grey100">
-              Auto Remediation Settings
-            </Heading>
-            <Box mt={8}>
-              <ErrorBoundary>
-                <PolicyFormAutoRemediationFields />
-              </ErrorBoundary>
-            </Box>
-          </Box>
-          <Flex borderTop="1px solid" borderColor="grey100" pt={6} mt={10} justify="flex-end">
-            <Flex>
-              <Button variant="default" size="large" onClick={history.goBack} mr={4}>
-                Cancel
-              </Button>
-              <SubmitButton>{initialValues.id ? 'Update' : 'Create'}</SubmitButton>
-            </Flex>
+            <ErrorBoundary>
+              <PolicyFormTestSection />
+            </ErrorBoundary>
+            <ErrorBoundary>
+              <PolicyFormAutoRemediationSection />
+            </ErrorBoundary>
+          </Flex>
+          <Flex spacing={4} mt={5} justify="flex-end">
+            <Button variant="outline" variantColor="navyblue" onClick={history.goBack}>
+              Cancel
+            </Button>
+            <SubmitButton>{initialValues.id ? 'Update' : 'Create'}</SubmitButton>
           </Flex>
         </Form>
       </FormSessionRestoration>

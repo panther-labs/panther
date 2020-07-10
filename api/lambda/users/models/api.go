@@ -67,6 +67,9 @@ type GetUserOutput = User
 
 // InviteUserInput creates a new user with minimal permissions and sends them an invite.
 type InviteUserInput struct {
+	// Which Panther user is making this request?
+	RequesterID *string `json:"requesterId" validate:"required,uuid4"`
+
 	GivenName  *string `json:"givenName" validate:"required,min=1,excludesall='<>&\""`
 	FamilyName *string `json:"familyName" validate:"required,min=1,excludesall='<>&\""`
 	Email      *string `json:"email" validate:"required,email"`
@@ -115,13 +118,16 @@ type ListUsersInput struct {
 //    ]
 // }
 type ListUsersOutput struct {
-	Users []*User `json:"users"`
+	Users []User `json:"users"`
 }
 
 // RemoveUserInput deletes a user.
 //
 // This will fail if the user is the only one with UserModify permissions.
 type RemoveUserInput struct {
+	// Which Panther user is making this request?
+	RequesterID *string `json:"requesterId" validate:"required,uuid4"`
+
 	ID *string `json:"id" validate:"required,uuid4"`
 }
 
@@ -132,6 +138,9 @@ type RemoveUserOutput struct {
 
 // ResetUserPasswordInput resets the password for a user.
 type ResetUserPasswordInput struct {
+	// Which Panther user is making this request?
+	RequesterID *string `json:"requesterId" validate:"required,uuid4"`
+
 	ID *string `json:"id" validate:"required,uuid4"`
 }
 
@@ -142,6 +151,9 @@ type ResetUserPasswordOutput struct {
 
 // UpdateUserInput updates user details.
 type UpdateUserInput struct {
+	// Which Panther user is making this request?
+	RequesterID *string `json:"requesterId" validate:"required,uuid4"`
+
 	ID *string `json:"id" validate:"required,uuid4"`
 
 	// At least one of the following must be specified:

@@ -18,13 +18,16 @@
 
 import React from 'react';
 import TablePlaceholder from 'Components/TablePlaceholder';
-import { Card } from 'pouncejs';
+import { Card, FadeIn } from 'pouncejs';
 
 const ListResourcesPageSkeleton: React.FC = () => {
   return (
-    <Card p={9}>
-      <TablePlaceholder />
-    </Card>
+    <FadeIn from="bottom">
+      <TablePlaceholder rowCount={1} rowHeight={15} />
+      <Card p={6} mt={5}>
+        <TablePlaceholder />
+      </Card>
+    </FadeIn>
   );
 };
 

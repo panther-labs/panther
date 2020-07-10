@@ -17,7 +17,8 @@
  */
 
 import React from 'react';
-import { Flex, Text, theme } from 'pouncejs';
+import { Box, Flex, Heading, theme } from 'pouncejs';
+import { slugify } from 'Helpers/utils';
 
 interface ChartSummaryProps {
   total: number;
@@ -27,20 +28,19 @@ interface ChartSummaryProps {
 
 const ChartSummary: React.FC<ChartSummaryProps> = ({ total, title, color }) => {
   return (
-    <Flex
-      width="50%"
-      flexDirection="column"
-      verticalAlign="middle"
-      alignItems="center"
-      align="center"
-      justify="center"
-      mb={10}
-      textAlign="center"
-    >
-      <Text size="large" color={color} fontWeight="bold" style={{ fontSize: 45 }}>
+    <Flex width="50%" direction="column" align="center" justify="center" mb={10}>
+      <Heading
+        as="h2"
+        size="3x-large"
+        color={color}
+        fontWeight="bold"
+        aria-describedby={slugify(title)}
+      >
         {total}
-      </Text>
-      <Text size="large">{title}</Text>
+      </Heading>
+      <Box id={slugify(title)} fontSize="medium">
+        {title}
+      </Box>
     </Flex>
   );
 };

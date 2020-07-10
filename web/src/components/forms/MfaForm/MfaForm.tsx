@@ -22,6 +22,7 @@ import * as Yup from 'yup';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
 import useAuth from 'Hooks/useAuth';
+import { Box } from 'pouncejs';
 
 interface MfaFormValues {
   mfaCode: string;
@@ -55,16 +56,19 @@ const MfaForm: React.FC = () => {
       }
     >
       <Form>
-        <Field
-          autoFocus
-          as={FormikTextInput}
-          placeholder="The 6-digit MFA code"
-          name="mfaCode"
-          autoComplete="off"
-          aria-required
-          mb={6}
-        />
-        <SubmitButton width={1}>Sign in</SubmitButton>
+        <Box mb={4}>
+          <Field
+            autoFocus
+            as={FormikTextInput}
+            placeholder="The 6-digit MFA code"
+            name="mfaCode"
+            label="Code"
+            autoComplete="off"
+            required
+          />
+        </Box>
+
+        <SubmitButton fullWidth>Sign in</SubmitButton>
       </Form>
     </Formik>
   );

@@ -19,30 +19,25 @@
 import React from 'react';
 import { Box, Flex, Heading } from 'pouncejs';
 import urls from 'Source/urls';
+import FadeInTrail from 'Components/utils/FadeInTrail';
 import NavLink from './NavLink';
 
 const ComplianceNavigation: React.FC = () => {
   return (
     <Box>
-      <Heading size="medium" textAlign="center" mt={10} mb={5}>
-        <b>CLOUD SECURITY</b>
+      <Heading size="x-small" textAlign="center" fontWeight="bold" mt={10} mb={5} truncated>
+        CLOUD SECURITY
       </Heading>
       <Flex direction="column" as="ul">
-        <Flex as="li">
+        <FadeInTrail as="li">
           <NavLink icon="dashboard-alt" to={urls.compliance.overview()} label="Overview" />
-        </Flex>
-        <Flex as="li">
           <NavLink icon="policy" to={urls.compliance.policies.list()} label="Policies" />
-        </Flex>
-        <Flex as="li">
           <NavLink icon="resource" to={urls.compliance.resources.list()} label="Resources" />
-        </Flex>
-        <Flex as="li">
           <NavLink icon="infra-source" to={urls.compliance.sources.list()} label="Sources" />
-        </Flex>
+        </FadeInTrail>
       </Flex>
     </Box>
   );
 };
 
-export default ComplianceNavigation;
+export default React.memo(ComplianceNavigation);
