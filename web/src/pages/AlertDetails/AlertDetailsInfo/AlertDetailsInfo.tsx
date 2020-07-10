@@ -118,7 +118,10 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
         </Flex>
         <Flex direction="column" align="left" spacing={2}>
           <Box aria-describedby="alert-status">
-            <UpdateAlertDropdown status={'OPEN' as AlertStatusesEnum} alertId={alert.alertId} />
+            <UpdateAlertDropdown
+              status={alert.status as AlertStatusesEnum}
+              alertId={alert.alertId}
+            />
           </Box>
         </Flex>
       </SimpleGrid>

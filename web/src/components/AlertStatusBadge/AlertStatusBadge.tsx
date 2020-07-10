@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Badge, BadgeProps, Box } from 'pouncejs';
+import { Badge, BadgeProps, PseudoBox } from 'pouncejs';
 import { AlertStatusesEnum } from 'Generated/schema';
 
 const STATUS_COLOR_MAP: {
@@ -37,13 +37,25 @@ interface StatusBadgeProps {
 const AlertStatusBadge: React.FC<StatusBadgeProps> = ({ status, disabled = false }) => {
   if (disabled) {
     return (
-      <Box opacity={0.5}>
-        <Badge color="gray-800">{status}</Badge>
-      </Box>
+      <PseudoBox as={Badge} opacity={0.5} backgroundColor="gray-800">
+        {status}
+      </PseudoBox>
     );
   }
 
-  return <Badge color={STATUS_COLOR_MAP[status]}>{status}</Badge>;
+  return (
+    <PseudoBox
+      as={Badge}
+      transition="box-shadow 0.2s ease-in-out"
+      backgroundColor={STATUS_COLOR_MAP[status]}
+      cursor="pointer"
+      _hover={{
+        boxShadow: '0px 0px 10px rgba(255, 255, 255, .3)',
+      }}
+    >
+      {status}
+    </PseudoBox>
+  );
 };
 
 export default AlertStatusBadge;
