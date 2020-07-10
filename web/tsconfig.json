@@ -18,7 +18,8 @@
       "Pages/*": ["src/pages/*"],
       "Hooks/*": ["src/hooks/*"],
       "Hoc/*": ["src/hoc/*"],
-      "Source/*": ["src/*"]
+      "Source/*": ["src/*"],
+      "test-utils": ["__tests__/utils"]
     }
   },
   "allowJs": false

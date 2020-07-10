@@ -71,6 +71,10 @@ module.exports = {
       webpack: {
         config: path.resolve(__dirname, 'webpack.config.js'),
       },
+      alias: {
+        map: [['test-utils', path.resolve(__dirname, '__tests__/utils')]],
+        extensions: ['.ts', '.tsx'],
+      },
     },
     react: {
       pragma: 'React',
