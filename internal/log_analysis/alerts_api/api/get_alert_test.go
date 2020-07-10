@@ -138,6 +138,7 @@ func TestGetAlert(t *testing.T) {
 		Severity:     "INFO",
 		EventCount:   5,
 		LogTypes:     []string{"logtype"},
+		UpdatedBy:    "userId",
 	}
 
 	expectedListObjectsRequest := &s3.ListObjectsV2Input{
@@ -187,6 +188,7 @@ func TestGetAlert(t *testing.T) {
 			CreationTime:  aws.Time(time.Date(2020, 1, 1, 1, 0, 0, 0, time.UTC)),
 			UpdateTime:    aws.Time(time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)),
 			EventsMatched: aws.Int(5),
+			UpdatedBy:     aws.String("userId"),
 		},
 		Events: aws.StringSlice([]string{"testEvent"}),
 		EventsLastEvaluatedKey:
@@ -238,6 +240,7 @@ func TestGetAlert(t *testing.T) {
 			CreationTime:  aws.Time(time.Date(2020, 1, 1, 1, 0, 0, 0, time.UTC)),
 			UpdateTime:    aws.Time(time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)),
 			EventsMatched: aws.Int(5),
+			UpdatedBy:     aws.String("userId"),
 		},
 		Events: aws.StringSlice([]string{}),
 		EventsLastEvaluatedKey:
@@ -282,6 +285,7 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 		EventCount:   5,
 		DedupString:  "dedupString",
 		LogTypes:     []string{"logtype"},
+		UpdatedBy:    "userId",
 	}
 
 	eventChannel := getChannel("testEvent")
@@ -312,6 +316,7 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 			EventsMatched: aws.Int(5),
 			Severity:      aws.String("INFO"),
 			DedupString:   aws.String("dedupString"),
+			UpdatedBy:     aws.String("userId"),
 		},
 		Events: aws.StringSlice([]string{"testEvent"}),
 		EventsLastEvaluatedKey:

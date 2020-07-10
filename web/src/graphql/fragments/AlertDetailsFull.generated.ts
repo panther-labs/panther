@@ -33,6 +33,8 @@ export type AlertDetailsFull = Pick<
   | 'eventsLastEvaluatedKey'
   | 'events'
   | 'dedupString'
+  | 'status'
+  | 'updatedBy'
 >;
 
 export const AlertDetailsFull = gql`
@@ -46,5 +48,7 @@ export const AlertDetailsFull = gql`
     eventsLastEvaluatedKey
     events
     dedupString
+    status
+    updatedBy
   }
 `;

@@ -19,11 +19,12 @@
 import { Box, Flex, SimpleGrid, Link, Heading, Tooltip, Icon, Card } from 'pouncejs';
 import urls from 'Source/urls';
 import React from 'react';
-import { AlertDetails, RuleDetails } from 'Generated/schema';
+import { AlertDetails, RuleDetails, AlertStatusesEnum } from 'Generated/schema';
 import Linkify from 'Components/Linkify';
 import { formatDatetime } from 'Helpers/utils';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/SeverityBadge';
+import UpdateAlertDropdown from 'Components/dropdowns/UpdateAlertDropdown';
 
 interface AlertDetailsInfoProps {
   alert: AlertDetails;
@@ -79,38 +80,48 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
     );
   }
 
+  console.log('ALERT:', alert);
   return (
     <Card as="article" p={6}>
-      <Flex as="header" align="center" mb={4} spacing={4}>
-        <Heading fontWeight="bold" wordBreak="break-word">
-          {alert.title || alert.alertId}
-        </Heading>
-        <Tooltip
-          content={
-            <Flex spacing={3}>
-              <Flex direction="column" spacing={2}>
-                <Box id="alert-id-label">Alert ID</Box>
-                <Box id="log-types-label">Log Types</Box>
-              </Flex>
-              <Flex direction="column" spacing={2} fontWeight="bold">
-                <Box aria-labelledby="alert-id-label">{alert.alertId}</Box>
-                <Box aria-labelledby="log-types-label">
-                  {rule.logTypes.map(logType => (
-                    <Box key={logType}>{logType}</Box>
-                  ))}
-                </Box>
-              </Flex>
-            </Flex>
-          }
-        >
-          <Icon type="info" />
-        </Tooltip>
-      </Flex>
-      <Flex spacing={4} as="ul" mb={6}>
-        <Box as="li">
-          <SeverityBadge severity={rule.severity} />
-        </Box>
-      </Flex>
+      <SimpleGrid columns={2} spacing={5}>
+        <Flex direction="column" spacing={2}>
+          <Flex as="header" align="center" mb={4} spacing={4}>
+            <Heading fontWeight="bold" wordBreak="break-word">
+              {alert.title || alert.alertId}
+            </Heading>
+            <Tooltip
+              content={
+                <Flex spacing={3}>
+                  <Flex direction="column" spacing={2}>
+                    <Box id="alert-id-label">Alert ID</Box>
+                    <Box id="log-types-label">Log Types</Box>
+                  </Flex>
+                  <Flex direction="column" spacing={2} fontWeight="bold">
+                    <Box aria-labelledby="alert-id-label">{alert.alertId}</Box>
+                    <Box aria-labelledby="log-types-label">
+                      {rule.logTypes.map(logType => (
+                        <Box key={logType}>{logType}</Box>
+                      ))}
+                    </Box>
+                  </Flex>
+                </Flex>
+              }
+            >
+              <Icon type="info" />
+            </Tooltip>
+          </Flex>
+          <Flex spacing={4} as="ul" mb={6}>
+            <Box as="li">
+              <SeverityBadge severity={rule.severity} />
+            </Box>
+          </Flex>
+        </Flex>
+        <Flex direction="column" align="left" spacing={2}>
+          <Box aria-describedby="alert-status">
+            <UpdateAlertDropdown status={'OPEN' as AlertStatusesEnum} alertId={alert.alertId} />
+          </Box>
+        </Flex>
+      </SimpleGrid>
       <Card variant="dark" as="section" p={4} mb={4}>
         <SimpleGrid columns={2} spacing={5}>
           <Flex direction="column" spacing={2}>

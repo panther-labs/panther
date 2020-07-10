@@ -140,6 +140,7 @@ type AlertDetails {
   eventsLastEvaluatedKey: String
   dedupString: String!
   status: String
+  updatedBy: ID
 }
 
 type ListAlertsResponse {

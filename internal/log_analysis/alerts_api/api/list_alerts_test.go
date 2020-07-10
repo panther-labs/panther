@@ -47,6 +47,7 @@ var (
 			RuleVersion:     "ruleVersion",
 			RuleDisplayName: aws.String("ruleDisplayName"),
 			Title:           aws.String("title"),
+			UpdatedBy:       "userId",
 		},
 	}
 
@@ -63,6 +64,7 @@ var (
 			DedupString:     aws.String("dedupString"),
 			EventsMatched:   aws.Int(100),
 			Title:           aws.String("title"),
+			UpdatedBy:       aws.String("userId"),
 		},
 	}
 )
@@ -136,6 +138,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			LogTypes:     []string{"AWS.CloudTrail"},
 			EventCount:   100,
 			RuleVersion:  "ruleVersion",
+			UpdatedBy:    "userId",
 		},
 		{ // Alert with Display Name for rule
 			RuleID:          "ruleId",
@@ -149,6 +152,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			EventCount:      100,
 			RuleVersion:     "ruleVersion",
 			RuleDisplayName: aws.String("ruleDisplayName"),
+			UpdatedBy:       "userId",
 		},
 	}
 
@@ -164,6 +168,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			DedupString:   aws.String("dedupString"),
 			EventsMatched: aws.Int(100),
 			Title:         aws.String("ruleId"),
+			UpdatedBy:     aws.String("userId"),
 		},
 		{
 			RuleID:          aws.String("ruleId"),
@@ -178,7 +183,8 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			RuleDisplayName: aws.String("ruleDisplayName"),
 			// Since there is no dynamically generated title,
 			// we return the display name
-			Title: aws.String("ruleDisplayName"),
+			Title:     aws.String("ruleDisplayName"),
+			UpdatedBy: aws.String("userId"),
 		},
 	}
 

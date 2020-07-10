@@ -111,6 +111,7 @@ export type AlertDetails = {
   eventsLastEvaluatedKey?: Maybe<Scalars['String']>;
   dedupString: Scalars['String'];
   status?: Maybe<Scalars['String']>;
+  updatedBy?: Maybe<Scalars['ID']>;
 };
 
 export enum AlertStatusesEnum {
@@ -1517,6 +1518,7 @@ export type AlertDetailsResolvers<
   eventsLastEvaluatedKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   dedupString?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   status?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  updatedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
