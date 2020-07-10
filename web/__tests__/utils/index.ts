@@ -17,3 +17,4 @@
  */
 
 export * from './render';
+export { default as faker } from 'faker';
