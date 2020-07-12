@@ -17,47 +17,13 @@
  */
 
 import React from 'react';
-import { render, screen } from 'test-utils';
-import PolicyForm from 'Components/forms/PolicyForm';
-import { ListRemediationsDocument } from 'Components/forms/PolicyForm/graphql/listRemediations.generated';
-import { AddPolicyInput } from 'Generated/schema';
-import { DEFAULT_POLICY_FUNCTION } from 'Source/constants';
-import { act } from 'react-dom/test-utils';
+import { render } from 'test-utils';
+import Breadcrumbs from 'Components/Breadcrumbs';
+import urls from 'Source/urls';
 
-test('render a header', async () => {
-  const initialValues: Required<AddPolicyInput> = {
-    body: DEFAULT_POLICY_FUNCTION,
-    autoRemediationId: '',
-    autoRemediationParameters: '{}',
-    description: '',
-    displayName: '',
-    enabled: true,
-    id: '',
-    outputIds: [],
-    reference: '',
-    resourceTypes: [],
-    runbook: '',
-    severity: null,
-    suppressions: [],
-    tags: [],
-    tests: [],
-  };
+test('renders correct  breadcrumbs', async () => {
+  const { container } = render(<Breadcrumbs />, { initialRoute: urls.compliance.policies.list() });
 
-  const mocks = [
-    {
-      request: {
-        query: ListRemediationsDocument,
-      },
-      result: {
-        data: {
-          remediations: '{}',
-        },
-      },
-    },
-  ];
-
-  render(<PolicyForm initialValues={initialValues} onSubmit={() => {}} />, { mocks });
-
-  await act(async () => screen.findByText('Auto Remediation Settings'));
-  expect(true).toBeTruthy();
+  expect(container).toHaveTextContent('Home');
+  expect(container).toHaveTextContent('Policies');
 });
