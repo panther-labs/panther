@@ -17,4 +17,5 @@
  */
 
 export * from './render';
+export * from './helpers';
 export { default as faker } from 'faker';
