@@ -16,4 +16,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './UIProvider';
+import React from 'react';
+import { SnackbarProvider, ThemeProvider } from 'pouncejs';
+import { SidesheetManager, SidesheetProvider } from 'Components/utils/Sidesheet';
+import { ModalManager, ModalProvider } from 'Components/utils/Modal';
+
+// Helper that allows us to guarantee same core providers in production & testing environments
+const UIProviders: React.FC = ({ children }) => (
+  <ThemeProvider>
+    <SidesheetProvider>
+      <ModalProvider>
+        <SnackbarProvider>
+          {children}
+          <ModalManager />
+          <SidesheetManager />
+        </SnackbarProvider>
+      </ModalProvider>
+    </SidesheetProvider>
+  </ThemeProvider>
+);
+
+export default UIProviders;

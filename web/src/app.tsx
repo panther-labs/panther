@@ -17,13 +17,12 @@
  */
 
 import React from 'react';
-import { SnackbarProvider, ThemeProvider } from 'pouncejs';
 import { Router } from 'react-router-dom';
 import Routes from 'Source/routes';
 import { History } from 'history';
 import { ApolloProvider } from '@apollo/client';
 import { AuthProvider } from 'Components/utils/AuthContext';
-import UIProvider from 'Components/utils/UIProvider';
+import UIProviders from 'Components/utils/UIProviders';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { createApolloClient } from 'Source/apollo';
 
@@ -38,9 +37,9 @@ const App: React.FC<AppProps> = ({ history }) => {
       <ApolloProvider client={client}>
         <AuthProvider>
           <Router history={history}>
-            <UIProvider>
+            <UIProviders>
               <Routes />
-            </UIProvider>
+            </UIProviders>
           </Router>
         </AuthProvider>
       </ApolloProvider>

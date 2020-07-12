@@ -30,7 +30,7 @@ import typePolicies from 'Source/apollo/typePolicies';
 import { AuthContext } from 'Components/utils/AuthContext';
 import { createMemoryHistory } from 'history';
 import { Router } from 'react-router-dom';
-import UIProvider from 'Components/utils/UIProvider';
+import UIProviders from 'Components/utils/UIProviders';
 import * as customQueries from './queries';
 import { mockAuthProviderValue } from './auth';
 
@@ -73,7 +73,7 @@ const render = (element: React.ReactElement, options: RenderOptions = {}) => {
     <MockedProvider link={apolloLink} cache={apolloCache}>
       <AuthContext.Provider value={authProviderValue}>
         <Router history={history}>
-          <UIProvider>{element}</UIProvider>
+          <UIProviders>{element}</UIProviders>
         </Router>
       </AuthContext.Provider>
     </MockedProvider>
