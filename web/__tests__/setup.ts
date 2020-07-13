@@ -15,6 +15,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+import path from 'path';
+import { loadDotEnvVars, getAppTemplateParams } from '../scripts/utils';
 
 // extends the basic `expect` function, by adding additional DOM assertions such as
 // `.toHaveAttribute`, `.toHaveTextContent` etc.
@@ -53,17 +55,15 @@ if (window.URL.revokeObjectURL === undefined) {
   Object.defineProperty(window.URL, 'revokeObjectURL', { value: noOp });
 }
 
-// Mock the server-side EJS-injected AWS configuration.
-// See web/public/index.ejs
+/**
+ * Mock the server-side EJS-injected AWS configuration.
+ * See `web/public/index.ejs`
+ */
+loadDotEnvVars(path.resolve(__dirname, '.env.test'));
+const { PANTHER_CONFIG } = getAppTemplateParams();
+
 const scriptTag = document.createElement('script');
 scriptTag.id = '__PANTHER_CONFIG__';
 scriptTag.type = 'application/json';
-scriptTag.innerHTML = JSON.stringify({
-  PANTHER_VERSION: 'test',
-  AWS_REGION: 'us-west-2',
-  AWS_ACCOUNT_ID: '111111111111',
-  WEB_APPLICATION_GRAPHQL_API_ENDPOINT: 'test',
-  WEB_APPLICATION_USER_POOL_CLIENT_ID: 'test',
-  WEB_APPLICATION_USER_POOL_ID: 'us-west-2_test',
-});
+scriptTag.innerHTML = JSON.stringify(PANTHER_CONFIG);
 document.body.appendChild(scriptTag);
