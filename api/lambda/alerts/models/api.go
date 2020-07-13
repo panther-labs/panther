@@ -120,10 +120,10 @@ type UpdateAlertOutput = AlertSummary
 
 // Constants defined for alert statuses
 const (
-	// Empty is present on items that already exist in the DB
+	// Empty is present on items that already exist in the DB and is considered in an "OPEN" state
 	EmptyStatus = ""
 
-	// Open is the new default value for an alert
+	// Open is strictly used for updating/filtering and is not explicitly set on an alert
 	OpenStatus = "OPEN"
 
 	// Triaged sets the alert to actively investigating

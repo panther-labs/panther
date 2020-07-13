@@ -59,7 +59,7 @@ func (API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAlertsO
 	return result, nil
 }
 
-// alertItemsToAlertSummary converts a list of DDB Alert Items to a Alert Summaries
+// alertItemsToAlertSummary converts a list of DDB AlertItem(s) to AlertSummary(ies)
 func alertItemsToAlertSummary(items []*table.AlertItem) []*models.AlertSummary {
 	result := make([]*models.AlertSummary, len(items))
 
@@ -70,7 +70,7 @@ func alertItemsToAlertSummary(items []*table.AlertItem) []*models.AlertSummary {
 	return result
 }
 
-// alertItemToAlertSummary converts a DDB Alert Item to an Alert Summary
+// alertItemToAlertSummary converts a DDB AlertItem to an AlertSummary
 func alertItemToAlertSummary(item *table.AlertItem) *models.AlertSummary {
 	return &models.AlertSummary{
 		AlertID:         &item.AlertID,
