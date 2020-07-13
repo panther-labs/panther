@@ -1,4 +1,4 @@
-package common
+package main
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,27 +19,28 @@ package common
  */
 
 import (
-	"github.com/panther-labs/panther/pkg/metrics"
+	"context"
+
+	"github.com/aws/aws-lambda-go/lambda"
+
+	"github.com/panther-labs/panther/api/lambda/metrics/models"
+	"github.com/panther-labs/panther/internal/core/metrics_api/api"
+	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
-var (
-	BytesProcessedLogger = metrics.MustStaticLogger([]metrics.DimensionSet{
-		{
-			"Component",
-			"LogType",
-		},
-	}, []metrics.Metric{
-		{
-			Name: "BytesProcessed",
-			Unit: metrics.UnitBytes,
-		},
-		{
-			Name: "EventsProcessed",
-			Unit: metrics.UnitCount,
-		},
-	})
-	Component = metrics.Dimension{
-		Name:  "Component",
-		Value: "LogProcessor",
-	}
-)
+var router *genericapi.Router
+
+func init() {
+	router = genericapi.NewRouter("core", "metrics_api", nil, api.API{})
+}
+
+func lambdaHandler(ctx context.Context, request *models.LambdaInput) (interface{}, error) {
+	lambdalogger.ConfigureGlobal(ctx, nil)
+	return router.Handle(request)
+}
+
+func main() {
+	api.Setup()
+	lambda.Start(lambdaHandler)
+}

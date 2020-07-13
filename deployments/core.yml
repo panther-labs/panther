@@ -105,6 +105,13 @@ Mappings:
     LayerManager:
       Memory: 512
       Timeout: 60
+    # The metrics API has a slightly higher timeout and memory size than most functions. The metrics
+    # API is only invoked based on user activity so should be called relatively infrequently, but
+    # when it is called it may make several AWS API calls and may need to hold several hundred
+    # thousand data points in memory before returning them.
+    MetricsAPI:
+      Memory: 256
+      Timeout: 180
     OrganizationAPI:
       Memory: 128
       Timeout: 60
@@ -1110,3 +1117,60 @@ Resources:
         ScaleOutCooldown: 60
         PredefinedMetricSpecification:
           PredefinedMetricType: DynamoDBWriteCapacityUtilization
+
+  ##### Metrics API #####
+  MetricsApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../out/bin/internal/core/metrics_api/main
+      Description: Handles requests for metric data
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+      FunctionName: panther-metrics-api
+      # <cfndoc>
+      # The `panther-metrics-api` lambda handles requests for metric data by properly translating
+      # them to CloudWatch requests and then translating the results back.
+      #
+      # Failure Impact
+      # * Failure of this lambda will prevent requests for metric data.
+      # </cfndoc>
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: !FindInMap [Functions, MetricsAPI, Memory]
+      Runtime: go1.x
+      Timeout: !FindInMap [Functions, MetricsAPI, Timeout]
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: RequestMetrics
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - cloudwatch:ListMetrics
+                - cloudwatch:GetMetricData
+                - cloudwatch:GetMetricStatistics
+              Resource: '*'
+
+  MetricsApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-metrics-api
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  MetricsApiMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
+      LogGroupName: !Ref MetricsApiLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  MetricsApiAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
+      FunctionMemoryMB: !FindInMap [Functions, MetricsAPI, Memory]
+      FunctionName: !Ref MetricsApiFunction
+      FunctionTimeoutSec: !FindInMap [Functions, MetricsAPI, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources

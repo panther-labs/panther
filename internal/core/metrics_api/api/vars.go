@@ -1,4 +1,4 @@
-package common
+package api
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,27 +19,20 @@ package common
  */
 
 import (
-	"github.com/panther-labs/panther/pkg/metrics"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
 )
 
 var (
-	BytesProcessedLogger = metrics.MustStaticLogger([]metrics.DimensionSet{
-		{
-			"Component",
-			"LogType",
-		},
-	}, []metrics.Metric{
-		{
-			Name: "BytesProcessed",
-			Unit: metrics.UnitBytes,
-		},
-		{
-			Name: "EventsProcessed",
-			Unit: metrics.UnitCount,
-		},
-	})
-	Component = metrics.Dimension{
-		Name:  "Component",
-		Value: "LogProcessor",
-	}
+	awsSession       *session.Session
+	cloudwatchClient *cloudwatch.CloudWatch
 )
+
+// Setup parses the environment and constructs AWS and http clients on a cold Lambda start.
+func Setup() {
+	awsSession = session.Must(session.NewSession())
+	cloudwatchClient = cloudwatch.New(awsSession)
+}
+
+// API provides receiver methods for each route handler.
+type API struct{}
