@@ -18,7 +18,7 @@
 
 import { History } from 'history';
 import { LocationErrorState } from 'Components/utils/ApiErrorFallback';
-import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
+import { getOperationName } from 'apollo-utilities';
 import { ListRemediationsDocument } from 'Components/forms/PolicyForm';
 import { RuleTeaserDocument } from 'Pages/AlertDetails';
 import { ErrorResponse, onError } from 'apollo-link-error';

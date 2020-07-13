@@ -21,7 +21,7 @@ import React from 'react';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 import { ListPoliciesDocument } from 'Pages/ListPolicies';
 import { ListRulesDocument } from 'Pages/ListRules';
-import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
+import { getOperationName } from 'apollo-utilities';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useUploadPolicies } from './graphql/uploadPolicies.generated';
 
