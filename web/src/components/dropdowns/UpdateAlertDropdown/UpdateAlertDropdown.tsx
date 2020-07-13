@@ -44,6 +44,7 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
 
   const { pushSnackbar } = useSnackbar();
 
+  // Retrieve a list of users so we can match attribution
   const { data: listUsersData } = useListUsers({
     onError: listUsersError => {
       pushSnackbar({
@@ -62,8 +63,8 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
       },
     },
 
-    // This hook ensures we update the AlertDetails object in the cache
-    // instead of refetching from the network
+    // This hook ensures we update the AlertDetails's `status`
+    // field in the cache instead of refetching from the network.
     update: (cache, { data }) => {
       cache.modify({
         id: cache.identify({

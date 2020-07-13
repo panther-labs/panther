@@ -38,7 +38,6 @@ import (
 
 	policiesclient "github.com/panther-labs/panther/api/gateway/analysis/client"
 	rulesModel "github.com/panther-labs/panther/api/gateway/analysis/models"
-	statusModel "github.com/panther-labs/panther/api/lambda/alerts/models"
 	alertModel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
@@ -118,7 +117,6 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 		Tags:                []string{"Tag"},
 		Type:                alertModel.RuleType,
 		AlertID:             aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
-		Status:              statusModel.EmptyStatus,
 		Title:               newAlertDedupEvent.GeneratedTitle,
 	}
 	expectedMarshaledAlertNotification, err := jsoniter.MarshalToString(expectedAlertNotification)
@@ -135,7 +133,6 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 		ID:              "b25dc23fb2a0b362da8428dbec1381a8",
 		TimePartition:   "defaultPartition",
 		Severity:        string(testRuleResponse.Severity),
-		Status:          statusModel.EmptyStatus,
 		RuleDisplayName: aws.String(string(testRuleResponse.DisplayName)),
 		Title:           aws.StringValue(newAlertDedupEvent.GeneratedTitle),
 		AlertDedupEvent: *newAlertDedupEvent,
@@ -192,7 +189,6 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 		Tags:                []string{"Tag"},
 		Type:                alertModel.RuleType,
 		AlertID:             aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
-		Status:              statusModel.EmptyStatus,
 		Title:               aws.String(newAlertDedupEventWithoutTitle.RuleID),
 	}
 	expectedMarshaledAlertNotification, err := jsoniter.MarshalToString(expectedAlertNotification)
@@ -217,7 +213,6 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 		ID:              "b25dc23fb2a0b362da8428dbec1381a8",
 		TimePartition:   "defaultPartition",
 		Severity:        string(testRuleResponse.Severity),
-		Status:          statusModel.EmptyStatus,
 		Title:           newAlertDedupEventWithoutTitle.RuleID,
 		AlertDedupEvent: *newAlertDedupEventWithoutTitle,
 	}
@@ -264,7 +259,6 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 		Type:                alertModel.RuleType,
 		AlertID:             aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
 		Title:               aws.String("DisplayName"),
-		Status:              statusModel.EmptyStatus,
 	}
 	expectedMarshaledAlertNotification, err := jsoniter.MarshalToString(expectedAlertNotification)
 	require.NoError(t, err)
@@ -283,7 +277,6 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 		RuleDisplayName: aws.String(string(testRuleResponse.DisplayName)),
 		Title:           "DisplayName",
 		AlertDedupEvent: *newAlertDedupEvent,
-		Status:          statusModel.EmptyStatus,
 	}
 
 	expectedMarshaledAlert, err := dynamodbattribute.MarshalMap(expectedAlert)
@@ -338,7 +331,6 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 		Tags:                []string{"Tag"},
 		Type:                alertModel.RuleType,
 		AlertID:             aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
-		Status:              statusModel.EmptyStatus,
 		Title:               newAlertDedupEvent.GeneratedTitle,
 	}
 	expectedMarshaledAlertNotification, err := jsoniter.MarshalToString(expectedAlertNotification)
@@ -355,7 +347,6 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 		ID:              "b25dc23fb2a0b362da8428dbec1381a8",
 		TimePartition:   "defaultPartition",
 		Severity:        string(testRuleResponse.Severity),
-		Status:          statusModel.EmptyStatus,
 		Title:           aws.StringValue(newAlertDedupEvent.GeneratedTitle),
 		RuleDisplayName: aws.String(string(testRuleResponse.DisplayName)),
 		AlertDedupEvent: *newAlertDedupEvent,
