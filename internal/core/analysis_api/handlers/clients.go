@@ -19,6 +19,7 @@ package handlers
  */
 
 import (
+	"github.com/panther-labs/panther/internal/core/analysis"
 	"net/http"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -47,6 +48,8 @@ var (
 
 	httpClient       *http.Client
 	complianceClient *complianceapi.PantherCompliance
+	policyEngine     analysis.PolicyEngine
+	ruleEngine       analysis.RuleEngine
 )
 
 type envConfig struct {
@@ -76,4 +79,7 @@ func Setup() {
 		nil, complianceapi.DefaultTransportConfig().
 			WithBasePath("/"+env.ComplianceAPIPath).
 			WithHost(env.ComplianceAPIHost))
+
+	policyEngine = analysis.NewPolicyEngine(awsSession, env.PolicyEngine)
+	ruleEngine = analysis.NewRuleEngine(awsSession, env.RulesEngine)
 }
