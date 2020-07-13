@@ -33,7 +33,6 @@ import (
 	logprocessormodels "github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
@@ -47,12 +46,6 @@ const (
 
 // GetAlert retrieves details for a given alert
 func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput, err error) {
-	operation := common.OpLogManager.Start("getAlert")
-	defer func() {
-		operation.Stop()
-		operation.Log(err)
-	}()
-
 	alertItem, err := alertsDB.GetAlert(input.AlertID)
 	if err != nil {
 		return nil, err

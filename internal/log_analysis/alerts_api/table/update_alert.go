@@ -87,8 +87,7 @@ func createUpdateBuilder(input *models.UpdateAlertInput) expression.UpdateBuilde
 
 // createConditionBuilder - creates a condition builder
 func createConditionBuilder(input *models.UpdateAlertInput) expression.ConditionBuilder {
-	return expression.AttributeExists(expression.Name(AlertIDKey)).
-		And(expression.Equal(expression.Name(AlertIDKey), expression.Value(input.AlertID)))
+	return expression.Equal(expression.Name(AlertIDKey), expression.Value(input.AlertID))
 }
 
 // buildExpression - builds an expression

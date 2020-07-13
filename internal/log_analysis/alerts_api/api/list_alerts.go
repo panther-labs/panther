@@ -21,19 +21,12 @@ package api
 import (
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // ListAlerts retrieves alert and event details.
 func (API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAlertsOutput, err error) {
-	operation := common.OpLogManager.Start("listAlerts")
-	defer func() {
-		operation.Stop()
-		operation.Log(err)
-	}()
-
 	result = &models.ListAlertsOutput{}
 	var alertItems []*table.AlertItem
 

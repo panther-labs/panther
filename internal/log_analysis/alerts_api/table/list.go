@@ -66,7 +66,7 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 	}
 
 	// Optionally continue the query from the "primary key of the item where the [previous] operation stopped"
-	queryExclusiveStartKey, startKeyErr := genStartKey(input)
+	queryExclusiveStartKey, startKeyErr := getExclusiveStartKey(input)
 	if startKeyErr != nil {
 		return nil, nil, startKeyErr
 	}
@@ -149,14 +149,15 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 	return summaries, lastEvaluatedKey, nil
 }
 
-func genStartKey(input *models.ListAlertsInput) (DynamoItem, error) {
-	// Optionally continue the query from the "primary key of the item where the [previous] operation stopped"
+// getExclusiveStartKey - if the input request contains a key, unmarshal it to use
+func getExclusiveStartKey(input *models.ListAlertsInput) (DynamoItem, error) {
 	var queryExclusiveStartKey DynamoItem
 	if input.ExclusiveStartKey != nil {
-		queryExclusiveStartKey = make(DynamoItem)
-		if err := jsoniter.UnmarshalFromString(*input.ExclusiveStartKey, &queryExclusiveStartKey); err != nil {
+		unmarshaledKey, err := dynamodbattribute.MarshalMap(*input.ExclusiveStartKey)
+		if err != nil {
 			return nil, errors.Wrap(err, "failed to Unmarshal ExclusiveStartKey")
 		}
+		queryExclusiveStartKey = unmarshaledKey
 	}
 	return queryExclusiveStartKey, nil
 }

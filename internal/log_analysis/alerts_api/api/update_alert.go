@@ -20,30 +20,11 @@ package api
 
 import (
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
-	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-// UpdateAlert modifies user attributes.
+// UpdateAlert modifies an alert's attributes.
 func (API) UpdateAlert(input *models.UpdateAlertInput) (result *models.UpdateAlertOutput, err error) {
-	operation := common.OpLogManager.Start("updateAlert")
-	defer func() {
-		operation.Stop()
-		operation.Log(err)
-	}()
-
-	// Perform input sanitization checks
-	if input.AlertID == nil {
-		return nil, &genericapi.InternalError{Message: "An AlerID must be specified"}
-	}
-	if input.Status == nil {
-		return nil, &genericapi.InternalError{Message: "A Status must be specified"}
-	}
-	if input.RequesterID == nil {
-		return nil, &genericapi.InternalError{Message: "A RequesterID must be specified"}
-	}
-
 	// Run the update alert query
 	alertItem, err := alertsDB.UpdateAlert(input)
 	if err != nil {
