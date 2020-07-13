@@ -21,7 +21,7 @@ The examples below will use Panther’s [open source rules and policies](https:/
 ## Getting Started
 
 Prerequisites:
-- A [Panther](quick-start.md) deployment
+- A [Panther](../quick-start.md) deployment
 - An existing CloudTrail
 - A set of buckets to monitor
 - [Configured alert destinations](https://docs.runpanther.io/setup)
@@ -366,7 +366,7 @@ Let's wrap up by ensuring your S3 buckets have secure configurations. This inclu
 
 Panther can natively scan your accounts to discover any low hanging fruit in your environment that could be easily exploitable. Cloud Security scans provide helpful context during an incident because vulnerable configurations can reveal root cause to attacker behaviors.
 
-Follow the instructions [here](cloud-security/README.md) to configure Cloud Security scans for a helpful baseline.
+Follow the instructions [here](../cloud-security/README.md) to configure Cloud Security scans for a helpful baseline.
 
 By default, Panther is pre-installed with the following S3 policies:
 
