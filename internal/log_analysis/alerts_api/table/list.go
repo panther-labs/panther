@@ -54,7 +54,7 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 	// Construct a query expression
 	queryExpression, builderError := builder.Build()
 	if builderError != nil {
-		return nil, nil, errors.Wrap(err, "failed to build expression")
+		return nil, nil, errors.Wrap(builderError, "failed to build expression")
 	}
 
 	// Limit the returned results to the specified page size or max default
