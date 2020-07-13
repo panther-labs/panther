@@ -85,5 +85,6 @@ func alertItemToAlertSummary(item *table.AlertItem) *models.AlertSummary {
 		Title:           getAlertTitle(item),
 		RuleVersion:     &item.RuleVersion,
 		UpdatedBy:       &item.UpdatedBy,
+		UpdatedByTime:   &item.UpdatedByTime,
 	}
 }

@@ -22,12 +22,7 @@ import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/SeverityBadge';
 import { ListAlerts } from 'Pages/ListAlerts/graphql/listAlerts.generated';
-import {
-  ListAlertsInput,
-  ListAlertsSortFieldsEnum,
-  SortDirEnum,
-  AlertStatusesEnum,
-} from 'Generated/schema';
+import { ListAlertsInput, ListAlertsSortFieldsEnum, SortDirEnum } from 'Generated/schema';
 import { shortenId, formatDatetime } from 'Helpers/utils';
 import UpdateAlertDropdown from 'Components/dropdowns/UpdateAlertDropdown';
 
@@ -113,7 +108,7 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
               </PseudoBox>
             </Table.Cell>
             <Table.Cell align="center">
-              <UpdateAlertDropdown status={alert.status as AlertStatusesEnum} alert={alert} />
+              <UpdateAlertDropdown status={alert.status} alert={alert} />
             </Table.Cell>
             <Table.Cell align="right">{formatDatetime(alert.creationTime)}</Table.Cell>
             <Table.Cell align="right">{formatDatetime(alert.updateTime)}</Table.Cell>

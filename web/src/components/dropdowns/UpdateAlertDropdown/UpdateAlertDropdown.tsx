@@ -32,17 +32,20 @@ import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.gene
 import { useUpdateAlert } from './graphql/updateAlert.generated';
 
 interface UpdateAlertDropdownProps {
-  status: AlertStatusesEnum;
+  status?: string;
   alert: AlertSummaryFull;
 }
 
-const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ status, alert }) => {
+const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({
+  status = AlertStatusesEnum.Open,
+  alert,
+}) => {
   const { pushSnackbar } = useSnackbar();
 
   const [updateAlert] = useUpdateAlert({
     variables: {
       input: {
-        status,
+        status: status as AlertStatusesEnum,
         alertId: alert.alertId,
       },
     },
@@ -91,7 +94,7 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ status, alert
   return (
     <Dropdown>
       <DropdownButton as={AbstractButton} aria-label="Status Options">
-        <AlertStatusBadge status={status} />
+        <AlertStatusBadge status={(status as AlertStatusesEnum) || AlertStatusesEnum.Open} />
       </DropdownButton>
       <DropdownMenu>
         {availableStatusesEntries.map(([statusKey, statusVal], index) => (

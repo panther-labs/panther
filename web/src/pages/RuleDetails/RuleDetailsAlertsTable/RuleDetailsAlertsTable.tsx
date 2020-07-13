@@ -23,7 +23,6 @@ import urls from 'Source/urls';
 import { formatDatetime, shortenId } from 'Helpers/utils';
 import SeverityBadge from 'Components/SeverityBadge';
 import UpdateAlertDropdown from 'Components/dropdowns/UpdateAlertDropdown';
-import { AlertStatusesEnum } from 'Generated/schema';
 import { ListAlertsForRule } from '../graphql/listAlertsForRule.generated';
 
 interface RuleDetailsAlertsTableProps {
@@ -57,7 +56,7 @@ const RuleDetailsAlertsTable: React.FC<RuleDetailsAlertsTableProps> = ({ alerts 
               </Link>
             </Table.Cell>
             <Table.Cell align="center">
-              <UpdateAlertDropdown status={alert.status as AlertStatusesEnum} alert={alert} />
+              <UpdateAlertDropdown status={alert.status} alert={alert} />
             </Table.Cell>
             <Table.Cell align="right">{formatDatetime(alert.creationTime)}</Table.Cell>
             <Table.Cell align="right">{formatDatetime(alert.updateTime)}</Table.Cell>

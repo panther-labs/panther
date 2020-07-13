@@ -39,6 +39,7 @@ const (
 	EventCountKey      = "eventCount"
 	StatusKey          = "status"
 	UpdatedByKey       = "updatedBy"
+	UpdatedByTimeKey   = "updatedByTime"
 )
 
 // API defines the interface for the alerts table which can be used for mocking.
@@ -77,4 +78,5 @@ type AlertItem struct {
 	EventCount      int       `json:"eventCount"`
 	LogTypes        []string  `json:"logTypes"`
 	UpdatedBy       string    `json:"updatedBy"`
+	UpdatedByTime   time.Time `json:"updatedByTime"`
 }

@@ -100,7 +100,7 @@ func storeNewAlert(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) error {
 		Severity:        string(rule.Severity),
 		RuleDisplayName: getRuleDisplayName(rule),
 		Title:           getAlertTitle(rule, alertDedup),
-		Status:          statusModel.OpenStatus, // Default status
+		Status:          statusModel.EmptyStatus, // Default status
 		AlertDedupEvent: *alertDedup,
 	}
 
@@ -132,7 +132,7 @@ func sendAlertNotification(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) er
 		Tags:                rule.Tags,
 		Type:                alertModel.RuleType,
 		Title:               aws.String(getAlertTitle(rule, alertDedup)),
-		Status:              statusModel.OpenStatus, // Default status
+		Status:              statusModel.EmptyStatus, // Default status
 		Version:             aws.String(alertDedup.RuleVersion),
 	}
 

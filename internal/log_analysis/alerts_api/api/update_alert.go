@@ -69,6 +69,7 @@ func (API) UpdateAlert(input *models.UpdateAlertInput) (result *models.UpdateAle
 		RuleVersion:     &alertItem.RuleVersion,
 		Severity:        &alertItem.Severity,
 		UpdatedBy:       &alertItem.UpdatedBy,
+		UpdatedByTime:   &alertItem.UpdatedByTime,
 	}
 
 	gatewayapi.ReplaceMapSliceNils(result)

@@ -128,17 +128,18 @@ func TestGetAlert(t *testing.T) {
 	}
 
 	alertItem := &table.AlertItem{
-		AlertID:      "alertId",
-		RuleID:       "ruleId",
-		Status:       "TRIAGED",
-		RuleVersion:  "ruleVersion",
-		DedupString:  "dedupString",
-		CreationTime: time.Date(2020, 1, 1, 1, 0, 0, 0, time.UTC),
-		UpdateTime:   time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
-		Severity:     "INFO",
-		EventCount:   5,
-		LogTypes:     []string{"logtype"},
-		UpdatedBy:    "userId",
+		AlertID:       "alertId",
+		RuleID:        "ruleId",
+		Status:        "TRIAGED",
+		RuleVersion:   "ruleVersion",
+		DedupString:   "dedupString",
+		CreationTime:  time.Date(2020, 1, 1, 1, 0, 0, 0, time.UTC),
+		UpdateTime:    time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
+		Severity:      "INFO",
+		EventCount:    5,
+		LogTypes:      []string{"logtype"},
+		UpdatedBy:     "userId",
+		UpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
 	}
 
 	expectedListObjectsRequest := &s3.ListObjectsV2Input{
@@ -189,6 +190,7 @@ func TestGetAlert(t *testing.T) {
 			UpdateTime:    aws.Time(time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)),
 			EventsMatched: aws.Int(5),
 			UpdatedBy:     aws.String("userId"),
+			UpdatedByTime: aws.Time(time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)),
 		},
 		Events: aws.StringSlice([]string{"testEvent"}),
 		EventsLastEvaluatedKey:
@@ -241,6 +243,7 @@ func TestGetAlert(t *testing.T) {
 			UpdateTime:    aws.Time(time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)),
 			EventsMatched: aws.Int(5),
 			UpdatedBy:     aws.String("userId"),
+			UpdatedByTime: aws.Time(time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)),
 		},
 		Events: aws.StringSlice([]string{}),
 		EventsLastEvaluatedKey:
@@ -275,17 +278,18 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 	}
 
 	alertItem := &table.AlertItem{
-		AlertID:      "alertId",
-		RuleID:       "ruleId",
-		Status:       "TRIAGED",
-		RuleVersion:  "ruleVersion",
-		CreationTime: time.Date(2020, 1, 1, 1, 5, 0, 0, time.UTC),
-		UpdateTime:   time.Date(2020, 1, 1, 1, 6, 0, 0, time.UTC),
-		Severity:     "INFO",
-		EventCount:   5,
-		DedupString:  "dedupString",
-		LogTypes:     []string{"logtype"},
-		UpdatedBy:    "userId",
+		AlertID:       "alertId",
+		RuleID:        "ruleId",
+		Status:        "TRIAGED",
+		RuleVersion:   "ruleVersion",
+		CreationTime:  time.Date(2020, 1, 1, 1, 5, 0, 0, time.UTC),
+		UpdateTime:    time.Date(2020, 1, 1, 1, 6, 0, 0, time.UTC),
+		Severity:      "INFO",
+		EventCount:    5,
+		DedupString:   "dedupString",
+		LogTypes:      []string{"logtype"},
+		UpdatedBy:     "userId",
+		UpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
 	}
 
 	eventChannel := getChannel("testEvent")
@@ -317,6 +321,7 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 			Severity:      aws.String("INFO"),
 			DedupString:   aws.String("dedupString"),
 			UpdatedBy:     aws.String("userId"),
+			UpdatedByTime: aws.Time(time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)),
 		},
 		Events: aws.StringSlice([]string{"testEvent"}),
 		EventsLastEvaluatedKey:

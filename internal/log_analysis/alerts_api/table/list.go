@@ -52,8 +52,8 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 	direction := table.isAscendingOrder(input)
 
 	// Construct a query expression
-	queryExpression, err := builder.Build()
-	if err != nil {
+	queryExpression, builderError := builder.Build()
+	if builderError != nil {
 		return nil, nil, errors.Wrap(err, "failed to build expression")
 	}
 
@@ -66,13 +66,9 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 	}
 
 	// Optionally continue the query from the "primary key of the item where the [previous] operation stopped"
-	var queryExclusiveStartKey map[string]*dynamodb.AttributeValue
-	if input.ExclusiveStartKey != nil {
-		queryExclusiveStartKey = make(map[string]*dynamodb.AttributeValue)
-		err = jsoniter.UnmarshalFromString(*input.ExclusiveStartKey, &queryExclusiveStartKey)
-		if err != nil {
-			return nil, nil, errors.Wrap(err, "failed to Unmarshal ExclusiveStartKey")
-		}
+	queryExclusiveStartKey, startKeyErr := genStartKey(input)
+	if startKeyErr != nil {
+		return nil, nil, startKeyErr
 	}
 
 	// Construct the full query
@@ -151,6 +147,18 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 	}
 
 	return summaries, lastEvaluatedKey, nil
+}
+
+func genStartKey(input *models.ListAlertsInput) (DynamoItem, error) {
+	// Optionally continue the query from the "primary key of the item where the [previous] operation stopped"
+	var queryExclusiveStartKey DynamoItem
+	if input.ExclusiveStartKey != nil {
+		queryExclusiveStartKey = make(DynamoItem)
+		if err := jsoniter.UnmarshalFromString(*input.ExclusiveStartKey, &queryExclusiveStartKey); err != nil {
+			return nil, errors.Wrap(err, "failed to Unmarshal ExclusiveStartKey")
+		}
+	}
+	return queryExclusiveStartKey, nil
 }
 
 // getLastKey - manually constructs the lastEvaluatedKey to be returned to the frontend
@@ -245,29 +253,25 @@ func filterByStatus(filter *expression.ConditionBuilder, input *models.ListAlert
 		// Start with the first known key
 		var multiFilter expression.ConditionBuilder
 
-		// Alerts that are strictly not Triaged, Closed, or Resolved are considered open.
+		// Alerts that don't have a status or have an empty string status are considered open.
 		if *input.Status[0] == models.OpenStatus {
-			multiFilter = expression.Name(StatusKey).
-				In(
-					expression.Value(models.TriagedStatus),
-					expression.Value(models.ClosedStatus),
-					expression.Value(models.ResolvedStatus),
-				).Not()
+			multiFilter = expression.
+				Or(
+					expression.AttributeNotExists(expression.Name(StatusKey)),
+					expression.Equal(expression.Name(StatusKey), expression.Value(models.EmptyStatus)),
+				)
 		} else {
 			multiFilter = expression.Name(StatusKey).Equal(expression.Value(*input.Status[0]))
 		}
 
 		// Then add or conditions starting at a new slice from the second index
 		for _, statusSetting := range input.Status[1:] {
-			// Alerts that are strictly not Triaged, Closed, or Resolved are considered open.
+			// Alerts that don't have a status or have an empty string status are considered open.
 			if *statusSetting == models.OpenStatus {
 				multiFilter = multiFilter.
 					Or(
-						expression.Name(StatusKey).In(
-							expression.Value(models.TriagedStatus),
-							expression.Value(models.ClosedStatus),
-							expression.Value(models.ResolvedStatus),
-						).Not(),
+						expression.AttributeNotExists(expression.Name(StatusKey)),
+						expression.Equal(expression.Name(StatusKey), expression.Value(models.EmptyStatus)),
 					)
 			} else {
 				multiFilter = multiFilter.Or(expression.Name(StatusKey).Equal(expression.Value(*statusSetting)))

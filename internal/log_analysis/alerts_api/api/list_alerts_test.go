@@ -48,6 +48,7 @@ var (
 			RuleDisplayName: aws.String("ruleDisplayName"),
 			Title:           aws.String("title"),
 			UpdatedBy:       "userId",
+			UpdatedByTime:   timeInTest,
 		},
 	}
 
@@ -65,6 +66,7 @@ var (
 			EventsMatched:   aws.Int(100),
 			Title:           aws.String("title"),
 			UpdatedBy:       aws.String("userId"),
+			UpdatedByTime:   aws.Time(timeInTest),
 		},
 	}
 )
@@ -128,17 +130,18 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 
 	alertItems := []*table.AlertItem{
 		{
-			RuleID:       "ruleId",
-			AlertID:      "alertId",
-			Status:       "TRIAGED",
-			UpdateTime:   timeInTest,
-			CreationTime: timeInTest,
-			Severity:     "INFO",
-			DedupString:  "dedupString",
-			LogTypes:     []string{"AWS.CloudTrail"},
-			EventCount:   100,
-			RuleVersion:  "ruleVersion",
-			UpdatedBy:    "userId",
+			RuleID:        "ruleId",
+			AlertID:       "alertId",
+			Status:        "TRIAGED",
+			UpdateTime:    timeInTest,
+			CreationTime:  timeInTest,
+			Severity:      "INFO",
+			DedupString:   "dedupString",
+			LogTypes:      []string{"AWS.CloudTrail"},
+			EventCount:    100,
+			RuleVersion:   "ruleVersion",
+			UpdatedBy:     "userId",
+			UpdatedByTime: timeInTest,
 		},
 		{ // Alert with Display Name for rule
 			RuleID:          "ruleId",
@@ -153,6 +156,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			RuleVersion:     "ruleVersion",
 			RuleDisplayName: aws.String("ruleDisplayName"),
 			UpdatedBy:       "userId",
+			UpdatedByTime:   timeInTest,
 		},
 	}
 
@@ -169,6 +173,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			EventsMatched: aws.Int(100),
 			Title:         aws.String("ruleId"),
 			UpdatedBy:     aws.String("userId"),
+			UpdatedByTime: aws.Time(timeInTest),
 		},
 		{
 			RuleID:          aws.String("ruleId"),
@@ -183,8 +188,9 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			RuleDisplayName: aws.String("ruleDisplayName"),
 			// Since there is no dynamically generated title,
 			// we return the display name
-			Title:     aws.String("ruleDisplayName"),
-			UpdatedBy: aws.String("userId"),
+			Title:         aws.String("ruleDisplayName"),
+			UpdatedBy:     aws.String("userId"),
+			UpdatedByTime: aws.Time(timeInTest),
 		},
 	}
 

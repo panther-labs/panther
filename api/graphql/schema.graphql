@@ -141,6 +141,7 @@ type AlertDetails {
   dedupString: String!
   status: String
   updatedBy: ID
+  updatedByTime: AWSDateTime
 }
 
 type ListAlertsResponse {
@@ -158,6 +159,7 @@ type AlertSummary {
   severity: SeverityEnum
   status: String
   updatedBy: ID
+  updatedByTime: AWSDateTime
 }
 
 input UpdateAlertInput {

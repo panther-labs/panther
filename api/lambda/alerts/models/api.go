@@ -119,10 +119,10 @@ type UpdateAlertOutput = AlertSummary
 
 // Constants defined for alert statuses
 const (
-	// Empty is the default value for an alert status and is used to create an alert
+	// Empty is present on items that already exist in the DB
 	EmptyStatus = ""
 
-	// Open is the default value for an alert status and is used to filter alerts
+	// Open is the new default value for an alert
 	OpenStatus = "OPEN"
 
 	// Triaged sets the alert to actively investigating
@@ -159,7 +159,8 @@ type AlertSummary struct {
 	Severity        *string    `json:"severity" validate:"required"`
 	Status          *string    `json:"status,omitempty"`
 	Title           *string    `json:"title" validate:"required"`
-	UpdatedBy       *string    `json:"updatedBy"`
+	UpdatedBy       *string    `json:"updatedBy,omitempty"`
+	UpdatedByTime   *time.Time `json:"updatedByTime,omitempty"`
 }
 
 // Alert contains the details of an alert

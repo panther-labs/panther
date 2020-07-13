@@ -19,6 +19,8 @@ package table
  */
 
 import (
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -28,7 +30,7 @@ import (
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-// UpdateAlert - updates account details and returns the updated item
+// UpdateAlert - updates the alert details and returns the updated item
 func (table *AlertsTable) UpdateAlert(input *models.UpdateAlertInput) (*AlertItem, error) {
 	// Create the dynamo key we want to update
 	var alertKey = DynamoItem{AlertIDKey: {S: aws.String(*input.AlertID)}}
@@ -67,10 +69,20 @@ func (table *AlertsTable) UpdateAlert(input *models.UpdateAlertInput) (*AlertIte
 
 // createUpdateBuilder - creates an update builder
 func createUpdateBuilder(input *models.UpdateAlertInput) expression.UpdateBuilder {
-	// Initialize update with a no-op (raw expression.UpdateBuilder does not work)
+	// When settig an "open" status we actually remove the attribute
+	// for uniformity against previous items in the database
+	// which also do not have a status attribute.
+	if *input.Status == models.OpenStatus {
+		return expression.
+			Remove(expression.Name(StatusKey)).
+			Set(expression.Name(UpdatedByKey), expression.Value(input.RequesterID)).
+			Set(expression.Name(UpdatedByTimeKey), expression.Value(aws.Time(time.Now().UTC())))
+	}
+
 	return expression.
 		Set(expression.Name(StatusKey), expression.Value(input.Status)).
-		Set(expression.Name(UpdatedByKey), expression.Value(input.RequesterID))
+		Set(expression.Name(UpdatedByKey), expression.Value(input.RequesterID)).
+		Set(expression.Name(UpdatedByTimeKey), expression.Value(aws.Time(time.Now().UTC())))
 }
 
 // createConditionBuilder - creates a condition builder

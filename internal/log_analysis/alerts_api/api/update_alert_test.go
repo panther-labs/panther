@@ -20,6 +20,7 @@ package api
 
 import (
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
@@ -36,21 +37,23 @@ func TestUpdateAlert(t *testing.T) {
 	alertID := aws.String("alertId")
 	status := aws.String("CLOSED")
 	userID := aws.String("userId")
-
+	timeNow := time.Now()
 	input := &models.UpdateAlertInput{
 		AlertID:     alertID,
 		Status:      status,
 		RequesterID: userID,
 	}
 	output := &table.AlertItem{
-		AlertID:   *alertID,
-		Status:    *status,
-		UpdatedBy: *userID,
+		AlertID:       *alertID,
+		Status:        *status,
+		UpdatedBy:     *userID,
+		UpdatedByTime: timeNow,
 	}
 	expectedSummary := &models.AlertSummary{
-		AlertID:   aws.String("alertId"),
-		Status:    aws.String("CLOSED"),
-		UpdatedBy: aws.String("userId"),
+		AlertID:       aws.String("alertId"),
+		Status:        aws.String("CLOSED"),
+		UpdatedBy:     aws.String("userId"),
+		UpdatedByTime: aws.Time(timeNow),
 	}
 
 	tableMock.On("UpdateAlert", input).Return(output, nil).Once()
@@ -59,9 +62,10 @@ func TestUpdateAlert(t *testing.T) {
 
 	// Marshal to convert "" to nils and focus on our properties
 	resultSummary := &models.AlertSummary{
-		AlertID:   result.AlertID,
-		Status:    result.Status,
-		UpdatedBy: result.UpdatedBy,
+		AlertID:       result.AlertID,
+		Status:        result.Status,
+		UpdatedBy:     result.UpdatedBy,
+		UpdatedByTime: result.UpdatedByTime,
 	}
 
 	assert.Equal(t, expectedSummary, resultSummary)

@@ -112,6 +112,7 @@ export type AlertDetails = {
   dedupString: Scalars['String'];
   status?: Maybe<Scalars['String']>;
   updatedBy?: Maybe<Scalars['ID']>;
+  updatedByTime?: Maybe<Scalars['AWSDateTime']>;
 };
 
 export enum AlertStatusesEnum {
@@ -132,6 +133,7 @@ export type AlertSummary = {
   severity?: Maybe<SeverityEnum>;
   status?: Maybe<Scalars['String']>;
   updatedBy?: Maybe<Scalars['ID']>;
+  updatedByTime?: Maybe<Scalars['AWSDateTime']>;
 };
 
 export enum AnalysisTypeEnum {
@@ -1519,6 +1521,7 @@ export type AlertDetailsResolvers<
   dedupString?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   status?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  updatedByTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -1535,6 +1538,7 @@ export type AlertSummaryResolvers<
   severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
   status?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  updatedByTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
