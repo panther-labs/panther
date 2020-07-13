@@ -4,20 +4,20 @@
 
 Out of the box, Panther ships with a self-signed certificate generated at deployment time. While this setup is better than not having SSL/TLS enabled at all on the web server, it is still far from best practice especially for a security tool. Panther *strongly* recommends you replace this self-signed certificate with a proper certificate before using Panther in a production environment.
 
-Setting up a custom domain for the Panther app is fairly easy, and takes four steps:
+To set up a custom domain for Panther, follow these easy four steps::
 
   1. Register a domain
   2. Get a signed certificate for your domain into AWS
   3. Configure Panther
   4. Setup an alias from the domain to the auto-generated load balancer URL
   
-All of these steps can be completed from within the AWS ecosystem. This guide will walk through configuring a custom domain totally within the AWS ecosystem, and should take ~45 minutes and cost less than $20/year. If you prefer to manage your certificates outside of AWS the same steps listed below should still apply, although the exact details will depend on where you are registering your certificate.
+  All of these steps can be completed from within the AWS ecosystem. This guide will walk through configuring a custom domain totally within the AWS ecosystem and should take ~45 minutes and cost less than $20/year. If you prefer to manage your certificates outside of AWS, the steps listed below still apply, although the exact details will depend on where you are registering your certificate.
 
 ### Register a domain
 
 In this guide we'll walk through registering a domain through AWS Route53, although any domain registrar should work. If you already have a domain registered, or perhaps an internal CA that manages certificates for your organization, this step can be skipped.
 
-  1. Navigate to the [Route53](https://console.aws.amazon.com/route53/home) console in AWS and click the `Registered domains` tab.
+  1. Navigate to the [Route53](https://console.aws.amazon.com/route53/home) console and click the `Registered domains` tab.
   2. Click the `Register domain` button, and enter the name of the domain you'd like to register. Click the `Check` button, and AWS will verify the domain is available and suggest alternatives if it is not.
   3. After verifying the domain is available, click `Add to cart` and then `Continue`. On the next form, fill in the contact information. Be sure you can receive email at the email specified so that you can verify the domain in a future step. When you're done, click `Continue`.
   4. Agree to the terms and conditions, and click `Complete order`. If you have not registered a domain through route53 before, you will receive a confirmation email.
@@ -28,7 +28,7 @@ After that, the domain will take between ten minutes and an hour to complete reg
 
 Now that you have a domain registered, you need to generate a certificate for it.
 
-  1. Navigate to the [ACM](https://console.aws.amazon.com/acm/home) console in AWS. Be sure you are in the same region that Panther is deployed in.
+  1. Navigate to the [ACM](https://console.aws.amazon.com/acm/home) console. Be sure you are in the same region that Panther is deployed in.
   2. Click either `Request a certificate` or `Import a certificate`, depending on your preferred workflow. In this example, we will be going through the `Request a certificate` workflow. If you are using a private CA, you will need to follow the `Import a certificate`  workflow.
   3. Make sure the `Request a public certificate` option is selected and click `Request a certificate`.
   4. Enter the name of the domain registered above, and click `Next`.
@@ -40,21 +40,26 @@ Now that you have a domain registered, you need to generate a certificate for it
   
 ### Configure Panther
 
-At this point, it is time to configure Panther to use your custom certificate and domain. This can be done to either an active Panther deployment or to a new Panther deployment.
+The next step is to configure Panther to use your new certificate and domain. This can be completed with either an active Panther or a new Panther deployment.
 
-For pre-packaged deployments, navigate to the [CloudFormation](https://console.aws.amazon.com/cloudformation/home) console in AWS. From here, find the panther master stack (you named this stack when deploying panther, most likely it is just called `panther`). Select this stack, then click the `Update` button. Ensure the `Use current template` option is selected and click `Next`. On the next page, find the `Parameters` section and update the following two parameters:
+For pre-packaged deployments:
+
+  1. Navigate to the [CloudFormation](https://console.aws.amazon.com/cloudformation/home) console.
+  2. Find the Panther master stack (called `panther` by default), select this stack, and click the `Update` button.
+  3. Select the `Use current template` option is selected and click `Next`.
+  4. Find the `Parameters` section and update the following two parameters:
 
   - `CertificateArn` - in this field, put the full ARN of the ACM certificate created in step two. This can be retrieved from the ACM console.
   - `CustomDomain` - in this field, put the domain name you registered in step one.
   
-Click the `Next` button until you reach the final `Review` step. Double check that the fields entered above are correct, then click the `Update stack` button. You may need to check the `I acknowledge that AWS CloudFormation might...` check boxes. After clicking `Update stack`, panther will update with your new certificate. An update should only take a few minutes.
+  5. Click the `Next` button until you reach the final `Review` step. Double check that the fields entered above are correct, then click the `Update stack` button. You will need to check the `I acknowledge that AWS CloudFormation might...` check boxes. After clicking `Update stack`, panther will update with your new certificate. An update should only take a few minutes.
 
 For from source deployments, navigate to your Panther directory and open the `deployments/panther_config.yml` file in your preferred text editor, then edit the following two configuration options:
 
   - `CertificateArn` - in this field, put the full ARN of the ACM certificate created in step two. This can be retrieved from the ACM console.
   - `CustomDomain` - in this field, put the domain name you registered in step one.
   
-That's it, now simply run the `mage deploy` command (in the container if needed) and the update/installation will start. An update should only take a few minutes to process.
+Now simply run the `mage deploy` command (in the container if needed) and the update/installation will start. An update should only take a few minutes to finish.
 
 ### Create an alias
 
@@ -74,6 +79,6 @@ Finally, you will need to create an alias or CNAME on your domain pointing to th
     - Click the `Create` button
 
 
-![](../../.gitbook/assets/hosted_zone_alias.png)
+![](../.gitbook/assets/hosted_zone_alias.png)
     
 After this, your setup is complete. You can now navigate to your new domain and reach the Panther web application over a signed and secure HTTPS connection.
