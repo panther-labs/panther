@@ -49,6 +49,21 @@ generates:
         AWSTimestamp: number
         AWSDateTime: string
         AWSJSON: string
+
+  web/__tests__/__mocks__/resources.generated.ts:
+    plugins:
+      - graphql-codegen-typescript-mock-data:
+          typesFile: ../../__generated__/schema.tsx
+          addTypename: true
+          typenames: keep
+          prefix: mock
+          scalars:
+            AWSTimestamp: unix_time
+            AWSEmail: email
+            AWSPhone: phone
+            AWSDateTime: date
+            AWSJSON: string
+
   web/src/:
     documents: web/**/*.graphql
     preset: near-operation-file
@@ -85,6 +100,7 @@ generates:
       withHooks: true
       skipTypename: true
       omitOperationSuffix: true
+
 hooks:
   afterAllFileWrite:
     - prettier --write
