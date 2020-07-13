@@ -282,17 +282,6 @@ func filterByStatus(filter *expression.ConditionBuilder, input *models.ListAlert
 	}
 }
 
-// Filter - filters an array by a string condition
-func Filter(arr []*string, cond func(string) bool) []*string {
-	result := []*string{}
-	for i := range arr {
-		if cond(*arr[i]) {
-			result = append(result, arr[i])
-		}
-	}
-	return result
-}
-
 // filterByTitleContains - fiters by a name that contains a string (case insensitive)
 func filterByTitleContains(input *models.ListAlertsInput, alert *AlertItem) *AlertItem {
 	if alert != nil && input.NameContains != nil && !strings.Contains(

@@ -127,7 +127,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
               Alert Status
             </Box>
             <Box aria-describedby="alert-status">
-              <UpdateAlertDropdown status={alert.status} alert={alert as AlertSummaryFull} />
+              <UpdateAlertDropdown alert={alert as AlertSummaryFull} />
             </Box>
           </Flex>
         </Flex>

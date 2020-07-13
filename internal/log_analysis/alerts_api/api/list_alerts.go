@@ -74,17 +74,17 @@ func alertItemsToAlertSummary(items []*table.AlertItem) []*models.AlertSummary {
 func alertItemToAlertSummary(item *table.AlertItem) *models.AlertSummary {
 	return &models.AlertSummary{
 		AlertID:         &item.AlertID,
-		RuleID:          &item.RuleID,
-		Status:          &item.Status,
-		DedupString:     &item.DedupString,
 		CreationTime:    &item.CreationTime,
-		Severity:        &item.Severity,
-		UpdateTime:      &item.UpdateTime,
+		DedupString:     &item.DedupString,
 		EventsMatched:   &item.EventCount,
 		RuleDisplayName: item.RuleDisplayName,
-		Title:           getAlertTitle(item),
+		RuleID:          &item.RuleID,
 		RuleVersion:     &item.RuleVersion,
+		Severity:        &item.Severity,
+		Status:          &item.Status,
+		Title:           getAlertTitle(item),
 		UpdatedBy:       &item.UpdatedBy,
 		UpdatedByTime:   &item.UpdatedByTime,
+		UpdateTime:      &item.UpdateTime,
 	}
 }

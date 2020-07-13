@@ -36,14 +36,12 @@ import { useListUsers } from 'Pages/Users';
 import { useUpdateAlert } from './graphql/updateAlert.generated';
 
 interface UpdateAlertDropdownProps {
-  status?: string;
   alert: AlertSummaryFull;
 }
 
-const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({
-  status = AlertStatusesEnum.Open,
-  alert,
-}) => {
+const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
+  const { status = AlertStatusesEnum.Open } = alert;
+
   const { pushSnackbar } = useSnackbar();
 
   const { data: listUsersData } = useListUsers({

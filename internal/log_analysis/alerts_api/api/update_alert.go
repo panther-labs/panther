@@ -56,21 +56,7 @@ func (API) UpdateAlert(input *models.UpdateAlertInput) (result *models.UpdateAle
 	}
 
 	// Marshal to an alert summary
-	result = &models.AlertSummary{
-		AlertID:         &alertItem.AlertID,
-		Status:          &alertItem.Status,
-		RuleID:          &alertItem.RuleID,
-		DedupString:     &alertItem.DedupString,
-		CreationTime:    &alertItem.CreationTime,
-		UpdateTime:      &alertItem.UpdateTime,
-		EventsMatched:   &alertItem.EventCount,
-		RuleDisplayName: alertItem.RuleDisplayName,
-		Title:           getAlertTitle(alertItem),
-		RuleVersion:     &alertItem.RuleVersion,
-		Severity:        &alertItem.Severity,
-		UpdatedBy:       &alertItem.UpdatedBy,
-		UpdatedByTime:   &alertItem.UpdatedByTime,
-	}
+	result = alertItemToAlertSummary(alertItem)
 
 	gatewayapi.ReplaceMapSliceNils(result)
 	return result, nil
