@@ -17,7 +17,7 @@
  */
 
 import { ApolloLink } from '@apollo/client';
-import { getMainDefinition } from '@apollo/client/utilities/graphql/getFromAST';
+import { getMainDefinition } from 'apollo-utilities';
 import { OperationDefinitionNode } from 'graphql';
 
 /**
