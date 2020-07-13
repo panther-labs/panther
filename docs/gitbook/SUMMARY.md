@@ -6,6 +6,8 @@
   * [Parsers](log-analysis/log-processing/writing-parsers.md)
 * [Operations](operations/ops-home.md)
   * [Run-books](operations/runbooks.md)
+  * [Advanced Setup]()
+    * [Configuring a Custom Domain](operations/advanced-setup/configuring-custom-domains.md)
 
 ## User Guide
 
