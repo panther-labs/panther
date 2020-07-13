@@ -19,7 +19,7 @@
 import React from 'react';
 import { ModalProps, useSnackbar } from 'pouncejs';
 import { ListUsersDocument } from 'Pages/Users';
-import { getOperationName } from '@apollo/client/utilities/graphql/getFromAST';
+import { getOperationName } from 'apollo-utilities';
 import ConfirmModal from 'Components/modals/ConfirmModal';
 import { UserDetails } from 'Source/graphql/fragments/UserDetails.generated';
 import { useResetUserPassword } from './graphql/resetUserPassword.generated';
