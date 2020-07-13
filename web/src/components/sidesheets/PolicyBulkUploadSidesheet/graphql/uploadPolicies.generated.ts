@@ -90,3 +90,18 @@ export type UploadPoliciesMutationOptions = ApolloReactCommon.BaseMutationOption
   UploadPolicies,
   UploadPoliciesVariables
 >;
+export function mockUploadPolicies({
+  data,
+  variables,
+  error,
+}: {
+  data: UploadPolicies;
+  variables?: UploadPoliciesVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: UploadPoliciesDocument, variables },
+    result: { data },
+    error,
+  };
+}

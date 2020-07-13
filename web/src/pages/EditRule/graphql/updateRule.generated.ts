@@ -75,3 +75,18 @@ export type UpdateRuleMutationOptions = ApolloReactCommon.BaseMutationOptions<
   UpdateRule,
   UpdateRuleVariables
 >;
+export function mockUpdateRule({
+  data,
+  variables,
+  error,
+}: {
+  data: UpdateRule;
+  variables?: UpdateRuleVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: UpdateRuleDocument, variables },
+    result: { data },
+    error,
+  };
+}

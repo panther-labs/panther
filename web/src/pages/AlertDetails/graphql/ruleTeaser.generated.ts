@@ -75,3 +75,18 @@ export function useRuleTeaserLazyQuery(
 export type RuleTeaserHookResult = ReturnType<typeof useRuleTeaser>;
 export type RuleTeaserLazyQueryHookResult = ReturnType<typeof useRuleTeaserLazyQuery>;
 export type RuleTeaserQueryResult = ApolloReactCommon.QueryResult<RuleTeaser, RuleTeaserVariables>;
+export function mockRuleTeaser({
+  data,
+  variables,
+  error,
+}: {
+  data: RuleTeaser;
+  variables?: RuleTeaserVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: RuleTeaserDocument, variables },
+    result: { data },
+    error,
+  };
+}

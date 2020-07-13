@@ -87,3 +87,18 @@ export type GetComplianceCfnTemplateQueryResult = ApolloReactCommon.QueryResult<
   GetComplianceCfnTemplate,
   GetComplianceCfnTemplateVariables
 >;
+export function mockGetComplianceCfnTemplate({
+  data,
+  variables,
+  error,
+}: {
+  data: GetComplianceCfnTemplate;
+  variables?: GetComplianceCfnTemplateVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: GetComplianceCfnTemplateDocument, variables },
+    result: { data },
+    error,
+  };
+}

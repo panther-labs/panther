@@ -87,3 +87,18 @@ export type ListDestinationsAndDefaultsQueryResult = ApolloReactCommon.QueryResu
   ListDestinationsAndDefaults,
   ListDestinationsAndDefaultsVariables
 >;
+export function mockListDestinationsAndDefaults({
+  data,
+  variables,
+  error,
+}: {
+  data: ListDestinationsAndDefaults;
+  variables?: ListDestinationsAndDefaultsVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: ListDestinationsAndDefaultsDocument, variables },
+    result: { data },
+    error,
+  };
+}

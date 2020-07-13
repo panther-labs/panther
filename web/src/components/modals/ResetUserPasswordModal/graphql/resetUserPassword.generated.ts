@@ -73,3 +73,18 @@ export type ResetUserPasswordMutationOptions = ApolloReactCommon.BaseMutationOpt
   ResetUserPassword,
   ResetUserPasswordVariables
 >;
+export function mockResetUserPassword({
+  data,
+  variables,
+  error,
+}: {
+  data: ResetUserPassword;
+  variables?: ResetUserPasswordVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: ResetUserPasswordDocument, variables },
+    result: { data },
+    error,
+  };
+}

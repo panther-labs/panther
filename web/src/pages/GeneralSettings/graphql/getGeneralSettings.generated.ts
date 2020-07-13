@@ -80,3 +80,18 @@ export type GetGeneralSettingsQueryResult = ApolloReactCommon.QueryResult<
   GetGeneralSettings,
   GetGeneralSettingsVariables
 >;
+export function mockGetGeneralSettings({
+  data,
+  variables,
+  error,
+}: {
+  data: GetGeneralSettings;
+  variables?: GetGeneralSettingsVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: GetGeneralSettingsDocument, variables },
+    result: { data },
+    error,
+  };
+}

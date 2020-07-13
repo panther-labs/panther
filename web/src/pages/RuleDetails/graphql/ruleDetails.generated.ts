@@ -81,3 +81,18 @@ export type RuleDetailsQueryResult = ApolloReactCommon.QueryResult<
   RuleDetails,
   RuleDetailsVariables
 >;
+export function mockRuleDetails({
+  data,
+  variables,
+  error,
+}: {
+  data: RuleDetails;
+  variables?: RuleDetailsVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: RuleDetailsDocument, variables },
+    result: { data },
+    error,
+  };
+}

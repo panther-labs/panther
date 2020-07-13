@@ -80,3 +80,18 @@ export type UpdateGlobalPythonModuleMutationOptions = ApolloReactCommon.BaseMuta
   UpdateGlobalPythonModule,
   UpdateGlobalPythonModuleVariables
 >;
+export function mockUpdateGlobalPythonModule({
+  data,
+  variables,
+  error,
+}: {
+  data: UpdateGlobalPythonModule;
+  variables?: UpdateGlobalPythonModuleVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: UpdateGlobalPythonModuleDocument, variables },
+    result: { data },
+    error,
+  };
+}

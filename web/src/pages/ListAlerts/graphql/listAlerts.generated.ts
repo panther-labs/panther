@@ -84,3 +84,18 @@ export function useListAlertsLazyQuery(
 export type ListAlertsHookResult = ReturnType<typeof useListAlerts>;
 export type ListAlertsLazyQueryHookResult = ReturnType<typeof useListAlertsLazyQuery>;
 export type ListAlertsQueryResult = ApolloReactCommon.QueryResult<ListAlerts, ListAlertsVariables>;
+export function mockListAlerts({
+  data,
+  variables,
+  error,
+}: {
+  data: ListAlerts;
+  variables?: ListAlertsVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: ListAlertsDocument, variables },
+    result: { data },
+    error,
+  };
+}

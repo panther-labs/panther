@@ -144,3 +144,18 @@ export type ResourceDetailsQueryResult = ApolloReactCommon.QueryResult<
   ResourceDetails,
   ResourceDetailsVariables
 >;
+export function mockResourceDetails({
+  data,
+  variables,
+  error,
+}: {
+  data: ResourceDetails;
+  variables?: ResourceDetailsVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: ResourceDetailsDocument, variables },
+    result: { data },
+    error,
+  };
+}

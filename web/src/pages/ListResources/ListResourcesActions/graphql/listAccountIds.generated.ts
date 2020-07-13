@@ -78,3 +78,18 @@ export type ListAccountIdsQueryResult = ApolloReactCommon.QueryResult<
   ListAccountIds,
   ListAccountIdsVariables
 >;
+export function mockListAccountIds({
+  data,
+  variables,
+  error,
+}: {
+  data: ListAccountIds;
+  variables?: ListAccountIdsVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: ListAccountIdsDocument, variables },
+    result: { data },
+    error,
+  };
+}

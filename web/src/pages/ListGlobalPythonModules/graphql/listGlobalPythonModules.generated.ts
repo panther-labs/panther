@@ -98,3 +98,18 @@ export type ListGlobalPythonModulesQueryResult = ApolloReactCommon.QueryResult<
   ListGlobalPythonModules,
   ListGlobalPythonModulesVariables
 >;
+export function mockListGlobalPythonModules({
+  data,
+  variables,
+  error,
+}: {
+  data: ListGlobalPythonModules;
+  variables?: ListGlobalPythonModulesVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: ListGlobalPythonModulesDocument, variables },
+    result: { data },
+    error,
+  };
+}

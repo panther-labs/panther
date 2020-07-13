@@ -78,3 +78,18 @@ export type AlertDetailsQueryResult = ApolloReactCommon.QueryResult<
   AlertDetails,
   AlertDetailsVariables
 >;
+export function mockAlertDetails({
+  data,
+  variables,
+  error,
+}: {
+  data: AlertDetails;
+  variables?: AlertDetailsVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: AlertDetailsDocument, variables },
+    result: { data },
+    error,
+  };
+}

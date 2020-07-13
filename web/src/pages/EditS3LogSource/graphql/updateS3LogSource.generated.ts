@@ -75,3 +75,18 @@ export type UpdateS3LogSourceMutationOptions = ApolloReactCommon.BaseMutationOpt
   UpdateS3LogSource,
   UpdateS3LogSourceVariables
 >;
+export function mockUpdateS3LogSource({
+  data,
+  variables,
+  error,
+}: {
+  data: UpdateS3LogSource;
+  variables?: UpdateS3LogSourceVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: UpdateS3LogSourceDocument, variables },
+    result: { data },
+    error,
+  };
+}

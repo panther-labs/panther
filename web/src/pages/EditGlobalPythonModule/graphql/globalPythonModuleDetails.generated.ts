@@ -86,3 +86,18 @@ export type GlobalPythonModuleDetailsQueryResult = ApolloReactCommon.QueryResult
   GlobalPythonModuleDetails,
   GlobalPythonModuleDetailsVariables
 >;
+export function mockGlobalPythonModuleDetails({
+  data,
+  variables,
+  error,
+}: {
+  data: GlobalPythonModuleDetails;
+  variables?: GlobalPythonModuleDetailsVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: GlobalPythonModuleDetailsDocument, variables },
+    result: { data },
+    error,
+  };
+}

@@ -76,3 +76,18 @@ export type DeleteGlobalPythonModuleMutationOptions = ApolloReactCommon.BaseMuta
   DeleteGlobalPythonModule,
   DeleteGlobalPythonModuleVariables
 >;
+export function mockDeleteGlobalPythonModule({
+  data,
+  variables,
+  error,
+}: {
+  data: DeleteGlobalPythonModule;
+  variables?: DeleteGlobalPythonModuleVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: DeleteGlobalPythonModuleDocument, variables },
+    result: { data },
+    error,
+  };
+}

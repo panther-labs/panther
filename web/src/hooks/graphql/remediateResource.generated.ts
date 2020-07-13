@@ -71,3 +71,18 @@ export type RemediateResourceMutationOptions = ApolloReactCommon.BaseMutationOpt
   RemediateResource,
   RemediateResourceVariables
 >;
+export function mockRemediateResource({
+  data,
+  variables,
+  error,
+}: {
+  data: RemediateResource;
+  variables?: RemediateResourceVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: RemediateResourceDocument, variables },
+    result: { data },
+    error,
+  };
+}

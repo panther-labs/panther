@@ -87,3 +87,18 @@ export type ListAlertsForRuleQueryResult = ApolloReactCommon.QueryResult<
   ListAlertsForRule,
   ListAlertsForRuleVariables
 >;
+export function mockListAlertsForRule({
+  data,
+  variables,
+  error,
+}: {
+  data: ListAlertsForRule;
+  variables?: ListAlertsForRuleVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: ListAlertsForRuleDocument, variables },
+    result: { data },
+    error,
+  };
+}

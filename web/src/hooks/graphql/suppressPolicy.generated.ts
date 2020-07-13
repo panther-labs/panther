@@ -71,3 +71,18 @@ export type SuppressPolicyMutationOptions = ApolloReactCommon.BaseMutationOption
   SuppressPolicy,
   SuppressPolicyVariables
 >;
+export function mockSuppressPolicy({
+  data,
+  variables,
+  error,
+}: {
+  data: SuppressPolicy;
+  variables?: SuppressPolicyVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: SuppressPolicyDocument, variables },
+    result: { data },
+    error,
+  };
+}

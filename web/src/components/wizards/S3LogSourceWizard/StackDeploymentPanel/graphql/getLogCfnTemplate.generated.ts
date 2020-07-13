@@ -79,3 +79,18 @@ export type GetLogCfnTemplateQueryResult = ApolloReactCommon.QueryResult<
   GetLogCfnTemplate,
   GetLogCfnTemplateVariables
 >;
+export function mockGetLogCfnTemplate({
+  data,
+  variables,
+  error,
+}: {
+  data: GetLogCfnTemplate;
+  variables?: GetLogCfnTemplateVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: GetLogCfnTemplateDocument, variables },
+    result: { data },
+    error,
+  };
+}

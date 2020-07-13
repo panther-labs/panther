@@ -108,3 +108,18 @@ export type ListResourcesQueryResult = ApolloReactCommon.QueryResult<
   ListResources,
   ListResourcesVariables
 >;
+export function mockListResources({
+  data,
+  variables,
+  error,
+}: {
+  data: ListResources;
+  variables?: ListResourcesVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: ListResourcesDocument, variables },
+    result: { data },
+    error,
+  };
+}

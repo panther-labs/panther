@@ -153,3 +153,18 @@ export type GetOrganizationStatsQueryResult = ApolloReactCommon.QueryResult<
   GetOrganizationStats,
   GetOrganizationStatsVariables
 >;
+export function mockGetOrganizationStats({
+  data,
+  variables,
+  error,
+}: {
+  data: GetOrganizationStats;
+  variables?: GetOrganizationStatsVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: GetOrganizationStatsDocument, variables },
+    result: { data },
+    error,
+  };
+}

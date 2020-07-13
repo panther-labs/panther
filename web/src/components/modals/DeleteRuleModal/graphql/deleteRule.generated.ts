@@ -71,3 +71,18 @@ export type DeleteRuleMutationOptions = ApolloReactCommon.BaseMutationOptions<
   DeleteRule,
   DeleteRuleVariables
 >;
+export function mockDeleteRule({
+  data,
+  variables,
+  error,
+}: {
+  data: DeleteRule;
+  variables?: DeleteRuleVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: DeleteRuleDocument, variables },
+    result: { data },
+    error,
+  };
+}

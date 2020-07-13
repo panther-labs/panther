@@ -71,3 +71,18 @@ export type DeleteUserMutationOptions = ApolloReactCommon.BaseMutationOptions<
   DeleteUser,
   DeleteUserVariables
 >;
+export function mockDeleteUser({
+  data,
+  variables,
+  error,
+}: {
+  data: DeleteUser;
+  variables?: DeleteUserVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: DeleteUserDocument, variables },
+    result: { data },
+    error,
+  };
+}

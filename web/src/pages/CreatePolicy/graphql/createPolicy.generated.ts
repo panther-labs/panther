@@ -78,3 +78,18 @@ export type CreatePolicyMutationOptions = ApolloReactCommon.BaseMutationOptions<
   CreatePolicy,
   CreatePolicyVariables
 >;
+export function mockCreatePolicy({
+  data,
+  variables,
+  error,
+}: {
+  data: CreatePolicy;
+  variables?: CreatePolicyVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: CreatePolicyDocument, variables },
+    result: { data },
+    error,
+  };
+}

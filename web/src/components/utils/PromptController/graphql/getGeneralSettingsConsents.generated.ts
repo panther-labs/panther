@@ -85,3 +85,18 @@ export type GetGeneralSettingsConsentsQueryResult = ApolloReactCommon.QueryResul
   GetGeneralSettingsConsents,
   GetGeneralSettingsConsentsVariables
 >;
+export function mockGetGeneralSettingsConsents({
+  data,
+  variables,
+  error,
+}: {
+  data: GetGeneralSettingsConsents;
+  variables?: GetGeneralSettingsConsentsVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: GetGeneralSettingsConsentsDocument, variables },
+    result: { data },
+    error,
+  };
+}

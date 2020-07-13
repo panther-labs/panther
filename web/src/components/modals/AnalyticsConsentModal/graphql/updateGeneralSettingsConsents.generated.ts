@@ -83,3 +83,18 @@ export type UpdateGeneralSettingsConsentsMutationOptions = ApolloReactCommon.Bas
   UpdateGeneralSettingsConsents,
   UpdateGeneralSettingsConsentsVariables
 >;
+export function mockUpdateGeneralSettingsConsents({
+  data,
+  variables,
+  error,
+}: {
+  data: UpdateGeneralSettingsConsents;
+  variables?: UpdateGeneralSettingsConsentsVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: UpdateGeneralSettingsConsentsDocument, variables },
+    result: { data },
+    error,
+  };
+}

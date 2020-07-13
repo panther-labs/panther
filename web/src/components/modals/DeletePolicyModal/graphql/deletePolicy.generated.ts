@@ -71,3 +71,18 @@ export type DeletePolicyMutationOptions = ApolloReactCommon.BaseMutationOptions<
   DeletePolicy,
   DeletePolicyVariables
 >;
+export function mockDeletePolicy({
+  data,
+  variables,
+  error,
+}: {
+  data: DeletePolicy;
+  variables?: DeletePolicyVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: DeletePolicyDocument, variables },
+    result: { data },
+    error,
+  };
+}

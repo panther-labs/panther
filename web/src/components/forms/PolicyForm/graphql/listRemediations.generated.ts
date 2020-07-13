@@ -71,3 +71,18 @@ export type ListRemediationsQueryResult = ApolloReactCommon.QueryResult<
   ListRemediations,
   ListRemediationsVariables
 >;
+export function mockListRemediations({
+  data,
+  variables,
+  error,
+}: {
+  data: ListRemediations;
+  variables?: ListRemediationsVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: ListRemediationsDocument, variables },
+    result: { data },
+    error,
+  };
+}

@@ -72,6 +72,7 @@ generates:
     plugins:
       - typescript-operations
       - typescript-react-apollo
+      - web/__tests__/codegen/mockGraphqlOperationsPlugin.js
       - add: |
           /**
            * Panther is a Cloud-Native SIEM for the Modern Security Team.

@@ -69,3 +69,18 @@ export function useListUsersLazyQuery(
 export type ListUsersHookResult = ReturnType<typeof useListUsers>;
 export type ListUsersLazyQueryHookResult = ReturnType<typeof useListUsersLazyQuery>;
 export type ListUsersQueryResult = ApolloReactCommon.QueryResult<ListUsers, ListUsersVariables>;
+export function mockListUsers({
+  data,
+  variables,
+  error,
+}: {
+  data: ListUsers;
+  variables?: ListUsersVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: ListUsersDocument, variables },
+    result: { data },
+    error,
+  };
+}

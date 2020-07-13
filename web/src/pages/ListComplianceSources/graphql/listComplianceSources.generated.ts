@@ -85,3 +85,18 @@ export type ListComplianceSourcesQueryResult = ApolloReactCommon.QueryResult<
   ListComplianceSources,
   ListComplianceSourcesVariables
 >;
+export function mockListComplianceSources({
+  data,
+  variables,
+  error,
+}: {
+  data: ListComplianceSources;
+  variables?: ListComplianceSourcesVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: ListComplianceSourcesDocument, variables },
+    result: { data },
+    error,
+  };
+}

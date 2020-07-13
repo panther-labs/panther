@@ -75,3 +75,18 @@ export type InviteUserMutationOptions = ApolloReactCommon.BaseMutationOptions<
   InviteUser,
   InviteUserVariables
 >;
+export function mockInviteUser({
+  data,
+  variables,
+  error,
+}: {
+  data: InviteUser;
+  variables?: InviteUserVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: InviteUserDocument, variables },
+    result: { data },
+    error,
+  };
+}

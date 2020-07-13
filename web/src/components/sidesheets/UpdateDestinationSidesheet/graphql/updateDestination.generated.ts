@@ -75,3 +75,18 @@ export type UpdateDestinationMutationOptions = ApolloReactCommon.BaseMutationOpt
   UpdateDestination,
   UpdateDestinationVariables
 >;
+export function mockUpdateDestination({
+  data,
+  variables,
+  error,
+}: {
+  data: UpdateDestination;
+  variables?: UpdateDestinationVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: UpdateDestinationDocument, variables },
+    result: { data },
+    error,
+  };
+}

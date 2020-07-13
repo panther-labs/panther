@@ -143,3 +143,18 @@ export type PolicyDetailsQueryResult = ApolloReactCommon.QueryResult<
   PolicyDetails,
   PolicyDetailsVariables
 >;
+export function mockPolicyDetails({
+  data,
+  variables,
+  error,
+}: {
+  data: PolicyDetails;
+  variables?: PolicyDetailsVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: PolicyDetailsDocument, variables },
+    result: { data },
+    error,
+  };
+}

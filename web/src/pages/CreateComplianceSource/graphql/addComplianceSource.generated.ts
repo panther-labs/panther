@@ -83,3 +83,18 @@ export type AddComplianceSourceMutationOptions = ApolloReactCommon.BaseMutationO
   AddComplianceSource,
   AddComplianceSourceVariables
 >;
+export function mockAddComplianceSource({
+  data,
+  variables,
+  error,
+}: {
+  data: AddComplianceSource;
+  variables?: AddComplianceSourceVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: AddComplianceSourceDocument, variables },
+    result: { data },
+    error,
+  };
+}

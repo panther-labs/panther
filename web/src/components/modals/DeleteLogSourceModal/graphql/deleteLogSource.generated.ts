@@ -71,3 +71,18 @@ export type DeleteLogSourceMutationOptions = ApolloReactCommon.BaseMutationOptio
   DeleteLogSource,
   DeleteLogSourceVariables
 >;
+export function mockDeleteLogSource({
+  data,
+  variables,
+  error,
+}: {
+  data: DeleteLogSource;
+  variables?: DeleteLogSourceVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: DeleteLogSourceDocument, variables },
+    result: { data },
+    error,
+  };
+}

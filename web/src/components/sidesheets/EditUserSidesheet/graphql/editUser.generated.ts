@@ -69,3 +69,18 @@ export type EditUserMutationOptions = ApolloReactCommon.BaseMutationOptions<
   EditUser,
   EditUserVariables
 >;
+export function mockEditUser({
+  data,
+  variables,
+  error,
+}: {
+  data: EditUser;
+  variables?: EditUserVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: EditUserDocument, variables },
+    result: { data },
+    error,
+  };
+}

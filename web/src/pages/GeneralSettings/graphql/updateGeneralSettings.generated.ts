@@ -80,3 +80,18 @@ export type UpdateGeneralSettingsMutationOptions = ApolloReactCommon.BaseMutatio
   UpdateGeneralSettings,
   UpdateGeneralSettingsVariables
 >;
+export function mockUpdateGeneralSettings({
+  data,
+  variables,
+  error,
+}: {
+  data: UpdateGeneralSettings;
+  variables?: UpdateGeneralSettingsVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: UpdateGeneralSettingsDocument, variables },
+    result: { data },
+    error,
+  };
+}

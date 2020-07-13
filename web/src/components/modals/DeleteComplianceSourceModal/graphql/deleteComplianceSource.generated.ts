@@ -76,3 +76,18 @@ export type DeleteComplianceSourceMutationOptions = ApolloReactCommon.BaseMutati
   DeleteComplianceSource,
   DeleteComplianceSourceVariables
 >;
+export function mockDeleteComplianceSource({
+  data,
+  variables,
+  error,
+}: {
+  data: DeleteComplianceSource;
+  variables?: DeleteComplianceSourceVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: DeleteComplianceSourceDocument, variables },
+    result: { data },
+    error,
+  };
+}

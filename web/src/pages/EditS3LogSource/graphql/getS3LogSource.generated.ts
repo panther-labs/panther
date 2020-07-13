@@ -78,3 +78,18 @@ export type GetS3LogSourceQueryResult = ApolloReactCommon.QueryResult<
   GetS3LogSource,
   GetS3LogSourceVariables
 >;
+export function mockGetS3LogSource({
+  data,
+  variables,
+  error,
+}: {
+  data: GetS3LogSource;
+  variables?: GetS3LogSourceVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: GetS3LogSourceDocument, variables },
+    result: { data },
+    error,
+  };
+}

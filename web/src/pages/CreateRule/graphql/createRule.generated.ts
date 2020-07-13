@@ -75,3 +75,18 @@ export type CreateRuleMutationOptions = ApolloReactCommon.BaseMutationOptions<
   CreateRule,
   CreateRuleVariables
 >;
+export function mockCreateRule({
+  data,
+  variables,
+  error,
+}: {
+  data: CreateRule;
+  variables?: CreateRuleVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: CreateRuleDocument, variables },
+    result: { data },
+    error,
+  };
+}
