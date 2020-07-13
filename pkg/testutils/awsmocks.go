@@ -19,12 +19,16 @@ package testutils
  */
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/aws/aws-sdk-go/service/eventbridge"
 	"github.com/aws/aws-sdk-go/service/eventbridge/eventbridgeiface"
+	"github.com/aws/aws-sdk-go/service/firehose"
+	"github.com/aws/aws-sdk-go/service/firehose/firehoseiface"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/aws/aws-sdk-go/service/lambda"
@@ -60,6 +64,11 @@ func (m *S3Mock) GetObject(input *s3.GetObjectInput) (*s3.GetObjectOutput, error
 	return args.Get(0).(*s3.GetObjectOutput), args.Error(1)
 }
 
+func (m *S3Mock) GetObjectWithContext(ctx aws.Context, input *s3.GetObjectInput, options ...request.Option) (*s3.GetObjectOutput, error) {
+	args := m.Called(ctx, input, options)
+	return args.Get(0).(*s3.GetObjectOutput), args.Error(1)
+}
+
 func (m *S3Mock) GetBucketLocation(input *s3.GetBucketLocationInput) (*s3.GetBucketLocationOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*s3.GetBucketLocationOutput), args.Error(1)
@@ -67,6 +76,14 @@ func (m *S3Mock) GetBucketLocation(input *s3.GetBucketLocationInput) (*s3.GetBuc
 
 func (m *S3Mock) ListObjectsV2Pages(input *s3.ListObjectsV2Input, f func(page *s3.ListObjectsV2Output, morePages bool) bool) error {
 	args := m.Called(input, f)
+	f(args.Get(0).(*s3.ListObjectsV2Output), false)
+	return args.Error(1)
+}
+
+func (m *S3Mock) ListObjectsV2PagesWithContext(ctx aws.Context, input *s3.ListObjectsV2Input,
+	f func(page *s3.ListObjectsV2Output, morePages bool) bool, options ...request.Option) error {
+
+	args := m.Called(ctx, input, f, options)
 	f(args.Get(0).(*s3.ListObjectsV2Output), false)
 	return args.Error(1)
 }
@@ -79,6 +96,25 @@ type LambdaMock struct {
 func (m *LambdaMock) Invoke(input *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*lambda.InvokeOutput), args.Error(1)
+}
+
+func (m *LambdaMock) CreateEventSourceMapping(
+	input *lambda.CreateEventSourceMappingInput) (*lambda.EventSourceMappingConfiguration, error) {
+
+	args := m.Called(input)
+	return args.Get(0).(*lambda.EventSourceMappingConfiguration), args.Error(1)
+}
+
+func (m *LambdaMock) ListEventSourceMappings(input *lambda.ListEventSourceMappingsInput) (*lambda.ListEventSourceMappingsOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*lambda.ListEventSourceMappingsOutput), args.Error(1)
+}
+
+func (m *LambdaMock) DeleteEventSourceMapping(
+	input *lambda.DeleteEventSourceMappingInput) (*lambda.EventSourceMappingConfiguration, error) {
+
+	args := m.Called(input)
+	return args.Get(0).(*lambda.EventSourceMappingConfiguration), args.Error(1)
 }
 
 type DynamoDBMock struct {
@@ -144,6 +180,16 @@ func (m *SqsMock) DeleteMessageBatch(input *sqs.DeleteMessageBatchInput) (*sqs.D
 func (m *SqsMock) ReceiveMessage(input *sqs.ReceiveMessageInput) (*sqs.ReceiveMessageOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*sqs.ReceiveMessageOutput), args.Error(1)
+}
+
+func (m *SqsMock) CreateQueue(input *sqs.CreateQueueInput) (*sqs.CreateQueueOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*sqs.CreateQueueOutput), args.Error(1)
+}
+
+func (m *SqsMock) DeleteQueue(input *sqs.DeleteQueueInput) (*sqs.DeleteQueueOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*sqs.DeleteQueueOutput), args.Error(1)
 }
 
 type EventBridgeMock struct {
@@ -244,4 +290,18 @@ type SnsMock struct {
 func (m *SnsMock) Publish(input *sns.PublishInput) (*sns.PublishOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*sns.PublishOutput), args.Error(1)
+}
+
+type FirehoseMock struct {
+	firehoseiface.FirehoseAPI
+	mock.Mock
+}
+
+func (m *FirehoseMock) PutRecordBatchWithContext(
+	ctx aws.Context,
+	input *firehose.PutRecordBatchInput,
+	options ...request.Option) (*firehose.PutRecordBatchOutput, error) {
+
+	args := m.Called(ctx, input, options)
+	return args.Get(0).(*firehose.PutRecordBatchOutput), args.Error(1)
 }

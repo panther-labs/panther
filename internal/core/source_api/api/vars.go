@@ -28,6 +28,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -51,6 +53,7 @@ var (
 	templateS3Client s3iface.S3API
 	glueClient       glueiface.GlueAPI
 	athenaClient     athenaiface.AthenaAPI
+	lambdaClient     lambdaiface.LambdaAPI
 )
 
 type envConfig struct {
@@ -59,6 +62,10 @@ type envConfig struct {
 	LogProcessorQueueArn    string `required:"true" split_words:"true"`
 	ProcessedDataBucket     string `required:"true" split_words:"true"`
 	TableName               string `required:"true" split_words:"true"`
+	AccountID               string `required:"true" split_words:"true"`
+	InputDataRoleArn        string `required:"true" split_words:"true"`
+	InputDataBucketName     string `required:"true" split_words:"true"`
+	InputDataTopicArn       string `required:"true" split_words:"true"`
 }
 
 // Setup parses the environment and constructs AWS and http clients on a cold Lambda start.
@@ -74,6 +81,7 @@ func Setup() {
 	})
 	glueClient = glue.New(awsSession)
 	athenaClient = athena.New(awsSession)
+	lambdaClient = lambda.New(awsSession)
 }
 
 // API provides receiver methods for each route handler.

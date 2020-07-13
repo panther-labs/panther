@@ -35,6 +35,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 )
 
@@ -128,7 +129,7 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 			zap.String("key", s3Object.S3ObjectKey))
 	}()
 
-	s3Client, _, err := getS3Client(s3Object)
+	s3Client, sourceType, err := getS3Client(s3Object)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to get S3 client for s3://%s/%s",
 			s3Object.S3Bucket, s3Object.S3ObjectKey)
@@ -179,6 +180,10 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 	} else {
 		err = &ErrUnsupportedFileType{Type: contentType}
 		return nil, err
+	}
+
+	if sourceType == models.IntegrationTypeSqs {
+		streamReader = NewMessageForwarderReader(streamReader)
 	}
 
 	dataStream = &common.DataStream{

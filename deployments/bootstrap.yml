@@ -332,7 +332,41 @@ Resources:
               Bool:
                 aws:SecureTransport: false
 
-  ProcessedData: # processed security logs
+  InputDataBucket: # contains data that are input to Panther log analysis
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      LoggingConfiguration: !If
+        - EnableAccessLogs
+        - DestinationBucketName: !If [ExternalAccessLogs, !Ref AccessLogsBucket, !Ref AuditLogs]
+          LogFilePrefix: !Sub panther-input-data-${AWS::AccountId}-${AWS::Region}/
+        - !Ref AWS::NoValue
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      # Short expiration because this data is sent to Panther.
+      LifecycleConfiguration:
+        Rules:
+          - Id: WeekExpiration
+            Status: Enabled
+            ExpirationInDays: 7
+            NoncurrentVersionExpirationInDays: 7
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      AccessControl: Private
+      VersioningConfiguration:
+        Status: Enabled
+      NotificationConfiguration:
+        TopicConfigurations:
+          - Topic: !Ref InputNotificationsTopic
+            Event: s3:ObjectCreated:*
+
+  ProcessedData: # processed security logs (JSON stage data)
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
@@ -845,6 +879,13 @@ Resources:
               - kms:GenerateDataKey
               - kms:Decrypt
             Resource: '*'
+          - Effect: Allow
+            Principal:
+              Service: s3.amazonaws.com
+            Action:
+              - kms:GenerateDataKey
+              - kms:Decrypt
+            Resource: '*'
 
   QueueEncryptionKeyAlias:
     Type: AWS::KMS::Alias
@@ -897,6 +938,37 @@ Resources:
             Action: sns:Subscribe
             Resource: !Ref ProcessedDataNotifications
 
+  InputNotificationsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: panther-boostrap-input-data-notifications
+      # <cfndoc>
+      # This topic triggers the log analysis flow for data integrations configured internally by Panther e.g. data by Amazon EventBridge.
+      # </cfndoc>
+      KmsMasterKeyId: !Ref QueueEncryptionKey
+
+  InputNotificationsTopicPolicy: # allow SNS subscriptions for S3 bucket
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref InputNotificationsTopic
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          # Reference: https://amzn.to/2ouFmhK
+          - Sid: AllowS3EventNotifications
+            Effect: Allow
+            Principal:
+              Service: s3.amazonaws.com
+            Action: sns:Publish
+            Resource: !Ref InputNotificationsTopic
+          - Sid: AllowSubscriptionToPantherInput
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+            Action: sns:Subscribe
+            Resource: !Ref InputNotificationsTopic
+
   AlarmNotifications:
     Condition: CreateAlarmSNSTopic
     Type: AWS::SNS::Topic
@@ -927,6 +999,9 @@ Outputs:
     Condition: IsDeployFromSource
     Description: S3 bucket name for Panther CloudFormation packaging
     Value: !Ref Source
+  InputDataBucket:
+    Description: S3 bucket name for bucket that will contain data that are meant to be processed by the log analysis
+    Value: !Ref InputDataBucket
 
   # Networking + elb
   SubnetOneId:
@@ -993,6 +1068,9 @@ Outputs:
   ProcessedDataTopicArn:
     Description: SNS topic ARN for processed log data notifications
     Value: !Ref ProcessedDataNotifications
+  InputDataTopicArn:
+    Description: SNS topic ARN for data that is sent as input to Log Analysis
+    Value: !Ref InputNotificationsTopic
   AlarmTopicArn:
     Description: SNS topic ARN for CloudWatch alarms
     Value: !If [CreateAlarmSNSTopic, !Ref AlarmNotifications, !Ref AlarmTopicArn]
