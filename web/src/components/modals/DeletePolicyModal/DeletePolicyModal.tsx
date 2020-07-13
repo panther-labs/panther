@@ -48,7 +48,6 @@ const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy, ...rest }
     update: async cache => {
       cache.evict({ id: cache.identify({ ...policy, __typename: 'PolicySummary' }) });
       cache.evict({ id: cache.identify({ ...policy, __typename: 'PolicyDetails' }) });
-      cache.gc();
     },
     onCompleted: () => {
       pushSnackbar({

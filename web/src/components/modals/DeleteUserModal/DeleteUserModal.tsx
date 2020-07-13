@@ -41,7 +41,6 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ user, ...rest }) => {
     },
     update: async cache => {
       cache.evict({ id: cache.identify(user) });
-      cache.gc();
     },
     onCompleted: async () => {
       pushSnackbar({

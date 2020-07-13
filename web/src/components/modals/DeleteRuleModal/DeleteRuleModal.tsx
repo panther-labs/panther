@@ -48,7 +48,6 @@ const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule, ...rest }) => {
     update: async cache => {
       cache.evict({ id: cache.identify({ ...rule, __typename: 'RuleSummary' }) });
       cache.evict({ id: cache.identify({ ...rule, __typename: 'RuleDetails' }) });
-      cache.gc();
     },
     onCompleted: () => {
       pushSnackbar({

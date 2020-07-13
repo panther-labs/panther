@@ -41,7 +41,6 @@ const DeleteDestinationModal: React.FC<DeleteDestinationModalProps> = ({
     },
     update: async cache => {
       cache.evict({ id: cache.identify(destination) });
-      cache.gc();
     },
     onCompleted: () => {
       pushSnackbar({

@@ -51,7 +51,6 @@ const DeleteGlobalModal: React.FC<DeleteGlobalPythonModuleModalProps> = ({
     },
     update: async cache => {
       cache.evict({ id: cache.identify(globalPythonModule) });
-      cache.gc();
     },
     onCompleted: () => {
       pushSnackbar({
