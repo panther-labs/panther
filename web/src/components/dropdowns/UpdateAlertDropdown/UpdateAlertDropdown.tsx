@@ -118,7 +118,7 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
   // Create our dropdown button
   const dropdownButton = React.useMemo(
     () => (
-      <DropdownButton as={AbstractButton} aria-label="Status Options">
+      <DropdownButton as={AbstractButton} outline="none" aria-label="Status Options">
         <AlertStatusBadge status={(status as AlertStatusesEnum) || AlertStatusesEnum.Open} />
       </DropdownButton>
     ),
