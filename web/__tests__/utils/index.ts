@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export * from './render';
 export * from './helpers';
+export { render } from './render';
+export * from '@testing-library/react';
 export { default as faker } from 'faker';

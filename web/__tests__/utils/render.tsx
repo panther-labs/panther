@@ -54,7 +54,7 @@ interface RenderOptions extends Omit<RtlRenderOptions, 'queries'> {
   mocks?: readonly MockedResponse[];
 }
 
-const render = (element: React.ReactElement, options: RenderOptions = {}) => {
+export const render = (element: React.ReactElement, options: RenderOptions = {}) => {
   const { initialRoute = '/', isAuthenticated = true, mocks, ...rtlOptions } = options;
 
   const history = createMemoryHistory({ initialEntries: [initialRoute] });
@@ -90,6 +90,3 @@ const render = (element: React.ReactElement, options: RenderOptions = {}) => {
     ...rtlRenderResult,
   };
 };
-
-export { render };
-export * from '@testing-library/react';
