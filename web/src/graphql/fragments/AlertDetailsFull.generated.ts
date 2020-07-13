@@ -35,6 +35,7 @@ export type AlertDetailsFull = Pick<
   | 'dedupString'
   | 'status'
   | 'updatedBy'
+  | 'updatedByTime'
 >;
 
 export const AlertDetailsFull = gql`
@@ -50,5 +51,6 @@ export const AlertDetailsFull = gql`
     dedupString
     status
     updatedBy
+    updatedByTime
   }
 `;

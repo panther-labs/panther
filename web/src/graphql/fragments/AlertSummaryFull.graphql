@@ -8,4 +8,5 @@ fragment AlertSummaryFull on AlertSummary {
   eventsMatched
   updateTime
   updatedBy
+  updatedByTime
 }

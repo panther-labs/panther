@@ -33,6 +33,7 @@ export type AlertSummaryFull = Pick<
   | 'eventsMatched'
   | 'updateTime'
   | 'updatedBy'
+  | 'updatedByTime'
 >;
 
 export const AlertSummaryFull = gql`
@@ -46,5 +47,6 @@ export const AlertSummaryFull = gql`
     eventsMatched
     updateTime
     updatedBy
+    updatedByTime
   }
 `;

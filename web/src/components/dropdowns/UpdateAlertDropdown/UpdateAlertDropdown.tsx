@@ -24,11 +24,15 @@ import {
   AbstractButton,
   DropdownMenu,
   DropdownItem,
+  Tooltip,
+  Flex,
+  Box,
 } from 'pouncejs';
 import { AlertStatusesEnum } from 'Generated/schema';
 import AlertStatusBadge from 'Components/AlertStatusBadge';
-import { extractErrorMessage } from 'Helpers/utils';
+import { extractErrorMessage, formatDatetime } from 'Helpers/utils';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
+import { useListUsers } from 'Pages/Users';
 import { useUpdateAlert } from './graphql/updateAlert.generated';
 
 interface UpdateAlertDropdownProps {
@@ -41,6 +45,16 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({
   alert,
 }) => {
   const { pushSnackbar } = useSnackbar();
+
+  const { data: listUsersData } = useListUsers({
+    onError: listUsersError => {
+      pushSnackbar({
+        variant: 'error',
+        title: `Failed to fetch some alert details`,
+        description: extractErrorMessage(listUsersError),
+      });
+    },
+  });
 
   const [updateAlert] = useUpdateAlert({
     variables: {
@@ -91,11 +105,55 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({
 
   const availableStatusesEntries = React.useMemo(() => Object.entries(AlertStatusesEnum), []);
 
-  return (
-    <Dropdown>
+  // Extract and map the specific userID -> user's name
+  const updatedByUser = React.useMemo(() => {
+    const user = listUsersData?.users?.filter(usr => usr.id === alert.updatedBy).pop();
+    return user ? `${user.givenName} ${user.familyName}` : null;
+  }, [listUsersData?.users, alert.updatedBy]);
+
+  // Format the timestamp
+  const updatedByTime = React.useMemo(() => formatDatetime(alert.updatedByTime), [
+    alert.updatedByTime,
+  ]);
+
+  // Create our dropdown button
+  const dropdownButton = React.useMemo(
+    () => (
       <DropdownButton as={AbstractButton} aria-label="Status Options">
         <AlertStatusBadge status={(status as AlertStatusesEnum) || AlertStatusesEnum.Open} />
       </DropdownButton>
+    ),
+    [alert, status]
+  );
+
+  // Create a wrapped dropdown button with a tooltip
+  const wrappedDropdownButton = React.useMemo(() => {
+    if (updatedByUser) {
+      return (
+        <Tooltip
+          content={
+            <Flex spacing={1}>
+              <Flex direction="column" spacing={1}>
+                <Box id="user-name-label">By:</Box>
+                <Box id="updated-by-timestamp-label">At:</Box>
+              </Flex>
+              <Flex direction="column" spacing={1} fontWeight="bold">
+                <Box aria-labelledby="user-name-label">{updatedByUser}</Box>
+                <Box aria-labelledby="updated-by-timestamp-label">{updatedByTime}</Box>
+              </Flex>
+            </Flex>
+          }
+        >
+          {dropdownButton}
+        </Tooltip>
+      );
+    }
+    return dropdownButton;
+  }, [alert, updatedByUser, updatedByTime]);
+
+  return (
+    <Dropdown>
+      {wrappedDropdownButton}
       <DropdownMenu>
         {availableStatusesEntries.map(([statusKey, statusVal], index) => (
           <DropdownItem

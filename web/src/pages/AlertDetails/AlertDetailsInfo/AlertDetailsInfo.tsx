@@ -19,7 +19,7 @@
 import { Box, Flex, SimpleGrid, Link, Heading, Tooltip, Icon, Card } from 'pouncejs';
 import urls from 'Source/urls';
 import React from 'react';
-import { AlertDetails, RuleDetails, AlertStatusesEnum } from 'Generated/schema';
+import { AlertDetails, RuleDetails } from 'Generated/schema';
 import Linkify from 'Components/Linkify';
 import { formatDatetime } from 'Helpers/utils';
 import { Link as RRLink } from 'react-router-dom';
@@ -116,13 +116,20 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
             </Box>
           </Flex>
         </Flex>
-        <Flex direction="column" align="left" spacing={2}>
-          <Box aria-describedby="alert-status">
-            <UpdateAlertDropdown
-              status={alert.status as AlertStatusesEnum}
-              alert={alert as AlertSummaryFull}
-            />
-          </Box>
+        <Flex direction="row" justify="flex-end" align="top" spacing={2}>
+          <Flex direction="column" align="center" spacing={4}>
+            <Box
+              color="gray-100"
+              fontSize="medium"
+              fontWeight="bold"
+              aria-describedby="alert-status-description"
+            >
+              Alert Status
+            </Box>
+            <Box aria-describedby="alert-status">
+              <UpdateAlertDropdown status={alert.status} alert={alert as AlertSummaryFull} />
+            </Box>
+          </Flex>
         </Flex>
       </SimpleGrid>
       <Card variant="dark" as="section" p={4} mb={4}>
