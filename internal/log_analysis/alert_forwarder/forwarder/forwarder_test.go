@@ -462,6 +462,91 @@ func TestHandleUpdateAlertDDBError(t *testing.T) {
 	assert.Error(t, handler.Do(newAlertDedupEvent, dedupEventWithUpdatedFields))
 }
 
+func TestHandleShouldNotCreateOrUpdateAlertIfThresholdNotReached(t *testing.T) {
+	ddbMock := &testutils.DynamoDBMock{}
+	sqsMock := &testutils.SqsMock{}
+	mockRoundTripper := &mockRoundTripper{}
+	httpClient := &http.Client{Transport: mockRoundTripper}
+	policyConfig := policiesclient.DefaultTransportConfig().
+		WithHost("host").
+		WithBasePath("path")
+	policyClient := policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
+	handler := &Handler{
+		AlertTable:       "alertsTable",
+		AlertingQueueURL: "queueUrl",
+		Cache:            NewCache(httpClient, policyClient),
+		DdbClient:        ddbMock,
+		SqsClient:        sqsMock,
+	}
+
+	ruleWithThreshold := &models.Rule{
+		ID:          "ruleId",
+		Description: "Description",
+		DisplayName: "DisplayName",
+		Severity:    "INFO",
+		Runbook:     "Runbook",
+		Tags:        []string{"Tag"},
+		Threshold:   1000,
+	}
+
+	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(ruleWithThreshold, http.StatusOK), nil).Once()
+	assert.NoError(t, handler.Do(oldAlertDedupEvent, newAlertDedupEvent))
+
+	ddbMock.AssertExpectations(t)
+	sqsMock.AssertExpectations(t)
+	mockRoundTripper.AssertExpectations(t)
+}
+
+func TestHandleShouldCreateAlertIfThresholdNowReached(t *testing.T) {
+	ddbMock := &testutils.DynamoDBMock{}
+	sqsMock := &testutils.SqsMock{}
+	mockRoundTripper := &mockRoundTripper{}
+	httpClient := &http.Client{Transport: mockRoundTripper}
+	policyConfig := policiesclient.DefaultTransportConfig().
+		WithHost("host").
+		WithBasePath("path")
+	policyClient := policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
+	handler := &Handler{
+		AlertTable:       "alertsTable",
+		AlertingQueueURL: "queueUrl",
+		Cache:            NewCache(httpClient, policyClient),
+		DdbClient:        ddbMock,
+		SqsClient:        sqsMock,
+	}
+
+	ruleWithThreshold := &models.Rule{
+		ID:          "ruleId",
+		Description: "Description",
+		DisplayName: "DisplayName",
+		Severity:    "INFO",
+		Runbook:     "Runbook",
+		Tags:        []string{"Tag"},
+		Threshold:   1000,
+	}
+
+	newAlertDedup := &AlertDedupEvent{
+		RuleID:              oldAlertDedupEvent.RuleID,
+		RuleVersion:         oldAlertDedupEvent.RuleVersion,
+		DeduplicationString: oldAlertDedupEvent.DeduplicationString,
+		AlertCount:          oldAlertDedupEvent.AlertCount + 1,
+		CreationTime:        time.Now().UTC(),
+		UpdateTime:          time.Now().UTC(),
+		EventCount:          1001,
+		LogTypes:            oldAlertDedupEvent.LogTypes,
+		GeneratedTitle:      oldAlertDedupEvent.GeneratedTitle,
+	}
+
+	ddbMock.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil).Once()
+	sqsMock.On("SendMessage", mock.Anything).Return(&sqs.SendMessageOutput{}, nil).Once()
+
+	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(ruleWithThreshold, http.StatusOK), nil).Once()
+	assert.NoError(t, handler.Do(oldAlertDedupEvent, newAlertDedup))
+
+	ddbMock.AssertExpectations(t)
+	sqsMock.AssertExpectations(t)
+	mockRoundTripper.AssertExpectations(t)
+}
+
 func generateResponse(body interface{}, httpCode int) *http.Response {
 	serializedBody, _ := jsoniter.MarshalToString(body)
 	return &http.Response{StatusCode: httpCode, Body: ioutil.NopCloser(strings.NewReader(serializedBody))}
