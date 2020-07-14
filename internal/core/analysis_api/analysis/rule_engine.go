@@ -25,6 +25,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	enginemodels "github.com/panther-labs/panther/api/gateway/analysis"
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	"github.com/panther-labs/panther/pkg/genericapi"
 	"github.com/pkg/errors"
 	"strconv"
 	"strings"
@@ -73,9 +74,10 @@ func (e *RuleEngine) TestRule(policy *models.TestPolicy) (models.TestPolicyResul
 	}
 
 	// Send the request to the rule-engine
-	engineOutput, err := e.Run(input)
+	var engineOutput enginemodels.RulesEngineOutput
+	err := genericapi.Invoke(e.lambdaClient, e.lambdaName, &input, &engineOutput)
 	if err != nil {
-		return testResults, errors.Wrap(err, "error calling rule engine")
+		return testResults, errors.Wrap(err, "error invoking rule engine")
 	}
 
 	// Translate rule engine output to test results.
@@ -113,26 +115,4 @@ func (e *RuleEngine) TestRule(policy *models.TestPolicy) (models.TestPolicyResul
 		}
 	}
 	return testResults, nil
-}
-
-func (e *RuleEngine) Run(input enginemodels.RulesEngineInput) (enginemodels.RulesEngineOutput, error) {
-	var engineOutput enginemodels.RulesEngineOutput
-	payload, err := jsoniter.Marshal(&input)
-	if err != nil {
-		return engineOutput, errors.Wrap(err, "failed to marshal input")
-	}
-
-	invokeOutput, err := e.lambdaClient.Invoke(&lambda.InvokeInput{FunctionName: &e.lambdaName, Payload: payload})
-	if err != nil {
-		return engineOutput, errors.Wrap(err, "failed to invoke the rule engine")
-	}
-	if invokeOutput.FunctionError != nil {
-		return engineOutput, errors.Errorf("failed to run policy:\n %s", *invokeOutput.FunctionError)
-	}
-
-	if err := jsoniter.Unmarshal(invokeOutput.Payload, &engineOutput); err != nil {
-		return engineOutput, errors.Wrap(err, "failed to unmarshal engine response")
-	}
-
-	return engineOutput, err
 }

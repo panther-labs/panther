@@ -19,7 +19,7 @@ package handlers
  */
 
 import (
-	"github.com/panther-labs/panther/internal/core/analysis"
+	"github.com/panther-labs/panther/internal/core/analysis_api/analysis"
 	"net/http"
 
 	"github.com/aws/aws-sdk-go/aws/session"
