@@ -45,7 +45,7 @@ export const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 // Generate a new secret code that contains metadata of issuer and user email
 export const formatSecretCode = (code: string, email: string): string => {
   const issuer = 'Panther';
-  return `otpauth://totp/${email}?secret=${code}&issuer=${issuer}`;
+  return `otpauth://totp/${issuer}:${email}?secret=${code}&issuer=${issuer}`;
 };
 
 export const getArnRegexForService = (awsService: string) => {
