@@ -19,13 +19,13 @@ package handlers
  */
 
 import (
+	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/panther-labs/panther/internal/core/analysis_api/analysis"
 	"net/http"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
-	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
@@ -80,6 +80,6 @@ func Setup() {
 			WithBasePath("/"+env.ComplianceAPIPath).
 			WithHost(env.ComplianceAPIHost))
 
-	policyEngine = analysis.NewPolicyEngine(awsSession, env.PolicyEngine)
-	ruleEngine = analysis.NewRuleEngine(awsSession, env.RulesEngine)
+	policyEngine = analysis.NewPolicyEngine(lambdaClient, env.PolicyEngine)
+	ruleEngine = analysis.NewRuleEngine(lambdaClient, env.RulesEngine)
 }

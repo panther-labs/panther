@@ -19,8 +19,6 @@ package analysis
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	jsoniter "github.com/json-iterator/go"
 	enginemodels "github.com/panther-labs/panther/api/gateway/analysis"
@@ -42,9 +40,9 @@ type PolicyEngine struct {
 	lambdaName   string
 }
 
-func NewPolicyEngine(sess *session.Session, lambdaName string) PolicyEngine {
+func NewPolicyEngine(lambdaClient lambdaiface.LambdaAPI, lambdaName string) PolicyEngine {
 	return PolicyEngine{
-		lambdaClient: lambda.New(sess),
+		lambdaClient: lambdaClient,
 		lambdaName:   lambdaName,
 	}
 }

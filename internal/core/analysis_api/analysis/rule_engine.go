@@ -19,8 +19,6 @@ package analysis
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	jsoniter "github.com/json-iterator/go"
 	enginemodels "github.com/panther-labs/panther/api/gateway/analysis"
@@ -37,9 +35,9 @@ type RuleEngine struct {
 	lambdaName   string
 }
 
-func NewRuleEngine(sess *session.Session, lambdaName string) RuleEngine {
+func NewRuleEngine(lambdaClient lambdaiface.LambdaAPI, lambdaName string) RuleEngine {
 	return RuleEngine{
-		lambdaClient: lambda.New(sess),
+		lambdaClient: lambdaClient,
 		lambdaName:   lambdaName,
 	}
 }
