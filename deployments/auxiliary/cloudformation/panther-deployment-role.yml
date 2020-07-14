@@ -176,8 +176,7 @@ Resources:
               - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/panther/*
           - Effect: Allow
             Action: firehose:*
-            Resource:
-              - !Sub arn:${AWS::Partition}:firehose:*:${AWS::AccountId}:deliverystream/panther-*
+            Resource: !Sub arn:${AWS::Partition}:firehose:*:${AWS::AccountId}:deliverystream/panther-*
           - Effect: Allow
             Action: kms:*
             Resource:
