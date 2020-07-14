@@ -52,7 +52,7 @@ func NewCache(httpClient *http.Client, policyClient *policiesclient.PantherAnaly
 func (c *RuleCache) Get(id, version string) (*models.Rule, error) {
 	value, ok := c.cache.Get(cacheKey(id, version))
 	if !ok {
-		rule, err := c.getRuleInfo(id, version)
+		rule, err := c.getRule(id, version)
 		if err != nil {
 			return nil, err
 		}
@@ -66,7 +66,7 @@ func cacheKey(id, version string) string {
 	return id + ":" + version
 }
 
-func (c *RuleCache) getRuleInfo(id, version string) (*models.Rule, error) {
+func (c *RuleCache) getRule(id, version string) (*models.Rule, error) {
 	zap.L().Debug("calling analysis API to retrieve information for rule", zap.String("ruleId", id), zap.String("ruleVersion", version))
 	rule, err := c.policyClient.Operations.GetRule(&policiesoperations.GetRuleParams{
 		RuleID:     id,

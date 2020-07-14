@@ -61,8 +61,7 @@ func (h *Handler) Do(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) (e
 		return errors.Wrap(err, "failed to get rule information")
 	}
 
-	if newAlertDedupEvent.EventCount < int64(newRule.Threshold) {
-		// If the number of matched events hasn't crossed the threshold for the rule, don't create a new alert.
+	if shouldIgnoreChange(newRule, newAlertDedupEvent) {
 		return nil
 	}
 
@@ -72,15 +71,22 @@ func (h *Handler) Do(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) (e
 	return h.updateExistingAlert(newAlertDedupEvent)
 }
 
+func shouldIgnoreChange(rule *models.Rule, alertDedupEvent *AlertDedupEvent) bool {
+	// If the number of matched events hasn't crossed the threshold for the rule, don't create a new alert.
+	return alertDedupEvent.EventCount < int64(rule.Threshold)
+}
+
 func needToCreateNewAlert(oldRule *models.Rule, oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) bool {
 	if oldAlertDedupEvent == nil {
+		// If this is the first time we see an alert deduplication entry, create an alert
 		return true
 	}
 	if oldAlertDedupEvent.AlertCount != newAlertDedupEvent.AlertCount {
+		// If this is an alert deduplication entry for a new alert, create the new alert
 		return true
 	}
 	if oldAlertDedupEvent.EventCount < int64(oldRule.Threshold) {
-		// If the previous alert dedup information was already above rule threshold, no need to generate a new alert (one was already generated)
+		// If the previous alert dedup information was not above rule threshold, we need to create a new alert
 		return true
 	}
 	return false
