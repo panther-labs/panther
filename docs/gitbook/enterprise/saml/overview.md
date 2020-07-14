@@ -18,7 +18,7 @@ Follow these step-by-step guides to enable SAML integration with one of the foll
 
 ## Features
 
-* **SP-initiated login flow** - When SAML is enabled, Panther will show a special link on the login page which will redirect to the IdP for login
+* **SP-initiated login flow** - When SAML is enabled, Panther will show a special link on the login page which, when clicked, will redirect to the IdP for login
 * **Auto-provisioning** - Panther SAML accounts are created on the first login; they do not need to be created in advance
 * **Role integration** - A single [Panther Role](../rbac.md) of your choice is assigned to SAML users by default, and you can change user roles after their first login
 
