@@ -29,7 +29,7 @@ Standard password-based logins are still supported after you enable SAML integra
 Panther does not support the following:
 
 * **IdP-initiated login flow** - Users cannot login from OneLogin or Okta directly, they must navigate to the Panther login page first
-* **SCIM** - Users deleted from the IdP can no longer login to Panther, but their Panther account is not automatically deleted
+* **SCIM** - Users deleted from the IdP are not automatically deleted from Panther (they just can't login anymore)
 * **Attribute mapping** - Panther roles cannot be assigned via SAML attributes
 
 These limitations stem from Amazon Cognito, the user management service Panther is built on.
