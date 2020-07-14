@@ -1,4 +1,4 @@
-// package analysis contains proxies to interact with the Panther analysis backends.
+// Package analysis contains proxies to interact with the Panther analysis backends.
 package analysis
 
 /**

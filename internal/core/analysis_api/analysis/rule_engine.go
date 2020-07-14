@@ -49,7 +49,7 @@ func (e *RuleEngine) TestRule(policy *models.TestPolicy) (models.TestPolicyResul
 	// Build the list of events to run the rule against
 	inputEvents := make([]enginemodels.Event, len(policy.Tests))
 	for i, test := range policy.Tests {
-		// TODO: Can swagger unmarshall this already?
+		// TODO(giorgosp): Can swagger unmarshall this already?
 		var attrs map[string]interface{}
 		if err := jsoniter.UnmarshalFromString(string(test.Resource), &attrs); err != nil {
 			return empty, errors.Wrapf(err, "tests[%d].event is not valid json", i)

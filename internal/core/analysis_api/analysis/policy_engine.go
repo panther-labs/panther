@@ -118,7 +118,7 @@ func makeTestSummary(policy *models.TestPolicy, engineOutput enginemodels.Policy
 func makeTestResources(policy *models.TestPolicy) ([]enginemodels.Resource, error) {
 	resources := make([]enginemodels.Resource, len(policy.Tests))
 	for i, test := range policy.Tests {
-		// TODO: Can swagger unmarshall this already?
+		// TODO(giorgosp): Can swagger unmarshall this already?
 		var attrs map[string]interface{}
 		if err := jsoniter.UnmarshalFromString(string(test.Resource), &attrs); err != nil {
 			return resources, errors.Wrapf(err, "tests[%d].resource is not valid json", i)
