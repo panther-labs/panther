@@ -114,7 +114,6 @@
     "express-static-gzip": "~2.0.6",
     "formik": "^2.1.3",
     "graphql": "^14.6.0",
-    "graphql-codegen-typescript-mock-data": "github:3nvi/graphql-codegen-typescript-mock-data#master",
     "history": "^4.10.1",
     "linkifyjs": "^2.1.9",
     "lodash-es": "^4.17.15",
