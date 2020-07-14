@@ -73,7 +73,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
      * is an array of values for all datapoints
      * Must be ordered
      */
-    const series = data.map(({ label, values }) => {
+    const series = data.map(({ label, values, timestamps }) => {
       return {
         name: label,
         type: 'line',
@@ -82,7 +82,12 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
         itemStyle: {
           color: LineColors[label],
         },
-        data: values,
+        data: values.map((v, i) => {
+          return {
+            name: label,
+            value: [timestamps[i], v],
+          };
+        }),
       };
     });
 
@@ -108,9 +113,12 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
       },
       xAxis: {
         // FIXME: This probably need to change to 'time' value with real data
-        type: 'category',
+        type: 'time',
         boundaryGap: 0,
         data: xAxisData,
+        splitLine: {
+          show: false,
+        },
       },
       yAxis: {
         type: 'value',
