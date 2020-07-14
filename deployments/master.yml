@@ -103,6 +103,12 @@ Parameters:
     Type: CommaDelimitedList
     Description: Comma-separated list of at most 3 LayerVersion ARNs to attach to each Lambda function (e.g. if you have a serverless monitoring service)
     Default: ''
+  LoadBalancerSecurityGroupCidr:
+    Type: String
+    Description: Allow HTTP(S) ingress access to the web app (ALB) security group from this IP block. Use 0.0.0.0/0 to allow unrestricted access
+    Default: 0.0.0.0/0
+    # cfn-lint suggested this regex pattern:
+    AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
   LogProcessorLambdaMemorySize:
     Type: Number
     Description: Log processor Lambda memory allocation. Increase to eliminate out-of-memory errors or reduce processing time (in exchange for higher cost)
@@ -151,6 +157,7 @@ Resources:
         Debug: !Ref Debug
         DeployFromSource: false
         EnableS3AccessLogs: !Ref EnableS3AccessLogs
+        LoadBalancerSecurityGroupCidr: !Ref LoadBalancerSecurityGroupCidr
         LogSubscriptionPrincipals: !Join [',', !Ref LogSubscriptionPrincipals]
         TracingMode: !Ref TracingMode
       Tags:
