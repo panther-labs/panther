@@ -67,9 +67,7 @@ func (Test) CI() {
 	}{
 		{"fmt", func() error { return fmtErr }},
 		{"go unit tests", func() error { return goUnitErr }},
-		{"build:lambda", build.lambda},
 		{"build:cfn", build.cfn},
-		{"build:tools", build.tools},
 		{"cfn lint", testCfnLint},
 		{"golangci-lint", testGoLint},
 		{"python unit tests", testPythonUnit},
@@ -78,6 +76,7 @@ func (Test) CI() {
 		{"mypy (python type checking)", testPythonMypy},
 		{"npm run eslint", testWebEslint},
 		{"npm run tsc", testWebTsc},
+		{"npm run test", testWebIntegration},
 		{"terraform validate", testTfValidate},
 	}
 	done := make(chan struct{})
@@ -386,6 +385,10 @@ func testWebEslint() error {
 
 func testWebTsc() error {
 	return sh.Run("npm", "run", "tsc")
+}
+
+func testWebIntegration() error {
+	return sh.Run("npm", "run", "test")
 }
 
 func testTfValidate() error {

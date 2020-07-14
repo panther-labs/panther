@@ -83,6 +83,12 @@ Parameters:
   UserPoolId:
     Type: String
     Description: Cognito user pool ID
+  InputDataBucket:
+    Type: String
+    Description: S3 bucket name for bucket that will contain data that are meant to be processed by the log analysis
+  InputDataTopicArn:
+    Type: String
+    Description: SNS topic ARN for data that is sent as input to Log Analysis
 
 Mappings:
   Alerts:
@@ -755,6 +761,10 @@ Resources:
           LOG_PROCESSOR_QUEUE_ARN: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-input-data-notifications-queue
           PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
           TABLE_NAME: !Ref IntegrationsTable
+          ACCOUNT_ID: !Ref AWS::AccountId
+          INPUT_DATA_ROLE_ARN: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/PantherInputDataLogProcessingRole-${AWS::Region}
+          INPUT_DATA_BUCKET_NAME: !Ref InputDataBucket
+          INPUT_DATA_TOPIC_ARN: !Ref InputDataTopicArn
       FunctionName: panther-source-api
       # <cfndoc>
       # The `panther-source-api` lambda manages Cloud Security and Log Analysis sources. This includes
@@ -845,6 +855,24 @@ Resources:
                 - s3:GetObject
                 - s3:PutObject
               Resource: !Sub arn:aws:s3:::${AthenaResultsBucket}*
+        - Id: CreateSqsQueues # Allows Lambda to manage SQS source queues - these are SQS queues users send data to for log analysis
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - sqs:CreateQueue
+                - sqs:DeleteQueue
+                - sqs:SetQueueAttributes
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-source-*
+        - Id: ConfigureMessageForwarderLambda
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - lambda:CreateEventSourceMapping
+                - lambda:ListEventSourceMappings
+                - lambda:DeleteEventSourceMapping
+              Resource: '*'
 
   SourceApiLogGroup:
     Type: AWS::Logs::LogGroup

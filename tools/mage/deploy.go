@@ -478,6 +478,8 @@ func deployCoreStack(settings *config.PantherConfig, outputs map[string]string) 
 		"SqsKeyId":                   outputs["QueueEncryptionKeyId"],
 		"TracingMode":                settings.Monitoring.TracingMode,
 		"UserPoolId":                 outputs["UserPoolId"],
+		"InputDataBucket":            outputs["InputDataBucket"],
+		"InputDataTopicArn":          outputs["InputDataTopicArn"],
 	})
 	return err
 }
@@ -513,6 +515,8 @@ func deployLogAnalysisStack(settings *config.PantherConfig, outputs map[string]s
 		"SqsKeyId":                     outputs["QueueEncryptionKeyId"],
 		"TablesSignature":              tablesSignature,
 		"TracingMode":                  settings.Monitoring.TracingMode,
+		"InputDataBucket":              outputs["InputDataBucket"],
+		"InputDataTopicArn":            outputs["InputDataTopicArn"],
 	})
 	return err
 }

@@ -40,23 +40,23 @@ type SqsPolicyStatement struct {
 	Principal map[string]string `json:"Principal"`
 	Action    string            `json:"Action"`
 	Resource  string            `json:"Resource"`
-	Condition interface{}       `json:"Condition"`
+	Condition interface{}       `json:"Condition,omitempty"`
 }
 
 const (
-	policyAttributeName = "Policy"
+	PolicyAttributeName = "Policy"
 )
 
 func GetQueuePolicy(sqsClient sqsiface.SQSAPI, queueURL string) (*SqsPolicy, error) {
 	getAttributesInput := &sqs.GetQueueAttributesInput{
-		AttributeNames: aws.StringSlice([]string{policyAttributeName}),
-		QueueUrl:       aws.String(queueURL),
+		AttributeNames: aws.StringSlice([]string{PolicyAttributeName}),
+		QueueUrl:       &queueURL,
 	}
 	attributes, err := sqsClient.GetQueueAttributes(getAttributesInput)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get queue attributes")
 	}
-	policyAttribute := attributes.Attributes[policyAttributeName]
+	policyAttribute := attributes.Attributes[PolicyAttributeName]
 	if len(aws.StringValue(policyAttribute)) == 0 {
 		return &SqsPolicy{
 			Version:    "2008-10-17",
@@ -71,25 +71,24 @@ func GetQueuePolicy(sqsClient sqsiface.SQSAPI, queueURL string) (*SqsPolicy, err
 	return &policy, nil
 }
 
-func SetQueuePolicy(sqsClient sqsiface.SQSAPI, queueURL string, policy *SqsPolicy) error {
-	policyAttribute := aws.String("")
+func SetQueuePolicy(sqsClient sqsiface.SQSAPI, queueURL string, policy *SqsPolicy) (err error) {
+	var marshaledPolicy string
 	if len(policy.Statements) > 0 {
-		marshaledPolicy, err := jsoniter.MarshalToString(policy)
+		marshaledPolicy, err = jsoniter.MarshalToString(policy)
 		if err != nil {
-			zap.L().Error("failed to serialize policy", zap.Error(errors.WithStack(err)))
-			return errors.WithStack(err)
+			return errors.Wrap(err, "failed to serialize policy")
 		}
-		policyAttribute = aws.String(marshaledPolicy)
 	}
+	zap.L().Debug("setting SQS queue policy", zap.String("queueURL", queueURL), zap.String("policy", marshaledPolicy))
 
 	setAttributesInput := &sqs.SetQueueAttributesInput{
-		QueueUrl: aws.String(queueURL),
+		QueueUrl: &queueURL,
 		Attributes: map[string]*string{
-			policyAttributeName: policyAttribute,
+			PolicyAttributeName: &marshaledPolicy,
 		},
 	}
 
-	_, err := sqsClient.SetQueueAttributes(setAttributesInput)
+	_, err = sqsClient.SetQueueAttributes(setAttributesInput)
 	if err != nil {
 		return errors.Wrap(err, "failed to set queue attributes")
 	}

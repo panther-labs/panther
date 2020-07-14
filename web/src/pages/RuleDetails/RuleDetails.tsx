@@ -27,6 +27,8 @@ import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import TablePlaceholder from 'Components/TablePlaceholder';
+import ListAlertsPageEmptyDataFallback from 'Pages/ListAlerts/EmptyDataFallback/EmptyDataFallback';
+
 import RuleDetailsPageSkeleton from './Skeleton';
 import RuleDetailsInfo from './RuleDetailsInfo';
 import { useRuleDetails } from './graphql/ruleDetails.generated';
@@ -115,7 +117,9 @@ const RuleDetailsPage = () => {
     );
   }
 
+  const hasAnyAlerts = listAlertsData?.alerts?.alertSummaries?.length > 0;
   const hasMoreAlerts = !!listAlertsData.alerts.lastEvaluatedKey;
+
   return (
     <article>
       <ErrorBoundary>
@@ -124,8 +128,11 @@ const RuleDetailsPage = () => {
       <Box mt={5} mb={6}>
         <Panel title="Alerts">
           <ErrorBoundary>
-            <RuleDetailsAlertsTable alerts={listAlertsData.alerts.alertSummaries} />
-            {hasMoreAlerts && (
+            {hasAnyAlerts && (
+              <RuleDetailsAlertsTable alerts={listAlertsData.alerts.alertSummaries} />
+            )}
+            {!hasAnyAlerts && <ListAlertsPageEmptyDataFallback />}
+            {hasMoreAlerts && hasAnyAlerts && (
               <Box mt={8} ref={sentinelRef}>
                 <TablePlaceholder rowCount={10} rowHeight={6} />
               </Box>
