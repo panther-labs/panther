@@ -42,30 +42,15 @@ var (
 )
 
 // PutIntegration adds a set of new integrations in a batch.
-func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.SourceIntegration, error) {
-	// Validate the new integration
-	reason, passing, err := evaluateIntegrationFunc(api, &models.CheckIntegrationInput{
-		AWSAccountID:      input.AWSAccountID,
-		IntegrationType:   input.IntegrationType,
-		IntegrationLabel:  input.IntegrationLabel,
-		EnableCWESetup:    input.CWEEnabled,
-		EnableRemediation: input.RemediationEnabled,
-		S3Bucket:          input.S3Bucket,
-		S3Prefix:          input.S3Prefix,
-		KmsKey:            input.KmsKey,
-	})
-	if err != nil {
-		return nil, putIntegrationInternalError
-	}
-	if !passing {
-		zap.L().Warn("PutIntegration: resource has a misconfiguration",
-			zap.Error(err),
-			zap.String("reason", reason),
-			zap.Any("input", input))
-		return nil, &genericapi.InvalidInputError{
-			Message: fmt.Sprintf("source %s did not pass configuration check because of %s",
-				input.IntegrationLabel, reason),
+func (api API) PutIntegration(input *models.PutIntegrationInput) (newIntegration *models.SourceIntegration, err error) {
+	defer func() {
+		if err != nil {
+			zap.L().Error("failed to put integration", zap.Error(err))
 		}
+	}()
+
+	if err := api.validateIntegration(input); err != nil {
+		return nil, err
 	}
 
 	// Filter out existing integrations
@@ -73,41 +58,25 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 		return nil, err
 	}
 
-	// Get ready to add appropriate permissions to the SQS queue
-	permissionAdded := false
-	defer func() {
-		if err != nil {
-			zap.L().Error("failed to put integration", zap.Error(err))
-			// In case there has been any error, try to undo granting of permissions to SQS queue.
-			if permissionAdded {
-				if undoErr := DisableExternalSnsTopicSubscription(input.AWSAccountID); undoErr != nil {
-					zap.L().Error("failed to remove SQS permission for integration. SQS queue has additional permissions that have to be removed manually",
-						zap.Error(undoErr),
-						zap.Error(err))
-				}
-			}
-		}
-	}()
+	// Generate the new integration from the input
+	newIntegration = generateNewIntegration(input)
 
-	switch input.IntegrationType {
-	case models.IntegrationTypeAWS3:
-		permissionAdded, err = AllowExternalSnsTopicSubscription(input.AWSAccountID)
-		if err != nil {
-			zap.L().Error("Failed to add permissions to log processor queue", zap.Error(errors.WithStack(err)))
-			return nil, putIntegrationInternalError
-		}
-		err = addGlueTables(input.LogTypes)
-		if err != nil {
-			zap.L().Error("Failed to add glue tables to glue catalog", zap.Error(errors.WithStack(err)))
-			return nil, putIntegrationInternalError
-		}
+	item := integrationToItem(newIntegration)
+
+	// First creating table - this action is idempotent. In case we succeed here and
+	// fail at a later stage, in case of retry this will succeed again.
+	if err = createTables(newIntegration); err != nil {
+		err = errors.Wrap(err, "Failed to create Glue tables")
+		return nil, putIntegrationInternalError
 	}
 
-	// Generate the new integration
-	newIntegration := generateNewIntegration(input)
+	// Try to setupExternalResources
+	if err := setupExternalResources(newIntegration); err != nil {
+		return nil, err
+	}
 
 	// Write to DynamoDB
-	if err = dynamoClient.PutItem(integrationToItem(newIntegration)); err != nil {
+	if err = dynamoClient.PutItem(item); err != nil {
 		err = errors.Wrap(err, "Failed to store source integration in DDB")
 		return nil, putIntegrationInternalError
 	}
@@ -119,7 +88,58 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (*models.Source
 			return nil, putIntegrationInternalError
 		}
 	}
+
 	return newIntegration, nil
+}
+
+func setupExternalResources(integration *models.SourceIntegration) error {
+	switch integration.IntegrationType {
+	case models.IntegrationTypeAWS3:
+		if err := AllowExternalSnsTopicSubscription(integration.AWSAccountID); err != nil {
+			return errors.Wrap(err, "failed to add permissions to log processor queue")
+		}
+	case models.IntegrationTypeSqs:
+		if err := AllowInputDataBucketSubscription(); err != nil {
+			return errors.Wrap(err, "failed to enable subscription for input bucket")
+		}
+		if err := CreateSourceSqsQueue(integration.IntegrationID,
+			integration.SqsConfig.AllowedPrincipals, integration.SqsConfig.AllowedSourceArns); err != nil {
+			return errors.Wrap(err, "failed to create input SQS queue")
+		}
+		if err := AddSourceAsLambdaTrigger(integration.IntegrationID); err != nil {
+			return errors.Wrap(err, "failed to configure queue as lambda source")
+		}
+	}
+	return nil
+}
+
+func (api API) validateIntegration(input *models.PutIntegrationInput) error {
+	// Validate the new integration
+	reason, passing, err := evaluateIntegrationFunc(api, &models.CheckIntegrationInput{
+		AWSAccountID:      input.AWSAccountID,
+		IntegrationType:   input.IntegrationType,
+		IntegrationLabel:  input.IntegrationLabel,
+		EnableCWESetup:    input.CWEEnabled,
+		EnableRemediation: input.RemediationEnabled,
+		S3Bucket:          input.S3Bucket,
+		S3Prefix:          input.S3Prefix,
+		KmsKey:            input.KmsKey,
+		SqsConfig:         input.SqsConfig,
+	})
+	if err != nil {
+		return putIntegrationInternalError
+	}
+	if !passing {
+		zap.L().Warn("PutIntegration: resource has a misconfiguration",
+			zap.Error(err),
+			zap.String("reason", reason),
+			zap.Any("input", input))
+		return &genericapi.InvalidInputError{
+			Message: fmt.Sprintf("source %s did not pass configuration check because of %s",
+				input.IntegrationLabel, reason),
+		}
+	}
+	return nil
 }
 
 func (api API) integrationAlreadyExists(input *models.PutIntegrationInput) error {
@@ -149,6 +169,13 @@ func (api API) integrationAlreadyExists(input *models.PutIntegrationInput) error
 						Message: fmt.Sprintf("Log source for account %s with label %s already onboarded",
 							input.AWSAccountID,
 							input.IntegrationLabel),
+					}
+				}
+			case models.IntegrationTypeSqs:
+				if existingIntegration.IntegrationLabel == input.IntegrationLabel {
+					// Sqs sources need to have different labels
+					return &genericapi.InvalidInputError{
+						Message: fmt.Sprintf("Integration with label %s already exists", input.IntegrationLabel),
 					}
 				}
 			}
@@ -230,8 +257,31 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 		metadata.LogTypes = input.LogTypes
 		metadata.StackName = getStackName(input.IntegrationType, input.IntegrationLabel)
 		metadata.LogProcessingRole = generateLogProcessingRoleArn(input.AWSAccountID, input.IntegrationLabel)
+	case models.IntegrationTypeSqs:
+		metadata.SqsConfig = &models.SqsConfig{
+			S3Bucket:          env.InputDataBucketName,
+			S3Prefix:          models.SqsS3Prefix,
+			LogProcessingRole: env.InputDataRoleArn,
+			AllowedPrincipals: input.SqsConfig.AllowedPrincipals,
+			AllowedSourceArns: input.SqsConfig.AllowedSourceArns,
+			LogTypes:          input.SqsConfig.LogTypes,
+			QueueURL:          SourceSqsQueueURL(metadata.IntegrationID),
+		}
 	}
 	return &models.SourceIntegration{
 		SourceIntegrationMetadata: metadata,
 	}
+}
+
+func createTables(integration *models.SourceIntegration) (err error) {
+	switch integration.IntegrationType {
+	case models.IntegrationTypeAWS3:
+		err = addGlueTables(integration.LogTypes)
+	case models.IntegrationTypeSqs:
+		err = addGlueTables(integration.SqsConfig.LogTypes)
+	}
+	if err != nil {
+		return errors.Wrap(err, "failed to create Glue tables")
+	}
+	return nil
 }

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Flex, Link, FormHelperText, useTheme } from 'pouncejs';
+import { Box, Flex, Link, FormHelperText, useTheme, AbstractButton, Text } from 'pouncejs';
 import { Field, Form, Formik } from 'formik';
 import QRCode from 'qrcode.react';
 import * as React from 'react';
@@ -43,6 +43,8 @@ const validationSchema = Yup.object().shape({
 export const TotpForm: React.FC = () => {
   const theme = useTheme();
   const [code, setCode] = React.useState('');
+  const [showCode, setShowCode] = React.useState(false);
+
   const { userInfo, verifyTotpSetup, requestTotpSecretCode } = useAuth();
 
   React.useEffect(() => {
@@ -70,10 +72,22 @@ export const TotpForm: React.FC = () => {
             bgColor={theme.colors['navyblue-800']}
           />
         </Flex>
+        <Text color="gray-300" textAlign="center" my={2}>
+          Or enter the code manually:
+        </Text>
+        <Box justify="center" textAlign="center" mb={6}>
+          {showCode ? (
+            <Text color="gray-300" my={2}>
+              {code}
+            </Text>
+          ) : (
+            <AbstractButton onClick={() => setShowCode(true)}>Show Code</AbstractButton>
+          )}
+        </Box>
         <Box mb={4}>
           <Field
-            autoFocus
             as={FormikTextInput}
+            maxLength="6"
             placeholder="The 6-digit MFA code"
             name="mfaCode"
             autoComplete="off"

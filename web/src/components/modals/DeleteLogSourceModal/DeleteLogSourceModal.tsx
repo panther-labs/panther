@@ -40,14 +40,7 @@ const DeleteLogSourceModal: React.FC<DeleteLogSourceModalProps> = ({
     },
     optimisticResponse: () => ({ deleteLogIntegration: true }),
     update: cache => {
-      cache.modify({
-        fields: {
-          listLogIntegrations: (queryData, { toReference }) => {
-            const deletedSource = toReference(source);
-            return queryData.filter(({ __ref }) => __ref !== deletedSource.__ref);
-          },
-        },
-      });
+      cache.evict({ id: cache.identify(source) });
     },
     onCompleted: () => {
       pushSnackbar({

@@ -60,6 +60,7 @@ const MfaForm: React.FC = () => {
           <Field
             autoFocus
             as={FormikTextInput}
+            maxLength="6"
             placeholder="The 6-digit MFA code"
             name="mfaCode"
             label="Code"
