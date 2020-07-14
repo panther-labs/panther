@@ -68,17 +68,8 @@ jobs:
           name: Run test suite
           command: mage test:ci
 
-  npm_audit:
-    executor: panther-buildpack
-    steps:
-      - checkout
-      - run:
-          name: Audit NPM packages
-          command: npm audit --production # does not require installing packages first
-
 workflows:
   version: 2
   pipeline:
     jobs:
       - mage_test_ci
-      - npm_audit
