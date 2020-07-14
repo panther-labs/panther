@@ -88,6 +88,7 @@ var (
 )
 
 func TestHandleStoreAndSendNotification(t *testing.T) {
+	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
 	mockRoundTripper := &mockRoundTripper{}
@@ -153,6 +154,7 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 }
 
 func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
+	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
 	mockRoundTripper := &mockRoundTripper{}
@@ -235,6 +237,7 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 }
 
 func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
+	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
 	mockRoundTripper := &mockRoundTripper{}
@@ -311,6 +314,7 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 }
 
 func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
+	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
 	mockRoundTripper := &mockRoundTripper{}
@@ -376,6 +380,7 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 }
 
 func TestHandleUpdateAlert(t *testing.T) {
+	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
 	mockRoundTripper := &mockRoundTripper{}
@@ -429,6 +434,7 @@ func TestHandleUpdateAlert(t *testing.T) {
 }
 
 func TestHandleUpdateAlertDDBError(t *testing.T) {
+	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
 	mockRoundTripper := &mockRoundTripper{}
@@ -463,6 +469,7 @@ func TestHandleUpdateAlertDDBError(t *testing.T) {
 }
 
 func TestHandleShouldNotCreateOrUpdateAlertIfThresholdNotReached(t *testing.T) {
+	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
 	mockRoundTripper := &mockRoundTripper{}
@@ -498,6 +505,7 @@ func TestHandleShouldNotCreateOrUpdateAlertIfThresholdNotReached(t *testing.T) {
 }
 
 func TestHandleShouldCreateAlertIfThresholdNowReached(t *testing.T) {
+	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
 	mockRoundTripper := &mockRoundTripper{}
