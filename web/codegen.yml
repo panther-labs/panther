@@ -50,19 +50,10 @@ generates:
         AWSDateTime: string
         AWSJSON: string
 
-  web/__tests__/__mocks__/resources.generated.ts:
+  web/__tests__/__mocks__/builders.generated.ts:
     plugins:
-      - graphql-codegen-typescript-mock-data:
+      - web/__tests__/codegen/mockGraphqlResourcesPlugin.js:
           typesFile: ../../__generated__/schema.tsx
-          addTypename: true
-          typenames: keep
-          prefix: mock
-          scalars:
-            AWSTimestamp: unix_time
-            AWSEmail: email
-            AWSPhone: phone
-            AWSDateTime: date
-            AWSJSON: string
 
   web/src/:
     documents: web/**/*.graphql

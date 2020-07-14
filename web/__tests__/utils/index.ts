@@ -16,11 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as mockResources from '../__mocks__/resources.generated';
-
 export * from '@testing-library/react';
 export { default as faker } from 'faker';
 
 export * from './helpers';
 export { render } from './render';
-export { mockResources };
+export * from '../__mocks__/builders.generated';
