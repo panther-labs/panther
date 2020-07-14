@@ -42,6 +42,7 @@ Parameters:
     Type: String
     Description: Company name displayed in Settings > General
     Default: AwesomeCo
+    MinLength: 1
   CustomDomain:
     Type: String
     Description: If CertificateArn is registered for a custom domain (e.g. 'example.com'), list that here.
@@ -73,14 +74,23 @@ Parameters:
   FirstUserEmail:
     Type: String
     Description: Initial Panther user - email address
+    # There is no perfect email regex, but this is good enough 99% of the time.
+    # https://www.regular-expressions.info/email.html
+    #
+    # The goal is to fail early if the user provides an invalid email, otherwise the deploy will
+    # fail at the very last step (onboarding the first user in the web stack), and the entire thing
+    # will rollback.
+    AllowedPattern: '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
   FirstUserFamilyName:
     Type: String
     Description: Initial Panther user - last name
     Default: Community
+    MinLength: 1
   FirstUserGivenName:
     Type: String
     Description: Initial Panther user - first name
     Default: PantherUser
+    MinLength: 1
   ImageRegistry:
     Type: String
     Description: Docker image registry which stores web app images. Used only when deploying from source and otherwise defaults to the Panther public account.
