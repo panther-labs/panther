@@ -74,7 +74,13 @@ Parameters:
   FirstUserEmail:
     Type: String
     Description: Initial Panther user - email address
-    MinLength: 5 # a@b.co
+    # There is no perfect email regex, but this is good enough 99% of the time.
+    # https://www.regular-expressions.info/email.html
+    #
+    # The goal is to fail early if the user provides an invalid email, otherwise the deploy will
+    # fail at the very last step (onboarding the first user in the web stack), and the entire thing
+    # will rollback.
+    AllowedPattern: '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
   FirstUserFamilyName:
     Type: String
     Description: Initial Panther user - last name
