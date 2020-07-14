@@ -76,6 +76,7 @@ func (Test) CI() {
 		{"mypy (python type checking)", testPythonMypy},
 		{"npm run eslint", testWebEslint},
 		{"npm run tsc", testWebTsc},
+		{"npm run test", testWebIntegration},
 		{"terraform validate", testTfValidate},
 	}
 	done := make(chan struct{})
@@ -384,6 +385,10 @@ func testWebEslint() error {
 
 func testWebTsc() error {
 	return sh.Run("npm", "run", "tsc")
+}
+
+func testWebIntegration() error {
+	return sh.Run("npm", "run", "test")
 }
 
 func testTfValidate() error {

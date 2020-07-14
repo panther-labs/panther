@@ -17,39 +17,30 @@
  */
 
 import React from 'react';
-import { SnackbarProvider, ThemeProvider } from 'pouncejs';
 import { Router } from 'react-router-dom';
 import Routes from 'Source/routes';
 import { History } from 'history';
 import { ApolloProvider } from '@apollo/client';
 import { AuthProvider } from 'Components/utils/AuthContext';
-import { ModalProvider, ModalManager } from 'Components/utils/Modal';
-import { SidesheetProvider, SidesheetManager } from 'Components/utils/Sidesheet';
+import UIProviders from 'Components/utils/UIProviders';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { createApolloClient } from 'Source/apollo';
 
 interface AppProps {
   history: History;
 }
+
 const App: React.FC<AppProps> = ({ history }) => {
   const client = React.useMemo(() => createApolloClient(history), [history]);
   return (
     <ErrorBoundary fallbackStrategy="passthrough">
       <ApolloProvider client={client}>
         <AuthProvider>
-          <ThemeProvider>
-            <Router history={history}>
-              <SidesheetProvider>
-                <ModalProvider>
-                  <SnackbarProvider>
-                    <Routes />
-                    <ModalManager />
-                    <SidesheetManager />
-                  </SnackbarProvider>
-                </ModalProvider>
-              </SidesheetProvider>
-            </Router>
-          </ThemeProvider>
+          <Router history={history}>
+            <UIProviders>
+              <Routes />
+            </UIProviders>
+          </Router>
         </AuthProvider>
       </ApolloProvider>
     </ErrorBoundary>

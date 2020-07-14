@@ -55,8 +55,8 @@ generates:
     presetConfig:
       baseTypesPath: ../__generated__/schema.tsx
     plugins:
-      - typescript-operations:
-      - typescript-react-apollo:
+      - typescript-operations
+      - typescript-react-apollo
       - add: |
           /**
            * Panther is a Cloud-Native SIEM for the Modern Security Team.
