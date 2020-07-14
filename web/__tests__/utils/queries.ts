@@ -22,7 +22,7 @@ import { queryHelpers, buildQueries, Matcher, MatcherOptions } from '@testing-li
 const buildQueryForAriaAttribute = (ariaAttribute: string) => {
   const queryAllByAriaAttribute = (...args) =>
     queryHelpers.queryAllByAttribute(
-      'ariaAttribute',
+      ariaAttribute,
       ...(args as [HTMLElement, Matcher, MatcherOptions])
     );
 
