@@ -16,9 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export const LineColors = {
-  'AWS.Cloudtrail': '#FDCA00',
-  'AWS.ALB': '#4e33e3',
-  'AWS.VPCFlow': '#dd4444',
-  'AWS.S3': '#92cb3e',
-};
+export { default } from './EventsByLogType';
