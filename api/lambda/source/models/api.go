@@ -44,8 +44,8 @@ type LambdaInput struct {
 
 // CheckIntegrationInput is used to check the health of a potential configuration.
 type CheckIntegrationInput struct {
-	AWSAccountID     string `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
-	IntegrationType  string `json:"integrationType" validate:"required,oneof=aws-scan aws-s3"`
+	AWSAccountID     string `genericapi:"redact" json:"awsAccountId" validate:"omitempty,len=12,numeric"`
+	IntegrationType  string `json:"integrationType" validate:"oneof=aws-scan aws-s3 aws-sqs"`
 	IntegrationLabel string `json:"integrationLabel" validate:"required,integrationLabel"`
 
 	// Checks for cloudsec integrations
@@ -56,6 +56,9 @@ type CheckIntegrationInput struct {
 	S3Bucket string `json:"s3Bucket"`
 	S3Prefix string `json:"s3Prefix"`
 	KmsKey   string `json:"kmsKey"`
+
+	// Checks for Sqs configuration
+	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
 }
 
 //
@@ -70,7 +73,7 @@ type PutIntegrationInput struct {
 // PutIntegrationSettings are all the settings for the new integration.
 type PutIntegrationSettings struct {
 	IntegrationLabel   string   `json:"integrationLabel" validate:"required,integrationLabel,excludesall='<>&\""`
-	IntegrationType    string   `json:"integrationType" validate:"required,oneof=aws-scan aws-s3"`
+	IntegrationType    string   `json:"integrationType" validate:"oneof=aws-scan aws-s3 aws-sqs"`
 	UserID             string   `json:"userId" validate:"required,uuid4"`
 	AWSAccountID       string   `genericapi:"redact" json:"awsAccountId" validate:"omitempty,len=12,numeric"`
 	CWEEnabled         *bool    `json:"cweEnabled"`
@@ -80,15 +83,17 @@ type PutIntegrationSettings struct {
 	S3Prefix           string   `json:"s3Prefix" validate:"omitempty,min=1"`
 	KmsKey             string   `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
 	LogTypes           []string `json:"logTypes" validate:"omitempty,min=1"`
+
+	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
 }
 
 //
 // ListIntegrations: Used by the Scheduler to find integrations to scan
 //
 
-// ListIntegrationsInput allows filtering by the IntegrationType or Enabled fields
+// ListIntegrationsInput allows filtering by the IntegrationType field
 type ListIntegrationsInput struct {
-	IntegrationType *string `json:"integrationType" validate:"omitempty,oneof=aws-scan aws-s3"`
+	IntegrationType *string `json:"integrationType" validate:"omitempty,oneof=aws-scan aws-s3 aws-sqs"`
 }
 
 // UpdateIntegrationSettingsInput is used to update integration settings.
@@ -102,6 +107,8 @@ type UpdateIntegrationSettingsInput struct {
 	S3Prefix           string   `json:"s3Prefix" validate:"omitempty,min=1"`
 	KmsKey             string   `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
 	LogTypes           []string `json:"logTypes" validate:"omitempty,min=1"`
+
+	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
 }
 
 // DeleteIntegrationInput is used to delete a specific item from the database.
@@ -147,7 +154,7 @@ type UpdateIntegrationLastScanStartInput struct {
 
 // UpdateIntegrationLastScanEndInput is used to update scan information at the end of a scan.
 type UpdateIntegrationLastScanEndInput struct {
-	ScanStatus           string    `json:"scanStatus" validate:"required,oneof=ok error scanning"`
+	ScanStatus           string    `json:"scanStatus" validate:"oneof=ok error scanning"`
 	IntegrationID        string    `json:"integrationId" validate:"required,uuid4"`
 	LastScanEndTime      time.Time `json:"lastScanEndTime" validate:"required"`
 	EventStatus          string    `json:"eventStatus"`
