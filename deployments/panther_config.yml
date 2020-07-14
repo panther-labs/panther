@@ -22,6 +22,10 @@ Infra:
   # For example, this could be a serverless monitoring/security service.
   BaseLayerVersionArns: ''
 
+  # Allow HTTP(S) ingress access to the web app (ALB) security group from this IP block.
+  # Use 0.0.0.0/0 to allow unrestricted access
+  LoadBalancerSecurityGroupCidr: 0.0.0.0/0
+
   # Lambda functions scale memory and CPU together.
   # Those with the smallest memory are slower and cheaper.
   # Those with the larger memory are faster and more expensive.

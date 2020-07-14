@@ -10,7 +10,7 @@ boto3==1.12.49
 botocore==1.15.49
 certifi==2020.6.20
 cfn-flip==1.2.3
-cfn-lint==0.33.1
+cfn-lint==0.33.2
 chardet==3.0.4
 chevron==0.13.1
 click==7.1.2
