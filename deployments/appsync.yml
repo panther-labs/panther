@@ -1612,7 +1612,7 @@ Resources:
       DataSourceName: !GetAtt AlertsAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("requesterId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.sub))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",

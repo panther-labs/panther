@@ -259,7 +259,7 @@ func filterByStatus(filter *expression.ConditionBuilder, input *models.ListAlert
 			multiFilter = expression.
 				Or(
 					expression.AttributeNotExists(expression.Name(StatusKey)),
-					expression.Equal(expression.Name(StatusKey), expression.Value(models.EmptyStatus)),
+					expression.Equal(expression.Name(StatusKey), expression.Value("")),
 				)
 		} else {
 			multiFilter = expression.Name(StatusKey).Equal(expression.Value(*input.Status[0]))
@@ -272,7 +272,7 @@ func filterByStatus(filter *expression.ConditionBuilder, input *models.ListAlert
 				multiFilter = multiFilter.
 					Or(
 						expression.AttributeNotExists(expression.Name(StatusKey)),
-						expression.Equal(expression.Name(StatusKey), expression.Value(models.EmptyStatus)),
+						expression.Equal(expression.Name(StatusKey), expression.Value("")),
 					)
 			} else {
 				multiFilter = multiFilter.Or(expression.Name(StatusKey).Equal(expression.Value(*statusSetting)))

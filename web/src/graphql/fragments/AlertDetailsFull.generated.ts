@@ -34,8 +34,8 @@ export type AlertDetailsFull = Pick<
   | 'events'
   | 'dedupString'
   | 'status'
-  | 'updatedBy'
-  | 'updatedByTime'
+  | 'lastUpdatedBy'
+  | 'lastUpdatedByTime'
 >;
 
 export const AlertDetailsFull = gql`
@@ -50,7 +50,7 @@ export const AlertDetailsFull = gql`
     events
     dedupString
     status
-    updatedBy
-    updatedByTime
+    lastUpdatedBy
+    lastUpdatedByTime
   }
 `;

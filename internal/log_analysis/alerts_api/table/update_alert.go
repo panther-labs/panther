@@ -75,14 +75,14 @@ func createUpdateBuilder(input *models.UpdateAlertInput) expression.UpdateBuilde
 	if *input.Status == models.OpenStatus {
 		return expression.
 			Remove(expression.Name(StatusKey)).
-			Set(expression.Name(UpdatedByKey), expression.Value(input.RequesterID)).
-			Set(expression.Name(UpdatedByTimeKey), expression.Value(aws.Time(time.Now().UTC())))
+			Set(expression.Name(LastUpdatedByKey), expression.Value(input.UserID)).
+			Set(expression.Name(LastUpdatedByTimeKey), expression.Value(aws.Time(time.Now().UTC())))
 	}
 
 	return expression.
 		Set(expression.Name(StatusKey), expression.Value(input.Status)).
-		Set(expression.Name(UpdatedByKey), expression.Value(input.RequesterID)).
-		Set(expression.Name(UpdatedByTimeKey), expression.Value(aws.Time(time.Now().UTC())))
+		Set(expression.Name(LastUpdatedByKey), expression.Value(input.UserID)).
+		Set(expression.Name(LastUpdatedByTimeKey), expression.Value(aws.Time(time.Now().UTC())))
 }
 
 // createConditionBuilder - creates a condition builder

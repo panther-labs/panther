@@ -105,14 +105,14 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
   const availableStatusesEntries = React.useMemo(() => Object.entries(AlertStatusesEnum), []);
 
   // Extract and map the specific userID -> user's name
-  const updatedByUser = React.useMemo(() => {
-    const user = listUsersData?.users?.filter(usr => usr.id === alert.updatedBy).pop();
+  const lastUpdatedBy = React.useMemo(() => {
+    const user = listUsersData?.users?.filter(usr => usr.id === alert.lastUpdatedBy).pop();
     return user ? `${user.givenName} ${user.familyName}` : null;
-  }, [listUsersData?.users, alert.updatedBy]);
+  }, [listUsersData?.users, alert.lastUpdatedBy]);
 
   // Format the timestamp
-  const updatedByTime = React.useMemo(() => formatDatetime(alert.updatedByTime), [
-    alert.updatedByTime,
+  const lastUpdatedByTime = React.useMemo(() => formatDatetime(alert.lastUpdatedByTime), [
+    alert.lastUpdatedByTime,
   ]);
 
   // Create our dropdown button
@@ -127,7 +127,7 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
 
   // Create a wrapped dropdown button with a tooltip
   const wrappedDropdownButton = React.useMemo(() => {
-    if (updatedByUser) {
+    if (lastUpdatedBy) {
       return (
         <Tooltip
           content={
@@ -137,8 +137,8 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
                 <Box id="updated-by-timestamp-label">At:</Box>
               </Flex>
               <Flex direction="column" spacing={1} fontWeight="bold">
-                <Box aria-labelledby="user-name-label">{updatedByUser}</Box>
-                <Box aria-labelledby="updated-by-timestamp-label">{updatedByTime}</Box>
+                <Box aria-labelledby="user-name-label">{lastUpdatedBy}</Box>
+                <Box aria-labelledby="updated-by-timestamp-label">{lastUpdatedByTime}</Box>
               </Flex>
             </Flex>
           }
@@ -148,7 +148,7 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
       );
     }
     return dropdownButton;
-  }, [alert, updatedByUser, updatedByTime]);
+  }, [alert, lastUpdatedBy, lastUpdatedByTime]);
 
   return (
     <Dropdown>

@@ -29,17 +29,17 @@ import (
 )
 
 const (
-	RuleIDKey          = "ruleId"
-	AlertIDKey         = "id"
-	CreatedAtKey       = "creationTime"
-	TimePartitionKey   = "timePartition"
-	TimePartitionValue = "defaultPartition"
-	TitleKey           = "title"
-	SeverityKey        = "severity"
-	EventCountKey      = "eventCount"
-	StatusKey          = "status"
-	UpdatedByKey       = "updatedBy"
-	UpdatedByTimeKey   = "updatedByTime"
+	RuleIDKey            = "ruleId"
+	AlertIDKey           = "id"
+	CreatedAtKey         = "creationTime"
+	TimePartitionKey     = "timePartition"
+	TimePartitionValue   = "defaultPartition"
+	TitleKey             = "title"
+	SeverityKey          = "severity"
+	EventCountKey        = "eventCount"
+	StatusKey            = "status"
+	LastUpdatedByKey     = "lastUpdatedBy"
+	LastUpdatedByTimeKey = "lastUpdatedByTime"
 )
 
 // API defines the interface for the alerts table which can be used for mocking.
@@ -72,11 +72,14 @@ type AlertItem struct {
 	Title           *string   `json:"title"`
 	DedupString     string    `json:"dedup"`
 	CreationTime    time.Time `json:"creationTime"`
-	UpdateTime      time.Time `json:"updateTime"`
-	Severity        string    `json:"severity"`
-	Status          string    `json:"status"`
-	EventCount      int       `json:"eventCount"`
-	LogTypes        []string  `json:"logTypes"`
-	UpdatedBy       string    `json:"updatedBy"`
-	UpdatedByTime   time.Time `json:"updatedByTime"`
+	// UpdateTime - stores the timestamp from an update from a dedup event
+	UpdateTime time.Time `json:"updateTime"`
+	Severity   string    `json:"severity"`
+	Status     string    `json:"status"`
+	EventCount int       `json:"eventCount"`
+	LogTypes   []string  `json:"logTypes"`
+	// LastUpdatedBy - stores the UserID of the last person who modified the Alert
+	LastUpdatedBy string `json:"lastUpdatedBy"`
+	// LastUpdatedByTime - stores the timestamp of the last person who modified the Alert
+	LastUpdatedByTime time.Time `json:"lastUpdatedByTime"`
 }

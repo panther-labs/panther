@@ -134,14 +134,17 @@ type AlertDetails {
   ruleId: ID
   title: String!
   creationTime: AWSDateTime!
+  # updateTime - stores the timestamp from an update from a dedup event
   updateTime: AWSDateTime!
   eventsMatched: Int!
   events: [AWSJSON!]!
   eventsLastEvaluatedKey: String
   dedupString: String!
   status: String
-  updatedBy: ID
-  updatedByTime: AWSDateTime
+  # lastUpdatedBy - stores the UserID of the last person who modified the Alert
+  lastUpdatedBy: ID
+  # lastUpdatedByTime - stores the timestamp of the last person who modified the Alert
+  lastUpdatedByTime: AWSDateTime
 }
 
 type ListAlertsResponse {
@@ -154,12 +157,15 @@ type AlertSummary {
   creationTime: AWSDateTime!
   eventsMatched: Int!
   title: String!
+  # updateTime - stores the timestamp from an update from a dedup event
   updateTime: AWSDateTime!
   ruleId: String
   severity: SeverityEnum
   status: String
-  updatedBy: ID
-  updatedByTime: AWSDateTime
+  # lastUpdatedBy - stores the UserID of the last person who modified the Alert
+  lastUpdatedBy: ID
+  # lastUpdatedByTime - stores the timestamp of the last person who modified the Alert
+  lastUpdatedByTime: AWSDateTime
 }
 
 input UpdateAlertInput {

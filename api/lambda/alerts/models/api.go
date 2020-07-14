@@ -100,19 +100,19 @@ type ListAlertsInput struct {
 //     "updateAlert": {
 //         "alertId": "84c3e4b27c702a1c31e6eb412fc377f6",
 //         "status": "CLOSED"
-//         // requesterId is added by AppSync resolver (UpdateAlertResolver)
-//         "requesterId": "5f54cf4a-ec56-44c2-83bc-8b742600f307"
+//         // userId is added by AppSync resolver (UpdateAlertResolver)
+//         "userId": "5f54cf4a-ec56-44c2-83bc-8b742600f307"
 //     }
 // }
 type UpdateAlertInput struct {
 	// ID of the alert to update
-	AlertID *string `json:"alertId" validate:"required,hexadecimal,len=32"` // AlertID is an MD5 hash
+	AlertID *string `json:"alertId" validate:"hexadecimal,len=32"` // AlertID is an MD5 hash
 
 	// Variables that we allow updating:
-	Status *string `json:"status" validate:"required,oneof=OPEN TRIAGED CLOSED RESOLVED"`
+	Status *string `json:"status" validate:"oneof=OPEN TRIAGED CLOSED RESOLVED"`
 
 	// User who made the change
-	RequesterID *string `json:"requesterId" validate:"required,uuid4"`
+	UserID *string `json:"userId" validate:"uuid4"`
 }
 
 // UpdateAlertOutput the returne alert summary after an update
@@ -120,9 +120,6 @@ type UpdateAlertOutput = AlertSummary
 
 // Constants defined for alert statuses
 const (
-	// Empty is present on items that already exist in the DB and is considered in an "OPEN" state
-	EmptyStatus = ""
-
 	// Open is strictly used for updating/filtering and is not explicitly set on an alert
 	OpenStatus = "OPEN"
 
@@ -149,19 +146,19 @@ type ListAlertsOutput struct {
 
 // AlertSummary contains summary information for an alert
 type AlertSummary struct {
-	AlertID         *string    `json:"alertId" validate:"required"`
-	RuleID          *string    `json:"ruleId" validate:"required"`
-	RuleDisplayName *string    `json:"ruleDisplayName,omitempty"`
-	RuleVersion     *string    `json:"ruleVersion" validate:"required"`
-	DedupString     *string    `json:"dedupString,omitempty"`
-	CreationTime    *time.Time `json:"creationTime" validate:"required"`
-	UpdateTime      *time.Time `json:"updateTime" validate:"required"`
-	EventsMatched   *int       `json:"eventsMatched" validate:"required"`
-	Severity        *string    `json:"severity" validate:"required"`
-	Status          *string    `json:"status,omitempty"`
-	Title           *string    `json:"title" validate:"required"`
-	UpdatedBy       *string    `json:"updatedBy,omitempty"`
-	UpdatedByTime   *time.Time `json:"updatedByTime,omitempty"`
+	AlertID           *string    `json:"alertId" validate:"required"`
+	RuleID            *string    `json:"ruleId" validate:"required"`
+	RuleDisplayName   *string    `json:"ruleDisplayName,omitempty"`
+	RuleVersion       *string    `json:"ruleVersion" validate:"required"`
+	DedupString       *string    `json:"dedupString,omitempty"`
+	CreationTime      *time.Time `json:"creationTime" validate:"required"`
+	UpdateTime        *time.Time `json:"updateTime" validate:"required"`
+	EventsMatched     *int       `json:"eventsMatched" validate:"required"`
+	Severity          *string    `json:"severity" validate:"required"`
+	Status            *string    `json:"status,omitempty"`
+	Title             *string    `json:"title" validate:"required"`
+	LastUpdatedBy     *string    `json:"lastUpdatedBy,omitempty"`
+	LastUpdatedByTime *time.Time `json:"lastUpdatedByTime,omitempty"`
 }
 
 // Alert contains the details of an alert

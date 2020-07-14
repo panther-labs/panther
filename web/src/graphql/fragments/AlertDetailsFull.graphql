@@ -9,6 +9,6 @@ fragment AlertDetailsFull on AlertDetails {
   events
   dedupString
   status
-  updatedBy
-  updatedByTime
+  lastUpdatedBy
+  lastUpdatedByTime
 }

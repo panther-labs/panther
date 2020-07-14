@@ -39,21 +39,21 @@ func TestUpdateAlert(t *testing.T) {
 	userID := aws.String("userId")
 	timeNow := time.Now()
 	input := &models.UpdateAlertInput{
-		AlertID:     alertID,
-		Status:      status,
-		RequesterID: userID,
+		AlertID: alertID,
+		Status:  status,
+		UserID:  userID,
 	}
 	output := &table.AlertItem{
-		AlertID:       *alertID,
-		Status:        *status,
-		UpdatedBy:     *userID,
-		UpdatedByTime: timeNow,
+		AlertID:           *alertID,
+		Status:            *status,
+		LastUpdatedBy:     *userID,
+		LastUpdatedByTime: timeNow,
 	}
 	expectedSummary := &models.AlertSummary{
-		AlertID:       aws.String("alertId"),
-		Status:        aws.String("CLOSED"),
-		UpdatedBy:     aws.String("userId"),
-		UpdatedByTime: aws.Time(timeNow),
+		AlertID:           aws.String("alertId"),
+		Status:            aws.String("CLOSED"),
+		LastUpdatedBy:     aws.String("userId"),
+		LastUpdatedByTime: aws.Time(timeNow),
 	}
 
 	tableMock.On("UpdateAlert", input).Return(output, nil).Once()
@@ -62,10 +62,10 @@ func TestUpdateAlert(t *testing.T) {
 
 	// Marshal to convert "" to nils and focus on our properties
 	resultSummary := &models.AlertSummary{
-		AlertID:       result.AlertID,
-		Status:        result.Status,
-		UpdatedBy:     result.UpdatedBy,
-		UpdatedByTime: result.UpdatedByTime,
+		AlertID:           result.AlertID,
+		Status:            result.Status,
+		LastUpdatedBy:     result.LastUpdatedBy,
+		LastUpdatedByTime: result.LastUpdatedByTime,
 	}
 
 	assert.Equal(t, expectedSummary, resultSummary)

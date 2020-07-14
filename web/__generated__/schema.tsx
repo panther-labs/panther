@@ -111,8 +111,8 @@ export type AlertDetails = {
   eventsLastEvaluatedKey?: Maybe<Scalars['String']>;
   dedupString: Scalars['String'];
   status?: Maybe<Scalars['String']>;
-  updatedBy?: Maybe<Scalars['ID']>;
-  updatedByTime?: Maybe<Scalars['AWSDateTime']>;
+  lastUpdatedBy?: Maybe<Scalars['ID']>;
+  lastUpdatedByTime?: Maybe<Scalars['AWSDateTime']>;
 };
 
 export enum AlertStatusesEnum {
@@ -132,8 +132,8 @@ export type AlertSummary = {
   ruleId?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
   status?: Maybe<Scalars['String']>;
-  updatedBy?: Maybe<Scalars['ID']>;
-  updatedByTime?: Maybe<Scalars['AWSDateTime']>;
+  lastUpdatedBy?: Maybe<Scalars['ID']>;
+  lastUpdatedByTime?: Maybe<Scalars['AWSDateTime']>;
 };
 
 export enum AnalysisTypeEnum {
@@ -1520,8 +1520,8 @@ export type AlertDetailsResolvers<
   eventsLastEvaluatedKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   dedupString?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   status?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  updatedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
-  updatedByTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
+  lastUpdatedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  lastUpdatedByTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -1537,8 +1537,8 @@ export type AlertSummaryResolvers<
   ruleId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
   status?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  updatedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
-  updatedByTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
+  lastUpdatedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  lastUpdatedByTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
