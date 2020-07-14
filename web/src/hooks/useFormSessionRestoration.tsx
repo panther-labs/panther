@@ -17,6 +17,7 @@
  */
 import React from 'react';
 import { useFormikContext } from 'formik';
+import debounce from 'lodash-es/debounce';
 import storage from 'Helpers/storage';
 
 export interface UseFormSessionRestorationProps {
@@ -29,7 +30,7 @@ export interface UseFormSessionRestorationProps {
  * changes
  */
 function useFormSessionRestoration<FormValues>({ sessionId }: UseFormSessionRestorationProps) {
-  const { values, dirty, setValues } = useFormikContext<FormValues>();
+  const { values, dirty, setValues, isSubmitting } = useFormikContext<FormValues>();
 
   React.useEffect(() => {
     const previousSessionValues = storage.session.read<FormValues>(sessionId);
@@ -38,13 +39,22 @@ function useFormSessionRestoration<FormValues>({ sessionId }: UseFormSessionRest
     }
   }, [sessionId, setValues]);
 
+  const syncStorage = React.useCallback(
+    debounce(() => {
+      if (dirty && !isSubmitting) {
+        storage.session.write(sessionId, values);
+      }
+    }, 200),
+    [dirty, isSubmitting, values]
+  );
+
+  React.useEffect(syncStorage, [dirty, isSubmitting, values]);
+
   React.useEffect(() => {
-    if (dirty) {
-      storage.session.write(sessionId, values);
-    } else {
+    if (isSubmitting) {
       storage.session.delete(sessionId);
     }
-  }, [values, dirty]);
+  }, [isSubmitting]);
 }
 
 export default useFormSessionRestoration;

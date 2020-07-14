@@ -19,25 +19,20 @@ package api
  */
 
 import (
-	"github.com/panther-labs/panther/api/lambda/source/models"
-	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
 )
 
-var genericListError = &genericapi.InternalError{Message: "Failed to list integrations"}
+var (
+	awsSession       *session.Session
+	cloudwatchClient *cloudwatch.CloudWatch
+)
 
-// ListIntegrations returns all enabled integrations.
-func (API) ListIntegrations(
-	input *models.ListIntegrationsInput) ([]*models.SourceIntegration, error) {
-
-	integrationItems, err := dynamoClient.ScanIntegrations(input.IntegrationType)
-	if err != nil {
-		return nil, genericListError
-	}
-
-	result := make([]*models.SourceIntegration, len(integrationItems))
-	for i, item := range integrationItems {
-		result[i] = itemToIntegration(item)
-	}
-
-	return result, nil
+// Setup parses the environment and constructs AWS and http clients on a cold Lambda start.
+func Setup() {
+	awsSession = session.Must(session.NewSession())
+	cloudwatchClient = cloudwatch.New(awsSession)
 }
+
+// API provides receiver methods for each route handler.
+type API struct{}
