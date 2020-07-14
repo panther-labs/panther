@@ -27,7 +27,7 @@ type Mutation {
   resetUserPassword(id: ID!): User!
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
   testPolicy(input: TestPolicyInput): TestPolicyResponse
-  updateAlert(input: UpdateAlertInput!): AlertSummary
+  updateAlertStatus(input: UpdateAlertStatusInput!): AlertSummary
   updateDestination(input: DestinationInput!): Destination
   updateComplianceIntegration(input: UpdateComplianceIntegrationInput!): ComplianceIntegration!
   updateS3LogIntegration(input: UpdateS3LogIntegrationInput!): S3LogIntegration!
@@ -134,17 +134,14 @@ type AlertDetails {
   ruleId: ID
   title: String!
   creationTime: AWSDateTime!
-  # updateTime - stores the timestamp from an update from a dedup event
-  updateTime: AWSDateTime!
+  updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
   eventsMatched: Int!
   events: [AWSJSON!]!
   eventsLastEvaluatedKey: String
   dedupString: String!
   status: String
-  # lastUpdatedBy - stores the UserID of the last person who modified the Alert
-  lastUpdatedBy: ID
-  # lastUpdatedByTime - stores the timestamp of the last person who modified the Alert
-  lastUpdatedByTime: AWSDateTime
+  lastUpdatedBy: ID # stores the UserID of the last person who modified the Alert
+  lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
 }
 
 type ListAlertsResponse {
@@ -157,18 +154,15 @@ type AlertSummary {
   creationTime: AWSDateTime!
   eventsMatched: Int!
   title: String!
-  # updateTime - stores the timestamp from an update from a dedup event
-  updateTime: AWSDateTime!
+  updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
   ruleId: String
   severity: SeverityEnum
   status: String
-  # lastUpdatedBy - stores the UserID of the last person who modified the Alert
-  lastUpdatedBy: ID
-  # lastUpdatedByTime - stores the timestamp of the last person who modified the Alert
-  lastUpdatedByTime: AWSDateTime
+  lastUpdatedBy: ID # stores the UserID of the last person who modified the Alert
+  lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
 }
 
-input UpdateAlertInput {
+input UpdateAlertStatusInput {
   alertId: String!
   status: AlertStatusesEnum!
 }

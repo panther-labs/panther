@@ -23,10 +23,10 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-// UpdateAlert modifies an alert's attributes.
-func (API) UpdateAlert(input *models.UpdateAlertInput) (result *models.UpdateAlertOutput, err error) {
+// UpdateAlertStatus modifies an alert's attributes.
+func (API) UpdateAlertStatus(input *models.UpdateAlertStatusInput) (result *models.UpdateAlertStatusOutput, err error) {
 	// Run the update alert query
-	alertItem, err := alertsDB.UpdateAlert(input)
+	alertItem, err := alertsDB.UpdateAlertStatus(input)
 	if err != nil {
 		return nil, err
 	}

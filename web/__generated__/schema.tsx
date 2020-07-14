@@ -564,7 +564,7 @@ export type Mutation = {
   resetUserPassword: User;
   suppressPolicies?: Maybe<Scalars['Boolean']>;
   testPolicy?: Maybe<TestPolicyResponse>;
-  updateAlert?: Maybe<AlertSummary>;
+  updateAlertStatus?: Maybe<AlertSummary>;
   updateDestination?: Maybe<Destination>;
   updateComplianceIntegration: ComplianceIntegration;
   updateS3LogIntegration: S3LogIntegration;
@@ -648,8 +648,8 @@ export type MutationTestPolicyArgs = {
   input?: Maybe<TestPolicyInput>;
 };
 
-export type MutationUpdateAlertArgs = {
-  input: UpdateAlertInput;
+export type MutationUpdateAlertStatusArgs = {
+  input: UpdateAlertStatusInput;
 };
 
 export type MutationUpdateDestinationArgs = {
@@ -1065,7 +1065,7 @@ export type TestPolicyResponse = {
   testsErrored?: Maybe<Array<Maybe<PolicyUnitTestError>>>;
 };
 
-export type UpdateAlertInput = {
+export type UpdateAlertStatusInput = {
   alertId: Scalars['String'];
   status: AlertStatusesEnum;
 };
@@ -1359,7 +1359,7 @@ export type ResolversTypes = {
   AnalysisTypeEnum: AnalysisTypeEnum;
   TestPolicyResponse: ResolverTypeWrapper<TestPolicyResponse>;
   PolicyUnitTestError: ResolverTypeWrapper<PolicyUnitTestError>;
-  UpdateAlertInput: UpdateAlertInput;
+  UpdateAlertStatusInput: UpdateAlertStatusInput;
   UpdateComplianceIntegrationInput: UpdateComplianceIntegrationInput;
   UpdateS3LogIntegrationInput: UpdateS3LogIntegrationInput;
   UpdateGeneralSettingsInput: UpdateGeneralSettingsInput;
@@ -1484,7 +1484,7 @@ export type ResolversParentTypes = {
   AnalysisTypeEnum: AnalysisTypeEnum;
   TestPolicyResponse: TestPolicyResponse;
   PolicyUnitTestError: PolicyUnitTestError;
-  UpdateAlertInput: UpdateAlertInput;
+  UpdateAlertStatusInput: UpdateAlertStatusInput;
   UpdateComplianceIntegrationInput: UpdateComplianceIntegrationInput;
   UpdateS3LogIntegrationInput: UpdateS3LogIntegrationInput;
   UpdateGeneralSettingsInput: UpdateGeneralSettingsInput;
@@ -1934,11 +1934,11 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationTestPolicyArgs, never>
   >;
-  updateAlert?: Resolver<
+  updateAlertStatus?: Resolver<
     Maybe<ResolversTypes['AlertSummary']>,
     ParentType,
     ContextType,
-    RequireFields<MutationUpdateAlertArgs, 'input'>
+    RequireFields<MutationUpdateAlertStatusArgs, 'input'>
   >;
   updateDestination?: Resolver<
     Maybe<ResolversTypes['Destination']>,

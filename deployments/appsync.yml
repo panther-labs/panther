@@ -1608,7 +1608,7 @@ Resources:
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
-      FieldName: updateAlert
+      FieldName: updateAlertStatus
       DataSourceName: !GetAtt AlertsAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
@@ -1617,7 +1617,7 @@ Resources:
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
-            "updateAlert": $input
+            "updateAlertStatus": $input
           })
         }
       ResponseMappingTemplate: |

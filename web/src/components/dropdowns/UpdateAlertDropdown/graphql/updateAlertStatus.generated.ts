@@ -25,53 +25,53 @@ import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
-export type UpdateAlertVariables = {
-  input: Types.UpdateAlertInput;
+export type UpdateAlertStatusVariables = {
+  input: Types.UpdateAlertStatusInput;
 };
 
-export type UpdateAlert = { updateAlert?: Types.Maybe<AlertSummaryFull> };
+export type UpdateAlertStatus = { updateAlertStatus?: Types.Maybe<AlertSummaryFull> };
 
-export const UpdateAlertDocument = gql`
-  mutation UpdateAlert($input: UpdateAlertInput!) {
-    updateAlert(input: $input) {
+export const UpdateAlertStatusDocument = gql`
+  mutation UpdateAlertStatus($input: UpdateAlertStatusInput!) {
+    updateAlertStatus(input: $input) {
       ...AlertSummaryFull
     }
   }
   ${AlertSummaryFull}
 `;
-export type UpdateAlertMutationFn = ApolloReactCommon.MutationFunction<
-  UpdateAlert,
-  UpdateAlertVariables
+export type UpdateAlertStatusMutationFn = ApolloReactCommon.MutationFunction<
+  UpdateAlertStatus,
+  UpdateAlertStatusVariables
 >;
 
 /**
- * __useUpdateAlert__
+ * __useUpdateAlertStatus__
  *
- * To run a mutation, you first call `useUpdateAlert` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateAlert` returns a tuple that includes:
+ * To run a mutation, you first call `useUpdateAlertStatus` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateAlertStatus` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [updateAlert, { data, loading, error }] = useUpdateAlert({
+ * const [updateAlertStatus, { data, loading, error }] = useUpdateAlertStatus({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useUpdateAlert(
-  baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateAlert, UpdateAlertVariables>
+export function useUpdateAlertStatus(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateAlertStatus, UpdateAlertStatusVariables>
 ) {
-  return ApolloReactHooks.useMutation<UpdateAlert, UpdateAlertVariables>(
-    UpdateAlertDocument,
+  return ApolloReactHooks.useMutation<UpdateAlertStatus, UpdateAlertStatusVariables>(
+    UpdateAlertStatusDocument,
     baseOptions
   );
 }
-export type UpdateAlertHookResult = ReturnType<typeof useUpdateAlert>;
-export type UpdateAlertMutationResult = ApolloReactCommon.MutationResult<UpdateAlert>;
-export type UpdateAlertMutationOptions = ApolloReactCommon.BaseMutationOptions<
-  UpdateAlert,
-  UpdateAlertVariables
+export type UpdateAlertStatusHookResult = ReturnType<typeof useUpdateAlertStatus>;
+export type UpdateAlertStatusMutationResult = ApolloReactCommon.MutationResult<UpdateAlertStatus>;
+export type UpdateAlertStatusMutationOptions = ApolloReactCommon.BaseMutationOptions<
+  UpdateAlertStatus,
+  UpdateAlertStatusVariables
 >;

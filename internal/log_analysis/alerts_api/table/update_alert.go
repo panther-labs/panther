@@ -30,8 +30,8 @@ import (
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-// UpdateAlert - updates the alert details and returns the updated item
-func (table *AlertsTable) UpdateAlert(input *models.UpdateAlertInput) (*AlertItem, error) {
+// UpdateAlertStatus - updates the alert details and returns the updated item
+func (table *AlertsTable) UpdateAlertStatus(input *models.UpdateAlertStatusInput) (*AlertItem, error) {
 	// Create the dynamo key we want to update
 	var alertKey = DynamoItem{AlertIDKey: {S: aws.String(*input.AlertID)}}
 
@@ -68,7 +68,7 @@ func (table *AlertsTable) UpdateAlert(input *models.UpdateAlertInput) (*AlertIte
 }
 
 // createUpdateBuilder - creates an update builder
-func createUpdateBuilder(input *models.UpdateAlertInput) expression.UpdateBuilder {
+func createUpdateBuilder(input *models.UpdateAlertStatusInput) expression.UpdateBuilder {
 	// When settig an "open" status we actually remove the attribute
 	// for uniformity against previous items in the database
 	// which also do not have a status attribute.
@@ -86,7 +86,7 @@ func createUpdateBuilder(input *models.UpdateAlertInput) expression.UpdateBuilde
 }
 
 // createConditionBuilder - creates a condition builder
-func createConditionBuilder(input *models.UpdateAlertInput) expression.ConditionBuilder {
+func createConditionBuilder(input *models.UpdateAlertStatusInput) expression.ConditionBuilder {
 	return expression.Equal(expression.Name(AlertIDKey), expression.Value(input.AlertID))
 }
 

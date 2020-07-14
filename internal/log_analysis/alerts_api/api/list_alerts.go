@@ -75,10 +75,10 @@ func alertItemToAlertSummary(item *table.AlertItem) *models.AlertSummary {
 		RuleID:            &item.RuleID,
 		RuleVersion:       &item.RuleVersion,
 		Severity:          &item.Severity,
-		Status:            &item.Status,
+		Status:            item.Status,
 		Title:             getAlertTitle(item),
-		LastUpdatedBy:     &item.LastUpdatedBy,
-		LastUpdatedByTime: &item.LastUpdatedByTime,
+		LastUpdatedBy:     item.LastUpdatedBy,
+		LastUpdatedByTime: item.LastUpdatedByTime,
 		UpdateTime:        &item.UpdateTime,
 	}
 }

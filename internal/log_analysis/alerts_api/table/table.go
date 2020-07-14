@@ -46,7 +46,7 @@ const (
 type API interface {
 	GetAlert(*string) (*AlertItem, error)
 	ListAll(*models.ListAlertsInput) ([]*AlertItem, *string, error)
-	UpdateAlert(*models.UpdateAlertInput) (*AlertItem, error)
+	UpdateAlertStatus(*models.UpdateAlertStatusInput) (*AlertItem, error)
 }
 
 // AlertsTable encapsulates a connection to the Dynamo alerts table.

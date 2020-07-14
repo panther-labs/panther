@@ -33,7 +33,7 @@ import AlertStatusBadge from 'Components/AlertStatusBadge';
 import { extractErrorMessage, formatDatetime } from 'Helpers/utils';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 import { useListUsers } from 'Pages/Users';
-import { useUpdateAlert } from './graphql/updateAlert.generated';
+import { useUpdateAlertStatus } from './graphql/updateAlertStatus.generated';
 
 interface UpdateAlertDropdownProps {
   alert: AlertSummaryFull;
@@ -55,7 +55,7 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
     },
   });
 
-  const [updateAlert] = useUpdateAlert({
+  const [updateAlertStatus] = useUpdateAlertStatus({
     variables: {
       input: {
         status: status as AlertStatusesEnum,
@@ -69,10 +69,10 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
       cache.modify({
         id: cache.identify({
           __typename: 'AlertDetails',
-          alertId: data.updateAlert.alertId,
+          alertId: data.updateAlertStatus.alertId,
         }),
         fields: {
-          status: () => data.updateAlert.status,
+          status: () => data.updateAlertStatus.status,
         },
       });
       cache.gc();
@@ -81,7 +81,7 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
     // We want to simulate an instant change in the UI
     optimisticResponse: data => {
       return {
-        updateAlert: {
+        updateAlertStatus: {
           ...alert,
           status: data.input.status,
         },
@@ -159,7 +159,9 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
             key={index}
             disabled={status === statusVal}
             onSelect={() =>
-              updateAlert({ variables: { input: { status: statusVal, alertId: alert.alertId } } })
+              updateAlertStatus({
+                variables: { input: { status: statusVal, alertId: alert.alertId } },
+              })
             }
           >
             {statusKey}

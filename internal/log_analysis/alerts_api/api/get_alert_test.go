@@ -87,7 +87,7 @@ func (m *tableMock) ListAll(input *models.ListAlertsInput) ([]*table.AlertItem, 
 	return args.Get(0).([]*table.AlertItem), args.Get(1).(*string), args.Error(2)
 }
 
-func (m *tableMock) UpdateAlert(input *models.UpdateAlertInput) (*table.AlertItem, error) {
+func (m *tableMock) UpdateAlertStatus(input *models.UpdateAlertStatusInput) (*table.AlertItem, error) {
 	args := m.Called(input)
 	return args.Get(0).(*table.AlertItem), args.Error(1)
 }
@@ -181,7 +181,7 @@ func TestGetAlert(t *testing.T) {
 		AlertSummary: models.AlertSummary{
 			AlertID:           aws.String("alertId"),
 			RuleID:            aws.String("ruleId"),
-			Status:            aws.String("TRIAGED"),
+			Status:            "TRIAGED",
 			RuleVersion:       aws.String("ruleVersion"),
 			Severity:          aws.String("INFO"),
 			Title:             aws.String("ruleId"),
@@ -189,8 +189,8 @@ func TestGetAlert(t *testing.T) {
 			CreationTime:      aws.Time(time.Date(2020, 1, 1, 1, 0, 0, 0, time.UTC)),
 			UpdateTime:        aws.Time(time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)),
 			EventsMatched:     aws.Int(5),
-			LastUpdatedBy:     aws.String("userId"),
-			LastUpdatedByTime: aws.Time(time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)),
+			LastUpdatedBy:     "userId",
+			LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
 		},
 		Events: aws.StringSlice([]string{"testEvent"}),
 		EventsLastEvaluatedKey:
@@ -234,7 +234,7 @@ func TestGetAlert(t *testing.T) {
 		AlertSummary: models.AlertSummary{
 			AlertID:           aws.String("alertId"),
 			RuleID:            aws.String("ruleId"),
-			Status:            aws.String("TRIAGED"),
+			Status:            "TRIAGED",
 			RuleVersion:       aws.String("ruleVersion"),
 			Severity:          aws.String("INFO"),
 			Title:             aws.String("ruleId"),
@@ -242,8 +242,8 @@ func TestGetAlert(t *testing.T) {
 			CreationTime:      aws.Time(time.Date(2020, 1, 1, 1, 0, 0, 0, time.UTC)),
 			UpdateTime:        aws.Time(time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)),
 			EventsMatched:     aws.Int(5),
-			LastUpdatedBy:     aws.String("userId"),
-			LastUpdatedByTime: aws.Time(time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)),
+			LastUpdatedBy:     "userId",
+			LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
 		},
 		Events: aws.StringSlice([]string{}),
 		EventsLastEvaluatedKey:
@@ -312,7 +312,7 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 		AlertSummary: models.AlertSummary{
 			AlertID:           aws.String("alertId"),
 			RuleID:            aws.String("ruleId"),
-			Status:            aws.String("TRIAGED"),
+			Status:            "TRIAGED",
 			RuleVersion:       aws.String("ruleVersion"),
 			Title:             aws.String("ruleId"),
 			CreationTime:      aws.Time(time.Date(2020, 1, 1, 1, 5, 0, 0, time.UTC)),
@@ -320,8 +320,8 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 			EventsMatched:     aws.Int(5),
 			Severity:          aws.String("INFO"),
 			DedupString:       aws.String("dedupString"),
-			LastUpdatedBy:     aws.String("userId"),
-			LastUpdatedByTime: aws.Time(time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)),
+			LastUpdatedBy:     "userId",
+			LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
 		},
 		Events: aws.StringSlice([]string{"testEvent"}),
 		EventsLastEvaluatedKey:

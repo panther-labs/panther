@@ -38,7 +38,7 @@ func TestUpdateAlert(t *testing.T) {
 	status := aws.String("CLOSED")
 	userID := aws.String("userId")
 	timeNow := time.Now()
-	input := &models.UpdateAlertInput{
+	input := &models.UpdateAlertStatusInput{
 		AlertID: alertID,
 		Status:  status,
 		UserID:  userID,
@@ -51,13 +51,13 @@ func TestUpdateAlert(t *testing.T) {
 	}
 	expectedSummary := &models.AlertSummary{
 		AlertID:           aws.String("alertId"),
-		Status:            aws.String("CLOSED"),
-		LastUpdatedBy:     aws.String("userId"),
-		LastUpdatedByTime: aws.Time(timeNow),
+		Status:            "CLOSED",
+		LastUpdatedBy:     "userId",
+		LastUpdatedByTime: timeNow,
 	}
 
-	tableMock.On("UpdateAlert", input).Return(output, nil).Once()
-	result, err := API{}.UpdateAlert(input)
+	tableMock.On("UpdateAlertStatus", input).Return(output, nil).Once()
+	result, err := API{}.UpdateAlertStatus(input)
 	require.NoError(t, err)
 
 	// Marshal to convert "" to nils and focus on our properties

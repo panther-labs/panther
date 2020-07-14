@@ -22,9 +22,9 @@ import "time"
 
 // LambdaInput is the request structure for the alerts-api Lambda function.
 type LambdaInput struct {
-	GetAlert    *GetAlertInput    `json:"getAlert"`
-	ListAlerts  *ListAlertsInput  `json:"listAlerts"`
-	UpdateAlert *UpdateAlertInput `json:"updateAlert"`
+	GetAlert          *GetAlertInput          `json:"getAlert"`
+	ListAlerts        *ListAlertsInput        `json:"listAlerts"`
+	UpdateAlertStatus *UpdateAlertStatusInput `json:"updateAlertStatus"`
 }
 
 // GetAlertInput retrieves details for a single alert.
@@ -95,16 +95,16 @@ type ListAlertsInput struct {
 	SortDir *string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
 }
 
-// UpdateAlertInput updates an alert by its ID
+// UpdateAlertStatusInput updates an alert by its ID
 // {
-//     "updateAlert": {
+//     "updateAlertStatus": {
 //         "alertId": "84c3e4b27c702a1c31e6eb412fc377f6",
 //         "status": "CLOSED"
 //         // userId is added by AppSync resolver (UpdateAlertResolver)
 //         "userId": "5f54cf4a-ec56-44c2-83bc-8b742600f307"
 //     }
 // }
-type UpdateAlertInput struct {
+type UpdateAlertStatusInput struct {
 	// ID of the alert to update
 	AlertID *string `json:"alertId" validate:"hexadecimal,len=32"` // AlertID is an MD5 hash
 
@@ -115,8 +115,8 @@ type UpdateAlertInput struct {
 	UserID *string `json:"userId" validate:"uuid4"`
 }
 
-// UpdateAlertOutput the returne alert summary after an update
-type UpdateAlertOutput = AlertSummary
+// UpdateAlertStatusOutput the returne alert summary after an update
+type UpdateAlertStatusOutput = AlertSummary
 
 // Constants defined for alert statuses
 const (
@@ -155,10 +155,10 @@ type AlertSummary struct {
 	UpdateTime        *time.Time `json:"updateTime" validate:"required"`
 	EventsMatched     *int       `json:"eventsMatched" validate:"required"`
 	Severity          *string    `json:"severity" validate:"required"`
-	Status            *string    `json:"status,omitempty"`
+	Status            string     `json:"status,omitempty"`
 	Title             *string    `json:"title" validate:"required"`
-	LastUpdatedBy     *string    `json:"lastUpdatedBy,omitempty"`
-	LastUpdatedByTime *time.Time `json:"lastUpdatedByTime,omitempty"`
+	LastUpdatedBy     string     `json:"lastUpdatedBy,omitempty"`
+	LastUpdatedByTime time.Time  `json:"lastUpdatedByTime,omitempty"`
 }
 
 // Alert contains the details of an alert
