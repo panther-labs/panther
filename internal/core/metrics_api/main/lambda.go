@@ -1,4 +1,4 @@
-package api
+package main
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,25 +19,28 @@ package api
  */
 
 import (
-	"github.com/panther-labs/panther/api/lambda/source/models"
+	"context"
+
+	"github.com/aws/aws-lambda-go/lambda"
+
+	"github.com/panther-labs/panther/api/lambda/metrics/models"
+	"github.com/panther-labs/panther/internal/core/metrics_api/api"
 	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
-var genericListError = &genericapi.InternalError{Message: "Failed to list integrations"}
+var router *genericapi.Router
 
-// ListIntegrations returns all enabled integrations.
-func (API) ListIntegrations(
-	input *models.ListIntegrationsInput) ([]*models.SourceIntegration, error) {
+func init() {
+	router = genericapi.NewRouter("core", "metrics_api", nil, api.API{})
+}
 
-	integrationItems, err := dynamoClient.ScanIntegrations(input.IntegrationType)
-	if err != nil {
-		return nil, genericListError
-	}
+func lambdaHandler(ctx context.Context, request *models.LambdaInput) (interface{}, error) {
+	lambdalogger.ConfigureGlobal(ctx, nil)
+	return router.Handle(request)
+}
 
-	result := make([]*models.SourceIntegration, len(integrationItems))
-	for i, item := range integrationItems {
-		result[i] = itemToIntegration(item)
-	}
-
-	return result, nil
+func main() {
+	api.Setup()
+	lambda.Start(lambdaHandler)
 }

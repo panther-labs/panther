@@ -24,7 +24,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
-	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -33,23 +32,8 @@ var (
 )
 
 // DeleteIntegration deletes a specific integration.
-func (API) DeleteIntegration(input *models.DeleteIntegrationInput) (err error) {
-	var integrationForDeletePermissions *models.SourceIntegration
-	defer func() {
-		if err != nil && integrationForDeletePermissions != nil {
-			// In case we have already removed the Permissions from SQS but some other operation failed
-			// re-add the permissions
-			if _, undoErr := AllowExternalSnsTopicSubscription(integrationForDeletePermissions.AWSAccountID); undoErr != nil {
-				zap.L().Error("failed to re-add SQS permission for integrationItem. SQS is missing permissions that have to be added manually",
-					zap.String("integrationId", integrationForDeletePermissions.IntegrationID),
-					zap.Error(undoErr),
-					zap.Error(err))
-			}
-		}
-	}()
-
-	var integrationItem *ddb.Integration
-	integrationItem, err = dynamoClient.GetItem(input.IntegrationID)
+func (API) DeleteIntegration(input *models.DeleteIntegrationInput) error {
+	integrationItem, err := dynamoClient.GetItem(input.IntegrationID)
 	if err != nil {
 		errMsg := "failed to get integrationItem"
 		err = errors.Wrap(err, errMsg)
@@ -68,6 +52,7 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) (err error) {
 	case models.IntegrationTypeAWS3:
 		existingIntegrations, err := dynamoClient.ScanIntegrations(aws.String(models.IntegrationTypeAWS3))
 		if err != nil {
+			zap.L().Error("failed to scan integration", zap.Error(err))
 			return deleteIntegrationInternalError
 		}
 
@@ -87,15 +72,28 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) (err error) {
 			if err = DisableExternalSnsTopicSubscription(integrationItem.AWSAccountID); err != nil {
 				zap.L().Error("failed to remove permission from SQS queue for integrationItem",
 					zap.String("integrationId", input.IntegrationID),
-					zap.Error(errors.Wrap(err, "failed to remove permission from SQS queue for integrationItem")))
+					zap.Error(err))
 				return deleteIntegrationInternalError
 			}
-			integrationForDeletePermissions = itemToIntegration(integrationItem)
+		}
+	case models.IntegrationTypeSqs:
+		if err := RemoveSourceFromLambdaTrigger(input.IntegrationID); err != nil {
+			zap.L().Error("failed to remove sqs queue from source",
+				zap.String("integrationId", input.IntegrationID),
+				zap.Error(err))
+			return deleteIntegrationInternalError
+		}
+		if err := DeleteSourceSqsQueue(input.IntegrationID); err != nil {
+			zap.L().Error("failed to delete source queue",
+				zap.String("integrationId", input.IntegrationID),
+				zap.Error(err))
+			return deleteIntegrationInternalError
 		}
 	}
 
 	err = dynamoClient.DeleteItem(input.IntegrationID)
 	if err != nil {
+		zap.L().Error("failed to delete item", zap.Error(err))
 		return deleteIntegrationInternalError
 	}
 	return nil
