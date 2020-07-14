@@ -19,14 +19,16 @@ package analysis
  */
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
+
 	enginemodels "github.com/panther-labs/panther/api/gateway/analysis"
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
-	"github.com/pkg/errors"
-	"strconv"
-	"strings"
 )
 
 const (
@@ -72,6 +74,11 @@ func (e *PolicyEngine) TestPolicy(policy *models.TestPolicy) (models.TestPolicyR
 	}
 
 	// Translate policy engine output to test results.
+	return makeTestSummary(policy, engineOutput)
+}
+
+func makeTestSummary(policy *models.TestPolicy, engineOutput enginemodels.PolicyEngineOutput) (models.TestPolicyResult, error) {
+	var testResults models.TestPolicyResult
 	for _, result := range engineOutput.Resources {
 		// Determine which test case this result corresponds to. We constructed resourceID with the
 		// format Panther:Test:Resource:TestNumber (see testResourceID),
@@ -101,8 +108,8 @@ func (e *PolicyEngine) TestPolicy(policy *models.TestPolicy) (models.TestPolicyR
 			testResults.TestSummary = true
 
 		default:
-			// This test didn't run (result.{Errored, Failed, Passed} are all empty). This must not happen absent a bug.
-			return testResults, errors.Errorf("unable to run test for resourceID %s", result.ID)
+			// This test didn't run (result.{Errored, Passed, Failed} are all empty). This must not happen absent a bug.
+			return testResults, errors.Errorf("unable to run test for ruleID %s", result.ID)
 		}
 	}
 	return testResults, nil

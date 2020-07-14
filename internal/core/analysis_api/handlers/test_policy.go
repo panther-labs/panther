@@ -19,11 +19,13 @@ package handlers
  */
 
 import (
+	"net/http"
+
 	"github.com/aws/aws-lambda-go/events"
 	jsoniter "github.com/json-iterator/go"
+
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
-	"net/http"
 )
 
 // TestPolicy runs a policy against a set of unit tests.
