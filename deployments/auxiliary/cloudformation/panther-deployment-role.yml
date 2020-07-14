@@ -68,6 +68,7 @@ Resources:
               - cloudwatch:*
               - cognito-idp:*
               - dynamodb:List*
+              - ec2:AllocateAddress
               - ec2:AssociateRouteTable
               - ec2:AssociateSubnetCidrBlock
               - ec2:AssociateVpcCidrBlock
@@ -76,6 +77,7 @@ Resources:
               - ec2:AttachInternetGateway
               - ec2:CreateFlowLogs
               - ec2:CreateInternetGateway
+              - ec2:CreateNatGateway
               - ec2:CreateRoute
               - ec2:CreateRouteTable
               - ec2:CreateSecurityGroup
@@ -102,6 +104,18 @@ Resources:
               - ec2:RevokeSecurityGroupIngress
               - ec2:UpdateSecurityGroupRuleDescriptionsEgress
               - ec2:UpdateSecurityGroupRuleDescriptionsIngress
+              - elasticfilesystem:CreateAccessPoint
+              - elasticfilesystem:CreateFileSystem
+              - elasticfilesystem:DescribeAccessPoints
+              - elasticfilesystem:DescribeFileSystems
+              - elasticfilesystem:DescribeFileSystemPolicy
+              - elasticfilesystem:DescribeLifecycleConfiguration
+              - elasticfilesystem:DescribeMountTargets
+              - elasticfilesystem:PutLifecycleConfiguration
+              - elasticfilesystem:PutFileSystemPolicy
+              - elasticfilesystem:ListTagsForResource
+              - elasticfilesystem:TagResource
+              - elasticfilesystem:UntagResource
               - elasticloadbalancing:*
               - ecr:GetAuthorizationToken
               - ecs:*
@@ -160,6 +174,10 @@ Resources:
               - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/panther-*
               - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/Panther*
               - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/panther/*
+          - Effect: Allow
+            Action: firehose:*
+            Resource:
+              - !Sub arn:${AWS::Partition}:firehose:*:${AWS::AccountId}:deliverystream/panther-*
           - Effect: Allow
             Action: kms:*
             Resource:
