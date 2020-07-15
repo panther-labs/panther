@@ -90,8 +90,8 @@ jobs:
           command: npm i
 
       - run:
-        name: Check bundle size
-        command: npm run bundlesize
+          name: Check bundle size
+          command: npm run bundlesize
 
 workflows:
   version: 2
