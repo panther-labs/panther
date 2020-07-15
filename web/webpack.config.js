@@ -115,9 +115,6 @@ module.exports = {
       name: entrypoint => `runtime-${entrypoint.name}`,
     },
   },
-  performance: {
-    hints: process.env.CI ? false : 'warning',
-  },
   module: {
     // enforce a javascript `strict` mode on different files
     strictExportPresence: true,
