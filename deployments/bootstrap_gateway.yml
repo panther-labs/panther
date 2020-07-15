@@ -133,6 +133,7 @@ Resources:
                 - guardduty:UpdatePublishingDestination
                 - kms:ListAliases # required for GuardDuty
                 - lambda:ListLayerVersions
+                - logs:DescribeLogGroups
               Resource: '*'
             - Effect: Allow
               Action:
@@ -184,6 +185,12 @@ Resources:
               Action: iam:PassRole
               Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/Panther*
             - Effect: Allow
+              # This function needs to be able to modify its own role policy for a clean teardown.
+              # We don't know the role name, which is randomly generated, but we know it will contain
+              # at least part of the CloudFormation resource name.
+              Action: iam:PutRolePolicy
+              Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/*CustomResourceFunction*
+            - Effect: Allow
               Action: lambda:GetFunction
               Resource:
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-policy-engine
@@ -200,6 +207,7 @@ Resources:
               Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:panther-engine-globals:*
             - Effect: Allow
               Action:
+                - logs:DeleteLogGroup
                 - logs:DeleteMetricFilter
                 - logs:PutMetricFilter
               Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/panther-*
@@ -218,6 +226,11 @@ Resources:
               Action: s3:Get*
               Resource: arn:aws:s3:::panther-public-cloudformation-templates*
 
+  # During teardown, CloudFormation will delete this group while the Lambda function is still running.
+  # This would normally lead to the group being recreated by Lambda, but the PantherTeardown resource
+  # modifies the custom resource IAM role to block future logs.
+  #
+  # In other words, by the time CFN deletes this log group, it can't be created again.
   CustomResourceLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -247,8 +260,11 @@ Resources:
     # When deleted, this resource will remove Panther assets added outside of CloudFormation:
     #   - ECR images
     #   - Lambda layers
+    #   - Leftover CloudWatch log groups
     Type: Custom::PantherTeardown
     Properties:
+      CustomResourceLogGroupName: !Ref CustomResourceLogGroup
+      CustomResourceRoleName: !Ref CustomResourceFunctionRole # Resource created by Serverless transform
       CustomResourceVersion: !Ref CustomResourceVersion
       EcrRepoName: !Ref ImageRegistryName
       ServiceToken: !GetAtt CustomResourceFunction.Arn
