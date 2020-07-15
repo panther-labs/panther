@@ -116,7 +116,7 @@ module.exports = {
     },
   },
   performance: {
-    hints: process.env.CI ? false : 'warning',
+    hints: false,
   },
   module: {
     // enforce a javascript `strict` mode on different files
