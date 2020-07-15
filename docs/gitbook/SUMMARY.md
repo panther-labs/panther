@@ -217,5 +217,5 @@
 * [SAML/SSO Integration](enterprise/saml/overview.md)
   * [Okta](enterprise/saml/okta.md)
   * [OneLogin](enterprise/saml/onelogin.md)
-  * [(Other)](enterprise/saml/other.md)
+  * [(Other)](enterprise/saml/generic.md)
 * [Role-Based Access Control](enterprise/rbac.md)
