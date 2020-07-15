@@ -52,7 +52,6 @@ type Alert struct {
 	TimePartition   string  `dynamodbav:"timePartition,string"`
 	Severity        string  `dynamodbav:"severity,string"`
 	RuleDisplayName *string `dynamodbav:"ruleDisplayName,string"`
-	Status          string  `dynamodbav:"status,string"`
 	Title           string  `dynamodbav:"title,string"` // The alert title. It will be the Python-generated title or a default one if
 	// no Python-generated title is available.
 	AlertDedupEvent

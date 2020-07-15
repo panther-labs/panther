@@ -1603,7 +1603,7 @@ Resources:
           $util.toJson($context.result)
         #end
 
-  UpdateAlertResolver:
+  UpdateAlertStatusResolver:
     Type: AWS::AppSync::Resolver
     Properties:
       ApiId: !Ref ApiId

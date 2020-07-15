@@ -35,7 +35,7 @@ func TestUpdateAlert(t *testing.T) {
 	alertsDB = tableMock
 
 	alertID := aws.String("alertId")
-	status := aws.String("CLOSED")
+	status := aws.String("")
 	userID := aws.String("userId")
 	timeNow := time.Now()
 	input := &models.UpdateAlertStatusInput{
@@ -45,7 +45,7 @@ func TestUpdateAlert(t *testing.T) {
 	}
 	output := &table.AlertItem{
 		AlertID:           *alertID,
-		Status:            *status,
+		Status:            "CLOSED",
 		LastUpdatedBy:     *userID,
 		LastUpdatedByTime: timeNow,
 	}

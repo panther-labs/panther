@@ -40,8 +40,7 @@ interface UpdateAlertDropdownProps {
 }
 
 const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
-  const { status = AlertStatusesEnum.Open } = alert;
-
+  const { status } = alert;
   const { pushSnackbar } = useSnackbar();
 
   // Retrieve a list of users so we can match attribution
@@ -58,7 +57,7 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
   const [updateAlertStatus] = useUpdateAlertStatus({
     variables: {
       input: {
-        status: status as AlertStatusesEnum,
+        status,
         alertId: alert.alertId,
       },
     },
@@ -78,15 +77,13 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
       cache.gc();
     },
 
-    // We want to simulate an instant change in the UI
-    optimisticResponse: data => {
-      return {
-        updateAlertStatus: {
-          ...alert,
-          status: data.input.status,
-        },
-      };
-    },
+    // We want to simulate an instant change in the UI which will fallback if there's a failure
+    optimisticResponse: data => ({
+      updateAlertStatus: {
+        ...alert,
+        status: data.input.status,
+      },
+    }),
     onCompleted: () => {
       pushSnackbar({
         variant: 'success',
@@ -111,15 +108,13 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
   }, [listUsersData?.users, alert.lastUpdatedBy]);
 
   // Format the timestamp
-  const lastUpdatedByTime = React.useMemo(() => formatDatetime(alert.lastUpdatedByTime), [
-    alert.lastUpdatedByTime,
-  ]);
+  const lastUpdatedByTime = formatDatetime(alert.lastUpdatedByTime);
 
   // Create our dropdown button
   const dropdownButton = React.useMemo(
     () => (
       <DropdownButton as={AbstractButton} outline="none" aria-label="Status Options">
-        <AlertStatusBadge status={(status as AlertStatusesEnum) || AlertStatusesEnum.Open} />
+        <AlertStatusBadge status={alert.status} />
       </DropdownButton>
     ),
     [alert, status]

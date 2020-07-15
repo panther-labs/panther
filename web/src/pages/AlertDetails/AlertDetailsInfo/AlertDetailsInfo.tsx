@@ -83,55 +83,39 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
 
   return (
     <Card as="article" p={6}>
-      <SimpleGrid columns={2} spacing={5}>
-        <Flex direction="column" spacing={2}>
-          <Flex as="header" align="center" mb={4} spacing={4}>
-            <Heading fontWeight="bold" wordBreak="break-word">
-              {alert.title || alert.alertId}
-            </Heading>
-            <Tooltip
-              content={
-                <Flex spacing={3}>
-                  <Flex direction="column" spacing={2}>
-                    <Box id="alert-id-label">Alert ID</Box>
-                    <Box id="log-types-label">Log Types</Box>
-                  </Flex>
-                  <Flex direction="column" spacing={2} fontWeight="bold">
-                    <Box aria-labelledby="alert-id-label">{alert.alertId}</Box>
-                    <Box aria-labelledby="log-types-label">
-                      {rule.logTypes.map(logType => (
-                        <Box key={logType}>{logType}</Box>
-                      ))}
-                    </Box>
-                  </Flex>
-                </Flex>
-              }
-            >
-              <Icon type="info" />
-            </Tooltip>
-          </Flex>
-          <Flex spacing={4} as="ul" mb={6}>
-            <Box as="li">
-              <SeverityBadge severity={rule.severity} />
-            </Box>
-          </Flex>
-        </Flex>
-        <Flex direction="row" justify="flex-end" align="top" spacing={2}>
-          <Flex direction="column" align="center" spacing={4}>
-            <Box
-              color="gray-100"
-              fontSize="medium"
-              fontWeight="bold"
-              aria-describedby="alert-status-description"
-            >
-              Alert Status
-            </Box>
-            <Box aria-describedby="alert-status">
-              <UpdateAlertDropdown alert={alert as AlertSummaryFull} />
-            </Box>
-          </Flex>
-        </Flex>
-      </SimpleGrid>
+      <Flex as="header" align="center" mb={4} spacing={4}>
+        <Heading fontWeight="bold" wordBreak="break-word">
+          {alert.title || alert.alertId}
+        </Heading>
+        <Tooltip
+          content={
+            <Flex spacing={3}>
+              <Flex direction="column" spacing={2}>
+                <Box id="alert-id-label">Alert ID</Box>
+                <Box id="log-types-label">Log Types</Box>
+              </Flex>
+              <Flex direction="column" spacing={2} fontWeight="bold">
+                <Box aria-labelledby="alert-id-label">{alert.alertId}</Box>
+                <Box aria-labelledby="log-types-label">
+                  {rule.logTypes.map(logType => (
+                    <Box key={logType}>{logType}</Box>
+                  ))}
+                </Box>
+              </Flex>
+            </Flex>
+          }
+        >
+          <Icon type="info" />
+        </Tooltip>
+      </Flex>
+      <Flex spacing={4} as="ul" mb={6}>
+        <Box as="li" aria-describedby="alert-status-description">
+          <UpdateAlertDropdown alert={alert as AlertSummaryFull} />
+        </Box>
+        <Box as="li" aria-describedby="alert-severity-description">
+          <SeverityBadge severity={rule.severity} />
+        </Box>
+      </Flex>
       <Card variant="dark" as="section" p={4} mb={4}>
         <SimpleGrid columns={2} spacing={5}>
           <Flex direction="column" spacing={2}>

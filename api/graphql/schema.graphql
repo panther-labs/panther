@@ -139,7 +139,7 @@ type AlertDetails {
   events: [AWSJSON!]!
   eventsLastEvaluatedKey: String
   dedupString: String!
-  status: String
+  status: AlertStatusesEnum!
   lastUpdatedBy: ID # stores the UserID of the last person who modified the Alert
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
 }
@@ -157,7 +157,7 @@ type AlertSummary {
   updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
   ruleId: String
   severity: SeverityEnum
-  status: String
+  status: AlertStatusesEnum!
   lastUpdatedBy: ID # stores the UserID of the last person who modified the Alert
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
 }

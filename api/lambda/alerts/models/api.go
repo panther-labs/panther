@@ -100,7 +100,7 @@ type ListAlertsInput struct {
 //     "updateAlertStatus": {
 //         "alertId": "84c3e4b27c702a1c31e6eb412fc377f6",
 //         "status": "CLOSED"
-//         // userId is added by AppSync resolver (UpdateAlertResolver)
+//         // userId is added by AppSync resolver (UpdateAlertStatusResolver)
 //         "userId": "5f54cf4a-ec56-44c2-83bc-8b742600f307"
 //     }
 // }

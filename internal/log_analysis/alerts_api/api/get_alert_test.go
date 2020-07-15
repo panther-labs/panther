@@ -106,11 +106,12 @@ func TestGetAlertDoesNotExist(t *testing.T) {
 		AlertID:        aws.String("alertId"),
 		EventsPageSize: aws.Int(5),
 	}
+	output := &models.GetAlertOutput{}
 
 	tableMock.On("GetAlert", aws.String("alertId")).Return(nil, nil)
 	api := API{}
 	result, err := api.GetAlert(input)
-	require.Nil(t, result)
+	require.Equal(t, output, result)
 	require.NoError(t, err)
 }
 
@@ -130,7 +131,7 @@ func TestGetAlert(t *testing.T) {
 	alertItem := &table.AlertItem{
 		AlertID:           "alertId",
 		RuleID:            "ruleId",
-		Status:            "TRIAGED",
+		Status:            "",
 		RuleVersion:       "ruleVersion",
 		DedupString:       "dedupString",
 		CreationTime:      time.Date(2020, 1, 1, 1, 0, 0, 0, time.UTC),
@@ -181,7 +182,7 @@ func TestGetAlert(t *testing.T) {
 		AlertSummary: models.AlertSummary{
 			AlertID:           aws.String("alertId"),
 			RuleID:            aws.String("ruleId"),
-			Status:            "TRIAGED",
+			Status:            "OPEN",
 			RuleVersion:       aws.String("ruleVersion"),
 			Severity:          aws.String("INFO"),
 			Title:             aws.String("ruleId"),
@@ -234,7 +235,7 @@ func TestGetAlert(t *testing.T) {
 		AlertSummary: models.AlertSummary{
 			AlertID:           aws.String("alertId"),
 			RuleID:            aws.String("ruleId"),
-			Status:            "TRIAGED",
+			Status:            "OPEN",
 			RuleVersion:       aws.String("ruleVersion"),
 			Severity:          aws.String("INFO"),
 			Title:             aws.String("ruleId"),
@@ -280,7 +281,7 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 	alertItem := &table.AlertItem{
 		AlertID:           "alertId",
 		RuleID:            "ruleId",
-		Status:            "TRIAGED",
+		Status:            "",
 		RuleVersion:       "ruleVersion",
 		CreationTime:      time.Date(2020, 1, 1, 1, 5, 0, 0, time.UTC),
 		UpdateTime:        time.Date(2020, 1, 1, 1, 6, 0, 0, time.UTC),
@@ -312,7 +313,7 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 		AlertSummary: models.AlertSummary{
 			AlertID:           aws.String("alertId"),
 			RuleID:            aws.String("ruleId"),
-			Status:            "TRIAGED",
+			Status:            "OPEN",
 			RuleVersion:       aws.String("ruleVersion"),
 			Title:             aws.String("ruleId"),
 			CreationTime:      aws.Time(time.Date(2020, 1, 1, 1, 5, 0, 0, time.UTC)),

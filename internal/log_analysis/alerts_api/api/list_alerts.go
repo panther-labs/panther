@@ -65,7 +65,12 @@ func alertItemsToAlertSummary(items []*table.AlertItem) []*models.AlertSummary {
 
 // alertItemToAlertSummary converts a DDB AlertItem to an AlertSummary
 func alertItemToAlertSummary(item *table.AlertItem) *models.AlertSummary {
-	// TODO: convert nil/empty status to "OPEN" status
+	// convert empty status to "OPEN" status
+	alertStatus := item.Status
+	if alertStatus == "" {
+		alertStatus = models.OpenStatus
+	}
+
 	return &models.AlertSummary{
 		AlertID:           &item.AlertID,
 		CreationTime:      &item.CreationTime,
@@ -75,7 +80,7 @@ func alertItemToAlertSummary(item *table.AlertItem) *models.AlertSummary {
 		RuleID:            &item.RuleID,
 		RuleVersion:       &item.RuleVersion,
 		Severity:          &item.Severity,
-		Status:            item.Status,
+		Status:            alertStatus,
 		Title:             getAlertTitle(item),
 		LastUpdatedBy:     item.LastUpdatedBy,
 		LastUpdatedByTime: item.LastUpdatedByTime,

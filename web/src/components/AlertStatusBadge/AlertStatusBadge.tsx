@@ -23,39 +23,28 @@ import { AlertStatusesEnum } from 'Generated/schema';
 const STATUS_COLOR_MAP: {
   [key in StatusBadgeProps['status']]: BadgeProps['color'];
 } = {
-  [AlertStatusesEnum.Open]: 'yellow-500' as const,
-  [AlertStatusesEnum.Triaged]: 'orange-500' as const,
-  [AlertStatusesEnum.Closed]: 'teal-300' as const,
-  [AlertStatusesEnum.Resolved]: 'green-200' as const,
+  [AlertStatusesEnum.Open]: 'red-200' as const,
+  [AlertStatusesEnum.Triaged]: 'yellow-500' as const,
+  [AlertStatusesEnum.Closed]: 'navyblue-500' as const,
+  [AlertStatusesEnum.Resolved]: 'navyblue-500' as const,
 };
 
 interface StatusBadgeProps {
   status: AlertStatusesEnum;
-  disabled?: boolean;
 }
 
-const AlertStatusBadge: React.FC<StatusBadgeProps> = ({ status, disabled = false }) => {
-  if (disabled) {
-    return (
-      <PseudoBox as={Badge} opacity={0.5} backgroundColor="gray-800">
-        {status}
-      </PseudoBox>
-    );
-  }
-
-  return (
-    <PseudoBox
-      as={Badge}
-      transition="box-shadow 0.2s ease-in-out"
-      backgroundColor={STATUS_COLOR_MAP[status]}
-      cursor="pointer"
-      _hover={{
-        boxShadow: '0px 0px 10px rgba(255, 255, 255, .3)',
-      }}
-    >
-      {status}
-    </PseudoBox>
-  );
-};
+const AlertStatusBadge: React.FC<StatusBadgeProps> = ({ status }) => (
+  <PseudoBox
+    as={Badge}
+    transition="box-shadow 0.2s ease-in-out"
+    backgroundColor={STATUS_COLOR_MAP[status]}
+    cursor="pointer"
+    _hover={{
+      boxShadow: 'dark250',
+    }}
+  >
+    {status}
+  </PseudoBox>
+);
 
 export default AlertStatusBadge;

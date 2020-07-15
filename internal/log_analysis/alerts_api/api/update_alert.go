@@ -33,7 +33,7 @@ func (API) UpdateAlertStatus(input *models.UpdateAlertStatusInput) (result *mode
 
 	// If there was no item from the DB, we return an empty response
 	if alertItem == nil {
-		return nil, nil
+		return &models.UpdateAlertStatusOutput{}, nil
 	}
 
 	// Marshal to an alert summary
