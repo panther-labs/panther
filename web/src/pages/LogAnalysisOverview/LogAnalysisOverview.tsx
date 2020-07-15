@@ -20,16 +20,24 @@ import React from 'react';
 import { Alert, Box, SimpleGrid } from 'pouncejs';
 import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage } from 'Helpers/utils';
-import { useGetOrganizationStats } from 'Pages/ComplianceOverview/graphql/getOrganizationStats.generated';
 import Panel from 'Components/Panel';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import EventsByLogType from 'Pages/LogAnalysisOverview/EventsByLogType';
 import LogAnalysisOverviewPageSkeleton from './Skeleton';
 import { eventData as metricsData } from './demoData';
+import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
 
 const LogAnalysisOverview: React.FC = () => {
-  const { data, loading, error } = useGetOrganizationStats({
+  const { data, loading, error } = useGetLogAnalysisMetrics({
     fetchPolicy: 'cache-and-network',
+    variables: {
+      input: {
+        metricNames: ['eventsProcessed'],
+        fromDate: '2020-07-10T12:00:00Z',
+        toDate: '2020-07-15T23:00:00Z',
+        intervalHours: 1,
+      },
+    },
   });
 
   if (loading && !data) {

@@ -61,6 +61,7 @@ type Query {
   listComplianceIntegrations: [ComplianceIntegration!]!
   listLogIntegrations: [LogIntegration!]!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
+  getLogAnalysisMetrics(input: LogAnalysisMetricsInput): LogAnalysisMetricsResponse
   rule(input: GetRuleInput!): RuleDetails
   rules(input: ListRulesInput): ListRulesResponse
   listGlobalPythonModules(input: ListGlobalPythonModuleInput!): ListGlobalPythonModulesResponse!
@@ -301,6 +302,13 @@ input OrganizationStatsInput {
   limitTopFailing: Int
 }
 
+input LogAnalysisMetricsInput {
+  intervalHours: Int!
+  fromDate: AWSDateTime!
+  toDate: AWSDateTime!
+  metricNames: [String!]!
+}
+
 type ComplianceStatusCounts {
   error: Int
   fail: Int
@@ -329,6 +337,24 @@ type OrganizationStatsResponse {
   scannedResources: ScannedResources
   topFailingPolicies: [PolicySummary]
   topFailingResources: [ResourceSummary]
+}
+
+type SeriesData {
+  label: String!
+  timestamps: [AWSDateTime]!
+  values: [Int]
+}
+
+type MetricsResults {
+  metricsName: String
+  seriesData: [SeriesData]
+}
+
+type LogAnalysisMetricsResponse {
+  metricsResults: [MetricsResults]!
+  #  fromDate: AWSDateTime
+  #  toDate: AWSDateTime
+  intervalHours: Int
 }
 
 input UpdateGeneralSettingsInput {
