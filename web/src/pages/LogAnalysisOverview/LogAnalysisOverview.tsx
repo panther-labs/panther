@@ -21,10 +21,10 @@ import { Alert, Box, SimpleGrid } from 'pouncejs';
 import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useGetOrganizationStats } from 'Pages/ComplianceOverview/graphql/getOrganizationStats.generated';
-import LogAnalysisOverviewPageSkeleton from './Skeleton';
 import Panel from 'Components/Panel';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import EventsByLogType from 'Pages/LogAnalysisOverview/EventsByLogType';
+import LogAnalysisOverviewPageSkeleton from './Skeleton';
 import { eventData as metricsData } from './demoData';
 
 const LogAnalysisOverview: React.FC = () => {
