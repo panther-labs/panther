@@ -62,7 +62,6 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
           status: () => data.updateAlertStatus.status,
         },
       });
-      cache.gc();
     },
 
     // We want to simulate an instant change in the UI which will fallback if there's a failure
