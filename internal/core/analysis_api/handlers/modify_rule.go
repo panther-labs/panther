@@ -34,6 +34,15 @@ func ModifyRule(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 		return badRequest(err)
 	}
 
+	// Disallow saving if rule is enabled and its tests fail.
+	ok, err := enabledRuleTestsPass(input)
+	if err != nil {
+		return failedRequest(err.Error(), http.StatusInternalServerError)
+	}
+	if !ok {
+		return badRequest(errRuleTestsFail)
+	}
+
 	item := &tableItem{
 		Body:               input.Body,
 		DedupPeriodMinutes: input.DedupPeriodMinutes,

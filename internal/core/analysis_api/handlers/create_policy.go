@@ -19,6 +19,7 @@ package handlers
  */
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -36,6 +37,15 @@ func CreatePolicy(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 	input, err := parseUpdatePolicy(request)
 	if err != nil {
 		return badRequest(err)
+	}
+
+	// Disallow saving if policy is enabled and its tests fail.
+	ok, err := enabledPolicyTestsPass(input)
+	if err != nil {
+		return failedRequest(err.Error(), http.StatusInternalServerError)
+	}
+	if !ok {
+		return badRequest(errPolicyTestsFail)
 	}
 
 	item := &tableItem{
@@ -85,4 +95,27 @@ func parseUpdatePolicy(request *events.APIGatewayProxyRequest) (*models.UpdatePo
 	}
 
 	return &result, nil
+}
+
+var errPolicyTestsFail = errors.New("cannot save an enabled policy with failing unit tests")
+
+// enabledPolicyTestsPass returns false if the policy is enabled and its tests fail.
+func enabledPolicyTestsPass(policy *models.UpdatePolicy) (bool, error) {
+	if !policy.Enabled || len(policy.Tests) == 0 {
+		return true, nil
+	}
+	testResults, err := policyEngine.TestPolicy(toTestPolicy(policy))
+	if err != nil {
+		return false, err
+	}
+	return bool(testResults.TestSummary), nil
+}
+
+func toTestPolicy(updatePolicy *models.UpdatePolicy) *models.TestPolicy {
+	return &models.TestPolicy{
+		AnalysisType:  models.AnalysisTypePOLICY,
+		Body:          updatePolicy.Body,
+		ResourceTypes: updatePolicy.ResourceTypes,
+		Tests:         updatePolicy.Tests,
+	}
 }
