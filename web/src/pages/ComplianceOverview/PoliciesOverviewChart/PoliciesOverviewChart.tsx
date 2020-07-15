@@ -17,50 +17,57 @@
  */
 
 import React from 'react';
-import { capitalize, countPoliciesBySeverityAndStatus } from 'Helpers/utils';
-import map from 'lodash-es/map';
+import { countPoliciesBySeverityAndStatus } from 'Helpers/utils';
 import sum from 'lodash-es/sum';
 import { OrganizationReportBySeverity } from 'Generated/schema';
-import { theme, Flex } from 'pouncejs';
+import { Flex } from 'pouncejs';
 import BarChart from 'Components/charts/BarChart';
 import ChartSummary from 'Components/charts/ChartSummary';
 
-const severityToColorMapping: {
-  [key in keyof OrganizationReportBySeverity]: keyof typeof theme['colors'];
-} = {
-  critical: 'red-400',
-  high: 'orange-500',
-  medium: 'yellow-500',
-  low: 'gray-500',
-  info: 'gray-800',
-};
+const severities = [
+  'critical',
+  'high',
+  'medium',
+  'low',
+  'info',
+] as (keyof OrganizationReportBySeverity)[];
 
-interface PoliciesByStatusChartData {
+interface PoliciesOverviewChartData {
   policies: OrganizationReportBySeverity;
 }
 
-const PoliciesByStatusChart: React.FC<PoliciesByStatusChartData> = ({ policies }) => {
-  const severities = Object.keys(severityToColorMapping);
-  const totalFailingPolicies = sum(
+const PoliciesOverviewChart: React.FC<PoliciesOverviewChartData> = ({ policies }) => {
+  const passingPolicies = sum(
+    severities.map((severity: keyof OrganizationReportBySeverity) =>
+      countPoliciesBySeverityAndStatus(policies, severity, ['pass'])
+    )
+  );
+  const failingPolicies = sum(
     severities.map((severity: keyof OrganizationReportBySeverity) =>
       countPoliciesBySeverityAndStatus(policies, severity, ['fail', 'error'])
     )
   );
 
-  const failingPoliciesChartData = [
-    ...map(severityToColorMapping, (color, severity: keyof OrganizationReportBySeverity) => ({
-      value: countPoliciesBySeverityAndStatus(policies, severity, ['fail', 'error']),
-      label: capitalize(severity),
-      color,
-    })),
+  const totalPolicies = passingPolicies + failingPolicies;
+  const policiesOverviewChartData = [
+    {
+      value: failingPolicies,
+      label: 'Failing',
+      color: 'red-200' as const,
+    },
+    {
+      value: passingPolicies,
+      label: 'Passing',
+      color: 'green-200' as const,
+    },
   ];
 
   return (
     <Flex height="100%">
-      <ChartSummary total={totalFailingPolicies} title="Total Failing Policies" color="red-200" />
-      <BarChart data={failingPoliciesChartData} />
+      <ChartSummary total={totalPolicies} title="Total Policies" color="blue-600" />
+      <BarChart data={policiesOverviewChartData} alignment="horizontal" />
     </Flex>
   );
 };
 
-export default React.memo(PoliciesByStatusChart);
+export default React.memo(PoliciesOverviewChart);
