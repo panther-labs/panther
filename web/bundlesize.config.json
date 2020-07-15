@@ -3,13 +3,13 @@
     {
       "name": "JS Assets",
       "path": "web/dist/*.js",
-      "maxSize": "350 kB",
+      "maxSize": "300 kB",
       "compression": "brotli"
     },
     {
       "name": "Illustrations",
       "path": "web/dist/*.svg",
-      "maxSize": "40 kB",
+      "maxSize": "20 kB",
       "compression": "brotli"
     },
     {
