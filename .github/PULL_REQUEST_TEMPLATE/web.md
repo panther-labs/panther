@@ -1,5 +1,6 @@
 <!--
-  Yay new Pull Request! <a href="https://www.youtube.com/watch?v=ygBP7MtT3Ac" target="_blank" rel="noopener noreferrer">POWERRRRRR!</a>
+  Yay new Pull Request! POWERRRRRR!
+  (https://www.youtube.com/watch?v=ygBP7MtT3Ac)
 
   Please take a look at the following checklist and make sure all of the items are checked before submitting your PR.
 -->
