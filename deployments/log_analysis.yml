@@ -67,6 +67,12 @@ Parameters:
     Type: String
     Description: Enable XRay tracing on Lambda and API Gateway
     AllowedValues: ['', Active, PassThrough]
+  InputDataBucket:
+    Type: String
+    Description: S3 bucket which stores incoming logs that are meant to be processed by log analysis
+  InputDataTopicArn:
+    Type: String
+    Description: The ARN of the input data SNS topic
 
 Mappings:
   Functions:
@@ -85,6 +91,9 @@ Mappings:
     Updater:
       Memory: 512
       Timeout: 900 # set to max to allow syncs
+    MessageForwarder:
+      Memory: 128
+      Timeout: 30
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
@@ -108,6 +117,42 @@ Resources:
       TablesSignature: !Ref TablesSignature
       ProcessedDataBucket: !Ref ProcessedDataBucket
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  InputDataSnsSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: sqs
+      Endpoint: !GetAtt LogProcessorQueue.Arn
+      Region: !Ref AWS::Region
+      TopicArn: !Ref InputDataTopicArn
+      RawMessageDelivery: false
+
+  InputDataLogProcessingRole: # Role that has access to data in the InputDataBucket
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub PantherInputDataLogProcessingRole-${AWS::Region}
+      MaxSessionDuration: 3600 # 1 hour
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+            Action: sts:AssumeRole
+            Condition:
+              Bool:
+                aws:SecureTransport: true
+      Policies:
+        - PolicyName: ReadData
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: s3:GetBucketLocation
+                Resource: !Sub arn:aws:s3:::${InputDataBucket}
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub arn:aws:s3:::${InputDataBucket}/*
 
   ###### Alerts API #####
   AlertsApiLogGroup:
@@ -423,6 +468,7 @@ Resources:
           PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
           SNS_TOPIC_ARN: !Ref ProcessedDataTopicArn
           SQS_QUEUE_URL: !Ref LogProcessorQueue
+          INPUT_DATA_BUCKET: !Ref InputDataBucket
       Events:
         Queue:
           Type: SQS
@@ -459,6 +505,15 @@ Resources:
             - Effect: Allow
               Action: sts:AssumeRole
               Resource: !Sub arn:${AWS::Partition}:iam::*:role/PantherLogProcessingRole-*
+              Condition:
+                Bool:
+                  aws:SecureTransport: true
+        - Id: AssumePantherInputDataLogProcessingRole
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Resource: !GetAtt InputDataLogProcessingRole.Arn
               Condition:
                 Bool:
                   aws:SecureTransport: true
@@ -902,3 +957,120 @@ Resources:
             pip: !Ref PythonLayerVersionArn
             global: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:panther-engine-globals:LATEST
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  ### Amazon SQS forwarder Resources###
+  MessageForwarderFirehose:
+    Type: AWS::KinesisFirehose::DeliveryStream
+    Properties:
+      DeliveryStreamName: panther-forwarder-firehose
+      DeliveryStreamType: DirectPut
+      ExtendedS3DestinationConfiguration:
+        BucketARN: !Sub arn:${AWS::Partition}:s3:::${InputDataBucket}
+        Prefix: forwarder/
+        BufferingHints:
+          # Data is flushed once one of the buffer hints are satisfied.
+          IntervalInSeconds: 60
+          SizeInMBs: 128
+        CompressionFormat: GZIP
+        RoleARN: !GetAtt MessageForwarderFirehoseRole.Arn
+
+  MessageForwarderFirehoseRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: firehose.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                sts:ExternalId: !Ref AWS::AccountId
+      Policies:
+        - PolicyName: WriteToDataBucket
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:AbortMultipartUpload
+                  - s3:GetBucketLocation
+                  - s3:GetObject
+                  - s3:ListBucket
+                  - s3:ListBucketMultipartUploads
+                  - s3:PutObject
+                Resource:
+                  - !Sub arn:${AWS::Partition}:s3:::${InputDataBucket}
+                  - !Sub arn:${AWS::Partition}:s3:::${InputDataBucket}/forwarder/*
+
+  MessageForwarderLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-message-forwarder
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  MessageForwarderMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      LogGroupName: !Ref MessageForwarderLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  MessageForwarderAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
+      FunctionMemoryMB: !FindInMap [Functions, MessageForwarder, Memory]
+      FunctionName: !Ref MessageForwarderFunction
+      FunctionTimeoutSec: !FindInMap [Functions, MessageForwarder, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  MessageForwarderFunction:
+    # !!!!!!!!! WARNING !!!!!!!!! #
+    # The triggers of this Lambda are managed at runtime, NOT in CloudFormation.
+    # We should NEVER specify a trigger for this Lambda in CloudFormation since this will cause CFN to override
+    # all runtime-managed triggers
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: panther-message-forwarder
+      # <cfndoc>
+      # This Lambda pulls data from user configured SQS sources and pushes them to Panther
+      # for further processing.
+      # Failure Impact
+      # Panther will stop processing data from SQS sources.
+      # </cfndoc>
+      Description: Pulls logs from external sources
+      CodeUri: ../out/bin/internal/log_analysis/message_forwarder/main
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: !FindInMap [Functions, MessageForwarder, Memory]
+      Runtime: go1.x
+      Timeout: !FindInMap [Functions, MessageForwarder, Timeout]
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+          STREAM_NAME: !Ref MessageForwarderFirehose
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: ReadFromSqs
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - sqs:ReceiveMessage
+                - sqs:DeleteMessage
+                - sqs:GetQueueAttributes
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-*
+        - Id: WriteToFirehose
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: firehose:PutRecordBatch
+              Resource: !GetAtt MessageForwarderFirehose.Arn
+        - Id: InvokeSourceAPI
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api

@@ -278,6 +278,10 @@ func TestProcessClassifyFailure(t *testing.T) {
 						Name: "BytesProcessed",
 						Unit: metrics.UnitBytes,
 					},
+					{
+						Name: "EventsProcessed",
+						Unit: metrics.UnitCount,
+					},
 				},
 			},
 		},
@@ -363,6 +367,10 @@ func TestProcessClassifyFailure(t *testing.T) {
 				{
 					Key:     "BytesProcessed",
 					Integer: 7996,
+				},
+				{
+					Key:     "EventsProcessed",
+					Integer: 1999,
 				},
 				{
 					Key:       "_aws",

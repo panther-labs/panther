@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/service/kms"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"go.uber.org/zap"
 
@@ -47,13 +48,15 @@ var (
 )
 
 // CheckIntegration adds a set of new integrations in a batch.
-func (API) CheckIntegration(input *models.CheckIntegrationInput) (*models.SourceIntegrationHealth, error) {
+func (api API) CheckIntegration(input *models.CheckIntegrationInput) (*models.SourceIntegrationHealth, error) {
 	zap.L().Debug("beginning source configuration check")
 	switch input.IntegrationType {
 	case models.IntegrationTypeAWSScan:
 		return checkAwsScanIntegration(input), nil
 	case models.IntegrationTypeAWS3:
 		return checkAwsS3Integration(input), nil
+	case models.IntegrationTypeSqs:
+		return checkSqsQueueHealth(input), nil
 	default:
 		return nil, checkIntegrationInternalError
 	}
@@ -196,7 +199,42 @@ func evaluateIntegration(api API, integration *models.CheckIntegrationInput) (st
 			return "log processing role cannot access kms key", false, nil
 		}
 		return "", true, nil
+	case models.IntegrationTypeSqs:
+		if !status.SqsStatus.Healthy {
+			return status.SqsStatus.ErrorMessage, false, nil
+		}
+		return "", true, nil
+
 	default:
 		return "", false, errors.New("invalid integration type")
 	}
+}
+
+// Check the health of the SQS source
+func checkSqsQueueHealth(input *models.CheckIntegrationInput) *models.SourceIntegrationHealth {
+	health := &models.SourceIntegrationHealth{
+		IntegrationType: input.IntegrationType,
+	}
+
+	// If the Queue URL is not populated, it means that the SQS queue has not yet been created
+	// In such a case, the health check can just return true, since there is no check to be performed.
+	// This can happen during the initial health-check performed by the frontend, since the health check
+	// is performed before the SQS queue is created.
+	if len(input.SqsConfig.QueueURL) == 0 {
+		health.SqsStatus.Healthy = true
+		return health
+	}
+
+	getAttributesInput := &sqs.GetQueueAttributesInput{
+		QueueUrl: &input.SqsConfig.QueueURL,
+	}
+	_, err := sqsClient.GetQueueAttributes(getAttributesInput)
+	if err != nil {
+		health.SqsStatus.Healthy = false
+		health.SqsStatus.ErrorMessage = "failed to get queue attributes"
+		return health
+	}
+
+	health.SqsStatus.Healthy = true
+	return health
 }

@@ -27,6 +27,7 @@ module.exports = {
     'plugin:prettier/recommended',
   ],
   env: {
+    jest: true,
     browser: true,
     node: true,
   },
@@ -69,6 +70,10 @@ module.exports = {
     'import/resolver': {
       webpack: {
         config: path.resolve(__dirname, 'webpack.config.js'),
+      },
+      alias: {
+        map: [['test-utils', path.resolve(__dirname, '__tests__/utils')]],
+        extensions: ['.ts', '.tsx'],
       },
     },
     react: {

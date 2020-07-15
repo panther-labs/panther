@@ -519,7 +519,7 @@ input DestinationInput {
 input DestinationConfigInput {
   slack: SlackConfigInput
   sns: SnsConfigInput
-  sqs: SQSConfigInput
+  sqs: SqsConfigInput
   pagerDuty: PagerDutyConfigInput
   github: GithubConfigInput
   jira: JiraConfigInput
@@ -529,7 +529,7 @@ input DestinationConfigInput {
   customWebhook: CustomWebhookConfigInput
 }
 
-input SQSConfigInput {
+input SqsConfigInput {
   queueUrl: String!
 }
 

@@ -1332,7 +1332,7 @@ export type ResolversTypes = {
   DestinationConfigInput: DestinationConfigInput;
   SlackConfigInput: SlackConfigInput;
   SnsConfigInput: SnsConfigInput;
-  SQSConfigInput: SqsConfigInput;
+  SqsConfigInput: SqsConfigInput;
   PagerDutyConfigInput: PagerDutyConfigInput;
   GithubConfigInput: GithubConfigInput;
   JiraConfigInput: JiraConfigInput;
@@ -1457,7 +1457,7 @@ export type ResolversParentTypes = {
   DestinationConfigInput: DestinationConfigInput;
   SlackConfigInput: SlackConfigInput;
   SnsConfigInput: SnsConfigInput;
-  SQSConfigInput: SqsConfigInput;
+  SqsConfigInput: SqsConfigInput;
   PagerDutyConfigInput: PagerDutyConfigInput;
   GithubConfigInput: GithubConfigInput;
   JiraConfigInput: JiraConfigInput;

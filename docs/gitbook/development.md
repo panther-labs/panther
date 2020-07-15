@@ -169,7 +169,7 @@ You can force an update of most custom resources by overriding their version:
 ### From an EC2 Instance
 
 You can also deploy from an EC2 instance with Docker and git installed in the same region you're deploying Panther to.
-Instead of exporting your AWS credentials as environment variables, you will need to attach the [deployment IAM role](quick-start.md#prerequisites) to your EC2 instance profile.
+Instead of exporting your AWS credentials as environment variables, you will need to attach the [deployment IAM role](quick-start.md) to your EC2 instance profile.
 We recommend at least an `m5.large` instance type, but even one as small as `t2.small` should be sufficient.
 
 ## Teardown

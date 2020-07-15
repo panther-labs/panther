@@ -54,6 +54,16 @@ func integrationToItem(input *models.SourceIntegration) *ddb.Integration {
 		item.LastScanStartTime = input.LastScanStartTime
 		item.LastScanEndTime = input.LastScanEndTime
 		item.StackName = input.StackName
+	case models.IntegrationTypeSqs:
+		item.SqsConfig = &ddb.SqsConfig{
+			QueueURL:          input.SqsConfig.QueueURL,
+			S3Bucket:          input.SqsConfig.S3Bucket,
+			S3Prefix:          input.SqsConfig.S3Prefix,
+			LogProcessingRole: input.SqsConfig.LogProcessingRole,
+			LogTypes:          input.SqsConfig.LogTypes,
+			AllowedPrincipals: input.SqsConfig.AllowedPrincipals,
+			AllowedSourceArns: input.SqsConfig.AllowedSourceArns,
+		}
 	}
 	return item
 }
@@ -88,6 +98,16 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 		integration.LastScanEndTime = item.LastScanEndTime
 		integration.LastScanErrorMessage = item.LastScanErrorMessage
 		integration.StackName = item.StackName
+	case models.IntegrationTypeSqs:
+		integration.SqsConfig = &models.SqsConfig{
+			S3Bucket:          item.SqsConfig.S3Bucket,
+			S3Prefix:          item.SqsConfig.S3Prefix,
+			LogProcessingRole: item.SqsConfig.LogProcessingRole,
+			QueueURL:          item.SqsConfig.QueueURL,
+			LogTypes:          item.SqsConfig.LogTypes,
+			AllowedPrincipals: item.SqsConfig.AllowedPrincipals,
+			AllowedSourceArns: item.SqsConfig.AllowedSourceArns,
+		}
 	}
 	return integration
 }
