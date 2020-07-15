@@ -18,54 +18,23 @@
 
 import React from 'react';
 import echarts from 'echarts';
-import { Box } from 'pouncejs';
+import { Box, theme } from 'pouncejs';
 import { LineColors } from '../constants';
-import { transform } from 'lodash-es';
 
 interface TimeSeriesLinesProps {
   // TODO: To be defined properly
   data: any;
 }
 
-const monthString = [
-  'JAN',
-  'FEB',
-  'MAR',
-  'APR',
-  'MAY',
-  'JUN',
-  'JUL',
-  'AUG',
-  'SEP',
-  'OCT',
-  'NOV',
-  'DEC',
-];
-
-function transformTimestamps(timestamp) {
-  const d = new Date(timestamp);
-  const date = d.getDate();
-  const month = d.getMonth();
-  return `${monthString[month]} ${date}`;
-}
-
 const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
   const container = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
-    /*
-     * 'xAxisData' must be an array of values that is common for all series
-     * Must be ordered
-     * e.g. [05/14, 05/15, [04,16]
-     */
-    const xAxisData = data[0].timestamps;
-    // .map(transformTimestamps);
-
     /*
      * 'legendData' must be an array of values that matches 'series.name'in order
      * to display them in correct order and color
      * e.g. [AWS.ALB]
      */
-    const legendData = Object.keys(data);
+    const legendData = data.map(({ label }) => label);
 
     /*
      * 'series' must be an array of objects that includes some graph options
@@ -78,7 +47,6 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
         name: label,
         type: 'line',
         smooth: true,
-        sampling: 'average',
         itemStyle: {
           color: LineColors[label],
         },
@@ -97,7 +65,6 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
         right: 20,
         bottom: 20,
         top: 10,
-        // show: true,
         containLabel: true,
       },
       tooltip: {
@@ -106,22 +73,42 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
       },
       legend: {
         type: 'scroll',
+        width: 50,
         orient: 'vertical',
         left: 'left',
         icon: 'circle',
         data: legendData,
+        textStyle: {
+          color: theme.colors['gray-50'],
+        },
       },
       xAxis: {
-        // FIXME: This probably need to change to 'time' value with real data
         type: 'time',
-        boundaryGap: 0,
-        data: xAxisData,
         splitLine: {
           show: false,
+        },
+        axisLabel: {
+          show: true,
+          textStyle: {
+            color: () => {
+              return '#F6F6F6';
+            },
+          },
         },
       },
       yAxis: {
         type: 'value',
+        splitNumber: 4,
+        axisLabel: {
+          padding: [0, 20, 0, 0],
+          interval: 1,
+          show: true,
+          textStyle: {
+            color: () => {
+              return '#F6F6F6';
+            },
+          },
+        },
         axisLine: {
           show: true,
         },
