@@ -8,7 +8,12 @@ fragment AlertDetailsFull on AlertDetails {
   eventsLastEvaluatedKey
   events
   dedupString
+  severity
   status
-  lastUpdatedBy
+  lastUpdatedBy {
+    givenName
+    familyName
+    email
+  }
   lastUpdatedByTime
 }

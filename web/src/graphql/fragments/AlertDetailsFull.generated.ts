@@ -33,10 +33,12 @@ export type AlertDetailsFull = Pick<
   | 'eventsLastEvaluatedKey'
   | 'events'
   | 'dedupString'
+  | 'severity'
   | 'status'
-  | 'lastUpdatedBy'
   | 'lastUpdatedByTime'
->;
+> & {
+  lastUpdatedBy?: Types.Maybe<Pick<Types.UserAttribution, 'givenName' | 'familyName' | 'email'>>;
+};
 
 export const AlertDetailsFull = gql`
   fragment AlertDetailsFull on AlertDetails {
@@ -49,8 +51,13 @@ export const AlertDetailsFull = gql`
     eventsLastEvaluatedKey
     events
     dedupString
+    severity
     status
-    lastUpdatedBy
+    lastUpdatedBy {
+      givenName
+      familyName
+      email
+    }
     lastUpdatedByTime
   }
 `;

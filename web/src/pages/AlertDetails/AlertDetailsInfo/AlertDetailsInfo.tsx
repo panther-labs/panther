@@ -19,16 +19,17 @@
 import { Box, Flex, SimpleGrid, Link, Heading, Tooltip, Icon, Card } from 'pouncejs';
 import urls from 'Source/urls';
 import React from 'react';
-import { AlertDetails, RuleDetails } from 'Generated/schema';
+import { RuleDetails } from 'Generated/schema';
 import Linkify from 'Components/Linkify';
 import { formatDatetime } from 'Helpers/utils';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/SeverityBadge';
 import UpdateAlertDropdown from 'Components/dropdowns/UpdateAlertDropdown';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
+import { AlertDetailsFull } from 'Source/graphql/fragments/AlertDetailsFull.generated';
 
 interface AlertDetailsInfoProps {
-  alert: AlertDetails;
+  alert: AlertDetailsFull;
   rule: Partial<RuleDetails>;
 }
 

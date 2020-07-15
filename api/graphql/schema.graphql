@@ -129,37 +129,52 @@ type S3LogIntegrationHealth {
   kmsKeyStatus: IntegrationItemHealthStatus!
 }
 
-type AlertDetails {
+interface Alert {
   alertId: ID!
-  ruleId: ID
-  title: String!
   creationTime: AWSDateTime!
-  updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
   eventsMatched: Int!
+  ruleId: ID
+  severity: SeverityEnum!
+  status: AlertStatusesEnum!
+  title: String!
+  lastUpdatedBy: UserAttribution # resolves to the user who last updated the alert
+  lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
+  updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
+}
+
+type AlertDetails implements Alert {
+  alertId: ID!
+  creationTime: AWSDateTime!
+  eventsMatched: Int!
+  ruleId: ID
+  severity: SeverityEnum!
+  status: AlertStatusesEnum!
+  title: String!
+  lastUpdatedBy: UserAttribution # resolves to the user who last updated the alert
+  lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
+  updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
+
+  dedupString: String!
   events: [AWSJSON!]!
   eventsLastEvaluatedKey: String
-  dedupString: String!
+}
+
+type AlertSummary implements Alert {
+  alertId: ID!
+  creationTime: AWSDateTime!
+  eventsMatched: Int!
+  ruleId: ID
+  severity: SeverityEnum!
   status: AlertStatusesEnum!
-  lastUpdatedBy: ID # stores the UserID of the last person who modified the Alert
+  title: String!
+  lastUpdatedBy: UserAttribution # resolves to the user who last updated the alert
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
+  updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
 }
 
 type ListAlertsResponse {
   alertSummaries: [AlertSummary]!
   lastEvaluatedKey: String
-}
-
-type AlertSummary {
-  alertId: String!
-  creationTime: AWSDateTime!
-  eventsMatched: Int!
-  title: String!
-  updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
-  ruleId: String
-  severity: SeverityEnum
-  status: AlertStatusesEnum!
-  lastUpdatedBy: ID # stores the UserID of the last person who modified the Alert
-  lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
 }
 
 input UpdateAlertStatusInput {
@@ -828,6 +843,12 @@ type User {
   email: AWSEmail!
   createdAt: AWSTimestamp!
   status: String!
+}
+
+type UserAttribution {
+  givenName: String
+  familyName: String
+  email: AWSEmail
 }
 
 input InviteUserInput {

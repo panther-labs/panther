@@ -32,9 +32,10 @@ export type AlertSummaryFull = Pick<
   | 'creationTime'
   | 'eventsMatched'
   | 'updateTime'
-  | 'lastUpdatedBy'
   | 'lastUpdatedByTime'
->;
+> & {
+  lastUpdatedBy?: Types.Maybe<Pick<Types.UserAttribution, 'givenName' | 'familyName' | 'email'>>;
+};
 
 export const AlertSummaryFull = gql`
   fragment AlertSummaryFull on AlertSummary {
@@ -46,7 +47,11 @@ export const AlertSummaryFull = gql`
     creationTime
     eventsMatched
     updateTime
-    lastUpdatedBy
+    lastUpdatedBy {
+      givenName
+      familyName
+      email
+    }
     lastUpdatedByTime
   }
 `;

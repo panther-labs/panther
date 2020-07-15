@@ -32,7 +32,6 @@ import { AlertStatusesEnum } from 'Generated/schema';
 import AlertStatusBadge from 'Components/AlertStatusBadge';
 import { extractErrorMessage, formatDatetime } from 'Helpers/utils';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
-import { useListUsers } from 'Pages/Users';
 import { useUpdateAlertStatus } from './graphql/updateAlertStatus.generated';
 
 interface UpdateAlertDropdownProps {
@@ -42,17 +41,6 @@ interface UpdateAlertDropdownProps {
 const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
   const { status } = alert;
   const { pushSnackbar } = useSnackbar();
-
-  // Retrieve a list of users so we can match attribution
-  const { data: listUsersData } = useListUsers({
-    onError: listUsersError => {
-      pushSnackbar({
-        variant: 'error',
-        title: `Failed to fetch some alert details`,
-        description: extractErrorMessage(listUsersError),
-      });
-    },
-  });
 
   const [updateAlertStatus] = useUpdateAlertStatus({
     variables: {
@@ -100,12 +88,19 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
   });
 
   const availableStatusesEntries = React.useMemo(() => Object.entries(AlertStatusesEnum), []);
-
-  // Extract and map the specific userID -> user's name
+  // Extract a name to display
   const lastUpdatedBy = React.useMemo(() => {
-    const user = listUsersData?.users?.filter(usr => usr.id === alert.lastUpdatedBy).pop();
-    return user ? `${user.givenName} ${user.familyName}` : null;
-  }, [listUsersData?.users, alert.lastUpdatedBy]);
+    if (alert.lastUpdatedBy.givenName && alert.lastUpdatedBy.familyName) {
+      return `${alert.lastUpdatedBy.givenName} ${alert.lastUpdatedBy.familyName}`;
+    }
+    if (!alert.lastUpdatedBy.givenName && alert.lastUpdatedBy.familyName) {
+      return alert.lastUpdatedBy.familyName;
+    }
+    if (alert.lastUpdatedBy.givenName && !alert.lastUpdatedBy.familyName) {
+      return alert.lastUpdatedBy.givenName;
+    }
+    return alert.lastUpdatedBy.email;
+  }, [alert]);
 
   // Format the timestamp
   const lastUpdatedByTime = formatDatetime(alert.lastUpdatedByTime);
@@ -128,8 +123,8 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
           content={
             <Flex spacing={1}>
               <Flex direction="column" spacing={1}>
-                <Box id="user-name-label">By:</Box>
-                <Box id="updated-by-timestamp-label">At:</Box>
+                <Box id="user-name-label">By</Box>
+                <Box id="updated-by-timestamp-label">At</Box>
               </Flex>
               <Flex direction="column" spacing={1} fontWeight="bold">
                 <Box aria-labelledby="user-name-label">{lastUpdatedBy}</Box>
