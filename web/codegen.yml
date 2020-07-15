@@ -52,8 +52,17 @@ generates:
 
   web/__tests__/__mocks__/builders.generated.ts:
     plugins:
-      - web/__tests__/codegen/mockGraphqlResourcesPlugin.js:
+      - graphql-codegen-typescript-mock-data:
           typesFile: ../../__generated__/schema.tsx
+          addTypename: true
+          typenames: keep
+          prefix: build
+          scalars:
+            AWSTimestamp: unix_time
+            AWSEmail: email
+            AWSPhone: phone
+            AWSDateTime: date
+            AWSJSON: string
 
   web/src/:
     documents: web/**/*.graphql

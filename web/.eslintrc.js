@@ -31,13 +31,7 @@ module.exports = {
     browser: true,
     node: true,
   },
-  ignorePatterns: [
-    'npm-debug.log*',
-    'dist',
-    '__generated__',
-    '*.generated.*',
-    '__tests__/codegen/*.js',
-  ],
+  ignorePatterns: ['npm-debug.log*', 'dist', '__generated__', '*.generated.*'],
   rules: {
     'import/prefer-default-export': 0,
     'max-len': 0,

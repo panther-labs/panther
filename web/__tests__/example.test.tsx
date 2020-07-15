@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { buildUser, render, generateRandomArray, waitForElementToBeRemoved } from 'test-utils';
+import { buildUser, render, waitForElementToBeRemoved } from 'test-utils';
 import Breadcrumbs from 'Components/Breadcrumbs';
 import urls from 'Source/urls';
 import ListUsersPage, { mockListUsers } from 'Pages/Users';
@@ -30,8 +30,8 @@ test('renders correct  breadcrumbs', async () => {
 });
 
 test('renders a list of users in the users page', async () => {
-  const randomUsers = generateRandomArray(() => buildUser(), 1, 5);
-  const mocks = [mockListUsers({ data: { users: randomUsers } })];
+  const users = [buildUser()];
+  const mocks = [mockListUsers({ data: { users } })];
 
   const { getByText, getByAriaLabel } = render(<ListUsersPage />, { mocks });
 
@@ -43,7 +43,7 @@ test('renders a list of users in the users page', async () => {
   await waitForElementToBeRemoved(loadingInterfaceElement);
 
   // Expect to see a list of names and emails
-  randomUsers.forEach(user => {
+  users.forEach(user => {
     expect(getByText(`${user.givenName} ${user.familyName}`)).toBeTruthy();
     expect(getByText(user.email)).toBeTruthy();
   });
