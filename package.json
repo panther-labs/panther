@@ -90,7 +90,7 @@
     "typescript": "^3.9.5",
     "url-loader": "^3.0.0",
     "webpack": "^4.41.5",
-    "webpack-bundle-analyzer": "^3.6.0",
+    "webpack-bundle-analyzer": "^3.8.0",
     "webpack-cli": "^3.3.10",
     "webpack-dev-middleware": "^3.7.2",
     "webpack-dev-server": "^3.11.0",
@@ -139,6 +139,7 @@
     "eslint": "eslint --config web/.eslintrc.js \"web/**/*.{ts,js,tsx}\"",
     "prettier": "prettier --list-different \"web/**/*.{ts,js,tsx,md,json,yml}\"",
     "tsc": "tsc -p web",
-    "validate": "npm run eslint && npm run prettier && npm run tsc"
+    "validate": "npm run eslint && npm run prettier && npm run tsc",
+    "bundlesize": "npm run build && bundlesize --config web/bundlesize.config.json"
   }
 }

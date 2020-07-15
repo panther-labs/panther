@@ -76,9 +76,27 @@ jobs:
           name: Audit NPM packages
           command: npm audit --production # does not require installing packages first
 
+  bundlesize:
+    executor: panther-buildpack
+    steps:
+      - checkout
+      - restore_cache:
+          name: 'Restore cache: npm'
+          keys:
+            - npm-{{ checksum "package-lock.json" }}
+
+      - run:
+          name: Install NPM dependencies
+          command: npm i
+
+      - run:
+        name: Check bundle size
+        command: npm run bundlesize
+
 workflows:
   version: 2
   pipeline:
     jobs:
       - mage_test_ci
       - npm_audit
+      - bundlesize
