@@ -52,13 +52,13 @@ func (h *Handler) Do(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) (e
 	if oldAlertDedupEvent != nil {
 		oldRule, err = h.Cache.Get(oldAlertDedupEvent.RuleID, oldAlertDedupEvent.RuleVersion)
 		if err != nil {
-			return errors.Wrap(err, "failed to get rule information")
+			return errors.Wrapf(err, "failed to get rule information for %s.%s", oldAlertDedupEvent.RuleID, oldAlertDedupEvent.RuleVersion)
 		}
 	}
 
 	newRule, err := h.Cache.Get(newAlertDedupEvent.RuleID, newAlertDedupEvent.RuleVersion)
 	if err != nil {
-		return errors.Wrap(err, "failed to get rule information")
+		return errors.Wrapf(err, "failed to get rule information for %s.%s", newAlertDedupEvent.RuleID, newAlertDedupEvent.RuleVersion)
 	}
 
 	if shouldIgnoreChange(newRule, newAlertDedupEvent) {
