@@ -17,7 +17,6 @@
  */
 
 import React from 'react';
-import echarts from 'echarts';
 import { Box, Theme, useTheme } from 'pouncejs';
 
 interface Data {
@@ -40,6 +39,13 @@ const BarChart: React.FC<BarChartProps> = ({ data, alignment = 'vertical' }) => 
     // We are not allowed to put async function directly in useEffect. Instead, we should define
     // our own async function and call it within useEffect
     (async () => {
+      // load the pie chart
+      const [echarts] = await Promise.all([
+        import(/* webpackChunkName: "echarts" */ 'echarts/lib/echarts'),
+        import(/* webpackChunkName: "echarts" */ 'echarts/lib/chart/bar'),
+        import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/legendScroll'),
+      ]);
+
       /*
        * 'legendData' must be an array of values that matches 'series.name'in order
        * to display them in correct order and color.
