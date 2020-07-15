@@ -56,6 +56,7 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 		S3Bucket:          input.S3Bucket,
 		S3Prefix:          input.S3Prefix,
 		KmsKey:            input.KmsKey,
+		SqsConfig:         input.SqsConfig,
 	})
 	if err != nil {
 		return nil, err
@@ -66,37 +67,53 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 			zap.String("reason", reason),
 			zap.Any("input", input))
 		return nil, &genericapi.InvalidInputError{
-			Message: fmt.Sprintf("existingIntegrationItem %s did not pass configuration check because of %s",
+			Message: fmt.Sprintf("source %s did not pass configuration check because of %s",
 				existingIntegrationItem.AWSAccountID, reason),
 		}
 	}
 
-	switch existingIntegrationItem.IntegrationType {
-	case models.IntegrationTypeAWSScan:
-		existingIntegrationItem.IntegrationLabel = input.IntegrationLabel
-		existingIntegrationItem.ScanIntervalMins = input.ScanIntervalMins
-		existingIntegrationItem.CWEEnabled = input.CWEEnabled
-		existingIntegrationItem.RemediationEnabled = input.RemediationEnabled
-	case models.IntegrationTypeAWS3:
-		existingIntegrationItem.S3Bucket = input.S3Bucket
-		existingIntegrationItem.S3Prefix = input.S3Prefix
-		existingIntegrationItem.KmsKey = input.KmsKey
-		existingIntegrationItem.LogTypes = input.LogTypes
-
-		err = addGlueTables(input.LogTypes)
-		if err != nil {
-			zap.L().Error("Failed to add glue tables to glue catalog", zap.Error(errors.WithStack(err)))
-			return nil, updateIntegrationInternalError
-		}
+	if err := normalizeIntegration(existingIntegrationItem, input); err != nil {
+		return nil, err
 	}
 
-	err = dynamoClient.PutItem(existingIntegrationItem)
-	if err != nil {
+	if err := updateTables(existingIntegrationItem.IntegrationType, input); err != nil {
+		return nil, updateIntegrationInternalError
+	}
+
+	if err := dynamoClient.PutItem(existingIntegrationItem); err != nil {
 		return nil, updateIntegrationInternalError
 	}
 
 	existingIntegration := itemToIntegration(existingIntegrationItem)
+
 	return existingIntegration, nil
+}
+
+func normalizeIntegration(item *ddb.Integration, input *models.UpdateIntegrationSettingsInput) error {
+	switch item.IntegrationType {
+	case models.IntegrationTypeAWSScan:
+		item.IntegrationLabel = input.IntegrationLabel
+		item.ScanIntervalMins = input.ScanIntervalMins
+		item.CWEEnabled = input.CWEEnabled
+		item.RemediationEnabled = input.RemediationEnabled
+	case models.IntegrationTypeAWS3:
+		item.S3Bucket = input.S3Bucket
+		item.S3Prefix = input.S3Prefix
+		item.KmsKey = input.KmsKey
+		item.LogTypes = input.LogTypes
+	case models.IntegrationTypeSqs:
+		item.IntegrationLabel = input.IntegrationLabel
+		item.SqsConfig.LogTypes = input.SqsConfig.LogTypes
+
+		newAllowedPrincipals := input.SqsConfig.AllowedPrincipals
+		newAllowedSourceArns := input.SqsConfig.AllowedSourceArns
+		item.SqsConfig.AllowedSourceArns = newAllowedSourceArns
+		item.SqsConfig.AllowedPrincipals = newAllowedPrincipals
+		if err := UpdateSourceSqsQueue(item.IntegrationID, newAllowedPrincipals, newAllowedSourceArns); err != nil {
+			return updateIntegrationInternalError
+		}
+	}
+	return nil
 }
 
 // UpdateIntegrationLastScanStart updates an integration when a new scan is started.
@@ -142,4 +159,17 @@ func getItem(integrationID string) (*ddb.Integration, error) {
 		return nil, &genericapi.DoesNotExistError{Message: "existingIntegration does not exist"}
 	}
 	return item, nil
+}
+
+func updateTables(integrationType string, input *models.UpdateIntegrationSettingsInput) (err error) {
+	switch integrationType {
+	case models.IntegrationTypeAWS3:
+		err = addGlueTables(input.LogTypes)
+	case models.IntegrationTypeSqs:
+		err = addGlueTables(input.SqsConfig.LogTypes)
+	}
+	if err != nil {
+		return errors.Wrap(err, "failed to create Glue tables")
+	}
+	return nil
 }

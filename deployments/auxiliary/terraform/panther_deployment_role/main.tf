@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+
+
 resource "aws_iam_role" "deployment" {
   name        = "PantherDeploymentRole"
   description = "IAM role for deploying Panther"
@@ -63,6 +65,7 @@ resource "aws_iam_policy" "deployment" {
           "cloudwatch:*",
           "cognito-idp:*",
           "dynamodb:List*",
+          "ec2:AllocateAddress",
           "ec2:AssociateRouteTable",
           "ec2:AssociateSubnetCidrBlock",
           "ec2:AssociateVpcCidrBlock",
@@ -71,6 +74,7 @@ resource "aws_iam_policy" "deployment" {
           "ec2:AttachInternetGateway",
           "ec2:CreateFlowLogs",
           "ec2:CreateInternetGateway",
+          "ec2:CreateNatGateway",
           "ec2:CreateRoute",
           "ec2:CreateRouteTable",
           "ec2:CreateSecurityGroup",
@@ -97,6 +101,19 @@ resource "aws_iam_policy" "deployment" {
           "ec2:RevokeSecurityGroupIngress",
           "ec2:UpdateSecurityGroupRuleDescriptionsEgress",
           "ec2:UpdateSecurityGroupRuleDescriptionsIngress",
+          "elasticfilesystem:CreateAccessPoint",
+          "elasticfilesystem:CreateFileSystem",
+          "elasticfilesystem:CreateMountTarget",
+          "elasticfilesystem:DescribeAccessPoints",
+          "elasticfilesystem:DescribeFileSystems",
+          "elasticfilesystem:DescribeFileSystemPolicy",
+          "elasticfilesystem:DescribeLifecycleConfiguration",
+          "elasticfilesystem:DescribeMountTargets",
+          "elasticfilesystem:PutLifecycleConfiguration",
+          "elasticfilesystem:PutFileSystemPolicy",
+          "elasticfilesystem:ListTagsForResource",
+          "elasticfilesystem:TagResource",
+          "elasticfilesystem:UntagResource",
           "elasticloadbalancing:*",
           "ecr:GetAuthorizationToken",
           "ecs:*",
@@ -173,6 +190,11 @@ resource "aws_iam_policy" "deployment" {
           "arn:${var.aws_partition}:iam::${var.aws_account_id}:role/Panther-*",
           "arn:${var.aws_partition}:iam::${var.aws_account_id}:server-certificate/panther/*"
         ]
+      },
+      {
+        Effect : "Allow",
+        Action : "firehose:*",
+        Resource : "arn:${var.aws_partition}:firehose:*:${var.aws_account_id}:deliverystream/panther-*",
       },
       {
         Effect : "Allow",

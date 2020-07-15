@@ -62,7 +62,7 @@ type MetricDirectiveObject struct {
 const (
 	// Per the AWS specification, a single metric directive can have at most 100 metric values
 	maxMetricsPerDirective = 100
-	namespace              = "Panther"
+	Namespace              = "Panther"
 )
 
 // DimensionSet is a slice of strings containing the dimension names that will be applied to all
@@ -93,7 +93,7 @@ type Metric struct {
 	// This value is not marshalled to JSON as it is not part of the AWS embedded metric format. We
 	// simply include it here for convenience when calling the loggers defined here, so that it is
 	// not required to consider the value of a metric separate from its Name and Unit.
-	Value *interface{} `json:"-"`
+	Value interface{} `json:"-"`
 }
 
 // Values that AWS understands as Metric Units
@@ -102,6 +102,7 @@ const (
 	// UnitSeconds      = "Seconds"
 	// UnitMicroseconds = "Microseconds"
 	// UnitMilliseconds = "Milliseconds"
+	UnitCount = "Count"
 )
 
 // Dimension represents the name and value of a given dimension. Each dimension must have its name
@@ -191,7 +192,7 @@ func (l *Logger) logEmbedded(values []Metric, dimensions []Dimension) error {
 	embeddedMetric := EmbeddedMetric{
 		CloudWatchMetrics: []MetricDirectiveObject{
 			{
-				Namespace:  namespace,
+				Namespace:  Namespace,
 				Dimensions: l.dimensionSets,
 				Metrics:    metrics,
 			},
@@ -205,79 +206,110 @@ func (l *Logger) logEmbedded(values []Metric, dimensions []Dimension) error {
 	return nil
 }
 
-// MonoLogger conveniently stores repeatedly used embedded metric format configurations such as
-// dimensionSets and metric name/unit so that they do not need to be specified each time. MonoLogger
+// StaticLogger conveniently stores repeatedly used embedded metric format configurations such as
+// dimensionSets and metric name/unit so that they do not need to be specified each time. StaticLogger
 // only supports one dimension set and one metric which must be set at initialization.
 //
 // These limitations still allow for 90% of use cases, and are more suitable for performance
 // critical parts of the code than the Logger.
-type MonoLogger struct {
+type StaticLogger struct {
 	directive     []MetricDirectiveObject
 	dimensionKeys map[string]struct{}
+	metricKeys    map[string]struct{}
 }
 
-// MustMonoLogger creates a new MonoLogger based on the given input, and panics if the input is invalid
-func MustMonoLogger(dimensionSets []DimensionSet, metric Metric) *MonoLogger {
-	logger, err := NewMonoLogger(dimensionSets, metric)
+// MustStaticLogger creates a new StaticLogger based on the given input, and panics if the input is invalid
+func MustStaticLogger(dimensionSets []DimensionSet, metrics []Metric) *StaticLogger {
+	logger, err := NewStaticLogger(dimensionSets, metrics)
 	if err != nil {
 		panic(err)
 	}
 	return logger
 }
 
-// NewMonoLogger create a new logger for a given set of dimensions and metric, returning an error if
+// NewStaticLogger create a new logger for a given set of dimensions and metric, returning an error if
 // the dimensions or metric are invalid
-func NewMonoLogger(dimensionSets []DimensionSet, metric Metric) (*MonoLogger, error) {
-	if metric.Name == "" || metric.Unit == "" {
-		return nil, errors.New("metric name and metric unit cannot be empty")
+func NewStaticLogger(dimensionSets []DimensionSet, metrics []Metric) (*StaticLogger, error) {
+	if len(metrics) > maxMetricsPerDirective {
+		return nil, errors.New("max number of metrics exceeded")
 	}
 
-	// Enforced by AWS specification
+	for _, metric := range metrics {
+		if metric.Name == "" || metric.Unit == "" {
+			return nil, errors.New("metric name and metric unit cannot be empty")
+		}
+	}
+
 	dimensionKeys, err := buildDimensionKeys(dimensionSets)
 	if err != nil {
 		return nil, err
 	}
 
+	metricKeys := make(map[string]struct{}, len(metrics))
+	for _, metric := range metrics {
+		metricKeys[metric.Name] = struct{}{}
+	}
+
 	directive := []MetricDirectiveObject{
 		{
-			Namespace:  namespace,
+			Namespace:  Namespace,
 			Dimensions: dimensionSets,
-			Metrics:    []Metric{metric},
+			Metrics:    metrics,
 		},
 	}
 
-	return &MonoLogger{
+	return &StaticLogger{
 		directive:     directive,
 		dimensionKeys: dimensionKeys,
+		metricKeys:    metricKeys,
 	}, nil
 }
 
 // Log sends a log formatted in the CloudWatch embedded metric format
-func (l *MonoLogger) Log(value interface{}, dimensions ...Dimension) {
-	err := l.fastLogEmbedded(value, dimensions...)
+func (l *StaticLogger) Log(metrics []Metric, dimensions ...Dimension) {
+	err := l.staticLogEmbedded(metrics, dimensions...)
 	if err != nil {
 		zap.L().Error("metric failed", zap.Error(err))
 	}
 }
 
-// fastLogEmbedded seeks to minimize safety checking and allocations by front loading validation in
-// the logger instantiation and limiting inputs to one metric value and one dimension set.
-func (l *MonoLogger) fastLogEmbedded(value interface{}, dimensions ...Dimension) error {
+// LogSingle sends a log for a single metric
+func (l *StaticLogger) LogSingle(value interface{}, dimensions ...Dimension) {
+	err := l.staticLogEmbedded([]Metric{{
+		Name:  l.directive[0].Metrics[0].Name,
+		Value: value,
+	}}, dimensions...)
+	if err != nil {
+		zap.L().Error("metric failed", zap.Error(err))
+	}
+}
+
+// fastLogEmbedded seeks to simplify safety checking and minimize allocations by front loading
+// validation in the logger instantiation and limiting inputs to one metric value and one dimension set.
+func (l *StaticLogger) staticLogEmbedded(metrics []Metric, dimensions ...Dimension) error {
 	// Set timestamp to current time
 	timestamp := time.Now().UnixNano() / NanosecondsPerMillisecond
 
+	// Validate the dimensions provided match the dimensions required
 	if err := validateDimensions(l.dimensionKeys, dimensions); err != nil {
 		return err
 	}
 
-	// Add each dimension to the list of top level fields
-	fields := make([]zap.Field, 0, len(dimensions)+2) // +1 for the metric value, +1 for the _aws node
+	// Validate the metrics provided match the metrics required
+	if err := validateMetrics(l.metricKeys, metrics); err != nil {
+		return err
+	}
+
+	// Add each dimension
+	fields := make([]zap.Field, 0, len(dimensions)+len(metrics)+1) // +1 for the _aws node
 	for _, dimension := range dimensions {
 		fields = append(fields, zap.String(dimension.Name, dimension.Value))
 	}
 
-	// Add the single metric name & value
-	fields = append(fields, zap.Any(l.directive[0].Metrics[0].Name, value))
+	// Add each metric
+	for _, metric := range metrics {
+		fields = append(fields, zap.Any(metric.Name, metric.Value))
+	}
 
 	// Construct the embedded metric metadata object per AWS standards
 	// https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format_Specification.html
@@ -326,4 +358,23 @@ func buildDimensionKeys(dimensionSets []DimensionSet) (map[string]struct{}, erro
 		}
 	}
 	return dimensionKeys, nil
+}
+
+// validateMetrics takes a set of required metric names and a slice of metric structs and
+// verifies that each required name is present in the list of provided metrics. Unfortunately
+// checking the inverse is not sufficient or this would be simpler.
+func validateMetrics(metricNames map[string]struct{}, metrics []Metric) error {
+	for metricName := range metricNames {
+		found := false
+		for _, metric := range metrics {
+			if metric.Name == metricName {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return errors.New("missing value for metric " + metricName)
+		}
+	}
+	return nil
 }

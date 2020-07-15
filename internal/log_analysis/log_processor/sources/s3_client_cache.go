@@ -242,6 +242,8 @@ func getSourceS3Info(source *models.SourceIntegration) (string, string) {
 	switch source.IntegrationType {
 	case models.IntegrationTypeAWS3:
 		return source.S3Bucket, source.S3Prefix
+	case models.IntegrationTypeSqs:
+		return source.SqsConfig.S3Bucket, source.SqsConfig.S3Prefix
 	}
 	return "", ""
 }
@@ -250,6 +252,8 @@ func getSourceLogProcessingRole(source *models.SourceIntegration) (roleArn strin
 	switch source.IntegrationType {
 	case models.IntegrationTypeAWS3:
 		roleArn = source.LogProcessingRole
+	case models.IntegrationTypeSqs:
+		roleArn = source.SqsConfig.LogProcessingRole
 	}
 	return roleArn
 }

@@ -130,6 +130,9 @@ The `panther-aws-remediation` lambda executes automated infrastructure remediati
  Failure Impact
  * Failure of this lambda will mean specific remediations are failing and infrastructure will remain in violation of policy.
 
+## panther-boostrap-input-data-notifications
+This topic triggers the log analysis flow for data integrations configured internally by Panther e.g. data by Amazon EventBridge.
+
 ## panther-cfn-custom-resources
 Used by CloudFormation when deploying or updating Panther.
 
@@ -269,6 +272,19 @@ The lambda function that processes S3 files from
  * Failed events will go into the `panther-input-data-notifications-queue-dlq`. When the system has recovered they should be
  * re-queued to the `panther-input-data-notifications-queue` using the Panther tool `requeue`.
  * There is the possibility of duplicate data ingested if the failures had partial results.
+
+## panther-message-forwarder
+This Lambda pulls data from user configured SQS sources and pushes them to Panther
+ for further processing.
+ Failure Impact
+ Panther will stop processing data from SQS sources.
+
+## panther-metrics-api
+The `panther-metrics-api` lambda handles requests for metric data by properly translating
+ them to CloudWatch requests and then translating the results back.
+
+ Failure Impact
+ * Failure of this lambda will prevent requests for metric data.
 
 ## panther-organization
 This ddb table stores general settings about an organizations.

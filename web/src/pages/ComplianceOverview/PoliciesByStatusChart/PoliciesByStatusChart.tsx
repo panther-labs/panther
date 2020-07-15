@@ -53,15 +53,6 @@ const PoliciesByStatusChart: React.FC<PoliciesByStatusChartData> = ({ policies }
       label: capitalize(severity),
       color,
     })),
-    {
-      value: sum(
-        Object.keys(severityToColorMapping).map((severity: keyof OrganizationReportBySeverity) =>
-          countPoliciesBySeverityAndStatus(policies, severity, ['pass'])
-        )
-      ),
-      label: 'Passing',
-      color: 'green-200' as const,
-    },
   ];
 
   return (
