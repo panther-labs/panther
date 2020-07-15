@@ -1169,6 +1169,28 @@ Resources:
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
 
+  LogAnalysisMetricsResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Query
+      FieldName: getLogAnalysisMetrics
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "getMetrics": $ctx.args.input
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, {})
+        #else
+          $util.toJson($ctx.result)
+        #end
+
   ResourcesForPolicyResolver:
     Type: AWS::AppSync::Resolver
     Properties:
