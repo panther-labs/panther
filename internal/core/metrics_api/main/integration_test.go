@@ -168,23 +168,22 @@ func getMetrics(t *testing.T) {
 	assert.Equal(t, input.GetMetrics.ToDate.UTC(), output.ToDate.UTC())
 	assert.Equal(t, input.GetMetrics.IntervalHours, output.IntervalHours)
 
-	require.Len(t, output.MetricResults, 1)
-	metricResult := output.MetricResults[0]
-	assert.Equal(t, metricResult.MetricName, "EventsProcessed")
+	//require.Len(t, output.MetricResults, 1)
+	metricResult := output.EventsProcessed
 	assert.Empty(t, metricResult.SingleValue)
+
 	// There should be two entries in series data, one for each unique combination of dimensions
-	assert.Len(t, metricResult.SeriesData, 2)
-	for _, seriesData := range metricResult.SeriesData {
-		require.Equal(t, len(seriesData.Values), len(seriesData.Timestamps))
+	assert.Len(t, metricResult.SeriesData.Series, 2)
+	assert.Len(t, metricResult.SeriesData.Timestamps, 2)
+	for _, seriesData := range metricResult.SeriesData.Series {
+		require.Equal(t, len(seriesData.Values), len(metricResult.SeriesData.Timestamps))
 		require.NotNil(t, seriesData.Label)
 		require.Subset(t, []string{"IntegrationTest1", "IntegrationTest2"}, []string{*seriesData.Label})
 		if *seriesData.Label == "IntegrationTest1" {
-			require.Len(t, seriesData.Timestamps, 2)
 			require.Len(t, seriesData.Values, 2)
 			assert.Equal(t, seriesData.Values[1], firstEvent.Value)
 			assert.Equal(t, seriesData.Values[0], secondEvent.Value)
 		} else {
-			require.Len(t, seriesData.Timestamps, 1)
 			require.Len(t, seriesData.Values, 1)
 			assert.Equal(t, seriesData.Values[0], thirdEvent.Value)
 		}

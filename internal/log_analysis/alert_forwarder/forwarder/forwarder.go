@@ -34,6 +34,7 @@ import (
 	policiesoperations "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
 	alertModel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	"github.com/panther-labs/panther/pkg/metrics"
 )
 
 const defaultTimePartition = "defaultPartition"
@@ -112,8 +113,14 @@ func storeNewAlert(rule *models.Rule, alertDedup *AlertDedupEvent) error {
 	}
 	_, err = ddbClient.PutItem(putItemRequest)
 	if err != nil {
-		return errors.Wrap(err, "failed to update store alert")
+		return errors.Wrap(err, "failed to store alert")
 	}
+
+	staticLogger.LogSingle(1,
+		metrics.Dimension{Name: "Severity", Value: string(rule.Severity)},
+		componentDimension,
+	)
+
 	return nil
 }
 

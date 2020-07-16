@@ -97,7 +97,7 @@ func send(alert *alertmodels.Alert, output *outputmodels.AlertOutput, statusChan
 //
 // Returns true if the alert was sent successfully, false if it needs to be retried.
 func dispatch(alert *alertmodels.Alert) bool {
-	outputs, err := getAlertOutputs(alert)
+	alertOutputs, err := getAlertOutputs(alert)
 
 	if err != nil {
 		zap.L().Warn("failed to get the outputs for the alert",
@@ -108,7 +108,7 @@ func dispatch(alert *alertmodels.Alert) bool {
 		return false
 	}
 
-	if len(outputs) == 0 {
+	if len(alertOutputs) == 0 {
 		zap.L().Info("no outputs configured",
 			zap.String("policyId", alert.AnalysisID),
 			zap.String("severity", alert.Severity),
@@ -119,13 +119,13 @@ func dispatch(alert *alertmodels.Alert) bool {
 	// Dispatch all outputs in parallel.
 	// This ensures one slow or failing output won't block the others.
 	statusChannel := make(chan outputStatus)
-	for _, output := range outputs {
+	for _, output := range alertOutputs {
 		go send(alert, output, statusChannel)
 	}
 
 	// Wait until all outputs have finished, gathering any that need to be retried.
 	var retryOutputs []string
-	for range outputs {
+	for range alertOutputs {
 		status := <-statusChannel
 		if status.needsRetry {
 			retryOutputs = append(retryOutputs, status.outputID)

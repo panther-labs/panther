@@ -41,7 +41,7 @@ func lambdaHandler(ctx context.Context, event events.SQSEvent) (err error) {
 	var alerts []*models.Alert
 
 	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
-	operation := oplog.NewManager("cloudsec", "alert_delivery").Start(lc.InvokedFunctionArn).WithMemUsed(lambdacontext.MemoryLimitInMB)
+	operation := oplog.NewManager("core", "alert_delivery").Start(lc.InvokedFunctionArn).WithMemUsed(lambdacontext.MemoryLimitInMB)
 	defer func() {
 		operation.Stop().Log(err, zap.Int("numEvents", len(event.Records)), zap.Int("numAlerts", len(alerts)))
 	}()
