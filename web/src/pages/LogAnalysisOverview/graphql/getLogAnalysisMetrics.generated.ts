@@ -31,13 +31,15 @@ export type GetLogAnalysisMetricsVariables = {
 export type GetLogAnalysisMetrics = {
   getLogAnalysisMetrics?: Types.Maybe<
     Pick<Types.LogAnalysisMetricsResponse, 'intervalHours'> & {
-      metricsResults: Array<
-        Types.Maybe<
-          Pick<Types.MetricsResults, 'metricsName'> & {
-            seriesData?: Types.Maybe<
-              Array<Types.Maybe<Pick<Types.SeriesData, 'label' | 'timestamps' | 'values'>>>
-            >;
-          }
+      metricsResults?: Types.Maybe<
+        Array<
+          Types.Maybe<
+            Pick<Types.MetricsResults, 'metricsName'> & {
+              seriesData?: Types.Maybe<
+                Array<Types.Maybe<Pick<Types.SeriesData, 'label' | 'timestamps' | 'values'>>>
+              >;
+            }
+          >
         >
       >;
     }

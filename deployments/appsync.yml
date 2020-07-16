@@ -35,9 +35,6 @@ Parameters:
   ComplianceApi:
     Type: String
     Description: API Gateway HTTPS endpoint for panther-compliance-api
-  MetricsApi:
-    Type: String
-    Description: API Gateway HTTPS endpoint for panther-metrics-api
   CustomResourceVersion:
     Type: String
     Description: Forces updates to custom resources when changed
