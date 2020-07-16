@@ -1,6 +1,6 @@
 # Log Analysis
 
-Panther's Log Analysis is used to detect threats in [log data](log-analysis/log-processing/supported-logs).
+Panther's Log Analysis is used to detect threats in [log data](log-processing/supported-logs).
 
 This works by parsing, normalizing, and analyzing high volumes of data in real-time. In order to onboard into this pipeline, data must send to either an S3 bucket or a SQS queue.
 

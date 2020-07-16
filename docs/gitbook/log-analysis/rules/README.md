@@ -8,7 +8,7 @@ Panther **Rules** are Python3 functions used to identify suspicious activity or 
 - A `dedup` function to control how alerts are grouped together
 - A `title` function to define the alert title
 - Metadata containing context for triage
-- An association with [specific log type(s)](log-analysis/supported-logs)
+- An association with [specific log type(s)](../log-processing/supported-logs)
 
 The example rule below validates if unauthenticated access occurred on an S3 bucket:
 
@@ -27,15 +27,15 @@ def title(event):
   return 'Unauthenticated Access to S3 Bucket  {}'.format(event.get('bucket'))
 ```
 
-- This rule applies to [S3 Server Access Logs](log-analysis/log-processing/supported-logs/aws#aws-s-3-serveraccess)
+- This rule applies to [S3 Server Access Logs](../log-processing/supported-logs/AWS.md#AWS.S3ServerAccess)
 - This rule groups alert events by the bucket name
 - Alerts will have a title like `Unauthenticated Access to S3 Bucket my-super-secret-data`
 
 ## Workflow
 
-Panther rules can be written, tested, and deployed either with the UI or the [panther_analysis_tool](analysis/panther-analysis-tool.md).
+Panther rules can be written, tested, and deployed either with the UI or the [panther_analysis_tool](../../analysis/panther-analysis-tool.md).
 
-Each rule takes an `event` input of a given log type from the [supported logs](log-analysis/supported-logs) page.
+Each rule takes an `event` input of a given log type from the [supported logs](../log-processing/supported-logs) page.
 
 ### Rule Body
 
@@ -58,7 +58,7 @@ The Python body may optionally:
 * Define a `dedup(event)` function that returns a `string`
 * Define a `title(event)` function that returns a `string`
 
-Referencing the [supported logs](log-analysis/supported-logs) page provides details on all available fields in events.
+Referencing the [supported logs](../log-processing/supported-logs) page provides details on all available fields in events.
 
 #### Example Rule
 
@@ -157,6 +157,4 @@ Then, configure the built in rules by searching for the `Configuration Required`
 
 ## Writing Rules with the Panther Analysis Tool
 
-The [panther_analysis_tool](panther-analysis-tool.md) is a Python command line interface for testing, packaging, and deploying Panther Policies and Rules. This enables teams to work in a more developer oriented workflow and track detections with version control systems such as `git`.
-
-To learn more about this workflow, check out the guide [here](analysis/panther-analysis-tool.md).
+The [panther_analysis_tool](../../analysis/panther-analysis-tool.md) is a Python command line interface for testing, packaging, and deploying Panther Policies and Rules. This enables teams to work in a more developer oriented workflow and track detections with version control systems such as `git`.
