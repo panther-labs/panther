@@ -47,6 +47,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
         name: label,
         type: 'line',
         smooth: true,
+        symbol: 'none',
         itemStyle: {
           color: LineColors[label],
         },
@@ -61,7 +62,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
 
     const options = {
       grid: {
-        left: 200,
+        left: 150,
         right: 20,
         bottom: 20,
         top: 10,
@@ -73,9 +74,9 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
       },
       legend: {
         type: 'scroll',
-        width: 50,
         orient: 'vertical',
-        left: 'left',
+        left: 'auto',
+        right: 'auto',
         icon: 'circle',
         data: legendData,
         textStyle: {

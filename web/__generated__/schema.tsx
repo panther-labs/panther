@@ -1012,9 +1012,9 @@ export type ScannedResourceStats = {
 
 export type SeriesData = {
   __typename?: 'SeriesData';
-  Label?: Maybe<Scalars['String']>;
-  Timestamps?: Maybe<Array<Maybe<Scalars['AWSDateTime']>>>;
-  Values?: Maybe<Array<Maybe<Scalars['Int']>>>;
+  Label: Scalars['String'];
+  Timestamps: Array<Maybe<Scalars['AWSDateTime']>>;
+  Values: Array<Maybe<Scalars['Int']>>;
 };
 
 export enum SeverityEnum {
@@ -2419,13 +2419,9 @@ export type SeriesDataResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['SeriesData'] = ResolversParentTypes['SeriesData']
 > = {
-  Label?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  Timestamps?: Resolver<
-    Maybe<Array<Maybe<ResolversTypes['AWSDateTime']>>>,
-    ParentType,
-    ContextType
-  >;
-  Values?: Resolver<Maybe<Array<Maybe<ResolversTypes['Int']>>>, ParentType, ContextType>;
+  Label?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  Timestamps?: Resolver<Array<Maybe<ResolversTypes['AWSDateTime']>>, ParentType, ContextType>;
+  Values?: Resolver<Array<Maybe<ResolversTypes['Int']>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 

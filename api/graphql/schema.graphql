@@ -340,9 +340,9 @@ type OrganizationStatsResponse {
 }
 
 type SeriesData {
-  Label: String
-  Timestamps: [AWSDateTime]
-  Values: [Int]
+  Label: String!
+  Timestamps: [AWSDateTime]!
+  Values: [Int]!
 }
 
 type MetricsResults {

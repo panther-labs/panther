@@ -17,26 +17,26 @@
  */
 
 import React from 'react';
-import { Flex } from 'pouncejs';
+import { Box } from 'pouncejs';
 import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
 
-interface EventsByLogTypesProps {
-  events: any;
+interface AlertsBySeverityProps {
+  alerts: any;
 }
 
-const EventsByLogTypes: React.FC<EventsByLogTypesProps> = ({ events }) => {
+const AlertsBySeverity: React.FC<AlertsBySeverityProps> = ({ alerts }) => {
   // FIXME: Remove this when fixed in backend
-  const transformedEvents = events.map(e => ({
+  const transformedAlerts = alerts.map(e => ({
     label: e.Label,
     timestamps: e.Timestamps,
     values: e.Values,
   }));
 
   return (
-    <Flex height="100%">
-      <TimeSeriesChart data={transformedEvents} />
-    </Flex>
+    <Box height={150} width="70%">
+      <TimeSeriesChart data={transformedAlerts} />
+    </Box>
   );
 };
 
-export default React.memo(EventsByLogTypes);
+export default React.memo(AlertsBySeverity);

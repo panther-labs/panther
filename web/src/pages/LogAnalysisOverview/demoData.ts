@@ -145,3 +145,58 @@ export const eventData = {
   toDate: '2020-07-09T23:00:00Z',
   intervalHours: 1,
 };
+
+export const alertsBySeverityData = {
+  metricNames: [
+    {
+      MetricName: 'AlertsBySeveriy',
+      seriesData: [
+        {
+          Label: 'Critical',
+          Values: [53, 22, 37],
+          Timestamps: ['2020-07-09T22:00:00Z', '2020-07-09T21:00:00Z', '2020-07-09T20:00:00Z'],
+        },
+        {
+          Label: 'High',
+          Values: [485, 583, 534],
+          Timestamps: ['2020-07-09T22:00:00Z', '2020-07-09T21:00:00Z', '2020-07-09T20:00:00Z'],
+        },
+        {
+          Label: 'Medium',
+          Values: [587, 356, 687],
+          Timestamps: ['2020-07-09T22:00:00Z', '2020-07-09T21:00:00Z', '2020-07-09T20:00:00Z'],
+        },
+        {
+          Label: 'Low',
+          Values: [987, 1322, 583],
+          Timestamps: ['2020-07-09T22:00:00Z', '2020-07-09T21:00:00Z', '2020-07-09T20:00:00Z'],
+        },
+        {
+          Label: 'Info',
+          Values: [579, 916, 1287],
+          Timestamps: ['2020-07-09T22:00:00Z', '2020-07-09T21:00:00Z', '2020-07-09T20:00:00Z'],
+        },
+      ],
+    },
+  ],
+};
+
+export const totalAlerts = {
+  metricsNames: [
+    {
+      MetricName: 'TotalAlerts',
+      totalAlerts: {
+        singleValue: [
+          {
+            Label: 'AlertsCurrentPeriod',
+            Values: 7,
+          },
+          {
+            Label: 'AlertsPreviousPeriod',
+            Values: 11,
+          },
+        ],
+      },
+    },
+  ],
+};

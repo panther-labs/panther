@@ -17,25 +17,41 @@
  */
 
 import React from 'react';
-import { Alert, Box, SimpleGrid } from 'pouncejs';
+import { Alert, Box, Flex, SimpleGrid } from 'pouncejs';
 import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage } from 'Helpers/utils';
 import Panel from 'Components/Panel';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import EventsByLogType from 'Pages/LogAnalysisOverview/EventsByLogType';
 import LogAnalysisOverviewPageSkeleton from './Skeleton';
-import { eventData as metricsData } from './demoData';
+import { alertsBySeverityData, totalAlerts } from './demoData';
 import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
+import AlertsBySeverity from './AlertsBySeverity';
+import AlertSummary from './AlertSummary';
+
+function getDates() {
+  const toDate = new Date();
+  const fromDate = new Date(toDate);
+  fromDate.setDate(toDate.getDate() - 7);
+
+  return {
+    // split is used to cut out milliseconds since they trigger an infinite loop for some reason
+    fromDate: `${fromDate.toISOString().split('.')[0]}Z`,
+    toDate: `${toDate.toISOString().split('.')[0]}Z`,
+  };
+}
 
 const LogAnalysisOverview: React.FC = () => {
+  const intervalHours = 3;
+  const { fromDate, toDate } = getDates();
   const { data, loading, error } = useGetLogAnalysisMetrics({
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
         metricNames: ['eventsProcessed'],
-        fromDate: '2020-07-10T12:00:00Z',
-        toDate: '2020-07-15T23:00:00Z',
-        intervalHours: 1,
+        fromDate,
+        toDate,
+        intervalHours,
       },
     },
   });
@@ -54,24 +70,24 @@ const LogAnalysisOverview: React.FC = () => {
     );
   }
 
+  const eventsByLogType = data.getLogAnalysisMetrics.metricResults.find(
+    ({ MetricName }) => MetricName === 'EventsProcessed'
+  );
+
   return (
     <Box as="article" mb={6}>
-      <SimpleGrid columns={2} spacing={3} as="section" mb={3}>
+      <SimpleGrid columns={1} spacing={3} as="section" mb={3}>
         <Panel title="Real-time Alerts">
-          <Box height={150}>
-            <TablePlaceholder />
-          </Box>
-        </Panel>
-        <Panel title="Most Active Rules">
-          <Box height={150}>
-            <TablePlaceholder />
-          </Box>
+          <Flex direction="row">
+            <AlertSummary data={totalAlerts.metricsNames[0].totalAlerts.singleValue} />
+            <AlertsBySeverity alerts={alertsBySeverityData.metricNames[0].seriesData} />
+          </Flex>
         </Panel>
       </SimpleGrid>
       <SimpleGrid columns={1} spacingX={3} spacingY={2} mb={3}>
         <Panel title="Events by Log Type">
           <Box height={150}>
-            <EventsByLogType events={metricsData.metricNames[0].seriesData} />
+            <EventsByLogType events={eventsByLogType.seriesData} />
           </Box>
         </Panel>
       </SimpleGrid>

@@ -16,27 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { Flex } from 'pouncejs';
-import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
-
-interface EventsByLogTypesProps {
-  events: any;
-}
-
-const EventsByLogTypes: React.FC<EventsByLogTypesProps> = ({ events }) => {
-  // FIXME: Remove this when fixed in backend
-  const transformedEvents = events.map(e => ({
-    label: e.Label,
-    timestamps: e.Timestamps,
-    values: e.Values,
-  }));
-
-  return (
-    <Flex height="100%">
-      <TimeSeriesChart data={transformedEvents} />
-    </Flex>
-  );
-};
-
-export default React.memo(EventsByLogTypes);
+export { default } from './AlertsBySeverity';
