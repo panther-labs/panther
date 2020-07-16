@@ -50,8 +50,7 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
       },
     },
 
-    // This hook ensures we update the AlertDetails's `status`
-    // field in the cache instead of refetching from the network.
+    // This hook ensures we also update the AlertDetails item in the cache
     update: (cache, { data }) => {
       cache.modify({
         id: cache.identify({
@@ -60,10 +59,11 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
         }),
         fields: {
           status: () => data.updateAlertStatus.status,
+          lastUpdatedBy: () => data.updateAlertStatus.lastUpdatedBy,
+          lastUpdatedByTime: () => data.updateAlertStatus.lastUpdatedByTime,
         },
       });
     },
-
     // We want to simulate an instant change in the UI which will fallback if there's a failure
     optimisticResponse: data => ({
       updateAlertStatus: {
@@ -115,9 +115,9 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
   );
 
   // Create a wrapped dropdown button with a tooltip
-  const wrappedDropdownButton = React.useMemo(() => {
-    if (lastUpdatedBy) {
-      return (
+  const wrappedDropdownButton = React.useMemo(
+    () =>
+      lastUpdatedBy ? (
         <Tooltip
           content={
             <Flex spacing={1}>
@@ -134,10 +134,11 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
         >
           {dropdownButton}
         </Tooltip>
-      );
-    }
-    return dropdownButton;
-  }, [alert, lastUpdatedBy, lastUpdatedByTime]);
+      ) : (
+        dropdownButton
+      ),
+    [alert]
+  );
 
   return (
     <Dropdown>

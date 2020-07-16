@@ -82,7 +82,7 @@ const typePolicies: TypePolicies = {
     keyFields: ['email'],
     fields: {
       errorReportingConsent: {
-        merge(oldValue, newValue) {
+        merge(_, newValue) {
           storage.local.write(ERROR_REPORTING_CONSENT_STORAGE_KEY, newValue);
           return newValue;
         },
