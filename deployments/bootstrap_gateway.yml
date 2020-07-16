@@ -146,6 +146,11 @@ Resources:
             - Effect: Allow
               Action:
                 - cloudwatch:PutMetricAlarm
+                - cloudwatch:PutCompositeAlarm
+                - cloudwatch:TagResource
+              Resource: !Sub arn:${AWS::Partition}:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:*
+            - Effect: Allow
+              Action:
                 - cloudwatch:DeleteAlarms
               Resource: !Sub arn:${AWS::Partition}:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:Panther*
             - Effect: Allow
