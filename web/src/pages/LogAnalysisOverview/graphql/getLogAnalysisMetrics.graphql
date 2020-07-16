@@ -1,11 +1,11 @@
 query GetLogAnalysisMetrics($input: LogAnalysisMetricsInput) {
   getLogAnalysisMetrics(input: $input) {
     metricResults {
-      metricsName
+      MetricsName
       seriesData {
-        label
-        timestamps
-        values
+        Label
+        Timestamps
+        Values
       }
     }
     intervalHours

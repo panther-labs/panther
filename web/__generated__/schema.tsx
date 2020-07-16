@@ -530,7 +530,7 @@ export type LogIntegration = S3LogIntegration;
 
 export type MetricsResults = {
   __typename?: 'MetricsResults';
-  metricsName?: Maybe<Scalars['String']>;
+  MetricsName?: Maybe<Scalars['String']>;
   seriesData?: Maybe<Array<Maybe<SeriesData>>>;
 };
 
@@ -1012,9 +1012,9 @@ export type ScannedResourceStats = {
 
 export type SeriesData = {
   __typename?: 'SeriesData';
-  label: Scalars['String'];
-  timestamps: Array<Maybe<Scalars['AWSDateTime']>>;
-  values?: Maybe<Array<Maybe<Scalars['Int']>>>;
+  Label?: Maybe<Scalars['String']>;
+  Timestamps?: Maybe<Array<Maybe<Scalars['AWSDateTime']>>>;
+  Values?: Maybe<Array<Maybe<Scalars['Int']>>>;
 };
 
 export enum SeverityEnum {
@@ -1836,7 +1836,7 @@ export type MetricsResultsResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['MetricsResults'] = ResolversParentTypes['MetricsResults']
 > = {
-  metricsName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  MetricsName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   seriesData?: Resolver<Maybe<Array<Maybe<ResolversTypes['SeriesData']>>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
@@ -2419,9 +2419,13 @@ export type SeriesDataResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['SeriesData'] = ResolversParentTypes['SeriesData']
 > = {
-  label?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  timestamps?: Resolver<Array<Maybe<ResolversTypes['AWSDateTime']>>, ParentType, ContextType>;
-  values?: Resolver<Maybe<Array<Maybe<ResolversTypes['Int']>>>, ParentType, ContextType>;
+  Label?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  Timestamps?: Resolver<
+    Maybe<Array<Maybe<ResolversTypes['AWSDateTime']>>>,
+    ParentType,
+    ContextType
+  >;
+  Values?: Resolver<Maybe<Array<Maybe<ResolversTypes['Int']>>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
