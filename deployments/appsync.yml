@@ -35,6 +35,9 @@ Parameters:
   ComplianceApi:
     Type: String
     Description: API Gateway HTTPS endpoint for panther-compliance-api
+  MetricsApi:
+    Type: String
+    Description: API Gateway HTTPS endpoint for panther-metrics-api
   CustomResourceVersion:
     Type: String
     Description: Forces updates to custom resources when changed
@@ -120,6 +123,17 @@ Resources:
       ServiceRoleArn: !Ref ServiceRole
       LambdaConfig:
         LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-organization-api
+
+  MetricsAPILambdaDataSource:
+    Type: AWS::AppSync::DataSource
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !Ref ApiId
+      Name: PantherMetricsAPILambda
+      Type: AWS_LAMBDA
+      ServiceRoleArn: !Ref ServiceRole
+      LambdaConfig:
+        LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-metrics-api
 
   ResourcesAPIHttpDataSource:
     Type: AWS::AppSync::DataSource
@@ -1175,7 +1189,7 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Query
       FieldName: getLogAnalysisMetrics
-      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
+      DataSourceName: !GetAtt MetricsAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
           "version" : "2017-02-28",
