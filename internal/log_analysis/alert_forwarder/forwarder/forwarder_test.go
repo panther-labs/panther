@@ -59,7 +59,7 @@ var (
 		DeduplicationString: "dedupString",
 		AlertCount:          10,
 		CreationTime:        time.Now().UTC(),
-		UpdateTime:          time.Now().UTC(),
+		UpdateTime:          time.Now().UTC().Add(1 * time.Minute),
 		EventCount:          100,
 		LogTypes:            []string{"Log.Type.1", "Log.Type.2"},
 		GeneratedTitle:      aws.String("test title"),
@@ -71,7 +71,7 @@ var (
 		DeduplicationString: oldAlertDedupEvent.DeduplicationString,
 		AlertCount:          oldAlertDedupEvent.AlertCount + 1,
 		CreationTime:        time.Now().UTC(),
-		UpdateTime:          time.Now().UTC(),
+		UpdateTime:          time.Now().UTC().Add(1 * time.Minute),
 		EventCount:          oldAlertDedupEvent.EventCount,
 		LogTypes:            oldAlertDedupEvent.LogTypes,
 		GeneratedTitle:      oldAlertDedupEvent.GeneratedTitle,
@@ -106,7 +106,7 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 	}
 
 	expectedAlertNotification := &alertModel.Alert{
-		CreatedAt:           newAlertDedupEvent.CreationTime,
+		CreatedAt:           newAlertDedupEvent.UpdateTime,
 		AnalysisDescription: aws.String(string(testRuleResponse.Description)),
 		AnalysisID:          newAlertDedupEvent.RuleID,
 		Version:             aws.String(newAlertDedupEvent.RuleVersion),
@@ -134,7 +134,17 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 		Severity:        string(testRuleResponse.Severity),
 		RuleDisplayName: aws.String(string(testRuleResponse.DisplayName)),
 		Title:           aws.StringValue(newAlertDedupEvent.GeneratedTitle),
-		AlertDedupEvent: *newAlertDedupEvent,
+		AlertDedupEvent: AlertDedupEvent{
+			RuleID:              newAlertDedupEvent.RuleID,
+			RuleVersion:         newAlertDedupEvent.RuleVersion,
+			LogTypes:            newAlertDedupEvent.LogTypes,
+			EventCount:          newAlertDedupEvent.EventCount,
+			AlertCount:          newAlertDedupEvent.AlertCount,
+			DeduplicationString: newAlertDedupEvent.DeduplicationString,
+			GeneratedTitle:      newAlertDedupEvent.GeneratedTitle,
+			UpdateTime:          newAlertDedupEvent.UpdateTime,
+			CreationTime:        newAlertDedupEvent.UpdateTime,
+		},
 	}
 
 	expectedMarshaledAlert, err := dynamodbattribute.MarshalMap(expectedAlert)
@@ -177,13 +187,13 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 		DeduplicationString: oldAlertDedupEvent.DeduplicationString,
 		AlertCount:          oldAlertDedupEvent.AlertCount + 1,
 		CreationTime:        time.Now().UTC(),
-		UpdateTime:          time.Now().UTC(),
+		UpdateTime:          time.Now().UTC().Add(1 * time.Minute),
 		EventCount:          oldAlertDedupEvent.EventCount,
 		LogTypes:            oldAlertDedupEvent.LogTypes,
 	}
 
 	expectedAlertNotification := &alertModel.Alert{
-		CreatedAt:           newAlertDedupEventWithoutTitle.CreationTime,
+		CreatedAt:           newAlertDedupEventWithoutTitle.UpdateTime,
 		AnalysisDescription: aws.String(string(testRuleResponse.Description)),
 		AnalysisID:          newAlertDedupEventWithoutTitle.RuleID,
 		Version:             aws.String(newAlertDedupEventWithoutTitle.RuleVersion),

@@ -137,7 +137,18 @@ func (h *Handler) storeNewAlert(rule *models.Rule, alertDedup *AlertDedupEvent) 
 		Severity:        string(rule.Severity),
 		RuleDisplayName: getRuleDisplayName(rule),
 		Title:           getAlertTitle(rule, alertDedup),
-		AlertDedupEvent: *alertDedup,
+		AlertDedupEvent: AlertDedupEvent{
+			RuleID:              alertDedup.RuleID,
+			RuleVersion:         alertDedup.RuleVersion,
+			DeduplicationString: alertDedup.DeduplicationString,
+			// In case a rule has a threshold, we want the alert creation time to be the same time
+			// as the update time -> the time that an update(new event) caused the matched events to exceed threshold
+			// In case the rule doesnt' have a threshold, the two are anyway the same
+			CreationTime: alertDedup.UpdateTime,
+			UpdateTime:   alertDedup.UpdateTime,
+			EventCount:   alertDedup.EventCount,
+			LogTypes:     alertDedup.LogTypes,
+		},
 	}
 
 	marshaledAlert, err := dynamodbattribute.MarshalMap(alert)
@@ -160,15 +171,18 @@ func (h *Handler) sendAlertNotification(rule *models.Rule, alertDedup *AlertDedu
 		AlertID:             aws.String(generateAlertID(alertDedup)),
 		AnalysisDescription: aws.String(string(rule.Description)),
 		AnalysisID:          alertDedup.RuleID,
-		CreatedAt:           alertDedup.CreationTime,
-		OutputIds:           rule.OutputIds,
-		AnalysisName:        getRuleDisplayName(rule),
-		Runbook:             aws.String(string(rule.Runbook)),
-		Severity:            string(rule.Severity),
-		Tags:                rule.Tags,
-		Type:                alertModel.RuleType,
-		Title:               aws.String(getAlertTitle(rule, alertDedup)),
-		Version:             &alertDedup.RuleVersion,
+		// In case a rule has a threshold, we want the alert creation time to be the same time
+		// as the update time -> the time that an update(new event) caused the matched events to exceed threshold
+		// In case the rule doesnt' have a threshold, the two are anyway the same
+		CreatedAt:    alertDedup.UpdateTime,
+		OutputIds:    rule.OutputIds,
+		AnalysisName: getRuleDisplayName(rule),
+		Runbook:      aws.String(string(rule.Runbook)),
+		Severity:     string(rule.Severity),
+		Tags:         rule.Tags,
+		Type:         alertModel.RuleType,
+		Title:        aws.String(getAlertTitle(rule, alertDedup)),
+		Version:      &alertDedup.RuleVersion,
 	}
 
 	msgBody, err := jsoniter.MarshalToString(alertNotification)
