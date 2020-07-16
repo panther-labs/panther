@@ -67,7 +67,6 @@ func getAlertsBySeverity(input *models.GetMetricsInput, output *models.GetMetric
 				Stat:   aws.String("Sum"),
 				Unit:   aws.String("Count"),
 			},
-			ReturnData: aws.Bool(true), // whether to return data or just calculate results for other expressions to use
 		})
 	}
 	zap.L().Debug("prepared metric queries", zap.Any("queries", queries), zap.Any("toDate", input.ToDate), zap.Any("fromDate", input.FromDate))
@@ -96,6 +95,14 @@ func getTotalAlertsDelta(input *models.GetMetricsInput, output *models.GetMetric
 	timeFrame := input.FromDate.Sub(input.ToDate)
 	dStart := input.FromDate.Add(timeFrame)
 
+	// Construct a new input model here because we want to overwrite the FromDate and IntervalHours
+	// fields without potentially affecting any other metrics that need to be generated.
+	dInput := &models.GetMetricsInput{
+		FromDate:      dStart,
+		ToDate:        input.ToDate,
+		IntervalHours: int64(math.Abs(timeFrame.Hours())),
+	}
+
 	// Build the query based on the applicable metric dimensions
 	queries := []*cloudwatch.MetricDataQuery{
 		{
@@ -112,23 +119,15 @@ func getTotalAlertsDelta(input *models.GetMetricsInput, output *models.GetMetric
 					MetricName: aws.String(alertsMetric),
 					Namespace:  aws.String(input.Namespace),
 				},
-				Period: aws.Int64(input.IntervalHours * 3600), // number of seconds, must be multiple of 60
+				Period: aws.Int64(dInput.IntervalHours * 3600), // number of seconds, must be multiple of 60
 				Stat:   aws.String("Sum"),
 				Unit:   aws.String("Count"),
 			},
-			ReturnData: aws.Bool(true), // whether to return data or just calculate results for other expressions to use
 		},
 	}
 
 	zap.L().Debug("prepared metric queries", zap.Any("queries", queries), zap.Any("toDate", input.ToDate), zap.Any("fromDate", input.FromDate))
 
-	// Construct a new input model here because we want to overwrite the FromDate and IntervalHours
-	// fields without potentially affecting any other metrics that need to be generated.
-	dInput := &models.GetMetricsInput{
-		FromDate:      dStart,
-		ToDate:        input.ToDate,
-		IntervalHours: int64(math.Abs(timeFrame.Hours())),
-	}
 	metricData, err := getMetricData(dInput, queries)
 	if err != nil {
 		return err

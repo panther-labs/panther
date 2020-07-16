@@ -58,7 +58,6 @@ func getEventsProcessed(input *models.GetMetricsInput, output *models.GetMetrics
 				Stat:   aws.String("Sum"),
 				Unit:   aws.String("Count"),
 			},
-			ReturnData: aws.Bool(true), // whether to return data or just calculate results for other expressions to use
 		}
 	}
 	zap.L().Debug("prepared metric queries", zap.Any("queries", queries), zap.Any("toDate", input.ToDate), zap.Any("fromDate", input.FromDate))
