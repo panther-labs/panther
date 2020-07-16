@@ -34,6 +34,15 @@ func ModifyPolicy(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 		return badRequest(err)
 	}
 
+	// Disallow saving if policy is enabled and its tests fail.
+	ok, err := enabledPolicyTestsPass(input)
+	if err != nil {
+		return failedRequest(err.Error(), http.StatusInternalServerError)
+	}
+	if !ok {
+		return badRequest(errPolicyTestsFail)
+	}
+
 	item := &tableItem{
 		AutoRemediationID:         input.AutoRemediationID,
 		AutoRemediationParameters: input.AutoRemediationParameters,

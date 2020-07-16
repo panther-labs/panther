@@ -12,4 +12,4 @@ With Panther Data Explorer, you are able to:
 
 ![Data Explorer](../../.gitbook/assets/data-explorer.png)
 
-As with all of our enterprise features, access to the Data Explorer can be limited through our [Role-Based Access Control](enterprise/rbac.md) system.
+As with all of our enterprise features, access to the Data Explorer can be limited through our [Role-Based Access Control](../rbac.md) system.

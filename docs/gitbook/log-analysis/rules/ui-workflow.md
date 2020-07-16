@@ -1,10 +1,10 @@
 # Writing Rules in the Panther UI
 
-This page details the steps to writing Panther rules with the built-in UI. For a background on how rules work, read the [guide here](log-analysis/rules).
+This page details the steps to writing Panther rules with the built-in UI. For a background on how rules work, read the guide [here](../rules/README.md).
 
 Navigate to `Log Analysis` > `Rules`, and click `Create New` in the top right corner.
 
-You have the option of creating a single new rule, or bulk uploading a zip file containing rules created with the [panther_analysis_tool](panther-analysis-tool.md):
+You have the option of creating a single new rule, or bulk uploading a zip file containing rules created with the [panther_analysis_tool](../../analysis/panther-analysis-tool.md):
 
 ![](../../.gitbook/assets/write-rules-ui-1.png)
 
