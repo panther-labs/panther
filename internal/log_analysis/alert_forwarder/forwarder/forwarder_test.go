@@ -223,11 +223,21 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
 
 	expectedAlert := &Alert{
-		ID:              "b25dc23fb2a0b362da8428dbec1381a8",
-		TimePartition:   "defaultPartition",
-		Severity:        string(testRuleResponse.Severity),
-		Title:           newAlertDedupEventWithoutTitle.RuleID,
-		AlertDedupEvent: *newAlertDedupEventWithoutTitle,
+		ID:            "b25dc23fb2a0b362da8428dbec1381a8",
+		TimePartition: "defaultPartition",
+		Severity:      string(testRuleResponse.Severity),
+		Title:         newAlertDedupEventWithoutTitle.RuleID,
+		AlertDedupEvent: AlertDedupEvent{
+			RuleID:              newAlertDedupEventWithoutTitle.RuleID,
+			RuleVersion:         newAlertDedupEventWithoutTitle.RuleVersion,
+			LogTypes:            newAlertDedupEventWithoutTitle.LogTypes,
+			EventCount:          newAlertDedupEventWithoutTitle.EventCount,
+			AlertCount:          newAlertDedupEventWithoutTitle.AlertCount,
+			DeduplicationString: newAlertDedupEventWithoutTitle.DeduplicationString,
+			GeneratedTitle:      newAlertDedupEventWithoutTitle.GeneratedTitle,
+			UpdateTime:          newAlertDedupEventWithoutTitle.UpdateTime,
+			CreationTime:        newAlertDedupEventWithoutTitle.UpdateTime,
+		},
 	}
 
 	expectedMarshaledAlert, err := dynamodbattribute.MarshalMap(expectedAlert)
@@ -293,7 +303,17 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 		Severity:        string(testRuleResponse.Severity),
 		RuleDisplayName: aws.String(string(testRuleResponse.DisplayName)),
 		Title:           "DisplayName",
-		AlertDedupEvent: *newAlertDedupEvent,
+		AlertDedupEvent: AlertDedupEvent{
+			RuleID:              newAlertDedupEvent.RuleID,
+			RuleVersion:         newAlertDedupEvent.RuleVersion,
+			LogTypes:            newAlertDedupEvent.LogTypes,
+			EventCount:          newAlertDedupEvent.EventCount,
+			AlertCount:          newAlertDedupEvent.AlertCount,
+			DeduplicationString: newAlertDedupEvent.DeduplicationString,
+			GeneratedTitle:      newAlertDedupEvent.GeneratedTitle,
+			UpdateTime:          newAlertDedupEvent.UpdateTime,
+			CreationTime:        newAlertDedupEvent.UpdateTime,
+		},
 	}
 
 	expectedMarshaledAlert, err := dynamodbattribute.MarshalMap(expectedAlert)
@@ -309,7 +329,7 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 		RuleVersion:         newAlertDedupEvent.RuleVersion,
 		DeduplicationString: newAlertDedupEvent.DeduplicationString,
 		AlertCount:          newAlertDedupEvent.AlertCount,
-		CreationTime:        newAlertDedupEvent.CreationTime,
+		CreationTime:        newAlertDedupEvent.UpdateTime,
 		UpdateTime:          newAlertDedupEvent.UpdateTime,
 		EventCount:          newAlertDedupEvent.EventCount,
 		LogTypes:            newAlertDedupEvent.LogTypes,
