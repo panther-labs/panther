@@ -24,26 +24,28 @@ import (
 	"unsafe"
 
 	jsoniter "github.com/json-iterator/go"
+	"gopkg.in/go-playground/validator.v9"
 )
 
-// String is a nullable string value
+// String is a nullable string value that retains empty string in the input
 // It's useful to handle string JSON values that could be `null` in the incoming log JSON.
-// It's `omitempty` behavior when used with `jsoniter` is to omit both `""` and `null` in the output
+// It's `omitempty` behavior when used with `jsoniter` is to only omit `null` in the output
 type String struct {
 	Value  string
 	Exists bool
 }
 
-// String implements fmt.Stringer interface
-// It is inlined by the compiler.
+func (s *String) IsNull() bool {
+	return !s.Exists
+}
 func (s *String) String() string {
 	return s.Value
 }
 
-// IsNull checks if a value is null
-func (s *String) IsNull() bool {
-	return !s.Exists
-}
+// NonEmpty is a nullable string value
+// It's useful to handle string JSON values that could be `null` in the incoming log JSON.
+// It's `omitempty` behavior when used with `jsoniter` is to omit both `""` and `null` in the output
+type NonEmpty String
 
 // FromString creates a non-null String.
 // It is inlined by the compiler.
@@ -67,10 +69,12 @@ func (s *String) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON implements json.Unmarshaler interface
+func (s *NonEmpty) UnmarshalJSON(data []byte) error {
+	return ((*String)(s)).UnmarshalJSON(data)
+}
+
 // MarshalJSON implements json.Marshaler interface
-// WARNING: Since `json` package has no method of modifying `omitempty` behavior,
-// the empty values (`null`, `""`) cannot be omitted when using `json.Marshal`.
-// To omit a `null` or empty string we need to use `jsoniter.Marshal`.
 func (s *String) MarshalJSON() ([]byte, error) {
 	if s.Exists {
 		return json.Marshal(s.Value)
@@ -78,11 +82,38 @@ func (s *String) MarshalJSON() ([]byte, error) {
 	return []byte(`null`), nil
 }
 
-// nullStringCodec is a jsoniter encoder/decoder for String values
-type nullStringCodec struct{}
+// MarshalJSON implements json.Marshaler interface
+// WARNING: Since `json` package has no method of modifying `omitempty` behavior,
+// the empty values (`null`, `""`) cannot be omitted when using `json.Marshal`.
+// To omit a `null` or empty string we need to use `jsoniter.Marshal`.
+func (s *NonEmpty) MarshalJSON() ([]byte, error) {
+	return ((*String)(s)).MarshalJSON()
+}
+
+// stringCodec is a jsoniter encoder/decoder for String values
+type stringCodec struct{}
+
+// Encode implements jsoniter.ValEncoder interface
+func (*stringCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
+	if str := (*String)(ptr); str.Exists {
+		stream.WriteString(str.Value)
+	} else {
+		stream.WriteNil()
+	}
+}
+
+// IsEmpty implements jsoniter.ValEncoder interface
+// WARNING: This considers *only* `null` values as empty and omits them
+func (*stringCodec) IsEmpty(ptr unsafe.Pointer) bool {
+	// A String is non empty only when it's non null and it's Value is not ""
+	if str := (*String)(ptr); str.Exists {
+		return false
+	}
+	return true
+}
 
 // Decode implements jsoniter.ValDecoder interface
-func (*nullStringCodec) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
+func (*stringCodec) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
 	switch iter.WhatIsNext() {
 	case jsoniter.NilValue:
 		iter.ReadNil()
@@ -93,32 +124,53 @@ func (*nullStringCodec) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
 			Exists: true,
 		}
 	default:
+		iter.Skip()
 		iter.ReportError("ReadNullString", "invalid null string value")
 	}
 }
 
+func StringEncoder() jsoniter.ValEncoder {
+	return &stringCodec{}
+}
+func StringDecoder() jsoniter.ValDecoder {
+	return &stringCodec{}
+}
+func NonEmptyEncoder() jsoniter.ValEncoder {
+	return &nonEmptyEncoder{}
+}
+
+type nonEmptyEncoder struct{}
+
+// IsEmpty implements jsoniter.ValEncoder interface
+// WARNING: This considers *both* `null` and `""` values as empty and omits them
+func (*nonEmptyEncoder) IsEmpty(ptr unsafe.Pointer) bool {
+	if str := (*NonEmpty)(ptr); str.Exists && str.Value != "" {
+		return false
+	}
+	return true
+}
+
 // Encode implements jsoniter.ValEncoder interface
-func (*nullStringCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	if str := (*String)(ptr); str.Exists {
+func (*nonEmptyEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
+	if str := (*NonEmpty)(ptr); str.Exists {
 		stream.WriteString(str.Value)
 	} else {
 		stream.WriteNil()
 	}
 }
 
-// IsEmpty implements jsoniter.ValEncoder interface
-// WARNING: This considers *both* `null` and `""` values as empty and omits them
-func (*nullStringCodec) IsEmpty(ptr unsafe.Pointer) bool {
-	// A String is non empty only when it's non null and it's Value is not ""
-	if str := (*String)(ptr); str.Exists {
-		return str.Value == ""
-	}
-	return true
-}
-
-func init() {
-	// Register jsoniter encoder/decoder for String
-	typ := reflect.TypeOf((*String)(nil)).Elem()
-	jsoniter.RegisterTypeEncoder(typ.String(), &nullStringCodec{})
-	jsoniter.RegisterTypeDecoder(typ.String(), &nullStringCodec{})
+// RegisterValidators registers custom type validators for null values
+func RegisterValidators(v *validator.Validate) {
+	v.RegisterCustomTypeFunc(func(v reflect.Value) interface{} {
+		return v.Field(0).String()
+	}, String{}, NonEmpty{})
+	v.RegisterCustomTypeFunc(func(v reflect.Value) interface{} {
+		return v.Field(0).Int()
+	}, Int64{})
+	v.RegisterCustomTypeFunc(func(v reflect.Value) interface{} {
+		return uint16(v.Field(0).Uint())
+	}, Uint16{}, NonEmpty{})
+	v.RegisterCustomTypeFunc(func(v reflect.Value) interface{} {
+		return uint32(v.Field(0).Uint())
+	}, Uint32{}, NonEmpty{})
 }

@@ -159,9 +159,9 @@ func newRegistry(names ...string) *logtypes.Registry {
 			Description:  "description",
 			ReferenceURL: "-",
 			Schema:       struct{}{},
-			NewParser: func(_ interface{}) (parsers.Interface, error) {
+			NewParser: parsers.FactoryFunc(func(_ interface{}) (parsers.Interface, error) {
 				return testutil.ParserConfig{}.Parser(), nil
-			},
+			}),
 		})
 		if err != nil {
 			panic(err)
@@ -180,6 +180,18 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	testResult, err := testEvent.Result()
 	assert.NoError(t, err)
 
+	// Gzipping the test event
+	// Do that now so that the event release does not affect output
+	var expectedBytes []byte
+	//nolint:errcheck
+	{
+		var buffer bytes.Buffer
+		writer := gzip.NewWriter(&buffer)
+		writer.Write(testResult.JSON)
+		writer.Write([]byte("\n"))
+		writer.Close()
+		expectedBytes = buffer.Bytes()
+	}
 	// sending event to buffered channel
 	eventChannel <- testResult
 
@@ -198,18 +210,6 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 
 	assert.Equal(t, aws.String("testbucket"), uploadInput.Bucket)
 	assert.True(t, strings.HasPrefix(*uploadInput.Key, expectedS3Prefix))
-
-	// Gzipping the test event
-	var expectedBytes []byte
-	//nolint:errcheck
-	{
-		var buffer bytes.Buffer
-		writer := gzip.NewWriter(&buffer)
-		writer.Write(testResult.JSON)
-		writer.Write([]byte("\n"))
-		writer.Close()
-		expectedBytes = buffer.Bytes()
-	}
 
 	// Collect what was produced
 	bodyBytes, _ := ioutil.ReadAll(uploadInput.Body)
@@ -254,8 +254,8 @@ func TestSendDataIfTotalMemSizeLimitHasBeenReached(t *testing.T) {
 	// sending 2 events to buffered channel
 	// The second should already cause the S3 object size limits to be exceeded
 	// so we expect two objects to be written to s3
-	eventChannel <- testResult
-	eventChannel <- testResult
+	eventChannel <- testResult.Clone()
+	eventChannel <- testResult.Clone()
 
 	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Twice()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Twice()
@@ -281,8 +281,8 @@ func TestSendDataIfBufferSizeLimitHasBeenReached(t *testing.T) {
 	// sending 2 events to buffered channel
 	// The second should already cause the S3 object size limits to be exceeded
 	// so we expect two objects to be written to s3
-	eventChannel <- testResult
-	eventChannel <- testResult
+	eventChannel <- testResult.Clone()
+	eventChannel <- testResult.Clone()
 
 	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Twice()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Twice()
@@ -315,7 +315,7 @@ func TestSendDataIfTimeLimitHasBeenReached(t *testing.T) {
 	// the last event is needed to trigger the flush of the previous
 	go func() {
 		for i := 0; i < nevents-1; i++ {
-			eventChannel <- testResult
+			eventChannel <- testResult.Clone()
 			time.Sleep(destination.maxDuration + (time.Millisecond * 10)) // give time to for timers to expire
 		}
 		eventChannel <- testResult // last event will trigger flush of the last event above

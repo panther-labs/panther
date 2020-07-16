@@ -38,16 +38,27 @@ func TestTimestampRFC3339String(t *testing.T) {
 }
 
 func TestTimestampRFC3339Marshal(t *testing.T) {
-	ts := (RFC3339)(expectedTime)
-	jsonTS, err := jsoniter.Marshal(&ts)
+	jsonTS, err := jsoniter.Marshal(RFC3339(expectedTime))
 	assert.NoError(t, err)
 	assert.Equal(t, expectedMarshalString, string(jsonTS))
+	null, err := jsoniter.Marshal(RFC3339{})
+	assert.NoError(t, err)
+	assert.Equal(t, `null`, string(null))
+	empty, err := jsoniter.Marshal(struct {
+		Timestamp RFC3339 `json:"ts,omitempty"`
+	}{})
+	assert.NoError(t, err)
+	assert.Equal(t, `{}`, string(empty))
+	nonempty, err := jsoniter.Marshal(struct {
+		Timestamp RFC3339 `json:"ts"`
+	}{})
+	assert.NoError(t, err)
+	assert.Equal(t, `{"ts":null}`, string(nonempty))
 }
 
 func TestTimestampRFC3339Unmarshal(t *testing.T) {
-	unmarshalString := `"2019-12-15T01:01:01Z"`
 	var ts RFC3339
-	err := jsoniter.Unmarshal([]byte(unmarshalString), &ts)
+	err := jsoniter.UnmarshalFromString(`"2019-12-15T01:01:01Z"`, &ts)
 	assert.NoError(t, err)
 	assert.Equal(t, (RFC3339)(expectedTime), ts)
 }
@@ -130,7 +141,10 @@ func TestUnixFloatUnmarshal(t *testing.T) {
 	var ts UnixFloat
 	err := jsoniter.Unmarshal([]byte(unmarshalString), &ts)
 	assert.NoError(t, err)
-	assert.Equal(t, (UnixFloat)(expectedTime), ts)
+	// Test empty string results in zero time
+	assert.Equal(t, expectedTime, time.Time(ts))
+	assert.NoError(t, jsoniter.Unmarshal([]byte(`""`), &ts))
+	assert.Equal(t, time.Time{}, time.Time(ts))
 }
 
 func TestSuricataString(t *testing.T) {
@@ -153,4 +167,10 @@ func TestSuricataUnmarshal(t *testing.T) {
 	err := jsoniter.Unmarshal([]byte(unmarshalString), &ts)
 	assert.NoError(t, err)
 	assert.Equal(t, (SuricataTimestamp)(expectedTime), ts)
+}
+
+func TestFromMilliseconds(t *testing.T) {
+	expect := time.Date(2020, 05, 24, 23, 50, 07, int(259*time.Millisecond.Nanoseconds()), time.UTC)
+	actual := FromMilliseconds(1590364207259)
+	assert.Equal(t, expect, actual)
 }

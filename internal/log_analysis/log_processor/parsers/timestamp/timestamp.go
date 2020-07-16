@@ -22,6 +22,8 @@ import (
 	"math"
 	"strconv"
 	"time"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/jsonutil"
 )
 
 // These objects are used to read timestamps and ensure a consistent JSON output for timestamps.
@@ -32,6 +34,9 @@ import (
 // We want our output JSON timestamps to be: YYYY-MM-DD HH:MM:SS.fffffffff
 // https://aws.amazon.com/premiumsupport/knowledge-center/query-table-athena-timestamp-empty/
 const (
+	// ExportLayout is the format used for storing timestamps in panther logs.
+	ExportLayout = `2006-01-02 15:04:05.000000000`
+
 	jsonMarshalLayout = `"2006-01-02 15:04:05.000000000"`
 
 	ansicWithTZUnmarshalLayout = `"Mon Jan 2 15:04:05 2006 MST"` // similar to time.ANSIC but with MST
@@ -59,6 +64,10 @@ type RFC3339 time.Time
 
 func (ts *RFC3339) String() string {
 	return (*time.Time)(ts).UTC().String() // ensure UTC
+}
+
+func AppendJSON(dst []byte, tm time.Time) []byte {
+	return tm.UTC().AppendFormat(dst, jsonMarshalLayout)
 }
 
 func (ts *RFC3339) MarshalJSON() ([]byte, error) {
@@ -100,13 +109,22 @@ func (ts *UnixMillisecond) MarshalJSON() ([]byte, error) {
 	return []byte((*time.Time)(ts).UTC().Format(jsonMarshalLayout)), nil // ensure UTC
 }
 
-func (ts *UnixMillisecond) UnmarshalJSON(jsonBytes []byte) (err error) {
-	value, err := strconv.ParseInt(string(jsonBytes), 10, 64)
+// UnmarshalJSON implement json.Unmarshaler interface.
+// It handles both number and string JSON input.
+// The empty string case results in zero time value.
+func (ts *UnixMillisecond) UnmarshalJSON(jsonBytes []byte) error {
+	jsonBytes = jsonutil.UnquoteJSON(jsonBytes)
+	if len(jsonBytes) == 0 {
+		*ts = UnixMillisecond{}
+		return nil
+	}
+	ms, err := strconv.ParseInt(string(jsonBytes), 10, 64)
 	if err != nil {
 		return err
 	}
-	t := time.Unix(0, value*time.Millisecond.Nanoseconds())
-	*ts = (UnixMillisecond)(t.UTC())
+	nsec := ms * time.Millisecond.Nanoseconds()
+	tm := time.Unix(0, nsec).UTC()
+	*ts = UnixMillisecond(tm)
 	return nil
 }
 
@@ -157,13 +175,32 @@ func (ts *UnixFloat) String() string {
 func (ts *UnixFloat) MarshalJSON() ([]byte, error) {
 	return []byte((*time.Time)(ts).UTC().Format(jsonMarshalLayout)), nil // ensure UTC
 }
+
+// UnmarshalJSON implement json.Unmarshaler interface.
+// It handles both number and string JSON input.
+// The empty string case results in zero time value.
 func (ts *UnixFloat) UnmarshalJSON(jsonBytes []byte) (err error) {
+	jsonBytes = jsonutil.UnquoteJSON(jsonBytes)
+	if len(jsonBytes) == 0 {
+		*ts = UnixFloat{}
+		return nil
+	}
 	f, err := strconv.ParseFloat(string(jsonBytes), 64)
 	if err != nil {
 		return err
 	}
 	intPart, fracPart := math.Modf(f)
-	t := time.Unix(int64(intPart), int64(fracPart*1e9))
-	*ts = (UnixFloat)(t.UTC())
+	const fSec = float64(time.Second)
+	tm := time.Unix(int64(intPart), int64(fracPart*fSec)).UTC()
+	*ts = UnixFloat(tm)
 	return nil
+}
+
+func FromSeconds(f float64) time.Time {
+	intPart, fracPart := math.Modf(f)
+	return time.Unix(int64(intPart), int64(fracPart*float64(time.Second))).UTC()
+}
+
+func FromMilliseconds(msec int64) time.Time {
+	return time.Unix(0, msec*time.Millisecond.Nanoseconds()).UTC()
 }

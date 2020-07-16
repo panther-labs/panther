@@ -184,6 +184,9 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Re
 			continue
 		}
 
+		// Release event
+		event.Close()
+
 		// Check if buffer is bigger than threshold for a single buffer
 		if buffer.bytes >= maxS3BufferSizeBytes {
 			bufferSet.removeBuffer(buffer) // bufferSet is not thread safe, do this here

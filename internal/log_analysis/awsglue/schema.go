@@ -29,6 +29,8 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common/null"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -79,12 +81,64 @@ var (
 			To:   "string",
 		},
 		{
+			From: reflect.TypeOf([]jsoniter.RawMessage{}),
+			To:   "array<string>",
+		},
+		{
 			From: reflect.TypeOf(*new(numerics.Integer)),
 			To:   "bigint",
 		},
 		{
 			From: reflect.TypeOf(*new(numerics.Int64)),
 			To:   "bigint",
+		},
+		{
+			From: reflect.TypeOf(*new(null.Int64)),
+			To:   "bigint",
+		},
+		{
+			From: reflect.TypeOf(*new(null.Uint16)),
+			To:   "int",
+		},
+		{
+			From: reflect.TypeOf(*new(null.Uint32)),
+			To:   "bigint",
+		},
+		{
+			From: reflect.TypeOf(*new(null.String)),
+			To:   "string",
+		},
+		{
+			From: reflect.TypeOf(*new(null.NonEmpty)),
+			To:   "string",
+		},
+		{
+			From: reflect.TypeOf(*new(pantherlog.IPAddress)),
+			To:   "string",
+		},
+		{
+			From: reflect.TypeOf(*new(pantherlog.Domain)),
+			To:   "string",
+		},
+		{
+			From: reflect.TypeOf(*new(pantherlog.Hostname)),
+			To:   "string",
+		},
+		{
+			From: reflect.TypeOf(*new(pantherlog.MD5)),
+			To:   "string",
+		},
+		{
+			From: reflect.TypeOf(*new(pantherlog.SHA256)),
+			To:   "string",
+		},
+		{
+			From: reflect.TypeOf(*new(pantherlog.SHA1)),
+			To:   "string",
+		},
+		{
+			From: reflect.TypeOf(*new(pantherlog.URL)),
+			To:   "string",
 		},
 	}
 
@@ -247,7 +301,7 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 	}
 
 	// Rewrite field the same way as the jsoniter extension to avoid invalid column names
-	fieldName = parsers.RewriteFieldName(fieldName)
+	fieldName = pantherlog.RewriteFieldName(fieldName)
 
 	comment = sf.Tag.Get("description")
 

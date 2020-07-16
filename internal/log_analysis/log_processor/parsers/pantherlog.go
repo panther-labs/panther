@@ -27,7 +27,10 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/jsonutil"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
+	"github.com/panther-labs/panther/pkg/unbox"
 )
 
 const (
@@ -260,17 +263,24 @@ func (pl *PantherLog) Result() (*Result, error) {
 	if pl.PantherEventTime == nil {
 		return nil, errors.New("nil event time")
 	}
-	tm := ((*time.Time)(pl.PantherEventTime)).UTC()
-	// Use custom JSON marshaler to rewrite fields
-	data, err := JSON.Marshal(event)
+	if pl.PantherParseTime == nil {
+		return nil, errors.New("nil event time")
+	}
+
+	result := pantherlog.BlankResult()
+	data, err := jsonutil.AppendJSON(result.JSON[:0], pantherlog.JSON(), pl.Event())
 	if err != nil {
+		result.Close()
 		return nil, err
 	}
-	return &Result{
-		LogType:   *pl.PantherLogType,
-		EventTime: tm,
+	*result = Result{
+		LogType:   unbox.String(pl.PantherLogType),
+		ParseTime: ((*time.Time)(pl.PantherParseTime)).UTC(),
+		EventTime: ((*time.Time)(pl.PantherEventTime)).UTC(),
+		RowID:     unbox.String(pl.PantherRowID),
 		JSON:      data,
-	}, nil
+	}
+	return result, nil
 }
 
 // Results converts a PantherLog to a slice of results

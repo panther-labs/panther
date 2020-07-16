@@ -1,5 +1,4 @@
-// Package strictnull provides types for lossless handling of nullable JSON values.
-package strictnull
+package pantherlog
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -18,3 +17,21 @@ package strictnull
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/go-playground/validator.v9"
+)
+
+func TestRegisterValidators(t *testing.T) {
+	v := validator.New()
+	type T struct {
+		RequiredIP IPAddress `validate:"required"`
+	}
+	assert.NoError(t, v.Struct(T{}))
+	RegisterValidators(v)
+	require.Error(t, v.Struct(T{}))
+}

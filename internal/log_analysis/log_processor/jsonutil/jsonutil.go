@@ -54,3 +54,36 @@ func (extension *encoderNamingStrategy) UpdateStructDescriptor(structDescriptor 
 		}
 	}
 }
+
+func AppendJSON(dst []byte, api jsoniter.API, value interface{}) ([]byte, error) {
+	w := AppendWriter{
+		B: dst,
+	}
+	stream := api.BorrowStream(&w)
+	stream.WriteVal(value)
+	if err := stream.Flush(); err != nil {
+		api.ReturnStream(stream)
+		return dst, err
+	}
+	api.ReturnStream(stream)
+	return w.B, nil
+}
+
+type AppendWriter struct {
+	B []byte
+}
+
+func (w *AppendWriter) Write(p []byte) (int, error) {
+	w.B = append(w.B, p...)
+	return len(p), nil
+}
+
+func UnquoteJSON(data []byte) []byte {
+	if len(data) > 1 && data[0] == '"' {
+		data = data[1:]
+		if n := len(data) - 1; 0 <= n && n < len(data) && data[n] == '"' {
+			return data[:n]
+		}
+	}
+	return data
+}

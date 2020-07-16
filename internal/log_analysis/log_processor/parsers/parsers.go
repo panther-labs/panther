@@ -19,13 +19,16 @@ package parsers
  */
 
 import (
+	"io"
 	"strings"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
 	"gopkg.in/go-playground/validator.v9"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/jsonutil"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common/null"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/rowid"
 )
 
 // LogParser represents a parser for a supported log type
@@ -45,39 +48,17 @@ type LogParser interface {
 }
 
 // Validator can be used to validate schemas of log fields
-var Validator = validator.New()
+var Validator = NewValidator()
 
-// NOTE: The mapping should be easy to remember (so no ASCII code etc) and complex enough
-// to avoid possible conflicts with other fields.
-var fieldNameReplacer = strings.NewReplacer(
-	"@", "_at_sign_",
-	",", "_comma_",
-	"`", "_backtick_",
-	"'", "_apostrophe_",
-)
-
-func RewriteFieldName(name string) string {
-	result := fieldNameReplacer.Replace(name)
-	if result == name {
-		return name
-	}
-	return strings.Trim(result, "_")
+func NewValidator() *validator.Validate {
+	v := validator.New()
+	null.RegisterValidators(v)
+	pantherlog.RegisterValidators(v)
+	return v
 }
 
 // JSON is a custom jsoniter config to properly remap field names for compatibility with Athena views
-var JSON = func() jsoniter.API {
-	config := jsoniter.Config{
-		EscapeHTML: true,
-		// Validate raw JSON messages to make sure queries work as expected
-		ValidateJsonRawMessage: true,
-		// We don't need sorted map keys
-		SortMapKeys: false,
-	}
-	api := config.Froze()
-	rewriteFields := jsonutil.NewEncoderNamingStrategy(RewriteFieldName)
-	api.RegisterExtension(rewriteFields)
-	return api
-}()
+var JSON = pantherlog.JSON()
 
 // Interface is the interface to be used for log parsers.
 type Interface interface {
@@ -86,30 +67,26 @@ type Interface interface {
 
 // Result is the result of parsing a log event.
 // It contains the JSON form of the pantherlog to be stored for queries.
-type Result struct {
-	LogType   string
-	EventTime time.Time
-	JSON      []byte
-}
-
-// Results wraps a single Result in a slice.
-func (r *Result) Results() []*Result {
-	if r == nil {
-		return nil
-	}
-	return []*Result{r}
-}
+type Result = pantherlog.Result
 
 // Factory creates new parser instances.
 // The params argument defines parameters for a parser.
-type Factory func(params interface{}) (Interface, error)
+type Factory interface {
+	NewParser(params interface{}) (Interface, error)
+}
+
+type FactoryFunc func(params interface{}) (Interface, error)
+
+func (ff FactoryFunc) NewParser(params interface{}) (Interface, error) {
+	return ff(params)
+}
 
 // AdapterFactory returns a pantherlog.LogParser factory from a parsers.Parser
 // This is used to ease transition to the new pantherlog.EventTypeEntry registry.
 func AdapterFactory(parser LogParser) Factory {
-	return func(_ interface{}) (Interface, error) {
+	return FactoryFunc(func(_ interface{}) (Interface, error) {
 		return NewAdapter(parser), nil
-	}
+	})
 }
 
 // NewAdapter creates a pantherlog.LogParser from a parsers.Parser
@@ -125,4 +102,76 @@ type logParserAdapter struct {
 
 func (a *logParserAdapter) ParseLog(log string) ([]*Result, error) {
 	return ToResults(a.LogParser.Parse(log))
+}
+
+type SimpleJSONParserFactory struct {
+	NewEvent       func() pantherlog.Event
+	JSON           jsoniter.API
+	Validate       *validator.Validate
+	ResultBuilder  *pantherlog.ResultBuilder
+	ReadBufferSize int
+}
+
+type simpleJSONEventParser struct {
+	newEvent  func() pantherlog.Event
+	iter      *jsoniter.Iterator
+	validate  *validator.Validate
+	builder   *pantherlog.ResultBuilder
+	logReader io.Reader
+}
+
+func (p *simpleJSONEventParser) ParseLog(log string) ([]*Result, error) {
+	event := p.newEvent()
+	p.logReader.(*strings.Reader).Reset(log)
+	p.iter.Reset(p.logReader)
+	p.iter.ReadVal(event)
+	if err := p.iter.Error; err != nil {
+		return nil, err
+	}
+	if err := p.validate.Struct(event); err != nil {
+		return nil, err
+	}
+	result, err := p.builder.BuildResult(event)
+	if err != nil {
+		return nil, err
+	}
+	return []*Result{result}, nil
+}
+
+func (f *SimpleJSONParserFactory) NewParser(_ interface{}) (Interface, error) {
+	api := f.JSON
+	if api == nil {
+		api = jsoniter.ConfigDefault
+	}
+	validate := f.Validate
+	if validate == nil {
+		validate = validator.New()
+	}
+
+	// Ensure custom validators are in place
+	null.RegisterValidators(validate)
+	pantherlog.RegisterValidators(validate)
+
+	builder := f.ResultBuilder
+	if builder == nil {
+		builder = &pantherlog.ResultBuilder{
+			Meta:      pantherlog.DefaultMetaFields(),
+			NextRowID: rowid.Next,
+			Now:       time.Now,
+		}
+	}
+	const minBufferSize = 512
+	bufferSize := f.ReadBufferSize
+	if bufferSize < minBufferSize {
+		bufferSize = minBufferSize
+	}
+
+	iter := jsoniter.Parse(api, nil, bufferSize)
+	return &simpleJSONEventParser{
+		newEvent:  f.NewEvent,
+		iter:      iter,
+		validate:  validate,
+		builder:   builder,
+		logReader: strings.NewReader(`null`),
+	}, nil
 }

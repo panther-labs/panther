@@ -1,4 +1,4 @@
-package strictnull_test
+package null_test
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -25,64 +25,50 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common/null"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common/strictnull"
 )
 
-func TestStringCodec(t *testing.T) {
+func TestInt64Codec(t *testing.T) {
 	type A struct {
-		Foo strictnull.String `json:"foo,omitempty"`
+		Foo null.Int64 `json:"foo,omitempty"`
 	}
 	{
 		a := A{}
-		err := jsoniter.UnmarshalFromString(`{"foo":"bar"}`, &a)
+		err := jsoniter.UnmarshalFromString(`{"foo":"42"}`, &a)
 		require.NoError(t, err)
-		require.Equal(t, "bar", a.Foo.Value)
+		require.Equal(t, int64(42), a.Foo.Value)
 		data, err := jsoniter.MarshalToString(&a)
 		require.NoError(t, err)
-		require.Equal(t, `{"foo":"bar"}`, data)
+		require.Equal(t, `{"foo":42}`, data)
 	}
 	{
 		a := A{}
 		err := jsoniter.UnmarshalFromString(`{"foo":""}`, &a)
 		require.NoError(t, err)
-		require.Equal(t, "", a.Foo.Value)
-		require.True(t, a.Foo.Exists)
+		require.Equal(t, null.Int64{}, a.Foo)
 		data, err := jsoniter.MarshalToString(&a)
 		require.NoError(t, err)
-		require.Equal(t, `{"foo":""}`, data)
+		require.Equal(t, `{}`, data)
 	}
 	{
 		a := A{}
 		err := jsoniter.UnmarshalFromString(`{"foo":null}`, &a)
 		require.NoError(t, err)
-		require.Equal(t, "", a.Foo.Value)
+		require.Equal(t, null.Int64{}, a.Foo)
 		require.False(t, a.Foo.Exists)
 		data, err := jsoniter.MarshalToString(&a)
 		require.NoError(t, err)
 		require.Equal(t, `{}`, data)
 	}
 	{
-		s := strictnull.FromString("foo")
+		s := null.FromInt64(42)
 		data, err := jsoniter.MarshalToString(&s)
 		require.NoError(t, err)
-		require.Equal(t, `"foo"`, data)
+		require.Equal(t, `42`, data)
 	}
 	{
-		s := strictnull.String{}
+		s := null.Int64{}
 		data, err := jsoniter.MarshalToString(&s)
 		require.NoError(t, err)
 		require.Equal(t, `null`, data)
-	}
-}
-func TestFromString(t *testing.T) {
-	{
-		s := strictnull.FromString("")
-		require.Equal(t, strictnull.String{
-			String: null.String{Exists: true},
-		}, s)
-	}
-	{
-		s := null.FromString("foo")
-		require.Equal(t, null.String{Value: "foo", Exists: true}, s)
 	}
 }
