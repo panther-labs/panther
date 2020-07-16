@@ -35,10 +35,11 @@ type PantherConfig struct {
 }
 
 type Infra struct {
-	BaseLayerVersionArns         string   `yaml:"BaseLayerVersionArns"`
-	LogProcessorLambdaMemorySize int      `yaml:"LogProcessorLambdaMemorySize"`
-	PipLayer                     []string `yaml:"PipLayer"`
-	PythonLayerVersionArn        string   `yaml:"PythonLayerVersionArn"`
+	BaseLayerVersionArns          string   `yaml:"BaseLayerVersionArns"`
+	LoadBalancerSecurityGroupCidr string   `yaml:"LoadBalancerSecurityGroupCidr"`
+	LogProcessorLambdaMemorySize  int      `yaml:"LogProcessorLambdaMemorySize"`
+	PipLayer                      []string `yaml:"PipLayer"`
+	PythonLayerVersionArn         string   `yaml:"PythonLayerVersionArn"`
 }
 
 type Monitoring struct {

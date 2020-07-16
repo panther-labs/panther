@@ -216,6 +216,11 @@ func installPythonEnv() error {
 		return fmt.Errorf("pip installation failed: %v", err)
 	}
 
+	// update cfn linter specs (cnf-lint is a python package)
+	if err := sh.RunV(pythonLibPath("cfn-lint"), "--update-specs"); err != nil {
+		return err
+	}
+
 	return nil
 }
 

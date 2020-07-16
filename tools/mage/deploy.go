@@ -348,16 +348,17 @@ func deployMainStacks(settings *config.PantherConfig, accountID string, outputs 
 
 func deployBootstrapStack(settings *config.PantherConfig) (map[string]string, error) {
 	return deployTemplate(bootstrapTemplate, "", bootstrapStack, map[string]string{
-		"AccessLogsBucket":           settings.Setup.S3AccessLogsBucket,
-		"AlarmTopicArn":              settings.Monitoring.AlarmSnsTopicArn,
-		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
-		"CustomDomain":               settings.Web.CustomDomain,
-		"DataReplicationBucket":      settings.Setup.DataReplicationBucket,
-		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
-		"DeployFromSource":           "true",
-		"EnableS3AccessLogs":         strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
-		"LogSubscriptionPrincipals":  strings.Join(settings.Setup.LogSubscriptions.PrincipalARNs, ","),
-		"TracingMode":                settings.Monitoring.TracingMode,
+		"AccessLogsBucket":              settings.Setup.S3AccessLogsBucket,
+		"AlarmTopicArn":                 settings.Monitoring.AlarmSnsTopicArn,
+		"CloudWatchLogRetentionDays":    strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+		"CustomDomain":                  settings.Web.CustomDomain,
+		"DataReplicationBucket":         settings.Setup.DataReplicationBucket,
+		"Debug":                         strconv.FormatBool(settings.Monitoring.Debug),
+		"DeployFromSource":              "true",
+		"EnableS3AccessLogs":            strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
+		"LoadBalancerSecurityGroupCidr": settings.Infra.LoadBalancerSecurityGroupCidr,
+		"LogSubscriptionPrincipals":     strings.Join(settings.Setup.LogSubscriptions.PrincipalARNs, ","),
+		"TracingMode":                   settings.Monitoring.TracingMode,
 	})
 }
 

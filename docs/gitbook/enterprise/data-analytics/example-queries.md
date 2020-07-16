@@ -8,7 +8,7 @@ This is often one of the first questions asked in an investigation. Given there 
 
 Panther makes asking such questions easy using the 'all_logs' Athena view which will search all data for the indicator of interest. Since most often the answers to these question are negative, making this a fast and efficient operation reduces investigation time.
 
-In this example the Panther field `p_any_ip_addresses` is used. Panther extracts a number of common indicator fields over all data sources into standard fields (see [Panther Fields](log-analysis/panther-fields.md)).
+In this example the Panther field `p_any_ip_addresses` is used. Panther extracts a number of common indicator fields over all data sources into standard fields (see [Panther Fields](../../log-analysis/panther-fields.md)).
 
 ```sql
 SELECT

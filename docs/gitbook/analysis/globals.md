@@ -6,7 +6,7 @@ A common pattern in programming is to extract repeated code into helper function
 
 ## Built-in Globals
 
-By default, Panther comes with two built-in globals named `panther` and `panther_oss_helpers`. `panther` is a default and already set up for you to define your custom logic, and `panther_oss_helpers` provides boilerplate helpers to common [caching](analysis/caching.md) and other use cases.
+By default, Panther comes with two built-in globals named `panther` and `panther_oss_helpers`. `panther` is a default and already set up for you to define your custom logic, and `panther_oss_helpers` provides boilerplate helpers to common [caching](caching.md) and other use cases.
 
 ## Using Globals
 
@@ -30,7 +30,7 @@ def title(event):
 
 ## Adding New Globals
 
-New globals can be created either with the Panther Analysis Tool (found [here](analysis/panther-analysis-tool.md#globals)) or from within the Panther UI.
+New globals can be created either with the Panther Analysis Tool (found [here](panther-analysis-tool.md#globals)) or from within the Panther UI.
 
 To create a new global, navigate to `Settings` > `Global Modules`:
 
