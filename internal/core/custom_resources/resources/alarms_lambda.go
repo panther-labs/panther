@@ -87,7 +87,7 @@ func customLambdaAlarms(_ context.Context, event cfn.Event) (string, map[string]
 // putLambdaAlarmGroup creates the standard set of alarms for all lambdas
 //
 // The lambda alarms are often correlated.
-// For example, a lambda can fail before logging is enables, so we alarm on that.
+// For example, a lambda can fail before logging is enabled, so we alarm on that.
 // We also alarm when a lambda runs, logs an informative error and fails.
 // If paging is tied to both alarms and a lambda runs, logs and error and fails
 // the 2 pages are generated (not good). Both alarms are needed because
@@ -209,12 +209,10 @@ func putLambdaAlarmGroup(props LambdaAlarmProperties) error {
 		name:        *input.AlarmName,
 		description: *input.AlarmDescription})
 
+	// the putCompositeAlarm will populate the AlarmDescription and AlarmRule fields.
 	compositeInput := &cloudwatch.PutCompositeAlarmInput{
-		AlarmActions:     []*string{&props.AlarmTopicArn},
-		AlarmDescription: nil,
-		AlarmName:        aws.String(fmt.Sprintf("Panther-%s-%s", lambdaCompositeAlarm, props.FunctionName)),
-		AlarmRule:        nil,
+		AlarmActions: []*string{&props.AlarmTopicArn},
+		AlarmName:    aws.String(fmt.Sprintf("Panther-%s-%s", lambdaCompositeAlarm, props.FunctionName)),
 	}
-
 	return putCompositeAlarm(compositeInput, alarmDescriptions)
 }
