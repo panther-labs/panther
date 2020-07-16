@@ -1,6 +1,6 @@
 query GetLogAnalysisMetrics($input: LogAnalysisMetricsInput) {
   getLogAnalysisMetrics(input: $input) {
-    metricsResults {
+    metricResults {
       metricsName
       seriesData {
         label

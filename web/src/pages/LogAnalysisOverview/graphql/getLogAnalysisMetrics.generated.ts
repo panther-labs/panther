@@ -31,7 +31,7 @@ export type GetLogAnalysisMetricsVariables = {
 export type GetLogAnalysisMetrics = {
   getLogAnalysisMetrics?: Types.Maybe<
     Pick<Types.LogAnalysisMetricsResponse, 'intervalHours'> & {
-      metricsResults?: Types.Maybe<
+      metricResults?: Types.Maybe<
         Array<
           Types.Maybe<
             Pick<Types.MetricsResults, 'metricsName'> & {
@@ -49,7 +49,7 @@ export type GetLogAnalysisMetrics = {
 export const GetLogAnalysisMetricsDocument = gql`
   query GetLogAnalysisMetrics($input: LogAnalysisMetricsInput) {
     getLogAnalysisMetrics(input: $input) {
-      metricsResults {
+      metricResults {
         metricsName
         seriesData {
           label

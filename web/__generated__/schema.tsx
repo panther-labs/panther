@@ -522,7 +522,7 @@ export type LogAnalysisMetricsInput = {
 
 export type LogAnalysisMetricsResponse = {
   __typename?: 'LogAnalysisMetricsResponse';
-  metricsResults?: Maybe<Array<Maybe<MetricsResults>>>;
+  metricResults?: Maybe<Array<Maybe<MetricsResults>>>;
   intervalHours?: Maybe<Scalars['Int']>;
 };
 
@@ -1816,7 +1816,7 @@ export type LogAnalysisMetricsResponseResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['LogAnalysisMetricsResponse'] = ResolversParentTypes['LogAnalysisMetricsResponse']
 > = {
-  metricsResults?: Resolver<
+  metricResults?: Resolver<
     Maybe<Array<Maybe<ResolversTypes['MetricsResults']>>>,
     ParentType,
     ContextType
