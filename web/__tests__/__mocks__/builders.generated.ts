@@ -286,9 +286,9 @@ export const buildAlertDetails = (overrides?: Partial<AlertDetails>): AlertDetai
     creationTime:
       overrides && overrides.hasOwnProperty('creationTime')
         ? overrides.creationTime!
-        : '1978-03-30',
+        : '1978-03-29',
     updateTime:
-      overrides && overrides.hasOwnProperty('updateTime') ? overrides.updateTime! : '2009-11-03',
+      overrides && overrides.hasOwnProperty('updateTime') ? overrides.updateTime! : '2009-11-02',
     eventsMatched:
       overrides && overrides.hasOwnProperty('eventsMatched') ? overrides.eventsMatched! : 5163,
     events:
@@ -798,11 +798,11 @@ export const buildGlobalPythonModule = (
         ? overrides.id!
         : '52f3a049-cced-4b20-825c-b8e861b2d2d0',
     createdAt:
-      overrides && overrides.hasOwnProperty('createdAt') ? overrides.createdAt! : '2011-09-27',
+      overrides && overrides.hasOwnProperty('createdAt') ? overrides.createdAt! : '2011-09-26',
     lastModified:
       overrides && overrides.hasOwnProperty('lastModified')
         ? overrides.lastModified!
-        : '2013-02-25',
+        : '2013-02-24',
   };
 };
 
@@ -887,7 +887,7 @@ export const buildListAlertsInput = (overrides?: Partial<ListAlertsInput>): List
     createdAtBefore:
       overrides && overrides.hasOwnProperty('createdAtBefore')
         ? overrides.createdAtBefore!
-        : '1998-05-17',
+        : '1998-05-16',
     createdAtAfter:
       overrides && overrides.hasOwnProperty('createdAtAfter')
         ? overrides.createdAtAfter!
@@ -1256,7 +1256,7 @@ export const buildPolicyDetails = (overrides?: Partial<PolicyDetails>): PolicyDe
         ? overrides.complianceStatus!
         : ComplianceStatusEnum.Error,
     createdAt:
-      overrides && overrides.hasOwnProperty('createdAt') ? overrides.createdAt! : '1970-10-16',
+      overrides && overrides.hasOwnProperty('createdAt') ? overrides.createdAt! : '1970-10-15',
     createdBy:
       overrides && overrides.hasOwnProperty('createdBy')
         ? overrides.createdBy!
@@ -1553,7 +1553,7 @@ export const buildS3LogIntegration = (overrides?: Partial<S3LogIntegration>): S3
     lastEventReceived:
       overrides && overrides.hasOwnProperty('lastEventReceived')
         ? overrides.lastEventReceived!
-        : '1998-01-04',
+        : '1998-01-03',
     s3Bucket: overrides && overrides.hasOwnProperty('s3Bucket') ? overrides.s3Bucket! : 'illum',
     s3Prefix: overrides && overrides.hasOwnProperty('s3Prefix') ? overrides.s3Prefix! : 'vero',
     kmsKey: overrides && overrides.hasOwnProperty('kmsKey') ? overrides.kmsKey! : 'aliquid',
