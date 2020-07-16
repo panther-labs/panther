@@ -530,7 +530,7 @@ export type LogIntegration = S3LogIntegration;
 
 export type MetricsResults = {
   __typename?: 'MetricsResults';
-  MetricsName?: Maybe<Scalars['String']>;
+  MetricName?: Maybe<Scalars['String']>;
   seriesData?: Maybe<Array<Maybe<SeriesData>>>;
 };
 
@@ -1836,7 +1836,7 @@ export type MetricsResultsResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['MetricsResults'] = ResolversParentTypes['MetricsResults']
 > = {
-  MetricsName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  MetricName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   seriesData?: Resolver<Maybe<Array<Maybe<ResolversTypes['SeriesData']>>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };

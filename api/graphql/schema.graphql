@@ -346,7 +346,7 @@ type SeriesData {
 }
 
 type MetricsResults {
-  MetricsName: String
+  MetricName: String
   seriesData: [SeriesData]
 }
 
