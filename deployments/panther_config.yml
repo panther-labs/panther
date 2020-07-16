@@ -64,7 +64,7 @@ Monitoring:
   CloudWatchLogRetentionDays: 365
 
   # Enable DEBUG logging for all Lambda functions.
-  Debug: true
+  Debug: false
 
   # XRay tracing mode for API Gateway and Lambda: '', 'Active', or 'PassThrough'
   TracingMode: ''
@@ -77,9 +77,9 @@ Setup:
 
   # The first Panther user. If left blank, you will be prompted for this when you deploy.
   FirstUser:
-    GivenName: 'nick'
-    FamilyName: 'hakmiller'
-    Email: 'nicholas.hakmiller@runpanther.io'
+    GivenName: ''
+    FamilyName: ''
+    Email: ''
 
   # List of policy/rule sets to install when Panther is first deployed.
   #
