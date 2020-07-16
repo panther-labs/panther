@@ -153,11 +153,11 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 func getExclusiveStartKey(input *models.ListAlertsInput) (DynamoItem, error) {
 	var queryExclusiveStartKey DynamoItem
 	if input.ExclusiveStartKey != nil {
-		unmarshaledKey, err := dynamodbattribute.MarshalMap(*input.ExclusiveStartKey)
+		queryExclusiveStartKey = make(DynamoItem)
+		err := jsoniter.UnmarshalFromString(*input.ExclusiveStartKey, &queryExclusiveStartKey)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to Unmarshal ExclusiveStartKey")
 		}
-		queryExclusiveStartKey = unmarshaledKey
 	}
 	return queryExclusiveStartKey, nil
 }
