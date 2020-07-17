@@ -59,7 +59,16 @@ func handleNewAlert(event *AlertDedupEvent) error {
 	if err := storeNewAlert(ruleInfo, event); err != nil {
 		return errors.Wrap(err, "failed to store new alert in DDB")
 	}
-	return sendAlertNotification(ruleInfo, event)
+
+	err = sendAlertNotification(ruleInfo, event)
+	if err == nil {
+		staticLogger.LogSingle(1,
+			metrics.Dimension{Name: "Severity", Value: string(ruleInfo.Severity)},
+			analysisTypeDimension,
+		)
+	}
+
+	return err
 }
 
 func updateExistingAlert(event *AlertDedupEvent) error {
@@ -115,11 +124,6 @@ func storeNewAlert(rule *models.Rule, alertDedup *AlertDedupEvent) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to store alert")
 	}
-
-	staticLogger.LogSingle(1,
-		metrics.Dimension{Name: "Severity", Value: string(rule.Severity)},
-		componentDimension,
-	)
 
 	return nil
 }

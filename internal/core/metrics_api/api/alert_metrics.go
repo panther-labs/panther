@@ -52,8 +52,8 @@ func getAlertsBySeverity(input *models.GetMetricsInput, output *models.GetMetric
 				Metric: &cloudwatch.Metric{
 					Dimensions: []*cloudwatch.Dimension{
 						{
-							Name:  aws.String("Component"),
-							Value: aws.String("AlertForwarder"),
+							Name:  aws.String("AnalysisType"),
+							Value: aws.String("Rule"),
 						},
 						{
 							Name:  aws.String("Severity"),
@@ -112,8 +112,8 @@ func getTotalAlertsDelta(input *models.GetMetricsInput, output *models.GetMetric
 				Metric: &cloudwatch.Metric{
 					Dimensions: []*cloudwatch.Dimension{
 						{
-							Name:  aws.String("Component"),
-							Value: aws.String("AlertForwarder"),
+							Name:  aws.String("AnalysisType"),
+							Value: aws.String("Rule"),
 						},
 					},
 					MetricName: aws.String(alertsMetric),
