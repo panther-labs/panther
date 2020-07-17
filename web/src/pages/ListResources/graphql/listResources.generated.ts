@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
-
 import * as Types from '../../../../__generated__/schema';
 
 import gql from 'graphql-tag';
@@ -108,3 +106,18 @@ export type ListResourcesQueryResult = ApolloReactCommon.QueryResult<
   ListResources,
   ListResourcesVariables
 >;
+export function mockListResources({
+  data,
+  variables,
+  error,
+}: {
+  data: ListResources;
+  variables?: ListResourcesVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: ListResourcesDocument, variables },
+    result: { data },
+    error,
+  };
+}

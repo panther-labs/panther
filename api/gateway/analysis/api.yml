@@ -1259,6 +1259,8 @@ definitions:
         $ref: '#/definitions/dedupPeriodMinutes'
       reports:
         $ref: '#/definitions/reports'
+      threshold:
+        $ref: '#/definitions/threshold'
     required:
       - body
       - createdAt
@@ -1279,6 +1281,7 @@ definitions:
       - versionId
       - dedupPeriodMinutes
       - reports
+      - threshold
 
   UpdateRule:
     type: object
@@ -1313,6 +1316,8 @@ definitions:
         $ref: '#/definitions/dedupPeriodMinutes'
       reports:
         $ref: '#/definitions/reports'
+      threshold:
+        $ref: '#/definitions/threshold'
     required:
       - body
       - enabled
@@ -1430,6 +1435,12 @@ definitions:
     maximum: 1440 # 1 day in minutes
     default: 60
 
+  threshold:
+    description: The threshold (number of events) that will have to be reached during the dedupPeriodMinutes in order for the rule to fire an alarm
+    type: integer
+    minimum: 0
+    default: 0
+
   description:
     description: Summary of the policy and its purpose
     type: string
@@ -1456,7 +1467,7 @@ definitions:
 
   outputIds:
     description: >
-      A list of destinations IDs to send an alert that overrides the 
+      A list of destinations IDs to send an alert that overrides the
       severity rating triggers set in the destination itself.
     type: array
     maxItems: 500

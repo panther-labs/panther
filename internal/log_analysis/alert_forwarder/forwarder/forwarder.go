@@ -26,57 +26,95 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
-	policiesoperations "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
 	ruleModel "github.com/panther-labs/panther/api/gateway/analysis/models"
 	alertModel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 )
 
 const defaultTimePartition = "defaultPartition"
 
-func Handle(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) error {
-	if needToCreateNewAlert(oldAlertDedupEvent, newAlertDedupEvent) {
-		return handleNewAlert(newAlertDedupEvent)
+type Handler struct {
+	SqsClient        sqsiface.SQSAPI
+	Cache            *RuleCache
+	DdbClient        dynamodbiface.DynamoDBAPI
+	AlertTable       string
+	AlertingQueueURL string
+}
+
+func (h *Handler) Do(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) (err error) {
+	var oldRule *ruleModel.Rule
+	if oldAlertDedupEvent != nil {
+		oldRule, err = h.Cache.Get(oldAlertDedupEvent.RuleID, oldAlertDedupEvent.RuleVersion)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get rule information for %s.%s", oldAlertDedupEvent.RuleID, oldAlertDedupEvent.RuleVersion)
+		}
 	}
-	return updateExistingAlert(newAlertDedupEvent)
-}
 
-func needToCreateNewAlert(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) bool {
-	return oldAlertDedupEvent == nil || oldAlertDedupEvent.AlertCount != newAlertDedupEvent.AlertCount
-}
-
-func handleNewAlert(event *AlertDedupEvent) error {
-	ruleInfo, err := getRuleInfo(event)
+	newRule, err := h.Cache.Get(newAlertDedupEvent.RuleID, newAlertDedupEvent.RuleVersion)
 	if err != nil {
-		return errors.Wrap(err, "failed to get rule information")
+		return errors.Wrapf(err, "failed to get rule information for %s.%s", newAlertDedupEvent.RuleID, newAlertDedupEvent.RuleVersion)
 	}
 
-	if err := storeNewAlert(ruleInfo, event); err != nil {
+	if shouldIgnoreChange(newRule, newAlertDedupEvent) {
+		return nil
+	}
+
+	if needToCreateNewAlert(oldRule, oldAlertDedupEvent, newAlertDedupEvent) {
+		return h.handleNewAlert(newRule, newAlertDedupEvent)
+	}
+	return h.updateExistingAlert(newAlertDedupEvent)
+}
+
+func shouldIgnoreChange(rule *ruleModel.Rule, alertDedupEvent *AlertDedupEvent) bool {
+	// If the number of matched events hasn't crossed the threshold for the rule, don't create a new alert.
+	return alertDedupEvent.EventCount < int64(rule.Threshold)
+}
+
+func needToCreateNewAlert(oldRule *ruleModel.Rule, oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) bool {
+	if oldAlertDedupEvent == nil {
+		// If this is the first time we see an alert deduplication entry, create an alert
+		return true
+	}
+	if oldAlertDedupEvent.AlertCount != newAlertDedupEvent.AlertCount {
+		// If this is an alert deduplication entry for a new alert, create the new alert
+		return true
+	}
+	if oldAlertDedupEvent.EventCount < int64(oldRule.Threshold) {
+		// If the previous alert dedup information was not above rule threshold, we need to create a new alert
+		return true
+	}
+	return false
+}
+
+func (h *Handler) handleNewAlert(rule *ruleModel.Rule, event *AlertDedupEvent) error {
+	if err := h.storeNewAlert(rule, event); err != nil {
 		return errors.Wrap(err, "failed to store new alert in DDB")
 	}
-	return sendAlertNotification(ruleInfo, event)
+	return h.sendAlertNotification(rule, event)
 }
 
-func updateExistingAlert(event *AlertDedupEvent) error {
+func (h *Handler) updateExistingAlert(event *AlertDedupEvent) error {
 	// When updating alert, we need to update only 3 fields
 	// - The number of events included in the alert
 	// - The log types of the events in the alert
 	// - The alert update time
 	updateExpression := expression.
-		Set(expression.Name(alertTableEventCountAttribute), expression.Value(aws.Int64(event.EventCount))).
-		Set(expression.Name(alertTableLogTypesAttribute), expression.Value(aws.StringSlice(event.LogTypes))).
-		Set(expression.Name(alertTableUpdateTimeAttribute), expression.Value(aws.Time(event.UpdateTime)))
+		Set(expression.Name(alertTableEventCountAttribute), expression.Value(event.EventCount)).
+		Set(expression.Name(alertTableLogTypesAttribute), expression.Value(event.LogTypes)).
+		Set(expression.Name(alertTableUpdateTimeAttribute), expression.Value(event.UpdateTime))
 	expr, err := expression.NewBuilder().WithUpdate(updateExpression).Build()
 	if err != nil {
 		return errors.Wrap(err, "failed to build update expression")
 	}
 
 	updateInput := &dynamodb.UpdateItemInput{
-		TableName:                 aws.String(env.AlertsTable),
+		TableName:                 &h.AlertTable,
 		UpdateExpression:          expr.Update(),
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
@@ -85,21 +123,32 @@ func updateExistingAlert(event *AlertDedupEvent) error {
 		},
 	}
 
-	_, err = ddbClient.UpdateItem(updateInput)
+	_, err = h.DdbClient.UpdateItem(updateInput)
 	if err != nil {
 		return errors.Wrap(err, "failed to update alert")
 	}
 	return nil
 }
 
-func storeNewAlert(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) error {
+func (h *Handler) storeNewAlert(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) error {
 	alert := &Alert{
 		ID:              generateAlertID(alertDedup),
 		TimePartition:   defaultTimePartition,
 		Severity:        string(rule.Severity),
 		RuleDisplayName: getRuleDisplayName(rule),
 		Title:           getAlertTitle(rule, alertDedup),
-		AlertDedupEvent: *alertDedup,
+		AlertDedupEvent: AlertDedupEvent{
+			RuleID:              alertDedup.RuleID,
+			RuleVersion:         alertDedup.RuleVersion,
+			DeduplicationString: alertDedup.DeduplicationString,
+			// In case a rule has a threshold, we want the alert creation time to be the same time
+			// as the update time -> the time that an update(new event) caused the matched events to exceed threshold
+			// In case the rule doesnt' have a threshold, the two are anyway the same
+			CreationTime: alertDedup.UpdateTime,
+			UpdateTime:   alertDedup.UpdateTime,
+			EventCount:   alertDedup.EventCount,
+			LogTypes:     alertDedup.LogTypes,
+		},
 	}
 
 	marshaledAlert, err := dynamodbattribute.MarshalMap(alert)
@@ -108,29 +157,32 @@ func storeNewAlert(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) error {
 	}
 	putItemRequest := &dynamodb.PutItemInput{
 		Item:      marshaledAlert,
-		TableName: aws.String(env.AlertsTable),
+		TableName: &h.AlertTable,
 	}
-	_, err = ddbClient.PutItem(putItemRequest)
+	_, err = h.DdbClient.PutItem(putItemRequest)
 	if err != nil {
 		return errors.Wrap(err, "failed to update store alert")
 	}
 	return nil
 }
 
-func sendAlertNotification(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) error {
+func (h *Handler) sendAlertNotification(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) error {
 	alertNotification := &alertModel.Alert{
 		AlertID:             aws.String(generateAlertID(alertDedup)),
 		AnalysisDescription: aws.String(string(rule.Description)),
 		AnalysisID:          alertDedup.RuleID,
-		CreatedAt:           alertDedup.CreationTime,
-		OutputIds:           rule.OutputIds,
-		AnalysisName:        getRuleDisplayName(rule),
-		Runbook:             aws.String(string(rule.Runbook)),
-		Severity:            string(rule.Severity),
-		Tags:                rule.Tags,
-		Type:                alertModel.RuleType,
-		Title:               aws.String(getAlertTitle(rule, alertDedup)),
-		Version:             aws.String(alertDedup.RuleVersion),
+		// In case a rule has a threshold, we want the alert creation time to be the same time
+		// as the update time -> the time that an update(new event) caused the matched events to exceed threshold
+		// In case the rule doesnt' have a threshold, the two are anyway the same
+		CreatedAt:    alertDedup.UpdateTime,
+		OutputIds:    rule.OutputIds,
+		AnalysisName: getRuleDisplayName(rule),
+		Runbook:      aws.String(string(rule.Runbook)),
+		Severity:     string(rule.Severity),
+		Tags:         rule.Tags,
+		Type:         alertModel.RuleType,
+		Title:        aws.String(getAlertTitle(rule, alertDedup)),
+		Version:      &alertDedup.RuleVersion,
 	}
 
 	msgBody, err := jsoniter.MarshalToString(alertNotification)
@@ -139,10 +191,10 @@ func sendAlertNotification(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) er
 	}
 
 	input := &sqs.SendMessageInput{
-		QueueUrl:    aws.String(env.AlertingQueueURL),
-		MessageBody: aws.String(msgBody),
+		QueueUrl:    &h.AlertingQueueURL,
+		MessageBody: &msgBody,
 	}
-	_, err = sqsClient.SendMessage(input)
+	_, err = h.SqsClient.SendMessage(input)
 	if err != nil {
 		return errors.Wrap(err, "failed to send notification")
 	}
@@ -171,18 +223,4 @@ func generateAlertID(event *AlertDedupEvent) string {
 	key := event.RuleID + ":" + strconv.FormatInt(event.AlertCount, 10) + ":" + event.DeduplicationString
 	keyHash := md5.Sum([]byte(key)) // nolint(gosec)
 	return hex.EncodeToString(keyHash[:])
-}
-
-func getRuleInfo(event *AlertDedupEvent) (*ruleModel.Rule, error) {
-	rule, err := policyClient.Operations.GetRule(&policiesoperations.GetRuleParams{
-		RuleID:     event.RuleID,
-		VersionID:  aws.String(event.RuleVersion),
-		HTTPClient: httpClient,
-	})
-
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to fetch information for ruleID [%s], version [%s]",
-			event.RuleID, event.RuleVersion)
-	}
-	return rule.Payload, nil
 }

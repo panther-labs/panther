@@ -64,5 +64,6 @@ func customResourceHandler(ctx context.Context, event cfn.Event) (string, map[st
 }
 
 func main() {
+	resources.Setup()
 	lambda.Start(cfn.LambdaWrap(customResourceHandler))
 }

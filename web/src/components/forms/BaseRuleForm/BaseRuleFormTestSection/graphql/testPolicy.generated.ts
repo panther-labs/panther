@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
-
 import * as Types from '../../../../../../__generated__/schema';
 
 import gql from 'graphql-tag';
@@ -87,3 +85,18 @@ export type TestPolicyMutationOptions = ApolloReactCommon.BaseMutationOptions<
   TestPolicy,
   TestPolicyVariables
 >;
+export function mockTestPolicy({
+  data,
+  variables,
+  error,
+}: {
+  data: TestPolicy;
+  variables?: TestPolicyVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: TestPolicyDocument, variables },
+    result: { data },
+    error,
+  };
+}

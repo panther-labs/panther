@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
-
 import * as Types from '../../../../../__generated__/schema';
 
 import { AlertSummaryFull } from '../../../../graphql/fragments/AlertSummaryFull.generated';
@@ -75,3 +73,18 @@ export type UpdateAlertStatusMutationOptions = ApolloReactCommon.BaseMutationOpt
   UpdateAlertStatus,
   UpdateAlertStatusVariables
 >;
+export function mockUpdateAlertStatus({
+  data,
+  variables,
+  error,
+}: {
+  data: UpdateAlertStatus;
+  variables?: UpdateAlertStatusVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: UpdateAlertStatusDocument, variables },
+    result: { data },
+    error,
+  };
+}

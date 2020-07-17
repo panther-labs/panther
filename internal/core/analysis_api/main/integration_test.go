@@ -204,6 +204,7 @@ var (
 		OutputIds:          []string{"test-output1", "test-output2"},
 		Reports:            map[string][]string{},
 		DedupPeriodMinutes: 1440,
+		Threshold:          10,
 	}
 
 	global = &models.Global{
@@ -783,6 +784,7 @@ func createRuleSuccess(t *testing.T) {
 			DedupPeriodMinutes: rule.DedupPeriodMinutes,
 			Tags:               rule.Tags,
 			OutputIds:          rule.OutputIds,
+			Threshold:          rule.Threshold,
 		},
 		HTTPClient: httpClient,
 	})
@@ -1004,6 +1006,7 @@ func modifyRule(t *testing.T) {
 	expectedRule := *rule
 	expectedRule.Description = "SkyNet integration"
 	expectedRule.DedupPeriodMinutes = 60
+	expectedRule.Threshold = rule.Threshold + 1
 
 	result, err := apiClient.Operations.ModifyRule(&operations.ModifyRuleParams{
 		Body: &models.UpdateRule{
@@ -1017,6 +1020,7 @@ func modifyRule(t *testing.T) {
 			DedupPeriodMinutes: expectedRule.DedupPeriodMinutes,
 			Tags:               expectedRule.Tags,
 			OutputIds:          expectedRule.OutputIds,
+			Threshold:          expectedRule.Threshold,
 		},
 		HTTPClient: httpClient,
 	})

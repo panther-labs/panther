@@ -26,6 +26,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 const ManifestPlugin = require('webpack-manifest-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
@@ -33,6 +34,7 @@ const CompressionPlugin = require('compression-webpack-plugin');
 
 const isEnvDevelopment = process.env.NODE_ENV === 'development';
 const isEnvProduction = process.env.NODE_ENV === 'production';
+const isPerformanceAnalysis = Boolean(process.env.PERFORMANCE_ANALYSIS);
 
 module.exports = {
   // webpack automatically makes optimisations depending on the environment that runs. We want to
@@ -280,5 +282,6 @@ module.exports = {
         algorithm: 'brotliCompress',
         compressionOptions: { level: 11 },
       }),
+    isPerformanceAnalysis && new BundleAnalyzerPlugin(),
   ].filter(Boolean),
 };

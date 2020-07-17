@@ -19,6 +19,8 @@ package resources
  */
 
 import (
+	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/acm"
@@ -43,9 +45,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
+	"github.com/kelseyhightower/envconfig"
 )
 
 var (
+	env envConfig
+
 	awsSession = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(10)))
 
 	acmClient            acmiface.ACMAPI                                         = acm.New(awsSession)
@@ -59,4 +64,18 @@ var (
 	iamClient            iamiface.IAMAPI                                         = iam.New(awsSession)
 	lambdaClient         lambdaiface.LambdaAPI                                   = lambda.New(awsSession)
 	s3Client             s3iface.S3API                                           = s3.New(awsSession)
+
+	accountDescription string
 )
+
+type envConfig struct {
+	AccountID          string `required:"true" split_words:"true"`
+	CompanyDisplayName string `required:"true" split_words:"true"`
+}
+
+func Setup() {
+	envconfig.MustProcess("", &env)
+
+	accountDescription = fmt.Sprintf("Panther %s (%s:%s)",
+		env.CompanyDisplayName, env.AccountID, *awsSession.Config.Region)
+}

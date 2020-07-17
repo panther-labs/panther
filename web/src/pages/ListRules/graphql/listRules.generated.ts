@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
-
 import * as Types from '../../../../__generated__/schema';
 
 import gql from 'graphql-tag';
@@ -96,3 +94,18 @@ export function useListRulesLazyQuery(
 export type ListRulesHookResult = ReturnType<typeof useListRules>;
 export type ListRulesLazyQueryHookResult = ReturnType<typeof useListRulesLazyQuery>;
 export type ListRulesQueryResult = ApolloReactCommon.QueryResult<ListRules, ListRulesVariables>;
+export function mockListRules({
+  data,
+  variables,
+  error,
+}: {
+  data: ListRules;
+  variables?: ListRulesVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: ListRulesDocument, variables },
+    result: { data },
+    error,
+  };
+}
