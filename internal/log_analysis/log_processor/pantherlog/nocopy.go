@@ -18,20 +18,14 @@ package pantherlog
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"testing"
+// Embed this type into a struct, which mustn't be copied,
+// so `go vet` gives a warning if this struct is copied.
+//
+// As seen on: `https://github.com/valyala/fasthttp/blob/master/nocopy.go`
+//
+// See https://github.com/golang/go/issues/8005#issuecomment-190753527 for details.
+// and also: https://stackoverflow.com/questions/52494458/nocopy-minimal-example
+type noCopy struct{} //nolint:unused
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/go-playground/validator.v9"
-)
-
-func TestRegisterValidators(t *testing.T) {
-	v := validator.New()
-	type T struct {
-		RequiredIP IPAddress `validate:"required"`
-	}
-	assert.NoError(t, v.Struct(T{}))
-	RegisterValidators(v)
-	require.Error(t, v.Struct(T{}))
-}
+func (*noCopy) Lock()   {}
+func (*noCopy) Unlock() {}

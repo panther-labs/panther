@@ -28,6 +28,8 @@ package pantherlog
  */
 
 import (
+	"net"
+	"net/url"
 	"sort"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common/null"
@@ -227,12 +229,131 @@ func (values ValueSlice) Normalized() ValueSlice {
 }
 
 // Specific types for extracting pantherlog values
+type Domain struct {
+	null.String
+}
 
-type Domain null.String
-type IPAddress null.String
-type Hostname null.String
-type SHA1 null.String
-type SHA256 null.String
-type MD5 null.String
-type URL null.String
-type TraceID null.String
+func (d *Domain) WriteValuesTo(w ValueWriter) {
+	if d.Exists && d.Value != "" {
+		w.WriteValues(KindDomainName, d.Value)
+	}
+}
+
+type IPAddress struct {
+	null.String
+}
+
+func ToIPAddress(ip string) IPAddress {
+	return IPAddress{null.FromString(ip)}
+}
+
+func (ip *IPAddress) WriteValuesTo(w ValueWriter) {
+	if ip.Exists && ip.Value != "" {
+		if checkIPAddress(ip.Value) {
+			w.WriteValues(KindIPAddress, ip.Value)
+		}
+	}
+}
+
+type Hostname struct {
+	null.String
+}
+
+func ToHostname(name string) Hostname {
+	return Hostname{null.FromString(name)}
+}
+func (h *Hostname) WriteValuesTo(w ValueWriter) {
+	if h.Exists && h.Value != "" {
+		if checkIPAddress(h.Value) {
+			w.WriteValues(KindIPAddress, h.Value)
+		} else {
+			w.WriteValues(KindDomainName, h.Value)
+		}
+	}
+}
+
+// checkIPAddress checks if an IP address is valid
+// TODO: [performance] Use a simpler method to check ip addresses than net.ParseIP to avoid allocations.
+func checkIPAddress(addr string) bool {
+	return net.ParseIP(addr) != nil
+}
+
+type SHA1 struct {
+	null.String
+}
+
+func ToSHA1(hash string) SHA1 {
+	return SHA1{null.FromString(hash)}
+}
+func (s *SHA1) WriteValuesTo(w ValueWriter) {
+	if s.Exists && s.Value != "" {
+		w.WriteValues(KindSHA1Hash, s.Value)
+	}
+}
+
+type SHA256 struct {
+	null.String
+}
+
+func ToSHA256(hash string) SHA256 {
+	return SHA256{null.FromString(hash)}
+}
+func (s *SHA256) WriteValuesTo(w ValueWriter) {
+	if s.Exists && s.Value != "" {
+		w.WriteValues(KindSHA256Hash, s.Value)
+	}
+}
+
+type MD5 struct {
+	null.String
+}
+
+func ToMD5(hash string) MD5 {
+	return MD5{null.FromString(hash)}
+}
+func (m *MD5) WriteValuesTo(w ValueWriter) {
+	if m.Exists && m.Value != "" {
+		w.WriteValues(KindMD5Hash, m.Value)
+	}
+}
+
+type URL struct {
+	null.String
+}
+
+func ToURL(url string) URL {
+	return URL{null.FromString(url)}
+}
+
+// WriteValuesTo scans a URL string for domain or ip address
+func (u *URL) WriteValuesTo(w ValueWriter) {
+	if !u.Exists || u.Value == "" {
+		return
+	}
+	parsedURL, err := url.Parse(u.Value)
+	if err != nil {
+		return
+	}
+	host := parsedURL.Hostname()
+	if host == "" {
+		return
+	}
+	if checkIPAddress(host) {
+		w.WriteValues(KindIPAddress, host)
+	} else {
+		w.WriteValues(KindDomainName, host)
+	}
+}
+
+type TraceID struct {
+	null.String
+}
+
+func ToTraceID(id string) TraceID {
+	return TraceID{null.FromString(id)}
+}
+func (id *TraceID) WriteValuesTo(w ValueWriter) {
+	if id.Exists && id.Value != "" {
+		w.WriteValues(KindTraceID, id.Value)
+	}
+}

@@ -43,7 +43,7 @@ import (
 
 type testEvent struct {
 	Name      string                 `json:"@name"`
-	Timestamp *timestamp.RFC3339     `json:"ts"`
+	Timestamp timestamp.RFC3339      `json:"ts"`
 	IP        pantherlog.IPAddress   `json:"ip"`
 	Domain    pantherlog.Domain      `json:"domain"`
 	Host      pantherlog.Hostname    `json:"hostname"`
@@ -67,7 +67,7 @@ func (e *testEvent) WriteValuesTo(w pantherlog.ValueWriter) {
 	e.Values.WriteValuesTo(w)
 }
 func (e *testEvent) PantherLogEvent() (string, *time.Time) {
-	return e.Name, (*time.Time)(e.Timestamp)
+	return e.Name, box.Time(time.Time(e.Timestamp))
 }
 
 func newBuilder(id string, now time.Time) *pantherlog.ResultBuilder {
@@ -87,10 +87,10 @@ func TestNewResultBuilder(t *testing.T) {
 	b := newBuilder(rowID, now)
 	event := testEvent{
 		Name:      "event",
-		IP:        pantherlog.IPAddress{Value: "1.1.1.1", Exists: true},
-		Host:      pantherlog.Hostname{Value: "2.1.1.1", Exists: true},
-		TraceID:   pantherlog.TraceID{Value: "foo", Exists: true},
-		Timestamp: (*timestamp.RFC3339)(&tm),
+		IP:        pantherlog.ToIPAddress("1.1.1.1"),
+		Host:      pantherlog.ToHostname("2.1.1.1"),
+		TraceID:   pantherlog.ToTraceID("foo"),
+		Timestamp: timestamp.RFC3339(tm),
 	}
 
 	result, err := b.BuildResult(&event)
@@ -131,9 +131,9 @@ func BenchmarkResultBuilder(b *testing.B) {
 
 	event := &testEvent{
 		Name:      "event",
-		IP:        pantherlog.IPAddress{Value: "1.1.1.1", Exists: true},
-		Host:      pantherlog.Hostname{Value: "2.1.1.1", Exists: true},
-		Timestamp: ts,
+		IP:        pantherlog.ToIPAddress("1.1.1.1"),
+		Host:      pantherlog.ToHostname("2.1.1.1"),
+		Timestamp: timestamp.RFC3339(tm),
 	}
 	b.Run("old pantherlog", func(b *testing.B) {
 		b.ReportAllocs()

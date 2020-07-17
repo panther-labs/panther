@@ -20,26 +20,88 @@ package null
  */
 
 import (
+	"errors"
 	"reflect"
 
 	jsoniter "github.com/json-iterator/go"
+	"gopkg.in/go-playground/validator.v9"
+)
+
+var (
+	typString   = reflect.TypeOf(String{})
+	typNonEmpty = reflect.TypeOf(NonEmpty{})
+	typInt64    = reflect.TypeOf(Int64{})
+	typUint32   = reflect.TypeOf(Uint32{})
+	typUint16   = reflect.TypeOf(Uint16{})
 )
 
 func init() {
 	// Register jsoniter encoder/decoder for String
-	typString := reflect.TypeOf(String{})
 	jsoniter.RegisterTypeEncoder(typString.String(), StringEncoder())
 	jsoniter.RegisterTypeDecoder(typString.String(), StringDecoder())
-	typNonEmpty := reflect.TypeOf(NonEmpty{})
 	jsoniter.RegisterTypeEncoder(typNonEmpty.String(), NonEmptyEncoder())
 	jsoniter.RegisterTypeDecoder(typNonEmpty.String(), StringDecoder())
-	typInt64 := reflect.TypeOf(Int64{})
 	jsoniter.RegisterTypeEncoder(typInt64.String(), &int64Codec{})
 	jsoniter.RegisterTypeDecoder(typInt64.String(), &int64Codec{})
-	typUint32 := reflect.TypeOf(Uint32{})
 	jsoniter.RegisterTypeEncoder(typUint32.String(), &uint32Codec{})
 	jsoniter.RegisterTypeDecoder(typUint32.String(), &uint32Codec{})
-	typUint16 := reflect.TypeOf(Uint16{})
 	jsoniter.RegisterTypeEncoder(typUint16.String(), &uint16Codec{})
 	jsoniter.RegisterTypeDecoder(typUint16.String(), &uint16Codec{})
+}
+
+func MustRegisterString(types ...interface{}) {
+	for _, typ := range types {
+		if err := RegisterString(typ); err != nil {
+			panic(err)
+		}
+	}
+}
+
+func RegisterString(x interface{}) error {
+	if x == nil {
+		return errors.New(`invalid value`)
+	}
+	typ := reflect.TypeOf(x)
+	for typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+	}
+	if !canCastUnsafe(typ, typString) {
+		return errors.New(`invalid type`)
+	}
+	typName := typ.String()
+	if typName == "" {
+		return errors.New(`anonymous type`)
+	}
+	jsoniter.RegisterTypeEncoder(typName, StringEncoder())
+	jsoniter.RegisterTypeDecoder(typName, StringDecoder())
+	return nil
+}
+
+func canCastUnsafe(from, to reflect.Type) bool {
+	if from.ConvertibleTo(to) {
+		return true
+	}
+	if from.Kind() == reflect.Struct {
+		field := from.Field(0)
+		if field.Anonymous && field.Type.ConvertibleTo(to) {
+			return true
+		}
+	}
+	return false
+}
+
+// RegisterValidators registers custom type validators for null values
+func RegisterValidators(v *validator.Validate) {
+	v.RegisterCustomTypeFunc(func(v reflect.Value) interface{} {
+		return v.Field(0).String()
+	}, String{}, NonEmpty{})
+	v.RegisterCustomTypeFunc(func(v reflect.Value) interface{} {
+		return v.Field(0).Int()
+	}, Int64{})
+	v.RegisterCustomTypeFunc(func(v reflect.Value) interface{} {
+		return uint16(v.Field(0).Uint())
+	}, Uint16{}, NonEmpty{})
+	v.RegisterCustomTypeFunc(func(v reflect.Value) interface{} {
+		return uint32(v.Field(0).Uint())
+	}, Uint32{}, NonEmpty{})
 }

@@ -38,6 +38,9 @@ import (
 )
 
 type Result struct {
+	// It is unsafe to use the same buffer and ValueBuffer from multiple instances.
+	noCopy noCopy //nolint:unused,structcheck
+
 	LogType   string
 	EventTime time.Time
 	ParseTime time.Time

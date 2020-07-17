@@ -20,11 +20,9 @@ package null
 
 import (
 	"encoding/json"
-	"reflect"
 	"unsafe"
 
 	jsoniter "github.com/json-iterator/go"
-	"gopkg.in/go-playground/validator.v9"
 )
 
 // String is a nullable string value that retains empty string in the input
@@ -157,20 +155,4 @@ func (*nonEmptyEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	} else {
 		stream.WriteNil()
 	}
-}
-
-// RegisterValidators registers custom type validators for null values
-func RegisterValidators(v *validator.Validate) {
-	v.RegisterCustomTypeFunc(func(v reflect.Value) interface{} {
-		return v.Field(0).String()
-	}, String{}, NonEmpty{})
-	v.RegisterCustomTypeFunc(func(v reflect.Value) interface{} {
-		return v.Field(0).Int()
-	}, Int64{})
-	v.RegisterCustomTypeFunc(func(v reflect.Value) interface{} {
-		return uint16(v.Field(0).Uint())
-	}, Uint16{}, NonEmpty{})
-	v.RegisterCustomTypeFunc(func(v reflect.Value) interface{} {
-		return uint32(v.Field(0).Uint())
-	}, Uint32{}, NonEmpty{})
 }

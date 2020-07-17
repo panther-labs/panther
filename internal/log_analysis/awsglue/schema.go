@@ -140,6 +140,10 @@ var (
 			From: reflect.TypeOf(*new(pantherlog.URL)),
 			To:   "string",
 		},
+		{
+			From: reflect.TypeOf(*new(pantherlog.TraceID)),
+			To:   "string",
+		},
 	}
 
 	// RuleMatchColumns are columns added by the rules engine

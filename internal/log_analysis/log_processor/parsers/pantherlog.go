@@ -251,7 +251,6 @@ func AppendAnyString(any *PantherAnyString, values ...string) {
 }
 
 // Result converts a PantherLog to Result
-// NOTE: Currently in this file to help with review
 func (pl *PantherLog) Result() (*Result, error) {
 	event := pl.Event()
 	if event == nil {
@@ -273,18 +272,16 @@ func (pl *PantherLog) Result() (*Result, error) {
 		result.Close()
 		return nil, err
 	}
-	*result = Result{
-		LogType:   unbox.String(pl.PantherLogType),
-		ParseTime: ((*time.Time)(pl.PantherParseTime)).UTC(),
-		EventTime: ((*time.Time)(pl.PantherEventTime)).UTC(),
-		RowID:     unbox.String(pl.PantherRowID),
-		JSON:      data,
-	}
+	// We use distinct assignments here to avoid 'losing' the allocated value buffer in the result.
+	result.LogType = unbox.String(pl.PantherLogType)
+	result.ParseTime = ((*time.Time)(pl.PantherParseTime)).UTC()
+	result.EventTime = ((*time.Time)(pl.PantherEventTime)).UTC()
+	result.RowID = unbox.String(pl.PantherRowID)
+	result.JSON = data
 	return result, nil
 }
 
 // Results converts a PantherLog to a slice of results
-// NOTE: Currently in this file to help with review
 func (pl *PantherLog) Results() ([]*Result, error) {
 	result, err := pl.Result()
 	if err != nil {

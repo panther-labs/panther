@@ -32,7 +32,7 @@ import (
 	"reflect"
 	"time"
 
-	"gopkg.in/go-playground/validator.v9"
+	"github.com/modern-go/reflect2"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common/null"
 )
@@ -44,21 +44,37 @@ type Event interface {
 func EventStruct(event Event) interface{} {
 	return defaultMetaFields.EventStruct(event)
 }
-func RegisterValidators(v *validator.Validate) {
-	// Register null values
-	null.RegisterValidators(v)
 
-	// Register scanners
-	for typ := range scannerMappings {
-		v.RegisterCustomTypeFunc(func(v reflect.Value) interface{} {
-			return v.Field(0).String()
-		}, reflect.New(typ).Elem().Interface())
-	}
+// Index of special string types that extract pantherlog Values during JSON encoding.
+// These types use a decoder that scans the decoded string value with a ValueScanner to extract pantherlog values
+// in a single pass while decoding input JSON.
+// To achieve that they check the iterator instance for a `*ValueBuffer` attachment and use it in the `ScanValues`
+// method of their respective ValueScanner.
+// Each entry in this index also contains a list of *all* possible `ValueKind` values that the scanner can produce.
+// This information can be retrieved with the RegisteredValueKinds() package method.
 
-	// Register enums
-	for typ := range registeredEnums {
-		v.RegisterCustomTypeFunc(func(v reflect.Value) interface{} {
-			return v.Field(0).String()
-		}, reflect.New(typ).Elem().Interface())
-	}
+func RegisteredValueKinds(typ reflect.Type) (kinds []ValueKind) {
+	typ2 := reflect2.Type2(typ)
+	return registeredTypes[typ2]
+}
+
+func init() {
+	null.MustRegisterString(
+		&IPAddress{},
+		&Domain{},
+		&SHA1{},
+		&SHA256{},
+		&MD5{},
+		&Hostname{},
+		&TraceID{},
+		&URL{},
+	)
+	MustRegisterCustomEncoder(&IPAddress{}, KindIPAddress)
+	MustRegisterCustomEncoder(&Domain{}, KindDomainName)
+	MustRegisterCustomEncoder(&SHA1{}, KindSHA1Hash)
+	MustRegisterCustomEncoder(&SHA256{}, KindSHA256Hash)
+	MustRegisterCustomEncoder(&MD5{}, KindMD5Hash)
+	MustRegisterCustomEncoder(&Hostname{}, KindIPAddress, KindDomainName)
+	MustRegisterCustomEncoder(&URL{}, KindIPAddress, KindDomainName)
+	MustRegisterCustomEncoder(&TraceID{}, KindTraceID)
 }

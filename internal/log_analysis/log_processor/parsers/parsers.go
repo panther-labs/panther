@@ -53,7 +53,6 @@ var Validator = NewValidator()
 func NewValidator() *validator.Validate {
 	v := validator.New()
 	null.RegisterValidators(v)
-	pantherlog.RegisterValidators(v)
 	return v
 }
 
@@ -107,7 +106,7 @@ func (a *logParserAdapter) ParseLog(log string) ([]*Result, error) {
 type SimpleJSONParserFactory struct {
 	NewEvent       func() pantherlog.Event
 	JSON           jsoniter.API
-	Validate       *validator.Validate
+	Validate       func(event interface{}) error
 	ResultBuilder  *pantherlog.ResultBuilder
 	ReadBufferSize int
 }
@@ -115,7 +114,7 @@ type SimpleJSONParserFactory struct {
 type simpleJSONEventParser struct {
 	newEvent  func() pantherlog.Event
 	iter      *jsoniter.Iterator
-	validate  *validator.Validate
+	validate  func(x interface{}) error
 	builder   *pantherlog.ResultBuilder
 	logReader io.Reader
 }
@@ -128,7 +127,7 @@ func (p *simpleJSONEventParser) ParseLog(log string) ([]*Result, error) {
 	if err := p.iter.Error; err != nil {
 		return nil, err
 	}
-	if err := p.validate.Struct(event); err != nil {
+	if err := p.validate(event); err != nil {
 		return nil, err
 	}
 	result, err := p.builder.BuildResult(event)
@@ -145,12 +144,8 @@ func (f *SimpleJSONParserFactory) NewParser(_ interface{}) (Interface, error) {
 	}
 	validate := f.Validate
 	if validate == nil {
-		validate = validator.New()
+		validate = pantherlog.ValidateStruct
 	}
-
-	// Ensure custom validators are in place
-	null.RegisterValidators(validate)
-	pantherlog.RegisterValidators(validate)
 
 	builder := f.ResultBuilder
 	if builder == nil {
