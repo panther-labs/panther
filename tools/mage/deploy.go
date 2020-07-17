@@ -380,6 +380,7 @@ func deployBootstrapGatewayStack(
 		"AthenaResultsBucket":        outputs["AthenaResultsBucket"],
 		"AuditLogsBucket":            outputs["AuditLogsBucket"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+		"CompanyDisplayName":         settings.Setup.Company.DisplayName,
 		"CustomResourceVersion":      customResourceVersion(),
 		"ImageRegistryName":          outputs["ImageRegistryName"],
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,

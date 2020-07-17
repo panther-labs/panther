@@ -27,7 +27,13 @@ import (
 	"go.uber.org/zap"
 )
 
-const alarmRunbook = "https://docs.runpanther.io/operations/runbooks"
+const (
+	alarmRunbook = "https://docs.runpanther.io/operations/runbooks"
+
+	consoleLinkTemplate = "\nhttps://console.aws.amazon.com/cloudwatch/home?region=%s#alarmsV2:alarm/%s?\n" // region, alarm name
+
+	maxAlarmDescriptionSize = 1024
+)
 
 // Wrapper functions to reduce boilerplate for all the custom alarms.
 
@@ -36,6 +42,10 @@ const alarmRunbook = "https://docs.runpanther.io/operations/runbooks"
 //    Tags:               Application=Panther
 //    TreatMissingData:   notBreaching
 func putMetricAlarm(input *cloudwatch.PutMetricAlarmInput) error {
+	// copy because we mutate the Alarm description
+	var copy cloudwatch.PutMetricAlarmInput = *input
+	input = &copy
+
 	if input.Tags == nil {
 		input.Tags = []*cloudwatch.Tag{
 			{Key: aws.String("Application"), Value: aws.String("Panther")},
@@ -45,6 +55,8 @@ func putMetricAlarm(input *cloudwatch.PutMetricAlarmInput) error {
 	if input.TreatMissingData == nil {
 		input.TreatMissingData = aws.String("notBreaching")
 	}
+
+	input.AlarmDescription = aws.String(createAlarmDescription(*input.AlarmName, *input.AlarmDescription))
 
 	zap.L().Info("putting metric alarm", zap.String("alarmName", *input.AlarmName))
 	if _, err := cloudWatchClient.PutMetricAlarm(input); err != nil {
@@ -80,7 +92,7 @@ func putCompositeAlarm(input *cloudwatch.PutCompositeAlarmInput, alarmDescriptio
 		}
 	}
 	input.AlarmRule = aws.String(compositeRule)
-	input.AlarmDescription = aws.String(compositeDescription)
+	input.AlarmDescription = aws.String(createAlarmDescription(*input.AlarmName, compositeDescription))
 
 	zap.L().Info("putting composite alarm", zap.String("alarmName", *input.AlarmName))
 	if _, err := cloudWatchClient.PutCompositeAlarm(input); err != nil {
@@ -114,4 +126,15 @@ func deleteAlarms(physicalID string, alarmNames ...string) error {
 	}
 
 	return nil
+}
+
+func createAlarmDescription(alarmName, alarmDesc string) string {
+	// prepend name,account and region, then console link
+	alarmDesc = accountDescription + fmt.Sprintf(consoleLinkTemplate, *awsSession.Config.Region, alarmName) + alarmDesc
+	
+	// clip
+	if len(alarmDesc) > maxAlarmDescriptionSize {
+		alarmDesc = alarmDesc[0:maxAlarmDescriptionSize]
+	}
+	return alarmDesc
 }
