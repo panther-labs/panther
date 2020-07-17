@@ -68,6 +68,11 @@ func DefaultMetaFields() Meta {
 			FieldNameJSON: "p_any_md5_hashes",
 			Description:   "Panther added field with collection of SHA256 hashes of any algorithm associated with the row",
 		},
+		KindTraceID: {
+			FieldName:     "PantherAnyTraceIDs",
+			FieldNameJSON: "p_any_trace_ids",
+			Description:   "Panther added field with collection of context trace identifiers",
+		},
 	}
 }
 

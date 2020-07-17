@@ -47,6 +47,7 @@ type testEvent struct {
 	IP        pantherlog.IPAddress   `json:"ip"`
 	Domain    pantherlog.Domain      `json:"domain"`
 	Host      pantherlog.Hostname    `json:"hostname"`
+	TraceID   pantherlog.TraceID     `json:"trace_id"`
 	Values    pantherlog.ValueBuffer `json:"-"`
 }
 
@@ -88,6 +89,7 @@ func TestNewResultBuilder(t *testing.T) {
 		Name:      "event",
 		IP:        pantherlog.IPAddress{Value: "1.1.1.1", Exists: true},
 		Host:      pantherlog.Hostname{Value: "2.1.1.1", Exists: true},
+		TraceID:   pantherlog.TraceID{Value: "foo", Exists: true},
 		Timestamp: (*timestamp.RFC3339)(&tm),
 	}
 
@@ -106,6 +108,8 @@ func TestNewResultBuilder(t *testing.T) {
 		"at_sign_name": "event",
 		"ip": "1.1.1.1",
 		"hostname": "2.1.1.1",
+		"trace_id": "foo",
+		"p_any_trace_ids": ["foo"],
 		"p_any_ip_addresses": ["1.1.1.1","2.1.1.1"]
 }`, tmJSON, tmJSON, nowJSON)
 	require.JSONEq(t, expect, string(result.JSON))

@@ -296,4 +296,5 @@ func init() {
 	MustRegisterStringMapping(reflect.TypeOf(MD5{}), NonEmptyScanner(KindMD5Hash), KindMD5Hash)
 	MustRegisterStringMapping(reflect.TypeOf(Hostname{}), ScannerFunc(ScanHostname), KindIPAddress, KindDomainName)
 	MustRegisterStringMapping(reflect.TypeOf(URL{}), ScannerFunc(ScanURL), KindIPAddress, KindDomainName)
+	MustRegisterStringMapping(reflect.TypeOf(TraceID{}), NonEmptyScanner(KindTraceID), KindTraceID)
 }

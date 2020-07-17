@@ -51,6 +51,7 @@ const (
 	KindMD5Hash
 	KindSHA1Hash
 	KindSHA256Hash
+	KindTraceID
 )
 
 // ValueBuffer is a reusable buffer of field values.
@@ -234,3 +235,4 @@ type SHA1 null.String
 type SHA256 null.String
 type MD5 null.String
 type URL null.String
+type TraceID null.String
