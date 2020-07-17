@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "name": "JS Assets",
+      "path": "web/dist/*.js",
+      "maxSize": "300 kB",
+      "compression": "brotli"
+    },
+    {
+      "name": "Illustrations",
+      "path": "web/dist/*.svg",
+      "maxSize": "20 kB",
+      "compression": "brotli"
+    },
+    {
+      "name": "Images",
+      "path": "web/dist/*.{jpg,jpeg,png,webp}",
+      "maxSize": "60 kB",
+      "compression": "none"
+    }
+  ]
+}

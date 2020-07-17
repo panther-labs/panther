@@ -30,6 +30,7 @@ import (
 
 	policiesclient "github.com/panther-labs/panther/api/gateway/analysis/client"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/pkg/metrics"
 )
 
 var (
@@ -41,6 +42,24 @@ var (
 	httpClient   *http.Client
 	policyConfig *policiesclient.TransportConfig
 	policyClient *policiesclient.PantherAnalysis
+	staticLogger = metrics.MustStaticLogger([]metrics.DimensionSet{
+		{
+			"Component",
+			"Severity",
+		},
+		{
+			"Component",
+		},
+	}, []metrics.Metric{
+		{
+			Name: "AlertsCreated",
+			Unit: metrics.UnitCount,
+		},
+	})
+	componentDimension = metrics.Dimension{
+		Name:  "Component",
+		Value: "AlertForwarder",
+	}
 )
 
 type envConfig struct {

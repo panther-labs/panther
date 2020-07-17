@@ -13,7 +13,7 @@ Each parser must be created inside of the [parsers](https://github.com/panther-l
 
 ## Developing
 
-Parsers represent logs as Go [structs](https://tour.golang.org/moretypes/2) and contain methods to load log fields into these structs. Parsers also perform normalization logic to populate the [Panther fields](log-analysis/panther-fields.md) for incident response and investigations.
+Parsers represent logs as Go [structs](https://tour.golang.org/moretypes/2) and contain methods to load log fields into these structs. Parsers also perform normalization logic to populate the [Panther fields](../panther-fields.md) for incident response and investigations.
 
 {% hint style="info" %}
 Use the [CloudTrail parser](https://github.com/panther-labs/panther/blob/master/internal/log_analysis/log_processor/parsers/awslogs/cloudtrail.go) as an example.

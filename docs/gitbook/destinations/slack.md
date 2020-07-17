@@ -8,7 +8,7 @@ description: A walkthrough on how to configure Slack as an alert destination
 
 Slack can be connected to Panther by creating a custom Slack app with a webhook:
 
-Navigate to [https://api.slack.com/apps](Your Slack Apps), and select `Create New App` to create a custom app
+Navigate to [Your Slack Apps](https://api.slack.com/apps), and select `Create New App` to create a custom app
 
 ![](../.gitbook/assets/screen-shot-2019-10-22-at-8.05.14-am.png)
 

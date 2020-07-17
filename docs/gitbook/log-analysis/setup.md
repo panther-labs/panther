@@ -195,4 +195,4 @@ There are other variations and advanced configurations available for more comple
 
 ## Viewing Collected Logs
 
-After log sources are configured, your data can be searched with the [Data Analytics](../../enterprise/data-analytics/README.md) page!
+After log sources are configured, your data can be searched with the [Data Analytics](../enterprise/data-analytics/README.md) page!

@@ -174,6 +174,10 @@ func policiesEqual(first, second *tableItem) (bool, error) {
 // To create a new item (with a unique ID), mustExist = aws.Bool(false)
 // To allow either an update or a create,   mustExist = nil (neither)
 //
+// mustExist is used to avoid overwriting a policy/rule in case the user creates a new one
+// from the UI and mistakenly re-uses a policy/rule id.
+// Note: BulkUpload doesn't have this check and always overwrites the existing policies.
+//
 // The first return value indicates what kind of change took place (none, new item, updated item).
 func writeItem(item *tableItem, userID models.UserID, mustExist *bool) (int, error) {
 	oldItem, err := dynamoGet(item.ID, true)

@@ -17,30 +17,23 @@
  */
 
 import React from 'react';
-import { ScannedResources } from 'Generated/schema';
-import { Flex } from 'pouncejs';
-import BarChart from 'Components/charts/BarChart';
-import ChartSummary from 'Components/charts/ChartSummary';
+import { SnackbarProvider, ThemeProvider } from 'pouncejs';
+import { SidesheetManager, SidesheetProvider } from 'Components/utils/Sidesheet';
+import { ModalManager, ModalProvider } from 'Components/utils/Modal';
 
-interface ResourcesByPlatformProps {
-  resources: ScannedResources;
-}
+// Helper that allows us to guarantee same core providers in production & testing environments
+const UIProviders: React.FC = ({ children }) => (
+  <ThemeProvider>
+    <SidesheetProvider>
+      <ModalProvider>
+        <SnackbarProvider>
+          {children}
+          <ModalManager />
+          <SidesheetManager />
+        </SnackbarProvider>
+      </ModalProvider>
+    </SidesheetProvider>
+  </ThemeProvider>
+);
 
-const ResourcesByPlatform: React.FC<ResourcesByPlatformProps> = ({ resources }) => {
-  const allResourcesChartData = [
-    {
-      value: resources.byType.length,
-      label: 'AWS',
-      color: 'gray-600' as const,
-    },
-  ];
-
-  return (
-    <Flex height="100%">
-      <ChartSummary total={resources.byType.length} title="Resource Types" color="gray-200" />
-      <BarChart data={allResourcesChartData} alignment="horizontal" />
-    </Flex>
-  );
-};
-
-export default React.memo(ResourcesByPlatform);
+export default UIProviders;

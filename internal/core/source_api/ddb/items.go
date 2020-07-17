@@ -41,13 +41,25 @@ type Integration struct {
 	S3Bucket          string   `json:"s3Bucket,omitempty"`
 	S3Prefix          string   `json:"s3Prefix,omitempty"`
 	KmsKey            string   `json:"kmsKey,omitempty"`
-	LogTypes          []string `json:"logTypes,omitempty" dynamodbav:"logTypes,stringset"`
+	LogTypes          []string `json:"logTypes,omitempty" dynamodbav:",stringset"`
 	StackName         string   `json:"stackName,omitempty"`
 	LogProcessingRole string   `json:"logProcessingRole,omitempty"`
+
+	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
 }
 
 type IntegrationStatus struct {
 	ScanStatus        string     `json:"scanStatus,omitempty"`
 	EventStatus       string     `json:"eventStatus,omitempty"`
 	LastEventReceived *time.Time `json:"lastEventReceived,omitempty"`
+}
+
+type SqsConfig struct {
+	S3Bucket          string   `json:"s3Bucket,omitempty"`
+	S3Prefix          string   `json:"s3Prefix,omitempty"`
+	LogProcessingRole string   `json:"logProcessingRole,omitempty"`
+	LogTypes          []string `json:"logTypes" dynamodbav:",stringset"`
+	AllowedPrincipals []string `json:"allowedPrincipals" dynamodbav:",stringset"`
+	AllowedSourceArns []string `json:"allowedSourceArns" dynamodbav:",stringset"`
+	QueueURL          string   `json:"queueUrl,omitempty"`
 }
