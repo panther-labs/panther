@@ -92,6 +92,7 @@ func putCompositeAlarm(input *cloudwatch.PutCompositeAlarmInput, alarmDescriptio
 		}
 	}
 	input.AlarmRule = aws.String(compositeRule)
+
 	input.AlarmDescription = aws.String(createAlarmDescription(*input.AlarmName, compositeDescription))
 
 	zap.L().Info("putting composite alarm", zap.String("alarmName", *input.AlarmName))
@@ -131,7 +132,7 @@ func deleteAlarms(physicalID string, alarmNames ...string) error {
 func createAlarmDescription(alarmName, alarmDesc string) string {
 	// prepend name,account and region, then console link
 	alarmDesc = accountDescription + fmt.Sprintf(consoleLinkTemplate, *awsSession.Config.Region, alarmName) + alarmDesc
-	
+
 	// clip
 	if len(alarmDesc) > maxAlarmDescriptionSize {
 		alarmDesc = alarmDesc[0:maxAlarmDescriptionSize]

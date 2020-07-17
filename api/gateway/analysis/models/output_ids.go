@@ -31,7 +31,7 @@ import (
 	"github.com/go-openapi/validate"
 )
 
-// OutputIds A list of destinations IDs to send an alert that overrides the  severity rating triggers set in the destination itself.
+// OutputIds A list of destinations IDs to send an alert that overrides the severity rating triggers set in the destination itself.
 //
 //
 // swagger:model outputIds

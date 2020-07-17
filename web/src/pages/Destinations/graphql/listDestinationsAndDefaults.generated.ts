@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
-
 import * as Types from '../../../../__generated__/schema';
 
 import { DestinationFull } from '../../../graphql/fragments/DestinationFull.generated';
@@ -87,3 +85,18 @@ export type ListDestinationsAndDefaultsQueryResult = ApolloReactCommon.QueryResu
   ListDestinationsAndDefaults,
   ListDestinationsAndDefaultsVariables
 >;
+export function mockListDestinationsAndDefaults({
+  data,
+  variables,
+  error,
+}: {
+  data: ListDestinationsAndDefaults;
+  variables?: ListDestinationsAndDefaultsVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: ListDestinationsAndDefaultsDocument, variables },
+    result: { data },
+    error,
+  };
+}
