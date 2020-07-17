@@ -21,7 +21,6 @@ import { Alert, Box, Flex, SimpleGrid } from 'pouncejs';
 import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage } from 'Helpers/utils';
 import Panel from 'Components/Panel';
-import TablePlaceholder from 'Components/TablePlaceholder';
 import EventsByLogType from 'Pages/LogAnalysisOverview/EventsByLogType';
 import LogAnalysisOverviewPageSkeleton from './Skeleton';
 import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
@@ -89,11 +88,6 @@ const LogAnalysisOverview: React.FC = () => {
           <Box height={200}>
             <EventsByLogType events={eventsProcessed.seriesData} />
           </Box>
-        </Panel>
-      </SimpleGrid>
-      <SimpleGrid columns={1} spacingX={3} spacingY={2}>
-        <Panel title="Recent Alerts | High Severity Alerts">
-          <TablePlaceholder />
         </Panel>
       </SimpleGrid>
     </Box>
