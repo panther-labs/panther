@@ -1010,8 +1010,8 @@ export type ScannedResourceStats = {
 
 export type Series = {
   __typename?: 'Series';
-  label: Scalars['String'];
-  values: Array<Maybe<Scalars['Int']>>;
+  label?: Maybe<Scalars['String']>;
+  values?: Maybe<Array<Maybe<Scalars['Int']>>>;
 };
 
 export type SeriesData = {
@@ -2435,8 +2435,8 @@ export type SeriesResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['Series'] = ResolversParentTypes['Series']
 > = {
-  label?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  values?: Resolver<Array<Maybe<ResolversTypes['Int']>>, ParentType, ContextType>;
+  label?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  values?: Resolver<Maybe<Array<Maybe<ResolversTypes['Int']>>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 

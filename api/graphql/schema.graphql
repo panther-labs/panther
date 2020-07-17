@@ -340,8 +340,8 @@ type OrganizationStatsResponse {
 }
 
 type Series {
-  label: String!
-  values: [Int]!
+  label: String
+  values: [Int]
 }
 
 type SeriesData {
