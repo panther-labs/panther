@@ -44,11 +44,11 @@ var (
 	policyClient *policiesclient.PantherAnalysis
 	staticLogger = metrics.MustStaticLogger([]metrics.DimensionSet{
 		{
-			"Component",
+			"AnalysisType",
 			"Severity",
 		},
 		{
-			"Component",
+			"AnalysisType",
 		},
 	}, []metrics.Metric{
 		{
@@ -56,9 +56,9 @@ var (
 			Unit: metrics.UnitCount,
 		},
 	})
-	componentDimension = metrics.Dimension{
-		Name:  "Component",
-		Value: "AlertForwarder",
+	analysisTypeDimension = metrics.Dimension{
+		Name:  "AnalysisType",
+		Value: "Rule",
 	}
 )
 
