@@ -125,7 +125,7 @@ const generateMockValue = (typeName, fieldName, types, currentType) => {
 };
 const createGraphQLResourceFunction = (typeName, fields, addTypename = true) => {
   return `
-		export const ${toMockName(typeName)} = (overrides?: Partial<${typeName}>): ${typeName} => {
+		export const ${toMockName(typeName)} = (overrides: Partial<${typeName}> = {}): ${typeName} => {
     return {
 			${addTypename ? `__typename: '${typeName}',` : ''}
 			${fields}
@@ -167,7 +167,7 @@ exports.plugin = (schema, documents, config) => {
         name: fieldName,
         mockFn: typeName => {
           const value = generateMockValue(typeName, fieldName, types, node.type);
-          return `${fieldName}: ${value},`;
+          return `${fieldName}: '${fieldName}' in overrides ? overrides.${fieldName} : ${value},`;
         },
       };
     },
@@ -180,7 +180,7 @@ exports.plugin = (schema, documents, config) => {
             ? node.fields
                 .map(field => {
                   const value = generateMockValue(fieldName, field.name.value, types, field.type);
-                  return `${field.name.value}: ${value},`;
+                  return `${field.name.value}: '${field.name.value}' in overrides ? overrides.${field.name.value} : ${value},`;
                 })
                 .join('\n')
             : '';
