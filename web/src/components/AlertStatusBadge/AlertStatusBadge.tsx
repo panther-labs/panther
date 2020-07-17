@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Badge, BadgeProps, PseudoBox } from 'pouncejs';
+import { Badge, BadgeProps, PseudoBox, Flex, Icon, Box } from 'pouncejs';
 import { AlertStatusesEnum } from 'Generated/schema';
 
 const STATUS_COLOR_MAP: {
@@ -25,7 +25,7 @@ const STATUS_COLOR_MAP: {
 } = {
   [AlertStatusesEnum.Open]: 'red-200' as const,
   [AlertStatusesEnum.Triaged]: 'yellow-500' as const,
-  [AlertStatusesEnum.Closed]: 'navyblue-500' as const,
+  [AlertStatusesEnum.Closed]: 'navyblue-550' as const,
   [AlertStatusesEnum.Resolved]: 'navyblue-500' as const,
 };
 
@@ -34,16 +34,29 @@ interface StatusBadgeProps {
 }
 
 const AlertStatusBadge: React.FC<StatusBadgeProps> = ({ status }) => (
-  <PseudoBox
-    as={Badge}
-    transition="box-shadow 0.2s ease-in-out"
-    backgroundColor={STATUS_COLOR_MAP[status]}
-    cursor="pointer"
-    _hover={{
-      boxShadow: 'dark250',
-    }}
-  >
-    {status}
+  <PseudoBox role="group">
+    <Flex spacing={1} justify="center" align="center">
+      <PseudoBox
+        as={Badge}
+        backgroundColor={STATUS_COLOR_MAP[status]}
+        cursor="pointer"
+        padding="4px 4px 4px 4px"
+      >
+        <Box>{status}</Box>
+      </PseudoBox>
+      <PseudoBox
+        as={Icon}
+        type="caret-down"
+        padding={1}
+        transition="all 0.2s ease-in-out"
+        border="1px solid"
+        borderColor="navyblue-450"
+        borderRadius="pill"
+        backgroundColor="transparent"
+        cursor="pointer"
+        _groupHover={{ backgroundColor: 'navyblue-450' }}
+      />
+    </Flex>
   </PseudoBox>
 );
 

@@ -27,6 +27,7 @@ import {
   Tooltip,
   Flex,
   Box,
+  Icon,
 } from 'pouncejs';
 import { AlertStatusesEnum } from 'Generated/schema';
 import AlertStatusBadge from 'Components/AlertStatusBadge';
@@ -87,8 +88,12 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
   });
 
   const availableStatusesEntries = React.useMemo(() => Object.entries(AlertStatusesEnum), []);
+
   // Extract a name to display
-  const lastUpdatedBy = React.useMemo(() => {
+  const getLastUpdatedBy = React.useCallback(() => {
+    if (!alert.lastUpdatedBy) {
+      return null;
+    }
     if (alert.lastUpdatedBy.givenName && alert.lastUpdatedBy.familyName) {
       return `${alert.lastUpdatedBy.givenName} ${alert.lastUpdatedBy.familyName}`;
     }
@@ -101,17 +106,21 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
     return alert.lastUpdatedBy.email;
   }, [alert]);
 
+  const lastUpdatedBy = React.useMemo(() => getLastUpdatedBy(), [alert.lastUpdatedBy]);
+
   // Format the timestamp
-  const lastUpdatedByTime = formatDatetime(alert.lastUpdatedByTime);
+  const lastUpdatedByTime = React.useMemo(() => formatDatetime(alert.lastUpdatedByTime), [
+    alert.lastUpdatedByTime,
+  ]);
 
   // Create our dropdown button
   const dropdownButton = React.useMemo(
     () => (
-      <DropdownButton as={AbstractButton} outline="none" aria-label="Status Options">
-        <AlertStatusBadge status={alert.status} />
+      <DropdownButton as={AbstractButton} outline="none" aria-label="Alert Status Options">
+        <AlertStatusBadge status={status} />
       </DropdownButton>
     ),
-    [alert, status]
+    [status]
   );
 
   // Create a wrapped dropdown button with a tooltip
@@ -137,7 +146,7 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
       ) : (
         dropdownButton
       ),
-    [alert]
+    [lastUpdatedBy, lastUpdatedByTime]
   );
 
   return (
@@ -154,7 +163,10 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
               })
             }
           >
-            {statusKey}
+            <Flex minWidth={85} spacing={2} justify="space-between" align="center">
+              <Box aria-labelledby="status-item">{statusKey}</Box>
+              {status === statusVal && <Icon size="x-small" type="check" />}
+            </Flex>
           </DropdownItem>
         ))}
       </DropdownMenu>

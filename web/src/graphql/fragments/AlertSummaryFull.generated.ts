@@ -33,9 +33,7 @@ export type AlertSummaryFull = Pick<
   | 'eventsMatched'
   | 'updateTime'
   | 'lastUpdatedByTime'
-> & {
-  lastUpdatedBy?: Types.Maybe<Pick<Types.UserAttribution, 'givenName' | 'familyName' | 'email'>>;
-};
+> & { lastUpdatedBy?: Types.Maybe<Pick<Types.User, 'givenName' | 'familyName' | 'email'>> };
 
 export const AlertSummaryFull = gql`
   fragment AlertSummaryFull on AlertSummary {

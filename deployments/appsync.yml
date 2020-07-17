@@ -1637,8 +1637,7 @@ Resources:
       DataSourceName: !GetAtt UsersAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #if ($util.isNullOrEmpty($ctx.source.lastUpdatedBy))
-          #set($result = {})
-          #return($result)
+          #return
         #end
         {
           "version" : "2017-02-28",
@@ -1662,8 +1661,7 @@ Resources:
       DataSourceName: !GetAtt UsersAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #if ($util.isNullOrEmpty($ctx.source.lastUpdatedBy))
-          #set($result = {})
-          #return($result)
+          #return
         #end
         {
           "version" : "2017-02-28",
