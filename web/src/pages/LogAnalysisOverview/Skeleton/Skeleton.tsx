@@ -25,21 +25,16 @@ const ComplianceOverviewPageSkeleton: React.FC = () => {
   return (
     <Box as="article" mb={6}>
       <FadeIn duration={400}>
-        <SimpleGrid columns={2} spacing={3} as="section" mb={3}>
+        <SimpleGrid columns={1} spacingX={3} spacingY={2} mb={3}>
           <Panel title="Real-time Alerts">
-            <Box height={150}>
-              <TablePlaceholder />
-            </Box>
-          </Panel>
-          <Panel title="Most Active Rules">
-            <Box height={150}>
+            <Box height={200}>
               <TablePlaceholder />
             </Box>
           </Panel>
         </SimpleGrid>
         <SimpleGrid columns={1} spacingX={3} spacingY={2} mb={3}>
           <Panel title="Events by Log Type">
-            <Box height={150}>
+            <Box height={200}>
               <TablePlaceholder />
             </Box>
           </Panel>
