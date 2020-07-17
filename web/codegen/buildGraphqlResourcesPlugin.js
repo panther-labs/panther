@@ -127,9 +127,8 @@ const createGraphQLResourceFunction = (typeName, fields, addTypename = true) => 
   return `
 		export const ${toMockName(typeName)} = (overrides: Partial<${typeName}> = {}): ${typeName} => {
     return {
-			${fields}
-			...overrides,
 			${addTypename ? `__typename: '${typeName}',` : ''}
+			${fields}
     };
 };`;
 };
