@@ -52,7 +52,7 @@ var (
 	lambdaClient     *lambda.Lambda
 	cloudwatchClient *cloudwatch.CloudWatch
 	endTime          = time.Now()
-	startTime        = endTime.Add(-2 * time.Hour)
+	startTime        = endTime.Add(-2*time.Hour + 5*time.Minute)
 
 	// Append a timestamp to the namespace so that we can pick out just the metrics we care about
 	namespace  = "ZZZPantherIntegrationTest" + strconv.Itoa(int(endTime.Unix()))
@@ -64,10 +64,6 @@ var (
 		{
 			Name:  aws.String("LogType"),
 			Value: aws.String("IntegrationTest2"),
-		},
-		{
-			Name:  aws.String("Component"),
-			Value: aws.String("IntegrationTest"),
 		},
 	}
 
@@ -116,8 +112,7 @@ func setupEvents() error {
 		MetricData: []*cloudwatch.MetricDatum{
 			{
 				Dimensions: []*cloudwatch.Dimension{
-					dimensions[0], // Type
-					dimensions[2], // Component
+					dimensions[0], // Type 1
 				},
 				MetricName: aws.String("EventsProcessed"),
 				Timestamp:  firstEvent.Timestamp,
@@ -126,8 +121,7 @@ func setupEvents() error {
 			},
 			{
 				Dimensions: []*cloudwatch.Dimension{
-					dimensions[0], // Type
-					dimensions[2], // Component
+					dimensions[0], // Type 1
 				},
 				MetricName: aws.String("EventsProcessed"),
 				Timestamp:  secondEvent.Timestamp,
@@ -136,8 +130,7 @@ func setupEvents() error {
 			},
 			{
 				Dimensions: []*cloudwatch.Dimension{
-					dimensions[1], // Type
-					dimensions[2], // Component
+					dimensions[1], // Type 2
 				},
 				MetricName: aws.String("EventsProcessed"),
 				Timestamp:  thirdEvent.Timestamp,
@@ -183,8 +176,9 @@ func getMetrics(t *testing.T) {
 			assert.Equal(t, seriesData.Values[1], firstEvent.Value)
 			assert.Equal(t, seriesData.Values[0], secondEvent.Value)
 		} else {
-			require.Len(t, seriesData.Values, 1)
+			require.Len(t, seriesData.Values, 2)
 			assert.Equal(t, seriesData.Values[0], thirdEvent.Value)
+			assert.Equal(t, *seriesData.Values[1], float64(0))
 		}
 	}
 }

@@ -25,7 +25,6 @@ import (
 var (
 	BytesProcessedLogger = metrics.MustStaticLogger([]metrics.DimensionSet{
 		{
-			"Component",
 			"LogType",
 		},
 	}, []metrics.Metric{
@@ -38,8 +37,4 @@ var (
 			Unit: metrics.UnitCount,
 		},
 	})
-	Component = metrics.Dimension{
-		Name:  "Component",
-		Value: "LogProcessor",
-	}
 )

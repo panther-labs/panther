@@ -32,7 +32,6 @@ import (
 
 func TestRoundToUTCMinute(t *testing.T) {
 	initialTime, err := time.Parse(time.RFC3339Nano, "2020-01-03T05:07:47.999999999+07:00")
-	// "2006-01-02T15:04:05.999999999Z07:00"
 	require.NoError(t, err)
 
 	roundedTime := roundToUTCMinute(initialTime)

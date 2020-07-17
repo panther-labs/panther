@@ -28,6 +28,8 @@ import (
 	"github.com/panther-labs/panther/api/lambda/metrics/models"
 )
 
+const eventsProcessedMetric = "EventsProcessed"
+
 // getEventsProcessed returns the count of events processed by the log processor per log type
 //
 // This is a time series metric.
@@ -42,15 +44,22 @@ func getEventsProcessed(input *models.GetMetricsInput, output *models.GetMetrics
 		return true
 	})
 	if err != nil {
-		zap.L().Error("unable to list metrics", zap.String("metric", eventsProcessedMetric))
+		zap.L().Error("unable to list metrics", zap.String("metric", eventsProcessedMetric), zap.Error(err))
 		return metricsInternalError
 	}
 	zap.L().Debug("found applicable metrics", zap.Any("metrics", listMetricsResponse))
 
 	// Build the query based on the applicable metric dimensions
-	queries := make([]*cloudwatch.MetricDataQuery, len(listMetricsResponse))
+	var queries []*cloudwatch.MetricDataQuery
 	for i, metric := range listMetricsResponse {
-		queries[i] = &cloudwatch.MetricDataQuery{
+		if len(metric.Dimensions) != 1 {
+			// This if statement is only needed by developers who have deployed the unstable branch
+			// of Panther before v1.6.0. Old metrics can't be deleted and you can't filter out
+			// dimensions you don't want, so we have to skip metrics where the Component dimension
+			// still exists.
+			continue
+		}
+		queries = append(queries, &cloudwatch.MetricDataQuery{
 			Id: aws.String("query" + strconv.Itoa(i)),
 			MetricStat: &cloudwatch.MetricStat{
 				Metric: metric,
@@ -58,7 +67,7 @@ func getEventsProcessed(input *models.GetMetricsInput, output *models.GetMetrics
 				Stat:   aws.String("Sum"),
 				Unit:   aws.String("Count"),
 			},
-		}
+		})
 	}
 	zap.L().Debug("prepared metric queries", zap.Any("queries", queries), zap.Any("toDate", input.ToDate), zap.Any("fromDate", input.FromDate))
 

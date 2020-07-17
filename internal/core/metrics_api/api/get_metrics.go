@@ -33,10 +33,8 @@ import (
 
 const (
 	// These limits are enforced by AWS
-	maxSeriesDataPoints   = 100800
-	maxMetricsPerRequest  = 500
-	eventsProcessedMetric = "EventsProcessed"
-	alertsMetric          = "AlertsCreated"
+	maxSeriesDataPoints  = 100800
+	maxMetricsPerRequest = 500
 )
 
 var (
