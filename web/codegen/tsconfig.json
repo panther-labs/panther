@@ -3,7 +3,6 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "target": "ES6",
-    "module": "CommonJS",
-    "outDir": "artifacts"
+    "module": "CommonJS"
   }
 }

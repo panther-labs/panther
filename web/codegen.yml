@@ -34,7 +34,7 @@ generates:
 
   web/__tests__/__mocks__/builders.generated.ts:
     plugins:
-      - web/__tests__/codegen/artifacts/mockGraphqlResourcesPlugin.js:
+      - web/codegen/buildGraphqlResourcesPlugin.js:
           typesFile: ../../__generated__/schema.tsx
 
   web/src/:
@@ -45,7 +45,7 @@ generates:
     plugins:
       - typescript-operations
       - typescript-react-apollo
-      - web/__tests__/codegen/artifacts/mockGraphqlOperationsPlugin.js
+      - web/codegen/mockGraphqlOperationsPlugin.js
     config:
       apolloReactHooksImportFrom: '@apollo/client'
       apolloReactCommonImportFrom: '@apollo/client'
