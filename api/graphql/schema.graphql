@@ -346,7 +346,7 @@ type Series {
 
 type SeriesData {
   timestamps: [AWSDateTime]
-  series: Series
+  series: [Series]
 }
 
 type SeriesMetric {

@@ -1017,7 +1017,7 @@ export type Series = {
 export type SeriesData = {
   __typename?: 'SeriesData';
   timestamps?: Maybe<Array<Maybe<Scalars['AWSDateTime']>>>;
-  series?: Maybe<Series>;
+  series?: Maybe<Array<Maybe<Series>>>;
 };
 
 export type SeriesMetric = {
@@ -2449,7 +2449,7 @@ export type SeriesDataResolvers<
     ParentType,
     ContextType
   >;
-  series?: Resolver<Maybe<ResolversTypes['Series']>, ParentType, ContextType>;
+  series?: Resolver<Maybe<Array<Maybe<ResolversTypes['Series']>>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
