@@ -154,11 +154,11 @@ func setupEvents() error {
 
 func getMetrics(t *testing.T) {
 	input := &models.LambdaInput{GetMetrics: &models.GetMetricsInput{
-		MetricNames:   []string{"eventsProcessed"},
-		FromDate:      startTime,
-		ToDate:        endTime,
-		IntervalHours: 1,
-		Namespace:     namespace,
+		MetricNames:     []string{"eventsProcessed"},
+		FromDate:        startTime,
+		ToDate:          endTime,
+		IntervalMinutes: 60,
+		Namespace:       namespace,
 	}}
 	var output models.GetMetricsOutput
 	err := genericapi.Invoke(lambdaClient, functionName, input, &output)
@@ -166,9 +166,8 @@ func getMetrics(t *testing.T) {
 
 	assert.Equal(t, input.GetMetrics.FromDate.UTC(), output.FromDate.UTC())
 	assert.Equal(t, input.GetMetrics.ToDate.UTC(), output.ToDate.UTC())
-	assert.Equal(t, input.GetMetrics.IntervalHours, output.IntervalHours)
+	assert.Equal(t, input.GetMetrics.IntervalMinutes, output.IntervalMinutes)
 
-	//require.Len(t, output.MetricResults, 1)
 	metricResult := output.EventsProcessed
 	assert.Empty(t, metricResult.SingleValue)
 

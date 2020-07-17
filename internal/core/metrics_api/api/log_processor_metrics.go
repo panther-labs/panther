@@ -54,7 +54,7 @@ func getEventsProcessed(input *models.GetMetricsInput, output *models.GetMetrics
 			Id: aws.String("query" + strconv.Itoa(i)),
 			MetricStat: &cloudwatch.MetricStat{
 				Metric: metric,
-				Period: aws.Int64(input.IntervalHours * 3600), // number of seconds, must be multiple of 60
+				Period: aws.Int64(input.IntervalMinutes * 60), // number of seconds, must be multiple of 60
 				Stat:   aws.String("Sum"),
 				Unit:   aws.String("Count"),
 			},

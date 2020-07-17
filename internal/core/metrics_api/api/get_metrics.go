@@ -53,9 +53,9 @@ var (
 // GetMetrics routes the requests for various metric data to the correct handlers
 func (API) GetMetrics(input *models.GetMetricsInput) (*models.GetMetricsOutput, error) {
 	response := &models.GetMetricsOutput{
-		FromDate:      input.FromDate,
-		ToDate:        input.ToDate,
-		IntervalHours: input.IntervalHours,
+		FromDate:        input.FromDate,
+		ToDate:          input.ToDate,
+		IntervalMinutes: input.IntervalMinutes,
 	}
 
 	// If a namespace was not specified, default to the Panther namespace
@@ -89,12 +89,13 @@ func (API) GetMetrics(input *models.GetMetricsInput) (*models.GetMetricsOutput, 
 // should go from v1 to 0 then back up to v3.
 func normalizeTimeStamps(input *models.GetMetricsInput, data []*cloudwatch.MetricDataResult) ([]models.TimeSeriesValues, []*time.Time) {
 	// First we need to calculate the expected timestamps, so we know if any are missing
-	tStart := getTruncatedStart(input.FromDate)
+	tStart, minInterval := getPeriodStartAndInterval(input.FromDate)
 	delta := input.ToDate.Sub(tStart)
-	intervals := int(math.Ceil(delta.Hours() / float64(input.IntervalHours)))
+	intervals := int(math.Ceil(delta.Minutes() / float64(input.IntervalMinutes)))
+	interval := math.Max(float64(minInterval), float64(input.IntervalMinutes))
 	times := make([]*time.Time, intervals)
 	for i := 1; i <= intervals; i++ {
-		times[intervals-i] = aws.Time(tStart.Add(time.Hour * time.Duration(input.IntervalHours) * time.Duration(i-1)))
+		times[intervals-i] = aws.Time(tStart.Add(time.Minute * time.Duration(interval) * time.Duration(i-1)))
 	}
 	zap.L().Debug("times calculated",
 		zap.Int("intervals", intervals),
@@ -120,14 +121,18 @@ func normalizeTimeStamps(input *models.GetMetricsInput, data []*cloudwatch.Metri
 		// In some cases, an interval will have no value. AWS just omits these intervals from the
 		// results, but most systems will not implicitly understand an omitted interval to mean zero
 		// activity, so we fill in a zero value.
+		//
+		// times is calculated based the IntervalMinutes and FromDate parameter set in the
+		// request. These same parameters are sent to CloudWatch, which uses them to calculate the
+		// timestamps for the values. So the times that we create should match exactly the times
+		// that CloudWatch returns, except for cases where CloudWatch omits a timestamp for
+		// having no values in the time period. For those cases, we insert a 0.
 		fullValues := make([]*float64, len(times))
 		for j, k := 0, 0; j < len(times); j++ {
-			// If the k'th value occurred during the j'th time, keep it and increment k.
 			if k < len(metricData.Values) && *times[j] == *metricData.Timestamps[k] {
 				fullValues[j] = metricData.Values[k]
 				k++
 			} else {
-				// Otherwise, insert a zero.
 				fullValues[j] = aws.Float64(0)
 			}
 		}
@@ -140,29 +145,35 @@ func normalizeTimeStamps(input *models.GetMetricsInput, data []*cloudwatch.Metri
 	return values, times
 }
 
-// getTruncatedStart determines the correct starting time for a metric based on the following
-// rules set by CloudWatch:
-// Start time less than 15 days ago - Round down to the nearest whole minute.
-//   - Example: 12:32:34 is rounded down to 12:32:00.
-// Start time between 15 and 63 days ago - Round down to the nearest 5-minute clock interval.
-//   - Example, 12:32:34 is rounded down to 12:30:00.
-// Start time greater than 63 days ago - Round down to the nearest 1-hour clock interval.
-//   - Example, 12:32:34 is rounded down to 12:00:00.
+// getPeriodStartAndInterval determines the correct starting time and minimum interval for a metric
+// based on the following rules set by CloudWatch:
 //
-// Reference: https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html
-func getTruncatedStart(startDate time.Time) time.Time {
+// Start time less than 15 days ago - Round down to the nearest whole minute.
+// Data points with a period of 60 seconds (1 minute) are available for 15 days.
+//   - Example: 12:32:34 is rounded down to 12:32:00, with a minimum interval of 1 minute.
+// Start time between 15 and 63 days ago - Round down to the nearest 5-minute clock interval.
+// Data points with a period of 300 seconds (5 minute) are available for 63 days.
+//   - Example, 12:32:34 is rounded down to 12:30:00, with a minimum interval of 5 minutes.
+// Start time greater than 63 days ago - Round down to the nearest 1-hour clock interval.
+// Data points with a period of 3600 seconds (1 hour) are available for 455 days (15 months).
+//   - Example, 12:32:34 is rounded down to 12:00:00 with a minimum interval of 1 hour.
+//
+// References:
+// https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html
+// https://aws.amazon.com/cloudwatch/faqs/
+func getPeriodStartAndInterval(startDate time.Time) (time.Time, int64) {
 	now := time.Now()
 	if now.Sub(startDate) < 15*24*time.Hour {
-		// Round to the nearest minute by truncating all seconds and nanoseconds
-		return roundToUTCMinute(startDate)
+		// Round to the nearest minute by truncating all seconds and nanoseconds.
+		return roundToUTCMinute(startDate), 1
 	}
 	if now.Sub(startDate) < 63*24*time.Hour {
 		// Round to the nearest 5 minute interval by truncating the number of minutes past the
-		// nearest 5 minute interval in addition to any seconds, and nanoseconds
-		return roundToUTCMinute(startDate).Truncate(5 * time.Minute)
+		// nearest 5 minute interval in addition to any seconds, and nanoseconds.
+		return roundToUTCMinute(startDate).Truncate(5 * time.Minute), 5
 	}
-	// Round to the nearest hour by truncating all minutes, seconds, and nanoseconds
-	return roundToUTCMinute(startDate).Truncate(60 * time.Minute)
+	// Round to the nearest hour by truncating all minutes, seconds, and nanoseconds.
+	return roundToUTCMinute(startDate).Truncate(60 * time.Minute), 60
 }
 
 // roundToUTCMinute returns the given time in UTC, rounded down to the nearest minute
@@ -177,7 +188,7 @@ func getMetricData(input *models.GetMetricsInput, queries []*cloudwatch.MetricDa
 	// Validate that we can fit this request in our maximum data point threshold
 	queryCount := len(queries)
 	duration := input.ToDate.Sub(input.FromDate)
-	samples := int64(duration.Hours()) / input.IntervalHours
+	samples := int64(duration.Minutes()) / input.IntervalMinutes
 	metricsPerCall := queryCount
 	if metricsPerCall > maxMetricsPerRequest {
 		metricsPerCall = maxMetricsPerRequest

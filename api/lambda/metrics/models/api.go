@@ -31,11 +31,11 @@ type LambdaInput struct {
 
 // GetMetricsInput is used to request data points for a number of metrics over a given time frame
 type GetMetricsInput struct {
-	MetricNames   []string  `json:"metricNames" validate:"required"`
-	Namespace     string    `json:"namespace"`
-	FromDate      time.Time `json:"fromDate" validate:"required"`
-	ToDate        time.Time `json:"toDate" validate:"required,gtfield=FromDate"`
-	IntervalHours int64     `json:"intervalHours" validate:"required,gt=0"`
+	MetricNames     []string  `json:"metricNames" validate:"required"`
+	Namespace       string    `json:"namespace"`
+	FromDate        time.Time `json:"fromDate" validate:"required"`
+	ToDate          time.Time `json:"toDate" validate:"required,gtfield=FromDate"`
+	IntervalMinutes int64     `json:"intervalMinutes" validate:"required,gt=0"`
 }
 
 // GetMetricsOutput contains data points for a number of metrics over the specified time frame
@@ -45,7 +45,7 @@ type GetMetricsOutput struct {
 	AlertsBySeverity *MetricResult `json:"alertsBySeverity,omitempty"`
 	FromDate         time.Time     `json:"fromDate"`
 	ToDate           time.Time     `json:"toDate"`
-	IntervalHours    int64         `json:"intervalHours"`
+	IntervalMinutes  int64         `json:"intervalMinutes"`
 }
 
 // MetricResult is either a single data point or a series of timestamped data points

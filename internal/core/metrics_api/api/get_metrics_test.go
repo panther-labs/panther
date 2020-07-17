@@ -54,12 +54,13 @@ func TestRoundToUTCMinute(t *testing.T) {
 	assert.Equal(t, 0, roundedTime.Nanosecond())
 }
 
-func TestGetTruncatedStart(t *testing.T) {
+func TestGetPeriodStartAndInterval(t *testing.T) {
 	now := roundToUTCMinute(time.Now())
 
 	// Offset by a few hours, seconds, and nanoseconds. This should be rounded to the nearest minute.
 	minuteTime := now.Add(-8*time.Hour + 32*time.Second + 640*time.Nanosecond)
-	minuteStart := getTruncatedStart(minuteTime)
+	minuteStart, minuteInterval := getPeriodStartAndInterval(minuteTime)
+	assert.Equal(t, int64(1), minuteInterval)
 	// These fields should not  change
 	assert.Equal(t, minuteTime.Year(), minuteStart.Year())
 	assert.Equal(t, minuteTime.Month(), minuteStart.Month())
@@ -75,7 +76,8 @@ func TestGetTruncatedStart(t *testing.T) {
 	fiveMinuteTime := now.Add((-30 * 24 * time.Hour) + 52*time.Second + 777*time.Nanosecond)
 	// Remove all minutes, so  we can explicitly set the minute field
 	fiveMinuteTime = fiveMinuteTime.Truncate(60 * time.Minute).Add(7 * time.Minute)
-	fiveMinuteStart := getTruncatedStart(fiveMinuteTime)
+	fiveMinuteStart, fiveMinuteInterval := getPeriodStartAndInterval(fiveMinuteTime)
+	assert.Equal(t, int64(5), fiveMinuteInterval)
 	// These fields should not  change
 	assert.Equal(t, fiveMinuteTime.Year(), fiveMinuteStart.Year())
 	assert.Equal(t, fiveMinuteTime.Month(), fiveMinuteStart.Month())
@@ -90,7 +92,8 @@ func TestGetTruncatedStart(t *testing.T) {
 	// Offset by 90 days to get into the next time bucket, then add some minutes, seconds, and nanoseconds.
 	// This should be rounded to the nearest hour.
 	hourTime := now.Add((-90 * 24 * time.Hour) + 52*time.Second + 777*time.Nanosecond + 3*time.Hour)
-	hourStart := getTruncatedStart(hourTime)
+	hourStart, hourInterval := getPeriodStartAndInterval(hourTime)
+	assert.Equal(t, int64(60), hourInterval)
 	// These fields should not  change
 	assert.Equal(t, hourTime.Year(), hourStart.Year())
 	assert.Equal(t, hourTime.Month(), hourStart.Month())
@@ -117,9 +120,9 @@ func TestNormalizeTimestamps(t *testing.T) {
 	bucketStartDate := today.Add(4 * time.Hour).Add(33 * time.Minute)
 
 	input := &models.GetMetricsInput{
-		FromDate:      fromDate,
-		ToDate:        toDate,
-		IntervalHours: 1,
+		FromDate:        fromDate,
+		ToDate:          toDate,
+		IntervalMinutes: 60,
 	}
 
 	data := []*cloudwatch.MetricDataResult{
