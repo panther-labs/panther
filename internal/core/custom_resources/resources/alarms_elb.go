@@ -64,7 +64,7 @@ func customElbAlarms(_ context.Context, event cfn.Event) (string, map[string]int
 
 		// Migration: In v1.5.0, the client error alarms were removed
 		if event.RequestType == cfn.RequestUpdate {
-			if err := deleteMetricAlarms(event.PhysicalResourceID, elbTargetClientErrorAlarm, elbClientErrorAlarm); err != nil {
+			if err := deleteAlarms(event.PhysicalResourceID, elbTargetClientErrorAlarm, elbClientErrorAlarm); err != nil {
 				zap.L().Error("failed to remove deprecated alarm", zap.Error(err))
 			}
 		}
@@ -72,7 +72,7 @@ func customElbAlarms(_ context.Context, event cfn.Event) (string, map[string]int
 		return physicalID, nil, nil
 
 	case cfn.RequestDelete:
-		return event.PhysicalResourceID, nil, deleteMetricAlarms(event.PhysicalResourceID,
+		return event.PhysicalResourceID, nil, deleteAlarms(event.PhysicalResourceID,
 			elbClientErrorAlarm, elbServerErrorAlarm, elbTargetClientErrorAlarm,
 			elbTargetServerErrorAlarm, elbTargetLatencyAlarm, elbHealthAlarm)
 
@@ -82,7 +82,7 @@ func customElbAlarms(_ context.Context, event cfn.Event) (string, map[string]int
 }
 
 func putElbAlarmGroup(props ElbAlarmProperties) error {
-	input := cloudwatch.PutMetricAlarmInput{
+	input := &cloudwatch.PutMetricAlarmInput{
 		AlarmActions: []*string{&props.AlarmTopicArn},
 		AlarmDescription: aws.String(fmt.Sprintf(
 			"Load balancer %s has 5XX errors (before reaching the target). See: %s#%s",

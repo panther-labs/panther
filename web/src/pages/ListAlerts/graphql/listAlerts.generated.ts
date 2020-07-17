@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
-
 import * as Types from '../../../../__generated__/schema';
 
 import { AlertSummaryFull } from '../../../graphql/fragments/AlertSummaryFull.generated';
@@ -84,3 +82,18 @@ export function useListAlertsLazyQuery(
 export type ListAlertsHookResult = ReturnType<typeof useListAlerts>;
 export type ListAlertsLazyQueryHookResult = ReturnType<typeof useListAlertsLazyQuery>;
 export type ListAlertsQueryResult = ApolloReactCommon.QueryResult<ListAlerts, ListAlertsVariables>;
+export function mockListAlerts({
+  data,
+  variables,
+  error,
+}: {
+  data: ListAlerts;
+  variables?: ListAlertsVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: ListAlertsDocument, variables },
+    result: { data },
+    error,
+  };
+}

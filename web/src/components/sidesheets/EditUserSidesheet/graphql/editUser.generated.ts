@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
-
 import * as Types from '../../../../../__generated__/schema';
 
 import { UserDetails } from '../../../../graphql/fragments/UserDetails.generated';
@@ -69,3 +67,18 @@ export type EditUserMutationOptions = ApolloReactCommon.BaseMutationOptions<
   EditUser,
   EditUserVariables
 >;
+export function mockEditUser({
+  data,
+  variables,
+  error,
+}: {
+  data: EditUser;
+  variables?: EditUserVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: EditUserDocument, variables },
+    result: { data },
+    error,
+  };
+}

@@ -1,4 +1,4 @@
-package forwarder
+package main
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -30,7 +30,6 @@ import (
 
 	policiesclient "github.com/panther-labs/panther/api/gateway/analysis/client"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
-	"github.com/panther-labs/panther/pkg/metrics"
 )
 
 var (
@@ -40,26 +39,8 @@ var (
 	sqsClient  sqsiface.SQSAPI
 
 	httpClient   *http.Client
-	policyConfig *policiesclient.TransportConfig
 	policyClient *policiesclient.PantherAnalysis
-	staticLogger = metrics.MustStaticLogger([]metrics.DimensionSet{
-		{
-			"AnalysisType",
-			"Severity",
-		},
-		{
-			"AnalysisType",
-		},
-	}, []metrics.Metric{
-		{
-			Name: "AlertsCreated",
-			Unit: metrics.UnitCount,
-		},
-	})
-	analysisTypeDimension = metrics.Dimension{
-		Name:  "AnalysisType",
-		Value: "Rule",
-	}
+	policyConfig *policiesclient.TransportConfig
 )
 
 type envConfig struct {

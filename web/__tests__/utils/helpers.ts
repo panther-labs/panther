@@ -23,7 +23,7 @@ import faker from 'faker';
  * @param array An array of items
  */
 export function randomFromArray<T>(array: T[] | ReadonlyArray<T>) {
-  return array[faker.random.number({ min: 0, max: array.length - 1, precision: 1 })];
+  return faker.random.arrayElement(array);
 }
 
 /**

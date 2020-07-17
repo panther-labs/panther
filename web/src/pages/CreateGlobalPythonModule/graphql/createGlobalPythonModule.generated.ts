@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
-
 import * as Types from '../../../../__generated__/schema';
 
 import { GlobalPythonModuleFull } from '../../../graphql/fragments/GlobalPythonModuleFull.generated';
@@ -80,3 +78,18 @@ export type CreateGlobalPythonModuleMutationOptions = ApolloReactCommon.BaseMuta
   CreateGlobalPythonModule,
   CreateGlobalPythonModuleVariables
 >;
+export function mockCreateGlobalPythonModule({
+  data,
+  variables,
+  error,
+}: {
+  data: CreateGlobalPythonModule;
+  variables?: CreateGlobalPythonModuleVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: CreateGlobalPythonModuleDocument, variables },
+    result: { data },
+    error,
+  };
+}
