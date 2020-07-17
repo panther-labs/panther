@@ -24,7 +24,6 @@ import Panel from 'Components/Panel';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import EventsByLogType from 'Pages/LogAnalysisOverview/EventsByLogType';
 import LogAnalysisOverviewPageSkeleton from './Skeleton';
-import { alertsBySeverityData, totalAlerts } from './demoData';
 import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
 import AlertsBySeverity from './AlertsBySeverity';
 import AlertSummary from './AlertSummary';
@@ -43,7 +42,7 @@ function getDates() {
 }
 
 const LogAnalysisOverview: React.FC = () => {
-  const intervalHours = 3;
+  const intervalHours = 6;
   const { fromDate, toDate } = getDates();
   const { data, loading, error } = useGetLogAnalysisMetrics({
     fetchPolicy: 'cache-and-network',
@@ -71,22 +70,24 @@ const LogAnalysisOverview: React.FC = () => {
     );
   }
 
-  const eventsByLogType = data.getLogAnalysisMetrics.eventsProcessed;
+  const { alertsBySeverity, totalAlertsDelta, eventsProcessed } = data.getLogAnalysisMetrics;
 
   return (
     <Box as="article" mb={6}>
-      <SimpleGrid columns={1} spacing={3} as="section" mb={3}>
+      <SimpleGrid columns={1} spacingX={3} spacingY={2} as="section" mb={3}>
         <Panel title="Real-time Alerts">
-          <Flex direction="row">
-            <AlertSummary data={totalAlerts.metricsNames[0].totalAlerts.singleValue} />
-            <AlertsBySeverity alerts={alertsBySeverityData.metricNames[0].seriesData} />
-          </Flex>
+          <Box height={200}>
+            <Flex direction="row" width="100%">
+              <AlertSummary data={totalAlertsDelta.singleValue} />
+              <AlertsBySeverity alerts={alertsBySeverity.seriesData} />
+            </Flex>
+          </Box>
         </Panel>
       </SimpleGrid>
-      <SimpleGrid columns={1} spacingX={3} spacingY={2} mb={3}>
+      <SimpleGrid columns={1} spacingX={3} spacingY={2} my={3}>
         <Panel title="Events by Log Type">
-          <Box height={150}>
-            <EventsByLogType events={eventsByLogType.seriesData} />
+          <Box height={200}>
+            <EventsByLogType events={eventsProcessed.seriesData} />
           </Box>
         </Panel>
       </SimpleGrid>

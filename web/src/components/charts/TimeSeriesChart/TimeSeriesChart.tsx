@@ -29,12 +29,13 @@ interface TimeSeriesLinesProps {
 const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
   const container = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
+    const { timestamps, series } = data;
     /*
      * 'legendData' must be an array of values that matches 'series.name'in order
      * to display them in correct order and color
      * e.g. [AWS.ALB]
      */
-    const legendData = data.map(({ label }) => label);
+    const legendData = series.map(({ label }) => label);
 
     /*
      * 'series' must be an array of objects that includes some graph options
@@ -42,7 +43,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
      * is an array of values for all datapoints
      * Must be ordered
      */
-    const series = data.map(({ label, values, timestamps }) => {
+    const seriesData = series.map(({ label, values }) => {
       return {
         name: label,
         type: 'line',
@@ -62,7 +63,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
 
     const options = {
       grid: {
-        left: 150,
+        left: 180,
         right: 20,
         bottom: 20,
         top: 10,
@@ -121,7 +122,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
           },
         },
       },
-      series,
+      series: seriesData,
     };
 
     // load the timeSeriesChart

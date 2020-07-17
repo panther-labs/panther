@@ -147,56 +147,44 @@ export const eventData = {
 };
 
 export const alertsBySeverityData = {
-  metricNames: [
-    {
-      MetricName: 'AlertsBySeveriy',
-      seriesData: [
+  alertsBySeverity: {
+    seriesData: {
+      timestamps: ['2020-07-09T22:00:00Z', '2020-07-09T21:00:00Z', '2020-07-09T20:00:00Z'],
+      series: [
         {
-          Label: 'Critical',
-          Values: [53, 22, 37],
-          Timestamps: ['2020-07-09T22:00:00Z', '2020-07-09T21:00:00Z', '2020-07-09T20:00:00Z'],
+          label: 'CRITICAL',
+          values: [53, 22, 37],
         },
         {
-          Label: 'High',
-          Values: [485, 583, 534],
-          Timestamps: ['2020-07-09T22:00:00Z', '2020-07-09T21:00:00Z', '2020-07-09T20:00:00Z'],
+          label: 'HIGH',
+          values: [485, 583, 534],
         },
         {
-          Label: 'Medium',
-          Values: [587, 356, 687],
-          Timestamps: ['2020-07-09T22:00:00Z', '2020-07-09T21:00:00Z', '2020-07-09T20:00:00Z'],
+          label: 'MEDIUM',
+          values: [587, 356, 687],
         },
         {
-          Label: 'Low',
-          Values: [987, 1322, 583],
-          Timestamps: ['2020-07-09T22:00:00Z', '2020-07-09T21:00:00Z', '2020-07-09T20:00:00Z'],
+          label: 'LOW',
+          values: [987, 1322, 583],
         },
         {
-          Label: 'Info',
-          Values: [579, 916, 1287],
-          Timestamps: ['2020-07-09T22:00:00Z', '2020-07-09T21:00:00Z', '2020-07-09T20:00:00Z'],
+          label: 'INFO',
+          values: [579, 916, 1287],
         },
       ],
     },
-  ],
+  },
 };
 
 export const totalAlerts = {
-  metricsNames: [
+  singleValue: [
     {
-      MetricName: 'TotalAlerts',
-      totalAlerts: {
-        singleValue: [
-          {
-            Label: 'AlertsCurrentPeriod',
-            Values: 7,
-          },
-          {
-            Label: 'AlertsPreviousPeriod',
-            Values: 11,
-          },
-        ],
-      },
+      label: 'Current Period',
+      value: 13,
+    },
+    {
+      label: 'Previous Period',
+      value: 63,
     },
   ],
 };

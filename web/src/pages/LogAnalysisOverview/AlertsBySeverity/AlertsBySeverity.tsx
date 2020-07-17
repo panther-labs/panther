@@ -17,24 +17,25 @@
  */
 
 import React from 'react';
-import { Box } from 'pouncejs';
+import { Box, Flex } from 'pouncejs';
 import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
+import { capitalize } from 'Helpers/utils';
 
 interface AlertsBySeverityProps {
   alerts: any;
 }
 
 const AlertsBySeverity: React.FC<AlertsBySeverityProps> = ({ alerts }) => {
-  // FIXME: Remove this when fixed in backend
-  const transformedAlerts = alerts.map(e => ({
-    label: e.Label,
-    timestamps: e.Timestamps,
-    values: e.Values,
+  const transformedSeries = alerts.series.map(serie => ({
+    ...serie,
+    label: capitalize(serie.label.toLowerCase()),
   }));
 
   return (
-    <Box height={150} width="70%">
-      <TimeSeriesChart data={transformedAlerts} />
+    <Box mx={2} px={4} py={4} height={200} width="80%" backgroundColor="navyblue-700">
+      <Flex height="100%" pt={4} px={4} backgroundColor="navyblue-700">
+        <TimeSeriesChart data={{ ...alerts, series: transformedSeries }} />
+      </Flex>
     </Box>
   );
 };

@@ -3,6 +3,7 @@ query GetLogAnalysisMetrics($input: LogAnalysisMetricsInput) {
     eventsProcessed {
       seriesData {
         series {
+          label
           values
         }
         timestamps
@@ -11,6 +12,7 @@ query GetLogAnalysisMetrics($input: LogAnalysisMetricsInput) {
     alertsBySeverity {
       seriesData {
         series {
+          label
           values
         }
         timestamps

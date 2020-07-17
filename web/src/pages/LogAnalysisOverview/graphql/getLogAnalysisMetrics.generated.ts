@@ -34,14 +34,14 @@ export type GetLogAnalysisMetrics = {
       eventsProcessed?: Types.Maybe<{
         seriesData?: Types.Maybe<
           Pick<Types.SeriesData, 'timestamps'> & {
-            series?: Types.Maybe<Pick<Types.Series, 'values'>>;
+            series?: Types.Maybe<Array<Types.Maybe<Pick<Types.Series, 'label' | 'values'>>>>;
           }
         >;
       }>;
       alertsBySeverity?: Types.Maybe<{
         seriesData?: Types.Maybe<
           Pick<Types.SeriesData, 'timestamps'> & {
-            series?: Types.Maybe<Pick<Types.Series, 'values'>>;
+            series?: Types.Maybe<Array<Types.Maybe<Pick<Types.Series, 'label' | 'values'>>>>;
           }
         >;
       }>;
@@ -58,6 +58,7 @@ export const GetLogAnalysisMetricsDocument = gql`
       eventsProcessed {
         seriesData {
           series {
+            label
             values
           }
           timestamps
@@ -66,6 +67,7 @@ export const GetLogAnalysisMetricsDocument = gql`
       alertsBySeverity {
         seriesData {
           series {
+            label
             values
           }
           timestamps

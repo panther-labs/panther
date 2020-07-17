@@ -15,8 +15,16 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+import { theme } from 'pouncejs';
 
 export const LineColors = {
+  // Alerts severity line colors
+  Critical: theme.colors['red-400'],
+  High: theme.colors['orange-500'],
+  Medium: theme.colors['yellow-500'],
+  Low: theme.colors['gray-500'],
+  Info: theme.colors['gray-800'],
+
   'AWS.Cloudtrail': '#FDCA00',
   'AWS.ALB': '#4e33e3',
   'AWS.VPCFlow': '#dd4444',

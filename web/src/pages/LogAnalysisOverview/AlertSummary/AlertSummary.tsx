@@ -17,20 +17,61 @@
  */
 
 import React from 'react';
-import { Box, Flex, Heading, Text } from 'pouncejs';
+import { Box, Flex, Heading, Icon, Text } from 'pouncejs';
 import { slugify } from 'Helpers/utils';
 
 interface AlertSummaryProps {
   data: any;
 }
 
+const DifferenceText = ({ diff }) => {
+  if (diff === 0) {
+    return (
+      <React.Fragment>
+        <Text fontSize="small">No change</Text>
+        <Flex>
+          <Text fontSize="small">{diff}</Text>
+        </Flex>
+      </React.Fragment>
+    );
+  }
+  if (diff > 0) {
+    return (
+      <React.Fragment>
+        <Text fontSize="small">Decreased by</Text>
+        <Flex>
+          <Icon type="caret-down" size="small" color="green-200" />
+          <Text fontSize="small">{diff}</Text>
+        </Flex>
+      </React.Fragment>
+    );
+  }
+
+  return (
+    <React.Fragment>
+      <Text fontSize="small">Increased by</Text>
+      <Flex>
+        <Icon type="caret-up" size="small" color="red-200" />
+        <Text fontSize="small">{-diff}</Text>
+      </Flex>
+    </React.Fragment>
+  );
+};
+
 const AlertSummary: React.FC<AlertSummaryProps> = ({ data }) => {
-  const alertsCurrentPeriod = data.find(d => d.Label === 'AlertsCurrentPeriod').Values;
-  const alertPreviousPeriod = data.find(d => d.Label === 'AlertsPreviousPeriod').Values;
+  const alertsCurrentPeriod = data.find(d => d.label === 'Current Period').value;
+  const alertPreviousPeriod = data.find(d => d.label === 'Previous Period').value;
 
   const diff = alertPreviousPeriod - alertsCurrentPeriod;
   return (
-    <Flex direction="column" width="300px" align="center" justify="center" mb={4}>
+    <Flex
+      direction="column"
+      backgroundColor="navyblue-700"
+      width="20%"
+      align="center"
+      justify="center"
+      p={0}
+    >
       <Heading
         as="h2"
         size="3x-large"
@@ -43,21 +84,16 @@ const AlertSummary: React.FC<AlertSummaryProps> = ({ data }) => {
       <Box id={slugify('Total Alerts')} fontSize="medium">
         Total Alerts
       </Box>
-      <Flex my={2}>
-        <Text fontSize="small" color="gray-300" mr={4} id="modal-subtitle">
+      <Flex my={2} width="60%" justify="space-between">
+        <Text fontSize="small" color="gray-300">
           Last period
         </Text>
-        <Text fontSize="small" color="gray-300" id="modal-subtitle">
+        <Text fontSize="small" color="gray-300">
           {alertPreviousPeriod}
         </Text>
       </Flex>
-      <Flex>
-        <Text fontSize="small" mr={4} id="modal-subtitle">
-          Decreased by
-        </Text>
-        <Text fontSize="small" id="modal-subtitle">
-          {diff}
-        </Text>
+      <Flex width="60%" justify="space-between">
+        <DifferenceText diff={diff} />
       </Flex>
     </Flex>
   );
