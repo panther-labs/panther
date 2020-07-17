@@ -24,7 +24,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common/null"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 )
 
 func TestInt64Codec(t *testing.T) {

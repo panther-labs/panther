@@ -32,7 +32,7 @@ import (
 	"net/url"
 	"sort"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common/null"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 )
 
 type ValueWriter interface {

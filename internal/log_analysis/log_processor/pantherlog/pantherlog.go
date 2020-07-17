@@ -34,7 +34,7 @@ import (
 
 	"github.com/modern-go/reflect2"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common/null"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 )
 
 type Event interface {
