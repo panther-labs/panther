@@ -275,7 +275,7 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 	}
 
 	expectedAlertNotification := &alertModel.Alert{
-		CreatedAt:           newAlertDedupEvent.CreationTime,
+		CreatedAt:           newAlertDedupEvent.UpdateTime,
 		AnalysisDescription: aws.String(string(testRuleResponse.Description)),
 		AnalysisID:          newAlertDedupEvent.RuleID,
 		Version:             aws.String(newAlertDedupEvent.RuleVersion),
@@ -329,7 +329,7 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 		RuleVersion:         newAlertDedupEvent.RuleVersion,
 		DeduplicationString: newAlertDedupEvent.DeduplicationString,
 		AlertCount:          newAlertDedupEvent.AlertCount,
-		CreationTime:        newAlertDedupEvent.UpdateTime,
+		CreationTime:        newAlertDedupEvent.CreationTime,
 		UpdateTime:          newAlertDedupEvent.UpdateTime,
 		EventCount:          newAlertDedupEvent.EventCount,
 		LogTypes:            newAlertDedupEvent.LogTypes,
@@ -362,7 +362,7 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 	}
 
 	expectedAlertNotification := &alertModel.Alert{
-		CreatedAt:           newAlertDedupEvent.CreationTime,
+		CreatedAt:           newAlertDedupEvent.UpdateTime,
 		AnalysisDescription: aws.String(string(testRuleResponse.Description)),
 		AnalysisID:          newAlertDedupEvent.RuleID,
 		AnalysisName:        aws.String(string(testRuleResponse.DisplayName)),
@@ -390,7 +390,17 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 		Severity:        string(testRuleResponse.Severity),
 		Title:           aws.StringValue(newAlertDedupEvent.GeneratedTitle),
 		RuleDisplayName: aws.String(string(testRuleResponse.DisplayName)),
-		AlertDedupEvent: *newAlertDedupEvent,
+		AlertDedupEvent: AlertDedupEvent{
+			RuleID:              newAlertDedupEvent.RuleID,
+			RuleVersion:         newAlertDedupEvent.RuleVersion,
+			LogTypes:            newAlertDedupEvent.LogTypes,
+			EventCount:          newAlertDedupEvent.EventCount,
+			AlertCount:          newAlertDedupEvent.AlertCount,
+			DeduplicationString: newAlertDedupEvent.DeduplicationString,
+			GeneratedTitle:      newAlertDedupEvent.GeneratedTitle,
+			UpdateTime:          newAlertDedupEvent.UpdateTime,
+			CreationTime:        newAlertDedupEvent.UpdateTime,
+		},
 	}
 
 	expectedMarshaledAlert, err := dynamodbattribute.MarshalMap(expectedAlert)
