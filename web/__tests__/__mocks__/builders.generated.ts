@@ -133,10 +133,9 @@ export const buildActiveSuppressCount = (
   overrides?: Partial<ActiveSuppressCount>
 ): ActiveSuppressCount => {
   return {
+    __typename: 'ActiveSuppressCount',
     active: buildComplianceStatusCounts(),
     suppressed: buildComplianceStatusCounts(),
-    ...overrides,
-    __typename: 'ActiveSuppressCount',
   };
 };
 
@@ -148,7 +147,6 @@ export const buildAddComplianceIntegrationInput = (
     integrationLabel: 'withdrawal',
     remediationEnabled: false,
     cweEnabled: false,
-    ...overrides,
   };
 };
 
@@ -159,7 +157,6 @@ export const buildAddGlobalPythonModuleInput = (
     id: '6b0f1c64-e650-48e8-abcf-37c23c6cf854',
     description: 'Dynamic',
     body: 'methodologies',
-    ...overrides,
   };
 };
 
@@ -180,7 +177,6 @@ export const buildAddPolicyInput = (overrides?: Partial<AddPolicyInput>): AddPol
     suppressions: ['Tunisian Dinar'],
     tags: ['Security'],
     tests: [buildPolicyUnitTestInput()],
-    ...overrides,
   };
 };
 
@@ -199,7 +195,6 @@ export const buildAddRuleInput = (overrides?: Partial<AddRuleInput>): AddRuleInp
     severity: SeverityEnum.Medium,
     tags: ['Way'],
     tests: [buildPolicyUnitTestInput()],
-    ...overrides,
   };
 };
 
@@ -213,12 +208,12 @@ export const buildAddS3LogIntegrationInput = (
     kmsKey: 'Personal Loan Account',
     s3Prefix: 'reintermediate',
     logTypes: ['expedite'],
-    ...overrides,
   };
 };
 
 export const buildAlertDetails = (overrides?: Partial<AlertDetails>): AlertDetails => {
   return {
+    __typename: 'AlertDetails',
     alertId: '2c5aa76d-eb43-49f0-a65c-50e4daa756a4',
     ruleId: '9ad2c6da-417d-414f-a3e5-7959acdeaa9e',
     title: 'Steel',
@@ -228,13 +223,12 @@ export const buildAlertDetails = (overrides?: Partial<AlertDetails>): AlertDetai
     events: ['"bar"'],
     eventsLastEvaluatedKey: 'Accountability',
     dedupString: 'Auto Loan Account',
-    ...overrides,
-    __typename: 'AlertDetails',
   };
 };
 
 export const buildAlertSummary = (overrides?: Partial<AlertSummary>): AlertSummary => {
   return {
+    __typename: 'AlertSummary',
     alertId: 'Administrator',
     creationTime: '2020-08-08T12:15:31.121Z',
     eventsMatched: 670,
@@ -242,17 +236,14 @@ export const buildAlertSummary = (overrides?: Partial<AlertSummary>): AlertSumma
     updateTime: '2020-09-17T19:32:46.882Z',
     ruleId: 'functionalities',
     severity: SeverityEnum.Medium,
-    ...overrides,
-    __typename: 'AlertSummary',
   };
 };
 
 export const buildAsanaConfig = (overrides?: Partial<AsanaConfig>): AsanaConfig => {
   return {
+    __typename: 'AsanaConfig',
     personalAccessToken: 'Chief',
     projectGids: ['Central'],
-    ...overrides,
-    __typename: 'AsanaConfig',
   };
 };
 
@@ -260,7 +251,6 @@ export const buildAsanaConfigInput = (overrides?: Partial<AsanaConfigInput>): As
   return {
     personalAccessToken: 'connect',
     projectGids: ['Executive'],
-    ...overrides,
   };
 };
 
@@ -268,6 +258,7 @@ export const buildComplianceIntegration = (
   overrides?: Partial<ComplianceIntegration>
 ): ComplianceIntegration => {
   return {
+    __typename: 'ComplianceIntegration',
     awsAccountId: 'Metrics',
     createdAtTime: '2020-11-23T16:57:57.973Z',
     createdBy: '460977ce-2de5-408b-8cd9-69796ea9f675',
@@ -277,8 +268,6 @@ export const buildComplianceIntegration = (
     remediationEnabled: false,
     health: buildComplianceIntegrationHealth(),
     stackName: 'Chips',
-    ...overrides,
-    __typename: 'ComplianceIntegration',
   };
 };
 
@@ -286,16 +275,16 @@ export const buildComplianceIntegrationHealth = (
   overrides?: Partial<ComplianceIntegrationHealth>
 ): ComplianceIntegrationHealth => {
   return {
+    __typename: 'ComplianceIntegrationHealth',
     auditRoleStatus: buildIntegrationItemHealthStatus(),
     cweRoleStatus: buildIntegrationItemHealthStatus(),
     remediationRoleStatus: buildIntegrationItemHealthStatus(),
-    ...overrides,
-    __typename: 'ComplianceIntegrationHealth',
   };
 };
 
 export const buildComplianceItem = (overrides?: Partial<ComplianceItem>): ComplianceItem => {
   return {
+    __typename: 'ComplianceItem',
     errorMessage: 'functionalities',
     lastUpdated: '2020-10-29T15:59:39.128Z',
     policyId: '7704cb04-183c-44c9-9d90-8e66b37d8cb7',
@@ -305,8 +294,6 @@ export const buildComplianceItem = (overrides?: Partial<ComplianceItem>): Compli
     status: ComplianceStatusEnum.Fail,
     suppressed: true,
     integrationId: '0aec2717-f82d-47fc-a2e5-2c2a8cd72160',
-    ...overrides,
-    __typename: 'ComplianceItem',
   };
 };
 
@@ -314,11 +301,10 @@ export const buildComplianceStatusCounts = (
   overrides?: Partial<ComplianceStatusCounts>
 ): ComplianceStatusCounts => {
   return {
+    __typename: 'ComplianceStatusCounts',
     error: 71,
     fail: 488,
     pass: 154,
-    ...overrides,
-    __typename: 'ComplianceStatusCounts',
   };
 };
 
@@ -326,9 +312,8 @@ export const buildCustomWebhookConfig = (
   overrides?: Partial<CustomWebhookConfig>
 ): CustomWebhookConfig => {
   return {
-    webhookURL: 'web services',
-    ...overrides,
     __typename: 'CustomWebhookConfig',
+    webhookURL: 'web services',
   };
 };
 
@@ -337,7 +322,6 @@ export const buildCustomWebhookConfigInput = (
 ): CustomWebhookConfigInput => {
   return {
     webhookURL: 'bypass',
-    ...overrides,
   };
 };
 
@@ -346,7 +330,6 @@ export const buildDeleteGlobalPythonInputItem = (
 ): DeleteGlobalPythonInputItem => {
   return {
     id: '28c248cf-f729-4ac6-af32-da12f186a8bd',
-    ...overrides,
   };
 };
 
@@ -355,7 +338,6 @@ export const buildDeleteGlobalPythonModuleInput = (
 ): DeleteGlobalPythonModuleInput => {
   return {
     globals: [buildDeleteGlobalPythonInputItem()],
-    ...overrides,
   };
 };
 
@@ -364,7 +346,6 @@ export const buildDeletePolicyInput = (
 ): DeletePolicyInput => {
   return {
     policies: [buildDeletePolicyInputItem()],
-    ...overrides,
   };
 };
 
@@ -373,14 +354,12 @@ export const buildDeletePolicyInputItem = (
 ): DeletePolicyInputItem => {
   return {
     id: 'a5304976-d86e-44d0-abe1-902e2565a38b',
-    ...overrides,
   };
 };
 
 export const buildDeleteRuleInput = (overrides?: Partial<DeleteRuleInput>): DeleteRuleInput => {
   return {
     rules: [buildDeleteRuleInputItem()],
-    ...overrides,
   };
 };
 
@@ -389,12 +368,12 @@ export const buildDeleteRuleInputItem = (
 ): DeleteRuleInputItem => {
   return {
     id: '9c1a40a6-8106-4f56-82b7-b71d4afc0065',
-    ...overrides,
   };
 };
 
 export const buildDestination = (overrides?: Partial<Destination>): Destination => {
   return {
+    __typename: 'Destination',
     createdBy: 'best-of-breed',
     creationTime: '2020-08-01T19:40:18.778Z',
     displayName: 'Accountability',
@@ -405,8 +384,6 @@ export const buildDestination = (overrides?: Partial<Destination>): Destination 
     outputConfig: buildDestinationConfig(),
     verificationStatus: 'Licensed',
     defaultForSeverity: [SeverityEnum.Critical],
-    ...overrides,
-    __typename: 'Destination',
   };
 };
 
@@ -414,6 +391,7 @@ export const buildDestinationConfig = (
   overrides?: Partial<DestinationConfig>
 ): DestinationConfig => {
   return {
+    __typename: 'DestinationConfig',
     slack: buildSlackConfig(),
     sns: buildSnsConfig(),
     sqs: buildSqsConfig(),
@@ -424,8 +402,6 @@ export const buildDestinationConfig = (
     msTeams: buildMsTeamsConfig(),
     asana: buildAsanaConfig(),
     customWebhook: buildCustomWebhookConfig(),
-    ...overrides,
-    __typename: 'DestinationConfig',
   };
 };
 
@@ -443,7 +419,6 @@ export const buildDestinationConfigInput = (
     msTeams: buildMsTeamsConfigInput(),
     asana: buildAsanaConfigInput(),
     customWebhook: buildCustomWebhookConfigInput(),
-    ...overrides,
   };
 };
 
@@ -454,17 +429,15 @@ export const buildDestinationInput = (overrides?: Partial<DestinationInput>): De
     outputConfig: buildDestinationConfigInput(),
     outputType: 'New Hampshire',
     defaultForSeverity: [SeverityEnum.Critical],
-    ...overrides,
   };
 };
 
 export const buildGeneralSettings = (overrides?: Partial<GeneralSettings>): GeneralSettings => {
   return {
+    __typename: 'GeneralSettings',
     displayName: 'Rustic',
     email: 'tertiary',
     errorReportingConsent: false,
-    ...overrides,
-    __typename: 'GeneralSettings',
   };
 };
 
@@ -473,7 +446,6 @@ export const buildGetAlertInput = (overrides?: Partial<GetAlertInput>): GetAlert
     alertId: '7dccc616-0ef2-4b9e-87ed-63b936c53e09',
     eventsPageSize: 385,
     eventsExclusiveStartKey: 'Sleek',
-    ...overrides,
   };
 };
 
@@ -485,7 +457,6 @@ export const buildGetComplianceIntegrationTemplateInput = (
     integrationLabel: '24 hour',
     remediationEnabled: true,
     cweEnabled: true,
-    ...overrides,
   };
 };
 
@@ -495,7 +466,6 @@ export const buildGetGlobalPythonModuleInput = (
   return {
     globalId: '0f341f61-9f20-4e1f-b8e0-5854a50dc594',
     versionId: '9fe39f4b-d18f-4a21-99a0-eeef9b77cb11',
-    ...overrides,
   };
 };
 
@@ -503,14 +473,12 @@ export const buildGetPolicyInput = (overrides?: Partial<GetPolicyInput>): GetPol
   return {
     policyId: 'f6a78c98-6d80-46bf-89e7-3df8975184a0',
     versionId: 'd394a64d-9476-44de-a8ab-7f8666cd4c8c',
-    ...overrides,
   };
 };
 
 export const buildGetResourceInput = (overrides?: Partial<GetResourceInput>): GetResourceInput => {
   return {
     resourceId: '913c64fb-c124-4dce-9757-51846aa5f4df',
-    ...overrides,
   };
 };
 
@@ -518,7 +486,6 @@ export const buildGetRuleInput = (overrides?: Partial<GetRuleInput>): GetRuleInp
   return {
     ruleId: '3b255df9-8276-4060-8f0c-cca418b158d6',
     versionId: '1b6ea7a4-7775-4b65-8315-89b764428571',
-    ...overrides,
   };
 };
 
@@ -532,16 +499,14 @@ export const buildGetS3LogIntegrationTemplateInput = (
     s3Prefix: 'optical',
     kmsKey: 'Books',
     logTypes: ['Borders'],
-    ...overrides,
   };
 };
 
 export const buildGithubConfig = (overrides?: Partial<GithubConfig>): GithubConfig => {
   return {
+    __typename: 'GithubConfig',
     repoName: 'quantify',
     token: 'International',
-    ...overrides,
-    __typename: 'GithubConfig',
   };
 };
 
@@ -551,7 +516,6 @@ export const buildGithubConfigInput = (
   return {
     repoName: 'Route',
     token: 'Hat',
-    ...overrides,
   };
 };
 
@@ -559,13 +523,12 @@ export const buildGlobalPythonModule = (
   overrides?: Partial<GlobalPythonModule>
 ): GlobalPythonModule => {
   return {
+    __typename: 'GlobalPythonModule',
     body: '5th generation',
     description: 'models',
     id: '42f3a049-dced-4b20-925c-a8e861b2d2d0',
     createdAt: '2020-02-07T06:16:18.558Z',
     lastModified: '2020-01-27T02:38:32.897Z',
-    ...overrides,
-    __typename: 'GlobalPythonModule',
   };
 };
 
@@ -573,10 +536,9 @@ export const buildIntegrationItemHealthStatus = (
   overrides?: Partial<IntegrationItemHealthStatus>
 ): IntegrationItemHealthStatus => {
   return {
+    __typename: 'IntegrationItemHealthStatus',
     healthy: false,
     errorMessage: 'Nebraska',
-    ...overrides,
-    __typename: 'IntegrationItemHealthStatus',
   };
 };
 
@@ -584,10 +546,9 @@ export const buildIntegrationTemplate = (
   overrides?: Partial<IntegrationTemplate>
 ): IntegrationTemplate => {
   return {
+    __typename: 'IntegrationTemplate',
     body: 'bandwidth',
     stackName: 'Handcrafted Granite Mouse',
-    ...overrides,
-    __typename: 'IntegrationTemplate',
   };
 };
 
@@ -596,20 +557,18 @@ export const buildInviteUserInput = (overrides?: Partial<InviteUserInput>): Invi
     givenName: 'system-worthy',
     familyName: 'copy',
     email: 'Gennaro_Kerluke71@gmail.com',
-    ...overrides,
   };
 };
 
 export const buildJiraConfig = (overrides?: Partial<JiraConfig>): JiraConfig => {
   return {
+    __typename: 'JiraConfig',
     orgDomain: 'deposit',
     projectKey: 'Investor',
     userName: 'payment',
     apiKey: 'bluetooth',
     assigneeId: 'bleeding-edge',
     issueType: 'Iowa',
-    ...overrides,
-    __typename: 'JiraConfig',
   };
 };
 
@@ -621,7 +580,6 @@ export const buildJiraConfigInput = (overrides?: Partial<JiraConfigInput>): Jira
     apiKey: 'Sleek Cotton Car',
     assigneeId: 'Virgin Islands, British',
     issueType: 'strategic',
-    ...overrides,
   };
 };
 
@@ -640,7 +598,6 @@ export const buildListAlertsInput = (overrides?: Partial<ListAlertsInput>): List
     eventCountMax: 911,
     sortBy: ListAlertsSortFieldsEnum.CreatedAt,
     sortDir: SortDirEnum.Descending,
-    ...overrides,
   };
 };
 
@@ -648,10 +605,9 @@ export const buildListAlertsResponse = (
   overrides?: Partial<ListAlertsResponse>
 ): ListAlertsResponse => {
   return {
+    __typename: 'ListAlertsResponse',
     alertSummaries: [buildAlertSummary()],
     lastEvaluatedKey: 'Arkansas',
-    ...overrides,
-    __typename: 'ListAlertsResponse',
   };
 };
 
@@ -659,12 +615,11 @@ export const buildListComplianceItemsResponse = (
   overrides?: Partial<ListComplianceItemsResponse>
 ): ListComplianceItemsResponse => {
   return {
+    __typename: 'ListComplianceItemsResponse',
     items: [buildComplianceItem()],
     paging: buildPagingData(),
     status: ComplianceStatusEnum.Fail,
     totals: buildActiveSuppressCount(),
-    ...overrides,
-    __typename: 'ListComplianceItemsResponse',
   };
 };
 
@@ -677,7 +632,6 @@ export const buildListGlobalPythonModuleInput = (
     sortDir: SortDirEnum.Descending,
     pageSize: 444,
     page: 404,
-    ...overrides,
   };
 };
 
@@ -685,10 +639,9 @@ export const buildListGlobalPythonModulesResponse = (
   overrides?: Partial<ListGlobalPythonModulesResponse>
 ): ListGlobalPythonModulesResponse => {
   return {
+    __typename: 'ListGlobalPythonModulesResponse',
     paging: buildPagingData(),
     globals: [buildGlobalPythonModule()],
-    ...overrides,
-    __typename: 'ListGlobalPythonModulesResponse',
   };
 };
 
@@ -707,7 +660,6 @@ export const buildListPoliciesInput = (
     sortDir: SortDirEnum.Ascending,
     pageSize: 50,
     page: 254,
-    ...overrides,
   };
 };
 
@@ -715,10 +667,9 @@ export const buildListPoliciesResponse = (
   overrides?: Partial<ListPoliciesResponse>
 ): ListPoliciesResponse => {
   return {
+    __typename: 'ListPoliciesResponse',
     paging: buildPagingData(),
     policies: [buildPolicySummary()],
-    ...overrides,
-    __typename: 'ListPoliciesResponse',
   };
 };
 
@@ -735,7 +686,6 @@ export const buildListResourcesInput = (
     sortDir: SortDirEnum.Descending,
     pageSize: 228,
     page: 643,
-    ...overrides,
   };
 };
 
@@ -743,10 +693,9 @@ export const buildListResourcesResponse = (
   overrides?: Partial<ListResourcesResponse>
 ): ListResourcesResponse => {
   return {
+    __typename: 'ListResourcesResponse',
     paging: buildPagingData(),
     resources: [buildResourceSummary()],
-    ...overrides,
-    __typename: 'ListResourcesResponse',
   };
 };
 
@@ -761,7 +710,6 @@ export const buildListRulesInput = (overrides?: Partial<ListRulesInput>): ListRu
     sortDir: SortDirEnum.Ascending,
     pageSize: 19,
     page: 323,
-    ...overrides,
   };
 };
 
@@ -769,10 +717,9 @@ export const buildListRulesResponse = (
   overrides?: Partial<ListRulesResponse>
 ): ListRulesResponse => {
   return {
+    __typename: 'ListRulesResponse',
     paging: buildPagingData(),
     rules: [buildRuleSummary()],
-    ...overrides,
-    __typename: 'ListRulesResponse',
   };
 };
 
@@ -783,15 +730,13 @@ export const buildModifyGlobalPythonModuleInput = (
     description: 'Tools',
     id: 'af4a9975-adcf-4efc-b667-f59f6214197c',
     body: 'evolve',
-    ...overrides,
   };
 };
 
 export const buildMsTeamsConfig = (overrides?: Partial<MsTeamsConfig>): MsTeamsConfig => {
   return {
-    webhookURL: 'eyeballs',
-    ...overrides,
     __typename: 'MsTeamsConfig',
+    webhookURL: 'eyeballs',
   };
 };
 
@@ -800,15 +745,13 @@ export const buildMsTeamsConfigInput = (
 ): MsTeamsConfigInput => {
   return {
     webhookURL: 'USB',
-    ...overrides,
   };
 };
 
 export const buildOpsgenieConfig = (overrides?: Partial<OpsgenieConfig>): OpsgenieConfig => {
   return {
-    apiKey: 'IB',
-    ...overrides,
     __typename: 'OpsgenieConfig',
+    apiKey: 'IB',
   };
 };
 
@@ -817,7 +760,6 @@ export const buildOpsgenieConfigInput = (
 ): OpsgenieConfigInput => {
   return {
     apiKey: 'hacking',
-    ...overrides,
   };
 };
 
@@ -825,13 +767,12 @@ export const buildOrganizationReportBySeverity = (
   overrides?: Partial<OrganizationReportBySeverity>
 ): OrganizationReportBySeverity => {
   return {
+    __typename: 'OrganizationReportBySeverity',
     info: buildComplianceStatusCounts(),
     low: buildComplianceStatusCounts(),
     medium: buildComplianceStatusCounts(),
     high: buildComplianceStatusCounts(),
     critical: buildComplianceStatusCounts(),
-    ...overrides,
-    __typename: 'OrganizationReportBySeverity',
   };
 };
 
@@ -840,7 +781,6 @@ export const buildOrganizationStatsInput = (
 ): OrganizationStatsInput => {
   return {
     limitTopFailing: 818,
-    ...overrides,
   };
 };
 
@@ -848,20 +788,18 @@ export const buildOrganizationStatsResponse = (
   overrides?: Partial<OrganizationStatsResponse>
 ): OrganizationStatsResponse => {
   return {
+    __typename: 'OrganizationStatsResponse',
     appliedPolicies: buildOrganizationReportBySeverity(),
     scannedResources: buildScannedResources(),
     topFailingPolicies: [buildPolicySummary()],
     topFailingResources: [buildResourceSummary()],
-    ...overrides,
-    __typename: 'OrganizationStatsResponse',
   };
 };
 
 export const buildPagerDutyConfig = (overrides?: Partial<PagerDutyConfig>): PagerDutyConfig => {
   return {
-    integrationKey: 'transform',
-    ...overrides,
     __typename: 'PagerDutyConfig',
+    integrationKey: 'transform',
   };
 };
 
@@ -870,17 +808,15 @@ export const buildPagerDutyConfigInput = (
 ): PagerDutyConfigInput => {
   return {
     integrationKey: 'Soft',
-    ...overrides,
   };
 };
 
 export const buildPagingData = (overrides?: Partial<PagingData>): PagingData => {
   return {
+    __typename: 'PagingData',
     thisPage: 289,
     totalPages: 812,
     totalItems: 394,
-    ...overrides,
-    __typename: 'PagingData',
   };
 };
 
@@ -894,12 +830,12 @@ export const buildPoliciesForResourceInput = (
     suppressed: false,
     pageSize: 282,
     page: 906,
-    ...overrides,
   };
 };
 
 export const buildPolicyDetails = (overrides?: Partial<PolicyDetails>): PolicyDetails => {
   return {
+    __typename: 'PolicyDetails',
     autoRemediationId: '63631269-b304-4865-b222-bf96d4b3162c',
     autoRemediationParameters: '"bar"',
     body: 'card',
@@ -921,13 +857,12 @@ export const buildPolicyDetails = (overrides?: Partial<PolicyDetails>): PolicyDe
     tags: ['success'],
     tests: [buildPolicyUnitTest()],
     versionId: 'ca391fc7-f186-4bcb-b717-3e34cb330d83',
-    ...overrides,
-    __typename: 'PolicyDetails',
   };
 };
 
 export const buildPolicySummary = (overrides?: Partial<PolicySummary>): PolicySummary => {
   return {
+    __typename: 'PolicySummary',
     autoRemediationId: '43a2278e-67bf-4941-91f8-7fbe8503562c',
     autoRemediationParameters: '"car"',
     suppressions: ['Senior'],
@@ -939,18 +874,15 @@ export const buildPolicySummary = (overrides?: Partial<PolicySummary>): PolicySu
     resourceTypes: ['EXE'],
     severity: SeverityEnum.Critical,
     tags: ['navigating'],
-    ...overrides,
-    __typename: 'PolicySummary',
   };
 };
 
 export const buildPolicyUnitTest = (overrides?: Partial<PolicyUnitTest>): PolicyUnitTest => {
   return {
+    __typename: 'PolicyUnitTest',
     expectedResult: true,
     name: 'Table',
     resource: 'deposit',
-    ...overrides,
-    __typename: 'PolicyUnitTest',
   };
 };
 
@@ -958,10 +890,9 @@ export const buildPolicyUnitTestError = (
   overrides?: Partial<PolicyUnitTestError>
 ): PolicyUnitTestError => {
   return {
+    __typename: 'PolicyUnitTestError',
     name: 'override',
     errorMessage: 'Frozen',
-    ...overrides,
-    __typename: 'PolicyUnitTestError',
   };
 };
 
@@ -972,7 +903,6 @@ export const buildPolicyUnitTestInput = (
     expectedResult: false,
     name: 'application',
     resource: 'Right-sized',
-    ...overrides,
   };
 };
 
@@ -982,12 +912,12 @@ export const buildRemediateResourceInput = (
   return {
     policyId: '9f991f1d-dcc4-4ce1-8490-335f34dd4da9',
     resourceId: '17cb94ba-4961-439a-9cbf-c305e26019da',
-    ...overrides,
   };
 };
 
 export const buildResourceDetails = (overrides?: Partial<ResourceDetails>): ResourceDetails => {
   return {
+    __typename: 'ResourceDetails',
     attributes: '"car"',
     deleted: false,
     expiresAt: 969,
@@ -996,8 +926,6 @@ export const buildResourceDetails = (overrides?: Partial<ResourceDetails>): Reso
     complianceStatus: ComplianceStatusEnum.Pass,
     lastModified: '2020-04-22T13:19:24.499Z',
     type: 'Ball',
-    ...overrides,
-    __typename: 'ResourceDetails',
   };
 };
 
@@ -1010,25 +938,24 @@ export const buildResourcesForPolicyInput = (
     suppressed: true,
     pageSize: 137,
     page: 354,
-    ...overrides,
   };
 };
 
 export const buildResourceSummary = (overrides?: Partial<ResourceSummary>): ResourceSummary => {
   return {
+    __typename: 'ResourceSummary',
     id: '9642570b-3380-417d-b139-6e9d3e887b08',
     integrationId: 'bb97638e-f07d-4ca1-96f6-206967b7c092',
     complianceStatus: ComplianceStatusEnum.Pass,
     deleted: false,
     lastModified: '2020-09-27T23:50:08.966Z',
     type: 'Illinois',
-    ...overrides,
-    __typename: 'ResourceSummary',
   };
 };
 
 export const buildRuleDetails = (overrides?: Partial<RuleDetails>): RuleDetails => {
   return {
+    __typename: 'RuleDetails',
     body: 'Shoes',
     createdAt: '2020-08-03T05:47:47.012Z',
     createdBy: '6c3e570b-c621-4e3a-aab1-8a21e9aa4d17',
@@ -1047,13 +974,12 @@ export const buildRuleDetails = (overrides?: Partial<RuleDetails>): RuleDetails 
     tags: ['digital'],
     tests: [buildPolicyUnitTest()],
     versionId: 'cd730243-e772-446f-b820-ff796b83a51f',
-    ...overrides,
-    __typename: 'RuleDetails',
   };
 };
 
 export const buildRuleSummary = (overrides?: Partial<RuleSummary>): RuleSummary => {
   return {
+    __typename: 'RuleSummary',
     displayName: 'array',
     enabled: false,
     id: '4ce135b7-005f-4a98-8a69-9b9d3b372bdb',
@@ -1061,13 +987,12 @@ export const buildRuleSummary = (overrides?: Partial<RuleSummary>): RuleSummary 
     logTypes: ['AI'],
     severity: SeverityEnum.Info,
     tags: ['Virginia'],
-    ...overrides,
-    __typename: 'RuleSummary',
   };
 };
 
 export const buildS3LogIntegration = (overrides?: Partial<S3LogIntegration>): S3LogIntegration => {
   return {
+    __typename: 'S3LogIntegration',
     awsAccountId: 'Bedfordshire',
     createdAtTime: '2020-07-03T08:10:02.259Z',
     createdBy: 'f135f3dc-9654-4752-b1a9-c20f98d87e48',
@@ -1081,8 +1006,6 @@ export const buildS3LogIntegration = (overrides?: Partial<S3LogIntegration>): S3
     logTypes: ['strategize'],
     health: buildS3LogIntegrationHealth(),
     stackName: 'River',
-    ...overrides,
-    __typename: 'S3LogIntegration',
   };
 };
 
@@ -1090,19 +1013,17 @@ export const buildS3LogIntegrationHealth = (
   overrides?: Partial<S3LogIntegrationHealth>
 ): S3LogIntegrationHealth => {
   return {
+    __typename: 'S3LogIntegrationHealth',
     processingRoleStatus: buildIntegrationItemHealthStatus(),
     s3BucketStatus: buildIntegrationItemHealthStatus(),
     kmsKeyStatus: buildIntegrationItemHealthStatus(),
-    ...overrides,
-    __typename: 'S3LogIntegrationHealth',
   };
 };
 
 export const buildScannedResources = (overrides?: Partial<ScannedResources>): ScannedResources => {
   return {
-    byType: [buildScannedResourceStats()],
-    ...overrides,
     __typename: 'ScannedResources',
+    byType: [buildScannedResourceStats()],
   };
 };
 
@@ -1110,55 +1031,48 @@ export const buildScannedResourceStats = (
   overrides?: Partial<ScannedResourceStats>
 ): ScannedResourceStats => {
   return {
+    __typename: 'ScannedResourceStats',
     count: buildComplianceStatusCounts(),
     type: 'proactive',
-    ...overrides,
-    __typename: 'ScannedResourceStats',
   };
 };
 
 export const buildSlackConfig = (overrides?: Partial<SlackConfig>): SlackConfig => {
   return {
-    webhookURL: 'Manat',
-    ...overrides,
     __typename: 'SlackConfig',
+    webhookURL: 'Manat',
   };
 };
 
 export const buildSlackConfigInput = (overrides?: Partial<SlackConfigInput>): SlackConfigInput => {
   return {
     webhookURL: 'Prairie',
-    ...overrides,
   };
 };
 
 export const buildSnsConfig = (overrides?: Partial<SnsConfig>): SnsConfig => {
   return {
-    topicArn: 'Outdoors',
-    ...overrides,
     __typename: 'SnsConfig',
+    topicArn: 'Outdoors',
   };
 };
 
 export const buildSnsConfigInput = (overrides?: Partial<SnsConfigInput>): SnsConfigInput => {
   return {
     topicArn: 'algorithm',
-    ...overrides,
   };
 };
 
 export const buildSqsConfig = (overrides?: Partial<SqsConfig>): SqsConfig => {
   return {
-    queueUrl: 'Engineer',
-    ...overrides,
     __typename: 'SqsConfig',
+    queueUrl: 'Engineer',
   };
 };
 
 export const buildSqsConfigInput = (overrides?: Partial<SqsConfigInput>): SqsConfigInput => {
   return {
     queueUrl: 'Seamless',
-    ...overrides,
   };
 };
 
@@ -1168,7 +1082,6 @@ export const buildSuppressPoliciesInput = (
   return {
     policyIds: ['b2796f03-2f72-4717-a45b-eea5c8b2943f'],
     resourcePatterns: ['Cuban Peso Peso Convertible'],
-    ...overrides,
   };
 };
 
@@ -1178,7 +1091,6 @@ export const buildTestPolicyInput = (overrides?: Partial<TestPolicyInput>): Test
     resourceTypes: ['Automotive'],
     analysisType: AnalysisTypeEnum.Rule,
     tests: [buildPolicyUnitTestInput()],
-    ...overrides,
   };
 };
 
@@ -1186,12 +1098,11 @@ export const buildTestPolicyResponse = (
   overrides?: Partial<TestPolicyResponse>
 ): TestPolicyResponse => {
   return {
+    __typename: 'TestPolicyResponse',
     testSummary: false,
     testsPassed: ['Producer'],
     testsFailed: ['Granite'],
     testsErrored: [buildPolicyUnitTestError()],
-    ...overrides,
-    __typename: 'TestPolicyResponse',
   };
 };
 
@@ -1203,7 +1114,6 @@ export const buildUpdateComplianceIntegrationInput = (
     integrationLabel: 'holistic',
     cweEnabled: false,
     remediationEnabled: false,
-    ...overrides,
   };
 };
 
@@ -1214,7 +1124,6 @@ export const buildUpdateGeneralSettingsInput = (
     displayName: 'Borders',
     email: 'olive',
     errorReportingConsent: true,
-    ...overrides,
   };
 };
 
@@ -1237,7 +1146,6 @@ export const buildUpdatePolicyInput = (
     suppressions: ['green'],
     tags: ['transmit'],
     tests: [buildPolicyUnitTestInput()],
-    ...overrides,
   };
 };
 
@@ -1256,7 +1164,6 @@ export const buildUpdateRuleInput = (overrides?: Partial<UpdateRuleInput>): Upda
     severity: SeverityEnum.High,
     tags: ['Senior'],
     tests: [buildPolicyUnitTestInput()],
-    ...overrides,
   };
 };
 
@@ -1270,7 +1177,6 @@ export const buildUpdateS3LogIntegrationInput = (
     kmsKey: 'deposit',
     s3Prefix: 'Keyboard',
     logTypes: ['Dynamic'],
-    ...overrides,
   };
 };
 
@@ -1280,7 +1186,6 @@ export const buildUpdateUserInput = (overrides?: Partial<UpdateUserInput>): Upda
     givenName: 'Personal Loan Account',
     familyName: 'connecting',
     email: 'Eldon.Gusikowski@hotmail.com',
-    ...overrides,
   };
 };
 
@@ -1289,7 +1194,6 @@ export const buildUploadPoliciesInput = (
 ): UploadPoliciesInput => {
   return {
     data: 'back-end',
-    ...overrides,
   };
 };
 
@@ -1297,26 +1201,24 @@ export const buildUploadPoliciesResponse = (
   overrides?: Partial<UploadPoliciesResponse>
 ): UploadPoliciesResponse => {
   return {
+    __typename: 'UploadPoliciesResponse',
     totalPolicies: 102,
     newPolicies: 971,
     modifiedPolicies: 829,
     totalRules: 916,
     newRules: 898,
     modifiedRules: 463,
-    ...overrides,
-    __typename: 'UploadPoliciesResponse',
   };
 };
 
 export const buildUser = (overrides?: Partial<User>): User => {
   return {
+    __typename: 'User',
     givenName: 'function',
     familyName: 'Future-proofed',
     id: 'b5756f00-51a6-422a-9a7d-c13ee6a63750',
     email: 'Mac13@yahoo.com',
     createdAt: 1578015894449,
     status: 'experiences',
-    ...overrides,
-    __typename: 'User',
   };
 };
