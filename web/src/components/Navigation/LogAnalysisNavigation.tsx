@@ -30,20 +30,7 @@ const LogAnalysisNavigation: React.FC = () => {
       </Heading>
       <Flex direction="column" as="ul">
         <FadeInTrail as="li">
-          <React.Fragment>
-            <NavLink icon="dashboard-alt" to={urls.logAnalysis.overview()} label="Overview" />
-            <Box
-              as="span"
-              position="absolute"
-              top={21}
-              right={42}
-              color="blue-600"
-              fontSize="x-small"
-              pointerEvents="none"
-            >
-              Soon
-            </Box>
-          </React.Fragment>
+          <NavLink icon="dashboard-alt" to={urls.logAnalysis.overview()} label="Overview" />
           <NavLink icon="rule" to={urls.logAnalysis.rules.list()} label="Rules" />
           <NavLink icon="alert" to={urls.logAnalysis.alerts.list()} label="Alerts" />
           <NavLink icon="log-source" to={urls.logAnalysis.sources.list()} label="Sources" />
