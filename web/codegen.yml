@@ -23,24 +23,6 @@ generates:
     plugins:
       - typescript
       - typescript-resolvers
-      - add: |
-          /**
-           * Panther is a Cloud-Native SIEM for the Modern Security Team.
-           * Copyright (C) 2020 Panther Labs Inc
-           *
-           * This program is free software: you can redistribute it and/or modify
-           * it under the terms of the GNU Affero General Public License as
-           * published by the Free Software Foundation, either version 3 of the
-           * License, or (at your option) any later version.
-           *
-           * This program is distributed in the hope that it will be useful,
-           * but WITHOUT ANY WARRANTY; without even the implied warranty of
-           * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-           * GNU Affero General Public License for more details.
-           *
-           * You should have received a copy of the GNU Affero General Public License
-           * along with this program.  If not, see <https://www.gnu.org/licenses/>.
-           */
 
     config:
       scalars:
@@ -52,17 +34,8 @@ generates:
 
   web/__tests__/__mocks__/builders.generated.ts:
     plugins:
-      - graphql-codegen-typescript-mock-data:
+      - web/__tests__/codegen/artifacts/mockGraphqlResourcesPlugin.js:
           typesFile: ../../__generated__/schema.tsx
-          addTypename: true
-          typenames: keep
-          prefix: build
-          scalars:
-            AWSTimestamp: unix_time
-            AWSEmail: email
-            AWSPhone: phone
-            AWSDateTime: date
-            AWSJSON: string
 
   web/src/:
     documents: web/**/*.graphql
@@ -72,27 +45,7 @@ generates:
     plugins:
       - typescript-operations
       - typescript-react-apollo
-      - web/__tests__/codegen/mockGraphqlOperationsPlugin.js
-      - add: |
-          /**
-           * Panther is a Cloud-Native SIEM for the Modern Security Team.
-           * Copyright (C) 2020 Panther Labs Inc
-           *
-           * This program is free software: you can redistribute it and/or modify
-           * it under the terms of the GNU Affero General Public License as
-           * published by the Free Software Foundation, either version 3 of the
-           * License, or (at your option) any later version.
-           *
-           * This program is distributed in the hope that it will be useful,
-           * but WITHOUT ANY WARRANTY; without even the implied warranty of
-           * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-           * GNU Affero General Public License for more details.
-           *
-           * You should have received a copy of the GNU Affero General Public License
-           * along with this program.  If not, see <https://www.gnu.org/licenses/>.
-           */
-
-          /* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
+      - web/__tests__/codegen/artifacts/mockGraphqlOperationsPlugin.js
     config:
       apolloReactHooksImportFrom: '@apollo/client'
       apolloReactCommonImportFrom: '@apollo/client'

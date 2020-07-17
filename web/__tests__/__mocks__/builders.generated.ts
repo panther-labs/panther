@@ -16,7 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable @typescript-eslint/no-use-before-define,@typescript-eslint/no-unused-vars,no-prototype-builtins */
 import {
   ActiveSuppressCount,
   AddComplianceIntegrationInput,
@@ -128,20 +127,16 @@ import {
   SeverityEnum,
   SortDirEnum,
 } from '../../__generated__/schema';
+import { generateRandomArray, faker } from 'test-utils';
 
 export const buildActiveSuppressCount = (
   overrides?: Partial<ActiveSuppressCount>
 ): ActiveSuppressCount => {
   return {
+    active: buildComplianceStatusCounts(),
+    suppressed: buildComplianceStatusCounts(),
+    ...overrides,
     __typename: 'ActiveSuppressCount',
-    active:
-      overrides && overrides.hasOwnProperty('active')
-        ? overrides.active!
-        : buildComplianceStatusCounts(),
-    suppressed:
-      overrides && overrides.hasOwnProperty('suppressed')
-        ? overrides.suppressed!
-        : buildComplianceStatusCounts(),
   };
 };
 
@@ -149,17 +144,11 @@ export const buildAddComplianceIntegrationInput = (
   overrides?: Partial<AddComplianceIntegrationInput>
 ): AddComplianceIntegrationInput => {
   return {
-    awsAccountId:
-      overrides && overrides.hasOwnProperty('awsAccountId') ? overrides.awsAccountId! : 'quo',
-    integrationLabel:
-      overrides && overrides.hasOwnProperty('integrationLabel')
-        ? overrides.integrationLabel!
-        : 'harum',
-    remediationEnabled:
-      overrides && overrides.hasOwnProperty('remediationEnabled')
-        ? overrides.remediationEnabled!
-        : true,
-    cweEnabled: overrides && overrides.hasOwnProperty('cweEnabled') ? overrides.cweEnabled! : true,
+    awsAccountId: 'protocol',
+    integrationLabel: 'withdrawal',
+    remediationEnabled: false,
+    cweEnabled: false,
+    ...overrides,
   };
 };
 
@@ -167,90 +156,50 @@ export const buildAddGlobalPythonModuleInput = (
   overrides?: Partial<AddGlobalPythonModuleInput>
 ): AddGlobalPythonModuleInput => {
   return {
-    id:
-      overrides && overrides.hasOwnProperty('id')
-        ? overrides.id!
-        : '7b0f1c64-f650-48e8-bbcf-27c23c6cf854',
-    description:
-      overrides && overrides.hasOwnProperty('description') ? overrides.description! : 'ut',
-    body: overrides && overrides.hasOwnProperty('body') ? overrides.body! : 'molestiae',
+    id: '6b0f1c64-e650-48e8-abcf-37c23c6cf854',
+    description: 'Dynamic',
+    body: 'methodologies',
+    ...overrides,
   };
 };
 
 export const buildAddPolicyInput = (overrides?: Partial<AddPolicyInput>): AddPolicyInput => {
   return {
-    autoRemediationId:
-      overrides && overrides.hasOwnProperty('autoRemediationId')
-        ? overrides.autoRemediationId!
-        : '3ddec795-5cf0-445d-8800-5d02470180f2',
-    autoRemediationParameters:
-      overrides && overrides.hasOwnProperty('autoRemediationParameters')
-        ? overrides.autoRemediationParameters!
-        : 'ea reprehenderit voluptatem amet ipsa incidunt reiciendis',
-    body: overrides && overrides.hasOwnProperty('body') ? overrides.body! : 'ab',
-    description:
-      overrides && overrides.hasOwnProperty('description') ? overrides.description! : 'omnis',
-    displayName:
-      overrides && overrides.hasOwnProperty('displayName') ? overrides.displayName! : 'nihil',
-    enabled: overrides && overrides.hasOwnProperty('enabled') ? overrides.enabled! : false,
-    id:
-      overrides && overrides.hasOwnProperty('id')
-        ? overrides.id!
-        : '6612f488-d028-4e4f-804f-17e707ce7bdd',
-    outputIds:
-      overrides && overrides.hasOwnProperty('outputIds')
-        ? overrides.outputIds!
-        : ['06ca6d99-8a12-404b-8ef5-8e522075db0d'],
-    reference:
-      overrides && overrides.hasOwnProperty('reference') ? overrides.reference! : 'voluptatem',
-    resourceTypes:
-      overrides && overrides.hasOwnProperty('resourceTypes')
-        ? overrides.resourceTypes!
-        : ['labore'],
-    runbook: overrides && overrides.hasOwnProperty('runbook') ? overrides.runbook! : 'rerum',
-    severity:
-      overrides && overrides.hasOwnProperty('severity') ? overrides.severity! : SeverityEnum.Info,
-    suppressions:
-      overrides && overrides.hasOwnProperty('suppressions') ? overrides.suppressions! : ['nobis'],
-    tags: overrides && overrides.hasOwnProperty('tags') ? overrides.tags! : ['molestiae'],
-    tests:
-      overrides && overrides.hasOwnProperty('tests')
-        ? overrides.tests!
-        : [buildPolicyUnitTestInput()],
+    autoRemediationId: '2ddec795-4cf0-445d-b800-4d02470180f2',
+    autoRemediationParameters: '"bar"',
+    body: 'Fantastic Concrete Table',
+    description: 'Qatar',
+    displayName: 'matrix',
+    enabled: true,
+    id: '7612f488-c028-4e4f-904f-07e707ce7bdd',
+    outputIds: ['16ca6d99-9a12-404b-aef5-9e522075db0d'],
+    reference: 'Clothing',
+    resourceTypes: ['Digitized'],
+    runbook: 'HTTP',
+    severity: SeverityEnum.High,
+    suppressions: ['Tunisian Dinar'],
+    tags: ['Security'],
+    tests: [buildPolicyUnitTestInput()],
+    ...overrides,
   };
 };
 
 export const buildAddRuleInput = (overrides?: Partial<AddRuleInput>): AddRuleInput => {
   return {
-    body: overrides && overrides.hasOwnProperty('body') ? overrides.body! : 'qui',
-    dedupPeriodMinutes:
-      overrides && overrides.hasOwnProperty('dedupPeriodMinutes')
-        ? overrides.dedupPeriodMinutes!
-        : 4288,
-    description:
-      overrides && overrides.hasOwnProperty('description') ? overrides.description! : 'adipisci',
-    displayName:
-      overrides && overrides.hasOwnProperty('displayName') ? overrides.displayName! : 'laborum',
-    enabled: overrides && overrides.hasOwnProperty('enabled') ? overrides.enabled! : false,
-    id:
-      overrides && overrides.hasOwnProperty('id')
-        ? overrides.id!
-        : 'e9463be1-5ef2-4950-a272-21540bb0cff3',
-    logTypes:
-      overrides && overrides.hasOwnProperty('logTypes') ? overrides.logTypes! : ['suscipit'],
-    outputIds:
-      overrides && overrides.hasOwnProperty('outputIds')
-        ? overrides.outputIds!
-        : ['1f6aac24-95db-4208-9f04-4f9cae908a5b'],
-    reference: overrides && overrides.hasOwnProperty('reference') ? overrides.reference! : 'et',
-    runbook: overrides && overrides.hasOwnProperty('runbook') ? overrides.runbook! : 'illo',
-    severity:
-      overrides && overrides.hasOwnProperty('severity') ? overrides.severity! : SeverityEnum.Info,
-    tags: overrides && overrides.hasOwnProperty('tags') ? overrides.tags! : ['praesentium'],
-    tests:
-      overrides && overrides.hasOwnProperty('tests')
-        ? overrides.tests!
-        : [buildPolicyUnitTestInput()],
+    body: 'microchip',
+    dedupPeriodMinutes: 429,
+    description: 'purple',
+    displayName: 'Investment Account',
+    enabled: true,
+    id: 'f9463be1-4ef2-4950-b272-31540bb0cff3',
+    logTypes: ['end-to-end'],
+    outputIds: ['0f6aac24-85db-4208-9f04-5f9cae908a5b'],
+    reference: 'mobile',
+    runbook: 'Practical Granite Salad',
+    severity: SeverityEnum.Medium,
+    tags: ['Way'],
+    tests: [buildPolicyUnitTestInput()],
+    ...overrides,
   };
 };
 
@@ -258,93 +207,60 @@ export const buildAddS3LogIntegrationInput = (
   overrides?: Partial<AddS3LogIntegrationInput>
 ): AddS3LogIntegrationInput => {
   return {
-    awsAccountId:
-      overrides && overrides.hasOwnProperty('awsAccountId') ? overrides.awsAccountId! : 'non',
-    integrationLabel:
-      overrides && overrides.hasOwnProperty('integrationLabel')
-        ? overrides.integrationLabel!
-        : 'et',
-    s3Bucket: overrides && overrides.hasOwnProperty('s3Bucket') ? overrides.s3Bucket! : 'illum',
-    kmsKey: overrides && overrides.hasOwnProperty('kmsKey') ? overrides.kmsKey! : 'et',
-    s3Prefix: overrides && overrides.hasOwnProperty('s3Prefix') ? overrides.s3Prefix! : 'eum',
-    logTypes: overrides && overrides.hasOwnProperty('logTypes') ? overrides.logTypes! : ['qui'],
+    awsAccountId: 'Ireland',
+    integrationLabel: 'payment',
+    s3Bucket: 'backing up',
+    kmsKey: 'Personal Loan Account',
+    s3Prefix: 'reintermediate',
+    logTypes: ['expedite'],
+    ...overrides,
   };
 };
 
 export const buildAlertDetails = (overrides?: Partial<AlertDetails>): AlertDetails => {
   return {
+    alertId: '2c5aa76d-eb43-49f0-a65c-50e4daa756a4',
+    ruleId: '9ad2c6da-417d-414f-a3e5-7959acdeaa9e',
+    title: 'Steel',
+    creationTime: '2020-05-13T11:40:31.054Z',
+    updateTime: '2019-09-07T14:28:37.099Z',
+    eventsMatched: 516,
+    events: ['"bar"'],
+    eventsLastEvaluatedKey: 'Accountability',
+    dedupString: 'Auto Loan Account',
+    ...overrides,
     __typename: 'AlertDetails',
-    alertId:
-      overrides && overrides.hasOwnProperty('alertId')
-        ? overrides.alertId!
-        : '3c5aa76d-fb43-49f0-b65c-40e4daa756a4',
-    ruleId:
-      overrides && overrides.hasOwnProperty('ruleId')
-        ? overrides.ruleId!
-        : '8ad2c6da-517d-414f-b3e5-6959acdeaa9e',
-    title: overrides && overrides.hasOwnProperty('title') ? overrides.title! : 'fugit',
-    creationTime:
-      overrides && overrides.hasOwnProperty('creationTime')
-        ? overrides.creationTime!
-        : '1978-03-29',
-    updateTime:
-      overrides && overrides.hasOwnProperty('updateTime') ? overrides.updateTime! : '2009-11-02',
-    eventsMatched:
-      overrides && overrides.hasOwnProperty('eventsMatched') ? overrides.eventsMatched! : 5163,
-    events:
-      overrides && overrides.hasOwnProperty('events')
-        ? overrides.events!
-        : ['ducimus aut rerum accusantium qui cupiditate quasi'],
-    eventsLastEvaluatedKey:
-      overrides && overrides.hasOwnProperty('eventsLastEvaluatedKey')
-        ? overrides.eventsLastEvaluatedKey!
-        : 'hic',
-    dedupString:
-      overrides && overrides.hasOwnProperty('dedupString') ? overrides.dedupString! : 'deserunt',
   };
 };
 
 export const buildAlertSummary = (overrides?: Partial<AlertSummary>): AlertSummary => {
   return {
+    alertId: 'Administrator',
+    creationTime: '2020-02-22T21:49:32.311Z',
+    eventsMatched: 670,
+    title: 'indexing',
+    updateTime: '2020-04-03T05:06:48.073Z',
+    ruleId: 'functionalities',
+    severity: SeverityEnum.Medium,
+    ...overrides,
     __typename: 'AlertSummary',
-    alertId: overrides && overrides.hasOwnProperty('alertId') ? overrides.alertId! : 'sapiente',
-    creationTime:
-      overrides && overrides.hasOwnProperty('creationTime')
-        ? overrides.creationTime!
-        : '1988-06-21',
-    eventsMatched:
-      overrides && overrides.hasOwnProperty('eventsMatched') ? overrides.eventsMatched! : 6695,
-    title: overrides && overrides.hasOwnProperty('title') ? overrides.title! : 'illum',
-    updateTime:
-      overrides && overrides.hasOwnProperty('updateTime') ? overrides.updateTime! : '1983-05-10',
-    ruleId: overrides && overrides.hasOwnProperty('ruleId') ? overrides.ruleId! : 'molestiae',
-    severity:
-      overrides && overrides.hasOwnProperty('severity') ? overrides.severity! : SeverityEnum.Info,
   };
 };
 
 export const buildAsanaConfig = (overrides?: Partial<AsanaConfig>): AsanaConfig => {
   return {
+    personalAccessToken: 'Chief',
+    projectGids: ['Central'],
+    ...overrides,
     __typename: 'AsanaConfig',
-    personalAccessToken:
-      overrides && overrides.hasOwnProperty('personalAccessToken')
-        ? overrides.personalAccessToken!
-        : 'et',
-    projectGids:
-      overrides && overrides.hasOwnProperty('projectGids')
-        ? overrides.projectGids!
-        : ['necessitatibus'],
   };
 };
 
 export const buildAsanaConfigInput = (overrides?: Partial<AsanaConfigInput>): AsanaConfigInput => {
   return {
-    personalAccessToken:
-      overrides && overrides.hasOwnProperty('personalAccessToken')
-        ? overrides.personalAccessToken!
-        : 'maxime',
-    projectGids:
-      overrides && overrides.hasOwnProperty('projectGids') ? overrides.projectGids! : ['maiores'],
+    personalAccessToken: 'connect',
+    projectGids: ['Executive'],
+    ...overrides,
   };
 };
 
@@ -352,35 +268,17 @@ export const buildComplianceIntegration = (
   overrides?: Partial<ComplianceIntegration>
 ): ComplianceIntegration => {
   return {
+    awsAccountId: 'Metrics',
+    createdAtTime: '2020-06-09T02:31:59.165Z',
+    createdBy: '460977ce-2de5-408b-8cd9-69796ea9f675',
+    integrationId: 'd61dbbdd-68fd-4c1d-8a21-508d2115b3d3',
+    integrationLabel: 'Movies',
+    cweEnabled: true,
+    remediationEnabled: false,
+    health: buildComplianceIntegrationHealth(),
+    stackName: 'Chips',
+    ...overrides,
     __typename: 'ComplianceIntegration',
-    awsAccountId:
-      overrides && overrides.hasOwnProperty('awsAccountId') ? overrides.awsAccountId! : 'molestiae',
-    createdAtTime:
-      overrides && overrides.hasOwnProperty('createdAtTime')
-        ? overrides.createdAtTime!
-        : '1974-11-11',
-    createdBy:
-      overrides && overrides.hasOwnProperty('createdBy')
-        ? overrides.createdBy!
-        : '560977ce-3de5-408b-9cd9-79796ea9f675',
-    integrationId:
-      overrides && overrides.hasOwnProperty('integrationId')
-        ? overrides.integrationId!
-        : 'c61dbbdd-78fd-4c1d-9a21-408d2115b3d3',
-    integrationLabel:
-      overrides && overrides.hasOwnProperty('integrationLabel')
-        ? overrides.integrationLabel!
-        : 'consequatur',
-    cweEnabled: overrides && overrides.hasOwnProperty('cweEnabled') ? overrides.cweEnabled! : false,
-    remediationEnabled:
-      overrides && overrides.hasOwnProperty('remediationEnabled')
-        ? overrides.remediationEnabled!
-        : true,
-    health:
-      overrides && overrides.hasOwnProperty('health')
-        ? overrides.health!
-        : buildComplianceIntegrationHealth(),
-    stackName: overrides && overrides.hasOwnProperty('stackName') ? overrides.stackName! : 'neque',
   };
 };
 
@@ -388,52 +286,27 @@ export const buildComplianceIntegrationHealth = (
   overrides?: Partial<ComplianceIntegrationHealth>
 ): ComplianceIntegrationHealth => {
   return {
+    auditRoleStatus: buildIntegrationItemHealthStatus(),
+    cweRoleStatus: buildIntegrationItemHealthStatus(),
+    remediationRoleStatus: buildIntegrationItemHealthStatus(),
+    ...overrides,
     __typename: 'ComplianceIntegrationHealth',
-    auditRoleStatus:
-      overrides && overrides.hasOwnProperty('auditRoleStatus')
-        ? overrides.auditRoleStatus!
-        : buildIntegrationItemHealthStatus(),
-    cweRoleStatus:
-      overrides && overrides.hasOwnProperty('cweRoleStatus')
-        ? overrides.cweRoleStatus!
-        : buildIntegrationItemHealthStatus(),
-    remediationRoleStatus:
-      overrides && overrides.hasOwnProperty('remediationRoleStatus')
-        ? overrides.remediationRoleStatus!
-        : buildIntegrationItemHealthStatus(),
   };
 };
 
 export const buildComplianceItem = (overrides?: Partial<ComplianceItem>): ComplianceItem => {
   return {
+    errorMessage: 'functionalities',
+    lastUpdated: '2020-05-15T01:33:40.322Z',
+    policyId: '7704cb04-183c-44c9-9d90-8e66b37d8cb7',
+    policySeverity: SeverityEnum.Critical,
+    resourceId: '89b815e3-cb3b-4df5-8a6e-8f6159ca308a',
+    resourceType: 'Leone',
+    status: ComplianceStatusEnum.Fail,
+    suppressed: true,
+    integrationId: '0aec2717-f82d-47fc-a2e5-2c2a8cd72160',
+    ...overrides,
     __typename: 'ComplianceItem',
-    errorMessage:
-      overrides && overrides.hasOwnProperty('errorMessage') ? overrides.errorMessage! : 'quia',
-    lastUpdated:
-      overrides && overrides.hasOwnProperty('lastUpdated') ? overrides.lastUpdated! : '1978-01-15',
-    policyId:
-      overrides && overrides.hasOwnProperty('policyId')
-        ? overrides.policyId!
-        : '6704cb04-083c-44c9-8d90-9e66b37d8cb7',
-    policySeverity:
-      overrides && overrides.hasOwnProperty('policySeverity')
-        ? overrides.policySeverity!
-        : SeverityEnum.Info,
-    resourceId:
-      overrides && overrides.hasOwnProperty('resourceId')
-        ? overrides.resourceId!
-        : '99b815e3-db3b-4df5-8a6e-9f6159ca308a',
-    resourceType:
-      overrides && overrides.hasOwnProperty('resourceType') ? overrides.resourceType! : 'cum',
-    status:
-      overrides && overrides.hasOwnProperty('status')
-        ? overrides.status!
-        : ComplianceStatusEnum.Error,
-    suppressed: overrides && overrides.hasOwnProperty('suppressed') ? overrides.suppressed! : false,
-    integrationId:
-      overrides && overrides.hasOwnProperty('integrationId')
-        ? overrides.integrationId!
-        : '1aec2717-e82d-47fc-a2e5-3c2a8cd72160',
   };
 };
 
@@ -441,10 +314,11 @@ export const buildComplianceStatusCounts = (
   overrides?: Partial<ComplianceStatusCounts>
 ): ComplianceStatusCounts => {
   return {
+    error: 71,
+    fail: 488,
+    pass: 154,
+    ...overrides,
     __typename: 'ComplianceStatusCounts',
-    error: overrides && overrides.hasOwnProperty('error') ? overrides.error! : 710,
-    fail: overrides && overrides.hasOwnProperty('fail') ? overrides.fail! : 4880,
-    pass: overrides && overrides.hasOwnProperty('pass') ? overrides.pass! : 1538,
   };
 };
 
@@ -452,9 +326,9 @@ export const buildCustomWebhookConfig = (
   overrides?: Partial<CustomWebhookConfig>
 ): CustomWebhookConfig => {
   return {
+    webhookURL: 'web services',
+    ...overrides,
     __typename: 'CustomWebhookConfig',
-    webhookURL:
-      overrides && overrides.hasOwnProperty('webhookURL') ? overrides.webhookURL! : 'dignissimos',
   };
 };
 
@@ -462,7 +336,8 @@ export const buildCustomWebhookConfigInput = (
   overrides?: Partial<CustomWebhookConfigInput>
 ): CustomWebhookConfigInput => {
   return {
-    webhookURL: overrides && overrides.hasOwnProperty('webhookURL') ? overrides.webhookURL! : 'est',
+    webhookURL: 'bypass',
+    ...overrides,
   };
 };
 
@@ -470,10 +345,8 @@ export const buildDeleteGlobalPythonInputItem = (
   overrides?: Partial<DeleteGlobalPythonInputItem>
 ): DeleteGlobalPythonInputItem => {
   return {
-    id:
-      overrides && overrides.hasOwnProperty('id')
-        ? overrides.id!
-        : '38c248cf-e729-4ac6-af32-ca12f186a8bd',
+    id: '28c248cf-f729-4ac6-af32-da12f186a8bd',
+    ...overrides,
   };
 };
 
@@ -481,10 +354,8 @@ export const buildDeleteGlobalPythonModuleInput = (
   overrides?: Partial<DeleteGlobalPythonModuleInput>
 ): DeleteGlobalPythonModuleInput => {
   return {
-    globals:
-      overrides && overrides.hasOwnProperty('globals')
-        ? overrides.globals!
-        : [buildDeleteGlobalPythonInputItem()],
+    globals: [buildDeleteGlobalPythonInputItem()],
+    ...overrides,
   };
 };
 
@@ -492,10 +363,8 @@ export const buildDeletePolicyInput = (
   overrides?: Partial<DeletePolicyInput>
 ): DeletePolicyInput => {
   return {
-    policies:
-      overrides && overrides.hasOwnProperty('policies')
-        ? overrides.policies!
-        : [buildDeletePolicyInputItem()],
+    policies: [buildDeletePolicyInputItem()],
+    ...overrides,
   };
 };
 
@@ -503,19 +372,15 @@ export const buildDeletePolicyInputItem = (
   overrides?: Partial<DeletePolicyInputItem>
 ): DeletePolicyInputItem => {
   return {
-    id:
-      overrides && overrides.hasOwnProperty('id')
-        ? overrides.id!
-        : 'b5304976-c86e-44d0-abe1-802e2565a38b',
+    id: 'a5304976-d86e-44d0-abe1-902e2565a38b',
+    ...overrides,
   };
 };
 
 export const buildDeleteRuleInput = (overrides?: Partial<DeleteRuleInput>): DeleteRuleInput => {
   return {
-    rules:
-      overrides && overrides.hasOwnProperty('rules')
-        ? overrides.rules!
-        : [buildDeleteRuleInputItem()],
+    rules: [buildDeleteRuleInputItem()],
+    ...overrides,
   };
 };
 
@@ -523,49 +388,25 @@ export const buildDeleteRuleInputItem = (
   overrides?: Partial<DeleteRuleInputItem>
 ): DeleteRuleInputItem => {
   return {
-    id:
-      overrides && overrides.hasOwnProperty('id')
-        ? overrides.id!
-        : '8c1a40a6-9106-4f56-82b7-a71d4afc0065',
+    id: '9c1a40a6-8106-4f56-82b7-b71d4afc0065',
+    ...overrides,
   };
 };
 
 export const buildDestination = (overrides?: Partial<Destination>): Destination => {
   return {
+    createdBy: 'best-of-breed',
+    creationTime: '2020-02-16T05:14:19.976Z',
+    displayName: 'Accountability',
+    lastModifiedBy: 'Tasty Granite Bike',
+    lastModifiedTime: '2020-01-19T15:57:50.478Z',
+    outputId: '8c0eb672-b7bb-4ef0-9d96-a2bc1abe94d7',
+    outputType: DestinationTypeEnum.Sns,
+    outputConfig: buildDestinationConfig(),
+    verificationStatus: 'Licensed',
+    defaultForSeverity: [SeverityEnum.Critical],
+    ...overrides,
     __typename: 'Destination',
-    createdBy: overrides && overrides.hasOwnProperty('createdBy') ? overrides.createdBy! : 'ut',
-    creationTime:
-      overrides && overrides.hasOwnProperty('creationTime')
-        ? overrides.creationTime!
-        : '1989-04-27',
-    displayName:
-      overrides && overrides.hasOwnProperty('displayName') ? overrides.displayName! : 'itaque',
-    lastModifiedBy:
-      overrides && overrides.hasOwnProperty('lastModifiedBy') ? overrides.lastModifiedBy! : 'et',
-    lastModifiedTime:
-      overrides && overrides.hasOwnProperty('lastModifiedTime')
-        ? overrides.lastModifiedTime!
-        : '1992-10-26',
-    outputId:
-      overrides && overrides.hasOwnProperty('outputId')
-        ? overrides.outputId!
-        : '9c0eb672-a7bb-4ef0-ad96-b2bc1abe94d7',
-    outputType:
-      overrides && overrides.hasOwnProperty('outputType')
-        ? overrides.outputType!
-        : DestinationTypeEnum.Slack,
-    outputConfig:
-      overrides && overrides.hasOwnProperty('outputConfig')
-        ? overrides.outputConfig!
-        : buildDestinationConfig(),
-    verificationStatus:
-      overrides && overrides.hasOwnProperty('verificationStatus')
-        ? overrides.verificationStatus!
-        : 'dicta',
-    defaultForSeverity:
-      overrides && overrides.hasOwnProperty('defaultForSeverity')
-        ? overrides.defaultForSeverity!
-        : [SeverityEnum.Info],
   };
 };
 
@@ -573,28 +414,18 @@ export const buildDestinationConfig = (
   overrides?: Partial<DestinationConfig>
 ): DestinationConfig => {
   return {
+    slack: buildSlackConfig(),
+    sns: buildSnsConfig(),
+    sqs: buildSqsConfig(),
+    pagerDuty: buildPagerDutyConfig(),
+    github: buildGithubConfig(),
+    jira: buildJiraConfig(),
+    opsgenie: buildOpsgenieConfig(),
+    msTeams: buildMsTeamsConfig(),
+    asana: buildAsanaConfig(),
+    customWebhook: buildCustomWebhookConfig(),
+    ...overrides,
     __typename: 'DestinationConfig',
-    slack: overrides && overrides.hasOwnProperty('slack') ? overrides.slack! : buildSlackConfig(),
-    sns: overrides && overrides.hasOwnProperty('sns') ? overrides.sns! : buildSnsConfig(),
-    sqs: overrides && overrides.hasOwnProperty('sqs') ? overrides.sqs! : buildSqsConfig(),
-    pagerDuty:
-      overrides && overrides.hasOwnProperty('pagerDuty')
-        ? overrides.pagerDuty!
-        : buildPagerDutyConfig(),
-    github:
-      overrides && overrides.hasOwnProperty('github') ? overrides.github! : buildGithubConfig(),
-    jira: overrides && overrides.hasOwnProperty('jira') ? overrides.jira! : buildJiraConfig(),
-    opsgenie:
-      overrides && overrides.hasOwnProperty('opsgenie')
-        ? overrides.opsgenie!
-        : buildOpsgenieConfig(),
-    msTeams:
-      overrides && overrides.hasOwnProperty('msTeams') ? overrides.msTeams! : buildMsTeamsConfig(),
-    asana: overrides && overrides.hasOwnProperty('asana') ? overrides.asana! : buildAsanaConfig(),
-    customWebhook:
-      overrides && overrides.hasOwnProperty('customWebhook')
-        ? overrides.customWebhook!
-        : buildCustomWebhookConfig(),
   };
 };
 
@@ -602,82 +433,47 @@ export const buildDestinationConfigInput = (
   overrides?: Partial<DestinationConfigInput>
 ): DestinationConfigInput => {
   return {
-    slack:
-      overrides && overrides.hasOwnProperty('slack') ? overrides.slack! : buildSlackConfigInput(),
-    sns: overrides && overrides.hasOwnProperty('sns') ? overrides.sns! : buildSnsConfigInput(),
-    sqs: overrides && overrides.hasOwnProperty('sqs') ? overrides.sqs! : buildSqsConfigInput(),
-    pagerDuty:
-      overrides && overrides.hasOwnProperty('pagerDuty')
-        ? overrides.pagerDuty!
-        : buildPagerDutyConfigInput(),
-    github:
-      overrides && overrides.hasOwnProperty('github')
-        ? overrides.github!
-        : buildGithubConfigInput(),
-    jira: overrides && overrides.hasOwnProperty('jira') ? overrides.jira! : buildJiraConfigInput(),
-    opsgenie:
-      overrides && overrides.hasOwnProperty('opsgenie')
-        ? overrides.opsgenie!
-        : buildOpsgenieConfigInput(),
-    msTeams:
-      overrides && overrides.hasOwnProperty('msTeams')
-        ? overrides.msTeams!
-        : buildMsTeamsConfigInput(),
-    asana:
-      overrides && overrides.hasOwnProperty('asana') ? overrides.asana! : buildAsanaConfigInput(),
-    customWebhook:
-      overrides && overrides.hasOwnProperty('customWebhook')
-        ? overrides.customWebhook!
-        : buildCustomWebhookConfigInput(),
+    slack: buildSlackConfigInput(),
+    sns: buildSnsConfigInput(),
+    sqs: buildSqsConfigInput(),
+    pagerDuty: buildPagerDutyConfigInput(),
+    github: buildGithubConfigInput(),
+    jira: buildJiraConfigInput(),
+    opsgenie: buildOpsgenieConfigInput(),
+    msTeams: buildMsTeamsConfigInput(),
+    asana: buildAsanaConfigInput(),
+    customWebhook: buildCustomWebhookConfigInput(),
+    ...overrides,
   };
 };
 
 export const buildDestinationInput = (overrides?: Partial<DestinationInput>): DestinationInput => {
   return {
-    outputId:
-      overrides && overrides.hasOwnProperty('outputId')
-        ? overrides.outputId!
-        : '636c7660-5609-4a00-96fe-3fabc99955d3',
-    displayName:
-      overrides && overrides.hasOwnProperty('displayName') ? overrides.displayName! : 'eum',
-    outputConfig:
-      overrides && overrides.hasOwnProperty('outputConfig')
-        ? overrides.outputConfig!
-        : buildDestinationConfigInput(),
-    outputType:
-      overrides && overrides.hasOwnProperty('outputType') ? overrides.outputType! : 'similique',
-    defaultForSeverity:
-      overrides && overrides.hasOwnProperty('defaultForSeverity')
-        ? overrides.defaultForSeverity!
-        : [SeverityEnum.Info],
+    outputId: '736c7660-4609-4a00-b6fe-2fabc99955d3',
+    displayName: 'morph',
+    outputConfig: buildDestinationConfigInput(),
+    outputType: 'New Hampshire',
+    defaultForSeverity: [SeverityEnum.Critical],
+    ...overrides,
   };
 };
 
 export const buildGeneralSettings = (overrides?: Partial<GeneralSettings>): GeneralSettings => {
   return {
+    displayName: 'Rustic',
+    email: 'tertiary',
+    errorReportingConsent: false,
+    ...overrides,
     __typename: 'GeneralSettings',
-    displayName:
-      overrides && overrides.hasOwnProperty('displayName') ? overrides.displayName! : 'explicabo',
-    email: overrides && overrides.hasOwnProperty('email') ? overrides.email! : 'nostrum',
-    errorReportingConsent:
-      overrides && overrides.hasOwnProperty('errorReportingConsent')
-        ? overrides.errorReportingConsent!
-        : true,
   };
 };
 
 export const buildGetAlertInput = (overrides?: Partial<GetAlertInput>): GetAlertInput => {
   return {
-    alertId:
-      overrides && overrides.hasOwnProperty('alertId')
-        ? overrides.alertId!
-        : '6dccc616-1ef2-4b9e-87ed-73b936c53e09',
-    eventsPageSize:
-      overrides && overrides.hasOwnProperty('eventsPageSize') ? overrides.eventsPageSize! : 3854,
-    eventsExclusiveStartKey:
-      overrides && overrides.hasOwnProperty('eventsExclusiveStartKey')
-        ? overrides.eventsExclusiveStartKey!
-        : 'vitae',
+    alertId: '7dccc616-0ef2-4b9e-87ed-63b936c53e09',
+    eventsPageSize: 385,
+    eventsExclusiveStartKey: 'Sleek',
+    ...overrides,
   };
 };
 
@@ -685,17 +481,11 @@ export const buildGetComplianceIntegrationTemplateInput = (
   overrides?: Partial<GetComplianceIntegrationTemplateInput>
 ): GetComplianceIntegrationTemplateInput => {
   return {
-    awsAccountId:
-      overrides && overrides.hasOwnProperty('awsAccountId') ? overrides.awsAccountId! : 'autem',
-    integrationLabel:
-      overrides && overrides.hasOwnProperty('integrationLabel')
-        ? overrides.integrationLabel!
-        : 'voluptatem',
-    remediationEnabled:
-      overrides && overrides.hasOwnProperty('remediationEnabled')
-        ? overrides.remediationEnabled!
-        : false,
-    cweEnabled: overrides && overrides.hasOwnProperty('cweEnabled') ? overrides.cweEnabled! : false,
+    awsAccountId: 'monetize',
+    integrationLabel: '24 hour',
+    remediationEnabled: true,
+    cweEnabled: true,
+    ...overrides,
   };
 };
 
@@ -703,49 +493,32 @@ export const buildGetGlobalPythonModuleInput = (
   overrides?: Partial<GetGlobalPythonModuleInput>
 ): GetGlobalPythonModuleInput => {
   return {
-    globalId:
-      overrides && overrides.hasOwnProperty('globalId')
-        ? overrides.globalId!
-        : '1f341f61-8f20-4e1f-98e0-4854a50dc594',
-    versionId:
-      overrides && overrides.hasOwnProperty('versionId')
-        ? overrides.versionId!
-        : '8fe39f4b-c18f-4a21-b9a0-feef9b77cb11',
+    globalId: '0f341f61-9f20-4e1f-b8e0-5854a50dc594',
+    versionId: '9fe39f4b-d18f-4a21-99a0-eeef9b77cb11',
+    ...overrides,
   };
 };
 
 export const buildGetPolicyInput = (overrides?: Partial<GetPolicyInput>): GetPolicyInput => {
   return {
-    policyId:
-      overrides && overrides.hasOwnProperty('policyId')
-        ? overrides.policyId!
-        : 'e6a78c98-7d80-46bf-99e7-2df8975184a0',
-    versionId:
-      overrides && overrides.hasOwnProperty('versionId')
-        ? overrides.versionId!
-        : 'c394a64d-8476-44de-98ab-6f8666cd4c8c',
+    policyId: 'f6a78c98-6d80-46bf-89e7-3df8975184a0',
+    versionId: 'd394a64d-9476-44de-a8ab-7f8666cd4c8c',
+    ...overrides,
   };
 };
 
 export const buildGetResourceInput = (overrides?: Partial<GetResourceInput>): GetResourceInput => {
   return {
-    resourceId:
-      overrides && overrides.hasOwnProperty('resourceId')
-        ? overrides.resourceId!
-        : '813c64fb-d124-4dce-8757-41846aa5f4df',
+    resourceId: '913c64fb-c124-4dce-9757-51846aa5f4df',
+    ...overrides,
   };
 };
 
 export const buildGetRuleInput = (overrides?: Partial<GetRuleInput>): GetRuleInput => {
   return {
-    ruleId:
-      overrides && overrides.hasOwnProperty('ruleId')
-        ? overrides.ruleId!
-        : '2b255df9-9276-4060-9f0c-dca418b158d6',
-    versionId:
-      overrides && overrides.hasOwnProperty('versionId')
-        ? overrides.versionId!
-        : '0b6ea7a4-6775-4b65-8315-99b764428571',
+    ruleId: '3b255df9-8276-4060-8f0c-cca418b158d6',
+    versionId: '1b6ea7a4-7775-4b65-8315-89b764428571',
+    ...overrides,
   };
 };
 
@@ -753,26 +526,22 @@ export const buildGetS3LogIntegrationTemplateInput = (
   overrides?: Partial<GetS3LogIntegrationTemplateInput>
 ): GetS3LogIntegrationTemplateInput => {
   return {
-    awsAccountId:
-      overrides && overrides.hasOwnProperty('awsAccountId') ? overrides.awsAccountId! : 'ut',
-    integrationLabel:
-      overrides && overrides.hasOwnProperty('integrationLabel')
-        ? overrides.integrationLabel!
-        : 'voluptatem',
-    s3Bucket: overrides && overrides.hasOwnProperty('s3Bucket') ? overrides.s3Bucket! : 'quo',
-    s3Prefix:
-      overrides && overrides.hasOwnProperty('s3Prefix') ? overrides.s3Prefix! : 'consequatur',
-    kmsKey: overrides && overrides.hasOwnProperty('kmsKey') ? overrides.kmsKey! : 'perferendis',
-    logTypes:
-      overrides && overrides.hasOwnProperty('logTypes') ? overrides.logTypes! : ['molestias'],
+    awsAccountId: 'Armenia',
+    integrationLabel: 'Concrete',
+    s3Bucket: 'generating',
+    s3Prefix: 'optical',
+    kmsKey: 'Books',
+    logTypes: ['Borders'],
+    ...overrides,
   };
 };
 
 export const buildGithubConfig = (overrides?: Partial<GithubConfig>): GithubConfig => {
   return {
+    repoName: 'quantify',
+    token: 'International',
+    ...overrides,
     __typename: 'GithubConfig',
-    repoName: overrides && overrides.hasOwnProperty('repoName') ? overrides.repoName! : 'maxime',
-    token: overrides && overrides.hasOwnProperty('token') ? overrides.token! : 'ut',
   };
 };
 
@@ -780,8 +549,9 @@ export const buildGithubConfigInput = (
   overrides?: Partial<GithubConfigInput>
 ): GithubConfigInput => {
   return {
-    repoName: overrides && overrides.hasOwnProperty('repoName') ? overrides.repoName! : 'ducimus',
-    token: overrides && overrides.hasOwnProperty('token') ? overrides.token! : 'dolorem',
+    repoName: 'Route',
+    token: 'Hat',
+    ...overrides,
   };
 };
 
@@ -789,20 +559,13 @@ export const buildGlobalPythonModule = (
   overrides?: Partial<GlobalPythonModule>
 ): GlobalPythonModule => {
   return {
+    body: '5th generation',
+    description: 'models',
+    id: '42f3a049-dced-4b20-925c-a8e861b2d2d0',
+    createdAt: '2019-08-23T15:50:19.767Z',
+    lastModified: '2019-08-12T12:12:34.106Z',
+    ...overrides,
     __typename: 'GlobalPythonModule',
-    body: overrides && overrides.hasOwnProperty('body') ? overrides.body! : 'quis',
-    description:
-      overrides && overrides.hasOwnProperty('description') ? overrides.description! : 'velit',
-    id:
-      overrides && overrides.hasOwnProperty('id')
-        ? overrides.id!
-        : '52f3a049-cced-4b20-825c-b8e861b2d2d0',
-    createdAt:
-      overrides && overrides.hasOwnProperty('createdAt') ? overrides.createdAt! : '2011-09-26',
-    lastModified:
-      overrides && overrides.hasOwnProperty('lastModified')
-        ? overrides.lastModified!
-        : '2013-02-24',
   };
 };
 
@@ -810,10 +573,10 @@ export const buildIntegrationItemHealthStatus = (
   overrides?: Partial<IntegrationItemHealthStatus>
 ): IntegrationItemHealthStatus => {
   return {
+    healthy: false,
+    errorMessage: 'Nebraska',
+    ...overrides,
     __typename: 'IntegrationItemHealthStatus',
-    healthy: overrides && overrides.hasOwnProperty('healthy') ? overrides.healthy! : true,
-    errorMessage:
-      overrides && overrides.hasOwnProperty('errorMessage') ? overrides.errorMessage! : 'in',
   };
 };
 
@@ -821,95 +584,63 @@ export const buildIntegrationTemplate = (
   overrides?: Partial<IntegrationTemplate>
 ): IntegrationTemplate => {
   return {
+    body: 'bandwidth',
+    stackName: 'Handcrafted Granite Mouse',
+    ...overrides,
     __typename: 'IntegrationTemplate',
-    body: overrides && overrides.hasOwnProperty('body') ? overrides.body! : 'impedit',
-    stackName: overrides && overrides.hasOwnProperty('stackName') ? overrides.stackName! : 'et',
   };
 };
 
 export const buildInviteUserInput = (overrides?: Partial<InviteUserInput>): InviteUserInput => {
   return {
-    givenName: overrides && overrides.hasOwnProperty('givenName') ? overrides.givenName! : 'ut',
-    familyName:
-      overrides && overrides.hasOwnProperty('familyName') ? overrides.familyName! : 'facere',
-    email:
-      overrides && overrides.hasOwnProperty('email') ? overrides.email! : 'Hoyt.Torphy@Reichel.org',
+    givenName: 'system-worthy',
+    familyName: 'copy',
+    email: 'Gennaro_Kerluke71@gmail.com',
+    ...overrides,
   };
 };
 
 export const buildJiraConfig = (overrides?: Partial<JiraConfig>): JiraConfig => {
   return {
+    orgDomain: 'deposit',
+    projectKey: 'Investor',
+    userName: 'payment',
+    apiKey: 'bluetooth',
+    assigneeId: 'bleeding-edge',
+    issueType: 'Iowa',
+    ...overrides,
     __typename: 'JiraConfig',
-    orgDomain: overrides && overrides.hasOwnProperty('orgDomain') ? overrides.orgDomain! : 'quidem',
-    projectKey:
-      overrides && overrides.hasOwnProperty('projectKey') ? overrides.projectKey! : 'repudiandae',
-    userName:
-      overrides && overrides.hasOwnProperty('userName') ? overrides.userName! : 'distinctio',
-    apiKey: overrides && overrides.hasOwnProperty('apiKey') ? overrides.apiKey! : 'dolor',
-    assigneeId:
-      overrides && overrides.hasOwnProperty('assigneeId') ? overrides.assigneeId! : 'suscipit',
-    issueType: overrides && overrides.hasOwnProperty('issueType') ? overrides.issueType! : 'sunt',
   };
 };
 
 export const buildJiraConfigInput = (overrides?: Partial<JiraConfigInput>): JiraConfigInput => {
   return {
-    orgDomain:
-      overrides && overrides.hasOwnProperty('orgDomain') ? overrides.orgDomain! : 'impedit',
-    projectKey:
-      overrides && overrides.hasOwnProperty('projectKey') ? overrides.projectKey! : 'officiis',
-    userName: overrides && overrides.hasOwnProperty('userName') ? overrides.userName! : 'eos',
-    apiKey: overrides && overrides.hasOwnProperty('apiKey') ? overrides.apiKey! : 'et',
-    assigneeId:
-      overrides && overrides.hasOwnProperty('assigneeId') ? overrides.assigneeId! : 'cupiditate',
-    issueType:
-      overrides && overrides.hasOwnProperty('issueType') ? overrides.issueType! : 'aliquid',
+    orgDomain: 'bus',
+    projectKey: 'XSS',
+    userName: 'SQL',
+    apiKey: 'Sleek Cotton Car',
+    assigneeId: 'Virgin Islands, British',
+    issueType: 'strategic',
+    ...overrides,
   };
 };
 
 export const buildListAlertsInput = (overrides?: Partial<ListAlertsInput>): ListAlertsInput => {
   return {
-    ruleId:
-      overrides && overrides.hasOwnProperty('ruleId')
-        ? overrides.ruleId!
-        : '5d7dfe6a-46ac-41c2-9fc1-0eaf33c0215a',
-    pageSize: overrides && overrides.hasOwnProperty('pageSize') ? overrides.pageSize! : 8273,
-    exclusiveStartKey:
-      overrides && overrides.hasOwnProperty('exclusiveStartKey')
-        ? overrides.exclusiveStartKey!
-        : 'rem',
-    severity:
-      overrides && overrides.hasOwnProperty('severity') ? overrides.severity! : [SeverityEnum.Info],
-    nameContains:
-      overrides && overrides.hasOwnProperty('nameContains')
-        ? overrides.nameContains!
-        : 'praesentium',
-    createdAtBefore:
-      overrides && overrides.hasOwnProperty('createdAtBefore')
-        ? overrides.createdAtBefore!
-        : '1998-05-16',
-    createdAtAfter:
-      overrides && overrides.hasOwnProperty('createdAtAfter')
-        ? overrides.createdAtAfter!
-        : '2001-09-02',
-    ruleIdContains:
-      overrides && overrides.hasOwnProperty('ruleIdContains')
-        ? overrides.ruleIdContains!
-        : 'temporibus',
-    alertIdContains:
-      overrides && overrides.hasOwnProperty('alertIdContains')
-        ? overrides.alertIdContains!
-        : 'eaque',
-    eventCountMin:
-      overrides && overrides.hasOwnProperty('eventCountMin') ? overrides.eventCountMin! : 6934,
-    eventCountMax:
-      overrides && overrides.hasOwnProperty('eventCountMax') ? overrides.eventCountMax! : 9101,
-    sortBy:
-      overrides && overrides.hasOwnProperty('sortBy')
-        ? overrides.sortBy!
-        : ListAlertsSortFieldsEnum.CreatedAt,
-    sortDir:
-      overrides && overrides.hasOwnProperty('sortDir') ? overrides.sortDir! : SortDirEnum.Ascending,
+    ruleId: '4d7dfe6a-56ac-41c2-bfc1-1eaf33c0215a',
+    pageSize: 828,
+    exclusiveStartKey: 'Throughway',
+    severity: [SeverityEnum.Low],
+    nameContains: 'Island',
+    createdAtBefore: '2019-12-06T22:07:47.033Z',
+    createdAtAfter: '2019-11-10T22:36:03.305Z',
+    ruleIdContains: 'virtual',
+    alertIdContains: 'Garden',
+    eventCountMin: 694,
+    eventCountMax: 911,
+    sortBy: ListAlertsSortFieldsEnum.CreatedAt,
+    sortDir: SortDirEnum.Descending,
+    ...overrides,
   };
 };
 
@@ -917,15 +648,10 @@ export const buildListAlertsResponse = (
   overrides?: Partial<ListAlertsResponse>
 ): ListAlertsResponse => {
   return {
+    alertSummaries: [buildAlertSummary()],
+    lastEvaluatedKey: 'Arkansas',
+    ...overrides,
     __typename: 'ListAlertsResponse',
-    alertSummaries:
-      overrides && overrides.hasOwnProperty('alertSummaries')
-        ? overrides.alertSummaries!
-        : [buildAlertSummary()],
-    lastEvaluatedKey:
-      overrides && overrides.hasOwnProperty('lastEvaluatedKey')
-        ? overrides.lastEvaluatedKey!
-        : 'culpa',
   };
 };
 
@@ -933,18 +659,12 @@ export const buildListComplianceItemsResponse = (
   overrides?: Partial<ListComplianceItemsResponse>
 ): ListComplianceItemsResponse => {
   return {
+    items: [buildComplianceItem()],
+    paging: buildPagingData(),
+    status: ComplianceStatusEnum.Fail,
+    totals: buildActiveSuppressCount(),
+    ...overrides,
     __typename: 'ListComplianceItemsResponse',
-    items:
-      overrides && overrides.hasOwnProperty('items') ? overrides.items! : [buildComplianceItem()],
-    paging: overrides && overrides.hasOwnProperty('paging') ? overrides.paging! : buildPagingData(),
-    status:
-      overrides && overrides.hasOwnProperty('status')
-        ? overrides.status!
-        : ComplianceStatusEnum.Error,
-    totals:
-      overrides && overrides.hasOwnProperty('totals')
-        ? overrides.totals!
-        : buildActiveSuppressCount(),
   };
 };
 
@@ -952,13 +672,12 @@ export const buildListGlobalPythonModuleInput = (
   overrides?: Partial<ListGlobalPythonModuleInput>
 ): ListGlobalPythonModuleInput => {
   return {
-    nameContains:
-      overrides && overrides.hasOwnProperty('nameContains') ? overrides.nameContains! : 'est',
-    enabled: overrides && overrides.hasOwnProperty('enabled') ? overrides.enabled! : false,
-    sortDir:
-      overrides && overrides.hasOwnProperty('sortDir') ? overrides.sortDir! : SortDirEnum.Ascending,
-    pageSize: overrides && overrides.hasOwnProperty('pageSize') ? overrides.pageSize! : 4439,
-    page: overrides && overrides.hasOwnProperty('page') ? overrides.page! : 4045,
+    nameContains: 'Kyat',
+    enabled: true,
+    sortDir: SortDirEnum.Descending,
+    pageSize: 444,
+    page: 404,
+    ...overrides,
   };
 };
 
@@ -966,12 +685,10 @@ export const buildListGlobalPythonModulesResponse = (
   overrides?: Partial<ListGlobalPythonModulesResponse>
 ): ListGlobalPythonModulesResponse => {
   return {
+    paging: buildPagingData(),
+    globals: [buildGlobalPythonModule()],
+    ...overrides,
     __typename: 'ListGlobalPythonModulesResponse',
-    paging: overrides && overrides.hasOwnProperty('paging') ? overrides.paging! : buildPagingData(),
-    globals:
-      overrides && overrides.hasOwnProperty('globals')
-        ? overrides.globals!
-        : [buildGlobalPythonModule()],
   };
 };
 
@@ -979,30 +696,18 @@ export const buildListPoliciesInput = (
   overrides?: Partial<ListPoliciesInput>
 ): ListPoliciesInput => {
   return {
-    complianceStatus:
-      overrides && overrides.hasOwnProperty('complianceStatus')
-        ? overrides.complianceStatus!
-        : ComplianceStatusEnum.Error,
-    nameContains:
-      overrides && overrides.hasOwnProperty('nameContains') ? overrides.nameContains! : 'possimus',
-    enabled: overrides && overrides.hasOwnProperty('enabled') ? overrides.enabled! : true,
-    hasRemediation:
-      overrides && overrides.hasOwnProperty('hasRemediation') ? overrides.hasRemediation! : true,
-    resourceTypes:
-      overrides && overrides.hasOwnProperty('resourceTypes')
-        ? overrides.resourceTypes!
-        : 'corporis',
-    severity:
-      overrides && overrides.hasOwnProperty('severity') ? overrides.severity! : SeverityEnum.Info,
-    tags: overrides && overrides.hasOwnProperty('tags') ? overrides.tags! : 'ipsum',
-    sortBy:
-      overrides && overrides.hasOwnProperty('sortBy')
-        ? overrides.sortBy!
-        : ListPoliciesSortFieldsEnum.ComplianceStatus,
-    sortDir:
-      overrides && overrides.hasOwnProperty('sortDir') ? overrides.sortDir! : SortDirEnum.Ascending,
-    pageSize: overrides && overrides.hasOwnProperty('pageSize') ? overrides.pageSize! : 504,
-    page: overrides && overrides.hasOwnProperty('page') ? overrides.page! : 2538,
+    complianceStatus: ComplianceStatusEnum.Pass,
+    nameContains: 'parse',
+    enabled: false,
+    hasRemediation: false,
+    resourceTypes: 'software',
+    severity: SeverityEnum.High,
+    tags: 'Fish',
+    sortBy: ListPoliciesSortFieldsEnum.ResourceTypes,
+    sortDir: SortDirEnum.Ascending,
+    pageSize: 50,
+    page: 254,
+    ...overrides,
   };
 };
 
@@ -1010,12 +715,10 @@ export const buildListPoliciesResponse = (
   overrides?: Partial<ListPoliciesResponse>
 ): ListPoliciesResponse => {
   return {
+    paging: buildPagingData(),
+    policies: [buildPolicySummary()],
+    ...overrides,
     __typename: 'ListPoliciesResponse',
-    paging: overrides && overrides.hasOwnProperty('paging') ? overrides.paging! : buildPagingData(),
-    policies:
-      overrides && overrides.hasOwnProperty('policies')
-        ? overrides.policies!
-        : [buildPolicySummary()],
   };
 };
 
@@ -1023,26 +726,16 @@ export const buildListResourcesInput = (
   overrides?: Partial<ListResourcesInput>
 ): ListResourcesInput => {
   return {
-    complianceStatus:
-      overrides && overrides.hasOwnProperty('complianceStatus')
-        ? overrides.complianceStatus!
-        : ComplianceStatusEnum.Error,
-    deleted: overrides && overrides.hasOwnProperty('deleted') ? overrides.deleted! : false,
-    idContains:
-      overrides && overrides.hasOwnProperty('idContains') ? overrides.idContains! : 'atque',
-    integrationId:
-      overrides && overrides.hasOwnProperty('integrationId')
-        ? overrides.integrationId!
-        : 'dcdadc7d-3460-418b-9e63-79d7110ffc5f',
-    types: overrides && overrides.hasOwnProperty('types') ? overrides.types! : 'velit',
-    sortBy:
-      overrides && overrides.hasOwnProperty('sortBy')
-        ? overrides.sortBy!
-        : ListResourcesSortFieldsEnum.ComplianceStatus,
-    sortDir:
-      overrides && overrides.hasOwnProperty('sortDir') ? overrides.sortDir! : SortDirEnum.Ascending,
-    pageSize: overrides && overrides.hasOwnProperty('pageSize') ? overrides.pageSize! : 2280,
-    page: overrides && overrides.hasOwnProperty('page') ? overrides.page! : 6426,
+    complianceStatus: ComplianceStatusEnum.Error,
+    deleted: true,
+    idContains: 'Borders',
+    integrationId: 'ccdadc7d-2460-418b-9e63-69d7110ffc5f',
+    types: 'black',
+    sortBy: ListResourcesSortFieldsEnum.Type,
+    sortDir: SortDirEnum.Descending,
+    pageSize: 228,
+    page: 643,
+    ...overrides,
   };
 };
 
@@ -1050,32 +743,25 @@ export const buildListResourcesResponse = (
   overrides?: Partial<ListResourcesResponse>
 ): ListResourcesResponse => {
   return {
+    paging: buildPagingData(),
+    resources: [buildResourceSummary()],
+    ...overrides,
     __typename: 'ListResourcesResponse',
-    paging: overrides && overrides.hasOwnProperty('paging') ? overrides.paging! : buildPagingData(),
-    resources:
-      overrides && overrides.hasOwnProperty('resources')
-        ? overrides.resources!
-        : [buildResourceSummary()],
   };
 };
 
 export const buildListRulesInput = (overrides?: Partial<ListRulesInput>): ListRulesInput => {
   return {
-    nameContains:
-      overrides && overrides.hasOwnProperty('nameContains') ? overrides.nameContains! : 'ratione',
-    enabled: overrides && overrides.hasOwnProperty('enabled') ? overrides.enabled! : true,
-    logTypes: overrides && overrides.hasOwnProperty('logTypes') ? overrides.logTypes! : 'ducimus',
-    severity:
-      overrides && overrides.hasOwnProperty('severity') ? overrides.severity! : SeverityEnum.Info,
-    tags: overrides && overrides.hasOwnProperty('tags') ? overrides.tags! : 'quam',
-    sortBy:
-      overrides && overrides.hasOwnProperty('sortBy')
-        ? overrides.sortBy!
-        : ListRulesSortFieldsEnum.Enabled,
-    sortDir:
-      overrides && overrides.hasOwnProperty('sortDir') ? overrides.sortDir! : SortDirEnum.Ascending,
-    pageSize: overrides && overrides.hasOwnProperty('pageSize') ? overrides.pageSize! : 193,
-    page: overrides && overrides.hasOwnProperty('page') ? overrides.page! : 3233,
+    nameContains: 'Cotton',
+    enabled: false,
+    logTypes: 'Drive',
+    severity: SeverityEnum.Low,
+    tags: 'channels',
+    sortBy: ListRulesSortFieldsEnum.Enabled,
+    sortDir: SortDirEnum.Ascending,
+    pageSize: 19,
+    page: 323,
+    ...overrides,
   };
 };
 
@@ -1083,9 +769,10 @@ export const buildListRulesResponse = (
   overrides?: Partial<ListRulesResponse>
 ): ListRulesResponse => {
   return {
+    paging: buildPagingData(),
+    rules: [buildRuleSummary()],
+    ...overrides,
     __typename: 'ListRulesResponse',
-    paging: overrides && overrides.hasOwnProperty('paging') ? overrides.paging! : buildPagingData(),
-    rules: overrides && overrides.hasOwnProperty('rules') ? overrides.rules! : [buildRuleSummary()],
   };
 };
 
@@ -1093,20 +780,18 @@ export const buildModifyGlobalPythonModuleInput = (
   overrides?: Partial<ModifyGlobalPythonModuleInput>
 ): ModifyGlobalPythonModuleInput => {
   return {
-    description:
-      overrides && overrides.hasOwnProperty('description') ? overrides.description! : 'consequatur',
-    id:
-      overrides && overrides.hasOwnProperty('id')
-        ? overrides.id!
-        : 'bf4a9975-bdcf-4efc-9667-e59f6214197c',
-    body: overrides && overrides.hasOwnProperty('body') ? overrides.body! : 'quis',
+    description: 'Tools',
+    id: 'af4a9975-adcf-4efc-b667-f59f6214197c',
+    body: 'evolve',
+    ...overrides,
   };
 };
 
 export const buildMsTeamsConfig = (overrides?: Partial<MsTeamsConfig>): MsTeamsConfig => {
   return {
+    webhookURL: 'eyeballs',
+    ...overrides,
     __typename: 'MsTeamsConfig',
-    webhookURL: overrides && overrides.hasOwnProperty('webhookURL') ? overrides.webhookURL! : 'et',
   };
 };
 
@@ -1114,15 +799,16 @@ export const buildMsTeamsConfigInput = (
   overrides?: Partial<MsTeamsConfigInput>
 ): MsTeamsConfigInput => {
   return {
-    webhookURL:
-      overrides && overrides.hasOwnProperty('webhookURL') ? overrides.webhookURL! : 'accusamus',
+    webhookURL: 'USB',
+    ...overrides,
   };
 };
 
 export const buildOpsgenieConfig = (overrides?: Partial<OpsgenieConfig>): OpsgenieConfig => {
   return {
+    apiKey: 'IB',
+    ...overrides,
     __typename: 'OpsgenieConfig',
-    apiKey: overrides && overrides.hasOwnProperty('apiKey') ? overrides.apiKey! : 'eos',
   };
 };
 
@@ -1130,7 +816,8 @@ export const buildOpsgenieConfigInput = (
   overrides?: Partial<OpsgenieConfigInput>
 ): OpsgenieConfigInput => {
   return {
-    apiKey: overrides && overrides.hasOwnProperty('apiKey') ? overrides.apiKey! : 'fugiat',
+    apiKey: 'hacking',
+    ...overrides,
   };
 };
 
@@ -1138,25 +825,13 @@ export const buildOrganizationReportBySeverity = (
   overrides?: Partial<OrganizationReportBySeverity>
 ): OrganizationReportBySeverity => {
   return {
+    info: buildComplianceStatusCounts(),
+    low: buildComplianceStatusCounts(),
+    medium: buildComplianceStatusCounts(),
+    high: buildComplianceStatusCounts(),
+    critical: buildComplianceStatusCounts(),
+    ...overrides,
     __typename: 'OrganizationReportBySeverity',
-    info:
-      overrides && overrides.hasOwnProperty('info')
-        ? overrides.info!
-        : buildComplianceStatusCounts(),
-    low:
-      overrides && overrides.hasOwnProperty('low') ? overrides.low! : buildComplianceStatusCounts(),
-    medium:
-      overrides && overrides.hasOwnProperty('medium')
-        ? overrides.medium!
-        : buildComplianceStatusCounts(),
-    high:
-      overrides && overrides.hasOwnProperty('high')
-        ? overrides.high!
-        : buildComplianceStatusCounts(),
-    critical:
-      overrides && overrides.hasOwnProperty('critical')
-        ? overrides.critical!
-        : buildComplianceStatusCounts(),
   };
 };
 
@@ -1164,8 +839,8 @@ export const buildOrganizationStatsInput = (
   overrides?: Partial<OrganizationStatsInput>
 ): OrganizationStatsInput => {
   return {
-    limitTopFailing:
-      overrides && overrides.hasOwnProperty('limitTopFailing') ? overrides.limitTopFailing! : 8181,
+    limitTopFailing: 818,
+    ...overrides,
   };
 };
 
@@ -1173,31 +848,20 @@ export const buildOrganizationStatsResponse = (
   overrides?: Partial<OrganizationStatsResponse>
 ): OrganizationStatsResponse => {
   return {
+    appliedPolicies: buildOrganizationReportBySeverity(),
+    scannedResources: buildScannedResources(),
+    topFailingPolicies: [buildPolicySummary()],
+    topFailingResources: [buildResourceSummary()],
+    ...overrides,
     __typename: 'OrganizationStatsResponse',
-    appliedPolicies:
-      overrides && overrides.hasOwnProperty('appliedPolicies')
-        ? overrides.appliedPolicies!
-        : buildOrganizationReportBySeverity(),
-    scannedResources:
-      overrides && overrides.hasOwnProperty('scannedResources')
-        ? overrides.scannedResources!
-        : buildScannedResources(),
-    topFailingPolicies:
-      overrides && overrides.hasOwnProperty('topFailingPolicies')
-        ? overrides.topFailingPolicies!
-        : [buildPolicySummary()],
-    topFailingResources:
-      overrides && overrides.hasOwnProperty('topFailingResources')
-        ? overrides.topFailingResources!
-        : [buildResourceSummary()],
   };
 };
 
 export const buildPagerDutyConfig = (overrides?: Partial<PagerDutyConfig>): PagerDutyConfig => {
   return {
+    integrationKey: 'transform',
+    ...overrides,
     __typename: 'PagerDutyConfig',
-    integrationKey:
-      overrides && overrides.hasOwnProperty('integrationKey') ? overrides.integrationKey! : 'iure',
   };
 };
 
@@ -1205,17 +869,18 @@ export const buildPagerDutyConfigInput = (
   overrides?: Partial<PagerDutyConfigInput>
 ): PagerDutyConfigInput => {
   return {
-    integrationKey:
-      overrides && overrides.hasOwnProperty('integrationKey') ? overrides.integrationKey! : 'qui',
+    integrationKey: 'Soft',
+    ...overrides,
   };
 };
 
 export const buildPagingData = (overrides?: Partial<PagingData>): PagingData => {
   return {
+    thisPage: 289,
+    totalPages: 812,
+    totalItems: 394,
+    ...overrides,
     __typename: 'PagingData',
-    thisPage: overrides && overrides.hasOwnProperty('thisPage') ? overrides.thisPage! : 2891,
-    totalPages: overrides && overrides.hasOwnProperty('totalPages') ? overrides.totalPages! : 8118,
-    totalItems: overrides && overrides.hasOwnProperty('totalItems') ? overrides.totalItems! : 3942,
   };
 };
 
@@ -1223,130 +888,69 @@ export const buildPoliciesForResourceInput = (
   overrides?: Partial<PoliciesForResourceInput>
 ): PoliciesForResourceInput => {
   return {
-    resourceId:
-      overrides && overrides.hasOwnProperty('resourceId')
-        ? overrides.resourceId!
-        : 'e3bd41bd-5265-4a12-b256-43a459c62d5b',
-    severity:
-      overrides && overrides.hasOwnProperty('severity') ? overrides.severity! : SeverityEnum.Info,
-    status:
-      overrides && overrides.hasOwnProperty('status')
-        ? overrides.status!
-        : ComplianceStatusEnum.Error,
-    suppressed: overrides && overrides.hasOwnProperty('suppressed') ? overrides.suppressed! : true,
-    pageSize: overrides && overrides.hasOwnProperty('pageSize') ? overrides.pageSize! : 2820,
-    page: overrides && overrides.hasOwnProperty('page') ? overrides.page! : 9055,
+    resourceId: 'f3bd41bd-4265-4a12-9256-53a459c62d5b',
+    severity: SeverityEnum.Medium,
+    status: ComplianceStatusEnum.Error,
+    suppressed: false,
+    pageSize: 282,
+    page: 906,
+    ...overrides,
   };
 };
 
 export const buildPolicyDetails = (overrides?: Partial<PolicyDetails>): PolicyDetails => {
   return {
+    autoRemediationId: '63631269-b304-4865-b222-bf96d4b3162c',
+    autoRemediationParameters: '"bar"',
+    body: 'card',
+    complianceStatus: ComplianceStatusEnum.Fail,
+    createdAt: '2020-07-11T04:22:59.325Z',
+    createdBy: 'cc4acb0d-22fe-4182-a29b-832f1f6d7f85',
+    description: 'time-frame',
+    displayName: 'navigating',
+    enabled: true,
+    id: '4193e9e6-d55b-48ad-8475-d171d8c2ea89',
+    lastModified: '2019-11-26T13:56:54.548Z',
+    lastModifiedBy: '8b4fcf01-c8f1-4fbf-bc94-e4f58d04c799',
+    outputIds: ['213c2719-fb31-4502-9a8a-adda432a772a'],
+    reference: 'applications',
+    resourceTypes: ['Specialist'],
+    runbook: 'upward-trending',
+    severity: SeverityEnum.Critical,
+    suppressions: ['Bike'],
+    tags: ['success'],
+    tests: [buildPolicyUnitTest()],
+    versionId: 'ca391fc7-f186-4bcb-b717-3e34cb330d83',
+    ...overrides,
     __typename: 'PolicyDetails',
-    autoRemediationId:
-      overrides && overrides.hasOwnProperty('autoRemediationId')
-        ? overrides.autoRemediationId!
-        : '73631269-a304-4865-a222-af96d4b3162c',
-    autoRemediationParameters:
-      overrides && overrides.hasOwnProperty('autoRemediationParameters')
-        ? overrides.autoRemediationParameters!
-        : 'et odio non repudiandae blanditiis est dignissimos',
-    body: overrides && overrides.hasOwnProperty('body') ? overrides.body! : 'id',
-    complianceStatus:
-      overrides && overrides.hasOwnProperty('complianceStatus')
-        ? overrides.complianceStatus!
-        : ComplianceStatusEnum.Error,
-    createdAt:
-      overrides && overrides.hasOwnProperty('createdAt') ? overrides.createdAt! : '1970-10-15',
-    createdBy:
-      overrides && overrides.hasOwnProperty('createdBy')
-        ? overrides.createdBy!
-        : 'dc4acb0d-32fe-4182-929b-932f1f6d7f85',
-    description:
-      overrides && overrides.hasOwnProperty('description') ? overrides.description! : 'voluptatem',
-    displayName:
-      overrides && overrides.hasOwnProperty('displayName') ? overrides.displayName! : 'dolorem',
-    enabled: overrides && overrides.hasOwnProperty('enabled') ? overrides.enabled! : false,
-    id:
-      overrides && overrides.hasOwnProperty('id')
-        ? overrides.id!
-        : '5193e9e6-c55b-48ad-8475-c171d8c2ea89',
-    lastModified:
-      overrides && overrides.hasOwnProperty('lastModified')
-        ? overrides.lastModified!
-        : '1999-09-08',
-    lastModifiedBy:
-      overrides && overrides.hasOwnProperty('lastModifiedBy')
-        ? overrides.lastModifiedBy!
-        : '9b4fcf01-d8f1-4fbf-9c94-f4f58d04c799',
-    outputIds:
-      overrides && overrides.hasOwnProperty('outputIds')
-        ? overrides.outputIds!
-        : ['313c2719-eb31-4502-8a8a-bdda432a772a'],
-    reference: overrides && overrides.hasOwnProperty('reference') ? overrides.reference! : 'odio',
-    resourceTypes:
-      overrides && overrides.hasOwnProperty('resourceTypes')
-        ? overrides.resourceTypes!
-        : ['reiciendis'],
-    runbook: overrides && overrides.hasOwnProperty('runbook') ? overrides.runbook! : 'quaerat',
-    severity:
-      overrides && overrides.hasOwnProperty('severity') ? overrides.severity! : SeverityEnum.Info,
-    suppressions:
-      overrides && overrides.hasOwnProperty('suppressions') ? overrides.suppressions! : ['neque'],
-    tags: overrides && overrides.hasOwnProperty('tags') ? overrides.tags! : ['nemo'],
-    tests:
-      overrides && overrides.hasOwnProperty('tests') ? overrides.tests! : [buildPolicyUnitTest()],
-    versionId:
-      overrides && overrides.hasOwnProperty('versionId')
-        ? overrides.versionId!
-        : 'da391fc7-e186-4bcb-9717-2e34cb330d83',
   };
 };
 
 export const buildPolicySummary = (overrides?: Partial<PolicySummary>): PolicySummary => {
   return {
+    autoRemediationId: '43a2278e-67bf-4941-91f8-7fbe8503562c',
+    autoRemediationParameters: '"car"',
+    suppressions: ['Senior'],
+    complianceStatus: ComplianceStatusEnum.Pass,
+    displayName: 'indigo',
+    enabled: false,
+    id: '260cad31-ef71-4eb6-9ac1-1ca1d0da39c7',
+    lastModified: '2020-03-27T11:32:48.714Z',
+    resourceTypes: ['EXE'],
+    severity: SeverityEnum.Critical,
+    tags: ['navigating'],
+    ...overrides,
     __typename: 'PolicySummary',
-    autoRemediationId:
-      overrides && overrides.hasOwnProperty('autoRemediationId')
-        ? overrides.autoRemediationId!
-        : '53a2278e-77bf-4941-81f8-6fbe8503562c',
-    autoRemediationParameters:
-      overrides && overrides.hasOwnProperty('autoRemediationParameters')
-        ? overrides.autoRemediationParameters!
-        : 'sunt eaque eligendi excepturi mollitia ipsum recusandae',
-    suppressions:
-      overrides && overrides.hasOwnProperty('suppressions')
-        ? overrides.suppressions!
-        : ['repudiandae'],
-    complianceStatus:
-      overrides && overrides.hasOwnProperty('complianceStatus')
-        ? overrides.complianceStatus!
-        : ComplianceStatusEnum.Error,
-    displayName:
-      overrides && overrides.hasOwnProperty('displayName') ? overrides.displayName! : 'quia',
-    enabled: overrides && overrides.hasOwnProperty('enabled') ? overrides.enabled! : true,
-    id:
-      overrides && overrides.hasOwnProperty('id')
-        ? overrides.id!
-        : '360cad31-ff71-4eb6-8ac1-0ca1d0da39c7',
-    lastModified:
-      overrides && overrides.hasOwnProperty('lastModified')
-        ? overrides.lastModified!
-        : '1984-03-17',
-    resourceTypes:
-      overrides && overrides.hasOwnProperty('resourceTypes') ? overrides.resourceTypes! : ['rerum'],
-    severity:
-      overrides && overrides.hasOwnProperty('severity') ? overrides.severity! : SeverityEnum.Info,
-    tags: overrides && overrides.hasOwnProperty('tags') ? overrides.tags! : ['dolorem'],
   };
 };
 
 export const buildPolicyUnitTest = (overrides?: Partial<PolicyUnitTest>): PolicyUnitTest => {
   return {
+    expectedResult: true,
+    name: 'Table',
+    resource: 'deposit',
+    ...overrides,
     __typename: 'PolicyUnitTest',
-    expectedResult:
-      overrides && overrides.hasOwnProperty('expectedResult') ? overrides.expectedResult! : false,
-    name: overrides && overrides.hasOwnProperty('name') ? overrides.name! : 'ipsum',
-    resource: overrides && overrides.hasOwnProperty('resource') ? overrides.resource! : 'quidem',
   };
 };
 
@@ -1354,10 +958,10 @@ export const buildPolicyUnitTestError = (
   overrides?: Partial<PolicyUnitTestError>
 ): PolicyUnitTestError => {
   return {
+    name: 'override',
+    errorMessage: 'Frozen',
+    ...overrides,
     __typename: 'PolicyUnitTestError',
-    name: overrides && overrides.hasOwnProperty('name') ? overrides.name! : 'facere',
-    errorMessage:
-      overrides && overrides.hasOwnProperty('errorMessage') ? overrides.errorMessage! : 'dolores',
   };
 };
 
@@ -1365,10 +969,10 @@ export const buildPolicyUnitTestInput = (
   overrides?: Partial<PolicyUnitTestInput>
 ): PolicyUnitTestInput => {
   return {
-    expectedResult:
-      overrides && overrides.hasOwnProperty('expectedResult') ? overrides.expectedResult! : true,
-    name: overrides && overrides.hasOwnProperty('name') ? overrides.name! : 'qui',
-    resource: overrides && overrides.hasOwnProperty('resource') ? overrides.resource! : 'dolore',
+    expectedResult: false,
+    name: 'application',
+    resource: 'Right-sized',
+    ...overrides,
   };
 };
 
@@ -1376,43 +980,24 @@ export const buildRemediateResourceInput = (
   overrides?: Partial<RemediateResourceInput>
 ): RemediateResourceInput => {
   return {
-    policyId:
-      overrides && overrides.hasOwnProperty('policyId')
-        ? overrides.policyId!
-        : '8f991f1d-ccc4-4ce1-a490-235f34dd4da9',
-    resourceId:
-      overrides && overrides.hasOwnProperty('resourceId')
-        ? overrides.resourceId!
-        : '07cb94ba-5961-439a-bcbf-d305e26019da',
+    policyId: '9f991f1d-dcc4-4ce1-8490-335f34dd4da9',
+    resourceId: '17cb94ba-4961-439a-9cbf-c305e26019da',
+    ...overrides,
   };
 };
 
 export const buildResourceDetails = (overrides?: Partial<ResourceDetails>): ResourceDetails => {
   return {
+    attributes: '"car"',
+    deleted: false,
+    expiresAt: 969,
+    id: '58de615f-2645-4b97-8a31-7cab72afe085',
+    integrationId: 'c3876057-6d75-4af9-b160-a51a16359574',
+    complianceStatus: ComplianceStatusEnum.Pass,
+    lastModified: '2019-11-06T22:53:25.735Z',
+    type: 'Ball',
+    ...overrides,
     __typename: 'ResourceDetails',
-    attributes:
-      overrides && overrides.hasOwnProperty('attributes')
-        ? overrides.attributes!
-        : 'qui qui dolore eveniet qui repellendus ut',
-    deleted: overrides && overrides.hasOwnProperty('deleted') ? overrides.deleted! : true,
-    expiresAt: overrides && overrides.hasOwnProperty('expiresAt') ? overrides.expiresAt! : 9684,
-    id:
-      overrides && overrides.hasOwnProperty('id')
-        ? overrides.id!
-        : '48de615f-3645-4b97-aa31-6cab72afe085',
-    integrationId:
-      overrides && overrides.hasOwnProperty('integrationId')
-        ? overrides.integrationId!
-        : 'd3876057-7d75-4af9-a160-b51a16359574',
-    complianceStatus:
-      overrides && overrides.hasOwnProperty('complianceStatus')
-        ? overrides.complianceStatus!
-        : ComplianceStatusEnum.Error,
-    lastModified:
-      overrides && overrides.hasOwnProperty('lastModified')
-        ? overrides.lastModified!
-        : '2002-03-06',
-    type: overrides && overrides.hasOwnProperty('type') ? overrides.type! : 'dolorem',
   };
 };
 
@@ -1420,149 +1005,84 @@ export const buildResourcesForPolicyInput = (
   overrides?: Partial<ResourcesForPolicyInput>
 ): ResourcesForPolicyInput => {
   return {
-    policyId:
-      overrides && overrides.hasOwnProperty('policyId')
-        ? overrides.policyId!
-        : 'bcd9a6a4-6c52-43d2-acd6-29bd74eb973f',
-    status:
-      overrides && overrides.hasOwnProperty('status')
-        ? overrides.status!
-        : ComplianceStatusEnum.Error,
-    suppressed: overrides && overrides.hasOwnProperty('suppressed') ? overrides.suppressed! : false,
-    pageSize: overrides && overrides.hasOwnProperty('pageSize') ? overrides.pageSize! : 1373,
-    page: overrides && overrides.hasOwnProperty('page') ? overrides.page! : 3539,
+    policyId: 'acd9a6a4-7c52-43d2-8cd6-39bd74eb973f',
+    status: ComplianceStatusEnum.Fail,
+    suppressed: true,
+    pageSize: 137,
+    page: 354,
+    ...overrides,
   };
 };
 
 export const buildResourceSummary = (overrides?: Partial<ResourceSummary>): ResourceSummary => {
   return {
+    id: '9642570b-3380-417d-b139-6e9d3e887b08',
+    integrationId: 'bb97638e-f07d-4ca1-96f6-206967b7c092',
+    complianceStatus: ComplianceStatusEnum.Pass,
+    deleted: false,
+    lastModified: '2020-04-13T09:24:10.204Z',
+    type: 'Illinois',
+    ...overrides,
     __typename: 'ResourceSummary',
-    id:
-      overrides && overrides.hasOwnProperty('id')
-        ? overrides.id!
-        : '8642570b-2380-417d-b139-7e9d3e887b08',
-    integrationId:
-      overrides && overrides.hasOwnProperty('integrationId')
-        ? overrides.integrationId!
-        : 'ab97638e-e07d-4ca1-96f6-306967b7c092',
-    complianceStatus:
-      overrides && overrides.hasOwnProperty('complianceStatus')
-        ? overrides.complianceStatus!
-        : ComplianceStatusEnum.Error,
-    deleted: overrides && overrides.hasOwnProperty('deleted') ? overrides.deleted! : true,
-    lastModified:
-      overrides && overrides.hasOwnProperty('lastModified')
-        ? overrides.lastModified!
-        : '1982-01-23',
-    type: overrides && overrides.hasOwnProperty('type') ? overrides.type! : 'similique',
   };
 };
 
 export const buildRuleDetails = (overrides?: Partial<RuleDetails>): RuleDetails => {
   return {
+    body: 'Shoes',
+    createdAt: '2020-02-17T15:21:48.251Z',
+    createdBy: '6c3e570b-c621-4e3a-aab1-8a21e9aa4d17',
+    dedupPeriodMinutes: 34,
+    description: 'EXE',
+    displayName: 'Advanced',
+    enabled: false,
+    id: 'Metal',
+    lastModified: '2019-08-17T12:43:27.239Z',
+    lastModifiedBy: '5c381f6d-f9c9-4de8-9d6f-dc274dc6b1e0',
+    logTypes: ['Auto Loan Account'],
+    outputIds: ['1460c173-140b-433a-af75-a657c342f229'],
+    reference: 'wireless',
+    runbook: 'withdrawal',
+    severity: SeverityEnum.Low,
+    tags: ['digital'],
+    tests: [buildPolicyUnitTest()],
+    versionId: 'cd730243-e772-446f-b820-ff796b83a51f',
+    ...overrides,
     __typename: 'RuleDetails',
-    body: overrides && overrides.hasOwnProperty('body') ? overrides.body! : 'voluptatem',
-    createdAt:
-      overrides && overrides.hasOwnProperty('createdAt') ? overrides.createdAt! : '1989-02-20',
-    createdBy:
-      overrides && overrides.hasOwnProperty('createdBy')
-        ? overrides.createdBy!
-        : '7c3e570b-d621-4e3a-9ab1-9a21e9aa4d17',
-    dedupPeriodMinutes:
-      overrides && overrides.hasOwnProperty('dedupPeriodMinutes')
-        ? overrides.dedupPeriodMinutes!
-        : 348,
-    description:
-      overrides && overrides.hasOwnProperty('description') ? overrides.description! : 'accusamus',
-    displayName:
-      overrides && overrides.hasOwnProperty('displayName') ? overrides.displayName! : 'quaerat',
-    enabled: overrides && overrides.hasOwnProperty('enabled') ? overrides.enabled! : true,
-    id: overrides && overrides.hasOwnProperty('id') ? overrides.id! : 'magni',
-    lastModified:
-      overrides && overrides.hasOwnProperty('lastModified')
-        ? overrides.lastModified!
-        : '2012-07-07',
-    lastModifiedBy:
-      overrides && overrides.hasOwnProperty('lastModifiedBy')
-        ? overrides.lastModifiedBy!
-        : '4c381f6d-e9c9-4de8-8d6f-cc274dc6b1e0',
-    logTypes:
-      overrides && overrides.hasOwnProperty('logTypes') ? overrides.logTypes! : ['mollitia'],
-    outputIds:
-      overrides && overrides.hasOwnProperty('outputIds')
-        ? overrides.outputIds!
-        : ['0460c173-040b-433a-9f75-b657c342f229'],
-    reference: overrides && overrides.hasOwnProperty('reference') ? overrides.reference! : 'vel',
-    runbook: overrides && overrides.hasOwnProperty('runbook') ? overrides.runbook! : 'harum',
-    severity:
-      overrides && overrides.hasOwnProperty('severity') ? overrides.severity! : SeverityEnum.Info,
-    tags: overrides && overrides.hasOwnProperty('tags') ? overrides.tags! : ['temporibus'],
-    tests:
-      overrides && overrides.hasOwnProperty('tests') ? overrides.tests! : [buildPolicyUnitTest()],
-    versionId:
-      overrides && overrides.hasOwnProperty('versionId')
-        ? overrides.versionId!
-        : 'dd730243-f772-446f-9820-ef796b83a51f',
   };
 };
 
 export const buildRuleSummary = (overrides?: Partial<RuleSummary>): RuleSummary => {
   return {
+    displayName: 'array',
+    enabled: false,
+    id: '4ce135b7-005f-4a98-8a69-9b9d3b372bdb',
+    lastModified: '2020-04-27T08:54:20.904Z',
+    logTypes: ['AI'],
+    severity: SeverityEnum.Info,
+    tags: ['Virginia'],
+    ...overrides,
     __typename: 'RuleSummary',
-    displayName:
-      overrides && overrides.hasOwnProperty('displayName') ? overrides.displayName! : 'porro',
-    enabled: overrides && overrides.hasOwnProperty('enabled') ? overrides.enabled! : true,
-    id:
-      overrides && overrides.hasOwnProperty('id')
-        ? overrides.id!
-        : '5ce135b7-105f-4a98-9a69-8b9d3b372bdb',
-    lastModified:
-      overrides && overrides.hasOwnProperty('lastModified')
-        ? overrides.lastModified!
-        : '1980-04-15',
-    logTypes: overrides && overrides.hasOwnProperty('logTypes') ? overrides.logTypes! : ['vero'],
-    severity:
-      overrides && overrides.hasOwnProperty('severity') ? overrides.severity! : SeverityEnum.Info,
-    tags: overrides && overrides.hasOwnProperty('tags') ? overrides.tags! : ['culpa'],
   };
 };
 
 export const buildS3LogIntegration = (overrides?: Partial<S3LogIntegration>): S3LogIntegration => {
   return {
+    awsAccountId: 'Bedfordshire',
+    createdAtTime: '2020-01-17T17:44:03.502Z',
+    createdBy: 'f135f3dc-9654-4752-b1a9-c20f98d87e48',
+    integrationId: '73041328-928c-4ff9-a396-06b9b769900d',
+    integrationType: 'Computers',
+    integrationLabel: 'transmitting',
+    lastEventReceived: '2019-12-09T18:54:30.382Z',
+    s3Bucket: 'generating',
+    s3Prefix: 'IB',
+    kmsKey: 'robust',
+    logTypes: ['strategize'],
+    health: buildS3LogIntegrationHealth(),
+    stackName: 'River',
+    ...overrides,
     __typename: 'S3LogIntegration',
-    awsAccountId:
-      overrides && overrides.hasOwnProperty('awsAccountId') ? overrides.awsAccountId! : 'dolores',
-    createdAtTime:
-      overrides && overrides.hasOwnProperty('createdAtTime')
-        ? overrides.createdAtTime!
-        : '1993-01-23',
-    createdBy:
-      overrides && overrides.hasOwnProperty('createdBy')
-        ? overrides.createdBy!
-        : 'e135f3dc-8654-4752-91a9-d20f98d87e48',
-    integrationId:
-      overrides && overrides.hasOwnProperty('integrationId')
-        ? overrides.integrationId!
-        : '63041328-828c-4ff9-8396-16b9b769900d',
-    integrationType:
-      overrides && overrides.hasOwnProperty('integrationType') ? overrides.integrationType! : 'sit',
-    integrationLabel:
-      overrides && overrides.hasOwnProperty('integrationLabel')
-        ? overrides.integrationLabel!
-        : 'quo',
-    lastEventReceived:
-      overrides && overrides.hasOwnProperty('lastEventReceived')
-        ? overrides.lastEventReceived!
-        : '1998-01-03',
-    s3Bucket: overrides && overrides.hasOwnProperty('s3Bucket') ? overrides.s3Bucket! : 'illum',
-    s3Prefix: overrides && overrides.hasOwnProperty('s3Prefix') ? overrides.s3Prefix! : 'vero',
-    kmsKey: overrides && overrides.hasOwnProperty('kmsKey') ? overrides.kmsKey! : 'aliquid',
-    logTypes: overrides && overrides.hasOwnProperty('logTypes') ? overrides.logTypes! : ['iure'],
-    health:
-      overrides && overrides.hasOwnProperty('health')
-        ? overrides.health!
-        : buildS3LogIntegrationHealth(),
-    stackName: overrides && overrides.hasOwnProperty('stackName') ? overrides.stackName! : 'totam',
   };
 };
 
@@ -1570,29 +1090,19 @@ export const buildS3LogIntegrationHealth = (
   overrides?: Partial<S3LogIntegrationHealth>
 ): S3LogIntegrationHealth => {
   return {
+    processingRoleStatus: buildIntegrationItemHealthStatus(),
+    s3BucketStatus: buildIntegrationItemHealthStatus(),
+    kmsKeyStatus: buildIntegrationItemHealthStatus(),
+    ...overrides,
     __typename: 'S3LogIntegrationHealth',
-    processingRoleStatus:
-      overrides && overrides.hasOwnProperty('processingRoleStatus')
-        ? overrides.processingRoleStatus!
-        : buildIntegrationItemHealthStatus(),
-    s3BucketStatus:
-      overrides && overrides.hasOwnProperty('s3BucketStatus')
-        ? overrides.s3BucketStatus!
-        : buildIntegrationItemHealthStatus(),
-    kmsKeyStatus:
-      overrides && overrides.hasOwnProperty('kmsKeyStatus')
-        ? overrides.kmsKeyStatus!
-        : buildIntegrationItemHealthStatus(),
   };
 };
 
 export const buildScannedResources = (overrides?: Partial<ScannedResources>): ScannedResources => {
   return {
+    byType: [buildScannedResourceStats()],
+    ...overrides,
     __typename: 'ScannedResources',
-    byType:
-      overrides && overrides.hasOwnProperty('byType')
-        ? overrides.byType!
-        : [buildScannedResourceStats()],
   };
 };
 
@@ -1600,53 +1110,55 @@ export const buildScannedResourceStats = (
   overrides?: Partial<ScannedResourceStats>
 ): ScannedResourceStats => {
   return {
+    count: buildComplianceStatusCounts(),
+    type: 'proactive',
+    ...overrides,
     __typename: 'ScannedResourceStats',
-    count:
-      overrides && overrides.hasOwnProperty('count')
-        ? overrides.count!
-        : buildComplianceStatusCounts(),
-    type: overrides && overrides.hasOwnProperty('type') ? overrides.type! : 'ut',
   };
 };
 
 export const buildSlackConfig = (overrides?: Partial<SlackConfig>): SlackConfig => {
   return {
+    webhookURL: 'Manat',
+    ...overrides,
     __typename: 'SlackConfig',
-    webhookURL:
-      overrides && overrides.hasOwnProperty('webhookURL') ? overrides.webhookURL! : 'nobis',
   };
 };
 
 export const buildSlackConfigInput = (overrides?: Partial<SlackConfigInput>): SlackConfigInput => {
   return {
-    webhookURL:
-      overrides && overrides.hasOwnProperty('webhookURL') ? overrides.webhookURL! : 'praesentium',
+    webhookURL: 'Prairie',
+    ...overrides,
   };
 };
 
 export const buildSnsConfig = (overrides?: Partial<SnsConfig>): SnsConfig => {
   return {
+    topicArn: 'Outdoors',
+    ...overrides,
     __typename: 'SnsConfig',
-    topicArn: overrides && overrides.hasOwnProperty('topicArn') ? overrides.topicArn! : 'aut',
   };
 };
 
 export const buildSnsConfigInput = (overrides?: Partial<SnsConfigInput>): SnsConfigInput => {
   return {
-    topicArn: overrides && overrides.hasOwnProperty('topicArn') ? overrides.topicArn! : 'voluptas',
+    topicArn: 'algorithm',
+    ...overrides,
   };
 };
 
 export const buildSqsConfig = (overrides?: Partial<SqsConfig>): SqsConfig => {
   return {
+    queueUrl: 'Engineer',
+    ...overrides,
     __typename: 'SqsConfig',
-    queueUrl: overrides && overrides.hasOwnProperty('queueUrl') ? overrides.queueUrl! : 'maiores',
   };
 };
 
 export const buildSqsConfigInput = (overrides?: Partial<SqsConfigInput>): SqsConfigInput => {
   return {
-    queueUrl: overrides && overrides.hasOwnProperty('queueUrl') ? overrides.queueUrl! : 'et',
+    queueUrl: 'Seamless',
+    ...overrides,
   };
 };
 
@@ -1654,32 +1166,19 @@ export const buildSuppressPoliciesInput = (
   overrides?: Partial<SuppressPoliciesInput>
 ): SuppressPoliciesInput => {
   return {
-    policyIds:
-      overrides && overrides.hasOwnProperty('policyIds')
-        ? overrides.policyIds!
-        : ['a2796f03-3f72-4717-a45b-fea5c8b2943f'],
-    resourcePatterns:
-      overrides && overrides.hasOwnProperty('resourcePatterns')
-        ? overrides.resourcePatterns!
-        : ['nobis'],
+    policyIds: ['b2796f03-2f72-4717-a45b-eea5c8b2943f'],
+    resourcePatterns: ['Cuban Peso Peso Convertible'],
+    ...overrides,
   };
 };
 
 export const buildTestPolicyInput = (overrides?: Partial<TestPolicyInput>): TestPolicyInput => {
   return {
-    body: overrides && overrides.hasOwnProperty('body') ? overrides.body! : 'et',
-    resourceTypes:
-      overrides && overrides.hasOwnProperty('resourceTypes')
-        ? overrides.resourceTypes!
-        : ['accusantium'],
-    analysisType:
-      overrides && overrides.hasOwnProperty('analysisType')
-        ? overrides.analysisType!
-        : AnalysisTypeEnum.Rule,
-    tests:
-      overrides && overrides.hasOwnProperty('tests')
-        ? overrides.tests!
-        : [buildPolicyUnitTestInput()],
+    body: 'Centralized',
+    resourceTypes: ['Automotive'],
+    analysisType: AnalysisTypeEnum.Rule,
+    tests: [buildPolicyUnitTestInput()],
+    ...overrides,
   };
 };
 
@@ -1687,17 +1186,12 @@ export const buildTestPolicyResponse = (
   overrides?: Partial<TestPolicyResponse>
 ): TestPolicyResponse => {
   return {
+    testSummary: false,
+    testsPassed: ['Producer'],
+    testsFailed: ['Granite'],
+    testsErrored: [buildPolicyUnitTestError()],
+    ...overrides,
     __typename: 'TestPolicyResponse',
-    testSummary:
-      overrides && overrides.hasOwnProperty('testSummary') ? overrides.testSummary! : true,
-    testsPassed:
-      overrides && overrides.hasOwnProperty('testsPassed') ? overrides.testsPassed! : ['maiores'],
-    testsFailed:
-      overrides && overrides.hasOwnProperty('testsFailed') ? overrides.testsFailed! : ['sed'],
-    testsErrored:
-      overrides && overrides.hasOwnProperty('testsErrored')
-        ? overrides.testsErrored!
-        : [buildPolicyUnitTestError()],
   };
 };
 
@@ -1705,19 +1199,11 @@ export const buildUpdateComplianceIntegrationInput = (
   overrides?: Partial<UpdateComplianceIntegrationInput>
 ): UpdateComplianceIntegrationInput => {
   return {
-    integrationId:
-      overrides && overrides.hasOwnProperty('integrationId')
-        ? overrides.integrationId!
-        : 'corporis',
-    integrationLabel:
-      overrides && overrides.hasOwnProperty('integrationLabel')
-        ? overrides.integrationLabel!
-        : 'nisi',
-    cweEnabled: overrides && overrides.hasOwnProperty('cweEnabled') ? overrides.cweEnabled! : true,
-    remediationEnabled:
-      overrides && overrides.hasOwnProperty('remediationEnabled')
-        ? overrides.remediationEnabled!
-        : true,
+    integrationId: 'support',
+    integrationLabel: 'holistic',
+    cweEnabled: false,
+    remediationEnabled: false,
+    ...overrides,
   };
 };
 
@@ -1725,13 +1211,10 @@ export const buildUpdateGeneralSettingsInput = (
   overrides?: Partial<UpdateGeneralSettingsInput>
 ): UpdateGeneralSettingsInput => {
   return {
-    displayName:
-      overrides && overrides.hasOwnProperty('displayName') ? overrides.displayName! : 'sint',
-    email: overrides && overrides.hasOwnProperty('email') ? overrides.email! : 'non',
-    errorReportingConsent:
-      overrides && overrides.hasOwnProperty('errorReportingConsent')
-        ? overrides.errorReportingConsent!
-        : false,
+    displayName: 'Borders',
+    email: 'olive',
+    errorReportingConsent: true,
+    ...overrides,
   };
 };
 
@@ -1739,77 +1222,41 @@ export const buildUpdatePolicyInput = (
   overrides?: Partial<UpdatePolicyInput>
 ): UpdatePolicyInput => {
   return {
-    autoRemediationId:
-      overrides && overrides.hasOwnProperty('autoRemediationId')
-        ? overrides.autoRemediationId!
-        : '2ec80d46-eb82-458d-9293-dcefffe7eeaa',
-    autoRemediationParameters:
-      overrides && overrides.hasOwnProperty('autoRemediationParameters')
-        ? overrides.autoRemediationParameters!
-        : 'odit quisquam rerum esse eligendi qui sed',
-    body: overrides && overrides.hasOwnProperty('body') ? overrides.body! : 'incidunt',
-    description:
-      overrides && overrides.hasOwnProperty('description') ? overrides.description! : 'commodi',
-    displayName:
-      overrides && overrides.hasOwnProperty('displayName') ? overrides.displayName! : 'harum',
-    enabled: overrides && overrides.hasOwnProperty('enabled') ? overrides.enabled! : false,
-    id:
-      overrides && overrides.hasOwnProperty('id')
-        ? overrides.id!
-        : 'ddf83cf0-7494-413a-b723-cdfd28c60cc7',
-    outputIds:
-      overrides && overrides.hasOwnProperty('outputIds')
-        ? overrides.outputIds!
-        : ['82126800-bfab-49cc-b6fb-c7d45589f268'],
-    reference:
-      overrides && overrides.hasOwnProperty('reference') ? overrides.reference! : 'dolorem',
-    resourceTypes:
-      overrides && overrides.hasOwnProperty('resourceTypes')
-        ? overrides.resourceTypes!
-        : ['excepturi'],
-    runbook: overrides && overrides.hasOwnProperty('runbook') ? overrides.runbook! : 'ea',
-    severity:
-      overrides && overrides.hasOwnProperty('severity') ? overrides.severity! : SeverityEnum.Info,
-    suppressions:
-      overrides && overrides.hasOwnProperty('suppressions') ? overrides.suppressions! : ['numquam'],
-    tags: overrides && overrides.hasOwnProperty('tags') ? overrides.tags! : ['assumenda'],
-    tests:
-      overrides && overrides.hasOwnProperty('tests')
-        ? overrides.tests!
-        : [buildPolicyUnitTestInput()],
+    autoRemediationId: '3ec80d46-fb82-458d-9293-ccefffe7eeaa',
+    autoRemediationParameters: '"bar"',
+    body: 'Front-line',
+    description: 'dot-com',
+    displayName: 'deposit',
+    enabled: true,
+    id: 'cdf83cf0-6494-413a-a723-ddfd28c60cc7',
+    outputIds: ['92126800-afab-49cc-b6fb-d7d45589f268'],
+    reference: 'Table',
+    resourceTypes: ['Buckinghamshire'],
+    runbook: 'productize',
+    severity: SeverityEnum.Info,
+    suppressions: ['green'],
+    tags: ['transmit'],
+    tests: [buildPolicyUnitTestInput()],
+    ...overrides,
   };
 };
 
 export const buildUpdateRuleInput = (overrides?: Partial<UpdateRuleInput>): UpdateRuleInput => {
   return {
-    body: overrides && overrides.hasOwnProperty('body') ? overrides.body! : 'nihil',
-    dedupPeriodMinutes:
-      overrides && overrides.hasOwnProperty('dedupPeriodMinutes')
-        ? overrides.dedupPeriodMinutes!
-        : 7481,
-    description:
-      overrides && overrides.hasOwnProperty('description') ? overrides.description! : 'officia',
-    displayName:
-      overrides && overrides.hasOwnProperty('displayName') ? overrides.displayName! : 'et',
-    enabled: overrides && overrides.hasOwnProperty('enabled') ? overrides.enabled! : false,
-    id:
-      overrides && overrides.hasOwnProperty('id')
-        ? overrides.id!
-        : '08acb268-462c-44de-b424-38c46a166088',
-    logTypes: overrides && overrides.hasOwnProperty('logTypes') ? overrides.logTypes! : ['quam'],
-    outputIds:
-      overrides && overrides.hasOwnProperty('outputIds')
-        ? overrides.outputIds!
-        : ['ce925222-cb76-43b8-a891-a7b6f90d8180'],
-    reference: overrides && overrides.hasOwnProperty('reference') ? overrides.reference! : 'iusto',
-    runbook: overrides && overrides.hasOwnProperty('runbook') ? overrides.runbook! : 'sed',
-    severity:
-      overrides && overrides.hasOwnProperty('severity') ? overrides.severity! : SeverityEnum.Info,
-    tags: overrides && overrides.hasOwnProperty('tags') ? overrides.tags! : ['ut'],
-    tests:
-      overrides && overrides.hasOwnProperty('tests')
-        ? overrides.tests!
-        : [buildPolicyUnitTestInput()],
+    body: 'capacitor',
+    dedupPeriodMinutes: 748,
+    description: 'Utah',
+    displayName: 'Internal',
+    enabled: true,
+    id: '18acb268-562c-44de-9424-28c46a166088',
+    logTypes: ['initiatives'],
+    outputIds: ['de925222-db76-43b8-a891-b7b6f90d8180'],
+    reference: 'e-commerce',
+    runbook: 'Fresh',
+    severity: SeverityEnum.High,
+    tags: ['Senior'],
+    tests: [buildPolicyUnitTestInput()],
+    ...overrides,
   };
 };
 
@@ -1817,33 +1264,23 @@ export const buildUpdateS3LogIntegrationInput = (
   overrides?: Partial<UpdateS3LogIntegrationInput>
 ): UpdateS3LogIntegrationInput => {
   return {
-    integrationId:
-      overrides && overrides.hasOwnProperty('integrationId') ? overrides.integrationId! : 'qui',
-    integrationLabel:
-      overrides && overrides.hasOwnProperty('integrationLabel')
-        ? overrides.integrationLabel!
-        : 'quos',
-    s3Bucket: overrides && overrides.hasOwnProperty('s3Bucket') ? overrides.s3Bucket! : 'numquam',
-    kmsKey: overrides && overrides.hasOwnProperty('kmsKey') ? overrides.kmsKey! : 'distinctio',
-    s3Prefix: overrides && overrides.hasOwnProperty('s3Prefix') ? overrides.s3Prefix! : 'sit',
-    logTypes:
-      overrides && overrides.hasOwnProperty('logTypes') ? overrides.logTypes! : ['repudiandae'],
+    integrationId: 'expedite',
+    integrationLabel: 'Buckinghamshire',
+    s3Bucket: 'green',
+    kmsKey: 'deposit',
+    s3Prefix: 'Keyboard',
+    logTypes: ['Dynamic'],
+    ...overrides,
   };
 };
 
 export const buildUpdateUserInput = (overrides?: Partial<UpdateUserInput>): UpdateUserInput => {
   return {
-    id:
-      overrides && overrides.hasOwnProperty('id')
-        ? overrides.id!
-        : '1d6a9360-c92b-4660-8e5f-04155047bddc',
-    givenName:
-      overrides && overrides.hasOwnProperty('givenName') ? overrides.givenName! : 'dolorum',
-    familyName: overrides && overrides.hasOwnProperty('familyName') ? overrides.familyName! : 'qui',
-    email:
-      overrides && overrides.hasOwnProperty('email')
-        ? overrides.email!
-        : 'Elisa.Lindgren@gmail.com',
+    id: '0d6a9360-d92b-4660-9e5f-14155047bddc',
+    givenName: 'Personal Loan Account',
+    familyName: 'connecting',
+    email: 'Eldon.Gusikowski@hotmail.com',
+    ...overrides,
   };
 };
 
@@ -1851,7 +1288,8 @@ export const buildUploadPoliciesInput = (
   overrides?: Partial<UploadPoliciesInput>
 ): UploadPoliciesInput => {
   return {
-    data: overrides && overrides.hasOwnProperty('data') ? overrides.data! : 'autem',
+    data: 'back-end',
+    ...overrides,
   };
 };
 
@@ -1859,37 +1297,26 @@ export const buildUploadPoliciesResponse = (
   overrides?: Partial<UploadPoliciesResponse>
 ): UploadPoliciesResponse => {
   return {
+    totalPolicies: 102,
+    newPolicies: 971,
+    modifiedPolicies: 829,
+    totalRules: 916,
+    newRules: 898,
+    modifiedRules: 463,
+    ...overrides,
     __typename: 'UploadPoliciesResponse',
-    totalPolicies:
-      overrides && overrides.hasOwnProperty('totalPolicies') ? overrides.totalPolicies! : 1020,
-    newPolicies:
-      overrides && overrides.hasOwnProperty('newPolicies') ? overrides.newPolicies! : 9703,
-    modifiedPolicies:
-      overrides && overrides.hasOwnProperty('modifiedPolicies')
-        ? overrides.modifiedPolicies!
-        : 8285,
-    totalRules: overrides && overrides.hasOwnProperty('totalRules') ? overrides.totalRules! : 9150,
-    newRules: overrides && overrides.hasOwnProperty('newRules') ? overrides.newRules! : 8972,
-    modifiedRules:
-      overrides && overrides.hasOwnProperty('modifiedRules') ? overrides.modifiedRules! : 4628,
   };
 };
 
 export const buildUser = (overrides?: Partial<User>): User => {
   return {
+    givenName: 'function',
+    familyName: 'Future-proofed',
+    id: 'b5756f00-51a6-422a-9a7d-c13ee6a63750',
+    email: 'Mac13@yahoo.com',
+    createdAt: 1563535135708,
+    status: 'experiences',
+    ...overrides,
     __typename: 'User',
-    givenName:
-      overrides && overrides.hasOwnProperty('givenName') ? overrides.givenName! : 'voluptas',
-    familyName:
-      overrides && overrides.hasOwnProperty('familyName') ? overrides.familyName! : 'incidunt',
-    id:
-      overrides && overrides.hasOwnProperty('id')
-        ? overrides.id!
-        : 'a5756f00-41a6-422a-8a7d-d13ee6a63750',
-    email:
-      overrides && overrides.hasOwnProperty('email') ? overrides.email! : 'Trinity_Ferry@gmail.com',
-    createdAt:
-      overrides && overrides.hasOwnProperty('createdAt') ? overrides.createdAt! : 1458071232,
-    status: overrides && overrides.hasOwnProperty('status') ? overrides.status! : 'iusto',
   };
 };
