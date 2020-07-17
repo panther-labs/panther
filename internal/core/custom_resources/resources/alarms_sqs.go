@@ -50,7 +50,7 @@ func customSQSAlarms(_ context.Context, event cfn.Event) (string, map[string]int
 
 	case cfn.RequestDelete:
 		// Only of the two alarms will be defined, but we can just delete both - one will be ignored
-		return event.PhysicalResourceID, nil, deleteMetricAlarms(
+		return event.PhysicalResourceID, nil, deleteAlarms(
 			event.PhysicalResourceID, sqsAgeAlarm, sqsDeadLetterAlarm)
 
 	default:
@@ -59,7 +59,7 @@ func customSQSAlarms(_ context.Context, event cfn.Event) (string, map[string]int
 }
 
 func putSQSAlarmGroup(props SQSAlarmProperties) error {
-	input := cloudwatch.PutMetricAlarmInput{
+	input := &cloudwatch.PutMetricAlarmInput{
 		AlarmActions:       []*string{&props.AlarmTopicArn},
 		ComparisonOperator: aws.String(cloudwatch.ComparisonOperatorGreaterThanThreshold),
 		Dimensions: []*cloudwatch.Dimension{
