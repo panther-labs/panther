@@ -80,6 +80,9 @@ type UpdateRule struct {
 	// tests
 	Tests TestSuite `json:"tests,omitempty"`
 
+	// threshold
+	Threshold Threshold `json:"threshold,omitempty"`
+
 	// user Id
 	// Required: true
 	UserID UserID `json:"userId"`
@@ -142,6 +145,10 @@ func (m *UpdateRule) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateTests(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateThreshold(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -356,6 +363,22 @@ func (m *UpdateRule) validateTests(formats strfmt.Registry) error {
 	if err := m.Tests.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("tests")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *UpdateRule) validateThreshold(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Threshold) { // not required
+		return nil
+	}
+
+	if err := m.Threshold.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("threshold")
 		}
 		return err
 	}

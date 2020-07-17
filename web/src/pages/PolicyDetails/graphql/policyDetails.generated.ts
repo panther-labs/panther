@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
-
 import * as Types from '../../../../__generated__/schema';
 
 import { PolicyDetailsMain } from '../../../graphql/fragments/PolicyDetailsMain.generated';
@@ -143,3 +141,18 @@ export type PolicyDetailsQueryResult = ApolloReactCommon.QueryResult<
   PolicyDetails,
   PolicyDetailsVariables
 >;
+export function mockPolicyDetails({
+  data,
+  variables,
+  error,
+}: {
+  data: PolicyDetails;
+  variables?: PolicyDetailsVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: PolicyDetailsDocument, variables },
+    result: { data },
+    error,
+  };
+}

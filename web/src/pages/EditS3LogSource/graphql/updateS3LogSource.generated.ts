@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
-
 import * as Types from '../../../../__generated__/schema';
 
 import { S3LogIntegrationDetails } from '../../../graphql/fragments/S3LogIntegrationDetails.generated';
@@ -75,3 +73,18 @@ export type UpdateS3LogSourceMutationOptions = ApolloReactCommon.BaseMutationOpt
   UpdateS3LogSource,
   UpdateS3LogSourceVariables
 >;
+export function mockUpdateS3LogSource({
+  data,
+  variables,
+  error,
+}: {
+  data: UpdateS3LogSource;
+  variables?: UpdateS3LogSourceVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: UpdateS3LogSourceDocument, variables },
+    result: { data },
+    error,
+  };
+}

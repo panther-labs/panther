@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
-
 import * as Types from '../../../__generated__/schema';
 
 import gql from 'graphql-tag';
@@ -71,3 +69,18 @@ export type RemediateResourceMutationOptions = ApolloReactCommon.BaseMutationOpt
   RemediateResource,
   RemediateResourceVariables
 >;
+export function mockRemediateResource({
+  data,
+  variables,
+  error,
+}: {
+  data: RemediateResource;
+  variables?: RemediateResourceVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: RemediateResourceDocument, variables },
+    result: { data },
+    error,
+  };
+}

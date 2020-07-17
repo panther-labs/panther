@@ -53,6 +53,7 @@ type tableItem struct {
 	CreatedAt                 models.ModifyTime                `json:"createdAt"`
 	CreatedBy                 models.UserID                    `json:"createdBy"`
 	DedupPeriodMinutes        models.DedupPeriodMinutes        `json:"dedupPeriodMinutes,omitempty"`
+	Threshold                 models.Threshold                 `json:"threshold,omitempty"`
 	Description               models.Description               `json:"description,omitempty"`
 	DisplayName               models.DisplayName               `json:"displayName,omitempty"`
 	Enabled                   models.Enabled                   `json:"enabled"`
@@ -168,6 +169,7 @@ func (r *tableItem) Rule() *models.Rule {
 		Tests:              r.Tests,
 		VersionID:          r.VersionID,
 		DedupPeriodMinutes: r.DedupPeriodMinutes,
+		Threshold:          r.Threshold,
 	}
 	gatewayapi.ReplaceMapSliceNils(result)
 	return result

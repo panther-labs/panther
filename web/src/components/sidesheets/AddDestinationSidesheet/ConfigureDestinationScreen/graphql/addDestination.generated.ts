@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
-
 import * as Types from '../../../../../../__generated__/schema';
 
 import { DestinationFull } from '../../../../../graphql/fragments/DestinationFull.generated';
@@ -75,3 +73,18 @@ export type AddDestinationMutationOptions = ApolloReactCommon.BaseMutationOption
   AddDestination,
   AddDestinationVariables
 >;
+export function mockAddDestination({
+  data,
+  variables,
+  error,
+}: {
+  data: AddDestination;
+  variables?: AddDestinationVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: AddDestinationDocument, variables },
+    result: { data },
+    error,
+  };
+}

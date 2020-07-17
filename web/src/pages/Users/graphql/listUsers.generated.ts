@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
-
 import * as Types from '../../../../__generated__/schema';
 
 import { UserDetails } from '../../../graphql/fragments/UserDetails.generated';
@@ -69,3 +67,18 @@ export function useListUsersLazyQuery(
 export type ListUsersHookResult = ReturnType<typeof useListUsers>;
 export type ListUsersLazyQueryHookResult = ReturnType<typeof useListUsersLazyQuery>;
 export type ListUsersQueryResult = ApolloReactCommon.QueryResult<ListUsers, ListUsersVariables>;
+export function mockListUsers({
+  data,
+  variables,
+  error,
+}: {
+  data: ListUsers;
+  variables?: ListUsersVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: ListUsersDocument, variables },
+    result: { data },
+    error,
+  };
+}
