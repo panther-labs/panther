@@ -30,6 +30,11 @@ const graphql_1 = require('graphql');
 const pascal_case_1 = require('pascal-case');
 const faker_1 = __importDefault(require('faker'));
 // import { generateRandomArray } from 'test-utils';
+// monkeypatching the date func since seeding is broken without it
+// https://github.com/Marak/faker.js/issues/608#issuecomment-491345249
+const oldPast = faker_1.default.date.past;
+faker_1.default.date.past = (years = 1, refDate = new Date(2021, 0, 0)) =>
+  oldPast.call(faker_1.default.date, years, refDate);
 const toMockName = str => `build${str}`;
 const wrapWithQuotes = str => `'${str}'`;
 const hashStringToNumber = value => {
