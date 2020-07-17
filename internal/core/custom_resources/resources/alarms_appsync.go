@@ -50,7 +50,7 @@ func customAppSyncAlarms(_ context.Context, event cfn.Event) (string, map[string
 		return "custom:alarms:appsync:" + props.APIID, nil, putAppSyncAlarmGroup(props)
 
 	case cfn.RequestDelete:
-		return event.PhysicalResourceID, nil, deleteMetricAlarms(event.PhysicalResourceID,
+		return event.PhysicalResourceID, nil, deleteAlarms(event.PhysicalResourceID,
 			appSyncClientErrorAlarm, appSyncServerErrorAlarm)
 
 	default:
@@ -59,7 +59,7 @@ func customAppSyncAlarms(_ context.Context, event cfn.Event) (string, map[string
 }
 
 func putAppSyncAlarmGroup(props AppSyncAlarmProperties) error {
-	input := cloudwatch.PutMetricAlarmInput{
+	input := &cloudwatch.PutMetricAlarmInput{
 		AlarmActions: []*string{&props.AlarmTopicArn},
 		AlarmDescription: aws.String(fmt.Sprintf(
 			"AppSync %s has elevated 4XX errors. See: %s#%s",

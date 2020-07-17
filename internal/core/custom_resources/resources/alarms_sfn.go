@@ -51,7 +51,7 @@ func customStateMachineAlarms(_ context.Context, event cfn.Event) (string, map[s
 		return "custom:alarms:sfn:" + props.stateMachineName, nil, putSfnAlarmGroup(props)
 
 	case cfn.RequestDelete:
-		return event.PhysicalResourceID, nil, deleteMetricAlarms(
+		return event.PhysicalResourceID, nil, deleteAlarms(
 			stateMachineName(event.PhysicalResourceID), sfnFailedExecutionsAlarm)
 
 	default:
@@ -68,7 +68,7 @@ func stateMachineName(arn string) string {
 }
 
 func putSfnAlarmGroup(props SFNAlarmProperties) error {
-	input := cloudwatch.PutMetricAlarmInput{
+	input := &cloudwatch.PutMetricAlarmInput{
 		AlarmActions: []*string{&props.AlarmTopicArn},
 		AlarmDescription: aws.String(fmt.Sprintf(
 			"State machine %s is failing. See: %s#%s",
