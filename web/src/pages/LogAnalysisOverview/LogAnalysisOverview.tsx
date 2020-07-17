@@ -30,9 +30,10 @@ import AlertsBySeverity from './AlertsBySeverity';
 import AlertSummary from './AlertSummary';
 
 function getDates() {
+  const pastDays = 3;
   const toDate = new Date();
   const fromDate = new Date(toDate);
-  fromDate.setDate(toDate.getDate() - 7);
+  fromDate.setDate(toDate.getDate() - pastDays);
 
   return {
     // split is used to cut out milliseconds since they trigger an infinite loop for some reason
@@ -48,7 +49,7 @@ const LogAnalysisOverview: React.FC = () => {
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
-        metricNames: ['eventsProcessed'],
+        metricNames: ['eventsProcessed', 'totalAlertsDelta', 'alertsBySeverity'],
         fromDate,
         toDate,
         intervalHours,
@@ -70,9 +71,7 @@ const LogAnalysisOverview: React.FC = () => {
     );
   }
 
-  const eventsByLogType = data.getLogAnalysisMetrics.metricResults.find(
-    ({ MetricName }) => MetricName === 'EventsProcessed'
-  );
+  const eventsByLogType = data.getLogAnalysisMetrics.eventsProcessed;
 
   return (
     <Box as="article" mb={6}>

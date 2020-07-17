@@ -25,16 +25,9 @@ interface EventsByLogTypesProps {
 }
 
 const EventsByLogTypes: React.FC<EventsByLogTypesProps> = ({ events }) => {
-  // FIXME: Remove this when fixed in backend
-  const transformedEvents = events.map(e => ({
-    label: e.Label,
-    timestamps: e.Timestamps,
-    values: e.Values,
-  }));
-
   return (
     <Flex height="100%">
-      <TimeSeriesChart data={transformedEvents} />
+      <TimeSeriesChart data={events} />
     </Flex>
   );
 };

@@ -339,22 +339,36 @@ type OrganizationStatsResponse {
   topFailingResources: [ResourceSummary]
 }
 
-type SeriesData {
-  Label: String!
-  Timestamps: [AWSDateTime]!
-  Values: [Int]!
+type Series {
+  label: String!
+  values: [Int]!
 }
 
-type MetricsResults {
-  MetricName: String
-  seriesData: [SeriesData]
+type SeriesData {
+  timestamps: [AWSDateTime]
+  series: Series
+}
+
+type SeriesMetric {
+  seriesData: SeriesData
+}
+
+type SingleValue {
+  label: String!
+  value: Int!
+}
+
+type TotalAlertsDelta {
+  singleValue: [SingleValue]!
 }
 
 type LogAnalysisMetricsResponse {
-  metricResults: [MetricsResults]
-  #  fromDate: AWSDateTime
-  #  toDate: AWSDateTime
-  intervalHours: Int
+  eventsProcessed: SeriesMetric
+  alertsBySeverity: SeriesMetric
+  totalAlertsDelta: TotalAlertsDelta
+  fromDate: AWSDateTime!
+  toDate: AWSDateTime!
+  intervalHours: Int!
 }
 
 input UpdateGeneralSettingsInput {
