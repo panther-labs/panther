@@ -27,7 +27,7 @@ Each analysis consists of:
 
 Rules are Python functions to detect suspicious behaviors. Returning a value of `True` indicates suspicious activity, which triggers an alert.
 
-First, [write your rule](log-analysis/rules/README.md) and save it (in your folder of choice) as `my_new_rule.py`:
+First, [write your rule](../log-analysis/rules/README.md) and save it (in your folder of choice) as `my_new_rule.py`:
 
 ```python
 def rule(event):
@@ -108,7 +108,7 @@ Try to cover as many test cases as possible, including both true and false posit
 
 Policies are Python functions to detect misconfigured cloud infrastructure. Returning a value of `True` indicates this resource is valid and properly configured. Returning `False` indicates a policy failure, which triggers an alert.
 
-First, [write your policy](cloud-security/policies/README.md) and save it (in your folder of choice) as `my_new_policy.py`:
+First, [write your policy](../cloud-security/policies/README.md) and save it (in your folder of choice) as `my_new_policy.py`:
 
 ```python
 def polcy(resource):
@@ -162,7 +162,7 @@ Automatic remediations requires two fields to be set in the spec file:
 * `AutoRemediationID`: The automatic remediation identifier to enable
 * `AutoRemediationParameters`: The expected configurations for the remediation
 
-For a complete list of remediations and their associated configurations, see the [remediations](cloud-security/automatic-remediation/aws) page.
+For a complete list of remediations and their associated configurations, see the [remediations](../cloud-security/automatic-remediation/aws) page.
 
 ### Policy Tests
 

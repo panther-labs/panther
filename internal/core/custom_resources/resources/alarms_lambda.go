@@ -34,6 +34,7 @@ const (
 	lambdaExecutionErrorAlarm = "LambdaExecutionErrors"
 	lambdaDurationAlarm       = "LambdaHighDuration"
 	lambdaThrottleAlarm       = "LambdaThrottles"
+	lambdaCompositeAlarm      = "LambdaCompositeAlarm"
 )
 
 type LambdaAlarmProperties struct {
@@ -74,21 +75,35 @@ func customLambdaAlarms(_ context.Context, event cfn.Event) (string, map[string]
 		return "custom:alarms:lambda:" + props.FunctionName, nil, putLambdaAlarmGroup(props)
 
 	case cfn.RequestDelete:
-		return event.PhysicalResourceID, nil, deleteMetricAlarms(event.PhysicalResourceID,
+		return event.PhysicalResourceID, nil, deleteAlarms(event.PhysicalResourceID,
 			lambdaLoggedErrorAlarm, lambdaLoggedWarnAlarm, lambdaMemoryAlarm,
-			lambdaExecutionErrorAlarm, lambdaDurationAlarm, lambdaThrottleAlarm)
+			lambdaExecutionErrorAlarm, lambdaDurationAlarm, lambdaThrottleAlarm, lambdaCompositeAlarm)
 
 	default:
 		return "", nil, fmt.Errorf("unknown request type %s", event.RequestType)
 	}
 }
 
+// putLambdaAlarmGroup creates the standard set of alarms for all lambdas
+//
+// The lambda alarms are often correlated.
+// For example, a lambda can fail before logging is enabled, so we alarm on that.
+// We also alarm when a lambda runs, logs an informative error and fails.
+// If paging is tied to both alarms and a lambda runs, logs and error and fails
+// the 2 pages are generated (not good). Both alarms are needed because
+// the lambda may fail before logging is running. There are also other
+// alarms that can be generated for different reasons.
+// To avoid multiple pages to oncall, a composite alarm over
+// all the primitive alarms is created and associated with the SNS topic.
+// The supporting alarms exists so that root cause can be easily
+// identified but these alarms do not generate pages.
+//
+// Logged errors/warns/memory are based on metric filters, hence the Panther namespace.
+// See also the Custom::LambdaMetricFilters resource
+// Metric filters do not have units, so neither can their alarms
 func putLambdaAlarmGroup(props LambdaAlarmProperties) error {
-	// Logged errors/warns/memory are based on metric filters, hence the Panther namespace.
-	// See also the Custom::LambdaMetricFilters resource
-	// Metric filters do not have units, so neither can their alarms
-	input := cloudwatch.PutMetricAlarmInput{
-		AlarmActions: []*string{&props.AlarmTopicArn},
+	var alarmDescriptions []alarmDescription // collected for composite alarms
+	input := &cloudwatch.PutMetricAlarmInput{
 		AlarmDescription: aws.String(fmt.Sprintf(
 			"Lambda function %s is logging errors. See: %s#%s",
 			props.FunctionName, alarmRunbook, props.FunctionName)),
@@ -105,6 +120,10 @@ func putLambdaAlarmGroup(props LambdaAlarmProperties) error {
 	if err := putMetricAlarm(input); err != nil {
 		return err
 	}
+	// collect for composite alarm
+	alarmDescriptions = append(alarmDescriptions, alarmDescription{
+		name:        *input.AlarmName,
+		description: *input.AlarmDescription})
 
 	input.AlarmDescription = aws.String(fmt.Sprintf(
 		"Lambda function %s is logging warnings. See: %s#%s",
@@ -116,6 +135,10 @@ func putLambdaAlarmGroup(props LambdaAlarmProperties) error {
 	if err := putMetricAlarm(input); err != nil {
 		return err
 	}
+	// collect for composite alarm
+	alarmDescriptions = append(alarmDescriptions, alarmDescription{
+		name:        *input.AlarmName,
+		description: *input.AlarmDescription})
 
 	input.AlarmDescription = aws.String(fmt.Sprintf(
 		"Lambda function %s is using more than 90%% of its allotted memory. See: %s#%s",
@@ -128,6 +151,10 @@ func putLambdaAlarmGroup(props LambdaAlarmProperties) error {
 	if err := putMetricAlarm(input); err != nil {
 		return err
 	}
+	// collect for composite alarm
+	alarmDescriptions = append(alarmDescriptions, alarmDescription{
+		name:        *input.AlarmName,
+		description: *input.AlarmDescription})
 
 	input.AlarmDescription = aws.String(fmt.Sprintf(
 		"Lambda function %s is failing. See: %s#%s",
@@ -145,6 +172,10 @@ func putLambdaAlarmGroup(props LambdaAlarmProperties) error {
 	if err := putMetricAlarm(input); err != nil {
 		return err
 	}
+	// collect for composite alarm
+	alarmDescriptions = append(alarmDescriptions, alarmDescription{
+		name:        *input.AlarmName,
+		description: *input.AlarmDescription})
 
 	input.AlarmDescription = aws.String(fmt.Sprintf(
 		"Lambda function %s is being throttled. See: %s#%s",
@@ -156,6 +187,10 @@ func putLambdaAlarmGroup(props LambdaAlarmProperties) error {
 	if err := putMetricAlarm(input); err != nil {
 		return err
 	}
+	// collect for composite alarm
+	alarmDescriptions = append(alarmDescriptions, alarmDescription{
+		name:        *input.AlarmName,
+		description: *input.AlarmDescription})
 
 	input.AlarmDescription = aws.String(fmt.Sprintf(
 		"Lambda function %s is using more than 90%% of its allotted execution time. See: %s#%s",
@@ -166,5 +201,18 @@ func putLambdaAlarmGroup(props LambdaAlarmProperties) error {
 	input.Statistic = aws.String(cloudwatch.StatisticMaximum)
 	input.Threshold = aws.Float64(float64(props.FunctionTimeoutSec) * 1000 * 0.9)
 	input.Unit = aws.String(cloudwatch.StandardUnitMilliseconds)
-	return putMetricAlarm(input)
+	if err := putMetricAlarm(input); err != nil {
+		return err
+	}
+	// collect for composite alarm
+	alarmDescriptions = append(alarmDescriptions, alarmDescription{
+		name:        *input.AlarmName,
+		description: *input.AlarmDescription})
+
+	// the putCompositeAlarm will populate the AlarmDescription and AlarmRule fields.
+	compositeInput := &cloudwatch.PutCompositeAlarmInput{
+		AlarmActions: []*string{&props.AlarmTopicArn},
+		AlarmName:    aws.String(fmt.Sprintf("Panther-%s-%s", lambdaCompositeAlarm, props.FunctionName)),
+	}
+	return putCompositeAlarm(compositeInput, alarmDescriptions)
 }
