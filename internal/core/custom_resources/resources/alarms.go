@@ -30,7 +30,7 @@ import (
 const (
 	alarmRunbook = "https://docs.runpanther.io/operations/runbooks"
 
-	consoleLinkTemplate = "\nhttps://console.aws.amazon.com/cloudwatch/home?region=%s#alarmsV2:alarm/%s?\n" // region, alarm name
+	consoleLinkTemplate = "\nhttps://%s.console.aws.amazon.com/cloudwatch/home?region=%s#alarmsV2:alarm/%s?\n"
 
 	maxAlarmDescriptionSize = 1024
 )
@@ -131,7 +131,8 @@ func deleteAlarms(physicalID string, alarmNames ...string) error {
 
 func createAlarmDescription(alarmName, alarmDesc string) string {
 	// prepend name,account and region, then console link
-	alarmDesc = accountDescription + fmt.Sprintf(consoleLinkTemplate, *awsSession.Config.Region, alarmName) + alarmDesc
+	alarmDesc = accountDescription + fmt.Sprintf(consoleLinkTemplate,
+		*awsSession.Config.Region, *awsSession.Config.Region, alarmName) + alarmDesc
 
 	// clip
 	if len(alarmDesc) > maxAlarmDescriptionSize {
