@@ -1,3 +1,21 @@
+/**
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import {
   ActiveSuppressCount,
   AddComplianceIntegrationInput,
@@ -204,8 +222,8 @@ export const buildAlertDetails = (overrides?: Partial<AlertDetails>): AlertDetai
     alertId: '2c5aa76d-eb43-49f0-a65c-50e4daa756a4',
     ruleId: '9ad2c6da-417d-414f-a3e5-7959acdeaa9e',
     title: 'Steel',
-    creationTime: '2020-05-13T11:42:01.089Z',
-    updateTime: '2019-09-07T14:30:07.134Z',
+    creationTime: '2020-10-27T00:06:29.865Z',
+    updateTime: '2020-02-21T02:54:35.910Z',
     eventsMatched: 516,
     events: ['"bar"'],
     eventsLastEvaluatedKey: 'Accountability',
@@ -218,10 +236,10 @@ export const buildAlertDetails = (overrides?: Partial<AlertDetails>): AlertDetai
 export const buildAlertSummary = (overrides?: Partial<AlertSummary>): AlertSummary => {
   return {
     alertId: 'Administrator',
-    creationTime: '2020-02-22T21:51:02.346Z',
+    creationTime: '2020-08-07T10:15:31.121Z',
     eventsMatched: 670,
     title: 'indexing',
-    updateTime: '2020-04-03T05:08:18.108Z',
+    updateTime: '2020-09-16T17:32:46.882Z',
     ruleId: 'functionalities',
     severity: SeverityEnum.Medium,
     ...overrides,
@@ -251,7 +269,7 @@ export const buildComplianceIntegration = (
 ): ComplianceIntegration => {
   return {
     awsAccountId: 'Metrics',
-    createdAtTime: '2020-06-09T02:33:29.200Z',
+    createdAtTime: '2020-11-22T14:57:57.973Z',
     createdBy: '460977ce-2de5-408b-8cd9-69796ea9f675',
     integrationId: 'd61dbbdd-68fd-4c1d-8a21-508d2115b3d3',
     integrationLabel: 'Movies',
@@ -279,7 +297,7 @@ export const buildComplianceIntegrationHealth = (
 export const buildComplianceItem = (overrides?: Partial<ComplianceItem>): ComplianceItem => {
   return {
     errorMessage: 'functionalities',
-    lastUpdated: '2020-05-15T01:35:10.357Z',
+    lastUpdated: '2020-10-28T13:59:39.128Z',
     policyId: '7704cb04-183c-44c9-9d90-8e66b37d8cb7',
     policySeverity: SeverityEnum.Critical,
     resourceId: '89b815e3-cb3b-4df5-8a6e-8f6159ca308a',
@@ -378,10 +396,10 @@ export const buildDeleteRuleInputItem = (
 export const buildDestination = (overrides?: Partial<Destination>): Destination => {
   return {
     createdBy: 'best-of-breed',
-    creationTime: '2020-02-16T05:15:50.011Z',
+    creationTime: '2020-07-31T17:40:18.778Z',
     displayName: 'Accountability',
     lastModifiedBy: 'Tasty Granite Bike',
-    lastModifiedTime: '2020-01-19T15:59:20.513Z',
+    lastModifiedTime: '2020-07-04T04:23:49.280Z',
     outputId: '8c0eb672-b7bb-4ef0-9d96-a2bc1abe94d7',
     outputType: DestinationTypeEnum.Sns,
     outputConfig: buildDestinationConfig(),
@@ -544,8 +562,8 @@ export const buildGlobalPythonModule = (
     body: '5th generation',
     description: 'models',
     id: '42f3a049-dced-4b20-925c-a8e861b2d2d0',
-    createdAt: '2019-08-23T15:51:49.802Z',
-    lastModified: '2019-08-12T12:14:04.141Z',
+    createdAt: '2020-02-06T04:16:18.558Z',
+    lastModified: '2020-01-26T00:38:32.897Z',
     ...overrides,
     __typename: 'GlobalPythonModule',
   };
@@ -614,8 +632,8 @@ export const buildListAlertsInput = (overrides?: Partial<ListAlertsInput>): List
     exclusiveStartKey: 'Throughway',
     severity: [SeverityEnum.Low],
     nameContains: 'Island',
-    createdAtBefore: '2019-12-06T22:09:17.067Z',
-    createdAtAfter: '2019-11-10T22:37:33.340Z',
+    createdAtBefore: '2020-05-21T10:33:45.819Z',
+    createdAtAfter: '2020-04-25T11:02:02.091Z',
     ruleIdContains: 'virtual',
     alertIdContains: 'Garden',
     eventCountMin: 694,
@@ -886,13 +904,13 @@ export const buildPolicyDetails = (overrides?: Partial<PolicyDetails>): PolicyDe
     autoRemediationParameters: '"bar"',
     body: 'card',
     complianceStatus: ComplianceStatusEnum.Fail,
-    createdAt: '2020-07-11T04:24:29.360Z',
+    createdAt: '2020-12-24T16:48:58.096Z',
     createdBy: 'cc4acb0d-22fe-4182-a29b-832f1f6d7f85',
     description: 'time-frame',
     displayName: 'navigating',
     enabled: true,
     id: '4193e9e6-d55b-48ad-8475-d171d8c2ea89',
-    lastModified: '2019-11-26T13:58:24.583Z',
+    lastModified: '2020-05-11T02:22:53.318Z',
     lastModifiedBy: '8b4fcf01-c8f1-4fbf-bc94-e4f58d04c799',
     outputIds: ['213c2719-fb31-4502-9a8a-adda432a772a'],
     reference: 'applications',
@@ -917,7 +935,7 @@ export const buildPolicySummary = (overrides?: Partial<PolicySummary>): PolicySu
     displayName: 'indigo',
     enabled: false,
     id: '260cad31-ef71-4eb6-9ac1-1ca1d0da39c7',
-    lastModified: '2020-03-27T11:34:18.749Z',
+    lastModified: '2020-09-09T23:58:47.481Z',
     resourceTypes: ['EXE'],
     severity: SeverityEnum.Critical,
     tags: ['navigating'],
@@ -976,7 +994,7 @@ export const buildResourceDetails = (overrides?: Partial<ResourceDetails>): Reso
     id: '58de615f-2645-4b97-8a31-7cab72afe085',
     integrationId: 'c3876057-6d75-4af9-b160-a51a16359574',
     complianceStatus: ComplianceStatusEnum.Pass,
-    lastModified: '2019-11-06T22:54:55.770Z',
+    lastModified: '2020-04-21T11:19:24.499Z',
     type: 'Ball',
     ...overrides,
     __typename: 'ResourceDetails',
@@ -1002,7 +1020,7 @@ export const buildResourceSummary = (overrides?: Partial<ResourceSummary>): Reso
     integrationId: 'bb97638e-f07d-4ca1-96f6-206967b7c092',
     complianceStatus: ComplianceStatusEnum.Pass,
     deleted: false,
-    lastModified: '2020-04-13T09:25:40.239Z',
+    lastModified: '2020-09-26T21:50:08.966Z',
     type: 'Illinois',
     ...overrides,
     __typename: 'ResourceSummary',
@@ -1012,14 +1030,14 @@ export const buildResourceSummary = (overrides?: Partial<ResourceSummary>): Reso
 export const buildRuleDetails = (overrides?: Partial<RuleDetails>): RuleDetails => {
   return {
     body: 'Shoes',
-    createdAt: '2020-02-17T15:23:18.286Z',
+    createdAt: '2020-08-02T03:47:47.012Z',
     createdBy: '6c3e570b-c621-4e3a-aab1-8a21e9aa4d17',
     dedupPeriodMinutes: 34,
     description: 'EXE',
     displayName: 'Advanced',
     enabled: false,
     id: 'Metal',
-    lastModified: '2019-08-17T12:44:57.274Z',
+    lastModified: '2020-01-31T01:09:25.999Z',
     lastModifiedBy: '5c381f6d-f9c9-4de8-9d6f-dc274dc6b1e0',
     logTypes: ['Auto Loan Account'],
     outputIds: ['1460c173-140b-433a-af75-a657c342f229'],
@@ -1039,7 +1057,7 @@ export const buildRuleSummary = (overrides?: Partial<RuleSummary>): RuleSummary 
     displayName: 'array',
     enabled: false,
     id: '4ce135b7-005f-4a98-8a69-9b9d3b372bdb',
-    lastModified: '2020-04-27T08:55:50.939Z',
+    lastModified: '2020-10-10T21:20:19.662Z',
     logTypes: ['AI'],
     severity: SeverityEnum.Info,
     tags: ['Virginia'],
@@ -1051,12 +1069,12 @@ export const buildRuleSummary = (overrides?: Partial<RuleSummary>): RuleSummary 
 export const buildS3LogIntegration = (overrides?: Partial<S3LogIntegration>): S3LogIntegration => {
   return {
     awsAccountId: 'Bedfordshire',
-    createdAtTime: '2020-01-17T17:45:33.537Z',
+    createdAtTime: '2020-07-02T06:10:02.259Z',
     createdBy: 'f135f3dc-9654-4752-b1a9-c20f98d87e48',
     integrationId: '73041328-928c-4ff9-a396-06b9b769900d',
     integrationType: 'Computers',
     integrationLabel: 'transmitting',
-    lastEventReceived: '2019-12-09T18:56:00.417Z',
+    lastEventReceived: '2020-05-24T07:20:29.138Z',
     s3Bucket: 'generating',
     s3Prefix: 'IB',
     kmsKey: 'robust',
@@ -1296,7 +1314,7 @@ export const buildUser = (overrides?: Partial<User>): User => {
     familyName: 'Future-proofed',
     id: 'b5756f00-51a6-422a-9a7d-c13ee6a63750',
     email: 'Mac13@yahoo.com',
-    createdAt: 1563535225743,
+    createdAt: 1577922294449,
     status: 'experiences',
     ...overrides,
     __typename: 'User',
