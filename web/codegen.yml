@@ -23,7 +23,8 @@ generates:
     plugins:
       - typescript
       - typescript-resolvers
-
+      - web/codegen/addLicenseHeaderPlugin.js:
+          licenseFilePath: ../../docs/LICENSE_HEADER_AGPL.txt
     config:
       scalars:
         AWSEmail: string
@@ -36,6 +37,8 @@ generates:
     plugins:
       - web/codegen/buildGraphqlResourcesPlugin.js:
           typesFile: ../../__generated__/schema.tsx
+      - web/codegen/addLicenseHeaderPlugin.js:
+          licenseFilePath: ../../docs/LICENSE_HEADER_AGPL.txt
 
   web/src/:
     documents: web/**/*.graphql
@@ -44,16 +47,18 @@ generates:
       baseTypesPath: ../__generated__/schema.tsx
     plugins:
       - typescript-operations
-      - typescript-react-apollo
+      - typescript-react-apollo:
+          apolloReactHooksImportFrom: '@apollo/client'
+          apolloReactCommonImportFrom: '@apollo/client'
+          withComponent: false
+          withHOC: false
+          withHooks: true
       - web/codegen/mockGraphqlOperationsPlugin.js
+      - web/codegen/addLicenseHeaderPlugin.js:
+          licenseFilePath: ../../docs/LICENSE_HEADER_AGPL.txt
     config:
-      apolloReactHooksImportFrom: '@apollo/client'
-      apolloReactCommonImportFrom: '@apollo/client'
-      withComponent: false
-      withHOC: false
-      withHooks: true
-      skipTypename: true
       omitOperationSuffix: true
+      skipTypename: true
 
 hooks:
   afterAllFileWrite:
