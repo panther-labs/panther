@@ -37,7 +37,7 @@ import faker from 'faker';
 // monkeypatching the date func since seeding is broken without it
 // https://github.com/Marak/faker.js/issues/608#issuecomment-491345249
 const oldPast = faker.date.past;
-faker.date.past = (years = 1, refDate = new Date(2020, 0, 0)) =>
+faker.date.past = (years = 1, refDate = '2021-01-01T00:00:00.000Z') =>
   oldPast.call(faker.date, years, refDate);
 
 const toMockName = (str: string) => `build${str}`;
