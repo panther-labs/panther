@@ -106,12 +106,10 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
     return alert.lastUpdatedBy.email;
   }, [alert]);
 
-  const lastUpdatedBy = React.useMemo(() => getLastUpdatedBy(), [alert.lastUpdatedBy]);
+  const lastUpdatedBy = React.useMemo(() => getLastUpdatedBy(), [alert]);
 
   // Format the timestamp
-  const lastUpdatedByTime = React.useMemo(() => formatDatetime(alert.lastUpdatedByTime), [
-    alert.lastUpdatedByTime,
-  ]);
+  const lastUpdatedByTime = React.useMemo(() => formatDatetime(alert.lastUpdatedByTime), [alert]);
 
   // Create our dropdown button
   const dropdownButton = React.useMemo(
@@ -120,7 +118,7 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
         <AlertStatusBadge status={status} />
       </DropdownButton>
     ),
-    [status]
+    [alert]
   );
 
   // Create a wrapped dropdown button with a tooltip
@@ -146,7 +144,7 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
       ) : (
         dropdownButton
       ),
-    [lastUpdatedBy, lastUpdatedByTime]
+    [alert]
   );
 
   return (

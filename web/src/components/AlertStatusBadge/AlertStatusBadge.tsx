@@ -48,10 +48,12 @@ const AlertStatusBadge: React.FC<StatusBadgeProps> = ({ status }) => (
         as={Icon}
         type="caret-down"
         padding={1}
+        width={24}
+        height={24}
         transition="all 0.2s ease-in-out"
         border="1px solid"
         borderColor="navyblue-450"
-        borderRadius="pill"
+        borderRadius={24}
         backgroundColor="transparent"
         cursor="pointer"
         _groupHover={{ backgroundColor: 'navyblue-450' }}
