@@ -72,16 +72,16 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
         status: data.input.status,
       },
     }),
-    onCompleted: () => {
+    onCompleted: data => {
       pushSnackbar({
         variant: 'success',
-        title: `Successfully updated alert`,
+        title: `Set alert to ${data.updateAlertStatus.status.toLowerCase()}`,
       });
     },
     onError: error => {
       pushSnackbar({
         variant: 'error',
-        title: `Failed to update alert`,
+        title: `Failed to set the alert status`,
         description: extractErrorMessage(error),
       });
     },

@@ -50,16 +50,31 @@ export type TypePolicies = Partial<
 const typePolicies: TypePolicies = {
   Query: {
     fields: {
-      getComplianceIntegration(existingData, { args, toReference }) {
+      getComplianceIntegration(existing, { args, toReference }) {
         return (
-          existingData ||
-          toReference({ __typename: 'ComplianceIntegration', integrationId: args.id })
+          existing || toReference({ __typename: 'ComplianceIntegration', integrationId: args.id })
         );
       },
-      getS3LogIntegration(existingData, { args, toReference }) {
-        return (
-          existingData || toReference({ __typename: 'S3LogIntegration', integrationId: args.id })
-        );
+      getS3LogIntegration(existing, { args, toReference }) {
+        return existing || toReference({ __typename: 'S3LogIntegration', integrationId: args.id });
+      },
+      // For GetAlert (AlertDetails)
+      alert: {
+        read(existing) {
+          return existing;
+        },
+        merge(existing, incoming, { mergeObjects }) {
+          return mergeObjects(existing, incoming);
+        },
+      },
+      // For ListAlerts (ListAlertsReponse)
+      alerts: {
+        read(existing) {
+          return existing;
+        },
+        merge(existing, incoming, { mergeObjects }) {
+          return mergeObjects(existing, incoming);
+        },
       },
     },
   },
@@ -68,9 +83,28 @@ const typePolicies: TypePolicies = {
   },
   AlertDetails: {
     keyFields: ['alertId'],
+    fields: {
+      events: {
+        merge(_, incoming) {
+          return incoming;
+        },
+      },
+      status: {
+        merge(_, incoming) {
+          return incoming;
+        },
+      },
+    },
   },
   AlertSummary: {
     keyFields: ['alertId'],
+    fields: {
+      status: {
+        merge(_, incoming) {
+          return incoming;
+        },
+      },
+    },
   },
   ComplianceIntegration: {
     keyFields: ['integrationId'],
@@ -82,9 +116,9 @@ const typePolicies: TypePolicies = {
     keyFields: ['email'],
     fields: {
       errorReportingConsent: {
-        merge(_, newValue) {
-          storage.local.write(ERROR_REPORTING_CONSENT_STORAGE_KEY, newValue);
-          return newValue;
+        merge(_, incoming) {
+          storage.local.write(ERROR_REPORTING_CONSENT_STORAGE_KEY, incoming);
+          return incoming;
         },
       },
     },
