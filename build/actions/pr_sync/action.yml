@@ -8,6 +8,9 @@ inputs:
     description: A Github label that, when added, should force the PR to ignore syncing
     required: false
     default: ignore-pr-sync
+  token:
+    description: A Github token to use for all the GH related actions
+    required: true
 outputs:
   url:
     description: The URL to the newly created PR
