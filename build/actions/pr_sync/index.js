@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const core = require('@actions/core');
 const github = require('@actions/github');
 
@@ -11,26 +12,27 @@ const main = async () => {
     const token = core.getInput('token');
 
     // Get the JSON webhook payload for the event that triggered the workflow
-    const { action, pull_request: pullRequest } = github.context.payload;
-
-    // If PR is still open, then do nothing
-    if (action !== 'closed') {
-      return;
-    }
+    const { pull_request: pullRequest } = github.context.payload;
 
     // If PR was closed, but it was not due to it being merged, then do nothing
     if (!pullRequest.merged) {
       return;
     }
+    console.log('PR was closed due to a merge. Looking for ignore labels...');
 
     // If PR has the "ignore" label, then the PR sync should not happen
     const isBackport = pullRequest.labels.some(label => label.name === ignoreLabel);
     if (isBackport) {
       return;
     }
+    console.log('PR did not have an ignore label. Starting sync process...');
 
     // const octokit = new Octokit({ auth: token });
+    console.log('Initializing octokit...');
     const octokit = github.getOctokit(token);
+    console.log('Octokit instance setup successfully');
+
+    console.log('Creating a pull request...');
     const destPullRequest = await octokit(`POST /repos/${destRepo}/pulls`, {
       title: `${PR_TITLE_PREFIX} ${pullRequest.title}`,
       body: pullRequest.body,
@@ -41,6 +43,7 @@ const main = async () => {
     });
 
     // Clone the existing labels
+    console.log(destPullRequest);
     await octokit(
       `POST /repos/${destRepo}/pulls``/repos/${destRepo}/issues/${destPullRequest.id}/labels`,
       {
