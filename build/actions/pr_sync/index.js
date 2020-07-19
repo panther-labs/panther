@@ -6,6 +6,7 @@ const MASTER_BRANCH = 'master';
 
 const main = async () => {
   try {
+    core.debug('Initializing...');
     const destRepo = core.getInput('destRepo');
     const ignoreLabel = core.getInput('ignoreLabel');
     const token = core.getInput('token');
