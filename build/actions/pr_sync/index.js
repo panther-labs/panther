@@ -33,7 +33,7 @@ const main = async () => {
     core.debug('Octokit instance setup successfully');
 
     core.debug('Creating a pull request...');
-    const destPullRequest = await octokit(`POST /repos/${destRepo}/pulls`, {
+    const destPullRequest = await octokit.request(`POST /repos/${destRepo}/pulls`, {
       title: `${PR_TITLE_PREFIX} ${pullRequest.title}`,
       body: pullRequest.body,
       maintainer_can_modify: true,
@@ -44,15 +44,8 @@ const main = async () => {
 
     // Clone the existing labels
     core.debug(destPullRequest);
-    await octokit(
-      `POST /repos/${destRepo}/pulls``/repos/${destRepo}/issues/${destPullRequest.id}/labels`,
-      {
-        labels: pullRequest.labels.map(label => label.name),
-      }
-    );
-
     // Clone the existing labels
-    await octokit(
+    await octokit.request(
       `POST /repos/${destRepo}/pulls``/repos/${destRepo}/issues/${destPullRequest.id}`,
       {
         labels: pullRequest.labels.map(label => label.name),
