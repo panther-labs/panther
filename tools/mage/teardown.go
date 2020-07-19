@@ -27,7 +27,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/s3"
 
 	"github.com/panther-labs/panther/pkg/awsbatch/s3batch"
@@ -53,10 +52,6 @@ func Teardown() {
 
 	// CloudFormation will not delete any Panther S3 buckets (DeletionPolicy: Retain), we do so here.
 	destroyPantherBuckets()
-
-	// Remove any leftover log groups.
-	// Sometimes buffered lambda logs are written after CloudFormation deletes the log groups.
-	destroyLogGroups()
 
 	logger.Info("successfully removed Panther infrastructure")
 }
@@ -281,29 +276,5 @@ func removeBucket(client *s3.S3, bucketName *string) {
 	time.Sleep(time.Second) // short pause since S3 is eventually consistent to avoid next call from failing
 	if _, err = client.DeleteBucket(&s3.DeleteBucketInput{Bucket: bucketName}); err != nil {
 		logger.Fatalf("failed to delete bucket %s: %v", *bucketName, err)
-	}
-}
-
-func destroyLogGroups() {
-	logger.Debug("checking for leftover Panther log groups")
-	client := cloudwatchlogs.New(awsSession)
-	listInput := &cloudwatchlogs.DescribeLogGroupsInput{
-		LogGroupNamePrefix: aws.String("/aws/lambda/panther-"),
-	}
-
-	err := client.DescribeLogGroupsPages(listInput, func(page *cloudwatchlogs.DescribeLogGroupsOutput, isLast bool) bool {
-		for _, group := range page.LogGroups {
-			logger.Infof("deleting log group %s", *group.LogGroupName)
-			_, err := client.DeleteLogGroup(&cloudwatchlogs.DeleteLogGroupInput{LogGroupName: group.LogGroupName})
-			if err != nil {
-				logger.Fatalf("failed to delete log group %s: %v", *group.LogGroupName, err)
-			}
-		}
-
-		return true
-	})
-
-	if err != nil {
-		logger.Fatalf("failed to list log groups: %v", err)
 	}
 }
