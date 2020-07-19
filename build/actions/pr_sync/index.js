@@ -2,7 +2,7 @@ const core = require('@actions/core');
 const github = require('@actions/github');
 
 const PR_TITLE_PREFIX = '[OSS Sync]';
-const MASTER_BRANCH = 'master';
+const MASTER_BRANCH = 'v1.0.1-docs';
 
 const main = async () => {
   try {
@@ -32,26 +32,38 @@ const main = async () => {
     const octokit = github.getOctokit(token);
     core.debug('Octokit instance setup successfully');
 
+    // https://developer.github.com/v3/git/refs/#create-a-reference
+    const prBranchName = pullRequest.head.ref;
+    await octokit.request(`POST /repos/${destRepo}/git/refs`, {
+      ref: `refs/heads/${prBranchName}`,
+      sha: pullRequest.merge_commit_sha,
+    });
+
     core.debug('Creating a pull request...');
     const destPullRequest = await octokit.request(`POST /repos/${destRepo}/pulls`, {
       title: `${PR_TITLE_PREFIX} ${pullRequest.title}`,
       body: pullRequest.body,
       maintainer_can_modify: true,
-      head: pullRequest.head.label,
+      head: prBranchName,
       base: MASTER_BRANCH,
       draft: false,
     });
 
     // Clone the existing labels
     core.debug(destPullRequest);
-    // Clone the existing labels
+
+    // https://developer.github.com/v3/issues/#update-an-issue
+    core.debug('Setting assignees, labels & milestone...');
     await octokit.request(
-      `POST /repos/${destRepo}/pulls``/repos/${destRepo}/issues/${destPullRequest.id}`,
+      `POST /repos/${destRepo}/pulls/repos/${destRepo}/issues/${destPullRequest.id}`,
       {
+        assignees: pullRequest.assignees.map(assignee => assignee.login),
         labels: pullRequest.labels.map(label => label.name),
         milestone: pullRequest.milestone.id,
       }
     );
+
+    // TODO: add reviewer
 
     // Set the `url` output to the created PR's URL
     core.setOutput('url', destPullRequest.url);
