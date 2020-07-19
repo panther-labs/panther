@@ -4,6 +4,10 @@ inputs:
   destRepo:
     description: The repo to create a PR to
     required: true
+  ignoreLabel:
+    description: A Github label that, when added, should force the PR to ignore syncing
+    required: false
+    default: ignore-pr-sync
 outputs:
   url:
     description: The URL to the newly created PR
