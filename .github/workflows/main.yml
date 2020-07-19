@@ -1,0 +1,20 @@
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  sync_prs_from_community_to_enterprise:
+    runs-on: ubuntu-latest
+    name: Syncs merged PRs from Panther Community to Panther Enterprise
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Monitor PRs on Community & Create PRs on Enterprise
+        uses: ./build/actions/pr_sync
+        with:
+          destRepo: panther-labs/panther-enterprise
+
+      - name: Get the output
+        run: echo "The URL was ${{ url }}"
