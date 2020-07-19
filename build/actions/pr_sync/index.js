@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 const core = require('@actions/core');
 const github = require('@actions/github');
 
@@ -18,21 +17,21 @@ const main = async () => {
     if (!pullRequest.merged) {
       return;
     }
-    console.log('PR was closed due to a merge. Looking for ignore labels...');
+    core.debug('PR was closed due to a merge. Looking for ignore labels...');
 
     // If PR has the "ignore" label, then the PR sync should not happen
     const isBackport = pullRequest.labels.some(label => label.name === ignoreLabel);
     if (isBackport) {
       return;
     }
-    console.log('PR did not have an ignore label. Starting sync process...');
+    core.debug('PR did not have an ignore label. Starting sync process...');
 
     // const octokit = new Octokit({ auth: token });
-    console.log('Initializing octokit...');
+    core.debug('Initializing octokit...');
     const octokit = github.getOctokit(token);
-    console.log('Octokit instance setup successfully');
+    core.debug('Octokit instance setup successfully');
 
-    console.log('Creating a pull request...');
+    core.debug('Creating a pull request...');
     const destPullRequest = await octokit(`POST /repos/${destRepo}/pulls`, {
       title: `${PR_TITLE_PREFIX} ${pullRequest.title}`,
       body: pullRequest.body,
@@ -43,7 +42,7 @@ const main = async () => {
     });
 
     // Clone the existing labels
-    console.log(destPullRequest);
+    core.debug(destPullRequest);
     await octokit(
       `POST /repos/${destRepo}/pulls``/repos/${destRepo}/issues/${destPullRequest.id}/labels`,
       {
