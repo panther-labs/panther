@@ -758,7 +758,6 @@ module.exports = /******/ (function (modules, runtime) {
           }
           core.debug('PR did not have an ignore label. Starting sync process...');
 
-          // const octokit = new Octokit({ auth: token });
           core.debug('Initializing octokit...');
           const octokit = github.getOctokit(token);
           core.debug('Octokit instance setup successfully');
