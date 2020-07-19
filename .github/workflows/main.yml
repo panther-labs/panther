@@ -1,7 +1,7 @@
 on:
   pull_request:
-    branches:
-      - master
+#    branches:
+#      - master
 
 jobs:
   sync_prs_from_community_to_enterprise:
