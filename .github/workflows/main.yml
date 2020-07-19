@@ -17,4 +17,4 @@ jobs:
           destRepo: panther-labs/panther-enterprise
 
       - name: Get the output
-        run: echo "The URL was ${{ url }}"
+        run: echo "The URL was ${{ steps.sync_prs_from_community_to_enterprise.outputs.url }}"
