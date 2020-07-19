@@ -16,9 +16,7 @@ jobs:
         with:
           destRepo: 3nvi/panther
           ignoreLabel: enterprise-backport
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get the output
         run: echo "The URL was ${{ steps.sync_prs_from_community_to_enterprise.outputs.url }}"
-
-    with:
-      token: ${{ secrets.GITHUB_TOKEN }}
