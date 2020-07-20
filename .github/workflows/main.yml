@@ -22,4 +22,4 @@ jobs:
           destRepo: 3nvi/panther
           destBranch: v1.0.1-docs
           ignoreLabel: enterprise-backport
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.ENVY_TOKEN }}
