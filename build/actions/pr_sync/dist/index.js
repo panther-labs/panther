@@ -760,7 +760,7 @@ module.exports = /******/ (function (modules, runtime) {
           // If PR was closed, but it was not due to it being merged, then do nothing
           if (!srcPullRequest.merged) {
             core.setOutput('message', 'PR was closed without merging. Terminating...');
-            process.exit(0);
+            return;
           }
           core.debug('PR was closed due to a merge. Looking for ignore labels...');
 
@@ -768,7 +768,7 @@ module.exports = /******/ (function (modules, runtime) {
           const shouldIgnore = srcPullRequest.labels.some(label => label.name === ignoreLabel);
           if (shouldIgnore) {
             core.setOutput('message', 'PR contained an ignore label. Terminating...');
-            process.exit(0);
+            return;
           }
           core.debug('An ignore label was not found. Starting sync process...');
 
