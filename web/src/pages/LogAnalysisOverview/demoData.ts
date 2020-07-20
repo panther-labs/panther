@@ -143,7 +143,7 @@ export const eventData = {
   ],
   fromDate: '2020-07-09T12:00:00Z',
   toDate: '2020-07-09T23:00:00Z',
-  intervalHours: 1,
+  intervalMinutes: 60,
 };
 
 export const alertsBySeverityData = {

@@ -28,7 +28,7 @@ export type GetLogAnalysisMetricsVariables = {
 
 export type GetLogAnalysisMetrics = {
   getLogAnalysisMetrics?: Types.Maybe<
-    Pick<Types.LogAnalysisMetricsResponse, 'intervalHours'> & {
+    Pick<Types.LogAnalysisMetricsResponse, 'intervalMinutes'> & {
       eventsProcessed?: Types.Maybe<{
         seriesData?: Types.Maybe<
           Pick<Types.SeriesData, 'timestamps'> & {
@@ -77,7 +77,7 @@ export const GetLogAnalysisMetricsDocument = gql`
           value
         }
       }
-      intervalHours
+      intervalMinutes
     }
   }
 `;

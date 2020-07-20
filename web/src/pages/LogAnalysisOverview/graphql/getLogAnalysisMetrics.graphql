@@ -24,6 +24,6 @@ query GetLogAnalysisMetrics($input: LogAnalysisMetricsInput) {
         value
       }
     }
-    intervalHours
+    intervalMinutes
   }
 }

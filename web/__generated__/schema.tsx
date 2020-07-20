@@ -527,7 +527,7 @@ export type LogAnalysisMetricsResponse = {
   totalAlertsDelta?: Maybe<TotalAlertsDelta>;
   fromDate: Scalars['AWSDateTime'];
   toDate: Scalars['AWSDateTime'];
-  intervalHours: Scalars['Int'];
+  intervalMinutes: Scalars['Int'];
 };
 
 export type LogIntegration = S3LogIntegration;
@@ -1846,7 +1846,7 @@ export type LogAnalysisMetricsResponseResolvers<
   totalAlertsDelta?: Resolver<Maybe<ResolversTypes['TotalAlertsDelta']>, ParentType, ContextType>;
   fromDate?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   toDate?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
-  intervalHours?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  intervalMinutes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 

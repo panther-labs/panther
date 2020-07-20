@@ -808,7 +808,7 @@ export const buildLogAnalysisMetricsResponse = (
       'totalAlertsDelta' in overrides ? overrides.totalAlertsDelta : buildTotalAlertsDelta(),
     fromDate: 'fromDate' in overrides ? overrides.fromDate : '2020-06-15T22:39:08.690Z',
     toDate: 'toDate' in overrides ? overrides.toDate : '2020-06-29T16:49:54.582Z',
-    intervalHours: 'intervalHours' in overrides ? overrides.intervalHours : 293,
+    intervalMinutes: 'intervalMinutes' in overrides ? overrides.intervalMinutes : 670,
   };
 };
 

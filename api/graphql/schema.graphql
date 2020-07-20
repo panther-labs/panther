@@ -368,7 +368,7 @@ type LogAnalysisMetricsResponse {
   totalAlertsDelta: TotalAlertsDelta
   fromDate: AWSDateTime!
   toDate: AWSDateTime!
-  intervalHours: Int!
+  intervalMinutes: Int!
 }
 
 input UpdateGeneralSettingsInput {
