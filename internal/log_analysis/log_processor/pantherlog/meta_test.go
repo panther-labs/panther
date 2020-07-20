@@ -26,6 +26,7 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/pkg/box"
 )
@@ -56,9 +57,9 @@ func TestMetaEventStruct(t *testing.T) {
 }
 
 type testEventMeta struct {
-	Name      string               `json:"foo" description:"foo"`
-	Timestamp timestamp.RFC3339    `json:"ts" description:"ts"`
-	Address   pantherlog.IPAddress `json:"addr" description:"address"`
+	Name      string            `json:"foo" description:"foo"`
+	Timestamp timestamp.RFC3339 `json:"ts" description:"ts"`
+	Address   null.String       `json:"addr" description:"address" panther:"ip"`
 }
 
 func (e *testEventMeta) PantherLogEvent() (string, *time.Time) {

@@ -20,9 +20,13 @@ package timestamp
 
 import (
 	"math"
+	"reflect"
 	"strconv"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
+
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/jsonutil"
 )
 
@@ -34,10 +38,7 @@ import (
 // We want our output JSON timestamps to be: YYYY-MM-DD HH:MM:SS.fffffffff
 // https://aws.amazon.com/premiumsupport/knowledge-center/query-table-athena-timestamp-empty/
 const (
-	// ExportLayout is the format used for storing timestamps in panther logs.
-	ExportLayout = `2006-01-02 15:04:05.000000000`
-
-	jsonMarshalLayout = `"2006-01-02 15:04:05.000000000"`
+	jsonMarshalLayout = awsglue.TimestampLayoutJSON
 
 	ansicWithTZUnmarshalLayout = `"Mon Jan 2 15:04:05 2006 MST"` // similar to time.ANSIC but with MST
 
@@ -45,6 +46,30 @@ const (
 
 	suricataTimestampLayout = `"2006-01-02T15:04:05.999999999Z0700"`
 )
+
+func init() {
+	typANSICwithTZ := reflect.TypeOf(ANSICwithTZ{})
+	typFluentd := reflect.TypeOf(FluentdTimestamp{})
+	typRFC3339 := reflect.TypeOf(RFC3339{})
+	typSuricata := reflect.TypeOf(SuricataTimestamp{})
+	typUnixFloat := reflect.TypeOf(UnixFloat{})
+	typUnixMillis := reflect.TypeOf(UnixMillisecond{})
+	// Add glue table mappings
+	awsglue.MustRegisterMapping(typANSICwithTZ, awsglue.GlueTimestampType)
+	awsglue.MustRegisterMapping(typFluentd, awsglue.GlueTimestampType)
+	awsglue.MustRegisterMapping(typRFC3339, awsglue.GlueTimestampType)
+	awsglue.MustRegisterMapping(typSuricata, awsglue.GlueTimestampType)
+	awsglue.MustRegisterMapping(typUnixFloat, awsglue.GlueTimestampType)
+	awsglue.MustRegisterMapping(typUnixMillis, awsglue.GlueTimestampType)
+	// Use efficient encoder for all timestamps
+	encoder := awsglue.NewTimestampEncoder()
+	jsoniter.RegisterTypeEncoder(typANSICwithTZ.String(), encoder)
+	jsoniter.RegisterTypeEncoder(typFluentd.String(), encoder)
+	jsoniter.RegisterTypeEncoder(typRFC3339.String(), encoder)
+	jsoniter.RegisterTypeEncoder(typSuricata.String(), encoder)
+	jsoniter.RegisterTypeEncoder(typUnixFloat.String(), encoder)
+	jsoniter.RegisterTypeEncoder(typUnixMillis.String(), encoder)
+}
 
 // use these functions to parse all incoming dates to ensure UTC consistency
 func Parse(layout, value string) (RFC3339, error) {
@@ -194,13 +219,4 @@ func (ts *UnixFloat) UnmarshalJSON(jsonBytes []byte) (err error) {
 	tm := time.Unix(int64(intPart), int64(fracPart*fSec)).UTC()
 	*ts = UnixFloat(tm)
 	return nil
-}
-
-func FromSeconds(f float64) time.Time {
-	intPart, fracPart := math.Modf(f)
-	return time.Unix(int64(intPart), int64(fracPart*float64(time.Second))).UTC()
-}
-
-func FromMilliseconds(msec int64) time.Time {
-	return time.Unix(0, msec*time.Millisecond.Nanoseconds()).UTC()
 }

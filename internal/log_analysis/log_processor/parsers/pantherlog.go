@@ -20,6 +20,7 @@ package parsers
 
 import (
 	"net"
+	"reflect"
 	"regexp"
 	"sort"
 	"time"
@@ -27,6 +28,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/jsonutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -71,6 +73,10 @@ func NewPantherAnyString() *PantherAnyString {
 	return &PantherAnyString{
 		set: make(map[string]struct{}),
 	}
+}
+
+func init() {
+	awsglue.MustRegisterMapping(reflect.TypeOf(PantherAnyString{}), awsglue.ArrayOf(awsglue.GlueStringType))
 }
 
 func (any *PantherAnyString) MarshalJSON() ([]byte, error) {

@@ -33,12 +33,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/tidwall/gjson"
 
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
 // For new parser tests use `CheckPantherParser` instead
@@ -230,7 +229,8 @@ func CheckParser(t *testing.T, log, logType string, expect ...string) {
 // Otherwise equality is checked strictly
 func CheckParserResults(t *testing.T, want string, actual *pantherlog.Result) {
 	t.Helper()
-	expect := resultFromString(want)
+	expect := pantherlog.Result{}
+	require.NoError(t, jsoniter.UnmarshalFromString(want, &expect))
 	require.Equal(t, expect.LogType, actual.LogType)
 	//require.Equal(t, -1, bytes.IndexByte(actual.JSON, '\n'), "Result JSON contains newlines")
 	var expectAny map[string]interface{}
@@ -253,8 +253,8 @@ func CheckParserResults(t *testing.T, want string, actual *pantherlog.Result) {
 		require.Equal(t, expect.RowID, actual.RowID)
 	}
 	// The following dance ensures that produced JSON matches values from `actual` result
-	require.Equal(t, actual.EventTime.UTC().Format(timestamp.ExportLayout), actualAny["p_event_time"], "Invalid JSON event time")
-	require.Equal(t, actual.ParseTime.UTC().Format(timestamp.ExportLayout), actualAny["p_parse_time"], "Invalid JSON parse time")
+	require.Equal(t, actual.EventTime.UTC().Format(awsglue.TimestampLayout), actualAny["p_event_time"], "Invalid JSON event time")
+	require.Equal(t, actual.ParseTime.UTC().Format(awsglue.TimestampLayout), actualAny["p_parse_time"], "Invalid JSON parse time")
 	require.Equal(t, actual.RowID, actualAny["p_row_id"], "Invalid JSON row id")
 	// Since these values are checked to be valid we assign them to expect to check the rest of the JSON values
 	expectAny["p_event_time"] = actualAny["p_event_time"]
@@ -268,26 +268,8 @@ func CheckParserResults(t *testing.T, want string, actual *pantherlog.Result) {
 	require.JSONEq(t, expectJSON, actualJSON)
 }
 
-func resultFromString(s string) *pantherlog.Result {
-	values := gjson.GetMany(s,
-		"p_event_time",
-		"p_parse_time",
-		"p_log_type",
-		"p_row_id",
-	)
-	eventTime, _ := time.Parse(timestamp.ExportLayout, values[0].String())
-	parseTime, _ := time.Parse(timestamp.ExportLayout, values[1].String())
-	return &pantherlog.Result{
-		EventTime: eventTime,
-		ParseTime: parseTime,
-		LogType:   values[2].String(),
-		RowID:     values[3].String(),
-		JSON:      []byte(s),
-	}
-}
-
 func EqualTimestamp(t *testing.T, expect, actual time.Time, msgAndArgs ...interface{}) {
 	t.Helper()
 	require.False(t, actual.IsZero(), "zero timestamp")
-	require.Equal(t, expect.UTC().Format(timestamp.ExportLayout), actual.UTC().Format(timestamp.ExportLayout), msgAndArgs...)
+	require.Equal(t, expect.UTC().Format(awsglue.TimestampLayout), actual.UTC().Format(awsglue.TimestampLayout), msgAndArgs...)
 }

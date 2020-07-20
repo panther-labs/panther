@@ -22,11 +22,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 )
 
 func TestValidateStruuct(t *testing.T) {
 	type T struct {
-		RequiredIP IPAddress `validate:"required"`
+		RequiredIP null.String `validate:"required"`
 	}
 	require.Error(t, ValidateStruct(T{}))
 }

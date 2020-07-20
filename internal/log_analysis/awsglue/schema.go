@@ -28,18 +28,17 @@ import (
 	"strings"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
 const (
 	DefaultMaxCommentLength = 255
 
 	GlueTimestampType = "timestamp"
+	GlueStringType    = "string"
 )
 
 var (
@@ -48,34 +47,6 @@ var (
 
 	// GlueMappings for custom Panther types.
 	GlueMappings = []CustomMapping{
-		{
-			From: reflect.TypeOf(timestamp.RFC3339{}),
-			To:   GlueTimestampType,
-		},
-		{
-			From: reflect.TypeOf(timestamp.ANSICwithTZ{}),
-			To:   GlueTimestampType,
-		},
-		{
-			From: reflect.TypeOf(timestamp.UnixMillisecond{}),
-			To:   GlueTimestampType,
-		},
-		{
-			From: reflect.TypeOf(timestamp.FluentdTimestamp{}),
-			To:   GlueTimestampType,
-		},
-		{
-			From: reflect.TypeOf(timestamp.UnixFloat{}),
-			To:   GlueTimestampType,
-		},
-		{
-			From: reflect.TypeOf(timestamp.SuricataTimestamp{}),
-			To:   GlueTimestampType,
-		},
-		{
-			From: reflect.TypeOf(parsers.PantherAnyString{}),
-			To:   "array<string>",
-		},
 		{
 			From: reflect.TypeOf(jsoniter.RawMessage{}),
 			To:   "string",
@@ -110,38 +81,6 @@ var (
 		},
 		{
 			From: reflect.TypeOf(*new(null.NonEmpty)),
-			To:   "string",
-		},
-		{
-			From: reflect.TypeOf(*new(pantherlog.IPAddress)),
-			To:   "string",
-		},
-		{
-			From: reflect.TypeOf(*new(pantherlog.Domain)),
-			To:   "string",
-		},
-		{
-			From: reflect.TypeOf(*new(pantherlog.Hostname)),
-			To:   "string",
-		},
-		{
-			From: reflect.TypeOf(*new(pantherlog.MD5)),
-			To:   "string",
-		},
-		{
-			From: reflect.TypeOf(*new(pantherlog.SHA256)),
-			To:   "string",
-		},
-		{
-			From: reflect.TypeOf(*new(pantherlog.SHA1)),
-			To:   "string",
-		},
-		{
-			From: reflect.TypeOf(*new(pantherlog.URL)),
-			To:   "string",
-		},
-		{
-			From: reflect.TypeOf(*new(pantherlog.TraceID)),
 			To:   "string",
 		},
 	}
@@ -180,6 +119,28 @@ var (
 		},
 	}
 )
+
+func MustRegisterMapping(from reflect.Type, to string) {
+	if err := RegisterMapping(from, to); err != nil {
+		panic(err)
+	}
+}
+func RegisterMapping(from reflect.Type, to string) error {
+	for _, mapping := range GlueMappings {
+		if mapping.From == from {
+			return errors.New("duplicate mapping")
+		}
+	}
+	GlueMappings = append(GlueMappings, CustomMapping{
+		From: from,
+		To:   to,
+	})
+	return nil
+}
+
+func ArrayOf(typ string) string {
+	return "array<" + typ + ">"
+}
 
 type Column struct {
 	Name     string
@@ -305,7 +266,7 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 	}
 
 	// Rewrite field the same way as the jsoniter extension to avoid invalid column names
-	fieldName = pantherlog.RewriteFieldName(fieldName)
+	fieldName = RewriteFieldName(fieldName)
 
 	comment = sf.Tag.Get("description")
 

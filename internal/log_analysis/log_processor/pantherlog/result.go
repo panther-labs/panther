@@ -24,6 +24,7 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/rowid"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
@@ -51,38 +52,77 @@ func (r *Result) Clone() *Result {
 	}
 }
 
-type resultWriter Result
-
-func (r *resultWriter) Write(p []byte) (int, error) {
-	r.JSON = append(r.JSON, p...)
-	return len(p), nil
-}
-
-type ResultBuilder struct {
-	Meta      Meta
-	NextRowID func() string
-	Now       func() time.Time
-}
-
-func StaticRowID(id string) func() string {
-	return func() string {
-		return id
+// UnmarshalJSON implements json.Unmarshaler interface.
+// The parsing is inefficient. It's purpose is to be used in tests to verify output results.
+func (r *Result) UnmarshalJSON(data []byte) error {
+	tmp := struct {
+		LogType   string `json:"p_log_type"`
+		EventTime string `json:"p_event_time"`
+		ParseTime string `json:"p_parse_time"`
+		RowID     string `json:"p_row_id"`
+	}{}
+	if err := jsoniter.Unmarshal(data, &tmp); err != nil {
+		return err
 	}
+	eventTime, err := time.Parse(awsglue.TimestampLayout, tmp.EventTime)
+	if err != nil {
+		return err
+	}
+	parseTime, err := time.Parse(awsglue.TimestampLayout, tmp.ParseTime)
+	if err != nil {
+		return err
+	}
+	*r = Result{
+		LogType:   tmp.LogType,
+		RowID:     tmp.RowID,
+		EventTime: eventTime,
+		ParseTime: parseTime,
+		JSON:      append(r.JSON[:0], data...),
+		values:    r.values,
+	}
+	return nil
 }
 
-func StaticNow(now time.Time) func() time.Time {
-	return func() time.Time {
-		return now
+var resultPool = &sync.Pool{
+	New: func() interface{} {
+		return &Result{}
+	},
+}
+
+func BlankResult() *Result {
+	return resultPool.Get().(*Result)
+}
+
+func NewResult(event Event, rowID string, parseTime time.Time, meta Meta) (*Result, error) {
+	result := BlankResult()
+	result.RowID = rowID
+	result.ParseTime = parseTime
+	if meta == nil {
+		meta = defaultMetaFields
 	}
+	if err := result.WriteEvent(event, meta); err != nil {
+		result.Close()
+		return nil, err
+	}
+	return result, nil
+}
+
+func (r *Result) Close() {
+	if r == nil {
+		return
+	}
+	r.values.Reset()
+	*r = Result{
+		JSON:   r.JSON[:0],
+		values: r.values,
+	}
+	resultPool.Put(r)
 }
 
 func (r *Result) WriteEvent(event Event, meta Meta) error {
 	stream := jsonAPI.BorrowStream((*resultWriter)(r))
 	var eventTime *time.Time
 	r.LogType, eventTime = event.PantherLogEvent()
-	if e, ok := event.(ValueWriterTo); ok {
-		e.WriteValuesTo(&r.values)
-	}
 	if eventTime == nil {
 		r.EventTime = r.ParseTime
 	} else {
@@ -94,6 +134,76 @@ func (r *Result) WriteEvent(event Event, meta Meta) error {
 	err := stream.Flush()
 	jsonAPI.ReturnStream(stream)
 	return err
+}
+
+// Utility type to mask a Result as an io.Writer
+type resultWriter Result
+
+func (r *resultWriter) Write(p []byte) (int, error) {
+	r.JSON = append(r.JSON, p...)
+	return len(p), nil
+}
+
+func (r *Result) writeMeta(meta Meta, stream *jsoniter.Stream) {
+	if !extendJSON(stream.Buffer()) {
+		stream.WriteObjectStart()
+	}
+	stream.WriteObjectField(FieldLogType)
+	stream.WriteString(r.LogType)
+	stream.WriteMore()
+
+	stream.WriteObjectField(FieldRowID)
+	stream.WriteString(r.RowID)
+	stream.WriteMore()
+
+	stream.WriteObjectField(FieldEventTime)
+	writeJSONTimestamp(stream, r.EventTime)
+	stream.WriteMore()
+
+	stream.WriteObjectField(FieldParseTime)
+	writeJSONTimestamp(stream, r.ParseTime)
+
+	for kind, values := range r.values.index {
+		if len(values) == 0 {
+			continue
+		}
+		metaField, ok := meta[kind]
+		if !ok {
+			continue
+		}
+		stream.WriteMore()
+		stream.WriteObjectField(metaField.FieldNameJSON)
+		stream.WriteArrayStart()
+		for i, value := range values {
+			if i != 0 {
+				stream.WriteMore()
+			}
+			stream.WriteString(value)
+		}
+		stream.WriteArrayEnd()
+	}
+
+	stream.WriteObjectEnd()
+}
+
+func extendJSON(data []byte) bool {
+	// Swap JSON object closing brace ('}') with comma (',') to extend the object
+	if n := len(data) - 1; 0 <= n && n < len(data) && data[n] == '}' {
+		data[n] = ','
+		return true
+	}
+	return false
+}
+
+// avoid allocations when encoding timestamps
+func writeJSONTimestamp(stream *jsoniter.Stream, tm time.Time) {
+	stream.SetBuffer(timestamp.AppendJSON(stream.Buffer(), tm))
+}
+
+type ResultBuilder struct {
+	Meta      Meta
+	NextRowID func() string
+	Now       func() time.Time
 }
 
 func (b *ResultBuilder) BuildResult(event Event) (*Result, error) {
@@ -143,100 +253,14 @@ func (b *ResultBuilder) meta() Meta {
 	return defaultMetaFields
 }
 
-const (
-	FieldLogType   = FieldPrefix + "log_type"
-	FieldRowID     = FieldPrefix + "row_id"
-	FieldEventTime = FieldPrefix + "event_time"
-	FieldParseTime = FieldPrefix + "parse_time"
-)
-
-func (r *Result) writeMeta(meta Meta, stream *jsoniter.Stream) {
-	if !extendJSON(stream.Buffer()) {
-		stream.WriteObjectStart()
+func StaticRowID(id string) func() string {
+	return func() string {
+		return id
 	}
-	stream.WriteObjectField(FieldLogType)
-	stream.WriteString(r.LogType)
-	stream.WriteMore()
-
-	stream.WriteObjectField(FieldRowID)
-	stream.WriteString(r.RowID)
-	stream.WriteMore()
-
-	stream.WriteObjectField(FieldEventTime)
-	writeJSONTimestamp(stream, r.EventTime)
-	stream.WriteMore()
-
-	stream.WriteObjectField(FieldParseTime)
-	writeJSONTimestamp(stream, r.ParseTime)
-
-	for kind, values := range r.values.index {
-		if len(values) == 0 {
-			continue
-		}
-		metaField, ok := meta[kind]
-		if !ok {
-			continue
-		}
-		stream.WriteMore()
-		stream.WriteObjectField(metaField.FieldNameJSON)
-		stream.WriteArrayStart()
-		for i, value := range values {
-			if i != 0 {
-				stream.WriteMore()
-			}
-			stream.WriteString(value)
-		}
-		stream.WriteArrayEnd()
-	}
-
-	stream.WriteObjectEnd()
-}
-func extendJSON(data []byte) bool {
-	// Swap JSON object closing brace ('}') with comma (',') to extend the object
-	if n := len(data) - 1; 0 <= n && n < len(data) && data[n] == '}' {
-		data[n] = ','
-		return true
-	}
-	return false
 }
 
-// avoid allocations when encoding timestamps
-func writeJSONTimestamp(stream *jsoniter.Stream, tm time.Time) {
-	stream.SetBuffer(timestamp.AppendJSON(stream.Buffer(), tm))
-}
-
-var resultPool = &sync.Pool{
-	New: func() interface{} {
-		return &Result{}
-	},
-}
-
-func BlankResult() *Result {
-	return resultPool.Get().(*Result)
-}
-
-func NewResult(event Event, rowID string, parseTime time.Time, meta Meta) (*Result, error) {
-	result := BlankResult()
-	result.RowID = rowID
-	result.ParseTime = parseTime
-	if meta == nil {
-		meta = defaultMetaFields
+func StaticNow(now time.Time) func() time.Time {
+	return func() time.Time {
+		return now
 	}
-	if err := result.WriteEvent(event, meta); err != nil {
-		result.Close()
-		return nil, err
-	}
-	return result, nil
-}
-
-func (r *Result) Close() {
-	if r == nil {
-		return
-	}
-	r.values.Reset()
-	*r = Result{
-		JSON:   r.JSON[:0],
-		values: r.values,
-	}
-	resultPool.Put(r)
 }

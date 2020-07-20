@@ -28,7 +28,14 @@ import (
 )
 
 // FieldPrefix is the prefix for field names injected by panther to log events.
-const FieldPrefix = "p_"
+
+const (
+	FieldPrefix    = "p_"
+	FieldLogType   = FieldPrefix + "log_type"
+	FieldRowID     = FieldPrefix + "row_id"
+	FieldEventTime = FieldPrefix + "event_time"
+	FieldParseTime = FieldPrefix + "parse_time"
+)
 
 // DefaultMetaFields returns the default panther 'any' field mappings.
 // It creates a new copy so that outside packages cannot affect the defaults.
@@ -113,26 +120,26 @@ func (meta Meta) StructType() reflect.Type {
 	fields := []reflect.StructField{
 		{
 			Name:  "PantherLogType",
-			Tag:   `json:"p_log_type,omitempty" validate:"required" description:"Panther added field with type of log"`,
+			Tag:   `json:"` + FieldLogType + `,omitempty" validate:"required" description:"Panther added field with type of log"`,
 			Type:  reflect.TypeOf(""),
 			Index: []int{0},
 		},
 		{
 			Name:  "PantherRowID",
-			Tag:   `json:"p_row_id,omitempty" validate:"required" description:"Panther added field with unique id (within table)"`,
+			Tag:   `json:"` + FieldRowID + `,omitempty" validate:"required" description:"Panther added field with unique id (within table)"`,
 			Type:  reflect.TypeOf(""),
 			Index: []int{1},
 		},
 		{
 			Name:  "PantherEventTime",
 			Type:  reflect.TypeOf(&timestamp.RFC3339{}),
-			Tag:   `json:"p_event_time,omitempty" validate:"required" description:"Panther added standardize event time (UTC)"`,
+			Tag:   `json:"` + FieldEventTime + `,omitempty" validate:"required" description:"Panther added standardize event time (UTC)"`,
 			Index: []int{2},
 		},
 		{
 			Name:  "PantherParseTime",
 			Type:  reflect.TypeOf(&timestamp.RFC3339{}),
-			Tag:   `json:"p_parse_time,omitempty" validate:"required" description:"Panther added standardize log parse time (UTC)"`,
+			Tag:   `json:"` + FieldParseTime + `,omitempty" validate:"required" description:"Panther added standardize log parse time (UTC)"`,
 			Index: []int{3},
 		},
 	}

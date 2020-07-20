@@ -168,9 +168,3 @@ func TestSuricataUnmarshal(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, (SuricataTimestamp)(expectedTime), ts)
 }
-
-func TestFromMilliseconds(t *testing.T) {
-	expect := time.Date(2020, 05, 24, 23, 50, 07, int(259*time.Millisecond.Nanoseconds()), time.UTC)
-	actual := FromMilliseconds(1590364207259)
-	assert.Equal(t, expect, actual)
-}

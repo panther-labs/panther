@@ -19,38 +19,38 @@ package pantherlog
  */
 
 import (
-	"reflect"
-
 	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 )
 
-var (
-	validate = validator.New()
-)
+var validate = func() *validator.Validate {
+	v := validator.New()
+	null.RegisterValidators(v)
+	return v
+}()
 
 func ValidateStruct(s interface{}) error {
 	return validate.Struct(s)
 }
 
-func RegisterCustomTypeFunc(fn validator.CustomTypeFunc, types ...interface{}) {
-	validate.RegisterCustomTypeFunc(fn, types...)
-}
+//func RegisterCustomTypeFunc(fn validator.CustomTypeFunc, types ...interface{}) {
+//	validate.RegisterCustomTypeFunc(fn, types...)
+//}
 
-func init() {
-	validateEmbedded := func(val reflect.Value) interface{} {
-		return val.Field(0).Field(0).String()
-	}
-	null.RegisterValidators(validate)
-	validate.RegisterCustomTypeFunc(validateEmbedded,
-		IPAddress{},
-		Domain{},
-		Hostname{},
-		TraceID{},
-		SHA256{},
-		SHA1{},
-		MD5{},
-		URL{},
-	)
-}
+//func init() {
+//	null.RegisterValidators(validate)
+//	//validateEmbedded := func(val reflect.Value) interface{} {
+//	//	return val.Field(0).Field(0).String()
+//	//}
+//	//validate.RegisterCustomTypeFunc(validateEmbedded,
+//	//	IPAddress{},
+//	//	Domain{},
+//	//	Hostname{},
+//	//	TraceID{},
+//	//	SHA256{},
+//	//	SHA1{},
+//	//	MD5{},
+//	//	URL{},
+//	//)
+//}

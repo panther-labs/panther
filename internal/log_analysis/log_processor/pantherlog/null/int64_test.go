@@ -1,4 +1,4 @@
-package null_test
+package null
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -23,13 +23,11 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
-
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 )
 
 func TestInt64Codec(t *testing.T) {
 	type A struct {
-		Foo null.Int64 `json:"foo,omitempty"`
+		Foo Int64 `json:"foo,omitempty"`
 	}
 	{
 		a := A{}
@@ -44,7 +42,7 @@ func TestInt64Codec(t *testing.T) {
 		a := A{}
 		err := jsoniter.UnmarshalFromString(`{"foo":""}`, &a)
 		require.NoError(t, err)
-		require.Equal(t, null.Int64{}, a.Foo)
+		require.Equal(t, Int64{}, a.Foo)
 		data, err := jsoniter.MarshalToString(&a)
 		require.NoError(t, err)
 		require.Equal(t, `{}`, data)
@@ -53,20 +51,20 @@ func TestInt64Codec(t *testing.T) {
 		a := A{}
 		err := jsoniter.UnmarshalFromString(`{"foo":null}`, &a)
 		require.NoError(t, err)
-		require.Equal(t, null.Int64{}, a.Foo)
+		require.Equal(t, Int64{}, a.Foo)
 		require.False(t, a.Foo.Exists)
 		data, err := jsoniter.MarshalToString(&a)
 		require.NoError(t, err)
 		require.Equal(t, `{}`, data)
 	}
 	{
-		s := null.FromInt64(42)
+		s := FromInt64(42)
 		data, err := jsoniter.MarshalToString(&s)
 		require.NoError(t, err)
 		require.Equal(t, `42`, data)
 	}
 	{
-		s := null.Int64{}
+		s := Int64{}
 		data, err := jsoniter.MarshalToString(&s)
 		require.NoError(t, err)
 		require.Equal(t, `null`, data)

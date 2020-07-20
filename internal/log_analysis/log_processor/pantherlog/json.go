@@ -20,20 +20,18 @@ package pantherlog
 
 import (
 	"reflect"
-	"strings"
+	"time"
 	"unsafe"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/modern-go/reflect2"
-	"github.com/pkg/errors"
 
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/jsonutil"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
 )
 
 var (
-	registeredTypes = map[reflect2.Type][]ValueKind{}
-	rewriteFields   = jsonutil.NewEncoderNamingStrategy(RewriteFieldName)
-	omitemptyAll    = jsonutil.NewOmitempty("json")
 	// JSON is a custom jsoniter config to properly remap field names for compatibility with Athena views
 	jsonAPI = BuildJSON(jsoniter.Config{
 		EscapeHTML: true,
@@ -42,43 +40,20 @@ var (
 		// We don't need sorted map keys
 		SortMapKeys: false,
 	})
+	typValueWriterTo = reflect.TypeOf((*ValueWriterTo)(nil)).Elem()
 )
 
 func JSON() jsoniter.API {
 	return jsonAPI
 }
-func MustRegisterCustomEncoder(f ValueWriterTo, kinds ...ValueKind) {
-	if err := RegisterCustomEncoder(f, kinds...); err != nil {
-		panic(err)
-	}
-}
-
-func RegisterCustomEncoder(f ValueWriterTo, kinds ...ValueKind) error {
-	if f == nil {
-		return errors.New(`nil field`)
-	}
-	if err := checkKinds(kinds); err != nil {
-		return err
-	}
-	val := reflect.ValueOf(f)
-	typ := val.Elem().Type()
-	typ = derefType(typ)
-	typName := typ.String()
-	if typName == "" {
-		return errors.New("anonymous type")
-	}
-	typ2 := reflect2.Type2(typ)
-	if _, duplicate := registeredTypes[typ2]; duplicate {
-		return errors.New("duplicate scanner mapping")
-	}
-	registeredTypes[typ2] = kinds
-	return nil
-}
 
 func BuildJSON(config jsoniter.Config) jsoniter.API {
 	api := config.Froze()
-	api.RegisterExtension(rewriteFields)
-	api.RegisterExtension(omitemptyAll)
+	api.RegisterExtension(jsonutil.NewEncoderNamingStrategy(awsglue.RewriteFieldName))
+	tcodec.RegisterJSONEncoder(api, awsglue.TimestampLayout, time.UTC)
+	api.RegisterExtension(tcodec.NewDecoderExtension())
+	api.RegisterExtension(jsonutil.NewOmitempty("json"))
+	api.RegisterExtension(&scanValueEncodersExt{})
 	api.RegisterExtension(&customEncodersExt{})
 	return api
 }
@@ -88,31 +63,19 @@ type customEncodersExt struct {
 }
 
 func (*customEncodersExt) DecorateEncoder(typ2 reflect2.Type, encoder jsoniter.ValEncoder) jsoniter.ValEncoder {
-	if _, ok := registeredTypes[typ2]; !ok {
+	typ := typ2.Type1()
+	isPtr := typ.Kind() == reflect.Ptr
+	if isPtr {
 		return encoder
 	}
-	return &customEncoder{
-		ValEncoder: encoder,
-		typ:        typ2.Type1(),
+	typPtr := reflect.PtrTo(typ)
+	if typPtr.Implements(typValueWriterTo) {
+		return &customEncoder{
+			ValEncoder: encoder,
+			typ:        typ,
+		}
 	}
-}
-
-// TODO: [pantherlog] Add more mappings of invalid Athena field name characters here
-// NOTE: The mapping should be easy to remember (so no ASCII code etc) and complex enough
-// to avoid possible conflicts with other fields.
-var fieldNameReplacer = strings.NewReplacer(
-	"@", "_at_sign_",
-	",", "_comma_",
-	"`", "_backtick_",
-	"'", "_apostrophe_",
-)
-
-func RewriteFieldName(name string) string {
-	result := fieldNameReplacer.Replace(name)
-	if result == name {
-		return name
-	}
-	return strings.Trim(result, "_")
+	return encoder
 }
 
 type customEncoder struct {
@@ -132,22 +95,4 @@ func (e *customEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 		val := reflect.NewAt(e.typ, ptr)
 		val.Interface().(ValueWriterTo).WriteValuesTo(w)
 	}
-}
-func derefType(typ reflect.Type) reflect.Type {
-	for typ.Kind() == reflect.Ptr {
-		typ = typ.Elem()
-	}
-	return typ
-}
-
-func checkKinds(kinds []ValueKind) error {
-	if len(kinds) == 0 {
-		return errors.New("no value kinds")
-	}
-	for _, kind := range kinds {
-		if kind == KindNone {
-			return errors.New("zero value kind")
-		}
-	}
-	return nil
 }
