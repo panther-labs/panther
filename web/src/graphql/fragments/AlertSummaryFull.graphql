@@ -7,10 +7,6 @@ fragment AlertSummaryFull on AlertSummary {
   creationTime
   eventsMatched
   updateTime
-  lastUpdatedBy {
-    givenName
-    familyName
-    email
-  }
+  lastUpdatedBy
   lastUpdatedByTime
 }

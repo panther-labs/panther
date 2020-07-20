@@ -33,6 +33,7 @@ import { AlertStatusesEnum } from 'Generated/schema';
 import AlertStatusBadge from 'Components/AlertStatusBadge';
 import { extractErrorMessage, formatDatetime } from 'Helpers/utils';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
+import { useListUsers } from 'Pages/Users/graphql/listUsers.generated';
 import { useUpdateAlertStatus } from './graphql/updateAlertStatus.generated';
 
 interface UpdateAlertDropdownProps {
@@ -40,30 +41,49 @@ interface UpdateAlertDropdownProps {
 }
 
 const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
-  const { status } = alert;
   const { pushSnackbar } = useSnackbar();
+
+  const { data: listUsersData } = useListUsers({
+    onError: error => {
+      pushSnackbar({
+        variant: 'error',
+        title: `Failed to get user attribution for alerts`,
+        description: extractErrorMessage(error),
+      });
+    },
+  });
 
   const [updateAlertStatus] = useUpdateAlertStatus({
     variables: {
       input: {
-        status,
+        status: alert.status,
         alertId: alert.alertId,
       },
     },
 
     // This hook ensures we also update the AlertDetails item in the cache
     update: (cache, { data }) => {
-      cache.modify({
-        id: cache.identify({
-          __typename: 'AlertDetails',
-          alertId: data.updateAlertStatus.alertId,
-        }),
-        fields: {
-          status: () => data.updateAlertStatus.status,
-          lastUpdatedBy: () => data.updateAlertStatus.lastUpdatedBy,
-          lastUpdatedByTime: () => data.updateAlertStatus.lastUpdatedByTime,
-        },
+      const dataId = cache.identify({
+        __typename: 'AlertDetails',
+        alertId: data.updateAlertStatus.alertId,
       });
+      cache.modify(dataId, {
+        status: () => data.updateAlertStatus.status,
+        lastUpdatedBy: () => data.updateAlertStatus.lastUpdatedBy,
+        lastUpdatedByTime: () => data.updateAlertStatus.lastUpdatedByTime,
+      });
+      // TODO: when apollo client is updated to 3.0.0-rc.12+, use this code
+      // cache.modify({
+      //   id: cache.identify({
+      //     __typename: 'AlertDetails',
+      //     alertId: data.updateAlertStatus.alertId,
+      //   }),
+      //   fields: {
+      //     status: () => data.updateAlertStatus.status,
+      //     lastUpdatedBy: () => data.updateAlertStatus.lastUpdatedBy,
+      //     lastUpdatedByTime: () => data.updateAlertStatus.lastUpdatedByTime,
+      //   },
+      // });
     },
     // We want to simulate an instant change in the UI which will fallback if there's a failure
     optimisticResponse: data => ({
@@ -87,41 +107,54 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
     },
   });
 
-  const availableStatusesEntries = React.useMemo(() => Object.entries(AlertStatusesEnum), []);
+  // Extracts a user from a list of users by its ID
+  const getUser = React.useCallback((listUsers, lastUpdatedBy) => {
+    return listUsers?.users.filter((usr: { id: string }) => usr.id === lastUpdatedBy).pop();
+  }, []);
 
-  // Extract a name to display
-  const getLastUpdatedBy = React.useCallback(() => {
-    if (!alert.lastUpdatedBy) {
-      return null;
+  // Returns a display name from a list of users and a specified userId
+  const getDisplayName = React.useCallback((lastUpdatedBy, listUsers) => {
+    if (!lastUpdatedBy) {
+      return '';
     }
-    if (alert.lastUpdatedBy.givenName && alert.lastUpdatedBy.familyName) {
-      return `${alert.lastUpdatedBy.givenName} ${alert.lastUpdatedBy.familyName}`;
-    }
-    if (!alert.lastUpdatedBy.givenName && alert.lastUpdatedBy.familyName) {
-      return alert.lastUpdatedBy.familyName;
-    }
-    if (alert.lastUpdatedBy.givenName && !alert.lastUpdatedBy.familyName) {
-      return alert.lastUpdatedBy.givenName;
-    }
-    return alert.lastUpdatedBy.email;
-  }, [alert]);
 
-  const lastUpdatedBy = React.useMemo(() => getLastUpdatedBy(), [alert]);
+    const user = getUser(listUsers, lastUpdatedBy);
+    if (!user) {
+      return '';
+    }
 
-  // Format the timestamp
+    if (user.givenName && user.familyName) {
+      return `${user.givenName} ${user.familyName}`;
+    }
+    if (!user.givenName && user.familyName) {
+      return user.familyName;
+    }
+    if (user.givenName && !user.familyName) {
+      return user.givenName;
+    }
+    return user.email;
+  }, []);
+
+  // Create the display name
+  const lastUpdatedBy = React.useMemo(() => getDisplayName(alert.lastUpdatedBy, listUsersData), [
+    alert,
+    listUsersData,
+  ]);
+
+  // Create a formatted timestamp
   const lastUpdatedByTime = React.useMemo(() => formatDatetime(alert.lastUpdatedByTime), [alert]);
 
   // Create our dropdown button
   const dropdownButton = React.useMemo(
     () => (
       <DropdownButton as={AbstractButton} outline="none" aria-label="Alert Status Options">
-        <AlertStatusBadge status={status} />
+        <AlertStatusBadge status={alert.status} />
       </DropdownButton>
     ),
     [alert]
   );
 
-  // Create a wrapped dropdown button with a tooltip
+  // Create a wrapped dropdown button with a tooltip.
   const wrappedDropdownButton = React.useMemo(
     () =>
       lastUpdatedBy ? (
@@ -144,8 +177,10 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
       ) : (
         dropdownButton
       ),
-    [alert]
+    [alert, lastUpdatedBy, lastUpdatedByTime]
   );
+
+  const availableStatusesEntries = React.useMemo(() => Object.entries(AlertStatusesEnum), []);
 
   return (
     <Dropdown>
@@ -154,7 +189,7 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
         {availableStatusesEntries.map(([statusKey, statusVal], index) => (
           <DropdownItem
             key={index}
-            disabled={status === statusVal}
+            disabled={alert.status === statusVal}
             onSelect={() =>
               updateAlertStatus({
                 variables: { input: { status: statusVal, alertId: alert.alertId } },
@@ -163,7 +198,7 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
           >
             <Flex minWidth={85} spacing={2} justify="space-between" align="center">
               <Box aria-labelledby="status-item">{statusKey}</Box>
-              {status === statusVal && <Icon size="x-small" type="check" />}
+              {alert.status === statusVal && <Icon size="x-small" type="check" />}
             </Flex>
           </DropdownItem>
         ))}

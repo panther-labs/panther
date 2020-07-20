@@ -229,7 +229,10 @@ export const buildAlertDetails = (overrides: Partial<AlertDetails> = {}): AlertD
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
     status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Closed,
     title: 'title' in overrides ? overrides.title : 'Steel',
-    lastUpdatedBy: 'lastUpdatedBy' in overrides ? overrides.lastUpdatedBy : buildUser(),
+    lastUpdatedBy:
+      'lastUpdatedBy' in overrides
+        ? overrides.lastUpdatedBy
+        : '15cffa0a-6a52-49cc-a5d6-d52aa26209ac',
     lastUpdatedByTime:
       'lastUpdatedByTime' in overrides ? overrides.lastUpdatedByTime : '2020-07-02T20:00:23.050Z',
     updateTime: 'updateTime' in overrides ? overrides.updateTime : '2020-02-22T04:54:35.910Z',
@@ -250,7 +253,10 @@ export const buildAlertSummary = (overrides: Partial<AlertSummary> = {}): AlertS
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Medium,
     status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Triaged,
     title: 'title' in overrides ? overrides.title : 'indexing',
-    lastUpdatedBy: 'lastUpdatedBy' in overrides ? overrides.lastUpdatedBy : buildUser(),
+    lastUpdatedBy:
+      'lastUpdatedBy' in overrides
+        ? overrides.lastUpdatedBy
+        : '2b032d04-ec9e-41cd-9bb7-cb8d0b6eee9e',
     lastUpdatedByTime:
       'lastUpdatedByTime' in overrides ? overrides.lastUpdatedByTime : '2020-07-29T23:42:06.903Z',
     updateTime: 'updateTime' in overrides ? overrides.updateTime : '2020-09-17T19:32:46.882Z',
