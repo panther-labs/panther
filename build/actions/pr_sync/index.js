@@ -22,7 +22,7 @@ const getPrTitle = str => `${PR_TITLE_PREFIX} ${str}`;
  * @param repo The owner:name representation of the repo
  * @returns {string} The URL that represents the repo on Github;
  */
-const getGithubUrl = repo => `git@github.com:${repo}.git`;
+const getGithubUrl = repo => `https://github.com/${repo}.git`;
 
 const main = async () => {
   try {
