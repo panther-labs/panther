@@ -35,9 +35,31 @@ import (
 
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
 	alertModel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	"github.com/panther-labs/panther/pkg/metrics"
 )
 
 const defaultTimePartition = "defaultPartition"
+
+var (
+	staticLogger = metrics.MustStaticLogger([]metrics.DimensionSet{
+		{
+			"AnalysisType",
+			"Severity",
+		},
+		{
+			"AnalysisType",
+		},
+	}, []metrics.Metric{
+		{
+			Name: "AlertsCreated",
+			Unit: metrics.UnitCount,
+		},
+	})
+	analysisTypeDimension = metrics.Dimension{
+		Name:  "AnalysisType",
+		Value: "Rule",
+	}
+)
 
 type Handler struct {
 	SqsClient        sqsiface.SQSAPI
@@ -96,7 +118,15 @@ func (h *Handler) handleNewAlert(rule *models.Rule, event *AlertDedupEvent) erro
 	if err := h.storeNewAlert(rule, event); err != nil {
 		return errors.Wrap(err, "failed to store new alert in DDB")
 	}
-	return h.sendAlertNotification(rule, event)
+
+	err := h.sendAlertNotification(rule, event)
+	if err == nil {
+		staticLogger.LogSingle(1,
+			metrics.Dimension{Name: "Severity", Value: string(rule.Severity)},
+			analysisTypeDimension,
+		)
+	}
+	return err
 }
 
 func (h *Handler) updateExistingAlert(event *AlertDedupEvent) error {
@@ -161,8 +191,9 @@ func (h *Handler) storeNewAlert(rule *models.Rule, alertDedup *AlertDedupEvent) 
 	}
 	_, err = h.DdbClient.PutItem(putItemRequest)
 	if err != nil {
-		return errors.Wrap(err, "failed to update store alert")
+		return errors.Wrap(err, "failed to store alert")
 	}
+
 	return nil
 }
 
