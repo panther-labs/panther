@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { countPoliciesBySeverityAndStatus } from 'Helpers/utils';
-import sum from 'lodash-es/sum';
+import sum from 'lodash/sum';
 import { OrganizationReportBySeverity } from 'Generated/schema';
 import { Flex } from 'pouncejs';
 import BarChart from 'Components/charts/BarChart';
