@@ -802,7 +802,7 @@ module.exports = /******/ (function (modules, runtime) {
           // Set the `url` output to the created PR's URL
           core.setOutput('url', destPullRequest.url);
         } catch (error) {
-          core.setFailed(error.message);
+          core.setFailed(error);
         } finally {
           // noop
         }
