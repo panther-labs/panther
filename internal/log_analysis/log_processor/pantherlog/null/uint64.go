@@ -112,7 +112,7 @@ func (*uint64Codec) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
 			return
 		}
 		*((*Uint64)(ptr)) = Uint64{
-			Value:  uint64(n),
+			Value:  n,
 			Exists: true,
 		}
 	default:

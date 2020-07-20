@@ -51,11 +51,11 @@ var (
 )
 
 func init() {
-	RegisterScanner("foo", kindFoo, kindFoo)
-	RegisterScanner("bar", kindBar, kindBar)
-	RegisterScanner("baz", kindBaz, kindBaz)
-	RegisterScanner("qux", kindQux, kindQux)
-	RegisterScanner("quux", kindQuux, kindQuux)
+	MustRegisterScanner("foo", kindFoo, kindFoo)
+	MustRegisterScanner("bar", kindBar, kindBar)
+	MustRegisterScanner("baz", kindBaz, kindBaz)
+	MustRegisterScanner("qux", kindQux, kindQux)
+	MustRegisterScanner("quux", kindQuux, kindQuux)
 }
 
 func TestScanValueEncodersExt(t *testing.T) {
