@@ -782,7 +782,7 @@ module.exports = /******/ (function (modules, runtime) {
           const destPullRequestBranchName = getPrBranch(srcPullRequest.head.ref);
 
           core.debug('Cloning destination repo...');
-          execSync(`git clone https://${token}@github.com/${destRepo}.git ${destRepoName}`);
+          execSync(`git clone https://${process.env.GITHUB_ACTOR}:${token}@github.com/${destRepo}.git ${destRepoName}`); // prettier-ignore
           execSync(`cd ${destRepoName}`);
           execSync(`git remote add ${srcRepoName} https://github.com/${process.env.GITHUB_REPOSITORY}.git`); // prettier-ignore
 
