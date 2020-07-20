@@ -737,7 +737,6 @@ module.exports = /******/ (function (modules, runtime) {
 
       const main = async () => {
         try {
-          core.debug('Initializing...');
           const destRepo = core.getInput('destRepo');
           const ignoreLabel = core.getInput('ignoreLabel');
           const token = core.getInput('token');
@@ -748,23 +747,25 @@ module.exports = /******/ (function (modules, runtime) {
 
           // If PR was closed, but it was not due to it being merged, then do nothing
           if (!pullRequest.merged) {
-            return;
+            core.debug('PR was closed without merging. Terminating...');
+            core.setFailed('PR was not merged');
           }
           core.debug('PR was closed due to a merge. Looking for ignore labels...');
 
           // If PR has the "ignore" label, then the PR sync should not happen
           const shouldIgnore = pullRequest.labels.some(label => label.name === ignoreLabel);
           if (shouldIgnore) {
-            return;
+            core.debug('PR contained an ignore label. Terminating...');
+            core.setFailed('PR was ignored by Author');
           }
-          core.debug('PR did not have an ignore label. Starting sync process...');
+          core.debug('An ignore label was not found. Starting sync process...');
 
           core.debug('Initializing octokit...');
           const octokit = github.getOctokit(token);
           core.debug('Octokit instance setup successfully');
 
           // https://developer.github.com/v3/git/refs/#create-a-reference
-          core.debug('Creating PR branch...');
+          core.debug('Creating a branch from the merge commit...');
           const prBranchName = pullRequest.head.ref;
           await octokit.request(`POST /repos/${destRepo}/git/refs`, {
             ref: `refs/heads/${prBranchName}`,
@@ -784,7 +785,8 @@ module.exports = /******/ (function (modules, runtime) {
 
           // https://developer.github.com/v3/issues/#update-an-issue
           core.debug('Setting assignees, labels & milestone...');
-          await octokit.request(`POST /repos/${destRepo}/issues/${destPullRequest.id}`, {
+          core.debug(JSON.stringify(destPullRequest, null, 2));
+          await octokit.request(`PATCH /repos/${destRepo}/issues/${destPullRequest.id}`, 
             assignees: pullRequest.assignees.map(assignee => assignee.login),
             labels: pullRequest.labels.map(label => label.name),
             milestone: pullRequest.milestone ? pullRequest.milestone.id : null,
