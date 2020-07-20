@@ -1242,7 +1242,7 @@ export const buildUpdateAlertStatusInput = (
   overrides: Partial<UpdateAlertStatusInput> = {}
 ): UpdateAlertStatusInput => {
   return {
-    alertId: 'alertId' in overrides ? overrides.alertId : 'Extended',
+    alertId: 'alertId' in overrides ? overrides.alertId : '344a4508-25bd-42d0-bc1a-11a8551110cc',
     status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Closed,
   };
 };

@@ -1080,7 +1080,7 @@ export type TestPolicyResponse = {
 };
 
 export type UpdateAlertStatusInput = {
-  alertId: Scalars['String'];
+  alertId: Scalars['ID'];
   status: AlertStatusesEnum;
 };
 

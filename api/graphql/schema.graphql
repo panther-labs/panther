@@ -178,7 +178,7 @@ type ListAlertsResponse {
 }
 
 input UpdateAlertStatusInput {
-  alertId: String!
+  alertId: ID!
   status: AlertStatusesEnum!
 }
 
