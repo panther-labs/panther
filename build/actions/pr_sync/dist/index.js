@@ -786,7 +786,7 @@ module.exports = /******/ (function (modules, runtime) {
           // https://developer.github.com/v3/issues/#update-an-issue
           core.debug('Setting assignees, labels & milestone...');
           core.debug(JSON.stringify(destPullRequest, null, 2));
-          await octokit.request(`PATCH /repos/${destRepo}/issues/${destPullRequest.id}`, 
+          await octokit.request(`PATCH /repos/${destRepo}/issues/${destPullRequest.id}`, {
             assignees: pullRequest.assignees.map(assignee => assignee.login),
             labels: pullRequest.labels.map(label => label.name),
             milestone: pullRequest.milestone ? pullRequest.milestone.id : null,
