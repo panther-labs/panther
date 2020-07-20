@@ -514,7 +514,7 @@ export enum ListRulesSortFieldsEnum {
 }
 
 export type LogAnalysisMetricsInput = {
-  intervalHours: Scalars['Int'];
+  intervalMinutes: Scalars['Int'];
   fromDate: Scalars['AWSDateTime'];
   toDate: Scalars['AWSDateTime'];
   metricNames: Array<Scalars['String']>;

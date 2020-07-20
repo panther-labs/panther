@@ -41,7 +41,7 @@ function getDates() {
 }
 
 const LogAnalysisOverview: React.FC = () => {
-  const intervalHours = 6;
+  const intervalMinutes = 6 * 60;
   const { fromDate, toDate } = getDates();
   const { data, loading, error } = useGetLogAnalysisMetrics({
     fetchPolicy: 'cache-and-network',
@@ -50,7 +50,7 @@ const LogAnalysisOverview: React.FC = () => {
         metricNames: ['eventsProcessed', 'totalAlertsDelta', 'alertsBySeverity'],
         fromDate,
         toDate,
-        intervalHours,
+        intervalMinutes,
       },
     },
   });

@@ -303,7 +303,7 @@ input OrganizationStatsInput {
 }
 
 input LogAnalysisMetricsInput {
-  intervalHours: Int!
+  intervalMinutes: Int!
   fromDate: AWSDateTime!
   toDate: AWSDateTime!
   metricNames: [String!]!

@@ -70,6 +70,8 @@ import {
   ListResourcesResponse,
   ListRulesInput,
   ListRulesResponse,
+  LogAnalysisMetricsInput,
+  LogAnalysisMetricsResponse,
   ModifyGlobalPythonModuleInput,
   MsTeamsConfig,
   MsTeamsConfigInput,
@@ -97,6 +99,10 @@ import {
   S3LogIntegrationHealth,
   ScannedResources,
   ScannedResourceStats,
+  Series,
+  SeriesData,
+  SeriesMetric,
+  SingleValue,
   SlackConfig,
   SlackConfigInput,
   SnsConfig,
@@ -106,6 +112,7 @@ import {
   SuppressPoliciesInput,
   TestPolicyInput,
   TestPolicyResponse,
+  TotalAlertsDelta,
   UpdateComplianceIntegrationInput,
   UpdateGeneralSettingsInput,
   UpdatePolicyInput,
@@ -777,6 +784,34 @@ export const buildListRulesResponse = (
   };
 };
 
+export const buildLogAnalysisMetricsInput = (
+  overrides: Partial<LogAnalysisMetricsInput> = {}
+): LogAnalysisMetricsInput => {
+  return {
+    intervalMinutes: 'intervalMinutes' in overrides ? overrides.intervalMinutes : 816,
+    fromDate: 'fromDate' in overrides ? overrides.fromDate : '2020-09-12T00:49:46.314Z',
+    toDate: 'toDate' in overrides ? overrides.toDate : '2020-04-12T07:15:32.902Z',
+    metricNames: 'metricNames' in overrides ? overrides.metricNames : ['Investment Account'],
+  };
+};
+
+export const buildLogAnalysisMetricsResponse = (
+  overrides: Partial<LogAnalysisMetricsResponse> = {}
+): LogAnalysisMetricsResponse => {
+  return {
+    __typename: 'LogAnalysisMetricsResponse',
+    eventsProcessed:
+      'eventsProcessed' in overrides ? overrides.eventsProcessed : buildSeriesMetric(),
+    alertsBySeverity:
+      'alertsBySeverity' in overrides ? overrides.alertsBySeverity : buildSeriesMetric(),
+    totalAlertsDelta:
+      'totalAlertsDelta' in overrides ? overrides.totalAlertsDelta : buildTotalAlertsDelta(),
+    fromDate: 'fromDate' in overrides ? overrides.fromDate : '2020-06-15T22:39:08.690Z',
+    toDate: 'toDate' in overrides ? overrides.toDate : '2020-06-29T16:49:54.582Z',
+    intervalHours: 'intervalHours' in overrides ? overrides.intervalHours : 293,
+  };
+};
+
 export const buildModifyGlobalPythonModuleInput = (
   overrides: Partial<ModifyGlobalPythonModuleInput> = {}
 ): ModifyGlobalPythonModuleInput => {
@@ -1144,6 +1179,37 @@ export const buildScannedResourceStats = (
   };
 };
 
+export const buildSeries = (overrides: Partial<Series> = {}): Series => {
+  return {
+    __typename: 'Series',
+    label: 'label' in overrides ? overrides.label : 'Idaho',
+    values: 'values' in overrides ? overrides.values : [371],
+  };
+};
+
+export const buildSeriesData = (overrides: Partial<SeriesData> = {}): SeriesData => {
+  return {
+    __typename: 'SeriesData',
+    timestamps: 'timestamps' in overrides ? overrides.timestamps : ['2020-10-18T14:12:28.273Z'],
+    series: 'series' in overrides ? overrides.series : [buildSeries()],
+  };
+};
+
+export const buildSeriesMetric = (overrides: Partial<SeriesMetric> = {}): SeriesMetric => {
+  return {
+    __typename: 'SeriesMetric',
+    seriesData: 'seriesData' in overrides ? overrides.seriesData : buildSeriesData(),
+  };
+};
+
+export const buildSingleValue = (overrides: Partial<SingleValue> = {}): SingleValue => {
+  return {
+    __typename: 'SingleValue',
+    label: 'label' in overrides ? overrides.label : 'blue',
+    value: 'value' in overrides ? overrides.value : 72,
+  };
+};
+
 export const buildSlackConfig = (overrides: Partial<SlackConfig> = {}): SlackConfig => {
   return {
     __typename: 'SlackConfig',
@@ -1217,6 +1283,15 @@ export const buildTestPolicyResponse = (
     testsFailed: 'testsFailed' in overrides ? overrides.testsFailed : ['Granite'],
     testsErrored:
       'testsErrored' in overrides ? overrides.testsErrored : [buildPolicyUnitTestError()],
+  };
+};
+
+export const buildTotalAlertsDelta = (
+  overrides: Partial<TotalAlertsDelta> = {}
+): TotalAlertsDelta => {
+  return {
+    __typename: 'TotalAlertsDelta',
+    singleValue: 'singleValue' in overrides ? overrides.singleValue : [buildSingleValue()],
   };
 };
 
