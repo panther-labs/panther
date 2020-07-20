@@ -24,19 +24,19 @@ const main = async () => {
     const token = core.getInput('token');
 
     // Get the JSON webhook payload for the event that triggered the workflow
-    const pullRequest = github.context.payload.pull_request;
+    const srcPullRequest = github.context.payload.pull_request;
 
     // If PR was closed, but it was not due to it being merged, then do nothing
-    if (!pullRequest.merged) {
-      core.debug('PR was closed without merging. Terminating...');
+    if (!srcPullRequest.merged) {
+      core.setOutput('message', 'PR was closed without merging. Terminating...');
       process.exit(0);
     }
     core.debug('PR was closed due to a merge. Looking for ignore labels...');
 
     // If PR has the "ignore" label, then the PR sync should not happen
-    const shouldIgnore = pullRequest.labels.some(label => label.name === ignoreLabel);
+    const shouldIgnore = srcPullRequest.labels.some(label => label.name === ignoreLabel);
     if (shouldIgnore) {
-      core.debug('PR contained an ignore label. Terminating...');
+      core.setOutput('message', 'PR contained an ignore label. Terminating...');
       process.exit(0);
     }
     core.debug('An ignore label was not found. Starting sync process...');
@@ -47,19 +47,19 @@ const main = async () => {
 
     // https://developer.github.com/v3/git/refs/#create-a-reference
     core.debug('Creating a branch from the merge commit...');
-    const prBranchName = getPrBranch(pullRequest.head.ref);
+    const destPullRequestBranchName = getPrBranch(srcPullRequest.head.ref);
     await octokit.request(`POST /repos/${destRepo}/git/refs`, {
-      ref: `refs/heads/${prBranchName}`,
-      sha: pullRequest.merge_commit_sha,
+      ref: `refs/heads/${destPullRequestBranchName}`,
+      sha: srcPullRequest.merge_commit_sha,
     });
 
     // https://developer.github.com/v3/pulls/#create-a-pull-request
     core.debug('Creating a pull request...');
     const { data: destPullRequest } = await octokit.request(`POST /repos/${destRepo}/pulls`, {
-      title: getPrTitle(pullRequest.title),
-      body: pullRequest.body,
+      title: getPrTitle(srcPullRequest.title),
+      body: srcPullRequest.body,
       maintainer_can_modify: true,
-      head: prBranchName,
+      head: destPullRequestBranchName,
       base: MASTER_BRANCH,
       draft: false,
     });
@@ -68,22 +68,23 @@ const main = async () => {
     core.debug('Setting assignees, labels & milestone...');
     core.debug(JSON.stringify(destPullRequest, null, 2));
     await octokit.request(`PATCH /repos/${destRepo}/issues/${destPullRequest.number}`, {
-      assignees: pullRequest.assignees.map(assignee => assignee.login),
-      labels: pullRequest.labels.map(label => label.name),
-      milestone: pullRequest.milestone ? pullRequest.milestone.id : null,
+      assignees: srcPullRequest.assignees.map(assignee => assignee.login),
+      labels: srcPullRequest.labels.map(label => label.name),
+      milestone: srcPullRequest.milestone ? srcPullRequest.milestone.id : null,
     });
 
     // https://developer.github.com/v3/pulls/review_requests/#request-reviewers-for-a-pull-request
     core.debug('Setting reviewers...');
     await octokit.request(
-      `POST /repos/${destRepo}/pulls/${destPullRequest.id}/requested_reviewers`,
+      `POST /repos/${destRepo}/pulls/${destPullRequest.number}/requested_reviewers`,
       {
-        reviewers: pullRequest.user.login,
+        reviewers: srcPullRequest.user.login,
       }
     );
 
     // Set the `url` output to the created PR's URL
     core.setOutput('url', destPullRequest.url);
+    core.setOutput('message', 'Successfully synced PRs');
   } catch (error) {
     core.setFailed(error);
   } finally {

@@ -23,4 +23,4 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get the output
-        run: echo "The URL was ${{ steps.sync_prs_from_community_to_enterprise.outputs.url }}"
+        run: echo "${{ steps.sync_prs_from_community_to_enterprise.outputs.message }}"
