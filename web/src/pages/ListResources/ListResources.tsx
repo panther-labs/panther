@@ -27,7 +27,7 @@ import {
   extractErrorMessage,
 } from 'Helpers/utils';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
-import isEmpty from 'lodash-es/isEmpty';
+import isEmpty from 'lodash/isEmpty';
 import withSEO from 'Hoc/withSEO';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import ListResourcesActions from './ListResourcesActions';

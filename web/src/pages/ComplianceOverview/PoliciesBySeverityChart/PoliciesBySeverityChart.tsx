@@ -18,9 +18,9 @@
 
 import React from 'react';
 import { Flex, theme } from 'pouncejs';
-import sum from 'lodash-es/sum';
+import sum from 'lodash/sum';
 import { capitalize, countPoliciesBySeverityAndStatus } from 'Helpers/utils';
-import map from 'lodash-es/map';
+import map from 'lodash/map';
 import { OrganizationReportBySeverity } from 'Generated/schema';
 import BarChart from 'Components/charts/BarChart';
 import ChartSummary from 'Components/charts/ChartSummary';

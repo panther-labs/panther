@@ -28,8 +28,8 @@ import { Box, Button, Card, Collapse, Flex } from 'pouncejs';
 import CreateButton from 'Pages/ListRules/CreateButton';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
-import isEmpty from 'lodash-es/isEmpty';
-import pick from 'lodash-es/pick';
+import isEmpty from 'lodash/isEmpty';
+import pick from 'lodash/pick';
 
 const severityOptions = Object.values(SeverityEnum);
 

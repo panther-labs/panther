@@ -31,7 +31,7 @@ import {
   convertObjArrayValuesToCsv,
   extractErrorMessage,
 } from 'Helpers/utils';
-import pick from 'lodash-es/pick';
+import pick from 'lodash/pick';
 import { DEFAULT_SMALL_PAGE_SIZE } from 'Source/constants';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import withSEO from 'Hoc/withSEO';
