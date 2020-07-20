@@ -731,6 +731,7 @@ module.exports = /******/ (function (modules, runtime) {
     /***/ 104: /***/ function (__unusedmodule, __unusedexports, __webpack_require__) {
       const core = __webpack_require__(470);
       const github = __webpack_require__(469);
+      const { execSync } = __webpack_require__(129);
 
       const PR_TITLE_PREFIX = '[Sync]';
       const BRANCH_PREFIX = 'sync/';
@@ -747,12 +748,24 @@ module.exports = /******/ (function (modules, runtime) {
        */
       const getPrTitle = str => `${PR_TITLE_PREFIX} ${str}`;
 
+      /**
+       *
+       * @param repo The owner:name representation of the repo
+       * @returns {string} The URL that represents the repo on Github;
+       */
+      const getGithubUrl = repo => `git@github.com:${repo}.git`;
+
       const main = async () => {
         try {
           const destRepo = core.getInput('destRepo');
           const destBranch = core.getInput('destBranch');
           const ignoreLabel = core.getInput('ignoreLabel');
           const token = core.getInput('token');
+
+          /* eslint-disable @typescript-eslint/no-unused-vars */
+          const [srcOwner, srcRepoName] = process.env.GITHUB_REPOSITORY.split('/');
+          const [destOwner, destRepoName] = destRepo.split('/');
+          /* eslint-enable @typescript-eslint/no-unused-vars */
 
           // Get the JSON webhook payload for the event that triggered the workflow
           const srcPullRequest = github.context.payload.pull_request;
@@ -772,17 +785,29 @@ module.exports = /******/ (function (modules, runtime) {
           }
           core.debug('An ignore label was not found. Starting sync process...');
 
+          const commit = srcPullRequest.merge_commit_sha || srcPullRequest.head.sha;
+          const destPullRequestBranchName = getPrBranch(srcPullRequest.head.ref);
+
+          core.debug('Cloning destination repo...');
+          execSync(`git clone ${getGithubUrl(destRepo)} ${destRepoName}`);
+          execSync(`cd ${destRepoName}`);
+          execSync(`git remote add ${srcRepoName} ${getGithubUrl(process.env.GITHUB_REPOSITORY)}`);
+
+          core.debug('Creating a branch from the merge commit...');
+          execSync(`git checkout ${destBranch}`);
+          execSync(`git checkout -b ${destPullRequestBranchName}`);
+          execSync(`git cherry-pick ${commit}`);
+          execSync(`git push origin ${destPullRequestBranchName}`);
+
           core.debug('Initializing octokit...');
           const octokit = github.getOctokit(token);
-          core.debug('Octokit instance setup successfully');
 
           // https://developer.github.com/v3/git/refs/#create-a-reference
-          core.debug('Creating a branch from the merge commit...');
-          const destPullRequestBranchName = getPrBranch(srcPullRequest.head.ref);
-          await octokit.request(`POST /repos/${destRepo}/git/refs`, {
-            ref: `refs/heads/${destPullRequestBranchName}`,
-            sha: srcPullRequest.merge_commit_sha,
-          });
+          // core.debug('Creating a branch from the merge commit...');
+          // await octokit.request(`POST /repos/${destRepo}/git/refs`, {
+          //   ref: `refs/heads/${destPullRequestBranchName}`,
+          //   sha: commit,
+          // });
 
           // https://developer.github.com/v3/pulls/#create-a-pull-request
           core.debug('Creating a pull request...');
@@ -797,20 +822,28 @@ module.exports = /******/ (function (modules, runtime) {
 
           // https://developer.github.com/v3/issues/#update-an-issue
           core.debug('Setting assignees, labels & milestone...');
-          await octokit.request(`PATCH /repos/${destRepo}/issues/${destPullRequest.number}`, {
-            assignees: srcPullRequest.assignees.map(assignee => assignee.login),
-            labels: srcPullRequest.labels.map(label => label.name),
-            milestone: srcPullRequest.milestone ? srcPullRequest.milestone.number : null,
-          });
+          try {
+            await octokit.request(`PATCH /repos/${destRepo}/issues/${destPullRequest.number}`, {
+              assignees: srcPullRequest.assignees.map(assignee => assignee.login),
+              labels: srcPullRequest.labels.map(label => label.name),
+              milestone: srcPullRequest.milestone ? srcPullRequest.milestone.number : null,
+            });
+          } catch (error) {
+            core.debug(error.message);
+          }
 
           // https://developer.github.com/v3/pulls/review_requests/#request-reviewers-for-a-pull-request
           core.debug('Setting reviewers...');
-          await octokit.request(
-            `POST /repos/${destRepo}/pulls/${destPullRequest.number}/requested_reviewers`,
-            {
-              reviewers: [srcPullRequest.user.login],
-            }
-          );
+          try {
+            await octokit.request(
+              `POST /repos/${destRepo}/pulls/${destPullRequest.number}/requested_reviewers`,
+              {
+                reviewers: [srcPullRequest.user.login],
+              }
+            );
+          } catch (error) {
+            core.debug(error.message);
+          }
 
           // Set the `url` output to the created PR's URL
           core.setOutput('url', destPullRequest.url);
@@ -1313,6 +1346,12 @@ module.exports = /******/ (function (modules, runtime) {
       }
       exports.getApiBaseUrl = getApiBaseUrl;
       //# sourceMappingURL=utils.js.map
+
+      /***/
+    },
+
+    /***/ 129: /***/ function (module) {
+      module.exports = require('child_process');
 
       /***/
     },

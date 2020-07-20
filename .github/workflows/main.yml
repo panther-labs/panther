@@ -13,7 +13,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Monitor PRs on Community & Create PRs on Enterprise
+      - name: Monitor PRs on a Source Repo & Create PRs on a dest one
         uses: ./build/actions/pr_sync
         id: pr_sync
         env:
