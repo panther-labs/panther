@@ -106,12 +106,11 @@ func TestGetAlertDoesNotExist(t *testing.T) {
 		AlertID:        aws.String("alertId"),
 		EventsPageSize: aws.Int(5),
 	}
-	output := &models.GetAlertOutput{}
 
 	tableMock.On("GetAlert", aws.String("alertId")).Return(nil, nil)
 	api := API{}
 	result, err := api.GetAlert(input)
-	require.Equal(t, output, result)
+	require.Nil(t, result)
 	require.NoError(t, err)
 }
 
