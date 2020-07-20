@@ -20,7 +20,6 @@ package null
  */
 
 import (
-	"errors"
 	"reflect"
 
 	jsoniter "github.com/json-iterator/go"
@@ -31,8 +30,16 @@ var (
 	typString   = reflect.TypeOf(String{})
 	typNonEmpty = reflect.TypeOf(NonEmpty{})
 	typInt64    = reflect.TypeOf(Int64{})
+	typInt32    = reflect.TypeOf(Int32{})
+	typInt16    = reflect.TypeOf(Int16{})
+	typInt8     = reflect.TypeOf(Int8{})
+	typUint64   = reflect.TypeOf(Uint64{})
 	typUint32   = reflect.TypeOf(Uint32{})
 	typUint16   = reflect.TypeOf(Uint16{})
+	typUint8    = reflect.TypeOf(Uint8{})
+	typFloat64  = reflect.TypeOf(Float64{})
+	typFloat32  = reflect.TypeOf(Float32{})
+	typBoolean  = reflect.TypeOf(Boolean{})
 )
 
 func init() {
@@ -41,67 +48,46 @@ func init() {
 	jsoniter.RegisterTypeDecoder(typString.String(), StringDecoder())
 	jsoniter.RegisterTypeEncoder(typNonEmpty.String(), NonEmptyEncoder())
 	jsoniter.RegisterTypeDecoder(typNonEmpty.String(), StringDecoder())
+
 	jsoniter.RegisterTypeEncoder(typInt64.String(), &int64Codec{})
 	jsoniter.RegisterTypeDecoder(typInt64.String(), &int64Codec{})
+	jsoniter.RegisterTypeEncoder(typInt32.String(), &int32Codec{})
+	jsoniter.RegisterTypeDecoder(typInt32.String(), &int32Codec{})
+	jsoniter.RegisterTypeEncoder(typInt16.String(), &int16Codec{})
+	jsoniter.RegisterTypeDecoder(typInt16.String(), &int16Codec{})
+	jsoniter.RegisterTypeEncoder(typInt8.String(), &int8Codec{})
+	jsoniter.RegisterTypeDecoder(typInt8.String(), &int8Codec{})
+
+	jsoniter.RegisterTypeEncoder(typUint64.String(), &uint64Codec{})
+	jsoniter.RegisterTypeDecoder(typUint64.String(), &uint64Codec{})
 	jsoniter.RegisterTypeEncoder(typUint32.String(), &uint32Codec{})
 	jsoniter.RegisterTypeDecoder(typUint32.String(), &uint32Codec{})
 	jsoniter.RegisterTypeEncoder(typUint16.String(), &uint16Codec{})
 	jsoniter.RegisterTypeDecoder(typUint16.String(), &uint16Codec{})
-}
+	jsoniter.RegisterTypeEncoder(typUint8.String(), &uint8Codec{})
+	jsoniter.RegisterTypeDecoder(typUint8.String(), &uint8Codec{})
 
-func MustRegisterString(types ...interface{}) {
-	for _, typ := range types {
-		if err := RegisterString(typ); err != nil {
-			panic(err)
-		}
-	}
-}
+	jsoniter.RegisterTypeEncoder(typFloat64.String(), &float64Codec{})
+	jsoniter.RegisterTypeDecoder(typFloat64.String(), &float64Codec{})
+	jsoniter.RegisterTypeEncoder(typFloat32.String(), &float32Codec{})
+	jsoniter.RegisterTypeDecoder(typFloat32.String(), &float32Codec{})
 
-func RegisterString(x interface{}) error {
-	if x == nil {
-		return errors.New(`invalid value`)
-	}
-	typ := reflect.TypeOf(x)
-	for typ.Kind() == reflect.Ptr {
-		typ = typ.Elem()
-	}
-	if !canCastUnsafe(typ, typString) {
-		return errors.New(`invalid type`)
-	}
-	typName := typ.String()
-	if typName == "" {
-		return errors.New(`anonymous type`)
-	}
-	jsoniter.RegisterTypeEncoder(typName, StringEncoder())
-	jsoniter.RegisterTypeDecoder(typName, StringDecoder())
-	return nil
-}
-
-func canCastUnsafe(from, to reflect.Type) bool {
-	if from.ConvertibleTo(to) {
-		return true
-	}
-	if from.Kind() == reflect.Struct {
-		field := from.Field(0)
-		if field.Anonymous && field.Type.ConvertibleTo(to) {
-			return true
-		}
-	}
-	return false
+	jsoniter.RegisterTypeEncoder(typBoolean.String(), &boolCodec{})
+	jsoniter.RegisterTypeDecoder(typBoolean.String(), &boolCodec{})
 }
 
 // RegisterValidators registers custom type validators for null values
-func RegisterValidators(v *validator.Validate) {
-	v.RegisterCustomTypeFunc(func(v reflect.Value) interface{} {
-		return v.Field(0).String()
-	}, String{}, NonEmpty{})
-	v.RegisterCustomTypeFunc(func(v reflect.Value) interface{} {
-		return v.Field(0).Int()
-	}, Int64{})
-	v.RegisterCustomTypeFunc(func(v reflect.Value) interface{} {
-		return uint16(v.Field(0).Uint())
-	}, Uint16{}, NonEmpty{})
-	v.RegisterCustomTypeFunc(func(v reflect.Value) interface{} {
-		return uint32(v.Field(0).Uint())
-	}, Uint32{}, NonEmpty{})
+func RegisterValidators(validate *validator.Validate) {
+	validate.RegisterCustomTypeFunc(ValidateNullType, String{}, NonEmpty{},
+		Float64{}, Float32{},
+		Int64{}, Int32{}, Int16{}, Int8{},
+		Uint64{}, Uint32{}, Uint16{}, Uint8{},
+	)
+}
+
+func ValidateNullType(val reflect.Value) interface{} {
+	if val.Field(1).Bool() {
+		return val.Field(0).Interface()
+	}
+	return nil
 }

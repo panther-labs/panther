@@ -26,15 +26,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestInt64Codec(t *testing.T) {
+func TestUint64Codec(t *testing.T) {
 	type A struct {
-		Foo Int64 `json:"foo,omitempty"`
+		Foo Uint64 `json:"foo,omitempty"`
 	}
 	{
 		a := A{}
 		err := jsoniter.UnmarshalFromString(`{"foo":"42"}`, &a)
 		require.NoError(t, err)
-		require.Equal(t, int64(42), a.Foo.Value)
+		require.Equal(t, FromUint64(42), a.Foo)
 		data, err := jsoniter.MarshalToString(&a)
 		require.NoError(t, err)
 		require.Equal(t, `{"foo":42}`, data)
@@ -43,7 +43,7 @@ func TestInt64Codec(t *testing.T) {
 		a := A{}
 		err := jsoniter.UnmarshalFromString(`{"foo":42}`, &a)
 		require.NoError(t, err)
-		require.Equal(t, int64(42), a.Foo.Value)
+		require.Equal(t, FromUint64(42), a.Foo)
 		data, err := jsoniter.MarshalToString(&a)
 		require.NoError(t, err)
 		require.Equal(t, `{"foo":42}`, data)
@@ -52,7 +52,7 @@ func TestInt64Codec(t *testing.T) {
 		a := A{}
 		err := jsoniter.UnmarshalFromString(`{"foo":""}`, &a)
 		require.NoError(t, err)
-		require.Equal(t, Int64{}, a.Foo)
+		require.Equal(t, Uint64{}, a.Foo)
 		data, err := jsoniter.MarshalToString(&a)
 		require.NoError(t, err)
 		require.Equal(t, `{}`, data)
@@ -61,35 +61,34 @@ func TestInt64Codec(t *testing.T) {
 		a := A{}
 		err := jsoniter.UnmarshalFromString(`{"foo":null}`, &a)
 		require.NoError(t, err)
-		require.Equal(t, Int64{}, a.Foo)
+		require.Equal(t, Uint64{}, a.Foo)
 		require.False(t, a.Foo.Exists)
 		data, err := jsoniter.MarshalToString(&a)
 		require.NoError(t, err)
 		require.Equal(t, `{}`, data)
 	}
 	{
-		s := FromInt64(42)
+		s := FromUint64(42)
 		data, err := jsoniter.MarshalToString(&s)
 		require.NoError(t, err)
 		require.Equal(t, `42`, data)
 	}
 	{
-		s := Int64{}
+		s := Uint64{}
 		data, err := jsoniter.MarshalToString(&s)
 		require.NoError(t, err)
 		require.Equal(t, `null`, data)
 	}
 }
-func TestInt64UnmarshalJSON(t *testing.T) {
+func TestUint64UnmarshalJSON(t *testing.T) {
 	type A struct {
-		Foo Int64 `json:"foo,omitempty"`
+		Foo Uint64 `json:"foo,omitempty"`
 	}
 	{
 		a := A{}
 		err := json.Unmarshal([]byte(`{"foo":"42"}`), &a)
 		require.NoError(t, err)
-		require.True(t, a.Foo.Exists)
-		require.Equal(t, int64(42), a.Foo.Value)
+		require.Equal(t, FromUint64(42), a.Foo)
 		data, err := json.Marshal(&a)
 		require.NoError(t, err)
 		require.Equal(t, `{"foo":42}`, string(data))
@@ -98,8 +97,7 @@ func TestInt64UnmarshalJSON(t *testing.T) {
 		a := A{}
 		err := json.Unmarshal([]byte(`{"foo":42}`), &a)
 		require.NoError(t, err)
-		require.True(t, a.Foo.Exists)
-		require.Equal(t, int64(42), a.Foo.Value)
+		require.Equal(t, FromUint64(42), a.Foo)
 		data, err := json.Marshal(&a)
 		require.NoError(t, err)
 		require.Equal(t, `{"foo":42}`, string(data))
@@ -108,7 +106,7 @@ func TestInt64UnmarshalJSON(t *testing.T) {
 		a := A{}
 		err := json.Unmarshal([]byte(`{"foo":""}`), &a)
 		require.NoError(t, err)
-		require.Equal(t, Int64{}, a.Foo)
+		require.Equal(t, Uint64{}, a.Foo)
 		data, err := json.Marshal(&a)
 		require.NoError(t, err)
 		require.Equal(t, `{"foo":null}`, string(data))
@@ -117,38 +115,38 @@ func TestInt64UnmarshalJSON(t *testing.T) {
 		a := A{}
 		err := json.Unmarshal([]byte(`{"foo":null}`), &a)
 		require.NoError(t, err)
-		require.Equal(t, Int64{}, a.Foo)
+		require.Equal(t, Uint64{}, a.Foo)
 		data, err := json.Marshal(&a)
 		require.NoError(t, err)
 		require.Equal(t, `{"foo":null}`, string(data))
 	}
 	{
-		s := FromInt64(42)
+		s := FromUint64(42)
 		data, err := json.Marshal(&s)
 		require.NoError(t, err)
 		require.Equal(t, `42`, string(data))
 	}
 	{
-		s := Int64{}
+		s := Uint64{}
 		data, err := json.Marshal(&s)
 		require.NoError(t, err)
 		require.Equal(t, `null`, string(data))
 	}
 }
 
-func TestInt64IsNull(t *testing.T) {
-	n := Int64{
+func TestUint64IsNull(t *testing.T) {
+	n := Uint64{
 		Exists: true,
 	}
 	require.False(t, n.IsNull())
-	n = Int64{
+	n = Uint64{
 		Value:  42,
 		Exists: true,
 	}
 	require.False(t, n.IsNull())
-	n = Int64{}
+	n = Uint64{}
 	require.True(t, n.IsNull())
-	n = Int64{
+	n = Uint64{
 		Value: 12,
 	}
 	require.True(t, n.IsNull())

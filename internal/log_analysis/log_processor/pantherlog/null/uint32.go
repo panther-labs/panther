@@ -42,16 +42,26 @@ func FromUint32(n uint32) Uint32 {
 	}
 }
 
+func (u *Uint32) IsNull() bool {
+	return !u.Exists
+}
+
+// UnmarshalJSON implements json.Unmarshaler interface.
+// It decodes Int32 value s from string, number or null JSON input.
 func (u *Uint32) UnmarshalJSON(data []byte) error {
+	// Check null JSON input
 	if string(data) == `null` {
 		*u = Uint32{}
 		return nil
 	}
+	// Handle both string and number input
 	data = jsonutil.UnquoteJSON(data)
+	// Empty string is considered the same as `null` input
 	if len(data) == 0 {
 		*u = Uint32{}
 		return nil
 	}
+	// Read the int32 value
 	n, err := strconv.ParseUint(string(data), 10, 32)
 	if err != nil {
 		return err
@@ -63,13 +73,30 @@ func (u *Uint32) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// int64Codec is a jsoniter encoder/decoder for integer values
+// MarshalJSON implements json.Marshaler interface.
+func (u *Uint32) MarshalJSON() ([]byte, error) {
+	if !u.Exists {
+		return []byte(`null`), nil
+	}
+	return strconv.AppendUint(nil, uint64(u.Value), 10), nil
+}
+
+// uint32Codec is a jsoniter encoder/decoder for integer values
 type uint32Codec struct{}
 
 // Decode implements jsoniter.ValDecoder interface
 func (*uint32Codec) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
 	const opName = "ReadNullUint32"
 	switch iter.WhatIsNext() {
+	case jsoniter.NumberValue:
+		n := iter.ReadUint32()
+		if iter.Error != nil {
+			return
+		}
+		*((*Uint32)(ptr)) = Uint32{
+			Value:  n,
+			Exists: true,
+		}
 	case jsoniter.NilValue:
 		iter.ReadNil()
 		*((*Uint32)(ptr)) = Uint32{}

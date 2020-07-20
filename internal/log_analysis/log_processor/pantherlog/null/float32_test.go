@@ -26,33 +26,33 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestInt64Codec(t *testing.T) {
+func TestFloat32Codec(t *testing.T) {
 	type A struct {
-		Foo Int64 `json:"foo,omitempty"`
+		Foo Float32 `json:"foo,omitempty"`
 	}
 	{
 		a := A{}
-		err := jsoniter.UnmarshalFromString(`{"foo":"42"}`, &a)
+		err := jsoniter.UnmarshalFromString(`{"foo":"42.42"}`, &a)
 		require.NoError(t, err)
-		require.Equal(t, int64(42), a.Foo.Value)
+		require.Equal(t, FromFloat32(42.42), a.Foo)
 		data, err := jsoniter.MarshalToString(&a)
 		require.NoError(t, err)
-		require.Equal(t, `{"foo":42}`, data)
+		require.Equal(t, `{"foo":42.42}`, data)
 	}
 	{
 		a := A{}
-		err := jsoniter.UnmarshalFromString(`{"foo":42}`, &a)
+		err := jsoniter.UnmarshalFromString(`{"foo":42.42}`, &a)
 		require.NoError(t, err)
-		require.Equal(t, int64(42), a.Foo.Value)
+		require.Equal(t, FromFloat32(42.42), a.Foo)
 		data, err := jsoniter.MarshalToString(&a)
 		require.NoError(t, err)
-		require.Equal(t, `{"foo":42}`, data)
+		require.Equal(t, `{"foo":42.42}`, data)
 	}
 	{
 		a := A{}
 		err := jsoniter.UnmarshalFromString(`{"foo":""}`, &a)
 		require.NoError(t, err)
-		require.Equal(t, Int64{}, a.Foo)
+		require.Equal(t, Float32{}, a.Foo)
 		data, err := jsoniter.MarshalToString(&a)
 		require.NoError(t, err)
 		require.Equal(t, `{}`, data)
@@ -61,45 +61,43 @@ func TestInt64Codec(t *testing.T) {
 		a := A{}
 		err := jsoniter.UnmarshalFromString(`{"foo":null}`, &a)
 		require.NoError(t, err)
-		require.Equal(t, Int64{}, a.Foo)
+		require.Equal(t, Float32{}, a.Foo)
 		require.False(t, a.Foo.Exists)
 		data, err := jsoniter.MarshalToString(&a)
 		require.NoError(t, err)
 		require.Equal(t, `{}`, data)
 	}
 	{
-		s := FromInt64(42)
+		s := FromFloat32(42.42)
 		data, err := jsoniter.MarshalToString(&s)
 		require.NoError(t, err)
-		require.Equal(t, `42`, data)
+		require.Equal(t, `42.42`, data)
 	}
 	{
-		s := Int64{}
+		s := Float32{}
 		data, err := jsoniter.MarshalToString(&s)
 		require.NoError(t, err)
 		require.Equal(t, `null`, data)
 	}
 }
-func TestInt64UnmarshalJSON(t *testing.T) {
+func TestFloat32UnmarshalJSON(t *testing.T) {
 	type A struct {
-		Foo Int64 `json:"foo,omitempty"`
+		Foo Float32 `json:"foo,omitempty"`
 	}
 	{
 		a := A{}
-		err := json.Unmarshal([]byte(`{"foo":"42"}`), &a)
+		err := json.Unmarshal([]byte(`{"foo":"42.0"}`), &a)
 		require.NoError(t, err)
-		require.True(t, a.Foo.Exists)
-		require.Equal(t, int64(42), a.Foo.Value)
+		require.Equal(t, FromFloat32(42.0), a.Foo)
 		data, err := json.Marshal(&a)
 		require.NoError(t, err)
 		require.Equal(t, `{"foo":42}`, string(data))
 	}
 	{
 		a := A{}
-		err := json.Unmarshal([]byte(`{"foo":42}`), &a)
+		err := json.Unmarshal([]byte(`{"foo":42.0}`), &a)
 		require.NoError(t, err)
-		require.True(t, a.Foo.Exists)
-		require.Equal(t, int64(42), a.Foo.Value)
+		require.Equal(t, FromFloat32(42.0), a.Foo)
 		data, err := json.Marshal(&a)
 		require.NoError(t, err)
 		require.Equal(t, `{"foo":42}`, string(data))
@@ -108,7 +106,7 @@ func TestInt64UnmarshalJSON(t *testing.T) {
 		a := A{}
 		err := json.Unmarshal([]byte(`{"foo":""}`), &a)
 		require.NoError(t, err)
-		require.Equal(t, Int64{}, a.Foo)
+		require.Equal(t, Float32{}, a.Foo)
 		data, err := json.Marshal(&a)
 		require.NoError(t, err)
 		require.Equal(t, `{"foo":null}`, string(data))
@@ -117,39 +115,39 @@ func TestInt64UnmarshalJSON(t *testing.T) {
 		a := A{}
 		err := json.Unmarshal([]byte(`{"foo":null}`), &a)
 		require.NoError(t, err)
-		require.Equal(t, Int64{}, a.Foo)
+		require.Equal(t, Float32{}, a.Foo)
 		data, err := json.Marshal(&a)
 		require.NoError(t, err)
 		require.Equal(t, `{"foo":null}`, string(data))
 	}
 	{
-		s := FromInt64(42)
+		s := FromFloat32(42)
 		data, err := json.Marshal(&s)
 		require.NoError(t, err)
 		require.Equal(t, `42`, string(data))
 	}
 	{
-		s := Int64{}
+		s := Float32{}
 		data, err := json.Marshal(&s)
 		require.NoError(t, err)
 		require.Equal(t, `null`, string(data))
 	}
 }
 
-func TestInt64IsNull(t *testing.T) {
-	n := Int64{
+func TestFloat32IsNull(t *testing.T) {
+	n := Float32{
 		Exists: true,
 	}
 	require.False(t, n.IsNull())
-	n = Int64{
-		Value:  42,
+	n = Float32{
+		Value:  42.42,
 		Exists: true,
 	}
 	require.False(t, n.IsNull())
-	n = Int64{}
+	n = Float32{}
 	require.True(t, n.IsNull())
-	n = Int64{
-		Value: 12,
+	n = Float32{
+		Value: 12.01,
 	}
 	require.True(t, n.IsNull())
 }

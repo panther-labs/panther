@@ -42,16 +42,26 @@ func FromUint16(n uint16) Uint16 {
 	}
 }
 
+func (u *Uint16) IsNull() bool {
+	return !u.Exists
+}
+
+// UnmarshalJSON implements json.Unmarshaler interface.
+// It decodes Int16 value s from string, number or null JSON input.
 func (u *Uint16) UnmarshalJSON(data []byte) error {
+	// Check null JSON input
 	if string(data) == `null` {
 		*u = Uint16{}
 		return nil
 	}
+	// Handle both string and number input
 	data = jsonutil.UnquoteJSON(data)
+	// Empty string is considered the same as `null` input
 	if len(data) == 0 {
 		*u = Uint16{}
 		return nil
 	}
+	// Read the int16 value
 	n, err := strconv.ParseUint(string(data), 10, 16)
 	if err != nil {
 		return err
@@ -63,13 +73,30 @@ func (u *Uint16) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// int64Codec is a jsoniter encoder/decoder for integer values
+// MarshalJSON implements json.Marshaler interface.
+func (u *Uint16) MarshalJSON() ([]byte, error) {
+	if !u.Exists {
+		return []byte(`null`), nil
+	}
+	return strconv.AppendUint(nil, uint64(u.Value), 10), nil
+}
+
+// uint16Codec is a jsoniter encoder/decoder for integer values
 type uint16Codec struct{}
 
 // Decode implements jsoniter.ValDecoder interface
 func (*uint16Codec) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
 	const opName = "ReadNullUint16"
 	switch iter.WhatIsNext() {
+	case jsoniter.NumberValue:
+		n := iter.ReadUint16()
+		if iter.Error != nil {
+			return
+		}
+		*((*Uint16)(ptr)) = Uint16{
+			Value:  n,
+			Exists: true,
+		}
 	case jsoniter.NilValue:
 		iter.ReadNil()
 		*((*Uint16)(ptr)) = Uint16{}

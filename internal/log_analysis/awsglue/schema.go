@@ -64,24 +64,56 @@ var (
 			To:   "bigint",
 		},
 		{
-			From: reflect.TypeOf(*new(null.Int64)),
+			From: reflect.TypeOf(null.Float64{}),
+			To:   "double",
+		},
+		{
+			From: reflect.TypeOf(null.Float32{}),
+			To:   "float",
+		},
+		{
+			From: reflect.TypeOf(null.Int64{}),
 			To:   "bigint",
 		},
 		{
-			From: reflect.TypeOf(*new(null.Uint16)),
+			From: reflect.TypeOf(null.Int32{}),
 			To:   "int",
 		},
 		{
-			From: reflect.TypeOf(*new(null.Uint32)),
+			From: reflect.TypeOf(null.Int16{}),
+			To:   "smallint",
+		},
+		{
+			From: reflect.TypeOf(null.Int8{}),
+			To:   "tinyint",
+		},
+		{
+			From: reflect.TypeOf(null.Uint64{}),
 			To:   "bigint",
 		},
 		{
-			From: reflect.TypeOf(*new(null.String)),
+			From: reflect.TypeOf(null.Uint32{}),
+			To:   "bigint",
+		},
+		{
+			From: reflect.TypeOf(null.Uint16{}),
+			To:   "int",
+		},
+		{
+			From: reflect.TypeOf(null.Uint8{}),
+			To:   "smallint",
+		},
+		{
+			From: reflect.TypeOf(null.String{}),
 			To:   "string",
 		},
 		{
-			From: reflect.TypeOf(*new(null.NonEmpty)),
+			From: reflect.TypeOf(null.NonEmpty{}),
 			To:   "string",
+		},
+		{
+			From: reflect.TypeOf(null.Boolean{}),
+			To:   "boolean",
 		},
 	}
 

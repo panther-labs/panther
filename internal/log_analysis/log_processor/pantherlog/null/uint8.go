@@ -28,110 +28,110 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/jsonutil"
 )
 
-type Int64 struct {
-	Value  int64
+type Uint8 struct {
+	Value  uint8
 	Exists bool
 }
 
-// FromInt64 creates a non-null Int64.
+// FromUint8 creates a non-null Uint8.
 // It is inlined by the compiler.
-func FromInt64(n int64) Int64 {
-	return Int64{
+func FromUint8(n uint8) Uint8 {
+	return Uint8{
 		Value:  n,
 		Exists: true,
 	}
 }
 
-func (i *Int64) IsNull() bool {
-	return !i.Exists
+func (u *Uint8) IsNull() bool {
+	return !u.Exists
 }
 
 // UnmarshalJSON implements json.Unmarshaler interface.
-// It decodes Int64 value s from string, number or null JSON input.
-func (i *Int64) UnmarshalJSON(data []byte) error {
+// It decodes Int8 value s from string, number or null JSON input.
+func (u *Uint8) UnmarshalJSON(data []byte) error {
 	// Check null JSON input
 	if string(data) == `null` {
-		*i = Int64{}
+		*u = Uint8{}
 		return nil
 	}
 	// Handle both string and number input
 	data = jsonutil.UnquoteJSON(data)
 	// Empty string is considered the same as `null` input
 	if len(data) == 0 {
-		*i = Int64{}
+		*u = Uint8{}
 		return nil
 	}
-	// Read the int64 value
-	n, err := strconv.ParseInt(string(data), 10, 64)
+	// Read the int8 value
+	n, err := strconv.ParseUint(string(data), 10, 8)
 	if err != nil {
 		return err
 	}
-	*i = Int64{
-		Value:  n,
+	*u = Uint8{
+		Value:  uint8(n),
 		Exists: true,
 	}
 	return nil
 }
 
 // MarshalJSON implements json.Marshaler interface.
-func (i *Int64) MarshalJSON() ([]byte, error) {
-	if !i.Exists {
+func (u *Uint8) MarshalJSON() ([]byte, error) {
+	if !u.Exists {
 		return []byte(`null`), nil
 	}
-	return strconv.AppendInt(nil, i.Value, 10), nil
+	return strconv.AppendUint(nil, uint64(u.Value), 10), nil
 }
 
-// int64Codec is a jsoniter encoder/decoder for int64 values
-type int64Codec struct{}
+// uint8Codec is a jsoniter encoder/decoder for integer values
+type uint8Codec struct{}
 
 // Decode implements jsoniter.ValDecoder interface
-func (*int64Codec) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
-	const opName = "ReadNullInt64"
+func (*uint8Codec) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
+	const opName = "ReadNullUint8"
 	switch iter.WhatIsNext() {
 	case jsoniter.NumberValue:
-		n := iter.ReadInt64()
+		n := iter.ReadUint8()
 		if iter.Error != nil {
 			return
 		}
-		*((*Int64)(ptr)) = Int64{
+		*((*Uint8)(ptr)) = Uint8{
 			Value:  n,
 			Exists: true,
 		}
 	case jsoniter.NilValue:
 		iter.ReadNil()
-		*((*Int64)(ptr)) = Int64{}
+		*((*Uint8)(ptr)) = Uint8{}
 	case jsoniter.StringValue:
 		s := iter.ReadStringAsSlice()
 		if len(s) == 0 {
-			*((*Int64)(ptr)) = Int64{}
+			*((*Uint8)(ptr)) = Uint8{}
 			return
 		}
-		n, err := strconv.ParseInt(string(s), 10, 64)
+		n, err := strconv.ParseUint(string(s), 10, 8)
 		if err != nil {
 			iter.ReportError(opName, err.Error())
 			return
 		}
-		*((*Int64)(ptr)) = Int64{
-			Value:  n,
+		*((*Uint8)(ptr)) = Uint8{
+			Value:  uint8(n),
 			Exists: true,
 		}
 	default:
 		iter.Skip()
-		iter.ReportError(opName, "invalid null int64 value")
+		iter.ReportError(opName, "invalid null uint8 value")
 	}
 }
 
 // Encode implements jsoniter.ValEncoder interface
-func (*int64Codec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	if i := (*Int64)(ptr); i.Exists {
-		stream.WriteInt64(i.Value)
+func (*uint8Codec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
+	if u := (*Uint8)(ptr); u.Exists {
+		stream.WriteUint8(u.Value)
 	} else {
 		stream.WriteNil()
 	}
 }
 
 // IsEmpty implements jsoniter.ValEncoder interface
-// WARNING: This considers only `null` values as empty and omits them
-func (*int64Codec) IsEmpty(ptr unsafe.Pointer) bool {
-	return !((*Int64)(ptr)).Exists
+// WARNING: This considers `null` values as empty and omits them
+func (*uint8Codec) IsEmpty(ptr unsafe.Pointer) bool {
+	return !((*Uint8)(ptr)).Exists
 }
