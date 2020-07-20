@@ -18,8 +18,8 @@
 
 import React from 'react';
 import { capitalize, countPoliciesBySeverityAndStatus } from 'Helpers/utils';
-import map from 'lodash-es/map';
-import sum from 'lodash-es/sum';
+import map from 'lodash/map';
+import sum from 'lodash/sum';
 import { OrganizationReportBySeverity } from 'Generated/schema';
 import { theme, Flex } from 'pouncejs';
 import BarChart from 'Components/charts/BarChart';

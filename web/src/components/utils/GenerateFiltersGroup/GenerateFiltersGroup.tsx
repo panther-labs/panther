@@ -19,8 +19,8 @@
 import React from 'react';
 import { Formik, Field, Form } from 'formik';
 import { Box, Button, SimpleGrid } from 'pouncejs';
-import mapValues from 'lodash-es/mapValues';
-import map from 'lodash-es/map';
+import mapValues from 'lodash/mapValues';
+import map from 'lodash/map';
 import FormikTextInput from 'Components/fields/TextInput';
 import FormikTextArea from 'Components/fields/TextArea';
 import FormikCombobox from 'Components/fields/ComboBox';
