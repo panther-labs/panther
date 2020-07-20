@@ -27,14 +27,25 @@ import (
 	"go.uber.org/zap"
 )
 
-const alarmRunbook = "https://docs.runpanther.io/operations/runbooks"
+const (
+	alarmRunbook = "https://docs.runpanther.io/operations/runbooks"
 
-// Wrapper function to reduce boilerplate for all the custom alarms.
-//
+	consoleLinkTemplate = "\nhttps://%s.console.aws.amazon.com/cloudwatch/home?region=%s#alarmsV2:alarm/%s?\n"
+
+	maxAlarmDescriptionSize = 1024
+)
+
+// Wrapper functions to reduce boilerplate for all the custom alarms.
+
+// putMetricAlarm
 // If not specified, fills in defaults for the following:
 //    Tags:               Application=Panther
 //    TreatMissingData:   notBreaching
-func putMetricAlarm(input cloudwatch.PutMetricAlarmInput) error {
+func putMetricAlarm(input *cloudwatch.PutMetricAlarmInput) error {
+	// copy because we mutate the Alarm description
+	var copy cloudwatch.PutMetricAlarmInput = *input
+	input = &copy
+
 	if input.Tags == nil {
 		input.Tags = []*cloudwatch.Tag{
 			{Key: aws.String("Application"), Value: aws.String("Panther")},
@@ -45,18 +56,57 @@ func putMetricAlarm(input cloudwatch.PutMetricAlarmInput) error {
 		input.TreatMissingData = aws.String("notBreaching")
 	}
 
+	input.AlarmDescription = aws.String(createAlarmDescription(*input.AlarmName, *input.AlarmDescription))
+
 	zap.L().Info("putting metric alarm", zap.String("alarmName", *input.AlarmName))
-	if _, err := cloudWatchClient.PutMetricAlarm(&input); err != nil {
+	if _, err := cloudWatchClient.PutMetricAlarm(input); err != nil {
 		return fmt.Errorf("failed to put alarm %s: %v", *input.AlarmName, err)
 	}
 	return nil
 }
 
-// Delete a group of metric alarms.
+// used to collect a set of alarms to create a composite alarm
+type alarmDescription struct {
+	name        string
+	description string
+}
+
+// putCompositeAlarm creates a composite alarm as an OR over the supporting alarms.
+// If not specified, fills in defaults for the following:
+//    Tags:               Application=Panther
+func putCompositeAlarm(input *cloudwatch.PutCompositeAlarmInput, alarmDescriptions []alarmDescription) error {
+	if input.Tags == nil {
+		input.Tags = []*cloudwatch.Tag{
+			{Key: aws.String("Application"), Value: aws.String("Panther")},
+		}
+	}
+
+	var compositeRule, compositeDescription string
+	compositeDescription = "One or more of the following alarms triggered:\n"
+	for i := range alarmDescriptions {
+		compositeRule += "ALARM(" + alarmDescriptions[i].name + ")"
+		compositeDescription += alarmDescriptions[i].description
+		if i < len(alarmDescriptions)-1 {
+			compositeRule += " OR "
+			compositeDescription += "\n"
+		}
+	}
+	input.AlarmRule = aws.String(compositeRule)
+
+	input.AlarmDescription = aws.String(createAlarmDescription(*input.AlarmName, compositeDescription))
+
+	zap.L().Info("putting composite alarm", zap.String("alarmName", *input.AlarmName))
+	if _, err := cloudWatchClient.PutCompositeAlarm(input); err != nil {
+		return fmt.Errorf("failed to put alarm %s: %v", *input.AlarmName, err)
+	}
+	return nil
+}
+
+// Delete a group of alarms.
 //
 // Assumes physicalID is of the form custom:alarms:$SERVICE:$ID
 // Assumes each alarm name is "Panther-$NAME-$ID"
-func deleteMetricAlarms(physicalID string, alarmNames ...string) error {
+func deleteAlarms(physicalID string, alarmNames ...string) error {
 	split := strings.Split(physicalID, ":")
 	if len(split) < 4 {
 		zap.L().Warn("invalid physicalID - skipping delete")
@@ -69,7 +119,7 @@ func deleteMetricAlarms(physicalID string, alarmNames ...string) error {
 		fullAlarmNames = append(fullAlarmNames, fmt.Sprintf("Panther-%s-%s", name, id))
 	}
 
-	zap.L().Info("deleting metric alarms", zap.Strings("alarmNames", fullAlarmNames))
+	zap.L().Info("deleting alarms", zap.Strings("alarmNames", fullAlarmNames))
 	_, err := cloudWatchClient.DeleteAlarms(
 		&cloudwatch.DeleteAlarmsInput{AlarmNames: aws.StringSlice(fullAlarmNames)})
 	if err != nil {
@@ -77,4 +127,16 @@ func deleteMetricAlarms(physicalID string, alarmNames ...string) error {
 	}
 
 	return nil
+}
+
+func createAlarmDescription(alarmName, alarmDesc string) string {
+	// prepend name,account and region, then console link
+	alarmDesc = accountDescription + fmt.Sprintf(consoleLinkTemplate,
+		*awsSession.Config.Region, *awsSession.Config.Region, alarmName) + alarmDesc
+
+	// clip
+	if len(alarmDesc) > maxAlarmDescriptionSize {
+		alarmDesc = alarmDesc[0:maxAlarmDescriptionSize]
+	}
+	return alarmDesc
 }

@@ -181,6 +181,7 @@ Resources:
         AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
         AuditLogsBucket: !GetAtt Bootstrap.Outputs.AuditLogsBucket
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
+        CompanyDisplayName: !Ref CompanyDisplayName
         CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         ImageRegistryName: !GetAtt Bootstrap.Outputs.ImageRegistryName
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]

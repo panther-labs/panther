@@ -65,6 +65,18 @@ jobs:
             - .setup/terraform
 
       - run:
+          name: Copy original problem file
+          command: cp web/__tests__/__mocks__/builders.generated.ts builders.orig
+
+      - run:
+          name: npm graphql-codegen
+          command: npm run graphql-codegen
+
+      - run:
+          name: check diff
+          command: diff builders.orig web/__tests__/__mocks__/builders.generated.ts
+
+      - run:
           name: Run test suite
           command: mage test:ci
 

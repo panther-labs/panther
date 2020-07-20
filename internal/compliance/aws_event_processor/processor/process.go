@@ -245,6 +245,7 @@ var (
 		"CreateMultipartUpload":   {},
 		"CompleteMultipartUpload": {},
 		"HeadBucket":              {},
+		"HeadObject":              {},
 		"PutObject":               {},
 
 		// waf, waf-regional

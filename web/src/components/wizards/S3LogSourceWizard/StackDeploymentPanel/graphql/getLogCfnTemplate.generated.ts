@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
-
 import * as Types from '../../../../../../__generated__/schema';
 
 import gql from 'graphql-tag';
@@ -79,3 +77,18 @@ export type GetLogCfnTemplateQueryResult = ApolloReactCommon.QueryResult<
   GetLogCfnTemplate,
   GetLogCfnTemplateVariables
 >;
+export function mockGetLogCfnTemplate({
+  data,
+  variables,
+  error,
+}: {
+  data: GetLogCfnTemplate;
+  variables?: GetLogCfnTemplateVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: GetLogCfnTemplateDocument, variables },
+    result: { data },
+    error,
+  };
+}

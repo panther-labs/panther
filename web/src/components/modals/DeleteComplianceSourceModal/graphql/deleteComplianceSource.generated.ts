@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
-
 import * as Types from '../../../../../__generated__/schema';
 
 import gql from 'graphql-tag';
@@ -76,3 +74,18 @@ export type DeleteComplianceSourceMutationOptions = ApolloReactCommon.BaseMutati
   DeleteComplianceSource,
   DeleteComplianceSourceVariables
 >;
+export function mockDeleteComplianceSource({
+  data,
+  variables,
+  error,
+}: {
+  data: DeleteComplianceSource;
+  variables?: DeleteComplianceSourceVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: DeleteComplianceSourceDocument, variables },
+    result: { data },
+    error,
+  };
+}
