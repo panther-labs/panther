@@ -5,6 +5,18 @@ const PR_TITLE_PREFIX = '[Sync]';
 const BRANCH_PREFIX = 'sync/';
 const MASTER_BRANCH = 'v1.0.1-docs';
 
+/**
+ * @param str a "local" branch name
+ * @returns {string} the branch name with the proper prefix
+ */
+const getPrBranch = str => `${BRANCH_PREFIX}${str}`;
+
+/**
+ * @param str the original PR title
+ * @returns {string} the synced PR's title
+ */
+const getPrTitle = str => `${PR_TITLE_PREFIX} ${str}`;
+
 const main = async () => {
   try {
     const destRepo = core.getInput('destRepo');
@@ -17,7 +29,7 @@ const main = async () => {
     // If PR was closed, but it was not due to it being merged, then do nothing
     if (!pullRequest.merged) {
       core.debug('PR was closed without merging. Terminating...');
-      core.setFailed('PR was not merged');
+      process.exit(0);
     }
     core.debug('PR was closed due to a merge. Looking for ignore labels...');
 
@@ -25,7 +37,7 @@ const main = async () => {
     const shouldIgnore = pullRequest.labels.some(label => label.name === ignoreLabel);
     if (shouldIgnore) {
       core.debug('PR contained an ignore label. Terminating...');
-      core.setFailed('PR was ignored by Author');
+      process.exit(0);
     }
     core.debug('An ignore label was not found. Starting sync process...');
 
@@ -35,16 +47,16 @@ const main = async () => {
 
     // https://developer.github.com/v3/git/refs/#create-a-reference
     core.debug('Creating a branch from the merge commit...');
-    const prBranchName = pullRequest.head.ref;
+    const prBranchName = getPrBranch(pullRequest.head.ref);
     await octokit.request(`POST /repos/${destRepo}/git/refs`, {
-      ref: `refs/heads/${BRANCH_PREFIX}${prBranchName}`,
+      ref: `refs/heads/${prBranchName}`,
       sha: pullRequest.merge_commit_sha,
     });
 
     // https://developer.github.com/v3/pulls/#create-a-pull-request
     core.debug('Creating a pull request...');
     const { data: destPullRequest } = await octokit.request(`POST /repos/${destRepo}/pulls`, {
-      title: `${PR_TITLE_PREFIX} ${pullRequest.title}`,
+      title: getPrTitle(pullRequest.title),
       body: pullRequest.body,
       maintainer_can_modify: true,
       head: prBranchName,
