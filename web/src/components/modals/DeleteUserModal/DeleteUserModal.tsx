@@ -40,7 +40,13 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ user, ...rest }) => {
       deleteUser: true,
     },
     update: async cache => {
-      cache.evict({ id: cache.identify(user) });
+      cache.modify('ROOT_QUERY', {
+        users: (data, helpers) => {
+          const userRef = helpers.toReference(user);
+          return data.filter(u => u.__ref !== userRef.__ref);
+        },
+      });
+      cache.gc();
     },
     onCompleted: async () => {
       pushSnackbar({
