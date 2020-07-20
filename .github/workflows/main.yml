@@ -16,7 +16,7 @@ jobs:
       - name: Monitor PRs on Community & Create PRs on Enterprise
         uses: ./build/actions/pr_sync
         env:
-          ACTIONS_STEP_DEBUG: true
+          ACTIONS_STEP_DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
         with:
           destRepo: 3nvi/panther
           ignoreLabel: enterprise-backport
