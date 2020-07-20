@@ -17,13 +17,6 @@ const getPrBranch = str => `${BRANCH_PREFIX}${str}`;
  */
 const getPrTitle = str => `${PR_TITLE_PREFIX} ${str}`;
 
-/**
- *
- * @param repo The owner:name representation of the repo
- * @returns {string} The URL that represents the repo on Github;
- */
-const getGithubUrl = repo => `https://github.com/${repo}.git`;
-
 const main = async () => {
   try {
     const destRepo = core.getInput('destRepo');
@@ -58,9 +51,9 @@ const main = async () => {
     const destPullRequestBranchName = getPrBranch(srcPullRequest.head.ref);
 
     core.debug('Cloning destination repo...');
-    execSync(`git clone ${getGithubUrl(destRepo)} ${destRepoName}`);
+    execSync(`git clone https://${token}@github.com/${destRepo}.git ${destRepoName}`);
     execSync(`cd ${destRepoName}`);
-    execSync(`git remote add ${srcRepoName} ${getGithubUrl(process.env.GITHUB_REPOSITORY)}`);
+    execSync(`git remote add ${srcRepoName} https://github.com/${process.env.GITHUB_REPOSITORY}.git`); // prettier-ignore
 
     core.debug('Creating a branch from the merge commit...');
     execSync(`git checkout ${destBranch}`);
