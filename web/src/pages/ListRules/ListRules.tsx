@@ -22,7 +22,7 @@ import { convertObjArrayValuesToCsv, extractErrorMessage, encodeParams } from 'H
 import { ListRulesInput, SortDirEnum, ListRulesSortFieldsEnum } from 'Generated/schema';
 import { TableControlsPagination } from 'Components/utils/TableControls';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
-import isEmpty from 'lodash-es/isEmpty';
+import isEmpty from 'lodash/isEmpty';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import withSEO from 'Hoc/withSEO';
 import ListRulesTable from './ListRulesTable';

@@ -23,7 +23,7 @@ import { ListPoliciesInput, SortDirEnum, ListPoliciesSortFieldsEnum } from 'Gene
 import { TableControlsPagination } from 'Components/utils/TableControls';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import isEmpty from 'lodash-es/isEmpty';
+import isEmpty from 'lodash/isEmpty';
 import withSEO from 'Hoc/withSEO';
 import ListPoliciesTable from './ListPoliciesTable';
 import ListPoliciesActions from './ListPoliciesActions';

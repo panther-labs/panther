@@ -19,7 +19,7 @@
 import React from 'react';
 import Editor, { EditorProps } from 'Components/Editor';
 import { FieldConfig } from 'formik';
-import debounce from 'lodash-es/debounce';
+import debounce from 'lodash/debounce';
 import { Box, FormError } from 'pouncejs';
 import useFastField from 'Hooks/useFastField';
 
