@@ -25,12 +25,58 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common/null"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 )
 
-func TestNullStringCodec(t *testing.T) {
+func TestStringCodec(t *testing.T) {
 	type A struct {
 		Foo null.String `json:"foo,omitempty"`
+	}
+	{
+		a := A{}
+		err := jsoniter.UnmarshalFromString(`{"foo":"bar"}`, &a)
+		require.NoError(t, err)
+		require.Equal(t, "bar", a.Foo.Value)
+		data, err := jsoniter.MarshalToString(&a)
+		require.NoError(t, err)
+		require.Equal(t, `{"foo":"bar"}`, data)
+	}
+	{
+		a := A{}
+		err := jsoniter.UnmarshalFromString(`{"foo":""}`, &a)
+		require.NoError(t, err)
+		require.Equal(t, "", a.Foo.Value)
+		require.True(t, a.Foo.Exists)
+		data, err := jsoniter.MarshalToString(&a)
+		require.NoError(t, err)
+		require.Equal(t, `{"foo":""}`, data)
+	}
+	{
+		a := A{}
+		err := jsoniter.UnmarshalFromString(`{"foo":null}`, &a)
+		require.NoError(t, err)
+		require.Equal(t, "", a.Foo.Value)
+		require.False(t, a.Foo.Exists)
+		data, err := jsoniter.MarshalToString(&a)
+		require.NoError(t, err)
+		require.Equal(t, `{}`, data)
+	}
+	{
+		s := null.FromString("foo")
+		data, err := jsoniter.MarshalToString(&s)
+		require.NoError(t, err)
+		require.Equal(t, `"foo"`, data)
+	}
+	{
+		s := null.String{}
+		data, err := jsoniter.MarshalToString(&s)
+		require.NoError(t, err)
+		require.Equal(t, `null`, data)
+	}
+}
+func TestNonEmptyStringCodec(t *testing.T) {
+	type A struct {
+		Foo null.NonEmpty `json:"foo,omitempty"`
 	}
 	{
 		a := A{}
