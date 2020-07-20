@@ -84,8 +84,8 @@ func PollCloudWatchLogsLogGroup(
 	if snapshot == nil {
 		return nil, nil
 	}
-	snapshot.Region = aws.String(resourceARN.Region)
-	snapshot.AccountID = aws.String(resourceARN.AccountID)
+	snapshot.Region = &resourceARN.Region
+	snapshot.AccountID = &resourceARN.AccountID
 	scanRequest.ResourceID = snapshot.ARN
 	return snapshot, nil
 }
