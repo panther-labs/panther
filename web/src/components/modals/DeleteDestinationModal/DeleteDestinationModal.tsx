@@ -40,7 +40,13 @@ const DeleteDestinationModal: React.FC<DeleteDestinationModalProps> = ({
       deleteDestination: true,
     },
     update: async cache => {
-      cache.evict({ id: cache.identify(destination) });
+      cache.modify('ROOT_QUERY', {
+        destinations: (destinations, helpers) => {
+          const destinationRef = helpers.toReference(destination);
+          return destinations.filter(dest => dest.__ref !== destinationRef.__ref);
+        },
+      });
+      cache.gc();
     },
     onCompleted: () => {
       pushSnackbar({

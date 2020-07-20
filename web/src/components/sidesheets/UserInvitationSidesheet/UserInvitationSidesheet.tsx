@@ -40,11 +40,9 @@ const UserInvitationSidesheet: React.FC<SideSheetProps> = props => {
   const { pushSnackbar } = useSnackbar();
   const [inviteUser] = useInviteUser({
     update: (cache, { data: { inviteUser: newUser } }) => {
-      cache.modify({
-        fields: {
-          users(existingData, { toReference }) {
-            return [toReference(newUser), ...existingData];
-          },
+      cache.modify('ROOT_QUERY', {
+        users(existingData, { toReference }) {
+          return [toReference(newUser), ...existingData];
         },
       });
     },
