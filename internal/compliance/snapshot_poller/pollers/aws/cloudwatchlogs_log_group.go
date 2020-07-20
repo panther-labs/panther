@@ -72,7 +72,14 @@ func PollCloudWatchLogsLogGroup(
 
 	// Split out the log group name from any additional modifiers
 	lgName := strings.Split(lgResource, ":")[0]
-	logGroup := getLogGroup(cwClient, aws.String(lgName))
+	logGroup, err := getLogGroup(cwClient, lgName)
+	if err != nil {
+		return nil, err
+	}
+	if logGroup == nil {
+		// this can happen in case we didn't find the requested log group - it might have been deleted
+		return nil, nil
+	}
 	snapshot := buildCloudWatchLogsLogGroupSnapshot(cwClient, logGroup)
 	if snapshot == nil {
 		return nil, nil
@@ -84,25 +91,25 @@ func PollCloudWatchLogsLogGroup(
 }
 
 // getLogGroup returns a specific cloudwatch logs log group
-func getLogGroup(svc cloudwatchlogsiface.CloudWatchLogsAPI, logGroupName *string) *cloudwatchlogs.LogGroup {
+func getLogGroup(svc cloudwatchlogsiface.CloudWatchLogsAPI, logGroupName string) (*cloudwatchlogs.LogGroup, error) {
 	logGroups, err := svc.DescribeLogGroups(&cloudwatchlogs.DescribeLogGroupsInput{
-		LogGroupNamePrefix: logGroupName,
+		LogGroupNamePrefix: &logGroupName,
 	})
 	if err != nil {
 		utils.LogAWSError("CloudWatchLogs.DescribeLogGroups", err)
-		return nil
+		return nil, err
 	}
 
 	for _, logGroup := range logGroups.LogGroups {
-		if *logGroup.LogGroupName == *logGroupName {
-			return logGroup
+		if *logGroup.LogGroupName == logGroupName {
+			return logGroup, nil
 		}
 	}
 
 	zap.L().Warn("tried to scan non-existent resource",
-		zap.String("resource", *logGroupName),
+		zap.String("resource", logGroupName),
 		zap.String("resourceType", awsmodels.CloudWatchLogGroupSchema))
-	return nil
+	return nil, nil
 }
 
 // describeLogGroups returns all Log Groups in the account
