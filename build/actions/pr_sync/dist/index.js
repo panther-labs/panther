@@ -732,7 +732,8 @@ module.exports = /******/ (function (modules, runtime) {
       const core = __webpack_require__(470);
       const github = __webpack_require__(469);
 
-      const PR_TITLE_PREFIX = '[OSS Sync]';
+      const PR_TITLE_PREFIX = '[Sync]';
+      const BRANCH_PREFIX = 'sync/';
       const MASTER_BRANCH = 'v1.0.1-docs';
 
       const main = async () => {
@@ -742,7 +743,6 @@ module.exports = /******/ (function (modules, runtime) {
           const token = core.getInput('token');
 
           // Get the JSON webhook payload for the event that triggered the workflow
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           const pullRequest = github.context.payload.pull_request;
 
           // If PR was closed, but it was not due to it being merged, then do nothing
@@ -768,13 +768,13 @@ module.exports = /******/ (function (modules, runtime) {
           core.debug('Creating a branch from the merge commit...');
           const prBranchName = pullRequest.head.ref;
           await octokit.request(`POST /repos/${destRepo}/git/refs`, {
-            ref: `refs/heads/${prBranchName}`,
+            ref: `refs/heads/${BRANCH_PREFIX}${prBranchName}`,
             sha: pullRequest.merge_commit_sha,
           });
 
           // https://developer.github.com/v3/pulls/#create-a-pull-request
           core.debug('Creating a pull request...');
-          const destPullRequest = await octokit.request(`POST /repos/${destRepo}/pulls`, {
+          const { data: destPullRequest } = await octokit.request(`POST /repos/${destRepo}/pulls`, {
             title: `${PR_TITLE_PREFIX} ${pullRequest.title}`,
             body: pullRequest.body,
             maintainer_can_modify: true,
