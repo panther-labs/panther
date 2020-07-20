@@ -78,7 +78,7 @@ const main = async () => {
     await octokit.request(
       `POST /repos/${destRepo}/pulls/${destPullRequest.number}/requested_reviewers`,
       {
-        reviewers: srcPullRequest.user.login,
+        reviewers: [srcPullRequest.user.login],
       }
     );
 
