@@ -1,9 +1,9 @@
 on:
   pull_request:
+    branches:
+      - master
     types:
       - closed
-#    branches:
-#      - master
 
 jobs:
   sync_prs_from_community_to_enterprise:
@@ -15,12 +15,11 @@ jobs:
 
       - name: Monitor PRs on Community & Create PRs on Enterprise
         uses: ./build/actions/pr_sync
+        id: pr_sync
         env:
           ACTIONS_STEP_DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
         with:
           destRepo: 3nvi/panther
+          destBranch: v1.0.1-docs
           ignoreLabel: enterprise-backport
           token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Get the output
-        run: echo "${{ steps.sync_prs_from_community_to_enterprise.outputs.message }}"

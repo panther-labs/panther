@@ -4,6 +4,10 @@ inputs:
   destRepo:
     description: The repo to create a PR to
     required: true
+  destBranch:
+    description: The branch that the PR will be created against
+    required: false
+    default: master
   ignoreLabel:
     description: A Github label that, when added, should force the PR to ignore syncing
     required: false

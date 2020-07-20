@@ -734,7 +734,6 @@ module.exports = /******/ (function (modules, runtime) {
 
       const PR_TITLE_PREFIX = '[Sync]';
       const BRANCH_PREFIX = 'sync/';
-      const MASTER_BRANCH = 'v1.0.1-docs';
 
       /**
        * @param str a "local" branch name
@@ -751,6 +750,7 @@ module.exports = /******/ (function (modules, runtime) {
       const main = async () => {
         try {
           const destRepo = core.getInput('destRepo');
+          const destBranch = core.getInput('destBranch');
           const ignoreLabel = core.getInput('ignoreLabel');
           const token = core.getInput('token');
 
@@ -791,7 +791,7 @@ module.exports = /******/ (function (modules, runtime) {
             body: srcPullRequest.body,
             maintainer_can_modify: true,
             head: destPullRequestBranchName,
-            base: MASTER_BRANCH,
+            base: destBranch,
             draft: false,
           });
 
