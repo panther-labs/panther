@@ -61,6 +61,12 @@ const typePolicies: TypePolicies = {
           existingData || toReference({ __typename: 'S3LogIntegration', integrationId: args.id })
         );
       },
+      getSqsLogIntegration(existingData, { args, toReference }) {
+        return (
+          existingData ||
+          toReference({ __typename: 'SqsLogSourceIntegration', integrationId: args.id })
+        );
+      },
     },
   },
   Destination: {
@@ -76,6 +82,9 @@ const typePolicies: TypePolicies = {
     keyFields: ['integrationId'],
   },
   S3LogIntegration: {
+    keyFields: ['integrationId'],
+  },
+  SqsLogSourceIntegration: {
     keyFields: ['integrationId'],
   },
   GeneralSettings: {

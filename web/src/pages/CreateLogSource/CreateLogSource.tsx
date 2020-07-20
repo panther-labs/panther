@@ -22,6 +22,7 @@ import { Card } from 'pouncejs';
 import useRouter from 'Hooks/useRouter';
 import Page404 from 'Pages/404';
 import CreateS3LogSource from './CreateS3LogSource';
+import CreateSqsSource from './CreateSqsLogSource';
 
 const CreateLogSource: React.FC = () => {
   const {
@@ -34,6 +35,8 @@ const CreateLogSource: React.FC = () => {
     switch (logType) {
       case 'S3':
         return <CreateS3LogSource />;
+      case 'SQS':
+        return <CreateSqsSource />;
       default:
         return <Page404 />;
     }

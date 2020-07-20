@@ -21,6 +21,7 @@ import { Box, Card, FadeIn, Heading, Text } from 'pouncejs';
 import urls from 'Source/urls';
 import LogSourceCard from 'Components/LogSourceCard';
 import s3Logo from 'Assets/s3-minimal-logo.svg';
+import sqsLogo from 'Assets/sqs-minimal-logo.svg';
 import duoLogo from 'Assets/duo-minimal-logo.svg';
 import eventBridgeLogo from 'Assets/eventbridge-minimal-logo.svg';
 import oktaLogo from 'Assets/okta-minimal-logo.svg';
@@ -31,6 +32,11 @@ const logSourcesConfig = [
     logo: s3Logo,
     title: 'Amazon S3',
     type: 'S3',
+  },
+  {
+    logo: sqsLogo,
+    title: 'Amazon SQS',
+    type: 'SQS',
   },
   {
     logo: eventBridgeLogo,
