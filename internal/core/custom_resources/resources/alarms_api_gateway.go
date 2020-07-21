@@ -54,7 +54,7 @@ func customAPIGatewayAlarms(_ context.Context, event cfn.Event) (string, map[str
 		return "custom:alarms:api:" + props.APIName, nil, putGatewayAlarmGroup(props)
 
 	case cfn.RequestDelete:
-		return event.PhysicalResourceID, nil, deleteMetricAlarms(event.PhysicalResourceID,
+		return event.PhysicalResourceID, nil, deleteAlarms(event.PhysicalResourceID,
 			gatewayErrorAlarm, gatewayLatencyAlarm)
 
 	default:
@@ -63,7 +63,7 @@ func customAPIGatewayAlarms(_ context.Context, event cfn.Event) (string, map[str
 }
 
 func putGatewayAlarmGroup(props APIGatewayAlarmProperties) error {
-	input := cloudwatch.PutMetricAlarmInput{
+	input := &cloudwatch.PutMetricAlarmInput{
 		AlarmActions: []*string{&props.AlarmTopicArn},
 		AlarmDescription: aws.String(fmt.Sprintf(
 			"API Gateway %s is experiencing high integration latency. See: %s#%s",

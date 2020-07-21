@@ -1,3 +1,5 @@
+package main
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,4 +18,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './ResourcesByPlatformChart';
+import (
+	"context"
+
+	"github.com/aws/aws-lambda-go/lambda"
+
+	"github.com/panther-labs/panther/api/lambda/metrics/models"
+	"github.com/panther-labs/panther/internal/core/metrics_api/api"
+	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/pkg/lambdalogger"
+)
+
+var router *genericapi.Router
+
+func init() {
+	router = genericapi.NewRouter("core", "metrics_api", nil, api.API{})
+}
+
+func lambdaHandler(ctx context.Context, request *models.LambdaInput) (interface{}, error) {
+	lambdalogger.ConfigureGlobal(ctx, nil)
+	return router.Handle(request)
+}
+
+func main() {
+	api.Setup()
+	lambda.Start(lambdaHandler)
+}

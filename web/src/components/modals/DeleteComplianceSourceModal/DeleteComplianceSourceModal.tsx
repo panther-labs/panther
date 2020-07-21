@@ -35,12 +35,10 @@ const DeleteSourceModal: React.FC<DeleteComplianceSourceModalProps> = ({ source,
     },
     optimisticResponse: () => ({ deleteComplianceIntegration: true }),
     update: cache => {
-      cache.modify({
-        fields: {
-          listComplianceIntegrations: (queryData, { toReference }) => {
-            const deletedSource = toReference(source);
-            return queryData.filter(({ __ref }) => __ref !== deletedSource.__ref);
-          },
+      cache.modify('ROOT_QUERY', {
+        listComplianceIntegrations: (queryData, { toReference }) => {
+          const deletedSource = toReference(source);
+          return queryData.filter(({ __ref }) => __ref !== deletedSource.__ref);
         },
       });
       cache.gc();

@@ -90,3 +90,18 @@ type EventAnalysis struct {
 	Matched    []string      `json:"matched"`    // set of rule IDs which returned True
 	NotMatched []string      `json:"notMatched"` // set of rule IDs which returned False
 }
+
+// ToResult normalizes an event analysis rule result into a Result.
+// Since rule and policy analysis result are quite similar, this allows them to
+// be handled consistently.
+func (e EventAnalysis) ToResult() Result {
+	return Result{
+		ID:      e.ID,
+		Errored: e.Errored,
+		// These are flipped from what would be expected due to the fact that a
+		// 'True' return in a policy means it is compliant while in a rule means
+		// it should fire an alert.
+		Failed: e.NotMatched,
+		Passed: e.Matched,
+	}
+}

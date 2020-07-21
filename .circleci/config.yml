@@ -65,6 +65,18 @@ jobs:
             - .setup/terraform
 
       - run:
+          name: Copy original problem file
+          command: cp web/__tests__/__mocks__/builders.generated.ts builders.orig
+
+      - run:
+          name: npm graphql-codegen
+          command: npm run graphql-codegen
+
+      - run:
+          name: check diff
+          command: diff builders.orig web/__tests__/__mocks__/builders.generated.ts
+
+      - run:
           name: Run test suite
           command: mage test:ci
 
@@ -76,9 +88,27 @@ jobs:
           name: Audit NPM packages
           command: npm audit --production # does not require installing packages first
 
+  bundlesize:
+    executor: panther-buildpack
+    steps:
+      - checkout
+      - restore_cache:
+          name: 'Restore cache: npm'
+          keys:
+            - npm-{{ checksum "package-lock.json" }}
+
+      - run:
+          name: Install NPM dependencies
+          command: npm i
+
+      - run:
+          name: Check bundle size
+          command: npm run bundlesize
+
 workflows:
   version: 2
   pipeline:
     jobs:
       - mage_test_ci
       - npm_audit
+      - bundlesize

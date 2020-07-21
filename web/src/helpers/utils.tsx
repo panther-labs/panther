@@ -35,8 +35,8 @@ import {
   CHECK_IF_HASH_REGEX,
   SOURCE_LABEL_REGEX,
 } from 'Source/constants';
-import mapValues from 'lodash-es/mapValues';
-import sum from 'lodash-es/sum';
+import mapValues from 'lodash/mapValues';
+import sum from 'lodash/sum';
 import { ErrorResponse } from 'apollo-link-error';
 import { ApolloError } from '@apollo/client';
 
@@ -45,7 +45,7 @@ export const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 // Generate a new secret code that contains metadata of issuer and user email
 export const formatSecretCode = (code: string, email: string): string => {
   const issuer = 'Panther';
-  return `otpauth://totp/${email}?secret=${code}&issuer=${issuer}`;
+  return `otpauth://totp/${issuer}:${email}?secret=${code}&issuer=${issuer}`;
 };
 
 export const getArnRegexForService = (awsService: string) => {

@@ -33,6 +33,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 
 	complianceapi "github.com/panther-labs/panther/api/gateway/compliance/client"
+	"github.com/panther-labs/panther/internal/core/analysis_api/analysis"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
@@ -47,6 +48,8 @@ var (
 
 	httpClient       *http.Client
 	complianceClient *complianceapi.PantherCompliance
+	policyEngine     analysis.PolicyEngine
+	ruleEngine       analysis.RuleEngine
 )
 
 type envConfig struct {
@@ -76,4 +79,7 @@ func Setup() {
 		nil, complianceapi.DefaultTransportConfig().
 			WithBasePath("/"+env.ComplianceAPIPath).
 			WithHost(env.ComplianceAPIHost))
+
+	policyEngine = analysis.NewPolicyEngine(lambdaClient, env.PolicyEngine)
+	ruleEngine = analysis.NewRuleEngine(lambdaClient, env.RulesEngine)
 }

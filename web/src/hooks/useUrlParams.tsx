@@ -19,7 +19,7 @@
 import React from 'react';
 import useRouter from 'Hooks/useRouter';
 import queryString from 'query-string';
-import omitBy from 'lodash-es/omitBy';
+import omitBy from 'lodash/omitBy';
 
 const queryStringOptions = {
   arrayFormat: 'bracket' as const,

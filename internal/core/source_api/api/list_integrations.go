@@ -23,15 +23,15 @@ import (
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-// ListIntegrations returns all enabled integrations across each organization.
-//
-// The output of this handler is used to schedule pollers.
+var genericListError = &genericapi.InternalError{Message: "Failed to list integrations"}
+
+// ListIntegrations returns all enabled integrations.
 func (API) ListIntegrations(
 	input *models.ListIntegrationsInput) ([]*models.SourceIntegration, error) {
 
 	integrationItems, err := dynamoClient.ScanIntegrations(input.IntegrationType)
 	if err != nil {
-		return nil, &genericapi.InternalError{Message: "Failed to list integrations"}
+		return nil, genericListError
 	}
 
 	result := make([]*models.SourceIntegration, len(integrationItems))

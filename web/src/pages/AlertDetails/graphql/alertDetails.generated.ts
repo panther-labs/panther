@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
-
 import * as Types from '../../../../__generated__/schema';
 
 import { AlertDetailsFull } from '../../../graphql/fragments/AlertDetailsFull.generated';
@@ -78,3 +76,18 @@ export type AlertDetailsQueryResult = ApolloReactCommon.QueryResult<
   AlertDetails,
   AlertDetailsVariables
 >;
+export function mockAlertDetails({
+  data,
+  variables,
+  error,
+}: {
+  data: AlertDetails;
+  variables?: AlertDetailsVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: AlertDetailsDocument, variables },
+    result: { data },
+    error,
+  };
+}

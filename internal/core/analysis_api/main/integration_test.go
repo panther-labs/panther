@@ -32,6 +32,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
+	"github.com/google/uuid"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -203,6 +204,7 @@ var (
 		OutputIds:          []string{"test-output1", "test-output2"},
 		Reports:            map[string][]string{},
 		DedupPeriodMinutes: 1440,
+		Threshold:          10,
 	}
 
 	global = &models.Global{
@@ -291,6 +293,13 @@ func TestIntegrationAPI(t *testing.T) {
 		// support for a single global nothing changes (the version gets bumped a few times). Once multiple globals are
 		// supported, these tests can be improved to run policies and rules that rely on these imports.
 		t.Run("CreateGlobalSuccess", createGlobalSuccess)
+
+		t.Run("SaveEnabledPolicyFailingTests", saveEnabledPolicyFailingTests)
+		t.Run("SaveDisabledPolicyFailingTests", saveDisabledPolicyFailingTests)
+		t.Run("SaveEnabledPolicyPassingTests", saveEnabledPolicyPassingTests)
+		t.Run("SaveEnabledRuleFailingTests", saveEnabledRuleFailingTests)
+		t.Run("SaveDisabledRuleFailingTests", saveDisabledRuleFailingTests)
+		t.Run("SaveEnabledRulePassingTests", saveEnabledRulePassingTests)
 	})
 	if t.Failed() {
 		return
@@ -556,6 +565,302 @@ func createPolicySuccess(t *testing.T) {
 	assert.Equal(t, &expectedPolicy, result.Payload)
 }
 
+// Tests that a policy cannot be saved if it is enabled and its tests fail.
+func saveEnabledPolicyFailingTests(t *testing.T) {
+	body := "def policy(resource): return True"
+	tests := []*models.UnitTest{
+		{
+			Name:           "This will fail",
+			ExpectedResult: false,
+			Resource:       `{}`,
+		},
+	}
+	policyID := uuid.New().String()
+	req := models.UpdatePolicy{
+		AutoRemediationID:         policy.AutoRemediationID,
+		AutoRemediationParameters: policy.AutoRemediationParameters,
+		Body:                      models.Body(body),
+		Description:               policy.Description,
+		DisplayName:               policy.DisplayName,
+		Enabled:                   true,
+		ID:                        models.ID(policyID),
+		ResourceTypes:             policy.ResourceTypes,
+		Severity:                  policy.Severity,
+		Suppressions:              policy.Suppressions,
+		Tags:                      policy.Tags,
+		OutputIds:                 policy.OutputIds,
+		UserID:                    userID,
+		Tests:                     tests,
+	}
+
+	expectedErrorMessage := "cannot save an enabled policy with failing unit tests"
+
+	defer func() {
+		result, err := apiClient.Operations.DeletePolicies(&operations.DeletePoliciesParams{
+			Body: &models.DeletePolicies{
+				Policies: []*models.DeleteEntry{
+					{
+						ID: models.ID(policyID),
+					},
+				},
+			},
+			HTTPClient: httpClient,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, &operations.DeletePoliciesOK{}, result)
+	}()
+
+	t.Run("Create", func(t *testing.T) {
+		_, err := apiClient.Operations.CreatePolicy(&operations.CreatePolicyParams{
+			Body:       &req,
+			HTTPClient: httpClient,
+		})
+		require.Error(t, err)
+		e, ok := err.(*operations.CreatePolicyBadRequest)
+		require.True(t, ok)
+		require.Equal(t, expectedErrorMessage, *e.Payload.Message)
+	})
+
+	t.Run("Modify", func(t *testing.T) {
+		_, err := apiClient.Operations.ModifyPolicy(&operations.ModifyPolicyParams{
+			Body:       &req,
+			HTTPClient: httpClient,
+		})
+		require.Error(t, err)
+		e, ok := err.(*operations.ModifyPolicyBadRequest)
+		require.True(t, ok)
+		require.Equal(t, expectedErrorMessage, *e.Payload.Message)
+	})
+}
+
+// Tests a disabled policy can be saved even if its tests fail.
+func saveDisabledPolicyFailingTests(t *testing.T) {
+	policyID := uuid.New().String()
+	defer cleanupPoliciesRules(t, policyID)
+	body := "def policy(resource): return True"
+	tests := []*models.UnitTest{
+		{
+			Name:           "This will fail",
+			ExpectedResult: false,
+			Resource:       `{}`,
+		},
+	}
+	req := models.UpdatePolicy{
+		AutoRemediationID:         policy.AutoRemediationID,
+		AutoRemediationParameters: policy.AutoRemediationParameters,
+		Body:                      models.Body(body),
+		Description:               policy.Description,
+		DisplayName:               policy.DisplayName,
+		Enabled:                   false,
+		ID:                        models.ID(policyID),
+		ResourceTypes:             policy.ResourceTypes,
+		Severity:                  policy.Severity,
+		Suppressions:              policy.Suppressions,
+		Tags:                      policy.Tags,
+		OutputIds:                 policy.OutputIds,
+		UserID:                    userID,
+		Tests:                     tests,
+	}
+
+	t.Run("Create", func(t *testing.T) {
+		_, err := apiClient.Operations.CreatePolicy(&operations.CreatePolicyParams{
+			Body:       &req,
+			HTTPClient: httpClient,
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("Modify", func(t *testing.T) {
+		_, err := apiClient.Operations.ModifyPolicy(&operations.ModifyPolicyParams{
+			Body:       &req,
+			HTTPClient: httpClient,
+		})
+		require.NoError(t, err)
+	})
+}
+
+// Tests that a policy can be saved if it is enabled and its tests pass.
+func saveEnabledPolicyPassingTests(t *testing.T) {
+	policyID := uuid.New().String()
+	defer cleanupPoliciesRules(t, policyID)
+	body := "def policy(resource): return True"
+	tests := []*models.UnitTest{
+		{
+			Name:           "Compliant",
+			ExpectedResult: true,
+			Resource:       `{}`,
+		},
+	}
+	req := models.UpdatePolicy{
+		AutoRemediationID:         policy.AutoRemediationID,
+		AutoRemediationParameters: policy.AutoRemediationParameters,
+		Body:                      models.Body(body),
+		Description:               policy.Description,
+		DisplayName:               policy.DisplayName,
+		Enabled:                   true,
+		ID:                        models.ID(policyID),
+		ResourceTypes:             policy.ResourceTypes,
+		Severity:                  policy.Severity,
+		Suppressions:              policy.Suppressions,
+		Tags:                      policy.Tags,
+		OutputIds:                 policy.OutputIds,
+		UserID:                    userID,
+		Tests:                     tests,
+	}
+
+	t.Run("Create", func(t *testing.T) {
+		_, err := apiClient.Operations.CreatePolicy(&operations.CreatePolicyParams{
+			Body:       &req,
+			HTTPClient: httpClient,
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("Modify", func(t *testing.T) {
+		_, err := apiClient.Operations.ModifyPolicy(&operations.ModifyPolicyParams{
+			Body:       &req,
+			HTTPClient: httpClient,
+		})
+		require.NoError(t, err)
+	})
+}
+
+// Tests that a rule cannot be saved if it is enabled and its tests fail.
+func saveEnabledRuleFailingTests(t *testing.T) {
+	ruleID := uuid.New().String()
+	defer cleanupPoliciesRules(t, ruleID)
+	body := "def rule(event): return True"
+	tests := []*models.UnitTest{
+		{
+			Name:           "This will fail",
+			ExpectedResult: false,
+			Resource:       `{}`,
+		},
+	}
+	req := models.UpdateRule{
+		Body:               models.Body(body),
+		Description:        rule.Description,
+		Enabled:            true,
+		ID:                 models.ID(ruleID),
+		LogTypes:           rule.LogTypes,
+		Severity:           rule.Severity,
+		UserID:             userID,
+		DedupPeriodMinutes: rule.DedupPeriodMinutes,
+		Tags:               rule.Tags,
+		OutputIds:          rule.OutputIds,
+		Tests:              tests,
+	}
+
+	expectedErrorMessage := "cannot save an enabled rule with failing unit tests"
+
+	t.Run("Create", func(t *testing.T) {
+		_, err := apiClient.Operations.CreateRule(&operations.CreateRuleParams{
+			Body:       &req,
+			HTTPClient: httpClient,
+		})
+		require.Error(t, err)
+		e, ok := err.(*operations.CreateRuleBadRequest)
+		require.True(t, ok)
+		require.Equal(t, expectedErrorMessage, *e.Payload.Message)
+	})
+
+	t.Run("Modify", func(t *testing.T) {
+		_, err := apiClient.Operations.ModifyRule(&operations.ModifyRuleParams{
+			Body:       &req,
+			HTTPClient: httpClient,
+		})
+		require.Error(t, err)
+		e, ok := err.(*operations.ModifyRuleBadRequest)
+		require.True(t, ok)
+		require.Equal(t, expectedErrorMessage, *e.Payload.Message)
+	})
+}
+
+// Tests that a rule can be saved if it is enabled and its tests pass.
+func saveEnabledRulePassingTests(t *testing.T) {
+	ruleID := uuid.New().String()
+	defer cleanupPoliciesRules(t, ruleID)
+	body := "def rule(event): return True"
+	tests := []*models.UnitTest{
+		{
+			Name:           "Trigger alert",
+			ExpectedResult: true,
+			Resource:       `{}`,
+		},
+	}
+	req := models.UpdateRule{
+		Body:               models.Body(body),
+		Description:        rule.Description,
+		Enabled:            true,
+		ID:                 models.ID(ruleID),
+		LogTypes:           rule.LogTypes,
+		Severity:           rule.Severity,
+		UserID:             userID,
+		DedupPeriodMinutes: rule.DedupPeriodMinutes,
+		Tags:               rule.Tags,
+		Tests:              tests,
+	}
+
+	t.Run("Create", func(t *testing.T) {
+		_, err := apiClient.Operations.CreateRule(&operations.CreateRuleParams{
+			Body:       &req,
+			HTTPClient: httpClient,
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("Modify", func(t *testing.T) {
+		_, err := apiClient.Operations.ModifyRule(&operations.ModifyRuleParams{
+			Body:       &req,
+			HTTPClient: httpClient,
+		})
+		require.NoError(t, err)
+	})
+}
+
+// Tests a disabled policy can be saved even if its tests fail.
+func saveDisabledRuleFailingTests(t *testing.T) {
+	ruleID := uuid.New().String()
+	defer cleanupPoliciesRules(t, ruleID)
+	body := "def policy(resource): return True"
+	tests := []*models.UnitTest{
+		{
+			Name:           "This will fail",
+			ExpectedResult: false,
+			Resource:       `{}`,
+		},
+	}
+	req := models.UpdateRule{
+		Body:               models.Body(body),
+		Description:        rule.Description,
+		Enabled:            false,
+		ID:                 models.ID(ruleID),
+		LogTypes:           rule.LogTypes,
+		Severity:           rule.Severity,
+		UserID:             userID,
+		DedupPeriodMinutes: rule.DedupPeriodMinutes,
+		Tags:               rule.Tags,
+		OutputIds:          rule.OutputIds,
+		Tests:              tests,
+	}
+
+	t.Run("Create", func(t *testing.T) {
+		_, err := apiClient.Operations.CreateRule(&operations.CreateRuleParams{
+			Body:       &req,
+			HTTPClient: httpClient,
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("Modify", func(t *testing.T) {
+		_, err := apiClient.Operations.ModifyRule(&operations.ModifyRuleParams{
+			Body:       &req,
+			HTTPClient: httpClient,
+		})
+		require.NoError(t, err)
+	})
+}
+
 func createRuleSuccess(t *testing.T) {
 	result, err := apiClient.Operations.CreateRule(&operations.CreateRuleParams{
 		Body: &models.UpdateRule{
@@ -569,6 +874,7 @@ func createRuleSuccess(t *testing.T) {
 			DedupPeriodMinutes: rule.DedupPeriodMinutes,
 			Tags:               rule.Tags,
 			OutputIds:          rule.OutputIds,
+			Threshold:          rule.Threshold,
 		},
 		HTTPClient: httpClient,
 	})
@@ -790,6 +1096,7 @@ func modifyRule(t *testing.T) {
 	expectedRule := *rule
 	expectedRule.Description = "SkyNet integration"
 	expectedRule.DedupPeriodMinutes = 60
+	expectedRule.Threshold = rule.Threshold + 1
 
 	result, err := apiClient.Operations.ModifyRule(&operations.ModifyRuleParams{
 		Body: &models.UpdateRule{
@@ -803,6 +1110,7 @@ func modifyRule(t *testing.T) {
 			DedupPeriodMinutes: expectedRule.DedupPeriodMinutes,
 			Tags:               expectedRule.Tags,
 			OutputIds:          expectedRule.OutputIds,
+			Threshold:          expectedRule.Threshold,
 		},
 		HTTPClient: httpClient,
 	})
@@ -1459,4 +1767,20 @@ func deleteGlobal(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, global, getResult.Payload)
+}
+
+// Can be used for both policies and rules since they share the same api handler.
+func cleanupPoliciesRules(t *testing.T, policyIDs ...string) {
+	entries := make([]*models.DeleteEntry, len(policyIDs))
+	for i, pid := range policyIDs {
+		entries[i] = &models.DeleteEntry{ID: models.ID(pid)}
+	}
+	result, err := apiClient.Operations.DeletePolicies(&operations.DeletePoliciesParams{
+		Body: &models.DeletePolicies{
+			Policies: entries,
+		},
+		HTTPClient: httpClient,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, &operations.DeletePoliciesOK{}, result)
 }

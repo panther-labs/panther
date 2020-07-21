@@ -37,15 +37,13 @@ const validationSchema = Yup.object().shape({
   id: Yup.string().required(),
   body: Yup.string().required(),
   severity: Yup.string().required(),
-  tests: Yup.array<PolicyUnitTest>()
-    .of(
-      Yup.object().shape({
-        name: Yup.string().required(),
-        expectedResult: Yup.boolean().required(),
-        resource: Yup.string().required(),
-      })
-    )
-    .unique('Test names must be unique', 'name'),
+  tests: Yup.array<PolicyUnitTest>().of(
+    Yup.object().shape({
+      name: Yup.string().required(),
+      expectedResult: Yup.boolean().required(),
+      resource: Yup.string().required(),
+    })
+  ),
 });
 
 export type PolicyFormValues = Required<AddPolicyInput> | Required<UpdatePolicyInput>;

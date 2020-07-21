@@ -42,6 +42,7 @@ Parameters:
     Type: String
     Description: Company name displayed in Settings > General
     Default: AwesomeCo
+    MinLength: 1
   CustomDomain:
     Type: String
     Description: If CertificateArn is registered for a custom domain (e.g. 'example.com'), list that here.
@@ -73,14 +74,23 @@ Parameters:
   FirstUserEmail:
     Type: String
     Description: Initial Panther user - email address
+    # There is no perfect email regex, but this is good enough 99% of the time.
+    # https://www.regular-expressions.info/email.html
+    #
+    # The goal is to fail early if the user provides an invalid email, otherwise the deploy will
+    # fail at the very last step (onboarding the first user in the web stack), and the entire thing
+    # will rollback.
+    AllowedPattern: '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
   FirstUserFamilyName:
     Type: String
     Description: Initial Panther user - last name
     Default: Community
+    MinLength: 1
   FirstUserGivenName:
     Type: String
     Description: Initial Panther user - first name
     Default: PantherUser
+    MinLength: 1
   ImageRegistry:
     Type: String
     Description: Docker image registry which stores web app images. Used only when deploying from source and otherwise defaults to the Panther public account.
@@ -93,6 +103,12 @@ Parameters:
     Type: CommaDelimitedList
     Description: Comma-separated list of at most 3 LayerVersion ARNs to attach to each Lambda function (e.g. if you have a serverless monitoring service)
     Default: ''
+  LoadBalancerSecurityGroupCidr:
+    Type: String
+    Description: Allow HTTP(S) ingress access to the web app (ALB) security group from this IP block. Use 0.0.0.0/0 to allow unrestricted access
+    Default: 0.0.0.0/0
+    # cfn-lint suggested this regex pattern:
+    AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
   LogProcessorLambdaMemorySize:
     Type: Number
     Description: Log processor Lambda memory allocation. Increase to eliminate out-of-memory errors or reduce processing time (in exchange for higher cost)
@@ -141,6 +157,7 @@ Resources:
         Debug: !Ref Debug
         DeployFromSource: false
         EnableS3AccessLogs: !Ref EnableS3AccessLogs
+        LoadBalancerSecurityGroupCidr: !Ref LoadBalancerSecurityGroupCidr
         LogSubscriptionPrincipals: !Join [',', !Ref LogSubscriptionPrincipals]
         TracingMode: !Ref TracingMode
       Tags:
@@ -164,6 +181,7 @@ Resources:
         AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
         AuditLogsBucket: !GetAtt Bootstrap.Outputs.AuditLogsBucket
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
+        CompanyDisplayName: !Ref CompanyDisplayName
         CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         ImageRegistryName: !GetAtt Bootstrap.Outputs.ImageRegistryName
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
@@ -258,6 +276,8 @@ Resources:
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
         TracingMode: !Ref TracingMode
         UserPoolId: !GetAtt Bootstrap.Outputs.UserPoolId
+        InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
+        InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
       Tags:
         - Key: Application
           Value: Panther
@@ -301,6 +321,8 @@ Resources:
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
         TablesSignature: !FindInMap [Constants, Panther, Version] # this changes with version, forcing table schema updates
         TracingMode: !Ref TracingMode
+        InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
+        InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
       Tags:
         - Key: Application
           Value: Panther

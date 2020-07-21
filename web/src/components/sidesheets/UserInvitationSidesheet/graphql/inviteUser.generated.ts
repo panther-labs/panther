@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
-
 import * as Types from '../../../../../__generated__/schema';
 
 import { UserDetails } from '../../../../graphql/fragments/UserDetails.generated';
@@ -75,3 +73,18 @@ export type InviteUserMutationOptions = ApolloReactCommon.BaseMutationOptions<
   InviteUser,
   InviteUserVariables
 >;
+export function mockInviteUser({
+  data,
+  variables,
+  error,
+}: {
+  data: InviteUser;
+  variables?: InviteUserVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: InviteUserDocument, variables },
+    result: { data },
+    error,
+  };
+}

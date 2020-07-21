@@ -38,15 +38,13 @@ const validationSchema = Yup.object().shape({
   severity: Yup.string().required(),
   dedupPeriodMinutes: Yup.number().integer(),
   logTypes: Yup.array().of(Yup.string()).required(),
-  tests: Yup.array<PolicyUnitTest>()
-    .of(
-      Yup.object().shape({
-        name: Yup.string().required(),
-        expectedResult: Yup.boolean().required(),
-        resource: Yup.string().required(),
-      })
-    )
-    .unique('Test names must be unique', 'name'),
+  tests: Yup.array<PolicyUnitTest>().of(
+    Yup.object().shape({
+      name: Yup.string().required(),
+      expectedResult: Yup.boolean().required(),
+      resource: Yup.string().required(),
+    })
+  ),
 });
 
 export type RuleFormValues = Required<AddRuleInput> | Required<UpdateRuleInput>;

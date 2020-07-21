@@ -32,7 +32,7 @@ import {
   TableControlsPagination,
   TableControlsComplianceFilter,
 } from 'Components/utils/TableControls';
-import pick from 'lodash-es/pick';
+import pick from 'lodash/pick';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import withSEO from 'Hoc/withSEO';
 import { DEFAULT_SMALL_PAGE_SIZE } from 'Source/constants';

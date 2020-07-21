@@ -348,16 +348,17 @@ func deployMainStacks(settings *config.PantherConfig, accountID string, outputs 
 
 func deployBootstrapStack(settings *config.PantherConfig) (map[string]string, error) {
 	return deployTemplate(bootstrapTemplate, "", bootstrapStack, map[string]string{
-		"AccessLogsBucket":           settings.Setup.S3AccessLogsBucket,
-		"AlarmTopicArn":              settings.Monitoring.AlarmSnsTopicArn,
-		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
-		"CustomDomain":               settings.Web.CustomDomain,
-		"DataReplicationBucket":      settings.Setup.DataReplicationBucket,
-		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
-		"DeployFromSource":           "true",
-		"EnableS3AccessLogs":         strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
-		"LogSubscriptionPrincipals":  strings.Join(settings.Setup.LogSubscriptions.PrincipalARNs, ","),
-		"TracingMode":                settings.Monitoring.TracingMode,
+		"AccessLogsBucket":              settings.Setup.S3AccessLogsBucket,
+		"AlarmTopicArn":                 settings.Monitoring.AlarmSnsTopicArn,
+		"CloudWatchLogRetentionDays":    strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+		"CustomDomain":                  settings.Web.CustomDomain,
+		"DataReplicationBucket":         settings.Setup.DataReplicationBucket,
+		"Debug":                         strconv.FormatBool(settings.Monitoring.Debug),
+		"DeployFromSource":              "true",
+		"EnableS3AccessLogs":            strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
+		"LoadBalancerSecurityGroupCidr": settings.Infra.LoadBalancerSecurityGroupCidr,
+		"LogSubscriptionPrincipals":     strings.Join(settings.Setup.LogSubscriptions.PrincipalARNs, ","),
+		"TracingMode":                   settings.Monitoring.TracingMode,
 	})
 }
 
@@ -379,6 +380,7 @@ func deployBootstrapGatewayStack(
 		"AthenaResultsBucket":        outputs["AthenaResultsBucket"],
 		"AuditLogsBucket":            outputs["AuditLogsBucket"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+		"CompanyDisplayName":         settings.Setup.Company.DisplayName,
 		"CustomResourceVersion":      customResourceVersion(),
 		"ImageRegistryName":          outputs["ImageRegistryName"],
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
@@ -478,6 +480,8 @@ func deployCoreStack(settings *config.PantherConfig, outputs map[string]string) 
 		"SqsKeyId":                   outputs["QueueEncryptionKeyId"],
 		"TracingMode":                settings.Monitoring.TracingMode,
 		"UserPoolId":                 outputs["UserPoolId"],
+		"InputDataBucket":            outputs["InputDataBucket"],
+		"InputDataTopicArn":          outputs["InputDataTopicArn"],
 	})
 	return err
 }
@@ -513,6 +517,8 @@ func deployLogAnalysisStack(settings *config.PantherConfig, outputs map[string]s
 		"SqsKeyId":                     outputs["QueueEncryptionKeyId"],
 		"TablesSignature":              tablesSignature,
 		"TracingMode":                  settings.Monitoring.TracingMode,
+		"InputDataBucket":              outputs["InputDataBucket"],
+		"InputDataTopicArn":            outputs["InputDataTopicArn"],
 	})
 	return err
 }

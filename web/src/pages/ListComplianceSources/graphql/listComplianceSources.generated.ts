@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
-
 import * as Types from '../../../../__generated__/schema';
 
 import { ComplianceIntegrationDetails } from '../../../graphql/fragments/ComplianceIntegrationDetails.generated';
@@ -85,3 +83,18 @@ export type ListComplianceSourcesQueryResult = ApolloReactCommon.QueryResult<
   ListComplianceSources,
   ListComplianceSourcesVariables
 >;
+export function mockListComplianceSources({
+  data,
+  variables,
+  error,
+}: {
+  data: ListComplianceSources;
+  variables?: ListComplianceSourcesVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: ListComplianceSourcesDocument, variables },
+    result: { data },
+    error,
+  };
+}
