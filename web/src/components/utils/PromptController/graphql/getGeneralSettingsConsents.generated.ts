@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
-
 import * as Types from '../../../../../__generated__/schema';
 
 import gql from 'graphql-tag';
@@ -85,3 +83,18 @@ export type GetGeneralSettingsConsentsQueryResult = ApolloReactCommon.QueryResul
   GetGeneralSettingsConsents,
   GetGeneralSettingsConsentsVariables
 >;
+export function mockGetGeneralSettingsConsents({
+  data,
+  variables,
+  error,
+}: {
+  data: GetGeneralSettingsConsents;
+  variables?: GetGeneralSettingsConsentsVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: GetGeneralSettingsConsentsDocument, variables },
+    result: { data },
+    error,
+  };
+}

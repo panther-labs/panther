@@ -18,8 +18,8 @@
 
 import React from 'react';
 import { capitalize, countPoliciesBySeverityAndStatus } from 'Helpers/utils';
-import map from 'lodash-es/map';
-import sum from 'lodash-es/sum';
+import map from 'lodash/map';
+import sum from 'lodash/sum';
 import { OrganizationReportBySeverity } from 'Generated/schema';
 import { theme, Flex } from 'pouncejs';
 import BarChart from 'Components/charts/BarChart';
@@ -53,15 +53,6 @@ const PoliciesByStatusChart: React.FC<PoliciesByStatusChartData> = ({ policies }
       label: capitalize(severity),
       color,
     })),
-    {
-      value: sum(
-        Object.keys(severityToColorMapping).map((severity: keyof OrganizationReportBySeverity) =>
-          countPoliciesBySeverityAndStatus(policies, severity, ['pass'])
-        )
-      ),
-      label: 'Passing',
-      color: 'green-200' as const,
-    },
   ];
 
   return (

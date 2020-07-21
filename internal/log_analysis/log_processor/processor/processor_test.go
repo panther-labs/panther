@@ -272,11 +272,15 @@ func TestProcessClassifyFailure(t *testing.T) {
 		CloudWatchMetrics: []metrics.MetricDirectiveObject{
 			{
 				Namespace:  "Panther",
-				Dimensions: []metrics.DimensionSet{{"Component", "LogType"}},
+				Dimensions: []metrics.DimensionSet{{"LogType"}},
 				Metrics: []metrics.Metric{
 					{
 						Name: "BytesProcessed",
 						Unit: metrics.UnitBytes,
+					},
+					{
+						Name: "EventsProcessed",
+						Unit: metrics.UnitCount,
 					},
 				},
 			},
@@ -353,16 +357,16 @@ func TestProcessClassifyFailure(t *testing.T) {
 			},
 			Context: []zapcore.Field{
 				{
-					Key:    "Component",
-					String: "LogProcessor",
-				},
-				{
 					Key:    "LogType",
 					String: testLogType,
 				},
 				{
 					Key:     "BytesProcessed",
 					Integer: 7996,
+				},
+				{
+					Key:     "EventsProcessed",
+					Integer: 1999,
 				},
 				{
 					Key:       "_aws",

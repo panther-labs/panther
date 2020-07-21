@@ -49,7 +49,7 @@ func customDynamoDBAlarms(_ context.Context, event cfn.Event) (string, map[strin
 		return "custom:alarms:dynamodb:" + props.TableName, nil, putDynamoAlarmGroup(props)
 
 	case cfn.RequestDelete:
-		return event.PhysicalResourceID, nil, deleteMetricAlarms(event.PhysicalResourceID,
+		return event.PhysicalResourceID, nil, deleteAlarms(event.PhysicalResourceID,
 			dynamoUserErrorAlarm, dynamoSystemErrorAlarm, dynamoLatencyErrorAlarm,
 			dynamoThrottleAlarm)
 
@@ -59,7 +59,7 @@ func customDynamoDBAlarms(_ context.Context, event cfn.Event) (string, map[strin
 }
 
 func putDynamoAlarmGroup(props DynamoDBAlarmProperties) error {
-	input := cloudwatch.PutMetricAlarmInput{
+	input := &cloudwatch.PutMetricAlarmInput{
 		AlarmActions: []*string{&props.AlarmTopicArn},
 		AlarmDescription: aws.String(fmt.Sprintf(
 			"DynamoDB table %s has user errors. See: %s#%s",

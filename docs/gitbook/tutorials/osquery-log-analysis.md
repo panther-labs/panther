@@ -162,7 +162,7 @@ Note the Log Types in the screenshot above. If you plan to send Osquery logs eit
 
 Follow the instructions to create the IAM role to allow Panther to pull the data.
 
-Then, save the source, and enable the notifications [here](/log-processing#how-to-setup-log-analysis) to onboard osquery data.
+Then, save the source, and [enable the notifications](../log-analysis/setup.md) to onboard osquery data.
 
 ### Validate
 
@@ -193,7 +193,7 @@ It may take up 15 minutes before data is searchable in Athena.
 
 ## Analyzing Osquery Logs
 
-Before writing any rules against osquery data, make sure to configure your [alert destinations](setup). This will provide a quick feedback loop on the rules written.
+Before writing any rules against osquery data, make sure to configure your [alert destinations](../destinations/README.md). This will provide a quick feedback loop on the rules written.
 
 ### Log Types
 

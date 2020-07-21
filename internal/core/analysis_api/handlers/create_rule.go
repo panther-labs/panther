@@ -19,6 +19,7 @@ package handlers
  */
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -42,9 +43,19 @@ func CreateRule(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 		return badRequest(err)
 	}
 
+	// Disallow saving if rule is enabled and its tests fail.
+	ok, err := enabledRuleTestsPass(input)
+	if err != nil {
+		return failedRequest(err.Error(), http.StatusInternalServerError)
+	}
+	if !ok {
+		return badRequest(errRuleTestsFail)
+	}
+
 	item := &tableItem{
 		Body:               input.Body,
 		DedupPeriodMinutes: input.DedupPeriodMinutes,
+		Threshold:          input.Threshold,
 		Description:        input.Description,
 		DisplayName:        input.DisplayName,
 		Enabled:            input.Enabled,
@@ -91,4 +102,25 @@ func parseUpdateRule(request *events.APIGatewayProxyRequest) (*models.UpdateRule
 	}
 
 	return &result, nil
+}
+
+var errRuleTestsFail = errors.New("cannot save an enabled rule with failing unit tests")
+
+// enabledRuleTestsPass returns false if the rule is enabled and its tests fail.
+func enabledRuleTestsPass(rule *models.UpdateRule) (bool, error) {
+	if !rule.Enabled || len(rule.Tests) == 0 {
+		return true, nil
+	}
+
+	tp := &models.TestPolicy{
+		AnalysisType:  models.AnalysisTypeRULE,
+		Body:          rule.Body,
+		ResourceTypes: rule.LogTypes,
+		Tests:         rule.Tests,
+	}
+	testResults, err := ruleEngine.TestRule(tp)
+	if err != nil {
+		return false, err
+	}
+	return bool(testResults.TestSummary), nil
 }

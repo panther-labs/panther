@@ -42,6 +42,9 @@ Parameters:
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
+  CompanyDisplayName:
+    Type: String
+    Description: Company name displayed in Settings > General
   CustomResourceVersion:
     Type: String
     Description: Forces updates to custom resources when changed
@@ -98,6 +101,8 @@ Resources:
       Description: Custom CloudFormation resources when deploying Panther
       Environment:
         Variables:
+          ACCOUNT_ID: !Ref AWS::AccountId
+          COMPANY_DISPLAY_NAME: !Ref CompanyDisplayName
           DEBUG: true
       FunctionName: panther-cfn-custom-resources
       # <cfndoc>
@@ -146,6 +151,11 @@ Resources:
             - Effect: Allow
               Action:
                 - cloudwatch:PutMetricAlarm
+                - cloudwatch:PutCompositeAlarm
+                - cloudwatch:TagResource
+              Resource: !Sub arn:${AWS::Partition}:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:*
+            - Effect: Allow
+              Action:
                 - cloudwatch:DeleteAlarms
               Resource: !Sub arn:${AWS::Partition}:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:Panther*
             - Effect: Allow

@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
-
 import * as Types from '../../../../__generated__/schema';
 
 import { RuleBasic } from '../../../graphql/fragments/RuleBasic.generated';
@@ -75,3 +73,18 @@ export function useRuleTeaserLazyQuery(
 export type RuleTeaserHookResult = ReturnType<typeof useRuleTeaser>;
 export type RuleTeaserLazyQueryHookResult = ReturnType<typeof useRuleTeaserLazyQuery>;
 export type RuleTeaserQueryResult = ApolloReactCommon.QueryResult<RuleTeaser, RuleTeaserVariables>;
+export function mockRuleTeaser({
+  data,
+  variables,
+  error,
+}: {
+  data: RuleTeaser;
+  variables?: RuleTeaserVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: RuleTeaserDocument, variables },
+    result: { data },
+    error,
+  };
+}

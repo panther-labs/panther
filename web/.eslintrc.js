@@ -27,10 +27,11 @@ module.exports = {
     'plugin:prettier/recommended',
   ],
   env: {
+    jest: true,
     browser: true,
     node: true,
   },
-  ignorePatterns: ['npm-debug.log*', 'dist', '__generated__', '*.generated.*'],
+  ignorePatterns: ['npm-debug.log*', 'dist', '__generated__', '*.generated.*', 'codegen/*.js'],
   rules: {
     'import/prefer-default-export': 0,
     'max-len': 0,
@@ -69,6 +70,10 @@ module.exports = {
     'import/resolver': {
       webpack: {
         config: path.resolve(__dirname, 'webpack.config.js'),
+      },
+      alias: {
+        map: [['test-utils', path.resolve(__dirname, '__tests__/utils')]],
+        extensions: ['.ts', '.tsx'],
       },
     },
     react: {
