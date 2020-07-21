@@ -19,11 +19,11 @@
 import React from 'react';
 import echarts from 'echarts';
 import { Box, theme } from 'pouncejs';
+import { SeriesData } from 'Generated/schema';
 import { LineColors } from '../constants';
 
 interface TimeSeriesLinesProps {
-  // TODO: To be defined properly
-  data: any;
+  data: SeriesData;
 }
 
 const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
