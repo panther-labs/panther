@@ -54,16 +54,16 @@ const DefaultTagName = "tcodec"
 type Config struct {
 	// Codecs overrides the TimeCodec registry to use for resolving TimeCodecs.
 	// If this option is `nil` the default registry is used.
-	Codecs          *Registry
+	Codecs *Registry
 	// DefaultCodec sets the default codec to use when a tag is not found or cannot be resolved to a TimeCodec.
 	// If this option is `nil` fields with unresolved codecs will not be modified by the extension.
-	DefaultCodec    TimeCodec
+	DefaultCodec TimeCodec
 	// Location forces all timestamps to be set to the specified location.
 	// If this option is `nil` timestamp location will not be modified.
-	Location        *time.Location
+	Location *time.Location
 	// TagName sets the struct tag name to use for tcodec options.
 	// If this option is not set the `DefaultTagName` will be used.
-	TagName         string
+	TagName string
 	// OverrideEncoder enforces all timestamps to be encoded using this TimeEncoder.
 	// If this option is `nil` timestamps will be encoded using their individual TimeCodec.
 	OverrideEncoder TimeEncoder

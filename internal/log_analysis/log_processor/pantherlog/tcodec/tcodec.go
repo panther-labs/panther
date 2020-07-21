@@ -19,20 +19,25 @@ package tcodec
  */
 
 import (
-	jsoniter "github.com/json-iterator/go"
+	"reflect"
 	"strconv"
 	"time"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
+// TimeCodec can decode/encode time.Time values using jsoniter.
 type TimeCodec interface {
 	TimeEncoder
 	TimeDecoder
 }
 
+// TimeDecoder can decode time.Time values from a jsoniter.Iterator.
 type TimeDecoder interface {
 	DecodeTime(iter *jsoniter.Iterator) time.Time
 }
 
+// TimeDecoderFunc is a helper to easily define TimeDecoder values.
 type TimeDecoderFunc func(iter *jsoniter.Iterator) time.Time
 
 var _ TimeDecoder = (TimeDecoderFunc)(nil)
@@ -41,10 +46,12 @@ func (fn TimeDecoderFunc) DecodeTime(iter *jsoniter.Iterator) time.Time {
 	return fn(iter)
 }
 
+// TimeEncoder can encode time.Time values onto a jsoniter.Stream.
 type TimeEncoder interface {
 	EncodeTime(tm time.Time, stream *jsoniter.Stream)
 }
 
+// TimeEncoderFunc is a helper to easily define TimeEncoder values.
 type TimeEncoderFunc func(tm time.Time, stream *jsoniter.Stream)
 
 var _ TimeEncoder = (TimeEncoderFunc)(nil)
@@ -53,12 +60,19 @@ func (fn TimeEncoderFunc) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
 	fn(tm, stream)
 }
 
+// Split is a helper to split a TimeCodec into a decoder and an encoder.
+func Split(codec TimeCodec) (TimeDecoder, TimeEncoder) {
+	return codec, codec
+}
+
+// Join is a helper to compose a TimeCodec from a decoder and an encoder.
 func Join(decode TimeDecoder, encode TimeEncoder) TimeCodec {
 	return &fnCodec{
 		encode: resolveEncodeFunc(encode),
 		decode: resolveDecodeFunc(decode),
 	}
 }
+
 func resolveEncodeFunc(enc TimeEncoder) TimeEncoderFunc {
 	if enc == nil {
 		return nil
@@ -68,6 +82,7 @@ func resolveEncodeFunc(enc TimeEncoder) TimeEncoderFunc {
 	}
 	return enc.EncodeTime
 }
+
 func resolveDecodeFunc(dec TimeDecoder) TimeDecoderFunc {
 	if dec == nil {
 		return nil
@@ -78,6 +93,7 @@ func resolveDecodeFunc(dec TimeDecoder) TimeDecoderFunc {
 	return dec.DecodeTime
 }
 
+// Join is a helper to compose a TimeCodec from a decoder and an encoder function.
 func JoinFunc(decode TimeDecoderFunc, encode TimeEncoderFunc) TimeCodec {
 	return &fnCodec{
 		encode: encode,
@@ -97,6 +113,9 @@ func (codec *fnCodec) DecodeTime(iter *jsoniter.Iterator) time.Time {
 	return codec.decode(iter)
 }
 
+// UnixSeconds reads a timestamp from seconds since UNIX epoch.
+// Fractions of a second can be set using the fractional part of a float.
+// Precision is kept up to Microseconds to avoid float64 precision issues.
 func UnixSeconds(sec float64) time.Time {
 	// We lose nanosecond precision to microsecond to have stable results with float64 values.
 	const usec = float64(time.Second / time.Microsecond)
@@ -104,6 +123,9 @@ func UnixSeconds(sec float64) time.Time {
 	return time.Unix(0, int64(sec*usec)*precision)
 }
 
+// UnixSecondsCodec decodes/encodes a timestamp from seconds since UNIX epoch.
+// Fractions of a second can be set using the fractional part of a float.
+// Precision is kept up to Microseconds to avoid float64 precision issues.
 func UnixSecondsCodec() TimeCodec {
 	return &unixSecondsCodec{}
 }
@@ -111,8 +133,8 @@ func UnixSecondsCodec() TimeCodec {
 type unixSecondsCodec struct{}
 
 func (*unixSecondsCodec) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
+	tm = tm.Truncate(time.Microsecond)
 	unixSeconds := time.Duration(tm.UnixNano()).Seconds()
-	const usecPrecision = int(time.Second / time.Microsecond)
 	stream.WriteFloat64(unixSeconds)
 }
 
@@ -142,10 +164,13 @@ func (*unixSecondsCodec) DecodeTime(iter *jsoniter.Iterator) (tm time.Time) {
 	}
 }
 
+// UnixMilliseconds reads a timestamp from milliseconds since UNIX epoch.
 func UnixMilliseconds(n int64) time.Time {
 	return time.Unix(0, n*int64(time.Millisecond))
 }
 
+// UnixMillisecondsCodec decodes/encodes a timestamps in UNIX millisecond epoch.
+// It decodes both string and number JSON values and encodes always to number.
 func UnixMillisecondsCodec() TimeCodec {
 	return &unixMillisecondsCodec{}
 }
@@ -183,6 +208,7 @@ func (*unixMillisecondsCodec) DecodeTime(iter *jsoniter.Iterator) (tm time.Time)
 	}
 }
 
+// LayoutCodec uses a time layout to decode/encode a timestamp from a JSON value.
 func LayoutCodec(layout string) TimeCodec {
 	return layoutCodec(layout)
 }
@@ -211,22 +237,30 @@ func (layout layoutCodec) DecodeTime(iter *jsoniter.Iterator) time.Time {
 	}
 }
 
-func DecodeIn(loc *time.Location, decoder TimeDecoder) TimeDecoder {
-	return &locDecoder{
-		decode: resolveDecodeFunc(decoder),
-		loc:    loc,
+// UTC forces UTC on all decoded/encoded timestamps
+func UTC(codec TimeCodec) TimeCodec {
+	return In(time.UTC, codec)
+}
+
+// In forces a `time.Location` on all decoded/encoded timestamps
+func In(loc *time.Location, codec TimeCodec) TimeCodec {
+	return &fnCodec{
+		encode: EncodeIn(loc, TimeEncoderFunc(codec.EncodeTime)).EncodeTime,
+		decode: DecodeIn(loc, TimeDecoderFunc(codec.DecodeTime)).DecodeTime,
 	}
 }
 
-type locDecoder struct {
-	decode TimeDecoderFunc
-	loc    *time.Location
+// DecodeUTC forces UTC on all decoded timestamps
+func DecodeUTC(decoder TimeDecoder) TimeDecoder {
+	return DecodeIn(time.UTC, decoder)
 }
 
-func (d *locDecoder) DecodeTime(iter *jsoniter.Iterator) time.Time {
-	return d.decode(iter).In(d.loc)
+// EncodeUTC forces UTC on all encoded timestamps
+func EncodeUTC(encoder TimeEncoder) TimeEncoder {
+	return EncodeIn(time.UTC, encoder)
 }
 
+// EncodeIn forces a `time.Location` on all encoded timestamps
 func EncodeIn(loc *time.Location, encoder TimeEncoder) TimeEncoder {
 	return &locEncoder{
 		encode: resolveEncodeFunc(encoder),
@@ -243,18 +277,42 @@ func (e *locEncoder) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
 	e.encode(tm.In(e.loc), stream)
 }
 
-func In(loc *time.Location, codec TimeCodec) TimeCodec {
-	return &fnCodec{
-		encode: EncodeIn(loc, TimeEncoderFunc(codec.EncodeTime)).EncodeTime,
-		decode: DecodeIn(loc, TimeDecoderFunc(codec.DecodeTime)).DecodeTime,
+// DecodeIn forces a `time.Location` on all decoded timestamps
+func DecodeIn(loc *time.Location, decoder TimeDecoder) TimeDecoder {
+	return &locDecoder{
+		decode: resolveDecodeFunc(decoder),
+		loc:    loc,
 	}
 }
-func UTC(codec TimeCodec) TimeCodec {
-	return In(time.UTC, codec)
+
+type locDecoder struct {
+	decode TimeDecoderFunc
+	loc    *time.Location
 }
-func DecodeUTC(decoder TimeDecoder) TimeDecoder {
-	return DecodeIn(time.UTC, decoder)
+
+func (d *locDecoder) DecodeTime(iter *jsoniter.Iterator) time.Time {
+	return d.decode(iter).In(d.loc)
 }
-func EncodeUTC(encoder TimeEncoder) TimeEncoder {
-	return EncodeIn(time.UTC, encoder)
+
+// ValidateEmbeddedTimeValue can be used by validator package to check values that embed time.Time
+// ```
+// type T struct {
+//   time.Time
+// }
+//
+// validate := validator.New()
+// validate.RegisterCustomTypeFunc(tcodec.ValidateEmbeddedTimeValue, T{})
+//
+// type Foo struct {
+//   Time T `validate:"required"`
+// }
+//
+// err := validate.Struct(&Foo{}) // error should be non nil
+// ```
+func ValidateEmbeddedTimeValue(val reflect.Value) interface{} {
+	tm := val.Field(0).Interface().(time.Time)
+	if tm.IsZero() {
+		return nil
+	}
+	return tm
 }
