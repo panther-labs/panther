@@ -97,7 +97,7 @@ func injectOmitempty(original reflect.StructTag, key string) reflect.StructTag {
 	}
 	// Assert jsoniter omits fields witg `-` name
 	if tag.Name == "-" {
-		panic("JSON-omited field in struct descriptor")
+		panic("JSON-omittted field in struct descriptor")
 	}
 	tags.AddOptions(key, "omitempty")
 	return reflect.StructTag(tags.String())
