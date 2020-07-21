@@ -72,6 +72,16 @@ func TestLaceworkAws(t *testing.T) {
 								"EXTERNAL_IP": "",
 								"CPU_PERCENTAGE": 10.61
 							}
+						],
+						"SourceIpAddress": [
+							{
+								"IP_ADDRESS": "169.254.169.254"
+							}
+						],
+						"IpAddress": [
+							{
+								"IP_ADDRESS": "0.0.0.0"
+							}
 						]
 					},
 					"EVENT_ACTOR": "App",
@@ -143,21 +153,33 @@ func TestLaceworkAws(t *testing.T) {
 							CPUPercentage: aws.Float32(10.61),
 						},
 					},
+					SourceIPAddress: []LaceworkSourceIPAddress{
+						{
+							SourceIPAddress: aws.String("169.254.169.254"),
+						},
+					},
+					IPAddress: []LaceworkIPAddress{
+						{
+							SourceIPAddress: aws.String("0.0.0.0"),
+						},
+					},
 				},
 			}},
 		},
 	}
 
 	// panther fields
-	expectedEvent.PantherLogType = aws.String("Lacework")
+	expectedEvent.PantherLogType = aws.String("Lacework.Events")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedDate)
+	expectedEvent.AppendAnyIPAddress("169.254.169.254")
+	expectedEvent.AppendAnyIPAddress("0.0.0.0")
 
 	checkLaceworkLog(t, log, expectedEvent)
 }
 
 func TestLaceworkLogType(t *testing.T) {
 	parser := &LaceworkParser{}
-	require.Equal(t, "Lacework", parser.LogType())
+	require.Equal(t, "Lacework.Events", parser.LogType())
 }
 
 func checkLaceworkLog(t *testing.T, log string, expectedEvent *Lacework) {
