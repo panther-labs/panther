@@ -153,7 +153,12 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
           lastUpdatedBy={lastUpdatedBy}
           lastUpdatedByTime={lastUpdatedByTime}
         />
-        <DropdownButton as={AbstractButton} outline="none" aria-label="Alert Status Options">
+        <DropdownButton
+          as={AbstractButton}
+          display="inline-flex"
+          outline="none"
+          aria-label="Alert Status Options"
+        >
           <PseudoBox
             as={Icon}
             type="caret-down"
