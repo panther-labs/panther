@@ -27,14 +27,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewTimeDecoderExtension(t *testing.T) {
+func TestNewExtension(t *testing.T) {
 	type T struct {
-		TimeRFC3339 time.Time `json:"t_rfc" tcodec:"rfc3339"`
-		TimeUnixMS  time.Time `json:"t_unix_ms" tcodec:"unix_ms"`
-		TimeUnix    time.Time `json:"t_unix" tcodec:"unix"`
-		TimeCustom  time.Time `json:"t_custom" tcodec:"layout=2006-01-02"`
+		TimeRFC3339 time.Time `json:"t_rfc,omitempty" tcodec:"rfc3339"`
+		TimeUnixMS  time.Time `json:"t_unix_ms,omitempty" tcodec:"unix_ms"`
+		TimeUnix    time.Time `json:"t_unix,omitempty" tcodec:"unix"`
+		TimeCustom  time.Time `json:"t_custom,omitempty" tcodec:"layout=2006-01-02"`
 	}
-	ext := NewDecoderExtension()
+	ext := NewExtension(OverrideEncoder(EncodeIn(time.UTC, LayoutCodec(time.RFC3339Nano))))
 	api := jsoniter.Config{}.Froze()
 	api.RegisterExtension(ext)
 
@@ -58,26 +58,22 @@ func TestNewTimeDecoderExtension(t *testing.T) {
 	require.Equal(t, expect, actual.TimeRFC3339.UTC().Format(time.RFC3339Nano), "rfc3339")
 	require.Equal(t, expect, actual.TimeUnix.UTC().Format(time.RFC3339Nano), "unix")
 	require.Equal(t, expect, actual.TimeUnixMS.UTC().Format(time.RFC3339Nano), "unix_ms")
-}
 
-func TestRegisterJSONEncoder(t *testing.T) {
-	type T struct {
-		Time time.Time `json:"time,omitempty"`
-	}
-
-	api := jsoniter.Config{}.Froze()
-	RegisterJSONEncoder(api, `2006-01-02`, time.UTC)
 	{
 		actual, err := api.MarshalToString(T{})
 		require.NoError(t, err)
 		require.Equal(t, `{}`, actual)
 	}
 	{
-		expect := time.Date(2020, 7, 3, 15, 12, 45, 0, time.UTC)
+		loc, _ := time.LoadLocation("Europe/Athens")
+		expect := time.Date(2020, 7, 3, 15, 12, 45, 0, loc)
 		actual, err := api.MarshalToString(T{
-			Time: expect,
+			TimeRFC3339: expect,
 		})
 		require.NoError(t, err)
-		require.Equal(t, `{"time":"2020-07-03"}`, actual)
+		require.Equal(t, `{"t_rfc":"2020-07-03T12:12:45Z"}`, actual)
 	}
+
+
 }
+

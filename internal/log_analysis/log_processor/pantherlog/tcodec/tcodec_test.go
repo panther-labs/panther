@@ -38,15 +38,15 @@ func TestUnixSeconds(t *testing.T) {
 	require.Equal(t, expect, actual.UTC())
 }
 
-func TestRegisterDecoder(t *testing.T) {
-	require.NoError(t, RegisterDecoder("foo", LayoutDecoder("2006")))
-	require.Error(t, RegisterDecoder("bar", nil))
-	require.Error(t, RegisterDecoder("foo", LayoutDecoder("2006")))
+func TestRegister(t *testing.T) {
+	require.NoError(t, Register("foo", LayoutCodec("2006")))
+	require.Error(t, Register("bar", nil))
+	require.Error(t, Register("foo", LayoutCodec("2006")))
 	require.Panics(t, func() {
-		MustRegisterDecoder("foo", nil)
+		MustRegister("foo", nil)
 	})
-	require.Nil(t, LookupDecoder("baz"))
-	require.NotNil(t, LookupDecoder("foo"))
+	require.Nil(t, Lookup("baz"))
+	require.NotNil(t, Lookup("foo"))
 
 	type T struct {
 		Time time.Time `json:"time" tcodec:"foo"`
@@ -54,7 +54,7 @@ func TestRegisterDecoder(t *testing.T) {
 	}
 	v := T{}
 	api := jsoniter.Config{}.Froze()
-	api.RegisterExtension(NewDecoderExtension())
+	api.RegisterExtension(NewExtension())
 	require.NoError(t, api.UnmarshalFromString(`{"time":"2020"}`, &v))
 	expect := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 	require.Equal(t, expect, v.Time.UTC())
@@ -94,7 +94,7 @@ func TestRegisterDecoder(t *testing.T) {
 }
 
 func TestUnixMillisecondsDecoder(t *testing.T) {
-	dec := UnixMillisecondsDecoder()
+	dec := UnixMillisecondsCodec()
 	tm, err := dec.DecodeTime("")
 	require.NoError(t, err)
 	require.Equal(t, time.Time{}.Format(time.RFC3339Nano), tm.Format(time.RFC3339Nano))
@@ -113,7 +113,7 @@ func TestUnixMillisecondsDecoder(t *testing.T) {
 }
 
 func TestUnixSecondsDecoder(t *testing.T) {
-	dec := UnixSecondsDecoder()
+	dec := UnixSecondsCodec()
 	tm, err := dec.DecodeTime("")
 	require.NoError(t, err)
 	require.Equal(t, time.Time{}.Format(time.RFC3339Nano), tm.Format(time.RFC3339Nano))

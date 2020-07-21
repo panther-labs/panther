@@ -25,18 +25,17 @@ import (
 	"unsafe"
 
 	jsoniter "github.com/json-iterator/go"
-	"github.com/modern-go/reflect2"
 )
 
-// NewDecoderExtension creates a jsoniter.Extension that decodes JSON values to time.Time.
-// The extension reads `tcodec` struct tags and matches to registered TimeDecoders.
+// Extension is a jsoniter.Extension that decodes JSON values to time.Time and encodes back to JSON.
+// The extension reads `tcodec` struct tags and matches to registered TimeCodecs.
 // ```
 // type Foo struct {
 //   Timestamp time.Time `json:"ts" tcodec:"rfc3339"`
 // }
 // ```
 //
-// To decode a field using a specific layout use `layout=GO_TIME_LAYOUT` tag value.
+// To decode/encode a field using a specific layout use `layout=GO_TIME_LAYOUT` tag value.
 //
 // ```
 // type Foo struct {
@@ -44,115 +43,120 @@ import (
 // }
 // ```
 //
-func NewDecoderExtension() jsoniter.Extension {
-	return &timeDecoderExt{}
-}
-
-type timeDecoderExt struct {
+type Extension struct {
 	jsoniter.DummyExtension
+	codecs   Registry
+	override fnCodec
+	loc      *time.Location
+	tagName  string
 }
 
-// TagName is the struct tag name used for defining time decoders for a time.Time field.
-const TagName = "tcodec"
+func NewExtension(options ...Option) *Extension {
+	ext := Extension{}
+	options = append([]Option{defaultRegistry}, options...)
+	for _, option := range options {
+		if option == nil {
+			continue
+		}
+		option.apply(&ext)
+	}
+	return &ext
+}
 
-func (*timeDecoderExt) UpdateStructDescriptor(desc *jsoniter.StructDescriptor) {
+func (ext *Extension) UpdateStructDescriptor(desc *jsoniter.StructDescriptor) {
+	tagName := ext.TagName()
 	typTime := reflect.TypeOf(time.Time{})
 	for _, binding := range desc.Fields {
 		field := binding.Field
-		tag, ok := field.Tag().Lookup(TagName)
-		if !ok {
-			continue
-		}
 		// NOTE [tcodec]: Add support for *time.Time values
 		if field.Type().Type1() != typTime {
 			// We only modify decoders for `time.Time` fields.
 			continue
 		}
 		// NOTE: [tcodec] Add support for other layout types such as strftime (https://strftime.org/)
-		var decoder TimeDecoder
-		if strings.HasPrefix(tag, "layout=") {
-			// The tag is of the form `layout=GO_TIME_LAYOUT`.
-			// We strip the prefix and use a LayoutDecoder.
-			layout := strings.TrimPrefix(tag, "layout=")
-			decoder = LayoutDecoder(layout)
-		} else if d, ok := registeredDecoders[tag]; ok {
-			// The tag is a registered decoder name
-			decoder = d
+		var codec TimeCodec
+		if tag, ok := field.Tag().Lookup(tagName); ok {
+			if strings.HasPrefix(tag, "layout=") {
+				// The tag is of the form `layout=GO_TIME_LAYOUT`.
+				// We strip the prefix and use a LayoutCodec.
+				layout := strings.TrimPrefix(tag, "layout=")
+				codec = LayoutCodec(layout)
+			} else {
+				// The tag is a registered decoder name
+				codec = Lookup(tag)
+			}
 		}
-		if decoder != nil {
+		if decoder := ext.newValDecoder(codec); decoder != nil {
 			// We only modify the underlying decoder if we resolved a decoder
-			binding.Decoder = NewJSONDecoder(decoder)
+			binding.Decoder = decoder
 		}
+		if encoder := ext.newValEncoder(codec); encoder != nil {
+			// We only modify the underlying encoder if we resolved an encoder
+			binding.Encoder = encoder
+		}
+	}
+}
+
+func (ext *Extension) TagName() string {
+	if tagName := ext.tagName; tagName != "" {
+		return tagName
+	}
+	return DefaultTagName
+}
+
+type jsonTimeEncoder struct {
+	encode TimeEncoderFunc
+}
+
+func (*jsonTimeEncoder) IsEmpty(ptr unsafe.Pointer) bool {
+	return (*time.Time)(ptr).IsZero()
+}
+func (enc *jsonTimeEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
+	tm := *((*time.Time)(ptr))
+	enc.encode(tm, stream)
+}
+
+func (ext *Extension) newValEncoder(codec TimeCodec) jsoniter.ValEncoder {
+	encode := ext.override.encode
+	if encode == nil {
+		if codec == nil {
+			return nil
+		}
+		encode = codec.EncodeTime
+	}
+	if loc := ext.loc; loc != nil {
+		encode = EncodeIn(loc, encode).EncodeTime
+	}
+	return &jsonTimeEncoder{
+		encode: encode,
+	}
+}
+func (ext *Extension) newValDecoder(codec TimeCodec) jsoniter.ValDecoder {
+	decode := ext.override.decode
+	if decode == nil {
+		if codec == nil {
+			return nil
+		}
+		decode = codec.DecodeTime
+	}
+	if loc := ext.loc; loc != nil {
+		decode = DecodeIn(loc, decode).DecodeTime
+	}
+	return &jsonTimeDecoder{
+		decode: decode,
 	}
 }
 
 func NewJSONDecoder(decoder TimeDecoder) jsoniter.ValDecoder {
-	return &jsonDecoder{
-		decoder: decoder,
+	return &jsonTimeDecoder{
+		decode: decoder.DecodeTime,
 	}
 }
 
-type jsonDecoder struct {
-	decoder TimeDecoder
+type jsonTimeDecoder struct {
+	decode TimeDecoderFunc
 }
 
-func (dec *jsonDecoder) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
-	const opName = "ReadTimestamp"
-	switch iter.WhatIsNext() {
-	case jsoniter.StringValue:
-		s := iter.ReadString()
-		tm, err := dec.decoder.DecodeTime(s)
-		if err != nil {
-			iter.ReportError(opName, err.Error())
-			return
-		}
-		*((*time.Time)(ptr)) = tm
-	case jsoniter.NilValue:
-		iter.ReadNil()
-		*((*time.Time)(ptr)) = time.Time{}
-	case jsoniter.NumberValue:
-		raw := iter.SkipAndReturnBytes()
-		tm, err := dec.decoder.DecodeTime(string(raw))
-		if err != nil {
-			iter.ReportError(opName, err.Error())
-			return
-		}
-		*((*time.Time)(ptr)) = tm
-	default:
-		iter.Skip()
-		iter.ReportError(opName, "invalid JSON value")
-	}
-}
-
-// RegisterJSONEncoder registers an encoder override for all `time.Time` values as strings using a layout.
-// If a location is provided all times are first converted to that location.
-// Zero time values are considered empty and omitted when omitempty is set.
-func RegisterJSONEncoder(api jsoniter.API, layout string, loc *time.Location) {
-	var (
-		typTime       = reflect2.TypeOf(time.Time{})
-		layoutJSON, _ = api.MarshalToString(layout)
-		ext           = jsoniter.EncoderExtension{
-			typTime: &jsonEncoder{layout: layoutJSON, location: loc},
-		}
-	)
-	api.RegisterExtension(ext)
-}
-
-type jsonEncoder struct {
-	layout   string
-	location *time.Location
-}
-
-func (*jsonEncoder) IsEmpty(ptr unsafe.Pointer) bool {
-	tm := (*time.Time)(ptr)
-	return tm.IsZero()
-}
-
-func (enc *jsonEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	tm := (*time.Time)(ptr)
-	if loc := enc.location; loc != nil {
-		stream.SetBuffer(tm.In(loc).AppendFormat(stream.Buffer(), enc.layout))
-		return
-	}
-	stream.SetBuffer(tm.AppendFormat(stream.Buffer(), enc.layout))
+func (dec *jsonTimeDecoder) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
+	*((*time.Time)(ptr)) = dec.decode(iter)
 }

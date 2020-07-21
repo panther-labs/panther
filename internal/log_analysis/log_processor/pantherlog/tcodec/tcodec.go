@@ -19,53 +19,82 @@ package tcodec
  */
 
 import (
-	"errors"
+	jsoniter "github.com/json-iterator/go"
 	"strconv"
 	"time"
 )
 
-var (
-	registeredDecoders = map[string]TimeDecoder{
-		"unix":    UnixSecondsDecoder(),
-		"unix_ms": UnixMillisecondsDecoder(),
-		"rfc3339": LayoutDecoder(time.RFC3339Nano),
-	}
-)
-
-type TimeDecoder interface {
-	DecodeTime(input string) (time.Time, error)
+type TimeCodec interface {
+	TimeEncoder
+	TimeDecoder
 }
 
-type TimeDecoderFunc func(input string) (time.Time, error)
+type TimeDecoder interface {
+	DecodeTime(iter *jsoniter.Iterator) time.Time
+}
+
+type TimeDecoderFunc func(iter *jsoniter.Iterator) time.Time
 
 var _ TimeDecoder = (TimeDecoderFunc)(nil)
 
-func (fn TimeDecoderFunc) DecodeTime(input string) (time.Time, error) {
-	return fn(input)
+func (fn TimeDecoderFunc) DecodeTime(iter *jsoniter.Iterator) time.Time {
+	return fn(iter)
 }
 
-func RegisterDecoder(name string, decoder TimeDecoder) error {
-	if decoder == nil {
-		return errors.New("nil decoder")
-	}
-	if name == "" {
-		return errors.New("anonymous time decoder")
-	}
-	if _, duplicate := registeredDecoders[name]; duplicate {
-		return errors.New("duplicate time decoder " + name)
-	}
-	registeredDecoders[name] = decoder
-	return nil
+type TimeEncoder interface {
+	EncodeTime(tm time.Time, stream *jsoniter.Stream)
 }
 
-func MustRegisterDecoder(name string, decoder TimeDecoder) {
-	if err := RegisterDecoder(name, decoder); err != nil {
-		panic(err)
+type TimeEncoderFunc func(tm time.Time, stream *jsoniter.Stream)
+
+var _ TimeEncoder = (TimeEncoderFunc)(nil)
+
+func (fn TimeEncoderFunc) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
+	fn(tm, stream)
+}
+
+func New(decode TimeDecoder, encode TimeEncoder) TimeCodec {
+	return &fnCodec{
+		encode: resolveEncodeFunc(encode),
+		decode: resolveDecodeFunc(decode),
+	}
+}
+func resolveEncodeFunc(enc TimeEncoder) TimeEncoderFunc {
+	if enc == nil {
+		return nil
+	}
+	if fn, ok := enc.(TimeEncoderFunc); ok {
+		return fn
+	}
+	return enc.EncodeTime
+}
+func resolveDecodeFunc(dec TimeDecoder) TimeDecoderFunc {
+	if dec == nil {
+		return nil
+	}
+	if fn, ok := dec.(TimeDecoderFunc); ok {
+		return fn
+	}
+	return dec.DecodeTime
+}
+
+func NewFunc(decode TimeDecoderFunc, encode TimeEncoderFunc) TimeCodec {
+	return &fnCodec{
+		encode: encode,
+		decode: decode,
 	}
 }
 
-func LookupDecoder(name string) TimeDecoder {
-	return registeredDecoders[name]
+type fnCodec struct {
+	encode TimeEncoderFunc
+	decode TimeDecoderFunc
+}
+
+func (codec *fnCodec) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
+	codec.encode(tm, stream)
+}
+func (codec *fnCodec) DecodeTime(iter *jsoniter.Iterator) time.Time {
+	return codec.decode(iter)
 }
 
 func UnixSeconds(sec float64) time.Time {
@@ -75,50 +104,150 @@ func UnixSeconds(sec float64) time.Time {
 	return time.Unix(0, int64(sec*usec)*precision)
 }
 
-func UnixSecondsDecoder() TimeDecoder {
-	return &unixSecondsDecoder{}
+func UnixSecondsCodec() TimeCodec {
+	return &unixSecondsCodec{}
 }
 
-type unixSecondsDecoder struct{}
+type unixSecondsCodec struct{}
 
-func (*unixSecondsDecoder) DecodeTime(input string) (tm time.Time, err error) {
-	if input == "" {
-		return
-	}
-	f, err := strconv.ParseFloat(input, 64)
-	if err != nil {
-		return
-	}
-	return UnixSeconds(f), nil
+func (*unixSecondsCodec) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
+	unixSeconds := time.Duration(tm.UnixNano()).Seconds()
+	const usecPrecision = int(time.Second / time.Microsecond)
+	stream.WriteFloat64(unixSeconds)
 }
 
-func UnixMillisecondsDecoder() TimeDecoder {
-	return &unixMillisecondsDecoder{}
+func (*unixSecondsCodec) DecodeTime(iter *jsoniter.Iterator) (tm time.Time) {
+	switch iter.WhatIsNext() {
+	case jsoniter.NilValue:
+		iter.ReadNil()
+		return
+	case jsoniter.NumberValue:
+		f := iter.ReadFloat64()
+		return UnixSeconds(f)
+	case jsoniter.StringValue:
+		s := iter.ReadString()
+		f, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			iter.ReportError("ReadUnixSeconds", err.Error())
+			return
+		}
+		return UnixSeconds(f)
+	default:
+		iter.Skip()
+		iter.ReportError("ReadUnixSeconds", `invalid JSON value`)
+		return
+	}
 }
 
 func UnixMilliseconds(n int64) time.Time {
 	return time.Unix(0, n*int64(time.Millisecond))
 }
 
-type unixMillisecondsDecoder struct{}
-
-func (*unixMillisecondsDecoder) DecodeTime(input string) (tm time.Time, err error) {
-	if input == "" {
-		return
-	}
-	n, err := strconv.ParseInt(input, 10, 64)
-	if err != nil {
-		return
-	}
-	return UnixMilliseconds(n), nil
+func UnixMillisecondsCodec() TimeCodec {
+	return &unixMillisecondsCodec{}
 }
 
-func LayoutDecoder(layout string) TimeDecoder {
-	return layoutDecoder(layout)
+type unixMillisecondsCodec struct{}
+
+func (*unixMillisecondsCodec) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
+	msec := tm.UnixNano() / int64(time.Millisecond)
+	stream.WriteInt64(msec)
 }
 
-type layoutDecoder string
+func (*unixMillisecondsCodec) DecodeTime(iter *jsoniter.Iterator) (tm time.Time) {
+	switch iter.WhatIsNext() {
+	case jsoniter.NilValue:
+		iter.ReadNil()
+		return
+	case jsoniter.NumberValue:
+		msec := iter.ReadInt64()
+		return UnixMilliseconds(msec)
+	case jsoniter.StringValue:
+		s := iter.ReadString()
+		msec, err := strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			iter.ReportError("ReadUnixMilliseconds", err.Error())
+			return
+		}
+		return UnixMilliseconds(msec)
+	default:
+		iter.Skip()
+		iter.ReportError("ReadUnixMilliseconds", `invalid JSON value`)
+		return
+	}
+}
 
-func (layout layoutDecoder) DecodeTime(input string) (time.Time, error) {
-	return time.Parse(string(layout), input)
+func LayoutCodec(layout string) TimeCodec {
+	return layoutCodec(layout)
+}
+
+type layoutCodec string
+
+func (layout layoutCodec) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
+	stream.WriteString(tm.Format(string(layout)))
+}
+
+func (layout layoutCodec) DecodeTime(iter *jsoniter.Iterator) time.Time {
+	switch iter.WhatIsNext() {
+	case jsoniter.StringValue:
+		tm, err := time.Parse(string(layout), iter.ReadString())
+		if err != nil {
+			iter.ReportError(`ParseTime`, err.Error())
+		}
+		return tm
+	case jsoniter.NilValue:
+		iter.ReadNil()
+		return time.Time{}
+	default:
+		iter.Skip()
+		iter.ReportError(`DecodeTime`, `invalid JSON value`)
+		return time.Time{}
+	}
+}
+
+func DecodeIn(loc *time.Location, decoder TimeDecoder) TimeDecoder {
+	return &locDecoder{
+		decode: resolveDecodeFunc(decoder),
+		loc:    loc,
+	}
+}
+
+type locDecoder struct {
+	decode TimeDecoderFunc
+	loc    *time.Location
+}
+
+func (d *locDecoder) DecodeTime(iter *jsoniter.Iterator) time.Time {
+	return d.decode(iter).In(d.loc)
+}
+func EncodeIn(loc *time.Location, encoder TimeEncoder) TimeEncoder {
+	return &locEncoder{
+		encode: resolveEncodeFunc(encoder),
+		loc:    loc,
+	}
+}
+
+type locEncoder struct {
+	encode TimeEncoderFunc
+	loc    *time.Location
+}
+
+func (e *locEncoder) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
+	e.encode(tm.In(e.loc), stream)
+}
+
+func In(loc *time.Location, codec TimeCodec) TimeCodec {
+	return &fnCodec{
+		encode: EncodeIn(loc, TimeEncoderFunc(codec.EncodeTime)).EncodeTime,
+		decode: DecodeIn(loc, TimeDecoderFunc(codec.DecodeTime)).DecodeTime,
+	}
+}
+func UTC(codec TimeCodec) TimeCodec {
+	return In(time.UTC, codec)
+}
+func DecodeUTC(decoder TimeDecoder) TimeDecoder {
+	return DecodeIn(time.UTC, decoder)
+}
+func EncodeUTC(encoder TimeEncoder) TimeEncoder {
+	return EncodeIn(time.UTC, encoder)
 }
