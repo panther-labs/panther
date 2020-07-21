@@ -236,11 +236,10 @@ Resources:
               Action: s3:Get*
               Resource: arn:aws:s3:::panther-public-cloudformation-templates*
 
-  # During teardown, CloudFormation will delete this group while the Lambda function is still running.
-  # This would normally lead to the group being recreated by Lambda, but the PantherTeardown resource
-  # adds an IAM permission boundary to the custom resource role which blocks future logs.
+  # The PantherTeardown resource adds an IAM permission boundary to the custom resource role
+  # which blocks future logs.
   #
-  # In other words, by the time CFN deletes this log group, it can't be created again.
+  # In other words, by the time CFN deletes this log group, Lambda can't create it again.
   CustomResourceLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -249,6 +248,7 @@ Resources:
 
   CustomResourceMetricFilters:
     Type: Custom::LambdaMetricFilters
+    DependsOn: CustomTeardown
     Properties:
       CustomResourceVersion: !Ref CustomResourceVersion
       LogGroupName: !Ref CustomResourceLogGroup
@@ -256,6 +256,7 @@ Resources:
 
   CustomResourceAlarms:
     Type: Custom::LambdaAlarms
+    DependsOn: CustomTeardown
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
       CustomResourceVersion: !Ref CustomResourceVersion
@@ -266,6 +267,8 @@ Resources:
       ThrottleThreshold: 0
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
+  # This needs to be the very last custom resource which is deleted -
+  # for this reason, all other custom resources in this stack depend on this one.
   CustomTeardown:
     # When deleted, this resource will remove Panther assets added outside of CloudFormation:
     #   - ECR images
@@ -282,6 +285,7 @@ Resources:
   # Alarms for SNS topics in the bootstrap stack
   ProcessedDataTopicAlarms:
     Type: Custom::SNSAlarms
+    DependsOn: CustomTeardown
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
       CustomResourceVersion: !Ref CustomResourceVersion
@@ -293,6 +297,7 @@ Resources:
     # It obviously might not be able to notify us about its own failures, but we still want to try.
     # There could be transient failures that will eventually get through.
     Type: Custom::SNSAlarms
+    DependsOn: CustomTeardown
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
       CustomResourceVersion: !Ref CustomResourceVersion
@@ -303,6 +308,7 @@ Resources:
   # forces SMS as a fallback option, but the SDK does not.
   UserPoolMfa:
     Type: Custom::CognitoUserPoolMfa
+    DependsOn: CustomTeardown
     Properties:
       CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
@@ -335,6 +341,7 @@ Resources:
 
   AnalysisApiAlarms:
     Type: Custom::ApiGatewayAlarms
+    DependsOn: CustomTeardown
     Properties:
       ApiName: panther-analysis-api
       AlarmTopicArn: !Ref AlarmTopicArn
@@ -355,6 +362,7 @@ Resources:
 
   ComplianceApiAlarms:
     Type: Custom::ApiGatewayAlarms
+    DependsOn: CustomTeardown
     Properties:
       ApiName: panther-compliance-api
       AlarmTopicArn: !Ref AlarmTopicArn
@@ -375,6 +383,7 @@ Resources:
 
   RemediationApiAlarms:
     Type: Custom::ApiGatewayAlarms
+    DependsOn: CustomTeardown
     Properties:
       ApiName: panther-remediation-api
       AlarmTopicArn: !Ref AlarmTopicArn
@@ -395,6 +404,7 @@ Resources:
 
   ResourcesApiAlarms:
     Type: Custom::ApiGatewayAlarms
+    DependsOn: CustomTeardown
     Properties:
       ApiName: panther-resources-api
       AlarmTopicArn: !Ref AlarmTopicArn

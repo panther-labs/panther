@@ -21,6 +21,7 @@ package resources
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-sdk-go/aws"
@@ -151,6 +152,8 @@ func destroyLogGroups(selfLogGroupName, roleName string) error {
 	if err != nil {
 		return fmt.Errorf("failed to add iam permission boundary to self: %v", err)
 	}
+
+	time.Sleep(15 * time.Second) // takes a few seconds for IAM boundary to kick in
 
 	// Our own log group will be deleted by CloudFormation right after we exit.
 	return nil
