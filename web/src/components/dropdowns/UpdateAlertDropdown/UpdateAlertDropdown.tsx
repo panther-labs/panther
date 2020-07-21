@@ -163,7 +163,6 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
             borderColor="navyblue-450"
             borderRadius="50%"
             backgroundColor="transparent"
-            cursor="pointer"
             _hover={{ backgroundColor: 'navyblue-450' }}
           />
         </DropdownButton>
