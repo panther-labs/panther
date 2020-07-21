@@ -559,6 +559,7 @@ export type Mutation = {
   updateDestination?: Maybe<Destination>;
   updateComplianceIntegration: ComplianceIntegration;
   updateS3LogIntegration: S3LogIntegration;
+  updateSqsLogIntegration: SqsLogSourceIntegration;
   updateGeneralSettings: GeneralSettings;
   updatePolicy?: Maybe<PolicyDetails>;
   updateRule?: Maybe<RuleDetails>;
@@ -653,6 +654,10 @@ export type MutationUpdateComplianceIntegrationArgs = {
 
 export type MutationUpdateS3LogIntegrationArgs = {
   input: UpdateS3LogIntegrationInput;
+};
+
+export type MutationUpdateSqsLogIntegrationArgs = {
+  input: UpdateSqsLogIntegrationInput;
 };
 
 export type MutationUpdateGeneralSettingsArgs = {
@@ -1152,6 +1157,7 @@ export type UpdateS3LogIntegrationInput = {
 };
 
 export type UpdateSqsLogIntegrationInput = {
+  integrationId: Scalars['String'];
   integrationLabel: Scalars['String'];
   sqsConfig: SqsLogConfigInput;
 };
@@ -1395,6 +1401,7 @@ export type ResolversTypes = {
   PolicyUnitTestError: ResolverTypeWrapper<PolicyUnitTestError>;
   UpdateComplianceIntegrationInput: UpdateComplianceIntegrationInput;
   UpdateS3LogIntegrationInput: UpdateS3LogIntegrationInput;
+  UpdateSqsLogIntegrationInput: UpdateSqsLogIntegrationInput;
   UpdateGeneralSettingsInput: UpdateGeneralSettingsInput;
   UpdatePolicyInput: UpdatePolicyInput;
   UpdateRuleInput: UpdateRuleInput;
@@ -1402,7 +1409,6 @@ export type ResolversTypes = {
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: ResolverTypeWrapper<UploadPoliciesResponse>;
   ModifyGlobalPythonModuleInput: ModifyGlobalPythonModuleInput;
-  UpdateSqsLogIntegrationInput: UpdateSqsLogIntegrationInput;
   AccountTypeEnum: AccountTypeEnum;
 };
 
@@ -1526,6 +1532,7 @@ export type ResolversParentTypes = {
   PolicyUnitTestError: PolicyUnitTestError;
   UpdateComplianceIntegrationInput: UpdateComplianceIntegrationInput;
   UpdateS3LogIntegrationInput: UpdateS3LogIntegrationInput;
+  UpdateSqsLogIntegrationInput: UpdateSqsLogIntegrationInput;
   UpdateGeneralSettingsInput: UpdateGeneralSettingsInput;
   UpdatePolicyInput: UpdatePolicyInput;
   UpdateRuleInput: UpdateRuleInput;
@@ -1533,7 +1540,6 @@ export type ResolversParentTypes = {
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: UploadPoliciesResponse;
   ModifyGlobalPythonModuleInput: ModifyGlobalPythonModuleInput;
-  UpdateSqsLogIntegrationInput: UpdateSqsLogIntegrationInput;
   AccountTypeEnum: AccountTypeEnum;
 };
 
@@ -1995,6 +2001,12 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationUpdateS3LogIntegrationArgs, 'input'>
+  >;
+  updateSqsLogIntegration?: Resolver<
+    ResolversTypes['SqsLogSourceIntegration'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationUpdateSqsLogIntegrationArgs, 'input'>
   >;
   updateGeneralSettings?: Resolver<
     ResolversTypes['GeneralSettings'],

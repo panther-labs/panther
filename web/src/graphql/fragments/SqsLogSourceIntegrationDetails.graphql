@@ -14,4 +14,9 @@ fragment SqsLogSourceIntegrationDetails on SqsLogSourceIntegration {
     logProcessingRole
     queueUrl
   }
+  health {
+    sqsStatus {
+      ...IntegrationItemHealthDetails
+    }
+  }
 }

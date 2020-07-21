@@ -31,6 +31,7 @@ import customWebhook from 'Assets/custom-webhook-minimal-logo.svg';
 
 export enum LogIntegrationsEnum {
   's3' = 'aws-s3',
+  'sqs' = 'aws-sqs',
 }
 
 export const AWS_ACCOUNT_ID_REGEX = new RegExp('^\\d{12}$');

@@ -18,6 +18,7 @@
 
 import * as Types from '../../../__generated__/schema';
 
+import { IntegrationItemHealthDetails } from './IntegrationItemHealthDetails.generated';
 import gql from 'graphql-tag';
 
 export type SqsLogSourceIntegrationDetails = Pick<
@@ -39,6 +40,7 @@ export type SqsLogSourceIntegrationDetails = Pick<
     | 'logProcessingRole'
     | 'queueUrl'
   >;
+  health: { sqsStatus?: Types.Maybe<IntegrationItemHealthDetails> };
 };
 
 export const SqsLogSourceIntegrationDetails = gql`
@@ -58,5 +60,11 @@ export const SqsLogSourceIntegrationDetails = gql`
       logProcessingRole
       queueUrl
     }
+    health {
+      sqsStatus {
+        ...IntegrationItemHealthDetails
+      }
+    }
   }
+  ${IntegrationItemHealthDetails}
 `;

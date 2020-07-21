@@ -26,14 +26,10 @@ const CreateSqsLogSource: React.FC = () => {
   const { history } = useRouter();
   const [addSqsLogSource, { error: sqsError }] = useAddSqsLogSource({
     update: (cache, { data }) => {
-      cache.modify({
-        fields: {
-          listLogIntegrations: (queryData, { toReference }) => {
-            const addedIntegrationCacheRef = toReference(data.addSqsLogIntegration);
-            return queryData
-              ? [addedIntegrationCacheRef, ...queryData]
-              : [addedIntegrationCacheRef];
-          },
+      cache.modify('ROOT_QUERY', {
+        listLogIntegrations: (queryData, { toReference }) => {
+          const addedIntegrationCacheRef = toReference(data.addSqsLogIntegration);
+          return queryData ? [addedIntegrationCacheRef, ...queryData] : [addedIntegrationCacheRef];
         },
       });
     },

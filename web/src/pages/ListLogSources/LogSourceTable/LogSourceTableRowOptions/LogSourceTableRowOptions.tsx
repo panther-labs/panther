@@ -25,7 +25,7 @@ import {
   DropdownItem,
   DropdownLink,
 } from 'pouncejs';
-import { LogIntegration, S3LogIntegration } from 'Generated/schema';
+import { LogIntegration, S3LogIntegration, SqsLogSourceIntegration } from 'Generated/schema';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
 import urls from 'Source/urls';
@@ -49,6 +49,10 @@ const LogSourceTableRowOptions: React.FC<LogSourceTableRowOptionsProps> = ({ sou
   let logSourceEditUrl;
 
   switch (source.integrationType) {
+    case LogIntegrationsEnum.sqs:
+      castedSource = source as SqsLogSourceIntegration;
+      logSourceEditUrl = urls.logAnalysis.sources.edit(source.integrationId, 'sqs');
+      break;
     case LogIntegrationsEnum.s3:
     default:
       castedSource = source as S3LogIntegration;

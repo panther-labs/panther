@@ -1,0 +1,5 @@
+query GetSqsLogSource($id: ID!) {
+  getSqsLogIntegration(id: $id) {
+    ...SqsLogSourceIntegrationDetails
+  }
+}

@@ -19,13 +19,16 @@
 import * as Types from '../../../../__generated__/schema';
 
 import { S3LogIntegrationDetails } from '../../../graphql/fragments/S3LogIntegrationDetails.generated';
+import { SqsLogSourceIntegrationDetails } from '../../../graphql/fragments/SqsLogSourceIntegrationDetails.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
 export type ListLogSourcesVariables = {};
 
-export type ListLogSources = { listLogIntegrations: Array<S3LogIntegrationDetails> };
+export type ListLogSources = {
+  listLogIntegrations: Array<S3LogIntegrationDetails | SqsLogSourceIntegrationDetails>;
+};
 
 export const ListLogSourcesDocument = gql`
   query ListLogSources {
@@ -33,9 +36,13 @@ export const ListLogSourcesDocument = gql`
       ... on S3LogIntegration {
         ...S3LogIntegrationDetails
       }
+      ... on SqsLogSourceIntegration {
+        ...SqsLogSourceIntegrationDetails
+      }
     }
   }
   ${S3LogIntegrationDetails}
+  ${SqsLogSourceIntegrationDetails}
 `;
 
 /**

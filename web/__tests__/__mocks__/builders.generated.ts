@@ -1381,6 +1381,7 @@ export const buildUpdateSqsLogIntegrationInput = (
   overrides: Partial<UpdateSqsLogIntegrationInput> = {}
 ): UpdateSqsLogIntegrationInput => {
   return {
+    integrationId: 'integrationId' in overrides ? overrides.integrationId : 'Pennsylvania',
     integrationLabel: 'integrationLabel' in overrides ? overrides.integrationLabel : 'morph',
     sqsConfig: 'sqsConfig' in overrides ? overrides.sqsConfig : buildSqsLogConfigInput(),
   };
