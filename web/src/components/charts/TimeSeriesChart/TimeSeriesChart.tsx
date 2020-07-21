@@ -17,7 +17,6 @@
  */
 
 import React from 'react';
-import echarts from 'echarts';
 import { Box, theme } from 'pouncejs';
 import { SeriesData } from 'Generated/schema';
 import { LineColors } from '../constants';
@@ -51,123 +50,136 @@ function formatDate(timestamp) {
 const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
   const container = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
-    const { timestamps, series } = data;
-    /*
-     * 'legendData' must be an array of values that matches 'series.name'in order
-     * to display them in correct order and color
-     * e.g. [AWS.ALB]
-     */
-    const legendData = series.map(({ label }) => label);
+    (async () => {
+      // load the pie chart
+      const [echarts] = await Promise.all([
+        import(/* webpackChunkName: "echarts" */ 'echarts/lib/echarts'),
+        import(/* webpackChunkName: "echarts" */ 'echarts/lib/chart/line'),
+        import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/tooltip'),
+        import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/legendScroll'),
+      ]);
+      /*
+       *  Timestamps are common for all series since everything has the same interval
+       *  and the same time frame
+       */
+      const { timestamps, series } = data;
+      /*
+       * 'legendData' must be an array of values that matches 'series.name'in order
+       * to display them in correct order and color
+       * e.g. [AWS.ALB, AWS.S3, ...etc]
+       */
+      const legendData = series.map(({ label }) => label);
 
-    /*
-     * 'series' must be an array of objects that includes some graph options
-     * like 'type', 'symbol' and 'itemStyle' and most importantly 'data' which
-     * is an array of values for all datapoints
-     * Must be ordered
-     */
-    const seriesData = series.map(({ label, values }) => {
-      return {
-        name: label,
-        type: 'line',
-        smooth: true,
-        symbol: 'none',
-        itemStyle: {
-          color: LineColors[label],
+      /*
+       * 'series' must be an array of objects that includes some graph options
+       * like 'type', 'symbol' and 'itemStyle' and most importantly 'data' which
+       * is an array of values for all datapoints
+       * Must be ordered
+       */
+      const seriesData = series.map(({ label, values }) => {
+        return {
+          name: label,
+          type: 'line',
+          smooth: true,
+          symbol: 'none',
+          itemStyle: {
+            color: LineColors[label],
+          },
+          data: values.map((v, i) => {
+            return {
+              name: label,
+              value: [timestamps[i], v],
+            };
+          }),
+        };
+      });
+
+      const options = {
+        grid: {
+          left: 180,
+          right: 20,
+          bottom: 20,
+          top: 10,
+          containLabel: true,
         },
-        data: values.map((v, i) => {
-          return {
-            name: label,
-            value: [timestamps[i], v],
-          };
-        }),
+        tooltip: {
+          trigger: 'axis',
+          position: pt => [pt[0], '100%'],
+          formatter: params => {
+            let tooltip = '';
+            if (params.length) {
+              const date = params[0].value[0];
+              const year = new Date(date).getFullYear();
+              tooltip += `${formatDate(date)}/${year}`;
+              const seriesTooltips = params.map(seriesTooltip => {
+                return `<br/>${seriesTooltip.marker} ${
+                  seriesTooltip.seriesName
+                }: ${seriesTooltip.value[1].toLocaleString('en')}`;
+              });
+              tooltip += seriesTooltips;
+            }
+            return tooltip;
+          },
+        },
+        legend: {
+          type: 'scroll',
+          orient: 'vertical',
+          left: 'auto',
+          right: 'auto',
+          icon: 'circle',
+          data: legendData,
+          textStyle: {
+            color: theme.colors['gray-50'],
+          },
+        },
+        xAxis: {
+          type: 'time',
+          splitLine: {
+            show: false,
+          },
+          axisLabel: {
+            show: true,
+            formatter: value => formatDate(value),
+            textStyle: {
+              color: () => {
+                return '#F6F6F6';
+              },
+            },
+          },
+        },
+        yAxis: {
+          type: 'value',
+          splitNumber: 4,
+          axisLabel: {
+            padding: [0, 20, 0, 0],
+            interval: 1,
+            show: true,
+            textStyle: {
+              color: () => {
+                return '#F6F6F6';
+              },
+            },
+          },
+          axisLine: {
+            show: true,
+          },
+          splitLine: {
+            lineStyle: {
+              color: 'rgba(246,246,246)',
+              opacity: 0.15,
+              type: 'dashed',
+            },
+          },
+        },
+        series: seriesData,
       };
-    });
 
-    const options = {
-      grid: {
-        left: 180,
-        right: 20,
-        bottom: 20,
-        top: 10,
-        containLabel: true,
-      },
-      tooltip: {
-        trigger: 'axis',
-        position: pt => [pt[0], '100%'],
-        formatter: params => {
-          let tooltip = '';
-          if (params.length) {
-            const date = params[0].value[0];
-            const year = new Date(date).getFullYear();
-            tooltip += `${formatDate(date)}/${year}`;
-            const seriesTooltips = params.map(seriesTooltip => {
-              return `<br/>${seriesTooltip.marker} ${
-                seriesTooltip.seriesName
-              }: ${seriesTooltip.value[1].toLocaleString('en')}`;
-            });
-            tooltip += seriesTooltips;
-          }
-          return tooltip;
-        },
-      },
-      legend: {
-        type: 'scroll',
-        orient: 'vertical',
-        left: 'auto',
-        right: 'auto',
-        icon: 'circle',
-        data: legendData,
-        textStyle: {
-          color: theme.colors['gray-50'],
-        },
-      },
-      xAxis: {
-        type: 'time',
-        splitLine: {
-          show: false,
-        },
-        axisLabel: {
-          show: true,
-          formatter: value => formatDate(value),
-          textStyle: {
-            color: () => {
-              return '#F6F6F6';
-            },
-          },
-        },
-      },
-      yAxis: {
-        type: 'value',
-        splitNumber: 4,
-        axisLabel: {
-          padding: [0, 20, 0, 0],
-          interval: 1,
-          show: true,
-          textStyle: {
-            color: () => {
-              return '#F6F6F6';
-            },
-          },
-        },
-        axisLine: {
-          show: true,
-        },
-        splitLine: {
-          lineStyle: {
-            color: 'rgba(246,246,246)',
-            opacity: 0.15,
-            type: 'dashed',
-          },
-        },
-      },
-      series: seriesData,
-    };
-
-    // load the timeSeriesChart
-    const timeSeriesChart = echarts.init(container.current);
-    // @ts-ignore
-    timeSeriesChart.setOption(options);
-  }, []);
+      // load the timeSeriesChart
+      const timeSeriesChart = echarts.init(container.current);
+      // @ts-ignore
+      timeSeriesChart.setOption(options);
+    })();
+  }, [data]);
 
   return <Box ref={container} width="100%" height="100%" />;
 };
