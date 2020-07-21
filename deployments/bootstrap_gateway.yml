@@ -195,10 +195,10 @@ Resources:
               Action: iam:PassRole
               Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/Panther*
             - Effect: Allow
-              # This function needs to be able to modify its own role policy for a clean teardown.
+              # This function needs to be able to modify its own permission boundary for a clean teardown.
               # We don't know the role name, which is randomly generated, but we know it will contain
               # at least part of the CloudFormation resource name.
-              Action: iam:PutRolePolicy
+              Action: iam:PutRolePermissionsBoundary
               Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/*CustomResourceFunction*
             - Effect: Allow
               Action: lambda:GetFunction

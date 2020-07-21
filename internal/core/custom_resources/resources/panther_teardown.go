@@ -29,7 +29,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/lambda"
-	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 )
 
@@ -141,34 +140,16 @@ func destroyLogGroups(selfLogGroupName, roleName string) error {
 
 	// Now for the tricky part - how to remove our own log group?
 	// If we just delete the group, it will be recreated automatically when the Lambda function exits.
-	// To prevent this, we modify our own IAM role to block future log writes.
+	// To prevent this, we use an IAM permission boundary to block future log writes from our own IAM role.
 	// Then we can let CFN delete the log group and Lambda will not be allowed to recreate it.
 
-	denyLogPolicy := map[string]interface{}{
-		"Version": "2012-10-17",
-		"Statement": []map[string]interface{}{
-			{
-				"Effect":   "Deny",
-				"Action":   "logs:*",
-				"Resource": "*",
-			},
-		},
-	}
-	policyBytes, err := jsoniter.MarshalToString(denyLogPolicy)
-	if err != nil {
-		return fmt.Errorf("failed to json marshal deny policy: %v", err)
-	}
-
 	zap.L().Info("blocking future log writes")
-	_, err = iamClient.PutRolePolicy(&iam.PutRolePolicyInput{
-		PolicyDocument: &policyBytes,
-		// CFN will fail to delete the IAM role if we add a new policy.
-		// Instead, we have to update the existing policy name, set automatically by the serverless transform.
-		PolicyName: aws.String("CustomResourceFunctionRolePolicy0"),
-		RoleName:   &roleName,
+	_, err = iamClient.PutRolePermissionsBoundary(&iam.PutRolePermissionsBoundaryInput{
+		PermissionsBoundary: aws.String("arn:aws:iam::aws:policy/AWSDenyAll"),
+		RoleName:            &roleName,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to put role policy on self: %v", err)
+		return fmt.Errorf("failed to add iam permission boundary to self: %v", err)
 	}
 	return nil
 }
