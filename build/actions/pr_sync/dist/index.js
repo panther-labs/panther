@@ -782,18 +782,14 @@ module.exports = /******/ (function (modules, runtime) {
           const destPullRequestBranchName = getPrBranch(srcPullRequest.head.ref);
 
           core.debug('Cloning destination repo...');
-          execSync(`git clone https://${token}@github.com/${destRepo}.git ${destRepoName}`);
-          execSync(`cd ${destRepoName}`);
-          execSync(`git remote add ${srcRepoName} https://github.com/${process.env.GITHUB_REPOSITORY}.git`); // prettier-ignore
 
           core.debug('Creating a branch from the merge commit...');
-          execSync(`git fetch ${srcRepoName}`);
-          execSync(`git checkout ${srcRepoName}/master`);
+          execSync(`git remote add ${destRepoName} https://3nvi:${token}@github.com/${process.env.GITHUB_REPOSITORY}.git`); // prettier-ignore
           execSync(`git checkout -b ${destPullRequestBranchName}`);
           execSync(`git config --global user.name "action"`);
           execSync(`git config --global user.email "action@action.com"`);
           // execSync(`git cherry-pick ${commit}`);
-          execSync(`git push origin ${destPullRequestBranchName}`);
+          execSync(`git push ${destRepoName} ${destPullRequestBranchName}`);
 
           core.debug('Initializing octokit...');
           const octokit = github.getOctokit(token);
