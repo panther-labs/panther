@@ -19,9 +19,10 @@
 import React from 'react';
 import { Box, Flex, Heading, Icon, Text } from 'pouncejs';
 import { slugify } from 'Helpers/utils';
+import { SingleValue } from 'Generated/schema';
 
 interface AlertSummaryProps {
-  data: any;
+  data: SingleValue[];
 }
 
 const DifferenceText = ({ diff }) => {

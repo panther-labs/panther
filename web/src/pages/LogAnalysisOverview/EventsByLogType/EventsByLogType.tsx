@@ -19,9 +19,10 @@
 import React from 'react';
 import { Flex } from 'pouncejs';
 import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
+import { SeriesData } from 'Generated/schema';
 
 interface EventsByLogTypesProps {
-  events: any;
+  events: SeriesData;
 }
 
 const EventsByLogTypes: React.FC<EventsByLogTypesProps> = ({ events }) => {
