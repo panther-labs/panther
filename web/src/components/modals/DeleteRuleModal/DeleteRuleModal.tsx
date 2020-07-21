@@ -46,8 +46,26 @@ const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule, ...rest }) => {
       deleteRule: true,
     },
     update: async cache => {
-      cache.evict({ id: cache.identify({ ...rule, __typename: 'RuleSummary' }) });
-      cache.evict({ id: cache.identify({ ...rule, __typename: 'RuleDetails' }) });
+      cache.modify('ROOT_QUERY', {
+        rules: (data, helpers) => {
+          const ruleRef = helpers.toReference({
+            __typename: 'RuleSummary',
+            id: rule.id,
+          });
+          return { ...data, rules: data.rules.filter(r => r.__ref !== ruleRef.__ref) };
+        },
+        rule: (data, helpers) => {
+          const ruleRef = helpers.toReference({
+            __typename: 'RuleDetails',
+            id: rule.id,
+          });
+          if (ruleRef.__ref !== data.__ref) {
+            return data;
+          }
+          return helpers.DELETE;
+        },
+      });
+      cache.gc();
     },
     onCompleted: () => {
       pushSnackbar({
