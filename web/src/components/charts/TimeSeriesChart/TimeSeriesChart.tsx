@@ -26,6 +26,28 @@ interface TimeSeriesLinesProps {
   data: SeriesData;
 }
 
+function formatTime(date) {
+  let hours = date.getHours();
+  let minutes = date.getMinutes();
+  if (hours === 0) {
+    hours = '00';
+  } else if (hours < 10) {
+    hours = `0${hours}`;
+  }
+  if (minutes === 0) {
+    minutes = '00';
+  } else if (minutes < 10) {
+    hours = `0${minutes}`;
+  }
+  // Spaces for centering time above dates
+  return `  ${hours}:${minutes}`;
+}
+function formatDate(timestamp) {
+  const date = new Date(timestamp);
+  return `${formatTime(date)}
+  ${date.getDate()}/${date.getMonth() + 1}`;
+}
+
 const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
   const container = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
@@ -72,6 +94,21 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
       tooltip: {
         trigger: 'axis',
         position: pt => [pt[0], '100%'],
+        formatter: params => {
+          let tooltip = '';
+          if (params.length) {
+            const date = params[0].value[0];
+            const year = new Date(date).getFullYear();
+            tooltip += `${formatDate(date)}/${year}`;
+            const seriesTooltips = params.map(seriesTooltip => {
+              return `<br/>${seriesTooltip.marker} ${
+                seriesTooltip.seriesName
+              }: ${seriesTooltip.value[1].toLocaleString('en')}`;
+            });
+            tooltip += seriesTooltips;
+          }
+          return tooltip;
+        },
       },
       legend: {
         type: 'scroll',
@@ -91,6 +128,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
         },
         axisLabel: {
           show: true,
+          formatter: value => formatDate(value),
           textStyle: {
             color: () => {
               return '#F6F6F6';
