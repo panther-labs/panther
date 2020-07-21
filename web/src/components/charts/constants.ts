@@ -26,10 +26,10 @@ export const LineColors = {
   Info: theme.colors['gray-800'],
 
   // FIXME: These should be mapped through pounce
-  'AWS.Cloudtrail': '#FDCA00',
   'AWS.ALB': '#4e33e3',
-  'AWS.VPCFlow': '#dd4444',
+  'AWS.VPCFlow': '#FF7577',
   'AWS.S3': '#92cb3e',
+  'AWS.S3ServerAccess': '#C82727',
   'Apache.AccessCombined': '#86A3C3',
   'Apache.AccessCommon': '#11A5F3',
   'AWS.AuroraMySQLAudit': '#C55773',
