@@ -25,6 +25,7 @@ import (
 	"unsafe"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/modern-go/reflect2"
 )
 
 // Extension is a jsoniter.Extension that decodes JSON values to time.Time and encodes back to JSON.
@@ -77,6 +78,40 @@ func NewExtension(config Config) *Extension {
 
 var typTime = reflect.TypeOf(time.Time{})
 
+func (ext *Extension) CreateEncoder(typ reflect2.Type) jsoniter.ValEncoder {
+	if typ.Type1() != typTime {
+		return nil
+	}
+	codec := ext.config.DefaultCodec
+	if codec == nil {
+		return nil
+	}
+	if decorate := ext.config.DecorateCodec; decorate != nil {
+		codec = decorate(codec)
+	}
+	_, enc := Split(codec)
+	if enc == nil {
+		return nil
+	}
+	return NewTimeEncoder(enc, false)
+}
+func (ext *Extension) CreateDecoder(typ reflect2.Type) jsoniter.ValDecoder {
+	if typ.Type1() != typTime {
+		return nil
+	}
+	codec := ext.config.DefaultCodec
+	if codec == nil {
+		return nil
+	}
+	if decorate := ext.config.DecorateCodec; decorate != nil {
+		codec = decorate(codec)
+	}
+	dec, _ := Split(codec)
+	if dec == nil {
+		return nil
+	}
+	return NewTimeDecoder(dec, false)
+}
 func (ext *Extension) UpdateStructDescriptor(desc *jsoniter.StructDescriptor) {
 	tagName := ext.TagName()
 	for _, binding := range desc.Fields {
@@ -143,14 +178,7 @@ func (ext *Extension) newValEncoder(typ reflect.Type, encode TimeEncoder) jsonit
 	if encode == nil {
 		return nil
 	}
-	if typ.Kind() == reflect.Ptr {
-		return &jsonTimePtrEncoder{
-			encode: encode.EncodeTime,
-		}
-	}
-	return &jsonTimeEncoder{
-		encode: encode.EncodeTime,
-	}
+	return NewTimeEncoder(encode, typ.Kind() == reflect.Ptr)
 }
 
 func (ext *Extension) split(codec TimeCodec) (decoder TimeDecoder, encoder TimeEncoder) {

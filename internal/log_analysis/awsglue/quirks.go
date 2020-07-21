@@ -46,6 +46,8 @@ func RewriteFieldName(name string) string {
 }
 
 const (
+	// We want our output JSON timestamps to be: YYYY-MM-DD HH:MM:SS.fffffffff
+	// https://aws.amazon.com/premiumsupport/knowledge-center/query-table-athena-timestamp-empty/
 	TimestampLayout     = `2006-01-02 15:04:05.000000000`
 	TimestampLayoutJSON = `"` + TimestampLayout + `"`
 )

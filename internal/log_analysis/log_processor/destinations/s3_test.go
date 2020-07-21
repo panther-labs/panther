@@ -161,9 +161,9 @@ func newRegistry(names ...string) *logtypes.Registry {
 			Schema: struct {
 				Foo string `json:"foo" description:"foo field"`
 			}{},
-			NewParser: func(_ interface{}) (parsers.Interface, error) {
+			NewParser: parsers.FactoryFunc(func(_ interface{}) (parsers.Interface, error) {
 				return testutil.ParserConfig{}.Parser(), nil
-			},
+			}),
 		})
 		if err != nil {
 			panic(err)
@@ -182,6 +182,18 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	testResult, err := testEvent.Result()
 	assert.NoError(t, err)
 
+	// Gzipping the test event
+	// Do that now so that the event release does not affect output
+	var expectedBytes []byte
+	//nolint:errcheck
+	{
+		var buffer bytes.Buffer
+		writer := gzip.NewWriter(&buffer)
+		require.NoError(t, testResult.WriteJSONTo(writer))
+		_, _ = writer.Write([]byte("\n"))
+		_ = writer.Close()
+		expectedBytes = buffer.Bytes()
+	}
 	// sending event to buffered channel
 	eventChannel <- testResult
 
@@ -200,18 +212,6 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 
 	assert.Equal(t, aws.String("testbucket"), uploadInput.Bucket)
 	assert.True(t, strings.HasPrefix(*uploadInput.Key, expectedS3Prefix))
-
-	// Gzipping the test event
-	var expectedBytes []byte
-	//nolint:errcheck
-	{
-		var buffer bytes.Buffer
-		writer := gzip.NewWriter(&buffer)
-		writer.Write(testResult.JSON)
-		writer.Write([]byte("\n"))
-		writer.Close()
-		expectedBytes = buffer.Bytes()
-	}
 
 	// Collect what was produced
 	bodyBytes, _ := ioutil.ReadAll(uploadInput.Body)

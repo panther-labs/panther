@@ -39,6 +39,7 @@ import (
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
@@ -177,7 +178,7 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Re
 
 		buffer := bufferSet.getBuffer(event)
 
-		err := bufferSet.addEvent(buffer, event.JSON)
+		err := bufferSet.addEvent(buffer, event)
 		if err != nil {
 			failed = true
 			errChan <- err
@@ -358,7 +359,7 @@ func (bs *s3EventBufferSet) getBuffer(event *parsers.Result) *s3EventBuffer {
 	return buffer
 }
 
-func (bs *s3EventBufferSet) addEvent(buffer *s3EventBuffer, event []byte) error {
+func (bs *s3EventBufferSet) addEvent(buffer *s3EventBuffer, event *pantherlog.Result) error {
 	eventBytes, err := buffer.addEvent(event)
 	bs.totalBufferedMemBytes += (uint64)(eventBytes)
 	return err
@@ -422,10 +423,9 @@ func newS3EventBuffer(logType string, hour time.Time) *s3EventBuffer {
 }
 
 // addEvent adds new data to the s3EventBuffer, return bytes added and error
-func (b *s3EventBuffer) addEvent(event []byte) (int, error) {
+func (b *s3EventBuffer) addEvent(event *pantherlog.Result) (int, error) {
 	startBufferSize := b.buffer.Len()
-
-	_, err := b.writer.Write(event)
+	err := event.WriteJSONTo(b.writer)
 	if err != nil {
 		err = errors.Wrap(err, "failed to add data to buffer %s")
 		return 0, err

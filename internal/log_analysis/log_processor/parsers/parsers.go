@@ -19,19 +19,16 @@ package parsers
  */
 
 import (
-	"time"
-
-	jsoniter "github.com/json-iterator/go"
 	"gopkg.in/go-playground/validator.v9"
 
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/jsonutil"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 )
 
 // LogParser represents a parser for a supported log type
-// NOTE: We will be transitioning parsers to the `pantherlog.LogParser` interface.
+// NOTE: We will be transitioning parsers to the `parsers.Interface` interface.
 // Until all parsers are converted to the new interface the `AdapterFactory()` helper should be used
-// when registering a `logtypes.Entry` that uses this interface.
+// when registering a new log type to a `logtypes.Registry`
 type LogParser interface {
 	// LogType returns the log type supported by this parser
 	LogType() string
@@ -45,23 +42,17 @@ type LogParser interface {
 }
 
 // Validator can be used to validate schemas of log fields
-var Validator = validator.New()
+var Validator = NewValidator()
+
+// NewValidator creates a validator.Validate instance that knows how to handle the types used in panther logs.
+func NewValidator() *validator.Validate {
+	v := validator.New()
+	null.RegisterValidators(v)
+	return v
+}
 
 // JSON is a custom jsoniter config to properly remap field names for compatibility with Athena views
-var JSON = func() jsoniter.API {
-	config := jsoniter.Config{
-		EscapeHTML: true,
-		// Validate raw JSON messages to make sure queries work as expected
-		ValidateJsonRawMessage: true,
-		// We don't need sorted map keys
-		SortMapKeys: false,
-	}
-	api := config.Froze()
-	// Use proper glue columns names for fields
-	rewriteFields := jsonutil.NewEncoderNamingStrategy(awsglue.RewriteFieldName)
-	api.RegisterExtension(rewriteFields)
-	return api
-}()
+var JSON = pantherlog.JSON()
 
 // Interface is the interface to be used for log parsers.
 type Interface interface {
@@ -69,44 +60,5 @@ type Interface interface {
 }
 
 // Result is the result of parsing a log event.
-// It contains the JSON form of the pantherlog to be stored for queries.
-type Result struct {
-	LogType   string
-	EventTime time.Time
-	JSON      []byte
-}
-
-// Results wraps a single Result in a slice.
-func (r *Result) Results() []*Result {
-	if r == nil {
-		return nil
-	}
-	return []*Result{r}
-}
-
-// Factory creates new parser instances.
-// The params argument defines parameters for a parser.
-type Factory func(params interface{}) (Interface, error)
-
-// AdapterFactory returns a pantherlog.LogParser factory from a parsers.Parser
-// This is used to ease transition to the new pantherlog.EventTypeEntry registry.
-func AdapterFactory(parser LogParser) Factory {
-	return func(_ interface{}) (Interface, error) {
-		return NewAdapter(parser), nil
-	}
-}
-
-// NewAdapter creates a pantherlog.LogParser from a parsers.Parser
-func NewAdapter(parser LogParser) Interface {
-	return &logParserAdapter{
-		LogParser: parser.New(),
-	}
-}
-
-type logParserAdapter struct {
-	LogParser
-}
-
-func (a *logParserAdapter) ParseLog(log string) ([]*Result, error) {
-	return ToResults(a.LogParser.Parse(log))
-}
+// It is an alias of `pantherlog.Result` to help with the refactoring.
+type Result = pantherlog.Result

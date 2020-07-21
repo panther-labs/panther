@@ -159,6 +159,9 @@ func (config *Config) Validate() error {
 	if err := checkLogEntrySchema(desc.Name, config.Schema); err != nil {
 		return err
 	}
+	if config.NewParser == nil {
+		return errors.New("nil parser factory")
+	}
 	return nil
 }
 
@@ -196,7 +199,7 @@ func (desc *Desc) Validate() error {
 type entry struct {
 	Desc
 	schema        interface{}
-	newParser     parsers.Factory
+	newParser     parsers.FactoryFunc
 	glueTableMeta *awsglue.GlueTableMetadata
 }
 
@@ -204,7 +207,7 @@ func newEntry(desc Desc, schema interface{}, fac parsers.Factory) *entry {
 	return &entry{
 		Desc:          desc,
 		schema:        schema,
-		newParser:     fac,
+		newParser:     fac.NewParser,
 		glueTableMeta: awsglue.NewGlueTableMetadata(models.LogData, desc.Name, desc.Description, awsglue.GlueTableHourly, schema),
 	}
 }
