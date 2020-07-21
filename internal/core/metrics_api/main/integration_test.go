@@ -52,7 +52,9 @@ var (
 	lambdaClient     *lambda.Lambda
 	cloudwatchClient *cloudwatch.CloudWatch
 	endTime          = time.Now()
+	roundedEndTime          = endTime.Truncate(1 * time.Minute)
 	startTime        = endTime.Add(-2*time.Hour + 5*time.Minute)
+	roundedStartTime= startTime.Truncate(1 * time.Minute)
 
 	// Append a timestamp to the namespace so that we can pick out just the metrics we care about
 	namespace  = "ZZZPantherIntegrationTest" + strconv.Itoa(int(endTime.Unix()))
@@ -157,8 +159,8 @@ func getMetrics(t *testing.T) {
 	err := genericapi.Invoke(lambdaClient, functionName, input, &output)
 	require.NoError(t, err)
 
-	assert.Equal(t, input.GetMetrics.FromDate.UTC(), output.FromDate.UTC())
-	assert.Equal(t, input.GetMetrics.ToDate.UTC(), output.ToDate.UTC())
+	assert.Equal(t, roundedStartTime.UTC(), output.FromDate.UTC())
+	assert.Equal(t, roundedEndTime.UTC(), output.ToDate.UTC())
 	assert.Equal(t, input.GetMetrics.IntervalMinutes, output.IntervalMinutes)
 
 	metricResult := output.EventsProcessed
