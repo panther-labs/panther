@@ -52,9 +52,9 @@ var (
 	lambdaClient     *lambda.Lambda
 	cloudwatchClient *cloudwatch.CloudWatch
 	endTime          = time.Now()
-	roundedEndTime          = endTime.Truncate(1 * time.Minute)
+	roundedEndTime   = endTime.Truncate(1 * time.Minute)
 	startTime        = endTime.Add(-2*time.Hour + 5*time.Minute)
-	roundedStartTime= startTime.Truncate(1 * time.Minute)
+	roundedStartTime = startTime.Truncate(1 * time.Minute)
 
 	// Append a timestamp to the namespace so that we can pick out just the metrics we care about
 	namespace  = "ZZZPantherIntegrationTest" + strconv.Itoa(int(endTime.Unix()))
