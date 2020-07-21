@@ -37,14 +37,10 @@ const CreateS3LogSource: React.FC = () => {
   const { history } = useRouter();
   const [addLogSource, { error: s3LogError }] = useAddS3LogSource({
     update: (cache, { data }) => {
-      cache.modify({
-        fields: {
-          listLogIntegrations: (queryData, { toReference }) => {
-            const addedIntegrationCacheRef = toReference(data.addS3LogIntegration);
-            return queryData
-              ? [addedIntegrationCacheRef, ...queryData]
-              : [addedIntegrationCacheRef];
-          },
+      cache.modify('ROOT_QUERY', {
+        listLogIntegrations: (queryData, { toReference }) => {
+          const addedIntegrationCacheRef = toReference(data.addS3LogIntegration);
+          return queryData ? [addedIntegrationCacheRef, ...queryData] : [addedIntegrationCacheRef];
         },
       });
     },

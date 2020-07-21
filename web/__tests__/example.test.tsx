@@ -17,13 +17,34 @@
  */
 
 import React from 'react';
-import { render } from 'test-utils';
+import { buildUser, render, waitForElementToBeRemoved } from 'test-utils';
 import Breadcrumbs from 'Components/Breadcrumbs';
 import urls from 'Source/urls';
+import ListUsersPage, { mockListUsers } from 'Pages/Users';
 
 test('renders correct  breadcrumbs', async () => {
   const { container } = render(<Breadcrumbs />, { initialRoute: urls.compliance.policies.list() });
 
   expect(container).toHaveTextContent('Home');
   expect(container).toHaveTextContent('Policies');
+});
+
+test('renders a list of users in the users page', async () => {
+  const users = [buildUser()];
+  const mocks = [mockListUsers({ data: { users } })];
+
+  const { getByText, getByAriaLabel } = render(<ListUsersPage />, { mocks });
+
+  // Expect to see a loading interface
+  const loadingInterfaceElement = getByAriaLabel('Loading interface...');
+  expect(loadingInterfaceElement).toBeTruthy();
+
+  // Wait for it to not exist anymore
+  await waitForElementToBeRemoved(loadingInterfaceElement);
+
+  // Expect to see a list of names and emails
+  users.forEach(user => {
+    expect(getByText(`${user.givenName} ${user.familyName}`)).toBeTruthy();
+    expect(getByText(user.email)).toBeTruthy();
+  });
 });

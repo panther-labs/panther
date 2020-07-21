@@ -87,12 +87,10 @@ const ConfigureDestinationScreen: React.FC<ConfigureDestinationScreenProps> = ({
           },
         },
         update: (cache, { data: { addDestination: newDestination } }) => {
-          cache.modify({
-            fields: {
-              destinations: (queryData, { toReference }) => {
-                const addDestinationRef = toReference(newDestination);
-                return queryData ? [addDestinationRef, ...queryData] : [addDestinationRef];
-              },
+          cache.modify('ROOT_QUERY', {
+            destinations: (queryData, { toReference }) => {
+              const addDestinationRef = toReference(newDestination);
+              return queryData ? [addDestinationRef, ...queryData] : [addDestinationRef];
             },
           });
         },

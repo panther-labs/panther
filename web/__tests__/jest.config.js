@@ -27,7 +27,6 @@ module.exports = {
   // This is the only way for jest to detect our custom webpack aliases
   moduleNameMapper: {
     '\\.(jpg|jpeg|png|svg)$': '<rootDir>/__mocks__/file.ts',
-    '^lodash-es/(.*)': 'lodash/$1',
     '^Assets/(.*)': '<rootDir>/../src/assets/$1',
     '^Components/(.*)': '<rootDir>/../src/components/$1',
     '^Generated/(.*)': '<rootDir>/../__generated__/$1',

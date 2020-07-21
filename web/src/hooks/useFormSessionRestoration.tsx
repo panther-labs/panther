@@ -17,7 +17,7 @@
  */
 import React from 'react';
 import { useFormikContext } from 'formik';
-import debounce from 'lodash-es/debounce';
+import debounce from 'lodash/debounce';
 import storage from 'Helpers/storage';
 
 export interface UseFormSessionRestorationProps {

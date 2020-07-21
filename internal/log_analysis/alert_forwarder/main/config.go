@@ -1,4 +1,4 @@
-package forwarder
+package main
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -39,8 +39,8 @@ var (
 	sqsClient  sqsiface.SQSAPI
 
 	httpClient   *http.Client
-	policyConfig *policiesclient.TransportConfig
 	policyClient *policiesclient.PantherAnalysis
+	policyConfig *policiesclient.TransportConfig
 )
 
 type envConfig struct {

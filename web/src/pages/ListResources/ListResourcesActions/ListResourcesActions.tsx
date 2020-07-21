@@ -26,9 +26,9 @@ import FormikTextInput from 'Components/fields/TextInput';
 import FormikCombobox from 'Components/fields/ComboBox';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import pick from 'lodash-es/pick';
+import pick from 'lodash/pick';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
-import isEmpty from 'lodash-es/isEmpty';
+import isEmpty from 'lodash/isEmpty';
 import { useListAccountIds } from './graphql/listAccountIds.generated';
 
 const statusOptions = Object.values(ComplianceStatusEnum);

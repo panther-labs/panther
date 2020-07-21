@@ -28,7 +28,7 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-// TestPolicy runs a policy against a set of unit tests.
+// TestPolicy runs a policy (or rule) against a set of unit tests.
 func TestPolicy(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
 	input, err := parseTestPolicy(request)
 	if err != nil {

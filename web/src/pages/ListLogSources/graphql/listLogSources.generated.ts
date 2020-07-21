@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
-
 import * as Types from '../../../../__generated__/schema';
 
 import { S3LogIntegrationDetails } from '../../../graphql/fragments/S3LogIntegrationDetails.generated';
@@ -77,3 +75,18 @@ export type ListLogSourcesQueryResult = ApolloReactCommon.QueryResult<
   ListLogSources,
   ListLogSourcesVariables
 >;
+export function mockListLogSources({
+  data,
+  variables,
+  error,
+}: {
+  data: ListLogSources;
+  variables?: ListLogSourcesVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: ListLogSourcesDocument, variables },
+    result: { data },
+    error,
+  };
+}

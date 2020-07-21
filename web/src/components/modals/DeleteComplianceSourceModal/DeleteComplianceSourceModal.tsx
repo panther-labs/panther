@@ -35,7 +35,13 @@ const DeleteSourceModal: React.FC<DeleteComplianceSourceModalProps> = ({ source,
     },
     optimisticResponse: () => ({ deleteComplianceIntegration: true }),
     update: cache => {
-      cache.evict({ id: cache.identify(source) });
+      cache.modify('ROOT_QUERY', {
+        listComplianceIntegrations: (queryData, { toReference }) => {
+          const deletedSource = toReference(source);
+          return queryData.filter(({ __ref }) => __ref !== deletedSource.__ref);
+        },
+      });
+      cache.gc();
     },
     onCompleted: () => {
       pushSnackbar({

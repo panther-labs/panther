@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Alert, Heading, SideSheet, useSnackbar, Box, SideSheetProps } from 'pouncejs';
-import pick from 'lodash-es/pick';
+import pick from 'lodash/pick';
 import { Destination, DestinationConfigInput, DestinationTypeEnum } from 'Generated/schema';
 import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm';
 import SNSDestinationForm from 'Components/forms/SnsDestinationForm';

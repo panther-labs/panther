@@ -31,37 +31,42 @@ type LambdaInput struct {
 
 // GetMetricsInput is used to request data points for a number of metrics over a given time frame
 type GetMetricsInput struct {
-	MetricNames   []string  `json:"metricNames" validate:"required"`
-	Namespace     string    `json:"namespace"`
-	FromDate      time.Time `json:"fromDate" validate:"required"`
-	ToDate        time.Time `json:"toDate" validate:"required,gtfield=FromDate"`
-	IntervalHours int64     `json:"intervalHours" validate:"required,gt=0"`
+	MetricNames     []string  `json:"metricNames" validate:"required"`
+	Namespace       string    `json:"namespace"`
+	FromDate        time.Time `json:"fromDate" validate:"required"`
+	ToDate          time.Time `json:"toDate" validate:"required,gtfield=FromDate"`
+	IntervalMinutes int64     `json:"intervalMinutes" validate:"required,gt=0"`
 }
 
 // GetMetricsOutput contains data points for a number of metrics over the specified time frame
 type GetMetricsOutput struct {
-	MetricResults []MetricResult `json:"metricResults"`
-	FromDate      time.Time      `json:"fromDate"`
-	ToDate        time.Time      `json:"toDate"`
-	IntervalHours int64          `json:"intervalHours"`
+	EventsProcessed  *MetricResult `json:"eventsProcessed,omitempty"`
+	TotalAlertsDelta *MetricResult `json:"totalAlertsDelta,omitempty"`
+	AlertsBySeverity *MetricResult `json:"alertsBySeverity,omitempty"`
+	FromDate         time.Time     `json:"fromDate"`
+	ToDate           time.Time     `json:"toDate"`
+	IntervalMinutes  int64         `json:"intervalMinutes"`
 }
 
 // MetricResult is either a single data point or a series of timestamped data points
 type MetricResult = struct {
-	MetricName  string
-	SingleValue []SingleMetricValue  `json:"singleValue,omitempty"`
-	SeriesData  []TimeSeriesResponse `json:"seriesData,omitempty"`
+	SingleValue []SingleMetric   `json:"singleValue,omitempty"`
+	SeriesData  TimeSeriesMetric `json:"seriesData,omitempty"`
 }
 
-type SingleMetricValue struct {
-	Label *string
-	Value int64
+type SingleMetric struct {
+	Label *string  `json:"label"`
+	Value *float64 `json:"value"`
 }
 
 // TimeSeriesResponse contains the pertinent fields from the GetMetricData response to be passed
 // back to the frontend
-type TimeSeriesResponse struct {
-	Label      *string
-	Timestamps []*time.Time
-	Values     []*float64
+type TimeSeriesMetric struct {
+	Timestamps []*time.Time       `json:"timestamps"`
+	Series     []TimeSeriesValues `json:"series"`
+}
+
+type TimeSeriesValues struct {
+	Label  *string    `json:"label"`
+	Values []*float64 `json:"values"`
 }

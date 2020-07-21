@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* eslint-disable import/order, import/no-duplicates, @typescript-eslint/no-unused-vars */
-
 import * as Types from '../../../../__generated__/schema';
 
 import { RuleFull } from '../../../graphql/fragments/RuleFull.generated';
@@ -75,3 +73,18 @@ export type UpdateRuleMutationOptions = ApolloReactCommon.BaseMutationOptions<
   UpdateRule,
   UpdateRuleVariables
 >;
+export function mockUpdateRule({
+  data,
+  variables,
+  error,
+}: {
+  data: UpdateRule;
+  variables?: UpdateRuleVariables;
+  error?: Error;
+}) {
+  return {
+    request: { query: UpdateRuleDocument, variables },
+    result: { data },
+    error,
+  };
+}

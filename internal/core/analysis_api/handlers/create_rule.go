@@ -55,6 +55,7 @@ func CreateRule(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 	item := &tableItem{
 		Body:               input.Body,
 		DedupPeriodMinutes: input.DedupPeriodMinutes,
+		Threshold:          input.Threshold,
 		Description:        input.Description,
 		DisplayName:        input.DisplayName,
 		Enabled:            input.Enabled,
@@ -117,7 +118,7 @@ func enabledRuleTestsPass(rule *models.UpdateRule) (bool, error) {
 		ResourceTypes: rule.LogTypes,
 		Tests:         rule.Tests,
 	}
-	testResults, err := policyEngine.TestPolicy(tp)
+	testResults, err := ruleEngine.TestRule(tp)
 	if err != nil {
 		return false, err
 	}

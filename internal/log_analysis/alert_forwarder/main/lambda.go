@@ -32,9 +32,19 @@ import (
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
+var handler *forwarder.Handler
+
 func init() {
 	// Required only once per Lambda container
-	forwarder.Setup()
+	Setup()
+	cache := forwarder.NewCache(httpClient, policyClient)
+	handler = &forwarder.Handler{
+		SqsClient:        sqsClient,
+		DdbClient:        ddbClient,
+		Cache:            cache,
+		AlertingQueueURL: env.AlertingQueueURL,
+		AlertTable:       env.AlertsTable,
+	}
 }
 
 func main() {
@@ -76,7 +86,7 @@ func reporterHandler(lc *lambdacontext.LambdaContext, event events.DynamoDBEvent
 			continue
 		}
 
-		if err = forwarder.Handle(oldAlertDedupEvent, newAlertDedupEvent); err != nil {
+		if err = handler.Do(oldAlertDedupEvent, newAlertDedupEvent); err != nil {
 			return errors.Wrap(err, "encountered issue while handling deduplication event")
 		}
 	}

@@ -46,7 +46,7 @@ func customSNSAlarms(_ context.Context, event cfn.Event) (string, map[string]int
 		return "custom:alarms:sns:" + props.TopicName, nil, putSNSAlarmGroup(props)
 
 	case cfn.RequestDelete:
-		return event.PhysicalResourceID, nil, deleteMetricAlarms(
+		return event.PhysicalResourceID, nil, deleteAlarms(
 			event.PhysicalResourceID, snsFailedNotificationsAlarm)
 
 	default:
@@ -55,7 +55,7 @@ func customSNSAlarms(_ context.Context, event cfn.Event) (string, map[string]int
 }
 
 func putSNSAlarmGroup(props SNSAlarmProperties) error {
-	input := cloudwatch.PutMetricAlarmInput{
+	input := &cloudwatch.PutMetricAlarmInput{
 		AlarmActions: []*string{&props.AlarmTopicArn},
 		AlarmDescription: aws.String(fmt.Sprintf(
 			"SNS topic %s is failing. See: %s#%s",
