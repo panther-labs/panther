@@ -133,6 +133,10 @@ func UnixSecondsCodec() TimeCodec {
 type unixSecondsCodec struct{}
 
 func (*unixSecondsCodec) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
+	if tm.IsZero() {
+		stream.WriteNil()
+		return
+	}
 	tm = tm.Truncate(time.Microsecond)
 	unixSeconds := time.Duration(tm.UnixNano()).Seconds()
 	stream.WriteFloat64(unixSeconds)
@@ -178,6 +182,10 @@ func UnixMillisecondsCodec() TimeCodec {
 type unixMillisecondsCodec struct{}
 
 func (*unixMillisecondsCodec) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
+	if tm.IsZero() {
+		stream.WriteNil()
+		return
+	}
 	msec := tm.UnixNano() / int64(time.Millisecond)
 	stream.WriteInt64(msec)
 }

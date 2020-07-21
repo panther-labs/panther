@@ -148,3 +148,69 @@ func TestConfig(t *testing.T) {
 		require.Equal(t, expect.Local().Format(time.RFC3339Nano), v.Time.Format(time.RFC3339Nano))
 	}
 }
+
+func TestPointerZeroValues(t *testing.T) {
+	ext := NewExtension(Config{
+		DefaultCodec: UnixSecondsCodec(),
+	})
+	api := jsoniter.Config{}.Froze()
+	api.RegisterExtension(ext)
+	type T struct {
+		Time *time.Time `json:"tm,omitempty"`
+	}
+	now := time.Now()
+	{
+		v := T{
+			Time: &now,
+		}
+		require.NoError(t, api.UnmarshalFromString(`{"tm":""}`, &v))
+		require.Nil(t, v.Time)
+	}
+	{
+		v := T{}
+		require.NoError(t, api.UnmarshalFromString(`{"tm":""}`, &v))
+		require.Nil(t, v.Time)
+	}
+	{
+		v := T{}
+		require.NoError(t, api.UnmarshalFromString(`{"tm":"1595257966.369"}`, &v))
+		expect := time.Date(2020, 7, 20, 15, 12, 46, int(0.369*float64(time.Second.Nanoseconds())), time.UTC)
+		require.Equal(t, expect.Local().Format(time.RFC3339Nano), v.Time.Format(time.RFC3339Nano))
+	}
+	{
+		v := T{
+			Time: &now,
+		}
+		require.NoError(t, api.UnmarshalFromString(`{"tm":"1595257966.369"}`, &v))
+		expect := time.Date(2020, 7, 20, 15, 12, 46, int(0.369*float64(time.Second.Nanoseconds())), time.UTC)
+		require.Equal(t, expect.Local().Format(time.RFC3339Nano), v.Time.Format(time.RFC3339Nano))
+	}
+	{
+		actual, err := api.MarshalToString(T{
+			Time: &now,
+		})
+		require.NoError(t, err)
+		require.Equal(t, `{"tm":1595257966.369}`, actual)
+	}
+	{
+		actual, err := api.MarshalToString(T{})
+		require.NoError(t, err)
+		require.Equal(t, `{}`, actual)
+	}
+	{
+		type T struct {
+			Time time.Time `json:"tm"`
+		}
+		actual, err := api.MarshalToString(T{})
+		require.NoError(t, err)
+		require.Equal(t, `{"tm":null}`, actual)
+	}
+	{
+		type T struct {
+			Time *time.Time `json:"tm"`
+		}
+		actual, err := api.MarshalToString(T{})
+		require.NoError(t, err)
+		require.Equal(t, `{"tm":null}`, actual)
+	}
+}

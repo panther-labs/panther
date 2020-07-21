@@ -201,7 +201,7 @@ func (*jsonTimePtrEncoder) IsEmpty(ptr unsafe.Pointer) bool {
 func (enc *jsonTimePtrEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	tm := *((**time.Time)(ptr))
 	if tm == nil {
-		stream.WriteNil()
+		enc.encode(time.Time{}, stream)
 	} else {
 		enc.encode(*tm, stream)
 	}
