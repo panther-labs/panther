@@ -20,6 +20,7 @@ package tcodec
 
 import (
 	"fmt"
+	"io"
 	"testing"
 	"time"
 
@@ -54,7 +55,7 @@ func TestRegister(t *testing.T) {
 	}
 	v := T{}
 	api := jsoniter.Config{}.Froze()
-	api.RegisterExtension(NewExtension())
+	api.RegisterExtension(NewExtension(Config{}))
 	require.NoError(t, api.UnmarshalFromString(`{"time":"2020"}`, &v))
 	expect := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 	require.Equal(t, expect, v.Time.UTC())
@@ -95,38 +96,130 @@ func TestRegister(t *testing.T) {
 
 func TestUnixMillisecondsDecoder(t *testing.T) {
 	dec := UnixMillisecondsCodec()
-	tm, err := dec.DecodeTime("")
-	require.NoError(t, err)
+	iter := jsoniter.Parse(jsoniter.ConfigDefault, nil, 1024)
+	iter.ResetBytes([]byte(`""`))
+	iter.Error = nil
+	tm  := dec.DecodeTime(iter)
+	require.NoError(t, iter.Error)
 	require.Equal(t, time.Time{}.Format(time.RFC3339Nano), tm.Format(time.RFC3339Nano))
 
-	tm, err = dec.DecodeTime("0")
-	require.NoError(t, err)
+	iter.ResetBytes([]byte(`"0"`))
+	iter.Error = nil
+	tm  = dec.DecodeTime(iter)
+	require.NoError(t, iter.Error)
 	require.Equal(t, time.Unix(0, 0).Format(time.RFC3339Nano), tm.Format(time.RFC3339Nano))
 
-	tm, err = dec.DecodeTime("foo")
-	require.Error(t, err)
+	iter.ResetBytes([]byte(`0`))
+	iter.Error = nil
+	tm  = dec.DecodeTime(iter)
+	require.NoError(t, iter.Error)
+	require.Equal(t, time.Unix(0, 0).Format(time.RFC3339Nano), tm.Format(time.RFC3339Nano))
 
-	tm, err = dec.DecodeTime("1595257966369")
-	require.NoError(t, err)
+	iter.ResetBytes([]byte(`foo`))
+	iter.Error = nil
+	tm  = dec.DecodeTime(iter)
+	require.Error(t, iter.Error)
+
+	iter.ResetBytes([]byte(`"1595257966369"`))
+	iter.Error = nil
+	tm  = dec.DecodeTime(iter)
 	expect := time.Date(2020, 7, 20, 15, 12, 46, int(0.369*float64(time.Second.Nanoseconds())), time.UTC)
+	require.Equal(t, expect.Format(time.RFC3339Nano), tm.UTC().Format(time.RFC3339Nano))
+
+	iter.ResetBytes([]byte(`1595257966369`))
+	iter.Error = nil
+	tm  = dec.DecodeTime(iter)
+	require.Equal(t, io.EOF, iter.Error)
 	require.Equal(t, expect.Format(time.RFC3339Nano), tm.UTC().Format(time.RFC3339Nano))
 }
 
 func TestUnixSecondsDecoder(t *testing.T) {
 	dec := UnixSecondsCodec()
-	tm, err := dec.DecodeTime("")
-	require.NoError(t, err)
+	iter := jsoniter.Parse(jsoniter.ConfigDefault, nil, 1024)
+
+	iter.ResetBytes([]byte(`""`))
+	iter.Error = nil
+	tm := dec.DecodeTime(iter)
+	require.NoError(t, iter.Error)
 	require.Equal(t, time.Time{}.Format(time.RFC3339Nano), tm.Format(time.RFC3339Nano))
 
-	tm, err = dec.DecodeTime("0")
-	require.NoError(t, err)
+	iter.ResetBytes([]byte(`null`))
+	tm = dec.DecodeTime(iter)
+	require.NoError(t, iter.Error)
+	require.Equal(t, time.Time{}.Format(time.RFC3339Nano), tm.Format(time.RFC3339Nano))
+
+	iter.ResetBytes([]byte(`0`))
+	iter.Error = nil
+	tm = dec.DecodeTime(iter)
+	require.Equal(t, io.EOF, iter.Error)
 	require.Equal(t, time.Unix(0, 0).Format(time.RFC3339Nano), tm.Format(time.RFC3339Nano))
 
-	tm, err = dec.DecodeTime("foo")
-	require.Error(t, err)
-
-	tm, err = dec.DecodeTime("1595257966.369")
+	str := ""
+	err := jsoniter.UnmarshalFromString(`"0"`, &str)
 	require.NoError(t, err)
+	require.Equal(t, "0", str)
+	iter.ResetBytes([]byte(`"0"`))
+	iter.Error = nil
+	tm = dec.DecodeTime(iter)
+	require.NoError(t, iter.Error)
+	require.Equal(t, time.Unix(0, 0).Format(time.RFC3339Nano), tm.Format(time.RFC3339Nano))
+
+	iter.ResetBytes([]byte(`"foo"`))
+	iter.Error = nil
+	tm = dec.DecodeTime(iter)
+	require.Error(t, iter.Error)
+
+	iter.ResetBytes([]byte(`"1595257966.369"`))
+	iter.Error = nil
+	tm = dec.DecodeTime(iter)
+	require.NoError(t, iter.Error)
 	expect := time.Date(2020, 7, 20, 15, 12, 46, int(0.369*float64(time.Second.Nanoseconds())), time.UTC)
 	require.Equal(t, expect.Format(time.RFC3339Nano), tm.UTC().Format(time.RFC3339Nano))
+
+	iter.ResetBytes([]byte(`1595257966.369`))
+	iter.Error = nil
+	tm = dec.DecodeTime(iter)
+	require.Equal(t, io.EOF, iter.Error)
+	require.Equal(t, expect.Format(time.RFC3339Nano), tm.UTC().Format(time.RFC3339Nano))
+}
+
+func TestPointers(t *testing.T) {
+	ext := NewExtension(Config{})
+	api := jsoniter.Config{}.Froze()
+	api.RegisterExtension(ext)
+	type T struct {
+		Time *time.Time `json:"tm,omitempty" tcodec:"unix"`
+	}
+	v := T{}
+	err := api.UnmarshalFromString(`{
+		"tm": "1595257966.369"
+	}`, &v)
+
+	expect := time.Date(2020, 7, 20, 15, 12, 46, int(0.369*float64(time.Second.Nanoseconds())), time.UTC).Local()
+	require.NoError(t, err)
+	require.NotNil(t, v.Time)
+	require.Equal(t, expect.Local().Format(time.RFC3339Nano), v.Time.Format(time.RFC3339Nano))
+}
+func TestEmbedded(t *testing.T) {
+	ext := NewExtension(Config{})
+	api := jsoniter.Config{}.Froze()
+	api.RegisterExtension(ext)
+	type Timestamp struct {
+		time.Time
+	}
+	type T struct {
+		Time Timestamp `json:"ts,omitempty" tcodec:"unix"`
+		TimeP *Timestamp `json:"tm,omitempty" tcodec:"unix"`
+	}
+	v := T{}
+	err := api.UnmarshalFromString(`{
+		"ts": "1595257966.369",
+		"tm": "1595257966.369"
+	}`, &v)
+
+	expect := time.Date(2020, 7, 20, 15, 12, 46, int(0.369*float64(time.Second.Nanoseconds())), time.UTC).Local()
+	require.NoError(t, err)
+	require.NotNil(t, v.TimeP)
+	require.Equal(t, expect.Format(time.RFC3339Nano), v.TimeP.Format(time.RFC3339Nano))
+	require.Equal(t, expect.Format(time.RFC3339Nano), v.Time.Format(time.RFC3339Nano))
 }

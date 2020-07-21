@@ -53,7 +53,7 @@ func (fn TimeEncoderFunc) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
 	fn(tm, stream)
 }
 
-func New(decode TimeDecoder, encode TimeEncoder) TimeCodec {
+func Join(decode TimeDecoder, encode TimeEncoder) TimeCodec {
 	return &fnCodec{
 		encode: resolveEncodeFunc(encode),
 		decode: resolveDecodeFunc(decode),
@@ -78,7 +78,7 @@ func resolveDecodeFunc(dec TimeDecoder) TimeDecoderFunc {
 	return dec.DecodeTime
 }
 
-func NewFunc(decode TimeDecoderFunc, encode TimeEncoderFunc) TimeCodec {
+func JoinFunc(decode TimeDecoderFunc, encode TimeEncoderFunc) TimeCodec {
 	return &fnCodec{
 		encode: encode,
 		decode: decode,
@@ -118,14 +118,17 @@ func (*unixSecondsCodec) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
 
 func (*unixSecondsCodec) DecodeTime(iter *jsoniter.Iterator) (tm time.Time) {
 	switch iter.WhatIsNext() {
-	case jsoniter.NilValue:
-		iter.ReadNil()
-		return
 	case jsoniter.NumberValue:
 		f := iter.ReadFloat64()
 		return UnixSeconds(f)
+	case jsoniter.NilValue:
+		iter.ReadNil()
+		return
 	case jsoniter.StringValue:
 		s := iter.ReadString()
+		if s == "" {
+			return
+		}
 		f, err := strconv.ParseFloat(s, 64)
 		if err != nil {
 			iter.ReportError("ReadUnixSeconds", err.Error())
@@ -156,14 +159,17 @@ func (*unixMillisecondsCodec) EncodeTime(tm time.Time, stream *jsoniter.Stream) 
 
 func (*unixMillisecondsCodec) DecodeTime(iter *jsoniter.Iterator) (tm time.Time) {
 	switch iter.WhatIsNext() {
-	case jsoniter.NilValue:
-		iter.ReadNil()
-		return
 	case jsoniter.NumberValue:
 		msec := iter.ReadInt64()
 		return UnixMilliseconds(msec)
+	case jsoniter.NilValue:
+		iter.ReadNil()
+		return
 	case jsoniter.StringValue:
 		s := iter.ReadString()
+		if s == "" {
+			return
+		}
 		msec, err := strconv.ParseInt(s, 10, 64)
 		if err != nil {
 			iter.ReportError("ReadUnixMilliseconds", err.Error())
@@ -220,6 +226,7 @@ type locDecoder struct {
 func (d *locDecoder) DecodeTime(iter *jsoniter.Iterator) time.Time {
 	return d.decode(iter).In(d.loc)
 }
+
 func EncodeIn(loc *time.Location, encoder TimeEncoder) TimeEncoder {
 	return &locEncoder{
 		encode: resolveEncodeFunc(encoder),

@@ -34,7 +34,9 @@ func TestNewExtension(t *testing.T) {
 		TimeUnix    time.Time `json:"t_unix,omitempty" tcodec:"unix"`
 		TimeCustom  time.Time `json:"t_custom,omitempty" tcodec:"layout=2006-01-02"`
 	}
-	ext := NewExtension(OverrideEncoder(EncodeIn(time.UTC, LayoutCodec(time.RFC3339Nano))))
+	ext := NewExtension(Config{
+		OverrideEncoder: EncodeIn(time.UTC, LayoutCodec(time.RFC3339Nano)),
+	})
 	api := jsoniter.Config{}.Froze()
 	api.RegisterExtension(ext)
 

@@ -32,10 +32,10 @@ func (r *Registry) MustRegister(name string, codec TimeCodec) {
 
 func (r *Registry) Register(name string, codec TimeCodec) error {
 	if codec == nil {
-		return errors.New("nil decoder")
+		return errors.New("nil codec")
 	}
 	if name == "" {
-		return errors.New("anonymous time decoder")
+		return errors.New("anonymous time codec")
 	}
 	if _, duplicate := r.codecs[name]; duplicate {
 		return errors.New("duplicate time codec " + name)
@@ -56,11 +56,17 @@ func (r *Registry) Lookup(name string) TimeCodec {
 	return r.codecs[name]
 }
 
-func (r *Registry) apply(ext *Extension) {
-	for name, codec := range r.codecs {
-		ext.codecs.set(name, codec)
+func (r *Registry) Extend(others ...*Registry) {
+	for _, other := range others {
+		if other == nil {
+			continue
+		}
+		for name, codec := range other.codecs {
+			r.set(name, codec)
+		}
 	}
 }
+
 func Register(name string, codec TimeCodec) error {
 	return defaultRegistry.Register(name, codec)
 }
@@ -75,3 +81,6 @@ func Lookup(name string) TimeCodec {
 	return defaultRegistry.Lookup(name)
 }
 
+func DefaultRegistry() *Registry {
+	return defaultRegistry
+}
