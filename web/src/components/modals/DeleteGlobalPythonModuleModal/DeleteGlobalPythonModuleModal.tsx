@@ -50,7 +50,17 @@ const DeleteGlobalModal: React.FC<DeleteGlobalPythonModuleModalProps> = ({
       deleteGlobalPythonModule: true,
     },
     update: async cache => {
-      cache.evict({ id: cache.identify(globalPythonModule) });
+      cache.modify('ROOT_QUERY', {
+        listGlobalPythonModules: (data, helpers) => {
+          const globalRef = helpers.toReference(globalPythonModule);
+          return {
+            ...data,
+            globals: data.globals.filter(p => p.__ref !== globalRef.__ref),
+          };
+        },
+      });
+
+      cache.gc();
     },
     onCompleted: () => {
       pushSnackbar({
