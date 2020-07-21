@@ -24,10 +24,10 @@ import {
   AbstractButton,
   DropdownMenu,
   DropdownItem,
-  Tooltip,
   Flex,
   Box,
   Icon,
+  PseudoBox,
 } from 'pouncejs';
 import { AlertStatusesEnum } from 'Generated/schema';
 import AlertStatusBadge from 'Components/AlertStatusBadge';
@@ -147,36 +147,28 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
   // Create our dropdown button
   const dropdownButton = React.useMemo(
     () => (
-      <DropdownButton as={AbstractButton} outline="none" aria-label="Alert Status Options">
-        <AlertStatusBadge status={alert.status} />
-      </DropdownButton>
+      <Flex spacing={1} justify="center" align="center">
+        <AlertStatusBadge
+          status={alert.status}
+          lastUpdatedBy={lastUpdatedBy}
+          lastUpdatedByTime={lastUpdatedByTime}
+        />
+        <DropdownButton as={AbstractButton} outline="none" aria-label="Alert Status Options">
+          <PseudoBox
+            as={Icon}
+            type="caret-down"
+            padding="4px"
+            transition="all 0.2s ease-in-out"
+            border="1px solid"
+            borderColor="navyblue-450"
+            borderRadius="50%"
+            backgroundColor="transparent"
+            cursor="pointer"
+            _hover={{ backgroundColor: 'navyblue-450' }}
+          />
+        </DropdownButton>
+      </Flex>
     ),
-    [alert]
-  );
-
-  // Create a wrapped dropdown button with a tooltip.
-  const wrappedDropdownButton = React.useMemo(
-    () =>
-      lastUpdatedBy ? (
-        <Tooltip
-          content={
-            <Flex spacing={1}>
-              <Flex direction="column" spacing={1}>
-                <Box id="user-name-label">By</Box>
-                <Box id="updated-by-timestamp-label">At</Box>
-              </Flex>
-              <Flex direction="column" spacing={1} fontWeight="bold">
-                <Box aria-labelledby="user-name-label">{lastUpdatedBy}</Box>
-                <Box aria-labelledby="updated-by-timestamp-label">{lastUpdatedByTime}</Box>
-              </Flex>
-            </Flex>
-          }
-        >
-          {dropdownButton}
-        </Tooltip>
-      ) : (
-        dropdownButton
-      ),
     [alert, lastUpdatedBy, lastUpdatedByTime]
   );
 
@@ -184,7 +176,7 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
 
   return (
     <Dropdown>
-      {wrappedDropdownButton}
+      {dropdownButton}
       <DropdownMenu>
         {availableStatusesEntries.map(([statusKey, statusVal], index) => (
           <DropdownItem

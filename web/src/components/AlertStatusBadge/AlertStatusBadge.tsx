@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Badge, BadgeProps, PseudoBox, Flex, Icon, Box } from 'pouncejs';
+import { Badge, BadgeProps, PseudoBox, Box, Flex, Tooltip } from 'pouncejs';
 import { AlertStatusesEnum } from 'Generated/schema';
 
 const STATUS_COLOR_MAP: {
@@ -31,35 +31,46 @@ const STATUS_COLOR_MAP: {
 
 interface StatusBadgeProps {
   status: AlertStatusesEnum;
+  lastUpdatedBy?: string;
+  lastUpdatedByTime?: string;
 }
 
-const AlertStatusBadge: React.FC<StatusBadgeProps> = ({ status }) => (
-  <PseudoBox role="group">
-    <Flex spacing={1} justify="center" align="center">
+const AlertStatusBadge: React.FC<StatusBadgeProps> = ({
+  status,
+  lastUpdatedBy,
+  lastUpdatedByTime,
+}) => {
+  const tooltipContent = React.useMemo(
+    () => (
+      <Flex spacing={1}>
+        <Flex direction="column" spacing={1}>
+          <Box id="user-name-label">By</Box>
+          <Box id="updated-by-timestamp-label">At</Box>
+        </Flex>
+        <Flex direction="column" spacing={1} fontWeight="bold">
+          <Box aria-labelledby="user-name-label">{lastUpdatedBy}</Box>
+          <Box aria-labelledby="updated-by-timestamp-label">{lastUpdatedByTime}</Box>
+        </Flex>
+      </Flex>
+    ),
+    [lastUpdatedBy, lastUpdatedByTime]
+  );
+
+  const statusBadge = React.useMemo(
+    () => (
       <PseudoBox
         as={Badge}
+        display="inline-flex"
         backgroundColor={STATUS_COLOR_MAP[status]}
-        cursor="pointer"
         padding="4px 4px 4px 4px"
       >
-        <Box>{status}</Box>
+        {status}
       </PseudoBox>
-      <PseudoBox
-        as={Icon}
-        type="caret-down"
-        padding={1}
-        width={24}
-        height={24}
-        transition="all 0.2s ease-in-out"
-        border="1px solid"
-        borderColor="navyblue-450"
-        borderRadius={24}
-        backgroundColor="transparent"
-        cursor="pointer"
-        _groupHover={{ backgroundColor: 'navyblue-450' }}
-      />
-    </Flex>
-  </PseudoBox>
-);
+    ),
+    [status]
+  );
+
+  return lastUpdatedBy ? <Tooltip content={tooltipContent}>{statusBadge}</Tooltip> : statusBadge;
+};
 
 export default AlertStatusBadge;
