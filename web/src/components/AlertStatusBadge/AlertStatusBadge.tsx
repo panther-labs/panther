@@ -58,7 +58,12 @@ const AlertStatusBadge: React.FC<StatusBadgeProps> = ({
 
   const statusBadge = React.useMemo(
     () => (
-      <PseudoBox as={Badge} display="inline-flex" backgroundColor={STATUS_COLOR_MAP[status]}>
+      <PseudoBox
+        as={Badge}
+        display="inline-flex"
+        backgroundColor={STATUS_COLOR_MAP[status]}
+        padding="4px"
+      >
         {status}
       </PseudoBox>
     ),
