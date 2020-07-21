@@ -27,7 +27,7 @@ import (
 )
 
 // LaceworkDesc is the lacework description
-var LaceworkDesc = `LaceworkAlerts represents the content of a Lacework S3 Object.`
+var LaceworkDesc = `Lacework.Events represents the content of an exported Lacework Alert S3 Object.`
 
 // Lacework struct for Events
 type Lacework struct {
@@ -268,17 +268,17 @@ func (p *LaceworkParser) Parse(log string) ([]*parsers.PantherLog, error) {
 
 // LogType returns the log type supported by this parser
 func (p *LaceworkParser) LogType() string {
-	return "Lacework"
+	return "Lacework.Events"
 }
 
 // Update schema defs and align to the fields below
 func (event *Lacework) updatePantherFields(p *LaceworkParser) {
 	event.SetCoreFields(p.LogType(), event.EventDetails.Data[0].StartTime, event)
 
-	//if event.EventDetails.Data[0].EntityMap.IPAddress[0].SourceIPAddress != nil {
-	//	event.AppendAnyIPAddress(event.EventDetails.Data[0].EntityMap.IPAddress[0].SourceIPAddress)
-	//}
-	//if event.EventDetails.Data[0].SourceIPAddress != nil {
-	//	event.AppendAnyIPAddress(event.EventDetails.Data[0].SourceIPAddress.SourceIPAddress)
-	//}
+	if event.EventDetails.Data[0].EntityMap.IPAddress[0].SourceIPAddress != nil {
+		event.AppendAnyIPAddressPtr(event.EventDetails.Data[0].EntityMap.IPAddress[0].SourceIPAddress)
+	}
+	if event.EventDetails.Data[0].EntityMap.SourceIPAddress[0].SourceIPAddress != nil {
+		event.AppendAnyIPAddressPtr(event.EventDetails.Data[0].EntityMap.SourceIPAddress[0].SourceIPAddress)
+	}
 }
