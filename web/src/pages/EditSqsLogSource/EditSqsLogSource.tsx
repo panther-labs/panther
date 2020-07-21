@@ -26,8 +26,10 @@ import { extractErrorMessage } from 'Helpers/utils';
 import SqsSourceWizard from 'Components/wizards/SqsSourceWizard';
 import { useGetSqsLogSource } from './graphql/getSqsLogSource.generated';
 import { useUpdateSqsLogSource } from './graphql/updateSqsLogSource.generated';
+import ValidationPanel from './ValidationPanel';
 
 const EditSqsLogSource: React.FC = () => {
+  const [skipValidation, setSkipValidation] = React.useState(false);
   const { pushSnackbar } = useSnackbar();
   const { match, history } = useRouter<{ id: string }>();
   const { data, error: getError } = useGetSqsLogSource({
@@ -48,9 +50,10 @@ const EditSqsLogSource: React.FC = () => {
     () => ({
       integrationId: data?.getSqsLogIntegration.integrationId,
       integrationLabel: data?.getSqsLogIntegration?.integrationLabel ?? 'Loading...',
-      logTypes: data?.getSqsLogIntegration.sqsConfig.logTypes,
-      allowedPrincipals: data?.getSqsLogIntegration.sqsConfig.allowedPrincipals,
-      allowedSourceArns: data?.getSqsLogIntegration.sqsConfig.allowedSourceArns,
+      logTypes: data?.getSqsLogIntegration.sqsConfig.logTypes ?? [],
+      allowedPrincipals: data?.getSqsLogIntegration.sqsConfig.allowedPrincipals ?? [],
+      allowedSourceArns: data?.getSqsLogIntegration.sqsConfig.allowedSourceArns ?? [],
+      queueUrl: data?.getSqsLogIntegration.sqsConfig.queueUrl,
     }),
     [data]
   );
@@ -58,6 +61,15 @@ const EditSqsLogSource: React.FC = () => {
   // we optimistically assume that an error in "get" is a 404. We don't have any other info
   if (getError) {
     return <Page404 />;
+  }
+
+  if (!skipValidation && !data?.getSqsLogIntegration.health.sqsStatus.healthy) {
+    return (
+      <ValidationPanel
+        skipValidation={() => setSkipValidation(true)}
+        queueUrl={initialValues.queueUrl}
+      />
+    );
   }
 
   return (
@@ -85,4 +97,4 @@ const EditSqsLogSource: React.FC = () => {
   );
 };
 
-export default withSEO({ title: 'Edit S3 Log Source' })(EditSqsLogSource);
+export default withSEO({ title: 'Edit SQS Log Source' })(EditSqsLogSource);

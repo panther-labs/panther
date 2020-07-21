@@ -46,11 +46,18 @@ const LogSourceTable: React.FC<LogSourceTableProps> = ({ sources }) => {
         {sources.map(source => {
           switch (source.integrationType) {
             case LogIntegrationsEnum.sqs: {
-              return <SqsLogSourceRow source={source as SqsLogSourceIntegration} />;
+              return (
+                <SqsLogSourceRow
+                  key={source.integrationId}
+                  source={source as SqsLogSourceIntegration}
+                />
+              );
             }
             case LogIntegrationsEnum.s3:
             default: {
-              return <S3LogSourceRow source={source as S3LogIntegration} />;
+              return (
+                <S3LogSourceRow key={source.integrationId} source={source as S3LogIntegration} />
+              );
             }
           }
         })}

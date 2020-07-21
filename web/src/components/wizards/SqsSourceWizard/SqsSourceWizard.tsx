@@ -17,7 +17,7 @@ import { integrationLabelValidation } from 'Helpers/utils';
 import SuccessPanel from './SuccessPanel';
 import SqsSourceConfigurationPanel from './SqsSourceConfigurationPanel';
 
-interface EventbridgeWizardProps {
+interface SqsLogSourceWizardProps {
   initialValues: SqsLogSourceWizardValues;
   onSubmit: (values: SqsLogSourceWizardValues) => Promise<FetchResult<any>>;
   externalErrorMessage?: string;
@@ -30,6 +30,7 @@ export interface SqsLogSourceWizardValues {
   logTypes: string[];
   allowedPrincipals: string[];
   allowedSourceArns: string[];
+  queueUrl?: string;
 }
 
 const validationSchema = Yup.object().shape<SqsLogSourceWizardValues>({
@@ -43,7 +44,7 @@ const validationSchema = Yup.object().shape<SqsLogSourceWizardValues>({
 
 const initialStatus = {};
 
-const SqsSourceWizard: React.FC<EventbridgeWizardProps> = ({
+const SqsSourceWizard: React.FC<SqsLogSourceWizardProps> = ({
   initialValues,
   onSubmit,
   externalErrorMessage,

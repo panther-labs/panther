@@ -30,7 +30,7 @@ const SuccessPanel: React.FC = () => {
       <Text color="gray-300" mb={10} textAlign="center">
         {initialValues.integrationId
           ? 'Click the button below to validate your changes & update your source!'
-          : 'After setting up your Eventbridge configuration, click on the button below to complete the setup!'}
+          : 'After setting up your SQS configuration, click on the button below to complete the setup!'}
       </Text>
       <SubmitButton fullWidth>
         {initialValues.integrationId ? 'Update Source' : 'Save Source'}

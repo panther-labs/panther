@@ -33,7 +33,8 @@ const CreateSqsLogSource: React.FC = () => {
         },
       });
     },
-    onCompleted: () => history.push(urls.logAnalysis.sources.list()),
+    onCompleted: data =>
+      history.push(urls.logAnalysis.sources.edit(data.addSqsLogIntegration.integrationId, 'sqs')),
   });
 
   return (
