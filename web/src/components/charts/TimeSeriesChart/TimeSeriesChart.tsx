@@ -103,7 +103,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
           containLabel: true,
         },
         tooltip: {
-          trigger: 'axis',
+          trigger: 'axis' as const,
           position: pt => [pt[0], '100%'],
           formatter: params => {
             let tooltip = '';
@@ -122,8 +122,8 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
           },
         },
         legend: {
-          type: 'scroll',
-          orient: 'vertical',
+          type: 'scroll' as const,
+          orient: 'vertical' as const,
           left: 'auto',
           right: 'auto',
           icon: 'circle',
@@ -133,7 +133,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
           },
         },
         xAxis: {
-          type: 'time',
+          type: 'time' as const,
           splitLine: {
             show: false,
           },
@@ -148,7 +148,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
           },
         },
         yAxis: {
-          type: 'value',
+          type: 'value' as const,
           splitNumber: 4,
           axisLabel: {
             padding: [0, 20, 0, 0],
@@ -167,7 +167,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
             lineStyle: {
               color: 'rgba(246,246,246)',
               opacity: 0.15,
-              type: 'dashed',
+              type: 'dashed' as const,
             },
           },
         },
@@ -176,7 +176,6 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
 
       // load the timeSeriesChart
       const timeSeriesChart = echarts.init(container.current);
-      // @ts-ignore
       timeSeriesChart.setOption(options);
     })();
   }, [data]);
