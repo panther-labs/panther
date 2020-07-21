@@ -3,7 +3,7 @@ const github = require('@actions/github');
 const { execSync } = require('child_process');
 
 const PR_TITLE_PREFIX = '[Sync]';
-const BRANCH_PREFIX = 'sync/';
+const BRANCH_PREFIX = 'sync-';
 
 /**
  * @param str a "local" branch name

@@ -734,7 +734,7 @@ module.exports = /******/ (function (modules, runtime) {
       const { execSync } = __webpack_require__(129);
 
       const PR_TITLE_PREFIX = '[Sync]';
-      const BRANCH_PREFIX = 'sync/';
+      const BRANCH_PREFIX = 'sync-';
 
       /**
        * @param str a "local" branch name
