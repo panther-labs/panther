@@ -20,6 +20,7 @@ package parsers
 
 import (
 	"net"
+	"reflect"
 	"regexp"
 	"sort"
 	"time"
@@ -27,6 +28,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -38,6 +40,11 @@ var (
 	ipv4Regex  = regexp.MustCompile(`(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])*`)
 	rowCounter RowID // number of rows generated in this lambda execution (used to generate p_row_id)
 )
+
+func init() {
+	// Register glue mapping for PantherAnyString
+	awsglue.MustRegisterMapping(reflect.TypeOf(PantherAnyString{}), awsglue.ArrayOf(awsglue.GlueStringType))
+}
 
 // All log parsers should extend from this to get standardized fields (all prefixed with 'p_' as JSON for uniqueness)
 // NOTE: It is VERY important that fields are added to END of the structure to avoid needed to re-build existing Glue partitions.
