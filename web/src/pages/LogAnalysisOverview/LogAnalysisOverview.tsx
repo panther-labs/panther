@@ -19,9 +19,14 @@
 import React from 'react';
 import { Alert, Box, Flex, SimpleGrid } from 'pouncejs';
 import withSEO from 'Hoc/withSEO';
+import TablePlaceholder from 'Components/TablePlaceholder';
 import { extractErrorMessage } from 'Helpers/utils';
 import Panel from 'Components/Panel';
 import EventsByLogType from 'Pages/LogAnalysisOverview/EventsByLogType';
+import { SeverityEnum } from 'Generated/schema';
+import { useListAlerts } from 'Pages/ListAlerts/graphql/listAlerts.generated';
+import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
+import AlertsTable from 'Pages/LogAnalysisOverview/AlertsTable';
 import LogAnalysisOverviewPageSkeleton from './Skeleton';
 import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
 import AlertsBySeverity from './AlertsBySeverity';
@@ -55,6 +60,16 @@ const LogAnalysisOverview: React.FC = () => {
     },
   });
 
+  const { loading: loadingAlerts, data: alerts } = useListAlerts({
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      input: {
+        severity: [SeverityEnum.Critical, SeverityEnum.High],
+        pageSize: DEFAULT_LARGE_PAGE_SIZE,
+      },
+    },
+  });
+
   if (loading && !data) {
     return <LogAnalysisOverviewPageSkeleton />;
   }
@@ -70,6 +85,7 @@ const LogAnalysisOverview: React.FC = () => {
   }
 
   const { alertsBySeverity, totalAlertsDelta, eventsProcessed } = data.getLogAnalysisMetrics;
+  const alertItems = alerts?.alerts.alertSummaries || [];
 
   return (
     <Box as="article" mb={6}>
@@ -88,6 +104,11 @@ const LogAnalysisOverview: React.FC = () => {
           <Box height={200}>
             <EventsByLogType events={eventsProcessed.seriesData} />
           </Box>
+        </Panel>
+      </SimpleGrid>
+      <SimpleGrid columns={1} spacingX={3} spacingY={2}>
+        <Panel title="Recent High Severity Alerts">
+          {loadingAlerts ? <TablePlaceholder /> : <AlertsTable items={alertItems} />}
         </Panel>
       </SimpleGrid>
     </Box>

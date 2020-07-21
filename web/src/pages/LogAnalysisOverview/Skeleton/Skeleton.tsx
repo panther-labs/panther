@@ -40,7 +40,7 @@ const ComplianceOverviewPageSkeleton: React.FC = () => {
           </Panel>
         </SimpleGrid>
         <SimpleGrid columns={1} spacingX={3} spacingY={2}>
-          <Panel title="Recent Alerts | High Severity Alerts">
+          <Panel title="Recent High Severity Alerts">
             <TablePlaceholder />
           </Panel>
         </SimpleGrid>
