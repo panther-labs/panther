@@ -151,6 +151,8 @@ func destroyLogGroups(selfLogGroupName, roleName string) error {
 	if err != nil {
 		return fmt.Errorf("failed to add iam permission boundary to self: %v", err)
 	}
+
+	// Our own log group will be deleted by CloudFormation right after we exit.
 	return nil
 }
 

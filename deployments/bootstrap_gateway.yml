@@ -238,7 +238,7 @@ Resources:
 
   # During teardown, CloudFormation will delete this group while the Lambda function is still running.
   # This would normally lead to the group being recreated by Lambda, but the PantherTeardown resource
-  # modifies the custom resource IAM role to block future logs.
+  # adds an IAM permission boundary to the custom resource role which blocks future logs.
   #
   # In other words, by the time CFN deletes this log group, it can't be created again.
   CustomResourceLogGroup:
