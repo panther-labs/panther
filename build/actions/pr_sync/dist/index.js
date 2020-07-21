@@ -779,11 +779,11 @@ module.exports = /******/ (function (modules, runtime) {
           core.debug('Cloning destination repo...');
 
           core.debug('Creating a branch from the merge commit...');
-          execSync(`git remote add target https://3nvi:${token}@github.com/${destRepo}.git`); // prettier-ignore
+          // execSync(`git remote add target https://3nvi:${token}@github.com/${destRepo}.git`); // prettier-ignore
           execSync(`git checkout -b ${destPullRequestBranchName}`);
           execSync(`git config --global user.name "action"`);
           execSync(`git config --global user.email "action@action.com"`);
-          execSync(`git push target ${destPullRequestBranchName}`);
+          execSync(`git push https://${token}@github.com/${destRepo}.git -f`);
 
           core.debug('Initializing octokit...');
           const octokit = github.getOctokit(token);
