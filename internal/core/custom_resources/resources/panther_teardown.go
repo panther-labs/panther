@@ -21,11 +21,14 @@ package resources
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/ecr"
+	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"go.uber.org/zap"
 )
@@ -33,7 +36,9 @@ import (
 const globalLayerName = "panther-engine-globals"
 
 type PantherTeardownProperties struct {
-	EcrRepoName string
+	CustomResourceLogGroupName string `validate:"required"`
+	CustomResourceRoleName     string `validate:"required"`
+	EcrRepoName                string
 }
 
 func customPantherTeardown(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
@@ -52,7 +57,12 @@ func customPantherTeardown(_ context.Context, event cfn.Event) (string, map[stri
 			}
 		}
 
-		return resourceID, nil, destroyLambdaLayers()
+		if err := destroyLambdaLayers(); err != nil {
+			return resourceID, nil, err
+		}
+
+		// Save the log groups for last
+		return resourceID, nil, destroyLogGroups(props.CustomResourceLogGroupName, props.CustomResourceRoleName)
 
 	default:
 		// skip creates/updates
@@ -92,6 +102,72 @@ func destroyLambdaLayers() error {
 		if err != nil {
 			return fmt.Errorf("failed to delete layer version %d: %v", aws.Int64Value(version.Version), err)
 		}
+	}
+
+	return nil
+}
+
+// Remove leftover CloudWatch log groups.
+//
+// "/aws/lambda/panther-" log groups are often recreated by still-running Lambda functions shortly
+// after CloudFormation deletes them.
+// This is problematic because it will break future deploys - CFN refuses to create log groups which already exist.
+func destroyLogGroups(selfLogGroupName, roleName string) error {
+	listInput := &cloudwatchlogs.DescribeLogGroupsInput{
+		LogGroupNamePrefix: aws.String("/aws/lambda/panther-"),
+	}
+
+	// Find and remove all "/aws/lambda/panther-*" log groups except the one used by this function.
+	var groupNames []*string
+	err := cloudWatchLogsClient.DescribeLogGroupsPages(listInput, func(page *cloudwatchlogs.DescribeLogGroupsOutput, _ bool) bool {
+		for _, group := range page.LogGroups {
+			if group.LogGroupName != nil && *group.LogGroupName != selfLogGroupName {
+				groupNames = append(groupNames, group.LogGroupName)
+			}
+		}
+		return true
+	})
+	if err != nil {
+		return fmt.Errorf("failed to list log groups: %v", err)
+	}
+
+	// By the time this code runs, all other Lambda functions and non-bootstrap stacks have been gone
+	// for some time, so we should be able to remove the leftover groups without worrying about more pending logs.
+	for _, name := range groupNames {
+		if err := deleteLogGroup(name); err != nil {
+			return err
+		}
+	}
+
+	// Now for the tricky part - how to remove our own log group?
+	// If we just delete the group, it will be recreated automatically when the Lambda function exits.
+	// To prevent this, we use an IAM permission boundary to block future log writes from our own IAM role.
+	// Then we can let CFN delete the log group and Lambda will not be allowed to recreate it.
+
+	zap.L().Info("blocking future log writes")
+	_, err = iamClient.PutRolePermissionsBoundary(&iam.PutRolePermissionsBoundaryInput{
+		PermissionsBoundary: aws.String("arn:aws:iam::aws:policy/AWSDenyAll"),
+		RoleName:            &roleName,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to add iam permission boundary to self: %v", err)
+	}
+
+	time.Sleep(15 * time.Second) // takes a few seconds for IAM boundary to kick in
+
+	// Our own log group will be deleted by CloudFormation right after we exit.
+	return nil
+}
+
+func deleteLogGroup(name *string) error {
+	zap.L().Info("deleting log group", zap.String("groupName", *name))
+	_, err := cloudWatchLogsClient.DeleteLogGroup(&cloudwatchlogs.DeleteLogGroupInput{LogGroupName: name})
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == cloudwatchlogs.ErrCodeResourceNotFoundException {
+			// log group no longer exists, carry on
+			return nil
+		}
+		return fmt.Errorf("failed to delete log group %s: %v", *name, err)
 	}
 
 	return nil
