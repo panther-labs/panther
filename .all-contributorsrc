@@ -191,6 +191,15 @@
         "code",
         "security"
       ]
+    },
+    {
+      "login": "BatteryCandy",
+      "name": "Ben Pruce",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/22948585?v=4",
+      "profile": "https://github.com/BatteryCandy",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
