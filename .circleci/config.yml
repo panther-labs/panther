@@ -70,6 +70,7 @@ jobs:
 
   npm_audit:
     executor: panther-buildpack
+    resource_class: small
     steps:
       - checkout
       - run:
@@ -95,6 +96,7 @@ jobs:
 
   fossa:
     executor: panther-buildpack
+    resource_class: small
     steps:
       - run: |
           curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | bash
