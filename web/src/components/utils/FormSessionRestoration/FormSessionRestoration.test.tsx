@@ -27,6 +27,11 @@ const TestForm: React.FC = () => (
   </Formik>
 );
 
+// values stored in `sessionStorage` will also be available in other tests unless we clear them
+beforeEach(() => {
+  sessionStorage.clear();
+});
+
 test('correctly stores form values to session', async () => {
   const testValue = 'test-value';
 
