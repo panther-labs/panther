@@ -67,6 +67,10 @@ var (
 			To:   GlueTimestampType,
 		},
 		{
+			From: reflect.TypeOf(timestamp.LaceworkTimestamp{}),
+			To:   GlueTimestampType,
+		},
+		{
 			From: reflect.TypeOf(timestamp.SuricataTimestamp{}),
 			To:   GlueTimestampType,
 		},

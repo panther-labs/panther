@@ -31,17 +31,17 @@ var LaceworkDesc = `Lacework.Events represents the content of an exported Lacewo
 
 // Lacework struct for Events
 type Lacework struct {
-	EventCategory *string            `json:"EVENT_CATEGORY" validate:"required" description:"The category the event falls into"`
-	EventDetails  *LaceworkDataArray `json:"EVENT_DETAILS" validate:"required" description:"The event details"`
-	Severity      *numerics.Integer  `json:"SEVERITY" validate:"required" description:"The severity level of the alert"`
-	StartTime     *string            `json:"START_TIME" validate:"required" description:"The event start time."`
-	Summary       *string            `json:"SUMMARY" validate:"required" description:"The alert title and quick summary"`
-	EventType     *string            `json:"EVENT_TYPE" validate:"required" description:"The type of event"`
-	EventName     *string            `json:"EVENT_NAME" validate:"required" description:"The event name"`
-	Link          *string            `json:"LINK" validate:"required" description:"A link to the Lacework dashboard for the event"`
-	EventID       *numerics.Integer  `json:"EVENT_ID" validate:"required" description:"The eventID reference"`
-	Account       *string            `json:"ACCOUNT" validate:"required" description:"The Lacework tenent that created the event"`
-	Source        *string            `json:"SOURCE" validate:"required" description:"The data source the event triggered on"`
+	EventCategory *string                      `json:"EVENT_CATEGORY" validate:"required" description:"The category the event falls into"`
+	EventDetails  *LaceworkDataArray           `json:"EVENT_DETAILS" validate:"required" description:"The event details"`
+	Severity      *numerics.Integer            `json:"SEVERITY" validate:"required" description:"The severity level of the alert"`
+	StartTime     *timestamp.LaceworkTimestamp `json:"START_TIME" validate:"required" description:"The event start time."`
+	Summary       *string                      `json:"SUMMARY" validate:"required" description:"The alert title and quick summary"`
+	EventType     *string                      `json:"EVENT_TYPE" validate:"required" description:"The type of event"`
+	EventName     *string                      `json:"EVENT_NAME" validate:"required" description:"The event name"`
+	Link          *string                      `json:"LINK" validate:"required" description:"A link to the Lacework dashboard for the event"`
+	EventID       *numerics.Integer            `json:"EVENT_ID" validate:"required" description:"The eventID reference"`
+	Account       *string                      `json:"ACCOUNT" validate:"required" description:"The Lacework tenent that created the event"`
+	Source        *string                      `json:"SOURCE" validate:"required" description:"The data source the event triggered on"`
 
 	// NOTE: added to end of struct to allow expansion later
 	parsers.PantherLog
@@ -273,12 +273,15 @@ func (p *LaceworkParser) LogType() string {
 
 // Update schema defs and align to the fields below
 func (event *Lacework) updatePantherFields(p *LaceworkParser) {
-	event.SetCoreFields(p.LogType(), event.EventDetails.Data[0].StartTime, event)
+	event.SetCoreFields(p.LogType(), (*timestamp.RFC3339)(event.StartTime), event)
 
-	if event.EventDetails.Data[0].EntityMap.IPAddress[0].SourceIPAddress != nil {
-		event.AppendAnyIPAddressPtr(event.EventDetails.Data[0].EntityMap.IPAddress[0].SourceIPAddress)
-	}
-	if event.EventDetails.Data[0].EntityMap.SourceIPAddress[0].SourceIPAddress != nil {
-		event.AppendAnyIPAddressPtr(event.EventDetails.Data[0].EntityMap.SourceIPAddress[0].SourceIPAddress)
+	for _, data := range event.EventDetails.Data {
+		for _, address := range data.EntityMap.IPAddress {
+			event.AppendAnyIPAddressPtr(address.SourceIPAddress)
+		}
+
+		for _, address := range data.EntityMap.SourceIPAddress {
+			event.AppendAnyIPAddressPtr(address.SourceIPAddress)
+		}
 	}
 }
