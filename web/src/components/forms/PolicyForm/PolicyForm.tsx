@@ -66,28 +66,37 @@ const PolicyForm: React.FC<PolicyFormProps> = ({ initialValues, onSubmit }) => {
       validationSchema={validationSchema}
     >
       <FormSessionRestoration sessionId={`policy-form-${initialValues.id || 'create'}`}>
-        <Form>
-          <Flex direction="column" as="article" spacing={5}>
-            <ErrorBoundary>
-              <BaseRuleFormCoreSection type="policy" />
-            </ErrorBoundary>
-            <ErrorBoundary>
-              <BaseRuleFormEditorSection type="policy" />
-            </ErrorBoundary>
-            <ErrorBoundary>
-              <PolicyFormTestSection />
-            </ErrorBoundary>
-            <ErrorBoundary>
-              <PolicyFormAutoRemediationSection />
-            </ErrorBoundary>
-          </Flex>
-          <Flex spacing={4} mt={5} justify="flex-end">
-            <Button variant="outline" variantColor="navyblue" onClick={history.goBack}>
-              Cancel
-            </Button>
-            <SubmitButton>{initialValues.id ? 'Update' : 'Create'}</SubmitButton>
-          </Flex>
-        </Form>
+        {({ clearFormSession }) => (
+          <Form>
+            <Flex direction="column" as="article" spacing={5}>
+              <ErrorBoundary>
+                <BaseRuleFormCoreSection type="policy" />
+              </ErrorBoundary>
+              <ErrorBoundary>
+                <BaseRuleFormEditorSection type="policy" />
+              </ErrorBoundary>
+              <ErrorBoundary>
+                <PolicyFormTestSection />
+              </ErrorBoundary>
+              <ErrorBoundary>
+                <PolicyFormAutoRemediationSection />
+              </ErrorBoundary>
+            </Flex>
+            <Flex spacing={4} mt={5} justify="flex-end">
+              <Button
+                variant="outline"
+                variantColor="navyblue"
+                onClick={() => {
+                  clearFormSession();
+                  history.goBack();
+                }}
+              >
+                Cancel
+              </Button>
+              <SubmitButton>{initialValues.id ? 'Update' : 'Create'}</SubmitButton>
+            </Flex>
+          </Form>
+        )}
       </FormSessionRestoration>
     </Formik>
   );

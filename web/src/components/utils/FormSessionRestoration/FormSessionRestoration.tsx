@@ -24,9 +24,11 @@ import useFormSessionRestoration, {
 type FormSessionRestorationProps = UseFormSessionRestorationProps;
 
 const FormSessionRestoration: React.FC<FormSessionRestorationProps> = ({ children, ...rest }) => {
-  useFormSessionRestoration(rest);
+  const { clearFormSession } = useFormSessionRestoration(rest);
 
-  return children as React.ReactElement;
+  return typeof children === 'function'
+    ? children({ clearFormSession })
+    : (children as React.ReactElement);
 };
 
 export default FormSessionRestoration;
