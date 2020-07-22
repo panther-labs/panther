@@ -100,7 +100,7 @@ jobs:
           curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | bash
       - checkout
       - run:
-          command: fossa # generate config file, run dependency analysis, and upload result to FOSSA
+          command: fossa # generate config file, run dependency analysis, and upload metadata to FOSSA
       - run:
           command: fossa test # fail CI if policy violations discovered
 
