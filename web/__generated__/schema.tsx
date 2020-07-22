@@ -524,7 +524,7 @@ export type LogAnalysisMetricsResponse = {
   __typename?: 'LogAnalysisMetricsResponse';
   eventsProcessed?: Maybe<SeriesData>;
   alertsBySeverity?: Maybe<SeriesData>;
-  totalAlertsDelta?: Maybe<TotalAlertsDelta>;
+  totalAlertsDelta?: Maybe<Array<Maybe<SingleValue>>>;
   fromDate: Scalars['AWSDateTime'];
   toDate: Scalars['AWSDateTime'];
   intervalMinutes: Scalars['Int'];
@@ -1086,11 +1086,6 @@ export type TestPolicyResponse = {
   testsErrored?: Maybe<Array<Maybe<PolicyUnitTestError>>>;
 };
 
-export type TotalAlertsDelta = {
-  __typename?: 'TotalAlertsDelta';
-  singleValue: Array<Maybe<SingleValue>>;
-};
-
 export type UpdateComplianceIntegrationInput = {
   integrationId: Scalars['String'];
   integrationLabel?: Maybe<Scalars['String']>;
@@ -1340,7 +1335,6 @@ export type ResolversTypes = {
   LogAnalysisMetricsResponse: ResolverTypeWrapper<LogAnalysisMetricsResponse>;
   SeriesData: ResolverTypeWrapper<SeriesData>;
   Series: ResolverTypeWrapper<Series>;
-  TotalAlertsDelta: ResolverTypeWrapper<TotalAlertsDelta>;
   SingleValue: ResolverTypeWrapper<SingleValue>;
   GetRuleInput: GetRuleInput;
   RuleDetails: ResolverTypeWrapper<RuleDetails>;
@@ -1469,7 +1463,6 @@ export type ResolversParentTypes = {
   LogAnalysisMetricsResponse: LogAnalysisMetricsResponse;
   SeriesData: SeriesData;
   Series: Series;
-  TotalAlertsDelta: TotalAlertsDelta;
   SingleValue: SingleValue;
   GetRuleInput: GetRuleInput;
   RuleDetails: RuleDetails;
@@ -1836,7 +1829,11 @@ export type LogAnalysisMetricsResponseResolvers<
 > = {
   eventsProcessed?: Resolver<Maybe<ResolversTypes['SeriesData']>, ParentType, ContextType>;
   alertsBySeverity?: Resolver<Maybe<ResolversTypes['SeriesData']>, ParentType, ContextType>;
-  totalAlertsDelta?: Resolver<Maybe<ResolversTypes['TotalAlertsDelta']>, ParentType, ContextType>;
+  totalAlertsDelta?: Resolver<
+    Maybe<Array<Maybe<ResolversTypes['SingleValue']>>>,
+    ParentType,
+    ContextType
+  >;
   fromDate?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   toDate?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   intervalMinutes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -2494,14 +2491,6 @@ export type TestPolicyResponseResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
-export type TotalAlertsDeltaResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['TotalAlertsDelta'] = ResolversParentTypes['TotalAlertsDelta']
-> = {
-  singleValue?: Resolver<Array<Maybe<ResolversTypes['SingleValue']>>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
 export type UploadPoliciesResponseResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['UploadPoliciesResponse'] = ResolversParentTypes['UploadPoliciesResponse']
@@ -2585,7 +2574,6 @@ export type Resolvers<ContextType = any> = {
   SnsConfig?: SnsConfigResolvers<ContextType>;
   SqsConfig?: SqsConfigResolvers<ContextType>;
   TestPolicyResponse?: TestPolicyResponseResolvers<ContextType>;
-  TotalAlertsDelta?: TotalAlertsDeltaResolvers<ContextType>;
   UploadPoliciesResponse?: UploadPoliciesResponseResolvers<ContextType>;
   User?: UserResolvers<ContextType>;
 };

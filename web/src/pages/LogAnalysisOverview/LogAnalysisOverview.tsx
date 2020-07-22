@@ -93,7 +93,7 @@ const LogAnalysisOverview: React.FC = () => {
         <Panel title="Real-time Alerts">
           <Box height={200}>
             <Flex direction="row" width="100%">
-              <AlertSummary data={totalAlertsDelta.singleValue} />
+              <AlertSummary data={totalAlertsDelta} />
               <AlertsBySeverity alerts={alertsBySeverity} />
             </Flex>
           </Box>

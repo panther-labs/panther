@@ -111,7 +111,6 @@ import {
   SuppressPoliciesInput,
   TestPolicyInput,
   TestPolicyResponse,
-  TotalAlertsDelta,
   UpdateComplianceIntegrationInput,
   UpdateGeneralSettingsInput,
   UpdatePolicyInput,
@@ -803,7 +802,7 @@ export const buildLogAnalysisMetricsResponse = (
     alertsBySeverity:
       'alertsBySeverity' in overrides ? overrides.alertsBySeverity : buildSeriesData(),
     totalAlertsDelta:
-      'totalAlertsDelta' in overrides ? overrides.totalAlertsDelta : buildTotalAlertsDelta(),
+      'totalAlertsDelta' in overrides ? overrides.totalAlertsDelta : [buildSingleValue()],
     fromDate: 'fromDate' in overrides ? overrides.fromDate : '2020-06-15T22:39:08.690Z',
     toDate: 'toDate' in overrides ? overrides.toDate : '2020-06-29T16:49:54.582Z',
     intervalMinutes: 'intervalMinutes' in overrides ? overrides.intervalMinutes : 670,
@@ -1274,15 +1273,6 @@ export const buildTestPolicyResponse = (
     testsFailed: 'testsFailed' in overrides ? overrides.testsFailed : ['Granite'],
     testsErrored:
       'testsErrored' in overrides ? overrides.testsErrored : [buildPolicyUnitTestError()],
-  };
-};
-
-export const buildTotalAlertsDelta = (
-  overrides: Partial<TotalAlertsDelta> = {}
-): TotalAlertsDelta => {
-  return {
-    __typename: 'TotalAlertsDelta',
-    singleValue: 'singleValue' in overrides ? overrides.singleValue : [buildSingleValue()],
   };
 };
 

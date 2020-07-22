@@ -15,10 +15,8 @@ query GetLogAnalysisMetrics($input: LogAnalysisMetricsInput!) {
       timestamps
     }
     totalAlertsDelta {
-      singleValue {
-        label
-        value
-      }
+      label
+      value
     }
     intervalMinutes
   }
