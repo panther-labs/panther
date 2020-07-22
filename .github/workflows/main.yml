@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.ENVY_TOKEN }}
 
       - name: Monitor PRs on a Source Repo & Create PRs on a dest one
         uses: ./build/actions/pr_sync
