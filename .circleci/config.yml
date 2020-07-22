@@ -94,7 +94,8 @@ jobs:
           name: Check bundle size
           command: npm run bundlesize
 
-  fossa:
+  # Upload dependency metadata to FOSSA, analyze offline
+  fossa_upload:
     executor: panther-buildpack
     resource_class: small
     steps:
@@ -103,8 +104,6 @@ jobs:
       - checkout
       - run:
           command: fossa # generate config file, run dependency analysis, and upload metadata to FOSSA
-      - run:
-          command: fossa test # fail CI if policy violations discovered
 
 workflows:
   version: 2
@@ -113,4 +112,4 @@ workflows:
       - mage_test_ci
       - npm_audit
       - bundlesize
-      - fossa
+      - fossa_upload
