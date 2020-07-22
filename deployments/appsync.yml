@@ -1199,7 +1199,18 @@ Resources:
         #if($context.error)
           $util.error($context.error.errorMessage, $context.error.errorType, {})
         #else
-          $util.toJson($ctx.result)
+          #set($response = {
+              "statusCode": 200
+              "body" : {
+                eventsProcessed: $context.result.body.eventsProcessed.seriesData
+                alertsBySeverity: $context.result.body.alertsBySeverity.seriesData
+                totalAlertsDelta: $context.result.body.alertsBySeverity.seriesData
+                fromDate: $context.result.body.fromDate
+                toDate: $context.result.body.toDate
+                intervalMinutes: $context.result.body.intervalMinutes
+              }
+          })
+          $util.toJson($response)
         #end
 
   ResourcesForPolicyResolver:

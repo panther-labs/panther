@@ -61,7 +61,7 @@ type Query {
   listComplianceIntegrations: [ComplianceIntegration!]!
   listLogIntegrations: [LogIntegration!]!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
-  getLogAnalysisMetrics(input: LogAnalysisMetricsInput): LogAnalysisMetricsResponse
+  getLogAnalysisMetrics(input: LogAnalysisMetricsInput!): LogAnalysisMetricsResponse!
   rule(input: GetRuleInput!): RuleDetails
   rules(input: ListRulesInput): ListRulesResponse
   listGlobalPythonModules(input: ListGlobalPythonModuleInput!): ListGlobalPythonModulesResponse!
@@ -349,10 +349,6 @@ type SeriesData {
   series: [Series]
 }
 
-type SeriesMetric {
-  seriesData: SeriesData
-}
-
 type SingleValue {
   label: String!
   value: Int!
@@ -363,8 +359,8 @@ type TotalAlertsDelta {
 }
 
 type LogAnalysisMetricsResponse {
-  eventsProcessed: SeriesMetric
-  alertsBySeverity: SeriesMetric
+  eventsProcessed: SeriesData
+  alertsBySeverity: SeriesData
   totalAlertsDelta: TotalAlertsDelta
   fromDate: AWSDateTime!
   toDate: AWSDateTime!

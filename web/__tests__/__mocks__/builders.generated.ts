@@ -101,7 +101,6 @@ import {
   ScannedResourceStats,
   Series,
   SeriesData,
-  SeriesMetric,
   SingleValue,
   SlackConfig,
   SlackConfigInput,
@@ -800,10 +799,9 @@ export const buildLogAnalysisMetricsResponse = (
 ): LogAnalysisMetricsResponse => {
   return {
     __typename: 'LogAnalysisMetricsResponse',
-    eventsProcessed:
-      'eventsProcessed' in overrides ? overrides.eventsProcessed : buildSeriesMetric(),
+    eventsProcessed: 'eventsProcessed' in overrides ? overrides.eventsProcessed : buildSeriesData(),
     alertsBySeverity:
-      'alertsBySeverity' in overrides ? overrides.alertsBySeverity : buildSeriesMetric(),
+      'alertsBySeverity' in overrides ? overrides.alertsBySeverity : buildSeriesData(),
     totalAlertsDelta:
       'totalAlertsDelta' in overrides ? overrides.totalAlertsDelta : buildTotalAlertsDelta(),
     fromDate: 'fromDate' in overrides ? overrides.fromDate : '2020-06-15T22:39:08.690Z',
@@ -1192,13 +1190,6 @@ export const buildSeriesData = (overrides: Partial<SeriesData> = {}): SeriesData
     __typename: 'SeriesData',
     timestamps: 'timestamps' in overrides ? overrides.timestamps : ['2020-10-18T14:12:28.273Z'],
     series: 'series' in overrides ? overrides.series : [buildSeries()],
-  };
-};
-
-export const buildSeriesMetric = (overrides: Partial<SeriesMetric> = {}): SeriesMetric => {
-  return {
-    __typename: 'SeriesMetric',
-    seriesData: 'seriesData' in overrides ? overrides.seriesData : buildSeriesData(),
   };
 };
 

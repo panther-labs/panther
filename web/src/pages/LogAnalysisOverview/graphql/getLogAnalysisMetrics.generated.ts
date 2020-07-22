@@ -23,53 +23,43 @@ import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
 export type GetLogAnalysisMetricsVariables = {
-  input?: Types.Maybe<Types.LogAnalysisMetricsInput>;
+  input: Types.LogAnalysisMetricsInput;
 };
 
 export type GetLogAnalysisMetrics = {
-  getLogAnalysisMetrics?: Types.Maybe<
-    Pick<Types.LogAnalysisMetricsResponse, 'intervalMinutes'> & {
-      eventsProcessed?: Types.Maybe<{
-        seriesData?: Types.Maybe<
-          Pick<Types.SeriesData, 'timestamps'> & {
-            series?: Types.Maybe<Array<Types.Maybe<Pick<Types.Series, 'label' | 'values'>>>>;
-          }
-        >;
-      }>;
-      alertsBySeverity?: Types.Maybe<{
-        seriesData?: Types.Maybe<
-          Pick<Types.SeriesData, 'timestamps'> & {
-            series?: Types.Maybe<Array<Types.Maybe<Pick<Types.Series, 'label' | 'values'>>>>;
-          }
-        >;
-      }>;
-      totalAlertsDelta?: Types.Maybe<{
-        singleValue: Array<Types.Maybe<Pick<Types.SingleValue, 'label' | 'value'>>>;
-      }>;
-    }
-  >;
+  getLogAnalysisMetrics: Pick<Types.LogAnalysisMetricsResponse, 'intervalMinutes'> & {
+    eventsProcessed?: Types.Maybe<
+      Pick<Types.SeriesData, 'timestamps'> & {
+        series?: Types.Maybe<Array<Types.Maybe<Pick<Types.Series, 'label' | 'values'>>>>;
+      }
+    >;
+    alertsBySeverity?: Types.Maybe<
+      Pick<Types.SeriesData, 'timestamps'> & {
+        series?: Types.Maybe<Array<Types.Maybe<Pick<Types.Series, 'label' | 'values'>>>>;
+      }
+    >;
+    totalAlertsDelta?: Types.Maybe<{
+      singleValue: Array<Types.Maybe<Pick<Types.SingleValue, 'label' | 'value'>>>;
+    }>;
+  };
 };
 
 export const GetLogAnalysisMetricsDocument = gql`
-  query GetLogAnalysisMetrics($input: LogAnalysisMetricsInput) {
+  query GetLogAnalysisMetrics($input: LogAnalysisMetricsInput!) {
     getLogAnalysisMetrics(input: $input) {
       eventsProcessed {
-        seriesData {
-          series {
-            label
-            values
-          }
-          timestamps
+        series {
+          label
+          values
         }
+        timestamps
       }
       alertsBySeverity {
-        seriesData {
-          series {
-            label
-            values
-          }
-          timestamps
+        series {
+          label
+          values
         }
+        timestamps
       }
       totalAlertsDelta {
         singleValue {

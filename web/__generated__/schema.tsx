@@ -522,8 +522,8 @@ export type LogAnalysisMetricsInput = {
 
 export type LogAnalysisMetricsResponse = {
   __typename?: 'LogAnalysisMetricsResponse';
-  eventsProcessed?: Maybe<SeriesMetric>;
-  alertsBySeverity?: Maybe<SeriesMetric>;
+  eventsProcessed?: Maybe<SeriesData>;
+  alertsBySeverity?: Maybe<SeriesData>;
   totalAlertsDelta?: Maybe<TotalAlertsDelta>;
   fromDate: Scalars['AWSDateTime'];
   toDate: Scalars['AWSDateTime'];
@@ -822,7 +822,7 @@ export type Query = {
   listComplianceIntegrations: Array<ComplianceIntegration>;
   listLogIntegrations: Array<LogIntegration>;
   organizationStats?: Maybe<OrganizationStatsResponse>;
-  getLogAnalysisMetrics?: Maybe<LogAnalysisMetricsResponse>;
+  getLogAnalysisMetrics: LogAnalysisMetricsResponse;
   rule?: Maybe<RuleDetails>;
   rules?: Maybe<ListRulesResponse>;
   listGlobalPythonModules: ListGlobalPythonModulesResponse;
@@ -890,7 +890,7 @@ export type QueryOrganizationStatsArgs = {
 };
 
 export type QueryGetLogAnalysisMetricsArgs = {
-  input?: Maybe<LogAnalysisMetricsInput>;
+  input: LogAnalysisMetricsInput;
 };
 
 export type QueryRuleArgs = {
@@ -1018,11 +1018,6 @@ export type SeriesData = {
   __typename?: 'SeriesData';
   timestamps?: Maybe<Array<Maybe<Scalars['AWSDateTime']>>>;
   series?: Maybe<Array<Maybe<Series>>>;
-};
-
-export type SeriesMetric = {
-  __typename?: 'SeriesMetric';
-  seriesData?: Maybe<SeriesData>;
 };
 
 export enum SeverityEnum {
@@ -1343,7 +1338,6 @@ export type ResolversTypes = {
   ScannedResourceStats: ResolverTypeWrapper<ScannedResourceStats>;
   LogAnalysisMetricsInput: LogAnalysisMetricsInput;
   LogAnalysisMetricsResponse: ResolverTypeWrapper<LogAnalysisMetricsResponse>;
-  SeriesMetric: ResolverTypeWrapper<SeriesMetric>;
   SeriesData: ResolverTypeWrapper<SeriesData>;
   Series: ResolverTypeWrapper<Series>;
   TotalAlertsDelta: ResolverTypeWrapper<TotalAlertsDelta>;
@@ -1473,7 +1467,6 @@ export type ResolversParentTypes = {
   ScannedResourceStats: ScannedResourceStats;
   LogAnalysisMetricsInput: LogAnalysisMetricsInput;
   LogAnalysisMetricsResponse: LogAnalysisMetricsResponse;
-  SeriesMetric: SeriesMetric;
   SeriesData: SeriesData;
   Series: Series;
   TotalAlertsDelta: TotalAlertsDelta;
@@ -1841,8 +1834,8 @@ export type LogAnalysisMetricsResponseResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['LogAnalysisMetricsResponse'] = ResolversParentTypes['LogAnalysisMetricsResponse']
 > = {
-  eventsProcessed?: Resolver<Maybe<ResolversTypes['SeriesMetric']>, ParentType, ContextType>;
-  alertsBySeverity?: Resolver<Maybe<ResolversTypes['SeriesMetric']>, ParentType, ContextType>;
+  eventsProcessed?: Resolver<Maybe<ResolversTypes['SeriesData']>, ParentType, ContextType>;
+  alertsBySeverity?: Resolver<Maybe<ResolversTypes['SeriesData']>, ParentType, ContextType>;
   totalAlertsDelta?: Resolver<Maybe<ResolversTypes['TotalAlertsDelta']>, ParentType, ContextType>;
   fromDate?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   toDate?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
@@ -2275,10 +2268,10 @@ export type QueryResolvers<
     RequireFields<QueryOrganizationStatsArgs, never>
   >;
   getLogAnalysisMetrics?: Resolver<
-    Maybe<ResolversTypes['LogAnalysisMetricsResponse']>,
+    ResolversTypes['LogAnalysisMetricsResponse'],
     ParentType,
     ContextType,
-    RequireFields<QueryGetLogAnalysisMetricsArgs, never>
+    RequireFields<QueryGetLogAnalysisMetricsArgs, 'input'>
   >;
   rule?: Resolver<
     Maybe<ResolversTypes['RuleDetails']>,
@@ -2453,14 +2446,6 @@ export type SeriesDataResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
-export type SeriesMetricResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['SeriesMetric'] = ResolversParentTypes['SeriesMetric']
-> = {
-  seriesData?: Resolver<Maybe<ResolversTypes['SeriesData']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
 export type SingleValueResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['SingleValue'] = ResolversParentTypes['SingleValue']
@@ -2595,7 +2580,6 @@ export type Resolvers<ContextType = any> = {
   ScannedResourceStats?: ScannedResourceStatsResolvers<ContextType>;
   Series?: SeriesResolvers<ContextType>;
   SeriesData?: SeriesDataResolvers<ContextType>;
-  SeriesMetric?: SeriesMetricResolvers<ContextType>;
   SingleValue?: SingleValueResolvers<ContextType>;
   SlackConfig?: SlackConfigResolvers<ContextType>;
   SnsConfig?: SnsConfigResolvers<ContextType>;

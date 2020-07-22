@@ -94,7 +94,7 @@ const LogAnalysisOverview: React.FC = () => {
           <Box height={200}>
             <Flex direction="row" width="100%">
               <AlertSummary data={totalAlertsDelta.singleValue} />
-              <AlertsBySeverity alerts={alertsBySeverity.seriesData} />
+              <AlertsBySeverity alerts={alertsBySeverity} />
             </Flex>
           </Box>
         </Panel>
@@ -102,7 +102,7 @@ const LogAnalysisOverview: React.FC = () => {
       <SimpleGrid columns={1} spacingX={3} spacingY={2} my={3}>
         <Panel title="Events by Log Type">
           <Box height={200}>
-            <EventsByLogType events={eventsProcessed.seriesData} />
+            <EventsByLogType events={eventsProcessed} />
           </Box>
         </Panel>
       </SimpleGrid>
