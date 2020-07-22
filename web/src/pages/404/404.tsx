@@ -33,6 +33,7 @@ const Page404: React.FC = () => {
       left={0}
       top={0}
       direction="column"
+      zIndex={-1}
     >
       <Box mb={10}>
         <img alt="Page not found illustration" src={NotFoundImg} width="auto" height={400} />
