@@ -26,6 +26,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
@@ -47,6 +48,10 @@ var (
 
 	// GlueMappings for custom Panther types.
 	GlueMappings = []CustomMapping{
+		{
+			From: reflect.TypeOf(time.Time{}),
+			To:   GlueTimestampType,
+		},
 		{
 			From: reflect.TypeOf(jsoniter.RawMessage{}),
 			To:   "string",

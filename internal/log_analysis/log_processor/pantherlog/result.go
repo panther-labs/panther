@@ -41,8 +41,8 @@ type Result struct {
 	Values    ValueBuffer `json:"-"`
 }
 
-func (r *Result) Clone() Result {
-	return Result{
+func (r *Result) Clone() *Result {
+	return &Result{
 		LogType:   r.LogType,
 		EventTime: r.EventTime,
 		ParseTime: r.ParseTime,

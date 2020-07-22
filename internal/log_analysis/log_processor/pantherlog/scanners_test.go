@@ -51,6 +51,31 @@ var (
 )
 
 func init() {
+	MustRegisterMeta(kindFoo, MetaField{
+		FieldName:     "PantherFoo",
+		FieldNameJSON: "p_any_foo",
+		Description:   "Foo data",
+	})
+	MustRegisterMeta(kindBar, MetaField{
+		FieldName:     "PantherBar",
+		FieldNameJSON: "p_any_bar",
+		Description:   "Bar data",
+	})
+	MustRegisterMeta(kindBaz, MetaField{
+		FieldName:     "PantherBaz",
+		FieldNameJSON: "p_any_baz",
+		Description:   "Baz data",
+	})
+	MustRegisterMeta(kindQux, MetaField{
+		FieldName:     "PantherQux",
+		FieldNameJSON: "p_any_qux",
+		Description:   "Qux data",
+	})
+	MustRegisterMeta(kindQuux, MetaField{
+		FieldName:     "PantherQuux",
+		FieldNameJSON: "p_any_quux",
+		Description:   "Quux data",
+	})
 	MustRegisterScanner("foo", kindFoo, kindFoo)
 	MustRegisterScanner("bar", kindBar, kindBar)
 	MustRegisterScanner("baz", kindBaz, kindBaz)
@@ -84,15 +109,15 @@ func TestScanValueEncodersExt(t *testing.T) {
 		Quux: null.FromString("ok"),
 	}
 
-	values := ValueBuffer{}
+	result := Result{}
 	stream := api.BorrowStream(nil)
-	stream.Attachment = &values
+	stream.Attachment = &result
 	stream.WriteVal(&v)
-	require.Equal(t, []string{"ok"}, values.Values(kindFoo))
-	require.Equal(t, []string{"ok"}, values.Values(kindBar))
-	require.Equal(t, []string{"ok"}, values.Values(kindBaz))
-	require.Equal(t, []string{"ok"}, values.Values(kindQux))
-	require.Equal(t, []string{"ok"}, values.Values(kindQuux))
+	require.Equal(t, []string{"ok"}, result.Values.Get(kindFoo), "foo")
+	require.Equal(t, []string{"ok"}, result.Values.Get(kindBar), "bar")
+	require.Equal(t, []string{"ok"}, result.Values.Get(kindBaz), "baz")
+	require.Equal(t, []string{"ok"}, result.Values.Get(kindQux), "qux")
+	require.Equal(t, []string{"ok"}, result.Values.Get(kindQuux), "quux")
 	actual := string(stream.Buffer())
 	require.Equal(t, `{"foo":"ok","bar":"ok","baz":"ok","qux":"ok","quux":"ok"}`, actual)
 }

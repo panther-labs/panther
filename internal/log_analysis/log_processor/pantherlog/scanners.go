@@ -19,10 +19,11 @@ package pantherlog
  */
 
 import (
-	"github.com/pkg/errors"
 	"net"
 	"net/url"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 func init() {
@@ -94,6 +95,9 @@ func checkKinds(kinds []ValueKind) error {
 	for _, kind := range kinds {
 		if kind == KindNone {
 			return errors.New("zero value kind")
+		}
+		if _, ok := registeredMeta[kind]; !ok {
+			return errors.New("unregistered value kind")
 		}
 	}
 	return nil

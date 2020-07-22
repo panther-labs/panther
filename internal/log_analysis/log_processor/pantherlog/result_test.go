@@ -19,6 +19,7 @@ package pantherlog_test
  */
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -35,7 +36,7 @@ import (
 
 type testEvent struct {
 	Name      string                 `json:"@name"`
-	Timestamp time.Time              `json:"ts" tcodec:"unix_ms"`
+	Timestamp time.Time              `json:"ts" tcodec:"unix_ms" panther:"event_time"`
 	IP        string                 `json:"ip" panther:"ip"`
 	Domain    null.String            `json:"domain" panther:"domain"`
 	Host      null.String            `json:"hostname" panther:"hostname"`
@@ -53,17 +54,13 @@ type oldEvent struct {
 	parsers.PantherLog
 }
 
-var _ pantherlog.Event = (*testEvent)(nil)
-
 func (e *testEvent) WriteValuesTo(w pantherlog.ValueWriter) {
 	e.Values.WriteValuesTo(w)
-}
-func (e *testEvent) PantherLogEvent() (string, *time.Time) {
-	return e.Name, box.Time(e.Timestamp)
 }
 
 func newBuilder(id string, now time.Time) *pantherlog.ResultBuilder {
 	return &pantherlog.ResultBuilder{
+		LogType:   "TestEvent",
 		NextRowID: pantherlog.StaticRowID(id),
 		Now:       pantherlog.StaticNow(now),
 	}
@@ -87,13 +84,13 @@ func TestNewResultBuilder(t *testing.T) {
 
 	result, err := b.BuildResult(&event)
 	require.NoError(t, err)
-	require.Equal(t, "event", result.LogType)
+	require.Equal(t, "TestEvent", result.LogType)
 	require.Equal(t, now, result.ParseTime)
 	require.Equal(t, tm, result.EventTime)
 	require.Equal(t, rowID, result.RowID)
 	expect := fmt.Sprintf(`{
 		"p_row_id": "id",
-		"p_log_type": "event",
+		"p_log_type": "TestEvent",
 		"p_event_time": %s,
 		"ts": %s,
 		"p_parse_time": %s,
@@ -105,6 +102,19 @@ func TestNewResultBuilder(t *testing.T) {
 		"p_any_ip_addresses": ["1.1.1.1","2.1.1.1"]
 }`, tmJSON, tmJSON, nowJSON)
 	require.JSONEq(t, expect, string(result.JSON))
+	expectResult := pantherlog.Result{
+		RowID:     "id",
+		LogType:   "TestEvent",
+		EventTime: tm.UTC(),
+		ParseTime: now.UTC(),
+		JSON:      result.JSON,
+	}
+	actualResult := pantherlog.Result{}
+	require.NoError(t, json.Unmarshal(result.JSON, &actualResult))
+	require.Equal(t, &expectResult, &actualResult)
+	result.Close()
+	require.Empty(t, result.JSON)
+	require.Empty(t, result.Values.Get(pantherlog.KindIPAddress))
 }
 
 func BenchmarkResultBuilder(b *testing.B) {

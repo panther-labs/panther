@@ -2,11 +2,13 @@
 package pantherlog
 
 import (
+	"time"
+
 	jsoniter "github.com/json-iterator/go"
+
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/jsonutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
-	"time"
 )
 
 /**

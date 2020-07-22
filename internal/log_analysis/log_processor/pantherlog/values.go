@@ -47,7 +47,7 @@ const (
 // It provides helper methods to collect fields from log entries.
 // A ValueBuffer can be reset and used in a pool.
 type ValueBuffer struct {
-	index map[ValueKind]sort.StringSlice
+	index map[ValueKind][]string
 }
 
 // Contains checks if a field buffer contains a specific field.
@@ -67,7 +67,7 @@ func (b *ValueBuffer) Clone() ValueBuffer {
 		return ValueBuffer{}
 	}
 	c := ValueBuffer{
-		index: make(map[ValueKind]sort.StringSlice, len(b.index)),
+		index: make(map[ValueKind][]string, len(b.index)),
 	}
 	for kind, values := range b.index {
 		if len(values) == 0 {
@@ -78,7 +78,7 @@ func (b *ValueBuffer) Clone() ValueBuffer {
 	return c
 }
 
-// Inspect returns a sorted snapshot of the value index
+// Inspect returns a sorted copy snapshot of the value index
 // This is mainly useful for tests.
 func (b *ValueBuffer) Inspect() map[ValueKind][]string {
 	if b.index == nil {
@@ -90,7 +90,7 @@ func (b *ValueBuffer) Inspect() map[ValueKind][]string {
 			m[kind] = nil
 			continue
 		}
-		values := append([]string(nil), values...)
+		values := append([]string{}, values...)
 		sort.Strings(values)
 		m[kind] = values
 	}
@@ -104,6 +104,10 @@ func (b *ValueBuffer) WriteValues(kind ValueKind, values ...string) {
 	n := len(currentValues)
 nextValue:
 	for _, value := range values {
+		// Don't add empty values
+		if value == "" {
+			continue
+		}
 		// Don't add duplicates
 		for _, v := range currentValues {
 			if v == value {
@@ -114,7 +118,7 @@ nextValue:
 	}
 	if len(currentValues) > n {
 		if b.index == nil {
-			b.index = make(map[ValueKind]sort.StringSlice)
+			b.index = make(map[ValueKind][]string)
 		}
 		b.index[kind] = currentValues
 	}
@@ -133,34 +137,32 @@ func (b *ValueBuffer) Reset() {
 	}
 }
 
-// ValuesUnsorted returns unsorted field values
-func (b *ValueBuffer) ValuesUnsorted(kind ValueKind) []string {
-	if values := b.index[kind]; len(values) != 0 {
-		return values
-	}
-	return nil
-}
-
-// Values returns field values sorted
-func (b *ValueBuffer) Values(kind ValueKind) []string {
+// Get returns field values sorted
+func (b *ValueBuffer) Get(kind ValueKind) []string {
 	switch values := b.index[kind]; len(values) {
 	case 0:
 		return nil
 	case 1:
 		return values
 	default:
-		sort.Sort(values)
+		sort.Strings(values)
 		return values
 	}
 }
 
-// ValueKinds returns the kind of values this buffer contains.
-func (b *ValueBuffer) ValueKinds() []ValueKind {
+// Kinds returns the kind of values this buffer contains.
+func (b *ValueBuffer) Kinds() []ValueKind {
+	if b.index == nil {
+		return nil
+	}
 	kinds := make([]ValueKind, 0, len(b.index))
 	for kind, values := range b.index {
 		if len(values) > 0 {
 			kinds = append(kinds, kind)
 		}
 	}
+	sort.Slice(kinds, func(i, j int) bool {
+		return kinds[i] < kinds[j]
+	})
 	return kinds
 }

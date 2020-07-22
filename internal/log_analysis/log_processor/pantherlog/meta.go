@@ -20,10 +20,11 @@ package pantherlog
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"reflect"
 	"sort"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -43,35 +44,41 @@ var (
 			FieldNameJSON: "p_any_ip_addresses",
 			Description:   "Panther added field with collection of ip addresses associated with the row",
 			typ:           typStringSlice,
+			kind:          KindIPAddress,
 		},
 		KindDomainName: {
 			FieldName:     "PantherAnyDomainNames",
 			FieldNameJSON: "p_any_domain_names",
 			Description:   "Panther added field with collection of domain names associated with the row",
+			kind:          KindDomainName,
 		},
 		KindSHA1Hash: {
 			FieldName:     "PantherAnySHA1Hashes",
 			FieldNameJSON: "p_any_sha1_hashes",
 			Description:   "Panther added field with collection of SHA1 hashes associated with the row",
 			typ:           typStringSlice,
+			kind:          KindSHA1Hash,
 		},
 		KindSHA256Hash: {
 			FieldName:     "PantherAnySHA256Hashes",
 			FieldNameJSON: "p_any_sha256_hashes",
 			Description:   "Panther added field with collection of MD5 hashes associated with the row",
 			typ:           typStringSlice,
+			kind:          KindSHA256Hash,
 		},
 		KindMD5Hash: {
 			FieldName:     "PantherAnyMD5Hashes",
 			FieldNameJSON: "p_any_md5_hashes",
 			Description:   "Panther added field with collection of SHA256 hashes of any algorithm associated with the row",
 			typ:           typStringSlice,
+			kind:          KindMD5Hash,
 		},
 		KindTraceID: {
 			FieldName:     "PantherAnyTraceIDs",
 			FieldNameJSON: "p_any_trace_ids",
 			Description:   "Panther added field with collection of context trace identifiers",
 			typ:           typStringSlice,
+			kind:          KindTraceID,
 		},
 	}
 	coreFields = []*MetaField{
@@ -141,6 +148,9 @@ func RegisterMeta(kind ValueKind, field MetaField) error {
 	}
 	if !strings.HasPrefix(field.FieldNameJSON, FieldPrefix) {
 		return errors.Errorf(`invalid field name JSON %q`, field.FieldNameJSON)
+	}
+	if _, duplicate := registeredMeta[kind]; duplicate {
+		return errors.Errorf(`duplicate field kind %d`, kind)
 	}
 	if _, duplicateFieldName := metaByFieldName[field.FieldName]; duplicateFieldName {
 		return errors.Errorf(`duplicate field name %q`, field.FieldName)
@@ -272,5 +282,4 @@ func (meta Meta) Kinds() (kinds []ValueKind) {
 		return kinds[i] < kinds[j]
 	})
 	return
-
 }
