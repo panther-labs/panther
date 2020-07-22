@@ -19,6 +19,6 @@ jobs:
         env:
           ACTIONS_STEP_DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
         with:
-          destRepo: panther-labs/panther-enterprise
+          destRepo: panther-labs/panther
           ignoreLabel: enterprise-backport
           token: ${{ secrets.ENVY_TOKEN }}

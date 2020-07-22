@@ -42,19 +42,14 @@ const main = async () => {
     }
     core.debug('An ignore label was not found. Starting sync process...');
 
-    // const commit = srcPullRequest.merge_commit_sha || srcPullRequest.head.sha;
     const destPullRequestBranchName = getPrBranch(srcPullRequest.head.ref);
-
-    core.debug('Cloning destination repo...');
-    execSync(`git clone https://panther-labs:${token}@github.com/${destRepo}.git dest`);
-    execSync(`git remote add dest https://panther-labs:${token}@github.com/${destRepo}.git`); // prettier-ignore
 
     core.debug('Creating a branch from the merge commit...');
     // execSync(`git remote add target https://3nvi:${token}@github.com/${destRepo}.git`); // prettier-ignore
     execSync(`git checkout -b ${destPullRequestBranchName}`);
-    execSync(`git config --global user.name "3nvi"`);
+    execSync(`git config --global user.name "action"`);
     execSync(`git config --global user.email "action@action.com"`);
-    execSync(`git push -u dest ${destPullRequestBranchName}`);
+    execSync(`git push https://${token}@github.com/${destRepo}.git -f`);
 
     core.debug('Initializing octokit...');
     const octokit = github.getOctokit(token);
