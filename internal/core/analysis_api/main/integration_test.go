@@ -576,6 +576,8 @@ func saveEnabledPolicyFailingTests(t *testing.T) {
 		},
 	}
 	policyID := uuid.New().String()
+	defer cleanupPoliciesRules(t, policyID)
+
 	req := models.UpdatePolicy{
 		AutoRemediationID:         policy.AutoRemediationID,
 		AutoRemediationParameters: policy.AutoRemediationParameters,
@@ -594,21 +596,6 @@ func saveEnabledPolicyFailingTests(t *testing.T) {
 	}
 
 	expectedErrorMessage := "cannot save an enabled policy with failing unit tests"
-
-	defer func() {
-		result, err := apiClient.Operations.DeletePolicies(&operations.DeletePoliciesParams{
-			Body: &models.DeletePolicies{
-				Policies: []*models.DeleteEntry{
-					{
-						ID: models.ID(policyID),
-					},
-				},
-			},
-			HTTPClient: httpClient,
-		})
-		require.NoError(t, err)
-		assert.Equal(t, &operations.DeletePoliciesOK{}, result)
-	}()
 
 	t.Run("Create", func(t *testing.T) {
 		_, err := apiClient.Operations.CreatePolicy(&operations.CreatePolicyParams{
@@ -687,6 +674,10 @@ func saveEnabledPolicyPassingTests(t *testing.T) {
 	tests := []*models.UnitTest{
 		{
 			Name:           "Compliant",
+			ExpectedResult: true,
+			Resource:       `{}`,
+		}, {
+			Name:           "Compliant 2",
 			ExpectedResult: true,
 			Resource:       `{}`,
 		},
@@ -777,6 +768,8 @@ func saveEnabledRuleFailingTests(t *testing.T) {
 }
 
 // Tests that a rule can be saved if it is enabled and its tests pass.
+// This is different than createRuleSuccess test. createRuleSuccess saves
+// a rule without tests.
 func saveEnabledRulePassingTests(t *testing.T) {
 	ruleID := uuid.New().String()
 	defer cleanupPoliciesRules(t, ruleID)
@@ -784,6 +777,10 @@ func saveEnabledRulePassingTests(t *testing.T) {
 	tests := []*models.UnitTest{
 		{
 			Name:           "Trigger alert",
+			ExpectedResult: true,
+			Resource:       `{}`,
+		}, {
+			Name:           "Trigger alert 2",
 			ExpectedResult: true,
 			Resource:       `{}`,
 		},
