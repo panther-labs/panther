@@ -134,6 +134,7 @@ export const LOG_TYPES = [
   'Syslog.RFC3164',
   'Syslog.RFC5424',
   'Zeek.DNS',
+  'Lacework.Events',
 ] as const;
 
 export const PANTHER_SCHEMA_DOCS_MASTER_LINK = 'https://docs.runpanther.io';

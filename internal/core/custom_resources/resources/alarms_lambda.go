@@ -75,9 +75,14 @@ func customLambdaAlarms(_ context.Context, event cfn.Event) (string, map[string]
 		return "custom:alarms:lambda:" + props.FunctionName, nil, putLambdaAlarmGroup(props)
 
 	case cfn.RequestDelete:
+		// Composite alarm must be deleted first
+		if err := deleteAlarms(event.PhysicalResourceID, lambdaCompositeAlarm); err != nil {
+			return event.PhysicalResourceID, nil, err
+		}
+
 		return event.PhysicalResourceID, nil, deleteAlarms(event.PhysicalResourceID,
 			lambdaLoggedErrorAlarm, lambdaLoggedWarnAlarm, lambdaMemoryAlarm,
-			lambdaExecutionErrorAlarm, lambdaDurationAlarm, lambdaThrottleAlarm, lambdaCompositeAlarm)
+			lambdaExecutionErrorAlarm, lambdaDurationAlarm, lambdaThrottleAlarm)
 
 	default:
 		return "", nil, fmt.Errorf("unknown request type %s", event.RequestType)

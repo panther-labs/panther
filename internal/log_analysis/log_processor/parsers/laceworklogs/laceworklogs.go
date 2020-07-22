@@ -1,3 +1,5 @@
+package laceworklogs
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,23 +18,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { Box, Flex } from 'pouncejs';
-import Navigation from 'Components/Navigation';
-import Header from 'Components/Header';
+import (
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+)
 
-const Layout: React.FC = ({ children }) => {
-  return (
-    <Flex minHeight="100%" bg="navyblue-800">
-      <Navigation />
-      <Box as="main" minHeight={1} flex="1 0 auto" bg="navyblue-800" zIndex={0}>
-        <Box width={1214} mx="auto">
-          <Header />
-          {children}
-        </Box>
-      </Box>
-    </Flex>
-  );
-};
-
-export default Layout;
+func init() {
+	logtypes.MustRegister(logtypes.Config{
+		Name:         "Lacework.Events",
+		Description:  LaceworkDesc,
+		ReferenceURL: `https://www.lacework.com/platform-overview/`,
+		Schema:       Lacework{},
+		NewParser:    parsers.AdapterFactory(&LaceworkParser{}),
+	})
+}
