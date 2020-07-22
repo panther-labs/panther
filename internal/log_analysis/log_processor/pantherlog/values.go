@@ -51,10 +51,10 @@ type ValueBuffer struct {
 }
 
 // Contains checks if a field buffer contains a specific field.
-func (b *ValueBuffer) Contains(field Value) bool {
-	if values, ok := b.index[field.Kind]; ok {
-		for _, value := range values {
-			if value == field.Data {
+func (b *ValueBuffer) Contains(kind ValueKind, value string) bool {
+	if values, ok := b.index[kind]; ok {
+		for _, v := range values {
+			if v == value {
 				return true
 			}
 		}
@@ -62,18 +62,40 @@ func (b *ValueBuffer) Contains(field Value) bool {
 	return false
 }
 
-// AppendValuesTo appends all fields stored in the buffer to a slice.
-// This is mainly useful for tests.
-func (b *ValueBuffer) AppendValuesTo(values []Value) []Value {
-	for kind, strValues := range b.index {
-		for _, value := range strValues {
-			values = append(values, Value{
-				Kind: kind,
-				Data: value,
-			})
-		}
+func (b *ValueBuffer) Clone() ValueBuffer {
+	if b.index == nil {
+		return ValueBuffer{}
 	}
-	return values
+	c := ValueBuffer{
+		index: make(map[ValueKind]sort.StringSlice, len(b.index)),
+	}
+	for kind, values := range b.index {
+		if len(values) == 0 {
+			continue
+		}
+		c.index[kind] = append([]string(nil), values...)
+	}
+	return c
+}
+
+// Inspect returns a sorted snapshot of the value index
+// This is mainly useful for tests.
+func (b *ValueBuffer) Inspect() map[ValueKind][]string {
+	if b.index == nil {
+		return nil
+	}
+	m := make(map[ValueKind][]string, len(b.index))
+	for kind, values := range b.index {
+		if values == nil {
+			m[kind] = nil
+			continue
+		}
+		values := append([]string(nil), values...)
+		sort.Strings(values)
+		m[kind] = values
+	}
+
+	return m
 }
 
 // WriteValues adds values to the buffer.
@@ -132,14 +154,6 @@ func (b *ValueBuffer) Values(kind ValueKind) []string {
 	}
 }
 
-func NopValueWriter() ValueWriter {
-	return &nopValueWriter{}
-}
-
-type nopValueWriter struct{}
-
-func (*nopValueWriter) WriteValues(_ ValueKind, _ ...string) {}
-
 // ValueKinds returns the kind of values this buffer contains.
 func (b *ValueBuffer) ValueKinds() []ValueKind {
 	kinds := make([]ValueKind, 0, len(b.index))
@@ -150,192 +164,3 @@ func (b *ValueBuffer) ValueKinds() []ValueKind {
 	}
 	return kinds
 }
-
-// Value is a value extracted from a log entry to be used in queries by Panther
-type Value struct {
-	Kind ValueKind
-	Data string
-}
-
-// IsZero checks if a field is empty.
-// Zero value fields can be returned by FieldFactory if the value is not valid for the specified FieldKind.
-func (d Value) IsZero() bool {
-	return d == Value{}
-}
-
-// ValueSlice is a helper type for sorting values
-type ValueSlice []Value
-
-var _ sort.Interface = (ValueSlice)(nil)
-
-// Len implements sort.Interface
-func (values ValueSlice) Len() int {
-	return len(values)
-}
-
-// Swap implements sort.Interface
-func (values ValueSlice) Swap(i, j int) {
-	values[i], values[j] = values[j], values[i]
-}
-
-// Less implements sort.Interface
-func (values ValueSlice) Less(i, j int) bool {
-	a := &values[i]
-	b := &values[j]
-	if a.Kind == b.Kind {
-		return a.Data < b.Data
-	}
-	return a.Kind < b.Kind
-}
-
-// WriteValues implements ValueWriter interface
-func (values *ValueSlice) WriteValues(kind ValueKind, data ...string) {
-	for _, d := range data {
-		(*values) = append(*values, Value{
-			Kind: kind,
-			Data: d,
-		})
-	}
-}
-
-// Normalized returns a sorted copy of the values slice removing zero values.
-// Sorting order is ascending over Kind, Data
-func (values ValueSlice) Normalized() ValueSlice {
-	if values == nil {
-		return nil
-	}
-	norm := make([]Value, 0, len(values))
-	for _, v := range values {
-		if v.IsZero() {
-			continue
-		}
-		norm = append(norm, v)
-	}
-	sort.Stable(ValueSlice(norm))
-	return norm
-}
-
-//// Specific types for extracting pantherlog values
-//type Domain struct {
-//	null.String
-//}
-//
-//func (d *Domain) WriteValuesTo(w ValueWriter) {
-//	if d.Exists && d.Value != "" {
-//		w.WriteValues(KindDomainName, d.Value)
-//	}
-//}
-//
-//type IPAddress struct {
-//	null.String
-//}
-//
-//func ToIPAddress(ip string) IPAddress {
-//	return IPAddress{null.FromString(ip)}
-//}
-//
-//func (ip *IPAddress) WriteValuesTo(w ValueWriter) {
-//	if ip.Exists && ip.Value != "" {
-//		if checkIPAddress(ip.Value) {
-//			w.WriteValues(KindIPAddress, ip.Value)
-//		}
-//	}
-//}
-//
-//type Hostname struct {
-//	null.String
-//}
-//
-//func ToHostname(name string) Hostname {
-//	return Hostname{null.FromString(name)}
-//}
-//func (h *Hostname) WriteValuesTo(w ValueWriter) {
-//	if h.Exists && h.Value != "" {
-//		if checkIPAddress(h.Value) {
-//			w.WriteValues(KindIPAddress, h.Value)
-//		} else {
-//			w.WriteValues(KindDomainName, h.Value)
-//		}
-//	}
-//}
-//
-//
-//type SHA1 struct {
-//	null.String
-//}
-//
-//func ToSHA1(hash string) SHA1 {
-//	return SHA1{null.FromString(hash)}
-//}
-//func (s *SHA1) WriteValuesTo(w ValueWriter) {
-//	if s.Exists && s.Value != "" {
-//		w.WriteValues(KindSHA1Hash, s.Value)
-//	}
-//}
-//
-//type SHA256 struct {
-//	null.String
-//}
-//
-//func ToSHA256(hash string) SHA256 {
-//	return SHA256{null.FromString(hash)}
-//}
-//func (s *SHA256) WriteValuesTo(w ValueWriter) {
-//	if s.Exists && s.Value != "" {
-//		w.WriteValues(KindSHA256Hash, s.Value)
-//	}
-//}
-//
-//type MD5 struct {
-//	null.String
-//}
-//
-//func ToMD5(hash string) MD5 {
-//	return MD5{null.FromString(hash)}
-//}
-//func (m *MD5) WriteValuesTo(w ValueWriter) {
-//	if m.Exists && m.Value != "" {
-//		w.WriteValues(KindMD5Hash, m.Value)
-//	}
-//}
-//
-//type URL struct {
-//	null.String
-//}
-//
-//func ToURL(url string) URL {
-//	return URL{null.FromString(url)}
-//}
-//
-//// WriteValuesTo scans a URL string for domain or ip address
-//func (u *URL) WriteValuesTo(w ValueWriter) {
-//	if !u.Exists || u.Value == "" {
-//		return
-//	}
-//	parsedURL, err := url.Parse(u.Value)
-//	if err != nil {
-//		return
-//	}
-//	host := parsedURL.Hostname()
-//	if host == "" {
-//		return
-//	}
-//	if checkIPAddress(host) {
-//		w.WriteValues(KindIPAddress, host)
-//	} else {
-//		w.WriteValues(KindDomainName, host)
-//	}
-//}
-//
-//type TraceID struct {
-//	null.String
-//}
-//
-//func ToTraceID(id string) TraceID {
-//	return TraceID{null.FromString(id)}
-//}
-//func (id *TraceID) WriteValuesTo(w ValueWriter) {
-//	if id.Exists && id.Value != "" {
-//		w.WriteValues(KindTraceID, id.Value)
-//	}
-//}

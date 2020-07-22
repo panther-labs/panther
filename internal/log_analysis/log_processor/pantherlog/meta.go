@@ -20,16 +20,14 @@ package pantherlog
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"reflect"
 	"sort"
 	"strings"
-
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-// FieldPrefix is the prefix for field names injected by panther to log events.
-
 const (
+	// FieldPrefix is the prefix for field names injected by panther to log events.
 	FieldPrefix    = "p_"
 	FieldLogType   = FieldPrefix + "log_type"
 	FieldRowID     = FieldPrefix + "row_id"
@@ -37,14 +35,14 @@ const (
 	FieldParseTime = FieldPrefix + "parse_time"
 )
 
-// DefaultMetaFields returns the default panther 'any' field mappings.
-// It creates a new copy so that outside packages cannot affect the defaults.
-func DefaultMetaFields() Meta {
-	return Meta{
+var (
+	typStringSlice = reflect.TypeOf([]string(nil))
+	registeredMeta = Meta{
 		KindIPAddress: {
 			FieldName:     "PantherAnyIPAddresses",
 			FieldNameJSON: "p_any_ip_addresses",
 			Description:   "Panther added field with collection of ip addresses associated with the row",
+			typ:           typStringSlice,
 		},
 		KindDomainName: {
 			FieldName:     "PantherAnyDomainNames",
@@ -55,23 +53,133 @@ func DefaultMetaFields() Meta {
 			FieldName:     "PantherAnySHA1Hashes",
 			FieldNameJSON: "p_any_sha1_hashes",
 			Description:   "Panther added field with collection of SHA1 hashes associated with the row",
+			typ:           typStringSlice,
 		},
 		KindSHA256Hash: {
 			FieldName:     "PantherAnySHA256Hashes",
 			FieldNameJSON: "p_any_sha256_hashes",
 			Description:   "Panther added field with collection of MD5 hashes associated with the row",
+			typ:           typStringSlice,
 		},
 		KindMD5Hash: {
 			FieldName:     "PantherAnyMD5Hashes",
 			FieldNameJSON: "p_any_md5_hashes",
 			Description:   "Panther added field with collection of SHA256 hashes of any algorithm associated with the row",
+			typ:           typStringSlice,
 		},
 		KindTraceID: {
 			FieldName:     "PantherAnyTraceIDs",
 			FieldNameJSON: "p_any_trace_ids",
 			Description:   "Panther added field with collection of context trace identifiers",
+			typ:           typStringSlice,
 		},
 	}
+	coreFields = []*MetaField{
+		{
+			FieldName:     "PantherEventTime",
+			FieldNameJSON: FieldEventTime,
+			Description:   "Panther added standardized event time (UTC)",
+			typ:           typTime,
+		},
+		{
+			FieldName:     "PantherParseTime",
+			FieldNameJSON: FieldParseTime,
+			Description:   "Panther added standardize log parse time (UTC)",
+			typ:           typTime,
+		},
+		{
+			FieldName:     "PantherLogType",
+			FieldNameJSON: FieldLogType,
+			Description:   "Panther added field with type of log",
+			typ:           typString,
+		},
+		{
+			FieldName:     "PantherRowID",
+			FieldNameJSON: FieldRowID,
+			Description:   "Panther added field with unique id (within table)",
+			typ:           typString,
+		},
+	}
+	metaByFieldName = func() map[string]ValueKind {
+		index := make(map[string]ValueKind)
+		for _, m := range coreFields {
+			if _, duplicate := index[m.FieldName]; duplicate {
+				panic(`duplicate core field`)
+			}
+			if _, duplicate := index[m.FieldNameJSON]; duplicate {
+				panic(`duplicate core field JSON`)
+			}
+			index[m.FieldName] = KindNone
+			index[m.FieldNameJSON] = KindNone
+		}
+		for kind, m := range registeredMeta {
+			if _, duplicate := index[m.FieldName]; duplicate {
+				panic(`duplicate meta field`)
+			}
+			if _, duplicate := index[m.FieldNameJSON]; duplicate {
+				panic(`duplicate meta field JSON`)
+			}
+			index[m.FieldName] = kind
+			index[m.FieldNameJSON] = kind
+		}
+		return index
+	}()
+)
+
+func MustRegisterMeta(kind ValueKind, field MetaField) {
+	if err := RegisterMeta(kind, field); err != nil {
+		panic(err)
+	}
+}
+
+func RegisterMeta(kind ValueKind, field MetaField) error {
+	if kind == KindNone {
+		return errors.New(`zero value kind`)
+	}
+	if !strings.HasPrefix(field.FieldName, "Panther") {
+		return errors.Errorf(`invalid field name %q`, field.FieldName)
+	}
+	if !strings.HasPrefix(field.FieldNameJSON, FieldPrefix) {
+		return errors.Errorf(`invalid field name JSON %q`, field.FieldNameJSON)
+	}
+	if _, duplicateFieldName := metaByFieldName[field.FieldName]; duplicateFieldName {
+		return errors.Errorf(`duplicate field name %q`, field.FieldName)
+	}
+	if _, duplicateFieldNameJSON := metaByFieldName[field.FieldName]; duplicateFieldNameJSON {
+		return errors.Errorf(`duplicate JSON field name %q`, field.FieldName)
+	}
+	field.typ = typStringSlice
+	field.kind = kind
+	registeredMeta[kind] = &field
+	metaByFieldName[field.FieldName] = kind
+	metaByFieldName[field.FieldNameJSON] = kind
+	return nil
+}
+
+func BuildMeta(kinds ...ValueKind) Meta {
+	meta := Meta{}
+	for _, kind := range kinds {
+		if kind == KindNone {
+			continue
+		}
+		if m, ok := registeredMeta[kind]; ok {
+			meta[kind] = m
+		}
+	}
+	return meta
+}
+
+// DefaultMetaFields returns the default panther 'any' field mappings.
+// It creates a new copy so that outside packages cannot affect the defaults.
+func DefaultMetaFields() Meta {
+	return BuildMeta(
+		KindIPAddress,
+		KindDomainName,
+		KindSHA256Hash,
+		KindSHA1Hash,
+		KindMD5Hash,
+		KindTraceID,
+	)
 }
 
 var defaultMetaFields = DefaultMetaFields()
@@ -80,19 +188,41 @@ type MetaField struct {
 	FieldName     string
 	FieldNameJSON string
 	Description   string
+	typ           reflect.Type
+	kind          ValueKind
 }
 
+func (m *MetaField) StructField(index int) reflect.StructField {
+	return reflect.StructField{
+		Name:  m.FieldName,
+		Tag:   m.StructTag(),
+		Type:  m.typ,
+		Index: []int{index},
+	}
+}
 func (m *MetaField) StructTag() reflect.StructTag {
-	tag := fmt.Sprintf(`json:"%s,omitempty" description:"%s"`, m.FieldNameJSON, m.Description)
+	var tag string
+	if m.IsCore() {
+		tag = fmt.Sprintf(`json:"%s" validate:"required" description:"%s"`, m.FieldNameJSON, m.Description)
+	} else {
+		tag = fmt.Sprintf(`json:"%s,omitempty" description:"%s"`, m.FieldNameJSON, m.Description)
+	}
 	return reflect.StructTag(tag)
 }
 
 type Meta map[ValueKind]*MetaField
 
-func (meta Meta) EventStruct(event Event) interface{} {
+func (m *MetaField) IsCore() bool {
+	return m.kind == KindNone
+}
+
+func (meta Meta) EventStruct(event interface{}) interface{} {
 	typ := reflect.TypeOf(event)
 	for typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
+	}
+	if typ.Kind() != reflect.Struct {
+		panic(`non struct event`)
 	}
 	eventType := meta.EventStructType(typ)
 	tmp := reflect.New(eventType)
@@ -117,41 +247,12 @@ func (meta Meta) EventStructType(eventType reflect.Type) reflect.Type {
 }
 
 func (meta Meta) StructType() reflect.Type {
-	fields := []reflect.StructField{
-		{
-			Name:  "PantherLogType",
-			Tag:   `json:"` + FieldLogType + `,omitempty" validate:"required" description:"Panther added field with type of log"`,
-			Type:  reflect.TypeOf(""),
-			Index: []int{0},
-		},
-		{
-			Name:  "PantherRowID",
-			Tag:   `json:"` + FieldRowID + `,omitempty" validate:"required" description:"Panther added field with unique id (within table)"`,
-			Type:  reflect.TypeOf(""),
-			Index: []int{1},
-		},
-		{
-			Name:  "PantherEventTime",
-			Type:  reflect.TypeOf(&timestamp.RFC3339{}),
-			Tag:   `json:"` + FieldEventTime + `,omitempty" validate:"required" description:"Panther added standardize event time (UTC)"`,
-			Index: []int{2},
-		},
-		{
-			Name:  "PantherParseTime",
-			Type:  reflect.TypeOf(&timestamp.RFC3339{}),
-			Tag:   `json:"` + FieldParseTime + `,omitempty" validate:"required" description:"Panther added standardize log parse time (UTC)"`,
-			Index: []int{3},
-		},
+	fields := []reflect.StructField{}
+	for i, m := range coreFields {
+		fields = append(fields, m.StructField(i))
 	}
-	// Produce ordered fields in the struct so doc generation is deterministic
-	keys := make([]ValueKind, 0, len(meta))
-	for kind := range meta {
-		keys = append(keys, kind)
-	}
-	sort.Slice(keys, func(i, j int) bool {
-		return keys[i] < keys[j]
-	})
-	for _, kind := range keys {
+	// Use ordered fields in the struct so doc generation is deterministic
+	for _, kind := range meta.Kinds() {
 		m := meta[kind]
 		fields = append(fields, reflect.StructField{
 			Name:  strings.ToTitle(m.FieldName),
@@ -161,4 +262,15 @@ func (meta Meta) StructType() reflect.Type {
 		})
 	}
 	return reflect.StructOf(fields)
+}
+
+func (meta Meta) Kinds() (kinds []ValueKind) {
+	for kind := range meta {
+		kinds = append(kinds, kind)
+	}
+	sort.Slice(kinds, func(i, j int) bool {
+		return kinds[i] < kinds[j]
+	})
+	return
+
 }

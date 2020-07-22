@@ -272,17 +272,18 @@ func (pl *PantherLog) Result() (*Result, error) {
 		return nil, errors.New("nil event time")
 	}
 
-	result := pantherlog.BlankResult()
-	data, err := jsonutil.AppendJSON(result.JSON[:0], pantherlog.JSON(), pl.Event())
+	result := pantherlog.NewResult(
+		unbox.String(pl.PantherLogType),
+		unbox.String(pl.PantherRowID),
+		((*time.Time)(pl.PantherParseTime)).UTC(),
+	)
+	data, err := jsonutil.AppendJSON(result.JSON[:0], pantherlog.JSON(), event)
 	if err != nil {
 		result.Close()
 		return nil, err
 	}
 	// We use distinct assignments here to avoid 'losing' the allocated value buffer in the result.
-	result.LogType = unbox.String(pl.PantherLogType)
-	result.ParseTime = ((*time.Time)(pl.PantherParseTime)).UTC()
 	result.EventTime = ((*time.Time)(pl.PantherEventTime)).UTC()
-	result.RowID = unbox.String(pl.PantherRowID)
 	result.JSON = data
 	return result, nil
 }

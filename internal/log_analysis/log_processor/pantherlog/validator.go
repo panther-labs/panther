@@ -33,24 +33,3 @@ var validate = func() *validator.Validate {
 func ValidateStruct(s interface{}) error {
 	return validate.Struct(s)
 }
-
-//func RegisterCustomTypeFunc(fn validator.CustomTypeFunc, types ...interface{}) {
-//	validate.RegisterCustomTypeFunc(fn, types...)
-//}
-
-//func init() {
-//	null.RegisterValidators(validate)
-//	//validateEmbedded := func(val reflect.Value) interface{} {
-//	//	return val.Field(0).Field(0).String()
-//	//}
-//	//validate.RegisterCustomTypeFunc(validateEmbedded,
-//	//	IPAddress{},
-//	//	Domain{},
-//	//	Hostname{},
-//	//	TraceID{},
-//	//	SHA256{},
-//	//	SHA1{},
-//	//	MD5{},
-//	//	URL{},
-//	//)
-//}

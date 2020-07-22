@@ -1,4 +1,4 @@
-package pantherlog
+package enum
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -30,11 +30,11 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 )
 
-// Enum maps numbers to labels
-type Enum map[int64]string
+// Mapping maps numbers to labels
+type Mapping map[int64]string
 
 // Inverse creates a lookup finding an enum value by label
-func (enum Enum) Inverse() map[string]int64 {
+func (enum Mapping) Inverse() map[string]int64 {
 	lookup := make(map[string]int64, len(enum))
 	for n, name := range enum {
 		lookup[name] = n
@@ -44,13 +44,13 @@ func (enum Enum) Inverse() map[string]int64 {
 
 // MustRegisterEnum registers a type to use an enum decoder when decoding with jsoniter.
 // It panics if an error occurred during registration
-func MustRegisterEnum(typ reflect.Type, enum Enum) {
+func MustRegisterEnum(typ reflect.Type, enum Mapping) {
 	if err := RegisterEnum(typ, enum); err != nil {
 		panic(err)
 	}
 }
 
-var registeredEnums = map[reflect.Type]Enum{}
+var registeredEnums = map[reflect.Type]Mapping{}
 
 // RegisterEnum registers a type to use an enum decoder when decoding with jsoniter.
 // It returns an error in the following conditions:
@@ -58,7 +58,7 @@ var registeredEnums = map[reflect.Type]Enum{}
 // - The enum has duplicate labels for the variants
 // - The typ argument is not based on `null.String`
 // - A previous enum was registered for the same type
-func RegisterEnum(typ reflect.Type, enum Enum) error {
+func RegisterEnum(typ reflect.Type, enum Mapping) error {
 	decoder, err := NewEnumDecoder(typ, enum)
 	if err != nil {
 		return err
@@ -72,7 +72,7 @@ func RegisterEnum(typ reflect.Type, enum Enum) error {
 	return nil
 }
 
-func NewEnumDecoder(typ reflect.Type, enum Enum) (jsoniter.ValDecoder, error) {
+func NewEnumDecoder(typ reflect.Type, enum Mapping) (jsoniter.ValDecoder, error) {
 	if typ == nil {
 		return nil, errors.New("nil type")
 	}
@@ -97,7 +97,7 @@ func NewEnumDecoder(typ reflect.Type, enum Enum) (jsoniter.ValDecoder, error) {
 }
 
 type enumDecoder struct {
-	enum     Enum
+	enum     Mapping
 	typeName string
 	lookup   map[string]int64
 }

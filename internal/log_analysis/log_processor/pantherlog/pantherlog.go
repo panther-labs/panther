@@ -1,6 +1,14 @@
 // Package pantherlog defines types and functions to parse logs for Panther
 package pantherlog
 
+import (
+	jsoniter "github.com/json-iterator/go"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/jsonutil"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
+	"time"
+)
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -19,102 +27,39 @@ package pantherlog
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"time"
-)
-
-type Event interface {
-	PantherLogEvent() (string, *time.Time)
-}
-
-func EventStruct(event Event) interface{} {
+// EventStruct composes a struct that extends `event` with panther fields
+func EventStruct(event interface{}) interface{} {
 	return defaultMetaFields.EventStruct(event)
 }
 
-// TagName is used for defining value scan methods on string fields.
-const TagName = "panther"
-
-func init() {
-	MustRegisterScanner("ip", ScannerFunc(ScanIPAddress), KindIPAddress)
-	MustRegisterScanner("domain", KindDomainName, KindDomainName)
-	MustRegisterScanner("md5", KindMD5Hash, KindMD5Hash)
-	MustRegisterScanner("sha1", KindSHA1Hash, KindSHA1Hash)
-	MustRegisterScanner("sha256", KindSHA256Hash, KindSHA256Hash)
-	MustRegisterScanner("hostname", ScannerFunc(ScanHostname), KindDomainName, KindIPAddress)
-	MustRegisterScanner("url", ScannerFunc(ScanURL), KindDomainName, KindIPAddress)
-	MustRegisterScanner("trace_id", KindTraceID, KindTraceID)
+// BuildResult builds a result using the default meta fields
+func BuildResult(logType string, event interface{}) (*Result, error) {
+	builder := ResultBuilder{
+		LogType: logType,
+	}
+	return builder.BuildResult(event)
 }
 
-// Index of special string types that extract pantherlog Values during JSON encoding.
-// These types use a decoder that scans the decoded string value with a ValueScanner to extract pantherlog values
-// in a single pass while decoding input JSON.
-// To achieve that they check the iterator instance for a `*ValueBuffer` attachment and use it in the `ScanValues`
-// method of their respective ValueScanner.
-// Each entry in this index also contains a list of *all* possible `ValueKind` values that the scanner can produce.
-// This information can be retrieved with the RegisteredValueKinds() package method.
+// JSON returns a customized jsoniter.API to be used for serializing panthe log events.
+func JSON() jsoniter.API {
+	return jsonAPI
+}
 
-//func RegisteredScannerKinds(typ reflect.Type) (kinds []ValueKind) {
-//	typ2 := reflect2.Type2(typ)
-//	return registeredTypes[typ2]
-//}
-//
-//func init() {
-//	null.MustRegisterString(
-//		&IPAddress{},
-//		&Domain{},
-//		&SHA1{},
-//		&SHA256{},
-//		&MD5{},
-//		&Hostname{},
-//		&TraceID{},
-//		&URL{},
-//	)
-//	MustRegisterCustomEncoder(&IPAddress{}, KindIPAddress)
-//	MustRegisterCustomEncoder(&Domain{}, KindDomainName)
-//	MustRegisterCustomEncoder(&SHA1{}, KindSHA1Hash)
-//	MustRegisterCustomEncoder(&SHA256{}, KindSHA256Hash)
-//	MustRegisterCustomEncoder(&MD5{}, KindMD5Hash)
-//	MustRegisterCustomEncoder(&Hostname{}, KindIPAddress, KindDomainName)
-//	MustRegisterCustomEncoder(&URL{}, KindIPAddress, KindDomainName)
-//	MustRegisterCustomEncoder(&TraceID{}, KindTraceID)
-//}
+var jsonAPI = RegisterExtensions(jsoniter.Config{
+	EscapeHTML: true,
+	// Validate raw JSON messages to make sure queries work as expected
+	ValidateJsonRawMessage: true,
+	SortMapKeys:            true,
+}.Froze())
 
-//func canCastUnsafe(from ,to reflect.Type) bool {
-//	if from.ConvertibleTo(to) {
-//		return true
-//	}
-//	if from.Kind() == reflect.Struct && from.NumField() == 1 {
-//		field := from.Field(0)
-//		return field.Anonymous && field.Type.ConvertibleTo(to)
-//	}
-//	return false
-//
-//}
-
-//func MustRegisterCustomEncoder(f ValueWriterTo, kinds ...ValueKind) {
-//	if err := RegisterCustomEncoder(f, kinds...); err != nil {
-//		panic(err)
-//	}
-//}
-
-//func RegisterCustomEncoder(f ValueWriterTo, kinds ...ValueKind) error {
-//	if f == nil {
-//		return errors.New(`nil field`)
-//	}
-//	if err := checkKinds(kinds); err != nil {
-//		return err
-//	}
-//	val := reflect.ValueOf(f)
-//	typ := val.Elem().Type()
-//	typ = derefType(typ)
-//	typName := typ.String()
-//	if typName == "" {
-//		return errors.New("anonymous type")
-//	}
-//	typ2 := reflect2.Type2(typ)
-//	if _, duplicate := registeredTypes[typ2]; duplicate {
-//		return errors.New("duplicate scanner mapping")
-//	}
-//	registeredTypes[typ2] = kinds
-//	return nil
-//}
+// RegisterExtensions registers all pantherlog required extensions on an API
+func RegisterExtensions(api jsoniter.API) jsoniter.API {
+	api.RegisterExtension(jsonutil.NewEncoderNamingStrategy(awsglue.RewriteFieldName))
+	tcodec.RegisterJSONEncoder(api, awsglue.TimestampLayout, time.UTC)
+	api.RegisterExtension(tcodec.NewDecoderExtension())
+	api.RegisterExtension(jsonutil.NewOmitempty("json"))
+	api.RegisterExtension(&scanValueEncodersExt{})
+	api.RegisterExtension(&customEncodersExt{})
+	api.RegisterExtension(&eventTimeExt{})
+	return api
+}

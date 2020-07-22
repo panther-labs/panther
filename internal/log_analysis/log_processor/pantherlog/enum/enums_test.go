@@ -1,4 +1,4 @@
-package pantherlog
+package enum
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -34,13 +34,13 @@ func TestNewEnumDecoder(t *testing.T) {
 
 	// Check error cases
 	{
-		enum := Enum{}
+		enum := Mapping{}
 		decoder, err := NewEnumDecoder(typFooEnum, enum)
 		require.Error(t, err)
 		require.Nil(t, decoder)
 	}
 	{
-		enum := Enum{
+		enum := Mapping{
 			1: "Foo",
 			2: "Foo",
 		}
@@ -49,7 +49,7 @@ func TestNewEnumDecoder(t *testing.T) {
 		require.Nil(t, decoder)
 	}
 	{
-		enum := Enum{
+		enum := Mapping{
 			1: "Foo",
 		}
 		decoder, err := NewEnumDecoder(nil, enum)
@@ -57,14 +57,14 @@ func TestNewEnumDecoder(t *testing.T) {
 		require.Nil(t, decoder)
 	}
 	{
-		enum := Enum{
+		enum := Mapping{
 			1: "Foo",
 		}
 		decoder, err := NewEnumDecoder(reflect.TypeOf(""), enum)
 		require.Error(t, err)
 		require.Nil(t, decoder)
 	}
-	enum := Enum{
+	enum := Mapping{
 		1: "Foo",
 		2: "Bar",
 		3: "Baz",

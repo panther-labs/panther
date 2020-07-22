@@ -104,15 +104,51 @@ func (a *logParserAdapter) ParseLog(log string) ([]*Result, error) {
 }
 
 type SimpleJSONParserFactory struct {
-	NewEvent       func() pantherlog.Event
+	LogType        string
+	NewEvent       func() interface{}
 	JSON           jsoniter.API
 	Validate       func(event interface{}) error
 	ResultBuilder  *pantherlog.ResultBuilder
 	ReadBufferSize int
 }
 
+func (f *SimpleJSONParserFactory) NewParser(_ interface{}) (Interface, error) {
+	api := f.JSON
+	if api == nil {
+		api = jsoniter.ConfigDefault
+	}
+	validate := f.Validate
+	if validate == nil {
+		validate = pantherlog.ValidateStruct
+	}
+
+	builder := f.ResultBuilder
+	if builder == nil {
+		builder = &pantherlog.ResultBuilder{
+			LogType:   f.LogType,
+			Meta:      pantherlog.DefaultMetaFields(),
+			NextRowID: rowid.Next,
+			Now:       time.Now,
+		}
+	}
+	const minBufferSize = 512
+	bufferSize := f.ReadBufferSize
+	if bufferSize < minBufferSize {
+		bufferSize = minBufferSize
+	}
+
+	iter := jsoniter.Parse(api, nil, bufferSize)
+	return &simpleJSONEventParser{
+		newEvent:  f.NewEvent,
+		iter:      iter,
+		validate:  validate,
+		builder:   builder,
+		logReader: strings.NewReader(`null`),
+	}, nil
+}
+
 type simpleJSONEventParser struct {
-	newEvent  func() pantherlog.Event
+	newEvent  func() interface{}
 	iter      *jsoniter.Iterator
 	validate  func(x interface{}) error
 	builder   *pantherlog.ResultBuilder
@@ -135,38 +171,4 @@ func (p *simpleJSONEventParser) ParseLog(log string) ([]*Result, error) {
 		return nil, err
 	}
 	return []*Result{result}, nil
-}
-
-func (f *SimpleJSONParserFactory) NewParser(_ interface{}) (Interface, error) {
-	api := f.JSON
-	if api == nil {
-		api = jsoniter.ConfigDefault
-	}
-	validate := f.Validate
-	if validate == nil {
-		validate = pantherlog.ValidateStruct
-	}
-
-	builder := f.ResultBuilder
-	if builder == nil {
-		builder = &pantherlog.ResultBuilder{
-			Meta:      pantherlog.DefaultMetaFields(),
-			NextRowID: rowid.Next,
-			Now:       time.Now,
-		}
-	}
-	const minBufferSize = 512
-	bufferSize := f.ReadBufferSize
-	if bufferSize < minBufferSize {
-		bufferSize = minBufferSize
-	}
-
-	iter := jsoniter.Parse(api, nil, bufferSize)
-	return &simpleJSONEventParser{
-		newEvent:  f.NewEvent,
-		iter:      iter,
-		validate:  validate,
-		builder:   builder,
-		logReader: strings.NewReader(`null`),
-	}, nil
 }

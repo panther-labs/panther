@@ -38,17 +38,17 @@ type Result struct {
 	ParseTime time.Time
 	RowID     string
 	JSON      []byte
-
-	values ValueBuffer
+	Values    ValueBuffer `json:"-"`
 }
 
-func (r *Result) Clone() *Result {
-	return &Result{
+func (r *Result) Clone() Result {
+	return Result{
 		LogType:   r.LogType,
 		EventTime: r.EventTime,
 		ParseTime: r.ParseTime,
 		RowID:     r.RowID,
 		JSON:      append(([]byte)(nil), r.JSON...),
+		Values:    r.Values.Clone(),
 	}
 }
 
@@ -78,7 +78,7 @@ func (r *Result) UnmarshalJSON(data []byte) error {
 		EventTime: eventTime,
 		ParseTime: parseTime,
 		JSON:      append(r.JSON[:0], data...),
-		values:    r.values,
+		Values:    r.Values,
 	}
 	return nil
 }
@@ -89,47 +89,33 @@ var resultPool = &sync.Pool{
 	},
 }
 
-func BlankResult() *Result {
-	return resultPool.Get().(*Result)
-}
-
-func NewResult(event Event, rowID string, parseTime time.Time, meta Meta) (*Result, error) {
-	result := BlankResult()
+func NewResult(logType, rowID string, parseTime time.Time) *Result {
+	result := resultPool.Get().(*Result)
+	result.LogType = logType
 	result.RowID = rowID
 	result.ParseTime = parseTime
-	if meta == nil {
-		meta = defaultMetaFields
-	}
-	if err := result.WriteEvent(event, meta); err != nil {
-		result.Close()
-		return nil, err
-	}
-	return result, nil
+	return result
 }
 
 func (r *Result) Close() {
 	if r == nil {
 		return
 	}
-	r.values.Reset()
+	r.Values.Reset()
 	*r = Result{
 		JSON:   r.JSON[:0],
-		values: r.values,
+		Values: r.Values,
 	}
 	resultPool.Put(r)
 }
 
-func (r *Result) WriteEvent(event Event, meta Meta) error {
+func (r *Result) WriteEvent(event interface{}, meta Meta) error {
 	stream := jsonAPI.BorrowStream((*resultWriter)(r))
-	var eventTime *time.Time
-	r.LogType, eventTime = event.PantherLogEvent()
-	if eventTime == nil {
-		r.EventTime = r.ParseTime
-	} else {
-		r.EventTime = *eventTime
-	}
-	stream.Attachment = &r.values
+	stream.Attachment = r
 	stream.WriteVal(event)
+	if r.EventTime.IsZero() {
+		r.EventTime = r.ParseTime
+	}
 	r.writeMeta(meta, stream)
 	err := stream.Flush()
 	jsonAPI.ReturnStream(stream)
@@ -162,8 +148,7 @@ func (r *Result) writeMeta(meta Meta, stream *jsoniter.Stream) {
 
 	stream.WriteObjectField(FieldParseTime)
 	writeJSONTimestamp(stream, r.ParseTime)
-
-	for kind, values := range r.values.index {
+	for kind, values := range r.Values.index {
 		if len(values) == 0 {
 			continue
 		}
@@ -196,42 +181,25 @@ func extendJSON(data []byte) bool {
 }
 
 // avoid allocations when encoding timestamps
+// TODO: use awsglue.TimestampLayoutJSON once we merge the decoupling
 func writeJSONTimestamp(stream *jsoniter.Stream, tm time.Time) {
 	stream.SetBuffer(timestamp.AppendJSON(stream.Buffer(), tm))
 }
 
 type ResultBuilder struct {
+	LogType   string
 	Meta      Meta
 	NextRowID func() string
 	Now       func() time.Time
 }
 
-func (b *ResultBuilder) BuildResult(event Event) (*Result, error) {
-	result := BlankResult()
-	result.RowID = b.nextRowID()
-	result.ParseTime = b.now()
+func (b *ResultBuilder) BuildResult(event interface{}) (*Result, error) {
+	result := NewResult(b.LogType, b.nextRowID(), b.now())
 	if err := result.WriteEvent(event, b.meta()); err != nil {
 		result.Close()
 		return nil, err
 	}
 	return result, nil
-}
-
-func (b *ResultBuilder) PackEvents(events []Event, err error) ([]*Result, error) {
-	if err != nil {
-		return nil, err
-	}
-	if len(events) == 0 {
-		return nil, nil
-	}
-	results := make([]*Result, len(events))
-	for i, event := range events {
-		results[i], err = b.BuildResult(event)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return results, nil
 }
 
 func (b *ResultBuilder) now() time.Time {

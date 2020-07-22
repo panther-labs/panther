@@ -19,18 +19,22 @@ package pantherlog
  */
 
 import (
-	"fmt"
+	"github.com/pkg/errors"
 	"net"
 	"net/url"
-	"reflect"
 	"strings"
-	"unsafe"
-
-	jsoniter "github.com/json-iterator/go"
-	"github.com/pkg/errors"
-
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 )
+
+func init() {
+	MustRegisterScanner("ip", ScannerFunc(ScanIPAddress), KindIPAddress)
+	MustRegisterScanner("domain", KindDomainName, KindDomainName)
+	MustRegisterScanner("md5", KindMD5Hash, KindMD5Hash)
+	MustRegisterScanner("sha1", KindSHA1Hash, KindSHA1Hash)
+	MustRegisterScanner("sha256", KindSHA256Hash, KindSHA256Hash)
+	MustRegisterScanner("hostname", ScannerFunc(ScanHostname), KindDomainName, KindIPAddress)
+	MustRegisterScanner("url", ScannerFunc(ScanURL), KindDomainName, KindIPAddress)
+	MustRegisterScanner("trace_id", KindTraceID, KindTraceID)
+}
 
 // ValueScanner parses values from a string and writes them to a ValueWriter.
 // Implementations should parse `input` and write valid values to `w`.
@@ -144,165 +148,4 @@ func checkIPAddress(addr string) bool {
 // ScanValues implements ValueScanner interface
 func (kind ValueKind) ScanValues(w ValueWriter, input string) {
 	w.WriteValues(kind, input)
-}
-
-type scanStringEncoder struct {
-	parent  jsoniter.ValEncoder
-	scanner ValueScanner
-}
-
-func (enc *scanStringEncoder) IsEmpty(ptr unsafe.Pointer) bool {
-	return enc.parent.IsEmpty(ptr)
-}
-func (enc *scanStringEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	enc.parent.Encode(ptr, stream)
-	if stream.Error != nil {
-		return
-	}
-	input := *((*string)(ptr))
-	if input == "" {
-		return
-	}
-	w, ok := stream.Attachment.(ValueWriter)
-	if !ok {
-		return
-	}
-	enc.scanner.ScanValues(w, input)
-}
-
-type scanStringerEncoder struct {
-	parent   jsoniter.ValEncoder
-	scanner  ValueScanner
-	typ      reflect.Type
-	indirect bool
-}
-
-func (enc *scanStringerEncoder) IsEmpty(ptr unsafe.Pointer) bool {
-	return enc.parent.IsEmpty(ptr)
-}
-
-func (enc *scanStringerEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	enc.parent.Encode(ptr, stream)
-	if stream.Error != nil {
-		return
-	}
-	w, ok := stream.Attachment.(ValueWriter)
-	if !ok {
-		return
-	}
-	val := reflect.NewAt(enc.typ, ptr)
-	if enc.indirect {
-		val = val.Elem()
-	}
-	str := val.Interface().(fmt.Stringer)
-	if input := str.String(); input != "" {
-		enc.scanner.ScanValues(w, input)
-	}
-}
-
-type scanNullStringEncoder struct {
-	parent  jsoniter.ValEncoder
-	scanner ValueScanner
-}
-
-func (enc *scanNullStringEncoder) IsEmpty(ptr unsafe.Pointer) bool {
-	return enc.parent.IsEmpty(ptr)
-}
-
-func (enc *scanNullStringEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	enc.parent.Encode(ptr, stream)
-	if stream.Error != nil {
-		return
-	}
-	input := *((*null.String)(ptr))
-	if !input.Exists || input.Value == "" {
-		return
-	}
-	w, ok := stream.Attachment.(ValueWriter)
-	if !ok {
-		return
-	}
-	enc.scanner.ScanValues(w, input.Value)
-}
-
-type scanStringPtrEncoder struct {
-	parent  jsoniter.ValEncoder
-	scanner ValueScanner
-}
-
-func (enc *scanStringPtrEncoder) IsEmpty(ptr unsafe.Pointer) bool {
-	return enc.parent.IsEmpty(ptr)
-}
-func (enc *scanStringPtrEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	enc.parent.Encode(ptr, stream)
-	if stream.Error != nil {
-		return
-	}
-	input := *((**string)(ptr))
-	if input == nil {
-		return
-	}
-	w, ok := stream.Attachment.(ValueWriter)
-	if !ok {
-		return
-	}
-	enc.scanner.ScanValues(w, *input)
-}
-
-type scanValueEncodersExt struct {
-	jsoniter.DummyExtension
-}
-
-var (
-	typStringer   = reflect.TypeOf((*fmt.Stringer)(nil)).Elem()
-	typString     = reflect.TypeOf("")
-	typStringPtr  = reflect.TypeOf((*string)(nil))
-	typNullString = reflect.TypeOf(null.String{})
-)
-
-func (ext *scanValueEncodersExt) UpdateStructDescriptor(desc *jsoniter.StructDescriptor) {
-	for _, binding := range desc.Fields {
-		field := binding.Field
-		tag, ok := field.Tag().Lookup(TagName)
-		if !ok {
-			continue
-		}
-		scanner, _ := LookupScanner(tag)
-		if scanner == nil {
-			continue
-		}
-		fieldType := field.Type().Type1()
-		// Decorate encoders
-		switch {
-		case fieldType.ConvertibleTo(typString):
-			binding.Encoder = &scanStringEncoder{
-				parent:  binding.Encoder,
-				scanner: scanner,
-			}
-		case fieldType.ConvertibleTo(typStringPtr):
-			binding.Encoder = &scanStringPtrEncoder{
-				parent:  binding.Encoder,
-				scanner: scanner,
-			}
-		case fieldType.ConvertibleTo(typNullString):
-			binding.Encoder = &scanNullStringEncoder{
-				parent:  binding.Encoder,
-				scanner: scanner,
-			}
-		case reflect.PtrTo(fieldType).Implements(typStringer):
-			binding.Encoder = &scanStringerEncoder{
-				parent:  binding.Encoder,
-				typ:     fieldType,
-				scanner: scanner,
-			}
-		case fieldType.Implements(typStringer):
-			indirect := fieldType.Kind() == reflect.Ptr
-			binding.Encoder = &scanStringerEncoder{
-				parent:   binding.Encoder,
-				typ:      fieldType,
-				indirect: indirect,
-				scanner:  scanner,
-			}
-		}
-	}
 }
