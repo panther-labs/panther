@@ -100,11 +100,11 @@ func TestLaceworkAws(t *testing.T) {
 		"SOURCE": "Lacework Agent"
 	}`
 
-	expectedDate := time.Unix(1594198800, 0).In(time.UTC)
+	expectedDate := time.Date(2020, 7, 8, 9, 0, 0, 0, time.UTC)
 	expectedEvent := &Lacework{
 		EventCategory: aws.String("App"),
 		Severity:      (*numerics.Integer)(aws.Int(5)),
-		StartTime:     aws.String("08 Jul 2020 09:00 GMT"),
+		StartTime:     (*timestamp.LaceworkTimestamp)(&expectedDate),
 		Summary:       aws.String("xxx"),
 		EventType:     aws.String("NewInternalConnection"),
 		EventName:     aws.String("New Internal Connection"),
