@@ -36,6 +36,7 @@ const Page403: React.FC = () => {
       left={0}
       top={0}
       direction="column"
+      zIndex={-1}
     >
       <Box mb={10}>
         <img alt="Access denied illustration" src={AccessDeniedImg} width="auto" height={400} />

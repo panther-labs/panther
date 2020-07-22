@@ -33,6 +33,7 @@ const Page500: React.FC = () => {
       left={0}
       top={0}
       direction="column"
+      zIndex={-1}
     >
       <Box mb={10}>
         <img alt="Page crash illustration" src={WarningImg} width="auto" height={350} />
