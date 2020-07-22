@@ -62,55 +62,53 @@ func (fn TimeEncoderFunc) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
 
 // Split is a helper to split a TimeCodec into a decoder and an encoder.
 func Split(codec TimeCodec) (TimeDecoder, TimeEncoder) {
-	return codec, codec
+	return resolveDecoder(codec), resolveEncoder(codec)
 }
 
 // Join is a helper to compose a TimeCodec from a decoder and an encoder.
 func Join(decode TimeDecoder, encode TimeEncoder) TimeCodec {
-	return &fnCodec{
-		encode: resolveEncodeFunc(encode),
-		decode: resolveDecodeFunc(decode),
+	if c, ok := decode.(*joinCodec); ok {
+		decode = c.decode
+	}
+	if c, ok := encode.(*joinCodec); ok {
+		encode = c.encode
+	}
+	return &joinCodec{
+		encode: resolveEncoder(encode),
+		decode: resolveDecoder(decode),
 	}
 }
 
-func resolveEncodeFunc(enc TimeEncoder) TimeEncoderFunc {
+func resolveEncoder(enc TimeEncoder) TimeEncoder {
 	if enc == nil {
 		return nil
 	}
-	if fn, ok := enc.(TimeEncoderFunc); ok {
-		return fn
+	if join, ok := enc.(*joinCodec); ok {
+		return join.encode
 	}
-	return enc.EncodeTime
+	return enc
 }
 
-func resolveDecodeFunc(dec TimeDecoder) TimeDecoderFunc {
+func resolveDecoder(dec TimeDecoder) TimeDecoder {
 	if dec == nil {
 		return nil
 	}
-	if fn, ok := dec.(TimeDecoderFunc); ok {
-		return fn
+	if join, ok := dec.(*joinCodec); ok {
+		return join.decode
 	}
-	return dec.DecodeTime
+	return dec
 }
 
-// Join is a helper to compose a TimeCodec from a decoder and an encoder function.
-func JoinFunc(decode TimeDecoderFunc, encode TimeEncoderFunc) TimeCodec {
-	return &fnCodec{
-		encode: encode,
-		decode: decode,
-	}
+type joinCodec struct {
+	encode TimeEncoder
+	decode TimeDecoder
 }
 
-type fnCodec struct {
-	encode TimeEncoderFunc
-	decode TimeDecoderFunc
+func (codec *joinCodec) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
+	codec.encode.EncodeTime(tm, stream)
 }
-
-func (codec *fnCodec) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
-	codec.encode(tm, stream)
-}
-func (codec *fnCodec) DecodeTime(iter *jsoniter.Iterator) time.Time {
-	return codec.decode(iter)
+func (codec *joinCodec) DecodeTime(iter *jsoniter.Iterator) time.Time {
+	return codec.decode.DecodeTime(iter)
 }
 
 // UnixSeconds reads a timestamp from seconds since UNIX epoch.
@@ -245,61 +243,54 @@ func (layout layoutCodec) DecodeTime(iter *jsoniter.Iterator) time.Time {
 	}
 }
 
-// UTC forces UTC on all decoded/encoded timestamps
-func UTC(codec TimeCodec) TimeCodec {
-	return In(time.UTC, codec)
-}
-
 // In forces a `time.Location` on all decoded/encoded timestamps
 func In(loc *time.Location, codec TimeCodec) TimeCodec {
-	return &fnCodec{
-		encode: EncodeIn(loc, TimeEncoderFunc(codec.EncodeTime)).EncodeTime,
-		decode: DecodeIn(loc, TimeDecoderFunc(codec.DecodeTime)).DecodeTime,
+	return &joinCodec{
+		encode: EncodeIn(loc, codec),
+		decode: DecodeIn(loc, codec),
 	}
 }
 
-// DecodeUTC forces UTC on all decoded timestamps
-func DecodeUTC(decoder TimeDecoder) TimeDecoder {
-	return DecodeIn(time.UTC, decoder)
-}
-
-// EncodeUTC forces UTC on all encoded timestamps
-func EncodeUTC(encoder TimeEncoder) TimeEncoder {
-	return EncodeIn(time.UTC, encoder)
-}
-
 // EncodeIn forces a `time.Location` on all encoded timestamps
-func EncodeIn(loc *time.Location, encoder TimeEncoder) TimeEncoder {
+func EncodeIn(loc *time.Location, enc TimeEncoder) TimeEncoder {
+	enc = resolveEncoder(enc)
+	if unwrap, ok := enc.(*locEncoder); ok {
+		enc = resolveEncoder(unwrap.encode)
+	}
 	return &locEncoder{
-		encode: resolveEncodeFunc(encoder),
+		encode: resolveEncoder(enc),
 		loc:    loc,
 	}
 }
 
 type locEncoder struct {
-	encode TimeEncoderFunc
+	encode TimeEncoder
 	loc    *time.Location
 }
 
 func (e *locEncoder) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
-	e.encode(tm.In(e.loc), stream)
+	e.encode.EncodeTime(tm.In(e.loc), stream)
 }
 
 // DecodeIn forces a `time.Location` on all decoded timestamps
-func DecodeIn(loc *time.Location, decoder TimeDecoder) TimeDecoder {
+func DecodeIn(loc *time.Location, dec TimeDecoder) TimeDecoder {
+	dec = resolveDecoder(dec)
+	if unwrap, ok := dec.(*locDecoder); ok {
+		dec = resolveDecoder(unwrap.decode)
+	}
 	return &locDecoder{
-		decode: resolveDecodeFunc(decoder),
+		decode: dec,
 		loc:    loc,
 	}
 }
 
 type locDecoder struct {
-	decode TimeDecoderFunc
+	decode TimeDecoder
 	loc    *time.Location
 }
 
 func (d *locDecoder) DecodeTime(iter *jsoniter.Iterator) time.Time {
-	return d.decode(iter).In(d.loc)
+	return d.decode.DecodeTime(iter).In(d.loc)
 }
 
 // ValidateEmbeddedTimeValue can be used by validator package to check values that embed time.Time

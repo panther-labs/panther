@@ -35,7 +35,11 @@ func TestNewExtension(t *testing.T) {
 		TimeCustom  time.Time `json:"t_custom,omitempty" tcodec:"layout=2006-01-02"`
 	}
 	ext := NewExtension(Config{
-		OverrideEncoder: EncodeIn(time.UTC, LayoutCodec(time.RFC3339Nano)),
+		DecorateCodec: func(codec TimeCodec) TimeCodec {
+			dec, _ := Split(codec)
+			enc := EncodeIn(time.UTC, LayoutCodec(time.RFC3339Nano))
+			return Join(dec, enc)
+		},
 	})
 	api := jsoniter.Config{}.Froze()
 	api.RegisterExtension(ext)
@@ -88,21 +92,6 @@ func TestConfig(t *testing.T) {
 	}
 	{
 		ext := NewExtension(Config{
-			OverrideEncoder: LayoutCodec(time.RFC3339Nano),
-		})
-		require.NotNil(t, ext.timeEncoderFunc(nil))
-		require.Nil(t, ext.timeDecoderFunc(nil))
-	}
-	{
-		ext := NewExtension(Config{
-			OverrideDecoder: LayoutCodec(time.RFC3339Nano),
-		})
-		require.NotNil(t, ext.timeDecoderFunc(nil))
-		require.Nil(t, ext.timeEncoderFunc(nil))
-		require.Equal(t, DefaultTagName, ext.TagName())
-	}
-	{
-		ext := NewExtension(Config{
 			TagName: "foo",
 		})
 		require.Equal(t, "foo", ext.TagName())
@@ -120,17 +109,23 @@ func TestConfig(t *testing.T) {
 		loc, err := time.LoadLocation("Europe/Athens")
 		require.NoError(t, err)
 		ext := NewExtension(Config{
-			Location: loc,
+			DecorateCodec: func(codec TimeCodec) TimeCodec {
+				return In(loc, codec)
+			},
 		})
 		type T struct {
 			Time time.Time `json:"tm" tcodec:"rfc3339"`
-			Foo  string
+			Foo  string    `json:"foo,omitempty"`
 		}
 		v := T{}
 		api := jsoniter.Config{}.Froze()
 		api.RegisterExtension(ext)
 		require.NoError(t, api.UnmarshalFromString(`{"tm":"2006-01-02T15:04:05.999Z"}`, &v))
 		require.Equal(t, loc, v.Time.Location())
+		v.Time = v.Time.UTC()
+		actual, err := api.MarshalToString(&v)
+		require.NoError(t, err)
+		require.Equal(t, `{"tm":"2006-01-02T17:04:05.999+02:00"}`, actual)
 	}
 	{
 		ext := NewExtension(Config{

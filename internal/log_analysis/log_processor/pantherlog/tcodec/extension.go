@@ -58,18 +58,12 @@ type Config struct {
 	// DefaultCodec sets the default codec to use when a tag is not found or cannot be resolved to a TimeCodec.
 	// If this option is `nil` fields with unresolved codecs will not be modified by the extension.
 	DefaultCodec TimeCodec
-	// Location forces all timestamps to be set to the specified location.
-	// If this option is `nil` timestamp location will not be modified.
-	Location *time.Location
 	// TagName sets the struct tag name to use for tcodec options.
 	// If this option is not set the `DefaultTagName` will be used.
 	TagName string
-	// OverrideEncoder enforces all timestamps to be encoded using this TimeEncoder.
+	// DecorateEncoder enforces all timestamps to be encoded using this TimeEncoder.
 	// If this option is `nil` timestamps will be encoded using their individual TimeCodec.
-	OverrideEncoder TimeEncoder
-	// OverrideDecoder enforces all timestamps to be decoded using this TimeDecoder
-	// If this option is `nil` timestamps will be decoded using their individual TimeCodec.
-	OverrideDecoder TimeDecoder
+	DecorateCodec func(TimeCodec) TimeCodec
 }
 
 func NewExtension(config Config) *Extension {
@@ -111,12 +105,12 @@ func (ext *Extension) UpdateStructDescriptor(desc *jsoniter.StructDescriptor) {
 				codec = Lookup(tag)
 			}
 		}
-
-		if decoder := ext.newValDecoder(typ, codec); decoder != nil {
+		dec, enc := ext.split(codec)
+		if decoder := ext.newValDecoder(typ, dec); decoder != nil {
 			// We only modify the underlying decoder if we resolved a decoder
 			binding.Decoder = decoder
 		}
-		if encoder := ext.newValEncoder(typ, codec); encoder != nil {
+		if encoder := ext.newValEncoder(typ, enc); encoder != nil {
 			// We only modify the underlying encoder if we resolved an encoder
 			binding.Encoder = encoder
 		}
@@ -145,36 +139,28 @@ func (ext *Extension) TagName() string {
 	return DefaultTagName
 }
 
-func (ext *Extension) newValEncoder(typ reflect.Type, codec TimeCodec) jsoniter.ValEncoder {
-	encode := ext.timeEncoderFunc(codec)
+func (ext *Extension) newValEncoder(typ reflect.Type, encode TimeEncoder) jsoniter.ValEncoder {
 	if encode == nil {
 		return nil
 	}
 	if typ.Kind() == reflect.Ptr {
 		return &jsonTimePtrEncoder{
-			encode: encode,
+			encode: encode.EncodeTime,
 		}
 	}
 	return &jsonTimeEncoder{
-		encode: encode,
+		encode: encode.EncodeTime,
 	}
 }
 
-func (ext *Extension) timeEncoderFunc(codec TimeCodec) (encode TimeEncoderFunc) {
+func (ext *Extension) split(codec TimeCodec) (decoder TimeDecoder, encoder TimeEncoder) {
 	if codec == nil {
 		codec = ext.config.DefaultCodec
 	}
-	if enc := ext.config.OverrideEncoder; enc != nil {
-		encode = enc.EncodeTime
-	} else if codec != nil {
-		encode = codec.EncodeTime
-	} else {
-		return
+	if decorate := ext.config.DecorateCodec; decorate != nil {
+		codec = decorate(codec)
 	}
-	if loc := ext.config.Location; loc != nil {
-		encode = EncodeIn(loc, encode).EncodeTime
-	}
-	return
+	return Split(codec)
 }
 
 type jsonTimeEncoder struct {
@@ -207,37 +193,19 @@ func (enc *jsonTimePtrEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Strea
 	}
 }
 
-func (ext *Extension) newValDecoder(typ reflect.Type, codec TimeCodec) jsoniter.ValDecoder {
-	decode := ext.timeDecoderFunc(codec)
+func (ext *Extension) newValDecoder(typ reflect.Type, decode TimeDecoder) jsoniter.ValDecoder {
 	if decode == nil {
 		return nil
 	}
 	if typ.Kind() == reflect.Ptr {
 		return &jsonTimePtrDecoder{
-			decode: decode,
+			decode: decode.DecodeTime,
 			typ:    typ.Elem(),
 		}
 	}
 	return &jsonTimeDecoder{
-		decode: decode,
+		decode: decode.DecodeTime,
 	}
-}
-
-func (ext *Extension) timeDecoderFunc(codec TimeCodec) (decode TimeDecoderFunc) {
-	if codec == nil {
-		codec = ext.config.DefaultCodec
-	}
-	if dec := ext.config.OverrideDecoder; dec != nil {
-		decode = dec.DecodeTime
-	} else if codec != nil {
-		decode = codec.DecodeTime
-	} else {
-		return
-	}
-	if loc := ext.config.Location; loc != nil {
-		decode = DecodeIn(loc, decode).DecodeTime
-	}
-	return
 }
 
 type jsonTimeDecoder struct {
