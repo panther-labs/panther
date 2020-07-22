@@ -66,9 +66,9 @@ Edit your `deployments/panther_config.yml` to add `arn:aws:iam::34318291XXXX:use
       - arn:aws:iam::34318291XXXX:user/k7m2-s-v2st0722
 ```
 
-If deploying from `master yml` also update `DestinationClusterARNs` as above.
+If deploying using a pre-packaged deployment also update `DestinationClusterARNs` as above in the CloudFormation inputs.
 
-Next, run `mage deploy` if deploying from source or deploy via `master.yml`.
+Next, run `mage deploy` if deploying from source or deploy via the pre-packaged deployment using CloudFormation.
 
 When the deployment is done, run `mage snowflake:snowpipe`. When finished there should be a `snowpipe.sql` file 
 created in `./out/snowflake/snowpipe.sql`
@@ -152,13 +152,13 @@ generated `./out/snowflake/snowpipe.sql` file from above, and `<secret ARN>` for
 ```
 Then click the `Save` button.
 
-Update the `SecretsManagerARN` attribute with the ARN of the secret in the `master.yml` CloudFormation template or
- the `panther_config.yml` if deploying from source.
+If using a pre-packaged deployment then pdate the `SecretsManagerARN` attribute with the ARN of the secret in 
+the CloudFormation template inputs or in the `panther_config.yml` file if deploying from source.
 
-Next deploy Panther, either from the `master.yml` CloudFormation template or doing `mage deploy` if from source.
+Next deploy Panther. If using a pre-packaged deployment use CloudFormation, if from source doing `mage deploy` 
 
-The configuration can be tested from the [Data Explorer](./data-analytics/data-explorer.md). Run some same queries over table that you know have data
-(check via Snowflake console).
+The configuration can be tested from the [Data Explorer](./data-analytics/data-explorer.md). Run some same queries over a
+table that you know has data (check via Snowflake console).
 
 To rotate secrets, create a NEW read-only user as above and follow the configuration steps above, replacing the old
 user with the new user. Wait one hour before deleting/disabling the the old user. 
