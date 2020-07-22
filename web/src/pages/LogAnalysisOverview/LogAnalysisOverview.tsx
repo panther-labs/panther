@@ -89,7 +89,7 @@ const LogAnalysisOverview: React.FC = () => {
 
   return (
     <Box as="article" mb={6}>
-      <SimpleGrid columns={1} spacingX={3} spacingY={2} as="section" mb={3}>
+      <SimpleGrid columns={1} spacingX={3} spacingY={2} as="section" mb={5}>
         <Panel title="Real-time Alerts">
           <Box height={200}>
             <Flex direction="row" width="100%">
@@ -99,7 +99,7 @@ const LogAnalysisOverview: React.FC = () => {
           </Box>
         </Panel>
       </SimpleGrid>
-      <SimpleGrid columns={1} spacingX={3} spacingY={2} my={3}>
+      <SimpleGrid columns={1} spacingX={3} spacingY={2} my={5}>
         <Panel title="Events by Log Type">
           <Box height={200}>
             <EventsByLogType events={eventsProcessed} />

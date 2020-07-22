@@ -17,47 +17,14 @@
  */
 
 import React from 'react';
-import { Box, Flex, Heading, Icon, Text } from 'pouncejs';
+import { Box, Flex, Heading, Text } from 'pouncejs';
 import { slugify } from 'Helpers/utils';
 import { SingleValue } from 'Generated/schema';
+import DifferenceText from './DifferenceText';
 
 interface AlertSummaryProps {
   data: SingleValue[];
 }
-
-const DifferenceText = ({ diff }) => {
-  if (diff === 0) {
-    return (
-      <React.Fragment>
-        <Text fontSize="small">No change</Text>
-        <Flex>
-          <Text fontSize="small">{diff}</Text>
-        </Flex>
-      </React.Fragment>
-    );
-  }
-  if (diff > 0) {
-    return (
-      <React.Fragment>
-        <Text fontSize="small">Decreased by</Text>
-        <Flex>
-          <Icon type="caret-down" size="small" color="green-200" />
-          <Text fontSize="small">{diff}</Text>
-        </Flex>
-      </React.Fragment>
-    );
-  }
-
-  return (
-    <React.Fragment>
-      <Text fontSize="small">Increased by</Text>
-      <Flex>
-        <Icon type="caret-up" size="small" color="red-200" />
-        <Text fontSize="small">{-diff}</Text>
-      </Flex>
-    </React.Fragment>
-  );
-};
 
 const AlertSummary: React.FC<AlertSummaryProps> = ({ data }) => {
   const alertsCurrentPeriod = data.find(d => d.label === 'Current Period').value;
@@ -76,13 +43,13 @@ const AlertSummary: React.FC<AlertSummaryProps> = ({ data }) => {
       <Heading
         as="h2"
         size="3x-large"
-        color="red-200"
+        color="red-700"
         fontWeight="bold"
         aria-describedby={slugify('title')}
       >
         {alertsCurrentPeriod}
       </Heading>
-      <Box id={slugify('Total Alerts')} fontSize="medium">
+      <Box id={slugify('Total Alerts')} fontWeight="bold" fontSize="medium">
         Total Alerts
       </Box>
       <Flex my={2} width="60%" justify="space-between">

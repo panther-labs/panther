@@ -17,7 +17,8 @@
  */
 
 import React from 'react';
-import { Box, theme } from 'pouncejs';
+import { Box, useTheme } from 'pouncejs';
+import { formatTime } from 'Helpers/utils';
 import { SeriesData } from 'Generated/schema';
 import { LineColors } from '../constants';
 
@@ -25,29 +26,18 @@ interface TimeSeriesLinesProps {
   data: SeriesData;
 }
 
-function formatTime(date) {
-  let hours = date.getHours();
-  let minutes = date.getMinutes();
-  if (hours === 0) {
-    hours = '00';
-  } else if (hours < 10) {
-    hours = `0${hours}`;
-  }
-  if (minutes === 0) {
-    minutes = '00';
-  } else if (minutes < 10) {
-    hours = `0${minutes}`;
-  }
-  // Spaces for centering time above dates
-  return `  ${hours}:${minutes}`;
-}
-function formatDate(timestamp) {
-  const date = new Date(timestamp);
-  return `${formatTime(date)}
-  ${date.getDate()}/${date.getMonth() + 1}`;
+const createFormat = (format: string): any => formatTime(format);
+const hourFormat = createFormat('HH:mm');
+const dateFormat = createFormat('DD/MM');
+const fullDateFormat = createFormat('HH:mm DD/MM/YYYY');
+
+function formatDateString(timestamp) {
+  return `  ${hourFormat(timestamp)}
+  ${dateFormat(timestamp)}`;
 }
 
 const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
+  const theme = useTheme();
   const container = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
     (async () => {
@@ -108,9 +98,12 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
           formatter: params => {
             let tooltip = '';
             if (params.length) {
-              const date = params[0].value[0];
-              const year = new Date(date).getFullYear();
-              tooltip += `${formatDate(date)}/${year}`;
+              const [
+                {
+                  value: [date],
+                },
+              ] = params;
+              tooltip += fullDateFormat(date);
               const seriesTooltips = params.map(seriesTooltip => {
                 return `<br/>${seriesTooltip.marker} ${
                   seriesTooltip.seriesName
@@ -139,10 +132,10 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
           },
           axisLabel: {
             show: true,
-            formatter: value => formatDate(value),
+            formatter: value => formatDateString(value),
             textStyle: {
               color: () => {
-                return '#F6F6F6';
+                return theme.colors['gray-50'];
               },
             },
           },
@@ -156,7 +149,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
             show: true,
             textStyle: {
               color: () => {
-                return '#F6F6F6';
+                return theme.colors['gray-50'];
               },
             },
           },
