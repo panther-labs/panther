@@ -30,7 +30,7 @@ interface PanelPlaceholderProps {
 
 const PanelPlaceholder: React.FC<PanelPlaceholderProps> = ({ rowCount = 4, rowHeight = 15 }) => (
   <Card width={1} py={8} px={8}>
-    <Box pb={8} borderBottom="1px solid" borderColor="navyblue-500">
+    <Box pb={8} borderBottom="1px solid" borderColor="navyblue-300">
       <ContentLoader height={10}>
         <rect x="0" y="0" rx="1" ry="1" width="30%" height="10" />
       </ContentLoader>

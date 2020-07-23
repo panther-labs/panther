@@ -40,8 +40,8 @@ const TablePlaceholder: React.FC<TablePlaceholderProps> = ({
   return (
     <ContentLoader
       height={rowCount * (rowHeight + rowGap)}
-      primaryColor={theme.colors['navyblue-700']}
-      secondaryColor={theme.colors['navyblue-800']}
+      primaryColor={theme.colors['navyblue-500']}
+      secondaryColor={theme.colors['navyblue-600']}
     >
       {[...Array(rowCount)].map((__, index) => (
         <rect

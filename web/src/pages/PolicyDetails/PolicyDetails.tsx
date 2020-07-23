@@ -113,7 +113,7 @@ const PolicyDetailsPage = () => {
               />
               <TableControlsComplianceFilter
                 count={totalCounts.active.fail}
-                countColor="red-200"
+                countColor="red-300"
                 text="Failing"
                 isActive={requestParams.status === ComplianceStatusEnum.Fail}
                 onClick={() =>
@@ -124,7 +124,7 @@ const PolicyDetailsPage = () => {
                 }
               />
               <TableControlsComplianceFilter
-                countColor="green-200"
+                countColor="green-400"
                 count={totalCounts.active.pass}
                 text="Passing"
                 isActive={requestParams.status === ComplianceStatusEnum.Pass}

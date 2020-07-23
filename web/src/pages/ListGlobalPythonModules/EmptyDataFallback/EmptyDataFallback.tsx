@@ -28,7 +28,7 @@ const EmptyDataFallback: React.FC = () => (
       <img alt="Empty data illustration" src={EmptyDataImg} width="auto" height={400} />
     </Box>
     <Heading mb={6}>It{"'"}s empty in here</Heading>
-    <Text color="gray-200" textAlign="center" mb={8}>
+    <Text color="gray-300" textAlign="center" mb={8}>
       Python modules allow you to define re-usable code elements for your rules and policies
     </Text>
     <Button as={RRLink} to={urls.settings.globalPythonModules.create()}>

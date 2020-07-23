@@ -38,15 +38,15 @@ const TableControlsComplianceFilter: React.FC<TableControlsComplianceFilterProps
       {...rest}
       py={2}
       px={3}
-      color={isActive ? 'inherit' : 'gray-200'}
+      color={isActive ? 'inherit' : 'gray-300'}
       borderRadius="medium"
       outline="none"
-      backgroundColor={isActive ? 'navyblue-450' : 'transparent'}
+      backgroundColor={isActive ? 'navyblue-300' : 'transparent'}
       _hover={{
-        backgroundColor: isActive ? 'navyblue-450' : 'navyblue-700',
+        backgroundColor: isActive ? 'navyblue-300' : 'navyblue-500',
       }}
       _focus={{
-        backgroundColor: isActive ? 'navyblue-450' : 'navyblue-700',
+        backgroundColor: isActive ? 'navyblue-300' : 'navyblue-500',
       }}
     >
       {text}{' '}

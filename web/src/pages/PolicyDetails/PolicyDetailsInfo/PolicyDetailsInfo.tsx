@@ -119,7 +119,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
               }
             >
               <Box as="li">
-                <Badge color="violet-300">
+                <Badge color="violet-400">
                   AUTO REMEDIATIATABLE
                   <Icon size="small" type="check" my={-1} ml={2} p="2px" />
                 </Badge>
@@ -137,20 +137,24 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
           </Text>
           <SimpleGrid columns={2} spacing={5}>
             <Flex direction="column" spacing={2}>
-              <Box color="gray-450" fontSize="small-medium" aria-describedby="runbook-description">
+              <Box
+                color="navyblue-100"
+                fontSize="small-medium"
+                aria-describedby="runbook-description"
+              >
                 Runbook
               </Box>
               {policy.runbook ? (
                 <Linkify id="runbook-description">{policy.runbook}</Linkify>
               ) : (
-                <Box fontStyle="italic" color="gray-450" id="runbook-description">
+                <Box fontStyle="italic" color="navyblue-100" id="runbook-description">
                   No runbook specified
                 </Box>
               )}
             </Flex>
             <Flex direction="column" spacing={2}>
               <Box
-                color="gray-450"
+                color="navyblue-100"
                 fontSize="small-medium"
                 aria-describedby="reference-description"
               >
@@ -159,7 +163,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
               {policy.reference ? (
                 <Linkify id="reference-description">{policy.reference}</Linkify>
               ) : (
-                <Box fontStyle="italic" color="gray-450" id="reference-description">
+                <Box fontStyle="italic" color="navyblue-100" id="reference-description">
                   No reference specified
                 </Box>
               )}
@@ -169,7 +173,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
         <Card variant="dark" as="section" p={4}>
           <SimpleGrid columns={2} spacing={5} fontSize="small-medium">
             <Flex spacing={5}>
-              <Flex direction="column" spacing={2} color="gray-450" flexShrink={0}>
+              <Flex direction="column" spacing={2} color="navyblue-100" flexShrink={0}>
                 <Box aria-describedby="tags-list">Tags</Box>
                 <Box aria-describedby="ignore-patterns-list">Ignore Pattens</Box>
               </Flex>
@@ -188,7 +192,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
                     ))}
                   </Box>
                 ) : (
-                  <Box fontStyle="italic" color="gray-450" id="tags-list">
+                  <Box fontStyle="italic" color="navyblue-100" id="tags-list">
                     This policy has no tags
                   </Box>
                 )}
@@ -207,7 +211,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
               </Flex>
             </Flex>
             <Flex spacing={60}>
-              <Flex direction="column" color="gray-450" spacing={2}>
+              <Flex direction="column" color="navyblue-100" spacing={2}>
                 <Box aria-describedby="created-at">Created</Box>
                 <Box aria-describedby="updated-at">Modified</Box>
               </Flex>

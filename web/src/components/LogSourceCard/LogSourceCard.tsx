@@ -37,10 +37,10 @@ const LogSourceCard: React.FC<ItemCardProps> = ({ logo, title, to, disabled }) =
       mb={5}
       border="1px solid"
       borderRadius="medium"
-      borderColor="navyblue-450"
+      borderColor="navyblue-300"
       transition="all 0.15s ease-in-out"
-      _hover={{ backgroundColor: 'navyblue-700', borderColor: 'navyblue-700' }}
-      _focus={{ backgroundColor: 'navyblue-700', borderColor: 'navyblue-700' }}
+      _hover={{ backgroundColor: 'navyblue-500', borderColor: 'navyblue-500' }}
+      _focus={{ backgroundColor: 'navyblue-500', borderColor: 'navyblue-500' }}
     >
       <Flex alignItems="center" py={3} px={6}>
         <Img
@@ -56,7 +56,7 @@ const LogSourceCard: React.FC<ItemCardProps> = ({ logo, title, to, disabled }) =
         </Box>
         <Box ml="auto">
           {disabled ? (
-            <Badge color="violet-300" aria-labelledby={titleId}>
+            <Badge color="violet-400" aria-labelledby={titleId}>
               AVAILABLE IN PANTHER ENTERPRISE
             </Badge>
           ) : (
