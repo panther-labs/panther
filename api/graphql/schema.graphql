@@ -27,6 +27,7 @@ type Mutation {
   resetUserPassword(id: ID!): User!
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
   testPolicy(input: TestPolicyInput): TestPolicyResponse
+  updateAlertStatus(input: UpdateAlertStatusInput!): AlertSummary
   updateDestination(input: DestinationInput!): Destination
   updateComplianceIntegration(input: UpdateComplianceIntegrationInput!): ComplianceIntegration!
   updateS3LogIntegration(input: UpdateS3LogIntegrationInput!): S3LogIntegration!
@@ -94,6 +95,7 @@ input ListAlertsInput {
   createdAtAfter: AWSDateTime
   ruleIdContains: String
   alertIdContains: String
+  status: [AlertStatusesEnum]
   eventCountMin: Int
   eventCountMax: Int
   sortBy: ListAlertsSortFieldsEnum # defaults to `createdAt`
@@ -128,16 +130,47 @@ type S3LogIntegrationHealth {
   kmsKeyStatus: IntegrationItemHealthStatus!
 }
 
-type AlertDetails {
+interface Alert {
   alertId: ID!
-  ruleId: ID
-  title: String!
   creationTime: AWSDateTime!
-  updateTime: AWSDateTime!
   eventsMatched: Int!
+  ruleId: ID
+  severity: SeverityEnum!
+  status: AlertStatusesEnum!
+  title: String!
+  lastUpdatedBy: ID # gets mapped to a User in the frontend
+  lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
+  updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
+}
+
+type AlertDetails implements Alert {
+  alertId: ID!
+  creationTime: AWSDateTime!
+  eventsMatched: Int!
+  ruleId: ID
+  severity: SeverityEnum!
+  status: AlertStatusesEnum!
+  title: String!
+  lastUpdatedBy: ID # gets mapped to a User in the frontend
+  lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
+  updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
+
+  dedupString: String!
   events: [AWSJSON!]!
   eventsLastEvaluatedKey: String
-  dedupString: String!
+}
+
+type AlertSummary implements Alert {
+  alertId: ID!
+  creationTime: AWSDateTime!
+  eventsMatched: Int!
+  ruleId: ID
+  severity: SeverityEnum!
+  status: AlertStatusesEnum!
+  title: String!
+  lastUpdatedBy: ID # gets mapped to a User in the frontend
+  lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
+  updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
 }
 
 type ListAlertsResponse {
@@ -145,14 +178,9 @@ type ListAlertsResponse {
   lastEvaluatedKey: String
 }
 
-type AlertSummary {
-  alertId: String!
-  creationTime: AWSDateTime!
-  eventsMatched: Int!
-  title: String!
-  updateTime: AWSDateTime!
-  ruleId: String
-  severity: SeverityEnum
+input UpdateAlertStatusInput {
+  alertId: ID!
+  status: AlertStatusesEnum!
 }
 
 input ListRulesInput {
@@ -887,6 +915,13 @@ enum ListRulesSortFieldsEnum {
 
 enum ListAlertsSortFieldsEnum {
   createdAt
+}
+
+enum AlertStatusesEnum {
+  OPEN
+  TRIAGED
+  CLOSED
+  RESOLVED
 }
 
 enum SortDirEnum {

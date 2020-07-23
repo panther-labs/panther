@@ -1644,6 +1644,30 @@ Resources:
           $util.toJson($context.result)
         #end
 
+  UpdateAlertStatusResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: updateAlertStatus
+      DataSourceName: !GetAtt AlertsAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        $util.qr($input.put("userId", $ctx.identity.sub))
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "updateAlertStatus": $input
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+            $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
+        #else
+          $util.toJson($context.result)
+        #end
+
   TestPolicyResolver:
     Type: AWS::AppSync::Resolver
     Properties:

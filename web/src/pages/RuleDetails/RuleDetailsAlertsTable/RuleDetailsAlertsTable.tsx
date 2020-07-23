@@ -22,6 +22,7 @@ import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import { formatDatetime, shortenId } from 'Helpers/utils';
 import SeverityBadge from 'Components/SeverityBadge';
+import UpdateAlertDropdown from 'Components/dropdowns/UpdateAlertDropdown';
 import { ListAlertsForRule } from '../graphql/listAlertsForRule.generated';
 
 interface RuleDetailsAlertsTableProps {
@@ -35,6 +36,7 @@ const RuleDetailsAlertsTable: React.FC<RuleDetailsAlertsTableProps> = ({ alerts 
         <Table.Row>
           <Table.HeaderCell align="center">Severity</Table.HeaderCell>
           <Table.HeaderCell>Alert</Table.HeaderCell>
+          <Table.HeaderCell align="center">Status</Table.HeaderCell>
           <Table.HeaderCell align="right">Created At</Table.HeaderCell>
           <Table.HeaderCell align="right">Last Matched At</Table.HeaderCell>
           <Table.HeaderCell align="right">Events</Table.HeaderCell>
@@ -52,6 +54,9 @@ const RuleDetailsAlertsTable: React.FC<RuleDetailsAlertsTableProps> = ({ alerts 
               <Link as={RRLink} to={urls.logAnalysis.alerts.details(alert.alertId)} py={4} pr={4}>
                 #{shortenId(alert.alertId)} {alert.title}
               </Link>
+            </Table.Cell>
+            <Table.Cell align="center">
+              <UpdateAlertDropdown alert={alert} />
             </Table.Cell>
             <Table.Cell align="right">{formatDatetime(alert.creationTime)}</Table.Cell>
             <Table.Cell align="right">{formatDatetime(alert.updateTime)}</Table.Cell>

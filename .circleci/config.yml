@@ -65,23 +65,12 @@ jobs:
             - .setup/terraform
 
       - run:
-          name: Copy original problem file
-          command: cp web/__tests__/__mocks__/builders.generated.ts builders.orig
-
-      - run:
-          name: npm graphql-codegen
-          command: npm run graphql-codegen
-
-      - run:
-          name: check diff
-          command: diff builders.orig web/__tests__/__mocks__/builders.generated.ts
-
-      - run:
           name: Run test suite
           command: mage test:ci
 
   npm_audit:
     executor: panther-buildpack
+    resource_class: small
     steps:
       - checkout
       - run:
@@ -105,6 +94,21 @@ jobs:
           name: Check bundle size
           command: npm run bundlesize
 
+  fossa:
+    executor: panther-buildpack
+    resource_class: small
+    steps:
+      - run: |
+          curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | bash
+      - checkout
+      - run:
+          # Generate config file, run dependency analysis, and upload metadata to FOSSA
+          command: fossa
+      - run:
+          # Wait for license scan to finish, exit with error code if policy violations are found.
+          # Usually only takes ~3 minutes, times out after 10 min
+          command: fossa test
+
 workflows:
   version: 2
   pipeline:
@@ -112,3 +116,4 @@ workflows:
       - mage_test_ci
       - npm_audit
       - bundlesize
+      - fossa

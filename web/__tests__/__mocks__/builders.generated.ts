@@ -111,6 +111,7 @@ import {
   SuppressPoliciesInput,
   TestPolicyInput,
   TestPolicyResponse,
+  UpdateAlertStatusInput,
   UpdateComplianceIntegrationInput,
   UpdateGeneralSettingsInput,
   UpdatePolicyInput,
@@ -121,6 +122,7 @@ import {
   UploadPoliciesResponse,
   User,
   AccountTypeEnum,
+  AlertStatusesEnum,
   AnalysisTypeEnum,
   ComplianceStatusEnum,
   DestinationTypeEnum,
@@ -226,28 +228,43 @@ export const buildAlertDetails = (overrides: Partial<AlertDetails> = {}): AlertD
   return {
     __typename: 'AlertDetails',
     alertId: 'alertId' in overrides ? overrides.alertId : '2c5aa76d-eb43-49f0-a65c-50e4daa756a4',
-    ruleId: 'ruleId' in overrides ? overrides.ruleId : '9ad2c6da-417d-414f-a3e5-7959acdeaa9e',
-    title: 'title' in overrides ? overrides.title : 'Steel',
     creationTime: 'creationTime' in overrides ? overrides.creationTime : '2020-10-28T02:06:29.865Z',
-    updateTime: 'updateTime' in overrides ? overrides.updateTime : '2020-02-22T04:54:35.910Z',
     eventsMatched: 'eventsMatched' in overrides ? overrides.eventsMatched : 516,
+    ruleId: 'ruleId' in overrides ? overrides.ruleId : '9ad2c6da-417d-414f-a3e5-7959acdeaa9e',
+    severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
+    status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Closed,
+    title: 'title' in overrides ? overrides.title : 'Steel',
+    lastUpdatedBy:
+      'lastUpdatedBy' in overrides
+        ? overrides.lastUpdatedBy
+        : '15cffa0a-6a52-49cc-a5d6-d52aa26209ac',
+    lastUpdatedByTime:
+      'lastUpdatedByTime' in overrides ? overrides.lastUpdatedByTime : '2020-07-02T20:00:23.050Z',
+    updateTime: 'updateTime' in overrides ? overrides.updateTime : '2020-02-22T04:54:35.910Z',
+    dedupString: 'dedupString' in overrides ? overrides.dedupString : 'Auto Loan Account',
     events: 'events' in overrides ? overrides.events : ['"bar"'],
     eventsLastEvaluatedKey:
       'eventsLastEvaluatedKey' in overrides ? overrides.eventsLastEvaluatedKey : 'Accountability',
-    dedupString: 'dedupString' in overrides ? overrides.dedupString : 'Auto Loan Account',
   };
 };
 
 export const buildAlertSummary = (overrides: Partial<AlertSummary> = {}): AlertSummary => {
   return {
     __typename: 'AlertSummary',
-    alertId: 'alertId' in overrides ? overrides.alertId : 'Administrator',
+    alertId: 'alertId' in overrides ? overrides.alertId : 'f67b8f04-5fac-404a-93a4-38db29f258ba',
     creationTime: 'creationTime' in overrides ? overrides.creationTime : '2020-08-08T12:15:31.121Z',
     eventsMatched: 'eventsMatched' in overrides ? overrides.eventsMatched : 670,
-    title: 'title' in overrides ? overrides.title : 'indexing',
-    updateTime: 'updateTime' in overrides ? overrides.updateTime : '2020-09-17T19:32:46.882Z',
-    ruleId: 'ruleId' in overrides ? overrides.ruleId : 'functionalities',
+    ruleId: 'ruleId' in overrides ? overrides.ruleId : '6eb9c948-5a13-4955-bd91-b98801b55bed',
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Medium,
+    status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Triaged,
+    title: 'title' in overrides ? overrides.title : 'indexing',
+    lastUpdatedBy:
+      'lastUpdatedBy' in overrides
+        ? overrides.lastUpdatedBy
+        : '2b032d04-ec9e-41cd-9bb7-cb8d0b6eee9e',
+    lastUpdatedByTime:
+      'lastUpdatedByTime' in overrides ? overrides.lastUpdatedByTime : '2020-07-29T23:42:06.903Z',
+    updateTime: 'updateTime' in overrides ? overrides.updateTime : '2020-09-17T19:32:46.882Z',
   };
 };
 
@@ -647,6 +664,7 @@ export const buildListAlertsInput = (overrides: Partial<ListAlertsInput> = {}): 
       'createdAtAfter' in overrides ? overrides.createdAtAfter : '2020-04-26T13:02:02.091Z',
     ruleIdContains: 'ruleIdContains' in overrides ? overrides.ruleIdContains : 'virtual',
     alertIdContains: 'alertIdContains' in overrides ? overrides.alertIdContains : 'Garden',
+    status: 'status' in overrides ? overrides.status : [AlertStatusesEnum.Open],
     eventCountMin: 'eventCountMin' in overrides ? overrides.eventCountMin : 694,
     eventCountMax: 'eventCountMax' in overrides ? overrides.eventCountMax : 911,
     sortBy: 'sortBy' in overrides ? overrides.sortBy : ListAlertsSortFieldsEnum.CreatedAt,
@@ -1273,6 +1291,15 @@ export const buildTestPolicyResponse = (
     testsFailed: 'testsFailed' in overrides ? overrides.testsFailed : ['Granite'],
     testsErrored:
       'testsErrored' in overrides ? overrides.testsErrored : [buildPolicyUnitTestError()],
+  };
+};
+
+export const buildUpdateAlertStatusInput = (
+  overrides: Partial<UpdateAlertStatusInput> = {}
+): UpdateAlertStatusInput => {
+  return {
+    alertId: 'alertId' in overrides ? overrides.alertId : '344a4508-25bd-42d0-bc1a-11a8551110cc',
+    status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Closed,
   };
 };
 

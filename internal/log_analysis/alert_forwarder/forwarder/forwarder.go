@@ -33,7 +33,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	ruleModel "github.com/panther-labs/panther/api/gateway/analysis/models"
 	alertModel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 	"github.com/panther-labs/panther/pkg/metrics"
 )
@@ -70,7 +70,7 @@ type Handler struct {
 }
 
 func (h *Handler) Do(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) (err error) {
-	var oldRule *models.Rule
+	var oldRule *ruleModel.Rule
 	if oldAlertDedupEvent != nil {
 		oldRule, err = h.Cache.Get(oldAlertDedupEvent.RuleID, oldAlertDedupEvent.RuleVersion)
 		if err != nil {
@@ -93,12 +93,12 @@ func (h *Handler) Do(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) (e
 	return h.updateExistingAlert(newAlertDedupEvent)
 }
 
-func shouldIgnoreChange(rule *models.Rule, alertDedupEvent *AlertDedupEvent) bool {
+func shouldIgnoreChange(rule *ruleModel.Rule, alertDedupEvent *AlertDedupEvent) bool {
 	// If the number of matched events hasn't crossed the threshold for the rule, don't create a new alert.
 	return alertDedupEvent.EventCount < int64(rule.Threshold)
 }
 
-func needToCreateNewAlert(oldRule *models.Rule, oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) bool {
+func needToCreateNewAlert(oldRule *ruleModel.Rule, oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) bool {
 	if oldAlertDedupEvent == nil {
 		// If this is the first time we see an alert deduplication entry, create an alert
 		return true
@@ -114,7 +114,7 @@ func needToCreateNewAlert(oldRule *models.Rule, oldAlertDedupEvent, newAlertDedu
 	return false
 }
 
-func (h *Handler) handleNewAlert(rule *models.Rule, event *AlertDedupEvent) error {
+func (h *Handler) handleNewAlert(rule *ruleModel.Rule, event *AlertDedupEvent) error {
 	if err := h.storeNewAlert(rule, event); err != nil {
 		return errors.Wrap(err, "failed to store new alert in DDB")
 	}
@@ -160,7 +160,7 @@ func (h *Handler) updateExistingAlert(event *AlertDedupEvent) error {
 	return nil
 }
 
-func (h *Handler) storeNewAlert(rule *models.Rule, alertDedup *AlertDedupEvent) error {
+func (h *Handler) storeNewAlert(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) error {
 	alert := &Alert{
 		ID:              generateAlertID(alertDedup),
 		TimePartition:   defaultTimePartition,
@@ -197,7 +197,7 @@ func (h *Handler) storeNewAlert(rule *models.Rule, alertDedup *AlertDedupEvent) 
 	return nil
 }
 
-func (h *Handler) sendAlertNotification(rule *models.Rule, alertDedup *AlertDedupEvent) error {
+func (h *Handler) sendAlertNotification(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) error {
 	alertNotification := &alertModel.Alert{
 		AlertID:             aws.String(generateAlertID(alertDedup)),
 		AnalysisDescription: aws.String(string(rule.Description)),
@@ -232,7 +232,7 @@ func (h *Handler) sendAlertNotification(rule *models.Rule, alertDedup *AlertDedu
 	return nil
 }
 
-func getAlertTitle(rule *models.Rule, alertDedup *AlertDedupEvent) string {
+func getAlertTitle(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) string {
 	if alertDedup.GeneratedTitle != nil {
 		return *alertDedup.GeneratedTitle
 	}
@@ -243,7 +243,7 @@ func getAlertTitle(rule *models.Rule, alertDedup *AlertDedupEvent) string {
 	return string(rule.ID)
 }
 
-func getRuleDisplayName(rule *models.Rule) *string {
+func getRuleDisplayName(rule *ruleModel.Rule) *string {
 	if len(rule.DisplayName) > 0 {
 		return aws.String(string(rule.DisplayName))
 	}

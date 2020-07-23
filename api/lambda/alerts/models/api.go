@@ -22,8 +22,9 @@ import "time"
 
 // LambdaInput is the request structure for the alerts-api Lambda function.
 type LambdaInput struct {
-	GetAlert   *GetAlertInput   `json:"getAlert"`
-	ListAlerts *ListAlertsInput `json:"listAlerts"`
+	GetAlert          *GetAlertInput          `json:"getAlert"`
+	ListAlerts        *ListAlertsInput        `json:"listAlerts"`
+	UpdateAlertStatus *UpdateAlertStatusInput `json:"updateAlertStatus"`
 }
 
 // GetAlertInput retrieves details for a single alert.
@@ -33,7 +34,7 @@ type LambdaInput struct {
 // Example:
 // {
 //     "getAlert": {
-// 	    "alertId": "ruleId-2",
+//         "alertId": "ruleId-2",
 //         "eventsPageSize": 20
 //     }
 // }
@@ -58,6 +59,7 @@ type GetAlertOutput = Alert
 //         "pageSize": 25,
 //         "exclusiveStartKey": "abcdef",
 //         "severity": ["INFO"],
+//         "status": ["TRIAGED"],
 //         "nameContains": "string in alert title",
 //         "createdAtAfter": "2020-06-17T15:49:40Z",
 //         "createdAtBefore": "2020-06-17T15:49:40Z",
@@ -81,6 +83,7 @@ type ListAlertsInput struct {
 	// Filtering
 	Severity        []*string  `json:"severity" validate:"omitempty,dive,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 	NameContains    *string    `json:"nameContains"`
+	Status          []string   `json:"status" validate:"omitempty,dive,oneof=OPEN TRIAGED CLOSED RESOLVED"`
 	CreatedAtBefore *time.Time `json:"createdAtBefore"`
 	CreatedAtAfter  *time.Time `json:"createdAtAfter"`
 	RuleIDContains  *string    `json:"ruleIdContains"`
@@ -91,6 +94,44 @@ type ListAlertsInput struct {
 	// Sorting
 	SortDir *string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
 }
+
+// UpdateAlertStatusInput updates an alert by its ID
+// {
+//     "updateAlertStatus": {
+//         "alertId": "84c3e4b27c702a1c31e6eb412fc377f6",
+//         "status": "CLOSED"
+//         // userId is added by AppSync resolver (UpdateAlertStatusResolver)
+//         "userId": "5f54cf4a-ec56-44c2-83bc-8b742600f307"
+//     }
+// }
+type UpdateAlertStatusInput struct {
+	// ID of the alert to update
+	AlertID *string `json:"alertId" validate:"hexadecimal,len=32"` // AlertID is an MD5 hash
+
+	// Variables that we allow updating:
+	Status *string `json:"status" validate:"oneof=OPEN TRIAGED CLOSED RESOLVED"`
+
+	// User who made the change
+	UserID *string `json:"userId" validate:"uuid4"`
+}
+
+// UpdateAlertStatusOutput the returne alert summary after an update
+type UpdateAlertStatusOutput = AlertSummary
+
+// Constants defined for alert statuses
+const (
+	// Open is strictly used for updating/filtering and is not explicitly set on an alert
+	OpenStatus = "OPEN"
+
+	// Triaged sets the alert to actively investigating
+	TriagedStatus = "TRIAGED"
+
+	// Closed is set for false positive or anything other reason than resolved
+	ClosedStatus = "CLOSED"
+
+	// Resolved is set when the issue was found and remediated
+	ResolvedStatus = "RESOLVED"
+)
 
 // ListAlertsOutput is the returned alert list.
 type ListAlertsOutput struct {
@@ -105,16 +146,19 @@ type ListAlertsOutput struct {
 
 // AlertSummary contains summary information for an alert
 type AlertSummary struct {
-	AlertID         *string    `json:"alertId" validate:"required"`
-	RuleID          *string    `json:"ruleId" validate:"required"`
-	RuleDisplayName *string    `json:"ruleDisplayName,omitempty"`
-	RuleVersion     *string    `json:"ruleVersion" validate:"required"`
-	DedupString     *string    `json:"dedupString,omitempty"`
-	CreationTime    *time.Time `json:"creationTime" validate:"required"`
-	UpdateTime      *time.Time `json:"updateTime" validate:"required"`
-	EventsMatched   *int       `json:"eventsMatched" validate:"required"`
-	Severity        *string    `json:"severity" validate:"required"`
-	Title           *string    `json:"title" validate:"required"`
+	AlertID           *string    `json:"alertId" validate:"required"`
+	RuleID            *string    `json:"ruleId" validate:"required"`
+	RuleDisplayName   *string    `json:"ruleDisplayName,omitempty"`
+	RuleVersion       *string    `json:"ruleVersion" validate:"required"`
+	DedupString       *string    `json:"dedupString,omitempty"`
+	CreationTime      *time.Time `json:"creationTime" validate:"required"`
+	UpdateTime        *time.Time `json:"updateTime" validate:"required"`
+	EventsMatched     *int       `json:"eventsMatched" validate:"required"`
+	Severity          *string    `json:"severity" validate:"required"`
+	Status            string     `json:"status,omitempty"`
+	Title             *string    `json:"title" validate:"required"`
+	LastUpdatedBy     string     `json:"lastUpdatedBy,omitempty"`
+	LastUpdatedByTime time.Time  `json:"lastUpdatedByTime,omitempty"`
 }
 
 // Alert contains the details of an alert

@@ -1,3 +1,5 @@
+package api
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,35 +18,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as Types from '../../../__generated__/schema';
+import (
+	"github.com/panther-labs/panther/api/lambda/alerts/models"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
+)
 
-import gql from 'graphql-tag';
+// UpdateAlertStatus modifies an alert's attributes.
+func (API) UpdateAlertStatus(input *models.UpdateAlertStatusInput) (result *models.UpdateAlertStatusOutput, err error) {
+	// Run the update alert query
+	alertItem, err := alertsDB.UpdateAlertStatus(input)
+	if err != nil {
+		return nil, err
+	}
 
-export type AlertSummaryFull = Pick<
-  Types.AlertSummary,
-  | 'alertId'
-  | 'ruleId'
-  | 'title'
-  | 'severity'
-  | 'status'
-  | 'creationTime'
-  | 'eventsMatched'
-  | 'updateTime'
-  | 'lastUpdatedBy'
-  | 'lastUpdatedByTime'
->;
+	// If there was no item from the DB, we return an empty response
+	if alertItem == nil {
+		return &models.UpdateAlertStatusOutput{}, nil
+	}
 
-export const AlertSummaryFull = gql`
-  fragment AlertSummaryFull on AlertSummary {
-    alertId
-    ruleId
-    title
-    severity
-    status
-    creationTime
-    eventsMatched
-    updateTime
-    lastUpdatedBy
-    lastUpdatedByTime
-  }
-`;
+	// Marshal to an alert summary
+	result = alertItemToAlertSummary(alertItem)
+
+	gatewayapi.ReplaceMapSliceNils(result)
+	return result, nil
+}

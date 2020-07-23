@@ -21,19 +21,12 @@ package api
 import (
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // ListAlerts retrieves alert and event details.
 func (API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAlertsOutput, err error) {
-	operation := common.OpLogManager.Start("listAlerts")
-	defer func() {
-		operation.Stop()
-		operation.Log(err)
-	}()
-
 	result = &models.ListAlertsOutput{}
 	var alertItems []*table.AlertItem
 
@@ -59,24 +52,38 @@ func (API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAlertsO
 	return result, nil
 }
 
-// alertItemsToAlertSummary converts a DDB Alert Item to an Alert Summary that will be returned by the API
+// alertItemsToAlertSummary converts a list of DDB AlertItem(s) to AlertSummary(ies)
 func alertItemsToAlertSummary(items []*table.AlertItem) []*models.AlertSummary {
 	result := make([]*models.AlertSummary, len(items))
 
 	for i, item := range items {
-		result[i] = &models.AlertSummary{
-			AlertID:         &item.AlertID,
-			RuleID:          &item.RuleID,
-			DedupString:     &item.DedupString,
-			CreationTime:    &item.CreationTime,
-			Severity:        &item.Severity,
-			UpdateTime:      &item.UpdateTime,
-			EventsMatched:   &item.EventCount,
-			RuleDisplayName: item.RuleDisplayName,
-			Title:           getAlertTitle(item),
-			RuleVersion:     &item.RuleVersion,
-		}
+		result[i] = alertItemToAlertSummary(item)
 	}
 
 	return result
+}
+
+// alertItemToAlertSummary converts a DDB AlertItem to an AlertSummary
+func alertItemToAlertSummary(item *table.AlertItem) *models.AlertSummary {
+	// convert empty status to "OPEN" status
+	alertStatus := item.Status
+	if alertStatus == "" {
+		alertStatus = models.OpenStatus
+	}
+
+	return &models.AlertSummary{
+		AlertID:           &item.AlertID,
+		CreationTime:      &item.CreationTime,
+		DedupString:       &item.DedupString,
+		EventsMatched:     &item.EventCount,
+		RuleDisplayName:   item.RuleDisplayName,
+		RuleID:            &item.RuleID,
+		RuleVersion:       &item.RuleVersion,
+		Severity:          &item.Severity,
+		Status:            alertStatus,
+		Title:             getAlertTitle(item),
+		LastUpdatedBy:     item.LastUpdatedBy,
+		LastUpdatedByTime: item.LastUpdatedByTime,
+		UpdateTime:        &item.UpdateTime,
+	}
 }

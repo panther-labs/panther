@@ -52,9 +52,9 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 	direction := table.isAscendingOrder(input)
 
 	// Construct a query expression
-	queryExpression, err := builder.Build()
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed to build expression")
+	queryExpression, builderError := builder.Build()
+	if builderError != nil {
+		return nil, nil, errors.Wrap(builderError, "failed to build expression")
 	}
 
 	// Limit the returned results to the specified page size or max default
@@ -66,13 +66,9 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 	}
 
 	// Optionally continue the query from the "primary key of the item where the [previous] operation stopped"
-	var queryExclusiveStartKey map[string]*dynamodb.AttributeValue
-	if input.ExclusiveStartKey != nil {
-		queryExclusiveStartKey = make(map[string]*dynamodb.AttributeValue)
-		err = jsoniter.UnmarshalFromString(*input.ExclusiveStartKey, &queryExclusiveStartKey)
-		if err != nil {
-			return nil, nil, errors.Wrap(err, "failed to Unmarshal ExclusiveStartKey")
-		}
+	queryExclusiveStartKey, startKeyErr := getExclusiveStartKey(input)
+	if startKeyErr != nil {
+		return nil, nil, startKeyErr
 	}
 
 	// Construct the full query
@@ -153,6 +149,19 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 	return summaries, lastEvaluatedKey, nil
 }
 
+// getExclusiveStartKey - if the input request contains a key, unmarshal it to use
+func getExclusiveStartKey(input *models.ListAlertsInput) (DynamoItem, error) {
+	var queryExclusiveStartKey DynamoItem
+	if input.ExclusiveStartKey != nil {
+		queryExclusiveStartKey = make(DynamoItem)
+		err := jsoniter.UnmarshalFromString(*input.ExclusiveStartKey, &queryExclusiveStartKey)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to Unmarshal ExclusiveStartKey")
+		}
+	}
+	return queryExclusiveStartKey, nil
+}
+
 // getLastKey - manually constructs the lastEvaluatedKey to be returned to the frontend
 func getLastKey(input *models.ListAlertsInput, item DynamoItem) DynamoItem {
 	// There are two types of queries, one from the list alerts page (by time partition)
@@ -217,6 +226,7 @@ func (table *AlertsTable) applyFilters(builder *expression.Builder, input *model
 
 	// Then, apply our filters
 	filterBySeverity(&filter, input)
+	filterByStatus(&filter, input)
 	filterByEventCount(&filter, input)
 
 	// Finally, overwrite the existing condition filter on the builder
@@ -232,6 +242,41 @@ func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAle
 		// Then add or conditions starting at a new slice from the second index
 		for _, severityLevel := range input.Severity[1:] {
 			multiFilter = multiFilter.Or(expression.Name(SeverityKey).Equal(expression.Value(*severityLevel)))
+		}
+
+		*filter = filter.And(multiFilter)
+	}
+}
+
+// filterByStatus - filters by Status(es)
+func filterByStatus(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
+	if len(input.Status) > 0 {
+		// Start with the first known key
+		var multiFilter expression.ConditionBuilder
+
+		// Alerts that don't have a status or have an empty string status are considered open.
+		if input.Status[0] == models.OpenStatus {
+			multiFilter = expression.
+				Or(
+					expression.AttributeNotExists(expression.Name(StatusKey)),
+					expression.Equal(expression.Name(StatusKey), expression.Value("")),
+				)
+		} else {
+			multiFilter = expression.Name(StatusKey).Equal(expression.Value(input.Status[0]))
+		}
+
+		// Then add or conditions starting at a new slice from the second index
+		for _, statusSetting := range input.Status[1:] {
+			// Alerts that don't have a status or have an empty string status are considered open.
+			if statusSetting == models.OpenStatus {
+				multiFilter = multiFilter.
+					Or(
+						expression.AttributeNotExists(expression.Name(StatusKey)),
+						expression.Equal(expression.Name(StatusKey), expression.Value("")),
+					)
+			} else {
+				multiFilter = multiFilter.Or(expression.Name(StatusKey).Equal(expression.Value(statusSetting)))
+			}
 		}
 
 		*filter = filter.And(multiFilter)

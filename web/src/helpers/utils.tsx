@@ -39,6 +39,7 @@ import mapValues from 'lodash/mapValues';
 import sum from 'lodash/sum';
 import { ErrorResponse } from 'apollo-link-error';
 import { ApolloError } from '@apollo/client';
+import { UserDetails } from 'Source/graphql/fragments/UserDetails.generated';
 
 export const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
@@ -304,6 +305,28 @@ export function slugify(text: string) {
 export const isNumber = (value: string) => /^-{0,1}\d+$/.test(value);
 
 export const toStackNameFormat = (val: string) => val.replace(/ /g, '-').toLowerCase();
+
+/*
+Given a user, returns a human readable string to show for the user's name
+*/
+export const getUserDisplayName = (
+  user: Pick<UserDetails, 'givenName' | 'familyName' | 'email'>
+) => {
+  if (!user) {
+    return '';
+  }
+
+  if (user.givenName && user.familyName) {
+    return `${user.givenName} ${user.familyName}`;
+  }
+  if (!user.givenName && user.familyName) {
+    return user.familyName;
+  }
+  if (user.givenName && !user.familyName) {
+    return user.givenName;
+  }
+  return user.email;
+};
 
 /**
  * Generates a random HEX color
