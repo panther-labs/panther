@@ -74,7 +74,7 @@ const Wizard: React.FC & WizardComposition = ({ children }) => {
           width={(steps.length - 1) / steps.length}
           ml={`${100 / (steps.length * 2)}%`}
         >
-          <ProgressBar color="teal-300" progress={currentStepIndex / (steps.length - 1)} />
+          <ProgressBar color="teal-500" progress={currentStepIndex / (steps.length - 1)} />
         </Box>
         <SimpleGrid as="ul" columns={steps.length} width={1} zIndex={2}>
           {steps.map((step, index) => {
@@ -82,10 +82,10 @@ const Wizard: React.FC & WizardComposition = ({ children }) => {
 
             let labelColor: keyof Theme['colors'] = 'gray-500';
             if (currentStepIndex === index) {
-              labelColor = 'gray-100';
+              labelColor = 'gray-200';
             }
             if (isComplete) {
-              labelColor = 'teal-300';
+              labelColor = 'teal-500';
             }
 
             return (
@@ -106,7 +106,7 @@ const Wizard: React.FC & WizardComposition = ({ children }) => {
                   align="center"
                   width={40}
                   height={40}
-                  backgroundColor={isComplete ? 'teal-300' : 'navyblue-450'}
+                  backgroundColor={isComplete ? 'teal-500' : 'navyblue-300'}
                 >
                   <Icon type={isComplete ? 'check' : step.props.icon} size="small" />
                 </Flex>

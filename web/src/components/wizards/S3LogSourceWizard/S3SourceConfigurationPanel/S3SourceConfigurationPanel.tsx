@@ -76,7 +76,7 @@ const S3SourceConfigurationPanel: React.FC = () => {
         </Flex>
         <Flex justify="center" my={4}>
           <AbstractButton
-            color="blue-600"
+            color="blue-400"
             onClick={() => showAdvancedConfig(!isAdvancedConfigVisible)}
             p={3}
           >

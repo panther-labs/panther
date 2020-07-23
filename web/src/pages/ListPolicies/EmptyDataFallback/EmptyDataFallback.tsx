@@ -29,7 +29,7 @@ const ListPoliciesPageEmptyDataFallback: React.FC = () => {
       </Box>
       <Heading mb={6}>No policies found</Heading>
 
-      <Text color="gray-200" textAlign="center" mb={8}>
+      <Text color="gray-300" textAlign="center" mb={8}>
         Writing policies is the only way to secure your infrastructure against misconfigurations
       </Text>
       <PolicyCreateButton />

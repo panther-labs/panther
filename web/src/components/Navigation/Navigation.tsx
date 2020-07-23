@@ -89,7 +89,7 @@ const Navigation = () => {
       position="sticky"
       top={0}
       height="100vh"
-      backgroundColor="navyblue-900"
+      backgroundColor="navyblue-700"
     >
       <Flex as="nav" direction="column" width={70} height="100%" aria-label="Main">
         <Flex as={RRLink} to="/" justify="center" py={3} my={6}>
@@ -141,7 +141,7 @@ const Navigation = () => {
         ({ item, key, props: styles }) =>
           item && (
             <animated.div key={key} style={{ width: 0, ...styles }}>
-              <Box height="100%" borderLeft="1px solid" borderColor="navyblue-600">
+              <Box height="100%" borderLeft="1px solid" borderColor="navyblue-400">
                 {secondaryNav === COMPLIANCE_NAV_KEY && <ComplianceNavigation />}
                 {secondaryNav === LOG_ANALYSIS_NAV_KEY && <LogAnalysisNavigation />}
                 {secondaryNav === SETTINGS_NAV_KEY && <SettingsNavigation />}

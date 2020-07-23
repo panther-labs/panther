@@ -50,7 +50,7 @@ const ListUsersTable: React.FC<ListUsersTableProps> = ({ users }) => {
             </Table.Cell>
             <Table.Cell align="center">
               <Box my={-1} display="inline-block">
-                <Badge color="blue-400">{user.status.replace(/_/g, ' ')}</Badge>
+                <Badge color="blue-300">{user.status.replace(/_/g, ' ')}</Badge>
               </Box>
             </Table.Cell>
             <Table.Cell>

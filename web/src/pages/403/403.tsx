@@ -44,7 +44,7 @@ const Page403: React.FC = () => {
       <Heading mb={2}>
         You have no power here, {userInfo ? userInfo.given_name : 'Anonymous'} the Grey
       </Heading>
-      <Text fontSize="medium" color="gray-200" mb={10}>
+      <Text fontSize="medium" color="gray-300" mb={10}>
         ( Sarum... Your administrator has restricted your powers )
       </Text>
       <Button as={RRLink} to="/">
