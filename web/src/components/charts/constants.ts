@@ -25,7 +25,6 @@ export const LineColors = {
   Low: theme.colors['gray-500'],
   Info: theme.colors['gray-600'],
 
-  // FIXME: These should be mapped through pounce
   'AWS.ALB': theme.colors['indigo-800'],
   'AWS.VPCFlow': theme.colors['yellow-800'],
   'AWS.S3': theme.colors['green-300'],
