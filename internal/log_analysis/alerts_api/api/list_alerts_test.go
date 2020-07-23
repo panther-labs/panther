@@ -77,7 +77,7 @@ func TestListAlertsForRule(t *testing.T) {
 
 	input := &models.ListAlertsInput{
 		RuleID:            aws.String("ruleId"),
-		Status:            []*string{aws.String(models.TriagedStatus)},
+		Status:            []string{models.TriagedStatus},
 		PageSize:          aws.Int(10),
 		ExclusiveStartKey: aws.String("startKey"),
 		Severity:          []*string{aws.String("INFO")},
@@ -101,7 +101,7 @@ func TestListAllAlerts(t *testing.T) {
 	input := &models.ListAlertsInput{
 		PageSize:          aws.Int(10),
 		ExclusiveStartKey: aws.String("startKey"),
-		Status:            []*string{aws.String(models.TriagedStatus)},
+		Status:            []string{models.TriagedStatus},
 		Severity:          []*string{aws.String("INFO")},
 		NameContains:      aws.String("title"),
 		EventCountMin:     aws.Int(0),

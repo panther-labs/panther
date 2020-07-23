@@ -52,7 +52,7 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 	}
 
 	if alertItem == nil {
-		return &models.GetAlertOutput{}, nil
+		return nil, nil
 	}
 
 	var token *EventPaginationToken

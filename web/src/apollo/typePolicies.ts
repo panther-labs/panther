@@ -58,24 +58,25 @@ const typePolicies: TypePolicies = {
       getS3LogIntegration(existing, { args, toReference }) {
         return existing || toReference({ __typename: 'S3LogIntegration', integrationId: args.id });
       },
-      // For GetAlert (AlertDetails)
-      alert: {
-        read(existing) {
-          return existing;
-        },
-        merge(existing, incoming, { mergeObjects }) {
-          return mergeObjects(existing, incoming);
-        },
-      },
-      // For ListAlerts (ListAlertsReponse)
-      alerts: {
-        read(existing) {
-          return existing;
-        },
-        merge(existing, incoming, { mergeObjects }) {
-          return mergeObjects(existing, incoming);
-        },
-      },
+      // TODO: when apollo client is updated to 3.0.0-rc.12+, use this code
+      // // For GetAlert (AlertDetails)
+      // alert: {
+      //   read(existing) {
+      //     return existing;
+      //   },
+      //   merge(existing, incoming, { mergeObjects }) {
+      //     return mergeObjects(existing, incoming);
+      //   },
+      // },
+      // // For ListAlerts (ListAlertsReponse)
+      // alerts: {
+      //   read(existing) {
+      //     return existing;
+      //   },
+      //   merge(existing, incoming, { mergeObjects }) {
+      //     return mergeObjects(existing, incoming);
+      //   },
+      // },
     },
   },
   Destination: {
@@ -83,28 +84,30 @@ const typePolicies: TypePolicies = {
   },
   AlertDetails: {
     keyFields: ['alertId'],
-    fields: {
-      events: {
-        merge(_, incoming) {
-          return incoming;
-        },
-      },
-      status: {
-        merge(_, incoming) {
-          return incoming;
-        },
-      },
-    },
+    // TODO: when apollo client is updated to 3.0.0-rc.12+, use this code
+    // fields: {
+    //   events: {
+    //     merge(_, incoming) {
+    //       return incoming;
+    //     },
+    //   },
+    //   status: {
+    //     merge(_, incoming) {
+    //       return incoming;
+    //     },
+    //   },
+    // },
   },
   AlertSummary: {
     keyFields: ['alertId'],
-    fields: {
-      status: {
-        merge(_, incoming) {
-          return incoming;
-        },
-      },
-    },
+    // TODO: when apollo client is updated to 3.0.0-rc.12+, use this code
+    // fields: {
+    //   status: {
+    //     merge(_, incoming) {
+    //       return incoming;
+    //     },
+    //   },
+    // },
   },
   ComplianceIntegration: {
     keyFields: ['integrationId'],

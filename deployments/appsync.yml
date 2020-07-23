@@ -1627,54 +1627,6 @@ Resources:
           $util.toJson($context.result)
         #end
 
-  GetAlertSummaryLastUpdatedByFieldResolver:
-    Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
-    Properties:
-      ApiId: !Ref ApiId
-      TypeName: AlertSummary
-      FieldName: lastUpdatedBy
-      DataSourceName: !GetAtt UsersAPILambdaDataSource.Name
-      RequestMappingTemplate: |
-        #if ($util.isNullOrEmpty($ctx.source.lastUpdatedBy))
-          #return
-        #end
-        {
-          "version" : "2017-02-28",
-          "operation": "Invoke",
-          "payload": $util.toJson({
-            "getUser": {
-              "id": $ctx.source.lastUpdatedBy
-            }
-          })
-        }
-      ResponseMappingTemplate: |
-        $util.toJson($context.result)
-
-  GetAlertDetailsLastUpdatedByFieldResolver:
-    Type: AWS::AppSync::Resolver
-    DependsOn: GraphQLSchema
-    Properties:
-      ApiId: !Ref ApiId
-      TypeName: AlertDetails
-      FieldName: lastUpdatedBy
-      DataSourceName: !GetAtt UsersAPILambdaDataSource.Name
-      RequestMappingTemplate: |
-        #if ($util.isNullOrEmpty($ctx.source.lastUpdatedBy))
-          #return
-        #end
-        {
-          "version" : "2017-02-28",
-          "operation": "Invoke",
-          "payload": $util.toJson({
-            "getUser": {
-              "id": $ctx.source.lastUpdatedBy
-            }
-          })
-        }
-      ResponseMappingTemplate: |
-        $util.toJson($context.result)
-
   TestPolicyResolver:
     Type: AWS::AppSync::Resolver
     Properties:

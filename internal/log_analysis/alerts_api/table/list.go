@@ -255,27 +255,27 @@ func filterByStatus(filter *expression.ConditionBuilder, input *models.ListAlert
 		var multiFilter expression.ConditionBuilder
 
 		// Alerts that don't have a status or have an empty string status are considered open.
-		if *input.Status[0] == models.OpenStatus {
+		if input.Status[0] == models.OpenStatus {
 			multiFilter = expression.
 				Or(
 					expression.AttributeNotExists(expression.Name(StatusKey)),
 					expression.Equal(expression.Name(StatusKey), expression.Value("")),
 				)
 		} else {
-			multiFilter = expression.Name(StatusKey).Equal(expression.Value(*input.Status[0]))
+			multiFilter = expression.Name(StatusKey).Equal(expression.Value(input.Status[0]))
 		}
 
 		// Then add or conditions starting at a new slice from the second index
 		for _, statusSetting := range input.Status[1:] {
 			// Alerts that don't have a status or have an empty string status are considered open.
-			if *statusSetting == models.OpenStatus {
+			if statusSetting == models.OpenStatus {
 				multiFilter = multiFilter.
 					Or(
 						expression.AttributeNotExists(expression.Name(StatusKey)),
 						expression.Equal(expression.Name(StatusKey), expression.Value("")),
 					)
 			} else {
-				multiFilter = multiFilter.Or(expression.Name(StatusKey).Equal(expression.Value(*statusSetting)))
+				multiFilter = multiFilter.Or(expression.Name(StatusKey).Equal(expression.Value(statusSetting)))
 			}
 		}
 

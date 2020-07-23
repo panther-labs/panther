@@ -10,10 +10,6 @@ fragment AlertDetailsFull on AlertDetails {
   dedupString
   severity
   status
-  lastUpdatedBy {
-    givenName
-    familyName
-    email
-  }
+  lastUpdatedBy
   lastUpdatedByTime
 }

@@ -65,6 +65,10 @@ const ListAlerts = () => {
           },
         },
         updateQuery: (previousResult, { fetchMoreResult }) => {
+          // FIXME: Centralize this behavior for alert pagination, when apollo fixes a bug which
+          // causes wrong params to be passed to the merge function in type policies
+          // https://github.com/apollographql/apollo-client/issues/5951
+
           // PreviousResults now contains cached data and could have the same records (alertIds)
           // as the incoming results. Therefore, we must merge them and not just concatenate.
 
