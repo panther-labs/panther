@@ -34,7 +34,7 @@ const SqsSourceConfigurationPanel: React.FC = () => {
           <Field
             name="integrationLabel"
             as={FormikTextInput}
-            label="Name"
+            label="* Name"
             placeholder="A nickname for this SQS log source"
             required
           />
