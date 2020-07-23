@@ -33,7 +33,13 @@ const AlertsBySeverity: React.FC<AlertsBySeverityProps> = ({ alerts }) => {
 
   return (
     <Box mx={2} px={4} py={4} height={200} width="80%" backgroundColor="navyblue-700">
-      <Flex height="100%" pt={4} px={4} backgroundColor="navyblue-700">
+      <Flex
+        data-testid="alert-by-severity-chart"
+        height="100%"
+        pt={4}
+        px={4}
+        backgroundColor="navyblue-700"
+      >
         <TimeSeriesChart data={{ ...alerts, series: transformedSeries }} />
       </Flex>
     </Box>

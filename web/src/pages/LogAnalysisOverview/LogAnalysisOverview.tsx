@@ -20,7 +20,7 @@ import React from 'react';
 import { Alert, Box, Flex, SimpleGrid } from 'pouncejs';
 import withSEO from 'Hoc/withSEO';
 import TablePlaceholder from 'Components/TablePlaceholder';
-import { extractErrorMessage } from 'Helpers/utils';
+import { extractErrorMessage, getCurrentDate, subtractDays } from 'Helpers/utils';
 import Panel from 'Components/Panel';
 import EventsByLogType from 'Pages/LogAnalysisOverview/EventsByLogType';
 import { SeverityEnum } from 'Generated/schema';
@@ -32,22 +32,13 @@ import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.genera
 import AlertsBySeverity from './AlertsBySeverity';
 import AlertSummary from './AlertSummary';
 
-function getDates() {
-  const pastDays = 3;
-  const toDate = new Date();
-  const fromDate = new Date(toDate);
-  fromDate.setDate(toDate.getDate() - pastDays);
-
-  return {
-    // split is used to cut out milliseconds since they trigger an infinite loop for some reason
-    fromDate: `${fromDate.toISOString().split('.')[0]}Z`,
-    toDate: `${toDate.toISOString().split('.')[0]}Z`,
-  };
-}
+export const intervalMinutes = 6 * 60;
+export const defaultPastDays = 3;
 
 const LogAnalysisOverview: React.FC = () => {
-  const intervalMinutes = 6 * 60;
-  const { fromDate, toDate } = getDates();
+  const toDate = getCurrentDate();
+  const fromDate = subtractDays(toDate, defaultPastDays);
+
   const { data, loading, error } = useGetLogAnalysisMetrics({
     fetchPolicy: 'cache-and-network',
     variables: {
