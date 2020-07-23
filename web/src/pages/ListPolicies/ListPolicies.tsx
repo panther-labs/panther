@@ -38,6 +38,10 @@ const ListPolicies = () => {
     updatePagingParams,
   } = useRequestParamsWithPagination<ListPoliciesInput>();
 
+  // FIXME: Apollo v3.x.x doesn't return previous data while waiting for new one. That means that
+  // when we go to the "next page" a "loading interface" will be shown. Curreently, the existing
+  // table is shown while the query is in flight
+  // https://github.com/apollographql/apollo-client/issues/6603
   const { loading, error, data } = useListPolicies({
     fetchPolicy: 'cache-and-network',
     variables: {

@@ -39,6 +39,7 @@ function useFormSessionRestoration<FormValues>({ sessionId }: UseFormSessionRest
     }
   }, [sessionId, setValues]);
 
+  // Helper to writes value to session storagee
   const syncStorage = React.useCallback(
     debounce(() => {
       if (dirty && !isSubmitting) {
@@ -48,13 +49,21 @@ function useFormSessionRestoration<FormValues>({ sessionId }: UseFormSessionRest
     [dirty, isSubmitting, values]
   );
 
+  // Helper to clear session storage
+  const flushStorage = React.useCallback(() => {
+    storage.session.delete(sessionId);
+  }, [sessionId]);
+
+  // Syncs to session storage
   React.useEffect(syncStorage, [dirty, isSubmitting, values]);
 
   React.useEffect(() => {
     if (isSubmitting) {
-      storage.session.delete(sessionId);
+      flushStorage();
     }
-  }, [isSubmitting]);
+  }, [isSubmitting, flushStorage]);
+
+  return { clearFormSession: flushStorage };
 }
 
 export default useFormSessionRestoration;

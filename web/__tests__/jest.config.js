@@ -19,6 +19,8 @@
 const { defaults } = require('jest-config');
 
 module.exports = {
+  // Only search for typescript tests
+  rootDir: '../',
   testMatch: ['<rootDir>/**/*.test.{ts,tsx}'],
 
   // Allow searching for modules written in TS
@@ -26,23 +28,23 @@ module.exports = {
 
   // This is the only way for jest to detect our custom webpack aliases
   moduleNameMapper: {
-    '\\.(jpg|jpeg|png|svg)$': '<rootDir>/__mocks__/file.ts',
-    '^Assets/(.*)': '<rootDir>/../src/assets/$1',
-    '^Components/(.*)': '<rootDir>/../src/components/$1',
-    '^Generated/(.*)': '<rootDir>/../__generated__/$1',
-    '^Helpers/(.*)': '<rootDir>/../src/helpers/$1',
-    '^Pages/(.*)': '<rootDir>/../src/pages/$1',
-    '^Hooks/(.*)': '<rootDir>/../src/hooks/$1',
-    '^Hoc/(.*)': '<rootDir>/../src/hoc/$1',
-    '^Source/(.*)': '<rootDir>/../src/$1',
-    'test-utils': '<rootDir>/utils',
+    '\\.(jpg|jpeg|png|svg)$': '<rootDir>/__tests__/__mocks__/file.ts',
+    '^Assets/(.*)': '<rootDir>/src/assets/$1',
+    '^Components/(.*)': '<rootDir>/src/components/$1',
+    '^Generated/(.*)': '<rootDir>/__generated__/$1',
+    '^Helpers/(.*)': '<rootDir>/src/helpers/$1',
+    '^Pages/(.*)': '<rootDir>/src/pages/$1',
+    '^Hooks/(.*)': '<rootDir>/src/hooks/$1',
+    '^Hoc/(.*)': '<rootDir>/src/hoc/$1',
+    '^Source/(.*)': '<rootDir>/src/$1',
+    'test-utils': '<rootDir>/__tests__/utils',
   },
 
   // mocks sessionStorage & localStorage
   setupFiles: ['jest-localstorage-mock'],
 
   // additional browser API mocks & assertions
-  setupFilesAfterEnv: ['<rootDir>/setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
 
   // report results for each file
   verbose: true,
