@@ -20,7 +20,7 @@ import React from 'react';
 import { Box, useTheme } from 'pouncejs';
 import { formatTime } from 'Helpers/utils';
 import { SeriesData } from 'Generated/schema';
-import useLineColors from 'Hooks/useLineColors';
+import colors from './colors';
 
 interface TimeSeriesLinesProps {
   data: SeriesData;
@@ -38,7 +38,6 @@ function formatDateString(timestamp) {
 
 const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
   const theme = useTheme();
-  const lineColors = useLineColors();
   const container = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
     (async () => {
@@ -74,7 +73,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
           smooth: true,
           symbol: 'none',
           itemStyle: {
-            color: lineColors[label],
+            color: theme[colors[label]],
           },
           data: values.map((v, i) => {
             return {

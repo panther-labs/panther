@@ -1,23 +1,10 @@
-/**
- * Panther is a Cloud-Native SIEM for the Modern Security Team.
- * Copyright (C) 2020 Panther Labs Inc
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-import { useTheme } from 'pouncejs';
+import { SEVERITY_COLOR_MAP } from 'Components/SeverityBadge';
+import mapKeys from 'lodash/mapKeys';
+import { capitalize } from 'Helpers/utils';
 
-export const LineColors = {
+const severityColors = mapKeys(SEVERITY_COLOR_MAP, (val, key) => capitalize(key));
+
+const logTypeColors = {
   Critical: 'red-500',
   High: 'orange-400',
   Medium: 'yellow-500',
@@ -62,16 +49,7 @@ export const LineColors = {
   'Zeek.DNS': 'blue-500',
 };
 
-/**
- * Helps save & restore form sessions when the user navigates away or closes the tab while making
- * changes
- */
-
-function useLineColors() {
-  const theme = useTheme();
-  return Object.keys(LineColors).reduce((acc, key) => {
-    return { ...acc, [key]: theme.colors[LineColors[key]] };
-  }, {});
-}
-
-export default useLineColors;
+export default {
+  ...severityColors,
+  ...logTypeColors,
+};
