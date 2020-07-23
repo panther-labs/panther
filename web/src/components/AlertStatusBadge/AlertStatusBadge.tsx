@@ -23,10 +23,10 @@ import { AlertStatusesEnum } from 'Generated/schema';
 const STATUS_COLOR_MAP: {
   [key in StatusBadgeProps['status']]: BadgeProps['color'];
 } = {
-  [AlertStatusesEnum.Open]: 'red-200' as const,
+  [AlertStatusesEnum.Open]: 'red-300' as const,
   [AlertStatusesEnum.Triaged]: 'yellow-500' as const,
-  [AlertStatusesEnum.Closed]: 'navyblue-550' as const,
-  [AlertStatusesEnum.Resolved]: 'navyblue-500' as const,
+  [AlertStatusesEnum.Closed]: 'navyblue-200' as const,
+  [AlertStatusesEnum.Resolved]: 'navyblue-300' as const,
 };
 
 interface StatusBadgeProps {

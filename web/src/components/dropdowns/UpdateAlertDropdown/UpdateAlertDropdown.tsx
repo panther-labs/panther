@@ -165,10 +165,10 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
             padding="4px"
             transition="all 0.2s ease-in-out"
             border="1px solid"
-            borderColor="navyblue-450"
+            borderColor="navyblue-300"
             borderRadius="50%"
             backgroundColor="transparent"
-            _hover={{ backgroundColor: 'navyblue-450' }}
+            _hover={{ backgroundColor: 'navyblue-300' }}
           />
         </DropdownButton>
       </Flex>
