@@ -27,7 +27,7 @@ interface AuthPageContainerComposition {
 
 const AuthPageContainer: React.FC & AuthPageContainerComposition = ({ children }) => {
   return (
-    <SimpleGrid columns={3} height="100vh" backgroundColor="navyblue-800">
+    <SimpleGrid columns={3} height="100vh" backgroundColor="navyblue-600">
       <Flex
         gridColumn="1/2"
         width="100%"
@@ -35,7 +35,7 @@ const AuthPageContainer: React.FC & AuthPageContainerComposition = ({ children }
         direction="column"
         justify="center"
         align="center"
-        backgroundColor="navyblue-900"
+        backgroundColor="navyblue-700"
       >
         <Img src={PantherLogoWhite} alt="Panther Logo" nativeWidth={54} nativeHeight={54} mb={6} />
         <Heading size="x-large" mb={3} textAlign="center">
@@ -72,7 +72,7 @@ const AuthPageContainerCaption: AuthPageContainerComposition['Caption'] = ({ tit
  * A compounet component to act as a wrapper for any alternative options that the page can have
  */
 const AuthPageContainerAlt: AuthPageContainerComposition['AltOptions'] = ({ children }) => (
-  <Box position="absolute" right={10} top={10} color="gray-200" fontSize="medium">
+  <Box position="absolute" right={10} top={10} color="gray-300" fontSize="medium">
     {children}
   </Box>
 );

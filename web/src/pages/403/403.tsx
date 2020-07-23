@@ -36,6 +36,7 @@ const Page403: React.FC = () => {
       left={0}
       top={0}
       direction="column"
+      zIndex={-1}
     >
       <Box mb={10}>
         <img alt="Access denied illustration" src={AccessDeniedImg} width="auto" height={400} />
@@ -43,7 +44,7 @@ const Page403: React.FC = () => {
       <Heading mb={2}>
         You have no power here, {userInfo ? userInfo.given_name : 'Anonymous'} the Grey
       </Heading>
-      <Text fontSize="medium" color="gray-200" mb={10}>
+      <Text fontSize="medium" color="gray-300" mb={10}>
         ( Sarum... Your administrator has restricted your powers )
       </Text>
       <Button as={RRLink} to="/">

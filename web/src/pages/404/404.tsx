@@ -33,12 +33,13 @@ const Page404: React.FC = () => {
       left={0}
       top={0}
       direction="column"
+      zIndex={-1}
     >
       <Box mb={10}>
         <img alt="Page not found illustration" src={NotFoundImg} width="auto" height={400} />
       </Box>
       <Heading mb={2}>Not all who wander are lost...</Heading>
-      <Text color="gray-200" mb={10}>
+      <Text color="gray-300" mb={10}>
         ( You definitely are though )
       </Text>
       <Button as={RRLink} to="/">

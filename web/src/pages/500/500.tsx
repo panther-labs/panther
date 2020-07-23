@@ -33,12 +33,13 @@ const Page500: React.FC = () => {
       left={0}
       top={0}
       direction="column"
+      zIndex={-1}
     >
       <Box mb={10}>
         <img alt="Page crash illustration" src={WarningImg} width="auto" height={350} />
       </Box>
       <Heading mb={2}>Something went terribly wrong</Heading>
-      <Text fontSize="medium" color="gray-200" mb={10}>
+      <Text fontSize="medium" color="gray-300" mb={10}>
         This would normally be an internal server error, but we are fully serverless. Feel free to
         laugh.
       </Text>

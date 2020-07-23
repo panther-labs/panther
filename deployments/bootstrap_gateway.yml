@@ -138,6 +138,7 @@ Resources:
                 - guardduty:UpdatePublishingDestination
                 - kms:ListAliases # required for GuardDuty
                 - lambda:ListLayerVersions
+                - logs:DescribeLogGroups
               Resource: '*'
             - Effect: Allow
               Action:
@@ -194,6 +195,12 @@ Resources:
               Action: iam:PassRole
               Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/Panther*
             - Effect: Allow
+              # This function needs to be able to modify its own permission boundary for a clean teardown.
+              # We don't know the role name, which is randomly generated, but we know it will contain
+              # at least part of the CloudFormation resource name.
+              Action: iam:PutRolePermissionsBoundary
+              Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/*CustomResourceFunction*
+            - Effect: Allow
               Action: lambda:GetFunction
               Resource:
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-policy-engine
@@ -210,6 +217,7 @@ Resources:
               Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:layer:panther-engine-globals:*
             - Effect: Allow
               Action:
+                - logs:DeleteLogGroup
                 - logs:DeleteMetricFilter
                 - logs:PutMetricFilter
               Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/panther-*
@@ -228,6 +236,10 @@ Resources:
               Action: s3:Get*
               Resource: arn:aws:s3:::panther-public-cloudformation-templates*
 
+  # The PantherTeardown resource adds an IAM permission boundary to the custom resource role
+  # which blocks future logs.
+  #
+  # In other words, by the time CFN deletes this log group, Lambda can't create it again.
   CustomResourceLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -236,6 +248,7 @@ Resources:
 
   CustomResourceMetricFilters:
     Type: Custom::LambdaMetricFilters
+    DependsOn: CustomTeardown
     Properties:
       CustomResourceVersion: !Ref CustomResourceVersion
       LogGroupName: !Ref CustomResourceLogGroup
@@ -243,6 +256,7 @@ Resources:
 
   CustomResourceAlarms:
     Type: Custom::LambdaAlarms
+    DependsOn: CustomTeardown
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
       CustomResourceVersion: !Ref CustomResourceVersion
@@ -253,12 +267,17 @@ Resources:
       ThrottleThreshold: 0
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
+  # This needs to be the very last custom resource which is deleted -
+  # for this reason, all other custom resources in this stack depend on this one.
   CustomTeardown:
     # When deleted, this resource will remove Panther assets added outside of CloudFormation:
     #   - ECR images
     #   - Lambda layers
+    #   - Leftover CloudWatch log groups
     Type: Custom::PantherTeardown
     Properties:
+      CustomResourceLogGroupName: !Ref CustomResourceLogGroup
+      CustomResourceRoleName: !Ref CustomResourceFunctionRole # Resource created by Serverless transform
       CustomResourceVersion: !Ref CustomResourceVersion
       EcrRepoName: !Ref ImageRegistryName
       ServiceToken: !GetAtt CustomResourceFunction.Arn
@@ -266,6 +285,7 @@ Resources:
   # Alarms for SNS topics in the bootstrap stack
   ProcessedDataTopicAlarms:
     Type: Custom::SNSAlarms
+    DependsOn: CustomTeardown
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
       CustomResourceVersion: !Ref CustomResourceVersion
@@ -277,6 +297,7 @@ Resources:
     # It obviously might not be able to notify us about its own failures, but we still want to try.
     # There could be transient failures that will eventually get through.
     Type: Custom::SNSAlarms
+    DependsOn: CustomTeardown
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
       CustomResourceVersion: !Ref CustomResourceVersion
@@ -287,6 +308,7 @@ Resources:
   # forces SMS as a fallback option, but the SDK does not.
   UserPoolMfa:
     Type: Custom::CognitoUserPoolMfa
+    DependsOn: CustomTeardown
     Properties:
       CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
@@ -319,6 +341,7 @@ Resources:
 
   AnalysisApiAlarms:
     Type: Custom::ApiGatewayAlarms
+    DependsOn: CustomTeardown
     Properties:
       ApiName: panther-analysis-api
       AlarmTopicArn: !Ref AlarmTopicArn
@@ -339,6 +362,7 @@ Resources:
 
   ComplianceApiAlarms:
     Type: Custom::ApiGatewayAlarms
+    DependsOn: CustomTeardown
     Properties:
       ApiName: panther-compliance-api
       AlarmTopicArn: !Ref AlarmTopicArn
@@ -359,6 +383,7 @@ Resources:
 
   RemediationApiAlarms:
     Type: Custom::ApiGatewayAlarms
+    DependsOn: CustomTeardown
     Properties:
       ApiName: panther-remediation-api
       AlarmTopicArn: !Ref AlarmTopicArn
@@ -379,6 +404,7 @@ Resources:
 
   ResourcesApiAlarms:
     Type: Custom::ApiGatewayAlarms
+    DependsOn: CustomTeardown
     Properties:
       ApiName: panther-resources-api
       AlarmTopicArn: !Ref AlarmTopicArn

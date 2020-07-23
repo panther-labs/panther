@@ -1,3 +1,5 @@
+package laceworklogs
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,33 +18,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { Box, Flex, Heading, Card } from 'pouncejs';
+import (
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+)
 
-interface PanelProps {
-  title: string;
-  actions?: React.ReactNode;
+func init() {
+	logtypes.MustRegister(logtypes.Config{
+		Name:         "Lacework.Events",
+		Description:  LaceworkDesc,
+		ReferenceURL: `https://www.lacework.com/platform-overview/`,
+		Schema:       Lacework{},
+		NewParser:    parsers.AdapterFactory(&LaceworkParser{}),
+	})
 }
-
-const Panel: React.FC<PanelProps> = ({ title, actions, children }) => {
-  return (
-    <Card as="section" width={1}>
-      <Flex
-        p={6}
-        borderBottom="1px solid"
-        borderColor={children ? 'navyblue-300' : 'transparent'}
-        justify="space-between"
-        align="center"
-        maxHeight={80}
-      >
-        <Heading size="x-small" as="h4">
-          {title}
-        </Heading>
-        {actions}
-      </Flex>
-      {children && <Box p={6}>{children}</Box>}
-    </Card>
-  );
-};
-
-export default Panel;

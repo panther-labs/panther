@@ -32,7 +32,7 @@ const ListAlertsPageEmptyDataFallback: React.FC = () => {
         />
       </Box>
       <Heading mb={6}>It{"'"}s quiet in here</Heading>
-      <Text color="gray-200" textAlign="center" mb={8}>
+      <Text color="gray-300" textAlign="center" mb={8}>
         Any suspicious rule-based activity we detect will be listed here
       </Text>
     </Flex>

@@ -46,9 +46,9 @@ const ComplianceSourceHealthIcon: React.FC<ComplianceSourceHealthIconProps> = ({
 
   const tooltipMessage = isHealthy ? 'Everything looks fine from our end!' : errorMessage;
   const icon = isHealthy ? (
-    <Icon type="check" size="small" color="green-200" />
+    <Icon type="check" size="small" color="green-400" />
   ) : (
-    <Icon type="close" size="small" color="red-200" />
+    <Icon type="close" size="small" color="red-300" />
   );
 
   return (

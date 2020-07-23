@@ -28,11 +28,11 @@ import ChartSummary from 'Components/charts/ChartSummary';
 const severityToGrayscaleMapping: {
   [key in keyof OrganizationReportBySeverity]: keyof typeof theme['colors'];
 } = {
-  critical: 'red-400',
-  high: 'orange-500',
+  critical: 'red-500',
+  high: 'orange-400',
   medium: 'yellow-500',
   low: 'gray-500',
-  info: 'gray-800',
+  info: 'gray-600',
 };
 
 interface PoliciesBySeverityChartData {
@@ -58,7 +58,7 @@ const PoliciesBySeverityChart: React.FC<PoliciesBySeverityChartData> = ({ polici
 
   return (
     <Flex height="100%">
-      <ChartSummary total={totalPolicies} title="Total Policies" color="blue-600" />
+      <ChartSummary total={totalPolicies} title="Total Policies" color="blue-400" />
       <BarChart data={allPoliciesChartData} />
     </Flex>
   );
