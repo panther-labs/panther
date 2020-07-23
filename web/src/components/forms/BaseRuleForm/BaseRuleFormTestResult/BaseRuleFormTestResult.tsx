@@ -25,9 +25,9 @@ import { Card, theme, Flex, Box } from 'pouncejs';
 export const mapTestStatusToColor: {
   [key in ComplianceStatusEnum]: keyof typeof theme['colors'];
 } = {
-  [ComplianceStatusEnum.Pass]: 'green-200',
-  [ComplianceStatusEnum.Fail]: 'red-200',
-  [ComplianceStatusEnum.Error]: 'orange-500',
+  [ComplianceStatusEnum.Pass]: 'green-400',
+  [ComplianceStatusEnum.Fail]: 'red-300',
+  [ComplianceStatusEnum.Error]: 'orange-400',
 };
 
 interface BaseRuleFormTestResultProps {

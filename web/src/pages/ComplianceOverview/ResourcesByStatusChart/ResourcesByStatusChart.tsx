@@ -34,18 +34,18 @@ const ResourcesByStatusChart: React.FC<ResourcesByStatusChartProps> = ({ resourc
     {
       value: countResourcesByStatus(resources, ['fail', 'error']),
       label: 'Failing',
-      color: 'red-200' as const,
+      color: 'red-300' as const,
     },
     {
       value: countResourcesByStatus(resources, ['pass']),
       label: 'Passing',
-      color: 'green-200' as const,
+      color: 'green-400' as const,
     },
   ];
 
   return (
     <Flex height="100%">
-      <ChartSummary total={totalResources} title="Total Resources" color="green-200" />
+      <ChartSummary total={totalResources} title="Total Resources" color="green-400" />
       <BarChart data={failingResourcesChartData} alignment="horizontal" />
     </Flex>
   );

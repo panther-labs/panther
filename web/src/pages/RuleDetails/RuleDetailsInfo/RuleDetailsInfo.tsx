@@ -93,20 +93,24 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
           </Text>
           <SimpleGrid columns={2} spacing={5}>
             <Flex direction="column" spacing={2}>
-              <Box color="gray-450" fontSize="small-medium" aria-describedby="runbook-description">
+              <Box
+                color="navyblue-100"
+                fontSize="small-medium"
+                aria-describedby="runbook-description"
+              >
                 Runbook
               </Box>
               {rule.runbook ? (
                 <Linkify id="runbook-description">{rule.runbook}</Linkify>
               ) : (
-                <Box fontStyle="italic" color="gray-450" id="runbook-description">
+                <Box fontStyle="italic" color="navyblue-100" id="runbook-description">
                   No runbook specified
                 </Box>
               )}
             </Flex>
             <Flex direction="column" spacing={2}>
               <Box
-                color="gray-450"
+                color="navyblue-100"
                 fontSize="small-medium"
                 aria-describedby="reference-description"
               >
@@ -115,7 +119,7 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
               {rule.reference ? (
                 <Linkify id="reference-description">{rule.reference}</Linkify>
               ) : (
-                <Box fontStyle="italic" color="gray-450" id="reference-description">
+                <Box fontStyle="italic" color="navyblue-100" id="reference-description">
                   No reference specified
                 </Box>
               )}
@@ -125,7 +129,7 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
         <Card variant="dark" as="section" p={4}>
           <SimpleGrid columns={2} spacing={5} fontSize="small-medium">
             <Flex spacing={5}>
-              <Flex direction="column" spacing={2} color="gray-450" flexShrink={0}>
+              <Flex direction="column" spacing={2} color="navyblue-100" flexShrink={0}>
                 <Box aria-describedby="tags-list">Tags</Box>
                 <Box aria-describedby="deduplication-period">Deduplication Period</Box>
               </Flex>
@@ -144,7 +148,7 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
                     ))}
                   </Box>
                 ) : (
-                  <Box fontStyle="italic" color="gray-450" id="tags-list">
+                  <Box fontStyle="italic" color="navyblue-100" id="tags-list">
                     This rule has no tags
                   </Box>
                 )}
@@ -152,7 +156,7 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
               </Flex>
             </Flex>
             <Flex spacing={60}>
-              <Flex direction="column" color="gray-450" spacing={2}>
+              <Flex direction="column" color="navyblue-100" spacing={2}>
                 <Box aria-describedby="created-at">Created</Box>
                 <Box aria-describedby="updated-at">Modified</Box>
               </Flex>

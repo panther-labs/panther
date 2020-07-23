@@ -67,3 +67,11 @@ scriptTag.id = '__PANTHER_CONFIG__';
 scriptTag.type = 'application/json';
 scriptTag.innerHTML = JSON.stringify(PANTHER_CONFIG);
 document.body.appendChild(scriptTag);
+
+/**
+ * Make sure that localStorage & sessionStorage are clean before each test
+ */
+afterEach(() => {
+  localStorage.clear();
+  sessionStorage.clear();
+});

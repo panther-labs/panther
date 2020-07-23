@@ -69,7 +69,7 @@ export const TotpForm: React.FC = () => {
           <QRCode
             value={formatSecretCode(code, userInfo.email)}
             fgColor={theme.colors['gray-50']}
-            bgColor={theme.colors['navyblue-800']}
+            bgColor={theme.colors['navyblue-600']}
           />
         </Flex>
         <Text color="gray-300" textAlign="center" my={2}>

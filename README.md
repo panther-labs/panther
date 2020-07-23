@@ -15,7 +15,9 @@
 </p>
 
 <p align="center">
-  <a href="#contributors-"><img src="https://img.shields.io/badge/all_contributors-17-orange.svg?style=svg" alt="All Contributors"/></a>
+  <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+  <a href="#contributors"><img src="https://img.shields.io/badge/all_contributors-18-orange.svg?style=svg" alt="All Contributors"/></a>	<a href="#contributors"><img src="https://img.shields.io/badge/all_contributors-18-orange.svg?style=svg" alt="All Contributors"/></a>
+  <!-- ALL-CONTRIBUTORS-BADGE:END -->
   <a href="https://panther-labs-oss-slackin.herokuapp.com/"><img src="https://panther-labs-oss-slackin.herokuapp.com/badge.svg" alt="Slack"/></a>
   <a href="https://circleci.com/gh/panther-labs/panther"><img src="https://circleci.com/gh/panther-labs/panther.svg?style=svg" alt="CircleCI"/></a> 
   <a href="https://app.fossa.com/projects/custom%2B15287%2Fgit%40github.com%3Apanther-labs%2Fpanther.git?ref=badge_shield"><img src="https://app.fossa.com/api/projects/custom%2B15287%2Fgit%40github.com%3Apanther-labs%2Fpanther.git.svg?type=shield" alt="FOSSA License Status"/></a>
@@ -139,7 +141,7 @@ Panther source code is licensed under [AGPLv3](https://github.com/panther-labs/p
 
 [![FOSSA Status](https://app.fossa.com/api/projects/custom%2B15287%2Fgit%40github.com%3Apanther-labs%2Fpanther.git.svg?type=large)](https://app.fossa.com/projects/custom%2B15287%2Fgit%40github.com%3Apanther-labs%2Fpanther.git?ref=badge_large)
 
-## Contributors ✨
+## Contributors
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
@@ -169,12 +171,12 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="http://sergeax.ru/"><img src="https://avatars2.githubusercontent.com/u/3264530?v=4" width="100px;" alt=""/><br /><sub><b>Sergey Aksenov</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=SergeAx" title="Documentation">📖</a></td>
     <td align="center"><a href="https://github.com/glerb"><img src="https://avatars3.githubusercontent.com/u/56281590?v=4" width="100px;" alt=""/><br /><sub><b>Patrick Hagan</b></sub></a><br /><a href="#infra-glerb" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
     <td align="center"><a href="https://github.com/alxarch"><img src="https://avatars3.githubusercontent.com/u/445794?v=4" width="100px;" alt=""/><br /><sub><b>Alexandros Sigalas</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=alxarch" title="Code">💻</a> <a href="#security-alxarch" title="Security">🛡️</a></td>
+    <td align="center"><a href="https://github.com/BatteryCandy"><img src="https://avatars3.githubusercontent.com/u/22948585?v=4" width="100px;" alt=""/><br /><sub><b>Ben Pruce</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=BatteryCandy" title="Code">💻</a></td>
   </tr>
 </table>
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
-
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!

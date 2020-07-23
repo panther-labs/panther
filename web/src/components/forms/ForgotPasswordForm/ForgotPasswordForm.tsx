@@ -54,7 +54,7 @@ const ForgotPasswordForm: React.FC = () => {
       {({ status, values }) => {
         if (status === 'SENT') {
           return (
-            <Card bg="teal-300" p={5} mb={8} boxShadow="none" fontSize="medium">
+            <Card bg="teal-500" p={5} mb={8} boxShadow="none" fontSize="medium">
               We have successfully sent you an email with reset instructions at{' '}
               <b>{values.email}</b>
             </Card>

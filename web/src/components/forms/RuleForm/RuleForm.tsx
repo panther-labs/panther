@@ -67,25 +67,34 @@ const RuleForm: React.FC<RuleFormProps> = ({ initialValues, onSubmit }) => {
       validationSchema={validationSchema}
     >
       <FormSessionRestoration sessionId={`rule-form-${initialValues.id || 'create'}`}>
-        <Form>
-          <Flex direction="column" as="article" spacing={5}>
-            <ErrorBoundary>
-              <BaseRuleFormCoreSection type="rule" />
-            </ErrorBoundary>
-            <ErrorBoundary>
-              <BaseRuleFormEditorSection type="rule" />
-            </ErrorBoundary>
-            <ErrorBoundary>
-              <BaseRuleFormTestSection />
-            </ErrorBoundary>
-          </Flex>
-          <Flex spacing={4} mt={5} justify="flex-end">
-            <Button variant="outline" variantColor="navyblue" onClick={history.goBack}>
-              Cancel
-            </Button>
-            <SubmitButton>{initialValues.id ? 'Update' : 'Create'}</SubmitButton>
-          </Flex>
-        </Form>
+        {({ clearFormSession }) => (
+          <Form>
+            <Flex direction="column" as="article" spacing={5}>
+              <ErrorBoundary>
+                <BaseRuleFormCoreSection type="rule" />
+              </ErrorBoundary>
+              <ErrorBoundary>
+                <BaseRuleFormEditorSection type="rule" />
+              </ErrorBoundary>
+              <ErrorBoundary>
+                <BaseRuleFormTestSection />
+              </ErrorBoundary>
+            </Flex>
+            <Flex spacing={4} mt={5} justify="flex-end">
+              <Button
+                variant="outline"
+                variantColor="navyblue"
+                onClick={() => {
+                  clearFormSession();
+                  history.goBack();
+                }}
+              >
+                Cancel
+              </Button>
+              <SubmitButton>{initialValues.id ? 'Update' : 'Create'}</SubmitButton>
+            </Flex>
+          </Form>
+        )}
       </FormSessionRestoration>
     </Formik>
   );
