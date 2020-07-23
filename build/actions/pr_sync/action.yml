@@ -1,0 +1,25 @@
+name: Sync merged PRs
+description: Automatically creates new PRs in a repo from the merged PRs of another repo
+inputs:
+  destRepo:
+    description: The repo to create a PR to
+    required: true
+  destBranch:
+    description: The branch that the PR will be created against
+    required: false
+    default: master
+  ignoreLabel:
+    description: A Github label that, when added, should force the PR to ignore syncing
+    required: false
+    default: ignore-pr-sync
+  token:
+    description: A Github token to use for all the GH related actions
+    required: true
+outputs:
+  url:
+    description: The URL to the newly created PR
+  message:
+    description: Custom information about the action (status, info, etc.)
+runs:
+  using: node12
+  main: dist/index.js

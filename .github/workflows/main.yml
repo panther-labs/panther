@@ -1,0 +1,27 @@
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - closed
+
+jobs:
+  sync_prs_from_community_to_enterprise:
+    runs-on: ubuntu-latest
+    name: Syncs merged PRs from Panther Community to Panther Enterprise
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.PR_SYNC_TOKEN }}
+          fetch-depth: 3
+
+      - name: Monitor PRs on a Source Repo & Create PRs on a dest one
+        uses: ./build/actions/pr_sync
+        id: pr_sync
+        env:
+          ACTIONS_STEP_DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
+        with:
+          destRepo: panther-labs/panther-enterprise
+          ignoreLabel: enterprise-backport
+          token: ${{ secrets.PR_SYNC_TOKEN }}
