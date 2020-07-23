@@ -52,7 +52,7 @@ const AlertSummary: React.FC<AlertSummaryProps> = ({ data }) => {
       <Box id={slugify('Total Alerts')} fontWeight="bold" fontSize="medium">
         Total Alerts
       </Box>
-      <Flex my={2} width="60%" justify="space-between">
+      <Flex mt={4} width="70%" justify="space-between">
         <Text fontSize="small" color="gray-300">
           Last period
         </Text>
@@ -60,7 +60,7 @@ const AlertSummary: React.FC<AlertSummaryProps> = ({ data }) => {
           {alertPreviousPeriod}
         </Text>
       </Flex>
-      <Flex width="60%" justify="space-between">
+      <Flex width="70%" justify="space-between">
         <DifferenceText diff={diff} />
       </Flex>
     </Flex>
