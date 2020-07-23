@@ -39,6 +39,7 @@ import mapValues from 'lodash/mapValues';
 import sum from 'lodash/sum';
 import { ErrorResponse } from 'apollo-link-error';
 import { ApolloError } from '@apollo/client';
+import { UserDetails } from 'Source/graphql/fragments/UserDetails.generated';
 
 export const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
@@ -308,7 +309,9 @@ export const toStackNameFormat = (val: string) => val.replace(/ /g, '-').toLower
 /*
 Given a user, returns a human readable string to show for the user's name
 */
-export const getUserDisplayName = (user: any) => {
+export const getUserDisplayName = (
+  user: Pick<UserDetails, 'givenName' | 'familyName' | 'email'>
+) => {
   if (!user) {
     return '';
   }
