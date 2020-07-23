@@ -44,7 +44,7 @@ const ResourceDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ resource }) =
       <Card variant="dark" as="section" p={4}>
         <SimpleGrid columns={3} fontSize="small-medium">
           <Flex spacing={5}>
-            <Box id="type-label" color="gray-450">
+            <Box id="type-label" color="navyblue-100">
               Type
             </Box>
             <Link
@@ -56,7 +56,7 @@ const ResourceDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ resource }) =
             </Link>
           </Flex>
           <Flex spacing={5}>
-            <Box id="source-label" color="gray-450">
+            <Box id="source-label" color="navyblue-100">
               Source
             </Box>
             <Link
@@ -68,7 +68,7 @@ const ResourceDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ resource }) =
             </Link>
           </Flex>
           <Flex spacing={5}>
-            <Box id="updated-at" color="gray-450">
+            <Box id="updated-at" color="navyblue-100">
               Modified
             </Box>
             <Box id="updated-at">{formatDatetime(resource.lastModified)}</Box>

@@ -51,7 +51,7 @@ const Header = () => {
             align="center"
             fontSize="medium"
             borderRadius="pill"
-            backgroundColor="navyblue-700"
+            backgroundColor="navyblue-500"
             py={2}
             px={4}
           >

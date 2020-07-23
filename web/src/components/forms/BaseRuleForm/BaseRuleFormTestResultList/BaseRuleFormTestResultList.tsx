@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Flex } from 'pouncejs';
+import { Box, Flex, Text } from 'pouncejs';
 import { ComplianceStatusEnum, TestPolicyResponse } from 'Generated/schema';
 import PolicyFormTestResult, { mapTestStatusToColor } from '../BaseRuleFormTestResult';
 
@@ -28,7 +28,7 @@ interface PolicyFormTestResultsProps {
 
 const BaseRuleFormTestResultList: React.FC<PolicyFormTestResultsProps> = ({ running, results }) => {
   return (
-    <Box bg="navyblue-500" fontSize="medium" fontWeight="medium" p={5}>
+    <Box bg="navyblue-300" fontSize="medium" fontWeight="medium" p={5}>
       {running && 'Running your tests...'}
       {!running && results && (
         <Flex direction="column" spacing={2}>
@@ -55,14 +55,15 @@ const BaseRuleFormTestResultList: React.FC<PolicyFormTestResultsProps> = ({ runn
                 status={ComplianceStatusEnum.Error}
                 text="Error"
               />
-              <Box
+              <Text
+                ml={1}
+                mt={1}
                 fontSize="x-small"
                 fontWeight="bold"
-                as="pre"
                 color={mapTestStatusToColor[ComplianceStatusEnum.Error]}
               >
                 {errorMessage}
-              </Box>
+              </Text>
             </Box>
           ))}
         </Flex>

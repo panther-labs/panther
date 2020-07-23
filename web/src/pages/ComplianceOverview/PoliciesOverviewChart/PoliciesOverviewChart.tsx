@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { countPoliciesBySeverityAndStatus } from 'Helpers/utils';
-import sum from 'lodash-es/sum';
+import sum from 'lodash/sum';
 import { OrganizationReportBySeverity } from 'Generated/schema';
 import { Flex } from 'pouncejs';
 import BarChart from 'Components/charts/BarChart';
@@ -53,18 +53,18 @@ const PoliciesOverviewChart: React.FC<PoliciesOverviewChartData> = ({ policies }
     {
       value: failingPolicies,
       label: 'Failing',
-      color: 'red-200' as const,
+      color: 'red-300' as const,
     },
     {
       value: passingPolicies,
       label: 'Passing',
-      color: 'green-200' as const,
+      color: 'green-400' as const,
     },
   ];
 
   return (
     <Flex height="100%">
-      <ChartSummary total={totalPolicies} title="Total Policies" color="blue-600" />
+      <ChartSummary total={totalPolicies} title="Total Policies" color="blue-400" />
       <BarChart data={policiesOverviewChartData} alignment="horizontal" />
     </Flex>
   );

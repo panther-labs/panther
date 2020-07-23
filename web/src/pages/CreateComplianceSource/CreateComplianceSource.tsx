@@ -36,14 +36,10 @@ const CreateComplianceSource: React.FC = () => {
   const { history } = useRouter();
   const [addComplianceSource, { error }] = useAddComplianceSource({
     update: (cache, { data: { addComplianceIntegration } }) => {
-      cache.modify({
-        fields: {
-          listComplianceIntegrations: (queryData, { toReference }) => {
-            const addedIntegrationCacheRef = toReference(addComplianceIntegration);
-            return queryData
-              ? [addedIntegrationCacheRef, ...queryData]
-              : [addedIntegrationCacheRef];
-          },
+      cache.modify('ROOT_QUERY', {
+        listComplianceIntegrations: (queryData, { toReference }) => {
+          const addedIntegrationCacheRef = toReference(addComplianceIntegration);
+          return queryData ? [addedIntegrationCacheRef, ...queryData] : [addedIntegrationCacheRef];
         },
       });
     },

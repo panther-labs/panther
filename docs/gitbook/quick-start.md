@@ -124,9 +124,6 @@ Congratulations! You are now ready to use Panther. Follow the steps below to com
 
 ## Removing Panther
 To uninstall Panther, simply delete the main "panther" stack (substituting whatever stack name you chose during deployment).
-This will automatically remove everything except:
-
-* S3 buckets and their data
-* A few empty CloudWatch log groups
+This will automatically remove everything except S3 buckets and the data they contain.
 
 You can easily find and delete these manually, or you can run `mage teardown` (see [development](development.md#teardown)).

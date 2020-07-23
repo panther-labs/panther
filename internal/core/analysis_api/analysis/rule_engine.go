@@ -43,12 +43,12 @@ func NewRuleEngine(lambdaClient lambdaiface.LambdaAPI, lambdaName string) RuleEn
 	}
 }
 
-func (e *RuleEngine) TestRule(policy *models.TestPolicy) (models.TestPolicyResult, error) {
+func (e *RuleEngine) TestRule(rule *models.TestPolicy) (models.TestPolicyResult, error) {
 	empty := models.TestPolicyResult{}
 
 	// Build the list of events to run the rule against
-	inputEvents := make([]enginemodels.Event, len(policy.Tests))
-	for i, test := range policy.Tests {
+	inputEvents := make([]enginemodels.Event, len(rule.Tests))
+	for i, test := range rule.Tests {
 		// TODO(giorgosp): Can swagger unmarshall this already?
 		var attrs map[string]interface{}
 		if err := jsoniter.UnmarshalFromString(string(test.Resource), &attrs); err != nil {
@@ -64,9 +64,9 @@ func (e *RuleEngine) TestRule(policy *models.TestPolicy) (models.TestPolicyResul
 	input := enginemodels.RulesEngineInput{
 		Rules: []enginemodels.Rule{
 			{
-				Body:     string(policy.Body),
+				Body:     string(rule.Body),
 				ID:       testPolicyID, // doesn't matter as we're only running one rule
-				LogTypes: policy.ResourceTypes,
+				LogTypes: rule.ResourceTypes,
 			},
 		},
 		Events: inputEvents,
@@ -80,11 +80,11 @@ func (e *RuleEngine) TestRule(policy *models.TestPolicy) (models.TestPolicyResul
 	}
 
 	// Translate rule engine output to test results.
-	testResults, err := makeTestSummaryRule(policy, engineOutput)
+	testResults, err := makeTestSummaryRule(rule, engineOutput)
 	return testResults, err
 }
 
-func makeTestSummaryRule(policy *models.TestPolicy, engineOutput enginemodels.RulesEngineOutput) (models.TestPolicyResult, error) {
+func makeTestSummaryRule(rule *models.TestPolicy, engineOutput enginemodels.RulesEngineOutput) (models.TestPolicyResult, error) {
 	// Normalize rule engine output to policy engine output to facilitate consistent handling
 	// in makeTestSummary().
 	output := enginemodels.PolicyEngineOutput{
@@ -93,5 +93,5 @@ func makeTestSummaryRule(policy *models.TestPolicy, engineOutput enginemodels.Ru
 	for i, event := range engineOutput.Events {
 		output.Resources[i] = event.ToResult()
 	}
-	return makeTestSummary(policy, output)
+	return makeTestSummary(rule, output)
 }

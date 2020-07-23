@@ -118,7 +118,7 @@ func enabledRuleTestsPass(rule *models.UpdateRule) (bool, error) {
 		ResourceTypes: rule.LogTypes,
 		Tests:         rule.Tests,
 	}
-	testResults, err := policyEngine.TestPolicy(tp)
+	testResults, err := ruleEngine.TestRule(tp)
 	if err != nil {
 		return false, err
 	}

@@ -34,26 +34,26 @@ ace.define(
   } 
     
   .ace-panther .ace_gutter {
-    background: ${theme.colors['navyblue-700']};
+    background: ${theme.colors['navyblue-500']};
     color: white
   }
   
   .ace-panther.ace_editor.ace_autocomplete {
-    background: ${theme.colors['navyblue-600']};
+    background: ${theme.colors['navyblue-400']};
     color: white;
     border: none;
   }
   
   .ace-panther.ace_editor.ace_autocomplete .ace_completion-highlight {
-    color: ${theme.colors['blue-400']};
+    color: ${theme.colors['blue-300']};
   }
   
   .ace-panther.ace_editor.ace_autocomplete .ace_marker-layer .ace_active-line {
-    background-color: ${theme.colors['navyblue-450']};
+    background-color: ${theme.colors['navyblue-300']};
   }
   
   .ace-panther.ace_editor.ace_autocomplete .ace_marker-layer .ace_line-hover {
-    background-color: ${theme.colors['navyblue-450']};
+    background-color: ${theme.colors['navyblue-300']};
   }
   
   .ace-panther .ace_print-margin {
@@ -62,7 +62,7 @@ ace.define(
   }
   
   .ace-panther {
-    background-color: ${theme.colors['navyblue-700']};
+    background-color: ${theme.colors['navyblue-500']};
     color: #FFFFFF
   }
   
@@ -110,7 +110,7 @@ ace.define(
   .ace-panther .ace_constant.ace_character,
   .ace-panther .ace_constant.ace_character.ace_escape,
   .ace-panther .ace_constant.ace_other {
-    color: ${theme.colors['red-200']}
+    color: ${theme.colors['red-300']}
   }
   
   .ace-panther .ace_invalid {
@@ -142,7 +142,7 @@ ace.define(
   }
   
   .ace-panther .ace_string {
-    color: ${theme.colors['teal-300']};
+    color: ${theme.colors['teal-500']};
   }
   
   .ace-panther .ace_string.ace_regexp {
@@ -151,7 +151,7 @@ ace.define(
   
   .ace-panther .ace_comment {
   font-style: italic;
-    color: ${theme.colors['blue-600']}
+    color: ${theme.colors['blue-400']}
   }
   
   .ace-panther .ace_heading,
@@ -178,7 +178,7 @@ ace.define(
   }
   
   .ace-panther .ace_rightAlignedText {
-    color: ${theme.colors['gray-200']}
+    color: ${theme.colors['gray-300']}
   }
   
   .ace-panther .ace_indent-guide {

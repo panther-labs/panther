@@ -260,8 +260,8 @@ func (destination *S3Destination) sendData(buffer *s3EventBuffer, errChan chan e
 	contentLength = int64(len(payload)) // for logging above
 
 	if _, err := destination.s3Uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String(destination.s3Bucket),
-		Key:    aws.String(key),
+		Bucket: &destination.s3Bucket,
+		Key:    &key,
 		Body:   bytes.NewReader(payload),
 	}); err != nil {
 		errChan <- errors.Wrap(err, "S3Upload")

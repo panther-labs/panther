@@ -172,7 +172,7 @@ func (p *Processor) logStats(err error) {
 		p.operation.Log(err, zap.Any(statsKey, *parserStats))
 		logType.Value = parserStats.LogType
 		pMetrics[0].Value, pMetrics[1].Value = parserStats.BytesProcessedCount, parserStats.EventCount
-		common.BytesProcessedLogger.Log(pMetrics, common.Component, logType)
+		common.BytesProcessedLogger.Log(pMetrics, logType)
 	}
 }
 

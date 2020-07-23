@@ -52,7 +52,7 @@ var (
 	lambdaClient     *lambda.Lambda
 	cloudwatchClient *cloudwatch.CloudWatch
 	endTime          = time.Now()
-	startTime        = endTime.Add(-2 * time.Hour)
+	startTime        = endTime.Add(-2*time.Hour + 5*time.Minute)
 
 	// Append a timestamp to the namespace so that we can pick out just the metrics we care about
 	namespace  = "ZZZPantherIntegrationTest" + strconv.Itoa(int(endTime.Unix()))
@@ -64,10 +64,6 @@ var (
 		{
 			Name:  aws.String("LogType"),
 			Value: aws.String("IntegrationTest2"),
-		},
-		{
-			Name:  aws.String("Component"),
-			Value: aws.String("IntegrationTest"),
 		},
 	}
 
@@ -116,8 +112,7 @@ func setupEvents() error {
 		MetricData: []*cloudwatch.MetricDatum{
 			{
 				Dimensions: []*cloudwatch.Dimension{
-					dimensions[0], // Type
-					dimensions[2], // Component
+					dimensions[0], // Type 1
 				},
 				MetricName: aws.String("EventsProcessed"),
 				Timestamp:  firstEvent.Timestamp,
@@ -126,8 +121,7 @@ func setupEvents() error {
 			},
 			{
 				Dimensions: []*cloudwatch.Dimension{
-					dimensions[0], // Type
-					dimensions[2], // Component
+					dimensions[0], // Type 1
 				},
 				MetricName: aws.String("EventsProcessed"),
 				Timestamp:  secondEvent.Timestamp,
@@ -136,8 +130,7 @@ func setupEvents() error {
 			},
 			{
 				Dimensions: []*cloudwatch.Dimension{
-					dimensions[1], // Type
-					dimensions[2], // Component
+					dimensions[1], // Type 2
 				},
 				MetricName: aws.String("EventsProcessed"),
 				Timestamp:  thirdEvent.Timestamp,
@@ -154,11 +147,11 @@ func setupEvents() error {
 
 func getMetrics(t *testing.T) {
 	input := &models.LambdaInput{GetMetrics: &models.GetMetricsInput{
-		MetricNames:   []string{"eventsProcessed"},
-		FromDate:      startTime,
-		ToDate:        endTime,
-		IntervalHours: 1,
-		Namespace:     namespace,
+		MetricNames:     []string{"eventsProcessed"},
+		FromDate:        startTime,
+		ToDate:          endTime,
+		IntervalMinutes: 60,
+		Namespace:       namespace,
 	}}
 	var output models.GetMetricsOutput
 	err := genericapi.Invoke(lambdaClient, functionName, input, &output)
@@ -166,27 +159,26 @@ func getMetrics(t *testing.T) {
 
 	assert.Equal(t, input.GetMetrics.FromDate.UTC(), output.FromDate.UTC())
 	assert.Equal(t, input.GetMetrics.ToDate.UTC(), output.ToDate.UTC())
-	assert.Equal(t, input.GetMetrics.IntervalHours, output.IntervalHours)
+	assert.Equal(t, input.GetMetrics.IntervalMinutes, output.IntervalMinutes)
 
-	require.Len(t, output.MetricResults, 1)
-	metricResult := output.MetricResults[0]
-	assert.Equal(t, metricResult.MetricName, "EventsProcessed")
+	metricResult := output.EventsProcessed
 	assert.Empty(t, metricResult.SingleValue)
+
 	// There should be two entries in series data, one for each unique combination of dimensions
-	assert.Len(t, metricResult.SeriesData, 2)
-	for _, seriesData := range metricResult.SeriesData {
-		require.Equal(t, len(seriesData.Values), len(seriesData.Timestamps))
+	assert.Len(t, metricResult.SeriesData.Series, 2)
+	assert.Len(t, metricResult.SeriesData.Timestamps, 2)
+	for _, seriesData := range metricResult.SeriesData.Series {
+		require.Equal(t, len(seriesData.Values), len(metricResult.SeriesData.Timestamps))
 		require.NotNil(t, seriesData.Label)
 		require.Subset(t, []string{"IntegrationTest1", "IntegrationTest2"}, []string{*seriesData.Label})
 		if *seriesData.Label == "IntegrationTest1" {
-			require.Len(t, seriesData.Timestamps, 2)
 			require.Len(t, seriesData.Values, 2)
 			assert.Equal(t, seriesData.Values[1], firstEvent.Value)
 			assert.Equal(t, seriesData.Values[0], secondEvent.Value)
 		} else {
-			require.Len(t, seriesData.Timestamps, 1)
-			require.Len(t, seriesData.Values, 1)
+			require.Len(t, seriesData.Values, 2)
 			assert.Equal(t, seriesData.Values[0], thirdEvent.Value)
+			assert.Equal(t, *seriesData.Values[1], float64(0))
 		}
 	}
 }

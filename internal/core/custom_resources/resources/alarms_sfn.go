@@ -51,8 +51,7 @@ func customStateMachineAlarms(_ context.Context, event cfn.Event) (string, map[s
 		return "custom:alarms:sfn:" + props.stateMachineName, nil, putSfnAlarmGroup(props)
 
 	case cfn.RequestDelete:
-		return event.PhysicalResourceID, nil, deleteAlarms(
-			stateMachineName(event.PhysicalResourceID), sfnFailedExecutionsAlarm)
+		return event.PhysicalResourceID, nil, deleteAlarms(event.PhysicalResourceID, sfnFailedExecutionsAlarm)
 
 	default:
 		return "", nil, fmt.Errorf("unknown request type %s", event.RequestType)

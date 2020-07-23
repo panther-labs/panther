@@ -33,7 +33,7 @@ const SourceConfigurationPanel: React.FC = () => {
       <Heading as="h2" m="auto" mb={2}>
         {initialValues.integrationId ? 'Update source' : 'First things first'}
       </Heading>
-      <Text color="gray-200" mb={10}>
+      <Text color="gray-300" mb={10}>
         {initialValues.integrationId
           ? 'Feel free to make any changes to your Cloud Security source'
           : "Let's configure your Cloud Security Source"}

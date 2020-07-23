@@ -29,7 +29,7 @@ const ListResourcesPageEmptyDataFallback: React.FC = () => {
         <img alt="Black Canvas Illustration" src={BlankCanvasImg} width="auto" height={300} />
       </Box>
       <Heading mb={6}>No resources found</Heading>
-      <Text color="gray-200" textAlign="center" mb={8}>
+      <Text color="gray-300" textAlign="center" mb={8}>
         You don{"'"}t have any resources connected to your Panther account
       </Text>
       <Button as={RRLink} to={urls.compliance.sources.create()}>

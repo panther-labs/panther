@@ -35,7 +35,13 @@ const DeleteSourceModal: React.FC<DeleteComplianceSourceModalProps> = ({ source,
     },
     optimisticResponse: () => ({ deleteComplianceIntegration: true }),
     update: cache => {
-      cache.evict({ id: cache.identify(source) });
+      cache.modify('ROOT_QUERY', {
+        listComplianceIntegrations: (queryData, { toReference }) => {
+          const deletedSource = toReference(source);
+          return queryData.filter(({ __ref }) => __ref !== deletedSource.__ref);
+        },
+      });
+      cache.gc();
     },
     onCompleted: () => {
       pushSnackbar({
@@ -58,7 +64,7 @@ const DeleteSourceModal: React.FC<DeleteComplianceSourceModalProps> = ({ source,
         <Text key={0}>
           Are you sure you want to delete <b>{sourceDisplayName}</b>?
         </Text>,
-        <Text fontSize="medium" color="gray-200" mt={3} key={1}>
+        <Text fontSize="medium" color="gray-300" mt={3} key={1}>
           Deleting this source will not delete the associated Cloudformation stack. You will need to
           manually delete the stack <b>{source.stackName}</b> from the account{' '}
           <b>{source.awsAccountId}</b>

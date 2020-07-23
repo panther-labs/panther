@@ -35,8 +35,8 @@ import {
   CHECK_IF_HASH_REGEX,
   SOURCE_LABEL_REGEX,
 } from 'Source/constants';
-import mapValues from 'lodash-es/mapValues';
-import sum from 'lodash-es/sum';
+import mapValues from 'lodash/mapValues';
+import sum from 'lodash/sum';
 import { ErrorResponse } from 'apollo-link-error';
 import { ApolloError } from '@apollo/client';
 

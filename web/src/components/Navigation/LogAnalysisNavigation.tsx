@@ -37,7 +37,7 @@ const LogAnalysisNavigation: React.FC = () => {
               position="absolute"
               top={21}
               right={42}
-              color="blue-600"
+              color="blue-400"
               fontSize="x-small"
               pointerEvents="none"
             >

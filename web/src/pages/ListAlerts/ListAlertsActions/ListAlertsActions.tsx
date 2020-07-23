@@ -24,9 +24,9 @@ import FormikTextInput from 'Components/fields/TextInput';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import { Box, Button, Card, Collapse, Flex } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import isEmpty from 'lodash-es/isEmpty';
-import isNumber from 'lodash-es/isNumber';
-import pick from 'lodash-es/pick';
+import isEmpty from 'lodash/isEmpty';
+import isNumber from 'lodash/isNumber';
+import pick from 'lodash/pick';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 
 const severityOptions = Object.values(SeverityEnum);
