@@ -16,12 +16,12 @@
 
 <p align="center">
   <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-<a href="#contributors"><img src="https://img.shields.io/badge/all_contributors-18-orange.svg?style=svg" alt="All Contributors"/></a>
-<!-- ALL-CONTRIBUTORS-BADGE:END -->
+  <a href="#contributors"><img src="https://img.shields.io/badge/all_contributors-18-orange.svg?style=svg" alt="All Contributors"/></a>
+  <!-- ALL-CONTRIBUTORS-BADGE:END -->
   <a href="https://panther-labs-oss-slackin.herokuapp.com/"><img src="https://panther-labs-oss-slackin.herokuapp.com/badge.svg" alt="Slack"/></a>
   <a href="https://circleci.com/gh/panther-labs/panther"><img src="https://circleci.com/gh/panther-labs/panther.svg?style=svg" alt="CircleCI"/></a>
-  <a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fpanther-labs%2Fpanther?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpanther-labs%2Fpanther.svg?type=shield"/></a>
-  <a href="https://cla-assistant.io/panther-labs/panther" alt="CLA Assistant"><img src="https://cla-assistant.io/readme/badge/panther-labs/panther"/></a>
+  <a href="https://app.fossa.com/projects/custom%2B15287%2Fgit%40github.com%3Apanther-labs%2Fpanther.git?ref=badge_shield"><img src="https://app.fossa.com/api/projects/custom%2B15287%2Fgit%40github.com%3Apanther-labs%2Fpanther.git.svg?type=shield" alt="FOSSA License Status"/></a>
+  <a href="https://cla-assistant.io/panther-labs/panther"><img src="https://cla-assistant.io/readme/badge/panther-labs/panther" alt="CLA Assistant"/></a>
   <a href="https://magefile.org"><img src="https://magefile.org/badge.svg" alt="Built with Mage"/></a>
 </p>
 
@@ -139,9 +139,9 @@ Panther source code is licensed under [AGPLv3](https://github.com/panther-labs/p
 
 ### FOSSA Status
 
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpanther-labs%2Fpanther.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fpanther-labs%2Fpanther?ref=badge_large)
+[![FOSSA Status](https://app.fossa.com/api/projects/custom%2B15287%2Fgit%40github.com%3Apanther-labs%2Fpanther.git.svg?type=large)](https://app.fossa.com/projects/custom%2B15287%2Fgit%40github.com%3Apanther-labs%2Fpanther.git?ref=badge_large)
 
-## Contributors ✨
+## Contributors
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
@@ -177,6 +177,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
+
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
