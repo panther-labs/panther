@@ -39,6 +39,9 @@ const (
 	fluentdTimestampLayout = `"2006-01-02 15:04:05 -0700"`
 
 	suricataTimestampLayout = `"2006-01-02T15:04:05.999999999Z0700"`
+
+	//08 Jul 2020 09:00 GMT
+	laceworkTimestampLayout = `"02 Jan 2006 15:04 MST"`
 )
 
 // use these functions to parse all incoming dates to ensure UTC consistency
@@ -166,4 +169,23 @@ func (ts *UnixFloat) UnmarshalJSON(jsonBytes []byte) (err error) {
 	t := time.Unix(int64(intPart), int64(fracPart*1e9))
 	*ts = (UnixFloat)(t.UTC())
 	return nil
+}
+
+type LaceworkTimestamp time.Time
+
+func (ts *LaceworkTimestamp) String() string {
+	return (*time.Time)(ts).UTC().String() // ensure UTC
+}
+
+func (ts *LaceworkTimestamp) MarshalJSON() ([]byte, error) {
+	return []byte((*time.Time)(ts).UTC().Format(laceworkTimestampLayout)), nil // ensure UTC
+}
+
+func (ts *LaceworkTimestamp) UnmarshalJSON(jsonBytes []byte) (err error) {
+	t, err := time.Parse(laceworkTimestampLayout, string(jsonBytes))
+	if err != nil {
+		return
+	}
+	*ts = (LaceworkTimestamp)(t.UTC())
+	return
 }

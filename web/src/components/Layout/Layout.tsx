@@ -25,7 +25,7 @@ const Layout: React.FC = ({ children }) => {
   return (
     <Flex minHeight="100%" bg="navyblue-800">
       <Navigation />
-      <Box as="main" minHeight={1} flex="1 0 auto" bg="navyblue-800">
+      <Box as="main" minHeight={1} flex="1 0 auto" bg="navyblue-800" zIndex={0}>
         <Box width={1214} mx="auto">
           <Header />
           {children}

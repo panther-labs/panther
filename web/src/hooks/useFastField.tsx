@@ -50,9 +50,9 @@ function useFastField<Val = any>(
   // same reference, but the functionn assigned to them will change on every render.
   if (!memoizedHelpersRef.current.memoizedHelpers) {
     memoizedHelpersRef.current.memoizedHelpers = {
-      setValue: memoizedHelpersRef.current.memoizedSetValue,
-      setTouched: memoizedHelpersRef.current.memoizedsetTouched,
-      setError: memoizedHelpersRef.current.memoizedsetError,
+      setValue: (...args) => memoizedHelpersRef.current.memoizedSetValue(...args),
+      setTouched: (...args) => memoizedHelpersRef.current.memoizedsetTouched(...args),
+      setError: (...args) => memoizedHelpersRef.current.memoizedsetError(...args),
     };
   }
 
