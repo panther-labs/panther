@@ -34,7 +34,7 @@ const AlertSummary: React.FC<AlertSummaryProps> = ({ data }) => {
   return (
     <Flex
       direction="column"
-      backgroundColor="navyblue-700"
+      backgroundColor="navyblue-500"
       width="20%"
       align="center"
       justify="center"
@@ -43,7 +43,7 @@ const AlertSummary: React.FC<AlertSummaryProps> = ({ data }) => {
       <Heading
         as="h2"
         size="3x-large"
-        color="red-700"
+        color="pink-700"
         fontWeight="bold"
         aria-describedby={slugify('title')}
       >

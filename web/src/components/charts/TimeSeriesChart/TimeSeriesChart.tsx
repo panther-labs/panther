@@ -158,7 +158,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
           },
           splitLine: {
             lineStyle: {
-              color: 'rgba(246,246,246)',
+              color: theme.colors['gray-50'],
               opacity: 0.15,
               type: 'dashed' as const,
             },

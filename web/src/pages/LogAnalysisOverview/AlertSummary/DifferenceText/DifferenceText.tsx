@@ -39,7 +39,7 @@ const DifferenceText: React.FC<DifferenceTextProps> = ({ diff }) => {
       <React.Fragment>
         <Text fontSize="small">Decreased by</Text>
         <Flex>
-          <Icon type="caret-down" size="small" color="green-200" />
+          <Icon type="caret-down" size="small" color="green-400" />
           <Text fontSize="small">{diff}</Text>
         </Flex>
       </React.Fragment>
@@ -50,7 +50,7 @@ const DifferenceText: React.FC<DifferenceTextProps> = ({ diff }) => {
     <React.Fragment>
       <Text fontSize="small">Increased by</Text>
       <Flex>
-        <Icon type="caret-up" size="small" color="red-200" />
+        <Icon type="caret-up" size="small" color="red-300" />
         <Text fontSize="small">{-diff}</Text>
       </Flex>
     </React.Fragment>

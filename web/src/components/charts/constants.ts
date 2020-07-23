@@ -19,11 +19,11 @@ import { theme } from 'pouncejs';
 
 export const LineColors = {
   // Alerts severity line colors
-  Critical: theme.colors['red-400'],
-  High: theme.colors['orange-500'],
+  Critical: theme.colors['red-500'],
+  High: theme.colors['orange-400'],
   Medium: theme.colors['yellow-500'],
   Low: theme.colors['gray-500'],
-  Info: theme.colors['gray-800'],
+  Info: theme.colors['gray-600'],
 
   // FIXME: These should be mapped through pounce
   'AWS.ALB': '#4e33e3',

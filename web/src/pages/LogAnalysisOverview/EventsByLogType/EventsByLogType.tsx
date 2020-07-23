@@ -32,7 +32,7 @@ const EventsByLogTypes: React.FC<EventsByLogTypesProps> = ({ events }) => {
       height="100%"
       pt={4}
       px={4}
-      backgroundColor="navyblue-700"
+      backgroundColor="navyblue-500"
     >
       <TimeSeriesChart data={events} />
     </Flex>
