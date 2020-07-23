@@ -36,3 +36,12 @@ export function generateRandomArray<T>(func: (index: number) => T, min = 0, max 
   const randomArrayLength = faker.random.number({ min, max, precision: 1 });
   return [...Array(randomArrayLength)].map((_, index) => func(index));
 }
+
+/**
+ *
+ * @param ms milliseconds to wait
+ * Waits for a specific number of time
+ */
+export function waitMs(ms = 0) {
+  return new Promise(r => setTimeout(r, ms));
+}

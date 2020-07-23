@@ -43,12 +43,12 @@ const NavLink: React.FC<NavLinkProps> = ({ icon, label, to }) => {
         px={4}
         py={3}
         borderRadius="small"
-        backgroundColor={isActive ? 'blue-600' : 'transparent'}
+        backgroundColor={isActive ? 'blue-400' : 'transparent'}
         _hover={{
-          backgroundColor: isActive ? 'blue-600' : 'navyblue-700',
+          backgroundColor: isActive ? 'blue-400' : 'navyblue-500',
         }}
         _focus={{
-          backgroundColor: isActive ? 'blue-600' : 'navyblue-700',
+          backgroundColor: isActive ? 'blue-400' : 'navyblue-500',
         }}
         transition="background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms"
         mx={3}

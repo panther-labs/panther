@@ -93,7 +93,7 @@ const GeneralSettingsPage: React.FC = () => {
             </Heading>
             <Flex as="section" align="center" justify="space-between">
               <Box>
-                <Box color="gray-450" fontSize="small" mb={1}>
+                <Box color="navyblue-100" fontSize="small" mb={1}>
                   Plan
                 </Box>
                 <Box fontWeight="medium">Community</Box>
@@ -105,19 +105,19 @@ const GeneralSettingsPage: React.FC = () => {
               </Link>
             </Flex>
             <Box as="section">
-              <Box color="gray-450" fontSize="small" mb={1}>
+              <Box color="navyblue-100" fontSize="small" mb={1}>
                 Version
               </Box>
               <Box fontWeight="medium">{pantherConfig.PANTHER_VERSION || 'N/A'}</Box>
             </Box>
             <Box as="section">
-              <Box color="gray-450" fontSize="small" mb={1}>
+              <Box color="navyblue-100" fontSize="small" mb={1}>
                 AWS Account ID
               </Box>
               <Box fontWeight="medium">{pantherConfig.AWS_ACCOUNT_ID}</Box>
             </Box>
             <Box as="section">
-              <Box color="gray-450" fontSize="small" mb={1}>
+              <Box color="navyblue-100" fontSize="small" mb={1}>
                 AWS Region
               </Box>
               <Box fontWeight="medium">{pantherConfig.AWS_REGION}</Box>

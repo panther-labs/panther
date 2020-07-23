@@ -30,7 +30,7 @@ const Panel: React.FC<PanelProps> = ({ title, actions, children }) => {
       <Flex
         p={6}
         borderBottom="1px solid"
-        borderColor={children ? 'navyblue-500' : 'transparent'}
+        borderColor={children ? 'navyblue-300' : 'transparent'}
         justify="space-between"
         align="center"
         maxHeight={80}

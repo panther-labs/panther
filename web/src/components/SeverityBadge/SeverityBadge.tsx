@@ -21,11 +21,11 @@ import { Badge, BadgeProps } from 'pouncejs';
 import { SeverityEnum } from 'Generated/schema';
 
 export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: BadgeProps['color'] } = {
-  [SeverityEnum.Critical]: 'red-400' as const,
-  [SeverityEnum.High]: 'orange-500' as const,
+  [SeverityEnum.Critical]: 'red-500' as const,
+  [SeverityEnum.High]: 'orange-400' as const,
   [SeverityEnum.Medium]: 'yellow-500' as const,
   [SeverityEnum.Low]: 'gray-500' as const,
-  [SeverityEnum.Info]: 'gray-800' as const,
+  [SeverityEnum.Info]: 'gray-600' as const,
 };
 
 interface SeverityBadgeProps {

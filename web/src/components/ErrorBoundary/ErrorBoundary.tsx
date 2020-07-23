@@ -55,7 +55,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
         return null;
       case 'placeholder':
         return (
-          <Card bg="red-700" width="100%" height="100%">
+          <Card bg="pink-700" width="100%" height="100%">
             <Flex align="center" justify="center" width="100%" height="100%">
               <Text py={5} px={4}>
                 Something went wrong and we could not correctly display this content

@@ -148,7 +148,7 @@ const BaseRuleFormTestSection: React.FC = () => {
                         borderRadius="pill"
                         px={4}
                         py={2}
-                        bg={activeTabIndex === index ? 'blue-600' : 'navyblue-500'}
+                        bg={activeTabIndex === index ? 'blue-400' : 'navyblue-300'}
                         onClick={() => setActiveTabIndex(index)}
                       >
                         <Flex align="center">

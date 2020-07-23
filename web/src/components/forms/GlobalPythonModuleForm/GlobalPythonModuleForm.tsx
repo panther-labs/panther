@@ -62,49 +62,54 @@ const GlobalPythonModuleForm: React.FC<GlobalModuleFormProps> = ({ initialValues
           validationSchema={validationSchema}
         >
           <FormSessionRestoration sessionId={`global-module-${initialValues.id || 'create'}`}>
-            <Form>
-              <Flex direction="column" spacing={5}>
-                <Panel title="Module Settings">
-                  <SimpleGrid columns={2} spacing={5}>
+            {({ clearFormSession }) => (
+              <Form>
+                <Flex direction="column" spacing={5}>
+                  <Panel title="Module Settings">
+                    <SimpleGrid columns={2} spacing={5}>
+                      <Field
+                        as={FormikTextInput}
+                        label="Module Name"
+                        placeholder="The name that this module will be imported as"
+                        name="id"
+                        disabled={!!initialValues.id}
+                        required
+                      />
+                      <Field
+                        as={FormikTextArea}
+                        label="Description"
+                        placeholder="Additional context about this global module"
+                        name="description"
+                        required
+                      />
+                    </SimpleGrid>
+                  </Panel>
+                  <Panel title="Module Definition">
                     <Field
-                      as={FormikTextInput}
-                      label="Module Name"
-                      placeholder="The name that this module will be imported as"
-                      name="id"
-                      disabled={!!initialValues.id}
+                      as={FormikEditor}
+                      placeholder="# Enter the body of the global here..."
+                      name="body"
+                      width="100%"
+                      minLines={16}
+                      mode="python"
                       required
                     />
-                    <Field
-                      as={FormikTextArea}
-                      label="Description"
-                      placeholder="Additional context about this global module"
-                      name="description"
-                      required
-                    />
-                  </SimpleGrid>
-                </Panel>
-                <Panel title="Module Definition">
-                  <Field
-                    as={FormikEditor}
-                    placeholder="# Enter the body of the global here..."
-                    name="body"
-                    width="100%"
-                    minLines={16}
-                    mode="python"
-                    required
-                  />
-                </Panel>
-              </Flex>
-              <Flex pt={6} justify="flex-end" spacing={4}>
-                <Button
-                  variantColor="red"
-                  onClick={() => history.push(urls.settings.globalPythonModules.list())}
-                >
-                  Cancel
-                </Button>
-                <SubmitButton>{initialValues.id ? 'Update' : 'Create'}</SubmitButton>
-              </Flex>
-            </Form>
+                  </Panel>
+                </Flex>
+                <Flex pt={6} justify="flex-end" spacing={4}>
+                  <Button
+                    variantColor="red"
+                    onClick={() => {
+                      clearFormSession();
+                      history.push(urls.settings.globalPythonModules.list());
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <SubmitButton>{initialValues.id ? 'Update' : 'Create'}</SubmitButton>
+                </Flex>
+              </Form>
+            )}
           </FormSessionRestoration>
         </Formik>
       </ErrorBoundary>

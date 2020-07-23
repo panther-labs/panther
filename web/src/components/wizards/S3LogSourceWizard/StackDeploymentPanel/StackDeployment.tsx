@@ -61,7 +61,7 @@ const StackDeployment: React.FC = () => {
 
     if (error) {
       return (
-        <Text color="red-200">
+        <Text color="red-300">
           Couldn{"'"}t generate a Cloudformation template. {extractErrorMessage(error)}
         </Text>
       );

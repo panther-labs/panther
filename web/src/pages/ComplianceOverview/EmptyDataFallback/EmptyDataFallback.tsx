@@ -29,7 +29,7 @@ const ComplianceEmptyDataFallback: React.FC = () => (
         <img alt="Empty data illustration" src={EmptyDataImg} width="auto" height={400} />
       </Box>
       <Heading mb={6}>It{"'"}s empty in here</Heading>
-      <Text color="gray-200" textAlign="center" mb={8}>
+      <Text color="gray-300" textAlign="center" mb={8}>
         You don{"'"}t seem to have any Cloud Security sources connected to our system. <br />
         When you do, a high level overview of your system{"'"}s health will appear here.
       </Text>

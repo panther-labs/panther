@@ -28,7 +28,7 @@ interface PolicyFormTestResultsProps {
 
 const BaseRuleFormTestResultList: React.FC<PolicyFormTestResultsProps> = ({ running, results }) => {
   return (
-    <Box bg="navyblue-500" fontSize="medium" fontWeight="medium" p={5}>
+    <Box bg="navyblue-300" fontSize="medium" fontWeight="medium" p={5}>
       {running && 'Running your tests...'}
       {!running && results && (
         <Flex direction="column" spacing={2}>
