@@ -305,6 +305,26 @@ export const isNumber = (value: string) => /^-{0,1}\d+$/.test(value);
 
 export const toStackNameFormat = (val: string) => val.replace(/ /g, '-').toLowerCase();
 
+/*
+Given a user, returns a human readable string to show for the user's name
+*/
+export const getUserDisplayName = (user: any) => {
+  if (!user) {
+    return '';
+  }
+
+  if (user.givenName && user.familyName) {
+    return `${user.givenName} ${user.familyName}`;
+  }
+  if (!user.givenName && user.familyName) {
+    return user.familyName;
+  }
+  if (user.givenName && !user.familyName) {
+    return user.givenName;
+  }
+  return user.email;
+};
+
 /**
  * Generates a random HEX color
  */

@@ -21,17 +21,16 @@ import {
   useSnackbar,
   Dropdown,
   DropdownButton,
-  AbstractButton,
   DropdownMenu,
   DropdownItem,
   Flex,
   Box,
   Icon,
-  PseudoBox,
+  IconButton,
 } from 'pouncejs';
 import { AlertStatusesEnum } from 'Generated/schema';
 import AlertStatusBadge from 'Components/AlertStatusBadge';
-import { extractErrorMessage, formatDatetime } from 'Helpers/utils';
+import { extractErrorMessage, formatDatetime, getUserDisplayName } from 'Helpers/utils';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 import { useListUsers } from 'Pages/Users/graphql/listUsers.generated';
 import { useUpdateAlertStatus } from './graphql/updateAlertStatus.generated';
@@ -107,99 +106,50 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
     },
   });
 
-  // Extracts a user from a list of users by its ID
-  const getUser = React.useCallback((listUsers, lastUpdatedBy) => {
-    return listUsers?.users.filter((usr: { id: string }) => usr.id === lastUpdatedBy).pop();
-  }, []);
-
-  // Returns a display name from a list of users and a specified userId
-  const getDisplayName = React.useCallback((lastUpdatedBy, listUsers) => {
-    if (!lastUpdatedBy) {
-      return '';
-    }
-
-    const user = getUser(listUsers, lastUpdatedBy);
-    if (!user) {
-      return '';
-    }
-
-    if (user.givenName && user.familyName) {
-      return `${user.givenName} ${user.familyName}`;
-    }
-    if (!user.givenName && user.familyName) {
-      return user.familyName;
-    }
-    if (user.givenName && !user.familyName) {
-      return user.givenName;
-    }
-    return user.email;
-  }, []);
-
-  // Create the display name
-  const lastUpdatedBy = React.useMemo(() => getDisplayName(alert.lastUpdatedBy, listUsersData), [
-    alert,
-    listUsersData,
-  ]);
-
-  // Create a formatted timestamp
-  const lastUpdatedByTime = React.useMemo(() => formatDatetime(alert.lastUpdatedByTime), [alert]);
-
-  // Create our dropdown button
-  const dropdownButton = React.useMemo(
-    () => (
-      <Flex spacing={1} justify="center" align="center">
-        <AlertStatusBadge
-          status={alert.status}
-          lastUpdatedBy={lastUpdatedBy}
-          lastUpdatedByTime={lastUpdatedByTime}
-        />
-        <DropdownButton
-          as={AbstractButton}
-          display="inline-flex"
-          outline="none"
-          aria-label="Alert Status Options"
-        >
-          <PseudoBox
-            as={Icon}
-            type="caret-down"
-            padding="4px"
-            transition="all 0.2s ease-in-out"
-            border="1px solid"
-            borderColor="navyblue-300"
-            borderRadius="50%"
-            backgroundColor="transparent"
-            _hover={{ backgroundColor: 'navyblue-300' }}
-          />
-        </DropdownButton>
-      </Flex>
-    ),
-    [alert, lastUpdatedBy, lastUpdatedByTime]
-  );
-
+  const user = listUsersData?.users.find(({ id }) => id === alert.lastUpdatedBy);
+  const lastUpdatedBy = getUserDisplayName(user);
+  const lastUpdatedByTime = formatDatetime(alert.lastUpdatedByTime);
   const availableStatusesEntries = React.useMemo(() => Object.entries(AlertStatusesEnum), []);
 
   return (
-    <Dropdown>
-      {dropdownButton}
-      <DropdownMenu>
-        {availableStatusesEntries.map(([statusKey, statusVal], index) => (
-          <DropdownItem
-            key={index}
-            disabled={alert.status === statusVal}
-            onSelect={() =>
-              updateAlertStatus({
-                variables: { input: { status: statusVal, alertId: alert.alertId } },
-              })
-            }
-          >
-            <Flex minWidth={85} spacing={2} justify="space-between" align="center">
-              <Box aria-labelledby="status-item">{statusKey}</Box>
-              {alert.status === statusVal && <Icon size="x-small" type="check" />}
-            </Flex>
-          </DropdownItem>
-        ))}
-      </DropdownMenu>
-    </Dropdown>
+    <Flex spacing={1} justify="center" align="center">
+      <AlertStatusBadge
+        status={alert.status}
+        lastUpdatedBy={lastUpdatedBy}
+        lastUpdatedByTime={lastUpdatedByTime}
+      />
+      <Dropdown>
+        <DropdownButton as={Box} display="inline-flex">
+          <IconButton
+            // @ts-ignore
+            p="1px"
+            variant="outline"
+            variantColor="navyblue"
+            icon="caret-down"
+            size="small"
+            aria-label="Change Alert Status"
+          />
+        </DropdownButton>
+        <DropdownMenu>
+          {availableStatusesEntries.map(([statusKey, statusVal], index) => (
+            <DropdownItem
+              key={index}
+              disabled={alert.status === statusVal}
+              onSelect={() =>
+                updateAlertStatus({
+                  variables: { input: { status: statusVal, alertId: alert.alertId } },
+                })
+              }
+            >
+              <Flex minWidth={85} spacing={2} justify="space-between" align="center">
+                <Box>{statusKey}</Box>
+                {alert.status === statusVal && <Icon size="x-small" type="check" />}
+              </Flex>
+            </DropdownItem>
+          ))}
+        </DropdownMenu>
+      </Dropdown>
+    </Flex>
   );
 };
 

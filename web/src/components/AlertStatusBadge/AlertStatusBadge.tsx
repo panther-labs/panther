@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Badge, BadgeProps, PseudoBox, Box, Flex, Tooltip } from 'pouncejs';
+import { Badge, BadgeProps, Box, Flex, Tooltip } from 'pouncejs';
 import { AlertStatusesEnum } from 'Generated/schema';
 
 const STATUS_COLOR_MAP: {
@@ -40,37 +40,35 @@ const AlertStatusBadge: React.FC<StatusBadgeProps> = ({
   lastUpdatedBy,
   lastUpdatedByTime,
 }) => {
-  const tooltipContent = React.useMemo(
-    () => (
-      <Flex spacing={1}>
-        <Flex direction="column" spacing={1}>
-          <Box id="user-name-label">By</Box>
-          <Box id="updated-by-timestamp-label">At</Box>
-        </Flex>
-        <Flex direction="column" spacing={1} fontWeight="bold">
-          <Box aria-labelledby="user-name-label">{lastUpdatedBy}</Box>
-          <Box aria-labelledby="updated-by-timestamp-label">{lastUpdatedByTime}</Box>
-        </Flex>
-      </Flex>
-    ),
-    [lastUpdatedBy, lastUpdatedByTime]
-  );
-
   const statusBadge = React.useMemo(
     () => (
-      <PseudoBox
-        as={Badge}
-        display="inline-flex"
-        backgroundColor={STATUS_COLOR_MAP[status]}
-        padding="4px"
-      >
-        {status}
-      </PseudoBox>
+      <Flex width={'85px'}>
+        <Badge color={STATUS_COLOR_MAP[status]}>{status}</Badge>
+      </Flex>
     ),
     [status]
   );
 
-  return lastUpdatedBy ? <Tooltip content={tooltipContent}>{statusBadge}</Tooltip> : statusBadge;
+  return lastUpdatedBy ? (
+    <Tooltip
+      content={
+        <Flex spacing={1}>
+          <Flex direction="column" spacing={1}>
+            <Box id="user-name-label">By</Box>
+            <Box id="updated-by-timestamp-label">At</Box>
+          </Flex>
+          <Flex direction="column" spacing={1} fontWeight="bold">
+            <Box aria-labelledby="user-name-label">{lastUpdatedBy}</Box>
+            <Box aria-labelledby="updated-by-timestamp-label">{lastUpdatedByTime}</Box>
+          </Flex>
+        </Flex>
+      }
+    >
+      {statusBadge}
+    </Tooltip>
+  ) : (
+    statusBadge
+  );
 };
 
 export default AlertStatusBadge;
