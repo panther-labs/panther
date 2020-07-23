@@ -16,10 +16,10 @@
 
 <p align="center">
   <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-  <a href="#contributors"><img src="https://img.shields.io/badge/all_contributors-18-orange.svg?style=svg" alt="All Contributors"/></a>	<a href="#contributors"><img src="https://img.shields.io/badge/all_contributors-18-orange.svg?style=svg" alt="All Contributors"/></a>
+  <a href="#contributors"><img src="https://img.shields.io/badge/all_contributors-18-orange.svg?style=svg" alt="All Contributors"/></a>
   <!-- ALL-CONTRIBUTORS-BADGE:END -->
   <a href="https://panther-labs-oss-slackin.herokuapp.com/"><img src="https://panther-labs-oss-slackin.herokuapp.com/badge.svg" alt="Slack"/></a>
-  <a href="https://circleci.com/gh/panther-labs/panther"><img src="https://circleci.com/gh/panther-labs/panther.svg?style=svg" alt="CircleCI"/></a> 
+  <a href="https://circleci.com/gh/panther-labs/panther"><img src="https://circleci.com/gh/panther-labs/panther.svg?style=svg" alt="CircleCI"/></a>
   <a href="https://app.fossa.com/projects/custom%2B15287%2Fgit%40github.com%3Apanther-labs%2Fpanther.git?ref=badge_shield"><img src="https://app.fossa.com/api/projects/custom%2B15287%2Fgit%40github.com%3Apanther-labs%2Fpanther.git.svg?type=shield" alt="FOSSA License Status"/></a>
   <a href="https://cla-assistant.io/panther-labs/panther"><img src="https://cla-assistant.io/readme/badge/panther-labs/panther" alt="CLA Assistant"/></a>
   <a href="https://magefile.org"><img src="https://magefile.org/badge.svg" alt="Built with Mage"/></a>
