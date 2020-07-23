@@ -104,6 +104,8 @@ jobs:
       - checkout
       - run:
           command: fossa # generate config file, run dependency analysis, and upload metadata to FOSSA
+      - run:
+          command: fossa test
 
 workflows:
   version: 2
