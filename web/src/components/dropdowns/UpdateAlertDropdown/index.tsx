@@ -16,35 +16,5 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as Types from '../../../__generated__/schema';
-
-import gql from 'graphql-tag';
-
-export type AlertSummaryFull = Pick<
-  Types.AlertSummary,
-  | 'alertId'
-  | 'ruleId'
-  | 'title'
-  | 'severity'
-  | 'status'
-  | 'creationTime'
-  | 'eventsMatched'
-  | 'updateTime'
-  | 'lastUpdatedBy'
-  | 'lastUpdatedByTime'
->;
-
-export const AlertSummaryFull = gql`
-  fragment AlertSummaryFull on AlertSummary {
-    alertId
-    ruleId
-    title
-    severity
-    status
-    creationTime
-    eventsMatched
-    updateTime
-    lastUpdatedBy
-    lastUpdatedByTime
-  }
-`;
+export { default } from './UpdateAlertDropdown';
+export * from './UpdateAlertDropdown';

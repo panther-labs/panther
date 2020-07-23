@@ -3,7 +3,10 @@ fragment AlertSummaryFull on AlertSummary {
   ruleId
   title
   severity
+  status
   creationTime
   eventsMatched
   updateTime
+  lastUpdatedBy
+  lastUpdatedByTime
 }

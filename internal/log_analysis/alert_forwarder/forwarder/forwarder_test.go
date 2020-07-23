@@ -37,7 +37,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	policiesclient "github.com/panther-labs/panther/api/gateway/analysis/client"
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	ruleModel "github.com/panther-labs/panther/api/gateway/analysis/models"
 	alertModel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
@@ -77,7 +77,7 @@ var (
 		GeneratedTitle:      oldAlertDedupEvent.GeneratedTitle,
 	}
 
-	testRuleResponse = &models.Rule{
+	testRuleResponse = &ruleModel.Rule{
 		ID:          "ruleId",
 		Description: "Description",
 		DisplayName: "DisplayName",
@@ -211,7 +211,7 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 		QueueUrl:    aws.String("queueUrl"),
 	}
 
-	testRuleResponseWithoutDisplayName := &models.Rule{
+	testRuleResponseWithoutDisplayName := &ruleModel.Rule{
 		ID:          "ruleId",
 		Description: "Description",
 		Severity:    "INFO",
@@ -526,7 +526,7 @@ func TestHandleShouldNotCreateOrUpdateAlertIfThresholdNotReached(t *testing.T) {
 		SqsClient:        sqsMock,
 	}
 
-	ruleWithThreshold := &models.Rule{
+	ruleWithThreshold := &ruleModel.Rule{
 		ID:          "ruleId",
 		Description: "Description",
 		DisplayName: "DisplayName",
@@ -562,7 +562,7 @@ func TestHandleShouldCreateAlertIfThresholdNowReached(t *testing.T) {
 		SqsClient:        sqsMock,
 	}
 
-	ruleWithThreshold := &models.Rule{
+	ruleWithThreshold := &ruleModel.Rule{
 		ID:          "ruleId",
 		Description: "Description",
 		DisplayName: "DisplayName",

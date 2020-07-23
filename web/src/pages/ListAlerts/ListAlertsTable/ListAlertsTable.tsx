@@ -24,6 +24,7 @@ import SeverityBadge from 'Components/SeverityBadge';
 import { ListAlerts } from 'Pages/ListAlerts/graphql/listAlerts.generated';
 import { ListAlertsInput, ListAlertsSortFieldsEnum, SortDirEnum } from 'Generated/schema';
 import { shortenId, formatDatetime } from 'Helpers/utils';
+import UpdateAlertDropdown from 'Components/dropdowns/UpdateAlertDropdown';
 
 type ListAlertsTableProps = {
   items: ListAlerts['alerts']['alertSummaries'];
@@ -50,6 +51,7 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
           <Table.HeaderCell align="center">Severity</Table.HeaderCell>
           <Table.HeaderCell>Alert</Table.HeaderCell>
           <Table.HeaderCell />
+          <Table.HeaderCell align="center">Status</Table.HeaderCell>
           <Table.SortableHeaderCell
             align="right"
             onClick={() => handleSort(ListAlertsSortFieldsEnum.CreatedAt)}
@@ -104,6 +106,9 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
                 View Rule
                 <Icon type="external-link" size="x-small" ml={1} />
               </PseudoBox>
+            </Table.Cell>
+            <Table.Cell align="center">
+              <UpdateAlertDropdown alert={alert} />
             </Table.Cell>
             <Table.Cell align="right">{formatDatetime(alert.creationTime)}</Table.Cell>
             <Table.Cell align="right">{formatDatetime(alert.updateTime)}</Table.Cell>

@@ -99,28 +99,55 @@ export type AddS3LogIntegrationInput = {
   logTypes: Array<Scalars['String']>;
 };
 
-export type AlertDetails = {
-  __typename?: 'AlertDetails';
+export type Alert = {
   alertId: Scalars['ID'];
-  ruleId?: Maybe<Scalars['ID']>;
-  title: Scalars['String'];
   creationTime: Scalars['AWSDateTime'];
-  updateTime: Scalars['AWSDateTime'];
   eventsMatched: Scalars['Int'];
-  events: Array<Scalars['AWSJSON']>;
-  eventsLastEvaluatedKey?: Maybe<Scalars['String']>;
-  dedupString: Scalars['String'];
+  ruleId?: Maybe<Scalars['ID']>;
+  severity: SeverityEnum;
+  status: AlertStatusesEnum;
+  title: Scalars['String'];
+  lastUpdatedBy?: Maybe<Scalars['ID']>;
+  lastUpdatedByTime?: Maybe<Scalars['AWSDateTime']>;
+  updateTime: Scalars['AWSDateTime'];
 };
 
-export type AlertSummary = {
-  __typename?: 'AlertSummary';
-  alertId: Scalars['String'];
+export type AlertDetails = Alert & {
+  __typename?: 'AlertDetails';
+  alertId: Scalars['ID'];
   creationTime: Scalars['AWSDateTime'];
   eventsMatched: Scalars['Int'];
+  ruleId?: Maybe<Scalars['ID']>;
+  severity: SeverityEnum;
+  status: AlertStatusesEnum;
   title: Scalars['String'];
+  lastUpdatedBy?: Maybe<Scalars['ID']>;
+  lastUpdatedByTime?: Maybe<Scalars['AWSDateTime']>;
   updateTime: Scalars['AWSDateTime'];
-  ruleId?: Maybe<Scalars['String']>;
-  severity?: Maybe<SeverityEnum>;
+  dedupString: Scalars['String'];
+  events: Array<Scalars['AWSJSON']>;
+  eventsLastEvaluatedKey?: Maybe<Scalars['String']>;
+};
+
+export enum AlertStatusesEnum {
+  Open = 'OPEN',
+  Triaged = 'TRIAGED',
+  Closed = 'CLOSED',
+  Resolved = 'RESOLVED',
+}
+
+export type AlertSummary = Alert & {
+  __typename?: 'AlertSummary';
+  alertId: Scalars['ID'];
+  creationTime: Scalars['AWSDateTime'];
+  eventsMatched: Scalars['Int'];
+  ruleId?: Maybe<Scalars['ID']>;
+  severity: SeverityEnum;
+  status: AlertStatusesEnum;
+  title: Scalars['String'];
+  lastUpdatedBy?: Maybe<Scalars['ID']>;
+  lastUpdatedByTime?: Maybe<Scalars['AWSDateTime']>;
+  updateTime: Scalars['AWSDateTime'];
 };
 
 export enum AnalysisTypeEnum {
@@ -395,6 +422,7 @@ export type ListAlertsInput = {
   createdAtAfter?: Maybe<Scalars['AWSDateTime']>;
   ruleIdContains?: Maybe<Scalars['String']>;
   alertIdContains?: Maybe<Scalars['String']>;
+  status?: Maybe<Array<Maybe<AlertStatusesEnum>>>;
   eventCountMin?: Maybe<Scalars['Int']>;
   eventCountMax?: Maybe<Scalars['Int']>;
   sortBy?: Maybe<ListAlertsSortFieldsEnum>;
@@ -550,6 +578,7 @@ export type Mutation = {
   resetUserPassword: User;
   suppressPolicies?: Maybe<Scalars['Boolean']>;
   testPolicy?: Maybe<TestPolicyResponse>;
+  updateAlertStatus?: Maybe<AlertSummary>;
   updateDestination?: Maybe<Destination>;
   updateComplianceIntegration: ComplianceIntegration;
   updateS3LogIntegration: S3LogIntegration;
@@ -631,6 +660,10 @@ export type MutationSuppressPoliciesArgs = {
 
 export type MutationTestPolicyArgs = {
   input?: Maybe<TestPolicyInput>;
+};
+
+export type MutationUpdateAlertStatusArgs = {
+  input: UpdateAlertStatusInput;
 };
 
 export type MutationUpdateDestinationArgs = {
@@ -1046,6 +1079,11 @@ export type TestPolicyResponse = {
   testsErrored?: Maybe<Array<Maybe<PolicyUnitTestError>>>;
 };
 
+export type UpdateAlertStatusInput = {
+  alertId: Scalars['ID'];
+  status: AlertStatusesEnum;
+};
+
 export type UpdateComplianceIntegrationInput = {
   integrationId: Scalars['String'];
   integrationLabel?: Maybe<Scalars['String']>;
@@ -1231,10 +1269,12 @@ export type ResolversTypes = {
   Int: ResolverTypeWrapper<Scalars['Int']>;
   String: ResolverTypeWrapper<Scalars['String']>;
   AlertDetails: ResolverTypeWrapper<AlertDetails>;
+  Alert: ResolversTypes['AlertDetails'] | ResolversTypes['AlertSummary'];
   AWSDateTime: ResolverTypeWrapper<Scalars['AWSDateTime']>;
+  SeverityEnum: SeverityEnum;
+  AlertStatusesEnum: AlertStatusesEnum;
   AWSJSON: ResolverTypeWrapper<Scalars['AWSJSON']>;
   ListAlertsInput: ListAlertsInput;
-  SeverityEnum: SeverityEnum;
   ListAlertsSortFieldsEnum: ListAlertsSortFieldsEnum;
   SortDirEnum: SortDirEnum;
   ListAlertsResponse: ResolverTypeWrapper<ListAlertsResponse>;
@@ -1334,6 +1374,7 @@ export type ResolversTypes = {
   AnalysisTypeEnum: AnalysisTypeEnum;
   TestPolicyResponse: ResolverTypeWrapper<TestPolicyResponse>;
   PolicyUnitTestError: ResolverTypeWrapper<PolicyUnitTestError>;
+  UpdateAlertStatusInput: UpdateAlertStatusInput;
   UpdateComplianceIntegrationInput: UpdateComplianceIntegrationInput;
   UpdateS3LogIntegrationInput: UpdateS3LogIntegrationInput;
   UpdateGeneralSettingsInput: UpdateGeneralSettingsInput;
@@ -1354,10 +1395,12 @@ export type ResolversParentTypes = {
   Int: Scalars['Int'];
   String: Scalars['String'];
   AlertDetails: AlertDetails;
+  Alert: ResolversParentTypes['AlertDetails'] | ResolversParentTypes['AlertSummary'];
   AWSDateTime: Scalars['AWSDateTime'];
+  SeverityEnum: SeverityEnum;
+  AlertStatusesEnum: AlertStatusesEnum;
   AWSJSON: Scalars['AWSJSON'];
   ListAlertsInput: ListAlertsInput;
-  SeverityEnum: SeverityEnum;
   ListAlertsSortFieldsEnum: ListAlertsSortFieldsEnum;
   SortDirEnum: SortDirEnum;
   ListAlertsResponse: ListAlertsResponse;
@@ -1457,6 +1500,7 @@ export type ResolversParentTypes = {
   AnalysisTypeEnum: AnalysisTypeEnum;
   TestPolicyResponse: TestPolicyResponse;
   PolicyUnitTestError: PolicyUnitTestError;
+  UpdateAlertStatusInput: UpdateAlertStatusInput;
   UpdateComplianceIntegrationInput: UpdateComplianceIntegrationInput;
   UpdateS3LogIntegrationInput: UpdateS3LogIntegrationInput;
   UpdateGeneralSettingsInput: UpdateGeneralSettingsInput;
@@ -1478,19 +1522,40 @@ export type ActiveSuppressCountResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
+export type AlertResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['Alert'] = ResolversParentTypes['Alert']
+> = {
+  __resolveType: TypeResolveFn<'AlertDetails' | 'AlertSummary', ParentType, ContextType>;
+  alertId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  creationTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
+  eventsMatched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  ruleId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  severity?: Resolver<ResolversTypes['SeverityEnum'], ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['AlertStatusesEnum'], ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  lastUpdatedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  lastUpdatedByTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
+  updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
+};
+
 export type AlertDetailsResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['AlertDetails'] = ResolversParentTypes['AlertDetails']
 > = {
   alertId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  ruleId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
-  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   creationTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
-  updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   eventsMatched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  ruleId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  severity?: Resolver<ResolversTypes['SeverityEnum'], ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['AlertStatusesEnum'], ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  lastUpdatedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  lastUpdatedByTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
+  updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
+  dedupString?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   events?: Resolver<Array<ResolversTypes['AWSJSON']>, ParentType, ContextType>;
   eventsLastEvaluatedKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  dedupString?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -1498,13 +1563,16 @@ export type AlertSummaryResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['AlertSummary'] = ResolversParentTypes['AlertSummary']
 > = {
-  alertId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  alertId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   creationTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   eventsMatched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  ruleId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  severity?: Resolver<ResolversTypes['SeverityEnum'], ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['AlertStatusesEnum'], ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  lastUpdatedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  lastUpdatedByTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
-  ruleId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -1899,6 +1967,12 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationTestPolicyArgs, never>
+  >;
+  updateAlertStatus?: Resolver<
+    Maybe<ResolversTypes['AlertSummary']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationUpdateAlertStatusArgs, 'input'>
   >;
   updateDestination?: Resolver<
     Maybe<ResolversTypes['Destination']>,
@@ -2415,6 +2489,7 @@ export type UserResolvers<
 
 export type Resolvers<ContextType = any> = {
   ActiveSuppressCount?: ActiveSuppressCountResolvers<ContextType>;
+  Alert?: AlertResolvers;
   AlertDetails?: AlertDetailsResolvers<ContextType>;
   AlertSummary?: AlertSummaryResolvers<ContextType>;
   AsanaConfig?: AsanaConfigResolvers<ContextType>;

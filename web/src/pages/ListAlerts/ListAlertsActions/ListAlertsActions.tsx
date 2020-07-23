@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { SeverityEnum, ListAlertsInput } from 'Generated/schema';
+import { SeverityEnum, ListAlertsInput, AlertStatusesEnum } from 'Generated/schema';
 import GenerateFiltersGroup from 'Components/utils/GenerateFiltersGroup';
 import { capitalize, formatTime } from 'Helpers/utils';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -30,6 +30,7 @@ import pick from 'lodash/pick';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 
 const severityOptions = Object.values(SeverityEnum);
+const statusOptions = Object.values(AlertStatusesEnum);
 
 export const filters = {
   severity: {
@@ -39,6 +40,15 @@ export const filters = {
       items: severityOptions,
       itemToString: (severity: SeverityEnum) => capitalize(severity.toLowerCase()),
       placeholder: 'Choose a severity...',
+    },
+  },
+  status: {
+    component: FormikMultiCombobox,
+    props: {
+      label: 'Status',
+      items: statusOptions,
+      itemToString: (status: AlertStatusesEnum) => capitalize(status.toLowerCase()),
+      placeholder: 'Choose a status...',
     },
   },
   nameContains: {
@@ -113,6 +123,7 @@ export const filters = {
 export type ListAlertsFiltersValues = Pick<
   ListAlertsInput,
   | 'severity'
+  | 'status'
   | 'nameContains'
   | 'createdAtAfter'
   | 'createdAtBefore'
