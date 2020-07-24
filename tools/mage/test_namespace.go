@@ -53,42 +53,97 @@ var (
 	)
 )
 
+type testTask struct {
+	Name string
+	Task func() error
+}
+
 // CI Run all required checks for a pull request
 func (Test) CI() {
 	// Formatting modifies files (and may generate new ones), so we need to run this first
 	fmtErr := testFmtAndGeneratedFiles()
-	// Run it serially since it runs itself in multiple processors
-	goUnitErr := testGoUnit()
 
-	results := make(chan goroutineResult)
-	tasks := []struct {
-		Name string
-		Task func() error
-	}{
+	// Go unit tests and linting already run in multiple processors
+	goUnitErr := testGoUnit()
+	goLintErr := testGoLint()
+
+	runTests([]testTask{
 		{"fmt", func() error { return fmtErr }},
+
+		// mage test:go
 		{"go unit tests", func() error { return goUnitErr }},
+		{"golangci-lint", func() error { return goLintErr }},
+
+		// mage test:cfn
 		{"build:cfn", build.cfn},
-		{"cfn lint", testCfnLint},
-		{"golangci-lint", testGoLint},
+		{"cfn-lint", testCfnLint},
+		{"terraform validate", testTfValidate},
+
+		// mage test:python
 		{"python unit tests", testPythonUnit},
 		{"pylint", testPythonLint},
 		{"bandit (python security linting)", testPythonBandit},
 		{"mypy (python type checking)", testPythonMypy},
+
+		// mage test:web
 		{"npm run eslint", testWebEslint},
 		{"npm run tsc", testWebTsc},
 		{"npm run test", testWebIntegration},
-		{"terraform validate", testTfValidate},
-	}
+	})
+}
+
+func runTests(tasks []testTask) {
+	results := make(chan goroutineResult)
+
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
 		logResults(results, "test:ci", 1, len(tasks), len(tasks))
 	}()
-	logger.Info("running tasks in parallel...")
+
 	for _, task := range tasks {
 		runTask(results, task.Name, task.Task)
 	}
 	<-done
+}
+
+// Lint CloudFormation and Terraform templates
+func (Test) Cfn() {
+	runTests([]testTask{
+		{"build:cfn", build.cfn},
+		{"cfn-lint", testCfnLint},
+		{"terraform validate", testTfValidate},
+	})
+}
+
+// Test and lint Golang source code
+func (Test) Go() {
+	if err := testGoUnit(); err != nil {
+		logger.Fatalf("go unit tests failed: %v", err)
+	}
+
+	if err := testGoLint(); err != nil {
+		logger.Fatalf("go linting failed: %v", err)
+	}
+}
+
+// Test and lint Python source code
+func (Test) Python() {
+	runTests([]testTask{
+		{"python unit tests", testPythonUnit},
+		{"pylint", testPythonLint},
+		{"bandit (python security linting)", testPythonBandit},
+		{"mypy (python type checking)", testPythonMypy},
+	})
+}
+
+// Test and lint npm/web source
+func (Test) Web() {
+	runTests([]testTask{
+		{"npm run eslint", testWebEslint},
+		{"npm run tsc", testWebTsc},
+		{"npm run test", testWebIntegration},
+	})
 }
 
 // Format source files and build APIs and check for changes.
@@ -287,7 +342,7 @@ func cfnTestFunction(logicalID, template string, resources map[string]string) er
 }
 
 func testGoUnit() error {
-	logger.Infof("test:ci: running go unit tests")
+	logger.Info("test:ci: running go unit tests")
 	runGoTest := func(args ...string) error {
 		if mg.Verbose() {
 			// verbose mode - show "go test" output (all package names)
@@ -314,7 +369,8 @@ func testGoUnit() error {
 }
 
 func testGoLint() error {
-	args := []string{"run", "--timeout", "10m", "-j", "1"}
+	logger.Info("test:ci: running go metalinter")
+	args := []string{"run", "--timeout", "10m", "-j", strconv.Itoa(maxWorkers)}
 	if mg.Verbose() {
 		args = append(args, "-v")
 	}

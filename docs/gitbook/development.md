@@ -75,8 +75,12 @@ Targets:
   master:publish      Publish a new Panther release (Panther team only)
   setup               Install all build and development dependencies
   teardown            Destroy all Panther infrastructure
+  test:cfn            Lint CloudFormation and Terraform templates
   test:ci             Run all required checks for a pull request
+  test:go             Test and lint Golang source code
   test:integration    Run integration tests (integration_test.go,integration.py)
+  test:python         Test and lint Python source code
+  test:web            Test and lint npm/web source
 ```
 
 You can easily chain `mage` commands together, for example: `mage clean setup test:ci deploy`
