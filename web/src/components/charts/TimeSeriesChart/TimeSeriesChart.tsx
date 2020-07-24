@@ -73,7 +73,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
           smooth: true,
           symbol: 'none',
           itemStyle: {
-            color: theme[colors[label]],
+            color: theme.colors[colors[label]],
           },
           data: values.map((v, i) => {
             return {
