@@ -16,6 +16,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export const LineColors = {
-  'AWS.Cloudtrail': '#FDCA00',
+import React from 'react';
+import { Flex } from 'pouncejs';
+import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
+import { SeriesData } from 'Generated/schema';
+
+interface EventsByLogTypesProps {
+  events: SeriesData;
+}
+
+const EventsByLogTypes: React.FC<EventsByLogTypesProps> = ({ events }) => {
+  return (
+    <Flex
+      data-testid="events-by-log-type-chart"
+      height="100%"
+      pt={4}
+      px={4}
+      backgroundColor="navyblue-500"
+    >
+      <TimeSeriesChart data={events} />
+    </Flex>
+  );
 };
+
+export default React.memo(EventsByLogTypes);

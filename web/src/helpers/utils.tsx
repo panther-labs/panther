@@ -349,3 +349,11 @@ export const remToPx = (rem: string) => {
 export const addTrailingSlash = (url: string) => {
   return url.endsWith('/') ? url : `${url}/`;
 };
+
+export const getCurrentDate = () => {
+  return `${dayjs().toISOString().split('.')[0]}Z`;
+};
+
+export const subtractDays = (date: string, days: number) => {
+  return `${dayjs(date).subtract(days, 'day').toISOString().split('.')[0]}Z`;
+};

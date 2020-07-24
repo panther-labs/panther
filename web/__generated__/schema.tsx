@@ -541,6 +541,23 @@ export enum ListRulesSortFieldsEnum {
   Severity = 'severity',
 }
 
+export type LogAnalysisMetricsInput = {
+  intervalMinutes: Scalars['Int'];
+  fromDate: Scalars['AWSDateTime'];
+  toDate: Scalars['AWSDateTime'];
+  metricNames: Array<Scalars['String']>;
+};
+
+export type LogAnalysisMetricsResponse = {
+  __typename?: 'LogAnalysisMetricsResponse';
+  eventsProcessed?: Maybe<SeriesData>;
+  alertsBySeverity?: Maybe<SeriesData>;
+  totalAlertsDelta?: Maybe<Array<Maybe<SingleValue>>>;
+  fromDate: Scalars['AWSDateTime'];
+  toDate: Scalars['AWSDateTime'];
+  intervalMinutes: Scalars['Int'];
+};
+
 export type LogIntegration = S3LogIntegration;
 
 export type ModifyGlobalPythonModuleInput = {
@@ -838,6 +855,7 @@ export type Query = {
   listComplianceIntegrations: Array<ComplianceIntegration>;
   listLogIntegrations: Array<LogIntegration>;
   organizationStats?: Maybe<OrganizationStatsResponse>;
+  getLogAnalysisMetrics: LogAnalysisMetricsResponse;
   rule?: Maybe<RuleDetails>;
   rules?: Maybe<ListRulesResponse>;
   listGlobalPythonModules: ListGlobalPythonModulesResponse;
@@ -902,6 +920,10 @@ export type QueryPoliciesForResourceArgs = {
 
 export type QueryOrganizationStatsArgs = {
   input?: Maybe<OrganizationStatsInput>;
+};
+
+export type QueryGetLogAnalysisMetricsArgs = {
+  input: LogAnalysisMetricsInput;
 };
 
 export type QueryRuleArgs = {
@@ -1019,6 +1041,18 @@ export type ScannedResourceStats = {
   type?: Maybe<Scalars['String']>;
 };
 
+export type Series = {
+  __typename?: 'Series';
+  label?: Maybe<Scalars['String']>;
+  values?: Maybe<Array<Maybe<Scalars['Int']>>>;
+};
+
+export type SeriesData = {
+  __typename?: 'SeriesData';
+  timestamps?: Maybe<Array<Maybe<Scalars['AWSDateTime']>>>;
+  series?: Maybe<Array<Maybe<Series>>>;
+};
+
 export enum SeverityEnum {
   Info = 'INFO',
   Low = 'LOW',
@@ -1026,6 +1060,12 @@ export enum SeverityEnum {
   High = 'HIGH',
   Critical = 'CRITICAL',
 }
+
+export type SingleValue = {
+  __typename?: 'SingleValue';
+  label: Scalars['String'];
+  value: Scalars['Int'];
+};
 
 export type SlackConfig = {
   __typename?: 'SlackConfig';
@@ -1331,6 +1371,11 @@ export type ResolversTypes = {
   OrganizationReportBySeverity: ResolverTypeWrapper<OrganizationReportBySeverity>;
   ScannedResources: ResolverTypeWrapper<ScannedResources>;
   ScannedResourceStats: ResolverTypeWrapper<ScannedResourceStats>;
+  LogAnalysisMetricsInput: LogAnalysisMetricsInput;
+  LogAnalysisMetricsResponse: ResolverTypeWrapper<LogAnalysisMetricsResponse>;
+  SeriesData: ResolverTypeWrapper<SeriesData>;
+  Series: ResolverTypeWrapper<Series>;
+  SingleValue: ResolverTypeWrapper<SingleValue>;
   GetRuleInput: GetRuleInput;
   RuleDetails: ResolverTypeWrapper<RuleDetails>;
   ListRulesInput: ListRulesInput;
@@ -1457,6 +1502,11 @@ export type ResolversParentTypes = {
   OrganizationReportBySeverity: OrganizationReportBySeverity;
   ScannedResources: ScannedResources;
   ScannedResourceStats: ScannedResourceStats;
+  LogAnalysisMetricsInput: LogAnalysisMetricsInput;
+  LogAnalysisMetricsResponse: LogAnalysisMetricsResponse;
+  SeriesData: SeriesData;
+  Series: Series;
+  SingleValue: SingleValue;
   GetRuleInput: GetRuleInput;
   RuleDetails: RuleDetails;
   ListRulesInput: ListRulesInput;
@@ -1838,6 +1888,23 @@ export type ListRulesResponseResolvers<
 > = {
   paging?: Resolver<Maybe<ResolversTypes['PagingData']>, ParentType, ContextType>;
   rules?: Resolver<Maybe<Array<Maybe<ResolversTypes['RuleSummary']>>>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type LogAnalysisMetricsResponseResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['LogAnalysisMetricsResponse'] = ResolversParentTypes['LogAnalysisMetricsResponse']
+> = {
+  eventsProcessed?: Resolver<Maybe<ResolversTypes['SeriesData']>, ParentType, ContextType>;
+  alertsBySeverity?: Resolver<Maybe<ResolversTypes['SeriesData']>, ParentType, ContextType>;
+  totalAlertsDelta?: Resolver<
+    Maybe<Array<Maybe<ResolversTypes['SingleValue']>>>,
+    ParentType,
+    ContextType
+  >;
+  fromDate?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
+  toDate?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
+  intervalMinutes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2271,6 +2338,12 @@ export type QueryResolvers<
     ContextType,
     RequireFields<QueryOrganizationStatsArgs, never>
   >;
+  getLogAnalysisMetrics?: Resolver<
+    ResolversTypes['LogAnalysisMetricsResponse'],
+    ParentType,
+    ContextType,
+    RequireFields<QueryGetLogAnalysisMetricsArgs, 'input'>
+  >;
   rule?: Resolver<
     Maybe<ResolversTypes['RuleDetails']>,
     ParentType,
@@ -2422,6 +2495,37 @@ export type ScannedResourceStatsResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
+export type SeriesResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['Series'] = ResolversParentTypes['Series']
+> = {
+  label?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  values?: Resolver<Maybe<Array<Maybe<ResolversTypes['Int']>>>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type SeriesDataResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['SeriesData'] = ResolversParentTypes['SeriesData']
+> = {
+  timestamps?: Resolver<
+    Maybe<Array<Maybe<ResolversTypes['AWSDateTime']>>>,
+    ParentType,
+    ContextType
+  >;
+  series?: Resolver<Maybe<Array<Maybe<ResolversTypes['Series']>>>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type SingleValueResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['SingleValue'] = ResolversParentTypes['SingleValue']
+> = {
+  label?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  value?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
 export type SlackConfigResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['SlackConfig'] = ResolversParentTypes['SlackConfig']
@@ -2516,6 +2620,7 @@ export type Resolvers<ContextType = any> = {
   ListPoliciesResponse?: ListPoliciesResponseResolvers<ContextType>;
   ListResourcesResponse?: ListResourcesResponseResolvers<ContextType>;
   ListRulesResponse?: ListRulesResponseResolvers<ContextType>;
+  LogAnalysisMetricsResponse?: LogAnalysisMetricsResponseResolvers<ContextType>;
   LogIntegration?: LogIntegrationResolvers;
   MsTeamsConfig?: MsTeamsConfigResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
@@ -2537,6 +2642,9 @@ export type Resolvers<ContextType = any> = {
   S3LogIntegrationHealth?: S3LogIntegrationHealthResolvers<ContextType>;
   ScannedResources?: ScannedResourcesResolvers<ContextType>;
   ScannedResourceStats?: ScannedResourceStatsResolvers<ContextType>;
+  Series?: SeriesResolvers<ContextType>;
+  SeriesData?: SeriesDataResolvers<ContextType>;
+  SingleValue?: SingleValueResolvers<ContextType>;
   SlackConfig?: SlackConfigResolvers<ContextType>;
   SnsConfig?: SnsConfigResolvers<ContextType>;
   SqsConfig?: SqsConfigResolvers<ContextType>;
