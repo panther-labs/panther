@@ -19,6 +19,7 @@ package analysis
  */
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -115,13 +116,21 @@ func makeTestSummary(policy *models.TestPolicy, engineOutput enginemodels.Policy
 	return testResults, nil
 }
 
+type TestInputError struct {
+	err error
+}
+
+func (e *TestInputError) Error() string {
+	return e.err.Error()
+}
+
 func makeTestResources(policy *models.TestPolicy) ([]enginemodels.Resource, error) {
 	resources := make([]enginemodels.Resource, len(policy.Tests))
 	for i, test := range policy.Tests {
-		// TODO(giorgosp): Can swagger unmarshall this already?
 		var attrs map[string]interface{}
 		if err := jsoniter.UnmarshalFromString(string(test.Resource), &attrs); err != nil {
-			return resources, errors.Wrapf(err, "tests[%d].resource is not valid json", i)
+			//nolint // Error is capitalized because will be returned to the UI
+			return nil, &TestInputError{fmt.Errorf(`Resource for test "%s" is not valid json: %w`, test.Name, err)}
 		}
 
 		resources[i] = enginemodels.Resource{

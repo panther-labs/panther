@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
 
+	"github.com/panther-labs/panther/internal/core/analysis_api/analysis"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
@@ -35,11 +36,14 @@ func ModifyPolicy(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 	}
 
 	// Disallow saving if policy is enabled and its tests fail.
-	ok, err := enabledPolicyTestsPass(input)
+	testsPass, err := enabledPolicyTestsPass(input)
+	if _, ok := err.(*analysis.TestInputError); ok {
+		return badRequest(err)
+	}
 	if err != nil {
 		return failedRequest(err.Error(), http.StatusInternalServerError)
 	}
-	if !ok {
+	if !testsPass {
 		return badRequest(errPolicyTestsFail)
 	}
 
