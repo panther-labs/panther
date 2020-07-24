@@ -80,7 +80,7 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
             if rule_result.exception:
                 result['errored'] = [{
                     'id': raw_rule['id'],
-                    'message': str(rule_result.exception),
+                    'message': '{}: {}'.format(type(rule_result.exception).__name__, rule_result.exception),
                 }]
             elif rule_result.matched:
                 result['matched'] = [raw_rule['id']]
