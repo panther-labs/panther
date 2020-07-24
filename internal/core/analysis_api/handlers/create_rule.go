@@ -28,6 +28,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	"github.com/panther-labs/panther/internal/core/analysis_api/analysis"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
@@ -44,11 +45,14 @@ func CreateRule(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 	}
 
 	// Disallow saving if rule is enabled and its tests fail.
-	ok, err := enabledRuleTestsPass(input)
+	testsPass, err := enabledRuleTestsPass(input)
+	if _, ok := err.(*analysis.TestInputError); ok {
+		return badRequest(err)
+	}
 	if err != nil {
 		return failedRequest(err.Error(), http.StatusInternalServerError)
 	}
-	if !ok {
+	if !testsPass {
 		return badRequest(errRuleTestsFail)
 	}
 

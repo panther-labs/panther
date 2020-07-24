@@ -216,7 +216,7 @@
 * [SaaS Logs](enterprise/saas-logs.md)
 * [Snowflake Integration](enterprise/snowflake.md)
 * [SAML/SSO Integration](enterprise/saml/overview.md)
+  * [Generic](enterprise/saml/generic.md)
   * [Okta](enterprise/saml/okta.md)
   * [OneLogin](enterprise/saml/onelogin.md)
-  * [(Other)](enterprise/saml/generic.md)
 * [Role-Based Access Control](enterprise/rbac.md)

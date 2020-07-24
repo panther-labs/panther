@@ -28,6 +28,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	"github.com/panther-labs/panther/internal/core/analysis_api/analysis"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
@@ -40,11 +41,14 @@ func CreatePolicy(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 	}
 
 	// Disallow saving if policy is enabled and its tests fail.
-	ok, err := enabledPolicyTestsPass(input)
+	testsPass, err := enabledPolicyTestsPass(input)
+	if _, ok := err.(*analysis.TestInputError); ok {
+		return badRequest(err)
+	}
 	if err != nil {
 		return failedRequest(err.Error(), http.StatusInternalServerError)
 	}
-	if !ok {
+	if !testsPass {
 		return badRequest(errPolicyTestsFail)
 	}
 
