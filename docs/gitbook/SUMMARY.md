@@ -74,6 +74,7 @@
   * [Zeek](log-analysis/log-processing/supported-logs/Zeek.md)
 * [SaaS Logs Setup]()
   * [GSuite](log-analysis/log-processing/log-setup/gsuite.md)
+  * [Box](log-analysis/log-processing/log-setup/box.md)
 * [Standard Fields](log-analysis/panther-fields.md)
 
 ## Cloud Security
