@@ -546,8 +546,6 @@ export enum ListRulesSortFieldsEnum {
   Severity = 'severity',
 }
 
-export type LogIntegration = S3LogIntegration | SqsLogSourceIntegration;
-
 export type LogAnalysisMetricsInput = {
   intervalMinutes: Scalars['Int'];
   fromDate: Scalars['AWSDateTime'];
@@ -564,6 +562,8 @@ export type LogAnalysisMetricsResponse = {
   toDate: Scalars['AWSDateTime'];
   intervalMinutes: Scalars['Int'];
 };
+
+export type LogIntegration = S3LogIntegration | SqsLogSourceIntegration;
 
 export type ModifyGlobalPythonModuleInput = {
   description: Scalars['String'];
