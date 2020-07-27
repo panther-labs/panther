@@ -413,9 +413,6 @@ Resources:
           Value: panther-web
 
 Outputs:
-  GraphQlUrl:
-    Description: The URL for the AppSync GraphQL endpoint
-    Value: !GetAtt Bootstrap.Outputs.GraphQLApiEndpoint
   LoadBalancerUrl:
     Description: Panther URL serving the web app
     Value: !Sub https://${Bootstrap.Outputs.LoadBalancerUrl}
