@@ -23,30 +23,51 @@ Parameters:
   AlarmTopicArn:
     Type: String
     Description: SNS topic for CloudWatch alarms
+    # Example: "arn:aws:sns:us-west-2:111122223333:panther-cw-alarms"
+    AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
   AppClientId:
     Type: String
     Description: The ID of the App Client that handles the sign-in for the aforementioned user pool
+    # Example: "4tnlr4boaiscbnsp5h19g27ri2"
+    AllowedPattern: '^[a-z0-9]{26}$'
+  AnalysisApiEndpoint:
+    Type: String
+    Description: Analysis API gateway FQDN
+    # Example: "o4q7r6x3y3.execute-api.us-west-2.amazonaws.com"
+    AllowedPattern: '[0-9a-z]{10}.execute-api.[a-z]{2}-[a-z]{4,9}-[1-9].amazonaws.com(.cn)?$'
   CertificateArn:
     Type: String
     Description: TLS certificate used by the web app. If not specified, a self-signed cert is created for you.
+    # Example: "arn:aws:acm:us-west-2:111122223333:certificate/6e51b91b-0d7d-4592-89a3-c113c78e3ab3" or
+    # "arn:aws:iam::111122223333:server-certificate/panther/us-west-2/MyCert"
+    AllowedPattern: '^((arn:(aws|aws-cn|aws-us-gov):acm:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:certificate\/[a-f0-9-]{36})|(arn:(aws|aws-cn|aws-us-gov):iam::\d{12}:server-certificate\/\S+))?$'
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
+    MinValue: 1
   CustomResourceVersion:
     Type: String
     Description: Forces updates to custom resources when changed
+    MinLength: 1
   ElbArn:
     Type: String
     Description: The ARN of the load balancer
+    # Example: "arn:aws:elasticloadbalancing:us-west-2:111122223333:loadbalancer/app/web/c39f74f9a62dd3c0"
+    AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):elasticloadbalancing:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:loadbalancer\/\S+$'
   ElbFullName:
     Type: String
     Description: The full name of the load balancer
+    # Example: "app/web/c39f74f9a62dd3c0"
+    AllowedPattern: '^[a-z0-9\/]{15,}$'
   ElbTargetGroup:
     Type: String
     Description: The ARN of the load balancer target group
+    # Example: "arn:aws:elasticloadbalancing:us-west-2:111122223333:targetgroup/panther-web/eb0b81e175ef6fe5"
+    AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):elasticloadbalancing:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:targetgroup\/\S+$'
   FirstUserEmail:
     Type: String
     Description: Email of the initial Panther user. If blank, no user is created
+    AllowedPattern: '^([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})?$'
   FirstUserFamilyName:
     Type: String
     Description: Family (last) name of the initial Panther user
@@ -56,24 +77,39 @@ Parameters:
   GraphQLApiEndpoint:
     Type: String
     Description: The URL of the GraphQL API that the web application uses
+    # Example: "https://mmo6but73nazdmp454amim3baa.appsync-api.us-west-2.amazonaws.com/graphql"
+    AllowedPattern: 'https:\/\/[a-z0-9]{26}.appsync-api.[a-z]{2}-[a-z]{4,9}-[1-9].amazonaws.com(.cn)?\/graphql$'
   Image:
     Type: String
     Description: The container image to use for the front-end web application server
+    # Truncated example: "111122223333.dkr.ecr.us-west-2.amazonaws.com/panther-web:9c2511a443"
+    AllowedPattern: '^[a-zA-Z0-9._-]{3,}:\S+$' # "host:tag" - docker host does not have to be AWS
+  InitialAnalysisPackUrls:
+    Type: CommaDelimitedList
+    Description: Initial Python analysis packs
   PantherVersion:
     Type: String
     Description: The semver of the current deployment (i.e. `v1.3.0`)
+    MinLength: 1
   SecurityGroup:
     Type: String
     Description: Web app security group ID
+    # Example: "sg-07114d098de449a39"
+    AllowedPattern: '^sg-[0-9a-f]{10,}$'
   SubnetOneId:
     Type: String
     Description: The ID of a subnet in the VPC above
+    # Example: "subnet-0014ecfa3c45ff9d9"
+    AllowedPattern: '^subnet-[0-9a-f]{10,}$'
   SubnetTwoId:
     Type: String
     Description: The ID of another subnet in the VPC above
+    AllowedPattern: '^subnet-[0-9a-f]{10,}$'
   UserPoolId:
     Type: String
     Description: The ID of the User Pool that holds all users of the Panther web app
+    # Example: "us-west-2_iHzBYf5SA"
+    AllowedPattern: '^[a-zA-Z0-9_-]{15,}$'
 
 Mappings:
   ECS:
@@ -257,4 +293,12 @@ Resources:
       GivenName: !Ref FirstUserGivenName
       FamilyName: !Ref FirstUserFamilyName
       Email: !Ref FirstUserEmail
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  # Upload the initial Python analysis rules/policies
+  InitialAnalysisSet:
+    Type: Custom::AnalysisSet
+    Properties:
+      AnalysisAPIEndpoint: !Ref AnalysisApiEndpoint
+      PackURLs: !Ref InitialAnalysisPackUrls
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources

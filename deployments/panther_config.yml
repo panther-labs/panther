@@ -100,13 +100,13 @@ Setup:
   # Access logs are sent either to the S3AccessLogsBucket below or a the panther audit bucket created for you.
   EnableS3AccessLogs: true
 
-  # Optionally use an existing S3 bucket for storing S3 access logs.
+  # Optionally use an existing S3 bucket name for storing S3 access logs.
   # If not specified, the generated panther audit logs bucket is used for access logs as well.
   #
   # Has no effect if EnableS3AccessLogs=false above.
   S3AccessLogsBucket: ''
 
-  # If specified, user data is replicated to this bucket.
+  # If specified, user data is replicated to this bucket arn.
   DataReplicationBucket: ''
 
   # Whether or not the Panther deployment should automatically onboard itself as a data source.
