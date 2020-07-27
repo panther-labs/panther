@@ -17,3 +17,4 @@
  */
 
 export { default } from './SeverityBadge';
+export * from './SeverityBadge';

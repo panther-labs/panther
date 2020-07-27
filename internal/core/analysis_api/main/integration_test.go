@@ -21,6 +21,7 @@ package main
 import (
 	"bufio"
 	"encoding/base64"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -297,9 +298,12 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("SaveEnabledPolicyFailingTests", saveEnabledPolicyFailingTests)
 		t.Run("SaveDisabledPolicyFailingTests", saveDisabledPolicyFailingTests)
 		t.Run("SaveEnabledPolicyPassingTests", saveEnabledPolicyPassingTests)
+		t.Run("SavePolicyInvalidTestInputJson", savePolicyInvalidTestInputJSON)
+
 		t.Run("SaveEnabledRuleFailingTests", saveEnabledRuleFailingTests)
 		t.Run("SaveDisabledRuleFailingTests", saveDisabledRuleFailingTests)
 		t.Run("SaveEnabledRulePassingTests", saveEnabledRulePassingTests)
+		t.Run("SaveRuleInvalidTestInputJson", saveRuleInvalidTestInputJSON)
 	})
 	if t.Failed() {
 		return
@@ -576,6 +580,8 @@ func saveEnabledPolicyFailingTests(t *testing.T) {
 		},
 	}
 	policyID := uuid.New().String()
+	defer cleanupPoliciesRules(t, policyID)
+
 	req := models.UpdatePolicy{
 		AutoRemediationID:         policy.AutoRemediationID,
 		AutoRemediationParameters: policy.AutoRemediationParameters,
@@ -594,21 +600,6 @@ func saveEnabledPolicyFailingTests(t *testing.T) {
 	}
 
 	expectedErrorMessage := "cannot save an enabled policy with failing unit tests"
-
-	defer func() {
-		result, err := apiClient.Operations.DeletePolicies(&operations.DeletePoliciesParams{
-			Body: &models.DeletePolicies{
-				Policies: []*models.DeleteEntry{
-					{
-						ID: models.ID(policyID),
-					},
-				},
-			},
-			HTTPClient: httpClient,
-		})
-		require.NoError(t, err)
-		assert.Equal(t, &operations.DeletePoliciesOK{}, result)
-	}()
 
 	t.Run("Create", func(t *testing.T) {
 		_, err := apiClient.Operations.CreatePolicy(&operations.CreatePolicyParams{
@@ -689,6 +680,10 @@ func saveEnabledPolicyPassingTests(t *testing.T) {
 			Name:           "Compliant",
 			ExpectedResult: true,
 			Resource:       `{}`,
+		}, {
+			Name:           "Compliant 2",
+			ExpectedResult: true,
+			Resource:       `{}`,
 		},
 	}
 	req := models.UpdatePolicy{
@@ -722,6 +717,61 @@ func saveEnabledPolicyPassingTests(t *testing.T) {
 			HTTPClient: httpClient,
 		})
 		require.NoError(t, err)
+	})
+}
+
+func savePolicyInvalidTestInputJSON(t *testing.T) {
+	policyID := uuid.New().String()
+	defer cleanupPoliciesRules(t, policyID)
+	body := "def policy(resource): return True"
+	tests := []*models.UnitTest{
+		{
+			Name:           "PolicyName",
+			ExpectedResult: true,
+			Resource:       "invalid json",
+		},
+	}
+	req := models.UpdatePolicy{
+		AutoRemediationID:         policy.AutoRemediationID,
+		AutoRemediationParameters: policy.AutoRemediationParameters,
+		Body:                      models.Body(body),
+		Description:               policy.Description,
+		DisplayName:               policy.DisplayName,
+		Enabled:                   true,
+		ID:                        models.ID(policyID),
+		ResourceTypes:             policy.ResourceTypes,
+		Severity:                  policy.Severity,
+		Suppressions:              policy.Suppressions,
+		Tags:                      policy.Tags,
+		OutputIds:                 policy.OutputIds,
+		UserID:                    userID,
+		Tests:                     tests,
+	}
+
+	t.Run("Create", func(t *testing.T) {
+		_, err := apiClient.Operations.CreatePolicy(&operations.CreatePolicyParams{
+			Body:       &req,
+			HTTPClient: httpClient,
+		})
+		require.Error(t, err)
+		e, ok := err.(*operations.CreatePolicyBadRequest)
+		require.True(t, ok, err)
+
+		expectedErrorPrefix := fmt.Sprintf(`Resource for test "%s" is not valid json:`, tests[0].Name)
+		require.True(t, strings.HasPrefix(*e.Payload.Message, expectedErrorPrefix), *e.Payload.Message)
+	})
+
+	t.Run("Modify", func(t *testing.T) {
+		_, err := apiClient.Operations.ModifyPolicy(&operations.ModifyPolicyParams{
+			Body:       &req,
+			HTTPClient: httpClient,
+		})
+		require.Error(t, err)
+		e, ok := err.(*operations.ModifyPolicyBadRequest)
+		require.True(t, ok, err)
+
+		expectedErrorPrefix := fmt.Sprintf(`Resource for test "%s" is not valid json:`, tests[0].Name)
+		require.True(t, strings.HasPrefix(*e.Payload.Message, expectedErrorPrefix), *e.Payload.Message)
 	})
 }
 
@@ -777,6 +827,8 @@ func saveEnabledRuleFailingTests(t *testing.T) {
 }
 
 // Tests that a rule can be saved if it is enabled and its tests pass.
+// This is different than createRuleSuccess test. createRuleSuccess saves
+// a rule without tests.
 func saveEnabledRulePassingTests(t *testing.T) {
 	ruleID := uuid.New().String()
 	defer cleanupPoliciesRules(t, ruleID)
@@ -784,6 +836,10 @@ func saveEnabledRulePassingTests(t *testing.T) {
 	tests := []*models.UnitTest{
 		{
 			Name:           "Trigger alert",
+			ExpectedResult: true,
+			Resource:       `{}`,
+		}, {
+			Name:           "Trigger alert 2",
 			ExpectedResult: true,
 			Resource:       `{}`,
 		},
@@ -815,6 +871,57 @@ func saveEnabledRulePassingTests(t *testing.T) {
 			HTTPClient: httpClient,
 		})
 		require.NoError(t, err)
+	})
+}
+
+func saveRuleInvalidTestInputJSON(t *testing.T) {
+	ruleID := uuid.New().String()
+	defer cleanupPoliciesRules(t, ruleID)
+	body := "def rule(event): return True"
+	tests := []*models.UnitTest{
+		{
+			Name:           "Trigger alert",
+			ExpectedResult: true,
+			Resource:       "invalid json",
+		},
+	}
+	req := models.UpdateRule{
+		Body:               models.Body(body),
+		Description:        rule.Description,
+		Enabled:            true,
+		ID:                 models.ID(ruleID),
+		LogTypes:           rule.LogTypes,
+		Severity:           rule.Severity,
+		UserID:             userID,
+		DedupPeriodMinutes: rule.DedupPeriodMinutes,
+		Tags:               rule.Tags,
+		Tests:              tests,
+	}
+
+	t.Run("Create", func(t *testing.T) {
+		_, err := apiClient.Operations.CreateRule(&operations.CreateRuleParams{
+			Body:       &req,
+			HTTPClient: httpClient,
+		})
+		require.Error(t, err)
+		e, ok := err.(*operations.CreateRuleBadRequest)
+		require.True(t, ok, err)
+
+		expectedErrorPrefix := fmt.Sprintf(`Event for test "%s" is not valid json:`, tests[0].Name)
+		require.True(t, strings.HasPrefix(*e.Payload.Message, expectedErrorPrefix), *e.Payload.Message)
+	})
+
+	t.Run("Modify", func(t *testing.T) {
+		_, err := apiClient.Operations.ModifyRule(&operations.ModifyRuleParams{
+			Body:       &req,
+			HTTPClient: httpClient,
+		})
+		require.Error(t, err)
+		e, ok := err.(*operations.ModifyRuleBadRequest)
+		require.True(t, ok, err)
+
+		expectedErrorPrefix := fmt.Sprintf(`Event for test "%s" is not valid json:`, tests[0].Name)
+		require.True(t, strings.HasPrefix(*e.Payload.Message, expectedErrorPrefix), *e.Payload.Message)
 	})
 }
 

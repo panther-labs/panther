@@ -39,6 +39,7 @@ import mapValues from 'lodash/mapValues';
 import sum from 'lodash/sum';
 import { ErrorResponse } from 'apollo-link-error';
 import { ApolloError } from '@apollo/client';
+import { UserDetails } from 'Source/graphql/fragments/UserDetails.generated';
 
 export const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
@@ -305,6 +306,28 @@ export const isNumber = (value: string) => /^-{0,1}\d+$/.test(value);
 
 export const toStackNameFormat = (val: string) => val.replace(/ /g, '-').toLowerCase();
 
+/*
+Given a user, returns a human readable string to show for the user's name
+*/
+export const getUserDisplayName = (
+  user: Pick<UserDetails, 'givenName' | 'familyName' | 'email'>
+) => {
+  if (!user) {
+    return '';
+  }
+
+  if (user.givenName && user.familyName) {
+    return `${user.givenName} ${user.familyName}`;
+  }
+  if (!user.givenName && user.familyName) {
+    return user.familyName;
+  }
+  if (user.givenName && !user.familyName) {
+    return user.givenName;
+  }
+  return user.email;
+};
+
 /**
  * Generates a random HEX color
  */
@@ -325,4 +348,12 @@ export const remToPx = (rem: string) => {
  */
 export const addTrailingSlash = (url: string) => {
   return url.endsWith('/') ? url : `${url}/`;
+};
+
+export const getCurrentDate = () => {
+  return `${dayjs().toISOString().split('.')[0]}Z`;
+};
+
+export const subtractDays = (date: string, days: number) => {
+  return `${dayjs(date).subtract(days, 'day').toISOString().split('.')[0]}Z`;
 };

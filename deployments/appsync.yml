@@ -121,6 +121,17 @@ Resources:
       LambdaConfig:
         LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-organization-api
 
+  MetricsAPILambdaDataSource:
+    Type: AWS::AppSync::DataSource
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !Ref ApiId
+      Name: PantherMetricsAPILambda
+      Type: AWS_LAMBDA
+      ServiceRoleArn: !Ref ServiceRole
+      LambdaConfig:
+        LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-metrics-api
+
   ResourcesAPIHttpDataSource:
     Type: AWS::AppSync::DataSource
     DependsOn: GraphQLSchema
@@ -1282,6 +1293,36 @@ Resources:
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
 
+  LogAnalysisMetricsResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Query
+      FieldName: getLogAnalysisMetrics
+      DataSourceName: !GetAtt MetricsAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "getMetrics": $ctx.args.input
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($ctx.error)
+          $util.error($ctx.error.errorMessage, $ctx.error.errorType, {})
+        #else
+          #set($response = {
+            "eventsProcessed": $ctx.result.eventsProcessed.seriesData,
+            "alertsBySeverity": $ctx.result.alertsBySeverity.seriesData,
+            "totalAlertsDelta": $ctx.result.totalAlertsDelta.singleValue,
+            "fromDate": $ctx.result.fromDate,
+            "toDate": $ctx.result.toDate,
+            "intervalMinutes": $ctx.result.intervalMinutes
+          })
+          $util.toJson($response)
+        #end
+
   ResourcesForPolicyResolver:
     Type: AWS::AppSync::Resolver
     Properties:
@@ -1712,6 +1753,30 @@ Resources:
       ResponseMappingTemplate: |
         #if($context.error)
           $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
+        #else
+          $util.toJson($context.result)
+        #end
+
+  UpdateAlertStatusResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: updateAlertStatus
+      DataSourceName: !GetAtt AlertsAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        $util.qr($input.put("userId", $ctx.identity.sub))
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "updateAlertStatus": $input
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+            $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
         #else
           $util.toJson($context.result)
         #end

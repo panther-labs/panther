@@ -1,0 +1,23 @@
+query GetLogAnalysisMetrics($input: LogAnalysisMetricsInput!) {
+  getLogAnalysisMetrics(input: $input) {
+    eventsProcessed {
+      series {
+        label
+        values
+      }
+      timestamps
+    }
+    alertsBySeverity {
+      series {
+        label
+        values
+      }
+      timestamps
+    }
+    totalAlertsDelta {
+      label
+      value
+    }
+    intervalMinutes
+  }
+}

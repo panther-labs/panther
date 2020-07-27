@@ -71,6 +71,8 @@ import {
   ListResourcesResponse,
   ListRulesInput,
   ListRulesResponse,
+  LogAnalysisMetricsInput,
+  LogAnalysisMetricsResponse,
   ModifyGlobalPythonModuleInput,
   MsTeamsConfig,
   MsTeamsConfigInput,
@@ -98,6 +100,9 @@ import {
   S3LogIntegrationHealth,
   ScannedResources,
   ScannedResourceStats,
+  Series,
+  SeriesData,
+  SingleValue,
   SlackConfig,
   SlackConfigInput,
   SnsConfig,
@@ -111,6 +116,7 @@ import {
   SuppressPoliciesInput,
   TestPolicyInput,
   TestPolicyResponse,
+  UpdateAlertStatusInput,
   UpdateComplianceIntegrationInput,
   UpdateGeneralSettingsInput,
   UpdatePolicyInput,
@@ -122,6 +128,7 @@ import {
   UploadPoliciesResponse,
   User,
   AccountTypeEnum,
+  AlertStatusesEnum,
   AnalysisTypeEnum,
   ComplianceStatusEnum,
   DestinationTypeEnum,
@@ -237,28 +244,43 @@ export const buildAlertDetails = (overrides: Partial<AlertDetails> = {}): AlertD
   return {
     __typename: 'AlertDetails',
     alertId: 'alertId' in overrides ? overrides.alertId : '2c5aa76d-eb43-49f0-a65c-50e4daa756a4',
-    ruleId: 'ruleId' in overrides ? overrides.ruleId : '9ad2c6da-417d-414f-a3e5-7959acdeaa9e',
-    title: 'title' in overrides ? overrides.title : 'Steel',
     creationTime: 'creationTime' in overrides ? overrides.creationTime : '2020-10-28T02:06:29.865Z',
-    updateTime: 'updateTime' in overrides ? overrides.updateTime : '2020-02-22T04:54:35.910Z',
     eventsMatched: 'eventsMatched' in overrides ? overrides.eventsMatched : 516,
+    ruleId: 'ruleId' in overrides ? overrides.ruleId : '9ad2c6da-417d-414f-a3e5-7959acdeaa9e',
+    severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
+    status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Closed,
+    title: 'title' in overrides ? overrides.title : 'Steel',
+    lastUpdatedBy:
+      'lastUpdatedBy' in overrides
+        ? overrides.lastUpdatedBy
+        : '15cffa0a-6a52-49cc-a5d6-d52aa26209ac',
+    lastUpdatedByTime:
+      'lastUpdatedByTime' in overrides ? overrides.lastUpdatedByTime : '2020-07-02T20:00:23.050Z',
+    updateTime: 'updateTime' in overrides ? overrides.updateTime : '2020-02-22T04:54:35.910Z',
+    dedupString: 'dedupString' in overrides ? overrides.dedupString : 'Auto Loan Account',
     events: 'events' in overrides ? overrides.events : ['"bar"'],
     eventsLastEvaluatedKey:
       'eventsLastEvaluatedKey' in overrides ? overrides.eventsLastEvaluatedKey : 'Accountability',
-    dedupString: 'dedupString' in overrides ? overrides.dedupString : 'Auto Loan Account',
   };
 };
 
 export const buildAlertSummary = (overrides: Partial<AlertSummary> = {}): AlertSummary => {
   return {
     __typename: 'AlertSummary',
-    alertId: 'alertId' in overrides ? overrides.alertId : 'Administrator',
+    alertId: 'alertId' in overrides ? overrides.alertId : 'f67b8f04-5fac-404a-93a4-38db29f258ba',
     creationTime: 'creationTime' in overrides ? overrides.creationTime : '2020-08-08T12:15:31.121Z',
     eventsMatched: 'eventsMatched' in overrides ? overrides.eventsMatched : 670,
-    title: 'title' in overrides ? overrides.title : 'indexing',
-    updateTime: 'updateTime' in overrides ? overrides.updateTime : '2020-09-17T19:32:46.882Z',
-    ruleId: 'ruleId' in overrides ? overrides.ruleId : 'functionalities',
+    ruleId: 'ruleId' in overrides ? overrides.ruleId : '6eb9c948-5a13-4955-bd91-b98801b55bed',
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Medium,
+    status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Triaged,
+    title: 'title' in overrides ? overrides.title : 'indexing',
+    lastUpdatedBy:
+      'lastUpdatedBy' in overrides
+        ? overrides.lastUpdatedBy
+        : '2b032d04-ec9e-41cd-9bb7-cb8d0b6eee9e',
+    lastUpdatedByTime:
+      'lastUpdatedByTime' in overrides ? overrides.lastUpdatedByTime : '2020-07-29T23:42:06.903Z',
+    updateTime: 'updateTime' in overrides ? overrides.updateTime : '2020-09-17T19:32:46.882Z',
   };
 };
 
@@ -658,6 +680,7 @@ export const buildListAlertsInput = (overrides: Partial<ListAlertsInput> = {}): 
       'createdAtAfter' in overrides ? overrides.createdAtAfter : '2020-04-26T13:02:02.091Z',
     ruleIdContains: 'ruleIdContains' in overrides ? overrides.ruleIdContains : 'virtual',
     alertIdContains: 'alertIdContains' in overrides ? overrides.alertIdContains : 'Garden',
+    status: 'status' in overrides ? overrides.status : [AlertStatusesEnum.Open],
     eventCountMin: 'eventCountMin' in overrides ? overrides.eventCountMin : 694,
     eventCountMax: 'eventCountMax' in overrides ? overrides.eventCountMax : 911,
     sortBy: 'sortBy' in overrides ? overrides.sortBy : ListAlertsSortFieldsEnum.CreatedAt,
@@ -790,6 +813,33 @@ export const buildListRulesResponse = (
     __typename: 'ListRulesResponse',
     paging: 'paging' in overrides ? overrides.paging : buildPagingData(),
     rules: 'rules' in overrides ? overrides.rules : [buildRuleSummary()],
+  };
+};
+
+export const buildLogAnalysisMetricsInput = (
+  overrides: Partial<LogAnalysisMetricsInput> = {}
+): LogAnalysisMetricsInput => {
+  return {
+    intervalMinutes: 'intervalMinutes' in overrides ? overrides.intervalMinutes : 816,
+    fromDate: 'fromDate' in overrides ? overrides.fromDate : '2020-09-12T00:49:46.314Z',
+    toDate: 'toDate' in overrides ? overrides.toDate : '2020-04-12T07:15:32.902Z',
+    metricNames: 'metricNames' in overrides ? overrides.metricNames : ['Investment Account'],
+  };
+};
+
+export const buildLogAnalysisMetricsResponse = (
+  overrides: Partial<LogAnalysisMetricsResponse> = {}
+): LogAnalysisMetricsResponse => {
+  return {
+    __typename: 'LogAnalysisMetricsResponse',
+    eventsProcessed: 'eventsProcessed' in overrides ? overrides.eventsProcessed : buildSeriesData(),
+    alertsBySeverity:
+      'alertsBySeverity' in overrides ? overrides.alertsBySeverity : buildSeriesData(),
+    totalAlertsDelta:
+      'totalAlertsDelta' in overrides ? overrides.totalAlertsDelta : [buildSingleValue()],
+    fromDate: 'fromDate' in overrides ? overrides.fromDate : '2020-06-15T22:39:08.690Z',
+    toDate: 'toDate' in overrides ? overrides.toDate : '2020-06-29T16:49:54.582Z',
+    intervalMinutes: 'intervalMinutes' in overrides ? overrides.intervalMinutes : 670,
   };
 };
 
@@ -1160,6 +1210,30 @@ export const buildScannedResourceStats = (
   };
 };
 
+export const buildSeries = (overrides: Partial<Series> = {}): Series => {
+  return {
+    __typename: 'Series',
+    label: 'label' in overrides ? overrides.label : 'Idaho',
+    values: 'values' in overrides ? overrides.values : [371],
+  };
+};
+
+export const buildSeriesData = (overrides: Partial<SeriesData> = {}): SeriesData => {
+  return {
+    __typename: 'SeriesData',
+    timestamps: 'timestamps' in overrides ? overrides.timestamps : ['2020-10-18T14:12:28.273Z'],
+    series: 'series' in overrides ? overrides.series : [buildSeries()],
+  };
+};
+
+export const buildSingleValue = (overrides: Partial<SingleValue> = {}): SingleValue => {
+  return {
+    __typename: 'SingleValue',
+    label: 'label' in overrides ? overrides.label : 'blue',
+    value: 'value' in overrides ? overrides.value : 72,
+  };
+};
+
 export const buildSlackConfig = (overrides: Partial<SlackConfig> = {}): SlackConfig => {
   return {
     __typename: 'SlackConfig',
@@ -1292,6 +1366,15 @@ export const buildTestPolicyResponse = (
     testsFailed: 'testsFailed' in overrides ? overrides.testsFailed : ['Granite'],
     testsErrored:
       'testsErrored' in overrides ? overrides.testsErrored : [buildPolicyUnitTestError()],
+  };
+};
+
+export const buildUpdateAlertStatusInput = (
+  overrides: Partial<UpdateAlertStatusInput> = {}
+): UpdateAlertStatusInput => {
+  return {
+    alertId: 'alertId' in overrides ? overrides.alertId : '344a4508-25bd-42d0-bc1a-11a8551110cc',
+    status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Closed,
   };
 };
 

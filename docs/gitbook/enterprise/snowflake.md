@@ -99,14 +99,17 @@ SELECT count(1) AS c FROM panther_logs.public.aws_cloudtrail ;
 
 ## Configure the Panther User Interface
 
-Create a read-only user in your Snowflake account with grants to read tables (at least) from the following databases:
+Create a [user](https://docs.snowflake.com/en/sql-reference/sql/create-user.html) associated with a 
+[read-only role](https://docs.snowflake.com/en/user-guide/security-access-control-configure.html#creating-read-only-roles) 
+in your Snowflake account with grants to read tables from the following databases:
 * `panther_logs`
 * `panther_rule_matches`
 * `panther_views`
 
 You may want to allow more tables so that you can join data to the Panther data from the Panther [Data Explorer](./data-analytics/data-explorer.md).
 
-Create a secret in the [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/). This secret will be used
+Create a secret in the [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/). Ideally this should be created
+in the same AWS region as the Panther deployment but this is optional. This secret will be used
 by Panther to read database tables. It will be configured to only allow access from a single lambda function
 in the Panther account.
 
@@ -114,11 +117,11 @@ First, access the AWS Secrets Manager via the console and select `Store a New Se
 
 Second, you will be presented with a page titled `Store a new secret`. Select `Other type of secrets` from the
 list of types. Specify the following key/value pairs:
-* account
+* account (NOTE: this can be found by clicking on the snowflake console on your login name)
 * user
 * password
-* host
-* port
+* host (NOTE: this is usually: <account>.<region>.snowflakecomputing.com)
+* port (NOTE: use 443 unless you have configured differently)
 
 Then click `Next`.
 
@@ -152,7 +155,7 @@ generated `./out/snowflake/snowpipe.sql` file from above, and `<secret ARN>` for
 ```
 Then click the `Save` button.
 
-If using a pre-packaged deployment then pdate the `SecretsManagerARN` attribute with the ARN of the secret in 
+If using a pre-packaged deployment then update the `SecretsManagerARN` attribute with the ARN of the secret in 
 the CloudFormation template inputs or in the `panther_config.yml` file if deploying from source.
 
 Next deploy Panther. If using a pre-packaged deployment use CloudFormation, if from source doing `mage deploy` 
@@ -160,8 +163,8 @@ Next deploy Panther. If using a pre-packaged deployment use CloudFormation, if f
 The configuration can be tested from the [Data Explorer](./data-analytics/data-explorer.md). Run some same queries over a
 table that you know has data (check via Snowflake console).
 
-To rotate secrets, create a NEW read-only user as above and follow the configuration steps above, replacing the old
-user with the new user. Wait one hour before deleting/disabling the the old user. 
+To rotate secrets, create a NEW read-only user and edit the secret replacing the old
+user and password with the new user and password. Wait one hour before deleting/disabling the the old user in Snowflake. 
  
  
  

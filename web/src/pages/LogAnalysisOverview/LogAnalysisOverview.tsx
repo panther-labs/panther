@@ -17,21 +17,92 @@
  */
 
 import React from 'react';
-import WarningImg from 'Assets/illustrations/warning.svg';
-import { Box, Flex, Heading, Text } from 'pouncejs';
+import { Alert, Box, Flex, SimpleGrid } from 'pouncejs';
 import withSEO from 'Hoc/withSEO';
+import TablePlaceholder from 'Components/TablePlaceholder';
+import { extractErrorMessage, getCurrentDate, subtractDays } from 'Helpers/utils';
+import Panel from 'Components/Panel';
+import EventsByLogType from 'Pages/LogAnalysisOverview/EventsByLogType';
+import { SeverityEnum } from 'Generated/schema';
+import { useListAlerts } from 'Pages/ListAlerts/graphql/listAlerts.generated';
+import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
+import AlertsTable from 'Pages/LogAnalysisOverview/AlertsTable';
+import LogAnalysisOverviewPageSkeleton from './Skeleton';
+import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
+import AlertsBySeverity from './AlertsBySeverity';
+import AlertSummary from './AlertSummary';
+
+export const intervalMinutes = 6 * 60;
+export const defaultPastDays = 3;
 
 const LogAnalysisOverview: React.FC = () => {
+  const toDate = getCurrentDate();
+  const fromDate = subtractDays(toDate, defaultPastDays);
+
+  const { data, loading, error } = useGetLogAnalysisMetrics({
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      input: {
+        metricNames: ['eventsProcessed', 'totalAlertsDelta', 'alertsBySeverity'],
+        fromDate,
+        toDate,
+        intervalMinutes,
+      },
+    },
+  });
+
+  const { loading: loadingAlerts, data: alerts } = useListAlerts({
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      input: {
+        severity: [SeverityEnum.Critical, SeverityEnum.High],
+        pageSize: DEFAULT_LARGE_PAGE_SIZE,
+      },
+    },
+  });
+
+  if (loading && !data) {
+    return <LogAnalysisOverviewPageSkeleton />;
+  }
+
+  if (error) {
+    return (
+      <Alert
+        variant="error"
+        title="We can't display this content right now"
+        description={extractErrorMessage(error)}
+      />
+    );
+  }
+
+  const { alertsBySeverity, totalAlertsDelta, eventsProcessed } = data.getLogAnalysisMetrics;
+  const alertItems = alerts?.alerts.alertSummaries || [];
+
   return (
-    <Flex height="100%" width="100%" justify="center" align="center" direction="column">
-      <Box m={10}>
-        <img alt="Construction works" src={WarningImg} width="auto" height={400} />
-      </Box>
-      <Heading mb={2}>Log analysis overview is not available</Heading>
-      <Text color="gray-300" textAlign="center" mb={10}>
-        We are currently developing this page and will release it in the near future
-      </Text>
-    </Flex>
+    <Box as="article" mb={6}>
+      <SimpleGrid columns={1} spacingX={3} spacingY={2} as="section" mb={5}>
+        <Panel title="Real-time Alerts">
+          <Box height={200}>
+            <Flex direction="row" width="100%">
+              <AlertSummary data={totalAlertsDelta} />
+              <AlertsBySeverity alerts={alertsBySeverity} />
+            </Flex>
+          </Box>
+        </Panel>
+      </SimpleGrid>
+      <SimpleGrid columns={1} spacingX={3} spacingY={2} my={5}>
+        <Panel title="Events by Log Type">
+          <Box height={200}>
+            <EventsByLogType events={eventsProcessed} />
+          </Box>
+        </Panel>
+      </SimpleGrid>
+      <SimpleGrid columns={1} spacingX={3} spacingY={2}>
+        <Panel title="Recent High Severity Alerts">
+          {loadingAlerts ? <TablePlaceholder /> : <AlertsTable items={alertItems} />}
+        </Panel>
+      </SimpleGrid>
+    </Box>
   );
 };
 

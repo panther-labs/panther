@@ -50,16 +50,13 @@ export type TypePolicies = Partial<
 const typePolicies: TypePolicies = {
   Query: {
     fields: {
-      getComplianceIntegration(existingData, { args, toReference }) {
+      getComplianceIntegration(existing, { args, toReference }) {
         return (
-          existingData ||
-          toReference({ __typename: 'ComplianceIntegration', integrationId: args.id })
+          existing || toReference({ __typename: 'ComplianceIntegration', integrationId: args.id })
         );
       },
-      getS3LogIntegration(existingData, { args, toReference }) {
-        return (
-          existingData || toReference({ __typename: 'S3LogIntegration', integrationId: args.id })
-        );
+      getS3LogIntegration(existing, { args, toReference }) {
+        return existing || toReference({ __typename: 'S3LogIntegration', integrationId: args.id });
       },
       getSqsLogIntegration(existingData, { args, toReference }) {
         return (
@@ -67,6 +64,25 @@ const typePolicies: TypePolicies = {
           toReference({ __typename: 'SqsLogSourceIntegration', integrationId: args.id })
         );
       },
+      // TODO: when apollo client is updated to 3.0.0-rc.12+, use this code
+      // // For GetAlert (AlertDetails)
+      // alert: {
+      //   read(existing) {
+      //     return existing;
+      //   },
+      //   merge(existing, incoming, { mergeObjects }) {
+      //     return mergeObjects(existing, incoming);
+      //   },
+      // },
+      // // For ListAlerts (ListAlertsReponse)
+      // alerts: {
+      //   read(existing) {
+      //     return existing;
+      //   },
+      //   merge(existing, incoming, { mergeObjects }) {
+      //     return mergeObjects(existing, incoming);
+      //   },
+      // },
     },
   },
   Destination: {
@@ -74,9 +90,30 @@ const typePolicies: TypePolicies = {
   },
   AlertDetails: {
     keyFields: ['alertId'],
+    // TODO: when apollo client is updated to 3.0.0-rc.12+, use this code
+    // fields: {
+    //   events: {
+    //     merge(_, incoming) {
+    //       return incoming;
+    //     },
+    //   },
+    //   status: {
+    //     merge(_, incoming) {
+    //       return incoming;
+    //     },
+    //   },
+    // },
   },
   AlertSummary: {
     keyFields: ['alertId'],
+    // TODO: when apollo client is updated to 3.0.0-rc.12+, use this code
+    // fields: {
+    //   status: {
+    //     merge(_, incoming) {
+    //       return incoming;
+    //     },
+    //   },
+    // },
   },
   ComplianceIntegration: {
     keyFields: ['integrationId'],
@@ -91,9 +128,9 @@ const typePolicies: TypePolicies = {
     keyFields: ['email'],
     fields: {
       errorReportingConsent: {
-        merge(oldValue, newValue) {
-          storage.local.write(ERROR_REPORTING_CONSENT_STORAGE_KEY, newValue);
-          return newValue;
+        merge(_, incoming) {
+          storage.local.write(ERROR_REPORTING_CONSENT_STORAGE_KEY, incoming);
+          return incoming;
         },
       },
     },

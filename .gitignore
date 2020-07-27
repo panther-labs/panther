@@ -4,6 +4,7 @@ venv/
 .idea/
 __pycache__/
 *.zip
+.vscode
 
 # Dependencies
 node_modules/

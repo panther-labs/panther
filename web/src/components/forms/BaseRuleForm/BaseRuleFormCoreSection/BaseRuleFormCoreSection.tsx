@@ -194,7 +194,7 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
           placeholder="i.e. HIPAA (separate with <Enter>)"
         />
         <Box as="fieldset">
-          {/* FIXME: We have an issue with FastField here. We shouldn't be setting props like that  on FastField or Field elements */}
+          {/* FIXME: We have an issue with FastField here. We shouldn't be setting props like that on FastField or Field elements */}
           <Field
             as={FormikMultiCombobox}
             disabled={disableDestinationField}
