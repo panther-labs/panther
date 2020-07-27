@@ -461,7 +461,6 @@ func deployCloudSecurityStack(settings *config.PantherConfig, outputs map[string
 func deployCoreStack(settings *config.PantherConfig, outputs map[string]string) error {
 	_, err := deployTemplate(coreTemplate, outputs["SourceBucket"], coreStack, map[string]string{
 		"AlarmTopicArn":              outputs["AlarmTopicArn"],
-		"AnalysisApiEndpoint":        outputs["AnalysisApiEndpoint"],
 		"AnalysisApiId":              outputs["AnalysisApiId"],
 		"AnalysisVersionsBucket":     outputs["AnalysisVersionsBucket"],
 		"AppDomainURL":               outputs["LoadBalancerUrl"],
@@ -473,7 +472,6 @@ func deployCoreStack(settings *config.PantherConfig, outputs map[string]string) 
 		"CustomResourceVersion":      customResourceVersion(),
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 		"DynamoScalingRoleArn":       outputs["DynamoScalingRoleArn"],
-		"InitialAnalysisPackUrls":    strings.Join(settings.Setup.InitialAnalysisSets, ","),
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
 		"OutputsKeyId":               outputs["OutputsEncryptionKeyId"],
 		"ProcessedDataBucket":        outputs["ProcessedDataBucket"],
