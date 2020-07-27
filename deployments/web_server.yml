@@ -83,7 +83,7 @@ Parameters:
     Type: String
     Description: The container image to use for the front-end web application server
     # Truncated example: "111122223333.dkr.ecr.us-west-2.amazonaws.com/panther-web:9c2511a443"
-    AllowedPattern: '^[a-zA-Z0-9._-]{3,}:\S+$' # "host:tag" - docker host does not have to be AWS
+    AllowedPattern: '^[a-zA-Z0-9._\/-]{3,}:\S+$' # "host:tag" - docker host does not have to be AWS
   InitialAnalysisPackUrls:
     Type: CommaDelimitedList
     Description: Initial Python analysis packs

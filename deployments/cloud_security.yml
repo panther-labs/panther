@@ -60,7 +60,7 @@ Parameters:
     AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
   PythonLayerVersionArn:
     Type: String
-    Description: Pip libraries for python analysis and remediation
+    Description: Versioned lambda layer with pip libraries for python analysis and remediation
     # Example: "arn:aws:lambda:us-west-2:111122223333:layer:panther-analysis:143"
     AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):lambda:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:layer:\S+:\d+$'
   RemediationApiId:

@@ -369,7 +369,8 @@ Resources:
 
   Web:
     Type: AWS::CloudFormation::Stack
-    DependsOn: Core # users-api
+    # Custom resources in this stack require the analysis-api, users-api, and both Python engines to exist
+    DependsOn: [CloudSecurity, Core, LogAnalysis]
     Properties:
       TemplateURL: web_server.yml
       Parameters:

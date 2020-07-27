@@ -67,7 +67,7 @@ Parameters:
     AllowedPattern: '^[a-z0-9.-]{3,63}$'
   PythonLayerVersionArn:
     Type: String
-    Description: Optional custom Python layer for analysis and remediation
+    Description: Optional versioned custom Python layer for analysis and remediation
     # Example: "arn:aws:lambda:us-west-2:111122223333:layer:panther-analysis:143"
     AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):lambda:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:layer:\S+:\d+)?$'
   TracingMode:
