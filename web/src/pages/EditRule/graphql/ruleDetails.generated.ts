@@ -32,6 +32,7 @@ export type RuleDetails = {
       Types.RuleDetails,
       | 'body'
       | 'dedupPeriodMinutes'
+      | 'threshold'
       | 'description'
       | 'displayName'
       | 'enabled'
@@ -55,6 +56,7 @@ export const RuleDetailsDocument = gql`
     rule(input: $input) {
       body
       dedupPeriodMinutes
+      threshold
       description
       displayName
       enabled

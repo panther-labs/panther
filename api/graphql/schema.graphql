@@ -154,7 +154,6 @@ type AlertDetails implements Alert {
   lastUpdatedBy: ID # gets mapped to a User in the frontend
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
   updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
-
   dedupString: String!
   events: [AWSJSON!]!
   eventsLastEvaluatedKey: String
@@ -200,6 +199,7 @@ input ListRulesInput {
 input AddRuleInput {
   body: String!
   dedupPeriodMinutes: Int!
+  threshold: Int!
   description: String
   displayName: String
   enabled: Boolean!
@@ -216,6 +216,7 @@ input AddRuleInput {
 input UpdateRuleInput {
   body: String
   dedupPeriodMinutes: Int
+  threshold: Int
   description: String
   displayName: String
   enabled: Boolean
@@ -262,6 +263,7 @@ type RuleDetails {
   createdAt: AWSDateTime
   createdBy: ID
   dedupPeriodMinutes: Int!
+  threshold: Int!
   description: String
   displayName: String
   enabled: Boolean

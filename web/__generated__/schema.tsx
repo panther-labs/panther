@@ -77,6 +77,7 @@ export type AddPolicyInput = {
 export type AddRuleInput = {
   body: Scalars['String'];
   dedupPeriodMinutes: Scalars['Int'];
+  threshold: Scalars['Int'];
   description?: Maybe<Scalars['String']>;
   displayName?: Maybe<Scalars['String']>;
   enabled: Scalars['Boolean'];
@@ -979,6 +980,7 @@ export type RuleDetails = {
   createdAt?: Maybe<Scalars['AWSDateTime']>;
   createdBy?: Maybe<Scalars['ID']>;
   dedupPeriodMinutes: Scalars['Int'];
+  threshold: Scalars['Int'];
   description?: Maybe<Scalars['String']>;
   displayName?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
@@ -1158,6 +1160,7 @@ export type UpdatePolicyInput = {
 export type UpdateRuleInput = {
   body?: Maybe<Scalars['String']>;
   dedupPeriodMinutes?: Maybe<Scalars['Int']>;
+  threshold?: Maybe<Scalars['Int']>;
   description?: Maybe<Scalars['String']>;
   displayName?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
@@ -2409,6 +2412,7 @@ export type RuleDetailsResolvers<
   createdAt?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   createdBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   dedupPeriodMinutes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  threshold?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   displayName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   enabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
