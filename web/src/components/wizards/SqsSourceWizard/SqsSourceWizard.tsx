@@ -38,8 +38,8 @@ const validationSchema = Yup.object().shape<SqsLogSourceWizardValues>({
   logTypes: Yup.array()
     .of(Yup.string().oneOf((LOG_TYPES as unknown) as string[]))
     .required(),
-  allowedPrincipals: Yup.array().of(Yup.string()).required(),
-  allowedSourceArns: Yup.array().of(Yup.string()).required(),
+  allowedPrincipals: Yup.array().of(Yup.string()),
+  allowedSourceArns: Yup.array().of(Yup.string()),
 });
 
 const initialStatus = {};

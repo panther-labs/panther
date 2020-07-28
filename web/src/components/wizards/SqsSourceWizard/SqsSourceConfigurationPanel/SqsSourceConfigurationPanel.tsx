@@ -24,11 +24,23 @@ const SqsSourceConfigurationPanel: React.FC = () => {
       <Heading as="h2" m="auto" mb={2}>
         {initialValues.integrationId ? 'Update the SQS source' : "Let's start with the basics"}
       </Heading>
-      <Text color="gray-300" mb={10}>
-        {initialValues.integrationId
-          ? 'Feel free to make any changes to your SQS log source'
-          : 'We need to know where to get your logs from'}
-      </Text>
+      {initialValues.integrationId ? (
+        <React.Fragment>
+          <Text color="gray-300" mb={2}>
+            You need to send events on this queue url for Panther to process them:
+          </Text>
+          <Text fontSize="small" mb={10}>
+            {initialValues.queueUrl}
+          </Text>
+          <Text color="gray-300" mb={4}>
+            Feel free to make any changes to your SQS log source
+          </Text>
+        </React.Fragment>
+      ) : (
+        <Text color="gray-300" mb={10}>
+          We need to know where to get your logs from
+        </Text>
+      )}
       <ErrorBoundary>
         <Flex direction="column" spacing={4}>
           <Field
@@ -48,7 +60,7 @@ const SqsSourceConfigurationPanel: React.FC = () => {
           />
           <FastField
             as={FormikMultiCombobox}
-            label="* Allowed Principals"
+            label="Allowed Principals"
             name="allowedPrincipals"
             searchable
             allowAdditions
@@ -57,7 +69,7 @@ const SqsSourceConfigurationPanel: React.FC = () => {
           />
           <FastField
             as={FormikMultiCombobox}
-            label="* Allowed ARNs"
+            label="Allowed ARNs"
             name="allowedSourceArns"
             searchable
             allowAdditions
