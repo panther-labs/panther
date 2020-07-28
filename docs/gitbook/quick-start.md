@@ -27,7 +27,7 @@ First, navigate to the AWS CloudFormation console and create a new stack.
 Use the following template URL to install the latest version in the us-east-1 region:
 
 ```
-https://panther-community-us-east-1.s3.amazonaws.com/v1.5.1/panther.yml
+https://panther-community-us-east-1.s3.amazonaws.com/v1.6.0panther.yml
 ```
 
 The template URL is of the following form:
@@ -68,7 +68,7 @@ Resources:
   Panther:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://panther-community-${AWS::Region}.s3.amazonaws.com/v1.5.1/panther.yml
+      TemplateURL: !Sub https://panther-community-${AWS::Region}.s3.amazonaws.com/v1.6.0/panther.yml
       Parameters:
         CompanyDisplayName: AwesomeCo
         FirstUserEmail: user@example.com
@@ -87,7 +87,7 @@ aws cloudformation deploy --template-file template.yml --stack-name panther --ca
 ```hcl
 resource "aws_cloudformation_stack" "panther" {
   name = "panther"
-  template_url = "https://panther-community-<REGION>.s3.amazonaws.com/v1.5.1/panther.yml"
+  template_url = "https://panther-community-<REGION>.s3.amazonaws.com/v1.6.0/panther.yml"
   capabilities = ["CAPABILITY_IAM", "CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND"]
   parameters = {
     CompanyDisplayName = "AwesomeCo"
