@@ -44,17 +44,17 @@ Where:
     * [Additional](development.md#supported-regions) regions are available when [deploying from source](development.md#deploying)
 * VERSION is the latest [tagged release](https://github.com/panther-labs/panther/releases)
 
-![CloudFormation Console](.gitbook/assets/cfn-deploy-1.png)
+![CloudFormation Console](.gitbook/assets/quick-start-cfn-deploy-1.png)
 
 On the next page, choose a stack name (e.g. "panther") and configure the name and email for the first Panther user:
 
-![CloudFormation Parameters](.gitbook/assets/cfn-deploy-2.png)
+![CloudFormation Parameters](.gitbook/assets/quick-start-cfn-deploy-2.png)
 
 This is the initial admin user account. You can edit the user and invite additional users after Panther is deployed. You can also set the `CompanyDisplayName` here if you like. All other parameters can be ignored.
 
 On the next page, you can skip all the advanced stack settings. Acknowledge the warnings and deploy the stack.
 
-![CloudFormation Capabilities](.gitbook/assets/cfn-deploy-3.png)
+![CloudFormation Capabilities](.gitbook/assets/quick-start-cfn-deploy-3.png)
 
 Alternatively, you can deploy Panther using a nested stack in your own CloudFormation pipeline, using a Terraform template, or by building and deploying from [source](development.md#deploying).
 
@@ -105,7 +105,7 @@ Once the deployment has finished, you will get an invitation email from `no-repl
 {% hint style="warning" %}
 By default, Panther generates a self-signed certificate, which will cause most browsers to present a warning page:
 
-![Self-Signed Certificate Warning](.gitbook/assets/self-signed-cert-warning.png)
+![Self-Signed Certificate Warning](.gitbook/assets/quick-start-cert-warning.png)
 
 Your connection _is_ encrypted, and it's generally safe to continue. However, the warning exists because self-signed certificates do not protect you from man-in-the-middle attacks; for this reason production deployments should provide their own `CertificateArn` parameter value.
 {% endhint %}

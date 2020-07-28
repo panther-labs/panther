@@ -4,7 +4,7 @@ Panther's Log Analysis is used to detect threats in [log data](log-processing/su
 
 This works by parsing, normalizing, and analyzing high volumes of data in real-time. In order to onboard into this pipeline, data must send to either an S3 bucket or a SQS queue.
 
-![](../.gitbook/assets/diagrams/panther_overview_transparent.png)
+![](../.gitbook/assets/readme-overview.png)
 
 Common events analyzed with log analysis include:
 * Authorization or authentication

@@ -6,7 +6,7 @@ The steps below will enable secure access for Panther to pull security logs from
 
 From **Log Analysis**, click **Sources**, then **Onboard Your Logs**:
 
-![](../.gitbook/assets/log-analysis-iam-1.png)
+![](../.gitbook/assets/log-analysis/setup-1.png)
 
 ### Step 1: Enter the Bucket Details
 
@@ -19,7 +19,7 @@ From **Log Analysis**, click **Sources**, then **Onboard Your Logs**:
 | `S3 Prefix Filter`   | `No`  | The path of the files to analyze, which should not start with the `/` character   |
 | `KMS Key`   | `No`  | If your data is encrypted using KMS-SSE, provide the ARN of the KMS key  |
 
-![](../.gitbook/assets/log-analysis-iam-2.png)
+![](../.gitbook/assets/log-analysis/setup-2.png)
 
 Click **Next**.
 
@@ -27,7 +27,7 @@ Click **Next**.
 
 You can deploy the generated stack by either **launching the CloudFormation Console** or **downloading the template** and applying it through your own pipeline.
 
-![](../.gitbook/assets/log-analysis-iam-3.png)
+![](../.gitbook/assets/log-analysis/setup-3.png)
 
 When you click the **Launch console** link, a new tab will open in your browser and direct you to the AWS Console for the account you are currently logged into.
 
@@ -35,7 +35,7 @@ When you click the **Launch console** link, a new tab will open in your browser 
 Make sure you are signed into the AWS Account where you'd like to deploy the stack.
 {% endhint %}
 
-![](../.gitbook/assets/log-analysis-iam-4.png)
+![](../.gitbook/assets/log-analysis/setup-cfn.png)
 
 {% hint style="info" %}
 Make sure to check the acknowledgement in the Capabilities box on the bottom
@@ -47,7 +47,7 @@ Click the **Create stack** button. After few seconds, the stack's `Status` shoul
 
 Head back to Panther and click on **Next,** then **Save Source** to complete the setup.
 
-![](../.gitbook/assets/log-analysis-iam-5.png)
+![](../.gitbook/assets/log-analysis/setup-4.png)
 
 {% hint style="success" %}
 Congratulations! You have granted Panther the permissions to process your logs in S3.
@@ -65,7 +65,7 @@ First, create an SNS Topic and SNS Subscription to notify Panther that new data 
 
 Log into the AWS Console of the account that owns the S3 bucket. Select the AWS Region where your S3 buckets are located, navigate to the **CloudFormation** console, and click on **Create Stack** (with new resources).
 
-![](../.gitbook/assets/create-sns-topic-1.png)
+![](../.gitbook/assets/log-analysis/setup-sns1.png)
 
 Under the `Specify template` section, enter the following Amazon S3 URL:
 
@@ -73,7 +73,7 @@ Under the `Specify template` section, enter the following Amazon S3 URL:
 https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-log-processing-notifications/latest/template.yml
 ```
 
-![](../.gitbook/assets/create-sns-topic-2.png)
+![](../.gitbook/assets/log-analysis/setup-sns2.png)
 
 Specify the stack details below:
 
