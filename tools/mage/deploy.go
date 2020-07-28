@@ -472,14 +472,14 @@ func deployCoreStack(settings *config.PantherConfig, outputs map[string]string) 
 		"CustomResourceVersion":      customResourceVersion(),
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 		"DynamoScalingRoleArn":       outputs["DynamoScalingRoleArn"],
+		"InputDataBucket":            outputs["InputDataBucket"],
+		"InputDataTopicArn":          outputs["InputDataTopicArn"],
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
 		"OutputsKeyId":               outputs["OutputsEncryptionKeyId"],
 		"ProcessedDataBucket":        outputs["ProcessedDataBucket"],
 		"SqsKeyId":                   outputs["QueueEncryptionKeyId"],
 		"TracingMode":                settings.Monitoring.TracingMode,
 		"UserPoolId":                 outputs["UserPoolId"],
-		"InputDataBucket":            outputs["InputDataBucket"],
-		"InputDataTopicArn":          outputs["InputDataTopicArn"],
 	})
 	return err
 }
@@ -507,6 +507,8 @@ func deployLogAnalysisStack(settings *config.PantherConfig, outputs map[string]s
 		"CloudWatchLogRetentionDays":   strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CustomResourceVersion":        customResourceVersion(),
 		"Debug":                        strconv.FormatBool(settings.Monitoring.Debug),
+		"InputDataBucket":              outputs["InputDataBucket"],
+		"InputDataTopicArn":            outputs["InputDataTopicArn"],
 		"LayerVersionArns":             settings.Infra.BaseLayerVersionArns,
 		"LogProcessorLambdaMemorySize": strconv.Itoa(settings.Infra.LogProcessorLambdaMemorySize),
 		"ProcessedDataBucket":          outputs["ProcessedDataBucket"],
@@ -515,8 +517,6 @@ func deployLogAnalysisStack(settings *config.PantherConfig, outputs map[string]s
 		"SqsKeyId":                     outputs["QueueEncryptionKeyId"],
 		"TablesSignature":              tablesSignature,
 		"TracingMode":                  settings.Monitoring.TracingMode,
-		"InputDataBucket":              outputs["InputDataBucket"],
-		"InputDataTopicArn":            outputs["InputDataTopicArn"],
 	})
 	return err
 }
