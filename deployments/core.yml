@@ -39,7 +39,7 @@ Parameters:
     Type: String
     Description: Panther App Domain used as a link for the customer in the password reset email
     # Example: "web-115120885.us-west-2.elb.amazonaws.com" or "app.example.com"
-    AllowedPattern: '^[a-z0-9.-]+.[a-z]{2,}$'
+    AllowedPattern: '^[a-z0-9.-]+\.[a-z]{2,}$'
   AthenaResultsBucket:
     Type: String
     Description: Name of the S3 bucket created to hold Athena results

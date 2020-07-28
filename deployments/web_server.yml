@@ -25,16 +25,16 @@ Parameters:
     Description: SNS topic for CloudWatch alarms
     # Example: "arn:aws:sns:us-west-2:111122223333:panther-cw-alarms"
     AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
-  AppClientId:
-    Type: String
-    Description: The ID of the App Client that handles the sign-in for the aforementioned user pool
-    # Example: "4tnlr4boaiscbnsp5h19g27ri2"
-    AllowedPattern: '^[a-z0-9]{26}$'
   AnalysisApiEndpoint:
     Type: String
     Description: Analysis API gateway FQDN
     # Example: "o4q7r6x3y3.execute-api.us-west-2.amazonaws.com"
-    AllowedPattern: '[0-9a-z]{10}.execute-api.[a-z]{2}-[a-z]{4,9}-[1-9].amazonaws.com(.cn)?$'
+    AllowedPattern: '^[0-9a-z]{10}\.execute-api\.[a-z]{2}-[a-z]{4,9}-[1-9]\.amazonaws\.com(\.cn)?$'
+  AppClientId:
+    Type: String
+    Description: The ID of the App Client that handles sign-in for the user pool
+    # Example: "4tnlr4boaiscbnsp5h19g27ri2"
+    AllowedPattern: '^[a-z0-9]{10,50}$'
   CertificateArn:
     Type: String
     Description: TLS certificate used by the web app. If not specified, a self-signed cert is created for you.
@@ -78,7 +78,7 @@ Parameters:
     Type: String
     Description: The URL of the GraphQL API that the web application uses
     # Example: "https://mmo6but73nazdmp454amim3baa.appsync-api.us-west-2.amazonaws.com/graphql"
-    AllowedPattern: 'https:\/\/[a-z0-9]{26}.appsync-api.[a-z]{2}-[a-z]{4,9}-[1-9].amazonaws.com(.cn)?\/graphql$'
+    AllowedPattern: '^https:\/\/[a-z0-9]{26}\.appsync-api\.[a-z]{2}-[a-z]{4,9}-[1-9]\.amazonaws\.com(\.cn)?\/graphql$'
   Image:
     Type: String
     Description: The container image to use for the front-end web application server

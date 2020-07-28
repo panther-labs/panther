@@ -54,7 +54,7 @@ Parameters:
     Type: String
     Description: If CertificateArn is registered for a custom domain (e.g. 'app.example.com'), list that here.
     Default: ''
-    AllowedPattern: '^([a-z0-9.-]+.[a-z]{2,})?$'
+    AllowedPattern: '^([a-z0-9.-]+\.[a-z]{2,})?$'
   DataReplicationBucketName:
     Type: String
     Description: Replicate processed log data to this S3 bucket for Glacier backup storage
@@ -279,14 +279,14 @@ Resources:
         CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         Debug: !Ref Debug
         DynamoScalingRoleArn: !GetAtt Bootstrap.Outputs.DynamoScalingRoleArn
+        InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
+        InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         OutputsKeyId: !GetAtt Bootstrap.Outputs.OutputsEncryptionKeyId
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
         TracingMode: !Ref TracingMode
         UserPoolId: !GetAtt Bootstrap.Outputs.UserPoolId
-        InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
-        InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
       Tags:
         - Key: Application
           Value: Panther
@@ -322,6 +322,8 @@ Resources:
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         Debug: !Ref Debug
+        InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
+        InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         LogProcessorLambdaMemorySize: !Ref LogProcessorLambdaMemorySize
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
@@ -330,8 +332,6 @@ Resources:
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
         TablesSignature: !FindInMap [Constants, Panther, Version] # this changes with version, forcing table schema updates
         TracingMode: !Ref TracingMode
-        InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
-        InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
       Tags:
         - Key: Application
           Value: Panther
