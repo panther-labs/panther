@@ -32,7 +32,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/anystring"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 )
 
@@ -60,10 +59,6 @@ var (
 		},
 		{
 			From: reflect.TypeOf([]jsoniter.RawMessage{}),
-			To:   ArrayOf(GlueStringType),
-		},
-		{
-			From: reflect.TypeOf(anystring.Set{}),
 			To:   ArrayOf(GlueStringType),
 		},
 		{

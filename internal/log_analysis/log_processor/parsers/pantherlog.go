@@ -19,13 +19,16 @@ package parsers
  */
 
 import (
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"net"
+	"reflect"
 	"regexp"
+	"sort"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/anystring"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -52,14 +55,52 @@ type PantherLog struct {
 	PantherParseTime *timestamp.RFC3339 `json:"p_parse_time,omitempty" validate:"required" description:"Panther added standardize log parse time (UTC)"`
 
 	// optional (any)
-	PantherAnyIPAddresses  PantherAnyString `json:"p_any_ip_addresses,omitempty" description:"Panther added field with collection of ip addresses associated with the row"`
-	PantherAnyDomainNames  PantherAnyString `json:"p_any_domain_names,omitempty" description:"Panther added field with collection of domain names associated with the row"`
-	PantherAnySHA1Hashes   PantherAnyString `json:"p_any_sha1_hashes,omitempty" description:"Panther added field with collection of SHA1 hashes associated with the row"`
-	PantherAnyMD5Hashes    PantherAnyString `json:"p_any_md5_hashes,omitempty" description:"Panther added field with collection of MD5 hashes associated with the row"`
-	PantherAnySHA256Hashes PantherAnyString `json:"p_any_sha256_hashes,omitempty" description:"Panther added field with collection of SHA256 hashes of any algorithm associated with the row"`
+	PantherAnyIPAddresses  *PantherAnyString `json:"p_any_ip_addresses,omitempty" description:"Panther added field with collection of ip addresses associated with the row"`
+	PantherAnyDomainNames  *PantherAnyString `json:"p_any_domain_names,omitempty" description:"Panther added field with collection of domain names associated with the row"`
+	PantherAnySHA1Hashes   *PantherAnyString `json:"p_any_sha1_hashes,omitempty" description:"Panther added field with collection of SHA1 hashes associated with the row"`
+	PantherAnyMD5Hashes    *PantherAnyString `json:"p_any_md5_hashes,omitempty" description:"Panther added field with collection of MD5 hashes associated with the row"`
+	PantherAnySHA256Hashes *PantherAnyString `json:"p_any_sha256_hashes,omitempty" description:"Panther added field with collection of SHA256 hashes of any algorithm associated with the row"`
 }
 
-type PantherAnyString = anystring.Set
+type PantherAnyString struct { // needed to declare as struct (rather than map) for CF generation
+	set map[string]struct{} // map is used for uniqueness, serializes as JSON list
+}
+
+func init() {
+	awsglue.MustRegisterMapping(reflect.TypeOf(PantherAnyString{}), awsglue.ArrayOf(awsglue.GlueStringType))
+}
+func NewPantherAnyString() *PantherAnyString {
+	return &PantherAnyString{
+		set: make(map[string]struct{}),
+	}
+}
+
+func (any *PantherAnyString) MarshalJSON() ([]byte, error) {
+	if any != nil { // copy to slice
+		values := make([]string, len(any.set))
+		i := 0
+		for k := range any.set {
+			values[i] = k
+			i++
+		}
+		sort.Strings(values) // sort for consistency and to improve compression when stored
+		return jsoniter.Marshal(values)
+	}
+	return []byte{}, nil
+}
+
+func (any *PantherAnyString) UnmarshalJSON(jsonBytes []byte) error {
+	var values []string
+	err := jsoniter.Unmarshal(jsonBytes, &values)
+	if err != nil {
+		return err
+	}
+	any.set = make(map[string]struct{}, len(values))
+	for _, entry := range values {
+		any.set[entry] = struct{}{}
+	}
+	return nil
+}
 
 // Event returns event data, used when composed
 func (pl *PantherLog) Event() interface{} {
@@ -129,7 +170,10 @@ func (pl *PantherLog) AppendAnyIPAddressInField(value string) bool {
 
 func (pl *PantherLog) AppendAnyIPAddress(value string) bool {
 	if net.ParseIP(value) != nil {
-		pl.PantherAnyIPAddresses.Add(value)
+		if pl.PantherAnyIPAddresses == nil { // lazy create
+			pl.PantherAnyIPAddresses = NewPantherAnyString()
+		}
+		AppendAnyString(pl.PantherAnyIPAddresses, value)
 		return true
 	}
 	return false
@@ -138,53 +182,74 @@ func (pl *PantherLog) AppendAnyIPAddress(value string) bool {
 func (pl *PantherLog) AppendAnyDomainNamePtrs(values ...*string) {
 	for _, value := range values {
 		if value != nil {
-			pl.PantherAnyDomainNames.Add(*value)
+			pl.AppendAnyDomainNames(*value)
 		}
 	}
 }
 
 func (pl *PantherLog) AppendAnyDomainNames(values ...string) {
-	AppendAnyString(&pl.PantherAnyDomainNames, values...)
+	if pl.PantherAnyDomainNames == nil { // lazy create
+		pl.PantherAnyDomainNames = NewPantherAnyString()
+	}
+	AppendAnyString(pl.PantherAnyDomainNames, values...)
 }
 
 func (pl *PantherLog) AppendAnySHA1HashPtrs(values ...*string) {
 	for _, value := range values {
 		if value != nil {
-			pl.PantherAnySHA1Hashes.Add(*value)
+			pl.AppendAnySHA1Hashes(*value)
 		}
 	}
 }
 
 func (pl *PantherLog) AppendAnySHA1Hashes(values ...string) {
-	AppendAnyString(&pl.PantherAnySHA1Hashes, values...)
+	if pl.PantherAnySHA1Hashes == nil { // lazy create
+		pl.PantherAnySHA1Hashes = NewPantherAnyString()
+	}
+	AppendAnyString(pl.PantherAnySHA1Hashes, values...)
 }
 
 func (pl *PantherLog) AppendAnyMD5HashPtrs(values ...*string) {
 	for _, value := range values {
 		if value != nil {
-			pl.PantherAnyMD5Hashes.Add(*value)
+			pl.AppendAnyMD5Hashes(*value)
 		}
 	}
 }
 
 func (pl *PantherLog) AppendAnyMD5Hashes(values ...string) {
-	AppendAnyString(&pl.PantherAnyMD5Hashes, values...)
+	if pl.PantherAnyMD5Hashes == nil { // lazy create
+		pl.PantherAnyMD5Hashes = NewPantherAnyString()
+	}
+	AppendAnyString(pl.PantherAnyMD5Hashes, values...)
 }
 
 func (pl *PantherLog) AppendAnySHA256Hashes(values ...string) {
-	AppendAnyString(&pl.PantherAnySHA256Hashes, values...)
+	if pl.PantherAnySHA256Hashes == nil { // lazy create
+		pl.PantherAnySHA256Hashes = NewPantherAnyString()
+	}
+	AppendAnyString(pl.PantherAnySHA256Hashes, values...)
 }
 
 func (pl *PantherLog) AppendAnySHA256HashesPtr(values ...*string) {
 	for _, value := range values {
 		if value != nil {
-			pl.PantherAnySHA256Hashes.Add(*value)
+			pl.AppendAnySHA256Hashes(*value)
 		}
 	}
 }
 
 func AppendAnyString(any *PantherAnyString, values ...string) {
-	anystring.Append(any, values...)
+	// add new if not present
+	for _, v := range values {
+		if v == "" { // ignore empty strings
+			continue
+		}
+		if _, exists := any.set[v]; exists {
+			continue
+		}
+		any.set[v] = struct{}{} // new
+	}
 }
 
 // Result converts a PantherLog to Result
