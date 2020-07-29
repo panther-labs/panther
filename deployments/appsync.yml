@@ -223,7 +223,7 @@ Resources:
           "operation": "Invoke",
           "payload": $util.toJson({
             "resetUserPassword": {
-              "requesterId": $ctx.identity.sub,
+              "requesterId": $ctx.identity.username,
               "id": $ctx.args.id
             }
           })
@@ -244,7 +244,7 @@ Resources:
       DataSourceName: !GetAtt UsersAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $ctx.args.input)
-        $util.qr($input.put("requesterId", $ctx.identity.sub))
+        $util.qr($input.put("requesterId", $ctx.identity.username))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
@@ -272,7 +272,7 @@ Resources:
           "operation": "Invoke",
           "payload": $util.toJson({
             "removeUser": {
-              "requesterId": $ctx.identity.sub,
+              "requesterId": $ctx.identity.username,
               "id": $ctx.args.id
             }
           })
@@ -315,7 +315,7 @@ Resources:
       DataSourceName: !GetAtt UsersAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("requesterId", $ctx.identity.sub))
+        $util.qr($input.put("requesterId", $ctx.identity.username))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
@@ -385,7 +385,7 @@ Resources:
       DataSourceName: !GetAtt DestinationsAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
@@ -434,7 +434,7 @@ Resources:
       DataSourceName: !GetAtt DestinationsAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
@@ -680,7 +680,7 @@ Resources:
       DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $ctx.args.input)
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         $util.qr($input.put("scanIntervalMins", 1440))
         $util.qr($input.put("integrationType", "aws-scan"))
         {
@@ -706,7 +706,7 @@ Resources:
       DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $ctx.args.input)
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         $util.qr($input.put("integrationType", "aws-s3"))
         {
           "version" : "2017-02-28",
@@ -929,7 +929,7 @@ Resources:
       DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         {
           "version": "2018-05-29",
           "method": "POST",
@@ -960,7 +960,7 @@ Resources:
       DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         {
           "version": "2018-05-29",
           "method": "POST",
@@ -1022,7 +1022,7 @@ Resources:
       DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         {
           "version": "2018-05-29",
           "method": "POST",
@@ -1141,7 +1141,7 @@ Resources:
       DataSourceName: !GetAtt RemediationAPIHttpDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         {
           "version": "2018-05-29",
           "method": "GET",
@@ -1377,7 +1377,7 @@ Resources:
       DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         {
           "version": "2018-05-29",
           "method": "POST",
@@ -1408,7 +1408,7 @@ Resources:
       DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         {
           "version": "2018-05-29",
           "method": "POST",
@@ -1499,7 +1499,7 @@ Resources:
       DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         {
           "version": "2018-05-29",
           "method": "POST",
@@ -1559,7 +1559,7 @@ Resources:
       DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         {
           "version": "2018-05-29",
           "method": "POST",
@@ -1665,7 +1665,7 @@ Resources:
       DataSourceName: !GetAtt AlertsAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
