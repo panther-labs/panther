@@ -23,70 +23,66 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/anystring"
 )
 
 func TestAppendAnyAWSAccountIds(t *testing.T) {
 	event := AWSPantherLog{}
 	value := "012345678912"
-	expectedAny := parsers.NewPantherAnyString()
-	parsers.AppendAnyString(expectedAny, value)
+	expectedAny := anystring.From(value)
 	event.AppendAnyAWSAccountIds(value)
-	require.Equal(t, expectedAny, event.PantherAnyAWSAccountIds)
+	require.Equal(t, expectedAny, &event.PantherAnyAWSAccountIds)
 
 	event = AWSPantherLog{}
 	event.AppendAnyAWSAccountIdPtrs(&value)
-	require.Equal(t, expectedAny, event.PantherAnyAWSAccountIds)
+	require.Equal(t, expectedAny, &event.PantherAnyAWSAccountIds)
 
 	// these should fail validation
 	event = AWSPantherLog{}
 	value = "012345" // too short
-	expectedAny = nil
+	expectedAny = &anystring.Set{}
 	event.AppendAnyAWSAccountIds(value)
-	require.Equal(t, expectedAny, event.PantherAnyAWSAccountIds)
+	require.Equal(t, expectedAny, &event.PantherAnyAWSAccountIds)
 
 	event = AWSPantherLog{}
 	value = "abc345678912" // not all numbers
-	expectedAny = nil
+	expectedAny = &anystring.Set{}
 	event.AppendAnyAWSAccountIds(value)
-	require.Equal(t, expectedAny, event.PantherAnyAWSAccountIds)
+	require.Equal(t, expectedAny, &event.PantherAnyAWSAccountIds)
 }
 
 func TestAppendAnyAWSInstanceIds(t *testing.T) {
 	event := AWSPantherLog{}
 	value := "a"
-	expectedAny := parsers.NewPantherAnyString()
-	parsers.AppendAnyString(expectedAny, value)
+	expectedAny := anystring.From(value)
 	event.AppendAnyAWSInstanceIds(value)
-	require.Equal(t, expectedAny, event.PantherAnyAWSInstanceIds)
+	require.Equal(t, expectedAny, &event.PantherAnyAWSInstanceIds)
 
 	event = AWSPantherLog{}
 	event.AppendAnyAWSInstanceIdPtrs(&value)
-	require.Equal(t, expectedAny, event.PantherAnyAWSInstanceIds)
+	require.Equal(t, expectedAny, &event.PantherAnyAWSInstanceIds)
 }
 
 func TestAppendAnyAWSARNs(t *testing.T) {
 	event := AWSPantherLog{}
 	value := "a"
-	expectedAny := parsers.NewPantherAnyString()
-	parsers.AppendAnyString(expectedAny, value)
+	expectedAny := anystring.From(value)
 	event.AppendAnyAWSARNs(value)
-	require.Equal(t, expectedAny, event.PantherAnyAWSARNs)
+	require.Equal(t, expectedAny, &event.PantherAnyAWSARNs)
 
 	event = AWSPantherLog{}
 	event.AppendAnyAWSARNPtrs(&value)
-	require.Equal(t, expectedAny, event.PantherAnyAWSARNs)
+	require.Equal(t, expectedAny, &event.PantherAnyAWSARNs)
 }
 
 func TestAppendAnyAWSTags(t *testing.T) {
 	event := AWSPantherLog{}
 	value := "a"
-	expectedAny := parsers.NewPantherAnyString()
-	parsers.AppendAnyString(expectedAny, value)
+	expectedAny := anystring.From(value)
 	event.AppendAnyAWSTags(value)
-	require.Equal(t, expectedAny, event.PantherAnyAWSTags)
+	require.Equal(t, expectedAny, &event.PantherAnyAWSTags)
 
 	event = AWSPantherLog{}
 	event.AppendAnyAWSTagPtrs(&value)
-	require.Equal(t, expectedAny, event.PantherAnyAWSTags)
+	require.Equal(t, expectedAny, &event.PantherAnyAWSTags)
 }

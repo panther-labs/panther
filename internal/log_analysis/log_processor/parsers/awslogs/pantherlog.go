@@ -22,6 +22,7 @@ import (
 	"regexp"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/anystring"
 )
 
 var (
@@ -32,10 +33,10 @@ var (
 type AWSPantherLog struct {
 	parsers.PantherLog
 
-	PantherAnyAWSAccountIds  *parsers.PantherAnyString `json:"p_any_aws_account_ids,omitempty" description:"Panther added field with collection of aws account ids associated with the row"`
-	PantherAnyAWSInstanceIds *parsers.PantherAnyString `json:"p_any_aws_instance_ids,omitempty" description:"Panther added field with collection of aws instance ids associated with the row"`
-	PantherAnyAWSARNs        *parsers.PantherAnyString `json:"p_any_aws_arns,omitempty" description:"Panther added field with collection of aws arns associated with the row"`
-	PantherAnyAWSTags        *parsers.PantherAnyString `json:"p_any_aws_tags,omitempty" description:"Panther added field with collection of aws tags associated with the row"`
+	PantherAnyAWSAccountIds  anystring.Set `json:"p_any_aws_account_ids,omitempty" description:"Panther added field with collection of aws account ids associated with the row"`
+	PantherAnyAWSInstanceIds anystring.Set `json:"p_any_aws_instance_ids,omitempty" description:"Panther added field with collection of aws instance ids associated with the row"`
+	PantherAnyAWSARNs        anystring.Set `json:"p_any_aws_arns,omitempty" description:"Panther added field with collection of aws arns associated with the row"`
+	PantherAnyAWSTags        anystring.Set `json:"p_any_aws_tags,omitempty" description:"Panther added field with collection of aws tags associated with the row"`
 }
 
 func (pl *AWSPantherLog) AppendAnyAWSAccountIdPtrs(values ...*string) { // nolint
@@ -51,10 +52,7 @@ func (pl *AWSPantherLog) AppendAnyAWSAccountIds(values ...string) {
 		if !awsAccountIDRegex.MatchString(value) {
 			continue
 		}
-		if pl.PantherAnyAWSAccountIds == nil { // lazy create
-			pl.PantherAnyAWSAccountIds = parsers.NewPantherAnyString()
-		}
-		parsers.AppendAnyString(pl.PantherAnyAWSAccountIds, value)
+		pl.PantherAnyAWSAccountIds.Add(value)
 	}
 }
 
@@ -67,10 +65,7 @@ func (pl *AWSPantherLog) AppendAnyAWSInstanceIdPtrs(values ...*string) { // noli
 }
 
 func (pl *AWSPantherLog) AppendAnyAWSInstanceIds(values ...string) {
-	if pl.PantherAnyAWSInstanceIds == nil { // lazy create
-		pl.PantherAnyAWSInstanceIds = parsers.NewPantherAnyString()
-	}
-	parsers.AppendAnyString(pl.PantherAnyAWSInstanceIds, values...)
+	anystring.Append(&pl.PantherAnyAWSInstanceIds, values...)
 }
 
 func (pl *AWSPantherLog) AppendAnyAWSARNPtrs(values ...*string) {
@@ -82,10 +77,7 @@ func (pl *AWSPantherLog) AppendAnyAWSARNPtrs(values ...*string) {
 }
 
 func (pl *AWSPantherLog) AppendAnyAWSARNs(values ...string) {
-	if pl.PantherAnyAWSARNs == nil { // lazy create
-		pl.PantherAnyAWSARNs = parsers.NewPantherAnyString()
-	}
-	parsers.AppendAnyString(pl.PantherAnyAWSARNs, values...)
+	anystring.Append(&pl.PantherAnyAWSARNs, values...)
 }
 
 func (pl *AWSPantherLog) AppendAnyAWSTagPtrs(values ...*string) {
@@ -98,8 +90,5 @@ func (pl *AWSPantherLog) AppendAnyAWSTagPtrs(values ...*string) {
 
 // NOTE: value should be of the form <key>:<value>
 func (pl *AWSPantherLog) AppendAnyAWSTags(values ...string) {
-	if pl.PantherAnyAWSTags == nil { // lazy create
-		pl.PantherAnyAWSTags = parsers.NewPantherAnyString()
-	}
-	parsers.AppendAnyString(pl.PantherAnyAWSTags, values...)
+	anystring.Append(&pl.PantherAnyAWSTags, values...)
 }

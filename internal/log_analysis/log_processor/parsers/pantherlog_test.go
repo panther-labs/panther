@@ -23,76 +23,11 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/anystring"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
-
-func TestAnyStringMarshal(t *testing.T) {
-	var any PantherAnyString
-
-	// nil case
-	expectedJSON := `[]`
-	actualJSON, err := jsoniter.Marshal(&any)
-	require.NoError(t, err)
-	require.Equal(t, expectedJSON, string(actualJSON))
-
-	// non-nil case
-	any.set = map[string]struct{}{
-		"a": {},
-		"b": {},
-		"c": {},
-	}
-	expectedJSON = `["a","b","c"]` // should be sorted
-	actualJSON, err = jsoniter.Marshal(&any)
-	require.NoError(t, err)
-	require.Equal(t, expectedJSON, string(actualJSON))
-}
-
-func TestAnyStringUnmarshal(t *testing.T) {
-	var any PantherAnyString
-
-	// nil case
-	jsonString := `[]`
-	expectedAny := PantherAnyString{
-		set: make(map[string]struct{}),
-	}
-	err := jsoniter.Unmarshal(([]byte)(jsonString), &any)
-	require.NoError(t, err)
-	require.Equal(t, expectedAny, any)
-
-	// non-nil case
-	jsonString = `["a"]`
-	expectedAny = PantherAnyString{
-		set: map[string]struct{}{
-			"a": {},
-		},
-	}
-	err = jsoniter.Unmarshal(([]byte)(jsonString), &any)
-	require.NoError(t, err)
-	require.Equal(t, expectedAny, any)
-}
-
-func TestAppendAnyString(t *testing.T) {
-	value := "a"
-	expectedAny := &PantherAnyString{
-		set: map[string]struct{}{
-			value: {},
-		},
-	}
-	any := NewPantherAnyString()
-	AppendAnyString(any, value)
-	require.Equal(t, expectedAny, any)
-}
-
-func TestAppendAnyStringWithEmptyString(t *testing.T) {
-	value := ""                                                  // should not be stored
-	expectedAny := &PantherAnyString{set: map[string]struct{}{}} // empty map
-	any := NewPantherAnyString()
-	AppendAnyString(any, value)
-	require.Equal(t, expectedAny, any)
-}
 
 func TestSetCoreFields(t *testing.T) {
 	event := PantherLog{}
@@ -146,13 +81,11 @@ func TestAppendAnyIPsInField(t *testing.T) {
 	require.True(t, event.AppendAnyIPAddressInField("Accepted publickey for ubuntu from 192.168.1.2 port 54717 ssh2"))
 	require.False(t, event.AppendAnyIPAddressInField("connection established"))
 
-	expectedAny := &PantherAnyString{
-		set: map[string]struct{}{
-			"192.168.1.1": {},
-			"192.168.1.2": {},
-		},
-	}
-	require.Equal(t, expectedAny, event.PantherAnyIPAddresses)
+	expectedAny := anystring.From(
+		"192.168.1.1",
+		"192.168.1.2",
+	)
+	require.Equal(t, expectedAny, &event.PantherAnyIPAddresses)
 }
 
 func TestAppendAnyIPsInFieldMultiple(t *testing.T) {
@@ -161,15 +94,13 @@ func TestAppendAnyIPsInFieldMultiple(t *testing.T) {
 	require.True(t, event.AppendAnyIPAddressInField("Accepted publickey from 221.19.216.201 to 229.12.27.176 port 54717"))
 	require.False(t, event.AppendAnyIPAddressInField("connection established"))
 
-	expectedAny := &PantherAnyString{
-		set: map[string]struct{}{
-			"206.206.199.127": {},
-			"186.28.188.20":   {},
-			"221.19.216.201":  {},
-			"229.12.27.176":   {},
-		},
-	}
-	require.Equal(t, expectedAny, event.PantherAnyIPAddresses)
+	expectedAny := anystring.From(
+		"206.206.199.127",
+		"186.28.188.20",
+		"221.19.216.201",
+		"229.12.27.176",
+	)
+	require.Equal(t, expectedAny, &event.PantherAnyIPAddresses)
 }
 
 func TestAppendAnyIPV4(t *testing.T) {
@@ -178,13 +109,8 @@ func TestAppendAnyIPV4(t *testing.T) {
 	require.True(t, event.AppendAnyIPAddress("192.168.1.2"))
 	require.False(t, event.AppendAnyIPAddress("not-an-ip"))
 
-	expectedAny := &PantherAnyString{
-		set: map[string]struct{}{
-			"192.168.1.1": {},
-			"192.168.1.2": {},
-		},
-	}
-	require.Equal(t, expectedAny, event.PantherAnyIPAddresses)
+	expectedAny := anystring.From("192.168.1.1", "192.168.1.2")
+	require.Equal(t, expectedAny, &event.PantherAnyIPAddresses)
 }
 
 func TestAppendAnyIPV6(t *testing.T) {
@@ -193,59 +119,42 @@ func TestAppendAnyIPV6(t *testing.T) {
 	require.True(t, event.AppendAnyIPAddress("::ffff:192.0.2.128"))
 	require.False(t, event.AppendAnyIPAddress("not-an-ip"))
 
-	expectedAny := &PantherAnyString{
-		set: map[string]struct{}{
-			"2001:db8:85a3:0:0:8a2e:370:7334": {},
-			"::ffff:192.0.2.128":              {},
-		},
-	}
-	require.Equal(t, expectedAny, event.PantherAnyIPAddresses)
+	expectedAny := anystring.From("2001:db8:85a3:0:0:8a2e:370:7334", "::ffff:192.0.2.128")
+	require.Equal(t, expectedAny, &event.PantherAnyIPAddresses)
 }
 
 func TestAppendAnyDomainNames(t *testing.T) {
 	event := PantherLog{}
 	value := "a"
-	expectedAny := &PantherAnyString{
-		set: map[string]struct{}{
-			value: {},
-		},
-	}
+	expectedAny := anystring.From(value)
 	event.AppendAnyDomainNames(value)
-	require.Equal(t, expectedAny, event.PantherAnyDomainNames)
+	require.Equal(t, expectedAny, &event.PantherAnyDomainNames)
 
 	event = PantherLog{}
 	event.AppendAnyDomainNamePtrs(&value)
-	require.Equal(t, expectedAny, event.PantherAnyDomainNames)
+	require.Equal(t, expectedAny, &event.PantherAnyDomainNames)
 }
 
 func TestAppendAnySHA1Hashes(t *testing.T) {
 	event := PantherLog{}
 	value := "a"
-	expectedAny := &PantherAnyString{
-		set: map[string]struct{}{
-			value: {},
-		},
-	}
+	expectedAny := anystring.From(value)
 	event.AppendAnySHA1Hashes(value)
-	require.Equal(t, expectedAny, event.PantherAnySHA1Hashes)
+	require.Equal(t, expectedAny, &event.PantherAnySHA1Hashes)
 
 	event = PantherLog{}
 	event.AppendAnySHA1HashPtrs(&value)
-	require.Equal(t, expectedAny, event.PantherAnySHA1Hashes)
+	require.Equal(t, expectedAny, &event.PantherAnySHA1Hashes)
 }
 
 func TestAppendAnyMD5Hashes(t *testing.T) {
 	event := PantherLog{}
 	value := "a"
-	expectedAny := &PantherAnyString{
-		set: map[string]struct{}{
-			value: {},
-		},
-	}
+	expectedAny := anystring.From(value)
 	event.AppendAnyMD5Hashes(value)
-	require.Equal(t, expectedAny, event.PantherAnyMD5Hashes)
+	require.Equal(t, expectedAny, &event.PantherAnyMD5Hashes)
 
 	event = PantherLog{}
 	event.AppendAnyMD5HashPtrs(&value)
-	require.Equal(t, expectedAny, event.PantherAnyMD5Hashes)
+	require.Equal(t, expectedAny, &event.PantherAnyMD5Hashes)
 }

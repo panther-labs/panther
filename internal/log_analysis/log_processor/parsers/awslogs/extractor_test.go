@@ -125,10 +125,12 @@ func TestAWSExtractor(t *testing.T) {
 `)
 
 	expectedEvent := AWSPantherLog{}
-	expectedEvent.AppendAnyAWSARNs("arn:aws:iam::123456789012:instance-profile/EC2Dev",
+	expectedEvent.AppendAnyAWSARNs(
 		"arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail",
+		"arn:aws:iam::123456789012:instance-profile/EC2Dev",
 		"arn:aws:ec2:region:111122223333:instance/i-0072230f74b3a798e",
-		"arn:aws:ec2:region:111122223333:instance/")
+		"arn:aws:ec2:region:111122223333:instance/",
+	)
 	expectedEvent.AppendAnyAWSInstanceIds("i-081de1d7604b11e4a", "i-0072230f74b3a798e" /* from ARN */)
 	expectedEvent.AppendAnyAWSAccountIds("123456789012", "888888888888" /* from ARN */, "111122223333" /* from ARN */)
 	expectedEvent.AppendAnyIPAddress("54.152.215.140")
@@ -136,8 +138,11 @@ func TestAWSExtractor(t *testing.T) {
 	expectedEvent.AppendAnyIPAddress("172.31.81.237")
 	expectedEvent.AppendAnyIPAddress("151.80.19.228")
 	expectedEvent.AppendAnyAWSTags("tag1:val1")
-	expectedEvent.AppendAnyDomainNames("ec2-54-152-215-140.compute-1.amazonaws.com", "GeneratedFindingDomainName",
-		"ip-172-31-81-237.ec2.internal")
+	expectedEvent.AppendAnyDomainNames(
+		"ip-172-31-81-237.ec2.internal",
+		"ec2-54-152-215-140.compute-1.amazonaws.com",
+		"GeneratedFindingDomainName",
+	)
 
 	extract.Extract(&json, NewAWSExtractor(&event))
 

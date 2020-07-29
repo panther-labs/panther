@@ -32,6 +32,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/anystring"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
 )
 
@@ -39,7 +40,6 @@ const (
 	DefaultMaxCommentLength = 255
 	// We want our output JSON timestamps to be: YYYY-MM-DD HH:MM:SS.fffffffff
 	// https://aws.amazon.com/premiumsupport/knowledge-center/query-table-athena-timestamp-empty/
-	TimestampLayout   = `2006-01-02 15:04:05.000000000`
 	GlueTimestampType = "timestamp"
 	GlueStringType    = "string"
 )
@@ -60,6 +60,10 @@ var (
 		},
 		{
 			From: reflect.TypeOf([]jsoniter.RawMessage{}),
+			To:   ArrayOf(GlueStringType),
+		},
+		{
+			From: reflect.TypeOf(anystring.Set{}),
 			To:   ArrayOf(GlueStringType),
 		},
 		{
@@ -459,22 +463,4 @@ func parseTag(tag string) (string, string) {
 		return tag[:idx], tag[idx+1:]
 	}
 	return tag, ""
-}
-
-// TODO: [awsglue] Add more mappings of invalid Athena field name characters here
-// NOTE: The mapping should be easy to remember (so no ASCII code etc) and complex enough
-// to avoid possible conflicts with other fields.
-var fieldNameReplacer = strings.NewReplacer(
-	"@", "_at_sign_",
-	",", "_comma_",
-	"`", "_backtick_",
-	"'", "_apostrophe_",
-)
-
-func RewriteFieldName(name string) string {
-	result := fieldNameReplacer.Replace(name)
-	if result == name {
-		return name
-	}
-	return strings.Trim(result, "_")
 }
