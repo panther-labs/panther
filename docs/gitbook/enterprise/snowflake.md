@@ -43,15 +43,15 @@ list of types. Specify the following key/value pairs:
 
 Then click `Next`.
 
-![Load](../.gitbook/assets/snowflake-secrets-page1.png)
+![Load](../.gitbook/assets/enterprise/snowflake-secrets-page1.png)
 
 You will be presented with a screen asking for the name and description of the secret. Fill these in and click `Next`.
 
-![Load](../.gitbook/assets/snowflake-secrets-page2.png)
+![Load](../.gitbook/assets/enterprise/snowflake-secrets-page2.png)
 
 The next screen concerns autorotation, just click the `Next` button.
 
-![Load](../.gitbook/assets/snowflake-secrets-page3.png)
+![Load](../.gitbook/assets/enterprise/snowflake-secrets-page3.png)
 
 Finally you will be presented with an overview screen. Scroll to the bottom and click the `Store` button.
 
@@ -127,11 +127,11 @@ created in `./out/snowflake/snowpipe.sql`
 
 In the Snowflake SQL shell use the `Load Script` option to load `snowpipe.sql`
 
-![Load](../.gitbook/assets/snowflake-upload.png)
+![Load](../.gitbook/assets/enterprise/snowflake-upload.png)
 
 Select the `All Queries` checkbox, then click on `Run`
 
-![Run](../.gitbook/assets/snowflake-run.png)
+![Run](../.gitbook/assets/enterprise/snowflake-run.png)
 
 ### Validation of Snowpipe Processing
 Once `snowpipe.sql` has been successfully executed, you should have three databases:
