@@ -127,11 +127,11 @@ created in `./out/snowflake/snowpipe.sql`
 
 In the Snowflake SQL shell use the `Load Script` option to load `snowpipe.sql`
 
-![Load](../.gitbook/assets/snowflake-upload.png)
+![Load](../.gitbook/assets/enterprise/snowflake-upload.png)
 
 Select the `All Queries` checkbox, then click on `Run`
 
-![Run](../.gitbook/assets/snowflake-run.png)
+![Run](../.gitbook/assets/enterprise/snowflake-run.png)
 
 ### Validation of Snowpipe Processing
 Once `snowpipe.sql` has been successfully executed, you should have three databases:
@@ -149,7 +149,6 @@ You can quickly test if the data ingestion is working by running simple queries,
 SELECT count(1) AS c FROM panther_logs.public.aws_cloudtrail ;
 ```
 
- 
 ## Update Permissions and Test Panther User Interface with Snowflake
 
 Update the Panther Snowflake user with grants to read tables from the following databases:
@@ -161,6 +160,7 @@ You may want to allow more tables so that you can join data to the Panther data 
 
 We need to configure the permissions for the Panther AWS secret. Go to the console and select the secret you created
 above. On the overview screen click on the `Edit Permissions` button.
+
 Copy the below policy JSON, substituting the `<snowflake api lambda role>` at the top of the 
 generated `./out/snowflake/snowpipe.sql` file from above, and `<secret ARN>` for the ARN of the secret just created.
 ```json

@@ -6,7 +6,7 @@ Navigate to `Log Analysis` > `Rules`, and click `Create New` in the top right co
 
 You have the option of creating a single new rule, or bulk uploading a zip file containing rules created with the [panther_analysis_tool](../../analysis/panther-analysis-tool.md):
 
-![](../../.gitbook/assets/write-rules-ui-1.png)
+![](../../.gitbook/assets/log-analysis/ui-write-rules-1.png)
 
 Select `Single` to create a new rule.
 
@@ -14,19 +14,19 @@ Select `Single` to create a new rule.
 
 Set all the necessary rule attributes, such as the ID, Log Types, Deduplication Period, and Severity:
 
-![](../../.gitbook/assets/write-rules-ui-2.png)
+![](../../.gitbook/assets/log-analysis/ui-write-rules-2.png)
 
 ## Write Rule Function
 
 Then write your rule function with the `rule()`, `title()`, and `dedup()` functions.
 
-![](../../.gitbook/assets/write-rules-ui-3.png)
+![](../../.gitbook/assets/log-analysis/ui-write-rules-3.png)
 
 ## Configure Tests
 
 Finally, configure test cases to ensure your rule works as expected:
 
-![](../../.gitbook/assets/write-rules-ui-4.png)
+![](../../.gitbook/assets/log-analysis/ui-write-rules-4.png)
 
 And click `Create` to save the rule.
 

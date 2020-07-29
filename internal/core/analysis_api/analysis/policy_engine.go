@@ -96,23 +96,23 @@ func makeTestSummary(policy *models.TestPolicy, engineOutput enginemodels.Policy
 				ErrorMessage: result.Errored[0].Message,
 				Name:         string(test.Name),
 			})
-			testResults.TestSummary = false
 
 		case len(result.Failed) > 0 && bool(test.ExpectedResult), len(result.Passed) > 0 && !bool(test.ExpectedResult):
 			// The test result was not expected, so this test failed
 			testResults.TestsFailed = append(testResults.TestsFailed, string(test.Name))
-			testResults.TestSummary = false
 
 		case len(result.Failed) > 0 && !bool(test.ExpectedResult), len(result.Passed) > 0 && bool(test.ExpectedResult):
 			// The test result was as expected
 			testResults.TestsPassed = append(testResults.TestsPassed, string(test.Name))
-			testResults.TestSummary = true
 
 		default:
 			// This test didn't run (result.{Errored, Passed, Failed} are all empty). This must not happen absent a bug.
-			return testResults, errors.Errorf("unable to run test for ruleID %s", result.ID)
+			return testResults, errors.Errorf("unable to run test for %s", result.ID)
 		}
 	}
+
+	testResults.TestSummary = len(testResults.TestsFailed) == 0 && len(testResults.TestsErrored) == 0
+
 	return testResults, nil
 }
 

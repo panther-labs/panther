@@ -10,6 +10,6 @@ With Panther Data Explorer, you are able to:
 * Share results with their team through a shareable link
 * Download results in a CSV
 
-![Data Explorer](../../.gitbook/assets/data-explorer.png)
+![Data Explorer](../../.gitbook/assets/enterprise/data-analytics/data-explorer.png)
 
 As with all of our enterprise features, access to the Data Explorer can be limited through our [Role-Based Access Control](../rbac.md) system.

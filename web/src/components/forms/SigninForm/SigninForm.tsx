@@ -50,10 +50,16 @@ const SignInForm: React.FC = () => {
         signIn({
           email: username,
           password,
-          onError: ({ message }) =>
-            setErrors({
-              password: message,
-            }),
+          onError: ({ message }) => {
+            // FIXME: There is weird issue returning wrong error message on submit
+            // correlated heavily on this https://github.com/aws-amplify/amplify-js/pull/4427
+            return setErrors({
+              password:
+                message === 'Only radix 2, 4, 8, 16, 32 are supported'
+                  ? 'Incorrect username or password.'
+                  : message,
+            });
+          },
         })
       }
     >

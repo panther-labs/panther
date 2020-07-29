@@ -25,11 +25,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/aws/aws-lambda-go/cfn"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/analysis/client"
@@ -44,72 +43,51 @@ type AnalysisSetProperties struct {
 }
 
 func customAnalysisSet(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
+	const resourceID = "custom:analysis:init"
+
 	switch event.RequestType {
-	case cfn.RequestCreate:
+	case cfn.RequestCreate, cfn.RequestUpdate:
 		var props AnalysisSetProperties
 		if err := parseProperties(event.ResourceProperties, &props); err != nil {
 			return "", nil, err
 		}
 
-		httpClient := gatewayapi.GatewayClient(awsSession)
-		apiClient := client.NewHTTPClientWithConfig(nil, client.DefaultTransportConfig().
-			WithBasePath("/v1").WithHost(props.AnalysisAPIEndpoint))
-
-		// The policy-engine and rules-engine must exist so the analysis-api can update their global layer.
-		// Waiting here is easier than using a CloudFormation dependency because of our stack structure.
-		// Typically this won't take more than a few seconds.
-		if err := waitForPythonEngines(); err != nil {
-			return "", nil, err
+		// Check if rules/policies already exist - never overwrite existing items.
+		// It's easier and faster to just scan the dynamo table directly instead of going through
+		// the analysis-api. This way, we can stop immediately if an entry is found.
+		response, err := dynamoClient.Scan(&dynamodb.ScanInput{
+			Limit:     aws.Int64(1),
+			TableName: aws.String("panther-analysis"),
+		})
+		if err != nil {
+			// Errors are logged but not returned - we do not need to fail the entire deployment
+			// because the user can always manually BulkUpload the python analysis set later.
+			zap.L().Error("failed to scan panther-analysis table", zap.Error(err))
+			return resourceID, nil, nil
 		}
-		return "custom:analysis:init", nil, initializeAnalysisSets(props.PackURLs, apiClient, httpClient)
+
+		if len(response.Items) > 0 {
+			zap.L().Info("skipping create/update because the panther-analysis table already has items")
+			return resourceID, nil, nil
+		}
+
+		if err := initializeAnalysisSets(props.PackURLs, props.AnalysisAPIEndpoint); err != nil {
+			zap.L().Error("failed to bulk upload python analysis set", zap.Error(err))
+		}
+		return resourceID, nil, nil
 
 	default:
-		// ignore deletes and updates - we do not want to modify an existing ruleset from here.
+		// ignore deletes
 		return event.PhysicalResourceID, nil, nil
 	}
 }
 
-func waitForPythonEngines() error {
-	zap.L().Info("waiting for policy-engine and rules-engine to exist")
-	const timeout = 5 * time.Minute
-
-	for start := time.Now(); time.Since(start) < timeout; time.Sleep(5 * time.Second) {
-		exists, err := lambdaFunctionExists("panther-policy-engine")
-		if err != nil {
-			return err
-		}
-		if !exists {
-			continue
-		}
-
-		exists, err = lambdaFunctionExists("panther-rules-engine")
-		if err != nil {
-			return err
-		}
-		if !exists {
-			continue
-		}
-
-		return nil // both exist
-	}
-
-	return fmt.Errorf("timed out waiting for Python engines")
-}
-
-func lambdaFunctionExists(name string) (bool, error) {
-	_, err := lambdaClient.GetFunction(&lambda.GetFunctionInput{FunctionName: &name})
-	if err == nil {
-		return true, nil
-	}
-
-	if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == lambda.ErrCodeResourceNotFoundException {
-		err = nil
-	}
-	return false, err
-}
-
 // Install Python rules/policies for a fresh deployment.
-func initializeAnalysisSets(sets []string, apiClient *client.PantherAnalysis, httpClient *http.Client) error {
+func initializeAnalysisSets(sets []string, endpoint string) error {
+	httpClient := gatewayapi.GatewayClient(awsSession)
+	apiClient := client.NewHTTPClientWithConfig(nil, client.DefaultTransportConfig().
+		WithBasePath("/v1").WithHost(endpoint))
+
 	var newRules, newPolicies int64
 	for _, url := range sets {
 		url = strings.TrimSpace(url)

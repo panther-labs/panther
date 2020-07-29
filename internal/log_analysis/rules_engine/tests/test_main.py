@@ -66,15 +66,18 @@ class TestMainDirectAnalysis(TestCase):
             }]
         }
         expected_response = {
-            'events': [{
-                'id': 'event_id',
-                'matched': [],
-                'notMatched': [],
-                'errored': [{
-                    'id': 'rule_id',
-                    'message': 'Failure message'
-                }]
-            }]
+            'events':
+                [
+                    {
+                        'id': 'event_id',
+                        'matched': [],
+                        'notMatched': [],
+                        'errored': [{
+                            'id': 'rule_id',
+                            'message': 'Exception: Failure message'
+                        }]
+                    }
+                ]
         }
         self.assertEqual(expected_response, lambda_handler(payload, None))
 

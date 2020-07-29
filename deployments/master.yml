@@ -24,20 +24,27 @@ Parameters:
   # and because the CloudFormation console always shows parameters in alphabetical order.
   AccessLogsBucketName:
     Type: String
-    Description: S3 bucket for storing S3 access logs. Has no effect if EnableS3AccessLogs=false. Defaults to the Panther audit bucket, created automatically.
+    Description: Name of the S3 bucket for storing S3 access logs (has no effect if EnableS3AccessLogs=false). Defaults to the Panther audit bucket, created automatically.
     Default: ''
+    AllowedPattern: '^([a-z0-9.-]{3,63})?$'
   AlarmTopicArn:
     Type: String
     Description: SNS topic notified by CloudWatch alarms. If not specified, a topic is created for you.
     Default: ''
+    # Example: "arn:aws:sns:us-west-2:111122223333:panther-cw-alarms"
+    AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+)?$'
   CertificateArn:
     Type: String
     Description: TLS certificate (ACM or IAM) used by the web app - see also CustomDomain. If not specified, a self-signed cert is created for you.
     Default: ''
+    # Example: "arn:aws:acm:us-west-2:111122223333:certificate/6e51b91b-0d7d-4592-89a3-c113c78e3ab3" or
+    # "arn:aws:iam::111122223333:server-certificate/panther/us-west-2/MyCert"
+    AllowedPattern: '^((arn:(aws|aws-cn|aws-us-gov):acm:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:certificate\/[a-f0-9-]{36})|(arn:(aws|aws-cn|aws-us-gov):iam::\d{12}:server-certificate\/\S+))?$'
   CloudWatchLogRetentionDays:
     Type: Number
     Description: Number of days to retain CloudWatch logs (e.g. Lambda execution logs)
     Default: 365
+    MinValue: 1
   CompanyDisplayName:
     Type: String
     Description: Company name displayed in Settings > General
@@ -45,12 +52,14 @@ Parameters:
     MinLength: 1
   CustomDomain:
     Type: String
-    Description: If CertificateArn is registered for a custom domain (e.g. 'example.com'), list that here.
+    Description: If CertificateArn is registered for a custom domain (e.g. 'app.example.com'), list that here.
     Default: ''
+    AllowedPattern: '^([a-z0-9.-]+\.[a-z]{2,})?$'
   DataReplicationBucketName:
     Type: String
     Description: Replicate processed log data to this S3 bucket for Glacier backup storage
     Default: ''
+    AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):s3:::[a-z0-9.-]{3,63})?$'
   Debug:
     Type: String
     Description: Toggle debug logging for all components
@@ -128,6 +137,8 @@ Parameters:
     Type: String
     Description: Custom Python layer for analysis and remediation. Defaults to a pre-built layer with 'policyuniverse' and 'requests' pip libraries
     Default: ''
+    # Example: "arn:aws:lambda:us-west-2:111122223333:layer:panther-analysis:143"
+    AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):lambda:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:layer:\S+:\d+)?$'
   TracingMode:
     Type: String
     Description: Enable XRay tracing on Lambda, API Gateway, and GraphQL
@@ -137,7 +148,7 @@ Parameters:
 Mappings:
   Constants:
     Panther:
-      Version: 1.5.1
+      Version: 1.6.0
 
 Conditions:
   RegistryProvided: !Not [!Equals [!Ref ImageRegistry, '']]
@@ -257,7 +268,6 @@ Resources:
       TemplateURL: core.yml
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
-        AnalysisApiEndpoint: !GetAtt BootstrapGateway.Outputs.AnalysisApiEndpoint
         AnalysisApiId: !GetAtt BootstrapGateway.Outputs.AnalysisApiId
         AnalysisVersionsBucket: !GetAtt Bootstrap.Outputs.AnalysisVersionsBucket
         AppDomainURL: !GetAtt Bootstrap.Outputs.LoadBalancerUrl
@@ -269,15 +279,14 @@ Resources:
         CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         Debug: !Ref Debug
         DynamoScalingRoleArn: !GetAtt Bootstrap.Outputs.DynamoScalingRoleArn
-        InitialAnalysisPackUrls: !Join [',', !Ref InitialAnalysisPackUrls]
+        InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
+        InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         OutputsKeyId: !GetAtt Bootstrap.Outputs.OutputsEncryptionKeyId
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
         TracingMode: !Ref TracingMode
         UserPoolId: !GetAtt Bootstrap.Outputs.UserPoolId
-        InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
-        InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
       Tags:
         - Key: Application
           Value: Panther
@@ -313,6 +322,8 @@ Resources:
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         Debug: !Ref Debug
+        InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
+        InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         LogProcessorLambdaMemorySize: !Ref LogProcessorLambdaMemorySize
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
@@ -321,8 +332,6 @@ Resources:
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
         TablesSignature: !FindInMap [Constants, Panther, Version] # this changes with version, forcing table schema updates
         TracingMode: !Ref TracingMode
-        InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
-        InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
       Tags:
         - Key: Application
           Value: Panther
@@ -360,11 +369,13 @@ Resources:
 
   Web:
     Type: AWS::CloudFormation::Stack
-    DependsOn: Core # users-api
+    # Custom resources in this stack require the analysis-api, users-api, and both Python engines to exist
+    DependsOn: [CloudSecurity, Core, LogAnalysis]
     Properties:
       TemplateURL: web_server.yml
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
+        AnalysisApiEndpoint: !GetAtt BootstrapGateway.Outputs.AnalysisApiEndpoint
         AppClientId: !GetAtt BootstrapGateway.Outputs.AppClientId
         CertificateArn: !Ref CertificateArn
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
@@ -383,6 +394,7 @@ Resources:
               - !Ref ImageRegistry
               - !Sub 349240696275.dkr.ecr.${AWS::Region}.amazonaws.com/panther-community
             tag: !FindInMap [Constants, Panther, Version]
+        InitialAnalysisPackUrls: !Join [',', !Ref InitialAnalysisPackUrls]
         PantherVersion: !Sub
           - v${version} # has to be prefixed with 'v' for docs link in web app to work
           - version: !FindInMap [Constants, Panther, Version]
@@ -401,9 +413,6 @@ Resources:
           Value: panther-web
 
 Outputs:
-  GraphQlUrl:
-    Description: The URL for the AppSync GraphQL endpoint
-    Value: !GetAtt Bootstrap.Outputs.GraphQLApiEndpoint
   LoadBalancerUrl:
     Description: Panther URL serving the web app
     Value: !Sub https://${Bootstrap.Outputs.LoadBalancerUrl}
