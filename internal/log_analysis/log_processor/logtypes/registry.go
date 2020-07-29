@@ -238,5 +238,29 @@ func checkLogEntrySchema(logType string, schema interface{}) error {
 	if err := jsoniter.Unmarshal(data, &fields); err != nil {
 		return errors.Errorf("invalid schema struct for log type %q: %s", logType, err)
 	}
+	// Verify we can generate glue schema from the provided struct
+	if err := checkGlue(schema); err != nil {
+		return errors.Wrapf(err, "failed to infer Glue columns for %q", logType)
+	}
 	return nil
+}
+
+func checkGlue(schema interface{}) (err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			switch e := e.(type) {
+			case error:
+				err = e
+			case string:
+				err = errors.New(e)
+			default:
+				err = errors.Errorf(`panic %v`, e)
+			}
+		}
+	}()
+	cols, _ := awsglue.InferJSONColumns(schema, awsglue.GlueMappings...)
+	if len(cols) == 0 {
+		err = errors.New("empty columns")
+	}
+	return
 }

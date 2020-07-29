@@ -19,7 +19,6 @@ package parsers
  */
 
 import (
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"net"
 	"reflect"
 	"regexp"
@@ -29,6 +28,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
