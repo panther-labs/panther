@@ -105,16 +105,16 @@ Returning `True` means that a resource is compliant, and returning `False` will 
 
 ## Screenshots
 
-<img src="docs/img/rule-search-new.png" alt="Rule Search"/>
+<img src="docs/img/rule-search-dark.PNG" alt="Rule Search"/>
 <p align="center"><i>Rule Search:</i> Show running detections</p>
 
-<img src="docs/img/rule-editor-new.png" alt="Rule Editor"/>
+<img src="docs/img/rule-editor-dark.PNG" alt="Rule Editor"/>
 <p align="center"><i>Rule Editor:</i> Write and test Python detections in the UI</p>
 
-<img src="docs/img/alert-viewer-new.png" alt="Alert Viewer"/>
+<img src="docs/img/alert-viewer-dark.PNG" alt="Alert Viewer"/>
 <p align="center"><i>Alert Viewer:</i> Triage generated alerts</p>
 
-<img src="docs/img/resource-viewer-new.png" alt="Resource Viewer"/>
+<img src="docs/img/resource-viewer-dark.PNG" alt="Resource Viewer"/>
 <p align="center"><i>Resource Viewer:</i> View attributes and policy statuses</p>
 
 ## About Us
