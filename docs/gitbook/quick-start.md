@@ -27,7 +27,7 @@ First, navigate to the AWS CloudFormation console and create a new stack.
 Use the following template URL to install the latest version in the us-east-1 region:
 
 ```
-https://panther-community-us-east-1.s3.amazonaws.com/v1.6.0panther.yml
+https://panther-community-us-east-1.s3.amazonaws.com/v1.6.0/panther.yml
 ```
 
 The template URL is of the following form:
