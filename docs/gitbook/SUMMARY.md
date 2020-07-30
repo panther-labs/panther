@@ -76,6 +76,7 @@
   * [Box](log-analysis/log-processing/log-setup/box.md)
   * [GSuite](log-analysis/log-processing/log-setup/gsuite.md)
   * [Okta](log-analysis/log-processing/log-setup/okta.md)
+  * [OneLogin](log-analysis/log-processing/log-setup/onelogin.md)
 * [Standard Fields](log-analysis/panther-fields.md)
 
 ## Cloud Security
