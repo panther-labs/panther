@@ -33,7 +33,7 @@ in the Panther account.
 
 First, create a KMS key to use for an secret. Go to the KMS console and click on `Create a key`. Pick `Symmetric` for the 
 type and click `Next`. On the next screen set the alias to `panther-secret`. Click `Next`. On the next 
-page select `AdminConsole` as the key administrator. Click `Next`. On the next page click on `Add another AWS Account`
+page Click `Next` (accept defaults). On the next page click on `Add another AWS Account`
 and enter the account id where Panther is installed. Click `Next`. Click `Finish`.
 
 Now, access the AWS Secrets Manager via the console and select `Store a New Secret` button on the page.
