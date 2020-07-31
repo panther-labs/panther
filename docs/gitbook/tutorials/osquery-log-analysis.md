@@ -69,7 +69,7 @@ When this query runs (every `3600` seconds), it will report results in a JSON lo
 * `action` indicates if this result is being added or removed
 * `hostIdentifier` is the hostname which reported the log
 
-When Panther receives the log, it will be parsed, extracted, and normalized based on fields such as IPs/domains to enable quick searches in the data warehouse and flexibility in rules. For the complete list of all fields parsed by Panther, check out the [Osquery.Differential reference](../log-analysis/log-processing/supported-logs/Osquery.md#Osquery.Differential).
+When Panther receives the log, it will be parsed, extracted, and normalized based on fields such as IPs/domains to enable quick searches in the data warehouse and flexibility in rules. For the complete list of all fields parsed by Panther, check out the [Osquery.Differential reference](../log-analysis/log-processing/supported-logs/Osquery.md#osquery-differential).
 
 ## Configuration
 

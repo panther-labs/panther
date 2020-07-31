@@ -156,9 +156,10 @@ func (Test) Doc() {
 	//    - ""                                       (file and header are both optional)
 	//
 	// Non-examples:
-	//    - "../log-analysis"   (a common mistake - you can't link to directories without a README)
-	//    - "quick_start.md"    (use "-" instead of "_")
-	docRef := regexp.MustCompile(`^([A-Za-z0-9./-]+\.md)?(#[A-Za-z0-9.-]+)?$`)
+	//    - "../log-analysis"           (can't link to directories - link will fail without README)
+	//    - "quick_start.md"            (use "-" instead of "_")
+	//    - "quick-start.md#Onboarding" (headers must be lowercase with dashes only)
+	docRef := regexp.MustCompile(`^([A-Za-z0-9./-]+\.md)?(#[a-z0-9-]+)?$`)
 
 	for path := range docFiles {
 		for _, match := range linkPattern.FindAllSubmatch(readFile(path), -1) {

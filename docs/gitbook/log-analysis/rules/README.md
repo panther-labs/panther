@@ -27,7 +27,7 @@ def title(event):
   return 'Unauthenticated Access to S3 Bucket  {}'.format(event.get('bucket'))
 ```
 
-- This rule applies to [S3 Server Access Logs](../log-processing/supported-logs/AWS.md#AWS.S3ServerAccess)
+- This rule applies to [S3 Server Access Logs](../log-processing/supported-logs/AWS.md#aws-s-3-serveraccess)
 - This rule groups alert events by the bucket name
 - Alerts will have a title like `Unauthenticated Access to S3 Bucket my-super-secret-data`
 
@@ -158,3 +158,11 @@ Then, configure the built in rules by searching for the `Configuration Required`
 ## Writing Rules with the Panther Analysis Tool
 
 The [panther_analysis_tool](../../analysis/panther-analysis-tool.md) is a Python command line interface for testing, packaging, and deploying Panther Policies and Rules. This enables teams to work in a more developer oriented workflow and track detections with version control systems such as `git`.
+
+### 12345
+
+### A-1-B-2-C-3
+
+### ABC 123 DEF
+
+### A1B2C3D4
