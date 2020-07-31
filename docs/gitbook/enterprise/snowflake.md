@@ -26,6 +26,28 @@ Create a [user](https://docs.snowflake.com/en/sql-reference/sql/create-user.html
 [read-only role](https://docs.snowflake.com/en/user-guide/security-access-control-configure.html#creating-read-only-roles) 
 in your Snowflake account.
 
+An example of how to create a user associated with a read only role with Snowflake queries is the following:
+
+```sql
+create user panther_readonly password='your_password'; 
+
+create role panther_readonly_role;
+
+grant role panther_readonly_role
+   to user panther_readonly;
+
+alter user panther_readonly
+   set default_role = panther_readonly_role;
+
+grant role public to role panther_readonly_role;
+
+grant usage
+  on warehouse your_warehouse
+  to role panther_readonly_role;
+
+alter user set DEFAULT_WAREHOUSE = your_warehouse;
+```
+
 Create a secret in the [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/). Ideally this should be created
 in the same AWS region as the Panther deployment but this is optional. This secret will be used
 by Panther to read database tables. It will be configured to only allow access from a single lambda function
@@ -45,6 +67,7 @@ list of types. Specify the following key/value pairs:
 * password
 * host (NOTE: this is usually: <account>.<region>.snowflakecomputing.com)
 * port (NOTE: use 443 unless you have configured differently)
+* warehouse (NOTE: check your active warehouses in your Snowflake account.)
 
 Select `panther-secret` from the dropdown under `Select the encryption key`.
 
@@ -166,7 +189,54 @@ Update the Panther Snowflake user with grants to read tables from the following 
 
 You may want to allow more tables so that you can join data to the Panther data from the Panther [Data Explorer](./data-analytics/data-explorer.md).
 
-We need to configure the permissions for the Panther AWS secret. Go to the console and select the secret you created
+Some example Snowflake queries to do it are the following:
+
+```sql
+-- panther_logs
+grant usage
+  on database panther_logs
+  to role panther_readonly_role;
+grant usage
+  on schema panther_logs.public
+  to role panther_readonly_role;
+grant select
+  on all tables in schema panther_logs.public
+  to role panther_readonly_role;
+grant select
+  on all views in schema panther_logs.public
+  to role panther_readonly_role;
+
+-- panther_rule_matches
+grant usage
+  on database panther_rule_matches
+  to role panther_readonly_role;
+grant usage
+  on schema panther_rule_matches.public
+  to role panther_readonly_role;
+grant select
+  on all tables in schema panther_rule_matches.public
+  to role  panther_readonly_role;
+grant select
+  on all views in schema panther_rule_matches.public
+  to role  panther_readonly_role;
+
+-- panther_views
+grant usage
+  on database panther_views
+  to role panther_readonly_role;
+grant usage
+  on schema panther_views.public
+  to role panther_readonly_role;
+grant select
+  on all views in schema panther_views.public
+  to role panther_readonly_role;
+
+-- check grants
+show grants to user panther_readonly;
+show grants to role panther_readonly_role;
+```
+
+Moreover, we need to configure the permissions for the Panther AWS secret. Go to the console and select the secret you created
 above. On the overview screen click on the `Edit Permissions` button.
 Copy the below policy JSON, substituting the `<snowflake api lambda role>` at the top of the 
 generated `./out/snowflake/snowpipe.sql` file from above, and `<secret ARN>` for the ARN of the secret just created.
