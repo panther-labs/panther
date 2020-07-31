@@ -25,21 +25,24 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 )
 
-// CustomRetryer wraps the SDK's built in DefaultRetryer adding additional
+func NewConnectionErrRetryer() *ConnectionErrRetryer {
+	return &ConnectionErrRetryer{
+		DefaultRetryer: client.DefaultRetryer{},
+	}
+}
+
+// ConnectionErrRetryer wraps the SDK's built in DefaultRetryer adding additional
 // custom features.
 type ConnectionErrRetryer struct {
 	client.DefaultRetryer
 }
 
 // ShouldRetry overrides the SDK's built in DefaultRetryer adding customization
-// to retry `connection reset by peer` and `use of closed network connection` errors
+// to retry `connection reset by peer` errors
 func (r ConnectionErrRetryer) ShouldRetry(req *request.Request) bool {
 	if req.Error != nil {
 		errMsg := req.Error.Error()
 		if strings.Contains(errMsg, "connection reset by peer") {
-			return true
-		}
-		if strings.Contains(errMsg, "use of closed network connection") {
 			return true
 		}
 	}

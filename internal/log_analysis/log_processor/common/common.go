@@ -61,7 +61,7 @@ type EnvConfig struct {
 
 func Setup() {
 	awsConfig := aws.NewConfig().WithMaxRetries(MaxRetries)
-	awsConfig.Retryer = awsretry.ConnectionErrRetryer{}
+	awsConfig.Retryer = awsretry.NewConnectionErrRetryer()
 	Session = session.Must(session.NewSession(awsConfig))
 	LambdaClient = lambda.New(Session)
 	S3Uploader = s3manager.NewUploader(Session)

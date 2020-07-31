@@ -65,7 +65,7 @@ var clientCache = make(map[clientKey]cachedClient)
 
 func Setup() {
 	awsConfig := aws.NewConfig().WithMaxRetries(maxRetries)
-	awsConfig.Retryer = awsretry.ConnectionErrRetryer{}
+	awsConfig.Retryer = awsretry.NewConnectionErrRetryer()
 	snapshotPollerSession = session.Must(session.NewSession(awsConfig))
 }
 
