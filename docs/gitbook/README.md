@@ -2,7 +2,7 @@
 
 #### Panther is an open source platform for detecting threats, improving cloud security posture, and powering investigations.
 
-![Architecture](.gitbook/assets/diagrams/panther_overview_transparent.png)
+![Architecture](.gitbook/assets/readme-overview.png)
 
 **Benefits**
 

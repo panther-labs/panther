@@ -23,12 +23,16 @@ Parameters:
   AlarmTopicArn:
     Type: String
     Description: SNS topic for CloudWatch alarms
+    # Example: "arn:aws:sns:us-west-2:111122223333:panther-cw-alarms"
+    AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
   AuditLogsBucket:
     Type: String
     Description: The name of the S3 bucket which stores Panther audit logs
+    AllowedPattern: '^[a-z0-9.-]{3,63}$'
   CustomResourceVersion:
     Type: String
     Description: Forces updates to custom resources when changed
+    MinLength: 1
   EnableCloudTrail:
     Type: String
     Description: If true, create a Panther CloudTrail in this account configured for log processing

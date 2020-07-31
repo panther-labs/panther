@@ -72,7 +72,7 @@ func (Master) Deploy() {
 //
 // Returns bucket, firstUserEmail, ecrRegistry
 func masterDeployPreCheck() (string, string, string) {
-	deployPreCheck(*awsSession.Config.Region)
+	deployPreCheck(*awsSession.Config.Region, false)
 
 	_, err := cloudformation.New(awsSession).DescribeStacks(
 		&cloudformation.DescribeStacksInput{StackName: aws.String(bootstrapStack)})
@@ -99,7 +99,7 @@ func masterDeployPreCheck() (string, string, string) {
 
 // Publish Publish a new Panther release (Panther team only)
 func (Master) Publish() {
-	deployPreCheck("us-east-1")
+	deployPreCheck("us-east-1", false)
 	version := getMasterVersion()
 
 	logger.Infof("Publishing panther-community v%s to %s", version, strings.Join(publishRegions, ","))

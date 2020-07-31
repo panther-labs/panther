@@ -22,21 +22,21 @@ The following databases are available to search from:
 
 By navigating to the AWS [Athena](https://console.aws.amazon.com/athena/home) console, you can find a set of Panther pre-built tables under the database dropdown:
 
-![Athena Tables](../../.gitbook/assets/screen-shot-2020-01-22-at-2.13.07-pm.png)
+![Athena Tables](../../.gitbook/assets/enterprise/data-analytics/readme-athena-1.png)
 
 Expanding these tables will show their fields (hover your mouse over a field to see the description). You can use the in-browser query editor to run SQL like commands against the data:
 
-![Athena Columns](../../.gitbook/assets/AthenaTablesWithColumnDescriptions.png)
+![Athena Columns](../../.gitbook/assets/enterprise/data-analytics/readme-athena-2.png)
 
 {% hint style="info" %}
 If this is your first time using Athena, you will be prompted to setup a bucket to store your search results
 {% endhint %}
 
-![Athena Settings](../../.gitbook/assets/screen-shot-2020-01-22-at-2.16.28-pm.png)
+![Athena Settings](../../.gitbook/assets/enterprise/data-analytics/readme-athena-3.png)
 
 Data can now be queried to answer common questions:
 
-![Athena Query](../../.gitbook/assets/screen-shot-2020-01-22-at-2.18.33-pm.png)
+![Athena Query](../../.gitbook/assets/enterprise/data-analytics/readme-athena-4.png)
 
 ## Accessing Data with AWS Glue
 

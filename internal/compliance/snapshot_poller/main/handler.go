@@ -22,8 +22,10 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers"
+	awspoller "github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws"
 )
 
 func main() {
+	awspoller.Setup()
 	lambda.Start(pollers.Handle)
 }

@@ -32,10 +32,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/kelseyhightower/envconfig"
+
+	"github.com/panther-labs/panther/pkg/awsretry"
 )
 
 const (
-	MaxRetries     = 20 // setting Max Retries to a higher number - we'd like to retry VERY hard before failing.
+	MaxRetries     = 15 // retrying for ~ 5'
 	EventDelimiter = '\n'
 )
 
@@ -58,7 +60,9 @@ type EnvConfig struct {
 }
 
 func Setup() {
-	Session = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(MaxRetries)))
+	awsConfig := aws.NewConfig().WithMaxRetries(MaxRetries)
+	awsConfig.Retryer = awsretry.NewConnectionErrRetryer()
+	Session = session.Must(session.NewSession(awsConfig))
 	LambdaClient = lambda.New(Session)
 	S3Uploader = s3manager.NewUploader(Session)
 	SqsClient = sqs.New(Session)

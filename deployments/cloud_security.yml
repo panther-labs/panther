@@ -24,18 +24,25 @@ Parameters:
   AlarmTopicArn:
     Type: String
     Description: SNS topic for CloudWatch alarms
+    # Example: "arn:aws:sns:us-west-2:111122223333:panther-cw-alarms"
+    AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
   AnalysisApiId:
     Type: String
     Description: API Gateway for analysis-api
+    # Example: "0jcmwnr9cj"
+    AllowedPattern: '^[0-9a-z]{10}$'
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
+    MinValue: 1
   ComplianceApiId:
     Type: String
     Description: API Gateway for compliance-api
+    AllowedPattern: '^[0-9a-z]{10}$'
   CustomResourceVersion:
     Type: String
     Description: Forces updates to custom resources when changed
+    MinLength: 1
   Debug:
     Type: String
     Description: Toggle debug logging
@@ -46,21 +53,29 @@ Parameters:
   ProcessedDataBucket:
     Type: String
     Description: Name of the S3 bucket for storing processed logs
+    AllowedPattern: '^[a-z0-9.-]{3,63}$'
   ProcessedDataTopicArn:
     Type: String
     Description: The ARN of the processed data SNS topic
+    AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
   PythonLayerVersionArn:
     Type: String
-    Description: Pip libraries for python analysis and remediation
+    Description: Versioned lambda layer with pip libraries for python analysis and remediation
+    # Example: "arn:aws:lambda:us-west-2:111122223333:layer:panther-analysis:143"
+    AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):lambda:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:layer:\S+:\d+$'
   RemediationApiId:
     Type: String
     Description: API Gateway for remediation-api
+    AllowedPattern: '^[0-9a-z]{10}$'
   ResourcesApiId:
     Type: String
     Description: API Gateway for resources-api
+    AllowedPattern: '^[0-9a-z]{10}$'
   SqsKeyId:
     Type: String
     Description: KMS key ID for SQS encryption
+    # Example: "484fb80c-4ae5-40d0-b22a-bdd5d0953b3e"
+    AllowedPattern: '^[0-9a-f-]{36}$'
   TracingMode:
     Type: String
     Description: Enable XRay tracing on Lambda and API Gateway

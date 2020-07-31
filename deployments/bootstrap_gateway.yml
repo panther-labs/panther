@@ -33,33 +33,43 @@ Parameters:
   AlarmTopicArn:
     Type: String
     Description: SNS topic for CloudWatch alarms
+    # Example: "arn:aws:sns:us-west-2:111122223333:panther-cw-alarms"
+    AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
   AthenaResultsBucket:
     Type: String
-    Description: Bucket created to hold Athena results
+    Description: Name of the S3 bucket created to hold Athena results
+    AllowedPattern: '^[a-z0-9.-]{3,63}$'
   AuditLogsBucket:
     Type: String
-    Description: Bucket which holds Panther's own audit logs
+    Description: Name of the S3 bucket which holds Panther's own audit logs
+    AllowedPattern: '^[a-z0-9.-]{3,63}$'
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
+    MinValue: 1
   CompanyDisplayName:
     Type: String
     Description: Company name displayed in Settings > General
+    MinLength: 1
   CustomResourceVersion:
     Type: String
     Description: Forces updates to custom resources when changed
+    MinLength: 1
   ImageRegistryName:
     Type: String
-    Description: Name of the ECR repository hosting web images (blank when deploying from source)
+    Description: Name of the ECR repository hosting web images which will be deleted when tearing down a source deployment
   LayerVersionArns:
     Type: CommaDelimitedList
     Description: List of LayerVersion ARNs to attach to each function
   ProcessedDataBucket:
     Type: String
-    Description: S3 bucket which stores processed logs
+    Description: Name of the S3 bucket which stores processed logs
+    AllowedPattern: '^[a-z0-9.-]{3,63}$'
   PythonLayerVersionArn:
     Type: String
-    Description: Custom Python layer for analysis and remediation
+    Description: Optional versioned custom Python layer for analysis and remediation
+    # Example: "arn:aws:lambda:us-west-2:111122223333:layer:panther-analysis:143"
+    AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):lambda:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:layer:\S+:\d+)?$'
   TracingMode:
     Type: String
     Description: Enable XRay tracing on Lambda and API Gateway
@@ -67,6 +77,8 @@ Parameters:
   UserPoolId:
     Type: String
     Description: Cognito user pool ID
+    # Example: "us-west-2_iHzBYf5SA"
+    AllowedPattern: '^[a-zA-Z0-9_-]{15,}$'
 
 Mappings:
   Functions:
@@ -163,6 +175,9 @@ Resources:
               Action: cognito-idp:SetUserPoolMfaConfig
               Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}
             - Effect: Allow
+              Action: dynamodb:Scan
+              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-analysis
+            - Effect: Allow
               Action: ecr:DeleteRepository
               Resource: !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ImageRegistryName}
             - Effect: Allow
@@ -200,11 +215,6 @@ Resources:
               # at least part of the CloudFormation resource name.
               Action: iam:PutRolePermissionsBoundary
               Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/*CustomResourceFunction*
-            - Effect: Allow
-              Action: lambda:GetFunction
-              Resource:
-                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-policy-engine
-                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-rules-engine
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource:

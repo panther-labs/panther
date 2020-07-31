@@ -158,7 +158,9 @@ func newRegistry(names ...string) *logtypes.Registry {
 			Name:         name,
 			Description:  "description",
 			ReferenceURL: "-",
-			Schema:       struct{}{},
+			Schema: struct {
+				Foo string `json:"foo" description:"foo field"`
+			}{},
 			NewParser: func(_ interface{}) (parsers.Interface, error) {
 				return testutil.ParserConfig{}.Parser(), nil
 			},

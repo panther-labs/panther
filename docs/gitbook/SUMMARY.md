@@ -73,8 +73,10 @@
   * [Syslog](log-analysis/log-processing/supported-logs/Syslog.md)
   * [Zeek](log-analysis/log-processing/supported-logs/Zeek.md)
 * [SaaS Logs Setup]()
-  * [GSuite](log-analysis/log-processing/log-setup/gsuite.md)
   * [Box](log-analysis/log-processing/log-setup/box.md)
+  * [GSuite](log-analysis/log-processing/log-setup/gsuite.md)
+  * [Okta](log-analysis/log-processing/log-setup/okta.md)
+  * [OneLogin](log-analysis/log-processing/log-setup/onelogin.md)
 * [Standard Fields](log-analysis/panther-fields.md)
 
 ## Cloud Security
