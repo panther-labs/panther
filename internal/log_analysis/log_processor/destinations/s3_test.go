@@ -179,8 +179,7 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	eventChannel := make(chan *parsers.Result, 1)
 
 	testEvent := newSimpleTestEvent()
-	testResult, err := testEvent.Result()
-	assert.NoError(t, err)
+	testResult := testEvent.Result()
 
 	// Gzipping the test event
 	// Do that now so that the event release does not affect output
@@ -189,7 +188,9 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	{
 		var buffer bytes.Buffer
 		writer := gzip.NewWriter(&buffer)
-		require.NoError(t, testResult.WriteJSONTo(writer))
+		stream := common.BuildJSON().BorrowStream(writer)
+		stream.WriteVal(testResult)
+		require.NoError(t, stream.Flush())
 		_, _ = writer.Write([]byte("\n"))
 		_ = writer.Close()
 		expectedBytes = buffer.Bytes()
@@ -247,8 +248,7 @@ func TestSendDataIfTotalMemSizeLimitHasBeenReached(t *testing.T) {
 	eventChannel := make(chan *parsers.Result, 2)
 
 	testEvent := newSimpleTestEvent()
-	testResult, err := testEvent.Result()
-	assert.NoError(t, err)
+	testResult := testEvent.Result()
 
 	// wire it up
 	destination.maxBufferedMemBytes = 0 // this will cause each event to trigger a send
@@ -275,8 +275,7 @@ func TestSendDataIfBufferSizeLimitHasBeenReached(t *testing.T) {
 	eventChannel := make(chan *parsers.Result, 2)
 
 	testEvent := newSimpleTestEvent()
-	testResult, err := testEvent.Result()
-	require.NoError(t, err)
+	testResult := testEvent.Result()
 
 	maxS3BufferSizeBytes = 0 // this will cause each event to trigger a send
 
@@ -303,8 +302,7 @@ func TestSendDataIfTimeLimitHasBeenReached(t *testing.T) {
 
 	const nevents = 7
 	testEvent := newSimpleTestEvent()
-	testResult, err := testEvent.Result()
-	require.NoError(t, err)
+	testResult := testEvent.Result()
 	destination := newS3Destination()
 	destination.maxDuration = time.Second / 4
 
@@ -339,12 +337,10 @@ func TestSendDataToS3FromMultipleLogTypesBeforeTerminating(t *testing.T) {
 
 	logType1 := "testtype1"
 	testEvent1 := newTestEvent(logType1, refTime)
-	testResult1, err := testEvent1.Result()
-	require.NoError(t, err)
+	testResult1 := testEvent1.Result()
 	logType2 := "testtype2"
 	testEvent2 := newTestEvent(logType2, refTime)
-	testResult2, err := testEvent2.Result()
-	require.NoError(t, err)
+	testResult2 := testEvent2.Result()
 
 	// wire it up
 	destination := newS3Destination(logType1, logType2)
@@ -368,11 +364,9 @@ func TestSendDataToS3FromSameHourBeforeTerminating(t *testing.T) {
 
 	// should write 1 file
 	testEvent1 := newTestEvent(testLogType, refTime)
-	testResult1, err := testEvent1.Result()
-	require.NoError(t, err)
+	testResult1 := testEvent1.Result()
 	testEvent2 := newTestEvent(testLogType, refTime)
-	testResult2, err := testEvent2.Result()
-	require.NoError(t, err)
+	testResult2 := testEvent2.Result()
 
 	// wire it up
 	destination := newS3Destination()
@@ -396,11 +390,9 @@ func TestSendDataToS3FromMultipleHoursBeforeTerminating(t *testing.T) {
 
 	// should write 2 files with different time partitions
 	testEvent1 := newTestEvent(testLogType, refTime)
-	testResult1, err := testEvent1.Result()
-	require.NoError(t, err)
+	testResult1 := testEvent1.Result()
 	testEvent2 := newTestEvent(testLogType, refTimePlusHour)
-	testResult2, err := testEvent2.Result()
-	require.NoError(t, err)
+	testResult2 := testEvent2.Result()
 
 	// wire it up
 	destination := newS3Destination()
@@ -433,8 +425,7 @@ func TestSendDataFailsIfS3Fails(t *testing.T) {
 	eventChannel := make(chan *parsers.Result, 1)
 
 	testEvent := newSimpleTestEvent()
-	testResult, err := testEvent.Result()
-	require.NoError(t, err)
+	testResult := testEvent.Result()
 
 	// wire it up
 	destination := newS3Destination()
@@ -454,8 +445,7 @@ func TestSendDataFailsIfSnsFails(t *testing.T) {
 	eventChannel := make(chan *parsers.Result, 1)
 
 	testEvent := newSimpleTestEvent()
-	testResult, err := testEvent.Result()
-	require.NoError(t, err)
+	testResult := testEvent.Result()
 
 	// wire it up
 	destination := newS3Destination()
@@ -475,13 +465,12 @@ func TestBufferSetLargest(t *testing.T) {
 	const size = 100
 	event := newTestEvent(testLogType, refTime)
 	bs := newS3EventBufferSet()
-	result, err := event.Result()
-	require.NoError(t, err)
+	result := event.Result()
 	expectedLargest := bs.getBuffer(result)
 	expectedLargest.bytes = size
 	for i := 0; i < size-1; i++ {
 		// incr hour so we get new buffers
-		result.EventTime = result.EventTime.Add(time.Hour)
+		result.PantherEventTime = result.PantherEventTime.Add(time.Hour)
 		buffer := bs.getBuffer(result)
 		buffer.bytes = i
 	}

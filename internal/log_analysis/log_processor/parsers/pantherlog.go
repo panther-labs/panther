@@ -26,7 +26,6 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
-	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
@@ -244,7 +243,7 @@ func (pl *PantherLog) AppendAnySHA256HashesPtr(values ...*string) {
 	}
 }
 
-var defaultMeta = pantherlog.DefaultMetaFields()
+var defaultMeta = pantherlog.DefaultFields()
 
 func AppendAnyString(any *PantherAnyString, values ...string) {
 	// add new if not present
@@ -260,66 +259,33 @@ func AppendAnyString(any *PantherAnyString, values ...string) {
 }
 
 // Result converts a PantherLog to Result
-func (pl *PantherLog) Result() (*Result, error) {
+func (pl *PantherLog) Result() *Result {
 	event := pl.Event()
-	if event == nil {
-		return nil, errors.New("nil event")
+	parseTime := pl.PantherParseTime
+	if parseTime == nil {
+		now := time.Now()
+		parseTime = (*timestamp.RFC3339)(&now)
 	}
-	if pl.PantherLogType == nil {
-		return nil, errors.New("nil log type")
-	}
-	if pl.PantherEventTime == nil {
-		return nil, errors.New("nil event time")
-	}
-	if pl.PantherParseTime == nil {
-		return nil, errors.New("nil event time")
+	eventTime := pl.PantherEventTime
+	if eventTime == nil {
+		eventTime = parseTime
 	}
 	return &pantherlog.Result{
-		Event: &eventAdapter{
-			PantherLog: pl,
+		// Use RawEvent so that our custom ValEncoder for Result knows to not duplicate Panther added fields
+		RawEvent: event,
+		Meta:     defaultMeta,
+		CoreFields: pantherlog.CoreFields{
+			PantherLogType:   unbox.String(pl.PantherLogType),
+			PantherRowID:     unbox.String(pl.PantherRowID),
+			PantherParseTime: ((*time.Time)(parseTime)).UTC(),
+			PantherEventTime: ((*time.Time)(eventTime)).UTC(),
 		},
-		Meta:      defaultMeta,
-		LogType:   unbox.String(pl.PantherLogType),
-		RowID:     unbox.String(pl.PantherRowID),
-		ParseTime: ((*time.Time)(pl.PantherParseTime)).UTC(),
-		EventTime: ((*time.Time)(pl.PantherEventTime)).UTC(),
-	}, nil
-}
-
-type eventAdapter struct {
-	*PantherLog
-}
-
-var _ pantherlog.ValueWriterTo = (*eventAdapter)(nil)
-
-func (e *eventAdapter) MarshalJSON() ([]byte, error) {
-	return pantherlog.JSON().Marshal(e.Event())
-}
-
-func (e *eventAdapter) WriteValuesTo(w pantherlog.ValueWriter) {
-	writeAnyValues(w, e.PantherAnyMD5Hashes, pantherlog.KindMD5Hash)
-	writeAnyValues(w, e.PantherAnySHA1Hashes, pantherlog.KindSHA1Hash)
-	writeAnyValues(w, e.PantherAnySHA256Hashes, pantherlog.KindSHA256Hash)
-	writeAnyValues(w, e.PantherAnyIPAddresses, pantherlog.KindIPAddress)
-	writeAnyValues(w, e.PantherAnyDomainNames, pantherlog.KindDomainName)
-}
-
-func writeAnyValues(w pantherlog.ValueWriter, any *PantherAnyString, kind pantherlog.ValueKind) {
-	if any == nil {
-		return
-	}
-	for value := range any.set {
-		w.WriteValues(kind, value)
 	}
 }
 
 // Results converts a PantherLog to a slice of results
 func (pl *PantherLog) Results() ([]*Result, error) {
-	result, err := pl.Result()
-	if err != nil {
-		return nil, err
-	}
-	return []*Result{result}, nil
+	return []*Result{pl.Result()}, nil
 }
 
 func ToResults(logs []*PantherLog, err error) ([]*Result, error) {
@@ -328,10 +294,7 @@ func ToResults(logs []*PantherLog, err error) ([]*Result, error) {
 	}
 	results := make([]*Result, len(logs))
 	for i := range results {
-		result, err := logs[i].Result()
-		if err != nil {
-			return nil, err
-		}
+		result := logs[i].Result()
 		results[i] = result
 	}
 	return results, nil

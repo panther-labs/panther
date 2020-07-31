@@ -24,6 +24,7 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/jsonutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
 )
 
@@ -68,4 +69,18 @@ func (*timestampEncoder) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
 	buf := stream.Buffer()
 	buf = tm.UTC().AppendFormat(buf, TimestampLayoutJSON)
 	stream.SetBuffer(buf)
+}
+
+func RegisterExtensions(api jsoniter.API) jsoniter.API {
+	api.RegisterExtension(jsonutil.NewEncoderNamingStrategy(RewriteFieldName))
+	api.RegisterExtension(tcodec.NewExtension(tcodec.Config{
+		// Force all timestamps to be awsglue format and UTC. This is needed to be able to write
+		DefaultCodec: tcodec.Join(nil, NewTimestampEncoder()),
+		DecorateCodec: func(codec tcodec.TimeCodec) tcodec.TimeCodec {
+			dec, _ := tcodec.Split(codec)
+			enc := NewTimestampEncoder()
+			return tcodec.Join(dec, enc)
+		},
+	}))
+	return api
 }

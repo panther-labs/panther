@@ -27,32 +27,32 @@ import (
 
 func TestValueBuffer_Kinds(t *testing.T) {
 	b := ValueBuffer{}
-	require.Nil(t, b.Kinds())
+	require.Nil(t, b.Fields())
 	b.WriteValues(1, "")
-	require.Empty(t, b.Kinds())
+	require.Empty(t, b.Fields())
 	b.WriteValues(1, "foo", "foo")
-	require.Equal(t, []ValueKind{1}, b.Kinds())
+	require.Equal(t, []FieldID{1}, b.Fields())
 	b.WriteValues(2, "foo")
-	require.Equal(t, []ValueKind{1, 2}, b.Kinds())
+	require.Equal(t, []FieldID{1, 2}, b.Fields())
 	b.Reset()
-	require.Empty(t, b.Kinds())
+	require.Empty(t, b.Fields())
 }
 
 func TestValueBuffer_Get(t *testing.T) {
 	b := ValueBuffer{}
 	require.Nil(t, b.Get(1))
 	b.WriteValues(1, "")
-	require.Equal(t, map[ValueKind][]string(nil), b.Inspect())
+	require.Equal(t, map[FieldID][]string(nil), b.Inspect())
 	require.Nil(t, b.Get(1))
 	b.WriteValues(1, "foo")
-	require.Equal(t, map[ValueKind][]string{
+	require.Equal(t, map[FieldID][]string{
 		1: {"foo"},
 	}, b.Inspect())
 	require.Equal(t, []string{"foo"}, b.Get(1))
 	b.WriteValues(1, "foo", "bar")
 	require.Equal(t, []string{"bar", "foo"}, b.Get(1))
 	b.WriteValues(2, "")
-	require.Equal(t, map[ValueKind][]string{
+	require.Equal(t, map[FieldID][]string{
 		1: {"bar", "foo"},
 	}, b.Inspect())
 	require.True(t, b.Contains(1, "foo"))
@@ -60,19 +60,19 @@ func TestValueBuffer_Get(t *testing.T) {
 	require.False(t, b.Contains(1, "baz"))
 	require.False(t, b.Contains(42, "baz"))
 	b.Reset()
-	require.Equal(t, map[ValueKind][]string{
+	require.Equal(t, map[FieldID][]string{
 		1: {},
 	}, b.Inspect())
 	require.Nil(t, b.Get(1))
 }
 
 type sample struct {
-	Kind  ValueKind
+	Kind  FieldID
 	Value string
 }
 type sampleValues []sample
 
-func (samples *sampleValues) WriteValues(kind ValueKind, values ...string) {
+func (samples *sampleValues) WriteValues(kind FieldID, values ...string) {
 	for _, value := range values {
 		*samples = append(*samples, sample{
 			Kind:  kind,
@@ -83,7 +83,7 @@ func (samples *sampleValues) WriteValues(kind ValueKind, values ...string) {
 func TestValueBuffer_WriteValuesTo(t *testing.T) {
 	{
 		b := ValueBuffer{
-			index: map[ValueKind][]string{
+			index: map[FieldID][]string{
 				1: {"foo", "bar"},
 				2: {"baz"},
 			},
@@ -110,8 +110,8 @@ func TestValueBuffer_WriteValuesTo(t *testing.T) {
 
 func TestValueBuffer_Clone(t *testing.T) {
 	{
-		b := ValueBuffer{
-			index: map[ValueKind][]string{
+		b := &ValueBuffer{
+			index: map[FieldID][]string{
 				1: {"foo", "bar"},
 				2: {"baz"},
 			},
@@ -121,19 +121,18 @@ func TestValueBuffer_Clone(t *testing.T) {
 	{
 		b := ValueBuffer{}
 		c := b.Clone()
-		require.Equal(t, b, c)
-		require.Nil(t, c.index)
+		require.Nil(t, c)
 	}
 	{
-		b := ValueBuffer{
-			index: map[ValueKind][]string{
+		b := &ValueBuffer{
+			index: map[FieldID][]string{
 				1: {"foo", "bar"},
 				2: {"baz"},
 				3: {},
 			},
 		}
-		require.Equal(t, ValueBuffer{
-			index: map[ValueKind][]string{
+		require.Equal(t, &ValueBuffer{
+			index: map[FieldID][]string{
 				1: {"foo", "bar"},
 				2: {"baz"},
 			},

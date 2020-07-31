@@ -27,14 +27,6 @@ import (
 )
 
 func init() {
-	MustRegisterScanner("ip", ScannerFunc(ScanIPAddress), KindIPAddress)
-	MustRegisterScanner("domain", KindDomainName, KindDomainName)
-	MustRegisterScanner("md5", KindMD5Hash, KindMD5Hash)
-	MustRegisterScanner("sha1", KindSHA1Hash, KindSHA1Hash)
-	MustRegisterScanner("sha256", KindSHA256Hash, KindSHA256Hash)
-	MustRegisterScanner("hostname", ScannerFunc(ScanHostname), KindDomainName, KindIPAddress)
-	MustRegisterScanner("url", ScannerFunc(ScanURL), KindDomainName, KindIPAddress)
-	MustRegisterScanner("trace_id", KindTraceID, KindTraceID)
 }
 
 // ValueScanner parses values from a string and writes them to a ValueWriter.
@@ -59,23 +51,30 @@ var registeredScanners = map[string]*scannerEntry{}
 
 type scannerEntry struct {
 	Scanner ValueScanner
-	Kinds   []ValueKind
+	Fields  []FieldID
 }
 
-func MustRegisterScanner(name string, scanner ValueScanner, kinds ...ValueKind) {
-	if err := RegisterScanner(name, scanner, kinds...); err != nil {
+// RegisterScanner registers a value scanner to be used on string fields with a `panther` struct tag.
+// It panics in case of a registration error.
+func MustRegisterScanner(name string, scanner ValueScanner, fields ...FieldID) {
+	if err := RegisterScanner(name, scanner, fields...); err != nil {
 		panic(err)
 	}
 }
 
-func RegisterScanner(name string, scanner ValueScanner, kinds ...ValueKind) error {
+// RegisterScanner tries to register a value scanner to be used on string fields with a `panther` struct tag.
+// Scanner names should be unique and field ids should already be registered with `RegisterField`.
+// Argument `name` defines the name to use for this scanner (ie "foo" will be used for tags with `panther:"foo").
+// Argument `scanner` is the actual scanner being registered.
+// Argument `fields` defines all the possible field ids this scanner can produce values for.
+func RegisterScanner(name string, scanner ValueScanner, fields ...FieldID) error {
 	if name == "" {
 		return errors.New("anonymous scanner")
 	}
 	if scanner == nil {
 		return errors.New("nil scanner")
 	}
-	if err := checkKinds(kinds); err != nil {
+	if err := checkFields(fields); err != nil {
 		return err
 	}
 	if _, duplicate := registeredScanners[name]; duplicate {
@@ -83,30 +82,31 @@ func RegisterScanner(name string, scanner ValueScanner, kinds ...ValueKind) erro
 	}
 	registeredScanners[name] = &scannerEntry{
 		Scanner: scanner,
-		Kinds:   kinds,
+		Fields:  fields,
 	}
 	return nil
 }
 
-func checkKinds(kinds []ValueKind) error {
-	if len(kinds) == 0 {
-		return errors.New("no value kinds")
+func checkFields(fields []FieldID) error {
+	if len(fields) == 0 {
+		return errors.New("no value fields")
 	}
-	for _, kind := range kinds {
-		if kind == KindNone {
-			return errors.New("zero value kind")
+	for _, id := range fields {
+		if id.IsCore() {
+			return errors.New("invalid field id")
 		}
-		if _, ok := registeredMeta[kind]; !ok {
-			return errors.New("unregistered value kind")
+		if _, ok := registeredFields[id]; !ok {
+			return errors.New("unregistered field id")
 		}
 	}
 	return nil
 }
 
-func LookupScanner(name string) (scanner ValueScanner, kinds []ValueKind) {
+// LookupScanner finds a registere scanner and field ids by name.
+func LookupScanner(name string) (scanner ValueScanner, fields []FieldID) {
 	if entry, ok := registeredScanners[name]; ok {
 		scanner = entry.Scanner
-		kinds = append(kinds, entry.Kinds...)
+		fields = append(fields, entry.Fields...)
 	}
 	return
 }
@@ -126,9 +126,9 @@ func ScanURL(dest ValueWriter, input string) {
 // ScanHostname scans `input` for either an ip address or a domain name value.
 func ScanHostname(w ValueWriter, input string) {
 	if checkIPAddress(input) {
-		w.WriteValues(KindIPAddress, input)
+		w.WriteValues(FieldIPAddress, input)
 	} else {
-		w.WriteValues(KindDomainName, input)
+		w.WriteValues(FieldDomainName, input)
 	}
 }
 
@@ -139,7 +139,7 @@ func ScanIPAddress(w ValueWriter, input string) {
 		return
 	}
 	if checkIPAddress(input) {
-		w.WriteValues(KindIPAddress, input)
+		w.WriteValues(FieldIPAddress, input)
 	}
 }
 
@@ -150,6 +150,11 @@ func checkIPAddress(addr string) bool {
 }
 
 // ScanValues implements ValueScanner interface
-func (kind ValueKind) ScanValues(w ValueWriter, input string) {
-	w.WriteValues(kind, input)
+func (id FieldID) ScanValues(w ValueWriter, input string) {
+	w.WriteValues(id, input)
+}
+
+// IsCore checks if a field id is core
+func (id FieldID) IsCore() bool {
+	return id <= 0
 }

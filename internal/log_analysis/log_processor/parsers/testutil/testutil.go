@@ -22,7 +22,6 @@ package testutil
 
 import (
 	"bufio"
-	"bytes"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -38,6 +37,8 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/omitempty"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
@@ -240,6 +241,18 @@ func CheckLogParser(t *testing.T, p parsers.Interface, input string, expect ...s
 	}
 }
 
+func jsonAPI() jsoniter.API {
+	api := jsoniter.Config{
+		EscapeHTML:             true,
+		SortMapKeys:            true,
+		ValidateJsonRawMessage: true,
+	}.Froze()
+	api.RegisterExtension(omitempty.New("json"))
+	api.RegisterExtension(tcodec.NewExtension(tcodec.Config{}))
+	api = pantherlog.RegisterExtensions(api)
+	return api
+}
+
 // Checks that `actual` is a parser result matching `expect`
 // If expect.RowID is empty it checks if actual has non-empty RowID
 // If expect.EventTime is zero it checks if actual.EventTime equals actual.ParseTime
@@ -247,8 +260,8 @@ func CheckLogParser(t *testing.T, p parsers.Interface, input string, expect ...s
 // Otherwise equality is checked strictly
 func CheckParserResults(t *testing.T, want string, actual *pantherlog.Result) {
 	t.Helper()
-	logType := jsoniter.Get([]byte(want), pantherlog.FieldLogType).ToString()
-	require.Equal(t, logType, actual.LogType)
+	logType := jsoniter.Get([]byte(want), pantherlog.FieldLogTypeJSON).ToString()
+	require.Equal(t, logType, actual.PantherLogType)
 	expect := pantherlog.Result{
 		Meta: actual.Meta,
 	}
@@ -257,29 +270,29 @@ func CheckParserResults(t *testing.T, want string, actual *pantherlog.Result) {
 	var expectAny map[string]interface{}
 	require.NoError(t, jsoniter.UnmarshalFromString(want, &expectAny))
 	var actualAny map[string]interface{}
-	buffer := &bytes.Buffer{}
-	require.NoError(t, actual.WriteJSONTo(buffer))
-	require.NoError(t, jsoniter.Unmarshal(buffer.Bytes(), &actualAny))
-	if expect.ParseTime.IsZero() {
-		require.False(t, actual.ParseTime.IsZero(), "zero parse time")
+	data, err := jsonAPI().Marshal(actual)
+	require.NoError(t, err)
+	require.NoError(t, jsoniter.Unmarshal(data, &actualAny))
+	if expect.PantherParseTime.IsZero() {
+		require.False(t, actual.PantherParseTime.IsZero(), "zero parse time")
 	} else {
-		EqualTimestamp(t, expect.ParseTime, actual.ParseTime, "invalid parse time")
+		EqualTimestamp(t, expect.PantherParseTime, actual.PantherParseTime, "invalid parse time")
 	}
-	if expect.EventTime.IsZero() {
-		EqualTimestamp(t, actual.ParseTime, actual.EventTime, "event time not equal to parse time")
+	if expect.PantherEventTime.IsZero() {
+		EqualTimestamp(t, actual.PantherParseTime, actual.PantherEventTime, "event time not equal to parse time")
 	} else {
-		EqualTimestamp(t, expect.EventTime, actual.EventTime, "invalid event time")
+		EqualTimestamp(t, expect.PantherEventTime, actual.PantherEventTime, "invalid event time")
 	}
-	if len(expect.RowID) == 0 {
-		require.NotEmpty(t, actual.RowID)
+	if len(expect.PantherRowID) == 0 {
+		require.NotEmpty(t, actual.PantherRowID)
 	} else {
-		require.Equal(t, expect.RowID, actual.RowID)
+		require.Equal(t, expect.PantherRowID, actual.PantherRowID)
 	}
 	// The following dance ensures that produced JSON matches values from `actual` result
 
-	require.Equal(t, actual.EventTime.UTC().Format(TimestampLayout), actualAny["p_event_time"], "Invalid JSON event time")
-	require.Equal(t, actual.ParseTime.UTC().Format(TimestampLayout), actualAny["p_parse_time"], "Invalid JSON parse time")
-	require.Equal(t, actual.RowID, actualAny["p_row_id"], "Invalid JSON row id")
+	require.Equal(t, actual.PantherEventTime.UTC().Format(TimestampLayout), actualAny["p_event_time"], "Invalid JSON event time")
+	require.Equal(t, actual.PantherParseTime.UTC().Format(TimestampLayout), actualAny["p_parse_time"], "Invalid JSON parse time")
+	require.Equal(t, actual.PantherRowID, actualAny["p_row_id"], "Invalid JSON row id")
 	// Since these values are checked to be valid we assign them to expect to check the rest of the JSON values
 	expectAny["p_event_time"] = actualAny["p_event_time"]
 	expectAny["p_parse_time"] = actualAny["p_parse_time"]
@@ -315,16 +328,21 @@ func UnmarshalResultJSON(data []byte, r *pantherlog.Result) error {
 	}
 	eventTime, err := time.Parse(awsglue.TimestampLayout, tmp.EventTime)
 	if err != nil {
-		return err
+		if tmp.EventTime != "" {
+			return err
+		}
 	}
 	parseTime, err := time.Parse(awsglue.TimestampLayout, tmp.ParseTime)
 	if err != nil {
-		return err
+		if tmp.ParseTime != "" {
+			return err
+		}
 	}
 	values := pantherlog.ValueBuffer{}
-	for kind, m := range r.Meta {
-		any := jsoniter.Get(data, m.FieldNameJSON)
-		if any == nil {
+	for _, kind := range r.Meta {
+		fieldName := pantherlog.FieldNameJSON(kind)
+		any := jsoniter.Get(data, fieldName)
+		if any == nil || any.ValueType() == jsoniter.InvalidValue {
 			continue
 		}
 		var v []string
@@ -334,12 +352,14 @@ func UnmarshalResultJSON(data []byte, r *pantherlog.Result) error {
 		}
 	}
 	*r = pantherlog.Result{
-		Meta:      r.Meta,
-		LogType:   tmp.LogType,
-		RowID:     tmp.RowID,
-		EventTime: eventTime,
-		ParseTime: parseTime,
-		Values:    &values,
+		Meta: r.Meta,
+		CoreFields: pantherlog.CoreFields{
+			PantherLogType:   tmp.LogType,
+			PantherRowID:     tmp.RowID,
+			PantherEventTime: eventTime,
+			PantherParseTime: parseTime,
+		},
+		Values: &values,
 	}
 	return nil
 }

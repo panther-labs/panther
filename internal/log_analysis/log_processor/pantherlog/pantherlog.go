@@ -3,11 +3,7 @@ package pantherlog
 
 import (
 	jsoniter "github.com/json-iterator/go"
-
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/jsonutil"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/omitempty"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
+	"github.com/modern-go/reflect2"
 )
 
 /**
@@ -28,41 +24,17 @@ import (
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// EventStruct composes a struct that extends `event` with panther fields
-func EventStruct(event interface{}) interface{} {
-	return defaultMetaFields.EventStruct(event)
-}
-
-// JSON returns a customized jsoniter.API to be used for serializing panthe log events.
-func JSON() jsoniter.API {
-	return jsonAPI
-}
-
-var jsonAPI = RegisterExtensions(jsoniter.Config{
-	EscapeHTML: true,
-	// Validate raw JSON messages to make sure queries work as expected
-	ValidateJsonRawMessage: true,
-	SortMapKeys:            true,
-}.Froze())
-
-// RegisterExtensions registers all pantherlog required extensions on an API
+// RegisterExtensions registers all jsoniter.Extensions required to process pantherlog events.
 func RegisterExtensions(api jsoniter.API) jsoniter.API {
-	api.RegisterExtension(jsonutil.NewEncoderNamingStrategy(awsglue.RewriteFieldName))
-	//api.RegisterExtension(jsoniter.EncoderExtension{
-	//	reflect2.TypeOf(time.Time{}): tcodec.NewTimeEncoder(awsglue.NewTimestampEncoder(), false),
-	//})
-	api.RegisterExtension(tcodec.NewExtension(tcodec.Config{
-		// Force all timestamps to be awsglue format and UTC. This is needed to be able to write
-		DefaultCodec: tcodec.Join(nil, awsglue.NewTimestampEncoder()),
-		DecorateCodec: func(codec tcodec.TimeCodec) tcodec.TimeCodec {
-			dec, _ := tcodec.Split(codec)
-			enc := awsglue.NewTimestampEncoder()
-			return tcodec.Join(dec, enc)
-		},
-	}))
-	api.RegisterExtension(omitempty.New("json"))
+	// Encode all Result instances using our custom encoder
+	api.RegisterExtension(jsoniter.EncoderExtension{
+		reflect2.TypeOf(Result{}): &resultEncoder{},
+	})
+	// Scan values based on `panther` tag
 	api.RegisterExtension(&scanValueEncodersExt{})
+	// Scan values from ValueWriterTo types
 	api.RegisterExtension(&customEncodersExt{})
+	// Set result event time with `panther:"event_time"`
 	api.RegisterExtension(&eventTimeExt{})
 	return api
 }

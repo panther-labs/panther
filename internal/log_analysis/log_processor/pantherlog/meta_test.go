@@ -32,8 +32,7 @@ import (
 )
 
 func TestMetaEventStruct(t *testing.T) {
-	meta := pantherlog.BuildMeta(pantherlog.KindIPAddress)
-	eventStruct := meta.EventStruct(&testEventMeta{})
+	eventStruct := pantherlog.MustBuildEventSchema(&testEventMeta{}, pantherlog.FieldIPAddress)
 
 	columns, names := awsglue.InferJSONColumns(eventStruct, awsglue.GlueMappings...)
 	require.Equal(t, []string{}, names)
@@ -43,7 +42,7 @@ func TestMetaEventStruct(t *testing.T) {
 		{"ts", "timestamp", "ts", false},
 		{"addr", "string", "address", false},
 		{"p_event_time", "timestamp", "Panther added standardized event time (UTC)", true},
-		{"p_parse_time", "timestamp", "Panther added standardize log parse time (UTC)", true},
+		{"p_parse_time", "timestamp", "Panther added standardized log parse time (UTC)", true},
 		{"p_log_type", "string", "Panther added field with type of log", true},
 		{"p_row_id", "string", "Panther added field with unique id (within table)", true},
 		{"p_any_ip_addresses", "array<string>", "Panther added field with collection of ip addresses associated with the row", false},

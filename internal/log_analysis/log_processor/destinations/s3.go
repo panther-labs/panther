@@ -341,7 +341,7 @@ func newS3EventBufferSet() *s3EventBufferSet {
 
 func (bs *s3EventBufferSet) getBuffer(event *parsers.Result) *s3EventBuffer {
 	// bin by hour (this is our partition size)
-	hour := event.EventTime.Truncate(time.Hour)
+	hour := event.PantherEventTime.Truncate(time.Hour)
 
 	logTypeToBuffer, ok := bs.set[hour]
 	if !ok {
@@ -349,7 +349,7 @@ func (bs *s3EventBufferSet) getBuffer(event *parsers.Result) *s3EventBuffer {
 		bs.set[hour] = logTypeToBuffer
 	}
 
-	logType := event.LogType
+	logType := event.PantherLogType
 	buffer, ok := logTypeToBuffer[logType]
 	if !ok {
 		buffer = newS3EventBuffer(logType, hour)
@@ -422,20 +422,22 @@ func newS3EventBuffer(logType string, hour time.Time) *s3EventBuffer {
 	}
 }
 
+// Use a properly configured jsoniter API for panther log events
+var jsonAPI = common.BuildJSON()
+
 // addEvent adds new data to the s3EventBuffer, return bytes added and error
 func (b *s3EventBuffer) addEvent(event *pantherlog.Result) (int, error) {
 	startBufferSize := b.buffer.Len()
-	err := event.WriteJSONTo(b.writer)
+	stream := jsonAPI.BorrowStream(b.writer)
+	stream.WriteVal(event)
+	err := stream.Flush()
+	stream.Pool().ReturnStream(stream)
 	if err != nil {
-		err = errors.Wrap(err, "failed to add data to buffer %s")
+		err = errors.Wrapf(err, "failed to serialize event to JSON %s", event.PantherLogType)
 		return 0, err
 	}
-
-	// Adding new line delimiter
-	_, err = b.writer.Write(newLineDelimiter)
-	if err != nil {
-		err = errors.Wrap(err, "failed to add data to buffer")
-		return 0, err
+	if _, err := b.writer.Write(newLineDelimiter); err != nil {
+		return 0, errors.Wrap(err, "failed to add data to buffer %s")
 	}
 
 	b.bytes = b.buffer.Len() // size of compressed data minus gzip buffer (that's ok we just use this for memory pressure)

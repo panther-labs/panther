@@ -19,16 +19,18 @@ package pantherlog_test
  */
 
 import (
-	"bytes"
 	"fmt"
 	"testing"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/omitempty"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -37,13 +39,13 @@ import (
 )
 
 type testEvent struct {
-	Name      string                 `json:"@name"`
-	Timestamp time.Time              `json:"ts" tcodec:"unix_ms" panther:"event_time"`
-	IP        string                 `json:"ip" panther:"ip"`
-	Domain    null.String            `json:"domain" panther:"domain"`
-	Host      null.String            `json:"hostname" panther:"hostname"`
-	TraceID   null.String            `json:"trace_id" panther:"trace_id"`
-	Values    pantherlog.ValueBuffer `json:"-"`
+	Name      string                  `json:"@name"`
+	Timestamp time.Time               `json:"ts" tcodec:"unix_ms" panther:"event_time"`
+	IP        string                  `json:"ip" panther:"ip"`
+	Domain    null.String             `json:"domain" panther:"domain"`
+	Host      null.String             `json:"hostname" panther:"hostname"`
+	TraceID   null.String             `json:"trace_id" panther:"trace_id"`
+	Values    *pantherlog.ValueBuffer `json:"-"`
 }
 
 type oldEvent struct {
@@ -57,7 +59,9 @@ type oldEvent struct {
 }
 
 func (e *testEvent) WriteValuesTo(w pantherlog.ValueWriter) {
-	e.Values.WriteValuesTo(w)
+	if e.Values != nil {
+		e.Values.WriteValuesTo(w)
+	}
 }
 
 func newBuilder(id string, now time.Time) *pantherlog.ResultBuilder {
@@ -81,39 +85,94 @@ func TestNewResultBuilder(t *testing.T) {
 		Timestamp: tm,
 	}
 
+	api := buildAPI()
 	result, err := b.BuildResult(&event)
 	require.NoError(t, err)
-	require.Equal(t, "TestEvent", result.LogType)
-	testutil.EqualTimestamp(t, now, result.ParseTime)
+	require.Equal(t, "TestEvent", result.PantherLogType)
+	testutil.EqualTimestamp(t, now, result.PantherParseTime)
 	// Ensure event time is zero time
-	require.Equal(t, time.Time{}, result.EventTime)
-	require.Equal(t, rowID, result.RowID)
+	require.Equal(t, time.Time{}, result.PantherEventTime)
+	require.Equal(t, rowID, result.PantherRowID)
 	expect := fmt.Sprintf(`{
 		"p_row_id": "id",
 		"p_log_type": "TestEvent",
 		"p_event_time": "%s",
-		"ts": "%s",
+		"ts": %d,
 		"p_parse_time": "%s",
-		"at_sign_name": "event",
+		"@name": "event",
 		"ip": "1.1.1.1",
 		"hostname": "2.1.1.1",
 		"trace_id": "foo",
 		"p_any_trace_ids": ["foo"],
 		"p_any_ip_addresses": ["1.1.1.1","2.1.1.1"]
 	}`,
-		tm.Format(awsglue.TimestampLayout),
-		tm.Format(awsglue.TimestampLayout),
+		tm.Format(time.RFC3339Nano),
+		time.Duration(tm.UnixNano()).Milliseconds(),
+		now.Format(time.RFC3339Nano),
+	)
+	actual, err := api.Marshal(result)
+	require.NoError(t, err)
+	require.JSONEq(t, expect, string(actual))
+}
+func TestOldResults(t *testing.T) {
+	rowID := "id"
+	now := time.Now().UTC()
+	tm := now.Add(-time.Hour)
+	event := oldEvent{
+		Name:      box.String("event"),
+		IP:        box.String("1.1.1.1"),
+		Host:      box.String("2.1.1.1"),
+		Timestamp: (*timestamp.RFC3339)(&tm),
+		PantherLog: parsers.PantherLog{
+			PantherLogType:        box.String("Foo"),
+			PantherRowID:          box.String("id"),
+			PantherEventTime:      (*timestamp.RFC3339)(&tm),
+			PantherParseTime:      (*timestamp.RFC3339)(&now),
+			PantherAnyIPAddresses: parsers.NewPantherAnyString(),
+		},
+	}
+	event.SetEvent(&event)
+	parsers.AppendAnyString(event.PantherAnyIPAddresses, "1.1.1.1", "2.1.1.1")
+
+	api := buildAPI()
+	result := event.Result()
+	require.Equal(t, "Foo", result.PantherLogType)
+	testutil.EqualTimestamp(t, now, result.PantherParseTime)
+	// Ensure event time is zero time
+	//require.Equal(t, time.Time{}, result.PantherEventTime)
+	require.Equal(t, rowID, result.PantherRowID)
+	expect := fmt.Sprintf(`{
+		"p_row_id": "id",
+		"p_log_type": "Foo",
+		"p_event_time": "%s",
+		"ts": "%s",
+		"p_parse_time": "%s",
+		"@name": "event",
+		"ip": "1.1.1.1",
+		"hostname": "2.1.1.1",
+		"p_any_ip_addresses": ["1.1.1.1","2.1.1.1"]
+	}`,
+		tm.UTC().Format(awsglue.TimestampLayout),
+		tm.UTC().Format(awsglue.TimestampLayout),
 		now.Format(awsglue.TimestampLayout),
 	)
-	buffer := bytes.Buffer{}
-	require.NoError(t, result.WriteJSONTo(&buffer))
-	actual := buffer.String()
-	require.JSONEq(t, expect, actual)
+	actual, err := api.Marshal(result)
+	require.NoError(t, err)
+	require.JSONEq(t, expect, string(actual))
+}
+
+func buildAPI() jsoniter.API {
+	api := jsoniter.Config{}.Froze()
+	api.RegisterExtension(tcodec.NewExtension(tcodec.Config{}))
+	api.RegisterExtension(omitempty.New(`json`))
+	api = pantherlog.RegisterExtensions(api)
+	return api
 }
 
 func BenchmarkResultBuilder(b *testing.B) {
 	rowID := "id"
 	now := time.Now()
+
 	builder := newBuilder(rowID, now)
 	tm := now.Add(-time.Hour)
 	ts := (*timestamp.RFC3339)(&tm)
@@ -125,42 +184,46 @@ func BenchmarkResultBuilder(b *testing.B) {
 	}
 	old.SetCoreFields("event", ts, &old)
 
-	event := &testEvent{
+	event := testEvent{
 		Name:      "event",
 		IP:        "1.1.1.1",
 		Host:      null.FromString("2.1.1.1"),
 		Timestamp: tm,
 	}
 	b.Run("old pantherlog", func(b *testing.B) {
-		buffer := bytes.NewBuffer(make([]byte, 0, 8192))
+		stream := jsoniter.NewStream(jsoniter.ConfigDefault, nil, 8192)
 		b.ReportAllocs()
 
 		for i := 0; i < b.N; i++ {
-			old.AppendAnyIPAddress("1.1.1.1")
-			if !old.AppendAnyIPAddressPtr(old.Host) {
-				old.AppendAnyDomainNames(unbox.String(old.Host))
+			result := old
+			result.AppendAnyIPAddress("1.1.1.1")
+			if !result.AppendAnyIPAddressPtr(result.Host) {
+				result.AppendAnyDomainNames(unbox.String(result.Host))
 			}
-			result, err := old.Result()
-			if err != nil {
-				b.Fatal(err)
-			}
-			buffer.Reset()
-			if err := result.WriteJSONTo(buffer); err != nil {
+			stream.Reset(nil)
+			stream.WriteVal(&result)
+			if err := stream.Error; err != nil {
 				b.Fatal(err)
 			}
 		}
 	})
 	b.Run("result builder", func(b *testing.B) {
-		buffer := bytes.NewBuffer(make([]byte, 0, 8192))
+		api := jsoniter.Config{}.Froze()
+		api.RegisterExtension(tcodec.NewExtension(tcodec.Config{}))
+		api.RegisterExtension(omitempty.New(`json`))
+		api = pantherlog.RegisterExtensions(api)
+		stream := jsoniter.NewStream(api, nil, 8192)
 		b.ReportAllocs()
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			result, err := builder.BuildResult(event)
+			localEvent := event
+			result, err := builder.BuildResult(localEvent)
 			if err != nil {
 				b.Fatal(err)
 			}
-			buffer.Reset()
-			if err := result.WriteJSONTo(buffer); err != nil {
+			stream.Reset(nil)
+			stream.WriteVal(result)
+			if err := stream.Error; err != nil {
 				b.Fatal(err)
 			}
 		}

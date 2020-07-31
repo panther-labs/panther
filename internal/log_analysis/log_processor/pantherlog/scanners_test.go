@@ -43,7 +43,7 @@ func (t *testStringer) MarshalJSON() ([]byte, error) {
 
 var (
 	// Register our own random value kinds
-	kindFoo  = ValueKind(time.Now().UnixNano())
+	kindFoo  = FieldID(time.Now().UnixNano())
 	kindBar  = kindFoo + 1
 	kindBaz  = kindFoo + 2
 	kindQux  = kindFoo + 3
@@ -51,30 +51,30 @@ var (
 )
 
 func init() {
-	MustRegisterMeta(kindFoo, MetaField{
-		FieldName:     "PantherFoo",
-		FieldNameJSON: "p_any_foo",
-		Description:   "Foo data",
+	MustRegisterField(kindFoo, FieldMeta{
+		Name:        "PantherFoo",
+		NameJSON:    "p_any_foo",
+		Description: "Foo data",
 	})
-	MustRegisterMeta(kindBar, MetaField{
-		FieldName:     "PantherBar",
-		FieldNameJSON: "p_any_bar",
-		Description:   "Bar data",
+	MustRegisterField(kindBar, FieldMeta{
+		Name:        "PantherBar",
+		NameJSON:    "p_any_bar",
+		Description: "Bar data",
 	})
-	MustRegisterMeta(kindBaz, MetaField{
-		FieldName:     "PantherBaz",
-		FieldNameJSON: "p_any_baz",
-		Description:   "Baz data",
+	MustRegisterField(kindBaz, FieldMeta{
+		Name:        "PantherBaz",
+		NameJSON:    "p_any_baz",
+		Description: "Baz data",
 	})
-	MustRegisterMeta(kindQux, MetaField{
-		FieldName:     "PantherQux",
-		FieldNameJSON: "p_any_qux",
-		Description:   "Qux data",
+	MustRegisterField(kindQux, FieldMeta{
+		Name:        "PantherQux",
+		NameJSON:    "p_any_qux",
+		Description: "Qux data",
 	})
-	MustRegisterMeta(kindQuux, MetaField{
-		FieldName:     "PantherQuux",
-		FieldNameJSON: "p_any_quux",
-		Description:   "Quux data",
+	MustRegisterField(kindQuux, FieldMeta{
+		Name:        "PantherQuux",
+		NameJSON:    "p_any_quux",
+		Description: "Quux data",
 	})
 	MustRegisterScanner("foo", kindFoo, kindFoo)
 	MustRegisterScanner("bar", kindBar, kindBar)

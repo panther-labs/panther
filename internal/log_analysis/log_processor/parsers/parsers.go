@@ -51,9 +51,6 @@ func NewValidator() *validator.Validate {
 	return v
 }
 
-// JSON is a custom jsoniter config to properly remap field names for compatibility with Athena views
-var JSON = pantherlog.JSON()
-
 // Interface is the interface to be used for log parsers.
 type Interface interface {
 	ParseLog(log string) ([]*Result, error)

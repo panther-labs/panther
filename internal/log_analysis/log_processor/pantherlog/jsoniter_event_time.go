@@ -62,6 +62,6 @@ func (e *eventTimeEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 		return
 	}
 	if result, ok := stream.Attachment.(*Result); ok {
-		result.EventTime = *tm
+		result.PantherEventTime = *tm
 	}
 }

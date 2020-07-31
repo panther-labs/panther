@@ -25,6 +25,7 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
@@ -77,7 +78,7 @@ type JSONParserFactory struct {
 	ReadBufferSize int
 	NextRowID      func() string
 	Now            func() time.Time
-	Meta           pantherlog.Meta
+	Meta           []pantherlog.FieldID
 }
 
 func (f *JSONParserFactory) NewParser(_ interface{}) (Interface, error) {
@@ -95,7 +96,7 @@ func (f *JSONParserFactory) NewParser(_ interface{}) (Interface, error) {
 	}
 	api := f.JSON
 	if api == nil {
-		api = pantherlog.JSON()
+		api = common.BuildJSON()
 	}
 	iter := jsoniter.Parse(api, logReader, bufferSize)
 
