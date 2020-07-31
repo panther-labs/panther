@@ -31,18 +31,18 @@ func NewConnectionErrRetryer() *ConnectionErrRetryer {
 	}
 }
 
-// ConnectionErrRetryer wraps the SDK's built in DefaultRetryer adding additional
-// custom features.
+// ConnectionErrRetryer wraps the SDK's built in DefaultRetryer adding customization
+// to retry `connection reset by peer` errors.
+// Not that this retryer should be used for either idempotent operations, or for operations
+// where performing duplicate requests to AWS is acceptable.
+// See also: https://github.com/aws/aws-sdk-go/issues/3027#issuecomment-567269161
 type ConnectionErrRetryer struct {
 	client.DefaultRetryer
 }
 
-// ShouldRetry overrides the SDK's built in DefaultRetryer adding customization
-// to retry `connection reset by peer` errors
 func (r ConnectionErrRetryer) ShouldRetry(req *request.Request) bool {
 	if req.Error != nil {
-		errMsg := req.Error.Error()
-		if strings.Contains(errMsg, "connection reset by peer") {
+		if strings.Contains(req.Error.Error(), "connection reset by peer") {
 			return true
 		}
 	}
