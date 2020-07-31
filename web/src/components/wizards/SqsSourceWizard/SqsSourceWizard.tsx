@@ -25,6 +25,7 @@ import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
 import { integrationLabelValidation } from 'Helpers/utils';
 import SuccessPanel from './SuccessPanel';
 import SqsSourceConfigurationPanel from './SqsSourceConfigurationPanel';
+import InformationPanel from './InformationPanel';
 
 interface SqsLogSourceWizardProps {
   initialValues: SqsLogSourceWizardValues;
@@ -66,7 +67,7 @@ const SqsSourceWizard: React.FC<SqsLogSourceWizardProps> = ({
       validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
-      {({ isValid, dirty, status, setStatus }) => {
+      {({ values, isValid, dirty, status, setStatus }) => {
         // We want to reset the error message whenever the user goes back to a previous screen.
         // That's why we handle it through status in order to manipulate it internally
         React.useEffect(() => {
@@ -79,13 +80,30 @@ const SqsSourceWizard: React.FC<SqsLogSourceWizardProps> = ({
         return (
           <Form>
             <Wizard>
+              {initialValues.integrationId && (
+                <Wizard.Step title="Information" icon="info">
+                  <WizardPanelWrapper>
+                    <WizardPanelWrapper.Content>
+                      <InformationPanel />
+                    </WizardPanelWrapper.Content>
+                    <WizardPanelWrapper.Actions>
+                      <WizardPanelWrapper.ActionNext />
+                    </WizardPanelWrapper.Actions>
+                  </WizardPanelWrapper>
+                </Wizard.Step>
+              )}
               <Wizard.Step title="Configure" icon="settings">
                 <WizardPanelWrapper>
                   <WizardPanelWrapper.Content>
                     <SqsSourceConfigurationPanel />
                   </WizardPanelWrapper.Content>
                   <WizardPanelWrapper.Actions>
-                    <WizardPanelWrapper.ActionNext disabled={!dirty || !isValid} />
+                    {initialValues.integrationId && <WizardPanelWrapper.ActionPrev />}
+                    <WizardPanelWrapper.ActionNext
+                      disabled={
+                        !values.logTypes.length && !isValid && !values.integrationLabel && !dirty
+                      }
+                    />
                   </WizardPanelWrapper.Actions>
                 </WizardPanelWrapper>
               </Wizard.Step>
