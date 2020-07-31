@@ -146,7 +146,8 @@ func (Test) Doc() {
 	// For example, "../.gitbook/assets/log-analysis/setup-sns1.png"
 	assetRef := regexp.MustCompile(`^(?:\.\./)*\.gitbook/assets/[a-z0-9/-]+\.(?:png|jpg)$`)
 
-	// Document reference - link to another documentation page, potentially with a header
+	// Document reference - link to another documentation page, potentially with a header.
+	// For safety and consistency, we don't allow linking to directories, only specific files.
 	//
 	// Examples:
 	//    - "#aws-credentials"                       (header in same file)
@@ -155,7 +156,7 @@ func (Test) Doc() {
 	//    - ""                                       (file and header are both optional)
 	//
 	// Non-examples:
-	//    - "../log-analysis"   (a common mistake - you can't link to directories)
+	//    - "../log-analysis"   (a common mistake - you can't link to directories without a README)
 	//    - "quick_start.md"    (use "-" instead of "_")
 	docRef := regexp.MustCompile(`^([A-Za-z0-9./-]+\.md)?(#[A-Za-z0-9.-]+)?$`)
 
@@ -165,17 +166,19 @@ func (Test) Doc() {
 			target := match[1]
 
 			if webRef.Match(target) || emailRef.Match(target) {
-				logger.Debugf("%s valid web/email link: %s", path, string(target))
+				logger.Debugf("test:doc: %s valid web/email link: %s", path, string(target))
 				continue
 			}
 
 			if assetRef.Match(target) {
-				logger.Debugf("%s image ref: %s", path, string(target))
+				// TODO - validate image path
+				logger.Debugf("test:doc: %s image ref: %s", path, string(target))
 			} else if docRef.Match(target) {
-				// TODO - may be empty
-				logger.Debugf("%s doc ref: %s", path, string(target))
+				// TODO - validate document path
+				// TODO - validate header
+				logger.Debugf("test:doc: %s doc ref: %s", path, string(target))
 			} else {
-				logger.Errorf("%s: unknown link: %s", path, string(match[0]))
+				logger.Errorf("test:doc: %s: unknown link: %s", path, string(match[0]))
 			}
 		}
 	}
