@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Flex, Heading, Text } from 'pouncejs';
+import { Box, Flex, FormHelperText, Heading, Text } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { FastField, Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -33,23 +33,11 @@ const SqsSourceConfigurationPanel: React.FC = () => {
       <Heading as="h2" m="auto" mb={2}>
         {initialValues.integrationId ? 'Update the SQS source' : "Let's start with the basics"}
       </Heading>
-      {initialValues.integrationId ? (
-        <React.Fragment>
-          <Text color="gray-300" mb={2}>
-            You need to send events on this queue url for Panther to process them:
-          </Text>
-          <Text fontSize="small" mb={10}>
-            {initialValues.queueUrl}
-          </Text>
-          <Text color="gray-300" mb={4}>
-            Feel free to make any changes to your SQS log source
-          </Text>
-        </React.Fragment>
-      ) : (
-        <Text color="gray-300" mb={10}>
-          We need to know where to get your logs from
-        </Text>
-      )}
+      <Text color="gray-300" mb={4}>
+        {initialValues.integrationId
+          ? 'Feel free to make any changes to your SQS log source'
+          : 'We need to know where to get your logs from'}
+      </Text>
       <ErrorBoundary>
         <Flex direction="column" spacing={4}>
           <Field
@@ -69,22 +57,31 @@ const SqsSourceConfigurationPanel: React.FC = () => {
           />
           <FastField
             as={FormikMultiCombobox}
-            label="Allowed Principals"
+            label="Allowed AWS Principal ARNs"
             name="allowedPrincipals"
             searchable
             allowAdditions
             items={[]}
-            placeholder="Which are the allowed principals should we monitor?"
+            placeholder="Enter AWS Principals ARNs"
           />
+          <FormHelperText id="aws-principals-arn-helper" ml={3} pb={4}>
+            Add the ARN of the AWS Principals that are allowed to send data to the queue i.e.
+            arn:aws:iam::01234567912:root
+          </FormHelperText>
+
           <FastField
             as={FormikMultiCombobox}
-            label="Allowed ARNs"
+            label="Allowed source ARNs"
             name="allowedSourceArns"
             searchable
             allowAdditions
             items={[]}
-            placeholder="Which are the allowed ARNs?"
+            placeholder="Enter AWS resources ARNs"
           />
+          <FormHelperText id="aws-resources-arn-helper" ml={3}>
+            Specify which AWS resources (SNS topics, S3 buckets, etc) are allowed to send data to
+            the queue i.e. arn:aws:sns:eu-west-1:123456789012:my-topic
+          </FormHelperText>
         </Flex>
       </ErrorBoundary>
     </Box>
