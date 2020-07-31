@@ -17,8 +17,11 @@
  */
 
 import React from 'react';
-import { Flex, FormError, Heading, Text } from 'pouncejs';
+import { Flex, FormError, Heading, Text, AbstractButton, Link } from 'pouncejs';
 import { useFormikContext } from 'formik';
+import { copyTextToClipboard } from 'Helpers/utils';
+import { Link as RRLink } from 'react-router-dom';
+import urls from 'Source/urls';
 import { SqsLogSourceWizardValues } from '../SqsSourceWizard';
 
 const InformationPanel: React.FC = () => {
@@ -35,14 +38,28 @@ const InformationPanel: React.FC = () => {
       <Heading as="h2" m="auto" mb={5}>
         We created a SQS queue for you
       </Heading>
-      <Text color="gray-300" mb={2}>
+      <Text color="gray-300" mb={4}>
         You need to send events on this queue url for Panther to process them:
       </Text>
-      <Text fontSize="small" mb={10}>
+      <Text fontSize="small" mb={4}>
         {initialValues.queueUrl}
       </Text>
+      <Text color="gray-300" mb={10}>
+        You can copy the above URL or click{' '}
+        <AbstractButton
+          color="blue-400"
+          onClick={() => copyTextToClipboard(initialValues.queueUrl)}
+        >
+          here
+        </AbstractButton>{' '}
+        to copy on clipboard
+      </Text>
       <Text color="gray-300" mb={4}>
-        Click Next if you want to edit your SQS source configuration
+        Click Next if you want to edit your SQS source configuration or click{' '}
+        <Link mr={1} as={RRLink} to={urls.logAnalysis.sources.list()}>
+          here
+        </Link>
+        to return on Sources page
       </Text>
       {status.errorMessage && <FormError mt={6}>{status.errorMessage}</FormError>}
     </Flex>
