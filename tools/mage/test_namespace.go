@@ -24,6 +24,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -79,6 +80,8 @@ func (Test) CI() {
 		{"cfn-lint", testCfnLint},
 		{"terraform validate", testTfValidate},
 
+		// mage test:doc
+
 		// mage test:python
 		{"python unit tests", testPythonUnit},
 		{"pylint", testPythonLint},
@@ -116,6 +119,68 @@ func (Test) Cfn() {
 	})
 }
 
+// Verify links and assets in documentation
+func (Test) Doc() {
+	// TODO - separate files for "test_doc", "test_python", "test_go", etc
+
+	docFiles := make(map[string]struct{})
+	walk(filepath.Join("docs", "gitbook"), func(path string, info os.FileInfo) {
+		if filepath.Ext(path) == ".md" {
+			docFiles[path] = struct{}{}
+		}
+	})
+
+	logger.Infof("test:doc: scanning %d documentation .md files", len(docFiles))
+	// note: we need the non-greedy variant, hence ".*?"
+	linkPattern := regexp.MustCompile(`\[.*?\]\((.*?)\)`) // e.g. "[myfile](path/to/doc.md)"
+
+	// Every link target must be one of the following:
+
+	// web reference - http(s) links
+	webRef := regexp.MustCompile(`^https?://[A-Za-z0-9.#?&%/:=_-]{5,}$`)
+
+	// email link - based on the same regex we use for emails in CloudFormation parameters
+	emailRef := regexp.MustCompile(`^mailto:[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$`)
+
+	// Asset reference - an image in the docs/gitbook/.gitbook/assets folder
+	// For example, "../.gitbook/assets/log-analysis/setup-sns1.png"
+	assetRef := regexp.MustCompile(`^(?:\.\./)*\.gitbook/assets/[a-z0-9/-]+\.(?:png|jpg)$`)
+
+	// Document reference - link to another documentation page, potentially with a header
+	//
+	// Examples:
+	//    - "#aws-credentials"                       (header in same file)
+	//    - "../enterprise/data-analytics/README.md" (a different document)
+	//    - "development.md#deploying"               (header in another file)
+	//    - ""                                       (file and header are both optional)
+	//
+	// Non-examples:
+	//    - "../log-analysis"   (a common mistake - you can't link to directories)
+	//    - "quick_start.md"    (use "-" instead of "_")
+	docRef := regexp.MustCompile(`^([A-Za-z0-9./-]+\.md)?(#[A-Za-z0-9.-]+)?$`)
+
+	for path := range docFiles {
+		for _, match := range linkPattern.FindAllSubmatch(readFile(path), -1) {
+			// match[0] is entire "[text](target)", match[1] is just "target"
+			target := match[1]
+
+			if webRef.Match(target) || emailRef.Match(target) {
+				logger.Debugf("%s valid web/email link: %s", path, string(target))
+				continue
+			}
+
+			if assetRef.Match(target) {
+				logger.Debugf("%s image ref: %s", path, string(target))
+			} else if docRef.Match(target) {
+				// TODO - may be empty
+				logger.Debugf("%s doc ref: %s", path, string(target))
+			} else {
+				logger.Errorf("%s: unknown link: %s", path, string(match[0]))
+			}
+		}
+	}
+}
+
 // Test and lint Golang source code
 func (Test) Go() {
 	if err := testGoUnit(); err != nil {
@@ -137,7 +202,7 @@ func (Test) Python() {
 	})
 }
 
-// Test and lint npm/web source
+// Test and lint web source
 func (Test) Web() {
 	runTests([]testTask{
 		{"npm run eslint", testWebEslint},
