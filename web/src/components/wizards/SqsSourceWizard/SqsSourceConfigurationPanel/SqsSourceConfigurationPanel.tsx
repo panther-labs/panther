@@ -23,6 +23,7 @@ import { FastField, Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import { LOG_TYPES } from 'Source/constants';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
+import { pantherConfig } from 'Source/config';
 import { SqsLogSourceWizardValues } from '../SqsSourceWizard';
 
 const SqsSourceConfigurationPanel: React.FC = () => {
@@ -66,7 +67,7 @@ const SqsSourceConfigurationPanel: React.FC = () => {
           />
           <FormHelperText id="aws-principals-arn-helper" ml={3} pb={4}>
             Add the ARN of the AWS Principals that are allowed to send data to the queue i.e.
-            arn:aws:iam::01234567912:root
+            arn:aws:iam::{pantherConfig.AWS_ACCOUNT_ID}:root
           </FormHelperText>
 
           <FastField
@@ -80,7 +81,8 @@ const SqsSourceConfigurationPanel: React.FC = () => {
           />
           <FormHelperText id="aws-resources-arn-helper" ml={3}>
             Specify which AWS resources (SNS topics, S3 buckets, etc) are allowed to send data to
-            the queue i.e. arn:aws:sns:eu-west-1:123456789012:my-topic
+            the queue i.e. arn:aws:sns:{pantherConfig.AWS_REGION}:{pantherConfig.AWS_ACCOUNT_ID}
+            :my-topic
           </FormHelperText>
         </Flex>
       </ErrorBoundary>

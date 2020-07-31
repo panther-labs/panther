@@ -99,7 +99,6 @@ const SqsSourceWizard: React.FC<SqsLogSourceWizardProps> = ({
                   </WizardPanelWrapper.Content>
                   <WizardPanelWrapper.Actions>
                     {initialValues.integrationId && <WizardPanelWrapper.ActionPrev />}
-                    {console.log('vars', dirty, isValid, values)}
                     <WizardPanelWrapper.ActionNext
                       disabled={
                         (!values.logTypes.length && !values.integrationLabel) || !isValid || !dirty
