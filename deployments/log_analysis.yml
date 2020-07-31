@@ -24,22 +24,37 @@ Parameters:
   AlarmTopicArn:
     Type: String
     Description: SNS topic for CloudWatch alarms
+    # Example: "arn:aws:sns:us-west-2:111122223333:panther-cw-alarms"
+    AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
   AnalysisApiId:
     Type: String
     Description: API Gateway for analysis-api
+    # Example: "0jcmwnr9cj"
+    AllowedPattern: '^[0-9a-z]{10}$'
   AthenaResultsBucket:
     Type: String
-    Description: Bucket created to hold Athena results
+    Description: Name of the S3 bucket created to hold Athena results
+    AllowedPattern: '^[a-z0-9.-]{3,63}$'
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
+    MinValue: 1
   CustomResourceVersion:
     Type: String
     Description: Forces updates to custom resources when changed
+    MinLength: 1
   Debug:
     Type: String
     Description: Toggle debug logging
     AllowedValues: [true, false]
+  InputDataBucket:
+    Type: String
+    Description: Name of the S3 bucket will contain data meant to be processed by log analysis
+    AllowedPattern: '^[a-z0-9.-]{3,63}$'
+  InputDataTopicArn:
+    Type: String
+    Description: The ARN of the input data SNS topic
+    AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
   LayerVersionArns:
     Type: CommaDelimitedList
     Description: List of base LayerVersion ARNs to attach to every Lambda function
@@ -50,29 +65,30 @@ Parameters:
     MaxValue: 3008
   ProcessedDataBucket:
     Type: String
-    Description: S3 bucket which stores processed logs
+    Description: Name of the S3 bucket which stores processed logs
+    AllowedPattern: '^[a-z0-9.-]{3,63}$'
   ProcessedDataTopicArn:
     Type: String
     Description: The ARN of the processed data SNS topic
+    AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
   PythonLayerVersionArn:
     Type: String
     Description: Pip libraries for python analysis and remediation
+    # Example: "arn:aws:lambda:us-west-2:111122223333:layer:panther-analysis:143"
+    AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):lambda:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:layer:\S+:\d+$'
   SqsKeyId:
     Type: String
     Description: KMS key ID for SQS encryption
+    # Example: "484fb80c-4ae5-40d0-b22a-bdd5d0953b3e"
+    AllowedPattern: '^[0-9a-f-]{36}$'
   TablesSignature:
     Type: String
     Description: Value from gluetable.DeployedTablesSignature() or the Panther version if using CF
+    MinLength: 1
   TracingMode:
     Type: String
     Description: Enable XRay tracing on Lambda and API Gateway
     AllowedValues: ['', Active, PassThrough]
-  InputDataBucket:
-    Type: String
-    Description: S3 bucket which stores incoming logs that are meant to be processed by log analysis
-  InputDataTopicArn:
-    Type: String
-    Description: The ARN of the input data SNS topic
 
 Mappings:
   Functions:

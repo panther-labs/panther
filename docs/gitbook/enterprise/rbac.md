@@ -6,10 +6,10 @@ Role-Based Access Control (RBAC) gives Panther Enterprise deployments fine-grain
 
 When you first deploy Panther Enterprise, the following three roles are automatically created for you:
 
-![Default Roles](../.gitbook/assets/rbac-default-roles.png)
+![Default Roles](../.gitbook/assets/enterprise/rbac-default-roles.png)
 
 * The "Admin" role will be automatically assigned to all existing users when upgrading from the community edition and has all available permissions.
-* The "Analyst" role can use all of the cloud security and log analysis features, but can't view or modify settings.
+* The "Analyst" role can use all the cloud security and log analysis features, but can't modify settings.
 * The "AnalystReadOnly" role can view resources and alerts and Python code, but can't change anything.
 
 ## Customizing Roles
@@ -23,10 +23,10 @@ All roles (including the default ones above) are fully customizable by any user 
 
 When you create or edit a role, you are shown the following screen:
 
-![Role Edit 1](../.gitbook/assets/rbac-role-edit1.png)
-![Role Edit 2](../.gitbook/assets/rbac-role-edit2.png)
-![Role Edit 3](../.gitbook/assets/rbac-role-edit3.png)
+![Role Edit](../.gitbook/assets/enterprise/rbac-role-edit.png)
+
+(There are more available permissions than the ones shown here.)
 
 {% hint style="info" %}
-Permission changes do not take effect until the next login or until the user's session expires.
+Permission changes will not take effect until the user's session expires (at most 1 hour).
 {% endhint %}

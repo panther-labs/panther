@@ -8,7 +8,7 @@ The sections below cover how Panther works under the hood, how to build and depl
 
 This diagram provides an overview of the core components of Panther, and how they are connected.
 
-![High level architecture diagram](.gitbook/assets/high-level-arch-diagram.png)
+![High level architecture diagram](.gitbook/assets/development-arch-diagram.png)
 
 For a more detailed architecture diagram, see the bottom of this page.
 
@@ -197,7 +197,7 @@ The diagrams below can be used to understand Panther's architecture at a deeper 
 
 This diagram provides additional detail to the high-level diagram above:
 
-![Architecture diagram](.gitbook/assets/detailed-arch-diagram.png)
+![Architecture diagram](.gitbook/assets/development-arch-diagram-detailed.png)
 
 While more detailed than the overview above, this diagram also simplifies some implementation details for clarity. For example, the majority of lambdas are not invoking each other directly but instead communicating via SQS Queues or DynamoDB streams.
 
@@ -205,6 +205,6 @@ While more detailed than the overview above, this diagram also simplifies some i
 
 This diagram shows where and how your data is stored and processed:
 
-![Data flow diagram](.gitbook/assets/data-flow-diagram.png)
+![Data flow diagram](.gitbook/assets/development-data-flow-diagram.png)
 
 The above arrows indicate the direction in which data is transferred, as opposed to the previous diagrams where arrows are indicating the direction that communication is being initiated.

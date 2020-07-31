@@ -26,19 +26,19 @@ A single alert can dispatch to multiple destinations simultaneously, such as cre
 
 To create a destination, navigate to `Settings` > `Destinations` and select `Add Destination`.
 
-![](../.gitbook/assets/default-destinations-new.png)
+![](../.gitbook/assets/destinations/readme-add-destination.png)
 
 You will then be prompted to select a destination type.
 
 Multiple destinations of the same type may be configured, such as several Slack channels or email addresses. This allows for fine grained control of destination routing.
 
-![Select the destination type](../.gitbook/assets/destination-types.png)
+![](../.gitbook/assets/destinations/readme-destination-types.png)
 
 Next, add a `Display Name` to distinguish the destination from others in the Panther UI and select the associated severities for this destination.
 
 Each destination type will have specific configuration options based on the system's API. See the destination specific setup instructions in the following pages for more details.
 
-![Configure the destination's settings](../.gitbook/assets/destination-settings-example.png)
+![](../.gitbook/assets/destinations/readme-settings-example.png)
 
 Finally, click the `Add Destination` button to save the configuration. You are now ready to receive alerts!
 
@@ -46,4 +46,4 @@ Finally, click the `Add Destination` button to save the configuration. You are n
 
 An existing destination may be modified or deleted by selecting the triple dot button. From here, you can modify the display name, the severities, and the specific configurations. Alternatively, you can also delete the destination.
 
-![Changing a destination](../.gitbook/assets/destination-modificaiton.png)
+![](../.gitbook/assets/destinations/readme-modification.png)

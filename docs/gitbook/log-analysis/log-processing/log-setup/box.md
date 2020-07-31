@@ -1,4 +1,4 @@
-# Setup a Box App to access Box admin events from Panther
+# Box Setup
 
 Panther has the ability to fetch events from the [Box Events API](https://developer.box.com/reference/get-events/).
 

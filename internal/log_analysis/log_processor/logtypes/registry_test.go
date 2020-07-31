@@ -30,6 +30,9 @@ import (
 
 func TestRegistry(t *testing.T) {
 	r := Registry{}
+	type T struct {
+		Foo string `json:"foo" description:"foo field"`
+	}
 	logTypes := r.LogTypes()
 	require.Empty(t, logTypes)
 	require.Panics(t, func() {
@@ -39,7 +42,7 @@ func TestRegistry(t *testing.T) {
 		Name:         "Foo.Bar",
 		Description:  "Foo.Bar logs",
 		ReferenceURL: "-",
-		Schema:       struct{}{},
+		Schema:       T{},
 		NewParser: func(params interface{}) (parsers.Interface, error) {
 			return nil, nil
 		},
@@ -52,12 +55,27 @@ func TestRegistry(t *testing.T) {
 		Description:  "Foo.Bar logs",
 		ReferenceURL: "-",
 	}, api.Describe())
-	require.Equal(t, struct{}{}, api.Schema())
+	require.Equal(t, T{}, api.Schema())
 	require.Equal(
 		t,
-		awsglue.NewGlueTableMetadata(models.LogData, "Foo.Bar", "Foo.Bar logs", awsglue.GlueTableHourly, struct{}{}),
+		awsglue.NewGlueTableMetadata(models.LogData, "Foo.Bar", "Foo.Bar logs", awsglue.GlueTableHourly, T{}),
 		api.GlueTableMeta(),
 	)
+
+	// Ensure invalid schemas don't pass
+	configEmpty := logTypeConfig
+	configEmpty.Schema = struct{}{}
+	nilEntry, err := r.Register(configEmpty)
+	require.Error(t, err)
+	require.Nil(t, nilEntry)
+
+	// Ensure nil schemas don't pass
+	configNil := logTypeConfig
+	configNil.Schema = nil
+	nilEntry2, err := r.Register(configNil)
+	require.Error(t, err)
+	require.Nil(t, nilEntry2)
+
 	entry, err := r.Register(logTypeConfig)
 	require.Error(t, err)
 	require.Equal(t, api, entry)

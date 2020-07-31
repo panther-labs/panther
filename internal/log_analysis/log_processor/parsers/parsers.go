@@ -19,12 +19,12 @@ package parsers
  */
 
 import (
-	"strings"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
 	"gopkg.in/go-playground/validator.v9"
 
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/jsonutil"
 )
 
@@ -47,23 +47,6 @@ type LogParser interface {
 // Validator can be used to validate schemas of log fields
 var Validator = validator.New()
 
-// NOTE: The mapping should be easy to remember (so no ASCII code etc) and complex enough
-// to avoid possible conflicts with other fields.
-var fieldNameReplacer = strings.NewReplacer(
-	"@", "_at_sign_",
-	",", "_comma_",
-	"`", "_backtick_",
-	"'", "_apostrophe_",
-)
-
-func RewriteFieldName(name string) string {
-	result := fieldNameReplacer.Replace(name)
-	if result == name {
-		return name
-	}
-	return strings.Trim(result, "_")
-}
-
 // JSON is a custom jsoniter config to properly remap field names for compatibility with Athena views
 var JSON = func() jsoniter.API {
 	config := jsoniter.Config{
@@ -74,7 +57,8 @@ var JSON = func() jsoniter.API {
 		SortMapKeys: false,
 	}
 	api := config.Froze()
-	rewriteFields := jsonutil.NewEncoderNamingStrategy(RewriteFieldName)
+	// Use proper glue columns names for fields
+	rewriteFields := jsonutil.NewEncoderNamingStrategy(awsglue.RewriteFieldName)
 	api.RegisterExtension(rewriteFields)
 	return api
 }()

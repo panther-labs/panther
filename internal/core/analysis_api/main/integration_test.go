@@ -571,10 +571,18 @@ func createPolicySuccess(t *testing.T) {
 
 // Tests that a policy cannot be saved if it is enabled and its tests fail.
 func saveEnabledPolicyFailingTests(t *testing.T) {
-	body := "def policy(resource): return True"
+	body := "def policy(resource): return resource['key']"
 	tests := []*models.UnitTest{
 		{
+			Name:           "This will pass",
+			ExpectedResult: true,
+			Resource:       `{"key":true}`,
+		}, {
 			Name:           "This will fail",
+			ExpectedResult: false,
+			Resource:       `{"key":true}`,
+		}, {
+			Name:           "This will fail too",
 			ExpectedResult: false,
 			Resource:       `{}`,
 		},
@@ -779,12 +787,20 @@ func savePolicyInvalidTestInputJSON(t *testing.T) {
 func saveEnabledRuleFailingTests(t *testing.T) {
 	ruleID := uuid.New().String()
 	defer cleanupPoliciesRules(t, ruleID)
-	body := "def rule(event): return True"
+	body := "def rule(event): return event['key']"
 	tests := []*models.UnitTest{
 		{
 			Name:           "This will fail",
 			ExpectedResult: false,
+			Resource:       `{"key":true}`,
+		}, {
+			Name:           "This will fail too",
+			ExpectedResult: true,
 			Resource:       `{}`,
+		}, {
+			Name:           "This will pass",
+			ExpectedResult: true,
+			Resource:       `{"key":true}`,
 		},
 	}
 	req := models.UpdateRule{

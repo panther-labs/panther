@@ -20,6 +20,7 @@ package parsers
 
 import (
 	"net"
+	"reflect"
 	"regexp"
 	"sort"
 	"time"
@@ -27,6 +28,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -64,6 +66,9 @@ type PantherAnyString struct { // needed to declare as struct (rather than map) 
 	set map[string]struct{} // map is used for uniqueness, serializes as JSON list
 }
 
+func init() {
+	awsglue.MustRegisterMapping(reflect.TypeOf(PantherAnyString{}), awsglue.ArrayOf(awsglue.GlueStringType))
+}
 func NewPantherAnyString() *PantherAnyString {
 	return &PantherAnyString{
 		set: make(map[string]struct{}),
