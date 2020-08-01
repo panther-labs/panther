@@ -129,6 +129,14 @@ func (logs *supportedLogs) generateDocumentation() error {
 			buf.WriteString(fmt.Sprintf("     - [%s](%s.md#%s)\n",
 				strings.Split(logType, ".")[1], name,
 				// gitbook will always use lowercase headers with dashes
+				// TODO - numbers in headers get real weird
+				// https://docs.runpanther.io/v/austin-ci-docs/log-analysis/rules
+				//
+				// "S3.ServerAccess" => "s-3-serveraccess"
+				// "A1B2C3D4" => "a-1-b2c-3-d4"
+				// "12345" => "12345"
+				// "A-1-B-2-C-3" => "a-1-b-2-c-3"
+				// "ABC 123 DEF" => "abc-123-def"
 				strings.ToLower(strings.ReplaceAll(logType, ".", "-"))))
 		}
 	}
