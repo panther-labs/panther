@@ -1,3 +1,6 @@
+/*
+Utility package to read input from terminal.
+*/
 package prompt
 
 /**
@@ -20,18 +23,13 @@ package prompt
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 )
-
-/*
- Utility package to read input from terminal
-*/
 
 // Read will prompt the user for a string input.
 func Read(prompt string, validator func(string) error) string {
