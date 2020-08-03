@@ -22,7 +22,7 @@ import { RuleBasic } from './RuleBasic.generated';
 import { RuleDates } from './RuleDates.generated';
 import gql from 'graphql-tag';
 
-export type RuleFull = Pick<Types.RuleDetails, 'body'> & {
+export type RuleFull = Pick<Types.RuleDetails, 'body' | 'threshold'> & {
   tests?: Types.Maybe<
     Array<Types.Maybe<Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource'>>>
   >;
@@ -34,6 +34,7 @@ export const RuleFull = gql`
     ...RuleBasic
     ...RuleDates
     body
+    threshold
     tests {
       expectedResult
       name

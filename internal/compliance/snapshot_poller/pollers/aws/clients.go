@@ -29,6 +29,7 @@ import (
 	"go.uber.org/zap"
 
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
+	"github.com/panther-labs/panther/pkg/awsretry"
 )
 
 const (
@@ -42,8 +43,7 @@ const (
 )
 
 var (
-	snapshotPollerSession = session.Must(session.NewSession(&aws.Config{MaxRetries: aws.Int(maxRetries)}))
-
+	snapshotPollerSession *session.Session
 	// assumeRoleFunc is the function to return valid AWS credentials.
 	assumeRoleFunc         = assumeRole
 	verifyAssumedCredsFunc = verifyAssumedCreds
@@ -62,6 +62,12 @@ type cachedClient struct {
 }
 
 var clientCache = make(map[clientKey]cachedClient)
+
+func Setup() {
+	awsConfig := aws.NewConfig().WithMaxRetries(maxRetries)
+	awsConfig.Retryer = awsretry.NewConnectionErrRetryer()
+	snapshotPollerSession = session.Must(session.NewSession(awsConfig))
+}
 
 // getClient returns a valid client for a given integration, service, and region using caching.
 func getClient(pollerInput *awsmodels.ResourcePollerInput,

@@ -4,7 +4,7 @@ description: Onboard and analyze osquery logs with Panther
 
 # Tutorial: Osquery Log Analysis
 
-![ Panther and Osquery](../.gitbook/assets/tutorials/osquery-panther.png)
+![Panther and Osquery](../.gitbook/assets/tutorials/osquery-panther.png)
 
 ## Overview
 
@@ -290,7 +290,7 @@ def rule(event):
         return False
 
     # Analyze any presence of the string /tmp/ in the rule
-    if ‘/tmp/’ in command:
+    if '/tmp/' in command:
         return True
 
     # If these conditions aren’t satisfied, do not trigger an alert

@@ -57,51 +57,77 @@ func TestGetPeriodStartAndInterval(t *testing.T) {
 	now := roundToUTCMinute(time.Now())
 
 	// Offset by a few hours, seconds, and nanoseconds. This should be rounded to the nearest minute.
-	minuteTime := now.Add(-8*time.Hour + 32*time.Second + 640*time.Nanosecond)
-	minuteStart, minuteInterval := getPeriodStartAndInterval(minuteTime)
+	minuteStartTime := now.Add(-8*time.Hour + 32*time.Second + 640*time.Nanosecond)
+	minuteEndTime := minuteStartTime.Add(4 * time.Hour)
+	minuteStart, minuteEnd, minuteInterval := roundInterval(minuteStartTime, minuteEndTime)
+
 	assert.Equal(t, int64(1), minuteInterval)
 	// These fields should not  change
-	assert.Equal(t, minuteTime.Year(), minuteStart.Year())
-	assert.Equal(t, minuteTime.Month(), minuteStart.Month())
-	assert.Equal(t, minuteTime.Day(), minuteStart.Day())
-	assert.Equal(t, minuteTime.Hour(), minuteStart.Hour())
-	assert.Equal(t, minuteTime.Minute(), minuteStart.Minute())
+	assert.Equal(t, minuteStartTime.Year(), minuteStart.Year())
+	assert.Equal(t, minuteStartTime.Month(), minuteStart.Month())
+	assert.Equal(t, minuteStartTime.Day(), minuteStart.Day())
+	assert.Equal(t, minuteStartTime.Hour(), minuteStart.Hour())
+	assert.Equal(t, minuteStartTime.Minute(), minuteStart.Minute())
+	assert.Equal(t, minuteEndTime.Year(), minuteEnd.Year())
+	assert.Equal(t, minuteEndTime.Month(), minuteEnd.Month())
+	assert.Equal(t, minuteEndTime.Day(), minuteEnd.Day())
+	assert.Equal(t, minuteEndTime.Hour(), minuteEnd.Hour())
+	assert.Equal(t, minuteEndTime.Minute(), minuteEnd.Minute())
 	// These fields should have been truncated
 	assert.Equal(t, 0, minuteStart.Second())
 	assert.Equal(t, 0, minuteStart.Nanosecond())
+	assert.Equal(t, 0, minuteEnd.Second())
+	assert.Equal(t, 0, minuteEnd.Nanosecond())
 
 	// Offset by 30 days to get into the next time bucket, then add some minutes, seconds, and nanoseconds.
 	// This should be rounded to the nearest five minute interval.
-	fiveMinuteTime := now.Add((-30 * 24 * time.Hour) + 52*time.Second + 777*time.Nanosecond)
+	fiveMinuteStartTime := now.Add((-30 * 24 * time.Hour) + 52*time.Second + 777*time.Nanosecond)
 	// Remove all minutes, so  we can explicitly set the minute field
-	fiveMinuteTime = fiveMinuteTime.Truncate(60 * time.Minute).Add(7 * time.Minute)
-	fiveMinuteStart, fiveMinuteInterval := getPeriodStartAndInterval(fiveMinuteTime)
+	fiveMinuteStartTime = fiveMinuteStartTime.Truncate(60 * time.Minute).Add(7 * time.Minute)
+	fiveMinuteEndTime := fiveMinuteStartTime.Add(4 * time.Hour)
+	fiveMinuteStart, fiveMinuteEnd, fiveMinuteInterval := roundInterval(fiveMinuteStartTime, fiveMinuteEndTime)
 	assert.Equal(t, int64(5), fiveMinuteInterval)
 	// These fields should not  change
-	assert.Equal(t, fiveMinuteTime.Year(), fiveMinuteStart.Year())
-	assert.Equal(t, fiveMinuteTime.Month(), fiveMinuteStart.Month())
-	assert.Equal(t, fiveMinuteTime.Day(), fiveMinuteStart.Day())
-	assert.Equal(t, fiveMinuteTime.Hour(), fiveMinuteStart.Hour())
+	assert.Equal(t, fiveMinuteStartTime.Year(), fiveMinuteStart.Year())
+	assert.Equal(t, fiveMinuteStartTime.Month(), fiveMinuteStart.Month())
+	assert.Equal(t, fiveMinuteStartTime.Day(), fiveMinuteStart.Day())
+	assert.Equal(t, fiveMinuteStartTime.Hour(), fiveMinuteStart.Hour())
+	assert.Equal(t, fiveMinuteEndTime.Year(), fiveMinuteEnd.Year())
+	assert.Equal(t, fiveMinuteEndTime.Month(), fiveMinuteEnd.Month())
+	assert.Equal(t, fiveMinuteEndTime.Day(), fiveMinuteEnd.Day())
+	assert.Equal(t, fiveMinuteEndTime.Hour(), fiveMinuteEnd.Hour())
 	// These fields should have been truncated
-	assert.NotEqual(t, fiveMinuteTime.Minute(), fiveMinuteStart.Minute())
+	assert.NotEqual(t, fiveMinuteStartTime.Minute(), fiveMinuteStart.Minute())
+	assert.NotEqual(t, fiveMinuteEndTime.Minute(), fiveMinuteEnd.Minute())
 	assert.Equal(t, 5, fiveMinuteStart.Minute())
 	assert.Equal(t, 0, fiveMinuteStart.Second())
 	assert.Equal(t, 0, fiveMinuteStart.Nanosecond())
+	assert.Equal(t, 5, fiveMinuteEnd.Minute())
+	assert.Equal(t, 0, fiveMinuteEnd.Second())
+	assert.Equal(t, 0, fiveMinuteEnd.Nanosecond())
 
 	// Offset by 90 days to get into the next time bucket, then add some minutes, seconds, and nanoseconds.
 	// This should be rounded to the nearest hour.
-	hourTime := now.Add((-90 * 24 * time.Hour) + 52*time.Second + 777*time.Nanosecond + 3*time.Hour)
-	hourStart, hourInterval := getPeriodStartAndInterval(hourTime)
+	hourStartTime := now.Add((-90 * 24 * time.Hour) + 52*time.Second + 777*time.Nanosecond + 3*time.Hour)
+	hourEndTime := hourStartTime.Add(8 * time.Hour)
+	hourStart, hourEnd, hourInterval := roundInterval(hourStartTime, hourEndTime)
 	assert.Equal(t, int64(60), hourInterval)
 	// These fields should not  change
-	assert.Equal(t, hourTime.Year(), hourStart.Year())
-	assert.Equal(t, hourTime.Month(), hourStart.Month())
-	assert.Equal(t, hourTime.Day(), hourStart.Day())
-	assert.Equal(t, hourTime.Hour(), hourStart.Hour())
+	assert.Equal(t, hourStartTime.Year(), hourStart.Year())
+	assert.Equal(t, hourStartTime.Month(), hourStart.Month())
+	assert.Equal(t, hourStartTime.Day(), hourStart.Day())
+	assert.Equal(t, hourStartTime.Hour(), hourStart.Hour())
+	assert.Equal(t, hourEndTime.Year(), hourEnd.Year())
+	assert.Equal(t, hourEndTime.Month(), hourEnd.Month())
+	assert.Equal(t, hourEndTime.Day(), hourEnd.Day())
+	assert.Equal(t, hourEndTime.Hour(), hourEnd.Hour())
 	// These fields should have been truncated
 	assert.Equal(t, 0, hourStart.Minute())
 	assert.Equal(t, 0, hourStart.Second())
 	assert.Equal(t, 0, hourStart.Nanosecond())
+	assert.Equal(t, 0, hourEnd.Minute())
+	assert.Equal(t, 0, hourEnd.Second())
+	assert.Equal(t, 0, hourEnd.Nanosecond())
 }
 
 func TestNormalizeTimestamps(t *testing.T) {
@@ -112,11 +138,11 @@ func TestNormalizeTimestamps(t *testing.T) {
 
 	// These two times are offset by slightly more than 4 hours. Therefore with a 1 hour interval, we
 	// expect five values per metric.
-	fromDate := today.Add(4 * time.Hour).Add(33 * time.Minute).Add(58 * time.Second).Add(500 * time.Nanosecond)
-	toDate := today.Add(8 * time.Hour).Add(55 * time.Minute).Add(16 * time.Second).Add(900 * time.Nanosecond)
-
-	// Since the fromDate is within the last 15 days, the true start time will be rounded to the nearest minute
-	bucketStartDate := today.Add(4 * time.Hour).Add(33 * time.Minute)
+	//
+	// Since the fromDate is within the last 15 days, the from and to dates will be rounded to the
+	// nearest minute already by this stage.
+	fromDate := today.Add(4 * time.Hour).Add(33 * time.Minute)
+	toDate := today.Add(8 * time.Hour).Add(55 * time.Minute)
 
 	input := &models.GetMetricsInput{
 		FromDate:        fromDate,
@@ -129,11 +155,11 @@ func TestNormalizeTimestamps(t *testing.T) {
 		{
 			Label: aws.String("label1"),
 			Timestamps: []*time.Time{
-				aws.Time(bucketStartDate.Add(4 * time.Hour)),
-				aws.Time(bucketStartDate.Add(3 * time.Hour)),
-				aws.Time(bucketStartDate.Add(2 * time.Hour)),
-				aws.Time(bucketStartDate.Add(1 * time.Hour)),
-				aws.Time(bucketStartDate),
+				aws.Time(fromDate.Add(4 * time.Hour)),
+				aws.Time(fromDate.Add(3 * time.Hour)),
+				aws.Time(fromDate.Add(2 * time.Hour)),
+				aws.Time(fromDate.Add(1 * time.Hour)),
+				aws.Time(fromDate),
 			},
 			Values: []*float64{
 				aws.Float64(100),
@@ -147,9 +173,9 @@ func TestNormalizeTimestamps(t *testing.T) {
 		{
 			Label: aws.String("label2"),
 			Timestamps: []*time.Time{
-				aws.Time(bucketStartDate.Add(4 * time.Hour)),
-				aws.Time(bucketStartDate.Add(2 * time.Hour)),
-				aws.Time(bucketStartDate),
+				aws.Time(fromDate.Add(4 * time.Hour)),
+				aws.Time(fromDate.Add(2 * time.Hour)),
+				aws.Time(fromDate),
 			},
 			Values: []*float64{
 				aws.Float64(20),

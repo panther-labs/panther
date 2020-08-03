@@ -24,36 +24,46 @@ Parameters:
   AlarmTopicArn:
     Type: String
     Description: SNS topic for CloudWatch alarms
-  AnalysisApiEndpoint:
-    Type: String
-    Description: Analysis API gateway FQDN
+    # Example: "arn:aws:sns:us-west-2:111122223333:panther-cw-alarms"
+    AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
   AnalysisApiId:
     Type: String
     Description: Analysis API gateway ID
+    # Example: "0jcmwnr9cj"
+    AllowedPattern: '^[0-9a-z]{10}$'
   AnalysisVersionsBucket:
     Type: String
-    Description: S3 bucket for python revision history
+    Description: Name of the S3 bucket which will store python revision history
+    AllowedPattern: '^[a-z0-9.-]{3,63}$'
   AppDomainURL:
     Type: String
     Description: Panther App Domain used as a link for the customer in the password reset email
+    # Example: "web-115120885.us-west-2.elb.amazonaws.com" or "app.example.com"
+    AllowedPattern: '^[a-z0-9.-]+\.[a-z]{2,}$'
   AthenaResultsBucket:
     Type: String
-    Description: Bucket created to hold Athena results
+    Description: Name of the S3 bucket created to hold Athena results
+    AllowedPattern: '^[a-z0-9.-]{3,63}$'
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
+    MinValue: 1
   CompanyDisplayName:
     Type: String
     Description: Company name displayed in Settings > General
+    MinLength: 1
   CompanyEmail:
     Type: String
     Description: Company email displayed in Settings > General
+    AllowedPattern: '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
   ComplianceApiId:
     Type: String
     Description: Compliance API gateway ID
+    AllowedPattern: '^[0-9a-z]{10}$'
   CustomResourceVersion:
     Type: String
     Description: Forces updates to custom resources when changed
+    MinLength: 1
   Debug:
     Type: String
     Description: Toggle debug logging
@@ -61,21 +71,32 @@ Parameters:
   DynamoScalingRoleArn:
     Type: String
     Description: IAM role arn for DynamoDB auto-scaling
-  InitialAnalysisPackUrls:
-    Type: CommaDelimitedList
-    Description: Initial Python analysis packs
+    # Example: "arn:aws:iam::111122223333:role/panther-bootstrap-DynamoScalingRole-UVZQF2N2BBRN"
+    AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):iam::\d{12}:role\/\S+$'
+  InputDataBucket:
+    Type: String
+    Description: Name of the S3 bucket will contain data meant to be processed by log analysis
+    AllowedPattern: '^[a-z0-9.-]{3,63}$'
+  InputDataTopicArn:
+    Type: String
+    Description: SNS topic ARN for data that is sent as input to Log Analysis
+    AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
   LayerVersionArns:
     Type: CommaDelimitedList
     Description: List of LayerVersion ARNs to attach to each function
   OutputsKeyId:
     Type: String
     Description: KMS key for encrypting alert outputs
+    # Example: "484fb80c-4ae5-40d0-b22a-bdd5d0953b3e"
+    AllowedPattern: '^[0-9a-f-]{36}$'
   ProcessedDataBucket:
     Type: String
-    Description: S3 bucket which stores processed logs
+    Description: Name of the S3 bucket which stores processed logs
+    AllowedPattern: '^[a-z0-9.-]{3,63}$'
   SqsKeyId:
     Type: String
     Description: KMS key for encrypting SQS queues
+    AllowedPattern: '^[0-9a-f-]{36}$'
   TracingMode:
     Type: String
     Description: Enable XRay tracing on Lambda and API Gateway
@@ -83,12 +104,8 @@ Parameters:
   UserPoolId:
     Type: String
     Description: Cognito user pool ID
-  InputDataBucket:
-    Type: String
-    Description: S3 bucket name for bucket that will contain data that are meant to be processed by the log analysis
-  InputDataTopicArn:
-    Type: String
-    Description: SNS topic ARN for data that is sent as input to Log Analysis
+    # Example: "us-west-2_iHzBYf5SA"
+    AllowedPattern: '^[a-zA-Z0-9_-]{15,}$'
 
 Mappings:
   Alerts:
@@ -445,18 +462,6 @@ Resources:
       CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
       TableName: !Ref AnalysisTable
-
-  # Once the analysis-api is ready, upload the initial Python analysis rules/policies
-  InitialAnalysisSet:
-    Type: Custom::AnalysisSet
-    # The policy-engine and rules-engine must also exist for the layer creation to succeed,
-    # but the custom resource handler will handle that waiting so we don't have to stall
-    # this entire stack waiting for cloud-security and log-analysis to finish.
-    DependsOn: AnalysisApiFunction
-    Properties:
-      AnalysisAPIEndpoint: !Ref AnalysisApiEndpoint
-      PackURLs: !Ref InitialAnalysisPackUrls
-      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Outputs API #####
   OutputsTable:
@@ -863,6 +868,7 @@ Resources:
                 - sqs:CreateQueue
                 - sqs:DeleteQueue
                 - sqs:SetQueueAttributes
+                - sqs:GetQueueAttributes
               Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-source-*
         - Id: ConfigureMessageForwarderLambda
           Version: 2012-10-17

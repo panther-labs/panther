@@ -73,7 +73,10 @@
   * [Syslog](log-analysis/log-processing/supported-logs/Syslog.md)
   * [Zeek](log-analysis/log-processing/supported-logs/Zeek.md)
 * [SaaS Logs Setup]()
+  * [Box](log-analysis/log-processing/log-setup/box.md)
   * [GSuite](log-analysis/log-processing/log-setup/gsuite.md)
+  * [Okta](log-analysis/log-processing/log-setup/okta.md)
+  * [OneLogin](log-analysis/log-processing/log-setup/onelogin.md)
 * [Standard Fields](log-analysis/panther-fields.md)
 
 ## Cloud Security
@@ -216,7 +219,7 @@
 * [SaaS Logs](enterprise/saas-logs.md)
 * [Snowflake Integration](enterprise/snowflake.md)
 * [SAML/SSO Integration](enterprise/saml/overview.md)
+  * [Generic](enterprise/saml/generic.md)
   * [Okta](enterprise/saml/okta.md)
   * [OneLogin](enterprise/saml/onelogin.md)
-  * [(Other)](enterprise/saml/generic.md)
 * [Role-Based Access Control](enterprise/rbac.md)

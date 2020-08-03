@@ -50,6 +50,13 @@ var (
 
 // GetMetrics routes the requests for various metric data to the correct handlers
 func (API) GetMetrics(input *models.GetMetricsInput) (*models.GetMetricsOutput, error) {
+	// Round the timestamps to align with CloudWatch's rounding
+	var minInterval int64
+	input.FromDate, input.ToDate, minInterval = roundInterval(input.FromDate, input.ToDate)
+	if minInterval > input.IntervalMinutes {
+		input.IntervalMinutes = minInterval
+	}
+
 	response := &models.GetMetricsOutput{
 		FromDate:        input.FromDate,
 		ToDate:          input.ToDate,
@@ -87,17 +94,14 @@ func (API) GetMetrics(input *models.GetMetricsInput) (*models.GetMetricsOutput, 
 // should go from v1 to 0 then back up to v3.
 func normalizeTimeStamps(input *models.GetMetricsInput, data []*cloudwatch.MetricDataResult) ([]models.TimeSeriesValues, []*time.Time) {
 	// First we need to calculate the expected timestamps, so we know if any are missing
-	tStart, minInterval := getPeriodStartAndInterval(input.FromDate)
-	delta := input.ToDate.Sub(tStart)
+	delta := input.ToDate.Sub(input.FromDate)
 	intervals := int(math.Ceil(delta.Minutes() / float64(input.IntervalMinutes)))
-	interval := math.Max(float64(minInterval), float64(input.IntervalMinutes))
 	times := make([]*time.Time, intervals)
 	for i := 1; i <= intervals; i++ {
-		times[intervals-i] = aws.Time(tStart.Add(time.Minute * time.Duration(interval) * time.Duration(i-1)))
+		times[intervals-i] = aws.Time(input.FromDate.Add(time.Minute * time.Duration(input.IntervalMinutes) * time.Duration(i-1)))
 	}
 	zap.L().Debug("times calculated",
 		zap.Int("intervals", intervals),
-		zap.Time("tStart", tStart),
 		zap.Any("delta", delta),
 		zap.Any("times", times),
 	)
@@ -143,7 +147,7 @@ func normalizeTimeStamps(input *models.GetMetricsInput, data []*cloudwatch.Metri
 	return values, times
 }
 
-// getPeriodStartAndInterval determines the correct starting time and minimum interval for a metric
+// roundInterval determines the correct starting time and minimum interval for a metric
 // based on the following rules set by CloudWatch:
 //
 // Start time less than 15 days ago - Round down to the nearest whole minute.
@@ -159,19 +163,22 @@ func normalizeTimeStamps(input *models.GetMetricsInput, data []*cloudwatch.Metri
 // References:
 // https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html
 // https://aws.amazon.com/cloudwatch/faqs/
-func getPeriodStartAndInterval(startDate time.Time) (time.Time, int64) {
+//
+// Additionally, we round the endDate as well. This is important otherwise the final period will
+// be only a few seconds or minutes long, which can give misleading results.
+func roundInterval(startDate, endDate time.Time) (time.Time, time.Time, int64) {
 	now := time.Now()
 	if now.Sub(startDate) < 15*24*time.Hour {
 		// Round to the nearest minute by truncating all seconds and nanoseconds.
-		return roundToUTCMinute(startDate), 1
+		return roundToUTCMinute(startDate), roundToUTCMinute(endDate), 1
 	}
 	if now.Sub(startDate) < 63*24*time.Hour {
 		// Round to the nearest 5 minute interval by truncating the number of minutes past the
 		// nearest 5 minute interval in addition to any seconds, and nanoseconds.
-		return roundToUTCMinute(startDate).Truncate(5 * time.Minute), 5
+		return roundToUTCMinute(startDate).Truncate(5 * time.Minute), roundToUTCMinute(endDate).Truncate(5 * time.Minute), 5
 	}
 	// Round to the nearest hour by truncating all minutes, seconds, and nanoseconds.
-	return roundToUTCMinute(startDate).Truncate(60 * time.Minute), 60
+	return roundToUTCMinute(startDate).Truncate(60 * time.Minute), roundToUTCMinute(endDate).Truncate(60 * time.Minute), 60
 }
 
 // roundToUTCMinute returns the given time in UTC, rounded down to the nearest minute

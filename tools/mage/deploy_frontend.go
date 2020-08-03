@@ -56,6 +56,7 @@ func deployFrontend(accountID string, bootstrapOutputs map[string]string, settin
 
 	params := map[string]string{
 		"AlarmTopicArn":              bootstrapOutputs["AlarmTopicArn"],
+		"AnalysisApiEndpoint":        bootstrapOutputs["AnalysisApiEndpoint"],
 		"AppClientId":                bootstrapOutputs["AppClientId"],
 		"CertificateArn":             settings.Web.CertificateArn,
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
@@ -68,6 +69,7 @@ func deployFrontend(accountID string, bootstrapOutputs map[string]string, settin
 		"FirstUserGivenName":         settings.Setup.FirstUser.GivenName,
 		"GraphQLApiEndpoint":         bootstrapOutputs["GraphQLApiEndpoint"],
 		"Image":                      dockerImage,
+		"InitialAnalysisPackUrls":    strings.Join(settings.Setup.InitialAnalysisSets, ","),
 		"PantherVersion":             gitVersion,
 		"SecurityGroup":              bootstrapOutputs["WebSecurityGroup"],
 		"SubnetOneId":                bootstrapOutputs["SubnetOneId"],

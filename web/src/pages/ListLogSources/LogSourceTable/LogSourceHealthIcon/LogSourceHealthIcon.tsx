@@ -18,31 +18,46 @@
 
 import React from 'react';
 import { Box, Icon, Tooltip } from 'pouncejs';
-import { LogIntegration } from 'Generated/schema';
+import { LogIntegration, S3LogIntegration, SqsLogSourceIntegration } from 'Generated/schema';
 
 interface LogSourceHealthIconProps {
   logSourceHealth: LogIntegration['health'];
 }
 
 const LogSourceHealthIcon: React.FC<LogSourceHealthIconProps> = ({ logSourceHealth }) => {
-  const { processingRoleStatus, s3BucketStatus, kmsKeyStatus } = logSourceHealth;
+  let isHealthy: boolean;
+  let errorMsg: string;
+  let sourceHealth: LogIntegration['health'];
 
-  // Some status return `null` when they shouldn't be checked. That doesn't mean the source is
-  // unhealthy. That's why we check explicitly for a "false" value
-  const isHealthy =
-    processingRoleStatus.healthy !== false &&
-    s3BucketStatus.healthy !== false &&
-    kmsKeyStatus.healthy !== false;
-
-  const errorMessage = [
-    processingRoleStatus.errorMessage,
-    s3BucketStatus.errorMessage,
-    kmsKeyStatus.errorMessage,
-  ]
-    .filter(Boolean)
-    .join('. ');
-
-  const tooltipMessage = isHealthy ? 'Everything looks fine from our end!' : errorMessage;
+  switch (logSourceHealth.__typename) {
+    case 'SqsLogIntegrationHealth':
+      sourceHealth = logSourceHealth as SqsLogSourceIntegration['health'];
+      isHealthy = sourceHealth.sqsStatus?.healthy !== false;
+      errorMsg = sourceHealth.sqsStatus?.errorMessage;
+      break;
+    case 'S3LogIntegrationHealth': {
+      sourceHealth = logSourceHealth as S3LogIntegration['health'];
+      const { processingRoleStatus, s3BucketStatus, kmsKeyStatus } = sourceHealth;
+      // Some status return `null` when they shouldn't be checked. That doesn't mean the source is
+      // unhealthy. That's why we check explicitly for a "false" value
+      isHealthy =
+        processingRoleStatus?.healthy !== false &&
+        s3BucketStatus?.healthy !== false &&
+        kmsKeyStatus?.healthy !== false;
+      errorMsg = [
+        processingRoleStatus?.errorMessage,
+        s3BucketStatus?.errorMessage,
+        kmsKeyStatus?.errorMessage,
+      ]
+        .filter(Boolean)
+        .join('. ');
+      break;
+    }
+    default:
+      isHealthy = false;
+      errorMsg = 'Couldn\t determine source health';
+  }
+  const tooltipMessage = isHealthy ? 'Everything looks fine from our end!' : errorMsg;
   const icon = isHealthy ? (
     <Icon type="check" size="small" color="green-400" />
   ) : (

@@ -17,11 +17,12 @@
  */
 
 import React from 'react';
-import { Box, Flex, Table } from 'pouncejs';
+import { Table } from 'pouncejs';
 import { ListLogSources } from 'Pages/ListLogSources';
-import { formatDatetime } from 'Helpers/utils';
-import LogSourceHealthIcon from './LogSourceHealthIcon';
-import LogSourceTableRowOptionsProps from './LogSourceTableRowOptions';
+import { S3LogIntegration, SqsLogSourceIntegration } from 'Generated/schema';
+import { LogIntegrationsEnum } from 'Source/constants';
+import S3LogSourceRow from './S3LogSourceRow';
+import SqsLogSourceRow from './SqsLogSourceRow';
 
 type LogSourceTableProps = {
   sources: ListLogSources['listLogIntegrations'];
@@ -33,42 +34,33 @@ const LogSourceTable: React.FC<LogSourceTableProps> = ({ sources }) => {
       <Table.Head>
         <Table.Row>
           <Table.HeaderCell>Label</Table.HeaderCell>
+          <Table.HeaderCell align="center">Type</Table.HeaderCell>
           <Table.HeaderCell>AWS Account ID</Table.HeaderCell>
-          <Table.HeaderCell>Log Types</Table.HeaderCell>
           <Table.HeaderCell>S3 Bucket</Table.HeaderCell>
-          <Table.HeaderCell>S3 Objects Prefix</Table.HeaderCell>
+          <Table.HeaderCell>Log Types</Table.HeaderCell>
           <Table.HeaderCell>Last Received Event</Table.HeaderCell>
           <Table.HeaderCell align="center">Healthy</Table.HeaderCell>
-          <Table.HeaderCell />
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {sources.map(source => (
-          <Table.Row key={source.integrationId}>
-            <Table.Cell>{source.integrationLabel}</Table.Cell>
-            <Table.Cell>{source.awsAccountId}</Table.Cell>
-            <Table.Cell>
-              {source.logTypes.map(logType => (
-                <Box key={logType}>{logType}</Box>
-              ))}
-            </Table.Cell>
-            <Table.Cell>{source.s3Bucket}</Table.Cell>
-            <Table.Cell>{source.s3Prefix || 'None'}</Table.Cell>
-            <Table.Cell>
-              {source.lastEventReceived ? formatDatetime(source.lastEventReceived) : 'N/A'}
-            </Table.Cell>
-            <Table.Cell>
-              <Flex justify="center">
-                <LogSourceHealthIcon logSourceHealth={source.health} />
-              </Flex>
-            </Table.Cell>
-            <Table.Cell>
-              <Box my={-1}>
-                <LogSourceTableRowOptionsProps source={source} />
-              </Box>
-            </Table.Cell>
-          </Table.Row>
-        ))}
+        {sources.map(source => {
+          switch (source.integrationType) {
+            case LogIntegrationsEnum.sqs: {
+              return (
+                <SqsLogSourceRow
+                  key={source.integrationId}
+                  source={source as SqsLogSourceIntegration}
+                />
+              );
+            }
+            case LogIntegrationsEnum.s3:
+            default: {
+              return (
+                <S3LogSourceRow key={source.integrationId} source={source as S3LogIntegration} />
+              );
+            }
+          }
+        })}
       </Table.Body>
     </Table>
   );

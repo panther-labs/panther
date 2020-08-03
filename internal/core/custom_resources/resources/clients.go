@@ -33,6 +33,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider/cognitoidentityprovideriface"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/ecr/ecriface"
 	"github.com/aws/aws-sdk-go/service/glue"
@@ -58,6 +60,7 @@ var (
 	cloudWatchClient     cloudwatchiface.CloudWatchAPI                           = cloudwatch.New(awsSession)
 	cloudWatchLogsClient cloudwatchlogsiface.CloudWatchLogsAPI                   = cloudwatchlogs.New(awsSession)
 	cognitoClient        cognitoidentityprovideriface.CognitoIdentityProviderAPI = cognitoidentityprovider.New(awsSession)
+	dynamoClient         dynamodbiface.DynamoDBAPI                               = dynamodb.New(awsSession)
 	ecrClient            ecriface.ECRAPI                                         = ecr.New(awsSession)
 	glueClient           glueiface.GlueAPI                                       = glue.New(awsSession)
 	guardDutyClient      guarddutyiface.GuardDutyAPI                             = guardduty.New(awsSession)

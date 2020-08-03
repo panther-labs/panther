@@ -3,6 +3,7 @@ fragment RuleBasic on RuleDetails {
   description
   displayName
   logTypes
+  threshold
   outputIds
   runbook
   severity

@@ -45,7 +45,7 @@ export type DestinationFull = { __typename: 'Destination' } & Pick<
       >;
       opsgenie?: Types.Maybe<Pick<Types.OpsgenieConfig, 'apiKey'>>;
       msTeams?: Types.Maybe<Pick<Types.MsTeamsConfig, 'webhookURL'>>;
-      sqs?: Types.Maybe<Pick<Types.SqsConfig, 'queueUrl'>>;
+      sqs?: Types.Maybe<Pick<Types.SqsDestinationConfig, 'queueUrl'>>;
       asana?: Types.Maybe<Pick<Types.AsanaConfig, 'personalAccessToken' | 'projectGids'>>;
       customWebhook?: Types.Maybe<Pick<Types.CustomWebhookConfig, 'webhookURL'>>;
     };

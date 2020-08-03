@@ -25,6 +25,7 @@ import { capitalize, minutesToString } from 'Helpers/utils';
 import FormikTextArea from 'Components/fields/TextArea';
 import FormikSwitch from 'Components/fields/Switch';
 import FormikCombobox from 'Components/fields/ComboBox';
+import FormikNumberInput from 'Components/fields/NumberInput';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import { LOG_TYPES, RESOURCE_TYPES } from 'Source/constants';
 import { RuleFormValues } from 'Components/forms/RuleForm';
@@ -140,20 +141,27 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
           placeholder={`Additional context about this ${type}`}
           name="description"
         />
-        <SimpleGrid columns={2} spacing={5}>
+        <SimpleGrid columns={1} spacing={5} mb={5}>
           <FastField
             as={FormikTextArea}
             label="Runbook"
             placeholder={`Procedures and operations related to this ${type}`}
             name="runbook"
           />
-          <FastField
-            as={FormikTextArea}
-            label="Reference"
-            placeholder={`An external link to why this ${type} exists`}
-            name="reference"
-          />
         </SimpleGrid>
+        <Flex spacing={5}>
+          <Box flexGrow={7} flexShrink={0}>
+            <FastField
+              as={FormikTextArea}
+              label="Reference"
+              placeholder={`An external link to why this ${type} exists`}
+              name="reference"
+            />
+          </Box>
+          <Box flexGrow={1}>
+            <Field as={FormikNumberInput} label="* Threshold" min={0} name="threshold" />
+          </Box>
+        </Flex>
       </SimpleGrid>
       <SimpleGrid columns={4} spacing={5}>
         {isPolicy && (
@@ -194,7 +202,7 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
           placeholder="i.e. HIPAA (separate with <Enter>)"
         />
         <Box as="fieldset">
-          {/* FIXME: We have an issue with FastField here. We shouldn't be setting props like that  on FastField or Field elements */}
+          {/* FIXME: We have an issue with FastField here. We shouldn't be setting props like that on FastField or Field elements */}
           <Field
             as={FormikMultiCombobox}
             disabled={disableDestinationField}

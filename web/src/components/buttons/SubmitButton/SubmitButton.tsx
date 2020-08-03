@@ -26,7 +26,6 @@ interface SubmitButtonProps extends Omit<ButtonProps, 'size' | 'variant' | 'disa
 
 const SubmitButton: React.FC<SubmitButtonProps> = ({ allowPristineSubmission, ...rest }) => {
   const { isSubmitting, isValid, dirty } = useFormikContext<any>();
-
   return (
     <Button
       type="submit"

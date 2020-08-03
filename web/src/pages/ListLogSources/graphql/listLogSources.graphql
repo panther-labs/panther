@@ -3,5 +3,8 @@ query ListLogSources {
     ... on S3LogIntegration {
       ...S3LogIntegrationDetails
     }
+    ... on SqsLogSourceIntegration {
+      ...SqsLogSourceIntegrationDetails
+    }
   }
 }

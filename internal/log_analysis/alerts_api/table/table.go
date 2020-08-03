@@ -29,20 +29,24 @@ import (
 )
 
 const (
-	RuleIDKey          = "ruleId"
-	AlertIDKey         = "id"
-	CreatedAtKey       = "creationTime"
-	TimePartitionKey   = "timePartition"
-	TimePartitionValue = "defaultPartition"
-	TitleKey           = "title"
-	SeverityKey        = "severity"
-	EventCountKey      = "eventCount"
+	RuleIDKey            = "ruleId"
+	AlertIDKey           = "id"
+	CreatedAtKey         = "creationTime"
+	TimePartitionKey     = "timePartition"
+	TimePartitionValue   = "defaultPartition"
+	TitleKey             = "title"
+	SeverityKey          = "severity"
+	EventCountKey        = "eventCount"
+	StatusKey            = "status"
+	LastUpdatedByKey     = "lastUpdatedBy"
+	LastUpdatedByTimeKey = "lastUpdatedByTime"
 )
 
 // API defines the interface for the alerts table which can be used for mocking.
 type API interface {
 	GetAlert(*string) (*AlertItem, error)
 	ListAll(*models.ListAlertsInput) ([]*AlertItem, *string, error)
+	UpdateAlertStatus(*models.UpdateAlertStatusInput) (*AlertItem, error)
 }
 
 // AlertsTable encapsulates a connection to the Dynamo alerts table.
@@ -68,8 +72,14 @@ type AlertItem struct {
 	Title           *string   `json:"title"`
 	DedupString     string    `json:"dedup"`
 	CreationTime    time.Time `json:"creationTime"`
-	UpdateTime      time.Time `json:"updateTime"`
-	Severity        string    `json:"severity"`
-	EventCount      int       `json:"eventCount"`
-	LogTypes        []string  `json:"logTypes"`
+	// UpdateTime - stores the timestamp from an update from a dedup event
+	UpdateTime time.Time `json:"updateTime"`
+	Severity   string    `json:"severity"`
+	Status     string    `json:"status"`
+	EventCount int       `json:"eventCount"`
+	LogTypes   []string  `json:"logTypes"`
+	// LastUpdatedBy - stores the UserID of the last person who modified the Alert
+	LastUpdatedBy string `json:"lastUpdatedBy"`
+	// LastUpdatedByTime - stores the timestamp of the last person who modified the Alert
+	LastUpdatedByTime time.Time `json:"lastUpdatedByTime"`
 }

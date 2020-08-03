@@ -19,6 +19,7 @@ package analysis
  */
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
@@ -49,10 +50,10 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (models.TestPolicyResult,
 	// Build the list of events to run the rule against
 	inputEvents := make([]enginemodels.Event, len(rule.Tests))
 	for i, test := range rule.Tests {
-		// TODO(giorgosp): Can swagger unmarshall this already?
 		var attrs map[string]interface{}
 		if err := jsoniter.UnmarshalFromString(string(test.Resource), &attrs); err != nil {
-			return empty, errors.Wrapf(err, "tests[%d].event is not valid json", i)
+			//nolint // Error is capitalized because will be returned to the UI
+			return empty, &TestInputError{fmt.Errorf(`Event for test "%s" is not valid json: %w`, test.Name, err)}
 		}
 
 		inputEvents[i] = enginemodels.Event{

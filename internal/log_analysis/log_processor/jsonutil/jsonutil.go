@@ -54,3 +54,13 @@ func (extension *encoderNamingStrategy) UpdateStructDescriptor(structDescriptor 
 		}
 	}
 }
+
+func UnquoteJSON(data []byte) []byte {
+	if len(data) > 1 && data[0] == '"' {
+		data = data[1:]
+		if n := len(data) - 1; 0 <= n && n < len(data) && data[n] == '"' {
+			return data[:n]
+		}
+	}
+	return data
+}

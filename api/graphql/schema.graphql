@@ -12,6 +12,7 @@ type Mutation {
   addDestination(input: DestinationInput!): Destination
   addComplianceIntegration(input: AddComplianceIntegrationInput!): ComplianceIntegration!
   addS3LogIntegration(input: AddS3LogIntegrationInput!): S3LogIntegration!
+  addSqsLogIntegration(input: AddSqsLogIntegrationInput!): SqsLogSourceIntegration!
   addPolicy(input: AddPolicyInput!): PolicyDetails
   addRule(input: AddRuleInput!): RuleDetails
   addGlobalPythonModule(input: AddGlobalPythonModuleInput!): GlobalPythonModule!
@@ -27,9 +28,11 @@ type Mutation {
   resetUserPassword(id: ID!): User!
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
   testPolicy(input: TestPolicyInput): TestPolicyResponse
+  updateAlertStatus(input: UpdateAlertStatusInput!): AlertSummary
   updateDestination(input: DestinationInput!): Destination
   updateComplianceIntegration(input: UpdateComplianceIntegrationInput!): ComplianceIntegration!
   updateS3LogIntegration(input: UpdateS3LogIntegrationInput!): S3LogIntegration!
+  updateSqsLogIntegration(input: UpdateSqsLogIntegrationInput!): SqsLogSourceIntegration!
   updateGeneralSettings(input: UpdateGeneralSettingsInput!): GeneralSettings!
   updatePolicy(input: UpdatePolicyInput!): PolicyDetails
   updateRule(input: UpdateRuleInput!): RuleDetails
@@ -50,6 +53,7 @@ type Query {
   ): IntegrationTemplate!
   getS3LogIntegration(id: ID!): S3LogIntegration!
   getS3LogIntegrationTemplate(input: GetS3LogIntegrationTemplateInput!): IntegrationTemplate!
+  getSqsLogIntegration(id: ID!): SqsLogSourceIntegration!
   remediations: AWSJSON
   resource(input: GetResourceInput!): ResourceDetails
   resources(input: ListResourcesInput): ListResourcesResponse
@@ -61,6 +65,7 @@ type Query {
   listComplianceIntegrations: [ComplianceIntegration!]!
   listLogIntegrations: [LogIntegration!]!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
+  getLogAnalysisMetrics(input: LogAnalysisMetricsInput!): LogAnalysisMetricsResponse!
   rule(input: GetRuleInput!): RuleDetails
   rules(input: ListRulesInput): ListRulesResponse
   listGlobalPythonModules(input: ListGlobalPythonModuleInput!): ListGlobalPythonModulesResponse!
@@ -93,6 +98,7 @@ input ListAlertsInput {
   createdAtAfter: AWSDateTime
   ruleIdContains: String
   alertIdContains: String
+  status: [AlertStatusesEnum]
   eventCountMin: Int
   eventCountMax: Int
   sortBy: ListAlertsSortFieldsEnum # defaults to `createdAt`
@@ -127,16 +133,50 @@ type S3LogIntegrationHealth {
   kmsKeyStatus: IntegrationItemHealthStatus!
 }
 
-type AlertDetails {
+type SqsLogIntegrationHealth {
+  sqsStatus: IntegrationItemHealthStatus
+}
+
+interface Alert {
   alertId: ID!
-  ruleId: ID
-  title: String!
   creationTime: AWSDateTime!
-  updateTime: AWSDateTime!
   eventsMatched: Int!
+  ruleId: ID
+  severity: SeverityEnum!
+  status: AlertStatusesEnum!
+  title: String!
+  lastUpdatedBy: ID # gets mapped to a User in the frontend
+  lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
+  updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
+}
+
+type AlertDetails implements Alert {
+  alertId: ID!
+  creationTime: AWSDateTime!
+  eventsMatched: Int!
+  ruleId: ID
+  severity: SeverityEnum!
+  status: AlertStatusesEnum!
+  title: String!
+  lastUpdatedBy: ID # gets mapped to a User in the frontend
+  lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
+  updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
+  dedupString: String!
   events: [AWSJSON!]!
   eventsLastEvaluatedKey: String
-  dedupString: String!
+}
+
+type AlertSummary implements Alert {
+  alertId: ID!
+  creationTime: AWSDateTime!
+  eventsMatched: Int!
+  ruleId: ID
+  severity: SeverityEnum!
+  status: AlertStatusesEnum!
+  title: String!
+  lastUpdatedBy: ID # gets mapped to a User in the frontend
+  lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
+  updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
 }
 
 type ListAlertsResponse {
@@ -144,14 +184,9 @@ type ListAlertsResponse {
   lastEvaluatedKey: String
 }
 
-type AlertSummary {
-  alertId: String!
-  creationTime: AWSDateTime!
-  eventsMatched: Int!
-  title: String!
-  updateTime: AWSDateTime!
-  ruleId: String
-  severity: SeverityEnum
+input UpdateAlertStatusInput {
+  alertId: ID!
+  status: AlertStatusesEnum!
 }
 
 input ListRulesInput {
@@ -171,6 +206,7 @@ input ListRulesInput {
 input AddRuleInput {
   body: String!
   dedupPeriodMinutes: Int!
+  threshold: Int!
   description: String
   displayName: String
   enabled: Boolean!
@@ -187,6 +223,7 @@ input AddRuleInput {
 input UpdateRuleInput {
   body: String
   dedupPeriodMinutes: Int
+  threshold: Int
   description: String
   displayName: String
   enabled: Boolean
@@ -233,6 +270,7 @@ type RuleDetails {
   createdAt: AWSDateTime
   createdBy: ID
   dedupPeriodMinutes: Int!
+  threshold: Int!
   description: String
   displayName: String
   enabled: Boolean
@@ -301,6 +339,13 @@ input OrganizationStatsInput {
   limitTopFailing: Int
 }
 
+input LogAnalysisMetricsInput {
+  intervalMinutes: Int!
+  fromDate: AWSDateTime!
+  toDate: AWSDateTime!
+  metricNames: [String!]!
+}
+
 type ComplianceStatusCounts {
   error: Int
   fail: Int
@@ -331,6 +376,30 @@ type OrganizationStatsResponse {
   topFailingResources: [ResourceSummary]
 }
 
+type Series {
+  label: String
+  values: [Int]
+}
+
+type SeriesData {
+  timestamps: [AWSDateTime]
+  series: [Series]
+}
+
+type SingleValue {
+  label: String!
+  value: Int!
+}
+
+type LogAnalysisMetricsResponse {
+  eventsProcessed: SeriesData
+  alertsBySeverity: SeriesData
+  totalAlertsDelta: [SingleValue]
+  fromDate: AWSDateTime!
+  toDate: AWSDateTime!
+  intervalMinutes: Int!
+}
+
 input UpdateGeneralSettingsInput {
   displayName: String
   email: String
@@ -350,6 +419,16 @@ input TestPolicyInput {
   tests: [PolicyUnitTestInput!]
 }
 
+type SqsConfig {
+  logTypes: [String!]!
+  allowedPrincipals: [String]
+  allowedSourceArns: [String]
+  s3Bucket: String!
+  s3Prefix: String
+  logProcessingRole: String
+  queueUrl: String!
+}
+
 type ComplianceIntegration {
   awsAccountId: String!
   createdAtTime: AWSDateTime!
@@ -362,7 +441,7 @@ type ComplianceIntegration {
   stackName: String!
 }
 
-union LogIntegration = S3LogIntegration
+union LogIntegration = S3LogIntegration | SqsLogSourceIntegration
 
 type S3LogIntegration {
   awsAccountId: String!
@@ -378,6 +457,17 @@ type S3LogIntegration {
   logTypes: [String!]!
   health: S3LogIntegrationHealth!
   stackName: String!
+}
+
+type SqsLogSourceIntegration {
+  createdAtTime: AWSDateTime!
+  createdBy: ID!
+  integrationId: ID!
+  integrationLabel: String!
+  integrationType: String!
+  lastEventReceived: AWSDateTime
+  sqsConfig: SqsConfig!
+  health: SqsLogIntegrationHealth!
 }
 
 input AddComplianceIntegrationInput {
@@ -396,6 +486,17 @@ input AddS3LogIntegrationInput {
   logTypes: [String!]!
 }
 
+input SqsLogConfigInput {
+  logTypes: [String!]!
+  allowedPrincipals: [String]!
+  allowedSourceArns: [String]!
+}
+
+input AddSqsLogIntegrationInput {
+  integrationLabel: String!
+  sqsConfig: SqsLogConfigInput!
+}
+
 input UpdateComplianceIntegrationInput {
   integrationId: String!
   integrationLabel: String
@@ -410,6 +511,12 @@ input UpdateS3LogIntegrationInput {
   kmsKey: String
   s3Prefix: String
   logTypes: [String!]
+}
+
+input UpdateSqsLogIntegrationInput {
+  integrationId: String!
+  integrationLabel: String!
+  sqsConfig: SqsLogConfigInput!
 }
 
 type ListPoliciesResponse {
@@ -438,7 +545,7 @@ type Destination {
 type DestinationConfig {
   slack: SlackConfig
   sns: SnsConfig
-  sqs: SqsConfig
+  sqs: SqsDestinationConfig
   pagerDuty: PagerDutyConfig
   github: GithubConfig
   jira: JiraConfig
@@ -448,7 +555,7 @@ type DestinationConfig {
   customWebhook: CustomWebhookConfig
 }
 
-type SqsConfig {
+type SqsDestinationConfig {
   queueUrl: String!
 }
 
@@ -855,6 +962,13 @@ enum ListRulesSortFieldsEnum {
 
 enum ListAlertsSortFieldsEnum {
   createdAt
+}
+
+enum AlertStatusesEnum {
+  OPEN
+  TRIAGED
+  CLOSED
+  RESOLVED
 }
 
 enum SortDirEnum {

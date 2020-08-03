@@ -26,27 +26,39 @@ Parameters:
   AlarmTopicArn:
     Type: String
     Description: SNS topic for CloudWatch alarms
+    # Example: "arn:aws:sns:us-west-2:111122223333:panther-cw-alarms"
+    AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
   AnalysisApi:
     Type: String
     Description: API Gateway HTTPS endpoint for panther-analysis-api
+    # Example: "https://0jcmwnr9cj.execute-api.us-west-2.amazonaws.com"
+    AllowedPattern: '^https:\/\/[0-9a-z]{10}\.execute-api\.[a-z]{2}-[a-z]{4,9}-[1-9]\.amazonaws\.com(\.cn)?$'
   ApiId:
     Type: String
     Description: Appsync GraphQL API ID
+    # Example: "hen4qu3cpjgmdmxltuzand5kjm"
+    AllowedPattern: '^[a-z0-9]{10,50}$'
   ComplianceApi:
     Type: String
     Description: API Gateway HTTPS endpoint for panther-compliance-api
+    AllowedPattern: '^https:\/\/[0-9a-z]{10}\.execute-api\.[a-z]{2}-[a-z]{4,9}-[1-9]\.amazonaws\.com(\.cn)?$'
   CustomResourceVersion:
     Type: String
     Description: Forces updates to custom resources when changed
+    MinLength: 1
   RemediationApi:
     Type: String
     Description: API Gateway HTTPS endpoint for panther-remediation-api
+    AllowedPattern: '^https:\/\/[0-9a-z]{10}\.execute-api\.[a-z]{2}-[a-z]{4,9}-[1-9]\.amazonaws\.com(\.cn)?$'
   ResourcesApi:
     Type: String
     Description: API Gateway HTTPS endpoint for panther-resources-api
+    AllowedPattern: '^https:\/\/[0-9a-z]{10}\.execute-api\.[a-z]{2}-[a-z]{4,9}-[1-9]\.amazonaws\.com(\.cn)?$'
   ServiceRole:
     Type: String
     Description: Appsync IAM service role ARN
+    # Example: "arn:aws:iam::111122223333:role/panther-bootstrap-AppsyncServiceRole-3NCFADATNZGN"
+    AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):iam::\d{12}:role\/\S+$'
 
 Resources:
   AppsyncAlarms:
@@ -120,6 +132,17 @@ Resources:
       ServiceRoleArn: !Ref ServiceRole
       LambdaConfig:
         LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-organization-api
+
+  MetricsAPILambdaDataSource:
+    Type: AWS::AppSync::DataSource
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !Ref ApiId
+      Name: PantherMetricsAPILambda
+      Type: AWS_LAMBDA
+      ServiceRoleArn: !Ref ServiceRole
+      LambdaConfig:
+        LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-metrics-api
 
   ResourcesAPIHttpDataSource:
     Type: AWS::AppSync::DataSource
@@ -200,7 +223,7 @@ Resources:
           "operation": "Invoke",
           "payload": $util.toJson({
             "resetUserPassword": {
-              "requesterId": $ctx.identity.sub,
+              "requesterId": $ctx.identity.username,
               "id": $ctx.args.id
             }
           })
@@ -221,7 +244,7 @@ Resources:
       DataSourceName: !GetAtt UsersAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $ctx.args.input)
-        $util.qr($input.put("requesterId", $ctx.identity.sub))
+        $util.qr($input.put("requesterId", $ctx.identity.username))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
@@ -249,7 +272,7 @@ Resources:
           "operation": "Invoke",
           "payload": $util.toJson({
             "removeUser": {
-              "requesterId": $ctx.identity.sub,
+              "requesterId": $ctx.identity.username,
               "id": $ctx.args.id
             }
           })
@@ -292,7 +315,7 @@ Resources:
       DataSourceName: !GetAtt UsersAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("requesterId", $ctx.identity.sub))
+        $util.qr($input.put("requesterId", $ctx.identity.username))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
@@ -362,7 +385,7 @@ Resources:
       DataSourceName: !GetAtt DestinationsAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
@@ -411,7 +434,7 @@ Resources:
       DataSourceName: !GetAtt DestinationsAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
@@ -473,6 +496,9 @@ Resources:
           #foreach($item in $ctx.result)
             #if ($item.integrationType == "aws-s3")
               $util.qr($item.put("__typename", "S3LogIntegration"))
+              $util.qr($logIntegrations.add($item))
+            #elseif ($item.integrationType == "aws-sqs")
+              $util.qr($item.put("__typename", "SqsLogSourceIntegration"))
               $util.qr($logIntegrations.add($item))
             #end
           #end
@@ -571,6 +597,36 @@ Resources:
           $util.toJson($requestedIntegration)
         #end
 
+  GetSqsLogIntegrationResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Query
+      FieldName: getSqsLogIntegration
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "listIntegrations": {
+              "integrationType": "aws-sqs"
+            }
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, {})
+        #else
+          #set ($requestedIntegration = "null")
+          #foreach($item in $ctx.result)
+            #if($item.integrationId == $ctx.args.id)
+              #set ($requestedIntegration = $item)
+            #end
+          #end
+          $util.toJson($requestedIntegration)
+        #end
+
   S3LogIntegrationHealthFieldResolver:
     Type: AWS::AppSync::Resolver
     Properties:
@@ -586,6 +642,32 @@ Resources:
         $util.qr($input.put("s3Bucket", $ctx.source.s3Bucket))
         $util.qr($input.put("s3Prefix", $ctx.source.s3Prefix))
         $util.qr($input.put("kmsKey", $ctx.source.kmsKey))
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "integrationHealthCheck": $input
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, {})
+        #else
+          $util.toJson($ctx.result)
+        #end
+
+  SqsLogIntegrationHealthFieldResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: SqsLogSourceIntegration
+      FieldName: health
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        #set ($input = {})
+        $util.qr($input.put("integrationType", "aws-sqs"))
+        $util.qr($input.put("integrationLabel", $ctx.source.integrationLabel))
+        $util.qr($input.put("sqsConfig", $ctx.source.sqsConfig))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
@@ -657,7 +739,7 @@ Resources:
       DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $ctx.args.input)
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         $util.qr($input.put("scanIntervalMins", 1440))
         $util.qr($input.put("integrationType", "aws-scan"))
         {
@@ -683,13 +765,43 @@ Resources:
       DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $ctx.args.input)
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         $util.qr($input.put("integrationType", "aws-s3"))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
             "putIntegration": $input
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
+        #else
+          $util.toJson($context.result)
+        #end
+
+  AddSqsLogIntegrationResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: addSqsLogIntegration
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        #set ($input = $ctx.args.input)
+        #set($data = {
+          "userId": $ctx.identity.sub,
+          "integrationType": "aws-sqs",
+          "integrationLabel": $input.integrationLabel,
+          "sqsConfig": $input.sqsConfig
+        })
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "putIntegration": $data
           })
         }
       ResponseMappingTemplate: |
@@ -733,6 +845,30 @@ Resources:
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
         $util.qr($input.put("integrationType", "aws-s3"))
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "updateIntegrationSettings": $input
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
+        #else
+          $util.toJson($context.result)
+        #end
+
+  UpdateSqsLogIntegrationResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: updateSqsLogIntegration
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        $util.qr($input.put("integrationType", "aws-sqs"))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
@@ -906,7 +1042,7 @@ Resources:
       DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         {
           "version": "2018-05-29",
           "method": "POST",
@@ -937,7 +1073,7 @@ Resources:
       DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         {
           "version": "2018-05-29",
           "method": "POST",
@@ -999,7 +1135,7 @@ Resources:
       DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         {
           "version": "2018-05-29",
           "method": "POST",
@@ -1118,7 +1254,7 @@ Resources:
       DataSourceName: !GetAtt RemediationAPIHttpDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         {
           "version": "2018-05-29",
           "method": "GET",
@@ -1167,6 +1303,36 @@ Resources:
             $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
+        #end
+
+  LogAnalysisMetricsResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Query
+      FieldName: getLogAnalysisMetrics
+      DataSourceName: !GetAtt MetricsAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "getMetrics": $ctx.args.input
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($ctx.error)
+          $util.error($ctx.error.errorMessage, $ctx.error.errorType, {})
+        #else
+          #set($response = {
+            "eventsProcessed": $ctx.result.eventsProcessed.seriesData,
+            "alertsBySeverity": $ctx.result.alertsBySeverity.seriesData,
+            "totalAlertsDelta": $ctx.result.totalAlertsDelta.singleValue,
+            "fromDate": $ctx.result.fromDate,
+            "toDate": $ctx.result.toDate,
+            "intervalMinutes": $ctx.result.intervalMinutes
+          })
+          $util.toJson($response)
         #end
 
   ResourcesForPolicyResolver:
@@ -1324,7 +1490,7 @@ Resources:
       DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         {
           "version": "2018-05-29",
           "method": "POST",
@@ -1355,7 +1521,7 @@ Resources:
       DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         {
           "version": "2018-05-29",
           "method": "POST",
@@ -1446,7 +1612,7 @@ Resources:
       DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         {
           "version": "2018-05-29",
           "method": "POST",
@@ -1506,7 +1672,7 @@ Resources:
       DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.sub))
+        $util.qr($input.put("userId", $ctx.identity.username))
         {
           "version": "2018-05-29",
           "method": "POST",
@@ -1599,6 +1765,30 @@ Resources:
       ResponseMappingTemplate: |
         #if($context.error)
           $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
+        #else
+          $util.toJson($context.result)
+        #end
+
+  UpdateAlertStatusResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: updateAlertStatus
+      DataSourceName: !GetAtt AlertsAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        $util.qr($input.put("userId", $ctx.identity.username))
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "updateAlertStatus": $input
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+            $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
         #else
           $util.toJson($context.result)
         #end

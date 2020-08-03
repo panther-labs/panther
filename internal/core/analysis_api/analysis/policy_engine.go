@@ -19,6 +19,7 @@ package analysis
  */
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -95,33 +96,41 @@ func makeTestSummary(policy *models.TestPolicy, engineOutput enginemodels.Policy
 				ErrorMessage: result.Errored[0].Message,
 				Name:         string(test.Name),
 			})
-			testResults.TestSummary = false
 
 		case len(result.Failed) > 0 && bool(test.ExpectedResult), len(result.Passed) > 0 && !bool(test.ExpectedResult):
 			// The test result was not expected, so this test failed
 			testResults.TestsFailed = append(testResults.TestsFailed, string(test.Name))
-			testResults.TestSummary = false
 
 		case len(result.Failed) > 0 && !bool(test.ExpectedResult), len(result.Passed) > 0 && bool(test.ExpectedResult):
 			// The test result was as expected
 			testResults.TestsPassed = append(testResults.TestsPassed, string(test.Name))
-			testResults.TestSummary = true
 
 		default:
 			// This test didn't run (result.{Errored, Passed, Failed} are all empty). This must not happen absent a bug.
-			return testResults, errors.Errorf("unable to run test for ruleID %s", result.ID)
+			return testResults, errors.Errorf("unable to run test for %s", result.ID)
 		}
 	}
+
+	testResults.TestSummary = len(testResults.TestsFailed) == 0 && len(testResults.TestsErrored) == 0
+
 	return testResults, nil
+}
+
+type TestInputError struct {
+	err error
+}
+
+func (e *TestInputError) Error() string {
+	return e.err.Error()
 }
 
 func makeTestResources(policy *models.TestPolicy) ([]enginemodels.Resource, error) {
 	resources := make([]enginemodels.Resource, len(policy.Tests))
 	for i, test := range policy.Tests {
-		// TODO(giorgosp): Can swagger unmarshall this already?
 		var attrs map[string]interface{}
 		if err := jsoniter.UnmarshalFromString(string(test.Resource), &attrs); err != nil {
-			return resources, errors.Wrapf(err, "tests[%d].resource is not valid json", i)
+			//nolint // Error is capitalized because will be returned to the UI
+			return nil, &TestInputError{fmt.Errorf(`Resource for test "%s" is not valid json: %w`, test.Name, err)}
 		}
 
 		resources[i] = enginemodels.Resource{

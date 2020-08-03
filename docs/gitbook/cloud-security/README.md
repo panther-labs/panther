@@ -11,7 +11,7 @@ Common security misconfigurations include:
 
 ## How It Works
 
-![Architecture Diagram](../.gitbook/assets/snapshot-processing-v3.png)
+![Architecture Diagram](../.gitbook/assets/cloud-security/readme-overview.png)
 
 When adding a new AWS account, Panther first conducts a baseline scan and models resources in your account. Account scans are performed daily to ensure the most consistent state possible. This works by using an assumable IAM Role with ReadOnly permissions.
 

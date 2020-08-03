@@ -26,18 +26,21 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/numerics"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
 const (
 	DefaultMaxCommentLength = 255
-
+	// We want our output JSON timestamps to be: YYYY-MM-DD HH:MM:SS.fffffffff
+	// https://aws.amazon.com/premiumsupport/knowledge-center/query-table-athena-timestamp-empty/
 	GlueTimestampType = "timestamp"
+	GlueStringType    = "string"
 )
 
 var (
@@ -47,48 +50,76 @@ var (
 	// GlueMappings for custom Panther types.
 	GlueMappings = []CustomMapping{
 		{
-			From: reflect.TypeOf(timestamp.RFC3339{}),
+			From: reflect.TypeOf(time.Time{}),
 			To:   GlueTimestampType,
-		},
-		{
-			From: reflect.TypeOf(timestamp.ANSICwithTZ{}),
-			To:   GlueTimestampType,
-		},
-		{
-			From: reflect.TypeOf(timestamp.UnixMillisecond{}),
-			To:   GlueTimestampType,
-		},
-		{
-			From: reflect.TypeOf(timestamp.FluentdTimestamp{}),
-			To:   GlueTimestampType,
-		},
-		{
-			From: reflect.TypeOf(timestamp.UnixFloat{}),
-			To:   GlueTimestampType,
-		},
-		{
-			From: reflect.TypeOf(timestamp.LaceworkTimestamp{}),
-			To:   GlueTimestampType,
-		},
-		{
-			From: reflect.TypeOf(timestamp.SuricataTimestamp{}),
-			To:   GlueTimestampType,
-		},
-		{
-			From: reflect.TypeOf(parsers.PantherAnyString{}),
-			To:   "array<string>",
 		},
 		{
 			From: reflect.TypeOf(jsoniter.RawMessage{}),
-			To:   "string",
+			To:   GlueStringType,
 		},
 		{
-			From: reflect.TypeOf(*new(numerics.Integer)),
+			From: reflect.TypeOf([]jsoniter.RawMessage{}),
+			To:   ArrayOf(GlueStringType),
+		},
+		{
+			From: reflect.TypeOf(numerics.Integer(0)),
 			To:   "bigint",
 		},
 		{
-			From: reflect.TypeOf(*new(numerics.Int64)),
+			From: reflect.TypeOf(numerics.Int64(0)),
 			To:   "bigint",
+		},
+		{
+			From: reflect.TypeOf(null.Float64{}),
+			To:   "double",
+		},
+		{
+			From: reflect.TypeOf(null.Float32{}),
+			To:   "float",
+		},
+		{
+			From: reflect.TypeOf(null.Int64{}),
+			To:   "bigint",
+		},
+		{
+			From: reflect.TypeOf(null.Int32{}),
+			To:   "int",
+		},
+		{
+			From: reflect.TypeOf(null.Int16{}),
+			To:   "smallint",
+		},
+		{
+			From: reflect.TypeOf(null.Int8{}),
+			To:   "tinyint",
+		},
+		{
+			From: reflect.TypeOf(null.Uint64{}),
+			To:   "bigint",
+		},
+		{
+			From: reflect.TypeOf(null.Uint32{}),
+			To:   "bigint",
+		},
+		{
+			From: reflect.TypeOf(null.Uint16{}),
+			To:   "int",
+		},
+		{
+			From: reflect.TypeOf(null.Uint8{}),
+			To:   "smallint",
+		},
+		{
+			From: reflect.TypeOf(null.String{}),
+			To:   GlueStringType,
+		},
+		{
+			From: reflect.TypeOf(null.NonEmpty{}),
+			To:   GlueStringType,
+		},
+		{
+			From: reflect.TypeOf(null.Bool{}),
+			To:   "boolean",
 		},
 	}
 
@@ -96,36 +127,63 @@ var (
 	RuleMatchColumns = []Column{
 		{
 			Name:    "p_rule_id",
-			Type:    "string",
+			Type:    GlueStringType,
 			Comment: "Rule id",
 		},
 		{
 			Name:    "p_alert_id",
-			Type:    "string",
+			Type:    GlueStringType,
 			Comment: "Alert id",
 		},
 		{
 			Name:    "p_alert_creation_time",
-			Type:    "timestamp",
+			Type:    GlueTimestampType,
 			Comment: "The time the alert was initially created (first match)",
 		},
 		{
 			Name:    "p_alert_update_time",
-			Type:    "timestamp",
+			Type:    GlueTimestampType,
 			Comment: "The time the alert last updated (last match)",
 		},
 		{
 			Name:    "p_rule_tags",
-			Type:    "array<string>",
+			Type:    ArrayOf(GlueStringType),
 			Comment: "The tags of the rule that generated this alert",
 		},
 		{
 			Name:    "p_rule_reports",
-			Type:    "map<string,array<string>>",
+			Type:    MapOf(GlueStringType, ArrayOf(GlueStringType)),
 			Comment: "The reporting tags of the rule that generated this alert",
 		},
 	}
 )
+
+func MustRegisterMapping(from reflect.Type, to string) {
+	if err := RegisterMapping(from, to); err != nil {
+		panic(err)
+	}
+}
+
+func RegisterMapping(from reflect.Type, to string) error {
+	for _, mapping := range GlueMappings {
+		if mapping.From == from {
+			return errors.New("duplicate mapping")
+		}
+	}
+	GlueMappings = append(GlueMappings, CustomMapping{
+		From: from,
+		To:   to,
+	})
+	return nil
+}
+
+func ArrayOf(typ string) string {
+	return "array<" + typ + ">"
+}
+
+func MapOf(key, typ string) string {
+	return "map<" + key + "," + typ + ">"
+}
 
 type Column struct {
 	Name     string
@@ -251,7 +309,7 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 	}
 
 	// Rewrite field the same way as the jsoniter extension to avoid invalid column names
-	fieldName = parsers.RewriteFieldName(fieldName)
+	fieldName = RewriteFieldName(fieldName)
 
 	comment = sf.Tag.Get("description")
 
@@ -269,14 +327,15 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 		switch sliceOfType.Kind() {
 		case reflect.Struct:
 			structType, nestedFieldNames = inferStruct(sliceOfType, customMappingsTable)
-			glueType = fmt.Sprintf("array<struct<%s>>", structType)
+			glueType = ArrayOf(fmt.Sprintf("struct<%s>", structType))
 			return
 		case reflect.Map:
 			structType, nestedFieldNames = inferMap(sliceOfType, customMappingsTable)
-			glueType = fmt.Sprintf("array<%s>", structType)
+			glueType = ArrayOf(structType)
 			return
 		default:
-			glueType = fmt.Sprintf("array<%s>", toGlueType(sliceOfType))
+			elementType := toGlueType(sliceOfType)
+			glueType = ArrayOf(elementType)
 			return
 		}
 
@@ -352,7 +411,7 @@ func toGlueType(t reflect.Type) (glueType string) {
 	case "bool":
 		glueType = "boolean"
 	case "string":
-		glueType = "string"
+		glueType = GlueStringType
 	case "int8":
 		glueType = "tinyint"
 	case "int16":
@@ -376,7 +435,7 @@ func toGlueType(t reflect.Type) (glueType string) {
 	case "float64":
 		glueType = "double"
 	case "interface {}":
-		glueType = "string" // best we can do in this case
+		glueType = GlueStringType // best we can do in this case
 	case "uint8":
 		glueType = "smallint" // Athena doesn't have an unsigned integer type
 	case "uint16":

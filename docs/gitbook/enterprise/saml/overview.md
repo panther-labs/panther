@@ -7,7 +7,7 @@ Follow these step-by-step guides to enable SAML integration with one of the foll
 
 * [OneLogin](onelogin.md)
 * [Okta](okta.md)
-* [(Other)](generic.md)
+* [Generic / Other](generic.md)
 
 ## Terminology
 
