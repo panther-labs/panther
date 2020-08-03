@@ -16,36 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import withSEO from 'Hoc/withSEO';
-import { Card } from 'pouncejs';
-import useRouter from 'Hooks/useRouter';
-import Page404 from 'Pages/404';
-import CreateS3LogSource from './CreateS3LogSource';
-import CreateSqsSource from './CreateSqsLogSource';
-
-const CreateLogSource: React.FC = () => {
-  const {
-    match: {
-      params: { type },
-    },
-  } = useRouter();
-
-  const renderWizard = logType => {
-    switch (logType) {
-      case 'S3':
-        return <CreateS3LogSource />;
-      case 'SQS':
-        return <CreateSqsSource />;
-      default:
-        return <Page404 />;
-    }
-  };
-  return (
-    <Card p={9} mb={6}>
-      {renderWizard(type)}
-    </Card>
-  );
-};
-
-export default withSEO({ title: 'New Log Analysis Source' })(CreateLogSource);
+export { default } from './SqsSourceWizard';

@@ -868,6 +868,7 @@ Resources:
                 - sqs:CreateQueue
                 - sqs:DeleteQueue
                 - sqs:SetQueueAttributes
+                - sqs:GetQueueAttributes
               Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-source-*
         - Id: ConfigureMessageForwarderLambda
           Version: 2012-10-17

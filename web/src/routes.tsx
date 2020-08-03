@@ -56,6 +56,7 @@ import LogSourceOnboarding from 'Pages/LogSourceOnboarding';
 import ListGlobalPythonModulesPage from 'Pages/ListGlobalPythonModules';
 import CreateGlobalPythonModulePage from 'Pages/CreateGlobalPythonModule';
 import EditGlobalPythonModulePage from 'Pages/EditGlobalPythonModule';
+import EditSqsLogSource from 'Pages/EditSqsLogSource';
 
 // Main page container for the web application, Navigation bar and Content body goes here
 const PrimaryPageLayout: React.FunctionComponent = () => {
@@ -165,6 +166,11 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   exact
                   path={urls.logAnalysis.sources.edit(':id', 's3')}
                   component={EditS3LogSourcePage}
+                />
+                <Route
+                  exact
+                  path={urls.logAnalysis.sources.edit(':id', 'sqs')}
+                  component={EditSqsLogSource}
                 />
                 <Redirect
                   exact

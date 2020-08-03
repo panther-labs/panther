@@ -497,6 +497,9 @@ Resources:
             #if ($item.integrationType == "aws-s3")
               $util.qr($item.put("__typename", "S3LogIntegration"))
               $util.qr($logIntegrations.add($item))
+            #elseif ($item.integrationType == "aws-sqs")
+              $util.qr($item.put("__typename", "SqsLogSourceIntegration"))
+              $util.qr($logIntegrations.add($item))
             #end
           #end
           $util.toJson($logIntegrations)
@@ -594,6 +597,36 @@ Resources:
           $util.toJson($requestedIntegration)
         #end
 
+  GetSqsLogIntegrationResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Query
+      FieldName: getSqsLogIntegration
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "listIntegrations": {
+              "integrationType": "aws-sqs"
+            }
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, {})
+        #else
+          #set ($requestedIntegration = "null")
+          #foreach($item in $ctx.result)
+            #if($item.integrationId == $ctx.args.id)
+              #set ($requestedIntegration = $item)
+            #end
+          #end
+          $util.toJson($requestedIntegration)
+        #end
+
   S3LogIntegrationHealthFieldResolver:
     Type: AWS::AppSync::Resolver
     Properties:
@@ -609,6 +642,32 @@ Resources:
         $util.qr($input.put("s3Bucket", $ctx.source.s3Bucket))
         $util.qr($input.put("s3Prefix", $ctx.source.s3Prefix))
         $util.qr($input.put("kmsKey", $ctx.source.kmsKey))
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "integrationHealthCheck": $input
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, {})
+        #else
+          $util.toJson($ctx.result)
+        #end
+
+  SqsLogIntegrationHealthFieldResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: SqsLogSourceIntegration
+      FieldName: health
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        #set ($input = {})
+        $util.qr($input.put("integrationType", "aws-sqs"))
+        $util.qr($input.put("integrationLabel", $ctx.source.integrationLabel))
+        $util.qr($input.put("sqsConfig", $ctx.source.sqsConfig))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
@@ -722,6 +781,36 @@ Resources:
           $util.toJson($context.result)
         #end
 
+  AddSqsLogIntegrationResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: addSqsLogIntegration
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        #set ($input = $ctx.args.input)
+        #set($data = {
+          "userId": $ctx.identity.sub,
+          "integrationType": "aws-sqs",
+          "integrationLabel": $input.integrationLabel,
+          "sqsConfig": $input.sqsConfig
+        })
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "putIntegration": $data
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
+        #else
+          $util.toJson($context.result)
+        #end
+
   UpdateComplianceIntegrationResolver:
     Type: AWS::AppSync::Resolver
     Properties:
@@ -756,6 +845,30 @@ Resources:
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
         $util.qr($input.put("integrationType", "aws-s3"))
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "updateIntegrationSettings": $input
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
+        #else
+          $util.toJson($context.result)
+        #end
+
+  UpdateSqsLogIntegrationResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: updateSqsLogIntegration
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        $util.qr($input.put("integrationType", "aws-sqs"))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",

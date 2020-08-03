@@ -1,0 +1,5 @@
+mutation AddSqsLogSource($input: AddSqsLogIntegrationInput!) {
+  addSqsLogIntegration(input: $input) {
+    ...SqsLogSourceIntegrationDetails
+  }
+}

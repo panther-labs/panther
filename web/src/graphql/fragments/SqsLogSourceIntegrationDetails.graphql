@@ -1,0 +1,22 @@
+fragment SqsLogSourceIntegrationDetails on SqsLogSourceIntegration {
+  createdAtTime
+  createdBy
+  integrationId
+  integrationLabel
+  integrationType
+  lastEventReceived
+  sqsConfig {
+    logTypes
+    allowedPrincipals
+    allowedSourceArns
+    s3Bucket
+    s3Prefix
+    logProcessingRole
+    queueUrl
+  }
+  health {
+    sqsStatus {
+      ...IntegrationItemHealthDetails
+    }
+  }
+}

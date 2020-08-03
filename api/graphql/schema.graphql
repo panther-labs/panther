@@ -12,6 +12,7 @@ type Mutation {
   addDestination(input: DestinationInput!): Destination
   addComplianceIntegration(input: AddComplianceIntegrationInput!): ComplianceIntegration!
   addS3LogIntegration(input: AddS3LogIntegrationInput!): S3LogIntegration!
+  addSqsLogIntegration(input: AddSqsLogIntegrationInput!): SqsLogSourceIntegration!
   addPolicy(input: AddPolicyInput!): PolicyDetails
   addRule(input: AddRuleInput!): RuleDetails
   addGlobalPythonModule(input: AddGlobalPythonModuleInput!): GlobalPythonModule!
@@ -31,6 +32,7 @@ type Mutation {
   updateDestination(input: DestinationInput!): Destination
   updateComplianceIntegration(input: UpdateComplianceIntegrationInput!): ComplianceIntegration!
   updateS3LogIntegration(input: UpdateS3LogIntegrationInput!): S3LogIntegration!
+  updateSqsLogIntegration(input: UpdateSqsLogIntegrationInput!): SqsLogSourceIntegration!
   updateGeneralSettings(input: UpdateGeneralSettingsInput!): GeneralSettings!
   updatePolicy(input: UpdatePolicyInput!): PolicyDetails
   updateRule(input: UpdateRuleInput!): RuleDetails
@@ -51,6 +53,7 @@ type Query {
   ): IntegrationTemplate!
   getS3LogIntegration(id: ID!): S3LogIntegration!
   getS3LogIntegrationTemplate(input: GetS3LogIntegrationTemplateInput!): IntegrationTemplate!
+  getSqsLogIntegration(id: ID!): SqsLogSourceIntegration!
   remediations: AWSJSON
   resource(input: GetResourceInput!): ResourceDetails
   resources(input: ListResourcesInput): ListResourcesResponse
@@ -128,6 +131,10 @@ type S3LogIntegrationHealth {
   processingRoleStatus: IntegrationItemHealthStatus!
   s3BucketStatus: IntegrationItemHealthStatus!
   kmsKeyStatus: IntegrationItemHealthStatus!
+}
+
+type SqsLogIntegrationHealth {
+  sqsStatus: IntegrationItemHealthStatus
 }
 
 interface Alert {
@@ -412,6 +419,16 @@ input TestPolicyInput {
   tests: [PolicyUnitTestInput!]
 }
 
+type SqsConfig {
+  logTypes: [String!]!
+  allowedPrincipals: [String]
+  allowedSourceArns: [String]
+  s3Bucket: String!
+  s3Prefix: String
+  logProcessingRole: String
+  queueUrl: String!
+}
+
 type ComplianceIntegration {
   awsAccountId: String!
   createdAtTime: AWSDateTime!
@@ -424,7 +441,7 @@ type ComplianceIntegration {
   stackName: String!
 }
 
-union LogIntegration = S3LogIntegration
+union LogIntegration = S3LogIntegration | SqsLogSourceIntegration
 
 type S3LogIntegration {
   awsAccountId: String!
@@ -440,6 +457,17 @@ type S3LogIntegration {
   logTypes: [String!]!
   health: S3LogIntegrationHealth!
   stackName: String!
+}
+
+type SqsLogSourceIntegration {
+  createdAtTime: AWSDateTime!
+  createdBy: ID!
+  integrationId: ID!
+  integrationLabel: String!
+  integrationType: String!
+  lastEventReceived: AWSDateTime
+  sqsConfig: SqsConfig!
+  health: SqsLogIntegrationHealth!
 }
 
 input AddComplianceIntegrationInput {
@@ -458,6 +486,17 @@ input AddS3LogIntegrationInput {
   logTypes: [String!]!
 }
 
+input SqsLogConfigInput {
+  logTypes: [String!]!
+  allowedPrincipals: [String]!
+  allowedSourceArns: [String]!
+}
+
+input AddSqsLogIntegrationInput {
+  integrationLabel: String!
+  sqsConfig: SqsLogConfigInput!
+}
+
 input UpdateComplianceIntegrationInput {
   integrationId: String!
   integrationLabel: String
@@ -472,6 +511,12 @@ input UpdateS3LogIntegrationInput {
   kmsKey: String
   s3Prefix: String
   logTypes: [String!]
+}
+
+input UpdateSqsLogIntegrationInput {
+  integrationId: String!
+  integrationLabel: String!
+  sqsConfig: SqsLogConfigInput!
 }
 
 type ListPoliciesResponse {
@@ -500,7 +545,7 @@ type Destination {
 type DestinationConfig {
   slack: SlackConfig
   sns: SnsConfig
-  sqs: SqsConfig
+  sqs: SqsDestinationConfig
   pagerDuty: PagerDutyConfig
   github: GithubConfig
   jira: JiraConfig
@@ -510,7 +555,7 @@ type DestinationConfig {
   customWebhook: CustomWebhookConfig
 }
 
-type SqsConfig {
+type SqsDestinationConfig {
   queueUrl: String!
 }
 

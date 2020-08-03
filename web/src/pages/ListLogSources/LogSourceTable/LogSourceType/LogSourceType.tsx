@@ -17,35 +17,29 @@
  */
 
 import React from 'react';
-import withSEO from 'Hoc/withSEO';
-import { Card } from 'pouncejs';
-import useRouter from 'Hooks/useRouter';
-import Page404 from 'Pages/404';
-import CreateS3LogSource from './CreateS3LogSource';
-import CreateSqsSource from './CreateSqsLogSource';
+import { Flex, Img, Tooltip } from 'pouncejs';
 
-const CreateLogSource: React.FC = () => {
-  const {
-    match: {
-      params: { type },
-    },
-  } = useRouter();
+type LogSourceTypeProps = {
+  name: string;
+  logo: any;
+};
 
-  const renderWizard = logType => {
-    switch (logType) {
-      case 'S3':
-        return <CreateS3LogSource />;
-      case 'SQS':
-        return <CreateSqsSource />;
-      default:
-        return <Page404 />;
-    }
-  };
+const LogSourceType: React.FC<LogSourceTypeProps> = ({ name, logo }) => {
   return (
-    <Card p={9} mb={6}>
-      {renderWizard(type)}
-    </Card>
+    <Flex justify="start" align="center">
+      <Tooltip content={name}>
+        <Img
+          src={logo}
+          alt={name}
+          objectFit="contain"
+          nativeHeight={48}
+          nativeWidth={48}
+          my={-2}
+          px={1}
+        />
+      </Tooltip>
+    </Flex>
   );
 };
 
-export default withSEO({ title: 'New Log Analysis Source' })(CreateLogSource);
+export default React.memo(LogSourceType);
