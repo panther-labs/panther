@@ -159,10 +159,22 @@ Then, configure the built in rules by searching for the `Configuration Required`
 
 The [panther_analysis_tool](../../analysis/panther-analysis-tool.md) is a Python command line interface for testing, packaging, and deploying Panther Policies and Rules. This enables teams to work in a more developer oriented workflow and track detections with version control systems such as `git`.
 
-### 12345
-
-### A-1-B-2-C-3
-
-### ABC 123 DEF
+## Header Link Tests
 
 ### A1B2C3D4
+
+### A.1B2C3D4
+
+### A1.B2C3D4
+
+### A1B.2C3D4
+
+### A1B2.C3D4
+
+### A1B2C.3D4
+
+### A1B2C3.D4
+
+### A1B2C3D.4
+
+### A.1.B.2.C.3.D.4
