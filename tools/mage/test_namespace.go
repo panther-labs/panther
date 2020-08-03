@@ -31,6 +31,7 @@ import (
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 
+	"github.com/panther-labs/panther/pkg/prompt"
 	"github.com/panther-labs/panther/tools/cfnparse"
 )
 
@@ -482,7 +483,7 @@ func (t Test) Integration() {
 
 	logger.Warnf("Integration tests will erase all Panther data in account %s (%s)",
 		getAccountID(), *awsSession.Config.Region)
-	result := promptUser("Are you sure you want to continue? (yes|no) ", nonemptyValidator)
+	result := prompt.Read("Are you sure you want to continue? (yes|no) ", prompt.NonemptyValidator)
 	if strings.ToLower(result) != "yes" {
 		logger.Fatal("integration tests aborted")
 	}

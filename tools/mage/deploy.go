@@ -37,6 +37,7 @@ import (
 	"github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/pkg/prompt"
 	"github.com/panther-labs/panther/pkg/shutil"
 	"github.com/panther-labs/panther/tools/config"
 )
@@ -215,9 +216,9 @@ func setFirstUser(settings *config.PantherConfig) {
 
 	// If there is no setting and no existing user, we have to prompt.
 	fmt.Println("Who will be the initial Panther admin user?")
-	firstName := promptUser("First name: ", nonemptyValidator)
-	lastName := promptUser("Last name: ", nonemptyValidator)
-	email := promptUser("Email: ", emailValidator)
+	firstName := prompt.Read("First name: ", prompt.NonemptyValidator)
+	lastName := prompt.Read("Last name: ", prompt.NonemptyValidator)
+	email := prompt.Read("Email: ", prompt.EmailValidator)
 	settings.Setup.FirstUser = config.FirstUser{
 		GivenName:  firstName,
 		FamilyName: lastName,
