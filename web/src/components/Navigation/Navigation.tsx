@@ -141,7 +141,7 @@ const Navigation = () => {
         ({ item, key, props: styles }) =>
           item && (
             <animated.div key={key} style={{ width: 0, ...styles }}>
-              <Box height="100%" borderLeft="1px solid" borderColor="navyblue-400">
+              <Box height="100%" borderLeft="1px solid" borderColor="navyblue-400" px="14px">
                 {secondaryNav === COMPLIANCE_NAV_KEY && <ComplianceNavigation />}
                 {secondaryNav === LOG_ANALYSIS_NAV_KEY && <LogAnalysisNavigation />}
                 {secondaryNav === SETTINGS_NAV_KEY && <SettingsNavigation />}
