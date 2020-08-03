@@ -19,17 +19,13 @@ package mage
  */
 
 import (
-	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -189,29 +185,6 @@ func uploadFileToS3(path, bucket, key string) (*s3manager.UploadOutput, error) {
 	})
 }
 
-// Prompt the user for a string input.
-func promptUser(prompt string, validator func(string) error) string {
-	reader := bufio.NewReader(os.Stdin)
-	for {
-		fmt.Print(prompt)
-		result, err := reader.ReadString('\n')
-		if err != nil {
-			fmt.Printf("read string failed: %v\n", err)
-			continue
-		}
-
-		result = strings.TrimSpace(result)
-		if validator != nil {
-			if err := validator(result); err != nil {
-				fmt.Println(err)
-				continue
-			}
-		}
-
-		return result
-	}
-}
-
 // Run a command, hiding both stdout and stderr unless running in verbose mode.
 //
 // Almost identical to sh.Run(), except sh.Run() only hides stdout in non-verbose mode.
@@ -223,39 +196,6 @@ func runWithoutStderr(cmd string, args ...string) error {
 	}
 	_, err := sh.Exec(nil, stdout, stderr, cmd, args...)
 	return err
-}
-
-// Ensure non-empty strings.
-func nonemptyValidator(input string) error {
-	if len(input) == 0 {
-		return errors.New("input is blank, please try again")
-	}
-	return nil
-}
-
-// Very simple email validation to prevent obvious mistakes.
-func emailValidator(email string) error {
-	if len(email) >= 4 && strings.Contains(email, "@") && strings.Contains(email, ".") {
-		return nil
-	}
-	return errors.New("invalid email: must be at least 4 characters and contain '@' and '.'")
-}
-
-func regexValidator(text string) error {
-	if _, err := regexp.Compile(text); err != nil {
-		return fmt.Errorf("invalid regex: %v", err)
-	}
-	return nil
-}
-
-func dateValidator(text string) error {
-	if len(text) == 0 { // allow no date
-		return nil
-	}
-	if _, err := time.Parse("2006-01-02", text); err != nil {
-		return fmt.Errorf("invalid date: %v", err)
-	}
-	return nil
 }
 
 // runningInCI returns true if the mage command is running inside the CI environment
