@@ -27,22 +27,12 @@ const Page403: React.FC = () => {
   const { userInfo } = useAuth();
 
   return (
-    <Flex
-      justify="center"
-      align="center"
-      width="100vw"
-      height="100vh"
-      position="fixed"
-      left={0}
-      top={0}
-      direction="column"
-      zIndex={-1}
-    >
+    <Flex justify="center" align="center" direction="column">
       <Box mb={10}>
         <img alt="Access denied illustration" src={AccessDeniedImg} width="auto" height={400} />
       </Box>
       <Heading mb={2}>
-        You have no power here, {userInfo ? userInfo.given_name : 'Anonymous'} the Grey
+        You have no power here, {userInfo ? userInfo.givenName : 'Anonymous'} the Grey
       </Heading>
       <Text fontSize="medium" color="gray-300" mb={10}>
         ( Sarum... Your administrator has restricted your powers )

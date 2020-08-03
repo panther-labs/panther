@@ -86,7 +86,6 @@ const Navigation = () => {
     <Flex
       as="aside"
       boxShadow="dark50"
-      zIndex={1}
       position="sticky"
       top={0}
       height="100vh"
@@ -133,7 +132,7 @@ const Navigation = () => {
               onClick={() => setSecondaryNav(isSettingsNavigationActive ? null : SETTINGS_NAV_KEY)}
             />
           </Box>
-          <Box as="li" mt="auto">
+          <Box as="li" mt="auto" mb={8}>
             <Link external href={PANTHER_SCHEMA_DOCS_LINK} tabIndex={-1}>
               <NavIconButton active={false} icon="docs" tooltipLabel="Documentation" />
             </Link>

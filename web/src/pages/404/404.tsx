@@ -24,17 +24,7 @@ import withSEO from 'Hoc/withSEO';
 
 const Page404: React.FC = () => {
   return (
-    <Flex
-      justify="center"
-      align="center"
-      width="100vw"
-      height="100vh"
-      position="fixed"
-      left={0}
-      top={0}
-      direction="column"
-      zIndex={-1}
-    >
+    <Flex justify="center" align="center" direction="column" height="100%" width="100%">
       <Box mb={10}>
         <img alt="Page not found illustration" src={NotFoundImg} width="auto" height={400} />
       </Box>
