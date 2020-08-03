@@ -325,3 +325,14 @@ func checkDistinctNamesJSON(fields []reflect.StructField) error {
 	}
 	return nil
 }
+
+// RegisteredFieldNamesJSON returns the JSON field names for all non-core registered fields.
+func RegisteredFieldNamesJSON() (names []string) {
+	for id, name := range fieldNamesJSON {
+		if id.IsCore() {
+			continue
+		}
+		names = append(names, name)
+	}
+	return
+}
