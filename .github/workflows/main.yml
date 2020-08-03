@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           token: ${{ secrets.PR_SYNC_TOKEN }}
-          fetch-depth: 3
+          fetch-depth: 10
 
       - name: Monitor PRs on a Source Repo & Create PRs on a dest one
         uses: ./build/actions/pr_sync
