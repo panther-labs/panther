@@ -16,24 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { Button, ButtonProps } from 'pouncejs';
-import { useFormikContext } from 'formik';
-
-interface SubmitButtonProps extends Omit<ButtonProps, 'size' | 'variant' | 'disabled'> {
-  allowPristineSubmission?: boolean;
-}
-
-const SubmitButton: React.FC<SubmitButtonProps> = ({ allowPristineSubmission, ...rest }) => {
-  const { isSubmitting, isValid, dirty } = useFormikContext<any>();
-  return (
-    <Button
-      type="submit"
-      loading={isSubmitting}
-      disabled={isSubmitting || !isValid || (!dirty && !allowPristineSubmission)}
-      {...rest}
-    />
-  );
-};
-
-export default React.memo(SubmitButton);
+export { default } from './NumberInput';

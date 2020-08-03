@@ -81,6 +81,7 @@ const EditRulePage: React.FC = () => {
   const initialValues = {
     body: rule.body,
     dedupPeriodMinutes: rule.dedupPeriodMinutes,
+    threshold: rule.threshold,
     description: rule.description,
     displayName: rule.displayName,
     enabled: rule.enabled,

@@ -202,6 +202,7 @@ export const buildAddRuleInput = (overrides: Partial<AddRuleInput> = {}): AddRul
   return {
     body: 'body' in overrides ? overrides.body : 'microchip',
     dedupPeriodMinutes: 'dedupPeriodMinutes' in overrides ? overrides.dedupPeriodMinutes : 429,
+    threshold: 'threshold' in overrides ? overrides.threshold : 140,
     description: 'description' in overrides ? overrides.description : 'purple',
     displayName: 'displayName' in overrides ? overrides.displayName : 'Investment Account',
     enabled: 'enabled' in overrides ? overrides.enabled : true,
@@ -1113,6 +1114,7 @@ export const buildRuleDetails = (overrides: Partial<RuleDetails> = {}): RuleDeta
     createdBy:
       'createdBy' in overrides ? overrides.createdBy : '6c3e570b-c621-4e3a-aab1-8a21e9aa4d17',
     dedupPeriodMinutes: 'dedupPeriodMinutes' in overrides ? overrides.dedupPeriodMinutes : 34,
+    threshold: 'threshold' in overrides ? overrides.threshold : 244,
     description: 'description' in overrides ? overrides.description : 'EXE',
     displayName: 'displayName' in overrides ? overrides.displayName : 'Advanced',
     enabled: 'enabled' in overrides ? overrides.enabled : false,
@@ -1431,6 +1433,7 @@ export const buildUpdateRuleInput = (overrides: Partial<UpdateRuleInput> = {}): 
   return {
     body: 'body' in overrides ? overrides.body : 'capacitor',
     dedupPeriodMinutes: 'dedupPeriodMinutes' in overrides ? overrides.dedupPeriodMinutes : 748,
+    threshold: 'threshold' in overrides ? overrides.threshold : 475,
     description: 'description' in overrides ? overrides.description : 'Utah',
     displayName: 'displayName' in overrides ? overrides.displayName : 'Internal',
     enabled: 'enabled' in overrides ? overrides.enabled : true,

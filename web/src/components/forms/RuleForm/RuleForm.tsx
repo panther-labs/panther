@@ -37,6 +37,7 @@ const validationSchema = Yup.object().shape({
   body: Yup.string().required(),
   severity: Yup.string().required(),
   dedupPeriodMinutes: Yup.number().integer(),
+  threshold: Yup.number().integer().moreThan(-1).required(),
   logTypes: Yup.array().of(Yup.string()).required(),
   tests: Yup.array<PolicyUnitTest>().of(
     Yup.object().shape({
