@@ -65,9 +65,9 @@ func fmtLicense(paths ...string) {
 }
 
 func addFileLicense(path, asteriskLicense, hashtagLicense string) {
-	// some monorepo dirs have nested node_modules. Until NPM ships their "workspaces" feature,
-	// we can't hoist all node modules in single folder at the project root. This prevents us from
-    // wrongly adding headers to 3rd party modules
+    // some monorepo dirs have nested node_modules. Until NPM ships their "workspaces" feature,
+    // we can't hoist all node modules in single folder at the project root. This prevents us
+    // from wrongly adding headers to 3rd party modules
 	if strings.Contains(path, "node_modules") {
 		return
 	}
