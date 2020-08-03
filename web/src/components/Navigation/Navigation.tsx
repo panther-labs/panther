@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Flex, Img, Link } from 'pouncejs';
+import { Box, Flex, Img, Link, Divider } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import PantherIcon from 'Assets/panther-minimal-logo.svg';
@@ -28,6 +28,7 @@ import NavIconButton from './NavIconButton';
 import SettingsNavigation from './SettingsNavigation';
 import ComplianceNavigation from './ComplianceNavigation';
 import LogAnalysisNavigation from './LogAnalysisNavigation';
+import ProfileIcon from './ProfileIcon';
 
 const SECONDARY_NAV_WIDTH = 200;
 const COMPLIANCE_NAV_KEY = 'compliance';
@@ -91,8 +92,8 @@ const Navigation = () => {
       height="100vh"
       backgroundColor="navyblue-700"
     >
-      <Flex as="nav" direction="column" width={70} height="100%" aria-label="Main">
-        <Flex as={RRLink} to="/" justify="center" py={3} my={6}>
+      <Flex as="nav" direction="column" width={60} height="100%" aria-label="Main" align="center">
+        <Box as={RRLink} to="/" py={3} my={3}>
           <Img
             src={PantherIcon}
             alt="Panther logo"
@@ -100,8 +101,10 @@ const Navigation = () => {
             nativeHeight={30}
             display="block"
           />
-        </Flex>
-        <Flex direction="column" justify="center" align="center" as="ul" flex="1 0 auto">
+        </Box>
+        <ProfileIcon />
+        <Divider mt={6} mb={4} width={37} orientation="horizontal" color="navyblue-300" />
+        <Flex direction="column" as="ul" flex="1 0 auto" spacing={4}>
           <Box as="li">
             <NavIconButton
               active={isComplianceNavigationActive}
@@ -112,7 +115,7 @@ const Navigation = () => {
               }
             />
           </Box>
-          <Box as="li" mb="auto">
+          <Box as="li">
             <NavIconButton
               active={isLogAnalysisNavigationActive}
               icon="log-analysis"
@@ -122,18 +125,18 @@ const Navigation = () => {
               }
             />
           </Box>
-          <Box as="li" mt="auto">
-            <Link external href={PANTHER_SCHEMA_DOCS_LINK} tabIndex={-1}>
-              <NavIconButton active={false} icon="docs" tooltipLabel="Documentation" />
-            </Link>
-          </Box>
-          <Box as="li">
+          <Box as="li" mb="auto">
             <NavIconButton
               active={isSettingsNavigationActive}
               icon="settings"
               tooltipLabel="Settings"
               onClick={() => setSecondaryNav(isSettingsNavigationActive ? null : SETTINGS_NAV_KEY)}
             />
+          </Box>
+          <Box as="li" mt="auto">
+            <Link external href={PANTHER_SCHEMA_DOCS_LINK} tabIndex={-1}>
+              <NavIconButton active={false} icon="docs" tooltipLabel="Documentation" />
+            </Link>
           </Box>
         </Flex>
       </Flex>
