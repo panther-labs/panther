@@ -57,8 +57,8 @@ const Header = () => {
           >
             <Icon type="user" size="small" mr={2} borderRadius="circle" color="white" />
             {userInfo &&
-              (userInfo.given_name && userInfo.family_name
-                ? `${userInfo.given_name} ${userInfo.family_name[0]}.`
+              (userInfo.givenName && userInfo.familyName
+                ? `${userInfo.givenName} ${userInfo.familyName[0]}.`
                 : userInfo.email.split('@')[0])}
           </Flex>
         </DropdownButton>

@@ -102,7 +102,7 @@ const Navigation = () => {
           />
         </Box>
         <ProfileIcon />
-        <Divider mt={6} mb={4} width={37} orientation="horizontal" color="navyblue-300" />
+        <Divider mt={6} mb={4} width={37} color="navyblue-300" />
         <Flex direction="column" as="ul" flex="1 0 auto" spacing={4}>
           <Box as="li">
             <NavIconButton
