@@ -1,29 +1,33 @@
-package gluesync
+package main
 
 import (
 	"flag"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/service/athena"
-	"github.com/aws/aws-sdk-go/service/glue"
-	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/panther-labs/panther/api/lambda/source/models"
-	"github.com/panther-labs/panther/internal/log_analysis/athenaviews"
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
-	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
-	"github.com/panther-labs/panther/pkg/genericapi"
-	"github.com/panther-labs/panther/pkg/prompt"
 	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/athena"
+	"github.com/aws/aws-sdk-go/service/cloudformation"
+	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/internal/log_analysis/athenaviews"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
+	"github.com/panther-labs/panther/pkg/awscfn"
+	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/pkg/prompt"
+	"github.com/panther-labs/panther/tools/cfnstacks"
 )
 
 const (
@@ -33,16 +37,15 @@ const (
 )
 
 var (
-	REGION = flag.String("region", "", "The Panther AWS region (optional, defaults to session env vars) where the queue exists.")
-	TABLE_REGEXP = flag.String("tables.regexp", "",
-		"Regular expression used to filter the set tables updated, defaults to all tables (no regexp")
+	REGION      = flag.String("region", "", "The Panther AWS region (optional, defaults to session env vars) where the queue exists.")
+	REGEXP      = flag.String("regexp", "", "Regular expression used to filter the set tables updated, defaults to all tables (no regexp")
 	START       = flag.String("start", "", "Start date of the form YYYY-MM-DD")
 	INTERACTIVE = flag.Bool("interactive", true, "If true, prompt for required flags if not set")
 	VERBOSE     = flag.Bool("verbose", false, "Enable verbose logging")
 
 	logger *zap.SugaredLogger
 
-	startDate  time.Time
+	startDate      time.Time
 	matchTableName *regexp.Regexp
 )
 
@@ -84,6 +87,7 @@ func main() {
 		return
 	}
 	athenaClient := athena.New(sess)
+	cfnClient := cloudformation.New(sess)
 	glueClient := glue.New(sess)
 	lambdaClient := lambda.New(sess)
 	s3Client := s3.New(sess)
@@ -98,7 +102,7 @@ func main() {
 	validateFlags()
 
 	// for each registered table, update the table, for each time partition, update the schema
-	for _, table := range updateRegisteredTables(athenaClient, lambdaClient, glueClient) {
+	for _, table := range updateRegisteredTables(athenaClient, cfnClient, glueClient, lambdaClient) {
 		name := fmt.Sprintf("%s.%s", table.DatabaseName(), table.TableName())
 		if !matchTableName.MatchString(name) {
 			continue
@@ -128,8 +132,8 @@ func promptFlags() {
 		}
 	}
 
-	if *TABLE_REGEXP == "" {
-		*TABLE_REGEXP = prompt.Read("Enter regex to select a subset of tables (or <enter> for all tables): ",
+	if *REGEXP == "" {
+		*REGEXP = prompt.Read("Enter regex to select a subset of tables (or <enter> for all tables): ",
 			prompt.RegexValidator)
 	}
 }
@@ -153,18 +157,18 @@ func validateFlags() {
 		err = errors.Wrapf(err, "cannot read -start")
 	}
 
-	matchTableName, err = regexp.Compile(*TABLE_REGEXP)
+	matchTableName, err = regexp.Compile(*REGEXP)
 	if err != nil {
-		err = errors.Wrapf(err, "cannot read -tables.regexp")
+		err = errors.Wrapf(err, "cannot read -regexp")
 	}
-
 }
 
-func updateRegisteredTables(athenaClient *athena.Athena, lambdaClient *lambda.Lambda, glueClient *glue.Glue) (
+func updateRegisteredTables(athenaClient *athena.Athena, cfnCLient *cloudformation.CloudFormation,
+	glueClient *glue.Glue, lambdaClient *lambda.Lambda) (
 	tables []*awsglue.GlueTableMetadata) {
 
-	const processDataBucketStack = bootstrapStack
-	outputs := stackOutputs(processDataBucketStack)
+	const processDataBucketStack = cfnstacks.Bootstrap
+	outputs := awscfn.StackOutputs(cfnCLient, logger, processDataBucketStack)
 	var dataBucket string
 	if dataBucket = outputs["ProcessedDataBucket"]; dataBucket == "" {
 		logger.Fatalf("could not find processed data bucket in %s outputs", processDataBucketStack)
@@ -189,7 +193,9 @@ func updateRegisteredTables(athenaClient *athena.Athena, lambdaClient *lambda.La
 	}
 
 	for logType := range logTypeSet {
-		logger.Infof("updating registered tables for %s", logType)
+		if *VERBOSE {
+			logger.Infof("updating registered tables for %s", logType)
+		}
 		logTable, ruleTable, err := gluetables.CreateOrUpdateGlueTablesForLogType(glueClient, logType, dataBucket)
 		if err != nil {
 			logger.Fatalf("error updating table definitions: %v", err)
