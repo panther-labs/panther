@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
@@ -86,6 +87,9 @@ func TestDeployedTablesSignature(t *testing.T) {
 		Schema: struct {
 			Foo string `json:"foo" description:"bar"`
 		}{},
+		NewParser: parsers.FactoryFunc(func(_ interface{}) (parsers.Interface, error) {
+			return nil, nil
+		}),
 	})
 	assert.NoError(t, err)
 	defer logtypes.DefaultRegistry().Del("Foo.Bar")

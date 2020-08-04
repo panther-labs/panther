@@ -26,10 +26,12 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
-	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/rowid"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
+	"github.com/panther-labs/panther/pkg/unbox"
 )
 
 const (
@@ -38,7 +40,7 @@ const (
 
 var (
 	ipv4Regex  = regexp.MustCompile(`(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])*`)
-	rowCounter RowID // number of rows generated in this lambda execution (used to generate p_row_id)
+	rowCounter rowid.RowID // number of rows generated in this lambda execution (used to generate p_row_id)
 )
 
 // All log parsers should extend from this to get standardized fields (all prefixed with 'p_' as JSON for uniqueness)
@@ -67,8 +69,10 @@ type PantherAnyString struct { // needed to declare as struct (rather than map) 
 }
 
 func init() {
+	// Register glue mapping for PantherAnyString
 	awsglue.MustRegisterMapping(reflect.TypeOf(PantherAnyString{}), awsglue.ArrayOf(awsglue.GlueStringType))
 }
+
 func NewPantherAnyString() *PantherAnyString {
 	return &PantherAnyString{
 		set: make(map[string]struct{}),
@@ -239,6 +243,8 @@ func (pl *PantherLog) AppendAnySHA256HashesPtr(values ...*string) {
 	}
 }
 
+var defaultMeta = pantherlog.DefaultFields()
+
 func AppendAnyString(any *PantherAnyString, values ...string) {
 	// add new if not present
 	for _, v := range values {
@@ -253,39 +259,33 @@ func AppendAnyString(any *PantherAnyString, values ...string) {
 }
 
 // Result converts a PantherLog to Result
-// NOTE: Currently in this file to help with review
-func (pl *PantherLog) Result() (*Result, error) {
+func (pl *PantherLog) Result() *Result {
 	event := pl.Event()
-	if event == nil {
-		return nil, errors.New("nil event")
+	parseTime := pl.PantherParseTime
+	if parseTime == nil {
+		now := time.Now()
+		parseTime = (*timestamp.RFC3339)(&now)
 	}
-	if pl.PantherLogType == nil {
-		return nil, errors.New("nil log type")
+	eventTime := pl.PantherEventTime
+	if eventTime == nil {
+		eventTime = parseTime
 	}
-	if pl.PantherEventTime == nil {
-		return nil, errors.New("nil event time")
+	return &pantherlog.Result{
+		// Use RawEvent so that our custom ValEncoder for Result knows to not duplicate Panther added fields
+		RawEvent: event,
+		Meta:     defaultMeta,
+		CoreFields: pantherlog.CoreFields{
+			PantherLogType:   unbox.String(pl.PantherLogType),
+			PantherRowID:     unbox.String(pl.PantherRowID),
+			PantherParseTime: ((*time.Time)(parseTime)).UTC(),
+			PantherEventTime: ((*time.Time)(eventTime)).UTC(),
+		},
 	}
-	tm := ((*time.Time)(pl.PantherEventTime)).UTC()
-	// Use custom JSON marshaler to rewrite fields
-	data, err := JSON.Marshal(event)
-	if err != nil {
-		return nil, err
-	}
-	return &Result{
-		LogType:   *pl.PantherLogType,
-		EventTime: tm,
-		JSON:      data,
-	}, nil
 }
 
 // Results converts a PantherLog to a slice of results
-// NOTE: Currently in this file to help with review
 func (pl *PantherLog) Results() ([]*Result, error) {
-	result, err := pl.Result()
-	if err != nil {
-		return nil, err
-	}
-	return []*Result{result}, nil
+	return []*Result{pl.Result()}, nil
 }
 
 func ToResults(logs []*PantherLog, err error) ([]*Result, error) {
@@ -294,10 +294,7 @@ func ToResults(logs []*PantherLog, err error) ([]*Result, error) {
 	}
 	results := make([]*Result, len(logs))
 	for i := range results {
-		result, err := logs[i].Result()
-		if err != nil {
-			return nil, err
-		}
+		result := logs[i].Result()
 		results[i] = result
 	}
 	return results, nil

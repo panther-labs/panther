@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/pkg/box"
@@ -33,12 +34,21 @@ import (
 
 // TODO: thorough test when parsers return parsers.Result
 func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
+	type testEvent struct {
+		Foo string `json:"foo"`
+	}
+	event := testEvent{
+		Foo: "bar",
+	}
 	logLine := "log"
 	tm := time.Now().UTC()
 	expectResult := &parsers.Result{
-		LogType:   "success",
-		EventTime: tm,
-		JSON:      []byte(`{"p_log_type":"success"}`),
+		Meta: pantherlog.DefaultFields(),
+		CoreFields: pantherlog.CoreFields{
+			PantherLogType:   "success",
+			PantherEventTime: tm,
+		},
+		Event: event,
 	}
 	parserSuccess := testutil.ParserConfig{
 		logLine: expectResult,
@@ -61,11 +71,7 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 	expectedResult := &ClassifierResult{
 		LogType: box.String("success"),
 		Events: []*parsers.Result{
-			{
-				LogType:   "success",
-				EventTime: tm.UTC(),
-				JSON:      []byte(`{"p_log_type":"success"}`),
-			},
+			expectResult,
 		},
 	}
 	expectedStats := &ClassifierStats{

@@ -1,4 +1,4 @@
-package parsers
+package rowid
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -48,25 +48,13 @@ var (
 	prefix = make([]byte, nodeIDSize+timeOffsetSize) // holds precomputed prefix
 )
 
-type RowID uint64
-
-// NewRowID returns a unique row id as a hex string, name spaced as nodeID + timeOffset + rowCounter
-func (rid *RowID) NewRowID() string {
-	// the timeOffset and rowCounter are VarInt (https://developers.google.com/protocol-buffers/docs/encoding) encoded to reduce space
-	newCounter := atomic.AddUint64((*uint64)(rid), 1)              // incr
-	id := make([]byte, len(prefix)+rowCounterSize)                 // worse case size
-	copy(id[:], prefix)                                            // copy fixed prefix
-	rowCounterN := binary.PutUvarint(id[len(prefix):], newCounter) // add counter to end Varint encoded
-	return hex.EncodeToString(id[:len(prefix)+rowCounterN])
-}
-
 func init() {
 	// get nodeID to use in prefix of uuid
 	nif, err := getHardwareInterface()
 	if err != nil { // should never happen ... but just in case
 		zap.L().Error("Could not find hardware interface, generating random addr for uuid prefix", zap.Error(err))
 		noise := make([]byte, nodeIDSize)
-		rand.Read(noise) // nolint errcheck, not checking error because there is noting else to do
+		_, _ = rand.Read(noise) // nolint (errcheck) , not checking error because there is noting else to do
 		copy(nodeID[:], noise)
 	} else {
 		zap.L().Debug("Found hardware interface for uuid prefix",
@@ -79,6 +67,18 @@ func init() {
 	copy(prefix[:], nodeID[:])                                        // no encoding
 	timeOffsetN := binary.PutUvarint(prefix[nodeIDSize:], timeOffset) // VarInt encoding
 	prefix = prefix[:nodeIDSize+timeOffsetN]                          // clip
+}
+
+type RowID uint64
+
+// NewRowID returns a unique row id as a hex string, name spaced as nodeID + timeOffset + rowCounter
+func (rid *RowID) NewRowID() string {
+	// the timeOffset and rowCounter are VarInt (https://developers.google.com/protocol-buffers/docs/encoding) encoded to reduce space
+	newCounter := atomic.AddUint64((*uint64)(rid), 1)              // incr
+	id := make([]byte, len(prefix)+rowCounterSize)                 // worse case size
+	copy(id[:], prefix)                                            // copy fixed prefix
+	rowCounterN := binary.PutUvarint(id[len(prefix):], newCounter) // add counter to end Varint encoded
+	return hex.EncodeToString(id[:len(prefix)+rowCounterN])
 }
 
 // return first mac addr found
@@ -94,4 +94,11 @@ func getHardwareInterface() (net.Interface, error) {
 		}
 	}
 	return net.Interface{}, errors.Errorf("no valid interface found")
+}
+
+var nextRowID RowID
+
+// Next returns the next row id from a package-wide id generator.
+func Next() string {
+	return nextRowID.NewRowID()
 }
