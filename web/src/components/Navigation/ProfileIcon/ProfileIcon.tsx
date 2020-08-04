@@ -20,7 +20,6 @@ import React from 'react';
 import {
   Dropdown,
   DropdownButton,
-  PseudoBox,
   DropdownMenu,
   Divider,
   Box,
@@ -67,19 +66,22 @@ const ProfileIcon: React.FC = () => {
     <Dropdown>
       {({ isExpanded }) => (
         <React.Fragment>
-          <DropdownButton as={AbstractButton}>
-            <PseudoBox
-              width={40}
-              height={40}
-              backgroundColor={isExpanded ? 'violet-400' : 'violet-500'}
-              _hover={{ backgroundColor: 'violet-400' }}
-              transition="background-color 0.1s linear"
-              borderRadius="circle"
-            >
-              <Flex as="b" justify="center" align="center" fontSize="small" height="100%">
-                {getUserInitials(userInfo).toUpperCase()}
-              </Flex>
-            </PseudoBox>
+          <DropdownButton
+            as={AbstractButton}
+            display="flex"
+            width={40}
+            height={40}
+            backgroundColor={isExpanded ? 'violet-400' : 'violet-500'}
+            _hover={{ backgroundColor: 'violet-400' }}
+            transition="background-color 0.1s linear"
+            borderRadius="circle"
+            justifyContent="center"
+            alignItems="center"
+            fontSize="small"
+            fontWeight="bold"
+            aria-label="Toggle User Menu"
+          >
+            {getUserInitials(userInfo).toUpperCase()}
           </DropdownButton>
           <DropdownMenu alignment="right" transform="translate(65px, -65px)">
             <Box p={6} width={240} backgroundColor="navyblue-400" fontSize="medium">
@@ -103,6 +105,7 @@ const ProfileIcon: React.FC = () => {
               </Box>
             </Box>
             <Flex
+              as="footer"
               justify="center"
               backgroundColor="navyblue-600"
               p={3}

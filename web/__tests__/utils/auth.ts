@@ -17,6 +17,7 @@
  */
 
 import faker from 'faker';
+import { UserInfo } from 'Components/utils/AuthContext';
 
 /**
  * Helper function that mocks the "core" shape of all auth-related actions. Each of them has an
@@ -36,7 +37,7 @@ const mockFunctionHelper = jest.fn<
  * authenticated.
  */
 export const mockAuthProviderValue = (isAuthenticated: boolean) => {
-  let userInfo = null;
+  let userInfo: UserInfo = null;
   if (isAuthenticated) {
     userInfo = {
       email: faker.internet.email(),
