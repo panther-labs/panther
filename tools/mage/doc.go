@@ -168,23 +168,50 @@ func (logs *supportedLogs) generateDocumentation() error {
 				//
 				// (duplicate suffixes omitted in this section)
 				// dot is always replaced by a dash, but a dot and a space affect subsequent numeric grouping differently
-				// space - run algorithm on two groups separately
+				// In other words, you can't just remove the dot, nor can you replace it with a space
+				//
+				// space - run algorithm on each group separately
+				//
+				// maybe just block these pathological cases entirely - don't allow
+				// multiple internal number groups within the same space-delimited word
+				//     - e.g. "S3.ServerAccess" is allowed
+				//     - "15X1Y0" is allowed
+				//     - but not "15X1a2Y0"
+				// Or, just don't allow single-character string with numbers on either side
 				//
 				// "A1B2C3D4" => "a-1-b2c-3-d4"
-				// "A.1B2C3D4" => "a-1-b2c-3-d4"
+				// "A.1B2C3D4" => "a-1-b2c-3-d4"  // pretend no dot
 				// "A 1B2C3D4" -> "a-1b-2-c3d4"
-				// "A1.B2C3D4" => "a-1-b2c-3-d4"
+				// "A1.B2C3D4" => "a-1-b-2-c3d4" // ? pretend b is beginning - changes main grouping
 				// "A1 B2C3D4" => "a1-b-2-c3d4"
-				// "A1B.2C3D4" => "a-1-b-2-c3d4"
-				// "A1B 2C3D4" => "a-1-b-2c-3-d4"
-				// "A1B2.C3D4" => "a-1-b2-c-3-d4"
+				// "A1B.2C3D4" => "a-1-b-2-c3d4"  // ? pretend b is beginning
+				// "A1B 2C3D4" => "(a-1-b)-(2c-3-d4)"
+				// "A1B2.C3D4" => "a-1-b2-c-3-d4" // pretend space - add dash to base
 				// "A1B2 C3D4" => "a-1-b2-c-3-d4"
-				// "A1B2C.3D4" => "a-1-b2c-3-d4"
+				// "A1B2C.3D4" => "a-1-b2c-3-d4" // pretend no dot
 				// "A1B2C 3D4" => "a-1-b2c-3d4"
-				// "A1B2C3.D4" => "a-1-b2c-3-d4"
+				// "A1B2C3.D4" => "a-1-b2c-3-d4" // pretend no dot
 				// "A1B2C3 D4" => "a-1-b2c3-d4"
-				// "A1B2C3D.4" => "a-1-b2c-3-d-4"
+				// "A1B2C3D.4" => "a-1-b2c-3-d-4" // pretend space - add dash to base
 				// "A1B2C3D 4" => "a-1-b2c-3-d-4"
+				//
+				// "AA11BB22CC33DD" => "aa-11-bb-22-cc-33-dd"
+				// "AA.11BB22CC33DD" => "aa-11-bb-22-cc-33-dd"
+				// "AA 11BB22CC33DD" => "aa-11bb-22-cc-33-dd"
+				// "AA11.BB22CC33DD" => "aa-11-bb-22-cc-33-dd"
+				// "AA11 BB22CC33DD" => "aa11-bb-22-cc-33-dd"
+				// "AA11BB 22CC33DD" => "aa-11-bb-22cc-33-dd"
+				// "AA11BB22 CC33DD" => "aa-11-bb22-cc-33-dd"
+				// "AA11BB22CC 33DD" => "aa-11-bb-22-cc-33dd"
+				// "AA11BB22CC33 DD" => "aa-11-bb-22-cc33-dd"
+				// "AABBCC" => "aabbcc"
+				// "AA BB CC DD" => "aa-bb-cc-dd"
+				// "AA-BB-CC-DD" => "aa-bb-cc-dd"
+				// "AA.BB.CC.DD" => "aa.bb.cc.dd"
+				// "A1B2C" => "a-1-b2c"
+				// "A1B22C" => "a-1-b22c"
+				// "A11B2C" => "a-11-b2c"
+				// "A11B22C" => "a-11-b22c"
 				//
 				// "3.5" => "3-5"
 				// "A1" => "a1"
