@@ -1,0 +1,21 @@
+{
+  "name": "panther-github-actions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "ncc build index.js"
+  },
+  "keywords": [
+    "panther",
+    "panther-enterprise"
+  ],
+  "private": true,
+  "author": "panther-labs",
+  "license": "AGPL",
+  "dependencies": {
+    "@actions/core": "^1.2.4",
+    "@actions/github": "^4.0.0",
+    "@zeit/ncc": "^0.22.3"
+  }
+}

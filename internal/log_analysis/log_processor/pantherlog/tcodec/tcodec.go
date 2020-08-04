@@ -315,3 +315,31 @@ func ValidateEmbeddedTimeValue(val reflect.Value) interface{} {
 	}
 	return tm
 }
+
+func NewTimeEncoder(enc TimeEncoder, typ reflect.Type) jsoniter.ValEncoder {
+	if !isTimeType(typ) {
+		return nil
+	}
+	if typ.Kind() == reflect.Ptr {
+		return &jsonTimePtrEncoder{
+			encode: enc.EncodeTime,
+		}
+	}
+	return &jsonTimeEncoder{
+		encode: enc.EncodeTime,
+	}
+}
+func NewTimeDecoder(dec TimeDecoder, typ reflect.Type) jsoniter.ValDecoder {
+	if !isTimeType(typ) {
+		return nil
+	}
+	if typ.Kind() == reflect.Ptr {
+		return &jsonTimePtrDecoder{
+			decode: dec.DecodeTime,
+			typ:    typ.Elem(),
+		}
+	}
+	return &jsonTimeDecoder{
+		decode: dec.DecodeTime,
+	}
+}

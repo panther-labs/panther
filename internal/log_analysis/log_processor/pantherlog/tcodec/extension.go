@@ -25,6 +25,7 @@ import (
 	"unsafe"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/modern-go/reflect2"
 )
 
 // Extension is a jsoniter.Extension that decodes JSON values to time.Time and encodes back to JSON.
@@ -77,18 +78,35 @@ func NewExtension(config Config) *Extension {
 
 var typTime = reflect.TypeOf(time.Time{})
 
+func (ext *Extension) CreateEncoder(typ reflect2.Type) jsoniter.ValEncoder {
+	typ1 := typ.Type1()
+	if !typ1.ConvertibleTo(typTime) {
+		return nil
+	}
+	_, enc := ext.split(nil)
+	if enc == nil {
+		return nil
+	}
+	return NewTimeEncoder(enc, typ1)
+}
+func (ext *Extension) CreateDecoder(typ reflect2.Type) jsoniter.ValDecoder {
+	typ1 := typ.Type1()
+	if !typ1.ConvertibleTo(typTime) {
+		return nil
+	}
+	dec, _ := ext.split(nil)
+	if dec == nil {
+		return nil
+	}
+	return NewTimeDecoder(dec, typ1)
+}
+
 func (ext *Extension) UpdateStructDescriptor(desc *jsoniter.StructDescriptor) {
 	tagName := ext.TagName()
 	for _, binding := range desc.Fields {
 		field := binding.Field
 		typ := field.Type().Type1()
-		switch {
-		case typ.ConvertibleTo(typTime):
-		case isEmbeddedTime(typ):
-		case typ.Kind() == reflect.Ptr && typ.Elem().ConvertibleTo(typTime):
-		case typ.Kind() == reflect.Ptr && isEmbeddedTime(typ.Elem()):
-			// We only modify encoders/decoders for `time.Time` and `*time.Time` fields.
-		default:
+		if !isTimeType(typ) {
 			continue
 		}
 
@@ -106,14 +124,43 @@ func (ext *Extension) UpdateStructDescriptor(desc *jsoniter.StructDescriptor) {
 			}
 		}
 		dec, enc := ext.split(codec)
-		if decoder := ext.newValDecoder(typ, dec); decoder != nil {
+		if dec != nil {
 			// We only modify the underlying decoder if we resolved a decoder
-			binding.Decoder = decoder
+			binding.Decoder = NewTimeDecoder(dec, typ)
 		}
-		if encoder := ext.newValEncoder(typ, enc); encoder != nil {
+		if enc != nil {
 			// We only modify the underlying encoder if we resolved an encoder
-			binding.Encoder = encoder
+			valEncoder := NewTimeEncoder(enc, typ)
+			// Reserve decorations.
+			// This is needed so globally registered extensions can apply their decorations on top of tcodec ones
+			type decorator interface {
+				DecorateEncoder(typ reflect2.Type, enc jsoniter.ValEncoder) jsoniter.ValEncoder
+			}
+			if d, ok := binding.Encoder.(decorator); ok {
+				valEncoder = d.DecorateEncoder(field.Type(), valEncoder)
+			}
+			binding.Encoder = valEncoder
 		}
+	}
+}
+
+func isTimeType(typ reflect.Type) bool {
+	switch {
+	case typ.ConvertibleTo(typTime):
+		// Type is time.Time
+		return true
+	case isEmbeddedTime(typ):
+		// Type is struct { time.Time }
+		return true
+	case typ.Kind() == reflect.Ptr && typ.Elem().ConvertibleTo(typTime):
+		// Type is *time.Time
+		return true
+	case typ.Kind() == reflect.Ptr && isEmbeddedTime(typ.Elem()):
+		// Type is *struct { time.Time }
+		return true
+	default:
+		// We only modify encoders/decoders for the above types
+		return false
 	}
 }
 
@@ -137,20 +184,6 @@ func (ext *Extension) TagName() string {
 		return tagName
 	}
 	return DefaultTagName
-}
-
-func (ext *Extension) newValEncoder(typ reflect.Type, encode TimeEncoder) jsoniter.ValEncoder {
-	if encode == nil {
-		return nil
-	}
-	if typ.Kind() == reflect.Ptr {
-		return &jsonTimePtrEncoder{
-			encode: encode.EncodeTime,
-		}
-	}
-	return &jsonTimeEncoder{
-		encode: encode.EncodeTime,
-	}
 }
 
 func (ext *Extension) split(codec TimeCodec) (decoder TimeDecoder, encoder TimeEncoder) {
@@ -190,21 +223,6 @@ func (enc *jsonTimePtrEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Strea
 		enc.encode(time.Time{}, stream)
 	} else {
 		enc.encode(*tm, stream)
-	}
-}
-
-func (ext *Extension) newValDecoder(typ reflect.Type, decode TimeDecoder) jsoniter.ValDecoder {
-	if decode == nil {
-		return nil
-	}
-	if typ.Kind() == reflect.Ptr {
-		return &jsonTimePtrDecoder{
-			decode: decode.DecodeTime,
-			typ:    typ.Elem(),
-		}
-	}
-	return &jsonTimeDecoder{
-		decode: decode.DecodeTime,
 	}
 }
 

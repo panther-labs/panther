@@ -1,3 +1,5 @@
+package pantherlog
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -15,21 +17,3 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-import { Flex, IconButton, IconButtonProps, Tooltip } from 'pouncejs';
-import React from 'react';
-
-type NavIconButtonProps = Omit<IconButtonProps, 'variant' | 'aria-label'> &
-  React.AnchorHTMLAttributes<HTMLButtonElement> & {
-    tooltipLabel: string;
-  };
-
-const NavIconButton: React.FC<NavIconButtonProps> = ({ icon, active, tooltipLabel, ...rest }) => (
-  <Tooltip content={tooltipLabel}>
-    <Flex mb={3}>
-      <IconButton {...rest} variant="ghost" icon={icon} active={active} aria-label={tooltipLabel} />
-    </Flex>
-  </Tooltip>
-);
-
-export default NavIconButton;

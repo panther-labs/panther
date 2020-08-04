@@ -33,6 +33,7 @@ func TestNewExtension(t *testing.T) {
 		TimeUnixMS  time.Time `json:"t_unix_ms,omitempty" tcodec:"unix_ms"`
 		TimeUnix    time.Time `json:"t_unix,omitempty" tcodec:"unix"`
 		TimeCustom  time.Time `json:"t_custom,omitempty" tcodec:"layout=2006-01-02"`
+		Time        time.Time `json:"t,omitempty"`
 	}
 	ext := NewExtension(Config{
 		DecorateCodec: func(codec TimeCodec) TimeCodec {
@@ -78,6 +79,19 @@ func TestNewExtension(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Equal(t, `{"t_rfc":"2020-07-03T12:12:45Z"}`, actual)
+	}
+	{
+		// Test that we use the default `encoding/json` behavior when no `tcodec` spec exists
+		loc, _ := time.LoadLocation("Europe/Athens")
+		expect := time.Date(2020, 7, 3, 15, 12, 45, 0, loc)
+		input := `{"t":"2020-07-03T12:12:45Z"}`
+		actual := T{}
+		err := api.UnmarshalFromString(input, &actual)
+		require.NoError(t, err)
+		require.Equal(t, expect, actual.Time.In(loc))
+		actualJSON, err := api.MarshalToString(&actual)
+		require.NoError(t, err)
+		require.Equal(t, `{"t":"2020-07-03T12:12:45Z"}`, actualJSON)
 	}
 }
 

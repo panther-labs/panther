@@ -72,8 +72,7 @@ func newTestLog() *parsers.Result {
 		logLine: testLogLine,
 	}
 	log.SetCoreFields(testLogType, &refTime, &log)
-	result, _ := log.Result()
-	return result
+	return log.Result()
 }
 
 func TestProcess(t *testing.T) {

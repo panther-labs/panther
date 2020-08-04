@@ -25,6 +25,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/athena"
+	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -34,8 +35,10 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/athenaviews"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
+	"github.com/panther-labs/panther/pkg/awscfn"
 	"github.com/panther-labs/panther/pkg/genericapi"
 	"github.com/panther-labs/panther/pkg/prompt"
+	"github.com/panther-labs/panther/tools/cfnstacks"
 )
 
 // targets for managing Glue tables
@@ -77,8 +80,9 @@ func (t Glue) Sync() {
 }
 
 func updateRegisteredTables(glueClient *glue.Glue) (tables []*awsglue.GlueTableMetadata) {
-	const processDataBucketStack = bootstrapStack
-	outputs := stackOutputs(processDataBucketStack)
+	const processDataBucketStack = cfnstacks.Bootstrap
+	client := cloudformation.New(awsSession)
+	outputs := awscfn.StackOutputs(client, logger, processDataBucketStack)
 	var dataBucket string
 	if dataBucket = outputs["ProcessedDataBucket"]; dataBucket == "" {
 		logger.Fatalf("could not find processed data bucket in %s outputs", processDataBucketStack)
