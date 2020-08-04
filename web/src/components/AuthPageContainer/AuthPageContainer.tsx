@@ -28,13 +28,13 @@ interface AuthPageContainerComposition {
 }
 
 const Footer: React.FC = ({ children }) => (
-  <Flex data-testid="auth-page-footer" p={26}>
+  <Flex as="footer" p={26}>
     {children}
   </Flex>
 );
 
 /**
- * A compounet component to act as a wrapper for any alternative options that the page can have
+ * A component to act as a wrapper for any alternative options that the page can have
  */
 const AuthPageContainerAlt: AuthPageContainerComposition['AltOptions'] = ({ children }) => (
   <Footer>
@@ -46,9 +46,8 @@ const AuthPageContainerAlt: AuthPageContainerComposition['AltOptions'] = ({ chil
 
 const AuthPageContainer: React.FC & AuthPageContainerComposition = ({ children }) => {
   const Copy = (
-    <Text as="span" fontSize="small" verticalAlign="text-top" data-testid="auth-page-copyright">
-      {'\u00a0'}
-      {'\u00a9'}
+    <Text as="span" fontSize="small" verticalAlign="text-top" pl={1}>
+      ©
     </Text>
   );
   return (
@@ -70,14 +69,7 @@ const AuthPageContainer: React.FC & AuthPageContainerComposition = ({ children }
           m="auto"
           data-testid="auth-page-branding"
         >
-          <Img
-            src={PantherLogo}
-            data-testid="auth-page-logo"
-            alt="Panther Logo"
-            nativeWidth={108}
-            nativeHeight={138}
-            mb={6}
-          />
+          <Img src={PantherLogo} alt="Panther Logo" nativeWidth={108} nativeHeight={138} mb={6} />
 
           <Text lineHeight="relaxed" textAlign="center" mb={4}>
             <strong>Detect Threats with Log Data and Improve Cloud Security Posture</strong>

@@ -39,12 +39,7 @@ const ForgotPasswordPage: React.FC = () => {
 
       <AuthPageContainer.AltOptions>
         Remembered it all of a sudden?
-        <Link
-          as={RRLink}
-          to={urls.account.auth.signIn()}
-          ml={2}
-          data-testid="forgot-passoword-reminder"
-        >
+        <Link as={RRLink} to={urls.account.auth.signIn()} ml={2}>
           Sign in
         </Link>
       </AuthPageContainer.AltOptions>

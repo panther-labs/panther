@@ -34,7 +34,7 @@ describe('Forgot password', () => {
   });
 
   test('it renders auth page footer', async () => {
-    const { getByTestId } = await render(<ForgotPassword />);
-    expect(getByTestId('forgot-passoword-reminder')).toBeInTheDocument();
+    const { getByText } = await render(<ForgotPassword />);
+    expect(getByText('Sign in')).toBeInTheDocument();
   });
 });
