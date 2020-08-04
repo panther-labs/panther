@@ -140,7 +140,8 @@ export const LOG_TYPES = [
 export const PANTHER_SCHEMA_DOCS_MASTER_LINK = 'https://docs.runpanther.io';
 
 export const STABLE_PANTHER_VERSION = pantherConfig.PANTHER_VERSION.split('-')[0]; // e.g. "v1.7.1"
-export const MINOR_PANTHER_VERSION = STABLE_PANTHER_VERSION.slice(0, 4); // e.g. "v1.7"
+const VERSION_PARTS = STABLE_PANTHER_VERSION.split('.'); // ["v1", "7", "1]
+export const MINOR_PANTHER_VERSION = `${VERSION_PARTS[0]}.${VERSION_PARTS[1]}`; // "v1.7"
 export const PANTHER_SCHEMA_DOCS_LINK = `${PANTHER_SCHEMA_DOCS_MASTER_LINK}/v/${MINOR_PANTHER_VERSION}-docs`;
 
 export const LOG_ONBOARDING_SNS_DOC_URL = `${PANTHER_SCHEMA_DOCS_LINK}/log-processing#sns-notification-setup`;
