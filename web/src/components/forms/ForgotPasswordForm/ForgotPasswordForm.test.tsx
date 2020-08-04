@@ -1,19 +1,6 @@
 import React from 'react';
 import { render, fireEvent, act, waitFor } from 'test-utils';
-import useAuth from 'Hooks/useAuth';
 import ForgotPasswordForm from './ForgotPasswordForm';
-
-jest.mock('Hooks/useAuth');
-
-const mockedUsedAuth = useAuth as jest.Mock;
-const mockForgotPassword = jest.fn().mockReturnValue(Promise.resolve());
-
-beforeAll(() => {
-  mockedUsedAuth.mockImplementation(() => ({
-    forgotPassword: mockForgotPassword,
-  }));
-});
-afterAll(() => jest.unmock('Hooks/useAuth'));
 
 const renderForm = () => render(<ForgotPasswordForm />);
 
@@ -40,7 +27,7 @@ describe('ForgotPasswordForm', () => {
   });
 
   it('submits the form', async () => {
-    const { findByLabelText, findByText } = await renderForm();
+    const { findByLabelText, findByText, forgotPassword } = await renderForm();
     const email = 'runner1@runpanther.io';
     await act(async () => {
       const emailInput = await findByLabelText('Email');
@@ -53,7 +40,7 @@ describe('ForgotPasswordForm', () => {
     });
 
     await waitFor(() => {
-      expect(mockForgotPassword).toHaveBeenCalledWith({
+      expect(forgotPassword).toHaveBeenCalledWith({
         email,
         onError: expect.any(Function),
         onSuccess: expect.any(Function),

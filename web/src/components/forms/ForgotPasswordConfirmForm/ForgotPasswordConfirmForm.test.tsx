@@ -1,19 +1,6 @@
 import React from 'react';
 import { render, fireEvent, act, waitFor } from 'test-utils';
-import useAuth from 'Hooks/useAuth';
 import ForgotPasswordConfirmForm from './ForgotPasswordConfirmForm';
-
-jest.mock('Hooks/useAuth');
-
-const mockedUsedAuth = useAuth as jest.Mock;
-const mockResetPassword = jest.fn().mockReturnValue(Promise.resolve());
-
-beforeAll(() => {
-  mockedUsedAuth.mockImplementation(() => ({
-    resetPassword: mockResetPassword,
-  }));
-});
-afterAll(() => jest.unmock('Hooks/useAuth'));
 
 const defaultEmail = 'example@runpanther.io';
 const defaultToken = 'xxx-xxx';
@@ -48,7 +35,7 @@ describe('ForgotPasswordConfirmForm', () => {
   });
 
   it('submits the form', async () => {
-    const { findByLabelText, findByText } = await renderForm();
+    const { findByLabelText, findByText, resetPassword } = await renderForm();
     // Required from Yup schema validation
     const strongPassword = 'abCDefg123456!@@##';
 
@@ -68,7 +55,7 @@ describe('ForgotPasswordConfirmForm', () => {
     });
 
     await waitFor(() => {
-      expect(mockResetPassword).toHaveBeenCalledWith({
+      expect(resetPassword).toHaveBeenCalledWith({
         newPassword: strongPassword,
         email: defaultEmail,
         token: defaultToken,
