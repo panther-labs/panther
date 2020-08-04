@@ -166,34 +166,64 @@ func testDoc() error {
 	//    - "../log-analysis"           (prevent directory links - link will fail without README)
 	//    - "quick_start.md"            (use "-" instead of "_")
 	//    - "quick-start.md#Onboarding" (headers must be lowercase with dashes only)
+	//
+	// TODO - be more permissive with the header so we can classify it correctly? Or handle this in `mage fmt`?
 	docRef := regexp.MustCompile(`^([A-Za-z0-9./-]+\.md)?(#[a-z0-9-]+)?$`)
 
+	// Remember which images we've seen so we can warn about unused assets
+	assetDir := filepath.Join("docs", "gitbook", ".gitbook", "assets")
+	linkedImages := map[string]struct{}{}
+
 	errCount := 0
-	for path := range docFiles {
-		for _, match := range linkPattern.FindAllSubmatch(readFile(path), -1) {
+	for doc := range docFiles {
+		for _, match := range linkPattern.FindAllSubmatch(readFile(doc), -1) {
 			// match[0] is entire "[text](target)", match[1] is just "target"
 			target := match[1]
 
 			if webRef.Match(target) || emailRef.Match(target) {
-				logger.Debugf("test:doc: %s valid web/email link: %s", path, string(target))
-				continue
-			}
+				logger.Debugf("test:doc: %s: valid web/email link: %s", doc, string(target))
+			} else if assetRef.Match(target) {
+				logger.Debugf("test:doc: %s: validating image ref: %s", doc, string(target))
+				imgPath := filepath.Join(filepath.Dir(doc), string(target))
 
-			if assetRef.Match(target) {
-				// TODO - validate image path
-				logger.Debugf("test:doc: %s image ref: %s", path, string(target))
-			} else if docRef.Match(target) {
+				// Make sure the reference is limited to the correct directory
+				if !strings.HasPrefix(imgPath, assetDir) {
+					logger.Errorf("test:doc: %s: image reference \"%s\" resolves to \"%s\", needs to be under %s",
+						doc, target, imgPath, assetDir)
+					continue
+				}
+
+				// Make sure the image exists
+				if _, err := os.Stat(imgPath); err == nil {
+					linkedImages[imgPath] = struct{}{}
+				} else {
+					logger.Errorf("test:doc: %s: invalid image asset \"%s\": %s", doc, target, err)
+					errCount++
+				}
+			} else if docMatch := docRef.FindSubmatch(target); len(docMatch) > 0 {
+				linkedFile, header := string(docMatch[1]), string(docMatch[2])
+				logger.Debugf("test:doc: %s found doc ref to %s with header %s", doc, linkedFile, header)
+
 				// TODO - validate document path
 				// TODO - validate headers
-				logger.Debugf("test:doc: %s doc ref: %s", path, string(target))
+				logger.Debugf("test:doc: %s doc ref: %s", doc, string(target))
 			} else {
-				logger.Errorf("test:doc: %s: unknown link: %s", path, string(match[0]))
+				// TODO - see if we can provide more help here
+				// E.g. check for directory
+				logger.Errorf("test:doc: %s: unable to validate link \"%s\"", doc, string(match[0]))
 				errCount++
 			}
 		}
 	}
 
-	if errCount > 1 {
+	// Check for unused image assets
+	walk(assetDir, func(path string, info os.FileInfo) {
+		if _, exists := linkedImages[path]; !exists && !info.IsDir() && filepath.Ext(path) != ".DS_Store" {
+			logger.Warnf("test:doc: %s is unused", path)
+		}
+	})
+
+	if errCount > 0 {
 		return fmt.Errorf("test:doc: %d errors", errCount)
 	}
 	return nil

@@ -77,10 +77,11 @@ Targets:
   teardown            Destroy all Panther infrastructure
   test:cfn            Lint CloudFormation and Terraform templates
   test:ci             Run all required checks for a pull request
+  test:doc            Verify links and assets in documentation
   test:go             Test and lint Golang source code
   test:integration    Run integration tests (integration_test.go,integration.py)
   test:python         Test and lint Python source code
-  test:web            Test and lint npm/web source
+  test:web            Test and lint web source
 ```
 
 You can easily chain `mage` commands together, for example: `mage clean setup test:ci deploy`
