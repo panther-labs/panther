@@ -27,16 +27,24 @@ import { Link as RRLink } from 'react-router-dom';
 const ForgotPasswordPage: React.FC = () => {
   return (
     <AuthPageContainer>
-      <FadeIn delay={100}>
-        <AuthPageContainer.Caption
-          title="Forgot your password?"
-          subtitle="We'll help you reset your password and get back on track."
-        />
-        <ForgotPasswordForm />
-      </FadeIn>
+      <AuthPageContainer.Content>
+        <FadeIn delay={100}>
+          <AuthPageContainer.Caption
+            title="Forgot your password?"
+            subtitle="We'll help you reset your password and get back on track."
+          />
+          <ForgotPasswordForm />
+        </FadeIn>
+      </AuthPageContainer.Content>
+
       <AuthPageContainer.AltOptions>
         Remembered it all of a sudden?
-        <Link as={RRLink} to={urls.account.auth.signIn()} ml={2}>
+        <Link
+          as={RRLink}
+          to={urls.account.auth.signIn()}
+          ml={2}
+          data-testid="forgot-passoword-reminder"
+        >
           Sign in
         </Link>
       </AuthPageContainer.AltOptions>

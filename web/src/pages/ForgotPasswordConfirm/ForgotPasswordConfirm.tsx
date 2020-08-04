@@ -32,10 +32,12 @@ const ForgotPasswordConfirmPage: React.FC = () => {
   if (!token || !email) {
     return (
       <AuthPageContainer>
-        <AuthPageContainer.Caption
-          title="Something seems off..."
-          subtitle="Are you sure that the URL you followed is valid?"
-        />
+        <AuthPageContainer.Content>
+          <AuthPageContainer.Caption
+            title="Something seems off..."
+            subtitle="Are you sure that the URL you followed is valid?"
+          />
+        </AuthPageContainer.Content>
       </AuthPageContainer>
     );
   }
@@ -43,11 +45,13 @@ const ForgotPasswordConfirmPage: React.FC = () => {
   return (
     <AuthPageContainer>
       <FadeIn delay={100}>
-        <AuthPageContainer.Caption
-          title="Alrighty then.."
-          subtitle="Let's set you up with a new password."
-        />
-        <ForgotPasswordConfirmForm email={email} token={token} />
+        <AuthPageContainer.Content>
+          <AuthPageContainer.Caption
+            title="Alrighty then.."
+            subtitle="Let's set you up with a new password."
+          />
+          <ForgotPasswordConfirmForm email={email} token={token} />
+        </AuthPageContainer.Content>
       </FadeIn>
     </AuthPageContainer>
   );

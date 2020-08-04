@@ -18,11 +18,13 @@
 
 import * as Yup from 'yup';
 import { Field, Form, Formik } from 'formik';
+import { Link as RRLink } from 'react-router-dom';
 import React from 'react';
 import FormikTextInput from 'Components/fields/TextInput';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import useAuth from 'Hooks/useAuth';
-import { Flex } from 'pouncejs';
+import { Link, Flex, Box } from 'pouncejs';
+import urls from 'Source/urls';
 
 interface SignInFormValues {
   username: string;
@@ -81,7 +83,14 @@ const SignInForm: React.FC = () => {
             type="password"
             required
           />
-          <SubmitButton fullWidth>Sign in</SubmitButton>
+          <Flex ml="auto">
+            <Link as={RRLink} to={urls.account.auth.forgotPassword()} fontSize="medium">
+              Forgot your password?
+            </Link>
+          </Flex>
+          <Box mt={4}>
+            <SubmitButton fullWidth>Sign in</SubmitButton>
+          </Box>
         </Flex>
       </Form>
     </Formik>
