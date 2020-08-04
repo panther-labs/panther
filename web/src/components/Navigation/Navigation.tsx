@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Flex, Img, Link } from 'pouncejs';
+import { Box, Flex, Img, Link, Divider } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import PantherIcon from 'Assets/panther-minimal-logo.svg';
@@ -25,9 +25,12 @@ import { animated, useTransition } from 'react-spring';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 import useRouter from 'Hooks/useRouter';
 import NavIconButton from './NavIconButton';
-import SettingsNavigation from './SettingsNavigation';
-import ComplianceNavigation from './ComplianceNavigation';
-import LogAnalysisNavigation from './LogAnalysisNavigation';
+import ProfileIcon from './ProfileIcon';
+import {
+  SettingsNavigation,
+  ComplianceNavigation,
+  LogAnalysisNavigation,
+} from './SecondaryNavigations';
 
 const SECONDARY_NAV_WIDTH = 200;
 const COMPLIANCE_NAV_KEY = 'compliance';
@@ -85,14 +88,13 @@ const Navigation = () => {
     <Flex
       as="aside"
       boxShadow="dark50"
-      zIndex={1}
       position="sticky"
       top={0}
       height="100vh"
       backgroundColor="navyblue-700"
     >
-      <Flex as="nav" direction="column" width={70} height="100%" aria-label="Main">
-        <Flex as={RRLink} to="/" justify="center" py={3} my={6}>
+      <Flex as="nav" direction="column" width={60} height="100%" aria-label="Main" align="center">
+        <Box as={RRLink} to="/" py={3} my={3}>
           <Img
             src={PantherIcon}
             alt="Panther logo"
@@ -100,8 +102,10 @@ const Navigation = () => {
             nativeHeight={30}
             display="block"
           />
-        </Flex>
-        <Flex direction="column" justify="center" align="center" as="ul" flex="1 0 auto">
+        </Box>
+        <ProfileIcon />
+        <Divider mt={6} mb={4} width={37} color="navyblue-300" />
+        <Flex direction="column" as="ul" flex="1 0 auto" spacing={4}>
           <Box as="li">
             <NavIconButton
               active={isComplianceNavigationActive}
@@ -112,7 +116,7 @@ const Navigation = () => {
               }
             />
           </Box>
-          <Box as="li" mb="auto">
+          <Box as="li">
             <NavIconButton
               active={isLogAnalysisNavigationActive}
               icon="log-analysis"
@@ -122,12 +126,7 @@ const Navigation = () => {
               }
             />
           </Box>
-          <Box as="li" mt="auto">
-            <Link external href={PANTHER_SCHEMA_DOCS_LINK} tabIndex={-1}>
-              <NavIconButton active={false} icon="docs" tooltipLabel="Documentation" />
-            </Link>
-          </Box>
-          <Box as="li">
+          <Box as="li" mb="auto">
             <NavIconButton
               active={isSettingsNavigationActive}
               icon="settings"
@@ -135,13 +134,18 @@ const Navigation = () => {
               onClick={() => setSecondaryNav(isSettingsNavigationActive ? null : SETTINGS_NAV_KEY)}
             />
           </Box>
+          <Box as="li" mt="auto" mb={8}>
+            <Link external href={PANTHER_SCHEMA_DOCS_LINK} tabIndex={-1}>
+              <NavIconButton active={false} icon="docs" tooltipLabel="Documentation" />
+            </Link>
+          </Box>
         </Flex>
       </Flex>
       {transitions.map(
         ({ item, key, props: styles }) =>
           item && (
             <animated.div key={key} style={{ width: 0, ...styles }}>
-              <Box height="100%" borderLeft="1px solid" borderColor="navyblue-400">
+              <Box height="100%" borderLeft="1px solid" borderColor="navyblue-400" px="14px">
                 {secondaryNav === COMPLIANCE_NAV_KEY && <ComplianceNavigation />}
                 {secondaryNav === LOG_ANALYSIS_NAV_KEY && <LogAnalysisNavigation />}
                 {secondaryNav === SETTINGS_NAV_KEY && <SettingsNavigation />}

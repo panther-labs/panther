@@ -29,15 +29,14 @@
 
 ## Getting Started!
 
-To deploy Panther Community Edition, continue to the [quick start](quick-start.md) guide.
+Follow the [quick start](quick-start.md) guide to deploy Panther Community. 
 
 ### Premium
 
-Panther provides additional features in its [Enterprise](enterprise) edition for advanced teams:
+Panther [Enterprise](enterprise) offers additional features for advanced teams, such as:
 - Data Explorer: Search your collected data, generated alerts, and threat hunt with SQL
 - SaaS Log Collection: Automatically load popular SaaS logs into Panther such as Okta, G Suite, and more.
 - Role-based Access Control: Assign roles to your Panther users
 - Single Sign-on: Integrate solutions such as Okta to streamline and manage identities.
-- Premium Detection Packs: Built-in support for PCI and more advanced off the shelf rules.
 
 To receive a trial of Panther Enterprise, [sign up here](https://runpanther.io/request-a-demo/)!

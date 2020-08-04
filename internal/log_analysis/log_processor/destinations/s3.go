@@ -39,6 +39,7 @@ import (
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
@@ -177,7 +178,7 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Re
 
 		buffer := bufferSet.getBuffer(event)
 
-		err := bufferSet.addEvent(buffer, event.JSON)
+		err := bufferSet.addEvent(buffer, event)
 		if err != nil {
 			failed = true
 			errChan <- err
@@ -340,7 +341,7 @@ func newS3EventBufferSet() *s3EventBufferSet {
 
 func (bs *s3EventBufferSet) getBuffer(event *parsers.Result) *s3EventBuffer {
 	// bin by hour (this is our partition size)
-	hour := event.EventTime.Truncate(time.Hour)
+	hour := event.PantherEventTime.Truncate(time.Hour)
 
 	logTypeToBuffer, ok := bs.set[hour]
 	if !ok {
@@ -348,7 +349,7 @@ func (bs *s3EventBufferSet) getBuffer(event *parsers.Result) *s3EventBuffer {
 		bs.set[hour] = logTypeToBuffer
 	}
 
-	logType := event.LogType
+	logType := event.PantherLogType
 	buffer, ok := logTypeToBuffer[logType]
 	if !ok {
 		buffer = newS3EventBuffer(logType, hour)
@@ -358,7 +359,7 @@ func (bs *s3EventBufferSet) getBuffer(event *parsers.Result) *s3EventBuffer {
 	return buffer
 }
 
-func (bs *s3EventBufferSet) addEvent(buffer *s3EventBuffer, event []byte) error {
+func (bs *s3EventBufferSet) addEvent(buffer *s3EventBuffer, event *pantherlog.Result) error {
 	eventBytes, err := buffer.addEvent(event)
 	bs.totalBufferedMemBytes += (uint64)(eventBytes)
 	return err
@@ -421,21 +422,22 @@ func newS3EventBuffer(logType string, hour time.Time) *s3EventBuffer {
 	}
 }
 
-// addEvent adds new data to the s3EventBuffer, return bytes added and error
-func (b *s3EventBuffer) addEvent(event []byte) (int, error) {
-	startBufferSize := b.buffer.Len()
+// Use a properly configured jsoniter API for panther log events
+var jsonAPI = common.BuildJSON()
 
-	_, err := b.writer.Write(event)
+// addEvent adds new data to the s3EventBuffer, return bytes added and error
+func (b *s3EventBuffer) addEvent(event *pantherlog.Result) (int, error) {
+	startBufferSize := b.buffer.Len()
+	stream := jsonAPI.BorrowStream(b.writer)
+	stream.WriteVal(event)
+	err := stream.Flush()
+	stream.Pool().ReturnStream(stream)
 	if err != nil {
-		err = errors.Wrap(err, "failed to add data to buffer %s")
+		err = errors.Wrapf(err, "failed to serialize event to JSON %s", event.PantherLogType)
 		return 0, err
 	}
-
-	// Adding new line delimiter
-	_, err = b.writer.Write(newLineDelimiter)
-	if err != nil {
-		err = errors.Wrap(err, "failed to add data to buffer")
-		return 0, err
+	if _, err := b.writer.Write(newLineDelimiter); err != nil {
+		return 0, errors.Wrap(err, "failed to add data to buffer %s")
 	}
 
 	b.bytes = b.buffer.Len() // size of compressed data minus gzip buffer (that's ok we just use this for memory pressure)
