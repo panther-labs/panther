@@ -20,24 +20,24 @@ import React from 'react';
 import { Box, Flex, Heading } from 'pouncejs';
 import urls from 'Source/urls';
 import FadeInTrail from 'Components/utils/FadeInTrail';
-import NavLink from './NavLink';
+import NavLink from '../NavLink';
 
-const ComplianceNavigation: React.FC = () => {
+const LogAnalysisNavigation: React.FC = () => {
   return (
     <Box>
       <Heading size="x-small" fontWeight="bold" pt={7} pb={5} truncated>
-        CLOUD SECURITY
+        LOG ANALYSIS
       </Heading>
       <Flex direction="column" as="ul">
         <FadeInTrail as="li">
-          <NavLink icon="dashboard-alt" to={urls.compliance.overview()} label="Overview" />
-          <NavLink icon="policy" to={urls.compliance.policies.list()} label="Policies" />
-          <NavLink icon="resource" to={urls.compliance.resources.list()} label="Resources" />
-          <NavLink icon="infra-source" to={urls.compliance.sources.list()} label="Sources" />
+          <NavLink icon="dashboard-alt" to={urls.logAnalysis.overview()} label="Overview" />
+          <NavLink icon="rule" to={urls.logAnalysis.rules.list()} label="Rules" />
+          <NavLink icon="alert" to={urls.logAnalysis.alerts.list()} label="Alerts" />
+          <NavLink icon="log-source" to={urls.logAnalysis.sources.list()} label="Sources" />
         </FadeInTrail>
       </Flex>
     </Box>
   );
 };
 
-export default React.memo(ComplianceNavigation);
+export default React.memo(LogAnalysisNavigation);

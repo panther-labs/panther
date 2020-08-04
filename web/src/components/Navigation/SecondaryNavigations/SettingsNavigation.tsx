@@ -20,7 +20,7 @@ import React from 'react';
 import { Box, Flex, Heading } from 'pouncejs';
 import FadeInTrail from 'Components/utils/FadeInTrail';
 import urls from 'Source/urls';
-import NavLink from './NavLink';
+import NavLink from '../NavLink';
 
 const SettingsNavigation: React.FC = () => {
   return (

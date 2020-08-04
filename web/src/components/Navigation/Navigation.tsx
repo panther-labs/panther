@@ -25,10 +25,12 @@ import { animated, useTransition } from 'react-spring';
 import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
 import useRouter from 'Hooks/useRouter';
 import NavIconButton from './NavIconButton';
-import SettingsNavigation from './SettingsNavigation';
-import ComplianceNavigation from './ComplianceNavigation';
-import LogAnalysisNavigation from './LogAnalysisNavigation';
 import ProfileIcon from './ProfileIcon';
+import {
+  SettingsNavigation,
+  ComplianceNavigation,
+  LogAnalysisNavigation,
+} from './SecondaryNavigations';
 
 const SECONDARY_NAV_WIDTH = 200;
 const COMPLIANCE_NAV_KEY = 'compliance';
