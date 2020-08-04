@@ -19,40 +19,14 @@ package mage
  */
 
 import (
-	"errors"
-	"fmt"
 	"path/filepath"
-	"strings"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
 
+	"github.com/panther-labs/panther/pkg/awscfn"
 	"github.com/panther-labs/panther/tools/config"
 )
-
-var allStacks = []string{
-	bootstrapStack,
-	gatewayStack,
-
-	appsyncStack,
-	cloudsecStack,
-	coreStack,
-	dashboardStack,
-	frontendStack,
-	logAnalysisStack,
-	onboardStack,
-}
-
-// Flatten CloudFormation stack outputs into a string map.
-func flattenStackOutputs(stack *cfn.Stack) map[string]string {
-	result := make(map[string]string, len(stack.Outputs))
-	for _, output := range stack.Outputs {
-		result[*output.OutputKey] = *output.OutputValue
-	}
-	return result
-}
 
 // Return the list of Panther's CloudFormation files
 func cfnFiles() []string {
@@ -71,207 +45,13 @@ func cfnFiles() []string {
 	return result
 }
 
-// Wait for the stack to reach a terminal status and then return its details.
-//
-// 1) Keep waiting while stack status is inProgress
-// 2) If stack status is successStatus, return stack details
-// 3) If stack status is neither success nor inProgress, log failing resources and return an error
-//
-// This allows us to report errors to the user immediately, e.g. an "UPDATE_ROLLBACK_IN_PROGRESS"
-// is considered a failed update - we don't have to wait until the stack is finished before finding
-// and logging the errors.
-//
-// successStatus and inProgress can be omitted to wait for any terminal status.
-//
-// If the stack does not exist, we report its status as DELETE_COMPLETE
-func waitForStack(client *cfn.CloudFormation, stackName, successStatus string, inProgress ...string) (*cfn.Stack, error) {
-	// See all stack status codes and exactly what they mean here:
-	// https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html
-
-	var allowedInProgress map[string]struct{}
-	if len(inProgress) > 0 {
-		allowedInProgress = make(map[string]struct{}, len(inProgress))
-		for _, state := range inProgress {
-			allowedInProgress[state] = struct{}{}
-		}
-	} else {
-		// All IN_PROGRESS states are allowed with the exception of REVIEW_IN_PROGRESS.
-		//
-		// REVIEW_IN_PROGRESS means the stack doesn't actually exist yet;
-		// there is a change set that was created but never applied - we would be waiting forever.
-		allowedInProgress = map[string]struct{}{
-			cfn.StackStatusCreateInProgress:                        {},
-			cfn.StackStatusDeleteInProgress:                        {},
-			cfn.StackStatusRollbackInProgress:                      {},
-			cfn.StackStatusUpdateCompleteCleanupInProgress:         {},
-			cfn.StackStatusUpdateInProgress:                        {},
-			cfn.StackStatusUpdateRollbackCompleteCleanupInProgress: {},
-			cfn.StackStatusUpdateRollbackInProgress:                {},
-			cfn.StackStatusImportInProgress:                        {},
-			cfn.StackStatusImportRollbackInProgress:                {},
-		}
-	}
-
-	var stack *cfn.Stack
-	start := time.Now()
-	lastUserMessage := start
-
-	// Wait until the stack is no longer in an expected IN_PROGRESS state
-	for {
-		detail, err := client.DescribeStacks(&cfn.DescribeStacksInput{StackName: &stackName})
-		if errStackDoesNotExist(err) {
-			// Special case - a deleted stack won't show up when describing stacks by name
-			stack = &cfn.Stack{StackName: &stackName, StackStatus: aws.String(cfn.StackStatusDeleteComplete)}
-			break
-		}
-
-		if err != nil {
-			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "ExpiredToken" {
-				return nil, fmt.Errorf("deploy: %s: security token expired; "+
-					"redeploy with fresh credentials to pick up where you left off. "+
-					"CloudFormation is still running in your AWS account, "+
-					"see https://console.aws.amazon.com/cloudformation", stackName)
-			}
-
-			return nil, fmt.Errorf("failed to describe stack %s: %v", stackName, err)
-		}
-
-		stack = detail.Stacks[0]
-		if _, inSet := allowedInProgress[*stack.StackStatus]; !inSet {
-			break
-		}
-
-		// Show the stack status occasionally
-		if successStatus == "" && lastUserMessage == start {
-			// If we just started and the caller wants the stack to be in any terminal state,
-			// this is a standard deploy - let the user know what we're waiting on.
-			logger.Warnf("stack %s was already %s, waiting for it to finish", stackName, *stack.StackStatus)
-			lastUserMessage = time.Now()
-		} else if time.Since(lastUserMessage) > 2*time.Minute {
-			// Show progress every few minutes so it doesn't look stuck
-			logger.Infof("    ... %s is still %s (%s)", stackName, *stack.StackStatus,
-				time.Since(start).Round(time.Second).String())
-			lastUserMessage = time.Now()
-		}
-
-		time.Sleep(pollInterval)
-	}
-
-	// Done waiting
-	if successStatus == "" || *stack.StackStatus == successStatus {
-		return stack, nil
-	}
-
-	// Error - stack entered an invalid state
-	logResourceFailures(client, &stackName, start)
-	return nil, errors.New(*stack.StackStatus)
-}
-
-func waitForStackCreate(client *cfn.CloudFormation, stackName string) (*cfn.Stack, error) {
-	return waitForStack(client, stackName, cfn.StackStatusCreateComplete, cfn.StackStatusCreateInProgress)
-}
-
-func waitForStackDelete(client *cfn.CloudFormation, stackName string) (*cfn.Stack, error) {
-	return waitForStack(client, stackName, cfn.StackStatusDeleteComplete, cfn.StackStatusDeleteInProgress)
-}
-
-func waitForStackUpdate(client *cfn.CloudFormation, stackName string) (*cfn.Stack, error) {
-	return waitForStack(client, stackName, cfn.StackStatusUpdateComplete,
-		cfn.StackStatusUpdateInProgress, cfn.StackStatusUpdateCompleteCleanupInProgress)
-}
-
-// Log failed resources from the stack's event history.
-//
-// Use this after a stack create/update/delete fails to understand why the stack failed.
-// Events from nested stacks which failed are enumerated as well.
-func logResourceFailures(client *cfn.CloudFormation, stackID *string, start time.Time) {
-	input := &cfn.DescribeStackEventsInput{StackName: stackID}
-	failedStatus := map[string]struct{}{
-		cfn.ResourceStatusCreateFailed: {},
-		cfn.ResourceStatusDeleteFailed: {},
-		cfn.ResourceStatusUpdateFailed: {},
-	}
-
-	// Events are listed in reverse chronological order (most recent first)
-	err := client.DescribeStackEventsPages(input, func(page *cfn.DescribeStackEventsOutput, isLast bool) bool {
-		for _, event := range page.StackEvents {
-			if (*event.Timestamp).Before(start) {
-				// Found the beginning of the events we care about: stop here
-				return false
-			}
-
-			status := *event.ResourceStatus
-			if _, ok := failedStatus[status]; !ok {
-				continue
-			}
-
-			resourceType := *event.ResourceType
-			logicalID, physicalID := *event.LogicalResourceId, *event.PhysicalResourceId
-			if resourceType == "AWS::CloudFormation::Stack" && logicalID != *stackID && physicalID != *stackID {
-				// If a nested stack failed, describe those events as well
-				logResourceFailures(client, event.PhysicalResourceId, start)
-			}
-
-			reason := aws.StringValue(event.ResourceStatusReason)
-			if reason == "Resource update cancelled" || reason == "Resource creation cancelled" {
-				continue
-			}
-
-			stackName := *stackID
-			if strings.HasPrefix(stackName, "arn") {
-				// The stackID is the full arn (i.e. a nested stack), for example:
-				//   arn:aws:cloudformation:us-west-2:111122223333:stack/panther-cw-alarms-BootstrapAlarms-1JFSJVDA48SZI/uuid
-				// Pull out just the stack name to make it easier to read
-				stackName = strings.Split(stackName, "/")[1]
-			}
-			logger.Errorf("stack %s: %s %s %s: %s", stackName, resourceType, logicalID, status, reason)
-		}
-
-		return true // keep paging
-	})
-
-	if err != nil {
-		logger.Warnf("failed to list stack events for %s: %v", *stackID, err)
-	}
-}
-
-// Returns true if the given error is from describing a stack that doesn't exist.
-func errStackDoesNotExist(err error) bool {
-	if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "ValidationError" &&
-		strings.Contains(awsErr.Message(), "does not exist") {
-
-		return true
-	}
-	return false
-}
-
-// Returns combined outputs from one or more stacks. Treats errors as fatal.
-func stackOutputs(stacks ...string) map[string]string {
-	result := make(map[string]string)
-	client := cfn.New(awsSession)
-
-	for _, stack := range stacks {
-		input := &cfn.DescribeStacksInput{StackName: aws.String(stack)}
-		response, err := client.DescribeStacks(input)
-		if err != nil {
-			logger.Fatal(err)
-		}
-
-		for k, v := range flattenStackOutputs(response.Stacks[0]) {
-			result[k] = v
-		}
-	}
-
-	return result
-}
-
 // Returns the PantherVersion tag for the given stack.
 //
 // Will be blank if the stack or tag does not exist.
 func stackVersion(stack string) (string, error) {
 	response, err := cfn.New(awsSession).DescribeStacks(&cfn.DescribeStacksInput{StackName: &stack})
 	if err != nil {
-		if errStackDoesNotExist(err) {
+		if awscfn.ErrStackDoesNotExist(err) {
 			return "", nil
 		}
 		return "", err

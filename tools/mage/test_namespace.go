@@ -33,6 +33,7 @@ import (
 
 	"github.com/panther-labs/panther/pkg/prompt"
 	"github.com/panther-labs/panther/tools/cfnparse"
+	"github.com/panther-labs/panther/tools/cfnstacks"
 )
 
 // Test contains targets for testing code syntax, style, and correctness.
@@ -226,7 +227,7 @@ func testCfnLint() error {
 			errs = append(errs, fmt.Sprintf("%s: %v", template, err))
 		}
 
-		if template == bootstrapTemplate {
+		if template == cfnstacks.BootstrapTemplate {
 			// Custom resources can't be in the bootstrap stack
 			for logicalID, resource := range body["Resources"].(map[string]interface{}) {
 				t := resource.(map[string]interface{})["Type"].(string)
@@ -325,7 +326,7 @@ func cfnTestFunction(logicalID, template string, resources map[string]string) er
 	// Backwards compatibility - these resources did not originally match the naming scheme,
 	// renaming the logical IDs would delete + recreate the log group, which usually causes
 	// deployments to fail because it tries to create a log group which already exists.
-	if template == logAnalysisTemplate {
+	if template == cfnstacks.LogAnalysisTemplate {
 		switch idPrefix {
 		case "AlertsForwarder":
 			idPrefix = "AlertForwarder"

@@ -34,6 +34,7 @@ import (
 
 	"github.com/panther-labs/panther/pkg/prompt"
 	"github.com/panther-labs/panther/tools/cfnparse"
+	"github.com/panther-labs/panther/tools/cfnstacks"
 	"github.com/panther-labs/panther/tools/config"
 )
 
@@ -76,11 +77,11 @@ func masterDeployPreCheck() (string, string, string) {
 	deployPreCheck(*awsSession.Config.Region, false)
 
 	_, err := cloudformation.New(awsSession).DescribeStacks(
-		&cloudformation.DescribeStacksInput{StackName: aws.String(bootstrapStack)})
+		&cloudformation.DescribeStacksInput{StackName: aws.String(cfnstacks.BootstrapStack)})
 	if err == nil {
 		// Multiple Panther deployments won't work in the same region in the same account.
 		// Named resources (e.g. IAM roles) will conflict
-		logger.Fatalf("%s stack already exists, can't deploy master template", bootstrapStack)
+		logger.Fatalf("%s stack already exists, can't deploy master template", cfnstacks.BootstrapStack)
 	}
 
 	bucket := os.Getenv("BUCKET")

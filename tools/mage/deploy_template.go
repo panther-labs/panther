@@ -32,6 +32,9 @@ import (
 	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/magefile/mage/sh"
+
+	"github.com/panther-labs/panther/pkg/awscfn"
+	"github.com/panther-labs/panther/tools/cfnstacks"
 )
 
 const (
@@ -145,7 +148,7 @@ func prepareStack(stackName string) (map[string]string, error) {
 	client := cfn.New(awsSession)
 
 	// Wait for the stack to reach a terminal state
-	stack, err := waitForStack(client, stackName, "")
+	stack, err := awscfn.WaitForStack(client, logger, stackName, "", pollInterval)
 	if err != nil {
 		return nil, err
 	}
@@ -166,10 +169,10 @@ func prepareStack(stackName string) (map[string]string, error) {
 		// tried destroying existing resources or is about to. (This is *not* a failed update.)
 		// Deleted stacks are retained and viewable in the AWS CloudFormation console for 90 days.
 
-		if stackName == bootstrapStack {
+		if stackName == cfnstacks.BootstrapStack {
 			// If the very first stack failed to create, we need to do a full teardown before trying again.
 			// Otherwise, there may be orphaned S3 buckets that will never be used.
-			logger.Warnf("The very first %s stack never created successfully (%s)", bootstrapStack, status)
+			logger.Warnf("The very first %s stack never created successfully (%s)", cfnstacks.BootstrapStack, status)
 			logger.Warnf("Running 'mage teardown' to fully remove orphaned resources before trying again")
 			Teardown()
 			return nil, nil
@@ -179,11 +182,11 @@ func prepareStack(stackName string) (map[string]string, error) {
 		if _, err := client.DeleteStack(&cfn.DeleteStackInput{StackName: &stackName}); err != nil {
 			return nil, fmt.Errorf("failed to start stack %s deletion: %v", stackName, err)
 		}
-		_, err = waitForStackDelete(client, stackName)
+		_, err = awscfn.WaitForStackDelete(client, logger, stackName, pollInterval)
 		return nil, err // stack deleted - there are no outputs
 
 	default:
-		return flattenStackOutputs(stack), nil
+		return awscfn.FlattenStackOutputs(stack), nil
 	}
 }
 
@@ -304,13 +307,13 @@ func executeChangeSet(changeSet *string, changeSetType string, stackName string)
 	// Wait for change set to finish.
 	var stack *cfn.Stack
 	if changeSetType == "CREATE" {
-		stack, err = waitForStackCreate(client, stackName)
+		stack, err = awscfn.WaitForStackCreate(client, logger, stackName, pollInterval)
 	} else {
-		stack, err = waitForStackUpdate(client, stackName)
+		stack, err = awscfn.WaitForStackUpdate(client, logger, stackName, pollInterval)
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	return flattenStackOutputs(stack), nil
+	return awscfn.FlattenStackOutputs(stack), nil
 }

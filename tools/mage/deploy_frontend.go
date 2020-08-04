@@ -29,6 +29,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/magefile/mage/sh"
 
+	"github.com/panther-labs/panther/tools/cfnstacks"
 	"github.com/panther-labs/panther/tools/config"
 )
 
@@ -76,7 +77,7 @@ func deployFrontend(accountID string, bootstrapOutputs map[string]string, settin
 		"SubnetTwoId":                bootstrapOutputs["SubnetTwoId"],
 		"UserPoolId":                 bootstrapOutputs["UserPoolId"],
 	}
-	_, err = deployTemplate(frontendTemplate, bootstrapOutputs["SourceBucket"], frontendStack, params)
+	_, err = deployTemplate(cfnstacks.FrontendTemplate, bootstrapOutputs["SourceBucket"], cfnstacks.FrontendStack, params)
 	return err
 }
 
