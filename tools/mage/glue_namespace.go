@@ -35,6 +35,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/pkg/prompt"
 )
 
 // targets for managing Glue tables
@@ -46,11 +47,13 @@ func (t Glue) Sync() {
 	glueClient := glue.New(awsSession)
 	s3Client := s3.New(awsSession)
 
-	enteredText := promptUser("Enter regex to select a subset of tables (or <enter> for all tables): ", regexValidator)
+	enteredText := prompt.Read("Enter regex to select a subset of tables (or <enter> for all tables): ",
+		prompt.RegexValidator)
 	matchTableName, _ := regexp.Compile(enteredText) // no error check already validated
 
 	var startDate time.Time
-	startDateText := promptUser("Enter a day as YYYY-MM-DD to start update (or <enter> to use create date on tables): ", dateValidator)
+	startDateText := prompt.Read("Enter a day as YYYY-MM-DD to start update (or <enter> to use create date on tables): ",
+		prompt.DateValidator)
 	if startDateText != "" {
 		startDate, _ = time.Parse("2006-01-02", startDateText) // no error check already validated
 	}
