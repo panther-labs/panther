@@ -18,14 +18,39 @@
 
 import React from 'react';
 import { Flex, Box, Text, Heading, SimpleGrid, Img } from 'pouncejs';
-import PantherLogoWhite from 'Assets/panther-minimal-logo.svg';
+import { getCurrentYear } from 'Helpers/utils';
+import PantherLogo from 'Assets/panther-logo.svg';
 
 interface AuthPageContainerComposition {
   Caption: React.FC<{ title: string; subtitle?: string }>;
   AltOptions: React.FC;
+  Content: React.FC;
 }
 
+const Footer: React.FC = ({ children }) => (
+  <Flex data-testid="auth-page-footer" p={26}>
+    {children}
+  </Flex>
+);
+
+/**
+ * A compounet component to act as a wrapper for any alternative options that the page can have
+ */
+const AuthPageContainerAlt: AuthPageContainerComposition['AltOptions'] = ({ children }) => (
+  <Footer>
+    <Flex color="gray-300" fontSize="small">
+      {children}
+    </Flex>
+  </Footer>
+);
+
 const AuthPageContainer: React.FC & AuthPageContainerComposition = ({ children }) => {
+  const Copy = (
+    <Text as="span" fontSize="small" verticalAlign="text-top" data-testid="auth-page-copyright">
+      {'\u00a0'}
+      {'\u00a9'}
+    </Text>
+  );
   return (
     <SimpleGrid columns={3} height="100vh" backgroundColor="navyblue-600">
       <Flex
@@ -33,51 +58,93 @@ const AuthPageContainer: React.FC & AuthPageContainerComposition = ({ children }
         width="100%"
         height="100%"
         direction="column"
-        justify="center"
         align="center"
-        backgroundColor="navyblue-700"
+        backgroundColor="navyblue-800"
       >
-        <Img src={PantherLogoWhite} alt="Panther Logo" nativeWidth={54} nativeHeight={54} mb={6} />
-        <Heading size="x-large" mb={3} textAlign="center">
-          Panther Community Edition
-        </Heading>
-        <Text lineHeight="relaxed" textAlign="center">
-          Detect threats with log data and improve cloud security posture
-          <br />
-          Designed for any scale
-        </Text>
+        <Flex
+          px={66}
+          height="100%"
+          align="center"
+          direction="column"
+          justify="center"
+          m="auto"
+          data-testid="auth-page-branding"
+        >
+          <Img
+            src={PantherLogo}
+            data-testid="auth-page-logo"
+            alt="Panther Logo"
+            nativeWidth={108}
+            nativeHeight={138}
+            mb={6}
+          />
+
+          <Text lineHeight="relaxed" textAlign="center" mb={4}>
+            <strong>Detect Threats with Log Data and Improve Cloud Security Posture</strong>
+          </Text>
+          <Text lineHeight="relaxed" fontSize="medium" textAlign="center" color="gray-100">
+            Designed for any scale
+          </Text>
+        </Flex>
+
+        <AuthPageContainerAlt>
+          Copyright {Copy} {getCurrentYear()} Panther Labs Inc. All Rights Reserved.
+        </AuthPageContainerAlt>
       </Flex>
-      <Flex gridColumn="2/4" justify="center" align="center">
-        <Box width={460}>{children}</Box>
+
+      <Flex
+        gridColumn="2/4"
+        height="100%"
+        align="center"
+        direction="column"
+        justify="center"
+        m="auto"
+      >
+        {children}
       </Flex>
     </SimpleGrid>
   );
 };
 
 /**
+ * A compound component for the core contents of the auth page
+ */
+
+const AuthPageContainerContent: AuthPageContainerComposition['Content'] = ({ children }) => (
+  <Flex
+    p={48}
+    width={565}
+    height="100%"
+    align="center"
+    direction="column"
+    justify="center"
+    m="auto"
+  >
+    <Box backgroundColor="navyblue-400" p={48} width={565}>
+      {children}
+    </Box>
+  </Flex>
+);
+
+/**
  * A compound component for the core caption of this auth page
  */
 const AuthPageContainerCaption: AuthPageContainerComposition['Caption'] = ({ title, subtitle }) => (
-  <Box mb={8}>
-    <Heading size="large">{title}</Heading>
+  <Box mb={8} textAlign="center">
+    <Heading size="small" color="white-100">
+      {title}
+    </Heading>
+
     {subtitle && (
-      <Text color="gray-300" mt={2}>
+      <Text color="navyblue-100" mt={1}>
         {subtitle}
       </Text>
     )}
   </Box>
 );
 
-/**
- * A compounet component to act as a wrapper for any alternative options that the page can have
- */
-const AuthPageContainerAlt: AuthPageContainerComposition['AltOptions'] = ({ children }) => (
-  <Box position="absolute" right={10} top={10} color="gray-300" fontSize="medium">
-    {children}
-  </Box>
-);
-
 AuthPageContainer.Caption = AuthPageContainerCaption;
 AuthPageContainer.AltOptions = AuthPageContainerAlt;
+AuthPageContainer.Content = AuthPageContainerContent;
 
 export default AuthPageContainer;
