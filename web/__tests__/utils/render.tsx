@@ -86,7 +86,7 @@ export const render = (element: React.ReactElement, options: RenderOptions = {})
 
   return {
     history,
-    userInfo: authProviderValue.userInfo,
+    ...authProviderValue,
     ...rtlRenderResult,
   };
 };

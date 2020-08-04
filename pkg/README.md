@@ -4,6 +4,7 @@ Standalone go utilities shared by multiple projects. See each module for details
 
 - [`awsathena`](awsathena) - query support and utilities for using AWS Athena
 - [`awsbatch`](awsbatch) - backoff/paging/retry for AWS batch operations
+- [`awscfn`](awscfn) - helpers that query/manipulate AWS Cloudformation stacks
 - [`awsretry`](retry) - helper that wraps the AWS retryer interface for cases not handled by SDK
 - [`awssqs`](awssqs) - wrappers for commmon sqs patterns
 - [`box`](box) - boxing helpers

@@ -41,7 +41,7 @@ interface AuthError {
   name?: string;
 }
 
-interface EnhancedCognitoUser extends CognitoUser {
+export interface EnhancedCognitoUser extends CognitoUser {
   challengeParam: {
     userAttributes: {
       /* eslint-disable  camelcase  */
@@ -70,7 +70,13 @@ interface EnhancedCognitoUser extends CognitoUser {
   };
 }
 
-export type UserInfo = EnhancedCognitoUser['attributes'];
+export type UserInfo = {
+  id: string;
+  email: string;
+  emailVerified: boolean;
+  givenName?: string;
+  familyName?: string;
+};
 
 interface SignOutParams {
   global?: boolean;
@@ -175,9 +181,17 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
    */
   const userInfo = React.useMemo<UserInfo>(() => {
     // if a user is present, derive the user info from him
-    // ! Check if this is calculated
+    // Check if this is calculated
     if (authUser?.attributes) {
-      return authUser.attributes;
+      // eslint-disable-next-line  camelcase
+      const { family_name, given_name, sub, email_verified, ...rest } = authUser.attributes;
+      return {
+        ...rest,
+        id: sub,
+        familyName: family_name,
+        givenName: given_name,
+        emailVerified: email_verified,
+      };
     }
 
     // if no user is present, attempt to return data from the stored session. This is true when

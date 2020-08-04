@@ -35,7 +35,7 @@ const EditUserSidesheet: React.FC<EditUserSidesheetProps> = ({ user, onClose, ..
     onError: error => pushSnackbar({ variant: 'error', title: extractErrorMessage(error) }),
     onCompleted: () => {
       // Refetch user info if editing self
-      if (user.id === userInfo.sub) {
+      if (user.id === userInfo.id) {
         refetchUserInfo();
       }
 

@@ -56,13 +56,11 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) => {
       }),
   });
 
-  /* eslint-disable camelcase */
   const initialValues = {
     email: userInfo?.email || '',
-    familyName: userInfo?.family_name || '',
-    givenName: userInfo?.given_name || '',
+    familyName: userInfo?.familyName || '',
+    givenName: userInfo?.givenName || '',
   };
-  /* eslint-enable camelcase */
 
   return (
     <Formik<EditProfileFormValues>
@@ -71,7 +69,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) => {
         editUser({
           variables: {
             input: {
-              id: userInfo.sub,
+              id: userInfo.id,
               familyName: values.familyName,
               givenName: values.givenName,
             },

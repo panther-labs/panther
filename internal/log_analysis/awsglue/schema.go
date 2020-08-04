@@ -37,10 +37,8 @@ import (
 
 const (
 	DefaultMaxCommentLength = 255
-	// We want our output JSON timestamps to be: YYYY-MM-DD HH:MM:SS.fffffffff
-	// https://aws.amazon.com/premiumsupport/knowledge-center/query-table-athena-timestamp-empty/
-	GlueTimestampType = "timestamp"
-	GlueStringType    = "string"
+	GlueTimestampType       = "timestamp"
+	GlueStringType          = "string"
 )
 
 var (

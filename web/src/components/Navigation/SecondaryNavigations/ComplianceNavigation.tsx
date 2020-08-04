@@ -18,30 +18,26 @@
 
 import React from 'react';
 import { Box, Flex, Heading } from 'pouncejs';
-import FadeInTrail from 'Components/utils/FadeInTrail';
 import urls from 'Source/urls';
-import NavLink from './NavLink';
+import FadeInTrail from 'Components/utils/FadeInTrail';
+import NavLink from '../NavLink';
 
-const SettingsNavigation: React.FC = () => {
+const ComplianceNavigation: React.FC = () => {
   return (
     <Box>
-      <Heading size="x-small" textAlign="center" fontWeight="bold" mt={10} mb={5}>
-        SETTINGS
+      <Heading size="x-small" fontWeight="bold" pt={7} pb={5} truncated>
+        CLOUD SECURITY
       </Heading>
       <Flex direction="column" as="ul">
         <FadeInTrail as="li">
-          <NavLink icon="settings-alt" to={urls.settings.general()} label="General" />
-          <NavLink icon="organization" to={urls.settings.users()} label="Users" />
-          <NavLink icon="output" to={urls.settings.destinations()} label="Destinations" />
-          <NavLink
-            icon="wrench"
-            to={urls.settings.globalPythonModules.list()}
-            label="Global Modules"
-          />
+          <NavLink icon="dashboard-alt" to={urls.compliance.overview()} label="Overview" />
+          <NavLink icon="policy" to={urls.compliance.policies.list()} label="Policies" />
+          <NavLink icon="resource" to={urls.compliance.resources.list()} label="Resources" />
+          <NavLink icon="infra-source" to={urls.compliance.sources.list()} label="Sources" />
         </FadeInTrail>
       </Flex>
     </Box>
   );
 };
 
-export default React.memo(SettingsNavigation);
+export default React.memo(ComplianceNavigation);

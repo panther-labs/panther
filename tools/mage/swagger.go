@@ -26,17 +26,16 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/panther-labs/panther/tools/cfnparse"
+	"github.com/panther-labs/panther/tools/cfnstacks"
 )
 
 const (
-	apiTemplate         = "deployments/bootstrap_gateway.yml"
-	apiEmbeddedTemplate = "out/deployments/embedded.bootstrap_gateway.yml"
-	pantherLambdaKey    = "x-panther-lambda-handler" // top-level key in Swagger file
+	pantherLambdaKey = "x-panther-lambda-handler" // top-level key in Swagger file
 )
 
 // Embed swagger specs into the API gateway template, saving it to out/deployments.
 func embedAPISpec() error {
-	cfn, err := cfnparse.ParseTemplate(pythonVirtualEnvPath, apiTemplate)
+	cfn, err := cfnparse.ParseTemplate(pythonVirtualEnvPath, cfnstacks.APITemplate)
 	if err != nil {
 		return err
 	}
@@ -45,8 +44,8 @@ func embedAPISpec() error {
 		return err
 	}
 
-	logger.Debugf("deploy: transformed %s => %s with embedded APIs", apiTemplate, apiEmbeddedTemplate)
-	return cfnparse.WriteTemplate(cfn, apiEmbeddedTemplate)
+	logger.Debugf("deploy: transformed %s => %s with embedded APIs", cfnstacks.APITemplate, cfnstacks.APIEmbeddedTemplate)
+	return cfnparse.WriteTemplate(cfn, cfnstacks.APIEmbeddedTemplate)
 }
 
 // Transform a single CloudFormation template by embedding Swagger definitions.
