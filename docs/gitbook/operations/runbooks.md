@@ -4,9 +4,9 @@
 # Panther Application Run Books
 
 Refer to the 
-[Cloud Security](https://docs.runpanther.io/cloud-security/cloud-security)
+[Cloud Security](../cloud-security/README.md)
 and
-[Log Analysis](https://docs.runpanther.io/log-analysis/log-analysis)
+[Log Analysis](../log-analysis/README.md)
 architecture diagrams for context.
 
 Resource names below refer to resources in the Cloud Formation templates in Panther.

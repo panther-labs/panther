@@ -83,6 +83,7 @@ func (Test) CI() {
 		{"terraform validate", testTfValidate},
 
 		// mage test:doc
+		{"test:doc", testDoc},
 
 		// mage test:python
 		{"python unit tests", testPythonUnit},
@@ -123,8 +124,12 @@ func (Test) Cfn() {
 
 // Verify links and assets in documentation
 func (Test) Doc() {
-	// TODO - separate files for "test_doc", "test_python", "test_go", etc
+	if err := testDoc(); err != nil {
+		logger.Fatal(err)
+	}
+}
 
+func testDoc() error {
 	docFiles := make(map[string]struct{})
 	walk(filepath.Join("docs", "gitbook"), func(path string, info os.FileInfo) {
 		if filepath.Ext(path) == ".md" {
@@ -158,11 +163,12 @@ func (Test) Doc() {
 	//    - ""                                       (file and header are both optional)
 	//
 	// Non-examples:
-	//    - "../log-analysis"           (can't link to directories - link will fail without README)
+	//    - "../log-analysis"           (prevent directory links - link will fail without README)
 	//    - "quick_start.md"            (use "-" instead of "_")
 	//    - "quick-start.md#Onboarding" (headers must be lowercase with dashes only)
 	docRef := regexp.MustCompile(`^([A-Za-z0-9./-]+\.md)?(#[a-z0-9-]+)?$`)
 
+	errCount := 0
 	for path := range docFiles {
 		for _, match := range linkPattern.FindAllSubmatch(readFile(path), -1) {
 			// match[0] is entire "[text](target)", match[1] is just "target"
@@ -178,13 +184,19 @@ func (Test) Doc() {
 				logger.Debugf("test:doc: %s image ref: %s", path, string(target))
 			} else if docRef.Match(target) {
 				// TODO - validate document path
-				// TODO - validate header
+				// TODO - validate headers
 				logger.Debugf("test:doc: %s doc ref: %s", path, string(target))
 			} else {
 				logger.Errorf("test:doc: %s: unknown link: %s", path, string(match[0]))
+				errCount++
 			}
 		}
 	}
+
+	if errCount > 1 {
+		return fmt.Errorf("test:doc: %d errors", errCount)
+	}
+	return nil
 }
 
 // Test and lint Golang source code
