@@ -1,5 +1,5 @@
 /*
-Helpers that query/manipulate AWS Cloudformation stacks
+Package awscfn contains helper functions that query/manipulate AWS Cloudformation stacks
 */
 package awscfn
 

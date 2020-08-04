@@ -1,5 +1,5 @@
 /*
-Declare pubic constants and vars for Panther stacks and templates for use by tools
+Package cfnstacks declares pubic constants and vars for Panther stacks and templates for use by tools
 */
 package cfnstacks
 
