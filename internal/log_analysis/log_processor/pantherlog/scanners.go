@@ -26,9 +26,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-func init() {
-}
-
 // ValueScanner parses values from a string and writes them to a ValueWriter.
 // Implementations should parse `input` and write valid values to `w`.
 // If errors occur while parsing `input` no values should be written to `w`.
@@ -147,14 +144,4 @@ func ScanIPAddress(w ValueWriter, input string) {
 // TODO: [performance] Use a simpler method to check ip addresses than net.ParseIP to avoid allocations.
 func checkIPAddress(addr string) bool {
 	return net.ParseIP(addr) != nil
-}
-
-// ScanValues implements ValueScanner interface
-func (id FieldID) ScanValues(w ValueWriter, input string) {
-	w.WriteValues(id, input)
-}
-
-// IsCore checks if a field id is core
-func (id FieldID) IsCore() bool {
-	return id <= 0
 }

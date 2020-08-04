@@ -47,6 +47,11 @@ func coreField(id FieldID) reflect.StructField {
 	return typCoreFields.Field(-1 - (int(id)))
 }
 
+// IsCore checks if a field id is core
+func (id FieldID) IsCore() bool {
+	return id <= 0
+}
+
 // Common fields (>0)
 // These fields collect string values from the log event.
 // Each logtype can choose the fields it requires.
@@ -59,6 +64,11 @@ const (
 	FieldSHA256Hash
 	FieldTraceID
 )
+
+// ScanValues implements ValueScanner interface
+func (id FieldID) ScanValues(w ValueWriter, input string) {
+	w.WriteValues(id, input)
+}
 
 // CoreFields are the 'core' fields Panther adds to each log.
 // External modules cannot add core fields.
@@ -108,6 +118,7 @@ var (
 	}
 )
 
+// FieldNameJSON returns the JSON field name of a field id.
 func FieldNameJSON(kind FieldID) string {
 	return fieldNamesJSON[kind]
 }
@@ -153,6 +164,9 @@ func init() {
 	MustRegisterScanner("trace_id", FieldTraceID, FieldTraceID)
 }
 
+// MustRegisterField allows modules to define their own field ids for 'any' fields.
+// It panics if a registration error occurs.
+// WARNING: This function is not concurrent safe and it *must* be used during `init()`
 func MustRegisterField(kind FieldID, field FieldMeta) {
 	if err := RegisterField(kind, field); err != nil {
 		panic(err)
@@ -220,6 +234,8 @@ func (m *FieldMeta) StructField() reflect.StructField {
 	}
 }
 
+// MustBuildEventSchema builds a struct that extends the fields of `event` with all the fields added by Panther.
+// It panics if an error occurred while building the new struct
 func MustBuildEventSchema(event interface{}, fields ...FieldID) interface{} {
 	schema, err := BuildEventSchema(event, fields...)
 	if err != nil {
@@ -228,6 +244,8 @@ func MustBuildEventSchema(event interface{}, fields ...FieldID) interface{} {
 	return schema
 }
 
+// BuildEventSchema builds a struct that extends the fields of `event` with all the fields added by Panther.
+// It checks for duplicate field names in both JSON and go and also that all field ids are distinct and non-core.
 func BuildEventSchema(event interface{}, fields ...FieldID) (interface{}, error) {
 	typ := reflect.TypeOf(event)
 	for typ.Kind() == reflect.Ptr {
@@ -242,6 +260,8 @@ func BuildEventSchema(event interface{}, fields ...FieldID) (interface{}, error)
 	return tmp.Interface(), nil
 }
 
+// BuildEventTypeSchema builds a struct that extends the fields of `eventType` with all the fields added by Panther.
+// It checks for duplicate field names in both JSON and go and also that all field ids are distinct and non-core.
 func BuildEventTypeSchema(eventType reflect.Type, extras ...FieldID) (reflect.Type, error) {
 	fields, err := extendStructFields(nil, eventType)
 	if err != nil {
@@ -255,7 +275,7 @@ func BuildEventTypeSchema(eventType reflect.Type, extras ...FieldID) (reflect.Ty
 	// Ensure distinct field ids
 	distinct := map[FieldID]bool{}
 	for _, id := range extras {
-		if id <= 0 {
+		if id.IsCore() {
 			return nil, errors.New(`invalid field id`)
 		}
 

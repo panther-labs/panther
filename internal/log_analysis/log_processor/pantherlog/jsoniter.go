@@ -30,8 +30,8 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 )
 
-// TagName is used for defining value scan methods on string fields.
 const (
+	// TagName is used for defining value scan methods on string fields.
 	TagName      = "panther"
 	tagEventTime = "event_time"
 )
@@ -53,13 +53,16 @@ func init() {
 	jsoniter.RegisterTypeEncoder(typResult.String(), &resultEncoder{})
 }
 
+// Special encoder for *Result values. It extends the event JSON object with all the required Panther fields.
 type resultEncoder struct{}
 
+// IsEmpty implements jsoniter.ValEncoder interface
 func (*resultEncoder) IsEmpty(ptr unsafe.Pointer) bool {
 	result := (*Result)(ptr)
 	return result.Event == nil
 }
 
+// Encode implements jsoniter.ValEncoder interface
 func (e *resultEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	result := (*Result)(ptr)
 	// Hack around events with embedded parsers.PantherLog.
@@ -74,19 +77,26 @@ func (e *resultEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	if values == nil {
 		result.Values = BlankValueBuffer()
 	}
+
+	// We swap the attachment after we're done so other code that depends on their set attachment behaves correctly
 	att := stream.Attachment
 	stream.Attachment = result
 	stream.WriteVal(result.Event)
 	stream.Attachment = att
+
+	// Extend the JSON object in the stream buffer with the required Panther fields
 	e.writePantherFields(result, stream)
 	if values == nil {
 		// values were borrowed
 		result.Values.Recycle()
 	}
+	// Restore the original values to avoid memory leaks.
 	result.Values = values
 }
 
+// writePantherFields extends the JSON object buffer with all required Panther fields.
 func (*resultEncoder) writePantherFields(r *Result, stream *jsoniter.Stream) {
+	// For unit tests it will be useful to be able to write only the panther added field as a 'proper' JSON object
 	if !extendJSON(stream.Buffer()) {
 		stream.WriteObjectStart()
 	}
@@ -146,21 +156,6 @@ type pantherExt struct {
 	jsoniter.DummyExtension
 }
 
-func (ext *pantherExt) UpdateStructDescriptor(desc *jsoniter.StructDescriptor) {
-	for _, binding := range desc.Fields {
-		field := binding.Field
-		tag, ok := field.Tag().Lookup(TagName)
-		if !ok {
-			continue
-		}
-		fieldType := field.Type().Type1()
-		switch {
-		case ext.updateTimeBinding(binding, tag, fieldType):
-		case ext.updateStringBinding(binding, tag, fieldType):
-		}
-	}
-}
-
 func (*pantherExt) DecorateEncoder(typ2 reflect2.Type, encoder jsoniter.ValEncoder) jsoniter.ValEncoder {
 	typ := typ2.Type1()
 	if typ.Kind() != reflect.Ptr && reflect.PtrTo(typ).Implements(typValueWriterTo) {
@@ -172,14 +167,19 @@ func (*pantherExt) DecorateEncoder(typ2 reflect2.Type, encoder jsoniter.ValEncod
 	return encoder
 }
 
+// customEncoder decorates the encoders for all values implementing ValueWriter to write the values
+// to the `stream.Attachment` if it implements `ValueWriter`
 type customEncoder struct {
 	jsoniter.ValEncoder
 	typ reflect.Type
 }
 
+// IsEmpty implements jsoniter.ValEncoder interface
 func (e *customEncoder) IsEmpty(ptr unsafe.Pointer) bool {
 	return e.ValEncoder.IsEmpty(ptr)
 }
+
+// Encode implements jsoniter.ValEncoder interface
 func (e *customEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	e.ValEncoder.Encode(ptr, stream)
 	if stream.Error != nil {
@@ -191,6 +191,27 @@ func (e *customEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	}
 }
 
+// UpdateStructDescriptor overrides the `DummyExtension` method to implement `jsoniter.Extension` interface.
+// We go over the struct fields looking for `panther` tags on time.Time and string-like types and decorate their
+// encoders appropriately.
+func (ext *pantherExt) UpdateStructDescriptor(desc *jsoniter.StructDescriptor) {
+	for _, binding := range desc.Fields {
+		field := binding.Field
+		tag, ok := field.Tag().Lookup(TagName)
+		if !ok {
+			continue
+		}
+		fieldType := field.Type().Type1()
+		switch {
+		case ext.updateTimeBinding(binding, tag, fieldType):
+			// Decorate with an encoder that assigns time value to Result.EventTime if non-zero
+		case ext.updateStringBinding(binding, tag, fieldType):
+			// Decorate with an encoder that appends values to 'any' fields using registered scanners
+		}
+	}
+}
+
+// Decorate with an encoder that assigns time value to Result.EventTime if non-zero
 func (*pantherExt) updateTimeBinding(b *jsoniter.Binding, tag string, typ reflect.Type) bool {
 	if !typ.ConvertibleTo(typTime) {
 		return false
@@ -207,6 +228,8 @@ type eventTimeEncoder struct {
 	jsoniter.ValEncoder
 }
 
+// We add this method so that other extensions that need to modify the encoder can keep our decorations.
+// This is used in `tcodec` to modify the underlying encoder.
 func (e *eventTimeEncoder) DecorateEncoder(typ reflect2.Type, encoder jsoniter.ValEncoder) jsoniter.ValEncoder {
 	if typ.Type1().ConvertibleTo(typTime) {
 		return &eventTimeEncoder{
@@ -216,10 +239,12 @@ func (e *eventTimeEncoder) DecorateEncoder(typ reflect2.Type, encoder jsoniter.V
 	return encoder
 }
 
+// IsEmpty implements jsoniter.ValEncoder interface
 func (e *eventTimeEncoder) IsEmpty(ptr unsafe.Pointer) bool {
 	return e.ValEncoder.IsEmpty(ptr)
 }
 
+// Encode implements jsoniter.ValEncoder interface
 func (e *eventTimeEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	e.ValEncoder.Encode(ptr, stream)
 	tm := (*time.Time)(ptr)
@@ -230,6 +255,8 @@ func (e *eventTimeEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 		result.PantherEventTime = *tm
 	}
 }
+
+// Decorate with an encoder that appends values to 'any' fields using registered scanners
 func (*pantherExt) updateStringBinding(b *jsoniter.Binding, tag string, typ reflect.Type) bool {
 	scanner, _ := LookupScanner(tag)
 	if scanner == nil {
@@ -282,9 +309,12 @@ type scanStringPtrEncoder struct {
 	scanner ValueScanner
 }
 
+// IsEmpty implements jsoniter.ValEncoder interface
 func (enc *scanStringPtrEncoder) IsEmpty(ptr unsafe.Pointer) bool {
 	return enc.parent.IsEmpty(ptr)
 }
+
+// Encode implements jsoniter.ValEncoder interface
 func (enc *scanStringPtrEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	enc.parent.Encode(ptr, stream)
 	if stream.Error != nil {
@@ -304,10 +334,12 @@ type scanNullStringEncoder struct {
 	scanner ValueScanner
 }
 
+// IsEmpty implements jsoniter.ValEncoder interface
 func (enc *scanNullStringEncoder) IsEmpty(ptr unsafe.Pointer) bool {
 	return enc.parent.IsEmpty(ptr)
 }
 
+// Encode implements jsoniter.ValEncoder interface
 func (enc *scanNullStringEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	enc.parent.Encode(ptr, stream)
 	if stream.Error != nil {
@@ -317,8 +349,8 @@ func (enc *scanNullStringEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.St
 	if !input.Exists || input.Value == "" {
 		return
 	}
-	if result, ok := stream.Attachment.(*Result); ok && result.Values != nil {
-		enc.scanner.ScanValues(result.Values, input.Value)
+	if values, ok := stream.Attachment.(ValueWriter); ok {
+		enc.scanner.ScanValues(values, input.Value)
 	}
 }
 
@@ -329,17 +361,19 @@ type scanStringerEncoder struct {
 	indirect bool
 }
 
+// IsEmpty implements jsoniter.ValEncoder interface
 func (enc *scanStringerEncoder) IsEmpty(ptr unsafe.Pointer) bool {
 	return enc.parent.IsEmpty(ptr)
 }
 
+// Encode implements jsoniter.ValEncoder interface
 func (enc *scanStringerEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	enc.parent.Encode(ptr, stream)
 	if stream.Error != nil {
 		return
 	}
-	result, ok := stream.Attachment.(*Result)
-	if !ok || result.Values == nil {
+	values, ok := stream.Attachment.(ValueWriter)
+	if !ok {
 		return
 	}
 	val := reflect.NewAt(enc.typ, ptr)
@@ -348,7 +382,7 @@ func (enc *scanStringerEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stre
 	}
 	str := val.Interface().(fmt.Stringer)
 	if input := str.String(); input != "" {
-		enc.scanner.ScanValues(result.Values, input)
+		enc.scanner.ScanValues(values, input)
 	}
 }
 
@@ -357,9 +391,12 @@ type scanStringEncoder struct {
 	scanner ValueScanner
 }
 
+// IsEmpty implements jsoniter.ValEncoder interface
 func (enc *scanStringEncoder) IsEmpty(ptr unsafe.Pointer) bool {
 	return enc.parent.IsEmpty(ptr)
 }
+
+// Encode implements jsoniter.ValEncoder interface
 func (enc *scanStringEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	enc.parent.Encode(ptr, stream)
 	if stream.Error != nil {

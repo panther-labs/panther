@@ -28,11 +28,20 @@ import (
 
 // Result is the result of parsing a log event.
 type Result struct {
+	// Result extends all core panther fields
 	CoreFields
-	Meta   []FieldID
-	Event  interface{}
+	// Panther fields needed to render this Result as JSON
+	Meta []FieldID
+	// The underlying event
+	Event interface{}
+	// Values for this result. These are normally nil throughout the lifetime of results.
+	// If they are found to be nil when the result is encoded as JSON they are overridden temporarily
+	// with a ValueBuffer borrowed from a pool.
+	// The field is kept public so tests can pre-define the values for a result in mocks without having to serialize
+	// the result.
 	Values *ValueBuffer
-	// Used for log events that embed parsers.PantherLog
+	// Used for log events that embed parsers.PantherLog. This is a low-overhead, temporary work-around
+	// to avoid duplicate panther fields in resulting JSON.
 	RawEvent interface{}
 }
 
@@ -46,10 +55,14 @@ func (r *Result) WriteValues(kind FieldID, values ...string) {
 
 // ResultBuilder builds new results filling out result fields.
 type ResultBuilder struct {
-	LogType   string
-	Meta      []FieldID
+	// The log type to use for the results
+	LogType string
+	// Field ids to ad to the result
+	Meta []FieldID
+	// Override this to have static row ids for tests
 	NextRowID func() string
-	Now       func() time.Time
+	// Override this to have static parse time for tests
+	Now func() time.Time
 }
 
 // BuildResult builds a new result for an event
