@@ -32,6 +32,7 @@ import (
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 
+	"github.com/panther-labs/panther/pkg/prompt"
 	"github.com/panther-labs/panther/tools/cfnparse"
 	"github.com/panther-labs/panther/tools/config"
 )
@@ -103,7 +104,7 @@ func (Master) Publish() {
 	version := getMasterVersion()
 
 	logger.Infof("Publishing panther-community v%s to %s", version, strings.Join(publishRegions, ","))
-	result := promptUser("Are you sure you want to continue? (yes|no) ", nonemptyValidator)
+	result := prompt.Read("Are you sure you want to continue? (yes|no) ", prompt.NonemptyValidator)
 	if strings.ToLower(result) != "yes" {
 		logger.Fatal("publish aborted")
 	}

@@ -30,6 +30,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 
 	"github.com/panther-labs/panther/pkg/awsbatch/s3batch"
+	"github.com/panther-labs/panther/pkg/prompt"
 )
 
 const (
@@ -73,7 +74,7 @@ func teardownConfirmation() string {
 	}
 
 	logger.Warnf(template, args...)
-	result := promptUser("Are you sure you want to continue? (yes|no) ", nonemptyValidator)
+	result := prompt.Read("Are you sure you want to continue? (yes|no) ", prompt.NonemptyValidator)
 	if strings.ToLower(result) != "yes" {
 		logger.Fatal("teardown aborted")
 	}
