@@ -21,10 +21,6 @@ package mage
 import (
 	"path/filepath"
 
-	"github.com/aws/aws-sdk-go/aws"
-	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
-
-	"github.com/panther-labs/panther/pkg/awscfn"
 	"github.com/panther-labs/panther/tools/config"
 )
 
@@ -43,25 +39,4 @@ func cfnFiles() []string {
 		}
 	}
 	return result
-}
-
-// Returns the PantherVersion tag for the given stack.
-//
-// Will be blank if the stack or tag does not exist.
-func stackVersion(stack string) (string, error) {
-	response, err := cfn.New(awsSession).DescribeStacks(&cfn.DescribeStacksInput{StackName: &stack})
-	if err != nil {
-		if awscfn.ErrStackDoesNotExist(err) {
-			return "", nil
-		}
-		return "", err
-	}
-
-	for _, tag := range response.Stacks[0].Tags {
-		if aws.StringValue(tag.Key) == "PantherVersion" {
-			return aws.StringValue(tag.Value), nil
-		}
-	}
-
-	return "", nil
 }

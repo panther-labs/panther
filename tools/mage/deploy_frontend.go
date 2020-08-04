@@ -77,7 +77,7 @@ func deployFrontend(accountID string, bootstrapOutputs map[string]string, settin
 		"SubnetTwoId":                bootstrapOutputs["SubnetTwoId"],
 		"UserPoolId":                 bootstrapOutputs["UserPoolId"],
 	}
-	_, err = deployTemplate(cfnstacks.FrontendTemplate, bootstrapOutputs["SourceBucket"], cfnstacks.FrontendStack, params)
+	_, err = deployTemplate(cfnstacks.FrontendTemplate, bootstrapOutputs["SourceBucket"], cfnstacks.Frontend, params)
 	return err
 }
 

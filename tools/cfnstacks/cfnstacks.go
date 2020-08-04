@@ -1,6 +1,4 @@
-/*
-Package cfnstacks declares pubic constants and vars for Panther stacks and templates for use by tools
-*/
+// Package cfnstacks declares public constants and vars for Panther stacks and templates for use by tools
 package cfnstacks
 
 /**
@@ -27,37 +25,39 @@ const (
 	APIEmbeddedTemplate = "out/deployments/embedded.bootstrap_gateway.yml"
 
 	// Bootstrap stacks and templates
-	BootstrapStack    = "panther-bootstrap"
+	Bootstrap         = "panther-bootstrap"
 	BootstrapTemplate = "deployments/bootstrap.yml"
-	GatewayStack      = "panther-bootstrap-gateway"
+	Gateway           = "panther-bootstrap-gateway"
 	GatewayTemplate   = APIEmbeddedTemplate
 
 	// Main stacks and templates
-	AppsyncStack        = "panther-appsync"
+	Appsync             = "panther-appsync"
 	AppsyncTemplate     = "deployments/appsync.yml"
-	CloudsecStack       = "panther-cloud-security"
+	Cloudsec            = "panther-cloud-security"
 	CloudsecTemplate    = "deployments/cloud_security.yml"
-	CoreStack           = "panther-core"
+	Core                = "panther-core"
 	CoreTemplate        = "deployments/core.yml"
-	DashboardStack      = "panther-cw-dashboards"
+	Dashboard           = "panther-cw-dashboards"
 	DashboardTemplate   = "deployments/dashboards.yml"
-	FrontendStack       = "panther-web"
+	Frontend            = "panther-web"
 	FrontendTemplate    = "deployments/web_server.yml"
-	LogAnalysisStack    = "panther-log-analysis"
+	LogAnalysis         = "panther-log-analysis"
 	LogAnalysisTemplate = "deployments/log_analysis.yml"
-	OnboardStack        = "panther-onboard"
+	Onboard             = "panther-onboard"
 	OnboardTemplate     = "deployments/onboard.yml"
 )
 
-var AllStacks = []string{
-	BootstrapStack,
-	GatewayStack,
-
-	AppsyncStack,
-	CloudsecStack,
-	CoreStack,
-	DashboardStack,
-	FrontendStack,
-	LogAnalysisStack,
-	OnboardStack,
-}
+var (
+	AllStacks = []string{
+		Appsync,
+		Bootstrap,
+		Cloudsec,
+		Core,
+		Dashboard,
+		Frontend,
+		Gateway,
+		LogAnalysis,
+		Onboard,
+	}
+	NumStacks = len(AllStacks)
+)

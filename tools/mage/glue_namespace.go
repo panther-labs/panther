@@ -80,7 +80,7 @@ func (t Glue) Sync() {
 }
 
 func updateRegisteredTables(glueClient *glue.Glue) (tables []*awsglue.GlueTableMetadata) {
-	const processDataBucketStack = cfnstacks.BootstrapStack
+	const processDataBucketStack = cfnstacks.Bootstrap
 	client := cloudformation.New(awsSession)
 	outputs := awscfn.StackOutputs(client, logger, processDataBucketStack)
 	var dataBucket string

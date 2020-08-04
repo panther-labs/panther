@@ -169,10 +169,10 @@ func prepareStack(stackName string) (map[string]string, error) {
 		// tried destroying existing resources or is about to. (This is *not* a failed update.)
 		// Deleted stacks are retained and viewable in the AWS CloudFormation console for 90 days.
 
-		if stackName == cfnstacks.BootstrapStack {
+		if stackName == cfnstacks.Bootstrap {
 			// If the very first stack failed to create, we need to do a full teardown before trying again.
 			// Otherwise, there may be orphaned S3 buckets that will never be used.
-			logger.Warnf("The very first %s stack never created successfully (%s)", cfnstacks.BootstrapStack, status)
+			logger.Warnf("The very first %s stack never created successfully (%s)", cfnstacks.Bootstrap, status)
 			logger.Warnf("Running 'mage teardown' to fully remove orphaned resources before trying again")
 			Teardown()
 			return nil, nil

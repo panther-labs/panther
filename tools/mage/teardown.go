@@ -65,7 +65,7 @@ func teardownConfirmation() string {
 	stack := os.Getenv("STACK")
 	if stack == "" {
 		logger.Warnf("No STACK env variable found; assuming you have %d top-level stacks from 'mage deploy'",
-			len(cfnstacks.AllStacks))
+			cfnstacks.NumStacks)
 	}
 
 	template := "Teardown will destroy all Panther infra in account %s (%s)"
@@ -98,27 +98,27 @@ func destroyCfnStacks(masterStack string) error {
 		finishCount++
 		if result.err != nil {
 			logger.Errorf("    - %s failed to delete (%d/%d): %v",
-				result.stackName, finishCount, len(cfnstacks.AllStacks), result.err)
+				result.stackName, finishCount, cfnstacks.NumStacks, result.err)
 			errCount++
 			return
 		}
 
-		logger.Infof("    √ %s deleted (%d/%d)", result.stackName, finishCount, len(cfnstacks.AllStacks))
+		logger.Infof("    √ %s deleted (%d/%d)", result.stackName, finishCount, cfnstacks.NumStacks)
 	}
 
 	// Trigger the deletion of the main stacks in parallel
 	//
 	// The bootstrap stacks have to be last because of the ECS cluster and custom resource Lambda.
 	parallelStacks := []string{
-		cfnstacks.AppsyncStack,
-		cfnstacks.CloudsecStack,
-		cfnstacks.CoreStack,
-		cfnstacks.DashboardStack,
-		cfnstacks.FrontendStack,
-		cfnstacks.LogAnalysisStack,
-		cfnstacks.OnboardStack,
+		cfnstacks.Appsync,
+		cfnstacks.Cloudsec,
+		cfnstacks.Core,
+		cfnstacks.Dashboard,
+		cfnstacks.Frontend,
+		cfnstacks.LogAnalysis,
+		cfnstacks.Onboard,
 	}
-	logger.Infof("deleting %d CloudFormation stacks", len(cfnstacks.AllStacks))
+	logger.Infof("deleting %d CloudFormation stacks", cfnstacks.NumStacks)
 
 	deleteFunc := func(client *cloudformation.CloudFormation, stack string, r chan deleteStackResult) {
 		r <- deleteStackResult{stackName: stack, err: deleteStack(client, &stack)}
@@ -136,9 +136,9 @@ func destroyCfnStacks(masterStack string) error {
 
 	// Now finish with the bootstrap stacks
 	// bootstrap-gateway must be deleted first because it will empty the ECR repo
-	go deleteFunc(client, cfnstacks.GatewayStack, results)
+	go deleteFunc(client, cfnstacks.Gateway, results)
 	handleResult(<-results)
-	go deleteFunc(client, cfnstacks.BootstrapStack, results)
+	go deleteFunc(client, cfnstacks.Bootstrap, results)
 	handleResult(<-results)
 
 	if errCount > 0 {

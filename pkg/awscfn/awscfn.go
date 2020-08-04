@@ -1,6 +1,4 @@
-/*
-Package awscfn contains helper functions that query/manipulate AWS Cloudformation stacks
-*/
+// Package awscfn contains helper functions that query/manipulate AWS Cloudformation stacks
 package awscfn
 
 /**
@@ -243,4 +241,23 @@ func StackOutputs(client *cloudformation.CloudFormation, logger *zap.SugaredLogg
 	}
 
 	return result
+}
+
+// StackTag returns the tag value for specified tag key for the given stack, will be blank if the stack or tag does not exist.
+func StackTag(client *cloudformation.CloudFormation, tagKey, stack string) (string, error) {
+	response, err := client.DescribeStacks(&cloudformation.DescribeStacksInput{StackName: &stack})
+	if err != nil {
+		if ErrStackDoesNotExist(err) {
+			return "", nil
+		}
+		return "", err
+	}
+
+	for _, tag := range response.Stacks[0].Tags {
+		if aws.StringValue(tag.Key) == tagKey {
+			return aws.StringValue(tag.Value), nil
+		}
+	}
+
+	return "", nil
 }
