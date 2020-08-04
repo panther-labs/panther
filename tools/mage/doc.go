@@ -89,10 +89,14 @@ const (
 `
 )
 
-// Regexes for gitbooks link verification
+// Regexes for gitbooks anchor generation / verification (assumes lowercase)
 var (
-	// A single character sandwiched between two numbers - this leads to strange gitbooks header links.
-	sandwichLetter = regexp.MustCompile(`\d[a-zA-Z]\d`)
+	// Generated links are hard to predict when numbers are mixed with single or special characters.
+	// Prevent any of the following in section titles:
+	//    - number + letter + number ("4X4")
+	//    - letter + special + number ("AA.11")
+	//    - number + special + letter ("S3.Server")
+	titleEdgeCase = regexp.MustCompile(`(?:\d[a-z]\d)|(?:[a-z][^a-z0-9 -]\d)|(?:\d[^a-z0-9 -][a-z])`)
 
 	// A number surrounded by letters - gitbooks will put dashes around it
 	innerNumber = regexp.MustCompile(`[a-z]\d+[a-z]`)
@@ -101,147 +105,33 @@ var (
 	dashGroup = regexp.MustCompile(`-{2,}`)
 )
 
-// Given markdown header text, return the gitbooks generated anchor link.
-//
+// Given markdown header text, return the anchor link gitbooks will generate for the rendered docs.
 // For example, "AWS.S3" returns "aws-s3"
+//
+// The caller is responsible for dealing with duplicate headers in the same file - gitbooks will
+// suffix these with an incremental counter: "dup", "dup-1", "dup-2", etc.
+//
 // Returns an error if the title is an edge case whose link we can't predict.
+// Returns "undefined" for invalid headers (e.g. "***"), which mirrors the real gitbooks behavior.
 //
-// TODO: unit tests
-//
-// "S3.ServerAccess" => "s-3-serveraccess"
-// "A1B2C3D4" => "a-1-b2c-3-d4"
-// "12345" => "12345"
-// "A-1-B-2-C-3" => "a-1-b-2-c-3"
-// "ABC 123 DEF" => "abc-123-def"
-// "A1B2C3D4E5F6G7H8I9J0" => "a-1-b2c-3-d4e-5-f6g-7-h8i-9-j0"
-// "3S" => "3s"
-// "S3" => "s3"
-// "3" => "3"
-// "13" => "13"
-// "33" => "33"
-// "A0A B1B C2C D3D E0E" => "a-0-a-b-1-b-c-2-c-d-3-d-e-0-e"
-// "F10FG11GH12HI13I" => "f-10-fg-11-gh-12-hi-13-i"
-// "rules2me" => "rules-2-me" (tested with other digits as well)
-// "B1BA2A" => "b-1-ba-2-a"
-// "A2AC3C" => "a-2-ac-3-c"
-// "alpha1beta2charlie3delta" => "alpha-1-beta-2-charlie-3-delta"
-//
-// "A-1-B-2-C-3" => "a-1-b-2-c-3"
-// "A1B2C3" => "a-1-b2c3"
-// "A1B2C3D4" => "a-1-b2c-3-d4"
-// "-A-1-b-2-c-3-d-4-" => "a-1-b-2-c-3-d-4"
-// "A--1--B--2--C--3--D--4" => "a-1-b-2-c-3-d-4" (with "-1" duplicate suffix)
-// "A - 1 - B - 2 - C - 3 - D - 4" => "a-1-b-2-c-3-d-4" (with "-2" duplicate suffix)
-// "A..1..B..2..C..3..D..4" => "a-1-b-2-c-3-d-4"
-// "A.1.B.2.C.3.D.4" => "a-1-b-2-c-3-d-4"
-//
-// "A1B2C3D4" => "a-1-b2c-3-d4"
-// "A.1B2C3D4" => "a-1-b2c-3-d4"
-// "A 1B2C3D4" -> "a-1b-2-c3d4"
-// "A1.B2C3D4" => "a-1-b-2-c3d4"
-// "A1 B2C3D4" => "a1-b-2-c3d4"
-// "A1B.2C3D4" => "a-1-b-2-c3d4"
-// "A1B 2C3D4" => "a-1-b-2c-3-d4"
-// "A1B2.C3D4" => "a-1-b2-c-3-d4"
-// "A1B2 C3D4" => "a-1-b2-c-3-d4"
-// "A1B2C.3D4" => "a-1-b2c-3-d4"
-// "A1B2C 3D4" => "a-1-b2c-3d4"
-// "A1B2C3.D4" => "a-1-b2c-3-d4"
-// "A1B2C3 D4" => "a-1-b2c3-d4"
-// "A1B2C3D.4" => "a-1-b2c-3-d-4"
-// "A1B2C3D 4" => "a-1-b2c-3-d-4"
-//
-// "AA11BB22CC33DD" => "aa-11-bb-22-cc-33-dd"
-// "AA.11BB22CC33DD" => "aa-11-bb-22-cc-33-dd"
-// "AA 11BB22CC33DD" => "aa-11bb-22-cc-33-dd"
-// "AA11.BB22CC33DD" => "aa-11-bb-22-cc-33-dd"
-// "AA11 BB22CC33DD" => "aa11-bb-22-cc-33-dd"
-// "AA11BB 22CC33DD" => "aa-11-bb-22cc-33-dd"
-// "AA11BB22 CC33DD" => "aa-11-bb22-cc-33-dd"
-// "AA11BB22CC 33DD" => "aa-11-bb-22-cc-33dd"
-// "AA11BB22CC33 DD" => "aa-11-bb-22-cc33-dd"
-//
-// "AA1BB2.CC33DD" => "aa-1-bb-2-cc-33-dd"
-// "AA1BB2CC33.DD" => "aa-1-bb-2-cc-33-dd"
-//
-// "AABBCC" => "aabbcc"
-// "AA BB CC DD" => "aa-bb-cc-dd"
-// "AA-BB-CC-DD" => "aa-bb-cc-dd"
-// "AA.BB.CC.DD" => "aa.bb.cc.dd"
-// "A1B2C" => "a-1-b2c"
-// "A1B22C" => "a-1-b22c"
-// "A11B2C" => "a-11-b2c"
-// "A11B22C" => "a-11-b22c"
-//
-// "3.5" => "3-5"
-// "A1" => "a1"
-// "A1B" => "a-1-b"
-// "\"A1B\"" => "a-1-b-1" (considered duplicate of previous)
-// "A1B2" => "a-1-b2"
-// "A1B2C" => "a-1-b2c"
-// "A1B2C3" => "a-1-b2c3"
-// "A1B2C3D" => "a-1-b2c-3-d"
-// "A1B2C3D4" => "a-1-b2c-3-d4"
-// "A0B0C0D0" => "a-0-b0c-0-d0"
-// "0A0B0C0D" => "0a-0-b0c-0-d"
-// "0AAA0AAA0" => "0aaa-0-aaa0"
-// "B2C" => "b-2-c"
-// "B2C3 => "b-2-c3"
-//
-// "." => "undefined"
-// ".." => "undefined-1" (duplicate of last one)
-// "%..%" => "undefined-2"
-// "!@#$%^&A()()()=-" => "usd-and-a"
-// "0A0A0A0A0A0" => "0a-0-a0a-0-a0a0"
-// "0AA0AA0AA0AA0" => "0aa-0-aa-0-aa-0-aa0"
-// "0AAA0AAA0AAA0AAA0" => "0aaa-0-aaa-0-aaa-0-aaa0"
-//
-// "-" => "undefined"
-// "--" => "undefined-1"
-// "-A-" => "undefined"
-// "-:A:{}[]|\/-<>?" => "a-or-less-than-greater-than"
-// "_a" => "_a"
-// "A0A0A0A" => "a-0-a0a-0-a"
-// "A00A00A00A" => "a-00-a00a-00-a"
-// "000A000A000A000A000A000" => "000a-000-a000a-000-a000a000"
-//
-// "000AA000AA000AA000AA000AA000" => "000aa-000-aa-000-aa-000-aa-000-aa000"
-// "000 A 000 A 000 A 000 A 000 A 000" => "000-a-000-a-000-a-000-a-000-a-000"
-// "S3......Server" => "s-3-server"
-// "S3.Server" => "s-3-server-1"
-// "S3 Server" => "s3-server"
-// "S3Server" => "s-3-server-2"
-// "S3S" => "s-3-s"
+// This was built by trial-and-error and isn't necessarily guaranteed to be correct for every edge case.
 func headerAnchor(sectionTitle string) (string, error) {
-	if match := sandwichLetter.FindString(sectionTitle); match != "" {
-		// Generally, gitbooks surrounds numbers with dashes except at the beginning or end of a
-		// space-delimited word. For example, "A1B" => "a-1-b"
-		//
-		// However, this rule breaks down in some cases:
-		//     "A1B2C3D4E5F6G7H8I9J0" => "a-1-b2c-3-d4e-5-f6g-7-h8i-9-j0"
-		//     "A1B2C3D4" => "a-1-b2c-3-d4"
-		//     "A1B.2C3D4" => "a-1-b-2-c3d4"
-		//
-		// The dashing essentially alternates with each digit, but special characters can break even
-		// that pattern. I've not yet been able to find a reliable algorithm for this case, so for
-		// now we just block it altogether. Hopefully, this is rare enough not to cause issues.
-		//
-		// This problem exists anytime single characters separate two numbers:
-		//     "0A0A0A0A0A0" => "0a-0-a0a-0-a0a0"
-		// But as soon as there are two characters between numbers, it works as you expect:
-		//     "0AA0AA0AA0AA0" => "0aa-0-aa-0-aa-0-aa0"
-		return "", fmt.Errorf("header \"%s\" violates pattern %s", sectionTitle, sandwichLetter.String())
+	sectionTitle = strings.ToLower(sectionTitle)
+
+	if match := titleEdgeCase.FindString(sectionTitle); match != "" {
+		return "", fmt.Errorf("header \"%s\" violates pattern %s: \"%s\" - try adding spaces around numbers",
+			sectionTitle, titleEdgeCase.String(), match)
 	}
 
-	// Gitbooks' number grouping rules are applied to each space-delimited word individually.
+	// Gitbooks' number dashing rules are applied individually to each space-delimited word.
 	//     "r2 d2" => "r2-d2"  (two words - number at end of each word is not surrounded with dash)
 	//     "r2d2"  => "r-2-d2" (one word - inner 2 is dashed)
 	var formattedWords []string
 	for _, word := range strings.Split(sectionTitle, " ") {
-		// Lowercase + remove/replace special characters
+		// Remove/replace special characters
 		//     "AWS.S3ServerAccess" => "aws-s3serveraccess"
 		var newWord strings.Builder
-		for _, char := range strings.ToLower(word) {
+		for _, char := range word {
 			switch char {
 			case '&':
 				newWord.WriteString("-and-")
@@ -277,9 +167,16 @@ func headerAnchor(sectionTitle string) (string, error) {
 	result := strings.Join(formattedWords, "-")
 
 	// Collapse all dash groups and remove any leading/trailing dashes
-	//     "---r-2-d-2--" => "r-2-d-2"
+	//     "---r--2--d--2--" => "r-2-d-2"
 	result = dashGroup.ReplaceAllString(result, "-")
-	return strings.Trim(result, "-"), nil
+	result = strings.Trim(result, "-")
+
+	if result == "" {
+		// If all that's left is an empty string, this header had nothing but special characters.
+		// Gitbooks will label this as "undefined"
+		return "undefined", nil
+	}
+	return result, nil
 }
 
 type supportedLogs struct {
