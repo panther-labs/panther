@@ -167,15 +167,24 @@ func (logs *supportedLogs) generateDocumentation() error {
 				// "A.1.B.2.C.3.D.4" => "a-1-b-2-c-3-d-4"
 				//
 				// (duplicate suffixes omitted in this section)
-				// dot is always replaced by a dash
+				// dot is always replaced by a dash, but a dot and a space affect subsequent numeric grouping differently
+				// space - run algorithm on two groups separately
+				//
 				// "A1B2C3D4" => "a-1-b2c-3-d4"
 				// "A.1B2C3D4" => "a-1-b2c-3-d4"
+				// "A 1B2C3D4" -> "a-1b-2-c3d4"
 				// "A1.B2C3D4" => "a-1-b2c-3-d4"
+				// "A1 B2C3D4" => "a1-b-2-c3d4"
 				// "A1B.2C3D4" => "a-1-b-2-c3d4"
+				// "A1B 2C3D4" => "a-1-b-2c-3-d4"
 				// "A1B2.C3D4" => "a-1-b2-c-3-d4"
+				// "A1B2 C3D4" => "a-1-b2-c-3-d4"
 				// "A1B2C.3D4" => "a-1-b2c-3-d4"
+				// "A1B2C 3D4" => "a-1-b2c-3d4"
 				// "A1B2C3.D4" => "a-1-b2c-3-d4"
+				// "A1B2C3 D4" => "a-1-b2c3-d4"
 				// "A1B2C3D.4" => "a-1-b2c-3-d-4"
+				// "A1B2C3D 4" => "a-1-b2c-3-d-4"
 				//
 				// "3.5" => "3-5"
 				// "A1" => "a1"
