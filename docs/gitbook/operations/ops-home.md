@@ -2,7 +2,7 @@
 
 ## Monitoring 
 
-### Visibilty
+### Visibility
 Panther has 5 CloudWatch dashboards to provide visibility into the operation of the system:
 
 - **PantherOverview** An overview all errors and performance of all Panther components.
@@ -29,6 +29,31 @@ To configure alarms to send to your team, follow the guides below:
 - [SNS Email and SMS Integration](https://docs.aws.amazon.com/sns/latest/dg/sns-user-notifications.html)
 - [PagerDuty Integration](https://support.pagerduty.com/docs/aws-cloudwatch-integration-guide)
 
+### Accessing Data Ingest Volume
+The Panther log analysis CloudWatch dashboard provides deep insight into operationally relevant aspects of log processing.
+In particular, understanding the ingest volume is critically important to forecast the cost of running Panther.
+One of the panes in the dashboard will show ingest volume by log type. This can be used, in combination with your AWS bill,
+to forecast costs as you scale your data. We suggest you use a month of data to estimate your costs. 
+
+The steps to view the dashboard:
+* Login to the AWS Console
+* Select `CloudWatch` from the Services menu
+* Select `Dashboards` from the left pane of the CloudWatch console 
+
+    ![](../.gitbook/assets/operations/cloudwatch-dashboards.png)
+* Select the dashboard beginning with `PantherLogAnalysis`
+
+    ![](../.gitbook/assets/operations/cloudwatch-dashboards-log-analysis.png)
+* Select the vertical `...` of the pane entitled `Input MBytes (Uncompressed) by Log Type` and select from the menu `View in CloudWatch Insights`
+
+    ![](../.gitbook/assets/operations/cloudwatch-dashboards-log-analysis-input-select.png)
+* Set the time period for 4 weeks and click `Apply`
+
+    ![](../.gitbook/assets/operations/cloudwatch-dashboards-log-analysis-input-select-time.png)
+* Click `Run Query`
+
+    ![](../.gitbook/assets/operations/cloudwatch-dashboards-log-analysis-input-show.png)
+
 ## Tools
 Panther comes with some operational tools useful for managing the Panther infrastructure. These are statically compiled
 executables for linux, mac (aka darwin) and windows. They can be copied/installed onto operational support hosts. 
@@ -41,4 +66,6 @@ mage build:tools
 * **compact**: a tool to back fill JSON to Parquet conversion of log data (used when upgrading to Panther Enterprise)
 * **requeue**: a tool to copy messages from a dead letter queue back to the originating queue for reprocessing
 * **s3queue**: a tool to list files under an S3 path and send to the log processor input queue for processing (useful for back fill of data)
+
+
 
