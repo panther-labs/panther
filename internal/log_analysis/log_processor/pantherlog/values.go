@@ -78,22 +78,6 @@ func (b *ValueBuffer) Contains(id FieldID, value string) bool {
 	return false
 }
 
-func (b *ValueBuffer) Clone() *ValueBuffer {
-	if b.index == nil {
-		return nil
-	}
-	c := ValueBuffer{
-		index: make(map[FieldID][]string, len(b.index)),
-	}
-	for id, values := range b.index {
-		if len(values) == 0 {
-			continue
-		}
-		c.index[id] = append([]string(nil), values...)
-	}
-	return &c
-}
-
 // Inspect returns a sorted copy snapshot of the value index
 // This is mainly useful for tests.
 func (b *ValueBuffer) Inspect() map[FieldID][]string {

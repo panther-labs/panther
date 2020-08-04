@@ -165,7 +165,6 @@ func buildAPI() jsoniter.API {
 	api := jsoniter.Config{}.Froze()
 	api.RegisterExtension(tcodec.NewExtension(tcodec.Config{}))
 	api.RegisterExtension(omitempty.New(`json`))
-	api = pantherlog.RegisterExtensions(api)
 	return api
 }
 
@@ -208,10 +207,7 @@ func BenchmarkResultBuilder(b *testing.B) {
 		}
 	})
 	b.Run("result builder", func(b *testing.B) {
-		api := jsoniter.Config{}.Froze()
-		api.RegisterExtension(tcodec.NewExtension(tcodec.Config{}))
-		api.RegisterExtension(omitempty.New(`json`))
-		api = pantherlog.RegisterExtensions(api)
+		api := buildAPI()
 		stream := jsoniter.NewStream(api, nil, 8192)
 		b.ReportAllocs()
 		b.ReportAllocs()

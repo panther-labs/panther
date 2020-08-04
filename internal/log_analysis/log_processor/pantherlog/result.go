@@ -20,7 +20,6 @@ package pantherlog
 
 import (
 	"time"
-	"unsafe"
 
 	jsoniter "github.com/json-iterator/go"
 
@@ -43,95 +42,6 @@ func (r *Result) WriteValues(kind FieldID, values ...string) {
 		r.Values = &ValueBuffer{}
 	}
 	r.Values.WriteValues(kind, values...)
-}
-
-type resultEncoder struct{}
-
-func (*resultEncoder) IsEmpty(ptr unsafe.Pointer) bool {
-	result := (*Result)(ptr)
-	return result.Event == nil
-}
-
-func (*resultEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	result := (*Result)(ptr)
-	// Hack around events with embedded parsers.PantherLog.
-	// TODO: Remove this once all parsers are ported to not use parsers.PantherLog
-	if raw := result.RawEvent; raw != nil {
-		stream.WriteVal(raw)
-		return
-	}
-
-	// Normal result
-	values := result.Values
-	if values == nil {
-		result.Values = BlankValueBuffer()
-	}
-	att := stream.Attachment
-	stream.Attachment = result
-	stream.WriteVal(result.Event)
-	stream.Attachment = att
-	result.writeMeta(stream)
-	if values == nil {
-		// values were borrowed
-		result.Values.Recycle()
-	}
-	result.Values = values
-}
-
-func (r *Result) writeMeta(stream *jsoniter.Stream) {
-	if !extendJSON(stream.Buffer()) {
-		stream.WriteObjectStart()
-	}
-	stream.WriteObjectField(FieldLogTypeJSON)
-	stream.WriteString(r.PantherLogType)
-	stream.WriteMore()
-
-	stream.WriteObjectField(FieldRowIDJSON)
-	stream.WriteString(r.PantherRowID)
-	stream.WriteMore()
-
-	stream.WriteObjectField(FieldEventTimeJSON)
-	if eventTime := r.PantherEventTime; eventTime.IsZero() {
-		stream.WriteVal(r.PantherParseTime)
-	} else {
-		stream.WriteVal(eventTime)
-	}
-	stream.WriteMore()
-
-	stream.WriteObjectField(FieldParseTimeJSON)
-	stream.WriteVal(r.PantherParseTime)
-
-	for _, kind := range r.Meta {
-		values := r.Values.Get(kind)
-		if len(values) == 0 {
-			continue
-		}
-		fieldName, ok := fieldNamesJSON[kind]
-		if !ok {
-			continue
-		}
-		stream.WriteMore()
-		stream.WriteObjectField(fieldName)
-		stream.WriteArrayStart()
-		for i, value := range values {
-			if i != 0 {
-				stream.WriteMore()
-			}
-			stream.WriteString(value)
-		}
-		stream.WriteArrayEnd()
-	}
-
-	stream.WriteObjectEnd()
-}
-
-func extendJSON(data []byte) bool {
-	// Swap JSON object closing brace ('}') with comma (',') to extend the object
-	if n := len(data) - 1; 0 <= n && n < len(data) && data[n] == '}' {
-		data[n] = ','
-		return true
-	}
-	return false
 }
 
 // ResultBuilder builds new results filling out result fields.
@@ -187,4 +97,11 @@ func StaticNow(now time.Time) func() time.Time {
 	return func() time.Time {
 		return now
 	}
+}
+
+func (r *Result) MarshalJSON() ([]byte, error) {
+	return jsoniter.Marshal(r)
+}
+func (r *Result) UnmarshalJSON(data []byte) error {
+	return jsoniter.Unmarshal(data, r)
 }

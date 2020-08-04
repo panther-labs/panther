@@ -107,35 +107,3 @@ func TestValueBuffer_WriteValuesTo(t *testing.T) {
 		require.Equal(t, expect, samples)
 	}
 }
-
-func TestValueBuffer_Clone(t *testing.T) {
-	{
-		b := &ValueBuffer{
-			index: map[FieldID][]string{
-				1: {"foo", "bar"},
-				2: {"baz"},
-			},
-		}
-		require.Equal(t, b, b.Clone())
-	}
-	{
-		b := ValueBuffer{}
-		c := b.Clone()
-		require.Nil(t, c)
-	}
-	{
-		b := &ValueBuffer{
-			index: map[FieldID][]string{
-				1: {"foo", "bar"},
-				2: {"baz"},
-				3: {},
-			},
-		}
-		require.Equal(t, &ValueBuffer{
-			index: map[FieldID][]string{
-				1: {"foo", "bar"},
-				2: {"baz"},
-			},
-		}, b.Clone())
-	}
-}

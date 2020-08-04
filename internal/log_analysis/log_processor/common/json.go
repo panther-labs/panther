@@ -22,7 +22,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/omitempty"
 )
 
@@ -39,8 +38,9 @@ func BuildJSON() jsoniter.API {
 		// Use case sensitive keys when decoding
 		CaseSensitive: true,
 	}.Froze()
-	awsglue.RegisterExtensions(api)
+	// Force omitempty on all struct fields
 	api.RegisterExtension(omitempty.New("json"))
-	pantherlog.RegisterExtensions(api)
+	// Register awsglue quirks
+	awsglue.RegisterExtensions(api)
 	return api
 }

@@ -130,7 +130,16 @@ func (ext *Extension) UpdateStructDescriptor(desc *jsoniter.StructDescriptor) {
 		}
 		if enc != nil {
 			// We only modify the underlying encoder if we resolved an encoder
-			binding.Encoder = NewTimeEncoder(enc, typ)
+			valEncoder := NewTimeEncoder(enc, typ)
+			// Reserve decorations.
+			// This is needed so globally registered extensions can apply their decorations on top of tcodec ones
+			type decorator interface {
+				DecorateEncoder(typ reflect2.Type, enc jsoniter.ValEncoder) jsoniter.ValEncoder
+			}
+			if d, ok := binding.Encoder.(decorator); ok {
+				valEncoder = d.DecorateEncoder(field.Type(), valEncoder)
+			}
+			binding.Encoder = valEncoder
 		}
 	}
 }

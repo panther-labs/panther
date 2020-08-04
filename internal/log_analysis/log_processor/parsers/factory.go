@@ -24,9 +24,11 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
+	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 )
 
 // Factory creates new parser instances.
@@ -84,7 +86,7 @@ type JSONParserFactory struct {
 func (f *JSONParserFactory) NewParser(_ interface{}) (Interface, error) {
 	validate := f.Validate
 	if validate == nil {
-		validate = pantherlog.ValidateStruct
+		validate = ValidateStruct
 	}
 
 	logReader := strings.NewReader(`null`)
@@ -112,6 +114,16 @@ func (f *JSONParserFactory) NewParser(_ interface{}) (Interface, error) {
 		},
 		logReader: logReader,
 	}, nil
+}
+
+var validate = func() *validator.Validate {
+	v := validator.New()
+	null.RegisterValidators(v)
+	return v
+}()
+
+func ValidateStruct(s interface{}) error {
+	return validate.Struct(s)
 }
 
 type simpleJSONParser struct {

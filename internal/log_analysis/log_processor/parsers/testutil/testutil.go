@@ -249,7 +249,6 @@ func jsonAPI() jsoniter.API {
 	}.Froze()
 	api.RegisterExtension(omitempty.New("json"))
 	api.RegisterExtension(tcodec.NewExtension(tcodec.Config{}))
-	api = pantherlog.RegisterExtensions(api)
 	return api
 }
 
