@@ -29,7 +29,7 @@ To configure alarms to send to your team, follow the guides below:
 - [SNS Email and SMS Integration](https://docs.aws.amazon.com/sns/latest/dg/sns-user-notifications.html)
 - [PagerDuty Integration](https://support.pagerduty.com/docs/aws-cloudwatch-integration-guide)
 
-### Accessing Data Ingest Volume
+### Assessing Data Ingest Volume
 The Panther log analysis CloudWatch dashboard provides deep insight into operationally relevant aspects of log processing.
 In particular, understanding the ingest volume is critically important to forecast the cost of running Panther.
 One of the panes in the dashboard will show ingest volume by log type. This can be used, in combination with your AWS bill,
