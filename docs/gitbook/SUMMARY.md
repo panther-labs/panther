@@ -40,7 +40,6 @@
 * [Overview](log-analysis/README.md)
 * [Setup](log-analysis/setup.md)
 * [Rules](log-analysis/rules/README.md)
-  * [Header Tests](log-analysis/rules/header-tests.md)
   * [Built-in Rule Runbooks]()
     * [AWS CloudTrail Modified](log-analysis/rules/aws-cis/aws-cloudtrail-modified.md)
     * [AWS Config Service Modified](log-analysis/rules/aws-cis/aws-config-service-modified.md)

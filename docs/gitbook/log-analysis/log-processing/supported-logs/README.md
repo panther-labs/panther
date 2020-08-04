@@ -12,7 +12,7 @@ Panther currently supports 37 security log types across 12 different categories:
      - [CloudTrailInsight](AWS.md#aws-cloudtrailinsight)
      - [CloudWatchEvents](AWS.md#aws-cloudwatchevents)
      - [GuardDuty](AWS.md#aws-guardduty)
-     - [S3ServerAccess](AWS.md#aws-s3serveraccess)
+     - [S3ServerAccess](AWS.md#aws-s-3-serveraccess)
      - [VPCFlow](AWS.md#aws-vpcflow)
  - [Apache](Apache.md)
      - [AccessCombined](Apache.md#apache-accesscombined)
