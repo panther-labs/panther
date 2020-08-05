@@ -198,10 +198,16 @@ func (b Build) tools() error {
 		}
 	})
 
+	// Set global gitVersion, warn if not deploying a tagged release
+	getGitVersion()
+
 	for _, path := range paths {
 		parts := strings.SplitN(path, `/`, 3)
 		// E.g. "out/bin/cmd/devtools/" or "out/bin/cmd/opstools"
 		outDir := filepath.Join("out", "bin", parts[0], parts[1])
+
+		// used in tools to check/display which Panther version was compiled
+		setVersionVar := fmt.Sprintf("-X 'main.version=%s'", gitVersion)
 
 		logger.Infof("build:tools: compiling %s to %s with %d os/arch combinations",
 			path, outDir, len(buildEnvs))
@@ -212,7 +218,8 @@ func (b Build) tools() error {
 				binaryName += ".exe"
 			}
 
-			err := sh.RunWith(env, "go", "build", "-ldflags", "-s -w",
+			err := sh.RunWith(env, "go", "build",
+				"-ldflags", "-s -w "+setVersionVar,
 				"-o", filepath.Join(outDir, binaryName), "./"+path)
 			if err != nil {
 				return err
