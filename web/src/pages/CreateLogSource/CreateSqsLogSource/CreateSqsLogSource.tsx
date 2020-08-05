@@ -27,7 +27,7 @@ import { useAddSqsLogSource } from './graphql/addSqsLogSource.generated';
 const initialValues = {
   integrationLabel: '',
   logTypes: [],
-  allowedPrincipals: [],
+  allowedPrincipalArns: [],
   allowedSourceArns: [],
 };
 
@@ -57,7 +57,7 @@ const CreateSqsLogSource: React.FC = () => {
               integrationLabel: values.integrationLabel,
               sqsConfig: {
                 logTypes: values.logTypes,
-                allowedPrincipals: values.allowedPrincipals,
+                allowedPrincipalArns: values.allowedPrincipalArns,
                 allowedSourceArns: values.allowedSourceArns,
               },
             },

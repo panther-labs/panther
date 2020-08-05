@@ -73,7 +73,7 @@ func GetQueuePolicy(sqsClient sqsiface.SQSAPI, queueURL string) (*SqsPolicy, err
 
 func SetQueuePolicy(sqsClient sqsiface.SQSAPI, queueURL string, policy *SqsPolicy) (err error) {
 	var marshaledPolicy string
-	if len(policy.Statements) > 0 {
+	if policy != nil && len(policy.Statements) > 0 {
 		marshaledPolicy, err = jsoniter.MarshalToString(policy)
 		if err != nil {
 			return errors.Wrap(err, "failed to serialize policy")
