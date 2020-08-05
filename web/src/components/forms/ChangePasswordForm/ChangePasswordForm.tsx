@@ -47,7 +47,7 @@ const validationSchema = Yup.object().shape({
   newPassword: yupPasswordValidationSchema,
   confirmNewPassword: yupPasswordValidationSchema.oneOf(
     [Yup.ref('newPassword')],
-    'New passwords must match'
+    'Passwords must match'
   ),
 });
 
@@ -111,7 +111,7 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ onSuccess }) =>
               required
             />
             <FieldPolicyChecker schema={yupPasswordValidationSchema} value={values.newPassword} />
-            <SubmitButton fullWidth>Update Password</SubmitButton>
+            <SubmitButton fullWidth>Update password</SubmitButton>
           </Flex>
         </Form>
       )}

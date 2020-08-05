@@ -18,3 +18,4 @@
 
 export { default } from './EditUserSidesheet';
 export * from './EditUserSidesheet';
+export * from './graphql/editUser.generated';

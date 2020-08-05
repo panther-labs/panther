@@ -16,7 +16,6 @@ const FieldPolicyChecker: React.FC<FieldPolicyCheckerProps> = ({ schema, value }
   // in which we save ALL the errors for a field
   // https://github.com/formium/formik/issues/243#issue-272680265
   React.useEffect(() => {
-    console.log(value);
     schema
       .validate(value, { abortEarly: false })
       .then(() => setPolicyErrors([]))
