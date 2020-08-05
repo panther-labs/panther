@@ -60,18 +60,23 @@ func CreateSourceSqsQueue(integrationID string, allowedPrincipalArns []string, a
 	queueName := getSourceSqsName(integrationID)
 	policy := createSourceSqsQueuePolicy(allowedPrincipalArns, allowedSourceArns)
 
-	marshaledPolicy, err := jsoniter.MarshalToString(policy)
-	if err != nil {
-		return errors.Wrap(err, "failed to marshal policy")
-	}
-	zap.L().Debug("creating SQS queue", zap.String("name", queueName), zap.String("policy", marshaledPolicy))
 	createQueueInput := &sqs.CreateQueueInput{
 		QueueName: &queueName,
-		Attributes: map[string]*string{
-			awssqs.PolicyAttributeName: &marshaledPolicy,
-		},
 	}
-	_, err = sqsClient.CreateQueue(createQueueInput)
+
+	if policy != nil {
+		marshaledPolicy, err := jsoniter.MarshalToString(policy)
+		if err != nil {
+			return errors.Wrap(err, "failed to marshal policy")
+		}
+		createQueueInput.Attributes = map[string]*string{
+			awssqs.PolicyAttributeName: &marshaledPolicy,
+		}
+	}
+
+	zap.L().Debug("creating SQS queue", zap.String("name", queueName), zap.Any("policy", policy))
+
+	_, err := sqsClient.CreateQueue(createQueueInput)
 	if err != nil {
 		return errors.Wrap(err, "failed to create SQS queue")
 	}
@@ -220,6 +225,10 @@ func createSourceSqsQueuePolicy(allowedPrincipalArns []string, allowedSourceArns
 			},
 		}
 		statements = append(statements, statement)
+	}
+
+	if len(statements) == 0 {
+		return nil
 	}
 
 	return &awssqs.SqsPolicy{
