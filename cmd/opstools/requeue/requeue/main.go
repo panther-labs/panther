@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/cmd/opstools/requeue"
+	"github.com/panther-labs/panther/pkg/prompt"
 )
 
 const (
@@ -19,9 +20,10 @@ const (
 )
 
 var (
-	REGION = flag.String("region", "", "The AWS region where the queues exists (optional, defaults to session env vars)")
-	FROMQ  = flag.String("from.q", "", "The name of the queue to copy from")
-	TOQ    = flag.String("to.q", "", "The name of the queue to copy to")
+	REGION      = flag.String("region", "", "The AWS region where the queues exists (optional, defaults to session env vars)")
+	FROMQ       = flag.String("from.q", "", "The name of the queue to copy from")
+	TOQ         = flag.String("to.q", "", "The name of the queue to copy to")
+	INTERACTIVE = flag.Bool("interactive", true, "If true, prompt for required flags if not set")
 )
 
 func usage() {
@@ -48,11 +50,26 @@ func main() {
 		sess.Config.Region = REGION
 	}
 
+	promptFlags()
 	validateFlags()
 
 	err = requeue.Requeue(sqs.New(sess), *sess.Config.Region, *FROMQ, *TOQ)
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func promptFlags() {
+	if !*INTERACTIVE {
+		return
+	}
+
+	if *FROMQ == "" {
+		*FROMQ = prompt.Read("Please enter queue name to read from: ", prompt.NonemptyValidator)
+	}
+
+	if *TOQ == "" {
+		*TOQ = prompt.Read("Please enter queue name to copy into: ", prompt.NonemptyValidator)
 	}
 }
 
