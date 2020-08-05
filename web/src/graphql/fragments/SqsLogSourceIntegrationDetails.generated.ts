@@ -33,7 +33,7 @@ export type SqsLogSourceIntegrationDetails = Pick<
   sqsConfig: Pick<
     Types.SqsConfig,
     | 'logTypes'
-    | 'allowedPrincipals'
+    | 'allowedPrincipalArns'
     | 'allowedSourceArns'
     | 's3Bucket'
     | 's3Prefix'
@@ -53,7 +53,7 @@ export const SqsLogSourceIntegrationDetails = gql`
     lastEventReceived
     sqsConfig {
       logTypes
-      allowedPrincipals
+      allowedPrincipalArns
       allowedSourceArns
       s3Bucket
       s3Prefix

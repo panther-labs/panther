@@ -56,22 +56,27 @@ func SourceSqsQueueArn(integrationID string) string {
 
 // Creates a source SQS queue
 // The new queue will allow the provided AWS principals and Source ARNs to send data to it
-func CreateSourceSqsQueue(integrationID string, allowedPrincipals []string, allowedSourceArns []string) error {
+func CreateSourceSqsQueue(integrationID string, allowedPrincipalArns []string, allowedSourceArns []string) error {
 	queueName := getSourceSqsName(integrationID)
-	policy := createSourceSqsQueuePolicy(allowedPrincipals, allowedSourceArns)
+	policy := createSourceSqsQueuePolicy(allowedPrincipalArns, allowedSourceArns)
 
-	marshaledPolicy, err := jsoniter.MarshalToString(policy)
-	if err != nil {
-		return errors.Wrap(err, "failed to marshal policy")
-	}
-	zap.L().Debug("creating SQS queue", zap.String("name", queueName), zap.String("policy", marshaledPolicy))
 	createQueueInput := &sqs.CreateQueueInput{
 		QueueName: &queueName,
-		Attributes: map[string]*string{
-			awssqs.PolicyAttributeName: &marshaledPolicy,
-		},
 	}
-	_, err = sqsClient.CreateQueue(createQueueInput)
+
+	if policy != nil {
+		marshaledPolicy, err := jsoniter.MarshalToString(policy)
+		if err != nil {
+			return errors.Wrap(err, "failed to marshal policy")
+		}
+		createQueueInput.Attributes = map[string]*string{
+			awssqs.PolicyAttributeName: &marshaledPolicy,
+		}
+	}
+
+	zap.L().Debug("creating SQS queue", zap.String("name", queueName), zap.Any("policy", policy))
+
+	_, err := sqsClient.CreateQueue(createQueueInput)
 	if err != nil {
 		return errors.Wrap(err, "failed to create SQS queue")
 	}
@@ -79,9 +84,9 @@ func CreateSourceSqsQueue(integrationID string, allowedPrincipals []string, allo
 }
 
 // Updates Source SQS queue with new permissions
-func UpdateSourceSqsQueue(integrationID string, awsAccountIDs []string, sourceArns []string) error {
+func UpdateSourceSqsQueue(integrationID string, allowedPrincipalArns []string, allowedSourceArns []string) error {
 	queueName := SourceSqsQueueURL(integrationID)
-	policy := createSourceSqsQueuePolicy(awsAccountIDs, sourceArns)
+	policy := createSourceSqsQueuePolicy(allowedPrincipalArns, allowedSourceArns)
 	if err := awssqs.SetQueuePolicy(sqsClient, queueName, policy); err != nil {
 		return errors.Wrap(err, "failed to update queue policy")
 	}
@@ -193,13 +198,16 @@ func AllowInputDataBucketSubscription() error {
 
 // Generates the Policy for the Source SQS queue that allows the following list of AWS AccountIDs and sourceARNS to send
 // data to the queue
-func createSourceSqsQueuePolicy(allowedPrincipals []string, allowedSourceArns []string) *awssqs.SqsPolicy {
+func createSourceSqsQueuePolicy(allowedPrincipalArns []string, allowedSourceArns []string) *awssqs.SqsPolicy {
+	if len(allowedPrincipalArns) == 0 && len(allowedSourceArns) == 0 {
+		return nil
+	}
 	var statements []awssqs.SqsPolicyStatement
-	for _, allowedPrincipal := range allowedPrincipals {
+	for _, allowedArn := range allowedPrincipalArns {
 		statement := awssqs.SqsPolicyStatement{
-			SID:       allowedPrincipal,
+			SID:       allowedArn,
 			Effect:    "Allow",
-			Principal: map[string]string{"AWS": allowedPrincipal},
+			Principal: map[string]string{"AWS": allowedArn},
 			Action:    "sqs:SendMessage",
 			Resource:  "*",
 		}

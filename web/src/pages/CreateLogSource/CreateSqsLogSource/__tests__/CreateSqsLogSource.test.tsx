@@ -26,7 +26,7 @@ test('renders SQS creation wizard', async () => {
     sqsConfig: {
       logTypes: ['AWS.ALB'],
       allowedSourceArns: ['source'],
-      allowedPrincipals: ['principal'],
+      allowedPrincipalArns: ['principal'],
     },
   };
 
@@ -37,21 +37,21 @@ test('renders SQS creation wizard', async () => {
   expect(configurationPanel).toBeTruthy();
   const integrationLabelField = container.querySelector('input[name="integrationLabel"]');
   const logTypesField = container.querySelector('input[name="logTypes"]');
-  const allowedPrincipalsField = container.querySelector('input[name="allowedPrincipals"]');
+  const allowedPrincipalArnsField = container.querySelector('input[name="allowedPrincipalArns"]');
   const allowedSourceArnsField = container.querySelector('input[name="allowedSourceArns"]');
   const nextButton = getByText('Next');
   // Expecting input elements and button to be rendered
   expect(integrationLabelField).not.toBeNull();
   expect(logTypesField).not.toBeNull();
-  expect(allowedPrincipalsField).not.toBeNull();
+  expect(allowedPrincipalArnsField).not.toBeNull();
   expect(allowedSourceArnsField).not.toBeNull();
   expect(nextButton).toBeDisabled();
 
   // Adding input to fields
   fireEvent.change(integrationLabelField, { target: { value: sqsInput.integrationLabel } });
   fireEvent.change(logTypesField, { target: { value: sqsInput.sqsConfig.logTypes } });
-  fireEvent.change(allowedPrincipalsField, {
-    target: { value: sqsInput.sqsConfig.allowedPrincipals },
+  fireEvent.change(allowedPrincipalArnsField, {
+    target: { value: sqsInput.sqsConfig.allowedPrincipalArns },
   });
   fireEvent.change(allowedSourceArnsField, {
     target: { value: sqsInput.sqsConfig.allowedSourceArns },

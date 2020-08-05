@@ -59,7 +59,7 @@ const SqsSourceConfigurationPanel: React.FC = () => {
           <FastField
             as={FormikMultiCombobox}
             label="Allowed AWS Principal ARNs"
-            name="allowedPrincipals"
+            name="allowedPrincipalArns"
             searchable
             allowAdditions
             items={[]}

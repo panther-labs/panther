@@ -103,7 +103,7 @@ func setupExternalResources(integration *models.SourceIntegration) error {
 			return errors.Wrap(err, "failed to enable subscription for input bucket")
 		}
 		if err := CreateSourceSqsQueue(integration.IntegrationID,
-			integration.SqsConfig.AllowedPrincipals, integration.SqsConfig.AllowedSourceArns); err != nil {
+			integration.SqsConfig.AllowedPrincipalArns, integration.SqsConfig.AllowedSourceArns); err != nil {
 			return errors.Wrap(err, "failed to create input SQS queue")
 		}
 		if err := AddSourceAsLambdaTrigger(integration.IntegrationID); err != nil {
@@ -259,13 +259,13 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 		metadata.LogProcessingRole = generateLogProcessingRoleArn(input.AWSAccountID, input.IntegrationLabel)
 	case models.IntegrationTypeSqs:
 		metadata.SqsConfig = &models.SqsConfig{
-			S3Bucket:          env.InputDataBucketName,
-			S3Prefix:          models.SqsS3Prefix,
-			LogProcessingRole: env.InputDataRoleArn,
-			AllowedPrincipals: input.SqsConfig.AllowedPrincipals,
-			AllowedSourceArns: input.SqsConfig.AllowedSourceArns,
-			LogTypes:          input.SqsConfig.LogTypes,
-			QueueURL:          SourceSqsQueueURL(metadata.IntegrationID),
+			S3Bucket:             env.InputDataBucketName,
+			S3Prefix:             models.SqsS3Prefix,
+			LogProcessingRole:    env.InputDataRoleArn,
+			AllowedPrincipalArns: input.SqsConfig.AllowedPrincipalArns,
+			AllowedSourceArns:    input.SqsConfig.AllowedSourceArns,
+			LogTypes:             input.SqsConfig.LogTypes,
+			QueueURL:             SourceSqsQueueURL(metadata.IntegrationID),
 		}
 	}
 	return &models.SourceIntegration{

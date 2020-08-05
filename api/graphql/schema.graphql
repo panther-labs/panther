@@ -421,7 +421,7 @@ input TestPolicyInput {
 
 type SqsConfig {
   logTypes: [String!]!
-  allowedPrincipals: [String]
+  allowedPrincipalArns: [String]
   allowedSourceArns: [String]
   s3Bucket: String!
   s3Prefix: String
@@ -488,7 +488,7 @@ input AddS3LogIntegrationInput {
 
 input SqsLogConfigInput {
   logTypes: [String!]!
-  allowedPrincipals: [String]!
+  allowedPrincipalArns: [String]!
   allowedSourceArns: [String]!
 }
 
