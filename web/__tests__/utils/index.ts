@@ -22,3 +22,4 @@ export { default as faker } from 'faker';
 export * from './helpers';
 export { render } from './render';
 export * from '../__mocks__/builders.generated';
+export * from './auth';
