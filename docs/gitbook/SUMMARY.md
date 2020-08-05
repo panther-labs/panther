@@ -55,7 +55,7 @@
     * [AWS Root Activity](log-analysis/rules/aws-cis/aws-root-activity.md)
     * [AWS S3 Bucket Policy Modified](log-analysis/rules/aws-cis/aws-s3-bucket-policy-modified.md)
     * [AWS Unauthorized API Call](log-analysis/rules/aws-cis/aws-unauthorized-api-call.md)
-* [Supported Logs]()
+* [Supported Logs](log-analysis/log-processing/supported-logs/README.md)
   * [Apache](log-analysis/log-processing/supported-logs/Apache.md)
   * [AWS](log-analysis/log-processing/supported-logs/AWS.md)
   * [Cisco Umbrella](log-analysis/log-processing/supported-logs/CiscoUmbrella.md)
