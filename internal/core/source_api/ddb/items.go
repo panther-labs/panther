@@ -55,11 +55,11 @@ type IntegrationStatus struct {
 }
 
 type SqsConfig struct {
-	S3Bucket          string   `json:"s3Bucket,omitempty"`
-	S3Prefix          string   `json:"s3Prefix,omitempty"`
-	LogProcessingRole string   `json:"logProcessingRole,omitempty"`
-	LogTypes          []string `json:"logTypes" dynamodbav:",stringset"`
-	AllowedPrincipals []string `json:"allowedPrincipals" dynamodbav:",stringset"`
-	AllowedSourceArns []string `json:"allowedSourceArns" dynamodbav:",stringset"`
-	QueueURL          string   `json:"queueUrl,omitempty"`
+	S3Bucket             string   `json:"s3Bucket,omitempty"`
+	S3Prefix             string   `json:"s3Prefix,omitempty"`
+	LogProcessingRole    string   `json:"logProcessingRole,omitempty"`
+	LogTypes             []string `json:"logTypes" dynamodbav:",stringset"`
+	AllowedPrincipalArns []string `json:"allowedPrincipalArns" dynamodbav:",stringset"`
+	AllowedSourceArns    []string `json:"allowedSourceArns" dynamodbav:",stringset"`
+	QueueURL             string   `json:"queueUrl,omitempty"`
 }
