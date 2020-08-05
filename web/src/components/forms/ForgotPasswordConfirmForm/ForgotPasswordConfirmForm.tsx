@@ -26,6 +26,7 @@ import useRouter from 'Hooks/useRouter';
 import useAuth from 'Hooks/useAuth';
 import urls from 'Source/urls';
 import { yupPasswordValidationSchema } from 'Helpers/utils';
+import FieldPolicyChecker from 'Components/FieldPolicyChecker/FieldPolicyChecker';
 
 interface ForgotPasswordConfirmFormProps {
   email: string;
@@ -76,7 +77,7 @@ const ForgotPasswordConfirmForm: React.FC<ForgotPasswordConfirmFormProps> = ({ e
         })
       }
     >
-      {({ status }) => (
+      {({ status, values }) => (
         <Form>
           <Flex direction="column" spacing={4}>
             {status && <Alert variant="error" title={status.title} description={status.message} />}
@@ -98,6 +99,7 @@ const ForgotPasswordConfirmForm: React.FC<ForgotPasswordConfirmFormProps> = ({ e
               required
               autoComplete="new-password"
             />
+            <FieldPolicyChecker schema={yupPasswordValidationSchema} value={values.newPassword} />
             <SubmitButton fullWidth>Update password</SubmitButton>
           </Flex>
         </Form>

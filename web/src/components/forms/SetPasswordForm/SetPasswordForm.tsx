@@ -24,6 +24,7 @@ import { Alert, Flex, FormHelperText, Link } from 'pouncejs';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
 import useAuth from 'Hooks/useAuth';
+import FieldPolicyChecker from 'Components/FieldPolicyChecker/FieldPolicyChecker';
 
 interface SetPasswordFormValues {
   confirmNewPassword: string;
@@ -62,7 +63,7 @@ const SetPasswordForm: React.FC = () => {
         })
       }
     >
-      {({ status }) => (
+      {({ status, values }) => (
         <Form>
           <Flex direction="column" spacing={4}>
             {status && <Alert variant="error" title={status.title} description={status.message} />}
@@ -82,6 +83,7 @@ const SetPasswordForm: React.FC = () => {
               name="confirmNewPassword"
               required
             />
+            <FieldPolicyChecker schema={yupPasswordValidationSchema} value={values.newPassword} />
             <SubmitButton aria-describedby="policy-disclaimer" fullWidth>
               Set password
             </SubmitButton>
