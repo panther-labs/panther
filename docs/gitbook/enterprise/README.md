@@ -3,7 +3,7 @@
 Panther offers an enterprise-ready product with all of the community features, plus:
 
 * [Data Explorer](data-analytics/data-explorer.md) to search collected data
-* [SaaS Log Pulling](saas-logs.md)
+* [SaaS Logs](saas-logs/saas-logs.md)
 * [Data Compaction](data-analytics/log-compaction.md) for faster queries
 * [Role-Based Access Control](rbac.md)
 * [SAML/SSO Support](saml/overview.md)

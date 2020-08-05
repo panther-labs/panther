@@ -415,9 +415,9 @@ func TestPutSqsIntegration(t *testing.T) {
 			IntegrationLabel: testIntegrationLabel,
 			IntegrationType:  models.IntegrationTypeSqs,
 			SqsConfig: &models.SqsConfig{
-				LogTypes:          []string{"AWS.CloudTrail"},
-				AllowedPrincipals: []string{"arn:aws:iam::123456789012:root"},
-				AllowedSourceArns: []string{"arn:aws:sns:*:415773754570:*"},
+				LogTypes:             []string{"AWS.CloudTrail"},
+				AllowedPrincipalArns: []string{"arn:aws:iam::123456789012:root"},
+				AllowedSourceArns:    []string{"arn:aws:sns:*:415773754570:*"},
 			},
 		},
 	})
