@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/athena"
@@ -37,16 +38,30 @@ const (
 )
 
 var (
-	REGION      = flag.String("region", "", "The Panther AWS region (optional, defaults to session env vars) where the queue exists.")
-	REGEXP      = flag.String("regexp", "", "Regular expression used to filter the set tables updated, defaults to all tables (no regexp")
-	START       = flag.String("start", "", "Start date of the form YYYY-MM-DD")
-	INTERACTIVE = flag.Bool("interactive", true, "If true, prompt for required flags if not set")
-	VERBOSE     = flag.Bool("verbose", false, "Enable verbose logging")
+	REGION = flag.String("region", "",
+		"The Panther AWS region (optional, defaults to session env vars) where the queue exists.")
+	REGEXP = flag.String("regexp", "",
+		"Regular expression used to filter the set of log types updated, defaults to all log types (no regexp)")
+	START = flag.String("start", "",
+		"Start date of the form YYYY-MM-DD, if not set use the create date of the table")
+	INTERACTIVE = flag.Bool("interactive", true,
+		"If true, prompt for required flags if not set")
+	VERBOSE = flag.Bool("verbose", true,
+		"Enable verbose logging")
 
 	logger *zap.SugaredLogger
 
-	startDate      time.Time
-	matchTableName *regexp.Regexp
+	startDate    time.Time
+	matchLogType *regexp.Regexp
+
+	version string // we expect this to be set by the build tool as `-X main.version=<some version>`
+
+	// clients
+	athenaClient *athena.Athena
+	cfnClient    *cloudformation.CloudFormation
+	glueClient   *glue.Glue
+	lambdaClient *lambda.Lambda
+	s3Client     *s3.S3
 )
 
 func usage() {
@@ -54,6 +69,7 @@ func usage() {
 		"%s %s\nUsage:\n",
 		filepath.Base(os.Args[0]), banner)
 	flag.PrintDefaults()
+	fmt.Printf("Panther version: %s\n", version)
 }
 
 func init() {
@@ -86,11 +102,11 @@ func main() {
 		logger.Fatal(err)
 		return
 	}
-	athenaClient := athena.New(sess)
-	cfnClient := cloudformation.New(sess)
-	glueClient := glue.New(sess)
-	lambdaClient := lambda.New(sess)
-	s3Client := s3.New(sess)
+	athenaClient = athena.New(sess)
+	cfnClient = cloudformation.New(sess)
+	glueClient = glue.New(sess)
+	lambdaClient = lambda.New(sess)
+	s3Client = s3.New(sess)
 
 	if *REGION != "" { //override
 		sess.Config.Region = REGION
@@ -102,12 +118,12 @@ func main() {
 	validateFlags()
 
 	// for each registered table, update the table, for each time partition, update the schema
-	for _, table := range updateRegisteredTables(athenaClient, cfnClient, glueClient, lambdaClient) {
+	for _, table := range updateRegisteredTables() {
 		name := fmt.Sprintf("%s.%s", table.DatabaseName(), table.TableName())
-		if !matchTableName.MatchString(name) {
-			continue
+
+		if *VERBOSE {
+			logger.Infof("syncing partitions for %s", name)
 		}
-		logger.Infof("syncing partitions for %s", name)
 		_, err := table.SyncPartitions(glueClient, s3Client, startDate, nil)
 		if err != nil {
 			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == glue.ErrCodeEntityNotFoundException {
@@ -133,7 +149,7 @@ func promptFlags() {
 	}
 
 	if *REGEXP == "" {
-		*REGEXP = prompt.Read("Enter regex to select a subset of tables (or <enter> for all tables): ",
+		*REGEXP = prompt.Read("Enter regex to select a subset of log types (or <enter> for all tables): ",
 			prompt.RegexValidator)
 	}
 }
@@ -148,30 +164,35 @@ func validateFlags() {
 		}
 	}()
 
-	if *START == "" {
-		err = errors.New("-start must be set")
-		return
-	}
-	startDate, err = time.Parse(dateFormat, *START)
-	if err != nil {
-		err = errors.Wrapf(err, "cannot read -start")
-	}
-
-	matchTableName, err = regexp.Compile(*REGEXP)
+	matchLogType, err = regexp.Compile(*REGEXP)
 	if err != nil {
 		err = errors.Wrapf(err, "cannot read -regexp")
 	}
 }
 
-func updateRegisteredTables(athenaClient *athena.Athena, cfnCLient *cloudformation.CloudFormation,
-	glueClient *glue.Glue, lambdaClient *lambda.Lambda) (
-	tables []*awsglue.GlueTableMetadata) {
-
+func updateRegisteredTables() (tables []*awsglue.GlueTableMetadata) {
+	// find the bucket to associate with the table
 	const processDataBucketStack = cfnstacks.Bootstrap
-	outputs := awscfn.StackOutputs(cfnCLient, logger, processDataBucketStack)
+	outputs := awscfn.StackOutputs(cfnClient, logger, processDataBucketStack)
 	var dataBucket string
 	if dataBucket = outputs["ProcessedDataBucket"]; dataBucket == "" {
 		logger.Fatalf("could not find processed data bucket in %s outputs", processDataBucketStack)
+	}
+
+	// check the version of Panther deployed against what this as compiled against, they _must_ match!
+	tagResponse, err := s3Client.GetBucketTagging(&s3.GetBucketTaggingInput{Bucket: &dataBucket})
+	if err != nil {
+		logger.Fatalf("could not read processed data bucket tags for %$: %s", processDataBucketStack, err)
+	}
+	var deployedPantherVersion string
+	for _, tag := range tagResponse.TagSet {
+		if aws.StringValue(tag.Key) == "PantherVersion" {
+			deployedPantherVersion = *tag.Value
+		}
+	}
+	if version != deployedPantherVersion {
+		logger.Fatalf("deployed Panther version '%s' does not match compiled Panther version '%s'",
+			deployedPantherVersion, version)
 	}
 
 	var listOutput []*models.SourceIntegration
@@ -193,6 +214,10 @@ func updateRegisteredTables(athenaClient *athena.Athena, cfnCLient *cloudformati
 	}
 
 	for logType := range logTypeSet {
+		if !matchLogType.MatchString(logType) {
+			continue
+		}
+
 		if *VERBOSE {
 			logger.Infof("updating registered tables for %s", logType)
 		}
