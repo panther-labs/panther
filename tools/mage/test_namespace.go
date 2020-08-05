@@ -24,6 +24,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -33,6 +34,7 @@ import (
 
 	"github.com/panther-labs/panther/pkg/prompt"
 	"github.com/panther-labs/panther/tools/cfnparse"
+	"github.com/panther-labs/panther/tools/cfnstacks"
 )
 
 // Test contains targets for testing code syntax, style, and correctness.
@@ -80,6 +82,9 @@ func (Test) CI() {
 		{"cfn-lint", testCfnLint},
 		{"terraform validate", testTfValidate},
 
+		// mage test:doc
+		{"test:doc", testDoc},
+
 		// mage test:python
 		{"python unit tests", testPythonUnit},
 		{"pylint", testPythonLint},
@@ -117,6 +122,83 @@ func (Test) Cfn() {
 	})
 }
 
+// Verify links and assets in documentation
+func (Test) Doc() {
+	if err := testDoc(); err != nil {
+		logger.Fatal(err)
+	}
+}
+
+func testDoc() error {
+	docFiles := make(map[string]struct{})
+	walk(filepath.Join("docs", "gitbook"), func(path string, info os.FileInfo) {
+		if filepath.Ext(path) == ".md" {
+			docFiles[path] = struct{}{}
+		}
+	})
+
+	logger.Infof("test:doc: scanning %d documentation .md files", len(docFiles))
+	// note: we need the non-greedy variant, hence ".*?"
+	linkPattern := regexp.MustCompile(`\[.*?\]\((.*?)\)`) // e.g. "[myfile](path/to/doc.md)"
+
+	// Every link target must be one of the following:
+
+	// web reference - http(s) links
+	webRef := regexp.MustCompile(`^https?://[A-Za-z0-9.#?&%/:=_-]{5,}$`)
+
+	// email link - based on the same regex we use for emails in CloudFormation parameters
+	emailRef := regexp.MustCompile(`^mailto:[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$`)
+
+	// Asset reference - an image in the docs/gitbook/.gitbook/assets folder
+	// For example, "../.gitbook/assets/log-analysis/setup-sns1.png"
+	assetRef := regexp.MustCompile(`^(?:\.\./)*\.gitbook/assets/[a-z0-9/-]+\.(?:png|jpg)$`)
+
+	// Document reference - link to another documentation page, potentially with a header.
+	// For safety and consistency, we don't allow linking to directories, only specific files.
+	//
+	// Examples:
+	//    - "#aws-credentials"                       (header in same file)
+	//    - "../enterprise/data-analytics/README.md" (a different document)
+	//    - "development.md#deploying"               (header in another file)
+	//    - ""                                       (file and header are both optional)
+	//
+	// Non-examples:
+	//    - "../log-analysis"           (prevent directory links - link will fail without README)
+	//    - "quick_start.md"            (use "-" instead of "_")
+	//    - "quick-start.md#Onboarding" (headers must be lowercase with dashes only)
+	docRef := regexp.MustCompile(`^([A-Za-z0-9./-]+\.md)?(#[a-z0-9-]+)?$`)
+
+	errCount := 0
+	for path := range docFiles {
+		for _, match := range linkPattern.FindAllSubmatch(readFile(path), -1) {
+			// match[0] is entire "[text](target)", match[1] is just "target"
+			target := match[1]
+
+			if webRef.Match(target) || emailRef.Match(target) {
+				logger.Debugf("test:doc: %s valid web/email link: %s", path, string(target))
+				continue
+			}
+
+			if assetRef.Match(target) {
+				// TODO - validate image path
+				logger.Debugf("test:doc: %s image ref: %s", path, string(target))
+			} else if docRef.Match(target) {
+				// TODO - validate document path
+				// TODO - validate headers
+				logger.Debugf("test:doc: %s doc ref: %s", path, string(target))
+			} else {
+				logger.Errorf("test:doc: %s: unknown link: %s", path, string(match[0]))
+				errCount++
+			}
+		}
+	}
+
+	if errCount > 1 {
+		return fmt.Errorf("test:doc: %d errors", errCount)
+	}
+	return nil
+}
+
 // Test and lint Golang source code
 func (Test) Go() {
 	if err := testGoUnit(); err != nil {
@@ -138,7 +220,7 @@ func (Test) Python() {
 	})
 }
 
-// Test and lint npm/web source
+// Test and lint web source
 func (Test) Web() {
 	runTests([]testTask{
 		{"npm run eslint", testWebEslint},
@@ -226,7 +308,7 @@ func testCfnLint() error {
 			errs = append(errs, fmt.Sprintf("%s: %v", template, err))
 		}
 
-		if template == bootstrapTemplate {
+		if template == cfnstacks.BootstrapTemplate {
 			// Custom resources can't be in the bootstrap stack
 			for logicalID, resource := range body["Resources"].(map[string]interface{}) {
 				t := resource.(map[string]interface{})["Type"].(string)
@@ -325,7 +407,7 @@ func cfnTestFunction(logicalID, template string, resources map[string]string) er
 	// Backwards compatibility - these resources did not originally match the naming scheme,
 	// renaming the logical IDs would delete + recreate the log group, which usually causes
 	// deployments to fail because it tries to create a log group which already exists.
-	if template == logAnalysisTemplate {
+	if template == cfnstacks.LogAnalysisTemplate {
 		switch idPrefix {
 		case "AlertsForwarder":
 			idPrefix = "AlertForwarder"

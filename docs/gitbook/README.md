@@ -33,7 +33,7 @@ Follow the [quick start](quick-start.md) guide to deploy Panther Community.
 
 ### Premium
 
-Panther [Enterprise](enterprise) offers additional features for advanced teams, such as:
+Panther [Enterprise](enterprise/README.md) offers additional features for advanced teams, such as:
 - Data Explorer: Search your collected data, generated alerts, and threat hunt with SQL
 - SaaS Log Collection: Automatically load popular SaaS logs into Panther such as Okta, G Suite, and more.
 - Role-based Access Control: Assign roles to your Panther users

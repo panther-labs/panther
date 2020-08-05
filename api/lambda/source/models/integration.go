@@ -97,7 +97,7 @@ type SqsConfig struct {
 	// The log types associated with the source. Needs to be set by UI.
 	LogTypes []string `json:"logTypes" validate:"required,min=1"`
 	// The AWS Principals that are allowed to send data to this source. Needs to be set by UI.
-	AllowedPrincipals []string `json:"allowedPrincipals"`
+	AllowedPrincipalArns []string `json:"allowedPrincipalArns"`
 	// The ARNS (e.g. SNS topic ARNs) that are allowed to send data to this source. Needs to be set by UI.
 	AllowedSourceArns []string `json:"allowedSourceArns"`
 

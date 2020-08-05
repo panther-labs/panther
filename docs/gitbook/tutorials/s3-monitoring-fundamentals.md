@@ -53,7 +53,7 @@ Amazon provides two mechanisms for monitoring S3 bucket calls: CloudTrail (via D
 
 Given the same request, we saw about a 40 minute difference between S3 Server Access logs and CloudTrail. The logs below show the difference in the data collected:
 
-![CloudTrail vs Access Logs](../.gitbook/assets/tutorials/s3-logs-comparison.jpg "CloudTrail vs S3 Access Logs")
+![CloudTrail vs Access Logs](../.gitbook/assets/tutorials/s3-logs-comparison.jpg)
 
 ### Choosing an Approach
 

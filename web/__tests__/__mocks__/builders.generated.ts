@@ -1268,8 +1268,8 @@ export const buildSqsConfig = (overrides: Partial<SqsConfig> = {}): SqsConfig =>
   return {
     __typename: 'SqsConfig',
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Direct'],
-    allowedPrincipals:
-      'allowedPrincipals' in overrides ? overrides.allowedPrincipals : ['navigating'],
+    allowedPrincipalArns:
+      'allowedPrincipalArns' in overrides ? overrides.allowedPrincipalArns : ['HTTP'],
     allowedSourceArns:
       'allowedSourceArns' in overrides ? overrides.allowedSourceArns : ['holistic'],
     s3Bucket: 's3Bucket' in overrides ? overrides.s3Bucket : 'Balanced',
@@ -1299,7 +1299,8 @@ export const buildSqsLogConfigInput = (
 ): SqsLogConfigInput => {
   return {
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Incredible'],
-    allowedPrincipals: 'allowedPrincipals' in overrides ? overrides.allowedPrincipals : ['Generic'],
+    allowedPrincipalArns:
+      'allowedPrincipalArns' in overrides ? overrides.allowedPrincipalArns : ['Zloty'],
     allowedSourceArns:
       'allowedSourceArns' in overrides ? overrides.allowedSourceArns : ['partnerships'],
   };

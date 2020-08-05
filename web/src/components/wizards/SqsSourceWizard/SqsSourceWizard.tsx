@@ -38,7 +38,7 @@ export interface SqsLogSourceWizardValues {
   integrationId?: string;
   integrationLabel: string;
   logTypes: string[];
-  allowedPrincipals: string[];
+  allowedPrincipalArns: string[];
   allowedSourceArns: string[];
   queueUrl?: string;
 }
@@ -48,7 +48,7 @@ const validationSchema = Yup.object().shape<SqsLogSourceWizardValues>({
   logTypes: Yup.array()
     .of(Yup.string().oneOf((LOG_TYPES as unknown) as string[]))
     .required(),
-  allowedPrincipals: Yup.array().of(Yup.string()),
+  allowedPrincipalArns: Yup.array().of(Yup.string()),
   allowedSourceArns: Yup.array().of(Yup.string()),
 });
 

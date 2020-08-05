@@ -105,11 +105,11 @@ func normalizeIntegration(item *ddb.Integration, input *models.UpdateIntegration
 		item.IntegrationLabel = input.IntegrationLabel
 		item.SqsConfig.LogTypes = input.SqsConfig.LogTypes
 
-		newAllowedPrincipals := input.SqsConfig.AllowedPrincipals
-		newAllowedSourceArns := input.SqsConfig.AllowedSourceArns
-		item.SqsConfig.AllowedSourceArns = newAllowedSourceArns
-		item.SqsConfig.AllowedPrincipals = newAllowedPrincipals
-		if err := UpdateSourceSqsQueue(item.IntegrationID, newAllowedPrincipals, newAllowedSourceArns); err != nil {
+		newAllowedPrincipals := input.SqsConfig.AllowedPrincipalArns
+		newAllowedSources := input.SqsConfig.AllowedSourceArns
+		item.SqsConfig.AllowedSourceArns = newAllowedSources
+		item.SqsConfig.AllowedPrincipalArns = newAllowedPrincipals
+		if err := UpdateSourceSqsQueue(item.IntegrationID, newAllowedPrincipals, newAllowedSources); err != nil {
 			return updateIntegrationInternalError
 		}
 	}

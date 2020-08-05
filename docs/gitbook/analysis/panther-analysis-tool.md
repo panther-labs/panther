@@ -162,7 +162,7 @@ Automatic remediations requires two fields to be set in the spec file:
 * `AutoRemediationID`: The automatic remediation identifier to enable
 * `AutoRemediationParameters`: The expected configurations for the remediation
 
-For a complete list of remediations and their associated configurations, see the [remediations](../cloud-security/automatic-remediation/aws) page.
+For a complete list of remediations and their associated configurations, see the [remediations](../cloud-security/automatic-remediation/README.md) page.
 
 ### Policy Tests
 

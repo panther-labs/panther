@@ -49,7 +49,7 @@ const EditSqsLogSource: React.FC = () => {
       integrationId: data?.getSqsLogIntegration.integrationId,
       integrationLabel: data?.getSqsLogIntegration?.integrationLabel ?? 'Loading...',
       logTypes: data?.getSqsLogIntegration.sqsConfig.logTypes ?? [],
-      allowedPrincipals: data?.getSqsLogIntegration.sqsConfig.allowedPrincipals ?? [],
+      allowedPrincipalArns: data?.getSqsLogIntegration.sqsConfig.allowedPrincipalArns ?? [],
       allowedSourceArns: data?.getSqsLogIntegration.sqsConfig.allowedSourceArns ?? [],
       queueUrl: data?.getSqsLogIntegration.sqsConfig.queueUrl,
     }),
@@ -74,7 +74,7 @@ const EditSqsLogSource: React.FC = () => {
                 integrationLabel: values.integrationLabel,
                 sqsConfig: {
                   logTypes: values.logTypes,
-                  allowedPrincipals: values.allowedPrincipals,
+                  allowedPrincipalArns: values.allowedPrincipalArns,
                   allowedSourceArns: values.allowedSourceArns,
                 },
               },

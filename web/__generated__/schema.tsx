@@ -1115,7 +1115,7 @@ export enum SortDirEnum {
 export type SqsConfig = {
   __typename?: 'SqsConfig';
   logTypes: Array<Scalars['String']>;
-  allowedPrincipals?: Maybe<Array<Maybe<Scalars['String']>>>;
+  allowedPrincipalArns?: Maybe<Array<Maybe<Scalars['String']>>>;
   allowedSourceArns?: Maybe<Array<Maybe<Scalars['String']>>>;
   s3Bucket: Scalars['String'];
   s3Prefix?: Maybe<Scalars['String']>;
@@ -1134,7 +1134,7 @@ export type SqsDestinationConfig = {
 
 export type SqsLogConfigInput = {
   logTypes: Array<Scalars['String']>;
-  allowedPrincipals: Array<Maybe<Scalars['String']>>;
+  allowedPrincipalArns: Array<Maybe<Scalars['String']>>;
   allowedSourceArns: Array<Maybe<Scalars['String']>>;
 };
 
@@ -2647,7 +2647,7 @@ export type SqsConfigResolvers<
   ParentType extends ResolversParentTypes['SqsConfig'] = ResolversParentTypes['SqsConfig']
 > = {
   logTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  allowedPrincipals?: Resolver<
+  allowedPrincipalArns?: Resolver<
     Maybe<Array<Maybe<ResolversTypes['String']>>>,
     ParentType,
     ContextType
