@@ -25,7 +25,7 @@ import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
-import { webhookValidation } from 'Helpers/utils';
+import { yupWebhookValidation } from 'Helpers/utils';
 
 type MicrosoftTeamsFieldValues = Pick<DestinationConfigInput, 'msTeams'>;
 
@@ -43,7 +43,7 @@ const MicrosoftTeamsDestinationForm: React.FC<MicrosoftTeamsDestinationFormProps
   const msTeamsFieldsValidationSchema = Yup.object().shape({
     outputConfig: Yup.object().shape({
       msTeams: Yup.object().shape({
-        webhookURL: existing ? webhookValidation() : webhookValidation().required(),
+        webhookURL: existing ? yupWebhookValidation : yupWebhookValidation.required(),
       }),
     }),
   });

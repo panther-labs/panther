@@ -25,7 +25,7 @@ import FormikTextInput from 'Components/fields/TextInput';
 import useRouter from 'Hooks/useRouter';
 import useAuth from 'Hooks/useAuth';
 import urls from 'Source/urls';
-import { createYupPasswordValidationSchema } from 'Helpers/utils';
+import { yupPasswordValidationSchema } from 'Helpers/utils';
 
 interface ForgotPasswordConfirmFormProps {
   email: string;
@@ -38,8 +38,8 @@ interface ForgotPasswordConfirmFormValues {
 }
 
 const validationSchema = Yup.object().shape({
-  newPassword: Yup.string().required(),
-  confirmNewPassword: createYupPasswordValidationSchema().oneOf(
+  newPassword: yupPasswordValidationSchema,
+  confirmNewPassword: yupPasswordValidationSchema.oneOf(
     [Yup.ref('newPassword')],
     'Passwords must match'
   ),

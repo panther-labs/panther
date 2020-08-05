@@ -22,7 +22,7 @@ import { Form, Formik } from 'formik';
 import * as Yup from 'yup';
 import { FetchResult } from '@apollo/client';
 import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
-import { integrationLabelValidation } from 'Helpers/utils';
+import { yupIntegrationLabelValidation } from 'Helpers/utils';
 import SuccessPanel from './SuccessPanel';
 import SqsSourceConfigurationPanel from './SqsSourceConfigurationPanel';
 import InformationPanel from './InformationPanel';
@@ -44,7 +44,7 @@ export interface SqsLogSourceWizardValues {
 }
 
 const validationSchema = Yup.object().shape<SqsLogSourceWizardValues>({
-  integrationLabel: integrationLabelValidation(),
+  integrationLabel: yupIntegrationLabelValidation,
   logTypes: Yup.array()
     .of(Yup.string().oneOf((LOG_TYPES as unknown) as string[]))
     .required(),

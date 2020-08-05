@@ -19,7 +19,7 @@
 import { Field, Form, Formik } from 'formik';
 import React from 'react';
 import * as Yup from 'yup';
-import { createYupPasswordValidationSchema } from 'Helpers/utils';
+import { yupPasswordValidationSchema } from 'Helpers/utils';
 import { Alert, Flex, FormHelperText, Link } from 'pouncejs';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -37,11 +37,11 @@ const initialValues = {
 };
 
 const validationSchema = Yup.object().shape({
-  confirmNewPassword: createYupPasswordValidationSchema().oneOf(
+  newPassword: yupPasswordValidationSchema,
+  confirmNewPassword: yupPasswordValidationSchema.oneOf(
     [Yup.ref('newPassword')],
     'Passwords must match'
   ),
-  newPassword: createYupPasswordValidationSchema(),
 });
 
 const SetPasswordForm: React.FC = () => {
