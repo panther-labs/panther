@@ -199,6 +199,9 @@ func AllowInputDataBucketSubscription() error {
 // Generates the Policy for the Source SQS queue that allows the following list of AWS AccountIDs and sourceARNS to send
 // data to the queue
 func createSourceSqsQueuePolicy(allowedPrincipalArns []string, allowedSourceArns []string) *awssqs.SqsPolicy {
+	if len(allowedPrincipalArns) == 0 && len(allowedSourceArns) == 0 {
+		return nil
+	}
 	var statements []awssqs.SqsPolicyStatement
 	for _, allowedArn := range allowedPrincipalArns {
 		statement := awssqs.SqsPolicyStatement{
@@ -225,10 +228,6 @@ func createSourceSqsQueuePolicy(allowedPrincipalArns []string, allowedSourceArns
 			},
 		}
 		statements = append(statements, statement)
-	}
-
-	if len(statements) == 0 {
-		return nil
 	}
 
 	return &awssqs.SqsPolicy{
