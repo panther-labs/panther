@@ -24,7 +24,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -130,88 +129,53 @@ func (Test) Doc() {
 }
 
 func testDoc() error {
-	docFiles := make(map[string]struct{})
-	walk(filepath.Join("docs", "gitbook"), func(path string, info os.FileInfo) {
+	return testDocRoot(filepath.Join("docs", "gitbook"))
+}
+
+// Configurable root allows this function to be unit tested with a separate test directory.
+func testDocRoot(root string) error {
+	docs := make(map[string]*docSummary) // map doc filepath to parsed summary
+	walk(root, func(path string, info os.FileInfo) {
 		if filepath.Ext(path) == ".md" {
-			docFiles[path] = struct{}{}
+			docs[path] = nil
 		}
 	})
 
-	logger.Infof("test:doc: scanning %d documentation .md files", len(docFiles))
-	// note: we need the non-greedy variant, hence ".*?"
-	linkPattern := regexp.MustCompile(`\[.*?\]\((.*?)\)`) // e.g. "[myfile](path/to/doc.md)"
+	logger.Infof("test:doc: scanning %d documentation .md files", len(docs))
+	for path := range docs {
+		summary, err := parseDoc(path)
+		if err != nil {
+			return err
+		}
+		docs[path] = summary
+	}
 
-	// Every link target must be one of the following:
+	// Remember which images we've seen so we can find unused assets
+	assetDir := filepath.Join(root, ".gitbook", "assets")
+	linkedImages := make(map[string]struct{})
 
-	// web reference - http(s) links
-	webRef := regexp.MustCompile(`^https?://[A-Za-z0-9.#?&%/:=_-]{5,}$`)
+	var errs []string
+	for docPath, summary := range docs {
+		for _, img := range summary.ImgLinks {
+			logger.Debugf("test:doc: %s: validating image ref: %s", docPath, img)
 
-	// email link - based on the same regex we use for emails in CloudFormation parameters
-	emailRef := regexp.MustCompile(`^mailto:[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$`)
+			// e.g. "../../.gitbook/assets/file.png" becomes "docs/gitbook/.gitbook/assets/file.png"
+			imgPath := filepath.Join(filepath.Dir(docPath), img)
 
-	// Asset reference - an image in the docs/gitbook/.gitbook/assets folder
-	// For example, "../.gitbook/assets/log-analysis/setup-sns1.png"
-	assetRef := regexp.MustCompile(`^(?:\.\./)*\.gitbook/assets/[a-z0-9/-]+\.(?:png|jpg)$`)
+			// Make sure the reference is limited to the correct directory
+			if !strings.HasPrefix(imgPath, assetDir) {
+				errs = append(errs, fmt.Sprintf(
+					"%s: image reference \"%s\" resolves to \"%s\", needs to be under %s",
+					docPath, img, imgPath, assetDir))
+				continue
+			}
 
-	// Document reference - link to another documentation page, potentially with a header.
-	// For safety and consistency, we don't allow linking to directories, only specific files.
-	//
-	// Examples:
-	//    - "#aws-credentials"                       (header in same file)
-	//    - "../enterprise/data-analytics/README.md" (a different document)
-	//    - "development.md#deploying"               (header in another file)
-	//    - ""                                       (file and header are both optional)
-	//
-	// Non-examples:
-	//    - "../log-analysis"           (prevent directory links - link will fail without README)
-	//    - "quick_start.md"            (use "-" instead of "_")
-	//    - "quick-start.md#Onboarding" (headers must be lowercase with dashes only)
-	//
-	// TODO - be more permissive with the header so we can classify it correctly? Or handle this in `mage fmt`?
-	docRef := regexp.MustCompile(`^([A-Za-z0-9./-]+\.md)?(#[a-z0-9-]+)?$`)
-
-	// Remember which images we've seen so we can warn about unused assets
-	assetDir := filepath.Join("docs", "gitbook", ".gitbook", "assets")
-	linkedImages := map[string]struct{}{}
-
-	errCount := 0
-	for doc := range docFiles {
-		for _, match := range linkPattern.FindAllSubmatch(readFile(doc), -1) {
-			// match[0] is entire "[text](target)", match[1] is just "target"
-			target := match[1]
-
-			if webRef.Match(target) || emailRef.Match(target) {
-				logger.Debugf("test:doc: %s: valid web/email link: %s", doc, string(target))
-			} else if assetRef.Match(target) {
-				logger.Debugf("test:doc: %s: validating image ref: %s", doc, string(target))
-				imgPath := filepath.Join(filepath.Dir(doc), string(target))
-
-				// Make sure the reference is limited to the correct directory
-				if !strings.HasPrefix(imgPath, assetDir) {
-					logger.Errorf("test:doc: %s: image reference \"%s\" resolves to \"%s\", needs to be under %s",
-						doc, target, imgPath, assetDir)
-					continue
-				}
-
-				// Make sure the image exists
-				if _, err := os.Stat(imgPath); err == nil {
-					linkedImages[imgPath] = struct{}{}
-				} else {
-					logger.Errorf("test:doc: %s: invalid image asset \"%s\": %s", doc, target, err)
-					errCount++
-				}
-			} else if docMatch := docRef.FindSubmatch(target); len(docMatch) > 0 {
-				linkedFile, header := string(docMatch[1]), string(docMatch[2])
-				logger.Debugf("test:doc: %s found doc ref to %s with header %s", doc, linkedFile, header)
-
-				// TODO - validate document path
-				// TODO - validate headers
-				logger.Debugf("test:doc: %s doc ref: %s", doc, string(target))
+			// Make sure the image exists
+			if _, err := os.Stat(imgPath); err == nil {
+				linkedImages[imgPath] = struct{}{}
 			} else {
-				// TODO - see if we can provide more help here
-				// E.g. check for directory
-				logger.Errorf("test:doc: %s: unable to validate link \"%s\"", doc, string(match[0]))
-				errCount++
+				errs = append(errs, fmt.Sprintf(
+					"%s: invalid image asset \"%s\": %s", docPath, img, err))
 			}
 		}
 	}
@@ -219,12 +183,12 @@ func testDoc() error {
 	// Check for unused image assets
 	walk(assetDir, func(path string, info os.FileInfo) {
 		if _, exists := linkedImages[path]; !exists && !info.IsDir() && filepath.Ext(path) != ".DS_Store" {
-			logger.Warnf("test:doc: %s is unused", path)
+			errs = append(errs, fmt.Sprintf("%s is unused", path))
 		}
 	})
 
-	if errCount > 0 {
-		return fmt.Errorf("test:doc: %d errors", errCount)
+	if len(errs) > 0 {
+		return fmt.Errorf("test:doc: %d errors:\n - %s", len(errs), strings.Join(errs, "\n - "))
 	}
 	return nil
 }
@@ -557,7 +521,8 @@ func testWebTsc() error {
 }
 
 func testWebIntegration() error {
-	return sh.Run("npm", "run", "test")
+	// Passing tests are printed to stderr
+	return runWithoutStderr("npm", "run", "test")
 }
 
 func testTfValidate() error {

@@ -1,0 +1,166 @@
+package mage
+
+/**
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
+)
+
+type docLink struct {
+	Path   string // e.g. "README.md"
+	Header string // e.g. "#section-title"
+}
+
+type docSummary struct {
+	// Anchor links for markdown headers.
+	// For example, the "### AWS.S3" header will be listed here as "#aws-s3"
+	Headers map[string]struct{}
+
+	// Links extracted from the "[text](target)" pattern
+	DocLinks   []docLink
+	EmailLinks []string // ["mailto:support@runpanther.io"]
+	ImgLinks   []string // ["../.gitbook/assets/readme-overview.png"]
+	WebLinks   []string // ["https://runpanther.io"]
+}
+
+var (
+	// find section titles: "## text" at the beginning of a line
+	headerPattern = regexp.MustCompile(`^#+(.*)`)
+
+	// note: we need the non-greedy variant, hence ".*?"
+	linkPattern = regexp.MustCompile(`\[.*?\]\((.*?)\)`) // e.g. "[myfile](path/to/doc.md)"
+
+	// Every link target must be one of the following:
+
+	// web reference - http(s) links
+	webLinkPattern = regexp.MustCompile(`^https?://[A-Za-z0-9.#?&%/:=_-]{5,}$`)
+
+	// email link - based on the same regex we use for emails in CloudFormation parameters
+	emailLinkPattern = regexp.MustCompile(`^mailto:[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$`)
+
+	// Asset reference - an image in the docs/gitbook/.gitbook/assets folder
+	// For example, "../.gitbook/assets/log-analysis/setup-sns1.png"
+	assetLinkPattern = regexp.MustCompile(`^(?:\.\./)*\.gitbook/assets/[a-z0-9/-]+\.(?:png|jpg)$`)
+
+	// Document reference - link to another documentation page, potentially with a header.
+	// For safety and consistency, we don't allow linking to directories, only specific files.
+	//
+	// Headers can only contain lowercase letters and dashes, but this pattern will allow a broader
+	// character set so the caller can display the appropriate error message.
+	//
+	// Examples:
+	//    - "#aws-credentials"                       (header in same file)
+	//    - "../enterprise/data-analytics/README.md" (a different document)
+	//    - "development.md#deploying"               (header in another file)
+	//    - ""                                       (file and header are both optional in regex)
+	//
+	// Non-examples:
+	//    - "../log-analysis"           (prevent directory links - link will fail without README)
+	//    - "quick_start.md"            (use "-" instead of "_")
+	docLinkPattern = regexp.MustCompile(`^([A-Za-z0-9./-]+\.md)?(#[A-Za-z0-9./-]+)?$`)
+)
+
+// Extract headers and links from a markdown document for subsequent verification.
+//
+// Returns an error if there are duplicate/undefined headers or links which could not be categorized.
+// But the caller is responsible for verifying the content of the links.
+func parseDoc(path string) (*docSummary, error) {
+	result := docSummary{Headers: make(map[string]struct{})}
+	var errs []string
+
+	contents := string(readFile(path))
+
+	// Extract headers
+	for _, match := range headerPattern.FindAllStringSubmatch(contents, -1) {
+		// match[0] is entire "### Header Text", match[1] is just " Header Text"
+		anchor, err := headerAnchor(match[1])
+		if err != nil {
+			errs = append(errs, err.Error())
+			continue
+		}
+
+		if anchor == "#undefined" {
+			errs = append(errs, fmt.Sprintf("\"%s\" results in undefined anchor - add header text", match[0]))
+			continue
+		}
+
+		// Duplicate headers are allowed by gitbooks - it will add an incremental counter
+		// "dup", "dup-1", "dup-2", etc.
+		//
+		// But we don't want to allow them because they're too fragile.
+		// For example, reorganizing a file would change their ordering.
+		if _, exists := result.Headers[anchor]; exists {
+			errs = append(errs, fmt.Sprintf("\"%s\" results in duplicate anchor %s", match[0], anchor))
+			continue
+		}
+
+		// The level of header has no effect on its generated link.
+		// E.g. "# AWS" and "##### AWS" will both result in "#aws" as the anchor link.
+		result.Headers[anchor] = struct{}{}
+	}
+
+	// Extract links
+	for _, match := range linkPattern.FindAllStringSubmatch(contents, -1) {
+		// match[0] is entire "[text](link-target)", match[1] is just "link-target"
+		target := match[1]
+
+		if webLinkPattern.MatchString(target) {
+			result.WebLinks = append(result.WebLinks, target)
+		} else if emailLinkPattern.MatchString(target) {
+			result.EmailLinks = append(result.EmailLinks, target)
+		} else if assetLinkPattern.MatchString(target) {
+			result.ImgLinks = append(result.ImgLinks, target)
+		} else if docMatch := docLinkPattern.FindStringSubmatch(target); len(docMatch) > 0 {
+			result.DocLinks = append(result.DocLinks, docLink{Path: docMatch[1], Header: docMatch[2]})
+		} else {
+			// This link couldn't be classified - try to offer a helpful error message for common mistakes
+			if target == "" {
+				errs = append(errs, fmt.Sprintf("%s has empty link target", match[0]))
+				continue
+			}
+
+			if strings.Contains(target, ".com") || strings.Contains(target, ".io") {
+				errs = append(errs, fmt.Sprintf("%s is an invalid link - be sure web links are "+
+					"prefixed with \"http(s)://\" and email links are prefixed with \"mailto:\"", match[0]))
+				continue
+			}
+
+			if info, err := os.Stat(filepath.Join(path, target)); err == nil && info.IsDir() {
+				// Linking to a directory without a README will result in a broken link.
+				// For simplicity, then, we disallow all directory links.
+				errs = append(errs, fmt.Sprintf(
+					"%s is invalid - directory links are not allowed, link to a specific .md file", match[0]))
+				continue
+			}
+
+			errs = append(errs, fmt.Sprintf(
+				"%s is invalid - links must match one of these patterns: \n%s\n%s\n%s\n%s",
+				match[0], webLinkPattern.String(), emailLinkPattern.String(), assetLinkPattern.String(), docLinkPattern.String()))
+		}
+	}
+
+	if len(errs) > 0 {
+		return nil, fmt.Errorf("%s: %d parsing errors:\n - %s", path, len(errs), strings.Join(errs, "\n - "))
+	}
+	return &result, nil
+}
