@@ -79,6 +79,6 @@ Finally, you will need to create an alias or CNAME on your domain pointing to th
     - Click the `Create` button
 
 
-![](../.gitbook/assets/operations/hosted_zone_alias.png)
+![](../.gitbook/assets/operations/hosted-zone-alias.png)
     
 After this, your setup is complete. You can now navigate to your new domain and reach the Panther web application over a signed and secure HTTPS connection.
