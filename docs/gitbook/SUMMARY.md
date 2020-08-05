@@ -74,11 +74,6 @@
   * [Suricata](log-analysis/log-processing/supported-logs/Suricata.md)
   * [Syslog](log-analysis/log-processing/supported-logs/Syslog.md)
   * [Zeek](log-analysis/log-processing/supported-logs/Zeek.md)
-* [SaaS Logs Setup]()
-  * [Box](log-analysis/log-processing/log-setup/box.md)
-  * [GSuite](log-analysis/log-processing/log-setup/gsuite.md)
-  * [Okta](log-analysis/log-processing/log-setup/okta.md)
-  * [OneLogin](log-analysis/log-processing/log-setup/onelogin.md)
 * [Standard Fields](log-analysis/panther-fields.md)
 
 ## Cloud Security
@@ -219,6 +214,10 @@
   * [Data Explorer](enterprise/data-analytics/data-explorer.md)
   * [Automatic Log Compaction](enterprise/data-analytics/log-compaction.md)
 * [SaaS Logs](enterprise/saas-logs.md)
+  * [Box](enterprise/saas-logs/box.md)
+  * [G Suite](enterprise/saas-logs/gsuite.md)
+  * [Okta](enterprise/saas-logs/okta.md)
+  * [OneLogin](enterprise/saas-logs/onelogin.md)
 * [Snowflake Integration](enterprise/snowflake.md)
 * [SAML/SSO Integration](enterprise/saml/overview.md)
   * [Generic](enterprise/saml/generic.md)
