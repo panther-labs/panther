@@ -57,12 +57,17 @@ The steps to view the dashboard:
 ## Tools
 Panther comes with some operational tools useful for managing the Panther infrastructure. These are statically compiled
 executables for linux, mac (aka darwin) and windows. They can be copied/installed onto operational support hosts. 
-To build:
+To build from source:
 
 ```yaml
 mage build:tools
 ```
 
+They are also available pre-compiled for each release as assets associated with the github release.
+
 * **compact**: a tool to back fill JSON to Parquet conversion of log data (used when upgrading to Panther Enterprise)
+* **gluesync**: a tool to update glue table and partition schemas
 * **requeue**: a tool to copy messages from a dead letter queue back to the originating queue for reprocessing
 * **s3queue**: a tool to list files under an S3 path and send to the log processor input queue for processing (useful for back fill of data)
+
+To see usage, execute the tool with the `-h` flag.

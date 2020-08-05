@@ -21,6 +21,7 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	"github.com/panther-labs/panther/cmd/opstools/s3queue"
+	"github.com/panther-labs/panther/pkg/prompt"
 )
 
 const (
@@ -34,6 +35,7 @@ var (
 	CONCURRENCY = flag.Int("concurrency", 50, "The number of concurrent sqs writer go routines")
 	LIMIT       = flag.Uint64("limit", 0, "If non-zero, then limit the number of files to this number.")
 	TOQ         = flag.String("queue", "panther-input-data-notifications-queue", "The name of the log processor queue to send notifications.")
+	INTERACTIVE = flag.Bool("interactive", true, "If true, prompt for required flags if not set")
 	VERBOSE     = flag.Bool("verbose", false, "Enable verbose logging")
 
 	logger *zap.SugaredLogger
@@ -83,6 +85,9 @@ func main() {
 		REGION = sess.Config.Region
 	}
 
+	promptFlags()
+	validateFlags()
+
 	s3Region := getS3Region(sess, *S3PATH)
 
 	if *ACCOUNT == "" {
@@ -92,8 +97,6 @@ func main() {
 		}
 		ACCOUNT = identity.Account
 	}
-
-	validateFlags()
 
 	startTime := time.Now()
 	if *VERBOSE {
@@ -121,6 +124,20 @@ func main() {
 	} else {
 		logger.Infof("sent %d files (%.2fMB) to %s (%s) in %v",
 			stats.NumFiles, float32(stats.NumBytes)/(1024.0*1024.0), *TOQ, *REGION, time.Since(startTime))
+	}
+}
+
+func promptFlags() {
+	if !*INTERACTIVE {
+		return
+	}
+
+	if *S3PATH == "" {
+		*S3PATH = prompt.Read("Please enter the s3 path to read from (e.g., s3://<bucket>/<prefix>): ", prompt.NonemptyValidator)
+	}
+
+	if *TOQ == "" {
+		*TOQ = prompt.Read("Please enter queue name to write to: ", prompt.NonemptyValidator)
 	}
 }
 

@@ -134,14 +134,7 @@ func deployPreCheck(awsRegion string, checkForOldVersion bool) {
 	}
 
 	// Set global gitVersion, warn if not deploying a tagged release
-	gitVersion, err = sh.Output("git", "describe", "--tags")
-	if err != nil {
-		logger.Fatalf("git describe failed: %v", err)
-	}
-	// The gitVersion is "v0.3.0" on tagged release, otherwise something like "v0.3.0-128-g77fd9ff"
-	if strings.Contains(gitVersion, "-") {
-		logger.Warnf("%s is not a tagged release, proceed at your own risk", gitVersion)
-	}
+	getGitVersion()
 
 	// There were mage migrations to help with v1.3 and v1.4 source deployments,
 	// but these were removed in v1.6. As a result, old deployments first need to upgrade to v1.5.1
