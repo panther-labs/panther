@@ -23,9 +23,9 @@ By default, we poll for new logs every minute.
 Panther has direct support for pulling log data from AWS EventBridge, enabling real-time streaming and simple ingestion of [support SaaS integrations](https://aws.amazon.com/eventbridge/integrations/).
 
 * [OneLogin](onelogin.md)
-* (Coming soon) Auth0
-* (Coming soon) NewRelic
-* (Coming soon) ZenDesk
+* *(Coming soon!)* Auth0
+* *(Coming soon!)* NewRelic
+* *(Coming soon!)* ZenDesk
 
 To set up, head to `Log Analysis` > `Sources` > `Add Source` and select `Amazon EventBridge`:
 
