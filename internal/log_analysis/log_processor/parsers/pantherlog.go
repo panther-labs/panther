@@ -243,8 +243,6 @@ func (pl *PantherLog) AppendAnySHA256HashesPtr(values ...*string) {
 	}
 }
 
-var defaultMeta = pantherlog.DefaultFields()
-
 func AppendAnyString(any *PantherAnyString, values ...string) {
 	// add new if not present
 	for _, v := range values {
@@ -271,9 +269,9 @@ func (pl *PantherLog) Result() *Result {
 		eventTime = parseTime
 	}
 	return &pantherlog.Result{
-		// Use RawEvent so that our custom ValEncoder for Result knows to not duplicate Panther added fields
-		RawEvent: event,
-		Meta:     defaultMeta,
+		// Use EventIncludesPantherFields so that our custom ValEncoder for Result knows to not duplicate Panther added fields
+		EventIncludesPantherFields: true,
+		Event:                      event,
 		CoreFields: pantherlog.CoreFields{
 			PantherLogType:   unbox.String(pl.PantherLogType),
 			PantherRowID:     unbox.String(pl.PantherRowID),

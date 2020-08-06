@@ -350,6 +350,10 @@ export const addTrailingSlash = (url: string) => {
   return url.endsWith('/') ? url : `${url}/`;
 };
 
+export const getCurrentYear = () => {
+  return dayjs().format('YYYY');
+};
+
 export const getCurrentDate = () => {
   return `${dayjs().toISOString().split('.')[0]}Z`;
 };

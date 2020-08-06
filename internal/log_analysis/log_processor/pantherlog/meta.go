@@ -26,11 +26,12 @@ import (
 	"time"
 
 	"github.com/fatih/structtag"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 )
 
 // FieldID is the id of a field added by Panther.
-// This includes both core fields that are common to all events and 'any' fields that are added on a per-logtype basis.
+// This includes both core fields that are common to all events and indicator fields that are added on a per-logtype basis.
 type FieldID int
 
 // Core field ids (<=0)
@@ -52,10 +53,10 @@ func (id FieldID) IsCore() bool {
 	return id <= 0
 }
 
-// Common fields (>0)
+// Indicator fields (>0)
 // These fields collect string values from the log event.
-// Each logtype can choose the fields it requires.
-// Modules can register new fields at init() using RegisterField
+// Each log type can choose the indicator fields it requires.
+// Modules can register new indicator fields at init() using RegisterIndicator
 const (
 	FieldIPAddress FieldID = 1 + iota
 	FieldDomainName
@@ -100,8 +101,8 @@ var (
 		CoreFieldRowID:     coreField(CoreFieldRowID),
 		CoreFieldLogType:   coreField(CoreFieldLogType),
 	}
-	// fieldNamesJSON stores the JSON field names of registered field ids.
-	fieldNamesJSON = map[FieldID]string{}
+	// registeredFieldNamesJSON stores the JSON field names of registered field ids.
+	registeredFieldNamesJSON = map[FieldID]string{}
 	// fieldsByName maps field names to ids to ensure field names are distinct in both Go structs and JSON objects.
 	fieldsByName = map[string]FieldID{
 		// Reserve field name for embedded event
@@ -120,63 +121,63 @@ var (
 
 // FieldNameJSON returns the JSON field name of a field id.
 func FieldNameJSON(kind FieldID) string {
-	return fieldNamesJSON[kind]
+	return registeredFieldNamesJSON[kind]
 }
 
 func init() {
-	MustRegisterField(FieldIPAddress, FieldMeta{
+	MustRegisterIndicator(FieldIPAddress, FieldMeta{
 		Name:        "PantherAnyIPAddresses",
 		NameJSON:    "p_any_ip_addresses",
 		Description: "Panther added field with collection of ip addresses associated with the row",
 	})
-	MustRegisterField(FieldDomainName, FieldMeta{
+	MustRegisterIndicator(FieldDomainName, FieldMeta{
 		Name:        "PantherAnyDomainNames",
 		NameJSON:    "p_any_domain_names",
 		Description: "Panther added field with collection of domain names associated with the row",
 	})
-	MustRegisterField(FieldSHA1Hash, FieldMeta{
+	MustRegisterIndicator(FieldSHA1Hash, FieldMeta{
 		Name:        "PantherAnySHA1Hashes",
 		NameJSON:    "p_any_sha1_hashes",
 		Description: "Panther added field with collection of SHA1 hashes associated with the row",
 	})
-	MustRegisterField(FieldSHA256Hash, FieldMeta{
+	MustRegisterIndicator(FieldSHA256Hash, FieldMeta{
 		Name:        "PantherAnySHA256Hashes",
 		NameJSON:    "p_any_sha256_hashes",
 		Description: "Panther added field with collection of MD5 hashes associated with the row",
 	})
-	MustRegisterField(FieldMD5Hash, FieldMeta{
+	MustRegisterIndicator(FieldMD5Hash, FieldMeta{
 		Name:        "PantherAnyMD5Hashes",
 		NameJSON:    "p_any_md5_hashes",
 		Description: "Panther added field with collection of SHA256 hashes of any algorithm associated with the row",
 	})
-	MustRegisterField(FieldTraceID, FieldMeta{
+	MustRegisterIndicator(FieldTraceID, FieldMeta{
 		Name:        "PantherAnyTraceIDs",
 		NameJSON:    "p_any_trace_ids",
 		Description: "Panther added field with collection of context trace identifiers",
 	})
-	MustRegisterScanner("ip", ScannerFunc(ScanIPAddress), FieldIPAddress)
+	MustRegisterScanner("ip", ValueScannerFunc(ScanIPAddress), FieldIPAddress)
 	MustRegisterScanner("domain", FieldDomainName, FieldDomainName)
 	MustRegisterScanner("md5", FieldMD5Hash, FieldMD5Hash)
 	MustRegisterScanner("sha1", FieldSHA1Hash, FieldSHA1Hash)
 	MustRegisterScanner("sha256", FieldSHA256Hash, FieldSHA256Hash)
-	MustRegisterScanner("hostname", ScannerFunc(ScanHostname), FieldDomainName, FieldIPAddress)
-	MustRegisterScanner("url", ScannerFunc(ScanURL), FieldDomainName, FieldIPAddress)
+	MustRegisterScanner("hostname", ValueScannerFunc(ScanHostname), FieldDomainName, FieldIPAddress)
+	MustRegisterScanner("url", ValueScannerFunc(ScanURL), FieldDomainName, FieldIPAddress)
 	MustRegisterScanner("trace_id", FieldTraceID, FieldTraceID)
 }
 
-// MustRegisterField allows modules to define their own field ids for 'any' fields.
+// MustRegisterIndicator allows modules to define their own indicator fields.
 // It panics if a registration error occurs.
 // WARNING: This function is not concurrent safe and it *must* be used during `init()`
-func MustRegisterField(kind FieldID, field FieldMeta) {
-	if err := RegisterField(kind, field); err != nil {
+func MustRegisterIndicator(id FieldID, field FieldMeta) {
+	if err := RegisterIndicator(id, field); err != nil {
 		panic(err)
 	}
 }
 
-// RegisterField allows modules to define their own field ids for 'any' fields.
+// RegisterIndicator allows modules to define their own indicator fields.
 // WARNING: This function is not concurrent safe and it *must* be used during `init()`
-// These fields are always added as `[]string` and values can be collected can by ValueScanners using `RegisterScanner`.
-func RegisterField(id FieldID, field FieldMeta) error {
+// These fields are always added as `[]string` and values can be collected can by scanners using `RegisterScanner`.
+func RegisterIndicator(id FieldID, field FieldMeta) error {
 	if id <= FieldNone {
 		return errors.New(`invalid field id`)
 	}
@@ -196,17 +197,17 @@ func RegisterField(id FieldID, field FieldMeta) error {
 		return errors.Errorf(`duplicate JSON field name %q`, field.Name)
 	}
 	registeredFields[id] = field.StructField()
-	fieldNamesJSON[id] = field.NameJSON
+	registeredFieldNamesJSON[id] = field.NameJSON
 	// Store both the JSON name and the go field name
 	fieldsByName[field.Name] = id
 	fieldsByName[field.NameJSON] = id
 	return nil
 }
 
-// DefaultFields returns the default panther 'any' fields.
+// DefaultIndicators returns the default panther indicator fields.
 // It creates a new copy so that outside packages cannot affect the defaults.
-func DefaultFields() []FieldID {
-	return []FieldID{
+func DefaultIndicators() FieldSet {
+	return FieldSet{
 		FieldIPAddress,
 		FieldDomainName,
 		FieldSHA256Hash,
@@ -216,9 +217,7 @@ func DefaultFields() []FieldID {
 	}
 }
 
-var defaultMetaFields = DefaultFields()
-
-// FieldMeta describes a panther 'any' field.
+// FieldMeta describes a panther field.
 type FieldMeta struct {
 	Name        string
 	NameJSON    string
@@ -316,43 +315,233 @@ func extendStructFields(fields []reflect.StructField, typ reflect.Type) ([]refle
 
 func checkDistinctNames(fields []reflect.StructField) error {
 	distinct := map[string]bool{}
-	for _, field := range fields {
+	return visitStructFieldsJSON(reflect.StructOf(fields), func(field reflect.StructField) error {
 		if distinct[field.Name] {
 			return errors.Errorf(`duplicate field name %q`, field.Name)
 		}
 		distinct[field.Name] = true
-	}
-	return nil
+		return nil
+	})
 }
 
 func checkDistinctNamesJSON(fields []reflect.StructField) error {
 	distinct := map[string]bool{}
-	for _, field := range fields {
-		tags, err := structtag.Parse(string(field.Tag))
-		if err != nil {
-			return err
+	return visitStructFieldsJSON(reflect.StructOf(fields), func(field reflect.StructField) error {
+		name := resolveFieldNameJSON(&field)
+		if name == "" {
+			return nil
 		}
-		jsonTag, err := tags.Get(`json`)
-		if err != nil {
-			return err
-		}
-		name := jsonTag.Name
-
 		if distinct[name] {
-			return errors.Errorf(`duplicate field name %q`, name)
+			return errors.Errorf(`duplicate field name %q`, field.Name)
 		}
 		distinct[name] = true
+		return nil
+	})
+}
+
+func visitStructFieldsJSON(typ reflect.Type, visit func(field reflect.StructField) error) error {
+	typ = derefType(typ)
+	if typ.Kind() != reflect.Struct {
+		return nil
+	}
+	numFields := typ.NumField()
+	for i := 0; i < numFields; i++ {
+		field := typ.Field(i)
+		name := resolveFieldNameJSON(&field)
+		// We only visit json visible fields and embedded fields
+		switch {
+		case name != "":
+			if err := visit(field); err != nil {
+				return err
+			}
+		case field.Anonymous:
+			if err := visitStructFieldsJSON(field.Type, visit); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
 
-// RegisteredFieldNamesJSON returns the JSON field names for all non-core registered fields.
-func RegisteredFieldNamesJSON() (names []string) {
-	for id, name := range fieldNamesJSON {
-		if id.IsCore() {
+// helper to deref pointer types
+func derefType(typ reflect.Type) reflect.Type {
+	for typ != nil && typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+	}
+	return typ
+}
+
+// helper to resolve the json field name of a struct field
+// returns an empty string if the field is not visible in JSON
+func resolveFieldNameJSON(field *reflect.StructField) string {
+	if !isPublicFieldName(field.Name) {
+		return ""
+	}
+	tags, err := structtag.Parse(string(field.Tag))
+	if err != nil {
+		return field.Name
+	}
+	const tagJSON = `json`
+	jsonTag, err := tags.Get(tagJSON)
+	if err != nil {
+		// Field has no `json` tag. It uses it's own name as JSON field name
+		return field.Name
+	}
+	// Handle all possible cases properly
+	switch name := jsonTag.Name; name {
+	case "-":
+		// Foo string `json:"-"`
+		return ""
+	case "":
+		// Foo string `json:",omitempty"`
+		return field.Name
+	default:
+		// Foo string `json:"foo"`
+		// Foo string `json:"foo,omitempty"`
+		return name
+	}
+}
+
+func isPublicFieldName(name string) bool {
+	return strings.Title(name) == name
+}
+
+// FieldSet is a set of field ids.
+// It provides helper methods to sort, filter and extend a set of uniquee fields ids.
+type FieldSet []FieldID
+
+// NewFieldSet creates a new set of distinct field ids
+func NewFieldSet(ids ...FieldID) (fields FieldSet) {
+	for _, id := range ids {
+		fields = fields.Add(id)
+	}
+	return fields
+}
+
+// Add appends a field id to the set if it is not already there.
+func (fields FieldSet) Add(id FieldID) FieldSet {
+	for _, duplicate := range fields {
+		if duplicate == id {
+			return fields
+		}
+	}
+	return append(fields, id)
+}
+
+// Extend extends the set to include ids.
+func (fields FieldSet) Extend(ids ...FieldID) FieldSet {
+	for _, id := range ids {
+		fields = fields.Add(id)
+	}
+	return fields
+}
+
+// Indicators returns a copy of the set containing only indicator field ids
+func (fields FieldSet) Indicators() (indicators FieldSet) {
+	if fields == nil {
+		return
+	}
+	for _, field := range fields {
+		if field.IsCore() {
 			continue
 		}
-		names = append(names, name)
+		indicators = indicators.Add(field)
 	}
 	return
+}
+
+// FieldSetFromTag produces the minimum required field set to support scanners defined in a struct tag.
+func FieldSetFromTag(tag string) FieldSet {
+	tags, err := structtag.Parse(tag)
+	if err != nil {
+		return nil
+	}
+
+	// Lookup field json name to see if it is one of the registered fields
+	if jsonTag, err := tags.Get(`json`); err == nil {
+		if id, ok := fieldsByName[jsonTag.Name]; ok {
+			return FieldSet{id}
+		}
+	}
+
+	// Check the panther tag to see if it maps to a registered scanner
+	pantherTag, err := tags.Get(TagName)
+	if err != nil {
+		// No `panther` tag
+		return nil
+	}
+	_, fields := LookupScanner(pantherTag.Name)
+	return fields
+}
+
+// FieldSetFromType produces the minimum required field set to support scanners and core fields defined in a struct.
+func FieldSetFromType(typ reflect.Type) (fields FieldSet) {
+	typ = derefType(typ)
+	if typ.Kind() != reflect.Struct {
+		return
+	}
+	for i := 0; i < typ.NumField(); i++ {
+		field := typ.Field(i)
+		// Anonymous struct fields can have their public fields exposed to JSON
+		if field.Anonymous || isPublicFieldName(field.Name) {
+			fields = appendFieldSet(fields, &field)
+		}
+	}
+	return
+}
+
+func appendFieldSet(fields FieldSet, field *reflect.StructField) FieldSet {
+	if id, ok := fieldsByName[field.Name]; ok {
+		return fields.Add(id)
+	}
+	switch fieldType := derefType(field.Type); fieldType.Kind() {
+	case reflect.Struct:
+		switch fieldType {
+		case typNullString:
+			tag := string(field.Tag)
+			return fields.Extend(FieldSetFromTag(tag)...)
+		case typTime:
+			// We know there are no field ids to be found in time.Time, avoid some needless recursion
+			return fields
+		default:
+			return fields.Extend(FieldSetFromType(fieldType)...)
+		}
+	case reflect.Slice:
+		el := derefType(fieldType.Elem())
+		return fields.Extend(FieldSetFromType(el)...)
+	case reflect.String:
+		tag := string(field.Tag)
+		return fields.Extend(FieldSetFromTag(tag)...)
+	default:
+		return fields
+	}
+}
+
+// FieldSetFromJSON checks top-level field names in a JSON object and produces the field set of all panther fields.
+func FieldSetFromJSON(input []byte) (fields FieldSet) {
+	obj := map[string]jsoniter.RawMessage{}
+	if err := jsoniter.Unmarshal(input, &obj); err != nil {
+		return nil
+	}
+	for key := range obj {
+		if id, ok := fieldsByName[key]; ok {
+			fields = fields.Add(id)
+		}
+	}
+	return
+}
+
+// Len implements sort.Interface
+func (fields FieldSet) Len() int {
+	return len(fields)
+}
+
+// Less implements sort.Interface
+func (fields FieldSet) Less(i, j int) bool {
+	return fields[i] < fields[j]
+}
+
+// Swap implements sort.Interface
+func (fields FieldSet) Swap(i, j int) {
+	fields[i], fields[j] = fields[j], fields[i]
 }
