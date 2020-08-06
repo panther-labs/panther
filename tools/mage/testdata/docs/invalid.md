@@ -20,8 +20,6 @@ Header has no text
 
 [empty]() - empty link
 
-[](example.com) - needs to be prefixed with https://
-
 [](.gitbook/assets/logo.png) - image not embedded with !
 
 [](.gitbook/) - directory link

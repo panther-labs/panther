@@ -99,13 +99,12 @@ func TestDocParseErrors(t *testing.T) {
 	assert.Nil(t, summary)
 
 	expected := strings.Join([]string{
-		"testdata/docs/invalid.md: 8 parsing errors:",
+		"testdata/docs/invalid.md: 7 parsing errors:",
 		fmt.Sprintf(" - header \"a1b2c3\" violates pattern %s: \"1b2\" - try adding spaces around numbers",
 			titleEdgeCase.String()),
 		" - duplicate header anchor #duplicate",
 		" - embedded image in ![](wrong-image-format.txt) does not match expected pattern " + assetLinkPattern.String(),
 		" - [empty]() has empty link target",
-		" - [](example.com) is invalid - be sure web links are prefixed with \"http(s)://\" and email links are prefixed with \"mailto:\"",
 		" - [](.gitbook/assets/logo.png) looks like an image, but is not prefixed with !",
 		" - [](.gitbook/) is invalid - directory links are not allowed, link to a specific .md file",
 		" - [](***) is invalid - non-image links must match one of these patterns:",

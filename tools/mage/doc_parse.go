@@ -56,10 +56,10 @@ var (
 	// Every link target must be one of the following:
 
 	// web reference - http(s) links
-	webLinkPattern = regexp.MustCompile(`^https?://[A-Za-z0-9.#?&%/:=_-]{5,}$`)
+	webLinkPattern = regexp.MustCompile(`^https?://[\w.#?&%/:=-]{5,}$`)
 
 	// email link - based on the same regex we use for emails in CloudFormation parameters
-	emailLinkPattern = regexp.MustCompile(`^mailto:[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$`)
+	emailLinkPattern = regexp.MustCompile(`^mailto:[\w.%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$`)
 
 	// Asset reference - an image in the docs/gitbook/.gitbook/assets folder
 	// For example, "../.gitbook/assets/log-analysis/setup-sns1.png"
@@ -79,8 +79,7 @@ var (
 	//
 	// Non-examples:
 	//    - "../log-analysis"           (prevent directory links - link will fail without README)
-	//    - "quick_start.md"            (use "-" instead of "_")
-	docLinkPattern = regexp.MustCompile(`^([A-Za-z0-9./-]+\.md)?(#[A-Za-z0-9./-]+)?$`)
+	docLinkPattern = regexp.MustCompile(`^([\w./-]+\.md)?(#[\w.-]+)?$`)
 )
 
 // Extract headers and links from a markdown document for subsequent verification.
@@ -132,6 +131,11 @@ func parseDoc(path string) (*docSummary, error) {
 	for _, match := range linkPattern.FindAllStringSubmatch(contents, -1) {
 		// match[0] is entire "![text](link-target)", match[1] is just "link-target"
 		target := match[1]
+		if target == "" {
+			// the doc link pattern could match an empty string
+			errs = append(errs, fmt.Sprintf("%s has empty link target", match[0]))
+			continue
+		}
 
 		if strings.HasPrefix(match[0], "!") {
 			// Images always have ! prefix for embedding
@@ -146,22 +150,11 @@ func parseDoc(path string) (*docSummary, error) {
 		} else if emailLinkPattern.MatchString(target) {
 			result.EmailLinks = append(result.EmailLinks, target)
 		} else if docMatch := docLinkPattern.FindStringSubmatch(target); docMatch != nil {
-			if target == "" {
-				// the doc link pattern could match an empty string
-				errs = append(errs, fmt.Sprintf("%s has empty link target", match[0]))
-			} else {
-				result.DocLinks = append(result.DocLinks, docLink{Path: docMatch[1], Header: docMatch[2]})
-			}
+			result.DocLinks = append(result.DocLinks, docLink{Path: docMatch[1], Header: docMatch[2]})
 		} else {
 			// This link couldn't be classified - try to offer a helpful error message for common mistakes
 			if assetLinkPattern.MatchString(target) {
 				errs = append(errs, fmt.Sprintf("%s looks like an image, but is not prefixed with !", match[0]))
-				continue
-			}
-
-			if strings.Contains(target, ".com") || strings.Contains(target, ".io") {
-				errs = append(errs, fmt.Sprintf("%s is invalid - be sure web links are "+
-					"prefixed with \"http(s)://\" and email links are prefixed with \"mailto:\"", match[0]))
 				continue
 			}
 
