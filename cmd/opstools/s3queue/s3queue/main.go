@@ -50,15 +50,17 @@ func usage() {
 
 func init() {
 	flag.Usage = usage
+}
 
+func logInit() {
 	config := zap.NewDevelopmentConfig() // DEBUG by default
 	if !*VERBOSE {
-		// In normal mode, hide DEBUG messages and file/line numbers
-		config.DisableCaller = true
+		// In normal mode, hide DEBUG messages
 		config.Level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
 	}
 
-	// Always disable error traces and use color-coded log levels and short timestamps
+	// Always disable and file/line numbers, error traces and use color-coded log levels and short timestamps
+	config.DisableCaller = true
 	config.DisableStacktrace = true
 	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 
@@ -72,6 +74,8 @@ func init() {
 
 func main() {
 	flag.Parse()
+
+	logInit() // must be done after parsing flags
 
 	sess, err := session.NewSession()
 	if err != nil {
@@ -118,7 +122,7 @@ func main() {
 			caught, stats.NumFiles, float32(stats.NumBytes)/(1024.0*1024.0), *TOQ, time.Since(startTime))
 	}()
 
-	err = s3queue.S3Queue(sess, *ACCOUNT, *S3PATH, s3Region, *TOQ, *CONCURRENCY, *LIMIT, *VERBOSE, stats)
+	err = s3queue.S3Queue(sess, *ACCOUNT, *S3PATH, s3Region, *TOQ, *CONCURRENCY, *LIMIT, stats)
 	if err != nil {
 		logger.Fatal(err)
 	} else {
