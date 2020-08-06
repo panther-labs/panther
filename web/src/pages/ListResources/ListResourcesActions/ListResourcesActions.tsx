@@ -29,6 +29,7 @@ import ErrorBoundary from 'Components/ErrorBoundary';
 import pick from 'lodash/pick';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import isEmpty from 'lodash/isEmpty';
+import Breadcrumbs from 'Components/Breadcrumbs';
 import { useListAccountIds } from './graphql/listAccountIds.generated';
 
 const statusOptions = Object.values(ComplianceStatusEnum);
@@ -139,32 +140,34 @@ const ListResourcesActions: React.FC = () => {
   );
 
   return (
-    <Box as="section" mb={6}>
+    <React.Fragment>
       {error && <Alert variant="error" title="Failed to fetch available sources" discardable />}
-      <Flex justify="flex-end">
-        <Button
-          icon="filter"
-          variant="outline"
-          variantColor="navyblue"
-          onClick={() => setFiltersVisibility(!areFiltersVisible)}
-        >
-          Filter Options {filtersCount ? `(${filtersCount})` : ''}
-        </Button>
-      </Flex>
-      <ErrorBoundary>
-        <Collapse open={areFiltersVisible}>
-          <Box pt={6}>
-            <Card p={8}>
+      <Breadcrumbs.Actions>
+        <Flex justify="flex-end">
+          <Button
+            icon="filter"
+            variant="outline"
+            variantColor="navyblue"
+            onClick={() => setFiltersVisibility(!areFiltersVisible)}
+          >
+            Filter Options {filtersCount ? `(${filtersCount})` : ''}
+          </Button>
+        </Flex>
+      </Breadcrumbs.Actions>
+      <Collapse open={areFiltersVisible}>
+        <Box pb={6} as="section">
+          <Card p={8}>
+            <ErrorBoundary>
               <GenerateFiltersGroup<MutatedListResourcesFiltersValues>
                 filters={filters}
                 onSubmit={handleFiltersSubmit}
                 initialValues={mutatedInitialValues}
               />
-            </Card>
-          </Box>
-        </Collapse>
-      </ErrorBoundary>
-    </Box>
+            </ErrorBoundary>
+          </Card>
+        </Box>
+      </Collapse>
+    </React.Fragment>
   );
 };
 
