@@ -68,12 +68,12 @@ func AvailableTables() (tables []*awsglue.GlueTableMetadata) {
 
 // Available parsers returns log parsers for all available log types with nil parameters.
 // Panics if a parser factory in the default registry fails with nil params.
-func AvailableParsers() map[string]parsers.Interface {
+func AvailableParsers(src parsers.SourceParams) map[string]parsers.Interface {
 	entries := logtypes.DefaultRegistry().Entries()
 	available := make(map[string]parsers.Interface, len(entries))
 	for _, entry := range entries {
 		logType := entry.Describe().Name
-		parser, err := entry.NewParser(parsers.SourceParams{})
+		parser, err := entry.NewParser(src)
 		if err != nil {
 			panic(errors.Errorf("failed to create %q parser with nil params", logType))
 		}

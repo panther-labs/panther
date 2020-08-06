@@ -36,12 +36,15 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/unbox"
 )
 
 var (
-	debug = flag.Bool("debug", false, "Log debug to stderr")
+	debug       = flag.Bool("debug", false, "Log debug to stderr")
+	sourceID    = flag.String("source-id", "", "Set source id")
+	sourceLabel = flag.String("source-label", "", "Set source label")
 )
 
 func main() {
@@ -64,8 +67,14 @@ func main() {
 	defer out.Flush()
 
 	jsonAPI := common.BuildJSON()
+	src := parsers.SourceParams{
+		SourceID:    *sourceID,
+		SourceLabel: *sourceLabel,
+	}
 
-	classifier := classification.NewClassifier(registry.AvailableParsers())
+	parsers := registry.AvailableParsers(src)
+
+	classifier := classification.NewClassifier(parsers)
 	lines := bufio.NewScanner(stdin)
 	n := 0
 	for lines.Scan() {
