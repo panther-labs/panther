@@ -122,7 +122,7 @@ func main() {
 			caught, stats.NumFiles, float32(stats.NumBytes)/(1024.0*1024.0), *TOQ, time.Since(startTime))
 	}()
 
-	err = s3queue.S3Queue(sess, *ACCOUNT, *S3PATH, s3Region, *TOQ, *CONCURRENCY, *LIMIT, *VERBOSE, stats)
+	err = s3queue.S3Queue(sess, *ACCOUNT, *S3PATH, s3Region, *TOQ, *CONCURRENCY, *LIMIT, stats)
 	if err != nil {
 		logger.Fatal(err)
 	} else {
