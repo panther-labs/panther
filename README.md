@@ -117,6 +117,9 @@ Returning `True` means that a resource is compliant, and returning `False` will 
 <img src="docs/img/resource-viewer-dark.PNG" alt="Resource Viewer"/>
 <p align="center"><i>Resource Viewer:</i> View attributes and policy statuses</p>
 
+<img src="docs/img/compliance-overview-dark.PNG" alt="Cloud Security Overview"/>
+<p align="center"><i>Cloud Security:</i> Track and enforce resource compliance</p>
+
 ## About Us
 
 ### Team
