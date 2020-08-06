@@ -37,7 +37,7 @@ func TestS3Queue(t *testing.T) {
 	sqsClient.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil).Once()
 
 	stats := &Stats{}
-	err := s3Queue(s3Client, sqsClient, testAccount, testS3Path, testQueueName, 1, 0, false, stats)
+	err := s3Queue(s3Client, sqsClient, testAccount, testS3Path, testQueueName, 1, 0, stats)
 	require.NoError(t, err)
 	s3Client.AssertExpectations(t)
 	sqsClient.AssertExpectations(t)
@@ -65,7 +65,7 @@ func TestS3QueueLimit(t *testing.T) {
 	sqsClient.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil).Once()
 
 	stats := &Stats{}
-	err := s3Queue(s3Client, sqsClient, testAccount, testS3Path, testQueueName, 1, 1, false, stats)
+	err := s3Queue(s3Client, sqsClient, testAccount, testS3Path, testQueueName, 1, 1, stats)
 	require.NoError(t, err)
 	s3Client.AssertExpectations(t)
 	sqsClient.AssertExpectations(t)
@@ -90,7 +90,7 @@ func TestS3QueueBatch(t *testing.T) {
 	sqsClient.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil).Times(3)
 
 	stats := &Stats{}
-	err := s3Queue(s3Client, sqsClient, testAccount, testS3Path, testQueueName, 1, 0, false, stats)
+	err := s3Queue(s3Client, sqsClient, testAccount, testS3Path, testQueueName, 1, 0, stats)
 	require.NoError(t, err)
 	s3Client.AssertExpectations(t)
 	sqsClient.AssertExpectations(t)

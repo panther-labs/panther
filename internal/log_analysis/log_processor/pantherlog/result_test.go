@@ -66,7 +66,6 @@ func (e *testEvent) WriteValuesTo(w pantherlog.ValueWriter) {
 
 func newBuilder(id string, now time.Time) *pantherlog.ResultBuilder {
 	return &pantherlog.ResultBuilder{
-		LogType:   "TestEvent",
 		NextRowID: pantherlog.StaticRowID(id),
 		Now:       pantherlog.StaticNow(now),
 	}
@@ -86,7 +85,7 @@ func TestNewResultBuilder(t *testing.T) {
 	}
 
 	api := buildAPI()
-	result, err := b.BuildResult(&event)
+	result, err := b.BuildResult("TestEvent", &event)
 	require.NoError(t, err)
 	require.Equal(t, "TestEvent", result.PantherLogType)
 	testutil.EqualTimestamp(t, now, result.PantherParseTime)
@@ -213,7 +212,7 @@ func BenchmarkResultBuilder(b *testing.B) {
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			localEvent := event
-			result, err := builder.BuildResult(localEvent)
+			result, err := builder.BuildResult("TestEvent", localEvent)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -224,4 +223,41 @@ func BenchmarkResultBuilder(b *testing.B) {
 			}
 		}
 	})
+}
+
+type testEventTimer struct {
+	Timestamp time.Time `json:"ts"`
+	Foo       string    `json:"foo"`
+}
+
+var _ pantherlog.EventTimer = (*testEventTimer)(nil)
+
+func (e *testEventTimer) PantherEventTime() time.Time {
+	return e.Timestamp
+}
+
+func TestResultBuilder_BuildResult(t *testing.T) {
+	now := time.Now().UTC()
+	tm := now.Add(-1 * time.Hour)
+	b := pantherlog.ResultBuilder{
+		Now:       pantherlog.StaticNow(now),
+		NextRowID: pantherlog.StaticRowID("42"),
+	}
+	event := &testEventTimer{
+		Foo:       "bar",
+		Timestamp: tm,
+	}
+	result, err := b.BuildResult("Foo", event)
+	assert := require.New(t)
+	assert.NoError(err)
+	expect := &pantherlog.Result{
+		CoreFields: pantherlog.CoreFields{
+			PantherLogType:   "Foo",
+			PantherEventTime: tm,
+			PantherParseTime: now,
+			PantherRowID:     "42",
+		},
+		Event: event,
+	}
+	assert.Equal(expect, result)
 }

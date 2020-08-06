@@ -80,7 +80,6 @@ type JSONParserFactory struct {
 	ReadBufferSize int
 	NextRowID      func() string
 	Now            func() time.Time
-	Meta           []pantherlog.FieldID
 }
 
 func (f *JSONParserFactory) NewParser(_ interface{}) (Interface, error) {
@@ -103,12 +102,11 @@ func (f *JSONParserFactory) NewParser(_ interface{}) (Interface, error) {
 	iter := jsoniter.Parse(api, logReader, bufferSize)
 
 	return &simpleJSONParser{
+		logType:  f.LogType,
 		newEvent: f.NewEvent,
 		iter:     iter,
 		validate: validate,
 		builder: pantherlog.ResultBuilder{
-			LogType:   f.LogType,
-			Meta:      f.Meta,
 			Now:       f.Now,
 			NextRowID: f.NextRowID,
 		},
@@ -127,6 +125,7 @@ func ValidateStruct(s interface{}) error {
 }
 
 type simpleJSONParser struct {
+	logType   string
 	newEvent  func() interface{}
 	iter      *jsoniter.Iterator
 	validate  func(x interface{}) error
@@ -146,7 +145,7 @@ func (p *simpleJSONParser) ParseLog(log string) ([]*Result, error) {
 	if err := p.validate(event); err != nil {
 		return nil, err
 	}
-	result, err := p.builder.BuildResult(event)
+	result, err := p.builder.BuildResult(p.logType, event)
 	if err != nil {
 		return nil, err
 	}
