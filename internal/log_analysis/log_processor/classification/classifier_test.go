@@ -43,7 +43,6 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 	logLine := "log"
 	tm := time.Now().UTC()
 	expectResult := &parsers.Result{
-		Meta: pantherlog.DefaultFields(),
 		CoreFields: pantherlog.CoreFields{
 			PantherLogType:   "success",
 			PantherEventTime: tm,

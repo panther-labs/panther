@@ -34,13 +34,13 @@ type ValueScanner interface {
 	ScanValues(w ValueWriter, input string)
 }
 
-// ScannerFunc is a function implementing ValueScanner interface
-type ScannerFunc func(dest ValueWriter, value string)
+// ValueScannerFunc is a function implementing ValueScanner interface
+type ValueScannerFunc func(dest ValueWriter, value string)
 
-var _ ValueScanner = (ScannerFunc)(nil)
+var _ ValueScanner = (ValueScannerFunc)(nil)
 
 // ScanValues implements ValueScanner interface
-func (f ScannerFunc) ScanValues(dest ValueWriter, value string) {
+func (f ValueScannerFunc) ScanValues(dest ValueWriter, value string) {
 	f(dest, value)
 }
 
@@ -99,7 +99,7 @@ func checkFields(fields []FieldID) error {
 	return nil
 }
 
-// LookupScanner finds a registere scanner and field ids by name.
+// LookupScanner finds a registered scanner and field ids by name.
 func LookupScanner(name string) (scanner ValueScanner, fields []FieldID) {
 	if entry, ok := registeredScanners[name]; ok {
 		scanner = entry.Scanner
