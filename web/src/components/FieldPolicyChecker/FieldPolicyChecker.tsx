@@ -27,6 +27,7 @@ interface FieldPolicyCheckerProps {
 
 const FieldPolicyChecker: React.FC<FieldPolicyCheckerProps> = ({ schema, value }) => {
   const [policyErrors, setPolicyErrors] = React.useState([]);
+  const isMountedRef = React.useRef(true);
 
   // Normally you would expect that we can just read the errors from Formik,  but Formik only
   // keeps the first failing error for a field. Thus, we can't know how many checks  are failing
@@ -36,9 +37,15 @@ const FieldPolicyChecker: React.FC<FieldPolicyCheckerProps> = ({ schema, value }
   React.useEffect(() => {
     schema
       .validate(value, { abortEarly: false })
-      .then(() => setPolicyErrors([]))
-      .catch(err => setPolicyErrors(err.errors));
+      .then(() => isMountedRef.current && setPolicyErrors([]))
+      .catch(err => isMountedRef.current && setPolicyErrors(err.errors));
   }, [value, schema, setPolicyErrors]);
+
+  React.useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   return (
     <Flex direction="column" spacing={3}>
