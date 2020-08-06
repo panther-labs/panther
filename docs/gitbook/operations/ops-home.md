@@ -32,8 +32,9 @@ To configure alarms to send to your team, follow the guides below:
     NOTE: As of this writing (August 2020) Pager Duty cannot 
     [handle composite CloudWatch alarms](https://community.pagerduty.com/forum/t/composite-alarm-in-cloudwatch-not-triggering-pd-integration/1798)
     which Panther uses to avoid duplicate pages to oncall staff.
-    The work around is to use a [Custom Event Transformer](https://www.pagerduty.com/docs/guides/custom-event-transformer/).
-    Follow the instruction to create a `Cusomer Event Transformer` using the below code:
+    The work around is to use a `Cusomer Event Transformer`.
+    Follow the [instructions ](https://www.pagerduty.com/docs/guides/custom-event-transformer/) 
+    to create a  using the below code:
     ```javascript
      var normalized_event = {
      event_type: PD.Trigger,
