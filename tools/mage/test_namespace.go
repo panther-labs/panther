@@ -156,6 +156,7 @@ func testDocRoot(root string) error {
 
 	var errs []string
 	for docPath, summary := range docs {
+		// Validate image links
 		for _, img := range summary.ImgLinks {
 			logger.Debugf("test:doc: %s: validating image ref: %s", docPath, img)
 
@@ -177,6 +178,27 @@ func testDocRoot(root string) error {
 				errs = append(errs, fmt.Sprintf(
 					"%s: invalid image asset \"%s\": %s", docPath, img, err))
 			}
+		}
+
+		// Validate documentation links
+		for _, link := range summary.DocLinks {
+			// Path relative to the documentation root
+			refPath := filepath.Join(filepath.Dir(docPath), link.Path)
+
+			if link.Path == "" {
+				// This is a header in the same file, e.g. "#my-section"
+				refPath = docPath
+			}
+
+			summary := docs[refPath]
+			if summary == nil {
+				errs = append(errs, fmt.Sprintf(
+					"%s: invalid reference to \"%s\": documentation file %s does not exist",
+					docPath, link.Path, refPath))
+				continue
+			}
+
+			// TODO - validate headers
 		}
 	}
 

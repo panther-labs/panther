@@ -33,7 +33,7 @@ type docLink struct {
 
 type docSummary struct {
 	// Anchor links for markdown headers.
-	// For example, the "### AWS.S3" header will be listed here as "#aws-s3"
+	// For example, the "### AWS.S3" header will be listed here as "aws-s3"
 	Headers map[string]struct{}
 
 	// Links extracted from the "[text](target)" pattern
@@ -44,11 +44,14 @@ type docSummary struct {
 }
 
 var (
+	// code blocks need to be removed before parsing headers + links
+	codeBlockPattern = regexp.MustCompile("```(.|\n)*?```")
+
 	// find section titles: "## text" at the beginning of a line
-	headerPattern = regexp.MustCompile(`^#+(.*)`)
+	headerPattern = regexp.MustCompile(`(?:^|\n)#+(.*)`)
 
 	// note: we need the non-greedy variant, hence ".*?"
-	linkPattern = regexp.MustCompile(`\[.*?\]\((.*?)\)`) // e.g. "[myfile](path/to/doc.md)"
+	linkPattern = regexp.MustCompile(`!?\[.*?\]\((.*?)\)`) // e.g. "[myfile](path/to/doc.md)"
 
 	// Every link target must be one of the following:
 
@@ -89,11 +92,13 @@ func parseDoc(path string) (*docSummary, error) {
 	var errs []string
 
 	contents := string(readFile(path))
+	contents = codeBlockPattern.ReplaceAllString(contents, "")
 
 	// Extract headers
 	for _, match := range headerPattern.FindAllStringSubmatch(contents, -1) {
 		// match[0] is entire "### Header Text", match[1] is just " Header Text"
-		anchor, err := headerAnchor(match[1])
+		text := strings.TrimSpace(match[1])
+		anchor, err := headerAnchor(strings.TrimSpace(text))
 		if err != nil {
 			errs = append(errs, err.Error())
 			continue
@@ -110,8 +115,12 @@ func parseDoc(path string) (*docSummary, error) {
 		// But we don't want to allow them because they're too fragile.
 		// For example, reorganizing a file would change their ordering.
 		if _, exists := result.Headers[anchor]; exists {
-			errs = append(errs, fmt.Sprintf("\"%s\" results in duplicate anchor %s", match[0], anchor))
-			continue
+			// For backwards compatibility, allow duplicate headers for generated runbooks
+			// TODO - fix generated runbook headers to prevent this
+			if path != filepath.Join("docs", "gitbook", "operations", "runbooks.md") {
+				errs = append(errs, fmt.Sprintf("duplicate header anchor #%s", anchor))
+				continue
+			}
 		}
 
 		// The level of header has no effect on its generated link.
@@ -121,31 +130,45 @@ func parseDoc(path string) (*docSummary, error) {
 
 	// Extract links
 	for _, match := range linkPattern.FindAllStringSubmatch(contents, -1) {
-		// match[0] is entire "[text](link-target)", match[1] is just "link-target"
+		// match[0] is entire "![text](link-target)", match[1] is just "link-target"
 		target := match[1]
+
+		if strings.HasPrefix(match[0], "!") {
+			// Images always have ! prefix for embedding
+			if assetLinkPattern.MatchString(target) {
+				result.ImgLinks = append(result.ImgLinks, target)
+			} else {
+				errs = append(errs, fmt.Sprintf("embedded image in %s does not match expected pattern %s",
+					match[0], assetLinkPattern.String()))
+			}
+			continue
+		}
 
 		if webLinkPattern.MatchString(target) {
 			result.WebLinks = append(result.WebLinks, target)
 		} else if emailLinkPattern.MatchString(target) {
 			result.EmailLinks = append(result.EmailLinks, target)
-		} else if assetLinkPattern.MatchString(target) {
-			result.ImgLinks = append(result.ImgLinks, target)
-		} else if docMatch := docLinkPattern.FindStringSubmatch(target); len(docMatch) > 0 {
-			result.DocLinks = append(result.DocLinks, docLink{Path: docMatch[1], Header: docMatch[2]})
+		} else if docMatch := docLinkPattern.FindStringSubmatch(target); docMatch != nil {
+			if target == "" {
+				// the doc link pattern could match an empty string
+				errs = append(errs, fmt.Sprintf("%s has empty link target", match[0]))
+			} else {
+				result.DocLinks = append(result.DocLinks, docLink{Path: docMatch[1], Header: docMatch[2]})
+			}
 		} else {
 			// This link couldn't be classified - try to offer a helpful error message for common mistakes
-			if target == "" {
-				errs = append(errs, fmt.Sprintf("%s has empty link target", match[0]))
+			if assetLinkPattern.MatchString(target) {
+				errs = append(errs, fmt.Sprintf("%s looks like an image, but is not prefixed with !", match[0]))
 				continue
 			}
 
 			if strings.Contains(target, ".com") || strings.Contains(target, ".io") {
-				errs = append(errs, fmt.Sprintf("%s is an invalid link - be sure web links are "+
+				errs = append(errs, fmt.Sprintf("%s is invalid - be sure web links are "+
 					"prefixed with \"http(s)://\" and email links are prefixed with \"mailto:\"", match[0]))
 				continue
 			}
 
-			if info, err := os.Stat(filepath.Join(path, target)); err == nil && info.IsDir() {
+			if info, err := os.Stat(filepath.Join(filepath.Dir(path), target)); err == nil && info.IsDir() {
 				// Linking to a directory without a README will result in a broken link.
 				// For simplicity, then, we disallow all directory links.
 				errs = append(errs, fmt.Sprintf(
@@ -154,8 +177,8 @@ func parseDoc(path string) (*docSummary, error) {
 			}
 
 			errs = append(errs, fmt.Sprintf(
-				"%s is invalid - links must match one of these patterns: \n%s\n%s\n%s\n%s",
-				match[0], webLinkPattern.String(), emailLinkPattern.String(), assetLinkPattern.String(), docLinkPattern.String()))
+				"%s is invalid - non-image links must match one of these patterns:\n%s\n%s\n%s",
+				match[0], webLinkPattern.String(), emailLinkPattern.String(), docLinkPattern.String()))
 		}
 	}
 
