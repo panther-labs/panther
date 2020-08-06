@@ -14,12 +14,14 @@ All appended standard fields begin with `p_`
 
 The fields below are appended to all log records:
 
-| Field Name   | Type      | Description                                                                      |
-| ------------ | --------- | -------------------------------------------------------------------------------- |
-| `p_log_type`   | `string`    | The type of log.                                                                 |
-| `p_row_id`     | `string`    | Unique id (UUID) for the row.                                                    |
-| `p_event_time` | `timestamp` | The associated event time for the log type is copied here and normalized to UTC. |
-| `p_parse_time` | `timestamp` | The current time when the event was parsed normalized to UTC.                    |
+| Field Name        | Type        | Description                                                                      |
+| ----------------- | ----------- | -------------------------------------------------------------------------------- |
+| `p_log_type`      | `string`    | The type of log.                                                                 |
+| `p_row_id`        | `string`    | Unique id (UUID) for the row.                                                    |
+| `p_event_time`    | `timestamp` | The associated event time for the log type is copied here and normalized to UTC. |
+| `p_parse_time`    | `timestamp` | The current time when the event was parsed normalized to UTC.                    |
+| `p_source_id`     | `string`    | The id of the source that the log was read from.                                 |
+| `p_source_label`  | `string`    | The label of the source that the log was read from.                              |
 
 {% hint style="info" %}
 If an event does not have a timestamp, then `p_event_time` will be set to `p_parse_time`, which is the time the event was parsed.
