@@ -70,7 +70,6 @@ Targets:
   deploy              Deploy Panther to your AWS account
   doc                 Auto-generate specific sections of documentation
   fmt                 Format source files
-  glue:sync           Sync glue table partitions after schema change
   master:deploy       Deploy single master template (deployments/master.yml) nesting all other stacks
   master:publish      Publish a new Panther release (Panther team only)
   setup               Install all build and development dependencies

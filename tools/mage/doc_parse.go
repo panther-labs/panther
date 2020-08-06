@@ -86,7 +86,7 @@ var (
 // Extract headers and links from a markdown document for subsequent verification.
 //
 // Returns an error if there are duplicate/undefined headers or links which could not be categorized.
-// But the caller is responsible for verifying the content of the links.
+// The caller is responsible for verifying the content of the links.
 func parseDoc(path string) (*docSummary, error) {
 	result := docSummary{Headers: make(map[string]struct{})}
 	var errs []string
@@ -98,7 +98,7 @@ func parseDoc(path string) (*docSummary, error) {
 	for _, match := range headerPattern.FindAllStringSubmatch(contents, -1) {
 		// match[0] is entire "### Header Text", match[1] is just " Header Text"
 		text := strings.TrimSpace(match[1])
-		anchor, err := headerAnchor(strings.TrimSpace(text))
+		anchor, err := headerAnchor(text)
 		if err != nil {
 			errs = append(errs, err.Error())
 			continue
@@ -115,7 +115,7 @@ func parseDoc(path string) (*docSummary, error) {
 		// But we don't want to allow them because they're too fragile.
 		// For example, reorganizing a file would change their ordering.
 		if _, exists := result.Headers[anchor]; exists {
-			// For backwards compatibility, allow duplicate headers for generated runbooks
+			// For backwards compatibility, temporarily allow duplicate headers for generated runbooks
 			// TODO - fix generated runbook headers to prevent this
 			if path != filepath.Join("docs", "gitbook", "operations", "runbooks.md") {
 				errs = append(errs, fmt.Sprintf("duplicate header anchor #%s", anchor))
@@ -141,10 +141,7 @@ func parseDoc(path string) (*docSummary, error) {
 				errs = append(errs, fmt.Sprintf("embedded image in %s does not match expected pattern %s",
 					match[0], assetLinkPattern.String()))
 			}
-			continue
-		}
-
-		if webLinkPattern.MatchString(target) {
+		} else if webLinkPattern.MatchString(target) {
 			result.WebLinks = append(result.WebLinks, target)
 		} else if emailLinkPattern.MatchString(target) {
 			result.EmailLinks = append(result.EmailLinks, target)
