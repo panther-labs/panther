@@ -20,7 +20,7 @@ import { Field, Form, Formik } from 'formik';
 import React from 'react';
 import * as Yup from 'yup';
 import { yupPasswordValidationSchema } from 'Helpers/utils';
-import { Alert, Flex, FormHelperText, Link } from 'pouncejs';
+import { Alert, Flex, FormHelperText, Link, TextInput } from 'pouncejs';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
 import useAuth from 'Hooks/useAuth';
@@ -68,7 +68,7 @@ const SetPasswordForm: React.FC = () => {
           <Flex direction="column" spacing={4}>
             {status && <Alert variant="error" title={status.title} description={status.message} />}
             <Field
-              as={FormikTextInput}
+              as={TextInput}
               label="New Password"
               placeholder="Type your new password..."
               type="password"
