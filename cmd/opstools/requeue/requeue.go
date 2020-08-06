@@ -1,7 +1,6 @@
 package requeue
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -32,7 +31,7 @@ func Requeue(sqsClient sqsiface.SQSAPI, region, fromQueueName, toQueueName strin
 		return errors.Wrapf(err, "cannot find destination queue %s in region %s", toQueueName, region)
 	}
 
-	zap.L().Debug(fmt.Sprintf("Moving messages from %s to %s", fromQueueName, toQueueName))
+	zap.S().Debugf("Moving messages from %s to %s", fromQueueName, toQueueName)
 	totalMessages := 0
 	for {
 		resp, err := sqsClient.ReceiveMessage(&sqs.ReceiveMessageInput{
@@ -50,11 +49,11 @@ func Requeue(sqsClient sqsiface.SQSAPI, region, fromQueueName, toQueueName strin
 		numberOfMessages := len(messages)
 		totalMessages += numberOfMessages
 		if numberOfMessages == 0 {
-			zap.L().Debug(fmt.Sprintf("Successfully requeued %d messages.", totalMessages))
+			zap.S().Debugf("Successfully requeued %d messages.", totalMessages)
 			return nil
 		}
 
-		zap.L().Debug(fmt.Sprintf("Moving %d message(s)...", numberOfMessages))
+		zap.S().Debugf("Moving %d message(s)...", numberOfMessages)
 
 		var sendMessageBatchRequestEntries []*sqs.SendMessageBatchRequestEntry
 		for index, element := range messages {
