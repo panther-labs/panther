@@ -76,8 +76,11 @@ func Setup() {
 
 // DataStream represents a data stream that read by the processor
 type DataStream struct {
-	Reader io.Reader
-	Hints  DataStreamHints
+	Reader      io.Reader
+	Hints       DataStreamHints
+	SourceID    string
+	SourceLabel string
+	LogTypes    []string
 	// The log type if known
 	// If it is nil, it means the log type hasn't been identified yet
 	LogType *string

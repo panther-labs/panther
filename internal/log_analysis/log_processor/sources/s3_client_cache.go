@@ -96,15 +96,7 @@ func init() {
 // getS3Client Fetches
 // 1. S3 client with permissions to read data from the account that contains the event
 // 2. The type of the integration
-func getS3Client(s3Object *S3ObjectInfo) (s3iface.S3API, string, error) {
-	sourceInfo, err := getSourceInfo(s3Object)
-	if err != nil {
-		return nil, "", errors.Wrapf(err, "failed to fetch the appropriate role arn to retrieve S3 object %#v", s3Object)
-	}
-
-	if sourceInfo == nil {
-		return nil, "", errors.Errorf("there is no source configured for S3 object %#v", s3Object)
-	}
+func getS3Client(s3Object *S3ObjectInfo, sourceInfo *models.SourceIntegration) (s3iface.S3API, error) {
 	var awsCreds *credentials.Credentials // lazy create below
 	roleArn := getSourceLogProcessingRole(sourceInfo)
 
@@ -113,12 +105,13 @@ func getS3Client(s3Object *S3ObjectInfo) (s3iface.S3API, string, error) {
 		zap.L().Debug("bucket region was not cached, fetching it", zap.String("bucket", s3Object.S3Bucket))
 		awsCreds = getAwsCredentials(roleArn)
 		if awsCreds == nil {
-			return nil, "", errors.Errorf("failed to fetch credentials for assumed role %s to read %#v",
+			return nil, errors.Errorf("failed to fetch credentials for assumed role %s to read %#v",
 				roleArn, s3Object)
 		}
+		var err error
 		bucketRegion, err = getBucketRegion(s3Object.S3Bucket, awsCreds)
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
 		bucketCache.Add(s3Object.S3Bucket, bucketRegion)
 	}
@@ -135,14 +128,14 @@ func getS3Client(s3Object *S3ObjectInfo) (s3iface.S3API, string, error) {
 		if awsCreds == nil {
 			awsCreds = getAwsCredentials(roleArn)
 			if awsCreds == nil {
-				return nil, "", errors.Errorf("failed to fetch credentials for assumed role %s to read %#v",
+				return nil, errors.Errorf("failed to fetch credentials for assumed role %s to read %#v",
 					roleArn, s3Object)
 			}
 		}
 		client = newS3ClientFunc(box.String(cacheKey.awsRegion), awsCreds)
 		s3ClientCache.Add(cacheKey, client)
 	}
-	return client.(s3iface.S3API), sourceInfo.IntegrationType, nil
+	return client.(s3iface.S3API), nil
 }
 
 func getBucketRegion(s3Bucket string, awsCreds *credentials.Credentials) (string, error) {

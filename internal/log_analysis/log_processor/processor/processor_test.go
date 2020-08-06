@@ -79,7 +79,7 @@ func TestProcess(t *testing.T) {
 	destination := (&testDestination{}).standardMock()
 
 	dataStream := makeDataStream()
-	p := NewProcessor(dataStream, registry.AvailableParsers())
+	p := NewProcessor(dataStream, registry.Default())
 	mockClassifier := &testClassifier{}
 	p.classifier = mockClassifier
 
@@ -117,7 +117,7 @@ func TestProcessDataStreamError(t *testing.T) {
 
 	destination := (&testDestination{}).standardMock()
 	dataStream := makeBadDataStream() // failure to read data, never hits classifier
-	p := NewProcessor(dataStream, registry.AvailableParsers())
+	p := NewProcessor(dataStream, registry.Default())
 	mockClassifier := &testClassifier{}
 	p.classifier = mockClassifier
 
@@ -182,7 +182,7 @@ func TestProcessDestinationError(t *testing.T) {
 	})
 
 	dataStream := makeDataStream()
-	p := NewProcessor(dataStream, registry.AvailableParsers())
+	p := NewProcessor(dataStream, registry.Default())
 	mockClassifier := &testClassifier{}
 	p.classifier = mockClassifier
 
@@ -225,7 +225,7 @@ func TestProcessClassifyFailure(t *testing.T) {
 
 	destination := (&testDestination{}).standardMock()
 	dataStream := makeDataStream()
-	p := NewProcessor(dataStream, registry.AvailableParsers())
+	p := NewProcessor(dataStream, registry.Default())
 	mockClassifier := &testClassifier{}
 	p.classifier = mockClassifier
 

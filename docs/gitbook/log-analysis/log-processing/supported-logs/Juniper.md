@@ -21,6 +21,8 @@ Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/referenc
 <tr><td valign=top><code><b>p_row_id</b></code></td><td><code>string</code></td><td valign=top>Panther added field with unique id (within table)</td></tr>
 <tr><td valign=top><code><b>p_event_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize event time (UTC)</td></tr>
 <tr><td valign=top><code><b>p_parse_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
+<tr><td valign=top><code>p_source_id</code></td><td><code>string</code></td><td valign=top>Panther added field with the source id</td></tr>
+<tr><td valign=top><code>p_source_label</code></td><td><code>string</code></td><td valign=top>Panther added field with the source label</td></tr>
 <tr><td valign=top><code>p_any_ip_addresses</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
 <tr><td valign=top><code>p_any_domain_names</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td valign=top><code>p_any_sha1_hashes</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
@@ -45,6 +47,8 @@ Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/referenc
 <tr><td valign=top><code><b>p_row_id</b></code></td><td><code>string</code></td><td valign=top>Panther added field with unique id (within table)</td></tr>
 <tr><td valign=top><code><b>p_event_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize event time (UTC)</td></tr>
 <tr><td valign=top><code><b>p_parse_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
+<tr><td valign=top><code>p_source_id</code></td><td><code>string</code></td><td valign=top>Panther added field with the source id</td></tr>
+<tr><td valign=top><code>p_source_label</code></td><td><code>string</code></td><td valign=top>Panther added field with the source label</td></tr>
 <tr><td valign=top><code>p_any_ip_addresses</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
 <tr><td valign=top><code>p_any_domain_names</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td valign=top><code>p_any_sha1_hashes</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
@@ -82,6 +86,8 @@ Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/referenc
 <tr><td valign=top><code><b>p_row_id</b></code></td><td><code>string</code></td><td valign=top>Panther added field with unique id (within table)</td></tr>
 <tr><td valign=top><code><b>p_event_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize event time (UTC)</td></tr>
 <tr><td valign=top><code><b>p_parse_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
+<tr><td valign=top><code>p_source_id</code></td><td><code>string</code></td><td valign=top>Panther added field with the source id</td></tr>
+<tr><td valign=top><code>p_source_label</code></td><td><code>string</code></td><td valign=top>Panther added field with the source label</td></tr>
 <tr><td valign=top><code>p_any_ip_addresses</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
 <tr><td valign=top><code>p_any_domain_names</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td valign=top><code>p_any_sha1_hashes</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
@@ -105,6 +111,8 @@ Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/referenc
 <tr><td valign=top><code><b>p_row_id</b></code></td><td><code>string</code></td><td valign=top>Panther added field with unique id (within table)</td></tr>
 <tr><td valign=top><code><b>p_event_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize event time (UTC)</td></tr>
 <tr><td valign=top><code><b>p_parse_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
+<tr><td valign=top><code>p_source_id</code></td><td><code>string</code></td><td valign=top>Panther added field with the source id</td></tr>
+<tr><td valign=top><code>p_source_label</code></td><td><code>string</code></td><td valign=top>Panther added field with the source label</td></tr>
 <tr><td valign=top><code>p_any_ip_addresses</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
 <tr><td valign=top><code>p_any_domain_names</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td valign=top><code>p_any_sha1_hashes</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
@@ -131,6 +139,8 @@ Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/referenc
 <tr><td valign=top><code><b>p_row_id</b></code></td><td><code>string</code></td><td valign=top>Panther added field with unique id (within table)</td></tr>
 <tr><td valign=top><code><b>p_event_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize event time (UTC)</td></tr>
 <tr><td valign=top><code><b>p_parse_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
+<tr><td valign=top><code>p_source_id</code></td><td><code>string</code></td><td valign=top>Panther added field with the source id</td></tr>
+<tr><td valign=top><code>p_source_label</code></td><td><code>string</code></td><td valign=top>Panther added field with the source label</td></tr>
 <tr><td valign=top><code>p_any_ip_addresses</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
 <tr><td valign=top><code>p_any_domain_names</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td valign=top><code>p_any_sha1_hashes</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>
@@ -172,6 +182,8 @@ Reference: https://www.juniper.net/documentation/en_US/webapp5.6/topics/referenc
 <tr><td valign=top><code><b>p_row_id</b></code></td><td><code>string</code></td><td valign=top>Panther added field with unique id (within table)</td></tr>
 <tr><td valign=top><code><b>p_event_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize event time (UTC)</td></tr>
 <tr><td valign=top><code><b>p_parse_time</b></code></td><td><code>timestamp</code></td><td valign=top>Panther added standardize log parse time (UTC)</td></tr>
+<tr><td valign=top><code>p_source_id</code></td><td><code>string</code></td><td valign=top>Panther added field with the source id</td></tr>
+<tr><td valign=top><code>p_source_label</code></td><td><code>string</code></td><td valign=top>Panther added field with the source label</td></tr>
 <tr><td valign=top><code>p_any_ip_addresses</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of ip addresses associated with the row</td></tr>
 <tr><td valign=top><code>p_any_domain_names</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of domain names associated with the row</td></tr>
 <tr><td valign=top><code>p_any_sha1_hashes</code></td><td><code>[string]</code></td><td valign=top>Panther added field with collection of SHA1 hashes associated with the row</td></tr>

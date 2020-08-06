@@ -43,7 +43,7 @@ func TestRegistry(t *testing.T) {
 		Description:  "Foo.Bar logs",
 		ReferenceURL: "-",
 		Schema:       T{},
-		NewParser: parsers.FactoryFunc(func(params interface{}) (parsers.Interface, error) {
+		NewParser: parsers.FactoryFunc(func(_ parsers.SourceParams) (parsers.Interface, error) {
 			return nil, nil
 		}),
 	}

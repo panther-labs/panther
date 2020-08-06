@@ -123,7 +123,7 @@ func (r *Registry) MustRegister(config Config) Entry {
 // Entries can be grouped in a `Registry` to have an index of available log types.
 type Entry interface {
 	Describe() Desc
-	NewParser(params interface{}) (parsers.Interface, error)
+	NewParser(params parsers.SourceParams) (parsers.Interface, error)
 	Schema() interface{}
 	GlueTableMeta() *awsglue.GlueTableMetadata
 }
@@ -225,7 +225,7 @@ func (e *entry) GlueTableMeta() *awsglue.GlueTableMetadata {
 }
 
 // Parser returns a new parsers.Interface instance for this log type
-func (e *entry) NewParser(params interface{}) (parsers.Interface, error) {
+func (e *entry) NewParser(params parsers.SourceParams) (parsers.Interface, error) {
 	return e.newParser(params)
 }
 

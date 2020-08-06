@@ -73,7 +73,7 @@ func AvailableParsers() map[string]parsers.Interface {
 	available := make(map[string]parsers.Interface, len(entries))
 	for _, entry := range entries {
 		logType := entry.Describe().Name
-		parser, err := entry.NewParser(nil)
+		parser, err := entry.NewParser(parsers.SourceParams{})
 		if err != nil {
 			panic(errors.Errorf("failed to create %q parser with nil params", logType))
 		}

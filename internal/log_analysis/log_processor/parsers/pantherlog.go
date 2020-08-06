@@ -56,6 +56,10 @@ type PantherLog struct {
 	PantherEventTime *timestamp.RFC3339 `json:"p_event_time,omitempty" validate:"required" description:"Panther added standardize event time (UTC)"`
 	PantherParseTime *timestamp.RFC3339 `json:"p_parse_time,omitempty" validate:"required" description:"Panther added standardize log parse time (UTC)"`
 
+	// optional (string)
+	PantherSourceID    *string `json:"p_source_id,omitempty" description:"Panther added field with the source id"`
+	PantherSourceLabel *string `json:"p_source_label,omitempty" description:"Panther added field with the source label"`
+
 	// optional (any)
 	PantherAnyIPAddresses  *PantherAnyString `json:"p_any_ip_addresses,omitempty" description:"Panther added field with collection of ip addresses associated with the row"`
 	PantherAnyDomainNames  *PantherAnyString `json:"p_any_domain_names,omitempty" description:"Panther added field with collection of domain names associated with the row"`
@@ -273,10 +277,12 @@ func (pl *PantherLog) Result() *Result {
 		EventIncludesPantherFields: true,
 		Event:                      event,
 		CoreFields: pantherlog.CoreFields{
-			PantherLogType:   unbox.String(pl.PantherLogType),
-			PantherRowID:     unbox.String(pl.PantherRowID),
-			PantherParseTime: ((*time.Time)(parseTime)).UTC(),
-			PantherEventTime: ((*time.Time)(eventTime)).UTC(),
+			PantherLogType:     unbox.String(pl.PantherLogType),
+			PantherRowID:       unbox.String(pl.PantherRowID),
+			PantherParseTime:   ((*time.Time)(parseTime)).UTC(),
+			PantherEventTime:   ((*time.Time)(eventTime)).UTC(),
+			PantherSourceID:    unbox.String(pl.PantherSourceID),
+			PantherSourceLabel: unbox.String(pl.PantherSourceLabel),
 		},
 	}
 }
