@@ -50,10 +50,10 @@ func TestSetDifference(t *testing.T) {
 }
 
 func TestSetEquality(t *testing.T) {
-	assert.True(t, setEquality(nil, []string{}))
-	assert.True(t, setEquality([]string{"panther", "labs", "inc"}, []string{"inc", "labs", "panther"}))
-	assert.False(t, setEquality([]string{"panther"}, []string{"panther", "labs"}))
-	assert.False(t, setEquality([]string{"panther", "labs"}, []string{"panther", "inc"}))
+	assert.True(t, slicesEqual(nil, []string{}))
+	assert.True(t, slicesEqual([]string{"panther", "labs", "inc"}, []string{"inc", "labs", "panther"}))
+	assert.False(t, slicesEqual([]string{"panther"}, []string{"panther", "labs"}))
+	assert.False(t, slicesEqual([]string{"panther", "labs"}, []string{"panther", "inc"}))
 }
 
 func TestPoliciesEqual(t *testing.T) {

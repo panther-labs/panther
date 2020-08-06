@@ -30,6 +30,10 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
+const (
+	defaultRuleThreshold = 1
+)
+
 type getParams struct {
 	ID        models.ID
 	VersionID models.VersionID
@@ -87,7 +91,14 @@ func handleGet(request *events.APIGatewayProxyRequest, codeType string) *events.
 		return gatewayapi.MarshalResponse(item.Policy(status.Status), http.StatusOK)
 	}
 	if codeType == typeRule {
-		return gatewayapi.MarshalResponse(item.Rule(), http.StatusOK)
+		// Backwards compatibility fix
+		// Rules that were created before the introduction of Rule Threshold
+		// will have a default threshold of '0'. However, the minimum threshold we allow is '1'.
+		rule := item.Rule()
+		if rule.Threshold == 0 {
+			rule.Threshold = defaultRuleThreshold
+		}
+		return gatewayapi.MarshalResponse(rule, http.StatusOK)
 	}
 	return gatewayapi.MarshalResponse(item.Global(), http.StatusOK)
 }

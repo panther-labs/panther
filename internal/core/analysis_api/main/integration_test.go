@@ -50,8 +50,8 @@ const (
 	bootstrapStack      = "panther-bootstrap"
 	gatewayStack        = "panther-bootstrap-gateway"
 	tableName           = "panther-analysis"
-	policiesRoot        = "./test_policies"
-	policiesZipLocation = "./bulk_upload.zip"
+	analysesRoot        = "./test_analyses"
+	analysesZipLocation = "./bulk_upload.zip"
 )
 
 var (
@@ -227,12 +227,12 @@ func TestIntegrationAPI(t *testing.T) {
 	}
 
 	// Set expected bodies from test files
-	trueBody, err := ioutil.ReadFile(path.Join(policiesRoot, "always_true.py"))
+	trueBody, err := ioutil.ReadFile(path.Join(analysesRoot, "policy_always_true.py"))
 	require.NoError(t, err)
 	policy.Body = models.Body(trueBody)
 	policyFromBulkJSON.Body = models.Body(trueBody)
 
-	cloudtrailBody, err := ioutil.ReadFile(path.Join(policiesRoot, "aws_cloudtrail_log_validation_enabled.py"))
+	cloudtrailBody, err := ioutil.ReadFile(path.Join(analysesRoot, "policy_aws_cloudtrail_log_validation_enabled.py"))
 	require.NoError(t, err)
 	policyFromBulk.Body = models.Body(cloudtrailBody)
 
@@ -1322,8 +1322,8 @@ func bulkUploadInvalid(t *testing.T) {
 }
 
 func bulkUploadSuccess(t *testing.T) {
-	require.NoError(t, shutil.ZipDirectory(policiesRoot, policiesZipLocation, true))
-	zipFile, err := os.Open(policiesZipLocation)
+	require.NoError(t, shutil.ZipDirectory(analysesRoot, analysesZipLocation, true))
+	zipFile, err := os.Open(analysesZipLocation)
 	require.NoError(t, err)
 	content, err := ioutil.ReadAll(bufio.NewReader(zipFile))
 	require.NoError(t, err)
@@ -1345,8 +1345,8 @@ func bulkUploadSuccess(t *testing.T) {
 		TotalPolicies:    aws.Int64(3),
 
 		ModifiedRules: aws.Int64(0),
-		NewRules:      aws.Int64(0),
-		TotalRules:    aws.Int64(0),
+		NewRules:      aws.Int64(1),
+		TotalRules:    aws.Int64(1),
 
 		ModifiedGlobals: aws.Int64(0),
 		NewGlobals:      aws.Int64(0),
@@ -1437,6 +1437,37 @@ func bulkUploadSuccess(t *testing.T) {
 	}
 
 	assert.Equal(t, policyFromBulkJSON, getResult.Payload)
+
+	// Verify newly created Rule
+	expectedNewRule := &models.Rule{
+		ID: "Rule.Always.True",
+		DisplayName: "Rule Always True display name",
+		Enabled: true,
+		LogTypes: []string{"CiscoUmbrella.DNS"},
+		Tags: []string{"DNS"},
+		Severity: "LOW",
+		Description: "Test rule",
+		Runbook: "Test runbook",
+		DedupPeriodMinutes: 480,
+		Threshold: 42,
+		OutputIds: []string{},
+		Tests: []*models.UnitTest{},
+		Reports: map[string][]string{},
+	}
+
+	getRule, err := apiClient.Operations.GetRule(&operations.GetRuleParams{
+		RuleID:   string(expectedNewRule.ID),
+		HTTPClient: httpClient,
+	})
+	require.NoError(t, err)
+	// Setting the below to the value received
+	// since we have no control over them
+	expectedNewRule.CreatedAt = getRule.Payload.CreatedAt
+	expectedNewRule.CreatedBy = getRule.Payload.CreatedBy
+	expectedNewRule.LastModified = getRule.Payload.LastModified
+	expectedNewRule.LastModifiedBy = getRule.Payload.LastModifiedBy
+	expectedNewRule.VersionID = getRule.Payload.VersionID
+	assert.Equal(t, expectedNewRule, getRule.Payload)
 }
 
 func listNotFound(t *testing.T) {

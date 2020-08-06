@@ -14,26 +14,5 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-AnalysisType: policy
-ActionDelaySeconds: 10
-AutoRemediationID: fix-it
-AutoRemediationParameters:
-  hello: goodbye
-DisplayName: AlwaysTrue
-Filename: always_true.py
-OutputIds: []
-PolicyID: Test:Policy
-Enabled: true
-Suppressions:
-  - 'panther.*'
-Tags: []
-Tests:
-  - Name: This will be True
-    ResourceType: AWS.S3.Bucket
-    ExpectedResult: true
-    Resource: { 'Bucket': 'empty' }
-ResourceTypes:
-  - AWS.S3.Bucket
-Severity: Medium
-Description: >
-  Matches every resource
+def rule(event):
+    return True

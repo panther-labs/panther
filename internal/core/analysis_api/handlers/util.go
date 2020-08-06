@@ -100,7 +100,7 @@ func setDifference(first, second []string) (result []string) {
 }
 
 // Returns true if the two string slices have the same unique elements in any order
-func setEquality(first, second []string) bool {
+func slicesEqual(first, second []string) bool {
 	firstMap := make(map[string]bool, len(first))
 	for _, x := range first {
 		firstMap[x] = true
@@ -261,15 +261,18 @@ func writeItem(item *tableItem, userID models.UserID, mustExist *bool) (int, err
 func itemUpdated(oldItem, newItem *tableItem) bool {
 	itemsEqual := oldItem.AutoRemediationID == newItem.AutoRemediationID && oldItem.Body == newItem.Body &&
 		oldItem.Description == newItem.Description &&
-		setEquality(oldItem.OutputIds, newItem.OutputIds) &&
+		slicesEqual(oldItem.OutputIds, newItem.OutputIds) &&
 		oldItem.DisplayName == newItem.DisplayName &&
 		oldItem.Enabled == newItem.Enabled && oldItem.Reference == newItem.Reference &&
 		oldItem.Runbook == newItem.Runbook && oldItem.Severity == newItem.Severity &&
 		oldItem.DedupPeriodMinutes == newItem.DedupPeriodMinutes &&
-		setEquality(oldItem.ResourceTypes, newItem.ResourceTypes) &&
-		setEquality(oldItem.Suppressions, newItem.Suppressions) && setEquality(oldItem.Tags, newItem.Tags) &&
+		oldItem.Threshold == newItem.Threshold &&
+		slicesEqual(oldItem.ResourceTypes, newItem.ResourceTypes) &&
+		slicesEqual(oldItem.Suppressions, newItem.Suppressions) && slicesEqual(oldItem.Tags, newItem.Tags) &&
 		len(oldItem.AutoRemediationParameters) == len(newItem.AutoRemediationParameters) &&
 		len(oldItem.Tests) == len(newItem.Tests)
+
+
 
 	if !itemsEqual {
 		return true
