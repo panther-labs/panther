@@ -28,14 +28,14 @@ const FieldPolicyChecker: React.FC<FieldPolicyCheckerProps> = ({ schema, value }
         const { message, name } = test.OPTIONS;
 
         // The "field is required" check doesn't have a reason to be listed to the users as a
-        // visible "check" that they must pass
+        // visible "check" that they must pass, since it doesn't make sense
         if (name === 'required') {
           return null;
         }
 
         return (
           <FieldPolicyCheck key={message} passing={!policyErrors.includes(message)}>
-            {test.OPTIONS.message}
+            {message}
           </FieldPolicyCheck>
         );
       })}
