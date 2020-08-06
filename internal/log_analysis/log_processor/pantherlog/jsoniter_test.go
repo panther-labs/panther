@@ -51,27 +51,27 @@ var (
 )
 
 func init() {
-	MustRegisterField(kindFoo, FieldMeta{
+	MustRegisterIndicator(kindFoo, FieldMeta{
 		Name:        "PantherFoo",
 		NameJSON:    "p_any_foo",
 		Description: "Foo data",
 	})
-	MustRegisterField(kindBar, FieldMeta{
+	MustRegisterIndicator(kindBar, FieldMeta{
 		Name:        "PantherBar",
 		NameJSON:    "p_any_bar",
 		Description: "Bar data",
 	})
-	MustRegisterField(kindBaz, FieldMeta{
+	MustRegisterIndicator(kindBaz, FieldMeta{
 		Name:        "PantherBaz",
 		NameJSON:    "p_any_baz",
 		Description: "Baz data",
 	})
-	MustRegisterField(kindQux, FieldMeta{
+	MustRegisterIndicator(kindQux, FieldMeta{
 		Name:        "PantherQux",
 		NameJSON:    "p_any_qux",
 		Description: "Qux data",
 	})
-	MustRegisterField(kindQuux, FieldMeta{
+	MustRegisterIndicator(kindQuux, FieldMeta{
 		Name:        "PantherQuux",
 		NameJSON:    "p_any_quux",
 		Description: "Quux data",
@@ -106,16 +106,16 @@ func TestPantherExt_DecorateEncoder(t *testing.T) {
 	}
 
 	result := Result{
-		Values: new(ValueBuffer),
+		values: new(ValueBuffer),
 	}
 	stream := jsoniter.ConfigDefault.BorrowStream(nil)
 	stream.Attachment = &result
 	stream.WriteVal(&v)
-	require.Equal(t, []string{"ok"}, result.Values.Get(kindFoo), "foo")
-	require.Equal(t, []string{"ok"}, result.Values.Get(kindBar), "bar")
-	require.Equal(t, []string{"ok"}, result.Values.Get(kindBaz), "baz")
-	require.Equal(t, []string{"ok"}, result.Values.Get(kindQux), "qux")
-	require.Equal(t, []string{"ok"}, result.Values.Get(kindQuux), "quux")
+	require.Equal(t, []string{"ok"}, result.values.Get(kindFoo), "foo")
+	require.Equal(t, []string{"ok"}, result.values.Get(kindBar), "bar")
+	require.Equal(t, []string{"ok"}, result.values.Get(kindBaz), "baz")
+	require.Equal(t, []string{"ok"}, result.values.Get(kindQux), "qux")
+	require.Equal(t, []string{"ok"}, result.values.Get(kindQuux), "quux")
 	actual := string(stream.Buffer())
 	require.Equal(t, `{"foo":"ok","bar":"ok","baz":"ok","qux":"ok","quux":"ok"}`, actual)
 }

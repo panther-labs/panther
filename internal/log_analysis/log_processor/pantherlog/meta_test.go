@@ -19,8 +19,9 @@ package pantherlog_test
  */
 
 import (
+	"reflect"
+	"sort"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -28,7 +29,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
-	"github.com/panther-labs/panther/pkg/box"
 )
 
 func TestMetaEventStruct(t *testing.T) {
@@ -55,6 +55,17 @@ type testEventMeta struct {
 	Address   null.String       `json:"addr" description:"address" panther:"ip"`
 }
 
-func (e *testEventMeta) PantherLogEvent() (string, *time.Time) {
-	return e.Name, box.Time(time.Time(e.Timestamp))
+func TestRequiredFields(t *testing.T) {
+	assert := require.New(t)
+	fields := pantherlog.FieldSetFromType(reflect.TypeOf(testEventMeta{}))
+	assert.Equal(pantherlog.NewFieldSet(pantherlog.FieldIPAddress), fields)
+}
+
+func TestFieldSetFromTag(t *testing.T) {
+	assert := require.New(t)
+	expect := pantherlog.NewFieldSet(pantherlog.FieldIPAddress, pantherlog.FieldDomainName)
+	sort.Sort(expect)
+	actual := pantherlog.FieldSetFromTag(`json:"foo" panther:"hostname"`)
+	sort.Sort(actual)
+	assert.Equal(expect, actual)
 }

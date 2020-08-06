@@ -17,9 +17,7 @@
  */
 
 import React from 'react';
-import { Flex, Link, FadeIn } from 'pouncejs';
-import urls from 'Source/urls';
-import { Link as RRLink } from 'react-router-dom';
+import { Link, FadeIn } from 'pouncejs';
 import AuthPageContainer from 'Components/AuthPageContainer';
 import SetPasswordForm from 'Components/forms/SetPasswordForm';
 import MfaForm from 'Components/forms/MfaForm';
@@ -35,6 +33,7 @@ import withSEO from 'Hoc/withSEO';
  * (meaning the redirect to the referrer page when the user became authenticated). This happens in
  * the `guarded-route` component which handles auth-related accesses and redirects.
  */
+
 const SignInPage: React.FC = () => {
   const { currentAuthChallengeName, userInfo } = useAuth();
 
@@ -44,11 +43,13 @@ const SignInPage: React.FC = () => {
     case CHALLENGE_NAMES.SOFTWARE_TOKEN_MFA:
       return (
         <AuthPageContainer>
-          <AuthPageContainer.Caption
-            title="One last thing..."
-            subtitle="Enter your MFA code to complete the sign-in"
-          />
-          <MfaForm />
+          <AuthPageContainer.Content>
+            <AuthPageContainer.Caption
+              title="One last thing..."
+              subtitle="Enter your MFA code to complete the sign-in"
+            />
+            <MfaForm />
+          </AuthPageContainer.Content>
           <AuthPageContainer.AltOptions>
             Can{"'"}t seem to get it right?
             <Link
@@ -64,34 +65,35 @@ const SignInPage: React.FC = () => {
     case CHALLENGE_NAMES.MFA_SETUP:
       return (
         <AuthPageContainer>
-          <AuthPageContainer.Caption
-            title="Great!"
-            subtitle="Now let's set up two-factor authentication for your account."
-          />
-          <TotpForm />
+          <AuthPageContainer.Content>
+            <AuthPageContainer.Caption
+              title="Great!"
+              subtitle="Now let's set up two-factor authentication for your account."
+            />
+            <TotpForm />
+          </AuthPageContainer.Content>
         </AuthPageContainer>
       );
     case CHALLENGE_NAMES.NEW_PASSWORD_REQUIRED:
       return (
         <AuthPageContainer>
-          <AuthPageContainer.Caption
-            title="First things first"
-            subtitle="We need to set you up with a new password."
-          />
-          <SetPasswordForm />
+          <AuthPageContainer.Content>
+            <AuthPageContainer.Caption
+              title="First things first"
+              subtitle="We need to set you up with a new password."
+            />
+            <SetPasswordForm />
+          </AuthPageContainer.Content>
         </AuthPageContainer>
       );
     default:
       return (
         <FadeIn delay={100}>
           <AuthPageContainer>
-            <AuthPageContainer.Caption title="Sign in" subtitle="to continue to Panther" />
-            <SignInForm />
-            <Flex justify="center" mt={4}>
-              <Link as={RRLink} p={4} to={urls.account.auth.forgotPassword()} fontSize="medium">
-                Forgot your password?
-              </Link>
-            </Flex>
+            <AuthPageContainer.Content>
+              <AuthPageContainer.Caption title="Sign in" subtitle="to continue to Panther" />
+              <SignInForm />
+            </AuthPageContainer.Content>
             <AuthPageContainer.AltOptions>
               Don{"'"}t have an account? Talk to your admin
             </AuthPageContainer.AltOptions>

@@ -25,7 +25,7 @@ import (
 
 // ValueWriter provides the interface to write field values
 type ValueWriter interface {
-	WriteValues(kind FieldID, values ...string)
+	WriteValues(field FieldID, values ...string)
 }
 
 // ValueWriterTo can write field values to a ValueWriter
@@ -158,9 +158,9 @@ func (b *ValueBuffer) Fields() []FieldID {
 		return nil
 	}
 	ids := make([]FieldID, 0, len(b.index))
-	for kind, values := range b.index {
+	for id, values := range b.index {
 		if len(values) > 0 {
-			ids = append(ids, kind)
+			ids = append(ids, id)
 		}
 	}
 	sort.Slice(ids, func(i, j int) bool {

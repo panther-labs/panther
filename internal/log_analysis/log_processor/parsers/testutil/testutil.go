@@ -24,6 +24,7 @@ import (
 	"bufio"
 	"io/ioutil"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -216,11 +217,13 @@ func CheckRegisteredParser(t *testing.T, logType, input string, expect ...string
 		require.Nil(t, results)
 		return
 	}
+	schema := entry.Schema()
+	indicators := pantherlog.FieldSetFromType(reflect.TypeOf(schema))
 	require.NotNil(t, results)
 	require.Equal(t, len(expect), len(results), "Invalid number of patherlog results produced by parser")
 	for i, result := range results {
 		expect := expect[i]
-		CheckParserResults(t, expect, result)
+		CheckParserResults(t, expect, result, indicators...)
 	}
 }
 
@@ -257,14 +260,15 @@ func jsonAPI() jsoniter.API {
 // If expect.EventTime is zero it checks if actual.EventTime equals actual.ParseTime
 // If expect.ParseTime is zero it checks if actual.ParseTime is non-zero
 // Otherwise equality is checked strictly
-func CheckParserResults(t *testing.T, want string, actual *pantherlog.Result) {
+func CheckParserResults(t *testing.T, want string, actual *pantherlog.Result, indicators ...pantherlog.FieldID) {
 	t.Helper()
 	logType := jsoniter.Get([]byte(want), pantherlog.FieldLogTypeJSON).ToString()
 	require.Equal(t, logType, actual.PantherLogType)
-	expect := pantherlog.Result{
-		Meta: actual.Meta,
+	expect := pantherlog.Result{}
+	if indicators == nil {
+		indicators = pantherlog.FieldSetFromJSON([]byte(want))
 	}
-	require.NoError(t, UnmarshalResultJSON([]byte(want), &expect))
+	require.NoError(t, UnmarshalResultJSON([]byte(want), &expect, indicators))
 	//require.Equal(t, -1, bytes.IndexByte(actual.JSON, '\n'), "Result JSON contains newlines")
 	var expectAny map[string]interface{}
 	require.NoError(t, jsoniter.UnmarshalFromString(want, &expectAny))
@@ -315,7 +319,7 @@ func EqualTimestamp(t *testing.T, expect, actual time.Time, msgAndArgs ...interf
 
 // UnmarshalResultJSON unmarshals a result from JSON
 // The parsing is inefficient. It's purpose is to be used in tests to verify output results.
-func UnmarshalResultJSON(data []byte, r *pantherlog.Result) error {
+func UnmarshalResultJSON(data []byte, r *pantherlog.Result, indicators pantherlog.FieldSet) error {
 	tmp := struct {
 		LogType   string `json:"p_log_type"`
 		EventTime string `json:"p_event_time"`
@@ -337,8 +341,8 @@ func UnmarshalResultJSON(data []byte, r *pantherlog.Result) error {
 			return err
 		}
 	}
-	values := pantherlog.ValueBuffer{}
-	for _, kind := range r.Meta {
+	values := pantherlog.BlankValueBuffer()
+	for _, kind := range indicators {
 		fieldName := pantherlog.FieldNameJSON(kind)
 		any := jsoniter.Get(data, fieldName)
 		if any == nil || any.ValueType() == jsoniter.InvalidValue {
@@ -351,14 +355,14 @@ func UnmarshalResultJSON(data []byte, r *pantherlog.Result) error {
 		}
 	}
 	*r = pantherlog.Result{
-		Meta: r.Meta,
 		CoreFields: pantherlog.CoreFields{
 			PantherLogType:   tmp.LogType,
 			PantherRowID:     tmp.RowID,
 			PantherEventTime: eventTime,
 			PantherParseTime: parseTime,
 		},
-		Values: &values,
 	}
+	values.WriteValuesTo(r)
+	values.Recycle()
 	return nil
 }
