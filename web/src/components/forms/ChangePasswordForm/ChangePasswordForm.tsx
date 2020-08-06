@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Alert, Card, Flex, Icon, Text, TextInput } from 'pouncejs';
+import { Alert, Card, Flex, Icon, Text, TextInput, Box } from 'pouncejs';
 import { Field, Form, Formik } from 'formik';
 import React from 'react';
 import * as Yup from 'yup';
@@ -110,7 +110,9 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ onSuccess }) =>
               name="confirmNewPassword"
               required
             />
-            <FieldPolicyChecker schema={yupPasswordValidationSchema} value={values.newPassword} />
+            <Box py={3}>
+              <FieldPolicyChecker schema={yupPasswordValidationSchema} value={values.newPassword} />
+            </Box>
             <SubmitButton fullWidth>Update password</SubmitButton>
           </Flex>
         </Form>

@@ -19,7 +19,7 @@
 import React from 'react';
 import { Field, Form, Formik } from 'formik';
 import * as Yup from 'yup';
-import { Alert, Flex, TextInput, useSnackbar } from 'pouncejs';
+import { Alert, Box, Flex, TextInput, useSnackbar } from 'pouncejs';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
 import useRouter from 'Hooks/useRouter';
@@ -99,7 +99,9 @@ const ForgotPasswordConfirmForm: React.FC<ForgotPasswordConfirmFormProps> = ({ e
               required
               autoComplete="new-password"
             />
-            <FieldPolicyChecker schema={yupPasswordValidationSchema} value={values.newPassword} />
+            <Box py={3}>
+              <FieldPolicyChecker schema={yupPasswordValidationSchema} value={values.newPassword} />
+            </Box>
             <SubmitButton fullWidth>Update password</SubmitButton>
           </Flex>
         </Form>

@@ -20,7 +20,7 @@ import { Field, Form, Formik } from 'formik';
 import React from 'react';
 import * as Yup from 'yup';
 import { yupPasswordValidationSchema } from 'Helpers/utils';
-import { Alert, Flex, FormHelperText, Link, TextInput } from 'pouncejs';
+import { Alert, Flex, FormHelperText, Link, TextInput, Box } from 'pouncejs';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
 import useAuth from 'Hooks/useAuth';
@@ -83,7 +83,9 @@ const SetPasswordForm: React.FC = () => {
               name="confirmNewPassword"
               required
             />
-            <FieldPolicyChecker schema={yupPasswordValidationSchema} value={values.newPassword} />
+            <Box py={3}>
+              <FieldPolicyChecker schema={yupPasswordValidationSchema} value={values.newPassword} />
+            </Box>
             <SubmitButton aria-describedby="policy-disclaimer" fullWidth>
               Set password
             </SubmitButton>
