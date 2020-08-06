@@ -33,8 +33,8 @@ To configure alarms to send to your team, follow the guides below:
     [handle composite CloudWatch alarms](https://community.pagerduty.com/forum/t/composite-alarm-in-cloudwatch-not-triggering-pd-integration/1798)
     which Panther uses to avoid duplicate pages to oncall staff.
     The work around is to use a [Custom Event Transformer](https://www.pagerduty.com/docs/guides/custom-event-transformer/).
-    Use the below code and configure the SNS topic to use `RawMessageDelivery: true`:
-    ```json
+    Follow the instruction to create a `Cusomer Event Transformer` using the below code:
+    ```javascript
      var normalized_event = {
      event_type: PD.Trigger,
      description: "Cloudwatch",
@@ -43,6 +43,7 @@ To configure alarms to send to your team, follow the guides below:
     
     PD.emitGenericEvents([normalized_event]);
     ```
+  Configure the SNS topic to use `RawMessageDelivery: true` when creating the Pager Duty subscription.
 
 ### Assessing Data Ingest Volume
 The Panther log analysis CloudWatch dashboard provides deep insight into operationally relevant aspects of log processing.
