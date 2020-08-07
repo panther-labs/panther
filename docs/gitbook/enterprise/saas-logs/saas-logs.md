@@ -29,4 +29,4 @@ Panther has direct support for pulling log data from AWS EventBridge, enabling r
 
 To set up in Panther, navigate to `Log Analysis` > `Sources` > `Add Source` and select `Amazon EventBridge`:
 
-![EventBridge](../.gitbook/assets/enterprise/saas-logs/eventbridge.png)
+![EventBridge](../../.gitbook/assets/enterprise/saas-logs/eventbridge.png)

@@ -29,6 +29,22 @@ To configure alarms to send to your team, follow the guides below:
 - [SNS Email and SMS Integration](https://docs.aws.amazon.com/sns/latest/dg/sns-user-notifications.html)
 - [PagerDuty Integration](https://support.pagerduty.com/docs/aws-cloudwatch-integration-guide)
 
+    NOTE: As of this writing (August 2020) Pager Duty cannot 
+    [handle composite CloudWatch alarms](https://community.pagerduty.com/forum/t/composite-alarm-in-cloudwatch-not-triggering-pd-integration/1798)
+    which Panther uses to avoid duplicate pages to oncall staff.
+    The work around is to use a `Cusomer Event Transformer`.
+    Follow the [instructions ](https://www.pagerduty.com/docs/guides/custom-event-transformer/) using the below code:
+    ```javascript
+     var normalized_event = {
+     event_type: PD.Trigger,
+     description: "Cloudwatch",
+     details: JSON.parse(PD.inputRequest.rawBody)
+    };
+    
+    PD.emitGenericEvents([normalized_event]);
+    ```
+  Configure the SNS topic to use `RawMessageDelivery: true` when creating the Pager Duty subscription.
+
 ### Assessing Data Ingest Volume
 The Panther log analysis CloudWatch dashboard provides deep insight into operationally relevant aspects of log processing.
 In particular, understanding the ingest volume is critically important to forecast the cost of running Panther.
