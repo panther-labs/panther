@@ -258,11 +258,11 @@ export const extractErrorMessage = (error: ApolloError | ErrorResponse) => {
   switch (errorType) {
     case '401':
     case '403':
-      return message || 'You are not authorized to perform this request';
+      return capitalize(message) || 'You are not authorized to perform this request';
     case '404':
-      return message || "The resource you requested couldn't be found on our servers";
+      return capitalize(message) || "The resource you requested couldn't be found on our servers";
     default:
-      return message;
+      return capitalize(message);
   }
 };
 
