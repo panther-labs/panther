@@ -68,7 +68,10 @@ scriptTag.type = 'application/json';
 scriptTag.innerHTML = JSON.stringify(PANTHER_CONFIG);
 document.body.appendChild(scriptTag);
 
-// hack until we can upgrade to react@16.9.0
+/**
+ * During testing, we modify `console.error` to "hide" errors that have to do with "act" since they
+ * are noisy and force us to write complicated test assertions which the team doesn't agree with
+ */
 const originalError = global.console.error;
 beforeAll(() => {
   global.console.error = jest.fn((...args) => {
@@ -79,14 +82,17 @@ beforeAll(() => {
   });
 });
 
-afterAll(() => {
-  (global.console.error as jest.Mock).mockRestore();
-});
-
 /**
  * Make sure that localStorage & sessionStorage are clean before each test
  */
 afterEach(() => {
   localStorage.clear();
   sessionStorage.clear();
+});
+
+/**
+ * Restore `console.error` to what it originally was
+ */
+afterAll(() => {
+  (global.console.error as jest.Mock).mockRestore();
 });
