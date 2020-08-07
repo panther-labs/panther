@@ -65,7 +65,7 @@ func TestAsanaAlert(t *testing.T) {
 		headers: requestHeader,
 	}
 
-	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryError)(nil))
+	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryResponse)(nil))
 
 	require.Nil(t, client.Asana(alert, asanaConfig))
 	httpWrapper.AssertExpectations(t)

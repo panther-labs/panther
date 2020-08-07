@@ -21,7 +21,6 @@ package delivery
 import (
 	"os"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -35,15 +34,16 @@ func TestMustParseIntPanic(t *testing.T) {
 }
 
 func TestHandleAlertsPermanentlyFailed(t *testing.T) {
-	createdAtTime, _ := time.Parse(time.RFC3339, "2019-05-03T11:40:13Z")
 	mockClient := &mockOutputsClient{}
 	outputClient = mockClient
-	mockClient.On("Slack", mock.Anything, mock.Anything).Return(&outputs.AlertDeliveryError{})
+	mockClient.On("Slack", mock.Anything, mock.Anything).Return(&outputs.AlertDeliveryResponse{})
 	sqsClient = &mockSQSClient{}
 	setCaches()
-	os.Setenv("ALERT_RETRY_DURATION_MINS", "5")
+	os.Setenv("ALERT_RETRY_COUNT", "0") // set '0' to branch immediately
+	os.Setenv("ALERT_QUEUE_URL", "sqs.url")
+	os.Setenv("MIN_RETRY_DELAY_SECS", "10")
+	os.Setenv("MAX_RETRY_DELAY_SECS", "30")
 	alert := sampleAlert()
-	alert.CreatedAt = createdAtTime
 	alerts := []*models.Alert{alert, alert, alert}
 	sqsMessages = 0
 
@@ -52,18 +52,16 @@ func TestHandleAlertsPermanentlyFailed(t *testing.T) {
 }
 
 func TestHandleAlertsTemporarilyFailed(t *testing.T) {
-	createdAtTime := time.Now()
 	mockClient := &mockOutputsClient{}
 	outputClient = mockClient
-	mockClient.On("Slack", mock.Anything, mock.Anything).Return(&outputs.AlertDeliveryError{})
+	mockClient.On("Slack", mock.Anything, mock.Anything).Return(&outputs.AlertDeliveryResponse{})
 	sqsClient = &mockSQSClient{}
 	setCaches()
-	os.Setenv("ALERT_RETRY_DURATION_MINS", "5")
+	os.Setenv("ALERT_RETRY_COUNT", "10")
 	os.Setenv("ALERT_QUEUE_URL", "sqs.url")
 	os.Setenv("MIN_RETRY_DELAY_SECS", "10")
 	os.Setenv("MAX_RETRY_DELAY_SECS", "30")
 	alert := sampleAlert()
-	alert.CreatedAt = createdAtTime
 	alerts := []*models.Alert{alert, alert, alert}
 	sqsMessages = 0
 

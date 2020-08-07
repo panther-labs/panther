@@ -53,7 +53,7 @@ type PostInput struct {
 
 // HTTPWrapperiface is the interface for our wrapper around Golang's http client
 type HTTPWrapperiface interface {
-	post(*PostInput) *AlertDeliveryError
+	post(*PostInput) *AlertDeliveryResponse
 }
 
 // HTTPiface is an interface for http.Client to simplify unit testing.
@@ -63,16 +63,16 @@ type HTTPiface interface {
 
 // API is the interface for output delivery that can be used for mocks in tests.
 type API interface {
-	Slack(*alertmodels.Alert, *outputmodels.SlackConfig) *AlertDeliveryError
-	PagerDuty(*alertmodels.Alert, *outputmodels.PagerDutyConfig) *AlertDeliveryError
-	Github(*alertmodels.Alert, *outputmodels.GithubConfig) *AlertDeliveryError
-	Jira(*alertmodels.Alert, *outputmodels.JiraConfig) *AlertDeliveryError
-	Opsgenie(*alertmodels.Alert, *outputmodels.OpsgenieConfig) *AlertDeliveryError
-	MsTeams(*alertmodels.Alert, *outputmodels.MsTeamsConfig) *AlertDeliveryError
-	Sqs(*alertmodels.Alert, *outputmodels.SqsConfig) *AlertDeliveryError
-	Sns(*alertmodels.Alert, *outputmodels.SnsConfig) *AlertDeliveryError
-	Asana(*alertmodels.Alert, *outputmodels.AsanaConfig) *AlertDeliveryError
-	CustomWebhook(*alertmodels.Alert, *outputmodels.CustomWebhookConfig) *AlertDeliveryError
+	Slack(*alertmodels.Alert, *outputmodels.SlackConfig) *AlertDeliveryResponse
+	PagerDuty(*alertmodels.Alert, *outputmodels.PagerDutyConfig) *AlertDeliveryResponse
+	Github(*alertmodels.Alert, *outputmodels.GithubConfig) *AlertDeliveryResponse
+	Jira(*alertmodels.Alert, *outputmodels.JiraConfig) *AlertDeliveryResponse
+	Opsgenie(*alertmodels.Alert, *outputmodels.OpsgenieConfig) *AlertDeliveryResponse
+	MsTeams(*alertmodels.Alert, *outputmodels.MsTeamsConfig) *AlertDeliveryResponse
+	Sqs(*alertmodels.Alert, *outputmodels.SqsConfig) *AlertDeliveryResponse
+	Sns(*alertmodels.Alert, *outputmodels.SnsConfig) *AlertDeliveryResponse
+	Asana(*alertmodels.Alert, *outputmodels.AsanaConfig) *AlertDeliveryResponse
+	CustomWebhook(*alertmodels.Alert, *outputmodels.CustomWebhookConfig) *AlertDeliveryResponse
 }
 
 // OutputClient encapsulates the clients that allow sending alerts to multiple outputs

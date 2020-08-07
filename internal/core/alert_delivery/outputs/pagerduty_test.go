@@ -76,7 +76,7 @@ func TestSendPagerDutyAlert(t *testing.T) {
 		body: expectedPostPayload,
 	}
 
-	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryError)(nil))
+	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryResponse)(nil))
 	result := outputClient.PagerDuty(pagerDutyAlert, pagerDutyConfig)
 
 	assert.Nil(t, result)
@@ -87,7 +87,7 @@ func TestSendPagerDutyAlertPostError(t *testing.T) {
 	httpWrapper := &mockHTTPWrapper{}
 	outputClient := &OutputClient{httpWrapper: httpWrapper}
 
-	httpWrapper.On("post", mock.Anything).Return(&AlertDeliveryError{Message: "Exception"})
+	httpWrapper.On("post", mock.Anything).Return(&AlertDeliveryResponse{Message: "Exception"})
 
 	require.Error(t, outputClient.PagerDuty(pagerDutyAlert, pagerDutyConfig))
 	httpWrapper.AssertExpectations(t)

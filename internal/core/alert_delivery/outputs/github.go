@@ -35,7 +35,7 @@ const (
 
 // Github alert send an issue.
 func (client *OutputClient) Github(
-	alert *alertmodels.Alert, config *outputmodels.GithubConfig) *AlertDeliveryError {
+	alert *alertmodels.Alert, config *outputmodels.GithubConfig) *AlertDeliveryResponse {
 
 	description := "**Description:** " + aws.StringValue(alert.AnalysisDescription)
 	link := "\n [Click here to view in the Panther UI](" + generateURL(alert) + ")"

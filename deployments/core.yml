@@ -111,6 +111,8 @@ Mappings:
   Alerts:
     QueueRetention:
       Seconds: 259200 # (3 days) How long SQS will retain messages in the alerts queue
+    RetryCount:
+      Max: 10 #Alerts which fail to send will be retried this many
     RetryDuration:
       Minutes: 30 # Alerts which fail to send will be retried for this duration
     MinRetryDelay:
@@ -634,7 +636,7 @@ Resources:
         Variables:
           DEBUG: !Ref Debug
           ALERT_QUEUE_URL: !Ref AlertQueue
-          ALERT_RETRY_DURATION_MINS: !FindInMap [Alerts, RetryDuration, Minutes]
+          ALERT_RETRY_COUNT: !FindInMap [Alerts, RetryCount, Max]
           ALERT_URL_PREFIX: !Sub https://${AppDomainURL}/log-analysis/alerts/
           MAX_RETRY_DELAY_SECS: !FindInMap [Alerts, MaxRetryDelay, Seconds]
           MIN_RETRY_DELAY_SECS: !FindInMap [Alerts, MinRetryDelay, Seconds]

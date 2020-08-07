@@ -70,7 +70,12 @@ func TestSendPanic(t *testing.T) {
 		panic("panicking")
 	})
 	go send(sampleAlert(), alertOutput, ch)
-	require.Equal(t, outputStatus{outputID: *alertOutput.OutputID}, <-ch)
+	require.Equal(t, outputStatus{
+		outputID:   *alertOutput.OutputID,
+		success:    false,
+		message:    "panic sending alert",
+		needsRetry: false,
+	}, <-ch)
 	mockOutputsClient.AssertExpectations(t)
 }
 
@@ -80,8 +85,20 @@ func TestSendUnsupportedOutput(t *testing.T) {
 	setCaches()
 	ch := make(chan outputStatus, 1)
 
-	send(sampleAlert(), alertOutput, ch)
-	assert.Equal(t, outputStatus{outputID: *alertOutput.OutputID}, <-ch)
+	send(sampleAlert(), &outputmodels.AlertOutput{
+		OutputType:  aws.String("unsupported"),
+		DisplayName: aws.String("unsupported:destination"),
+		OutputConfig: &outputmodels.OutputConfig{
+			Slack: &outputmodels.SlackConfig{WebhookURL: "https://slack.com"},
+		},
+		OutputID: aws.String("output-id"),
+	}, ch)
+	assert.Equal(t, outputStatus{
+		outputID:   *alertOutput.OutputID,
+		success:    false,
+		message:    "unsupported output type",
+		needsRetry: false,
+	}, <-ch)
 	mockClient.AssertExpectations(t)
 }
 
@@ -90,7 +107,7 @@ func TestSendTransientFailure(t *testing.T) {
 	outputClient = mockClient
 	setCaches()
 	ch := make(chan outputStatus, 1)
-	mockClient.On("Slack", mock.Anything, mock.Anything).Return(&outputs.AlertDeliveryError{})
+	mockClient.On("Slack", mock.Anything, mock.Anything).Return(&outputs.AlertDeliveryResponse{})
 
 	send(sampleAlert(), alertOutput, ch)
 	assert.Equal(t, outputStatus{outputID: *alertOutput.OutputID, needsRetry: true}, <-ch)
@@ -101,11 +118,20 @@ func TestSendSuccess(t *testing.T) {
 	mockClient := &mockOutputsClient{}
 	outputClient = mockClient
 	setCaches()
-	mockClient.On("Slack", mock.Anything, mock.Anything).Return((*outputs.AlertDeliveryError)(nil))
+	mockClient.On("Slack", mock.Anything, mock.Anything).Return(&outputs.AlertDeliveryResponse{
+		Success:   true,
+		Message:   "successful response payload",
+		Permanent: false,
+	})
 	ch := make(chan outputStatus, 1)
 
 	send(sampleAlert(), alertOutput, ch)
-	assert.Equal(t, outputStatus{outputID: *alertOutput.OutputID, success: true}, <-ch)
+	assert.Equal(t, outputStatus{
+		outputID:   *alertOutput.OutputID,
+		success:    true,
+		message:    "successful response payload",
+		needsRetry: false,
+	}, <-ch)
 	mockClient.AssertExpectations(t)
 }
 
@@ -113,7 +139,7 @@ func TestDispatchFailure(t *testing.T) {
 	mockClient := &mockOutputsClient{}
 	outputClient = mockClient
 	setCaches()
-	mockClient.On("Slack", mock.Anything, mock.Anything).Return(&outputs.AlertDeliveryError{})
+	mockClient.On("Slack", mock.Anything, mock.Anything).Return(&outputs.AlertDeliveryResponse{})
 
 	assert.False(t, dispatch(sampleAlert()))
 	mockClient.AssertExpectations(t)
@@ -123,7 +149,7 @@ func TestDispatchSuccess(t *testing.T) {
 	mockClient := &mockOutputsClient{}
 	outputClient = mockClient
 	setCaches()
-	mockClient.On("Slack", mock.Anything, mock.Anything).Return((*outputs.AlertDeliveryError)(nil))
+	mockClient.On("Slack", mock.Anything, mock.Anything).Return((*outputs.AlertDeliveryResponse)(nil))
 	assert.True(t, dispatch(sampleAlert()))
 }
 

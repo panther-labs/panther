@@ -69,7 +69,7 @@ func TestCustomWebhookAlert(t *testing.T) {
 		body: expectedNotification,
 	}
 
-	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryError)(nil))
+	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryResponse)(nil))
 
 	require.Nil(t, client.CustomWebhook(alert, customWebhookConfig))
 	httpWrapper.AssertExpectations(t)

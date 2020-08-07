@@ -33,13 +33,13 @@ import (
 
 // Sqs sends an alert to an SQS Queue.
 // nolint: dupl
-func (client *OutputClient) Sqs(alert *alertmodels.Alert, config *outputmodels.SqsConfig) *AlertDeliveryError {
+func (client *OutputClient) Sqs(alert *alertmodels.Alert, config *outputmodels.SqsConfig) *AlertDeliveryResponse {
 	notification := generateNotificationFromAlert(alert)
 
 	serializedMessage, err := jsoniter.MarshalToString(notification)
 	if err != nil {
 		zap.L().Error("Failed to serialize message", zap.Error(err))
-		return &AlertDeliveryError{Message: "Failed to serialize message"}
+		return &AlertDeliveryResponse{Message: "Failed to serialize message"}
 	}
 
 	sqsSendMessageInput := &sqs.SendMessageInput{
@@ -52,7 +52,7 @@ func (client *OutputClient) Sqs(alert *alertmodels.Alert, config *outputmodels.S
 	_, err = sqsClient.SendMessage(sqsSendMessageInput)
 	if err != nil {
 		zap.L().Error("Failed to send message to SQS queue", zap.Error(err))
-		return &AlertDeliveryError{Message: "Failed to send message to SQS queue"}
+		return &AlertDeliveryResponse{Message: "Failed to send message to SQS queue"}
 	}
 	return nil
 }

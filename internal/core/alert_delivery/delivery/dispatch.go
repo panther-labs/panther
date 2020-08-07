@@ -30,6 +30,7 @@ import (
 type outputStatus struct {
 	outputID   string
 	success    bool
+	message    string
 	needsRetry bool
 }
 
@@ -46,7 +47,12 @@ func send(alert *alertmodels.Alert, output *outputmodels.AlertOutput, statusChan
 		// Otherwise, the main routine will wait forever for this to finish.
 		if r := recover(); r != nil {
 			zap.L().Error("panic sending alert", append(commonFields, zap.Any("panic", r))...)
-			statusChannel <- outputStatus{outputID: *output.OutputID, success: false, needsRetry: false}
+			statusChannel <- outputStatus{
+				outputID:   *output.OutputID,
+				success:    false,
+				message:    "panic sending alert",
+				needsRetry: false,
+			}
 		}
 	}()
 
@@ -55,42 +61,51 @@ func send(alert *alertmodels.Alert, output *outputmodels.AlertOutput, statusChan
 		append(commonFields, zap.String("name", *output.DisplayName))...,
 	)
 
-	var alertDeliveryError *outputs.AlertDeliveryError
+	var response *outputs.AlertDeliveryResponse
 	switch *output.OutputType {
 	case "slack":
-		alertDeliveryError = outputClient.Slack(alert, output.OutputConfig.Slack)
+		response = outputClient.Slack(alert, output.OutputConfig.Slack)
 	case "pagerduty":
-		alertDeliveryError = outputClient.PagerDuty(alert, output.OutputConfig.PagerDuty)
+		response = outputClient.PagerDuty(alert, output.OutputConfig.PagerDuty)
 	case "github":
-		alertDeliveryError = outputClient.Github(alert, output.OutputConfig.Github)
+		response = outputClient.Github(alert, output.OutputConfig.Github)
 	case "opsgenie":
-		alertDeliveryError = outputClient.Opsgenie(alert, output.OutputConfig.Opsgenie)
+		response = outputClient.Opsgenie(alert, output.OutputConfig.Opsgenie)
 	case "jira":
-		alertDeliveryError = outputClient.Jira(alert, output.OutputConfig.Jira)
+		response = outputClient.Jira(alert, output.OutputConfig.Jira)
 	case "msteams":
-		alertDeliveryError = outputClient.MsTeams(alert, output.OutputConfig.MsTeams)
+		response = outputClient.MsTeams(alert, output.OutputConfig.MsTeams)
 	case "sqs":
-		alertDeliveryError = outputClient.Sqs(alert, output.OutputConfig.Sqs)
+		response = outputClient.Sqs(alert, output.OutputConfig.Sqs)
 	case "sns":
-		alertDeliveryError = outputClient.Sns(alert, output.OutputConfig.Sns)
+		response = outputClient.Sns(alert, output.OutputConfig.Sns)
 	case "asana":
-		alertDeliveryError = outputClient.Asana(alert, output.OutputConfig.Asana)
+		response = outputClient.Asana(alert, output.OutputConfig.Asana)
 	case "customwebhook":
-		alertDeliveryError = outputClient.CustomWebhook(alert, output.OutputConfig.CustomWebhook)
+		response = outputClient.CustomWebhook(alert, output.OutputConfig.CustomWebhook)
 	default:
 		zap.L().Warn("unsupported output type", commonFields...)
-		statusChannel <- outputStatus{outputID: *output.OutputID, success: false, needsRetry: false}
+		statusChannel <- outputStatus{
+			outputID:   *output.OutputID,
+			success:    false,
+			message:    "unsupported output type",
+			needsRetry: false,
+		}
 		return
 	}
-	if alertDeliveryError != nil {
-		zap.L().Warn("failed to send alert", append(commonFields, zap.Error(alertDeliveryError))...)
-		statusChannel <- outputStatus{
-			outputID: *output.OutputID, success: false, needsRetry: !alertDeliveryError.Permanent}
-		return
+	if response.Success == false {
+		zap.L().Warn("failed to send alert", append(commonFields, zap.Error(response))...)
+	} else {
+		zap.L().Info("alert success", commonFields...)
 	}
 
-	zap.L().Info("alert success", commonFields...)
-	statusChannel <- outputStatus{outputID: *output.OutputID, success: true, needsRetry: false}
+	// Retry only if not successful and we don't have a permanent failure
+	statusChannel <- outputStatus{
+		outputID:   *output.OutputID,
+		success:    response.Success,
+		message:    response.Message,
+		needsRetry: !response.Success && !response.Permanent,
+	}
 }
 
 // Dispatch sends the alert to each of its designated outputs.

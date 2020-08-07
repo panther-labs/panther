@@ -33,9 +33,9 @@ type mockOutputsClient struct {
 	mock.Mock
 }
 
-func (m *mockOutputsClient) Slack(alert *alertmodels.Alert, config *outputmodels.SlackConfig) *outputs.AlertDeliveryError {
+func (m *mockOutputsClient) Slack(alert *alertmodels.Alert, config *outputmodels.SlackConfig) *outputs.AlertDeliveryResponse {
 	args := m.Called(alert, config)
-	return args.Get(0).(*outputs.AlertDeliveryError)
+	return args.Get(0).(*outputs.AlertDeliveryResponse)
 }
 
 type mockLambdaClient struct {

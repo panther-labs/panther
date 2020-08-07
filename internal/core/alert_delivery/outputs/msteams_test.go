@@ -82,7 +82,7 @@ func TestMsTeamsAlert(t *testing.T) {
 		body: msTeamsPayload,
 	}
 
-	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryError)(nil))
+	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryResponse)(nil))
 
 	require.Nil(t, client.MsTeams(alert, msTeamConfig))
 	httpWrapper.AssertExpectations(t)

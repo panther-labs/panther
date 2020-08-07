@@ -34,7 +34,7 @@ const (
 
 // Jira alert send an issue.
 func (client *OutputClient) Jira(
-	alert *alertmodels.Alert, config *outputmodels.JiraConfig) *AlertDeliveryError {
+	alert *alertmodels.Alert, config *outputmodels.JiraConfig) *AlertDeliveryResponse {
 
 	description := "*Description:* " + aws.StringValue(alert.AnalysisDescription)
 	link := "\n [Click here to view in the Panther UI](" + generateURL(alert) + ")"

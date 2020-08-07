@@ -25,7 +25,7 @@ import (
 
 // CustomWebhook alert send an alert.
 func (client *OutputClient) CustomWebhook(
-	alert *alertmodels.Alert, config *outputmodels.CustomWebhookConfig) *AlertDeliveryError {
+	alert *alertmodels.Alert, config *outputmodels.CustomWebhookConfig) *AlertDeliveryResponse {
 
 	postInput := &PostInput{
 		url:  config.WebhookURL,

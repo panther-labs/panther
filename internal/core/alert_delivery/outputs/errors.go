@@ -18,9 +18,18 @@ package outputs
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// AlertDeliveryError indicates whether a failed alert should be retried.
-type AlertDeliveryError struct {
-	// Message is the description of the problem: what went wrong.
+// AlertDeliveryResponse holds the response (success or failure) of an alert delivery request.
+type AlertDeliveryResponse struct {
+	// Status is the http status code
+	Status int
+
+	// Success is true if we determine the request executed successfully. False otherwise.
+	Success bool
+
+	// Body holds the raw body from the response payload.
+	Body string
+
+	// Message is our wrapped description of the problem: what went wrong.
 	Message string
 
 	// Permanent indicates whether the alert output should be retried.
@@ -29,4 +38,4 @@ type AlertDeliveryError struct {
 	Permanent bool
 }
 
-func (e *AlertDeliveryError) Error() string { return e.Message }
+func (e *AlertDeliveryResponse) Error() string { return e.Message }

@@ -22,9 +22,10 @@ import "time"
 
 // LambdaInput is the request structure for the alerts-api Lambda function.
 type LambdaInput struct {
-	GetAlert          *GetAlertInput          `json:"getAlert"`
-	ListAlerts        *ListAlertsInput        `json:"listAlerts"`
-	UpdateAlertStatus *UpdateAlertStatusInput `json:"updateAlertStatus"`
+	GetAlert                  *GetAlertInput                  `json:"getAlert"`
+	ListAlerts                *ListAlertsInput                `json:"listAlerts"`
+	UpdateAlertStatus         *UpdateAlertStatusInput         `json:"updateAlertStatus"`
+	UpdateAlertDeliveryStatus *UpdateAlertDeliveryStatusInput `json:"updateAlertDeliveryStatus"`
 }
 
 // GetAlertInput retrieves details for a single alert.
@@ -115,6 +116,23 @@ type UpdateAlertStatusInput struct {
 	UserID *string `json:"userId" validate:"uuid4"`
 }
 
+// UpdateAlertDeliveryStatusInput updates an alert by its ID
+// {
+//     "updateAlertDeliveryStatus": {
+//         "alertId": "84c3e4b27c702a1c31e6eb412fc377f6",
+//         "deliverySuccess": false,
+//         "deliveryResponses": [ "{\"status\": 5XX, \"message\": \"some failure message\"}" ]
+//     }
+// }
+type UpdateAlertDeliveryStatusInput struct {
+	// ID of the alert to update
+	AlertID string `json:"alertId" validate:"hexadecimal,len=32"` // AlertID is an MD5 hash
+
+	// Variables that we allow updating:
+	DeliverySuccess   bool     `json:"deliverySuccess" validate:"exists"`
+	DeliveryResponses []string `json:"deliveryResponses"`
+}
+
 // UpdateAlertStatusOutput the returne alert summary after an update
 type UpdateAlertStatusOutput = AlertSummary
 
@@ -151,6 +169,8 @@ type AlertSummary struct {
 	RuleDisplayName   *string    `json:"ruleDisplayName,omitempty"`
 	RuleVersion       *string    `json:"ruleVersion" validate:"required"`
 	DedupString       *string    `json:"dedupString,omitempty"`
+	DeliverySuccess   bool       `json:"deliveryStatus,omitempty"`
+	DeliveryResponses []string   `json:"deliveryReponses,omitempty"`
 	CreationTime      *time.Time `json:"creationTime" validate:"required"`
 	UpdateTime        *time.Time `json:"updateTime" validate:"required"`
 	EventsMatched     *int       `json:"eventsMatched" validate:"required"`

@@ -29,7 +29,7 @@ import (
 
 // MsTeams alert send an alert.
 func (client *OutputClient) MsTeams(
-	alert *alertmodels.Alert, config *outputmodels.MsTeamsConfig) *AlertDeliveryError {
+	alert *alertmodels.Alert, config *outputmodels.MsTeamsConfig) *AlertDeliveryResponse {
 
 	link := "[Click here to view in the Panther UI](" + policyURLPrefix + alert.AnalysisID + ").\n"
 

@@ -19,9 +19,9 @@ package delivery
  */
 
 import (
+	"fmt"
 	"os"
 	"strconv"
-	"time"
 
 	"go.uber.org/zap"
 
@@ -36,8 +36,8 @@ func mustParseInt(text string) int {
 	return val
 }
 
-func getMaxRetryDuration() time.Duration {
-	return time.Duration(mustParseInt(os.Getenv("ALERT_RETRY_DURATION_MINS"))) * time.Minute
+func getMaxRetryCount() int {
+	return mustParseInt(os.Getenv("ALERT_RETRY_COUNT"))
 }
 
 // HandleAlerts sends each alert to its outputs and puts failed alerts back on the queue to retry.
@@ -45,18 +45,20 @@ func HandleAlerts(alerts []*models.Alert) {
 	var failedAlerts []*models.Alert
 
 	zap.L().Info("starting processing alerts", zap.Int("alerts", len(alerts)))
+	maxRetries := getMaxRetryCount()
 
 	for _, alert := range alerts {
 		if !dispatch(alert) {
-			if time.Since(alert.CreatedAt) > getMaxRetryDuration() {
+			if alert.RetryCount >= maxRetries {
 				zap.L().Error(
-					"alert delivery permanently failed, exceeded max retry duration",
+					"alert delivery permanently failed, exceeded max retry count",
 					zap.Strings("failedOutputs", alert.OutputIds),
 					zap.Time("alertCreatedAt", alert.CreatedAt),
 					zap.String("policyId", alert.AnalysisID),
 					zap.String("severity", alert.Severity),
 				)
 			} else {
+				fmt.Print(("Alert failed, will be retried..."))
 				zap.L().Warn("will retry delivery of alert",
 					zap.String("policyId", alert.AnalysisID),
 					zap.String("severity", alert.Severity),

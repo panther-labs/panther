@@ -74,7 +74,7 @@ func TestSlackAlert(t *testing.T) {
 		body: expectedPostPayload,
 	}
 
-	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryError)(nil))
+	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryResponse)(nil))
 
 	require.Nil(t, client.Slack(alert, slackConfig))
 	httpWrapper.AssertExpectations(t)

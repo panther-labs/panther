@@ -39,7 +39,7 @@ var pantherToOpsGeniePriority = map[string]string{
 
 // Opsgenie alert send an alert.
 func (client *OutputClient) Opsgenie(
-	alert *alertmodels.Alert, config *outputmodels.OpsgenieConfig) *AlertDeliveryError {
+	alert *alertmodels.Alert, config *outputmodels.OpsgenieConfig) *AlertDeliveryResponse {
 
 	description := "<strong>Description:</strong> " + aws.StringValue(alert.AnalysisDescription)
 	link := "\n<a href=\"" + generateURL(alert) + "\">Click here to view in the Panther UI</a>"

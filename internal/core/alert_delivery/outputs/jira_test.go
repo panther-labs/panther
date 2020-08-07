@@ -81,7 +81,7 @@ func TestJiraAlert(t *testing.T) {
 		headers: requestHeader,
 	}
 
-	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryError)(nil))
+	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryResponse)(nil))
 
 	require.Nil(t, client.Jira(alert, jiraConfig))
 	httpWrapper.AssertExpectations(t)

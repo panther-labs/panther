@@ -53,6 +53,9 @@ func retry(alerts []*models.Alert) {
 	maxDelaySeconds := mustParseInt(os.Getenv("MAX_RETRY_DELAY_SECS"))
 
 	for i, alert := range alerts {
+		// Increment the retry counter in the alert
+		alert.RetryCount++
+
 		body, err := jsoniter.MarshalToString(alert)
 		if err != nil {
 			zap.L().Panic("error encoding alert as JSON", zap.Error(err))
