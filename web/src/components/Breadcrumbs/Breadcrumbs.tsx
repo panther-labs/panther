@@ -21,11 +21,16 @@ import * as React from 'react';
 import { isGuid, capitalize, shortenId, isHash } from 'Helpers/utils';
 import { Link as RRLink } from 'react-router-dom';
 import useRouter from 'Hooks/useRouter';
+import ReactDOM from 'react-dom';
 
 const transformBreadcrumbText = text =>
   isHash(text.toLowerCase()) ? shortenId(text).toLowerCase() : text;
 
-const Breadcrumbs: React.FC = () => {
+interface BreadcrumbComposition {
+  Actions: React.FC;
+}
+
+const Breadcrumbs: React.FC & BreadcrumbComposition = () => {
   const {
     location: { pathname },
   } = useRouter();
@@ -62,5 +67,11 @@ const Breadcrumbs: React.FC = () => {
 
   return <PounceBreadcrumbs items={fragments} as={RRLink} />;
 };
+
+const BreadcrumbActions: React.FC = ({ children }) => {
+  return ReactDOM.createPortal(children, document.querySelector('#main-header'));
+};
+
+Breadcrumbs.Actions = React.memo(BreadcrumbActions);
 
 export default Breadcrumbs;

@@ -19,11 +19,12 @@
 import { Field, Form, Formik } from 'formik';
 import React from 'react';
 import * as Yup from 'yup';
-import { createYupPasswordValidationSchema } from 'Helpers/utils';
-import { Alert, Flex, FormHelperText, Link } from 'pouncejs';
+import { yupPasswordValidationSchema } from 'Helpers/utils';
+import { Alert, Flex, FormHelperText, Link, TextInput, Box } from 'pouncejs';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
 import useAuth from 'Hooks/useAuth';
+import FieldPolicyChecker from 'Components/FieldPolicyChecker/FieldPolicyChecker';
 
 interface SetPasswordFormValues {
   confirmNewPassword: string;
@@ -37,11 +38,11 @@ const initialValues = {
 };
 
 const validationSchema = Yup.object().shape({
-  confirmNewPassword: createYupPasswordValidationSchema().oneOf(
+  newPassword: yupPasswordValidationSchema,
+  confirmNewPassword: yupPasswordValidationSchema.oneOf(
     [Yup.ref('newPassword')],
     'Passwords must match'
   ),
-  newPassword: createYupPasswordValidationSchema(),
 });
 
 const SetPasswordForm: React.FC = () => {
@@ -62,12 +63,12 @@ const SetPasswordForm: React.FC = () => {
         })
       }
     >
-      {({ status }) => (
+      {({ status, values }) => (
         <Form>
           <Flex direction="column" spacing={4}>
             {status && <Alert variant="error" title={status.title} description={status.message} />}
             <Field
-              as={FormikTextInput}
+              as={TextInput}
               label="New Password"
               placeholder="Type your new password..."
               type="password"
@@ -82,6 +83,9 @@ const SetPasswordForm: React.FC = () => {
               name="confirmNewPassword"
               required
             />
+            <Box py={3}>
+              <FieldPolicyChecker schema={yupPasswordValidationSchema} value={values.newPassword} />
+            </Box>
             <SubmitButton aria-describedby="policy-disclaimer" fullWidth>
               Set password
             </SubmitButton>

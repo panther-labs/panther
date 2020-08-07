@@ -23,7 +23,6 @@ import { SIDESHEETS } from 'Components/utils/Sidesheet';
 import PolicyBulkUploadSidesheet from 'Components/sidesheets/PolicyBulkUploadSidesheet';
 import AddDestinationSidesheet from 'Components/sidesheets/AddDestinationSidesheet';
 import UpdateDestinationSidesheet from 'Components/sidesheets/UpdateDestinationSidesheet';
-import EditAccountSidesheet from 'Components/sidesheets/EditAccountSidesheet';
 import EditUserSidesheet from 'Components/sidesheets/EditUserSidesheet';
 import UserInvitationSidesheet from 'Components/sidesheets/UserInvitationSidesheet';
 
@@ -40,9 +39,6 @@ const SidesheetManager: React.FC = () => {
       break;
     case SIDESHEETS.POLICY_BULK_UPLOAD:
       Component = PolicyBulkUploadSidesheet;
-      break;
-    case SIDESHEETS.EDIT_ACCOUNT:
-      Component = EditAccountSidesheet;
       break;
     case SIDESHEETS.EDIT_USER:
       Component = EditUserSidesheet;
