@@ -17,29 +17,24 @@
  */
 
 import React from 'react';
-import { render, fireEvent, act, waitFor } from 'test-utils';
-import ForgotPasswordConfirmForm from './ForgotPasswordConfirmForm';
+import { render, fireEvent, waitFor } from 'test-utils';
+import SetPasswordForm from './index';
 
-const defaultEmail = 'example@runpanther.io';
-const defaultToken = 'xxx-xxx';
+describe('SetPasswordConfirmForm', () => {
+  it('renders the correct fields', () => {
+    const { getByLabelText, getByText } = render(<SetPasswordForm />);
 
-const renderForm = ({ email = defaultEmail, token = defaultToken } = {}) =>
-  render(<ForgotPasswordConfirmForm email={email} token={token} />);
-
-describe('ForgotPasswordConfirmForm', () => {
-  it('renders', async () => {
-    const { getByText } = renderForm();
-    expect(await getByText('New Password')).toBeInTheDocument();
-    expect(await getByText('Confirm New Password')).toBeInTheDocument();
-    expect(await getByText('Update password')).toBeInTheDocument();
+    expect(getByLabelText('New Password')).toBeInTheDocument();
+    expect(getByLabelText('Confirm New Password')).toBeInTheDocument();
+    expect(getByText('Set password')).toBeInTheDocument();
   });
 
   it('has proper validation', async () => {
-    const { getByLabelText, findByText, getByText, queryByAriaLabel } = renderForm();
+    const { getByLabelText, findByText, getByText, queryByAriaLabel } = render(<SetPasswordForm />);
 
     const newPassword = getByLabelText('New Password');
     const newPasswordConfirm = getByLabelText('Confirm New Password');
-    const sumbitBtn = getByText('Update password');
+    const sumbitBtn = getByText('Set password');
 
     // By default submit should be disabled
     expect(sumbitBtn).toHaveAttribute('disabled');
@@ -79,32 +74,23 @@ describe('ForgotPasswordConfirmForm', () => {
   });
 
   it('submits the form', async () => {
-    const { findByLabelText, findByText, resetPassword } = await renderForm();
+    const { getByLabelText, getByText, setNewPassword } = render(<SetPasswordForm />);
+
     // Required from Yup schema validation
     const strongPassword = 'abCDefg123456!@@##';
 
-    await act(async () => {
-      const newPassword = await findByLabelText('New Password');
-      const newPasswordConfirm = await findByLabelText('Confirm New Password');
-      const sumbitBtn = await findByText('Update password');
+    const newPassword = getByLabelText('New Password');
+    const newPasswordConfirm = getByLabelText('Confirm New Password');
+    const sumbitBtn = getByText('Set password');
 
-      await fireEvent.change(newPassword, {
-        target: { value: strongPassword },
-      });
-      await fireEvent.blur(newPassword);
-      await fireEvent.change(newPasswordConfirm, {
-        target: { value: strongPassword },
-      });
-      await fireEvent.click(sumbitBtn);
-    });
+    fireEvent.change(newPassword, { target: { value: strongPassword } });
+    fireEvent.change(newPasswordConfirm, { target: { value: strongPassword } });
+    fireEvent.click(sumbitBtn);
 
     await waitFor(() => {
-      expect(resetPassword).toHaveBeenCalledWith({
+      expect(setNewPassword).toHaveBeenCalledWith({
         newPassword: strongPassword,
-        email: defaultEmail,
-        token: defaultToken,
         onError: expect.any(Function),
-        onSuccess: expect.any(Function),
       });
     });
   });

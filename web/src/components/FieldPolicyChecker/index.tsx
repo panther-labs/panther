@@ -16,18 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import Breadcrumbs from 'Components/Breadcrumbs';
-import { Box, Flex } from 'pouncejs';
-
-const Header = () => {
-  return (
-    <Flex id="main-header" as="header" width={1} align="center" justify="space-between" py={6}>
-      <Box py={14}>
-        <Breadcrumbs />
-      </Box>
-    </Flex>
-  );
-};
-
-export default Header;
+export { default } from './FieldPolicyChecker';

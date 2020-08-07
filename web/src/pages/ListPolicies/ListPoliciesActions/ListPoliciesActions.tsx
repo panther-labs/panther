@@ -30,6 +30,7 @@ import CreateButton from 'Pages/ListPolicies/CreateButton';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import isEmpty from 'lodash/isEmpty';
 import pick from 'lodash/pick';
+import Breadcrumbs from 'Components/Breadcrumbs';
 
 const severityOptions = Object.values(SeverityEnum);
 const statusOptions = Object.values(ComplianceStatusEnum);
@@ -140,33 +141,35 @@ const ListPoliciesActions: React.FC = () => {
   );
 
   return (
-    <Box mb={6} as="section">
-      <Flex spacing={5} justify="flex-end">
-        <Button
-          active={areFiltersVisible}
-          icon="filter"
-          variant="outline"
-          variantColor="navyblue"
-          onClick={() => setFiltersVisibility(!areFiltersVisible)}
-        >
-          Filter Options {filtersCount ? `(${filtersCount})` : ''}
-        </Button>
-        <CreateButton />
-      </Flex>
-      <ErrorBoundary>
-        <Collapse open={areFiltersVisible}>
-          <Box pt={6}>
-            <Card p={8}>
+    <React.Fragment>
+      <Breadcrumbs.Actions>
+        <Flex spacing={5} justify="flex-end">
+          <Button
+            active={areFiltersVisible}
+            icon="filter"
+            variant="outline"
+            variantColor="navyblue"
+            onClick={() => setFiltersVisibility(!areFiltersVisible)}
+          >
+            Filter Options {filtersCount ? `(${filtersCount})` : ''}
+          </Button>
+          <CreateButton />
+        </Flex>
+      </Breadcrumbs.Actions>
+      <Collapse open={areFiltersVisible}>
+        <Box pb={6} as="section">
+          <Card p={8}>
+            <ErrorBoundary>
               <GenerateFiltersGroup<ListPoliciesFiltersValues>
                 filters={filters}
                 onSubmit={updateRequestParamsAndResetPaging}
                 initialValues={initialFilterValues}
               />
-            </Card>
-          </Box>
-        </Collapse>
-      </ErrorBoundary>
-    </Box>
+            </ErrorBoundary>
+          </Card>
+        </Box>
+      </Collapse>
+    </React.Fragment>
   );
 };
 

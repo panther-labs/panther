@@ -27,12 +27,12 @@ import { MockedProvider, MockLink, MockedResponse } from '@apollo/client/testing
 import cleanParamsLink from 'Source/apollo/cleanParamsLink';
 import createErrorLink from 'Source/apollo/createErrorLink';
 import typePolicies from 'Source/apollo/typePolicies';
-import { AuthContext } from 'Components/utils/AuthContext';
+import { AuthContext, UserInfo } from 'Components/utils/AuthContext';
 import { createMemoryHistory } from 'history';
 import { Router } from 'react-router-dom';
 import UIProviders from 'Components/utils/UIProviders';
 import * as customQueries from './queries';
-import { mockAuthProviderValue } from './auth';
+import { buildUserInfo, mockAuthProviderValue } from './auth';
 
 interface RenderOptions extends Omit<RtlRenderOptions, 'queries'> {
   /**
@@ -42,10 +42,11 @@ interface RenderOptions extends Omit<RtlRenderOptions, 'queries'> {
   initialRoute?: string;
 
   /**
-   * Whether the test should have an authenticated user present
-   * @default  true
+   * The information for the authenticated user. Pass `null` or  `false` if you don't want to have
+   * the user as authenticated in your tests
+   * @default  the output of `buildUserInfo()`
    */
-  isAuthenticated?: boolean;
+  userInfo?: UserInfo;
 
   /**
    * A list of GraphQL requests along with  their mocked results
@@ -55,10 +56,10 @@ interface RenderOptions extends Omit<RtlRenderOptions, 'queries'> {
 }
 
 export const render = (element: React.ReactElement, options: RenderOptions = {}) => {
-  const { initialRoute = '/', isAuthenticated = true, mocks, ...rtlOptions } = options;
+  const { initialRoute = '/', userInfo = buildUserInfo(), mocks, ...rtlOptions } = options;
 
   const history = createMemoryHistory({ initialEntries: [initialRoute] });
-  const authProviderValue = mockAuthProviderValue(isAuthenticated);
+  const authProviderValue = mockAuthProviderValue(userInfo);
 
   // A mock terminating link that allows apollo to resolve graphql operations from the mocks
   const mockLink = new MockLink(mocks, true);

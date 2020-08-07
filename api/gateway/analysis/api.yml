@@ -1438,8 +1438,8 @@ definitions:
   threshold:
     description: The threshold (number of events) that will have to be reached during the dedupPeriodMinutes in order for the rule to fire an alarm
     type: integer
-    minimum: 0
-    default: 0
+    minimum: 1
+    default: 1
 
   description:
     description: Summary of the policy and its purpose
