@@ -30,7 +30,7 @@ import {
 } from 'pouncejs';
 import { AlertStatusesEnum } from 'Generated/schema';
 import AlertStatusBadge from 'Components/AlertStatusBadge';
-import { extractErrorMessage, formatDatetime, getUserDisplayName } from 'Helpers/utils';
+import { extractErrorMessage, formatDatetime, getUserDisplayName, capitalize } from 'Helpers/utils';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 import { useListUsers } from 'Pages/Users/graphql/listUsers.generated';
 import { useUpdateAlertStatus } from './graphql/updateAlertStatus.generated';
@@ -94,7 +94,7 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
     onCompleted: data => {
       pushSnackbar({
         variant: 'success',
-        title: `Set alert to ${data.updateAlertStatus.status.toLowerCase()}`,
+        title: `Alert set to ${capitalize(data.updateAlertStatus.status.toLowerCase())}`,
       });
     },
     onError: error => {
