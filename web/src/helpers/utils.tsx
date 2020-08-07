@@ -362,6 +362,6 @@ export const subtractDays = (date: string, days: number) => {
   return `${dayjs(date).subtract(days, 'day').toISOString().split('.')[0]}Z`;
 };
 
-export const numberFormat = (num: number): string => {
+export const formatNumber = (num: number): string => {
   return new Intl.NumberFormat().format(num);
 };
