@@ -8,7 +8,7 @@
   "Description": "Matches every resource",
   "DisplayName": "AlwaysTrue",
   "Enabled": true,
-  "Filename": "always_true.py",
+  "Filename": "policy_always_true.py",
   "OutputIds": [],
   "PolicyID": "Test:Policy:JSON",
   "ResourceTypes": ["AWS.S3.Bucket"],

@@ -38,7 +38,7 @@ type Threshold int64
 func (m Threshold) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := validate.MinimumInt("", "body", int64(m), 0, false); err != nil {
+	if err := validate.MinimumInt("", "body", int64(m), 1, false); err != nil {
 		return err
 	}
 

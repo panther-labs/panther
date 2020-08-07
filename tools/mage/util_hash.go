@@ -70,7 +70,7 @@ func fileHashMap(roots ...string) (map[string][16]byte, error) {
 
 // Hash every "source" file in the repo to check for diffs before vs after formatting.
 //
-// Excludes: .idea, .git, .setup, docs (fmt doesn't touch docs), keys, node_modules, out, etc
+// Excludes: .idea, .git, .setup, keys, node_modules, out, etc
 func sourceHashes() (map[string][16]byte, error) {
 	topLevel, err := filepath.Glob("*.{json,md,go,yml}")
 	if err != nil {

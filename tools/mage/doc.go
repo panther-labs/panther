@@ -131,7 +131,7 @@ func headerAnchor(sectionTitle string) (string, error) {
 	var formattedWords []string
 	for _, word := range strings.Split(sectionTitle, " ") {
 		// Remove/replace special characters
-		//     "AWS.S3ServerAccess" => "aws-s3serveraccess"
+		//     "aws.s3serveraccess" => "aws-s3serveraccess"
 		var newWord strings.Builder
 		for _, char := range word {
 			switch char {
