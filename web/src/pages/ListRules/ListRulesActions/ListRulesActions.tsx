@@ -30,6 +30,7 @@ import ErrorBoundary from 'Components/ErrorBoundary';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import isEmpty from 'lodash/isEmpty';
 import pick from 'lodash/pick';
+import Breadcrumbs from 'Components/Breadcrumbs';
 
 const severityOptions = Object.values(SeverityEnum);
 
@@ -115,34 +116,36 @@ const ListRulesActions: React.FC = () => {
   );
 
   return (
-    <Box mb={6} as="section">
-      <Flex justify="flex-end">
-        <Flex spacing={5} justify="flex-end">
-          <Button
-            variant="outline"
-            variantColor="navyblue"
-            icon="filter"
-            onClick={() => setFiltersVisibility(!areFiltersVisible)}
-          >
-            Filter Options {filtersCount ? `(${filtersCount})` : ''}
-          </Button>
-          <CreateButton />
+    <React.Fragment>
+      <Breadcrumbs.Actions>
+        <Flex justify="flex-end">
+          <Flex spacing={5} justify="flex-end">
+            <Button
+              variant="outline"
+              variantColor="navyblue"
+              icon="filter"
+              onClick={() => setFiltersVisibility(!areFiltersVisible)}
+            >
+              Filter Options {filtersCount ? `(${filtersCount})` : ''}
+            </Button>
+            <CreateButton />
+          </Flex>
         </Flex>
-      </Flex>
-      <ErrorBoundary>
-        <Collapse open={areFiltersVisible}>
-          <Box pt={6}>
-            <Card p={8}>
+      </Breadcrumbs.Actions>
+      <Collapse open={areFiltersVisible}>
+        <Box pb={6} as="section">
+          <Card p={8}>
+            <ErrorBoundary>
               <GenerateFiltersGroup<ListRulesFiltersValues>
                 filters={filters}
                 onSubmit={updateRequestParamsAndResetPaging}
                 initialValues={initialFilterValues}
               />
-            </Card>
-          </Box>
-        </Collapse>
-      </ErrorBoundary>
-    </Box>
+            </ErrorBoundary>
+          </Card>
+        </Box>
+      </Collapse>
+    </React.Fragment>
   );
 };
 

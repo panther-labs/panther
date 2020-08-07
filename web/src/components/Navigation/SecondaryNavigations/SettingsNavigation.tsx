@@ -25,7 +25,7 @@ import NavLink from '../NavLink';
 const SettingsNavigation: React.FC = () => {
   return (
     <Box>
-      <Heading size="x-small" fontWeight="bold" pt={7} pb={5}>
+      <Heading size="x-small" fontWeight="bold" pt={4} pb={5}>
         SETTINGS
       </Heading>
       <Flex direction="column" as="ul">

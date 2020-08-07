@@ -53,22 +53,21 @@ export const getArnRegexForService = (awsService: string) => {
   return new RegExp(`arn:aws:${awsService.toLowerCase()}:([a-z]){2}-([a-z])+-[0-9]:\\d{12}:.+`);
 };
 
-export const createYupPasswordValidationSchema = () =>
-  Yup.string()
-    .required()
-    .min(14, 'Must be at least 14 characters')
-    .matches(INCLUDE_DIGITS_REGEX, 'Include at least 1 digit')
-    .matches(INCLUDE_LOWERCASE_REGEX, 'Include at least 1 lowercase character')
-    .matches(INCLUDE_UPPERCASE_REGEX, 'Include at least 1 uppercase character')
-    .matches(INCLUDE_SPECIAL_CHAR_REGEX, 'Include at least 1 special character');
+// Derived from https://github.com/3nvi/panther/blob/master/deployments/bootstrap.yml#L557-L563
+export const yupPasswordValidationSchema = Yup.string()
+  .required()
+  .min(12, 'Password must contain at least 12 characters')
+  .matches(INCLUDE_UPPERCASE_REGEX, 'Password must contain at least 1 uppercase character')
+  .matches(INCLUDE_LOWERCASE_REGEX, 'Password must contain at least 1 lowercase character')
+  .matches(INCLUDE_SPECIAL_CHAR_REGEX, 'Password must contain at least 1 symbol')
+  .matches(INCLUDE_DIGITS_REGEX, 'Password must contain  at least 1 number');
 
-export const integrationLabelValidation = () =>
-  Yup.string()
-    .required()
-    .matches(SOURCE_LABEL_REGEX, 'Can only include alphanumeric characters, dashes and spaces')
-    .max(32, 'Must be at most 32 characters');
+export const yupIntegrationLabelValidation = Yup.string()
+  .required()
+  .matches(SOURCE_LABEL_REGEX, 'Can only include alphanumeric characters, dashes and spaces')
+  .max(32, 'Must be at most 32 characters');
 
-export const webhookValidation = () => Yup.string().url('Must be a valid webhook URL');
+export const yupWebhookValidation = Yup.string().url('Must be a valid webhook URL');
 /**
  * checks whether the input is a valid UUID
  */

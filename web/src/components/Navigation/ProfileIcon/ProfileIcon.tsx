@@ -32,10 +32,10 @@ import {
 import useAuth from 'Hooks/useAuth';
 import { UserInfo } from 'Components/utils/AuthContext';
 import { getUserDisplayName } from 'Helpers/utils';
-import { SIDESHEETS } from 'Components/utils/Sidesheet';
-import useSidesheet from 'Hooks/useSidesheet';
 import PantherIcon from 'Assets/panther-minimal-logo.svg';
 import { STABLE_PANTHER_VERSION } from 'Source/constants';
+import { MODALS } from 'Components/utils/Modal';
+import useModal from 'Hooks/useModal';
 
 const DEFAULT_INITIALS = '??';
 
@@ -60,7 +60,7 @@ const getUserInitials = (userInfo?: UserInfo) => {
 
 const ProfileIcon: React.FC = () => {
   const { userInfo, signOut } = useAuth();
-  const { showSidesheet } = useSidesheet();
+  const { showModal } = useModal();
 
   return (
     <Dropdown>
@@ -93,7 +93,7 @@ const ProfileIcon: React.FC = () => {
               <Box mb={2} mx={-2}>
                 <AbstractButton
                   p={2}
-                  onClick={() => showSidesheet({ sidesheet: SIDESHEETS.EDIT_ACCOUNT })}
+                  onClick={() => showModal({ modal: MODALS.EDIT_PROFILE_SETTINGS })}
                 >
                   Profile Settings
                 </AbstractButton>
@@ -114,7 +114,7 @@ const ProfileIcon: React.FC = () => {
               fontStyle="italic"
             >
               <Img src={PantherIcon} alt="Panther logo" nativeWidth={16} nativeHeight={16} mr={2} />
-              panther&nbsp;<b>{STABLE_PANTHER_VERSION}</b>
+              Panther&nbsp;<b>{STABLE_PANTHER_VERSION}</b>
             </Flex>
           </DropdownMenu>
         </React.Fragment>
