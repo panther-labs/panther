@@ -31,9 +31,11 @@ import (
 	"time"
 )
 
-// Read will prompt the user for a string input.
-func Read(prompt string, validator func(string) error) string {
+// Read will prompt the user for a string input, all validators must pass to return
+func Read(prompt string, validators ...func(string) error) string {
 	reader := bufio.NewReader(os.Stdin)
+
+prompt:
 	for {
 		fmt.Print(prompt)
 		result, err := reader.ReadString('\n')
@@ -43,10 +45,10 @@ func Read(prompt string, validator func(string) error) string {
 		}
 
 		result = strings.TrimSpace(result)
-		if validator != nil {
+		for _, validator := range validators {
 			if err := validator(result); err != nil {
 				fmt.Println(err)
-				continue
+				continue prompt
 			}
 		}
 
