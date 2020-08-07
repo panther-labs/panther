@@ -35,6 +35,8 @@ type PantherUserProperties struct {
 	Email      string `validate:"required,email"`
 }
 
+const usersAPI = "panther-users-api"
+
 func customPantherUser(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
 	switch event.RequestType {
 	case cfn.RequestCreate:
@@ -47,7 +49,9 @@ func customPantherUser(_ context.Context, event cfn.Event) (string, map[string]i
 		if err != nil {
 			// We want to log an error, but not fail the CloudFormation and trigger a rollback.
 			// The user can manually invoke users-api to invite a user if this fails.
-			zap.L().Error("failed to invite user", zap.Any("user", props), zap.Error(err))
+			zap.L().Error("failed to invite user - you'll need to invoke "+usersAPI+" directly "+
+				"(see https://docs.runpanther.io/user-guide/help/troubleshooting)",
+				zap.Any("user", props), zap.Error(err))
 			userID = "error"
 		}
 
@@ -74,7 +78,7 @@ func inviteUser(props PantherUserProperties) (string, error) {
 	}
 	var output models.InviteUserOutput
 
-	if err := genericapi.Invoke(lambdaClient, "panther-users-api", &input, &output); err != nil {
+	if err := genericapi.Invoke(lambdaClient, usersAPI, &input, &output); err != nil {
 		return "", err
 	}
 
