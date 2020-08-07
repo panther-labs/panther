@@ -79,6 +79,6 @@ type envConfig struct {
 func Setup() {
 	envconfig.MustProcess("", &env)
 
-	accountDescription = fmt.Sprintf("Panther %s (%s:%s)",
+	accountDescription = fmt.Sprintf("%s (%s:%s)",
 		env.CompanyDisplayName, env.AccountID, *awsSession.Config.Region)
 }
