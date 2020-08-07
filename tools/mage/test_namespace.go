@@ -72,6 +72,9 @@ func (Test) CI() {
 	runTests([]testTask{
 		{"fmt", func() error { return fmtErr }},
 
+		// mage doc
+		{"doc", doc}, // verify the command works, even if docs aren't committed in this repo
+
 		// mage test:go
 		{"go unit tests", func() error { return goUnitErr }},
 		{"golangci-lint", func() error { return goLintErr }},
