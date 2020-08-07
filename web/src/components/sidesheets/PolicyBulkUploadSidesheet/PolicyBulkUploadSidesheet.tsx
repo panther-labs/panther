@@ -18,7 +18,7 @@
 
 import { Box, Heading, SideSheet, useSnackbar, Text, SideSheetProps, Button, Link } from 'pouncejs';
 import React from 'react';
-import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
+import { ANALYSIS_UPLOAD_DOC_URL } from 'Source/constants';
 import { ListPoliciesDocument } from 'Pages/ListPolicies';
 import { ListRulesDocument } from 'Pages/ListRules';
 import { getOperationName } from 'apollo-utilities';
@@ -119,7 +119,7 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({
           Supposing you have a collection of {isPolicy ? 'policy' : 'rule'} files, simply zip them
           together using any zip method you prefer. You can find a detailed description of the
           process in our{' '}
-          <Link external href={`${PANTHER_SCHEMA_DOCS_LINK}/policies/uploading`}>
+          <Link external href={`${ANALYSIS_UPLOAD_DOC_URL}`}>
             designated docs page
           </Link>
           .

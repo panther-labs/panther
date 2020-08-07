@@ -22,7 +22,7 @@ import { Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import React from 'react';
 import FormikCheckbox from 'Components/fields/Checkbox';
-import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
+import { CLOUD_SECURITY_REAL_TIME_DOC_URL, REMEDIATION_DOC_URL } from 'Source/constants';
 import { ComplianceSourceWizardValues } from 'Components/wizards/ComplianceSourceWizard/ComplianceSourceWizard';
 
 const SourceConfigurationPanel: React.FC = () => {
@@ -69,10 +69,7 @@ const SourceConfigurationPanel: React.FC = () => {
             <FormHelperText id="cweEnabled-description" ml={2}>
               Configure Panther to monitor all AWS resource changes in real-time through CloudWatch
               Events.{' '}
-              <Link
-                external
-                href={`${PANTHER_SCHEMA_DOCS_LINK}/amazon-web-services/aws-setup/real-time-events`}
-              >
+              <Link external href={`${CLOUD_SECURITY_REAL_TIME_DOC_URL}`}>
                 Read more
               </Link>
             </FormHelperText>
@@ -87,10 +84,7 @@ const SourceConfigurationPanel: React.FC = () => {
             <FormHelperText id="remediationEnabled-description" ml={2}>
               Allow Panther to fix misconfigured infrastructure as soon as it is detected.
               <br />
-              <Link
-                external
-                href={`${PANTHER_SCHEMA_DOCS_LINK}/amazon-web-services/aws-setup/automatic-remediation`}
-              >
+              <Link external href={`${REMEDIATION_DOC_URL}`}>
                 Read more
               </Link>
             </FormHelperText>
