@@ -32,7 +32,7 @@ import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.genera
 import AlertsBySeverity from './AlertsBySeverity';
 import AlertSummary from './AlertSummary';
 
-export const intervalMinutes = 6 * 60;
+export const intervalMinutes = 60;
 export const defaultPastDays = 3;
 
 const LogAnalysisOverview: React.FC = () => {
