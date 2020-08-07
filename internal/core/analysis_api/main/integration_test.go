@@ -588,7 +588,7 @@ func saveEnabledPolicyFailingTests(t *testing.T) {
 		},
 	}
 	policyID := uuid.New().String()
-	defer cleanupPoliciesRules(t, policyID)
+	defer cleanupAnalyses(t, policyID)
 
 	req := models.UpdatePolicy{
 		AutoRemediationID:         policy.AutoRemediationID,
@@ -635,7 +635,7 @@ func saveEnabledPolicyFailingTests(t *testing.T) {
 // Tests a disabled policy can be saved even if its tests fail.
 func saveDisabledPolicyFailingTests(t *testing.T) {
 	policyID := uuid.New().String()
-	defer cleanupPoliciesRules(t, policyID)
+	defer cleanupAnalyses(t, policyID)
 	body := "def policy(resource): return True"
 	tests := []*models.UnitTest{
 		{
@@ -681,7 +681,7 @@ func saveDisabledPolicyFailingTests(t *testing.T) {
 // Tests that a policy can be saved if it is enabled and its tests pass.
 func saveEnabledPolicyPassingTests(t *testing.T) {
 	policyID := uuid.New().String()
-	defer cleanupPoliciesRules(t, policyID)
+	defer cleanupAnalyses(t, policyID)
 	body := "def policy(resource): return True"
 	tests := []*models.UnitTest{
 		{
@@ -730,7 +730,7 @@ func saveEnabledPolicyPassingTests(t *testing.T) {
 
 func savePolicyInvalidTestInputJSON(t *testing.T) {
 	policyID := uuid.New().String()
-	defer cleanupPoliciesRules(t, policyID)
+	defer cleanupAnalyses(t, policyID)
 	body := "def policy(resource): return True"
 	tests := []*models.UnitTest{
 		{
@@ -786,7 +786,7 @@ func savePolicyInvalidTestInputJSON(t *testing.T) {
 // Tests that a rule cannot be saved if it is enabled and its tests fail.
 func saveEnabledRuleFailingTests(t *testing.T) {
 	ruleID := uuid.New().String()
-	defer cleanupPoliciesRules(t, ruleID)
+	defer cleanupAnalyses(t, ruleID)
 	body := "def rule(event): return event['key']"
 	tests := []*models.UnitTest{
 		{
@@ -847,7 +847,7 @@ func saveEnabledRuleFailingTests(t *testing.T) {
 // a rule without tests.
 func saveEnabledRulePassingTests(t *testing.T) {
 	ruleID := uuid.New().String()
-	defer cleanupPoliciesRules(t, ruleID)
+	defer cleanupAnalyses(t, ruleID)
 	body := "def rule(event): return True"
 	tests := []*models.UnitTest{
 		{
@@ -892,7 +892,7 @@ func saveEnabledRulePassingTests(t *testing.T) {
 
 func saveRuleInvalidTestInputJSON(t *testing.T) {
 	ruleID := uuid.New().String()
-	defer cleanupPoliciesRules(t, ruleID)
+	defer cleanupAnalyses(t, ruleID)
 	body := "def rule(event): return True"
 	tests := []*models.UnitTest{
 		{
@@ -944,7 +944,7 @@ func saveRuleInvalidTestInputJSON(t *testing.T) {
 // Tests a disabled policy can be saved even if its tests fail.
 func saveDisabledRuleFailingTests(t *testing.T) {
 	ruleID := uuid.New().String()
-	defer cleanupPoliciesRules(t, ruleID)
+	defer cleanupAnalyses(t, ruleID)
 	body := "def policy(resource): return True"
 	tests := []*models.UnitTest{
 		{
@@ -1336,6 +1336,9 @@ func bulkUploadSuccess(t *testing.T) {
 		},
 		HTTPClient: httpClient,
 	})
+
+	// cleaning up added Rule
+	defer cleanupAnalyses(t, "Rule.Always.True")
 
 	require.NoError(t, err)
 
@@ -1927,9 +1930,9 @@ func deleteGlobal(t *testing.T) {
 }
 
 // Can be used for both policies and rules since they share the same api handler.
-func cleanupPoliciesRules(t *testing.T, policyIDs ...string) {
-	entries := make([]*models.DeleteEntry, len(policyIDs))
-	for i, pid := range policyIDs {
+func cleanupAnalyses(t *testing.T, analysisID ...string) {
+	entries := make([]*models.DeleteEntry, len(analysisID))
+	for i, pid := range analysisID {
 		entries[i] = &models.DeleteEntry{ID: models.ID(pid)}
 	}
 	result, err := apiClient.Operations.DeletePolicies(&operations.DeletePoliciesParams{
