@@ -17,7 +17,7 @@
  */
 
 import * as React from 'react';
-import { Alert, Box, SimpleGrid, useSnackbar } from 'pouncejs';
+import { Alert, Box, Flex, useSnackbar } from 'pouncejs';
 import { Field, Form, Formik } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import SubmitButton from 'Components/buttons/SubmitButton';
@@ -32,7 +32,6 @@ interface EditProfileFormProps {
 interface EditProfileFormValues {
   givenName: string;
   familyName: string;
-  email: string;
 }
 
 const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) => {
@@ -57,7 +56,6 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) => {
   });
 
   const initialValues = {
-    email: userInfo?.email || '',
     familyName: userInfo?.familyName || '',
     givenName: userInfo?.givenName || '',
   };
@@ -83,16 +81,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) => {
             <Alert variant="error" title={status.title} description={status.message} />
           </Box>
         )}
-        <Field
-          as={FormikTextInput}
-          label="Email address"
-          placeholder="john@doe.com"
-          disabled
-          name="email"
-          required
-          readonly
-        />
-        <SimpleGrid my={4} columns={2} gap={4}>
+        <Flex direction="column" spacing={5}>
           <Field
             as={FormikTextInput}
             label="First Name"
@@ -107,8 +96,8 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess }) => {
             name="familyName"
             required
           />
-        </SimpleGrid>
-        <SubmitButton fullWidth>Update</SubmitButton>
+          <SubmitButton fullWidth>Save Changes</SubmitButton>
+        </Flex>
       </Form>
     </Formik>
   );

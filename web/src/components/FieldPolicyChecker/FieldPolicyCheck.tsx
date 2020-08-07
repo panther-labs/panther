@@ -16,28 +16,28 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Heading, SideSheet, SideSheetProps } from 'pouncejs';
-import EditProfileForm from 'Components/forms/EditProfileForm';
-import ChangePasswordForm from 'Components/forms/ChangePasswordForm';
 import React from 'react';
+import { Flex, Icon, Text } from 'pouncejs';
 
-const EditAccountSidesheet: React.FC<SideSheetProps> = props => {
+interface FieldPolicyCheckProps {
+  passing: boolean;
+}
+
+const FieldPolicyCheck: React.FC<FieldPolicyCheckProps> = ({ passing, children }) => {
   return (
-    <SideSheet aria-label="Profile & Account Settings" {...props}>
-      <Box as="section" my={8}>
-        <Heading as="h2" pb={4}>
-          Edit Profile
-        </Heading>
-        <EditProfileForm onSuccess={props.onClose} />
-      </Box>
-      <Box as="section">
-        <Heading as="h2" pb={4}>
-          Account Security
-        </Heading>
-        <ChangePasswordForm onSuccess={props.onClose} />
-      </Box>
-    </SideSheet>
+    <Flex align="center">
+      <Icon
+        type={passing ? 'check-circle' : 'close-circle'}
+        color={passing ? 'green-400' : 'navyblue-100'}
+        size="small"
+        mr={2}
+        aria-label={passing ? 'Check is passing' : 'Check is failing'}
+      />
+      <Text fontSize="small-medium" color={passing ? undefined : 'navyblue-100'}>
+        {children}
+      </Text>
+    </Flex>
   );
 };
 
-export default EditAccountSidesheet;
+export default FieldPolicyCheck;

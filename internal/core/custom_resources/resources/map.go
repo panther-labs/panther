@@ -189,9 +189,6 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	//     GivenName:   string
 	//     FamilyName:  string
 	//     Email:       string (required)
-	// Outputs:
-	//     Email        string
-	//     UserId:      string
 	// PhysicalId: custom:panther-user:$USER_ID
 	"Custom::PantherUser": customPantherUser,
 

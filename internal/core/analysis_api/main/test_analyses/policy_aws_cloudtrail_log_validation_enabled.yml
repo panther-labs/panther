@@ -17,7 +17,7 @@
 AnalysisType: policy
 AutoRemediationParameters:
   hello: goodbye
-Filename: aws_cloudtrail_log_validation_enabled.py
+Filename: policy_aws_cloudtrail_log_validation_enabled.py
 PolicyID: AWS.CloudTrail.Log.Validation.Enabled
 Enabled: true
 ResourceTypes:
