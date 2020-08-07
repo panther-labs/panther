@@ -55,7 +55,7 @@ const PolicyFormAutoRemediationSection: React.FC = () => {
         description={[
           extractErrorMessage(error),
           '. For more info, please consult the ',
-          <Link external href={`${REMEDIATION_DOC_URL}`} key="docs">
+          <Link external href={REMEDIATION_DOC_URL} key="docs">
             related docs
           </Link>,
         ]}

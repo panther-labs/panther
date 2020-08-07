@@ -137,12 +137,12 @@ export const LOG_TYPES = [
   'Lacework.Events',
 ] as const;
 
-export const PANTHER_DOCS_MASTER_LINK = 'https://docs.runpanther.io';
+const PANTHER_DOCS_BASE = 'https://docs.runpanther.io';
 
 export const STABLE_PANTHER_VERSION = pantherConfig.PANTHER_VERSION.split('-')[0]; // e.g. "v1.7.1"
 const VERSION_PARTS = STABLE_PANTHER_VERSION.split('.'); // ["v1", "7", "1]
 export const MINOR_PANTHER_VERSION = `${VERSION_PARTS[0]}.${VERSION_PARTS[1]}`; // "v1.7"
-export const PANTHER_DOCS_LINK = `${PANTHER_DOCS_MASTER_LINK}/v/${MINOR_PANTHER_VERSION}-docs`;
+export const PANTHER_DOCS_LINK = `${PANTHER_DOCS_BASE}/v/${MINOR_PANTHER_VERSION}-docs`;
 
 export const ANALYSIS_UPLOAD_DOC_URL = `${PANTHER_DOCS_LINK}/user-guide/analysis/panther-analysis-tool#uploading-to-panther`;
 export const CLOUD_SECURITY_REAL_TIME_DOC_URL = `${PANTHER_DOCS_LINK}/cloud-security/setup#configure-real-time-monitoring`;

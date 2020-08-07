@@ -69,7 +69,7 @@ const SourceConfigurationPanel: React.FC = () => {
             <FormHelperText id="cweEnabled-description" ml={2}>
               Configure Panther to monitor all AWS resource changes in real-time through CloudWatch
               Events.{' '}
-              <Link external href={`${CLOUD_SECURITY_REAL_TIME_DOC_URL}`}>
+              <Link external href={CLOUD_SECURITY_REAL_TIME_DOC_URL}>
                 Read more
               </Link>
             </FormHelperText>
@@ -84,7 +84,7 @@ const SourceConfigurationPanel: React.FC = () => {
             <FormHelperText id="remediationEnabled-description" ml={2}>
               Allow Panther to fix misconfigured infrastructure as soon as it is detected.
               <br />
-              <Link external href={`${REMEDIATION_DOC_URL}`}>
+              <Link external href={REMEDIATION_DOC_URL}>
                 Read more
               </Link>
             </FormHelperText>

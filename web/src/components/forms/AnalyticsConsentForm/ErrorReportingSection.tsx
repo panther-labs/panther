@@ -33,7 +33,7 @@ const ErrorReportingSection: React.FC = () => {
       />
       <FormHelperText mt={2} id="error-reporting-section-helper">
         Send anonymized runtime exception reports <br /> to improve Panther{"'"}s reliability.
-        <Link external textDecoration="underline" ml={1} href={`${PRIVACY_DOC_URL}`}>
+        <Link external textDecoration="underline" ml={1} href={PRIVACY_DOC_URL}>
           Read more
         </Link>
       </FormHelperText>

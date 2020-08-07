@@ -119,7 +119,7 @@ const PolicyBulkUploadSideSheet: React.FC<PolicyBulkUploadSideSheetProps> = ({
           Supposing you have a collection of {isPolicy ? 'policy' : 'rule'} files, simply zip them
           together using any zip method you prefer. You can find a detailed description of the
           process in our{' '}
-          <Link external href={`${ANALYSIS_UPLOAD_DOC_URL}`}>
+          <Link external href={ANALYSIS_UPLOAD_DOC_URL}>
             designated docs page
           </Link>
           .
