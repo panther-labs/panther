@@ -168,7 +168,7 @@ func updateComplianceStatus(oldItem, newItem *tableItem) error {
 	//
 	// But the compliance table has columns for severity and suppression -
 	// if either of those changed, we can update the compliance API directly.
-	if oldItem.Severity != newItem.Severity || !slicesEqual(oldItem.Suppressions, newItem.Suppressions) {
+	if oldItem.Severity != newItem.Severity || !setEquality(oldItem.Suppressions, newItem.Suppressions) {
 		return updateComplianceMetadata(newItem)
 	}
 
