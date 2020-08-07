@@ -68,6 +68,21 @@ scriptTag.type = 'application/json';
 scriptTag.innerHTML = JSON.stringify(PANTHER_CONFIG);
 document.body.appendChild(scriptTag);
 
+// hack until we can upgrade to react@16.9.0
+const originalError = global.console.error;
+beforeAll(() => {
+  global.console.error = jest.fn((...args) => {
+    if (typeof args[0] === 'string' && args[0].includes('was not wrapped in act')) {
+      return undefined;
+    }
+    return originalError(...args);
+  });
+});
+
+afterAll(() => {
+  (global.console.error as jest.Mock).mockRestore();
+});
+
 /**
  * Make sure that localStorage & sessionStorage are clean before each test
  */
