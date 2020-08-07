@@ -35,7 +35,7 @@ import (
 func Read(prompt string, validators ...func(string) error) string {
 	reader := bufio.NewReader(os.Stdin)
 
-prompt:
+rePrompt:
 	for {
 		fmt.Print(prompt)
 		result, err := reader.ReadString('\n')
@@ -48,7 +48,7 @@ prompt:
 		for _, validator := range validators {
 			if err := validator(result); err != nil {
 				fmt.Println(err)
-				continue prompt
+				continue rePrompt
 			}
 		}
 
