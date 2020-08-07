@@ -272,8 +272,6 @@ func itemUpdated(oldItem, newItem *tableItem) bool {
 		len(oldItem.AutoRemediationParameters) == len(newItem.AutoRemediationParameters) &&
 		len(oldItem.Tests) == len(newItem.Tests)
 
-
-
 	if !itemsEqual {
 		return true
 	}

@@ -1440,23 +1440,23 @@ func bulkUploadSuccess(t *testing.T) {
 
 	// Verify newly created Rule
 	expectedNewRule := &models.Rule{
-		ID: "Rule.Always.True",
-		DisplayName: "Rule Always True display name",
-		Enabled: true,
-		LogTypes: []string{"CiscoUmbrella.DNS"},
-		Tags: []string{"DNS"},
-		Severity: "LOW",
-		Description: "Test rule",
-		Runbook: "Test runbook",
+		ID:                 "Rule.Always.True",
+		DisplayName:        "Rule Always True display name",
+		Enabled:            true,
+		LogTypes:           []string{"CiscoUmbrella.DNS"},
+		Tags:               []string{"DNS"},
+		Severity:           "LOW",
+		Description:        "Test rule",
+		Runbook:            "Test runbook",
 		DedupPeriodMinutes: 480,
-		Threshold: 42,
-		OutputIds: []string{},
-		Tests: []*models.UnitTest{},
-		Reports: map[string][]string{},
+		Threshold:          42,
+		OutputIds:          []string{},
+		Tests:              []*models.UnitTest{},
+		Reports:            map[string][]string{},
 	}
 
 	getRule, err := apiClient.Operations.GetRule(&operations.GetRuleParams{
-		RuleID:   string(expectedNewRule.ID),
+		RuleID:     string(expectedNewRule.ID),
 		HTTPClient: httpClient,
 	})
 	require.NoError(t, err)
@@ -1467,7 +1467,10 @@ func bulkUploadSuccess(t *testing.T) {
 	expectedNewRule.LastModified = getRule.Payload.LastModified
 	expectedNewRule.LastModifiedBy = getRule.Payload.LastModifiedBy
 	expectedNewRule.VersionID = getRule.Payload.VersionID
+	expectedNewRule.Body = getRule.Payload.Body
 	assert.Equal(t, expectedNewRule, getRule.Payload)
+	// Checking if the body contains the provide `rule` function (the body contains licence information that we are not interested in)
+	assert.Contains(t, getRule.Payload.Body, "def rule(event):\n    return True\n")
 }
 
 func listNotFound(t *testing.T) {

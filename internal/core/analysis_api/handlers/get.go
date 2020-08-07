@@ -30,10 +30,6 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-const (
-	defaultRuleThreshold = 1
-)
-
 type getParams struct {
 	ID        models.ID
 	VersionID models.VersionID
