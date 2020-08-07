@@ -18,22 +18,21 @@
 
 import React from 'react';
 import { Box, useTheme } from 'pouncejs';
-import { formatTime } from 'Helpers/utils';
+import { formatTime, remToPx } from 'Helpers/utils';
 import { SeriesData } from 'Generated/schema';
+import { EChartOption } from 'echarts';
 import colors from './colors';
 
 interface TimeSeriesLinesProps {
   data: SeriesData;
 }
 
-const createFormat = (format: string): any => formatTime(format);
-const hourFormat = createFormat('HH:mm');
-const dateFormat = createFormat('DD/MM');
-const fullDateFormat = createFormat('HH:mm DD/MM/YYYY');
+const hourFormat = formatTime('HH:mm');
+const dateFormat = formatTime('MMM DD');
+const fullDateFormat = formatTime('DD MMM YYYY HH:mm');
 
 function formatDateString(timestamp) {
-  return `  ${hourFormat(timestamp)}
-  ${dateFormat(timestamp)}`;
+  return `${hourFormat(timestamp)}\n${dateFormat(timestamp).toUpperCase()}`;
 }
 
 const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
@@ -70,7 +69,6 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
         return {
           name: label,
           type: 'line',
-          smooth: true,
           symbol: 'none',
           itemStyle: {
             color: theme.colors[colors[label]],
@@ -84,7 +82,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
         };
       });
 
-      const options = {
+      const options: EChartOption = {
         grid: {
           left: 180,
           right: 20,
@@ -95,23 +93,25 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
         tooltip: {
           trigger: 'axis' as const,
           position: pt => [pt[0], '100%'],
-          formatter: params => {
-            let tooltip = '';
-            if (params.length) {
-              const [
-                {
-                  value: [date],
-                },
-              ] = params;
-              tooltip += fullDateFormat(date);
-              const seriesTooltips = params.map(seriesTooltip => {
-                return `<br/>${seriesTooltip.marker} ${
-                  seriesTooltip.seriesName
-                }: ${seriesTooltip.value[1].toLocaleString('en')}`;
-              });
-              tooltip += seriesTooltips;
+          backgroundColor: theme.colors['navyblue-300'],
+          padding: theme.space[4] as number,
+          textStyle: {
+            fontFamily: theme.fonts.primary,
+          },
+          extraCssText: `box-shadow: ${theme.shadows.dark250}`,
+          formatter: (params: EChartOption.Tooltip.Format[]) => {
+            if (!params || !params.length) {
+              return '';
             }
-            return tooltip;
+
+            const date: string = params[0].value[0];
+            const seriesTooltips = params.map(seriesTooltip => {
+              return `<br/>${seriesTooltip.marker} ${
+                seriesTooltip.seriesName
+              }: ${seriesTooltip.value[1].toLocaleString('en')}`;
+            });
+
+            return `${fullDateFormat(date)}${seriesTooltips}`;
           },
         },
         legend: {
@@ -123,38 +123,46 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
           data: legendData,
           textStyle: {
             color: theme.colors['gray-50'],
+            fontFamily: theme.fonts.primary,
+            fontSize: remToPx(theme.fontSizes['x-small']),
           },
         },
         xAxis: {
           type: 'time' as const,
+          interval: 3600 * 1000 * 6, // display time data in 6h intervals
           splitLine: {
             show: false,
           },
-          axisLabel: {
-            show: true,
-            formatter: value => formatDateString(value),
-            textStyle: {
-              color: () => {
-                return theme.colors['gray-50'];
-              },
+          axisLine: {
+            lineStyle: {
+              color: 'transparent',
             },
           },
+          axisLabel: {
+            formatter: value => formatDateString(value),
+            fontWeight: theme.fontWeights.medium as any,
+            fontSize: remToPx(theme.fontSizes['x-small']),
+            fontFamily: theme.fonts.primary,
+            color: theme.colors['gray-50'],
+          },
+          splitArea: { show: false }, // remove the grid area
         },
         yAxis: {
           type: 'value' as const,
-          splitNumber: 4,
-          axisLabel: {
-            padding: [0, 20, 0, 0],
-            interval: 1,
-            show: true,
-            textStyle: {
-              color: () => {
-                return theme.colors['gray-50'];
-              },
+          axisLine: {
+            lineStyle: {
+              color: 'transparent',
             },
           },
-          axisLine: {
-            show: true,
+          axisLabel: {
+            padding: [0, theme.space[2] as number, 0, 0],
+            fontSize: remToPx(theme.fontSizes['x-small']),
+            fontWeight: theme.fontWeights.medium as any,
+            fontFamily: theme.fonts.primary,
+            color: theme.colors['gray-50'],
+          },
+          minorSplitLine: {
+            show: false,
           },
           splitLine: {
             lineStyle: {
