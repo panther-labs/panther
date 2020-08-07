@@ -92,9 +92,10 @@ const Navigation = () => {
       top={0}
       height="100vh"
       backgroundColor="navyblue-700"
+      py={6}
     >
       <Flex as="nav" direction="column" width={60} height="100%" aria-label="Main" align="center">
-        <Box as={RRLink} to="/" py={3} my={3}>
+        <Box as={RRLink} to="/" py={3} mb={3}>
           <Img
             src={PantherIcon}
             alt="Panther logo"
@@ -134,7 +135,7 @@ const Navigation = () => {
               onClick={() => setSecondaryNav(isSettingsNavigationActive ? null : SETTINGS_NAV_KEY)}
             />
           </Box>
-          <Box as="li" mt="auto" mb={8}>
+          <Box as="li" mt="auto">
             <Link external href={PANTHER_SCHEMA_DOCS_LINK} tabIndex={-1}>
               <NavIconButton active={false} icon="docs" tooltipLabel="Documentation" />
             </Link>

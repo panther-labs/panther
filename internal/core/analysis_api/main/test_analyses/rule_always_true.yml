@@ -14,9 +14,17 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
-
-
-
-def policy(resource):
-    return True
+AnalysisType: rule
+Filename: rule_always_true.py
+RuleID: Rule.Always.True
+DisplayName: Rule Always True display name
+Enabled: true
+DedupPeriodMinutes: 480 # 8 hours
+LogTypes:
+  - CiscoUmbrella.DNS
+Tags:
+  - DNS
+Severity: LOW
+Description: Test rule
+Runbook: Test runbook
+Threshold: 42

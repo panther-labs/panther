@@ -20,16 +20,16 @@
   * [Slack](destinations/slack.md)
   * [SNS](destinations/sns.md)
   * [SQS](destinations/sqs.md)
-* [Analysis]()
+* Analysis
   * [Built-in Packs](analysis/built-in-packs.md)
   * [Caching](analysis/caching.md)
   * [Globals](analysis/globals.md)
   * [Panther Analysis Tool](analysis/panther-analysis-tool.md)
   * [Runtime Environment](analysis/run-time.md)
-* [Tutorials]()
+* Tutorials
   * [Osquery Log Analysis](tutorials/osquery-log-analysis.md)
   * [S3 Bucket Monitoring](tutorials/s3-monitoring-fundamentals.md)
-* [Help]()
+* Help
   * [Troubleshooting](troubleshooting.md)
   * [Support](support.md)
   * [Security and Privacy](security-privacy.md)
@@ -40,7 +40,7 @@
 * [Overview](log-analysis/README.md)
 * [Setup](log-analysis/setup.md)
 * [Rules](log-analysis/rules/README.md)
-  * [Built-in Rule Runbooks]()
+  * Built-in Rule Runbooks
     * [AWS CloudTrail Modified](log-analysis/rules/aws-cis/aws-cloudtrail-modified.md)
     * [AWS Config Service Modified](log-analysis/rules/aws-cis/aws-config-service-modified.md)
     * [AWS Console Login Failed](log-analysis/rules/aws-cis/aws-console-login-failed.md)
@@ -81,7 +81,7 @@
 * [Overview](cloud-security/README.md)
 * [Setup](cloud-security/setup.md)
 * [Policies](cloud-security/policies/README.md)
-* [Built-in Policy Runbooks]()
+* Built-in Policy Runbooks
   * [AWS CloudTrail Is Enabled In All Regions](cloud-security/policies/aws/aws-cloudtrail-enabled-in-all-regions.md)
   * [AWS CloudTrail Sending To CloudWatch Logs](cloud-security/policies/aws/aws-cloudtrail-trails-integrated-with-cloudwatch-logs.md)
   * [AWS KMS CMK Key Rotation Is Enabled](cloud-security/policies/aws/aws-customer-created-cmk-has-key-rotation-enabled.md)
@@ -155,7 +155,7 @@
   * [AWS CloudTrail Logs Encrypted Using KMS CMK](cloud-security/policies/aws/aws-cloudtrail-logs-encrypted-using-kms-cmk.md)
 * [Automatic Remediation](cloud-security/automatic-remediation/README.md)
   * [Writing Custom Remediations](cloud-security/automatic-remediation/writing-custom-remediations.md)
-  * [Built-in Remediations]()
+  * Built-in Remediations
     * [AWS Block Public Access for S3 Bucket](cloud-security/automatic-remediation/aws/aws-block-public-access-for-s3-bucket.md)
     * [AWS Block S3 Bucket Public ACL](cloud-security/automatic-remediation/aws/aws-block-s3-bucket-public-acl.md)
     * [AWS Create CloudTrail](cloud-security/automatic-remediation/aws/aws.cloudtrail.createtrail.md)
@@ -174,7 +174,7 @@
     * [AWS Terminate EC2 Instance](cloud-security/automatic-remediation/aws/aws-terminate-ec2-instance.md)
     * [AWS Update Account Password Policy](cloud-security/automatic-remediation/aws/aws-update-account-password-policy.md)
 * [Supported Resources](cloud-security/resources/README.md)
-  * [AWS]()
+  * AWS
     * [ACM Certificate](cloud-security/resources/aws/acm-certificate.md)
     * [CloudFormation Stack](cloud-security/resources/aws/cloudformation-stack.md)
     * [CloudWatch Log Group](cloud-security/resources/aws/cloudwatch-log-group.md)
@@ -213,7 +213,7 @@
   * [Example Queries](enterprise/data-analytics/example-queries.md)
   * [Data Explorer](enterprise/data-analytics/data-explorer.md)
   * [Automatic Log Compaction](enterprise/data-analytics/log-compaction.md)
-* [SaaS Logs](enterprise/saas-logs.md)
+* [SaaS Logs](enterprise/saas-logs/saas-logs.md)
   * [Box](enterprise/saas-logs/box.md)
   * [G Suite](enterprise/saas-logs/gsuite.md)
   * [Okta](enterprise/saas-logs/okta.md)

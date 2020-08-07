@@ -19,6 +19,7 @@ package mage
  */
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -200,14 +201,27 @@ func uploadFileToS3(path, bucket, key string) (*s3manager.UploadOutput, error) {
 
 // Run a command, hiding both stdout and stderr unless running in verbose mode.
 //
-// Almost identical to sh.Run(), except sh.Run() only hides stdout in non-verbose mode.
-func runWithoutStderr(cmd string, args ...string) error {
+// This is helpful for tools which print unwanted info to stderr even when successful.
+// Stderr will be printed if the command returned an error.
+//
+// Similar to sh.Run(), except sh.Run() only hides stdout in non-verbose mode.
+func runWithCapturedStderr(cmd string, args ...string) error {
 	var stdout, stderr io.Writer
+	var buf bytes.Buffer
+
 	if mg.Verbose() {
 		stdout = os.Stdout
 		stderr = os.Stderr
+	} else {
+		stderr = &buf
 	}
+
 	_, err := sh.Exec(nil, stdout, stderr, cmd, args...)
+	if err != nil && !mg.Verbose() {
+		// The command failed - in non-verbose mode, all output has been hidden.
+		// We need to print the output so the user can see the error message.
+		fmt.Println(buf.String())
+	}
 	return err
 }
 
