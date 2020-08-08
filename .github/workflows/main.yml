@@ -35,17 +35,17 @@ jobs:
       - name: Checkout Source Repo
         uses: actions/checkout@v2
         with:
-          path: $SOURCE_REPO_CHECKOUT_PATH
+          path: ${{ env.SOURCE_REPO_CHECKOUT_PATH }}
           token: ${{ secrets.PR_SYNC_TOKEN }}
           fetch-depth: 1
 
       - name: Checkout Dest Repo
         uses: actions/checkout@v2
         with:
-          path: $DEST_REPO_CHECKOUT_PATH
+          path: ${{ env.DEST_REPO_CHECKOUT_PATH }}
           token: ${{ secrets.PR_SYNC_TOKEN }}
           fetch-depth: 1
-          repository: 3nvi/panther-enterprise
+          repository: ${{ env.DEST_REPO }}
 
         # Return early if the PR was not merged
       - name: Validate that PR was merged and not closed
@@ -66,7 +66,7 @@ jobs:
           git config --global user.name "CI"
           git checkout -b $HEAD
           git remote add source https://github.com/$GITHUB_REPOSITORY.git
-          git fetch --all
+          git fetch source master --depth 10
           git cherry-pick ${{ github.event.pull_request.head.sha }} || true
           git add -A .
           git commit -m "merge changes from $GITHUB_REPOSITORY" --allow-empty
