@@ -20,16 +20,20 @@ import React from 'react';
 import { Box, Flex } from 'pouncejs';
 import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
 import { capitalize } from 'Helpers/utils';
+import { SeriesData } from 'Generated/schema';
 
 interface AlertsBySeverityProps {
-  alerts: any;
+  alerts: SeriesData;
 }
 
-const AlertsBySeverity: React.FC<AlertsBySeverityProps> = ({ alerts }) => {
-  const transformedSeries = alerts.series.map(serie => ({
-    ...serie,
-    label: capitalize(serie.label.toLowerCase()),
-  }));
+const AlertsBySeverity: React.FC<AlertsBySeverityProps> = ({ alerts: { series, timestamps } }) => {
+  const timeSeriesData = React.useMemo(
+    () => ({
+      timestamps,
+      series: series.map(serie => ({ ...serie, label: capitalize(serie.label.toLowerCase()) })),
+    }),
+    [series, timestamps]
+  );
 
   return (
     <Box mx={2} px={4} py={4} height={200} width="80%" backgroundColor="navyblue-500">
@@ -40,7 +44,7 @@ const AlertsBySeverity: React.FC<AlertsBySeverityProps> = ({ alerts }) => {
         px={4}
         backgroundColor="navyblue-500"
       >
-        <TimeSeriesChart data={{ ...alerts, series: transformedSeries }} />
+        <TimeSeriesChart data={timeSeriesData} />
       </Flex>
     </Box>
   );
