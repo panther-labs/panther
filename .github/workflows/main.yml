@@ -54,7 +54,7 @@ jobs:
 
         # Return early if the PR has the ignore label
       - name: Validate that PR shouldn't be excempt from syncing
-        if: ${{ contains(github.event.pull_request.labels, $IGNORE_LABEL) }}
+        if: ${{ contains(github.event.pull_request.labels, env.IGNORE_LABEL) }}
         run: exit 1
 
         # Cherry picks commit from `source` and creates a PR-ready branch in `dest`
