@@ -124,6 +124,17 @@ func FieldNameJSON(kind FieldID) string {
 	return registeredFieldNamesJSON[kind]
 }
 
+// RegisteredFieldNamesJSON returns the JSON field names for registered indicator fields
+func RegisteredFieldNamesJSON() (names []string) {
+	for id, name := range registeredFieldNamesJSON {
+		if id.IsCore() {
+			continue
+		}
+		names = append(names, name)
+	}
+	return
+}
+
 func init() {
 	MustRegisterIndicator(FieldIPAddress, FieldMeta{
 		Name:        "PantherAnyIPAddresses",
