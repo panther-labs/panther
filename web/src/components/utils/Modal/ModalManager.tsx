@@ -31,6 +31,7 @@ import NetworkErrorModal from 'Components/modals/NetworkErrorModal';
 import AnalyticsConsentModal from 'Components/modals/AnalyticsConsentModal';
 import DeleteTestModal from 'Components/modals/DeleteTestModal';
 import DeleteGlobalPythonModuleModal from 'Components/modals/DeleteGlobalPythonModuleModal';
+import ProfileSettingsModal from 'Components/modals/ProfileSettingsModal';
 
 const ModalManager: React.FC = () => {
   const { state: modalState, hideModal } = useModal();
@@ -45,6 +46,9 @@ const ModalManager: React.FC = () => {
       break;
     case MODALS.DELETE_USER:
       Component = DeleteUserModal;
+      break;
+    case MODALS.EDIT_PROFILE_SETTINGS:
+      Component = ProfileSettingsModal;
       break;
     case MODALS.RESET_USER_PASS:
       Component = ResetUserPasswordModal;

@@ -25,7 +25,7 @@ import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
-import { webhookValidation } from 'Helpers/utils';
+import { yupWebhookValidation } from 'Helpers/utils';
 
 type CustomWebhookFieldValues = Pick<DestinationConfigInput, 'customWebhook'>;
 
@@ -43,7 +43,7 @@ const CustomWebhookDestinationForm: React.FC<CustomWebhookDestinationFormProps> 
   const customWebhookFieldsValidationSchema = Yup.object().shape({
     outputConfig: Yup.object().shape({
       customWebhook: Yup.object().shape({
-        webhookURL: existing ? webhookValidation() : webhookValidation().required(),
+        webhookURL: existing ? yupWebhookValidation : yupWebhookValidation.required(),
       }),
     }),
   });

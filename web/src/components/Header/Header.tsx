@@ -18,12 +18,14 @@
 
 import React from 'react';
 import Breadcrumbs from 'Components/Breadcrumbs';
-import { Flex } from 'pouncejs';
+import { Box, Flex } from 'pouncejs';
 
 const Header = () => {
   return (
-    <Flex as="header" width={1} align="center" justify="space-between" py={10}>
-      <Breadcrumbs />
+    <Flex id="main-header" as="header" width={1} align="center" justify="space-between" py={6}>
+      <Box py={14}>
+        <Breadcrumbs />
+      </Box>
     </Flex>
   );
 };

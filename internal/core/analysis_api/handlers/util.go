@@ -101,14 +101,14 @@ func setDifference(first, second []string) (result []string) {
 
 // Returns true if the two string slices have the same unique elements in any order
 func setEquality(first, second []string) bool {
-	firstMap := make(map[string]bool, len(first))
+	firstMap := make(map[string]struct{}, len(first))
 	for _, x := range first {
-		firstMap[x] = true
+		firstMap[x] = struct{}{}
 	}
 
-	secondMap := make(map[string]bool, len(second))
+	secondMap := make(map[string]struct{}, len(second))
 	for _, x := range second {
-		secondMap[x] = true
+		secondMap[x] = struct{}{}
 	}
 
 	if len(firstMap) != len(secondMap) {
@@ -116,7 +116,7 @@ func setEquality(first, second []string) bool {
 	}
 
 	for x := range firstMap {
-		if !secondMap[x] {
+		if _, ok := secondMap[x]; !ok {
 			return false
 		}
 	}
@@ -266,6 +266,7 @@ func itemUpdated(oldItem, newItem *tableItem) bool {
 		oldItem.Enabled == newItem.Enabled && oldItem.Reference == newItem.Reference &&
 		oldItem.Runbook == newItem.Runbook && oldItem.Severity == newItem.Severity &&
 		oldItem.DedupPeriodMinutes == newItem.DedupPeriodMinutes &&
+		oldItem.Threshold == newItem.Threshold &&
 		setEquality(oldItem.ResourceTypes, newItem.ResourceTypes) &&
 		setEquality(oldItem.Suppressions, newItem.Suppressions) && setEquality(oldItem.Tags, newItem.Tags) &&
 		len(oldItem.AutoRemediationParameters) == len(newItem.AutoRemediationParameters) &&

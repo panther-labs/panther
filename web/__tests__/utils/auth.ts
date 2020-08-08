@@ -16,8 +16,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import faker from 'faker';
 import { UserInfo } from 'Components/utils/AuthContext';
+
+export const buildUserInfo = (overrides?: Partial<UserInfo>) => ({
+  email: 'test@test.test',
+  emailVerified: true,
+  givenName: 'TestName',
+  familyName: 'TestSurname',
+  id: '1234-1234-1234-1234',
+  ...overrides,
+});
 
 /**
  * Helper function that mocks the "core" shape of all auth-related actions. Each of them has an
@@ -33,25 +41,14 @@ const mockFunctionHelper = jest.fn<
  * (as opposed to E2E), so we can safely mock the "end" state, which is either a logged-out user
  * or a logged-in user
  *
- * @param isAuthenticated Whether we should mock the `AuthContext` value as if the user was
- * authenticated.
+ * @param userInfo The information of the authenticated user. A falsy value has the user as not
+ * authenticated
  */
-export const mockAuthProviderValue = (isAuthenticated: boolean) => {
-  let userInfo: UserInfo = null;
-  if (isAuthenticated) {
-    userInfo = {
-      email: faker.internet.email(),
-      emailVerified: true,
-      givenName: faker.name.firstName(),
-      familyName: faker.name.lastName(),
-      id: faker.random.uuid(),
-    };
-  }
-
+export const mockAuthProviderValue = (userInfo: UserInfo) => {
   return {
     isAuthenticated: !!userInfo,
     currentAuthChallengeName: null,
-    userInfo,
+    userInfo: userInfo || null,
     refetchUserInfo: mockFunctionHelper,
     signIn: mockFunctionHelper,
     confirmSignIn: mockFunctionHelper,
