@@ -18,75 +18,35 @@
 
 const core = require('@actions/core');
 const github = require('@actions/github');
-// const { execSync } = require('child_process');
 
 const PR_TITLE_PREFIX = '[Sync]';
-// const BRANCH_PREFIX = 'sync-';
-
-/**
- * @param str a "local" branch name
- * @returns {string} the branch name with the proper prefix
- */
-// const getPrBranch = str => `${BRANCH_PREFIX}${str}`;
-
-/**
- * @param str the original PR title
- * @returns {string} the synced PR's title
- */
-const getPrTitle = str => `${PR_TITLE_PREFIX} ${str}`;
 
 const main = async () => {
   try {
-    const destRepo = core.getInput('destRepo');
-    const destBranch = core.getInput('destBranch');
-    // const ignoreLabel = core.getInput('ignoreLabel');
+    const repo = core.getInput('repo');
+    const head = core.getInput('head');
+    const base = core.getInput('base');
     const token = core.getInput('token');
 
     // Get the JSON webhook payload for the event that triggered the workflow
     const srcPullRequest = github.context.payload.pull_request;
 
-    // // If PR was closed, but it was not due to it being merged, then do nothing
-    // if (!srcPullRequest.merged) {
-    //   core.setOutput('message', 'PR was closed without merging. Terminating...');
-    //   return;
-    // }
-    //
-    // // If PR has the "ignore" label, then the PR sync should not happen
-    // core.debug('PR was closed due to a merge. Looking for ignore labels...');
-    // const shouldIgnore = srcPullRequest.labels.some(label => label.name === ignoreLabel);
-    // if (shouldIgnore) {
-    //   core.setOutput('message', 'PR contained an ignore label. Terminating...');
-    //   return;
-    // }
-
-    // core.debug('An ignore label was not found. Starting sync process...');
-    const destPullRequestBranchName = srcPullRequest.head.ref; // getPrBranch(srcPullRequest.head.ref);
-    //
-    // core.debug('Creating a branch from the merge commit...');
-    // const commit = srcPullRequest.merge_commit_sha || srcPullRequest.head.sha;
-    // execSync(`git checkout -b ${destPullRequestBranchName}`);
-    // execSync(`git remote add source https://github.com/${process.env.GITHUB_REPOSITORY.git}`);
-    // execSync(`git cherry-pick ${commit}`);
-    // execSync(`git add -A .`);
-    // execSync(`git commit -m "merge synced changes"`);
-    // execSync(`git push origin ${destPullRequestBranchName}`);
-
     // https://developer.github.com/v3/pulls/#create-a-pull-request
     core.debug('Creating a pull request...');
     const octokit = github.getOctokit(token);
-    const { data: destPullRequest } = await octokit.request(`POST /repos/${destRepo}/pulls`, {
-      title: getPrTitle(srcPullRequest.title),
+    const { data: destPullRequest } = await octokit.request(`POST /repos/${repo}/pulls`, {
+      title: PR_TITLE_PREFIX + srcPullRequest.title,
       body: srcPullRequest.body,
       maintainer_can_modify: true,
-      head: destPullRequestBranchName,
-      base: destBranch,
+      head,
+      base,
       draft: false,
     });
 
     // https://developer.github.com/v3/issues/#update-an-issue
     core.debug('Setting assignees, labels & milestone...');
     try {
-      await octokit.request(`PATCH /repos/${destRepo}/issues/${destPullRequest.number}`, {
+      await octokit.request(`PATCH /repos/${repo}/issues/${destPullRequest.number}`, {
         assignees: srcPullRequest.assignees.map(assignee => assignee.login),
         labels: srcPullRequest.labels.map(label => label.name),
         milestone: srcPullRequest.milestone ? srcPullRequest.milestone.number : null,
@@ -99,7 +59,7 @@ const main = async () => {
     core.debug('Setting reviewers...');
     try {
       await octokit.request(
-        `POST /repos/${destRepo}/pulls/${destPullRequest.number}/requested_reviewers`,
+        `POST /repos/${repo}/pulls/${destPullRequest.number}/requested_reviewers`,
         {
           reviewers: [srcPullRequest.user.login],
         }

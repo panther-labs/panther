@@ -26,52 +26,59 @@ jobs:
     name: Syncs merged PRs from Panther Community to Panther Enterprise
     runs-on: ubuntu-latest
     env:
-      SOURCE_REPO_PATH: src
-      DEST_REPO_PATH: dest
+      SOURCE_REPO_CHECKOUT_PATH: src
+      DEST_REPO_CHECKOUT_PATH: dest
+      DEST_REPO: 3nvi/panther-enterprise
+      HEAD: ${{ format('sync-{0}', github.event.pull_request.head.ref) }}
+      IGNORE_LABEL: enterprise-backport
     steps:
       - name: Checkout Source Repo
         uses: actions/checkout@v2
         with:
-          path: $SOURCE_REPO_PATH
+          path: $SOURCE_REPO_CHECKOUT_PATH
           token: ${{ secrets.PR_SYNC_TOKEN }}
-          fetch-depth: 10
+          fetch-depth: 1
 
       - name: Checkout Dest Repo
         uses: actions/checkout@v2
         with:
-          path: $DEST_REPO_PATH
+          path: $DEST_REPO_CHECKOUT_PATH
           token: ${{ secrets.PR_SYNC_TOKEN }}
-          fetch-depth: 2
+          fetch-depth: 1
           repository: 3nvi/panther-enterprise
 
-      - name: Check if PR was closed or merged
+        # Return early if the PR was not merged
+      - name: Validate that PR was merged and not closed
         if: ${{ github.event.pull_request.merged == false }}
         run: exit 1
 
-      - name: Check if PR has ignore labels
-        if: ${{ contains(github.event.pull_request.labels, 'enterprise-backport') }}
+        # Return early if the PR has the ignore label
+      - name: Validate that PR shouldn't be excempt from syncing
+        if: ${{ contains(github.event.pull_request.labels, $IGNORE_LABEL) }}
         run: exit 1
 
-      - name: Create PR branch
+        # Cherry picks commit from `source` and creates a PR-ready branch in `dest`
+      - name: Bootstrap a PR branch
         if: ${{ success() }}
-        working-directory: $DEST_REPO_PATH
+        working-directory: $DEST_REPO_CHECKOUT_PATH
         run: |
           git config --global user.email "ci@runpanther.io"
           git config --global user.name "CI"
-          git checkout -b ${{ github.event.pull_request.head.ref }}
+          git checkout -b $HEAD
           git remote add source https://github.com/$GITHUB_REPOSITORY.git
           git fetch --all
           git cherry-pick ${{ github.event.pull_request.head.sha }} || true
           git add -A .
-          git commit -m "merge synced changes"
-          git push origin ${{ github.event.pull_request.head.ref }}
+          git commit -m "merge changes from $GITHUB_REPOSITORY"
+          git push origin $HEAD
 
       - name: Monitor PRs on a Source Repo & Create PRs on a dest one
         if: ${{ success() }}
-        uses: ./$SOURCE_REPO_PATH/build/actions/pr_sync
+        uses: ./$SOURCE_REPO_CHECKOUT_PATH/build/actions/pr_sync
         id: pr_sync
         env:
           ACTIONS_STEP_DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
         with:
-          destRepo: 3nvi/panther-enterprise
+          repo: $DEST_REPO
+          head: $HEAD
           token: ${{ secrets.PR_SYNC_TOKEN }}
