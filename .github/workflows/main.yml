@@ -79,6 +79,6 @@ jobs:
         env:
           ACTIONS_STEP_DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
         with:
-          repo: $DEST_REPO
-          head: $HEAD
+          repo: ${{ env.DEST_REPO }}
+          head: ${{ env.HEAD }}
           token: ${{ secrets.PR_SYNC_TOKEN }}
