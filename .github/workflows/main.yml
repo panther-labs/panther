@@ -67,7 +67,10 @@ jobs:
           git checkout -b $HEAD
           git remote add source https://github.com/$GITHUB_REPOSITORY.git
           git fetch source master --depth 10
-          git cherry-pick ${{ github.event.pull_request.head.sha }} || true
+          if [ -z "${{ github.context.payload.pull_request.merge_commit_sha }}" ]; then
+            git cherry-pick ${{ github.event.pull_request.merge_commit_sha }} -m 2 || true; else
+            git cherry-pick ${{ github.event.pull_request.head.sha }} || true;
+          fi
           git add -A .
           git commit -m "merge changes from $GITHUB_REPOSITORY" --allow-empty
           git push origin $HEAD
