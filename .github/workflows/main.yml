@@ -74,7 +74,7 @@ jobs:
 
       - name: Clone original PR
         if: ${{ success() }}
-        uses: $GITHUB_WORKSPACE/$SOURCE_REPO_CHECKOUT_PATH/build/actions/pr_sync
+        uses: ./$SOURCE_REPO_CHECKOUT_PATH/build/actions/pr_sync
         id: pr_sync
         env:
           ACTIONS_STEP_DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
