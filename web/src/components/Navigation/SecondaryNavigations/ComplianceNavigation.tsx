@@ -25,7 +25,7 @@ import NavLink from '../NavLink';
 const ComplianceNavigation: React.FC = () => {
   return (
     <Box>
-      <Heading size="x-small" fontWeight="bold" pt={7} pb={5} truncated>
+      <Heading size="x-small" fontWeight="bold" pt={4} pb={5} truncated>
         CLOUD SECURITY
       </Heading>
       <Flex direction="column" as="ul">

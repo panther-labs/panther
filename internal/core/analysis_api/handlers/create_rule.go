@@ -34,7 +34,10 @@ import (
 )
 
 const (
+	// Default Deduplication period for rules
 	defaultDedupPeriodMinutes = 60
+	// Default Threshold value for Rules
+	defaultRuleThreshold = 1
 )
 
 // CreateRule adds a new rule to the Dynamo table.

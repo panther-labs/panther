@@ -29,7 +29,6 @@ export enum SIDESHEETS {
   POLICY_BULK_UPLOAD = 'POLICY_BULK_UPLOAD',
   ADD_DESTINATION = 'ADD_DESTINATION',
   UPDATE_DESTINATION = 'UPDATE_DESTINATION',
-  EDIT_ACCOUNT = 'EDIT_ACCOUNT',
   EDIT_USER = 'EDIT_USER',
   USER_INVITATION = 'USER_INVITATION',
 }
@@ -71,13 +70,6 @@ interface PolicyBulkUploadSideSheetAction {
   };
 }
 
-interface EditAccountSideSheetAction {
-  type: typeof SHOW_SIDESHEET;
-  payload: {
-    sidesheet: SIDESHEETS.EDIT_ACCOUNT;
-  };
-}
-
 interface EditUserSideSheetAction {
   type: typeof SHOW_SIDESHEET;
   payload: {
@@ -98,7 +90,6 @@ type SidesheetStateAction =
   | PolicyBulkUploadSideSheetAction
   | AddDestinationSideSheetAction
   | UpdateDestinationSideSheetAction
-  | EditAccountSideSheetAction
   | EditUserSideSheetAction
   | UserInvitationSideSheetAction
   | HideSidesheetAction;

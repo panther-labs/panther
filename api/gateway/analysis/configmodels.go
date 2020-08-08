@@ -44,6 +44,7 @@ type Config struct {
 	Suppressions              []string            `yaml:"Suppressions"`
 	Tags                      []string            `yaml:"Tags"`
 	Tests                     []Test              `yaml:"Tests"`
+	Threshold                 int                 `yaml:"Threshold"`
 }
 
 // Test is a unit test definition when parsing policies in a bulk upload.

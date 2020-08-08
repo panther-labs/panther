@@ -35,20 +35,46 @@ describe('ForgotPasswordConfirmForm', () => {
   });
 
   it('has proper validation', async () => {
-    const { findByLabelText, findByText } = await renderForm();
+    const { getByLabelText, findByText, getByText, queryByAriaLabel } = renderForm();
 
-    await act(async () => {
-      const newPassword = await findByLabelText('New Password');
-      const newPasswordConfirm = await findByLabelText('Confirm New Password');
-      await fireEvent.change(newPassword, {
-        target: { value: 'xxxx' },
-      });
-      await fireEvent.blur(newPassword);
-      await fireEvent.change(newPasswordConfirm, {
-        target: { value: 'yyyy' },
-      });
-      await fireEvent.blur(newPasswordConfirm);
+    const newPassword = getByLabelText('New Password');
+    const newPasswordConfirm = getByLabelText('Confirm New Password');
+    const sumbitBtn = getByText('Update password');
+
+    // By default submit should be disabled
+    expect(sumbitBtn).toHaveAttribute('disabled');
+
+    // min 12 chars
+    // with lower
+    let value = 'aaaaaaaaaaaa';
+    fireEvent.change(newPassword, { target: { value } });
+    fireEvent.change(newPasswordConfirm, { target: { value } });
+    await waitFor(() => expect(sumbitBtn).toHaveAttribute('disabled'));
+
+    // with upper
+    value += 'A';
+    fireEvent.change(newPassword, { target: { value } });
+    fireEvent.change(newPasswordConfirm, { target: { value } });
+    await waitFor(() => expect(sumbitBtn).toHaveAttribute('disabled'));
+
+    // with number
+    value += '1';
+    fireEvent.change(newPassword, { target: { value } });
+    fireEvent.change(newPasswordConfirm, { target: { value } });
+    await waitFor(() => expect(sumbitBtn).toHaveAttribute('disabled'));
+
+    // with symbol
+    value += '!';
+    fireEvent.change(newPassword, { target: { value } });
+    fireEvent.change(newPasswordConfirm, { target: { value } });
+    await waitFor(() => {
+      expect(sumbitBtn).not.toHaveAttribute('disabled');
+      expect(queryByAriaLabel('Check is failing')).toBeFalsy();
     });
+
+    // with mismatch
+    fireEvent.change(newPasswordConfirm, { target: { value: `${value}??` } });
+    fireEvent.blur(newPasswordConfirm);
     expect(await findByText('Passwords must match')).not.toBeNull();
   });
 

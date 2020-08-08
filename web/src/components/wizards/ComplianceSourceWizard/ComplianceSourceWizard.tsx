@@ -22,7 +22,7 @@ import { Form, Formik } from 'formik';
 import * as Yup from 'yup';
 import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
 import { FetchResult } from '@apollo/client';
-import { integrationLabelValidation } from 'Helpers/utils';
+import { yupIntegrationLabelValidation } from 'Helpers/utils';
 import StackDeploymentPanel from './StackDeploymentPanel';
 import SuccessPanel from './SuccessPanel';
 import SourceConfigurationPanel from './SourceConfigurationPanel';
@@ -42,7 +42,7 @@ export interface ComplianceSourceWizardValues {
 }
 
 const validationSchema = Yup.object().shape<ComplianceSourceWizardValues>({
-  integrationLabel: integrationLabelValidation(),
+  integrationLabel: yupIntegrationLabelValidation,
   awsAccountId: Yup.string()
     .matches(AWS_ACCOUNT_ID_REGEX, 'Must be a valid AWS Account ID')
     .required(),

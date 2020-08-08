@@ -20,11 +20,10 @@ package resources
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-sdk-go/aws"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
@@ -36,42 +35,34 @@ type PantherUserProperties struct {
 	Email      string `validate:"required,email"`
 }
 
+const usersAPI = "panther-users-api"
+
 func customPantherUser(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
 	switch event.RequestType {
-	case cfn.RequestCreate, cfn.RequestUpdate:
+	case cfn.RequestCreate:
 		var props PantherUserProperties
-		var err error
-		if err = parseProperties(event.ResourceProperties, &props); err != nil {
+		if err := parseProperties(event.ResourceProperties, &props); err != nil {
 			return event.PhysicalResourceID, nil, err
 		}
 
-		var userID string
-		if event.RequestType == cfn.RequestCreate {
-			userID, err = inviteUser(props)
-		} else {
-			split := strings.Split(event.PhysicalResourceID, ":")
-			userID = split[len(split)-1]
-			err = updateUser(userID, props)
-		}
-
+		userID, err := inviteUser(props)
 		if err != nil {
-			return event.PhysicalResourceID, nil, err
-		}
-		outputs := map[string]interface{}{"Email": props.Email, "UserId": userID}
-		return "custom:panther-user:" + userID, outputs, nil
-
-	case cfn.RequestDelete:
-		split := strings.Split(event.PhysicalResourceID, ":")
-		if len(split) < 3 {
-			// invalid ID (e.g. create failed)
-			return event.PhysicalResourceID, nil, nil
+			// We want to log an error, but not fail the CloudFormation and trigger a rollback.
+			// The user can manually invoke users-api to invite a user if this fails.
+			zap.L().Error("failed to invite user - you'll need to invoke "+usersAPI+" directly "+
+				"(see https://docs.runpanther.io/user-guide/help/troubleshooting)",
+				zap.Any("user", props), zap.Error(err))
+			userID = "error"
 		}
 
-		userID := split[len(split)-1]
-		return event.PhysicalResourceID, nil, deleteUser(userID)
+		return "custom:panther-user:" + userID, nil, nil
 
 	default:
-		return "", nil, fmt.Errorf("unknown request type %s", event.RequestType)
+		// This custom resource is only used to bootstrap the first user.
+		// We used to support updates and deletes, but then CloudFormation could conflict with
+		// changes made in the Panther web app.
+		// So now we ignore updates and deletes, just like the AnalysisSet.
+		return event.PhysicalResourceID, nil, nil
 	}
 }
 
@@ -87,32 +78,9 @@ func inviteUser(props PantherUserProperties) (string, error) {
 	}
 	var output models.InviteUserOutput
 
-	if err := genericapi.Invoke(lambdaClient, "panther-users-api", &input, &output); err != nil {
+	if err := genericapi.Invoke(lambdaClient, usersAPI, &input, &output); err != nil {
 		return "", err
 	}
 
 	return *output.ID, nil
-}
-
-func updateUser(userID string, props PantherUserProperties) error {
-	input := models.LambdaInput{
-		UpdateUser: &models.UpdateUserInput{
-			RequesterID: aws.String(systemUserID),
-			ID:          &userID,
-			GivenName:   &props.GivenName,
-			FamilyName:  &props.FamilyName,
-			Email:       &props.Email,
-		},
-	}
-	return genericapi.Invoke(lambdaClient, "panther-users-api", &input, nil)
-}
-
-func deleteUser(userID string) error {
-	input := models.LambdaInput{
-		RemoveUser: &models.RemoveUserInput{
-			RequesterID: aws.String(systemUserID),
-			ID:          &userID,
-		},
-	}
-	return genericapi.Invoke(lambdaClient, "panther-users-api", &input, nil)
 }

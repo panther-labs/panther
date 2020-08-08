@@ -37,6 +37,7 @@ export enum MODALS {
   DELETE_GLOBAL_PYTHON_MODULE = 'DELETE_GLOBAL_PYTHON_MODULE',
   DELETE_USER = 'DELETE_USER',
   DELETE_TEST = 'DELETE_TEST',
+  EDIT_PROFILE_SETTINGS = 'EDIT_PROFILE_SETTINGS',
   RESET_USER_PASS = 'RESET_USER_PASS',
   DELETE_COMPLIANCE_SOURCE = 'DELETE_COMPLIANCE_SOURCE',
   DELETE_LOG_SOURCE = 'DELETE_LOG_SOURCE',
@@ -120,6 +121,14 @@ interface ShowDeleteLogSourceModalAction {
   };
 }
 
+/* Opens the modal that allows the user to update info & change password */
+interface ShowProfileSettingsModalAction {
+  type: typeof SHOW_MODAL;
+  payload: {
+    modal: MODALS.EDIT_PROFILE_SETTINGS;
+  };
+}
+
 /* 1st action */
 interface ShowDeleteRuleModalAction {
   type: typeof SHOW_MODAL;
@@ -161,6 +170,7 @@ type ModalStateAction =
   | ShowGlobalPythonModuleModalAction
   | ShowDeleteUserModalAction
   | ShowDeleteTestModalAction
+  | ShowProfileSettingsModalAction
   | ShowResetUserPasswordModalAction
   | ShowPolicyModalAction
   | ShowDeleteRuleModalAction
