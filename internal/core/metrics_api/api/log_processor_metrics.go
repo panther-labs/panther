@@ -26,9 +26,13 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/metrics/models"
+	"github.com/panther-labs/panther/pkg/metrics"
 )
 
-const eventsProcessedMetric = "EventsProcessed"
+const (
+	eventsProcessedMetric = "EventsProcessed"
+	eventsLatencyMetric   = "CombinedLatency"
+)
 
 // getEventsProcessed returns the count of events processed by the log processor per log type
 //
@@ -65,8 +69,94 @@ func getEventsProcessed(input *models.GetMetricsInput, output *models.GetMetrics
 				Metric: metric,
 				Period: aws.Int64(input.IntervalMinutes * 60), // number of seconds, must be multiple of 60
 				Stat:   aws.String("Sum"),
-				Unit:   aws.String("Count"),
+				Unit:   aws.String(metrics.UnitCount),
 			},
+		})
+	}
+	zap.L().Debug("prepared metric queries", zap.Any("queries", queries), zap.Any("toDate", input.ToDate), zap.Any("fromDate", input.FromDate))
+
+	metricData, err := getMetricData(input, queries)
+	if err != nil {
+		return err
+	}
+
+	values, timestamps := normalizeTimeStamps(input, metricData)
+
+	output.EventsProcessed = &models.MetricResult{
+		SeriesData: models.TimeSeriesMetric{
+			Timestamps: timestamps,
+			Series:     values,
+		},
+	}
+	return nil
+}
+
+// getEventsProcessed returns the count of events processed by the log processor per log type
+//
+// This is a time series metric.
+func getEventsLatency(input *models.GetMetricsInput, output *models.GetMetricsOutput) error {
+	// First determine applicable metric dimensions
+	var listMetricsResponse []*cloudwatch.Metric
+	err := cloudwatchClient.ListMetricsPages(&cloudwatch.ListMetricsInput{
+		MetricName: aws.String(eventsLatencyMetric),
+		Namespace:  aws.String(input.Namespace),
+	}, func(page *cloudwatch.ListMetricsOutput, _ bool) bool {
+		listMetricsResponse = append(listMetricsResponse, page.Metrics...)
+		return true
+	})
+	if err != nil {
+		zap.L().Error("unable to list metrics", zap.String("metric", eventsLatencyMetric), zap.Error(err))
+		return metricsInternalError
+	}
+	zap.L().Debug("found applicable metrics", zap.Any("metrics", listMetricsResponse))
+
+	// Build the query based on the applicable metric dimensions
+	var queries []*cloudwatch.MetricDataQuery
+	for i, metric := range listMetricsResponse {
+		if len(metric.Dimensions) != 1 {
+			// This if statement is only needed by developers who have deployed the unstable branch
+			// of Panther before v1.6.0. Old metrics can't be deleted and you can't filter out
+			// dimensions you don't want, so we have to skip metrics where the Component dimension
+			// still exists.
+			continue
+		}
+		// Add the latency query
+		index := strconv.Itoa(i)
+		queries = append(queries, &cloudwatch.MetricDataQuery{
+			Id: aws.String("latency_query_" + index),
+			MetricStat: &cloudwatch.MetricStat{
+				Metric: metric,
+				Period: aws.Int64(input.IntervalMinutes * 60), // number of seconds, must be multiple of 60
+				Stat:   aws.String("Sum"),
+				Unit:   aws.String(metrics.UnitMilliseconds),
+			},
+			ReturnData: aws.Bool(false),
+		})
+		queries = append(queries, &cloudwatch.MetricDataQuery{
+			Id: aws.String("events_query_" + index),
+			MetricStat: &cloudwatch.MetricStat{
+				Metric: &cloudwatch.Metric{
+					Dimensions: []*cloudwatch.Dimension{
+						{
+							Name: aws.String("LogType"),
+							// We know the length of this field is exactly 1 due to the above check
+							Value: metric.Dimensions[0].Value,
+						},
+					},
+					MetricName: aws.String(eventsProcessedMetric),
+					Namespace:  aws.String(input.Namespace),
+				},
+				Period: aws.Int64(input.IntervalMinutes * 60), // number of seconds, must be multiple of 60
+				Stat:   aws.String("Sum"),
+				Unit:   aws.String(metrics.UnitCount),
+			},
+			ReturnData: aws.Bool(false),
+		})
+		queries = append(queries, &cloudwatch.MetricDataQuery{
+			Id:         aws.String("avg_latency_query" + index),
+			Label:      aws.String(aws.StringValue(metric.Dimensions[0].Value) + " latency"),
+			Expression: aws.String("latency_query_" + index + " / events_query_" + index),
+			ReturnData: aws.Bool(true),
 		})
 	}
 	zap.L().Debug("prepared metric queries", zap.Any("queries", queries), zap.Any("toDate", input.ToDate), zap.Any("fromDate", input.FromDate))
