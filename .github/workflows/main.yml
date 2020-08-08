@@ -72,7 +72,7 @@ jobs:
           git commit -m "merge changes from $GITHUB_REPOSITORY" --allow-empty
           git push origin $HEAD
 
-      - name: Monitor PRs on a Source Repo & Create PRs on a dest one
+      - name: Clone original PR
         if: ${{ success() }}
         uses: ./$SOURCE_REPO_CHECKOUT_PATH/build/actions/pr_sync
         id: pr_sync
