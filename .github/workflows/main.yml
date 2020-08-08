@@ -37,14 +37,14 @@ jobs:
         with:
           path: $SOURCE_REPO_CHECKOUT_PATH
           token: ${{ secrets.PR_SYNC_TOKEN }}
-          fetch-depth: 2
+          fetch-depth: 1
 
       - name: Checkout Dest Repo
         uses: actions/checkout@v2
         with:
           path: $DEST_REPO_CHECKOUT_PATH
           token: ${{ secrets.PR_SYNC_TOKEN }}
-          fetch-depth: 2
+          fetch-depth: 1
           repository: 3nvi/panther-enterprise
 
         # Return early if the PR was not merged
@@ -79,6 +79,6 @@ jobs:
         env:
           ACTIONS_STEP_DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
         with:
-          repo: $DEST_REPO
-          head: $HEAD
+          repo: ${{ env.DEST_REPO }}
+          head: ${{ env.HEAD }}
           token: ${{ secrets.PR_SYNC_TOKEN }}
