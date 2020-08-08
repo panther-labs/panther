@@ -24,7 +24,29 @@ import { EChartOption } from 'echarts';
 import colors from './colors';
 
 interface TimeSeriesLinesProps {
+  /** The data for the time series */
   data: SeriesData;
+
+  /**
+   * The number of segments that the X-axis is split into
+   * @default 12
+   */
+  segments?: number;
+
+  /**
+   * Whether the chart will allow zooming
+   * @default false
+   */
+  zoomable?: boolean;
+
+  /**
+   * If defined, the chart will be zoomable and will zoom up to a range specified in `ms` by this
+   * value. This range will occupy the entirety of the X-axis (end-to-end).
+   * For example, a value of 3600 * 1000 * 24 would allow the chart to zoom until the entirety
+   * of the zoomed-in chart shows 1 full day.
+   * @default 3600 * 1000 * 24
+   */
+  maxZoomPeriod?: number;
 }
 
 const hourFormat = formatTime('HH:mm');
@@ -35,18 +57,26 @@ function formatDateString(timestamp) {
   return `${hourFormat(timestamp)}\n${dateFormat(timestamp).toUpperCase()}`;
 }
 
-const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
+const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
+  data,
+  zoomable = false,
+  segments = 12,
+  maxZoomPeriod = 3600 * 1000 * 24,
+}) => {
   const theme = useTheme();
   const container = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
     (async () => {
       // load the pie chart
-      const [echarts] = await Promise.all([
-        import(/* webpackChunkName: "echarts" */ 'echarts/lib/echarts'),
-        import(/* webpackChunkName: "echarts" */ 'echarts/lib/chart/line'),
-        import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/tooltip'),
-        import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/legendScroll'),
-      ]);
+      const [echarts] = await Promise.all(
+        [
+          import(/* webpackChunkName: "echarts" */ 'echarts/lib/echarts'),
+          import(/* webpackChunkName: "echarts" */ 'echarts/lib/chart/line'),
+          import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/tooltip'),
+          zoomable && import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/dataZoom'),
+          import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/legendScroll'),
+        ].filter(Boolean)
+      );
       /*
        *  Timestamps are common for all series since everything has the same interval
        *  and the same time frame
@@ -90,6 +120,15 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
           top: 10,
           containLabel: true,
         },
+        ...(zoomable && {
+          dataZoom: [
+            {
+              type: 'inside',
+              orient: 'horizontal',
+              minValueSpan: maxZoomPeriod,
+            },
+          ],
+        }),
         tooltip: {
           trigger: 'axis' as const,
           position: pt => [pt[0], '100%'],
@@ -129,7 +168,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
         },
         xAxis: {
           type: 'time' as const,
-          interval: 3600 * 1000 * 6, // display time data in 6h intervals
+          splitNumber: segments,
           splitLine: {
             show: false,
           },
