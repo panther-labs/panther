@@ -50,9 +50,8 @@ jobs:
 
       - name: Restore previous GO modules
         uses: actions/cache@v2
-        working-directory: ${{ env.DEST_REPO_CHECKOUT_PATH }}
         with:
-          path: ~/go/pkg/mod
+          path: ${{ env.DEST_REPO_CHECKOUT_PATH }}/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
