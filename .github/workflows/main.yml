@@ -24,7 +24,7 @@ on:
 jobs:
   sync_prs_from_community_to_enterprise:
     name: Syncs merged PRs from Panther Community to Panther Enterprise
-    runs-on: ubuntu-latest
+    container: pantherlabs/panther-buildpack:1.2.0
     env:
       SOURCE_REPO_CHECKOUT_PATH: src
       DEST_REPO_CHECKOUT_PATH: dest
@@ -37,48 +37,50 @@ jobs:
         with:
           path: ${{ env.SOURCE_REPO_CHECKOUT_PATH }}
           token: ${{ secrets.PR_SYNC_TOKEN }}
-          fetch-depth: 2
+          fetch-depth: 1
 
       - name: Checkout Dest Repo
         uses: actions/checkout@v2
         with:
           path: ${{ env.DEST_REPO_CHECKOUT_PATH }}
           token: ${{ secrets.PR_SYNC_TOKEN }}
-          fetch-depth: 1
           repository: ${{ env.DEST_REPO }}
+          fetch-depth: 1
 
-        # Return early if the PR was not merged
       - name: Validate that PR was merged and not closed
         if: ${{ github.event.pull_request.merged == false }}
         run: exit 1
 
-        # Return early if the PR has the ignore label
       - name: Validate that PR shouldn't be excempt from syncing
         if: ${{ contains(github.event.pull_request.labels, env.IGNORE_LABEL) }}
         run: exit 1
 
-        # Cherry picks commit from `source` and creates a PR-ready branch in `dest`
       - name: Bootstrap a PR branch
         if: ${{ success() }}
         working-directory: $DEST_REPO_CHECKOUT_PATH
         run: |
-          git config --global user.email "ci@runpanther.io"
-          git config --global user.name "CI"
+          git config --global user.email "aggelos@runpanther.io"
+          git config --global user.name "3nvi"
           git checkout -b ${{ env.HEAD }}
-          git remote add source https://github.com/$GITHUB_REPOSITORY.git
-          git fetch source master --depth 10
-          if [ -z "${{ github.context.payload.pull_request.merge_commit_sha }}" ]; then
-            git cherry-pick ${{ github.event.pull_request.head.sha }} || true
-          else
-            git cherry-pick ${{ github.event.pull_request.merge_commit_sha }} -m 2 || true
-          fi
+          git remote add source https://github.com/${{ env.GITHUB_REPOSITORY }}.git
+          git fetch source master --depth 15
+          git cherry-pick ${{ github.event.pull_request.merge_commit_sha }} || true
           git add -A .
-          git commit -m "merge changes from $GITHUB_REPOSITORY" --allow-empty
+          git commit -m "merge changes from $GITHUB_REPOSITORY" || true
+          git push origin ${{ env.HEAD }}
+
+      - name: Add proper license headers
+        if: ${{ success() }}
+        working-directory: ${{ env.DEST_REPO_CHECKOUT_PATH }}
+        run: |
+          mage fmt
+          git add -A .
+          git commit -m "run mage fmt" || true
           git push origin ${{ env.HEAD }}
 
       - name: Clone original PR
         if: ${{ success() }}
-        uses: ./$SOURCE_REPO_CHECKOUT_PATH/build/actions/pr_sync
+        uses: ./${{ env.SOURCE_REPO_CHECKOUT_PATH }}/build/actions/pr_sync
         id: pr_sync
         env:
           ACTIONS_STEP_DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}

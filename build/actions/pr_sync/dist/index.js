@@ -761,7 +761,7 @@ module.exports = /******/ (function (modules, runtime) {
 
           // Get the JSON webhook payload for the event that triggered the workflow
           const srcPullRequest = github.context.payload.pull_request;
-          console.log(repo, head, base, token);
+
           // https://developer.github.com/v3/pulls/#create-a-pull-request
           core.debug('Creating a pull request...');
           const octokit = github.getOctokit(token);
