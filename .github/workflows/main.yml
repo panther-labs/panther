@@ -36,15 +36,15 @@ jobs:
       - name: Checkout Source Repo
         uses: actions/checkout@v2
         with:
-          path: $SOURCE_REPO_CHECKOUT_PATH
+          path: ${{ env.SOURCE_REPO_CHECKOUT_PATH }}
           token: ${{ secrets.PR_SYNC_TOKEN }}
           fetch-depth: 1
 
       - name: Checkout Dest Repo
         uses: actions/checkout@v2
         with:
-          path: $DEST_REPO_CHECKOUT_PATH
-          repository: $DEST_REPO
+          path: ${{ env.DEST_REPO_CHECKOUT_PATH }}
+          repository: ${{ env.DEST_REPO }}
           token: ${{ secrets.PR_SYNC_TOKEN }}
           fetch-depth: 1
 
@@ -86,6 +86,6 @@ jobs:
         env:
           ACTIONS_STEP_DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
         with:
-          repo: $DEST_REPO
-          head: $HEAD
+          repo: ${{ env.DEST_REPO }}
+          head: ${{ env.HEAD }}
           token: ${{ secrets.PR_SYNC_TOKEN }}
