@@ -58,7 +58,7 @@ jobs:
 
       - name: Bootstrap a PR branch
         if: ${{ success() }}
-        working-directory: $DEST_REPO_CHECKOUT_PATH
+        working-directory: ${{ env.DEST_REPO_CHECKOUT_PATH }}
         run: |
           git config --global user.email "aggelos@runpanther.io"
           git config --global user.name "3nvi"
