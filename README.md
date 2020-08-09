@@ -1,7 +1,7 @@
 <p align="center">
   <a href="https://www.runpanther.io"><img src="docs/img/panther-logo-github-highres.png" width=75% alt="Panther Logo"/></a>
 </p>
-test test test
+
 <p align="center">
   <h3 align="center">A Cloud-Native SIEM for the Modern Security Team</h3>
 </p>
