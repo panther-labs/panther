@@ -86,7 +86,7 @@ jobs:
 
       - name: Clone original PR
         if: ${{ success() }}
-        uses: ./${{ env.SOURCE_REPO_CHECKOUT_PATH }}/build/actions/pr_sync
+        uses: ./src/build/actions/pr_sync # Github actions has a bug and we can't use ENV var here
         id: pr_sync
         env:
           ACTIONS_STEP_DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
