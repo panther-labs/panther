@@ -74,7 +74,7 @@ jobs:
         if: ${{ success() }}
         working-directory: ${{ env.DEST_REPO_CHECKOUT_PATH }}
         run: |
-          mage fmt
+          mage setup fmt
           git add -A .
           git commit -m "run mage fmt" || true
           git push origin $HEAD
