@@ -72,7 +72,7 @@ jobs:
 
       - name: Add proper license headers
         if: ${{ success() }}
-        working-directory: $DEST_REPO_CHECKOUT_PATH
+        working-directory: ${{ env.DEST_REPO_CHECKOUT_PATH }}
         run: |
           mage fmt
           git add -A .
