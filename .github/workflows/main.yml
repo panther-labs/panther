@@ -25,6 +25,7 @@ jobs:
   sync_prs_from_community_to_enterprise:
     name: Syncs merged PRs from Panther Community to Panther Enterprise
     runs-on: ubuntu-latest
+    container: pantherlabs/panther-buildpack:1.2.0
     env:
       SOURCE_REPO_CHECKOUT_PATH: src
       DEST_REPO_CHECKOUT_PATH: dest
@@ -72,7 +73,6 @@ jobs:
       - name: Add proper license headers
         if: ${{ success() }}
         working-directory: $DEST_REPO_CHECKOUT_PATH
-        container: pantherlabs/panther-buildpack:1.2.0
         run: |
           mage fmt
           git add -A .
