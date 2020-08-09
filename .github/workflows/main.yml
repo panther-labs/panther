@@ -64,16 +64,17 @@ jobs:
         run: |
           git config --global user.email "ci@runpanther.io"
           git config --global user.name "CI"
-          git checkout -b $HEAD
+          git checkout -b ${{ env.HEAD }}
           git remote add source https://github.com/$GITHUB_REPOSITORY.git
           git fetch source master --depth 10
           if [ -z "${{ github.context.payload.pull_request.merge_commit_sha }}" ]; then
-            git cherry-pick ${{ github.event.pull_request.merge_commit_sha }} -m 2 || true; else
-            git cherry-pick ${{ github.event.pull_request.head.sha }} || true;
+            git cherry-pick ${{ github.event.pull_request.merge_commit_sha }} -m 2 || true
+          else
+            git cherry-pick ${{ github.event.pull_request.head.sha }} || true
           fi
           git add -A .
           git commit -m "merge changes from $GITHUB_REPOSITORY" --allow-empty
-          git push origin $HEAD
+          git push origin ${{ env.HEAD }}
 
       - name: Clone original PR
         if: ${{ success() }}
