@@ -48,6 +48,15 @@ jobs:
           token: ${{ secrets.PR_SYNC_TOKEN }}
           fetch-depth: 1
 
+      - name: Restore previous GO modules
+        uses: actions/cache@v2
+        working-directory: ${{ env.DEST_REPO_CHECKOUT_PATH }}
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
       - name: Validate that PR was merged and not closed
         if: ${{ github.event.pull_request.merged == false }}
         run: exit 1
