@@ -17,17 +17,16 @@
 name: Sync merged PRs
 description: Automatically creates new PRs in a repo from the merged PRs of another repo
 inputs:
-  destRepo:
+  repo:
     description: The repo to create a PR to
     required: true
-  destBranch:
+  head:
+    description: The branch that contains the changes
+    required: true
+  base:
     description: The branch that the PR will be created against
     required: false
     default: master
-  ignoreLabel:
-    description: A Github label that, when added, should force the PR to ignore syncing
-    required: false
-    default: ignore-pr-sync
   token:
     description: A Github token to use for all the GH related actions
     required: true
