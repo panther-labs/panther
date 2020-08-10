@@ -334,7 +334,9 @@ func NewTimeDecoder(dec TimeDecoder, typ reflect.Type) jsoniter.ValDecoder {
 	}
 }
 
-// StdCodec uses default
+// StdCodec behaves like the default UnmarshalJSON/MarshalJSON for time.Time values.
+// The tcodec extension uses this TimeCodec when no `tcodec` tag is present on a field of type time.Time and
+// the extension has no Config.DefaultCodec defined.
 func StdCodec() TimeCodec {
 	return &stdCodec{}
 }
@@ -349,6 +351,10 @@ func (*stdCodec) DecodeTime(iter *jsoniter.Iterator) (tm time.Time) {
 	return
 }
 
+const layoutRFC3339NanoJSON = `"` + time.RFC3339Nano + `"`
+
 func (*stdCodec) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
-	stream.WriteVal(tm)
+	buf := stream.Buffer()
+	buf = tm.AppendFormat(buf, layoutRFC3339NanoJSON)
+	stream.SetBuffer(buf)
 }

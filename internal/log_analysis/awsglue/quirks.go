@@ -76,7 +76,7 @@ func RegisterExtensions(api jsoniter.API) jsoniter.API {
 	api.RegisterExtension(jsonutil.NewEncoderNamingStrategy(RewriteFieldName))
 	api.RegisterExtension(tcodec.NewExtension(tcodec.Config{
 		// Force all timestamps to be awsglue format and UTC. This is needed to be able to write
-		DefaultCodec: tcodec.Join(nil, NewTimestampEncoder()),
+		DefaultCodec: tcodec.Join(tcodec.StdCodec(), NewTimestampEncoder()),
 		DecorateCodec: func(codec tcodec.TimeCodec) tcodec.TimeCodec {
 			dec, _ := tcodec.Split(codec)
 			enc := NewTimestampEncoder()

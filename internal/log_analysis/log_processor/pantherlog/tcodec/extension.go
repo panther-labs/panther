@@ -19,7 +19,6 @@ package tcodec
  */
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -122,7 +121,7 @@ func (ext *Extension) UpdateStructDescriptor(desc *jsoniter.StructDescriptor) {
 			} else if codec = Lookup(tag); codec == nil {
 				// Report failed lookup error on decode/encode
 				jsonCodec := &errCodec{
-					err:       errors.New(fmt.Sprintf(`unregistered codec %q`, tag)),
+					err:       fmt.Errorf(`unregistered codec %q`, tag),
 					operation: "LookupTimeCodec",
 				}
 				binding.Decoder, binding.Encoder = jsonCodec, jsonCodec
