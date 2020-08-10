@@ -132,7 +132,7 @@ func getEventsLatency(input *models.GetMetricsInput, output *models.GetMetricsOu
 					Metric: &cloudwatch.Metric{
 						Dimensions: []*cloudwatch.Dimension{
 							{
-								Name: aws.String("LogType"),
+								Name:  aws.String("LogType"),
 								Value: metric.Dimensions[0].Value,
 							},
 						},
