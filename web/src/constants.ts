@@ -133,6 +133,7 @@ export const LOG_TYPES = [
   'Suricata.DNS',
   'Syslog.RFC3164',
   'Syslog.RFC5424',
+  'Gravitational.TeleportAudit',
   'Zeek.DNS',
   'Lacework.Events',
 ] as const;
