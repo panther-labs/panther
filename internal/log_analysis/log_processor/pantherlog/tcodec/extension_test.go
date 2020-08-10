@@ -169,13 +169,6 @@ func TestPointerZeroValues(t *testing.T) {
 	}
 	now := time.Now()
 	{
-		v := T{
-			Time: &now,
-		}
-		require.NoError(t, api.UnmarshalFromString(`{"tm":""}`, &v))
-		require.Nil(t, v.Time)
-	}
-	{
 		v := T{}
 		require.NoError(t, api.UnmarshalFromString(`{"tm":""}`, &v))
 		require.Nil(t, v.Time)

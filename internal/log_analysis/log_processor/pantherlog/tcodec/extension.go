@@ -19,6 +19,8 @@ package tcodec
  */
 
 import (
+	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 	"time"
@@ -76,37 +78,36 @@ func NewExtension(config Config) *Extension {
 	}
 }
 
-var typTime = reflect.TypeOf(time.Time{})
+var (
+	typTime    = reflect.TypeOf(time.Time{})
+	typTimePtr = reflect.PtrTo(typTime)
+)
 
 func (ext *Extension) CreateEncoder(typ reflect2.Type) jsoniter.ValEncoder {
-	typ1 := typ.Type1()
-	if !typ1.ConvertibleTo(typTime) {
-		return nil
+	if typ := typ.Type1(); typ == typTime {
+		_, enc := ext.split(StdCodec())
+		return NewTimeEncoder(enc, typ)
 	}
-	_, enc := ext.split(nil)
-	if enc == nil {
-		return nil
-	}
-	return NewTimeEncoder(enc, typ1)
+	return nil
 }
+
 func (ext *Extension) CreateDecoder(typ reflect2.Type) jsoniter.ValDecoder {
-	typ1 := typ.Type1()
-	if !typ1.ConvertibleTo(typTime) {
-		return nil
+	if typ := typ.Type1(); typ == typTime {
+		dec, _ := ext.split(StdCodec())
+		return NewTimeDecoder(dec, typ)
 	}
-	dec, _ := ext.split(nil)
-	if dec == nil {
-		return nil
-	}
-	return NewTimeDecoder(dec, typ1)
+	return nil
 }
 
 func (ext *Extension) UpdateStructDescriptor(desc *jsoniter.StructDescriptor) {
 	tagName := ext.TagName()
 	for _, binding := range desc.Fields {
 		field := binding.Field
+
 		typ := field.Type().Type1()
-		if !isTimeType(typ) {
+		switch typ {
+		case typTime, typTimePtr:
+		default:
 			continue
 		}
 
@@ -118,65 +119,47 @@ func (ext *Extension) UpdateStructDescriptor(desc *jsoniter.StructDescriptor) {
 				// We strip the prefix and use a LayoutCodec.
 				layout := strings.TrimPrefix(tag, "layout=")
 				codec = LayoutCodec(layout)
-			} else {
-				// The tag is a registered decoder name
-				codec = Lookup(tag)
+			} else if codec = Lookup(tag); codec == nil {
+				// Report failed lookup error on decode/encode
+				jsonCodec := &errCodec{
+					err:       errors.New(fmt.Sprintf(`unregistered codec %q`, tag)),
+					operation: "LookupTimeCodec",
+				}
+				binding.Decoder, binding.Encoder = jsonCodec, jsonCodec
+				continue
 			}
+		} else if codec = ext.config.DefaultCodec; codec == nil {
+			// Use std codec for time values without a `tcodec` tag
+			codec = StdCodec()
 		}
+
 		dec, enc := ext.split(codec)
-		if dec != nil {
+		vDec, vEnc := NewTimeDecoder(dec, typ), NewTimeEncoder(enc, typ)
+		if vDec != nil {
 			// We only modify the underlying decoder if we resolved a decoder
-			binding.Decoder = NewTimeDecoder(dec, typ)
+			// Reserve decorations.
+			// This is needed so globally registered extensions can apply their decorations on top of tcodec ones
+			type decorator interface {
+				DecorateDecoder(typ reflect2.Type, dec jsoniter.ValDecoder) jsoniter.ValDecoder
+			}
+			if d, ok := binding.Decoder.(decorator); ok {
+				vDec = d.DecorateDecoder(field.Type(), vDec)
+			}
+			binding.Decoder = vDec
 		}
-		if enc != nil {
+		if vEnc != nil {
 			// We only modify the underlying encoder if we resolved an encoder
-			valEncoder := NewTimeEncoder(enc, typ)
 			// Reserve decorations.
 			// This is needed so globally registered extensions can apply their decorations on top of tcodec ones
 			type decorator interface {
 				DecorateEncoder(typ reflect2.Type, enc jsoniter.ValEncoder) jsoniter.ValEncoder
 			}
 			if d, ok := binding.Encoder.(decorator); ok {
-				valEncoder = d.DecorateEncoder(field.Type(), valEncoder)
+				vEnc = d.DecorateEncoder(field.Type(), vEnc)
 			}
-			binding.Encoder = valEncoder
+			binding.Encoder = vEnc
 		}
 	}
-}
-
-func isTimeType(typ reflect.Type) bool {
-	switch {
-	case typ.ConvertibleTo(typTime):
-		// Type is time.Time
-		return true
-	case isEmbeddedTime(typ):
-		// Type is struct { time.Time }
-		return true
-	case typ.Kind() == reflect.Ptr && typ.Elem().ConvertibleTo(typTime):
-		// Type is *time.Time
-		return true
-	case typ.Kind() == reflect.Ptr && isEmbeddedTime(typ.Elem()):
-		// Type is *struct { time.Time }
-		return true
-	default:
-		// We only modify encoders/decoders for the above types
-		return false
-	}
-}
-
-// check if type is a struct wrapping time.Time
-// ```
-// type T struct {
-//   time.Time
-// }
-// ```
-func isEmbeddedTime(typ reflect.Type) bool {
-	if typ.Kind() == reflect.Struct && typ.NumField() == 1 {
-		if field := typ.Field(0); field.Anonymous && field.Type.ConvertibleTo(typTime) {
-			return true
-		}
-	}
-	return false
 }
 
 func (ext *Extension) TagName() string {
@@ -258,4 +241,29 @@ func (dec *jsonTimePtrDecoder) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterato
 	newPtr := unsafe.Pointer(v.Pointer())
 	*(*time.Time)(newPtr) = tm
 	*(**time.Time)(ptr) = (*time.Time)(newPtr)
+}
+
+type errCodec struct {
+	err       error
+	operation string
+}
+
+func (c *errCodec) IsEmpty(_ unsafe.Pointer) bool {
+	return false
+}
+func (c *errCodec) Encode(_ unsafe.Pointer, stream *jsoniter.Stream) {
+	stream.Error = c.err
+}
+func (c *errCodec) Decode(_ unsafe.Pointer, iter *jsoniter.Iterator) {
+	iter.ReportError(c.operation, c.err.Error())
+}
+
+// Force error reporting when decorating
+func (c *errCodec) DecorateEncoder(_ reflect2.Type, _ jsoniter.ValEncoder) jsoniter.ValEncoder {
+	return c
+}
+
+// Force error reporting when decorating
+func (c *errCodec) DecorateDecoder(_ reflect2.Type, _ jsoniter.ValDecoder) jsoniter.ValDecoder {
+	return c
 }
