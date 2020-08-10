@@ -85,14 +85,15 @@ export const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.sli
  * as a single digit (all of them display it either as 03:00 or as 0300) and require string
  * manipulation which is harder
  * */
-export const formatDatetime = (datetime: string) => {
+export const formatDatetime = (datetime: string, verbose = false) => {
   // get the offset minutes and calculate the hours from them
   const utcOffset = dayjs(datetime).utcOffset() / 60;
 
+  const suffix = `G[M]T${utcOffset > 0 ? '+' : ''}${utcOffset !== 0 ? utcOffset : ''}`;
+  const format = verbose ? `dddd, MMMM YYYY, HH:mm (${suffix})` : `YYYY-MM-DD HH:mm ${suffix}`;
+
   // properly format the date
-  return dayjs(datetime).format(
-    `YYYY-MM-DD HH:mm G[M]T${utcOffset > 0 ? '+' : ''}${utcOffset !== 0 ? utcOffset : ''}`
-  );
+  return dayjs(datetime).format(format);
 };
 
 /**

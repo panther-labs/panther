@@ -17,8 +17,9 @@
  */
 
 import React from 'react';
-import { Box, useTheme } from 'pouncejs';
-import { formatTime, remToPx } from 'Helpers/utils';
+import ReactDOM from 'react-dom';
+import { Box, Flex, Text, useTheme } from 'pouncejs';
+import { formatTime, formatDatetime, remToPx } from 'Helpers/utils';
 import { SeriesData } from 'Generated/schema';
 import { EChartOption } from 'echarts';
 import colors from './colors';
@@ -51,7 +52,6 @@ interface TimeSeriesLinesProps {
 
 const hourFormat = formatTime('HH:mm');
 const dateFormat = formatTime('MMM DD');
-const fullDateFormat = formatTime('DD MMM YYYY HH:mm');
 
 function formatDateString(timestamp) {
   return `${hourFormat(timestamp)}\n${dateFormat(timestamp).toUpperCase()}`;
@@ -65,6 +65,8 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
 }) => {
   const theme = useTheme();
   const container = React.useRef<HTMLDivElement>(null);
+  const tooltip = React.useRef<HTMLDivElement>(document.createElement('div'));
+
   React.useEffect(() => {
     (async () => {
       // load the pie chart
@@ -133,26 +135,34 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
           trigger: 'axis' as const,
           position: pt => [(pt[0] as number) + 40, '0%'],
           backgroundColor: theme.colors['navyblue-300'],
-          padding: theme.space[4] as number,
-          textStyle: {
-            fontFamily: theme.fonts.primary,
-          },
-          extraCssText: `box-shadow: ${theme.shadows.dark250}`,
           formatter: (params: EChartOption.Tooltip.Format[]) => {
             if (!params || !params.length) {
               return '';
             }
 
-            const date: string = params[0].value[0];
-            const seriesTooltips = params
-              .map(seriesTooltip => {
-                return `<br/>${seriesTooltip.marker} ${
-                  seriesTooltip.seriesName
-                }: ${seriesTooltip.value[1].toLocaleString('en')}`;
-              })
-              .join('');
+            const component = (
+              <Box font="primary" minWidth={200} boxShadow="dark250" p={2} borderRadius="medium">
+                <Text fontSize="small-medium" mb={3}>
+                  {formatDatetime(params[0].value[0], true)}
+                </Text>
+                <Flex as="dl" direction="column" spacing={2} fontSize="x-small">
+                  {params.map(seriesTooltip => (
+                    <Flex key={seriesTooltip.seriesName} justify="space-between">
+                      <Box as="dt">
+                        <span dangerouslySetInnerHTML={{ __html: seriesTooltip.marker }} />
+                        {seriesTooltip.seriesName}
+                      </Box>
+                      <Box as="dd" font="mono" fontWeight="bold">
+                        {seriesTooltip.value[1].toLocaleString('en')}
+                      </Box>
+                    </Flex>
+                  ))}
+                </Flex>
+              </Box>
+            );
 
-            return `${fullDateFormat(date)}${seriesTooltips}`;
+            ReactDOM.render(component, tooltip.current);
+            return tooltip.current.innerHTML;
           },
         },
         legend: {
