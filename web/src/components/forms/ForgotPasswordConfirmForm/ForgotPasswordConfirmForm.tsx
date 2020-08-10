@@ -19,13 +19,14 @@
 import React from 'react';
 import { Field, Form, Formik } from 'formik';
 import * as Yup from 'yup';
-import { Alert, Flex, useSnackbar } from 'pouncejs';
+import { Alert, Box, Flex, TextInput, useSnackbar } from 'pouncejs';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
 import useRouter from 'Hooks/useRouter';
 import useAuth from 'Hooks/useAuth';
 import urls from 'Source/urls';
-import { createYupPasswordValidationSchema } from 'Helpers/utils';
+import { yupPasswordValidationSchema } from 'Helpers/utils';
+import FieldPolicyChecker from 'Components/FieldPolicyChecker/FieldPolicyChecker';
 
 interface ForgotPasswordConfirmFormProps {
   email: string;
@@ -38,8 +39,8 @@ interface ForgotPasswordConfirmFormValues {
 }
 
 const validationSchema = Yup.object().shape({
-  newPassword: Yup.string().required(),
-  confirmNewPassword: createYupPasswordValidationSchema().oneOf(
+  newPassword: yupPasswordValidationSchema,
+  confirmNewPassword: yupPasswordValidationSchema.oneOf(
     [Yup.ref('newPassword')],
     'Passwords must match'
   ),
@@ -76,12 +77,12 @@ const ForgotPasswordConfirmForm: React.FC<ForgotPasswordConfirmFormProps> = ({ e
         })
       }
     >
-      {({ status }) => (
+      {({ status, values }) => (
         <Form>
           <Flex direction="column" spacing={4}>
             {status && <Alert variant="error" title={status.title} description={status.message} />}
             <Field
-              as={FormikTextInput}
+              as={TextInput}
               label="New Password"
               placeholder="Type your new password..."
               type="password"
@@ -98,6 +99,9 @@ const ForgotPasswordConfirmForm: React.FC<ForgotPasswordConfirmFormProps> = ({ e
               required
               autoComplete="new-password"
             />
+            <Box py={3}>
+              <FieldPolicyChecker schema={yupPasswordValidationSchema} value={values.newPassword} />
+            </Box>
             <SubmitButton fullWidth>Update password</SubmitButton>
           </Flex>
         </Form>

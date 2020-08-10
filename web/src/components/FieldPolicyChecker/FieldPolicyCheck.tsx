@@ -16,10 +16,28 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export * from '@testing-library/react';
-export { default as faker } from 'faker';
+import React from 'react';
+import { Flex, Icon, Text } from 'pouncejs';
 
-export * from './helpers';
-export { render } from './render';
-export * from '../__mocks__/builders.generated';
-export * from './auth';
+interface FieldPolicyCheckProps {
+  passing: boolean;
+}
+
+const FieldPolicyCheck: React.FC<FieldPolicyCheckProps> = ({ passing, children }) => {
+  return (
+    <Flex align="center">
+      <Icon
+        type={passing ? 'check-circle' : 'close-circle'}
+        color={passing ? 'green-400' : 'navyblue-100'}
+        size="small"
+        mr={2}
+        aria-label={passing ? 'Check is passing' : 'Check is failing'}
+      />
+      <Text fontSize="small-medium" color={passing ? undefined : 'navyblue-100'}>
+        {children}
+      </Text>
+    </Flex>
+  );
+};
+
+export default FieldPolicyCheck;

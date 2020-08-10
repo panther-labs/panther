@@ -72,6 +72,9 @@ func (Test) CI() {
 	runTests([]testTask{
 		{"fmt", func() error { return fmtErr }},
 
+		// mage doc
+		{"doc", doc}, // verify the command works, even if docs aren't committed in this repo
+
 		// mage test:go
 		{"go unit tests", func() error { return goUnitErr }},
 		{"golangci-lint", func() error { return goLintErr }},
@@ -80,9 +83,6 @@ func (Test) CI() {
 		{"build:cfn", build.cfn},
 		{"cfn-lint", testCfnLint},
 		{"terraform validate", testTfValidate},
-
-		// mage test:doc
-		{"test:doc", testDoc},
 
 		// mage test:python
 		{"python unit tests", testPythonUnit},
@@ -119,100 +119,6 @@ func (Test) Cfn() {
 		{"cfn-lint", testCfnLint},
 		{"terraform validate", testTfValidate},
 	})
-}
-
-// Verify links and assets in documentation
-func (Test) Doc() {
-	if err := testDoc(); err != nil {
-		logger.Fatal(err)
-	}
-}
-
-func testDoc() error {
-	return testDocRoot(filepath.Join("docs", "gitbook"))
-}
-
-// Configurable root allows this function to be unit tested with a separate test directory.
-func testDocRoot(root string) error {
-	docs := make(map[string]*docSummary) // map doc filepath to parsed summary
-	walk(root, func(path string, info os.FileInfo) {
-		if filepath.Ext(path) == ".md" {
-			docs[path] = nil
-		}
-	})
-
-	logger.Infof("test:doc: scanning %d documentation .md files", len(docs))
-	for path := range docs {
-		summary, err := parseDoc(path)
-		if err != nil {
-			return err
-		}
-		docs[path] = summary
-	}
-
-	// Remember which images we've seen so we can find unused assets
-	assetDir := filepath.Join(root, ".gitbook", "assets")
-	linkedImages := make(map[string]struct{})
-
-	var errs []string
-	for docPath, summary := range docs {
-		// Validate image links
-		for _, img := range summary.ImgLinks {
-			logger.Debugf("test:doc: %s: validating image ref: %s", docPath, img)
-
-			// e.g. "../../.gitbook/assets/file.png" becomes "docs/gitbook/.gitbook/assets/file.png"
-			imgPath := filepath.Join(filepath.Dir(docPath), img)
-
-			// Make sure the reference is limited to the correct directory
-			if !strings.HasPrefix(imgPath, assetDir) {
-				errs = append(errs, fmt.Sprintf(
-					"%s: image reference \"%s\" resolves to \"%s\", needs to be under %s",
-					docPath, img, imgPath, assetDir))
-				continue
-			}
-
-			// Make sure the image exists
-			if _, err := os.Stat(imgPath); err == nil {
-				linkedImages[imgPath] = struct{}{}
-			} else {
-				errs = append(errs, fmt.Sprintf(
-					"%s: invalid image asset \"%s\": %s", docPath, img, err))
-			}
-		}
-
-		// Validate documentation links
-		for _, link := range summary.DocLinks {
-			// Path relative to the documentation root
-			refPath := filepath.Join(filepath.Dir(docPath), link.Path)
-
-			if link.Path == "" {
-				// This is a header in the same file, e.g. "#my-section"
-				refPath = docPath
-			}
-
-			summary := docs[refPath]
-			if summary == nil {
-				errs = append(errs, fmt.Sprintf(
-					"%s: invalid reference to \"%s\": documentation file %s does not exist",
-					docPath, link.Path, refPath))
-				continue
-			}
-
-			// TODO - validate headers
-		}
-	}
-
-	// Check for unused image assets
-	walk(assetDir, func(path string, info os.FileInfo) {
-		if _, exists := linkedImages[path]; !exists && !info.IsDir() && filepath.Ext(path) != ".DS_Store" {
-			errs = append(errs, fmt.Sprintf("%s is unused", path))
-		}
-	})
-
-	if len(errs) > 0 {
-		return fmt.Errorf("test:doc: %d errors:\n - %s", len(errs), strings.Join(errs, "\n - "))
-	}
-	return nil
 }
 
 // Test and lint Golang source code

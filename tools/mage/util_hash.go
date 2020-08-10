@@ -79,7 +79,7 @@ func sourceHashes() (map[string][16]byte, error) {
 
 	// We don't want to waste time hashing files that we don't care about
 	roots := append(topLevel, ".circleci", ".github", "api", "build", "cmd", "deployments",
-		"docs", "internal", "pkg", "tools", "web")
+		"internal", "pkg", "tools", "web")
 	return fileHashMap(roots...)
 }
 

@@ -130,8 +130,8 @@ func deleteAlarms(physicalID string, alarmNames ...string) error {
 }
 
 func createAlarmDescription(alarmName, alarmDesc string) string {
-	// prepend name,account and region, then console link
-	alarmDesc = accountDescription + fmt.Sprintf(consoleLinkTemplate,
+	// prepend alarmName, name, account and region, then console link
+	alarmDesc = alarmName + " " + accountDescription + fmt.Sprintf(consoleLinkTemplate,
 		*awsSession.Config.Region, *awsSession.Config.Region, alarmName) + alarmDesc
 
 	// clip
