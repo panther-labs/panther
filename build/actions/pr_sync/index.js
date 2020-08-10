@@ -48,7 +48,7 @@ const main = async () => {
     try {
       let milestoneId;
       if (srcPullRequest.milestone) {
-        const destMilestones = await octokit.request(`GET /repos/${repo}/milestones`);
+        const { data: destMilestones } = await octokit.request(`GET /repos/${repo}/milestones`);
         const matchingMilestone = destMilestones.find(
           milestone => milestone.title === srcPullRequest.milestone.title
         );
