@@ -795,10 +795,21 @@ module.exports = /******/ (function (modules, runtime) {
           // https://developer.github.com/v3/issues/#update-an-issue
           core.debug('Setting assignees, labels & milestone...');
           try {
+            let milestoneId;
+            if (srcPullRequest.milestone) {
+              const { data: destMilestones } = await octokit.request(
+                `GET /repos/${repo}/milestones`
+              );
+              const matchingMilestone = destMilestones.find(
+                milestone => milestone.title === srcPullRequest.milestone.title
+              );
+              milestoneId = matchingMilestone ? matchingMilestone.number : null;
+            }
+
             await octokit.request(`PATCH /repos/${repo}/issues/${destPullRequest.number}`, {
               assignees: srcPullRequest.assignees.map(assignee => assignee.login),
               labels: srcPullRequest.labels.map(label => label.name),
-              milestone: srcPullRequest.milestone ? srcPullRequest.milestone.number : null,
+              milestone: milestoneId,
             });
           } catch (error) {
             core.debug(error.message);
