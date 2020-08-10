@@ -145,3 +145,11 @@ func ScanIPAddress(w ValueWriter, input string) {
 func checkIPAddress(addr string) bool {
 	return net.ParseIP(addr) != nil
 }
+
+func ScanNetworkAddress(w ValueWriter, input string) {
+	host, _, err := net.SplitHostPort(input)
+	if err != nil {
+		return
+	}
+	ScanHostname(w, host)
+}
