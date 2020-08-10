@@ -358,3 +358,33 @@ func (*stdCodec) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
 	buf = tm.AppendFormat(buf, layoutRFC3339NanoJSON)
 	stream.SetBuffer(buf)
 }
+
+// TryDecoders returns a TimeDecoder that tries to decode a time.Time using `dec` and then each of the `fallback` decoders in order.
+func TryDecoders(dec TimeDecoder, fallback ...TimeDecoder) TimeDecoder {
+	return &tryDecoder{
+		decoders: append([]TimeDecoder{dec}, fallback...),
+	}
+}
+
+type tryDecoder struct {
+	decoders []TimeDecoder
+}
+
+func (d *tryDecoder) DecodeTime(iter *jsoniter.Iterator) time.Time {
+	rawJSON := iter.SkipAndReturnBytes()
+	child := iter.Pool().BorrowIterator(rawJSON)
+	for i, dec := range d.decoders {
+		if i != 0 {
+			child.ResetBytes(rawJSON)
+			child.Error = nil
+		}
+		tm := dec.DecodeTime(child)
+		if child.Error == nil {
+			child.Pool().ReturnIterator(child)
+			return tm
+		}
+	}
+	iter.Error = child.Error
+	child.Pool().ReturnIterator(child)
+	return time.Time{}
+}

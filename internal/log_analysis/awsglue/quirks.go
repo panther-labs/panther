@@ -79,6 +79,8 @@ func RegisterExtensions(api jsoniter.API) jsoniter.API {
 		DefaultCodec: tcodec.Join(tcodec.StdCodec(), NewTimestampEncoder()),
 		DecorateCodec: func(codec tcodec.TimeCodec) tcodec.TimeCodec {
 			dec, _ := tcodec.Split(codec)
+			// Try to decode with glue timestamp format in case we are re-parsing a Result
+			dec = tcodec.TryDecoders(dec, tcodec.LayoutCodec(TimestampLayout))
 			enc := NewTimestampEncoder()
 			return tcodec.Join(dec, enc)
 		},

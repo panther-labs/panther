@@ -200,3 +200,30 @@ func TestPointers(t *testing.T) {
 	require.NotNil(t, v.Time)
 	require.Equal(t, expect.Local().Format(time.RFC3339Nano), v.Time.Format(time.RFC3339Nano))
 }
+
+func TestTryDecoder_DecodeTime(t *testing.T) {
+	dec := LayoutCodec(time.RFC3339).(TimeDecoder)
+	dec = TryDecoders(dec, LayoutCodec(time.ANSIC))
+	expect := time.Date(2020, 7, 20, 15, 12, 46, int(0.369*float64(time.Second.Nanoseconds())), time.UTC)
+	{
+		input := fmt.Sprintf(`"%s"`, expect.Format(time.RFC3339Nano))
+		iter := jsoniter.ParseString(jsoniter.ConfigDefault, input)
+		actual := dec.DecodeTime(iter)
+		require.NoError(t, iter.Error)
+		require.Equal(t, expect.Format(time.RFC3339Nano), actual.Format(time.RFC3339Nano))
+	}
+	{
+		input := fmt.Sprintf(`"%s"`, expect.Format(time.ANSIC))
+		iter := jsoniter.ParseString(jsoniter.ConfigDefault, input)
+		actual := dec.DecodeTime(iter)
+		require.NoError(t, iter.Error)
+		// ANSIC has seconds precision
+		require.Equal(t, expect.Format(time.RFC3339), actual.Format(time.RFC3339))
+	}
+	{
+		input := fmt.Sprintf(`"%s"`, expect.Format(time.RubyDate))
+		iter := jsoniter.ParseString(jsoniter.ConfigDefault, input)
+		_ = dec.DecodeTime(iter)
+		require.Error(t, iter.Error)
+	}
+}
