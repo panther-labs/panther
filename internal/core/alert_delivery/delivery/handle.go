@@ -41,14 +41,14 @@ func getMaxRetryCount() int {
 }
 
 // HandleAlerts sends each alert to its outputs and puts failed alerts back on the queue to retry.
-func HandleAlerts(alerts []*models.Alert, shouldRetry bool) {
+func HandleAlerts(alerts []*models.Alert) {
 	var failedAlerts []*models.Alert
 
 	zap.L().Info("starting processing alerts", zap.Int("alerts", len(alerts)))
 	maxRetries := getMaxRetryCount()
 
 	for _, alert := range alerts {
-		if !dispatch(alert, shouldRetry) {
+		if !dispatch(alert) {
 			if alert.RetryCount >= maxRetries {
 				zap.L().Error(
 					"alert delivery permanently failed, exceeded max retry count",

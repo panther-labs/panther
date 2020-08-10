@@ -111,7 +111,7 @@ func send(alert *alertmodels.Alert, output *outputmodels.AlertOutput, statusChan
 // Dispatch sends the alert to each of its designated outputs.
 //
 // Returns true if the alert was sent successfully, false if it needs to be retried.
-func dispatch(alert *alertmodels.Alert, shouldRetry bool) bool {
+func dispatch(alert *alertmodels.Alert) bool {
 	alertOutputs, err := getAlertOutputs(alert)
 
 	if err != nil {
@@ -138,9 +138,6 @@ func dispatch(alert *alertmodels.Alert, shouldRetry bool) bool {
 		go send(alert, output, statusChannel)
 	}
 
-	if shouldRetry == false {
-		return true
-	}
 	// Wait until all outputs have finished, gathering any that need to be retried.
 	var retryOutputs []string
 	for range alertOutputs {

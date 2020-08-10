@@ -45,7 +45,7 @@ type LambdaInput struct {
 // {
 //     "deliverAlert": {
 //         "alertId": "8304cc90750d4b8f9a63b90a4543c707"
-//         "outputIds": ["1304cc90750d4b8f9a63b90a4543c707"]
+//         "outputIds": ["198bdbc5-5d94-4d59-8c93-f2bab86359f5"]
 //     }
 // }
 type DeliverAlertInput struct {
