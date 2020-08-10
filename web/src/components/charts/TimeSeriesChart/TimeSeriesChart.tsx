@@ -131,7 +131,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
         }),
         tooltip: {
           trigger: 'axis' as const,
-          position: pt => [pt[0], '100%'],
+          position: pt => [(pt[0] as number) + 40, '0%'],
           backgroundColor: theme.colors['navyblue-300'],
           padding: theme.space[4] as number,
           textStyle: {
@@ -144,11 +144,13 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
             }
 
             const date: string = params[0].value[0];
-            const seriesTooltips = params.map(seriesTooltip => {
-              return `<br/>${seriesTooltip.marker} ${
-                seriesTooltip.seriesName
-              }: ${seriesTooltip.value[1].toLocaleString('en')}`;
-            });
+            const seriesTooltips = params
+              .map(seriesTooltip => {
+                return `<br/>${seriesTooltip.marker} ${
+                  seriesTooltip.seriesName
+                }: ${seriesTooltip.value[1].toLocaleString('en')}`;
+              })
+              .join('');
 
             return `${fullDateFormat(date)}${seriesTooltips}`;
           },
