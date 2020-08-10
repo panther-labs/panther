@@ -91,7 +91,7 @@ func getEventsProcessed(input *models.GetMetricsInput, output *models.GetMetrics
 	return nil
 }
 
-// getEventsProcessed returns the count of events processed by the log processor per log type
+// getEventsLatency returns the average event latency per log type
 //
 // This is a time series metric.
 func getEventsLatency(input *models.GetMetricsInput, output *models.GetMetricsOutput) error {
@@ -113,13 +113,6 @@ func getEventsLatency(input *models.GetMetricsInput, output *models.GetMetricsOu
 	// Build the query based on the applicable metric dimensions
 	var queries []*cloudwatch.MetricDataQuery
 	for i, metric := range listMetricsResponse {
-		if len(metric.Dimensions) != 1 {
-			// This if statement is only needed by developers who have deployed the unstable branch
-			// of Panther before v1.6.0. Old metrics can't be deleted and you can't filter out
-			// dimensions you don't want, so we have to skip metrics where the Component dimension
-			// still exists.
-			continue
-		}
 		// Add the latency query
 		index := strconv.Itoa(i)
 		queries = append(queries, &cloudwatch.MetricDataQuery{
@@ -131,33 +124,36 @@ func getEventsLatency(input *models.GetMetricsInput, output *models.GetMetricsOu
 				Unit:   aws.String(metrics.UnitMilliseconds),
 			},
 			ReturnData: aws.Bool(false),
-		})
-		queries = append(queries, &cloudwatch.MetricDataQuery{
-			Id: aws.String("events_query_" + index),
-			MetricStat: &cloudwatch.MetricStat{
-				Metric: &cloudwatch.Metric{
-					Dimensions: []*cloudwatch.Dimension{
-						{
-							Name: aws.String("LogType"),
-							// We know the length of this field is exactly 1 due to the above check
-							Value: metric.Dimensions[0].Value,
+		},
+			// Add the event count query
+			&cloudwatch.MetricDataQuery{
+				Id: aws.String("events_query_" + index),
+				MetricStat: &cloudwatch.MetricStat{
+					Metric: &cloudwatch.Metric{
+						Dimensions: []*cloudwatch.Dimension{
+							{
+								Name: aws.String("LogType"),
+								// We know the length of this field is exactly 1 due to the above check
+								Value: metric.Dimensions[0].Value,
+							},
 						},
+						MetricName: aws.String(eventsProcessedMetric),
+						Namespace:  aws.String(input.Namespace),
 					},
-					MetricName: aws.String(eventsProcessedMetric),
-					Namespace:  aws.String(input.Namespace),
+					Period: aws.Int64(input.IntervalMinutes * 60), // number of seconds, must be multiple of 60
+					Stat:   aws.String("Sum"),
+					Unit:   aws.String(metrics.UnitCount),
 				},
-				Period: aws.Int64(input.IntervalMinutes * 60), // number of seconds, must be multiple of 60
-				Stat:   aws.String("Sum"),
-				Unit:   aws.String(metrics.UnitCount),
+				ReturnData: aws.Bool(false),
 			},
-			ReturnData: aws.Bool(false),
-		})
-		queries = append(queries, &cloudwatch.MetricDataQuery{
-			Id:         aws.String("avg_latency_query" + index),
-			Label:      aws.String(aws.StringValue(metric.Dimensions[0].Value) + " latency"),
-			Expression: aws.String("latency_query_" + index + " / events_query_" + index),
-			ReturnData: aws.Bool(true),
-		})
+			// Add the latency / event count expression
+			&cloudwatch.MetricDataQuery{
+				Id:         aws.String("avg_latency_query" + index),
+				Label:      aws.String(aws.StringValue(metric.Dimensions[0].Value) + " latency"),
+				Expression: aws.String("latency_query_" + index + " / events_query_" + index),
+				ReturnData: aws.Bool(true),
+			},
+		)
 	}
 	zap.L().Debug("prepared metric queries", zap.Any("queries", queries), zap.Any("toDate", input.ToDate), zap.Any("fromDate", input.FromDate))
 

@@ -172,7 +172,8 @@ func (p *Processor) logStats(err error) {
 	for _, parserStats := range p.classifier.ParserStats() {
 		p.operation.Log(err, zap.Any(statsKey, *parserStats))
 		logType.Value = parserStats.LogType
-		pMetrics[0].Value, pMetrics[1].Value, pMetrics[2].Value = parserStats.BytesProcessedCount, parserStats.EventCount, parserStats.CombinedLatency
+		pMetrics[0].Value, pMetrics[1].Value, pMetrics[2].Value =
+			parserStats.BytesProcessedCount, parserStats.EventCount, parserStats.CombinedLatency
 		common.BytesProcessedLogger.Log(pMetrics, logType)
 	}
 }
