@@ -36,6 +36,7 @@ var fieldNameReplacer = strings.NewReplacer(
 	",", "_comma_",
 	"`", "_backtick_",
 	"'", "_apostrophe_",
+	".", "_",
 )
 
 func RewriteFieldName(name string) string {
