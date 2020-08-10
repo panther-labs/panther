@@ -25,7 +25,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	"github.com/panther-labs/panther/api/lambda/delivery/models"
 )
 
 func mustParseInt(text string) int {
@@ -41,14 +41,14 @@ func getMaxRetryCount() int {
 }
 
 // HandleAlerts sends each alert to its outputs and puts failed alerts back on the queue to retry.
-func HandleAlerts(alerts []*models.Alert) {
+func HandleAlerts(alerts []*models.Alert, shouldRetry bool) {
 	var failedAlerts []*models.Alert
 
 	zap.L().Info("starting processing alerts", zap.Int("alerts", len(alerts)))
 	maxRetries := getMaxRetryCount()
 
 	for _, alert := range alerts {
-		if !dispatch(alert) {
+		if !dispatch(alert, shouldRetry) {
 			if alert.RetryCount >= maxRetries {
 				zap.L().Error(
 					"alert delivery permanently failed, exceeded max retry count",

@@ -18,7 +18,11 @@ package models
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "time"
+import (
+	"time"
+
+	"github.com/panther-labs/panther/api/lambda/alerts/models"
+)
 
 const (
 	// RuleType identifies the Alert to be for a Policy
@@ -27,6 +31,30 @@ const (
 	// PolicyType identifies the Alert to be for a Policy
 	PolicyType = "POLICY"
 )
+
+// LambdaInput is the invocation event expected by the Lambda function.
+//
+// Exactly one action must be specified, see comments below for examples.
+type LambdaInput struct {
+	DeliverAlert *DeliverAlertInput `json:"deliverAlert"`
+}
+
+// DeliverAlertInput sends an alert to the specified destinations
+//
+// Example:
+// {
+//     "deliverAlert": {
+//         "alertId": "8304cc90750d4b8f9a63b90a4543c707"
+//         "outputIds": ["1304cc90750d4b8f9a63b90a4543c707"]
+//     }
+// }
+type DeliverAlertInput struct {
+	AlertID   string   `json:"alertId" validate:"required,hexadecimal,len=32"` // AlertID is an MD5 hash
+	OutputIds []string `json:"outputIds"`
+}
+
+// DeliverAlertOutput is an alias for an alert summary
+type DeliverAlertOutput models.AlertSummary
 
 // Alert is the schema for each row in the Dynamo alerts table.
 type Alert struct {

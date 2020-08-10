@@ -21,8 +21,8 @@ package outputs
 import (
 	"time"
 
+	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 )
 
 var (

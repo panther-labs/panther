@@ -21,8 +21,8 @@ package delivery
 import (
 	"go.uber.org/zap"
 
+	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
 )
 
@@ -111,7 +111,7 @@ func send(alert *alertmodels.Alert, output *outputmodels.AlertOutput, statusChan
 // Dispatch sends the alert to each of its designated outputs.
 //
 // Returns true if the alert was sent successfully, false if it needs to be retried.
-func dispatch(alert *alertmodels.Alert) bool {
+func dispatch(alert *alertmodels.Alert, shouldRetry bool) bool {
 	alertOutputs, err := getAlertOutputs(alert)
 
 	if err != nil {
@@ -138,6 +138,9 @@ func dispatch(alert *alertmodels.Alert) bool {
 		go send(alert, output, statusChannel)
 	}
 
+	if shouldRetry == false {
+		return true
+	}
 	// Wait until all outputs have finished, gathering any that need to be retried.
 	var retryOutputs []string
 	for range alertOutputs {

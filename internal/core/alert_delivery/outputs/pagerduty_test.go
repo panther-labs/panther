@@ -27,8 +27,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 )
 
 var createdAtTime, _ = time.Parse(time.RFC3339, "2019-05-03T11:40:13Z")

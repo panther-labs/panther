@@ -29,7 +29,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	"github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 )
 

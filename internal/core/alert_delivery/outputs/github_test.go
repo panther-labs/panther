@@ -25,8 +25,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
+	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 )
 
 var githubConfig = &outputmodels.GithubConfig{RepoName: "profile/reponame", Token: "github-token"}
