@@ -133,7 +133,6 @@ func getEventsLatency(input *models.GetMetricsInput, output *models.GetMetricsOu
 						Dimensions: []*cloudwatch.Dimension{
 							{
 								Name: aws.String("LogType"),
-								// We know the length of this field is exactly 1 due to the above check
 								Value: metric.Dimensions[0].Value,
 							},
 						},
