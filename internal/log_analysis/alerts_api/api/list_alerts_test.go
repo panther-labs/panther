@@ -49,6 +49,8 @@ var (
 			Title:             aws.String("title"),
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: timeInTest,
+			DeliverySuccess:   false,
+			DeliveryResponses: []string{},
 		},
 	}
 
@@ -67,6 +69,8 @@ var (
 			Title:             aws.String("title"),
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: timeInTest,
+			DeliverySuccess:   false,
+			DeliveryResponses: []string{},
 		},
 	}
 )
@@ -174,6 +178,8 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			Title:             aws.String("ruleId"),
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: timeInTest,
+			DeliverySuccess:   false,
+			DeliveryResponses: []string{},
 		},
 		{
 			RuleID:          aws.String("ruleId"),
@@ -191,6 +197,8 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			Title:             aws.String("ruleDisplayName"),
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: timeInTest,
+			DeliverySuccess:   false,
+			DeliveryResponses: []string{},
 		},
 	}
 

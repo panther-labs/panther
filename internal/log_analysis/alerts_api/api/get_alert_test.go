@@ -92,6 +92,11 @@ func (m *tableMock) UpdateAlertStatus(input *models.UpdateAlertStatusInput) (*ta
 	return args.Get(0).(*table.AlertItem), args.Error(1)
 }
 
+func (m *tableMock) UpdateAlertDelivery(input *models.UpdateAlertDeliveryInput) (*table.AlertItem, error) {
+	args := m.Called(input)
+	return args.Get(0).(*table.AlertItem), args.Error(1)
+}
+
 func init() {
 	env = envConfig{
 		ProcessedDataBucket: "bucket",
@@ -191,6 +196,8 @@ func TestGetAlert(t *testing.T) {
 			EventsMatched:     aws.Int(5),
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
+			DeliverySuccess:   false,
+			DeliveryResponses: []string{},
 		},
 		Events: aws.StringSlice([]string{"testEvent"}),
 		EventsLastEvaluatedKey:
@@ -244,6 +251,8 @@ func TestGetAlert(t *testing.T) {
 			EventsMatched:     aws.Int(5),
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
+			DeliverySuccess:   false,
+			DeliveryResponses: []string{},
 		},
 		Events: aws.StringSlice([]string{}),
 		EventsLastEvaluatedKey:
@@ -322,6 +331,8 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 			DedupString:       aws.String("dedupString"),
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
+			DeliverySuccess:   false,
+			DeliveryResponses: []string{},
 		},
 		Events: aws.StringSlice([]string{"testEvent"}),
 		EventsLastEvaluatedKey:

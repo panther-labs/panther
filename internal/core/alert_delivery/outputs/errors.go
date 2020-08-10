@@ -23,9 +23,6 @@ type AlertDeliveryResponse struct {
 	// Status is the http status code
 	Status int
 
-	// Success is true if we determine the request executed successfully. False otherwise.
-	Success bool
-
 	// Body holds the raw body from the response payload.
 	Body string
 
@@ -36,6 +33,9 @@ type AlertDeliveryResponse struct {
 	// For example, outputs which don't exist or errors creating the request are permanent failures.
 	// But any error talking to the output itself can be retried by the Lambda function later.
 	Permanent bool
+
+	// Success is true if we determine the request executed successfully. False otherwise.
+	Success bool
 }
 
 func (e *AlertDeliveryResponse) Error() string { return e.Message }

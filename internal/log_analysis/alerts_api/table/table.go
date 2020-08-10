@@ -39,7 +39,7 @@ const (
 	EventCountKey        = "eventCount"
 	StatusKey            = "status"
 	DeliverySuccessKey   = "deliverySuccess"
-	DeliveryResponseKey  = "deliveryResponse"
+	DeliveryResponsesKey = "deliveryResponses"
 	LastUpdatedByKey     = "lastUpdatedBy"
 	LastUpdatedByTimeKey = "lastUpdatedByTime"
 )
@@ -49,6 +49,7 @@ type API interface {
 	GetAlert(*string) (*AlertItem, error)
 	ListAll(*models.ListAlertsInput) ([]*AlertItem, *string, error)
 	UpdateAlertStatus(*models.UpdateAlertStatusInput) (*AlertItem, error)
+	UpdateAlertDelivery(*models.UpdateAlertDeliveryInput) (*AlertItem, error)
 }
 
 // AlertsTable encapsulates a connection to the Dynamo alerts table.

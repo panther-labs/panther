@@ -29,8 +29,8 @@ import (
 // outputStatus communicates parallelized alert delivery status via channels.
 type outputStatus struct {
 	outputID   string
-	success    bool
 	message    string
+	success    bool
 	needsRetry bool
 }
 
@@ -93,7 +93,7 @@ func send(alert *alertmodels.Alert, output *outputmodels.AlertOutput, statusChan
 		}
 		return
 	}
-	if response.Success == false {
+	if !response.Success {
 		zap.L().Warn("failed to send alert", append(commonFields, zap.Error(response))...)
 	} else {
 		zap.L().Info("alert success", commonFields...)

@@ -22,10 +22,10 @@ import "time"
 
 // LambdaInput is the request structure for the alerts-api Lambda function.
 type LambdaInput struct {
-	GetAlert                  *GetAlertInput                  `json:"getAlert"`
-	ListAlerts                *ListAlertsInput                `json:"listAlerts"`
-	UpdateAlertStatus         *UpdateAlertStatusInput         `json:"updateAlertStatus"`
-	UpdateAlertDeliveryStatus *UpdateAlertDeliveryStatusInput `json:"updateAlertDeliveryStatus"`
+	GetAlert            *GetAlertInput            `json:"getAlert"`
+	ListAlerts          *ListAlertsInput          `json:"listAlerts"`
+	UpdateAlertStatus   *UpdateAlertStatusInput   `json:"updateAlertStatus"`
+	UpdateAlertDelivery *UpdateAlertDeliveryInput `json:"updateAlertDelivery"`
 }
 
 // GetAlertInput retrieves details for a single alert.
@@ -116,15 +116,21 @@ type UpdateAlertStatusInput struct {
 	UserID *string `json:"userId" validate:"uuid4"`
 }
 
-// UpdateAlertDeliveryStatusInput updates an alert by its ID
+// UpdateAlertDeliveryInput updates an alert by its ID
 // {
-//     "updateAlertDeliveryStatus": {
+//     "updateAlertDelivery": {
 //         "alertId": "84c3e4b27c702a1c31e6eb412fc377f6",
 //         "deliverySuccess": false,
-//         "deliveryResponses": [ "{\"status\": 5XX, \"message\": \"some failure message\"}" ]
+//         "deliveryResponses": [
+//           {
+//             "status": 5XX,
+//             "success": false,
+//             "response": "client timeout",
+//           }
+//         ]
 //     }
 // }
-type UpdateAlertDeliveryStatusInput struct {
+type UpdateAlertDeliveryInput struct {
 	// ID of the alert to update
 	AlertID string `json:"alertId" validate:"hexadecimal,len=32"` // AlertID is an MD5 hash
 
@@ -133,8 +139,11 @@ type UpdateAlertDeliveryStatusInput struct {
 	DeliveryResponses []string `json:"deliveryResponses"`
 }
 
-// UpdateAlertStatusOutput the returne alert summary after an update
+// UpdateAlertStatusOutput is an alias for an alert summary
 type UpdateAlertStatusOutput = AlertSummary
+
+// UpdateAlertDeliveryOutput is an alias for an alert summary
+type UpdateAlertDeliveryOutput = AlertSummary
 
 // Constants defined for alert statuses
 const (
@@ -169,7 +178,7 @@ type AlertSummary struct {
 	RuleDisplayName   *string    `json:"ruleDisplayName,omitempty"`
 	RuleVersion       *string    `json:"ruleVersion" validate:"required"`
 	DedupString       *string    `json:"dedupString,omitempty"`
-	DeliverySuccess   bool       `json:"deliveryStatus,omitempty"`
+	DeliverySuccess   bool       `json:"deliverySuccess,omitempty"`
 	DeliveryResponses []string   `json:"deliveryReponses,omitempty"`
 	CreationTime      *time.Time `json:"creationTime" validate:"required"`
 	UpdateTime        *time.Time `json:"updateTime" validate:"required"`

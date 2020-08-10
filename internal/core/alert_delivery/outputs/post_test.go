@@ -100,5 +100,11 @@ func TestPostCreated(t *testing.T) {
 		url:  requestEndpoint,
 		body: map[string]interface{}{"abc": 123},
 	}
-	assert.Nil(t, c.post(postInput))
+	assert.Equal(t, &AlertDeliveryResponse{
+		Status:    201,
+		Success:   true,
+		Body:      "response",
+		Message:   "",
+		Permanent: false,
+	}, c.post(postInput))
 }

@@ -67,6 +67,45 @@ func (table *AlertsTable) UpdateAlertStatus(input *models.UpdateAlertStatusInput
 	return updatedAlert, nil
 }
 
+// UpdateAlertDelivery - updates the alert details and returns the updated item
+func (table *AlertsTable) UpdateAlertDelivery(input *models.UpdateAlertDeliveryInput) (*AlertItem, error) {
+	// Create the dynamo key we want to update
+	var alertKey = DynamoItem{AlertIDKey: {S: aws.String(input.AlertID)}}
+
+	// Create the update builder
+	updateBuilder := expression.
+		Set(expression.Name(DeliverySuccessKey), expression.Value(input.DeliverySuccess)).
+		Set(expression.Name(DeliveryResponsesKey), expression.Value(input.DeliveryResponses))
+
+	// Create the condition builder
+	conditionBuilder := expression.Equal(expression.Name(AlertIDKey), expression.Value(input.AlertID))
+
+	// Build an expression from our builders
+	expression, err := buildExpression(updateBuilder, conditionBuilder)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create our dynamo update item
+	updateItem := dynamodb.UpdateItemInput{
+		ExpressionAttributeNames:  expression.Names(),
+		ExpressionAttributeValues: expression.Values(),
+		Key:                       alertKey,
+		ReturnValues:              aws.String("ALL_NEW"),
+		TableName:                 &table.AlertsTableName,
+		UpdateExpression:          expression.Update(),
+		ConditionExpression:       expression.Condition(),
+	}
+
+	// Run the update query and marshal
+	updatedAlert := &AlertItem{}
+	if err = table.update(updateItem, &updatedAlert); err != nil {
+		return nil, err
+	}
+
+	return updatedAlert, nil
+}
+
 // createUpdateBuilder - creates an update builder
 func createUpdateBuilder(input *models.UpdateAlertStatusInput) expression.UpdateBuilder {
 	// When settig an "open" status we actually remove the attribute
