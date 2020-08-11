@@ -53,22 +53,21 @@ export const getArnRegexForService = (awsService: string) => {
   return new RegExp(`arn:aws:${awsService.toLowerCase()}:([a-z]){2}-([a-z])+-[0-9]:\\d{12}:.+`);
 };
 
-export const createYupPasswordValidationSchema = () =>
-  Yup.string()
-    .required()
-    .min(14, 'Must be at least 14 characters')
-    .matches(INCLUDE_DIGITS_REGEX, 'Include at least 1 digit')
-    .matches(INCLUDE_LOWERCASE_REGEX, 'Include at least 1 lowercase character')
-    .matches(INCLUDE_UPPERCASE_REGEX, 'Include at least 1 uppercase character')
-    .matches(INCLUDE_SPECIAL_CHAR_REGEX, 'Include at least 1 special character');
+// Derived from https://github.com/3nvi/panther/blob/master/deployments/bootstrap.yml#L557-L563
+export const yupPasswordValidationSchema = Yup.string()
+  .required()
+  .min(12, 'Password must contain at least 12 characters')
+  .matches(INCLUDE_UPPERCASE_REGEX, 'Password must contain at least 1 uppercase character')
+  .matches(INCLUDE_LOWERCASE_REGEX, 'Password must contain at least 1 lowercase character')
+  .matches(INCLUDE_SPECIAL_CHAR_REGEX, 'Password must contain at least 1 symbol')
+  .matches(INCLUDE_DIGITS_REGEX, 'Password must contain  at least 1 number');
 
-export const integrationLabelValidation = () =>
-  Yup.string()
-    .required()
-    .matches(SOURCE_LABEL_REGEX, 'Can only include alphanumeric characters, dashes and spaces')
-    .max(32, 'Must be at most 32 characters');
+export const yupIntegrationLabelValidation = Yup.string()
+  .required()
+  .matches(SOURCE_LABEL_REGEX, 'Can only include alphanumeric characters, dashes and spaces')
+  .max(32, 'Must be at most 32 characters');
 
-export const webhookValidation = () => Yup.string().url('Must be a valid webhook URL');
+export const yupWebhookValidation = Yup.string().url('Must be a valid webhook URL');
 /**
  * checks whether the input is a valid UUID
  */
@@ -86,14 +85,15 @@ export const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.sli
  * as a single digit (all of them display it either as 03:00 or as 0300) and require string
  * manipulation which is harder
  * */
-export const formatDatetime = (datetime: string) => {
+export const formatDatetime = (datetime: string, verbose = false) => {
   // get the offset minutes and calculate the hours from them
   const utcOffset = dayjs(datetime).utcOffset() / 60;
 
+  const suffix = `G[M]T${utcOffset > 0 ? '+' : ''}${utcOffset !== 0 ? utcOffset : ''}`;
+  const format = verbose ? `dddd, MMMM YYYY, HH:mm (${suffix})` : `YYYY-MM-DD HH:mm ${suffix}`;
+
   // properly format the date
-  return dayjs(datetime).format(
-    `YYYY-MM-DD HH:mm G[M]T${utcOffset > 0 ? '+' : ''}${utcOffset !== 0 ? utcOffset : ''}`
-  );
+  return dayjs(datetime).format(format);
 };
 
 /**
@@ -259,11 +259,11 @@ export const extractErrorMessage = (error: ApolloError | ErrorResponse) => {
   switch (errorType) {
     case '401':
     case '403':
-      return message || 'You are not authorized to perform this request';
+      return capitalize(message) || 'You are not authorized to perform this request';
     case '404':
-      return message || "The resource you requested couldn't be found on our servers";
+      return capitalize(message) || "The resource you requested couldn't be found on our servers";
     default:
-      return message;
+      return capitalize(message);
   }
 };
 
@@ -362,6 +362,6 @@ export const subtractDays = (date: string, days: number) => {
   return `${dayjs(date).subtract(days, 'day').toISOString().split('.')[0]}Z`;
 };
 
-export const numberFormat = (num: number): string => {
+export const formatNumber = (num: number): string => {
   return new Intl.NumberFormat().format(num);
 };

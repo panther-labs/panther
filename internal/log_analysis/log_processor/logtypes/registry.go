@@ -27,6 +27,7 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
@@ -91,6 +92,28 @@ func (r *Registry) Del(logType string) bool {
 		return true
 	}
 	return false
+}
+
+func (r *Registry) RegisterJSON(desc Desc, eventFactory func() interface{}) (Entry, error) {
+	if eventFactory == nil {
+		return nil, errors.New(`nil event factory`)
+	}
+	event := eventFactory()
+	schema, err := pantherlog.BuildEventSchema(event)
+	if err != nil {
+		return nil, err
+	}
+	config := Config{
+		Name:         desc.Name,
+		Description:  desc.Description,
+		ReferenceURL: desc.ReferenceURL,
+		Schema:       schema,
+		NewParser: &parsers.JSONParserFactory{
+			LogType:  desc.Name,
+			NewEvent: eventFactory,
+		},
+	}
+	return r.Register(config)
 }
 
 func (r *Registry) Register(config Config) (Entry, error) {

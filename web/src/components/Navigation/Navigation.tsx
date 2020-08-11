@@ -22,7 +22,7 @@ import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import PantherIcon from 'Assets/panther-minimal-logo.svg';
 import { animated, useTransition } from 'react-spring';
-import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
+import { PANTHER_DOCS_LINK } from 'Source/constants';
 import useRouter from 'Hooks/useRouter';
 import NavIconButton from './NavIconButton';
 import ProfileIcon from './ProfileIcon';
@@ -92,9 +92,10 @@ const Navigation = () => {
       top={0}
       height="100vh"
       backgroundColor="navyblue-700"
+      py={6}
     >
       <Flex as="nav" direction="column" width={60} height="100%" aria-label="Main" align="center">
-        <Box as={RRLink} to="/" py={3} my={3}>
+        <Box as={RRLink} to="/" py={3} mb={3}>
           <Img
             src={PantherIcon}
             alt="Panther logo"
@@ -134,8 +135,8 @@ const Navigation = () => {
               onClick={() => setSecondaryNav(isSettingsNavigationActive ? null : SETTINGS_NAV_KEY)}
             />
           </Box>
-          <Box as="li" mt="auto" mb={8}>
-            <Link external href={PANTHER_SCHEMA_DOCS_LINK} tabIndex={-1}>
+          <Box as="li" mt="auto">
+            <Link external href={PANTHER_DOCS_LINK} tabIndex={-1}>
               <NavIconButton active={false} icon="docs" tooltipLabel="Documentation" />
             </Link>
           </Box>

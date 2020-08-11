@@ -76,20 +76,21 @@ func main() {
 
 	classifier := classification.NewClassifier(parsers)
 	lines := bufio.NewScanner(stdin)
-	n := 0
+	numLines := 0
+	numEvents := 0
 	for lines.Scan() {
 		line := lines.Text()
 		if line == "" {
-			debugLog.Printf("Empty line %d\n", n)
+			debugLog.Printf("Empty line %d\n", numLines)
 			continue
 		}
-		n++
+		numLines++
 		result := classifier.Classify(line)
 		if result == nil {
-			debugLog.Printf("Failed to classify line %d\n", n)
+			debugLog.Printf("Failed to classify line %d\n", numLines)
 			os.Exit(1)
 		}
-		debugLog.Printf("Line=%d Type=%q NumEvents=%d\n", n, unbox.String(result.LogType), len(result.Events))
+		debugLog.Printf("Line=%d Type=%q NumEvents=%d\n", numLines, unbox.String(result.LogType), len(result.Events))
 		for _, event := range result.Events {
 			data, err := jsonAPI.Marshal(event)
 			if err != nil {
@@ -101,11 +102,13 @@ func main() {
 			if err := out.WriteByte('\n'); err != nil {
 				log.Fatal(err)
 			}
+			numEvents++
 		}
 	}
 	if err := lines.Err(); err != nil {
 		debugLog.Printf("Scan failed %s\n", err)
 		os.Exit(1)
 	}
-	debugLog.Printf("Scanned %d lines\n", n)
+	debugLog.Printf("Scanned %d lines\n", numLines)
+	debugLog.Printf("Parsed %d events\n", numEvents)
 }

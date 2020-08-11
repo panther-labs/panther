@@ -26,7 +26,7 @@ import (
 
 const agplSource = "docs/LICENSE_HEADER_AGPL.txt"
 
-var licensePaths = []string{"api", "build", "deployments", "internal", "pkg", "tools", "web", "magefile.go"}
+var licensePaths = []string{"api", "build", "deployments", "internal", "pkg", "cmd", "web", "magefile.go"}
 
 // Add a comment character in front of each line in a block of license text.
 func commentEachLine(prefix, text string) string {

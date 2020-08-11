@@ -24,7 +24,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -73,6 +72,9 @@ func (Test) CI() {
 	runTests([]testTask{
 		{"fmt", func() error { return fmtErr }},
 
+		// mage doc
+		{"doc", doc}, // verify the command works, even if docs aren't committed in this repo
+
 		// mage test:go
 		{"go unit tests", func() error { return goUnitErr }},
 		{"golangci-lint", func() error { return goLintErr }},
@@ -81,9 +83,6 @@ func (Test) CI() {
 		{"build:cfn", build.cfn},
 		{"cfn-lint", testCfnLint},
 		{"terraform validate", testTfValidate},
-
-		// mage test:doc
-		{"test:doc", testDoc},
 
 		// mage test:python
 		{"python unit tests", testPythonUnit},
@@ -120,83 +119,6 @@ func (Test) Cfn() {
 		{"cfn-lint", testCfnLint},
 		{"terraform validate", testTfValidate},
 	})
-}
-
-// Verify links and assets in documentation
-func (Test) Doc() {
-	if err := testDoc(); err != nil {
-		logger.Fatal(err)
-	}
-}
-
-func testDoc() error {
-	docFiles := make(map[string]struct{})
-	walk(filepath.Join("docs", "gitbook"), func(path string, info os.FileInfo) {
-		if filepath.Ext(path) == ".md" {
-			docFiles[path] = struct{}{}
-		}
-	})
-
-	logger.Infof("test:doc: scanning %d documentation .md files", len(docFiles))
-	// note: we need the non-greedy variant, hence ".*?"
-	linkPattern := regexp.MustCompile(`\[.*?\]\((.*?)\)`) // e.g. "[myfile](path/to/doc.md)"
-
-	// Every link target must be one of the following:
-
-	// web reference - http(s) links
-	webRef := regexp.MustCompile(`^https?://[A-Za-z0-9.#?&%/:=_-]{5,}$`)
-
-	// email link - based on the same regex we use for emails in CloudFormation parameters
-	emailRef := regexp.MustCompile(`^mailto:[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$`)
-
-	// Asset reference - an image in the docs/gitbook/.gitbook/assets folder
-	// For example, "../.gitbook/assets/log-analysis/setup-sns1.png"
-	assetRef := regexp.MustCompile(`^(?:\.\./)*\.gitbook/assets/[a-z0-9/-]+\.(?:png|jpg)$`)
-
-	// Document reference - link to another documentation page, potentially with a header.
-	// For safety and consistency, we don't allow linking to directories, only specific files.
-	//
-	// Examples:
-	//    - "#aws-credentials"                       (header in same file)
-	//    - "../enterprise/data-analytics/README.md" (a different document)
-	//    - "development.md#deploying"               (header in another file)
-	//    - ""                                       (file and header are both optional)
-	//
-	// Non-examples:
-	//    - "../log-analysis"           (prevent directory links - link will fail without README)
-	//    - "quick_start.md"            (use "-" instead of "_")
-	//    - "quick-start.md#Onboarding" (headers must be lowercase with dashes only)
-	docRef := regexp.MustCompile(`^([A-Za-z0-9./-]+\.md)?(#[a-z0-9-]+)?$`)
-
-	errCount := 0
-	for path := range docFiles {
-		for _, match := range linkPattern.FindAllSubmatch(readFile(path), -1) {
-			// match[0] is entire "[text](target)", match[1] is just "target"
-			target := match[1]
-
-			if webRef.Match(target) || emailRef.Match(target) {
-				logger.Debugf("test:doc: %s valid web/email link: %s", path, string(target))
-				continue
-			}
-
-			if assetRef.Match(target) {
-				// TODO - validate image path
-				logger.Debugf("test:doc: %s image ref: %s", path, string(target))
-			} else if docRef.Match(target) {
-				// TODO - validate document path
-				// TODO - validate headers
-				logger.Debugf("test:doc: %s doc ref: %s", path, string(target))
-			} else {
-				logger.Errorf("test:doc: %s: unknown link: %s", path, string(match[0]))
-				errCount++
-			}
-		}
-	}
-
-	if errCount > 1 {
-		return fmt.Errorf("test:doc: %d errors", errCount)
-	}
-	return nil
 }
 
 // Test and lint Golang source code
@@ -469,7 +391,7 @@ func testPythonUnit() error {
 	}
 
 	for _, target := range []string{"internal/core", "internal/compliance", "internal/log_analysis"} {
-		if err := runWithoutStderr(pythonLibPath("python3"), append(args, target)...); err != nil {
+		if err := runWithCapturedStderr(pythonLibPath("python3"), append(args, target)...); err != nil {
 			return fmt.Errorf("python unit tests failed: %v", err)
 		}
 	}
@@ -506,7 +428,7 @@ func testPythonBandit() error {
 	} else {
 		args = append(args, "--quiet")
 	}
-	return runWithoutStderr(pythonLibPath("bandit"), append(args, pyTargets...)...)
+	return runWithCapturedStderr(pythonLibPath("bandit"), append(args, pyTargets...)...)
 }
 
 func testPythonMypy() error {
@@ -527,7 +449,8 @@ func testWebTsc() error {
 }
 
 func testWebIntegration() error {
-	return sh.Run("npm", "run", "test")
+	// Passing tests are printed to stderr
+	return runWithCapturedStderr("npm", "run", "test")
 }
 
 func testTfValidate() error {

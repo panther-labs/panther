@@ -34,7 +34,7 @@ const EventsByLogTypes: React.FC<EventsByLogTypesProps> = ({ events }) => {
       px={4}
       backgroundColor="navyblue-500"
     >
-      <TimeSeriesChart data={events} />
+      <TimeSeriesChart data={events} zoomable />
     </Flex>
   );
 };

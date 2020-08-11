@@ -128,6 +128,17 @@ func FieldNameJSON(kind FieldID) string {
 	return registeredFieldNamesJSON[kind]
 }
 
+// RegisteredFieldNamesJSON returns the JSON field names for registered indicator fields
+func RegisteredFieldNamesJSON() (names []string) {
+	for id, name := range registeredFieldNamesJSON {
+		if id.IsCore() {
+			continue
+		}
+		names = append(names, name)
+	}
+	return
+}
+
 func init() {
 	MustRegisterIndicator(FieldIPAddress, FieldMeta{
 		Name:        "PantherAnyIPAddresses",
@@ -167,6 +178,7 @@ func init() {
 	MustRegisterScanner("hostname", ValueScannerFunc(ScanHostname), FieldDomainName, FieldIPAddress)
 	MustRegisterScanner("url", ValueScannerFunc(ScanURL), FieldDomainName, FieldIPAddress)
 	MustRegisterScanner("trace_id", FieldTraceID, FieldTraceID)
+	MustRegisterScanner("net_addr", ValueScannerFunc(ScanNetworkAddress), FieldIPAddress, FieldDomainName)
 }
 
 // MustRegisterIndicator allows modules to define their own indicator fields.
@@ -238,9 +250,10 @@ func (m *FieldMeta) StructField() reflect.StructField {
 }
 
 // MustBuildEventSchema builds a struct that extends the fields of `event` with all the fields added by Panther.
+// It automatically detects indicator field ids required for `event` if no `indicators` are passed.
 // It panics if an error occurred while building the new struct
-func MustBuildEventSchema(event interface{}, fields ...FieldID) interface{} {
-	schema, err := BuildEventSchema(event, fields...)
+func MustBuildEventSchema(event interface{}, indicators ...FieldID) interface{} {
+	schema, err := BuildEventSchema(event, indicators...)
 	if err != nil {
 		panic(err)
 	}
@@ -248,14 +261,15 @@ func MustBuildEventSchema(event interface{}, fields ...FieldID) interface{} {
 }
 
 // BuildEventSchema builds a struct that extends the fields of `event` with all the fields added by Panther.
-// It checks for duplicate field names in both JSON and go and also that all field ids are distinct and non-core.
-func BuildEventSchema(event interface{}, fields ...FieldID) (interface{}, error) {
+// It automatically detects indicator field ids required for `event` if no `indicators` are passed.
+// It checks for duplicate field names in both JSON and go.
+func BuildEventSchema(event interface{}, indicators ...FieldID) (interface{}, error) {
 	typ := reflect.TypeOf(event)
 	for typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
 	}
 
-	eventType, err := BuildEventTypeSchema(typ, fields...)
+	eventType, err := BuildEventTypeSchema(typ, indicators...)
 	if err != nil {
 		return nil, err
 	}
@@ -264,20 +278,26 @@ func BuildEventSchema(event interface{}, fields ...FieldID) (interface{}, error)
 }
 
 // BuildEventTypeSchema builds a struct that extends the fields of `eventType` with all the fields added by Panther.
-// It checks for duplicate field names in both JSON and go and also that all field ids are distinct and non-core.
-func BuildEventTypeSchema(eventType reflect.Type, extras ...FieldID) (reflect.Type, error) {
+// It automatically detects indicator field ids required for `eventType` if no `indicators` are passed.
+// It checks for duplicate field names in both JSON and go.
+func BuildEventTypeSchema(eventType reflect.Type, indicators ...FieldID) (reflect.Type, error) {
 	fields, err := extendStructFields(nil, eventType)
 	if err != nil {
 		return nil, err
 	}
 	fields, _ = extendStructFields(fields, reflect.TypeOf(CoreFields{}))
-	sort.Slice(extras, func(i, j int) bool {
-		return extras[i] < extras[j]
-	})
+
+	// Auto-detect required field ids
+	if indicators == nil {
+		indicators = FieldSetFromType(eventType)
+	}
+	indicators = NewFieldSet(indicators...).Indicators()
+	// Sort field set to make sure struct fields have strict order
+	sort.Sort(FieldSet(indicators))
 
 	// Ensure distinct field ids
 	distinct := map[FieldID]bool{}
-	for _, id := range extras {
+	for _, id := range indicators {
 		if id.IsCore() {
 			return nil, errors.New(`invalid field id`)
 		}

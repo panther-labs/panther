@@ -1,5 +1,23 @@
 package s3queue
 
+/**
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import (
 	"testing"
 
@@ -37,7 +55,7 @@ func TestS3Queue(t *testing.T) {
 	sqsClient.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil).Once()
 
 	stats := &Stats{}
-	err := s3Queue(s3Client, sqsClient, testAccount, testS3Path, testQueueName, 1, 0, false, stats)
+	err := s3Queue(s3Client, sqsClient, testAccount, testS3Path, testQueueName, 1, 0, stats)
 	require.NoError(t, err)
 	s3Client.AssertExpectations(t)
 	sqsClient.AssertExpectations(t)
@@ -65,7 +83,7 @@ func TestS3QueueLimit(t *testing.T) {
 	sqsClient.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil).Once()
 
 	stats := &Stats{}
-	err := s3Queue(s3Client, sqsClient, testAccount, testS3Path, testQueueName, 1, 1, false, stats)
+	err := s3Queue(s3Client, sqsClient, testAccount, testS3Path, testQueueName, 1, 1, stats)
 	require.NoError(t, err)
 	s3Client.AssertExpectations(t)
 	sqsClient.AssertExpectations(t)
@@ -90,7 +108,7 @@ func TestS3QueueBatch(t *testing.T) {
 	sqsClient.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil).Times(3)
 
 	stats := &Stats{}
-	err := s3Queue(s3Client, sqsClient, testAccount, testS3Path, testQueueName, 1, 0, false, stats)
+	err := s3Queue(s3Client, sqsClient, testAccount, testS3Path, testQueueName, 1, 0, stats)
 	require.NoError(t, err)
 	s3Client.AssertExpectations(t)
 	sqsClient.AssertExpectations(t)

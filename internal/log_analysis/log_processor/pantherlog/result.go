@@ -77,8 +77,8 @@ func (b *ResultBuilder) BuildResult(logType string, event interface{}) (*Result,
 		CoreFields: CoreFields{
 			PantherLogType:   logType,
 			PantherRowID:     b.nextRowID(),
-			PantherParseTime: b.now(),
-			PantherEventTime: eventTime,
+			PantherParseTime: b.now().UTC(),
+			PantherEventTime: eventTime.UTC(),
 		},
 		Event: event,
 	}, nil

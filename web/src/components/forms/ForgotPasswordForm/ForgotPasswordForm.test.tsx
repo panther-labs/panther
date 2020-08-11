@@ -17,27 +17,23 @@
  */
 
 import React from 'react';
-import { render, fireEvent, act, waitFor } from 'test-utils';
+import { render, fireEvent, waitFor } from 'test-utils';
 import ForgotPasswordForm from './ForgotPasswordForm';
 
 const renderForm = () => render(<ForgotPasswordForm />);
 
 describe('ForgotPasswordForm', () => {
-  it('renders', async () => {
+  it('renders', () => {
     const { getByText } = renderForm();
-    expect(await getByText('Email')).toBeInTheDocument();
+    expect(getByText('Email')).toBeInTheDocument();
   });
 
   it('has proper validation', async () => {
-    const { findByLabelText, findByText } = await renderForm();
-    await act(async () => {
-      const emailInput = await findByLabelText('Email');
-      await fireEvent.change(emailInput, {
-        target: { value: 'invalidemail' },
-      });
+    const { getByLabelText, findByText } = renderForm();
 
-      await fireEvent.blur(emailInput);
-    });
+    const emailInput = getByLabelText('Email');
+    fireEvent.change(emailInput, { target: { value: 'invalidemail' } });
+    fireEvent.blur(emailInput);
 
     await waitFor(() => {
       expect(findByText('Needs to be a valid email')).not.toBeNull();
@@ -45,17 +41,13 @@ describe('ForgotPasswordForm', () => {
   });
 
   it('submits the form', async () => {
-    const { findByLabelText, findByText, forgotPassword } = await renderForm();
+    const { getByLabelText, getByText, forgotPassword } = renderForm();
     const email = 'runner1@runpanther.io';
-    await act(async () => {
-      const emailInput = await findByLabelText('Email');
-      const sumbitBtn = await findByText('Reset Password');
+    const emailInput = getByLabelText('Email');
+    const sumbitBtn = getByText('Reset Password');
 
-      await fireEvent.change(emailInput, {
-        target: { value: email },
-      });
-      await fireEvent.click(sumbitBtn);
-    });
+    fireEvent.change(emailInput, { target: { value: email } });
+    fireEvent.click(sumbitBtn);
 
     await waitFor(() => {
       expect(forgotPassword).toHaveBeenCalledWith({

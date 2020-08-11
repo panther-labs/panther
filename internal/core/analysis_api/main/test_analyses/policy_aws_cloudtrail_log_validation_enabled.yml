@@ -1,0 +1,73 @@
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+AnalysisType: policy
+AutoRemediationParameters:
+  hello: goodbye
+Filename: policy_aws_cloudtrail_log_validation_enabled.py
+PolicyID: AWS.CloudTrail.Log.Validation.Enabled
+Enabled: true
+ResourceTypes:
+  - AWS.CloudTrail
+Tags:
+  - AWS Managed Rules - Management and Governance
+  - CIS
+Severity: Medium
+Description: >
+  This rule validates that AWS CloudTrails have log file validation enabled.
+OutputIds:
+  - 621a1c7b-273f-4a03-99a7-5c661de5b0e8
+Runbook: >
+  Runbook
+Reference: reference.link
+Tests:
+  - Name: Log File Validation Disabled
+    ResourceType: AWS.CloudTrail
+    ExpectedResult: false
+    Resource:
+      {
+        'Info': { 'LogFileValidationEnabled': false },
+        'EventSelectors':
+          [
+            {
+              'DataResources': [{ 'Type': 'AWS::S3::Object', 'Values': null }],
+              'IncludeManagementEvents': false,
+              'ReadWriteType': 'All',
+            },
+          ],
+      }
+  - Name: Log File Validation Enabled
+    ResourceType: AWS.CloudTrail
+    ExpectedResult: true
+    Resource:
+      {
+        'Info': { 'LogFileValidationEnabled': true },
+        'Bucket':
+          {
+            'CreationDate': '2019-01-01T00:00:00Z',
+            'Grants': [{ 'Grantee': { 'URI': null }, 'Permission': 'FULL_CONTROL' }],
+            'Owner':
+              { 'DisplayName': 'panther-admins', 'ID': 'longalphanumericstring112233445566778899' },
+            'Versioning': null,
+          },
+        'EventSelectors':
+          [
+            {
+              'DataResources': [{ 'Type': 'AWS::S3::Object', 'Values': null }],
+              'ReadWriteType': 'All',
+            },
+          ],
+      }

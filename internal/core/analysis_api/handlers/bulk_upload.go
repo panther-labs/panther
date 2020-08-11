@@ -234,6 +234,7 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 			Tests:         make([]*models.UnitTest, len(config.Tests)),
 			Type:          strings.ToUpper(config.AnalysisType),
 			Reports:       config.Reports,
+			Threshold:     models.Threshold(config.Threshold),
 		}
 
 		typeNormalizeTableItem(&analysisItem, config)
@@ -280,6 +281,13 @@ func typeNormalizeTableItem(item *tableItem, config analysis.Config) {
 			item.DedupPeriodMinutes = defaultDedupPeriodMinutes
 		} else {
 			item.DedupPeriodMinutes = models.DedupPeriodMinutes(config.DedupPeriodMinutes)
+		}
+
+		// If there is no value set, default to 1
+		if config.Threshold == 0 {
+			item.Threshold = defaultRuleThreshold
+		} else {
+			item.Threshold = models.Threshold(config.Threshold)
 		}
 
 		// These "syntax sugar" re-mappings are to make managing rules from the CLI more intuitive

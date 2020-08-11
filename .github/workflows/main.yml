@@ -1,0 +1,86 @@
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - closed
+
+jobs:
+  sync_prs_from_community_to_enterprise:
+    name: Syncs merged PRs from Panther Community to Panther Enterprise
+    runs-on: ubuntu-latest
+    env:
+      SOURCE_REPO_CHECKOUT_PATH: src
+      DEST_REPO_CHECKOUT_PATH: dest
+      DEST_REPO: panther-labs/panther-enterprise
+      HEAD: ${{ format('sync-{0}', github.event.pull_request.head.ref) }}
+      IGNORE_LABEL: enterprise-backport
+    steps:
+      - name: Checkout Source Repo
+        uses: actions/checkout@v2
+        with:
+          path: ${{ env.SOURCE_REPO_CHECKOUT_PATH }}
+          token: ${{ secrets.PR_SYNC_TOKEN }}
+          fetch-depth: 1
+
+      - name: Checkout Dest Repo
+        uses: actions/checkout@v2
+        with:
+          path: ${{ env.DEST_REPO_CHECKOUT_PATH }}
+          repository: ${{ env.DEST_REPO }}
+          token: ${{ secrets.PR_SYNC_TOKEN }}
+          fetch-depth: 1
+
+      - name: Validate that PR was merged and not closed
+        if: ${{ github.event.pull_request.merged == false }}
+        run: exit 1
+
+      - name: Validate that PR shouldn't be excempt from syncing
+        if: ${{ contains(github.event.pull_request.labels, env.IGNORE_LABEL) }}
+        run: exit 1
+
+      - name: Setup Git Credentials
+        if: ${{ success() }}
+        working-directory: ${{ env.DEST_REPO_CHECKOUT_PATH }}
+        run: |
+          git config --global user.email "aggelos@runpanther.io"
+          git config --global user.name "3nvi"
+
+      - name: Bootstrap a PR branch
+        if: ${{ success() }}
+        working-directory: ${{ env.DEST_REPO_CHECKOUT_PATH }}
+        run: |
+          git checkout -b $HEAD
+          git remote add source https://github.com/$GITHUB_REPOSITORY.git
+          git fetch source master --depth 15
+          git cherry-pick ${{ github.event.pull_request.merge_commit_sha }} || true
+          git add -A .
+          git commit -m "merge changes from $GITHUB_REPOSITORY" || true
+          git push origin $HEAD
+
+      - name: Clone original PR
+        if: ${{ success() }}
+        uses: ./src/build/actions/pr_sync # Github actions has a bug and we can't use ENV var here
+        id: pr_sync
+        env:
+          ACTIONS_STEP_DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
+        with:
+          repo: ${{ env.DEST_REPO }}
+          head: ${{ env.HEAD }}
+          token: ${{ secrets.PR_SYNC_TOKEN }}

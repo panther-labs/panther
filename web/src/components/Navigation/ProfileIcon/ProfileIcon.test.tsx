@@ -53,8 +53,8 @@ test('Shows profile settings on menu entry click', () => {
   fireEvent.click(getByText('Profile Settings'));
 
   // Expect a dialog with some entries
-  const sidebarElement = getByAriaLabel('Profile & Account Settings');
-  expect(sidebarElement).toHaveAttribute('role', 'dialog');
+  const modalElement = getByAriaLabel('Profile & Account Settings');
+  expect(modalElement).toHaveAttribute('role', 'dialog');
 });
 
 test('Calls SignOut on menu entry click', () => {

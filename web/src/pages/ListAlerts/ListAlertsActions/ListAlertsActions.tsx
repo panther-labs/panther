@@ -28,6 +28,7 @@ import isEmpty from 'lodash/isEmpty';
 import isNumber from 'lodash/isNumber';
 import pick from 'lodash/pick';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
+import Breadcrumbs from 'Components/Breadcrumbs';
 
 const severityOptions = Object.values(SeverityEnum);
 const statusOptions = Object.values(AlertStatusesEnum);
@@ -194,32 +195,34 @@ const ListAlertsActions: React.FC<ListAlertsActionsProps> = ({ showActions }) =>
   );
 
   return (
-    <Box mb={6} as="section">
-      <Flex justify="flex-end">
-        <Button
-          active={areFiltersVisible}
-          icon="filter"
-          variant="outline"
-          variantColor="navyblue"
-          onClick={() => setFiltersVisibility(!areFiltersVisible)}
-        >
-          Filter Options {filtersCount ? `(${filtersCount})` : ''}
-        </Button>
-      </Flex>
-      <ErrorBoundary>
-        <Collapse open={areFiltersVisible}>
-          <Box pt={6}>
-            <Card p={8}>
+    <React.Fragment>
+      <Breadcrumbs.Actions>
+        <Flex justify="flex-end">
+          <Button
+            active={areFiltersVisible}
+            icon="filter"
+            variant="outline"
+            variantColor="navyblue"
+            onClick={() => setFiltersVisibility(!areFiltersVisible)}
+          >
+            Filter Options {filtersCount ? `(${filtersCount})` : ''}
+          </Button>
+        </Flex>
+      </Breadcrumbs.Actions>
+      <Collapse open={areFiltersVisible}>
+        <Box pb={6} as="section">
+          <Card p={8}>
+            <ErrorBoundary>
               <GenerateFiltersGroup<ListAlertsFiltersValues>
                 filters={filters}
                 onSubmit={newParams => updateRequestParams(postProcessDate(newParams))}
                 initialValues={initialFilterValues}
               />
-            </Card>
-          </Box>
-        </Collapse>
-      </ErrorBoundary>
-    </Box>
+            </ErrorBoundary>
+          </Card>
+        </Box>
+      </Collapse>
+    </React.Fragment>
   );
 };
 

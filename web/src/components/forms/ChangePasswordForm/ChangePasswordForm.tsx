@@ -16,14 +16,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Alert, Flex } from 'pouncejs';
+import { Alert, Card, Flex, Icon, Text, TextInput, Box } from 'pouncejs';
 import { Field, Form, Formik } from 'formik';
 import React from 'react';
 import * as Yup from 'yup';
-import { createYupPasswordValidationSchema } from 'Helpers/utils';
+import { yupPasswordValidationSchema } from 'Helpers/utils';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
 import useAuth from 'Hooks/useAuth';
+import FieldPolicyChecker from 'Components/FieldPolicyChecker';
 
 interface ChangePasswordFormProps {
   onSuccess: () => void;
@@ -42,11 +43,11 @@ const initialValues = {
 };
 
 const validationSchema = Yup.object().shape({
-  oldPassword: createYupPasswordValidationSchema(),
-  newPassword: createYupPasswordValidationSchema(),
-  confirmNewPassword: createYupPasswordValidationSchema().oneOf(
+  oldPassword: yupPasswordValidationSchema,
+  newPassword: yupPasswordValidationSchema,
+  confirmNewPassword: yupPasswordValidationSchema.oneOf(
     [Yup.ref('newPassword')],
-    "Passwords don't match"
+    'Passwords must match'
   ),
 });
 
@@ -73,13 +74,17 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ onSuccess }) =>
         })
       }
     >
-      {({ status }) => (
+      {({ status, values }) => (
         <Form>
-          <Flex direction="column" spacing={4}>
-            <Alert
-              variant="default"
-              title="Updating your password will log you out of all devices!"
-            />
+          <Flex direction="column" spacing={5}>
+            <Card variant="dark" p={3}>
+              <Flex align="center">
+                <Icon type="alert-circle" size="small" color="blue-400" />
+                <Text fontSize="medium" ml={2}>
+                  Updating your password will log you out of all devices you are logged in!
+                </Text>
+              </Flex>
+            </Card>
             {status && <Alert variant="error" title={status.title} description={status.message} />}
             <Field
               as={FormikTextInput}
@@ -90,7 +95,7 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ onSuccess }) =>
               required
             />
             <Field
-              as={FormikTextInput}
+              as={TextInput}
               label="New Password"
               placeholder="Type your new password..."
               type="password"
@@ -105,7 +110,10 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ onSuccess }) =>
               name="confirmNewPassword"
               required
             />
-            <SubmitButton fullWidth>Change password</SubmitButton>
+            <Box py={3}>
+              <FieldPolicyChecker schema={yupPasswordValidationSchema} value={values.newPassword} />
+            </Box>
+            <SubmitButton fullWidth>Update password</SubmitButton>
           </Flex>
         </Form>
       )}

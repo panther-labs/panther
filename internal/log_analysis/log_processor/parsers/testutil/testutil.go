@@ -35,7 +35,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/omitempty"
@@ -293,8 +292,8 @@ func CheckParserResults(t *testing.T, want string, actual *pantherlog.Result, in
 	}
 	// The following dance ensures that produced JSON matches values from `actual` result
 
-	require.Equal(t, actual.PantherEventTime.UTC().Format(TimestampLayout), actualAny["p_event_time"], "Invalid JSON event time")
-	require.Equal(t, actual.PantherParseTime.UTC().Format(TimestampLayout), actualAny["p_parse_time"], "Invalid JSON parse time")
+	require.Equal(t, actual.PantherEventTime.UTC().Format(time.RFC3339Nano), actualAny["p_event_time"], "Invalid JSON event time")
+	require.Equal(t, actual.PantherParseTime.UTC().Format(time.RFC3339Nano), actualAny["p_parse_time"], "Invalid JSON parse time")
 	require.Equal(t, actual.PantherRowID, actualAny["p_row_id"], "Invalid JSON row id")
 	// Since these values are checked to be valid we assign them to expect to check the rest of the JSON values
 	expectAny["p_event_time"] = actualAny["p_event_time"]
@@ -308,13 +307,10 @@ func CheckParserResults(t *testing.T, want string, actual *pantherlog.Result, in
 	require.JSONEq(t, expectJSON, actualJSON)
 }
 
-// same as awsglue.TimestampLayout
-const TimestampLayout = `2006-01-02 15:04:05.000000000`
-
 func EqualTimestamp(t *testing.T, expect, actual time.Time, msgAndArgs ...interface{}) {
 	t.Helper()
 	require.False(t, actual.IsZero(), "zero timestamp")
-	require.Equal(t, expect.UTC().Format(TimestampLayout), actual.UTC().Format(TimestampLayout), msgAndArgs...)
+	require.Equal(t, expect.UTC().Format(time.RFC3339Nano), actual.UTC().Format(time.RFC3339Nano), msgAndArgs...)
 }
 
 // UnmarshalResultJSON unmarshals a result from JSON
@@ -331,13 +327,13 @@ func UnmarshalResultJSON(data []byte, r *pantherlog.Result, indicators pantherlo
 	if err := jsoniter.Unmarshal(data, &tmp); err != nil {
 		return err
 	}
-	eventTime, err := time.Parse(awsglue.TimestampLayout, tmp.EventTime)
+	eventTime, err := time.Parse(time.RFC3339, tmp.EventTime)
 	if err != nil {
 		if tmp.EventTime != "" {
 			return err
 		}
 	}
-	parseTime, err := time.Parse(awsglue.TimestampLayout, tmp.ParseTime)
+	parseTime, err := time.Parse(time.RFC3339, tmp.ParseTime)
 	if err != nil {
 		if tmp.ParseTime != "" {
 			return err

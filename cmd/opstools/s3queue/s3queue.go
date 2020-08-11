@@ -1,5 +1,23 @@
 package s3queue
 
+/**
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import (
 	"fmt"
 	"log"
@@ -35,14 +53,14 @@ type Stats struct {
 }
 
 func S3Queue(sess *session.Session, account, s3path, s3region, queueName string,
-	concurrency int, limit uint64, verbose bool, stats *Stats) (err error) {
+	concurrency int, limit uint64, stats *Stats) (err error) {
 
 	return s3Queue(s3.New(sess.Copy(&aws.Config{Region: &s3region})), sqs.New(sess),
-		account, s3path, queueName, concurrency, limit, verbose, stats)
+		account, s3path, queueName, concurrency, limit, stats)
 }
 
 func s3Queue(s3Client s3iface.S3API, sqsClient sqsiface.SQSAPI, account, s3path, queueName string,
-	concurrency int, limit uint64, verbose bool, stats *Stats) (failed error) {
+	concurrency int, limit uint64, stats *Stats) (failed error) {
 
 	queueURL, err := sqsClient.GetQueueUrl(&sqs.GetQueueUrlInput{
 		QueueName: &queueName,
@@ -61,7 +79,7 @@ func s3Queue(s3Client s3iface.S3API, sqsClient sqsiface.SQSAPI, account, s3path,
 	for i := 0; i < concurrency; i++ {
 		queueWg.Add(1)
 		go func() {
-			queueNotifications(sqsClient, topicARN, queueURL.QueueUrl, notifyChan, errChan, verbose)
+			queueNotifications(sqsClient, topicARN, queueURL.QueueUrl, notifyChan, errChan)
 			queueWg.Done()
 		}()
 	}
@@ -163,7 +181,7 @@ func listPath(s3Client s3iface.S3API, s3path string, limit uint64,
 
 // post message per file as-if it was an S3 notification
 func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *string,
-	notifyChan chan *events.S3Event, errChan chan error, verbose bool) {
+	notifyChan chan *events.S3Event, errChan chan error) {
 
 	sendMessageBatchInput := &sqs.SendMessageBatchInput{
 		QueueUrl: queueURL,
@@ -180,11 +198,9 @@ func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *st
 			continue
 		}
 
-		if verbose {
-			zap.L().Info("sending file to SQS",
-				zap.String("bucket", s3Notification.Records[0].S3.Bucket.Name),
-				zap.String("key", s3Notification.Records[0].S3.Object.Key))
-		}
+		zap.L().Debug("sending file to SQS",
+			zap.String("bucket", s3Notification.Records[0].S3.Bucket.Name),
+			zap.String("key", s3Notification.Records[0].S3.Object.Key))
 
 		ctnJSON, err := jsoniter.MarshalToString(s3Notification)
 		if err != nil {

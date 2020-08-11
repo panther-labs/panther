@@ -71,11 +71,6 @@ func Fmt() {
 		c <- goroutineResult{"fmt: tf", terraformFmt()}
 	}(results)
 
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"docs", doc()}
-	}(results)
-
 	logResults(results, "fmt", 1, count, count)
 }
 

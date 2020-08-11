@@ -281,6 +281,10 @@ func TestProcessClassifyFailure(t *testing.T) {
 						Name: "EventsProcessed",
 						Unit: metrics.UnitCount,
 					},
+					{
+						Name: "CombinedLatency",
+						Unit: metrics.UnitMilliseconds,
+					},
 				},
 			},
 		},
@@ -366,6 +370,10 @@ func TestProcessClassifyFailure(t *testing.T) {
 				{
 					Key:     "EventsProcessed",
 					Integer: 1999,
+				},
+				{
+					Key:     "CombinedLatency",
+					Integer: 0,
 				},
 				{
 					Key:       "_aws",

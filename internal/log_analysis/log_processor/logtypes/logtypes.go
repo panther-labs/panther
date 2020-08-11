@@ -43,3 +43,17 @@ func MustRegister(entries ...Config) {
 		DefaultRegistry().MustRegister(entry)
 	}
 }
+
+// RegisterJSON registers simple JSON log type entry to the package wide registry returning the first error it encounters
+func RegisterJSON(desc Desc, eventFactory func() interface{}) (Entry, error) {
+	return defaultRegistry.RegisterJSON(desc, eventFactory)
+}
+
+// MustRegisterJSON registers simple JSON log type entry to the package wide registry and panics if an error occurs
+func MustRegisterJSON(desc Desc, eventFactory func() interface{}) Entry {
+	entry, err := defaultRegistry.RegisterJSON(desc, eventFactory)
+	if err != nil {
+		panic(err)
+	}
+	return entry
+}
