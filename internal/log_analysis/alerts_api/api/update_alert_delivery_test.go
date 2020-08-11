@@ -33,6 +33,9 @@ func TestUpdateAlertDelivery(t *testing.T) {
 	tableMock := &tableMock{}
 	alertsDB = tableMock
 
+	utilsMock := &utilsMock{}
+	alertUtils = utilsMock
+
 	alertID := "alertId"
 	input := &models.UpdateAlertDeliveryInput{
 		AlertID:           alertID,
@@ -49,6 +52,9 @@ func TestUpdateAlertDelivery(t *testing.T) {
 		DeliverySuccess:   true,
 		DeliveryResponses: []string{"response"},
 	}
+
+	utilsMock.On("AlertItemToSummary", output).
+		Return(expectedSummary)
 
 	tableMock.On("UpdateAlertDelivery", input).Return(output, nil).Once()
 	result, err := API{}.UpdateAlertDelivery(input)

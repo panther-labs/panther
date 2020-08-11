@@ -34,6 +34,9 @@ func TestUpdateAlert(t *testing.T) {
 	tableMock := &tableMock{}
 	alertsDB = tableMock
 
+	utilsMock := &utilsMock{}
+	alertUtils = utilsMock
+
 	alertID := aws.String("alertId")
 	status := aws.String("")
 	userID := aws.String("userId")
@@ -48,13 +51,20 @@ func TestUpdateAlert(t *testing.T) {
 		Status:            "CLOSED",
 		LastUpdatedBy:     *userID,
 		LastUpdatedByTime: timeNow,
+		DeliverySuccess:   false,
+		DeliveryResponses: []string{"response"},
 	}
 	expectedSummary := &models.AlertSummary{
 		AlertID:           aws.String("alertId"),
 		Status:            "CLOSED",
 		LastUpdatedBy:     "userId",
 		LastUpdatedByTime: timeNow,
+		DeliverySuccess:   false,
+		DeliveryResponses: []string{"response"},
 	}
+
+	utilsMock.On("AlertItemToSummary", output).
+		Return(expectedSummary)
 
 	tableMock.On("UpdateAlertStatus", input).Return(output, nil).Once()
 	result, err := API{}.UpdateAlertStatus(input)
@@ -66,6 +76,8 @@ func TestUpdateAlert(t *testing.T) {
 		Status:            result.Status,
 		LastUpdatedBy:     result.LastUpdatedBy,
 		LastUpdatedByTime: result.LastUpdatedByTime,
+		DeliverySuccess:   false,
+		DeliveryResponses: []string{"response"},
 	}
 
 	assert.Equal(t, expectedSummary, resultSummary)

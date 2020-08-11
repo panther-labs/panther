@@ -74,6 +74,7 @@ func lambdaHandler(ctx context.Context, input json.RawMessage) (output interface
 	}
 
 	// HTTP request
+	api.Setup()
 	var apiRequest models.LambdaInput
 	if err := jsoniter.Unmarshal(input, &apiRequest); err != nil {
 		return nil, &genericapi.InvalidInputError{

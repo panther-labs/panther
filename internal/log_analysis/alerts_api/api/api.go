@@ -64,6 +64,7 @@ func Setup() {
 		RuleIDCreationTimeIndexName:        env.RuleIndexName,
 		TimePartitionCreationTimeIndexName: env.TimeIndexName,
 	}
+	alertUtils = &utils.AlertUtils{}
 	s3Client = s3.New(awsSession)
 }
 

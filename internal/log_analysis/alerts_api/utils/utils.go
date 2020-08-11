@@ -32,9 +32,57 @@ type API interface {
 }
 
 // AlertUtils encapsulates all public utility methods related to alerts.
-type AlertUtils struct {
-	Name string
-}
+type AlertUtils struct{}
 
 // The AlertUtils must satisfy the API interface.
 var _ API = (*AlertUtils)(nil)
+
+// AlertItemsToSummaries converts a list of DDB AlertItem(s) to AlertSummary(ies)
+func (utils *AlertUtils) AlertItemsToSummaries(items []*table.AlertItem) []*models.AlertSummary {
+	result := make([]*models.AlertSummary, len(items))
+
+	for i, item := range items {
+		result[i] = utils.AlertItemToSummary(item)
+	}
+
+	return result
+}
+
+// AlertItemToSummary converts a DDB AlertItem to an AlertSummary
+func (utils *AlertUtils) AlertItemToSummary(item *table.AlertItem) *models.AlertSummary {
+	// convert empty status to "OPEN" status
+	alertStatus := item.Status
+	if alertStatus == "" {
+		alertStatus = models.OpenStatus
+	}
+
+	return &models.AlertSummary{
+		AlertID:           &item.AlertID,
+		CreationTime:      &item.CreationTime,
+		DedupString:       &item.DedupString,
+		EventsMatched:     &item.EventCount,
+		RuleDisplayName:   item.RuleDisplayName,
+		RuleID:            &item.RuleID,
+		RuleVersion:       &item.RuleVersion,
+		Severity:          &item.Severity,
+		Status:            alertStatus,
+		Title:             utils.GetAlertTitle(item),
+		LastUpdatedBy:     item.LastUpdatedBy,
+		LastUpdatedByTime: item.LastUpdatedByTime,
+		UpdateTime:        &item.UpdateTime,
+		DeliverySuccess:   item.DeliverySuccess,
+		DeliveryResponses: item.DeliveryResponses,
+	}
+}
+
+// GetAlertTitle - Method required for backwards compatibility
+// In case the alert title is empty, return custom title
+func (utils *AlertUtils) GetAlertTitle(alert *table.AlertItem) *string {
+	if alert.Title != nil {
+		return alert.Title
+	}
+	if alert.RuleDisplayName != nil {
+		return alert.RuleDisplayName
+	}
+	return &alert.RuleID
+}

@@ -54,7 +54,5 @@ func Setup() {
 		RuleIDCreationTimeIndexName:        env.RuleIndexName,
 		TimePartitionCreationTimeIndexName: env.TimeIndexName,
 	}
-	alertUtils = &utils.AlertUtils{
-		Name: "someName",
-	}
+	alertUtils = &utils.AlertUtils{}
 }

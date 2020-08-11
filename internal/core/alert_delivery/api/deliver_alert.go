@@ -33,6 +33,11 @@ func (API) DeliverAlert(input *models.DeliverAlertInput) (*models.DeliverAlertOu
 	if alertItem == nil {
 		return nil, nil
 	}
+	// TODO: Fetch outputIds
+	// TODO: Create AlertOutput mappings
+	// TODO: Deliver Alerts
+	// TODO: Record status to ddb
+
 	alertSummary := alertUtils.AlertItemToSummary(alertItem)
 
 	gatewayapi.ReplaceMapSliceNils(alertSummary)
