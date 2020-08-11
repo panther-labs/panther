@@ -26,11 +26,11 @@ const CustomWebhookDestinationCard: React.FC<CustomWebhookDestinationCardProps> 
         />
         <GenericItemCard.Value
           label="Date Created"
-          value={formatDatetime(destination.creationTime)}
+          value={formatDatetime(destination.creationTime, true)}
         />
         <GenericItemCard.Value
           label="Last Updated"
-          value={formatDatetime(destination.lastModifiedTime)}
+          value={formatDatetime(destination.lastModifiedTime, true)}
         />
       </GenericItemCard.ValuesGroup>
     </DestinationCard>

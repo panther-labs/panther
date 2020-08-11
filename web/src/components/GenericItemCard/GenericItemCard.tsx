@@ -23,14 +23,16 @@ interface GenericItemCardComposition {
 const GenericItemCard: React.FC & GenericItemCardComposition = ({ children }) => {
   return (
     <Card as="section" variant="dark" p={6}>
-      <Flex position="relative">{children}</Flex>
+      <Flex position="relative" height="100%">
+        {children}
+      </Flex>
     </Card>
   );
 };
 
 const GenericItemCardHeading: React.FC<TextProps> = ({ children, ...rest }) => {
   return (
-    <Text fontWeight="medium" as="h4" {...rest}>
+    <Text fontWeight="medium" as="h4" mb={4} {...rest}>
       {children}
     </Text>
   );
@@ -38,7 +40,7 @@ const GenericItemCardHeading: React.FC<TextProps> = ({ children, ...rest }) => {
 
 const GenericItemCardBody: React.FC = ({ children }) => {
   return (
-    <Flex direction="column" spacing={4}>
+    <Flex direction="column" justify="space-between">
       {children}
     </Flex>
   );
@@ -78,7 +80,7 @@ const GenericItemCardValue: React.FC<GenericItemCardValueProps> = ({ label, valu
   const id = slugify(`${label}${value}`);
 
   return (
-    <Box>
+    <Box mb={4}>
       <Box as="dt" aria-labelledby={id} color="gray-300" fontSize="2x-small" mb="1px">
         {label}
       </Box>

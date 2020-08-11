@@ -37,7 +37,7 @@ type ListDestinationsTableProps = Pick<ListDestinationsAndDefaults, 'destination
 
 const ListDestinationsCards: React.FC<ListDestinationsTableProps> = ({ destinations }) => {
   return (
-    <SimpleGrid columns={2} gap={5}>
+    <SimpleGrid columns={1} gap={5}>
       {destinations.map(destination => {
         const { outputId } = destination;
         switch (destination.outputType) {
