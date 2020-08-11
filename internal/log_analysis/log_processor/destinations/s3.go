@@ -379,9 +379,10 @@ func (bs *s3EventBufferSet) getBuffer(event *parsers.Result) *s3EventBuffer {
 	eventTime := event.PantherEventTime
 	if eventTime.IsZero() {
 		eventTime = event.PantherParseTime
-	}
-	if eventTime.IsZero() {
-		eventTime = time.Now()
+		if eventTime.IsZero() {
+			zap.L().Warn(`parsed result has zero parse time`, zap.String(`logType`, event.PantherLogType))
+			eventTime = time.Now()
+		}
 	}
 	// bin by hour (this is our partition size)
 	// We convert to UTC here so truncation does not affect the partition in the weird half-hour timezones if for
