@@ -84,7 +84,7 @@ const S3LogSourceWizard: React.FC<S3LogSourceWizardProps> = ({
         return (
           <Form>
             <Wizard>
-              <Wizard.Step title="Configure Logs Source" icon="settings">
+              <Wizard.Step title="Configure Logs Source">
                 <WizardPanelWrapper>
                   <WizardPanelWrapper.Content>
                     <S3SourceConfigurationPanel />
@@ -94,7 +94,7 @@ const S3LogSourceWizard: React.FC<S3LogSourceWizardProps> = ({
                   </WizardPanelWrapper.Actions>
                 </WizardPanelWrapper>
               </Wizard.Step>
-              <Wizard.Step title="Deploy Stack" icon="upload">
+              <Wizard.Step title="Deploy Stack">
                 <WizardPanelWrapper>
                   <WizardPanelWrapper.Content>
                     <StackDeploymentPanel />
@@ -105,7 +105,7 @@ const S3LogSourceWizard: React.FC<S3LogSourceWizardProps> = ({
                   </WizardPanelWrapper.Actions>
                 </WizardPanelWrapper>
               </Wizard.Step>
-              <Wizard.Step title="Done!" icon="check">
+              <Wizard.Step title="Done!">
                 <WizardPanelWrapper>
                   <WizardPanelWrapper.Content>
                     <SuccessPanel />

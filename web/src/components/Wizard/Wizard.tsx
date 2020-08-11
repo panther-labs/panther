@@ -17,40 +17,55 @@
  */
 
 import React from 'react';
-import { Box, Flex, IconProps, Icon, ProgressBar, Theme, SimpleGrid, Heading } from 'pouncejs';
+import { Box, Flex, Icon, Text, Divider } from 'pouncejs';
 import { WizardContext } from './WizardContext';
 
 export interface WizardStepProps {
   title?: string;
-  icon: IconProps['type'];
+}
+
+interface WizardProps {
+  hideHeader?: boolean;
 }
 
 interface WizardComposition {
   Step: React.FC<WizardStepProps>;
 }
 
-const Wizard: React.FC & WizardComposition = ({ children }) => {
+const Wizard: React.FC<WizardProps> & WizardComposition = ({ children, hideHeader = false }) => {
   const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
+  const prevStepIndex = React.useRef<number>(null);
 
   const steps = React.useMemo(() => React.Children.toArray(children) as React.ReactElement[], [
     children,
   ]);
 
   /**
+   * Goes to the the chosen wizard step
+   */
+  const goToStep = React.useCallback(
+    stepIndex => {
+      prevStepIndex.current = stepIndex > currentStepIndex ? currentStepIndex : stepIndex - 1;
+      setCurrentStepIndex(stepIndex);
+    },
+    [currentStepIndex]
+  );
+
+  /**
    * Goes to the previous wizard step
    */
   const goToPrevStep = React.useCallback(() => {
-    if (currentStepIndex > 0) {
-      setCurrentStepIndex(currentStepIndex - 1);
+    if (prevStepIndex.current >= 0) {
+      goToStep(prevStepIndex.current);
     }
-  }, [currentStepIndex]);
+  }, [prevStepIndex]);
 
   /**
    * Goes to the next wizard step
    */
   const goToNextStep = React.useCallback(() => {
     if (currentStepIndex < steps.length - 1) {
-      setCurrentStepIndex(currentStepIndex + 1);
+      goToStep(currentStepIndex + 1);
     }
   }, [currentStepIndex]);
 
@@ -66,55 +81,46 @@ const Wizard: React.FC & WizardComposition = ({ children }) => {
   );
 
   return (
-    <Box as="article" width={1}>
-      <Box position="relative" mb={6}>
-        <Box
-          position="absolute"
-          bottom={17}
-          width={(steps.length - 1) / steps.length}
-          ml={`${100 / (steps.length * 2)}%`}
-        >
-          <ProgressBar color="teal-500" progress={currentStepIndex / (steps.length - 1)} />
-        </Box>
-        <SimpleGrid as="ul" columns={steps.length} width={1} zIndex={2}>
+    <Box as="article" width={1} position="relative">
+      {!hideHeader && (
+        <Flex as="ul" justify="center" pt="10px" zIndex={2}>
           {steps.map((step, index) => {
+            const isLast = index === steps.length - 1;
             const isComplete = currentStepIndex > index || currentStepIndex === steps.length - 1;
-
-            let labelColor: keyof Theme['colors'] = 'gray-500';
-            if (currentStepIndex === index) {
-              labelColor = 'gray-200';
-            }
-            if (isComplete) {
-              labelColor = 'teal-500';
-            }
+            const isCurrent = currentStepIndex === index;
 
             return (
               <Flex
                 as="li"
                 justify="center"
                 align="center"
-                direction="column"
                 key={step.props.title}
                 zIndex={2}
+                opacity={isComplete || isCurrent ? 1 : 0.3}
               >
-                <Heading as="h3" color={labelColor} size="x-small" mb={4}>
-                  {index + 1}. {step.props.title}
-                </Heading>
                 <Flex
-                  borderRadius="circle"
                   justify="center"
                   align="center"
-                  width={40}
-                  height={40}
-                  backgroundColor={isComplete ? 'teal-500' : 'navyblue-300'}
+                  width={25}
+                  height={25}
+                  fontSize="small"
+                  fontWeight="bold"
+                  borderRadius="circle"
+                  border="1px solid"
+                  borderColor={isComplete ? 'blue-400' : 'gray-300'}
+                  backgroundColor={isComplete ? 'blue-400' : 'transparent'}
                 >
-                  <Icon type={isComplete ? 'check' : step.props.icon} size="small" />
+                  {isComplete ? <Icon type="check" size="x-small" /> : index + 1}
                 </Flex>
+                <Text fontSize="medium" ml={2}>
+                  {step.props.title}
+                </Text>
+                {!isLast && <Divider width={64} mx={4} />}
               </Flex>
             );
           })}
-        </SimpleGrid>
-      </Box>
+        </Flex>
+      )}
       <Box>
         <WizardContext.Provider value={contextValue}>
           {steps[currentStepIndex]}

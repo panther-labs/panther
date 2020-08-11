@@ -81,7 +81,7 @@ const SqsSourceWizard: React.FC<SqsLogSourceWizardProps> = ({
           <Form>
             <Wizard>
               {initialValues.integrationId && (
-                <Wizard.Step title="Information" icon="info">
+                <Wizard.Step title="Information">
                   <WizardPanelWrapper>
                     <WizardPanelWrapper.Content>
                       <InformationPanel />
@@ -92,7 +92,7 @@ const SqsSourceWizard: React.FC<SqsLogSourceWizardProps> = ({
                   </WizardPanelWrapper>
                 </Wizard.Step>
               )}
-              <Wizard.Step title="Configure" icon="settings">
+              <Wizard.Step title="Configure" >
                 <WizardPanelWrapper>
                   <WizardPanelWrapper.Content>
                     <SqsSourceConfigurationPanel />
@@ -107,7 +107,7 @@ const SqsSourceWizard: React.FC<SqsLogSourceWizardProps> = ({
                   </WizardPanelWrapper.Actions>
                 </WizardPanelWrapper>
               </Wizard.Step>
-              <Wizard.Step title="Done" icon="check">
+              <Wizard.Step title="Done">
                 <WizardPanelWrapper>
                   <WizardPanelWrapper.Content>
                     <SuccessPanel />

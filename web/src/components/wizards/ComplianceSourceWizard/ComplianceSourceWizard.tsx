@@ -75,7 +75,7 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
         return (
           <Form>
             <Wizard>
-              <Wizard.Step title="Configure Source" icon="settings">
+              <Wizard.Step title="Configure Source" >
                 <WizardPanelWrapper>
                   <WizardPanelWrapper.Content>
                     <SourceConfigurationPanel />
@@ -96,7 +96,7 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
                   </WizardPanelWrapper.Actions>
                 </WizardPanelWrapper>
               </Wizard.Step>
-              <Wizard.Step title="Done!" icon="check">
+              <Wizard.Step title="Done!" >
                 <WizardPanelWrapper>
                   <WizardPanelWrapper.Content>
                     <SuccessPanel />

@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Button, FadeIn, Flex } from 'pouncejs';
+import { Box, Button, FadeIn, Flex, IconButton } from 'pouncejs';
 import { useWizardContext } from './WizardContext';
 
 interface WizardPanelWrapperAction {
@@ -48,19 +48,21 @@ const WizardPanelWrapperContent: React.FC = ({ children }) => {
 };
 
 const WizardPanelWrapperActions: React.FC = ({ children }) => {
-  return (
-    <Flex justify="flex-end" spacing={3}>
-      {children}
-    </Flex>
-  );
+  return <Flex justify="flex-end">{children}</Flex>;
 };
 
 const WizardPanelActionPrev: React.FC<WizardPanelWrapperAction> = ({ disabled }) => {
   const { goToPrevStep } = useWizardContext();
   return (
-    <Button variant="outline" variantColor="navyblue" onClick={goToPrevStep} disabled={disabled}>
-      Back
-    </Button>
+    <Box position="absolute" top={0} left={0}>
+      <IconButton
+        disabled={disabled}
+        icon="arrow-back"
+        variantColor="navyblue"
+        aria-label="Go back"
+        onClick={goToPrevStep}
+      />
+    </Box>
   );
 };
 
