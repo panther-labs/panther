@@ -25,8 +25,6 @@ import (
 	"unsafe"
 
 	jsoniter "github.com/json-iterator/go"
-
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/jsonutil"
 )
 
 type Float32 struct {
@@ -56,7 +54,7 @@ func (f *Float32) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 	// Handle both string and number input
-	data = jsonutil.UnquoteJSON(data)
+	data = unquoteJSON(data)
 	// Empty string is considered the same as `null` input
 	if len(data) == 0 {
 		*f = Float32{}
