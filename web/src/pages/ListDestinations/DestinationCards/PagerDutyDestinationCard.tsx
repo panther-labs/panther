@@ -17,16 +17,14 @@ const PagerDutyDestinationCard: React.FC<PagerDutyDestinationCardProps> = ({ des
       logo={DESTINATIONS[DestinationTypeEnum.Pagerduty].logo}
       destination={destination}
     >
-      <GenericItemCard.ValuesGroup>
-        <GenericItemCard.Value
-          label="Date Created"
-          value={formatDatetime(destination.creationTime, true)}
-        />
-        <GenericItemCard.Value
-          label="Last Updated"
-          value={formatDatetime(destination.lastModifiedTime, true)}
-        />
-      </GenericItemCard.ValuesGroup>
+      <GenericItemCard.Value
+        label="Date Created"
+        value={formatDatetime(destination.creationTime, true)}
+      />
+      <GenericItemCard.Value
+        label="Last Updated"
+        value={formatDatetime(destination.lastModifiedTime, true)}
+      />
     </DestinationCard>
   );
 };

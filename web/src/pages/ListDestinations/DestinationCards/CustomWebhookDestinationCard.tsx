@@ -19,20 +19,18 @@ const CustomWebhookDestinationCard: React.FC<CustomWebhookDestinationCardProps> 
       logo={DESTINATIONS[DestinationTypeEnum.Customwebhook].logo}
       destination={destination}
     >
-      <GenericItemCard.ValuesGroup>
-        <GenericItemCard.Value
-          label="Webhook URL"
-          value={destination.outputConfig.customWebhook.webhookURL}
-        />
-        <GenericItemCard.Value
-          label="Date Created"
-          value={formatDatetime(destination.creationTime, true)}
-        />
-        <GenericItemCard.Value
-          label="Last Updated"
-          value={formatDatetime(destination.lastModifiedTime, true)}
-        />
-      </GenericItemCard.ValuesGroup>
+      <GenericItemCard.Value
+        label="Webhook URL"
+        value={destination.outputConfig.customWebhook.webhookURL}
+      />
+      <GenericItemCard.Value
+        label="Date Created"
+        value={formatDatetime(destination.creationTime, true)}
+      />
+      <GenericItemCard.Value
+        label="Last Updated"
+        value={formatDatetime(destination.lastModifiedTime, true)}
+      />
     </DestinationCard>
   );
 };

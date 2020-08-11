@@ -17,16 +17,14 @@ const OpsGenieDestinationCard: React.FC<OpsGenieDestinationCardProps> = ({ desti
       logo={DESTINATIONS[DestinationTypeEnum.Opsgenie].logo}
       destination={destination}
     >
-      <GenericItemCard.ValuesGroup>
-        <GenericItemCard.Value
-          label="Date Created"
-          value={formatDatetime(destination.creationTime, true)}
-        />
-        <GenericItemCard.Value
-          label="Last Updated"
-          value={formatDatetime(destination.lastModifiedTime, true)}
-        />
-      </GenericItemCard.ValuesGroup>
+      <GenericItemCard.Value
+        label="Date Created"
+        value={formatDatetime(destination.creationTime, true)}
+      />
+      <GenericItemCard.Value
+        label="Last Updated"
+        value={formatDatetime(destination.lastModifiedTime, true)}
+      />
     </DestinationCard>
   );
 };

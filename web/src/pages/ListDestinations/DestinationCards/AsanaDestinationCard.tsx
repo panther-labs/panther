@@ -17,20 +17,18 @@ const AsanaDestinationCard: React.FC<AsanaDestinationCardProps> = ({ destination
       logo={DESTINATIONS[DestinationTypeEnum.Asana].logo}
       destination={destination}
     >
-      <GenericItemCard.ValuesGroup>
-        <GenericItemCard.Value
-          label="Project GIDs"
-          value={destination.outputConfig.asana.projectGids.join(', ')}
-        />
-        <GenericItemCard.Value
-          label="Date Created"
-          value={formatDatetime(destination.creationTime, true)}
-        />
-        <GenericItemCard.Value
-          label="Last Updated"
-          value={formatDatetime(destination.lastModifiedTime, true)}
-        />
-      </GenericItemCard.ValuesGroup>
+      <GenericItemCard.Value
+        label="Project GIDs"
+        value={destination.outputConfig.asana.projectGids.join(', ')}
+      />
+      <GenericItemCard.Value
+        label="Date Created"
+        value={formatDatetime(destination.creationTime, true)}
+      />
+      <GenericItemCard.Value
+        label="Last Updated"
+        value={formatDatetime(destination.lastModifiedTime, true)}
+      />
     </DestinationCard>
   );
 };

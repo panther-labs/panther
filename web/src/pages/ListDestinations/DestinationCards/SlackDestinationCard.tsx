@@ -17,16 +17,14 @@ const SlackDestinationCard: React.FC<SlackDestinationCardProps> = ({ destination
       logo={DESTINATIONS[DestinationTypeEnum.Slack].logo}
       destination={destination}
     >
-      <GenericItemCard.ValuesGroup>
-        <GenericItemCard.Value
-          label="Date Created"
-          value={formatDatetime(destination.creationTime, true)}
-        />
-        <GenericItemCard.Value
-          label="Last Updated"
-          value={formatDatetime(destination.lastModifiedTime, true)}
-        />
-      </GenericItemCard.ValuesGroup>
+      <GenericItemCard.Value
+        label="Date Created"
+        value={formatDatetime(destination.creationTime, true)}
+      />
+      <GenericItemCard.Value
+        label="Last Updated"
+        value={formatDatetime(destination.lastModifiedTime, true)}
+      />
     </DestinationCard>
   );
 };

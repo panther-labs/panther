@@ -17,17 +17,15 @@ const SqsDestinationCard: React.FC<SqsDestinationCardProps> = ({ destination }) 
       logo={DESTINATIONS[DestinationTypeEnum.Sqs].logo}
       destination={destination}
     >
-      <GenericItemCard.ValuesGroup>
-        <GenericItemCard.Value label="Queue URL" value={destination.outputConfig.sqs.queueUrl} />
-        <GenericItemCard.Value
-          label="Date Created"
-          value={formatDatetime(destination.creationTime, true)}
-        />
-        <GenericItemCard.Value
-          label="Last Updated"
-          value={formatDatetime(destination.lastModifiedTime, true)}
-        />
-      </GenericItemCard.ValuesGroup>
+      <GenericItemCard.Value label="Queue URL" value={destination.outputConfig.sqs.queueUrl} />
+      <GenericItemCard.Value
+        label="Date Created"
+        value={formatDatetime(destination.creationTime, true)}
+      />
+      <GenericItemCard.Value
+        label="Last Updated"
+        value={formatDatetime(destination.lastModifiedTime, true)}
+      />
     </DestinationCard>
   );
 };

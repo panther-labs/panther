@@ -17,30 +17,22 @@ const JiraDestinationCard: React.FC<JiraDestinationCardProps> = ({ destination }
       logo={DESTINATIONS[DestinationTypeEnum.Jira].logo}
       destination={destination}
     >
-      <GenericItemCard.ValuesGroup>
-        <GenericItemCard.Value
-          label="Organization Domain"
-          value={destination.outputConfig.jira.orgDomain}
-        />
-        <GenericItemCard.Value
-          label="Project Key"
-          value={destination.outputConfig.jira.projectKey}
-        />
-        <GenericItemCard.Value label="Email" value={destination.outputConfig.jira.userName} />
-        <GenericItemCard.Value
-          label="Assignee ID"
-          value={destination.outputConfig.jira.assigneeId}
-        />
-        <GenericItemCard.Value label="Issue Type" value={destination.outputConfig.jira.issueType} />
-        <GenericItemCard.Value
-          label="Date Created"
-          value={formatDatetime(destination.creationTime, true)}
-        />
-        <GenericItemCard.Value
-          label="Last Updated"
-          value={formatDatetime(destination.lastModifiedTime, true)}
-        />
-      </GenericItemCard.ValuesGroup>
+      <GenericItemCard.Value
+        label="Organization Domain"
+        value={destination.outputConfig.jira.orgDomain}
+      />
+      <GenericItemCard.Value label="Project Key" value={destination.outputConfig.jira.projectKey} />
+      <GenericItemCard.Value label="Email" value={destination.outputConfig.jira.userName} />
+      <GenericItemCard.Value label="Assignee ID" value={destination.outputConfig.jira.assigneeId} />
+      <GenericItemCard.Value label="Issue Type" value={destination.outputConfig.jira.issueType} />
+      <GenericItemCard.Value
+        label="Date Created"
+        value={formatDatetime(destination.creationTime, true)}
+      />
+      <GenericItemCard.Value
+        label="Last Updated"
+        value={formatDatetime(destination.lastModifiedTime, true)}
+      />
     </DestinationCard>
   );
 };

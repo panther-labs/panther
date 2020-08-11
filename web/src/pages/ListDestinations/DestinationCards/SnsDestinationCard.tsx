@@ -17,17 +17,15 @@ const SnsDestinationCard: React.FC<SnsDestinationCardProps> = ({ destination }) 
       logo={DESTINATIONS[DestinationTypeEnum.Sns].logo}
       destination={destination}
     >
-      <GenericItemCard.ValuesGroup>
-        <GenericItemCard.Value label="Topic ARN" value={destination.outputConfig.sns.topicArn} />
-        <GenericItemCard.Value
-          label="Date Created"
-          value={formatDatetime(destination.creationTime, true)}
-        />
-        <GenericItemCard.Value
-          label="Last Updated"
-          value={formatDatetime(destination.lastModifiedTime, true)}
-        />
-      </GenericItemCard.ValuesGroup>
+      <GenericItemCard.Value label="Topic ARN" value={destination.outputConfig.sns.topicArn} />
+      <GenericItemCard.Value
+        label="Date Created"
+        value={formatDatetime(destination.creationTime, true)}
+      />
+      <GenericItemCard.Value
+        label="Last Updated"
+        value={formatDatetime(destination.lastModifiedTime, true)}
+      />
     </DestinationCard>
   );
 };

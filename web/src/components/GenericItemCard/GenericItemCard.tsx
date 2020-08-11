@@ -22,7 +22,7 @@ interface GenericItemCardComposition {
 
 const GenericItemCard: React.FC & GenericItemCardComposition = ({ children }) => {
   return (
-    <Card as="section" variant="dark" p={6}>
+    <Card as="section" variant="dark" p={5}>
       <Flex position="relative" height="100%">
         {children}
       </Flex>
@@ -32,7 +32,7 @@ const GenericItemCard: React.FC & GenericItemCardComposition = ({ children }) =>
 
 const GenericItemCardHeading: React.FC<TextProps> = ({ children, ...rest }) => {
   return (
-    <Text fontWeight="medium" as="h4" mb={4} {...rest}>
+    <Text fontWeight="medium" as="h4" {...rest}>
       {children}
     </Text>
   );
@@ -40,7 +40,7 @@ const GenericItemCardHeading: React.FC<TextProps> = ({ children, ...rest }) => {
 
 const GenericItemCardBody: React.FC = ({ children }) => {
   return (
-    <Flex direction="column" justify="space-between">
+    <Flex direction="column" justify="space-between" width={1}>
       {children}
     </Flex>
   );
@@ -48,14 +48,14 @@ const GenericItemCardBody: React.FC = ({ children }) => {
 
 const GenericItemCardValuesGroup: React.FC = ({ children }) => {
   return (
-    <Flex as="dl" wrap="wrap" spacing={10}>
+    <Flex wrap="wrap" spacing={8}>
       {children}
     </Flex>
   );
 };
 
 const GenericItemCardLogo: React.FC<GenericItemCardLogoProps> = ({ src }) => {
-  return <Img nativeWidth={33} my={-1} mr={5} nativeHeight={33} alt="Logo" src={src} />;
+  return <Img nativeWidth={20} nativeHeight={20} mr={5} alt="Logo" src={src} />;
 };
 
 const GenericItemCardOptions = React.forwardRef<HTMLButtonElement>(function GenericItemCardOptions(
@@ -80,7 +80,7 @@ const GenericItemCardValue: React.FC<GenericItemCardValueProps> = ({ label, valu
   const id = slugify(`${label}${value}`);
 
   return (
-    <Box mb={4}>
+    <Box as="dl" mt={4}>
       <Box as="dt" aria-labelledby={id} color="gray-300" fontSize="2x-small" mb="1px">
         {label}
       </Box>

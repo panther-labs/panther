@@ -18,12 +18,14 @@ const DestinationCard: React.FC<DestinationCardProps> = ({ destination, logo, ch
       <DestinationCardOptions destination={destination} />
       <GenericItemCard.Body>
         <GenericItemCard.Heading>{destination.displayName}</GenericItemCard.Heading>
-        {children}
-        <Flex spacing={2} mt={2}>
-          {destination.defaultForSeverity.map(severity => (
-            <SeverityBadge severity={severity} key={severity} />
-          ))}
-        </Flex>
+        <GenericItemCard.ValuesGroup>
+          {children}
+          <Flex ml="auto" mr={0} align="flex-end" spacing={2}>
+            {destination.defaultForSeverity.map(severity => (
+              <SeverityBadge severity={severity} key={severity} />
+            ))}
+          </Flex>
+        </GenericItemCard.ValuesGroup>
       </GenericItemCard.Body>
     </GenericItemCard>
   );

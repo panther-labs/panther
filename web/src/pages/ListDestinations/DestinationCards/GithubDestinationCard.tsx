@@ -17,21 +17,16 @@ const GithubDestinationCard: React.FC<GithubDestinationCardProps> = ({ destinati
       logo={DESTINATIONS[DestinationTypeEnum.Github].logo}
       destination={destination}
     >
-      <GenericItemCard.ValuesGroup>
-        <GenericItemCard.Value
-          label="Repository"
-          value={destination.outputConfig.github.repoName}
-        />
-        <br />
-        <GenericItemCard.Value
-          label="Date Created"
-          value={formatDatetime(destination.creationTime, true)}
-        />
-        <GenericItemCard.Value
-          label="Last Updated"
-          value={formatDatetime(destination.lastModifiedTime, true)}
-        />
-      </GenericItemCard.ValuesGroup>
+      <GenericItemCard.Value label="Repository" value={destination.outputConfig.github.repoName} />
+      <br />
+      <GenericItemCard.Value
+        label="Date Created"
+        value={formatDatetime(destination.creationTime, true)}
+      />
+      <GenericItemCard.Value
+        label="Last Updated"
+        value={formatDatetime(destination.lastModifiedTime, true)}
+      />
     </DestinationCard>
   );
 };
