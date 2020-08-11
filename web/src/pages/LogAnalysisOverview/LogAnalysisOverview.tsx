@@ -23,14 +23,12 @@ import TablePlaceholder from 'Components/TablePlaceholder';
 import { extractErrorMessage, getCurrentDate, subtractDays } from 'Helpers/utils';
 import Panel from 'Components/Panel';
 import EventsByLogType from 'Pages/LogAnalysisOverview/EventsByLogType';
-import { SeverityEnum } from 'Generated/schema';
-import { useListAlerts } from 'Pages/ListAlerts/graphql/listAlerts.generated';
-import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import AlertsTable from 'Pages/LogAnalysisOverview/AlertsTable';
 import LogAnalysisOverviewPageSkeleton from './Skeleton';
 import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
 import AlertsBySeverity from './AlertsBySeverity';
 import AlertSummary from './AlertSummary';
+import { useGetTopAlerts } from './graphql/getTopAlerts.generated';
 
 export const intervalMinutes = 60;
 export const defaultPastDays = 3;
@@ -53,14 +51,8 @@ const LogAnalysisOverview: React.FC = () => {
     },
   });
 
-  const { loading: loadingAlerts, data: alerts } = useListAlerts({
+  const { loading: loadingAlerts, data: alerts } = useGetTopAlerts({
     fetchPolicy: 'cache-and-network',
-    variables: {
-      input: {
-        severity: [SeverityEnum.Critical, SeverityEnum.High],
-        pageSize: DEFAULT_LARGE_PAGE_SIZE,
-      },
-    },
   });
 
   if (loading && !data) {
