@@ -101,8 +101,8 @@ const (
 	UnitBytes = "Bytes"
 	// UnitSeconds      = "Seconds"
 	// UnitMicroseconds = "Microseconds"
-	// UnitMilliseconds = "Milliseconds"
-	UnitCount = "Count"
+	UnitMilliseconds = "Milliseconds"
+	UnitCount        = "Count"
 )
 
 // Dimension represents the name and value of a given dimension. Each dimension must have its name
