@@ -19,7 +19,7 @@
 import React from 'react';
 import { Link as RRLink } from 'react-router-dom';
 import { Box, Button, Icon, SimpleGrid, Text, Link, Flex, Card, Heading, Tooltip } from 'pouncejs';
-import { formatDatetime, minutesToString, numberFormat } from 'Helpers/utils';
+import { formatDatetime, minutesToString, formatNumber } from 'Helpers/utils';
 import Linkify from 'Components/Linkify';
 import { RuleDetails } from 'Generated/schema';
 import urls from 'Source/urls';
@@ -154,7 +154,7 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
                   </Box>
                 )}
                 <Box id="deduplication-period">{minutesToString(rule.dedupPeriodMinutes)}</Box>
-                <Box id="threshold">{numberFormat(rule.threshold)}</Box>
+                <Box id="threshold">{formatNumber(rule.threshold)}</Box>
               </Flex>
             </Flex>
             <Flex spacing={60}>
