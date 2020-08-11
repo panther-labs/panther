@@ -21,7 +21,7 @@ import { Flex, Table, Img, Box } from 'pouncejs';
 import SeverityBadge from 'Components/SeverityBadge';
 import { DESTINATIONS } from 'Source/constants';
 import { formatDatetime } from 'Helpers/utils';
-import { ListDestinationsAndDefaults } from 'Pages/Destinations';
+import { ListDestinationsAndDefaults } from '../graphql/listDestinationsAndDefaults.generated';
 import ListDestinationsTableRowOptionsProps from './ListDestinationsTableRowOptions';
 
 type ListDestinationsTableProps = Pick<ListDestinationsAndDefaults, 'destinations'>;

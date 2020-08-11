@@ -19,8 +19,8 @@
 import React from 'react';
 import { Box, Flex, Heading, Text } from 'pouncejs';
 import { DESTINATIONS } from 'Source/constants';
-import DestinationCard from 'Components/DestinationCard';
 import { DestinationTypeEnum } from 'Generated/schema';
+import DestinationCard from '../DestinationCard';
 
 const destinationConfigs = Object.values(DESTINATIONS);
 

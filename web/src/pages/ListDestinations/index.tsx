@@ -16,6 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './Destinations';
-export * from './Destinations';
+export { default } from './ListDestinations';
+export * from './ListDestinations';
 export * from './graphql/listDestinationsAndDefaults.generated';
