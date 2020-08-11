@@ -114,8 +114,14 @@ func main() {
 		log.Fatal("failed to build zap logger: " + err.Error())
 	}
 	zap.ReplaceGlobals(logger)
+	// Use a properly configured JSON instance with AWS Glue quirks
+	jsonAPI := common.BuildJSON()
+	// Use the global registry
+	logTypes := registry.Default()
 
-	err = processor.Process(streamChan, destinations.CreateS3Destination(registry.Default()))
+	dest := destinations.CreateS3Destination(logTypes, jsonAPI)
+
+	err = processor.Process(streamChan, dest)
 	if err != nil {
 		log.Fatal(err)
 	}
