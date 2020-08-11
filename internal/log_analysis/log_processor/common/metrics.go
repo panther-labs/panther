@@ -36,5 +36,9 @@ var (
 			Name: "EventsProcessed",
 			Unit: metrics.UnitCount,
 		},
+		{
+			Name: "CombinedLatency",
+			Unit: metrics.UnitMilliseconds,
+		},
 	})
 )
