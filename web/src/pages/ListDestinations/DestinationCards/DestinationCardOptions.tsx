@@ -17,32 +17,25 @@
  */
 
 import React from 'react';
-import { Dropdown, DropdownButton, DropdownItem, DropdownMenu, IconButton } from 'pouncejs';
+import { Dropdown, DropdownButton, DropdownItem, DropdownMenu } from 'pouncejs';
 import useSidesheet from 'Hooks/useSidesheet';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
 import { SIDESHEETS } from 'Components/utils/Sidesheet';
 import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
+import GenericItemCard from 'Components/GenericItemCard';
 
-interface ListDestinationsTableRowOptionsProps {
+interface DestinationCardOptionsProps {
   destination: DestinationFull;
 }
 
-const ListDestinationsTableRowOptions: React.FC<ListDestinationsTableRowOptionsProps> = ({
-  destination,
-}) => {
+const DestinationCardOptions: React.FC<DestinationCardOptionsProps> = ({ destination }) => {
   const { showModal } = useModal();
   const { showSidesheet } = useSidesheet();
 
   return (
     <Dropdown>
-      <DropdownButton
-        as={IconButton}
-        icon="more"
-        variant="ghost"
-        size="small"
-        aria-label="Destination Options"
-      />
+      <DropdownButton as={GenericItemCard.Options} />
       <DropdownMenu>
         <DropdownItem
           onSelect={() =>
@@ -69,4 +62,4 @@ const ListDestinationsTableRowOptions: React.FC<ListDestinationsTableRowOptionsP
   );
 };
 
-export default React.memo(ListDestinationsTableRowOptions);
+export default React.memo(DestinationCardOptions);

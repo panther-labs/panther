@@ -26,7 +26,7 @@ import { useListDestinationsAndDefaults } from './graphql/listDestinationsAndDef
 import DestinationsPageSkeleton from './Skeleton';
 import DestinationsPageEmptyDataFallback from './EmptyDataFallback';
 import DestinationCreateButton from './CreateButton';
-import ListDestinationsTable from './ListDestinationsTable';
+import ListDestinationsCards from './ListDestinationsCards';
 
 const ListDestinations = () => {
   const { loading, error, data } = useListDestinationsAndDefaults();
@@ -56,7 +56,7 @@ const ListDestinations = () => {
     <Box mb={6}>
       <ErrorBoundary>
         <Panel title="Destinations" actions={<DestinationCreateButton />}>
-          <ListDestinationsTable destinations={data.destinations} />
+          <ListDestinationsCards destinations={data.destinations} />
         </Panel>
       </ErrorBoundary>
     </Box>
