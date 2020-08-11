@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { render, fireEvent } from 'test-utils';
-import CreateSqsLogSource from 'Pages/CreateLogSource/CreateSqsLogSource';
+import CreateSqsLogSource from './index';
 
 test('renders SQS creation wizard', async () => {
   const sqsInput = {
@@ -30,15 +30,15 @@ test('renders SQS creation wizard', async () => {
     },
   };
 
-  const { getByText, queryByText, container } = render(<CreateSqsLogSource />);
+  const { getByText, queryByText, getAllByLabelText } = render(<CreateSqsLogSource />);
 
   // Expect to see a loading interface
   const configurationPanel = getByText("Let's start with the basics");
   expect(configurationPanel).toBeTruthy();
-  const integrationLabelField = container.querySelector('input[name="integrationLabel"]');
-  const logTypesField = container.querySelector('input[name="logTypes"]');
-  const allowedPrincipalArnsField = container.querySelector('input[name="allowedPrincipalArns"]');
-  const allowedSourceArnsField = container.querySelector('input[name="allowedSourceArns"]');
+  const integrationLabelField = getAllByLabelText('* Name')[0];
+  const logTypesField = getAllByLabelText('* Log Types')[0];
+  const allowedPrincipalArnsField = getAllByLabelText('Allowed AWS Principal ARNs')[0];
+  const allowedSourceArnsField = getAllByLabelText('Allowed source ARNs')[0];
   const nextButton = getByText('Next');
   // Expecting input elements and button to be rendered
   expect(integrationLabelField).not.toBeNull();

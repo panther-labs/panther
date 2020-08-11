@@ -42,8 +42,9 @@ var (
 	metricsNoDataError   = &genericapi.DoesNotExistError{
 		Message: "Could not find data points for the given metric in the selected time period"}
 	metricResolvers = map[string]func(input *models.GetMetricsInput, output *models.GetMetricsOutput) error{
-		"eventsProcessed":  getEventsProcessed,
 		"alertsBySeverity": getAlertsBySeverity,
+		"eventsLatency":    getEventsLatency,
+		"eventsProcessed":  getEventsProcessed,
 		"totalAlertsDelta": getTotalAlertsDelta,
 	}
 )

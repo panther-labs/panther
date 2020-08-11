@@ -19,7 +19,7 @@
 import React from 'react';
 import { Field } from 'formik';
 import { Box, FormHelperText, Link } from 'pouncejs';
-import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
+import { PRIVACY_DOC_URL } from 'Source/constants';
 import FormikSwitch from 'Components/fields/Switch';
 
 const ErrorReportingSection: React.FC = () => {
@@ -33,12 +33,7 @@ const ErrorReportingSection: React.FC = () => {
       />
       <FormHelperText mt={2} id="error-reporting-section-helper">
         Send anonymized runtime exception reports <br /> to improve Panther{"'"}s reliability.
-        <Link
-          external
-          textDecoration="underline"
-          ml={1}
-          href={`${PANTHER_SCHEMA_DOCS_LINK}/security-privacy#privacy`}
-        >
+        <Link external textDecoration="underline" ml={1} href={PRIVACY_DOC_URL}>
           Read more
         </Link>
       </FormHelperText>
