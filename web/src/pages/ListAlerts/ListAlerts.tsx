@@ -20,7 +20,12 @@ import React from 'react';
 import { Alert, Box, Card } from 'pouncejs';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
-import { ListAlertsInput, SortDirEnum, ListAlertsSortFieldsEnum } from 'Generated/schema';
+import {
+  ListAlertsInput,
+  SortDirEnum,
+  ListAlertsSortFieldsEnum,
+  AlertStatusesEnum,
+} from 'Generated/schema';
 import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import TablePlaceholder from 'Components/TablePlaceholder';
@@ -42,6 +47,8 @@ const ListAlerts = () => {
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
+        // default status-filter that can be overridden if URL params (requestParams) are specified
+        status: [AlertStatusesEnum.Open, AlertStatusesEnum.Triaged],
         ...requestParams,
         pageSize: DEFAULT_LARGE_PAGE_SIZE,
       },
@@ -59,6 +66,8 @@ const ListAlerts = () => {
       fetchMore({
         variables: {
           input: {
+            // default status-filter that can be overridden if URL params (requestParams) are specified
+            status: [AlertStatusesEnum.Open, AlertStatusesEnum.Triaged],
             ...requestParams,
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
             exclusiveStartKey: lastEvaluatedKey,
