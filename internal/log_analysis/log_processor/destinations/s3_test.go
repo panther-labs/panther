@@ -144,6 +144,7 @@ func newS3Destination(logTypes ...string) *testS3Destination {
 			maxBufferedMemBytes: 10 * 1024 * 1024, // an arbitrary amount enough to hold default test data
 			maxDuration:         maxDuration,
 			registry:            newRegistry(logTypes...),
+			jsonAPI:             common.BuildJSON(),
 		},
 		mockSns:        mockSns,
 		mockS3Uploader: mockS3Uploader,
@@ -464,7 +465,7 @@ func TestSendDataFailsIfSnsFails(t *testing.T) {
 func TestBufferSetLargest(t *testing.T) {
 	const size = 100
 	event := newTestEvent(testLogType, refTime)
-	bs := newS3EventBufferSet()
+	bs := newS3EventBufferSet(common.BuildJSON())
 	result := event.Result()
 	expectedLargest := bs.getBuffer(result)
 	expectedLargest.bytes = size
