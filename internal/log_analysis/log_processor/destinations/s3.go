@@ -139,7 +139,7 @@ type S3Destination struct {
 }
 
 // SendEvents stores events in S3.
-// It continuously reads events from outputChannel, groups them in batches per log type
+// It continuously reads events from parsedEventChannel, groups them in batches per log type
 // and stores them in the appropriate S3 path. If the method encounters an error
 // it writes an error to the errorChannel and continues until channel is closed (skipping events).
 // The sendData() method is called as go routine to allow processing to continue and hide network latency.
@@ -150,13 +150,15 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Re
 
 	// use a single go routine for safety/back pressure when writing to s3 concurrently with buffer accumulation
 	var sendWaitGroup sync.WaitGroup
+	// FIXME: We risk a panic causing a memory leak by never exiting the write goroutine (see below).
 	sendChan := make(chan *s3EventBuffer) // unbuffered for back pressure (we want only 1 sendData() in flight)
 	sendWaitGroup.Add(1)
 	go func() {
+		// Make sure a panic does not prevent SendEvents from exiting
+		defer sendWaitGroup.Done()
 		for buffer := range sendChan {
 			destination.sendData(buffer, errChan)
 		}
-		sendWaitGroup.Done()
 	}()
 
 	// accumulate results gzip'd in a buffer
@@ -185,6 +187,7 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Re
 		buffer, err := bufferSet.writeEvent(event, maxS3BufferSizeBytes, int(destination.maxBufferedMemBytes))
 		if err != nil {
 			failed = true
+			zap.L().Debug(`aborting log processing: failed to write event`, zap.Error(err), zap.String(`logType`, event.PantherLogType))
 			errChan <- errors.Wrapf(err, "failed to write event %s", event.PantherLogType)
 			continue
 		}
@@ -208,6 +211,10 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Re
 		return nil
 	})
 
+	// FIXME: closing the channel here is appropriate but we risk a panic leaving the write goroutine open forever.
+	// causing a memory leak. To fix this we need to have the reading of results in a goroutine and keep the writing here.
+	// We need to wrap the read loop in a separate function and synchronize with defer close(sendChan).
+	// Write failures should also abort the whole log processing so this is more complex than it looks.
 	close(sendChan)
 	sendWaitGroup.Wait() // wait until all writes to s3 are done
 
@@ -349,6 +356,9 @@ func (bs *s3EventBufferSet) writeEvent(event *parsers.Result, maxBufferSize, max
 	}
 	// Just in case something was amiss elsewhere `getBuffer` checks again and uses PantherParseTime and Time.Now() as fallbacks.
 	buf = bs.getBuffer(event)
+	if buf == nil {
+		return nil, errors.New(`could not resolve a buffer for the event`)
+	}
 	n, err := buf.addEvent(stream.Buffer())
 	bs.totalBufferedMemBytes += uint64(n)
 	if err != nil {
@@ -380,8 +390,7 @@ func (bs *s3EventBufferSet) getBuffer(event *parsers.Result) *s3EventBuffer {
 	if eventTime.IsZero() {
 		eventTime = event.PantherParseTime
 		if eventTime.IsZero() {
-			zap.L().Warn(`parsed result has zero parse time`, zap.String(`logType`, event.PantherLogType))
-			eventTime = time.Now()
+			return nil
 		}
 	}
 	// bin by hour (this is our partition size)
