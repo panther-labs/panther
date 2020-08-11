@@ -29,8 +29,8 @@ import {
   buildListAlertsResponse,
 } from 'test-utils';
 import { mockListAlerts } from 'Pages/ListAlerts/graphql/listAlerts.generated';
-import LogAnalysisOverview, { intervalMinutes, defaultPastDays } from '../LogAnalysisOverview';
-import { mockGetLogAnalysisMetrics } from '../graphql/getLogAnalysisMetrics.generated';
+import LogAnalysisOverview, { intervalMinutes, defaultPastDays } from './LogAnalysisOverview';
+import { mockGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
 
 describe('Log Analysis Overview', () => {
   test('render 2 canvas', async () => {

@@ -17,37 +17,68 @@
  */
 
 import React from 'react';
-import { Box, useTheme } from 'pouncejs';
-import { formatTime } from 'Helpers/utils';
+import ReactDOM from 'react-dom';
+import { Box, Flex, Text, useTheme } from 'pouncejs';
+import { formatTime, formatDatetime, remToPx } from 'Helpers/utils';
 import { SeriesData } from 'Generated/schema';
+import { EChartOption } from 'echarts';
 import colors from './colors';
 
 interface TimeSeriesLinesProps {
+  /** The data for the time series */
   data: SeriesData;
+
+  /**
+   * The number of segments that the X-axis is split into
+   * @default 12
+   */
+  segments?: number;
+
+  /**
+   * Whether the chart will allow zooming
+   * @default false
+   */
+  zoomable?: boolean;
+
+  /**
+   * If defined, the chart will be zoomable and will zoom up to a range specified in `ms` by this
+   * value. This range will occupy the entirety of the X-axis (end-to-end).
+   * For example, a value of 3600 * 1000 * 24 would allow the chart to zoom until the entirety
+   * of the zoomed-in chart shows 1 full day.
+   * @default 3600 * 1000 * 24
+   */
+  maxZoomPeriod?: number;
 }
 
-const createFormat = (format: string): any => formatTime(format);
-const hourFormat = createFormat('HH:mm');
-const dateFormat = createFormat('DD/MM');
-const fullDateFormat = createFormat('HH:mm DD/MM/YYYY');
+const hourFormat = formatTime('HH:mm');
+const dateFormat = formatTime('MMM DD');
 
 function formatDateString(timestamp) {
-  return `  ${hourFormat(timestamp)}
-  ${dateFormat(timestamp)}`;
+  return `${hourFormat(timestamp)}\n${dateFormat(timestamp).toUpperCase()}`;
 }
 
-const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
+const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
+  data,
+  zoomable = false,
+  segments = 12,
+  maxZoomPeriod = 3600 * 1000 * 24,
+}) => {
   const theme = useTheme();
   const container = React.useRef<HTMLDivElement>(null);
+  const tooltip = React.useRef<HTMLDivElement>(document.createElement('div'));
+
   React.useEffect(() => {
     (async () => {
       // load the pie chart
-      const [echarts] = await Promise.all([
-        import(/* webpackChunkName: "echarts" */ 'echarts/lib/echarts'),
-        import(/* webpackChunkName: "echarts" */ 'echarts/lib/chart/line'),
-        import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/tooltip'),
-        import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/legendScroll'),
-      ]);
+      const [echarts] = await Promise.all(
+        [
+          import(/* webpackChunkName: "echarts" */ 'echarts/lib/echarts'),
+          import(/* webpackChunkName: "echarts" */ 'echarts/lib/chart/line'),
+          import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/tooltip'),
+          zoomable && import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/dataZoom'),
+          import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/legendScroll'),
+        ].filter(Boolean)
+      );
       /*
        *  Timestamps are common for all series since everything has the same interval
        *  and the same time frame
@@ -70,7 +101,6 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
         return {
           name: label,
           type: 'line',
-          smooth: true,
           symbol: 'none',
           itemStyle: {
             color: theme.colors[colors[label]],
@@ -84,7 +114,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
         };
       });
 
-      const options = {
+      const options: EChartOption = {
         grid: {
           left: 180,
           right: 20,
@@ -92,26 +122,47 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
           top: 10,
           containLabel: true,
         },
+        ...(zoomable && {
+          dataZoom: [
+            {
+              type: 'inside',
+              orient: 'horizontal',
+              minValueSpan: maxZoomPeriod,
+            },
+          ],
+        }),
         tooltip: {
           trigger: 'axis' as const,
-          position: pt => [pt[0], '100%'],
-          formatter: params => {
-            let tooltip = '';
-            if (params.length) {
-              const [
-                {
-                  value: [date],
-                },
-              ] = params;
-              tooltip += fullDateFormat(date);
-              const seriesTooltips = params.map(seriesTooltip => {
-                return `<br/>${seriesTooltip.marker} ${
-                  seriesTooltip.seriesName
-                }: ${seriesTooltip.value[1].toLocaleString('en')}`;
-              });
-              tooltip += seriesTooltips;
+          position: pt => [(pt[0] as number) + 40, '0%'],
+          backgroundColor: theme.colors['navyblue-300'],
+          formatter: (params: EChartOption.Tooltip.Format[]) => {
+            if (!params || !params.length) {
+              return '';
             }
-            return tooltip;
+
+            const component = (
+              <Box font="primary" minWidth={200} boxShadow="dark250" p={2} borderRadius="medium">
+                <Text fontSize="small-medium" mb={3}>
+                  {formatDatetime(params[0].value[0], true)}
+                </Text>
+                <Flex as="dl" direction="column" spacing={2} fontSize="x-small">
+                  {params.map(seriesTooltip => (
+                    <Flex key={seriesTooltip.seriesName} justify="space-between">
+                      <Box as="dt">
+                        <span dangerouslySetInnerHTML={{ __html: seriesTooltip.marker }} />
+                        {seriesTooltip.seriesName}
+                      </Box>
+                      <Box as="dd" font="mono" fontWeight="bold">
+                        {seriesTooltip.value[1].toLocaleString('en')}
+                      </Box>
+                    </Flex>
+                  ))}
+                </Flex>
+              </Box>
+            );
+
+            ReactDOM.render(component, tooltip.current);
+            return tooltip.current.innerHTML;
           },
         },
         legend: {
@@ -123,38 +174,59 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({ data }) => {
           data: legendData,
           textStyle: {
             color: theme.colors['gray-50'],
+            fontFamily: theme.fonts.primary,
+            fontSize: remToPx(theme.fontSizes['x-small']),
           },
+          pageIcons: {
+            vertical: ['M7 10L12 15L17 10H7Z', 'M7 14L12 9L17 14H7Z'],
+          },
+          pageIconColor: theme.colors['gray-50'],
+          pageIconInactiveColor: theme.colors['navyblue-300'],
+          pageIconSize: 12,
+          pageTextStyle: {
+            fontFamily: theme.fonts.primary,
+            color: theme.colors['gray-50'],
+            fontWeight: theme.fontWeights.bold as any,
+            fontSize: remToPx(theme.fontSizes['x-small']),
+          },
+          pageButtonGap: theme.space[3] as number,
         },
         xAxis: {
           type: 'time' as const,
+          splitNumber: segments,
           splitLine: {
             show: false,
           },
-          axisLabel: {
-            show: true,
-            formatter: value => formatDateString(value),
-            textStyle: {
-              color: () => {
-                return theme.colors['gray-50'];
-              },
+          axisLine: {
+            lineStyle: {
+              color: 'transparent',
             },
           },
+          axisLabel: {
+            formatter: value => formatDateString(value),
+            fontWeight: theme.fontWeights.medium as any,
+            fontSize: remToPx(theme.fontSizes['x-small']),
+            fontFamily: theme.fonts.primary,
+            color: theme.colors['gray-50'],
+          },
+          splitArea: { show: false }, // remove the grid area
         },
         yAxis: {
           type: 'value' as const,
-          splitNumber: 4,
-          axisLabel: {
-            padding: [0, 20, 0, 0],
-            interval: 1,
-            show: true,
-            textStyle: {
-              color: () => {
-                return theme.colors['gray-50'];
-              },
+          axisLine: {
+            lineStyle: {
+              color: 'transparent',
             },
           },
-          axisLine: {
-            show: true,
+          axisLabel: {
+            padding: [0, theme.space[2] as number, 0, 0],
+            fontSize: remToPx(theme.fontSizes['x-small']),
+            fontWeight: theme.fontWeights.medium as any,
+            fontFamily: theme.fonts.primary,
+            color: theme.colors['gray-50'],
+          },
+          minorSplitLine: {
+            show: false,
           },
           splitLine: {
             lineStyle: {

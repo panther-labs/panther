@@ -73,7 +73,7 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
                 <SeverityBadge severity={alert.severity} />
               </Box>
             </Table.Cell>
-            <Table.Cell maxWidth={400} truncated title={alert.title}>
+            <Table.Cell maxWidth={300} truncated title={alert.title}>
               <Link
                 as={RRLink}
                 to={urls.logAnalysis.alerts.details(alert.alertId)}
@@ -84,8 +84,9 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
                 #{shortenId(alert.alertId)} {alert.title}
               </Link>
             </Table.Cell>
-            <Table.Cell>
+            <Table.Cell wrapText="nowrap">
               <PseudoBox
+                mx={-4}
                 as="a"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -110,8 +111,12 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
             <Table.Cell align="center">
               <UpdateAlertDropdown alert={alert} />
             </Table.Cell>
-            <Table.Cell align="right">{formatDatetime(alert.creationTime)}</Table.Cell>
-            <Table.Cell align="right">{formatDatetime(alert.updateTime)}</Table.Cell>
+            <Table.Cell align="right" wrapText="nowrap">
+              {formatDatetime(alert.creationTime)}
+            </Table.Cell>
+            <Table.Cell align="right" wrapText="nowrap">
+              {formatDatetime(alert.updateTime)}
+            </Table.Cell>
             <Table.Cell align="right" mono>
               {alert.eventsMatched}
             </Table.Cell>
