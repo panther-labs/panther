@@ -310,8 +310,9 @@ func (destination *S3Destination) getS3ObjectKey(logType string, timestamp time.
 		return "", errors.Errorf(`unknown log type %q`, logType)
 	}
 	meta := typ.GlueTableMeta()
+	timestamp = timestamp.UTC()
 	return fmt.Sprintf(s3ObjectKeyFormat,
-		meta.GetPartitionPrefix(timestamp.UTC()), // get the path to store the data in S3
+		meta.GetPartitionPrefix(timestamp), // get the path to store the data in S3
 		timestamp.Format(S3ObjectTimestampFormat),
 		uuid.New().String(),
 	), nil

@@ -21,6 +21,8 @@ package destinations
 import (
 	"bytes"
 	"compress/gzip"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 	"io/ioutil"
 	"strings"
 	"sync"
@@ -59,6 +61,12 @@ var (
 	// same as above plus 1 hour
 	refTimePlusHour   = (timestamp.RFC3339)((time.Time)(refTime).Add(time.Hour))
 	expectedS3Prefix2 = "logs/testlogtype/year=2020/month=01/day=01/hour=01/20200101T010000Z"
+
+	refParseTime  = time.Now()
+	resultBuilder = pantherlog.ResultBuilder{
+		NextRowID: pantherlog.StaticRowID("row_id"),
+		Now:       pantherlog.StaticNow(refParseTime),
+	}
 )
 
 type mockParser struct {
@@ -101,6 +109,24 @@ type mockSns struct {
 type testEvent struct {
 	Data string
 	parsers.PantherLog
+}
+
+type fooEvent struct {
+	Time time.Time   `json:"ts" tcodec:"rfc3339" panther:"event_time" description:"ts"`
+	Foo  null.String `json:"foo" description:"foo"`
+}
+
+var refEvent = &fooEvent{
+	Time: time.Time(refTime),
+	Foo:  null.FromString("bar"),
+}
+
+func newTestResult(event interface{}) *parsers.Result {
+	if event == nil {
+		event = refEvent
+	}
+	result, _ := resultBuilder.BuildResult(testLogType, event)
+	return result
 }
 
 func newSimpleTestEvent() *parsers.PantherLog {
@@ -179,8 +205,7 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	destination := newS3Destination()
 	eventChannel := make(chan *parsers.Result, 1)
 
-	testEvent := newSimpleTestEvent()
-	testResult := testEvent.Result()
+	testResult := newTestResult(nil)
 
 	// Gzipping the test event
 	// Do that now so that the event release does not affect output
@@ -248,8 +273,10 @@ func TestSendDataIfTotalMemSizeLimitHasBeenReached(t *testing.T) {
 	destination := newS3Destination()
 	eventChannel := make(chan *parsers.Result, 2)
 
-	testEvent := newSimpleTestEvent()
-	testResult := testEvent.Result()
+	// Use 1 result with `panther:"event_time"` struct tag
+	testResult1 := newTestResult(nil)
+	// Use 1 result with embedded panther log
+	testResult2 := newSimpleTestEvent().Result()
 
 	// wire it up
 	destination.maxBufferedMemBytes = 0 // this will cause each event to trigger a send
@@ -257,8 +284,8 @@ func TestSendDataIfTotalMemSizeLimitHasBeenReached(t *testing.T) {
 	// sending 2 events to buffered channel
 	// The second should already cause the S3 object size limits to be exceeded
 	// so we expect two objects to be written to s3
-	eventChannel <- testResult
-	eventChannel <- testResult
+	eventChannel <- testResult1
+	eventChannel <- testResult2
 
 	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Twice()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Twice()
@@ -267,6 +294,12 @@ func TestSendDataIfTotalMemSizeLimitHasBeenReached(t *testing.T) {
 
 	destination.mockS3Uploader.AssertExpectations(t)
 	destination.mockSns.AssertExpectations(t)
+
+	// Verify proper buckets were used for both events
+	key1 := destination.mockS3Uploader.Calls[0].Arguments.Get(0).(*s3manager.UploadInput).Key
+	require.Equal(t, expectedS3Prefix, aws.StringValue(key1)[:len(expectedS3Prefix)])
+	key2 := destination.mockS3Uploader.Calls[1].Arguments.Get(0).(*s3manager.UploadInput).Key
+	require.Equal(t, expectedS3Prefix, aws.StringValue(key2)[:len(expectedS3Prefix)])
 }
 
 func TestSendDataIfBufferSizeLimitHasBeenReached(t *testing.T) {
