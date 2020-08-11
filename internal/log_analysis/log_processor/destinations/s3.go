@@ -336,13 +336,18 @@ func newS3EventBufferSet(jsonAPI jsoniter.API) *s3EventBufferSet {
 }
 
 func (bs *s3EventBufferSet) writeEvent(event *parsers.Result, maxBufferSize, maxTotalSize int) (buf *s3EventBuffer, err error) {
+	// HERE BE DRAGONS
+	// We need to first serialize the event to JSON for events that only set the event time via `panther:"event_time"` tag.
+	// This includes custom logs and other simple struct-based events.
 	stream := bs.stream
 	stream.Reset(nil)
 	stream.WriteVal(event)
+	// By now if the event has event time defined then event.PantherEventTime will be a non-zero value
 	err, stream.Error = stream.Error, nil
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to serialize event to JSON")
 	}
+	// Just in case something was amiss elsewhere `getBuffer` checks again and uses PantherParseTime and Time.Now() as fallbacks.
 	buf = bs.getBuffer(event)
 	n, err := buf.addEvent(stream.Buffer())
 	bs.totalBufferedMemBytes += uint64(n)
@@ -369,8 +374,19 @@ func (bs *s3EventBufferSet) writeEvent(event *parsers.Result, maxBufferSize, max
 }
 
 func (bs *s3EventBufferSet) getBuffer(event *parsers.Result) *s3EventBuffer {
+	// Make sure we have a valid time to set the event partition
+	// If the event had no event time we use PantherParseTime and time.Now as fallbacks
+	eventTime := event.PantherEventTime
+	if eventTime.IsZero() {
+		eventTime = event.PantherParseTime
+	}
+	if eventTime.IsZero() {
+		eventTime = time.Now()
+	}
 	// bin by hour (this is our partition size)
-	hour := event.PantherEventTime.Truncate(time.Hour)
+	// We convert to UTC here so truncation does not affect the partition in the weird half-hour timezones if for
+	// some reason (bug) a non-UTC timestamp got through.
+	hour := eventTime.UTC().Truncate(time.Hour)
 
 	logTypeToBuffer, ok := bs.set[hour]
 	if !ok {
