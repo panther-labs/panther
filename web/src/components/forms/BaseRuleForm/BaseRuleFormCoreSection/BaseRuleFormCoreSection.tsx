@@ -159,7 +159,13 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
             />
           </Box>
           <Box flexGrow={1}>
-            <Field as={FormikNumberInput} label="* Threshold" min={0} name="threshold" />
+            <Field
+              as={FormikNumberInput}
+              label="* Events Threshold"
+              min={0}
+              name="threshold"
+              placeholder="Send an alert only after # events"
+            />
           </Box>
         </Flex>
       </SimpleGrid>

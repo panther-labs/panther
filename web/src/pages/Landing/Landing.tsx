@@ -33,7 +33,7 @@ import {
 import { Link as RRLink } from 'react-router-dom';
 import logo from 'Source/assets/panther-minimal-logo.svg';
 import urls from 'Source/urls';
-import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
+import { PANTHER_DOCS_LINK } from 'Source/constants';
 import { pantherConfig } from 'Source/config';
 import withSEO from 'Hoc/withSEO';
 
@@ -229,7 +229,7 @@ const LandingPage: React.FC = () => {
               Learn more about Panther and how can you best harness its power to secure your
               business
             </Text>
-            <Link external py={4} href={PANTHER_SCHEMA_DOCS_LINK}>
+            <Link external py={4} href={PANTHER_DOCS_LINK}>
               Discover Panther
             </Link>
           </Card>

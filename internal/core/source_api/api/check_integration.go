@@ -65,6 +65,9 @@ func (api API) CheckIntegration(input *models.CheckIntegrationInput) (*models.So
 func checkAwsScanIntegration(input *models.CheckIntegrationInput) *models.SourceIntegrationHealth {
 	out := &models.SourceIntegrationHealth{
 		IntegrationType: input.IntegrationType,
+		// Default to true, if these need to be checked and they are not healthy they will be overwritten
+		CWERoleStatus:         models.SourceIntegrationItemStatus{Healthy: true},
+		RemediationRoleStatus: models.SourceIntegrationItemStatus{Healthy: true},
 	}
 	_, out.AuditRoleStatus = getCredentialsWithStatus(fmt.Sprintf(auditRoleFormat,
 		input.AWSAccountID, *awsSession.Config.Region))

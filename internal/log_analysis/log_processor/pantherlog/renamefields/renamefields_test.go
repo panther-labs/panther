@@ -1,3 +1,5 @@
+package renamefields
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,27 +18,32 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { Flex } from 'pouncejs';
-import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
-import { SeriesData } from 'Generated/schema';
+import (
+	"testing"
 
-interface EventsByLogTypesProps {
-  events: SeriesData;
+	jsoniter "github.com/json-iterator/go"
+	"github.com/stretchr/testify/require"
+)
+
+func TestEncoderNamingStrategy(t *testing.T) {
+	api := jsoniter.Config{}.Froze()
+	api.RegisterExtension(New(func(name string) string {
+		if name == "foo" {
+			return "bar"
+		}
+		return name
+	}))
+
+	type T struct {
+		Foo string `json:"foo"`
+		Baz string `json:"baz"`
+	}
+	value := T{}
+	assert := require.New(t)
+	err := api.UnmarshalFromString(`{"foo":"foo","baz":"baz"}`, &value)
+	assert.NoError(err)
+	assert.Equal(T{Foo: "foo", Baz: "baz"}, value)
+	data, err := api.MarshalToString(&value)
+	assert.NoError(err)
+	assert.Equal(`{"bar":"foo","baz":"baz"}`, data)
 }
-
-const EventsByLogTypes: React.FC<EventsByLogTypesProps> = ({ events }) => {
-  return (
-    <Flex
-      data-testid="events-by-log-type-chart"
-      height="100%"
-      pt={4}
-      px={4}
-      backgroundColor="navyblue-500"
-    >
-      <TimeSeriesChart data={events} zoomable />
-    </Flex>
-  );
-};
-
-export default React.memo(EventsByLogTypes);
