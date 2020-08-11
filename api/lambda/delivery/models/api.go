@@ -21,7 +21,7 @@ package models
 import (
 	"time"
 
-	"github.com/panther-labs/panther/api/lambda/alerts/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/alerts/models"
 )
 
 const (
@@ -54,7 +54,7 @@ type DeliverAlertInput struct {
 }
 
 // DeliverAlertOutput is an alias for an alert summary
-type DeliverAlertOutput models.AlertSummary
+type DeliverAlertOutput = alertModels.AlertSummary
 
 // Alert is the schema for each row in the Dynamo alerts table.
 type Alert struct {

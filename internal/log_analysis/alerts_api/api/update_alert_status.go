@@ -37,7 +37,7 @@ func (API) UpdateAlertStatus(input *models.UpdateAlertStatusInput) (result *mode
 	}
 
 	// Marshal to an alert summary
-	result = alertItemToAlertSummary(alertItem)
+	result = alertUtils.AlertItemToSummary(alertItem)
 
 	gatewayapi.ReplaceMapSliceNils(result)
 	return result, nil

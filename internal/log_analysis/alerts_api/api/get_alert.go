@@ -90,7 +90,7 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 		return nil, err
 	}
 
-	alertSummary := alertItemToAlertSummary(alertItem)
+	alertSummary := alertUtils.AlertItemToSummary(alertItem)
 
 	result = &models.Alert{
 		AlertSummary:           *alertSummary,
@@ -100,18 +100,6 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 
 	gatewayapi.ReplaceMapSliceNils(result)
 	return result, nil
-}
-
-// Method required for backwards compatibility
-// In case the alert title is empty, return custom title
-func getAlertTitle(alert *table.AlertItem) *string {
-	if alert.Title != nil {
-		return alert.Title
-	}
-	if alert.RuleDisplayName != nil {
-		return alert.RuleDisplayName
-	}
-	return &alert.RuleID
 }
 
 // This method returns events from a specific log type that are associated to a given alert.

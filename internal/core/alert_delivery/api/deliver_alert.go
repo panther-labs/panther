@@ -19,26 +19,22 @@ package api
  */
 
 import (
-	"github.com/panther-labs/panther/api/lambda/alerts/models"
+	"github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-// UpdateAlertDelivery modifies an alert's attributes.
-func (API) UpdateAlertDelivery(input *models.UpdateAlertDeliveryInput) (result *models.UpdateAlertDeliveryOutput, err error) {
-	// Run the update alert query
-	alertItem, err := alertsDB.UpdateAlertDelivery(input)
+// DeliverAlert sends a specific alert to the specified destinations.
+func (API) DeliverAlert(input *models.DeliverAlertInput) (*models.DeliverAlertOutput, error) {
+	alertItem, err := alertsDB.GetAlert(&input.AlertID)
 	if err != nil {
 		return nil, err
 	}
 
-	// If there was no item from the DB, we return an empty response
 	if alertItem == nil {
-		return &models.UpdateAlertDeliveryOutput{}, nil
+		return nil, nil
 	}
+	alertSummary := alertUtils.AlertItemToSummary(alertItem)
 
-	// Marshal to an alert summary
-	result = alertUtils.AlertItemToSummary(alertItem)
-
-	gatewayapi.ReplaceMapSliceNils(result)
-	return result, nil
+	gatewayapi.ReplaceMapSliceNils(alertSummary)
+	return alertSummary, nil
 }

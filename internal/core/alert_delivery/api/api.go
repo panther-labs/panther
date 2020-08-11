@@ -18,5 +18,43 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// The API has receiver methods for each of the handlers.
+import (
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/kelseyhightower/envconfig"
+
+	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
+	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
+)
+
+// API has all of the handlers as receiver methods.
 type API struct{}
+
+var (
+	env        envConfig
+	awsSession *session.Session
+	alertsDB   table.API
+	alertUtils utils.API
+)
+
+type envConfig struct {
+	AlertsTableName string `required:"true" split_words:"true"`
+	RuleIndexName   string `required:"true" split_words:"true"`
+	TimeIndexName   string `required:"true" split_words:"true"`
+}
+
+// Setup - parses the environment and builds the AWS and http clients.
+func Setup() {
+	envconfig.MustProcess("", &env)
+
+	awsSession = session.Must(session.NewSession())
+	alertsDB = &table.AlertsTable{
+		AlertsTableName:                    env.AlertsTableName,
+		Client:                             dynamodb.New(awsSession),
+		RuleIDCreationTimeIndexName:        env.RuleIndexName,
+		TimePartitionCreationTimeIndexName: env.TimeIndexName,
+	}
+	alertUtils = &utils.AlertUtils{
+		Name: "someName",
+	}
+}

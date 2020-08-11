@@ -42,12 +42,14 @@ var validate = validator.New()
 
 var router = genericapi.NewRouter("api", "delivery", nil, api.API{})
 
+// lambdaHandler handles two different kinds of requests:
+// 1. SQS event triggers that processes a batch of alerts periodically
+// 2. HTTP requests for direct invocation
 func lambdaHandler(ctx context.Context, input json.RawMessage) (output interface{}, err error) {
 	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
 	operation := oplog.NewManager("core", "alert_delivery").Start(lc.InvokedFunctionArn).WithMemUsed(lambdacontext.MemoryLimitInMB)
 
-	// There are two different kinds of requests handled by this function:
-	// SQS event triggers and standard delivery-api direct invocations
+	// SQS trigger
 	var events events.SQSEvent
 	if err := jsoniter.Unmarshal(input, &events); err == nil {
 		var alerts []*models.Alert
@@ -71,6 +73,7 @@ func lambdaHandler(ctx context.Context, input json.RawMessage) (output interface
 		return nil, err
 	}
 
+	// HTTP request
 	var apiRequest models.LambdaInput
 	if err := jsoniter.Unmarshal(input, &apiRequest); err != nil {
 		return nil, &genericapi.InvalidInputError{

@@ -30,6 +30,7 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
+	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
 )
 
 type s3SelectStreamReaderMock struct {
@@ -72,6 +73,21 @@ func (m *tableMock) ListObjectsV2Pages(input *string) (*table.AlertItem, error) 
 type tableMock struct {
 	table.API
 	mock.Mock
+}
+
+type utilsMock struct {
+	utils.API
+	mock.Mock
+}
+
+func (m *utilsMock) AlertItemToSummary(input *table.AlertItem) *models.AlertSummary {
+	args := m.Called(input)
+	return args.Get(0).(*models.AlertSummary)
+}
+
+func (m *utilsMock) AlertItemsToSummaries(input []*table.AlertItem) []*models.AlertSummary {
+	args := m.Called(input)
+	return args.Get(0).([]*models.AlertSummary)
 }
 
 func (m *tableMock) GetAlert(input *string) (*table.AlertItem, error) {

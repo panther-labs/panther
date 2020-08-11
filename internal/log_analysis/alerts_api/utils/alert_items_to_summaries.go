@@ -1,4 +1,5 @@
-package api
+// Package utils manages all of the utility functions for alerts that are public
+package utils
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -20,25 +21,16 @@ package api
 
 import (
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 )
 
-// UpdateAlertDelivery modifies an alert's attributes.
-func (API) UpdateAlertDelivery(input *models.UpdateAlertDeliveryInput) (result *models.UpdateAlertDeliveryOutput, err error) {
-	// Run the update alert query
-	alertItem, err := alertsDB.UpdateAlertDelivery(input)
-	if err != nil {
-		return nil, err
+// AlertItemsToSummaries converts a list of DDB AlertItem(s) to AlertSummary(ies)
+func (utils *AlertUtils) AlertItemsToSummaries(items []*table.AlertItem) []*models.AlertSummary {
+	result := make([]*models.AlertSummary, len(items))
+
+	for i, item := range items {
+		result[i] = utils.AlertItemToAlertSummary(item)
 	}
 
-	// If there was no item from the DB, we return an empty response
-	if alertItem == nil {
-		return &models.UpdateAlertDeliveryOutput{}, nil
-	}
-
-	// Marshal to an alert summary
-	result = alertUtils.AlertItemToSummary(alertItem)
-
-	gatewayapi.ReplaceMapSliceNils(result)
-	return result, nil
+	return result
 }
