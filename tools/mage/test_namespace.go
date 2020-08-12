@@ -347,7 +347,7 @@ func cfnTestFunction(logicalID, template string, resources map[string]string) er
 }
 
 func testGoUnit() error {
-	logger.Info("test:ci: running go unit tests")
+	logger.Info("test:go: running go unit tests")
 	runGoTest := func(args ...string) error {
 		if mg.Verbose() {
 			// verbose mode - show "go test" output (all package names)
@@ -374,7 +374,7 @@ func testGoUnit() error {
 }
 
 func testGoLint() error {
-	logger.Info("test:ci: running go metalinter")
+	logger.Info("test:go: running go metalinter")
 	args := []string{"run", "--timeout", "10m", "-j", strconv.Itoa(maxWorkers)}
 	if mg.Verbose() {
 		args = append(args, "-v")
@@ -391,7 +391,7 @@ func testPythonUnit() error {
 	}
 
 	for _, target := range []string{"internal/core", "internal/compliance", "internal/log_analysis"} {
-		if err := runWithCapturedStderr(pythonLibPath("python3"), append(args, target)...); err != nil {
+		if err := runWithCapturedOutput(pythonLibPath("python3"), append(args, target)...); err != nil {
 			return fmt.Errorf("python unit tests failed: %v", err)
 		}
 	}
@@ -428,7 +428,7 @@ func testPythonBandit() error {
 	} else {
 		args = append(args, "--quiet")
 	}
-	return runWithCapturedStderr(pythonLibPath("bandit"), append(args, pyTargets...)...)
+	return runWithCapturedOutput(pythonLibPath("bandit"), append(args, pyTargets...)...)
 }
 
 func testPythonMypy() error {
@@ -441,16 +441,16 @@ func testPythonMypy() error {
 }
 
 func testWebEslint() error {
-	return sh.Run("npm", "run", "eslint")
+	return runWithCapturedOutput("npm", "run", "eslint")
 }
 
 func testWebTsc() error {
-	return sh.Run("npm", "run", "tsc")
+	return runWithCapturedOutput("npm", "run", "tsc")
 }
 
 func testWebIntegration() error {
 	// Passing tests are printed to stderr
-	return runWithCapturedStderr("npm", "run", "test")
+	return runWithCapturedOutput("npm", "run", "test")
 }
 
 func testTfValidate() error {

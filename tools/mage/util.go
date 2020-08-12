@@ -199,13 +199,15 @@ func uploadFileToS3(path, bucket, key string) (*s3manager.UploadOutput, error) {
 	})
 }
 
-// Run a command, hiding both stdout and stderr unless running in verbose mode.
+// Run a command, capturing stdout and stderr unless the command errors or we're in verbose mode.
 //
-// This is helpful for tools which print unwanted info to stderr even when successful.
-// Stderr will be printed if the command returned an error.
+// This is helpful for tools which print unwanted info to stderr even when successful or, conversely,
+// tools which output failing tests to stdout that we want to show even in non-verbose mode.
+//
+// Both outputs will be printed if the command returns an error.
 //
 // Similar to sh.Run(), except sh.Run() only hides stdout in non-verbose mode.
-func runWithCapturedStderr(cmd string, args ...string) error {
+func runWithCapturedOutput(cmd string, args ...string) error {
 	var stdout, stderr io.Writer
 	var buf bytes.Buffer
 
@@ -213,6 +215,7 @@ func runWithCapturedStderr(cmd string, args ...string) error {
 		stdout = os.Stdout
 		stderr = os.Stderr
 	} else {
+		stdout = &buf
 		stderr = &buf
 	}
 
