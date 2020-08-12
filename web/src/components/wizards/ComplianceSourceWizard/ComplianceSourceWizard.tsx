@@ -75,7 +75,7 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
         return (
           <Form>
             <Wizard>
-              <Wizard.Step title="Configure Source" >
+              <Wizard.Step title="Configure Source">
                 <WizardPanelWrapper>
                   <WizardPanelWrapper.Content>
                     <SourceConfigurationPanel />
@@ -85,7 +85,7 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
                   </WizardPanelWrapper.Actions>
                 </WizardPanelWrapper>
               </Wizard.Step>
-              <Wizard.Step title="Deploy Stack" icon="upload">
+              <Wizard.Step title="Deploy Stack">
                 <WizardPanelWrapper>
                   <WizardPanelWrapper.Content>
                     <StackDeploymentPanel />
@@ -96,7 +96,7 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
                   </WizardPanelWrapper.Actions>
                 </WizardPanelWrapper>
               </Wizard.Step>
-              <Wizard.Step title="Done!" >
+              <Wizard.Step title="Done!">
                 <WizardPanelWrapper>
                   <WizardPanelWrapper.Content>
                     <SuccessPanel />

@@ -26,6 +26,7 @@ import PolicyDetailsPage from 'Pages/PolicyDetails';
 import GeneralSettingsPage from 'Pages/GeneralSettings';
 import SignInPage from 'Pages/SignIn';
 import ListDestinationsPage from 'Pages/ListDestinations';
+import CreateDestinationPage from 'Pages/CreateDestination';
 import UsersPage from 'Pages/Users';
 import RuleDetailsPage from 'Pages/RuleDetails';
 import LandingPage from 'Pages/Landing';
@@ -202,7 +203,16 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   to={urls.settings.globalPythonModules.edit(':id')}
                 />
                 <Route exact path={urls.settings.users()} component={UsersPage} />
-                <Route exact path={urls.settings.destinations()} component={ListDestinationsPage} />
+                <Route
+                  exact
+                  path={urls.settings.destinations.create()}
+                  component={CreateDestinationPage}
+                />
+                <Route
+                  exact
+                  path={urls.settings.destinations.list()}
+                  component={ListDestinationsPage}
+                />
                 <Route component={Page404} />
               </Switch>
             </APIErrorFallback>

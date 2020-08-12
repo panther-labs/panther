@@ -27,7 +27,6 @@ const HIDE_SIDESHEET = 'HIDE_SIDESHEET';
 /* The available list of sidesheets to dispatch */
 export enum SIDESHEETS {
   POLICY_BULK_UPLOAD = 'POLICY_BULK_UPLOAD',
-  ADD_DESTINATION = 'ADD_DESTINATION',
   UPDATE_DESTINATION = 'UPDATE_DESTINATION',
   EDIT_USER = 'EDIT_USER',
   USER_INVITATION = 'USER_INVITATION',
@@ -40,13 +39,6 @@ interface SidesheetStateShape {
   sidesheet: keyof typeof SIDESHEETS | null;
   props?: { [key: string]: any };
   isVisible: boolean;
-}
-
-interface AddDestinationSideSheetAction {
-  type: typeof SHOW_SIDESHEET;
-  payload: {
-    sidesheet: SIDESHEETS.ADD_DESTINATION;
-  };
 }
 
 interface UpdateDestinationSideSheetAction {
@@ -88,7 +80,6 @@ interface UserInvitationSideSheetAction {
 /* The available actions that can be dispatched */
 type SidesheetStateAction =
   | PolicyBulkUploadSideSheetAction
-  | AddDestinationSideSheetAction
   | UpdateDestinationSideSheetAction
   | EditUserSideSheetAction
   | UserInvitationSideSheetAction

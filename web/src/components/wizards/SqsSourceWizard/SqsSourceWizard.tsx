@@ -92,7 +92,7 @@ const SqsSourceWizard: React.FC<SqsLogSourceWizardProps> = ({
                   </WizardPanelWrapper>
                 </Wizard.Step>
               )}
-              <Wizard.Step title="Configure" >
+              <Wizard.Step title="Configure">
                 <WizardPanelWrapper>
                   <WizardPanelWrapper.Content>
                     <SqsSourceConfigurationPanel />

@@ -17,4 +17,5 @@
  */
 
 export { default as Wizard, WizardStep } from './Wizard';
+export { useWizardContext } from './WizardContext';
 export { default as WizardPanelWrapper } from './WizardPanelWrapper';

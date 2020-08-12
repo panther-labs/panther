@@ -17,15 +17,16 @@
  */
 
 import React from 'react';
-import { Alert, Box } from 'pouncejs';
+import { Alert, Box, Button, Link } from 'pouncejs';
 import withSEO from 'Hoc/withSEO';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
 import Panel from 'Components/Panel';
+import { Link as RRLink } from 'react-router-dom';
+import urls from 'Source/urls';
 import { useListDestinationsAndDefaults } from './graphql/listDestinationsAndDefaults.generated';
 import DestinationsPageSkeleton from './Skeleton';
 import DestinationsPageEmptyDataFallback from './EmptyDataFallback';
-import DestinationCreateButton from './CreateButton';
 import ListDestinationsCards from './ListDestinationsCards';
 
 const ListDestinations = () => {
@@ -55,7 +56,16 @@ const ListDestinations = () => {
   return (
     <Box mb={6}>
       <ErrorBoundary>
-        <Panel title="Destinations" actions={<DestinationCreateButton />}>
+        <Panel
+          title="Destinations"
+          actions={
+            <Link as={RRLink} to={urls.settings.destinations.create()}>
+              <Button as="div" icon="add">
+                Add Destination
+              </Button>
+            </Link>
+          }
+        >
           <ListDestinationsCards destinations={data.destinations} />
         </Panel>
       </ErrorBoundary>

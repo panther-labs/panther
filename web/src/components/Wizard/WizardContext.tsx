@@ -18,11 +18,17 @@
 
 import React from 'react';
 
-interface WizardContextValue {
-  goToPrevStep: () => void;
-  goToNextStep: () => void;
+interface WizardContextValue<ReceivedStepValue, ForwardedStepValue> {
+  goToPrevStep: (stepContext?: ForwardedStepValue) => void;
+  goToNextStep: (stepContext?: ForwardedStepValue) => void;
+  stepContext: ReceivedStepValue;
 }
 
-export const WizardContext = React.createContext<WizardContextValue>(null);
+export const WizardContext = React.createContext<WizardContextValue<any, any>>(null);
 
-export const useWizardContext = () => React.useContext(WizardContext);
+export function useWizardContext<
+  ReceivedStepValue = any,
+  ForwardedStepValue = ReceivedStepValue
+>() {
+  return React.useContext<WizardContextValue<ReceivedStepValue, ForwardedStepValue>>(WizardContext);
+}

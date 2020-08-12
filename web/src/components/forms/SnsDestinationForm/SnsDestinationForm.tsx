@@ -20,7 +20,7 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
-import { Box, FormHelperText } from 'pouncejs';
+import { AbstractButton, Box, Collapse, FormHelperText, SimpleGrid } from 'pouncejs';
 import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
@@ -68,29 +68,49 @@ const snsFieldsValidationSchema = Yup.object().shape({
 const mergedValidationSchema = defaultValidationSchema.concat(snsFieldsValidationSchema);
 
 const SnsDestinationForm: React.FC<SNSDestinationFormProps> = ({ onSubmit, initialValues }) => {
+  const [showPolicy, setShowPolicy] = React.useState(false);
+
   return (
     <BaseDestinationForm<SNSFieldValues>
       initialValues={initialValues}
       validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
-      <Box as="fieldset">
+      <SimpleGrid gap={5} columns={2}>
         <Field
+          name="displayName"
           as={FormikTextInput}
-          name="outputConfig.sns.topicArn"
-          label="Topic ARN"
-          placeholder="Where should we publish a notification to?"
+          label="* Display Name"
+          placeholder="How should we name this?"
           required
-          aria-describedby="topicArn-label topicArn-policy"
         />
-        <FormHelperText id="topicArn-label" mt={2}>
-          <b>Note</b>: You would need to allow Panther <b>sns:Publish</b> access to send alert
-          messages to your SNS topic
-        </FormHelperText>
-        <Box my={4} id="topicArn-policy">
-          <JsonViewer data={SNS_TOPIC_POLICY} collapsed={false} />
+        <Box as="fieldset">
+          <Field
+            as={FormikTextInput}
+            name="outputConfig.sns.topicArn"
+            label="Topic ARN"
+            placeholder="Where should we publish a notification to?"
+            required
+            aria-describedby="topicArn-label topicArn-policy"
+          />
+          <FormHelperText id="topicArn-label" mt={2}>
+            <b>Note</b>: You would need to allow Panther <b>sns:Publish</b> access to send alert
+            messages to your SNS topic.{' '}
+            {!showPolicy && (
+              <AbstractButton color="blue-400" onClick={() => setShowPolicy(true)}>
+                Show Policy
+              </AbstractButton>
+            )}
+          </FormHelperText>
+          {showPolicy && (
+            <Collapse open={showPolicy}>
+              <Box my={4} id="topicArn-policy">
+                <JsonViewer data={SNS_TOPIC_POLICY} collapsed={false} />
+              </Box>
+            </Collapse>
+          )}
         </Box>
-      </Box>
+      </SimpleGrid>
     </BaseDestinationForm>
   );
 };

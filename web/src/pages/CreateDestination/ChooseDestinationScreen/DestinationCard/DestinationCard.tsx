@@ -19,13 +19,17 @@
 import * as React from 'react';
 import { Box, AbstractButton, Img, Flex } from 'pouncejs';
 
-interface ItemCardProps {
+interface DestinationCardProps {
   logo: string;
   title: string;
   onClick?: () => void;
 }
 
-const DestinationCard: React.FunctionComponent<ItemCardProps> = ({ logo, title, onClick }) => (
+const DestinationCard: React.FunctionComponent<DestinationCardProps> = ({
+  logo,
+  title,
+  onClick,
+}) => (
   <AbstractButton
     p={3}
     width={1}

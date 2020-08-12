@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Alert, Box, Flex, Heading, IconButton, useSnackbar } from 'pouncejs';
+import { useSnackbar } from 'pouncejs';
 import { DestinationConfigInput, DestinationTypeEnum } from 'Generated/schema';
 import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm';
 
@@ -32,29 +32,24 @@ import GithubDestinationForm from 'Components/forms/GithubDestinationForm';
 import AsanaDestinationForm from 'Components/forms/AsanaDestinationForm';
 import CustomWebhookDestinationForm from 'Components/forms/CustomWebhookDestinationForm';
 import { capitalize, extractErrorMessage } from 'Helpers/utils';
+import { useWizardContext, WizardPanelWrapper } from 'Components/Wizard';
+import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
+import { ForwardedStepContextValue as ReceivedStepContextValue } from '../ChooseDestinationScreen';
 import { useAddDestination } from './graphql/addDestination.generated';
 
-export interface ConfigureDestinationScreenProps {
-  destination: DestinationTypeEnum;
-  onSuccess: () => void;
-  onReset: () => void;
-}
+export type ForwardedStepContextValue = { destination: DestinationFull };
 
-const ConfigureDestinationScreen: React.FC<ConfigureDestinationScreenProps> = ({
-  destination,
-  onSuccess,
-  onReset,
-}) => {
+const ConfigureDestinationScreen: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
+  const {
+    goToNextStep,
+    stepContext: { destination },
+  } = useWizardContext<ReceivedStepContextValue, ForwardedStepContextValue>();
 
   // If destination object doesn't exist, handleSubmit should call addDestination to create a new destination and use default initial values
-  const [addDestination, { error: addDestinationError }] = useAddDestination({
+  const [addDestination] = useAddDestination({
     onCompleted: data => {
-      onSuccess();
-      pushSnackbar({
-        variant: 'success',
-        title: `Successfully added ${data.addDestination.displayName}`,
-      });
+      goToNextStep({ destination: data.addDestination });
     },
     onError: error => {
       pushSnackbar({
@@ -156,9 +151,9 @@ const ConfigureDestinationScreen: React.FC<ConfigureDestinationScreenProps> = ({
         return (
           <MicrosoftTeamsDestinationForm
             initialValues={{
-							...commonInitialValues,
-							outputConfig: {msTeams: {webhookURL: ''}}
-						}} // prettier-ignore
+              ...commonInitialValues,
+              outputConfig: { msTeams: { webhookURL: '' } },
+            }}
             onSubmit={handleSubmit}
           />
         );
@@ -172,20 +167,14 @@ const ConfigureDestinationScreen: React.FC<ConfigureDestinationScreenProps> = ({
       case DestinationTypeEnum.Sns:
         return (
           <SNSDestinationForm
-            initialValues={{
-              ...commonInitialValues,
-              outputConfig: { sns: { topicArn: '' } },
-            }}
+            initialValues={{ ...commonInitialValues, outputConfig: { sns: { topicArn: '' } } }}
             onSubmit={handleSubmit}
           />
         );
       case DestinationTypeEnum.Sqs:
         return (
           <SQSDestinationForm
-            initialValues={{
-              ...commonInitialValues,
-              outputConfig: { sqs: { queueUrl: '' } },
-            }}
+            initialValues={{ ...commonInitialValues, outputConfig: { sqs: { queueUrl: '' } } }}
             onSubmit={handleSubmit}
           />
         );
@@ -214,31 +203,15 @@ const ConfigureDestinationScreen: React.FC<ConfigureDestinationScreenProps> = ({
     }
   };
 
+  const destinationDisplayName = capitalize(
+    destination === DestinationTypeEnum.Customwebhook ? 'Webhook' : destination
+  );
   return (
     <React.Fragment>
-      <Flex mb={8} align="center" mt={-2}>
-        <IconButton
-          aria-label="Go to select destination screen"
-          variant="ghost"
-          icon="arrow-back"
-          onClick={onReset}
-        />
-        <Heading ml={4} id="add-destination-title">
-          {capitalize(destination)} Configuration
-        </Heading>
-      </Flex>
-      {addDestinationError && (
-        <Box mt={2} mb={6}>
-          <Alert
-            variant="error"
-            title="Destination not added"
-            description={
-              extractErrorMessage(addDestinationError) ||
-              "An unknown error occured and we couldn't add your new destination"
-            }
-          />
-        </Box>
-      )}
+      <WizardPanelWrapper.Heading
+        title={`Configure Your ${destinationDisplayName} Destination`}
+        subtitle="Fill out the form below to configure your Destination"
+      />
       {renderFullDestinationForm()}
     </React.Fragment>
   );

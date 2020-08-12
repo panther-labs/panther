@@ -25,7 +25,7 @@ import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
-import { Box, FormHelperText } from 'pouncejs';
+import { Box, FormHelperText, SimpleGrid } from 'pouncejs';
 
 type JiraFieldValues = Pick<DestinationConfigInput, 'jira'>;
 
@@ -58,59 +58,70 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
       validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
-      <Field
-        as={FormikTextInput}
-        name="outputConfig.jira.orgDomain"
-        label="* Organization Domain"
-        placeholder="What's your organization's Jira domain?"
-        required
-      />
-      <Field
-        as={FormikTextInput}
-        name="outputConfig.jira.projectKey"
-        label="* Project Key"
-        placeholder="What's your Jira Project key?"
-        required
-        autoComplete="new-password"
-      />
-      <Field
-        as={FormikTextInput}
-        name="outputConfig.jira.userName"
-        label="* Email"
-        placeholder="What's the email of the reporting user?"
-      />
-      <Field
-        as={FormikTextInput}
-        type="password"
-        name="outputConfig.jira.apiKey"
-        label="* Jira API Key"
-        placeholder={
-          existing
-            ? 'Information is hidden. New values will override the existing ones.'
-            : "What's the API key of the related Jira account"
-        }
-        required={!existing}
-        autoComplete="new-password"
-      />
-
-      <Field
-        as={FormikTextInput}
-        name="outputConfig.jira.assigneeId"
-        label="Assignee ID"
-        placeholder="Who should we assign this to?"
-      />
-      <Box as="fieldset">
+      <SimpleGrid gap={5} columns={3} mb={5}>
         <Field
+          name="displayName"
           as={FormikTextInput}
-          name="outputConfig.jira.issueType"
-          label="* Issue Type"
-          placeholder="What type of issue you want us to create?"
+          label="* Display Name"
+          placeholder="How should we name this?"
           required
         />
-        <FormHelperText id="issueType-helper" mt={2}>
-          Can be Bug, Story, Task or any custom type
-        </FormHelperText>
-      </Box>
+        <Field
+          as={FormikTextInput}
+          name="outputConfig.jira.orgDomain"
+          label="* Organization Domain"
+          placeholder="What's your Jira domain?"
+          required
+        />
+        <Field
+          as={FormikTextInput}
+          name="outputConfig.jira.projectKey"
+          label="* Project Key"
+          placeholder="What's your Jira project key?"
+          required
+          autoComplete="new-password"
+        />
+      </SimpleGrid>
+      <SimpleGrid gap={5} columns={2}>
+        <Field
+          as={FormikTextInput}
+          name="outputConfig.jira.userName"
+          label="* Email"
+          placeholder="What's the email of the reporting user?"
+        />
+        <Field
+          as={FormikTextInput}
+          type="password"
+          name="outputConfig.jira.apiKey"
+          label="* Jira API Key"
+          placeholder={
+            existing
+              ? 'Information is hidden. New values will override the existing ones.'
+              : "What's the API key of the Jira account?"
+          }
+          required={!existing}
+          autoComplete="new-password"
+        />
+
+        <Field
+          as={FormikTextInput}
+          name="outputConfig.jira.assigneeId"
+          label="Assignee ID"
+          placeholder="Who should we assign this to?"
+        />
+        <Box as="fieldset">
+          <Field
+            as={FormikTextInput}
+            name="outputConfig.jira.issueType"
+            label="* Issue Type"
+            placeholder="What type of issue you want us to create?"
+            required
+          />
+          <FormHelperText id="issueType-helper" mt={2}>
+            Can be Bug, Story, Task or any custom type
+          </FormHelperText>
+        </Box>
+      </SimpleGrid>
     </BaseDestinationForm>
   );
 };

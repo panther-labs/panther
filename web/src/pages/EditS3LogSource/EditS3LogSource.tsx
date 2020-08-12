@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Card, useSnackbar } from 'pouncejs';
+import { useSnackbar } from 'pouncejs';
 import urls from 'Source/urls';
 import Page404 from 'Pages/404';
 import useRouter from 'Hooks/useRouter';
@@ -64,26 +64,24 @@ const EditS3LogSource: React.FC = () => {
   }
 
   return (
-    <Card p={9} mb={6}>
-      <S3LogSourceWizard
-        initialValues={initialValues}
-        externalErrorMessage={updateError && extractErrorMessage(updateError)}
-        onSubmit={values =>
-          updateLogSource({
-            variables: {
-              input: {
-                integrationId: values.integrationId,
-                integrationLabel: values.integrationLabel,
-                s3Bucket: values.s3Bucket,
-                logTypes: values.logTypes,
-                s3Prefix: values.s3Prefix || null,
-                kmsKey: values.kmsKey || null,
-              },
+    <S3LogSourceWizard
+      initialValues={initialValues}
+      externalErrorMessage={updateError && extractErrorMessage(updateError)}
+      onSubmit={values =>
+        updateLogSource({
+          variables: {
+            input: {
+              integrationId: values.integrationId,
+              integrationLabel: values.integrationLabel,
+              s3Bucket: values.s3Bucket,
+              logTypes: values.logTypes,
+              s3Prefix: values.s3Prefix || null,
+              kmsKey: values.kmsKey || null,
             },
-          })
-        }
-      />
-    </Card>
+          },
+        })
+      }
+    />
   );
 };
 

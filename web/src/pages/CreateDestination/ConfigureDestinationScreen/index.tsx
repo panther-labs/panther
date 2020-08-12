@@ -16,25 +16,5 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { SIDESHEETS } from 'Components/utils/Sidesheet';
-import { Button } from 'pouncejs';
-import useSidesheet from 'Hooks/useSidesheet';
-
-const DestinationCreateButton: React.FC = () => {
-  const { showSidesheet } = useSidesheet();
-  return (
-    <Button
-      icon="add"
-      onClick={() =>
-        showSidesheet({
-          sidesheet: SIDESHEETS.ADD_DESTINATION,
-        })
-      }
-    >
-      Add Destination
-    </Button>
-  );
-};
-
-export default DestinationCreateButton;
+export { default } from './ConfigureDestinationScreen';
+export type { ForwardedStepContextValue } from './ConfigureDestinationScreen';

@@ -25,6 +25,7 @@ import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
+import { SimpleGrid } from 'pouncejs';
 
 type OpsgenieFieldValues = Pick<DestinationConfigInput, 'opsgenie'>;
 
@@ -55,19 +56,28 @@ const OpsgenieDestinationForm: React.FC<OpsgenieDestinationFormProps> = ({
       validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
-      <Field
-        as={FormikTextInput}
-        type="password"
-        name="outputConfig.opsgenie.apiKey"
-        label="Opsgenie API key"
-        placeholder={
-          existing
-            ? 'Information is hidden. New values will override the existing ones.'
-            : "What's your organization's Opsgenie API key?"
-        }
-        required={!existing}
-        autoComplete="new-password"
-      />
+      <SimpleGrid gap={5} columns={2}>
+        <Field
+          name="displayName"
+          as={FormikTextInput}
+          label="* Display Name"
+          placeholder="How should we name this?"
+          required
+        />
+        <Field
+          as={FormikTextInput}
+          type="password"
+          name="outputConfig.opsgenie.apiKey"
+          label="Opsgenie API key"
+          placeholder={
+            existing
+              ? 'Information is hidden. New values will override the existing ones.'
+              : "What's your organization's Opsgenie API key?"
+          }
+          required={!existing}
+          autoComplete="new-password"
+        />
+      </SimpleGrid>
     </BaseDestinationForm>
   );
 };

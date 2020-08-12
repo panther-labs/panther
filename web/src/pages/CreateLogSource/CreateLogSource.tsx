@@ -18,7 +18,6 @@
 
 import React from 'react';
 import withSEO from 'Hoc/withSEO';
-import { Card } from 'pouncejs';
 import useRouter from 'Hooks/useRouter';
 import Page404 from 'Pages/404';
 import CreateS3LogSource from './CreateS3LogSource';
@@ -31,21 +30,14 @@ const CreateLogSource: React.FC = () => {
     },
   } = useRouter();
 
-  const renderWizard = logType => {
-    switch (logType) {
-      case 'S3':
-        return <CreateS3LogSource />;
-      case 'SQS':
-        return <CreateSqsSource />;
-      default:
-        return <Page404 />;
-    }
-  };
-  return (
-    <Card p={9} mb={6}>
-      {renderWizard(type)}
-    </Card>
-  );
+  switch (type) {
+    case 'S3':
+      return <CreateS3LogSource />;
+    case 'SQS':
+      return <CreateSqsSource />;
+    default:
+      return <Page404 />;
+  }
 };
 
 export default withSEO({ title: 'New Log Analysis Source' })(CreateLogSource);

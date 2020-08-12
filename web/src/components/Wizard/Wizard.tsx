@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Flex, Icon, Text, Divider } from 'pouncejs';
+import { Box, Flex, Icon, Text, Divider, Card } from 'pouncejs';
 import { WizardContext } from './WizardContext';
 
 export interface WizardStepProps {
@@ -25,16 +25,17 @@ export interface WizardStepProps {
 }
 
 interface WizardProps {
-  hideHeader?: boolean;
+  header?: boolean;
 }
 
 interface WizardComposition {
   Step: React.FC<WizardStepProps>;
 }
 
-const Wizard: React.FC<WizardProps> & WizardComposition = ({ children, hideHeader = false }) => {
+const Wizard: React.FC<WizardProps> & WizardComposition = ({ children, header = true }) => {
   const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
   const prevStepIndex = React.useRef<number>(null);
+  const stepContext = React.useRef<any>(null);
 
   const steps = React.useMemo(() => React.Children.toArray(children) as React.ReactElement[], [
     children,
@@ -44,7 +45,8 @@ const Wizard: React.FC<WizardProps> & WizardComposition = ({ children, hideHeade
    * Goes to the the chosen wizard step
    */
   const goToStep = React.useCallback(
-    stepIndex => {
+    (stepIndex, context?: any) => {
+      stepContext.current = context !== undefined ? context : null;
       prevStepIndex.current = stepIndex > currentStepIndex ? currentStepIndex : stepIndex - 1;
       setCurrentStepIndex(stepIndex);
     },
@@ -54,20 +56,26 @@ const Wizard: React.FC<WizardProps> & WizardComposition = ({ children, hideHeade
   /**
    * Goes to the previous wizard step
    */
-  const goToPrevStep = React.useCallback(() => {
-    if (prevStepIndex.current >= 0) {
-      goToStep(prevStepIndex.current);
-    }
-  }, [prevStepIndex]);
+  const goToPrevStep = React.useCallback(
+    (context?: any) => {
+      if (prevStepIndex.current >= 0) {
+        goToStep(prevStepIndex.current, context);
+      }
+    },
+    [prevStepIndex]
+  );
 
   /**
    * Goes to the next wizard step
    */
-  const goToNextStep = React.useCallback(() => {
-    if (currentStepIndex < steps.length - 1) {
-      goToStep(currentStepIndex + 1);
-    }
-  }, [currentStepIndex]);
+  const goToNextStep = React.useCallback(
+    (context?: any) => {
+      if (currentStepIndex < steps.length - 1) {
+        goToStep(currentStepIndex + 1, context);
+      }
+    },
+    [currentStepIndex]
+  );
 
   /*
    * Exposes handlers to any components below
@@ -76,13 +84,14 @@ const Wizard: React.FC<WizardProps> & WizardComposition = ({ children, hideHeade
     () => ({
       goToPrevStep,
       goToNextStep,
+      stepContext: stepContext.current,
     }),
-    [goToPrevStep, goToNextStep]
+    [goToPrevStep, goToNextStep, stepContext]
   );
 
   return (
-    <Box as="article" width={1} position="relative">
-      {!hideHeader && (
+    <Card p={6} mb={6} as="article" width={1}>
+      {header && (
         <Flex as="ul" justify="center" pt="10px" zIndex={2}>
           {steps.map((step, index) => {
             const isLast = index === steps.length - 1;
@@ -121,12 +130,12 @@ const Wizard: React.FC<WizardProps> & WizardComposition = ({ children, hideHeade
           })}
         </Flex>
       )}
-      <Box>
+      <Box position="relative" pt={3}>
         <WizardContext.Provider value={contextValue}>
           {steps[currentStepIndex]}
         </WizardContext.Provider>
       </Box>
-    </Box>
+    </Card>
   );
 };
 

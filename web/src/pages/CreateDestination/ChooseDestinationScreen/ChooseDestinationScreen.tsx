@@ -17,41 +17,36 @@
  */
 
 import React from 'react';
-import { Box, Flex, Heading, Text } from 'pouncejs';
+import { SimpleGrid } from 'pouncejs';
 import { DESTINATIONS } from 'Source/constants';
 import { DestinationTypeEnum } from 'Generated/schema';
-import DestinationCard from '../DestinationCard';
+import { useWizardContext, WizardPanelWrapper } from 'Components/Wizard';
+import DestinationCard from './DestinationCard';
+
+export type ForwardedStepContextValue = { destination: DestinationTypeEnum };
 
 const destinationConfigs = Object.values(DESTINATIONS);
 
-interface ChooseDestinationScreenProps {
-  chooseDestination: (destination: DestinationTypeEnum) => void;
-}
-
-export const ChooseDestinationScreen: React.FC<ChooseDestinationScreenProps> = ({
-  chooseDestination,
-}) => {
+export const ChooseDestinationScreen: React.FC = () => {
+  const { goToNextStep } = useWizardContext<ForwardedStepContextValue>();
   return (
     <React.Fragment>
-      <Box mb={8}>
-        <Heading mb={6} id="sidesheet-title">
-          Select an Alert Destination
-        </Heading>
-        <Text color="gray-300" id="sidesheet-description">
-          Add a new destination below to deliver alerts to a specific application for further triage
-        </Text>
-      </Box>
-      <Flex justify="space-between" flexWrap="wrap">
+      <WizardPanelWrapper.Heading
+        title="Select an Alert Destination"
+        subtitle="Add a new destination below to deliver alerts to a specific application for further triage"
+      />
+      <SimpleGrid columns={3} gap={5}>
         {destinationConfigs.map(destinationConfig => (
-          <Box width={224} mb={4} key={destinationConfig.title}>
-            <DestinationCard
-              logo={destinationConfig.logo}
-              title={destinationConfig.title}
-              onClick={() => chooseDestination(destinationConfig.type)}
-            />
-          </Box>
+          <DestinationCard
+            key={destinationConfig.title}
+            logo={destinationConfig.logo}
+            title={destinationConfig.title}
+            onClick={() => {
+              goToNextStep({ destination: destinationConfig.type });
+            }}
+          />
         ))}
-      </Flex>
+      </SimpleGrid>
     </React.Fragment>
   );
 };
