@@ -55,7 +55,7 @@ func TestGlobalRegister(t *testing.T) {
 	}
 	v := T{}
 	api := jsoniter.Config{}.Froze()
-	api.RegisterExtension(NewExtension(Config{}))
+	api.RegisterExtension(&Extension{})
 	require.NoError(t, api.UnmarshalFromString(`{"time":"2020"}`, &v))
 	expect := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 	require.Equal(t, expect, v.Time.UTC())
@@ -184,9 +184,8 @@ func TestUnixSecondsDecoder(t *testing.T) {
 }
 
 func TestPointers(t *testing.T) {
-	ext := NewExtension(Config{})
 	api := jsoniter.Config{}.Froze()
-	api.RegisterExtension(ext)
+	api.RegisterExtension(&Extension{})
 	type T struct {
 		Time *time.Time `json:"tm,omitempty" tcodec:"unix"`
 	}

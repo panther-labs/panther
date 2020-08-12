@@ -35,13 +35,7 @@ func TestNewExtension(t *testing.T) {
 		TimeCustom  time.Time `json:"t_custom,omitempty" tcodec:"layout=2006-01-02"`
 		Time        time.Time `json:"t,omitempty"`
 	}
-	ext := NewExtension(Config{
-		DecorateCodec: func(codec TimeCodec) TimeCodec {
-			dec, _ := Split(codec)
-			enc := EncodeIn(time.UTC, LayoutCodec(time.RFC3339Nano))
-			return Join(dec, enc)
-		},
-	})
+	ext := &Extension{}
 	api := jsoniter.Config{}.Froze()
 	api.RegisterExtension(ext)
 
@@ -65,107 +59,13 @@ func TestNewExtension(t *testing.T) {
 	require.Equal(t, expect, actual.TimeRFC3339.UTC().Format(time.RFC3339Nano), "rfc3339")
 	require.Equal(t, expect, actual.TimeUnix.UTC().Format(time.RFC3339Nano), "unix")
 	require.Equal(t, expect, actual.TimeUnixMS.UTC().Format(time.RFC3339Nano), "unix_ms")
-
-	{
-		actual, err := api.MarshalToString(T{})
-		require.NoError(t, err)
-		require.Equal(t, `{}`, actual)
-	}
-	{
-		loc, _ := time.LoadLocation("Europe/Athens")
-		expect := time.Date(2020, 7, 3, 15, 12, 45, 0, loc)
-		actual, err := api.MarshalToString(T{
-			TimeRFC3339: expect,
-		})
-		require.NoError(t, err)
-		require.Equal(t, `{"t_rfc":"2020-07-03T12:12:45Z"}`, actual)
-	}
-	{
-		// Test that we use the default `encoding/json` behavior when no `tcodec` spec exists
-		loc, _ := time.LoadLocation("Europe/Athens")
-		expect := time.Date(2020, 7, 3, 15, 12, 45, 0, loc)
-		input := `{"t":"2020-07-03T12:12:45Z"}`
-		actual := T{}
-		err := api.UnmarshalFromString(input, &actual)
-		require.NoError(t, err)
-		require.Equal(t, expect, actual.Time.In(loc))
-		actualJSON, err := api.MarshalToString(&actual)
-		require.NoError(t, err)
-		require.Equal(t, `{"t":"2020-07-03T12:12:45Z"}`, actualJSON)
-	}
-}
-
-func TestConfig(t *testing.T) {
-	{
-		var ext Extension
-		require.Equal(t, DefaultTagName, ext.TagName())
-	}
-	{
-		ext := NewExtension(Config{})
-		require.Equal(t, DefaultTagName, ext.TagName())
-	}
-	{
-		ext := NewExtension(Config{
-			TagName: "foo",
-		})
-		require.Equal(t, "foo", ext.TagName())
-		type T struct {
-			Time time.Time `json:"tm" foo:"rfc3339"`
-		}
-		v := T{}
-		api := jsoniter.Config{}.Froze()
-		api.RegisterExtension(ext)
-		require.NoError(t, api.UnmarshalFromString(`{"tm":"2006-01-02T15:04:05.999Z"}`, &v))
-		expect := time.Date(2006, 1, 2, 15, 4, 5, 999*int(time.Millisecond), time.UTC)
-		require.Equal(t, expect.Format(time.RFC3339Nano), v.Time.Format(time.RFC3339Nano))
-	}
-	{
-		loc, err := time.LoadLocation("Europe/Athens")
-		require.NoError(t, err)
-		ext := NewExtension(Config{
-			DecorateCodec: func(codec TimeCodec) TimeCodec {
-				return In(loc, codec)
-			},
-		})
-		type T struct {
-			Time time.Time `json:"tm" tcodec:"rfc3339"`
-			Foo  string    `json:"foo,omitempty"`
-		}
-		v := T{}
-		api := jsoniter.Config{}.Froze()
-		api.RegisterExtension(ext)
-		require.NoError(t, api.UnmarshalFromString(`{"tm":"2006-01-02T15:04:05.999Z"}`, &v))
-		require.Equal(t, loc, v.Time.Location())
-		v.Time = v.Time.UTC()
-		actual, err := api.MarshalToString(&v)
-		require.NoError(t, err)
-		require.Equal(t, `{"tm":"2006-01-02T17:04:05.999+02:00"}`, actual)
-	}
-	{
-		ext := NewExtension(Config{
-			DefaultCodec: UnixSecondsCodec(),
-		})
-		type T struct {
-			Time time.Time `json:"tm"`
-			Foo  string
-		}
-		v := T{}
-		api := jsoniter.Config{}.Froze()
-		api.RegisterExtension(ext)
-		require.NoError(t, api.UnmarshalFromString(`{"tm":"1595257966.369"}`, &v))
-		expect := time.Date(2020, 7, 20, 15, 12, 46, int(0.369*float64(time.Second.Nanoseconds())), time.UTC)
-		require.Equal(t, expect.Local().Format(time.RFC3339Nano), v.Time.Format(time.RFC3339Nano))
-	}
 }
 
 func TestPointerZeroValues(t *testing.T) {
-	ext := NewExtension(Config{
-		DefaultCodec: UnixSecondsCodec(),
-	})
 	api := jsoniter.Config{}.Froze()
-	api.RegisterExtension(ext)
+	api.RegisterExtension(&Extension{})
 	type T struct {
-		Time *time.Time `json:"tm,omitempty"`
+		Time *time.Time `json:"tm,omitempty" tcodec:"unix"`
 	}
 	now := time.Now()
 	{
@@ -201,7 +101,7 @@ func TestPointerZeroValues(t *testing.T) {
 	}
 	{
 		type T struct {
-			Time time.Time `json:"tm"`
+			Time time.Time `json:"tm" tcodec:"unix"`
 		}
 		actual, err := api.MarshalToString(T{})
 		require.NoError(t, err)
@@ -209,7 +109,7 @@ func TestPointerZeroValues(t *testing.T) {
 	}
 	{
 		type T struct {
-			Time *time.Time `json:"tm"`
+			Time *time.Time `json:"tm" tcodec:"unix"`
 		}
 		actual, err := api.MarshalToString(T{})
 		require.NoError(t, err)

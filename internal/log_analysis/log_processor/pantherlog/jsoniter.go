@@ -29,6 +29,7 @@ import (
 	"github.com/modern-go/reflect2"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
 )
 
 const (

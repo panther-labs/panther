@@ -299,7 +299,7 @@ func (d *locDecoder) DecodeTime(iter *jsoniter.Iterator) time.Time {
 
 func NewTimeEncoder(enc TimeEncoder, typ reflect.Type) jsoniter.ValEncoder {
 	if enc == nil {
-		return nil
+		enc = StdCodec()
 	}
 	switch typ {
 	case typTime:
@@ -317,7 +317,7 @@ func NewTimeEncoder(enc TimeEncoder, typ reflect.Type) jsoniter.ValEncoder {
 
 func NewTimeDecoder(dec TimeDecoder, typ reflect.Type) jsoniter.ValDecoder {
 	if dec == nil {
-		return nil
+		dec = StdCodec()
 	}
 	switch typ {
 	case typTime:
@@ -343,12 +343,13 @@ func StdCodec() TimeCodec {
 
 type stdCodec struct{}
 
-func (*stdCodec) DecodeTime(iter *jsoniter.Iterator) (tm time.Time) {
-	data := iter.SkipAndReturnBytes()
-	if err := tm.UnmarshalJSON(data); err != nil {
+func (*stdCodec) DecodeTime(iter *jsoniter.Iterator) time.Time {
+	ts := iter.ReadString()
+	tm, err := time.Parse(time.RFC3339, ts)
+	if err != nil {
 		iter.ReportError(`DecodeTime`, err.Error())
 	}
-	return
+	return tm
 }
 
 const layoutRFC3339NanoJSON = `"` + time.RFC3339Nano + `"`
@@ -387,4 +388,10 @@ func (d *tryDecoder) DecodeTime(iter *jsoniter.Iterator) time.Time {
 	iter.Error = child.Error
 	child.Pool().ReturnIterator(child)
 	return time.Time{}
+}
+
+type Time = time.Time
+
+func init() {
+	jsoniter.RegisterExtension(&Extension{})
 }
