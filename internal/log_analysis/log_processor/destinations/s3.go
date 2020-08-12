@@ -39,7 +39,6 @@ import (
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
@@ -78,7 +77,13 @@ func init() {
 	memUsedAtStartupMB = (int)(memStats.Sys/(bytesPerMB)) + 1
 }
 
-func CreateS3Destination(registry *logtypes.Registry) Destination {
+func CreateS3Destination(registry *logtypes.Registry, jsonAPI jsoniter.API) Destination {
+	if jsonAPI == nil {
+		jsonAPI = jsoniter.ConfigDefault
+	}
+	if registry == nil {
+		registry = logtypes.DefaultRegistry()
+	}
 	return &S3Destination{
 		s3Uploader:          common.S3Uploader,
 		snsClient:           common.SnsClient,
@@ -87,6 +92,7 @@ func CreateS3Destination(registry *logtypes.Registry) Destination {
 		maxBufferedMemBytes: maxS3BufferMemUsageBytes(common.Config.AwsLambdaFunctionMemorySize),
 		maxDuration:         maxDuration,
 		registry:            registry,
+		jsonAPI:             jsonAPI,
 	}
 }
 
@@ -129,10 +135,11 @@ type S3Destination struct {
 	maxBufferedMemBytes uint64 // max will hold in buffers before ejection
 	maxDuration         time.Duration
 	registry            *logtypes.Registry
+	jsonAPI             jsoniter.API
 }
 
 // SendEvents stores events in S3.
-// It continuously reads events from outputChannel, groups them in batches per log type
+// It continuously reads events from parsedEventChannel, groups them in batches per log type
 // and stores them in the appropriate S3 path. If the method encounters an error
 // it writes an error to the errorChannel and continues until channel is closed (skipping events).
 // The sendData() method is called as go routine to allow processing to continue and hide network latency.
@@ -143,18 +150,20 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Re
 
 	// use a single go routine for safety/back pressure when writing to s3 concurrently with buffer accumulation
 	var sendWaitGroup sync.WaitGroup
+	// FIXME: We risk a panic causing a memory leak by never exiting the write goroutine (see below).
 	sendChan := make(chan *s3EventBuffer) // unbuffered for back pressure (we want only 1 sendData() in flight)
 	sendWaitGroup.Add(1)
 	go func() {
+		// Make sure a panic does not prevent SendEvents from exiting
+		defer sendWaitGroup.Done()
 		for buffer := range sendChan {
 			destination.sendData(buffer, errChan)
 		}
-		sendWaitGroup.Done()
 	}()
 
 	// accumulate results gzip'd in a buffer
 	failed := false // set to true on error and loop will drain channel
-	bufferSet := newS3EventBufferSet()
+	bufferSet := newS3EventBufferSet(destination.jsonAPI)
 	eventsProcessed := 0
 	zap.L().Debug("starting to read events from channel")
 	for event := range parsedEventChannel {
@@ -175,32 +184,16 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Re
 			})
 		default: // makes select non-blocking
 		}
-
-		buffer := bufferSet.getBuffer(event)
-
-		err := bufferSet.addEvent(buffer, event)
+		buffer, err := bufferSet.writeEvent(event, maxS3BufferSizeBytes, int(destination.maxBufferedMemBytes))
 		if err != nil {
 			failed = true
-			errChan <- err
+			zap.L().Debug(`aborting log processing: failed to write event`, zap.Error(err), zap.String(`logType`, event.PantherLogType))
+			errChan <- errors.Wrapf(err, "failed to write event %s", event.PantherLogType)
 			continue
 		}
-
-		// Check if buffer is bigger than threshold for a single buffer
-		if buffer.bytes >= maxS3BufferSizeBytes {
-			bufferSet.removeBuffer(buffer) // bufferSet is not thread safe, do this here
+		// buffer needs flushing
+		if buffer != nil {
 			sendChan <- buffer
-		}
-
-		// Check if bufferSet is bigger than threshold for total memory usage
-		if bufferSet.totalBufferedMemBytes >= destination.maxBufferedMemBytes {
-			largestBuffer := bufferSet.largestBuffer()
-			if largestBuffer == nil { // this should NEVER happen since we exceeded threshold
-				zap.L().Error("bufferSet error",
-					zap.Error(errors.New("non-empty bufferSet does not have buffer")))
-			} else {
-				bufferSet.removeBuffer(largestBuffer) // bufferSet is not thread safe, do this here
-				sendChan <- buffer
-			}
 		}
 
 		eventsProcessed++
@@ -218,6 +211,10 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Re
 		return nil
 	})
 
+	// FIXME: closing the channel here is appropriate but we risk a panic leaving the write goroutine open forever.
+	// causing a memory leak. To fix this we need to have the reading of results in a goroutine and keep the writing here.
+	// We need to wrap the read loop in a separate function and synchronize with defer close(sendChan).
+	// Write failures should also abort the whole log processing so this is more complex than it looks.
 	close(sendChan)
 	sendWaitGroup.Wait() // wait until all writes to s3 are done
 
@@ -320,8 +317,9 @@ func (destination *S3Destination) getS3ObjectKey(logType string, timestamp time.
 		return "", errors.Errorf(`unknown log type %q`, logType)
 	}
 	meta := typ.GlueTableMeta()
+	timestamp = timestamp.UTC()
 	return fmt.Sprintf(s3ObjectKeyFormat,
-		meta.GetPartitionPrefix(timestamp.UTC()), // get the path to store the data in S3
+		meta.GetPartitionPrefix(timestamp), // get the path to store the data in S3
 		timestamp.Format(S3ObjectTimestampFormat),
 		uuid.New().String(),
 	), nil
@@ -331,17 +329,74 @@ func (destination *S3Destination) getS3ObjectKey(logType string, timestamp time.
 type s3EventBufferSet struct {
 	totalBufferedMemBytes uint64 // managed by addEvent() and removeBuffer()
 	set                   map[time.Time]map[string]*s3EventBuffer
+	stream                *jsoniter.Stream
 }
 
-func newS3EventBufferSet() *s3EventBufferSet {
+func newS3EventBufferSet(jsonAPI jsoniter.API) *s3EventBufferSet {
+	const initialBufferSize = 8192
+	// Stream will be a buffered stream
+	stream := jsoniter.NewStream(jsonAPI, nil, initialBufferSize)
 	return &s3EventBufferSet{
-		set: make(map[time.Time]map[string]*s3EventBuffer),
+		stream: stream,
+		set:    make(map[time.Time]map[string]*s3EventBuffer),
 	}
 }
 
+func (bs *s3EventBufferSet) writeEvent(event *parsers.Result, maxBufferSize, maxTotalSize int) (buf *s3EventBuffer, err error) {
+	// HERE BE DRAGONS
+	// We need to first serialize the event to JSON for events that only set the event time via `panther:"event_time"` tag.
+	// This includes custom logs and other simple struct-based events.
+	stream := bs.stream
+	stream.Reset(nil)
+	stream.WriteVal(event)
+	// By now if the event has event time defined then event.PantherEventTime will be a non-zero value
+	err, stream.Error = stream.Error, nil
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to serialize event to JSON")
+	}
+	// Just in case something was amiss elsewhere `getBuffer` checks again and uses PantherParseTime and Time.Now() as fallbacks.
+	buf = bs.getBuffer(event)
+	if buf == nil {
+		return nil, errors.New(`could not resolve a buffer for the event`)
+	}
+	n, err := buf.addEvent(stream.Buffer())
+	bs.totalBufferedMemBytes += uint64(n)
+	if err != nil {
+		return nil, err
+	}
+	// Check if buffer is bigger than threshold for a single buffer
+	if buf.bytes >= maxBufferSize {
+		bs.removeBuffer(buf) // bufferSet is not thread safe, do this here
+		return buf, nil
+	}
+	// Check if bufferSet is bigger than threshold for total memory usage
+	if bs.totalBufferedMemBytes >= uint64(maxTotalSize) {
+		if buf := bs.largestBuffer(); buf != nil {
+			bs.removeBuffer(buf)
+			return buf, nil
+		}
+		// this should NEVER happen since we exceeded threshold
+		zap.L().Error("bufferSet error",
+			zap.Error(errors.New("non-empty bufferSet does not have buffer")))
+	}
+
+	return nil, nil
+}
+
 func (bs *s3EventBufferSet) getBuffer(event *parsers.Result) *s3EventBuffer {
+	// Make sure we have a valid time to set the event partition
+	// If the event had no event time we use PantherParseTime and time.Now as fallbacks
+	eventTime := event.PantherEventTime
+	if eventTime.IsZero() {
+		eventTime = event.PantherParseTime
+		if eventTime.IsZero() {
+			return nil
+		}
+	}
 	// bin by hour (this is our partition size)
-	hour := event.PantherEventTime.Truncate(time.Hour)
+	// We convert to UTC here so truncation does not affect the partition in the weird half-hour timezones if for
+	// some reason (bug) a non-UTC timestamp got through.
+	hour := eventTime.UTC().Truncate(time.Hour)
 
 	logTypeToBuffer, ok := bs.set[hour]
 	if !ok {
@@ -357,12 +412,6 @@ func (bs *s3EventBufferSet) getBuffer(event *parsers.Result) *s3EventBuffer {
 	}
 
 	return buffer
-}
-
-func (bs *s3EventBufferSet) addEvent(buffer *s3EventBuffer, event *pantherlog.Result) error {
-	eventBytes, err := buffer.addEvent(event)
-	bs.totalBufferedMemBytes += (uint64)(eventBytes)
-	return err
 }
 
 func (bs *s3EventBufferSet) removeBuffer(buffer *s3EventBuffer) {
@@ -422,18 +471,11 @@ func newS3EventBuffer(logType string, hour time.Time) *s3EventBuffer {
 	}
 }
 
-// Use a properly configured jsoniter API for panther log events
-var jsonAPI = common.BuildJSON()
-
 // addEvent adds new data to the s3EventBuffer, return bytes added and error
-func (b *s3EventBuffer) addEvent(event *pantherlog.Result) (int, error) {
+func (b *s3EventBuffer) addEvent(data []byte) (int, error) {
+	// FIXME: To have proper JSONL data in the buffers we need to write "\n" *before* writing the JSON if startBufferSize is zero
 	startBufferSize := b.buffer.Len()
-	stream := jsonAPI.BorrowStream(b.writer)
-	stream.WriteVal(event)
-	err := stream.Flush()
-	stream.Pool().ReturnStream(stream)
-	if err != nil {
-		err = errors.Wrapf(err, "failed to serialize event to JSON %s", event.PantherLogType)
+	if _, err := b.writer.Write(data); err != nil {
 		return 0, err
 	}
 	if _, err := b.writer.Write(newLineDelimiter); err != nil {
