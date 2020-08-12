@@ -19,16 +19,14 @@
 import React from 'react';
 import { SimpleGrid } from 'pouncejs';
 import { DESTINATIONS } from 'Source/constants';
-import { DestinationTypeEnum } from 'Generated/schema';
 import { useWizardContext, WizardPanelWrapper } from 'Components/Wizard';
 import DestinationCard from './DestinationCard';
-
-export type ForwardedStepContextValue = { destination: DestinationTypeEnum };
+import { WizardData } from '../CreateDestination';
 
 const destinationConfigs = Object.values(DESTINATIONS);
 
 export const ChooseDestinationScreen: React.FC = () => {
-  const { goToNextStep } = useWizardContext<ForwardedStepContextValue>();
+  const { goToNextStep, setData } = useWizardContext<WizardData>();
   return (
     <React.Fragment>
       <WizardPanelWrapper.Heading
@@ -42,7 +40,8 @@ export const ChooseDestinationScreen: React.FC = () => {
             logo={destinationConfig.logo}
             title={destinationConfig.title}
             onClick={() => {
-              goToNextStep({ destination: destinationConfig.type });
+              setData({ selectedDestinationType: destinationConfig.type });
+              goToNextStep();
             }}
           />
         ))}

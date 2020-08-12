@@ -33,23 +33,22 @@ import AsanaDestinationForm from 'Components/forms/AsanaDestinationForm';
 import CustomWebhookDestinationForm from 'Components/forms/CustomWebhookDestinationForm';
 import { capitalize, extractErrorMessage } from 'Helpers/utils';
 import { useWizardContext, WizardPanelWrapper } from 'Components/Wizard';
-import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
-import { ForwardedStepContextValue as ReceivedStepContextValue } from '../ChooseDestinationScreen';
 import { useAddDestination } from './graphql/addDestination.generated';
-
-export type ForwardedStepContextValue = { destination: DestinationFull };
+import { WizardData } from '../CreateDestination';
 
 const ConfigureDestinationScreen: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
   const {
     goToNextStep,
-    stepContext: { destination },
-  } = useWizardContext<ReceivedStepContextValue, ForwardedStepContextValue>();
+    data: { selectedDestinationType },
+    updateData,
+  } = useWizardContext<WizardData>();
 
   // If destination object doesn't exist, handleSubmit should call addDestination to create a new destination and use default initial values
   const [addDestination] = useAddDestination({
     onCompleted: data => {
-      goToNextStep({ destination: data.addDestination });
+      updateData({ destination: data.addDestination });
+      goToNextStep();
     },
     onError: error => {
       pushSnackbar({
@@ -77,7 +76,7 @@ const ConfigureDestinationScreen: React.FC = () => {
             defaultForSeverity,
 
             // dynamic form values that depend on the selected destination
-            outputType: destination,
+            outputType: selectedDestinationType,
             outputConfig,
           },
         },
@@ -100,7 +99,7 @@ const ConfigureDestinationScreen: React.FC = () => {
   };
 
   const renderFullDestinationForm = () => {
-    switch (destination) {
+    switch (selectedDestinationType) {
       case DestinationTypeEnum.Pagerduty:
         return (
           <PagerDutyDestinationForm
@@ -204,7 +203,9 @@ const ConfigureDestinationScreen: React.FC = () => {
   };
 
   const destinationDisplayName = capitalize(
-    destination === DestinationTypeEnum.Customwebhook ? 'Webhook' : destination
+    selectedDestinationType === DestinationTypeEnum.Customwebhook
+      ? 'Webhook'
+      : selectedDestinationType
   );
   return (
     <React.Fragment>

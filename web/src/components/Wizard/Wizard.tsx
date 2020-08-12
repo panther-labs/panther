@@ -16,26 +16,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
+import React, { ReactElement, ReactNode } from 'react';
 import { Box, Flex, Icon, Text, Divider, Card } from 'pouncejs';
 import { WizardContext } from './WizardContext';
 
-export interface WizardStepProps {
-  title?: string;
-}
-
-interface WizardProps {
+interface WizardProps<Data> {
+  children?: ReactNode;
   header?: boolean;
+  initialData?: Data;
 }
 
-interface WizardComposition {
-  Step: React.FC<WizardStepProps>;
-}
-
-const Wizard: React.FC<WizardProps> & WizardComposition = ({ children, header = true }) => {
+function Wizard<WizardData = any>({
+  children,
+  header = true,
+  initialData = undefined,
+}: WizardProps<WizardData>): ReactElement {
   const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
   const prevStepIndex = React.useRef<number>(null);
-  const stepContext = React.useRef<any>(null);
+  const [wizardData, setWizardData] = React.useState<WizardData>(initialData);
 
   const steps = React.useMemo(() => React.Children.toArray(children) as React.ReactElement[], [
     children,
@@ -45,37 +43,55 @@ const Wizard: React.FC<WizardProps> & WizardComposition = ({ children, header = 
    * Goes to the the chosen wizard step
    */
   const goToStep = React.useCallback(
-    (stepIndex, context?: any) => {
-      stepContext.current = context !== undefined ? context : null;
+    stepIndex => {
       prevStepIndex.current = stepIndex > currentStepIndex ? currentStepIndex : stepIndex - 1;
       setCurrentStepIndex(stepIndex);
     },
     [currentStepIndex]
   );
 
+  /*
+   * Resets the data to  the original value
+   */
+  const resetWizardData = React.useCallback(() => {
+    setWizardData(initialData);
+  }, [initialData, setWizardData]);
+
+  /*
+   *  Merges new data with the existing wizard data
+   */
+  const updateWizardData = React.useCallback(
+    data => {
+      setWizardData({ ...wizardData, ...data });
+    },
+    [wizardData, setWizardData]
+  );
+
   /**
    * Goes to the previous wizard step
    */
-  const goToPrevStep = React.useCallback(
-    (context?: any) => {
-      if (prevStepIndex.current >= 0) {
-        goToStep(prevStepIndex.current, context);
-      }
-    },
-    [prevStepIndex]
-  );
+  const goToPrevStep = React.useCallback(() => {
+    if (prevStepIndex.current >= 0) {
+      goToStep(prevStepIndex.current);
+    }
+  }, [prevStepIndex]);
 
   /**
    * Goes to the next wizard step
    */
-  const goToNextStep = React.useCallback(
-    (context?: any) => {
-      if (currentStepIndex < steps.length - 1) {
-        goToStep(currentStepIndex + 1, context);
-      }
-    },
-    [currentStepIndex]
-  );
+  const goToNextStep = React.useCallback(() => {
+    if (currentStepIndex < steps.length - 1) {
+      goToStep(currentStepIndex + 1);
+    }
+  }, [currentStepIndex]);
+
+  /**
+   * Fully resets the wizard,  including data and current step
+   */
+  const resetWizard = React.useCallback(() => {
+    resetWizardData();
+    setCurrentStepIndex(0);
+  }, [resetWizardData, setCurrentStepIndex]);
 
   /*
    * Exposes handlers to any components below
@@ -84,9 +100,13 @@ const Wizard: React.FC<WizardProps> & WizardComposition = ({ children, header = 
     () => ({
       goToPrevStep,
       goToNextStep,
-      stepContext: stepContext.current,
+      resetData: resetWizardData,
+      setData: setWizardData,
+      updateData: updateWizardData,
+      reset: resetWizard,
+      data: wizardData,
     }),
-    [goToPrevStep, goToNextStep, stepContext]
+    [goToPrevStep, goToNextStep, wizardData, resetWizardData, setWizardData, updateWizardData]
   );
 
   return (
@@ -137,11 +157,13 @@ const Wizard: React.FC<WizardProps> & WizardComposition = ({ children, header = 
       </Box>
     </Card>
   );
-};
+}
 
-export const WizardStep: React.FC<WizardStepProps> = ({ children }) =>
-  children as React.ReactElement;
+interface WizardStepProps {
+  title?: string;
+}
 
-Wizard.Step = React.memo(WizardStep);
+const WizardStep: React.FC<WizardStepProps> = ({ children }) => children as React.ReactElement;
+Wizard.Step = React.memo(WizardStep) as React.FC<WizardStepProps>;
 
 export default Wizard;

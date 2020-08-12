@@ -22,7 +22,6 @@ import { useWizardContext } from './WizardContext';
 
 interface WizardPanelWrapperAction {
   disabled?: boolean;
-  retainContext?: boolean;
 }
 
 interface WizardPanelHeadingProps {
@@ -52,7 +51,7 @@ const WizardPanelWrapperContent: React.FC = ({ children }) => {
 
 const WizardPanelHeading: React.FC<WizardPanelHeadingProps> = ({ title, subtitle }) => (
   <Box as="header" mb={10} textAlign="center">
-    <Heading size="small" mb={2}>
+    <Heading size="small" mb={2} fontWeight="medium">
       {title}
     </Heading>
     {!!subtitle && (
@@ -71,11 +70,8 @@ const WizardPanelWrapperActions: React.FC = ({ children }) => {
   );
 };
 
-const WizardPanelActionPrev: React.FC<WizardPanelWrapperAction> = ({
-  disabled,
-  retainContext = false,
-}) => {
-  const { goToPrevStep, stepContext } = useWizardContext();
+const WizardPanelActionPrev: React.FC<WizardPanelWrapperAction> = ({ disabled }) => {
+  const { goToPrevStep } = useWizardContext();
   return (
     <Box position="absolute" top={6} left={6}>
       <IconButton
@@ -83,23 +79,16 @@ const WizardPanelActionPrev: React.FC<WizardPanelWrapperAction> = ({
         icon="arrow-back"
         variantColor="navyblue"
         aria-label="Go back"
-        onClick={() => goToPrevStep(retainContext ? stepContext : undefined)}
+        onClick={goToPrevStep}
       />
     </Box>
   );
 };
 
-const WizardPanelActionNext: React.FC<WizardPanelWrapperAction> = ({
-  disabled,
-  children,
-  retainContext = false,
-}) => {
-  const { goToNextStep, stepContext } = useWizardContext();
+const WizardPanelActionNext: React.FC<WizardPanelWrapperAction> = ({ disabled, children }) => {
+  const { goToNextStep } = useWizardContext();
   return (
-    <Button
-      onClick={() => goToNextStep(retainContext ? stepContext : undefined)}
-      disabled={disabled}
-    >
+    <Button onClick={goToNextStep} disabled={disabled}>
       {children || 'Next'}
     </Button>
   );
