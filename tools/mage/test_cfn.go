@@ -227,39 +227,75 @@ func cfnTestFunction(logicalID, template string, resources map[string]cfnResourc
 func cfnValidateMaster(parsed map[string]cfnTemplate) []string {
 	var errs []string
 
-	for resourceID, resource := range parsed["deployments/master.yml"].Resources {
+	masterResources := parsed["deployments/master.yml"].Resources
+	for resourceID, resource := range masterResources {
 		if resource.Type != "AWS::CloudFormation::Stack" || resource.Properties["Parameters"] == nil {
 			continue
 		}
 
-		templateURL := resource.Properties["TemplateURL"].(string)
-		if filepath.Base(templateURL) == "embedded.bootstrap_gateway.yml" {
-			// For the purposes of this test, read the original template, not the one with embedded swagger
-			templateURL = "bootstrap_gateway.yml"
-		}
-		templateURL = filepath.Join("deployments", templateURL)
-
+		templatePath := resolvedTemplatePath(resource)
 		// Compare the parameters passed in the master stack to those defined in the nested stack
 		// Note: all nested stack parameters are required
 		passedParams := resource.Properties["Parameters"].(map[string]interface{})
-		for paramName := range parsed[templateURL].Parameters {
+		for paramName := range parsed[templatePath].Parameters {
 			if _, exists := passedParams[paramName]; !exists {
 				errs = append(errs, fmt.Sprintf(
-					"deployments/master.yml: %s is missing required parameter %s",
+					"deployments/master.yml: %s: missing required parameter %s",
 					resourceID, paramName))
 			}
 		}
 
 		for paramName := range passedParams {
-			if _, exists := parsed[templateURL].Parameters[paramName]; !exists {
+			if _, exists := parsed[templatePath].Parameters[paramName]; !exists {
 				errs = append(errs, fmt.Sprintf(
 					"deployments/master.yml: %s: parameter %s does not exist",
 					resourceID, paramName))
 			}
 		}
+
+		// Ensure all stack output references are valid. For example,
+		//    !GetAtt Bootstrap.Outputs.AlarmTopicArn
+		//
+		// will be parsed as:
+		//    {"Fn::GetAtt": ["Bootstrap", "Outputs.AlarmTopicArn"]}
+		for name, value := range passedParams {
+			valMap, ok := value.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			getAtt, ok := valMap["Fn::GetAtt"].([]interface{})
+			if !ok {
+				continue
+			}
+
+			stack := getAtt[0].(string)
+			if masterResources[stack].Type != "AWS::CloudFormation::Stack" {
+				// Some other !GetAtt, not a cross-stack reference
+				continue
+			}
+			output := strings.TrimPrefix(getAtt[1].(string), "Outputs.")
+
+			// Look up the outputs of the referenced stack
+			refPath := resolvedTemplatePath(masterResources[stack])
+			if _, exists := parsed[refPath].Outputs[output]; !exists {
+				errs = append(errs, fmt.Sprintf(
+					"deployments/master.yml: %s.Properties.Parameters.%s: output %s does not exist in %s",
+					resourceID, name, output, stack))
+			}
+		}
 	}
 
 	return errs
+}
+
+// Given a stack resource, return the templateURL relative to the repo root
+func resolvedTemplatePath(stackResource cfnResource) string {
+	templateURL := stackResource.Properties["TemplateURL"].(string)
+	if filepath.Base(templateURL) == "embedded.bootstrap_gateway.yml" {
+		// For the purposes of the tests, read the original template, not the one with embedded swagger
+		templateURL = "bootstrap_gateway.yml"
+	}
+	return filepath.Join("deployments", templateURL)
 }
 
 func testTfValidate() error {
