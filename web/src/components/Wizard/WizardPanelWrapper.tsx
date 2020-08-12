@@ -78,7 +78,7 @@ const WizardPanelActionPrev: React.FC<WizardPanelWrapperAction> = ({ disabled })
         disabled={disabled}
         icon="arrow-back"
         variantColor="navyblue"
-        aria-label="Go back"
+        aria-label="Go Back"
         onClick={goToPrevStep}
       />
     </Box>

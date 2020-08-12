@@ -17,6 +17,7 @@
  */
 
 import faker from 'faker';
+import { fireEvent } from '@testing-library/react';
 
 /**
  * Selects a random element from an array
@@ -44,4 +45,16 @@ export function generateRandomArray<T>(func: (index: number) => T, min = 0, max 
  */
 export function waitMs(ms = 0) {
   return new Promise(r => setTimeout(r, ms));
+}
+
+/**
+ * Fires all related events that would simulate a typical click. A lot of Reach-UI components expect
+ * mouseevents instead of click ones. This helper allows us to use all of them at once
+ * @param element HTML element
+ */
+export function fireClickAndMouseEvents(element: HTMLElement) {
+  fireEvent.mouseMove(element);
+  fireEvent.mouseDown(element);
+  fireEvent.mouseUp(element);
+  fireEvent.click(element);
 }

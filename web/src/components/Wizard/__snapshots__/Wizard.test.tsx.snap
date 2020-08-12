@@ -1,0 +1,77 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Wizard renders a step 1`] = `
+<div>
+  <article
+    class="css-ohs38u-Box e1fc5tbl0"
+  >
+    <ul
+      class="css-1f33fcb-Box e1fc5tbl0"
+    >
+      <li
+        class="css-rvvuib-Box e1fc5tbl0"
+      >
+        <div
+          class="css-xxr4gn-Box e1fc5tbl0"
+        >
+          <svg
+            class="css-1ivya6n-Box e1fc5tbl0"
+            role="presentation"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M8.99991 16.17L4.82991 12L3.40991 13.41L8.99991 19L20.9999 6.99997L19.5899 5.58997L8.99991 16.17Z"
+            />
+          </svg>
+        </div>
+        <p
+          class="css-1n91m9j-Box e1fc5tbl0"
+        >
+          Step Nickname
+        </p>
+      </li>
+    </ul>
+    <div
+      class="css-uo8b0h-Box e1fc5tbl0"
+    >
+      <div
+        class="css-1lbgvul-Box e1fc5tbl0"
+      >
+        <div
+          class="css-1uxxjp9-Box e1fc5tbl0"
+        >
+          <div
+            class="css-1193zv1-Box e1fc5tbl0"
+          >
+            <header
+              class="css-1kbzh21-Box e1fc5tbl0"
+            >
+              <h1
+                class="css-hds6fg-Box e1fc5tbl0"
+              >
+                Title
+              </h1>
+              <p
+                class="css-18rh8ug-Box e1fc5tbl0"
+              >
+                Subtitle
+              </p>
+            </header>
+            Content
+            <div
+              class="css-18d5esa-Box e1fc5tbl0"
+            >
+              <button
+                class="css-qrafa5-Box-PseudoBox e1fc5tbl0"
+                type="button"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+</div>
+`;
