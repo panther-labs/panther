@@ -55,10 +55,10 @@ var alertOutput = &outputmodels.AlertOutput{
 }
 
 func setCaches() {
-	cache = &outputsCache{
+	setCache(&outputsCache{
 		Outputs:   []*outputmodels.AlertOutput{alertOutput},
 		Timestamp: time.Now(),
-	}
+	})
 }
 
 func TestSendPanic(t *testing.T) {
@@ -185,7 +185,7 @@ func TestDispatchUseNonCachedDefault(t *testing.T) {
 	mockLambdaClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil)
 	alert := sampleAlert()
 	alert.OutputIds = nil //Setting OutputIds in the alert to nil, in order to fetch default outputs
-	cache = nil           // Setting cache to nil, so we fetch latest outputs IDs from Lambda
+	setCache(nil)         // Setting cache to nil, so we fetch latest outputs IDs from Lambda
 	assert.True(t, dispatch(alert))
 	mockLambdaClient.AssertExpectations(t)
 }
@@ -214,8 +214,7 @@ func TestAllGoRoutinesShouldComplete(t *testing.T) {
 	mockLambdaClient.On("Invoke", mock.Anything).Return(mockGetOutputsResponse, nil).Once()
 	alert := sampleAlert()
 	alert.OutputIds = nil //Setting OutputIds in the alert to nil, in order to fetch default outputs
-	cache = nil           // Clearing the default output ids cache
-
+	setCache(nil)         // Clearing the default output ids cache
 	assert.True(t, dispatch(alert))
 	mockLambdaClient.AssertExpectations(t)
 }
