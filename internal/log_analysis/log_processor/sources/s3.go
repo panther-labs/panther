@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
@@ -137,6 +138,13 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 	if sourceInfo == nil {
 		err = errors.Errorf("there is no source configured for S3 object %#v", s3Object)
 		return
+	}
+
+	id := sourceInfo.IntegrationID
+	age := updateSourceLastEvent(id)
+	// if more than 'statusUpdateFrequency' time has passed, update status
+	if age > statusUpdateFrequency {
+		updateIntegrationStatus(id, time.Now())
 	}
 
 	sourceType := sourceInfo.IntegrationType
