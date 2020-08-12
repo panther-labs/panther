@@ -27,6 +27,7 @@ import GeneralSettingsPage from 'Pages/GeneralSettings';
 import SignInPage from 'Pages/SignIn';
 import ListDestinationsPage from 'Pages/ListDestinations';
 import CreateDestinationPage from 'Pages/CreateDestination';
+import EditDestinationPage from 'Pages/EditDestination';
 import UsersPage from 'Pages/Users';
 import RuleDetailsPage from 'Pages/RuleDetails';
 import LandingPage from 'Pages/Landing';
@@ -207,6 +208,11 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   exact
                   path={urls.settings.destinations.create()}
                   component={CreateDestinationPage}
+                />
+                <Route
+                  exact
+                  path={urls.settings.destinations.edit(':id')}
+                  component={EditDestinationPage}
                 />
                 <Route
                   exact

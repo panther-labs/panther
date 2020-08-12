@@ -6,16 +6,17 @@ import urls from 'Source/urls';
 import SuccessStatus from 'Assets/statuses/success.svg';
 import FailureStatus from 'Assets/statuses/failure.svg';
 import NotificationStatus from 'Assets/statuses/notification.svg';
-import { WizardData } from '../CreateDestination';
+import { WizardData as CreateWizardData } from '../../CreateDestinationWizard';
+import { WizardData as EditWizardData } from '../../EditDestinationWizard';
 
 type TestStatus = 'PASSED' | 'FAILED' | null;
 
-const SuccessScreen: React.FC = () => {
-  const [testStatus, sendTestStatus] = React.useState<TestStatus>('PASSED');
+const DestinationTestPanel: React.FC = () => {
+  const [testStatus, sendTestStatus] = React.useState<TestStatus>(null);
   const {
     data: { destination },
     reset,
-  } = useWizardContext<WizardData>();
+  } = useWizardContext<CreateWizardData & EditWizardData>();
 
   const handleTestAlertClick = React.useCallback(() => {
     // FIXME: add logic for alert testing and then update the `sendTestStatus` call below
@@ -100,4 +101,4 @@ const SuccessScreen: React.FC = () => {
   );
 };
 
-export default SuccessScreen;
+export default DestinationTestPanel;

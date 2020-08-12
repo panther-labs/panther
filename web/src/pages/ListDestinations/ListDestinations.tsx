@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Alert, Box, Button, Link } from 'pouncejs';
+import { Alert, Box, Button, FadeIn, Link } from 'pouncejs';
 import withSEO from 'Hoc/withSEO';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
@@ -66,7 +66,9 @@ const ListDestinations = () => {
             </Link>
           }
         >
-          <ListDestinationsCards destinations={data.destinations} />
+          <FadeIn>
+            <ListDestinationsCards destinations={data.destinations} />
+          </FadeIn>
         </Panel>
       </ErrorBoundary>
     </Box>

@@ -21,11 +21,11 @@ import { SimpleGrid } from 'pouncejs';
 import { DESTINATIONS } from 'Source/constants';
 import { useWizardContext, WizardPanelWrapper } from 'Components/Wizard';
 import DestinationCard from './DestinationCard';
-import { WizardData } from '../CreateDestination';
+import { WizardData } from '../CreateDestinationWizard';
 
 const destinationConfigs = Object.values(DESTINATIONS);
 
-export const ChooseDestinationScreen: React.FC = () => {
+export const ChooseDestinationPanel: React.FC = () => {
   const { goToNextStep, setData } = useWizardContext<WizardData>();
   return (
     <React.Fragment>
@@ -50,4 +50,4 @@ export const ChooseDestinationScreen: React.FC = () => {
   );
 };
 
-export default React.memo(ChooseDestinationScreen);
+export default React.memo(ChooseDestinationPanel);

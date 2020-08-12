@@ -17,7 +17,6 @@
  */
 
 import React from 'react';
-import { UpdateDestinationSidesheetProps } from 'Components/sidesheets/UpdateDestinationSidesheet';
 import { PolicyBulkUploadSideSheetProps } from 'Components/sidesheets/PolicyBulkUploadSidesheet';
 import { EditUserSidesheetProps } from 'Components/sidesheets/EditUserSidesheet';
 
@@ -39,14 +38,6 @@ interface SidesheetStateShape {
   sidesheet: keyof typeof SIDESHEETS | null;
   props?: { [key: string]: any };
   isVisible: boolean;
-}
-
-interface UpdateDestinationSideSheetAction {
-  type: typeof SHOW_SIDESHEET;
-  payload: {
-    sidesheet: SIDESHEETS.UPDATE_DESTINATION;
-    props: OmitControlledProps<UpdateDestinationSidesheetProps>;
-  };
 }
 
 interface HideSidesheetAction {
@@ -80,7 +71,6 @@ interface UserInvitationSideSheetAction {
 /* The available actions that can be dispatched */
 type SidesheetStateAction =
   | PolicyBulkUploadSideSheetAction
-  | UpdateDestinationSideSheetAction
   | EditUserSideSheetAction
   | UserInvitationSideSheetAction
   | HideSidesheetAction;

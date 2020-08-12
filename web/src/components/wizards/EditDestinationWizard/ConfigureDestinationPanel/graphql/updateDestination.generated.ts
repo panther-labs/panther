@@ -16,9 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as Types from '../../../../../__generated__/schema';
+import * as Types from '../../../../../../__generated__/schema';
 
-import { DestinationFull } from '../../../../graphql/fragments/DestinationFull.generated';
+import { DestinationFull } from '../../../../../graphql/fragments/DestinationFull.generated';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';

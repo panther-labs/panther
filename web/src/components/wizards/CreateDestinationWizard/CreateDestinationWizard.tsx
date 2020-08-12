@@ -1,23 +1,30 @@
 import React from 'react';
 import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
-import ChooseDestinationScreen from './ChooseDestinationScreen';
-import ConfigureDestinationScreen from './ConfigureDestinationScreen';
-import SuccessScreen from './SuccessScreen';
+import { DestinationTypeEnum } from 'Generated/schema';
+import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
+import ChooseDestinationPanel from './ChooseDestinationPanel';
+import ConfigureDestinationPanel from './ConfigureDestinationPanel';
+import DestinationTestPanel from '../common/DestinationTestPanel';
 
-const CreateDestination: React.FC = () => {
+export interface WizardData {
+  selectedDestinationType?: DestinationTypeEnum;
+  destination?: DestinationFull;
+}
+
+const CreateDestinationWizard: React.FC = () => {
   return (
-    <Wizard header={false}>
+    <Wizard<WizardData> header={false}>
       <Wizard.Step>
         <WizardPanelWrapper>
           <WizardPanelWrapper.Content>
-            <ChooseDestinationScreen />
+            <ChooseDestinationPanel />
           </WizardPanelWrapper.Content>
         </WizardPanelWrapper>
       </Wizard.Step>
       <Wizard.Step>
         <WizardPanelWrapper>
           <WizardPanelWrapper.Content>
-            <ConfigureDestinationScreen />
+            <ConfigureDestinationPanel />
           </WizardPanelWrapper.Content>
           <WizardPanelWrapper.ActionPrev />
         </WizardPanelWrapper>
@@ -25,7 +32,7 @@ const CreateDestination: React.FC = () => {
       <Wizard.Step>
         <WizardPanelWrapper>
           <WizardPanelWrapper.Content>
-            <SuccessScreen />
+            <DestinationTestPanel />
           </WizardPanelWrapper.Content>
         </WizardPanelWrapper>
       </Wizard.Step>
@@ -33,4 +40,4 @@ const CreateDestination: React.FC = () => {
   );
 };
 
-export default CreateDestination;
+export default CreateDestinationWizard;
