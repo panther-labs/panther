@@ -21,6 +21,7 @@ package pantherlog
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"time"
 	"unsafe"
 
@@ -146,6 +147,7 @@ func (*resultEncoder) writePantherFields(r *Result, stream *jsoniter.Stream) {
 		if !ok {
 			continue
 		}
+		sort.Strings(values)
 		stream.WriteMore()
 		stream.WriteObjectField(fieldName)
 		stream.WriteArrayStart()
