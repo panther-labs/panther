@@ -35,12 +35,12 @@ const (
 
 // Embed swagger specs into the API gateway template, saving it to out/deployments.
 func embedAPISpec() error {
-	cfn, err := cfnparse.ParseTemplate(pythonVirtualEnvPath, cfnstacks.APITemplate)
-	if err != nil {
+	var cfn map[string]interface{}
+	if err := cfnparse.ParseTemplate(pythonVirtualEnvPath, cfnstacks.APITemplate, &cfn); err != nil {
 		return err
 	}
 
-	if err = embedAPIs(cfn); err != nil {
+	if err := embedAPIs(cfn); err != nil {
 		return err
 	}
 

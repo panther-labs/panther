@@ -33,9 +33,25 @@ import (
 )
 
 var cfnTests = []testTask{
-	{"build:cfn", build.cfn},
 	{"cfn-lint", testCfnLint},
 	{"terraform validate", testTfValidate},
+}
+
+// A subset of CFN structure we care about when running tests.
+type cfnTemplate struct {
+	Parameters map[string]cfnParameter
+	Resources map[string]cfnResource
+	Outputs map[string]interface{}
+}
+
+type cfnParameter struct {
+	Type string
+	Default interface{}
+}
+
+type cfnResource struct {
+	Type string
+	Properties map[string]interface{}
 }
 
 // Lint CloudFormation and Terraform templates
@@ -72,8 +88,8 @@ func testCfnLint() error {
 			continue
 		}
 
-		body, err := cfnparse.ParseTemplate(pythonVirtualEnvPath, template)
-		if err != nil {
+		var body cfnTemplate
+		if err := cfnparse.ParseTemplate(pythonVirtualEnvPath, template, &body); err != nil {
 			errs = append(errs, fmt.Sprintf("failed to parse %s: %v", template, err))
 			continue
 		}
@@ -84,68 +100,11 @@ func testCfnLint() error {
 		//
 		// Allowing defaults in nested stacks is confusing and leads to bugs where a parameter is
 		// defined but never passed through during deployment.
-		if err = cfnDefaultParameters(body); err != nil {
+		if err := cfnDefaultParameters(body.Parameters); err != nil {
 			errs = append(errs, fmt.Sprintf("%s: %v", template, err))
 		}
 
-		if template == cfnstacks.BootstrapTemplate {
-			// Custom resources can't be in the bootstrap stack
-			for logicalID, resource := range body["Resources"].(map[string]interface{}) {
-				t := resource.(map[string]interface{})["Type"].(string)
-				if strings.HasPrefix(t, "Custom::") {
-					return fmt.Errorf("%s: %s: custom resources will not work in this stack - use bootstrap-gateway instead",
-						template, logicalID)
-				}
-			}
-
-			// Skip remaining checks
-			continue
-		}
-
-		// Map logicalID => resource type
-		resources := make(map[string]string)
-		for logicalID, resource := range body["Resources"].(map[string]interface{}) {
-			resources[logicalID] = resource.(map[string]interface{})["Type"].(string)
-		}
-
-		// Right now, we just check logicalID and type, but we can always add additional validation
-		// of the resource properties in the future if needed.
-		for logicalID, resourceType := range resources {
-			var err error
-			switch resourceType {
-			case "AWS::DynamoDB::Table":
-				if resources[logicalID+"Alarms"] != "Custom::DynamoDBAlarms" {
-					err = fmt.Errorf("%s needs an associated %s resource in %s",
-						logicalID, logicalID+"Alarms", template)
-				}
-			case "AWS::Serverless::Api":
-				if resources[logicalID+"Alarms"] != "Custom::ApiGatewayAlarms" {
-					err = fmt.Errorf("%s needs an associated %s resource in %s",
-						logicalID, logicalID+"Alarms", template)
-				}
-			case "AWS::Serverless::Function":
-				err = cfnTestFunction(logicalID, template, resources)
-			case "AWS::SNS::Topic":
-				if resources[logicalID+"Alarms"] != "Custom::SNSAlarms" {
-					err = fmt.Errorf("%s needs an associated %s resource in %s",
-						logicalID, logicalID+"Alarms", template)
-				}
-			case "AWS::SQS::Queue":
-				if resources[logicalID+"Alarms"] != "Custom::SQSAlarms" {
-					err = fmt.Errorf("%s needs an associated %s resource in %s",
-						logicalID, logicalID+"Alarms", template)
-				}
-			case "AWS::StepFunctions::StateMachine":
-				if resources[logicalID+"Alarms"] != "Custom::StateMachineAlarms" {
-					err = fmt.Errorf("%s needs an associated %s resource in %s",
-						logicalID, logicalID+"Alarms", template)
-				}
-			}
-
-			if err != nil {
-				errs = append(errs, err.Error())
-			}
-		}
+		errs = append(errs, cfnValidateCustomResources(template, body.Resources)...)
 	}
 
 	if len(errs) > 0 {
@@ -155,14 +114,9 @@ func testCfnLint() error {
 }
 
 // Returns an error if there is a parameter with a default value.
-func cfnDefaultParameters(template map[string]interface{}) error {
-	params, ok := template["Parameters"].(map[string]interface{})
-	if !ok {
-		return nil
-	}
-
+func cfnDefaultParameters(params map[string]cfnParameter) error {
 	for name, options := range params {
-		if _, exists := options.(map[string]interface{})["Default"]; exists {
+		if options.Default != nil {
 			return fmt.Errorf("parameter '%s' should not have a default value. "+
 				"Either pass the value from the config file and master stack or use a Mapping", name)
 		}
@@ -171,15 +125,74 @@ func cfnDefaultParameters(template map[string]interface{}) error {
 	return nil
 }
 
+// Enforce custom resources in a CloudFormation template. Returns a list of error messages.
+func cfnValidateCustomResources(template string, resources map[string]cfnResource) []string {
+	if template == cfnstacks.BootstrapTemplate {
+		// Custom resources can't be in the bootstrap stack
+		for logicalID, resource := range resources {
+			if strings.HasPrefix(resource.Type, "Custom::") {
+				return []string{fmt.Sprintf(
+					"%s: %s: custom resources will not work in this stack - use %s instead",
+					template, logicalID, cfnstacks.Gateway)}
+			}
+		}
+
+		// Skip remaining checks
+		return nil
+	}
+
+	// Right now, we just check logicalID and type, but we can always add additional validation
+	// of the resource properties in the future if needed.
+	var errs []string
+	for logicalID, resource := range resources {
+		var err error
+		switch resource.Type {
+		case "AWS::DynamoDB::Table":
+			if resources[logicalID+"Alarms"].Type != "Custom::DynamoDBAlarms" {
+				err = fmt.Errorf("%s needs an associated %s resource in %s",
+					logicalID, logicalID+"Alarms", template)
+			}
+		case "AWS::Serverless::Api":
+			if resources[logicalID+"Alarms"].Type != "Custom::ApiGatewayAlarms" {
+				err = fmt.Errorf("%s needs an associated %s resource in %s",
+					logicalID, logicalID+"Alarms", template)
+			}
+		case "AWS::Serverless::Function":
+			err = cfnTestFunction(logicalID, template, resources)
+		case "AWS::SNS::Topic":
+			if resources[logicalID+"Alarms"].Type != "Custom::SNSAlarms" {
+				err = fmt.Errorf("%s needs an associated %s resource in %s",
+					logicalID, logicalID+"Alarms", template)
+			}
+		case "AWS::SQS::Queue":
+			if resources[logicalID+"Alarms"].Type != "Custom::SQSAlarms" {
+				err = fmt.Errorf("%s needs an associated %s resource in %s",
+					logicalID, logicalID+"Alarms", template)
+			}
+		case "AWS::StepFunctions::StateMachine":
+			if resources[logicalID+"Alarms"].Type != "Custom::StateMachineAlarms" {
+				err = fmt.Errorf("%s needs an associated %s resource in %s",
+					logicalID, logicalID+"Alarms", template)
+			}
+		}
+
+		if err != nil {
+			errs = append(errs, err.Error())
+		}
+	}
+
+	return errs
+}
+
 // Returns an error if an AWS::Serverless::Function is missing associated resources
-func cfnTestFunction(logicalID, template string, resources map[string]string) error {
+func cfnTestFunction(logicalID, template string, resources map[string]cfnResource) error {
 	idPrefix := strings.TrimSuffix(logicalID, "Function")
-	if resources[idPrefix+"MetricFilters"] != "Custom::LambdaMetricFilters" {
+	if resources[idPrefix+"MetricFilters"].Type != "Custom::LambdaMetricFilters" {
 		return fmt.Errorf("%s needs an associated %s resource in %s",
 			logicalID, idPrefix+"MetricFilters", template)
 	}
 
-	if resources[idPrefix+"Alarms"] != "Custom::LambdaAlarms" {
+	if resources[idPrefix+"Alarms"].Type != "Custom::LambdaAlarms" {
 		return fmt.Errorf("%s needs an associated %s resource in %s",
 			logicalID, idPrefix+"Alarms", template)
 	}
@@ -196,7 +209,7 @@ func cfnTestFunction(logicalID, template string, resources map[string]string) er
 		}
 	}
 
-	if resources[idPrefix+"LogGroup"] != "AWS::Logs::LogGroup" {
+	if resources[idPrefix+"LogGroup"].Type != "AWS::Logs::LogGroup" {
 		return fmt.Errorf("%s needs an associated %s resource in %s",
 			logicalID, idPrefix+"LogGroup", template)
 	}
