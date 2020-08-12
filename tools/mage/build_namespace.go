@@ -233,7 +233,7 @@ func (b Build) tools() error {
 	return nil
 }
 
-// Generate CloudFormation templates in out/deployments folder
+// Generate CloudFormation: deployments/dashboards.yml and out/deployments/
 func (b Build) Cfn() {
 	if err := b.cfn(); err != nil {
 		logger.Fatal(err)

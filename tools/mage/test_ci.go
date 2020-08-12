@@ -88,6 +88,7 @@ func testFmtAndGeneratedFiles() error {
 	}
 
 	build.API()
+	build.Cfn()
 	Fmt()
 
 	afterHashes, err := sourceHashes()
