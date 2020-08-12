@@ -81,7 +81,9 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
                     <SourceConfigurationPanel />
                   </WizardPanelWrapper.Content>
                   <WizardPanelWrapper.Actions>
-                    <WizardPanelWrapper.ActionNext disabled={!dirty || !isValid} />
+                    <WizardPanelWrapper.ActionNext disabled={!dirty || !isValid}>
+                      Continue Setup
+                    </WizardPanelWrapper.ActionNext>
                   </WizardPanelWrapper.Actions>
                 </WizardPanelWrapper>
               </Wizard.Step>
@@ -92,7 +94,7 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
                   </WizardPanelWrapper.Content>
                   <WizardPanelWrapper.Actions>
                     <WizardPanelWrapper.ActionPrev />
-                    <WizardPanelWrapper.ActionNext />
+                    <WizardPanelWrapper.ActionNext>Continue Setup</WizardPanelWrapper.ActionNext>
                   </WizardPanelWrapper.Actions>
                 </WizardPanelWrapper>
               </Wizard.Step>

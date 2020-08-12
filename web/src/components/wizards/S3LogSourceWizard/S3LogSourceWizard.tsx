@@ -90,7 +90,9 @@ const S3LogSourceWizard: React.FC<S3LogSourceWizardProps> = ({
                     <S3SourceConfigurationPanel />
                   </WizardPanelWrapper.Content>
                   <WizardPanelWrapper.Actions>
-                    <WizardPanelWrapper.ActionNext disabled={!dirty || !isValid} />
+                    <WizardPanelWrapper.ActionNext disabled={!dirty || !isValid}>
+                      Continue Setup
+                    </WizardPanelWrapper.ActionNext>
                   </WizardPanelWrapper.Actions>
                 </WizardPanelWrapper>
               </Wizard.Step>
@@ -101,7 +103,7 @@ const S3LogSourceWizard: React.FC<S3LogSourceWizardProps> = ({
                   </WizardPanelWrapper.Content>
                   <WizardPanelWrapper.Actions>
                     <WizardPanelWrapper.ActionPrev />
-                    <WizardPanelWrapper.ActionNext />
+                    <WizardPanelWrapper.ActionNext>Continue Setup</WizardPanelWrapper.ActionNext>
                   </WizardPanelWrapper.Actions>
                 </WizardPanelWrapper>
               </Wizard.Step>

@@ -17,11 +17,12 @@
  */
 
 import React from 'react';
-import { Flex, FormError, Heading, Text, AbstractButton, Link } from 'pouncejs';
+import { Flex, FormError, Text, AbstractButton, Link } from 'pouncejs';
 import { useFormikContext } from 'formik';
 import { copyTextToClipboard } from 'Helpers/utils';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
+import { WizardPanelWrapper } from 'Components/Wizard';
 import { SqsLogSourceWizardValues } from '../SqsSourceWizard';
 
 const InformationPanel: React.FC = () => {
@@ -35,12 +36,10 @@ const InformationPanel: React.FC = () => {
 
   return (
     <Flex justify="center" align="center" direction="column" my={190} mx="auto" width={400}>
-      <Heading as="h2" m="auto" mb={5}>
-        We created a SQS queue for you
-      </Heading>
-      <Text color="gray-300" mb={4}>
-        You need to send events on this queue url for Panther to process them:
-      </Text>
+      <WizardPanelWrapper.Heading
+        title="We created a SQS queue for you"
+        subtitle="You need to send events on this queue url for Panther to process them"
+      />
       <Text fontSize="small" mb={4}>
         {initialValues.queueUrl}
       </Text>

@@ -90,9 +90,9 @@ const Wizard: React.FC<WizardProps> & WizardComposition = ({ children, header = 
   );
 
   return (
-    <Card p={6} mb={6} as="article" width={1}>
+    <Card p={6} mb={6} as="article" width={1} position="relative">
       {header && (
-        <Flex as="ul" justify="center" pt="10px" zIndex={2}>
+        <Flex as="ul" justify="center" pt="10px" mb={60} zIndex={2}>
           {steps.map((step, index) => {
             const isLast = index === steps.length - 1;
             const isComplete = currentStepIndex > index || currentStepIndex === steps.length - 1;
@@ -130,7 +130,7 @@ const Wizard: React.FC<WizardProps> & WizardComposition = ({ children, header = 
           })}
         </Flex>
       )}
-      <Box position="relative" pt={3}>
+      <Box pt={3}>
         <WizardContext.Provider value={contextValue}>
           {steps[currentStepIndex]}
         </WizardContext.Provider>

@@ -87,7 +87,7 @@ const SqsSourceWizard: React.FC<SqsLogSourceWizardProps> = ({
                       <InformationPanel />
                     </WizardPanelWrapper.Content>
                     <WizardPanelWrapper.Actions>
-                      <WizardPanelWrapper.ActionNext />
+                      <WizardPanelWrapper.ActionNext>Continue Setup</WizardPanelWrapper.ActionNext>
                     </WizardPanelWrapper.Actions>
                   </WizardPanelWrapper>
                 </Wizard.Step>
@@ -103,7 +103,9 @@ const SqsSourceWizard: React.FC<SqsLogSourceWizardProps> = ({
                       disabled={
                         (!values.logTypes.length && !values.integrationLabel) || !isValid || !dirty
                       }
-                    />
+                    >
+                      Continue Setup
+                    </WizardPanelWrapper.ActionNext>
                   </WizardPanelWrapper.Actions>
                 </WizardPanelWrapper>
               </Wizard.Step>

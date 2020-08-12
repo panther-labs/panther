@@ -26,8 +26,8 @@ interface WizardPanelWrapperAction {
 }
 
 interface WizardPanelHeadingProps {
-  title: string;
-  subtitle?: string;
+  title: string | React.ReactNode | React.ReactNode[];
+  subtitle?: string | React.ReactNode | React.ReactNode[];
 }
 
 interface WizardPanelWrapperComposition {
@@ -77,7 +77,7 @@ const WizardPanelActionPrev: React.FC<WizardPanelWrapperAction> = ({
 }) => {
   const { goToPrevStep, stepContext } = useWizardContext();
   return (
-    <Box position="absolute" top={0} left={0}>
+    <Box position="absolute" top={6} left={6}>
       <IconButton
         disabled={disabled}
         icon="arrow-back"
