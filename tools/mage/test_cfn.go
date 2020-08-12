@@ -40,17 +40,17 @@ var cfnTests = []testTask{
 // A subset of CFN structure we care about when running tests.
 type cfnTemplate struct {
 	Parameters map[string]cfnParameter
-	Resources map[string]cfnResource
-	Outputs map[string]interface{}
+	Resources  map[string]cfnResource
+	Outputs    map[string]interface{}
 }
 
 type cfnParameter struct {
-	Type string
+	Type    string
 	Default interface{}
 }
 
 type cfnResource struct {
-	Type string
+	Type       string
 	Properties map[string]interface{}
 }
 
@@ -78,19 +78,26 @@ func testCfnLint() error {
 		return err
 	}
 
-	// Panther-specific linting for main stacks
-	//
-	// - Required custom resources
-	// - No default parameter values
-	var errs []string
+	// Parse Panther CloudFormation, map template path to parsed body
+	parsed := make(map[string]cfnTemplate, cfnstacks.NumStacks+1)
 	for _, template := range templates {
-		if template == "deployments/master.yml" || strings.HasPrefix(template, "deployments/auxiliary") {
+		if strings.HasPrefix(template, "deployments/auxiliary") {
 			continue
 		}
 
 		var body cfnTemplate
 		if err := cfnparse.ParseTemplate(pythonVirtualEnvPath, template, &body); err != nil {
-			errs = append(errs, fmt.Sprintf("failed to parse %s: %v", template, err))
+			return fmt.Errorf("failed to parse %s: %v", template, err)
+		}
+		parsed[template] = body
+	}
+
+	// Panther-specific linting for main stacks
+	//   - No default parameter values
+	//   - Required custom resources
+	var errs []string
+	for template, body := range parsed {
+		if template == "deployments/master.yml" {
 			continue
 		}
 
@@ -100,28 +107,23 @@ func testCfnLint() error {
 		//
 		// Allowing defaults in nested stacks is confusing and leads to bugs where a parameter is
 		// defined but never passed through during deployment.
-		if err := cfnDefaultParameters(body.Parameters); err != nil {
-			errs = append(errs, fmt.Sprintf("%s: %v", template, err))
+		for name, options := range body.Parameters {
+			if options.Default != nil {
+				errs = append(errs, fmt.Sprintf(
+					"%s: parameter '%s' should not have a default value. "+
+						"Either pass the value from the config file and master stack or use a Mapping",
+					template, name))
+			}
 		}
 
 		errs = append(errs, cfnValidateCustomResources(template, body.Resources)...)
 	}
 
+	errs = append(errs, cfnValidateMaster(parsed)...)
+
 	if len(errs) > 0 {
 		return errors.New(strings.Join(errs, "\n"))
 	}
-	return nil
-}
-
-// Returns an error if there is a parameter with a default value.
-func cfnDefaultParameters(params map[string]cfnParameter) error {
-	for name, options := range params {
-		if options.Default != nil {
-			return fmt.Errorf("parameter '%s' should not have a default value. "+
-				"Either pass the value from the config file and master stack or use a Mapping", name)
-		}
-	}
-
 	return nil
 }
 
@@ -215,6 +217,49 @@ func cfnTestFunction(logicalID, template string, resources map[string]cfnResourc
 	}
 
 	return nil
+}
+
+// Validate pre-packaged master template (cfn-lint does not handle cross-stack validation)
+//   - Parameters passed to nested stacks are correct
+//   - All referenced outputs exist in other stacks
+//
+// Returns list of error messages.
+func cfnValidateMaster(parsed map[string]cfnTemplate) []string {
+	var errs []string
+
+	for resourceID, resource := range parsed["deployments/master.yml"].Resources {
+		if resource.Type != "AWS::CloudFormation::Stack" || resource.Properties["Parameters"] == nil {
+			continue
+		}
+
+		templateURL := resource.Properties["TemplateURL"].(string)
+		if filepath.Base(templateURL) == "embedded.bootstrap_gateway.yml" {
+			// For the purposes of this test, read the original template, not the one with embedded swagger
+			templateURL = "bootstrap_gateway.yml"
+		}
+		templateURL = filepath.Join("deployments", templateURL)
+
+		// Compare the parameters passed in the master stack to those defined in the nested stack
+		// Note: all nested stack parameters are required
+		passedParams := resource.Properties["Parameters"].(map[string]interface{})
+		for paramName := range parsed[templateURL].Parameters {
+			if _, exists := passedParams[paramName]; !exists {
+				errs = append(errs, fmt.Sprintf(
+					"deployments/master.yml: %s is missing required parameter %s",
+					resourceID, paramName))
+			}
+		}
+
+		for paramName := range passedParams {
+			if _, exists := parsed[templateURL].Parameters[paramName]; !exists {
+				errs = append(errs, fmt.Sprintf(
+					"deployments/master.yml: %s: parameter %s does not exist",
+					resourceID, paramName))
+			}
+		}
+	}
+
+	return errs
 }
 
 func testTfValidate() error {
