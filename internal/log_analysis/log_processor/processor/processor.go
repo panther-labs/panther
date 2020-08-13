@@ -184,7 +184,10 @@ type Processor struct {
 }
 
 func NewProcessor(input *common.DataStream, registry *logtypes.Registry) *Processor {
-	entries := registry.Entries(input.LogTypes...)
+	// FIXME: Uncomment this to use source-specific log types once v1.7 is branched out
+	// entries := registry.Entries(input.LogTypes...)
+	// Use all registered parsers for v1.7 to better test this E2E
+	entries := registry.Entries()
 
 	src := parsers.SourceParams{
 		SourceLabel: input.SourceLabel,
