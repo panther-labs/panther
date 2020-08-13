@@ -149,6 +149,7 @@ type Entry interface {
 	NewParser(params parsers.SourceParams) (parsers.Interface, error)
 	Schema() interface{}
 	GlueTableMeta() *awsglue.GlueTableMetadata
+	String() string
 }
 
 // Config describes a log event type in a declarative way.
@@ -238,6 +239,11 @@ func newEntry(desc Desc, schema interface{}, fac parsers.Factory) *entry {
 func (e *entry) Describe() Desc {
 	return e.Desc
 }
+
+func (e *entry) String() string {
+	return e.Desc.Name
+}
+
 func (e *entry) Schema() interface{} {
 	return e.schema
 }
