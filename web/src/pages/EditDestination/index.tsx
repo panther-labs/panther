@@ -1,1 +1,1 @@
-export { default } from 'Components/wizards/EditDestinationWizard';
+export { default } from './EditDestination';

@@ -1,21 +1,212 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Wizard renders a step 1`] = `
+@keyframes animation-0 {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.panther-28 {
+  padding: 24px;
+  margin-bottom: 24px;
+  background-color: #23344e;
+  width: 100%;
+  border-radius: 4px;
+  position: relative;
+}
+
+.panther-8 {
+  padding-top: 10px;
+  margin-bottom: 60px;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  z-index: 2;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+}
+
+.panther-6 {
+  opacity: 1;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  z-index: 2;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-2 {
+  background-color: #0081c5;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  width: 25px;
+  height: 25px;
+  border-radius: 99999px;
+  border: 1px solid;
+  border-color: #0081c5;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.panther-0 {
+  color: currentColor;
+  display: inline-block;
+  vertical-align: sub;
+  width: 12px;
+  height: 12px;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+}
+
+.panther-4 {
+  margin-left: 8px;
+  font-size: 0.875rem;
+}
+
+.panther-26 {
+  padding-top: 12px;
+}
+
+.panther-24 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+}
+
+.panther-22 {
+  margin-left: auto;
+  margin-right: auto;
+  width: 700px;
+}
+
+.panther-20 {
+  will-change: opacity,transform;
+  -webkit-animation: animation-0 300ms 0ms ease-in-out both;
+  animation: animation-0 300ms 0ms ease-in-out both;
+}
+
+.panther-14 {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.panther-10 {
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 1.25rem;
+}
+
+.panther-12 {
+  color: #bdbdbd;
+  font-size: 0.875rem;
+}
+
+.panther-18 {
+  margin-top: 32px;
+  margin-bottom: 16px;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+}
+
+.panther-16 {
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  color: #f6f6f6;
+  background-color: #0081c5;
+  width: auto;
+  border-radius: 4px;
+  border: 1px solid;
+  border-color: #0081c5;
+  font-size: 0.938rem;
+  cursor: pointer;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  -webkit-transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  outline: none;
+}
+
+.panther-16:hover {
+  background-color: #0a8bcf;
+  border-color: #0a8bcf;
+}
+
+.panther-16:focus {
+  background-color: #0a8bcf;
+  border-color: #55d6ff;
+}
+
+.panther-16:active,
+.panther-16[data-active=true] {
+  background-color: #0077bb;
+  border-color: #0077bb;
+}
+
+.panther-16:disabled,
+.panther-16:disabled:focus,
+.panther-16:disabled:hover,
+.panther-16[aria-disabled=true],
+.panther-16[aria-disabled=true]:focus,
+.panther-16[aria-disabled=true]:hover {
+  opacity: 0.3;
+  pointer-events: none;
+  cursor: default;
+}
+
 <div>
   <article
-    class="css-ohs38u-Box e1fc5tbl0"
+    class="panther-28 panther-1"
   >
     <ul
-      class="css-1f33fcb-Box e1fc5tbl0"
+      class="panther-8 panther-1"
     >
       <li
-        class="css-rvvuib-Box e1fc5tbl0"
+        class="panther-6 panther-1"
       >
         <div
-          class="css-xxr4gn-Box e1fc5tbl0"
+          class="panther-2 panther-1"
         >
           <svg
-            class="css-1ivya6n-Box e1fc5tbl0"
+            class="panther-0 panther-1"
             role="presentation"
             viewBox="0 0 24 24"
           >
@@ -25,44 +216,44 @@ exports[`Wizard renders a step 1`] = `
           </svg>
         </div>
         <p
-          class="css-1n91m9j-Box e1fc5tbl0"
+          class="panther-4 panther-1"
         >
           Step Nickname
         </p>
       </li>
     </ul>
     <div
-      class="css-uo8b0h-Box e1fc5tbl0"
+      class="panther-26 panther-1"
     >
       <div
-        class="css-1lbgvul-Box e1fc5tbl0"
+        class="panther-24 panther-1"
       >
         <div
-          class="css-1uxxjp9-Box e1fc5tbl0"
+          class="panther-22 panther-1"
         >
           <div
-            class="css-1193zv1-Box e1fc5tbl0"
+            class="panther-20 panther-1"
           >
             <header
-              class="css-1kbzh21-Box e1fc5tbl0"
+              class="panther-14 panther-1"
             >
               <h1
-                class="css-hds6fg-Box e1fc5tbl0"
+                class="panther-10 panther-1"
               >
                 Title
               </h1>
               <p
-                class="css-18rh8ug-Box e1fc5tbl0"
+                class="panther-12 panther-1"
               >
                 Subtitle
               </p>
             </header>
             Content
             <div
-              class="css-18d5esa-Box e1fc5tbl0"
+              class="panther-18 panther-1"
             >
               <button
-                class="css-qrafa5-Box-PseudoBox e1fc5tbl0"
+                class="panther-16 panther-1"
                 type="button"
               >
                 Continue

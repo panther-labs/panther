@@ -67,7 +67,7 @@ describe('ListDestinations', () => {
       // open menu
       fireClickAndMouseEvents(option);
 
-      // check edits
+      // check edit button link
       const editButton = await findByText('Edit');
       expect(editButton.parentElement).toHaveAttribute(
         'href',
@@ -96,16 +96,18 @@ describe('ListDestinations', () => {
       { mocks }
     );
 
+    // Make sure that there are 2 destinations
     expect(await findByText('First Destination')).toBeInTheDocument();
     expect(await findByText('Second Destination')).toBeInTheDocument();
-
     const options = await findAllByAriaLabel('Toggle Options');
     const firstDestinationOptionsButton = options[0];
 
+    // Open menu -> click delete -> click confirm on the modal that appears
     fireClickAndMouseEvents(firstDestinationOptionsButton);
     fireClickAndMouseEvents(getByText('Delete'));
     fireClickAndMouseEvents(getByText('Confirm'));
 
+    // Expect too see  1 destination in the screen now
     expect(queryByText('First Destination')).not.toBeInTheDocument();
     expect(getByText('Second Destination')).toBeInTheDocument();
   });
