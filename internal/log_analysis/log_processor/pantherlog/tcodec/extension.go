@@ -19,6 +19,7 @@ package tcodec
  */
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"time"
@@ -46,154 +47,101 @@ import (
 //
 type Extension struct {
 	jsoniter.DummyExtension
-	config Config
+
+	// Codecs overrides the TimeCodec registry to use for resolving TimeCodecs.
+	// If this option is `nil` the default registry is used.
+	Codecs *Registry
+	// TagName sets the struct tag name to use for tcodec options.
+	// If this option is not set the `DefaultTagName` will be used.
+	TagName string
 }
 
 // DefaultTagName is the struct tag name used for defining time decoders for a time.Time field.
 const DefaultTagName = "tcodec"
 
-type Config struct {
-	// Codecs overrides the TimeCodec registry to use for resolving TimeCodecs.
-	// If this option is `nil` the default registry is used.
-	Codecs *Registry
-	// DefaultCodec sets the default codec to use when a tag is not found or cannot be resolved to a TimeCodec.
-	// If this option is `nil` fields with unresolved codecs will not be modified by the extension.
-	DefaultCodec TimeCodec
-	// TagName sets the struct tag name to use for tcodec options.
-	// If this option is not set the `DefaultTagName` will be used.
-	TagName string
-	// DecorateEncoder enforces all timestamps to be encoded using this TimeEncoder.
-	// If this option is `nil` timestamps will be encoded using their individual TimeCodec.
-	DecorateCodec func(TimeCodec) TimeCodec
-}
-
-func NewExtension(config Config) *Extension {
-	if config.Codecs == nil {
-		config.Codecs = defaultRegistry
-	}
-	return &Extension{
-		config: config,
-	}
-}
-
-var typTime = reflect.TypeOf(time.Time{})
-
-func (ext *Extension) CreateEncoder(typ reflect2.Type) jsoniter.ValEncoder {
-	typ1 := typ.Type1()
-	if !typ1.ConvertibleTo(typTime) {
-		return nil
-	}
-	_, enc := ext.split(nil)
-	if enc == nil {
-		return nil
-	}
-	return NewTimeEncoder(enc, typ1)
-}
-func (ext *Extension) CreateDecoder(typ reflect2.Type) jsoniter.ValDecoder {
-	typ1 := typ.Type1()
-	if !typ1.ConvertibleTo(typTime) {
-		return nil
-	}
-	dec, _ := ext.split(nil)
-	if dec == nil {
-		return nil
-	}
-	return NewTimeDecoder(dec, typ1)
-}
+var (
+	typTime    = reflect.TypeOf(time.Time{})
+	typTimePtr = reflect.PtrTo(typTime)
+)
 
 func (ext *Extension) UpdateStructDescriptor(desc *jsoniter.StructDescriptor) {
-	tagName := ext.TagName()
+	tagName := ext.tagName()
 	for _, binding := range desc.Fields {
 		field := binding.Field
+
 		typ := field.Type().Type1()
-		if !isTimeType(typ) {
+		switch typ {
+		case typTime, typTimePtr:
+		default:
+			// We only affect time.Time and *time.Time fields
+			continue
+		}
+		tag, ok := field.Tag().Lookup(tagName)
+		if !ok {
+			// We only affect fields that have the tag
+			continue
+		}
+		// convert tag to TimeCodec
+		codec, err := ext.resolveCodec(tag)
+		if err != nil {
+			// Report failed lookup error on decode/encode
+			jsonCodec := &errCodec{
+				err:       err,
+				operation: "LookupTimeCodec",
+			}
+			binding.Decoder, binding.Encoder = jsonCodec, jsonCodec
 			continue
 		}
 
-		// NOTE: [tcodec] Add support for other layout types such as strftime (https://strftime.org/)
-		var codec TimeCodec
-		if tag, ok := field.Tag().Lookup(tagName); ok {
-			if strings.HasPrefix(tag, "layout=") {
-				// The tag is of the form `layout=GO_TIME_LAYOUT`.
-				// We strip the prefix and use a LayoutCodec.
-				layout := strings.TrimPrefix(tag, "layout=")
-				codec = LayoutCodec(layout)
-			} else {
-				// The tag is a registered decoder name
-				codec = Lookup(tag)
-			}
+		tDec, tEnc := Split(codec)
+
+		// Preserve decorations of the current binding.Decoder
+		vDec := NewTimeDecoder(tDec, typ)
+		if ddc, ok := binding.Decoder.(DecoderDecorator); ok {
+			vDec = ddc.DecorateDecoder(field.Type(), vDec)
 		}
-		dec, enc := ext.split(codec)
-		if dec != nil {
-			// We only modify the underlying decoder if we resolved a decoder
-			binding.Decoder = NewTimeDecoder(dec, typ)
+
+		// Preserve decorations of the current binding.Encoder
+		vEnc := NewTimeEncoder(tEnc, typ)
+		if edc, ok := binding.Encoder.(EncoderDecorator); ok {
+			vEnc = edc.DecorateEncoder(field.Type(), vEnc)
 		}
-		if enc != nil {
-			// We only modify the underlying encoder if we resolved an encoder
-			valEncoder := NewTimeEncoder(enc, typ)
-			// Reserve decorations.
-			// This is needed so globally registered extensions can apply their decorations on top of tcodec ones
-			type decorator interface {
-				DecorateEncoder(typ reflect2.Type, enc jsoniter.ValEncoder) jsoniter.ValEncoder
-			}
-			if d, ok := binding.Encoder.(decorator); ok {
-				valEncoder = d.DecorateEncoder(field.Type(), valEncoder)
-			}
-			binding.Encoder = valEncoder
-		}
+
+		binding.Decoder, binding.Encoder = vDec, vEnc
 	}
 }
 
-func isTimeType(typ reflect.Type) bool {
-	switch {
-	case typ.ConvertibleTo(typTime):
-		// Type is time.Time
-		return true
-	case isEmbeddedTime(typ):
-		// Type is struct { time.Time }
-		return true
-	case typ.Kind() == reflect.Ptr && typ.Elem().ConvertibleTo(typTime):
-		// Type is *time.Time
-		return true
-	case typ.Kind() == reflect.Ptr && isEmbeddedTime(typ.Elem()):
-		// Type is *struct { time.Time }
-		return true
-	default:
-		// We only modify encoders/decoders for the above types
-		return false
-	}
+type DecoderDecorator interface {
+	DecorateDecoder(typ reflect2.Type, dec jsoniter.ValDecoder) jsoniter.ValDecoder
+}
+type EncoderDecorator interface {
+	DecorateEncoder(typ reflect2.Type, dec jsoniter.ValEncoder) jsoniter.ValEncoder
 }
 
-// check if type is a struct wrapping time.Time
-// ```
-// type T struct {
-//   time.Time
-// }
-// ```
-func isEmbeddedTime(typ reflect.Type) bool {
-	if typ.Kind() == reflect.Struct && typ.NumField() == 1 {
-		if field := typ.Field(0); field.Anonymous && field.Type.ConvertibleTo(typTime) {
-			return true
+func (ext *Extension) resolveCodec(tag string) (TimeCodec, error) {
+	// NOTE: [tcodec] Add support for other layout types such as strftime (https://strftime.org/)
+	if strings.HasPrefix(tag, "layout=") {
+		// The tag is of the form `layout=GO_TIME_LAYOUT`.
+		// We strip the prefix and use a LayoutCodec.
+		layout := strings.TrimPrefix(tag, "layout=")
+		return LayoutCodec(layout), nil
+	}
+	if codecs := ext.Codecs; codecs != nil {
+		if codec := codecs.Lookup(tag); codec != nil {
+			return codec, nil
 		}
 	}
-	return false
+	if codec := Lookup(tag); codec != nil {
+		return codec, nil
+	}
+	return nil, fmt.Errorf(`failed to resolve %q time codec`, tag)
 }
 
-func (ext *Extension) TagName() string {
-	if tagName := ext.config.TagName; tagName != "" {
+func (ext *Extension) tagName() string {
+	if tagName := ext.TagName; tagName != "" {
 		return tagName
 	}
 	return DefaultTagName
-}
-
-func (ext *Extension) split(codec TimeCodec) (decoder TimeDecoder, encoder TimeEncoder) {
-	if codec == nil {
-		codec = ext.config.DefaultCodec
-	}
-	if decorate := ext.config.DecorateCodec; decorate != nil {
-		codec = decorate(codec)
-	}
-	return Split(codec)
 }
 
 type jsonTimeEncoder struct {
@@ -219,10 +167,10 @@ func (*jsonTimePtrEncoder) IsEmpty(ptr unsafe.Pointer) bool {
 
 func (enc *jsonTimePtrEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	tm := *((**time.Time)(ptr))
-	if tm == nil {
-		enc.encode(time.Time{}, stream)
-	} else {
+	if tm != nil {
 		enc.encode(*tm, stream)
+	} else {
+		stream.WriteNil()
 	}
 }
 
@@ -258,4 +206,54 @@ func (dec *jsonTimePtrDecoder) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterato
 	newPtr := unsafe.Pointer(v.Pointer())
 	*(*time.Time)(newPtr) = tm
 	*(**time.Time)(ptr) = (*time.Time)(newPtr)
+}
+
+type errCodec struct {
+	err       error
+	operation string
+}
+
+func (c *errCodec) IsEmpty(_ unsafe.Pointer) bool {
+	return false
+}
+func (c *errCodec) Encode(_ unsafe.Pointer, stream *jsoniter.Stream) {
+	stream.Error = c.err
+}
+func (c *errCodec) Decode(_ unsafe.Pointer, iter *jsoniter.Iterator) {
+	iter.ReportError(c.operation, c.err.Error())
+}
+
+// OverrideEncoders returns an extension that forces all time.Time values to be encoded using `enc`
+func OverrideEncoders(enc TimeEncoder) jsoniter.Extension {
+	return &extOverrideEncoders{
+		enc: enc,
+	}
+}
+
+type extOverrideEncoders struct {
+	jsoniter.DummyExtension
+	enc TimeEncoder
+}
+
+func (ext *extOverrideEncoders) CreateEncoder(typ reflect2.Type) jsoniter.ValEncoder {
+	if typ := typ.Type1(); typ == typTime {
+		return NewTimeEncoder(ext.enc, typ)
+	}
+	return nil
+}
+
+func (ext *extOverrideEncoders) UpdateStructDescriptor(desc *jsoniter.StructDescriptor) {
+	for _, binding := range desc.Fields {
+		typ2 := binding.Field.Type()
+		enc := NewTimeEncoder(ext.enc, typ2.Type1())
+		if enc == nil {
+			continue
+		}
+
+		if e, ok := binding.Encoder.(EncoderDecorator); ok {
+			enc = e.DecorateEncoder(typ2, enc)
+		}
+
+		binding.Encoder = enc
+	}
 }

@@ -228,9 +228,13 @@ func (layout layoutCodec) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
 func (layout layoutCodec) DecodeTime(iter *jsoniter.Iterator) time.Time {
 	switch iter.WhatIsNext() {
 	case jsoniter.StringValue:
-		tm, err := time.Parse(string(layout), iter.ReadString())
+		s := iter.ReadString()
+		if s == "" {
+			return time.Time{}
+		}
+		tm, err := time.Parse(string(layout), s)
 		if err != nil {
-			iter.ReportError(`ParseTime`, err.Error())
+			iter.ReportError(`DecodeTime`, err.Error())
 		}
 		return tm
 	case jsoniter.NilValue:
@@ -293,53 +297,101 @@ func (d *locDecoder) DecodeTime(iter *jsoniter.Iterator) time.Time {
 	return d.decode.DecodeTime(iter).In(d.loc)
 }
 
-// ValidateEmbeddedTimeValue can be used by validator package to check values that embed time.Time
-// ```
-// type T struct {
-//   time.Time
-// }
-//
-// validate := validator.New()
-// validate.RegisterCustomTypeFunc(tcodec.ValidateEmbeddedTimeValue, T{})
-//
-// type Foo struct {
-//   Time T `validate:"required"`
-// }
-//
-// err := validate.Struct(&Foo{}) // error should be non nil
-// ```
-func ValidateEmbeddedTimeValue(val reflect.Value) interface{} {
-	tm := val.Field(0).Interface().(time.Time)
-	if tm.IsZero() {
-		return nil
-	}
-	return tm
-}
-
 func NewTimeEncoder(enc TimeEncoder, typ reflect.Type) jsoniter.ValEncoder {
-	if !isTimeType(typ) {
-		return nil
+	if enc == nil {
+		enc = StdCodec()
 	}
-	if typ.Kind() == reflect.Ptr {
+	switch typ {
+	case typTime:
+		return &jsonTimeEncoder{
+			encode: enc.EncodeTime,
+		}
+	case typTimePtr:
 		return &jsonTimePtrEncoder{
 			encode: enc.EncodeTime,
 		}
-	}
-	return &jsonTimeEncoder{
-		encode: enc.EncodeTime,
-	}
-}
-func NewTimeDecoder(dec TimeDecoder, typ reflect.Type) jsoniter.ValDecoder {
-	if !isTimeType(typ) {
+	default:
 		return nil
 	}
-	if typ.Kind() == reflect.Ptr {
+}
+
+func NewTimeDecoder(dec TimeDecoder, typ reflect.Type) jsoniter.ValDecoder {
+	if dec == nil {
+		dec = StdCodec()
+	}
+	switch typ {
+	case typTime:
+		return &jsonTimeDecoder{
+			decode: dec.DecodeTime,
+		}
+	case typTimePtr:
 		return &jsonTimePtrDecoder{
 			decode: dec.DecodeTime,
 			typ:    typ.Elem(),
 		}
+	default:
+		return nil
 	}
-	return &jsonTimeDecoder{
-		decode: dec.DecodeTime,
+}
+
+// StdCodec behaves like the default UnmarshalJSON/MarshalJSON for time.Time values.
+// The tcodec extension uses this TimeCodec when no `tcodec` tag is present on a field of type time.Time and
+// the extension has no Config.DefaultCodec defined.
+func StdCodec() TimeCodec {
+	return &stdCodec{}
+}
+
+type stdCodec struct{}
+
+func (*stdCodec) DecodeTime(iter *jsoniter.Iterator) time.Time {
+	ts := iter.ReadString()
+	tm, err := time.Parse(time.RFC3339, ts)
+	if err != nil {
+		iter.ReportError(`DecodeTime`, err.Error())
 	}
+	return tm
+}
+
+const layoutRFC3339NanoJSON = `"` + time.RFC3339Nano + `"`
+
+func (*stdCodec) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
+	buf := stream.Buffer()
+	buf = tm.AppendFormat(buf, layoutRFC3339NanoJSON)
+	stream.SetBuffer(buf)
+}
+
+// TryDecoders returns a TimeDecoder that tries to decode a time.Time using `dec` and then each of the `fallback` decoders in order.
+func TryDecoders(dec TimeDecoder, fallback ...TimeDecoder) TimeDecoder {
+	return &tryDecoder{
+		decoders: append([]TimeDecoder{dec}, fallback...),
+	}
+}
+
+type tryDecoder struct {
+	decoders []TimeDecoder
+}
+
+func (d *tryDecoder) DecodeTime(iter *jsoniter.Iterator) time.Time {
+	rawJSON := iter.SkipAndReturnBytes()
+	child := iter.Pool().BorrowIterator(rawJSON)
+	for i, dec := range d.decoders {
+		if i != 0 {
+			child.ResetBytes(rawJSON)
+			child.Error = nil
+		}
+		tm := dec.DecodeTime(child)
+		if child.Error == nil {
+			child.Pool().ReturnIterator(child)
+			return tm
+		}
+	}
+	iter.Error = child.Error
+	child.Pool().ReturnIterator(child)
+	return time.Time{}
+}
+
+type Time = time.Time
+
+func init() {
+	jsoniter.RegisterExtension(&Extension{})
 }
