@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Card, useSnackbar } from 'pouncejs';
+import { useSnackbar } from 'pouncejs';
 import urls from 'Source/urls';
 import Page404 from 'Pages/404';
 import useRouter from 'Hooks/useRouter';
@@ -61,24 +61,22 @@ const EditComplianceSource: React.FC = () => {
   }
 
   return (
-    <Card p={9} mb={6}>
-      <ComplianceSourceWizard
-        initialValues={initialValues}
-        externalErrorMessage={updateError && extractErrorMessage(updateError)}
-        onSubmit={values =>
-          updateComplianceSource({
-            variables: {
-              input: {
-                integrationId: match.params.id,
-                integrationLabel: values.integrationLabel,
-                cweEnabled: values.cweEnabled,
-                remediationEnabled: values.remediationEnabled,
-              },
+    <ComplianceSourceWizard
+      initialValues={initialValues}
+      externalErrorMessage={updateError && extractErrorMessage(updateError)}
+      onSubmit={values =>
+        updateComplianceSource({
+          variables: {
+            input: {
+              integrationId: match.params.id,
+              integrationLabel: values.integrationLabel,
+              cweEnabled: values.cweEnabled,
+              remediationEnabled: values.remediationEnabled,
             },
-          })
-        }
-      />
-    </Card>
+          },
+        })
+      }
+    />
   );
 };
 

@@ -18,3 +18,4 @@
 
 export { default } from './DeleteDestinationModal';
 export * from './DeleteDestinationModal';
+export * from './graphql/deleteOutput.generated';

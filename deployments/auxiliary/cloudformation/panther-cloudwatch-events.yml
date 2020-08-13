@@ -16,7 +16,7 @@
 
 AWSTemplateFormatVersion: 2010-09-09
 Description: >
-  This stack configures Panther's real-time CloudWatch Event collection process.
+  This stack configures Panther's real-time CloudWatch Event collection.
   It works by creating CloudWatch Event rules which feed to Panther's SQS Queue proxied by
   a local SNS topic in each region.
 Metadata:
@@ -25,10 +25,10 @@ Metadata:
 Parameters:
   MasterAccountId:
     Type: String
-    Description: AWS account ID of the account running the Panther backend
+    Description: The AWS Account ID of the Panther deployment
   QueueArn:
     Type: String
-    Description: The Panther SQS Queue Arn to forward CloudWatch Events to via SNS.
+    Description: The Panther SQS Queue Arn to receive CloudWatch Events via SNS
 
 Resources:
   # SNS Topic, Policy, and Subscription to SQS

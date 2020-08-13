@@ -20,7 +20,7 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
-import { Box, FormHelperText } from 'pouncejs';
+import { AbstractButton, Box, Collapse, FormHelperText, SimpleGrid } from 'pouncejs';
 import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
@@ -65,29 +65,47 @@ const SQS_QUEUE_POLICY = {
 const mergedValidationSchema = defaultValidationSchema.concat(sqsFieldsValidationSchema);
 
 const SqsDestinationForm: React.FC<SQSDestinationFormProps> = ({ onSubmit, initialValues }) => {
+  const [showPolicy, setShowPolicy] = React.useState(false);
+
   return (
     <BaseDestinationForm<SQSFieldValues>
       initialValues={initialValues}
       validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
-      <Box as="fieldset">
+      <SimpleGrid gap={5} columns={2}>
         <Field
+          name="displayName"
           as={FormikTextInput}
-          name="outputConfig.sqs.queueUrl"
-          label="Queue URL"
-          placeholder="Where should we send the queue data to?"
+          label="* Display Name"
+          placeholder="How should we name this?"
           required
-          aria-describedby="queueUrl-label queueUrl-policy"
         />
-        <FormHelperText id="queueUrl-label" mt={2}>
-          <b>Note</b>: You would need to allow Panther <b>sqs:SendMessage</b> access to send alert
-          messages to your SQS queue
-        </FormHelperText>
-        <Box my={4} id="queueUrl-policy">
-          <JsonViewer data={SQS_QUEUE_POLICY} collapsed={false} />
+        <Box as="fieldset">
+          <Field
+            as={FormikTextInput}
+            name="outputConfig.sqs.queueUrl"
+            label="Queue URL"
+            placeholder="Where should we send the queue data to?"
+            required
+            aria-describedby="queueUrl-label queueUrl-policy"
+          />
+          <FormHelperText id="queueUrl-label" mt={2}>
+            <b>Note</b>: You would need to allow Panther <b>sqs:SendMessage</b> access to send alert
+            messages to your queue.{' '}
+            {!showPolicy && (
+              <AbstractButton color="blue-400" onClick={() => setShowPolicy(true)}>
+                Show Policy
+              </AbstractButton>
+            )}
+          </FormHelperText>
+          <Collapse open={showPolicy}>
+            <Box my={4} id="queueUrl-policy">
+              <JsonViewer data={SQS_QUEUE_POLICY} collapsed={false} />
+            </Box>
+          </Collapse>
         </Box>
-      </Box>
+      </SimpleGrid>
     </BaseDestinationForm>
   );
 };

@@ -68,19 +68,9 @@ func fileHashMap(roots ...string) (map[string][16]byte, error) {
 	return result, nil
 }
 
-// Hash every "source" file in the repo to check for diffs before vs after formatting.
-//
-// Excludes: .idea, .git, .setup, keys, node_modules, out, etc
+// Hash every source file in the repo to check for diffs before vs after formatting.
 func sourceHashes() (map[string][16]byte, error) {
-	topLevel, err := filepath.Glob("*.{json,md,go,yml}")
-	if err != nil {
-		return nil, fmt.Errorf("glob failed: %v", err)
-	}
-
-	// We don't want to waste time hashing files that we don't care about
-	roots := append(topLevel, ".circleci", ".github", "api", "build", "cmd", "deployments",
-		"internal", "pkg", "tools", "web")
-	return fileHashMap(roots...)
+	return fileHashMap(licensePaths...)
 }
 
 // Return a list of file paths that are different between the two hash maps.

@@ -26,7 +26,7 @@
  */
 
 import React from 'react';
-import { useListDestinationsAndDefaults } from 'Pages/Destinations';
+import { useListDestinationsAndDefaults } from 'Pages/ListDestinations';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useSnackbar } from 'pouncejs';
 

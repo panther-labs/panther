@@ -50,6 +50,9 @@ export type TypePolicies = Partial<
 const typePolicies: TypePolicies = {
   Query: {
     fields: {
+      destination(existing, { args, toReference }) {
+        return existing || toReference({ __typename: 'Destination', outputId: args.id });
+      },
       getComplianceIntegration(existing, { args, toReference }) {
         return (
           existing || toReference({ __typename: 'ComplianceIntegration', integrationId: args.id })

@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Card, useSnackbar } from 'pouncejs';
+import { useSnackbar } from 'pouncejs';
 import urls from 'Source/urls';
 import Page404 from 'Pages/404';
 import useRouter from 'Hooks/useRouter';
@@ -62,27 +62,25 @@ const EditSqsLogSource: React.FC = () => {
   }
 
   return (
-    <Card p={9} mb={6}>
-      <SqsSourceWizard
-        initialValues={initialValues}
-        externalErrorMessage={updateError && extractErrorMessage(updateError)}
-        onSubmit={values =>
-          updateSqsLogSource({
-            variables: {
-              input: {
-                integrationId: values.integrationId,
-                integrationLabel: values.integrationLabel,
-                sqsConfig: {
-                  logTypes: values.logTypes,
-                  allowedPrincipalArns: values.allowedPrincipalArns,
-                  allowedSourceArns: values.allowedSourceArns,
-                },
+    <SqsSourceWizard
+      initialValues={initialValues}
+      externalErrorMessage={updateError && extractErrorMessage(updateError)}
+      onSubmit={values =>
+        updateSqsLogSource({
+          variables: {
+            input: {
+              integrationId: values.integrationId,
+              integrationLabel: values.integrationLabel,
+              sqsConfig: {
+                logTypes: values.logTypes,
+                allowedPrincipalArns: values.allowedPrincipalArns,
+                allowedSourceArns: values.allowedSourceArns,
               },
             },
-          })
-        }
-      />
-    </Card>
+          },
+        })
+      }
+    />
   );
 };
 

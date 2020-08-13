@@ -17,12 +17,13 @@
  */
 
 import React from 'react';
-import { Box, Flex, FormHelperText, Heading, Text } from 'pouncejs';
+import { Box, Flex, FormHelperText } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { FastField, Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import { LOG_TYPES } from 'Source/constants';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
+import { WizardPanelWrapper } from 'Components/Wizard';
 import { pantherConfig } from 'Source/config';
 import { SqsLogSourceWizardValues } from '../SqsSourceWizard';
 
@@ -31,16 +32,18 @@ const SqsSourceConfigurationPanel: React.FC = () => {
 
   return (
     <Box width={460} m="auto">
-      <Heading as="h2" m="auto" mb={2}>
-        {initialValues.integrationId ? 'Update the SQS source' : "Let's start with the basics"}
-      </Heading>
-      <Text color="gray-300" mb={4}>
-        {initialValues.integrationId
-          ? 'Feel free to make any changes to your SQS log source'
-          : 'We need to know where to get your logs from'}
-      </Text>
+      <WizardPanelWrapper.Heading
+        title={
+          initialValues.integrationId ? 'Update the SQS source' : "Let's start with the basics"
+        }
+        subtitle={
+          initialValues.integrationId
+            ? 'Feel free to make any changes to your SQS log source'
+            : 'We need to know where to get your logs from'
+        }
+      />
       <ErrorBoundary>
-        <Flex direction="column" spacing={4}>
+        <Flex direction="column" spacing={5}>
           <Field
             name="integrationLabel"
             as={FormikTextInput}
@@ -56,34 +59,38 @@ const SqsSourceConfigurationPanel: React.FC = () => {
             items={LOG_TYPES}
             placeholder="Which log types should we monitor?"
           />
-          <FastField
-            as={FormikMultiCombobox}
-            label="Allowed AWS Principal ARNs"
-            name="allowedPrincipalArns"
-            searchable
-            allowAdditions
-            items={[]}
-            placeholder="Enter AWS Principals ARNs"
-          />
-          <FormHelperText id="aws-principals-arn-helper" ml={3} pb={4}>
-            Add the ARN of the AWS Principals that are allowed to send data to the queue i.e.
-            arn:aws:iam::{pantherConfig.AWS_ACCOUNT_ID}:root
-          </FormHelperText>
-
-          <FastField
-            as={FormikMultiCombobox}
-            label="Allowed source ARNs"
-            name="allowedSourceArns"
-            searchable
-            allowAdditions
-            items={[]}
-            placeholder="Enter AWS resources ARNs"
-          />
-          <FormHelperText id="aws-resources-arn-helper" ml={3}>
-            Specify which AWS resources (SNS topics, S3 buckets, etc) are allowed to send data to
-            the queue i.e. arn:aws:sns:{pantherConfig.AWS_REGION}:{pantherConfig.AWS_ACCOUNT_ID}
-            :my-topic
-          </FormHelperText>
+          <Box as="fieldset">
+            <FastField
+              as={FormikMultiCombobox}
+              label="Allowed AWS Principal ARNs"
+              name="allowedPrincipalArns"
+              searchable
+              allowAdditions
+              items={[]}
+              placeholder="The allowed AWS Principals ARNs (separated with <Enter>)"
+            />
+            <FormHelperText id="aws-principals-arn-helper" mt={2}>
+              The ARN of the AWS Principals that are allowed to send data to the queue, separated
+              with {'<'}Enter{'>'} (i.e. arn:aws:iam::{pantherConfig.AWS_ACCOUNT_ID}:root)
+            </FormHelperText>
+          </Box>
+          <Box as="fieldset">
+            <FastField
+              as={FormikMultiCombobox}
+              label="Allowed source ARNs"
+              name="allowedSourceArns"
+              searchable
+              allowAdditions
+              items={[]}
+              placeholder="The allowed AWS resources ARNs (separated with <Enter>)"
+            />
+            <FormHelperText id="aws-resources-arn-helper" mt={2}>
+              The AWS resources (SNS topics, S3 buckets, etc) that are allowed to send data to the
+              queue, separated with {'<'}Enter{'>'} (i.e. arn:aws:sns:{pantherConfig.AWS_REGION}:
+              {pantherConfig.AWS_ACCOUNT_ID}
+              :my-topic).
+            </FormHelperText>
+          </Box>
         </Flex>
       </ErrorBoundary>
     </Box>
