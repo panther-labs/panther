@@ -190,12 +190,7 @@ const ListAlertsActions: React.FC<ListAlertsActionsProps> = ({ showActions }) =>
   // The initial filter values for when the filters component first renders. If you see down below,
   // we mount and unmount it depending on whether it's visible or not
   const initialFilterValues = React.useMemo(
-    () =>
-      preProcessDate({
-        // Sets the multi-select to pre-highlight these statuses to filter on initial load
-        status: [AlertStatusesEnum.Open, AlertStatusesEnum.Triaged],
-        ...(pick(requestParams, filterKeys) as ListAlertsFiltersValues),
-      }),
+    () => preProcessDate(pick(requestParams, filterKeys) as ListAlertsFiltersValues),
     [requestParams]
   );
 
