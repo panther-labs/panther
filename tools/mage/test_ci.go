@@ -40,15 +40,29 @@ func (Test) CI() {
 	fmtErr := testFmtAndGeneratedFiles()
 
 	// Go unit tests and linting already run in multiple processors
-	goUnitErr := testGoUnit()
-	goLintErr := testGoLint()
+	// When running locally, test these by themselves to avoid locking up dev laptops.
+	var goUnitErr, goLintErr error
+	if !runningInCI() {
+		goUnitErr = testGoUnit()
+		goLintErr = testGoLint()
+	}
 
 	tests := []testTask{
 		{"fmt", func() error { return fmtErr }},
 
 		// mage test:go
-		{"go unit tests", func() error { return goUnitErr }},
-		{"golangci-lint", func() error { return goLintErr }},
+		{"go unit tests", func() error {
+			if runningInCI() {
+				return testGoUnit()
+			}
+			return goUnitErr
+		}},
+		{"golangci-lint", func() error {
+			if runningInCI() {
+				return testGoLint()
+			}
+			return goLintErr
+		}},
 
 		// mage doc
 		{"doc", doc}, // verify the command works, even if docs aren't committed in this repo
