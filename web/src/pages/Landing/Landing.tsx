@@ -110,7 +110,7 @@ const LandingPage: React.FC = () => {
               <Text fontSize="medium" color="gray-300" mb={6} maxWidth={275}>
                 Add destinations so Panther can notify you of policy and rule findings
               </Text>
-              <Box width={225} as={RRLink} to={urls.settings.destinations()}>
+              <Box width={225} as={RRLink} to={urls.settings.destinations.list()}>
                 <Button fullWidth variantColor="red" as="div">
                   Setup Destinations
                 </Button>

@@ -39,7 +39,7 @@ test('renders SQS creation wizard', async () => {
   const logTypesField = getAllByLabelText('* Log Types')[0];
   const allowedPrincipalArnsField = getAllByLabelText('Allowed AWS Principal ARNs')[0];
   const allowedSourceArnsField = getAllByLabelText('Allowed source ARNs')[0];
-  const nextButton = getByText('Next');
+  const nextButton = getByText('Continue Setup');
   // Expecting input elements and button to be rendered
   expect(integrationLabelField).not.toBeNull();
   expect(logTypesField).not.toBeNull();
@@ -57,9 +57,9 @@ test('renders SQS creation wizard', async () => {
     target: { value: sqsInput.sqsConfig.allowedSourceArns },
   });
 
-  expect(getByText('Next').closest('button')).not.toBeDisabled();
+  expect(getByText('Continue Setup').closest('button')).not.toBeDisabled();
   expect(queryByText('Save Source')).toBeNull();
   // Triggering event for Next step
-  fireEvent.click(getByText('Next'));
+  fireEvent.click(getByText('Continue Setup'));
   expect(getByText('Save Source')).toBeDefined();
 });

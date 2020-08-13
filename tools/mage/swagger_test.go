@@ -30,9 +30,11 @@ import (
 )
 
 func TestEmbedAPIsNoChange(t *testing.T) {
-	cfn, err := cfnparse.ParseTemplate(testEnvPath(), "testdata/no-api.yml")
+	var cfn map[string]interface{}
+	err := cfnparse.ParseTemplate(testEnvPath(), "testdata/no-api.yml", &cfn)
 	require.NoError(t, err)
-	expectedMap, err := cfnparse.ParseTemplate(testEnvPath(), "testdata/no-api.yml")
+	var expectedMap map[string]interface{}
+	err = cfnparse.ParseTemplate(testEnvPath(), "testdata/no-api.yml", &expectedMap)
 	require.NoError(t, err)
 
 	require.NoError(t, embedAPIs(cfn))
@@ -48,9 +50,11 @@ func TestEmbedAPIsNoChange(t *testing.T) {
 }
 
 func TestEmbedAPIs(t *testing.T) {
-	cfn, err := cfnparse.ParseTemplate(testEnvPath(), "testdata/valid-api.yml")
+	var cfn map[string]interface{}
+	err := cfnparse.ParseTemplate(testEnvPath(), "testdata/valid-api.yml", &cfn)
 	require.NoError(t, err)
-	expectedMap, err := cfnparse.ParseTemplate(testEnvPath(), "testdata/valid-api-expected-output.yml")
+	var expectedMap map[string]interface{}
+	err = cfnparse.ParseTemplate(testEnvPath(), "testdata/valid-api-expected-output.yml", &expectedMap)
 	require.NoError(t, err)
 
 	require.NoError(t, embedAPIs(cfn))

@@ -21,6 +21,7 @@ package pantherlog
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"time"
 	"unsafe"
 
@@ -29,7 +30,17 @@ import (
 	"github.com/modern-go/reflect2"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
+
+	// We ensure that `tcodec`'s `init()` runs before pantherlog's `init()` by importing it anonymously
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
 )
+
+func init() {
+	// Since the panther extension does not affect non-panther struct we register it globally
+	jsoniter.RegisterExtension(&pantherExt{})
+	// Encode all Result instances using our custom encoder
+	jsoniter.RegisterTypeEncoder(typResult.String(), &resultEncoder{})
+}
 
 const (
 	// TagName is used for defining value scan methods on string fields.
@@ -64,13 +75,6 @@ var (
 	typTime          = reflect.TypeOf(time.Time{})
 	typResult        = reflect.TypeOf(Result{})
 )
-
-func init() {
-	// Since the panther extension does not affect non-panther struct we register it globally
-	jsoniter.RegisterExtension(&pantherExt{})
-	// Encode all Result instances using our custom encoder
-	jsoniter.RegisterTypeEncoder(typResult.String(), &resultEncoder{})
-}
 
 // Special encoder for *Result. It extends the event JSON object with all the required Panther fields.
 type resultEncoder struct{}
@@ -146,6 +150,7 @@ func (*resultEncoder) writePantherFields(r *Result, stream *jsoniter.Stream) {
 		if !ok {
 			continue
 		}
+		sort.Strings(values)
 		stream.WriteMore()
 		stream.WriteObjectField(fieldName)
 		stream.WriteArrayStart()
@@ -168,6 +173,10 @@ func extendJSON(data []byte) bool {
 		return true
 	}
 	return false
+}
+
+func NewExtension() jsoniter.Extension {
+	return &pantherExt{}
 }
 
 type pantherExt struct {
@@ -280,8 +289,10 @@ func (e *eventTimeEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 		return
 	}
 	if result, ok := stream.Attachment.(*Result); ok {
+		// We only override the result event time if the tag was `panther:"event_time,override" or
+		// if we're the first to set the event time. See usage comments on `tagEventTime` const above.
 		if e.override || result.PantherEventTime.IsZero() {
-			result.PantherEventTime = *tm
+			result.PantherEventTime = tm.UTC()
 		}
 	}
 }
