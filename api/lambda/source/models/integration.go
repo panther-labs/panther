@@ -63,6 +63,14 @@ type SourceIntegrationMetadata struct {
 	SqsConfig          *SqsConfig `json:"sqsConfig,omitempty"`
 }
 
+func (info *SourceIntegration) RequiredLogTypes() (logTypes []string) {
+	logTypes = append(logTypes, info.LogTypes...)
+	if sqsConfig := info.SqsConfig; sqsConfig != nil {
+		logTypes = append(logTypes, sqsConfig.LogTypes...)
+	}
+	return
+}
+
 type SourceIntegrationHealth struct {
 	IntegrationType string `json:"integrationType"`
 

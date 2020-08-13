@@ -185,7 +185,7 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 		Reader:      streamReader,
 		SourceID:    sourceInfo.IntegrationID,
 		SourceLabel: sourceInfo.IntegrationLabel,
-		LogTypes:    sourceInfo.LogTypes,
+		LogTypes:    sourceInfo.RequiredLogTypes(),
 		Hints: common.DataStreamHints{
 			S3: &common.S3DataStreamHints{
 				Bucket:      s3Object.S3Bucket,
