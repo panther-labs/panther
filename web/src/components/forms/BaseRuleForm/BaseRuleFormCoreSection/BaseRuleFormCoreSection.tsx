@@ -141,7 +141,7 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
           placeholder={`Additional context about this ${type}`}
           name="description"
         />
-        <SimpleGrid columns={1} spacing={5} mb={5}>
+        <SimpleGrid columns={1} spacing={5}>
           <FastField
             as={FormikTextArea}
             label="Runbook"
@@ -158,15 +158,17 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
               name="reference"
             />
           </Box>
-          <Box flexGrow={1}>
-            <Field
-              as={FormikNumberInput}
-              label="* Events Threshold"
-              min={0}
-              name="threshold"
-              placeholder="Send an alert only after # events"
-            />
-          </Box>
+          {!isPolicy && (
+            <Box flexGrow={1}>
+              <Field
+                as={FormikNumberInput}
+                label="* Events Threshold"
+                min={0}
+                name="threshold"
+                placeholder="Send an alert only after # events"
+              />
+            </Box>
+          )}
         </Flex>
       </SimpleGrid>
       <SimpleGrid columns={4} spacing={5}>
