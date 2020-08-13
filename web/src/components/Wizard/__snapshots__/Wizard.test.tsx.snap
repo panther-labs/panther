@@ -225,7 +225,7 @@ exports[`Wizard renders a step 1`] = `
     <div
       class="panther-26 panther-1"
     >
-      <div
+      <section
         class="panther-24 panther-1"
       >
         <div
@@ -261,7 +261,7 @@ exports[`Wizard renders a step 1`] = `
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   </article>
 </div>
