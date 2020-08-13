@@ -18,7 +18,13 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: IAM role for deploying Panther
 
 Metadata:
-  Version: v1.6.0
+  Version: v1.7.0
+
+Parameters:
+  IdentityAccountId:
+    Type: String
+    Description: The account ID for the account the deployment role will be assumed from
+    Default: ''
 
 Resources:
   DeploymentRole:
@@ -30,7 +36,7 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+              AWS: !Sub arn:${AWS::Partition}:iam::${IdentityAccountId}:root
             Action: sts:AssumeRole
             Condition:
               Bool:
