@@ -21,6 +21,7 @@ package pantherlog
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"time"
 	"unsafe"
 
@@ -149,6 +150,7 @@ func (*resultEncoder) writePantherFields(r *Result, stream *jsoniter.Stream) {
 		if !ok {
 			continue
 		}
+		sort.Strings(values)
 		stream.WriteMore()
 		stream.WriteObjectField(fieldName)
 		stream.WriteArrayStart()
@@ -287,8 +289,10 @@ func (e *eventTimeEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 		return
 	}
 	if result, ok := stream.Attachment.(*Result); ok {
+		// We only override the result event time if the tag was `panther:"event_time,override" or
+		// if we're the first to set the event time. See usage comments on `tagEventTime` const above.
 		if e.override || result.PantherEventTime.IsZero() {
-			result.PantherEventTime = *tm
+			result.PantherEventTime = tm.UTC()
 		}
 	}
 }
