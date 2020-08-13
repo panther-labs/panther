@@ -19,9 +19,7 @@ package sources
  */
 
 import (
-	"sort"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -57,53 +55,8 @@ type s3ClientCacheKey struct {
 }
 
 type sourceCacheStruct struct {
-	mu              sync.RWMutex
-	lastUpdateAt    time.Time
-	sourcesByID     map[string]*models.SourceIntegration
-	sourcesByBucket map[string][]*models.SourceIntegration
-}
-
-func (c *sourceCacheStruct) find(obj *S3ObjectInfo) *models.SourceIntegration {
-	key := obj.S3ObjectKey
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	for _, src := range c.sourcesByBucket[obj.S3Bucket] {
-		if src.S3Prefix == "" {
-			return src
-		}
-		if strings.HasPrefix(key, src.S3Prefix) {
-			return src
-		}
-	}
-	return nil
-}
-
-func (c *sourceCacheStruct) reset(sources ...*models.SourceIntegration) {
-	byID := make(map[string]*models.SourceIntegration, len(sources))
-	byBucket := make(map[string][]*models.SourceIntegration, len(sources))
-	for _, src := range sources {
-		byID[src.IntegrationID] = src
-		bucketName := src.S3Bucket
-		bucketSources := byBucket[bucketName]
-		byBucket[bucketName] = append(bucketSources, src)
-	}
-
-	for key, bSources := range byBucket {
-		cp := bSources[:]
-		// Sort sources using longest prefix first so we can match subpaths by prefix
-		sort.Slice(cp, func(i, j int) bool {
-			return len(cp[i].S3Prefix) > len(cp[j].S3Prefix)
-		})
-		byBucket[key] = cp
-	}
-
-	now := time.Now()
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.lastUpdateAt = now
-	c.sourcesByBucket = byBucket
-	c.sourcesByID = byID
+	cacheUpdateTime time.Time
+	sources         []*models.SourceIntegration
 }
 
 var (
@@ -113,26 +66,19 @@ var (
 	// s3ClientCacheKey -> S3 client
 	s3ClientCache *lru.ARCCache
 
-	sourceCache = &sourceCacheStruct{}
-
-	muLastReceived sync.Mutex
-	lastReceived   = make(map[string]time.Time)
+	sourceCache = &sourceCacheStruct{
+		cacheUpdateTime: time.Unix(0, 0),
+	}
 
 	//used to simplify mocking during testing
 	newCredentialsFunc = stscreds.NewCredentials
 	newS3ClientFunc    = getNewS3Client
 
+	// Map from integrationId -> last time an event was received
+	lastEventReceived = make(map[string]time.Time)
 	// How frequently to update the status
 	statusUpdateFrequency = 1 * time.Minute
 )
-
-func updateSourceLastEvent(id string) time.Duration {
-	tm := time.Now()
-	muLastReceived.Lock()
-	tm, lastReceived[id] = lastReceived[id], tm
-	muLastReceived.Unlock()
-	return time.Since(tm)
-}
 
 func init() {
 	var err error
@@ -150,7 +96,15 @@ func init() {
 // getS3Client Fetches
 // 1. S3 client with permissions to read data from the account that contains the event
 // 2. The type of the integration
-func getS3Client(s3Object *S3ObjectInfo, sourceInfo *models.SourceIntegration) (s3iface.S3API, error) {
+func getS3Client(s3Object *S3ObjectInfo) (s3iface.S3API, *models.SourceIntegration, error) {
+	sourceInfo, err := getSourceInfo(s3Object)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "failed to fetch the appropriate role arn to retrieve S3 object %#v", s3Object)
+	}
+
+	if sourceInfo == nil {
+		return nil, nil, errors.Errorf("there is no source configured for S3 object %#v", s3Object)
+	}
 	var awsCreds *credentials.Credentials // lazy create below
 	roleArn := getSourceLogProcessingRole(sourceInfo)
 
@@ -159,13 +113,12 @@ func getS3Client(s3Object *S3ObjectInfo, sourceInfo *models.SourceIntegration) (
 		zap.L().Debug("bucket region was not cached, fetching it", zap.String("bucket", s3Object.S3Bucket))
 		awsCreds = getAwsCredentials(roleArn)
 		if awsCreds == nil {
-			return nil, errors.Errorf("failed to fetch credentials for assumed role %s to read %#v",
+			return nil, nil, errors.Errorf("failed to fetch credentials for assumed role %s to read %#v",
 				roleArn, s3Object)
 		}
-		var err error
 		bucketRegion, err = getBucketRegion(s3Object.S3Bucket, awsCreds)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		bucketCache.Add(s3Object.S3Bucket, bucketRegion)
 	}
@@ -182,14 +135,14 @@ func getS3Client(s3Object *S3ObjectInfo, sourceInfo *models.SourceIntegration) (
 		if awsCreds == nil {
 			awsCreds = getAwsCredentials(roleArn)
 			if awsCreds == nil {
-				return nil, errors.Errorf("failed to fetch credentials for assumed role %s to read %#v",
+				return nil, nil, errors.Errorf("failed to fetch credentials for assumed role %s to read %#v",
 					roleArn, s3Object)
 			}
 		}
 		client = newS3ClientFunc(box.String(cacheKey.awsRegion), awsCreds)
 		s3ClientCache.Add(cacheKey, client)
 	}
-	return client.(s3iface.S3API), nil
+	return client.(s3iface.S3API), sourceInfo, nil
 }
 
 func getBucketRegion(s3Bucket string, awsCreds *credentials.Credentials) (string, error) {
@@ -223,7 +176,8 @@ func getAwsCredentials(roleArn string) *credentials.Credentials {
 // It will return error if it encountered an issue retrieving the role.
 // It will return nil result if no source exists for this object.
 func getSourceInfo(s3Object *S3ObjectInfo) (result *models.SourceIntegration, err error) {
-	if time.Since(sourceCache.lastUpdateAt) > sourceCacheDuration {
+	now := time.Now() // No need to be UTC. We care about relative time
+	if sourceCache.cacheUpdateTime.Add(sourceCacheDuration).Before(now) {
 		// we need to update the cache
 		input := &models.LambdaInput{
 			ListIntegrations: &models.ListIntegrationsInput{},
@@ -233,10 +187,31 @@ func getSourceInfo(s3Object *S3ObjectInfo) (result *models.SourceIntegration, er
 		if err != nil {
 			return nil, err
 		}
-		sourceCache.reset(output...)
+		sourceCache.cacheUpdateTime = now
+		sourceCache.sources = output
 	}
 
-	return sourceCache.find(s3Object), nil
+	for _, source := range sourceCache.sources {
+		integrationBucket, integrationPrefix := getSourceS3Info(source)
+		if integrationBucket == s3Object.S3Bucket {
+			if strings.HasPrefix(s3Object.S3ObjectKey, integrationPrefix) {
+				result = source
+				break
+			}
+		}
+	}
+
+	// If the incoming notification maps to a known source, update the source information
+	if result != nil {
+		deadline := lastEventReceived[result.IntegrationID].Add(statusUpdateFrequency)
+		// if more than 'statusUpdateFrequency' time has passed, update status
+		if now.After(deadline) {
+			updateIntegrationStatus(result.IntegrationID, now)
+			lastEventReceived[result.IntegrationID] = now
+		}
+	}
+
+	return result, nil
 }
 
 func updateIntegrationStatus(integrationID string, timestamp time.Time) {
@@ -260,6 +235,17 @@ func getNewS3Client(region *string, creds *credentials.Credentials) (result s3if
 		config.WithRegion(*region)
 	}
 	return s3.New(common.Session, config)
+}
+
+// Returns the configured S3 bucket and S3 object prefix for this source
+func getSourceS3Info(source *models.SourceIntegration) (string, string) {
+	switch source.IntegrationType {
+	case models.IntegrationTypeAWS3:
+		return source.S3Bucket, source.S3Prefix
+	case models.IntegrationTypeSqs:
+		return source.SqsConfig.S3Bucket, source.SqsConfig.S3Prefix
+	}
+	return "", ""
 }
 
 func getSourceLogProcessingRole(source *models.SourceIntegration) (roleArn string) {

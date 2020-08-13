@@ -25,7 +25,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
@@ -129,31 +128,14 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 			zap.String("bucket", s3Object.S3Bucket),
 			zap.String("key", s3Object.S3ObjectKey))
 	}()
-	sourceInfo, err := getSourceInfo(s3Object)
-	if err != nil {
-		err = errors.Wrapf(err, "failed to fetch the appropriate role arn to retrieve S3 object %#v", s3Object)
-		return
-	}
 
-	if sourceInfo == nil {
-		err = errors.Errorf("there is no source configured for S3 object %#v", s3Object)
-		return
-	}
-
-	id := sourceInfo.IntegrationID
-	age := updateSourceLastEvent(id)
-	// if more than 'statusUpdateFrequency' time has passed, update status
-	if age > statusUpdateFrequency {
-		updateIntegrationStatus(id, time.Now())
-	}
-
-	sourceType := sourceInfo.IntegrationType
-	s3Client, err := getS3Client(s3Object, sourceInfo)
+	s3Client, sourceInfo, err := getS3Client(s3Object)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to get S3 client for s3://%s/%s",
 			s3Object.S3Bucket, s3Object.S3ObjectKey)
 		return
 	}
+	sourceType := sourceInfo.IntegrationType
 
 	getObjectInput := &s3.GetObjectInput{
 		Bucket: &s3Object.S3Bucket,
