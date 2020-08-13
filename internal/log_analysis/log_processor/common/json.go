@@ -22,7 +22,9 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/omitempty"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
 )
 
 // BuildJSON returns a jsoniter.API instance that is configured to be used for decoding/encoding JSON log events.
@@ -40,7 +42,11 @@ func BuildJSON() jsoniter.API {
 	}.Froze()
 	// Force omitempty on all struct fields
 	api.RegisterExtension(omitempty.New("json"))
+	// Add tcodec using the default registry
+	api.RegisterExtension(&tcodec.Extension{})
 	// Register awsglue quirks
 	awsglue.RegisterExtensions(api)
+	// Register pantherlog last so event_time tags work fine
+	api.RegisterExtension(pantherlog.NewExtension())
 	return api
 }

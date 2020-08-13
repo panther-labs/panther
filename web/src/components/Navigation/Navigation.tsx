@@ -109,21 +109,21 @@ const Navigation = () => {
         <Flex direction="column" as="ul" flex="1 0 auto" spacing={4}>
           <Box as="li">
             <NavIconButton
-              active={isComplianceNavigationActive}
-              icon="cloud-security"
-              tooltipLabel="Cloud Security"
-              onClick={() =>
-                setSecondaryNav(isComplianceNavigationActive ? null : COMPLIANCE_NAV_KEY)
-              }
-            />
-          </Box>
-          <Box as="li">
-            <NavIconButton
               active={isLogAnalysisNavigationActive}
               icon="log-analysis"
               tooltipLabel="Log Analysis"
               onClick={() =>
                 setSecondaryNav(isLogAnalysisNavigationActive ? null : LOG_ANALYSIS_NAV_KEY)
+              }
+            />
+          </Box>
+          <Box as="li">
+            <NavIconButton
+              active={isComplianceNavigationActive}
+              icon="cloud-security"
+              tooltipLabel="Cloud Security"
+              onClick={() =>
+                setSecondaryNav(isComplianceNavigationActive ? null : COMPLIANCE_NAV_KEY)
               }
             />
           </Box>

@@ -83,7 +83,7 @@ func TestTeleportAudit(t *testing.T) {
 				  "uid": "34bb01d5-8cef-4925-875a-783b2dbee3b6",
 				  "user": "kostaspap",
 				  "p_event_time": "2020-08-07T07:52:09.821Z",
-				  "p_any_ip_addresses": ["127.0.0.1", "1.1.1.1"],
+				  "p_any_ip_addresses": ["1.1.1.1","127.0.0.1"],
 				  "p_any_domain_names": ["ip-172-31-14-137.us-west-2.compute.internal"],
 				  "p_any_trace_ids": ["e527ab2a-d882-11ea-9f82-0a588c28e4c2"],
 				  "p_log_type": "%s"
@@ -175,7 +175,7 @@ func TestTeleportAudit(t *testing.T) {
 					"uid": "9f2bc778-e87e-4536-9c3f-0d4a57955fd0",
 					"user": "kostaspap",
 					"p_event_time": "2020-08-07T07:52:25Z",
-					"p_any_ip_addresses": ["127.0.0.1", "1.1.1.1"],
+				    "p_any_ip_addresses": ["1.1.1.1","127.0.0.1"],
 					"p_any_trace_ids": ["e527ab2a-d882-11ea-9f82-0a588c28e4c2"],
 					"p_log_type": "%s"
 				}`, logTypeTeleportAudit),
