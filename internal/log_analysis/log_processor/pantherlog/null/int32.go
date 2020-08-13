@@ -24,8 +24,6 @@ import (
 	"unsafe"
 
 	jsoniter "github.com/json-iterator/go"
-
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/jsonutil"
 )
 
 // Int32 represents a nullable int32 value.
@@ -57,7 +55,7 @@ func (i *Int32) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 	// Handle both string and number input
-	data = jsonutil.UnquoteJSON(data)
+	data = unquoteJSON(data)
 	// Empty string is considered the same as `null` input
 	if len(data) == 0 {
 		*i = Int32{}

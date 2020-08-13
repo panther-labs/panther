@@ -146,10 +146,10 @@ func checkIPAddress(addr string) bool {
 	return net.ParseIP(addr) != nil
 }
 
+// Tries to split host:port address or falls back to Hostname scanning if `:` is not present in input
 func ScanNetworkAddress(w ValueWriter, input string) {
-	host, _, err := net.SplitHostPort(input)
-	if err != nil {
-		return
+	if host, _, err := net.SplitHostPort(input); err == nil {
+		input = host
 	}
-	ScanHostname(w, host)
+	ScanHostname(w, input)
 }

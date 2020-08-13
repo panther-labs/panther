@@ -26,7 +26,6 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/go-playground/validator.v9"
 )
 
 func TestUnixMilliseconds(t *testing.T) {
@@ -56,7 +55,7 @@ func TestGlobalRegister(t *testing.T) {
 	}
 	v := T{}
 	api := jsoniter.Config{}.Froze()
-	api.RegisterExtension(NewExtension(Config{}))
+	api.RegisterExtension(&Extension{})
 	require.NoError(t, api.UnmarshalFromString(`{"time":"2020"}`, &v))
 	expect := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 	require.Equal(t, expect, v.Time.UTC())
@@ -185,9 +184,8 @@ func TestUnixSecondsDecoder(t *testing.T) {
 }
 
 func TestPointers(t *testing.T) {
-	ext := NewExtension(Config{})
 	api := jsoniter.Config{}.Froze()
-	api.RegisterExtension(ext)
+	api.RegisterExtension(&Extension{})
 	type T struct {
 		Time *time.Time `json:"tm,omitempty" tcodec:"unix"`
 	}
@@ -201,51 +199,30 @@ func TestPointers(t *testing.T) {
 	require.NotNil(t, v.Time)
 	require.Equal(t, expect.Local().Format(time.RFC3339Nano), v.Time.Format(time.RFC3339Nano))
 }
-func TestEmbedded(t *testing.T) {
-	ext := NewExtension(Config{})
-	api := jsoniter.Config{}.Froze()
-	api.RegisterExtension(ext)
-	type Timestamp struct {
-		time.Time
-	}
-	type T struct {
-		Time  Timestamp  `json:"ts,omitempty" tcodec:"unix"`
-		TimeP *Timestamp `json:"tm,omitempty" tcodec:"unix"`
-	}
-	v := T{}
-	err := api.UnmarshalFromString(`{
-		"ts": "1595257966.369",
-		"tm": "1595257966.369"
-	}`, &v)
 
-	expect := time.Date(2020, 7, 20, 15, 12, 46, int(0.369*float64(time.Second.Nanoseconds())), time.UTC).Local()
-	require.NoError(t, err)
-	require.NotNil(t, v.TimeP)
-	require.Equal(t, expect.Format(time.RFC3339Nano), v.TimeP.Format(time.RFC3339Nano))
-	require.Equal(t, expect.Format(time.RFC3339Nano), v.Time.Format(time.RFC3339Nano))
-}
-
-func TestValidate(t *testing.T) {
-	type T struct {
-		time.Time
+func TestTryDecoder_DecodeTime(t *testing.T) {
+	dec := LayoutCodec(time.RFC3339).(TimeDecoder)
+	dec = TryDecoders(dec, LayoutCodec(time.ANSIC))
+	expect := time.Date(2020, 7, 20, 15, 12, 46, int(0.369*float64(time.Second.Nanoseconds())), time.UTC)
+	{
+		input := fmt.Sprintf(`"%s"`, expect.Format(time.RFC3339Nano))
+		iter := jsoniter.ParseString(jsoniter.ConfigDefault, input)
+		actual := dec.DecodeTime(iter)
+		require.NoError(t, iter.Error)
+		require.Equal(t, expect.Format(time.RFC3339Nano), actual.Format(time.RFC3339Nano))
 	}
-	type Foo struct {
-		Embedded T         `validate:"required"`
-		Time     time.Time `validate:"required"`
+	{
+		input := fmt.Sprintf(`"%s"`, expect.Format(time.ANSIC))
+		iter := jsoniter.ParseString(jsoniter.ConfigDefault, input)
+		actual := dec.DecodeTime(iter)
+		require.NoError(t, iter.Error)
+		// ANSIC has seconds precision
+		require.Equal(t, expect.Format(time.RFC3339), actual.Format(time.RFC3339))
 	}
-	now := time.Now()
-	validate := validator.New()
-	require.NoError(t, validate.Struct(&Foo{
-		Time: now,
-	}))
-	validate.RegisterCustomTypeFunc(ValidateEmbeddedTimeValue, T{})
-	require.Error(t, validate.Struct(&Foo{}))
-	require.Error(t, validate.Struct(&Foo{Time: now}))
-	require.Error(t, validate.Struct(&Foo{Embedded: T{now}}))
-	require.NoError(t, validate.Struct(&Foo{
-		Embedded: T{
-			Time: now,
-		},
-		Time: now,
-	}))
+	{
+		input := fmt.Sprintf(`"%s"`, expect.Format(time.RubyDate))
+		iter := jsoniter.ParseString(jsoniter.ConfigDefault, input)
+		_ = dec.DecodeTime(iter)
+		require.Error(t, iter.Error)
+	}
 }
