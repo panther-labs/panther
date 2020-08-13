@@ -38,7 +38,11 @@ interface WizardPanelWrapperComposition {
 }
 
 const WizardPanelWrapper: React.FC & WizardPanelWrapperComposition = ({ children }) => {
-  return <Flex direction="column">{children}</Flex>;
+  return (
+    <Flex as="section" direction="column">
+      {children}
+    </Flex>
+  );
 };
 
 const WizardPanelWrapperContent: React.FC = ({ children }) => {
