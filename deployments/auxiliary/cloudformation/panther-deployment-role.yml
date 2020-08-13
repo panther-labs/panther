@@ -26,6 +26,9 @@ Parameters:
     Description: The account ID for the account the deployment role will be assumed from
     Default: ''
 
+Conditions:
+  AccountSpecified: !Not [!Equals [!Ref IdentityAccountId, '']]
+
 Resources:
   DeploymentRole:
     Type: AWS::IAM::Role
@@ -36,7 +39,10 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: !Sub arn:${AWS::Partition}:iam::${IdentityAccountId}:root
+              AWS: !If
+                - AccountSpecified
+                - !Sub arn:${AWS::Partition}:iam::${IdentityAccountId}:root
+                - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
             Action: sts:AssumeRole
             Condition:
               Bool:
