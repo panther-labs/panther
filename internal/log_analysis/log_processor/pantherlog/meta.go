@@ -100,10 +100,12 @@ var (
 	// Registered fields holds the distinct index of field ids to struct fields
 	registeredFields = map[FieldID]reflect.StructField{
 		// Reserve ids for core fields
-		CoreFieldEventTime: coreField(CoreFieldEventTime),
-		CoreFieldParseTime: coreField(CoreFieldParseTime),
-		CoreFieldRowID:     coreField(CoreFieldRowID),
-		CoreFieldLogType:   coreField(CoreFieldLogType),
+		CoreFieldEventTime:   coreField(CoreFieldEventTime),
+		CoreFieldParseTime:   coreField(CoreFieldParseTime),
+		CoreFieldRowID:       coreField(CoreFieldRowID),
+		CoreFieldLogType:     coreField(CoreFieldLogType),
+		CoreFieldSourceID:    coreField(CoreFieldSourceID),
+		CoreFieldSourceLabel: coreField(CoreFieldSourceLabel),
 	}
 	// registeredFieldNamesJSON stores the JSON field names of registered field ids.
 	registeredFieldNamesJSON = map[FieldID]string{}

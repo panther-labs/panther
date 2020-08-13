@@ -51,14 +51,12 @@ type PantherLog struct {
 	event interface{} // points to event that encapsulates this  as interface{} so we can serialize full event.
 
 	//  required
-	PantherLogType   *string            `json:"p_log_type,omitempty" validate:"required" description:"Panther added field with type of log"`
-	PantherRowID     *string            `json:"p_row_id,omitempty" validate:"required" description:"Panther added field with unique id (within table)"`
-	PantherEventTime *timestamp.RFC3339 `json:"p_event_time,omitempty" validate:"required" description:"Panther added standardize event time (UTC)"`
-	PantherParseTime *timestamp.RFC3339 `json:"p_parse_time,omitempty" validate:"required" description:"Panther added standardize log parse time (UTC)"`
-
-	// optional (string)
-	PantherSourceID    *string `json:"p_source_id,omitempty" description:"Panther added field with the source id"`
-	PantherSourceLabel *string `json:"p_source_label,omitempty" description:"Panther added field with the source label"`
+	PantherLogType     *string            `json:"p_log_type,omitempty" validate:"required" description:"Panther added field with type of log"`
+	PantherRowID       *string            `json:"p_row_id,omitempty" validate:"required" description:"Panther added field with unique id (within table)"`
+	PantherEventTime   *timestamp.RFC3339 `json:"p_event_time,omitempty" validate:"required" description:"Panther added standardize event time (UTC)"`
+	PantherParseTime   *timestamp.RFC3339 `json:"p_parse_time,omitempty" validate:"required" description:"Panther added standardize log parse time (UTC)"`
+	PantherSourceID    *string            `json:"p_source_id,omitempty" description:"Panther added field with the source id"`
+	PantherSourceLabel *string            `json:"p_source_label,omitempty" description:"Panther added field with the source label"`
 
 	// optional (any)
 	PantherAnyIPAddresses  *PantherAnyString `json:"p_any_ip_addresses,omitempty" description:"Panther added field with collection of ip addresses associated with the row"`

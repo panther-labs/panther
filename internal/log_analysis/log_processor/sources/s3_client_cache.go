@@ -95,7 +95,7 @@ func init() {
 
 // getS3Client Fetches
 // 1. S3 client with permissions to read data from the account that contains the event
-// 2. The type of the integration
+// 2. The source integration
 func getS3Client(s3Object *S3ObjectInfo) (s3iface.S3API, *models.SourceIntegration, error) {
 	sourceInfo, err := getSourceInfo(s3Object)
 	if err != nil {

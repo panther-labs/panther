@@ -152,7 +152,7 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 	contentType, err := detectContentType(bufferedReader)
 
 	if err != nil {
-		err = errors.Wrapf(err, "failed to Peek() in S3 payload for s3://%s/%s",
+		err = errors.Wrapf(err, "failed to detect content type of S3 payload for s3://%s/%s",
 			s3Object.S3Bucket, s3Object.S3ObjectKey)
 		return
 	}

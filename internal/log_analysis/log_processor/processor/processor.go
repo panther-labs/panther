@@ -192,11 +192,12 @@ func NewProcessor(input *common.DataStream, registry *logtypes.Registry) *Proces
 	}
 	parsers := make(map[string]parsers.Interface, len(entries))
 	for _, entry := range entries {
+		logType := entry.String()
 		parser, err := entry.NewParser(src)
 		if err != nil {
-			panic(err)
+			panic(errors.Wrapf(err, "failed to create a parser for %q", logType))
 		}
-		parsers[entry.Describe().Name] = parser
+		parsers[logType] = parser
 	}
 
 	return &Processor{
