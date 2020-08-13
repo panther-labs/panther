@@ -30,16 +30,17 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// Parse a CloudFormation template, returning a json map.
+// Parse a CloudFormation template and unmarshal into the out parameter.
+// The caller can pass map[string]interface{} or a struct if the format is known.
 //
 // Short-form functions like "!If" and "!Sub" will be replaced with "Fn::" objects.
-func ParseTemplate(pyEnv, path string) (map[string]interface{}, error) {
+func ParseTemplate(pyEnv, path string, out interface{}) error {
 	// The Go yaml parser doesn't understand short-form functions.
 	// So we first use cfn-flip to flip .yml to .json
 	if strings.ToLower(filepath.Ext(path)) != ".json" {
 		jsonPath := filepath.Join(os.TempDir(), filepath.Base(path)+".json")
 		if err := sh.Run(filepath.Join(pyEnv, "bin", "cfn-flip"), "-j", path, jsonPath); err != nil {
-			return nil, fmt.Errorf("failed to flip %s to json: %v", path, err)
+			return fmt.Errorf("failed to flip %s to json: %v", path, err)
 		}
 		defer os.Remove(jsonPath)
 		path = jsonPath
@@ -47,11 +48,10 @@ func ParseTemplate(pyEnv, path string) (map[string]interface{}, error) {
 
 	contents, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read %s: %v", path, err)
+		return fmt.Errorf("failed to read %s: %v", path, err)
 	}
 
-	var result map[string]interface{}
-	return result, jsoniter.Unmarshal(contents, &result)
+	return jsoniter.Unmarshal(contents, out)
 }
 
 // Save the CloudFormation structure as a .yml file.
