@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Text, Box, Spinner, Link, FormError, Flex} from 'pouncejs';
+import { Text, Box, Spinner, Link, FormError, Flex } from 'pouncejs';
 import React from 'react';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useFormikContext } from 'formik';
