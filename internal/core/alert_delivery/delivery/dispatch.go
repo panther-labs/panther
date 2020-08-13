@@ -19,6 +19,8 @@ package delivery
  */
 
 import (
+	"fmt"
+
 	"go.uber.org/zap"
 
 	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
@@ -120,6 +122,8 @@ func dispatch(alert *alertmodels.Alert) bool {
 			zap.String("severity", alert.Severity),
 			zap.Error(err),
 		)
+		fmt.Println("Error getting alert outputs...", err)
+
 		return false
 	}
 
@@ -128,6 +132,7 @@ func dispatch(alert *alertmodels.Alert) bool {
 			zap.String("policyId", alert.AnalysisID),
 			zap.String("severity", alert.Severity),
 		)
+		fmt.Println("No outputs configured...")
 		return true
 	}
 
@@ -153,9 +158,11 @@ func dispatch(alert *alertmodels.Alert) bool {
 	}
 
 	if len(retryOutputs) > 0 {
+		fmt.Println("RETRYING...")
 		alert.OutputIds = retryOutputs // Replace the outputs with the set that failed
 		return false
 	}
 
+	fmt.Println("Delivery success...")
 	return true
 }

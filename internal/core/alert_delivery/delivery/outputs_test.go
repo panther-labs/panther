@@ -54,7 +54,7 @@ func TestGetAlertOutputsFromDefaultSeverity(t *testing.T) {
 	require.NoError(t, err)
 	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
 
-	setCache(nil) // Clear the cache
+	cache.set(nil) // Clear the cache
 	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
 	alert := sampleAlert()
 	alert.OutputIds = nil
@@ -100,7 +100,7 @@ func TestGetAlertOutputsFromOutputIds(t *testing.T) {
 	require.NoError(t, err)
 	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
 
-	setCache(nil) // Clear the cache
+	cache.set(nil) // Clear the cache
 	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
 	alert := sampleAlert()
 	alert.OutputIds = []string{"output-id", "output-id-3", "output-id-not"}
@@ -126,7 +126,7 @@ func TestGetAlertOutputsIdsError(t *testing.T) {
 	mockClient.On("Invoke", mock.Anything).Return((*lambda.InvokeOutput)(nil), errors.New("error"))
 
 	alert := sampleAlert()
-	setCache(nil) // Clear the cache
+	cache.set(nil) // Clear the cache
 
 	result, err := getAlertOutputs(alert)
 	require.Error(t, err)

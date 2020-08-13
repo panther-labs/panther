@@ -55,7 +55,7 @@ var alertOutput = &outputmodels.AlertOutput{
 }
 
 func setCaches() {
-	setCache(&outputsCache{
+	cache.set(&outputsCache{
 		Outputs:   []*outputmodels.AlertOutput{alertOutput},
 		Timestamp: time.Now(),
 	})
@@ -157,10 +157,22 @@ func TestDispatchUseCachedDefault(t *testing.T) {
 	mockLambdaClient := &mockLambdaClient{}
 	lambdaClient = mockLambdaClient
 
+	outputs := &outputmodels.GetOutputsOutput{
+		{
+			OutputID:           aws.String("output-id"),
+			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
+		},
+	}
+	payload, err := jsoniter.Marshal(outputs)
+	require.NoError(t, err)
+	mockLambdaResponse := &lambda.InvokeOutput{
+		Payload: payload,
+	}
 	setCaches()
+	// cache.setExpiry(time.Now().Add(time.Second * time.Duration(5*60)))
+	mockLambdaClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil)
 	alert := sampleAlert()
-	alert.OutputIds = nil //Setting OutputIds in the alert to nil, in order to fetch default outputs
-
+	alert.OutputIds = nil // Setting OutputIds in the alert to nil, in order to fetch default outputs
 	assert.True(t, dispatch(alert))
 	mockLambdaClient.AssertExpectations(t)
 }
@@ -184,8 +196,7 @@ func TestDispatchUseNonCachedDefault(t *testing.T) {
 
 	mockLambdaClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil)
 	alert := sampleAlert()
-	alert.OutputIds = nil //Setting OutputIds in the alert to nil, in order to fetch default outputs
-	setCache(nil)         // Setting cache to nil, so we fetch latest outputs IDs from Lambda
+	alert.OutputIds = nil // Setting OutputIds in the alert to nil, in order to fetch default outputs
 	assert.True(t, dispatch(alert))
 	mockLambdaClient.AssertExpectations(t)
 }
@@ -213,8 +224,7 @@ func TestAllGoRoutinesShouldComplete(t *testing.T) {
 	// Invoke once to get all outpts
 	mockLambdaClient.On("Invoke", mock.Anything).Return(mockGetOutputsResponse, nil).Once()
 	alert := sampleAlert()
-	alert.OutputIds = nil //Setting OutputIds in the alert to nil, in order to fetch default outputs
-	setCache(nil)         // Clearing the default output ids cache
+	alert.OutputIds = nil // Setting OutputIds in the alert to nil, in order to fetch default outputs
 	assert.True(t, dispatch(alert))
 	mockLambdaClient.AssertExpectations(t)
 }

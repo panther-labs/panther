@@ -19,8 +19,8 @@ package delivery
  */
 
 import (
+	"fmt"
 	"os"
-	"sync"
 	"time"
 
 	"go.uber.org/zap"
@@ -30,65 +30,10 @@ import (
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-// getRefreshInterval - fetches the env setting or provides a default value if not set
-func getRefreshInterval() time.Duration {
-	intervalMins := os.Getenv("OUTPUTS_REFRESH_INTERVAL_MIN")
-	if intervalMins == "" {
-		intervalMins = "5"
-	}
-	return time.Duration(mustParseInt(intervalMins)) * time.Minute
-}
-
-// outputsCache - is a singleton holding outputs to send alerts
-type outputsCache struct {
-	// All cached outputs
-	Outputs   []*outputmodels.AlertOutput
-	Timestamp time.Time
-}
-
 // Global variables
 var (
-	once            sync.Once
-	cache           *outputsCache
-	outputsAPI      = os.Getenv("OUTPUTS_API")
-	refreshInterval = getRefreshInterval()
+	outputsAPI = os.Getenv("OUTPUTS_API")
 )
-
-// getCache - Gets a pointer to the cache singleton
-func getCache() *outputsCache {
-	// atomic, does not allow repeating
-	once.Do(func() {
-		// thread safe, create a new (empty) cache
-		setCache(&outputsCache{})
-	})
-
-	return cache
-}
-
-// setCache - Sets the cache
-func setCache(newCache *outputsCache) {
-	cache = newCache
-}
-
-// getCacheOutputs - Gets the outputs stored in the cache
-func getCacheOutputs() []*outputmodels.AlertOutput {
-	return getCache().Outputs
-}
-
-// setCacheOutputs - Stores the outputs in the cache
-func setCacheOutputs(outputs []*outputmodels.AlertOutput) {
-	getCache().Outputs = outputs
-}
-
-// getCacheExpiry - Gets the expiry time in the cache
-func getCacheExpiry() time.Time {
-	return getCache().Timestamp
-}
-
-// setCacheExpiry - Sets the expiry time of the cache
-func setCacheExpiry(time time.Time) {
-	getCache().Timestamp = time
-}
 
 // fetchOutputs - performs an API query to get a list of outputs
 func fetchOutputs() ([]*outputmodels.AlertOutput, error) {
@@ -96,34 +41,35 @@ func fetchOutputs() ([]*outputmodels.AlertOutput, error) {
 	input := outputmodels.LambdaInput{GetOutputsWithSecrets: &outputmodels.GetOutputsWithSecretsInput{}}
 	var outputs outputmodels.GetOutputsOutput
 	if err := genericapi.Invoke(lambdaClient, outputsAPI, &input, &outputs); err != nil {
+		fmt.Println("fetchOutputs failed:", err)
 		return nil, err
 	}
 	return outputs, nil
 }
 
-// isCacheExpired - determines if the cache has expired
-func isCacheExpired() bool {
-	return time.Since(getCacheExpiry()) > refreshInterval
-}
-
 // getOutputs - Gets a list of outputs from panther
 func getOutputs() ([]*outputmodels.AlertOutput, error) {
-	if getCache() == nil || isCacheExpired() {
+	fmt.Println("CACHE was NIL:", cache.get() == nil)
+	fmt.Println("CACHE was EXPIRED:", cache.isExpired())
+
+	if cache.get() == nil || cache.isExpired() {
 		outputs, err := fetchOutputs()
+		fmt.Println("CACH fetchOutputs:", outputs)
+
 		if err != nil {
 			return nil, err
 		}
-		setCacheOutputs(outputs)
-		setCacheExpiry(time.Now().UTC())
+		cache.setOutputs(outputs)
+		cache.setExpiry(time.Now().UTC())
 	}
-
-	return getCacheOutputs(), nil
+	return cache.getOutputs(), nil
 }
 
 // getAlertOutputs - Get output ids for an alert
 func getAlertOutputs(alert *alertmodels.Alert) ([]*outputmodels.AlertOutput, error) {
 	outputIds, err := getOutputs()
 	if err != nil {
+		fmt.Println("getOutputs failed...", err)
 		return nil, err
 	}
 
@@ -145,11 +91,11 @@ func getAlertOutputs(alert *alertmodels.Alert) ([]*outputmodels.AlertOutput, err
 
 func getOutputsBySeverity(severity string) []*outputmodels.AlertOutput {
 	result := []*outputmodels.AlertOutput{}
-	if getCache() == nil {
+	if cache.get() == nil {
 		return result
 	}
 
-	for _, output := range getCacheOutputs() {
+	for _, output := range cache.getOutputs() {
 		for _, outputSeverity := range output.DefaultForSeverity {
 			if severity == *outputSeverity {
 				result = append(result, output)
