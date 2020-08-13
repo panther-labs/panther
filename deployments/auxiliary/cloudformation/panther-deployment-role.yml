@@ -163,8 +163,8 @@ Resources:
           - Effect: Allow
             Action: cloudformation:*
             Resource:
-              - !Sub arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stack/panther-*
-              - !Sub arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stackset/panther-*
+              - !Sub arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stack/panther*
+              - !Sub arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stackset/panther*
               - !Sub arn:${AWS::Partition}:cloudformation:*:aws:transform/Serverless-2016-10-31
           - Effect: Allow
             Action: dynamodb:*
