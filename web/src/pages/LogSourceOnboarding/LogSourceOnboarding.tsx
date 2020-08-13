@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Card, FadeIn, Heading, Text } from 'pouncejs';
+import { Box, Card, FadeIn } from 'pouncejs';
 import urls from 'Source/urls';
 import LogSourceCard from 'Components/LogSourceCard';
 import s3Logo from 'Assets/s3-minimal-logo.svg';
