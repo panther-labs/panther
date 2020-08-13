@@ -19,6 +19,8 @@ package sources
  */
 
 import (
+	"testing"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -27,7 +29,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/stretchr/testify/require"
-	"testing"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
