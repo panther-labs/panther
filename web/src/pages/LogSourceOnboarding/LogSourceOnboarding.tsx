@@ -26,6 +26,7 @@ import gsuiteLogo from 'Assets/gsuite-minimal-logo.svg';
 import eventBridgeLogo from 'Assets/eventbridge-minimal-logo.svg';
 import oktaLogo from 'Assets/okta-minimal-logo.svg';
 import withSEO from 'Hoc/withSEO';
+import { WizardPanelWrapper } from 'Components/Wizard';
 
 const logSourcesConfig = [
   {
@@ -60,22 +61,26 @@ const logSourcesConfig = [
 const LogSourceOnboarding: React.FC = () => {
   return (
     <FadeIn>
-      <Card p={9} mb={6}>
-        <Box width={600} m="auto" textAlign="center">
-          <Heading mb={4}>Select a Source Type</Heading>
-          <Text color="gray-300" mb={8}>
-            Please select the source type you want to configure from the list below
-          </Text>
-          {logSourcesConfig.map(config => (
-            <LogSourceCard
-              key={config.title}
-              logo={config.logo}
-              title={config.title}
-              disabled={config.disabled}
-              to={`${urls.logAnalysis.sources.create(config.type)}`}
+      <Card p={6} mb={6}>
+        <WizardPanelWrapper>
+          <WizardPanelWrapper.Content>
+            <WizardPanelWrapper.Heading
+              title="Select a Source Type"
+              subtitle="Please select the source type you want to configure from the list below"
             />
-          ))}
-        </Box>
+            <Box mx={10}>
+              {logSourcesConfig.map(config => (
+                <LogSourceCard
+                  key={config.title}
+                  logo={config.logo}
+                  title={config.title}
+                  disabled={config.disabled}
+                  to={`${urls.logAnalysis.sources.create(config.type)}`}
+                />
+              ))}
+            </Box>
+          </WizardPanelWrapper.Content>
+        </WizardPanelWrapper>
       </Card>
     </FadeIn>
   );
