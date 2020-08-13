@@ -57,7 +57,11 @@ const StackDeployment: React.FC = () => {
 
   const renderContent = () => {
     if (loading) {
-      return <Spinner size="small" />;
+      return (
+        <Flex width={1} justify="center" my={5}>
+          <Spinner size="medium" />
+        </Flex>
+      );
     }
 
     if (error) {

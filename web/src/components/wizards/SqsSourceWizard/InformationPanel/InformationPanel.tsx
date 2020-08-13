@@ -35,7 +35,7 @@ const InformationPanel: React.FC = () => {
   }, []);
 
   return (
-    <Flex justify="center" align="center" direction="column" my={190} mx="auto" width={400}>
+    <Flex justify="center" align="center" direction="column" mx="auto" width={400}>
       <WizardPanelWrapper.Heading
         title="We created a SQS queue for you"
         subtitle="You need to send events on this queue url for Panther to process them"
