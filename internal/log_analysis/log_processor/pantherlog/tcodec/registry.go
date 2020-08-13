@@ -28,7 +28,7 @@ var (
 		codecs: map[string]TimeCodec{
 			"unix":    UnixSecondsCodec(),
 			"unix_ms": UnixMillisecondsCodec(),
-			"rfc3339": LayoutCodec(time.RFC3339Nano),
+			"rfc3339": Join(LayoutCodec(time.RFC3339), LayoutCodec(time.RFC3339Nano)),
 		},
 	}
 )

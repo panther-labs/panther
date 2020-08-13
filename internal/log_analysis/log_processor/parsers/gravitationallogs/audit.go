@@ -113,7 +113,7 @@ type TeleportAudit struct {
 	BytesReceived null.Int64 `json:"rx" description:"Number of bytes received"`
 
 	// session.start
-	ServerLabels   map[string]string `json:"server_labels" description:"Sever labels"`
+	ServerLabels   map[string]string `json:"server_labels" description:"Server labels"`
 	ServerHostname null.String       `json:"server_hostname" panther:"hostname" description:"Server hostname"`
 	ServerAddress  null.String       `json:"server_addr" panther:"net_addr" description:"Server hostname"`
 
@@ -123,4 +123,10 @@ type TeleportAudit struct {
 	Interactive       null.Bool `json:"interactive" description:"Whether the session was interactive"`
 	EnhancedRecording null.Bool `json:"enhanced_recording" description:"Whether enhanced recording is enabled"`
 	Participants      []string  `json:"participants" description:"Users that participated in the session"`
+
+	// session.network
+	DestinationAddress null.String `json:"dst_addr" panther:"ip" description:"Destination IP address"`
+	SourceAddress      null.String `json:"src_addr" panther:"ip" description:"Source IP address"`
+	DestinationPort    null.Uint16 `json:"dst_port" description:"Destination port"`
+	Version            null.Int32  `json:"version" description:"Event version"`
 }
