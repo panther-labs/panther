@@ -19,6 +19,7 @@
 import {
   AlertDetails,
   ComplianceIntegration,
+  Destination,
   GlobalPythonModule,
   LogIntegration,
   PolicyDetails,
@@ -82,7 +83,12 @@ const urls = {
         `${urls.settings.globalPythonModules.list()}${urlEncode(id)}/edit/`,
     },
     users: () => `${urls.settings.home()}users/`,
-    destinations: () => `${urls.settings.home()}destinations/`,
+    destinations: {
+      list: () => `${urls.settings.home()}destinations/`,
+      create: () => `${urls.settings.destinations.list()}new/`,
+      edit: (id: Destination['outputId']) =>
+        `${urls.settings.destinations.list()}${urlEncode(id)}/edit/`,
+    },
   },
   account: {
     auth: {

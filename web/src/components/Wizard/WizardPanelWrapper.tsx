@@ -17,11 +17,16 @@
  */
 
 import React from 'react';
-import { Box, Button, FadeIn, Flex } from 'pouncejs';
+import { Box, Button, FadeIn, Flex, Heading, IconButton, Text } from 'pouncejs';
 import { useWizardContext } from './WizardContext';
 
 interface WizardPanelWrapperAction {
   disabled?: boolean;
+}
+
+interface WizardPanelHeadingProps {
+  title: string | React.ReactNode | React.ReactNode[];
+  subtitle?: string | React.ReactNode | React.ReactNode[];
 }
 
 interface WizardPanelWrapperComposition {
@@ -29,27 +34,37 @@ interface WizardPanelWrapperComposition {
   Actions: React.FC;
   ActionNext: React.FC<WizardPanelWrapperAction>;
   ActionPrev: React.FC<WizardPanelWrapperAction>;
+  Heading: React.FC<WizardPanelHeadingProps>;
 }
 
 const WizardPanelWrapper: React.FC & WizardPanelWrapperComposition = ({ children }) => {
-  return (
-    <Flex minHeight={550} direction="column">
-      {children}
-    </Flex>
-  );
+  return <Flex direction="column">{children}</Flex>;
 };
 
 const WizardPanelWrapperContent: React.FC = ({ children }) => {
   return (
-    <Box width={600} m="auto">
+    <Box width={700} mx="auto">
       <FadeIn>{children}</FadeIn>
     </Box>
   );
 };
 
+const WizardPanelHeading: React.FC<WizardPanelHeadingProps> = ({ title, subtitle }) => (
+  <Box as="header" mb={10} textAlign="center">
+    <Heading size="small" mb={2} fontWeight="medium">
+      {title}
+    </Heading>
+    {!!subtitle && (
+      <Text fontSize="medium" color="gray-300">
+        {subtitle}
+      </Text>
+    )}
+  </Box>
+);
+
 const WizardPanelWrapperActions: React.FC = ({ children }) => {
   return (
-    <Flex justify="flex-end" spacing={3}>
+    <Flex justify="center" mt={8} mb={4}>
       {children}
     </Flex>
   );
@@ -58,17 +73,23 @@ const WizardPanelWrapperActions: React.FC = ({ children }) => {
 const WizardPanelActionPrev: React.FC<WizardPanelWrapperAction> = ({ disabled }) => {
   const { goToPrevStep } = useWizardContext();
   return (
-    <Button variant="outline" variantColor="navyblue" onClick={goToPrevStep} disabled={disabled}>
-      Back
-    </Button>
+    <Box position="absolute" top={6} left={6}>
+      <IconButton
+        disabled={disabled}
+        icon="arrow-back"
+        variantColor="navyblue"
+        aria-label="Go Back"
+        onClick={goToPrevStep}
+      />
+    </Box>
   );
 };
 
-const WizardPanelActionNext: React.FC<WizardPanelWrapperAction> = ({ disabled }) => {
+const WizardPanelActionNext: React.FC<WizardPanelWrapperAction> = ({ disabled, children }) => {
   const { goToNextStep } = useWizardContext();
   return (
     <Button onClick={goToNextStep} disabled={disabled}>
-      Next
+      {children || 'Next'}
     </Button>
   );
 };
@@ -77,5 +98,6 @@ WizardPanelWrapper.Content = React.memo(WizardPanelWrapperContent);
 WizardPanelWrapper.Actions = React.memo(WizardPanelWrapperActions);
 WizardPanelWrapper.ActionPrev = React.memo(WizardPanelActionPrev);
 WizardPanelWrapper.ActionNext = React.memo(WizardPanelActionNext);
+WizardPanelWrapper.Heading = React.memo(WizardPanelHeading);
 
 export default WizardPanelWrapper;

@@ -16,11 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Text, Box, Heading, Spinner, Link, FormError } from 'pouncejs';
+import { Text, Box, Spinner, Link, FormError } from 'pouncejs';
 import React from 'react';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useFormikContext } from 'formik';
 import { pantherConfig } from 'Source/config';
+import { WizardPanelWrapper } from 'Components/Wizard';
 import { useGetComplianceCfnTemplate } from './graphql/getComplianceCfnTemplate.generated';
 import { ComplianceSourceWizardValues } from '../ComplianceSourceWizard';
 
@@ -88,7 +89,7 @@ const StackDeployment: React.FC = () => {
         `&param_DeployRemediation=${values.remediationEnabled}`;
 
       return (
-        <React.Fragment>
+        <Box fontSize="medium">
           <Text color="gray-300" mt={2} mb={2}>
             The quickest way to do it, is through the AWS console
           </Text>
@@ -105,13 +106,13 @@ const StackDeployment: React.FC = () => {
             <b>{stackName}</b>
           </Text>
           {downloadTemplateLink}
-        </React.Fragment>
+        </Box>
       );
     }
 
     return (
       <React.Fragment>
-        <Box as="ol">
+        <Box as="ol" fontSize="medium">
           <Box as="li" color="gray-300" mb={3}>
             1. {downloadTemplateLink}
           </Box>
@@ -137,7 +138,7 @@ const StackDeployment: React.FC = () => {
             5. Press <b>Next</b> and finally click on <b>Update</b>
           </Box>
         </Box>
-        <Text color="gray-300" mt={10} mb={2}>
+        <Text color="gray-300" fontSize="medium" mt={10} mb={2}>
           Alternatively, you can update your stack through the AWS CLI
         </Text>
       </React.Fragment>
@@ -146,16 +147,16 @@ const StackDeployment: React.FC = () => {
 
   return (
     <Box>
-      <Heading as="h2" m="auto" mb={2}>
-        Deploy your configured stack
-      </Heading>
-      <Text color="gray-300" mb={10}>
-        To proceed, you must deploy the generated Cloudformation template to the AWS account{' '}
-        <b>{values.awsAccountId}</b>.{' '}
-        {!initialValues.integrationId
-          ? 'This will generate the necessary IAM Roles.'
-          : 'This will update any previous IAM Roles.'}
-      </Text>
+      <WizardPanelWrapper.Heading
+        title="Deploy your configured stack"
+        subtitle={`To proceed, you must deploy the generated Cloudformation template to the AWS account 
+        ${values.awsAccountId}. 
+        ${
+          !initialValues.integrationId
+            ? 'This will generate the necessary IAM Roles.'
+            : 'This will update any previous IAM Roles.'
+        }`}
+      />
       {renderContent()}
     </Box>
   );

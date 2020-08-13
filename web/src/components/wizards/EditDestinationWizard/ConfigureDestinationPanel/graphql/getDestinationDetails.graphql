@@ -1,0 +1,5 @@
+query GetDestinationDetails($id: ID!) {
+  destination(id: $id) {
+    ...DestinationFull
+  }
+}

@@ -75,7 +75,7 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
       return (
         <FormHelperText id="outputIds-description" mt={2} mr={1}>
           You have not configured any destinations, create one
-          <Link ml={1} as={RRLink} to={urls.settings.destinations()}>
+          <Link ml={1} as={RRLink} to={urls.settings.destinations.create()}>
             here
           </Link>
         </FormHelperText>
