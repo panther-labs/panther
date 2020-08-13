@@ -29,6 +29,7 @@ import (
 	"github.com/modern-go/reflect2"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
+
 	// We ensure that `tcodec`'s `init()` runs before pantherlog's `init()` by importing it anonymously
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
 )
@@ -39,7 +40,6 @@ func init() {
 	// Encode all Result instances using our custom encoder
 	jsoniter.RegisterTypeEncoder(typResult.String(), &resultEncoder{})
 }
-
 
 const (
 	// TagName is used for defining value scan methods on string fields.
@@ -74,7 +74,6 @@ var (
 	typTime          = reflect.TypeOf(time.Time{})
 	typResult        = reflect.TypeOf(Result{})
 )
-
 
 // Special encoder for *Result. It extends the event JSON object with all the required Panther fields.
 type resultEncoder struct{}
@@ -177,6 +176,7 @@ func extendJSON(data []byte) bool {
 func NewExtension() jsoniter.Extension {
 	return &pantherExt{}
 }
+
 type pantherExt struct {
 	jsoniter.DummyExtension
 }

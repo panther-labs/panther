@@ -20,11 +20,11 @@ package common
 
 import (
 	jsoniter "github.com/json-iterator/go"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/omitempty"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
 )
 
 // BuildJSON returns a jsoniter.API instance that is configured to be used for decoding/encoding JSON log events.
