@@ -235,7 +235,8 @@ func PollCloudTrails(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 	zap.L().Debug("starting CloudTrail resource poller")
 	cloudTrailSnapshots := make(awsmodels.CloudTrails)
 
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "cloudtrail") {
+	// TODO CloudTrail scans must always scan all regions, fix this
+	for _, regionID := range utils.GetServiceRegions([]*string{pollerInput.Region}, "cloudtrail") {
 		zap.L().Debug("building CloudTrail snapshots", zap.String("region", *regionID))
 		cloudTrailSvc, err := getCloudTrailClient(pollerInput, *regionID)
 		if err != nil {

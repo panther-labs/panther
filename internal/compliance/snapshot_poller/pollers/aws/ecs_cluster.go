@@ -71,10 +71,18 @@ func PollECSCluster(
 }
 
 // listClusters returns all ECS clusters in the account
-func listClusters(ecsSvc ecsiface.ECSAPI) (clusters []*string) {
-	err := ecsSvc.ListClustersPages(&ecs.ListClustersInput{},
+func listClusters(ecsSvc ecsiface.ECSAPI, nextMarker *string) (clusters []*string, marker *string) {
+	err := ecsSvc.ListClustersPages(&ecs.ListClustersInput{
+		NextToken: nextMarker,
+	},
 		func(page *ecs.ListClustersOutput, lastPage bool) bool {
 			clusters = append(clusters, page.ClusterArns...)
+			if len(clusters) >= defaultBatchSize {
+				if !lastPage {
+					marker = page.NextToken
+				}
+				return false
+			}
 			return true
 		})
 	if err != nil {
@@ -309,39 +317,37 @@ func buildEcsClusterSnapshot(ecsSvc ecsiface.ECSAPI, clusterArn *string) *awsmod
 }
 
 // PollEcsCluster gathers information on each ECS Cluster for an AWS account.
-func PollEcsClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollEcsClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting ECS Cluster resource poller")
 	ecsClusterSnapshots := make(map[string]*awsmodels.EcsCluster)
 
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "ecs") {
-		ecsSvc, err := getEcsClient(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
+	ecsSvc, err := getEcsClient(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
+	}
 
-		// Start with generating a list of all clusters
-		clusters := listClusters(ecsSvc)
-		if len(clusters) == 0 {
-			zap.L().Debug("no ECS clusters found", zap.String("region", *regionID))
+	// Start with generating a list of all clusters
+	clusters, marker := listClusters(ecsSvc, pollerInput.NextPageToken)
+	if len(clusters) == 0 {
+		zap.L().Debug("no ECS clusters found", zap.String("region", *pollerInput.Region))
+		return nil, nil, nil
+	}
+
+	for _, clusterArn := range clusters {
+		ecsClusterSnapshot := buildEcsClusterSnapshot(ecsSvc, clusterArn)
+		if ecsClusterSnapshot == nil {
 			continue
 		}
+		ecsClusterSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
+		ecsClusterSnapshot.Region = pollerInput.Region
 
-		for _, clusterArn := range clusters {
-			ecsClusterSnapshot := buildEcsClusterSnapshot(ecsSvc, clusterArn)
-			if ecsClusterSnapshot == nil {
-				continue
-			}
-			ecsClusterSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			ecsClusterSnapshot.Region = regionID
-
-			if _, ok := ecsClusterSnapshots[*ecsClusterSnapshot.ARN]; ok {
-				zap.L().Info(
-					"overwriting existing ECS Certificate snapshot",
-					zap.String("resourceId", *ecsClusterSnapshot.ARN),
-				)
-			}
-			ecsClusterSnapshots[*ecsClusterSnapshot.ARN] = ecsClusterSnapshot
+		if _, ok := ecsClusterSnapshots[*ecsClusterSnapshot.ARN]; ok {
+			zap.L().Info(
+				"overwriting existing ECS Certificate snapshot",
+				zap.String("resourceId", *ecsClusterSnapshot.ARN),
+			)
 		}
+		ecsClusterSnapshots[*ecsClusterSnapshot.ARN] = ecsClusterSnapshot
 	}
 
 	resources := make([]*apimodels.AddResourceEntry, 0, len(ecsClusterSnapshots))
@@ -355,5 +361,5 @@ func PollEcsClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

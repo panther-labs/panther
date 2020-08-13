@@ -84,11 +84,20 @@ func getRole(svc iamiface.IAMAPI, roleName *string) *iam.Role {
 }
 
 // listUsers returns an array of all users in the account, excluding the root account.
-func listRoles(iamSvc iamiface.IAMAPI) (roles []*iam.Role) {
+func listRoles(iamSvc iamiface.IAMAPI, nextPage *string) (roles []*iam.Role, marker *string) {
 	err := iamSvc.ListRolesPages(
-		&iam.ListRolesInput{},
+		&iam.ListRolesInput{
+			Marker:   nextPage,
+			MaxItems: aws.Int64(20),
+		},
 		func(page *iam.ListRolesOutput, lastPage bool) bool {
 			roles = append(roles, page.Roles...)
+			if len(roles) >= defaultBatchSize {
+				if !lastPage {
+					marker = page.Marker
+				}
+				return false
+			}
 			return true
 		},
 	)
@@ -203,18 +212,18 @@ func BuildIAMRoleSnapshot(iamSvc iamiface.IAMAPI, role *iam.Role) *awsmodels.IAM
 }
 
 // PollIAMRoles generates a snapshot for each IAM Role.
-func PollIAMRoles(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollIAMRoles(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting IAM Role resource poller")
 	iamSvc, err := getIAMClient(pollerInput, defaultRegion)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, nil, err // error is logged in getClient()
 	}
 
 	// List all IAM Roles in the account
-	roles := listRoles(iamSvc)
+	roles, marker := listRoles(iamSvc, pollerInput.NextPageToken)
 	if len(roles) == 0 {
 		zap.L().Debug("no IAM roles found")
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	// Create IAM Role snapshots
@@ -241,5 +250,5 @@ func PollIAMRoles(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddR
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

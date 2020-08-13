@@ -363,7 +363,7 @@ func buildS3BucketSnapshot(s3Svc s3iface.S3API, bucket *s3.Bucket) *awsmodels.S3
 }
 
 // PollS3Buckets gathers information on each S3 bucket for an AWS account.
-func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting S3 Bucket resource poller", zap.String("integrationID", *pollerInput.IntegrationID))
 
 	// Clear the previously collected S3 Bucket Snapshots
@@ -371,25 +371,21 @@ func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Add
 
 	s3Svc, err := getS3Client(pollerInput, defaultRegion)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, nil, err
 	}
 
 	// Start with generating a list of all buckets
 	allBuckets := listBuckets(s3Svc)
 	if allBuckets == nil {
 		zap.L().Debug("nothing returned by S3 list buckets")
-		return nil, nil
+		return nil, nil, nil
 	}
 	zap.L().Debug("listed all S3 buckets", zap.Int("count", len(allBuckets.Buckets)))
 
-	// For each bucket, determine its region, then group it with other buckets in that region
-	// so a session can be created for each region to build the snapshots. Only pay attention to
-	// buckets from active regions/regions the user has requested.
-	bucketsByRegion := map[string][]*s3.Bucket{}
-	for _, region := range pollerInput.Regions {
-		bucketsByRegion[*region] = []*s3.Bucket{}
-	}
-
+	// For each bucket, determine its region, then only consider the bucket if it's region matches
+	// the requested region. May have timeout issues for accounts with lots of buckets, but s3 is
+	// pretty limited in these things.
+	var buckets []*s3.Bucket
 	for _, bucket := range allBuckets.Buckets {
 		if bucket == nil {
 			zap.L().Debug("nil bucket returned by S3 list buckets")
@@ -400,45 +396,44 @@ func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Add
 			continue
 		}
 
-		if regionBuckets, ok := bucketsByRegion[*region]; ok {
-			bucketsByRegion[*region] = append(regionBuckets, bucket)
+		if region == pollerInput.Region {
+			buckets = append(buckets, bucket)
 		}
 	}
 
 	var resources []*apimodels.AddResourceEntry
-	for region, buckets := range bucketsByRegion {
-		s3Svc, err := getS3Client(pollerInput, region)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
-
-		for _, bucket := range buckets {
-			s3BucketSnapshot := buildS3BucketSnapshot(s3Svc, bucket)
-
-			resourceID := strings.Join(
-				[]string{"arn", pollerInput.AuthSourceParsedARN.Partition, "s3::", *s3BucketSnapshot.Name},
-				":",
-			)
-
-			// Populate generic fields
-			s3BucketSnapshot.ResourceID = aws.String(resourceID)
-
-			// Populate AWS generic fields
-			s3BucketSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			s3BucketSnapshot.ARN = aws.String(resourceID)
-			s3BucketSnapshot.Region = aws.String(region)
-
-			S3BucketSnapshots[*s3BucketSnapshot.Name] = s3BucketSnapshot
-
-			resources = append(resources, &apimodels.AddResourceEntry{
-				Attributes:      s3BucketSnapshot,
-				ID:              apimodels.ResourceID(resourceID),
-				IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-				IntegrationType: apimodels.IntegrationTypeAws,
-				Type:            awsmodels.S3BucketSchema,
-			})
-		}
+	s3Svc, err = getS3Client(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return resources, nil
+	for _, bucket := range buckets {
+		s3BucketSnapshot := buildS3BucketSnapshot(s3Svc, bucket)
+
+		resourceID := strings.Join(
+			[]string{"arn", pollerInput.AuthSourceParsedARN.Partition, "s3::", *s3BucketSnapshot.Name},
+			":",
+		)
+
+		// Populate generic fields
+		s3BucketSnapshot.ResourceID = aws.String(resourceID)
+
+		// Populate AWS generic fields
+		s3BucketSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
+		s3BucketSnapshot.ARN = aws.String(resourceID)
+		s3BucketSnapshot.Region = pollerInput.Region
+
+		S3BucketSnapshots[*s3BucketSnapshot.Name] = s3BucketSnapshot
+
+		resources = append(resources, &apimodels.AddResourceEntry{
+			Attributes:      s3BucketSnapshot,
+			ID:              apimodels.ResourceID(resourceID),
+			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
+			IntegrationType: apimodels.IntegrationTypeAws,
+			Type:            awsmodels.S3BucketSchema,
+		})
+	}
+
+	// s3 buckets can never paginate
+	return resources, nil, nil
 }

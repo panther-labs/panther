@@ -105,14 +105,22 @@ func getApplicationLoadBalancer(svc elbv2iface.ELBV2API, loadBalancerARN *string
 }
 
 // describeLoadBalancers returns a list of all Load Balancers in the account in the current region
-func describeLoadBalancers(elbv2Svc elbv2iface.ELBV2API) (loadBalancers []*elbv2.LoadBalancer, err error) {
-	err = elbv2Svc.DescribeLoadBalancersPages(&elbv2.DescribeLoadBalancersInput{},
+func describeLoadBalancers(elbv2Svc elbv2iface.ELBV2API, nextMarker *string) (loadBalancers []*elbv2.LoadBalancer, marker *string, err error) {
+	err = elbv2Svc.DescribeLoadBalancersPages(&elbv2.DescribeLoadBalancersInput{
+		Marker: nextMarker,
+	},
 		func(page *elbv2.DescribeLoadBalancersOutput, lastPage bool) bool {
 			loadBalancers = append(loadBalancers, page.LoadBalancers...)
+			if len(loadBalancers) >= defaultBatchSize {
+				if !lastPage {
+					marker = page.NextMarker
+				}
+				return false
+			}
 			return true
 		})
 	if err != nil {
-		return nil, errors.Wrap(err, "ELBV2.DescribeLoadBalancersPages")
+		return nil, nil, errors.Wrap(err, "ELBV2.DescribeLoadBalancersPages")
 	}
 	return
 }
@@ -254,58 +262,56 @@ func buildElbv2ApplicationLoadBalancerSnapshot(
 }
 
 // PollElbv2ApplicationLoadBalancers gathers information on each application load balancer for an AWS account.
-func PollElbv2ApplicationLoadBalancers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollElbv2ApplicationLoadBalancers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting ELBV2 Application Load Balancer resource poller")
 	elbv2LoadBalancerSnapshots := make(map[string]*awsmodels.Elbv2ApplicationLoadBalancer)
 
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "elasticloadbalancing") {
-		elbv2Svc, err := getElbv2Client(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
+	elbv2Svc, err := getElbv2Client(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
+	}
 
-		wafRegionalSvc, err := getWafRegionalClient(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
+	wafRegionalSvc, err := getWafRegionalClient(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
+	}
 
-		// Start with generating a list of all load balancers
-		loadBalancers, err := describeLoadBalancers(elbv2Svc)
-		if err != nil {
-			return nil, errors.Wrapf(err, "PollElbv2ApplicationLoadBalancers(%#v) in region %s", *pollerInput, *regionID)
-		}
-		if len(loadBalancers) == 0 {
-			zap.L().Debug(
-				"No application load balancers found.",
-				zap.String("region", *regionID),
-			)
+	// Start with generating a list of all load balancers
+	loadBalancers, marker, err := describeLoadBalancers(elbv2Svc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "PollElbv2ApplicationLoadBalancers(%#v) in region %s", *pollerInput, *pollerInput.Region)
+	}
+	if len(loadBalancers) == 0 {
+		zap.L().Debug(
+			"No application load balancers found.",
+			zap.String("region", *pollerInput.Region),
+		)
+		return nil, nil, nil
+	}
+
+	// Next generate a list of SSL policies to be shared by the load balancer snapshots
+	generateSSLPolicies(elbv2Svc)
+
+	for _, loadBalancer := range loadBalancers {
+		elbv2LoadBalancer := buildElbv2ApplicationLoadBalancerSnapshot(
+			elbv2Svc,
+			wafRegionalSvc,
+			loadBalancer,
+		)
+		if elbv2LoadBalancer == nil {
 			continue
 		}
+		elbv2LoadBalancer.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
+		elbv2LoadBalancer.Region = pollerInput.Region
 
-		// Next generate a list of SSL policies to be shared by the load balancer snapshots
-		generateSSLPolicies(elbv2Svc)
-
-		for _, loadBalancer := range loadBalancers {
-			elbv2LoadBalancer := buildElbv2ApplicationLoadBalancerSnapshot(
-				elbv2Svc,
-				wafRegionalSvc,
-				loadBalancer,
+		if _, ok := elbv2LoadBalancerSnapshots[*elbv2LoadBalancer.ARN]; !ok {
+			elbv2LoadBalancerSnapshots[*elbv2LoadBalancer.ARN] = elbv2LoadBalancer
+		} else {
+			zap.L().Info(
+				"overwriting existing ELB v2 Load Balancer snapshot",
+				zap.String("resourceId", *elbv2LoadBalancer.ARN),
 			)
-			if elbv2LoadBalancer == nil {
-				continue
-			}
-			elbv2LoadBalancer.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			elbv2LoadBalancer.Region = regionID
-
-			if _, ok := elbv2LoadBalancerSnapshots[*elbv2LoadBalancer.ARN]; !ok {
-				elbv2LoadBalancerSnapshots[*elbv2LoadBalancer.ARN] = elbv2LoadBalancer
-			} else {
-				zap.L().Info(
-					"overwriting existing ELB v2 Load Balancer snapshot",
-					zap.String("resourceId", *elbv2LoadBalancer.ARN),
-				)
-				elbv2LoadBalancerSnapshots[*elbv2LoadBalancer.ARN] = elbv2LoadBalancer
-			}
+			elbv2LoadBalancerSnapshots[*elbv2LoadBalancer.ARN] = elbv2LoadBalancer
 		}
 	}
 
@@ -320,5 +326,5 @@ func PollElbv2ApplicationLoadBalancers(pollerInput *awsmodels.ResourcePollerInpu
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

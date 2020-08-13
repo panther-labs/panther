@@ -28,10 +28,10 @@ type ScanMsg struct {
 // The poller can scan a single resource, all resources of a given type, or all resources.
 // Scanning all resources in an account is discouraged for performance reasons.
 type ScanEntry struct {
-	AWSAccountID     *string `json:"awsAccountId"`
-	IntegrationID    *string `json:"integrationId"`
-	Region           *string `json:"region"`
-	ResourceID       *string `json:"resourceId"`
-	ResourceType     *string `json:"resourceType"`
-	ScanAllResources *bool   `json:"scanAllResources"`
+	AWSAccountID  *string `json:"awsAccountId"`
+	IntegrationID *string `json:"integrationId"`
+	Region        *string `json:"region"`
+	ResourceID    *string `json:"resourceId"`
+	ResourceType  *string `json:"resourceType"`
+	NextPageToken *string `json:"nextPageToken"`
 }

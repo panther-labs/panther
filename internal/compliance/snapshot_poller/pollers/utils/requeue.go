@@ -36,6 +36,7 @@ const MaxRequeueDelaySeconds = 900
 var queueURL = os.Getenv("SNAPSHOT_QUEUE_URL")
 
 // Requeue sends a scan request back to the poller input queue
+// TODO now that we rely on this for everything it should probably return an error
 func Requeue(scanRequest poller.ScanMsg, delay int64) {
 	body, err := jsoniter.MarshalToString(scanRequest)
 	if err != nil {
@@ -47,7 +48,7 @@ func Requeue(scanRequest poller.ScanMsg, delay int64) {
 		delay = MaxRequeueDelaySeconds
 	}
 
-	zap.L().Info(
+	zap.L().Debug(
 		"initiating scan re-queue",
 		zap.Int64("delaySeconds", delay),
 		zap.String("requeueRequest", body),

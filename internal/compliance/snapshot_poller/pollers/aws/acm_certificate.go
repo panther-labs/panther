@@ -75,10 +75,18 @@ func PollACMCertificate(
 }
 
 // listCertificates returns all ACM certificates in the account
-func listCertificates(acmSvc acmiface.ACMAPI) (certs []*acm.CertificateSummary) {
-	err := acmSvc.ListCertificatesPages(&acm.ListCertificatesInput{},
+func listCertificates(acmSvc acmiface.ACMAPI, nextMarker *string) (certs []*acm.CertificateSummary, marker *string) {
+	err := acmSvc.ListCertificatesPages(&acm.ListCertificatesInput{
+		NextToken: nextMarker,
+	},
 		func(page *acm.ListCertificatesOutput, lastPage bool) bool {
 			certs = append(certs, page.CertificateSummaryList...)
+			if len(certs) >= defaultBatchSize {
+				if !lastPage {
+					marker = page.NextToken
+				}
+				return false
+			}
 			return true
 		})
 	if err != nil {
@@ -170,40 +178,38 @@ func buildAcmCertificateSnapshot(acmSvc acmiface.ACMAPI, certificateArn *string)
 }
 
 // PollAcmCertificates gathers information on each ACM Certificate for an AWS account.
-func PollAcmCertificates(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollAcmCertificates(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting ACM Certificate resource poller")
 	acmCertificateSnapshots := make(map[string]*awsmodels.AcmCertificate)
 
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "acm") {
-		acmSvc, err := getAcmClient(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
+	acmSvc, err := getAcmClient(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err // error is logged in getClient()
+	}
 
-		// Start with generating a list of all certificates
-		certificates := listCertificates(acmSvc)
-		if len(certificates) == 0 {
-			zap.L().Debug("no ACM certificates found", zap.String("region", *regionID))
+	// Start with generating a list of all certificates
+	certificates, marker := listCertificates(acmSvc, pollerInput.NextPageToken)
+	if len(certificates) == 0 {
+		zap.L().Debug("no ACM certificates found", zap.String("region", *pollerInput.Region))
+		return nil, nil, nil
+	}
+
+	for _, certificateSummary := range certificates {
+		acmCertificateSnapshot := buildAcmCertificateSnapshot(acmSvc, certificateSummary.CertificateArn)
+		if acmCertificateSnapshot == nil {
 			continue
 		}
+		acmCertificateSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
+		acmCertificateSnapshot.Region = pollerInput.Region
 
-		for _, certificateSummary := range certificates {
-			acmCertificateSnapshot := buildAcmCertificateSnapshot(acmSvc, certificateSummary.CertificateArn)
-			if acmCertificateSnapshot == nil {
-				continue
-			}
-			acmCertificateSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			acmCertificateSnapshot.Region = regionID
-
-			if _, ok := acmCertificateSnapshots[*acmCertificateSnapshot.ARN]; !ok {
-				acmCertificateSnapshots[*acmCertificateSnapshot.ARN] = acmCertificateSnapshot
-			} else {
-				zap.L().Info(
-					"overwriting existing ACM Certificate snapshot",
-					zap.String("resourceId", *acmCertificateSnapshot.ARN),
-				)
-				acmCertificateSnapshots[*acmCertificateSnapshot.ARN] = acmCertificateSnapshot
-			}
+		if _, ok := acmCertificateSnapshots[*acmCertificateSnapshot.ARN]; !ok {
+			acmCertificateSnapshots[*acmCertificateSnapshot.ARN] = acmCertificateSnapshot
+		} else {
+			zap.L().Info(
+				"overwriting existing ACM Certificate snapshot",
+				zap.String("resourceId", *acmCertificateSnapshot.ARN),
+			)
+			acmCertificateSnapshots[*acmCertificateSnapshot.ARN] = acmCertificateSnapshot
 		}
 	}
 
@@ -218,5 +224,5 @@ func PollAcmCertificates(pollerInput *awsmodels.ResourcePollerInput) ([]*apimode
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

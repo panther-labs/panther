@@ -82,10 +82,18 @@ func getNetworkACL(svc ec2iface.EC2API, networkACLID *string) *ec2.NetworkAcl {
 }
 
 // describeNetworkAclsPages returns all Network ACLs for a given region
-func describeNetworkAcls(ec2Svc ec2iface.EC2API) (networkACLs []*ec2.NetworkAcl) {
-	err := ec2Svc.DescribeNetworkAclsPages(&ec2.DescribeNetworkAclsInput{},
+func describeNetworkAcls(ec2Svc ec2iface.EC2API, nextMarker *string) (networkACLs []*ec2.NetworkAcl, marker *string) {
+	err := ec2Svc.DescribeNetworkAclsPages(&ec2.DescribeNetworkAclsInput{
+		NextToken: nextMarker,
+	},
 		func(page *ec2.DescribeNetworkAclsOutput, lastPage bool) bool {
 			networkACLs = append(networkACLs, page.NetworkAcls...)
+			if len(networkACLs) >= defaultBatchSize {
+				if !lastPage {
+					marker = page.NextToken
+				}
+				return false
+			}
 			return true
 		})
 
@@ -117,55 +125,53 @@ func buildEc2NetworkAclSnapshot(_ ec2iface.EC2API, networkACL *ec2.NetworkAcl) *
 }
 
 // PollEc2NetworkAcls gathers information on each Network ACL in an AWS account.
-func PollEc2NetworkAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollEc2NetworkAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting EC2 Network ACL resource poller")
 	ec2NetworkACLSnapshots := make(map[string]*awsmodels.Ec2NetworkAcl)
 
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "ec2") {
-		ec2Svc, err := getEC2Client(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
+	ec2Svc, err := getEC2Client(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
+	}
 
-		// Start with generating a list of all Network ACLs
-		networkACLs := describeNetworkAcls(ec2Svc)
-		if len(networkACLs) == 0 {
-			zap.L().Debug("no EC2 Network ACLs found", zap.String("region", *regionID))
-			continue
-		}
+	// Start with generating a list of all Network ACLs
+	networkACLs, marker := describeNetworkAcls(ec2Svc, pollerInput.NextPageToken)
+	if len(networkACLs) == 0 {
+		zap.L().Debug("no EC2 Network ACLs found", zap.String("region", *pollerInput.Region))
+		return nil, nil, nil
+	}
 
-		// For each Network ACL, build out a full snapshot
-		for _, networkACL := range networkACLs {
-			ec2NetworkACLSnapshot := buildEc2NetworkAclSnapshot(ec2Svc, networkACL)
+	// For each Network ACL, build out a full snapshot
+	for _, networkACL := range networkACLs {
+		ec2NetworkACLSnapshot := buildEc2NetworkAclSnapshot(ec2Svc, networkACL)
 
-			// arn:aws:ec2:region:account-id:network-acl/nacl-id
-			resourceID := strings.Join(
-				[]string{
-					"arn",
-					pollerInput.AuthSourceParsedARN.Partition,
-					"ec2",
-					*regionID,
-					*ec2NetworkACLSnapshot.OwnerId,
-					"network-acl/" + *ec2NetworkACLSnapshot.ID,
-				},
-				":",
-			)
+		// arn:aws:ec2:region:account-id:network-acl/nacl-id
+		resourceID := strings.Join(
+			[]string{
+				"arn",
+				pollerInput.AuthSourceParsedARN.Partition,
+				"ec2",
+				*pollerInput.Region,
+				*ec2NetworkACLSnapshot.OwnerId,
+				"network-acl/" + *ec2NetworkACLSnapshot.ID,
+			},
+			":",
+		)
 
-			// Populate generic fields
-			ec2NetworkACLSnapshot.ResourceID = aws.String(resourceID)
+		// Populate generic fields
+		ec2NetworkACLSnapshot.ResourceID = aws.String(resourceID)
 
-			// Populate AWS generic fields
-			ec2NetworkACLSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			ec2NetworkACLSnapshot.Region = regionID
-			ec2NetworkACLSnapshot.ARN = aws.String(resourceID)
+		// Populate AWS generic fields
+		ec2NetworkACLSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
+		ec2NetworkACLSnapshot.Region = pollerInput.Region
+		ec2NetworkACLSnapshot.ARN = aws.String(resourceID)
 
-			if _, ok := ec2NetworkACLSnapshots[resourceID]; !ok {
-				ec2NetworkACLSnapshots[resourceID] = ec2NetworkACLSnapshot
-			} else {
-				zap.L().Info("overwriting existing EC2 Network ACL snapshot",
-					zap.String("resourceId", resourceID))
-				ec2NetworkACLSnapshots[resourceID] = ec2NetworkACLSnapshot
-			}
+		if _, ok := ec2NetworkACLSnapshots[resourceID]; !ok {
+			ec2NetworkACLSnapshots[resourceID] = ec2NetworkACLSnapshot
+		} else {
+			zap.L().Info("overwriting existing EC2 Network ACL snapshot",
+				zap.String("resourceId", resourceID))
+			ec2NetworkACLSnapshots[resourceID] = ec2NetworkACLSnapshot
 		}
 	}
 
@@ -180,5 +186,5 @@ func PollEc2NetworkAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

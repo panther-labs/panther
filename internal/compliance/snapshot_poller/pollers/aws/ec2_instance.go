@@ -87,16 +87,24 @@ func getInstance(svc ec2iface.EC2API, instanceID *string) *ec2.Instance {
 }
 
 // describeInstances returns all EC2 instances in the current region
-func describeInstances(ec2Svc ec2iface.EC2API) (instances []*ec2.Instance, err error) {
-	err = ec2Svc.DescribeInstancesPages(&ec2.DescribeInstancesInput{},
+func describeInstances(ec2Svc ec2iface.EC2API, nextMarker *string) (instances []*ec2.Instance, marker *string, err error) {
+	err = ec2Svc.DescribeInstancesPages(&ec2.DescribeInstancesInput{
+		NextToken: nextMarker,
+	},
 		func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
 			for _, reservation := range page.Reservations {
 				instances = append(instances, reservation.Instances...)
 			}
+			if len(instances) >= defaultBatchSize {
+				if !lastPage {
+					marker = page.NextToken
+				}
+				return false
+			}
 			return true
 		})
 	if err != nil {
-		return nil, errors.Wrap(err, "EC2.DescribeInstances")
+		return nil, nil, errors.Wrap(err, "EC2.DescribeInstances")
 	}
 	return
 }
@@ -163,58 +171,57 @@ func buildEc2InstanceSnapshot(_ ec2iface.EC2API, instance *ec2.Instance) *awsmod
 }
 
 // PollEc2Instances gathers information on each EC2 instance in an AWS account.
-func PollEc2Instances(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollEc2Instances(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting EC2 Instance resource poller")
 	ec2InstanceSnapshots := make(map[string]*awsmodels.Ec2Instance)
 
 	// Reset list of AMIs
+	// TODO: why are we making a list of AMIs?
 	ec2Amis = make(map[string][]*string)
 
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "ec2") {
-		ec2Svc, err := getEC2Client(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
+	ec2Svc, err := getEC2Client(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
+	}
 
-		// Start with generating a list of all EC2 instances
-		instances, err := describeInstances(ec2Svc)
-		if err != nil {
-			return nil, errors.Wrapf(err, "PollEc2Instances(%#v) in region %s", *pollerInput, *regionID)
-		}
+	// Start with generating a list of all EC2 instances
+	instances, marker, err := describeInstances(ec2Svc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "PollEc2Instances(%#v) in region %s", *pollerInput, *pollerInput.Region)
+	}
 
-		// For each instance, build out a full snapshot
-		zap.L().Debug("building EC2 Instance snapshots", zap.String("region", *regionID))
-		for _, instance := range instances {
-			ec2Instance := buildEc2InstanceSnapshot(ec2Svc, instance)
+	// For each instance, build out a full snapshot
+	zap.L().Debug("building EC2 Instance snapshots", zap.String("region", *pollerInput.Region))
+	for _, instance := range instances {
+		ec2Instance := buildEc2InstanceSnapshot(ec2Svc, instance)
 
-			// arn:aws:ec2:region:account-id:instance/instance-id
-			resourceID := strings.Join(
-				[]string{
-					"arn",
-					pollerInput.AuthSourceParsedARN.Partition,
-					"ec2",
-					*regionID,
-					pollerInput.AuthSourceParsedARN.AccountID,
-					"instance/" + *ec2Instance.ID,
-				},
-				":",
-			)
+		// arn:aws:ec2:region:account-id:instance/instance-id
+		resourceID := strings.Join(
+			[]string{
+				"arn",
+				pollerInput.AuthSourceParsedARN.Partition,
+				"ec2",
+				*pollerInput.Region,
+				pollerInput.AuthSourceParsedARN.AccountID,
+				"instance/" + *ec2Instance.ID,
+			},
+			":",
+		)
 
-			// Populate generic fields
-			ec2Instance.ResourceID = aws.String(resourceID)
+		// Populate generic fields
+		ec2Instance.ResourceID = aws.String(resourceID)
 
-			// Populate AWS generic fields
-			ec2Instance.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			ec2Instance.Region = regionID
-			ec2Instance.ARN = aws.String(resourceID)
+		// Populate AWS generic fields
+		ec2Instance.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
+		ec2Instance.Region = pollerInput.Region
+		ec2Instance.ARN = aws.String(resourceID)
 
-			ec2Amis[*regionID] = append(ec2Amis[*regionID], ec2Instance.ImageId)
-			if _, ok := ec2InstanceSnapshots[resourceID]; !ok {
-				ec2InstanceSnapshots[resourceID] = ec2Instance
-			} else {
-				zap.L().Info("overwriting existing EC2 Instance snapshot", zap.String("resourceId", resourceID))
-				ec2InstanceSnapshots[resourceID] = ec2Instance
-			}
+		ec2Amis[*pollerInput.Region] = append(ec2Amis[*pollerInput.Region], ec2Instance.ImageId)
+		if _, ok := ec2InstanceSnapshots[resourceID]; !ok {
+			ec2InstanceSnapshots[resourceID] = ec2Instance
+		} else {
+			zap.L().Info("overwriting existing EC2 Instance snapshot", zap.String("resourceId", resourceID))
+			ec2InstanceSnapshots[resourceID] = ec2Instance
 		}
 	}
 
@@ -229,5 +236,5 @@ func PollEc2Instances(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

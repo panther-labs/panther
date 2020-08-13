@@ -86,14 +86,25 @@ func PollKMSKey(
 }
 
 // listKeys returns a list of all keys in the account
-func listKeys(kmsSvc kmsiface.KMSAPI) (keys []*kms.KeyListEntry) {
-	out, err := kmsSvc.ListKeys(&kms.ListKeysInput{})
+func listKeys(kmsSvc kmsiface.KMSAPI, nextMarker *string) (keys []*kms.KeyListEntry, marker *string) {
+	err := kmsSvc.ListKeysPages(
+		&kms.ListKeysInput{
+			Marker: nextMarker,
+		},
+		func(page *kms.ListKeysOutput, lastPage bool) bool {
+			keys = append(keys, page.Keys...)
+			if len(keys) >= defaultBatchSize {
+				if !lastPage {
+					marker = page.NextMarker
+				}
+				return false
+			}
+			return true
+		},
+	)
 	if err != nil {
-		utils.LogAWSError("KMS.ListKeys", err)
-		return
+		utils.LogAWSError("KMS.ListKeysPages", err)
 	}
-	keys = out.Keys
-
 	return
 }
 
@@ -235,39 +246,37 @@ func buildKmsKeySnapshot(kmsSvc kmsiface.KMSAPI, key *kms.KeyListEntry) *awsmode
 }
 
 // PollKmsKeys gathers information on each KMS key for an AWS account.
-func PollKmsKeys(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollKmsKeys(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting KMS Key resource poller")
 	kmsKeySnapshots := make(map[string]*awsmodels.KmsKey)
 
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "kms") {
-		kmsSvc, err := getKMSClient(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
+	kmsSvc, err := getKMSClient(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
+	}
 
-		// Start with generating a list of all keys
-		keys := listKeys(kmsSvc)
-		if keys == nil {
+	// Start with generating a list of all keys
+	keys, marker := listKeys(kmsSvc, pollerInput.NextPageToken)
+	if keys == nil {
+		return nil, nil, nil
+	}
+
+	for _, key := range keys {
+		kmsKeySnapshot := buildKmsKeySnapshot(kmsSvc, key)
+		if kmsKeySnapshot == nil {
 			continue
 		}
+		kmsKeySnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
+		kmsKeySnapshot.Region = pollerInput.Region
 
-		for _, key := range keys {
-			kmsKeySnapshot := buildKmsKeySnapshot(kmsSvc, key)
-			if kmsKeySnapshot == nil {
-				continue
-			}
-			kmsKeySnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			kmsKeySnapshot.Region = regionID
-
-			if _, ok := kmsKeySnapshots[*kmsKeySnapshot.ARN]; !ok {
-				kmsKeySnapshots[*kmsKeySnapshot.ARN] = kmsKeySnapshot
-			} else {
-				zap.L().Info(
-					"overwriting existing KMS Key snapshot",
-					zap.String("resourceId", *kmsKeySnapshot.ARN),
-				)
-				kmsKeySnapshots[*kmsKeySnapshot.ARN] = kmsKeySnapshot
-			}
+		if _, ok := kmsKeySnapshots[*kmsKeySnapshot.ARN]; !ok {
+			kmsKeySnapshots[*kmsKeySnapshot.ARN] = kmsKeySnapshot
+		} else {
+			zap.L().Info(
+				"overwriting existing KMS Key snapshot",
+				zap.String("resourceId", *kmsKeySnapshot.ARN),
+			)
+			kmsKeySnapshots[*kmsKeySnapshot.ARN] = kmsKeySnapshot
 		}
 	}
 
@@ -282,5 +291,5 @@ func PollKmsKeys(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddRe
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

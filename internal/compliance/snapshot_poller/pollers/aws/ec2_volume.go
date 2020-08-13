@@ -79,10 +79,18 @@ func getVolume(svc ec2iface.EC2API, volumeID *string) *ec2.Volume {
 }
 
 // describeVolumes returns all the EC2 volumes in the account
-func describeVolumes(ec2Svc ec2iface.EC2API) (volumes []*ec2.Volume) {
-	err := ec2Svc.DescribeVolumesPages(&ec2.DescribeVolumesInput{},
+func describeVolumes(ec2Svc ec2iface.EC2API, nextMarker *string) (volumes []*ec2.Volume, marker *string) {
+	err := ec2Svc.DescribeVolumesPages(&ec2.DescribeVolumesInput{
+		NextToken: nextMarker,
+	},
 		func(page *ec2.DescribeVolumesOutput, lastPage bool) bool {
 			volumes = append(volumes, page.Volumes...)
+			if len(volumes) >= defaultBatchSize {
+				if !lastPage {
+					marker = page.NextToken
+				}
+				return false
+			}
 			return true
 		})
 	if err != nil {
@@ -174,58 +182,56 @@ func buildEc2VolumeSnapshot(ec2Svc ec2iface.EC2API, volume *ec2.Volume) *awsmode
 }
 
 // PollEc2Volumes gathers information on each EC2 Volume for an AWS account.
-func PollEc2Volumes(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollEc2Volumes(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting EC2 Volume resource poller")
 	ec2VolumeSnapshots := make(map[string]*awsmodels.Ec2Volume)
 
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "ec2") {
-		ec2Svc, err := getEC2Client(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
+	ec2Svc, err := getEC2Client(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
+	}
 
-		// Start with generating a list of all volumes
-		volumes := describeVolumes(ec2Svc)
-		if len(volumes) == 0 {
-			zap.L().Debug("no EC2 Volumes found", zap.String("region", *regionID))
+	// Start with generating a list of all volumes
+	volumes, marker := describeVolumes(ec2Svc, pollerInput.NextPageToken)
+	if len(volumes) == 0 {
+		zap.L().Debug("no EC2 Volumes found", zap.String("region", *pollerInput.Region))
+		return nil, nil, nil
+	}
+
+	for _, volume := range volumes {
+		ec2VolumeSnapshot := buildEc2VolumeSnapshot(ec2Svc, volume)
+		if ec2VolumeSnapshot == nil {
 			continue
 		}
 
-		for _, volume := range volumes {
-			ec2VolumeSnapshot := buildEc2VolumeSnapshot(ec2Svc, volume)
-			if ec2VolumeSnapshot == nil {
-				continue
-			}
+		// arn:aws:ec2:region:account-id:volume/volume-id
+		resourceID := strings.Join(
+			[]string{
+				"arn",
+				pollerInput.AuthSourceParsedARN.Partition,
+				"ec2",
+				*pollerInput.Region,
+				pollerInput.AuthSourceParsedARN.AccountID,
+				"volume/" + *ec2VolumeSnapshot.ID,
+			},
+			":",
+		)
+		// Populate generic fields
+		ec2VolumeSnapshot.ResourceID = aws.String(resourceID)
 
-			// arn:aws:ec2:region:account-id:volume/volume-id
-			resourceID := strings.Join(
-				[]string{
-					"arn",
-					pollerInput.AuthSourceParsedARN.Partition,
-					"ec2",
-					*regionID,
-					pollerInput.AuthSourceParsedARN.AccountID,
-					"volume/" + *ec2VolumeSnapshot.ID,
-				},
-				":",
+		// Populate AWS generic fields
+		ec2VolumeSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
+		ec2VolumeSnapshot.Region = pollerInput.Region
+		ec2VolumeSnapshot.ARN = aws.String(resourceID)
+
+		if _, ok := ec2VolumeSnapshots[resourceID]; !ok {
+			ec2VolumeSnapshots[resourceID] = ec2VolumeSnapshot
+		} else {
+			zap.L().Info(
+				"overwriting existing EC2 Volume snapshot",
+				zap.String("resourceId", resourceID),
 			)
-			// Populate generic fields
-			ec2VolumeSnapshot.ResourceID = aws.String(resourceID)
-
-			// Populate AWS generic fields
-			ec2VolumeSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			ec2VolumeSnapshot.Region = regionID
-			ec2VolumeSnapshot.ARN = aws.String(resourceID)
-
-			if _, ok := ec2VolumeSnapshots[resourceID]; !ok {
-				ec2VolumeSnapshots[resourceID] = ec2VolumeSnapshot
-			} else {
-				zap.L().Info(
-					"overwriting existing EC2 Volume snapshot",
-					zap.String("resourceId", resourceID),
-				)
-				ec2VolumeSnapshots[resourceID] = ec2VolumeSnapshot
-			}
+			ec2VolumeSnapshots[resourceID] = ec2VolumeSnapshot
 		}
 	}
 
@@ -240,5 +246,5 @@ func PollEc2Volumes(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Ad
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

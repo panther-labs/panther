@@ -121,16 +121,24 @@ func describeRouteTables(ec2Svc ec2iface.EC2API, vpcID *string) (routeTables []*
 }
 
 // describeVpcs describes all VPCs for a given region
-func describeVpcs(ec2Svc ec2iface.EC2API) (vpcs []*ec2.Vpc, err error) {
+func describeVpcs(ec2Svc ec2iface.EC2API, nextMarker *string) (vpcs []*ec2.Vpc, marker *string, err error) {
 	err = ec2Svc.DescribeVpcsPages(
-		&ec2.DescribeVpcsInput{},
+		&ec2.DescribeVpcsInput{
+			NextToken: nextMarker,
+		},
 		func(page *ec2.DescribeVpcsOutput, lastPage bool) bool {
 			vpcs = append(vpcs, page.Vpcs...)
+			if len(vpcs) >= defaultBatchSize {
+				if !lastPage {
+					marker = page.NextToken
+				}
+				return false
+			}
 			return true
 		})
 
 	if err != nil {
-		return nil, errors.Wrap(err, "EC2.DescribeVpcsPages")
+		return nil, nil, errors.Wrap(err, "EC2.DescribeVpcsPages")
 	}
 	return
 }
@@ -244,57 +252,55 @@ func buildEc2VpcSnapshot(ec2Svc ec2iface.EC2API, vpc *ec2.Vpc) *awsmodels.Ec2Vpc
 }
 
 // PollEc2Vpcs gathers information on each VPC in an AWS account.
-func PollEc2Vpcs(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollEc2Vpcs(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting EC2 VPC resource poller")
 	ec2VpcSnapshots := make(map[string]*awsmodels.Ec2Vpc)
 
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "ec2") {
-		zap.L().Debug("building EC2 VPC snapshots", zap.String("region", *regionID))
-		ec2Svc, err := getEC2Client(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
+	zap.L().Debug("building EC2 VPC snapshots", zap.String("region", *pollerInput.Region))
+	ec2Svc, err := getEC2Client(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
+	}
 
-		// Start with generating a list of all VPCs
-		vpcs, err := describeVpcs(ec2Svc)
-		if err != nil {
-			return nil, errors.Wrapf(err, "PollEc2Vpcs(%#v) in region %s", *pollerInput, *regionID)
-		}
-		if len(vpcs) == 0 {
-			zap.L().Debug("no EC2 VPCs found", zap.String("region", *regionID))
-			continue
-		}
+	// Start with generating a list of all VPCs
+	vpcs, marker, err := describeVpcs(ec2Svc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "PollEc2Vpcs(%#v) in region %s", *pollerInput, *pollerInput.Region)
+	}
+	if len(vpcs) == 0 {
+		zap.L().Debug("no EC2 VPCs found", zap.String("region", *pollerInput.Region))
+		return nil, nil, nil
+	}
 
-		// For each VPC, build out a full snapshot
-		for _, vpc := range vpcs {
-			ec2Vpc := buildEc2VpcSnapshot(ec2Svc, vpc)
+	// For each VPC, build out a full snapshot
+	for _, vpc := range vpcs {
+		ec2Vpc := buildEc2VpcSnapshot(ec2Svc, vpc)
 
-			// arn:aws:ec2:region:account-id:vpc/vpc-id
-			resourceID := strings.Join(
-				[]string{
-					"arn",
-					pollerInput.AuthSourceParsedARN.Partition,
-					"ec2",
-					*regionID,
-					*ec2Vpc.OwnerId,
-					"vpc/" + *ec2Vpc.ID,
-				},
-				":",
-			)
-			// Populate generic fields
-			ec2Vpc.ResourceID = aws.String(resourceID)
+		// arn:aws:ec2:region:account-id:vpc/vpc-id
+		resourceID := strings.Join(
+			[]string{
+				"arn",
+				pollerInput.AuthSourceParsedARN.Partition,
+				"ec2",
+				*pollerInput.Region,
+				*ec2Vpc.OwnerId,
+				"vpc/" + *ec2Vpc.ID,
+			},
+			":",
+		)
+		// Populate generic fields
+		ec2Vpc.ResourceID = aws.String(resourceID)
 
-			// Populate AWS generic fields
-			ec2Vpc.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			ec2Vpc.Region = regionID
-			ec2Vpc.ARN = aws.String(resourceID)
+		// Populate AWS generic fields
+		ec2Vpc.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
+		ec2Vpc.Region = pollerInput.Region
+		ec2Vpc.ARN = aws.String(resourceID)
 
-			if _, ok := ec2VpcSnapshots[resourceID]; !ok {
-				ec2VpcSnapshots[resourceID] = ec2Vpc
-			} else {
-				zap.L().Info("overwriting existing EC2 VPC snapshot", zap.String("resourceId", resourceID))
-				ec2VpcSnapshots[resourceID] = ec2Vpc
-			}
+		if _, ok := ec2VpcSnapshots[resourceID]; !ok {
+			ec2VpcSnapshots[resourceID] = ec2Vpc
+		} else {
+			zap.L().Info("overwriting existing EC2 VPC snapshot", zap.String("resourceId", resourceID))
+			ec2VpcSnapshots[resourceID] = ec2Vpc
 		}
 	}
 
@@ -309,5 +315,5 @@ func PollEc2Vpcs(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddRe
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

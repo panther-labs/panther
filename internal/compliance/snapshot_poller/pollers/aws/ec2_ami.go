@@ -50,7 +50,7 @@ func PollEC2Image(
 	imageID := strings.Replace(resourceARN.Resource, "image/", "", 1)
 	ami := getAMI(ec2Client, aws.String(imageID))
 
-	snapshot := buildEc2AmiSnapshot(ec2Client, ami)
+	snapshot := buildEc2AmiSnapshot(ami)
 	if snapshot == nil {
 		return nil, nil
 	}
@@ -93,6 +93,7 @@ func buildImageList(svc ec2iface.EC2API, region string) (err error) {
 	}
 
 	// Get all the instances in this region
+	// TODO unfuck this tangle
 	instances, err := describeInstances(svc)
 	if err != nil {
 		return err
@@ -153,7 +154,7 @@ func describeImages(svc ec2iface.EC2API, region string) ([]*ec2.Image, error) {
 }
 
 // buildEc2AmiSnapshot makes the necessary API calls to build a full Ec2AmiSnapshot
-func buildEc2AmiSnapshot(_ ec2iface.EC2API, image *ec2.Image) *awsmodels.Ec2Ami {
+func buildEc2AmiSnapshot(image *ec2.Image) *awsmodels.Ec2Ami {
 	if image == nil {
 		return nil
 	}
@@ -191,65 +192,63 @@ func buildEc2AmiSnapshot(_ ec2iface.EC2API, image *ec2.Image) *awsmodels.Ec2Ami 
 }
 
 // PollEc2Amis gathers information on each EC2 AMI in an AWS account.
-func PollEc2Amis(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollEc2Amis(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting EC2 AMI resource poller")
 	ec2AmiSnapshots := make(map[string]*awsmodels.Ec2Ami)
 
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "ec2") {
-		ec2Svc, err := getEC2Client(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
+	ec2Svc, err := getEC2Client(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err // error is logged in getClient()
+	}
 
-		// Start with generating a list of all EC2 AMIs
-		amis, err := describeImages(ec2Svc, *regionID)
-		if err != nil {
-			return nil, errors.Wrapf(err, "PollEc2Amis(%#v) in region %s", *pollerInput, *regionID)
-		}
-		if len(amis) == 0 {
-			zap.L().Debug("no AMIs described", zap.String("region", *regionID))
+	// Start with generating a list of all EC2 AMIs
+	amis, err := describeImages(ec2Svc, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "PollEc2Amis(%#v) in region %s", *pollerInput, *pollerInput.Region)
+	}
+	if len(amis) == 0 {
+		zap.L().Debug("no AMIs found in region", zap.String("region", *pollerInput.Region))
+		return nil, nil, nil
+	}
+
+	zap.L().Debug("building EC2 AMI snapshots", zap.String("region", *pollerInput.Region))
+	// For each image, build out a full snapshot
+	for _, ami := range amis {
+		ec2Ami := buildEc2AmiSnapshot(ami)
+		if ec2Ami == nil {
 			continue
 		}
 
-		zap.L().Debug("building EC2 AMI snapshots", zap.String("region", *regionID))
-		// For each image, build out a full snapshot
-		for _, ami := range amis {
-			ec2Ami := buildEc2AmiSnapshot(ec2Svc, ami)
-			if ec2Ami == nil {
-				continue
-			}
+		accountID := aws.String("")
+		if ec2Ami.OwnerId != nil {
+			accountID = ec2Ami.OwnerId
+		}
+		// arn:aws:ec2:region:account-id(optional):image/image-id
+		resourceID := strings.Join(
+			[]string{
+				"arn",
+				pollerInput.AuthSourceParsedARN.Partition,
+				"ec2",
+				*pollerInput.Region,
+				*accountID,
+				"image/" + *ec2Ami.ID,
+			},
+			":",
+		)
 
-			accountID := aws.String("")
-			if ec2Ami.OwnerId != nil {
-				accountID = ec2Ami.OwnerId
-			}
-			// arn:aws:ec2:region:account-id(optional):image/image-id
-			resourceID := strings.Join(
-				[]string{
-					"arn",
-					pollerInput.AuthSourceParsedARN.Partition,
-					"ec2",
-					*regionID,
-					*accountID,
-					"image/" + *ec2Ami.ID,
-				},
-				":",
-			)
+		// Populate generic fields
+		ec2Ami.ResourceID = aws.String(resourceID)
 
-			// Populate generic fields
-			ec2Ami.ResourceID = aws.String(resourceID)
+		// Populate AWS generic fields
+		ec2Ami.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
+		ec2Ami.Region = pollerInput.Region
+		ec2Ami.ARN = aws.String(resourceID)
 
-			// Populate AWS generic fields
-			ec2Ami.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			ec2Ami.Region = regionID
-			ec2Ami.ARN = aws.String(resourceID)
-
-			if _, ok := ec2AmiSnapshots[resourceID]; !ok {
-				ec2AmiSnapshots[resourceID] = ec2Ami
-			} else {
-				zap.L().Info("overwriting existing EC2 AMI snapshot", zap.String("resourceId", resourceID))
-				ec2AmiSnapshots[resourceID] = ec2Ami
-			}
+		if _, ok := ec2AmiSnapshots[resourceID]; !ok {
+			ec2AmiSnapshots[resourceID] = ec2Ami
+		} else {
+			zap.L().Info("overwriting existing EC2 AMI snapshot", zap.String("resourceId", resourceID))
+			ec2AmiSnapshots[resourceID] = ec2Ami
 		}
 	}
 
@@ -264,5 +263,6 @@ func PollEc2Amis(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddRe
 		})
 	}
 
-	return resources, nil
+	// EC2 AMI's can't be paged
+	return resources, nil, nil
 }
