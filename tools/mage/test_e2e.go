@@ -26,17 +26,24 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/magefile/mage/sh"
 
 	analysisclient "github.com/panther-labs/panther/api/gateway/analysis/client"
 	analysisops "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
 	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
+	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/pkg/awscfn"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/pkg/genericapi"
 	"github.com/panther-labs/panther/pkg/prompt"
 )
 
-const systemUserID = "00000000-0000-4000-8000-000000000000"
+const (
+	systemUserID = "00000000-0000-4000-8000-000000000000"
+	outputsAPI   = "panther-outputs-api"
+)
 
 // Maintain context about the test as it progresses
 type e2eContext struct {
@@ -50,8 +57,9 @@ type e2eContext struct {
 	GatewayStackOutputs map[string]string
 
 	// Added in stage 3
-	NewPolicy *analysismodels.Policy
-	NewRule   *analysismodels.Rule
+	OutputQueue outputmodels.AlertOutput
+	NewPolicy   analysismodels.Policy
+	NewRule     analysismodels.Rule
 }
 
 // End-to-end test suite - deploy, migrate, test, teardown
@@ -71,6 +79,11 @@ func (Test) E2e() {
 	ctx.Region = *awsSession.Config.Region
 	ctx.deployPreviousVersion()
 	ctx.interactWithOldVersion()
+
+	// TODO - stage 4 - migration - current master template (with deployment role)
+	// TODO - stage 5 - verify migrated data - verify app functionality
+	// TODO - stage 6 - integration test
+	// TODO - stage 7 - teardown + verify no leftover resources
 }
 
 // Deploy the official published pre-packaged deployment for the previous version.
@@ -88,7 +101,7 @@ func (ctx *e2eContext) deployPreviousVersion() {
 	// Deploy the template directly, do not use our standard deploy code with packaging.
 	err := sh.RunV(filepath.Join(pythonVirtualEnvPath, "bin", "sam"), "deploy",
 		"--capabilities", "CAPABILITY_AUTO_EXPAND", "CAPABILITY_IAM", "CAPABILITY_NAMED_IAM",
-		"--parameter-overrides", "FirstUserEmail="+ctx.FirstUserEmail,
+		"--parameter-overrides", "CompanyDisplayName=e2e-test", "FirstUserEmail="+ctx.FirstUserEmail,
 		"--region", ctx.Region,
 		"--stack-name", "panther",
 		"--template", downloadPath,
@@ -133,6 +146,28 @@ func (ctx *e2eContext) deployPreviousVersion() {
 func (ctx *e2eContext) interactWithOldVersion() {
 	logger.Info("***** test:e2e : Stage 3/10 : Generate Data in Previous Release *****")
 
+	// Add an SQS alert destination
+	queue, err := sqs.New(awsSession).CreateQueue(&sqs.CreateQueueInput{
+		QueueName: aws.String("e2e-test"),
+	})
+	if err != nil {
+		logger.Fatalf("failed to create SQS queue: %v", err)
+	}
+
+	input := outputmodels.LambdaInput{
+		AddOutput: &outputmodels.AddOutputInput{
+			UserID:      aws.String(systemUserID),
+			DisplayName: aws.String("e2e-test-queue"),
+			OutputConfig: &outputmodels.OutputConfig{
+				Sqs: &outputmodels.SqsConfig{QueueURL: *queue.QueueUrl},
+			},
+		},
+	}
+	if err := genericapi.Invoke(lambda.New(awsSession), outputsAPI, &input, &ctx.OutputQueue); err != nil {
+		logger.Fatalf("failed to add SQS output in %s: %v", outputsAPI, err)
+	}
+	logger.Infof("added SQS queue %s as output ID %s", *queue.QueueUrl, *ctx.OutputQueue.OutputID)
+
 	// Add a policy which scans "panther-" stacks
 	policy, err := ctx.AnalysisClient.Operations.CreatePolicy(&analysisops.CreatePolicyParams{
 		Body: &analysismodels.UpdatePolicy{
@@ -144,8 +179,9 @@ def policy(resource):
 `,
 			Description:   "E2E test - check tags in panther stacks",
 			DisplayName:   "Tagged Panther Stacks",
-			Enabled:       true,
+			Enabled:       false,
 			ID:            "E2E.TaggedPantherStacks",
+			OutputIds:     []string{*ctx.OutputQueue.OutputID},
 			ResourceTypes: []string{"AWS.CloudFormation.Stack"},
 			Severity:      "INFO",
 			UserID:        systemUserID,
@@ -155,7 +191,7 @@ def policy(resource):
 	if err != nil {
 		logger.Fatalf("failed to create policy from analysis-api: %v", err)
 	}
-	ctx.NewPolicy = policy.Payload
+	ctx.NewPolicy = *policy.Payload
 	logger.Infof("added policy ID \"%s\"", ctx.NewPolicy.ID)
 
 	// Add a rule which matches 10% of all input logs
@@ -170,7 +206,7 @@ def rule(event):
 			DedupPeriodMinutes: 15,
 			Description:        "E2E test - match 10% of all logs",
 			DisplayName:        "Random Log Match",
-			Enabled:            true,
+			Enabled:            false,
 			ID:                 "E2E.RandomLogMatch",
 			Severity:           "INFO",
 			UserID:             systemUserID,
@@ -183,10 +219,6 @@ def rule(event):
 		}
 		logger.Fatalf("failed to create rule from analysis-api: %v", err)
 	}
-	ctx.NewRule = rule.Payload
+	ctx.NewRule = *rule.Payload
 	logger.Infof("added rule ID \"%s\"", ctx.NewRule.ID)
-
-	// TODO - add another user
-	// TODO - update settings
-	// TODO - add destination
 }
