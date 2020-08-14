@@ -17,8 +17,9 @@
  */
 
 import React from 'react';
-import { Flex, FormError, Heading, Text } from 'pouncejs';
+import { Flex, FormError } from 'pouncejs';
 import SubmitButton from 'Components/buttons/SubmitButton';
+import { WizardPanelWrapper } from 'Components/Wizard';
 import { useFormikContext } from 'formik';
 import { SqsLogSourceWizardValues } from '../SqsSourceWizard';
 
@@ -32,15 +33,15 @@ const SuccessPanel: React.FC = () => {
   }, []);
 
   return (
-    <Flex justify="center" align="center" direction="column" my={190} mx="auto" width={400}>
-      <Heading as="h2" m="auto" mb={5}>
-        Almost done!
-      </Heading>
-      <Text color="gray-300" mb={10} textAlign="center">
-        {initialValues.integrationId
-          ? 'Click the button below to validate your changes & update your source!'
-          : 'After setting up your SQS configuration, click on the button below to complete the setup!'}
-      </Text>
+    <Flex justify="center" align="center" direction="column" mx="auto" width={400}>
+      <WizardPanelWrapper.Heading
+        title="Almost Done!"
+        subtitle={
+          initialValues.integrationId
+            ? 'Click the button below to validate your changes & update your source!'
+            : 'After setting up your SQS configuration, click on the button below to complete the setup!'
+        }
+      />
       <SubmitButton fullWidth>
         {initialValues.integrationId ? 'Update Source' : 'Save Source'}
       </SubmitButton>

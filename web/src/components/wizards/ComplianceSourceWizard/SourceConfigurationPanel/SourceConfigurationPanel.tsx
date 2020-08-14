@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, FormHelperText, Heading, Link, Text } from 'pouncejs';
+import { Box, FormHelperText, Link } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -24,20 +24,21 @@ import React from 'react';
 import FormikCheckbox from 'Components/fields/Checkbox';
 import { CLOUD_SECURITY_REAL_TIME_DOC_URL, REMEDIATION_DOC_URL } from 'Source/constants';
 import { ComplianceSourceWizardValues } from 'Components/wizards/ComplianceSourceWizard/ComplianceSourceWizard';
+import { WizardPanelWrapper } from 'Components/Wizard';
 
 const SourceConfigurationPanel: React.FC = () => {
   const { initialValues } = useFormikContext<ComplianceSourceWizardValues>();
 
   return (
     <Box width={460} m="auto">
-      <Heading as="h2" m="auto" mb={2}>
-        {initialValues.integrationId ? 'Update source' : 'First things first'}
-      </Heading>
-      <Text color="gray-300" mb={10}>
-        {initialValues.integrationId
-          ? 'Feel free to make any changes to your Cloud Security source'
-          : "Let's configure your Cloud Security Source"}
-      </Text>
+      <WizardPanelWrapper.Heading
+        title={initialValues.integrationId ? 'Update source' : 'First things first'}
+        subtitle={
+          initialValues.integrationId
+            ? 'Feel free to make any changes to your Cloud Security source'
+            : "Let's configure your Cloud Security Source"
+        }
+      />
       <ErrorBoundary>
         <Box mb={4}>
           <Field

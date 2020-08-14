@@ -26,6 +26,7 @@ import BaseDestinationForm, {
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
 import { yupWebhookValidation } from 'Helpers/utils';
+import { SimpleGrid } from 'pouncejs';
 
 type SlackFieldValues = Pick<DestinationConfigInput, 'slack'>;
 
@@ -53,18 +54,27 @@ const SlackDestinationForm: React.FC<SlackDestinationFormProps> = ({ onSubmit, i
       validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
-      <Field
-        as={FormikTextInput}
-        type="password"
-        name="outputConfig.slack.webhookURL"
-        label="Slack Webhook URL"
-        placeholder={
-          existing
-            ? 'Information is hidden. New values will override the existing ones.'
-            : 'Where should we send a push notification to?'
-        }
-        required={!existing}
-      />
+      <SimpleGrid gap={5} columns={2}>
+        <Field
+          name="displayName"
+          as={FormikTextInput}
+          label="* Display Name"
+          placeholder="How should we name this?"
+          required
+        />
+        <Field
+          as={FormikTextInput}
+          type="password"
+          name="outputConfig.slack.webhookURL"
+          label="Slack Webhook URL"
+          placeholder={
+            existing
+              ? 'Information is hidden. New values will override the existing ones.'
+              : 'Where should we send a push notification to?'
+          }
+          required={!existing}
+        />
+      </SimpleGrid>
     </BaseDestinationForm>
   );
 };

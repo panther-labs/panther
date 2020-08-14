@@ -27,7 +27,7 @@ import BaseDestinationForm, {
 } from 'Components/forms/BaseDestinationForm';
 import { isNumber } from 'Helpers/utils';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
-import { Box, FormHelperText } from 'pouncejs';
+import { Box, FormHelperText, SimpleGrid } from 'pouncejs';
 
 type AsanaFieldValues = Pick<DestinationConfigInput, 'asana'>;
 
@@ -56,18 +56,27 @@ const AsanaDestinationForm: React.FC<AsanaDestinationFormProps> = ({ onSubmit, i
       validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
-      <Field
-        as={FormikTextInput}
-        type="password"
-        name="outputConfig.asana.personalAccessToken"
-        label="Access Token"
-        placeholder={
-          existing
-            ? 'Information is hidden. New values will override the existing ones.'
-            : 'Your personal Asana access token'
-        }
-        required={!existing}
-      />
+      <SimpleGrid gap={5} columns={2} mb={5}>
+        <Field
+          name="displayName"
+          as={FormikTextInput}
+          label="* Display Name"
+          placeholder="How should we name this?"
+          required
+        />
+        <Field
+          as={FormikTextInput}
+          type="password"
+          name="outputConfig.asana.personalAccessToken"
+          label="Access Token"
+          placeholder={
+            existing
+              ? 'Information is hidden. New values will override the existing ones.'
+              : "What's  your access token?"
+          }
+          required={!existing}
+        />
+      </SimpleGrid>
       <Box as="fieldset">
         <Field
           name="outputConfig.asana.projectGids"

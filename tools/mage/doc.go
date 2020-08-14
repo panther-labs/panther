@@ -151,7 +151,7 @@ func (category *logCategory) generateDocFile(outDir string) error {
 
 		description := html.EscapeString(desc)
 
-		docsBuffer.WriteString(fmt.Sprintf("##%s\n%s\n", logType, description))
+		docsBuffer.WriteString(fmt.Sprintf("## %s\n%s\n", logType, description))
 
 		// add schema as html table since markdown won't let you embed tables
 		docsBuffer.WriteString(`<table>` + "\n")

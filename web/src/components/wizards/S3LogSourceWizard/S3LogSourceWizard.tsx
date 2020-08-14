@@ -84,28 +84,30 @@ const S3LogSourceWizard: React.FC<S3LogSourceWizardProps> = ({
         return (
           <Form>
             <Wizard>
-              <Wizard.Step title="Configure Logs Source" icon="settings">
+              <Wizard.Step title="Configure Logs Source">
                 <WizardPanelWrapper>
                   <WizardPanelWrapper.Content>
                     <S3SourceConfigurationPanel />
                   </WizardPanelWrapper.Content>
                   <WizardPanelWrapper.Actions>
-                    <WizardPanelWrapper.ActionNext disabled={!dirty || !isValid} />
+                    <WizardPanelWrapper.ActionNext disabled={!dirty || !isValid}>
+                      Continue Setup
+                    </WizardPanelWrapper.ActionNext>
                   </WizardPanelWrapper.Actions>
                 </WizardPanelWrapper>
               </Wizard.Step>
-              <Wizard.Step title="Deploy Stack" icon="upload">
+              <Wizard.Step title="Deploy Stack">
                 <WizardPanelWrapper>
                   <WizardPanelWrapper.Content>
                     <StackDeploymentPanel />
                   </WizardPanelWrapper.Content>
                   <WizardPanelWrapper.Actions>
                     <WizardPanelWrapper.ActionPrev />
-                    <WizardPanelWrapper.ActionNext />
+                    <WizardPanelWrapper.ActionNext>Continue Setup</WizardPanelWrapper.ActionNext>
                   </WizardPanelWrapper.Actions>
                 </WizardPanelWrapper>
               </Wizard.Step>
-              <Wizard.Step title="Done!" icon="check">
+              <Wizard.Step title="Done!">
                 <WizardPanelWrapper>
                   <WizardPanelWrapper.Content>
                     <SuccessPanel />

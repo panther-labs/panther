@@ -75,28 +75,30 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
         return (
           <Form>
             <Wizard>
-              <Wizard.Step title="Configure Source" icon="settings">
+              <Wizard.Step title="Configure Source">
                 <WizardPanelWrapper>
                   <WizardPanelWrapper.Content>
                     <SourceConfigurationPanel />
                   </WizardPanelWrapper.Content>
                   <WizardPanelWrapper.Actions>
-                    <WizardPanelWrapper.ActionNext disabled={!dirty || !isValid} />
+                    <WizardPanelWrapper.ActionNext disabled={!dirty || !isValid}>
+                      Continue Setup
+                    </WizardPanelWrapper.ActionNext>
                   </WizardPanelWrapper.Actions>
                 </WizardPanelWrapper>
               </Wizard.Step>
-              <Wizard.Step title="Deploy Stack" icon="upload">
+              <Wizard.Step title="Deploy Stack">
                 <WizardPanelWrapper>
                   <WizardPanelWrapper.Content>
                     <StackDeploymentPanel />
                   </WizardPanelWrapper.Content>
                   <WizardPanelWrapper.Actions>
                     <WizardPanelWrapper.ActionPrev />
-                    <WizardPanelWrapper.ActionNext />
+                    <WizardPanelWrapper.ActionNext>Continue Setup</WizardPanelWrapper.ActionNext>
                   </WizardPanelWrapper.Actions>
                 </WizardPanelWrapper>
               </Wizard.Step>
-              <Wizard.Step title="Done!" icon="check">
+              <Wizard.Step title="Done!">
                 <WizardPanelWrapper>
                   <WizardPanelWrapper.Content>
                     <SuccessPanel />

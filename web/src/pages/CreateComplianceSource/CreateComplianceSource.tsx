@@ -17,7 +17,6 @@
  */
 
 import React from 'react';
-import { Card } from 'pouncejs';
 import urls from 'Source/urls';
 import useRouter from 'Hooks/useRouter';
 import withSEO from 'Hoc/withSEO';
@@ -47,24 +46,22 @@ const CreateComplianceSource: React.FC = () => {
   });
 
   return (
-    <Card p={9} mb={6}>
-      <ComplianceSourceWizard
-        initialValues={initialValues}
-        externalErrorMessage={error && extractErrorMessage(error)}
-        onSubmit={values =>
-          addComplianceSource({
-            variables: {
-              input: {
-                integrationLabel: values.integrationLabel,
-                awsAccountId: values.awsAccountId,
-                cweEnabled: values.cweEnabled,
-                remediationEnabled: values.remediationEnabled,
-              },
+    <ComplianceSourceWizard
+      initialValues={initialValues}
+      externalErrorMessage={error && extractErrorMessage(error)}
+      onSubmit={values =>
+        addComplianceSource({
+          variables: {
+            input: {
+              integrationLabel: values.integrationLabel,
+              awsAccountId: values.awsAccountId,
+              cweEnabled: values.cweEnabled,
+              remediationEnabled: values.remediationEnabled,
             },
-          })
-        }
-      />
-    </Card>
+          },
+        })
+      }
+    />
   );
 };
 

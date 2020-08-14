@@ -18,7 +18,16 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: IAM role for deploying Panther
 
 Metadata:
-  Version: v1.6.0
+  Version: v1.7.0
+
+Parameters:
+  IdentityAccountId:
+    Type: String
+    Description: The account ID for the account the deployment role will be assumed from
+    Default: ''
+
+Conditions:
+  AccountSpecified: !Not [!Equals [!Ref IdentityAccountId, '']]
 
 Resources:
   DeploymentRole:
@@ -30,7 +39,10 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+              AWS: !If
+                - AccountSpecified
+                - !Sub arn:${AWS::Partition}:iam::${IdentityAccountId}:root
+                - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
             Action: sts:AssumeRole
             Condition:
               Bool:
@@ -151,8 +163,8 @@ Resources:
           - Effect: Allow
             Action: cloudformation:*
             Resource:
-              - !Sub arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stack/panther-*
-              - !Sub arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stackset/panther-*
+              - !Sub arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stack/panther*
+              - !Sub arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stackset/panther*
               - !Sub arn:${AWS::Partition}:cloudformation:*:aws:transform/Serverless-2016-10-31
           - Effect: Allow
             Action: dynamodb:*

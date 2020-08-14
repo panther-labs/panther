@@ -21,7 +21,6 @@ package mage
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -199,30 +198,28 @@ func uploadFileToS3(path, bucket, key string) (*s3manager.UploadOutput, error) {
 	})
 }
 
-// Run a command, hiding both stdout and stderr unless running in verbose mode.
+// Run a command, capturing stdout and stderr unless the command errors or we're in verbose mode.
 //
-// This is helpful for tools which print unwanted info to stderr even when successful.
-// Stderr will be printed if the command returned an error.
+// This is helpful for tools which print unwanted info to stderr even when successful or, conversely,
+// tools which output failing tests to stdout that we want to show even in non-verbose mode.
+//
+// Both outputs will be printed if the command returns an error.
 //
 // Similar to sh.Run(), except sh.Run() only hides stdout in non-verbose mode.
-func runWithCapturedStderr(cmd string, args ...string) error {
-	var stdout, stderr io.Writer
-	var buf bytes.Buffer
-
+func runWithCapturedOutput(cmd string, args ...string) error {
 	if mg.Verbose() {
-		stdout = os.Stdout
-		stderr = os.Stderr
-	} else {
-		stderr = &buf
+		return sh.Run(cmd, args...)
 	}
 
-	_, err := sh.Exec(nil, stdout, stderr, cmd, args...)
-	if err != nil && !mg.Verbose() {
+	var buf bytes.Buffer
+	if _, err := sh.Exec(nil, &buf, &buf, cmd, args...); err != nil {
 		// The command failed - in non-verbose mode, all output has been hidden.
 		// We need to print the output so the user can see the error message.
 		fmt.Println(buf.String())
+		return err
 	}
-	return err
+
+	return nil
 }
 
 // runningInCI returns true if the mage command is running inside the CI environment
