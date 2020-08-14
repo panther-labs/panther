@@ -36,7 +36,9 @@ import (
 	analysisclient "github.com/panther-labs/panther/api/gateway/analysis/client"
 	analysisops "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
 	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
+	orgmodels "github.com/panther-labs/panther/api/lambda/organization/models"
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	usermodels "github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/pkg/awscfn"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/genericapi"
@@ -45,10 +47,31 @@ import (
 
 const (
 	systemUserID = "00000000-0000-4000-8000-000000000000"
+	orgAPI       = "panther-organization-api"
 	outputsAPI   = "panther-outputs-api"
+	usersAPI     = "panther-users-api"
 
-	// TODO - rename ecrRepoName?
-	e2eResourceName = "panther-e2e-test"
+	e2eCompanyName  = "Panther Labs"
+	e2eFirstName    = "Panther"
+	e2eLastName     = "Tester"
+	e2eResourceName = "panther-e2e-test" // TODO - rename ecrRepoName?
+
+	e2ePolicyBody = `
+def policy(resource):
+    if not resource['Name'].startswith('panther-'):
+        return True
+    return resource['Tags'].get('Application') == 'Panther'
+`
+	e2ePolicyDescription = "E2E test - check tags in panther stacks"
+	e2ePolicyID          = "E2E.TaggedPantherStacks"
+
+	e2eRuleBody = `
+def rule(event):
+    return True
+`
+	e2eDedupMinutes    = 2
+	e2eRuleDescription = "E2E test - match all incoming logs"
+	e2eRuleID          = "E2E.RandomLogMatch"
 )
 
 // Maintain context about the test as it progresses
@@ -70,6 +93,8 @@ type e2eContext struct {
 
 // End-to-end test suite - deploy, migrate, test, teardown
 func (Test) E2e() {
+	// TODO - can we use testing library to make assertions
+
 	ctx := e2eContext{
 		FirstUserEmail: prompt.Read("Email for initial invite: ", prompt.EmailValidator),
 	}
@@ -80,7 +105,6 @@ func (Test) E2e() {
 	logger.Info("***** test:e2e : Stage 1/8 : Pre-Teardown *****")
 	// TODO - teardown masterStack as well?
 	// TODO - mage clean setup?
-	// TODO - setup account here: deployment role, bucket, ECR repo, etc
 	Teardown() // includes getSession()
 	// I tried removing AWSService IAM roles here - AWS does not allow it
 
@@ -89,11 +113,13 @@ func (Test) E2e() {
 	ctx.deployPreviousVersion()
 	ctx.interactWithOldVersion()
 	ctx.migrate()
+	ctx.validateMigration()
 
-	// TODO - stage 5 - verify migrated data - verify app functionality
-	// TODO - stage 6 - integration test
-	// TODO - stage 7 - teardown + verify no leftover resources
-	// TODO - stage 8 - cleanup (bucket, IAM role, ecr repo)
+	// TODO - use a fresh account from AWS organizations for this
+	// TODO - stage 6 - validate product functionality - enable policy/rule, verify alerts
+	// TODO - stage 7 - integration test
+	// TODO - stage 8 - teardown + verify no leftover resources
+	// TODO - stage 9 - cleanup (bucket, IAM role, ecr repo)
 }
 
 // Deploy the official published pre-packaged deployment for the previous version.
@@ -111,7 +137,8 @@ func (ctx *e2eContext) deployPreviousVersion() {
 	// Deploy the template directly, do not use our standard deploy code with packaging.
 	err := sh.RunV(filepath.Join(pythonVirtualEnvPath, "bin", "sam"), "deploy",
 		"--capabilities", "CAPABILITY_AUTO_EXPAND", "CAPABILITY_IAM", "CAPABILITY_NAMED_IAM",
-		"--parameter-overrides", "CompanyDisplayName="+e2eResourceName, "FirstUserEmail="+ctx.FirstUserEmail,
+		"--parameter-overrides", "CompanyDisplayName="+e2eCompanyName, "FirstUserEmail="+ctx.FirstUserEmail,
+		"FirstUserGivenName="+e2eFirstName, "FirstUserFamilyName="+e2eLastName,
 		"--region", ctx.Region,
 		"--stack-name", masterStackName,
 		"--template", downloadPath,
@@ -156,6 +183,8 @@ func (ctx *e2eContext) deployPreviousVersion() {
 func (ctx *e2eContext) interactWithOldVersion() {
 	logger.Info("***** test:e2e : Stage 3/8 : Generate Data in Previous Release *****")
 
+	// TODO - directly put a log into the ingestion bucket
+
 	// Add an SQS alert destination
 	queue, err := sqs.New(awsSession).CreateQueue(&sqs.CreateQueueInput{
 		QueueName: aws.String("e2e-test"), // TODO - rename "panther-e2e-test" ?
@@ -178,19 +207,15 @@ func (ctx *e2eContext) interactWithOldVersion() {
 	}
 	logger.Infof("added SQS queue %s as output ID %s", *queue.QueueUrl, *ctx.OutputQueue.OutputID)
 
+	// TODO - modify an existing policy...
+
 	// Add a policy which scans "panther-" stacks
 	policy, err := ctx.AnalysisClient.Operations.CreatePolicy(&analysisops.CreatePolicyParams{
 		Body: &analysismodels.UpdatePolicy{
-			Body: `
-def policy(resource):
-    if not resource['Name'].startswith('panther-'):
-        return True
-    return resource['Tags'].get('Application') == 'Panther'
-`,
-			Description:   "E2E test - check tags in panther stacks",
-			DisplayName:   "Tagged Panther Stacks",
+			Body:          e2ePolicyBody,
+			Description:   e2ePolicyDescription,
 			Enabled:       false,
-			ID:            "E2E.TaggedPantherStacks",
+			ID:            e2ePolicyID,
 			OutputIds:     []string{*ctx.OutputQueue.OutputID},
 			ResourceTypes: []string{"AWS.CloudFormation.Stack"},
 			Severity:      "INFO",
@@ -207,17 +232,11 @@ def policy(resource):
 	// Add a rule which matches 10% of all input logs
 	rule, err := ctx.AnalysisClient.Operations.CreateRule(&analysisops.CreateRuleParams{
 		Body: &analysismodels.UpdateRule{
-			Body: `
-import random
-
-def rule(event):
-    return random.random() <= 0.10
-`,
-			DedupPeriodMinutes: 15,
-			Description:        "E2E test - match 10% of all logs",
-			DisplayName:        "Random Log Match",
+			Body:               e2eRuleBody,
+			DedupPeriodMinutes: e2eDedupMinutes,
+			Description:        e2eRuleDescription,
 			Enabled:            false,
-			ID:                 "E2E.RandomLogMatch",
+			ID:                 e2eRuleID,
 			Severity:           "INFO",
 			UserID:             systemUserID,
 		},
@@ -277,21 +296,70 @@ func (ctx *e2eContext) migrate() {
 	// TODO - ensure master version is different from the one we deployed to trigger custom resource updates
 	masterBuild()
 	masterVersion := getMasterVersion()
-	pkg := masterPackage(bucket, masterVersion,
-		fmt.Sprintf("%s.dkr.ecr.%s.amazonaws.com/%s", accountID, ctx.Region, e2eResourceName))
+	imgRegistry := fmt.Sprintf("%s.dkr.ecr.%s.amazonaws.com/%s", accountID, ctx.Region, e2eResourceName)
+	pkg := masterPackage(bucket, masterVersion, imgRegistry)
 
 	// Deploy current master template to upgrade Panther to the release candidate
 	logger.Infof("updating %s stack with local master template %s using IAM role %s",
 		masterStackName, masterVersion, deploymentRoleArn)
 	err = sh.RunV(filepath.Join(pythonVirtualEnvPath, "bin", "sam"), "deploy",
 		"--capabilities", "CAPABILITY_IAM", "CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND",
-		"--no-fail-on-empty-changeset",
+		"--parameter-overrides", "ImageRegistry="+imgRegistry,
 		"--region", ctx.Region,
 		"--role-arn", deploymentRoleArn,
 		"--stack-name", masterStackName,
-		"-t", pkg,
+		"--template", pkg,
 	)
 	if err != nil {
 		logger.Fatal(err)
 	}
+}
+
+// Ensure user data wasn't corrupted during the migration.
+func (ctx *e2eContext) validateMigration() {
+	logger.Info("***** test:e2e : Stage 5/8 : Validate Migration *****")
+
+	// User list should still contain only the single invited user
+	lambdaClient := lambda.New(awsSession)
+	var userList usermodels.ListUsersOutput
+	listInput := usermodels.LambdaInput{ListUsers: &usermodels.ListUsersInput{}}
+	if err := genericapi.Invoke(lambdaClient, usersAPI, &listInput, &userList); err != nil {
+		logger.Fatalf("failed to invoke %s.listUsers: %v", usersAPI, err)
+	}
+	if len(userList.Users) != 1 {
+		logger.Fatalf("expected 1 Panther user, found %d", len(userList.Users))
+	}
+	user := userList.Users[0]
+	if aws.StringValue(user.GivenName) != e2eFirstName || aws.StringValue(user.FamilyName) != e2eLastName {
+		logger.Fatalf("expected Panther user %s %s, found %s %s (ID %s)",
+			e2eFirstName, e2eLastName,
+			aws.StringValue(user.GivenName), aws.StringValue(user.FamilyName),
+			*user.ID)
+	}
+
+	// Organization settings
+	var orgSettings orgmodels.GeneralSettings
+	orgInput := orgmodels.LambdaInput{GetSettings: &orgmodels.GetSettingsInput{}}
+	if err := genericapi.Invoke(lambdaClient, orgAPI, &orgInput, &orgSettings); err != nil {
+		logger.Fatalf("failed to invoke %s.getSettings: %v", orgAPI, err)
+	}
+	if aws.StringValue(orgSettings.DisplayName) != e2eCompanyName {
+		logger.Fatalf("expected org name \"%s\", found \"%s\"",
+			e2eCompanyName, aws.StringValue(orgSettings.DisplayName))
+	}
+
+	// New policy should be the same
+	policyResponse, err := ctx.AnalysisClient.Operations.GetPolicy(&analysisops.GetPolicyParams{
+		PolicyID:   e2ePolicyID,
+		HTTPClient: ctx.GatewayClient,
+	})
+	if err != nil {
+		logger.Fatalf("failed to retrieve policy %s: %v", e2ePolicyID, err)
+	}
+	policy := policyResponse.Payload
+	if policy.Enabled || policy.Body != e2ePolicyBody || policy.Description != e2ePolicyDescription {
+		logger.Fatalf("policy ID %s unexpectedly changed", policy.ID)
+	}
+	// check rule
+	// check output
 }
