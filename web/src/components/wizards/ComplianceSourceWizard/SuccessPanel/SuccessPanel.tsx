@@ -33,7 +33,7 @@ const SuccessPanel: React.FC = () => {
   }, []);
 
   return (
-    <Flex justify="center" align="center" direction="column" my={190} mx="auto" width={400}>
+    <Flex justify="center" align="center" direction="column" mx="auto" width={400}>
       <WizardPanelWrapper.Heading
         title="Almost Done!"
         subtitle={
