@@ -42,6 +42,7 @@ const (
 	// The region will be interpolated in these names
 	publicAssetsBucket    = "panther-community-%s"
 	publicImageRepository = "349240696275.dkr.ecr.%s.amazonaws.com/panther-community"
+	masterStackName       = "panther"
 )
 
 var (
@@ -62,7 +63,7 @@ func (Master) Deploy() {
 	err := sh.RunV(filepath.Join(pythonVirtualEnvPath, "bin", "sam"), "deploy",
 		"--capabilities", "CAPABILITY_IAM", "CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND",
 		"--region", region,
-		"--stack-name", "panther",
+		"--stack-name", masterStackName,
 		"-t", pkg,
 		"--parameter-overrides", "FirstUserEmail="+firstUserEmail, "ImageRegistry="+ecrRegistry)
 	if err != nil {

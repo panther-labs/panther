@@ -25,8 +25,11 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
+	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/magefile/mage/sh"
 
@@ -43,6 +46,9 @@ import (
 const (
 	systemUserID = "00000000-0000-4000-8000-000000000000"
 	outputsAPI   = "panther-outputs-api"
+
+	// TODO - rename ecrRepoName?
+	e2eResourceName = "panther-e2e-test"
 )
 
 // Maintain context about the test as it progresses
@@ -71,7 +77,10 @@ func (Test) E2e() {
 	// TODO - allow specifying STAGE to jump to
 
 	// Make sure there are no leftover resources that would fail the deployment.
-	logger.Info("***** test:e2e : Stage 1/10 : Pre-Teardown *****")
+	logger.Info("***** test:e2e : Stage 1/8 : Pre-Teardown *****")
+	// TODO - teardown masterStack as well?
+	// TODO - mage clean setup?
+	// TODO - setup account here: deployment role, bucket, ECR repo, etc
 	Teardown() // includes getSession()
 	// I tried removing AWSService IAM roles here - AWS does not allow it
 
@@ -79,16 +88,17 @@ func (Test) E2e() {
 	ctx.Region = *awsSession.Config.Region
 	ctx.deployPreviousVersion()
 	ctx.interactWithOldVersion()
+	ctx.migrate()
 
-	// TODO - stage 4 - migration - current master template (with deployment role)
 	// TODO - stage 5 - verify migrated data - verify app functionality
 	// TODO - stage 6 - integration test
 	// TODO - stage 7 - teardown + verify no leftover resources
+	// TODO - stage 8 - cleanup (bucket, IAM role, ecr repo)
 }
 
 // Deploy the official published pre-packaged deployment for the previous version.
 func (ctx *e2eContext) deployPreviousVersion() {
-	logger.Info("***** test:e2e : Stage 2/10 : Deploy Previous Release *****")
+	logger.Info("***** test:e2e : Stage 2/8 : Deploy Previous Release *****")
 	getGitVersion(false)
 	s3URL := fmt.Sprintf("https://panther-community-%s.s3.amazonaws.com/%s/panther.yml",
 		ctx.Region, strings.Split(gitVersion, "-")[0])
@@ -101,9 +111,9 @@ func (ctx *e2eContext) deployPreviousVersion() {
 	// Deploy the template directly, do not use our standard deploy code with packaging.
 	err := sh.RunV(filepath.Join(pythonVirtualEnvPath, "bin", "sam"), "deploy",
 		"--capabilities", "CAPABILITY_AUTO_EXPAND", "CAPABILITY_IAM", "CAPABILITY_NAMED_IAM",
-		"--parameter-overrides", "CompanyDisplayName=e2e-test", "FirstUserEmail="+ctx.FirstUserEmail,
+		"--parameter-overrides", "CompanyDisplayName="+e2eResourceName, "FirstUserEmail="+ctx.FirstUserEmail,
 		"--region", ctx.Region,
-		"--stack-name", "panther",
+		"--stack-name", masterStackName,
 		"--template", downloadPath,
 	)
 	if err != nil {
@@ -144,11 +154,11 @@ func (ctx *e2eContext) deployPreviousVersion() {
 
 // Interact with the last Panther release to generate some custom data we can verify after the migration.
 func (ctx *e2eContext) interactWithOldVersion() {
-	logger.Info("***** test:e2e : Stage 3/10 : Generate Data in Previous Release *****")
+	logger.Info("***** test:e2e : Stage 3/8 : Generate Data in Previous Release *****")
 
 	// Add an SQS alert destination
 	queue, err := sqs.New(awsSession).CreateQueue(&sqs.CreateQueueInput{
-		QueueName: aws.String("e2e-test"),
+		QueueName: aws.String("e2e-test"), // TODO - rename "panther-e2e-test" ?
 	})
 	if err != nil {
 		logger.Fatalf("failed to create SQS queue: %v", err)
@@ -221,4 +231,67 @@ def rule(event):
 	}
 	ctx.NewRule = *rule.Payload
 	logger.Infof("added rule ID \"%s\"", ctx.NewRule.ID)
+}
+
+// Using the deployment role, migrate to the current master stack
+func (ctx *e2eContext) migrate() {
+	logger.Info("***** test:e2e : Stage 4/8 : Migrate to Current Master Template *****")
+
+	// Create deployment role
+	deploymentRoleTemplate := filepath.Join(
+		"deployments", "auxiliary", "cloudformation", "panther-deployment-role.yml")
+	logger.Infof("creating deployment role from %s", deploymentRoleTemplate)
+
+	err := sh.RunV(filepath.Join(pythonVirtualEnvPath, "bin", "sam"), "deploy",
+		"--capabilities", "CAPABILITY_IAM", "CAPABILITY_NAMED_IAM",
+		"--no-fail-on-empty-changeset",
+		"--region", ctx.Region,
+		"--stack-name", "panther-deployment-role",
+		"--template", deploymentRoleTemplate,
+	)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	// TODO - we already got the accountID during the first teardown
+	accountID := getAccountID()
+	deploymentRoleArn := fmt.Sprintf("arn:aws:iam::%s:role/PantherDeploymentRole", accountID)
+
+	// Create S3 bucket and ECR repo for staging master package assets
+	bucket := e2eResourceName + "-" + accountID
+	if _, err := s3.New(awsSession).CreateBucket(&s3.CreateBucketInput{Bucket: &bucket}); err != nil {
+		if awsErr := err.(awserr.Error); awsErr.Code() != s3.ErrCodeBucketAlreadyExists && awsErr.Code() != s3.ErrCodeBucketAlreadyOwnedByYou {
+			logger.Fatalf("failed to create S3 bucket %s: %v", bucket, err)
+		}
+	}
+
+	_, err = ecr.New(awsSession).CreateRepository(&ecr.CreateRepositoryInput{
+		RepositoryName: aws.String(e2eResourceName),
+	})
+	if err != nil {
+		if awsErr := err.(awserr.Error); awsErr.Code() != ecr.ErrCodeRepositoryAlreadyExistsException {
+			logger.Fatalf("failed to create ECR repository %s: %v", e2eResourceName, err)
+		}
+	}
+	logger.Infof("created S3 bucket %s and ECR repo %s for staging master assets", bucket, e2eResourceName)
+
+	// TODO - ensure master version is different from the one we deployed to trigger custom resource updates
+	masterBuild()
+	masterVersion := getMasterVersion()
+	pkg := masterPackage(bucket, masterVersion,
+		fmt.Sprintf("%s.dkr.ecr.%s.amazonaws.com/%s", accountID, ctx.Region, e2eResourceName))
+
+	// Deploy current master template to upgrade Panther to the release candidate
+	logger.Infof("updating %s stack with local master template %s using IAM role %s",
+		masterStackName, masterVersion, deploymentRoleArn)
+	err = sh.RunV(filepath.Join(pythonVirtualEnvPath, "bin", "sam"), "deploy",
+		"--capabilities", "CAPABILITY_IAM", "CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND",
+		"--no-fail-on-empty-changeset",
+		"--region", ctx.Region,
+		"--role-arn", deploymentRoleArn,
+		"--stack-name", masterStackName,
+		"-t", pkg,
+	)
+	if err != nil {
+		logger.Fatal(err)
+	}
 }
