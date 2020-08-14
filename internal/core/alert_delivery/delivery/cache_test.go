@@ -50,19 +50,16 @@ func createAlertOutputs() []*outputmodels.AlertOutput {
 	return []*outputmodels.AlertOutput{createAlertOutput(), createAlertOutput(), createAlertOutput()}
 }
 
-// By default, a cache should never return nil unless it is intentional
-func TestGet(t *testing.T) {
-	c := &outputsCache{}
-	assert.NotNil(t, c.get())
-}
-
+// By default, cache.get() will initialize the cache - no need
+// to explicitly call cache.set(...)
+//
 // To override the default action, the user must cache.get()
 // then cache.set(nil) in order to successfully set the cache
 // to nil. This is for debugging/testing and should not be
-// directly used in application.
-func TestSetNil(t *testing.T) {
+// used in application.
+func TestGetSetCache(t *testing.T) {
+	assert.Nil(t, cache)
 	c := &outputsCache{}
-	assert.Equal(t, c, cache)
 
 	cPtr := c.get()
 	assert.NotNil(t, cPtr)
@@ -76,17 +73,12 @@ func TestSetNil(t *testing.T) {
 	c.set(&outputsCache{})
 	cPtr = c.get()
 	assert.NotNil(t, cPtr)
-	assert.Equal(t, c.get(), cache.get())
+	assert.NotNil(t, cache)
+	assert.Equal(t, cPtr, cache)
+	assert.Equal(t, cPtr.get(), cache.get())
 }
 
-func TestGetOutputs(t *testing.T) {
-	c := &outputsCache{}
-	outputs := createAlertOutputs()
-	c.setOutputs(outputs)
-	assert.Equal(t, outputs, c.getOutputs())
-	assert.Equal(t, c.getOutputs(), cache.getOutputs())
-}
-func TestSetOutputs(t *testing.T) {
+func TestGetSetOutputs(t *testing.T) {
 	c := &outputsCache{}
 	outputs := createAlertOutputs()
 	c.setOutputs(outputs)
@@ -94,17 +86,11 @@ func TestSetOutputs(t *testing.T) {
 	assert.Equal(t, c.getOutputs(), cache.getOutputs())
 }
 
-func TestGetExpiry(t *testing.T) {
-	c := &outputsCache{}
-	expiry := time.Now()
-	c.setExpiry(expiry)
-	assert.Equal(t, expiry, c.getExpiry())
-	assert.Equal(t, c.getExpiry(), cache.getExpiry())
-}
-func TestSetExpiry(t *testing.T) {
+func TestGetSetExpiry(t *testing.T) {
 	c := &outputsCache{}
 	expiry := time.Now().Add(time.Second * time.Duration(10))
 	c.setExpiry(expiry)
+	assert.Equal(t, expiry, c.getExpiry())
 	assert.Equal(t, c.getExpiry(), cache.getExpiry())
 }
 
