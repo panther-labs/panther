@@ -19,7 +19,6 @@ package delivery
  */
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -41,7 +40,6 @@ func fetchOutputs() ([]*outputmodels.AlertOutput, error) {
 	input := outputmodels.LambdaInput{GetOutputsWithSecrets: &outputmodels.GetOutputsWithSecretsInput{}}
 	var outputs outputmodels.GetOutputsOutput
 	if err := genericapi.Invoke(lambdaClient, outputsAPI, &input, &outputs); err != nil {
-		fmt.Println("fetchOutputs failed:", err)
 		return nil, err
 	}
 	return outputs, nil
@@ -49,18 +47,14 @@ func fetchOutputs() ([]*outputmodels.AlertOutput, error) {
 
 // getOutputs - Gets a list of outputs from panther
 func getOutputs() ([]*outputmodels.AlertOutput, error) {
-	fmt.Println("CACHE was NIL:", cache.get() == nil)
-	fmt.Println("CACHE was EXPIRED:", cache.isExpired())
-
 	if cache.get() == nil || cache.isExpired() {
 		outputs, err := fetchOutputs()
-		fmt.Println("CACH fetchOutputs:", outputs)
-
 		if err != nil {
 			return nil, err
 		}
 		cache.setOutputs(outputs)
 		cache.setExpiry(time.Now().UTC())
+		return cache.getOutputs(), nil
 	}
 	return cache.getOutputs(), nil
 }
@@ -69,7 +63,6 @@ func getOutputs() ([]*outputmodels.AlertOutput, error) {
 func getAlertOutputs(alert *alertmodels.Alert) ([]*outputmodels.AlertOutput, error) {
 	outputIds, err := getOutputs()
 	if err != nil {
-		fmt.Println("getOutputs failed...", err)
 		return nil, err
 	}
 

@@ -37,6 +37,7 @@ import (
 
 func sampleAlert() *alertmodels.Alert {
 	return &alertmodels.Alert{
+		AlertID:      aws.String("alert-id"),
 		OutputIds:    []string{"output-id"},
 		Severity:     "INFO",
 		AnalysisID:   "test-rule-id",
@@ -46,12 +47,13 @@ func sampleAlert() *alertmodels.Alert {
 }
 
 var alertOutput = &outputmodels.AlertOutput{
+	OutputID:    aws.String("output-id"),
 	OutputType:  aws.String("slack"),
 	DisplayName: aws.String("slack:alerts"),
 	OutputConfig: &outputmodels.OutputConfig{
 		Slack: &outputmodels.SlackConfig{WebhookURL: "https://slack.com"},
 	},
-	OutputID: aws.String("output-id"),
+	DefaultForSeverity: []*string{aws.String("INFO")},
 }
 
 func setCaches() {
@@ -156,21 +158,7 @@ func TestDispatchSuccess(t *testing.T) {
 func TestDispatchUseCachedDefault(t *testing.T) {
 	mockLambdaClient := &mockLambdaClient{}
 	lambdaClient = mockLambdaClient
-
-	outputs := &outputmodels.GetOutputsOutput{
-		{
-			OutputID:           aws.String("output-id"),
-			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
-		},
-	}
-	payload, err := jsoniter.Marshal(outputs)
-	require.NoError(t, err)
-	mockLambdaResponse := &lambda.InvokeOutput{
-		Payload: payload,
-	}
 	setCaches()
-	// cache.setExpiry(time.Now().Add(time.Second * time.Duration(5*60)))
-	mockLambdaClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil)
 	alert := sampleAlert()
 	alert.OutputIds = nil // Setting OutputIds in the alert to nil, in order to fetch default outputs
 	assert.True(t, dispatch(alert))
@@ -181,12 +169,7 @@ func TestDispatchUseNonCachedDefault(t *testing.T) {
 	mockLambdaClient := &mockLambdaClient{}
 	lambdaClient = mockLambdaClient
 
-	outputs := &outputmodels.GetOutputsOutput{
-		{
-			OutputID:           aws.String("output-id"),
-			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
-		},
-	}
+	outputs := &outputmodels.GetOutputsOutput{alertOutput}
 	payload, err := jsoniter.Marshal(outputs)
 	require.NoError(t, err)
 
@@ -194,6 +177,8 @@ func TestDispatchUseNonCachedDefault(t *testing.T) {
 		Payload: payload,
 	}
 
+	// Ensure the cache  is expired so we perform the lambda invocation
+	cache.setExpiry(time.Now().Add(time.Second * time.Duration(-5*60)))
 	mockLambdaClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil)
 	alert := sampleAlert()
 	alert.OutputIds = nil // Setting OutputIds in the alert to nil, in order to fetch default outputs
@@ -205,22 +190,16 @@ func TestAllGoRoutinesShouldComplete(t *testing.T) {
 	mockLambdaClient := &mockLambdaClient{}
 	lambdaClient = mockLambdaClient
 
-	outputs := &outputmodels.GetOutputsOutput{
-		{
-			OutputID:           aws.String("output-id-1"),
-			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
-		},
-		{
-			OutputID:           aws.String("output-id-2"),
-			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
-		},
-	}
+	outputs := &outputmodels.GetOutputsOutput{alertOutput}
 	payload, err := jsoniter.Marshal(outputs)
 	require.NoError(t, err)
 	mockGetOutputsResponse := &lambda.InvokeOutput{
 		Payload: payload,
 	}
 
+	// Ensure the cache  is expired so we perform the lambda invocation
+	cache.setExpiry(time.Now().Add(time.Second * time.Duration(-5*60)))
+	// setCaches()
 	// Invoke once to get all outpts
 	mockLambdaClient.On("Invoke", mock.Anything).Return(mockGetOutputsResponse, nil).Once()
 	alert := sampleAlert()

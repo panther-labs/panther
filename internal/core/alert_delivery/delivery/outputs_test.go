@@ -21,6 +21,7 @@ package delivery
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/lambda"
@@ -35,7 +36,6 @@ import (
 func TestGetAlertOutputsFromDefaultSeverity(t *testing.T) {
 	mockClient := &mockLambdaClient{}
 	lambdaClient = mockClient
-
 	output := &outputmodels.GetOutputsOutput{
 		{
 			OutputID:           aws.String("default-info-1"),
@@ -54,7 +54,7 @@ func TestGetAlertOutputsFromDefaultSeverity(t *testing.T) {
 	require.NoError(t, err)
 	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
 
-	cache.set(nil) // Clear the cache
+	cache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
 	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
 	alert := sampleAlert()
 	alert.OutputIds = nil
@@ -100,7 +100,7 @@ func TestGetAlertOutputsFromOutputIds(t *testing.T) {
 	require.NoError(t, err)
 	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
 
-	cache.set(nil) // Clear the cache
+	cache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
 	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
 	alert := sampleAlert()
 	alert.OutputIds = []string{"output-id", "output-id-3", "output-id-not"}
@@ -126,7 +126,7 @@ func TestGetAlertOutputsIdsError(t *testing.T) {
 	mockClient.On("Invoke", mock.Anything).Return((*lambda.InvokeOutput)(nil), errors.New("error"))
 
 	alert := sampleAlert()
-	cache.set(nil) // Clear the cache
+	cache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
 
 	result, err := getAlertOutputs(alert)
 	require.Error(t, err)

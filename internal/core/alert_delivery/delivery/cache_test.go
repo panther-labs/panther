@@ -52,72 +52,73 @@ func createAlertOutputs() []*outputmodels.AlertOutput {
 
 // By default, a cache should never return nil unless it is intentional
 func TestGet(t *testing.T) {
-	c := cache.get()
-	assert.NotNil(t, c)
+	c := &outputsCache{}
+	assert.NotNil(t, c.get())
 }
 
 // To override the default action, the user must cache.get()
 // then cache.set(nil) in order to successfully set the cache
 // to nil. This is for debugging/testing and should not be
 // directly used in application.
-func TestGetAfterSetNilIsNil(t *testing.T) {
-	c := cache.get()
-	assert.NotNil(t, cache)
-
-	cache.set(nil)
-	assert.Nil(t, cache)
-
-	c = cache.get()
-	assert.Nil(t, c)
-}
-
-// Attempts to first set a cache to nil is disregarded via
-// a subsequent get. Setting to nil should be avoided.
-func TestGetAfterSetNilIsNotNil(t *testing.T) {
-	cache.set(nil)
-	assert.Nil(t, cache)
-
-	c := cache.get()
-	assert.NotNil(t, c)
-}
-func TestSet(t *testing.T) {
-	cache.set(&outputsCache{})
-	assert.NotNil(t, cache)
-}
 func TestSetNil(t *testing.T) {
-	cache.set(nil)
+	c := &outputsCache{}
+	assert.Equal(t, c, cache)
+
+	cPtr := c.get()
+	assert.NotNil(t, cPtr)
+	assert.NotNil(t, cache)
+
+	c.set(nil)
+	cPtr = c.get()
+	assert.Nil(t, cPtr)
 	assert.Nil(t, cache)
+
+	c.set(&outputsCache{})
+	cPtr = c.get()
+	assert.NotNil(t, cPtr)
+	assert.Equal(t, c.get(), cache.get())
 }
 
 func TestGetOutputs(t *testing.T) {
+	c := &outputsCache{}
 	outputs := createAlertOutputs()
-	cache.setOutputs(outputs)
-	assert.Equal(t, outputs, cache.getOutputs())
+	c.setOutputs(outputs)
+	assert.Equal(t, outputs, c.getOutputs())
+	assert.Equal(t, c.getOutputs(), cache.getOutputs())
 }
 func TestSetOutputs(t *testing.T) {
+	c := &outputsCache{}
 	outputs := createAlertOutputs()
-	cache.setOutputs(outputs)
-	assert.Equal(t, cache.Outputs, outputs)
+	c.setOutputs(outputs)
+	assert.Equal(t, outputs, c.getOutputs())
+	assert.Equal(t, c.getOutputs(), cache.getOutputs())
 }
 
 func TestGetExpiry(t *testing.T) {
+	c := &outputsCache{}
 	expiry := time.Now()
-	cache.setExpiry(expiry)
-	assert.Equal(t, expiry, cache.getExpiry())
+	c.setExpiry(expiry)
+	assert.Equal(t, expiry, c.getExpiry())
+	assert.Equal(t, c.getExpiry(), cache.getExpiry())
 }
 func TestSetExpiry(t *testing.T) {
-	expiry := time.Now()
-	cache.setExpiry(expiry)
-	assert.Equal(t, cache.Timestamp, cache.getExpiry())
+	c := &outputsCache{}
+	expiry := time.Now().Add(time.Second * time.Duration(10))
+	c.setExpiry(expiry)
+	assert.Equal(t, c.getExpiry(), cache.getExpiry())
 }
 
 func TestIsNotExpired(t *testing.T) {
+	c := &outputsCache{}
 	expiry := time.Now().Add(time.Second * time.Duration(-5*59))
-	cache.setExpiry(expiry)
-	assert.False(t, cache.isExpired())
+	c.setExpiry(expiry)
+	assert.False(t, c.isExpired())
+	assert.Equal(t, c.isExpired(), cache.isExpired())
 }
 func TestIsExpired(t *testing.T) {
+	c := &outputsCache{}
 	expiry := time.Now().Add(time.Second * time.Duration(-5*60))
-	cache.setExpiry(expiry)
-	assert.True(t, cache.isExpired())
+	c.setExpiry(expiry)
+	assert.True(t, c.isExpired())
+	assert.Equal(t, c.isExpired(), cache.isExpired())
 }
