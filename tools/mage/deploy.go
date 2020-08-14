@@ -134,7 +134,7 @@ func deployPreCheck(awsRegion string, checkForOldVersion bool) {
 	}
 
 	// Set global gitVersion, warn if not deploying a tagged release
-	getGitVersion()
+	getGitVersion(true)
 
 	// There were mage migrations to help with v1.3 and v1.4 source deployments,
 	// but these were removed in v1.6. As a result, old deployments first need to upgrade to v1.5.1

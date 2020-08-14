@@ -202,7 +202,7 @@ func (b Build) tools() error {
 	})
 
 	// Set global gitVersion, warn if not deploying a tagged release
-	getGitVersion()
+	getGitVersion(false)
 
 	for _, path := range paths {
 		parts := strings.SplitN(path, `/`, 3)
