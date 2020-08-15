@@ -67,16 +67,16 @@ func TestSendPanic(t *testing.T) {
 	mockOutputsClient := &mockOutputsClient{}
 	outputClient = mockOutputsClient
 
-	ch := make(chan outputStatus, 1)
+	ch := make(chan OutputStatus, 1)
 	mockOutputsClient.On("Slack", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 		panic("panicking")
 	})
 	go send(sampleAlert(), alertOutput, ch)
-	require.Equal(t, outputStatus{
-		outputID:   *alertOutput.OutputID,
-		success:    false,
-		message:    "panic sending alert",
-		needsRetry: false,
+	require.Equal(t, OutputStatus{
+		OutputID:   *alertOutput.OutputID,
+		Success:    false,
+		Message:    "panic sending alert",
+		NeedsRetry: false,
 	}, <-ch)
 	mockOutputsClient.AssertExpectations(t)
 }
@@ -85,7 +85,7 @@ func TestSendUnsupportedOutput(t *testing.T) {
 	mockClient := &mockOutputsClient{}
 	outputClient = mockClient
 	setCaches()
-	ch := make(chan outputStatus, 1)
+	ch := make(chan OutputStatus, 1)
 
 	send(sampleAlert(), &outputmodels.AlertOutput{
 		OutputType:  aws.String("unsupported"),
@@ -95,11 +95,11 @@ func TestSendUnsupportedOutput(t *testing.T) {
 		},
 		OutputID: aws.String("output-id"),
 	}, ch)
-	assert.Equal(t, outputStatus{
-		outputID:   *alertOutput.OutputID,
-		success:    false,
-		message:    "unsupported output type",
-		needsRetry: false,
+	assert.Equal(t, OutputStatus{
+		OutputID:   *alertOutput.OutputID,
+		Success:    false,
+		Message:    "unsupported output type",
+		NeedsRetry: false,
 	}, <-ch)
 	mockClient.AssertExpectations(t)
 }
@@ -108,11 +108,11 @@ func TestSendTransientFailure(t *testing.T) {
 	mockClient := &mockOutputsClient{}
 	outputClient = mockClient
 	setCaches()
-	ch := make(chan outputStatus, 1)
+	ch := make(chan OutputStatus, 1)
 	mockClient.On("Slack", mock.Anything, mock.Anything).Return(&outputs.AlertDeliveryResponse{})
 
 	send(sampleAlert(), alertOutput, ch)
-	assert.Equal(t, outputStatus{outputID: *alertOutput.OutputID, needsRetry: true}, <-ch)
+	assert.Equal(t, OutputStatus{OutputID: *alertOutput.OutputID, NeedsRetry: true}, <-ch)
 	mockClient.AssertExpectations(t)
 }
 
@@ -125,14 +125,14 @@ func TestSendSuccess(t *testing.T) {
 		Message:   "successful response payload",
 		Permanent: false,
 	})
-	ch := make(chan outputStatus, 1)
+	ch := make(chan OutputStatus, 1)
 
 	send(sampleAlert(), alertOutput, ch)
-	assert.Equal(t, outputStatus{
-		outputID:   *alertOutput.OutputID,
-		success:    true,
-		message:    "successful response payload",
-		needsRetry: false,
+	assert.Equal(t, OutputStatus{
+		OutputID:   *alertOutput.OutputID,
+		Success:    true,
+		Message:    "successful response payload",
+		NeedsRetry: false,
 	}, <-ch)
 	mockClient.AssertExpectations(t)
 }

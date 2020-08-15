@@ -52,7 +52,7 @@ func TestUpdateAlert(t *testing.T) {
 		LastUpdatedBy:     *userID,
 		LastUpdatedByTime: timeNow,
 		DeliverySuccess:   false,
-		DeliveryResponses: []string{"response"},
+		DeliveryResponses: []*models.DeliveryResponse{},
 	}
 	expectedSummary := &models.AlertSummary{
 		AlertID:           aws.String("alertId"),
@@ -60,7 +60,7 @@ func TestUpdateAlert(t *testing.T) {
 		LastUpdatedBy:     "userId",
 		LastUpdatedByTime: timeNow,
 		DeliverySuccess:   false,
-		DeliveryResponses: []string{"response"},
+		DeliveryResponses: []*models.DeliveryResponse{},
 	}
 
 	utilsMock.On("AlertItemToSummary", output).
@@ -77,7 +77,7 @@ func TestUpdateAlert(t *testing.T) {
 		LastUpdatedBy:     result.LastUpdatedBy,
 		LastUpdatedByTime: result.LastUpdatedByTime,
 		DeliverySuccess:   false,
-		DeliveryResponses: []string{"response"},
+		DeliveryResponses: []*models.DeliveryResponse{},
 	}
 
 	assert.Equal(t, expectedSummary, resultSummary)

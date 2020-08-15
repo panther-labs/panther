@@ -68,15 +68,16 @@ type DynamoItem = map[string]*dynamodb.AttributeValue
 
 // AlertItem is a DDB representation of an Alert
 type AlertItem struct {
-	AlertID           string    `json:"id"`
-	RuleID            string    `json:"ruleId"`
-	RuleVersion       string    `json:"ruleVersion"`
-	RuleDisplayName   *string   `json:"ruleDisplayName"`
-	Title             *string   `json:"title"`
-	DedupString       string    `json:"dedup"`
-	DeliverySuccess   bool      `json:"deliverySuccess"`
-	DeliveryResponses []string  `json:"deliveryResponses"`
-	CreationTime      time.Time `json:"creationTime"`
+	AlertID           string                     `json:"id"`
+	RuleID            string                     `json:"ruleId"`
+	RuleVersion       string                     `json:"ruleVersion"`
+	RuleDisplayName   *string                    `json:"ruleDisplayName"`
+	Title             *string                    `json:"title"`
+	DedupString       string                     `json:"dedup"`
+	DeliverySuccess   bool                       `json:"deliverySuccess"`
+	DeliveryResponses []*models.DeliveryResponse `json:"deliveryResponses"`
+	CreationTime      time.Time                  `json:"creationTime"`
+	OutputIds         []string                   `json:"outputIds"`
 	// UpdateTime - stores the timestamp from an update from a dedup event
 	UpdateTime time.Time `json:"updateTime"`
 	Severity   string    `json:"severity"`

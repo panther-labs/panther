@@ -135,8 +135,15 @@ type UpdateAlertDeliveryInput struct {
 	AlertID string `json:"alertId" validate:"hexadecimal,len=32"` // AlertID is an MD5 hash
 
 	// Variables that we allow updating:
-	DeliverySuccess   bool     `json:"deliverySuccess" validate:"exists"`
-	DeliveryResponses []string `json:"deliveryResponses"`
+	DeliverySuccess   bool                `json:"deliverySuccess" validate:"exists"`
+	DeliveryResponses []*DeliveryResponse `json:"deliveryResponses"`
+}
+
+// DeliveryResponse holds the delivery response for data stored in DDB
+type DeliveryResponse struct {
+	OutputID string
+	Response string
+	Success  bool
 }
 
 // UpdateAlertStatusOutput is an alias for an alert summary
@@ -173,21 +180,21 @@ type ListAlertsOutput struct {
 
 // AlertSummary contains summary information for an alert
 type AlertSummary struct {
-	AlertID           *string    `json:"alertId" validate:"required"`
-	RuleID            *string    `json:"ruleId" validate:"required"`
-	RuleDisplayName   *string    `json:"ruleDisplayName,omitempty"`
-	RuleVersion       *string    `json:"ruleVersion" validate:"required"`
-	DedupString       *string    `json:"dedupString,omitempty"`
-	DeliverySuccess   bool       `json:"deliverySuccess,omitempty"`
-	DeliveryResponses []string   `json:"deliveryReponses,omitempty"`
-	CreationTime      *time.Time `json:"creationTime" validate:"required"`
-	UpdateTime        *time.Time `json:"updateTime" validate:"required"`
-	EventsMatched     *int       `json:"eventsMatched" validate:"required"`
-	Severity          *string    `json:"severity" validate:"required"`
-	Status            string     `json:"status,omitempty"`
-	Title             *string    `json:"title" validate:"required"`
-	LastUpdatedBy     string     `json:"lastUpdatedBy,omitempty"`
-	LastUpdatedByTime time.Time  `json:"lastUpdatedByTime,omitempty"`
+	AlertID           *string             `json:"alertId" validate:"required"`
+	RuleID            *string             `json:"ruleId" validate:"required"`
+	RuleDisplayName   *string             `json:"ruleDisplayName,omitempty"`
+	RuleVersion       *string             `json:"ruleVersion" validate:"required"`
+	DedupString       *string             `json:"dedupString,omitempty"`
+	DeliverySuccess   bool                `json:"deliverySuccess,omitempty"`
+	DeliveryResponses []*DeliveryResponse `json:"deliveryReponses,omitempty"`
+	CreationTime      *time.Time          `json:"creationTime" validate:"required"`
+	UpdateTime        *time.Time          `json:"updateTime" validate:"required"`
+	EventsMatched     *int                `json:"eventsMatched" validate:"required"`
+	Severity          *string             `json:"severity" validate:"required"`
+	Status            string              `json:"status,omitempty"`
+	Title             *string             `json:"title" validate:"required"`
+	LastUpdatedBy     string              `json:"lastUpdatedBy,omitempty"`
+	LastUpdatedByTime time.Time           `json:"lastUpdatedByTime,omitempty"`
 }
 
 // Alert contains the details of an alert

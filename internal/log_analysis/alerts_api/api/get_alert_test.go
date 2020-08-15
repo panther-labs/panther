@@ -177,7 +177,7 @@ func TestGetAlert(t *testing.T) {
 		LastUpdatedBy:     "userId",
 		LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
 		DeliverySuccess:   false,
-		DeliveryResponses: []string{},
+		DeliveryResponses: []*models.DeliveryResponse{},
 	}
 
 	expectedListObjectsRequest := &s3.ListObjectsV2Input{
@@ -322,7 +322,7 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 		LastUpdatedBy:     "userId",
 		LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
 		DeliverySuccess:   false,
-		DeliveryResponses: []string{},
+		DeliveryResponses: []*models.DeliveryResponse{},
 	}
 
 	eventChannel := getChannel("testEvent")

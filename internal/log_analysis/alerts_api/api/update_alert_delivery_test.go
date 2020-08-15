@@ -40,17 +40,22 @@ func TestUpdateAlertDelivery(t *testing.T) {
 	input := &models.UpdateAlertDeliveryInput{
 		AlertID:           alertID,
 		DeliverySuccess:   false,
-		DeliveryResponses: []string{},
+		DeliveryResponses: []*models.DeliveryResponse{},
+	}
+	deliveryResponse := &models.DeliveryResponse{
+		OutputID: "output-id",
+		Response: "successful delivery",
+		Success:  true,
 	}
 	output := &table.AlertItem{
 		AlertID:           alertID,
 		DeliverySuccess:   true,
-		DeliveryResponses: []string{"response"},
+		DeliveryResponses: []*models.DeliveryResponse{deliveryResponse},
 	}
 	expectedSummary := &models.AlertSummary{
 		AlertID:           aws.String(alertID),
 		DeliverySuccess:   true,
-		DeliveryResponses: []string{"response"},
+		DeliveryResponses: []*models.DeliveryResponse{deliveryResponse},
 	}
 
 	utilsMock.On("AlertItemToSummary", output).

@@ -45,8 +45,8 @@ func fetchOutputs() ([]*outputmodels.AlertOutput, error) {
 	return outputs, nil
 }
 
-// getOutputs - Gets a list of outputs from panther
-func getOutputs() ([]*outputmodels.AlertOutput, error) {
+// GetOutputs - Gets a list of outputs from panther
+func GetOutputs() ([]*outputmodels.AlertOutput, error) {
 	if cache.get() == nil || cache.isExpired() {
 		outputs, err := fetchOutputs()
 		if err != nil {
@@ -61,7 +61,7 @@ func getOutputs() ([]*outputmodels.AlertOutput, error) {
 
 // getAlertOutputs - Get output ids for an alert
 func getAlertOutputs(alert *alertmodels.Alert) ([]*outputmodels.AlertOutput, error) {
-	outputIds, err := getOutputs()
+	outputIds, err := GetOutputs()
 	if err != nil {
 		return nil, err
 	}
