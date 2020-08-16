@@ -21,6 +21,7 @@ package models
 import (
 	"time"
 
+	"github.com/aws/aws-lambda-go/events"
 	alertModels "github.com/panther-labs/panther/api/lambda/alerts/models"
 )
 
@@ -36,7 +37,8 @@ const (
 //
 // Exactly one action must be specified, see comments below for examples.
 type LambdaInput struct {
-	DeliverAlert *DeliverAlertInput `json:"deliverAlert"`
+	DispatchAlert []*DispatchAlertsInput `json:"Records"`
+	DeliverAlert  *DeliverAlertInput     `json:"deliverAlert"`
 }
 
 // DeliverAlertInput sends an alert to the specified destinations
@@ -50,8 +52,11 @@ type LambdaInput struct {
 // }
 type DeliverAlertInput struct {
 	AlertID   string   `json:"alertId" validate:"required,hexadecimal,len=32"` // AlertID is an MD5 hash
-	OutputIds []string `json:"outputIds"`
+	OutputIds []string `json:"outputIds" validate:"required,gt=0,dive,uuid4"`
 }
+
+// DispatchAlertsInput is an alias for an array of SQSMessages
+type DispatchAlertsInput = events.SQSMessage
 
 // DeliverAlertOutput is an alias for an alert summary
 type DeliverAlertOutput = alertModels.AlertSummary

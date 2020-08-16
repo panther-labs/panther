@@ -37,11 +37,10 @@ func (client *HTTPWrapper) post(input *PostInput) *AlertDeliveryResponse {
 	// If there was an error marshaling the input
 	if err != nil {
 		return &AlertDeliveryResponse{
-			Status:    500, // Internal server error
-			Success:   false,
-			Body:      "",
-			Message:   "json marshal error: " + err.Error(),
-			Permanent: true,
+			StatusCode: 500, // Internal server error
+			Success:    false,
+			Message:    "json marshal error: " + err.Error(),
+			Permanent:  true,
 		}
 	}
 
@@ -50,11 +49,10 @@ func (client *HTTPWrapper) post(input *PostInput) *AlertDeliveryResponse {
 	// If there was an error creating the request
 	if err != nil {
 		return &AlertDeliveryResponse{
-			Status:    500, // Internal server error
-			Success:   false,
-			Body:      "",
-			Message:   "http request error: " + err.Error(),
-			Permanent: true,
+			StatusCode: 500, // Internal server error
+			Success:    false,
+			Message:    "http request error: " + err.Error(),
+			Permanent:  true,
 		}
 	}
 
@@ -71,11 +69,10 @@ func (client *HTTPWrapper) post(input *PostInput) *AlertDeliveryResponse {
 	// If there was an error sending the request
 	if err != nil {
 		return &AlertDeliveryResponse{
-			Status:    500, // Internal server error
-			Success:   false,
-			Body:      "",
-			Message:   "network error: " + err.Error(),
-			Permanent: false,
+			StatusCode: 500, // Internal server error
+			Success:    false,
+			Message:    "network error: " + err.Error(),
+			Permanent:  false,
 		}
 	}
 
@@ -86,19 +83,17 @@ func (client *HTTPWrapper) post(input *PostInput) *AlertDeliveryResponse {
 	// If the client response status code is not acceptable
 	if response.StatusCode < 200 || response.StatusCode > 299 {
 		return &AlertDeliveryResponse{
-			Status:    response.StatusCode,
-			Success:   false,
-			Body:      string(body),
-			Message:   "request failed: " + response.Status + ": " + string(body),
-			Permanent: false,
+			StatusCode: response.StatusCode,
+			Success:    false,
+			Message:    "request failed: " + response.Status + ": " + string(body),
+			Permanent:  false,
 		}
 	}
 
 	return &AlertDeliveryResponse{
-		Status:    response.StatusCode,
-		Success:   true,
-		Body:      string(body),
-		Message:   "",
-		Permanent: false,
+		StatusCode: response.StatusCode,
+		Success:    true,
+		Message:    "",
+		Permanent:  false,
 	}
 }

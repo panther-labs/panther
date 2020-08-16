@@ -638,11 +638,14 @@ Resources:
           ALERT_QUEUE_URL: !Ref AlertQueue
           ALERT_RETRY_COUNT: !FindInMap [Alerts, RetryCount, Max]
           ALERT_URL_PREFIX: !Sub https://${AppDomainURL}/log-analysis/alerts/
+          ALERTS_TABLE_NAME: panther-log-alert-info
           MAX_RETRY_DELAY_SECS: !FindInMap [Alerts, MaxRetryDelay, Seconds]
           MIN_RETRY_DELAY_SECS: !FindInMap [Alerts, MinRetryDelay, Seconds]
           OUTPUTS_API: panther-outputs-api
           OUTPUTS_REFRESH_INTERVAL_MIN: '5'
           POLICY_URL_PREFIX: !Sub https://${AppDomainURL}/cloud-security/policies/
+          RULE_INDEX_NAME: ruleId-creationTime-index
+          TIME_INDEX_NAME: timePartition-creationTime-index
       Events:
         AlertQueue:
           Type: SQS
@@ -699,6 +702,13 @@ Resources:
                 - sqs:GetQueueAttributes
                 - sqs:ReceiveMessage
               Resource: !GetAtt AlertQueue.Arn
+        - Id: ManageAlertsDeliveryStatus
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-log-alert-info
 
   AlertDeliveryLogGroup:
     Type: AWS::Logs::LogGroup

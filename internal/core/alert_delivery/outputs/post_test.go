@@ -86,11 +86,10 @@ func TestPostOk(t *testing.T) {
 		body: map[string]interface{}{"abc": 123},
 	}
 	assert.Equal(t, &AlertDeliveryResponse{
-		Status:    200,
-		Success:   true,
-		Body:      "response",
-		Message:   "",
-		Permanent: false,
+		StatusCode: 200,
+		Success:    true,
+		Message:    "",
+		Permanent:  false,
 	}, c.post(postInput))
 }
 
@@ -101,10 +100,9 @@ func TestPostCreated(t *testing.T) {
 		body: map[string]interface{}{"abc": 123},
 	}
 	assert.Equal(t, &AlertDeliveryResponse{
-		Status:    201,
-		Success:   true,
-		Body:      "response",
-		Message:   "",
-		Permanent: false,
+		StatusCode: 201,
+		Success:    true,
+		Message:    "",
+		Permanent:  false,
 	}, c.post(postInput))
 }

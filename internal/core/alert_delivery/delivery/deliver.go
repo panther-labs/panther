@@ -34,6 +34,7 @@ type DispatchStatus struct {
 	AlertID    string
 	OutputID   string
 	Message    string
+	StatusCode int
 	Success    bool
 	NeedsRetry bool
 }
@@ -78,6 +79,7 @@ func deliverAlert(alert *alertmodels.Alert, output *outputmodels.AlertOutput, st
 			statusChannel <- DispatchStatus{
 				AlertID:    *alert.AlertID,
 				OutputID:   *output.OutputID,
+				StatusCode: 500,
 				Success:    false,
 				Message:    "panic sending alert",
 				NeedsRetry: false,
@@ -89,7 +91,6 @@ func deliverAlert(alert *alertmodels.Alert, output *outputmodels.AlertOutput, st
 		"sending alert",
 		append(commonFields, zap.String("name", *output.DisplayName))...,
 	)
-
 	var response *outputs.AlertDeliveryResponse
 	switch *output.OutputType {
 	case "slack":
@@ -117,6 +118,7 @@ func deliverAlert(alert *alertmodels.Alert, output *outputmodels.AlertOutput, st
 		statusChannel <- DispatchStatus{
 			AlertID:    *alert.AlertID,
 			OutputID:   *output.OutputID,
+			StatusCode: 500,
 			Success:    false,
 			Message:    "unsupported output type",
 			NeedsRetry: false,
@@ -129,6 +131,7 @@ func deliverAlert(alert *alertmodels.Alert, output *outputmodels.AlertOutput, st
 		statusChannel <- DispatchStatus{
 			AlertID:    *alert.AlertID,
 			OutputID:   *output.OutputID,
+			StatusCode: 500,
 			Success:    false,
 			Message:    "output response is nil",
 			NeedsRetry: false,
@@ -146,6 +149,7 @@ func deliverAlert(alert *alertmodels.Alert, output *outputmodels.AlertOutput, st
 	statusChannel <- DispatchStatus{
 		AlertID:    *alert.AlertID,
 		OutputID:   *output.OutputID,
+		StatusCode: response.StatusCode,
 		Success:    response.Success,
 		Message:    response.Message,
 		NeedsRetry: !response.Success && !response.Permanent,

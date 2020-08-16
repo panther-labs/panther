@@ -37,7 +37,6 @@ var (
 	alertUtils utils.API
 	// We will always need the Lambda client (to get policy, rule, and set alert delivery)
 	// lambdaClient lambdaiface.LambdaAPI = lambda.New(awsSession)
-	// outputsAPI   = os.Getenv("OUTPUTS_API")
 )
 
 type envConfig struct {
@@ -49,8 +48,6 @@ type envConfig struct {
 // Setup - parses the environment and builds the AWS and http clients.
 func Setup() {
 	envconfig.MustProcess("", &env)
-
-	awsSession = session.Must(session.NewSession())
 	alertsDB = &table.AlertsTable{
 		AlertsTableName:                    env.AlertsTableName,
 		Client:                             dynamodb.New(awsSession),

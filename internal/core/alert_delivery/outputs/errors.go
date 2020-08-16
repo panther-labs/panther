@@ -20,11 +20,8 @@ package outputs
 
 // AlertDeliveryResponse holds the response (success or failure) of an alert delivery request.
 type AlertDeliveryResponse struct {
-	// Status is the http status code
-	Status int
-
-	// Body holds the raw body from the response payload.
-	Body string
+	// StatusCode is the http response status code
+	StatusCode int
 
 	// Message is our wrapped description of the problem: what went wrong.
 	Message string

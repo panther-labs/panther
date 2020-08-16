@@ -141,9 +141,10 @@ type UpdateAlertDeliveryInput struct {
 
 // DeliveryResponse holds the delivery response for data stored in DDB
 type DeliveryResponse struct {
-	OutputID string
-	Response string
-	Success  bool
+	OutputID   string
+	Response   string
+	StatusCode int
+	Success    bool
 }
 
 // UpdateAlertStatusOutput is an alias for an alert summary
