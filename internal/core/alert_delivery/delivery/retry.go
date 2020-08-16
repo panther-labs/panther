@@ -40,8 +40,8 @@ func randomInt(lower, upper int) int {
 	return rand.Intn(upper-lower) + lower
 }
 
-// retry a batch of failed outputs by putting them all back on the queue with random delays.
-func retry(alerts []*models.Alert) {
+// Retry a batch of failed outputs by putting them all back on the queue with random delays.
+func Retry(alerts []*models.Alert) {
 	zap.L().Warn("queueing failed alerts for future retry", zap.Int("failedAlerts", len(alerts)))
 	input := &sqs.SendMessageBatchInput{
 		Entries:  make([]*sqs.SendMessageBatchRequestEntry, len(alerts)),

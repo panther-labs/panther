@@ -67,12 +67,12 @@ func TestGetAlertOutputsFromDefaultSeverity(t *testing.T) {
 		DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
 	}}
 
-	result, err := getAlertOutputs(alert)
+	result, err := GetAlertOutputs(alert)
 
 	require.NoError(t, err)
 	assert.Equal(t, expectedResult, result)
 
-	result, err = getAlertOutputs(alert)
+	result, err = GetAlertOutputs(alert)
 	require.NoError(t, err)
 	assert.Equal(t, expectedResult, result)
 	mockClient.AssertExpectations(t)
@@ -113,7 +113,7 @@ func TestGetAlertOutputsFromOutputIds(t *testing.T) {
 		DefaultForSeverity: aws.StringSlice([]string{"MEDIUM"}),
 	}}
 
-	result, err := getAlertOutputs(alert)
+	result, err := GetAlertOutputs(alert)
 	require.NoError(t, err)
 	assert.Equal(t, expectedResult, result)
 
@@ -128,7 +128,7 @@ func TestGetAlertOutputsIdsError(t *testing.T) {
 	alert := sampleAlert()
 	cache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
 
-	result, err := getAlertOutputs(alert)
+	result, err := GetAlertOutputs(alert)
 	require.Error(t, err)
 	assert.Nil(t, result)
 	mockClient.AssertExpectations(t)

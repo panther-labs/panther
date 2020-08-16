@@ -33,7 +33,35 @@ var validate = validator.New()
 func (API) DispatchAlert(input []*models.DispatchAlertsInput) (output interface{}, err error) {
 	zap.L().Info("Dispatching alerts", zap.Int("num_alerts", len(input)))
 
-	var alerts []*models.Alert
+	// Extract alerts from the input payload
+	alerts, err := getAlerts(input)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create our Alert -> Output mappings
+	alertOutputMap, err := getAlertOutputMap(alerts)
+	if err != nil {
+		return nil, err
+	}
+
+	// Deliver alerts to the specified destination(s) and obtain each response status
+	dispatchStatuses := delivery.DeliverAlerts(alertOutputMap)
+
+	// TODO: Record the responses to ddb
+	// ...
+	//
+
+	// Obtain a list of alerts that should be retried and put back on to the queue
+	alertsToRetry := getAlertsToRetry(alerts, dispatchStatuses)
+	if len(alertsToRetry) > 0 {
+		delivery.Retry(alertsToRetry)
+	}
+
+	return nil, err
+}
+
+func getAlerts(input []*models.DispatchAlertsInput) (alerts []*models.Alert, err error) {
 	for _, record := range input {
 		alert := &models.Alert{}
 		if err = jsoniter.UnmarshalFromString(record.Body, alert); err != nil {
@@ -46,6 +74,68 @@ func (API) DispatchAlert(input []*models.DispatchAlertsInput) (output interface{
 		}
 		alerts = append(alerts, alert)
 	}
-	delivery.HandleAlerts(alerts)
-	return nil, err
+	return
+}
+
+func getAlertOutputMap(alerts []*models.Alert) (alertOutputMap delivery.AlertOutputMap, err error) {
+	// Create our Alert -> Output mappings
+	alertOutputMap = make(delivery.AlertOutputMap)
+	// Create a slice to be universal with the HTTP payload format
+	for _, alert := range alerts {
+		validOutputIds, err := delivery.GetAlertOutputs(alert)
+		if err != nil {
+			zap.L().Error("Failed to fetch outputIds", zap.Error(err))
+			return nil, err
+		}
+		alertOutputMap[alert] = validOutputIds
+	}
+	return
+}
+
+func getAlertsToRetry(alerts []*models.Alert, dispatchStatuses []delivery.DispatchStatus) []*models.Alert {
+	alertsToRetry := []*models.Alert{}
+	for _, alert := range alerts {
+		// Get a list of failed outputs for the alert
+		outputsToRetry := getOutputsToRetry(alert, dispatchStatuses)
+		if len(outputsToRetry) > 0 {
+			// Create a shallow copy to mutate
+			mutatedAlert := alert
+			// Overwrite the slice of outputs
+			mutatedAlert.OutputIds = outputsToRetry
+			// Add the new alert to a new list to be retried
+			alertsToRetry = append(alertsToRetry, mutatedAlert)
+		}
+	}
+	return alertsToRetry
+}
+
+func getOutputsToRetry(alert *models.Alert, dispatchStatuses []delivery.DispatchStatus) (retryOutputs []string) {
+	for _, delivery := range dispatchStatuses {
+		// Skip deliveries not associated to our alert
+		if delivery.AlertID != *alert.AlertID {
+			continue
+		}
+		// Log any generic failures
+		if !delivery.Success {
+			zap.L().Error(
+				"failed to send alert to output",
+				zap.String("alertID", delivery.AlertID),
+				zap.String("outputID", delivery.OutputID),
+				zap.Int("statusCode", delivery.StatusCode),
+				zap.String("message", delivery.Message),
+			)
+		}
+
+		// Log permanent failures to be investigated
+		if !delivery.Success && !delivery.NeedsRetry {
+			zap.L().Error("permanently failed to send alert to output")
+		}
+
+		// Create a list of alerts to retry
+		if !delivery.Success && delivery.NeedsRetry {
+			retryOutputs = append(retryOutputs, delivery.OutputID)
+		}
+	}
+
+	return
 }

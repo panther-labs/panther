@@ -69,6 +69,6 @@ func HandleAlerts(alerts []*models.Alert) {
 	}
 
 	if len(failedAlerts) > 0 {
-		retry(failedAlerts)
+		Retry(failedAlerts)
 	}
 }

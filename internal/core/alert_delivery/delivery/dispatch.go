@@ -125,7 +125,7 @@ func send(alert *alertmodels.Alert, output *outputmodels.AlertOutput, statusChan
 //
 // Returns true if the alert was sent successfully, false if it needs to be retried.
 func dispatch(alert *alertmodels.Alert) bool {
-	alertOutputs, err := getAlertOutputs(alert)
+	alertOutputs, err := GetAlertOutputs(alert)
 
 	if err != nil {
 		zap.L().Warn("failed to get the outputs for the alert",

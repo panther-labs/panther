@@ -59,8 +59,8 @@ func GetOutputs() ([]*outputmodels.AlertOutput, error) {
 	return cache.getOutputs(), nil
 }
 
-// getAlertOutputs - Get output ids for an alert
-func getAlertOutputs(alert *alertmodels.Alert) ([]*outputmodels.AlertOutput, error) {
+// GetAlertOutputs - Get output ids for an alert
+func GetAlertOutputs(alert *alertmodels.Alert) ([]*outputmodels.AlertOutput, error) {
 	outputIds, err := GetOutputs()
 	if err != nil {
 		return nil, err
