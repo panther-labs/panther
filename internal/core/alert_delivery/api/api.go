@@ -32,9 +32,12 @@ type API struct{}
 
 var (
 	env        envConfig
-	awsSession *session.Session
+	awsSession = session.Must(session.NewSession())
 	alertsDB   table.API
 	alertUtils utils.API
+	// We will always need the Lambda client (to get policy, rule, and set alert delivery)
+	// lambdaClient lambdaiface.LambdaAPI = lambda.New(awsSession)
+	// outputsAPI   = os.Getenv("OUTPUTS_API")
 )
 
 type envConfig struct {

@@ -147,3 +147,14 @@ func contains(list []*outputmodels.AlertOutput, outputID string) bool {
 	}
 	return false
 }
+
+// updateDelivery - performs an API query to get a list of outputs
+// func updateDelivery() ([]*outputmodels.AlertOutput, error) {
+// 	zap.L().Debug("getting default outputs")
+// 	input := outputmodels.LambdaInput{GetOutputsWithSecrets: &outputmodels.GetOutputsWithSecretsInput{}}
+// 	var outputs outputmodels.GetOutputsOutput
+// 	if err := genericapi.Invoke(lambdaClient, outputsAPI, &input, &outputs); err != nil {
+// 		return nil, err
+// 	}
+// 	return outputs, nil
+// }
