@@ -133,7 +133,6 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
         }),
         tooltip: {
           trigger: 'axis' as const,
-          position: pt => [(pt[0] as number) + 40, '0%'],
           backgroundColor: theme.colors['navyblue-300'],
           formatter: (params: EChartOption.Tooltip.Format[]) => {
             if (!params || !params.length) {
