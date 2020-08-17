@@ -34,6 +34,7 @@ import ChangePasswordForm from 'Components/forms/ChangePasswordForm';
 import React from 'react';
 import useAuth from 'Hooks/useAuth';
 import { getUserDisplayName } from 'Helpers/utils';
+import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
 
 const ProfileSettingsModal: React.FC<ModalProps> = ({ onClose, ...rest }) => {
   const { userInfo } = useAuth();
@@ -41,11 +42,24 @@ const ProfileSettingsModal: React.FC<ModalProps> = ({ onClose, ...rest }) => {
     <Modal showCloseButton aria-label="Profile & Account Settings" onClose={onClose} {...rest}>
       <Box width={450}>
         <Tabs>
-          <Box mx={-8} mt={-6}>
+          <Box mt={-6}>
             <TabList>
-              <Tab>Profile Settings</Tab>
-              <Tab>Account Security</Tab>
+              <Tab>
+                {({ isSelected, isFocused }) => (
+                  <BorderedTab isSelected={isSelected} isFocused={isFocused}>
+                    Profile Settings
+                  </BorderedTab>
+                )}
+              </Tab>
+              <Tab>
+                {({ isSelected, isFocused }) => (
+                  <BorderedTab isSelected={isSelected} isFocused={isFocused}>
+                    Account Security
+                  </BorderedTab>
+                )}
+              </Tab>
             </TabList>
+            <BorderTabDivider />
           </Box>
           <Box px={8} mt={8}>
             <TabPanels>
