@@ -10,7 +10,7 @@ const BorderTabDivider: React.FC = () => {
       backgroundColor="navyblue-300"
       zIndex={0}
       left={0}
-      marginTop="-1px"
+      marginTop="-2px"
     />
   );
 };
