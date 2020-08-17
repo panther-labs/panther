@@ -20,8 +20,9 @@ package awslogs
 
 import (
 	"errors"
-	jsoniter "github.com/json-iterator/go"
 	"strings"
+
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
