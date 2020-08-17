@@ -49,7 +49,7 @@ func fmtLicenseAll() {
 }
 
 func fmtLicense(paths ...string) {
-	logger.Debugf("fmt: license header %s for %s", agplSource, strings.Join(paths, " "))
+	log.Debugf("fmt: license header %s for %s", agplSource, strings.Join(paths, " "))
 	header := strings.TrimSpace(string(readFile(agplSource)))
 
 	asteriskLicense := "/**\n" + commentEachLine(" *", header) + "\n */"
@@ -75,7 +75,7 @@ func fmtLicense(paths ...string) {
 			return nil
 		})
 		if err != nil {
-			logger.Fatalf("failed to walk %s: %v", root, err)
+			log.Fatalf("failed to walk %s: %v", root, err)
 		}
 	}
 }
@@ -110,7 +110,7 @@ func licenseModifier(path string, modifier func(string) string) {
 	newContents := modifier(contents)
 	if newContents != contents {
 		if err := writeFile(path, []byte(newContents)); err != nil {
-			logger.Fatal(err)
+			log.Fatal(err)
 		}
 	}
 }

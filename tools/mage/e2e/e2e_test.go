@@ -1,4 +1,5 @@
-package mage
+// Package e2e provides an end-to-end deployment test, triggered by 'mage test:e2e'
+package e2e
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -21,25 +22,17 @@ package mage
 import (
 	"os"
 	"strings"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-// Clean Remove dev libraries and build/test artifacts
-func Clean() {
-	paths := []string{setupDirectory, "node_modules", "out", "internal/core/analysis_api/main/bulk_upload.zip"}
-
-	// Remove __pycache__ folders
-	for _, target := range pyTargets {
-		walk(target, func(path string, info os.FileInfo) {
-			if strings.HasSuffix(path, "__pycache__") {
-				paths = append(paths, path)
-			}
-		})
+// Writing this as a real "test" (instead of in mage directly) makes it easier to add assertions.
+// This also avoids bloating mage with all of the compiled testing code.
+func TestIntegrationEndToEnd(t *testing.T) {
+	if strings.ToLower(os.Getenv("INTEGRATION_TEST")) != "true" {
+		t.Skip()
 	}
 
-	for _, pkg := range paths {
-		log.Info("clean: rm -r " + pkg)
-		if err := os.RemoveAll(pkg); err != nil {
-			log.Fatalf("failed to remove %s: %v", pkg, err)
-		}
-	}
+	assert.Equal(t, true, false)
 }

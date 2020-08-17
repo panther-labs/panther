@@ -33,6 +33,7 @@ import (
 	"github.com/panther-labs/panther/pkg/awscfn"
 	"github.com/panther-labs/panther/pkg/prompt"
 	"github.com/panther-labs/panther/tools/cfnstacks"
+	"github.com/panther-labs/panther/tools/mage/clients"
 )
 
 const (
@@ -47,16 +48,15 @@ type deleteStackResult struct {
 
 // Teardown Destroy all Panther infrastructure
 func Teardown() {
-	getSession()
 	masterStack := teardownConfirmation()
 	if err := destroyCfnStacks(masterStack); err != nil {
-		logger.Fatal(err)
+		log.Fatal(err)
 	}
 
 	// CloudFormation will not delete any Panther S3 buckets (DeletionPolicy: Retain), we do so here.
-	destroyPantherBuckets()
+	destroyPantherBuckets(clients.S3())
 
-	logger.Info("successfully removed Panther infrastructure")
+	log.Info("successfully removed Panther infrastructure")
 }
 
 func teardownConfirmation() string {
@@ -64,21 +64,21 @@ func teardownConfirmation() string {
 	// When deploying the master template, there is only one main stack whose name we do not know.
 	stack := os.Getenv("STACK")
 	if stack == "" {
-		logger.Warnf("No STACK env variable found; assuming you have %d top-level stacks from 'mage deploy'",
+		log.Warnf("No STACK env variable found; assuming you have %d top-level stacks from 'mage deploy'",
 			cfnstacks.NumStacks)
 	}
 
 	template := "Teardown will destroy all Panther infra in account %s (%s)"
-	args := []interface{}{getAccountID(), *awsSession.Config.Region}
+	args := []interface{}{clients.AccountID(), clients.Region()}
 	if stack != "" {
 		template += " with master stack '%s'"
 		args = append(args, stack)
 	}
 
-	logger.Warnf(template, args...)
+	log.Warnf(template, args...)
 	result := prompt.Read("Are you sure you want to continue? (yes|no) ", prompt.NonemptyValidator)
 	if strings.ToLower(result) != "yes" {
-		logger.Fatal("teardown aborted")
+		log.Fatal("teardown aborted")
 	}
 
 	return stack
@@ -86,10 +86,9 @@ func teardownConfirmation() string {
 
 // Destroy all Panther CloudFormation stacks
 func destroyCfnStacks(masterStack string) error {
-	client := cloudformation.New(awsSession)
 	if masterStack != "" {
-		logger.Infof("deleting master stack '%s'", masterStack)
-		return deleteStack(client, &masterStack)
+		log.Infof("deleting master stack '%s'", masterStack)
+		return deleteStack(&masterStack)
 	}
 
 	// Define a common routine for processing stack delete results
@@ -97,13 +96,13 @@ func destroyCfnStacks(masterStack string) error {
 	handleResult := func(result deleteStackResult) {
 		finishCount++
 		if result.err != nil {
-			logger.Errorf("    - %s failed to delete (%d/%d): %v",
+			log.Errorf("    - %s failed to delete (%d/%d): %v",
 				result.stackName, finishCount, cfnstacks.NumStacks, result.err)
 			errCount++
 			return
 		}
 
-		logger.Infof("    √ %s deleted (%d/%d)", result.stackName, finishCount, cfnstacks.NumStacks)
+		log.Infof("    √ %s deleted (%d/%d)", result.stackName, finishCount, cfnstacks.NumStacks)
 	}
 
 	// Trigger the deletion of the main stacks in parallel
@@ -118,15 +117,15 @@ func destroyCfnStacks(masterStack string) error {
 		cfnstacks.LogAnalysis,
 		cfnstacks.Onboard,
 	}
-	logger.Infof("deleting %d CloudFormation stacks", cfnstacks.NumStacks)
+	log.Infof("deleting %d CloudFormation stacks", cfnstacks.NumStacks)
 
-	deleteFunc := func(client *cloudformation.CloudFormation, stack string, r chan deleteStackResult) {
-		r <- deleteStackResult{stackName: stack, err: deleteStack(client, &stack)}
+	deleteFunc := func(stack string, r chan deleteStackResult) {
+		r <- deleteStackResult{stackName: stack, err: deleteStack(&stack)}
 	}
 
 	results := make(chan deleteStackResult)
 	for _, stack := range parallelStacks {
-		go deleteFunc(client, stack, results)
+		go deleteFunc(stack, results)
 	}
 
 	// Wait for all of the main stacks to finish deleting
@@ -136,9 +135,9 @@ func destroyCfnStacks(masterStack string) error {
 
 	// Now finish with the bootstrap stacks
 	// bootstrap-gateway must be deleted first because it will empty the ECR repo
-	go deleteFunc(client, cfnstacks.Gateway, results)
+	go deleteFunc(cfnstacks.Gateway, results)
 	handleResult(<-results)
-	go deleteFunc(client, cfnstacks.Bootstrap, results)
+	go deleteFunc(cfnstacks.Bootstrap, results)
 	handleResult(<-results)
 
 	if errCount > 0 {
@@ -148,21 +147,20 @@ func destroyCfnStacks(masterStack string) error {
 }
 
 // Delete a single CFN stack and wait for it to finish
-func deleteStack(client *cloudformation.CloudFormation, stack *string) error {
-	if _, err := client.DeleteStack(&cloudformation.DeleteStackInput{StackName: stack}); err != nil {
+func deleteStack(stack *string) error {
+	if _, err := clients.Cfn().DeleteStack(&cloudformation.DeleteStackInput{StackName: stack}); err != nil {
 		return err
 	}
 
-	_, err := awscfn.WaitForStackDelete(client, logger, *stack, pollInterval)
+	_, err := awscfn.WaitForStackDelete(clients.Cfn(), log, *stack, pollInterval)
 	return err
 }
 
 // Delete all objects in the given S3 buckets and then remove them.
-func destroyPantherBuckets() {
-	client := s3.New(awsSession)
+func destroyPantherBuckets(client *s3.S3) {
 	response, err := client.ListBuckets(&s3.ListBucketsInput{})
 	if err != nil {
-		logger.Fatalf("failed to list S3 buckets: %v", err)
+		log.Fatalf("failed to list S3 buckets: %v", err)
 	}
 
 	for _, bucket := range response.Buckets {
@@ -198,10 +196,10 @@ func removeBucket(client *s3.S3, bucketName *string) {
 	_, err := client.PutBucketAcl(&s3.PutBucketAclInput{ACL: aws.String("private"), Bucket: bucketName})
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NoSuchBucket" {
-			logger.Debugf("%s already deleted", *bucketName)
+			log.Debugf("%s already deleted", *bucketName)
 			return
 		}
-		logger.Fatalf("%s put-bucket-acl failed: %v", *bucketName, err)
+		log.Fatalf("%s put-bucket-acl failed: %v", *bucketName, err)
 	}
 
 	input := &s3.ListObjectVersionsInput{Bucket: bucketName}
@@ -223,11 +221,11 @@ func removeBucket(client *s3.S3, bucketName *string) {
 		return len(objectVersions) < s3MaxDeletes
 	})
 	if err != nil {
-		logger.Fatalf("failed to list object versions for %s: %v", *bucketName, err)
+		log.Fatalf("failed to list object versions for %s: %v", *bucketName, err)
 	}
 
 	if len(objectVersions) >= s3MaxDeletes {
-		logger.Warnf("s3://%s has too many items to delete directly, setting an expiration policy instead", *bucketName)
+		log.Warnf("s3://%s has too many items to delete directly, setting an expiration policy instead", *bucketName)
 		_, err = client.PutBucketLifecycleConfiguration(&s3.PutBucketLifecycleConfigurationInput{
 			Bucket: bucketName,
 			LifecycleConfiguration: &s3.BucketLifecycleConfiguration{
@@ -252,7 +250,7 @@ func removeBucket(client *s3.S3, bucketName *string) {
 			},
 		})
 		if err != nil {
-			logger.Fatalf("failed to set expiration policy for %s: %v", *bucketName, err)
+			log.Fatalf("failed to set expiration policy for %s: %v", *bucketName, err)
 		}
 		// remove any notifications since we are leaving the bucket (best effort)
 		notificationInput := &s3.PutBucketNotificationConfigurationInput{
@@ -261,23 +259,23 @@ func removeBucket(client *s3.S3, bucketName *string) {
 		}
 		_, err := client.PutBucketNotificationConfiguration(notificationInput)
 		if err != nil {
-			logger.Warnf("Unable to clear S3 event notifications on bucket %s (%v). Use the console to clear.",
+			log.Warnf("Unable to clear S3 event notifications on bucket %s (%v). Use the console to clear.",
 				bucketName, err)
 		}
 		return
 	}
 
 	// Here there aren't too many objects, we can delete them in a handful of BatchDelete calls.
-	logger.Infof("deleting s3://%s", *bucketName)
+	log.Infof("deleting s3://%s", *bucketName)
 	err = s3batch.DeleteObjects(client, 2*time.Minute, &s3.DeleteObjectsInput{
 		Bucket: bucketName,
 		Delete: &s3.Delete{Objects: objectVersions},
 	})
 	if err != nil {
-		logger.Fatalf("failed to batch delete objects: %v", err)
+		log.Fatalf("failed to batch delete objects: %v", err)
 	}
 	time.Sleep(time.Second) // short pause since S3 is eventually consistent to avoid next call from failing
 	if _, err = client.DeleteBucket(&s3.DeleteBucketInput{Bucket: bucketName}); err != nil {
-		logger.Fatalf("failed to delete bucket %s: %v", *bucketName, err)
+		log.Fatalf("failed to delete bucket %s: %v", *bucketName, err)
 	}
 }

@@ -36,9 +36,9 @@ import (
 // Preview auto-generated documentation in out/doc
 func Doc() {
 	if err := doc(); err != nil {
-		logger.Fatal(err)
+		log.Fatal(err)
 	}
-	logger.Info("doc: generated runbooks and log types in out/docs")
+	log.Info("doc: generated runbooks and log types in out/docs")
 }
 
 func doc() error {
@@ -68,7 +68,7 @@ Each resource describes its function and failure impacts.
 func cfnFiles() []string {
 	paths, err := filepath.Glob("deployments/*.yml")
 	if err != nil {
-		logger.Fatalf("failed to glob deployments: %v", err)
+		log.Fatalf("failed to glob deployments: %v", err)
 	}
 
 	// Remove the config file
@@ -83,7 +83,7 @@ func cfnFiles() []string {
 
 // generate operational documentation from deployment CloudFormation
 func opDocs() error {
-	logger.Debug("doc: generating operational documentation from cloudformation")
+	log.Debug("doc: generating operational documentation from cloudformation")
 	docs, err := cfndoc.ReadCfn(cfnFiles()...)
 	if err != nil {
 		return fmt.Errorf("failed to generate operational documentation: %v", err)
@@ -173,12 +173,12 @@ func (category *logCategory) generateDocFile(outDir string) error {
 	}
 
 	path := filepath.Join(outDir, category.Name+".md")
-	logger.Debugf("writing log category documentation: %s", path)
+	log.Debugf("writing log category documentation: %s", path)
 	return writeFile(path, docsBuffer.Bytes())
 }
 
 func logDocs() error {
-	logger.Debug("doc: generating documentation on supported logs")
+	log.Debug("doc: generating documentation on supported logs")
 
 	// allow large comment descriptions in the docs (by default they are clipped)
 	awsglue.MaxCommentLength = math.MaxInt32

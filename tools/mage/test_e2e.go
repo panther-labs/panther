@@ -28,7 +28,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/ecr"
-	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/magefile/mage/sh"
@@ -40,9 +39,9 @@ import (
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	usermodels "github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/pkg/awscfn"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/genericapi"
 	"github.com/panther-labs/panther/pkg/prompt"
+	"github.com/panther-labs/panther/tools/mage/clients"
 )
 
 const (
@@ -93,7 +92,10 @@ type e2eContext struct {
 
 // End-to-end test suite - deploy, migrate, test, teardown
 func (Test) E2e() {
-	// TODO - can we use testing library to make assertions
+	if err := goPkgIntegrationTest("test:e2e", "./tools/mage/e2e"); err != nil {
+		log.Fatal(err)
+	}
+	log.Fatal("stopping early")
 
 	ctx := e2eContext{
 		FirstUserEmail: prompt.Read("Email for initial invite: ", prompt.EmailValidator),
@@ -102,14 +104,14 @@ func (Test) E2e() {
 	// TODO - allow specifying STAGE to jump to
 
 	// Make sure there are no leftover resources that would fail the deployment.
-	logger.Info("***** test:e2e : Stage 1/8 : Pre-Teardown *****")
+	log.Info("***** test:e2e : Stage 1/8 : Pre-Teardown *****")
 	// TODO - teardown masterStack as well?
 	// TODO - mage clean setup?
 	Teardown() // includes getSession()
 	// I tried removing AWSService IAM roles here - AWS does not allow it
 
-	ctx.GatewayClient = gatewayapi.GatewayClient(awsSession)
-	ctx.Region = *awsSession.Config.Region
+	ctx.GatewayClient = clients.HTTPGateway()
+	ctx.Region = clients.Region()
 	ctx.deployPreviousVersion()
 	ctx.interactWithOldVersion()
 	ctx.migrate()
@@ -124,14 +126,14 @@ func (Test) E2e() {
 
 // Deploy the official published pre-packaged deployment for the previous version.
 func (ctx *e2eContext) deployPreviousVersion() {
-	logger.Info("***** test:e2e : Stage 2/8 : Deploy Previous Release *****")
+	log.Info("***** test:e2e : Stage 2/8 : Deploy Previous Release *****")
 	getGitVersion(false)
 	s3URL := fmt.Sprintf("https://panther-community-%s.s3.amazonaws.com/%s/panther.yml",
 		ctx.Region, strings.Split(gitVersion, "-")[0])
 	downloadPath := filepath.Join("out", "deployments", "panther.yml")
-	logger.Infof("downloading %s to %s", s3URL, downloadPath)
+	log.Infof("downloading %s to %s", s3URL, downloadPath)
 	if err := runWithCapturedOutput("curl", s3URL, "--output", downloadPath); err != nil {
-		logger.Fatal(err)
+		log.Fatal(err)
 	}
 
 	// Deploy the template directly, do not use our standard deploy code with packaging.
@@ -144,12 +146,12 @@ func (ctx *e2eContext) deployPreviousVersion() {
 		"--template", downloadPath,
 	)
 	if err != nil {
-		logger.Fatal(err)
+		log.Fatal(err)
 	}
 
 	// Lookup API gateway IDs
 	// These aren't top-level outputs, so we need to find the gateway nested stack.
-	cfnClient := cfn.New(awsSession)
+	cfnClient := clients.Cfn()
 	var gatewayStackName string
 	listStacksInput := &cfn.ListStacksInput{
 		StackStatusFilter: []*string{
@@ -168,29 +170,29 @@ func (ctx *e2eContext) deployPreviousVersion() {
 		return true // keep paging
 	})
 	if err != nil {
-		logger.Fatalf("failed to list CloudFormation stacks: %v", err)
+		log.Fatalf("failed to list CloudFormation stacks: %v", err)
 	}
 	if gatewayStackName == "" {
-		logger.Fatal("failed to find successful panther-BootstrapGateway stack")
+		log.Fatal("failed to find successful panther-BootstrapGateway stack")
 	}
 
-	outputs := awscfn.StackOutputs(cfnClient, logger, gatewayStackName)
+	outputs := awscfn.StackOutputs(cfnClient, log, gatewayStackName)
 	ctx.AnalysisClient = analysisclient.NewHTTPClientWithConfig(nil, analysisclient.DefaultTransportConfig().
 		WithBasePath("/v1").WithHost(outputs["AnalysisApiEndpoint"]))
 }
 
 // Interact with the last Panther release to generate some custom data we can verify after the migration.
 func (ctx *e2eContext) interactWithOldVersion() {
-	logger.Info("***** test:e2e : Stage 3/8 : Generate Data in Previous Release *****")
+	log.Info("***** test:e2e : Stage 3/8 : Generate Data in Previous Release *****")
 
 	// TODO - directly put a log into the ingestion bucket
 
 	// Add an SQS alert destination
-	queue, err := sqs.New(awsSession).CreateQueue(&sqs.CreateQueueInput{
+	queue, err := clients.SQS().CreateQueue(&sqs.CreateQueueInput{
 		QueueName: aws.String("e2e-test"), // TODO - rename "panther-e2e-test" ?
 	})
 	if err != nil {
-		logger.Fatalf("failed to create SQS queue: %v", err)
+		log.Fatalf("failed to create SQS queue: %v", err)
 	}
 
 	input := outputmodels.LambdaInput{
@@ -202,10 +204,10 @@ func (ctx *e2eContext) interactWithOldVersion() {
 			},
 		},
 	}
-	if err := genericapi.Invoke(lambda.New(awsSession), outputsAPI, &input, &ctx.OutputQueue); err != nil {
-		logger.Fatalf("failed to add SQS output in %s: %v", outputsAPI, err)
+	if err := genericapi.Invoke(clients.Lambda(), outputsAPI, &input, &ctx.OutputQueue); err != nil {
+		log.Fatalf("failed to add SQS output in %s: %v", outputsAPI, err)
 	}
-	logger.Infof("added SQS queue %s as output ID %s", *queue.QueueUrl, *ctx.OutputQueue.OutputID)
+	log.Infof("added SQS queue %s as output ID %s", *queue.QueueUrl, *ctx.OutputQueue.OutputID)
 
 	// TODO - modify an existing policy...
 
@@ -224,10 +226,10 @@ func (ctx *e2eContext) interactWithOldVersion() {
 		HTTPClient: ctx.GatewayClient,
 	})
 	if err != nil {
-		logger.Fatalf("failed to create policy from analysis-api: %v", err)
+		log.Fatalf("failed to create policy from analysis-api: %v", err)
 	}
 	ctx.NewPolicy = *policy.Payload
-	logger.Infof("added policy ID \"%s\"", ctx.NewPolicy.ID)
+	log.Infof("added policy ID \"%s\"", ctx.NewPolicy.ID)
 
 	// Add a rule which matches 10% of all input logs
 	rule, err := ctx.AnalysisClient.Operations.CreateRule(&analysisops.CreateRuleParams{
@@ -244,22 +246,22 @@ func (ctx *e2eContext) interactWithOldVersion() {
 	})
 	if err != nil {
 		if badReq, ok := err.(*analysisops.CreateRuleBadRequest); ok {
-			logger.Errorf("bad request: %s", *badReq.Payload.Message)
+			log.Errorf("bad request: %s", *badReq.Payload.Message)
 		}
-		logger.Fatalf("failed to create rule from analysis-api: %v", err)
+		log.Fatalf("failed to create rule from analysis-api: %v", err)
 	}
 	ctx.NewRule = *rule.Payload
-	logger.Infof("added rule ID \"%s\"", ctx.NewRule.ID)
+	log.Infof("added rule ID \"%s\"", ctx.NewRule.ID)
 }
 
 // Using the deployment role, migrate to the current master stack
 func (ctx *e2eContext) migrate() {
-	logger.Info("***** test:e2e : Stage 4/8 : Migrate to Current Master Template *****")
+	log.Info("***** test:e2e : Stage 4/8 : Migrate to Current Master Template *****")
 
 	// Create deployment role
 	deploymentRoleTemplate := filepath.Join(
 		"deployments", "auxiliary", "cloudformation", "panther-deployment-role.yml")
-	logger.Infof("creating deployment role from %s", deploymentRoleTemplate)
+	log.Infof("creating deployment role from %s", deploymentRoleTemplate)
 
 	err := sh.RunV(filepath.Join(pythonVirtualEnvPath, "bin", "sam"), "deploy",
 		"--capabilities", "CAPABILITY_IAM", "CAPABILITY_NAMED_IAM",
@@ -269,38 +271,37 @@ func (ctx *e2eContext) migrate() {
 		"--template", deploymentRoleTemplate,
 	)
 	if err != nil {
-		logger.Fatal(err)
+		log.Fatal(err)
 	}
-	// TODO - we already got the accountID during the first teardown
-	accountID := getAccountID()
+	accountID := clients.AccountID()
 	deploymentRoleArn := fmt.Sprintf("arn:aws:iam::%s:role/PantherDeploymentRole", accountID)
 
 	// Create S3 bucket and ECR repo for staging master package assets
 	bucket := e2eResourceName + "-" + accountID
-	if _, err := s3.New(awsSession).CreateBucket(&s3.CreateBucketInput{Bucket: &bucket}); err != nil {
+	if _, err := clients.S3().CreateBucket(&s3.CreateBucketInput{Bucket: &bucket}); err != nil {
 		if awsErr := err.(awserr.Error); awsErr.Code() != s3.ErrCodeBucketAlreadyExists && awsErr.Code() != s3.ErrCodeBucketAlreadyOwnedByYou {
-			logger.Fatalf("failed to create S3 bucket %s: %v", bucket, err)
+			log.Fatalf("failed to create S3 bucket %s: %v", bucket, err)
 		}
 	}
 
-	_, err = ecr.New(awsSession).CreateRepository(&ecr.CreateRepositoryInput{
+	_, err = clients.ECR().CreateRepository(&ecr.CreateRepositoryInput{
 		RepositoryName: aws.String(e2eResourceName),
 	})
 	if err != nil {
 		if awsErr := err.(awserr.Error); awsErr.Code() != ecr.ErrCodeRepositoryAlreadyExistsException {
-			logger.Fatalf("failed to create ECR repository %s: %v", e2eResourceName, err)
+			log.Fatalf("failed to create ECR repository %s: %v", e2eResourceName, err)
 		}
 	}
-	logger.Infof("created S3 bucket %s and ECR repo %s for staging master assets", bucket, e2eResourceName)
+	log.Infof("created S3 bucket %s and ECR repo %s for staging master assets", bucket, e2eResourceName)
 
 	// TODO - ensure master version is different from the one we deployed to trigger custom resource updates
 	masterBuild()
 	masterVersion := getMasterVersion()
 	imgRegistry := fmt.Sprintf("%s.dkr.ecr.%s.amazonaws.com/%s", accountID, ctx.Region, e2eResourceName)
-	pkg := masterPackage(bucket, masterVersion, imgRegistry)
+	pkg := masterPackage(ctx.Region, bucket, masterVersion, imgRegistry)
 
 	// Deploy current master template to upgrade Panther to the release candidate
-	logger.Infof("updating %s stack with local master template %s using IAM role %s",
+	log.Infof("updating %s stack with local master template %s using IAM role %s",
 		masterStackName, masterVersion, deploymentRoleArn)
 	err = sh.RunV(filepath.Join(pythonVirtualEnvPath, "bin", "sam"), "deploy",
 		"--capabilities", "CAPABILITY_IAM", "CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND",
@@ -311,27 +312,26 @@ func (ctx *e2eContext) migrate() {
 		"--template", pkg,
 	)
 	if err != nil {
-		logger.Fatal(err)
+		log.Fatal(err)
 	}
 }
 
 // Ensure user data wasn't corrupted during the migration.
 func (ctx *e2eContext) validateMigration() {
-	logger.Info("***** test:e2e : Stage 5/8 : Validate Migration *****")
+	log.Info("***** test:e2e : Stage 5/8 : Validate Migration *****")
 
 	// User list should still contain only the single invited user
-	lambdaClient := lambda.New(awsSession)
 	var userList usermodels.ListUsersOutput
 	listInput := usermodels.LambdaInput{ListUsers: &usermodels.ListUsersInput{}}
-	if err := genericapi.Invoke(lambdaClient, usersAPI, &listInput, &userList); err != nil {
-		logger.Fatalf("failed to invoke %s.listUsers: %v", usersAPI, err)
+	if err := genericapi.Invoke(clients.Lambda(), usersAPI, &listInput, &userList); err != nil {
+		log.Fatalf("failed to invoke %s.listUsers: %v", usersAPI, err)
 	}
 	if len(userList.Users) != 1 {
-		logger.Fatalf("expected 1 Panther user, found %d", len(userList.Users))
+		log.Fatalf("expected 1 Panther user, found %d", len(userList.Users))
 	}
 	user := userList.Users[0]
 	if aws.StringValue(user.GivenName) != e2eFirstName || aws.StringValue(user.FamilyName) != e2eLastName {
-		logger.Fatalf("expected Panther user %s %s, found %s %s (ID %s)",
+		log.Fatalf("expected Panther user %s %s, found %s %s (ID %s)",
 			e2eFirstName, e2eLastName,
 			aws.StringValue(user.GivenName), aws.StringValue(user.FamilyName),
 			*user.ID)
@@ -340,11 +340,11 @@ func (ctx *e2eContext) validateMigration() {
 	// Organization settings
 	var orgSettings orgmodels.GeneralSettings
 	orgInput := orgmodels.LambdaInput{GetSettings: &orgmodels.GetSettingsInput{}}
-	if err := genericapi.Invoke(lambdaClient, orgAPI, &orgInput, &orgSettings); err != nil {
-		logger.Fatalf("failed to invoke %s.getSettings: %v", orgAPI, err)
+	if err := genericapi.Invoke(clients.Lambda(), orgAPI, &orgInput, &orgSettings); err != nil {
+		log.Fatalf("failed to invoke %s.getSettings: %v", orgAPI, err)
 	}
 	if aws.StringValue(orgSettings.DisplayName) != e2eCompanyName {
-		logger.Fatalf("expected org name \"%s\", found \"%s\"",
+		log.Fatalf("expected org name \"%s\", found \"%s\"",
 			e2eCompanyName, aws.StringValue(orgSettings.DisplayName))
 	}
 
@@ -354,11 +354,11 @@ func (ctx *e2eContext) validateMigration() {
 		HTTPClient: ctx.GatewayClient,
 	})
 	if err != nil {
-		logger.Fatalf("failed to retrieve policy %s: %v", e2ePolicyID, err)
+		log.Fatalf("failed to retrieve policy %s: %v", e2ePolicyID, err)
 	}
 	policy := policyResponse.Payload
 	if policy.Enabled || policy.Body != e2ePolicyBody || policy.Description != e2ePolicyDescription {
-		logger.Fatalf("policy ID %s unexpectedly changed", policy.ID)
+		log.Fatalf("policy ID %s unexpectedly changed", policy.ID)
 	}
 	// check rule
 	// check output

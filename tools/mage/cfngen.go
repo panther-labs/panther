@@ -31,7 +31,7 @@ import (
 // Generate CloudWatch dashboards as CloudFormation
 func generateDashboards() error {
 	dashboardResources := dashboards.Dashboards()
-	logger.Debugf("deploy: cfngen: loaded %d dashboards", len(dashboardResources))
+	log.Debugf("deploy: cfngen: loaded %d dashboards", len(dashboardResources))
 
 	template := map[string]interface{}{
 		"AWSTemplateFormatVersion": "2010-09-09",

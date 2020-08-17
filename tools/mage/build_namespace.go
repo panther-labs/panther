@@ -50,7 +50,7 @@ func (b Build) generateSwaggerClients() error {
 		return fmt.Errorf("failed to glob %s: %v", swaggerGlob, err)
 	}
 
-	logger.Infof("build:api: generating Go SDK for %d APIs (%s)", len(specs), swaggerGlob)
+	log.Infof("build:api: generating Go SDK for %d APIs (%s)", len(specs), swaggerGlob)
 
 	cmd := filepath.Join(setupDirectory, "swagger")
 	if _, err = os.Stat(cmd); err != nil {
@@ -91,7 +91,7 @@ func (b Build) generateSwaggerClients() error {
 
 			body, err := ioutil.ReadFile(path)
 			if err != nil {
-				logger.Fatalf("failed to open %s: %v", path, err)
+				log.Fatalf("failed to open %s: %v", path, err)
 			}
 
 			correctImport := fmt.Sprintf(
@@ -100,7 +100,7 @@ func (b Build) generateSwaggerClients() error {
 
 			newBody := clientImport.ReplaceAll(body, []byte(correctImport))
 			if err := ioutil.WriteFile(path, newBody, info.Mode()); err != nil {
-				logger.Fatalf("failed to rewrite %s: %v", path, err)
+				log.Fatalf("failed to rewrite %s: %v", path, err)
 			}
 		})
 
@@ -109,20 +109,20 @@ func (b Build) generateSwaggerClients() error {
 		// formatted the exact same way.
 		fmtLicense(client, models)
 		if err := gofmt(client, models); err != nil {
-			logger.Warnf("gofmt %s %s failed: %v", client, models, err)
+			log.Warnf("gofmt %s %s failed: %v", client, models, err)
 		}
 	}
 	return nil
 }
 
 func (b Build) generateWebTypescript() error {
-	logger.Info("build:api: generating web typescript from graphql")
+	log.Info("build:api: generating web typescript from graphql")
 	if err := sh.Run("npm", "run", "graphql-codegen"); err != nil {
 		return fmt.Errorf("graphql generation failed: %v", err)
 	}
 	fmtLicense("web/__generated__")
 	if err := prettier("web/__generated__/*"); err != nil {
-		logger.Warnf("prettier web/__generated__/ failed: %v", err)
+		log.Warnf("prettier web/__generated__/ failed: %v", err)
 	}
 	return nil
 }
@@ -130,7 +130,7 @@ func (b Build) generateWebTypescript() error {
 // Lambda Compile Go Lambda function source
 func (b Build) Lambda() {
 	if err := b.lambda(); err != nil {
-		logger.Fatal(err)
+		log.Fatal(err)
 	}
 }
 
@@ -149,7 +149,7 @@ func (b Build) lambda() error {
 		}
 	})
 
-	logger.Infof("build:lambda: compiling %d Go Lambda functions (internal/.../main) using %s",
+	log.Infof("build:lambda: compiling %d Go Lambda functions (internal/.../main) using %s",
 		len(packages), runtime.Version())
 
 	for _, pkg := range packages {
@@ -179,7 +179,7 @@ func buildLambdaPackage(pkg string) error {
 // Tools Compile devtools and opstools
 func (b Build) Tools() {
 	if err := b.tools(); err != nil {
-		logger.Fatal(err)
+		log.Fatal(err)
 	}
 }
 
@@ -212,7 +212,7 @@ func (b Build) tools() error {
 		// used in tools to check/display which Panther version was compiled
 		setVersionVar := fmt.Sprintf("-X 'main.version=%s'", gitVersion)
 
-		logger.Infof("build:tools: compiling %s to %s with %d os/arch combinations",
+		log.Infof("build:tools: compiling %s to %s with %d os/arch combinations",
 			path, outDir, len(buildEnvs))
 		for _, env := range buildEnvs {
 			// E.g. "requeue-darwin-amd64"
@@ -236,7 +236,7 @@ func (b Build) tools() error {
 // Generate CloudFormation: deployments/dashboards.yml and out/deployments/
 func (b Build) Cfn() {
 	if err := b.cfn(); err != nil {
-		logger.Fatal(err)
+		log.Fatal(err)
 	}
 }
 

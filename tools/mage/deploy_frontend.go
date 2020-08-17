@@ -31,16 +31,17 @@ import (
 
 	"github.com/panther-labs/panther/tools/cfnstacks"
 	"github.com/panther-labs/panther/tools/config"
+	"github.com/panther-labs/panther/tools/mage/clients"
 )
 
 const awsEnvFile = "out/.env.aws"
 
-func deployFrontend(accountID string, bootstrapOutputs map[string]string, settings *config.PantherConfig) error {
+func deployFrontend(bootstrapOutputs map[string]string, settings *config.PantherConfig) error {
 	// Save .env file (only used when running web server locally)
 	if err := godotenv.Write(
 		map[string]string{
-			"AWS_REGION":                           *awsSession.Config.Region,
-			"AWS_ACCOUNT_ID":                       accountID,
+			"AWS_REGION":                           clients.Region(),
+			"AWS_ACCOUNT_ID":                       clients.AccountID(),
 			"WEB_APPLICATION_GRAPHQL_API_ENDPOINT": bootstrapOutputs["GraphQLApiEndpoint"],
 			"WEB_APPLICATION_USER_POOL_ID":         bootstrapOutputs["UserPoolId"],
 			"WEB_APPLICATION_USER_POOL_CLIENT_ID":  bootstrapOutputs["AppClientId"],
@@ -83,8 +84,8 @@ func deployFrontend(accountID string, bootstrapOutputs map[string]string, settin
 
 // Build a personalized docker image from source and push it to the private image repo of the user
 func buildAndPushImageFromSource(imageRegistry, tag string) (string, error) {
-	logger.Debug("requesting access to remote image repo")
-	response, err := ecr.New(awsSession).GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
+	log.Debug("requesting access to remote image repo")
+	response, err := clients.ECR().GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
 	if err != nil {
 		return "", fmt.Errorf("failed to get ecr auth token: %v", err)
 	}
@@ -102,7 +103,7 @@ func buildAndPushImageFromSource(imageRegistry, tag string) (string, error) {
 		return "", err
 	}
 
-	logger.Info("docker build web server (deployments/Dockerfile)")
+	log.Info("docker build web server (deployments/Dockerfile)")
 	dockerBuildOutput, err := sh.Output("docker", "build", "--file", "deployments/Dockerfile", "--quiet", ".")
 	if err != nil {
 		return "", fmt.Errorf("docker build failed: %v", err)
@@ -118,7 +119,7 @@ func buildAndPushImageFromSource(imageRegistry, tag string) (string, error) {
 		return "", fmt.Errorf("docker tag %s %s failed: %v", localImageID, remoteImage, err)
 	}
 
-	logger.Info("pushing docker image to remote repo")
+	log.Info("pushing docker image to remote repo")
 	if err := sh.Run("docker", "push", remoteImage); err != nil {
 		return "", err
 	}

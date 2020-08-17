@@ -27,25 +27,24 @@ import (
 	"github.com/magefile/mage/sh"
 
 	"github.com/panther-labs/panther/pkg/prompt"
+	"github.com/panther-labs/panther/tools/mage/clients"
 )
 
 // Integration Run integration tests (integration_test.go,integration.py)
 func (t Test) Integration() {
-	getSession()
-
-	logger.Warnf("Integration tests will erase all Panther data in account %s (%s)",
-		getAccountID(), *awsSession.Config.Region)
+	log.Warnf("Integration tests will erase all Panther data in account %s (%s)",
+		clients.AccountID(), clients.Region())
 	result := prompt.Read("Are you sure you want to continue? (yes|no) ", prompt.NonemptyValidator)
 	if strings.ToLower(result) != "yes" {
-		logger.Fatal("integration tests aborted")
+		log.Fatal("integration tests aborted")
 	}
 
 	mg.Deps(build.API)
 
 	if pkg := os.Getenv("PKG"); pkg != "" {
 		// One specific package requested: run integration tests just for that
-		if err := goPkgIntegrationTest(pkg); err != nil {
-			logger.Fatal(err)
+		if err := goPkgIntegrationTest("test:integration", pkg); err != nil {
+			log.Fatal(err)
 		}
 		return
 	}
@@ -53,32 +52,32 @@ func (t Test) Integration() {
 	errCount := 0
 	walk(".", func(path string, info os.FileInfo) {
 		if filepath.Base(path) == "integration_test.go" {
-			if err := goPkgIntegrationTest("./" + filepath.Dir(path)); err != nil {
-				logger.Error(err)
+			if err := goPkgIntegrationTest("test:integration", "./"+filepath.Dir(path)); err != nil {
+				log.Error(err)
 				errCount++
 			}
 		}
 	})
 
-	logger.Info("test:integration: python policy engine")
+	log.Info("test:integration: python policy engine")
 	if err := sh.RunV(pythonLibPath("python3"), "internal/compliance/policy_engine/tests/integration.py"); err != nil {
-		logger.Errorf("python integration test failed: %v", err)
+		log.Errorf("python integration test failed: %v", err)
 		errCount++
 	}
 
 	if errCount > 0 {
-		logger.Fatalf("%d integration test(s) failed", errCount)
+		log.Fatalf("%d integration test(s) failed", errCount)
 	}
 }
 
 // Run integration tests for a single Go package.
-func goPkgIntegrationTest(pkg string) error {
+func goPkgIntegrationTest(mageCmd, pkg string) error {
 	if err := os.Setenv("INTEGRATION_TEST", "True"); err != nil {
-		logger.Fatalf("failed to set INTEGRATION_TEST environment variable: %v", err)
+		log.Fatalf("failed to set INTEGRATION_TEST environment variable: %v", err)
 	}
 	defer os.Unsetenv("INTEGRATION_TEST")
 
-	logger.Info("test:integration: go test " + pkg + " -run=TestIntegration*")
+	log.Infof("%s: INTEGRATION_TEST=True go test %s -run=TestIntegration*", mageCmd, pkg)
 	// -count 1 is the idiomatic way to disable test caching
 	args := []string{"test", pkg, "-run=TestIntegration*", "-p", "1", "-count", "1"}
 	if mg.Verbose() {

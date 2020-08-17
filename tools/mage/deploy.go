@@ -28,10 +28,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/magefile/mage/sh"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
@@ -42,6 +39,7 @@ import (
 	"github.com/panther-labs/panther/pkg/shutil"
 	"github.com/panther-labs/panther/tools/cfnstacks"
 	"github.com/panther-labs/panther/tools/config"
+	"github.com/panther-labs/panther/tools/mage/clients"
 )
 
 const (
@@ -76,8 +74,7 @@ var supportedRegions = map[string]bool{
 func Deploy() {
 	start := time.Now()
 
-	getSession()
-	deployPreCheck(*awsSession.Config.Region, true)
+	deployPreCheck(true)
 
 	if stack := os.Getenv("STACK"); stack != "" {
 		stack = strings.ToLower(strings.TrimSpace(stack))
@@ -85,52 +82,51 @@ func Deploy() {
 			stack = "panther-" + stack
 		}
 		if err := deploySingleStack(stack); err != nil {
-			logger.Fatal(err)
+			log.Fatal(err)
 		}
 		return
 	}
 
 	settings := getSettings()
-	accountID := getAccountID()
-	logger.Infof("deploying Panther %s to account %s (%s)", gitVersion, accountID, *awsSession.Config.Region)
+	log.Infof("deploying Panther %s to account %s (%s)", gitVersion, clients.AccountID(), clients.Region())
 
 	setFirstUser(settings)
 	outputs := bootstrap(settings)
-	deployMainStacks(settings, accountID, outputs)
+	deployMainStacks(settings, outputs)
 
-	logger.Infof("deploy: finished successfully in %s", time.Since(start).Round(time.Second))
-	logger.Infof("***** Panther URL = https://%s", outputs["LoadBalancerUrl"])
+	log.Infof("deploy: finished successfully in %s", time.Since(start).Round(time.Second))
+	log.Infof("***** Panther URL = https://%s", outputs["LoadBalancerUrl"])
 }
 
 // Fail the deploy early if there is a known issue with the user's environment.
-func deployPreCheck(awsRegion string, checkForOldVersion bool) {
+func deployPreCheck(checkForOldVersion bool) {
 	// Ensure the AWS region is supported
-	if !supportedRegions[awsRegion] {
-		logger.Fatalf("panther is not supported in %s region", awsRegion)
+	if region := clients.Region(); !supportedRegions[region] {
+		log.Fatalf("panther is not supported in %s region", region)
 	}
 
 	// Check the Go version (1.12 fails with a build error)
 	if version := runtime.Version(); version <= "go1.12" {
-		logger.Fatalf("go %s not supported, upgrade to 1.13+", version)
+		log.Fatalf("go %s not supported, upgrade to 1.13+", version)
 	}
 
 	// Check the major node version
 	nodeVersion, err := sh.Output("node", "--version")
 	if err != nil {
-		logger.Fatalf("failed to check node version: %v", err)
+		log.Fatalf("failed to check node version: %v", err)
 	}
 	if !strings.HasPrefix(strings.TrimSpace(nodeVersion), "v12") {
-		logger.Fatalf("node version must be v12.x.x, found %s", nodeVersion)
+		log.Fatalf("node version must be v12.x.x, found %s", nodeVersion)
 	}
 
 	// Make sure docker is running
 	if _, err = sh.Output("docker", "info"); err != nil {
-		logger.Fatalf("docker is not available: %v", err)
+		log.Fatalf("docker is not available: %v", err)
 	}
 
 	// Ensure swagger is available
 	if _, err = sh.Output(filepath.Join(setupDirectory, "swagger"), "version"); err != nil {
-		logger.Fatalf("swagger is not available (%v): try 'mage setup'", err)
+		log.Fatalf("swagger is not available (%v): try 'mage setup'", err)
 	}
 
 	// Set global gitVersion, warn if not deploying a tagged release
@@ -139,31 +135,15 @@ func deployPreCheck(awsRegion string, checkForOldVersion bool) {
 	// There were mage migrations to help with v1.3 and v1.4 source deployments,
 	// but these were removed in v1.6. As a result, old deployments first need to upgrade to v1.5.1
 	if checkForOldVersion {
-		bootstrapVersion, err := awscfn.StackTag(cloudformation.New(awsSession), "PantherVersion", cfnstacks.Bootstrap)
+		bootstrapVersion, err := awscfn.StackTag(clients.Cfn(), "PantherVersion", cfnstacks.Bootstrap)
 		if err != nil {
-			logger.Warnf("failed to describe stack %s: %v", cfnstacks.Bootstrap, err)
+			log.Warnf("failed to describe stack %s: %v", cfnstacks.Bootstrap, err)
 		}
 		if bootstrapVersion != "" && bootstrapVersion < "v1.4.0" {
-			logger.Fatalf("trying to upgrade from %s to %s will not work - upgrade to v1.5.1 first",
+			log.Fatalf("trying to upgrade from %s to %s will not work - upgrade to v1.5.1 first",
 				bootstrapVersion, gitVersion)
 		}
 	}
-}
-
-func getAccountID() string {
-	identity, err := sts.New(awsSession).GetCallerIdentity(&sts.GetCallerIdentityInput{})
-	if err != nil {
-		logger.Fatalf("failed to get caller identity: %v", err)
-	}
-	return *identity.Account
-}
-
-func getSettings() *config.PantherConfig {
-	settings, err := config.Settings()
-	if err != nil {
-		logger.Fatalf("failed to read config file %s: %v", config.Filepath, err)
-	}
-	return settings
 }
 
 // Prompt for the name and email of the initial user if not already defined.
@@ -175,9 +155,9 @@ func setFirstUser(settings *config.PantherConfig) {
 
 	input := models.LambdaInput{ListUsers: &models.ListUsersInput{}}
 	var output models.ListUsersOutput
-	err := genericapi.Invoke(lambda.New(awsSession), "panther-users-api", &input, &output)
+	err := genericapi.Invoke(clients.Lambda(), clients.UsersAPI, &input, &output)
 	if err != nil && !strings.Contains(err.Error(), lambda.ErrCodeResourceNotFoundException) {
-		logger.Fatalf("failed to list existing users: %v", err)
+		log.Fatalf("failed to list existing users: %v", err)
 	}
 
 	if len(output.Users) > 0 {
@@ -203,44 +183,41 @@ func setFirstUser(settings *config.PantherConfig) {
 //
 // Can only be used to update an existing deployment.
 func deploySingleStack(stack string) error {
-	client := cloudformation.New(awsSession)
 	switch stack {
 	case cfnstacks.Bootstrap:
 		_, err := deployBootstrapStack(getSettings())
 		return err
 	case cfnstacks.Gateway:
 		build.Lambda() // custom-resources
-		_, err := deployBootstrapGatewayStack(getSettings(), awscfn.StackOutputs(client, logger,
-			cfnstacks.Bootstrap))
+		_, err := deployBootstrapGatewayStack(getSettings(),
+			awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap))
 		return err
 	case cfnstacks.Appsync:
-		return deployAppsyncStack(awscfn.StackOutputs(client, logger,
-			cfnstacks.Bootstrap, cfnstacks.Gateway))
+		return deployAppsyncStack(awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap, cfnstacks.Gateway))
 	case cfnstacks.Cloudsec:
 		build.API()
 		build.Lambda()
-		return deployCloudSecurityStack(getSettings(), awscfn.StackOutputs(client, logger,
-			cfnstacks.Bootstrap, cfnstacks.Gateway))
+		return deployCloudSecurityStack(getSettings(),
+			awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap, cfnstacks.Gateway))
 	case cfnstacks.Core:
 		build.API()
 		build.Lambda()
-		return deployCoreStack(getSettings(), awscfn.StackOutputs(client, logger,
-			cfnstacks.Bootstrap, cfnstacks.Gateway))
+		return deployCoreStack(getSettings(),
+			awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap, cfnstacks.Gateway))
 	case cfnstacks.Dashboard:
-		bucket := awscfn.StackOutputs(client, logger, cfnstacks.Bootstrap)["SourceBucket"]
+		bucket := awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap)["SourceBucket"]
 		return deployDashboardStack(bucket)
 	case cfnstacks.Frontend:
 		setFirstUser(getSettings())
-		return deployFrontend(getAccountID(), awscfn.StackOutputs(client, logger,
-			cfnstacks.Bootstrap, cfnstacks.Gateway), getSettings())
+		return deployFrontend(awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap, cfnstacks.Gateway), getSettings())
 	case cfnstacks.LogAnalysis:
 		build.API()
 		build.Lambda()
-		return deployLogAnalysisStack(getSettings(), awscfn.StackOutputs(client, logger,
-			cfnstacks.Bootstrap, cfnstacks.Gateway))
+		return deployLogAnalysisStack(getSettings(),
+			awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap, cfnstacks.Gateway))
 	case cfnstacks.Onboard:
-		return deployOnboardStack(getSettings(), awscfn.StackOutputs(client, logger,
-			cfnstacks.Bootstrap))
+		return deployOnboardStack(getSettings(),
+			awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap))
 	default:
 		return fmt.Errorf("unknown stack '%s'", stack)
 	}
@@ -255,29 +232,29 @@ func bootstrap(settings *config.PantherConfig) map[string]string {
 
 	outputs, err := deployBootstrapStack(settings)
 	if err != nil {
-		logger.Fatal(err)
+		log.Fatal(err)
 	}
-	logger.Infof("    √ %s finished (1/%d)", cfnstacks.Bootstrap, cfnstacks.NumStacks)
+	log.Infof("    √ %s finished (1/%d)", cfnstacks.Bootstrap, cfnstacks.NumStacks)
 
 	// Deploy second bootstrap stack and merge outputs
 	gatewayOutputs, err := deployBootstrapGatewayStack(settings, outputs)
 	if err != nil {
-		logger.Fatal(err)
+		log.Fatal(err)
 	}
 
 	for k, v := range gatewayOutputs {
 		if _, exists := outputs[k]; exists {
-			logger.Fatalf("output %s exists in both bootstrap stacks", k)
+			log.Fatalf("output %s exists in both bootstrap stacks", k)
 		}
 		outputs[k] = v
 	}
 
-	logger.Infof("    √ %s finished (2/%d)", cfnstacks.Gateway, cfnstacks.NumStacks)
+	log.Infof("    √ %s finished (2/%d)", cfnstacks.Gateway, cfnstacks.NumStacks)
 	return outputs
 }
 
 // Deploy main stacks (everything after bootstrap and bootstrap-gateway)
-func deployMainStacks(settings *config.PantherConfig, accountID string, outputs map[string]string) {
+func deployMainStacks(settings *config.PantherConfig, outputs map[string]string) {
 	results := make(chan goroutineResult)
 	count := 0
 
@@ -317,7 +294,7 @@ func deployMainStacks(settings *config.PantherConfig, accountID string, outputs 
 
 	go func(c chan goroutineResult) {
 		// Web stack requires core stack to exist first
-		c <- goroutineResult{summary: cfnstacks.Frontend, err: deployFrontend(accountID, outputs, settings)}
+		c <- goroutineResult{summary: cfnstacks.Frontend, err: deployFrontend(outputs, settings)}
 	}(results)
 
 	// Onboard Panther to scan itself
@@ -378,11 +355,11 @@ func deployBootstrapGatewayStack(
 // Build standard Python analysis layer in out/layer.zip if that file doesn't already exist.
 func buildLayer(libs []string) error {
 	if _, err := os.Stat(layerZipfile); err == nil {
-		logger.Debugf("%s already exists, not rebuilding layer", layerZipfile)
+		log.Debugf("%s already exists, not rebuilding layer", layerZipfile)
 		return nil
 	}
 
-	logger.Info("downloading python libraries " + strings.Join(libs, ","))
+	log.Info("downloading python libraries " + strings.Join(libs, ","))
 	if err := os.RemoveAll(layerSourceDir); err != nil {
 		return fmt.Errorf("failed to remove layer directory %s: %v", layerSourceDir, err)
 	}
@@ -479,7 +456,7 @@ func deployDashboardStack(bucket string) error {
 
 func deployLogAnalysisStack(settings *config.PantherConfig, outputs map[string]string) error {
 	// this computes a signature of the deployed glue tables used for change detection, for CF use the Panther version
-	tablesSignature, err := gluetables.DeployedTablesSignature(glue.New(awsSession))
+	tablesSignature, err := gluetables.DeployedTablesSignature(clients.Glue())
 	if err != nil {
 		return err
 	}
@@ -518,7 +495,7 @@ func deployOnboardStack(settings *config.PantherConfig, outputs map[string]strin
 		})
 	} else {
 		// Delete the onboard stack if OnboardSelf was toggled off
-		err = deleteStack(cloudformation.New(awsSession), aws.String(cfnstacks.Onboard))
+		err = deleteStack(aws.String(cfnstacks.Onboard))
 	}
 
 	return err

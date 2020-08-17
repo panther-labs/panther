@@ -47,10 +47,10 @@ var (
 func Setup() {
 	env, err := sh.Output("uname")
 	if err != nil {
-		logger.Fatalf("couldn't determine environment: %v", err)
+		log.Fatalf("couldn't determine environment: %v", err)
 	}
 	if err := os.MkdirAll(setupDirectory, os.ModePerm); err != nil {
-		logger.Fatalf("failed to create setup directory %s: %v", setupDirectory, err)
+		log.Fatalf("failed to create setup directory %s: %v", setupDirectory, err)
 	}
 
 	results := make(chan goroutineResult)
@@ -95,7 +95,7 @@ func Setup() {
 // to happen in parallel with the rest of the downloads. Pre-installing modules also allows
 // us to build Lambda functions in parallel.
 func installGoModules() error {
-	logger.Info("setup: download go modules...")
+	log.Info("setup: download go modules...")
 
 	if err := sh.Run("go", "mod", "download"); err != nil {
 		return err
@@ -109,11 +109,11 @@ func installGoModules() error {
 func installSwagger(uname string) error {
 	binary := filepath.Join(setupDirectory, "swagger")
 	if output, err := sh.Output(binary, "version"); err == nil && strings.Contains(output, swaggerVersion) {
-		logger.Infof("setup: %s v%s is already installed", binary, swaggerVersion)
+		log.Infof("setup: %s v%s is already installed", binary, swaggerVersion)
 		return nil
 	}
 
-	logger.Infof("setup: downloading go-swagger v%s...", swaggerVersion)
+	log.Infof("setup: downloading go-swagger v%s...", swaggerVersion)
 	url := fmt.Sprintf("https://github.com/go-swagger/go-swagger/releases/download/v%s/swagger_%s_amd64",
 		swaggerVersion, strings.ToLower(uname))
 	if err := sh.Run("curl", "-s", "-o", binary, "-fL", url); err != nil {
@@ -131,11 +131,11 @@ func installSwagger(uname string) error {
 func installGolangCiLint(uname string) error {
 	binary := filepath.Join(setupDirectory, "golangci-lint")
 	if output, err := sh.Output(binary, "--version"); err == nil && strings.Contains(output, golangciVersion) {
-		logger.Infof("setup: %s v%s is already installed", binary, golangciVersion)
+		log.Infof("setup: %s v%s is already installed", binary, golangciVersion)
 		return nil
 	}
 
-	logger.Infof("setup: downloading golangci-lint v%s...", golangciVersion)
+	log.Infof("setup: downloading golangci-lint v%s...", golangciVersion)
 	downloadDir := filepath.Join(setupDirectory, "golangci")
 	if err := os.MkdirAll(downloadDir, os.ModePerm); err != nil {
 		return fmt.Errorf("failed to create temporary %s: %v", downloadDir, err)
@@ -161,7 +161,7 @@ func installGolangCiLint(uname string) error {
 
 	// deleting download folder
 	if err := os.RemoveAll(downloadDir); err != nil {
-		logger.Warnf("failed to remove temp folder %s: %v", downloadDir, err)
+		log.Warnf("failed to remove temp folder %s: %v", downloadDir, err)
 	}
 	return nil
 }
@@ -169,7 +169,7 @@ func installGolangCiLint(uname string) error {
 func installTerraform(uname string) error {
 	uname = strings.ToLower(uname)
 	if output, err := sh.Output(terraformPath, "-version"); err == nil && strings.Contains(output, terraformVersion) {
-		logger.Infof("setup: %s v%s is already installed", terraformPath, terraformVersion)
+		log.Infof("setup: %s v%s is already installed", terraformPath, terraformVersion)
 		return nil
 	}
 
@@ -185,7 +185,7 @@ func installTerraform(uname string) error {
 	}
 
 	if err := os.Remove(archive); err != nil {
-		logger.Warnf("failed to remove %s after unpacking: %v", archive, err)
+		log.Warnf("failed to remove %s after unpacking: %v", archive, err)
 	}
 
 	return nil
@@ -197,7 +197,7 @@ func installPythonEnv() error {
 	if info, err := os.Stat(pythonVirtualEnvPath); err == nil && info.IsDir() {
 		if runningInCI() {
 			// If .setup/venv already exists in CI, it must have been restored from the cache.
-			logger.Info("setup: skipping pip install")
+			log.Info("setup: skipping pip install")
 			return nil
 		}
 	} else {
@@ -207,7 +207,7 @@ func installPythonEnv() error {
 	}
 
 	// pip install requirements
-	logger.Infof("setup: pip install requirements.txt to %s...", pythonVirtualEnvPath)
+	log.Infof("setup: pip install requirements.txt to %s...", pythonVirtualEnvPath)
 	args := []string{"install", "-r", "requirements.txt"}
 	if !mg.Verbose() {
 		args = append(args, "--quiet")
@@ -229,11 +229,11 @@ func installNodeModules() error {
 	if _, err := os.Stat("node_modules"); err == nil && runningInCI() {
 		// In CI, if node_modules already exist, they must have been restored from the cache.
 		// Stop early (otherwise, npm install takes ~10 seconds to figure out it has nothing to do).
-		logger.Info("setup: skipping npm install")
+		log.Info("setup: skipping npm install")
 		return nil
 	}
 
-	logger.Info("setup: npm install...")
+	log.Info("setup: npm install...")
 	args := []string{"install", "--no-progress", "--no-audit"}
 	if !mg.Verbose() {
 		args = append(args, "--silent")

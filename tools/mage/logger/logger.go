@@ -1,4 +1,4 @@
-package mage
+package logger
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -29,13 +29,12 @@ import (
 
 var logger *zap.SugaredLogger
 
-// serializes a time.Time to just hour:minute:second
-func simpleTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-	enc.AppendString(t.Format("15:04:05"))
-}
+// Build the dev-friendly mage logger - subsequent calls return the cached logger.
+func Get() *zap.SugaredLogger {
+	if logger != nil {
+		return logger
+	}
 
-// Build the global zap logger
-func init() {
 	config := zap.NewDevelopmentConfig() // DEBUG by default
 	if !mg.Verbose() && !mg.Debug() {
 		// In normal mode, hide DEBUG messages and file/line numbers
@@ -46,11 +45,15 @@ func init() {
 	// Always disable error traces and use color-coded log levels and short timestamps
 	config.DisableStacktrace = true
 	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-	config.EncoderConfig.EncodeTime = simpleTimeEncoder
+	config.EncoderConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+		// serializes a time.Time to just hour:minute:second
+		enc.AppendString(t.Format("15:04:05"))
+	}
 
 	rawLogger, err := config.Build()
 	if err != nil {
 		log.Fatalf("failed to build logger: %s", err)
 	}
 	logger = rawLogger.Sugar()
+	return logger
 }

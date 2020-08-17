@@ -44,7 +44,7 @@ func embedAPISpec() error {
 		return err
 	}
 
-	logger.Debugf("deploy: transformed %s => %s with embedded APIs", cfnstacks.APITemplate, cfnstacks.APIEmbeddedTemplate)
+	log.Debugf("deploy: transformed %s => %s with embedded APIs", cfnstacks.APITemplate, cfnstacks.APIEmbeddedTemplate)
 	return cfnparse.WriteTemplate(cfn, cfnstacks.APIEmbeddedTemplate)
 }
 

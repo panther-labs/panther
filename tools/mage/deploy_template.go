@@ -35,6 +35,7 @@ import (
 
 	"github.com/panther-labs/panther/pkg/awscfn"
 	"github.com/panther-labs/panther/tools/cfnstacks"
+	"github.com/panther-labs/panther/tools/mage/clients"
 )
 
 const (
@@ -56,7 +57,7 @@ func deployTemplate(
 ) (map[string]string, error) {
 
 	// 1) Generate final template, with large assets packaged in S3.
-	packagedTemplate, err := samPackage(*awsSession.Config.Region, templatePath, bucket)
+	packagedTemplate, err := samPackage(clients.Region(), templatePath, bucket)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +85,7 @@ func deployTemplate(
 	}
 
 	// 4) Execute the change set
-	return executeChangeSet(changeID, changeSetType, stack)
+	return executeChangeSet(*changeID, changeSetType, stack)
 }
 
 // Package resources in S3 and return the path to the modified CloudFormation template.
@@ -94,7 +95,7 @@ func deployTemplate(
 //
 // The bucket name can be blank if no S3 bucket is actually needed (e.g. bootstrap stack).
 func samPackage(region, templatePath, bucket string) (string, error) {
-	logger.Debugf("deploy: packaging %s assets", templatePath)
+	log.Debugf("deploy: packaging %s assets", templatePath)
 	if bucket == "" {
 		// "sam package" requires a bucket name even if it isn't used
 		// Put a default value that can't be possibly be a real bucket (names must have 3+ characters)
@@ -120,7 +121,7 @@ func uploadAsset(assetPath, bucket, stack string) (string, string, error) {
 	// We are using SHA1 for caching / asset lookup, we don't need strong cryptographic guarantees
 	hash := sha1.Sum(contents) // nolint: gosec
 	s3Key := fmt.Sprintf("%s/%x", stack, hash)
-	response, err := s3.New(awsSession).HeadObject(&s3.HeadObjectInput{Bucket: &bucket, Key: &s3Key})
+	response, err := clients.S3().HeadObject(&s3.HeadObjectInput{Bucket: &bucket, Key: &s3Key})
 	if err == nil {
 		return s3Key, *response.VersionId, nil // object already exists in S3 with the same hash
 	}
@@ -145,10 +146,8 @@ func uploadAsset(assetPath, bucket, stack string) (string, string, error) {
 // If the stack exists, its outputs are returned to the caller (once complete).
 //     A return of (nil, nil) means the stack does not exist.
 func prepareStack(stackName string) (map[string]string, error) {
-	client := cfn.New(awsSession)
-
 	// Wait for the stack to reach a terminal state
-	stack, err := awscfn.WaitForStack(client, logger, stackName, "", pollInterval)
+	stack, err := awscfn.WaitForStack(clients.Cfn(), log, stackName, "", pollInterval)
 	if err != nil {
 		return nil, err
 	}
@@ -172,17 +171,17 @@ func prepareStack(stackName string) (map[string]string, error) {
 		if stackName == cfnstacks.Bootstrap {
 			// If the very first stack failed to create, we need to do a full teardown before trying again.
 			// Otherwise, there may be orphaned S3 buckets that will never be used.
-			logger.Warnf("The very first %s stack never created successfully (%s)", cfnstacks.Bootstrap, status)
-			logger.Warnf("Running 'mage teardown' to fully remove orphaned resources before trying again")
+			log.Warnf("The very first %s stack never created successfully (%s)", cfnstacks.Bootstrap, status)
+			log.Warn("Running 'mage teardown' to fully remove orphaned resources before trying again")
 			Teardown()
 			return nil, nil
 		}
 
-		logger.Warnf("deleting stack %s (%s) before it can be re-deployed", stackName, status)
-		if _, err := client.DeleteStack(&cfn.DeleteStackInput{StackName: &stackName}); err != nil {
+		log.Warnf("deleting stack %s (%s) before it can be re-deployed", stackName, status)
+		if _, err := clients.Cfn().DeleteStack(&cfn.DeleteStackInput{StackName: &stackName}); err != nil {
 			return nil, fmt.Errorf("failed to start stack %s deletion: %v", stackName, err)
 		}
-		_, err = awscfn.WaitForStackDelete(client, logger, stackName, pollInterval)
+		_, err = awscfn.WaitForStackDelete(clients.Cfn(), log, stackName, pollInterval)
 		return nil, err // stack deleted - there are no outputs
 
 	default:
@@ -248,23 +247,22 @@ func createChangeSet(
 		createInput.SetTemplateURL(fmt.Sprintf("https://s3.amazonaws.com/%s/%s", bucket, key))
 	}
 
-	logger.Infof("deploy: %s CloudFormation stack %s", strings.ToLower(changeSetType), stack)
-	client := cfn.New(awsSession)
-	if _, err := client.CreateChangeSet(createInput); err != nil {
+	log.Infof("deploy: %s CloudFormation stack %s", strings.ToLower(changeSetType), stack)
+	if _, err := clients.Cfn().CreateChangeSet(createInput); err != nil {
 		return nil, fmt.Errorf("failed to create change set for stack %s: %v", stack, err)
 	}
 
-	return waitForChangeSet(client, *createInput.ChangeSetName, stack)
+	return waitForChangeSet(*createInput.ChangeSetName, stack)
 }
 
 // Wait for the change set to finish creating.
 //
 // Returns the change set ID, or nil if it was deleted (indicating no changes).
 // Returns an error if the final status is not CREATE_COMPLETE.
-func waitForChangeSet(client *cfn.CloudFormation, changeSetName, stack string) (*string, error) {
+func waitForChangeSet(changeSetName, stack string) (*string, error) {
 	input := &cfn.DescribeChangeSetInput{ChangeSetName: &changeSetName, StackName: &stack}
 	for {
-		response, err := client.DescribeChangeSet(input)
+		response, err := clients.Cfn().DescribeChangeSet(input)
 		if err != nil {
 			return nil, fmt.Errorf("failed to describe change set %s for stack %s: %v", changeSetName, stack, err)
 		}
@@ -281,10 +279,10 @@ func waitForChangeSet(client *cfn.CloudFormation, changeSetName, stack string) (
 				strings.HasPrefix(reason, "No updates are to be performed") {
 
 				// no changes needed - delete the change set
-				logger.Debugf("deploy: stack %s is already up to date", stack)
-				_, err := client.DeleteChangeSet(&cfn.DeleteChangeSetInput{ChangeSetName: &changeSetName, StackName: &stack})
+				log.Debugf("deploy: stack %s is already up to date", stack)
+				_, err := clients.Cfn().DeleteChangeSet(&cfn.DeleteChangeSetInput{ChangeSetName: &changeSetName, StackName: &stack})
 				if err != nil {
-					logger.Warnf("failed to delete change set %s for stack %s: %v", changeSetName, stack, err)
+					log.Warnf("failed to delete change set %s for stack %s: %v", changeSetName, stack, err)
 				}
 
 				return nil, nil
@@ -297,9 +295,8 @@ func waitForChangeSet(client *cfn.CloudFormation, changeSetName, stack string) (
 }
 
 // Execute a change set, blocking until the stack has finished updating and then returning its outputs.
-func executeChangeSet(changeSet *string, changeSetType string, stackName string) (map[string]string, error) {
-	client := cfn.New(awsSession)
-	_, err := client.ExecuteChangeSet(&cfn.ExecuteChangeSetInput{ChangeSetName: changeSet, StackName: &stackName})
+func executeChangeSet(changeSet, changeSetType, stackName string) (map[string]string, error) {
+	_, err := clients.Cfn().ExecuteChangeSet(&cfn.ExecuteChangeSetInput{ChangeSetName: &changeSet, StackName: &stackName})
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute change set for stack %s: %v", stackName, err)
 	}
@@ -307,9 +304,9 @@ func executeChangeSet(changeSet *string, changeSetType string, stackName string)
 	// Wait for change set to finish.
 	var stack *cfn.Stack
 	if changeSetType == "CREATE" {
-		stack, err = awscfn.WaitForStackCreate(client, logger, stackName, pollInterval)
+		stack, err = awscfn.WaitForStackCreate(clients.Cfn(), log, stackName, pollInterval)
 	} else {
-		stack, err = awscfn.WaitForStackUpdate(client, logger, stackName, pollInterval)
+		stack, err = awscfn.WaitForStackUpdate(clients.Cfn(), log, stackName, pollInterval)
 	}
 	if err != nil {
 		return nil, err

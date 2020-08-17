@@ -31,16 +31,16 @@ import (
 // Test and lint Golang source code
 func (Test) Go() {
 	if err := testGoUnit(); err != nil {
-		logger.Fatalf("go unit tests failed: %v", err)
+		log.Fatalf("go unit tests failed: %v", err)
 	}
 
 	if err := testGoLint(); err != nil {
-		logger.Fatalf("go linting failed: %v", err)
+		log.Fatalf("go linting failed: %v", err)
 	}
 }
 
 func testGoUnit() error {
-	logger.Info("test:go: running go unit tests")
+	log.Info("test:go: running go unit tests")
 	runGoTest := func(args ...string) error {
 		if mg.Verbose() {
 			// verbose mode - show "go test" output (all package names)
@@ -67,7 +67,7 @@ func testGoUnit() error {
 }
 
 func testGoLint() error {
-	logger.Info("test:go: running go metalinter")
+	log.Info("test:go: running go metalinter")
 	args := []string{"run", "--timeout", "10m", "-j", strconv.Itoa(maxWorkers)}
 	if mg.Verbose() {
 		args = append(args, "-v")

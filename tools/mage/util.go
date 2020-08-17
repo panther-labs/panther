@@ -27,20 +27,16 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
+
+	"github.com/panther-labs/panther/tools/config"
+	"github.com/panther-labs/panther/tools/mage/clients"
+	"github.com/panther-labs/panther/tools/mage/logger"
 )
 
-// Package global set by getSession()
-var awsSession *session.Session
-
-const (
-	maxRetries = 20 // try very hard, avoid throttles
-)
+var log = logger.Get()
 
 // For CPU-intensive operations, limit the max number of worker goroutines.
 var maxWorkers = func() int {
@@ -94,16 +90,24 @@ func logResults(results chan goroutineResult, command string, start, end, total 
 	for i := start; i <= end; i++ {
 		r := <-results
 		if r.err == nil {
-			logger.Infof("    √ %s finished (%d/%d)", r.summary, i, total)
+			log.Infof("    √ %s finished (%d/%d)", r.summary, i, total)
 		} else {
-			logger.Errorf("    X %s failed (%d/%d): %v", r.summary, i, total, r.err)
+			log.Errorf("    X %s failed (%d/%d): %v", r.summary, i, total, r.err)
 			erroredTasks = append(erroredTasks, r.summary)
 		}
 	}
 
 	if len(erroredTasks) > 0 {
-		logger.Fatalf("%s failed: %s", command, strings.Join(erroredTasks, ", "))
+		log.Fatalf("%s failed: %s", command, strings.Join(erroredTasks, ", "))
 	}
+}
+
+func getSettings() *config.PantherConfig {
+	settings, err := config.Settings()
+	if err != nil {
+		log.Fatalf("failed to read config file %s: %v", config.Filepath, err)
+	}
+	return settings
 }
 
 // Wrapper around filepath.Walk, logging errors as fatal.
@@ -116,7 +120,7 @@ func walk(root string, handler func(string, os.FileInfo)) {
 		return nil
 	})
 	if err != nil {
-		logger.Fatalf("couldn't traverse %s: %v", root, err)
+		log.Fatalf("couldn't traverse %s: %v", root, err)
 	}
 }
 
@@ -124,7 +128,7 @@ func walk(root string, handler func(string, os.FileInfo)) {
 func readFile(path string) []byte {
 	contents, err := ioutil.ReadFile(path)
 	if err != nil {
-		logger.Fatalf("failed to read %s: %v", path, err)
+		log.Fatalf("failed to read %s: %v", path, err)
 	}
 	return contents
 }
@@ -141,42 +145,16 @@ func writeFile(path string, data []byte) error {
 	return nil
 }
 
-// Build awsSession global from the environment or a credentials file
-func getSession() {
-	var err error
-	awsSession, err = session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries))
-	if err != nil {
-		logger.Fatalf("failed to create AWS session: %v", err)
-	}
-	if aws.StringValue(awsSession.Config.Region) == "" {
-		logger.Fatalf("no region specified, set AWS_REGION or AWS_DEFAULT_REGION")
-	}
-
-	// Load and cache credentials now so we can report a meaningful error
-	creds, err := awsSession.Config.Credentials.Get()
-	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NoCredentialProviders" {
-			logger.Fatalf("no AWS credentials found, set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY")
-		}
-		logger.Fatalf("failed to load AWS credentials: %v", err)
-	}
-
-	logger.Debugw("loaded AWS credentials",
-		"provider", creds.ProviderName,
-		"region", awsSession.Config.Region,
-		"accessKeyId", creds.AccessKeyID)
-}
-
 // Set global gitVersion, warn if not deploying a tagged release
 func getGitVersion(warnWhenUntagged bool) {
 	var err error
 	gitVersion, err = sh.Output("git", "describe", "--tags")
 	if err != nil {
-		logger.Fatalf("git describe failed: %v", err)
+		log.Fatalf("git describe failed: %v", err)
 	}
 	// The gitVersion is "v0.3.0" on tagged release, otherwise something like "v0.3.0-128-g77fd9ff"
 	if warnWhenUntagged && strings.Contains(gitVersion, "-") {
-		logger.Warnf("%s is not a tagged release, proceed at your own risk", gitVersion)
+		log.Warnf("%s is not a tagged release, proceed at your own risk", gitVersion)
 	}
 }
 
@@ -188,10 +166,8 @@ func uploadFileToS3(path, bucket, key string) (*s3manager.UploadOutput, error) {
 	}
 	defer file.Close()
 
-	uploader := s3manager.NewUploader(awsSession)
-
-	logger.Debugf("uploading %s to s3://%s/%s", path, bucket, key)
-	return uploader.Upload(&s3manager.UploadInput{
+	log.Debugf("uploading %s to s3://%s/%s", path, bucket, key)
+	return clients.S3Uploader().Upload(&s3manager.UploadInput{
 		Body:   file,
 		Bucket: &bucket,
 		Key:    &key,

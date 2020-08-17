@@ -36,6 +36,7 @@ import (
 	"github.com/panther-labs/panther/tools/cfnparse"
 	"github.com/panther-labs/panther/tools/cfnstacks"
 	"github.com/panther-labs/panther/tools/config"
+	"github.com/panther-labs/panther/tools/mage/clients"
 )
 
 const (
@@ -53,21 +54,19 @@ type Master mg.Namespace
 
 // Deploy Deploy single master template (deployments/master.yml) nesting all other stacks
 func (Master) Deploy() {
-	getSession()
-	region := *awsSession.Config.Region
 	bucket, firstUserEmail, ecrRegistry := masterDeployPreCheck()
 
 	masterBuild()
-	pkg := masterPackage(bucket, getMasterVersion(), ecrRegistry)
+	pkg := masterPackage(clients.Region(), bucket, getMasterVersion(), ecrRegistry)
 
 	err := sh.RunV(filepath.Join(pythonVirtualEnvPath, "bin", "sam"), "deploy",
 		"--capabilities", "CAPABILITY_IAM", "CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND",
-		"--region", region,
+		"--region", clients.Region(),
 		"--stack-name", masterStackName,
 		"-t", pkg,
 		"--parameter-overrides", "FirstUserEmail="+firstUserEmail, "ImageRegistry="+ecrRegistry)
 	if err != nil {
-		logger.Fatal(err)
+		log.Fatal(err)
 	}
 }
 
@@ -75,26 +74,26 @@ func (Master) Deploy() {
 //
 // Returns bucket, firstUserEmail, ecrRegistry
 func masterDeployPreCheck() (string, string, string) {
-	deployPreCheck(*awsSession.Config.Region, false)
+	deployPreCheck(false)
 
-	_, err := cloudformation.New(awsSession).DescribeStacks(
+	_, err := clients.Cfn().DescribeStacks(
 		&cloudformation.DescribeStacksInput{StackName: aws.String(cfnstacks.Bootstrap)})
 	if err == nil {
 		// Multiple Panther deployments won't work in the same region in the same account.
 		// Named resources (e.g. IAM roles) will conflict
-		logger.Fatalf("%s stack already exists, can't deploy master template", cfnstacks.Bootstrap)
+		log.Fatalf("%s stack already exists, can't deploy master template", cfnstacks.Bootstrap)
 	}
 
 	bucket := os.Getenv("BUCKET")
 	firstUserEmail := os.Getenv("EMAIL")
 	ecrRegistry := os.Getenv("ECR_REGISTRY")
 	if bucket == "" || firstUserEmail == "" || ecrRegistry == "" {
-		logger.Error("BUCKET, EMAIL, and ECR_REGISTRY env variables must be defined")
-		logger.Info("    BUCKET - S3 bucket for staging assets in the deployment region")
-		logger.Info("    EMAIL - email for inviting the first Panther admin user")
-		logger.Info("    ECR_REGISTRY - where to push docker images, e.g. " +
+		log.Error("BUCKET, EMAIL, and ECR_REGISTRY env variables must be defined")
+		log.Info("    BUCKET - S3 bucket for staging assets in the deployment region")
+		log.Info("    EMAIL - email for inviting the first Panther admin user")
+		log.Info("    ECR_REGISTRY - where to push docker images, e.g. " +
 			"111122223333.dkr.ecr.us-west-2.amazonaws.com/panther-web")
-		logger.Fatal("invalid environment")
+		log.Fatal("invalid environment")
 	}
 
 	return bucket, firstUserEmail, ecrRegistry
@@ -102,13 +101,13 @@ func masterDeployPreCheck() (string, string, string) {
 
 // Publish Publish a new Panther release (Panther team only)
 func (Master) Publish() {
-	deployPreCheck("us-east-1", false)
+	deployPreCheck(false)
 	version := getMasterVersion()
 
-	logger.Infof("Publishing panther-community v%s to %s", version, strings.Join(publishRegions, ","))
+	log.Infof("Publishing panther-community v%s to %s", version, strings.Join(publishRegions, ","))
 	result := prompt.Read("Are you sure you want to continue? (yes|no) ", prompt.NonemptyValidator)
 	if strings.ToLower(result) != "yes" {
-		logger.Fatal("publish aborted")
+		log.Fatal("publish aborted")
 	}
 
 	// To be safe, always clean and reset the repo before building the assets
@@ -130,29 +129,29 @@ func masterBuild() {
 	// Use the pip libraries in the default settings file when building the layer.
 	defaultConfig, err := config.Settings()
 	if err != nil {
-		logger.Fatal(err)
+		log.Fatal(err)
 	}
 
 	if err = buildLayer(defaultConfig.Infra.PipLayer); err != nil {
-		logger.Fatal(err)
+		log.Fatal(err)
 	}
 }
 
 // Package assets needed for the master template.
 //
 // Returns the path to the final generated template.
-func masterPackage(bucket, pantherVersion, imgRegistry string) string {
-	pkg, err := samPackage(*awsSession.Config.Region, "deployments/master.yml", bucket)
+func masterPackage(region, bucket, pantherVersion, imgRegistry string) string {
+	pkg, err := samPackage(region, "deployments/master.yml", bucket)
 	if err != nil {
-		logger.Fatal(err)
+		log.Fatal(err)
 	}
 
 	dockerImage, err := buildAndPushImageFromSource(imgRegistry, pantherVersion)
 	if err != nil {
-		logger.Fatal(err)
+		log.Fatal(err)
 	}
 
-	logger.Infof("successfully published docker image %s", dockerImage)
+	log.Infof("successfully published docker image %s", dockerImage)
 	return pkg
 }
 
@@ -170,19 +169,20 @@ func getMasterVersion() string {
 
 	var cfn template
 	if err := cfnparse.ParseTemplate(pythonVirtualEnvPath, "deployments/master.yml", &cfn); err != nil {
-		logger.Fatal(err)
+		log.Fatal(err)
 	}
 
 	if cfn.Mappings.Constants.Panther.Version == "" {
-		logger.Fatal("Mappings:Constants:Panther:Version not found in deployments/master.yml")
+		log.Fatal("Mappings:Constants:Panther:Version not found in deployments/master.yml")
 	}
 
 	return cfn.Mappings.Constants.Panther.Version
 }
 
 func publishToRegion(version, region string) {
-	logger.Infof("publishing to %s", region)
-	awsSession = session.Must(session.NewSession(
+	log.Infof("publishing to %s", region)
+	// We need a different client for each region, so we don't use the global AWS clients pkg here.
+	awsSession := session.Must(session.NewSession(
 		aws.NewConfig().WithMaxRetries(10).WithRegion(region)))
 
 	bucket := fmt.Sprintf(publicAssetsBucket, region)
@@ -193,21 +193,21 @@ func publishToRegion(version, region string) {
 	// in the template file and we don't want to overwrite a previous version.
 	_, err := s3.New(awsSession).HeadObject(&s3.HeadObjectInput{Bucket: &bucket, Key: &s3Key})
 	if err == nil {
-		logger.Errorf("%s already exists", s3URL)
+		log.Errorf("%s already exists", s3URL)
 		return
 	}
 	if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != "NotFound" {
 		// Some error other than 'not found'
-		logger.Fatalf("failed to describe %s : %v", s3URL, err)
+		log.Fatalf("failed to describe %s : %v", s3URL, err)
 	}
 
 	// Publish S3 assets and ECR docker image
-	pkg := masterPackage(bucket, version, fmt.Sprintf(publicImageRepository, region))
+	pkg := masterPackage(region, bucket, version, fmt.Sprintf(publicImageRepository, region))
 
 	// Upload final packaged template
 	if _, err := uploadFileToS3(pkg, bucket, s3Key); err != nil {
-		logger.Fatalf("failed to upload %s : %v", s3URL, err)
+		log.Fatalf("failed to upload %s : %v", s3URL, err)
 	}
 
-	logger.Infof("successfully published %s", s3URL)
+	log.Infof("successfully published %s", s3URL)
 }
