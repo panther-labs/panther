@@ -19,16 +19,14 @@ package awslogs
  */
 
 import (
+	"errors"
 	jsoniter "github.com/json-iterator/go"
+	"strings"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/pkg/extract"
 )
-
-type CloudTrailRecords struct {
-	Records []*CloudTrail `json:"Records" validate:"required,dive"`
-}
 
 // CloudTrail is a record from the Records[*] JSON of an AWS CloudTrail API log.
 // nolint:lll
@@ -115,30 +113,44 @@ type CloudTrailParser struct{}
 
 var _ parsers.LogParser = (*CloudTrailParser)(nil)
 
-func (p *CloudTrailParser) New() parsers.LogParser {
+func (*CloudTrailParser) New() parsers.LogParser {
 	return &CloudTrailParser{}
 }
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *CloudTrailParser) Parse(log string) ([]*parsers.PantherLog, error) {
-	cloudTrailRecords := &CloudTrailRecords{}
-	err := jsoniter.UnmarshalFromString(log, cloudTrailRecords)
-	if err != nil {
+func (p *CloudTrailParser) Parse(log string) (results []*parsers.PantherLog, err error) {
+	// Use strings.Reader to avoid duplicate allocation of `log` as bytes
+	const bufferSize = 8192
+	iter := jsoniter.Parse(jsoniter.ConfigDefault, strings.NewReader(log), bufferSize)
+	// Seek to Records key
+	const fieldNameRecords = `Records`
+	for key := iter.ReadObject(); key != ""; key = iter.ReadObject() {
+		if key != fieldNameRecords {
+			iter.Skip()
+			continue
+		}
+		// Pre-allocate some results to avoid multiple slice expansions
+		const minResultSize = 1000
+		results = make([]*parsers.PantherLog, 0, minResultSize)
+		// Go over all records parsing results
+		for iter.ReadArray() {
+			event := CloudTrail{}
+			iter.ReadVal(&event)
+			if err := iter.Error; err != nil {
+				return nil, err
+			}
+			event.updatePantherFields(p)
+			if err := parsers.ValidateStruct(&event); err != nil {
+				return nil, err
+			}
+			results = append(results, event.Log())
+		}
+		return results, nil
+	}
+	if err := iter.Error; err != nil {
 		return nil, err
 	}
-
-	for _, event := range cloudTrailRecords.Records {
-		event.updatePantherFields(p)
-	}
-
-	if err := parsers.Validator.Struct(cloudTrailRecords); err != nil {
-		return nil, err
-	}
-	result := make([]*parsers.PantherLog, len(cloudTrailRecords.Records))
-	for i, event := range cloudTrailRecords.Records {
-		result[i] = event.Log()
-	}
-	return result, nil
+	return nil, errors.New(`missing 'Records' field`)
 }
 
 // LogType returns the log type supported by this parser
