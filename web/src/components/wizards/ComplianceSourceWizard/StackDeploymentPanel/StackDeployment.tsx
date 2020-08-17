@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Text, Box, Spinner, Link, FormError } from 'pouncejs';
+import { Text, Box, Spinner, Link, FormError, Flex } from 'pouncejs';
 import React from 'react';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useFormikContext } from 'formik';
@@ -54,7 +54,11 @@ const StackDeployment: React.FC = () => {
 
   const renderContent = () => {
     if (loading) {
-      return <Spinner size="small" />;
+      return (
+        <Flex width={1} justify="center" my={5}>
+          <Spinner size="medium" />
+        </Flex>
+      );
     }
 
     if (error) {

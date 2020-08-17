@@ -16,4 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from 'Components/wizards/CreateDestinationWizard';
+import CreateDestinationWizard from 'Components/wizards/CreateDestinationWizard';
+import withSEO from 'Hoc/withSEO';
+
+export default withSEO({ title: 'New Destination' })(CreateDestinationWizard);
