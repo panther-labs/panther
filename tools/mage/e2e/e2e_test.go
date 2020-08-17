@@ -24,15 +24,32 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/panther-labs/panther/tools/mage/logger"
 )
 
-// Writing this as a real "test" (instead of in mage directly) makes it easier to add assertions.
+var log = logger.Get()
+
+// NOTE to self - adding this as a separate pkg makes it easier for others to extend it
+// To avoid importing from mage directly (which would encourage exporting funcs that could turn into mage targets),
+// I've been splitting out parts of mage into other packages.
+
+// Using the testing library (instead of adding to mage directly) makes it easier to add assertions.
 // This also avoids bloating mage with all of the compiled testing code.
+//
+// It's recommended to run this test in a fresh account when possible.
 func TestIntegrationEndToEnd(t *testing.T) {
 	if strings.ToLower(os.Getenv("INTEGRATION_TEST")) != "true" {
 		t.Skip()
 	}
 
-	assert.Equal(t, true, false)
+	t.Run("PreTeardown", preTeardown)
+}
+
+// Teardown all Panther resources in the region to start with a clean slate.
+func preTeardown(t *testing.T) {
+	// NOTE: AWS does not allow programmatically removing AWSService IAM roles
+
+	// We want timestamps, colors, and levels from the standard mage logger,
+	// so we use that instead of t.Log().
+	log.Info("***** test:e2e : Stage 1/8 : Pre-Teardown *****")
 }

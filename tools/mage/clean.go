@@ -21,6 +21,8 @@ package mage
 import (
 	"os"
 	"strings"
+
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 // Clean Remove dev libraries and build/test artifacts
@@ -29,7 +31,7 @@ func Clean() {
 
 	// Remove __pycache__ folders
 	for _, target := range pyTargets {
-		walk(target, func(path string, info os.FileInfo) {
+		util.Walk(target, func(path string, info os.FileInfo) {
 			if strings.HasSuffix(path, "__pycache__") {
 				paths = append(paths, path)
 			}

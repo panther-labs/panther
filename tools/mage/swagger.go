@@ -27,6 +27,7 @@ import (
 
 	"github.com/panther-labs/panther/tools/cfnparse"
 	"github.com/panther-labs/panther/tools/cfnstacks"
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 const (
@@ -76,7 +77,7 @@ func embedAPIs(cfn map[string]interface{}) error {
 // if we just reference a swagger file in S3 - the api spec must be embedded into the CloudFormation itself.
 func loadSwagger(filename string) (map[string]interface{}, error) {
 	var apiBody map[string]interface{}
-	if err := yaml.Unmarshal(readFile(filename), &apiBody); err != nil {
+	if err := yaml.Unmarshal(util.ReadFile(filename), &apiBody); err != nil {
 		return nil, fmt.Errorf("failed to parse file %s: %v", filename, err)
 	}
 

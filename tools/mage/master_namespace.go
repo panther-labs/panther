@@ -37,6 +37,7 @@ import (
 	"github.com/panther-labs/panther/tools/cfnstacks"
 	"github.com/panther-labs/panther/tools/config"
 	"github.com/panther-labs/panther/tools/mage/clients"
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 const (
@@ -205,7 +206,7 @@ func publishToRegion(version, region string) {
 	pkg := masterPackage(region, bucket, version, fmt.Sprintf(publicImageRepository, region))
 
 	// Upload final packaged template
-	if _, err := uploadFileToS3(pkg, bucket, s3Key); err != nil {
+	if _, err := util.UploadFileToS3(pkg, bucket, s3Key); err != nil {
 		log.Fatalf("failed to upload %s : %v", s3URL, err)
 	}
 

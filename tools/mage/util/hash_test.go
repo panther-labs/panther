@@ -1,4 +1,4 @@
-package mage
+package util
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -34,28 +34,28 @@ func TestFileDiffs(t *testing.T) {
 	type set = map[string][16]byte
 
 	// no diffs
-	assert.Nil(t, fileDiffs(nil, nil))
-	assert.Nil(t, fileDiffs(
+	assert.Nil(t, FileDiffs(nil, nil))
+	assert.Nil(t, FileDiffs(
 		set{"A": hello, "B": panther, "C": world},
 		set{"C": world, "B": panther, "A": hello}))
 
 	// only modifications
-	assert.Equal(t, []string{"~ B"}, fileDiffs(
+	assert.Equal(t, []string{"~ B"}, FileDiffs(
 		set{"A": hello, "B": panther, "C": world},
 		set{"A": hello, "B": world, "C": world}))
 
 	// only additions
-	result := fileDiffs(nil, set{"A": hello, "B": panther, "C": world})
+	result := FileDiffs(nil, set{"A": hello, "B": panther, "C": world})
 	sort.Strings(result)
 	assert.Equal(t, []string{"+ A", "+ B", "+ C"}, result)
 
 	// only deletions
-	result = fileDiffs(set{"A": hello, "B": panther, "C": world}, set{"A": hello})
+	result = FileDiffs(set{"A": hello, "B": panther, "C": world}, set{"A": hello})
 	sort.Strings(result)
 	assert.Equal(t, []string{"- B", "- C"}, result)
 
 	// all types
-	result = fileDiffs(
+	result = FileDiffs(
 		set{"A": hello, "B": panther, "C": world, "D": hello},
 		set{"A": panther, "C": world, "D": world, "E": hello},
 	)

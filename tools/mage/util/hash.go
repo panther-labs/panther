@@ -1,4 +1,4 @@
-package mage
+package util
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -41,7 +41,7 @@ func fileMD5(path string) ([16]byte, error) {
 // Hash every file in the given directory
 //
 // Returns map from file path => MD5 sum
-func fileHashMap(roots ...string) (map[string][16]byte, error) {
+func FileHashMap(roots ...string) (map[string][16]byte, error) {
 	result := make(map[string][16]byte)
 
 	for _, root := range roots {
@@ -68,15 +68,10 @@ func fileHashMap(roots ...string) (map[string][16]byte, error) {
 	return result, nil
 }
 
-// Hash every source file in the repo to check for diffs before vs after formatting.
-func sourceHashes() (map[string][16]byte, error) {
-	return fileHashMap(licensePaths...)
-}
-
 // Return a list of file paths that are different between the two hash maps.
 //
 // Paths are prefixed with '~ ' if modified, '+ ' if added, '- ' if removed
-func fileDiffs(before, after map[string][16]byte) []string {
+func FileDiffs(before, after map[string][16]byte) []string {
 	var diffs []string
 	for path, hash := range before {
 		afterHash, ok := after[path]

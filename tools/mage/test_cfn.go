@@ -30,6 +30,7 @@ import (
 
 	"github.com/panther-labs/panther/tools/cfnparse"
 	"github.com/panther-labs/panther/tools/cfnstacks"
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 var cfnTests = []testTask{
@@ -61,7 +62,7 @@ func (Test) Cfn() {
 
 func testCfnLint() error {
 	var templates []string
-	walk("deployments", func(path string, info os.FileInfo) {
+	util.Walk("deployments", func(path string, info os.FileInfo) {
 		if !info.IsDir() && filepath.Ext(path) == ".yml" && filepath.Base(path) != "panther_config.yml" {
 			templates = append(templates, path)
 		}
@@ -74,7 +75,7 @@ func testCfnLint() error {
 	// which CFN does not understand. So we force string values to serialize them correctly.
 	args := []string{"-x", "E3012:strict=false", "--"}
 	args = append(args, templates...)
-	if err := sh.RunV(pythonLibPath("cfn-lint"), args...); err != nil {
+	if err := sh.RunV(util.PythonLibPath("cfn-lint"), args...); err != nil {
 		return err
 	}
 

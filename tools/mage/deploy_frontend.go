@@ -32,6 +32,7 @@ import (
 	"github.com/panther-labs/panther/tools/cfnstacks"
 	"github.com/panther-labs/panther/tools/config"
 	"github.com/panther-labs/panther/tools/mage/clients"
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 const awsEnvFile = "out/.env.aws"
@@ -72,7 +73,7 @@ func deployFrontend(bootstrapOutputs map[string]string, settings *config.Panther
 		"GraphQLApiEndpoint":         bootstrapOutputs["GraphQLApiEndpoint"],
 		"Image":                      dockerImage,
 		"InitialAnalysisPackUrls":    strings.Join(settings.Setup.InitialAnalysisSets, ","),
-		"PantherVersion":             gitVersion,
+		"PantherVersion":             util.RepoVersion(),
 		"SecurityGroup":              bootstrapOutputs["WebSecurityGroup"],
 		"SubnetOneId":                bootstrapOutputs["SubnetOneId"],
 		"SubnetTwoId":                bootstrapOutputs["SubnetTwoId"],

@@ -26,6 +26,8 @@ import (
 
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
+
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 const (
@@ -53,40 +55,40 @@ func Setup() {
 		log.Fatalf("failed to create setup directory %s: %v", setupDirectory, err)
 	}
 
-	results := make(chan goroutineResult)
+	results := make(chan util.TaskResult)
 	count := 0
 
 	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"download go modules", installGoModules()}
+	go func(c chan util.TaskResult) {
+		c <- util.TaskResult{Summary: "download go modules", Err: installGoModules()}
 	}(results)
 
 	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"download go-swagger", installSwagger(env)}
+	go func(c chan util.TaskResult) {
+		c <- util.TaskResult{Summary: "download go-swagger", Err: installSwagger(env)}
 	}(results)
 
 	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"download golangci-lint", installGolangCiLint(env)}
+	go func(c chan util.TaskResult) {
+		c <- util.TaskResult{Summary: "download golangci-lint", Err: installGolangCiLint(env)}
 	}(results)
 
 	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"download terraform", installTerraform(env)}
+	go func(c chan util.TaskResult) {
+		c <- util.TaskResult{Summary: "download terraform", Err: installTerraform(env)}
 	}(results)
 
 	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"pip install", installPythonEnv()}
+	go func(c chan util.TaskResult) {
+		c <- util.TaskResult{Summary: "pip install", Err: installPythonEnv()}
 	}(results)
 
 	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"npm install", installNodeModules()}
+	go func(c chan util.TaskResult) {
+		c <- util.TaskResult{Summary: "npm install", Err: installNodeModules()}
 	}(results)
 
-	logResults(results, "setup", 1, count, count)
+	util.LogResults(results, "setup", 1, count, count)
 }
 
 // Fetch all Go modules needed for tests and compilation.
@@ -195,7 +197,7 @@ func installTerraform(uname string) error {
 func installPythonEnv() error {
 	// Create .setup/venv if it doesn't already exist
 	if info, err := os.Stat(pythonVirtualEnvPath); err == nil && info.IsDir() {
-		if runningInCI() {
+		if util.IsRunningInCI() {
 			// If .setup/venv already exists in CI, it must have been restored from the cache.
 			log.Info("setup: skipping pip install")
 			return nil
@@ -212,12 +214,12 @@ func installPythonEnv() error {
 	if !mg.Verbose() {
 		args = append(args, "--quiet")
 	}
-	if err := sh.Run(pythonLibPath("pip3"), args...); err != nil {
+	if err := sh.Run(util.PythonLibPath("pip3"), args...); err != nil {
 		return fmt.Errorf("pip installation failed: %v", err)
 	}
 
 	// update cfn linter specs (cnf-lint is a python package)
-	if err := sh.RunV(pythonLibPath("cfn-lint"), "--update-specs"); err != nil {
+	if err := sh.RunV(util.PythonLibPath("cfn-lint"), "--update-specs"); err != nil {
 		return err
 	}
 
@@ -226,7 +228,7 @@ func installPythonEnv() error {
 
 // Install npm modules
 func installNodeModules() error {
-	if _, err := os.Stat("node_modules"); err == nil && runningInCI() {
+	if _, err := os.Stat("node_modules"); err == nil && util.IsRunningInCI() {
 		// In CI, if node_modules already exist, they must have been restored from the cache.
 		// Stop early (otherwise, npm install takes ~10 seconds to figure out it has nothing to do).
 		log.Info("setup: skipping npm install")

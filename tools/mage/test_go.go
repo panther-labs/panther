@@ -26,6 +26,8 @@ import (
 
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
+
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 // Test and lint Golang source code
@@ -63,12 +65,12 @@ func testGoUnit() error {
 	}
 
 	// unit tests and race detection
-	return runGoTest("test", "-race", "-p", strconv.Itoa(maxWorkers), "-vet", "", "-cover", "./...")
+	return runGoTest("test", "-race", "-p", strconv.Itoa(util.MaxWorkers), "-vet", "", "-cover", "./...")
 }
 
 func testGoLint() error {
 	log.Info("test:go: running go metalinter")
-	args := []string{"run", "--timeout", "10m", "-j", strconv.Itoa(maxWorkers)}
+	args := []string{"run", "--timeout", "10m", "-j", strconv.Itoa(util.MaxWorkers)}
 	if mg.Verbose() {
 		args = append(args, "-v")
 	}

@@ -27,7 +27,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/magefile/mage/sh"
 
@@ -40,6 +39,8 @@ import (
 	"github.com/panther-labs/panther/tools/cfnstacks"
 	"github.com/panther-labs/panther/tools/config"
 	"github.com/panther-labs/panther/tools/mage/clients"
+	"github.com/panther-labs/panther/tools/mage/logger"
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 const (
@@ -47,6 +48,8 @@ const (
 	layerSourceDir = "out/pip/analysis/python"
 	layerZipfile   = "out/layer.zip"
 )
+
+var log = logger.Get()
 
 // Not all AWS services are available in every region. In particular, Panther will currently NOT work in:
 //     n. california, us-gov, china, paris, stockholm, brazil, osaka, or bahrain
@@ -73,7 +76,6 @@ var supportedRegions = map[string]bool{
 // Deploy Deploy Panther to your AWS account
 func Deploy() {
 	start := time.Now()
-
 	deployPreCheck(true)
 
 	if stack := os.Getenv("STACK"); stack != "" {
@@ -87,9 +89,10 @@ func Deploy() {
 		return
 	}
 
-	settings := getSettings()
-	log.Infof("deploying Panther %s to account %s (%s)", gitVersion, clients.AccountID(), clients.Region())
+	log.Infof("deploying Panther %s to account %s (%s)",
+		util.RepoVersion(), clients.AccountID(), clients.Region())
 
+	settings := getSettings()
 	setFirstUser(settings)
 	outputs := bootstrap(settings)
 	deployMainStacks(settings, outputs)
@@ -129,9 +132,6 @@ func deployPreCheck(checkForOldVersion bool) {
 		log.Fatalf("swagger is not available (%v): try 'mage setup'", err)
 	}
 
-	// Set global gitVersion, warn if not deploying a tagged release
-	getGitVersion(true)
-
 	// There were mage migrations to help with v1.3 and v1.4 source deployments,
 	// but these were removed in v1.6. As a result, old deployments first need to upgrade to v1.5.1
 	if checkForOldVersion {
@@ -141,9 +141,23 @@ func deployPreCheck(checkForOldVersion bool) {
 		}
 		if bootstrapVersion != "" && bootstrapVersion < "v1.4.0" {
 			log.Fatalf("trying to upgrade from %s to %s will not work - upgrade to v1.5.1 first",
-				bootstrapVersion, gitVersion)
+				bootstrapVersion, util.RepoVersion())
 		}
 	}
+
+	// Warn if deploying untagged version
+	// The gitVersion is "v0.3.0" on tagged release, otherwise something like "v0.3.0-128-g77fd9ff"
+	if version := util.RepoVersion(); strings.Contains(util.RepoVersion(), "-") {
+		log.Warnf("%s is not a tagged release, proceed at your own risk", version)
+	}
+}
+
+func getSettings() *config.PantherConfig {
+	settings, err := config.Settings()
+	if err != nil {
+		log.Fatalf("failed to read config file %s: %v", config.Filepath, err)
+	}
+	return settings
 }
 
 // Prompt for the name and email of the initial user if not already defined.
@@ -255,56 +269,56 @@ func bootstrap(settings *config.PantherConfig) map[string]string {
 
 // Deploy main stacks (everything after bootstrap and bootstrap-gateway)
 func deployMainStacks(settings *config.PantherConfig, outputs map[string]string) {
-	results := make(chan goroutineResult)
+	results := make(chan util.TaskResult)
 	count := 0
 
 	// Appsync
 	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{summary: cfnstacks.Appsync, err: deployAppsyncStack(outputs)}
+	go func(c chan util.TaskResult) {
+		c <- util.TaskResult{Summary: cfnstacks.Appsync, Err: deployAppsyncStack(outputs)}
 	}(results)
 
 	// Cloud security
 	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{summary: cfnstacks.Cloudsec, err: deployCloudSecurityStack(settings, outputs)}
+	go func(c chan util.TaskResult) {
+		c <- util.TaskResult{Summary: cfnstacks.Cloudsec, Err: deployCloudSecurityStack(settings, outputs)}
 	}(results)
 
 	// Core
 	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{summary: cfnstacks.Core, err: deployCoreStack(settings, outputs)}
+	go func(c chan util.TaskResult) {
+		c <- util.TaskResult{Summary: cfnstacks.Core, Err: deployCoreStack(settings, outputs)}
 	}(results)
 
 	// Dashboards
 	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{summary: cfnstacks.Dashboard, err: deployDashboardStack(outputs["SourceBucket"])}
+	go func(c chan util.TaskResult) {
+		c <- util.TaskResult{Summary: cfnstacks.Dashboard, Err: deployDashboardStack(outputs["SourceBucket"])}
 	}(results)
 
 	// Log analysis
 	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{summary: cfnstacks.LogAnalysis, err: deployLogAnalysisStack(settings, outputs)}
+	go func(c chan util.TaskResult) {
+		c <- util.TaskResult{Summary: cfnstacks.LogAnalysis, Err: deployLogAnalysisStack(settings, outputs)}
 	}(results)
 
 	// Wait for stacks to finish.
 	// There are two stacks before and two stacks after.
-	logResults(results, "deploy", 3, count+2, cfnstacks.NumStacks)
+	util.LogResults(results, "deploy", 3, count+2, cfnstacks.NumStacks)
 
-	go func(c chan goroutineResult) {
+	go func(c chan util.TaskResult) {
 		// Web stack requires core stack to exist first
-		c <- goroutineResult{summary: cfnstacks.Frontend, err: deployFrontend(outputs, settings)}
+		c <- util.TaskResult{Summary: cfnstacks.Frontend, Err: deployFrontend(outputs, settings)}
 	}(results)
 
 	// Onboard Panther to scan itself
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{summary: cfnstacks.Onboard, err: deployOnboardStack(settings, outputs)}
+	go func(c chan util.TaskResult) {
+		c <- util.TaskResult{Summary: cfnstacks.Onboard, Err: deployOnboardStack(settings, outputs)}
 	}(results)
 
 	// Log stack results, counting where the last parallel group left off to give the illusion of
 	// one continuous deploy progress tracker.
-	logResults(results, "deploy", count+3, cfnstacks.NumStacks, cfnstacks.NumStacks)
+	util.LogResults(results, "deploy", count+3, cfnstacks.NumStacks, cfnstacks.NumStacks)
 }
 
 func deployBootstrapStack(settings *config.PantherConfig) (map[string]string, error) {
@@ -495,7 +509,7 @@ func deployOnboardStack(settings *config.PantherConfig, outputs map[string]strin
 		})
 	} else {
 		// Delete the onboard stack if OnboardSelf was toggled off
-		err = deleteStack(aws.String(cfnstacks.Onboard))
+		err = awscfn.DeleteStack(clients.Cfn(), log, cfnstacks.Onboard, pollInterval)
 	}
 
 	return err
@@ -511,5 +525,5 @@ func customResourceVersion() string {
 	// By default, just use the major release version so developers do not have to trigger every
 	// custom resource on every deploy.
 	// The gitVersion is "v0.3.0" on tagged release, otherwise something like "v0.3.0-128-g77fd9ff"
-	return strings.Split(gitVersion, "-")[0]
+	return strings.Split(util.RepoVersion(), "-")[0]
 }

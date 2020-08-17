@@ -29,6 +29,8 @@ import (
 
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
+
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 const swaggerGlob = "api/gateway/*/api.yml"
@@ -84,7 +86,7 @@ func (b Build) generateSwaggerClients() error {
 		//     import "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
 		// should be
 		//     import "github.com/panther-labs/panther/api/gateway/remediation/client/operations"
-		walk(client, func(path string, info os.FileInfo) {
+		util.Walk(client, func(path string, info os.FileInfo) {
 			if info.IsDir() || filepath.Ext(path) != ".go" {
 				return
 			}
@@ -143,7 +145,7 @@ func (b Build) Lambda() {
 // If you're adding a new module, run "go get ./..." before building to fetch the new module.
 func (b Build) lambda() error {
 	var packages []string
-	walk("internal", func(path string, info os.FileInfo) {
+	util.Walk("internal", func(path string, info os.FileInfo) {
 		if info.IsDir() && strings.HasSuffix(path, "main") {
 			packages = append(packages, path)
 		}
@@ -195,14 +197,11 @@ func (b Build) tools() error {
 	}
 
 	var paths []string
-	walk("cmd", func(path string, info os.FileInfo) {
+	util.Walk("cmd", func(path string, info os.FileInfo) {
 		if !info.IsDir() && filepath.Base(path) == "main.go" {
 			paths = append(paths, path)
 		}
 	})
-
-	// Set global gitVersion, warn if not deploying a tagged release
-	getGitVersion(false)
 
 	for _, path := range paths {
 		parts := strings.SplitN(path, `/`, 3)
@@ -210,7 +209,7 @@ func (b Build) tools() error {
 		outDir := filepath.Join("out", "bin", parts[0], parts[1])
 
 		// used in tools to check/display which Panther version was compiled
-		setVersionVar := fmt.Sprintf("-X 'main.version=%s'", gitVersion)
+		setVersionVar := fmt.Sprintf("-X 'main.version=%s'", util.RepoVersion())
 
 		log.Infof("build:tools: compiling %s to %s with %d os/arch combinations",
 			path, outDir, len(buildEnvs))

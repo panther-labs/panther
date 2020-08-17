@@ -28,6 +28,8 @@ import (
 
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
+
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 var (
@@ -43,30 +45,35 @@ func Fmt() {
 	// Add license headers first (don't run in parallel with other formatters)
 	fmtLicenseAll()
 
-	results := make(chan goroutineResult)
+	results := make(chan util.TaskResult)
 	count := 0
 
 	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"fmt: gofmt", gofmt(goTargets...)}
+	go func(c chan util.TaskResult) {
+		c <- util.TaskResult{Summary: "fmt: gofmt", Err: gofmt(goTargets...)}
 	}(results)
 
 	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"fmt: yapf", yapf(pyTargets...)}
+	go func(c chan util.TaskResult) {
+		c <- util.TaskResult{Summary: "fmt: yapf", Err: yapf(pyTargets...)}
 	}(results)
 
 	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"fmt: prettier", prettier("")}
+	go func(c chan util.TaskResult) {
+		c <- util.TaskResult{Summary: "fmt: prettier", Err: prettier("")}
 	}(results)
 
 	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"fmt: tf", terraformFmt()}
+	go func(c chan util.TaskResult) {
+		c <- util.TaskResult{Summary: "fmt: tf", Err: terraformFmt()}
 	}(results)
 
-	logResults(results, "fmt", 1, count, count)
+	util.LogResults(results, "fmt", 1, count, count)
+}
+
+// Hash every source file in the repo to check for diffs before vs after formatting.
+func sourceHashes() (map[string][16]byte, error) {
+	return util.FileHashMap(licensePaths...)
 }
 
 // Apply full go formatting to the given paths
@@ -110,7 +117,7 @@ func gofmt(paths ...string) error {
 func removeImportNewlines(path string) error {
 	var newLines [][]byte
 	inImport := false
-	for _, line := range bytes.Split(readFile(path), []byte("\n")) {
+	for _, line := range bytes.Split(util.ReadFile(path), []byte("\n")) {
 		if inImport {
 			if len(line) == 0 {
 				continue // skip empty newlines in import groups
@@ -132,7 +139,7 @@ func removeImportNewlines(path string) error {
 func yapf(paths ...string) error {
 	log.Debug("fmt: python yapf " + strings.Join(paths, " "))
 	args := []string{"--in-place", "--parallel", "--recursive"}
-	if err := sh.Run(pythonLibPath("yapf"), append(args, pyTargets...)...); err != nil {
+	if err := sh.Run(util.PythonLibPath("yapf"), append(args, pyTargets...)...); err != nil {
 		return fmt.Errorf("failed to format python: %v", err)
 	}
 	return nil
@@ -149,7 +156,7 @@ func prettier(pathPattern string) error {
 		args = append(args, "--loglevel", "error")
 	}
 
-	if err := sh.Run(nodePath("prettier"), args...); err != nil {
+	if err := sh.Run(util.NodePath("prettier"), args...); err != nil {
 		return fmt.Errorf("failed to format with prettier: %v", err)
 	}
 	return nil

@@ -22,6 +22,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 const agplSource = "docs/LICENSE_HEADER_AGPL.txt"
@@ -50,7 +52,7 @@ func fmtLicenseAll() {
 
 func fmtLicense(paths ...string) {
 	log.Debugf("fmt: license header %s for %s", agplSource, strings.Join(paths, " "))
-	header := strings.TrimSpace(string(readFile(agplSource)))
+	header := strings.TrimSpace(string(util.ReadFile(agplSource)))
 
 	asteriskLicense := "/**\n" + commentEachLine(" *", header) + "\n */"
 	hashtagLicense := commentEachLine("#", header)
@@ -106,12 +108,10 @@ func addFileLicense(path, asteriskLicense, hashtagLicense string) {
 
 // Rewrite file contents on disk with the given modifier function.
 func licenseModifier(path string, modifier func(string) string) {
-	contents := string(readFile(path))
+	contents := string(util.ReadFile(path))
 	newContents := modifier(contents)
 	if newContents != contents {
-		if err := writeFile(path, []byte(newContents)); err != nil {
-			log.Fatal(err)
-		}
+		util.WriteFile(path, []byte(newContents))
 	}
 }
 

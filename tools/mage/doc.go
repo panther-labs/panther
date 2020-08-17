@@ -31,6 +31,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/tools/cfndoc"
 	"github.com/panther-labs/panther/tools/config"
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 // Preview auto-generated documentation in out/doc
@@ -95,7 +96,8 @@ func opDocs() error {
 		docsBuffer.WriteString(fmt.Sprintf("## %s\n%s\n\n", doc.Resource, doc.Documentation))
 	}
 
-	return writeFile(filepath.Join("out", "docs", "gitbook", "operations", "runbooks.md"), docsBuffer.Bytes())
+	util.WriteFile(filepath.Join("out", "docs", "gitbook", "operations", "runbooks.md"), docsBuffer.Bytes())
+	return nil
 }
 
 const (
@@ -110,17 +112,13 @@ type supportedLogs struct {
 }
 
 // Generate entire "supported-logs" documentation directory
-func (logs *supportedLogs) generateDocumentation() error {
+func (logs *supportedLogs) generateDocumentation() {
 	outDir := filepath.Join("out", "docs", "gitbook", "log-analysis", "log-processing", "supported-logs")
 
 	// Write one file for each category.
 	for _, category := range logs.Categories {
-		if err := category.generateDocFile(outDir); err != nil {
-			return err
-		}
+		category.generateDocFile(outDir)
 	}
-
-	return nil
 }
 
 type logCategory struct {
@@ -129,7 +127,7 @@ type logCategory struct {
 }
 
 // Generate a single documentation file for a log category, e.g. "AWS.md"
-func (category *logCategory) generateDocFile(outDir string) error {
+func (category *logCategory) generateDocFile(outDir string) {
 	sort.Strings(category.LogTypes)
 
 	var docsBuffer bytes.Buffer
@@ -174,7 +172,7 @@ func (category *logCategory) generateDocFile(outDir string) error {
 
 	path := filepath.Join(outDir, category.Name+".md")
 	log.Debugf("writing log category documentation: %s", path)
-	return writeFile(path, docsBuffer.Bytes())
+	util.WriteFile(path, docsBuffer.Bytes())
 }
 
 func logDocs() error {
@@ -191,7 +189,8 @@ func logDocs() error {
 		return err
 	}
 
-	return logs.generateDocumentation()
+	logs.generateDocumentation()
+	return nil
 }
 
 // Group log registry by category

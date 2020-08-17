@@ -42,6 +42,7 @@ import (
 	"github.com/panther-labs/panther/pkg/genericapi"
 	"github.com/panther-labs/panther/pkg/prompt"
 	"github.com/panther-labs/panther/tools/mage/clients"
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 const (
@@ -92,7 +93,14 @@ type e2eContext struct {
 
 // End-to-end test suite - deploy, migrate, test, teardown
 func (Test) E2e() {
-	if err := goPkgIntegrationTest("test:e2e", "./tools/mage/e2e"); err != nil {
+	log.Warnf("End-to-end tests will destroy all Panther infra in account %s (%s)",
+		clients.AccountID(), clients.Region())
+	result := prompt.Read("Are you sure you want to continue? (yes|no) ", prompt.NonemptyValidator)
+	if strings.ToLower(result) != "yes" {
+		log.Fatal("test aborted")
+	}
+
+	if err := goPkgIntegrationTest("test:e2e", "./tools/mage/e2e", true); err != nil {
 		log.Fatal(err)
 	}
 	log.Fatal("stopping early")
@@ -127,12 +135,11 @@ func (Test) E2e() {
 // Deploy the official published pre-packaged deployment for the previous version.
 func (ctx *e2eContext) deployPreviousVersion() {
 	log.Info("***** test:e2e : Stage 2/8 : Deploy Previous Release *****")
-	getGitVersion(false)
 	s3URL := fmt.Sprintf("https://panther-community-%s.s3.amazonaws.com/%s/panther.yml",
-		ctx.Region, strings.Split(gitVersion, "-")[0])
+		ctx.Region, strings.Split(util.RepoVersion(), "-")[0])
 	downloadPath := filepath.Join("out", "deployments", "panther.yml")
 	log.Infof("downloading %s to %s", s3URL, downloadPath)
-	if err := runWithCapturedOutput("curl", s3URL, "--output", downloadPath); err != nil {
+	if err := util.RunWithCapturedOutput("curl", s3URL, "--output", downloadPath); err != nil {
 		log.Fatal(err)
 	}
 

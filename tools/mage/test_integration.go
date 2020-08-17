@@ -28,6 +28,7 @@ import (
 
 	"github.com/panther-labs/panther/pkg/prompt"
 	"github.com/panther-labs/panther/tools/mage/clients"
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 // Integration Run integration tests (integration_test.go,integration.py)
@@ -43,16 +44,16 @@ func (t Test) Integration() {
 
 	if pkg := os.Getenv("PKG"); pkg != "" {
 		// One specific package requested: run integration tests just for that
-		if err := goPkgIntegrationTest("test:integration", pkg); err != nil {
+		if err := goPkgIntegrationTest("test:integration", pkg, mg.Verbose()); err != nil {
 			log.Fatal(err)
 		}
 		return
 	}
 
 	errCount := 0
-	walk(".", func(path string, info os.FileInfo) {
+	util.Walk(".", func(path string, info os.FileInfo) {
 		if filepath.Base(path) == "integration_test.go" {
-			if err := goPkgIntegrationTest("test:integration", "./"+filepath.Dir(path)); err != nil {
+			if err := goPkgIntegrationTest("test:integration", "./"+filepath.Dir(path), mg.Verbose()); err != nil {
 				log.Error(err)
 				errCount++
 			}
@@ -60,7 +61,7 @@ func (t Test) Integration() {
 	})
 
 	log.Info("test:integration: python policy engine")
-	if err := sh.RunV(pythonLibPath("python3"), "internal/compliance/policy_engine/tests/integration.py"); err != nil {
+	if err := sh.RunV(util.PythonLibPath("python3"), "internal/compliance/policy_engine/tests/integration.py"); err != nil {
 		log.Errorf("python integration test failed: %v", err)
 		errCount++
 	}
@@ -71,18 +72,13 @@ func (t Test) Integration() {
 }
 
 // Run integration tests for a single Go package.
-func goPkgIntegrationTest(mageCmd, pkg string) error {
-	if err := os.Setenv("INTEGRATION_TEST", "True"); err != nil {
-		log.Fatalf("failed to set INTEGRATION_TEST environment variable: %v", err)
-	}
-	defer os.Unsetenv("INTEGRATION_TEST")
-
-	log.Infof("%s: INTEGRATION_TEST=True go test %s -run=TestIntegration*", mageCmd, pkg)
+func goPkgIntegrationTest(mageCmd, pkg string, verbose bool) error {
 	// -count 1 is the idiomatic way to disable test caching
 	args := []string{"test", pkg, "-run=TestIntegration*", "-p", "1", "-count", "1"}
-	if mg.Verbose() {
+	if verbose {
 		args = append(args, "-v")
 	}
 
-	return sh.RunV("go", args...)
+	log.Infof("%s: INTEGRATION_TEST=True go %s", mageCmd, strings.Join(args, " "))
+	return sh.RunWithV(map[string]string{"INTEGRATION_TEST": "True"}, "go", args...)
 }

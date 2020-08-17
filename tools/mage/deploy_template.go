@@ -36,16 +36,13 @@ import (
 	"github.com/panther-labs/panther/pkg/awscfn"
 	"github.com/panther-labs/panther/tools/cfnstacks"
 	"github.com/panther-labs/panther/tools/mage/clients"
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 const (
 	maxTemplateSize = 51200 // Max file size before CFN templates must be uploaded to S3
 
 	pollInterval = 5 * time.Second // How long to wait in between requests to the CloudFormation service
-)
-
-var (
-	gitVersion string // set in deployPrecheck()
 )
 
 // Deploy a CloudFormation template, returning stack outputs.
@@ -128,7 +125,7 @@ func uploadAsset(assetPath, bucket, stack string) (string, string, error) {
 
 	if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NotFound" {
 		// object does not exist yet - upload it!
-		response, err := uploadFileToS3(assetPath, bucket, s3Key)
+		response, err := util.UploadFileToS3(assetPath, bucket, s3Key)
 		if err != nil {
 			return "", "", fmt.Errorf("package %s: failed to upload %s: %v", stack, assetPath, err)
 		}
@@ -208,7 +205,7 @@ func createChangeSet(
 	}
 
 	// add version tag to all objects ("untagged" if not set)
-	pantherVersion := gitVersion
+	pantherVersion := util.RepoVersion()
 	if pantherVersion == "" {
 		pantherVersion = "untagged"
 	}

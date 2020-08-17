@@ -24,6 +24,8 @@ import (
 
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
+
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 var (
@@ -61,7 +63,7 @@ func testPythonUnit() error {
 	}
 
 	for _, target := range []string{"internal/core", "internal/compliance", "internal/log_analysis"} {
-		if err := runWithCapturedOutput(pythonLibPath("python3"), append(args, target)...); err != nil {
+		if err := util.RunWithCapturedOutput(util.PythonLibPath("python3"), append(args, target)...); err != nil {
 			return fmt.Errorf("python unit tests failed: %v", err)
 		}
 	}
@@ -78,13 +80,13 @@ func testPythonLint() error {
 
 	// pylint src
 	srcArgs := append(args, "--ignore", "tests", "--disable", strings.Join(pylintSrcDisabled, ","))
-	if err := sh.RunV(pythonLibPath("pylint"), append(srcArgs, pyTargets...)...); err != nil {
+	if err := sh.RunV(util.PythonLibPath("pylint"), append(srcArgs, pyTargets...)...); err != nil {
 		return fmt.Errorf("pylint source failed: %v", err)
 	}
 
 	// pylint tests
 	testArgs := append(args, "--ignore", "src", "--disable", strings.Join(pylintTestsDisabled, ","))
-	if err := sh.RunV(pythonLibPath("pylint"), append(testArgs, pyTargets...)...); err != nil {
+	if err := sh.RunV(util.PythonLibPath("pylint"), append(testArgs, pyTargets...)...); err != nil {
 		return fmt.Errorf("pylint tests failed: %v", err)
 	}
 
@@ -98,7 +100,7 @@ func testPythonBandit() error {
 	} else {
 		args = append(args, "--quiet")
 	}
-	return runWithCapturedOutput(pythonLibPath("bandit"), append(args, pyTargets...)...)
+	return util.RunWithCapturedOutput(util.PythonLibPath("bandit"), append(args, pyTargets...)...)
 }
 
 func testPythonMypy() error {
@@ -107,5 +109,5 @@ func testPythonMypy() error {
 	if mg.Verbose() {
 		args = append(args, "--verbose")
 	}
-	return sh.RunV(pythonLibPath("mypy"), append(args, pyTargets...)...)
+	return sh.RunV(util.PythonLibPath("mypy"), append(args, pyTargets...)...)
 }

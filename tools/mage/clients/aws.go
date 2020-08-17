@@ -59,6 +59,7 @@ var (
 	s3Client     *s3.S3
 	s3Uploader   *s3manager.Uploader
 	sqsClient    *sqs.SQS
+	stsClient    *sts.STS
 )
 
 // Build the AWS session from credentials - subsequent calls return the cached result.
@@ -100,7 +101,7 @@ func Region() string {
 // Returns the current AWS account ID - subsequent calls return the cached result.
 func AccountID() string {
 	if accountID == "" {
-		identity, err := sts.New(getSession()).GetCallerIdentity(&sts.GetCallerIdentityInput{})
+		identity, err := STS().GetCallerIdentity(&sts.GetCallerIdentityInput{})
 		if err != nil {
 			log.Fatalf("failed to get caller identity: %v", err)
 		}
@@ -165,4 +166,11 @@ func SQS() *sqs.SQS {
 		sqsClient = sqs.New(getSession())
 	}
 	return sqsClient
+}
+
+func STS() *sts.STS {
+	if stsClient == nil {
+		stsClient = sts.New(getSession())
+	}
+	return stsClient
 }

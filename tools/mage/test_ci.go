@@ -24,6 +24,8 @@ import (
 	"strings"
 
 	"github.com/magefile/mage/mg"
+
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 // Test contains targets for testing code syntax, style, and correctness.
@@ -42,7 +44,7 @@ func (Test) CI() {
 	// Go unit tests and linting already run in multiple processors
 	// When running locally, test these by themselves to avoid locking up dev laptops.
 	var goUnitErr, goLintErr error
-	if !runningInCI() {
+	if !util.IsRunningInCI() {
 		goUnitErr = testGoUnit()
 		goLintErr = testGoLint()
 	}
@@ -52,13 +54,13 @@ func (Test) CI() {
 
 		// mage test:go
 		{"go unit tests", func() error {
-			if runningInCI() {
+			if util.IsRunningInCI() {
 				return testGoUnit()
 			}
 			return goUnitErr
 		}},
 		{"golangci-lint", func() error {
-			if runningInCI() {
+			if util.IsRunningInCI() {
 				return testGoLint()
 			}
 			return goLintErr
@@ -75,16 +77,16 @@ func (Test) CI() {
 }
 
 func runTests(tasks []testTask) {
-	results := make(chan goroutineResult)
+	results := make(chan util.TaskResult)
 
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		logResults(results, "test:ci", 1, len(tasks), len(tasks))
+		util.LogResults(results, "test:ci", 1, len(tasks), len(tasks))
 	}()
 
 	for _, task := range tasks {
-		runTask(results, task.Name, task.Task)
+		util.RunTask(results, task.Name, task.Task)
 	}
 	<-done
 }
@@ -110,9 +112,9 @@ func testFmtAndGeneratedFiles() error {
 		return err
 	}
 
-	if diffs := fileDiffs(beforeHashes, afterHashes); len(diffs) > 0 {
+	if diffs := util.FileDiffs(beforeHashes, afterHashes); len(diffs) > 0 {
 		sort.Strings(diffs)
-		if runningInCI() {
+		if util.IsRunningInCI() {
 			log.Errorf("%d file diffs after build:api + fmt:\n  %s", len(diffs), strings.Join(diffs, "\n  "))
 			return fmt.Errorf("%d file diffs after 'mage build:api fmt'", len(diffs))
 		}
