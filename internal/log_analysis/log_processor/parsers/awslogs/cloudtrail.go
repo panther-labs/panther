@@ -122,6 +122,7 @@ func (p *CloudTrailParser) Parse(log string) (results []*parsers.PantherLog, err
 	// Use strings.Reader to avoid duplicate allocation of `log` as bytes
 	const bufferSize = 8192
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, strings.NewReader(log), bufferSize)
+	// CloudTrail has all events in a single line inside an array at key `Records`
 	// Seek to Records key
 	const fieldNameRecords = `Records`
 	for key := iter.ReadObject(); key != ""; key = iter.ReadObject() {
