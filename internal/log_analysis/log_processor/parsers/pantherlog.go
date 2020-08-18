@@ -19,6 +19,7 @@ package parsers
  */
 
 import (
+	"github.com/panther-labs/panther/pkg/box"
 	"net"
 	"reflect"
 	"regexp"
@@ -140,6 +141,17 @@ func (pl *PantherLog) SetCoreFields(logType string, eventTime *timestamp.RFC3339
 	pl.PantherLogType = &logType
 	pl.PantherEventTime = eventTime
 	pl.PantherParseTime = &parseTime
+}
+
+type PantherSourceSetter interface {
+	SetPantherSource(id, label string)
+}
+
+var _ PantherSourceSetter = (*PantherLog)(nil)
+
+func (pl *PantherLog) SetPantherSource(id, label string) {
+	pl.PantherSourceLabel = box.NonEmpty(label)
+	pl.PantherSourceID = box.NonEmpty(id)
 }
 
 // AppendAnyIPAddressPtr returns true if the IP address was successfully appended,

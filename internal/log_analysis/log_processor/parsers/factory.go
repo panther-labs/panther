@@ -29,49 +29,38 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
-	"github.com/panther-labs/panther/pkg/box"
 )
 
 // Factory creates new parser instances.
 // The params argument defines parameters for a parser.
 type Factory interface {
-	NewParser(params SourceParams) (Interface, error)
-}
-
-type SourceParams struct {
-	SourceID    string
-	SourceLabel string
-	Options     interface{}
+	NewParser(params interface{}) (Interface, error)
 }
 
 // FactoryFunc is a callback parser factory
-type FactoryFunc func(params SourceParams) (Interface, error)
+type FactoryFunc func(params interface{}) (Interface, error)
 
 // NewParser implements Factory interface
-func (ff FactoryFunc) NewParser(params SourceParams) (Interface, error) {
+func (ff FactoryFunc) NewParser(params interface{}) (Interface, error) {
 	return ff(params)
 }
 
 // AdapterFactory returns a parsers.Factory from a parsers.Parser
 // This is used to ease transition to the new parsers.Interface for parsers based on parsers.PantherLog
 func AdapterFactory(parser LogParser) Factory {
-	return FactoryFunc(func(src SourceParams) (Interface, error) {
-		return NewAdapter(src, parser), nil
+	return FactoryFunc(func(_ interface{}) (Interface, error) {
+		return NewAdapter(parser), nil
 	})
 }
 
 // NewAdapter creates a pantherlog.LogParser from a parsers.Parser
-func NewAdapter(src SourceParams, parser LogParser) Interface {
+func NewAdapter(parser LogParser) Interface {
 	return &logParserAdapter{
-		sourceID:    box.NonEmpty(src.SourceID),
-		sourceLabel: box.NonEmpty(src.SourceLabel),
-		LogParser:   parser.New(),
+		LogParser: parser.New(),
 	}
 }
 
 type logParserAdapter struct {
-	sourceID    *string
-	sourceLabel *string
 	LogParser
 }
 
@@ -79,10 +68,6 @@ func (a *logParserAdapter) ParseLog(log string) ([]*Result, error) {
 	results, err := a.LogParser.Parse(log)
 	if err != nil {
 		return nil, err
-	}
-	for _, result := range results {
-		result.PantherSourceID = a.sourceID
-		result.PantherSourceLabel = a.sourceLabel
 	}
 	return ToResults(results, nil)
 }
@@ -97,7 +82,7 @@ type JSONParserFactory struct {
 	Now            func() time.Time
 }
 
-func (f *JSONParserFactory) NewParser(src SourceParams) (Interface, error) {
+func (f *JSONParserFactory) NewParser(_ interface{}) (Interface, error) {
 	validate := f.Validate
 	if validate == nil {
 		validate = ValidateStruct

@@ -36,7 +36,6 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/unbox"
 )
@@ -67,12 +66,8 @@ func main() {
 	defer out.Flush()
 
 	jsonAPI := common.BuildJSON()
-	src := parsers.SourceParams{
-		SourceID:    *sourceID,
-		SourceLabel: *sourceLabel,
-	}
 
-	parsers := registry.AvailableParsers(src)
+	parsers := registry.AvailableParsers()
 
 	classifier := classification.NewClassifier(parsers)
 	lines := bufio.NewScanner(stdin)
@@ -93,6 +88,10 @@ func main() {
 		}
 		debugLog.Printf("Line=%d Type=%q NumEvents=%d\n", numLines, unbox.String(result.LogType), len(result.Events))
 		for _, event := range result.Events {
+			// Add source fields
+			event.PantherSourceID = *sourceID
+			event.PantherSourceLabel = *sourceLabel
+
 			data, err := jsonAPI.Marshal(event)
 			if err != nil {
 				log.Fatal(err)

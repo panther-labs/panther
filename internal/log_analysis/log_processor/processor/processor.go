@@ -20,6 +20,7 @@ package processor
 
 import (
 	"bufio"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"io"
 	"strings"
 	"sync"
@@ -184,23 +185,16 @@ type Processor struct {
 }
 
 func NewProcessor(input *common.DataStream, registry *logtypes.Registry) *Processor {
-	// FIXME: Uncomment this to use source-specific log types once v1.7 is branched out
-	// entries := registry.Entries(input.LogTypes...)
-	// Use all registered parsers for v1.7 to better test this E2E
-	entries := registry.Entries()
+	entries := registry.Entries(input.LogTypes...)
 
-	src := parsers.SourceParams{
-		SourceLabel: input.SourceLabel,
-		SourceID:    input.SourceID,
-	}
 	parsers := make(map[string]parsers.Interface, len(entries))
 	for _, entry := range entries {
 		logType := entry.String()
-		parser, err := entry.NewParser(src)
+		parser, err := entry.NewParser(nil)
 		if err != nil {
 			panic(errors.Wrapf(err, "failed to create a parser for %q", logType))
 		}
-		parsers[logType] = parser
+		parsers[logType] = newSourceFieldsParser(input.SourceID, input.SourceLabel, parser)
 	}
 
 	return &Processor{
@@ -208,4 +202,36 @@ func NewProcessor(input *common.DataStream, registry *logtypes.Registry) *Proces
 		classifier: classification.NewClassifier(parsers),
 		operation:  common.OpLogManager.Start(operationName),
 	}
+}
+
+func newSourceFieldsParser(id, label string, parser parsers.Interface) parsers.Interface {
+	return &sourceFieldsParser{
+		Interface:   parser,
+		SourceID:    id,
+		SourceLabel: label,
+	}
+}
+
+type sourceFieldsParser struct {
+	parsers.Interface
+	SourceID    string
+	SourceLabel string
+}
+
+func (p *sourceFieldsParser) ParseLog(log string) ([]*pantherlog.Result, error) {
+	results, err := p.Interface.ParseLog(log)
+	if err != nil {
+		return nil, err
+	}
+	for _, result := range results {
+		if result.EventIncludesPantherFields {
+			if event, ok := result.Event.(parsers.PantherSourceSetter); ok {
+				event.SetPantherSource(p.SourceID, p.SourceLabel)
+				continue
+			}
+		}
+		result.PantherSourceID = p.SourceID
+		result.PantherSourceLabel = p.SourceLabel
+	}
+	return results, nil
 }

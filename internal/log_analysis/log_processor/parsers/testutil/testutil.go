@@ -208,7 +208,7 @@ func CheckRegisteredParser(t *testing.T, logType, input string, expect ...string
 	if !assert.NotNil(t, entry, "logtype %q not registered", logType) {
 		return
 	}
-	p, err := entry.NewParser(parsers.SourceParams{})
+	p, err := entry.NewParser(nil)
 	require.NoError(t, err, "failed to create log parser")
 	results, err := p.ParseLog(input)
 	require.NoError(t, err)

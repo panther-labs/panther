@@ -87,7 +87,7 @@ func TestDeployedTablesSignature(t *testing.T) {
 		Schema: struct {
 			Foo string `json:"foo" description:"bar"`
 		}{},
-		NewParser: parsers.FactoryFunc(func(_ parsers.SourceParams) (parsers.Interface, error) {
+		NewParser: parsers.FactoryFunc(func(_ interface{}) (parsers.Interface, error) {
 			return nil, nil
 		}),
 	})
