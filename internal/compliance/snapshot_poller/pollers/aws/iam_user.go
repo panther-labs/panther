@@ -303,17 +303,22 @@ func buildCredentialReport(
 }
 
 // listUsers returns all the users in the account, excluding the root account.
-func listUsers(iamSvc iamiface.IAMAPI) (users []*iam.User) {
-	err := iamSvc.ListUsersPages(
-		&iam.ListUsersInput{},
+func listUsers(iamSvc iamiface.IAMAPI, nextMarker *string) (users []*iam.User, marker *string, err error) {
+	err = iamSvc.ListUsersPages(
+		&iam.ListUsersInput{
+			Marker: nextMarker,
+		},
 		func(page *iam.ListUsersOutput, lastPage bool) bool {
 			users = append(users, page.Users...)
+			if len(users) >= defaultBatchSize {
+				if !lastPage {
+					marker = page.Marker
+				}
+				return false
+			}
 			return true
 		},
 	)
-	if err != nil {
-		utils.LogAWSError("IAM.ListUsersPages", err)
-	}
 	return
 }
 
@@ -521,15 +526,18 @@ func buildIAMRootUserSnapshot() *awsmodels.IAMRootUser {
 // PollIAMUsers generates a snapshot for each IAM User.
 //
 // This function returns a slice of Events.
-func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting IAM User resource poller")
 	iamSvc, err := getIAMClient(pollerInput, defaultRegion)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, nil, err
 	}
 
 	// List all IAM Users in the account
-	users := listUsers(iamSvc)
+	users, marker, err := listUsers(iamSvc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, err
+	}
 	if len(users) == 0 {
 		zap.L().Debug("no IAM users found")
 	}
@@ -550,18 +558,20 @@ func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddR
 						ResourceType:  aws.String(awsmodels.IAMUserSchema),
 					}},
 				}, credentialReportRequeueDelaySeconds)
-				return nil, nil
+				// Manually re-queueing the re-scan here so we can specify the delay. Don't return
+				// an error so that lambda doesn't also try to re-scan.
+				return nil, nil, nil
 			}
 		}
 		zap.L().Error("failed to build credential report", zap.Error(err))
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Get all VMFA snapshots
 	mfaDeviceMapping, err = listVirtualMFADevices(iamSvc)
 	if err != nil {
 		utils.LogAWSError("IAM.ListVirtualMFADevices", err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Create IAM User snapshots
@@ -604,28 +614,32 @@ func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddR
 		})
 	}
 
-	rootSnapshot := buildIAMRootUserSnapshot()
-	if rootSnapshot == nil {
-		// Re-scan the root user if there was any error building it
-		utils.Requeue(pollermodels.ScanMsg{
-			Entries: []*pollermodels.ScanEntry{
-				{
-					AWSAccountID:  aws.String(pollerInput.AuthSourceParsedARN.AccountID),
-					IntegrationID: pollerInput.IntegrationID,
-					ResourceType:  aws.String(awsmodels.IAMRootUserSchema),
+	// We only want to scan the root user once per service scan, so if we're on a subsequent user
+	// scan then just skip the root user
+	if pollerInput.NextPageToken == nil {
+		rootSnapshot := buildIAMRootUserSnapshot()
+		if rootSnapshot == nil {
+			// Re-scan the root user if there was any error building it
+			utils.Requeue(pollermodels.ScanMsg{
+				Entries: []*pollermodels.ScanEntry{
+					{
+						AWSAccountID:  aws.String(pollerInput.AuthSourceParsedARN.AccountID),
+						IntegrationID: pollerInput.IntegrationID,
+						ResourceType:  aws.String(awsmodels.IAMRootUserSchema),
+					},
 				},
-			},
-		}, utils.MaxRequeueDelaySeconds)
-	} else {
-		// Create the IAM Root User snapshot
-		resources = append(resources, &apimodels.AddResourceEntry{
-			Attributes:      rootSnapshot,
-			ID:              apimodels.ResourceID(*rootSnapshot.ARN),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
-			Type:            awsmodels.IAMRootUserSchema,
-		})
+			}, utils.MaxRequeueDelaySeconds)
+		} else {
+			// Create the IAM Root User snapshot
+			resources = append(resources, &apimodels.AddResourceEntry{
+				Attributes:      rootSnapshot,
+				ID:              apimodels.ResourceID(*rootSnapshot.ARN),
+				IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
+				IntegrationType: apimodels.IntegrationTypeAws,
+				Type:            awsmodels.IAMRootUserSchema,
+			})
+		}
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

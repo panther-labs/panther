@@ -48,7 +48,10 @@ func PollEC2Image(
 	}
 
 	imageID := strings.Replace(resourceARN.Resource, "image/", "", 1)
-	ami := getAMI(ec2Client, aws.String(imageID))
+	ami, err := getAMI(ec2Client, aws.String(imageID))
+	if err != nil {
+		return nil, err
+	}
 
 	snapshot := buildEc2AmiSnapshot(ami)
 	if snapshot == nil {
@@ -62,7 +65,7 @@ func PollEC2Image(
 }
 
 // getAMI returns a specific EC2 AMI
-func getAMI(svc ec2iface.EC2API, imageID *string) *ec2.Image {
+func getAMI(svc ec2iface.EC2API, imageID *string) (*ec2.Image, error) {
 	image, err := svc.DescribeImages(&ec2.DescribeImagesInput{
 		ImageIds: []*string{
 			imageID,
@@ -75,82 +78,65 @@ func getAMI(svc ec2iface.EC2API, imageID *string) *ec2.Image {
 				zap.L().Warn("tried to scan non-existent resource",
 					zap.String("resource", *imageID),
 					zap.String("resourceType", awsmodels.Ec2AmiSchema))
-				return nil
+				return nil, nil
 			}
 		}
-		utils.LogAWSError("EC2.DescribeImages", err)
-		return nil
+		return nil, errors.Wrapf(err, "EC2.DescribeImages")
 	}
 
-	return image.Images[0]
+	return image.Images[0], nil
 }
 
-// buildImageList creates the ec2Ami cache if it does not exist, and populates it for a given region
-func buildImageList(svc ec2iface.EC2API, region string) (err error) {
-	// If ec2Amis is nil there is no cache yet at all
-	if ec2Amis == nil {
-		ec2Amis = make(map[string][]*string)
-	}
-
-	// Get all the instances in this region
-	// TODO unfuck this tangle
-	instances, err := describeInstances(svc)
+// describeImages returns a union of the images owned by this account and the images in use by
+// this account.
+func describeImages(svc ec2iface.EC2API, nextMarker *string) ([]*ec2.Image, *string, error) {
+	// Start iterating through instances looking for in use image IDs
+	instances, marker, err := describeInstances(svc, nextMarker)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	// Populate the cache with the unique image IDs in use in this region
-	var images []*string
+	var imageIDs []*string
 	imagesUnique := make(map[string]struct{})
 	for _, instance := range instances {
 		if _, ok := imagesUnique[*instance.ImageId]; !ok {
-			images = append(images, instance.ImageId)
+			imageIDs = append(imageIDs, instance.ImageId)
 			imagesUnique[*instance.ImageId] = struct{}{}
 		}
 	}
-	ec2Amis[region] = images
-	return nil
-}
 
-// describeImages returns all the EC2 AMIs the account has access to
-func describeImages(svc ec2iface.EC2API, region string) ([]*ec2.Image, error) {
-	// Start with the list of images this account owns
+	// Now that we know what images are in use, we can describe them without timing out (this call
+	// does not support pagination on its own)
+	imagesInUse, err := svc.DescribeImages(&ec2.DescribeImagesInput{
+		ImageIds: imageIDs,
+	})
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "EC2.DescribeImages")
+	}
+
+	// If this is not the first page of a scan, just return now
+	if nextMarker != nil {
+		return imagesInUse.Images, marker, nil
+	}
+
+	// This call does not support pagination
 	imagesOwned, err := svc.DescribeImages(&ec2.DescribeImagesInput{
 		Owners: []*string{
 			aws.String("self"),
 		},
 	})
 	if err != nil {
-		utils.LogAWSError("EC2.DescribeImages", err)
-		return nil, err
+		return nil, nil, errors.Wrapf(err, "EC2.DescribeImages")
 	}
-
-	// Additionally, check all images this account is using in this region
-	imageIDs := ec2Amis[region]
-
-	// If imageIDs is nil there is no cache for this region from running the EC2 instance poller
-	if imageIDs == nil {
-		err = buildImageList(svc, region)
-		if err != nil {
-			return nil, err
+	// Most likely at least some of the images this account owns are also in use by this
+	// account, so don't include those duplicates here.
+	for _, image := range imagesOwned.Images {
+		if _, ok := imagesUnique[*image.ImageId]; !ok {
+			imagesInUse.Images = append(imagesInUse.Images, image)
 		}
-		imageIDs = ec2Amis[region]
 	}
 
-	// If imageIDs contains no elements, there are no EC2 AMIs in use in this region
-	if len(imageIDs) == 0 {
-		return imagesOwned.Images, nil
-	}
-
-	imagesInUse, err := svc.DescribeImages(&ec2.DescribeImagesInput{
-		ImageIds: imageIDs,
-	})
-	if err != nil {
-		utils.LogAWSError("EC2.DescribeImages", err)
-		return nil, err
-	}
-
-	return append(imagesOwned.Images, imagesInUse.Images...), nil
+	return imagesInUse.Images, marker, nil
 }
 
 // buildEc2AmiSnapshot makes the necessary API calls to build a full Ec2AmiSnapshot
@@ -194,25 +180,20 @@ func buildEc2AmiSnapshot(image *ec2.Image) *awsmodels.Ec2Ami {
 // PollEc2Amis gathers information on each EC2 AMI in an AWS account.
 func PollEc2Amis(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting EC2 AMI resource poller")
-	ec2AmiSnapshots := make(map[string]*awsmodels.Ec2Ami)
-
 	ec2Svc, err := getEC2Client(pollerInput, *pollerInput.Region)
 	if err != nil {
-		return nil, nil, err // error is logged in getClient()
+		return nil, nil, err
 	}
 
 	// Start with generating a list of all EC2 AMIs
-	amis, err := describeImages(ec2Svc, *pollerInput.Region)
+	amis, marker, err := describeImages(ec2Svc, pollerInput.NextPageToken)
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "PollEc2Amis(%#v) in region %s", *pollerInput, *pollerInput.Region)
-	}
-	if len(amis) == 0 {
-		zap.L().Debug("no AMIs found in region", zap.String("region", *pollerInput.Region))
-		return nil, nil, nil
+		return nil, nil, err
 	}
 
 	zap.L().Debug("building EC2 AMI snapshots", zap.String("region", *pollerInput.Region))
 	// For each image, build out a full snapshot
+	resources := make([]*apimodels.AddResourceEntry, 0, len(amis))
 	for _, ami := range amis {
 		ec2Ami := buildEc2AmiSnapshot(ami)
 		if ec2Ami == nil {
@@ -244,18 +225,8 @@ func PollEc2Amis(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddRe
 		ec2Ami.Region = pollerInput.Region
 		ec2Ami.ARN = aws.String(resourceID)
 
-		if _, ok := ec2AmiSnapshots[resourceID]; !ok {
-			ec2AmiSnapshots[resourceID] = ec2Ami
-		} else {
-			zap.L().Info("overwriting existing EC2 AMI snapshot", zap.String("resourceId", resourceID))
-			ec2AmiSnapshots[resourceID] = ec2Ami
-		}
-	}
-
-	resources := make([]*apimodels.AddResourceEntry, 0, len(ec2AmiSnapshots))
-	for resourceID, ec2AmiSnapshot := range ec2AmiSnapshots {
 		resources = append(resources, &apimodels.AddResourceEntry{
-			Attributes:      ec2AmiSnapshot,
+			Attributes:      ec2Ami,
 			ID:              apimodels.ResourceID(resourceID),
 			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
 			IntegrationType: apimodels.IntegrationTypeAws,
@@ -263,6 +234,5 @@ func PollEc2Amis(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddRe
 		})
 	}
 
-	// EC2 AMI's can't be paged
-	return resources, nil, nil
+	return resources, marker, nil
 }

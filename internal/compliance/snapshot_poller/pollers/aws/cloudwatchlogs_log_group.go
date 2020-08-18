@@ -111,14 +111,22 @@ func getLogGroup(svc cloudwatchlogsiface.CloudWatchLogsAPI, logGroupName string)
 }
 
 // describeLogGroups returns all Log Groups in the account
-func describeLogGroups(cloudwatchLogsSvc cloudwatchlogsiface.CloudWatchLogsAPI) (logGroups []*cloudwatchlogs.LogGroup, err error) {
-	err = cloudwatchLogsSvc.DescribeLogGroupsPages(&cloudwatchlogs.DescribeLogGroupsInput{},
+func describeLogGroups(cloudwatchLogsSvc cloudwatchlogsiface.CloudWatchLogsAPI, nextMarker *string) (logGroups []*cloudwatchlogs.LogGroup, marker *string, err error) {
+	err = cloudwatchLogsSvc.DescribeLogGroupsPages(&cloudwatchlogs.DescribeLogGroupsInput{
+		NextToken: nextMarker,
+	},
 		func(page *cloudwatchlogs.DescribeLogGroupsOutput, lastPage bool) bool {
 			logGroups = append(logGroups, page.LogGroups...)
+			if len(logGroups) >= defaultBatchSize {
+				if !lastPage {
+					marker = page.NextToken
+				}
+				return false
+			}
 			return true
 		})
 	if err != nil {
-		return nil, errors.Wrap(err, "CloudWatchLogs.DescribeLogGroups")
+		return nil, nil, errors.Wrap(err, "CloudWatchLogs.DescribeLogGroups")
 	}
 	return
 }
@@ -164,43 +172,41 @@ func buildCloudWatchLogsLogGroupSnapshot(
 }
 
 // PollCloudWatchLogsLogGroups gathers information on each CloudWatchLogs LogGroup for an AWS account
-func PollCloudWatchLogsLogGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollCloudWatchLogsLogGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting CloudWatch LogGroup resource poller")
 	logGroupSnapshots := make(map[string]*awsmodels.CloudWatchLogsLogGroup)
 
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "logs") {
-		cloudwatchLogGroupSvc, err := getCloudWatchLogsClient(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
+	cloudwatchLogGroupSvc, err := getCloudWatchLogsClient(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
+	}
 
-		// Start with generating a list of all log groups
-		logGroups, err := describeLogGroups(cloudwatchLogGroupSvc)
-		if err != nil {
-			return nil, errors.Wrapf(err, "PollCloudWatchLogsLogGroups(%#v) in region %s", *pollerInput, *regionID)
-		}
-		if len(logGroups) == 0 {
-			zap.L().Debug("no CloudWatchLogs LogGroups found", zap.String("region", *regionID))
+	// Start with generating a list of all log groups
+	logGroups, marker, err := describeLogGroups(cloudwatchLogGroupSvc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "PollCloudWatchLogsLogGroups(%#v) in region %s", *pollerInput, *pollerInput.Region)
+	}
+	if len(logGroups) == 0 {
+		zap.L().Debug("no CloudWatchLogs LogGroups found", zap.String("region", *pollerInput.Region))
+		return nil, nil, nil
+	}
+
+	for _, logGroup := range logGroups {
+		logGroupSnapshot := buildCloudWatchLogsLogGroupSnapshot(cloudwatchLogGroupSvc, logGroup)
+		if logGroupSnapshot == nil {
 			continue
 		}
+		logGroupSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
+		logGroupSnapshot.Region = pollerInput.Region
 
-		for _, logGroup := range logGroups {
-			logGroupSnapshot := buildCloudWatchLogsLogGroupSnapshot(cloudwatchLogGroupSvc, logGroup)
-			if logGroupSnapshot == nil {
-				continue
-			}
-			logGroupSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			logGroupSnapshot.Region = regionID
-
-			if _, ok := logGroupSnapshots[*logGroupSnapshot.ARN]; !ok {
-				logGroupSnapshots[*logGroup.Arn] = logGroupSnapshot
-			} else {
-				zap.L().Info(
-					"overwriting existing CloudWatchLogs LogGroup snapshot",
-					zap.String("resourceId", *logGroupSnapshot.ARN),
-				)
-				logGroupSnapshots[*logGroupSnapshot.ARN] = logGroupSnapshot
-			}
+		if _, ok := logGroupSnapshots[*logGroupSnapshot.ARN]; !ok {
+			logGroupSnapshots[*logGroup.Arn] = logGroupSnapshot
+		} else {
+			zap.L().Info(
+				"overwriting existing CloudWatchLogs LogGroup snapshot",
+				zap.String("resourceId", *logGroupSnapshot.ARN),
+			)
+			logGroupSnapshots[*logGroupSnapshot.ARN] = logGroupSnapshot
 		}
 	}
 
@@ -215,5 +221,5 @@ func PollCloudWatchLogsLogGroups(pollerInput *awsmodels.ResourcePollerInput) ([]
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

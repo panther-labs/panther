@@ -105,14 +105,23 @@ func PollDynamoDBTable(
 }
 
 // listTables returns a list of all Dynamo DB tables in the account
-func listTables(dynamoDBSvc dynamodbiface.DynamoDBAPI) (tables []*string, err error) {
-	err = dynamoDBSvc.ListTablesPages(&dynamodb.ListTablesInput{},
+func listTables(dynamoDBSvc dynamodbiface.DynamoDBAPI, nextMarker *string) (tables []*string, marker *string, err error) {
+	err = dynamoDBSvc.ListTablesPages(&dynamodb.ListTablesInput{
+		ExclusiveStartTableName: nextMarker,
+	},
 		func(page *dynamodb.ListTablesOutput, lastPage bool) bool {
 			tables = append(tables, page.TableNames...)
+			if len(tables) >= defaultBatchSize {
+				if !lastPage {
+					// DynamoDB uses the name of the last table evaluated as the pagination marker
+					marker = page.LastEvaluatedTableName
+				}
+				return false
+			}
 			return true
 		})
 	if err != nil {
-		return nil, errors.Wrap(err, "DynamoDB.ListTablesPages")
+		return nil, nil, errors.Wrap(err, "DynamoDB.ListTablesPages")
 	}
 	return
 }
@@ -262,52 +271,50 @@ func buildDynamoDBTableSnapshot(
 }
 
 // PollDynamoDBTables gathers information on each Dynamo DB Table for an AWS account.
-func PollDynamoDBTables(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollDynamoDBTables(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting DynamoDB Table resource poller")
 	dynamoDBTableSnapshots := make(map[string]*awsmodels.DynamoDBTable)
 
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "dynamodb") {
-		dynamoDBSvc, err := getDynamoDBClient(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
+	dynamoDBSvc, err := getDynamoDBClient(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
+	}
 
-		applicationAutoScalingSvc, err := getApplicationAutoScalingClient(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
+	applicationAutoScalingSvc, err := getApplicationAutoScalingClient(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
+	}
 
-		// Start with generating a list of all tables
-		tables, err := listTables(dynamoDBSvc)
-		if err != nil {
-			return nil, errors.Wrapf(err, "PollDynamoDBTables(%#v) in region %s", *pollerInput, *regionID)
-		}
-		if len(tables) == 0 {
-			zap.L().Debug("no DynamoDB tables found.", zap.String("region", *regionID))
+	// Start with generating a list of all tables
+	tables, marker, err := listTables(dynamoDBSvc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "PollDynamoDBTables(%#v) in region %s", *pollerInput, *pollerInput.Region)
+	}
+	if len(tables) == 0 {
+		zap.L().Debug("no DynamoDB tables found.", zap.String("region", *pollerInput.Region))
+		return nil, nil, nil
+	}
+
+	for _, table := range tables {
+		dynamoDBTable := buildDynamoDBTableSnapshot(
+			dynamoDBSvc,
+			applicationAutoScalingSvc,
+			table,
+		)
+		if dynamoDBTable == nil {
 			continue
 		}
+		dynamoDBTable.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
+		dynamoDBTable.Region = pollerInput.Region
 
-		for _, table := range tables {
-			dynamoDBTable := buildDynamoDBTableSnapshot(
-				dynamoDBSvc,
-				applicationAutoScalingSvc,
-				table,
+		if _, ok := dynamoDBTableSnapshots[*dynamoDBTable.ARN]; !ok {
+			dynamoDBTableSnapshots[*dynamoDBTable.ARN] = dynamoDBTable
+		} else {
+			zap.L().Info(
+				"overwriting existing DynamoDB Table snapshot",
+				zap.String("resourceID", *dynamoDBTable.ARN),
 			)
-			if dynamoDBTable == nil {
-				continue
-			}
-			dynamoDBTable.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			dynamoDBTable.Region = regionID
-
-			if _, ok := dynamoDBTableSnapshots[*dynamoDBTable.ARN]; !ok {
-				dynamoDBTableSnapshots[*dynamoDBTable.ARN] = dynamoDBTable
-			} else {
-				zap.L().Info(
-					"overwriting existing DynamoDB Table snapshot",
-					zap.String("resourceID", *dynamoDBTable.ARN),
-				)
-				dynamoDBTableSnapshots[*dynamoDBTable.ARN] = dynamoDBTable
-			}
+			dynamoDBTableSnapshots[*dynamoDBTable.ARN] = dynamoDBTable
 		}
 	}
 
@@ -322,5 +329,5 @@ func PollDynamoDBTables(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

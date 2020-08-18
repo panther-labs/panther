@@ -25,7 +25,29 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/acm"
+	"github.com/aws/aws-sdk-go/service/cloudformation"
+	"github.com/aws/aws-sdk-go/service/cloudtrail"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go/service/configservice"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	"github.com/aws/aws-sdk-go/service/ecs"
+	"github.com/aws/aws-sdk-go/service/elbv2"
+	"github.com/aws/aws-sdk-go/service/guardduty"
+	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/aws/aws-sdk-go/service/kms"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/rds"
+	"github.com/aws/aws-sdk-go/service/redshift"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/ssm"
+	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
 	"github.com/aws/aws-sdk-go/service/sts"
+	"github.com/aws/aws-sdk-go/service/waf"
+	"github.com/aws/aws-sdk-go/service/wafregional"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
@@ -37,9 +59,6 @@ const (
 	assumeRoleDuration = time.Hour
 	// retries on default session
 	maxRetries = 6
-
-	// error message for failure
-	clientErrMessage = "failed to get service client"
 )
 
 var (
@@ -47,6 +66,53 @@ var (
 	// assumeRoleFunc is the function to return valid AWS credentials.
 	assumeRoleFunc         = assumeRole
 	verifyAssumedCredsFunc = verifyAssumedCreds
+
+	// This maps the name we have given to a type of resource to the corresponding AWS name for the
+	// service that the resource type is a part of.
+	typeToIDMapping = map[string]string{
+		awsmodels.AcmCertificateSchema:      acm.ServiceName,
+		awsmodels.CloudFormationStackSchema: cloudformation.ServiceName,
+		awsmodels.CloudTrailSchema:          cloudtrail.ServiceName,
+		awsmodels.CloudWatchLogGroupSchema:  cloudwatchlogs.ServiceName,
+		awsmodels.ConfigServiceSchema:       configservice.ServiceName,
+		awsmodels.DynamoDBTableSchema:       dynamodb.ServiceName,
+		awsmodels.Ec2AmiSchema:              ec2.ServiceName,
+		awsmodels.Ec2InstanceSchema:         ec2.ServiceName,
+		awsmodels.Ec2NetworkAclSchema:       ec2.ServiceName,
+		awsmodels.Ec2SecurityGroupSchema:    ec2.ServiceName,
+		awsmodels.Ec2VolumeSchema:           ec2.ServiceName,
+		awsmodels.Ec2VpcSchema:              ec2.ServiceName,
+		awsmodels.EcsClusterSchema:          ecs.ServiceName,
+		awsmodels.Elbv2LoadBalancerSchema:   elbv2.ServiceName,
+		awsmodels.GuardDutySchema:           guardduty.ServiceName,
+		awsmodels.IAMGroupSchema:            iam.ServiceName,
+		awsmodels.IAMPolicySchema:           iam.ServiceName,
+		awsmodels.IAMRoleSchema:             iam.ServiceName,
+		awsmodels.IAMRootUserSchema:         iam.ServiceName,
+		awsmodels.IAMUserSchema:             iam.ServiceName,
+		awsmodels.KmsKeySchema:              kms.ServiceName,
+		awsmodels.LambdaFunctionSchema:      lambda.ServiceName,
+		awsmodels.RDSInstanceSchema:         rds.ServiceName,
+		awsmodels.RedshiftClusterSchema:     redshift.ServiceName,
+		awsmodels.S3BucketSchema:            s3.ServiceName,
+		awsmodels.WafRegionalWebAclSchema:   waf.ServiceName,
+		awsmodels.WafWebAclSchema:           wafregional.ServiceName,
+	}
+
+	// These services do not support regional scans, either because the resource itself is not
+	// regional or because we construct a "Meta" resource that needs the full context of every
+	// resource to be updated.
+	globalOnlyTypes = map[string]struct{}{
+		awsmodels.CloudTrailSchema:    {}, // Has a meta resource
+		awsmodels.ConfigServiceSchema: {}, // Has a meta resource
+		awsmodels.GuardDutySchema:     {}, // Has a meta resource
+		awsmodels.IAMGroupSchema:      {}, // Global service
+		awsmodels.IAMPolicySchema:     {}, // Global service
+		awsmodels.IAMRoleSchema:       {}, // Global service
+		awsmodels.IAMRootUserSchema:   {}, // Global service
+		awsmodels.IAMUserSchema:       {}, // Global service
+		awsmodels.WafWebAclSchema:     {}, // Global service
+	}
 )
 
 // Key used for the client cache to neatly encapsulate an integration, service, and region
@@ -67,6 +133,64 @@ func Setup() {
 	awsConfig := aws.NewConfig().WithMaxRetries(maxRetries)
 	awsConfig.Retryer = awsretry.NewConnectionErrRetryer()
 	snapshotPollerSession = session.Must(session.NewSession(awsConfig))
+}
+
+func setupSSMClient(sess *session.Session, cfg *aws.Config) interface{} {
+	return ssm.New(sess, cfg)
+}
+
+// GetRegionsToScan determines what regions need to be scanned in order to perform a full account
+// scan for a given resource type
+func GetRegionsToScan(pollerInput *awsmodels.ResourcePollerInput, resourceType string) (regions []*string, err error) {
+	// For resources where we are always going to perform a full account scan anyways, just return a
+	// single region.
+	if _, ok := globalOnlyTypes[resourceType]; ok {
+		return []*string{&defaultRegion}, nil
+	}
+
+	return GetServiceRegions(pollerInput, resourceType)
+}
+
+// GetServiceRegions determines what regions are both enabled in the account and are supported by
+// AWS for the given resource type.
+func GetServiceRegions(pollerInput *awsmodels.ResourcePollerInput, resourceType string) (regions []*string, err error) {
+	// Determine the service ID based on the resource type
+	serviceID, ok := typeToIDMapping[resourceType]
+	if !ok {
+		return nil, errors.Errorf("no service mapping for resource type %s", resourceType)
+	}
+
+	// Lookup the regions that the account has enabled
+	ec2Svc, err := getClient(pollerInput, setupEC2Client, "ec2", defaultRegion)
+	describeRegionsOutput, err := ec2Svc.(ec2iface.EC2API).DescribeRegions(&ec2.DescribeRegionsInput{})
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a set of regions to union with the service enabled regions below
+	enabledRegions := make(map[string]struct{})
+	for _, region := range describeRegionsOutput.Regions {
+		enabledRegions[*region.RegionName] = struct{}{}
+	}
+
+	// Lookup the regions that AWS supports for the service, storing the ones that are also enabled
+	// for this account
+	ssmSvc, err := getClient(pollerInput, setupSSMClient, "ssm", defaultRegion)
+	err = ssmSvc.(ssmiface.SSMAPI).GetParametersByPathPages(&ssm.GetParametersByPathInput{
+		Path: aws.String("/aws/service/global-infrastructure/services/" + serviceID + "/regions"),
+	}, func(page *ssm.GetParametersByPathOutput, b bool) bool {
+		for _, param := range page.Parameters {
+			if _, ok := enabledRegions[*param.Value]; ok {
+				regions = append(regions, param.Value)
+			}
+		}
+		return true
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return
 }
 
 // getClient returns a valid client for a given integration, service, and region using caching.
@@ -94,12 +218,7 @@ func getClient(pollerInput *awsmodels.ResourcePollerInput,
 	creds := assumeRoleFunc(pollerInput, snapshotPollerSession, region)
 	err := verifyAssumedCredsFunc(creds, region)
 	if err != nil {
-		zap.L().Error(clientErrMessage,
-			zap.Error(err),
-			zap.String("service", service),
-			zap.String("region", region),
-			zap.Any("pollerInput", *pollerInput))
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to get %s client in %s region", service, region)
 	}
 	client := clientFunc(snapshotPollerSession, &aws.Config{
 		Credentials: creds,

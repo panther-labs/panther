@@ -160,15 +160,20 @@ func buildGuardDutyDetectorSnapshot(guardDutySvc guarddutyiface.GuardDutyAPI, de
 }
 
 // PollGuardDutyDetectors gathers information on each GuardDuty detector for an AWS account.
-func PollGuardDutyDetectors(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollGuardDutyDetectors(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting GuardDuty Detector resource poller")
 	guardDutyDetectorSnapshots := make(map[string]*awsmodels.GuardDutyDetector)
 
 	// Get detectors in each region
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "guardduty") {
+	regions, err := GetServiceRegions(pollerInput, awsmodels.GuardDutySchema)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for _, regionID := range regions {
 		guardDutySvc, err := getGuardDutyClient(pollerInput, *regionID)
 		if err != nil {
-			return nil, err // error is logged in getClient()
+			return nil, nil, err
 		}
 
 		// Start with generating a list of all detectors
@@ -235,5 +240,9 @@ func PollGuardDutyDetectors(pollerInput *awsmodels.ResourcePollerInput) ([]*apim
 		Type:            awsmodels.GuardDutyMetaSchema,
 	})
 
-	return resources, nil
+	// We don't support paging for GuardDuty resources. Since there is a limit of 1 detector per
+	// region, we should not run into timeout issues here anyways.
+	//
+	// Reference: https://docs.aws.amazon.com/general/latest/gr/guardduty.html
+	return resources, nil, nil
 }

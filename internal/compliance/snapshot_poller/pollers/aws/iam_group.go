@@ -64,15 +64,18 @@ func PollIAMGroup(
 }
 
 // listGroups returns a list of all IAM groups in the account
-func listGroups(iamSvc iamiface.IAMAPI) (groups []*iam.Group) {
-	err := iamSvc.ListGroupsPages(&iam.ListGroupsInput{},
+func listGroups(iamSvc iamiface.IAMAPI, nextMarker *string) (groups []*iam.Group, marker *string, err error) {
+	err = iamSvc.ListGroupsPages(&iam.ListGroupsInput{Marker: nextMarker},
 		func(page *iam.ListGroupsOutput, lastPage bool) bool {
 			groups = append(groups, page.Groups...)
+			if len(groups) >= defaultBatchSize {
+				if !lastPage {
+					marker = page.Marker
+				}
+				return false
+			}
 			return true
 		})
-	if err != nil {
-		utils.LogAWSError("IAM.ListGroups", err)
-	}
 	return
 }
 
@@ -192,18 +195,21 @@ func buildIamGroupSnapshot(iamSvc iamiface.IAMAPI, group *iam.Group) *awsmodels.
 }
 
 // PollIamGroups gathers information on each IAM Group for an AWS account.
-func PollIamGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollIamGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting IAM Group resource poller")
 	iamSvc, err := getIAMClient(pollerInput, defaultRegion)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, nil, err
 	}
 
 	// Start with generating a list of all keys
-	groups := listGroups(iamSvc)
+	groups, marker, err := listGroups(iamSvc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, err
+	}
 	if len(groups) == 0 {
 		zap.L().Debug("No IAM groups found.")
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	var resources []*apimodels.AddResourceEntry
@@ -223,5 +229,5 @@ func PollIamGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Add
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

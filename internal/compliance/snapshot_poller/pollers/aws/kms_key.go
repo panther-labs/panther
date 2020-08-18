@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/kms"
 	"github.com/aws/aws-sdk-go/service/kms/kmsiface"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
@@ -52,7 +53,7 @@ func setupKmsClient(sess *session.Session, cfg *aws.Config) interface{} {
 func getKMSClient(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (kmsiface.KMSAPI, error) {
 	client, err := getClient(pollerResourceInput, KmsClientFunc, "kms", region)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, err
 	}
 
 	return client.(kmsiface.KMSAPI), nil
@@ -76,9 +77,9 @@ func PollKMSKey(
 		KeyArn: scanRequest.ResourceID,
 	}
 
-	snapshot := buildKmsKeySnapshot(client, key)
-	if snapshot == nil {
-		return nil, nil
+	snapshot, err := buildKmsKeySnapshot(client, key)
+	if err != nil || snapshot == nil {
+		return nil, err
 	}
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	snapshot.Region = aws.String(resourceARN.Region)
@@ -86,8 +87,8 @@ func PollKMSKey(
 }
 
 // listKeys returns a list of all keys in the account
-func listKeys(kmsSvc kmsiface.KMSAPI, nextMarker *string) (keys []*kms.KeyListEntry, marker *string) {
-	err := kmsSvc.ListKeysPages(
+func listKeys(kmsSvc kmsiface.KMSAPI, nextMarker *string) (keys []*kms.KeyListEntry, marker *string, err error) {
+	err = kmsSvc.ListKeysPages(
 		&kms.ListKeysInput{
 			Marker: nextMarker,
 		},
@@ -103,63 +104,54 @@ func listKeys(kmsSvc kmsiface.KMSAPI, nextMarker *string) (keys []*kms.KeyListEn
 		},
 	)
 	if err != nil {
-		utils.LogAWSError("KMS.ListKeysPages", err)
+		return nil, nil, errors.Wrap(err, "KMS.ListKeysPages")
 	}
 	return
 }
 
 // getKeyRotationStatus returns the rotation status for a given KMS key
-func getKeyRotationStatus(
-	kmsSvc kmsiface.KMSAPI, keyID *string) (rotationEnabled *bool, err error) {
-
+func getKeyRotationStatus(kmsSvc kmsiface.KMSAPI, keyID *string) (*bool, error) {
 	out, err := kmsSvc.GetKeyRotationStatus(&kms.GetKeyRotationStatusInput{KeyId: keyID})
 	if err != nil {
-		return
+		return nil, errors.Wrap(err, "KMS.GetKeyRotationStatus")
 	}
 
-	rotationEnabled = out.KeyRotationEnabled
-	return
+	return out.KeyRotationEnabled, nil
 }
 
 // getKeyRotationStatus returns the rotation status for a given KMS key
 func listResourceTags(kmsSvc kmsiface.KMSAPI, keyID *string) ([]*kms.Tag, error) {
 	tags, err := kmsSvc.ListResourceTags(&kms.ListResourceTagsInput{KeyId: keyID})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "AccessDeniedException" {
-				zap.L().Info(
-					"AccessDeniedException, additional permissions were not granted or key is in another account",
-					zap.String("API", "KMS.ListResourceTags"),
-					zap.String("key", *keyID))
-				return nil, err
-			}
-		}
-		utils.LogAWSError("KMS.ListResourceTags", err)
-		return nil, err
+		return nil, errors.Wrap(err, "KMS.ListResourceTags")
 	}
 
-	return tags.Tags, err
+	return tags.Tags, nil
 }
 
 // describeKey returns detailed key meta data for a given kms key
-func describeKey(kmsSvc kmsiface.KMSAPI, keyID *string) (metadata *kms.KeyMetadata, err error) {
+func describeKey(kmsSvc kmsiface.KMSAPI, keyID *string) (*kms.KeyMetadata, error) {
 	out, err := kmsSvc.DescribeKey(&kms.DescribeKeyInput{KeyId: keyID})
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {
 			if awsErr.Code() == "AccessDeniedException" {
-				zap.L().Info(
+				zap.L().Warn(
 					"AccessDeniedException, additional permissions were not granted or key is in another account",
 					zap.String("API", "KMS.DescribeKey"),
 					zap.String("key", *keyID))
-				return nil, err
+				return nil, nil
+			}
+			if awsErr.Code() == kms.ErrCodeNotFoundException {
+				zap.L().Warn("tried to scan non-existent resource",
+					zap.String("resource", *keyID),
+					zap.String("resourceType", awsmodels.KmsKeySchema))
+				return nil, nil
 			}
 		}
-		utils.LogAWSError("KMS.DescribeKey", err)
-		return nil, err
+		return nil, errors.Wrap(err, "KMS.DescribeKey")
 	}
 
-	metadata = out.KeyMetadata
-	return
+	return out.KeyMetadata, err
 }
 
 // getKeyPolicy returns the policy document for a given KMS key
@@ -168,35 +160,25 @@ func getKeyPolicy(kmsSvc kmsiface.KMSAPI, keyID *string) (*string, error) {
 		&kms.GetKeyPolicyInput{KeyId: keyID, PolicyName: &defaultPolicyName},
 	)
 	if err != nil {
-		utils.LogAWSError("KMS.GetKeyPolicy", err)
-		return nil, err
+		return nil, errors.Wrap(err, "KMS.GetKeyPolicy")
 	}
 
-	return out.Policy, err
+	return out.Policy, nil
 }
 
 // buildKmsKeySnapshot makes all the calls to build up a snapshot of a given KMS key
-func buildKmsKeySnapshot(kmsSvc kmsiface.KMSAPI, key *kms.KeyListEntry) *awsmodels.KmsKey {
+func buildKmsKeySnapshot(kmsSvc kmsiface.KMSAPI, key *kms.KeyListEntry) (*awsmodels.KmsKey, error) {
 	if key == nil {
-		return nil
+		return nil, nil
 	}
 	metadata, err := describeKey(kmsSvc, key.KeyId)
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == kms.ErrCodeNotFoundException {
-				zap.L().Warn("tried to scan non-existent resource",
-					zap.String("resource", *key.KeyId),
-					zap.String("resourceType", awsmodels.KmsKeySchema))
-				return nil
-			}
-		}
-		utils.LogAWSError("KMS.DescribeKey", err)
-		return nil
+		return nil, err
 	}
 
+	// This means we don't have permission to scan the key, likely because it exists in another account
 	if metadata == nil {
-		zap.L().Error("KMS key metadata is nil", zap.String("resource", *key.KeyId))
-		return nil
+		return nil, nil
 	}
 
 	kmsKey := &awsmodels.KmsKey{
@@ -223,32 +205,32 @@ func buildKmsKeySnapshot(kmsSvc kmsiface.KMSAPI, key *kms.KeyListEntry) *awsmode
 	}
 
 	policy, err := getKeyPolicy(kmsSvc, key.KeyId)
-	if err == nil {
-		kmsKey.Policy = policy
+	if err != nil {
+		return nil, err
 	}
+	kmsKey.Policy = policy
 
 	tags, err := listResourceTags(kmsSvc, key.KeyId)
-	if err == nil {
-		kmsKey.Tags = utils.ParseTagSlice(tags)
+	if err != nil {
+		return nil, err
 	}
+	kmsKey.Tags = utils.ParseTagSlice(tags)
 
 	// Check that the key was created by the customer's account and not AWS
 	if *metadata.KeyManager == customerKeyManager {
 		rotationStatus, err := getKeyRotationStatus(kmsSvc, key.KeyId)
 		if err != nil {
-			utils.LogAWSError("KMS.GetKeyRotationStatus", err)
-		} else {
-			kmsKey.KeyRotationEnabled = rotationStatus
+			return nil, errors.Wrap(err, "KMS.GetKeyRotationStatus")
 		}
+		kmsKey.KeyRotationEnabled = rotationStatus
 	}
 
-	return kmsKey
+	return kmsKey, nil
 }
 
 // PollKmsKeys gathers information on each KMS key for an AWS account.
 func PollKmsKeys(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting KMS Key resource poller")
-	kmsKeySnapshots := make(map[string]*awsmodels.KmsKey)
 
 	kmsSvc, err := getKMSClient(pollerInput, *pollerInput.Region)
 	if err != nil {
@@ -256,35 +238,27 @@ func PollKmsKeys(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddRe
 	}
 
 	// Start with generating a list of all keys
-	keys, marker := listKeys(kmsSvc, pollerInput.NextPageToken)
-	if keys == nil {
-		return nil, nil, nil
+	keys, marker, err := listKeys(kmsSvc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, err
 	}
 
+	resources := make([]*apimodels.AddResourceEntry, 0, len(keys))
 	for _, key := range keys {
-		kmsKeySnapshot := buildKmsKeySnapshot(kmsSvc, key)
+		kmsKeySnapshot, err := buildKmsKeySnapshot(kmsSvc, key)
+		if err != nil {
+			return nil, nil, err
+		}
 		if kmsKeySnapshot == nil {
 			continue
 		}
+
 		kmsKeySnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 		kmsKeySnapshot.Region = pollerInput.Region
 
-		if _, ok := kmsKeySnapshots[*kmsKeySnapshot.ARN]; !ok {
-			kmsKeySnapshots[*kmsKeySnapshot.ARN] = kmsKeySnapshot
-		} else {
-			zap.L().Info(
-				"overwriting existing KMS Key snapshot",
-				zap.String("resourceId", *kmsKeySnapshot.ARN),
-			)
-			kmsKeySnapshots[*kmsKeySnapshot.ARN] = kmsKeySnapshot
-		}
-	}
-
-	resources := make([]*apimodels.AddResourceEntry, 0, len(kmsKeySnapshots))
-	for resourceID, kmsKeySnapshot := range kmsKeySnapshots {
 		resources = append(resources, &apimodels.AddResourceEntry{
 			Attributes:      kmsKeySnapshot,
-			ID:              apimodels.ResourceID(resourceID),
+			ID:              apimodels.ResourceID(*kmsKeySnapshot.ResourceID),
 			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
 			IntegrationType: apimodels.IntegrationTypeAws,
 			Type:            awsmodels.KmsKeySchema,

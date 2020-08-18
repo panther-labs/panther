@@ -165,15 +165,20 @@ func buildConfigServiceSnapshot(
 }
 
 // PollConfigServices gathers information on each config service for an AWS account.
-func PollConfigServices(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollConfigServices(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting ConfigService poller")
 	configSnapshots := make(map[string]*awsmodels.ConfigService)
 
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "config") {
+	regions, err := GetServiceRegions(pollerInput, awsmodels.ConfigServiceSchema)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for _, regionID := range regions {
 		zap.L().Debug("building Config snapshots", zap.String("region", *regionID))
 		configServiceSvc, err := getConfigServiceClient(pollerInput, *regionID)
 		if err != nil {
-			return nil, err // error is logged in getClient()
+			return nil, nil, err
 		}
 
 		// Start with generating a list of all recorders
@@ -252,5 +257,7 @@ func PollConfigServices(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 		Type:            awsmodels.ConfigServiceMetaSchema,
 	})
 
-	return resources, nil
+	// We don't support paging for Config resources. Since you can only have one config recorder per
+	// region anyways, this shouldn't be an issue.
+	return resources, nil, nil
 }

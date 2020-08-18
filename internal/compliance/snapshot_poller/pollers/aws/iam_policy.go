@@ -81,12 +81,21 @@ func getIAMPolicy(svc iamiface.IAMAPI, policyARN *string) *iam.Policy {
 }
 
 // listPolicies returns all IAM policies in the account
-func listPolicies(iamSvc iamiface.IAMAPI) (policies []*iam.Policy, err error) {
+func listPolicies(iamSvc iamiface.IAMAPI, nextMarker *string) (policies []*iam.Policy, marker *string, err error) {
 	err = iamSvc.ListPoliciesPages(
-		// We only want to scan Customer managed policies
-		&iam.ListPoliciesInput{Scope: aws.String(localPolicyScope)},
+		&iam.ListPoliciesInput{
+			// We only want to scan Customer managed policies
+			Scope:  aws.String(localPolicyScope),
+			Marker: nextMarker,
+		},
 		func(page *iam.ListPoliciesOutput, lastPage bool) bool {
 			policies = append(policies, page.Policies...)
+			if len(policies) >= defaultBatchSize {
+				if !lastPage {
+					marker = page.Marker
+				}
+				return false
+			}
 			return true
 		},
 	)
@@ -169,18 +178,18 @@ func buildIAMPolicySnapshot(iamSvc iamiface.IAMAPI, policy *iam.Policy) *awsmode
 }
 
 // PollIamPolicies gathers information on each IAM policy for an AWS account.
-func PollIamPolicies(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollIamPolicies(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting IAM Policy resource poller")
 	iamSvc, err := getIAMClient(pollerInput, defaultRegion)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, nil, err
 	}
 
 	// Start with generating a list of all policies
-	policies, listErr := listPolicies(iamSvc)
-	if listErr != nil {
-		utils.LogAWSError("IAM.ListPolicies", listErr)
-		return nil, nil
+	policies, marker, err := listPolicies(iamSvc, pollerInput.NextPageToken)
+	if err != nil {
+		utils.LogAWSError("IAM.ListPolicies", err)
+		return nil, nil, err
 	}
 
 	var resources []*apimodels.AddResourceEntry
@@ -200,5 +209,5 @@ func PollIamPolicies(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

@@ -65,9 +65,15 @@ func PollCloudTrailTrail(
 		return nil, err
 	}
 
-	trail := getTrail(ctClient, scanRequest.ResourceID)
+	trail, err := getTrail(ctClient, scanRequest.ResourceID)
+	if err != nil {
+		return nil, err
+	}
 
-	snapshot := buildCloudTrailSnapshot(ctClient, trail, aws.String(resourceARN.Region))
+	snapshot, err := buildCloudTrailSnapshot(ctClient, trail, aws.String(resourceARN.Region))
+	if err != nil {
+		return nil, err
+	}
 	if snapshot == nil {
 		return nil, nil
 	}
@@ -77,59 +83,46 @@ func PollCloudTrailTrail(
 }
 
 // getTrail returns the specified cloudtrail
-func getTrail(svc cloudtrailiface.CloudTrailAPI, trailARN *string) *cloudtrail.Trail {
+func getTrail(svc cloudtrailiface.CloudTrailAPI, trailARN *string) (*cloudtrail.Trail, error) {
 	trail, err := svc.DescribeTrails(&cloudtrail.DescribeTrailsInput{
 		TrailNameList: []*string{trailARN},
 	})
 	if err != nil {
-		utils.LogAWSError("CloudTrail.DescribeTrails", err)
-		return nil
+		return nil, errors.Wrapf(err, "CloudTrail.DescribeTrails")
 	}
 
 	if len(trail.TrailList) == 0 {
 		zap.L().Warn("tried to scan non-existent resource",
 			zap.String("resource", *trailARN),
 			zap.String("resourceType", awsmodels.CloudTrailSchema))
-		return nil
+		return nil, nil
 	}
 
-	return trail.TrailList[0]
+	return trail.TrailList[0], nil
 }
 
 func describeTrails(svc cloudtrailiface.CloudTrailAPI) ([]*cloudtrail.Trail, error) {
-	var in = &cloudtrail.DescribeTrailsInput{IncludeShadowTrails: aws.Bool(true)}
-	var out *cloudtrail.DescribeTrailsOutput
-	var err error
-
-	if out, err = svc.DescribeTrails(in); err != nil {
-		return nil, err
+	out, err := svc.DescribeTrails(&cloudtrail.DescribeTrailsInput{IncludeShadowTrails: aws.Bool(true)})
+	if err != nil {
+		return nil, errors.Wrapf(err, "CloudTrail.Describe")
 	}
 
 	return out.TrailList, nil
 }
 
-func getTrailStatus(
-	svc cloudtrailiface.CloudTrailAPI,
-	trailARN *string,
-) (*cloudtrail.GetTrailStatusOutput, error) {
-
-	var in = &cloudtrail.GetTrailStatusInput{Name: trailARN}
-	var out *cloudtrail.GetTrailStatusOutput
-	var err error
-
-	if out, err = svc.GetTrailStatus(in); err != nil {
-		return nil, err
+func getTrailStatus(svc cloudtrailiface.CloudTrailAPI, trailARN *string) (*cloudtrail.GetTrailStatusOutput, error) {
+	trailStatus, err := svc.GetTrailStatus(&cloudtrail.GetTrailStatusInput{Name: trailARN})
+	if err != nil {
+		return nil, errors.Wrapf(err, "CloudTrail.GetTrailStatus")
 	}
 
-	return out, nil
+	return trailStatus, nil
 }
 
 func listTagsCloudTrail(svc cloudtrailiface.CloudTrailAPI, trailArn *string) ([]*cloudtrail.Tag, error) {
 	out, err := svc.ListTags(&cloudtrail.ListTagsInput{ResourceIdList: []*string{trailArn}})
 	if err != nil {
-		err = errors.WithMessagef(err, "ListTags failed for arn %s", *trailArn)
-		utils.LogAWSError("CloudTrail.ListTags", err)
-		return nil, err
+		return nil, errors.Wrapf(err, "CloudTrail.ListTags")
 	}
 
 	// Since we are only specifying one resource, this will always return one value.
@@ -141,19 +134,18 @@ func listTagsCloudTrail(svc cloudtrailiface.CloudTrailAPI, trailArn *string) ([]
 func getEventSelectors(svc cloudtrailiface.CloudTrailAPI, trailARN *string) ([]*cloudtrail.EventSelector, error) {
 	out, err := svc.GetEventSelectors(&cloudtrail.GetEventSelectorsInput{TrailName: trailARN})
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "CloudTrail.GetEventSelectors")
 	}
 	return out.EventSelectors, nil
 }
 
 // buildCloudTrailSnapshot builds a complete CloudTrail snapshot for a given trail
-func buildCloudTrailSnapshot(svc cloudtrailiface.CloudTrailAPI, trail *cloudtrail.Trail, region *string) *awsmodels.CloudTrail {
+func buildCloudTrailSnapshot(svc cloudtrailiface.CloudTrailAPI, trail *cloudtrail.Trail, region *string) (*awsmodels.CloudTrail, error) {
 	// Return on empty requests and shadow trails (trails not from this region)
 	if trail == nil || *trail.HomeRegion != *region {
 		zap.L().Debug("shadow trail or nil request")
-		return nil
+		return nil, nil
 	}
-	zap.L().Debug("cloudtrail has valid arn", zap.String("arn", *trail.TrailARN))
 	cloudTrail := &awsmodels.CloudTrail{
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   trail.TrailARN,
@@ -180,24 +172,23 @@ func buildCloudTrailSnapshot(svc cloudtrailiface.CloudTrailAPI, trail *cloudtrai
 
 	status, err := getTrailStatus(svc, trail.TrailARN)
 	if err != nil {
-		utils.LogAWSError("CloudTrail.GetTrailStatus", err)
-	} else {
-		cloudTrail.Status = status
+		return nil, err
 	}
+	cloudTrail.Status = status
 
 	eventSelectors, err := getEventSelectors(svc, trail.TrailARN)
 	if err != nil {
-		utils.LogAWSError("CloudTrail.GetEventSelectors", err)
-	} else {
-		cloudTrail.EventSelectors = eventSelectors
+		return nil, err
 	}
+	cloudTrail.EventSelectors = eventSelectors
 
 	tags, err := listTagsCloudTrail(svc, trail.TrailARN)
-	if err == nil {
-		cloudTrail.Tags = utils.ParseTagSlice(tags)
+	if err != nil {
+		return nil, err
 	}
+	cloudTrail.Tags = utils.ParseTagSlice(tags)
 
-	return cloudTrail
+	return cloudTrail, nil
 }
 
 // buildCloudTrails combines the output of each required API call to build the CloudTrailSnapshot.
@@ -205,21 +196,22 @@ func buildCloudTrailSnapshot(svc cloudtrailiface.CloudTrailAPI, trail *cloudtrai
 // It returns a mapping of CloudTrailARN to CloudTrailSnapshot.
 func buildCloudTrails(
 	cloudtrailSvc cloudtrailiface.CloudTrailAPI, region *string,
-) awsmodels.CloudTrails {
+) (awsmodels.CloudTrails, error) {
 
 	cloudTrails := make(awsmodels.CloudTrails)
 
 	zap.L().Debug("describing CloudTrails")
 	trails, err := describeTrails(cloudtrailSvc)
 	if err != nil {
-		utils.LogAWSError("CloudTrail.Describe", err)
-		// Return early since there are no CloudTrails
-		return cloudTrails
+		return nil, err
 	}
 
 	// Build each CloudTrail's snapshot by requesting additional context from CloudTrail/S3 APIs
 	for _, trail := range trails {
-		cloudTrail := buildCloudTrailSnapshot(cloudtrailSvc, trail, region)
+		cloudTrail, err := buildCloudTrailSnapshot(cloudtrailSvc, trail, region)
+		if err != nil {
+			return nil, err
+		}
 		// Skip same account shadow trails
 		if cloudTrail == nil {
 			continue
@@ -227,34 +219,36 @@ func buildCloudTrails(
 		cloudTrails[*trail.TrailARN] = cloudTrail
 	}
 
-	return cloudTrails
+	return cloudTrails, nil
 }
 
 // PollCloudTrails gathers information on all CloudTrails in an AWS account.
-func PollCloudTrails(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollCloudTrails(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting CloudTrail resource poller")
 	cloudTrailSnapshots := make(awsmodels.CloudTrails)
 
-	// TODO CloudTrail scans must always scan all regions, fix this
-	for _, regionID := range utils.GetServiceRegions([]*string{pollerInput.Region}, "cloudtrail") {
+	regions, err := GetServiceRegions(pollerInput, awsmodels.CloudTrailSchema)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for _, regionID := range regions {
 		zap.L().Debug("building CloudTrail snapshots", zap.String("region", *regionID))
 		cloudTrailSvc, err := getCloudTrailClient(pollerInput, *regionID)
 		if err != nil {
-			continue // error is logged in getClient()
+			return nil, nil, err
 		}
 
 		// Build the list of all CloudTrails for the given region
-		regionTrails := buildCloudTrails(cloudTrailSvc, regionID)
+		regionTrails, err := buildCloudTrails(cloudTrailSvc, regionID)
+		if err != nil {
+			return nil, nil, err
+		}
 
 		// Insert each trail into the master list of CloudTrails (if it is not there already)
 		for trailARN, trail := range regionTrails {
 			trail.Region = regionID
 			trail.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			if _, ok := cloudTrailSnapshots[trailARN]; ok {
-				zap.L().Info(
-					"overwriting existing CloudTrail snapshot", zap.String("resourceId", trailARN),
-				)
-			}
 			cloudTrailSnapshots[trailARN] = trail
 		}
 	}
@@ -286,7 +280,7 @@ func PollCloudTrails(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
 			IntegrationType: apimodels.IntegrationTypeAws,
 			Type:            awsmodels.CloudTrailMetaSchema,
-		}}, nil
+		}}, nil, nil
 	}
 
 	// Build the meta resource
@@ -349,5 +343,9 @@ func PollCloudTrails(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 		Type:            awsmodels.CloudTrailMetaSchema,
 	})
 
-	return resources, nil
+	// We don't support paging for CloudTrail resources. Since there is a limit of 5 trails per
+	// region, we should not run into timeout issues here anyways.
+	//
+	// Reference: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/WhatIsCloudTrail-Limits.html
+	return resources, nil, nil
 }

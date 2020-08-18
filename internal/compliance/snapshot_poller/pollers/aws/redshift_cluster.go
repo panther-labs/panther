@@ -100,15 +100,20 @@ func getRedshiftCluster(svc redshiftiface.RedshiftAPI, clusterID *string) *redsh
 }
 
 // describeClusters returns a list of all redshift cluster in the account
-func describeClusters(redshiftSvc redshiftiface.RedshiftAPI) (clusters []*redshift.Cluster) {
-	err := redshiftSvc.DescribeClustersPages(&redshift.DescribeClustersInput{},
+func describeClusters(redshiftSvc redshiftiface.RedshiftAPI, nextMarker *string) (clusters []*redshift.Cluster, marker *string, err error) {
+	err = redshiftSvc.DescribeClustersPages(&redshift.DescribeClustersInput{
+		Marker: nextMarker,
+	},
 		func(page *redshift.DescribeClustersOutput, lastPage bool) bool {
 			clusters = append(clusters, page.Clusters...)
+			if len(clusters) >= defaultBatchSize {
+				if !lastPage {
+					marker = page.Marker
+				}
+				return false
+			}
 			return true
 		})
-	if err != nil {
-		utils.LogAWSError("Redshift.DescribeClustersPages", err)
-	}
 	return
 }
 
@@ -190,54 +195,55 @@ func buildRedshiftClusterSnapshot(redshiftSvc redshiftiface.RedshiftAPI, cluster
 }
 
 // PollRedshiftClusters gathers information on each Redshift Cluster for an AWS account.
-func PollRedshiftClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollRedshiftClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting Redshift Cluster resource poller")
 	redshiftClusterSnapshots := make(map[string]*awsmodels.RedshiftCluster)
 
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "redshift") {
-		redshiftSvc, err := getRedshiftClient(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
+	redshiftSvc, err := getRedshiftClient(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
+	}
 
-		// Start with generating a list of all clusters
-		clusters := describeClusters(redshiftSvc)
-		if len(clusters) == 0 {
-			zap.L().Debug("No Redshift clusters found.", zap.String("region", *regionID))
-			continue
-		}
+	// Start with generating a list of all clusters
+	clusters, marker, err := describeClusters(redshiftSvc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(clusters) == 0 {
+		zap.L().Debug("No Redshift clusters found.", zap.String("region", *pollerInput.Region))
+		return nil, nil, nil
+	}
 
-		for _, cluster := range clusters {
-			redshiftClusterSnapshot := buildRedshiftClusterSnapshot(redshiftSvc, cluster)
+	for _, cluster := range clusters {
+		redshiftClusterSnapshot := buildRedshiftClusterSnapshot(redshiftSvc, cluster)
 
-			resourceID := strings.Join(
-				[]string{
-					"arn",
-					pollerInput.AuthSourceParsedARN.Partition,
-					"redshift",
-					*regionID,
-					pollerInput.AuthSourceParsedARN.AccountID,
-					"cluster",
-					*redshiftClusterSnapshot.ID},
-				":",
+		resourceID := strings.Join(
+			[]string{
+				"arn",
+				pollerInput.AuthSourceParsedARN.Partition,
+				"redshift",
+				*pollerInput.Region,
+				pollerInput.AuthSourceParsedARN.AccountID,
+				"cluster",
+				*redshiftClusterSnapshot.ID},
+			":",
+		)
+		// Populate generic fields
+		redshiftClusterSnapshot.ResourceID = aws.String(resourceID)
+
+		// Populate AWS generic fields
+		redshiftClusterSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
+		redshiftClusterSnapshot.Region = pollerInput.Region
+		redshiftClusterSnapshot.ARN = aws.String(resourceID)
+
+		if _, ok := redshiftClusterSnapshots[resourceID]; !ok {
+			redshiftClusterSnapshots[resourceID] = redshiftClusterSnapshot
+		} else {
+			zap.L().Info(
+				"overwriting existing Redshift Cluster snapshot",
+				zap.String("resourceID", resourceID),
 			)
-			// Populate generic fields
-			redshiftClusterSnapshot.ResourceID = aws.String(resourceID)
-
-			// Populate AWS generic fields
-			redshiftClusterSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			redshiftClusterSnapshot.Region = regionID
-			redshiftClusterSnapshot.ARN = aws.String(resourceID)
-
-			if _, ok := redshiftClusterSnapshots[resourceID]; !ok {
-				redshiftClusterSnapshots[resourceID] = redshiftClusterSnapshot
-			} else {
-				zap.L().Info(
-					"overwriting existing Redshift Cluster snapshot",
-					zap.String("resourceID", resourceID),
-				)
-				redshiftClusterSnapshots[resourceID] = redshiftClusterSnapshot
-			}
+			redshiftClusterSnapshots[resourceID] = redshiftClusterSnapshot
 		}
 	}
 
@@ -252,5 +258,5 @@ func PollRedshiftClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimod
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

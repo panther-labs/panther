@@ -87,8 +87,8 @@ func getRole(svc iamiface.IAMAPI, roleName *string) *iam.Role {
 func listRoles(iamSvc iamiface.IAMAPI, nextPage *string) (roles []*iam.Role, marker *string) {
 	err := iamSvc.ListRolesPages(
 		&iam.ListRolesInput{
-			Marker:   nextPage,
-			MaxItems: aws.Int64(20),
+			Marker: nextPage,
+			//MaxItems: aws.Int64(20),
 		},
 		func(page *iam.ListRolesOutput, lastPage bool) bool {
 			roles = append(roles, page.Roles...)
@@ -216,7 +216,7 @@ func PollIAMRoles(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddR
 	zap.L().Debug("starting IAM Role resource poller")
 	iamSvc, err := getIAMClient(pollerInput, defaultRegion)
 	if err != nil {
-		return nil, nil, err // error is logged in getClient()
+		return nil, nil, err
 	}
 
 	// List all IAM Roles in the account

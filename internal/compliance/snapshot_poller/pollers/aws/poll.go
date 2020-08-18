@@ -23,7 +23,6 @@ import (
 	"os"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -41,7 +40,8 @@ type resourcePoller struct {
 
 var (
 	// Default region to use when building clients for the individual resource poller
-	defaultRegion = endpoints.UsWest2RegionID
+	// defaultRegion = endpoints.UsWest2RegionID
+	defaultRegion = os.Getenv("AWS_REGION")
 
 	auditRoleName = os.Getenv("AUDIT_ROLE_NAME")
 
@@ -91,9 +91,9 @@ var (
 
 	// ServicePollers maps a resource type to its Poll function
 	ServicePollers = map[string]resourcePoller{
-		awsmodels.AcmCertificateSchema: {"ACMCertificate", PollAcmCertificates},
-		//awsmodels.CloudTrailSchema:          {"CloudTrail", PollCloudTrails},
-		awsmodels.Ec2AmiSchema:              {"EC2AMI", PollEc2Amis}, // TODO: build amis
+		awsmodels.AcmCertificateSchema:      {"ACMCertificate", PollAcmCertificates},
+		awsmodels.CloudTrailSchema:          {"CloudTrail", PollCloudTrails},
+		awsmodels.Ec2AmiSchema:              {"EC2AMI", PollEc2Amis},
 		awsmodels.Ec2InstanceSchema:         {"EC2Instance", PollEc2Instances},
 		awsmodels.Ec2NetworkAclSchema:       {"EC2NetworkACL", PollEc2NetworkAcls},
 		awsmodels.Ec2SecurityGroupSchema:    {"EC2SecurityGroup", PollEc2SecurityGroups},
@@ -142,9 +142,10 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 
 	// Extract the role ARN to construct various ResourceIDs.
 	roleArn, err := arn.Parse(auditRoleARN)
+	// This error cannot be retried so we don't return it
 	if err != nil {
 		zap.L().Error("unable to parse constructed audit role", zap.Error(err))
-		return nil, err
+		return nil, nil
 	}
 
 	pollerResourceInput := &awsmodels.ResourcePollerInput{
@@ -168,6 +169,7 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	}
 
 	// If a resource ID is not provided, a resource type must be present
+	// This error cannot be retried so we don't return it
 	if scanRequest.ResourceType == nil {
 		zap.L().Error("Invalid scan request input")
 		return nil, nil
@@ -187,21 +189,12 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		}
 	}
 
-	// If a region is not provided, then an 'all region' scan is being requested. Since we no longer
-	// support scanning multiple regions in one request, we translate this request into a single
+	// If a region is not provided, then an 'all regions' scan is being requested. We don't
+	// support scanning multiple regions in one request, so we translate this request into a single
 	// region scan in each region.
 	//
-	// For this reason, requests to scan "global" resources such as IAM entities need to supply a
-	// global or default region value, which will be ignored.
-	ec2Client, err := getEC2Client(pollerResourceInput, defaultRegion)
-	if err != nil {
-		return nil, err // getClient() logs error
-	}
-	regions := utils.GetRegions(ec2Client)
-	if regions == nil {
-		zap.L().Info("no valid regions to scan")
-		return nil, nil
-	}
+	// Lookup the regions that are both enabled and supported by this service
+	regions, err := GetRegionsToScan(pollerResourceInput, *scanRequest.ResourceType)
 
 	zap.L().Info("processing full account resource type scan")
 	for _, region := range regions {

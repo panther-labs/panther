@@ -57,7 +57,9 @@ func PollPasswordPolicyResource(
 	_ *pollermodels.ScanEntry,
 ) (interface{}, error) {
 
-	snapshot, err := PollPasswordPolicy(pollerResourceInput)
+	// Throw away the dummy next page response, password policy resources don't need paging
+	// during scanning
+	snapshot, _, err := PollPasswordPolicy(pollerResourceInput)
 	if err != nil || snapshot == nil {
 		return nil, err
 	}
@@ -75,11 +77,11 @@ func getPasswordPolicy(svc iamiface.IAMAPI) (*iam.PasswordPolicy, error) {
 }
 
 // PollPasswordPolicy gathers information on all PasswordPolicy in an AWS account.
-func PollPasswordPolicy(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollPasswordPolicy(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting Password Policy resource poller")
 	iamSvc, err := getIAMClient(pollerInput, defaultRegion)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	anyExist := true
@@ -111,6 +113,7 @@ func PollPasswordPolicy(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 		Region:    aws.String(awsmodels.GlobalRegion),
 	}
 
+	// Password Policy never pages
 	if anyExist && passwordPolicy != nil {
 		return []*apimodels.AddResourceEntry{{
 			Attributes: &awsmodels.PasswordPolicy{
@@ -123,7 +126,7 @@ func PollPasswordPolicy(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
 			IntegrationType: apimodels.IntegrationTypeAws,
 			Type:            awsmodels.PasswordPolicySchema,
-		}}, nil
+		}}, nil, nil
 	}
 
 	return []*apimodels.AddResourceEntry{{
@@ -136,5 +139,5 @@ func PollPasswordPolicy(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 		IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
 		IntegrationType: apimodels.IntegrationTypeAws,
 		Type:            awsmodels.PasswordPolicySchema,
-	}}, nil
+	}}, nil, nil
 }

@@ -98,15 +98,20 @@ func getRDSInstance(svc rdsiface.RDSAPI, instanceARN *string) *rds.DBInstance {
 }
 
 // describeDbInstance returns a list of all RDS Instances in the account
-func describeDBInstances(rdsSvc rdsiface.RDSAPI) (instances []*rds.DBInstance) {
-	err := rdsSvc.DescribeDBInstancesPages(&rds.DescribeDBInstancesInput{},
+func describeDBInstances(rdsSvc rdsiface.RDSAPI, nextMarker *string) (instances []*rds.DBInstance, marker *string, err error) {
+	err = rdsSvc.DescribeDBInstancesPages(&rds.DescribeDBInstancesInput{
+		Marker: nextMarker,
+	},
 		func(page *rds.DescribeDBInstancesOutput, lastPage bool) bool {
 			instances = append(instances, page.DBInstances...)
+			if len(instances) >= defaultBatchSize {
+				if !lastPage {
+					marker = page.Marker
+				}
+				return false
+			}
 			return true
 		})
-	if err != nil {
-		utils.LogAWSError("RDS.DescribeDBInstancesPages", err)
-	}
 	return
 }
 
@@ -240,40 +245,40 @@ func buildRDSInstanceSnapshot(rdsSvc rdsiface.RDSAPI, instance *rds.DBInstance) 
 }
 
 // PollRDSInstances gathers information on each RDS DB Instance for an AWS account.
-func PollRDSInstances(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollRDSInstances(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting RDS Instance resource poller")
 	rdsInstanceSnapshots := make(map[string]*awsmodels.RDSInstance)
 
-	regions := utils.GetServiceRegions(pollerInput.Regions, "rds")
-	for _, regionID := range regions {
-		rdsSvc, err := getRDSClient(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
+	rdsSvc, err := getRDSClient(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
+	}
 
-		// Start with generating a list of all instances
-		instances := describeDBInstances(rdsSvc)
-		if len(instances) == 0 {
-			zap.L().Debug("No RDS instances found.", zap.String("region", *regionID))
+	// Start with generating a list of all instances
+	instances, marker, err := describeDBInstances(rdsSvc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(instances) == 0 {
+		zap.L().Debug("No RDS instances found.", zap.String("region", *pollerInput.Region))
+		return nil, nil, nil
+	}
+
+	for _, instance := range instances {
+		rdsInstanceSnapshot := buildRDSInstanceSnapshot(rdsSvc, instance)
+		if rdsInstanceSnapshot == nil {
 			continue
 		}
-
-		for _, instance := range instances {
-			rdsInstanceSnapshot := buildRDSInstanceSnapshot(rdsSvc, instance)
-			if rdsInstanceSnapshot == nil {
-				continue
-			}
-			rdsInstanceSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			rdsInstanceSnapshot.Region = regionID
-			if _, ok := rdsInstanceSnapshots[*rdsInstanceSnapshot.ARN]; !ok {
-				rdsInstanceSnapshots[*rdsInstanceSnapshot.ARN] = rdsInstanceSnapshot
-			} else {
-				zap.L().Info(
-					"overwriting existing RDS Instance snapshot",
-					zap.String("resourceID", *rdsInstanceSnapshot.ARN),
-				)
-				rdsInstanceSnapshots[*rdsInstanceSnapshot.ARN] = rdsInstanceSnapshot
-			}
+		rdsInstanceSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
+		rdsInstanceSnapshot.Region = pollerInput.Region
+		if _, ok := rdsInstanceSnapshots[*rdsInstanceSnapshot.ARN]; !ok {
+			rdsInstanceSnapshots[*rdsInstanceSnapshot.ARN] = rdsInstanceSnapshot
+		} else {
+			zap.L().Info(
+				"overwriting existing RDS Instance snapshot",
+				zap.String("resourceID", *rdsInstanceSnapshot.ARN),
+			)
+			rdsInstanceSnapshots[*rdsInstanceSnapshot.ARN] = rdsInstanceSnapshot
 		}
 	}
 
@@ -288,5 +293,5 @@ func PollRDSInstances(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }
