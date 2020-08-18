@@ -46,7 +46,7 @@ const BorderedTab: React.FC<BorderedTabProps> = ({ isSelected, isFocused, childr
 
   return (
     <PseudoBox
-      mr={8}
+      mx={4}
       borderBottom="3px solid"
       zIndex={5}
       py={4}
