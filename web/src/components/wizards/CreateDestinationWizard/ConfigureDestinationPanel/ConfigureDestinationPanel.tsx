@@ -22,7 +22,7 @@ import { DestinationConfigInput, DestinationInput, DestinationTypeEnum } from 'G
 import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm';
 import DestinationFormSwitcher from 'Components/forms/DestinationFormSwitcher';
 import { capitalize, extractErrorMessage } from 'Helpers/utils';
-import { useWizardContext, WizardPanelWrapper } from 'Components/Wizard';
+import { useWizardContext, WizardPanel } from 'Components/Wizard';
 import { useAddDestination } from './graphql/addDestination.generated';
 import { WizardData } from '../CreateDestinationWizard';
 
@@ -116,7 +116,7 @@ const ConfigureDestinationPanel: React.FC = () => {
   );
   return (
     <React.Fragment>
-      <WizardPanelWrapper.Heading
+      <WizardPanel.Heading
         title={`Configure Your ${destinationDisplayName} Destination`}
         subtitle="Fill out the form below to configure your Destination"
       />

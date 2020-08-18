@@ -18,22 +18,20 @@
 
 import React from 'react';
 import { render, fireEvent } from 'test-utils';
-import { useWizardContext, Wizard, WizardPanelWrapper } from './index';
+import { useWizardContext, Wizard, WizardPanel } from './index';
 
 describe('Wizard', () => {
   it('renders a step', () => {
     const { container } = render(
       <Wizard>
         <Wizard.Step title="Step Nickname">
-          <WizardPanelWrapper>
-            <WizardPanelWrapper.Content>
-              <WizardPanelWrapper.Heading title="Title" subtitle="Subtitle" />
-              Content
-              <WizardPanelWrapper.Actions>
-                <WizardPanelWrapper.ActionNext>Continue</WizardPanelWrapper.ActionNext>
-              </WizardPanelWrapper.Actions>
-            </WizardPanelWrapper.Content>
-          </WizardPanelWrapper>
+          <WizardPanel>
+            <WizardPanel.Heading title="Title" subtitle="Subtitle" />
+            Content
+            <WizardPanel.Actions>
+              <WizardPanel.ActionNext>Continue</WizardPanel.ActionNext>
+            </WizardPanel.Actions>
+          </WizardPanel>
         </Wizard.Step>
       </Wizard>
     );
@@ -69,11 +67,9 @@ describe('Wizard', () => {
     const { container, getByText } = render(
       <Wizard header={false}>
         <Wizard.Step>
-          <WizardPanelWrapper>
-            <WizardPanelWrapper.Content>
-              <WizardPanelWrapper.Heading title="Title" subtitle="Subtitle" />
-            </WizardPanelWrapper.Content>
-          </WizardPanelWrapper>
+          <WizardPanel>
+            <WizardPanel.Heading title="Title" subtitle="Subtitle" />
+          </WizardPanel>
         </Wizard.Step>
       </Wizard>
     );
@@ -87,12 +83,10 @@ describe('Wizard', () => {
     const { getByText } = render(
       <Wizard header={false}>
         <Wizard.Step>
-          <WizardPanelWrapper>
-            <WizardPanelWrapper.Content>
-              Content
-              <WizardPanelWrapper.ActionNext />
-            </WizardPanelWrapper.Content>
-          </WizardPanelWrapper>
+          <WizardPanel>
+            Content
+            <WizardPanel.ActionNext />
+          </WizardPanel>
         </Wizard.Step>
       </Wizard>
     );
@@ -104,9 +98,7 @@ describe('Wizard', () => {
     const { queryByText, queryByAriaLabel } = render(
       <Wizard header={false}>
         <Wizard.Step>
-          <WizardPanelWrapper>
-            <WizardPanelWrapper.Content>Content</WizardPanelWrapper.Content>
-          </WizardPanelWrapper>
+          <WizardPanel>Content</WizardPanel>
         </Wizard.Step>
       </Wizard>
     );
@@ -119,12 +111,10 @@ describe('Wizard', () => {
     const { queryByText, queryByAriaLabel } = render(
       <Wizard header={false}>
         <Wizard.Step>
-          <WizardPanelWrapper>
-            <WizardPanelWrapper.Content>
-              <WizardPanelWrapper.ActionPrev />
-              <WizardPanelWrapper.ActionNext />
-            </WizardPanelWrapper.Content>
-          </WizardPanelWrapper>
+          <WizardPanel>
+            <WizardPanel.ActionPrev />
+            <WizardPanel.ActionNext />
+          </WizardPanel>
         </Wizard.Step>
       </Wizard>
     );
@@ -137,11 +127,9 @@ describe('Wizard', () => {
     const { queryByText } = render(
       <Wizard header={false}>
         <Wizard.Step>
-          <WizardPanelWrapper>
-            <WizardPanelWrapper.Content>
-              <WizardPanelWrapper.ActionNext>Continue</WizardPanelWrapper.ActionNext>
-            </WizardPanelWrapper.Content>
-          </WizardPanelWrapper>
+          <WizardPanel>
+            <WizardPanel.ActionNext>Continue</WizardPanel.ActionNext>
+          </WizardPanel>
         </Wizard.Step>
       </Wizard>
     );
@@ -153,35 +141,29 @@ describe('Wizard', () => {
     const { getByText, queryByText, getByAriaLabel } = render(
       <Wizard header={false}>
         <Wizard.Step>
-          <WizardPanelWrapper>
-            <WizardPanelWrapper.Content>
-              A
-              <WizardPanelWrapper.Actions>
-                <WizardPanelWrapper.ActionNext />
-              </WizardPanelWrapper.Actions>
-            </WizardPanelWrapper.Content>
-          </WizardPanelWrapper>
+          <WizardPanel>
+            A
+            <WizardPanel.Actions>
+              <WizardPanel.ActionNext />
+            </WizardPanel.Actions>
+          </WizardPanel>
         </Wizard.Step>
         <Wizard.Step>
-          <WizardPanelWrapper>
-            <WizardPanelWrapper.Content>
-              B
-              <WizardPanelWrapper.Actions>
-                <WizardPanelWrapper.ActionPrev />
-                <WizardPanelWrapper.ActionNext />
-              </WizardPanelWrapper.Actions>
-            </WizardPanelWrapper.Content>
-          </WizardPanelWrapper>
+          <WizardPanel>
+            B
+            <WizardPanel.Actions>
+              <WizardPanel.ActionPrev />
+              <WizardPanel.ActionNext />
+            </WizardPanel.Actions>
+          </WizardPanel>
         </Wizard.Step>
         <Wizard.Step>
-          <WizardPanelWrapper>
-            <WizardPanelWrapper.Content>
-              C
-              <WizardPanelWrapper.Actions>
-                <WizardPanelWrapper.ActionPrev />
-              </WizardPanelWrapper.Actions>
-            </WizardPanelWrapper.Content>
-          </WizardPanelWrapper>
+          <WizardPanel>
+            C
+            <WizardPanel.Actions>
+              <WizardPanel.ActionPrev />
+            </WizardPanel.Actions>
+          </WizardPanel>
         </Wizard.Step>
       </Wizard>
     );
@@ -233,14 +215,12 @@ describe('Wizard', () => {
     const { getByText } = render(
       <Wizard initialData={{ text: 'A' }} header={false}>
         <Wizard.Step>
-          <WizardPanelWrapper>
-            <WizardPanelWrapper.Content>
-              <WizardDataConsumer />
-              <WizardDataSetter />
-              <WizardDataUpdater />
-              <WizardDataResetter />
-            </WizardPanelWrapper.Content>
-          </WizardPanelWrapper>
+          <WizardPanel>
+            <WizardDataConsumer />
+            <WizardDataSetter />
+            <WizardDataUpdater />
+            <WizardDataResetter />
+          </WizardPanel>
         </Wizard.Step>
       </Wizard>
     );
@@ -276,25 +256,21 @@ describe('Wizard', () => {
     const { getByText } = render(
       <Wizard initialData="A" header={false}>
         <Wizard.Step>
-          <WizardPanelWrapper>
-            <WizardPanelWrapper.Content>
-              First
-              <WizardDataSetter />
-              <WizardDataConsumer />
-              <WizardPanelWrapper.Actions>
-                <WizardPanelWrapper.ActionNext />
-              </WizardPanelWrapper.Actions>
-            </WizardPanelWrapper.Content>
-          </WizardPanelWrapper>
+          <WizardPanel>
+            First
+            <WizardDataSetter />
+            <WizardDataConsumer />
+            <WizardPanel.Actions>
+              <WizardPanel.ActionNext />
+            </WizardPanel.Actions>
+          </WizardPanel>
         </Wizard.Step>
         <Wizard.Step>
-          <WizardPanelWrapper>
-            <WizardPanelWrapper.Content>
-              Second
-              <WizardResetter />
-              <WizardDataConsumer />
-            </WizardPanelWrapper.Content>
-          </WizardPanelWrapper>
+          <WizardPanel>
+            Second
+            <WizardResetter />
+            <WizardDataConsumer />
+          </WizardPanel>
         </Wizard.Step>
       </Wizard>
     );

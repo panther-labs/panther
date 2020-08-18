@@ -17,30 +17,20 @@
  */
 
 import React from 'react';
-import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
-import { Wizard, WizardPanel } from 'Components/Wizard';
-import ConfigureDestinationScreen from './ConfigureDestinationPanel';
-import DestinationTestPanel from '../common/DestinationTestPanel';
+import { Box } from 'pouncejs';
 
-export interface WizardData {
-  destination?: DestinationFull;
-}
-
-const EditDestination: React.FC = () => {
+const BorderTabDivider: React.FC = () => {
   return (
-    <Wizard<WizardData> header={false}>
-      <Wizard.Step>
-        <WizardPanel>
-          <ConfigureDestinationScreen />
-        </WizardPanel>
-      </Wizard.Step>
-      <Wizard.Step>
-        <WizardPanel>
-          <DestinationTestPanel />
-        </WizardPanel>
-      </Wizard.Step>
-    </Wizard>
+    <Box
+      position="absolute"
+      width="100%"
+      height={1}
+      backgroundColor="navyblue-300"
+      zIndex={0}
+      left={0}
+      marginTop="-2px"
+    />
   );
 };
 
-export default EditDestination;
+export default BorderTabDivider;
