@@ -19,7 +19,6 @@ package parsers
  */
 
 import (
-	"github.com/panther-labs/panther/pkg/box"
 	"net"
 	"reflect"
 	"regexp"
@@ -32,6 +31,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/rowid"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
+	"github.com/panther-labs/panther/pkg/box"
 	"github.com/panther-labs/panther/pkg/unbox"
 )
 

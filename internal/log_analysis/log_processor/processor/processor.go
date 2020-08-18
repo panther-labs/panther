@@ -20,7 +20,6 @@ package processor
 
 import (
 	"bufio"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"io"
 	"strings"
 	"sync"
@@ -32,6 +31,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/metrics"
