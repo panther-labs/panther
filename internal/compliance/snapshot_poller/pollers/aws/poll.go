@@ -92,7 +92,11 @@ var (
 	// ServicePollers maps a resource type to its Poll function
 	ServicePollers = map[string]resourcePoller{
 		awsmodels.AcmCertificateSchema:      {"ACMCertificate", PollAcmCertificates},
+		awsmodels.CloudFormationStackSchema: {"CloudFormationStack", PollCloudFormationStacks},
 		awsmodels.CloudTrailSchema:          {"CloudTrail", PollCloudTrails},
+		awsmodels.CloudWatchLogGroupSchema:  {"CloudWatchLogGroup", PollCloudWatchLogsLogGroups},
+		awsmodels.ConfigServiceSchema:       {"ConfigService", PollConfigServices},
+		awsmodels.DynamoDBTableSchema:       {"DynamoDBTable", PollDynamoDBTables},
 		awsmodels.Ec2AmiSchema:              {"EC2AMI", PollEc2Amis},
 		awsmodels.Ec2InstanceSchema:         {"EC2Instance", PollEc2Instances},
 		awsmodels.Ec2NetworkAclSchema:       {"EC2NetworkACL", PollEc2NetworkAcls},
@@ -101,24 +105,20 @@ var (
 		awsmodels.Ec2VpcSchema:              {"EC2VPC", PollEc2Vpcs},
 		awsmodels.EcsClusterSchema:          {"ECSCluster", PollEcsClusters},
 		awsmodels.Elbv2LoadBalancerSchema:   {"ELBV2LoadBalancer", PollElbv2ApplicationLoadBalancers},
-		awsmodels.KmsKeySchema:              {"KMSKey", PollKmsKeys},
-		awsmodels.S3BucketSchema:            {"S3Bucket", PollS3Buckets},
-		awsmodels.WafWebAclSchema:           {"WAFWebAcl", PollWafWebAcls},
-		awsmodels.WafRegionalWebAclSchema:   {"WAFRegionalWebAcl", PollWafRegionalWebAcls},
-		awsmodels.CloudFormationStackSchema: {"CloudFormationStack", PollCloudFormationStacks},
-		awsmodels.CloudWatchLogGroupSchema:  {"CloudWatchLogGroup", PollCloudWatchLogsLogGroups},
-		awsmodels.ConfigServiceSchema:       {"ConfigService", PollConfigServices},
-		awsmodels.DynamoDBTableSchema:       {"DynamoDBTable", PollDynamoDBTables},
 		awsmodels.GuardDutySchema:           {"GuardDutyDetector", PollGuardDutyDetectors},
+		awsmodels.IAMGroupSchema:            {"IAMGroups", PollIamGroups},
+		awsmodels.IAMPolicySchema:           {"IAMPolicies", PollIamPolicies},
+		awsmodels.IAMRoleSchema:             {"IAMRoles", PollIAMRoles},
 		awsmodels.IAMUserSchema:             {"IAMUser", PollIAMUsers},
 		// Service scan for the resource type IAMRootUserSchema is not defined! Do not do it!
-		awsmodels.IAMRoleSchema:         {"IAMRoles", PollIAMRoles},
-		awsmodels.IAMGroupSchema:        {"IAMGroups", PollIamGroups},
-		awsmodels.IAMPolicySchema:       {"IAMPolicies", PollIamPolicies},
-		awsmodels.LambdaFunctionSchema:  {"LambdaFunctions", PollLambdaFunctions},
-		awsmodels.PasswordPolicySchema:  {"PasswordPolicy", PollPasswordPolicy},
-		awsmodels.RDSInstanceSchema:     {"RDSInstance", PollRDSInstances},
-		awsmodels.RedshiftClusterSchema: {"RedshiftCluster", PollRedshiftClusters},
+		awsmodels.KmsKeySchema:            {"KMSKey", PollKmsKeys},
+		awsmodels.LambdaFunctionSchema:    {"LambdaFunctions", PollLambdaFunctions},
+		awsmodels.PasswordPolicySchema:    {"PasswordPolicy", PollPasswordPolicy},
+		awsmodels.RDSInstanceSchema:       {"RDSInstance", PollRDSInstances},
+		awsmodels.RedshiftClusterSchema:   {"RedshiftCluster", PollRedshiftClusters},
+		awsmodels.S3BucketSchema:          {"S3Bucket", PollS3Buckets},
+		awsmodels.WafWebAclSchema:         {"WAFWebAcl", PollWafWebAcls},
+		awsmodels.WafRegionalWebAclSchema: {"WAFRegionalWebAcl", PollWafRegionalWebAcls},
 	}
 )
 
@@ -165,7 +165,6 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		// Individual resource scan
 		zap.L().Info("processing single resource scan")
 		return singleResourceScan(scanRequest, pollerResourceInput)
-
 	}
 
 	// If a resource ID is not provided, a resource type must be present
@@ -207,7 +206,7 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 					ResourceType:  scanRequest.ResourceType,
 				},
 			},
-		}, 0)
+		}, 0) // We could add a small random delay to reduce burst load on the poller
 	}
 
 	return nil, nil
@@ -219,26 +218,25 @@ func serviceScan(
 	scanRequest *pollermodels.ScanEntry,
 ) (generatedEvents []*resourcesapimodels.AddResourceEntry, err error) {
 
-	var generatedResources []*resourcesapimodels.AddResourceEntry
 	var marker *string
-	generatedResources, marker, err = poller.resourcePoller(pollerInput)
+	generatedEvents, marker, err = poller.resourcePoller(pollerInput)
 	if err != nil {
-		zap.L().Error(
+		zap.L().Info(
 			"an error occurred while polling",
 			zap.String("resourcePoller", poller.description),
 			zap.String("errorMessage", err.Error()),
 		)
 		return
-	} else if generatedResources != nil {
-		zap.L().Info(
-			"resources generated",
-			zap.Int("numResources", len(generatedResources)),
-			zap.String("resourcePoller", poller.description),
-		)
-		generatedEvents = append(generatedEvents, generatedResources...)
 	}
 
-	// If we need to keep going keep going
+	zap.L().Info(
+		"resources generated",
+		zap.Int("numResources", len(generatedEvents)),
+		zap.String("resourcePoller", poller.description),
+	)
+
+	// If we exited early because we hit the max batch size, re-queue a scan starting from where we
+	// left off
 	if marker != nil {
 		zap.L().Debug("hit max batch size")
 		scanRequest.NextPageToken = marker
@@ -254,10 +252,12 @@ func serviceScan(
 func singleResourceScan(
 	scanRequest *pollermodels.ScanEntry,
 	pollerInput *awsmodels.ResourcePollerInput,
-) (generatedEvent []*resourcesapimodels.AddResourceEntry, err error) {
+) ([]*resourcesapimodels.AddResourceEntry, error) {
 
 	var resource interface{}
+	var err error
 
+	// I don't know why this comment is here and I'm too scared to remove it
 	// TODO: does this accept short names?
 	if pollFunction, ok := IndividualResourcePollers[*scanRequest.ResourceType]; ok {
 		// Handle cases where the ResourceID is not an ARN
@@ -270,30 +270,31 @@ func singleResourceScan(
 		// Handle cases where the ResourceID is an ARN
 		resourceARN, err := arn.Parse(*scanRequest.ResourceID)
 		if err != nil {
-			zap.L().Error("unable to parse resourceID",
-				zap.Error(err),
-			)
-			return nil, err
+			zap.L().Error("unable to parse resourceID", zap.Error(err))
+			// Don't return an error here because the scan request is not retryable
+			return nil, nil
 		}
 		resource, err = pollFunction(pollerInput, resourceARN, scanRequest)
 		if err != nil {
 			return nil, errors.Wrapf(err, "could not scan %#v", *scanRequest)
 		}
+	} else {
+		zap.L().Error("unable to perform scan of specified resource type", zap.String("resourceType", *scanRequest.ResourceType))
+		// This error is not retryable
+		return nil, nil
 	}
 
+	// This can happen for a number of reasons, most commonly that the resource no longer exists
+	// or there is custom retry logic built into the specific scanner in use
 	if resource == nil {
-		zap.L().Info("could not build resource",
-			zap.Error(err))
-		return
+		return nil, nil
 	}
 
-	generatedEvent = []*resourcesapimodels.AddResourceEntry{{
+	return []*resourcesapimodels.AddResourceEntry{{
 		Attributes:      resource,
 		ID:              resourcesapimodels.ResourceID(*scanRequest.ResourceID),
 		IntegrationID:   resourcesapimodels.IntegrationID(*scanRequest.IntegrationID),
 		IntegrationType: resourcesapimodels.IntegrationTypeAws,
 		Type:            resourcesapimodels.ResourceType(*scanRequest.ResourceType),
-	}}
-
-	return generatedEvent, nil
+	}}, nil
 }

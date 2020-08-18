@@ -49,7 +49,7 @@ func setupElbv2Client(sess *session.Session, cfg *aws.Config) interface{} {
 func getElbv2Client(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (elbv2iface.ELBV2API, error) {
 	client, err := getClient(pollerResourceInput, Elbv2ClientFunc, "elbv2", region)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, err
 	}
 
 	return client.(elbv2iface.ELBV2API), nil

@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/iam/iamiface"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
@@ -44,7 +45,7 @@ func setupIAMClient(sess *session.Session, cfg *aws.Config) interface{} {
 func getIAMClient(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (iamiface.IAMAPI, error) {
 	client, err := getClient(pollerResourceInput, IAMClientFunc, "iam", region)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, err
 	}
 
 	return client.(iamiface.IAMAPI), nil
@@ -70,7 +71,7 @@ func PollPasswordPolicyResource(
 func getPasswordPolicy(svc iamiface.IAMAPI) (*iam.PasswordPolicy, error) {
 	out, err := svc.GetAccountPasswordPolicy(&iam.GetAccountPasswordPolicyInput{})
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "IAM.GetAccountPasswordPolicy")
 	}
 
 	return out.PasswordPolicy, nil
@@ -85,15 +86,16 @@ func PollPasswordPolicy(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 	}
 
 	anyExist := true
-	passwordPolicy, getErr := getPasswordPolicy(iamSvc)
-	if getErr != nil {
-		if awsErr, ok := getErr.(awserr.Error); ok {
-			switch awsErr.Code() {
-			case iam.ErrCodeNoSuchEntityException:
+	passwordPolicy, err := getPasswordPolicy(iamSvc)
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok {
+			if awsErr.Code() == iam.ErrCodeNoSuchEntityException {
 				anyExist = false
-			default:
-				utils.LogAWSError("IAM.GetPasswordPolicy", getErr)
 			}
+		}
+		// If the error wasn't caused by the password policy not existing, then return it
+		if anyExist {
+			return nil, nil, err
 		}
 	}
 

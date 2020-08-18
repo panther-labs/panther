@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/redshift"
 	"github.com/aws/aws-sdk-go/service/redshift/redshiftiface"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
@@ -47,7 +48,7 @@ func setupRedshiftClient(sess *session.Session, cfg *aws.Config) interface{} {
 func getRedshiftClient(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (redshiftiface.RedshiftAPI, error) {
 	client, err := getClient(pollerResourceInput, RedshiftClientFunc, "redshift", region)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, err
 	}
 
 	return client.(redshiftiface.RedshiftAPI), nil
@@ -66,11 +67,14 @@ func PollRedshiftCluster(
 	}
 
 	clusterID := strings.Replace(resourceARN.Resource, "cluster:", "", 1)
-	redshiftCluster := getRedshiftCluster(client, aws.String(clusterID))
+	redshiftCluster, err := getRedshiftCluster(client, aws.String(clusterID))
+	if err != nil || redshiftCluster == nil {
+		return nil, err
+	}
 
-	snapshot := buildRedshiftClusterSnapshot(client, redshiftCluster)
-	if snapshot == nil {
-		return nil, nil
+	snapshot, err := buildRedshiftClusterSnapshot(client, redshiftCluster)
+	if err != nil {
+		return nil, err
 	}
 	snapshot.ResourceID = scanRequest.ResourceID
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
@@ -80,7 +84,7 @@ func PollRedshiftCluster(
 }
 
 // getRedshiftCluster returns a specific redshift cluster
-func getRedshiftCluster(svc redshiftiface.RedshiftAPI, clusterID *string) *redshift.Cluster {
+func getRedshiftCluster(svc redshiftiface.RedshiftAPI, clusterID *string) (*redshift.Cluster, error) {
 	cluster, err := svc.DescribeClusters(&redshift.DescribeClustersInput{
 		ClusterIdentifier: clusterID,
 	})
@@ -90,13 +94,12 @@ func getRedshiftCluster(svc redshiftiface.RedshiftAPI, clusterID *string) *redsh
 				zap.L().Warn("tried to scan non-existent resource",
 					zap.String("resource", *clusterID),
 					zap.String("resourceType", awsmodels.RedshiftClusterSchema))
-				return nil
+				return nil, nil
 			}
 		}
-		utils.LogAWSError("Redshift.DescribeClusters", err)
-		return nil
+		return nil, errors.Wrap(err, "Redshift.DescribeClusters")
 	}
-	return cluster.Clusters[0]
+	return cluster.Clusters[0], nil
 }
 
 // describeClusters returns a list of all redshift cluster in the account
@@ -114,6 +117,9 @@ func describeClusters(redshiftSvc redshiftiface.RedshiftAPI, nextMarker *string)
 			}
 			return true
 		})
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "Redshift.DescribeClustersPages")
+	}
 	return
 }
 
@@ -123,17 +129,13 @@ func describeLoggingStatus(redshiftSvc redshiftiface.RedshiftAPI, clusterID *str
 		&redshift.DescribeLoggingStatusInput{ClusterIdentifier: clusterID},
 	)
 	if err != nil {
-		utils.LogAWSError("Redshift.DescribeLoggingStatus", err)
-		return nil, err
+		return nil, errors.Wrap(err, "Redshift.DescribeLoggingStatus")
 	}
 	return out, nil
 }
 
 // buildRedshiftClusterSnapshot makes all the calls to build up a snapshot of a given Redshift cluster
-func buildRedshiftClusterSnapshot(redshiftSvc redshiftiface.RedshiftAPI, cluster *redshift.Cluster) *awsmodels.RedshiftCluster {
-	if cluster == nil {
-		return nil
-	}
+func buildRedshiftClusterSnapshot(redshiftSvc redshiftiface.RedshiftAPI, cluster *redshift.Cluster) (*awsmodels.RedshiftCluster, error) {
 	clusterSnapshot := &awsmodels.RedshiftCluster{
 		GenericResource: awsmodels.GenericResource{
 			TimeCreated:  utils.DateTimeFormat(*cluster.ClusterCreateTime),
@@ -187,18 +189,16 @@ func buildRedshiftClusterSnapshot(redshiftSvc redshiftiface.RedshiftAPI, cluster
 
 	loggingStatus, err := describeLoggingStatus(redshiftSvc, cluster.ClusterIdentifier)
 	if err != nil {
-		return clusterSnapshot
+		return nil, err
 	}
 	clusterSnapshot.LoggingStatus = loggingStatus
 
-	return clusterSnapshot
+	return clusterSnapshot, nil
 }
 
 // PollRedshiftClusters gathers information on each Redshift Cluster for an AWS account.
 func PollRedshiftClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting Redshift Cluster resource poller")
-	redshiftClusterSnapshots := make(map[string]*awsmodels.RedshiftCluster)
-
 	redshiftSvc, err := getRedshiftClient(pollerInput, *pollerInput.Region)
 	if err != nil {
 		return nil, nil, err
@@ -209,13 +209,13 @@ func PollRedshiftClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimod
 	if err != nil {
 		return nil, nil, err
 	}
-	if len(clusters) == 0 {
-		zap.L().Debug("No Redshift clusters found.", zap.String("region", *pollerInput.Region))
-		return nil, nil, nil
-	}
 
+	resources := make([]*apimodels.AddResourceEntry, 0, len(clusters))
 	for _, cluster := range clusters {
-		redshiftClusterSnapshot := buildRedshiftClusterSnapshot(redshiftSvc, cluster)
+		redshiftClusterSnapshot, err := buildRedshiftClusterSnapshot(redshiftSvc, cluster)
+		if err != nil {
+			return nil, nil, err
+		}
 
 		resourceID := strings.Join(
 			[]string{
@@ -236,21 +236,8 @@ func PollRedshiftClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimod
 		redshiftClusterSnapshot.Region = pollerInput.Region
 		redshiftClusterSnapshot.ARN = aws.String(resourceID)
 
-		if _, ok := redshiftClusterSnapshots[resourceID]; !ok {
-			redshiftClusterSnapshots[resourceID] = redshiftClusterSnapshot
-		} else {
-			zap.L().Info(
-				"overwriting existing Redshift Cluster snapshot",
-				zap.String("resourceID", resourceID),
-			)
-			redshiftClusterSnapshots[resourceID] = redshiftClusterSnapshot
-		}
-	}
-
-	resources := make([]*apimodels.AddResourceEntry, 0, len(redshiftClusterSnapshots))
-	for resourceID, clusterSnapshot := range redshiftClusterSnapshots {
 		resources = append(resources, &apimodels.AddResourceEntry{
-			Attributes:      clusterSnapshot,
+			Attributes:      redshiftClusterSnapshot,
 			ID:              apimodels.ResourceID(resourceID),
 			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
 			IntegrationType: apimodels.IntegrationTypeAws,

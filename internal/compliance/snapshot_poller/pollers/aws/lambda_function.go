@@ -25,12 +25,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
-	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
 )
 
 // Set as variables to be overridden in testing
@@ -45,7 +45,7 @@ func setupLambdaClient(sess *session.Session, cfg *aws.Config) interface{} {
 func getLambdaClient(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (lambdaiface.LambdaAPI, error) {
 	client, err := getClient(pollerResourceInput, LambdaClientFunc, "lambda", region)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, err
 	}
 
 	return client.(lambdaiface.LambdaAPI), nil
@@ -63,11 +63,14 @@ func PollLambdaFunction(
 		return nil, err
 	}
 
-	lambdaFunction := getLambda(lambdaClient, scanRequest.ResourceID)
+	lambdaFunction, err := getLambda(lambdaClient, scanRequest.ResourceID)
+	if err != nil || lambdaFunction == nil {
+		return nil, err
+	}
 
-	snapshot := buildLambdaFunctionSnapshot(lambdaClient, lambdaFunction)
-	if snapshot == nil {
-		return nil, nil
+	snapshot, err := buildLambdaFunctionSnapshot(lambdaClient, lambdaFunction)
+	if err != nil {
+		return nil, err
 	}
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	snapshot.Region = aws.String(resourceARN.Region)
@@ -75,7 +78,7 @@ func PollLambdaFunction(
 }
 
 // getLambda returns a specific Lambda function configuration
-func getLambda(svc lambdaiface.LambdaAPI, functionARN *string) *lambda.FunctionConfiguration {
+func getLambda(svc lambdaiface.LambdaAPI, functionARN *string) (*lambda.FunctionConfiguration, error) {
 	// The GetFunction API call includes a pre-signed URL pointing to the function's source code, in
 	// addition to the rest of the function configuration information.
 	// Because of this, the lambda:GetFunction permission is not included in the default IAM audit
@@ -95,19 +98,19 @@ func getLambda(svc lambdaiface.LambdaAPI, functionARN *string) *lambda.FunctionC
 			return true
 		})
 	if err != nil {
-		utils.LogAWSError("Lambda.ListFunctionsPages", err)
+		return nil, errors.Wrap(err, "Lambda.ListFunctionsPages")
 	}
 	if functionConfig == nil {
 		zap.L().Warn("tried to scan non-existent resource",
 			zap.String("resource", *functionARN),
 			zap.String("resourceType", awsmodels.LambdaFunctionSchema))
 	}
-	return functionConfig
+	return functionConfig, nil
 }
 
 // listFunctions returns all lambda functions in the account
-func listFunctions(lambdaSvc lambdaiface.LambdaAPI, nextMarker *string) (functions []*lambda.FunctionConfiguration, marker *string) {
-	err := lambdaSvc.ListFunctionsPages(&lambda.ListFunctionsInput{
+func listFunctions(lambdaSvc lambdaiface.LambdaAPI, nextMarker *string) (functions []*lambda.FunctionConfiguration, marker *string, err error) {
+	err = lambdaSvc.ListFunctionsPages(&lambda.ListFunctionsInput{
 		Marker: nextMarker,
 	},
 		func(page *lambda.ListFunctionsOutput, lastPage bool) bool {
@@ -121,7 +124,7 @@ func listFunctions(lambdaSvc lambdaiface.LambdaAPI, nextMarker *string) (functio
 			return true
 		})
 	if err != nil {
-		utils.LogAWSError("Lambda.ListFunctionsPages", err)
+		return nil, nil, errors.Wrap(err, "Lambda.ListFunctionsPages")
 	}
 	return
 }
@@ -130,8 +133,7 @@ func listFunctions(lambdaSvc lambdaiface.LambdaAPI, nextMarker *string) (functio
 func listTagsLambda(lambdaSvc lambdaiface.LambdaAPI, arn *string) (map[string]*string, error) {
 	out, err := lambdaSvc.ListTags(&lambda.ListTagsInput{Resource: arn})
 	if err != nil {
-		utils.LogAWSError("Lambda.ListTags", err)
-		return nil, err
+		return nil, errors.Wrap(err, "Lambda.ListTags")
 	}
 
 	return out.Tags, nil
@@ -144,11 +146,10 @@ func getPolicy(lambdaSvc lambdaiface.LambdaAPI, name *string) (*lambda.GetPolicy
 		if awsErr, ok := err.(awserr.Error); ok {
 			if awsErr.Code() == "ResourceNotFoundException" {
 				zap.L().Debug("No Lambda Policy set", zap.String("function name", *name))
-				return nil, err
+				return nil, nil
 			}
 		}
-		utils.LogAWSError("Lambda.GetFunction", err)
-		return nil, err
+		return nil, errors.Wrap(err, "Lambda.GetFunction")
 	}
 
 	return out, nil
@@ -158,11 +159,8 @@ func getPolicy(lambdaSvc lambdaiface.LambdaAPI, name *string) (*lambda.GetPolicy
 func buildLambdaFunctionSnapshot(
 	lambdaSvc lambdaiface.LambdaAPI,
 	configuration *lambda.FunctionConfiguration,
-) *awsmodels.LambdaFunction {
+) (*awsmodels.LambdaFunction, error) {
 
-	if configuration == nil {
-		return nil
-	}
 	lambdaFunction := &awsmodels.LambdaFunction{
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   configuration.FunctionArn,
@@ -193,22 +191,23 @@ func buildLambdaFunctionSnapshot(
 	}
 
 	tags, err := listTagsLambda(lambdaSvc, configuration.FunctionArn)
-	if err == nil {
-		lambdaFunction.Tags = tags
+	if err != nil {
+		return nil, err
 	}
+	lambdaFunction.Tags = tags
 
 	policy, err := getPolicy(lambdaSvc, configuration.FunctionName)
-	if err == nil {
-		lambdaFunction.Policy = policy
+	if err != nil {
+		return nil, err
 	}
+	lambdaFunction.Policy = policy
 
-	return lambdaFunction
+	return lambdaFunction, nil
 }
 
 // PollLambdaFunctions gathers information on each Lambda Function for an AWS account.
 func PollLambdaFunctions(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting Lambda Function resource poller")
-	lambdaFunctionSnapshots := make(map[string]*awsmodels.LambdaFunction)
 
 	lambdaSvc, err := getLambdaClient(pollerInput, *pollerInput.Region)
 	if err != nil {
@@ -216,36 +215,23 @@ func PollLambdaFunctions(pollerInput *awsmodels.ResourcePollerInput) ([]*apimode
 	}
 
 	// Start with generating a list of all functions
-	functions, marker := listFunctions(lambdaSvc, pollerInput.NextPageToken)
-	if len(functions) == 0 {
-		zap.L().Debug("no Lambda functions found", zap.String("region", *pollerInput.Region))
-		return nil, nil, nil
+	functions, marker, err := listFunctions(lambdaSvc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, err
 	}
 
+	resources := make([]*apimodels.AddResourceEntry, 0, len(functions))
 	for _, functionConfiguration := range functions {
-		lambdaFunctionSnapshot := buildLambdaFunctionSnapshot(lambdaSvc, functionConfiguration)
-		if lambdaFunctionSnapshot == nil {
-			continue
+		lambdaFunctionSnapshot, err := buildLambdaFunctionSnapshot(lambdaSvc, functionConfiguration)
+		if err != nil {
+			return nil, nil, err
 		}
 		lambdaFunctionSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 		lambdaFunctionSnapshot.Region = pollerInput.Region
 
-		if _, ok := lambdaFunctionSnapshots[*lambdaFunctionSnapshot.ARN]; !ok {
-			lambdaFunctionSnapshots[*lambdaFunctionSnapshot.ARN] = lambdaFunctionSnapshot
-		} else {
-			zap.L().Info(
-				"overwriting existing Lambda Function snapshot",
-				zap.String("resourceId", *lambdaFunctionSnapshot.ARN),
-			)
-			lambdaFunctionSnapshots[*lambdaFunctionSnapshot.ARN] = lambdaFunctionSnapshot
-		}
-	}
-
-	resources := make([]*apimodels.AddResourceEntry, 0, len(lambdaFunctionSnapshots))
-	for resourceID, lambdaSnapshot := range lambdaFunctionSnapshots {
 		resources = append(resources, &apimodels.AddResourceEntry{
-			Attributes:      lambdaSnapshot,
-			ID:              apimodels.ResourceID(resourceID),
+			Attributes:      lambdaFunctionSnapshot,
+			ID:              apimodels.ResourceID(*lambdaFunctionSnapshot.ResourceID),
 			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
 			IntegrationType: apimodels.IntegrationTypeAws,
 			Type:            awsmodels.LambdaFunctionSchema,

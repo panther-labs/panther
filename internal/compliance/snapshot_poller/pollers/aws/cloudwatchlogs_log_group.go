@@ -49,7 +49,7 @@ func getCloudWatchLogsClient(pollerResourceInput *awsmodels.ResourcePollerInput,
 
 	client, err := getClient(pollerResourceInput, CloudWatchLogsClientFunc, "cloudwatchlogs", region)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, err
 	}
 
 	return client.(cloudwatchlogsiface.CloudWatchLogsAPI), nil
@@ -72,15 +72,15 @@ func PollCloudWatchLogsLogGroup(
 
 	// Split out the log group name from any additional modifiers
 	lgName := strings.Split(lgResource, ":")[0]
-	logGroup := getLogGroup(cwClient, lgName)
-	if logGroup == nil {
+	logGroup, err := getLogGroup(cwClient, lgName)
+	if logGroup == nil || err != nil {
 		// this can happen in case we didn't find the requested log group - it might have been deleted
 		// or we might have encountered some issue with querying for it
-		return nil, nil
+		return nil, err
 	}
-	snapshot := buildCloudWatchLogsLogGroupSnapshot(cwClient, logGroup)
-	if snapshot == nil {
-		return nil, nil
+	snapshot, err := buildCloudWatchLogsLogGroupSnapshot(cwClient, logGroup)
+	if err != nil {
+		return nil, err
 	}
 	snapshot.Region = &resourceARN.Region
 	snapshot.AccountID = &resourceARN.AccountID
@@ -89,25 +89,24 @@ func PollCloudWatchLogsLogGroup(
 }
 
 // getLogGroup returns a specific cloudwatch logs log group
-func getLogGroup(svc cloudwatchlogsiface.CloudWatchLogsAPI, logGroupName string) *cloudwatchlogs.LogGroup {
+func getLogGroup(svc cloudwatchlogsiface.CloudWatchLogsAPI, logGroupName string) (*cloudwatchlogs.LogGroup, error) {
 	logGroups, err := svc.DescribeLogGroups(&cloudwatchlogs.DescribeLogGroupsInput{
 		LogGroupNamePrefix: &logGroupName,
 	})
 	if err != nil {
-		utils.LogAWSError("CloudWatchLogs.DescribeLogGroups", err)
-		return nil
+		return nil, errors.Wrap(err, "CloudWatchLogs.DescribeLogGroups")
 	}
 
 	for _, logGroup := range logGroups.LogGroups {
 		if *logGroup.LogGroupName == logGroupName {
-			return logGroup
+			return logGroup, nil
 		}
 	}
 
 	zap.L().Warn("tried to scan non-existent resource",
 		zap.String("resource", logGroupName),
 		zap.String("resourceType", awsmodels.CloudWatchLogGroupSchema))
-	return nil
+	return nil, nil
 }
 
 // describeLogGroups returns all Log Groups in the account
@@ -132,22 +131,21 @@ func describeLogGroups(cloudwatchLogsSvc cloudwatchlogsiface.CloudWatchLogsAPI, 
 }
 
 // listTagsLogGroup returns the tags for a given log group
-func listTagsLogGroup(svc cloudwatchlogsiface.CloudWatchLogsAPI, groupName *string) map[string]*string {
+func listTagsLogGroup(svc cloudwatchlogsiface.CloudWatchLogsAPI, groupName *string) (map[string]*string, error) {
 	tags, err := svc.ListTagsLogGroup(&cloudwatchlogs.ListTagsLogGroupInput{
 		LogGroupName: groupName,
 	})
 	if err != nil {
-		utils.LogAWSError("CloudWatchLogs ListTagsLogGroup", err)
-		return nil
+		return nil, errors.Wrap(err, "CloudWatchLogs ListTagsLogGroup")
 	}
-	return tags.Tags
+	return tags.Tags, nil
 }
 
 // buildCloudWatchLogsLogGroupSnapshot returns a complete snapshot of a LogGroup
 func buildCloudWatchLogsLogGroupSnapshot(
 	svc cloudwatchlogsiface.CloudWatchLogsAPI,
 	logGroup *cloudwatchlogs.LogGroup,
-) *awsmodels.CloudWatchLogsLogGroup {
+) (*awsmodels.CloudWatchLogsLogGroup, error) {
 
 	logGroupSnapshot := &awsmodels.CloudWatchLogsLogGroup{
 		GenericResource: awsmodels.GenericResource{
@@ -166,15 +164,18 @@ func buildCloudWatchLogsLogGroupSnapshot(
 		RetentionInDays:   logGroup.RetentionInDays,
 		StoredBytes:       logGroup.StoredBytes,
 	}
-	logGroupSnapshot.Tags = listTagsLogGroup(svc, logGroupSnapshot.Name)
+	var err error
+	logGroupSnapshot.Tags, err = listTagsLogGroup(svc, logGroupSnapshot.Name)
+	if err != nil {
+		return nil, err
+	}
 
-	return logGroupSnapshot
+	return logGroupSnapshot, nil
 }
 
 // PollCloudWatchLogsLogGroups gathers information on each CloudWatchLogs LogGroup for an AWS account
 func PollCloudWatchLogsLogGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting CloudWatch LogGroup resource poller")
-	logGroupSnapshots := make(map[string]*awsmodels.CloudWatchLogsLogGroup)
 
 	cloudwatchLogGroupSvc, err := getCloudWatchLogsClient(pollerInput, *pollerInput.Region)
 	if err != nil {
@@ -184,37 +185,21 @@ func PollCloudWatchLogsLogGroups(pollerInput *awsmodels.ResourcePollerInput) ([]
 	// Start with generating a list of all log groups
 	logGroups, marker, err := describeLogGroups(cloudwatchLogGroupSvc, pollerInput.NextPageToken)
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "PollCloudWatchLogsLogGroups(%#v) in region %s", *pollerInput, *pollerInput.Region)
-	}
-	if len(logGroups) == 0 {
-		zap.L().Debug("no CloudWatchLogs LogGroups found", zap.String("region", *pollerInput.Region))
-		return nil, nil, nil
+		return nil, nil, err
 	}
 
+	resources := make([]*apimodels.AddResourceEntry, 0, len(logGroups))
 	for _, logGroup := range logGroups {
-		logGroupSnapshot := buildCloudWatchLogsLogGroupSnapshot(cloudwatchLogGroupSvc, logGroup)
-		if logGroupSnapshot == nil {
-			continue
+		logGroupSnapshot, err := buildCloudWatchLogsLogGroupSnapshot(cloudwatchLogGroupSvc, logGroup)
+		if err != nil {
+			return nil, nil, err
 		}
 		logGroupSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 		logGroupSnapshot.Region = pollerInput.Region
 
-		if _, ok := logGroupSnapshots[*logGroupSnapshot.ARN]; !ok {
-			logGroupSnapshots[*logGroup.Arn] = logGroupSnapshot
-		} else {
-			zap.L().Info(
-				"overwriting existing CloudWatchLogs LogGroup snapshot",
-				zap.String("resourceId", *logGroupSnapshot.ARN),
-			)
-			logGroupSnapshots[*logGroupSnapshot.ARN] = logGroupSnapshot
-		}
-	}
-
-	resources := make([]*apimodels.AddResourceEntry, 0, len(logGroupSnapshots))
-	for resourceID, logGroupSnapshot := range logGroupSnapshots {
 		resources = append(resources, &apimodels.AddResourceEntry{
 			Attributes:      logGroupSnapshot,
-			ID:              apimodels.ResourceID(resourceID),
+			ID:              apimodels.ResourceID(*logGroupSnapshot.ResourceID),
 			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
 			IntegrationType: apimodels.IntegrationTypeAws,
 			Type:            awsmodels.CloudWatchLogGroupSchema,

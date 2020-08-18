@@ -47,7 +47,7 @@ func getCloudTrailClient(pollerResourceInput *awsmodels.ResourcePollerInput,
 
 	client, err := getClient(pollerResourceInput, CloudTrailClientFunc, "cloudtrail", region)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, err
 	}
 
 	return client.(cloudtrailiface.CloudTrailAPI), nil

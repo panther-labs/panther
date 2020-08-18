@@ -26,6 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/iam/iamiface"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
@@ -50,18 +51,22 @@ func PollIAMPolicy(
 		return nil, err
 	}
 
-	policy := getIAMPolicy(iamClient, scanRequest.ResourceID)
-
-	snapshot := buildIAMPolicySnapshot(iamClient, policy)
-	if snapshot == nil {
-		return nil, nil
+	policy, err := getIAMPolicy(iamClient, scanRequest.ResourceID)
+	if err != nil || policy == nil {
+		return nil, err
 	}
+
+	snapshot, err := buildIAMPolicySnapshot(iamClient, policy)
+	if err != nil {
+		return nil, err
+	}
+
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	return snapshot, nil
 }
 
 // getPolicy returns a specific IAM policy
-func getIAMPolicy(svc iamiface.IAMAPI, policyARN *string) *iam.Policy {
+func getIAMPolicy(svc iamiface.IAMAPI, policyARN *string) (*iam.Policy, error) {
 	policy, err := svc.GetPolicy(&iam.GetPolicyInput{
 		PolicyArn: policyARN,
 	})
@@ -71,13 +76,12 @@ func getIAMPolicy(svc iamiface.IAMAPI, policyARN *string) *iam.Policy {
 				zap.L().Warn("tried to scan non-existent resource",
 					zap.String("resource", *policyARN),
 					zap.String("resourceType", awsmodels.IAMPolicySchema))
-				return nil
+				return nil, nil
 			}
 		}
-		utils.LogAWSError("IAM.GetPolicy", err)
-		return nil
+		return nil, errors.Wrap(err, "IAM.GetPolicy")
 	}
-	return policy.Policy
+	return policy.Policy, nil
 }
 
 // listPolicies returns all IAM policies in the account
@@ -99,16 +103,18 @@ func listPolicies(iamSvc iamiface.IAMAPI, nextMarker *string) (policies []*iam.P
 			return true
 		},
 	)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "IAM.ListPoliciesPages")
+	}
 
 	return
 }
 
 // listEntitiesForPolicy returns the entities that have the given policy
 func listEntitiesForPolicy(
-	iamSvc iamiface.IAMAPI, arn *string) (entities *awsmodels.IAMPolicyEntities) {
+	iamSvc iamiface.IAMAPI, arn *string) (entities *awsmodels.IAMPolicyEntities, err error) {
 
-	entities = &awsmodels.IAMPolicyEntities{}
-	err := iamSvc.ListEntitiesForPolicyPages(
+	err = iamSvc.ListEntitiesForPolicyPages(
 		&iam.ListEntitiesForPolicyInput{PolicyArn: arn},
 		func(page *iam.ListEntitiesForPolicyOutput, lastPage bool) bool {
 			entities.PolicyGroups = append(entities.PolicyGroups, page.PolicyGroups...)
@@ -118,32 +124,32 @@ func listEntitiesForPolicy(
 		},
 	)
 	if err != nil {
-		utils.LogAWSError("IAM.ListEntitiesForPolicyPages", err)
+		return nil, errors.Wrap(err, "IAM.ListEntitiesForPolicyPages")
 	}
 	return
 }
 
 // getPolicyVersion returns a specific policy document given a policy ARN and version number
 func getPolicyVersion(
-	iamSvc iamiface.IAMAPI, arn *string, version *string) (policyDoc string, err error) {
+	iamSvc iamiface.IAMAPI, arn *string, version *string) (string, error) {
 
 	policy, err := iamSvc.GetPolicyVersion(
 		&iam.GetPolicyVersionInput{PolicyArn: arn, VersionId: version},
 	)
 	if err != nil {
-		return
+		return "", errors.Wrap(err, "IAM.GetPolicyVersion")
 	}
 
-	policyDoc, err = url.QueryUnescape(*policy.PolicyVersion.Document)
-	return
+	policyDoc, err := url.QueryUnescape(*policy.PolicyVersion.Document)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to url decode policy document")
+	}
+
+	return policyDoc, nil
 }
 
 // buildIAMPolicySnapshot builds a complete IAMPolicySnapshot
-func buildIAMPolicySnapshot(iamSvc iamiface.IAMAPI, policy *iam.Policy) *awsmodels.IAMPolicy {
-	if policy == nil {
-		return nil
-	}
-
+func buildIAMPolicySnapshot(iamSvc iamiface.IAMAPI, policy *iam.Policy) (*awsmodels.IAMPolicy, error) {
 	policySnapshot := &awsmodels.IAMPolicy{
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   policy.Arn,
@@ -165,16 +171,19 @@ func buildIAMPolicySnapshot(iamSvc iamiface.IAMAPI, policy *iam.Policy) *awsmode
 		UpdateDate:                    policy.UpdateDate,
 	}
 
-	policySnapshot.Entities = listEntitiesForPolicy(iamSvc, policy.Arn)
+	var err error
+	policySnapshot.Entities, err = listEntitiesForPolicy(iamSvc, policy.Arn)
+	if err != nil {
+		return nil, err
+	}
 
 	policyDocument, err := getPolicyVersion(iamSvc, policy.Arn, policy.DefaultVersionId)
 	if err != nil {
-		utils.LogAWSError("IAM.GetPolicyVersion", err)
-	} else {
-		policySnapshot.PolicyDocument = aws.String(policyDocument)
+		return nil, err
 	}
+	policySnapshot.PolicyDocument = aws.String(policyDocument)
 
-	return policySnapshot
+	return policySnapshot, nil
 }
 
 // PollIamPolicies gathers information on each IAM policy for an AWS account.
@@ -188,15 +197,14 @@ func PollIamPolicies(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 	// Start with generating a list of all policies
 	policies, marker, err := listPolicies(iamSvc, pollerInput.NextPageToken)
 	if err != nil {
-		utils.LogAWSError("IAM.ListPolicies", err)
 		return nil, nil, err
 	}
 
 	var resources []*apimodels.AddResourceEntry
 	for _, policy := range policies {
-		iamPolicySnapshot := buildIAMPolicySnapshot(iamSvc, policy)
-		if iamPolicySnapshot == nil {
-			continue
+		iamPolicySnapshot, err := buildIAMPolicySnapshot(iamSvc, policy)
+		if err != nil {
+			return nil, nil, err
 		}
 		iamPolicySnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 
