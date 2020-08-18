@@ -21,7 +21,7 @@ import React from 'react';
 import { extractErrorMessage, toStackNameFormat } from 'Helpers/utils';
 import { useFormikContext } from 'formik';
 import { LOG_ONBOARDING_SNS_DOC_URL } from 'Source/constants';
-import { WizardPanelWrapper } from 'Components/Wizard';
+import { WizardPanel } from 'Components/Wizard';
 import { pantherConfig } from 'Source/config';
 import { useGetLogCfnTemplate } from './graphql/getLogCfnTemplate.generated';
 import { S3LogSourceWizardValues } from '../S3LogSourceWizard';
@@ -86,7 +86,7 @@ const StackDeployment: React.FC = () => {
 
       return (
         <React.Fragment>
-          <WizardPanelWrapper.Heading
+          <WizardPanel.Heading
             title="Deploy your configured stack"
             subtitle={`To proceed, you must deploy the generated Cloudformation template to the AWS account
           ${values.awsAccountId}.
@@ -122,7 +122,7 @@ const StackDeployment: React.FC = () => {
               Download template
             </Link>
           </Box>
-          <WizardPanelWrapper.Heading
+          <WizardPanel.Heading
             title="Step 2: Adding Notifications For New Data"
             subtitle={[
               'After deploying the stack above, follow the steps ',
@@ -143,7 +143,7 @@ const StackDeployment: React.FC = () => {
 
     return (
       <React.Fragment>
-        <WizardPanelWrapper.Heading
+        <WizardPanel.Heading
           title="Deploy your configured stack"
           subtitle={`To proceed, you must deploy the generated Cloudformation template to the AWS account
           ${values.awsAccountId}.

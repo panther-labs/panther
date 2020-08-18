@@ -98,6 +98,7 @@ Resources:
               - ec2:CreateVpc
               - ec2:DeleteFlowLogs
               - ec2:DeleteInternetGateway
+              - ec2:DeleteNatGateway
               - ec2:DeleteRoute
               - ec2:DeleteRouteTable
               - ec2:DeleteSecurityGroup
@@ -106,6 +107,7 @@ Resources:
               - ec2:DeleteVpc
               - ec2:Describe*
               - ec2:DetachInternetGateway
+              - ec2:DisassociateAddress
               - ec2:DisassociateRouteTable
               - ec2:DisassociateSubnetCidrBlock
               - ec2:ModifySubnetAttribute

@@ -22,7 +22,7 @@ import { useFormikContext } from 'formik';
 import { copyTextToClipboard } from 'Helpers/utils';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
-import { WizardPanelWrapper } from 'Components/Wizard';
+import { WizardPanel } from 'Components/Wizard';
 import { SqsLogSourceWizardValues } from '../SqsSourceWizard';
 
 const InformationPanel: React.FC = () => {
@@ -36,7 +36,7 @@ const InformationPanel: React.FC = () => {
 
   return (
     <Flex justify="center" align="center" direction="column" mx="auto" width={400}>
-      <WizardPanelWrapper.Heading
+      <WizardPanel.Heading
         title="We created a SQS queue for you"
         subtitle="You need to send events on this queue url for Panther to process them"
       />

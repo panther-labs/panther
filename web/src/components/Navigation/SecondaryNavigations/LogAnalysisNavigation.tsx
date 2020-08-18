@@ -20,6 +20,7 @@ import React from 'react';
 import { Box, Flex, Heading } from 'pouncejs';
 import urls from 'Source/urls';
 import FadeInTrail from 'Components/utils/FadeInTrail';
+import { AlertStatusesEnum } from 'Generated/schema';
 import NavLink from '../NavLink';
 
 const LogAnalysisNavigation: React.FC = () => {
@@ -32,7 +33,13 @@ const LogAnalysisNavigation: React.FC = () => {
         <FadeInTrail as="li">
           <NavLink icon="dashboard-alt" to={urls.logAnalysis.overview()} label="Overview" />
           <NavLink icon="rule" to={urls.logAnalysis.rules.list()} label="Rules" />
-          <NavLink icon="alert" to={urls.logAnalysis.alerts.list()} label="Alerts" />
+          <NavLink
+            icon="alert"
+            to={`${urls.logAnalysis.alerts.list()}?status[]=${AlertStatusesEnum.Open}&status[]=${
+              AlertStatusesEnum.Triaged
+            }`}
+            label="Alerts"
+          />
           <NavLink icon="log-source" to={urls.logAnalysis.sources.list()} label="Sources" />
         </FadeInTrail>
       </Flex>

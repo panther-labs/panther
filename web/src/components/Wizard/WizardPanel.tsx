@@ -20,7 +20,7 @@ import React from 'react';
 import { Box, Button, FadeIn, Flex, Heading, IconButton, Text } from 'pouncejs';
 import { useWizardContext } from './WizardContext';
 
-interface WizardPanelWrapperAction {
+interface WizardPanelAction {
   disabled?: boolean;
 }
 
@@ -29,25 +29,16 @@ interface WizardPanelHeadingProps {
   subtitle?: string | React.ReactNode | React.ReactNode[];
 }
 
-interface WizardPanelWrapperComposition {
-  Content: React.FC;
+interface WizardPanelComposition {
   Actions: React.FC;
-  ActionNext: React.FC<WizardPanelWrapperAction>;
-  ActionPrev: React.FC<WizardPanelWrapperAction>;
+  ActionNext: React.FC<WizardPanelAction>;
+  ActionPrev: React.FC<WizardPanelAction>;
   Heading: React.FC<WizardPanelHeadingProps>;
 }
 
-const WizardPanelWrapper: React.FC & WizardPanelWrapperComposition = ({ children }) => {
+const WizardPanel: React.FC & WizardPanelComposition = ({ children }) => {
   return (
-    <Flex as="section" direction="column">
-      {children}
-    </Flex>
-  );
-};
-
-const WizardPanelWrapperContent: React.FC = ({ children }) => {
-  return (
-    <Box width={700} mx="auto">
+    <Box as="section" width={700} mx="auto">
       <FadeIn>{children}</FadeIn>
     </Box>
   );
@@ -66,7 +57,7 @@ const WizardPanelHeading: React.FC<WizardPanelHeadingProps> = ({ title, subtitle
   </Box>
 );
 
-const WizardPanelWrapperActions: React.FC = ({ children }) => {
+const WizardPanelActions: React.FC = ({ children }) => {
   return (
     <Flex justify="center" mt={8} mb={4}>
       {children}
@@ -74,7 +65,7 @@ const WizardPanelWrapperActions: React.FC = ({ children }) => {
   );
 };
 
-const WizardPanelActionPrev: React.FC<WizardPanelWrapperAction> = ({ disabled }) => {
+const WizardPanelActionPrev: React.FC<WizardPanelAction> = ({ disabled }) => {
   const { goToPrevStep } = useWizardContext();
   return (
     <Box position="absolute" top={6} left={6}>
@@ -89,7 +80,7 @@ const WizardPanelActionPrev: React.FC<WizardPanelWrapperAction> = ({ disabled })
   );
 };
 
-const WizardPanelActionNext: React.FC<WizardPanelWrapperAction> = ({ disabled, children }) => {
+const WizardPanelActionNext: React.FC<WizardPanelAction> = ({ disabled, children }) => {
   const { goToNextStep } = useWizardContext();
   return (
     <Button onClick={goToNextStep} disabled={disabled}>
@@ -98,10 +89,9 @@ const WizardPanelActionNext: React.FC<WizardPanelWrapperAction> = ({ disabled, c
   );
 };
 
-WizardPanelWrapper.Content = React.memo(WizardPanelWrapperContent);
-WizardPanelWrapper.Actions = React.memo(WizardPanelWrapperActions);
-WizardPanelWrapper.ActionPrev = React.memo(WizardPanelActionPrev);
-WizardPanelWrapper.ActionNext = React.memo(WizardPanelActionNext);
-WizardPanelWrapper.Heading = React.memo(WizardPanelHeading);
+WizardPanel.Actions = React.memo(WizardPanelActions);
+WizardPanel.ActionPrev = React.memo(WizardPanelActionPrev);
+WizardPanel.ActionNext = React.memo(WizardPanelActionNext);
+WizardPanel.Heading = React.memo(WizardPanelHeading);
 
-export default WizardPanelWrapper;
+export default WizardPanel;

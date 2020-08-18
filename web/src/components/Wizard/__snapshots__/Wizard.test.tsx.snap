@@ -11,7 +11,7 @@ exports[`Wizard renders a step 1`] = `
   }
 }
 
-.panther-28 {
+.panther-26 {
   padding: 24px;
   margin-bottom: 24px;
   background-color: #23344e;
@@ -90,18 +90,8 @@ exports[`Wizard renders a step 1`] = `
   font-size: 0.875rem;
 }
 
-.panther-26 {
-  padding-top: 12px;
-}
-
 .panther-24 {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-flex-direction: column;
-  -ms-flex-direction: column;
-  flex-direction: column;
+  padding-top: 12px;
 }
 
 .panther-22 {
@@ -194,7 +184,7 @@ exports[`Wizard renders a step 1`] = `
 
 <div>
   <article
-    class="panther-28 panther-1"
+    class="panther-26 panther-1"
   >
     <ul
       class="panther-8 panther-1"
@@ -223,42 +213,38 @@ exports[`Wizard renders a step 1`] = `
       </li>
     </ul>
     <div
-      class="panther-26 panther-1"
+      class="panther-24 panther-1"
     >
       <section
-        class="panther-24 panther-1"
+        class="panther-22 panther-1"
       >
         <div
-          class="panther-22 panther-1"
+          class="panther-20 panther-1"
         >
-          <div
-            class="panther-20 panther-1"
+          <header
+            class="panther-14 panther-1"
           >
-            <header
-              class="panther-14 panther-1"
+            <h1
+              class="panther-10 panther-1"
             >
-              <h1
-                class="panther-10 panther-1"
-              >
-                Title
-              </h1>
-              <p
-                class="panther-12 panther-1"
-              >
-                Subtitle
-              </p>
-            </header>
-            Content
-            <div
-              class="panther-18 panther-1"
+              Title
+            </h1>
+            <p
+              class="panther-12 panther-1"
             >
-              <button
-                class="panther-16 panther-1"
-                type="button"
-              >
-                Continue
-              </button>
-            </div>
+              Subtitle
+            </p>
+          </header>
+          Content
+          <div
+            class="panther-18 panther-1"
+          >
+            <button
+              class="panther-16 panther-1"
+              type="button"
+            >
+              Continue
+            </button>
           </div>
         </div>
       </section>

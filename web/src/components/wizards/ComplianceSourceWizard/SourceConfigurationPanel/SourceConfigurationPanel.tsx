@@ -24,14 +24,14 @@ import React from 'react';
 import FormikCheckbox from 'Components/fields/Checkbox';
 import { CLOUD_SECURITY_REAL_TIME_DOC_URL, REMEDIATION_DOC_URL } from 'Source/constants';
 import { ComplianceSourceWizardValues } from 'Components/wizards/ComplianceSourceWizard/ComplianceSourceWizard';
-import { WizardPanelWrapper } from 'Components/Wizard';
+import { WizardPanel } from 'Components/Wizard';
 
 const SourceConfigurationPanel: React.FC = () => {
   const { initialValues } = useFormikContext<ComplianceSourceWizardValues>();
 
   return (
     <Box width={460} m="auto">
-      <WizardPanelWrapper.Heading
+      <WizardPanel.Heading
         title={initialValues.integrationId ? 'Update source' : 'First things first'}
         subtitle={
           initialValues.integrationId
