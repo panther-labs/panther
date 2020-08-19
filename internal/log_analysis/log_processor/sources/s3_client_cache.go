@@ -19,6 +19,7 @@ package sources
  */
 
 import (
+	"sort"
 	"strings"
 	"time"
 
@@ -57,6 +58,39 @@ type s3ClientCacheKey struct {
 type sourceCacheStruct struct {
 	cacheUpdateTime time.Time
 	sources         []*models.SourceIntegration
+	byBucket        map[string][]*models.SourceIntegration
+}
+
+func (c *sourceCacheStruct) Update(now time.Time, sources []*models.SourceIntegration) {
+	byBucket := make(map[string][]*models.SourceIntegration)
+	for _, source := range sources {
+		bucketName := source.S3Bucket
+		bucketSources := byBucket[bucketName]
+		byBucket[bucketName] = append(bucketSources, source)
+	}
+	// Sort sources for each bucket
+	for bucketName, sources := range byBucket {
+		sourcesSorted := sources
+		sort.Slice(sourcesSorted, func(i, j int) bool {
+			// Sort by prefix length descending
+			return len(sourcesSorted[i].S3Prefix) > len(sourcesSorted[j].S3Prefix)
+		})
+		byBucket[bucketName] = sourcesSorted
+	}
+	*c = sourceCacheStruct{
+		byBucket:        byBucket,
+		sources:         sources,
+		cacheUpdateTime: now,
+	}
+}
+func (c *sourceCacheStruct) Find(bucketName, objectKey string) *models.SourceIntegration {
+	sources := c.byBucket[bucketName]
+	for _, source := range sources {
+		if strings.HasPrefix(objectKey, source.S3Prefix) {
+			return source
+		}
+	}
+	return nil
 }
 
 var (
@@ -187,19 +221,10 @@ func getSourceInfo(s3Object *S3ObjectInfo) (result *models.SourceIntegration, er
 		if err != nil {
 			return nil, err
 		}
-		sourceCache.cacheUpdateTime = now
-		sourceCache.sources = output
+		sourceCache.Update(now, output)
 	}
 
-	for _, source := range sourceCache.sources {
-		integrationBucket, integrationPrefix := getSourceS3Info(source)
-		if integrationBucket == s3Object.S3Bucket {
-			if strings.HasPrefix(s3Object.S3ObjectKey, integrationPrefix) {
-				result = source
-				break
-			}
-		}
-	}
+	result = sourceCache.Find(s3Object.S3Bucket, s3Object.S3ObjectKey)
 
 	// If the incoming notification maps to a known source, update the source information
 	if result != nil {
