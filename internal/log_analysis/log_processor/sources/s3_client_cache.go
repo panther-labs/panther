@@ -64,7 +64,7 @@ type sourceCacheStruct struct {
 func (c *sourceCacheStruct) Update(now time.Time, sources []*models.SourceIntegration) {
 	byBucket := make(map[string][]*models.SourceIntegration)
 	for _, source := range sources {
-		bucketName := source.S3Bucket
+		bucketName, _ := getSourceS3Info(source)
 		bucketSources := byBucket[bucketName]
 		byBucket[bucketName] = append(bucketSources, source)
 	}
@@ -72,8 +72,10 @@ func (c *sourceCacheStruct) Update(now time.Time, sources []*models.SourceIntegr
 	for bucketName, sources := range byBucket {
 		sourcesSorted := sources
 		sort.Slice(sourcesSorted, func(i, j int) bool {
+			_, prefixA := getSourceS3Info(sourcesSorted[i])
+			_, prefixB := getSourceS3Info(sourcesSorted[j])
 			// Sort by prefix length descending
-			return len(sourcesSorted[i].S3Prefix) > len(sourcesSorted[j].S3Prefix)
+			return len(prefixA) > len(prefixB)
 		})
 		byBucket[bucketName] = sourcesSorted
 	}
