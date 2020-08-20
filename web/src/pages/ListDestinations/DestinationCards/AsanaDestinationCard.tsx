@@ -39,6 +39,7 @@ const AsanaDestinationCard: React.FC<AsanaDestinationCardProps> = ({ destination
         label="Project GIDs"
         value={destination.outputConfig.asana.projectGids.join(', ')}
       />
+      <GenericItemCard.LineBreak />
       <GenericItemCard.Value
         label="Date Created"
         value={formatDatetime(destination.creationTime, true)}
