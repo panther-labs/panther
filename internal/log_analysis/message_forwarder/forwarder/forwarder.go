@@ -48,7 +48,7 @@ type Message struct {
 const RecordDelimiter = '\n'
 
 var (
-	sourcesCache = cache.New(getSourceInfo)
+	sourcesCache     = cache.New(getSourceInfo)
 	getSnsClientFunc = getSnsClient
 )
 
@@ -167,7 +167,6 @@ func confirmIfSnsSubscriptionMessage(message string) (bool, error) {
 	}
 	return true, nil
 }
-
 
 func getSnsClient(region string) snsiface.SNSAPI {
 	return sns.New(config.AwsSession, aws.NewConfig().WithRegion(region))

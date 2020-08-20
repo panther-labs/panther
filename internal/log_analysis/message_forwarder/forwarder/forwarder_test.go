@@ -292,7 +292,6 @@ func TestShouldConfirmSnsSubscriptionMessage(t *testing.T) {
 	mockSns.AssertExpectations(t)
 }
 
-
 func resetCache() {
 	sourcesCache = cache.New(getSourceInfo)
 }
