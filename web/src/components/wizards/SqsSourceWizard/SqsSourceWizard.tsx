@@ -82,9 +82,7 @@ const SqsSourceWizard: React.FC<SqsLogSourceWizardProps> = ({
               <Wizard.Step title="Configure">
                 <WizardPanel>
                   <SqsSourceConfigurationPanel />
-
                   <WizardPanel.Actions>
-                    {initialValues.integrationId && <WizardPanel.ActionPrev />}
                     <WizardPanel.ActionNext
                       disabled={
                         (!values.logTypes.length && !values.integrationLabel) || !isValid || !dirty
