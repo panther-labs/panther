@@ -26,8 +26,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/firehose"
+	"github.com/aws/aws-sdk-go/service/sns"
+	"github.com/aws/aws-sdk-go/service/sns/snsiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
+	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
 
 	sourcemodels "github.com/panther-labs/panther/api/lambda/source/models"
@@ -44,7 +47,10 @@ type Message struct {
 
 const RecordDelimiter = '\n'
 
-var sourcesCache = cache.New(getSourceInfo)
+var (
+	sourcesCache = cache.New(getSourceInfo)
+	getSnsClientFunc = getSnsClient
+)
 
 func Handle(ctx context.Context, event *events.SQSEvent) error {
 	var firehoseRecords []*firehose.Record
@@ -59,6 +65,15 @@ func Handle(ctx context.Context, event *events.SQSEvent) error {
 		}
 		integrationID := cacheValue.(string)
 		zap.L().Debug("Found integration", zap.String("integrationId", integrationID))
+		isSubscriptionMsg, err := confirmIfSnsSubscriptionMessage(record.Body)
+		if isSubscriptionMsg {
+			if err != nil {
+				// best effort - just log warning
+				zap.L().Warn("failed to confirm subscription", zap.Error(err))
+			}
+			continue
+		}
+
 		message := Message{
 			Payload:             record.Body,
 			SourceIntegrationID: integrationID,
@@ -117,4 +132,43 @@ func getQueueNameFromURL(queueURL string) string {
 		panic("failed to parse queue URL")
 	}
 	return urlParts[len(urlParts)-1]
+}
+
+// Tries to identify if message is an SNS topic subscription message
+func confirmIfSnsSubscriptionMessage(message string) (bool, error) {
+	msgType := gjson.Get(message, "Type")
+	if !msgType.Exists() {
+		return false, nil
+	}
+	if msgType.String() != "SubscriptionConfirmation" {
+		return false, nil
+	}
+	topicArn := gjson.Get(message, "TopicArn")
+	if !topicArn.Exists() {
+		return false, nil
+	}
+	token := gjson.Get(message, "Token")
+	if !token.Exists() {
+		return false, nil
+	}
+	parsedTopicArn, err := arn.Parse(topicArn.String())
+	if err != nil {
+		return false, nil
+	}
+
+	snsClient := getSnsClientFunc(parsedTopicArn.Region)
+	subscriptionConfiguration := &sns.ConfirmSubscriptionInput{
+		Token:    aws.String(token.String()),
+		TopicArn: aws.String(topicArn.String()),
+	}
+	_, err = snsClient.ConfirmSubscription(subscriptionConfiguration)
+	if err != nil {
+		return true, errors.Wrapf(err, "failed to confirm subscription for: %s", topicArn.String())
+	}
+	return true, nil
+}
+
+
+func getSnsClient(region string) snsiface.SNSAPI {
+	return sns.New(config.AwsSession, aws.NewConfig().WithRegion(region))
 }

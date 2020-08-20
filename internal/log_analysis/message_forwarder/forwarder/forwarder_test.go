@@ -27,6 +27,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/firehose"
 	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/sns"
+	snsiface "github.com/aws/aws-sdk-go/service/sns/snsiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/mock"
@@ -244,6 +246,52 @@ func TestShouldFailIfFailureToPutRecord(t *testing.T) {
 	mockLambda.AssertExpectations(t)
 	mockFirehose.AssertExpectations(t)
 }
+
+func TestShouldConfirmSnsSubscriptionMessage(t *testing.T) {
+	mockLambda := &testutils.LambdaMock{}
+	config.LambdaClient = mockLambda
+	mockFirehose := &testutils.FirehoseMock{}
+	config.FirehoseClient = mockFirehose
+	config.Env.StreamName = "testStreamName"
+	resetCache()
+	mockSns := &testutils.SnsMock{}
+	getSnsClientFunc = func(region string) snsiface.SNSAPI {
+		return mockSns
+	}
+
+	// nolint: lll
+	snsConfirmationMsg := "{\"Type\" : \"SubscriptionConfirmation\",\n  \"MessageId\" : \"5d694afe-8598-422b-8a8b-578333d50df9\",\n  \"Token\" : \"2336412f37fb687f5d51e6e2425f004ae15784e4195f44c480796e9181756a3bf7e81188d3e842a98\",\n  \"TopicArn\" : \"arn:aws:sns:us-east-1:123456789012:testing-stuff\",\n  \"Message\" : \"You have chosen to subscribe to the topic arn:aws:sns:us-east-1:123456789012:testing-stuff.\\nTo confirm the subscription, visit the SubscribeURL included in this message.\",\n  \"SubscribeURL\" : \"https://sns.us-east-1.amazonaws.com/?Action=ConfirmSubscription\u0026TopicArn=arn:aws:sns:us-east-1:012345678912:testing-stuff\u0026Token=213412412342134\",\n  \"Timestamp\" : \"2020-08-19T12:13:24.717Z\",\n  \"SignatureVersion\" : \"1\",\n  \"Signature\" : \"oEsP+\",\n  \"SigningCertURL\" : \"https://sns.us-east-1.amazonaws.com/SimpleNotificationService-a86cb10b4e1f29c941702d737128f7b6.pem\"\n}"
+	sqsEvent := &events.SQSEvent{
+		Records: []events.SQSMessage{
+			{
+				EventSourceARN: "arn:aws:sqs:eu-west-2:123456789012:test-queue-1",
+				Body:           snsConfirmationMsg,
+			},
+		},
+	}
+
+	marshaledSources, err := jsoniter.Marshal(availableSqsSources)
+	require.NoError(t, err)
+
+	mockLambda.On("Invoke", mock.Anything).Return(
+		&lambda.InvokeOutput{
+			Payload:    marshaledSources,
+			StatusCode: aws.Int64(http.StatusOK),
+		}, nil)
+
+	expectedSnsConfirmation := &sns.ConfirmSubscriptionInput{
+		TopicArn: aws.String("arn:aws:sns:us-east-1:123456789012:testing-stuff"),
+		Token:    aws.String("2336412f37fb687f5d51e6e2425f004ae15784e4195f44c480796e9181756a3bf7e81188d3e842a98"),
+	}
+	mockSns.On("ConfirmSubscription", expectedSnsConfirmation).Return(&sns.ConfirmSubscriptionOutput{}, nil)
+
+	require.NoError(t, Handle(context.TODO(), sqsEvent))
+
+	mockLambda.AssertExpectations(t)
+	mockFirehose.AssertExpectations(t)
+	mockSns.AssertExpectations(t)
+}
+
 
 func resetCache() {
 	sourcesCache = cache.New(getSourceInfo)
