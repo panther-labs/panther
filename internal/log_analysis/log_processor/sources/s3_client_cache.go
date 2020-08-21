@@ -68,6 +68,10 @@ func (c *sourceCacheStruct) Update(now time.Time, sources []*models.SourceIntegr
 		byBucket[bucketName] = append(bucketSources, source)
 	}
 	// Sort sources for each bucket
+	// It is important to have the sources sorted by longest prefix first.
+	// This ensures that longer prefixes (ie `/foo/bar`) have precedence over shorter ones (ie `/foo`).
+	// This is especially important for the empty prefix as it would match all objects in a bucket making
+	// other sources invalid.
 	for bucketName, sources := range byBucket {
 		sourcesSorted := sources
 		sort.Slice(sourcesSorted, func(i, j int) bool {
