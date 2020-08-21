@@ -479,9 +479,9 @@ func makeDataStream() (dataStream *common.DataStream) {
 		testData[i] = testLogLine
 	}
 	dataStream = &common.DataStream{
-		Reader:  strings.NewReader(strings.Join(testData, "\n")),
-		LogType: &testLogType,
-		Hints:   common.DataStreamHints{S3: s3Hint},
+		Reader:   strings.NewReader(strings.Join(testData, "\n")),
+		LogTypes: []string{testLogType},
+		Hints:    common.DataStreamHints{S3: s3Hint},
 	}
 	return
 }
@@ -498,8 +498,8 @@ func (fr *failingReader) Read(_ []byte) (int, error) {
 func makeBadDataStream() (dataStream *common.DataStream) {
 	testLogType := "testLogType"
 	dataStream = &common.DataStream{
-		Reader:  &failingReader{},
-		LogType: &testLogType,
+		Reader:   &failingReader{},
+		LogTypes: []string{testLogType},
 	}
 	return
 }

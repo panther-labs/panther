@@ -81,9 +81,6 @@ type DataStream struct {
 	SourceID    string
 	SourceLabel string
 	LogTypes    []string
-	// The log type if known
-	// If it is nil, it means the log type hasn't been identified yet
-	LogType *string
 }
 
 // Used in a DataStream as meta data to describe the data
