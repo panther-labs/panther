@@ -124,7 +124,7 @@ func getEventsForLogType(
 
 	resultToken = &LogTypeToken{}
 
-	nextTime := alert.CreationTime // this is used to iterate over the partitions, might be reset if token != nil
+	nextTime := getFirstEventTime(alert)
 
 	if token != nil {
 		events, index, err := queryS3Object(token.S3ObjectKey, alert.AlertID, token.EventIndex, maxResults)
@@ -176,7 +176,7 @@ func getEventsForLogType(
 					paginationError = err
 					return false
 				}
-				if objectTime.Before(alert.CreationTime) || objectTime.After(alert.UpdateTime) {
+				if objectTime.Before(getFirstEventTime(alert)) || objectTime.After(alert.UpdateTime) {
 					// if the time in the S3 object key was before alert creation time or after last alert update time
 					// skip the object
 					continue
@@ -282,4 +282,13 @@ func queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]
 		result = append(result, record)
 	}
 	return result, currentIndex, nil
+}
+
+func getFirstEventTime(alert *table.AlertItem) time.Time {
+	if alert.FirstEventMatchTime.IsZero() {
+		// This check is for backward compatibility since
+		// `FirstEventMatchTime` is a new field and many alerts might not have it
+		return alert.CreationTime
+	}
+	return alert.FirstEventMatchTime
 }
