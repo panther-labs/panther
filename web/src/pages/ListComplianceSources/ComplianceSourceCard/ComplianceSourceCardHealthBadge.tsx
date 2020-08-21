@@ -17,14 +17,14 @@
  */
 
 import React from 'react';
-import { Box, Icon, Tooltip } from 'pouncejs';
+import { Badge, Box, Tooltip } from 'pouncejs';
 import { ComplianceIntegration } from 'Generated/schema';
 
-interface ComplianceSourceHealthIconProps {
+interface ComplianceSourceCardHealthBadgeProps {
   complianceSourceHealth: ComplianceIntegration['health'];
 }
 
-const ComplianceSourceHealthIcon: React.FC<ComplianceSourceHealthIconProps> = ({
+const ComplianceSourceCardHealthBadge: React.FC<ComplianceSourceCardHealthBadgeProps> = ({
   complianceSourceHealth,
 }) => {
   const { auditRoleStatus, cweRoleStatus, remediationRoleStatus } = complianceSourceHealth;
@@ -46,9 +46,9 @@ const ComplianceSourceHealthIcon: React.FC<ComplianceSourceHealthIconProps> = ({
 
   const tooltipMessage = isHealthy ? 'Everything looks fine from our end!' : errorMessage;
   const icon = isHealthy ? (
-    <Icon type="check" size="small" color="green-400" />
+    <Badge color="green-400">HEALTHY</Badge>
   ) : (
-    <Icon type="close" size="small" color="red-300" />
+    <Badge color="red-300">UNHEALTHY</Badge>
   );
 
   return (
@@ -58,4 +58,4 @@ const ComplianceSourceHealthIcon: React.FC<ComplianceSourceHealthIconProps> = ({
   );
 };
 
-export default ComplianceSourceHealthIcon;
+export default ComplianceSourceCardHealthBadge;

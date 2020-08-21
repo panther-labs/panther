@@ -30,11 +30,7 @@ interface AsanaDestinationCardProps {
 
 const AsanaDestinationCard: React.FC<AsanaDestinationCardProps> = ({ destination }) => {
   return (
-    <DestinationCard
-      key={destination.outputId}
-      logo={DESTINATIONS[DestinationTypeEnum.Asana].logo}
-      destination={destination}
-    >
+    <DestinationCard logo={DESTINATIONS[DestinationTypeEnum.Asana].logo} destination={destination}>
       <GenericItemCard.Value
         label="Project GIDs"
         value={destination.outputConfig.asana.projectGids.join(', ')}

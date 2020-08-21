@@ -17,38 +17,24 @@
  */
 
 import React from 'react';
-import {
-  Dropdown,
-  DropdownButton,
-  DropdownItem,
-  DropdownLink,
-  DropdownMenu,
-  IconButton,
-} from 'pouncejs';
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownLink } from 'pouncejs';
 import { ComplianceIntegration } from 'Generated/schema';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
+import GenericItemCard from 'Components/GenericItemCard';
 
-interface ComplianceSourceTableRowOptionsProps {
+interface ComplianceSourceCardOptionsProps {
   source: ComplianceIntegration;
 }
 
-const ComplianceSourceTableRowOptions: React.FC<ComplianceSourceTableRowOptionsProps> = ({
-  source,
-}) => {
+const ComplianceSourceCardOptions: React.FC<ComplianceSourceCardOptionsProps> = ({ source }) => {
   const { showModal } = useModal();
 
   return (
     <Dropdown>
-      <DropdownButton
-        as={IconButton}
-        icon="more"
-        variant="ghost"
-        size="small"
-        aria-label="Source Options"
-      />
+      <DropdownButton as={GenericItemCard.Options} />
       <DropdownMenu>
         <DropdownLink as={RRLink} to={urls.compliance.sources.edit(source.integrationId)}>
           Edit
@@ -68,4 +54,4 @@ const ComplianceSourceTableRowOptions: React.FC<ComplianceSourceTableRowOptionsP
   );
 };
 
-export default React.memo(ComplianceSourceTableRowOptions);
+export default React.memo(ComplianceSourceCardOptions);

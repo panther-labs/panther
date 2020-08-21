@@ -25,7 +25,6 @@ import { Wizard, WizardPanel } from 'Components/Wizard';
 import { yupIntegrationLabelValidation } from 'Helpers/utils';
 import SuccessPanel from './SuccessPanel';
 import SqsSourceConfigurationPanel from './SqsSourceConfigurationPanel';
-import InformationPanel from './InformationPanel';
 
 interface SqsLogSourceWizardProps {
   initialValues: SqsLogSourceWizardValues;
@@ -80,23 +79,10 @@ const SqsSourceWizard: React.FC<SqsLogSourceWizardProps> = ({
         return (
           <Form>
             <Wizard>
-              {initialValues.integrationId && (
-                <Wizard.Step title="Information">
-                  <WizardPanel>
-                    <InformationPanel />
-
-                    <WizardPanel.Actions>
-                      <WizardPanel.ActionNext>Continue Setup</WizardPanel.ActionNext>
-                    </WizardPanel.Actions>
-                  </WizardPanel>
-                </Wizard.Step>
-              )}
               <Wizard.Step title="Configure">
                 <WizardPanel>
                   <SqsSourceConfigurationPanel />
-
                   <WizardPanel.Actions>
-                    {initialValues.integrationId && <WizardPanel.ActionPrev />}
                     <WizardPanel.ActionNext
                       disabled={
                         (!values.logTypes.length && !values.integrationLabel) || !isValid || !dirty
@@ -110,7 +96,6 @@ const SqsSourceWizard: React.FC<SqsLogSourceWizardProps> = ({
               <Wizard.Step title="Done">
                 <WizardPanel>
                   <SuccessPanel />
-
                   <WizardPanel.Actions>
                     <WizardPanel.ActionPrev />
                   </WizardPanel.Actions>

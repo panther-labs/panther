@@ -30,11 +30,7 @@ interface SqsDestinationCardProps {
 
 const SqsDestinationCard: React.FC<SqsDestinationCardProps> = ({ destination }) => {
   return (
-    <DestinationCard
-      key={destination.outputId}
-      logo={DESTINATIONS[DestinationTypeEnum.Sqs].logo}
-      destination={destination}
-    >
+    <DestinationCard logo={DESTINATIONS[DestinationTypeEnum.Sqs].logo} destination={destination}>
       <GenericItemCard.Value label="Queue URL" value={destination.outputConfig.sqs.queueUrl} />
       <GenericItemCard.LineBreak />
       <GenericItemCard.Value

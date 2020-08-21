@@ -23,7 +23,7 @@ import { Theme } from 'pouncejs';
 
 const severityColors = mapKeys(SEVERITY_COLOR_MAP, (val, key) => capitalize(key));
 
-const logTypeColors: Record<string, keyof Theme['colors']> = {
+const logTypeColorMappings: Record<string, keyof Theme['colors']> = {
   Critical: 'red-500',
   High: 'orange-400',
   Medium: 'yellow-500',
@@ -70,5 +70,5 @@ const logTypeColors: Record<string, keyof Theme['colors']> = {
 
 export default {
   ...severityColors,
-  ...logTypeColors,
+  ...logTypeColorMappings,
 };

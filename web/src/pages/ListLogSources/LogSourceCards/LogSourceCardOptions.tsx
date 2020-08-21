@@ -17,32 +17,21 @@
  */
 
 import React from 'react';
-import {
-  Dropdown,
-  DropdownButton,
-  DropdownMenu,
-  IconButton,
-  DropdownItem,
-  DropdownLink,
-} from 'pouncejs';
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownLink } from 'pouncejs';
 import { LogIntegration, S3LogIntegration, SqsLogSourceIntegration } from 'Generated/schema';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
 import urls from 'Source/urls';
-import { LogIntegrationsEnum, PANTHER_USER_ID } from 'Source/constants';
+import { LogIntegrationsEnum } from 'Source/constants';
 import { Link as RRLink } from 'react-router-dom';
+import GenericItemCard from 'Components/GenericItemCard';
 
-interface LogSourceTableRowOptionsProps {
+interface LogSourceCardOptionsProps {
   source: LogIntegration;
 }
 
-const LogSourceTableRowOptions: React.FC<LogSourceTableRowOptionsProps> = ({ source }) => {
+const LogSourceCardOptions: React.FC<LogSourceCardOptionsProps> = ({ source }) => {
   const { showModal } = useModal();
-
-  const isCreatedByPanther = source.createdBy === PANTHER_USER_ID;
-  if (isCreatedByPanther) {
-    return null;
-  }
 
   let description;
   let castedSource;
@@ -62,13 +51,7 @@ const LogSourceTableRowOptions: React.FC<LogSourceTableRowOptionsProps> = ({ sou
 
   return (
     <Dropdown>
-      <DropdownButton
-        as={IconButton}
-        icon="more"
-        variant="ghost"
-        size="small"
-        aria-label="Source Options"
-      />
+      <DropdownButton as={GenericItemCard.Options} />
       <DropdownMenu>
         <DropdownLink as={RRLink} to={logSourceEditUrl}>
           Edit
@@ -88,4 +71,4 @@ const LogSourceTableRowOptions: React.FC<LogSourceTableRowOptionsProps> = ({ sou
   );
 };
 
-export default React.memo(LogSourceTableRowOptions);
+export default React.memo(LogSourceCardOptions);

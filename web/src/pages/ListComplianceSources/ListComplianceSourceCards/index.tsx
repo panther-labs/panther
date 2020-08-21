@@ -16,30 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { Flex, Img, Tooltip } from 'pouncejs';
-
-type LogSourceTypeProps = {
-  name: string;
-  logo: any;
-};
-
-const LogSourceType: React.FC<LogSourceTypeProps> = ({ name, logo }) => {
-  return (
-    <Flex justify="start" align="center">
-      <Tooltip content={name}>
-        <Img
-          src={logo}
-          alt={name}
-          objectFit="contain"
-          nativeHeight={48}
-          nativeWidth={48}
-          my={-2}
-          px={1}
-        />
-      </Tooltip>
-    </Flex>
-  );
-};
-
-export default React.memo(LogSourceType);
+export { default } from './ListComplianceSourceCards';

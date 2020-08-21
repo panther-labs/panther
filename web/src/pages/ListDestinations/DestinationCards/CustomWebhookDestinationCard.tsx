@@ -33,7 +33,6 @@ const CustomWebhookDestinationCard: React.FC<CustomWebhookDestinationCardProps> 
 }) => {
   return (
     <DestinationCard
-      key={destination.outputId}
       logo={DESTINATIONS[DestinationTypeEnum.Customwebhook].logo}
       destination={destination}
     >

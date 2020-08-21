@@ -95,22 +95,29 @@ const GenericItemCardOptions = React.forwardRef<HTMLButtonElement>(function Gene
   );
 });
 
-const GenericItemCardLineBreak: React.FC = () => <Box flexBasis="100%" height={0} />;
-
 const GenericItemCardValue: React.FC<GenericItemCardValueProps> = ({ label, value }) => {
   const id = slugify(`${label}${value}`);
 
   return (
     <Box as="dl" mt={4}>
-      <Box as="dt" aria-labelledby={id} color="gray-300" fontSize="2x-small" mb="1px">
+      <Box
+        as="dt"
+        aria-labelledby={id}
+        color="gray-300"
+        fontSize="2x-small"
+        mb="1px"
+        fontWeight="medium"
+      >
         {label}
       </Box>
-      <Box as="dd" aria-labelledby={id} fontSize="medium">
-        {value}
+      <Box as="dd" aria-labelledby={id} fontSize="medium" opacity={value ? 1 : 0.3}>
+        {value || 'Not Set'}
       </Box>
     </Box>
   );
 };
+
+const GenericItemCardLineBreak: React.FC = () => <Box flexBasis="100%" height={0} />;
 
 GenericItemCard.Body = GenericItemCardBody;
 GenericItemCard.Heading = GenericItemCardHeading;

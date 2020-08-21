@@ -17,14 +17,14 @@
  */
 
 import React from 'react';
-import { Box, Icon, Tooltip } from 'pouncejs';
+import { Badge, Box, Tooltip } from 'pouncejs';
 import { LogIntegration, S3LogIntegration, SqsLogSourceIntegration } from 'Generated/schema';
 
-interface LogSourceHealthIconProps {
+interface LogSourceCardHealthBadgeProps {
   logSourceHealth: LogIntegration['health'];
 }
 
-const LogSourceHealthIcon: React.FC<LogSourceHealthIconProps> = ({ logSourceHealth }) => {
+const LogSourceCardHealthBadge: React.FC<LogSourceCardHealthBadgeProps> = ({ logSourceHealth }) => {
   let isHealthy: boolean;
   let errorMsg: string;
   let sourceHealth: LogIntegration['health'];
@@ -59,9 +59,9 @@ const LogSourceHealthIcon: React.FC<LogSourceHealthIconProps> = ({ logSourceHeal
   }
   const tooltipMessage = isHealthy ? 'Everything looks fine from our end!' : errorMsg;
   const icon = isHealthy ? (
-    <Icon type="check" size="small" color="green-400" />
+    <Badge color="green-400">HEALTHY</Badge>
   ) : (
-    <Icon type="close" size="small" color="red-300" />
+    <Badge color="red-300">UNHEALTHY</Badge>
   );
 
   return (
@@ -71,4 +71,4 @@ const LogSourceHealthIcon: React.FC<LogSourceHealthIconProps> = ({ logSourceHeal
   );
 };
 
-export default LogSourceHealthIcon;
+export default LogSourceCardHealthBadge;

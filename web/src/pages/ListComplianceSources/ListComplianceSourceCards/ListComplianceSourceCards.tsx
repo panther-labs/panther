@@ -16,4 +16,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './ComplianceSourceTable';
+import React from 'react';
+import { SimpleGrid } from 'pouncejs';
+import { ListComplianceSources } from '../graphql/listComplianceSources.generated';
+import ComplianceSourceCard from '../ComplianceSourceCard';
+
+type ListDestinationsTableProps = { sources: ListComplianceSources['listComplianceIntegrations'] };
+
+const ListDestinationsCards: React.FC<ListDestinationsTableProps> = ({ sources }) => {
+  return (
+    <SimpleGrid as="article" columns={1} gap={5}>
+      {sources.map(source => (
+        <ComplianceSourceCard key={source.integrationId} source={source} />
+      ))}
+    </SimpleGrid>
+  );
+};
+
+export default React.memo(ListDestinationsCards);

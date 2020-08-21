@@ -423,9 +423,6 @@ type SqsConfig {
   logTypes: [String!]!
   allowedPrincipalArns: [String]
   allowedSourceArns: [String]
-  s3Bucket: String!
-  s3Prefix: String
-  logProcessingRole: String
   queueUrl: String!
 }
 
