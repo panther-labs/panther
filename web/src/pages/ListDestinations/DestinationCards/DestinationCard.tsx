@@ -38,7 +38,7 @@ const DestinationCard: React.FC<DestinationCardProps> = ({ destination, logo, ch
         <GenericItemCard.Heading>{destination.displayName}</GenericItemCard.Heading>
         <GenericItemCard.ValuesGroup>
           {children}
-          <Flex ml="auto" mr={0} align="flex-end" spacing={2}>
+          <Flex ml="auto" mr={0} mt={4} align="flex-end" spacing={2}>
             {destination.defaultForSeverity.map(severity => (
               <SeverityBadge severity={severity} key={severity} />
             ))}

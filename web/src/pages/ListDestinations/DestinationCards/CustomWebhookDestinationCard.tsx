@@ -38,10 +38,6 @@ const CustomWebhookDestinationCard: React.FC<CustomWebhookDestinationCardProps> 
       destination={destination}
     >
       <GenericItemCard.Value
-        label="Webhook URL"
-        value={destination.outputConfig.customWebhook.webhookURL}
-      />
-      <GenericItemCard.Value
         label="Date Created"
         value={formatDatetime(destination.creationTime, true)}
       />
