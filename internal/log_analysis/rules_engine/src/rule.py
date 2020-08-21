@@ -125,10 +125,13 @@ class Rule:
             return RuleResult(exception=err)
         return RuleResult(matched=rule_result, dedup_string=dedup_string, title=title)
 
+    # Returns the dedup string for this rule match
+    # If the rule match had a custom title, use the title as a deduplication string
+    # If no title and no dedup function is defined, return the default dedup string.
     def _get_dedup(self, event: Dict[str, Any], title: Optional[str]) -> str:
         if not self._has_dedup:
             if title:
-                # If no dedup function is defined but the rule had a title, use the title as dedup mechanism
+                # If no dedup function is defined but the rule had a title, use the title as dedup string
                 return title
             # If no dedup function defined, return default dedup string
             return self._default_dedup_string
