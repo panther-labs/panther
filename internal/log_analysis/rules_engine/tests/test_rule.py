@@ -121,7 +121,7 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
 
     def test_restrict_title_size(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\n' \
-                    'def dedup(event):\n\treturn test\n' \
+                    'def dedup(event):\n\treturn "test"\n' \
                     'def title(event):\n\treturn "".join("a" for i in range({}))'. \
             format(MAX_TITLE_SIZE+1)
         rule = Rule({'id': 'test_restrict_title_size', 'body': rule_body, 'versionId': 'versionId'})
