@@ -350,6 +350,14 @@ export const addTrailingSlash = (url: string) => {
   return url.endsWith('/') ? url : `${url}/`;
 };
 
+/**
+ * Strips hashes and query params from a URI, returning the pathname
+ *
+ * @param {String} uri A relative URI
+ * @returns {String} The same URI stripped of hashes and query params
+ */
+export const getPathnameFromURI = (uri: string) => uri.split(/[?#]/)[0];
+
 export const getCurrentYear = () => {
   return dayjs().format('YYYY');
 };
