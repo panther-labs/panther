@@ -36,6 +36,7 @@ const SnsDestinationCard: React.FC<SnsDestinationCardProps> = ({ destination }) 
       destination={destination}
     >
       <GenericItemCard.Value label="Topic ARN" value={destination.outputConfig.sns.topicArn} />
+      <GenericItemCard.LineBreak />
       <GenericItemCard.Value
         label="Date Created"
         value={formatDatetime(destination.creationTime, true)}
