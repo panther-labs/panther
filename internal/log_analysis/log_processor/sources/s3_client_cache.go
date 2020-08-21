@@ -57,7 +57,6 @@ type s3ClientCacheKey struct {
 
 type sourceCacheStruct struct {
 	cacheUpdateTime time.Time
-	sources         []*models.SourceIntegration
 	byBucket        map[string][]*models.SourceIntegration
 }
 
@@ -81,7 +80,6 @@ func (c *sourceCacheStruct) Update(now time.Time, sources []*models.SourceIntegr
 	}
 	*c = sourceCacheStruct{
 		byBucket:        byBucket,
-		sources:         sources,
 		cacheUpdateTime: now,
 	}
 }
