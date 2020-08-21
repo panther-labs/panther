@@ -144,7 +144,11 @@ func main() {
 		name := fmt.Sprintf("%s.%s", table.DatabaseName(), table.TableName())
 
 		if *VERBOSE {
-			logger.Infof("syncing partitions for %s", name)
+			if *START == "" {
+				logger.Infof("syncing partitions for %s from create date of table to now", name)
+			} else {
+				logger.Infof("syncing partitions for %s from %s to now", name, *START)
+			}
 		}
 		_, err := table.SyncPartitions(glueClient, s3Client, startDate, nil)
 		if err != nil {
@@ -163,11 +167,8 @@ func promptFlags() {
 	}
 
 	if *START == "" {
-		startDateText := prompt.Read("Enter a day as YYYY-MM-DD to start update (or <enter> to use create date on tables): ",
+		*START = prompt.Read("Enter a day as YYYY-MM-DD to start update (or <enter> to use create date on tables): ",
 			prompt.DateValidator)
-		if startDateText != "" {
-			startDate, _ = time.Parse(dateFormat, startDateText) // no error check already validated
-		}
 	}
 
 	if *REGEXP == "" {
@@ -186,9 +187,23 @@ func validateFlags() {
 		}
 	}()
 
+	if *START != "" {
+		startDate, err = time.Parse(dateFormat, *START)
+		if err != nil {
+			err = errors.Wrapf(err, "cannot read -start")
+			return
+		}
+		today := time.Now().UTC().Truncate(time.Hour * 24)
+		if startDate.After(today) {
+			err = errors.Errorf("-start must be <= %s", today.Format(dateFormat))
+			return
+		}
+	}
+
 	matchLogType, err = regexp.Compile(*REGEXP)
 	if err != nil {
 		err = errors.Wrapf(err, "cannot read -regexp")
+		return
 	}
 }
 

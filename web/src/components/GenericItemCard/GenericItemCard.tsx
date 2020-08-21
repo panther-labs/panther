@@ -36,6 +36,7 @@ interface GenericItemCardComposition {
   Options: React.ForwardRefExoticComponent<React.RefAttributes<HTMLButtonElement>>;
   Value: React.FC<GenericItemCardValueProps>;
   ValuesGroup: React.FC;
+  LineBreak: React.FC;
 }
 
 const GenericItemCard: React.FC & GenericItemCardComposition = ({ children }) => {
@@ -94,6 +95,8 @@ const GenericItemCardOptions = React.forwardRef<HTMLButtonElement>(function Gene
   );
 });
 
+const GenericItemCardLineBreak: React.FC = () => <Box flexBasis="100%" height={0} />;
+
 const GenericItemCardValue: React.FC<GenericItemCardValueProps> = ({ label, value }) => {
   const id = slugify(`${label}${value}`);
 
@@ -115,5 +118,6 @@ GenericItemCard.Logo = GenericItemCardLogo;
 GenericItemCard.Options = GenericItemCardOptions;
 GenericItemCard.Value = GenericItemCardValue;
 GenericItemCard.ValuesGroup = GenericItemCardValuesGroup;
+GenericItemCard.LineBreak = GenericItemCardLineBreak;
 
 export default GenericItemCard;

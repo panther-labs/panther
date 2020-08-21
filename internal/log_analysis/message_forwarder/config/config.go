@@ -30,7 +30,7 @@ import (
 
 var (
 	Env            EnvConfig
-	awsSession     *session.Session
+	AwsSession     *session.Session
 	FirehoseClient firehoseiface.FirehoseAPI
 	LambdaClient   lambdaiface.LambdaAPI
 )
@@ -47,8 +47,8 @@ type EnvConfig struct {
 // Setup parses the environment and builds the AWS and http clients.
 func Setup() {
 	envconfig.MustProcess("", &Env)
-	awsSession = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(MaxRetries)))
+	AwsSession = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(MaxRetries)))
 
-	FirehoseClient = firehose.New(awsSession)
-	LambdaClient = lambda.New(awsSession)
+	FirehoseClient = firehose.New(AwsSession)
+	LambdaClient = lambda.New(AwsSession)
 }
