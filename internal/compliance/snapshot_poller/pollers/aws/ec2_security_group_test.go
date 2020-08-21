@@ -32,15 +32,19 @@ import (
 func TestEC2DescribeSecurityGroups(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2Svc([]string{"DescribeSecurityGroupsPages"})
 
-	out := describeSecurityGroups(mockSvc)
+	out, marker, err := describeSecurityGroups(mockSvc, nil)
 	assert.NotEmpty(t, out)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestEC2DescribeSecurityGroupsError(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2SvcError([]string{"DescribeSecurityGroupsPages"})
 
-	out := describeSecurityGroups(mockSvc)
+	out, marker, err := describeSecurityGroups(mockSvc, nil)
 	assert.Nil(t, out)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }
 
 func TestEC2PollSecurityGroups(t *testing.T) {
@@ -49,21 +53,22 @@ func TestEC2PollSecurityGroups(t *testing.T) {
 	assumeRoleFunc = awstest.AssumeRoleMock
 	EC2ClientFunc = awstest.SetupMockEC2
 
-	resources, err := PollEc2SecurityGroups(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollEc2SecurityGroups(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
 	assert.Regexp(
 		t,
 		regexp.MustCompile(`arn:aws:ec2:.*:123456789012:security-group/sg-111222333`),
 		resources[0].ID,
 	)
 	assert.NotEmpty(t, resources)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestEC2PollSecurityGroupsError(t *testing.T) {
@@ -72,14 +77,15 @@ func TestEC2PollSecurityGroupsError(t *testing.T) {
 	assumeRoleFunc = awstest.AssumeRoleMock
 	EC2ClientFunc = awstest.SetupMockEC2
 
-	resources, err := PollEc2SecurityGroups(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollEc2SecurityGroups(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
 	assert.Empty(t, resources)
+	assert.Nil(t, marker)
+	require.Error(t, err)
 }

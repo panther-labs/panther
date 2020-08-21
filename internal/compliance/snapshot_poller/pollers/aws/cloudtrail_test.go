@@ -133,7 +133,8 @@ func testCloudTrailBuild(t *testing.T) {
 		},
 	}
 
-	trails := buildCloudTrails(mockSvc, awstest.ExampleTrail.HomeRegion)
+	trails, err := buildCloudTrails(mockSvc, awstest.ExampleTrail.HomeRegion)
+	assert.NoError(t, err)
 	assert.Equal(t, expected, trails)
 }
 
@@ -143,14 +144,16 @@ func TestCloudTrailBuildEmpty(t *testing.T) {
 		On("DescribeTrails", mock.Anything).
 		Return(&cloudtrail.DescribeTrailsOutput{}, nil)
 
-	trails := buildCloudTrails(mockSvc, awstest.ExampleTrail.HomeRegion)
+	trails, err := buildCloudTrails(mockSvc, awstest.ExampleTrail.HomeRegion)
+	assert.NoError(t, err)
 	assert.Empty(t, trails)
 }
 
 func TestCloudTrailBuildError(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudTrailSvcError([]string{"DescribeTrails"})
 
-	trails := buildCloudTrails(mockSvc, awstest.ExampleTrail.HomeRegion)
+	trails, err := buildCloudTrails(mockSvc, awstest.ExampleTrail.HomeRegion)
+	assert.Error(t, err)
 	assert.Empty(t, trails)
 }
 
@@ -159,15 +162,16 @@ func TestCloudTrailPoller(t *testing.T) {
 
 	CloudTrailClientFunc = awstest.SetupMockCloudTrail
 
-	resources, err := PollCloudTrails(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollCloudTrails(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
 	require.NoError(t, err)
+	assert.Nil(t, marker)
 	assert.NotEmpty(t, resources)
 
 	assert.IsType(t, &awsmodels.CloudTrail{}, resources[0].Attributes)
@@ -183,15 +187,16 @@ func TestCloudTrailPollerError(t *testing.T) {
 
 	CloudTrailClientFunc = awstest.SetupMockCloudTrail
 
-	resources, err := PollCloudTrails(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollCloudTrails(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	require.Error(t, err)
+	assert.Nil(t, marker)
 	assert.Len(t, resources, 1)
 }
 
@@ -213,17 +218,18 @@ func TestCloudTrailPollerPartialError(t *testing.T) {
 	CloudTrailClientFunc = awstest.SetupMockCloudTrail
 	S3ClientFunc = awstest.SetupMockS3
 
-	resources, err := PollCloudTrails(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollCloudTrails(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
 	require.NoError(t, err)
 	// 1 event + meta
 	assert.Len(t, resources, 2)
+	assert.Nil(t, marker)
 
 	snapshot, ok := resources[0].Attributes.(*awsmodels.CloudTrail)
 	require.True(t, ok)
@@ -241,15 +247,16 @@ func TestCloudTrailPollerEmpty(t *testing.T) {
 
 	CloudTrailClientFunc = awstest.SetupMockCloudTrail
 
-	resources, err := PollCloudTrails(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollCloudTrails(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
 	require.NoError(t, err)
 	require.Len(t, resources, 1)
+	assert.Nil(t, marker)
 	assert.Len(t, resources[0].Attributes.(*awsmodels.CloudTrailMeta).Trails, 0)
 }

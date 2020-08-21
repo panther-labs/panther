@@ -19,6 +19,7 @@ package aws
  */
 
 import (
+	"fmt"
 	"net/url"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -112,9 +113,18 @@ func listPolicies(iamSvc iamiface.IAMAPI, nextMarker *string) (policies []*iam.P
 
 // listEntitiesForPolicy returns the entities that have the given policy
 func listEntitiesForPolicy(
-	iamSvc iamiface.IAMAPI, arn *string) (entities *awsmodels.IAMPolicyEntities, err error) {
+	iamSvc iamiface.IAMAPI, arn *string) (*awsmodels.IAMPolicyEntities, error) {
 
-	err = iamSvc.ListEntitiesForPolicyPages(
+	zap.L().Debug("about to list entities for policy")
+	if arn == nil {
+		zap.L().Debug("arn is nil")
+	}
+	if iamSvc == nil {
+		fmt.Print("iam svc is nil")
+		return nil, nil
+	}
+	entities := &awsmodels.IAMPolicyEntities{}
+	err := iamSvc.ListEntitiesForPolicyPages(
 		&iam.ListEntitiesForPolicyInput{PolicyArn: arn},
 		func(page *iam.ListEntitiesForPolicyOutput, lastPage bool) bool {
 			entities.PolicyGroups = append(entities.PolicyGroups, page.PolicyGroups...)
@@ -123,10 +133,11 @@ func listEntitiesForPolicy(
 			return true
 		},
 	)
+	zap.L().Debug("done listing entities for policy")
 	if err != nil {
 		return nil, errors.Wrap(err, "IAM.ListEntitiesForPolicyPages")
 	}
-	return
+	return entities, nil
 }
 
 // getPolicyVersion returns a specific policy document given a policy ARN and version number

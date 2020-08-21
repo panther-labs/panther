@@ -40,6 +40,8 @@ var (
 	CloudWatchLogsClientFunc = setupCloudWatchLogsClient
 )
 
+const cloudwatchlogsBatchSize = 10
+
 func setupCloudWatchLogsClient(sess *session.Session, cfg *aws.Config) interface{} {
 	return cloudwatchlogs.New(sess, cfg)
 }
@@ -111,12 +113,15 @@ func getLogGroup(svc cloudwatchlogsiface.CloudWatchLogsAPI, logGroupName string)
 
 // describeLogGroups returns all Log Groups in the account
 func describeLogGroups(cloudwatchLogsSvc cloudwatchlogsiface.CloudWatchLogsAPI, nextMarker *string) (logGroups []*cloudwatchlogs.LogGroup, marker *string, err error) {
+	// CloudWatch log groups have fairly absurdly low throttling limits, so intentionally choke this
+	// down super slow to avoid going over.
 	err = cloudwatchLogsSvc.DescribeLogGroupsPages(&cloudwatchlogs.DescribeLogGroupsInput{
+		Limit:     aws.Int64(cloudwatchlogsBatchSize),
 		NextToken: nextMarker,
 	},
 		func(page *cloudwatchlogs.DescribeLogGroupsOutput, lastPage bool) bool {
 			logGroups = append(logGroups, page.LogGroups...)
-			if len(logGroups) >= defaultBatchSize {
+			if len(logGroups) >= cloudwatchlogsBatchSize {
 				if !lastPage {
 					marker = page.NextToken
 				}
@@ -131,6 +136,9 @@ func describeLogGroups(cloudwatchLogsSvc cloudwatchlogsiface.CloudWatchLogsAPI, 
 }
 
 // listTagsLogGroup returns the tags for a given log group
+//
+// This API call throttles if more than 10 are made in the same region in the same ~100 ms. Not
+// documented anywhere, just determined by Science.
 func listTagsLogGroup(svc cloudwatchlogsiface.CloudWatchLogsAPI, groupName *string) (map[string]*string, error) {
 	tags, err := svc.ListTagsLogGroup(&cloudwatchlogs.ListTagsLogGroupInput{
 		LogGroupName: groupName,
@@ -189,9 +197,10 @@ func PollCloudWatchLogsLogGroups(pollerInput *awsmodels.ResourcePollerInput) ([]
 	}
 
 	resources := make([]*apimodels.AddResourceEntry, 0, len(logGroups))
-	for _, logGroup := range logGroups {
+	for i, logGroup := range logGroups {
 		logGroupSnapshot, err := buildCloudWatchLogsLogGroupSnapshot(cloudwatchLogGroupSvc, logGroup)
 		if err != nil {
+			zap.L().Debug("error occurred building snapshot", zap.Int("loggroup number", i))
 			return nil, nil, err
 		}
 		logGroupSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)

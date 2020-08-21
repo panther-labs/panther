@@ -21,6 +21,7 @@ package aws
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudtrail"
 	"github.com/aws/aws-sdk-go/service/cloudtrail/cloudtrailiface"
@@ -122,6 +123,16 @@ func getTrailStatus(svc cloudtrailiface.CloudTrailAPI, trailARN *string) (*cloud
 func listTagsCloudTrail(svc cloudtrailiface.CloudTrailAPI, trailArn *string) ([]*cloudtrail.Tag, error) {
 	out, err := svc.ListTags(&cloudtrail.ListTagsInput{ResourceIdList: []*string{trailArn}})
 	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok {
+			// At this point in the scan, we know the ARN is valid. This exception is thrown when you
+			// try to make a cloudtrail:ListTags API call on a trail in another account. The only
+			// trail that we would be scanning in another account is an organization trail, which we
+			// are going to discard at the end of the scan anyways so it doesn't matter what we
+			// return here as long as it's not an error.
+			if awsErr.Code() == cloudtrail.ErrCodeARNInvalidException {
+				return nil, nil
+			}
+		}
 		return nil, errors.Wrapf(err, "CloudTrail.ListTags")
 	}
 

@@ -32,15 +32,19 @@ import (
 func TestKMSKeyList(t *testing.T) {
 	mockSvc := awstest.BuildMockKmsSvc([]string{"ListKeys"})
 
-	out := listKeys(mockSvc)
+	out, marker, err := listKeys(mockSvc, nil)
 	assert.NotEmpty(t, out)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestKMSKeyListError(t *testing.T) {
 	mockSvc := awstest.BuildMockKmsSvcError([]string{"ListKeys"})
 
-	out := listKeys(mockSvc)
+	out, marker, err := listKeys(mockSvc, nil)
 	assert.Nil(t, out)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }
 
 func TestKMSKeyGetRotationStatus(t *testing.T) {
@@ -119,7 +123,8 @@ func TestBuildKmsKeySnapshotAWSManaged(t *testing.T) {
 		Return(awstest.ExampleDescribeKeyOutputAWSManaged, nil)
 	awstest.MockKmsForSetup = mockSvc
 
-	keySnapshot := buildKmsKeySnapshot(mockSvc, awstest.ExampleListKeysOutput.Keys[0])
+	keySnapshot, err := buildKmsKeySnapshot(mockSvc, awstest.ExampleListKeysOutput.Keys[0])
+	assert.NoError(t, err)
 	assert.Nil(t, keySnapshot.KeyRotationEnabled)
 	assert.NotEmpty(t, keySnapshot.KeyManager)
 	assert.NotEmpty(t, keySnapshot.Policy)
@@ -128,8 +133,9 @@ func TestBuildKmsKeySnapshotAWSManaged(t *testing.T) {
 func TestBuildKmsKeySnapshotErrors(t *testing.T) {
 	mockSvc := awstest.BuildMockKmsSvcAllError()
 
-	keySnapshot := buildKmsKeySnapshot(mockSvc, awstest.ExampleListKeysOutput.Keys[0])
+	keySnapshot, err := buildKmsKeySnapshot(mockSvc, awstest.ExampleListKeysOutput.Keys[0])
 	assert.Nil(t, keySnapshot)
+	assert.Error(t, err)
 }
 
 func TestKMSKeyPoller(t *testing.T) {
@@ -137,16 +143,17 @@ func TestKMSKeyPoller(t *testing.T) {
 
 	KmsClientFunc = awstest.SetupMockKms
 
-	resources, err := PollKmsKeys(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollKmsKeys(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
 	assert.NotEmpty(t, resources)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestKMSKeyPollerError(t *testing.T) {
@@ -154,16 +161,17 @@ func TestKMSKeyPollerError(t *testing.T) {
 
 	KmsClientFunc = awstest.SetupMockKms
 
-	resources, err := PollKmsKeys(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollKmsKeys(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
 	for _, event := range resources {
 		assert.Nil(t, event.Attributes)
 	}
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }

@@ -113,29 +113,35 @@ func TestExtractCredentialReportError(t *testing.T) {
 func TestIAMUsersList(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvc([]string{"ListUsersPages"})
 
-	out := listUsers(mockSvc)
+	out, marker, err := listUsers(mockSvc, nil)
 	assert.Equal(t, awstest.ExampleListUsers.Users, out)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestIAMUsersListError(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvcError([]string{"ListUsersPages"})
 
-	out := listUsers(mockSvc)
+	out, marker, err := listUsers(mockSvc, nil)
 	assert.Nil(t, out)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }
 
 func TestIAMUsersGetPolicy(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvc([]string{"GetUserPolicy"})
 
-	out := getUserPolicy(mockSvc, aws.String("ExampleUser"), aws.String("ExamplePolicy"))
+	out, err := getUserPolicy(mockSvc, aws.String("ExampleUser"), aws.String("ExamplePolicy"))
 	assert.Equal(t, awstest.ExampleGetUserPolicy.PolicyDocument, out)
+	assert.NoError(t, err)
 }
 
 func TestIAMUsersGetUserPolicyError(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvcError([]string{"GetUserPolicy"})
 
-	out := getUserPolicy(mockSvc, aws.String("ExampleUser"), aws.String("ExamplePolicy"))
+	out, err := getUserPolicy(mockSvc, aws.String("ExampleUser"), aws.String("ExamplePolicy"))
 	assert.Nil(t, out)
+	assert.Error(t, err)
 }
 
 func TestIAMUsersGetPolicies(t *testing.T) {
@@ -202,7 +208,7 @@ func TestIAMUsersPoller(t *testing.T) {
 
 	IAMClientFunc = awstest.SetupMockIAM
 
-	resources, err := PollIAMUsers(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollIAMUsers(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
@@ -287,13 +293,14 @@ func TestIAMUsersPoller(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, err)
 	assert.NotEmpty(t, resources)
 	// Root and two IAM users
 	assert.Len(t, resources, 3)
 	assert.Equal(t, expectedIamUserSnapshots[0], resources[0].Attributes)
 	assert.Equal(t, expectedIamUserSnapshots[1], resources[1].Attributes)
 	assert.Equal(t, rootSnapshot, resources[2].Attributes)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestIAMUsersPollerError(t *testing.T) {
@@ -301,7 +308,7 @@ func TestIAMUsersPollerError(t *testing.T) {
 
 	IAMClientFunc = awstest.SetupMockIAM
 
-	resources, err := PollIAMUsers(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollIAMUsers(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
@@ -310,6 +317,7 @@ func TestIAMUsersPollerError(t *testing.T) {
 
 	// Even though ListUsers will return no users, the poller will continue making API calls to build
 	// the root user and error when building the credential report
-	require.Error(t, err)
 	assert.Nil(t, resources)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }

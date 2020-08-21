@@ -32,15 +32,19 @@ import (
 func TestRedshiftClusterDescribe(t *testing.T) {
 	mockSvc := awstest.BuildMockRedshiftSvc([]string{"DescribeClustersPages"})
 
-	out := describeClusters(mockSvc)
+	out, marker, err := describeClusters(mockSvc, nil)
 	assert.NotEmpty(t, out)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestRedshiftClusterDescribeError(t *testing.T) {
 	mockSvc := awstest.BuildMockRedshiftSvcError([]string{"DescribeClustersPages"})
 
-	out := describeClusters(mockSvc)
+	out, marker, err := describeClusters(mockSvc, nil)
 	assert.Nil(t, out)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }
 
 func TestRedshiftClusterDescribeLoggingStatus(t *testing.T) {
@@ -62,11 +66,12 @@ func TestRedshiftClusterDescribeLoggingStatusError(t *testing.T) {
 func TestRedshiftClusterBuildSnapshot(t *testing.T) {
 	mockSvc := awstest.BuildMockRedshiftSvcAll()
 
-	clusterSnapshot := buildRedshiftClusterSnapshot(
+	clusterSnapshot, err := buildRedshiftClusterSnapshot(
 		mockSvc,
 		awstest.ExampleDescribeClustersOutput.Clusters[0],
 	)
 
+	assert.NoError(t, err)
 	assert.NotEmpty(t, clusterSnapshot.LoggingStatus)
 	assert.NotEmpty(t, clusterSnapshot.GenericAWSResource)
 }
@@ -74,11 +79,12 @@ func TestRedshiftClusterBuildSnapshot(t *testing.T) {
 func TestRedshiftCLusterBuildSnapshotErrors(t *testing.T) {
 	mockSvc := awstest.BuildMockRedshiftSvcAllError()
 
-	clusterSnapshot := buildRedshiftClusterSnapshot(
+	clusterSnapshot, err := buildRedshiftClusterSnapshot(
 		mockSvc,
 		awstest.ExampleDescribeClustersOutput.Clusters[0],
 	)
 
+	assert.Error(t, err)
 	assert.NotEmpty(t, clusterSnapshot.GenericAWSResource)
 	assert.NotNil(t, clusterSnapshot.VpcId)
 	assert.Nil(t, clusterSnapshot.LoggingStatus)
@@ -89,15 +95,14 @@ func TestRedshiftClusterPoller(t *testing.T) {
 
 	RedshiftClientFunc = awstest.SetupMockRedshift
 
-	resources, err := PollRedshiftClusters(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollRedshiftClusters(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
 	assert.NotEmpty(t, resources)
 	cluster := resources[0].Attributes.(*awsmodels.RedshiftCluster)
 	assert.Equal(t, aws.String("awsuser"), cluster.MasterUsername)
@@ -105,6 +110,8 @@ func TestRedshiftClusterPoller(t *testing.T) {
 	assert.Equal(t, aws.Int64(5439), cluster.Endpoint.Port)
 	assert.Equal(t, aws.String("LEADER"), cluster.ClusterNodes[0].NodeRole)
 	assert.False(t, *cluster.EnhancedVpcRouting)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestRedshiftClusterPollerError(t *testing.T) {
@@ -112,16 +119,17 @@ func TestRedshiftClusterPollerError(t *testing.T) {
 
 	RedshiftClientFunc = awstest.SetupMockRedshift
 
-	resources, err := PollRDSInstances(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollRDSInstances(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
 	for _, event := range resources {
 		assert.Nil(t, event.Attributes)
 	}
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }

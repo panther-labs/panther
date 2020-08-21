@@ -93,7 +93,7 @@ func Handle(ctx context.Context, event events.SQSEvent) (err error) {
 			}
 
 			// Send data to the Resources API
-			if resources != nil {
+			if len(resources) > 0 {
 				zap.L().Debug("total resources generated",
 					zap.Int("messageNumber", indx),
 					zap.Int("numResources", len(resources)),

@@ -20,6 +20,7 @@ package aws
 
 import (
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
@@ -277,9 +278,11 @@ func PollDynamoDBTables(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 	}
 
 	resources := make([]*apimodels.AddResourceEntry, 0, len(tables))
-	for _, table := range tables {
+	for i, table := range tables {
+		time.Sleep(1000000000)
 		dynamoDBTable, err := buildDynamoDBTableSnapshot(dynamoDBSvc, applicationAutoScalingSvc, table)
 		if err != nil {
+			zap.L().Debug("error occurred building snapshot", zap.Int("table number", i))
 			return nil, nil, err
 		}
 		if dynamoDBTable == nil {

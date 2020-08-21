@@ -32,23 +32,23 @@ import (
 func TestEC2DescribeInstances(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2Svc([]string{"DescribeInstancesPages"})
 
-	out, err := describeInstances(mockSvc)
+	out, marker, err := describeInstances(mockSvc, nil)
 	require.NoError(t, err)
+	assert.Nil(t, marker)
 	assert.NotEmpty(t, out)
 }
 
 func TestEC2DescribeInstancesError(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2SvcError([]string{"DescribeInstancesPages"})
 
-	out, err := describeInstances(mockSvc)
+	out, marker, err := describeInstances(mockSvc, nil)
 	require.Error(t, err)
+	assert.Nil(t, marker)
 	assert.Nil(t, out)
 }
 
 func TestEC2BuildInstanceSnapshot(t *testing.T) {
-	mockSvc := awstest.BuildMockEC2SvcAll()
-
-	ec2Snapshot := buildEc2InstanceSnapshot(mockSvc, awstest.ExampleInstance)
+	ec2Snapshot := buildEc2InstanceSnapshot(awstest.ExampleInstance)
 	assert.NotEmpty(t, ec2Snapshot.SecurityGroups)
 	assert.NotEmpty(t, ec2Snapshot.BlockDeviceMappings)
 }
@@ -58,15 +58,16 @@ func TestEC2PollInstances(t *testing.T) {
 
 	EC2ClientFunc = awstest.SetupMockEC2
 
-	resources, err := PollEc2Instances(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollEc2Instances(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
 	require.NoError(t, err)
+	assert.Nil(t, marker)
 	assert.Regexp(
 		t,
 		regexp.MustCompile(`arn:aws:ec2:.*:123456789012:instance/instance-aabbcc123`),
@@ -80,14 +81,15 @@ func TestEC2PollInstancesError(t *testing.T) {
 
 	EC2ClientFunc = awstest.SetupMockEC2
 
-	resources, err := PollEc2Instances(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollEc2Instances(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
 	require.Error(t, err)
+	assert.Nil(t, marker)
 	assert.Empty(t, resources)
 }

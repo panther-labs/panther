@@ -32,17 +32,19 @@ import (
 func TestIAMPolicyList(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvc([]string{"ListPoliciesPages"})
 
-	out, err := listPolicies(mockSvc)
-	require.NoError(t, err)
+	out, marker, err := listPolicies(mockSvc, nil)
 	assert.NotEmpty(t, out)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestIAMPolicyListError(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvcError([]string{"ListPoliciesPages"})
 
-	out, err := listPolicies(mockSvc)
-	require.NotNil(t, err)
+	out, marker, err := listPolicies(mockSvc, nil)
 	assert.Nil(t, out)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }
 
 func TestIAMPolicyVersion(t *testing.T) {
@@ -54,7 +56,7 @@ func TestIAMPolicyVersion(t *testing.T) {
 		aws.String("v2"),
 	)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, *awstest.ExamplePolicyDocumentDecoded, out)
 	mockSvc.AssertExpectations(t)
 }
@@ -76,39 +78,43 @@ func TestIAMPolicyVersionError(t *testing.T) {
 func TestIAMPolicyListEntities(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvc([]string{"ListEntitiesForPolicyPages"})
 
-	out := listEntitiesForPolicy(
+	out, err := listEntitiesForPolicy(
 		mockSvc,
 		aws.String("arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"),
 	)
 
 	assert.NotEmpty(t, out)
+	assert.NoError(t, err)
 }
 
 func TestIAMPolicyListEntitiesError(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvcError([]string{"ListEntitiesForPolicyPages"})
 
-	out := listEntitiesForPolicy(
+	out, err := listEntitiesForPolicy(
 		mockSvc,
 		aws.String("arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"),
 	)
 
 	assert.Empty(t, out)
+	assert.Error(t, err)
 }
 
 func TestIAMPolicyBuildSnapshot(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvcAll()
 
-	out := buildIAMPolicySnapshot(mockSvc, awstest.ExampleListPolicies.Policies[0])
-	require.NotEmpty(t, out)
+	out, err := buildIAMPolicySnapshot(mockSvc, awstest.ExampleListPolicies.Policies[0])
+	assert.NotEmpty(t, out)
+	assert.NoError(t, err)
 }
 
 func TestIAMPolicyBuildSnapshotError(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvcAllError()
 
-	out := buildIAMPolicySnapshot(mockSvc, awstest.ExampleListPolicies.Policies[0])
-	require.Nil(t, out.Entities.PolicyGroups)
-	require.Nil(t, out.Entities.PolicyRoles)
-	require.Nil(t, out.Entities.PolicyUsers)
+	out, err := buildIAMPolicySnapshot(mockSvc, awstest.ExampleListPolicies.Policies[0])
+	assert.Error(t, err)
+	assert.Nil(t, out.Entities.PolicyGroups)
+	assert.Nil(t, out.Entities.PolicyRoles)
+	assert.Nil(t, out.Entities.PolicyUsers)
 	assert.NotNil(t, out.PermissionsBoundaryUsageCount)
 }
 
@@ -117,16 +123,17 @@ func TestIAMPolicyPoller(t *testing.T) {
 
 	IAMClientFunc = awstest.SetupMockIAM
 
-	resources, err := PollIamPolicies(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollIamPolicies(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Len(t, resources, 1)
 	assert.Equal(t, *awstest.ExampleListPolicies.Policies[0].Arn, string(resources[0].ID))
+	assert.Nil(t, marker)
 }
 
 func TestIAMPolicyPollerError(t *testing.T) {
@@ -134,13 +141,14 @@ func TestIAMPolicyPollerError(t *testing.T) {
 
 	IAMClientFunc = awstest.SetupMockIAM
 
-	resources, err := PollIamPolicies(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollIamPolicies(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
 	assert.Nil(t, resources)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }

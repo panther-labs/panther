@@ -43,7 +43,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/redshift"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/ssm"
-	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/aws/aws-sdk-go/service/waf"
 	"github.com/aws/aws-sdk-go/service/wafregional"
@@ -92,6 +91,7 @@ var (
 		awsmodels.IAMUserSchema:             iam.ServiceName,
 		awsmodels.KmsKeySchema:              kms.ServiceName,
 		awsmodels.LambdaFunctionSchema:      lambda.ServiceName,
+		awsmodels.PasswordPolicySchema:      iam.ServiceName,
 		awsmodels.RDSInstanceSchema:         rds.ServiceName,
 		awsmodels.RedshiftClusterSchema:     redshift.ServiceName,
 		awsmodels.S3BucketSchema:            s3.ServiceName,
@@ -103,15 +103,16 @@ var (
 	// regional or because we construct a "Meta" resource that needs the full context of every
 	// resource to be updated.
 	globalOnlyTypes = map[string]struct{}{
-		awsmodels.CloudTrailSchema:    {}, // Has a meta resource
-		awsmodels.ConfigServiceSchema: {}, // Has a meta resource
-		awsmodels.GuardDutySchema:     {}, // Has a meta resource
-		awsmodels.IAMGroupSchema:      {}, // Global service
-		awsmodels.IAMPolicySchema:     {}, // Global service
-		awsmodels.IAMRoleSchema:       {}, // Global service
-		awsmodels.IAMRootUserSchema:   {}, // Global service
-		awsmodels.IAMUserSchema:       {}, // Global service
-		awsmodels.WafWebAclSchema:     {}, // Global service
+		awsmodels.CloudTrailSchema:     {}, // Has a meta resource
+		awsmodels.ConfigServiceSchema:  {}, // Has a meta resource
+		awsmodels.GuardDutySchema:      {}, // Has a meta resource
+		awsmodels.IAMGroupSchema:       {}, // Global service
+		awsmodels.IAMPolicySchema:      {}, // Global service
+		awsmodels.IAMRoleSchema:        {}, // Global service
+		awsmodels.IAMRootUserSchema:    {}, // Global service
+		awsmodels.IAMUserSchema:        {}, // Global service
+		awsmodels.PasswordPolicySchema: {}, // Global service
+		awsmodels.WafWebAclSchema:      {}, // Global service
 	}
 )
 
@@ -162,6 +163,9 @@ func GetServiceRegions(pollerInput *awsmodels.ResourcePollerInput, resourceType 
 
 	// Lookup the regions that the account has enabled
 	ec2Svc, err := getClient(pollerInput, setupEC2Client, "ec2", defaultRegion)
+	if err != nil {
+		return nil, err
+	}
 	describeRegionsOutput, err := ec2Svc.(ec2iface.EC2API).DescribeRegions(&ec2.DescribeRegionsInput{})
 	if err != nil {
 		return nil, err
@@ -175,8 +179,9 @@ func GetServiceRegions(pollerInput *awsmodels.ResourcePollerInput, resourceType 
 
 	// Lookup the regions that AWS supports for the service, storing the ones that are also enabled
 	// for this account
-	ssmSvc, err := getClient(pollerInput, setupSSMClient, "ssm", defaultRegion)
-	err = ssmSvc.(ssmiface.SSMAPI).GetParametersByPathPages(&ssm.GetParametersByPathInput{
+	// ssmSvc, err := getClient(pollerInput, setupSSMClient, "ssm", defaultRegion)
+	ssmSvc := ssm.New(snapshotPollerSession)
+	err = ssmSvc.GetParametersByPathPages(&ssm.GetParametersByPathInput{
 		Path: aws.String("/aws/service/global-infrastructure/services/" + serviceID + "/regions"),
 	}, func(page *ssm.GetParametersByPathOutput, b bool) bool {
 		for _, param := range page.Parameters {

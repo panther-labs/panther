@@ -23,7 +23,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws/awstest"
@@ -32,15 +31,17 @@ import (
 func TestGuardDutyListDetectors(t *testing.T) {
 	mockSvc := awstest.BuildMockGuardDutySvc([]string{"ListDetectorsPages"})
 
-	out := listDetectors(mockSvc)
+	out, err := listDetectors(mockSvc)
 	assert.NotEmpty(t, out)
+	assert.NoError(t, err)
 }
 
 func TestGuardDutyListDetectorsError(t *testing.T) {
 	mockSvc := awstest.BuildMockGuardDutySvcError([]string{"ListDetectorsPages"})
 
-	out := listDetectors(mockSvc)
+	out, err := listDetectors(mockSvc)
 	assert.Nil(t, out)
+	assert.Error(t, err)
 }
 
 func TestGuardDutyGetMasterAccount(t *testing.T) {
@@ -85,11 +86,12 @@ func TestGuardDutyGetDetectorError(t *testing.T) {
 func TestBuildGuardDutyDetectorSnapshot(t *testing.T) {
 	mockSvc := awstest.BuildMockGuardDutySvcAll()
 
-	detectorSnapshot := buildGuardDutyDetectorSnapshot(
+	detectorSnapshot, err := buildGuardDutyDetectorSnapshot(
 		mockSvc,
 		awstest.ExampleDetectorID,
 	)
 
+	assert.NoError(t, err)
 	assert.NotEmpty(t, detectorSnapshot.Master)
 	assert.Equal(t, awstest.ExampleDetectorID, detectorSnapshot.ID)
 }
@@ -97,12 +99,13 @@ func TestBuildGuardDutyDetectorSnapshot(t *testing.T) {
 func TestBuildGuardDutyDetectorSnapshotError(t *testing.T) {
 	mockSvc := awstest.BuildMockGuardDutySvcAllError()
 
-	detectorSnapshot := buildGuardDutyDetectorSnapshot(
+	detectorSnapshot, err := buildGuardDutyDetectorSnapshot(
 		mockSvc,
 		awstest.ExampleDetectorID,
 	)
 
 	assert.Nil(t, detectorSnapshot)
+	assert.Error(t, err)
 }
 
 func TestGuardDutyDetectorsPoller(t *testing.T) {
@@ -110,15 +113,15 @@ func TestGuardDutyDetectorsPoller(t *testing.T) {
 
 	GuardDutyClientFunc = awstest.SetupMockGuardDuty
 
-	resources, err := PollGuardDutyDetectors(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollGuardDutyDetectors(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Regexp(
 		t,
 		regexp.MustCompile(`123456789012:[^:]*:AWS\.GuardDuty\.Detector`),
@@ -134,6 +137,7 @@ func TestGuardDutyDetectorsPoller(t *testing.T) {
 	assert.Len(t, resources, 4)
 	assert.IsType(t, &awsmodels.GuardDutyMeta{}, resources[3].Attributes)
 	assert.Len(t, resources[3].Attributes.(*awsmodels.GuardDutyMeta).Detectors, 3)
+	assert.Nil(t, marker)
 }
 
 func TestGuardDutyDetectorsPollerError(t *testing.T) {
@@ -141,15 +145,16 @@ func TestGuardDutyDetectorsPollerError(t *testing.T) {
 
 	GuardDutyClientFunc = awstest.SetupMockGuardDuty
 
-	resources, err := PollGuardDutyDetectors(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollGuardDutyDetectors(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
 	// Should only contain meta resource
-	require.Len(t, resources, 1)
+	assert.Len(t, resources, 1)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }

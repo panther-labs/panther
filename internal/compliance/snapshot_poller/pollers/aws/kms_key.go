@@ -210,11 +210,16 @@ func buildKmsKeySnapshot(kmsSvc kmsiface.KMSAPI, key *kms.KeyListEntry) (*awsmod
 	}
 	kmsKey.Policy = policy
 
-	tags, err := listResourceTags(kmsSvc, key.KeyId)
-	if err != nil {
-		return nil, err
+	// The AWS managed default ACM master key FOR SOME REASON denies the list-resource-tags API call
+	// to all customer owned entities. Not documented behavior btw. All other AWS managed keys that
+	// I have checked do not exhibit this behavior.
+	if *kmsKey.Description != "Default master key that protects my ACM private keys when no other key is defined" {
+		tags, err := listResourceTags(kmsSvc, key.KeyId)
+		if err != nil {
+			return nil, err
+		}
+		kmsKey.Tags = utils.ParseTagSlice(tags)
 	}
-	kmsKey.Tags = utils.ParseTagSlice(tags)
 
 	// Check that the key was created by the customer's account and not AWS
 	if *metadata.KeyManager == customerKeyManager {

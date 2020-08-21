@@ -31,14 +31,18 @@ import (
 func TestAcmCertificateList(t *testing.T) {
 	mockSvc := awstest.BuildMockAcmSvc([]string{"ListCertificatesPages"})
 
-	out := listCertificates(mockSvc)
+	out, marker, err := listCertificates(mockSvc, nil)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 	assert.NotEmpty(t, out)
 }
 
 func TestAcmCertificateListError(t *testing.T) {
 	mockSvc := awstest.BuildMockAcmSvcError([]string{"ListCertificatesPages"})
 
-	out := listCertificates(mockSvc)
+	out, marker, err := listCertificates(mockSvc, nil)
+	assert.Error(t, err)
+	assert.Nil(t, marker)
 	assert.Nil(t, out)
 }
 
@@ -77,11 +81,12 @@ func TestAcmCertificateListTagsError(t *testing.T) {
 func TestAcmCertificateBuildSnapshot(t *testing.T) {
 	mockSvc := awstest.BuildMockAcmSvcAll()
 
-	certSnapshot := buildAcmCertificateSnapshot(
+	certSnapshot, err := buildAcmCertificateSnapshot(
 		mockSvc,
 		awstest.ExampleListCertificatesOutput.CertificateSummaryList[0].CertificateArn,
 	)
 
+	assert.NoError(t, err)
 	assert.NotEmpty(t, certSnapshot.ARN)
 	assert.Equal(t, "Value1", *certSnapshot.Tags["Key1"])
 }
@@ -89,12 +94,13 @@ func TestAcmCertificateBuildSnapshot(t *testing.T) {
 func TestAcmCertificateBuildSnapshotErrors(t *testing.T) {
 	mockSvc := awstest.BuildMockAcmSvcAllError()
 
-	certSnapshot := buildAcmCertificateSnapshot(
+	certSnapshot, err := buildAcmCertificateSnapshot(
 		mockSvc,
 		awstest.ExampleListCertificatesOutput.CertificateSummaryList[0].CertificateArn,
 	)
 
 	assert.Nil(t, certSnapshot)
+	assert.Error(t, err)
 }
 
 func TestAcmCertificatePoller(t *testing.T) {
@@ -102,15 +108,16 @@ func TestAcmCertificatePoller(t *testing.T) {
 
 	AcmClientFunc = awstest.SetupMockAcm
 
-	resources, err := PollAcmCertificates(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollAcmCertificates(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
 	require.NoError(t, err)
+	assert.Nil(t, marker)
 	assert.Equal(t, *awstest.ExampleCertificateArn, string(resources[0].ID))
 	assert.NotEmpty(t, resources)
 }
@@ -120,15 +127,16 @@ func TestAcmCertificatePollerError(t *testing.T) {
 
 	AcmClientFunc = awstest.SetupMockAcm
 
-	resources, err := PollAcmCertificates(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollAcmCertificates(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
 	require.NoError(t, err)
+	assert.Nil(t, marker)
 	for _, event := range resources {
 		assert.Nil(t, event.Attributes)
 	}

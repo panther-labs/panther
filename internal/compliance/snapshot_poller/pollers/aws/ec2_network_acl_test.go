@@ -23,7 +23,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws/awstest"
@@ -32,15 +31,19 @@ import (
 func TestEC2DescribeNetworkAcls(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2Svc([]string{"DescribeNetworkAclsPages"})
 
-	out := describeNetworkAcls(mockSvc)
+	out, marker, err := describeNetworkAcls(mockSvc, nil)
+	assert.NoError(t, err)
+	assert.Nil(t, marker)
 	assert.NotEmpty(t, out)
 }
 
 func TestEC2DescribeNetworkAclsError(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2SvcError([]string{"DescribeNetworkAclsPages"})
 
-	out := describeNetworkAcls(mockSvc)
+	out, marker, err := describeNetworkAcls(mockSvc, nil)
 	assert.Nil(t, out)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }
 
 func TestEC2PollNetworkAcls(t *testing.T) {
@@ -48,15 +51,16 @@ func TestEC2PollNetworkAcls(t *testing.T) {
 
 	EC2ClientFunc = awstest.SetupMockEC2
 
-	resources, err := PollEc2NetworkAcls(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollEc2NetworkAcls(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
+	assert.Nil(t, marker)
 	assert.Regexp(
 		t,
 		regexp.MustCompile(`arn:aws:ec2:.*:123456789012:network-acl/acl-111222333`),
@@ -70,14 +74,15 @@ func TestEC2PollNetworkAclsError(t *testing.T) {
 
 	EC2ClientFunc = awstest.SetupMockEC2
 
-	resources, err := PollEc2NetworkAcls(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollEc2NetworkAcls(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
+	assert.Nil(t, marker)
 	assert.Empty(t, resources)
 }

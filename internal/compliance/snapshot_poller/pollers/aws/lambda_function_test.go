@@ -31,15 +31,19 @@ import (
 func TestLambdaFunctionsList(t *testing.T) {
 	mockSvc := awstest.BuildMockLambdaSvc([]string{"ListFunctionsPages"})
 
-	out := listFunctions(mockSvc)
+	out, marker, err := listFunctions(mockSvc, nil)
 	assert.NotEmpty(t, out)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestLambdaFunctionsListError(t *testing.T) {
 	mockSvc := awstest.BuildMockLambdaSvcError([]string{"ListFunctionsPages"})
 
-	out := listFunctions(mockSvc)
+	out, marker, err := listFunctions(mockSvc, nil)
 	assert.Nil(t, out)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }
 
 func TestLambdaFunctionListTags(t *testing.T) {
@@ -77,11 +81,12 @@ func TestLambdaFunctionGetPolicyError(t *testing.T) {
 func TestBuildLambdaFunctionSnapshot(t *testing.T) {
 	mockSvc := awstest.BuildMockLambdaSvcAll()
 
-	lambdaSnapshot := buildLambdaFunctionSnapshot(
+	lambdaSnapshot, err := buildLambdaFunctionSnapshot(
 		mockSvc,
 		awstest.ExampleListFunctions.Functions[0],
 	)
 
+	assert.NoError(t, err)
 	assert.NotEmpty(t, lambdaSnapshot.Tags)
 	assert.NotEmpty(t, lambdaSnapshot.Policy)
 	assert.Equal(t, "arn:aws:lambda:us-west-2:123456789012:function:ExampleFunction", *lambdaSnapshot.ARN)
@@ -91,11 +96,12 @@ func TestBuildLambdaFunctionSnapshot(t *testing.T) {
 func TestBuildLambdaFunctionSnapshotErrors(t *testing.T) {
 	mockSvc := awstest.BuildMockLambdaSvcAllError()
 
-	lambdaSnapshot := buildLambdaFunctionSnapshot(
+	lambdaSnapshot, err := buildLambdaFunctionSnapshot(
 		mockSvc,
 		awstest.ExampleListFunctions.Functions[0],
 	)
 
+	assert.NoError(t, err)
 	assert.NotNil(t, lambdaSnapshot)
 	assert.Nil(t, lambdaSnapshot.Policy)
 	assert.Nil(t, lambdaSnapshot.Tags)
@@ -106,16 +112,17 @@ func TestLambdaFunctionPoller(t *testing.T) {
 
 	LambdaClientFunc = awstest.SetupMockLambda
 
-	resources, err := PollLambdaFunctions(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollLambdaFunctions(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
 	assert.NotEmpty(t, resources)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestLambdaFunctionPollerError(t *testing.T) {
@@ -123,16 +130,17 @@ func TestLambdaFunctionPollerError(t *testing.T) {
 
 	LambdaClientFunc = awstest.SetupMockLambda
 
-	resources, err := PollLambdaFunctions(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollLambdaFunctions(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
 	for _, event := range resources {
 		assert.Nil(t, event.Attributes)
 	}
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }

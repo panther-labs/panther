@@ -20,7 +20,9 @@ package aws
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/pkg/errors"
@@ -47,7 +49,8 @@ var (
 
 	// The default max number of resources to scan at once. We will keep paging until we scan this
 	// many resources, then do one additional page worth of resources
-	defaultBatchSize = 15
+	defaultBatchSize   = 15
+	pageRequeueDelayer = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	// IndividualARNResourcePollers maps resource types to their corresponding individual polling
 	// functions for resources whose ID is their ARN.
@@ -194,8 +197,11 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	//
 	// Lookup the regions that are both enabled and supported by this service
 	regions, err := GetRegionsToScan(pollerResourceInput, *scanRequest.ResourceType)
+	if err != nil {
+		return nil, err
+	}
 
-	zap.L().Info("processing full account resource type scan")
+	zap.L().Info("processing full account resource type scan", zap.Any("regions", regions), zap.String("resourceType", *scanRequest.ResourceType))
 	for _, region := range regions {
 		utils.Requeue(pollermodels.ScanMsg{
 			Entries: []*pollermodels.ScanEntry{
@@ -240,11 +246,12 @@ func serviceScan(
 	if marker != nil {
 		zap.L().Debug("hit max batch size")
 		scanRequest.NextPageToken = marker
+
 		utils.Requeue(pollermodels.ScanMsg{
 			Entries: []*pollermodels.ScanEntry{
 				scanRequest,
 			},
-		}, 0)
+		}, int64(pageRequeueDelayer.Intn(30)+1)) // Delay between 1 & 30 seconds to spread out page scans
 	}
 	return
 }

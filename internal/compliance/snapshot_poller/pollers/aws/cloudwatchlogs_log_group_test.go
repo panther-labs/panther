@@ -31,41 +31,46 @@ import (
 func TestCloudWatchLogsLogGroupsDescribe(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudWatchLogsSvc([]string{"DescribeLogGroupsPages"})
 
-	out, err := describeLogGroups(mockSvc)
+	out, marker, err := describeLogGroups(mockSvc, nil)
 	require.NoError(t, err)
+	assert.Nil(t, marker)
 	assert.NotEmpty(t, out)
 }
 
 func TestCloudWatchLogsLogGroupsDescribeError(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudWatchLogsSvcError([]string{"DescribeLogGroupsPages"})
 
-	out, err := describeLogGroups(mockSvc)
+	out, marker, err := describeLogGroups(mockSvc, nil)
 	require.Error(t, err)
+	assert.Nil(t, marker)
 	assert.Nil(t, out)
 }
 
 func TestCloudWatchLogsLogGroupsListTags(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudWatchLogsSvc([]string{"ListTagsLogGroup"})
 
-	out := listTagsLogGroup(mockSvc, awstest.ExampleDescribeLogGroups.LogGroups[0].LogGroupName)
+	out, err := listTagsLogGroup(mockSvc, awstest.ExampleDescribeLogGroups.LogGroups[0].LogGroupName)
+	assert.NoError(t, err)
 	assert.NotEmpty(t, out)
 }
 
 func TestCloudWatchLogsLogGroupsListTagsError(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudWatchLogsSvcError([]string{"ListTagsLogGroup"})
 
-	out := listTagsLogGroup(mockSvc, awstest.ExampleDescribeLogGroups.LogGroups[0].LogGroupName)
+	out, err := listTagsLogGroup(mockSvc, awstest.ExampleDescribeLogGroups.LogGroups[0].LogGroupName)
+	assert.Error(t, err)
 	assert.Nil(t, out)
 }
 
 func TestBuildCloudWatchLogsLogGroupSnapshot(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudWatchLogsSvcAll()
 
-	certSnapshot := buildCloudWatchLogsLogGroupSnapshot(
+	certSnapshot, err := buildCloudWatchLogsLogGroupSnapshot(
 		mockSvc,
 		awstest.ExampleDescribeLogGroups.LogGroups[0],
 	)
 
+	assert.NoError(t, err)
 	assert.NotNil(t, certSnapshot.ARN)
 	assert.NotNil(t, certSnapshot.StoredBytes)
 	assert.Equal(t, "LogGroup-1", *certSnapshot.Name)
@@ -76,15 +81,16 @@ func TestCloudWatchLogsLogGroupPoller(t *testing.T) {
 
 	CloudWatchLogsClientFunc = awstest.SetupMockCloudWatchLogs
 
-	resources, err := PollCloudWatchLogsLogGroups(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollCloudWatchLogsLogGroups(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
 	require.NoError(t, err)
+	assert.Nil(t, marker)
 	assert.NotEmpty(t, resources)
 }
 
@@ -93,15 +99,16 @@ func TestCloudWatchLogsLogGroupPollerError(t *testing.T) {
 
 	AcmClientFunc = awstest.SetupMockAcm
 
-	resources, err := PollCloudWatchLogsLogGroups(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollCloudWatchLogsLogGroups(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
 	require.Error(t, err)
+	assert.Nil(t, marker)
 	for _, event := range resources {
 		assert.Nil(t, event.Attributes)
 	}

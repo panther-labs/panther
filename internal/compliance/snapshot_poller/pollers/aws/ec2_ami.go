@@ -107,11 +107,14 @@ func describeImages(svc ec2iface.EC2API, nextMarker *string) ([]*ec2.Image, *str
 
 	// Now that we know what images are in use, we can describe them without timing out (this call
 	// does not support pagination on its own)
-	imagesInUse, err := svc.DescribeImages(&ec2.DescribeImagesInput{
-		ImageIds: imageIDs,
-	})
-	if err != nil {
-		return nil, nil, errors.Wrapf(err, "EC2.DescribeImages")
+	imagesInUse := &ec2.DescribeImagesOutput{}
+	if len(imageIDs) > 0 {
+		imagesInUse, err = svc.DescribeImages(&ec2.DescribeImagesInput{
+			ImageIds: imageIDs,
+		})
+		if err != nil {
+			return nil, nil, errors.Wrapf(err, "EC2.DescribeImages")
+		}
 	}
 
 	// If this is not the first page of a scan, just return now

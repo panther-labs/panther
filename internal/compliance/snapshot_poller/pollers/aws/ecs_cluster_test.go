@@ -33,15 +33,19 @@ import (
 func TestEcsClusterList(t *testing.T) {
 	mockSvc := awstest.BuildMockEcsSvc([]string{"ListClustersPages"})
 
-	out := listClusters(mockSvc)
+	out, marker, err := listClusters(mockSvc, nil)
 	assert.NotEmpty(t, out)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestEcsClusterListError(t *testing.T) {
 	mockSvc := awstest.BuildMockEcsSvcError([]string{"ListClustersPages"})
 
-	out := listClusters(mockSvc)
+	out, marker, err := listClusters(mockSvc, nil)
 	assert.Nil(t, out)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }
 
 func TestEcsClusterDescribe(t *testing.T) {
@@ -78,11 +82,12 @@ func TestEcsClusterDescribeError(t *testing.T) {
 func TestEcsClusterBuildSnapshot(t *testing.T) {
 	mockSvc := awstest.BuildMockEcsSvcAll()
 
-	clusterSnapshot := buildEcsClusterSnapshot(
+	clusterSnapshot, err := buildEcsClusterSnapshot(
 		mockSvc,
 		awstest.ExampleListClusters.ClusterArns[0],
 	)
 
+	assert.NoError(t, err)
 	assert.NotEmpty(t, clusterSnapshot.ARN)
 	assert.Equal(t, "Value1", *clusterSnapshot.Tags["Key1"])
 }
@@ -90,12 +95,13 @@ func TestEcsClusterBuildSnapshot(t *testing.T) {
 func TestEcsClusterBuildSnapshotErrors(t *testing.T) {
 	mockSvc := awstest.BuildMockEcsSvcAllError()
 
-	certSnapshot := buildEcsClusterSnapshot(
+	certSnapshot, err := buildEcsClusterSnapshot(
 		mockSvc,
 		awstest.ExampleListClusters.ClusterArns[0],
 	)
 
 	assert.Nil(t, certSnapshot)
+	assert.Error(t, err)
 }
 
 func TestEcsClusterPoller(t *testing.T) {
@@ -103,17 +109,18 @@ func TestEcsClusterPoller(t *testing.T) {
 
 	EcsClientFunc = awstest.SetupMockEcs
 
-	resources, err := PollEcsClusters(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollEcsClusters(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, *awstest.ExampleClusterArn, string(resources[0].ID))
 	assert.NotEmpty(t, resources)
+	assert.Nil(t, marker)
 }
 
 func TestEcsClusterPollerError(t *testing.T) {
@@ -121,16 +128,17 @@ func TestEcsClusterPollerError(t *testing.T) {
 
 	EcsClientFunc = awstest.SetupMockEcs
 
-	resources, err := PollEcsClusters(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollEcsClusters(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	assert.Error(t, err)
 	for _, event := range resources {
 		assert.Nil(t, event.Attributes)
 	}
+	assert.Nil(t, marker)
 }
