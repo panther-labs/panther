@@ -99,17 +99,17 @@ class Rule:
         if not hasattr(self._module, 'rule'):
             raise AssertionError("rule needs to have a method named 'rule'")
 
+        if hasattr(self._module, 'title'):
+            self._has_title = True
+        else:
+            self._has_title = False
+
         if hasattr(self._module, 'dedup'):
             self._has_dedup = True
         else:
             self._has_dedup = False
 
         self._default_dedup_string = 'defaultDedupString:{}'.format(self.rule_id)
-
-        if hasattr(self._module, 'title'):
-            self._has_title = True
-        else:
-            self._has_title = False
 
     def run(self, event: Dict[str, Any]) -> RuleResult:
         """Analyze a log line with this rule and return True, False, or an error."""
@@ -119,14 +119,17 @@ class Rule:
         try:
             rule_result = self._run_command(self._module.rule, event, bool)
             if rule_result:
-                dedup_string = self._get_dedup(event)
                 title = self._get_title(event)
+                dedup_string = self._get_dedup(event, title)
         except Exception as err:  # pylint: disable=broad-except
             return RuleResult(exception=err)
         return RuleResult(matched=rule_result, dedup_string=dedup_string, title=title)
 
-    def _get_dedup(self, event: Dict[str, Any]) -> str:
+    def _get_dedup(self, event: Dict[str, Any], title: Optional[str]) -> str:
         if not self._has_dedup:
+            if title:
+                # If no dedup function is defined but the rule had a title, use the title as dedup mechanism
+                return title
             # If no dedup function defined, return default dedup string
             return self._default_dedup_string
         try:

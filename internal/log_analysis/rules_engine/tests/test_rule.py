@@ -120,16 +120,14 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(expected_rule, rule.run({}))
 
     def test_restrict_title_size(self) -> None:
-        rule_body = 'def rule(event):\n\treturn True\ndef title(event):\n\treturn "".join("a" for i in range({}))'. \
+        rule_body = 'def rule(event):\n\treturn True\n' \
+                    'def dedup(event):\n\treturn test\n' \
+                    'def title(event):\n\treturn "".join("a" for i in range({}))'. \
             format(MAX_TITLE_SIZE+1)
         rule = Rule({'id': 'test_restrict_title_size', 'body': rule_body, 'versionId': 'versionId'})
 
         expected_title_string_prefix = ''.join('a' for _ in range(MAX_TITLE_SIZE - len(TRUNCATED_STRING_SUFFIX)))
-        expected_rule = RuleResult(
-            matched=True,
-            dedup_string='defaultDedupString:test_restrict_title_size',
-            title=expected_title_string_prefix + TRUNCATED_STRING_SUFFIX
-        )
+        expected_rule = RuleResult(matched=True, dedup_string='test', title=expected_title_string_prefix + TRUNCATED_STRING_SUFFIX)
         self.assertEqual(expected_rule, rule.run({}))
 
     def test_empty_dedup_result_to_default(self) -> None:
@@ -176,11 +174,11 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         expected_result = RuleResult(matched=True, dedup_string='defaultDedupString:test_rule_dedup_returns_empty_string')
         self.assertEqual(rule.run({}), expected_result)
 
-    def test_rule_matches_with_title(self) -> None:
+    def test_rule_matches_with_title_without_dedup(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\ndef title(event):\n\treturn "title"'
         rule = Rule({'id': 'test_rule_matches_with_title', 'body': rule_body, 'versionId': 'versionId'})
 
-        expected_result = RuleResult(matched=True, dedup_string='defaultDedupString:test_rule_matches_with_title', title='title')
+        expected_result = RuleResult(matched=True, dedup_string='title', title='title')
         self.assertEqual(rule.run({}), expected_result)
 
     def test_rule_title_throws_exception(self) -> None:
