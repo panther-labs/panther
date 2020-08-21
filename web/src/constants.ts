@@ -62,7 +62,7 @@ export const DEFAULT_TITLE_FUNCTION =
   "def title(event):\n\t# (Optional) Return a string which will be shown as the alert title.\n\t# If no 'dedup' function is defined, the return value of this method will act as deduplication string.\n\treturn ''";
 
 export const DEFAULT_DEDUP_FUNCTION =
-  "# def dedup(event):\n\t#  (Optional) Return a string which will de-duplicate similar alerts.\n\t# return ''";
+  "# def dedup(event):\n\t#  (Optional) Return a string which will be used to deduplicate similar alerts.\n\t# return ''";
 
 export const RESOURCE_TYPES = [
   'AWS.ACM.Certificate',
