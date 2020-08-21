@@ -96,7 +96,6 @@ const SqsSourceWizard: React.FC<SqsLogSourceWizardProps> = ({
               <Wizard.Step title="Done">
                 <WizardPanel>
                   <SuccessPanel />
-
                   <WizardPanel.Actions>
                     <WizardPanel.ActionPrev />
                   </WizardPanel.Actions>

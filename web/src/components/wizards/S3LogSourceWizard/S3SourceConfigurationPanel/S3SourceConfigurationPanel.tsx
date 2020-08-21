@@ -48,14 +48,14 @@ const S3SourceConfigurationPanel: React.FC = () => {
           <Field
             name="integrationLabel"
             as={FormikTextInput}
-            label="Name"
+            label="* Name"
             placeholder="A nickname for this log analysis source"
             required
           />
           <Field
             name="awsAccountId"
             as={FormikTextInput}
-            label="Account ID"
+            label="* Account ID"
             placeholder="The AWS Account ID that the S3 log bucket lives in"
             disabled={!!initialValues.integrationId}
             required
@@ -63,14 +63,14 @@ const S3SourceConfigurationPanel: React.FC = () => {
           <Field
             name="s3Bucket"
             as={FormikTextInput}
-            label="Bucket Name"
+            label="* Bucket Name"
             required
             placeholder="The name of the S3 bucket that holds the logs"
           />
           <Field
             as={FormikMultiCombobox}
             searchable
-            label="Log Types"
+            label="* Log Types"
             name="logTypes"
             items={LOG_TYPES}
             placeholder="The types of logs that are collected"

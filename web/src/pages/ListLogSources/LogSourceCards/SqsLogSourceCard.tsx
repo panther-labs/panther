@@ -36,21 +36,25 @@ const SqsLogSourceCard: React.FC<SqsLogSourceCardProps> = ({ source }) => {
       <GenericItemCard.Value
         label="Allowed Principal ARNs"
         value={
-          <React.Fragment>
-            {source.sqsConfig.allowedPrincipalArns.map(arn => (
-              <Box key={arn}>{arn}</Box>
-            ))}
-          </React.Fragment>
+          source.sqsConfig.allowedPrincipalArns.length ? (
+            <React.Fragment>
+              {source.sqsConfig.allowedPrincipalArns.map(arn => (
+                <Box key={arn}>{arn}</Box>
+              ))}
+            </React.Fragment>
+          ) : null
         }
       />
       <GenericItemCard.Value
         label="Allowed Source ARNs"
         value={
-          <React.Fragment>
-            {source.sqsConfig.allowedSourceArns.map(arn => (
-              <Box key={arn}>{arn}</Box>
-            ))}
-          </React.Fragment>
+          source.sqsConfig.allowedSourceArns.length ? (
+            <React.Fragment>
+              {source.sqsConfig.allowedSourceArns.map(arn => (
+                <Box key={arn}>{arn}</Box>
+              ))}
+            </React.Fragment>
+          ) : null
         }
       />
       <GenericItemCard.LineBreak />
