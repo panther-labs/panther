@@ -64,11 +64,13 @@ type SourceIntegrationMetadata struct {
 }
 
 func (info *SourceIntegration) RequiredLogTypes() (logTypes []string) {
-	logTypes = append(logTypes, info.LogTypes...)
-	if sqsConfig := info.SqsConfig; sqsConfig != nil {
-		logTypes = append(logTypes, sqsConfig.LogTypes...)
+	// We use a switch to avoid git conflicts with enterprise
+	switch {
+	case info.SqsConfig != nil:
+		return info.SqsConfig.LogTypes
+	default:
+		return info.LogTypes
 	}
-	return
 }
 
 type SourceIntegrationHealth struct {
