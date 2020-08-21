@@ -206,3 +206,57 @@ func resetCaches() {
 	bucketCache, _ = lru.NewARC(s3BucketLocationCacheSize)
 	s3ClientCache, _ = lru.NewARC(s3ClientCacheSize)
 }
+
+func TestSourceCacheStruct_Find(t *testing.T) {
+	cache := sourceCacheStruct{}
+	now := time.Now()
+	sources := []*models.SourceIntegration{
+		{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
+				S3Bucket: "foo",
+				S3Prefix: "",
+				LogTypes: []string{"Foo.Bar"},
+			},
+		},
+		{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
+				S3Bucket: "foo",
+				S3Prefix: "/foo",
+				LogTypes: []string{"Foo.Baz"},
+			},
+		},
+		{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
+				S3Bucket: "foo",
+				S3Prefix: "/foo/bar/baz",
+				LogTypes: []string{"Foo.Qux"},
+			},
+		},
+	}
+	assert := require.New(t)
+	cache.Update(now, sources)
+	{
+		src := cache.Find("foo", "/bar")
+		assert.NotNil(src)
+		assert.Equal("", src.S3Prefix)
+	}
+	{
+		src := cache.Find("foo", "/foo/bar.json")
+		assert.NotNil(src)
+		assert.Equal("/foo", src.S3Prefix)
+	}
+	{
+		src := cache.Find("foo", "/foo/bar/baz.json")
+		assert.NotNil(src)
+		assert.Equal("/foo/bar/baz", src.S3Prefix)
+	}
+	{
+		src := cache.Find("foo", "/foo/bar/baz/qux.json")
+		assert.NotNil(src)
+		assert.Equal("/foo/bar/baz", src.S3Prefix)
+	}
+	{
+		src := cache.Find("goo", "/foo/bar/baz/qux.json")
+		assert.Nil(src)
+	}
+}

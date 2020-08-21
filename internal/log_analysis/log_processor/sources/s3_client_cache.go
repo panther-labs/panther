@@ -269,12 +269,11 @@ func getNewS3Client(region *string, creds *credentials.Credentials) (result s3if
 // Returns the configured S3 bucket and S3 object prefix for this source
 func getSourceS3Info(source *models.SourceIntegration) (string, string) {
 	switch source.IntegrationType {
-	case models.IntegrationTypeAWS3:
-		return source.S3Bucket, source.S3Prefix
 	case models.IntegrationTypeSqs:
 		return source.SqsConfig.S3Bucket, source.SqsConfig.S3Prefix
+	default:
+		return source.S3Bucket, source.S3Prefix
 	}
-	return "", ""
 }
 
 func getSourceLogProcessingRole(source *models.SourceIntegration) (roleArn string) {
