@@ -50,12 +50,15 @@ class MatchingGroupInfo:
     dedup: str
     dedup_period_mins: int
     num_matches: int
-    title: Optional[str]
     processing_time: datetime
+    title: Optional[str]
+    is_rule_error: bool = False
 
 
-def _generate_dedup_key(rule_id: str, dedup: str) -> str:
+def _generate_dedup_key(rule_id: str, dedup: str, is_rule_error: bool) -> str:
     key = rule_id + ':' + dedup
+    if is_rule_error:
+        key += ":error"
     return hashlib.md5(key.encode('utf-8')).hexdigest()  # nosec
 
 
@@ -98,6 +101,7 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
         '#8': _ALERT_EVENT_COUNT,
         '#9': _ALERT_LOG_TYPES,
         '#10': _RULE_VERSION_ATTR_NAME,
+        '#11': _RULE_
     }
 
     if group_info.title:
@@ -141,7 +145,7 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
     response = _DDB_CLIENT.update_item(
         TableName=_DDB_TABLE_NAME,
         Key={_PARTITION_KEY_NAME: {
-            'S': _generate_dedup_key(group_info.rule_id, group_info.dedup)
+            'S': _generate_dedup_key(group_info.rule_id, group_info.dedup, group_info.is_rule_error)
         }},
         # Setting proper values for alertCreationTime, alertUpdateTime,
         UpdateExpression=update_expression,
@@ -152,7 +156,8 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
     )
     alert_count = response['Attributes'][_ALERT_COUNT_ATTR_NAME]['N']
     alert_id = _generate_alert_id(group_info.rule_id, group_info.dedup, alert_count)
-    return AlertInfo(alert_id=alert_id, alert_creation_time=group_info.processing_time, alert_update_time=group_info.processing_time)
+    return AlertInfo(alert_id=alert_id, alert_creation_time=group_info.processing_time,
+                     alert_update_time=group_info.processing_time)
 
 
 def _update_get(group_info: MatchingGroupInfo) -> AlertInfo:
