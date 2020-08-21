@@ -95,8 +95,6 @@ const GenericItemCardOptions = React.forwardRef<HTMLButtonElement>(function Gene
   );
 });
 
-const GenericItemCardLineBreak: React.FC = () => <Box flexBasis="100%" height={0} />;
-
 const GenericItemCardValue: React.FC<GenericItemCardValueProps> = ({ label, value }) => {
   const id = slugify(`${label}${value}`);
 
