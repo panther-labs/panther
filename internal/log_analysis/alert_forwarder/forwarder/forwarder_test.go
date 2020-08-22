@@ -129,11 +129,12 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
 
 	expectedAlert := &Alert{
-		ID:              "b25dc23fb2a0b362da8428dbec1381a8",
-		TimePartition:   "defaultPartition",
-		Severity:        string(testRuleResponse.Severity),
-		RuleDisplayName: aws.String(string(testRuleResponse.DisplayName)),
-		Title:           aws.StringValue(newAlertDedupEvent.GeneratedTitle),
+		ID:                  "b25dc23fb2a0b362da8428dbec1381a8",
+		TimePartition:       "defaultPartition",
+		Severity:            string(testRuleResponse.Severity),
+		RuleDisplayName:     aws.String(string(testRuleResponse.DisplayName)),
+		Title:               aws.StringValue(newAlertDedupEvent.GeneratedTitle),
+		FirstEventMatchTime: newAlertDedupEvent.CreationTime,
 		AlertDedupEvent: AlertDedupEvent{
 			RuleID:              newAlertDedupEvent.RuleID,
 			RuleVersion:         newAlertDedupEvent.RuleVersion,
@@ -223,10 +224,11 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
 
 	expectedAlert := &Alert{
-		ID:            "b25dc23fb2a0b362da8428dbec1381a8",
-		TimePartition: "defaultPartition",
-		Severity:      string(testRuleResponse.Severity),
-		Title:         newAlertDedupEventWithoutTitle.RuleID,
+		ID:                  "b25dc23fb2a0b362da8428dbec1381a8",
+		TimePartition:       "defaultPartition",
+		Severity:            string(testRuleResponse.Severity),
+		Title:               newAlertDedupEventWithoutTitle.RuleID,
+		FirstEventMatchTime: newAlertDedupEventWithoutTitle.CreationTime,
 		AlertDedupEvent: AlertDedupEvent{
 			RuleID:              newAlertDedupEventWithoutTitle.RuleID,
 			RuleVersion:         newAlertDedupEventWithoutTitle.RuleVersion,
@@ -298,11 +300,12 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
 
 	expectedAlert := &Alert{
-		ID:              "b25dc23fb2a0b362da8428dbec1381a8",
-		TimePartition:   "defaultPartition",
-		Severity:        string(testRuleResponse.Severity),
-		RuleDisplayName: aws.String(string(testRuleResponse.DisplayName)),
-		Title:           "DisplayName",
+		ID:                  "b25dc23fb2a0b362da8428dbec1381a8",
+		TimePartition:       "defaultPartition",
+		Severity:            string(testRuleResponse.Severity),
+		RuleDisplayName:     aws.String(string(testRuleResponse.DisplayName)),
+		Title:               "DisplayName",
+		FirstEventMatchTime: newAlertDedupEvent.CreationTime,
 		AlertDedupEvent: AlertDedupEvent{
 			RuleID:              newAlertDedupEvent.RuleID,
 			RuleVersion:         newAlertDedupEvent.RuleVersion,
@@ -385,11 +388,12 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
 
 	expectedAlert := &Alert{
-		ID:              "b25dc23fb2a0b362da8428dbec1381a8",
-		TimePartition:   "defaultPartition",
-		Severity:        string(testRuleResponse.Severity),
-		Title:           aws.StringValue(newAlertDedupEvent.GeneratedTitle),
-		RuleDisplayName: aws.String(string(testRuleResponse.DisplayName)),
+		ID:                  "b25dc23fb2a0b362da8428dbec1381a8",
+		TimePartition:       "defaultPartition",
+		Severity:            string(testRuleResponse.Severity),
+		Title:               aws.StringValue(newAlertDedupEvent.GeneratedTitle),
+		RuleDisplayName:     aws.String(string(testRuleResponse.DisplayName)),
+		FirstEventMatchTime: newAlertDedupEvent.CreationTime,
 		AlertDedupEvent: AlertDedupEvent{
 			RuleID:              newAlertDedupEvent.RuleID,
 			RuleVersion:         newAlertDedupEvent.RuleVersion,

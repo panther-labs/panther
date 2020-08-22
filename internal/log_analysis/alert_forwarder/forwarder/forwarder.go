@@ -162,11 +162,12 @@ func (h *Handler) updateExistingAlert(event *AlertDedupEvent) error {
 
 func (h *Handler) storeNewAlert(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) error {
 	alert := &Alert{
-		ID:              generateAlertID(alertDedup),
-		TimePartition:   defaultTimePartition,
-		Severity:        string(rule.Severity),
-		RuleDisplayName: getRuleDisplayName(rule),
-		Title:           getAlertTitle(rule, alertDedup),
+		ID:                  generateAlertID(alertDedup),
+		TimePartition:       defaultTimePartition,
+		Severity:            string(rule.Severity),
+		RuleDisplayName:     getRuleDisplayName(rule),
+		Title:               getAlertTitle(rule, alertDedup),
+		FirstEventMatchTime: alertDedup.CreationTime,
 		AlertDedupEvent: AlertDedupEvent{
 			RuleID:              alertDedup.RuleID,
 			RuleVersion:         alertDedup.RuleVersion,
