@@ -42,6 +42,8 @@ const (
 	CoreFieldParseTime
 	CoreFieldLogType
 	CoreFieldRowID
+	CoreFieldSourceID
+	CoreFieldSourceLabel
 )
 
 func coreField(id FieldID) reflect.StructField {
@@ -74,10 +76,12 @@ func (id FieldID) ScanValues(w ValueWriter, input string) {
 // CoreFields are the 'core' fields Panther adds to each log.
 // External modules cannot add core fields.
 type CoreFields struct {
-	PantherEventTime time.Time `json:"p_event_time" validate:"required" description:"Panther added standardized event time (UTC)"`
-	PantherParseTime time.Time `json:"p_parse_time" validate:"required" description:"Panther added standardized log parse time (UTC)"`
-	PantherLogType   string    `json:"p_log_type" validate:"required" description:"Panther added field with type of log"`
-	PantherRowID     string    `json:"p_row_id" validate:"required" description:"Panther added field with unique id (within table)"`
+	PantherEventTime   time.Time `json:"p_event_time" validate:"required" description:"Panther added standardized event time (UTC)"`
+	PantherParseTime   time.Time `json:"p_parse_time" validate:"required" description:"Panther added standardized log parse time (UTC)"`
+	PantherLogType     string    `json:"p_log_type" validate:"required" description:"Panther added field with type of log"`
+	PantherRowID       string    `json:"p_row_id" validate:"required" description:"Panther added field with unique id (within table)"`
+	PantherSourceID    string    `json:"p_source_id,omitempty" description:"Panther added field with the source id"`
+	PantherSourceLabel string    `json:"p_source_label,omitempty" description:"Panther added field with the source label"`
 }
 
 const (
@@ -96,10 +100,12 @@ var (
 	// Registered fields holds the distinct index of field ids to struct fields
 	registeredFields = map[FieldID]reflect.StructField{
 		// Reserve ids for core fields
-		CoreFieldEventTime: coreField(CoreFieldEventTime),
-		CoreFieldParseTime: coreField(CoreFieldParseTime),
-		CoreFieldRowID:     coreField(CoreFieldRowID),
-		CoreFieldLogType:   coreField(CoreFieldLogType),
+		CoreFieldEventTime:   coreField(CoreFieldEventTime),
+		CoreFieldParseTime:   coreField(CoreFieldParseTime),
+		CoreFieldRowID:       coreField(CoreFieldRowID),
+		CoreFieldLogType:     coreField(CoreFieldLogType),
+		CoreFieldSourceID:    coreField(CoreFieldSourceID),
+		CoreFieldSourceLabel: coreField(CoreFieldSourceLabel),
 	}
 	// registeredFieldNamesJSON stores the JSON field names of registered field ids.
 	registeredFieldNamesJSON = map[FieldID]string{}

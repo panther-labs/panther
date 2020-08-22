@@ -30,12 +30,9 @@ interface SnsDestinationCardProps {
 
 const SnsDestinationCard: React.FC<SnsDestinationCardProps> = ({ destination }) => {
   return (
-    <DestinationCard
-      key={destination.outputId}
-      logo={DESTINATIONS[DestinationTypeEnum.Sns].logo}
-      destination={destination}
-    >
+    <DestinationCard logo={DESTINATIONS[DestinationTypeEnum.Sns].logo} destination={destination}>
       <GenericItemCard.Value label="Topic ARN" value={destination.outputConfig.sns.topicArn} />
+      <GenericItemCard.LineBreak />
       <GenericItemCard.Value
         label="Date Created"
         value={formatDatetime(destination.creationTime, true)}

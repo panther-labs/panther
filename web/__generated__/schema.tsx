@@ -1117,9 +1117,6 @@ export type SqsConfig = {
   logTypes: Array<Scalars['String']>;
   allowedPrincipalArns?: Maybe<Array<Maybe<Scalars['String']>>>;
   allowedSourceArns?: Maybe<Array<Maybe<Scalars['String']>>>;
-  s3Bucket: Scalars['String'];
-  s3Prefix?: Maybe<Scalars['String']>;
-  logProcessingRole?: Maybe<Scalars['String']>;
   queueUrl: Scalars['String'];
 };
 
@@ -2657,9 +2654,6 @@ export type SqsConfigResolvers<
     ParentType,
     ContextType
   >;
-  s3Bucket?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  s3Prefix?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  logProcessingRole?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   queueUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };

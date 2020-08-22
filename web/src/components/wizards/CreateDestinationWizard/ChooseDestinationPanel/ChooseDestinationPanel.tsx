@@ -19,7 +19,7 @@
 import React from 'react';
 import { SimpleGrid } from 'pouncejs';
 import { DESTINATIONS } from 'Source/constants';
-import { useWizardContext, WizardPanelWrapper } from 'Components/Wizard';
+import { useWizardContext, WizardPanel } from 'Components/Wizard';
 import DestinationCard from './DestinationCard';
 import { WizardData } from '../CreateDestinationWizard';
 
@@ -29,7 +29,7 @@ export const ChooseDestinationPanel: React.FC = () => {
   const { goToNextStep, setData } = useWizardContext<WizardData>();
   return (
     <React.Fragment>
-      <WizardPanelWrapper.Heading
+      <WizardPanel.Heading
         title="Select an Alert Destination"
         subtitle="Add a new destination below to deliver alerts to a specific application for further triage"
       />

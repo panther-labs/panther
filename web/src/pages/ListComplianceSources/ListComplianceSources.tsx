@@ -26,8 +26,8 @@ import ErrorBoundary from 'Components/ErrorBoundary';
 import withSEO from 'Hoc/withSEO';
 import { useListComplianceSources } from './graphql/listComplianceSources.generated';
 import EmptyDataFallback from './EmptyDataFallback';
-import ComplianceSourceTable from './ComplianceSourceTable';
 import Skeleton from './Skeleton';
+import ListComplianceSourceCards from './ListComplianceSourceCards';
 
 const ListComplianceSources = () => {
   const { loading, error, data } = useListComplianceSources();
@@ -64,7 +64,7 @@ const ListComplianceSources = () => {
         }
       >
         <ErrorBoundary>
-          <ComplianceSourceTable sources={data.listComplianceIntegrations} />
+          <ListComplianceSourceCards sources={data.listComplianceIntegrations} />
         </ErrorBoundary>
       </Panel>
     </Box>

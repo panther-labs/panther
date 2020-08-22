@@ -32,13 +32,7 @@ export type SqsLogSourceIntegrationDetails = Pick<
 > & {
   sqsConfig: Pick<
     Types.SqsConfig,
-    | 'logTypes'
-    | 'allowedPrincipalArns'
-    | 'allowedSourceArns'
-    | 's3Bucket'
-    | 's3Prefix'
-    | 'logProcessingRole'
-    | 'queueUrl'
+    'logTypes' | 'allowedPrincipalArns' | 'allowedSourceArns' | 'queueUrl'
   >;
   health: { sqsStatus?: Types.Maybe<IntegrationItemHealthDetails> };
 };
@@ -55,9 +49,6 @@ export const SqsLogSourceIntegrationDetails = gql`
       logTypes
       allowedPrincipalArns
       allowedSourceArns
-      s3Bucket
-      s3Prefix
-      logProcessingRole
       queueUrl
     }
     health {

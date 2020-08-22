@@ -129,12 +129,13 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 			zap.String("key", s3Object.S3ObjectKey))
 	}()
 
-	s3Client, sourceType, err := getS3Client(s3Object)
+	s3Client, sourceInfo, err := getS3Client(s3Object)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to get S3 client for s3://%s/%s",
 			s3Object.S3Bucket, s3Object.S3ObjectKey)
-		return nil, err
+		return
 	}
+	sourceType := sourceInfo.IntegrationType
 
 	getObjectInput := &s3.GetObjectInput{
 		Bucket: &s3Object.S3Bucket,
@@ -144,23 +145,17 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 	if err != nil {
 		err = errors.Wrapf(err, "GetObject() failed for s3://%s/%s",
 			s3Object.S3Bucket, s3Object.S3ObjectKey)
-		return nil, err
+		return
 	}
 
 	bufferedReader := bufio.NewReader(output.Body)
+	contentType, err := detectContentType(bufferedReader)
 
-	// We peek into the file header to identify the content type
-	// http.DetectContentType only uses up to the first 512 bytes
-	headerBytes, err := bufferedReader.Peek(512)
 	if err != nil {
-		if err != bufio.ErrBufferFull && err != io.EOF { // EOF or ErrBufferFull means file is shorter than n
-			err = errors.Wrapf(err, "failed to Peek() in S3 payload for s3://%s/%s",
-				s3Object.S3Bucket, s3Object.S3ObjectKey)
-			return nil, err
-		}
-		err = nil // not really an error
+		err = errors.Wrapf(err, "failed to detect content type of S3 payload for s3://%s/%s",
+			s3Object.S3Bucket, s3Object.S3ObjectKey)
+		return
 	}
-	contentType := http.DetectContentType(headerBytes)
 
 	var streamReader io.Reader
 
@@ -174,12 +169,12 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 		if err != nil {
 			err = errors.Wrapf(err, "failed to created gzip reader for s3://%s/%s",
 				s3Object.S3Bucket, s3Object.S3ObjectKey)
-			return nil, err
+			return
 		}
 		streamReader = gzipReader
 	} else {
 		err = &ErrUnsupportedFileType{Type: contentType}
-		return nil, err
+		return
 	}
 
 	if sourceType == models.IntegrationTypeSqs {
@@ -187,7 +182,10 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 	}
 
 	dataStream = &common.DataStream{
-		Reader: streamReader,
+		Reader:      streamReader,
+		SourceID:    sourceInfo.IntegrationID,
+		SourceLabel: sourceInfo.IntegrationLabel,
+		LogTypes:    sourceInfo.RequiredLogTypes(),
 		Hints: common.DataStreamHints{
 			S3: &common.S3DataStreamHints{
 				Bucket:      s3Object.S3Bucket,
@@ -197,6 +195,22 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 		},
 	}
 	return dataStream, err
+}
+
+func detectContentType(r *bufio.Reader) (string, error) {
+	// We peek into the file header to identify the content type
+	// http.DetectContentType only uses up to the first 512 bytes
+	headerBytes, err := r.Peek(512)
+	if err != nil {
+		switch err {
+		// EOF or ErrBufferFull means file is shorter than n
+		case bufio.ErrBufferFull, io.EOF:
+			// not really an error
+		default:
+			return "", err
+		}
+	}
+	return http.DetectContentType(headerBytes), nil
 }
 
 // ParseNotification parses a message received

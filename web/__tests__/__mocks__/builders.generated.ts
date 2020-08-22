@@ -1272,9 +1272,6 @@ export const buildSqsConfig = (overrides: Partial<SqsConfig> = {}): SqsConfig =>
       'allowedPrincipalArns' in overrides ? overrides.allowedPrincipalArns : ['HTTP'],
     allowedSourceArns:
       'allowedSourceArns' in overrides ? overrides.allowedSourceArns : ['holistic'],
-    s3Bucket: 's3Bucket' in overrides ? overrides.s3Bucket : 'Balanced',
-    s3Prefix: 's3Prefix' in overrides ? overrides.s3Prefix : 'deposit',
-    logProcessingRole: 'logProcessingRole' in overrides ? overrides.logProcessingRole : 'national',
     queueUrl: 'queueUrl' in overrides ? overrides.queueUrl : 'Engineer',
   };
 };

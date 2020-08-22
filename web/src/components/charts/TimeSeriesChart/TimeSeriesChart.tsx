@@ -22,7 +22,7 @@ import { Box, Flex, Text, useTheme } from 'pouncejs';
 import { formatTime, formatDatetime, remToPx } from 'Helpers/utils';
 import { SeriesData } from 'Generated/schema';
 import { EChartOption } from 'echarts';
-import colors from './colors';
+import logTypeColorMappings from 'Helpers/logTypeColorMappings';
 
 interface TimeSeriesLinesProps {
   /** The data for the time series */
@@ -103,7 +103,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
           type: 'line',
           symbol: 'none',
           itemStyle: {
-            color: theme.colors[colors[label]],
+            color: theme.colors[logTypeColorMappings[label]],
           },
           data: values.map((v, i) => {
             return {
@@ -133,7 +133,6 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
         }),
         tooltip: {
           trigger: 'axis' as const,
-          position: pt => [(pt[0] as number) + 40, '0%'],
           backgroundColor: theme.colors['navyblue-300'],
           formatter: (params: EChartOption.Tooltip.Format[]) => {
             if (!params || !params.length) {

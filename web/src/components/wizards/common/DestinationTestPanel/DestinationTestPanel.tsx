@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { useWizardContext, WizardPanelWrapper } from 'Components/Wizard';
+import { useWizardContext, WizardPanel } from 'Components/Wizard';
 import { Button, Text, Tooltip, Link, Img, Flex, Box, AbstractButton } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
@@ -44,7 +44,7 @@ const DestinationTestPanel: React.FC = () => {
   if (testStatus === 'FAILED') {
     return (
       <React.Fragment>
-        <WizardPanelWrapper.Heading
+        <WizardPanel.Heading
           title="Testing your Destination"
           subtitle="Something went wrong and the destination you have configured did not receive the test alert. Please update your destination settings and try again."
         />
@@ -72,7 +72,7 @@ const DestinationTestPanel: React.FC = () => {
   if (testStatus === 'PASSED') {
     return (
       <React.Fragment>
-        <WizardPanelWrapper.Heading
+        <WizardPanel.Heading
           title="Testing your Destination"
           subtitle="Everything worked as planned and your destination received the triggered alert. You can always send additional test alerts from the destinations page."
         />
@@ -97,7 +97,7 @@ const DestinationTestPanel: React.FC = () => {
 
   return (
     <React.Fragment>
-      <WizardPanelWrapper.Heading
+      <WizardPanel.Heading
         title="Everything looks good!"
         subtitle="Your destination was successfully added and you will receive alerts based on your configuration.You can always edit or delete this destination from the destinations page"
       />
