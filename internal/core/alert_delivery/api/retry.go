@@ -1,4 +1,4 @@
-package delivery
+package api
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -29,7 +29,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 )
 
@@ -40,8 +40,16 @@ func randomInt(lower, upper int) int {
 	return rand.Intn(upper-lower) + lower
 }
 
-// Retry a batch of failed outputs by putting them all back on the queue with random delays.
-func Retry(alerts []*models.Alert) {
+func mustParseInt(text string) int {
+	val, err := strconv.Atoi(text)
+	if err != nil {
+		panic(err)
+	}
+	return val
+}
+
+// Retry - sends a list of alerts back to the queue with random delays.
+func Retry(alerts []*deliveryModels.Alert) {
 	zap.L().Warn("queueing failed alerts for future retry", zap.Int("failedAlerts", len(alerts)))
 	input := &sqs.SendMessageBatchInput{
 		Entries:  make([]*sqs.SendMessageBatchRequestEntry, len(alerts)),

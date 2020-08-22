@@ -1,4 +1,4 @@
-package delivery
+package api
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -30,13 +30,13 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
 func TestGetAlertOutputsFromDefaultSeverity(t *testing.T) {
 	mockClient := &mockLambdaClient{}
 	lambdaClient = mockClient
-	output := &outputmodels.GetOutputsOutput{
+	output := &outputModels.GetOutputsOutput{
 		{
 			OutputID:           aws.String("default-info-1"),
 			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
@@ -59,7 +59,7 @@ func TestGetAlertOutputsFromDefaultSeverity(t *testing.T) {
 	alert := sampleAlert()
 	alert.OutputIds = nil
 
-	expectedResult := []*outputmodels.AlertOutput{{
+	expectedResult := []*outputModels.AlertOutput{{
 		OutputID:           aws.String("default-info-1"),
 		DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
 	}, {
@@ -82,7 +82,7 @@ func TestGetAlertOutputsFromOutputIds(t *testing.T) {
 	mockClient := &mockLambdaClient{}
 	lambdaClient = mockClient
 
-	output := &outputmodels.GetOutputsOutput{
+	output := &outputModels.GetOutputsOutput{
 		{
 			OutputID:           aws.String("output-id"),
 			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
@@ -105,7 +105,7 @@ func TestGetAlertOutputsFromOutputIds(t *testing.T) {
 	alert := sampleAlert()
 	alert.OutputIds = []string{"output-id", "output-id-3", "output-id-not"}
 
-	expectedResult := []*outputmodels.AlertOutput{{
+	expectedResult := []*outputModels.AlertOutput{{
 		OutputID:           aws.String("output-id"),
 		DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
 	}, {

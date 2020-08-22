@@ -1,4 +1,4 @@
-package delivery
+package api
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -25,11 +25,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
 
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
-func createAlertOutput() *outputmodels.AlertOutput {
-	return &outputmodels.AlertOutput{
+func createAlertOutput() *outputModels.AlertOutput {
+	return &outputModels.AlertOutput{
 		CreatedBy:          aws.String("userId"),
 		CreationTime:       aws.String(time.Now().Local().String()),
 		DefaultForSeverity: []*string{aws.String("INFO"), aws.String("CRITICAL")},
@@ -38,16 +38,16 @@ func createAlertOutput() *outputmodels.AlertOutput {
 		LastModifiedTime:   aws.String(time.Now().Local().String()),
 		OutputID:           aws.String("outputId"),
 		OutputType:         aws.String("slack"),
-		OutputConfig: &outputmodels.OutputConfig{
-			Slack: &outputmodels.SlackConfig{
+		OutputConfig: &outputModels.OutputConfig{
+			Slack: &outputModels.SlackConfig{
 				WebhookURL: "https://slack.com",
 			},
 		},
 	}
 }
 
-func createAlertOutputs() []*outputmodels.AlertOutput {
-	return []*outputmodels.AlertOutput{createAlertOutput(), createAlertOutput(), createAlertOutput()}
+func createAlertOutputs() []*outputModels.AlertOutput {
+	return []*outputModels.AlertOutput{createAlertOutput(), createAlertOutput(), createAlertOutput()}
 }
 
 // By default, cache.get() will initialize the cache - no need

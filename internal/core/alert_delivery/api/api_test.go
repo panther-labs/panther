@@ -18,19 +18,29 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// MockAPI is a mocked object that implements the API interface
-// It describes an object that the apis rely on.
-// type MockAPI struct {
-// 	API
-// 	mock.Mock
-// }
+import (
+	"testing"
 
-// type MockTable struct {
-// 	table.API
-// 	mock.Mock
-// }
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/stretchr/testify/assert"
+)
 
-// func (m *MockAPI) DeliverAlert(input *models.DeliverAlertInput) (*models.DeliverAlertOutput, error) {
-// 	args := m.Called(input)
-// 	return args.Get(0).(*models.DeliverAlertOutput), args.Error(1)
-// }
+func TestGetSQSClient(t *testing.T) {
+	assert.NotNil(t, getSQSClient())
+}
+
+// 95 ms / op
+func BenchmarkSessionCreation(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		session.Must(session.NewSession())
+	}
+}
+
+// 2.7 ms / op
+func BenchmarkClientCreation(b *testing.B) {
+	sess := session.Must(session.NewSession())
+	for i := 0; i < b.N; i++ {
+		sqs.New(sess)
+	}
+}

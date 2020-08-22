@@ -21,8 +21,13 @@ package api
 import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
+	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/kelseyhightower/envconfig"
 
+	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
 )
@@ -35,8 +40,15 @@ var (
 	awsSession = session.Must(session.NewSession())
 	alertsDB   table.API
 	alertUtils utils.API
-	// We will always need the Lambda client (to get policy, rule, and set alert delivery)
-	// lambdaClient lambdaiface.LambdaAPI = lambda.New(awsSession)
+	// We need the Lambda client for the following:
+	//  1. To fetch the details from the destination outputs
+	//  2. To get the rule or policy associated with the original alert (for re-sending alerts)
+	//  3. To invoke the Alerts API lambda to up date the delivery status
+	lambdaClient lambdaiface.LambdaAPI = lambda.New(awsSession)
+	outputClient outputs.API           = outputs.New(awsSession)
+
+	// Lazy-load the SQS client - we only need it to retry failed alerts
+	sqsClient sqsiface.SQSAPI
 )
 
 type envConfig struct {
@@ -55,4 +67,11 @@ func Setup() {
 		TimePartitionCreationTimeIndexName: env.TimeIndexName,
 	}
 	alertUtils = &utils.AlertUtils{}
+}
+
+func getSQSClient() sqsiface.SQSAPI {
+	if sqsClient == nil {
+		sqsClient = sqs.New(awsSession)
+	}
+	return sqsClient
 }

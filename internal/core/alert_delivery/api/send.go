@@ -1,4 +1,12 @@
-package delivery
+package api
+
+import (
+	"go.uber.org/zap"
+
+	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
+)
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -18,27 +26,47 @@ package delivery
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"go.uber.org/zap"
+// AlertOutputMap is a type alias for containing the outputIds that an alert should be delivered to
+type AlertOutputMap map[*deliveryModels.Alert][]*outputModels.AlertOutput
 
-	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
-)
-
-// OutputStatus communicates parallelized alert delivery status via channels.
-type OutputStatus struct {
+// DispatchStatus holds info about which alert was sent to a given destination with its response status
+type DispatchStatus struct {
+	AlertID    string
 	OutputID   string
 	Message    string
+	StatusCode int
 	Success    bool
 	NeedsRetry bool
 }
 
-// Send an alert to one specific output (run as a child goroutine).
+// SendAlerts - dispatches alerts to their associated outputIds in parallel
+func SendAlerts(alertOutputs AlertOutputMap) []DispatchStatus {
+	// Initialize the channel to dispatch all outputs in parallel.
+	statusChannel := make(chan DispatchStatus)
+
+	// Extract the maps (k, v)
+	for alert, outputIds := range alertOutputs {
+		for _, output := range outputIds {
+			go sendAlert(alert, output, statusChannel)
+		}
+	}
+
+	// Wait until all outputs have finished, gathering all the statuses of each delivery
+	var deliveryStatuses []DispatchStatus
+	for range alertOutputs {
+		status := <-statusChannel
+		deliveryStatuses = append(deliveryStatuses, status)
+	}
+
+	return deliveryStatuses
+}
+
+// sendAlert an alert to one specific output (run as a child goroutine).
 //
 // The statusChannel will be sent a message with the result of the send attempt.
-func send(alert *alertmodels.Alert, output *outputmodels.AlertOutput, statusChannel chan OutputStatus) {
+func sendAlert(alert *deliveryModels.Alert, output *outputModels.AlertOutput, statusChannel chan DispatchStatus) {
 	commonFields := []zap.Field{
+		zap.String("alertID", *alert.AlertID),
 		zap.String("outputID", *output.OutputID),
 		zap.String("policyId", alert.AnalysisID),
 	}
@@ -48,8 +76,10 @@ func send(alert *alertmodels.Alert, output *outputmodels.AlertOutput, statusChan
 		// Otherwise, the main routine will wait forever for this to finish.
 		if r := recover(); r != nil {
 			zap.L().Error("panic sending alert", append(commonFields, zap.Any("panic", r))...)
-			statusChannel <- OutputStatus{
+			statusChannel <- DispatchStatus{
+				AlertID:    *alert.AlertID,
 				OutputID:   *output.OutputID,
+				StatusCode: 500,
 				Success:    false,
 				Message:    "panic sending alert",
 				NeedsRetry: false,
@@ -61,7 +91,6 @@ func send(alert *alertmodels.Alert, output *outputmodels.AlertOutput, statusChan
 		"sending alert",
 		append(commonFields, zap.String("name", *output.DisplayName))...,
 	)
-
 	var response *outputs.AlertDeliveryResponse
 	switch *output.OutputType {
 	case "slack":
@@ -86,8 +115,10 @@ func send(alert *alertmodels.Alert, output *outputmodels.AlertOutput, statusChan
 		response = outputClient.CustomWebhook(alert, output.OutputConfig.CustomWebhook)
 	default:
 		zap.L().Warn("unsupported output type", commonFields...)
-		statusChannel <- OutputStatus{
+		statusChannel <- DispatchStatus{
+			AlertID:    *alert.AlertID,
 			OutputID:   *output.OutputID,
+			StatusCode: 500,
 			Success:    false,
 			Message:    "unsupported output type",
 			NeedsRetry: false,
@@ -97,8 +128,10 @@ func send(alert *alertmodels.Alert, output *outputmodels.AlertOutput, statusChan
 
 	if response == nil {
 		zap.L().Warn("output response is nil", commonFields...)
-		statusChannel <- OutputStatus{
+		statusChannel <- DispatchStatus{
+			AlertID:    *alert.AlertID,
 			OutputID:   *output.OutputID,
+			StatusCode: 500,
 			Success:    false,
 			Message:    "output response is nil",
 			NeedsRetry: false,
@@ -113,64 +146,12 @@ func send(alert *alertmodels.Alert, output *outputmodels.AlertOutput, statusChan
 	}
 
 	// Retry only if not successful and we don't have a permanent failure
-	statusChannel <- OutputStatus{
+	statusChannel <- DispatchStatus{
+		AlertID:    *alert.AlertID,
 		OutputID:   *output.OutputID,
-		Success:    response.Success,
+		StatusCode: response.StatusCode,
+		Success:    response.Success && !response.Permanent,
 		Message:    response.Message,
 		NeedsRetry: !response.Success && !response.Permanent,
 	}
-}
-
-// Dispatch sends the alert to each of its designated outputs.
-//
-// Returns true if the alert was sent successfully, false if it needs to be retried.
-func dispatch(alert *alertmodels.Alert) bool {
-	alertOutputs, err := GetAlertOutputs(alert)
-
-	if err != nil {
-		zap.L().Warn("failed to get the outputs for the alert",
-			zap.String("policyId", alert.AnalysisID),
-			zap.String("severity", alert.Severity),
-			zap.Error(err),
-		)
-
-		return false
-	}
-
-	if len(alertOutputs) == 0 {
-		zap.L().Info("no outputs configured",
-			zap.String("policyId", alert.AnalysisID),
-			zap.String("severity", alert.Severity),
-		)
-		return true
-	}
-
-	// Dispatch all outputs in parallel.
-	// This ensures one slow or failing output won't block the others.
-	statusChannel := make(chan OutputStatus)
-	for _, output := range alertOutputs {
-		go send(alert, output, statusChannel)
-	}
-
-	// Wait until all outputs have finished, gathering any that need to be retried.
-	var retryOutputs []string
-	for range alertOutputs {
-		status := <-statusChannel
-
-		if status.NeedsRetry {
-			retryOutputs = append(retryOutputs, status.OutputID)
-		} else if !status.Success {
-			zap.L().Error(
-				"permanently failed to send alert to output",
-				zap.String("outputID", status.OutputID),
-			)
-		}
-	}
-
-	if len(retryOutputs) > 0 {
-		alert.OutputIds = retryOutputs // Replace the outputs with the set that failed
-		return false
-	}
-
-	return true
 }

@@ -1,4 +1,4 @@
-package delivery
+package api
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -17,27 +17,3 @@ package delivery
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-import (
-	"errors"
-
-	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
-)
-
-type mockSQSClient struct {
-	sqsiface.SQSAPI
-	err bool
-}
-
-var sqsMessages int // store number of messages here for tests to verify
-
-func (m mockSQSClient) SendMessageBatch(input *sqs.SendMessageBatchInput) (*sqs.SendMessageBatchOutput, error) {
-	if m.err {
-		return nil, errors.New("internal service error")
-	}
-	sqsMessages = len(input.Entries)
-	return &sqs.SendMessageBatchOutput{
-		Successful: make([]*sqs.SendMessageBatchResultEntry, len(input.Entries)),
-	}, nil
-}

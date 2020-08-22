@@ -1,4 +1,4 @@
-package delivery
+package api
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -24,8 +24,8 @@ import (
 
 	"go.uber.org/zap"
 
-	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -35,10 +35,10 @@ var (
 )
 
 // fetchOutputs - performs an API query to get a list of outputs
-func fetchOutputs() ([]*outputmodels.AlertOutput, error) {
+func fetchOutputs() ([]*outputModels.AlertOutput, error) {
 	zap.L().Debug("getting default outputs")
-	input := outputmodels.LambdaInput{GetOutputsWithSecrets: &outputmodels.GetOutputsWithSecretsInput{}}
-	var outputs outputmodels.GetOutputsOutput
+	input := outputModels.LambdaInput{GetOutputsWithSecrets: &outputModels.GetOutputsWithSecretsInput{}}
+	var outputs outputModels.GetOutputsOutput
 	if err := genericapi.Invoke(lambdaClient, outputsAPI, &input, &outputs); err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func fetchOutputs() ([]*outputmodels.AlertOutput, error) {
 }
 
 // GetOutputs - Gets a list of outputs from panther
-func GetOutputs() ([]*outputmodels.AlertOutput, error) {
+func GetOutputs() ([]*outputModels.AlertOutput, error) {
 	if cache.get() == nil || cache.isExpired() {
 		outputs, err := fetchOutputs()
 		if err != nil {
@@ -60,7 +60,7 @@ func GetOutputs() ([]*outputmodels.AlertOutput, error) {
 }
 
 // GetAlertOutputs - Get output ids for an alert
-func GetAlertOutputs(alert *alertmodels.Alert) ([]*outputmodels.AlertOutput, error) {
+func GetAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, error) {
 	outputIds, err := GetOutputs()
 	if err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func GetAlertOutputs(alert *alertmodels.Alert) ([]*outputmodels.AlertOutput, err
 		return getOutputsBySeverity(alert.Severity), nil
 	}
 
-	result := []*outputmodels.AlertOutput{}
+	result := []*outputModels.AlertOutput{}
 	for _, output := range outputIds {
 		for _, alertOutputID := range alert.OutputIds {
 			if *output.OutputID == alertOutputID {
@@ -82,8 +82,8 @@ func GetAlertOutputs(alert *alertmodels.Alert) ([]*outputmodels.AlertOutput, err
 	return result, nil
 }
 
-func getOutputsBySeverity(severity string) []*outputmodels.AlertOutput {
-	result := []*outputmodels.AlertOutput{}
+func getOutputsBySeverity(severity string) []*outputModels.AlertOutput {
+	result := []*outputModels.AlertOutput{}
 	if cache.get() == nil {
 		return result
 	}

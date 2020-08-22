@@ -1,4 +1,4 @@
-package delivery
+package api
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -23,7 +23,7 @@ import (
 	"sync"
 	"time"
 
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
 // getRefreshInterval - fetches the env setting or provides a default value if not set
@@ -38,7 +38,7 @@ func getRefreshInterval() time.Duration {
 // outputsCache - is a singleton holding outputs to send alerts
 type outputsCache struct {
 	// All cached outputs
-	Outputs   []*outputmodels.AlertOutput
+	Outputs   []*outputModels.AlertOutput
 	Timestamp time.Time
 }
 
@@ -69,12 +69,12 @@ func (c *outputsCache) set(newCache *outputsCache) {
 }
 
 // getOutputs - Gets the outputs stored in the cache
-func (c *outputsCache) getOutputs() []*outputmodels.AlertOutput {
+func (c *outputsCache) getOutputs() []*outputModels.AlertOutput {
 	return c.get().Outputs
 }
 
 // setCacheOutputs - Stores the outputs in the cache
-func (c *outputsCache) setOutputs(outputs []*outputmodels.AlertOutput) {
+func (c *outputsCache) setOutputs(outputs []*outputModels.AlertOutput) {
 	c.get().Outputs = outputs
 }
 

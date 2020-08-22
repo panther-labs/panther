@@ -38,8 +38,8 @@ const (
 //
 // Exactly one action must be specified, see comments below for examples.
 type LambdaInput struct {
-	DispatchAlert []*DispatchAlertsInput `json:"Records"`
-	DeliverAlert  *DeliverAlertInput     `json:"deliverAlert"`
+	DispatchAlerts []*DispatchAlertsInput `json:"Records"` // SQS Shape
+	DeliverAlert   *DeliverAlertInput     `json:"deliverAlert"`
 }
 
 // DeliverAlertInput sends an alert to the specified destinations
@@ -56,7 +56,7 @@ type DeliverAlertInput struct {
 	OutputIds []string `json:"outputIds" validate:"required,gt=0,dive,uuid4"`
 }
 
-// DispatchAlertsInput is an alias for an array of SQSMessages
+// DispatchAlertsInput is an alias for an SQSMessage
 type DispatchAlertsInput = events.SQSMessage
 
 // DeliverAlertOutput is an alias for an alert summary

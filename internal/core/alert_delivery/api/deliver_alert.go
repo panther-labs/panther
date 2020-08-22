@@ -23,19 +23,56 @@ import (
 
 	"go.uber.org/zap"
 
-	alertmodels "github.com/panther-labs/panther/api/lambda/alerts/models"
-	"github.com/panther-labs/panther/api/lambda/delivery/models"
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	delivery "github.com/panther-labs/panther/internal/core/alert_delivery/delivery"
+	alertModels "github.com/panther-labs/panther/api/lambda/alerts/models"
+	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // DeliverAlert sends a specific alert to the specified destinations.
-func (API) DeliverAlert(input *models.DeliverAlertInput) (*models.DeliverAlertOutput, error) {
+func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModels.DeliverAlertOutput, error) {
 	// First, fetch the alert
 	zap.L().Info("Fetching alert", zap.String("AlertID", input.AlertID))
 
+	// Extract the alert from the input
+	alertItem, err := getAlert(input)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch the Policy or Rule associated with the alert to fill in the missing attributes
+	alert := populateAlertData(alertItem)
+
+	// Get our Alert -> Output mappings. We determine which destinations an alert should be sent.
+	alertOutputMap, err := getAlertOutputMapping(alert, input)
+	if err != nil {
+		return nil, err
+	}
+
+	// Send alerts to the specified destination(s) and obtain each response status
+	dispatchStatuses := SendAlerts(alertOutputMap)
+
+	// TODO: Record the delivery statuses to ddb
+	// ...
+	//
+
+	// Because this API will be used for re-sending only 1 alert,
+	// we log if there was a failure and return the error
+	if err := logOrReturn(dispatchStatuses); err != nil {
+		return nil, err
+	}
+
+	// The frontend will merge this summary to in the alert details page to update the delivery status
+	alertSummary := convertToSummary(alertItem, dispatchStatuses)
+
+	gatewayapi.ReplaceMapSliceNils(alertSummary)
+	return alertSummary, nil
+}
+
+// getAlert - extracts the alert from the input payload and handles corner cases
+func getAlert(input *deliveryModels.DeliverAlertInput) (*table.AlertItem, error) {
 	alertItem, err := alertsDB.GetAlert(&input.AlertID)
 	if err != nil {
 		zap.L().Error("Failed to fetch alert from ddb", zap.Error(err))
@@ -48,16 +85,19 @@ func (API) DeliverAlert(input *models.DeliverAlertInput) (*models.DeliverAlertOu
 		return nil, &genericapi.DoesNotExistError{
 			Message: "Unable to find the specified alert!"}
 	}
+	return alertItem, nil
+}
 
-	// TODO: Fetch the Policy or Rule associated with the alert to fill in the gaps
+// populateAlertData - queries the rule or policy associated and merges in the details to the alert
+func populateAlertData(alertItem *table.AlertItem) *deliveryModels.Alert {
+	// TODO: Fetch and merge the related fields from the Policy/Rule into the alert.
 	// ...
 	//
 
-	// TODO: Merge the related fields from the Policy/Rule from above into the alert.
 	// For now, we are taking the data from Dynamo and populating as much as we have.
 	// Eventually, sending an alert should be _exactly_ the same as if it were triggered
 	// from a Policy or a Rule.
-	alert := &models.Alert{
+	return &deliveryModels.Alert{
 		AnalysisID: alertItem.AlertID,
 		Type:       "RULE",
 		CreatedAt:  alertItem.CreationTime,
@@ -72,15 +112,18 @@ func (API) DeliverAlert(input *models.DeliverAlertInput) (*models.DeliverAlertOu
 		Title:      alertItem.Title,
 		RetryCount: 0,
 	}
+}
 
-	// Fetch outputIds from ddb
-	outputs, err := delivery.GetOutputs()
+// getAlertOutputMapping -
+func getAlertOutputMapping(alert *deliveryModels.Alert, input *deliveryModels.DeliverAlertInput) (AlertOutputMap, error) {
+	// Fetch outputIds from ddb (utilizing a cache)
+	outputs, err := GetOutputs()
 	if err != nil {
 		zap.L().Error("Failed to fetch outputIds", zap.Error(err))
 		return nil, err
 	}
 
-	// Check to see if the input outputIds are valid
+	// Check the provided the input outputIds and generate a list of valid outputs
 	validOutputIds := intersection(input.OutputIds, outputs)
 	if len(validOutputIds) == 0 {
 		zap.L().Error("Invalid outputIds specified", zap.Strings("OutputIds", input.OutputIds))
@@ -88,54 +131,21 @@ func (API) DeliverAlert(input *models.DeliverAlertInput) (*models.DeliverAlertOu
 			Message: "Invalid destination(s) specified!"}
 	}
 
-	// Create our Alert -> Output mappings
-	alertOutputMap := make(delivery.AlertOutputMap)
-	// Create a slice to be universal with the SQS payload format
-	alerts := []*models.Alert{alert}
+	// Initialize our Alert -> Output mappings
+	alertOutputMap := make(AlertOutputMap)
+
+	// Create a list to be universal with the SQS payload format
+	// as they both eventually call a function that expects a list.
+	alerts := []*deliveryModels.Alert{alert}
 	for _, alert := range alerts {
 		alertOutputMap[alert] = validOutputIds
 	}
 
-	// Deliver alerts to the specified destination(s) and obtain each response status
-	dispatchStatuses := delivery.DeliverAlerts(alertOutputMap)
-	for _, delivery := range dispatchStatuses {
-		if !delivery.Success {
-			zap.L().Error(
-				"failed to send alert to output",
-				zap.String("alertID", delivery.AlertID),
-				zap.String("outputID", delivery.OutputID),
-				zap.Int("statusCode", delivery.StatusCode),
-				zap.String("message", delivery.Message),
-			)
-			return nil, &genericapi.InternalError{
-				Message: "Failed to send the alert: " + strconv.Itoa(delivery.StatusCode)}
-		}
-	}
-
-	// TODO: Record the responses to ddb
-	// ...
-	//
-
-	// Convert the alerts to summaries to update the frontend
-	alertSummary := alertUtils.AlertItemToSummary(alertItem)
-
-	// Since this API accepts only one alertID, we can directly
-	// access the first item in the lists to add the delivery status
-	alertSummary.DeliverySuccess = dispatchStatuses[0].Success
-	alertSummary.DeliveryResponses = []*alertmodels.DeliveryResponse{
-		{
-			OutputID:   dispatchStatuses[0].OutputID,
-			Response:   dispatchStatuses[0].Message,
-			StatusCode: dispatchStatuses[0].StatusCode,
-			Success:    dispatchStatuses[0].Success,
-		},
-	}
-	gatewayapi.ReplaceMapSliceNils(alertSummary)
-	return alertSummary, nil
+	return alertOutputMap, nil
 }
 
 // intersection - Finds the intersection O(M + N) of panther outputs and the provided input list of outputIds
-func intersection(inputs []string, outputs []*outputmodels.AlertOutput) (valid []*outputmodels.AlertOutput) {
+func intersection(inputs []string, outputs []*outputModels.AlertOutput) (valid []*outputModels.AlertOutput) {
 	m := make(map[string]bool)
 
 	for _, item := range inputs {
@@ -149,4 +159,42 @@ func intersection(inputs []string, outputs []*outputmodels.AlertOutput) (valid [
 	}
 
 	return valid
+}
+
+func logOrReturn(dispatchStatuses []DispatchStatus) (err error) {
+	for _, delivery := range dispatchStatuses {
+		if !delivery.Success {
+			zap.L().Error(
+				"failed to send alert to output",
+				zap.String("alertID", delivery.AlertID),
+				zap.String("outputID", delivery.OutputID),
+				zap.Int("statusCode", delivery.StatusCode),
+				zap.String("message", delivery.Message),
+			)
+
+			// return early
+			return &genericapi.InternalError{
+				Message: "Failed to send the alert: " + strconv.Itoa(delivery.StatusCode)}
+		}
+	}
+	return
+}
+
+func convertToSummary(alertItem *table.AlertItem, dispatchStatuses []DispatchStatus) *alertModels.AlertSummary {
+	// Convert the alerts to summaries to update the frontend
+	alertSummary := alertUtils.AlertItemToSummary(alertItem)
+
+	// Since this API accepts only one alertID, we can directly
+	// access the first item in the lists to add the delivery status
+	alertSummary.DeliverySuccess = dispatchStatuses[0].Success
+	alertSummary.DeliveryResponses = []*alertModels.DeliveryResponse{
+		{
+			OutputID:   dispatchStatuses[0].OutputID,
+			Response:   dispatchStatuses[0].Message,
+			StatusCode: dispatchStatuses[0].StatusCode,
+			Success:    dispatchStatuses[0].Success,
+		},
+	}
+
+	return alertSummary
 }

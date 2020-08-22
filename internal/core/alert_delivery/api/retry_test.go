@@ -1,4 +1,4 @@
-package delivery
+package api
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,52 +19,51 @@ package delivery
  */
 
 import (
+	"errors"
 	"os"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
+	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-
-	"github.com/panther-labs/panther/api/lambda/delivery/models"
-	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
 )
+
+type mockSQSClient struct {
+	sqsiface.SQSAPI
+	err bool
+}
+
+var sqsMessages int // store number of messages here for tests to verify
+
+func (m mockSQSClient) SendMessageBatch(input *sqs.SendMessageBatchInput) (*sqs.SendMessageBatchOutput, error) {
+	if m.err {
+		return nil, errors.New("internal service error")
+	}
+	sqsMessages = len(input.Entries)
+	return &sqs.SendMessageBatchOutput{
+		Successful: make([]*sqs.SendMessageBatchResultEntry, len(input.Entries)),
+	}, nil
+}
 
 func TestMustParseIntPanic(t *testing.T) {
 	assert.Panics(t, func() { mustParseInt("") })
 }
 
-func TestHandleAlertsPermanentlyFailed(t *testing.T) {
-	mockClient := &mockOutputsClient{}
-	outputClient = mockClient
-	mockClient.On("Slack", mock.Anything, mock.Anything).Return(&outputs.AlertDeliveryResponse{})
-	sqsClient = &mockSQSClient{}
-	setCaches()
-	os.Setenv("ALERT_RETRY_COUNT", "0") // set '0' to branch immediately
-	os.Setenv("ALERT_QUEUE_URL", "sqs.url")
-	os.Setenv("MIN_RETRY_DELAY_SECS", "10")
-	os.Setenv("MAX_RETRY_DELAY_SECS", "30")
-	alert := sampleAlert()
-	alerts := []*models.Alert{alert, alert, alert}
-	sqsMessages = 0
-
-	HandleAlerts(alerts)
-	assert.Equal(t, 0, sqsMessages)
+func TestMustParseInt(t *testing.T) {
+	assert.Equal(t, 5, mustParseInt("5"))
 }
 
-func TestHandleAlertsTemporarilyFailed(t *testing.T) {
+func TestRetry(t *testing.T) {
 	mockClient := &mockOutputsClient{}
-	outputClient = mockClient
-	mockClient.On("Slack", mock.Anything, mock.Anything).Return(&outputs.AlertDeliveryResponse{})
 	sqsClient = &mockSQSClient{}
-	setCaches()
-	os.Setenv("ALERT_RETRY_COUNT", "10")
 	os.Setenv("ALERT_QUEUE_URL", "sqs.url")
 	os.Setenv("MIN_RETRY_DELAY_SECS", "10")
 	os.Setenv("MAX_RETRY_DELAY_SECS", "30")
 	alert := sampleAlert()
-	alerts := []*models.Alert{alert, alert, alert}
+	alerts := []*deliveryModels.Alert{alert, alert, alert}
 	sqsMessages = 0
-
-	HandleAlerts(alerts)
+	Retry(alerts)
 	assert.Equal(t, 3, sqsMessages)
+	mockClient.AssertExpectations(t)
 }
