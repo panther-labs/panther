@@ -25,8 +25,9 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
-	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/stretchr/testify/assert"
+
+	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 )
 
 type mockSQSClient struct {
