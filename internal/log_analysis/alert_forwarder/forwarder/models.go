@@ -48,11 +48,12 @@ type AlertDedupEvent struct {
 
 // Alert contains all the fields associated to the alert stored in DDB
 type Alert struct {
-	ID              string  `dynamodbav:"id,string"`
-	TimePartition   string  `dynamodbav:"timePartition,string"`
-	Severity        string  `dynamodbav:"severity,string"`
-	RuleDisplayName *string `dynamodbav:"ruleDisplayName,string"`
-	Title           string  `dynamodbav:"title,string"` // The alert title. It will be the Python-generated title or a default one if
+	ID                  string    `dynamodbav:"id,string"`
+	TimePartition       string    `dynamodbav:"timePartition,string"`
+	Severity            string    `dynamodbav:"severity,string"`
+	RuleDisplayName     *string   `dynamodbav:"ruleDisplayName,string"`
+	FirstEventMatchTime time.Time `dynamodbav:"firstEventMatchTime,string"`
+	Title               string    `dynamodbav:"title,string"` // The alert title. It will be the Python-generated title or a default one if
 	// no Python-generated title is available.
 	AlertDedupEvent
 }
