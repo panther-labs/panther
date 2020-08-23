@@ -92,7 +92,9 @@ func getAlert(input *deliveryModels.DeliverAlertInput) (*table.AlertItem, error)
 func populateAlertData(alertItem *table.AlertItem) *deliveryModels.Alert {
 	// TODO: Fetch and merge the related fields from the Policy/Rule into the alert.
 	// ...
-	//
+	// Note: we need to account for the corner case when there is no rule/policy
+	// because it has been deleted. Additionally, we should provide an identifier
+	// in the alert (TBD) to differentiate from re-send action or a new rule/policy trigger
 
 	// For now, we are taking the data from Dynamo and populating as much as we have.
 	// Eventually, sending an alert should be _exactly_ the same as if it were triggered

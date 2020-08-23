@@ -193,7 +193,7 @@ func getAlertsToRetry(alerts []*deliveryModels.Alert, failedDispatchStatuses []D
 			mutatedAlert := alert
 			// Overwrite the list of outputs with the output that failed
 			mutatedAlert.OutputIds = []string{failed.OutputID}
-			// Add the alert in question with it's singular outputId to a new list to be retried
+			// Add the alert in question to a new list to be retried
 			alertsToRetry = append(alertsToRetry, mutatedAlert)
 		}
 	}
