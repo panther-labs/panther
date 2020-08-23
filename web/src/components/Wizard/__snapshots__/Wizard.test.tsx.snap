@@ -101,7 +101,7 @@ exports[`Wizard renders a step 1`] = `
 }
 
 .panther-20 {
-  will-change: opacity,transform;
+  will-change: opacity;
   -webkit-animation: animation-0 300ms 0ms ease-in-out both;
   animation: animation-0 300ms 0ms ease-in-out both;
 }
