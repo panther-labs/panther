@@ -50,6 +50,9 @@ func mustParseInt(text string) int {
 
 // Retry - sends a list of alerts back to the queue with random delays.
 func Retry(alerts []*deliveryModels.Alert) {
+	if len(alerts) == 0 {
+		return
+	}
 	zap.L().Warn("queueing failed alerts for future retry", zap.Int("failedAlerts", len(alerts)))
 	input := &sqs.SendMessageBatchInput{
 		Entries:  make([]*sqs.SendMessageBatchRequestEntry, len(alerts)),
