@@ -51,11 +51,14 @@ func (API) DispatchAlerts(input []*deliveryModels.DispatchAlertsInput) (output i
 	//
 
 	failedDispatches := filterFailedDispatches(dispatchStatuses)
+	if len(failedDispatches) > 0 {
+		zap.L().Info("Soma alerts failed to be deliverd", zap.Int("num_failed", len(failedDispatches)))
+	}
 
 	// Obtain a list of alerts that should be retried and put back on to the queue
 	alertsToRetry := getAlertsToRetry(alerts, failedDispatches, getMaxRetryCount())
 	if len(alertsToRetry) == 0 {
-		zap.L().Info("All alerts dispatched successfully!", zap.Int("delivered", len(dispatchStatuses)))
+		zap.L().Info("All alerts delivered successfully!", zap.Int("num_delivered", len(dispatchStatuses)))
 	}
 
 	// Put any alerts that need to be retried back into the queue
@@ -101,27 +104,48 @@ func getAlertOutputMap(alerts []*deliveryModels.Alert) (AlertOutputMap, error) {
 func filterFailedDispatches(dispatchStatuses []DispatchStatus) []DispatchStatus {
 	failedDispatches := []DispatchStatus{}
 	for _, status := range dispatchStatuses {
+		// Always warn of any generic failures
 		if !status.Success {
-			// Always warn of any generic failures
-			if !status.Success {
-				zap.L().Warn(
-					"failed to send alert to output",
-					zap.String("alertID", status.AlertID),
-					zap.String("outputID", status.OutputID),
-					zap.Int("statusCode", status.StatusCode),
-					zap.String("message", status.Message),
-				)
-			}
-			failedDispatches = append(failedDispatches, status)
+			zap.L().Warn(
+				"failed to send alert to output",
+				zap.String("alertID", status.AlertID),
+				zap.String("outputID", status.OutputID),
+				zap.Int("statusCode", status.StatusCode),
+				zap.String("message", status.Message),
+			)
 		}
+		failedDispatches = append(failedDispatches, status)
 	}
 	return failedDispatches
 }
 
-// getAlertsToRetry - finds failed dliveries and generates a list of alerts that need to be retried.
+// getAlertsToRetry - finds failed deliveries and generates a list of alerts that need to be retried.
 //
-// Ex: If a single alert had 10 outputs (overrides -or- default outputs) and failed to be delivered to 2 of them, this function
-// will return a list containing two alerts (in this case, the same alert) with the outputIds field set to the specific failed outputId:
+// Note: If a single alert had 10 outputs (overrides -or- default outputs) and
+// failed to be delivered to 3 of them, this function will return a list
+// containing 3 alerts (in this case, the same alert) each with its outputIds
+// list containing only the specific failed outputId.
+//
+// Ex:
+// A list of alerts ([]*deliveryModels.Alert)
+//   [
+//   	{
+//   		"alertID": "abc",
+//   		...
+//   		"outputIds": ["failed-output-id-1"]
+//   	},
+//   	{
+//   		"alertID": "abc",
+//   		...
+//   		"outputIds": ["failed-output-id-2"]
+//   	},
+//   	{
+//   		"alertID": "abc",
+//   		...
+//   		"outputIds": ["failed-output-id-3"]
+//   	},
+//   ]
+//
 func getAlertsToRetry(alerts []*deliveryModels.Alert, failedDispatchStatuses []DispatchStatus, maxRetryCount int) []*deliveryModels.Alert {
 	alertsToRetry := []*deliveryModels.Alert{}
 	for _, alert := range alerts {
@@ -130,11 +154,11 @@ func getAlertsToRetry(alerts []*deliveryModels.Alert, failedDispatchStatuses []D
 			if alert.AlertID != &failed.AlertID {
 				continue
 			}
-			// If we've reached the max retry count for a specific alert, log a permanent failure and continue
+			// If we've reached the max retry count for a specific alert, log and continue
 			//
-			// This does not block the alert from being sent to other outputs because
-			// when the alert is put back onto the queue, the outputIds will
-			// only have 1 destination specified.
+			// Note: This does not block the alert from being sent to other outputs because
+			// when the alert is put back onto the queue, the outputIds will only have 1
+			// destination specified.
 			if alert.RetryCount >= maxRetryCount {
 				zap.L().Error(
 					"alert delivery permanently failed, exceeded max retry count",
@@ -146,51 +170,34 @@ func getAlertsToRetry(alerts []*deliveryModels.Alert, failedDispatchStatuses []D
 				continue
 			}
 
-			// Get a list of failed outputs for the alert
-			outputsToRetry := getOutputsToRetry(alert, failedDispatchStatuses)
-
-			// More than one destination can fail for a given alert. Here we iterate and add them to a list to be retried individually
-			for _, outputToRetry := range outputsToRetry {
-				// Log that we will send this alert to be retried
-				zap.L().Warn("will retry delivery of alert",
-					zap.String("policyId", alert.AnalysisID),
-					zap.String("severity", alert.Severity),
-					zap.String("outputId", outputToRetry),
+			// If there was a permanent failure, log and don't retry
+			if !failed.NeedsRetry {
+				zap.L().Error(
+					"permanently failed to send alert to output",
+					zap.String("alertID", *alert.AlertID),
+					zap.String("outputID", failed.OutputID),
+					zap.Int("statusCode", failed.StatusCode),
+					zap.String("message", failed.Message),
 				)
-
-				// Create a shallow copy to mutate
-				mutatedAlert := alert
-				// Overwrite the list of outputs with the specific output that failed
-				mutatedAlert.OutputIds = []string{outputToRetry}
-				// Add the alert in question with it's singular outputId to a new list to be retried
-				alertsToRetry = append(alertsToRetry, mutatedAlert)
+				continue
 			}
+
+			// Log that we will send this alert to be retried
+			zap.L().Warn("will retry delivery of alert",
+				zap.String("policyId", alert.AnalysisID),
+				zap.String("severity", alert.Severity),
+				zap.String("outputId", failed.OutputID),
+			)
+
+			// Create a shallow copy to mutate
+			mutatedAlert := alert
+			// Overwrite the list of outputs with the output that failed
+			mutatedAlert.OutputIds = []string{failed.OutputID}
+			// Add the alert in question with it's singular outputId to a new list to be retried
+			alertsToRetry = append(alertsToRetry, mutatedAlert)
 		}
 	}
 	return alertsToRetry
-}
-
-// getOutputsToRetry - finds all the failed outputIds (for failed delivery) of a given alert
-func getOutputsToRetry(alert *deliveryModels.Alert, failedDispatchStatuses []DispatchStatus) []string {
-	retryOutputs := []string{}
-	for _, failedDelivery := range failedDispatchStatuses {
-		// Log permanent failures to be investigated, but don't retry
-		if !failedDelivery.NeedsRetry {
-			zap.L().Error(
-				"permanently failed to send alert to output",
-				zap.String("alertID", *alert.AlertID),
-				zap.String("outputID", failedDelivery.OutputID),
-				zap.Int("statusCode", failedDelivery.StatusCode),
-				zap.String("message", failedDelivery.Message),
-			)
-			continue
-		}
-
-		// Create a list of alerts to retry
-		retryOutputs = append(retryOutputs, failedDelivery.OutputID)
-	}
-
-	return retryOutputs
 }
 
 // getMaxRetryCount - reads the env variable for max retry count
