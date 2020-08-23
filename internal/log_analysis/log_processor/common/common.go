@@ -37,7 +37,7 @@ import (
 )
 
 const (
-	MaxRetries     = 15 // retrying for ~ 5'
+	MaxRetries     = 25 // setting Max Retries to a high number - we'd like to retry VERY hard before failing.
 	EventDelimiter = '\n'
 )
 
