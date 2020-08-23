@@ -34,20 +34,42 @@ var (
 	outputsAPI = os.Getenv("OUTPUTS_API")
 )
 
-// fetchOutputs - performs an API query to get a list of outputs
-func fetchOutputs() ([]*outputModels.AlertOutput, error) {
-	zap.L().Debug("getting default outputs")
-	input := outputModels.LambdaInput{GetOutputsWithSecrets: &outputModels.GetOutputsWithSecretsInput{}}
-	var outputs outputModels.GetOutputsOutput
-	if err := genericapi.Invoke(lambdaClient, outputsAPI, &input, &outputs); err != nil {
+// GetAlertOutputs - Get output ids for an alert via the specified overrides or the defaults in panther
+func GetAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, error) {
+	// fetch available panther outputs
+	outputs, err := getOutputs()
+	if err != nil {
 		return nil, err
 	}
-	return outputs, nil
+
+	// If alert doesn't have outputs IDs specified, return the defaults for the severity
+	if len(alert.OutputIds) == 0 {
+		defaultsForSeverity := []*outputModels.AlertOutput{}
+		for _, output := range outputs {
+			for _, outputSeverity := range output.DefaultForSeverity {
+				if alert.Severity == *outputSeverity {
+					defaultsForSeverity = append(defaultsForSeverity, output)
+				}
+			}
+		}
+		return defaultsForSeverity, nil
+	}
+
+	// Otherwise, return the specified output overrides for the alert
+	overrideOutputs := []*outputModels.AlertOutput{}
+	for _, output := range outputs {
+		for _, outputID := range alert.OutputIds {
+			if *output.OutputID == outputID {
+				overrideOutputs = append(overrideOutputs, output)
+			}
+		}
+	}
+	return overrideOutputs, nil
 }
 
-// GetOutputs - Gets a list of outputs from panther
-func GetOutputs() ([]*outputModels.AlertOutput, error) {
-	if cache.get() == nil || cache.isExpired() {
+// getOutputs - Gets a list of outputs from panther (using a cache)
+func getOutputs() ([]*outputModels.AlertOutput, error) {
+	if cache.isExpired() {
 		outputs, err := fetchOutputs()
 		if err != nil {
 			return nil, err
@@ -59,41 +81,13 @@ func GetOutputs() ([]*outputModels.AlertOutput, error) {
 	return cache.getOutputs(), nil
 }
 
-// GetAlertOutputs - Get output ids for an alert
-func GetAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, error) {
-	outputIds, err := GetOutputs()
-	if err != nil {
+// fetchOutputs - performs an API query to get a list of outputs
+func fetchOutputs() ([]*outputModels.AlertOutput, error) {
+	zap.L().Debug("getting default outputs")
+	input := outputModels.LambdaInput{GetOutputsWithSecrets: &outputModels.GetOutputsWithSecretsInput{}}
+	var outputs outputModels.GetOutputsOutput
+	if err := genericapi.Invoke(lambdaClient, outputsAPI, &input, &outputs); err != nil {
 		return nil, err
 	}
-
-	// If alert doesn't have outputs IDs specified, return the defaults for the severity
-	if len(alert.OutputIds) == 0 {
-		return getOutputsBySeverity(alert.Severity), nil
-	}
-
-	result := []*outputModels.AlertOutput{}
-	for _, output := range outputIds {
-		for _, alertOutputID := range alert.OutputIds {
-			if *output.OutputID == alertOutputID {
-				result = append(result, output)
-			}
-		}
-	}
-	return result, nil
-}
-
-func getOutputsBySeverity(severity string) []*outputModels.AlertOutput {
-	result := []*outputModels.AlertOutput{}
-	if cache.get() == nil {
-		return result
-	}
-
-	for _, output := range cache.getOutputs() {
-		for _, outputSeverity := range output.DefaultForSeverity {
-			if severity == *outputSeverity {
-				result = append(result, output)
-			}
-		}
-	}
-	return result
+	return outputs, nil
 }

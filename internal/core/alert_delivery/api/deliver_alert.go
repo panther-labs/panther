@@ -117,7 +117,7 @@ func populateAlertData(alertItem *table.AlertItem) *deliveryModels.Alert {
 // getAlertOutputMapping -
 func getAlertOutputMapping(alert *deliveryModels.Alert, input *deliveryModels.DeliverAlertInput) (AlertOutputMap, error) {
 	// Fetch outputIds from ddb (utilizing a cache)
-	outputs, err := GetOutputs()
+	outputs, err := getOutputs()
 	if err != nil {
 		zap.L().Error("Failed to fetch outputIds", zap.Error(err))
 		return nil, err
@@ -145,13 +145,14 @@ func getAlertOutputMapping(alert *deliveryModels.Alert, input *deliveryModels.De
 }
 
 // intersection - Finds the intersection O(M + N) of panther outputs and the provided input list of outputIds
-func intersection(inputs []string, outputs []*outputModels.AlertOutput) (valid []*outputModels.AlertOutput) {
+func intersection(inputs []string, outputs []*outputModels.AlertOutput) []*outputModels.AlertOutput {
 	m := make(map[string]bool)
 
 	for _, item := range inputs {
 		m[item] = true
 	}
 
+	valid := []*outputModels.AlertOutput{}
 	for _, item := range outputs {
 		if _, ok := m[*item.OutputID]; ok {
 			valid = append(valid, item)
@@ -161,7 +162,8 @@ func intersection(inputs []string, outputs []*outputModels.AlertOutput) (valid [
 	return valid
 }
 
-func logOrReturn(dispatchStatuses []DispatchStatus) (err error) {
+// logOrReturn - logs and eagerly returns an error if any of the deliveries failed
+func logOrReturn(dispatchStatuses []DispatchStatus) error {
 	for _, delivery := range dispatchStatuses {
 		if !delivery.Success {
 			zap.L().Error(
@@ -177,9 +179,10 @@ func logOrReturn(dispatchStatuses []DispatchStatus) (err error) {
 				Message: "Failed to send the alert: " + strconv.Itoa(delivery.StatusCode)}
 		}
 	}
-	return
+	return nil
 }
 
+// convertToSummary - converts an alert to a summary and adds the dispatch status
 func convertToSummary(alertItem *table.AlertItem, dispatchStatuses []DispatchStatus) *alertModels.AlertSummary {
 	// Convert the alerts to summaries to update the frontend
 	alertSummary := alertUtils.AlertItemToSummary(alertItem)

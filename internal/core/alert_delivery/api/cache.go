@@ -63,7 +63,7 @@ func (c *outputsCache) get() *outputsCache {
 	return cache
 }
 
-// setCache - Sets the cache
+// set - Sets the cache singleton
 func (c *outputsCache) set(newCache *outputsCache) {
 	cache = newCache
 }
@@ -73,7 +73,7 @@ func (c *outputsCache) getOutputs() []*outputModels.AlertOutput {
 	return c.get().Outputs
 }
 
-// setCacheOutputs - Stores the outputs in the cache
+// setOutputs - Stores the outputs in the cache
 func (c *outputsCache) setOutputs(outputs []*outputModels.AlertOutput) {
 	c.get().Outputs = outputs
 }
@@ -88,7 +88,7 @@ func (c *outputsCache) setExpiry(time time.Time) {
 	c.get().Timestamp = time
 }
 
-// isCacheExpired - determines if the cache has expired
+// isExpired - determines if the cache has expired
 func (c *outputsCache) isExpired() bool {
 	return time.Since(c.getExpiry()) > refreshInterval
 }

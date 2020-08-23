@@ -108,3 +108,9 @@ func TestIsExpired(t *testing.T) {
 	assert.True(t, c.isExpired())
 	assert.Equal(t, c.isExpired(), cache.isExpired())
 }
+
+func TestIsExpiredByDefault(t *testing.T) {
+	c := &outputsCache{}
+	assert.True(t, c.isExpired())
+	assert.Equal(t, c.isExpired(), cache.isExpired())
+}
