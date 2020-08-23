@@ -52,7 +52,7 @@ func (API) DispatchAlerts(input []*deliveryModels.DispatchAlertsInput) (output i
 
 	failedDispatches := filterFailedDispatches(dispatchStatuses)
 	if len(failedDispatches) > 0 {
-		zap.L().Info("Soma alerts failed to be deliverd", zap.Int("num_failed", len(failedDispatches)))
+		zap.L().Info("Some alerts failed to be deliverd", zap.Int("num_failed", len(failedDispatches)))
 	}
 
 	// Obtain a list of alerts that should be retried and put back on to the queue
