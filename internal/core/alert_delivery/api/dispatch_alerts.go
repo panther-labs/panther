@@ -60,8 +60,7 @@ func (API) DispatchAlerts(input []*deliveryModels.DispatchAlertsInput) (interfac
 	// Put any alerts that need to be retried back into the queue
 	retry(alertsToRetry)
 
-	// return emtpy object to satisfy the JSON output to be compatible with the top level handler
-	return map[interface{}]interface{}{}, err
+	return nil, err
 }
 
 // getAlerts - extracts the alerts from an DispatchAlertsInput (SQSMessage)
