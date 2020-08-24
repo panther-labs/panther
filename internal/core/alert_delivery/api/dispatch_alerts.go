@@ -113,8 +113,8 @@ func filterFailedDispatches(dispatchStatuses []DispatchStatus) []DispatchStatus 
 				zap.Int("statusCode", status.StatusCode),
 				zap.String("message", status.Message),
 			)
+			failedDispatches = append(failedDispatches, status)
 		}
-		failedDispatches = append(failedDispatches, status)
 	}
 	return failedDispatches
 }
