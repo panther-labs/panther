@@ -74,7 +74,6 @@ func (table *AlertsTable) UpdateAlertDelivery(input *models.UpdateAlertDeliveryI
 
 	// Create the update builder
 	updateBuilder := expression.
-		Set(expression.Name(DeliverySuccessKey), expression.Value(input.DeliverySuccess)).
 		Set(expression.Name(DeliveryResponsesKey), expression.Value(input.DeliveryResponses))
 
 	// Create the condition builder

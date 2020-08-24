@@ -51,7 +51,6 @@ func TestUpdateAlert(t *testing.T) {
 		Status:            "CLOSED",
 		LastUpdatedBy:     *userID,
 		LastUpdatedByTime: timeNow,
-		DeliverySuccess:   false,
 		DeliveryResponses: []*models.DeliveryResponse{},
 	}
 	expectedSummary := &models.AlertSummary{
@@ -59,7 +58,6 @@ func TestUpdateAlert(t *testing.T) {
 		Status:            "CLOSED",
 		LastUpdatedBy:     "userId",
 		LastUpdatedByTime: timeNow,
-		DeliverySuccess:   false,
 		DeliveryResponses: []*models.DeliveryResponse{},
 	}
 
@@ -76,7 +74,6 @@ func TestUpdateAlert(t *testing.T) {
 		Status:            result.Status,
 		LastUpdatedBy:     result.LastUpdatedBy,
 		LastUpdatedByTime: result.LastUpdatedByTime,
-		DeliverySuccess:   false,
 		DeliveryResponses: []*models.DeliveryResponse{},
 	}
 

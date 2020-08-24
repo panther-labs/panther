@@ -176,7 +176,6 @@ func TestGetAlert(t *testing.T) {
 		EventsMatched:     aws.Int(5),
 		LastUpdatedBy:     "userId",
 		LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
-		DeliverySuccess:   false,
 		DeliveryResponses: []*models.DeliveryResponse{},
 	}
 
@@ -321,7 +320,6 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 		DedupString:       aws.String("dedupString"),
 		LastUpdatedBy:     "userId",
 		LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
-		DeliverySuccess:   false,
 		DeliveryResponses: []*models.DeliveryResponse{},
 	}
 

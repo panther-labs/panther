@@ -38,7 +38,6 @@ const (
 	SeverityKey          = "severity"
 	EventCountKey        = "eventCount"
 	StatusKey            = "status"
-	DeliverySuccessKey   = "deliverySuccess"
 	DeliveryResponsesKey = "deliveryResponses"
 	LastUpdatedByKey     = "lastUpdatedBy"
 	LastUpdatedByTimeKey = "lastUpdatedByTime"
@@ -76,7 +75,6 @@ type AlertItem struct {
 	DedupString         string                     `json:"dedup"`
 	FirstEventMatchTime time.Time                  `json:"firstEventMatchTime"`
 	CreationTime        time.Time                  `json:"creationTime"`
-	DeliverySuccess     bool                       `json:"deliverySuccess"`
 	DeliveryResponses   []*models.DeliveryResponse `json:"deliveryResponses"`
 	OutputIds           []string                   `json:"outputIds"`
 	// UpdateTime - stores the timestamp from an update from a dedup event

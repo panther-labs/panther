@@ -19,8 +19,6 @@ package api
  */
 
 import (
-	"os"
-
 	"github.com/go-playground/validator"
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
@@ -30,8 +28,7 @@ import (
 
 // Global variables
 var (
-	validate      = validator.New()
-	maxRetryCount = getMaxRetryCount()
+	validate = validator.New()
 )
 
 // DispatchAlerts - Sends an alert to sends a specific alert to the specified destinations.
@@ -198,9 +195,4 @@ func getAlertsToRetry(alerts []*deliveryModels.Alert, failedDispatchStatuses []D
 		}
 	}
 	return alertsToRetry
-}
-
-// getMaxRetryCount - reads the env variable for max retry count
-func getMaxRetryCount() int {
-	return mustParseInt(os.Getenv("ALERT_RETRY_COUNT"))
 }

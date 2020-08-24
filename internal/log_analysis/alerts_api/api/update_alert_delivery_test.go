@@ -39,22 +39,19 @@ func TestUpdateAlertDelivery(t *testing.T) {
 	alertID := "alertId"
 	input := &models.UpdateAlertDeliveryInput{
 		AlertID:           alertID,
-		DeliverySuccess:   false,
 		DeliveryResponses: []*models.DeliveryResponse{},
 	}
 	deliveryResponse := &models.DeliveryResponse{
 		OutputID: "output-id",
-		Response: "successful delivery",
+		Message:  "successful delivery",
 		Success:  true,
 	}
 	output := &table.AlertItem{
 		AlertID:           alertID,
-		DeliverySuccess:   true,
 		DeliveryResponses: []*models.DeliveryResponse{deliveryResponse},
 	}
 	expectedSummary := &models.AlertSummary{
 		AlertID:           aws.String(alertID),
-		DeliverySuccess:   true,
 		DeliveryResponses: []*models.DeliveryResponse{deliveryResponse},
 	}
 
@@ -68,7 +65,6 @@ func TestUpdateAlertDelivery(t *testing.T) {
 	// Marshal to convert "" to nils and focus on our properties
 	resultSummary := &models.AlertSummary{
 		AlertID:           result.AlertID,
-		DeliverySuccess:   result.DeliverySuccess,
 		DeliveryResponses: result.DeliveryResponses,
 	}
 

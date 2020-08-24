@@ -19,6 +19,8 @@ package api
  */
 
 import (
+	"os"
+
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/lambda"
@@ -36,10 +38,11 @@ import (
 type API struct{}
 
 var (
-	env        envConfig
-	awsSession = session.Must(session.NewSession())
-	alertsDB   table.API
-	alertUtils utils.API
+	env           envConfig
+	maxRetryCount int
+	awsSession    = session.Must(session.NewSession())
+	alertsDB      table.API
+	alertUtils    utils.API
 	// We need the Lambda client for the following:
 	//  1. To fetch the details from the destination outputs
 	//  2. To get the rule or policy associated with the original alert (for re-sending alerts)
@@ -60,6 +63,7 @@ type envConfig struct {
 // Setup - parses the environment and builds the AWS and http clients.
 func Setup() {
 	envconfig.MustProcess("", &env)
+	maxRetryCount = getMaxRetryCount()
 	alertsDB = &table.AlertsTable{
 		AlertsTableName:                    env.AlertsTableName,
 		Client:                             dynamodb.New(awsSession),
@@ -74,4 +78,8 @@ func getSQSClient() sqsiface.SQSAPI {
 		sqsClient = sqs.New(awsSession)
 	}
 	return sqsClient
+}
+
+func getMaxRetryCount() int {
+	return mustParseInt(os.Getenv("ALERT_RETRY_COUNT"))
 }

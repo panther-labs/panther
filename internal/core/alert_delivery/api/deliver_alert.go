@@ -191,11 +191,10 @@ func convertToSummary(alertItem *table.AlertItem, dispatchStatuses []DispatchSta
 
 	// Since this API accepts only one alertID, we can directly
 	// access the first item in the lists to add the delivery status
-	alertSummary.DeliverySuccess = dispatchStatuses[0].Success
 	alertSummary.DeliveryResponses = []*alertModels.DeliveryResponse{
 		{
 			OutputID:   dispatchStatuses[0].OutputID,
-			Response:   dispatchStatuses[0].Message,
+			Message:    dispatchStatuses[0].Message,
 			StatusCode: dispatchStatuses[0].StatusCode,
 			Success:    dispatchStatuses[0].Success,
 		},

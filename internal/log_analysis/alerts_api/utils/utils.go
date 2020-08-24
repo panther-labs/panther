@@ -70,7 +70,6 @@ func (utils *AlertUtils) AlertItemToSummary(item *table.AlertItem) *models.Alert
 		LastUpdatedBy:     item.LastUpdatedBy,
 		LastUpdatedByTime: item.LastUpdatedByTime,
 		UpdateTime:        &item.UpdateTime,
-		DeliverySuccess:   item.DeliverySuccess,
 		DeliveryResponses: item.DeliveryResponses,
 	}
 }
