@@ -52,7 +52,7 @@ func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModel
 	}
 
 	// Send alerts to the specified destination(s) and obtain each response status
-	dispatchStatuses := SendAlerts(alertOutputMap)
+	dispatchStatuses := sendAlerts(alertOutputMap)
 
 	// TODO: Record the delivery statuses to ddb
 	// ...

@@ -44,25 +44,21 @@ func (API) DispatchAlerts(input []*deliveryModels.DispatchAlertsInput) (output i
 	}
 
 	// Send alerts to the specified destination(s) and obtain each response status
-	dispatchStatuses := SendAlerts(alertOutputMap)
+	dispatchStatuses := sendAlerts(alertOutputMap)
 
 	// TODO: Record the delivery statuses to ddb
 	// ...
 	//
 
-	failedDispatches := filterFailedDispatches(dispatchStatuses)
-	if len(failedDispatches) > 0 {
-		zap.L().Info("Some alerts failed to be deliverd", zap.Int("num_failed", len(failedDispatches)))
-	}
+	success, failed := filterDispatches(dispatchStatuses)
+	zap.L().Info("Alerts that failed", zap.Int("num_failed", len(failed)))
+	zap.L().Info("Alerts that succeeded", zap.Int("num_success", len(success)))
 
 	// Obtain a list of alerts that should be retried and put back on to the queue
-	alertsToRetry := getAlertsToRetry(alerts, failedDispatches, getMaxRetryCount())
-	if len(alertsToRetry) == 0 {
-		zap.L().Info("All alerts delivered successfully!", zap.Int("num_delivered", len(dispatchStatuses)))
-	}
+	alertsToRetry := getAlertsToRetry(alerts, failed, getMaxRetryCount())
 
 	// Put any alerts that need to be retried back into the queue
-	Retry(alertsToRetry)
+	retry(alertsToRetry)
 
 	return nil, err
 }
@@ -90,7 +86,7 @@ func getAlertOutputMap(alerts []*deliveryModels.Alert) (AlertOutputMap, error) {
 	// Create our Alert -> Output mappings
 	alertOutputMap := make(AlertOutputMap)
 	for _, alert := range alerts {
-		validOutputIds, err := GetAlertOutputs(alert)
+		validOutputIds, err := getAlertOutputs(alert)
 		if err != nil {
 			zap.L().Error("Failed to fetch outputIds", zap.Error(err))
 			return nil, err
@@ -100,8 +96,9 @@ func getAlertOutputMap(alerts []*deliveryModels.Alert) (AlertOutputMap, error) {
 	return alertOutputMap, nil
 }
 
-// filterFailedDispatches - returns the faild dispatches
-func filterFailedDispatches(dispatchStatuses []DispatchStatus) []DispatchStatus {
+// filterDispatches - returns a tuple (success, failed) of lists containing dispatch statuses
+func filterDispatches(dispatchStatuses []DispatchStatus) ([]DispatchStatus, []DispatchStatus) {
+	successDispatches := []DispatchStatus{}
 	failedDispatches := []DispatchStatus{}
 	for _, status := range dispatchStatuses {
 		// Always warn of any generic failures
@@ -114,9 +111,11 @@ func filterFailedDispatches(dispatchStatuses []DispatchStatus) []DispatchStatus 
 				zap.String("message", status.Message),
 			)
 			failedDispatches = append(failedDispatches, status)
+			continue
 		}
+		successDispatches = append(successDispatches, status)
 	}
-	return failedDispatches
+	return successDispatches, failedDispatches
 }
 
 // getAlertsToRetry - finds failed deliveries and generates a list of alerts that need to be retried.

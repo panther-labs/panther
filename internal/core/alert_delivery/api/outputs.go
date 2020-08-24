@@ -34,8 +34,8 @@ var (
 	outputsAPI = os.Getenv("OUTPUTS_API")
 )
 
-// GetAlertOutputs - Get output ids for an alert via the specified overrides or the defaults in panther
-func GetAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, error) {
+// getAlertOutputs - Get output ids for an alert via the specified overrides or the defaults in panther
+func getAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, error) {
 	// fetch available panther outputs
 	outputs, err := getOutputs()
 	if err != nil {

@@ -48,8 +48,8 @@ func mustParseInt(text string) int {
 	return val
 }
 
-// Retry - sends a list of alerts back to the queue with random delays.
-func Retry(alerts []*deliveryModels.Alert) {
+// retry - sends a list of alerts back to the queue with random delays.
+func retry(alerts []*deliveryModels.Alert) {
 	if len(alerts) == 0 {
 		return
 	}

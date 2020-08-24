@@ -64,7 +64,7 @@ func TestRetry(t *testing.T) {
 	alert := sampleAlert()
 	alerts := []*deliveryModels.Alert{alert, alert, alert}
 	sqsMessages = 0
-	Retry(alerts)
+	retry(alerts)
 	assert.Equal(t, 3, sqsMessages)
 	mockClient.AssertExpectations(t)
 }

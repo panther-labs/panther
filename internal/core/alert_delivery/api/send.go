@@ -39,8 +39,8 @@ type DispatchStatus struct {
 	NeedsRetry bool
 }
 
-// SendAlerts - dispatches alerts to their associated outputIds in parallel
-func SendAlerts(alertOutputs AlertOutputMap) []DispatchStatus {
+// sendAlerts - dispatches alerts to their associated outputIds in parallel
+func sendAlerts(alertOutputs AlertOutputMap) []DispatchStatus {
 	// Initialize the channel to dispatch all outputs in parallel.
 	statusChannel := make(chan DispatchStatus)
 
