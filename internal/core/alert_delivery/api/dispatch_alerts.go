@@ -28,7 +28,11 @@ import (
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 )
 
-var validate = validator.New()
+// Global variables
+var (
+	validate      = validator.New()
+	maxRetryCount = getMaxRetryCount()
+)
 
 // DispatchAlerts - Sends an alert to sends a specific alert to the specified destinations.
 func (API) DispatchAlerts(input []*deliveryModels.DispatchAlertsInput) (interface{}, error) {
@@ -55,7 +59,7 @@ func (API) DispatchAlerts(input []*deliveryModels.DispatchAlertsInput) (interfac
 	zap.L().Info("Deliveries that succeeded", zap.Int("num_success", len(success)))
 
 	// Obtain a list of alerts that should be retried and put back on to the queue
-	alertsToRetry := getAlertsToRetry(alerts, failed, getMaxRetryCount())
+	alertsToRetry := getAlertsToRetry(alerts, failed)
 
 	// Put any alerts that need to be retried back into the queue
 	retry(alertsToRetry)
@@ -145,7 +149,7 @@ func filterDispatches(dispatchStatuses []DispatchStatus) ([]DispatchStatus, []Di
 //   	},
 //   ]
 //
-func getAlertsToRetry(alerts []*deliveryModels.Alert, failedDispatchStatuses []DispatchStatus, maxRetryCount int) []*deliveryModels.Alert {
+func getAlertsToRetry(alerts []*deliveryModels.Alert, failedDispatchStatuses []DispatchStatus) []*deliveryModels.Alert {
 	alertsToRetry := []*deliveryModels.Alert{}
 	for _, alert := range alerts {
 		for _, failed := range failedDispatchStatuses {
