@@ -161,10 +161,8 @@ func getAlertsToRetry(alerts []*deliveryModels.Alert, failedDispatchStatuses []D
 			if alert.RetryCount >= maxRetryCount {
 				zap.L().Error(
 					"alert delivery permanently failed, exceeded max retry count",
-					zap.Strings("failedOutputs", alert.OutputIds),
-					zap.Time("alertCreatedAt", alert.CreatedAt),
-					zap.String("policyId", alert.AnalysisID),
-					zap.String("severity", alert.Severity),
+					zap.String("alertID", *alert.AlertID),
+					zap.String("outputId", failed.OutputID),
 				)
 				continue
 			}
@@ -183,8 +181,7 @@ func getAlertsToRetry(alerts []*deliveryModels.Alert, failedDispatchStatuses []D
 
 			// Log that we will send this alert to be retried
 			zap.L().Warn("will retry delivery of alert",
-				zap.String("policyId", alert.AnalysisID),
-				zap.String("severity", alert.Severity),
+				zap.String("alertID", *alert.AlertID),
 				zap.String("outputId", failed.OutputID),
 			)
 
