@@ -31,7 +31,7 @@ import (
 var validate = validator.New()
 
 // DispatchAlerts - Sends an alert to sends a specific alert to the specified destinations.
-func (API) DispatchAlerts(input []*deliveryModels.DispatchAlertsInput) (output interface{}, err error) {
+func (API) DispatchAlerts(input []*deliveryModels.DispatchAlertsInput) (interface{}, error) {
 	zap.L().Info("Dispatching alerts", zap.Int("num_alerts", len(input)))
 
 	// Extract alerts from the input payload
@@ -60,7 +60,8 @@ func (API) DispatchAlerts(input []*deliveryModels.DispatchAlertsInput) (output i
 	// Put any alerts that need to be retried back into the queue
 	retry(alertsToRetry)
 
-	return nil, err
+	// return emtpy object to satisfy the JSON output to be compatible with the top level handler
+	return map[interface{}]interface{}{}, err
 }
 
 // getAlerts - extracts the alerts from an DispatchAlertsInput (SQSMessage)
