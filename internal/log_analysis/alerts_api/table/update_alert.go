@@ -19,12 +19,14 @@ package table
  */
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
@@ -72,9 +74,24 @@ func (table *AlertsTable) UpdateAlertDelivery(input *models.UpdateAlertDeliveryI
 	// Create the dynamo key we want to update
 	var alertKey = DynamoItem{AlertIDKey: {S: aws.String(input.AlertID)}}
 
-	// Create the update builder
-	updateBuilder := expression.
-		Set(expression.Name(DeliveryResponsesKey), expression.Value(input.DeliveryResponses))
+	// convert out list of response structs to a list of maps to be stored in dynamo.
+	// This is purely so we can clearly see JSON in DDB for readability
+	deliveryResponsesMaps, err := toListOfMaps(input.DeliveryResponses)
+	if err != nil {
+		zap.L().Error(
+			"failed to convert delivery responses struct to map",
+			zap.Any("deliveryResponses", input.DeliveryResponses),
+		)
+		return nil, err
+	}
+
+	// Create the update builder. If the column was null, we set to an empty list.
+	// Dynamo cannot append to NULL so we must create the empty list
+	updateBuilder := expression.Set(expression.Name(DeliveryResponsesKey),
+		expression.ListAppend(
+			expression.IfNotExists(expression.Name(DeliveryResponsesKey), expression.Value([]interface{}{})),
+			expression.Value(deliveryResponsesMaps),
+		))
 
 	// Create the condition builder
 	conditionBuilder := expression.Equal(expression.Name(AlertIDKey), expression.Value(input.AlertID))
@@ -162,4 +179,22 @@ func (table *AlertsTable) update(
 		return &genericapi.InternalError{Message: "failed to unmarshal dynamo item: " + err.Error()}
 	}
 	return nil
+}
+
+// toListOfMaps - convert our list of structs to a list of maps by marshaling
+func toListOfMaps(responses []*models.DeliveryResponse) ([]map[string]interface{}, error) {
+	result := make([]map[string]interface{}, 0)
+	for _, response := range responses {
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			return nil, err
+		}
+		mappedResponse := make(map[string]interface{})
+		err = json.Unmarshal(responseBytes, &mappedResponse)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, mappedResponse)
+	}
+	return result, nil
 }
