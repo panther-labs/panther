@@ -144,6 +144,17 @@ Resources:
       LambdaConfig:
         LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-metrics-api
 
+  LogTypesAPILambdaDataSource:
+    Type: AWS::AppSync::DataSource
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !Ref ApiId
+      Name: PantherLogTypesAPILambda
+      Type: AWS_LAMBDA
+      ServiceRoleArn: !Ref ServiceRole
+      LambdaConfig:
+        LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-logtypes-api
+
   ResourcesAPIHttpDataSource:
     Type: AWS::AppSync::DataSource
     DependsOn: GraphQLSchema
