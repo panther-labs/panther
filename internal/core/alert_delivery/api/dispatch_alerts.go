@@ -25,9 +25,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
-	alertModels "github.com/panther-labs/panther/api/lambda/alerts/models"
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
-	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // Global variables
@@ -52,10 +50,9 @@ func (API) DispatchAlerts(input []*deliveryModels.DispatchAlertsInput) (interfac
 	// Send alerts to the specified destination(s) and obtain each response status
 	dispatchStatuses := sendAlerts(alertOutputMap)
 
-	// TODO: Record the delivery statuses to ddb
-	_, err = updateAlerts(dispatchStatuses)
-	if err != nil {
-		zap.L().Error("Updating Alert Delivery failed", zap.Any("error", err))
+	// Record the delivery statuses to ddb.
+	if err := updateAlerts(dispatchStatuses); err == nil {
+		zap.L().Info("Updated all alert delivery statuses successfully")
 	}
 
 	success, failed := filterDispatches(dispatchStatuses)
@@ -202,37 +199,4 @@ func getAlertsToRetry(alerts []*deliveryModels.Alert, failedDispatchStatuses []D
 		}
 	}
 	return alertsToRetry
-}
-
-// updateAlerts - ivokes a lambda to update the alert statuses
-func updateAlerts(statuses []DispatchStatus) ([]*alertModels.AlertSummary, error) {
-	// create a relational mapping for alertID to a list of delivery statuses
-	alertMap := make(map[string][]*alertModels.DeliveryResponse)
-	for _, status := range statuses {
-		// convert to the response type the lambda expects
-		deliveryResponse := &alertModels.DeliveryResponse{
-			OutputID:     status.OutputID,
-			Message:      status.Message,
-			StatusCode:   status.StatusCode,
-			Success:      status.Success,
-			DispatchedAt: status.DispatchedAt,
-		}
-		alertMap[status.AlertID] = append(alertMap[status.AlertID], deliveryResponse)
-	}
-
-	// Make a lambda call for each alert. We dont make a single API call to reduce the failure impact.
-	responses := []*alertModels.UpdateAlertDeliveryOutput{}
-	for alertID, deliveryResponse := range alertMap {
-		input := alertModels.LambdaInput{UpdateAlertDelivery: &alertModels.UpdateAlertDeliveryInput{
-			AlertID:           alertID,
-			DeliveryResponses: deliveryResponse,
-		}}
-		var response alertModels.UpdateAlertDeliveryOutput
-		if err := genericapi.Invoke(lambdaClient, alertsAPI, &input, &response); err != nil {
-			zap.L().Error("Invoking UpdateAlertDelivery failed", zap.Any("error", err))
-		}
-
-		responses = append(responses, &response)
-	}
-	return responses, nil
 }

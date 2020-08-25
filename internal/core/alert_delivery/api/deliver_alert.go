@@ -54,9 +54,11 @@ func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModel
 	// Send alerts to the specified destination(s) and obtain each response status
 	dispatchStatuses := sendAlerts(alertOutputMap)
 
-	// TODO: Record the delivery statuses to ddb
-	// ...
-	//
+	// Record the delivery statuses to ddb
+	if err := updateAlerts(dispatchStatuses); err != nil {
+		return nil, err
+	}
+	zap.L().Info("Updated all alert delivery statuses successfully")
 
 	// Because this API will be used for re-sending only 1 alert,
 	// we log if there was a failure and return the error
