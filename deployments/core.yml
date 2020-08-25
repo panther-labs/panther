@@ -638,6 +638,7 @@ Resources:
           ALERT_QUEUE_URL: !Ref AlertQueue
           ALERT_RETRY_COUNT: !FindInMap [Alerts, RetryCount, Max]
           ALERT_URL_PREFIX: !Sub https://${AppDomainURL}/log-analysis/alerts/
+          ALERTS_API: panther-alerts-api
           ALERTS_TABLE_NAME: panther-log-alert-info
           MAX_RETRY_DELAY_SECS: !FindInMap [Alerts, MaxRetryDelay, Seconds]
           MIN_RETRY_DELAY_SECS: !FindInMap [Alerts, MinRetryDelay, Seconds]
