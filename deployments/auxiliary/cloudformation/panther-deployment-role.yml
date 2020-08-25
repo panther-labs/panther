@@ -18,7 +18,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: IAM role for deploying Panther
 
 Metadata:
-  Version: v1.7.0
+  Version: v1.7.1
 
 Parameters:
   IdentityAccountId:
