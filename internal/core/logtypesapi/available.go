@@ -58,9 +58,13 @@ func (api *API) ListAvailableLogTypes(ctx context.Context) (*AvailableLogTypes, 
 		return nil, err
 	}
 	logTypes := api.NativeLogTypes.LogTypes()
-	if dbLogTypes, ok := ddbOutput.Item[attrAvailableLogTypes]; ok {
-		logTypes = append(logTypes, aws.StringValueSlice(dbLogTypes.SS)...)
+	row := struct {
+		AvailableLogTypes []string
+	}{}
+	if err := dynamodbattribute.UnmarshalMap(ddbOutput.Item, &row); err != nil {
+		return nil, err
 	}
+	logTypes = append(logTypes, row.AvailableLogTypes...)
 	return &AvailableLogTypes{
 		LogTypes: logTypes,
 	}, nil
