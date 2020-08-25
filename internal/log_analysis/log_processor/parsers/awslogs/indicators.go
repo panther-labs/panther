@@ -86,22 +86,3 @@ func ScanInstanceID(w pantherlog.ValueWriter, input string) {
 		w.WriteValues(pantherlog.FieldAWSInstanceID, input)
 	}
 }
-
-//type RawMessage []byte
-//
-//func (msg RawMessage) MarshalJSON() ([]byte, error) {
-//	if msg == nil {
-//		return []byte(`null`), nil
-//	}
-//	return []byte(msg), nil
-//}
-//
-//func (msg *RawMessage) UnmarshalJSON(data []byte) error {
-//	*msg = append((*msg)[:0], data...)
-//	return nil
-//}
-//func (msg *RawMessage) WriteValuesTo(w pantherlog.ValueWriter) {
-//	iter := jsoniter.ConfigFastest.BorrowIterator([]byte(*msg))
-//	defer iter.Pool().ReturnIterator(iter)
-//	iter.ReadObjectCB()
-//}
