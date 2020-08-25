@@ -46,7 +46,6 @@ var routeNameRegExp = regexp.MustCompile(`^[A-Z][A-Za-z0-9]+$`)
 
 type Route struct {
 	name        string
-	receiver    reflect.Value
 	method      reflect.Value
 	input       reflect.Type
 	output      reflect.Type
@@ -246,7 +245,6 @@ func buildRouteFromMethod(name string, receiver reflect.Value, method reflect.Me
 	if err := route.setOutputs(method.Type); err != nil {
 		return nil, err
 	}
-	route.receiver = receiver
 	route.method = receiver.Method(method.Index)
 	return &route, nil
 }
@@ -258,9 +256,6 @@ type routeHandler struct {
 
 func (r *routeHandler) HandleRaw(ctx context.Context, input json.RawMessage) (output json.RawMessage, err error) {
 	in := make([]reflect.Value, 0, 3)
-	if r.receiver.IsValid() {
-		in = append(in, r.receiver)
-	}
 	if r.withContext {
 		in = append(in, reflect.ValueOf(ctx))
 	}
