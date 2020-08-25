@@ -27,6 +27,7 @@ func TestStructRoutes(t *testing.T) {
 
 	mux := Mux{}
 	mux.HandleRoutes(routes...)
+	mux.MustHandleStructs(DefaultHandlerPrefix, &testAPI{})
 	output, err := mux.HandleRaw(context.Background(), json.RawMessage(`{"Foo":{}}`))
 	assert.NoError(err)
 	assert.Equal("{}", string(output))

@@ -257,6 +257,17 @@ type routeHandler struct {
 var emptyResult = json.RawMessage(`{}`)
 
 func (r *routeHandler) HandleRaw(ctx context.Context, input json.RawMessage) (output json.RawMessage, err error) {
+	out, err := r.HandleJSON(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+	if out == nil {
+		return emptyResult, nil
+	}
+	return r.JSON.Marshal(out)
+}
+
+func (r *routeHandler) HandleJSON(ctx context.Context, input json.RawMessage) (interface{}, error) {
 	in := make([]reflect.Value, 0, 3)
 	if r.withContext {
 		in = append(in, reflect.ValueOf(ctx))
@@ -271,20 +282,19 @@ func (r *routeHandler) HandleRaw(ctx context.Context, input json.RawMessage) (ou
 	switch out := r.method.Call(in); len(out) {
 	case 2:
 		outVal, errVal := out[0], out[1]
-		if errVal.IsNil() {
-			return r.JSON.Marshal(outVal.Interface())
+		if errVal.IsZero() || errVal.IsNil() {
+			return outVal.Interface(), nil
 		}
 		return nil, errVal.Interface().(error)
 	case 1:
 		outVal := out[0]
 		if r.withError {
 			if outVal.IsNil() {
-				// Use empty object
-				return emptyResult, nil
+				return nil, nil
 			}
 			return nil, outVal.Interface().(error)
 		}
-		return r.JSON.Marshal(outVal.Interface())
+		return outVal.Interface(), nil
 	default:
 		return nil, errors.New(`invalid route signature`)
 	}
