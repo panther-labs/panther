@@ -35,6 +35,7 @@ type Mux struct {
 	Decorate func(routeName string, handler Handler) Handler
 	// NotFound is the fallback handler if a route is not found.
 	NotFound Handler
+	Validate func(interface{}) error
 	handlers map[string]Handler
 }
 
@@ -50,7 +51,7 @@ func (m *Mux) Routes() (routes []*Route) {
 func (m *Mux) HandleRoutes(routes ...*Route) {
 	for _, route := range routes {
 		name := route.Name()
-		handler := route.Handler(m.JSON)
+		handler := route.Handler(m.JSON, m.Validate)
 		m.Handle(name, handler)
 	}
 }

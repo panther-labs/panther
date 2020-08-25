@@ -111,10 +111,11 @@ func (r *Route) Output() reflect.Type {
 	return r.output
 }
 
-func (r *Route) Handler(api jsoniter.API) Handler {
+func (r *Route) Handler(api jsoniter.API, validate func(interface{}) error) Handler {
 	return &routeHandler{
-		Route: r,
-		JSON:  resolveJSON(api),
+		Route:    r,
+		Validate: validate,
+		JSON:     resolveJSON(api),
 	}
 }
 
@@ -242,7 +243,8 @@ func buildRouteFromMethod(name string, receiver reflect.Value, method reflect.Me
 
 type routeHandler struct {
 	*Route
-	JSON jsoniter.API
+	Validate func(interface{}) error
+	JSON     jsoniter.API
 }
 
 var emptyResult = json.RawMessage(`{}`)
@@ -265,8 +267,14 @@ func (r *routeHandler) HandleJSON(ctx context.Context, input json.RawMessage) (i
 	}
 	if r.input != nil {
 		val := reflect.New(r.input)
-		if err := r.JSON.Unmarshal(input, val.Interface()); err != nil {
+		x := val.Interface()
+		if err := r.JSON.Unmarshal(input, x); err != nil {
 			return nil, err
+		}
+		if r.Validate != nil {
+			if err := r.Validate(x); err != nil {
+				return nil, err
+			}
 		}
 		in = append(in, val)
 	}
