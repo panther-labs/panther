@@ -1,6 +1,8 @@
 package api
 
 import (
+	"time"
+
 	"go.uber.org/zap"
 
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
@@ -31,12 +33,13 @@ type AlertOutputMap map[*deliveryModels.Alert][]*outputModels.AlertOutput
 
 // DispatchStatus holds info about which alert was sent to a given destination with its response status
 type DispatchStatus struct {
-	AlertID    string
-	OutputID   string
-	Message    string
-	StatusCode int
-	Success    bool
-	NeedsRetry bool
+	AlertID      string
+	OutputID     string
+	Message      string
+	StatusCode   int
+	Success      bool
+	NeedsRetry   bool
+	DispatchedAt time.Time
 }
 
 // sendAlerts - dispatches alerts to their associated outputIds in parallel
@@ -47,7 +50,8 @@ func sendAlerts(alertOutputs AlertOutputMap) []DispatchStatus {
 	// Extract the maps (k, v)
 	for alert, outputIds := range alertOutputs {
 		for _, output := range outputIds {
-			go sendAlert(alert, output, statusChannel)
+			dispatchedAt := time.Now().UTC()
+			go sendAlert(alert, output, dispatchedAt, statusChannel)
 		}
 	}
 
@@ -64,7 +68,7 @@ func sendAlerts(alertOutputs AlertOutputMap) []DispatchStatus {
 // sendAlert an alert to one specific output (run as a child goroutine).
 //
 // The statusChannel will be sent a message with the result of the send attempt.
-func sendAlert(alert *deliveryModels.Alert, output *outputModels.AlertOutput, statusChannel chan DispatchStatus) {
+func sendAlert(alert *deliveryModels.Alert, output *outputModels.AlertOutput, dispatchedAt time.Time, statusChannel chan DispatchStatus) {
 	commonFields := []zap.Field{
 		zap.String("alertID", *alert.AlertID),
 		zap.String("outputID", *output.OutputID),
@@ -77,12 +81,13 @@ func sendAlert(alert *deliveryModels.Alert, output *outputModels.AlertOutput, st
 		if r := recover(); r != nil {
 			zap.L().Error("panic sending alert", append(commonFields, zap.Any("panic", r))...)
 			statusChannel <- DispatchStatus{
-				AlertID:    *alert.AlertID,
-				OutputID:   *output.OutputID,
-				StatusCode: 500,
-				Success:    false,
-				Message:    "panic sending alert",
-				NeedsRetry: false,
+				AlertID:      *alert.AlertID,
+				OutputID:     *output.OutputID,
+				StatusCode:   500,
+				Success:      false,
+				Message:      "panic sending alert",
+				NeedsRetry:   false,
+				DispatchedAt: dispatchedAt,
 			}
 		}
 	}()
@@ -116,12 +121,13 @@ func sendAlert(alert *deliveryModels.Alert, output *outputModels.AlertOutput, st
 	default:
 		zap.L().Warn("unsupported output type", commonFields...)
 		statusChannel <- DispatchStatus{
-			AlertID:    *alert.AlertID,
-			OutputID:   *output.OutputID,
-			StatusCode: 500,
-			Success:    false,
-			Message:    "unsupported output type",
-			NeedsRetry: false,
+			AlertID:      *alert.AlertID,
+			OutputID:     *output.OutputID,
+			StatusCode:   500,
+			Success:      false,
+			Message:      "unsupported output type",
+			NeedsRetry:   false,
+			DispatchedAt: dispatchedAt,
 		}
 		return
 	}
@@ -129,12 +135,13 @@ func sendAlert(alert *deliveryModels.Alert, output *outputModels.AlertOutput, st
 	if response == nil {
 		zap.L().Warn("output response is nil", commonFields...)
 		statusChannel <- DispatchStatus{
-			AlertID:    *alert.AlertID,
-			OutputID:   *output.OutputID,
-			StatusCode: 500,
-			Success:    false,
-			Message:    "output response is nil",
-			NeedsRetry: false,
+			AlertID:      *alert.AlertID,
+			OutputID:     *output.OutputID,
+			StatusCode:   500,
+			Success:      false,
+			Message:      "output response is nil",
+			NeedsRetry:   false,
+			DispatchedAt: dispatchedAt,
 		}
 		return
 	}
@@ -147,11 +154,12 @@ func sendAlert(alert *deliveryModels.Alert, output *outputModels.AlertOutput, st
 
 	// Retry only if not successful and we don't have a permanent failure
 	statusChannel <- DispatchStatus{
-		AlertID:    *alert.AlertID,
-		OutputID:   *output.OutputID,
-		StatusCode: response.StatusCode,
-		Success:    response.Success && !response.Permanent,
-		Message:    response.Message,
-		NeedsRetry: !response.Success && !response.Permanent,
+		AlertID:      *alert.AlertID,
+		OutputID:     *output.OutputID,
+		StatusCode:   response.StatusCode,
+		Success:      response.Success && !response.Permanent,
+		Message:      response.Message,
+		NeedsRetry:   !response.Success && !response.Permanent,
+		DispatchedAt: dispatchedAt,
 	}
 }

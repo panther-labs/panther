@@ -193,10 +193,11 @@ func convertToSummary(alertItem *table.AlertItem, dispatchStatuses []DispatchSta
 	// access the first item in the lists to add the delivery status
 	alertSummary.DeliveryResponses = []*alertModels.DeliveryResponse{
 		{
-			OutputID:   dispatchStatuses[0].OutputID,
-			Message:    dispatchStatuses[0].Message,
-			StatusCode: dispatchStatuses[0].StatusCode,
-			Success:    dispatchStatuses[0].Success,
+			OutputID:     dispatchStatuses[0].OutputID,
+			Message:      dispatchStatuses[0].Message,
+			StatusCode:   dispatchStatuses[0].StatusCode,
+			Success:      dispatchStatuses[0].Success,
+			DispatchedAt: dispatchStatuses[0].DispatchedAt,
 		},
 	}
 

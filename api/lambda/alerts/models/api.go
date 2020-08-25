@@ -139,10 +139,11 @@ type UpdateAlertDeliveryInput struct {
 
 // DeliveryResponse holds the delivery response for data stored in DDB
 type DeliveryResponse struct {
-	OutputID   string
-	Message    string
-	StatusCode int
-	Success    bool
+	OutputID     string    `json:"outputId" validate:"required,uuid4"`
+	Message      string    `json:"message"`
+	StatusCode   int       `json:"statusCode"`
+	Success      bool      `json:"success"`
+	DispatchedAt time.Time `json:"dispatchedAt"`
 }
 
 // UpdateAlertStatusOutput is an alias for an alert summary

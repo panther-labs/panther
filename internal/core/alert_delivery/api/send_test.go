@@ -75,6 +75,8 @@ var alertOutput = &outputModels.AlertOutput{
 	DefaultForSeverity: []*string{aws.String("INFO")},
 }
 
+var dispatchedAt = time.Now().UTC()
+
 func setCaches() {
 	cache.set(&outputsCache{
 		Outputs:   []*outputModels.AlertOutput{alertOutput},
@@ -89,18 +91,20 @@ func TestSendPanic(t *testing.T) {
 
 	ch := make(chan DispatchStatus, 1)
 	alert := sampleAlert()
+
 	expectedResponse := DispatchStatus{
-		AlertID:    *alert.AlertID,
-		OutputID:   *alertOutput.OutputID,
-		StatusCode: 500,
-		Success:    false,
-		Message:    "panic sending alert",
-		NeedsRetry: false,
+		AlertID:      *alert.AlertID,
+		OutputID:     *alertOutput.OutputID,
+		StatusCode:   500,
+		Success:      false,
+		Message:      "panic sending alert",
+		NeedsRetry:   false,
+		DispatchedAt: dispatchedAt,
 	}
 	mockClient.On("Slack", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 		panic("panicking")
 	})
-	go sendAlert(alert, alertOutput, ch)
+	go sendAlert(alert, alertOutput, dispatchedAt, ch)
 	assert.Equal(t, expectedResponse, <-ch)
 	mockClient.AssertExpectations(t)
 }
@@ -121,14 +125,15 @@ func TestSendUnsupportedOutput(t *testing.T) {
 		OutputID: aws.String("output-id"),
 	}
 	expectedResponse := DispatchStatus{
-		AlertID:    *alert.AlertID,
-		OutputID:   *alertOutput.OutputID,
-		StatusCode: 500,
-		Success:    false,
-		Message:    "unsupported output type",
-		NeedsRetry: false,
+		AlertID:      *alert.AlertID,
+		OutputID:     *alertOutput.OutputID,
+		StatusCode:   500,
+		Success:      false,
+		Message:      "unsupported output type",
+		NeedsRetry:   false,
+		DispatchedAt: dispatchedAt,
 	}
-	go sendAlert(alert, unsupportedOutput, ch)
+	go sendAlert(alert, unsupportedOutput, dispatchedAt, ch)
 	assert.Equal(t, expectedResponse, <-ch)
 	mockClient.AssertExpectations(t)
 }
@@ -143,15 +148,16 @@ func TestSendResponseNil(t *testing.T) {
 	// Create a nil response
 	var response *outputs.AlertDeliveryResponse
 	expectedResponse := DispatchStatus{
-		AlertID:    *alert.AlertID,
-		OutputID:   *alertOutput.OutputID,
-		StatusCode: 500,
-		Success:    false,
-		Message:    "output response is nil",
-		NeedsRetry: false,
+		AlertID:      *alert.AlertID,
+		OutputID:     *alertOutput.OutputID,
+		StatusCode:   500,
+		Success:      false,
+		Message:      "output response is nil",
+		NeedsRetry:   false,
+		DispatchedAt: dispatchedAt,
 	}
 	mockClient.On("Slack", mock.Anything, mock.Anything).Return(response)
-	sendAlert(alert, alertOutput, ch)
+	sendAlert(alert, alertOutput, dispatchedAt, ch)
 	assert.Equal(t, expectedResponse, <-ch)
 	mockClient.AssertExpectations(t)
 }
@@ -170,15 +176,16 @@ func TestSendPermanentFailure(t *testing.T) {
 		Permanent:  true,
 	}
 	expectedResponse := DispatchStatus{
-		AlertID:    *alert.AlertID,
-		OutputID:   *alertOutput.OutputID,
-		StatusCode: 500,
-		Success:    false,
-		Message:    "permanent failure",
-		NeedsRetry: false,
+		AlertID:      *alert.AlertID,
+		OutputID:     *alertOutput.OutputID,
+		StatusCode:   500,
+		Success:      false,
+		Message:      "permanent failure",
+		NeedsRetry:   false,
+		DispatchedAt: dispatchedAt,
 	}
 	mockClient.On("Slack", mock.Anything, mock.Anything).Return(response)
-	go sendAlert(alert, alertOutput, ch)
+	go sendAlert(alert, alertOutput, dispatchedAt, ch)
 	assert.Equal(t, expectedResponse, <-ch)
 	mockClient.AssertExpectations(t)
 }
@@ -197,15 +204,16 @@ func TestSendTransientFailure(t *testing.T) {
 		Permanent:  false,
 	}
 	expectedResponse := DispatchStatus{
-		AlertID:    *alert.AlertID,
-		OutputID:   *alertOutput.OutputID,
-		StatusCode: 429,
-		Success:    false,
-		Message:    "transient failure",
-		NeedsRetry: true,
+		AlertID:      *alert.AlertID,
+		OutputID:     *alertOutput.OutputID,
+		StatusCode:   429,
+		Success:      false,
+		Message:      "transient failure",
+		NeedsRetry:   true,
+		DispatchedAt: dispatchedAt,
 	}
 	mockClient.On("Slack", mock.Anything, mock.Anything).Return(response)
-	go sendAlert(alert, alertOutput, ch)
+	go sendAlert(alert, alertOutput, dispatchedAt, ch)
 	assert.Equal(t, expectedResponse, <-ch)
 	mockClient.AssertExpectations(t)
 }
@@ -224,76 +232,16 @@ func TestSendSuccess(t *testing.T) {
 		Permanent:  false,
 	}
 	expectedResponse := DispatchStatus{
-		AlertID:    *alert.AlertID,
-		OutputID:   *alertOutput.OutputID,
-		StatusCode: 200,
-		Success:    true,
-		Message:    "successful response payload",
-		NeedsRetry: false,
+		AlertID:      *alert.AlertID,
+		OutputID:     *alertOutput.OutputID,
+		StatusCode:   200,
+		Success:      true,
+		Message:      "successful response payload",
+		NeedsRetry:   false,
+		DispatchedAt: dispatchedAt,
 	}
 	mockClient.On("Slack", mock.Anything, mock.Anything).Return(response)
-	go sendAlert(alert, alertOutput, ch)
+	go sendAlert(alert, alertOutput, dispatchedAt, ch)
 	assert.Equal(t, expectedResponse, <-ch)
 	mockClient.AssertExpectations(t)
 }
-
-// func TestDispatchSuccess(t *testing.T) {
-// 	mockClient := &mockOutputsClient{}
-// 	outputClient = mockClient
-// 	setCaches()
-// 	mockClient.On("Slack", mock.Anything, mock.Anything).Return((*outputs.AlertDeliveryResponse)(nil))
-// 	assert.True(t, dispatch(sampleAlert()))
-// }
-
-// func TestDispatchUseCachedDefault(t *testing.T) {
-// 	mockLambdaClient := &mockLambdaClient{}
-// 	lambdaClient = mockLambdaClient
-// 	setCaches()
-// 	alert := sampleAlert()
-// 	alert.OutputIds = nil // Setting OutputIds in the alert to nil, in order to fetch default outputs
-// 	assert.True(t, dispatch(alert))
-// 	mockLambdaClient.AssertExpectations(t)
-// }
-
-// func TestDispatchUseNonCachedDefault(t *testing.T) {
-// 	mockLambdaClient := &mockLambdaClient{}
-// 	lambdaClient = mockLambdaClient
-
-// 	outputs := &outputModels.GetOutputsOutput{alertOutput}
-// 	payload, err := jsoniter.Marshal(outputs)
-// 	require.NoError(t, err)
-
-// 	mockLambdaResponse := &lambda.InvokeOutput{
-// 		Payload: payload,
-// 	}
-
-// 	// Ensure the cache  is expired so we perform the lambda invocation
-// 	cache.setExpiry(time.Now().Add(time.Second * time.Duration(-5*60)))
-// 	mockLambdaClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil)
-// 	alert := sampleAlert()
-// 	alert.OutputIds = nil // Setting OutputIds in the alert to nil, in order to fetch default outputs
-// 	assert.True(t, dispatch(alert))
-// 	mockLambdaClient.AssertExpectations(t)
-// }
-
-// func TestAllGoRoutinesShouldComplete(t *testing.T) {
-// 	mockLambdaClient := &mockLambdaClient{}
-// 	lambdaClient = mockLambdaClient
-
-// 	outputs := &outputModels.GetOutputsOutput{alertOutput}
-// 	payload, err := jsoniter.Marshal(outputs)
-// 	require.NoError(t, err)
-// 	mockGetOutputsResponse := &lambda.InvokeOutput{
-// 		Payload: payload,
-// 	}
-
-// 	// Ensure the cache  is expired so we perform the lambda invocation
-// 	cache.setExpiry(time.Now().Add(time.Second * time.Duration(-5*60)))
-// 	// setCaches()
-// 	// Invoke once to get all outpts
-// 	mockLambdaClient.On("Invoke", mock.Anything).Return(mockGetOutputsResponse, nil).Once()
-// 	alert := sampleAlert()
-// 	alert.OutputIds = nil // Setting OutputIds in the alert to nil, in order to fetch default outputs
-// 	assert.True(t, dispatch(alert))
-// 	mockLambdaClient.AssertExpectations(t)
-// }
