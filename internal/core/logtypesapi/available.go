@@ -57,10 +57,10 @@ func (api *API) ListAvailableLogTypes(ctx context.Context) (*AvailableLogTypes, 
 	if err != nil {
 		return nil, err
 	}
-	logTypes := aws.StringValueSlice(ddbOutput.Item[attrAvailableLogTypes].SS)
-
-	logTypes = append(logTypes, api.NativeLogTypes.LogTypes()...)
-
+	logTypes := api.NativeLogTypes.LogTypes()
+	if dbLogTypes, ok := ddbOutput.Item[attrAvailableLogTypes]; ok {
+		logTypes = append(logTypes, aws.StringValueSlice(dbLogTypes.SS)...)
+	}
 	return &AvailableLogTypes{
 		LogTypes: logTypes,
 	}, nil
