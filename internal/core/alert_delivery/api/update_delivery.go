@@ -26,7 +26,7 @@ import (
 )
 
 // updateAlerts - ivokes a lambda to update the alert statuses
-func updateAlerts(statuses []DispatchStatus) error {
+func updateAlerts(statuses []DispatchStatus) ([]*alertModels.AlertSummary, error) {
 	// create a relational mapping for alertID to a list of delivery statuses
 	alertMap := make(map[string][]*alertModels.DeliveryResponse)
 	for _, status := range statuses {
@@ -42,6 +42,7 @@ func updateAlerts(statuses []DispatchStatus) error {
 	}
 
 	// Make a lambda call for each alert. We dont make a single API call to reduce the failure impact.
+	alertSummaries := []*alertModels.AlertSummary{}
 	for alertID, deliveryResponse := range alertMap {
 		input := alertModels.LambdaInput{UpdateAlertDelivery: &alertModels.UpdateAlertDeliveryInput{
 			AlertID:           alertID,
@@ -50,8 +51,9 @@ func updateAlerts(statuses []DispatchStatus) error {
 		var response alertModels.UpdateAlertDeliveryOutput
 		if err := genericapi.Invoke(lambdaClient, alertsAPI, &input, &response); err != nil {
 			zap.L().Error("Invoking UpdateAlertDelivery failed", zap.Any("error", err))
-			return err
+			return nil, err
 		}
+		alertSummaries = append(alertSummaries, &response)
 	}
-	return nil
+	return alertSummaries, nil
 }

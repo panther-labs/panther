@@ -55,7 +55,8 @@ func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModel
 	dispatchStatuses := sendAlerts(alertOutputMap)
 
 	// Record the delivery statuses to ddb
-	if err := updateAlerts(dispatchStatuses); err != nil {
+	alertSummaries, err := updateAlerts(dispatchStatuses)
+	if err != nil {
 		return nil, err
 	}
 	zap.L().Info("Updated all alert delivery statuses successfully")
@@ -66,9 +67,7 @@ func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModel
 		return nil, err
 	}
 
-	// The frontend will merge this summary to in the alert details page to update the delivery status
-	alertSummary := convertToSummary(alertItem, dispatchStatuses)
-
+	alertSummary := alertSummaries[0]
 	gatewayapi.ReplaceMapSliceNils(alertSummary)
 	return alertSummary, nil
 }

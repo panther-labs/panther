@@ -51,7 +51,7 @@ func (API) DispatchAlerts(input []*deliveryModels.DispatchAlertsInput) (interfac
 	dispatchStatuses := sendAlerts(alertOutputMap)
 
 	// Record the delivery statuses to ddb.
-	if err := updateAlerts(dispatchStatuses); err == nil {
+	if _, err := updateAlerts(dispatchStatuses); err == nil {
 		zap.L().Info("Updated all alert delivery statuses successfully")
 	}
 
