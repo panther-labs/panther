@@ -18,20 +18,12 @@ package lambdamux
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/**
- * Copyright (C) 2020 Panther Labs Inc
- *
- * Panther Enterprise is licensed under the terms of a commercial license available from
- * Panther Labs Inc ("Panther Commercial License") by contacting contact@runpanther.com.
- * All use, distribution, and/or modification of this software, whether commercial or non-commercial,
- * falls under the Panther Commercial License to the extent it is permitted.
- */
-
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 
+	goerr "errors"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 )
@@ -115,7 +107,8 @@ func (m *Mux) HandleRaw(ctx context.Context, input json.RawMessage) (json.RawMes
 const DefaultHandlerPrefix = "Handle"
 
 // ErrRouteNotFound is a well-known error that a route was not found.
-var ErrRouteNotFound = fmt.Errorf(`route not found`)
+// Using std errors.New here since we don't want a stack
+var ErrRouteNotFound = goerr.New(`route not found`)
 
 func NewRouteError(route string, err error) error {
 	return &RouteError{
