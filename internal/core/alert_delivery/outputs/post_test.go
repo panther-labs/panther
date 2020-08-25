@@ -88,7 +88,7 @@ func TestPostOk(t *testing.T) {
 	assert.Equal(t, &AlertDeliveryResponse{
 		StatusCode: 200,
 		Success:    true,
-		Message:    "",
+		Message:    "response",
 		Permanent:  false,
 	}, c.post(postInput))
 }
@@ -102,7 +102,7 @@ func TestPostCreated(t *testing.T) {
 	assert.Equal(t, &AlertDeliveryResponse{
 		StatusCode: 201,
 		Success:    true,
-		Message:    "",
+		Message:    "response",
 		Permanent:  false,
 	}, c.post(postInput))
 }

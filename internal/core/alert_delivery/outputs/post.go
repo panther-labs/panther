@@ -93,7 +93,7 @@ func (client *HTTPWrapper) post(input *PostInput) *AlertDeliveryResponse {
 	return &AlertDeliveryResponse{
 		StatusCode: response.StatusCode,
 		Success:    true,
-		Message:    "",
+		Message:    string(body),
 		Permanent:  false,
 	}
 }
