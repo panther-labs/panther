@@ -29,6 +29,7 @@ package logtypesapi
 
 import (
 	"context"
+	"sort"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -57,14 +58,16 @@ func (api *API) ListAvailableLogTypes(ctx context.Context) (*AvailableLogTypes, 
 	if err != nil {
 		return nil, err
 	}
-	logTypes := api.NativeLogTypes.LogTypes()
 	row := struct {
 		AvailableLogTypes []string
 	}{}
 	if err := dynamodbattribute.UnmarshalMap(ddbOutput.Item, &row); err != nil {
 		return nil, err
 	}
+
+	logTypes := api.NativeLogTypes.LogTypes()
 	logTypes = append(logTypes, row.AvailableLogTypes...)
+	sort.Strings(logTypes)
 	return &AvailableLogTypes{
 		LogTypes: logTypes,
 	}, nil
