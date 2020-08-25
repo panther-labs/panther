@@ -58,15 +58,15 @@ func (api *API) ListAvailableLogTypes(ctx context.Context) (*AvailableLogTypes, 
 	if err != nil {
 		return nil, err
 	}
-	row := struct {
+	item := struct {
 		AvailableLogTypes []string
 	}{}
-	if err := dynamodbattribute.UnmarshalMap(ddbOutput.Item, &row); err != nil {
+	if err := dynamodbattribute.UnmarshalMap(ddbOutput.Item, &item); err != nil {
 		return nil, err
 	}
 
 	logTypes := api.NativeLogTypes.LogTypes()
-	logTypes = append(logTypes, row.AvailableLogTypes...)
+	logTypes = append(logTypes, item.AvailableLogTypes...)
 	sort.Strings(logTypes)
 	return &AvailableLogTypes{
 		LogTypes: logTypes,
