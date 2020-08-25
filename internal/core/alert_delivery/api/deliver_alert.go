@@ -19,8 +19,6 @@ package api
  */
 
 import (
-	"strconv"
-
 	"go.uber.org/zap"
 
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
@@ -176,9 +174,9 @@ func logOrReturn(dispatchStatuses []DispatchStatus) error {
 				zap.String("message", delivery.Message),
 			)
 
-			// return early
+			// return early if there was a failure.
 			return &genericapi.InternalError{
-				Message: "Failed to send the alert: " + strconv.Itoa(delivery.StatusCode)}
+				Message: "Some alerts failed to be delivered"}
 		}
 	}
 	return nil

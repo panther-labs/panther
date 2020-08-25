@@ -130,6 +130,10 @@ func filterDispatches(dispatchStatuses []DispatchStatus) ([]DispatchStatus, []Di
 // containing 3 alerts (in this case, the same alert) each with its outputIds
 // list containing only the specific failed outputId.
 //
+// Previously, we put all the failed outputIds back into a single alert to be retried; however
+// because the new mechanism tracks a single counter inside the alert itself, failures should be individually
+// retried to track which destinations are failing.
+//
 // Ex:
 // A list of alerts ([]*deliveryModels.Alert)
 //   [

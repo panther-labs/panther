@@ -41,19 +41,35 @@ func updateAlerts(statuses []DispatchStatus) ([]*alertModels.AlertSummary, error
 		alertMap[status.AlertID] = append(alertMap[status.AlertID], deliveryResponse)
 	}
 
-	// Make a lambda call for each alert. We dont make a single API call to reduce the failure impact.
-	alertSummaries := []*alertModels.AlertSummary{}
+	// Init a channel
+	alertSummaryChannel := make(chan alertModels.AlertSummary)
+
+	// Make a lambda call for each alert in parallel. We dont make a single API call to reduce the failure impact.
+	zap.L().Info("Invoking UpdateAlertDelivery in parallel")
+
 	for alertID, deliveryResponse := range alertMap {
-		input := alertModels.LambdaInput{UpdateAlertDelivery: &alertModels.UpdateAlertDeliveryInput{
-			AlertID:           alertID,
-			DeliveryResponses: deliveryResponse,
-		}}
-		var response alertModels.UpdateAlertDeliveryOutput
-		if err := genericapi.Invoke(lambdaClient, alertsAPI, &input, &response); err != nil {
-			zap.L().Error("Invoking UpdateAlertDelivery failed", zap.Any("error", err))
-			return nil, err
-		}
-		alertSummaries = append(alertSummaries, &response)
+		go updateAlert(alertID, deliveryResponse, alertSummaryChannel)
 	}
+
+	zap.L().Info("Joining UpdateAlertDelivery results")
+	// Join all goroutines and collect a list of summaries
+	alertSummaries := []*alertModels.AlertSummary{}
+	for range alertMap {
+		alertSummary := <-alertSummaryChannel
+		alertSummaries = append(alertSummaries, &alertSummary)
+	}
+
 	return alertSummaries, nil
+}
+
+func updateAlert(alertID string, deliveryResponse []*alertModels.DeliveryResponse, alertSummaryChannel chan alertModels.AlertSummary) {
+	input := alertModels.LambdaInput{UpdateAlertDelivery: &alertModels.UpdateAlertDeliveryInput{
+		AlertID:           alertID,
+		DeliveryResponses: deliveryResponse,
+	}}
+	var response alertModels.UpdateAlertDeliveryOutput
+	if err := genericapi.Invoke(lambdaClient, alertsAPI, &input, &response); err != nil {
+		zap.L().Error("Invoking UpdateAlertDelivery failed", zap.Any("error", err))
+	}
+	alertSummaryChannel <- response
 }
