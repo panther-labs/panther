@@ -124,6 +124,9 @@ Mappings:
     AlertDelivery:
       Memory: 128
       Timeout: 60
+    AlertsAPI:
+      Memory: 256
+      Timeout: 60
     AnalysisAPI:
       Memory: 512
       Timeout: 120
@@ -674,6 +677,12 @@ Resources:
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-outputs-api'
+        - Id: AlertsAPI
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-alerts-api'
         - Id: PublishSnsMessage
           Version: 2012-10-17
           Statement:
