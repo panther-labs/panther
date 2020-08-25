@@ -94,10 +94,9 @@ func L(ctx context.Context) *zap.Logger {
 }
 
 func WithLogger(logger *zap.Logger, handler Handler) Handler {
-	return HandlerFunc(func(ctx context.Context, input json.RawMessage) (output json.RawMessage, err error) {
+	return HandlerFunc(func(ctx context.Context, input json.RawMessage) (json.RawMessage, error) {
 		ctx = ContextWithLogger(ctx, logger)
-		output, err = handler.HandleRaw(ctx, input)
-		return
+		return handler.HandleRaw(ctx, input)
 	})
 }
 
