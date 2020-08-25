@@ -254,6 +254,8 @@ type routeHandler struct {
 	JSON jsoniter.API
 }
 
+var emptyResult = json.RawMessage(`{}`)
+
 func (r *routeHandler) HandleRaw(ctx context.Context, input json.RawMessage) (output json.RawMessage, err error) {
 	in := make([]reflect.Value, 0, 3)
 	if r.withContext {
@@ -277,7 +279,8 @@ func (r *routeHandler) HandleRaw(ctx context.Context, input json.RawMessage) (ou
 		outVal := out[0]
 		if r.withError {
 			if outVal.IsNil() {
-				return r.JSON.Marshal(nil)
+				// Use empty object
+				return emptyResult, nil
 			}
 			return nil, outVal.Interface().(error)
 		}

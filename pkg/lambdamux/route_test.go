@@ -2,6 +2,7 @@ package lambdamux
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -9,7 +10,7 @@ import (
 type testAPI struct {
 }
 
-func (*testAPI) HandleFooWithContext(ctx context.Context) error {
+func (*testAPI) HandleFoo(ctx context.Context) error {
 	return nil
 }
 
@@ -23,4 +24,10 @@ func TestStructRoutes(t *testing.T) {
 	assert.True(routes[0].withError)
 	assert.True(routes[0].withContext)
 	assert.Equal(1, routes[0].method.Type().NumIn())
+
+	mux := Mux{}
+	mux.HandleRoutes(routes...)
+	output, err := mux.HandleRaw(context.Background(), json.RawMessage(`{"Foo":{}}`))
+	assert.NoError(err)
+	assert.Equal("{}", string(output))
 }
