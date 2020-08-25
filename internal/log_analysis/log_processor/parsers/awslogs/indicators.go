@@ -19,10 +19,12 @@ package awslogs
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"regexp"
 	"strings"
+
+	"github.com/aws/aws-sdk-go/aws/arn"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
 const SizeAccountID = 12
