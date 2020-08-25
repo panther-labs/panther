@@ -38,7 +38,11 @@ func updateAlerts(statuses []DispatchStatus) ([]*alertModels.AlertSummary, error
 			Success:      status.Success,
 			DispatchedAt: status.DispatchedAt,
 		}
-		alertMap[status.AlertID] = append(alertMap[status.AlertID], deliveryResponse)
+		if _, ok := alertMap[status.AlertID]; !ok {
+			alertMap[status.AlertID] = []*alertModels.DeliveryResponse{deliveryResponse}
+		} else {
+			alertMap[status.AlertID] = append(alertMap[status.AlertID], deliveryResponse)
+		}
 	}
 
 	// Make a lambda call for each alert. We dont make a single API call to reduce the failure impact.

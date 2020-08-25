@@ -23,7 +23,6 @@ import (
 
 	"go.uber.org/zap"
 
-	alertModels "github.com/panther-labs/panther/api/lambda/alerts/models"
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
@@ -183,24 +182,4 @@ func logOrReturn(dispatchStatuses []DispatchStatus) error {
 		}
 	}
 	return nil
-}
-
-// convertToSummary - converts an alert to a summary and adds the dispatch status
-func convertToSummary(alertItem *table.AlertItem, dispatchStatuses []DispatchStatus) *alertModels.AlertSummary {
-	// Convert the alerts to summaries to update the frontend
-	alertSummary := alertUtils.AlertItemToSummary(alertItem)
-
-	// Since this API accepts only one alertID, we can directly
-	// access the first item in the lists to add the delivery status
-	alertSummary.DeliveryResponses = []*alertModels.DeliveryResponse{
-		{
-			OutputID:     dispatchStatuses[0].OutputID,
-			Message:      dispatchStatuses[0].Message,
-			StatusCode:   dispatchStatuses[0].StatusCode,
-			Success:      dispatchStatuses[0].Success,
-			DispatchedAt: dispatchStatuses[0].DispatchedAt,
-		},
-	}
-
-	return alertSummary
 }
