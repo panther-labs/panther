@@ -28,7 +28,7 @@ import (
 )
 
 // Generate a lambda client using genlambdamux
-//go:generate go run github.com/panther-labs/panther/pkg/lambdamux/genlambdamux -out ./apiclient_gen.go
+//go:generate go run github.com/panther-labs/panther/pkg/lambdamux/genlambdamux -validate ".*" -out ./apiclient_gen.go
 
 type Config struct {
 	LogTypesTableName string `required:"true" split_words:"true"`

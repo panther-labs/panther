@@ -60,18 +60,31 @@ type Lambda{{.API}}Event struct {
 type LambdaClient struct {
 	lambdaAPI lambdaiface.LambdaAPI
 	lambdaName string
+	validate func(interface{}) error
 }
 
-func NewLambdaClient(lambdaAPI lambdaiface.LambdaAPI, lambdaName string) *LambdaClient {
+func NewLambdaClient(lambdaAPI lambdaiface.LambdaAPI, lambdaName string, validate func(interface{}) error) *LambdaClient {
+{{- if .Validate }}
+	if validate == nil {
+		v := validator.New()
+		validate = v.Struct
+	}
+{{ end -}}
 	return &LambdaClient{
 		lambdaAPI: lambdaAPI,
 		lambdaName: lambdaName,
+		validate: validate,
 	}
 }
 `
 
 const methodTemplateInputOutput = `
 func (c *LambdaClient) {{ .Name }}(ctx context.Context, input *{{.Name}}Input) (*{{.Name}}Output, error) {
+{{- if .Validate }}
+	if err := c.validate(input); err != nil {
+		return nil, err
+	}
+{{ end -}}
 	lambdaEvent := Lambda{{.API}}Event{
 		{{ .Name }}: input,
 	}
@@ -105,6 +118,11 @@ func (c *LambdaClient) {{ .Name }}(ctx context.Context, input *{{.Name}}Input) (
 `
 const methodTemplateInput = `
 func (c *LambdaClient) {{ .Name }}(ctx context.Context, input *{{.Name}}Input) error {
+{{- if .Validate }}
+	if err := c.validate(input); err != nil {
+		return nil, err
+	}
+{{ end -}}
 	lambdaEvent := Lambda{{.API}}Event{
 		{{ .Name }}: input,
 	}
