@@ -36,6 +36,7 @@ type AvailableLogTypes struct {
 	LogTypes []string `json:"logTypes"`
 }
 
+// ListAvailableLogTypes lists all available log type ids
 func (api *API) ListAvailableLogTypes(ctx context.Context) (*AvailableLogTypes, error) {
 	ddbInput := dynamodb.GetItemInput{
 		TableName:            aws.String(api.TableName),

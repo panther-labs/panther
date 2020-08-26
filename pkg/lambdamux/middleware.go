@@ -24,16 +24,14 @@ import (
 	"errors"
 	"time"
 
-	"github.com/aws/aws-lambda-go/lambdacontext"
 	"go.uber.org/zap"
+
+	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
 func Debug(handler Handler) Handler {
 	return HandlerFunc(func(ctx context.Context, input json.RawMessage) (output json.RawMessage, err error) {
-		logger := L(ctx)
-		if logger == nil {
-			logger = zap.L()
-		}
+		logger := lambdalogger.FromContext(ctx)
 		defer func() {
 			logger.Debug(`lambda handler result`,
 				zap.ByteString("input", input),
@@ -59,34 +57,9 @@ func NotFound(handler, notFound Handler) Handler {
 	})
 }
 
-var zapContextKey = &struct{}{}
-
-func ContextWithLogger(ctx context.Context, logger *zap.Logger) context.Context {
-	if logger == nil {
-		logger = zap.L()
-	}
-	// Add lambda fields to the logger
-	if ctx, ok := lambdacontext.FromContext(ctx); ok {
-		logger = logger.With(
-			zap.String(`aws_request_id`, ctx.AwsRequestID),
-			zap.String(`aws_lambda_arn`, ctx.InvokedFunctionArn),
-		)
-	}
-	return context.WithValue(ctx, zapContextKey, logger)
-}
-
-var nopLogger = zap.NewNop()
-
-func L(ctx context.Context) *zap.Logger {
-	if logger, ok := ctx.Value(zapContextKey).(*zap.Logger); ok {
-		return logger
-	}
-	return nopLogger
-}
-
 func WithLogger(logger *zap.Logger, handler Handler) Handler {
 	return HandlerFunc(func(ctx context.Context, input json.RawMessage) (json.RawMessage, error) {
-		ctx = ContextWithLogger(ctx, logger)
+		ctx = lambdalogger.Context(ctx, logger)
 		return handler.HandleRaw(ctx, input)
 	})
 }

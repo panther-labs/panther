@@ -23,10 +23,9 @@ import (
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/kelseyhightower/envconfig"
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
+	"github.com/panther-labs/panther/pkg/lambdalogger"
 	"github.com/panther-labs/panther/pkg/lambdamux"
 )
 
@@ -41,16 +40,17 @@ func init() {
 }
 
 func main() {
-	logger := mustBuildLogger()
-	// nolint: errcheck
-	defer logger.Sync()
+	logger := lambdalogger.Config{
+		Debug:     config.Debug,
+		Namespace: "api",
+		Component: "logtypes",
+	}.MustBuild()
 
-	logger = logger.With(
-		zap.String(`namespace`, `api`),
-		zap.String(`component`, `logtypes`),
-	)
+	// Syncing the zap.Logger always results in Lambda errors. Commented code kept as a reminder.
+	// defer logger.Sync()
 
 	mux := lambdamux.Mux{}
+
 	if maxAge := config.LogTypesMaxAge; maxAge > 0 {
 		// Cache results of ListAvailableLogTypes
 		mux.Decorate = func(routeName string, handler lambdamux.Handler) lambdamux.Handler {
@@ -66,24 +66,13 @@ func main() {
 	api := logtypesapi.BuildAPI(&config.Config)
 	mux.MustHandleStructs("", api)
 
+	// Adds logger to lambda context with a Lambda request ID field
 	handler := lambdamux.WithLogger(logger, &mux)
 
 	if config.Debug {
+		// Adds debug that always logs input/output
 		handler = lambdamux.Debug(handler)
 	}
 
 	lambda.Start(handler)
-}
-
-func mustBuildLogger() (logger *zap.Logger) {
-	var err error
-	if config.Debug {
-		logger, err = zap.NewDevelopment()
-	} else {
-		logger, err = zap.NewProduction()
-	}
-	if err != nil {
-		panic(errors.Wrap(err, "failed to initialize logger"))
-	}
-	return
 }
