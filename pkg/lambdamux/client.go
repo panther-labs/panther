@@ -20,12 +20,12 @@ package lambdamux
 
 import (
 	"context"
-	"github.com/pkg/errors"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 )
 
 type InvokeError struct {
