@@ -28,33 +28,28 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"regexp"
 	"strings"
 
 	"golang.org/x/tools/go/packages"
 )
 
 var (
-	validatorPkgPath = "gopkg.in/go-playground/validator.v9"
-	opts             = struct {
+	opts = struct {
 		API          *string
 		Filename     *string
 		MethodPrefix *string
 		PackageName  *string
 		Debug        *bool
-		Validate     *string
 	}{
 		API:          flag.String(`api`, "API", "API name"),
 		Filename:     flag.String(`out`, "", "Output file name (defaults to stdout)"),
 		MethodPrefix: flag.String(`prefix`, "", "Method name prefix"),
 		PackageName:  flag.String(`pkg`, "", "Go package name to use"),
 		Debug:        flag.Bool(`debug`, false, "Print debug output to stderr"),
-		Validate:     flag.String(`validate`, "", "Use validation for routes matching this pattern"),
 	}
 
-	typError     = types.Universe.Lookup("error").Type().Underlying().(*types.Interface)
-	typContext   *types.Interface
-	validatorPkg = types.NewPackage(validatorPkgPath, "validator")
+	typError   = types.Universe.Lookup("error").Type().Underlying().(*types.Interface)
+	typContext *types.Interface
 )
 
 func main() {
@@ -109,15 +104,6 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	if pattern := *opts.Validate; pattern != "" {
-		re := regexp.MustCompile(pattern)
-		for _, method := range methods {
-			if re.MatchString(method.Name) {
-				method.Validate = method.Input != nil
-			}
-		}
-	}
-
 	clientPkg := types.NewPackage(".", *opts.PackageName)
 	if *opts.PackageName == "" {
 		clientPkg = apiType.Obj().Pkg()
@@ -128,9 +114,12 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-	src, err = format.Source(src)
-	if err != nil {
-		logger.Fatal(err)
+	if !*opts.Debug {
+		src, err = format.Source(src)
+		if err != nil {
+			logger.Fatal(err)
+		}
+
 	}
 	if fileName := *opts.Filename; fileName != "" {
 		if err := ioutil.WriteFile(fileName, src, os.ModePerm); err != nil {
@@ -266,7 +255,6 @@ func GenerateClient(pkg *types.Package, apiName string, methods []*Method) ([]by
 	data := struct {
 		Generator string
 		PkgName   string
-		Validate  bool
 		API       string
 		Methods   []*Method
 		Aliases   map[string]string
@@ -275,7 +263,6 @@ func GenerateClient(pkg *types.Package, apiName string, methods []*Method) ([]by
 		Generator: "genlambdamux",
 		PkgName:   pkg.Name(),
 		API:       apiName,
-		Validate:  needsValidation(methods...),
 		Methods:   methods,
 		Aliases:   methodAliases(pkg, methods...),
 		Imports:   methodImports(pkg, methods...),
@@ -312,15 +299,6 @@ func typeAlias(obj types.Object, q types.Qualifier) string {
 	return types.TypeString(typ, q)
 }
 
-func needsValidation(methods ...*Method) bool {
-	for _, m := range methods {
-		if m.Validate {
-			return true
-		}
-	}
-	return false
-}
-
 func methodAliases(pkg *types.Package, methods ...*Method) map[string]string {
 	aliases := map[string]string{}
 	q := types.RelativeTo(pkg)
@@ -342,9 +320,6 @@ func methodAliases(pkg *types.Package, methods ...*Method) map[string]string {
 func methodImports(pkg *types.Package, methods ...*Method) []*types.Package {
 	imports := map[string]*types.Package{}
 	for _, method := range methods {
-		if method.Validate {
-			imports[validatorPkg.Path()] = validatorPkg
-		}
 		if method.Input != nil {
 			inputPkg := method.Input.Pkg()
 			if inputPkg.Path() != pkg.Path() {
@@ -366,11 +341,10 @@ func methodImports(pkg *types.Package, methods ...*Method) []*types.Package {
 }
 
 type Method struct {
-	API      string
-	Input    types.Object
-	Output   types.Object
-	Name     string
-	Validate bool
+	API    string
+	Input  types.Object
+	Output types.Object
+	Name   string
 }
 
 func isContext(typ types.Type) bool {

@@ -34,13 +34,8 @@ package {{.PkgName}}
 
 import (
 	"context"
-	"encoding/json"
-	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
-	"github.com/pkg/errors"
-	{{ range .Imports }}
-	{{ .Name }} {{ printf "%q" .Path }}
-	{{- end }}
+	"github.com/panther-labs/panther/pkg/lambdamux"
+	{{ range .Imports }}{{ .Name }} {{ printf "%q" .Path }}{{ end }}
 )
 
 {{ range $alias, $typ := .Aliases }}
@@ -58,94 +53,44 @@ type Lambda{{.API}}Event struct {
 }
 
 type LambdaClient struct {
-	lambdaAPI lambdaiface.LambdaAPI
-	lambdaName string
-	validate func(interface{}) error
+	client lambdamux.Client
 }
 
-func NewLambdaClient(lambdaAPI lambdaiface.LambdaAPI, lambdaName string, validate func(interface{}) error) *LambdaClient {
-{{- if .Validate }}
-	if validate == nil {
-		v := validator.New()
-		validate = v.Struct
+func NewLambdaClient(client lambdamux.Client) *LambdaClient {
+	if client.Validate == nil {
+		client.Validate = nopValidate
 	}
-{{ end -}}
 	return &LambdaClient{
-		lambdaAPI: lambdaAPI,
-		lambdaName: lambdaName,
-		validate: validate,
+		client: client,
 	}
 }
+func nopValidate(_ interface{}) error { return nil }
 `
 
 const methodTemplateInputOutput = `
 func (c *LambdaClient) {{ .Name }}(ctx context.Context, input *{{.Name}}Input) (*{{.Name}}Output, error) {
-{{- if .Validate }}
-	if err := c.validate(input); err != nil {
+	if err := c.client.Validate(input); err != nil {
 		return nil, err
 	}
-{{ end -}}
 	lambdaEvent := Lambda{{.API}}Event{
 		{{ .Name }}: input,
 	}
-
-	payload, err := json.Marshal(&lambdaEvent)
-	if err != nil {
-		return nil, err
-	}
-
-	lambdaInput := lambda.InvokeInput{
-		FunctionName: &c.lambdaName,
-		Payload: payload,
-	}
-
-	lambdaOutput, err := c.lambdaAPI.InvokeWithContext(ctx, &lambdaInput)
-	if err != nil {
-		return nil, err
-	}
-	
-	if lambdaError := lambdaOutput.FunctionError; lambdaError != nil {
-		return nil, errors.New(*lambdaError)
-	}
-
 	output := {{ .Name }}Output{}
-	if err := json.Unmarshal(lambdaOutput.Payload, &output); err != nil {
+	if err := c.client.InvokeWithContext(ctx, &lambdaEvent, &output); err != nil {
 		return nil, err
 	}
-
 	return &output, nil
 }
 `
 const methodTemplateInput = `
 func (c *LambdaClient) {{ .Name }}(ctx context.Context, input *{{.Name}}Input) error {
-{{- if .Validate }}
-	if err := c.validate(input); err != nil {
+	if err := c.client.Validate(input); err != nil {
 		return nil, err
 	}
-{{ end -}}
 	lambdaEvent := Lambda{{.API}}Event{
 		{{ .Name }}: input,
 	}
-
-	payload, err := json.Marshal(&lambdaEvent)
-	if err != nil {
-		return err
-	}
-
-	lambdaInput := lambda.InvokeInput{
-		FunctionName: &c.lambdaName,
-		Payload: payload,
-	}
-
-	lambdaOutput, err := c.lambdaAPI.InvokeWithContext(ctx, &lambdaInput)
-	if err != nil {
-		return err
-	}
-	
-	if lambdaError := lambdaOutput.FunctionError; lambdaError != nil {
-		return errors.New(*lambdaError)
-	}
-	return nil
+	return c.client.InvokeWithContext(ctx, &lambdaEvent, nil)
 }
 `
 const methodTemplateOutput = `
@@ -153,31 +98,10 @@ func (c *LambdaClient) {{ .Name }}(ctx context.Context) (*{{.Name}}Output, error
 	lambdaEvent := Lambda{{.API}}Event{
 		{{ .Name }}: &struct{}{},
 	}
-
-	payload, err := json.Marshal(&lambdaEvent)
-	if err != nil {
-		return nil, err
-	}
-
-	lambdaInput := lambda.InvokeInput{
-		FunctionName: &c.lambdaName,
-		Payload: payload,
-	}
-
-	lambdaOutput, err := c.lambdaAPI.InvokeWithContext(ctx, &lambdaInput)
-	if err != nil {
-		return nil, err
-	}
-	
-	if lambdaError := lambdaOutput.FunctionError; lambdaError != nil {
-		return nil, errors.New(*lambdaError)
-	}
-
 	output := {{ .Name }}Output{}
-	if err := json.Unmarshal(lambdaOutput.Payload, &output); err != nil {
+	if err := c.client.InvokeWithContext(ctx, &lambdaEvent, &output); err != nil {
 		return nil, err
 	}
-
 	return &output, nil
 }
 `

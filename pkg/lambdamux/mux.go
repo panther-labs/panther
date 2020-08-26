@@ -21,9 +21,9 @@ package lambdamux
 import (
 	"context"
 	"encoding/json"
+	goerr "errors"
 	"fmt"
 
-	goerr "errors"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 )
