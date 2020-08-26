@@ -16,19 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { SEVERITY_COLOR_MAP } from 'Components/SeverityBadge';
 import mapKeys from 'lodash/mapKeys';
 import { capitalize } from 'Helpers/utils';
 import { Theme } from 'pouncejs';
+import { SEVERITY_COLOR_MAP } from 'Source/constants';
 
-const severityColors = mapKeys(SEVERITY_COLOR_MAP, (val, key) => capitalize(key));
+const severityColors = mapKeys(SEVERITY_COLOR_MAP, (val, key) => capitalize(key.toLowerCase()));
 
 const logTypeColorMappings: Record<string, keyof Theme['colors']> = {
-  Critical: 'red-500',
-  High: 'orange-400',
-  Medium: 'yellow-500',
-  Low: 'gray-500',
-  Info: 'gray-600',
   'AWS.ALB': 'teal-100',
   'AWS.VPCFlow': 'orange-100',
   'AWS.S3': 'green-300',
