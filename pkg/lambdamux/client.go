@@ -20,7 +20,7 @@ package lambdamux
 
 import (
 	"context"
-	"fmt"
+	"github.com/pkg/errors"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/lambda"
@@ -29,14 +29,13 @@ import (
 )
 
 type InvokeError struct {
-	Function   string            `json:"function"`
 	Message    string            `json:"errorMessage"`
 	Type       string            `json:"errorType"`
 	StackTrace []ErrorStackFrame `json:"stackTrace,omitempty"`
 }
 
 func (e *InvokeError) Error() string {
-	return fmt.Sprintf("lambda invoke failed for %s:%s %s", e.Function, e.Type, e.Message)
+	return e.Message
 }
 
 type ErrorStackFrame struct {
@@ -59,7 +58,7 @@ func (c *Client) InvokeWithContext(ctx context.Context, input, output interface{
 	}
 	payload, err := jsonAPI.Marshal(input)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, `failed to marshal lambda %q input`, c.LambdaName)
 	}
 	lambdaInput := lambda.InvokeInput{
 		FunctionName: aws.String(c.LambdaName),
@@ -67,18 +66,20 @@ func (c *Client) InvokeWithContext(ctx context.Context, input, output interface{
 	}
 	lambdaOutput, err := c.LambdaAPI.InvokeWithContext(ctx, &lambdaInput)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, `lambda %q invocation failed`, c.LambdaName)
 	}
 	if lambdaOutput.FunctionError != nil {
 		invokeErr := InvokeError{}
 		if err := jsoniter.Unmarshal(lambdaOutput.Payload, &invokeErr); err != nil {
-			return err
+			return errors.Wrapf(err, `failed to unmarshal lambda %q invoke error`, c.LambdaName)
 		}
-		invokeErr.Function = c.LambdaName
-		return &invokeErr
+		return errors.Wrapf(&invokeErr, `lambda %q execution failed`, c.LambdaName)
 	}
 	if output == nil {
 		return nil
 	}
-	return jsonAPI.Unmarshal(lambdaOutput.Payload, output)
+	if err := jsonAPI.Unmarshal(lambdaOutput.Payload, output); err != nil {
+		return errors.Wrapf(err, `failed to marshal lambda %q response`, c.LambdaName)
+	}
+	return nil
 }
