@@ -23,12 +23,15 @@ import (
 	"encoding/json"
 )
 
+// Handler is a Lambda handler that intercepts the raw JSON payload
 type Handler interface {
 	HandleRaw(ctx context.Context, msg json.RawMessage) (json.RawMessage, error)
 }
 
+// HandlerFunc is a function implementing Handler
 type HandlerFunc func(ctx context.Context, msg json.RawMessage) (json.RawMessage, error)
 
+// HandleRaw implements Handler
 func (f HandlerFunc) HandleRaw(ctx context.Context, msg json.RawMessage) (json.RawMessage, error) {
 	return f(ctx, msg)
 }

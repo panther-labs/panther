@@ -119,7 +119,6 @@ func main() {
 		if err != nil {
 			logger.Fatal(err)
 		}
-
 	}
 	if fileName := *opts.Filename; fileName != "" {
 		if err := ioutil.WriteFile(fileName, src, os.ModePerm); err != nil {

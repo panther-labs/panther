@@ -37,13 +37,12 @@ type LambdaClient struct {
 
 func NewLambdaClient(client lambdamux.Client) *LambdaClient {
 	if client.Validate == nil {
-		client.Validate = nopValidate
+		client.Validate = lambdamux.NopValidate
 	}
 	return &LambdaClient{
 		client: client,
 	}
 }
-func nopValidate(_ interface{}) error { return nil }
 
 func (c *LambdaClient) ListAvailableLogTypes(ctx context.Context) (*ListAvailableLogTypesOutput, error) {
 	lambdaEvent := LambdaAPIEvent{

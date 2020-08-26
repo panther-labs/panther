@@ -29,12 +29,14 @@ import (
 	"github.com/pkg/errors"
 )
 
+// CheckRouteName checks if a route name is valid
 func CheckRouteName(name string) bool {
 	return routeNameRegExp.MatchString(name)
 }
 
 var routeNameRegExp = regexp.MustCompile(`^[A-Z][A-Za-z0-9]+$`)
 
+// Route is a named route method
 type Route struct {
 	name        string
 	method      reflect.Value
@@ -44,6 +46,7 @@ type Route struct {
 	withError   bool
 }
 
+// MustBuildRoute builds a route for a handler or panics
 func MustBuildRoute(routeName string, handler interface{}) *Route {
 	route, err := BuildRoute(routeName, handler)
 	if err != nil {
@@ -52,6 +55,8 @@ func MustBuildRoute(routeName string, handler interface{}) *Route {
 	return route
 }
 
+// BuildRoute builds a route for a handler.
+// If the handler does not meet the signature requirements it returns an error.
 func BuildRoute(routeName string, handler interface{}) (*Route, error) {
 	if !CheckRouteName(routeName) {
 		return nil, errors.Errorf(`invalid route name %q`, routeName)
@@ -72,6 +77,7 @@ func AppendStructRoutes(routes []*Route, methodPrefix string, structHandler inte
 	return append(routes, structRoutes...), nil
 }
 
+// StructRoutes returns a route for each method of a struct that has the prefix.
 func StructRoutes(methodPrefix string, structHandler interface{}) ([]*Route, error) {
 	var routes []*Route
 	val := reflect.ValueOf(structHandler)
@@ -101,22 +107,37 @@ func StructRoutes(methodPrefix string, structHandler interface{}) ([]*Route, err
 	return routes, nil
 }
 
+// Name returns the route name
 func (r *Route) Name() string {
 	return r.name
 }
+
+// Input returns input argument type
 func (r *Route) Input() reflect.Type {
 	return r.input
 }
+
+// Output returns output argument type
 func (r *Route) Output() reflect.Type {
 	return r.output
 }
 
+// Handler builds a Handler for the route
 func (r *Route) Handler(api jsoniter.API, validate func(interface{}) error) Handler {
+	if validate == nil {
+		validate = NopValidate
+	}
 	return &routeHandler{
 		Route:    r,
 		Validate: validate,
 		JSON:     resolveJSON(api),
 	}
+}
+
+// NopValidate returns no errors.
+// It is exported to avoid having to re-define it in generated client code
+func NopValidate(_ interface{}) error {
+	return nil
 }
 
 func (r *Route) setInputMethod(receiver reflect.Value, method reflect.Method) error {
@@ -249,51 +270,62 @@ type routeHandler struct {
 
 var emptyResult = json.RawMessage(`{}`)
 
-func (r *routeHandler) HandleRaw(ctx context.Context, input json.RawMessage) (output json.RawMessage, err error) {
-	out, err := r.HandleJSON(ctx, input)
+// HandleRaw implements Handler
+func (r *routeHandler) HandleRaw(ctx context.Context, input json.RawMessage) (json.RawMessage, error) {
+	params, err := r.callParams(ctx, input)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	result, err := r.call(params)
 	if err != nil {
 		return nil, err
 	}
-	if out == nil {
+	if result == nil {
 		return emptyResult, nil
 	}
-	return r.JSON.Marshal(out)
+	output, err := r.JSON.Marshal(result.Interface())
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return output, nil
 }
 
-func (r *routeHandler) HandleJSON(ctx context.Context, input json.RawMessage) (interface{}, error) {
-	in := make([]reflect.Value, 0, 3)
+func (r *routeHandler) callParams(ctx context.Context, input json.RawMessage) ([]reflect.Value, error) {
+	in := make([]reflect.Value, 0, 2)
 	if r.withContext {
 		in = append(in, reflect.ValueOf(ctx))
 	}
 	if r.input != nil {
-		val := reflect.New(r.input)
-		x := val.Interface()
-		if err := r.JSON.Unmarshal(input, x); err != nil {
+		inputVal := reflect.New(r.input)
+		val := inputVal.Interface()
+		if err := r.JSON.Unmarshal(input, val); err != nil {
 			return nil, err
 		}
-		if r.Validate != nil {
-			if err := r.Validate(x); err != nil {
-				return nil, err
-			}
+		if err := r.Validate(val); err != nil {
+			return nil, err
 		}
-		in = append(in, val)
+		in = append(in, inputVal)
 	}
+	return in, nil
+}
+
+func (r *routeHandler) call(in []reflect.Value) (*reflect.Value, error) {
 	switch out := r.method.Call(in); len(out) {
 	case 2:
-		outVal, errVal := out[0], out[1]
+		outVal, errVal := &out[0], &out[1]
 		if errVal.IsZero() || errVal.IsNil() {
-			return outVal.Interface(), nil
+			return outVal, nil
 		}
 		return nil, errVal.Interface().(error)
 	case 1:
-		outVal := out[0]
+		outVal := &out[0]
 		if r.withError {
 			if outVal.IsNil() {
 				return nil, nil
 			}
 			return nil, outVal.Interface().(error)
 		}
-		return outVal.Interface(), nil
+		return outVal, nil
 	default:
 		return nil, errors.New(`invalid route signature`)
 	}

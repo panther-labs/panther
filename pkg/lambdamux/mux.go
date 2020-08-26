@@ -28,6 +28,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Mux dispatches handling of a Lambda event based on top-level JSON key.
 type Mux struct {
 	// JSON can be used to specialize the configuration and extensions used by jsoniter
 	JSON jsoniter.API
@@ -39,6 +40,7 @@ type Mux struct {
 	handlers map[string]Handler
 }
 
+// Routes returns all Routes added to the mux.
 func (m *Mux) Routes() (routes []*Route) {
 	for _, handler := range m.handlers {
 		if r, ok := handler.(*routeHandler); ok {
@@ -48,6 +50,8 @@ func (m *Mux) Routes() (routes []*Route) {
 	return
 }
 
+// HandleRoutes adds handlers for all routes.
+// The handlers will use the values from Mux.JSON and Mux.Validate
 func (m *Mux) HandleRoutes(routes ...*Route) {
 	for _, route := range routes {
 		name := route.Name()
@@ -56,6 +60,8 @@ func (m *Mux) HandleRoutes(routes ...*Route) {
 	}
 }
 
+// Handle applies any decoration and adds a handler to the mux.
+// It does *not* affect validation or the JSON config of the handler.
 func (m *Mux) Handle(routeName string, handler Handler) {
 	if decorate := m.Decorate; decorate != nil {
 		handler = decorate(routeName, handler)
@@ -69,12 +75,17 @@ func (m *Mux) Handle(routeName string, handler Handler) {
 	m.handlers[routeName] = handler
 }
 
+// MustHandleStructs add all routes from a struct to the Mux or panics.
+// It overrides previously defined routes *without* an error.
 func (m *Mux) MustHandleStructs(methodPrefix string, structHandlers ...interface{}) {
 	if err := m.HandleStructs(methodPrefix, structHandlers...); err != nil {
 		panic(err)
 	}
 }
 
+// HandleStructs add all routes from a struct to the Mux.
+// It fails if a method does not meet the signature requirements.
+// It overrides previously defined routes *without* an error.
 func (m *Mux) HandleStructs(methodPrefix string, structHandlers ...interface{}) error {
 	for _, s := range structHandlers {
 		routes, err := StructRoutes(methodPrefix, s)
@@ -86,6 +97,7 @@ func (m *Mux) HandleStructs(methodPrefix string, structHandlers ...interface{}) 
 	return nil
 }
 
+// HandleRaw implements Handler interface
 func (m *Mux) HandleRaw(ctx context.Context, input json.RawMessage) (json.RawMessage, error) {
 	jsonAPI := resolveJSON(m.JSON)
 	iter := jsonAPI.BorrowIterator(input)
