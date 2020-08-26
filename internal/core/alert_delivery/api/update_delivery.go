@@ -22,6 +22,7 @@ import (
 	"go.uber.org/zap"
 
 	alertModels "github.com/panther-labs/panther/api/lambda/alerts/models"
+	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -30,6 +31,11 @@ func updateAlerts(statuses []DispatchStatus) []*alertModels.AlertSummary {
 	// create a relational mapping for alertID to a list of delivery statuses
 	alertMap := make(map[string][]*alertModels.DeliveryResponse)
 	for _, status := range statuses {
+		// If the alert came from a policy, we need to skip
+		if (status.Alert.Type == deliveryModels.PolicyType) || (status.Alert.AlertID == nil) {
+			continue
+		}
+
 		// convert to the response type the lambda expects
 		deliveryResponse := &alertModels.DeliveryResponse{
 			OutputID:     status.OutputID,
@@ -38,7 +44,7 @@ func updateAlerts(statuses []DispatchStatus) []*alertModels.AlertSummary {
 			Success:      status.Success,
 			DispatchedAt: status.DispatchedAt,
 		}
-		alertMap[status.AlertID] = append(alertMap[status.AlertID], deliveryResponse)
+		alertMap[*status.Alert.AlertID] = append(alertMap[*status.Alert.AlertID], deliveryResponse)
 	}
 
 	// Init a channel

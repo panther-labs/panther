@@ -33,7 +33,7 @@ type AlertOutputMap map[*deliveryModels.Alert][]*outputModels.AlertOutput
 
 // DispatchStatus holds info about which alert was sent to a given destination with its response status
 type DispatchStatus struct {
-	AlertID      string
+	Alert        deliveryModels.Alert
 	OutputID     string
 	Message      string
 	StatusCode   int
@@ -72,9 +72,9 @@ func sendAlerts(alertOutputs AlertOutputMap) []DispatchStatus {
 // The statusChannel will be sent a message with the result of the send attempt.
 func sendAlert(alert *deliveryModels.Alert, output *outputModels.AlertOutput, dispatchedAt time.Time, statusChannel chan DispatchStatus) {
 	commonFields := []zap.Field{
-		zap.String("alertID", *alert.AlertID),
-		zap.String("outputID", *output.OutputID),
+		zap.Stringp("alertID", alert.AlertID),
 		zap.String("policyId", alert.AnalysisID),
+		zap.Stringp("outputID", output.OutputID),
 	}
 
 	defer func() {
@@ -83,7 +83,7 @@ func sendAlert(alert *deliveryModels.Alert, output *outputModels.AlertOutput, di
 		if r := recover(); r != nil {
 			zap.L().Error("panic sending alert", append(commonFields, zap.Any("panic", r))...)
 			statusChannel <- DispatchStatus{
-				AlertID:      *alert.AlertID,
+				Alert:        *alert,
 				OutputID:     *output.OutputID,
 				StatusCode:   500,
 				Success:      false,
@@ -96,7 +96,7 @@ func sendAlert(alert *deliveryModels.Alert, output *outputModels.AlertOutput, di
 
 	zap.L().Info(
 		"sending alert",
-		append(commonFields, zap.String("name", *output.DisplayName))...,
+		append(commonFields, zap.Stringp("name", output.DisplayName))...,
 	)
 	var response *outputs.AlertDeliveryResponse
 	switch *output.OutputType {
@@ -123,7 +123,7 @@ func sendAlert(alert *deliveryModels.Alert, output *outputModels.AlertOutput, di
 	default:
 		zap.L().Warn("unsupported output type", commonFields...)
 		statusChannel <- DispatchStatus{
-			AlertID:      *alert.AlertID,
+			Alert:        *alert,
 			OutputID:     *output.OutputID,
 			StatusCode:   500,
 			Success:      false,
@@ -137,7 +137,7 @@ func sendAlert(alert *deliveryModels.Alert, output *outputModels.AlertOutput, di
 	if response == nil {
 		zap.L().Warn("output response is nil", commonFields...)
 		statusChannel <- DispatchStatus{
-			AlertID:      *alert.AlertID,
+			Alert:        *alert,
 			OutputID:     *output.OutputID,
 			StatusCode:   500,
 			Success:      false,
@@ -150,13 +150,11 @@ func sendAlert(alert *deliveryModels.Alert, output *outputModels.AlertOutput, di
 
 	if !response.Success {
 		zap.L().Warn("failed to send alert", append(commonFields, zap.Error(response))...)
-	} else {
-		zap.L().Info("alert success", commonFields...)
 	}
 
 	// Retry only if not successful and we don't have a permanent failure
 	statusChannel <- DispatchStatus{
-		AlertID:      *alert.AlertID,
+		Alert:        *alert,
 		OutputID:     *output.OutputID,
 		StatusCode:   response.StatusCode,
 		Success:      response.Success && !response.Permanent,

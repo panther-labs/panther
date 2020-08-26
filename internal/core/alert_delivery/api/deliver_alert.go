@@ -19,9 +19,9 @@ package api
  */
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
 
-	"github.com/aws/aws-sdk-go/aws"
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
@@ -86,9 +86,10 @@ func getAlert(input *deliveryModels.DeliverAlertInput) (*table.AlertItem, error)
 
 // populateAlertData - queries the rule or policy associated and merges in the details to the alert
 func populateAlertData(alertItem *table.AlertItem) *deliveryModels.Alert {
-	// TODO: Fetch and merge the related fields from the Policy/Rule into the alert.
+	// TODO: Fetch and merge the related fields from the Rule into the alert.
+	// Alerts triggerd by Policies are not supported.
 	// ...
-	// Note: we need to account for the corner case when there is no rule/policy
+	// Note: we need to account for the corner case when there is no rule
 	// because it has been deleted. Additionally, we should provide an identifier
 	// in the alert (TBD) to differentiate from re-send action or a new rule/policy trigger
 
@@ -96,11 +97,11 @@ func populateAlertData(alertItem *table.AlertItem) *deliveryModels.Alert {
 	// Eventually, sending an alert should be _exactly_ the same as if it were triggered
 	// from a Policy or a Rule.
 	return &deliveryModels.Alert{
-		AnalysisID: alertItem.AlertID,
-		Type:       "RULE",
-		CreatedAt:  alertItem.CreationTime,
-		Severity:   alertItem.Severity,
-		OutputIds:  alertItem.OutputIds,
+		// AnalysisID: alertItem.AlertID,
+		Type:      deliveryModels.RuleType, // For now, we hard-code this value as only RULE is supported
+		CreatedAt: alertItem.CreationTime,
+		Severity:  alertItem.Severity,
+		OutputIds: alertItem.OutputIds,
 		// AnalysisDescription: alertItem.Title,
 		AnalysisName: alertItem.RuleDisplayName,
 		Version:      &alertItem.RuleVersion,
@@ -167,7 +168,7 @@ func logOrReturn(dispatchStatuses []DispatchStatus) error {
 		if !delivery.Success {
 			zap.L().Error(
 				"failed to send alert to output",
-				zap.String("alertID", delivery.AlertID),
+				zap.Any("alert", delivery.Alert),
 				zap.String("outputID", delivery.OutputID),
 				zap.Int("statusCode", delivery.StatusCode),
 				zap.String("message", delivery.Message),

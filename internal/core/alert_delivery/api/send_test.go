@@ -93,7 +93,7 @@ func TestSendPanic(t *testing.T) {
 	alert := sampleAlert()
 
 	expectedResponse := DispatchStatus{
-		AlertID:      *alert.AlertID,
+		Alert:        *alert,
 		OutputID:     *alertOutput.OutputID,
 		StatusCode:   500,
 		Success:      false,
@@ -125,7 +125,7 @@ func TestSendUnsupportedOutput(t *testing.T) {
 		OutputID: aws.String("output-id"),
 	}
 	expectedResponse := DispatchStatus{
-		AlertID:      *alert.AlertID,
+		Alert:        *alert,
 		OutputID:     *alertOutput.OutputID,
 		StatusCode:   500,
 		Success:      false,
@@ -148,7 +148,7 @@ func TestSendResponseNil(t *testing.T) {
 	// Create a nil response
 	var response *outputs.AlertDeliveryResponse
 	expectedResponse := DispatchStatus{
-		AlertID:      *alert.AlertID,
+		Alert:        *alert,
 		OutputID:     *alertOutput.OutputID,
 		StatusCode:   500,
 		Success:      false,
@@ -176,7 +176,7 @@ func TestSendPermanentFailure(t *testing.T) {
 		Permanent:  true,
 	}
 	expectedResponse := DispatchStatus{
-		AlertID:      *alert.AlertID,
+		Alert:        *alert,
 		OutputID:     *alertOutput.OutputID,
 		StatusCode:   500,
 		Success:      false,
@@ -204,7 +204,7 @@ func TestSendTransientFailure(t *testing.T) {
 		Permanent:  false,
 	}
 	expectedResponse := DispatchStatus{
-		AlertID:      *alert.AlertID,
+		Alert:        *alert,
 		OutputID:     *alertOutput.OutputID,
 		StatusCode:   429,
 		Success:      false,
@@ -232,7 +232,7 @@ func TestSendSuccess(t *testing.T) {
 		Permanent:  false,
 	}
 	expectedResponse := DispatchStatus{
-		AlertID:      *alert.AlertID,
+		Alert:        *alert,
 		OutputID:     *alertOutput.OutputID,
 		StatusCode:   200,
 		Success:      true,
