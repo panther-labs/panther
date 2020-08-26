@@ -95,9 +95,9 @@ commands:
 
 # The pool of jobs that that our CI will be able to run
 jobs:
-  mage_fmt:
+  mage_test_ci:
     executor: panther-buildpack
-    resource_class: large
+    resource_class: xlarge
     steps:
       - checkout
       - restore_go_modules_from_cache
@@ -115,30 +115,15 @@ jobs:
       - persist_binaries_to_cache
       - run:
           name: Run test suite
-          command: mage fmt
+          command: mage fmt doc
       - run:
-          name: Push `mage fmt` changes to remote ref (optional - only if `mage fmt` produces changes)
+          name: Push `mage fmt doc` changes to remote ref (optional - only if `mage fmt doc` produces changes)
           command: |
             git config --global user.email "github-service-account@runpanther.io"
             git config --global user.name "panther-bot"
             git add -A .
-            git commit -m "ci: mage fmt" || true
+            git commit -m "ci: mage fmt doc" || true
             git push origin $CIRCLE_BRANCH
-
-  mage_test_ci:
-    executor: panther-buildpack
-    resource_class: xlarge
-    steps:
-      - checkout
-      - restore_go_modules_from_cache
-      - restore_node_modules_from_cache
-      - restore_python_modules_from_cache
-      - restore_binaries_from_cache
-      - run:
-          # By this point, mage is compiled and all dependencies have been restored from the cache.
-          # "mage setup" will be a no-op unless new dependencies have been introduced.
-          name: Install new dependencies
-          command: mage setup
       - run:
           name: Run test suite
           command: mage test:ci
@@ -180,10 +165,10 @@ workflows:
   version: 2
   pipeline:
     jobs:
-      - mage_fmt
       - mage_test_ci:
-          requires:
-            - mage_fmt # fmt needs to run before mage test:ci in order to apply potential changes
+          filters:
+            branches:
+              ignore: master
       - npm_audit
       - bundlesize
       - fossa_upload
