@@ -32,6 +32,7 @@ const SqsDestinationCard: React.FC<SqsDestinationCardProps> = ({ destination }) 
   return (
     <DestinationCard logo={DESTINATIONS[DestinationTypeEnum.Sqs].logo} destination={destination}>
       <GenericItemCard.Value label="Queue URL" value={destination.outputConfig.sqs.queueUrl} />
+      <GenericItemCard.LineBreak />
       <GenericItemCard.Value
         label="Date Created"
         value={formatDatetime(destination.creationTime, true)}

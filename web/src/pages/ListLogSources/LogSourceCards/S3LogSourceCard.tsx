@@ -43,7 +43,7 @@ const S3LogSourceCard: React.FC<S3LogSourceCardProps> = ({ source }) => {
       />
       <GenericItemCard.Value
         label="Last Received Events At"
-        value={formatDatetime(source.lastEventReceived, true)}
+        value={source.lastEventReceived ? formatDatetime(source.lastEventReceived, true) : 'Never'}
       />
       <GenericItemCard.LineBreak />
       <GenericItemCard.Value

@@ -32,7 +32,7 @@ const GithubDestinationCard: React.FC<GithubDestinationCardProps> = ({ destinati
   return (
     <DestinationCard logo={DESTINATIONS[DestinationTypeEnum.Github].logo} destination={destination}>
       <GenericItemCard.Value label="Repository" value={destination.outputConfig.github.repoName} />
-      <br />
+      <GenericItemCard.LineBreak />
       <GenericItemCard.Value
         label="Date Created"
         value={formatDatetime(destination.creationTime, true)}

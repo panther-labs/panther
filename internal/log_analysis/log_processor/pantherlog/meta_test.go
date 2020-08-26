@@ -45,6 +45,8 @@ func TestMetaEventStruct(t *testing.T) {
 		{"p_parse_time", "timestamp", "Panther added standardized log parse time (UTC)", true},
 		{"p_log_type", "string", "Panther added field with type of log", true},
 		{"p_row_id", "string", "Panther added field with unique id (within table)", true},
+		{"p_source_id", "string", "Panther added field with the source id", false},
+		{"p_source_label", "string", "Panther added field with the source label", false},
 		{"p_any_ip_addresses", "array<string>", "Panther added field with collection of ip addresses associated with the row", false},
 	}, columns)
 }
