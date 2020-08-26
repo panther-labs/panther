@@ -30,11 +30,7 @@ interface JiraDestinationCardProps {
 
 const JiraDestinationCard: React.FC<JiraDestinationCardProps> = ({ destination }) => {
   return (
-    <DestinationCard
-      key={destination.outputId}
-      logo={DESTINATIONS[DestinationTypeEnum.Jira].logo}
-      destination={destination}
-    >
+    <DestinationCard logo={DESTINATIONS[DestinationTypeEnum.Jira].logo} destination={destination}>
       <GenericItemCard.Value
         label="Organization Domain"
         value={destination.outputConfig.jira.orgDomain}
@@ -43,6 +39,7 @@ const JiraDestinationCard: React.FC<JiraDestinationCardProps> = ({ destination }
       <GenericItemCard.Value label="Email" value={destination.outputConfig.jira.userName} />
       <GenericItemCard.Value label="Assignee ID" value={destination.outputConfig.jira.assigneeId} />
       <GenericItemCard.Value label="Issue Type" value={destination.outputConfig.jira.issueType} />
+      <GenericItemCard.LineBreak />
       <GenericItemCard.Value
         label="Date Created"
         value={formatDatetime(destination.creationTime, true)}

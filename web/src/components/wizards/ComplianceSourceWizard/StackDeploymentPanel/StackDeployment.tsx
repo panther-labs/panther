@@ -21,7 +21,7 @@ import React from 'react';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useFormikContext } from 'formik';
 import { pantherConfig } from 'Source/config';
-import { WizardPanelWrapper } from 'Components/Wizard';
+import { WizardPanel } from 'Components/Wizard';
 import { useGetComplianceCfnTemplate } from './graphql/getComplianceCfnTemplate.generated';
 import { ComplianceSourceWizardValues } from '../ComplianceSourceWizard';
 
@@ -151,7 +151,7 @@ const StackDeployment: React.FC = () => {
 
   return (
     <Box>
-      <WizardPanelWrapper.Heading
+      <WizardPanel.Heading
         title="Deploy your configured stack"
         subtitle={`To proceed, you must deploy the generated Cloudformation template to the AWS account 
         ${values.awsAccountId}. 

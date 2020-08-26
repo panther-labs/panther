@@ -317,10 +317,12 @@ func EqualTimestamp(t *testing.T, expect, actual time.Time, msgAndArgs ...interf
 // The parsing is inefficient. It's purpose is to be used in tests to verify output results.
 func UnmarshalResultJSON(data []byte, r *pantherlog.Result, indicators pantherlog.FieldSet) error {
 	tmp := struct {
-		LogType   string      `json:"p_log_type"`
-		EventTime tcodec.Time `json:"p_event_time" tcodec:"rfc3339"`
-		ParseTime tcodec.Time `json:"p_parse_time" tcodec:"rfc3339"`
-		RowID     string      `json:"p_row_id"`
+		LogType     string      `json:"p_log_type"`
+		EventTime   tcodec.Time `json:"p_event_time" tcodec:"rfc3339"`
+		ParseTime   tcodec.Time `json:"p_parse_time" tcodec:"rfc3339"`
+		RowID       string      `json:"p_row_id"`
+		SourceID    string      `json:"p_source_id"`
+		SourceLabel string      `json:"p_source_label"`
 	}{}
 	if err := jsoniter.Unmarshal(data, &tmp); err != nil {
 		return err
@@ -340,10 +342,12 @@ func UnmarshalResultJSON(data []byte, r *pantherlog.Result, indicators pantherlo
 	}
 	*r = pantherlog.Result{
 		CoreFields: pantherlog.CoreFields{
-			PantherLogType:   tmp.LogType,
-			PantherRowID:     tmp.RowID,
-			PantherEventTime: tmp.EventTime,
-			PantherParseTime: tmp.ParseTime,
+			PantherLogType:     tmp.LogType,
+			PantherRowID:       tmp.RowID,
+			PantherEventTime:   tmp.EventTime,
+			PantherParseTime:   tmp.ParseTime,
+			PantherSourceID:    tmp.SourceID,
+			PantherSourceLabel: tmp.SourceLabel,
 		},
 	}
 	values.WriteValuesTo(r)

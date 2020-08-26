@@ -21,7 +21,7 @@ import { Flex, Spinner, useSnackbar } from 'pouncejs';
 import { DestinationConfigInput } from 'Generated/schema';
 import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm';
 import { extractErrorMessage } from 'Helpers/utils';
-import { useWizardContext, WizardPanelWrapper } from 'Components/Wizard';
+import { useWizardContext, WizardPanel } from 'Components/Wizard';
 import DestinationFormSwitcher from 'Components/forms/DestinationFormSwitcher';
 import useRouter from 'Hooks/useRouter';
 import { useUpdateDestination } from './graphql/updateDestination.generated';
@@ -91,7 +91,7 @@ const ConfigureDestinationPanel: React.FC = () => {
 
   return (
     <React.Fragment>
-      <WizardPanelWrapper.Heading
+      <WizardPanel.Heading
         title="Update Your Destination"
         subtitle="Make changes to the form below in order to update your Destination"
       />

@@ -86,16 +86,16 @@ func TestGetS3Client(t *testing.T) {
 		S3Bucket:    "test-bucket",
 		S3ObjectKey: "prefix/key",
 	}
-	result, sourceType, err := getS3Client(s3Object)
+	result, sourceInfo, err := getS3Client(s3Object)
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	require.Equal(t, models.IntegrationTypeAWS3, sourceType)
+	require.Equal(t, models.IntegrationTypeAWS3, sourceInfo.IntegrationType)
 
 	// Subsequent calls should use cache
-	result, sourceType, err = getS3Client(s3Object)
+	result, sourceInfo, err = getS3Client(s3Object)
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	require.Equal(t, models.IntegrationTypeAWS3, sourceType)
+	require.Equal(t, models.IntegrationTypeAWS3, sourceInfo.IntegrationType)
 
 	// verify that we have updated the source with the last time scanned status
 	updateStatusInvokeInput := lambdaMock.Calls[1].Arguments.Get(0).(*lambda.InvokeInput)
@@ -137,10 +137,10 @@ func TestGetS3ClientUnknownBucket(t *testing.T) {
 		S3ObjectKey: "prefix/key",
 	}
 
-	result, sourceType, err := getS3Client(s3Object)
+	result, sourceInfo, err := getS3Client(s3Object)
 	require.Error(t, err)
 	require.Nil(t, result)
-	require.Equal(t, "", sourceType)
+	require.Nil(t, sourceInfo)
 
 	s3Mock.AssertExpectations(t)
 	lambdaMock.AssertExpectations(t)
@@ -191,10 +191,10 @@ func TestGetS3ClientSourceNoPrefix(t *testing.T) {
 		S3ObjectKey: "test",
 	}
 
-	result, sourceType, err := getS3Client(s3Object)
+	result, sourceInfo, err := getS3Client(s3Object)
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	require.Equal(t, models.IntegrationTypeAWS3, sourceType)
+	require.Equal(t, models.IntegrationTypeAWS3, sourceInfo.IntegrationType)
 
 	s3Mock.AssertExpectations(t)
 	lambdaMock.AssertExpectations(t)
@@ -205,4 +205,58 @@ func resetCaches() {
 	sourceCache.cacheUpdateTime = time.Unix(0, 0)
 	bucketCache, _ = lru.NewARC(s3BucketLocationCacheSize)
 	s3ClientCache, _ = lru.NewARC(s3ClientCacheSize)
+}
+
+func TestSourceCacheStruct_Find(t *testing.T) {
+	cache := sourceCacheStruct{}
+	now := time.Now()
+	sources := []*models.SourceIntegration{
+		{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
+				S3Bucket: "foo",
+				S3Prefix: "",
+				LogTypes: []string{"Foo.Bar"},
+			},
+		},
+		{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
+				S3Bucket: "foo",
+				S3Prefix: "/foo",
+				LogTypes: []string{"Foo.Baz"},
+			},
+		},
+		{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
+				S3Bucket: "foo",
+				S3Prefix: "/foo/bar/baz",
+				LogTypes: []string{"Foo.Qux"},
+			},
+		},
+	}
+	assert := require.New(t)
+	cache.Update(now, sources)
+	{
+		src := cache.Find("foo", "/bar")
+		assert.NotNil(src)
+		assert.Equal("", src.S3Prefix)
+	}
+	{
+		src := cache.Find("foo", "/foo/bar.json")
+		assert.NotNil(src)
+		assert.Equal("/foo", src.S3Prefix)
+	}
+	{
+		src := cache.Find("foo", "/foo/bar/baz.json")
+		assert.NotNil(src)
+		assert.Equal("/foo/bar/baz", src.S3Prefix)
+	}
+	{
+		src := cache.Find("foo", "/foo/bar/baz/qux.json")
+		assert.NotNil(src)
+		assert.Equal("/foo/bar/baz", src.S3Prefix)
+	}
+	{
+		src := cache.Find("goo", "/foo/bar/baz/qux.json")
+		assert.Nil(src)
+	}
 }

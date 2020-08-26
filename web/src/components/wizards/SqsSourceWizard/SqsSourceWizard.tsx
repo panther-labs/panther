@@ -21,11 +21,10 @@ import { LOG_TYPES } from 'Source/constants';
 import { Form, Formik } from 'formik';
 import * as Yup from 'yup';
 import { FetchResult } from '@apollo/client';
-import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
+import { Wizard, WizardPanel } from 'Components/Wizard';
 import { yupIntegrationLabelValidation } from 'Helpers/utils';
 import SuccessPanel from './SuccessPanel';
 import SqsSourceConfigurationPanel from './SqsSourceConfigurationPanel';
-import InformationPanel from './InformationPanel';
 
 interface SqsLogSourceWizardProps {
   initialValues: SqsLogSourceWizardValues;
@@ -80,44 +79,27 @@ const SqsSourceWizard: React.FC<SqsLogSourceWizardProps> = ({
         return (
           <Form>
             <Wizard>
-              {initialValues.integrationId && (
-                <Wizard.Step title="Information">
-                  <WizardPanelWrapper>
-                    <WizardPanelWrapper.Content>
-                      <InformationPanel />
-                    </WizardPanelWrapper.Content>
-                    <WizardPanelWrapper.Actions>
-                      <WizardPanelWrapper.ActionNext>Continue Setup</WizardPanelWrapper.ActionNext>
-                    </WizardPanelWrapper.Actions>
-                  </WizardPanelWrapper>
-                </Wizard.Step>
-              )}
               <Wizard.Step title="Configure">
-                <WizardPanelWrapper>
-                  <WizardPanelWrapper.Content>
-                    <SqsSourceConfigurationPanel />
-                  </WizardPanelWrapper.Content>
-                  <WizardPanelWrapper.Actions>
-                    {initialValues.integrationId && <WizardPanelWrapper.ActionPrev />}
-                    <WizardPanelWrapper.ActionNext
+                <WizardPanel>
+                  <SqsSourceConfigurationPanel />
+                  <WizardPanel.Actions>
+                    <WizardPanel.ActionNext
                       disabled={
                         (!values.logTypes.length && !values.integrationLabel) || !isValid || !dirty
                       }
                     >
                       Continue Setup
-                    </WizardPanelWrapper.ActionNext>
-                  </WizardPanelWrapper.Actions>
-                </WizardPanelWrapper>
+                    </WizardPanel.ActionNext>
+                  </WizardPanel.Actions>
+                </WizardPanel>
               </Wizard.Step>
               <Wizard.Step title="Done">
-                <WizardPanelWrapper>
-                  <WizardPanelWrapper.Content>
-                    <SuccessPanel />
-                  </WizardPanelWrapper.Content>
-                  <WizardPanelWrapper.Actions>
-                    <WizardPanelWrapper.ActionPrev />
-                  </WizardPanelWrapper.Actions>
-                </WizardPanelWrapper>
+                <WizardPanel>
+                  <SuccessPanel />
+                  <WizardPanel.Actions>
+                    <WizardPanel.ActionPrev />
+                  </WizardPanel.Actions>
+                </WizardPanel>
               </Wizard.Step>
             </Wizard>
           </Form>

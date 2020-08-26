@@ -20,6 +20,7 @@ package kinesisbatch
 
 import (
 	"errors"
+	"strconv"
 	"testing"
 	"time"
 
@@ -53,7 +54,7 @@ func (m *mockKinesis) PutRecords(input *kinesis.PutRecordsInput) (*kinesis.PutRe
 		if i == 0 || !m.unprocessedItems {
 			// Success if this is first record or failure not requested
 			result.Records = append(result.Records, &kinesis.PutRecordsResultEntry{
-				SequenceNumber: aws.String(string(i)),
+				SequenceNumber: aws.String(strconv.Itoa(i)),
 				ShardId:        aws.String("shard-id"),
 			})
 		} else {

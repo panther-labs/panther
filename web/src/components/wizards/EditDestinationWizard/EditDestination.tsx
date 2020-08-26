@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
-import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
+import { Wizard, WizardPanel } from 'Components/Wizard';
 import ConfigureDestinationScreen from './ConfigureDestinationPanel';
 import DestinationTestPanel from '../common/DestinationTestPanel';
 
@@ -30,18 +30,14 @@ const EditDestination: React.FC = () => {
   return (
     <Wizard<WizardData> header={false}>
       <Wizard.Step>
-        <WizardPanelWrapper>
-          <WizardPanelWrapper.Content>
-            <ConfigureDestinationScreen />
-          </WizardPanelWrapper.Content>
-        </WizardPanelWrapper>
+        <WizardPanel>
+          <ConfigureDestinationScreen />
+        </WizardPanel>
       </Wizard.Step>
       <Wizard.Step>
-        <WizardPanelWrapper>
-          <WizardPanelWrapper.Content>
-            <DestinationTestPanel />
-          </WizardPanelWrapper.Content>
-        </WizardPanelWrapper>
+        <WizardPanel>
+          <DestinationTestPanel />
+        </WizardPanel>
       </Wizard.Step>
     </Wizard>
   );

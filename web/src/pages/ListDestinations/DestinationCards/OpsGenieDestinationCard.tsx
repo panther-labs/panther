@@ -31,7 +31,6 @@ interface OpsGenieDestinationCardProps {
 const OpsGenieDestinationCard: React.FC<OpsGenieDestinationCardProps> = ({ destination }) => {
   return (
     <DestinationCard
-      key={destination.outputId}
       logo={DESTINATIONS[DestinationTypeEnum.Opsgenie].logo}
       destination={destination}
     >
