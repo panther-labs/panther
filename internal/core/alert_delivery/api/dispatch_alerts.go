@@ -184,6 +184,8 @@ func getAlertsToRetry(failedDispatchStatuses []DispatchStatus) []*deliveryModels
 
 		// Create a shallow copy to mutate
 		mutatedAlert := failed.Alert
+		// Increment the retry counter in the alert
+		mutatedAlert.RetryCount++
 		// Overwrite the list of outputs with the output that failed
 		mutatedAlert.OutputIds = []string{failed.OutputID}
 		// Add the alert in question to a new list to be retried

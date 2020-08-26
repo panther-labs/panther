@@ -94,10 +94,6 @@ func sendAlert(alert *deliveryModels.Alert, output *outputModels.AlertOutput, di
 		}
 	}()
 
-	zap.L().Info(
-		"sending alert",
-		append(commonFields, zap.Stringp("name", output.DisplayName))...,
-	)
 	var response *outputs.AlertDeliveryResponse
 	switch *output.OutputType {
 	case "slack":
@@ -146,10 +142,6 @@ func sendAlert(alert *deliveryModels.Alert, output *outputModels.AlertOutput, di
 			DispatchedAt: dispatchedAt,
 		}
 		return
-	}
-
-	if !response.Success {
-		zap.L().Warn("failed to send alert", append(commonFields, zap.Error(response))...)
 	}
 
 	// Retry only if not successful and we don't have a permanent failure
