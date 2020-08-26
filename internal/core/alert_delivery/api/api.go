@@ -31,7 +31,6 @@ import (
 
 	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
-	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
 )
 
 // API has all of the handlers as receiver methods.
@@ -42,7 +41,6 @@ var (
 	maxRetryCount int
 	awsSession    = session.Must(session.NewSession())
 	alertsDB      table.API
-	alertUtils    utils.API
 	// We need the Lambda client for the following:
 	//  1. To fetch the details from the destination outputs
 	//  2. To get the rule or policy associated with the original alert (for re-sending alerts)
@@ -70,7 +68,6 @@ func Setup() {
 		RuleIDCreationTimeIndexName:        env.RuleIndexName,
 		TimePartitionCreationTimeIndexName: env.TimeIndexName,
 	}
-	alertUtils = &utils.AlertUtils{}
 }
 
 func getSQSClient() sqsiface.SQSAPI {

@@ -25,8 +25,8 @@ import (
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-// updateAlerts - ivokes a lambda to update the alert statuses
-func updateAlerts(statuses []DispatchStatus) ([]*alertModels.AlertSummary, error) {
+// updateAlerts - dispatches parallel lambda requests to update the alert statuses
+func updateAlerts(statuses []DispatchStatus) []*alertModels.AlertSummary {
 	// create a relational mapping for alertID to a list of delivery statuses
 	alertMap := make(map[string][]*alertModels.DeliveryResponse)
 	for _, status := range statuses {
@@ -59,9 +59,10 @@ func updateAlerts(statuses []DispatchStatus) ([]*alertModels.AlertSummary, error
 		alertSummaries = append(alertSummaries, &alertSummary)
 	}
 
-	return alertSummaries, nil
+	return alertSummaries
 }
 
+// updateAlert - invokes a lambda to update an alert's delivery status
 func updateAlert(alertID string, deliveryResponse []*alertModels.DeliveryResponse, alertSummaryChannel chan alertModels.AlertSummary) {
 	input := alertModels.LambdaInput{UpdateAlertDelivery: &alertModels.UpdateAlertDeliveryInput{
 		AlertID:           alertID,

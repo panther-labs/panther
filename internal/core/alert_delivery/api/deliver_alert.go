@@ -21,6 +21,7 @@ package api
 import (
 	"go.uber.org/zap"
 
+	"github.com/aws/aws-sdk-go/aws"
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
@@ -52,11 +53,8 @@ func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModel
 	dispatchStatuses := sendAlerts(alertOutputMap)
 
 	// Record the delivery statuses to ddb
-	alertSummaries, err := updateAlerts(dispatchStatuses)
-	if err != nil {
-		return nil, err
-	}
-	zap.L().Info("Updated all alert delivery statuses successfully")
+	alertSummaries := updateAlerts(dispatchStatuses)
+	zap.L().Info("Finished updating alert delivery statuses")
 
 	// Because this API will be used for re-sending only 1 alert,
 	// we log if there was a failure and return the error
@@ -109,12 +107,12 @@ func populateAlertData(alertItem *table.AlertItem) *deliveryModels.Alert {
 		// Runbook:      alertItem.Runbook,
 		// Tags:         alertItem.Tags,
 		AlertID:    &alertItem.AlertID,
-		Title:      alertItem.Title,
+		Title:      aws.String("[re-sent] " + *alertItem.Title),
 		RetryCount: 0,
 	}
 }
 
-// getAlertOutputMapping -
+// getAlertOutputMapping - gets a flat map for each alert to it's outputIds
 func getAlertOutputMapping(alert *deliveryModels.Alert, input *deliveryModels.DeliverAlertInput) (AlertOutputMap, error) {
 	// Fetch outputIds from ddb (utilizing a cache)
 	outputs, err := getOutputs()
@@ -162,8 +160,9 @@ func intersection(inputs []string, outputs []*outputModels.AlertOutput) []*outpu
 	return valid
 }
 
-// logOrReturn - logs and eagerly returns an error if any of the deliveries failed
+// logOrReturn - logs failed deliveries and returns an error
 func logOrReturn(dispatchStatuses []DispatchStatus) error {
+	shouldReturn := false
 	for _, delivery := range dispatchStatuses {
 		if !delivery.Success {
 			zap.L().Error(
@@ -173,11 +172,14 @@ func logOrReturn(dispatchStatuses []DispatchStatus) error {
 				zap.Int("statusCode", delivery.StatusCode),
 				zap.String("message", delivery.Message),
 			)
-
-			// return early if there was a failure.
-			return &genericapi.InternalError{
-				Message: "Some alerts failed to be delivered"}
+			shouldReturn = true
 		}
 	}
+
+	if shouldReturn {
+		return &genericapi.InternalError{
+			Message: "Some alerts failed to be delivered"}
+	}
+
 	return nil
 }
