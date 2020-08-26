@@ -139,6 +139,7 @@ Mappings:
 
 Conditions:
   ConfigureLogSubscriptions: !Not [!Equals [!Select [0, !Ref LogSubscriptionPrincipals], '']]
+  NotConfigureLogSubscriptions: !Not [Condition: ConfigureLogSubscriptions]
   EnableAccessLogs: !Equals [!Ref EnableS3AccessLogs, true]
   ExternalAccessLogs: !Not [!Equals [!Ref AccessLogsBucket, '']]
   ReplicateData: !Not [!Equals [!Ref DataReplicationBucket, '']]
@@ -378,6 +379,21 @@ Resources:
           - Topic: !Ref InputNotificationsTopic
             Event: s3:ObjectCreated:*
 
+  InputDataBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref InputDataBucket
+      PolicyDocument:
+        Statement:
+          - Sid: ForceSSL
+            Effect: Deny
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub arn:${AWS::Partition}:s3:::${InputDataBucket}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+
   ProcessedData: # processed security logs (JSON stage data)
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
@@ -479,6 +495,23 @@ Resources:
               - s3:GetObject
               - s3:GetObjectVersion
             Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedData}/rules/*
+          - Sid: ForceSSL
+            Effect: Deny
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedData}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+
+  ProcessedDataDefaultPolicy: # enforce secure access even if there aren't log subscriptions
+    Condition: NotConfigureLogSubscriptions
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ProcessedData
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
           - Sid: ForceSSL
             Effect: Deny
             Principal: '*'

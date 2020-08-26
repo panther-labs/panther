@@ -66,6 +66,10 @@ const (
 	FieldSHA1Hash
 	FieldSHA256Hash
 	FieldTraceID
+	FieldAWSAccountID
+	FieldAWSInstanceID
+	FieldAWSARN
+	FieldAWSTag
 )
 
 // ScanValues implements ValueScanner interface
@@ -171,6 +175,26 @@ func init() {
 		Name:        "PantherAnyTraceIDs",
 		NameJSON:    "p_any_trace_ids",
 		Description: "Panther added field with collection of context trace identifiers",
+	})
+	MustRegisterIndicator(FieldAWSAccountID, FieldMeta{
+		Name:        "PantherAnyAWSAccountIDs",
+		NameJSON:    "p_any_aws_account_ids",
+		Description: "Panther added field with collection of AWS account ids associated with the row",
+	})
+	MustRegisterIndicator(FieldAWSInstanceID, FieldMeta{
+		Name:        "PantherAnyAWSInstanceIDs",
+		NameJSON:    "p_any_aws_instance_ids",
+		Description: "Panther added field with collection of AWS instance ids associated with the row",
+	})
+	MustRegisterIndicator(FieldAWSARN, FieldMeta{
+		Name:        "PantherAnyAWSARNs",
+		NameJSON:    "p_any_aws_arns",
+		Description: "Panther added field with collection of AWS ARNs associated with the row",
+	})
+	MustRegisterIndicator(FieldAWSTag, FieldMeta{
+		Name:        "PantherAnyAWSTags",
+		NameJSON:    "p_any_aws_tags",
+		Description: "Panther added field with collection of AWS Tags associated with the row",
 	})
 	MustRegisterScanner("ip", ValueScannerFunc(ScanIPAddress), FieldIPAddress)
 	MustRegisterScanner("domain", FieldDomainName, FieldDomainName)
