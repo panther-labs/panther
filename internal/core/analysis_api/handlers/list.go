@@ -400,7 +400,9 @@ func sortByStatus(policies []*models.PolicySummary, ascending bool, policyStatus
 
 		// Group all disabled policies together at the end.
 		// Technically, disabled policies still have a pass/fail status,
-		// we just don't show it yet in the web app. They are all shown with status "disabled"
+		// we just don't show it yet in the web app.
+		// The "disabled" status overrides the "pass/fail" status
+		// TODO - remove this block once enabled/disabled status is shown separately (ETA v1.9)
 		//
 		// So the sort order is essentially:
 		//     PASS < FAIL < ERROR < PASS/DISABLED < FAIL/DISABLED < ERROR/DISABLED
