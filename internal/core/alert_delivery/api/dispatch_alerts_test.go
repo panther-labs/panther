@@ -1,13 +1,17 @@
 package api
 
 import (
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/lambda"
 	jsoniter "github.com/json-iterator/go"
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -74,10 +78,140 @@ func TestGetAlerts(t *testing.T) {
 	assert.Equal(t, expectedResult, result)
 }
 
-// func TestGetAlertOutputMap(t *testing.T) {
+func TestGetAlertOutputMap(t *testing.T) {
+	mockClient := &mockLambdaClient{}
+	lambdaClient = mockClient
 
-// }
+	alertID := aws.String("alert-id")
+	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
 
-// func TestGetAlertOutputMapError(t *testing.T) {
+	alerts := []*deliveryModels.Alert{
+		{
+			AlertID:             alertID,
+			AnalysisDescription: aws.String("A test alert"),
+			AnalysisID:          "Test.Analysis.ID",
+			AnalysisName:        aws.String("Test Analysis Name"),
+			Runbook:             aws.String("A runbook link"),
+			Title:               aws.String("Test Alert"),
+			RetryCount:          0,
+			Tags:                []string{"test", "alert"},
+			Type:                deliveryModels.RuleType,
+			OutputIds:           outputIds,
+			Severity:            "INFO",
+			CreatedAt:           time.Now().UTC(),
+			Version:             aws.String("abc"),
+		},
+	}
 
-// }
+	outputs := []*outputModels.AlertOutput{
+		{
+			OutputID:           aws.String(outputIds[0]),
+			OutputType:         aws.String("slack"),
+			DefaultForSeverity: []*string{aws.String("INFO")},
+		},
+		{
+			OutputID:           aws.String(outputIds[1]),
+			OutputType:         aws.String("customwebhook"),
+			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM")},
+		},
+		{
+			OutputID:           aws.String(outputIds[2]),
+			OutputType:         aws.String("asana"),
+			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM"), aws.String("CRITICAL")},
+		},
+	}
+
+	payload, err := jsoniter.Marshal(outputs)
+	require.NoError(t, err)
+	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
+	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
+
+	// AlertOutputMap map[*deliveryModels.Alert][]*outputModels.AlertOutput
+	expectedResult := AlertOutputMap{
+		alerts[0]: outputs,
+	}
+	result, err := getAlertOutputMap(alerts)
+	require.NoError(t, err)
+
+	assert.Equal(t, expectedResult, result)
+}
+
+func TestGetAlertOutputMapError(t *testing.T) {
+	mockClient := &mockLambdaClient{}
+	lambdaClient = mockClient
+
+	alertID := aws.String("alert-id")
+	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
+
+	alerts := []*deliveryModels.Alert{
+		{
+			AlertID:             alertID,
+			AnalysisDescription: aws.String("A test alert"),
+			AnalysisID:          "Test.Analysis.ID",
+			AnalysisName:        aws.String("Test Analysis Name"),
+			Runbook:             aws.String("A runbook link"),
+			Title:               aws.String("Test Alert"),
+			RetryCount:          0,
+			Tags:                []string{"test", "alert"},
+			Type:                deliveryModels.RuleType,
+			OutputIds:           outputIds,
+			Severity:            "INFO",
+			CreatedAt:           time.Now().UTC(),
+			Version:             aws.String("abc"),
+		},
+	}
+
+	mockClient.On("Invoke", mock.Anything).Return((*lambda.InvokeOutput)(nil), errors.New("error")).Once()
+
+	// AlertOutputMap map[*deliveryModels.Alert][]*outputModels.AlertOutput
+	expectedResult := AlertOutputMap{}
+
+	result, err := getAlertOutputMap(alerts)
+	require.Error(t, err)
+
+	assert.Equal(t, expectedResult, result)
+}
+
+func TestFilterDispatches(t *testing.T) {
+	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
+
+	successStatuses := []DispatchStatus{
+		{
+			Alert:        deliveryModels.Alert{},
+			OutputID:     outputIds[0],
+			Message:      "success",
+			StatusCode:   200,
+			Success:      true,
+			NeedsRetry:   false,
+			DispatchedAt: dispatchedAt,
+		},
+	}
+	failedStatuses := []DispatchStatus{
+		{
+			Alert:        deliveryModels.Alert{},
+			OutputID:     outputIds[1],
+			Message:      "failure",
+			StatusCode:   401,
+			Success:      false,
+			NeedsRetry:   true,
+			DispatchedAt: dispatchedAt,
+		},
+		{
+			Alert:        deliveryModels.Alert{},
+			OutputID:     outputIds[2],
+			Message:      "failure",
+			StatusCode:   500,
+			Success:      false,
+			NeedsRetry:   false,
+			DispatchedAt: dispatchedAt,
+		},
+	}
+
+	statuses := []DispatchStatus{}
+	statuses = append(statuses, successStatuses...)
+	statuses = append(statuses, failedStatuses...)
+
+	resultSuccess, resultFailed := filterDispatches(statuses)
+	assert.Equal(t, successStatuses, resultSuccess)
+	assert.Equal(t, failedStatuses, resultFailed)
+}

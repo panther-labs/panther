@@ -95,7 +95,7 @@ func getAlertOutputMap(alerts []*deliveryModels.Alert) (AlertOutputMap, error) {
 		validOutputIds, err := getAlertOutputs(alert)
 		if err != nil {
 			zap.L().Error("Failed to fetch outputIds", zap.Error(err))
-			return nil, err
+			return alertOutputMap, err
 		}
 		alertOutputMap[alert] = validOutputIds
 	}
