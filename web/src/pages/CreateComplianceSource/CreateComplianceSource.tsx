@@ -17,10 +17,7 @@
  */
 
 import React from 'react';
-import urls from 'Source/urls';
-import useRouter from 'Hooks/useRouter';
 import withSEO from 'Hoc/withSEO';
-import { extractErrorMessage } from 'Helpers/utils';
 import ComplianceSourceWizard from 'Components/wizards/ComplianceSourceWizard';
 import { useAddComplianceSource } from './graphql/addComplianceSource.generated';
 
@@ -32,8 +29,7 @@ const initialValues = {
 };
 
 const CreateComplianceSource: React.FC = () => {
-  const { history } = useRouter();
-  const [addComplianceSource, { error }] = useAddComplianceSource({
+  const [addComplianceSource] = useAddComplianceSource({
     update: (cache, { data: { addComplianceIntegration } }) => {
       cache.modify('ROOT_QUERY', {
         listComplianceIntegrations: (queryData, { toReference }) => {
@@ -42,13 +38,11 @@ const CreateComplianceSource: React.FC = () => {
         },
       });
     },
-    onCompleted: () => history.push(urls.compliance.sources.list()),
   });
 
   return (
     <ComplianceSourceWizard
       initialValues={initialValues}
-      externalErrorMessage={error && extractErrorMessage(error)}
       onSubmit={values =>
         addComplianceSource({
           variables: {
