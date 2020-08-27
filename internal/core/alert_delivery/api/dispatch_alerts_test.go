@@ -1,5 +1,7 @@
 package api
 
+import "testing"
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,4 +20,14 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// TODO: add testing
+func TestGetAlerts(t *testing.T) {
+
+}
+
+func TestGetAlertOutputMap(t *testing.T) {
+
+}
+
+func TestGetAlertOutputMapError(t *testing.T) {
+
+}

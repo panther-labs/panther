@@ -23,8 +23,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
@@ -42,16 +40,6 @@ type mockOutputsClient struct {
 func (m *mockOutputsClient) Slack(alert *deliveryModels.Alert, config *outputModels.SlackConfig) *outputs.AlertDeliveryResponse {
 	args := m.Called(alert, config)
 	return args.Get(0).(*outputs.AlertDeliveryResponse)
-}
-
-type mockLambdaClient struct {
-	lambdaiface.LambdaAPI
-	mock.Mock
-}
-
-func (m *mockLambdaClient) Invoke(input *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*lambda.InvokeOutput), args.Error(1)
 }
 
 func sampleAlert() *deliveryModels.Alert {

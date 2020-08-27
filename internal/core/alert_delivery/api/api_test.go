@@ -21,26 +21,22 @@ package api
 import (
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
+
+type mockLambdaClient struct {
+	lambdaiface.LambdaAPI
+	mock.Mock
+}
+
+func (m *mockLambdaClient) Invoke(input *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*lambda.InvokeOutput), args.Error(1)
+}
 
 func TestGetSQSClient(t *testing.T) {
 	assert.NotNil(t, getSQSClient())
-}
-
-// 95 ms / op
-func BenchmarkSessionCreation(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		session.Must(session.NewSession())
-	}
-}
-
-// 2.7 ms / op
-func BenchmarkClientCreation(b *testing.B) {
-	sess := session.Must(session.NewSession())
-	for i := 0; i < b.N; i++ {
-		sqs.New(sess)
-	}
 }
