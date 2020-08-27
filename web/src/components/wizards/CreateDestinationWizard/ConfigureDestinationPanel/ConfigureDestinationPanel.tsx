@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { useSnackbar } from 'pouncejs';
+import { Box, useSnackbar } from 'pouncejs';
 import { DestinationConfigInput, DestinationInput, DestinationTypeEnum } from 'Generated/schema';
 import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm';
 import DestinationFormSwitcher from 'Components/forms/DestinationFormSwitcher';
@@ -115,7 +115,7 @@ const ConfigureDestinationPanel: React.FC = () => {
       : selectedDestinationType
   );
   return (
-    <React.Fragment>
+    <Box maxWidth={700} mx="auto">
       <WizardPanel.Heading
         title={`Configure Your ${destinationDisplayName} Destination`}
         subtitle="Fill out the form below to configure your Destination"
@@ -124,7 +124,7 @@ const ConfigureDestinationPanel: React.FC = () => {
         initialValues={{ ...initialValues, outputType: selectedDestinationType }}
         onSubmit={handleSubmit}
       />
-    </React.Fragment>
+    </Box>
   );
 };
 
