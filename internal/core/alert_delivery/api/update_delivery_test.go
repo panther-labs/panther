@@ -25,11 +25,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	jsoniter "github.com/json-iterator/go"
-	alertModels "github.com/panther-labs/panther/api/lambda/alerts/models"
-	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	alertModels "github.com/panther-labs/panther/api/lambda/alerts/models"
+	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 )
 
 func TestUpdateAlerts(t *testing.T) {
