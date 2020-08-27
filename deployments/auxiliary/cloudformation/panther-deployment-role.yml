@@ -18,7 +18,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: IAM role for deploying Panther
 
 Metadata:
-  Version: v1.7.1
+  Version: v1.7.2
 
 Parameters:
   IdentityAccountId:
@@ -120,7 +120,7 @@ Resources:
               - ec2:UpdateSecurityGroupRuleDescriptionsIngress
               - elasticfilesystem:CreateAccessPoint
               - elasticfilesystem:CreateFileSystem
-              - elasticfilesystem:CreateMountPoint
+              - elasticfilesystem:CreateMountTarget
               - elasticfilesystem:DeleteAccessPoint
               - elasticfilesystem:DeleteFileSystem
               - elasticfilesystem:DeleteMountTarget
