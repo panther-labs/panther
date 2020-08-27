@@ -32,14 +32,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var (
-	alertID = aws.String("alert-id")
-)
-
 func TestUpdateAlerts(t *testing.T) {
 	mockClient := &mockLambdaClient{}
 	lambdaClient = mockClient
 
+	alertID := aws.String("alert-id")
 	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
 
 	statuses := []DispatchStatus{
@@ -139,6 +136,7 @@ func TestUpdateAlertSkipPolicy(t *testing.T) {
 	mockClient := &mockLambdaClient{}
 	lambdaClient = mockClient
 
+	alertID := aws.String("alert-id")
 	outputIds := []string{"output-id-1"}
 	statuses := []DispatchStatus{
 		{
@@ -171,6 +169,7 @@ func TestUpdateAlert(t *testing.T) {
 
 	ch := make(chan alertModels.AlertSummary, 1)
 
+	alertID := aws.String("alert-id")
 	deliveryResponses := []*alertModels.DeliveryResponse{
 		{
 			OutputID:     "output-id-1",
