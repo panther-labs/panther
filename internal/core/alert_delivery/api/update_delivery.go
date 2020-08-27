@@ -70,10 +70,12 @@ func updateAlerts(statuses []DispatchStatus) []*alertModels.AlertSummary {
 
 // updateAlert - invokes a lambda to update an alert's delivery status
 func updateAlert(alertID string, deliveryResponse []*alertModels.DeliveryResponse, alertSummaryChannel chan alertModels.AlertSummary) {
-	input := alertModels.LambdaInput{UpdateAlertDelivery: &alertModels.UpdateAlertDeliveryInput{
-		AlertID:           alertID,
-		DeliveryResponses: deliveryResponse,
-	}}
+	input := alertModels.LambdaInput{
+		UpdateAlertDelivery: &alertModels.UpdateAlertDeliveryInput{
+			AlertID:           alertID,
+			DeliveryResponses: deliveryResponse,
+		},
+	}
 	var response alertModels.UpdateAlertDeliveryOutput
 	if err := genericapi.Invoke(lambdaClient, alertsAPI, &input, &response); err != nil {
 		zap.L().Error("Invoking UpdateAlertDelivery failed", zap.Any("error", err))
