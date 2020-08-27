@@ -130,6 +130,10 @@ func TestGetAlertOutputMap(t *testing.T) {
 	expectedResult := AlertOutputMap{
 		alerts[0]: outputs,
 	}
+
+	// Need to expire the cache because other tests
+	cache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
+
 	result, err := getAlertOutputMap(alerts)
 	require.NoError(t, err)
 
@@ -165,6 +169,9 @@ func TestGetAlertOutputMapError(t *testing.T) {
 
 	// AlertOutputMap map[*deliveryModels.Alert][]*outputModels.AlertOutput
 	expectedResult := AlertOutputMap{}
+
+	// Need to expire the cache because other tests
+	cache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
 
 	result, err := getAlertOutputMap(alerts)
 	require.Error(t, err)
@@ -214,4 +221,131 @@ func TestFilterDispatches(t *testing.T) {
 	resultSuccess, resultFailed := filterDispatches(statuses)
 	assert.Equal(t, successStatuses, resultSuccess)
 	assert.Equal(t, failedStatuses, resultFailed)
+}
+
+func TestGetAlertsToRetry(t *testing.T) {
+	alertID := aws.String("alert-id")
+	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
+	createdAt := time.Now().UTC()
+	alerts := []*deliveryModels.Alert{
+		// Needs to be retried
+		{
+			AlertID:             alertID,
+			AnalysisDescription: aws.String("A test alert"),
+			AnalysisID:          "Test.Analysis.ID",
+			AnalysisName:        aws.String("Test Analysis Name"),
+			Runbook:             aws.String("A runbook link"),
+			Title:               aws.String("Test Alert"),
+			RetryCount:          0,
+			Tags:                []string{"test", "alert"},
+			Type:                deliveryModels.RuleType,
+			OutputIds:           outputIds,
+			Severity:            "INFO",
+			CreatedAt:           createdAt,
+			Version:             aws.String("abc"),
+		},
+		// Should be ignored because it has exceeded the max retry count
+		{
+			AlertID:             alertID,
+			AnalysisDescription: aws.String("A test alert"),
+			AnalysisID:          "Test.Analysis.ID",
+			AnalysisName:        aws.String("Test Analysis Name"),
+			Runbook:             aws.String("A runbook link"),
+			Title:               aws.String("Test Alert"),
+			RetryCount:          10,
+			Tags:                []string{"test", "alert"},
+			Type:                deliveryModels.RuleType,
+			OutputIds:           outputIds,
+			Severity:            "INFO",
+			CreatedAt:           createdAt,
+			Version:             aws.String("abc"),
+		},
+	}
+
+	failedStatuses := []DispatchStatus{
+		// [TRUE] Status says to retry (true), alert says to retry (true)
+		{
+			Alert:        *alerts[0],
+			OutputID:     outputIds[0],
+			Message:      "failure",
+			StatusCode:   401,
+			Success:      false,
+			NeedsRetry:   true,
+			DispatchedAt: dispatchedAt,
+		},
+		// [FALSE] Should not be retried because of permanent failure, alert says to retry (true)
+		{
+			Alert:        *alerts[0],
+			OutputID:     outputIds[1],
+			Message:      "failure",
+			StatusCode:   500,
+			Success:      false,
+			NeedsRetry:   false,
+			DispatchedAt: dispatchedAt,
+		},
+		// [FALSE] Should not be retried because this is marked a success, alert says to retry (true)
+		{
+			Alert:        *alerts[0],
+			OutputID:     outputIds[1],
+			Message:      "success",
+			StatusCode:   200,
+			Success:      true,
+			NeedsRetry:   false,
+			DispatchedAt: dispatchedAt,
+		},
+
+		// [FALSE] Should be retried, alert exceeded max retries (false)
+		{
+			Alert:        *alerts[1],
+			OutputID:     outputIds[0],
+			Message:      "failure",
+			StatusCode:   401,
+			Success:      false,
+			NeedsRetry:   true,
+			DispatchedAt: dispatchedAt,
+		},
+		// [FALSE] Should not be retried because of permanent failure, alert exceeded max retries (false)
+		{
+			Alert:        *alerts[1],
+			OutputID:     outputIds[1],
+			Message:      "failure",
+			StatusCode:   500,
+			Success:      false,
+			NeedsRetry:   false,
+			DispatchedAt: dispatchedAt,
+		},
+		// [FALSE] Should not be retried because this is marked a success, alert exceeded max retries (false)
+		{
+			Alert:        *alerts[1],
+			OutputID:     outputIds[1],
+			Message:      "success",
+			StatusCode:   200,
+			Success:      true,
+			NeedsRetry:   false,
+			DispatchedAt: dispatchedAt,
+		},
+	}
+
+	// The expected result will have an incremented retry count and the outputIds set to the single output which has failed
+	expectedResult := []*deliveryModels.Alert{
+		{
+			AlertID:             alertID,
+			AnalysisDescription: aws.String("A test alert"),
+			AnalysisID:          "Test.Analysis.ID",
+			AnalysisName:        aws.String("Test Analysis Name"),
+			Runbook:             aws.String("A runbook link"),
+			Title:               aws.String("Test Alert"),
+			RetryCount:          1,
+			Tags:                []string{"test", "alert"},
+			Type:                deliveryModels.RuleType,
+			OutputIds:           []string{outputIds[0]},
+			Severity:            "INFO",
+			CreatedAt:           createdAt,
+			Version:             aws.String("abc"),
+		},
+	}
+
+	result := getAlertsToRetry(failedStatuses, 10)
+
+	assert.Equal(t, expectedResult, result)
 }

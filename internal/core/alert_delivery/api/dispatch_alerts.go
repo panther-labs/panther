@@ -61,7 +61,7 @@ func (API) DispatchAlerts(input []*deliveryModels.DispatchAlertsInput) (interfac
 	zap.L().Info("Deliveries that succeeded", zap.Int("num_success", len(success)))
 
 	// Obtain a list of alerts that should be retried and put back on to the queue
-	alertsToRetry := getAlertsToRetry(failed)
+	alertsToRetry := getAlertsToRetry(failed, maxRetryCount)
 
 	// Put any alerts that need to be retried back into the queue
 	retry(alertsToRetry)
@@ -152,7 +152,7 @@ func filterDispatches(dispatchStatuses []DispatchStatus) ([]DispatchStatus, []Di
 //   	},
 //   ]
 //
-func getAlertsToRetry(failedDispatchStatuses []DispatchStatus) []*deliveryModels.Alert {
+func getAlertsToRetry(failedDispatchStatuses []DispatchStatus, maximumRetryCount int) []*deliveryModels.Alert {
 	alertsToRetry := []*deliveryModels.Alert{}
 	for _, failed := range failedDispatchStatuses {
 		// If we've reached the max retry count for a specific alert, log and continue
@@ -160,7 +160,7 @@ func getAlertsToRetry(failedDispatchStatuses []DispatchStatus) []*deliveryModels
 		// Note: This does not block the alert from being sent to other outputs because
 		// when the alert is put back onto the queue, the outputIds will only have 1
 		// destination specified.
-		if failed.Alert.RetryCount >= maxRetryCount {
+		if failed.Alert.RetryCount >= maximumRetryCount {
 			zap.L().Error(
 				"alert delivery permanently failed, exceeded max retry count",
 				zap.Any("status", failed),
