@@ -67,7 +67,7 @@ func (c *Config) InitialFields() map[string]interface{} {
 		fields[FieldNamespace] = c.Namespace
 	}
 	if c.Component != "" {
-		fields[FieldComponent] = c.Namespace
+		fields[FieldComponent] = c.Component
 	}
 	return fields
 }
