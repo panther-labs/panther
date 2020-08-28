@@ -62,6 +62,7 @@ import {
   JiraConfigInput,
   ListAlertsInput,
   ListAlertsResponse,
+  ListAvailableLogTypesResponse,
   ListComplianceItemsResponse,
   ListGlobalPythonModuleInput,
   ListGlobalPythonModulesResponse,
@@ -697,6 +698,15 @@ export const buildListAlertsResponse = (
     alertSummaries:
       'alertSummaries' in overrides ? overrides.alertSummaries : [buildAlertSummary()],
     lastEvaluatedKey: 'lastEvaluatedKey' in overrides ? overrides.lastEvaluatedKey : 'Arkansas',
+  };
+};
+
+export const buildListAvailableLogTypesResponse = (
+  overrides: Partial<ListAvailableLogTypesResponse> = {}
+): ListAvailableLogTypesResponse => {
+  return {
+    __typename: 'ListAvailableLogTypesResponse',
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['silver'],
   };
 };
 
