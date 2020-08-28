@@ -20,18 +20,31 @@ package lambdamux
 
 import (
 	"context"
-	"encoding/json"
+
+	jsoniter "github.com/json-iterator/go"
+
+	"github.com/panther-labs/panther/pkg/lambdamux/internal"
 )
 
-// Handler is a Lambda handler that intercepts the raw JSON payload
-type Handler interface {
-	HandleRaw(ctx context.Context, msg json.RawMessage) (json.RawMessage, error)
+const DefaultHandlerPrefix = "Invoke"
+
+type Handler = internal.Handler
+
+// HandlerFunc is a function implementing lambda.Handler
+type HandlerFunc func(ctx context.Context, payload []byte) ([]byte, error)
+
+var _ Handler = (HandlerFunc)(nil)
+
+// Invoke implements lambda.Handler
+func (f HandlerFunc) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
+	return f(ctx, payload)
 }
 
-// HandlerFunc is a function implementing Handler
-type HandlerFunc func(ctx context.Context, msg json.RawMessage) (json.RawMessage, error)
+var defaultJSON = jsoniter.ConfigCompatibleWithStandardLibrary
 
-// HandleRaw implements Handler
-func (f HandlerFunc) HandleRaw(ctx context.Context, msg json.RawMessage) (json.RawMessage, error) {
-	return f(ctx, msg)
+func resolveJSON(api jsoniter.API) jsoniter.API {
+	if api != nil {
+		return api
+	}
+	return defaultJSON
 }

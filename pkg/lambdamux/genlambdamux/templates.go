@@ -34,7 +34,7 @@ package {{.PkgName}}
 
 import (
 	"context"
-	"github.com/panther-labs/panther/pkg/lambdamux"
+	"github.com/panther-labs/panther/pkg/lambdamux/lambdaclient"
 	{{ range .Imports }}{{ .Name }} {{ printf "%q" .Path }}{{ end }}
 )
 
@@ -53,12 +53,12 @@ type Lambda{{.API}}Event struct {
 }
 
 type LambdaClient struct {
-	client lambdamux.Client
+	client lambdaclient.Client
 }
 
-func NewLambdaClient(client lambdamux.Client) *LambdaClient {
+func NewLambdaClient(client lambdaclient.Client) *LambdaClient {
 	if client.Validate == nil {
-		client.Validate = lambdamux.NopValidate
+		client.Validate = func(interface{}) error { return nil }
 	}
 	return &LambdaClient{
 		client: client,

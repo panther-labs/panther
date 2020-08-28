@@ -21,6 +21,7 @@ package lambdalogger
 import (
 	"context"
 
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -101,4 +102,37 @@ func FromContext(ctx context.Context) *zap.Logger {
 		return logger
 	}
 	return withLambdaFieldsFromContext(ctx, zap.L())
+}
+
+type middleware struct {
+	logger  *zap.Logger
+	debug   bool
+	handler lambda.Handler
+}
+
+func (m *middleware) Invoke(ctx context.Context, payload []byte) (reply []byte, err error) {
+	logger := m.logger
+	if m.debug {
+		defer func() {
+			logger.Debug(`lambda handler result`,
+				zap.ByteString("payload", payload),
+				zap.ByteString("reply", reply),
+				zap.Error(err),
+			)
+		}()
+	}
+	ctx = Context(ctx, logger)
+	reply, err = m.handler.Invoke(ctx, payload)
+	return
+}
+func IsDebug(logger *zap.Logger) bool {
+	return logger.Core().Enabled(zap.DebugLevel)
+}
+
+func Wrap(logger *zap.Logger, handler lambda.Handler) lambda.Handler {
+	return &middleware{
+		logger:  logger,
+		debug:   IsDebug(logger),
+		handler: handler,
+	}
 }

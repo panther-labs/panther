@@ -20,63 +20,43 @@ package lambdamux
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"time"
-
-	"go.uber.org/zap"
-
-	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
-func Debug(handler Handler) Handler {
-	return HandlerFunc(func(ctx context.Context, input json.RawMessage) (output json.RawMessage, err error) {
-		logger := lambdalogger.FromContext(ctx)
-		defer func() {
-			logger.Debug(`lambda handler result`,
-				zap.ByteString("input", input),
-				zap.ByteString("output", output),
-				zap.Error(err),
-			)
-		}()
-		output, err = handler.HandleRaw(ctx, input)
-		return
-	})
-}
-
-func NotFound(handler, notFound Handler) Handler {
-	if notFound == nil {
-		return handler
-	}
-	return HandlerFunc(func(ctx context.Context, event json.RawMessage) (json.RawMessage, error) {
-		reply, err := handler.HandleRaw(ctx, event)
-		if err != nil && errors.Is(err, ErrRouteNotFound) {
-			return notFound.HandleRaw(ctx, event)
-		}
-		return reply, err
-	})
-}
-
-func WithLogger(logger *zap.Logger, handler Handler) Handler {
-	return HandlerFunc(func(ctx context.Context, input json.RawMessage) (json.RawMessage, error) {
-		ctx = lambdalogger.Context(ctx, logger)
-		return handler.HandleRaw(ctx, input)
-	})
-}
-
-func Recover(onPanic func(p interface{}) (json.RawMessage, error), handler Handler) Handler {
+func Recover(onPanic func(p interface{}) ([]byte, error), handler Handler) Handler {
 	if onPanic == nil {
 		return handler
 	}
-	return HandlerFunc(func(ctx context.Context, input json.RawMessage) (output json.RawMessage, err error) {
+	return HandlerFunc(func(ctx context.Context, input []byte) (output []byte, err error) {
 		defer func() {
 			if p := recover(); p != nil {
 				output, err = onPanic(p)
 			}
 		}()
-		output, err = handler.HandleRaw(ctx, input)
+		output, err = handler.Invoke(ctx, input)
 		return
 	})
+}
+
+func Chain(handlers ...Handler) Handler {
+	return chainHandler(handlers)
+}
+
+type chainHandler []Handler
+
+func (c chainHandler) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
+	for _, handler := range c {
+		reply, err := handler.Invoke(ctx, payload)
+		if err != nil {
+			if errors.Is(err, ErrNotFound) {
+				continue
+			}
+			return nil, err
+		}
+		return reply, nil
+	}
+	return nil, ErrNotFound
 }
 
 func CacheProxy(maxAge time.Duration, handler Handler) Handler {
@@ -84,17 +64,17 @@ func CacheProxy(maxAge time.Duration, handler Handler) Handler {
 		return handler
 	}
 	type cacheEntry struct {
-		Output    json.RawMessage
+		Output    []byte
 		UpdatedAt time.Time
 	}
 	cache := map[string]*cacheEntry{}
 	var lastInsertAt time.Time
-	return HandlerFunc(func(ctx context.Context, input json.RawMessage) (json.RawMessage, error) {
+	return HandlerFunc(func(ctx context.Context, input []byte) ([]byte, error) {
 		entry, ok := cache[string(input)]
 		if ok && time.Since(entry.UpdatedAt) < maxAge {
 			return entry.Output, nil
 		}
-		output, err := handler.HandleRaw(ctx, input)
+		output, err := handler.Invoke(ctx, input)
 		if err != nil {
 			return nil, err
 		}
@@ -109,5 +89,18 @@ func CacheProxy(maxAge time.Duration, handler Handler) Handler {
 			UpdatedAt: now,
 		}
 		return output, nil
+	})
+}
+
+func NotFound(handler, notFound Handler) Handler {
+	if notFound == nil {
+		return handler
+	}
+	return HandlerFunc(func(ctx context.Context, event []byte) ([]byte, error) {
+		reply, err := handler.Invoke(ctx, event)
+		if err != nil && errors.Is(err, ErrNotFound) {
+			return notFound.Invoke(ctx, event)
+		}
+		return reply, err
 	})
 }

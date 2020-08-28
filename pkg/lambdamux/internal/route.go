@@ -1,4 +1,4 @@
-package lambdamux
+package internal
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -20,7 +20,7 @@ package lambdamux
 
 import (
 	"context"
-	"encoding/json"
+	goerr "errors"
 	"reflect"
 	"regexp"
 	"strings"
@@ -28,6 +28,10 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 )
+
+type Handler interface {
+	Invoke(ctx context.Context, payload []byte) ([]byte, error)
+}
 
 // CheckRouteName checks if a route name is valid
 func CheckRouteName(name string) bool {
@@ -69,21 +73,21 @@ func BuildRoute(routeName string, handler interface{}) (*Route, error) {
 	return route, nil
 }
 
-func AppendStructRoutes(routes []*Route, methodPrefix string, structHandler interface{}) ([]*Route, error) {
-	structRoutes, err := StructRoutes(methodPrefix, structHandler)
-	if err != nil {
-		return routes, nil
-	}
-	return append(routes, structRoutes...), nil
-}
-
-// StructRoutes returns a route for each method of a struct that has the prefix.
-func StructRoutes(methodPrefix string, structHandler interface{}) ([]*Route, error) {
+// RouteMethods returns a route for each method of a struct that has the prefix.
+func RouteMethods(prefix string, receiver interface{}) ([]*Route, error) {
 	var routes []*Route
-	val := reflect.ValueOf(structHandler)
+	val := reflect.ValueOf(receiver)
 	typ := val.Type()
-	if typ.Kind() != reflect.Ptr {
-		return nil, errors.New(`non-pointer struct handler`)
+	switch typ.Kind() {
+	case reflect.Ptr:
+	case reflect.Interface:
+	case reflect.Struct:
+		return nil, errors.Errorf(`non-pointer receiver %s`, typ)
+	default:
+		return nil, errors.Errorf(`invalid receiver type %s`, typ)
+	}
+	if val.IsNil() {
+		return nil, errors.Errorf(`nil receiver type %v`, val)
 	}
 	numMethod := typ.NumMethod()
 	for i := 0; i < numMethod; i++ {
@@ -92,11 +96,11 @@ func StructRoutes(methodPrefix string, structHandler interface{}) ([]*Route, err
 			// unexported method
 			continue
 		}
-		if !strings.HasPrefix(method.Name, methodPrefix) {
+		if !strings.HasPrefix(method.Name, prefix) {
 			continue
 		}
 
-		routeName := strings.TrimPrefix(method.Name, methodPrefix)
+		routeName := strings.TrimPrefix(method.Name, prefix)
 
 		if !CheckRouteName(routeName) {
 			return nil, errors.Errorf(`invalid route name %q`, routeName)
@@ -133,7 +137,7 @@ func (r *Route) Handler(api jsoniter.API, validate func(interface{}) error) Hand
 	return &routeHandler{
 		Route:    r,
 		Validate: validate,
-		JSON:     resolveJSON(api),
+		JSON:     api,
 	}
 }
 
@@ -271,29 +275,36 @@ type routeHandler struct {
 	JSON     jsoniter.API
 }
 
-var emptyResult = json.RawMessage(`{}`)
+var emptyResult = []byte(`{}`)
 
-// HandleRaw implements Handler
-func (r *routeHandler) HandleRaw(ctx context.Context, input json.RawMessage) (json.RawMessage, error) {
+// Invoke implements Handler
+func (r *routeHandler) Invoke(ctx context.Context, input []byte) ([]byte, error) {
 	params, err := r.callParams(ctx, input)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, r.wrapErr(err)
 	}
 	result, err := r.call(params)
 	if err != nil {
-		return nil, err
+		return nil, r.wrapErr(err)
 	}
 	if result == nil {
 		return emptyResult, nil
 	}
 	output, err := r.JSON.Marshal(result.Interface())
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, r.wrapErr(err)
 	}
 	return output, nil
 }
 
-func (r *routeHandler) callParams(ctx context.Context, input json.RawMessage) ([]reflect.Value, error) {
+func (r *routeHandler) wrapErr(err error) error {
+	if err != nil {
+		return newRouteError(r.Name(), err)
+	}
+	return nil
+}
+
+func (r *routeHandler) callParams(ctx context.Context, input []byte) ([]reflect.Value, error) {
 	in := make([]reflect.Value, 0, 2)
 	if r.withContext {
 		in = append(in, reflect.ValueOf(ctx))
@@ -330,15 +341,34 @@ func (r *routeHandler) call(in []reflect.Value) (*reflect.Value, error) {
 		}
 		return outVal, nil
 	default:
-		return nil, errors.New(`invalid route signature`)
+		return nil, goerr.New(`invalid route signature`)
 	}
 }
 
-var defaultJSON = jsoniter.ConfigDefault
-
-func resolveJSON(api jsoniter.API) jsoniter.API {
-	if api != nil {
-		return api
+func newRouteError(route string, err error) error {
+	return &routeError{
+		routeName: route,
+		err:       errors.WithMessagef(err, "route %q error", route),
 	}
-	return defaultJSON
+}
+
+type RouteError interface {
+	error
+	Route() string
+}
+type routeError struct {
+	routeName string
+	err       error
+}
+
+func (e *routeError) Error() string {
+	return e.err.Error()
+}
+
+func (e *routeError) Unwrap() error {
+	return e.err
+}
+
+func (e *routeError) Route() string {
+	return e.routeName
 }

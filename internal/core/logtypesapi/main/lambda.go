@@ -19,10 +19,13 @@ package main
  */
 
 import (
+	"strings"
+
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/kelseyhightower/envconfig"
+	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
@@ -56,16 +59,18 @@ func main() {
 		NativeLogTypes: registry.AvailableLogTypes,
 	}
 
-	mux := lambdamux.Mux{}
-	mux.MustHandleStructs("", api)
+	validate := validator.New()
 
-	// Adds logger to lambda context with a Lambda request ID field
-	handler := lambdamux.WithLogger(logger, &mux)
-
-	if config.Debug {
-		// Adds debug that always logs input/output
-		handler = lambdamux.Debug(handler)
+	mux := lambdamux.Mux{
+		// use case-insensitive route matching
+		Rename:   strings.ToUpper,
+		Validate: validate.Struct,
 	}
 
-	lambda.Start(handler)
+	mux.MustHandleMethods(api)
+
+	// Adds logger to lambda context with a Lambda request ID field and debug output
+	handler := lambdalogger.Wrap(logger, &mux)
+
+	lambda.StartHandler(handler)
 }

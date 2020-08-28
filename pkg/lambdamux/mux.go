@@ -20,138 +20,150 @@ package lambdamux
 
 import (
 	"context"
-	"encoding/json"
 	goerr "errors"
-	"fmt"
-	"strings"
 
+	"github.com/aws/aws-lambda-go/lambda"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
+
+	"github.com/panther-labs/panther/pkg/lambdamux/internal"
 )
 
-// Mux dispatches handling of a Lambda event based on top-level JSON key.
+// ErrNotFound is a well-known error that a route was not found.
+// Using std errors.New here since we don't want a stack
+var ErrNotFound = goerr.New(`route not found`)
+
+// Mux dispatches handling of a Lambda events
 type Mux struct {
-	// JSON can be used to specialize the configuration and extensions used by jsoniter
-	JSON jsoniter.API
-	// Decorate can be used to decorate the route handlers when building the mux handler
-	Decorate func(routeName string, handler Handler) Handler
-	// NotFound is the fallback handler if a route is not found.
-	NotFound Handler
-	Validate func(interface{}) error
-	// If set to true route matching will be case sensitive
-	CaseSensitive bool
-	handlers      map[string]Handler
+	Rename           func(name string) (key string)
+	Decorate         func(key string, handler lambda.Handler) lambda.Handler
+	Demux            Demux
+	JSON             jsoniter.API
+	Validate         func(payload interface{}) error
+	IgnoreDuplicates bool
+
+	handlers map[string]lambda.Handler
 }
 
-// Routes returns all Routes added to the mux.
-func (m *Mux) Routes() (routes []*Route) {
+// Handlers returns all handlers added to the mux.
+func (m *Mux) Handlers() (handlers []lambda.Handler) {
+	if len(m.handlers) == 0 {
+		return
+	}
+	handlers = make([]lambda.Handler, 0, len(m.handlers))
 	for _, handler := range m.handlers {
-		if r, ok := handler.(*routeHandler); ok {
-			routes = append(routes, r.Route)
-		}
+		handlers = append(handlers, handler)
 	}
 	return
 }
 
-// HandleRoutes adds handlers for all routes.
-// The handlers will use the values from Mux.JSON and Mux.Validate
-func (m *Mux) HandleRoutes(routes ...*Route) {
-	for _, route := range routes {
-		name := route.Name()
-		handler := route.Handler(m.JSON, m.Validate)
-		m.Handle(name, handler)
-	}
-}
-
-// Handle applies any decoration and adds a handler to the mux.
-// It does *not* affect validation or the JSON config of the handler.
-func (m *Mux) Handle(routeName string, handler Handler) {
-	if decorate := m.Decorate; decorate != nil {
-		handler = decorate(routeName, handler)
-	}
-	if handler == nil {
-		return
-	}
-	if !m.CaseSensitive {
-		routeName = strings.ToUpper(routeName)
-	}
-	if m.handlers == nil {
-		m.handlers = make(map[string]Handler)
-	}
-	m.handlers[routeName] = handler
-}
-
-// MustHandleStructs add all routes from a struct to the Mux or panics.
+// MustHandleMethods add all routes from a struct to the Mux or panics.
 // It overrides previously defined routes *without* an error.
-func (m *Mux) MustHandleStructs(methodPrefix string, structHandlers ...interface{}) {
-	if err := m.HandleStructs(methodPrefix, structHandlers...); err != nil {
+func (m *Mux) MustHandleMethods(receivers ...interface{}) {
+	if err := m.HandleMethodsPrefix("", receivers...); err != nil {
 		panic(err)
 	}
 }
 
-// HandleStructs add all routes from a struct to the Mux.
+// HandleMethodsPrefix add all routes from a struct to the Mux.
 // It fails if a method does not meet the signature requirements.
 // It overrides previously defined routes *without* an error.
-func (m *Mux) HandleStructs(methodPrefix string, structHandlers ...interface{}) error {
-	for _, s := range structHandlers {
-		routes, err := StructRoutes(methodPrefix, s)
+func (m *Mux) HandleMethodsPrefix(prefix string, receivers ...interface{}) error {
+	for _, receiver := range receivers {
+		routes, err := internal.RouteMethods(prefix, receiver)
 		if err != nil {
 			return err
 		}
-		m.HandleRoutes(routes...)
+		if err := m.handleRoutes(routes...); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-// HandleRaw implements Handler interface
-func (m *Mux) HandleRaw(ctx context.Context, input json.RawMessage) (json.RawMessage, error) {
-	jsonAPI := resolveJSON(m.JSON)
-	iter := jsonAPI.BorrowIterator(input)
-	defer jsonAPI.ReturnIterator(iter)
-	routeName := iter.ReadObject()
-	if !m.CaseSensitive {
-		routeName = strings.ToUpper(routeName)
-	}
-	payload := iter.SkipAndReturnBytes()
-	if handler, ok := m.handlers[routeName]; ok {
-		reply, err := handler.HandleRaw(ctx, payload)
-		if err != nil {
-			return nil, NewRouteError(routeName, err)
+func (m *Mux) handleRoutes(routes ...*internal.Route) error {
+	for _, route := range routes {
+		name := route.Name()
+		handler := route.Handler(m.JSON, m.Validate)
+		if err := m.Handle(name, handler); err != nil {
+			return err
 		}
-		return reply, nil
 	}
-	if notFound := m.NotFound; notFound != nil {
-		return notFound.HandleRaw(ctx, input)
+	return nil
+}
+
+// Handle applies any decoration and adds a handler to the mux.
+func (m *Mux) Handle(name string, handler lambda.Handler) error {
+	key := name
+	if m.Rename != nil {
+		key = m.Rename(key)
 	}
-	return nil, NewRouteError(routeName, errors.WithStack(ErrRouteNotFound))
+	if key == "" {
+		return errors.Errorf("invalid route name %q", name)
+	}
+	if decorate := m.Decorate; decorate != nil {
+		handler = decorate(key, handler)
+	}
+	if !m.IgnoreDuplicates {
+		if _, duplicate := m.handlers[key]; duplicate {
+			return errors.Errorf("duplicate route handler for %q", name)
+		}
+	}
+	if m.handlers == nil {
+		m.handlers = map[string]lambda.Handler{}
+	}
+	m.handlers[key] = handler
+	return nil
 }
 
-const DefaultHandlerPrefix = "Handle"
-
-// ErrRouteNotFound is a well-known error that a route was not found.
-// Using std errors.New here since we don't want a stack
-var ErrRouteNotFound = goerr.New(`route not found`)
-
-func NewRouteError(route string, err error) error {
-	return &RouteError{
-		routeName: route,
-		err:       err,
+func (m *Mux) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
+	iter := resolveJSON(m.JSON).BorrowIterator(payload)
+	defer iter.Pool().ReturnIterator(iter)
+	switch next := iter.WhatIsNext(); next {
+	case jsoniter.ObjectValue:
+		p, name := m.demux(iter, payload)
+		if err := iter.Error; err != nil {
+			return nil, errors.Wrap(err, `invalid JSON payload`)
+		}
+		handler, err := m.Get(name)
+		if err != nil {
+			return nil, err
+		}
+		return handler.Invoke(ctx, p)
+	case jsoniter.ArrayValue:
+		b := borrowBatch()
+		defer b.Recycle()
+		if err := b.ReadJobs(m, iter); err != nil {
+			return nil, err
+		}
+		return m.runBatch(ctx, b)
+	default:
+		return nil, errors.Wrapf(ErrNotFound, `invalid JSON payload %q`, next)
 	}
 }
 
-type RouteError struct {
-	routeName string
-	err       error
+var defaultDemux = &demuxKeyValue{}
+
+func (m *Mux) demux(iter *jsoniter.Iterator, payload []byte) ([]byte, string) {
+	if m.Demux != nil {
+		return m.Demux.demux(iter, payload)
+	}
+	return defaultDemux.demux(iter, payload)
 }
 
-func (e *RouteError) Error() string {
-	return fmt.Sprintf(`route %q error: %s`, e.routeName, e.err)
-}
-
-func (e *RouteError) Unwrap() error {
-	return e.err
-}
-
-func (e *RouteError) Route() string {
-	return e.routeName
+func (m *Mux) Get(name string) (lambda.Handler, error) {
+	if name == "" {
+		return nil, errors.Wrap(ErrNotFound, `invalid payload`)
+	}
+	key := name
+	if m.Rename != nil {
+		key = m.Rename(key)
+		if key == "" {
+			return nil, errors.Wrapf(ErrNotFound, `invalid route key %q`, name)
+		}
+	}
+	if handler, ok := m.handlers[key]; ok {
+		return handler, nil
+	}
+	return nil, errors.WithStack(ErrNotFound)
 }
