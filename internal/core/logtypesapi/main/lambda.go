@@ -47,7 +47,7 @@ func main() {
 	// Syncing the zap.Logger always results in Lambda errors. Commented code kept as a reminder.
 	// defer logger.Sync()
 
-	api := logtypesapi.API{
+	api := &logtypesapi.API{
 		ExternalAPI: &logtypesapi.ExternalAPIDynamoDB{
 			DB:        dynamodb.New(session.Must(session.NewSession())),
 			TableName: config.LogTypesTableName,

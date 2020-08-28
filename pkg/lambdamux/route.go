@@ -82,6 +82,9 @@ func StructRoutes(methodPrefix string, structHandler interface{}) ([]*Route, err
 	var routes []*Route
 	val := reflect.ValueOf(structHandler)
 	typ := val.Type()
+	if typ.Kind() != reflect.Ptr {
+		return nil, errors.New(`non-pointer struct handler`)
+	}
 	numMethod := typ.NumMethod()
 	for i := 0; i < numMethod; i++ {
 		method := typ.Method(i)
