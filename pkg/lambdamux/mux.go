@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	goerr "errors"
 	"fmt"
+	"strings"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
@@ -37,7 +38,9 @@ type Mux struct {
 	// NotFound is the fallback handler if a route is not found.
 	NotFound Handler
 	Validate func(interface{}) error
-	handlers map[string]Handler
+	// If set to true route matching will be case sensitive
+	CaseSensitive bool
+	handlers      map[string]Handler
 }
 
 // Routes returns all Routes added to the mux.
@@ -68,6 +71,9 @@ func (m *Mux) Handle(routeName string, handler Handler) {
 	}
 	if handler == nil {
 		return
+	}
+	if !m.CaseSensitive {
+		routeName = strings.ToUpper(routeName)
 	}
 	if m.handlers == nil {
 		m.handlers = make(map[string]Handler)
@@ -103,6 +109,9 @@ func (m *Mux) HandleRaw(ctx context.Context, input json.RawMessage) (json.RawMes
 	iter := jsonAPI.BorrowIterator(input)
 	defer jsonAPI.ReturnIterator(iter)
 	routeName := iter.ReadObject()
+	if !m.CaseSensitive {
+		routeName = strings.ToUpper(routeName)
+	}
 	payload := iter.SkipAndReturnBytes()
 	if handler, ok := m.handlers[routeName]; ok {
 		reply, err := handler.HandleRaw(ctx, payload)
