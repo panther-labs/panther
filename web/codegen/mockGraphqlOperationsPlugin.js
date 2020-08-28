@@ -46,25 +46,27 @@ class MockGraphqlOperationsVisitor extends visitor_plugin_common_1.ClientSideBas
   }
 }
 module.exports = {
-    plugin: (schema, documents, config) => {
-        const allAst = graphql_1.concatAST(documents.map(v => v.document));
-        const allFragments = allAst.definitions.filter(d => d.kind === graphql_1.Kind.FRAGMENT_DEFINITION).map(fragmentDef => ({
-            node: fragmentDef,
-            name: fragmentDef.name.value,
-            onType: fragmentDef.typeCondition.name.value,
-            isExternal: false,
-        }));
-        const visitor = new MockGraphqlOperationsVisitor(schema, allFragments, config, documents);
-        const visitorResult = graphql_1.visit(allAst, { leave: visitor });
-        return {
-            prepend: ["import { GraphQLError } from 'graphql'"],
-            content: visitorResult.definitions
-                // Only get the stringified definitions
-                .filter(t => typeof t === 'string')
-                // filter our  the part that we care about, since, by default, `@graphql-codegen/visitor-plugin-common`
-                // prepends additional stuff
-                .map(t => t.slice(t.indexOf('export function mock'), t.length))
-                .join('\n'),
-        };
-    },
+  plugin: (schema, documents, config) => {
+    const allAst = graphql_1.concatAST(documents.map(v => v.document));
+    const allFragments = allAst.definitions
+      .filter(d => d.kind === graphql_1.Kind.FRAGMENT_DEFINITION)
+      .map(fragmentDef => ({
+        node: fragmentDef,
+        name: fragmentDef.name.value,
+        onType: fragmentDef.typeCondition.name.value,
+        isExternal: false,
+      }));
+    const visitor = new MockGraphqlOperationsVisitor(schema, allFragments, config, documents);
+    const visitorResult = graphql_1.visit(allAst, { leave: visitor });
+    return {
+      prepend: ["import { GraphQLError } from 'graphql'"],
+      content: visitorResult.definitions
+        // Only get the stringified definitions
+        .filter(t => typeof t === 'string')
+        // filter our  the part that we care about, since, by default, `@graphql-codegen/visitor-plugin-common`
+        // prepends additional stuff
+        .map(t => t.slice(t.indexOf('export function mock'), t.length))
+        .join('\n'),
+    };
+  },
 };
