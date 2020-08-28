@@ -396,7 +396,7 @@ func processCloudTrailLog(detail gjson.Result, metadata *CloudTrailMetadata, cha
 		// Prevents the following from being de-duped mistakenly:
 		//
 		// Resources with the same ID in different regions (different regions)
-		// Service scans in the same region (different resource types)
+		// ExternalAPI scans in the same region (different resource types)
 		// Resources with the same type in the same region (different resource IDs)
 		key := change.ResourceID + change.ResourceType + change.Region
 		if entry, ok := changes[key]; !ok || change.EventTime > entry.EventTime {

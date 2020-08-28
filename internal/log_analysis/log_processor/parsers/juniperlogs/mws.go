@@ -98,7 +98,7 @@ func (p *MWSParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	return event.Logs(), nil
 }
 
-// Service tags that not handled by MWSParser
+// ExternalAPI tags that not handled by MWSParser
 var mwsSkipServices = map[string]struct{}{
 	"[mws-access]":         {},
 	"[mws-security-alert]": {},

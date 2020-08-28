@@ -1,4 +1,4 @@
-package logtypesapi
+package logtypesapi_test
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -18,26 +18,14 @@ package logtypesapi
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"context"
-)
+import "context"
 
-// Generate a lambda client using genlambdamux
-//go:generate go run github.com/panther-labs/panther/pkg/lambdamux/genlambdamux -out ./api_client_gen.go
-
-// API handles the business logic of LogTypesAPI
-type API struct {
-	ExternalAPI    ExternalAPI
-	NativeLogTypes func() []string
+// TestCase implements logtypes.ExternalAPI
+// TODO: Generate test cases with go generate
+type TestCase struct {
+	ListLogTypesOutput []string
 }
 
-// ExternalAPI handles the external actions required for API to be implemented
-type ExternalAPI interface {
-	ListLogTypes(ctx context.Context) ([]string, error)
-}
-
-// Models
-// We should list all API models here until we update the generator to produce docs for the models used.
-type AvailableLogTypes struct {
-	LogTypes []string `json:"logTypes"`
+func (t *TestCase) ListLogTypes(ctx context.Context) ([]string, error) {
+	return t.ListLogTypesOutput, nil
 }

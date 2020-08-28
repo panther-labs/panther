@@ -1,4 +1,4 @@
-package logtypesapi
+package logtypesapi_test
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -20,40 +20,33 @@ package logtypesapi
 
 import (
 	"context"
-	"sort"
+	"testing"
 
-	"go.uber.org/zap"
+	"github.com/stretchr/testify/require"
+
+	"github.com/panther-labs/panther/internal/core/logtypesapi"
 )
 
-// ListAvailableLogTypes lists all available log type ids
-func (api *API) ListAvailableLogTypes(ctx context.Context) (*AvailableLogTypes, error) {
-	logTypes, err := api.ExternalAPI.ListLogTypes(ctx)
-	if err != nil {
-		return nil, err
+func TestAPI_ListAvailableLogTypes(t *testing.T) {
+	assert := require.New(t)
+	ctx := context.Background()
+	api := logtypesapi.API{
+		ExternalAPI: &TestCase{
+			ListLogTypesOutput: []string{"foo", "bar", "baz"},
+		},
 	}
-	if api.NativeLogTypes != nil {
-		native := api.NativeLogTypes()
-		L(ctx).Debug(`merging native log types with external API`,
-			zap.Strings(`external`, logTypes),
-			zap.Strings(`native`, native),
-		)
-		logTypes = appendDistinct(logTypes, native)
-	}
-	sort.Strings(logTypes)
-	return &AvailableLogTypes{
-		LogTypes: logTypes,
-	}, nil
-}
 
-func appendDistinct(dst []string, src []string) []string {
-skip:
-	for _, s := range src {
-		for _, d := range dst {
-			if d == s {
-				continue skip
-			}
-		}
-		dst = append(dst, s)
+	actual, _ := api.ListAvailableLogTypes(ctx)
+	assert.Equal(&logtypesapi.AvailableLogTypes{
+		LogTypes: []string{"bar", "baz", "foo"},
+	}, actual)
+
+	api.NativeLogTypes = func() []string {
+		return []string{"aaa", "foo"}
 	}
-	return dst
+
+	actual, _ = api.ListAvailableLogTypes(ctx)
+	assert.Equal(&logtypesapi.AvailableLogTypes{
+		LogTypes: []string{"aaa", "bar", "baz", "foo"},
+	}, actual)
 }

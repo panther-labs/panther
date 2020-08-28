@@ -67,7 +67,7 @@ var (
 	}
 
 	ExampleGetPolicy = &lambda.GetPolicyOutput{
-		Policy:     aws.String("{\"Policy\": \"{\"Version\":\"2012-10-17\",\"Id\":\"default\",\"Statement\":[{\"Sid\":\"sns\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"sns.amazonaws.com\"},\"Action\":\"lambda:InvokeFunction\",\"Resource\":\"arn:aws:lambda:us-west-2:123456789012:function:ExampleFunction\"}]}"),
+		Policy:     aws.String("{\"Policy\": \"{\"Version\":\"2012-10-17\",\"Id\":\"default\",\"Statement\":[{\"Sid\":\"sns\",\"Effect\":\"Allow\",\"Principal\":{\"ExternalAPI\":\"sns.amazonaws.com\"},\"Action\":\"lambda:InvokeFunction\",\"Resource\":\"arn:aws:lambda:us-west-2:123456789012:function:ExampleFunction\"}]}"),
 		RevisionId: aws.String("abcdefg-1234567890-abcdefg"),
 	}
 

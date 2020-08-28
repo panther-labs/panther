@@ -107,7 +107,7 @@ var (
 		awsmodels.DynamoDBTableSchema:       {"DynamoDBTable", PollDynamoDBTables},
 		awsmodels.GuardDutySchema:           {"GuardDutyDetector", PollGuardDutyDetectors},
 		awsmodels.IAMUserSchema:             {"IAMUser", PollIAMUsers},
-		// Service scan for the resource type IAMRootUserSchema is not defined! Do not do it!
+		// ExternalAPI scan for the resource type IAMRootUserSchema is not defined! Do not do it!
 		awsmodels.IAMRoleSchema:         {"IAMRoles", PollIAMRoles},
 		awsmodels.IAMGroupSchema:        {"IAMGroups", PollIamGroups},
 		awsmodels.IAMPolicySchema:       {"IAMPolicies", PollIamPolicies},

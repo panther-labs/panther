@@ -62,7 +62,7 @@ func classifyWAF(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 		wafARN = strings.Join([]string{
 			"arn",
 			"aws",              // Partition
-			"waf",              // Service
+			"waf",              // ExternalAPI
 			"",                 // Region (global service so no region)
 			metadata.accountID, // Account ID
 			"webacl/" + detail.Get("requestParameters.webACLId").Str, // Resource-type/id

@@ -19,27 +19,25 @@ package main
  */
 
 import (
-	"time"
-
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/kelseyhightower/envconfig"
 
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 	"github.com/panther-labs/panther/pkg/lambdamux"
 )
 
 var config = struct {
-	Debug          bool
-	LogTypesMaxAge time.Duration `split_words:"true"`
-	logtypesapi.Config
+	Debug             bool
+	LogTypesTableName string `required:"true" split_words:"true"`
 }{}
 
-func init() {
-	envconfig.MustProcess("", &config)
-}
-
 func main() {
+	envconfig.MustProcess("", &config)
+
 	logger := lambdalogger.Config{
 		Debug:     config.Debug,
 		Namespace: "api",
@@ -49,21 +47,16 @@ func main() {
 	// Syncing the zap.Logger always results in Lambda errors. Commented code kept as a reminder.
 	// defer logger.Sync()
 
-	mux := lambdamux.Mux{}
-
-	if maxAge := config.LogTypesMaxAge; maxAge > 0 {
-		// Cache results of ListAvailableLogTypes
-		mux.Decorate = func(routeName string, handler lambdamux.Handler) lambdamux.Handler {
-			switch routeName {
-			case "ListAvailableLogTypes":
-				return lambdamux.CacheProxy(maxAge, handler)
-			default:
-				return handler
-			}
-		}
+	api := logtypesapi.API{
+		ExternalAPI: &logtypesapi.ExternalAPIDynamoDB{
+			DB:        dynamodb.New(session.Must(session.NewSession())),
+			TableName: config.LogTypesTableName,
+		},
+		// Use the default registry with all available log types
+		NativeLogTypes: registry.AvailableLogTypes,
 	}
 
-	api := logtypesapi.BuildAPI(&config.Config)
+	mux := lambdamux.Mux{}
 	mux.MustHandleStructs("", api)
 
 	// Adds logger to lambda context with a Lambda request ID field

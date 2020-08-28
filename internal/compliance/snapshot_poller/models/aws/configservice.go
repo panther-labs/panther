@@ -41,7 +41,7 @@ type ConfigService struct {
 	Status *configservice.ConfigurationRecorderStatus
 }
 
-// ConfigServiceMeta contains metadata about all Config Service Recorders in an account.
+// ConfigServiceMeta contains metadata about all Config ExternalAPI Recorders in an account.
 type ConfigServiceMeta struct {
 	// Generic resource fields
 	GenericAWSResource
