@@ -19,7 +19,7 @@
 import * as Types from '../../../../__generated__/schema';
 
 import { ComplianceIntegrationDetails } from '../../../graphql/fragments/ComplianceIntegrationDetails.generated';
-import * as GraphQL from 'graphql';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -89,7 +89,7 @@ export function mockAddComplianceSource({
 }: {
   data: AddComplianceSource;
   variables?: AddComplianceSourceVariables;
-  errors?: GraphQL.GraphQLError[];
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: AddComplianceSourceDocument, variables },

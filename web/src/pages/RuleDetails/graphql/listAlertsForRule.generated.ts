@@ -19,7 +19,7 @@
 import * as Types from '../../../../__generated__/schema';
 
 import { AlertSummaryFull } from '../../../graphql/fragments/AlertSummaryFull.generated';
-import * as GraphQL from 'graphql';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -93,7 +93,7 @@ export function mockListAlertsForRule({
 }: {
   data: ListAlertsForRule;
   variables?: ListAlertsForRuleVariables;
-  errors?: GraphQL.GraphQLError[];
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: ListAlertsForRuleDocument, variables },

@@ -19,7 +19,7 @@
 import * as Types from '../../../../__generated__/schema';
 
 import { PolicyDetailsMain } from '../../../graphql/fragments/PolicyDetailsMain.generated';
-import * as GraphQL from 'graphql';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -149,7 +149,7 @@ export function mockPolicyDetails({
 }: {
   data: PolicyDetails;
   variables?: PolicyDetailsVariables;
-  errors?: GraphQL.GraphQLError[];
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: PolicyDetailsDocument, variables },

@@ -18,7 +18,7 @@
 
 import * as Types from '../../../__generated__/schema';
 
-import * as GraphQL from 'graphql';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 
 export type AlertDetailsFull = Pick<

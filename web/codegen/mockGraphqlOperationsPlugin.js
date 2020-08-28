@@ -30,7 +30,7 @@ class MockGraphqlOperationsVisitor extends visitor_plugin_common_1.ClientSideBas
         return `export function mock${node.name.value}({ data, variables, errors}: { 
       data: ${operationResultType}, 
       variables?: ${operationVariablesTypes || 'never'}, 
-      errors?: GraphQL.GraphQLError[] 
+      errors?: GraphQLError[] 
     }) {
       return {
         request: { query: ${documentVariableName}, variables },
@@ -51,7 +51,7 @@ module.exports = {
         const visitor = new MockGraphqlOperationsVisitor(schema, allFragments, config, documents);
         const visitorResult = graphql_1.visit(allAst, { leave: visitor });
         return {
-            prepend: ["import * as GraphQL from 'graphql'"],
+            prepend: ["import { GraphQLError } from 'graphql'"],
             content: visitorResult.definitions
                 // Only get the stringified definitions
                 .filter(t => typeof t === 'string')

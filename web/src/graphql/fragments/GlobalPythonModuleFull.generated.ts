@@ -19,7 +19,7 @@
 import * as Types from '../../../__generated__/schema';
 
 import { GlobalPythonModuleTeaser } from './GlobalPythonModuleTeaser.generated';
-import * as GraphQL from 'graphql';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 
 export type GlobalPythonModuleFull = Pick<

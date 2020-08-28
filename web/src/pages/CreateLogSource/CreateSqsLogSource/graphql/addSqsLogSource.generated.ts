@@ -19,7 +19,7 @@
 import * as Types from '../../../../../__generated__/schema';
 
 import { SqsLogSourceIntegrationDetails } from '../../../../graphql/fragments/SqsLogSourceIntegrationDetails.generated';
-import * as GraphQL from 'graphql';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -81,7 +81,7 @@ export function mockAddSqsLogSource({
 }: {
   data: AddSqsLogSource;
   variables?: AddSqsLogSourceVariables;
-  errors?: GraphQL.GraphQLError[];
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: AddSqsLogSourceDocument, variables },
