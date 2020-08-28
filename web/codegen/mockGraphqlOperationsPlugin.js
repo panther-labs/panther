@@ -33,7 +33,7 @@ class MockGraphqlOperationsVisitor extends visitor_plugin_common_1.ClientSideBas
     operationResultType,
     operationVariablesTypes
   ) {
-    return `export function mock${node.name.value}({ data, variables, errors}: { 
+    return `export function mock${node.name.value}({ data, variables, errors }: { 
       data: ${operationResultType}, 
       variables?: ${operationVariablesTypes || 'never'}, 
       errors?: GraphQLError[] 
