@@ -41,7 +41,16 @@ var build = Build{}
 
 // API Generate API source files from GraphQL + Swagger
 func (b Build) API() {
-	mg.Deps(b.generateSwaggerClients, b.generateWebTypescript)
+	mg.Deps(b.generateSwaggerClients, b.generateWebTypescript, b.goGenerate)
+}
+
+func (b Build) goGenerate() error {
+	const generatePattern = "./..."
+	logger.Info("build:api: generating Go code with go:generate")
+	if err := sh.Run("go", "generate", generatePattern); err != nil {
+		return fmt.Errorf("go:generate failed: %s", err)
+	}
+	return nil
 }
 
 func (b Build) generateSwaggerClients() error {
