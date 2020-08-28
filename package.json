@@ -140,7 +140,7 @@
     "serve": "node web/scripts/serve.js",
     "test": "jest --config web/__tests__/jest.config.js --runInBand",
     "test:watch": "npm run test -- --watch",
-    "transpile-graphql-codegen-plugins": "tsc -p web/codegen",
+    "build-graphql-codegen-plugins": "tsc -p web/codegen",
     "graphql-codegen": "graphql-codegen --config web/codegen.yml",
     "graphql-codegen:watch": "npm run graphql-codegen -- --watch",
     "eslint": "eslint --config web/.eslintrc.js \"web/**/*.{ts,js,tsx}\"",

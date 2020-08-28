@@ -18,6 +18,7 @@
 
 import * as Types from '../../../__generated__/schema';
 
+import * as GraphQL from 'graphql';
 import gql from 'graphql-tag';
 
 export type GlobalPythonModuleTeaser = Pick<Types.GlobalPythonModule, 'id' | 'lastModified'>;

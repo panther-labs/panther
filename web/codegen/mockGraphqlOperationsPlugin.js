@@ -1,5 +1,5 @@
-'use strict';
-Object.defineProperty(exports, '__esModule', { value: true });
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -17,56 +17,48 @@ Object.defineProperty(exports, '__esModule', { value: true });
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-const graphql_1 = require('graphql');
-const visitor_plugin_common_1 = require('@graphql-codegen/visitor-plugin-common');
+const graphql_1 = require("graphql");
+const visitor_plugin_common_1 = require("@graphql-codegen/visitor-plugin-common");
 /**
  * This visitor runs for all GraphQL operations found in the graphql documents that it received
  * as input. It just returns a type-safe way of creating mock API requests. The "stringified" return
  * value is typical in those codegen-plugins and not a "hack" from our side
  */
 class MockGraphqlOperationsVisitor extends visitor_plugin_common_1.ClientSideBaseVisitor {
-  // eslint-disable-next-line class-methods-use-this
-  buildOperation(
-    node,
-    documentVariableName,
-    operationType,
-    operationResultType,
-    operationVariablesTypes
-  ) {
-    return `export function mock${node.name.value}({ data, variables, error}: { 
+    // eslint-disable-next-line class-methods-use-this
+    buildOperation(node, documentVariableName, operationType, operationResultType, operationVariablesTypes) {
+        return `export function mock${node.name.value}({ data, variables, errors}: { 
       data: ${operationResultType}, 
       variables?: ${operationVariablesTypes || 'never'}, 
-      error?: Error 
+      errors?: GraphQL.GraphQLError[] 
     }) {
       return {
         request: { query: ${documentVariableName}, variables },
-        result: { data },
-        error,
+        result: { data, errors },
       }
     }`;
-  }
+    }
 }
 module.exports = {
-  plugin: (schema, documents, config) => {
-    const allAst = graphql_1.concatAST(documents.map(v => v.document));
-    const allFragments = allAst.definitions
-      .filter(d => d.kind === graphql_1.Kind.FRAGMENT_DEFINITION)
-      .map(fragmentDef => ({
-        node: fragmentDef,
-        name: fragmentDef.name.value,
-        onType: fragmentDef.typeCondition.name.value,
-        isExternal: false,
-      }));
-    const visitor = new MockGraphqlOperationsVisitor(schema, allFragments, config, documents);
-    const visitorResult = graphql_1.visit(allAst, { leave: visitor });
-    return {
-      content: visitorResult.definitions
-        // Only get the stringified definitions
-        .filter(t => typeof t === 'string')
-        // filter our  the part that we care about, since, by default, `@graphql-codegen/visitor-plugin-common`
-        // prepends additional stuff
-        .map(t => t.slice(t.indexOf('export function mock'), t.length))
-        .join('\n'),
-    };
-  },
+    plugin: (schema, documents, config) => {
+        const allAst = graphql_1.concatAST(documents.map(v => v.document));
+        const allFragments = allAst.definitions.filter(d => d.kind === graphql_1.Kind.FRAGMENT_DEFINITION).map(fragmentDef => ({
+            node: fragmentDef,
+            name: fragmentDef.name.value,
+            onType: fragmentDef.typeCondition.name.value,
+            isExternal: false,
+        }));
+        const visitor = new MockGraphqlOperationsVisitor(schema, allFragments, config, documents);
+        const visitorResult = graphql_1.visit(allAst, { leave: visitor });
+        return {
+            prepend: ["import * as GraphQL from 'graphql'"],
+            content: visitorResult.definitions
+                // Only get the stringified definitions
+                .filter(t => typeof t === 'string')
+                // filter our  the part that we care about, since, by default, `@graphql-codegen/visitor-plugin-common`
+                // prepends additional stuff
+                .map(t => t.slice(t.indexOf('export function mock'), t.length))
+                .join('\n'),
+        };
+    },
 };

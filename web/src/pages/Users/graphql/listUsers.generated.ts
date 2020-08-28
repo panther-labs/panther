@@ -19,6 +19,7 @@
 import * as Types from '../../../../__generated__/schema';
 
 import { UserDetails } from '../../../graphql/fragments/UserDetails.generated';
+import * as GraphQL from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -70,15 +71,14 @@ export type ListUsersQueryResult = ApolloReactCommon.QueryResult<ListUsers, List
 export function mockListUsers({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: ListUsers;
   variables?: ListUsersVariables;
-  error?: Error;
+  errors?: GraphQL.GraphQLError[];
 }) {
   return {
     request: { query: ListUsersDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }

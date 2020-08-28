@@ -19,6 +19,7 @@
 import * as Types from '../../../../__generated__/schema';
 
 import { AlertSummaryFull } from '../../../graphql/fragments/AlertSummaryFull.generated';
+import * as GraphQL from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -80,15 +81,14 @@ export type GetTopAlertsQueryResult = ApolloReactCommon.QueryResult<
 export function mockGetTopAlerts({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: GetTopAlerts;
   variables?: GetTopAlertsVariables;
-  error?: Error;
+  errors?: GraphQL.GraphQLError[];
 }) {
   return {
     request: { query: GetTopAlertsDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }

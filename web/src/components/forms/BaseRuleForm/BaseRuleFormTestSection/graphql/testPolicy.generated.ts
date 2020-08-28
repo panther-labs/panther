@@ -18,6 +18,7 @@
 
 import * as Types from '../../../../../../__generated__/schema';
 
+import * as GraphQL from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -88,15 +89,14 @@ export type TestPolicyMutationOptions = ApolloReactCommon.BaseMutationOptions<
 export function mockTestPolicy({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: TestPolicy;
   variables?: TestPolicyVariables;
-  error?: Error;
+  errors?: GraphQL.GraphQLError[];
 }) {
   return {
     request: { query: TestPolicyDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }
