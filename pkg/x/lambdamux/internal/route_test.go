@@ -1,4 +1,4 @@
-package internal
+package internal_test
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -25,30 +25,30 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/pkg/lambdamux"
+	"github.com/panther-labs/panther/pkg/x/lambdamux"
+	"github.com/panther-labs/panther/pkg/x/lambdamux/internal"
 )
 
 type testAPI struct {
 }
 
-func (*testAPI) InvokeFoo(ctx context.Context) error {
+func (*testAPI) InvokeFoo(_ context.Context) error {
 	return nil
 }
 
 func TestStructRoutes(t *testing.T) {
 	assert := require.New(t)
-	routes, err := RouteMethods(lambdamux.DefaultHandlerPrefix, &testAPI{})
+	routes, err := internal.RouteMethods(lambdamux.DefaultHandlerPrefix, &testAPI{})
 	assert.NoError(err)
 	assert.Len(routes, 1)
-	assert.Nil(routes[0].input)
-	assert.Nil(routes[0].output)
-	assert.True(routes[0].withError)
-	assert.True(routes[0].withContext)
-	assert.Equal(1, routes[0].method.Type().NumIn())
+	assert.Nil(routes[0].Input())
+	assert.Nil(routes[0].Output())
 
-	mux := lambdamux.Mux{}
-	mux.MustHandleMethods(lambdamux.DefaultHandlerPrefix, &testAPI{})
-	mux.MustHandleMethods(lambdamux.DefaultHandlerPrefix, &testAPI{})
+	mux := lambdamux.Mux{
+		IgnoreDuplicates: true,
+	}
+	assert.NoError(mux.HandleMethodsPrefix(lambdamux.DefaultHandlerPrefix, &testAPI{}))
+	assert.NoError(mux.HandleMethodsPrefix(lambdamux.DefaultHandlerPrefix, &testAPI{}))
 	output, err := mux.Invoke(context.Background(), json.RawMessage(`{"Foo":{}}`))
 	assert.NoError(err)
 	assert.Equal("{}", string(output))

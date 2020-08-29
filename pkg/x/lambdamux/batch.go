@@ -79,7 +79,6 @@ func (m *Mux) runBatch(ctx context.Context, b *batchJobs) ([]byte, error) {
 	out := make([]byte, w.Buffered())
 	copy(out, w.Buffer())
 	return out, nil
-
 }
 
 func (b *batchJobs) Run(ctx context.Context, w *jsoniter.Stream) error {

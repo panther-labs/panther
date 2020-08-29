@@ -34,15 +34,12 @@ package {{.PkgName}}
 
 import (
 	"context"
-	"github.com/panther-labs/panther/pkg/lambdamux/lambdaclient"
 	{{ range .Imports }}{{ .Name }} {{ printf "%q" .Path }}{{ end }}
 )
 
-{{ range $alias, $typ := .Aliases }}
-type {{ $alias }} = {{ $typ }}
-{{ end }}
+// Models
 
-type Lambda{{.API}}Event struct {
+type LambdaEventPayload struct {
 {{- range .Methods }}
 {{- if .Input }}
 	{{ .Name }} *{{ .Name }}Input
@@ -51,6 +48,10 @@ type Lambda{{.API}}Event struct {
 {{- end -}}
 {{- end }}
 }
+
+{{ .Models }}
+
+// Lambda client
 
 type LambdaClient struct {
 	client lambdaclient.Client
@@ -71,7 +72,7 @@ func (c *LambdaClient) {{ .Name }}(ctx context.Context, input *{{.Name}}Input) (
 	if err := c.client.Validate(input); err != nil {
 		return nil, err
 	}
-	lambdaEvent := Lambda{{.API}}Event{
+	lambdaEvent := LambdaEventPayload{
 		{{ .Name }}: input,
 	}
 	output := {{ .Name }}Output{}
@@ -86,7 +87,7 @@ func (c *LambdaClient) {{ .Name }}(ctx context.Context, input *{{.Name}}Input) e
 	if err := c.client.Validate(input); err != nil {
 		return nil, err
 	}
-	lambdaEvent := Lambda{{.API}}Event{
+	lambdaEvent := LambdaEventPayload{
 		{{ .Name }}: input,
 	}
 	return c.client.InvokeWithContext(ctx, &lambdaEvent, nil)
@@ -94,7 +95,7 @@ func (c *LambdaClient) {{ .Name }}(ctx context.Context, input *{{.Name}}Input) e
 `
 const methodTemplateOutput = `
 func (c *LambdaClient) {{ .Name }}(ctx context.Context) (*{{.Name}}Output, error) {
-	lambdaEvent := Lambda{{.API}}Event{
+	lambdaEvent := LambdaEventPayload{
 		{{ .Name }}: &struct{}{},
 	}
 	output := {{ .Name }}Output{}

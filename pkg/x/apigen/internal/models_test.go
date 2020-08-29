@@ -1,4 +1,4 @@
-package lambdamux
+package internal
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -17,34 +17,3 @@ package lambdamux
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-import (
-	"context"
-
-	jsoniter "github.com/json-iterator/go"
-
-	"github.com/panther-labs/panther/pkg/lambdamux/internal"
-)
-
-const DefaultHandlerPrefix = "Invoke"
-
-type Handler = internal.Handler
-
-// HandlerFunc is a function implementing lambda.Handler
-type HandlerFunc func(ctx context.Context, payload []byte) ([]byte, error)
-
-var _ Handler = (HandlerFunc)(nil)
-
-// Invoke implements lambda.Handler
-func (f HandlerFunc) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
-	return f(ctx, payload)
-}
-
-var defaultJSON = jsoniter.ConfigCompatibleWithStandardLibrary
-
-func resolveJSON(api jsoniter.API) jsoniter.API {
-	if api != nil {
-		return api
-	}
-	return defaultJSON
-}

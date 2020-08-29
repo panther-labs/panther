@@ -1,4 +1,4 @@
-package logtypesapi
+package lambdamux
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -20,24 +20,31 @@ package logtypesapi
 
 import (
 	"context"
+
+	jsoniter "github.com/json-iterator/go"
+
+	"github.com/panther-labs/panther/pkg/x/lambdamux/internal"
 )
 
-// Generate a lambda client using genlambdamux
-//go:generate go run github.com/panther-labs/panther/pkg/x/apigen -pkg logtypesclient -out ./client/lambdaclient_gen.go
+const DefaultHandlerPrefix = "Invoke"
 
-// API handles the business logic of LogTypesAPI
-type API struct {
-	ExternalAPI    ExternalAPI
-	NativeLogTypes func() []string
+type Handler = internal.Handler
+
+// HandlerFunc is a function implementing lambda.Handler
+type HandlerFunc func(ctx context.Context, payload []byte) ([]byte, error)
+
+var _ Handler = (HandlerFunc)(nil)
+
+// Invoke implements lambda.Handler
+func (f HandlerFunc) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
+	return f(ctx, payload)
 }
 
-// ExternalAPI handles the external actions required for API to be implemented
-type ExternalAPI interface {
-	ListLogTypes(ctx context.Context) ([]string, error)
-}
+var defaultJSON = jsoniter.ConfigCompatibleWithStandardLibrary
 
-// Models
-// We should list all API models here until we update the generator to produce docs for the models used.
-type AvailableLogTypes struct {
-	LogTypes []string `json:"logTypes"`
+func resolveJSON(api jsoniter.API) jsoniter.API {
+	if api != nil {
+		return api
+	}
+	return defaultJSON
 }

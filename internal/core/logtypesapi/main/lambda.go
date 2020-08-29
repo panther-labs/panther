@@ -30,7 +30,7 @@ import (
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
-	"github.com/panther-labs/panther/pkg/lambdamux"
+	"github.com/panther-labs/panther/pkg/x/lambdamux"
 )
 
 var config = struct {

@@ -26,7 +26,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/pkg/lambdamux/internal"
+	"github.com/panther-labs/panther/pkg/x/lambdamux/internal"
 )
 
 // ErrNotFound is a well-known error that a route was not found.

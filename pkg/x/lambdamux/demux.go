@@ -44,7 +44,7 @@ func DemuxKeys(routeKey, payloadKey string) Demux {
 
 type demuxKeyValue struct{}
 
-func (d *demuxKeyValue) demux(iter *jsoniter.Iterator, payload []byte) ([]byte, string) {
+func (d *demuxKeyValue) demux(iter *jsoniter.Iterator, _ []byte) ([]byte, string) {
 	name := iter.ReadObject()
 	if name == "" {
 		return nil, ""
