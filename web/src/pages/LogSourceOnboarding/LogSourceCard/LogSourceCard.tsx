@@ -17,7 +17,7 @@
  */
 
 import * as React from 'react';
-import { Badge, Box, Flex, Icon, Img, PseudoBox } from 'pouncejs';
+import { Badge, Box, Flex, Icon, Img } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import { slugify } from 'Helpers/utils';
 
@@ -32,7 +32,7 @@ const LogSourceCard: React.FC<ItemCardProps> = ({ logo, title, to, disabled }) =
   const titleId = slugify(title);
 
   const content = (
-    <PseudoBox
+    <Box
       aria-disabled={disabled}
       mb={5}
       border="1px solid"
@@ -64,7 +64,7 @@ const LogSourceCard: React.FC<ItemCardProps> = ({ logo, title, to, disabled }) =
           )}
         </Box>
       </Flex>
-    </PseudoBox>
+    </Box>
   );
 
   if (disabled) {

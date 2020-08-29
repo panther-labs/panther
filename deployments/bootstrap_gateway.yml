@@ -172,7 +172,10 @@ Resources:
                 - cloudwatch:DeleteAlarms
               Resource: !Sub arn:${AWS::Partition}:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:Panther*
             - Effect: Allow
-              Action: cognito-idp:SetUserPoolMfaConfig
+              Action:
+                - cognito-idp:DescribeUserPoolClient
+                - cognito-idp:SetUserPoolMfaConfig
+                - cognito-idp:UpdateUserPoolClient
               Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}
             - Effect: Allow
               Action: dynamodb:Scan
@@ -336,6 +339,18 @@ Resources:
         - email
         - given_name
         - family_name
+
+  AppClientTokenExpiration:
+    Type: Custom::CognitoClientTokenExpiration
+    Properties:
+      AccessTokenValidityMinutes: 15
+      IdTokenValidityMinutes: 720 # 12 hours
+      RefreshTokenValidityMinutes: 720 # 12 hours
+
+      AppClientId: !Ref AppClient
+      CustomResourceVersion: !Ref CustomResourceVersion
+      ServiceToken: !GetAtt CustomResourceFunction.Arn
+      UserPoolId: !Ref UserPoolId
 
   AnalysisApi:
     Type: AWS::Serverless::Api
