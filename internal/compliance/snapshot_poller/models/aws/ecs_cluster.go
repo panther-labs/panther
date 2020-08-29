@@ -51,7 +51,7 @@ type EcsCluster struct {
 	Tasks    []*EcsTask
 }
 
-// EcsService contains all the information about an ECS ExternalAPI, for embedding into the EcsCluster resource
+// EcsService contains all the information about an ECS Service, for embedding into the EcsCluster resource
 type EcsService struct {
 	// Generic resource fields
 	//

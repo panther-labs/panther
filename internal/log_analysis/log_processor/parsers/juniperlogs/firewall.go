@@ -105,7 +105,7 @@ type IPTables struct {
 	PacketID        int64  `json:"ID" description:"Packet id"`
 	MACAddress      string `json:"MAC,omitempty" description:"MAC address"`
 	PacketLength    uint16 `json:"LEN,omitempty" description:"Packet length"`
-	TypeOfService   string `json:"TOS,omitempty" description:"Packet Type of ExternalAPI field"`
+	TypeOfService   string `json:"TOS,omitempty" description:"Packet Type of Service field"`
 	Precedence      string `json:"PREC,omitempty" description:"Packet precedence bits"`
 	RST             bool   `json:"RST,omitempty" description:"Packet is RST"`
 	SYN             bool   `json:"SYN,omitempty" description:"Packet is SYN"`

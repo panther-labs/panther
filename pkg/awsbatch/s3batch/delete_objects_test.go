@@ -89,7 +89,7 @@ func TestDeleteObjectsBackoff(t *testing.T) {
 	assert.Equal(t, 2, client.callCount)
 }
 
-// ExternalAPI errors are not retried
+// Service errors are not retried
 func TestDeleteObjectsPermanentError(t *testing.T) {
 	client := &mockS3{err: errors.New("permanent")}
 	assert.NotNil(t, DeleteObjects(client, 5*time.Second, testInput()))

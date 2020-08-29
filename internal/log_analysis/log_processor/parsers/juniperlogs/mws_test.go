@@ -29,7 +29,7 @@ import (
 )
 
 func TestMWSParser_Parse(t *testing.T) {
-	t.Run("ExternalAPI with component", func(t *testing.T) {
+	t.Run("Service with component", func(t *testing.T) {
 		log := `Mar 19 18:42:38 my-jwas-instance [INFO][mws-cluster-services][db-cleanup] Database cleanup completed. Removed record count: 0`
 		now := time.Now()
 		tm := time.Date(now.Year(), time.March, 19, 18, 42, 38, 0, time.UTC)
@@ -57,7 +57,7 @@ func TestMWSParser_Parse(t *testing.T) {
 		event.SetCoreFields(TypeMWS, (*timestamp.RFC3339)(&tm), &event)
 		testutil.CheckPantherParser(t, log, NewMWSParser(), &event.PantherLog)
 	})
-	t.Run("ExternalAPI without component", func(t *testing.T) {
+	t.Run("Service without component", func(t *testing.T) {
 		log := `Mar 19 20:18:26 my-jwas-instance [INFO][mws-security-engine] Server startup in 3080 ms`
 		now := time.Now()
 		tm := time.Date(now.Year(), time.March, 19, 20, 18, 26, 0, time.UTC)
