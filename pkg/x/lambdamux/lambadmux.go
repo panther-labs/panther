@@ -20,17 +20,20 @@ package lambdamux
 
 import (
 	"context"
+	"errors"
+	"strings"
 
 	jsoniter "github.com/json-iterator/go"
-
-	"github.com/panther-labs/panther/pkg/x/lambdamux/internal"
 )
 
 const DefaultHandlerPrefix = "Invoke"
 
-type Handler = internal.Handler
+// Handler is identical to lambda.Handler.
+type Handler interface {
+	Invoke(ctx context.Context, payload []byte) ([]byte, error)
+}
 
-// HandlerFunc is a function implementing lambda.Handler
+// HandlerFunc is a function implementing Handler
 type HandlerFunc func(ctx context.Context, payload []byte) ([]byte, error)
 
 var _ Handler = (HandlerFunc)(nil)
@@ -40,6 +43,21 @@ func (f HandlerFunc) Invoke(ctx context.Context, payload []byte) ([]byte, error)
 	return f(ctx, payload)
 }
 
+type RouteHandler interface {
+	Handler
+	Route() string
+}
+
+// ErrNotFound is a well-known error that a route was not found.
+// Using std errors.New here since we don't want a stack
+var ErrNotFound = errors.New(`route not found`)
+
+// RouteError is the error implemented by errors returned from a route handler
+type RouteError interface {
+	error
+	Route() string
+}
+
 var defaultJSON = jsoniter.ConfigCompatibleWithStandardLibrary
 
 func resolveJSON(api jsoniter.API) jsoniter.API {
@@ -47,4 +65,8 @@ func resolveJSON(api jsoniter.API) jsoniter.API {
 		return api
 	}
 	return defaultJSON
+}
+
+func IgnoreCase(name string) string {
+	return strings.ToUpper(name)
 }

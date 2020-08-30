@@ -57,16 +57,6 @@ func (b *batchJobs) Recycle() {
 }
 
 func (m *Mux) runBatch(ctx context.Context, b *batchJobs) ([]byte, error) {
-	// Check all route names upfront
-	for i := range b.jobs {
-		job := &b.jobs[i]
-		handler, err := m.Get(job.name)
-		if err != nil {
-			return nil, err
-		}
-		job.handler = handler
-	}
-
 	// Run the batch
 	jsonAPI := resolveJSON(m.JSON)
 	w := jsonAPI.BorrowStream(nil)
@@ -88,7 +78,7 @@ func (b *batchJobs) Run(ctx context.Context, w *jsoniter.Stream) error {
 		payload := b.slicePayload(job.start, job.end)
 		reply, err := job.handler.Invoke(ctx, payload)
 		if err != nil {
-			return errors.Wrapf(err, "batch job %s %d/%d failed", job.name, i, len(b.jobs))
+			return errors.WithMessagef(err, "batch job %s %d/%d failed", job.name, i, len(b.jobs))
 		}
 		if i != 0 {
 			w.WriteMore()
@@ -102,7 +92,7 @@ func (b *batchJobs) Run(ctx context.Context, w *jsoniter.Stream) error {
 func (b *batchJobs) slicePayload(start, end int) (p []byte) {
 	if 0 <= start && start < len(b.buffer) {
 		p = b.buffer[start:]
-		if 0 <= end && end < len(p) {
+		if 0 <= end && end <= len(p) {
 			return p[:end]
 		}
 	}
@@ -112,14 +102,29 @@ func (b *batchJobs) slicePayload(start, end int) (p []byte) {
 func (b *batchJobs) ReadJobs(mux *Mux, iter *jsoniter.Iterator) error {
 	buffer := b.buffer[:0]
 	jobs := b.jobs[:0]
+	var jobIter *jsoniter.Iterator
+	defer func() {
+		if jobIter != nil {
+			iter.Pool().ReturnIterator(jobIter)
+		}
+	}()
 	for iter.ReadArray() {
-		name := iter.ReadObject()
+		payload := iter.SkipAndReturnBytes()
+		if jobIter == nil {
+			jobIter = iter.Pool().BorrowIterator(payload)
+		} else {
+			jobIter.ResetBytes(payload)
+		}
+		jobPayload, name := mux.demux(jobIter, payload)
+		if err := jobIter.Error; err != nil {
+			return errors.Wrap(err, `invalid batch JSON payload`)
+		}
 		handler, err := mux.Get(name)
 		if err != nil {
 			return err
 		}
 		start := len(buffer)
-		buffer = iter.SkipAndAppendBytes(buffer)
+		buffer = append(buffer, jobPayload...)
 		jobs = append(jobs, batchJob{
 			name:    name,
 			handler: handler,

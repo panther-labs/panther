@@ -20,37 +20,35 @@ package lambdamux
 
 import (
 	"context"
-	goerr "errors"
 
-	"github.com/aws/aws-lambda-go/lambda"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
-
-	"github.com/panther-labs/panther/pkg/x/lambdamux/internal"
 )
-
-// ErrNotFound is a well-known error that a route was not found.
-// Using std errors.New here since we don't want a stack
-var ErrNotFound = goerr.New(`route not found`)
 
 // Mux dispatches handling of a Lambda events
 type Mux struct {
-	Rename           func(name string) (key string)
-	Decorate         func(key string, handler lambda.Handler) lambda.Handler
-	Demux            Demux
-	JSON             jsoniter.API
-	Validate         func(payload interface{}) error
+	// If set, it will normalize route names.
+	RouteName func(name string) string
+	// Decorate can intercept new handlers and add decorations
+	Decorate func(key string, handler Handler) Handler
+	// Demux sets the routing method.
+	Demux Demuxer // defaults to DemuxKeyValue
+	// JSON
+	JSON jsoniter.API // defaults to jsoniter.ConfigCompatibleWithStandardLibrary
+	// Validate sets a custom validation function to be injected into every route handler
+	Validate func(payload interface{}) error
+	// IgnoreDuplicates will not return errors when duplicate route handlers are added to the mux
 	IgnoreDuplicates bool
 
-	handlers map[string]lambda.Handler
+	handlers map[string]RouteHandler
 }
 
 // Handlers returns all handlers added to the mux.
-func (m *Mux) Handlers() (handlers []lambda.Handler) {
+func (m *Mux) Handlers() (handlers []RouteHandler) {
 	if len(m.handlers) == 0 {
 		return
 	}
-	handlers = make([]lambda.Handler, 0, len(m.handlers))
+	handlers = make([]RouteHandler, 0, len(m.handlers))
 	for _, handler := range m.handlers {
 		handlers = append(handlers, handler)
 	}
@@ -58,7 +56,7 @@ func (m *Mux) Handlers() (handlers []lambda.Handler) {
 }
 
 // MustHandleMethods add all routes from a struct to the Mux or panics.
-// It overrides previously defined routes *without* an error.
+// It overrides previously defined routes without error if IgnoreDuplicates is set
 func (m *Mux) MustHandleMethods(receivers ...interface{}) {
 	if err := m.HandleMethodsPrefix("", receivers...); err != nil {
 		panic(err)
@@ -67,10 +65,10 @@ func (m *Mux) MustHandleMethods(receivers ...interface{}) {
 
 // HandleMethodsPrefix add all routes from a struct to the Mux.
 // It fails if a method does not meet the signature requirements.
-// It overrides previously defined routes *without* an error.
+// It overrides previously defined routes without error if IgnoreDuplicates is set
 func (m *Mux) HandleMethodsPrefix(prefix string, receivers ...interface{}) error {
 	for _, receiver := range receivers {
-		routes, err := internal.RouteMethods(prefix, receiver)
+		routes, err := routeMethods(prefix, receiver)
 		if err != nil {
 			return err
 		}
@@ -81,38 +79,86 @@ func (m *Mux) HandleMethodsPrefix(prefix string, receivers ...interface{}) error
 	return nil
 }
 
-func (m *Mux) handleRoutes(routes ...*internal.Route) error {
+func (m *Mux) handleRoutes(routes ...*routeHandler) error {
 	for _, route := range routes {
-		name := route.Name()
-		handler := route.Handler(m.JSON, m.Validate)
-		if err := m.Handle(name, handler); err != nil {
+		name := route.name
+		if err := m.Handle(name, route); err != nil {
 			return err
 		}
 	}
 	return nil
 }
+func (m *Mux) MustHandle(name string, handler interface{}) {
+	if err := m.Handle(name, handler); err != nil {
+		panic(err)
+	}
+}
 
 // Handle applies any decoration and adds a handler to the mux.
-func (m *Mux) Handle(name string, handler lambda.Handler) error {
+// It fails if the handler does not meet the signature requirements.
+// It overrides previously defined routes without error if IgnoreDuplicates is set.
+func (m *Mux) Handle(name string, handler interface{}) error {
 	key := name
-	if m.Rename != nil {
-		key = m.Rename(key)
+	if m.RouteName != nil {
+		key = m.RouteName(name)
 	}
 	if key == "" {
 		return errors.Errorf("invalid route name %q", name)
 	}
-	if decorate := m.Decorate; decorate != nil {
-		handler = decorate(key, handler)
+
+	var route RouteHandler
+	switch h := handler.(type) {
+	case *routeHandler:
+		r := *h
+		r.name = key
+		if m.JSON != nil {
+			r.jsonAPI = m.JSON
+		}
+		if m.Validate != nil {
+			r.validate = m.Validate
+		}
+		route = &r
+	case Handler:
+		route = &namedHandler{
+			Handler: h,
+			route:   key,
+		}
+	default:
+		r, err := buildRoute(key, handler)
+		if err != nil {
+			return err
+		}
+		if m.JSON != nil {
+			r.jsonAPI = m.JSON
+		}
+		if m.Validate != nil {
+			r.validate = m.Validate
+		}
+		route = r
 	}
+
+	if decorate := m.Decorate; decorate != nil {
+		d := decorate(key, route)
+		// Allow Decorate to filter routes
+		if d == nil {
+			return nil
+		}
+		route = &namedHandler{
+			Handler: d,
+			route:   key,
+		}
+	}
+
 	if !m.IgnoreDuplicates {
 		if _, duplicate := m.handlers[key]; duplicate {
 			return errors.Errorf("duplicate route handler for %q", name)
 		}
 	}
+
 	if m.handlers == nil {
-		m.handlers = map[string]lambda.Handler{}
+		m.handlers = map[string]RouteHandler{}
 	}
-	m.handlers[key] = handler
+	m.handlers[key] = route
 	return nil
 }
 
@@ -145,19 +191,19 @@ func (m *Mux) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
 var defaultDemux = &demuxKeyValue{}
 
 func (m *Mux) demux(iter *jsoniter.Iterator, payload []byte) ([]byte, string) {
-	if m.Demux != nil {
-		return m.Demux.demux(iter, payload)
+	if d := m.Demux; d != nil {
+		return d.Demux(iter, payload)
 	}
-	return defaultDemux.demux(iter, payload)
+	return defaultDemux.Demux(iter, payload)
 }
 
-func (m *Mux) Get(name string) (lambda.Handler, error) {
+func (m *Mux) Get(name string) (Handler, error) {
 	if name == "" {
 		return nil, errors.Wrap(ErrNotFound, `invalid payload`)
 	}
 	key := name
-	if m.Rename != nil {
-		key = m.Rename(key)
+	if m.RouteName != nil {
+		key = m.RouteName(key)
 		if key == "" {
 			return nil, errors.Wrapf(ErrNotFound, `invalid route key %q`, name)
 		}
@@ -165,5 +211,24 @@ func (m *Mux) Get(name string) (lambda.Handler, error) {
 	if handler, ok := m.handlers[key]; ok {
 		return handler, nil
 	}
-	return nil, errors.WithStack(ErrNotFound)
+	return nil, errors.Wrapf(ErrNotFound, "route %q not found", key)
+}
+
+type namedHandler struct {
+	Handler
+	route string
+}
+
+var _ RouteHandler = (*namedHandler)(nil)
+
+func (h *namedHandler) Route() string {
+	return h.route
+}
+
+func (h *namedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
+	reply, err := h.Handler.Invoke(ctx, payload)
+	if err != nil {
+		return nil, newRouteError(h.route, err)
+	}
+	return reply, nil
 }

@@ -19,8 +19,6 @@ package main
  */
 
 import (
-	"strings"
-
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -63,8 +61,8 @@ func main() {
 
 	mux := lambdamux.Mux{
 		// use case-insensitive route matching
-		Rename:   strings.ToUpper,
-		Validate: validate.Struct,
+		RouteName: lambdamux.IgnoreCase,
+		Validate:  validate.Struct,
 	}
 
 	mux.MustHandleMethods(api)

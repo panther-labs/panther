@@ -1,4 +1,4 @@
-package internal_test
+package lambdamux
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -20,36 +20,33 @@ package internal_test
 
 import (
 	"context"
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/panther-labs/panther/pkg/x/lambdamux"
-	"github.com/panther-labs/panther/pkg/x/lambdamux/internal"
 )
 
-type testAPI struct {
-}
-
-func (*testAPI) InvokeFoo(_ context.Context) error {
-	return nil
-}
-
-func TestStructRoutes(t *testing.T) {
-	assert := require.New(t)
-	routes, err := internal.RouteMethods(lambdamux.DefaultHandlerPrefix, &testAPI{})
-	assert.NoError(err)
-	assert.Len(routes, 1)
-	assert.Nil(routes[0].Input())
-	assert.Nil(routes[0].Output())
-
-	mux := lambdamux.Mux{
-		IgnoreDuplicates: true,
+func TestBatch(t *testing.T) {
+	mux := Mux{}
+	type Payload struct {
+		Foo string `json:"foo"`
 	}
-	assert.NoError(mux.HandleMethodsPrefix(lambdamux.DefaultHandlerPrefix, &testAPI{}))
-	assert.NoError(mux.HandleMethodsPrefix(lambdamux.DefaultHandlerPrefix, &testAPI{}))
-	output, err := mux.Invoke(context.Background(), json.RawMessage(`{"Foo":{}}`))
-	assert.NoError(err)
-	assert.Equal("{}", string(output))
+	type Reply struct {
+		Bar string `json:"bar,omitempty"`
+		Baz string `json:"baz,omitempty"`
+	}
+
+	mux.MustHandle("bar", func(payload *Payload) (*Reply, error) {
+		return &Reply{Bar: payload.Foo}, nil
+	})
+	mux.MustHandle("baz", func(payload *Payload) (*Reply, error) {
+		return &Reply{Baz: payload.Foo}, nil
+	})
+	ctx := context.Background()
+	assert := require.New(t)
+	{
+		reply, err := mux.Invoke(ctx, []byte(`[{"bar":{"foo":"bar"}},{"baz":{"foo":"baz"}}]`))
+		assert.NoError(err)
+		assert.JSONEq(`[{"bar":"bar"},{"baz":"baz"}]`, string(reply))
+	}
+
 }

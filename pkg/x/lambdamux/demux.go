@@ -22,29 +22,24 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
-type Demux interface {
-	demux(api *jsoniter.Iterator, payload []byte) ([]byte, string)
+// Demuxer sets the routing strategy for a payload.
+//
+// It accepts the current JSON iterator and the original payload and returns the route payload and name.
+type Demuxer interface {
+	Demux(iter *jsoniter.Iterator, payload []byte) ([]byte, string)
 }
 
-func DemuxKeyValue() Demux {
+// DemuxKeyValue uses the first key in a JSON object as route name and it's value as payload.
+//
+// For example a `DemuxKeyValue()` will route a payload `{"foo":{"bar":"baz"}}`
+// to route `foo` with payload `{"bar":"baz"}`.
+func DemuxKeyValue() Demuxer {
 	return &demuxKeyValue{}
-}
-func DemuxPeekKey(routeKey string) Demux {
-	return &demuxPeekKey{
-		routeKey: routeKey,
-	}
-}
-
-func DemuxKeys(routeKey, payloadKey string) Demux {
-	return &demuxKeyKey{
-		routeKey:   routeKey,
-		payloadKey: payloadKey,
-	}
 }
 
 type demuxKeyValue struct{}
 
-func (d *demuxKeyValue) demux(iter *jsoniter.Iterator, _ []byte) ([]byte, string) {
+func (d *demuxKeyValue) Demux(iter *jsoniter.Iterator, _ []byte) ([]byte, string) {
 	name := iter.ReadObject()
 	if name == "" {
 		return nil, ""
@@ -52,12 +47,53 @@ func (d *demuxKeyValue) demux(iter *jsoniter.Iterator, _ []byte) ([]byte, string
 	return iter.SkipAndReturnBytes(), name
 }
 
-type demuxKeyKey struct {
+// DemuxPeekKey peeks into the value of a JSON object field to find the route name.
+//
+// For example a `DemuxPeekKey("method")` will route a payload `{"method":"foo", "bar":"baz"}}`
+// to route `foo` with payload `{"method":"foo", "bar":"baz"}`.
+func DemuxPeekKey(routeKey string) Demuxer {
+	return &demuxPeekKey{
+		routeKey: routeKey,
+	}
+}
+
+type demuxPeekKey struct {
+	routeKey string
+}
+
+func (d *demuxPeekKey) Demux(iter *jsoniter.Iterator, payload []byte) ([]byte, string) {
+	for key := iter.ReadObject(); key != ""; key = iter.ReadObject() {
+		if key != d.routeKey {
+			iter.Skip()
+			continue
+		}
+		name := iter.ReadString()
+		if name == "" {
+			return nil, ""
+		}
+		return payload, name
+	}
+	return nil, ""
+}
+
+// DemuxKeys uses the value of two separate keys of a JSON object as route name and payload.
+//
+// For example a `DemuxKeys("method","params")` will route a payload `{"method": "foo", "params":{"bar":"baz"}}`
+// to route `foo` with payload `{"bar":"baz"}`.
+//
+func DemuxKeys(routeKey, payloadKey string) Demuxer {
+	return &demuxKeys{
+		routeKey:   routeKey,
+		payloadKey: payloadKey,
+	}
+}
+
+type demuxKeys struct {
 	routeKey   string
 	payloadKey string
 }
 
-func (d *demuxKeyKey) demux(iter *jsoniter.Iterator, payload []byte) (p []byte, name string) {
+func (d *demuxKeys) Demux(iter *jsoniter.Iterator, payload []byte) (p []byte, name string) {
 	for key := iter.ReadObject(); key != ""; key = iter.ReadObject() {
 		switch key {
 		case d.routeKey:
@@ -73,25 +109,6 @@ func (d *demuxKeyKey) demux(iter *jsoniter.Iterator, payload []byte) (p []byte, 
 		default:
 			iter.Skip()
 		}
-	}
-	return nil, ""
-}
-
-type demuxPeekKey struct {
-	routeKey string
-}
-
-func (d *demuxPeekKey) demux(iter *jsoniter.Iterator, payload []byte) ([]byte, string) {
-	for key := iter.ReadObject(); key != ""; key = iter.ReadObject() {
-		if key != d.routeKey {
-			iter.Skip()
-			continue
-		}
-		name := iter.ReadString()
-		if name == "" {
-			return nil, ""
-		}
-		return payload, name
 	}
 	return nil, ""
 }

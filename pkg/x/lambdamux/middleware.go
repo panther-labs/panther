@@ -24,21 +24,7 @@ import (
 	"time"
 )
 
-func Recover(onPanic func(p interface{}) ([]byte, error), handler Handler) Handler {
-	if onPanic == nil {
-		return handler
-	}
-	return HandlerFunc(func(ctx context.Context, input []byte) (output []byte, err error) {
-		defer func() {
-			if p := recover(); p != nil {
-				output, err = onPanic(p)
-			}
-		}()
-		output, err = handler.Invoke(ctx, input)
-		return
-	})
-}
-
+// Chain tries handlers in sequence while a NotFound error is returned.
 func Chain(handlers ...Handler) Handler {
 	return chainHandler(handlers)
 }
@@ -89,18 +75,5 @@ func CacheProxy(maxAge time.Duration, handler Handler) Handler {
 			UpdatedAt: now,
 		}
 		return output, nil
-	})
-}
-
-func NotFound(handler, notFound Handler) Handler {
-	if notFound == nil {
-		return handler
-	}
-	return HandlerFunc(func(ctx context.Context, event []byte) ([]byte, error) {
-		reply, err := handler.Invoke(ctx, event)
-		if err != nil && errors.Is(err, ErrNotFound) {
-			return notFound.Invoke(ctx, event)
-		}
-		return reply, err
 	})
 }
