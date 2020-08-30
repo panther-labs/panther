@@ -36,6 +36,7 @@ import (
 
 var (
 	policyURLPrefix = os.Getenv("POLICY_URL_PREFIX")
+	appDomainURL    = os.Getenv("APP_DOMAIN_URL")
 	alertURLPrefix  = os.Getenv("ALERT_URL_PREFIX")
 )
 
@@ -198,6 +199,9 @@ func getDisplayName(alert *alertmodels.Alert) string {
 }
 
 func generateURL(alert *alertmodels.Alert) string {
+	if alert.IsTest {
+		return appDomainURL
+	}
 	if alert.Type == alertmodels.RuleType {
 		return alertURLPrefix + *alert.AlertID
 	}

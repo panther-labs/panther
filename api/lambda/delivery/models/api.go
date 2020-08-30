@@ -40,7 +40,23 @@ const (
 type LambdaInput struct {
 	DispatchAlerts []*DispatchAlertsInput `json:"Records"` // SQS Shape
 	DeliverAlert   *DeliverAlertInput     `json:"deliverAlert"`
+	SendTestAlert  *SendTestAlertInput    `json:"sendTestAlert"`
 }
+
+// SendTestAlertInput sends a dummy alert to the specified destinations
+//
+// Example:
+// {
+//     "sendTestAlert": {
+//         "outputIds": ["198bdbc5-5d94-4d59-8c93-f2bab86359f5"]
+//     }
+// }
+type SendTestAlertInput struct {
+	OutputIds []string `json:"outputIds" validate:"required,gt=0,dive,uuid4"`
+}
+
+// SendTestAlertOutput is an alias for anything
+type SendTestAlertOutput interface{}
 
 // DeliverAlertInput sends an alert to the specified destinations
 //
@@ -102,4 +118,7 @@ type Alert struct {
 
 	// RetryCount is a counter for the nubmer of times we have attempted to send this alert to a destination.
 	RetryCount int `json:"retryCount,omitempty"`
+
+	// IsTest is a test flag set only to replace the contents of the alert with dummy values
+	IsTest bool `json:"isTest,omitempty"`
 }

@@ -56,8 +56,7 @@ func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModel
 	alertSummaries := updateAlerts(dispatchStatuses)
 	zap.L().Info("Finished updating alert delivery statuses")
 
-	// Because this API will be used for re-sending only 1 alert,
-	// we log if there was a failure and return the error
+	// Log any failures and return
 	if err := returnIfFailed(dispatchStatuses); err != nil {
 		return nil, err
 	}
