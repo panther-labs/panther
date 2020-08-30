@@ -21,9 +21,9 @@ package api
 import (
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
 
-	"github.com/aws/aws-sdk-go/aws"
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 )
 
@@ -46,10 +46,14 @@ func (API) SendTestAlert(input *deliveryModels.SendTestAlertInput) (*deliveryMod
 
 	// Log any failures and return
 	if err := returnIfFailed(dispatchStatuses); err != nil {
-		return dispatchStatuses, err
+		return &deliveryModels.SendTestAlertOutput{
+			Success: false,
+		}, err
 	}
 
-	return dispatchStatuses, nil
+	return &deliveryModels.SendTestAlertOutput{
+		Success: true,
+	}, nil
 }
 
 // generateTestAlert - genreates an alert with dummy values

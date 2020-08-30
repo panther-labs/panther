@@ -52,7 +52,6 @@ func TestUpdateAlertDelivery(t *testing.T) {
 		DeliveryResponses: []*models.DeliveryResponse{deliveryResponse},
 	}
 
-
 	tableMock.On("UpdateAlertDelivery", input).Return(output, nil).Once()
 	result, err := API{}.UpdateAlertDelivery(input)
 	require.NoError(t, err)
