@@ -40,7 +40,7 @@ var (
 	env           envConfig
 	maxRetryCount int
 	awsSession    = session.Must(session.NewSession())
-	// The alerts DDB client is needed to fetch the alert's details
+	// Lazy-load the DDB client - only needed to fetch the alert's details
 	alertsTableClient *alertTable.AlertsTable
 	// We need the Lambda client for the following:
 	//  1. To fetch the details from the destination outputs
@@ -49,7 +49,7 @@ var (
 	lambdaClient lambdaiface.LambdaAPI = lambda.New(awsSession)
 	outputClient outputs.API           = outputs.New(awsSession)
 
-	// Lazy-load the SQS client - we only need it to retry failed alerts
+	// Lazy-load the SQS client - only needed to retry failed alerts
 	sqsClient sqsiface.SQSAPI
 )
 
@@ -65,6 +65,7 @@ func Setup() {
 	maxRetryCount = getMaxRetryCount()
 }
 
+// getAlertsTableClient - lazy load the DDB client
 func getAlertsTableClient() *alertTable.AlertsTable {
 	if alertsTableClient == nil {
 		alertsTableClient = &alertTable.AlertsTable{
@@ -77,6 +78,7 @@ func getAlertsTableClient() *alertTable.AlertsTable {
 	return alertsTableClient
 }
 
+// getSQSClient - lazy load the SQS client
 func getSQSClient() sqsiface.SQSAPI {
 	if sqsClient == nil {
 		sqsClient = sqs.New(awsSession)

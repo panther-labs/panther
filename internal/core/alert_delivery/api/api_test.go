@@ -40,3 +40,7 @@ func (m *mockLambdaClient) Invoke(input *lambda.InvokeInput) (*lambda.InvokeOutp
 func TestGetSQSClient(t *testing.T) {
 	assert.NotNil(t, getSQSClient())
 }
+
+func TestGetDDBClient(t *testing.T) {
+	assert.NotNil(t, getAlertsTableClient())
+}
