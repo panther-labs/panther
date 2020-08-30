@@ -24,32 +24,19 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 )
 
-// API defines the interface for the alert utility functions that can be used for mocking.
-type API interface {
-	AlertItemsToSummaries([]*table.AlertItem) []*models.AlertSummary
-	AlertItemToSummary(*table.AlertItem) *models.AlertSummary
-	GetAlertTitle(alert *table.AlertItem) *string
-}
-
-// AlertUtils encapsulates all public utility methods related to alerts.
-type AlertUtils struct{}
-
-// The AlertUtils must satisfy the API interface.
-var _ API = (*AlertUtils)(nil)
-
 // AlertItemsToSummaries converts a list of DDB AlertItem(s) to AlertSummary(ies)
-func (utils *AlertUtils) AlertItemsToSummaries(items []*table.AlertItem) []*models.AlertSummary {
+func AlertItemsToSummaries(items []*table.AlertItem) []*models.AlertSummary {
 	result := make([]*models.AlertSummary, len(items))
 
 	for i, item := range items {
-		result[i] = utils.AlertItemToSummary(item)
+		result[i] = AlertItemToSummary(item)
 	}
 
 	return result
 }
 
 // AlertItemToSummary converts a DDB AlertItem to an AlertSummary
-func (utils *AlertUtils) AlertItemToSummary(item *table.AlertItem) *models.AlertSummary {
+func AlertItemToSummary(item *table.AlertItem) *models.AlertSummary {
 	// convert empty status to "OPEN" status
 	alertStatus := item.Status
 	if alertStatus == "" {
@@ -66,7 +53,7 @@ func (utils *AlertUtils) AlertItemToSummary(item *table.AlertItem) *models.Alert
 		RuleVersion:       &item.RuleVersion,
 		Severity:          &item.Severity,
 		Status:            alertStatus,
-		Title:             utils.GetAlertTitle(item),
+		Title:             GetAlertTitle(item),
 		LastUpdatedBy:     item.LastUpdatedBy,
 		LastUpdatedByTime: item.LastUpdatedByTime,
 		UpdateTime:        &item.UpdateTime,
@@ -76,7 +63,7 @@ func (utils *AlertUtils) AlertItemToSummary(item *table.AlertItem) *models.Alert
 
 // GetAlertTitle - Method required for backwards compatibility
 // In case the alert title is empty, return custom title
-func (utils *AlertUtils) GetAlertTitle(alert *table.AlertItem) *string {
+func GetAlertTitle(alert *table.AlertItem) *string {
 	if alert.Title != nil {
 		return alert.Title
 	}

@@ -32,6 +32,7 @@ import (
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	logprocessormodels "github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
+	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
@@ -90,7 +91,7 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 		return nil, err
 	}
 
-	alertSummary := alertUtils.AlertItemToSummary(alertItem)
+	alertSummary := utils.AlertItemToSummary(alertItem)
 
 	result = &models.Alert{
 		AlertSummary:           *alertSummary,

@@ -20,6 +20,7 @@ package api
 
 import (
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
+	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
@@ -37,7 +38,7 @@ func (API) UpdateAlertStatus(input *models.UpdateAlertStatusInput) (result *mode
 	}
 
 	// Marshal to an alert summary
-	result = alertUtils.AlertItemToSummary(alertItem)
+	result = utils.AlertItemToSummary(alertItem)
 
 	gatewayapi.ReplaceMapSliceNils(result)
 	return result, nil

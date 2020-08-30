@@ -30,7 +30,6 @@ import (
 	"github.com/kelseyhightower/envconfig"
 
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
-	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
 )
 
 // API has all of the handlers as receiver methods.
@@ -40,7 +39,6 @@ var (
 	env        envConfig
 	awsSession *session.Session
 	alertsDB   table.API
-	alertUtils utils.API
 	s3Client   s3iface.S3API
 )
 
@@ -64,7 +62,6 @@ func Setup() {
 		RuleIDCreationTimeIndexName:        env.RuleIndexName,
 		TimePartitionCreationTimeIndexName: env.TimeIndexName,
 	}
-	alertUtils = &utils.AlertUtils{}
 	s3Client = s3.New(awsSession)
 }
 

@@ -34,9 +34,6 @@ func TestUpdateAlert(t *testing.T) {
 	tableMock := &tableMock{}
 	alertsDB = tableMock
 
-	utilsMock := &utilsMock{}
-	alertUtils = utilsMock
-
 	alertID := aws.String("alertId")
 	status := aws.String("")
 	userID := aws.String("userId")
@@ -60,9 +57,6 @@ func TestUpdateAlert(t *testing.T) {
 		LastUpdatedByTime: timeNow,
 		DeliveryResponses: []*models.DeliveryResponse{},
 	}
-
-	utilsMock.On("AlertItemToSummary", output).
-		Return(expectedSummary)
 
 	tableMock.On("UpdateAlertStatus", input).Return(output, nil).Once()
 	result, err := API{}.UpdateAlertStatus(input)

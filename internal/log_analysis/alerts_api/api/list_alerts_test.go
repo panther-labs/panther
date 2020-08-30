@@ -77,9 +77,6 @@ func TestListAlertsForRule(t *testing.T) {
 	tableMock := &tableMock{}
 	alertsDB = tableMock
 
-	utilsMock := &utilsMock{}
-	alertUtils = utilsMock
-
 	input := &models.ListAlertsInput{
 		RuleID:            aws.String("ruleId"),
 		Status:            []string{models.TriagedStatus},
@@ -87,9 +84,6 @@ func TestListAlertsForRule(t *testing.T) {
 		ExclusiveStartKey: aws.String("startKey"),
 		Severity:          []*string{aws.String("INFO")},
 	}
-
-	utilsMock.On("AlertItemsToSummaries", alertItems).
-		Return(expectedAlertSummary)
 
 	tableMock.On("ListAll", input).
 		Return(alertItems, aws.String("lastKey"), nil)
@@ -106,9 +100,6 @@ func TestListAllAlerts(t *testing.T) {
 	tableMock := &tableMock{}
 	alertsDB = tableMock
 
-	utilsMock := &utilsMock{}
-	alertUtils = utilsMock
-
 	input := &models.ListAlertsInput{
 		PageSize:          aws.Int(10),
 		ExclusiveStartKey: aws.String("startKey"),
@@ -121,9 +112,6 @@ func TestListAllAlerts(t *testing.T) {
 		CreatedAtBefore:   aws.Time(time.Now()),
 		SortDir:           aws.String("ascending"),
 	}
-
-	utilsMock.On("AlertItemsToSummaries", alertItems).
-		Return(expectedAlertSummary)
 
 	tableMock.On("ListAll", input).
 		Return(alertItems, aws.String("lastKey"), nil)
@@ -141,9 +129,6 @@ func TestListAllAlerts(t *testing.T) {
 func TestListAllAlertsWithoutTitle(t *testing.T) {
 	tableMock := &tableMock{}
 	alertsDB = tableMock
-
-	utilsMock := &utilsMock{}
-	alertUtils = utilsMock
 
 	alertItems := []*table.AlertItem{
 		{
@@ -217,9 +202,6 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 		PageSize:          aws.Int(10),
 		ExclusiveStartKey: aws.String("startKey"),
 	}
-
-	utilsMock.On("AlertItemsToSummaries", alertItems).
-		Return(expectedAlertSummary)
 
 	tableMock.On("ListAll", input).
 		Return(alertItems, aws.String("lastKey"), nil)

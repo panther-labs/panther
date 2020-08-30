@@ -21,6 +21,7 @@ package api
 import (
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
+	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
@@ -46,7 +47,7 @@ func (API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAlertsO
 		return nil, err
 	}
 
-	result.Alerts = alertUtils.AlertItemsToSummaries(alertItems)
+	result.Alerts = utils.AlertItemsToSummaries(alertItems)
 
 	gatewayapi.ReplaceMapSliceNils(result)
 	return result, nil

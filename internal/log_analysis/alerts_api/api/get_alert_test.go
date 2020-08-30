@@ -30,7 +30,6 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
-	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
 )
 
 type s3SelectStreamReaderMock struct {
@@ -68,21 +67,6 @@ func (m *s3Mock) SelectObjectContent(input *s3.SelectObjectContentInput) (*s3.Se
 func (m *tableMock) ListObjectsV2Pages(input *string) (*table.AlertItem, error) {
 	args := m.Called(input)
 	return args.Get(0).(*table.AlertItem), args.Error(1)
-}
-
-type utilsMock struct {
-	utils.API
-	mock.Mock
-}
-
-func (m *utilsMock) AlertItemToSummary(input *table.AlertItem) *models.AlertSummary {
-	args := m.Called(input)
-	return args.Get(0).(*models.AlertSummary)
-}
-
-func (m *utilsMock) AlertItemsToSummaries(input []*table.AlertItem) []*models.AlertSummary {
-	args := m.Called(input)
-	return args.Get(0).([]*models.AlertSummary)
 }
 
 type tableMock struct {
@@ -136,7 +120,7 @@ func TestGetAlertDoesNotExist(t *testing.T) {
 }
 
 func TestGetAlert(t *testing.T) {
-	tableMock, utilsMock, s3Mock := initTest()
+	tableMock, s3Mock := initTest()
 
 	// The S3 object keys returned by S3 List objects command
 	s3Mock.listObjectsOutput = &s3.ListObjectsV2Output{
@@ -206,9 +190,6 @@ func TestGetAlert(t *testing.T) {
 		},
 	}
 
-	utilsMock.On("AlertItemToSummary", alertItem).
-		Return(expectedSummary)
-
 	tableMock.On("GetAlert", aws.String("alertId")).Return(alertItem, nil).Once()
 	s3Mock.On("ListObjectsV2Pages", expectedListObjectsRequest, mock.Anything).Return(nil).Once()
 	s3Mock.On("SelectObjectContent", expectedSelectObjectInput).Return(selectObjectOutput, nil).Once()
@@ -229,7 +210,7 @@ func TestGetAlert(t *testing.T) {
 
 	// now test paging...
 
-	tableMock, utilsMock, s3Mock = initTest() // reset mocks
+	tableMock, s3Mock = initTest() // reset mocks
 
 	input.EventsExclusiveStartKey = result.EventsLastEvaluatedKey // set paginator
 
@@ -252,8 +233,6 @@ func TestGetAlert(t *testing.T) {
 	// nothing comes back from the listing
 	s3Mock.listObjectsOutput = &s3.ListObjectsV2Output{}
 
-	utilsMock.On("AlertItemToSummary", alertItem).
-		Return(expectedSummary)
 	tableMock.On("GetAlert", aws.String("alertId")).Return(alertItem, nil).Once()
 	s3Mock.On("SelectObjectContent", expectedSelectObjectInput).Return(noopSelectObjectOutput, nil).Once()
 	s3Mock.On("ListObjectsV2Pages", expectedPagedListObjectsRequest, mock.Anything).Return(nil).Once()
@@ -272,7 +251,7 @@ func TestGetAlert(t *testing.T) {
 }
 
 func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
-	tableMock, utilsMock, s3Mock := initTest()
+	tableMock, s3Mock := initTest()
 
 	// The S3 object keys returned by S3 List objects command
 	s3Mock.listObjectsOutput = &s3.ListObjectsV2Output{
@@ -331,9 +310,6 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 		},
 	}
 
-	utilsMock.On("AlertItemToSummary", alertItem).
-		Return(expectedSummary)
-
 	tableMock.On("GetAlert", aws.String("alertId")).Return(alertItem, nil).Once()
 	s3Mock.On("ListObjectsV2Pages", mock.Anything, mock.Anything).Return(nil).Once()
 	s3Mock.On("SelectObjectContent", mock.Anything).Return(selectObjectOutput, nil).Once()
@@ -365,15 +341,12 @@ func getChannel(events ...string) <-chan s3.SelectObjectContentEventStreamEvent 
 	return channel
 }
 
-func initTest() (*tableMock, *utilsMock, *s3Mock) {
+func initTest() (*tableMock, *s3Mock) {
 	tableMock := &tableMock{}
 	alertsDB = tableMock
-
-	utilsMock := &utilsMock{}
-	alertUtils = utilsMock
 
 	s3Mock := &s3Mock{}
 	s3Client = s3Mock
 
-	return tableMock, utilsMock, s3Mock
+	return tableMock, s3Mock
 }
