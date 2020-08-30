@@ -24,7 +24,7 @@ import (
 
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	alertsTable "github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
+	alertTable "github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
@@ -34,7 +34,7 @@ func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModel
 	// First, fetch the alert
 	zap.L().Info("Fetching alert", zap.String("AlertID", input.AlertID))
 
-	// Extract the alert from the input
+	// Extract the alert from the input and lookup from ddb
 	alertItem, err := getAlert(input)
 	if err != nil {
 		return nil, err
@@ -68,8 +68,8 @@ func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModel
 }
 
 // getAlert - extracts the alert from the input payload and handles corner cases
-func getAlert(input *deliveryModels.DeliverAlertInput) (*alertsTable.AlertItem, error) {
-	alertItem, err := alertsDB.GetAlert(&input.AlertID)
+func getAlert(input *deliveryModels.DeliverAlertInput) (*alertTable.AlertItem, error) {
+	alertItem, err := getAlertsTableClient().GetAlert(&input.AlertID)
 	if err != nil {
 		zap.L().Error("Failed to fetch alert from ddb", zap.Error(err))
 		return nil, err
@@ -85,7 +85,7 @@ func getAlert(input *deliveryModels.DeliverAlertInput) (*alertsTable.AlertItem, 
 }
 
 // populateAlertData - queries the rule or policy associated and merges in the details to the alert
-func populateAlertData(alertItem *alertsTable.AlertItem) *deliveryModels.Alert {
+func populateAlertData(alertItem *alertTable.AlertItem) *deliveryModels.Alert {
 	// TODO: Fetch and merge the related fields from the Rule into the alert.
 	// Alerts triggerd by Policies are not supported.
 	// ...

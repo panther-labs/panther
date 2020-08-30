@@ -24,70 +24,93 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	alertModels "github.com/panther-labs/panther/api/lambda/alerts/models"
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	alertTable "github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 )
 
-// func TestGetAlert(t *testing.T) {
-// 	os.Setenv("ALERT_RETRY_COUNT", "10")
-// 	os.Setenv("ALERTS_TABLE_NAME", "alertsTableName")
-// 	os.Setenv("RULE_INDEX_NAME", "ruleIndexName")
-// 	os.Setenv("TIME_INDEX_NAME", "timeIndexName")
-// 	os.Setenv("ALERT_QUEUE_URL", "sqs.url")
-// 	os.Setenv("MIN_RETRY_DELAY_SECS", "10")
-// 	os.Setenv("MAX_RETRY_DELAY_SECS", "30")
-// 	Setup()
+type mockDynamoDB struct {
+	dynamodbiface.DynamoDBAPI
+	mock.Mock
+}
 
-// 	alertID := aws.String("alert-id")
-// 	timeNow := time.Now().UTC()
-// 	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
+func (m *mockDynamoDB) GetItem(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*dynamodb.GetItemOutput), args.Error(1)
+}
 
-// 	alert := &deliveryModels.Alert{
-// 		AlertID:             alertID,
-// 		AnalysisDescription: aws.String("A test alert"),
-// 		AnalysisID:          "Test.Analysis.ID",
-// 		AnalysisName:        aws.String("Test Analysis Name"),
-// 		Runbook:             aws.String("A runbook link"),
-// 		Title:               aws.String("Test Alert"),
-// 		RetryCount:          0,
-// 		Tags:                []string{"test", "alert"},
-// 		Type:                deliveryModels.RuleType,
-// 		OutputIds:           outputIds,
-// 		Severity:            "INFO",
-// 		CreatedAt:           timeNow,
-// 		Version:             aws.String("abc"),
-// 	}
+func TestGetAlert(t *testing.T) {
+	// Mock the ddb client and table
+	mockDdbClient := &mockDynamoDB{}
+	alertsTableClient = &alertTable.AlertsTable{
+		AlertsTableName:                    "alertTableName",
+		Client:                             mockDdbClient,
+		RuleIDCreationTimeIndexName:        "ruleIDCreationTimeIndexName",
+		TimePartitionCreationTimeIndexName: "timePartitionCreationTimeIndexName",
+	}
 
-// 	input := &deliveryModels.DeliverAlertInput{
-// 		AlertID:   aws.StringValue(alertID),
-// 		OutputIds: outputIds,
-// 	}
-// 	expectedResult := &alertsTable.AlertItem{
-// 		AlertID:             aws.StringValue(alert.AlertID),
-// 		RuleID:              alert.AnalysisID,
-// 		RuleVersion:         aws.StringValue(alert.Version),
-// 		RuleDisplayName:     alert.AnalysisName,
-// 		Title:               aws.String("Test Alert"),
-// 		DedupString:         "dedup",
-// 		FirstEventMatchTime: timeNow,
-// 		CreationTime:        timeNow,
-// 		DeliveryResponses:   []*models.DeliveryResponse{},
-// 		OutputIds:           alert.OutputIds,
-// 		Severity:            alert.Severity,
-// 		Status:              "TRIAGED",
-// 		EventCount:          0,
-// 		LogTypes:            []string{"logtype"},
-// 		LastUpdatedBy:       "user-id",
-// 		LastUpdatedByTime:   timeNow,
-// 	}
+	alertID := aws.String("alert-id")
+	timeNow := time.Now().UTC()
+	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
 
-// }
+	alert := &deliveryModels.Alert{
+		AlertID:             alertID,
+		AnalysisDescription: aws.String("A test alert"),
+		AnalysisID:          "Test.Analysis.ID",
+		AnalysisName:        aws.String("Test Analysis Name"),
+		Runbook:             aws.String("A runbook link"),
+		Title:               aws.String("Test Alert"),
+		RetryCount:          0,
+		Tags:                []string{"test", "alert"},
+		Type:                deliveryModels.RuleType,
+		OutputIds:           outputIds,
+		Severity:            "INFO",
+		CreatedAt:           timeNow,
+		Version:             aws.String("abc"),
+	}
+
+	expectedResult := &alertTable.AlertItem{
+		AlertID:             aws.StringValue(alert.AlertID),
+		RuleID:              alert.AnalysisID,
+		RuleVersion:         aws.StringValue(alert.Version),
+		RuleDisplayName:     alert.AnalysisName,
+		Title:               aws.String("Test Alert"),
+		DedupString:         "dedup",
+		FirstEventMatchTime: timeNow,
+		CreationTime:        timeNow,
+		DeliveryResponses:   []*alertModels.DeliveryResponse{{}},
+		OutputIds:           alert.OutputIds,
+		Severity:            alert.Severity,
+	}
+
+	expectedGetItemRequest := &dynamodb.GetItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"id": {S: alertID},
+		},
+		TableName: aws.String(alertsTableClient.AlertsTableName),
+	}
+
+	item, err := dynamodbattribute.MarshalMap(expectedResult)
+	require.NoError(t, err)
+
+	mockDdbClient.On("GetItem", expectedGetItemRequest).Return(&dynamodb.GetItemOutput{Item: item}, nil)
+
+	result, err := alertsTableClient.GetAlert(alertID)
+	require.NoError(t, err)
+	require.Equal(t, expectedResult, result)
+
+	mockDdbClient.AssertExpectations(t)
+}
 
 func TestGetAlertOutputMapping(t *testing.T) {
 	mockClient := &mockLambdaClient{}

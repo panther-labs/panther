@@ -30,7 +30,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 
 	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
-	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
+	alertTable "github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 )
 
 // API has all of the handlers as receiver methods.
@@ -40,7 +40,8 @@ var (
 	env           envConfig
 	maxRetryCount int
 	awsSession    = session.Must(session.NewSession())
-	alertsDB      table.API
+	// The alerts DDB client is needed to fetch the alert's details
+	alertsTableClient *alertTable.AlertsTable
 	// We need the Lambda client for the following:
 	//  1. To fetch the details from the destination outputs
 	//  2. To get the rule or policy associated with the original alert (for re-sending alerts)
@@ -62,12 +63,18 @@ type envConfig struct {
 func Setup() {
 	envconfig.MustProcess("", &env)
 	maxRetryCount = getMaxRetryCount()
-	alertsDB = &table.AlertsTable{
-		AlertsTableName:                    env.AlertsTableName,
-		Client:                             dynamodb.New(awsSession),
-		RuleIDCreationTimeIndexName:        env.RuleIndexName,
-		TimePartitionCreationTimeIndexName: env.TimeIndexName,
+}
+
+func getAlertsTableClient() *alertTable.AlertsTable {
+	if alertsTableClient == nil {
+		alertsTableClient = &alertTable.AlertsTable{
+			AlertsTableName:                    env.AlertsTableName,
+			Client:                             dynamodb.New(awsSession),
+			RuleIDCreationTimeIndexName:        env.RuleIndexName,
+			TimePartitionCreationTimeIndexName: env.TimeIndexName,
+		}
 	}
+	return alertsTableClient
 }
 
 func getSQSClient() sqsiface.SQSAPI {
