@@ -24,7 +24,7 @@ import (
 
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
+	alertsTable "github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
@@ -44,7 +44,7 @@ func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModel
 	alert := populateAlertData(alertItem)
 
 	// Get our Alert -> Output mappings. We determine which destinations an alert should be sent.
-	alertOutputMap, err := getAlertOutputMapping(alert, input)
+	alertOutputMap, err := getAlertOutputMapping(alert, input.OutputIds)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModel
 
 	// Because this API will be used for re-sending only 1 alert,
 	// we log if there was a failure and return the error
-	if err := logOrReturn(dispatchStatuses); err != nil {
+	if err := returnIfFailed(dispatchStatuses); err != nil {
 		return nil, err
 	}
 
@@ -68,7 +68,7 @@ func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModel
 }
 
 // getAlert - extracts the alert from the input payload and handles corner cases
-func getAlert(input *deliveryModels.DeliverAlertInput) (*table.AlertItem, error) {
+func getAlert(input *deliveryModels.DeliverAlertInput) (*alertsTable.AlertItem, error) {
 	alertItem, err := alertsDB.GetAlert(&input.AlertID)
 	if err != nil {
 		zap.L().Error("Failed to fetch alert from ddb", zap.Error(err))
@@ -85,7 +85,7 @@ func getAlert(input *deliveryModels.DeliverAlertInput) (*table.AlertItem, error)
 }
 
 // populateAlertData - queries the rule or policy associated and merges in the details to the alert
-func populateAlertData(alertItem *table.AlertItem) *deliveryModels.Alert {
+func populateAlertData(alertItem *alertsTable.AlertItem) *deliveryModels.Alert {
 	// TODO: Fetch and merge the related fields from the Rule into the alert.
 	// Alerts triggerd by Policies are not supported.
 	// ...
@@ -113,33 +113,27 @@ func populateAlertData(alertItem *table.AlertItem) *deliveryModels.Alert {
 	}
 }
 
-// getAlertOutputMapping - gets a flat map for each alert to it's outputIds
-func getAlertOutputMapping(alert *deliveryModels.Alert, input *deliveryModels.DeliverAlertInput) (AlertOutputMap, error) {
+// getAlertOutputMapping - gets a map for a given alert to it's outputIds
+func getAlertOutputMapping(alert *deliveryModels.Alert, outputIds []string) (AlertOutputMap, error) {
+	// Initialize our Alert -> Output map
+	alertOutputMap := make(AlertOutputMap)
 	// Fetch outputIds from ddb (utilizing a cache)
 	outputs, err := getOutputs()
 	if err != nil {
 		zap.L().Error("Failed to fetch outputIds", zap.Error(err))
-		return nil, err
+		return alertOutputMap, err
 	}
 
 	// Check the provided the input outputIds and generate a list of valid outputs
-	validOutputIds := intersection(input.OutputIds, outputs)
+	validOutputIds := intersection(outputIds, outputs)
 	if len(validOutputIds) == 0 {
-		zap.L().Error("Invalid outputIds specified", zap.Strings("OutputIds", input.OutputIds))
-		return nil, &genericapi.InvalidInputError{
+		zap.L().Error("Invalid outputIds specified", zap.Strings("OutputIds", outputIds))
+		return alertOutputMap, &genericapi.InvalidInputError{
 			Message: "Invalid destination(s) specified!"}
 	}
 
-	// Initialize our Alert -> Output mappings
-	alertOutputMap := make(AlertOutputMap)
-
-	// Create a list to be universal with the SQS payload format
-	// as they both eventually call a function that expects a list.
-	alerts := []*deliveryModels.Alert{alert}
-	for _, alert := range alerts {
-		alertOutputMap[alert] = validOutputIds
-	}
-
+	// Map the outputs
+	alertOutputMap[alert] = validOutputIds
 	return alertOutputMap, nil
 }
 
@@ -161,8 +155,8 @@ func intersection(inputs []string, outputs []*outputModels.AlertOutput) []*outpu
 	return valid
 }
 
-// logOrReturn - logs failed deliveries and returns an error
-func logOrReturn(dispatchStatuses []DispatchStatus) error {
+// returnIfFailed - logs failed deliveries and returns an error
+func returnIfFailed(dispatchStatuses []DispatchStatus) error {
 	shouldReturn := false
 	for _, delivery := range dispatchStatuses {
 		if !delivery.Success {

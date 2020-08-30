@@ -18,4 +18,368 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// TODO: add testing
+import (
+	"errors"
+	"testing"
+	"time"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	jsoniter "github.com/json-iterator/go"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
+	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
+)
+
+// func TestGetAlert(t *testing.T) {
+// 	os.Setenv("ALERT_RETRY_COUNT", "10")
+// 	os.Setenv("ALERTS_TABLE_NAME", "alertsTableName")
+// 	os.Setenv("RULE_INDEX_NAME", "ruleIndexName")
+// 	os.Setenv("TIME_INDEX_NAME", "timeIndexName")
+// 	os.Setenv("ALERT_QUEUE_URL", "sqs.url")
+// 	os.Setenv("MIN_RETRY_DELAY_SECS", "10")
+// 	os.Setenv("MAX_RETRY_DELAY_SECS", "30")
+// 	Setup()
+
+// 	alertID := aws.String("alert-id")
+// 	timeNow := time.Now().UTC()
+// 	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
+
+// 	alert := &deliveryModels.Alert{
+// 		AlertID:             alertID,
+// 		AnalysisDescription: aws.String("A test alert"),
+// 		AnalysisID:          "Test.Analysis.ID",
+// 		AnalysisName:        aws.String("Test Analysis Name"),
+// 		Runbook:             aws.String("A runbook link"),
+// 		Title:               aws.String("Test Alert"),
+// 		RetryCount:          0,
+// 		Tags:                []string{"test", "alert"},
+// 		Type:                deliveryModels.RuleType,
+// 		OutputIds:           outputIds,
+// 		Severity:            "INFO",
+// 		CreatedAt:           timeNow,
+// 		Version:             aws.String("abc"),
+// 	}
+
+// 	input := &deliveryModels.DeliverAlertInput{
+// 		AlertID:   aws.StringValue(alertID),
+// 		OutputIds: outputIds,
+// 	}
+// 	expectedResult := &alertsTable.AlertItem{
+// 		AlertID:             aws.StringValue(alert.AlertID),
+// 		RuleID:              alert.AnalysisID,
+// 		RuleVersion:         aws.StringValue(alert.Version),
+// 		RuleDisplayName:     alert.AnalysisName,
+// 		Title:               aws.String("Test Alert"),
+// 		DedupString:         "dedup",
+// 		FirstEventMatchTime: timeNow,
+// 		CreationTime:        timeNow,
+// 		DeliveryResponses:   []*models.DeliveryResponse{},
+// 		OutputIds:           alert.OutputIds,
+// 		Severity:            alert.Severity,
+// 		Status:              "TRIAGED",
+// 		EventCount:          0,
+// 		LogTypes:            []string{"logtype"},
+// 		LastUpdatedBy:       "user-id",
+// 		LastUpdatedByTime:   timeNow,
+// 	}
+
+// }
+
+func TestGetAlertOutputMapping(t *testing.T) {
+	mockClient := &mockLambdaClient{}
+	lambdaClient = mockClient
+
+	alertID := aws.String("alert-id")
+	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
+
+	alert := &deliveryModels.Alert{
+		AlertID:             alertID,
+		AnalysisDescription: aws.String("A test alert"),
+		AnalysisID:          "Test.Analysis.ID",
+		AnalysisName:        aws.String("Test Analysis Name"),
+		Runbook:             aws.String("A runbook link"),
+		Title:               aws.String("Test Alert"),
+		RetryCount:          0,
+		Tags:                []string{"test", "alert"},
+		Type:                deliveryModels.RuleType,
+		OutputIds:           outputIds,
+		Severity:            "INFO",
+		CreatedAt:           time.Now().UTC(),
+		Version:             aws.String("abc"),
+	}
+
+	input := &deliveryModels.DeliverAlertInput{
+		AlertID:   aws.StringValue(alertID),
+		OutputIds: outputIds,
+	}
+
+	outputs := []*outputModels.AlertOutput{
+		{
+			OutputID:           aws.String(outputIds[0]),
+			OutputType:         aws.String("slack"),
+			DefaultForSeverity: []*string{aws.String("INFO")},
+		},
+		{
+			OutputID:           aws.String(outputIds[1]),
+			OutputType:         aws.String("customwebhook"),
+			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM")},
+		},
+		{
+			OutputID:           aws.String(outputIds[2]),
+			OutputType:         aws.String("asana"),
+			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM"), aws.String("CRITICAL")},
+		},
+	}
+
+	payload, err := jsoniter.Marshal(outputs)
+	require.NoError(t, err)
+	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
+	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
+
+	// AlertOutputMap map[*deliveryModels.Alert][]*outputModels.AlertOutput
+	expectedResult := AlertOutputMap{
+		alert: outputs,
+	}
+
+	// Need to expire the cache because of other tests
+	cache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
+
+	result, err := getAlertOutputMapping(alert, input.OutputIds)
+	require.NoError(t, err)
+
+	assert.Equal(t, expectedResult, result)
+}
+
+func TestGetAlertOutputMappingError(t *testing.T) {
+	mockClient := &mockLambdaClient{}
+	lambdaClient = mockClient
+
+	alertID := aws.String("alert-id")
+	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
+
+	alert := &deliveryModels.Alert{
+		AlertID:             alertID,
+		AnalysisDescription: aws.String("A test alert"),
+		AnalysisID:          "Test.Analysis.ID",
+		AnalysisName:        aws.String("Test Analysis Name"),
+		Runbook:             aws.String("A runbook link"),
+		Title:               aws.String("Test Alert"),
+		RetryCount:          0,
+		Tags:                []string{"test", "alert"},
+		Type:                deliveryModels.RuleType,
+		OutputIds:           outputIds,
+		Severity:            "INFO",
+		CreatedAt:           time.Now().UTC(),
+		Version:             aws.String("abc"),
+	}
+
+	input := &deliveryModels.DeliverAlertInput{
+		AlertID:   aws.StringValue(alertID),
+		OutputIds: outputIds,
+	}
+
+	mockClient.On("Invoke", mock.Anything).Return((*lambda.InvokeOutput)(nil), errors.New("error")).Once()
+
+	// AlertOutputMap map[*deliveryModels.Alert][]*outputModels.AlertOutput
+	expectedResult := AlertOutputMap{}
+
+	// Need to expire the cache because other tests
+	cache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
+
+	result, err := getAlertOutputMapping(alert, input.OutputIds)
+	require.Error(t, err)
+
+	assert.Equal(t, expectedResult, result)
+}
+
+func TestGetAlertOutputMappingInvalidOutputIds(t *testing.T) {
+	mockClient := &mockLambdaClient{}
+	lambdaClient = mockClient
+
+	alertID := aws.String("alert-id")
+	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
+
+	alert := &deliveryModels.Alert{
+		AlertID:             alertID,
+		AnalysisDescription: aws.String("A test alert"),
+		AnalysisID:          "Test.Analysis.ID",
+		AnalysisName:        aws.String("Test Analysis Name"),
+		Runbook:             aws.String("A runbook link"),
+		Title:               aws.String("Test Alert"),
+		RetryCount:          0,
+		Tags:                []string{"test", "alert"},
+		Type:                deliveryModels.RuleType,
+		OutputIds:           outputIds,
+		Severity:            "INFO",
+		CreatedAt:           time.Now().UTC(),
+		Version:             aws.String("abc"),
+	}
+
+	input := &deliveryModels.DeliverAlertInput{
+		AlertID:   aws.StringValue(alertID),
+		OutputIds: outputIds,
+	}
+
+	outputs := []*outputModels.AlertOutput{
+		{
+			OutputID:           aws.String("output-id-a"),
+			OutputType:         aws.String("slack"),
+			DefaultForSeverity: []*string{aws.String("INFO")},
+		},
+		{
+			OutputID:           aws.String("output-id-b"),
+			OutputType:         aws.String("customwebhook"),
+			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM")},
+		},
+		{
+			OutputID:           aws.String("output-id-c"),
+			OutputType:         aws.String("asana"),
+			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM"), aws.String("CRITICAL")},
+		},
+	}
+
+	payload, err := jsoniter.Marshal(outputs)
+	require.NoError(t, err)
+	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
+	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
+
+	// AlertOutputMap map[*deliveryModels.Alert][]*outputModels.AlertOutput
+	expectedResult := AlertOutputMap{}
+
+	// Need to expire the cache because other tests
+	cache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
+
+	result, err := getAlertOutputMapping(alert, input.OutputIds)
+	require.Error(t, err)
+
+	assert.Equal(t, expectedResult, result)
+}
+
+func TestIntersection(t *testing.T) {
+	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
+	outputs := []*outputModels.AlertOutput{
+		{
+			OutputID:           aws.String("output-id-1"),
+			OutputType:         aws.String("slack"),
+			DefaultForSeverity: []*string{aws.String("INFO")},
+		},
+		{
+			OutputID:           aws.String("output-id-b"),
+			OutputType:         aws.String("customwebhook"),
+			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM")},
+		},
+		{
+			OutputID:           aws.String("output-id-3"),
+			OutputType:         aws.String("asana"),
+			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM"), aws.String("CRITICAL")},
+		},
+	}
+
+	expectedResult := []*outputModels.AlertOutput{
+		{
+			OutputID:           aws.String("output-id-1"),
+			OutputType:         aws.String("slack"),
+			DefaultForSeverity: []*string{aws.String("INFO")},
+		},
+		{
+			OutputID:           aws.String("output-id-3"),
+			OutputType:         aws.String("asana"),
+			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM"), aws.String("CRITICAL")},
+		},
+	}
+
+	result := intersection(outputIds, outputs)
+	assert.Equal(t, expectedResult, result)
+}
+
+func TestReturnIfFailedSuccess(t *testing.T) {
+	alertID := aws.String("alert-id")
+	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
+	timeNow := time.Now().UTC()
+	alert := deliveryModels.Alert{
+		AlertID:             alertID,
+		AnalysisDescription: aws.String("A test alert"),
+		AnalysisID:          "Test.Analysis.ID",
+		AnalysisName:        aws.String("Test Analysis Name"),
+		Runbook:             aws.String("A runbook link"),
+		Title:               aws.String("Test Alert"),
+		RetryCount:          0,
+		Tags:                []string{"test", "alert"},
+		Type:                deliveryModels.RuleType,
+		OutputIds:           outputIds,
+		Severity:            "INFO",
+		CreatedAt:           timeNow,
+		Version:             aws.String("abc"),
+	}
+	dispatchStatuses := []DispatchStatus{
+		{
+			Alert:        alert,
+			OutputID:     outputIds[0],
+			Message:      "message",
+			StatusCode:   200,
+			Success:      true,
+			NeedsRetry:   false,
+			DispatchedAt: timeNow,
+		},
+		{
+			Alert:        alert,
+			OutputID:     outputIds[1],
+			Message:      "message",
+			StatusCode:   299,
+			Success:      true,
+			NeedsRetry:   false,
+			DispatchedAt: timeNow,
+		},
+	}
+
+	err := returnIfFailed(dispatchStatuses)
+	require.NoError(t, err)
+}
+
+func TestReturnIfFailed(t *testing.T) {
+	alertID := aws.String("alert-id")
+	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
+	timeNow := time.Now().UTC()
+	alert := deliveryModels.Alert{
+		AlertID:             alertID,
+		AnalysisDescription: aws.String("A test alert"),
+		AnalysisID:          "Test.Analysis.ID",
+		AnalysisName:        aws.String("Test Analysis Name"),
+		Runbook:             aws.String("A runbook link"),
+		Title:               aws.String("Test Alert"),
+		RetryCount:          0,
+		Tags:                []string{"test", "alert"},
+		Type:                deliveryModels.RuleType,
+		OutputIds:           outputIds,
+		Severity:            "INFO",
+		CreatedAt:           timeNow,
+		Version:             aws.String("abc"),
+	}
+	dispatchStatuses := []DispatchStatus{
+		{
+			Alert:        alert,
+			OutputID:     outputIds[0],
+			Message:      "message",
+			StatusCode:   401,
+			Success:      false,
+			NeedsRetry:   false,
+			DispatchedAt: timeNow,
+		},
+		{
+			Alert:        alert,
+			OutputID:     outputIds[1],
+			Message:      "message",
+			StatusCode:   299,
+			Success:      true,
+			NeedsRetry:   false,
+			DispatchedAt: timeNow,
+		},
+	}
+
+	err := returnIfFailed(dispatchStatuses)
+	require.Error(t, err)
+}

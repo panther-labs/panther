@@ -76,7 +76,6 @@ func getOutputs() ([]*outputModels.AlertOutput, error) {
 		}
 		cache.setOutputs(outputs)
 		cache.setExpiry(time.Now().UTC())
-		return cache.getOutputs(), nil
 	}
 	return cache.getOutputs(), nil
 }
