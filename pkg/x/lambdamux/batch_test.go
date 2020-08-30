@@ -48,5 +48,4 @@ func TestBatch(t *testing.T) {
 		assert.NoError(err)
 		assert.JSONEq(`[{"bar":"bar"},{"baz":"baz"}]`, string(reply))
 	}
-
 }

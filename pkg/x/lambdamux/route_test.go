@@ -56,8 +56,8 @@ func TestSignatures(t *testing.T) {
 	type Input struct{}
 	type Output struct{}
 	mustBuildRoute("foo", func() error { return nil })
-	mustBuildRoute("foo", func(context.Context) error { return nil })
-	mustBuildRoute("foo", func(context.Context) (*Output, error) { return nil, nil })
+	mustBuildRoute("bar", func(context.Context) error { return nil })
+	mustBuildRoute("baz", func(context.Context) (*Output, error) { return nil, nil })
 	mustBuildRoute("foo", func(context.Context) *Output { return nil })
 	mustBuildRoute("foo", func(*Input) error { return nil })
 	mustBuildRoute("foo", func(*Input) (*Output, error) { return nil, nil })
