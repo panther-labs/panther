@@ -18,6 +18,7 @@
 
 import * as Types from '../../../../../../__generated__/schema';
 
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -75,15 +76,14 @@ export type SendTestAlertQueryResult = ApolloReactCommon.QueryResult<
 export function mockSendTestAlert({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: SendTestAlert;
   variables?: SendTestAlertVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: SendTestAlertDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }
