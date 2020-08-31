@@ -54,7 +54,7 @@ func TestGetAlertOutputsFromDefaultSeverity(t *testing.T) {
 	require.NoError(t, err)
 	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
 
-	cache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
+	outputsCache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
 	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
 	alert := sampleAlert()
 	alert.OutputIds = nil
@@ -100,7 +100,7 @@ func TestGetAlertOutputsFromOutputIds(t *testing.T) {
 	require.NoError(t, err)
 	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
 
-	cache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
+	outputsCache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
 	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
 	alert := sampleAlert()
 	alert.OutputIds = []string{"output-id", "output-id-3", "output-id-not"}
@@ -126,7 +126,7 @@ func TestGetAlertOutputsIdsError(t *testing.T) {
 	mockClient.On("Invoke", mock.Anything).Return((*lambda.InvokeOutput)(nil), errors.New("error"))
 
 	alert := sampleAlert()
-	cache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
+	outputsCache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
 
 	result, err := getAlertOutputs(alert)
 	require.Error(t, err)

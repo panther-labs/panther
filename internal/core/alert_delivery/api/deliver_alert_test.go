@@ -169,7 +169,7 @@ func TestGetAlertOutputMapping(t *testing.T) {
 	}
 
 	// Need to expire the cache because of other tests
-	cache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
+	outputsCache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
 
 	result, err := getAlertOutputMapping(alert, input.OutputIds)
 	require.NoError(t, err)
@@ -211,7 +211,7 @@ func TestGetAlertOutputMappingError(t *testing.T) {
 	expectedResult := AlertOutputMap{}
 
 	// Need to expire the cache because other tests
-	cache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
+	outputsCache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
 
 	result, err := getAlertOutputMapping(alert, input.OutputIds)
 	require.Error(t, err)
@@ -274,7 +274,7 @@ func TestGetAlertOutputMappingInvalidOutputIds(t *testing.T) {
 	expectedResult := AlertOutputMap{}
 
 	// Need to expire the cache because other tests
-	cache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
+	outputsCache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
 
 	result, err := getAlertOutputMapping(alert, input.OutputIds)
 	require.Error(t, err)

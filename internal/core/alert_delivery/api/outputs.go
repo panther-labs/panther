@@ -70,15 +70,15 @@ func getAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, 
 
 // getOutputs - Gets a list of outputs from panther (using a cache)
 func getOutputs() ([]*outputModels.AlertOutput, error) {
-	if cache.isExpired() {
+	if outputsCache.isExpired() {
 		outputs, err := fetchOutputs()
 		if err != nil {
 			return nil, err
 		}
-		cache.setOutputs(outputs)
-		cache.setExpiry(time.Now().UTC())
+		outputsCache.setOutputs(outputs)
+		outputsCache.setExpiry(time.Now().UTC())
 	}
-	return cache.getOutputs(), nil
+	return outputsCache.getOutputs(), nil
 }
 
 // fetchOutputs - performs an API query to get a list of outputs

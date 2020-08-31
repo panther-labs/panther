@@ -20,7 +20,6 @@ package api
 
 import (
 	"math/rand"
-	"os"
 	"strconv"
 	"time"
 
@@ -40,14 +39,6 @@ func randomInt(lower, upper int) int {
 	return rand.Intn(upper-lower) + lower
 }
 
-func mustParseInt(text string) int {
-	val, err := strconv.Atoi(text)
-	if err != nil {
-		panic(err)
-	}
-	return val
-}
-
 // retry - sends a list of alerts back to the queue with random delays.
 func retry(alerts []*deliveryModels.Alert) {
 	if len(alerts) == 0 {
@@ -55,12 +46,10 @@ func retry(alerts []*deliveryModels.Alert) {
 	}
 	input := &sqs.SendMessageBatchInput{
 		Entries:  make([]*sqs.SendMessageBatchRequestEntry, len(alerts)),
-		QueueUrl: aws.String(os.Getenv("ALERT_QUEUE_URL")),
+		QueueUrl: aws.String(alertQueueURL),
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	minDelaySeconds := mustParseInt(os.Getenv("MIN_RETRY_DELAY_SECS"))
-	maxDelaySeconds := mustParseInt(os.Getenv("MAX_RETRY_DELAY_SECS"))
 
 	for i, alert := range alerts {
 		body, err := jsoniter.MarshalToString(alert)
@@ -69,13 +58,13 @@ func retry(alerts []*deliveryModels.Alert) {
 		}
 
 		input.Entries[i] = &sqs.SendMessageBatchRequestEntry{
-			DelaySeconds: aws.Int64(int64(randomInt(minDelaySeconds, maxDelaySeconds))),
+			DelaySeconds: aws.Int64(int64(randomInt(minRetryDelaySecs, maxRetryDelaySecs))),
 			Id:           aws.String(strconv.Itoa(i)),
 			MessageBody:  aws.String(body),
 		}
 	}
 
-	if _, err := sqsbatch.SendMessageBatch(getSQSClient(), maxSQSBackoff, input); err != nil {
+	if _, err := sqsbatch.SendMessageBatch(sqsClient, maxSQSBackoff, input); err != nil {
 		zap.L().Error("unable to retry failed alerts", zap.Error(err))
 	}
 }

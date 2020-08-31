@@ -66,7 +66,7 @@ var alertOutput = &outputModels.AlertOutput{
 var dispatchedAt = time.Now().UTC()
 
 func setCaches() {
-	cache.set(&outputsCache{
+	outputsCache.set(&alertOutputsCache{
 		Outputs:   []*outputModels.AlertOutput{alertOutput},
 		Timestamp: time.Now(),
 	})

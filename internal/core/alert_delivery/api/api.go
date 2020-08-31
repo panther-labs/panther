@@ -19,7 +19,7 @@ package api
  */
 
 import (
-	"os"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -36,56 +36,49 @@ import (
 // API has all of the handlers as receiver methods.
 type API struct{}
 
-var (
-	env           envConfig
-	maxRetryCount int
-	awsSession    = session.Must(session.NewSession())
-	// Lazy-load the DDB client - only needed to fetch the alert's details
-	alertsTableClient *alertTable.AlertsTable
-	// We need the Lambda client for the following:
-	//  1. To fetch the details from the destination outputs
-	//  2. To get the rule or policy associated with the original alert (for re-sending alerts)
-	//  3. To invoke the Alerts API lambda to up date the delivery status
-	lambdaClient lambdaiface.LambdaAPI = lambda.New(awsSession)
-	outputClient outputs.API           = outputs.New(awsSession)
-
-	// Lazy-load the SQS client - only needed to retry failed alerts
-	sqsClient sqsiface.SQSAPI
-)
-
 type envConfig struct {
-	AlertsTableName string `required:"true" split_words:"true"`
-	RuleIndexName   string `required:"true" split_words:"true"`
-	TimeIndexName   string `required:"true" split_words:"true"`
+	AlertRetryCount           int    `required:"true" split_words:"true"`
+	OutputsRefreshIntervalSec int    `required:"true" split_words:"true"`
+	MinRetryDelaySecs         int    `required:"true" split_words:"true"`
+	MaxRetryDelaySecs         int    `required:"true" split_words:"true"`
+	AlertsTableName           string `required:"true" split_words:"true"`
+	RuleIndexName             string `required:"true" split_words:"true"`
+	TimeIndexName             string `required:"true" split_words:"true"`
+	AlertQueueURL             string `required:"true" split_words:"true"`
 }
+
+var (
+	env                    envConfig
+	maxRetryCount          int
+	outputsRefreshInterval time.Duration
+	minRetryDelaySecs      int
+	maxRetryDelaySecs      int
+	alertQueueURL          string
+	awsSession             *session.Session
+	alertsTableClient      *alertTable.AlertsTable
+	lambdaClient           lambdaiface.LambdaAPI
+	outputClient           outputs.API
+	sqsClient              sqsiface.SQSAPI
+	outputsCache           *alertOutputsCache
+)
 
 // Setup - parses the environment and builds the AWS and http clients.
 func Setup() {
 	envconfig.MustProcess("", &env)
-	maxRetryCount = getMaxRetryCount()
-}
-
-// getAlertsTableClient - lazy load the DDB client
-func getAlertsTableClient() *alertTable.AlertsTable {
-	if alertsTableClient == nil {
-		alertsTableClient = &alertTable.AlertsTable{
-			AlertsTableName:                    env.AlertsTableName,
-			Client:                             dynamodb.New(awsSession),
-			RuleIDCreationTimeIndexName:        env.RuleIndexName,
-			TimePartitionCreationTimeIndexName: env.TimeIndexName,
-		}
+	maxRetryCount = env.AlertRetryCount
+	outputsRefreshInterval = time.Duration(env.OutputsRefreshIntervalSec) * time.Second
+	minRetryDelaySecs = env.MinRetryDelaySecs
+	maxRetryDelaySecs = env.MaxRetryDelaySecs
+	alertQueueURL = env.AlertQueueURL
+	awsSession = session.Must(session.NewSession())
+	lambdaClient = lambda.New(awsSession)
+	outputClient = outputs.New(awsSession)
+	sqsClient = sqs.New(awsSession)
+	outputsCache = &alertOutputsCache{}
+	alertsTableClient = &alertTable.AlertsTable{
+		AlertsTableName:                    env.AlertsTableName,
+		Client:                             dynamodb.New(awsSession),
+		RuleIDCreationTimeIndexName:        env.RuleIndexName,
+		TimePartitionCreationTimeIndexName: env.TimeIndexName,
 	}
-	return alertsTableClient
-}
-
-// getSQSClient - lazy load the SQS client
-func getSQSClient() sqsiface.SQSAPI {
-	if sqsClient == nil {
-		sqsClient = sqs.New(awsSession)
-	}
-	return sqsClient
-}
-
-func getMaxRetryCount() int {
-	return mustParseInt(os.Getenv("ALERT_RETRY_COUNT"))
 }

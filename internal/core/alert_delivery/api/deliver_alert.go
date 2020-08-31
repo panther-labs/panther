@@ -70,7 +70,7 @@ func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModel
 
 // getAlert - extracts the alert from the input payload and handles corner cases
 func getAlert(input *deliveryModels.DeliverAlertInput) (*alertTable.AlertItem, error) {
-	alertItem, err := getAlertsTableClient().GetAlert(&input.AlertID)
+	alertItem, err := alertsTableClient.GetAlert(&input.AlertID)
 	if err != nil {
 		zap.L().Error("Failed to fetch alert from ddb", zap.Error(err))
 		return nil, err
@@ -117,7 +117,7 @@ func getAlertOutputMapping(alert *deliveryModels.Alert, outputIds []string) (Ale
 	alertOutputMap := make(AlertOutputMap)
 
 	// Direct API hits should not use the cache. Only SQS events.
-	cache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5)))
+	outputsCache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5)))
 
 	// Fetch outputIds from ddb
 	outputs, err := getOutputs()

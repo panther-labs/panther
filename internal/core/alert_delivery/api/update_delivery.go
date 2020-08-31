@@ -51,13 +51,13 @@ func updateAlerts(statuses []DispatchStatus) []*alertModels.AlertSummary {
 	alertSummaryChannel := make(chan alertModels.AlertSummary)
 
 	// Make a lambda call for each alert in parallel. We dont make a single API call to reduce the failure impact.
-	zap.L().Info("Invoking UpdateAlertDelivery in parallel")
+	zap.L().Debug("Invoking UpdateAlertDelivery in parallel")
 
 	for alertID, deliveryResponse := range alertMap {
 		go updateAlert(alertID, deliveryResponse, alertSummaryChannel)
 	}
 
-	zap.L().Info("Joining UpdateAlertDelivery results")
+	zap.L().Debug("Joining UpdateAlertDelivery results")
 	// Join all goroutines and collect a list of summaries
 	alertSummaries := []*alertModels.AlertSummary{}
 	for range alertMap {
@@ -77,6 +77,10 @@ func updateAlert(alertID string, deliveryResponse []*alertModels.DeliveryRespons
 		},
 	}
 	var response alertModels.UpdateAlertDeliveryOutput
+
+	// We log, but do not return the error because this lambda execution needs to succeede regardless
+	// if this invocation failed. Worst case, the user will see in the frontend that the status will be
+	// unknown and will be able to re-send the alert to the applicable destinations.
 	if err := genericapi.Invoke(lambdaClient, alertsAPI, &input, &response); err != nil {
 		zap.L().Error("Invoking UpdateAlertDelivery failed", zap.Any("error", err))
 	}

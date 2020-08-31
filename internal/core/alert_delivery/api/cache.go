@@ -19,76 +19,49 @@ package api
  */
 
 import (
-	"os"
-	"sync"
 	"time"
 
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
-// getRefreshInterval - fetches the env setting or provides a default value if not set
-func getRefreshInterval() time.Duration {
-	intervalSeconds := os.Getenv("OUTPUTS_REFRESH_INTERVAL_SEC")
-	if intervalSeconds == "" {
-		intervalSeconds = "30"
-	}
-	return time.Duration(mustParseInt(intervalSeconds)) * time.Second
-}
-
-// outputsCache - is a singleton holding outputs to send alerts
-type outputsCache struct {
+// alertOutputsCache - is a singleton holding outputs to send alerts
+type alertOutputsCache struct {
 	// All cached outputs
 	Outputs   []*outputModels.AlertOutput
 	Timestamp time.Time
 }
 
-// Global variables
-var (
-	cache           *outputsCache
-	once            sync.Once
-	refreshInterval = getRefreshInterval()
-)
-
-// get - Gets a pointer to the cache singleton
-func (c *outputsCache) get() *outputsCache {
-	// Atomic, execute only once.
-	// Now, we don't have to always think about calling `cache.set(...)`
-	// before using the cache.
-	once.Do(func() {
-		// Thread safe. create a new cache if it was nil, otherwise do nothing
-		if cache == nil {
-			c.set(&outputsCache{})
-		}
-	})
-	return cache
+// get - Gets a pointer to the outputsCache singleton
+func (c *alertOutputsCache) get() *alertOutputsCache {
+	return outputsCache
 }
 
-// set - Sets the cache singleton
-func (c *outputsCache) set(newCache *outputsCache) {
-	cache = newCache
+// set - Sets the outputsCache singleton
+func (c *alertOutputsCache) set(newCache *alertOutputsCache) {
+	outputsCache = newCache
 }
 
 // getOutputs - Gets the outputs stored in the cache
-func (c *outputsCache) getOutputs() []*outputModels.AlertOutput {
+func (c *alertOutputsCache) getOutputs() []*outputModels.AlertOutput {
 	return c.get().Outputs
 }
 
 // setOutputs - Stores the outputs in the cache
-func (c *outputsCache) setOutputs(outputs []*outputModels.AlertOutput) {
+func (c *alertOutputsCache) setOutputs(outputs []*outputModels.AlertOutput) {
 	c.get().Outputs = outputs
 }
 
 // getExpiry - Gets the expiry time in the cache
-func (c *outputsCache) getExpiry() time.Time {
+func (c *alertOutputsCache) getExpiry() time.Time {
 	return c.get().Timestamp
 }
 
 // setExpiry - Sets the expiry time of the cache
-func (c *outputsCache) setExpiry(time time.Time) {
+func (c *alertOutputsCache) setExpiry(time time.Time) {
 	c.get().Timestamp = time
 }
 
 // isExpired - determines if the cache has expired
-func (c *outputsCache) isExpired() bool {
-	return time.Since(c.getExpiry()) > refreshInterval
+func (c *alertOutputsCache) isExpired() bool {
+	return time.Since(c.getExpiry()) > outputsRefreshInterval
 }

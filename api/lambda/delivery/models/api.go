@@ -38,7 +38,10 @@ const (
 //
 // Exactly one action must be specified, see comments below for examples.
 type LambdaInput struct {
-	DispatchAlerts []*DispatchAlertsInput `json:"Records"` // SQS Shape
+	// DispatchAlerts is our alias for an SQSMessage so that we can invoke directly
+	// in AWS with a proper SQSMessage JSON payload without needing to put data on
+	// the queue and wait for the trigger. Do not change `json:"Records"`
+	DispatchAlerts []*DispatchAlertsInput `json:"Records"`
 	DeliverAlert   *DeliverAlertInput     `json:"deliverAlert"`
 	SendTestAlert  *SendTestAlertInput    `json:"sendTestAlert"`
 }

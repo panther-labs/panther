@@ -47,14 +47,6 @@ func (m mockSQSClient) SendMessageBatch(input *sqs.SendMessageBatchInput) (*sqs.
 	}, nil
 }
 
-func TestMustParseIntPanic(t *testing.T) {
-	assert.Panics(t, func() { mustParseInt("") })
-}
-
-func TestMustParseInt(t *testing.T) {
-	assert.Equal(t, 5, mustParseInt("5"))
-}
-
 func TestRetry(t *testing.T) {
 	mockClient := &mockOutputsClient{}
 	sqsClient = &mockSQSClient{}

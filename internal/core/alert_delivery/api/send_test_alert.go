@@ -30,7 +30,7 @@ import (
 // SendTestAlert sends a dummy alert to the specified destinations.
 func (API) SendTestAlert(input *deliveryModels.SendTestAlertInput) (*deliveryModels.SendTestAlertOutput, error) {
 	// First, fetch the alert
-	zap.L().Info("Sending test alert")
+	zap.L().Debug("Sending test alert")
 
 	// Fetch the Policy or Rule associated with the alert to fill in the missing attributes
 	alert := generateTestAlert()
@@ -52,7 +52,7 @@ func (API) SendTestAlert(input *deliveryModels.SendTestAlertInput) (*deliveryMod
 			Success: false,
 		}, err
 	}
-	zap.L().Info("Test Succeeded")
+	zap.L().Debug("Test Succeeded")
 	return &deliveryModels.SendTestAlertOutput{
 		Success: true,
 	}, nil

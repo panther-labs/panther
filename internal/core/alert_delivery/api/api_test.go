@@ -19,11 +19,10 @@ package api
  */
 
 import (
-	"testing"
+	"os"
 
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -37,10 +36,14 @@ func (m *mockLambdaClient) Invoke(input *lambda.InvokeInput) (*lambda.InvokeOutp
 	return args.Get(0).(*lambda.InvokeOutput), args.Error(1)
 }
 
-func TestGetSQSClient(t *testing.T) {
-	assert.NotNil(t, getSQSClient())
-}
-
-func TestGetDDBClient(t *testing.T) {
-	assert.NotNil(t, getAlertsTableClient())
+func initEnvironmentTest() {
+	os.Setenv("ALERT_RETRY_COUNT", "10")
+	os.Setenv("OUTPUTS_REFRESH_INTERVAL_SEC", "30")
+	os.Setenv("MIN_RETRY_DELAY_SECS", "10")
+	os.Setenv("MAX_RETRY_DELAY_SECS", "30")
+	os.Setenv("ALERT_QUEUE_URL", "sqs.url")
+	os.Setenv("ALERTS_TABLE_NAME", "alerts-table-name")
+	os.Setenv("RULE_INDEX_NAME", "rule-index")
+	os.Setenv("TIME_INDEX_NAME", "time-index")
+	Setup()
 }

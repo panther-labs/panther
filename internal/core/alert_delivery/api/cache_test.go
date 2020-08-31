@@ -50,67 +50,63 @@ func createAlertOutputs() []*outputModels.AlertOutput {
 	return []*outputModels.AlertOutput{createAlertOutput(), createAlertOutput(), createAlertOutput()}
 }
 
-// By default, cache.get() will initialize the cache - no need
-// to explicitly call cache.set(...)
-//
-// To override the default action, the user must cache.get()
-// then cache.set(nil) in order to successfully set the cache
-// to nil. This is for debugging/testing and should not be
-// used in application.
 func TestGetSetCache(t *testing.T) {
-	assert.Nil(t, cache)
-	c := &outputsCache{}
+	assert.Nil(t, outputsCache)
+	c := &alertOutputsCache{}
 
 	cPtr := c.get()
-	assert.NotNil(t, cPtr)
-	assert.NotNil(t, cache)
+	assert.Nil(t, cPtr)
+	assert.Nil(t, outputsCache)
 
 	c.set(nil)
 	cPtr = c.get()
 	assert.Nil(t, cPtr)
-	assert.Nil(t, cache)
+	assert.Nil(t, outputsCache)
 
-	c.set(&outputsCache{})
+	c.set(&alertOutputsCache{})
 	cPtr = c.get()
 	assert.NotNil(t, cPtr)
-	assert.NotNil(t, cache)
-	assert.Equal(t, cPtr, cache)
-	assert.Equal(t, cPtr.get(), cache.get())
+	assert.NotNil(t, outputsCache)
+	assert.Equal(t, cPtr, outputsCache)
+	assert.Equal(t, cPtr.get(), outputsCache.get())
 }
 
 func TestGetSetOutputs(t *testing.T) {
-	c := &outputsCache{}
+	c := &alertOutputsCache{}
 	outputs := createAlertOutputs()
 	c.setOutputs(outputs)
 	assert.Equal(t, outputs, c.getOutputs())
-	assert.Equal(t, c.getOutputs(), cache.getOutputs())
+	assert.Equal(t, c.getOutputs(), outputsCache.getOutputs())
 }
 
 func TestGetSetExpiry(t *testing.T) {
-	c := &outputsCache{}
+	c := &alertOutputsCache{}
 	expiry := time.Now().Add(time.Second * time.Duration(10))
 	c.setExpiry(expiry)
 	assert.Equal(t, expiry, c.getExpiry())
-	assert.Equal(t, c.getExpiry(), cache.getExpiry())
+	assert.Equal(t, c.getExpiry(), outputsCache.getExpiry())
 }
 
 func TestIsNotExpired(t *testing.T) {
-	c := &outputsCache{}
+	initEnvironmentTest()
+	c := &alertOutputsCache{}
 	expiry := time.Now().Add(time.Second * time.Duration(-29))
 	c.setExpiry(expiry)
 	assert.False(t, c.isExpired())
-	assert.Equal(t, c.isExpired(), cache.isExpired())
+	assert.Equal(t, c.isExpired(), outputsCache.isExpired())
 }
 func TestIsExpired(t *testing.T) {
-	c := &outputsCache{}
+	initEnvironmentTest()
+	c := &alertOutputsCache{}
 	expiry := time.Now().Add(time.Second * time.Duration(-30))
 	c.setExpiry(expiry)
 	assert.True(t, c.isExpired())
-	assert.Equal(t, c.isExpired(), cache.isExpired())
+	assert.Equal(t, c.isExpired(), outputsCache.isExpired())
 }
 
 func TestIsExpiredByDefault(t *testing.T) {
-	c := &outputsCache{}
+	initEnvironmentTest()
+	c := &alertOutputsCache{}
 	assert.True(t, c.isExpired())
-	assert.Equal(t, c.isExpired(), cache.isExpired())
+	assert.Equal(t, c.isExpired(), outputsCache.isExpired())
 }
