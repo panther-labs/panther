@@ -18,7 +18,7 @@
 
 import { pantherConfig } from 'Source/config';
 import slackLogo from 'Assets/slack-minimal-logo.svg';
-import { DestinationTypeEnum } from 'Generated/schema';
+import { DestinationTypeEnum, SeverityEnum } from 'Generated/schema';
 import msTeamsLogo from 'Assets/ms-teams-minimal-logo.svg';
 import opsgenieLogo from 'Assets/opsgenie-minimal-logo.svg';
 import jiraLogo from 'Assets/jira-minimal-logo.svg';
@@ -28,6 +28,7 @@ import snsLogo from 'Assets/aws-sns-minimal-logo.svg';
 import sqsLogo from 'Assets/aws-sqs-minimal-logo.svg';
 import asanaLogo from 'Assets/asana-minimal-logo.svg';
 import customWebhook from 'Assets/custom-webhook-minimal-logo.svg';
+import { Theme } from 'pouncejs';
 
 export enum LogIntegrationsEnum {
   's3' = 'aws-s3',
@@ -59,10 +60,10 @@ export const DEFAULT_RULE_FUNCTION =
   'def rule(event):\n\t# Return True to match the log event and trigger an alert.\n\treturn False';
 
 export const DEFAULT_TITLE_FUNCTION =
-  "def title(event):\n\t# (Optional) Return a string which will be shown as the alert title.\n\treturn ''";
+  "def title(event):\n\t# (Optional) Return a string which will be shown as the alert title.\n\t# If no 'dedup' function is defined, the return value of this method will act as deduplication string.\n\treturn ''";
 
 export const DEFAULT_DEDUP_FUNCTION =
-  "def dedup(event):\n\t# (Optional) Return a string which will de-duplicate similar alerts.\n\treturn ''";
+  "# def dedup(event):\n\t#  (Optional) Return a string which will be used to deduplicate similar alerts.\n\t# return ''";
 
 export const RESOURCE_TYPES = [
   'AWS.ACM.Certificate',
@@ -216,4 +217,12 @@ export const DESTINATIONS: Record<
     title: 'Custom Webhook',
     type: DestinationTypeEnum.Customwebhook,
   },
+};
+
+export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: keyof Theme['colors'] } = {
+  [SeverityEnum.Critical]: 'red-400' as const,
+  [SeverityEnum.High]: 'orange-500' as const,
+  [SeverityEnum.Medium]: 'yellow-500' as const,
+  [SeverityEnum.Low]: 'blue-300' as const,
+  [SeverityEnum.Info]: 'gray-300' as const,
 };

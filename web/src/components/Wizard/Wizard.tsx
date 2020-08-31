@@ -74,7 +74,7 @@ function Wizard<WizardData = any>({
     if (prevStepIndex.current >= 0) {
       goToStep(prevStepIndex.current);
     }
-  }, [prevStepIndex]);
+  }, [goToStep, prevStepIndex]);
 
   /**
    * Goes to the next wizard step
@@ -83,7 +83,7 @@ function Wizard<WizardData = any>({
     if (currentStepIndex < steps.length - 1) {
       goToStep(currentStepIndex + 1);
     }
-  }, [currentStepIndex]);
+  }, [goToStep, currentStepIndex]);
 
   /**
    * Fully resets the wizard,  including data and current step

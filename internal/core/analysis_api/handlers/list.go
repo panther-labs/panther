@@ -397,15 +397,34 @@ func sortPolicies(policies []*models.PolicySummary, sortBy string, ascending boo
 func sortByStatus(policies []*models.PolicySummary, ascending bool, policyStatus map[models.ID]*complianceStatus) {
 	sort.Slice(policies, func(i, j int) bool {
 		left, right := policies[i], policies[j]
+
+		// Group all disabled policies together at the end.
+		// Technically, disabled policies still have a pass/fail status,
+		// we just don't show it yet in the web app.
+		// The "disabled" status overrides the "pass/fail" status
+		// TODO - remove this block once enabled/disabled status is shown separately (ETA v1.9)
+		//
+		// So the sort order is essentially:
+		//     PASS < FAIL < ERROR < PASS/DISABLED < FAIL/DISABLED < ERROR/DISABLED
+		// Which will appear to the user as:
+		//     PASS < FAIL < ERROR < DISABLED
+		if left.Enabled != right.Enabled {
+			// Same logic as sortByEnabled()
+			if left.Enabled && !right.Enabled {
+				return ascending
+			}
+			return !ascending
+		}
+
+		// Group by compliance status (pass/fail/error)
 		if left.ComplianceStatus != right.ComplianceStatus {
-			// Group first by compliance status
 			if ascending {
 				return statusSortPriority[left.ComplianceStatus] < statusSortPriority[right.ComplianceStatus]
 			}
 			return statusSortPriority[left.ComplianceStatus] > statusSortPriority[right.ComplianceStatus]
 		}
 
-		// Same pass/fail status: use sort index for ERROR and FAIL
+		// Same pass/fail and enabled status: use sort index for ERROR and FAIL
 		// This will sort by "top failing": the most failures in order of severity
 		if left.ComplianceStatus == models.ComplianceStatusERROR || left.ComplianceStatus == models.ComplianceStatusFAIL {
 			// The status cache has already been populated, we can access it directly
@@ -426,13 +445,13 @@ func sortByEnabled(policies []*models.PolicySummary, ascending bool) {
 	sort.Slice(policies, func(i, j int) bool {
 		left, right := policies[i], policies[j]
 		if left.Enabled && !right.Enabled {
-			// ascending: true > false
-			return !ascending
+			// when ascending (default): enabled < disabled
+			return ascending
 		}
 
 		if !left.Enabled && right.Enabled {
-			// ascending: false < true
-			return ascending
+			// when ascending: disabled > enabled
+			return !ascending
 		}
 
 		// Same enabled status: sort by ID ascending

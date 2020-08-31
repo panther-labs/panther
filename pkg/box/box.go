@@ -28,6 +28,13 @@ func String(s string) *string {
 	return &s
 }
 
+func NonEmpty(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
 func Int(n int) *int {
 	return &n
 }

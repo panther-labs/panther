@@ -51,9 +51,17 @@ type scannerEntry struct {
 	Fields  []FieldID
 }
 
-// RegisterScanner registers a value scanner to be used on string fields with a `panther` struct tag.
+// MustRegisterScanner registers a value scanner to be used on string fields with a `panther` struct tag.
 // It panics in case of a registration error.
 func MustRegisterScanner(name string, scanner ValueScanner, fields ...FieldID) {
+	if err := RegisterScanner(name, scanner, fields...); err != nil {
+		panic(err)
+	}
+}
+
+// MustRegisterScannerFunc registers a value scanner to be used on string fields with a `panther` struct tag.
+// It panics in case of a registration error.
+func MustRegisterScannerFunc(name string, scanner ValueScannerFunc, fields ...FieldID) {
 	if err := RegisterScanner(name, scanner, fields...); err != nil {
 		panic(err)
 	}

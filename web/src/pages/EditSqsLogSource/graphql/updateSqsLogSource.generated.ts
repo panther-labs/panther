@@ -19,6 +19,7 @@
 import * as Types from '../../../../__generated__/schema';
 
 import { SqsLogSourceIntegrationDetails } from '../../../graphql/fragments/SqsLogSourceIntegrationDetails.generated';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -79,15 +80,14 @@ export type UpdateSqsLogSourceMutationOptions = ApolloReactCommon.BaseMutationOp
 export function mockUpdateSqsLogSource({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: UpdateSqsLogSource;
   variables?: UpdateSqsLogSourceVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: UpdateSqsLogSourceDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }

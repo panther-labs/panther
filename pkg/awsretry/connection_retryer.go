@@ -25,9 +25,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 )
 
-func NewConnectionErrRetryer() *ConnectionErrRetryer {
+func NewConnectionErrRetryer(maxRetries int) *ConnectionErrRetryer {
 	return &ConnectionErrRetryer{
-		DefaultRetryer: client.DefaultRetryer{},
+		DefaultRetryer: client.DefaultRetryer{
+			NumMaxRetries: maxRetries, // MUST be set or all retrying is skipped!
+		},
 	}
 }
 

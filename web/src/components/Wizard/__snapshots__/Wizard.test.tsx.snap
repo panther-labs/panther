@@ -11,36 +11,34 @@ exports[`Wizard renders a step 1`] = `
   }
 }
 
-.panther-26 {
+.panther-13 {
+  background-color: #23344e;
+  border-radius: 4px;
   padding: 24px;
   margin-bottom: 24px;
-  background-color: #23344e;
   width: 100%;
-  border-radius: 4px;
   position: relative;
 }
 
-.panther-8 {
-  padding-top: 10px;
-  margin-bottom: 60px;
+.panther-4 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  z-index: 2;
   -webkit-box-pack: center;
   -ms-flex-pack: center;
   -webkit-justify-content: center;
   justify-content: center;
+  padding-top: 10px;
+  margin-bottom: 60px;
+  z-index: 2;
 }
 
-.panther-6 {
-  opacity: 1;
+.panther-3 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  z-index: 2;
   -webkit-box-pack: center;
   -ms-flex-pack: center;
   -webkit-justify-content: center;
@@ -49,82 +47,82 @@ exports[`Wizard renders a step 1`] = `
   -webkit-box-align: center;
   -ms-flex-align: center;
   align-items: center;
+  z-index: 2;
+  opacity: 1;
 }
 
-.panther-2 {
-  background-color: #0081c5;
+.panther-1 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
   width: 25px;
   height: 25px;
+  font-size: 0.75rem;
+  font-weight: 700;
   border-radius: 99999px;
   border: 1px solid;
   border-color: #0081c5;
-  -webkit-box-pack: center;
-  -ms-flex-pack: center;
-  -webkit-justify-content: center;
-  justify-content: center;
-  -webkit-align-items: center;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-  font-size: 0.75rem;
-  font-weight: 700;
+  background-color: #0081c5;
 }
 
 .panther-0 {
-  color: currentColor;
   display: inline-block;
   vertical-align: sub;
-  width: 12px;
-  height: 12px;
   -webkit-flex-shrink: 0;
   -ms-flex-negative: 0;
   flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  color: currentColor;
 }
 
-.panther-4 {
-  margin-left: 8px;
+.panther-2 {
   font-size: 0.875rem;
+  margin-left: 8px;
 }
 
-.panther-24 {
+.panther-12 {
   padding-top: 12px;
 }
 
-.panther-22 {
+.panther-11 {
+  width: 700px;
   margin-left: auto;
   margin-right: auto;
-  width: 700px;
 }
 
-.panther-20 {
-  will-change: opacity,transform;
+.panther-10 {
+  will-change: opacity;
   -webkit-animation: animation-0 300ms 0ms ease-in-out both;
   animation: animation-0 300ms 0ms ease-in-out both;
 }
 
-.panther-14 {
+.panther-7 {
   margin-bottom: 40px;
   text-align: center;
 }
 
-.panther-10 {
-  margin-bottom: 8px;
+.panther-5 {
   font-weight: 500;
   font-size: 1.25rem;
+  margin-bottom: 8px;
 }
 
-.panther-12 {
-  color: #bdbdbd;
+.panther-6 {
   font-size: 0.875rem;
+  color: #bdbdbd;
 }
 
-.panther-18 {
-  margin-top: 32px;
-  margin-bottom: 16px;
+.panther-9 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -133,70 +131,61 @@ exports[`Wizard renders a step 1`] = `
   -ms-flex-pack: center;
   -webkit-justify-content: center;
   justify-content: center;
+  margin-top: 32px;
+  margin-bottom: 16px;
 }
 
-.panther-16 {
+.panther-8 {
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  background-color: #0081c5;
+  -webkit-transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  width: auto;
   padding-left: 20px;
   padding-right: 20px;
   padding-top: 12px;
   padding-bottom: 12px;
-  color: #f6f6f6;
-  background-color: #0081c5;
-  width: auto;
+  font-size: 0.938rem;
+  outline: none;
   border-radius: 4px;
   border: 1px solid;
   border-color: #0081c5;
-  font-size: 0.938rem;
-  cursor: pointer;
-  -webkit-text-decoration: none;
-  text-decoration: none;
-  -webkit-transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
-  transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
-  outline: none;
 }
 
-.panther-16:hover {
+.panther-8:hover {
   background-color: #0a8bcf;
   border-color: #0a8bcf;
 }
 
-.panther-16:focus {
+.panther-8:focus {
   background-color: #0a8bcf;
   border-color: #55d6ff;
 }
 
-.panther-16:active,
-.panther-16[data-active=true] {
+.panther-8:active,
+.panther-8[data-active=true] {
   background-color: #0077bb;
   border-color: #0077bb;
 }
 
-.panther-16:disabled,
-.panther-16:disabled:focus,
-.panther-16:disabled:hover,
-.panther-16[aria-disabled=true],
-.panther-16[aria-disabled=true]:focus,
-.panther-16[aria-disabled=true]:hover {
-  opacity: 0.3;
-  pointer-events: none;
-  cursor: default;
-}
-
 <div>
   <article
-    class="panther-26 panther-1"
+    class="panther-13"
   >
     <ul
-      class="panther-8 panther-1"
+      class="panther-4"
     >
       <li
-        class="panther-6 panther-1"
+        class="panther-3"
       >
         <div
-          class="panther-2 panther-1"
+          class="panther-1"
         >
           <svg
-            class="panther-0 panther-1"
+            class="panther-0"
             role="presentation"
             viewBox="0 0 24 24"
           >
@@ -206,41 +195,41 @@ exports[`Wizard renders a step 1`] = `
           </svg>
         </div>
         <p
-          class="panther-4 panther-1"
+          class="panther-2"
         >
           Step Nickname
         </p>
       </li>
     </ul>
     <div
-      class="panther-24 panther-1"
+      class="panther-12"
     >
       <section
-        class="panther-22 panther-1"
+        class="panther-11"
       >
         <div
-          class="panther-20 panther-1"
+          class="panther-10"
         >
           <header
-            class="panther-14 panther-1"
+            class="panther-7"
           >
             <h1
-              class="panther-10 panther-1"
+              class="panther-5"
             >
               Title
             </h1>
             <p
-              class="panther-12 panther-1"
+              class="panther-6"
             >
               Subtitle
             </p>
           </header>
           Content
           <div
-            class="panther-18 panther-1"
+            class="panther-9"
           >
             <button
-              class="panther-16 panther-1"
+              class="panther-8"
               type="button"
             >
               Continue

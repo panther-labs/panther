@@ -26,24 +26,32 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestConnectionErrRetryerShouldRetry(t *testing.T) {
-	retryer := NewConnectionErrRetryer()
+func TestConnectionErrRetryerShouldRetryThrottledException(t *testing.T) {
+	retryer := NewConnectionErrRetryer(1)
 	sdkRequest := &request.Request{
-		Error: errors.New("read: connection reset by peer"),
+		Error: errors.New("ThrottledException"),
 	}
 	assert.True(t, retryer.ShouldRetry(sdkRequest))
 }
 
-func TestConnectionErrRetryerShouldNotRetryOtherErrors(t *testing.T) {
-	retryer := NewConnectionErrRetryer()
+func TestConnectionErrRetryerShouldRetry(t *testing.T) {
+	retryer := NewConnectionErrRetryer(1)
+	sdkRequest := &request.Request{
+		Error: errors.New("read: connection reset by peer"), // this is the one we added
+	}
+	assert.True(t, retryer.ShouldRetry(sdkRequest))
+}
+
+func TestConnectionErrRetryerShouldRetryOtherErrors(t *testing.T) {
+	retryer := NewConnectionErrRetryer(1)
 	sdkRequest := &request.Request{
 		Error: errors.New("random error"),
 	}
-	assert.False(t, retryer.ShouldRetry(sdkRequest))
+	assert.True(t, retryer.ShouldRetry(sdkRequest))
 }
 
 func TestConnectionErrRetryerShouldNotRetryNoErrors(t *testing.T) {
-	retryer := NewConnectionErrRetryer()
+	retryer := NewConnectionErrRetryer(1)
 	sdkRequest := &request.Request{}
 	assert.False(t, retryer.ShouldRetry(sdkRequest))
 }

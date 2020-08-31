@@ -22,6 +22,7 @@ import (
 	"io"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
@@ -37,7 +38,7 @@ import (
 )
 
 const (
-	MaxRetries     = 15 // retrying for ~ 5'
+	MaxRetries     = 15 // retrying for ~15'
 	EventDelimiter = '\n'
 )
 
@@ -61,8 +62,8 @@ type EnvConfig struct {
 
 func Setup() {
 	awsConfig := aws.NewConfig().WithMaxRetries(MaxRetries)
-	awsConfig.Retryer = awsretry.NewConnectionErrRetryer()
-	Session = session.Must(session.NewSession(awsConfig))
+	Session = session.Must(session.NewSession(request.WithRetryer(awsConfig,
+		awsretry.NewConnectionErrRetryer(*awsConfig.MaxRetries))))
 	LambdaClient = lambda.New(Session)
 	S3Uploader = s3manager.NewUploader(Session)
 	SqsClient = sqs.New(Session)
@@ -76,11 +77,11 @@ func Setup() {
 
 // DataStream represents a data stream that read by the processor
 type DataStream struct {
-	Reader io.Reader
-	Hints  DataStreamHints
-	// The log type if known
-	// If it is nil, it means the log type hasn't been identified yet
-	LogType *string
+	Reader      io.Reader
+	Hints       DataStreamHints
+	SourceID    string
+	SourceLabel string
+	LogTypes    []string
 }
 
 // Used in a DataStream as meta data to describe the data

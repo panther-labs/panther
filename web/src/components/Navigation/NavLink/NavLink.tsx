@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Icon, IconProps, PseudoBox } from 'pouncejs';
+import { Box, Icon, IconProps } from 'pouncejs';
 import React from 'react';
 import useRouter from 'Hooks/useRouter';
 import { addTrailingSlash, getPathnameFromURI } from 'Helpers/utils';
@@ -36,7 +36,7 @@ const NavLink: React.FC<NavLinkProps> = ({ icon, label, to }) => {
 
   return (
     <Box as={RRLink} display="block" to={to} my={1} aria-current={isActive ? 'page' : undefined}>
-      <PseudoBox
+      <Box
         color="gray-50"
         fontSize="medium"
         fontWeight="medium"
@@ -55,7 +55,7 @@ const NavLink: React.FC<NavLinkProps> = ({ icon, label, to }) => {
       >
         <Icon type={icon} size="small" mr={4} />
         {label}
-      </PseudoBox>
+      </Box>
     </Box>
   );
 };

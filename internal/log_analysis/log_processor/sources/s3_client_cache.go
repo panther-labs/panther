@@ -19,6 +19,7 @@ package sources
  */
 
 import (
+	"sort"
 	"strings"
 	"time"
 
@@ -56,7 +57,44 @@ type s3ClientCacheKey struct {
 
 type sourceCacheStruct struct {
 	cacheUpdateTime time.Time
-	sources         []*models.SourceIntegration
+	byBucket        map[string][]*models.SourceIntegration
+}
+
+func (c *sourceCacheStruct) Update(now time.Time, sources []*models.SourceIntegration) {
+	byBucket := make(map[string][]*models.SourceIntegration)
+	for _, source := range sources {
+		bucketName, _ := getSourceS3Info(source)
+		bucketSources := byBucket[bucketName]
+		byBucket[bucketName] = append(bucketSources, source)
+	}
+	// Sort sources for each bucket
+	// It is important to have the sources sorted by longest prefix first.
+	// This ensures that longer prefixes (ie `/foo/bar`) have precedence over shorter ones (ie `/foo`).
+	// This is especially important for the empty prefix as it would match all objects in a bucket making
+	// other sources invalid.
+	for bucketName, sources := range byBucket {
+		sourcesSorted := sources
+		sort.Slice(sourcesSorted, func(i, j int) bool {
+			_, prefixA := getSourceS3Info(sourcesSorted[i])
+			_, prefixB := getSourceS3Info(sourcesSorted[j])
+			// Sort by prefix length descending
+			return len(prefixA) > len(prefixB)
+		})
+		byBucket[bucketName] = sourcesSorted
+	}
+	*c = sourceCacheStruct{
+		byBucket:        byBucket,
+		cacheUpdateTime: now,
+	}
+}
+func (c *sourceCacheStruct) Find(bucketName, objectKey string) *models.SourceIntegration {
+	sources := c.byBucket[bucketName]
+	for _, source := range sources {
+		if strings.HasPrefix(objectKey, source.S3Prefix) {
+			return source
+		}
+	}
+	return nil
 }
 
 var (
@@ -95,15 +133,15 @@ func init() {
 
 // getS3Client Fetches
 // 1. S3 client with permissions to read data from the account that contains the event
-// 2. The type of the integration
-func getS3Client(s3Object *S3ObjectInfo) (s3iface.S3API, string, error) {
+// 2. The source integration
+func getS3Client(s3Object *S3ObjectInfo) (s3iface.S3API, *models.SourceIntegration, error) {
 	sourceInfo, err := getSourceInfo(s3Object)
 	if err != nil {
-		return nil, "", errors.Wrapf(err, "failed to fetch the appropriate role arn to retrieve S3 object %#v", s3Object)
+		return nil, nil, errors.Wrapf(err, "failed to fetch the appropriate role arn to retrieve S3 object %#v", s3Object)
 	}
 
 	if sourceInfo == nil {
-		return nil, "", errors.Errorf("there is no source configured for S3 object %#v", s3Object)
+		return nil, nil, errors.Errorf("there is no source configured for S3 object %#v", s3Object)
 	}
 	var awsCreds *credentials.Credentials // lazy create below
 	roleArn := getSourceLogProcessingRole(sourceInfo)
@@ -113,12 +151,12 @@ func getS3Client(s3Object *S3ObjectInfo) (s3iface.S3API, string, error) {
 		zap.L().Debug("bucket region was not cached, fetching it", zap.String("bucket", s3Object.S3Bucket))
 		awsCreds = getAwsCredentials(roleArn)
 		if awsCreds == nil {
-			return nil, "", errors.Errorf("failed to fetch credentials for assumed role %s to read %#v",
+			return nil, nil, errors.Errorf("failed to fetch credentials for assumed role %s to read %#v",
 				roleArn, s3Object)
 		}
 		bucketRegion, err = getBucketRegion(s3Object.S3Bucket, awsCreds)
 		if err != nil {
-			return nil, "", err
+			return nil, nil, err
 		}
 		bucketCache.Add(s3Object.S3Bucket, bucketRegion)
 	}
@@ -135,14 +173,14 @@ func getS3Client(s3Object *S3ObjectInfo) (s3iface.S3API, string, error) {
 		if awsCreds == nil {
 			awsCreds = getAwsCredentials(roleArn)
 			if awsCreds == nil {
-				return nil, "", errors.Errorf("failed to fetch credentials for assumed role %s to read %#v",
+				return nil, nil, errors.Errorf("failed to fetch credentials for assumed role %s to read %#v",
 					roleArn, s3Object)
 			}
 		}
 		client = newS3ClientFunc(box.String(cacheKey.awsRegion), awsCreds)
 		s3ClientCache.Add(cacheKey, client)
 	}
-	return client.(s3iface.S3API), sourceInfo.IntegrationType, nil
+	return client.(s3iface.S3API), sourceInfo, nil
 }
 
 func getBucketRegion(s3Bucket string, awsCreds *credentials.Credentials) (string, error) {
@@ -187,19 +225,10 @@ func getSourceInfo(s3Object *S3ObjectInfo) (result *models.SourceIntegration, er
 		if err != nil {
 			return nil, err
 		}
-		sourceCache.cacheUpdateTime = now
-		sourceCache.sources = output
+		sourceCache.Update(now, output)
 	}
 
-	for _, source := range sourceCache.sources {
-		integrationBucket, integrationPrefix := getSourceS3Info(source)
-		if integrationBucket == s3Object.S3Bucket {
-			if strings.HasPrefix(s3Object.S3ObjectKey, integrationPrefix) {
-				result = source
-				break
-			}
-		}
-	}
+	result = sourceCache.Find(s3Object.S3Bucket, s3Object.S3ObjectKey)
 
 	// If the incoming notification maps to a known source, update the source information
 	if result != nil {
@@ -240,12 +269,11 @@ func getNewS3Client(region *string, creds *credentials.Credentials) (result s3if
 // Returns the configured S3 bucket and S3 object prefix for this source
 func getSourceS3Info(source *models.SourceIntegration) (string, string) {
 	switch source.IntegrationType {
-	case models.IntegrationTypeAWS3:
-		return source.S3Bucket, source.S3Prefix
 	case models.IntegrationTypeSqs:
 		return source.SqsConfig.S3Bucket, source.SqsConfig.S3Prefix
+	default:
+		return source.S3Bucket, source.S3Prefix
 	}
-	return "", ""
 }
 
 func getSourceLogProcessingRole(source *models.SourceIntegration) (roleArn string) {

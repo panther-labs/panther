@@ -19,6 +19,7 @@
 import * as Types from '../../../../__generated__/schema';
 
 import { S3LogIntegrationDetails } from '../../../graphql/fragments/S3LogIntegrationDetails.generated';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -76,15 +77,14 @@ export type UpdateS3LogSourceMutationOptions = ApolloReactCommon.BaseMutationOpt
 export function mockUpdateS3LogSource({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: UpdateS3LogSource;
   variables?: UpdateS3LogSourceVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: UpdateS3LogSourceDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }
