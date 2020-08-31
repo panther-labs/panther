@@ -18,3 +18,4 @@
 
 export { default } from './ComplianceSourceWizard';
 export * from './StackDeploymentPanel/graphql/getComplianceCfnTemplate.generated';
+export * from './StackDeploymentPanel/graphql/getComplianceCfnTemplate.generated';

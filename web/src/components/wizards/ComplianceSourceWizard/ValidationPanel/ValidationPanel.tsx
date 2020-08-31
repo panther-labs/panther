@@ -72,9 +72,11 @@ const ValidationPanel: React.FC = () => {
                   Finish Setup
                 </Button>
               </RRLink>
-              <Link as={AbstractButton} variant="discreet" onClick={reset}>
-                Add Another
-              </Link>
+              {!initialValues.integrationId && (
+                <Link as={AbstractButton} variant="discreet" onClick={reset}>
+                  Add Another
+                </Link>
+              )}
             </Flex>
           </WizardPanel.Actions>
         </Flex>
