@@ -37,7 +37,8 @@ const DestinationTestPanel: React.FC = () => {
     reset,
   } = useWizardContext<CreateWizardData & EditWizardData>();
 
-  const [useSendTest] = useSendTestAlertLazyQuery({
+  const [useSendTest, { loading }] = useSendTestAlertLazyQuery({
+    fetchPolicy: 'network-only', // Don't use cache
     variables: {
       input: {
         outputIds: [destination.outputId],
@@ -115,7 +116,9 @@ const DestinationTestPanel: React.FC = () => {
         <Img nativeWidth={120} nativeHeight={120} alt="Success" src={SuccessStatus} />
         <Text mb={5}>Do you want to try it out by sending a test Alert?</Text>
         <Box>
-          <Button onClick={handleTestAlertClick}>Send Test Alert</Button>
+          <Button loading={loading} disabled={loading} onClick={handleTestAlertClick}>
+            Send Test Alert
+          </Button>
         </Box>
         <Link as={RRLink} variant="discreet" to={urls.settings.destinations.list()}>
           Finish Setup

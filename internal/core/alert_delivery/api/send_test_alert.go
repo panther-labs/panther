@@ -65,7 +65,7 @@ func generateTestAlert() *deliveryModels.Alert {
 		AnalysisDescription: aws.String("This is a test alert"),
 		AnalysisName:        aws.String("Test Alert"),
 		Version:             aws.String("Test Alert Version"),
-		Runbook:             aws.String("Stuck? Checkout our docs: https://docs.runpanther.io/"),
+		Runbook:             aws.String("Stuck? Check out our docs: https://docs.runpanther.io/"),
 		Tags:                []string{"test"},
 		AlertID:             aws.String("Test.Alert"),
 		Title:               aws.String("Test Alert"),
