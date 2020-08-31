@@ -91,12 +91,9 @@ func populateAlertData(alertItem *alertTable.AlertItem) *deliveryModels.Alert {
 	// Alerts triggerd by Policies are not supported.
 	// ...
 	// Note: we need to account for the corner case when there is no rule
-	// because it has been deleted. Additionally, we should provide an identifier
-	// in the alert (TBD) to differentiate from re-send action or a new rule/policy trigger
-
-	// For now, we are taking the data from Dynamo and populating as much as we have.
-	// Eventually, sending an alert should be _exactly_ the same as if it were triggered
-	// from a Policy or a Rule.
+	// because it has been deleted. For now, we are taking the data from Dynamo
+	// and populating as much as we have. Eventually, sending an alert should
+	// be _exactly_ the same as if it were triggered by a Rule.
 	return &deliveryModels.Alert{
 		// AnalysisID: alertItem.AlertID,
 		Type:      deliveryModels.RuleType, // For now, we hard-code this value as only RULE is supported
