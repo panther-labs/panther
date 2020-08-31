@@ -23,7 +23,6 @@ import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
-import { GraphQLError } from 'graphql';
 
 export type AddComplianceSourceVariables = {
   input: Types.AddComplianceIntegrationInput;
