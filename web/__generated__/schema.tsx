@@ -853,6 +853,7 @@ export type Query = {
   __typename?: 'Query';
   alert?: Maybe<AlertDetails>;
   alerts?: Maybe<ListAlertsResponse>;
+  sendTestAlert?: Maybe<Scalars['Boolean']>;
   destination?: Maybe<Destination>;
   destinations?: Maybe<Array<Maybe<Destination>>>;
   generalSettings: GeneralSettings;
@@ -885,6 +886,10 @@ export type QueryAlertArgs = {
 
 export type QueryAlertsArgs = {
   input?: Maybe<ListAlertsInput>;
+};
+
+export type QuerySendTestAlertArgs = {
+  input: SendTestAlertInput;
 };
 
 export type QueryDestinationArgs = {
@@ -1061,6 +1066,10 @@ export type ScannedResourceStats = {
   __typename?: 'ScannedResourceStats';
   count?: Maybe<ComplianceStatusCounts>;
   type?: Maybe<Scalars['String']>;
+};
+
+export type SendTestAlertInput = {
+  outputIds: Array<Maybe<Scalars['ID']>>;
 };
 
 export type Series = {
@@ -1379,6 +1388,8 @@ export type ResolversTypes = {
   SortDirEnum: SortDirEnum;
   ListAlertsResponse: ResolverTypeWrapper<ListAlertsResponse>;
   AlertSummary: ResolverTypeWrapper<AlertSummary>;
+  SendTestAlertInput: SendTestAlertInput;
+  Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
   Destination: ResolverTypeWrapper<Destination>;
   DestinationTypeEnum: DestinationTypeEnum;
   DestinationConfig: ResolverTypeWrapper<DestinationConfig>;
@@ -1393,7 +1404,6 @@ export type ResolversTypes = {
   AsanaConfig: ResolverTypeWrapper<AsanaConfig>;
   CustomWebhookConfig: ResolverTypeWrapper<CustomWebhookConfig>;
   GeneralSettings: ResolverTypeWrapper<GeneralSettings>;
-  Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
   ComplianceIntegration: ResolverTypeWrapper<ComplianceIntegration>;
   ComplianceIntegrationHealth: ResolverTypeWrapper<ComplianceIntegrationHealth>;
   IntegrationItemHealthStatus: ResolverTypeWrapper<IntegrationItemHealthStatus>;
@@ -1516,6 +1526,8 @@ export type ResolversParentTypes = {
   SortDirEnum: SortDirEnum;
   ListAlertsResponse: ListAlertsResponse;
   AlertSummary: AlertSummary;
+  SendTestAlertInput: SendTestAlertInput;
+  Boolean: Scalars['Boolean'];
   Destination: Destination;
   DestinationTypeEnum: DestinationTypeEnum;
   DestinationConfig: DestinationConfig;
@@ -1530,7 +1542,6 @@ export type ResolversParentTypes = {
   AsanaConfig: AsanaConfig;
   CustomWebhookConfig: CustomWebhookConfig;
   GeneralSettings: GeneralSettings;
-  Boolean: Scalars['Boolean'];
   ComplianceIntegration: ComplianceIntegration;
   ComplianceIntegrationHealth: ComplianceIntegrationHealth;
   IntegrationItemHealthStatus: IntegrationItemHealthStatus;
@@ -2336,6 +2347,12 @@ export type QueryResolvers<
     ParentType,
     ContextType,
     RequireFields<QueryAlertsArgs, never>
+  >;
+  sendTestAlert?: Resolver<
+    Maybe<ResolversTypes['Boolean']>,
+    ParentType,
+    ContextType,
+    RequireFields<QuerySendTestAlertArgs, 'input'>
   >;
   destination?: Resolver<
     Maybe<ResolversTypes['Destination']>,

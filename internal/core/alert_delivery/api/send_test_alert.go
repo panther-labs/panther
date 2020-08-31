@@ -46,11 +46,9 @@ func (API) SendTestAlert(input *deliveryModels.SendTestAlertInput) (*deliveryMod
 
 	// Log any failures and return
 	if err := returnIfFailed(dispatchStatuses); err != nil {
-		return &deliveryModels.SendTestAlertOutput{
-			Success: false,
-		}, err
+		return nil, err
 	}
-
+	zap.L().Info("Test Succeeded")
 	return &deliveryModels.SendTestAlertOutput{
 		Success: true,
 	}, nil
@@ -67,7 +65,7 @@ func generateTestAlert() *deliveryModels.Alert {
 		AnalysisDescription: aws.String("This is a test alert"),
 		AnalysisName:        aws.String("Test Alert"),
 		Version:             aws.String("Test Alert Version"),
-		Runbook:             aws.String("https://docs.runpanther.io/"),
+		Runbook:             aws.String("Stuck? Checkout our docs: https://docs.runpanther.io/"),
 		Tags:                []string{"test"},
 		AlertID:             aws.String("Test.Alert"),
 		Title:               aws.String("Test Alert"),

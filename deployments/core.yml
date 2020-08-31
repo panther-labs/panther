@@ -658,7 +658,7 @@ Resources:
             Queue: !GetAtt AlertQueue.Arn
             BatchSize: 10
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      FunctionName: panther-alert-delivery
+      FunctionName: panther-alert-delivery-api
       # <cfndoc>
       # This lambda dispatches alerts to their specified outputs (destinations).
       #
@@ -724,7 +724,7 @@ Resources:
   AlertDeliveryLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: /aws/lambda/panther-alert-delivery
+      LogGroupName: /aws/lambda/panther-alert-delivery-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
   AlertDeliveryMetricFilters:

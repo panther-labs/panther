@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { useWizardContext, WizardPanel } from 'Components/Wizard';
-import { Button, Text, Tooltip, Link, Img, Flex, Box, AbstractButton } from 'pouncejs';
+import { Button, Text, Link, Img, Flex, Box, AbstractButton } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import SuccessStatus from 'Assets/statuses/success.svg';
@@ -26,19 +26,29 @@ import FailureStatus from 'Assets/statuses/failure.svg';
 import NotificationStatus from 'Assets/statuses/notification.svg';
 import { WizardData as CreateWizardData } from '../../CreateDestinationWizard';
 import { WizardData as EditWizardData } from '../../EditDestinationWizard';
+import { useSendTestAlertLazyQuery } from './graphql/sendTestAlert.generated';
 
 type TestStatus = 'PASSED' | 'FAILED' | null;
 
 const DestinationTestPanel: React.FC = () => {
-  const [testStatus, sendTestStatus] = React.useState<TestStatus>(null);
+  const [testStatus, setTestStatus] = React.useState<TestStatus>(null);
   const {
     data: { destination },
     reset,
   } = useWizardContext<CreateWizardData & EditWizardData>();
 
+  const [useSendTest] = useSendTestAlertLazyQuery({
+    variables: {
+      input: {
+        outputIds: [destination.outputId],
+      },
+    },
+    onCompleted: () => setTestStatus('PASSED'),
+    onError: () => setTestStatus('FAILED'),
+  });
+
   const handleTestAlertClick = React.useCallback(() => {
-    // FIXME: add logic for alert testing and then update the `sendTestStatus` call below
-    sendTestStatus('PASSED');
+    useSendTest();
   }, []);
 
   if (testStatus === 'FAILED') {
@@ -99,18 +109,14 @@ const DestinationTestPanel: React.FC = () => {
     <React.Fragment>
       <WizardPanel.Heading
         title="Everything looks good!"
-        subtitle="Your destination was successfully added and you will receive alerts based on your configuration.You can always edit or delete this destination from the destinations page"
+        subtitle="Your destination was successfully added and you will receive alerts based on your configuration. You can always edit or delete this destination from the destinations page"
       />
       <Flex direction="column" align="center" spacing={6} my={6}>
         <Img nativeWidth={120} nativeHeight={120} alt="Success" src={SuccessStatus} />
         <Text mb={5}>Do you want to try it out by sending a test Alert?</Text>
-        <Tooltip content="The ability to test your destination is coming really soon!">
-          <Box>
-            <Button disabled onClick={handleTestAlertClick}>
-              Send Test Alert
-            </Button>
-          </Box>
-        </Tooltip>
+        <Box>
+          <Button onClick={handleTestAlertClick}>Send Test Alert</Button>
+        </Box>
         <Link as={RRLink} variant="discreet" to={urls.settings.destinations.list()}>
           Finish Setup
         </Link>

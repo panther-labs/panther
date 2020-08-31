@@ -19,6 +19,8 @@ package api
  */
 
 import (
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
 
@@ -116,7 +118,11 @@ func populateAlertData(alertItem *alertTable.AlertItem) *deliveryModels.Alert {
 func getAlertOutputMapping(alert *deliveryModels.Alert, outputIds []string) (AlertOutputMap, error) {
 	// Initialize our Alert -> Output map
 	alertOutputMap := make(AlertOutputMap)
-	// Fetch outputIds from ddb (utilizing a cache)
+
+	// Direct API hits should not use the cache. Only SQS events.
+	cache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5)))
+
+	// Fetch outputIds from ddb
 	outputs, err := getOutputs()
 	if err != nil {
 		zap.L().Error("Failed to fetch outputIds", zap.Error(err))

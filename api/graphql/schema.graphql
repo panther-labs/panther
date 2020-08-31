@@ -44,6 +44,7 @@ type Mutation {
 type Query {
   alert(input: GetAlertInput!): AlertDetails
   alerts(input: ListAlertsInput): ListAlertsResponse
+  sendTestAlert(input: SendTestAlertInput!): Boolean
   destination(id: ID!): Destination
   destinations: [Destination]
   generalSettings: GeneralSettings!
@@ -524,6 +525,10 @@ type ListPoliciesResponse {
 type ListResourcesResponse {
   paging: PagingData
   resources: [ResourceSummary]
+}
+
+input SendTestAlertInput {
+  outputIds: [ID]!
 }
 
 type Destination {
