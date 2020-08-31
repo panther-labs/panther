@@ -28,11 +28,11 @@ import (
 
 // getRefreshInterval - fetches the env setting or provides a default value if not set
 func getRefreshInterval() time.Duration {
-	intervalMins := os.Getenv("OUTPUTS_REFRESH_INTERVAL_MIN")
-	if intervalMins == "" {
-		intervalMins = "5"
+	intervalSeconds := os.Getenv("OUTPUTS_REFRESH_INTERVAL_SEC")
+	if intervalSeconds == "" {
+		intervalSeconds = "30"
 	}
-	return time.Duration(mustParseInt(intervalMins)) * time.Minute
+	return time.Duration(mustParseInt(intervalSeconds)) * time.Second
 }
 
 // outputsCache - is a singleton holding outputs to send alerts

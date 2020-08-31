@@ -96,14 +96,14 @@ func TestGetSetExpiry(t *testing.T) {
 
 func TestIsNotExpired(t *testing.T) {
 	c := &outputsCache{}
-	expiry := time.Now().Add(time.Second * time.Duration(-5*59))
+	expiry := time.Now().Add(time.Second * time.Duration(-29))
 	c.setExpiry(expiry)
 	assert.False(t, c.isExpired())
 	assert.Equal(t, c.isExpired(), cache.isExpired())
 }
 func TestIsExpired(t *testing.T) {
 	c := &outputsCache{}
-	expiry := time.Now().Add(time.Second * time.Duration(-5*60))
+	expiry := time.Now().Add(time.Second * time.Duration(-30))
 	c.setExpiry(expiry)
 	assert.True(t, c.isExpired())
 	assert.Equal(t, c.isExpired(), cache.isExpired())
