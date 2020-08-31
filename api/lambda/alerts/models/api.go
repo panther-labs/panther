@@ -122,9 +122,11 @@ type UpdateAlertStatusInput struct {
 //         "alertId": "84c3e4b27c702a1c31e6eb412fc377f6",
 //         "deliveryResponses": [
 //           {
-//             "status": 5XX,
+//             "outputId": "1f54cf4a-ec56-44c2-83bc-8b742600f307"
+//             "message": "gateway timeout",
+//             "statusCode": 504,
 //             "success": false,
-//             "response": "client timeout",
+//             "dispatchedAt": "2020-06-17T15:49:40Z",
 //           }
 //         ]
 //     }
