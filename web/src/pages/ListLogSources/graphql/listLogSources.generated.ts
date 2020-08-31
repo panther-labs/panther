@@ -20,6 +20,7 @@ import * as Types from '../../../../__generated__/schema';
 
 import { S3LogIntegrationDetails } from '../../../graphql/fragments/S3LogIntegrationDetails.generated';
 import { SqsLogSourceIntegrationDetails } from '../../../graphql/fragments/SqsLogSourceIntegrationDetails.generated';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -85,15 +86,14 @@ export type ListLogSourcesQueryResult = ApolloReactCommon.QueryResult<
 export function mockListLogSources({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: ListLogSources;
   variables?: ListLogSourcesVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: ListLogSourcesDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }

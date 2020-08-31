@@ -19,6 +19,7 @@
 import * as Types from '../../../../__generated__/schema';
 
 import { ComplianceIntegrationDetails } from '../../../graphql/fragments/ComplianceIntegrationDetails.generated';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -81,15 +82,14 @@ export type UpdateComplianceSourceMutationOptions = ApolloReactCommon.BaseMutati
 export function mockUpdateComplianceSource({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: UpdateComplianceSource;
   variables?: UpdateComplianceSourceVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: UpdateComplianceSourceDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }

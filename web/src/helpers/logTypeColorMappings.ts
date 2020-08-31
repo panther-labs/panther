@@ -16,22 +16,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { SEVERITY_COLOR_MAP } from 'Components/SeverityBadge';
 import mapKeys from 'lodash/mapKeys';
 import { capitalize } from 'Helpers/utils';
 import { Theme } from 'pouncejs';
+import { LOG_TYPES, SEVERITY_COLOR_MAP } from 'Source/constants';
 
-const severityColors = mapKeys(SEVERITY_COLOR_MAP, (val, key) => capitalize(key));
+const severityColors = mapKeys(SEVERITY_COLOR_MAP, (val, key) => capitalize(key.toLowerCase()));
 
-const logTypeColorMappings: Record<string, keyof Theme['colors']> = {
-  Critical: 'red-500',
-  High: 'orange-400',
-  Medium: 'yellow-500',
-  Low: 'gray-500',
-  Info: 'gray-600',
+const logTypeColorMappings: Record<typeof LOG_TYPES[number], keyof Theme['colors']> = {
   'AWS.ALB': 'teal-100',
   'AWS.VPCFlow': 'orange-100',
-  'AWS.S3': 'green-300',
   'AWS.S3ServerAccess': 'red-300',
   'Apache.AccessCombined': 'navyblue-100',
   'Apache.AccessCommon': 'teal-500',
@@ -66,6 +60,8 @@ const logTypeColorMappings: Record<string, keyof Theme['colors']> = {
   'Syslog.RFC3164': 'violet-500',
   'Syslog.RFC5424': 'violet-300',
   'Zeek.DNS': 'blue-500',
+  'Gravitational.TeleportAudit': 'green-300',
+  'Lacework.Events': 'green-700',
 };
 
 export default {

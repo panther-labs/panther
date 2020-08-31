@@ -18,6 +18,7 @@
 
 import * as Types from '../../../__generated__/schema';
 
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 
 export type DestinationFull = { __typename: 'Destination' } & Pick<
