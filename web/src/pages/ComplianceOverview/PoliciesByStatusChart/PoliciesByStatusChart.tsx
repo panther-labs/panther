@@ -19,21 +19,17 @@
 import React from 'react';
 import { capitalize, countPoliciesBySeverityAndStatus } from 'Helpers/utils';
 import map from 'lodash/map';
+import mapKeys from 'lodash/mapKeys';
 import sum from 'lodash/sum';
 import { OrganizationReportBySeverity } from 'Generated/schema';
 import { theme, Flex } from 'pouncejs';
 import BarChart from 'Components/charts/BarChart';
 import ChartSummary from 'Components/charts/ChartSummary';
+import { SEVERITY_COLOR_MAP } from 'Source/constants';
 
 const severityToColorMapping: {
   [key in keyof OrganizationReportBySeverity]: keyof typeof theme['colors'];
-} = {
-  critical: 'red-500',
-  high: 'orange-400',
-  medium: 'yellow-500',
-  low: 'gray-500',
-  info: 'gray-600',
-};
+} = mapKeys(SEVERITY_COLOR_MAP, (value, key) => key.toLowerCase());
 
 interface PoliciesByStatusChartData {
   policies: OrganizationReportBySeverity;

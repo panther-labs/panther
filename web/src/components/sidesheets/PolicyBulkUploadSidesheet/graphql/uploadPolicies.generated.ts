@@ -18,6 +18,7 @@
 
 import * as Types from '../../../../../__generated__/schema';
 
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -91,15 +92,14 @@ export type UploadPoliciesMutationOptions = ApolloReactCommon.BaseMutationOption
 export function mockUploadPolicies({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: UploadPolicies;
   variables?: UploadPoliciesVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: UploadPoliciesDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }

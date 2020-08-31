@@ -18,22 +18,18 @@
 
 import React from 'react';
 import { Flex, theme } from 'pouncejs';
-import sum from 'lodash/sum';
+import sum from 'lodash-es/sum';
 import { capitalize, countPoliciesBySeverityAndStatus } from 'Helpers/utils';
-import map from 'lodash/map';
+import map from 'lodash-es/map';
 import { OrganizationReportBySeverity } from 'Generated/schema';
 import BarChart from 'Components/charts/BarChart';
 import ChartSummary from 'Components/charts/ChartSummary';
+import mapKeys from 'lodash/mapKeys';
+import { SEVERITY_COLOR_MAP } from 'Source/constants';
 
 const severityToGrayscaleMapping: {
   [key in keyof OrganizationReportBySeverity]: keyof typeof theme['colors'];
-} = {
-  critical: 'red-500',
-  high: 'orange-400',
-  medium: 'yellow-500',
-  low: 'gray-500',
-  info: 'gray-600',
-};
+} = mapKeys(SEVERITY_COLOR_MAP, (value, key) => key.toLowerCase());
 
 interface PoliciesBySeverityChartData {
   policies: OrganizationReportBySeverity;
@@ -58,7 +54,7 @@ const PoliciesBySeverityChart: React.FC<PoliciesBySeverityChartData> = ({ polici
 
   return (
     <Flex height="100%">
-      <ChartSummary total={totalPolicies} title="Total Policies" color="blue-400" />
+      <ChartSummary total={totalPolicies} title="Total Policies" color="blue-600" />
       <BarChart data={allPoliciesChartData} />
     </Flex>
   );

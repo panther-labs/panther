@@ -19,6 +19,7 @@
 import * as Types from '../../../../__generated__/schema';
 
 import { GlobalPythonModuleFull } from '../../../graphql/fragments/GlobalPythonModuleFull.generated';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -87,15 +88,14 @@ export type GlobalPythonModuleDetailsQueryResult = ApolloReactCommon.QueryResult
 export function mockGlobalPythonModuleDetails({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: GlobalPythonModuleDetails;
   variables?: GlobalPythonModuleDetailsVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: GlobalPythonModuleDetailsDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }

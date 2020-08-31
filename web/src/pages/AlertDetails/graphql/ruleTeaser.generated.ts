@@ -19,6 +19,7 @@
 import * as Types from '../../../../__generated__/schema';
 
 import { RuleBasic } from '../../../graphql/fragments/RuleBasic.generated';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -76,15 +77,14 @@ export type RuleTeaserQueryResult = ApolloReactCommon.QueryResult<RuleTeaser, Ru
 export function mockRuleTeaser({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: RuleTeaser;
   variables?: RuleTeaserVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: RuleTeaserDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }
