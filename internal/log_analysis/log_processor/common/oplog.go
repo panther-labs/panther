@@ -62,14 +62,14 @@ var (
 
 			  -- show all sns activity
 			  filter namespace="Panther" and component="LogProcessor"
-			  | filter Service='sns'
+			  | filter ExternalAPI='sns'
 			  | fields @timestamp, topicArn
 			  | sort @timestamp desc
 			  | limit 200
 
 			   -- show all s3 activity
 			   filter namespace="Panther" and component="LogProcessor"
-			   | filter Service='s3'
+			   | filter ExternalAPI='s3'
 			   | fields @timestamp, bucket, key
 			   | sort @timestamp desc
 			   | limit 200
