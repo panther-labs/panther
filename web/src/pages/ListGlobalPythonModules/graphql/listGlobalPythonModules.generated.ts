@@ -19,6 +19,7 @@
 import * as Types from '../../../../__generated__/schema';
 
 import { GlobalPythonModuleTeaser } from '../../../graphql/fragments/GlobalPythonModuleTeaser.generated';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -99,15 +100,14 @@ export type ListGlobalPythonModulesQueryResult = ApolloReactCommon.QueryResult<
 export function mockListGlobalPythonModules({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: ListGlobalPythonModules;
   variables?: ListGlobalPythonModulesVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: ListGlobalPythonModulesDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }

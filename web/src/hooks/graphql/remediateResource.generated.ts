@@ -18,6 +18,7 @@
 
 import * as Types from '../../../__generated__/schema';
 
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -72,15 +73,14 @@ export type RemediateResourceMutationOptions = ApolloReactCommon.BaseMutationOpt
 export function mockRemediateResource({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: RemediateResource;
   variables?: RemediateResourceVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: RemediateResourceDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }

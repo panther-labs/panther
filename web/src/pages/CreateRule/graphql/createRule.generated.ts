@@ -19,6 +19,7 @@
 import * as Types from '../../../../__generated__/schema';
 
 import { RuleFull } from '../../../graphql/fragments/RuleFull.generated';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -76,15 +77,14 @@ export type CreateRuleMutationOptions = ApolloReactCommon.BaseMutationOptions<
 export function mockCreateRule({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: CreateRule;
   variables?: CreateRuleVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: CreateRuleDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }

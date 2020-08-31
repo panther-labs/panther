@@ -18,6 +18,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -154,15 +155,14 @@ export type GetOrganizationStatsQueryResult = ApolloReactCommon.QueryResult<
 export function mockGetOrganizationStats({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: GetOrganizationStats;
   variables?: GetOrganizationStatsVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: GetOrganizationStatsDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }

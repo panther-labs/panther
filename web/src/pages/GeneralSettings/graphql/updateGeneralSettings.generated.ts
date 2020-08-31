@@ -19,6 +19,7 @@
 import * as Types from '../../../../__generated__/schema';
 
 import { GeneralSettingsFull } from '../../../graphql/fragments/GeneralSettingsFull.generated';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -81,15 +82,14 @@ export type UpdateGeneralSettingsMutationOptions = ApolloReactCommon.BaseMutatio
 export function mockUpdateGeneralSettings({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: UpdateGeneralSettings;
   variables?: UpdateGeneralSettingsVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: UpdateGeneralSettingsDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }
