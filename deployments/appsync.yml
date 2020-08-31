@@ -1766,7 +1766,7 @@ Resources:
         #if($context.error)
           $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
         #else
-          true
+          $util.toJson($context.result)
         #end
 
   ListAlertsResolver:

@@ -38,7 +38,9 @@ func (API) SendTestAlert(input *deliveryModels.SendTestAlertInput) (*deliveryMod
 	// Get our Alert -> Output mappings. We determine which destinations an alert should be sent.
 	alertOutputMap, err := getAlertOutputMapping(alert, input.OutputIds)
 	if err != nil {
-		return nil, err
+		return &deliveryModels.SendTestAlertOutput{
+			Success: false,
+		}, err
 	}
 
 	// Send alerts to the specified destination(s) and obtain each response status
@@ -46,7 +48,9 @@ func (API) SendTestAlert(input *deliveryModels.SendTestAlertInput) (*deliveryMod
 
 	// Log any failures and return
 	if err := returnIfFailed(dispatchStatuses); err != nil {
-		return nil, err
+		return &deliveryModels.SendTestAlertOutput{
+			Success: false,
+		}, err
 	}
 	zap.L().Info("Test Succeeded")
 	return &deliveryModels.SendTestAlertOutput{

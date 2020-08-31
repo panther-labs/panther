@@ -37,7 +37,7 @@ const DestinationTestPanel: React.FC = () => {
     reset,
   } = useWizardContext<CreateWizardData & EditWizardData>();
 
-  const [useSendTest, { loading }] = useSendTestAlertLazyQuery({
+  const [sendTestAlert, { loading }] = useSendTestAlertLazyQuery({
     fetchPolicy: 'network-only', // Don't use cache
     variables: {
       input: {
@@ -49,7 +49,7 @@ const DestinationTestPanel: React.FC = () => {
   });
 
   const handleTestAlertClick = React.useCallback(() => {
-    useSendTest();
+    sendTestAlert();
   }, []);
 
   if (testStatus === 'FAILED') {
