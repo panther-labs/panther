@@ -445,6 +445,11 @@ export enum ListAlertsSortFieldsEnum {
   CreatedAt = 'createdAt',
 }
 
+export type ListAvailableLogTypesResponse = {
+  __typename?: 'ListAvailableLogTypesResponse';
+  logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
+};
+
 export type ListComplianceItemsResponse = {
   __typename?: 'ListComplianceItemsResponse';
   items?: Maybe<Array<Maybe<ComplianceItem>>>;
@@ -870,6 +875,7 @@ export type Query = {
   policy?: Maybe<PolicyDetails>;
   policies?: Maybe<ListPoliciesResponse>;
   policiesForResource?: Maybe<ListComplianceItemsResponse>;
+  listAvailableLogTypes?: Maybe<ListAvailableLogTypesResponse>;
   listComplianceIntegrations: Array<ComplianceIntegration>;
   listLogIntegrations: Array<LogIntegration>;
   organizationStats?: Maybe<OrganizationStatsResponse>;
@@ -1438,6 +1444,7 @@ export type ResolversTypes = {
   ListPoliciesResponse: ResolverTypeWrapper<ListPoliciesResponse>;
   PolicySummary: ResolverTypeWrapper<PolicySummary>;
   PoliciesForResourceInput: PoliciesForResourceInput;
+  ListAvailableLogTypesResponse: ResolverTypeWrapper<ListAvailableLogTypesResponse>;
   LogIntegration: ResolversTypes['S3LogIntegration'] | ResolversTypes['SqsLogSourceIntegration'];
   OrganizationStatsInput: OrganizationStatsInput;
   OrganizationStatsResponse: ResolverTypeWrapper<OrganizationStatsResponse>;
@@ -1576,6 +1583,7 @@ export type ResolversParentTypes = {
   ListPoliciesResponse: ListPoliciesResponse;
   PolicySummary: PolicySummary;
   PoliciesForResourceInput: PoliciesForResourceInput;
+  ListAvailableLogTypesResponse: ListAvailableLogTypesResponse;
   LogIntegration:
     | ResolversParentTypes['S3LogIntegration']
     | ResolversParentTypes['SqsLogSourceIntegration'];
@@ -1914,6 +1922,14 @@ export type ListAlertsResponseResolvers<
 > = {
   alertSummaries?: Resolver<Array<Maybe<ResolversTypes['AlertSummary']>>, ParentType, ContextType>;
   lastEvaluatedKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type ListAvailableLogTypesResponseResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['ListAvailableLogTypesResponse'] = ResolversParentTypes['ListAvailableLogTypesResponse']
+> = {
+  logTypes?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2439,6 +2455,11 @@ export type QueryResolvers<
     ContextType,
     RequireFields<QueryPoliciesForResourceArgs, never>
   >;
+  listAvailableLogTypes?: Resolver<
+    Maybe<ResolversTypes['ListAvailableLogTypesResponse']>,
+    ParentType,
+    ContextType
+  >;
   listComplianceIntegrations?: Resolver<
     Array<ResolversTypes['ComplianceIntegration']>,
     ParentType,
@@ -2775,6 +2796,7 @@ export type Resolvers<ContextType = any> = {
   IntegrationTemplate?: IntegrationTemplateResolvers<ContextType>;
   JiraConfig?: JiraConfigResolvers<ContextType>;
   ListAlertsResponse?: ListAlertsResponseResolvers<ContextType>;
+  ListAvailableLogTypesResponse?: ListAvailableLogTypesResponseResolvers<ContextType>;
   ListComplianceItemsResponse?: ListComplianceItemsResponseResolvers<ContextType>;
   ListGlobalPythonModulesResponse?: ListGlobalPythonModulesResponseResolvers<ContextType>;
   ListPoliciesResponse?: ListPoliciesResponseResolvers<ContextType>;

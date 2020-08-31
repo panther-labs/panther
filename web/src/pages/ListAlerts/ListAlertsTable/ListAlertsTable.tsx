@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Link, Table, Icon, PseudoBox } from 'pouncejs';
+import { Box, Link, Table, Icon } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/SeverityBadge';
@@ -85,7 +85,7 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
               </Link>
             </Table.Cell>
             <Table.Cell wrapText="nowrap">
-              <PseudoBox
+              <Box
                 mx={-4}
                 as="a"
                 target="_blank"
@@ -96,8 +96,10 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
                 fontSize="small"
                 borderRadius="pill"
                 transition="background-color 0.1s ease-in-out"
+                // @ts-ignore
                 backgroundColor="rgba(255,255,255,0.1)"
                 _hover={{
+                  // @ts-ignore
                   backgroundColor: 'rgba(255,255,255,0.15)',
                 }}
                 my={-1}
@@ -106,7 +108,7 @@ const ListAlertsTable: React.FC<ListAlertsTableProps> = ({ items, sortBy, sortDi
               >
                 View Rule
                 <Icon type="external-link" size="x-small" ml={1} />
-              </PseudoBox>
+              </Box>
             </Table.Cell>
             <Table.Cell align="center">
               <UpdateAlertDropdown alert={alert} />
