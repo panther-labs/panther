@@ -44,7 +44,7 @@ type Mutation {
 type Query {
   alert(input: GetAlertInput!): AlertDetails
   alerts(input: ListAlertsInput): ListAlertsResponse
-  sendTestAlert(input: [SendTestAlertInput]!): SendTestAlertResponse
+  sendTestAlert(input: SendTestAlertInput!): SendTestAlertResponse
   destination(id: ID!): Destination
   destinations: [Destination]
   generalSettings: GeneralSettings!

@@ -1,3 +1,5 @@
 query SendTestAlert($input: SendTestAlertInput!) {
-  sendTestAlert(input: $input)
+  sendTestAlert(input: $input) {
+    success
+  }
 }
