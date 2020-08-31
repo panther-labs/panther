@@ -116,6 +116,7 @@ func testCfnLint() error {
 			}
 		}
 
+		errs = append(errs, cfnValidateBuckets(template, body.Resources)...)
 		errs = append(errs, cfnValidateCustomResources(template, body.Resources)...)
 	}
 
@@ -125,6 +126,43 @@ func testCfnLint() error {
 		return errors.New(strings.Join(errs, "\n"))
 	}
 	return nil
+}
+
+// Ensure all buckets block HTTP access. Returns a list of error messages.
+func cfnValidateBuckets(template string, resources map[string]cfnResource) []string {
+	// We don't evaluate the bucket policy logic, we just check that every bucket has an associated
+	// "ForceSSL" statement ID attached to its bucket policy.
+
+	// Map bucket resource logical ID to true if we found an associated ForceSSL policy.
+	buckets := make(map[string]bool)
+
+	for logicalID, resource := range resources {
+		switch resource.Type {
+		case "AWS::S3::Bucket":
+			if _, exists := buckets[logicalID]; !exists {
+				buckets[logicalID] = false
+			}
+
+		case "AWS::S3::BucketPolicy":
+			bucketID := resource.Properties["Bucket"].(map[string]interface{})["Ref"].(string)
+			policy := resource.Properties["PolicyDocument"].(map[string]interface{})
+			for _, stmt := range policy["Statement"].([]interface{}) {
+				if stmt.(map[string]interface{})["Sid"] == "ForceSSL" {
+					buckets[bucketID] = true
+					break
+				}
+			}
+		}
+	}
+
+	var errs []string
+	for bucketID, hasPolicy := range buckets {
+		if !hasPolicy {
+			errs = append(errs, fmt.Sprintf(
+				"%s: S3 bucket %s needs an associated ForceSSL policy statement ID", template, bucketID))
+		}
+	}
+	return errs
 }
 
 // Enforce custom resources in a CloudFormation template. Returns a list of error messages.
