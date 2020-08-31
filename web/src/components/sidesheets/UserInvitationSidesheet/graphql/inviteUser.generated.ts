@@ -19,6 +19,7 @@
 import * as Types from '../../../../../__generated__/schema';
 
 import { UserDetails } from '../../../../graphql/fragments/UserDetails.generated';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -76,15 +77,14 @@ export type InviteUserMutationOptions = ApolloReactCommon.BaseMutationOptions<
 export function mockInviteUser({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: InviteUser;
   variables?: InviteUserVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: InviteUserDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }

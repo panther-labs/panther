@@ -19,6 +19,7 @@
 import * as Types from '../../../__generated__/schema';
 
 import { IntegrationItemHealthDetails } from './IntegrationItemHealthDetails.generated';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 
 export type S3LogIntegrationDetails = Pick<

@@ -19,6 +19,7 @@
 import * as Types from '../../../../../../__generated__/schema';
 
 import { DestinationFull } from '../../../../../graphql/fragments/DestinationFull.generated';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -76,15 +77,14 @@ export type UpdateDestinationMutationOptions = ApolloReactCommon.BaseMutationOpt
 export function mockUpdateDestination({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: UpdateDestination;
   variables?: UpdateDestinationVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: UpdateDestinationDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }

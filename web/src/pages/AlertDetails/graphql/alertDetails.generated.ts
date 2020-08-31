@@ -19,6 +19,7 @@
 import * as Types from '../../../../__generated__/schema';
 
 import { AlertDetailsFull } from '../../../graphql/fragments/AlertDetailsFull.generated';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -79,15 +80,14 @@ export type AlertDetailsQueryResult = ApolloReactCommon.QueryResult<
 export function mockAlertDetails({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: AlertDetails;
   variables?: AlertDetailsVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: AlertDetailsDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }
