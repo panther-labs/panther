@@ -20,6 +20,7 @@ import * as Types from '../../../../__generated__/schema';
 
 import { RuleBasic } from '../../../graphql/fragments/RuleBasic.generated';
 import { RuleDates } from '../../../graphql/fragments/RuleDates.generated';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -82,15 +83,14 @@ export type RuleDetailsQueryResult = ApolloReactCommon.QueryResult<
 export function mockRuleDetails({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: RuleDetails;
   variables?: RuleDetailsVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: RuleDetailsDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }

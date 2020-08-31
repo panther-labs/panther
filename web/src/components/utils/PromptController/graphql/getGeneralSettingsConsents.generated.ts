@@ -18,6 +18,7 @@
 
 import * as Types from '../../../../../__generated__/schema';
 
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -86,15 +87,14 @@ export type GetGeneralSettingsConsentsQueryResult = ApolloReactCommon.QueryResul
 export function mockGetGeneralSettingsConsents({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: GetGeneralSettingsConsents;
   variables?: GetGeneralSettingsConsentsVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: GetGeneralSettingsConsentsDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }

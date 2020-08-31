@@ -19,6 +19,7 @@
 import * as Types from '../../../../__generated__/schema';
 
 import { PolicyTeaser } from '../../../graphql/fragments/PolicyTeaser.generated';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -91,15 +92,14 @@ export type ListPoliciesQueryResult = ApolloReactCommon.QueryResult<
 export function mockListPolicies({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: ListPolicies;
   variables?: ListPoliciesVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: ListPoliciesDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }
