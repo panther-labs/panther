@@ -1338,6 +1338,7 @@ Resources:
           #set($response = {
             "eventsProcessed": $ctx.result.eventsProcessed.seriesData,
             "alertsBySeverity": $ctx.result.alertsBySeverity.seriesData,
+            "eventsLatency": $ctx.result.eventsLatency.seriesData,
             "totalAlertsDelta": $ctx.result.totalAlertsDelta.singleValue,
             "fromDate": $ctx.result.fromDate,
             "toDate": $ctx.result.toDate,

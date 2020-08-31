@@ -43,7 +43,7 @@ const LogAnalysisOverview: React.FC = () => {
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
-        metricNames: ['eventsProcessed', 'totalAlertsDelta', 'alertsBySeverity'],
+        metricNames: ['eventsProcessed', 'totalAlertsDelta', 'alertsBySeverity', 'eventsLatency'],
         fromDate,
         toDate,
         intervalMinutes,
