@@ -81,6 +81,27 @@ type DeliverAlertInput struct {
 }
 
 // DispatchAlertsInput is an alias for an SQSMessage
+//
+// Example:
+// {
+// 	"Records": [
+// 	  {
+// 		"MessageId": "messageId",
+// 		"ReceiptHandle": "MessageReceiptHandle",
+// 		"Body": "{\"analysisId\":\"Test.Analysis.ID\",\"type\":\"RULE\",\"createdAt\":\"2020-09-01T21:10:41.80307Z\",\"severity\":\"INFO\",\"outputIds\":[\"1954ae35-f896-4d55-941f-f596ea80da86\",\"d498bac4-7ec3-432c-92b5-9a470d592c16\"],\"analysisDescription\":\"A test alert\",\"analysisName\":\"Test Analysis Name\",\"version\":\"abc\",\"runbook\":\"A runbook link\",\"tags\":[\"test\",\"alert\"],\"alertId\":\"alert-id\",\"title\":\"Test Alert\"}",
+// 		"Md5OfBody": "7b270e59b47ff90a553787216d55d91d",
+// 		"Attributes": {
+// 		  "ApproximateReceiveCount": "1",
+// 		  "SentTimestamp": "1523232000000",
+// 		  "SenderId": "123456789012",
+// 		  "ApproximateFirstReceiveTimestamp": "1523232000001"
+// 		},
+// 		"EventSourceARN": "arn:aws:sqs:us-west-2:123456789012:MyQueue",
+// 		"EventSource": "aws:sqs",
+// 		"AWSRegion": "us-west-2"
+// 	  }
+// 	]
+// }
 type DispatchAlertsInput = events.SQSMessage
 
 // DeliverAlertOutput is an alias for an alert summary
