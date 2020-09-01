@@ -36,9 +36,21 @@ const swaggerGlob = "api/gateway/*/api.yml"
 // Build contains targets for compiling source code.
 type Build mg.Namespace
 
+// Other mage commands can use this to invoke build commands directly.
+var build = Build{}
+
 // API Generate API source files from GraphQL + Swagger
 func (b Build) API() {
-	mg.Deps(b.generateSwaggerClients, b.generateWebTypescript)
+	mg.Deps(b.generateSwaggerClients, b.generateWebTypescript, b.goGenerate)
+}
+
+func (b Build) goGenerate() error {
+	const generatePattern = "./..."
+	logger.Info("build:api: generating Go code with go:generate")
+	if err := sh.Run("go", "generate", generatePattern); err != nil {
+		return fmt.Errorf("go:generate failed: %s", err)
+	}
+	return nil
 }
 
 func (b Build) generateSwaggerClients() error {
@@ -230,7 +242,7 @@ func (b Build) tools() error {
 	return nil
 }
 
-// Generate CloudFormation templates in out/deployments folder
+// Generate CloudFormation: deployments/dashboards.yml and out/deployments/
 func (b Build) Cfn() {
 	if err := b.cfn(); err != nil {
 		logger.Fatal(err)

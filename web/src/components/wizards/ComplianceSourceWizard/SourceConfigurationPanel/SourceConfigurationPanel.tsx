@@ -16,28 +16,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, FormHelperText, Heading, Link, Text } from 'pouncejs';
+import { Box, FormHelperText, Link } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import React from 'react';
 import FormikCheckbox from 'Components/fields/Checkbox';
-import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
+import { CLOUD_SECURITY_REAL_TIME_DOC_URL, REMEDIATION_DOC_URL } from 'Source/constants';
 import { ComplianceSourceWizardValues } from 'Components/wizards/ComplianceSourceWizard/ComplianceSourceWizard';
+import { WizardPanel } from 'Components/Wizard';
 
 const SourceConfigurationPanel: React.FC = () => {
   const { initialValues } = useFormikContext<ComplianceSourceWizardValues>();
 
   return (
     <Box width={460} m="auto">
-      <Heading as="h2" m="auto" mb={2}>
-        {initialValues.integrationId ? 'Update source' : 'First things first'}
-      </Heading>
-      <Text color="gray-300" mb={10}>
-        {initialValues.integrationId
-          ? 'Feel free to make any changes to your Cloud Security source'
-          : "Let's configure your Cloud Security Source"}
-      </Text>
+      <WizardPanel.Heading
+        title={initialValues.integrationId ? 'Update source' : 'First things first'}
+        subtitle={
+          initialValues.integrationId
+            ? 'Feel free to make any changes to your Cloud Security source'
+            : "Let's configure your Cloud Security Source"
+        }
+      />
       <ErrorBoundary>
         <Box mb={4}>
           <Field
@@ -69,10 +70,7 @@ const SourceConfigurationPanel: React.FC = () => {
             <FormHelperText id="cweEnabled-description" ml={2}>
               Configure Panther to monitor all AWS resource changes in real-time through CloudWatch
               Events.{' '}
-              <Link
-                external
-                href={`${PANTHER_SCHEMA_DOCS_LINK}/amazon-web-services/aws-setup/real-time-events`}
-              >
+              <Link external href={CLOUD_SECURITY_REAL_TIME_DOC_URL}>
                 Read more
               </Link>
             </FormHelperText>
@@ -87,10 +85,7 @@ const SourceConfigurationPanel: React.FC = () => {
             <FormHelperText id="remediationEnabled-description" ml={2}>
               Allow Panther to fix misconfigured infrastructure as soon as it is detected.
               <br />
-              <Link
-                external
-                href={`${PANTHER_SCHEMA_DOCS_LINK}/amazon-web-services/aws-setup/automatic-remediation`}
-              >
+              <Link external href={REMEDIATION_DOC_URL}>
                 Read more
               </Link>
             </FormHelperText>

@@ -16,11 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Text, Box, Heading, Spinner, Flex, Link } from 'pouncejs';
+import { Text, Box, Spinner, Flex, Link } from 'pouncejs';
 import React from 'react';
 import { extractErrorMessage, toStackNameFormat } from 'Helpers/utils';
 import { useFormikContext } from 'formik';
 import { LOG_ONBOARDING_SNS_DOC_URL } from 'Source/constants';
+import { WizardPanel } from 'Components/Wizard';
 import { pantherConfig } from 'Source/config';
 import { useGetLogCfnTemplate } from './graphql/getLogCfnTemplate.generated';
 import { S3LogSourceWizardValues } from '../S3LogSourceWizard';
@@ -56,7 +57,11 @@ const StackDeployment: React.FC = () => {
 
   const renderContent = () => {
     if (loading) {
-      return <Spinner size="small" />;
+      return (
+        <Flex width={1} justify="center" my={5}>
+          <Spinner size="medium" />
+        </Flex>
+      );
     }
 
     if (error) {
@@ -81,67 +86,74 @@ const StackDeployment: React.FC = () => {
 
       return (
         <React.Fragment>
-          <Heading as="h2" m="auto" mb={2}>
-            Step 1: Allow Panther to Read S3 Data
-          </Heading>
-          <Text color="gray-300" mb={10}>
-            To proceed, you must deploy the generated Cloudformation template to the AWS account{' '}
-            <b>{values.awsAccountId}</b>.{' '}
-            {!initialValues.integrationId
+          <WizardPanel.Heading
+            title="Deploy your configured stack"
+            subtitle={`To proceed, you must deploy the generated Cloudformation template to the AWS account
+          ${values.awsAccountId}.
+          ${
+            !initialValues.integrationId
               ? 'This will create a ReadOnly IAM Role to access the logs.'
-              : 'This will override the existing ReadOnly IAM Role.'}
-          </Text>
-          <Text color="gray-300" mt={2} mb={2}>
-            The quickest way to do it is through the AWS console
-          </Text>
-          <Link
-            external
-            title="Launch Cloudformation console"
-            href={cfnConsoleLink}
-            onClick={() => setStatus({ cfnTemplateDownloaded: true })}
-          >
-            Launch stack
-          </Link>
-          <Text color="gray-300" mt={10} mb={2}>
-            Alternatively, you can download it and deploy it through the AWS CLI with the stack name{' '}
-            <b>{stackName}</b>
-          </Text>
-          <Link
-            href="#"
-            title="Download Cloudformation template"
-            download={`${stackName}.yml`}
-            ref={downloadRef}
-            onClick={() => setStatus({ cfnTemplateDownloaded: true })}
-          >
-            Download template
-          </Link>
-          <Heading as="h2" m="auto" mt={8}>
-            Step 2: Adding Notifications For New Data
-          </Heading>
-          <Text color="gray-300" mt={4} mb={2}>
-            After deploying the stack above, follow the steps{' '}
-            <Link external title="SNS Notification Setup" href={LOG_ONBOARDING_SNS_DOC_URL}>
-              here
-            </Link>{' '}
-            to notify Panther when new data becomes available for analysis.
-          </Text>
+              : 'This will override the existing ReadOnly IAM Role.'
+          }`}
+          />
+          <Box fontSize="medium" mb={10}>
+            <Text color="gray-300" mt={2} mb={2}>
+              The quickest way to do it is through the AWS console
+            </Text>
+            <Link
+              external
+              title="Launch Cloudformation console"
+              href={cfnConsoleLink}
+              onClick={() => setStatus({ cfnTemplateDownloaded: true })}
+            >
+              Launch stack
+            </Link>
+            <Text color="gray-300" mt={10} mb={2}>
+              Alternatively, you can download it and deploy it through the AWS CLI with the stack
+              name <b>{stackName}</b>
+            </Text>
+            <Link
+              href="#"
+              title="Download Cloudformation template"
+              download={`${stackName}.yml`}
+              ref={downloadRef}
+              onClick={() => setStatus({ cfnTemplateDownloaded: true })}
+            >
+              Download template
+            </Link>
+          </Box>
+          <WizardPanel.Heading
+            title="Step 2: Adding Notifications For New Data"
+            subtitle={[
+              'After deploying the stack above, follow the steps ',
+              <Link
+                key={0}
+                external
+                title="SNS Notification Setup"
+                href={LOG_ONBOARDING_SNS_DOC_URL}
+              >
+                here
+              </Link>,
+              ' to notify Panther when new data becomes available for analysis.',
+            ]}
+          />
         </React.Fragment>
       );
     }
 
     return (
       <React.Fragment>
-        <Heading as="h2" m="auto" mb={2}>
-          Deploy your configured stack
-        </Heading>
-        <Text color="gray-300" mb={10}>
-          To proceed, you must deploy the generated Cloudformation template to the AWS account{' '}
-          <b>{values.awsAccountId}</b>.{' '}
-          {!initialValues.integrationId
-            ? 'This will create a ReadOnly IAM Role to access the logs.'
-            : 'This will override the existing ReadOnly IAM Role.'}
-        </Text>
-        <Box as="ol">
+        <WizardPanel.Heading
+          title="Deploy your configured stack"
+          subtitle={`To proceed, you must deploy the generated Cloudformation template to the AWS account
+          ${values.awsAccountId}.
+          ${
+            !initialValues.integrationId
+              ? 'This will create a ReadOnly IAM Role to access the logs.'
+              : 'This will override the existing ReadOnly IAM Role.'
+          }`}
+        />
+        <Box as="ol" fontSize="medium">
           <Flex as="li" align="center" mb={3}>
             <Box color="gray-300" mr={1}>
               1.
@@ -178,7 +190,7 @@ const StackDeployment: React.FC = () => {
             5. Press <b>Next</b> and finally click on <b>Update</b>
           </Box>
         </Box>
-        <Text color="gray-300" mt={10} mb={2}>
+        <Text color="gray-300" mt={10} mb={2} fontSize="medium">
           Alternatively, you can update your stack through the AWS CLI
         </Text>
       </React.Fragment>

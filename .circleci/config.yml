@@ -6,56 +6,75 @@ executors:
     docker:
       - image: pantherlabs/panther-buildpack:1.2.0
 
-# The pool of jobs that that our CI will be able to run
-jobs:
-  mage_test_ci:
-    executor: panther-buildpack
-    resource_class: xlarge
+commands:
+  restore_go_modules_from_cache:
+    description: 'Restores all Golang modules that were installed & cached in previous executions'
     steps:
-      - checkout
       - restore_cache:
           name: 'Restore cache: go modules'
           keys:
             - gomod2-{{ checksum "go.mod" }}
+
+      # Start compiling mage in the background while other caches are restoring
       - run:
-          # Start compiling mage in the background while other caches are restoring
           name: Compile mage (background)
           command: mage
           background: true
+
+  restore_node_modules_from_cache:
+    description: 'Restores all Node modules that were installed & cached in previous executions'
+    steps:
       - restore_cache:
           name: 'Restore cache: npm'
           keys:
             - npm-{{ checksum "package-lock.json" }}
+
+  restore_python_modules_from_cache:
+    description: 'Restores all Python modules that were installed & cached in previous executions'
+    steps:
       - restore_cache:
           name: 'Restore cache: python env'
           keys:
             - venv-{{ checksum "requirements.txt" }}
+
+  restore_binaries_from_cache:
+    description: 'Restores all binaries that were installed & cached in previous executions'
+    steps:
       - restore_cache:
           name: 'Restore cache: .setup binaries'
           keys:
             - setup-{{ checksum "tools/mage/setup.go" }}
 
-      - run:
-          # By this point, mage is compiled and all dependencies have been restored from the cache.
-          # "mage setup" will be a no-op unless new dependencies have been introduced.
-          name: Install new dependencies
-          command: mage setup
-
+  persist_go_modules_to_cache:
+    description: Saves all currently installed Golang modules to the cache, to be used by future jobs
+    steps:
       - save_cache:
           name: 'Save cache: go modules'
           key: gomod2-{{ checksum "go.mod" }}
           paths:
             - /go/pkg/mod
+
+  persist_node_modules_to_cache:
+    description: Saves all currently installed Node modules to the cache, to be used by future jobs
+    steps:
       - save_cache:
           name: 'Save cache: npm'
           key: npm-{{ checksum "package-lock.json" }}
           paths:
             - node_modules
+
+  persist_python_modules_to_cache:
+    description: Saves all currently installed Python modules to the cache, to be used by future jobs
+    steps:
       - save_cache:
           name: 'Save cache: python env'
           key: venv-{{ checksum "requirements.txt" }}
           paths:
             - .setup/venv
+
+  persist_binaries_to_cache:
+    description: Saves all currently installed binaries to the cache, to be used by future jobs
+    steps:
       - save_cache:
           name: 'Save cache: .setup binaries'
           key: setup-{{ checksum "tools/mage/setup.go" }}
@@ -64,6 +83,47 @@ jobs:
             - .setup/swagger
             - .setup/terraform
 
+  setup_dependencies:
+    description: 'Installs all dependencies of the project'
+    steps:
+      - restore_modules_from_cache
+      - run:
+          # By this point, mage is compiled and all dependencies have been restored from the cache.
+          # "mage setup" will be a no-op unless new dependencies have been introduced.
+          name: Install new dependencies
+          command: mage setup
+
+# The pool of jobs that that our CI will be able to run
+jobs:
+  mage_test_ci:
+    executor: panther-buildpack
+    resource_class: xlarge
+    steps:
+      - checkout
+      - restore_go_modules_from_cache
+      - restore_node_modules_from_cache
+      - restore_python_modules_from_cache
+      - restore_binaries_from_cache
+      - run:
+          # By this point, mage is compiled and all dependencies have been restored from the cache.
+          # "mage setup" will be a no-op unless new dependencies have been introduced.
+          name: Install new dependencies
+          command: mage setup
+      - persist_go_modules_to_cache
+      - persist_node_modules_to_cache
+      - persist_python_modules_to_cache
+      - persist_binaries_to_cache
+      - run:
+          name: Run test suite
+          command: mage fmt doc
+      - run:
+          name: Push `mage fmt doc` changes to remote ref (optional - only if `mage fmt doc` produces changes)
+          command: |
+            git config --global user.email "github-service-account@runpanther.io"
+            git config --global user.name "panther-bot"
+            git add -A .
+            git commit -m "ci: mage fmt doc" || true
+            git push origin $CIRCLE_BRANCH
       - run:
           name: Run test suite
           command: mage test:ci
@@ -81,15 +141,11 @@ jobs:
     executor: panther-buildpack
     steps:
       - checkout
-      - restore_cache:
-          name: 'Restore cache: npm'
-          keys:
-            - npm-{{ checksum "package-lock.json" }}
-
+      - restore_node_modules_from_cache
       - run:
           name: Install NPM dependencies
           command: npm i
-
+      - persist_node_modules_to_cache
       - run:
           name: Check bundle size
           command: npm run bundlesize
@@ -109,7 +165,10 @@ workflows:
   version: 2
   pipeline:
     jobs:
-      - mage_test_ci
+      - mage_test_ci:
+          filters:
+            branches:
+              ignore: master
       - npm_audit
       - bundlesize
       - fossa_upload

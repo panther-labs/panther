@@ -18,9 +18,8 @@
 
 import * as Yup from 'yup';
 import { SeverityEnum, DestinationConfigInput } from 'Generated/schema';
-import { Box, Flex, FormHelperText } from 'pouncejs';
+import { Box, Flex, Text } from 'pouncejs';
 import { Field, Form, Formik } from 'formik';
-import FormikTextInput from 'Components/fields/TextInput';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import React from 'react';
 import FormikCheckbox from 'Components/fields/Checkbox';
@@ -66,11 +65,7 @@ interface BaseDestinationFormProps<AdditionalValues extends Partial<DestinationC
 // The validation checks that Formik will run
 export const defaultValidationSchema = Yup.object().shape({
   displayName: Yup.string().required(),
-  defaultForSeverity: Yup.object<{ [key in SeverityEnum]: boolean }>().test(
-    'atLeastOneSeverity',
-    'You need to select at least one severity type',
-    val => Object.values(val).some(checked => checked)
-  ),
+  defaultForSeverity: Yup.object<{ [key in SeverityEnum]: boolean }>(),
 });
 
 function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigInput>>({
@@ -114,44 +109,39 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
       onSubmit={onSubmitWithConvertedValues}
     >
       <Form autoComplete="off">
-        <Flex direction="column" spacing={4}>
-          <Field
-            name="displayName"
-            as={FormikTextInput}
-            label="* Display Name"
-            placeholder="A nickname to recognise this destination"
-            required
-          />
-          {children}
-        </Flex>
-
-        <Box my={6} aria-describedby="severity-disclaimer">
-          Associated Severities
-          <FormHelperText id="severity-disclaimer" mt={1} mb={4}>
+        {children}
+        <Box my={8} aria-describedby="severity-disclaimer" textAlign="center">
+          Severity Levels
+          <Text
+            color="gray-300"
+            fontSize="small-medium"
+            id="severity-disclaimer"
+            mt={1}
+            mb={4}
+            fontWeight="medium"
+          >
             We will only notify you on issues related to the severity types chosen above
-          </FormHelperText>
-          {Object.values(SeverityEnum)
-            .reverse()
-            .map(severity => (
-              <Field name="defaultForSeverity" key={severity}>
-                {() => (
-                  <Field
-                    as={FormikCheckbox}
-                    name={`defaultForSeverity.${severity}`}
-                    id={severity}
-                    label={
-                      <Box ml={2}>
-                        <SeverityBadge severity={severity} />
-                      </Box>
-                    }
-                  />
-                )}
-              </Field>
-            ))}
+          </Text>
+          <Flex spacing={5} cursor="pointer">
+            {Object.values(SeverityEnum)
+              .reverse()
+              .map(severity => (
+                <Field name="defaultForSeverity" key={severity}>
+                  {() => (
+                    <Field
+                      as={FormikCheckbox}
+                      name={`defaultForSeverity.${severity}`}
+                      id={severity}
+                      label={<SeverityBadge severity={severity} />}
+                    />
+                  )}
+                </Field>
+              ))}
+          </Flex>
         </Box>
-        <SubmitButton fullWidth>
-          {initialValues.outputId ? 'Update' : 'Add'} Destination
-        </SubmitButton>
+        <Flex justify="center" my={6}>
+          <SubmitButton>{initialValues.outputId ? 'Update' : 'Add'} Destination</SubmitButton>
+        </Flex>
       </Form>
     </Formik>
   );

@@ -157,18 +157,26 @@ func masterPackage(bucket, pantherVersion, imgRegistry string) string {
 
 // Get the Panther version indicated in the master template.
 func getMasterVersion() string {
-	cfn, err := cfnparse.ParseTemplate(pythonVirtualEnvPath, "deployments/master.yml")
-	if err != nil {
+	type template struct {
+		Mappings struct {
+			Constants struct {
+				Panther struct {
+					Version string
+				}
+			}
+		}
+	}
+
+	var cfn template
+	if err := cfnparse.ParseTemplate(pythonVirtualEnvPath, "deployments/master.yml", &cfn); err != nil {
 		logger.Fatal(err)
 	}
-	type m = map[string]interface{}
-	version := cfn["Mappings"].(m)["Constants"].(m)["Panther"].(m)["Version"].(string)
 
-	if version == "" {
+	if cfn.Mappings.Constants.Panther.Version == "" {
 		logger.Fatal("Mappings:Constants:Panther:Version not found in deployments/master.yml")
 	}
 
-	return version
+	return cfn.Mappings.Constants.Panther.Version
 }
 
 func publishToRegion(version, region string) {

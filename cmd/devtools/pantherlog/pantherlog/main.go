@@ -41,7 +41,9 @@ import (
 )
 
 var (
-	debug = flag.Bool("debug", false, "Log debug to stderr")
+	debug       = flag.Bool("debug", false, "Log debug to stderr")
+	sourceID    = flag.String("source-id", "", "Set source id")
+	sourceLabel = flag.String("source-label", "", "Set source label")
 )
 
 func main() {
@@ -65,7 +67,9 @@ func main() {
 
 	jsonAPI := common.BuildJSON()
 
-	classifier := classification.NewClassifier(registry.AvailableParsers())
+	parsers := registry.AvailableParsers()
+
+	classifier := classification.NewClassifier(parsers)
 	lines := bufio.NewScanner(stdin)
 	numLines := 0
 	numEvents := 0
@@ -80,9 +84,14 @@ func main() {
 		if result == nil {
 			debugLog.Printf("Failed to classify line %d\n", numLines)
 			os.Exit(1)
+			return
 		}
 		debugLog.Printf("Line=%d Type=%q NumEvents=%d\n", numLines, unbox.String(result.LogType), len(result.Events))
 		for _, event := range result.Events {
+			// Add source fields
+			event.PantherSourceID = *sourceID
+			event.PantherSourceLabel = *sourceLabel
+
 			data, err := jsonAPI.Marshal(event)
 			if err != nil {
 				log.Fatal(err)

@@ -1,0 +1,243 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Wizard renders a step 1`] = `
+@keyframes animation-0 {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.panther-13 {
+  background-color: #23344e;
+  border-radius: 4px;
+  padding: 24px;
+  margin-bottom: 24px;
+  width: 100%;
+  position: relative;
+}
+
+.panther-4 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  padding-top: 10px;
+  margin-bottom: 60px;
+  z-index: 2;
+}
+
+.panther-3 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  z-index: 2;
+  opacity: 1;
+}
+
+.panther-1 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  width: 25px;
+  height: 25px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 99999px;
+  border: 1px solid;
+  border-color: #0081c5;
+  background-color: #0081c5;
+}
+
+.panther-0 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  color: currentColor;
+}
+
+.panther-2 {
+  font-size: 0.875rem;
+  margin-left: 8px;
+}
+
+.panther-12 {
+  padding-top: 12px;
+}
+
+.panther-11 {
+  width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.panther-10 {
+  will-change: opacity;
+  -webkit-animation: animation-0 300ms 0ms ease-in-out both;
+  animation: animation-0 300ms 0ms ease-in-out both;
+}
+
+.panther-7 {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.panther-5 {
+  font-weight: 500;
+  font-size: 1.25rem;
+  margin-bottom: 8px;
+}
+
+.panther-6 {
+  font-size: 0.875rem;
+  color: #bdbdbd;
+}
+
+.panther-9 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  margin-top: 32px;
+  margin-bottom: 16px;
+}
+
+.panther-8 {
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  background-color: #0081c5;
+  -webkit-transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  width: auto;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  font-size: 0.938rem;
+  outline: none;
+  border-radius: 4px;
+  border: 1px solid;
+  border-color: #0081c5;
+}
+
+.panther-8:hover {
+  background-color: #0a8bcf;
+  border-color: #0a8bcf;
+}
+
+.panther-8:focus {
+  background-color: #0a8bcf;
+  border-color: #55d6ff;
+}
+
+.panther-8:active,
+.panther-8[data-active=true] {
+  background-color: #0077bb;
+  border-color: #0077bb;
+}
+
+<div>
+  <article
+    class="panther-13"
+  >
+    <ul
+      class="panther-4"
+    >
+      <li
+        class="panther-3"
+      >
+        <div
+          class="panther-1"
+        >
+          <svg
+            class="panther-0"
+            role="presentation"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M8.99991 16.17L4.82991 12L3.40991 13.41L8.99991 19L20.9999 6.99997L19.5899 5.58997L8.99991 16.17Z"
+            />
+          </svg>
+        </div>
+        <p
+          class="panther-2"
+        >
+          Step Nickname
+        </p>
+      </li>
+    </ul>
+    <div
+      class="panther-12"
+    >
+      <section
+        class="panther-11"
+      >
+        <div
+          class="panther-10"
+        >
+          <header
+            class="panther-7"
+          >
+            <h1
+              class="panther-5"
+            >
+              Title
+            </h1>
+            <p
+              class="panther-6"
+            >
+              Subtitle
+            </p>
+          </header>
+          Content
+          <div
+            class="panther-9"
+          >
+            <button
+              class="panther-8"
+              type="button"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </article>
+</div>
+`;

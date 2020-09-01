@@ -1069,6 +1069,15 @@ Resources:
           STREAM_NAME: !Ref MessageForwarderFirehose
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
+        - Id: ConfirmSnsSubscriptions
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              # This policy allows the message forwarder to confirm SNS->SQS subscriptions to SQS source queues.
+              # Note that by default SQS queue policy blocks all accounts from subscribing to it.
+              # When a user onboards an SQS log source, they whitelist the SNS topics that can send messages to their SQS queue.
+              Action: sns:ConfirmSubscription
+              Resource: '*'
         - Id: ReadFromSqs
           Version: 2012-10-17
           Statement:

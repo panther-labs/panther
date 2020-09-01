@@ -42,13 +42,15 @@ Profiles can then be visualized with the pprof tool: go tool pprof cpu.prof
 */
 
 var (
-	BUCKET     = flag.String("bucket", "", "The bucket to write to.")
-	TOPICARN   = flag.String("topic", "", "The arn for log processor notifications")
-	QUEUEURL   = flag.String("queue", "", "The url of the input queue")
-	TIMEOUT    = flag.Int("timeout", 900, "timeout in sec")
-	FILE       = flag.String("file", "", "The file to process (assumed to be gzipped).")
-	LOGTYPE    = flag.String("logtype", "", "The logType.")
-	MEMORYSIZE = flag.Int("lambdaSize", 1024, "The memory size of the lambda")
+	BUCKET          = flag.String("bucket", "", "The bucket to write to.")
+	flagSourceID    = flag.String("source-id", "", "The source-id to use.")
+	flagSourceLabel = flag.String("source-label", "", "The source-id to use.")
+	TOPICARN        = flag.String("topic", "", "The arn for log processor notifications")
+	QUEUEURL        = flag.String("queue", "", "The url of the input queue")
+	TIMEOUT         = flag.Int("timeout", 900, "timeout in sec")
+	FILE            = flag.String("file", "", "The file to process (assumed to be gzipped).")
+	LOGTYPE         = flag.String("logtype", "", "The logType.")
+	MEMORYSIZE      = flag.Int("lambdaSize", 1024, "The memory size of the lambda")
 
 	VERBOSE = flag.Bool("verbose", false, "verbose logging")
 
@@ -87,7 +89,22 @@ func main() {
 		log.Fatal(err)
 	}
 	streamChan := make(chan *common.DataStream, 1)
-	dataStream := &common.DataStream{Reader: gzipReader, LogType: LOGTYPE}
+
+	var logTypes []string
+	if *LOGTYPE != "" {
+		logTypes = append(logTypes, *LOGTYPE)
+	} else {
+		// Use all available log types
+		logTypes = registry.Default().LogTypes()
+	}
+
+	dataStream := &common.DataStream{
+		Reader:      gzipReader,
+		SourceID:    *flagSourceID,
+		SourceLabel: *flagSourceLabel,
+		LogTypes:    logTypes,
+	}
+
 	streamChan <- dataStream
 	close(streamChan)
 
@@ -114,8 +131,13 @@ func main() {
 		log.Fatal("failed to build zap logger: " + err.Error())
 	}
 	zap.ReplaceGlobals(logger)
+	// Use a properly configured JSON instance with AWS Glue quirks
+	jsonAPI := common.BuildJSON()
 
-	err = processor.Process(streamChan, destinations.CreateS3Destination(registry.Default()))
+	// Use the global registry
+	dest := destinations.CreateS3Destination(registry.Default(), jsonAPI)
+
+	err = processor.Process(streamChan, dest)
 	if err != nil {
 		log.Fatal(err)
 	}

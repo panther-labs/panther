@@ -60,12 +60,12 @@ func ConfigureGlobal(
 	// always tag with requestId and application
 	if initialFields == nil {
 		config.InitialFields = map[string]interface{}{
-			"requestId":   lc.AwsRequestID,
-			"application": Application,
+			FieldRequestID:   lc.AwsRequestID,
+			FieldApplication: Application,
 		}
 	} else {
-		initialFields["requestId"] = lc.AwsRequestID
-		initialFields["application"] = Application
+		initialFields[FieldRequestID] = lc.AwsRequestID
+		initialFields[FieldApplication] = Application
 		config.InitialFields = initialFields
 	}
 

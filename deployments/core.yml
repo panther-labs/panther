@@ -147,6 +147,9 @@ Mappings:
     UsersAPI:
       Memory: 128
       Timeout: 60
+    LogTypesAPI:
+      Memory: 128
+      Timeout: 60
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
@@ -1208,3 +1211,87 @@ Resources:
       FunctionName: !Ref MetricsApiFunction
       FunctionTimeoutSec: !FindInMap [Functions, MetricsAPI, Timeout]
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  ##### LogTypes API #####
+  LogTypesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: RecordID
+          AttributeType: S
+        - AttributeName: RecordKind
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: RecordKind
+          KeyType: HASH
+        - AttributeName: RecordID
+          KeyType: RANGE
+      PointInTimeRecoverySpecification: # Create periodic table backups
+        PointInTimeRecoveryEnabled: True
+      SSESpecification: # Enable server-side encryption
+        SSEEnabled: True
+      TableName: panther-logtypes
+      # <cfndoc>
+      # This ddb table stores settings about log types.
+      # </cfndoc>
+
+  LogTypesTableAlarms:
+    Type: Custom::DynamoDBAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      TableName: !Ref LogTypesTable
+
+  LogTypesAPILogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-logtypes-api
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  LogTypesAPIMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
+      LogGroupName: !Ref LogTypesAPILogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  LogTypesAPIAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
+      FunctionMemoryMB: !FindInMap [Functions, LogTypesAPI, Memory]
+      FunctionName: !Ref LogTypesAPIFunction
+      FunctionTimeoutSec: !FindInMap [Functions, LogTypesAPI, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  LogTypesAPIFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../out/bin/internal/core/logtypesapi/main
+      Description: Implements logtypes API to manage logtypes.
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+          LOG_TYPES_TABLE_NAME: !Ref LogTypesTable
+      FunctionName: panther-logtypes-api
+      # <cfndoc>
+      # This lambda implements logtypes API to manage logtypes.
+      # </cfndoc>
+      Handler: main
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      MemorySize: !FindInMap [Functions, LogTypesAPI, Memory]
+      Runtime: go1.x
+      Timeout: !FindInMap [Functions, LogTypesAPI, Timeout]
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Policies:
+        - Id: ManageLogTypesTable
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:*Item
+                - dynamodb:Scan
+              Resource: !GetAtt LogTypesTable.Arn

@@ -85,14 +85,15 @@ export const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.sli
  * as a single digit (all of them display it either as 03:00 or as 0300) and require string
  * manipulation which is harder
  * */
-export const formatDatetime = (datetime: string) => {
+export const formatDatetime = (datetime: string, verbose = false) => {
   // get the offset minutes and calculate the hours from them
   const utcOffset = dayjs(datetime).utcOffset() / 60;
 
+  const suffix = `G[M]T${utcOffset > 0 ? '+' : ''}${utcOffset !== 0 ? utcOffset : ''}`;
+  const format = verbose ? `dddd, DD MMMM YYYY, HH:mm (${suffix})` : `YYYY-MM-DD HH:mm ${suffix}`;
+
   // properly format the date
-  return dayjs(datetime).format(
-    `YYYY-MM-DD HH:mm G[M]T${utcOffset > 0 ? '+' : ''}${utcOffset !== 0 ? utcOffset : ''}`
-  );
+  return dayjs(datetime).format(format);
 };
 
 /**
@@ -349,6 +350,14 @@ export const addTrailingSlash = (url: string) => {
   return url.endsWith('/') ? url : `${url}/`;
 };
 
+/**
+ * Strips hashes and query params from a URI, returning the pathname
+ *
+ * @param {String} uri A relative URI
+ * @returns {String} The same URI stripped of hashes and query params
+ */
+export const getPathnameFromURI = (uri: string) => uri.split(/[?#]/)[0];
+
 export const getCurrentYear = () => {
   return dayjs().format('YYYY');
 };
@@ -361,6 +370,6 @@ export const subtractDays = (date: string, days: number) => {
   return `${dayjs(date).subtract(days, 'day').toISOString().split('.')[0]}Z`;
 };
 
-export const numberFormat = (num: number): string => {
+export const formatNumber = (num: number): string => {
   return new Intl.NumberFormat().format(num);
 };

@@ -25,6 +25,7 @@ import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
+import { SimpleGrid } from 'pouncejs';
 
 type PagerDutyFieldValues = Pick<DestinationConfigInput, 'pagerDuty'>;
 
@@ -56,19 +57,28 @@ const PagerDutyDestinationForm: React.FC<PagerDutyDestinationFormProps> = ({
       validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
-      <Field
-        as={FormikTextInput}
-        type="password"
-        name="outputConfig.pagerDuty.integrationKey"
-        label="Integration Key"
-        placeholder={
-          existing
-            ? 'Information is hidden. New values will override the existing ones.'
-            : "What's your PagerDuty Integration Key?"
-        }
-        required={!existing}
-        autoComplete="new-password"
-      />
+      <SimpleGrid gap={5} columns={2}>
+        <Field
+          name="displayName"
+          as={FormikTextInput}
+          label="* Display Name"
+          placeholder="How should we name this?"
+          required
+        />
+        <Field
+          as={FormikTextInput}
+          type="password"
+          name="outputConfig.pagerDuty.integrationKey"
+          label="Integration Key"
+          placeholder={
+            existing
+              ? 'Information is hidden. New values will override the existing ones.'
+              : "What's your PagerDuty Integration Key?"
+          }
+          required={!existing}
+          autoComplete="new-password"
+        />
+      </SimpleGrid>
     </BaseDestinationForm>
   );
 };

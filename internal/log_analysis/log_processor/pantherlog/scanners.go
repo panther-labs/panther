@@ -51,9 +51,17 @@ type scannerEntry struct {
 	Fields  []FieldID
 }
 
-// RegisterScanner registers a value scanner to be used on string fields with a `panther` struct tag.
+// MustRegisterScanner registers a value scanner to be used on string fields with a `panther` struct tag.
 // It panics in case of a registration error.
 func MustRegisterScanner(name string, scanner ValueScanner, fields ...FieldID) {
+	if err := RegisterScanner(name, scanner, fields...); err != nil {
+		panic(err)
+	}
+}
+
+// MustRegisterScannerFunc registers a value scanner to be used on string fields with a `panther` struct tag.
+// It panics in case of a registration error.
+func MustRegisterScannerFunc(name string, scanner ValueScannerFunc, fields ...FieldID) {
 	if err := RegisterScanner(name, scanner, fields...); err != nil {
 		panic(err)
 	}
@@ -146,10 +154,10 @@ func checkIPAddress(addr string) bool {
 	return net.ParseIP(addr) != nil
 }
 
+// Tries to split host:port address or falls back to Hostname scanning if `:` is not present in input
 func ScanNetworkAddress(w ValueWriter, input string) {
-	host, _, err := net.SplitHostPort(input)
-	if err != nil {
-		return
+	if host, _, err := net.SplitHostPort(input); err == nil {
+		input = host
 	}
-	ScanHostname(w, host)
+	ScanHostname(w, input)
 }

@@ -25,6 +25,7 @@ import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
+import { SimpleGrid } from 'pouncejs';
 
 type GithubFieldValues = Pick<DestinationConfigInput, 'github'>;
 
@@ -56,26 +57,35 @@ const GithubDestinationForm: React.FC<GithubDestinationFormProps> = ({
       validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
-      <Field
-        as={FormikTextInput}
-        name="outputConfig.github.repoName"
-        label="Repository name"
-        placeholder="What's the name of your Github repository?"
-        required
-      />
-      <Field
-        as={FormikTextInput}
-        type="password"
-        name="outputConfig.github.token"
-        label="Token"
-        placeholder={
-          existing
-            ? 'Information is hidden. New values will override the existing ones.'
-            : "What's your Github API token?"
-        }
-        autoComplete="new-password"
-        required={!existing}
-      />
+      <SimpleGrid gap={5} columns={3}>
+        <Field
+          name="displayName"
+          as={FormikTextInput}
+          label="* Display Name"
+          placeholder="How should we name this?"
+          required
+        />
+        <Field
+          as={FormikTextInput}
+          name="outputConfig.github.repoName"
+          label="Repository name"
+          placeholder="What's the repo name?"
+          required
+        />
+        <Field
+          as={FormikTextInput}
+          type="password"
+          name="outputConfig.github.token"
+          label="Token"
+          placeholder={
+            existing
+              ? 'Information is hidden. New values will override the existing ones.'
+              : "What's your API token?"
+          }
+          autoComplete="new-password"
+          required={!existing}
+        />
+      </SimpleGrid>
     </BaseDestinationForm>
   );
 };

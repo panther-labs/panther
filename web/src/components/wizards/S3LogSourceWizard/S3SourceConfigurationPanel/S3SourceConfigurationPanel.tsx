@@ -16,13 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { AbstractButton, Box, Collapse, Flex, Heading, Text } from 'pouncejs';
+import { AbstractButton, Box, Collapse, Flex } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import React from 'react';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import { LOG_TYPES } from 'Source/constants';
+import { WizardPanel } from 'Components/Wizard';
 import { S3LogSourceWizardValues } from '../S3LogSourceWizard';
 
 const S3SourceConfigurationPanel: React.FC = () => {
@@ -33,27 +34,28 @@ const S3SourceConfigurationPanel: React.FC = () => {
 
   return (
     <Box width={460} m="auto">
-      <Heading as="h2" m="auto" mb={2}>
-        {initialValues.integrationId ? 'Update source' : "Let's start with the basics"}
-      </Heading>
-      <Text color="gray-300" mb={10}>
-        {initialValues.integrationId
-          ? 'Feel free to make any changes to your log source'
-          : 'We need to know where to get your logs from'}
-      </Text>
+      <WizardPanel.Heading
+        title={initialValues.integrationId ? 'Update source' : "Let's start with the basics"}
+        subtitle={
+          initialValues.integrationId
+            ? 'Feel free to make any changes to your log source'
+            : 'We need to know where to get your logs from'
+        }
+      />
+
       <ErrorBoundary>
         <Flex direction="column" spacing={4}>
           <Field
             name="integrationLabel"
             as={FormikTextInput}
-            label="Name"
+            label="* Name"
             placeholder="A nickname for this log analysis source"
             required
           />
           <Field
             name="awsAccountId"
             as={FormikTextInput}
-            label="Account ID"
+            label="* Account ID"
             placeholder="The AWS Account ID that the S3 log bucket lives in"
             disabled={!!initialValues.integrationId}
             required
@@ -61,24 +63,24 @@ const S3SourceConfigurationPanel: React.FC = () => {
           <Field
             name="s3Bucket"
             as={FormikTextInput}
-            label="Bucket Name"
+            label="* Bucket Name"
             required
             placeholder="The name of the S3 bucket that holds the logs"
           />
           <Field
             as={FormikMultiCombobox}
             searchable
-            label="Log Types"
+            label="* Log Types"
             name="logTypes"
             items={LOG_TYPES}
             placeholder="The types of logs that are collected"
           />
         </Flex>
-        <Flex justify="center" my={4}>
+        <Flex justify="center" mt={6}>
           <AbstractButton
             color="blue-400"
             onClick={() => showAdvancedConfig(!isAdvancedConfigVisible)}
-            p={3}
+            p={2}
           >
             {isAdvancedConfigVisible
               ? 'Hide advanced configuration'
@@ -86,7 +88,7 @@ const S3SourceConfigurationPanel: React.FC = () => {
           </AbstractButton>
         </Flex>
         <Collapse open={isAdvancedConfigVisible}>
-          <Flex direction="column" spacing={4}>
+          <Flex direction="column" spacing={4} pt={6}>
             <Field
               name="s3Prefix"
               as={FormikTextInput}

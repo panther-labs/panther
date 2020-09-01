@@ -9,9 +9,6 @@ fragment SqsLogSourceIntegrationDetails on SqsLogSourceIntegration {
     logTypes
     allowedPrincipalArns
     allowedSourceArns
-    s3Bucket
-    s3Prefix
-    logProcessingRole
     queueUrl
   }
   health {

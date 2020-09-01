@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import path from 'path';
+import { createSerializer } from 'jest-emotion';
 import { loadDotEnvVars, getAppTemplateParams } from '../scripts/utils';
 
 // extends the basic `expect` function, by adding additional DOM assertions such as
@@ -69,11 +70,20 @@ scriptTag.innerHTML = JSON.stringify(PANTHER_CONFIG);
 document.body.appendChild(scriptTag);
 
 /**
- * During testing, we modify `console.error` to "hide" errors that have to do with "act" since they
- * are noisy and force us to write complicated test assertions which the team doesn't agree with
+ * Make sure that mock style tags exist to help with emotion bugs + mock console.error to "hide"
+ * act  warnings
  */
 const originalError = global.console.error;
 beforeAll(() => {
+  // Add a dummy emotion style tag to prevent testing snapshot serializer from failing
+  // https://github.com/emotion-js/emotion/issues/1960
+  document.head.insertAdjacentHTML(
+    'beforeend',
+    `<style data-id="jest-emotion-setup" data-emotion="css" />`
+  );
+
+  // During testing, we modify `console.error` to "hide" errors that have to do with "act" since they
+  // are noisy and force us to write complicated test assertions which the team doesn't agree with
   global.console.error = jest.fn((...args) => {
     if (typeof args[0] === 'string' && args[0].includes('was not wrapped in act')) {
       return undefined;
@@ -96,3 +106,14 @@ afterEach(() => {
 afterAll(() => {
   (global.console.error as jest.Mock).mockRestore();
 });
+
+/**
+ * Adds a static serializer for emotion classnames to help with snapshot testing
+ */
+expect.addSnapshotSerializer(
+  createSerializer({
+    classNameReplacer(className, index) {
+      return `panther-${index}`;
+    },
+  })
+);

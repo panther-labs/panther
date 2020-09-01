@@ -206,6 +206,7 @@ func putLambdaAlarmGroup(props LambdaAlarmProperties) error {
 	input.Statistic = aws.String(cloudwatch.StatisticMaximum)
 	input.Threshold = aws.Float64(float64(props.FunctionTimeoutSec) * 1000 * 0.9)
 	input.Unit = aws.String(cloudwatch.StandardUnitMilliseconds)
+	input.EvaluationPeriods = aws.Int64(3)
 	if err := putMetricAlarm(input); err != nil {
 		return err
 	}

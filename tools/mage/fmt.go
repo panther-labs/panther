@@ -20,14 +20,18 @@ package mage
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
+
+	"github.com/panther-labs/panther/tools/cfnparse"
 )
 
 var (
@@ -49,11 +53,6 @@ func Fmt() {
 	count++
 	go func(c chan goroutineResult) {
 		c <- goroutineResult{"fmt: gofmt", gofmt(goTargets...)}
-	}(results)
-
-	count++
-	go func(c chan goroutineResult) {
-		c <- goroutineResult{"fmt: go mod tidy", goModTidy()}
 	}(results)
 
 	count++
@@ -133,11 +132,6 @@ func removeImportNewlines(path string) error {
 	return ioutil.WriteFile(path, bytes.Join(newLines, []byte("\n")), 0600)
 }
 
-// Tidy go.mod/go.sum
-func goModTidy() error {
-	return sh.Run("go", "mod", "tidy")
-}
-
 // Apply Python formatting to the given paths
 func yapf(paths ...string) error {
 	logger.Debug("fmt: python yapf " + strings.Join(paths, " "))
@@ -167,6 +161,95 @@ func prettier(pathPattern string) error {
 
 // Apply Terraform formatting to aux templates
 func terraformFmt() error {
+	if err := tfUpdateDeploymentRole(); err != nil {
+		return err
+	}
 	root := filepath.Join("deployments", "auxiliary", "terraform")
 	return sh.Run(terraformPath, "fmt", "-recursive", root)
+}
+
+// Generate terraform version of the deployment role
+func tfUpdateDeploymentRole() error {
+	// CloudFormation deployment role template structure
+	type template struct {
+		Resources struct {
+			DeploymentPolicy struct {
+				Properties struct {
+					// This policy document will be converted to TF json
+					PolicyDocument map[string]interface{}
+				}
+			}
+		}
+	}
+
+	// Parse CF deployment role
+	var cfn template
+	srcPath := filepath.Join("deployments", "auxiliary", "cloudformation", "panther-deployment-role.yml")
+	if err := cfnparse.ParseTemplate(pythonVirtualEnvPath, srcPath, &cfn); err != nil {
+		return err
+	}
+
+	doc := cfn.Resources.DeploymentPolicy.Properties.PolicyDocument
+	if len(doc) == 0 {
+		return fmt.Errorf("%s: Resources.DeploymentPolicy.Properties.PolicyDocument is empty", srcPath)
+	}
+
+	// Convert to TF and marshal to JSON string
+	policy := convertPolicyToTf(doc)
+	// json stdlib handles pretty-print (indentation) better than jsoniter
+	policyText, err := json.MarshalIndent(policy, "", "  ")
+	if err != nil {
+		return fmt.Errorf("json marshal failed: %v", err)
+	}
+
+	// Replace EOT block in TF file.
+	dstPath := filepath.Join("deployments", "auxiliary", "terraform", "panther_deployment_role", "main.tf")
+	tf := readFile(dstPath)
+	pattern := regexp.MustCompile(`<<EOT(.|\n)+?EOT`)
+	tf = pattern.ReplaceAll(tf, []byte("<<EOT\n"+string(policyText)+"\nEOT"))
+
+	return writeFile(dstPath, tf)
+}
+
+// Update CloudFormation IAM policy document to be Terraform compatible.
+//
+// Specifically, replace Fn::Sub with TF interpolation. For example,
+//     { "Fn::Sub": "arn:${AWS::Partition}:firehose:*:${AWS::AccountId}:deliverystream/panther-*" }
+// becomes
+//     "arn:${var.aws_partition}:firehose:*:${var.aws_account_id}:deliverystream/panther-*"
+func convertPolicyToTf(doc interface{}) interface{} {
+	switch doc := doc.(type) {
+	case map[string]interface{}:
+		if len(doc) == 1 {
+			if val, ok := doc["Fn::Sub"]; ok {
+				// Remove Sub key and use the interpolated string value
+				return convertPolicyToTf(val)
+			}
+
+			// Other functions like !Ref or !FindInMap are not supported here
+			// (and should not be present in the deployment role).
+			panic(fmt.Errorf("unexpected singleton map: %v", doc))
+		}
+
+		result := make(map[string]interface{}, len(doc))
+		for key, val := range doc {
+			result[key] = convertPolicyToTf(val)
+		}
+		return result
+
+	case []interface{}:
+		result := make([]interface{}, 0, len(doc))
+		for _, item := range doc {
+			result = append(result, convertPolicyToTf(item))
+		}
+		return result
+
+	case string:
+		// Convert AWS pseudo-parameters into Terraform interpolation strings
+		result := strings.ReplaceAll(doc, "${AWS::Partition}", "${var.aws_partition}")
+		return strings.ReplaceAll(result, "${AWS::AccountId}", "${var.aws_account_id}")
+
+	default:
+		return doc
+	}
 }

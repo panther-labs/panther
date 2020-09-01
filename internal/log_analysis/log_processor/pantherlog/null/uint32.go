@@ -25,8 +25,6 @@ import (
 	"unsafe"
 
 	jsoniter "github.com/json-iterator/go"
-
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/jsonutil"
 )
 
 // Uint32 represents a nullable uint32 value.
@@ -58,7 +56,7 @@ func (u *Uint32) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 	// Handle both string and number input
-	data = jsonutil.UnquoteJSON(data)
+	data = unquoteJSON(data)
 	// Empty string is considered the same as `null` input
 	if len(data) == 0 {
 		*u = Uint32{}

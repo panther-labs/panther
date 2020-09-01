@@ -30,6 +30,8 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/metrics"
@@ -56,9 +58,7 @@ var (
 // and forwarding the logs to the appropriate destination. Any errors will cause Lambda invocation to fail
 func Process(dataStreams chan *common.DataStream, destination destinations.Destination) error {
 	factory := func(r *common.DataStream) *Processor {
-		// By initializing the global parsers here we can constrain the proliferation of globals throughout the code.
-		allParsers := registry.AvailableParsers()
-		return NewProcessor(r, allParsers)
+		return NewProcessor(r, registry.Default())
 	}
 	return process(dataStreams, destination, factory)
 }
@@ -184,10 +184,54 @@ type Processor struct {
 	operation  *oplog.Operation
 }
 
-func NewProcessor(input *common.DataStream, parsers map[string]parsers.Interface) *Processor {
+func NewProcessor(input *common.DataStream, registry *logtypes.Registry) *Processor {
+	entries := registry.Entries(input.LogTypes...)
+
+	parsers := make(map[string]parsers.Interface, len(entries))
+	for _, entry := range entries {
+		logType := entry.String()
+		parser, err := entry.NewParser(nil)
+		if err != nil {
+			panic(errors.Wrapf(err, "failed to create a parser for %q", logType))
+		}
+		parsers[logType] = newSourceFieldsParser(input.SourceID, input.SourceLabel, parser)
+	}
+
 	return &Processor{
 		input:      input,
 		classifier: classification.NewClassifier(parsers),
 		operation:  common.OpLogManager.Start(operationName),
 	}
+}
+
+func newSourceFieldsParser(id, label string, parser parsers.Interface) parsers.Interface {
+	return &sourceFieldsParser{
+		Interface:   parser,
+		SourceID:    id,
+		SourceLabel: label,
+	}
+}
+
+type sourceFieldsParser struct {
+	parsers.Interface
+	SourceID    string
+	SourceLabel string
+}
+
+func (p *sourceFieldsParser) ParseLog(log string) ([]*pantherlog.Result, error) {
+	results, err := p.Interface.ParseLog(log)
+	if err != nil {
+		return nil, err
+	}
+	for _, result := range results {
+		if result.EventIncludesPantherFields {
+			if event, ok := result.Event.(parsers.PantherSourceSetter); ok {
+				event.SetPantherSource(p.SourceID, p.SourceLabel)
+				continue
+			}
+		}
+		result.PantherSourceID = p.SourceID
+		result.PantherSourceLabel = p.SourceLabel
+	}
+	return results, nil
 }

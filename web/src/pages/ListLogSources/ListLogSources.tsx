@@ -26,8 +26,8 @@ import { extractErrorMessage } from 'Helpers/utils';
 import withSEO from 'Hoc/withSEO';
 import { useListLogSources } from './graphql/listLogSources.generated';
 import EmptyDataFallback from './EmptyDataFallback';
-import LogSourceTable from './LogSourceTable';
 import Skeleton from './Skeleton';
+import ListDestinationsCards from './ListLogSourceCards';
 
 const ListLogSources = () => {
   const { loading, error, data } = useListLogSources();
@@ -64,7 +64,7 @@ const ListLogSources = () => {
         }
       >
         <ErrorBoundary>
-          <LogSourceTable sources={data.listLogIntegrations} />
+          <ListDestinationsCards sources={data.listLogIntegrations} />
         </ErrorBoundary>
       </Panel>
     </Box>

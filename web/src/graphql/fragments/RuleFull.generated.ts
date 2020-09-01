@@ -20,6 +20,7 @@ import * as Types from '../../../__generated__/schema';
 
 import { RuleBasic } from './RuleBasic.generated';
 import { RuleDates } from './RuleDates.generated';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 
 export type RuleFull = Pick<Types.RuleDetails, 'body' | 'threshold'> & {

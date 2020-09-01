@@ -17,12 +17,13 @@
  */
 
 import React from 'react';
-import { Box, Link, Table, Icon, PseudoBox } from 'pouncejs';
+import { Box, Link, Table, Icon } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/SeverityBadge';
 import { ListAlerts } from 'Pages/ListAlerts/graphql/listAlerts.generated';
 import { shortenId, formatDatetime } from 'Helpers/utils';
+import AlertStatusBadge from 'Components/AlertStatusBadge';
 
 type ListAlertsTableProps = {
   items: ListAlerts['alerts']['alertSummaries'];
@@ -33,19 +34,24 @@ const AlertsTableBody: React.FC<ListAlertsTableProps> = ({ items }) => {
     <Table>
       <Table.Head>
         <Table.Row>
-          <Table.HeaderCell align="center">Created At</Table.HeaderCell>
+          <Table.HeaderCell align="center">Severity</Table.HeaderCell>
           <Table.HeaderCell>Alert</Table.HeaderCell>
           <Table.HeaderCell />
-          <Table.HeaderCell align="center">Events</Table.HeaderCell>
-          <Table.HeaderCell align="center">Severity</Table.HeaderCell>
+          <Table.HeaderCell align="center">Status</Table.HeaderCell>
+          <Table.HeaderCell align="right">Created At</Table.HeaderCell>
+          <Table.HeaderCell align="right">Last Matched At</Table.HeaderCell>
+          <Table.HeaderCell align="right">Events</Table.HeaderCell>
         </Table.Row>
       </Table.Head>
       <Table.Body>
         {items.map(alert => (
           <Table.Row key={alert.alertId}>
-            <Table.Cell align="center">{formatDatetime(alert.creationTime)}</Table.Cell>
-
-            <Table.Cell maxWidth={400} truncated title={alert.title}>
+            <Table.Cell align="center">
+              <Box my={-1} display="inline-block">
+                <SeverityBadge severity={alert.severity} />
+              </Box>
+            </Table.Cell>
+            <Table.Cell maxWidth={300} truncated title={alert.title}>
               <Link
                 as={RRLink}
                 to={urls.logAnalysis.alerts.details(alert.alertId)}
@@ -56,8 +62,9 @@ const AlertsTableBody: React.FC<ListAlertsTableProps> = ({ items }) => {
                 #{shortenId(alert.alertId)} {alert.title}
               </Link>
             </Table.Cell>
-            <Table.Cell>
-              <PseudoBox
+            <Table.Cell wrapText="nowrap">
+              <Box
+                mx={-4}
                 as="a"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -67,8 +74,10 @@ const AlertsTableBody: React.FC<ListAlertsTableProps> = ({ items }) => {
                 fontSize="small"
                 borderRadius="pill"
                 transition="background-color 0.1s ease-in-out"
+                // @ts-ignore
                 backgroundColor="rgba(255,255,255,0.1)"
                 _hover={{
+                  // @ts-ignore
                   backgroundColor: 'rgba(255,255,255,0.15)',
                 }}
                 my={-1}
@@ -77,15 +86,25 @@ const AlertsTableBody: React.FC<ListAlertsTableProps> = ({ items }) => {
               >
                 View Rule
                 <Icon type="external-link" size="x-small" ml={1} />
-              </PseudoBox>
-            </Table.Cell>
-            <Table.Cell align="center" mono>
-              {alert.eventsMatched}
+              </Box>
             </Table.Cell>
             <Table.Cell align="center">
-              <Box my={-1} display="inline-block">
-                <SeverityBadge severity={alert.severity} />
+              <Box display="inline-block" my={-1}>
+                <AlertStatusBadge
+                  status={alert.status}
+                  lastUpdatedBy={alert.lastUpdatedBy}
+                  lastUpdatedByTime={alert.lastUpdatedByTime}
+                />
               </Box>
+            </Table.Cell>
+            <Table.Cell align="right" wrapText="nowrap">
+              {formatDatetime(alert.creationTime)}
+            </Table.Cell>
+            <Table.Cell align="right" wrapText="nowrap">
+              {formatDatetime(alert.updateTime)}
+            </Table.Cell>
+            <Table.Cell align="right" mono>
+              {alert.eventsMatched}
             </Table.Cell>
           </Table.Row>
         ))}

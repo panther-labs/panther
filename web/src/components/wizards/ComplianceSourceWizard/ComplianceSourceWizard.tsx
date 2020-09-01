@@ -20,7 +20,7 @@ import React from 'react';
 import { AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
 import { Form, Formik } from 'formik';
 import * as Yup from 'yup';
-import { Wizard, WizardPanelWrapper } from 'Components/Wizard';
+import { Wizard, WizardPanel } from 'Components/Wizard';
 import { FetchResult } from '@apollo/client';
 import { yupIntegrationLabelValidation } from 'Helpers/utils';
 import StackDeploymentPanel from './StackDeploymentPanel';
@@ -75,36 +75,35 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
         return (
           <Form>
             <Wizard>
-              <Wizard.Step title="Configure Source" icon="settings">
-                <WizardPanelWrapper>
-                  <WizardPanelWrapper.Content>
-                    <SourceConfigurationPanel />
-                  </WizardPanelWrapper.Content>
-                  <WizardPanelWrapper.Actions>
-                    <WizardPanelWrapper.ActionNext disabled={!dirty || !isValid} />
-                  </WizardPanelWrapper.Actions>
-                </WizardPanelWrapper>
+              <Wizard.Step title="Configure Source">
+                <WizardPanel>
+                  <SourceConfigurationPanel />
+
+                  <WizardPanel.Actions>
+                    <WizardPanel.ActionNext disabled={!dirty || !isValid}>
+                      Continue Setup
+                    </WizardPanel.ActionNext>
+                  </WizardPanel.Actions>
+                </WizardPanel>
               </Wizard.Step>
-              <Wizard.Step title="Deploy Stack" icon="upload">
-                <WizardPanelWrapper>
-                  <WizardPanelWrapper.Content>
-                    <StackDeploymentPanel />
-                  </WizardPanelWrapper.Content>
-                  <WizardPanelWrapper.Actions>
-                    <WizardPanelWrapper.ActionPrev />
-                    <WizardPanelWrapper.ActionNext />
-                  </WizardPanelWrapper.Actions>
-                </WizardPanelWrapper>
+              <Wizard.Step title="Deploy Stack">
+                <WizardPanel>
+                  <StackDeploymentPanel />
+
+                  <WizardPanel.Actions>
+                    <WizardPanel.ActionPrev />
+                    <WizardPanel.ActionNext>Continue Setup</WizardPanel.ActionNext>
+                  </WizardPanel.Actions>
+                </WizardPanel>
               </Wizard.Step>
-              <Wizard.Step title="Done!" icon="check">
-                <WizardPanelWrapper>
-                  <WizardPanelWrapper.Content>
-                    <SuccessPanel />
-                  </WizardPanelWrapper.Content>
-                  <WizardPanelWrapper.Actions>
-                    <WizardPanelWrapper.ActionPrev />
-                  </WizardPanelWrapper.Actions>
-                </WizardPanelWrapper>
+              <Wizard.Step title="Done!">
+                <WizardPanel>
+                  <SuccessPanel />
+
+                  <WizardPanel.Actions>
+                    <WizardPanel.ActionPrev />
+                  </WizardPanel.Actions>
+                </WizardPanel>
               </Wizard.Step>
             </Wizard>
           </Form>

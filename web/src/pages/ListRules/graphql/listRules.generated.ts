@@ -18,6 +18,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -97,15 +98,14 @@ export type ListRulesQueryResult = ApolloReactCommon.QueryResult<ListRules, List
 export function mockListRules({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: ListRules;
   variables?: ListRulesVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: ListRulesDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }

@@ -22,7 +22,7 @@ import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import PantherIcon from 'Assets/panther-minimal-logo.svg';
 import { animated, useTransition } from 'react-spring';
-import { PANTHER_SCHEMA_DOCS_LINK } from 'Source/constants';
+import { PANTHER_DOCS_LINK } from 'Source/constants';
 import useRouter from 'Hooks/useRouter';
 import NavIconButton from './NavIconButton';
 import ProfileIcon from './ProfileIcon';
@@ -109,21 +109,21 @@ const Navigation = () => {
         <Flex direction="column" as="ul" flex="1 0 auto" spacing={4}>
           <Box as="li">
             <NavIconButton
-              active={isComplianceNavigationActive}
-              icon="cloud-security"
-              tooltipLabel="Cloud Security"
-              onClick={() =>
-                setSecondaryNav(isComplianceNavigationActive ? null : COMPLIANCE_NAV_KEY)
-              }
-            />
-          </Box>
-          <Box as="li">
-            <NavIconButton
               active={isLogAnalysisNavigationActive}
               icon="log-analysis"
               tooltipLabel="Log Analysis"
               onClick={() =>
                 setSecondaryNav(isLogAnalysisNavigationActive ? null : LOG_ANALYSIS_NAV_KEY)
+              }
+            />
+          </Box>
+          <Box as="li">
+            <NavIconButton
+              active={isComplianceNavigationActive}
+              icon="cloud-security"
+              tooltipLabel="Cloud Security"
+              onClick={() =>
+                setSecondaryNav(isComplianceNavigationActive ? null : COMPLIANCE_NAV_KEY)
               }
             />
           </Box>
@@ -136,7 +136,7 @@ const Navigation = () => {
             />
           </Box>
           <Box as="li" mt="auto">
-            <Link external href={PANTHER_SCHEMA_DOCS_LINK} tabIndex={-1}>
+            <Link external href={PANTHER_DOCS_LINK} tabIndex={-1}>
               <NavIconButton active={false} icon="docs" tooltipLabel="Documentation" />
             </Link>
           </Box>

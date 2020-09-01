@@ -162,7 +162,7 @@ func TestOldResults(t *testing.T) {
 
 func buildAPI() jsoniter.API {
 	api := jsoniter.Config{}.Froze()
-	api.RegisterExtension(tcodec.NewExtension(tcodec.Config{}))
+	api.RegisterExtension(&tcodec.Extension{})
 	api.RegisterExtension(omitempty.New(`json`))
 	return api
 }
