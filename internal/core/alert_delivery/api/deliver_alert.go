@@ -109,13 +109,13 @@ func populateAlertData(alertItem *alertTable.AlertItem) (*deliveryModels.Alert, 
 	}
 
 	if response == nil {
-		zap.L().Error("Retrieving rule response was nil", commonFields...)
+		zap.L().Error("Rule response was nil", commonFields...)
 		return nil, &genericapi.InternalError{Message: genericErrorMessage}
 	}
 
 	rule := response.GetPayload()
 	if rule == nil {
-		zap.L().Error("Rule payload was nil", commonFields...)
+		zap.L().Error("Rule response payload was nil", commonFields...)
 		return nil, &genericapi.InvalidInputError{Message: genericErrorMessage}
 	}
 
