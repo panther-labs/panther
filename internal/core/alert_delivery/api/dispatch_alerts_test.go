@@ -182,6 +182,7 @@ func TestGetAlertOutputMapError(t *testing.T) {
 
 func TestFilterDispatches(t *testing.T) {
 	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
+	dispatchedAt := time.Now().UTC()
 
 	successStatuses := []DispatchStatus{
 		{
@@ -228,6 +229,7 @@ func TestGetAlertsToRetry(t *testing.T) {
 	alertID := aws.String("alert-id")
 	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
 	createdAt := time.Now().UTC()
+	dispatchedAt := time.Now().UTC()
 	alerts := []*deliveryModels.Alert{
 		// Needs to be retried
 		{

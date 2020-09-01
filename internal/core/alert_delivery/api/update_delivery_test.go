@@ -39,6 +39,7 @@ func TestUpdateAlerts(t *testing.T) {
 
 	alertID := aws.String("alert-id")
 	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
+	dispatchedAt := time.Now().UTC()
 
 	statuses := []DispatchStatus{
 		{
@@ -139,6 +140,7 @@ func TestUpdateAlertSkipPolicy(t *testing.T) {
 
 	alertID := aws.String("alert-id")
 	outputIds := []string{"output-id-1"}
+	dispatchedAt := time.Now().UTC()
 	statuses := []DispatchStatus{
 		{
 			Alert: deliveryModels.Alert{
@@ -171,6 +173,7 @@ func TestUpdateAlert(t *testing.T) {
 	ch := make(chan alertModels.AlertSummary, 1)
 
 	alertID := aws.String("alert-id")
+	dispatchedAt := time.Now().UTC()
 	deliveryResponses := []*alertModels.DeliveryResponse{
 		{
 			OutputID:     "output-id-1",

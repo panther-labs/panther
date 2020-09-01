@@ -32,19 +32,6 @@ import (
 	"github.com/panther-labs/panther/pkg/box"
 )
 
-var (
-	alertOutput = &outputModels.AlertOutput{
-		OutputID:    aws.String("output-id"),
-		OutputType:  aws.String("slack"),
-		DisplayName: aws.String("slack:alerts"),
-		OutputConfig: &outputModels.OutputConfig{
-			Slack: &outputModels.SlackConfig{WebhookURL: "https://slack.com"},
-		},
-		DefaultForSeverity: []*string{aws.String("INFO")},
-	}
-	dispatchedAt = time.Now().UTC()
-)
-
 type mockOutputsClient struct {
 	outputs.API
 	mock.Mock
@@ -53,6 +40,18 @@ type mockOutputsClient struct {
 func (m *mockOutputsClient) Slack(alert *deliveryModels.Alert, config *outputModels.SlackConfig) *outputs.AlertDeliveryResponse {
 	args := m.Called(alert, config)
 	return args.Get(0).(*outputs.AlertDeliveryResponse)
+}
+
+func genAlertOutput() *outputModels.AlertOutput {
+	return &outputModels.AlertOutput{
+		OutputID:    aws.String("output-id"),
+		OutputType:  aws.String("slack"),
+		DisplayName: aws.String("slack:alerts"),
+		OutputConfig: &outputModels.OutputConfig{
+			Slack: &outputModels.SlackConfig{WebhookURL: "https://slack.com"},
+		},
+		DefaultForSeverity: []*string{aws.String("INFO")},
+	}
 }
 
 func sampleAlert() *deliveryModels.Alert {
@@ -68,7 +67,7 @@ func sampleAlert() *deliveryModels.Alert {
 
 func setCaches() {
 	outputsCache.set(&alertOutputsCache{
-		Outputs:   []*outputModels.AlertOutput{alertOutput},
+		Outputs:   []*outputModels.AlertOutput{genAlertOutput()},
 		Timestamp: time.Now(),
 	})
 }
@@ -80,6 +79,8 @@ func TestSendPanic(t *testing.T) {
 
 	ch := make(chan DispatchStatus, 1)
 	alert := sampleAlert()
+	alertOutput := genAlertOutput()
+	dispatchedAt := time.Now().UTC()
 
 	expectedResponse := DispatchStatus{
 		Alert:        *alert,
@@ -105,6 +106,9 @@ func TestSendUnsupportedOutput(t *testing.T) {
 
 	ch := make(chan DispatchStatus, 1)
 	alert := sampleAlert()
+	alertOutput := genAlertOutput()
+	dispatchedAt := time.Now().UTC()
+
 	unsupportedOutput := &outputModels.AlertOutput{
 		OutputType:  aws.String("unsupported"),
 		DisplayName: aws.String("unsupported:destination"),
@@ -134,8 +138,11 @@ func TestSendResponseNil(t *testing.T) {
 
 	ch := make(chan DispatchStatus, 1)
 	alert := sampleAlert()
+	alertOutput := genAlertOutput()
+	dispatchedAt := time.Now().UTC()
+
 	// Create a nil response
-	var response *outputs.AlertDeliveryResponse
+	response := (*outputs.AlertDeliveryResponse)(nil)
 	expectedResponse := DispatchStatus{
 		Alert:        *alert,
 		OutputID:     *alertOutput.OutputID,
@@ -158,6 +165,9 @@ func TestSendPermanentFailure(t *testing.T) {
 
 	ch := make(chan DispatchStatus, 1)
 	alert := sampleAlert()
+	alertOutput := genAlertOutput()
+	dispatchedAt := time.Now().UTC()
+
 	response := &outputs.AlertDeliveryResponse{
 		StatusCode: 500,
 		Success:    false,
@@ -186,6 +196,9 @@ func TestSendTransientFailure(t *testing.T) {
 
 	ch := make(chan DispatchStatus, 1)
 	alert := sampleAlert()
+	alertOutput := genAlertOutput()
+	dispatchedAt := time.Now().UTC()
+
 	response := &outputs.AlertDeliveryResponse{
 		StatusCode: 429,
 		Success:    false,
@@ -214,6 +227,9 @@ func TestSendSuccess(t *testing.T) {
 
 	ch := make(chan DispatchStatus, 1)
 	alert := sampleAlert()
+	alertOutput := genAlertOutput()
+	dispatchedAt := time.Now().UTC()
+
 	response := &outputs.AlertDeliveryResponse{
 		StatusCode: 200,
 		Success:    true,
