@@ -25,18 +25,18 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
-	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
-var slackConfig = &outputmodels.SlackConfig{WebhookURL: "slack-channel-url"}
+var slackConfig = &outputModels.SlackConfig{WebhookURL: "slack-channel-url"}
 
 func TestSlackAlert(t *testing.T) {
 	httpWrapper := &mockHTTPWrapper{}
 	client := &OutputClient{httpWrapper: httpWrapper}
 
 	createdAtTime := time.Now()
-	alert := &alertmodels.Alert{
+	alert := &alertModels.Alert{
 		AnalysisID:   "policyId",
 		CreatedAt:    createdAtTime,
 		OutputIds:    []string{"output-id"},

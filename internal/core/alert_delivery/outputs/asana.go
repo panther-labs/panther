@@ -23,8 +23,8 @@ import (
 
 	"go.uber.org/zap"
 
-	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
 const (
@@ -33,7 +33,7 @@ const (
 )
 
 // Asana creates a task in Asana projects
-func (client *OutputClient) Asana(alert *alertmodels.Alert, config *outputmodels.AsanaConfig) *AlertDeliveryResponse {
+func (client *OutputClient) Asana(alert *alertModels.Alert, config *outputModels.AsanaConfig) *AlertDeliveryResponse {
 	zap.L().Debug("sending alert to Asana")
 	payload := map[string]interface{}{
 		"data": map[string]interface{}{

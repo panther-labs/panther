@@ -21,8 +21,8 @@ package outputs
 import (
 	"time"
 
-	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
 var (
@@ -31,7 +31,7 @@ var (
 )
 
 // PagerDuty sends an alert to a pager duty integration endpoint.
-func (client *OutputClient) PagerDuty(alert *alertmodels.Alert, config *outputmodels.PagerDutyConfig) *AlertDeliveryResponse {
+func (client *OutputClient) PagerDuty(alert *alertModels.Alert, config *outputModels.PagerDutyConfig) *AlertDeliveryResponse {
 	severity, err := pantherSeverityToPagerDuty(alert.Severity)
 	if err != nil {
 		return err

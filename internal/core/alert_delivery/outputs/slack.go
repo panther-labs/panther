@@ -23,8 +23,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 
-	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
 // Severity colors match those in the Panther UI
@@ -37,7 +37,7 @@ var severityColors = map[string]string{
 }
 
 // Slack sends an alert to a slack channel.
-func (client *OutputClient) Slack(alert *alertmodels.Alert, config *outputmodels.SlackConfig) *AlertDeliveryResponse {
+func (client *OutputClient) Slack(alert *alertModels.Alert, config *outputModels.SlackConfig) *AlertDeliveryResponse {
 	messageField := fmt.Sprintf("<%s|%s>",
 		generateURL(alert),
 		"Click here to view in the Panther UI")

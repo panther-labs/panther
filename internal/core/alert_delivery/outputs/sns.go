@@ -27,8 +27,8 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
 type snsMessage struct {
@@ -39,7 +39,7 @@ type snsMessage struct {
 
 // Sns sends an alert to an SNS Topic.
 // nolint: dupl
-func (client *OutputClient) Sns(alert *alertmodels.Alert, config *outputmodels.SnsConfig) *AlertDeliveryResponse {
+func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.SnsConfig) *AlertDeliveryResponse {
 	notification := generateNotificationFromAlert(alert)
 	serializedDefaultMessage, err := jsoniter.MarshalToString(notification)
 	if err != nil {

@@ -25,8 +25,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
-	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
 func TestAsanaAlert(t *testing.T) {
@@ -35,7 +35,7 @@ func TestAsanaAlert(t *testing.T) {
 
 	createdAtTime, err := time.Parse(time.RFC3339, "2019-08-03T11:40:13Z")
 	require.NoError(t, err)
-	alert := &alertmodels.Alert{
+	alert := &alertModels.Alert{
 		AnalysisID:          "ruleId",
 		CreatedAt:           createdAtTime,
 		OutputIds:           []string{"output-id"},
@@ -44,7 +44,7 @@ func TestAsanaAlert(t *testing.T) {
 		Severity:            "INFO",
 	}
 
-	asanaConfig := &outputmodels.AsanaConfig{PersonalAccessToken: "token", ProjectGids: []string{"projectGid"}}
+	asanaConfig := &outputModels.AsanaConfig{PersonalAccessToken: "token", ProjectGids: []string{"projectGid"}}
 
 	asanaRequest := map[string]interface{}{
 		"data": map[string]interface{}{

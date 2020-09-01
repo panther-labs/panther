@@ -45,8 +45,11 @@ type envConfig struct {
 	RuleIndexName             string `required:"true" split_words:"true"`
 	TimeIndexName             string `required:"true" split_words:"true"`
 	AlertQueueURL             string `required:"true" split_words:"true"`
+	AlertsAPI                 string `required:"true" split_words:"true"`
+	OutputsAPI                string `required:"true" split_words:"true"`
 }
 
+// Globals
 var (
 	env                    envConfig
 	maxRetryCount          int
@@ -54,6 +57,8 @@ var (
 	minRetryDelaySecs      int
 	maxRetryDelaySecs      int
 	alertQueueURL          string
+	alertsAPI              string
+	outputsAPI             string
 	awsSession             *session.Session
 	alertsTableClient      *alertTable.AlertsTable
 	lambdaClient           lambdaiface.LambdaAPI
@@ -70,6 +75,8 @@ func Setup() {
 	minRetryDelaySecs = env.MinRetryDelaySecs
 	maxRetryDelaySecs = env.MaxRetryDelaySecs
 	alertQueueURL = env.AlertQueueURL
+	alertsAPI = env.AlertsAPI
+	outputsAPI = env.OutputsAPI
 	awsSession = session.Must(session.NewSession())
 	lambdaClient = lambda.New(awsSession)
 	outputClient = outputs.New(awsSession)

@@ -21,8 +21,8 @@ package outputs
 import (
 	"github.com/aws/aws-sdk-go/aws"
 
-	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
 var (
@@ -39,7 +39,7 @@ var pantherToOpsGeniePriority = map[string]string{
 
 // Opsgenie alert send an alert.
 func (client *OutputClient) Opsgenie(
-	alert *alertmodels.Alert, config *outputmodels.OpsgenieConfig) *AlertDeliveryResponse {
+	alert *alertModels.Alert, config *outputModels.OpsgenieConfig) *AlertDeliveryResponse {
 
 	description := "<strong>Description:</strong> " + aws.StringValue(alert.AnalysisDescription)
 	link := "\n<a href=\"" + generateURL(alert) + "\">Click here to view in the Panther UI</a>"

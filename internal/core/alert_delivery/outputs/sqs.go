@@ -27,13 +27,13 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
-	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
 // Sqs sends an alert to an SQS Queue.
 // nolint: dupl
-func (client *OutputClient) Sqs(alert *alertmodels.Alert, config *outputmodels.SqsConfig) *AlertDeliveryResponse {
+func (client *OutputClient) Sqs(alert *alertModels.Alert, config *outputModels.SqsConfig) *AlertDeliveryResponse {
 	notification := generateNotificationFromAlert(alert)
 
 	serializedMessage, err := jsoniter.MarshalToString(notification)

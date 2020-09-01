@@ -42,6 +42,8 @@ func initEnvironmentTest() {
 	os.Setenv("MIN_RETRY_DELAY_SECS", "10")
 	os.Setenv("MAX_RETRY_DELAY_SECS", "30")
 	os.Setenv("ALERT_QUEUE_URL", "sqs.url")
+	os.Setenv("ALERTS_API", "alerts-api")
+	os.Setenv("OUTPUTS_API", "outputs-api")
 	os.Setenv("ALERTS_TABLE_NAME", "alerts-table-name")
 	os.Setenv("RULE_INDEX_NAME", "rule-index")
 	os.Setenv("TIME_INDEX_NAME", "time-index")

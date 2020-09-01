@@ -27,21 +27,21 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
 var createdAtTime, _ = time.Parse(time.RFC3339, "2019-05-03T11:40:13Z")
 
-var pagerDutyAlert = &alertmodels.Alert{
+var pagerDutyAlert = &alertModels.Alert{
 	AnalysisName: aws.String("policyName"),
 	AnalysisID:   "policyId",
 	Severity:     "INFO",
 	Runbook:      aws.String("runbook"),
 	CreatedAt:    createdAtTime,
-	Type:         alertmodels.PolicyType,
+	Type:         alertModels.PolicyType,
 }
-var pagerDutyConfig = &outputmodels.PagerDutyConfig{
+var pagerDutyConfig = &outputModels.PagerDutyConfig{
 	IntegrationKey: "integrationKey",
 }
 
@@ -56,7 +56,7 @@ func TestSendPagerDutyAlert(t *testing.T) {
 				ID:        "policyId",
 				CreatedAt: createdAtTime,
 				Severity:  "INFO",
-				Type:      alertmodels.PolicyType,
+				Type:      alertModels.PolicyType,
 				Link:      "https://panther.io/policies/policyId",
 				Title:     "Policy Failure: policyName",
 				Name:      aws.String("policyName"),

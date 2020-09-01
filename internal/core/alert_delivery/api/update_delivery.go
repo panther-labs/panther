@@ -76,7 +76,7 @@ func updateAlert(alertID string, deliveryResponse []*alertModels.DeliveryRespons
 			DeliveryResponses: deliveryResponse,
 		},
 	}
-	var response alertModels.UpdateAlertDeliveryOutput
+	response := alertModels.UpdateAlertDeliveryOutput{}
 
 	// We log, but do not return the error because this lambda execution needs to succeede regardless
 	// if this invocation failed. Worst case, the user will see in the frontend that the status will be

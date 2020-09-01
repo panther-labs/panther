@@ -19,7 +19,6 @@ package api
  */
 
 import (
-	"os"
 	"time"
 
 	"go.uber.org/zap"
@@ -27,11 +26,6 @@ import (
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
-)
-
-// Global variables
-var (
-	outputsAPI = os.Getenv("OUTPUTS_API")
 )
 
 // getAlertOutputs - Get output ids for an alert via the specified overrides or the defaults in panther
@@ -85,7 +79,7 @@ func getOutputs() ([]*outputModels.AlertOutput, error) {
 func fetchOutputs() ([]*outputModels.AlertOutput, error) {
 	zap.L().Debug("getting default outputs")
 	input := outputModels.LambdaInput{GetOutputsWithSecrets: &outputModels.GetOutputsWithSecretsInput{}}
-	var outputs outputModels.GetOutputsOutput
+	outputs := outputModels.GetOutputsOutput{}
 	if err := genericapi.Invoke(lambdaClient, outputsAPI, &input, &outputs); err != nil {
 		return nil, err
 	}

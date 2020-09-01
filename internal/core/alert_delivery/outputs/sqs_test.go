@@ -28,8 +28,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
@@ -37,10 +37,10 @@ func TestSendSqs(t *testing.T) {
 	client := &testutils.SqsMock{}
 	outputClient := &OutputClient{sqsClients: map[string]sqsiface.SQSAPI{"us-west-2": client}}
 
-	sqsOutputConfig := &outputmodels.SqsConfig{
+	sqsOutputConfig := &outputModels.SqsConfig{
 		QueueURL: "https://sqs.us-west-2.amazonaws.com/123456789012/test-output",
 	}
-	alert := &alertmodels.Alert{
+	alert := &alertModels.Alert{
 		AnalysisName:        aws.String("policyName"),
 		AnalysisID:          "policyId",
 		AnalysisDescription: aws.String("policyDescription"),

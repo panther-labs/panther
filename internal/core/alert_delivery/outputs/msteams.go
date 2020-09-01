@@ -23,13 +23,13 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 
-	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
 // MsTeams alert send an alert.
 func (client *OutputClient) MsTeams(
-	alert *alertmodels.Alert, config *outputmodels.MsTeamsConfig) *AlertDeliveryResponse {
+	alert *alertModels.Alert, config *outputModels.MsTeamsConfig) *AlertDeliveryResponse {
 
 	link := "[Click here to view in the Panther UI](" + policyURLPrefix + alert.AnalysisID + ").\n"
 

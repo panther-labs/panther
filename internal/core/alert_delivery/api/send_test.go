@@ -53,17 +53,18 @@ func sampleAlert() *deliveryModels.Alert {
 	}
 }
 
-var alertOutput = &outputModels.AlertOutput{
-	OutputID:    aws.String("output-id"),
-	OutputType:  aws.String("slack"),
-	DisplayName: aws.String("slack:alerts"),
-	OutputConfig: &outputModels.OutputConfig{
-		Slack: &outputModels.SlackConfig{WebhookURL: "https://slack.com"},
-	},
-	DefaultForSeverity: []*string{aws.String("INFO")},
-}
-
-var dispatchedAt = time.Now().UTC()
+var (
+	alertOutput = &outputModels.AlertOutput{
+		OutputID:    aws.String("output-id"),
+		OutputType:  aws.String("slack"),
+		DisplayName: aws.String("slack:alerts"),
+		OutputConfig: &outputModels.OutputConfig{
+			Slack: &outputModels.SlackConfig{WebhookURL: "https://slack.com"},
+		},
+		DefaultForSeverity: []*string{aws.String("INFO")},
+	}
+	dispatchedAt = time.Now().UTC()
+)
 
 func setCaches() {
 	outputsCache.set(&alertOutputsCache{

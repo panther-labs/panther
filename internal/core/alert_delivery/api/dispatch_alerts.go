@@ -19,19 +19,11 @@ package api
  */
 
 import (
-	"os"
-
 	"github.com/go-playground/validator"
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
-)
-
-// Global variables
-var (
-	validate  = validator.New()
-	alertsAPI = os.Getenv("ALERTS_API")
 )
 
 // DispatchAlerts - Sends an alert to sends a specific alert to the specified destinations.
@@ -72,6 +64,8 @@ func (API) DispatchAlerts(input []*deliveryModels.DispatchAlertsInput) (interfac
 // getAlerts - extracts the alerts from an DispatchAlertsInput (SQSMessage)
 func getAlerts(input []*deliveryModels.DispatchAlertsInput) []*deliveryModels.Alert {
 	alerts := []*deliveryModels.Alert{}
+	validate := validator.New()
+
 	for _, record := range input {
 		alert := &deliveryModels.Alert{}
 		if err := jsoniter.UnmarshalFromString(record.Body, alert); err != nil {

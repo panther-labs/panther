@@ -24,8 +24,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 
-	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
 const (
@@ -34,7 +34,7 @@ const (
 
 // Jira alert send an issue.
 func (client *OutputClient) Jira(
-	alert *alertmodels.Alert, config *outputmodels.JiraConfig) *AlertDeliveryResponse {
+	alert *alertModels.Alert, config *outputModels.JiraConfig) *AlertDeliveryResponse {
 
 	description := "*Description:* " + aws.StringValue(alert.AnalysisDescription)
 	link := "\n [Click here to view in the Panther UI](" + generateURL(alert) + ")"
