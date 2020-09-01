@@ -25,7 +25,7 @@ import (
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
-var (
+const (
 	pagerDutyEndpoint  = "https://events.pagerduty.com/v2/enqueue"
 	triggerEventAction = "trigger"
 )

@@ -67,7 +67,7 @@ var (
 	outputsCache           *alertOutputsCache
 )
 
-// Setup - parses the environment and builds the AWS and http clients.
+// Setup - initialize global state
 func Setup() {
 	envconfig.MustProcess("", &env)
 	maxRetryCount = env.AlertRetryCount

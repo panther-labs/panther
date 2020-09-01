@@ -36,7 +36,7 @@ func TestOpsgenieAlert(t *testing.T) {
 	httpWrapper := &mockHTTPWrapper{}
 	client := &OutputClient{httpWrapper: httpWrapper}
 
-	var createdAtTime, err = time.Parse(time.RFC3339, "2019-08-03T11:40:13Z")
+	createdAtTime, err := time.Parse(time.RFC3339, "2019-08-03T11:40:13Z")
 	require.NoError(t, err)
 	alert := &alertModels.Alert{
 		AnalysisID:   "policyId",

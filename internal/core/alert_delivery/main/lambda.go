@@ -45,7 +45,7 @@ func lambdaHandler(ctx context.Context, input json.RawMessage) (output interface
 		operation.Stop().Log(err)
 	}()
 
-	var apiRequest models.LambdaInput
+	apiRequest := models.LambdaInput{}
 	if err := jsoniter.Unmarshal(input, &apiRequest); err == nil {
 		return router.Handle(&apiRequest)
 	}

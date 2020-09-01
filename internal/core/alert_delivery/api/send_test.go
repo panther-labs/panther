@@ -32,6 +32,19 @@ import (
 	"github.com/panther-labs/panther/pkg/box"
 )
 
+var (
+	alertOutput = &outputModels.AlertOutput{
+		OutputID:    aws.String("output-id"),
+		OutputType:  aws.String("slack"),
+		DisplayName: aws.String("slack:alerts"),
+		OutputConfig: &outputModels.OutputConfig{
+			Slack: &outputModels.SlackConfig{WebhookURL: "https://slack.com"},
+		},
+		DefaultForSeverity: []*string{aws.String("INFO")},
+	}
+	dispatchedAt = time.Now().UTC()
+)
+
 type mockOutputsClient struct {
 	outputs.API
 	mock.Mock
@@ -52,19 +65,6 @@ func sampleAlert() *deliveryModels.Alert {
 		CreatedAt:    time.Now().UTC(),
 	}
 }
-
-var (
-	alertOutput = &outputModels.AlertOutput{
-		OutputID:    aws.String("output-id"),
-		OutputType:  aws.String("slack"),
-		DisplayName: aws.String("slack:alerts"),
-		OutputConfig: &outputModels.OutputConfig{
-			Slack: &outputModels.SlackConfig{WebhookURL: "https://slack.com"},
-		},
-		DefaultForSeverity: []*string{aws.String("INFO")},
-	}
-	dispatchedAt = time.Now().UTC()
-)
 
 func setCaches() {
 	outputsCache.set(&alertOutputsCache{

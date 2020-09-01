@@ -25,9 +25,7 @@ import (
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
-var (
-	opsgenieEndpoint = "https://api.opsgenie.com/v2/alerts"
-)
+const opsgenieEndpoint = "https://api.opsgenie.com/v2/alerts"
 
 var pantherToOpsGeniePriority = map[string]string{
 	"CRITICAL": "P1",

@@ -31,19 +31,20 @@ import (
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
-var createdAtTime, _ = time.Parse(time.RFC3339, "2019-05-03T11:40:13Z")
-
-var pagerDutyAlert = &alertModels.Alert{
-	AnalysisName: aws.String("policyName"),
-	AnalysisID:   "policyId",
-	Severity:     "INFO",
-	Runbook:      aws.String("runbook"),
-	CreatedAt:    createdAtTime,
-	Type:         alertModels.PolicyType,
-}
-var pagerDutyConfig = &outputModels.PagerDutyConfig{
-	IntegrationKey: "integrationKey",
-}
+var (
+	createdAtTime, _ = time.Parse(time.RFC3339, "2019-05-03T11:40:13Z")
+	pagerDutyAlert   = &alertModels.Alert{
+		AnalysisName: aws.String("policyName"),
+		AnalysisID:   "policyId",
+		Severity:     "INFO",
+		Runbook:      aws.String("runbook"),
+		CreatedAt:    createdAtTime,
+		Type:         alertModels.PolicyType,
+	}
+	pagerDutyConfig = &outputModels.PagerDutyConfig{
+		IntegrationKey: "integrationKey",
+	}
+)
 
 func TestSendPagerDutyAlert(t *testing.T) {
 	httpWrapper := &mockHTTPWrapper{}

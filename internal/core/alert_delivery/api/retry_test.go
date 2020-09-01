@@ -20,7 +20,6 @@ package api
 
 import (
 	"errors"
-	"os"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -48,15 +47,11 @@ func (m mockSQSClient) SendMessageBatch(input *sqs.SendMessageBatchInput) (*sqs.
 }
 
 func TestRetry(t *testing.T) {
-	mockClient := &mockOutputsClient{}
+	initEnvironmentTest()
 	sqsClient = &mockSQSClient{}
-	os.Setenv("ALERT_QUEUE_URL", "sqs.url")
-	os.Setenv("MIN_RETRY_DELAY_SECS", "10")
-	os.Setenv("MAX_RETRY_DELAY_SECS", "30")
 	alert := sampleAlert()
 	alerts := []*deliveryModels.Alert{alert, alert, alert}
 	sqsMessages = 0
 	retry(alerts)
 	assert.Equal(t, 3, sqsMessages)
-	mockClient.AssertExpectations(t)
 }

@@ -94,7 +94,7 @@ func sendAlert(alert *deliveryModels.Alert, output *outputModels.AlertOutput, di
 		}
 	}()
 
-	var response *outputs.AlertDeliveryResponse
+	response := (*outputs.AlertDeliveryResponse)(nil)
 	switch *output.OutputType {
 	case "slack":
 		response = outputClient.Slack(alert, output.OutputConfig.Slack)

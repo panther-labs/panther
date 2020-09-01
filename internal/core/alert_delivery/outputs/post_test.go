@@ -35,7 +35,7 @@ type mockHTTPClient struct {
 	requestBody  string // Request body is saved here for tests to verify
 }
 
-var requestEndpoint = "https://runpanther.io"
+const requestEndpoint = "https://runpanther.io"
 
 func (m *mockHTTPClient) Do(request *http.Request) (*http.Response, error) {
 	if m.requestError {
