@@ -198,11 +198,6 @@ resource "aws_iam_policy" "deployment" {
       ]
     },
     {
-      "Action": "firehose:*",
-      "Effect": "Allow",
-      "Resource": "arn:${var.aws_partition}:firehose:*:${var.aws_account_id}:deliverystream/panther-*"
-    },
-    {
       "Action": "kms:*",
       "Effect": "Allow",
       "Resource": [
