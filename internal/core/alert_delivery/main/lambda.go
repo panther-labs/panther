@@ -36,8 +36,9 @@ import (
 var router = genericapi.NewRouter("api", "delivery", nil, api.API{})
 
 // lambdaHandler handles two different kinds of requests:
-// 1. SQS event triggers that processes a batch of alerts periodically
-// 2. HTTP requests for direct invocation
+// 1. SQSMessage trigger that takes data from the queue or can be directly invoked
+// 2. HTTP API for re-sending an alert to the specified outputs
+// 3. HTTP API for sending a test alert
 func lambdaHandler(ctx context.Context, input json.RawMessage) (output interface{}, err error) {
 	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
 	operation := oplog.NewManager("core", "alert_delivery").Start(lc.InvokedFunctionArn).WithMemUsed(lambdacontext.MemoryLimitInMB)
