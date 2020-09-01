@@ -109,16 +109,18 @@ func checkKey(roleCredentials *credentials.Credentials, key string) models.Sourc
 	info, err := kmsClient.DescribeKey(&kms.DescribeKeyInput{KeyId: &key})
 	if err != nil {
 		return models.SourceIntegrationItemStatus{
-			Healthy: false,
-			Message: "An error occurred while trying to describe the specified KMS key. Error: " + err.Error(),
+			Healthy:      false,
+			Message:      "An error occurred while trying to describe the specified KMS key.",
+			ErrorMessage: err.Error(),
 		}
 	}
 
 	if !aws.BoolValue(info.KeyMetadata.Enabled) {
 		// If the key is disabled, we should fail as well
 		return models.SourceIntegrationItemStatus{
-			Healthy: false,
-			Message: "The specified KMS Key is disabled.",
+			Healthy:      false,
+			Message:      "The specified KMS Key is disabled.",
+			ErrorMessage: "",
 		}
 	}
 
@@ -134,8 +136,9 @@ func checkBucket(roleCredentials *credentials.Credentials, bucket string) models
 	_, err := s3Client.GetBucketLocation(&s3.GetBucketLocationInput{Bucket: &bucket})
 	if err != nil {
 		return models.SourceIntegrationItemStatus{
-			Healthy: false,
-			Message: "An error occurred while trying to get the region of the specified S3 bucket. Error: " + err.Error(),
+			Healthy:      false,
+			Message:      "An error occurred while trying to get the region of the specified S3 bucket.",
+			ErrorMessage: err.Error(),
 		}
 	}
 
@@ -158,8 +161,9 @@ func getCredentialsWithStatus(roleARN string) (*credentials.Credentials, models.
 	_, err := stsClient.GetCallerIdentity(&sts.GetCallerIdentityInput{})
 	if err != nil {
 		return roleCredentials, models.SourceIntegrationItemStatus{
-			Healthy: false,
-			Message: "We were unable to assume this role. Error: " + err.Error(),
+			Healthy:      false,
+			Message:      "We were unable to assume this role.",
+			ErrorMessage: err.Error(),
 		}
 	}
 
@@ -239,7 +243,8 @@ func checkSqsQueueHealth(input *models.CheckIntegrationInput) *models.SourceInte
 	_, err := sqsClient.GetQueueAttributes(getAttributesInput)
 	if err != nil {
 		health.SqsStatus.Healthy = false
-		health.SqsStatus.Message = "An error occurred while trying to get the attributes of the specified SQS queue. Error: " + err.Error()
+		health.SqsStatus.Message = "An error occurred while trying to get the attributes of the specified SQS queue."
+		health.SqsStatus.ErrorMessage = err.Error()
 		return health
 	}
 
