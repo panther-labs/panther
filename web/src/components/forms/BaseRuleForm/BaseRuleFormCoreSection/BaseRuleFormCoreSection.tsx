@@ -237,7 +237,7 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
               searchable
               label="* Log Types"
               name="logTypes"
-              items={data.listAvailableLogTypes.logTypes ?? []}
+              items={data?.listAvailableLogTypes.logTypes ?? []}
               placeholder="Where should the rule appoly?"
             />
             <FastField

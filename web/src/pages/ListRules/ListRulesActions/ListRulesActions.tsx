@@ -120,9 +120,7 @@ const ListRulesActions: React.FC = () => {
   );
 
   // FIXME: I know this sucks, but we plan to refactor all this logic in the upcoming release
-  if (data) {
-    filters.logTypes.props.items = data.listAvailableLogTypes.logTypes;
-  }
+  filters.logTypes.props.items = data?.listAvailableLogTypes.logTypes ?? [];
 
   return (
     <React.Fragment>

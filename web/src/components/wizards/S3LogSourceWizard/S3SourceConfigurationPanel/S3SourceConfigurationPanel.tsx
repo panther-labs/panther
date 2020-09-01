@@ -76,7 +76,7 @@ const S3SourceConfigurationPanel: React.FC = () => {
             searchable
             label="* Log Types"
             name="logTypes"
-            items={data.listAvailableLogTypes.logTypes ?? []}
+            items={data?.listAvailableLogTypes.logTypes ?? []}
             placeholder="The types of logs that are collected"
           />
         </Flex>

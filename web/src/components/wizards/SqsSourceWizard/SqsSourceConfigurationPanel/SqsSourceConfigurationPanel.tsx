@@ -60,7 +60,7 @@ const SqsSourceConfigurationPanel: React.FC = () => {
             searchable
             label="* Log Types"
             name="logTypes"
-            items={data.listAvailableLogTypes.logTypes ?? []}
+            items={data?.listAvailableLogTypes.logTypes ?? []}
             placeholder="Which log types should we monitor?"
           />
           <Box as="fieldset">
