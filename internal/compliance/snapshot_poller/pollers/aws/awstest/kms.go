@@ -93,9 +93,9 @@ var (
 	}
 
 	svcKmsSetupCalls = map[string]func(*MockKms){
-		"ListKeys": func(svc *MockKms) {
-			svc.On("ListKeys", mock.Anything).
-				Return(ExampleListKeysOutput, nil)
+		"ListKeysPages": func(svc *MockKms) {
+			svc.On("ListKeysPages", mock.Anything).
+				Return(nil)
 		},
 		"GetKeyRotationStatus": func(svc *MockKms) {
 			svc.On("GetKeyRotationStatus", mock.Anything).
@@ -116,11 +116,9 @@ var (
 	}
 
 	svcKmsSetupCallsError = map[string]func(*MockKms){
-		"ListKeys": func(svc *MockKms) {
-			svc.On("ListKeys", mock.Anything).
-				Return(&kms.ListKeysOutput{},
-					errors.New("KMS.ListKeys error"),
-				)
+		"ListKeysPages": func(svc *MockKms) {
+			svc.On("ListKeysPages", mock.Anything).
+				Return(errors.New("KMS.ListKeys error"))
 		},
 		"GetKeyRotationStatus": func(svc *MockKms) {
 			svc.On("GetKeyRotationStatus", mock.Anything).
@@ -208,9 +206,17 @@ func BuildMockKmsSvcAllError() (mockSvc *MockKms) {
 	return
 }
 
-func (m *MockKms) ListKeys(in *kms.ListKeysInput) (*kms.ListKeysOutput, error) {
+func (m *MockKms) ListKeysPages(
+	in *kms.ListKeysInput,
+	paginationFunction func(*kms.ListKeysOutput, bool) bool,
+) error {
+
 	args := m.Called(in)
-	return args.Get(0).(*kms.ListKeysOutput), args.Error(1)
+	if args.Error(0) != nil {
+		return args.Error(0)
+	}
+	paginationFunction(ExampleListKeysOutput, true)
+	return args.Error(0)
 }
 
 func (m *MockKms) GetKeyRotationStatus(in *kms.GetKeyRotationStatusInput) (*kms.GetKeyRotationStatusOutput, error) {

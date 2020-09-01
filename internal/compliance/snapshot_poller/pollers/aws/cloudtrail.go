@@ -234,11 +234,12 @@ func buildCloudTrails(
 }
 
 // PollCloudTrails gathers information on all CloudTrails in an AWS account.
-func PollCloudTrails(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollCloudTrails(pollerInput *awsmodels.ResourcePollerInput) (
+	[]*apimodels.AddResourceEntry, *string, error) {
+
 	zap.L().Debug("starting CloudTrail resource poller")
 	cloudTrailSnapshots := make(awsmodels.CloudTrails)
-
-	regions, err := GetServiceRegions(pollerInput, awsmodels.CloudTrailSchema)
+	regions, err := GetServiceRegionsFunc(pollerInput, awsmodels.CloudTrailSchema)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -264,35 +265,11 @@ func PollCloudTrails(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 		}
 	}
 
-	zap.L().Debug("finished polling CloudTrail", zap.Int("count", len(cloudTrailSnapshots)))
-
 	metaResourceID := utils.GenerateResourceID(
 		pollerInput.AuthSourceParsedARN.AccountID,
 		"",
 		awsmodels.CloudTrailMetaSchema,
 	)
-
-	// Handle the case where there are no CloudTrails to return
-	if len(cloudTrailSnapshots) == 0 {
-		return []*apimodels.AddResourceEntry{{
-			Attributes: &awsmodels.CloudTrailMeta{
-				GenericResource: awsmodels.GenericResource{
-					ResourceID:   aws.String(metaResourceID),
-					ResourceType: aws.String(awsmodels.CloudTrailMetaSchema),
-				},
-				GenericAWSResource: awsmodels.GenericAWSResource{
-					AccountID: aws.String(pollerInput.AuthSourceParsedARN.AccountID),
-					Name:      aws.String(awsmodels.CloudTrailMetaSchema),
-					Region:    aws.String("global"),
-				},
-				Trails: []*string{},
-			},
-			ID:              apimodels.ResourceID(metaResourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
-			Type:            awsmodels.CloudTrailMetaSchema,
-		}}, nil, nil
-	}
 
 	// Build the meta resource
 	accountSnapshot := &awsmodels.CloudTrailMeta{
@@ -305,6 +282,7 @@ func PollCloudTrails(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 			Name:      aws.String(awsmodels.CloudTrailMetaSchema),
 			Region:    aws.String("global"),
 		},
+		Trails: []*string{},
 	}
 
 	// Append each individual trail to  the results and update the meta resource appropriately

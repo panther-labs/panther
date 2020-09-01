@@ -30,7 +30,7 @@ import (
 )
 
 func TestKMSKeyList(t *testing.T) {
-	mockSvc := awstest.BuildMockKmsSvc([]string{"ListKeys"})
+	mockSvc := awstest.BuildMockKmsSvc([]string{"ListKeysPages"})
 
 	out, marker, err := listKeys(mockSvc, nil)
 	assert.NotEmpty(t, out)
@@ -39,7 +39,7 @@ func TestKMSKeyList(t *testing.T) {
 }
 
 func TestKMSKeyListError(t *testing.T) {
-	mockSvc := awstest.BuildMockKmsSvcError([]string{"ListKeys"})
+	mockSvc := awstest.BuildMockKmsSvcError([]string{"ListKeysPages"})
 
 	out, marker, err := listKeys(mockSvc, nil)
 	assert.Nil(t, out)
@@ -173,5 +173,5 @@ func TestKMSKeyPollerError(t *testing.T) {
 		assert.Nil(t, event.Attributes)
 	}
 	assert.Nil(t, marker)
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }

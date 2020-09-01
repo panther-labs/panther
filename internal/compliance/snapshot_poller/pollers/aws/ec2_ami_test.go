@@ -32,7 +32,7 @@ import (
 // Unit Tests
 
 func TestEC2DescribeImages(t *testing.T) {
-	mockSvc := awstest.BuildMockEC2Svc([]string{"DescribeImages"})
+	mockSvc := awstest.BuildMockEC2Svc([]string{"DescribeImages", "DescribeInstancesPages"})
 
 	out, marker, err := describeImages(mockSvc, awstest.ExampleRegion)
 	assert.NotEmpty(t, out)
@@ -41,7 +41,7 @@ func TestEC2DescribeImages(t *testing.T) {
 }
 
 func TestEC2DescribeImagesError(t *testing.T) {
-	mockSvc := awstest.BuildMockEC2SvcError([]string{"DescribeImages"})
+	mockSvc := awstest.BuildMockEC2SvcError([]string{"DescribeImages", "DescribeInstancesPages"})
 
 	out, marker, err := describeImages(mockSvc, awstest.ExampleRegion)
 	assert.Error(t, err)

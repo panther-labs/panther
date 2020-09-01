@@ -135,7 +135,7 @@ func TestAcmCertificatePollerError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	require.Error(t, err)
 	assert.Nil(t, marker)
 	for _, event := range resources {
 		assert.Nil(t, event.Attributes)

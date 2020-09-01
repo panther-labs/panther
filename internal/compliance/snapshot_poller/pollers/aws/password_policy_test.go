@@ -74,7 +74,7 @@ func TestPasswordPolicyPollerError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	assert.Len(t, resources, 1)
+	assert.Empty(t, resources)
 	assert.Nil(t, marker)
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }

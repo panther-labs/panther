@@ -106,7 +106,7 @@ func TestBuildDynamoDBSnapshot(t *testing.T) {
 		awstest.ExampleTableName,
 	)
 
-	assert.Error(t, err)
+	assert.NoError(t, err)
 	assert.NotNil(t, tableSnapshot.ARN)
 	assert.NotEmpty(t, tableSnapshot.GlobalSecondaryIndexes)
 }

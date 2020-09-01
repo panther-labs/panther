@@ -215,6 +215,9 @@ func PollIAMRoles(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddR
 
 	// List all IAM Roles in the account
 	roles, marker, err := listRoles(iamSvc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	// Create IAM Role snapshots
 	var resources []*apimodels.AddResourceEntry

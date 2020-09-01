@@ -19,6 +19,7 @@ package aws
  */
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -369,7 +370,8 @@ func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Add
 			continue
 		}
 
-		if region == pollerInput.Region {
+		if *region == *pollerInput.Region {
+			fmt.Println("adding bucket")
 			buckets = append(buckets, bucket)
 		}
 	}

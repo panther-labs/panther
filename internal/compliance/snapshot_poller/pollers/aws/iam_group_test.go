@@ -178,9 +178,7 @@ func TestIamGroupPollerError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	assert.NoError(t, err)
-	for _, event := range resources {
-		assert.Nil(t, event.Attributes)
-	}
+	assert.Error(t, err)
+	assert.Nil(t, resources)
 	assert.Nil(t, marker)
 }

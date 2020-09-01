@@ -66,6 +66,7 @@ var (
 	// assumeRoleFunc is the function to return valid AWS credentials.
 	assumeRoleFunc         = assumeRole
 	verifyAssumedCredsFunc = verifyAssumedCreds
+	GetServiceRegionsFunc  = GetServiceRegions
 
 	// This maps the name we have given to a type of resource to the corresponding AWS name for the
 	// service that the resource type is a part of.
@@ -137,10 +138,6 @@ func Setup() {
 		awsretry.NewConnectionErrRetryer(*awsConfig.MaxRetries))))
 }
 
-func setupSSMClient(sess *session.Session, cfg *aws.Config) interface{} {
-	return ssm.New(sess, cfg)
-}
-
 // GetRegionsToScan determines what regions need to be scanned in order to perform a full account
 // scan for a given resource type
 func GetRegionsToScan(pollerInput *awsmodels.ResourcePollerInput, resourceType string) (regions []*string, err error) {
@@ -155,7 +152,7 @@ func GetRegionsToScan(pollerInput *awsmodels.ResourcePollerInput, resourceType s
 
 // GetServiceRegions determines what regions are both enabled in the account and are supported by
 // AWS for the given resource type.
-func GetServiceRegions(pollerInput *awsmodels.ResourcePollerInput, resourceType string) (regions []*string, err error) {
+func GetServiceRegions(pollerInput *awsmodels.ResourcePollerInput, resourceType string) ([]*string, error) {
 	// Determine the service ID based on the resource type
 	serviceID, ok := typeToIDMapping[resourceType]
 	if !ok {
@@ -163,7 +160,7 @@ func GetServiceRegions(pollerInput *awsmodels.ResourcePollerInput, resourceType 
 	}
 
 	// Lookup the regions that the account has enabled
-	ec2Svc, err := getClient(pollerInput, setupEC2Client, "ec2", defaultRegion)
+	ec2Svc, err := getClient(pollerInput, EC2ClientFunc, "ec2", defaultRegion)
 	if err != nil {
 		return nil, err
 	}
@@ -180,8 +177,8 @@ func GetServiceRegions(pollerInput *awsmodels.ResourcePollerInput, resourceType 
 
 	// Lookup the regions that AWS supports for the service, storing the ones that are also enabled
 	// for this account
-	// ssmSvc, err := getClient(pollerInput, setupSSMClient, "ssm", defaultRegion)
 	ssmSvc := ssm.New(snapshotPollerSession)
+	var regions []*string
 	err = ssmSvc.GetParametersByPathPages(&ssm.GetParametersByPathInput{
 		Path: aws.String("/aws/service/global-infrastructure/services/" + serviceID + "/regions"),
 	}, func(page *ssm.GetParametersByPathOutput, b bool) bool {
@@ -196,7 +193,7 @@ func GetServiceRegions(pollerInput *awsmodels.ResourcePollerInput, resourceType 
 		return nil, err
 	}
 
-	return
+	return regions, nil
 }
 
 // getClient returns a valid client for a given integration, service, and region using caching.

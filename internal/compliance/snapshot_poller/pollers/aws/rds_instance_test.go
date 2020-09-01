@@ -117,9 +117,7 @@ func TestRDSInstanceBuildSnapshotErrors(t *testing.T) {
 	)
 
 	assert.Error(t, err)
-	assert.Equal(t, "db.t2.micro", *instance.DBInstanceClass)
-	assert.Equal(t, *awstest.ExampleRDSInstanceName, *instance.ID)
-	assert.Equal(t, awstest.ExampleDescribeDBInstancesOutput.DBInstances[0].OptionGroupMemberships, instance.OptionGroupMemberships)
+	assert.Nil(t, instance)
 }
 
 func TestRDSInstancePoller(t *testing.T) {
@@ -162,9 +160,7 @@ func TestRDSInstancePollerError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
+	assert.Empty(t, resources)
 	assert.Nil(t, marker)
-	for _, event := range resources {
-		assert.Nil(t, event.Attributes)
-	}
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }

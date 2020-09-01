@@ -23,7 +23,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -98,7 +97,7 @@ func TestEC2DescribeFlowLogsError(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestEC2BuildVpcSnapshot(t *testing.T) {
+func TestEC2BuildVpcSnapshotPartialError(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2Svc([]string{
 		"DescribeVpcsPages",
 		"DescribeRouteTablesPages",
@@ -109,11 +108,18 @@ func TestEC2BuildVpcSnapshot(t *testing.T) {
 	})
 	mockSvc.
 		On("DescribeSecurityGroupsPages", mock.Anything).
-		Return(&ec2.DescribeSecurityGroupsOutput{}, errors.New("fake describe security group error"))
+		Return(errors.New("fake describe security group error"))
 	mockSvc.
 		On("DescribeNetworkAclsPages", mock.Anything).
-		Return(&ec2.DescribeNetworkAclsOutput{}, errors.New("fake describe network ACLs error"))
+		Return(errors.New("fake describe network ACLs error"))
 
+	ec2Snapshot, err := buildEc2VpcSnapshot(mockSvc, awstest.ExampleVpc)
+	assert.Error(t, err)
+	assert.Nil(t, ec2Snapshot)
+}
+
+func TestEC2BuildVpcSnapshot(t *testing.T) {
+	mockSvc := awstest.BuildMockEC2SvcAll()
 	ec2Snapshot, err := buildEc2VpcSnapshot(mockSvc, awstest.ExampleVpc)
 	assert.NoError(t, err)
 	assert.Len(t, ec2Snapshot.SecurityGroups, 1)

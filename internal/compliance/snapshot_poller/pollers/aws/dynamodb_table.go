@@ -292,7 +292,7 @@ func PollDynamoDBTables(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 		dynamoDBTable.Region = pollerInput.Region
 
 		resources = append(resources, &apimodels.AddResourceEntry{
-			Attributes:      table,
+			Attributes:      dynamoDBTable,
 			ID:              apimodels.ResourceID(*dynamoDBTable.ResourceID),
 			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
 			IntegrationType: apimodels.IntegrationTypeAws,

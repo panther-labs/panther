@@ -101,10 +101,8 @@ func TestBuildLambdaFunctionSnapshotErrors(t *testing.T) {
 		awstest.ExampleListFunctions.Functions[0],
 	)
 
-	assert.NoError(t, err)
-	assert.NotNil(t, lambdaSnapshot)
-	assert.Nil(t, lambdaSnapshot.Policy)
-	assert.Nil(t, lambdaSnapshot.Tags)
+	assert.Error(t, err)
+	assert.Nil(t, lambdaSnapshot)
 }
 
 func TestLambdaFunctionPoller(t *testing.T) {
@@ -142,5 +140,5 @@ func TestLambdaFunctionPollerError(t *testing.T) {
 		assert.Nil(t, event.Attributes)
 	}
 	assert.Nil(t, marker)
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }

@@ -254,11 +254,9 @@ func TestWafWebAclsPollerError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	for _, event := range resources {
-		assert.Nil(t, event.Attributes)
-	}
+	assert.Nil(t, resources)
 	assert.Nil(t, marker)
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }
 
 func TestWafRegionalWebAclsPoller(t *testing.T) {
@@ -297,9 +295,7 @@ func TestWafRegionalWebAclsPollerError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	for _, event := range resources {
-		assert.Nil(t, event.Attributes)
-	}
+	assert.Empty(t, resources)
 	assert.Nil(t, marker)
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }

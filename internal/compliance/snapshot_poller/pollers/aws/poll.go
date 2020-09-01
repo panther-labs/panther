@@ -201,7 +201,11 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		return nil, err
 	}
 
-	zap.L().Info("processing full account resource type scan", zap.Any("regions", regions), zap.String("resourceType", *scanRequest.ResourceType))
+	zap.L().Info(
+		"processing full account resource type scan",
+		zap.Any("regions", regions),
+		zap.String("resourceType", *scanRequest.ResourceType),
+	)
 	for _, region := range regions {
 		utils.Requeue(pollermodels.ScanMsg{
 			Entries: []*pollermodels.ScanEntry{
@@ -246,14 +250,14 @@ func serviceScan(
 	if marker != nil {
 		zap.L().Debug("hit max batch size")
 		scanRequest.NextPageToken = marker
-
 		utils.Requeue(pollermodels.ScanMsg{
 			Entries: []*pollermodels.ScanEntry{
 				scanRequest,
 			},
 		}, int64(pageRequeueDelayer.Intn(30)+1)) // Delay between 1 & 30 seconds to spread out page scans
 	}
-	return
+
+	return generatedEvents, nil
 }
 
 func singleResourceScan(

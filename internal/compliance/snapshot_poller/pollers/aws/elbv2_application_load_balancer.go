@@ -108,7 +108,9 @@ func getApplicationLoadBalancer(svc elbv2iface.ELBV2API, loadBalancerARN *string
 }
 
 // describeLoadBalancers returns a list of all Load Balancers in the account in the current region
-func describeLoadBalancers(elbv2Svc elbv2iface.ELBV2API, nextMarker *string) (loadBalancers []*elbv2.LoadBalancer, marker *string, err error) {
+func describeLoadBalancers(elbv2Svc elbv2iface.ELBV2API, nextMarker *string) (
+	loadBalancers []*elbv2.LoadBalancer, marker *string, err error) {
+
 	err = elbv2Svc.DescribeLoadBalancersPages(&elbv2.DescribeLoadBalancersInput{
 		Marker: nextMarker,
 	},

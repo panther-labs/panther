@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws/awstest"
@@ -112,6 +113,7 @@ func TestGuardDutyDetectorsPoller(t *testing.T) {
 	awstest.MockGuardDutyForSetup = awstest.BuildMockGuardDutySvcAll()
 
 	GuardDutyClientFunc = awstest.SetupMockGuardDuty
+	GetServiceRegionsFunc = GetServiceRegionsTest
 
 	resources, marker, err := PollGuardDutyDetectors(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
@@ -122,6 +124,7 @@ func TestGuardDutyDetectorsPoller(t *testing.T) {
 	})
 
 	assert.NoError(t, err)
+	require.Len(t, resources, 2)
 	assert.Regexp(
 		t,
 		regexp.MustCompile(`123456789012:[^:]*:AWS\.GuardDuty\.Detector`),
@@ -130,13 +133,11 @@ func TestGuardDutyDetectorsPoller(t *testing.T) {
 	assert.Regexp(
 		t,
 		regexp.MustCompile(`123456789012::AWS\.GuardDuty\.Detector\.Meta`),
-		resources[3].ID,
+		resources[1].ID,
 	)
 	assert.NotEmpty(t, resources)
-	// Three regions + meta resource
-	assert.Len(t, resources, 4)
-	assert.IsType(t, &awsmodels.GuardDutyMeta{}, resources[3].Attributes)
-	assert.Len(t, resources[3].Attributes.(*awsmodels.GuardDutyMeta).Detectors, 3)
+	require.IsType(t, &awsmodels.GuardDutyMeta{}, resources[1].Attributes)
+	assert.Len(t, resources[1].Attributes.(*awsmodels.GuardDutyMeta).Detectors, 1)
 	assert.Nil(t, marker)
 }
 
@@ -153,8 +154,7 @@ func TestGuardDutyDetectorsPollerError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	// Should only contain meta resource
-	assert.Len(t, resources, 1)
+	assert.Len(t, resources, 0)
 	assert.Nil(t, marker)
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }

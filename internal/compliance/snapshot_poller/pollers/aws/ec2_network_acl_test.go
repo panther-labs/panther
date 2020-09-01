@@ -82,7 +82,7 @@ func TestEC2PollNetworkAclsError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	assert.NoError(t, err)
+	assert.Error(t, err)
 	assert.Nil(t, marker)
 	assert.Empty(t, resources)
 }

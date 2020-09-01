@@ -123,12 +123,7 @@ func TestBuildElbv2ApplicationLoadBalancerSnapshotError(t *testing.T) {
 	)
 
 	assert.Error(t, err)
-	assert.Nil(t, elbv2Snapshot.WebAcl)
-	assert.Equal(
-		t,
-		awstest.ExampleDescribeLoadBalancersOutput.LoadBalancers[0].LoadBalancerArn,
-		elbv2Snapshot.ResourceID,
-	)
+	assert.Nil(t, elbv2Snapshot)
 }
 
 func TestElbv2ApplicationLoadBalancersPoller(t *testing.T) {

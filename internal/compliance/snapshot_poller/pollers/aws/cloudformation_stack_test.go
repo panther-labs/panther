@@ -100,8 +100,7 @@ func TestCloudFormationStackBuildSnapshotError(t *testing.T) {
 	)
 
 	assert.Error(t, err)
-	assert.NotNil(t, certSnapshot.Name)
-	assert.Nil(t, certSnapshot.Drifts)
+	assert.Nil(t, certSnapshot)
 }
 
 func TestCloudFormationStackPoller(t *testing.T) {

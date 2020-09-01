@@ -89,7 +89,7 @@ func TestBuildEc2VolumeSnapshot(t *testing.T) {
 	)
 
 	require.NotNil(t, volumeSnapshot)
-	assert.Error(t, err)
+	assert.NoError(t, err)
 	assert.NotNil(t, volumeSnapshot.AvailabilityZone)
 	assert.NotEmpty(t, volumeSnapshot.Attachments)
 }
@@ -109,7 +109,7 @@ func TestEc2VolumePoller(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotEmpty(t, resources)
-	assert.NotNil(t, marker)
+	assert.Nil(t, marker)
 }
 
 func TestEc2VolumePollerError(t *testing.T) {

@@ -143,7 +143,9 @@ func getStack(svc cloudformationiface.CloudFormationAPI, stackName string) (*clo
 }
 
 // describeStacks returns all CloudFormation stacks in the account
-func describeStacks(cloudformationSvc cloudformationiface.CloudFormationAPI, nextMarker *string) (stacks []*cloudformation.Stack, marker *string, err error) {
+func describeStacks(cloudformationSvc cloudformationiface.CloudFormationAPI, nextMarker *string) (
+	stacks []*cloudformation.Stack, marker *string, err error) {
+
 	err = cloudformationSvc.DescribeStacksPages(&cloudformation.DescribeStacksInput{NextToken: nextMarker},
 		func(page *cloudformation.DescribeStacksOutput, lastPage bool) bool {
 			stacks = append(stacks, page.Stacks...)

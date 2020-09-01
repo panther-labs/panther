@@ -112,7 +112,8 @@ func getLogGroup(svc cloudwatchlogsiface.CloudWatchLogsAPI, logGroupName string)
 }
 
 // describeLogGroups returns all Log Groups in the account
-func describeLogGroups(cloudwatchLogsSvc cloudwatchlogsiface.CloudWatchLogsAPI, nextMarker *string) (logGroups []*cloudwatchlogs.LogGroup, marker *string, err error) {
+func describeLogGroups(cloudwatchLogsSvc cloudwatchlogsiface.CloudWatchLogsAPI, nextMarker *string) (
+	logGroups []*cloudwatchlogs.LogGroup, marker *string, err error) {
 	// CloudWatch log groups have fairly absurdly low throttling limits, so intentionally choke this
 	// down super slow to avoid going over.
 	err = cloudwatchLogsSvc.DescribeLogGroupsPages(&cloudwatchlogs.DescribeLogGroupsInput{

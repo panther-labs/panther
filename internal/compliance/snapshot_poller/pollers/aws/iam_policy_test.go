@@ -112,10 +112,7 @@ func TestIAMPolicyBuildSnapshotError(t *testing.T) {
 
 	out, err := buildIAMPolicySnapshot(mockSvc, awstest.ExampleListPolicies.Policies[0])
 	assert.Error(t, err)
-	assert.Nil(t, out.Entities.PolicyGroups)
-	assert.Nil(t, out.Entities.PolicyRoles)
-	assert.Nil(t, out.Entities.PolicyUsers)
-	assert.NotNil(t, out.PermissionsBoundaryUsageCount)
+	assert.Nil(t, out)
 }
 
 func TestIAMPolicyPoller(t *testing.T) {

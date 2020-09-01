@@ -116,7 +116,10 @@ func describeConfigurationRecorderStatus(
 	configServiceSvc configserviceiface.ConfigServiceAPI, name *string,
 ) (*configservice.ConfigurationRecorderStatus, error) {
 
-	status, err := configServiceSvc.DescribeConfigurationRecorderStatus(&configservice.DescribeConfigurationRecorderStatusInput{ConfigurationRecorderNames: []*string{name}})
+	status, err := configServiceSvc.DescribeConfigurationRecorderStatus(
+		&configservice.DescribeConfigurationRecorderStatusInput{
+			ConfigurationRecorderNames: []*string{name},
+		})
 	if err != nil {
 		return nil, errors.Wrap(err, "ConfigService.DescribeConfigurationRecorderStatus")
 	}
@@ -160,7 +163,7 @@ func PollConfigServices(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 	zap.L().Debug("starting ConfigService poller")
 	configSnapshots := make(map[string]*awsmodels.ConfigService)
 
-	regions, err := GetServiceRegions(pollerInput, awsmodels.ConfigServiceSchema)
+	regions, err := GetServiceRegionsFunc(pollerInput, awsmodels.ConfigServiceSchema)
 	if err != nil {
 		return nil, nil, err
 	}

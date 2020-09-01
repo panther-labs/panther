@@ -157,10 +157,15 @@ func TestCloudTrailBuildError(t *testing.T) {
 	assert.Empty(t, trails)
 }
 
+func GetServiceRegionsTest(_ *awsmodels.ResourcePollerInput, _ string) (regions []*string, err error) {
+	return []*string{aws.String("us-west-2")}, nil
+}
+
 func TestCloudTrailPoller(t *testing.T) {
 	awstest.MockCloudTrailForSetup = awstest.BuildMockCloudTrailSvcAll()
 
 	CloudTrailClientFunc = awstest.SetupMockCloudTrail
+	GetServiceRegionsFunc = GetServiceRegionsTest
 
 	resources, marker, err := PollCloudTrails(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
@@ -197,7 +202,7 @@ func TestCloudTrailPollerError(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Nil(t, marker)
-	assert.Len(t, resources, 1)
+	assert.Len(t, resources, 0)
 }
 
 func TestCloudTrailPollerPartialError(t *testing.T) {
@@ -226,16 +231,9 @@ func TestCloudTrailPollerPartialError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
-	// 1 event + meta
-	assert.Len(t, resources, 2)
+	assert.Error(t, err)
+	assert.Nil(t, resources)
 	assert.Nil(t, marker)
-
-	snapshot, ok := resources[0].Attributes.(*awsmodels.CloudTrail)
-	require.True(t, ok)
-
-	assert.Nil(t, snapshot.EventSelectors)
-	assert.True(t, *snapshot.IncludeGlobalServiceEvents)
 }
 
 func TestCloudTrailPollerEmpty(t *testing.T) {

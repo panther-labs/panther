@@ -253,8 +253,8 @@ func TestS3BucketPoller(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
+	require.NotEmpty(t, resources)
 	assert.Equal(t, "arn:aws:s3:::unit-test-cloudtrail-bucket", string(resources[0].ID))
-	assert.NotEmpty(t, resources)
 	assert.Nil(t, marker)
 	assert.NoError(t, err)
 }
@@ -268,6 +268,7 @@ func TestS3BucketPollerError(t *testing.T) {
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 

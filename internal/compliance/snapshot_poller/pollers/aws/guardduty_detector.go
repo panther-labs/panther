@@ -162,7 +162,7 @@ func PollGuardDutyDetectors(pollerInput *awsmodels.ResourcePollerInput) ([]*apim
 	guardDutyDetectorSnapshots := make(map[string]*awsmodels.GuardDutyDetector)
 
 	// Get detectors in each region
-	regions, err := GetServiceRegions(pollerInput, awsmodels.GuardDutySchema)
+	regions, err := GetServiceRegionsFunc(pollerInput, awsmodels.GuardDutySchema)
 	if err != nil {
 		return nil, nil, err
 	}

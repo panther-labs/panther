@@ -85,9 +85,7 @@ func TestRedshiftCLusterBuildSnapshotErrors(t *testing.T) {
 	)
 
 	assert.Error(t, err)
-	assert.NotEmpty(t, clusterSnapshot.GenericAWSResource)
-	assert.NotNil(t, clusterSnapshot.VpcId)
-	assert.Nil(t, clusterSnapshot.LoggingStatus)
+	assert.Nil(t, clusterSnapshot)
 }
 
 func TestRedshiftClusterPoller(t *testing.T) {
@@ -127,9 +125,7 @@ func TestRedshiftClusterPollerError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	for _, event := range resources {
-		assert.Nil(t, event.Attributes)
-	}
+	assert.Empty(t, resources)
 	assert.Nil(t, marker)
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }

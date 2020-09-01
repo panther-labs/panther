@@ -82,13 +82,14 @@ func TestBuildConfigServiceSnapshotError(t *testing.T) {
 		"us-west-2",
 	)
 	assert.Error(t, err)
-	assert.NotEmpty(t, out)
+	assert.Empty(t, out)
 }
 
 func TestPollConfigServices(t *testing.T) {
 	awstest.MockConfigServiceForSetup = awstest.BuildMockConfigServiceSvcAll()
 
 	ConfigServiceClientFunc = awstest.SetupMockConfigService
+	GetServiceRegionsFunc = GetServiceRegionsTest
 
 	resources, marker, err := PollConfigServices(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
@@ -124,8 +125,7 @@ func TestPollConfigServicesError(t *testing.T) {
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	require.Error(t, err)
 	assert.Nil(t, marker)
-	// The meta resource should still send.
-	assert.Len(t, resources, 1)
+	assert.Len(t, resources, 0)
 }

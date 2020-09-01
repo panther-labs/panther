@@ -109,7 +109,9 @@ func getLambda(svc lambdaiface.LambdaAPI, functionARN *string) (*lambda.Function
 }
 
 // listFunctions returns all lambda functions in the account
-func listFunctions(lambdaSvc lambdaiface.LambdaAPI, nextMarker *string) (functions []*lambda.FunctionConfiguration, marker *string, err error) {
+func listFunctions(lambdaSvc lambdaiface.LambdaAPI, nextMarker *string) (
+	functions []*lambda.FunctionConfiguration, marker *string, err error) {
+
 	err = lambdaSvc.ListFunctionsPages(&lambda.ListFunctionsInput{
 		Marker: nextMarker,
 	},
