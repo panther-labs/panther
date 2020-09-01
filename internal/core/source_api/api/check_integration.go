@@ -165,7 +165,7 @@ func getCredentialsWithStatus(roleARN string) (*credentials.Credentials, models.
 
 	return roleCredentials, models.SourceIntegrationItemStatus{
 		Healthy: true,
-		Message: "We were able to successfully assumed this role.",
+		Message: "We were able to successfully assume this role.",
 	}
 }
 
@@ -182,35 +182,35 @@ func evaluateIntegration(api API, integration *models.CheckIntegrationInput) (st
 	switch integration.IntegrationType {
 	case models.IntegrationTypeAWSScan:
 		if !status.AuditRoleStatus.Healthy {
-			return "cannot assume audit role", false, nil
+			return status.AuditRoleStatus.Message, false, nil
 		}
 
 		if aws.BoolValue(integration.EnableRemediation) && !status.RemediationRoleStatus.Healthy {
-			return "cannot assume remediation role", false, nil
+			return status.RemediationRoleStatus.Message, false, nil
 		}
 
 		if aws.BoolValue(integration.EnableCWESetup) && !status.CWERoleStatus.Healthy {
-			return "cannot assume cwe role", false, nil
+			return status.CWERoleStatus.Message, false, nil
 		}
 		return "", true, nil
 	case models.IntegrationTypeAWS3:
 		if !status.ProcessingRoleStatus.Healthy {
-			return "cannot assume log processing role", false, nil
+			return status.ProcessingRoleStatus.Message, false, nil
 		}
 
 		if !status.S3BucketStatus.Healthy {
-			return "log processing role cannot access s3 bucket", false, nil
+			return status.S3BucketStatus.Message, false, nil
 		}
 
 		if !status.KMSKeyStatus.Healthy {
-			return "log processing role cannot access kms key", false, nil
+			return status.KMSKeyStatus.Message, false, nil
 		}
 		return "", true, nil
 	case models.IntegrationTypeSqs:
 		if !status.SqsStatus.Healthy {
 			return status.SqsStatus.Message, false, nil
 		}
-		return "", true, nil
+		return status.SqsStatus.Message, true, nil
 
 	default:
 		return "", false, errors.New("invalid integration type")
@@ -229,6 +229,7 @@ func checkSqsQueueHealth(input *models.CheckIntegrationInput) *models.SourceInte
 	// is performed before the SQS queue is created.
 	if len(input.SqsConfig.QueueURL) == 0 {
 		health.SqsStatus.Healthy = true
+		health.SqsStatus.Message = "Queue does not exist yet (first time setup)."
 		return health
 	}
 
@@ -238,10 +239,11 @@ func checkSqsQueueHealth(input *models.CheckIntegrationInput) *models.SourceInte
 	_, err := sqsClient.GetQueueAttributes(getAttributesInput)
 	if err != nil {
 		health.SqsStatus.Healthy = false
-		health.SqsStatus.Message = "failed to get queue attributes"
+		health.SqsStatus.Message = "An error occurred while trying to get the attributes of the specified SQS queue. Error: " + err.Error()
 		return health
 	}
 
 	health.SqsStatus.Healthy = true
+	health.SqsStatus.Message = "We were able to call sqs:GetQueueAttributes on the specified SQS queue."
 	return health
 }
