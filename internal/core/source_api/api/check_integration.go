@@ -66,8 +66,8 @@ func checkAwsScanIntegration(input *models.CheckIntegrationInput) *models.Source
 	out := &models.SourceIntegrationHealth{
 		IntegrationType: input.IntegrationType,
 		// Default to true, if these need to be checked and they are not healthy they will be overwritten
-		CWERoleStatus:         models.SourceIntegrationItemStatus{Healthy: true},
-		RemediationRoleStatus: models.SourceIntegrationItemStatus{Healthy: true},
+		CWERoleStatus:         models.SourceIntegrationItemStatus{Healthy: true, Message: "Real time event setup is not enabled."},
+		RemediationRoleStatus: models.SourceIntegrationItemStatus{Healthy: true, Message: "Automatic remediation is not enabled."},
 	}
 	_, out.AuditRoleStatus = getCredentialsWithStatus(fmt.Sprintf(auditRoleFormat,
 		input.AWSAccountID, *awsSession.Config.Region))
@@ -101,6 +101,7 @@ func checkKey(roleCredentials *credentials.Credentials, key string) models.Sourc
 		// KMS key is optional
 		return models.SourceIntegrationItemStatus{
 			Healthy: true,
+			Message: "No KMS Key was specified.",
 		}
 	}
 	kmsClient := kms.New(awsSession, &aws.Config{Credentials: roleCredentials})
@@ -108,21 +109,22 @@ func checkKey(roleCredentials *credentials.Credentials, key string) models.Sourc
 	info, err := kmsClient.DescribeKey(&kms.DescribeKeyInput{KeyId: &key})
 	if err != nil {
 		return models.SourceIntegrationItemStatus{
-			Healthy:      false,
-			ErrorMessage: err.Error(),
+			Healthy: false,
+			Message: "An error occurred while trying to describe the specified KMS key. Error: " + err.Error(),
 		}
 	}
 
 	if !aws.BoolValue(info.KeyMetadata.Enabled) {
 		// If the key is disabled, we should fail as well
 		return models.SourceIntegrationItemStatus{
-			Healthy:      false,
-			ErrorMessage: "key disabled",
+			Healthy: false,
+			Message: "The specified KMS Key is disabled.",
 		}
 	}
 
 	return models.SourceIntegrationItemStatus{
 		Healthy: true,
+		Message: "We were able to call kms:DescribeKey on the specified KMS key.",
 	}
 }
 
@@ -132,13 +134,14 @@ func checkBucket(roleCredentials *credentials.Credentials, bucket string) models
 	_, err := s3Client.GetBucketLocation(&s3.GetBucketLocationInput{Bucket: &bucket})
 	if err != nil {
 		return models.SourceIntegrationItemStatus{
-			Healthy:      false,
-			ErrorMessage: err.Error(),
+			Healthy: false,
+			Message: "An error occurred while trying to get the region of the specified S3 bucket. Error: " + err.Error(),
 		}
 	}
 
 	return models.SourceIntegrationItemStatus{
 		Healthy: true,
+		Message: "We were able to call s3:GetBucketLocation on the specified S3 bucket.",
 	}
 }
 
@@ -155,13 +158,14 @@ func getCredentialsWithStatus(roleARN string) (*credentials.Credentials, models.
 	_, err := stsClient.GetCallerIdentity(&sts.GetCallerIdentityInput{})
 	if err != nil {
 		return roleCredentials, models.SourceIntegrationItemStatus{
-			Healthy:      false,
-			ErrorMessage: err.Error(),
+			Healthy: false,
+			Message: "We were unable to assume this role. Error: " + err.Error(),
 		}
 	}
 
 	return roleCredentials, models.SourceIntegrationItemStatus{
 		Healthy: true,
+		Message: "We were able to successfully assumed this role.",
 	}
 }
 
@@ -204,7 +208,7 @@ func evaluateIntegration(api API, integration *models.CheckIntegrationInput) (st
 		return "", true, nil
 	case models.IntegrationTypeSqs:
 		if !status.SqsStatus.Healthy {
-			return status.SqsStatus.ErrorMessage, false, nil
+			return status.SqsStatus.Message, false, nil
 		}
 		return "", true, nil
 
@@ -234,7 +238,7 @@ func checkSqsQueueHealth(input *models.CheckIntegrationInput) *models.SourceInte
 	_, err := sqsClient.GetQueueAttributes(getAttributesInput)
 	if err != nil {
 		health.SqsStatus.Healthy = false
-		health.SqsStatus.ErrorMessage = "failed to get queue attributes"
+		health.SqsStatus.Message = "failed to get queue attributes"
 		return health
 	}
 
