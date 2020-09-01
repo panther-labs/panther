@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"go.uber.org/zap"
@@ -65,8 +66,8 @@ var clientCache = make(map[clientKey]cachedClient)
 
 func Setup() {
 	awsConfig := aws.NewConfig().WithMaxRetries(maxRetries)
-	awsConfig.Retryer = awsretry.NewConnectionErrRetryer()
-	snapshotPollerSession = session.Must(session.NewSession(awsConfig))
+	snapshotPollerSession = session.Must(session.NewSession(request.WithRetryer(awsConfig,
+		awsretry.NewConnectionErrRetryer(*awsConfig.MaxRetries))))
 }
 
 // getClient returns a valid client for a given integration, service, and region using caching.

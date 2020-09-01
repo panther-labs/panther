@@ -144,7 +144,7 @@ func TestGlueTableMetadataSignature(t *testing.T) {
 	gm := NewGlueTableMetadata(models.LogData, "My.Logs.Type", "description", GlueTableHourly, partitionTestEvent{})
 	sig, err := gm.Signature()
 	require.NoError(t, err)
-	assert.Equal(t, "5a3ca736985afab5ba83361dcb17ecb4fd1ea5632b11674137e6887148556e67", sig)
+	assert.Equal(t, "53372e1ee5b73d1e73594335e6df94489d0a759106fa2119fca66844f7ee5618", sig)
 }
 
 func TestCreateJSONPartition(t *testing.T) {

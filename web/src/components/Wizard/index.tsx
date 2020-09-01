@@ -18,4 +18,4 @@
 
 export { default as Wizard } from './Wizard';
 export { useWizardContext } from './WizardContext';
-export { default as WizardPanelWrapper } from './WizardPanelWrapper';
+export { default as WizardPanel } from './WizardPanel';

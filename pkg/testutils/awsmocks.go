@@ -292,6 +292,11 @@ func (m *SnsMock) Publish(input *sns.PublishInput) (*sns.PublishOutput, error) {
 	return args.Get(0).(*sns.PublishOutput), args.Error(1)
 }
 
+func (m *SnsMock) ConfirmSubscription(input *sns.ConfirmSubscriptionInput) (*sns.ConfirmSubscriptionOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*sns.ConfirmSubscriptionOutput), args.Error(1)
+}
+
 type FirehoseMock struct {
 	firehoseiface.FirehoseAPI
 	mock.Mock

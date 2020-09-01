@@ -18,6 +18,7 @@
 
 import * as Types from '../../../../../__generated__/schema';
 
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -72,15 +73,14 @@ export type DeletePolicyMutationOptions = ApolloReactCommon.BaseMutationOptions<
 export function mockDeletePolicy({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: DeletePolicy;
   variables?: DeletePolicyVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: DeletePolicyDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }

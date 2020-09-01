@@ -18,6 +18,7 @@
 
 import * as Types from '../../../../../../__generated__/schema';
 
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -80,15 +81,14 @@ export type GetLogCfnTemplateQueryResult = ApolloReactCommon.QueryResult<
 export function mockGetLogCfnTemplate({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: GetLogCfnTemplate;
   variables?: GetLogCfnTemplateVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: GetLogCfnTemplateDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }

@@ -19,6 +19,7 @@
 import * as Types from '../../../../../../__generated__/schema';
 
 import { DestinationFull } from '../../../../../graphql/fragments/DestinationFull.generated';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -87,15 +88,14 @@ export type GetDestinationDetailsQueryResult = ApolloReactCommon.QueryResult<
 export function mockGetDestinationDetails({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: GetDestinationDetails;
   variables?: GetDestinationDetailsVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: GetDestinationDetailsDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }

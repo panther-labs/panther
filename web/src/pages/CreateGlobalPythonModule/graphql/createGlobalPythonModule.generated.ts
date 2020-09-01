@@ -19,6 +19,7 @@
 import * as Types from '../../../../__generated__/schema';
 
 import { GlobalPythonModuleFull } from '../../../graphql/fragments/GlobalPythonModuleFull.generated';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -81,15 +82,14 @@ export type CreateGlobalPythonModuleMutationOptions = ApolloReactCommon.BaseMuta
 export function mockCreateGlobalPythonModule({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: CreateGlobalPythonModule;
   variables?: CreateGlobalPythonModuleVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: CreateGlobalPythonModuleDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }

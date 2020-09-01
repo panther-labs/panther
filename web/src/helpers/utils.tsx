@@ -90,7 +90,7 @@ export const formatDatetime = (datetime: string, verbose = false) => {
   const utcOffset = dayjs(datetime).utcOffset() / 60;
 
   const suffix = `G[M]T${utcOffset > 0 ? '+' : ''}${utcOffset !== 0 ? utcOffset : ''}`;
-  const format = verbose ? `dddd, MMMM YYYY, HH:mm (${suffix})` : `YYYY-MM-DD HH:mm ${suffix}`;
+  const format = verbose ? `dddd, DD MMMM YYYY, HH:mm (${suffix})` : `YYYY-MM-DD HH:mm ${suffix}`;
 
   // properly format the date
   return dayjs(datetime).format(format);
@@ -349,6 +349,14 @@ export const remToPx = (rem: string) => {
 export const addTrailingSlash = (url: string) => {
   return url.endsWith('/') ? url : `${url}/`;
 };
+
+/**
+ * Strips hashes and query params from a URI, returning the pathname
+ *
+ * @param {String} uri A relative URI
+ * @returns {String} The same URI stripped of hashes and query params
+ */
+export const getPathnameFromURI = (uri: string) => uri.split(/[?#]/)[0];
 
 export const getCurrentYear = () => {
   return dayjs().format('YYYY');

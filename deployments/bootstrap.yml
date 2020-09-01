@@ -378,6 +378,21 @@ Resources:
           - Topic: !Ref InputNotificationsTopic
             Event: s3:ObjectCreated:*
 
+  InputDataBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref InputDataBucket
+      PolicyDocument:
+        Statement:
+          - Sid: ForceSSL
+            Effect: Deny
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub arn:${AWS::Partition}:s3:::${InputDataBucket}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+
   ProcessedData: # processed security logs (JSON stage data)
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
@@ -450,35 +465,12 @@ Resources:
               Resource: !Sub ${DataReplicationBucket}/*
 
   ProcessedDataPolicy: # read access on processed data bucket for log subscriptions
-    Condition: ConfigureLogSubscriptions
     Type: AWS::S3::BucketPolicy
     Properties:
       Bucket: !Ref ProcessedData
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          - Sid: ReadBucket
-            Effect: Allow
-            Principal:
-              AWS: !Ref LogSubscriptionPrincipals
-            Action: s3:ListBucket
-            Resource: !GetAtt ProcessedData.Arn
-          - Sid: ReadLogData
-            Effect: Allow
-            Principal:
-              AWS: !Ref LogSubscriptionPrincipals
-            Action:
-              - s3:GetObject
-              - s3:GetObjectVersion
-            Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedData}/logs/*
-          - Sid: ReadRuleData
-            Effect: Allow
-            Principal:
-              AWS: !Ref LogSubscriptionPrincipals
-            Action:
-              - s3:GetObject
-              - s3:GetObjectVersion
-            Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedData}/rules/*
           - Sid: ForceSSL
             Effect: Deny
             Principal: '*'
@@ -487,6 +479,28 @@ Resources:
             Condition:
               Bool:
                 aws:SecureTransport: false
+          - !If
+            - ConfigureLogSubscriptions
+            - Sid: ReadBucket
+              Effect: Allow
+              Principal:
+                AWS: !Ref LogSubscriptionPrincipals
+              Action: s3:ListBucket
+              Resource: !GetAtt ProcessedData.Arn
+            - !Ref AWS::NoValue
+          - !If
+            - ConfigureLogSubscriptions
+            - Sid: ReadLogAndRuleData
+              Effect: Allow
+              Principal:
+                AWS: !Ref LogSubscriptionPrincipals
+              Action:
+                - s3:GetObject
+                - s3:GetObjectVersion
+              Resource:
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedData}/logs/*
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedData}/rules/*
+            - !Ref AWS::NoValue
 
   AthenaResults: # athena query results
     Type: AWS::S3::Bucket

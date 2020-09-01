@@ -19,6 +19,7 @@
 import * as Types from '../../../__generated__/schema';
 
 import { IntegrationItemHealthDetails } from './IntegrationItemHealthDetails.generated';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 
 export type SqsLogSourceIntegrationDetails = Pick<
@@ -32,13 +33,7 @@ export type SqsLogSourceIntegrationDetails = Pick<
 > & {
   sqsConfig: Pick<
     Types.SqsConfig,
-    | 'logTypes'
-    | 'allowedPrincipalArns'
-    | 'allowedSourceArns'
-    | 's3Bucket'
-    | 's3Prefix'
-    | 'logProcessingRole'
-    | 'queueUrl'
+    'logTypes' | 'allowedPrincipalArns' | 'allowedSourceArns' | 'queueUrl'
   >;
   health: { sqsStatus?: Types.Maybe<IntegrationItemHealthDetails> };
 };
@@ -55,9 +50,6 @@ export const SqsLogSourceIntegrationDetails = gql`
       logTypes
       allowedPrincipalArns
       allowedSourceArns
-      s3Bucket
-      s3Prefix
-      logProcessingRole
       queueUrl
     }
     health {

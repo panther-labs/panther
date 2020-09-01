@@ -19,6 +19,7 @@
 import * as Types from '../../../../../__generated__/schema';
 
 import { UserDetails } from '../../../../graphql/fragments/UserDetails.generated';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -70,15 +71,14 @@ export type EditUserMutationOptions = ApolloReactCommon.BaseMutationOptions<
 export function mockEditUser({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: EditUser;
   variables?: EditUserVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: EditUserDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }

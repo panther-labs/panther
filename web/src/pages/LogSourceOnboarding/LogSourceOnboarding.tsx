@@ -19,14 +19,14 @@
 import React from 'react';
 import { Box, Card, FadeIn } from 'pouncejs';
 import urls from 'Source/urls';
-import LogSourceCard from 'Components/LogSourceCard';
 import s3Logo from 'Assets/s3-minimal-logo.svg';
 import sqsLogo from 'Assets/sqs-minimal-logo.svg';
 import gsuiteLogo from 'Assets/gsuite-minimal-logo.svg';
 import eventBridgeLogo from 'Assets/eventbridge-minimal-logo.svg';
 import oktaLogo from 'Assets/okta-minimal-logo.svg';
 import withSEO from 'Hoc/withSEO';
-import { WizardPanelWrapper } from 'Components/Wizard';
+import { WizardPanel } from 'Components/Wizard';
+import LogSourceCard from './LogSourceCard';
 
 const logSourcesConfig = [
   {
@@ -62,25 +62,23 @@ const LogSourceOnboarding: React.FC = () => {
   return (
     <FadeIn>
       <Card p={6} mb={6}>
-        <WizardPanelWrapper>
-          <WizardPanelWrapper.Content>
-            <WizardPanelWrapper.Heading
-              title="Select a Source Type"
-              subtitle="Please select the source type you want to configure from the list below"
-            />
-            <Box mx={10}>
-              {logSourcesConfig.map(config => (
-                <LogSourceCard
-                  key={config.title}
-                  logo={config.logo}
-                  title={config.title}
-                  disabled={config.disabled}
-                  to={`${urls.logAnalysis.sources.create(config.type)}`}
-                />
-              ))}
-            </Box>
-          </WizardPanelWrapper.Content>
-        </WizardPanelWrapper>
+        <WizardPanel>
+          <WizardPanel.Heading
+            title="Select a Source Type"
+            subtitle="Please select the source type you want to configure from the list below"
+          />
+          <Box mx={10}>
+            {logSourcesConfig.map(config => (
+              <LogSourceCard
+                key={config.title}
+                logo={config.logo}
+                title={config.title}
+                disabled={config.disabled}
+                to={`${urls.logAnalysis.sources.create(config.type)}`}
+              />
+            ))}
+          </Box>
+        </WizardPanel>
       </Card>
     </FadeIn>
   );

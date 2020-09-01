@@ -23,7 +23,7 @@ import { FastField, Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import { LOG_TYPES } from 'Source/constants';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
-import { WizardPanelWrapper } from 'Components/Wizard';
+import { WizardPanel } from 'Components/Wizard';
 import { pantherConfig } from 'Source/config';
 import { SqsLogSourceWizardValues } from '../SqsSourceWizard';
 
@@ -32,7 +32,7 @@ const SqsSourceConfigurationPanel: React.FC = () => {
 
   return (
     <Box width={460} m="auto">
-      <WizardPanelWrapper.Heading
+      <WizardPanel.Heading
         title={
           initialValues.integrationId ? 'Update the SQS source' : "Let's start with the basics"
         }

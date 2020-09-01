@@ -20,7 +20,7 @@ import React from 'react';
 import { Flex, FormError } from 'pouncejs';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import { useFormikContext } from 'formik';
-import { WizardPanelWrapper } from 'Components/Wizard';
+import { WizardPanel } from 'Components/Wizard';
 import { S3LogSourceWizardValues } from '../S3LogSourceWizard';
 
 const SuccessPanel: React.FC = () => {
@@ -34,7 +34,7 @@ const SuccessPanel: React.FC = () => {
 
   return (
     <Flex justify="center" align="center" direction="column" mx="auto" width={400}>
-      <WizardPanelWrapper.Heading
+      <WizardPanel.Heading
         title="Almost Done!"
         subtitle={
           initialValues.integrationId

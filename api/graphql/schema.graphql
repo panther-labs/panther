@@ -62,6 +62,7 @@ type Query {
   policy(input: GetPolicyInput!): PolicyDetails
   policies(input: ListPoliciesInput): ListPoliciesResponse
   policiesForResource(input: PoliciesForResourceInput): ListComplianceItemsResponse
+  listAvailableLogTypes: ListAvailableLogTypesResponse
   listComplianceIntegrations: [ComplianceIntegration!]!
   listLogIntegrations: [LogIntegration!]!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
@@ -423,9 +424,6 @@ type SqsConfig {
   logTypes: [String!]!
   allowedPrincipalArns: [String]
   allowedSourceArns: [String]
-  s3Bucket: String!
-  s3Prefix: String
-  logProcessingRole: String
   queueUrl: String!
 }
 
@@ -1004,4 +1002,8 @@ enum DestinationTypeEnum {
 enum AnalysisTypeEnum {
   RULE
   POLICY
+}
+
+type ListAvailableLogTypesResponse {
+  logTypes: [String]
 }
