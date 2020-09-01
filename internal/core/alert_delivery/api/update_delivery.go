@@ -79,8 +79,7 @@ func updateAlert(alertID string, deliveryResponse []*alertModels.DeliveryRespons
 	response := alertModels.UpdateAlertDeliveryOutput{}
 
 	// We log, but do not return the error because this lambda execution needs to succeede regardless
-	// if this invocation failed. Worst case, the user will see in the frontend that the status will be
-	// unknown and will be able to re-send the alert to the applicable destinations.
+	// if this invocation failed. By default, the genericapi will retry up to 3x before failure.
 	if err := genericapi.Invoke(lambdaClient, alertsAPI, &input, &response); err != nil {
 		zap.L().Error("Invoking UpdateAlertDelivery failed", zap.Any("error", err))
 	}
