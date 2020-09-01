@@ -38,9 +38,12 @@ const (
 //
 // Exactly one action must be specified, see comments below for examples.
 type LambdaInput struct {
-	// DispatchAlerts is our alias for an SQSMessage so that we can invoke directly
-	// in AWS with a proper SQSMessage JSON payload without needing to put data on
-	// the queue and wait for the trigger. Do not change `json:"Records"`
+	// `DispatchAlerts` is an alias for `SQSMessage` so that we can invoke directly
+	// in AWS UI with a valid `SQSMessage` JSON payload without needing to put data on
+	// the queue and wait for the trigger. This matches the raw SQS message format
+	// (hence 'Records' being the name of the field), but genericapi will route the
+	// request to the DispatchAlerts handler. This way all requests can be routed
+	// by genericapi without having to inspect the message ahead of time.
 	DispatchAlerts []*DispatchAlertsInput `json:"Records"`
 	DeliverAlert   *DeliverAlertInput     `json:"deliverAlert"`
 	SendTestAlert  *SendTestAlertInput    `json:"sendTestAlert"`
