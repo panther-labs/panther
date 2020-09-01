@@ -19,31 +19,26 @@ package mage
  */
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
-	"github.com/panther-labs/panther/pkg/awscfn"
 	"github.com/panther-labs/panther/pkg/prompt"
 	"github.com/panther-labs/panther/tools/cfnstacks"
 	"github.com/panther-labs/panther/tools/mage/clients"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
-type deleteStackResult struct {
-	stackName string
-	err       error
-}
-
 // Teardown Destroy all Panther infrastructure
 func Teardown() {
 	masterStack := teardownConfirmation()
-	if err := destroyCfnStacks(masterStack); err != nil {
+	if err := util.DestroyCfnStacks(masterStack, pollInterval); err != nil {
 		log.Fatal(err)
 	}
 
 	// CloudFormation will not delete any Panther S3 buckets (DeletionPolicy: Retain), we do so here.
-	util.DestroyPantherBuckets(clients.S3())
+	if err := util.DestroyPantherBuckets(clients.S3()); err != nil {
+		log.Fatal(err)
+	}
 
 	log.Info("successfully removed Panther infrastructure")
 }
@@ -71,66 +66,4 @@ func teardownConfirmation() string {
 	}
 
 	return stack
-}
-
-// Destroy all Panther CloudFormation stacks
-func destroyCfnStacks(masterStack string) error {
-	if masterStack != "" {
-		log.Infof("deleting master stack '%s'", masterStack)
-		return awscfn.DeleteStack(clients.Cfn(), log, masterStack, pollInterval)
-	}
-
-	// Define a common routine for processing stack delete results
-	var errCount, finishCount int
-	handleResult := func(result deleteStackResult) {
-		finishCount++
-		if result.err != nil {
-			log.Errorf("    - %s failed to delete (%d/%d): %v",
-				result.stackName, finishCount, cfnstacks.NumStacks, result.err)
-			errCount++
-			return
-		}
-
-		log.Infof("    √ %s deleted (%d/%d)", result.stackName, finishCount, cfnstacks.NumStacks)
-	}
-
-	// Trigger the deletion of the main stacks in parallel
-	//
-	// The bootstrap stacks have to be last because of the ECS cluster and custom resource Lambda.
-	parallelStacks := []string{
-		cfnstacks.Appsync,
-		cfnstacks.Cloudsec,
-		cfnstacks.Core,
-		cfnstacks.Dashboard,
-		cfnstacks.Frontend,
-		cfnstacks.LogAnalysis,
-		cfnstacks.Onboard,
-	}
-	log.Infof("deleting %d CloudFormation stacks", cfnstacks.NumStacks)
-
-	deleteFunc := func(stack string, r chan deleteStackResult) {
-		r <- deleteStackResult{stackName: stack, err: awscfn.DeleteStack(clients.Cfn(), log, stack, pollInterval)}
-	}
-
-	results := make(chan deleteStackResult)
-	for _, stack := range parallelStacks {
-		go deleteFunc(stack, results)
-	}
-
-	// Wait for all of the main stacks to finish deleting
-	for i := 0; i < len(parallelStacks); i++ {
-		handleResult(<-results)
-	}
-
-	// Now finish with the bootstrap stacks
-	// bootstrap-gateway must be deleted first because it will empty the ECR repo
-	go deleteFunc(cfnstacks.Gateway, results)
-	handleResult(<-results)
-	go deleteFunc(cfnstacks.Bootstrap, results)
-	handleResult(<-results)
-
-	if errCount > 0 {
-		return fmt.Errorf("%d stack(s) failed to delete", errCount)
-	}
-	return nil
 }

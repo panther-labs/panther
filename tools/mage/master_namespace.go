@@ -42,7 +42,6 @@ import (
 
 const (
 	// The region will be interpolated in these names
-	publicAssetsBucket    = "panther-community-%s"
 	publicImageRepository = "349240696275.dkr.ecr.%s.amazonaws.com/panther-community"
 	masterStackName       = "panther"
 )
@@ -186,7 +185,7 @@ func publishToRegion(version, region string) {
 	awsSession := session.Must(session.NewSession(
 		aws.NewConfig().WithMaxRetries(10).WithRegion(region)))
 
-	bucket := fmt.Sprintf(publicAssetsBucket, region)
+	bucket := util.PublicAssetsBucket()
 	s3Key := fmt.Sprintf("v%s/panther.yml", version)
 	s3URL := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucket, s3Key)
 

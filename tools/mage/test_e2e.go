@@ -22,11 +22,10 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
-	"strings"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -38,7 +37,6 @@ import (
 	orgmodels "github.com/panther-labs/panther/api/lambda/organization/models"
 	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	usermodels "github.com/panther-labs/panther/api/lambda/users/models"
-	"github.com/panther-labs/panther/pkg/awscfn"
 	"github.com/panther-labs/panther/pkg/genericapi"
 	"github.com/panther-labs/panther/pkg/prompt"
 	"github.com/panther-labs/panther/tools/mage/clients"
@@ -93,99 +91,62 @@ type e2eContext struct {
 
 // End-to-end test suite - deploy, migrate, test, teardown
 func (Test) E2e() {
+	// User input is not allowed by the testing library, so we have to get it in advance
 	log.Warnf("End-to-end tests will destroy all Panther infra in account %s (%s)",
 		clients.AccountID(), clients.Region())
-	result := prompt.Read("Are you sure you want to continue? (yes|no) ", prompt.NonemptyValidator)
-	if strings.ToLower(result) != "yes" {
-		log.Fatal("test aborted")
+
+	var stage int
+	if txt := prompt.Read("Testing stage to start at [1]: "); txt == "" {
+		stage = 1
+	} else {
+		var err error
+		stage, err = strconv.Atoi(txt)
+		if err != nil {
+			log.Fatalf("expected int: %v", err)
+		}
 	}
 
-	if err := goPkgIntegrationTest("test:e2e", "./tools/mage/e2e", true); err != nil {
+	// We need the user email and previous version only for the initial deployment
+	var email, oldVersion string
+	if stage <= 2 {
+		email = prompt.Read("First user email: ", prompt.EmailValidator)
+
+		defaultOldVersion, err := util.LatestPublishedVersion()
+		if err != nil {
+			log.Fatal(err)
+		}
+		oldVersion = prompt.Read("Previous version [" + defaultOldVersion + "]: ")
+		if oldVersion == "" {
+			oldVersion = defaultOldVersion
+		}
+	}
+
+	env := map[string]string{
+		"EMAIL":       email,
+		"OLD_VERSION": oldVersion,
+		"STAGE":       strconv.Itoa(stage),
+	}
+	if err := goPkgIntegrationTest("test:e2e", "./tools/mage/e2e", true, env); err != nil {
 		log.Fatal(err)
 	}
 	log.Fatal("stopping early")
 
+	// *********** //
 	ctx := e2eContext{
 		FirstUserEmail: prompt.Read("Email for initial invite: ", prompt.EmailValidator),
 	}
 
-	// TODO - allow specifying STAGE to jump to
-
-	// Make sure there are no leftover resources that would fail the deployment.
-	log.Info("***** test:e2e : Stage 1/8 : Pre-Teardown *****")
-	// TODO - teardown masterStack as well?
-	// TODO - mage clean setup?
-	Teardown() // includes getSession()
-	// I tried removing AWSService IAM roles here - AWS does not allow it
-
 	ctx.GatewayClient = clients.HTTPGateway()
 	ctx.Region = clients.Region()
-	ctx.deployPreviousVersion()
+	//ctx.deployPreviousVersion()
 	ctx.interactWithOldVersion()
-	ctx.migrate()
+	ctx.migrate() // TODO - mage clean setup?
 	ctx.validateMigration()
 
-	// TODO - use a fresh account from AWS organizations for this
 	// TODO - stage 6 - validate product functionality - enable policy/rule, verify alerts
 	// TODO - stage 7 - integration test
 	// TODO - stage 8 - teardown + verify no leftover resources
 	// TODO - stage 9 - cleanup (bucket, IAM role, ecr repo)
-}
-
-// Deploy the official published pre-packaged deployment for the previous version.
-func (ctx *e2eContext) deployPreviousVersion() {
-	log.Info("***** test:e2e : Stage 2/8 : Deploy Previous Release *****")
-	s3URL := fmt.Sprintf("https://panther-community-%s.s3.amazonaws.com/%s/panther.yml",
-		ctx.Region, strings.Split(util.RepoVersion(), "-")[0])
-	downloadPath := filepath.Join("out", "deployments", "panther.yml")
-	log.Infof("downloading %s to %s", s3URL, downloadPath)
-	if err := util.RunWithCapturedOutput("curl", s3URL, "--output", downloadPath); err != nil {
-		log.Fatal(err)
-	}
-
-	// Deploy the template directly, do not use our standard deploy code with packaging.
-	err := sh.RunV(filepath.Join(pythonVirtualEnvPath, "bin", "sam"), "deploy",
-		"--capabilities", "CAPABILITY_AUTO_EXPAND", "CAPABILITY_IAM", "CAPABILITY_NAMED_IAM",
-		"--parameter-overrides", "CompanyDisplayName="+e2eCompanyName, "FirstUserEmail="+ctx.FirstUserEmail,
-		"FirstUserGivenName="+e2eFirstName, "FirstUserFamilyName="+e2eLastName,
-		"--region", ctx.Region,
-		"--stack-name", masterStackName,
-		"--template", downloadPath,
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Lookup API gateway IDs
-	// These aren't top-level outputs, so we need to find the gateway nested stack.
-	cfnClient := clients.Cfn()
-	var gatewayStackName string
-	listStacksInput := &cfn.ListStacksInput{
-		StackStatusFilter: []*string{
-			aws.String(cfn.StackStatusCreateComplete),
-			aws.String(cfn.StackStatusUpdateComplete),
-			aws.String(cfn.StackStatusUpdateRollbackComplete),
-		},
-	}
-	err = cfnClient.ListStacksPages(listStacksInput, func(page *cfn.ListStacksOutput, isLast bool) bool {
-		for _, stack := range page.StackSummaries {
-			if strings.HasPrefix(*stack.StackName, "panther-BootstrapGateway") {
-				gatewayStackName = *stack.StackName
-				return false // stop paging
-			}
-		}
-		return true // keep paging
-	})
-	if err != nil {
-		log.Fatalf("failed to list CloudFormation stacks: %v", err)
-	}
-	if gatewayStackName == "" {
-		log.Fatal("failed to find successful panther-BootstrapGateway stack")
-	}
-
-	outputs := awscfn.StackOutputs(cfnClient, log, gatewayStackName)
-	ctx.AnalysisClient = analysisclient.NewHTTPClientWithConfig(nil, analysisclient.DefaultTransportConfig().
-		WithBasePath("/v1").WithHost(outputs["AnalysisApiEndpoint"]))
 }
 
 // Interact with the last Panther release to generate some custom data we can verify after the migration.

@@ -44,7 +44,7 @@ func (t Test) Integration() {
 
 	if pkg := os.Getenv("PKG"); pkg != "" {
 		// One specific package requested: run integration tests just for that
-		if err := goPkgIntegrationTest("test:integration", pkg, mg.Verbose()); err != nil {
+		if err := goPkgIntegrationTest("test:integration", pkg, mg.Verbose(), nil); err != nil {
 			log.Fatal(err)
 		}
 		return
@@ -52,8 +52,9 @@ func (t Test) Integration() {
 
 	errCount := 0
 	util.Walk(".", func(path string, info os.FileInfo) {
+		// This intentionally does not include the end-to-end test (e2e_test.go)
 		if filepath.Base(path) == "integration_test.go" {
-			if err := goPkgIntegrationTest("test:integration", "./"+filepath.Dir(path), mg.Verbose()); err != nil {
+			if err := goPkgIntegrationTest("test:integration", "./"+filepath.Dir(path), mg.Verbose(), nil); err != nil {
 				log.Error(err)
 				errCount++
 			}
@@ -72,13 +73,19 @@ func (t Test) Integration() {
 }
 
 // Run integration tests for a single Go package.
-func goPkgIntegrationTest(mageCmd, pkg string, verbose bool) error {
+func goPkgIntegrationTest(mageCmd, pkg string, verbose bool, env map[string]string) error {
 	// -count 1 is the idiomatic way to disable test caching
-	args := []string{"test", pkg, "-run=TestIntegration*", "-p", "1", "-count", "1"}
+	// -timeout 0 disables the test timeout
+	args := []string{"test", pkg, "-run=TestIntegration*", "-p", "1", "-count", "1", "-timeout", "0"}
 	if verbose {
 		args = append(args, "-v")
 	}
 
-	log.Infof("%s: INTEGRATION_TEST=True go %s", mageCmd, strings.Join(args, " "))
-	return sh.RunWithV(map[string]string{"INTEGRATION_TEST": "True"}, "go", args...)
+	if env == nil {
+		env = make(map[string]string)
+	}
+	env["INTEGRATION_TEST"] = "True"
+
+	log.Infof("%s: %v go %s", mageCmd, env, strings.Join(args, " "))
+	return sh.RunWithV(env, "go", args...)
 }

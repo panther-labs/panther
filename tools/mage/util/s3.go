@@ -21,6 +21,9 @@ package util
 import (
 	"fmt"
 	"os"
+	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -36,6 +39,11 @@ const (
 	// Upper bound on the number of s3 object versions we'll delete manually.
 	s3MaxDeletes = 10000
 )
+
+// The name of the bucket containing published Panther releases
+func PublicAssetsBucket() string {
+	return "panther-community-" + clients.Region()
+}
 
 // Upload a local file to S3.
 func UploadFileToS3(path, bucket, key string) (*s3manager.UploadOutput, error) {
@@ -53,11 +61,76 @@ func UploadFileToS3(path, bucket, key string) (*s3manager.UploadOutput, error) {
 	})
 }
 
+// Find the most recent published version of Panther in S3, e.g. "1.7.1"
+//
+// This provides an alternative to checking the git tags in the repo.
+func LatestPublishedVersion() (string, error) {
+	bucket := PublicAssetsBucket()
+	input := &s3.ListObjectsV2Input{
+		Bucket: &bucket,
+		// Packaged assets are hex and will not start with 'v'.
+		// This will match only published master templates, e.g. "v1.7.1/master.yml"
+		Prefix: aws.String("v"),
+	}
+
+	// Sorting versions by string is not sufficient ("v1.10.0" < "v1.3.0")
+	// Instead, keep track of the the semver components
+	type semver struct {
+		major int
+		minor int
+		patch int
+	}
+	var versions []semver
+
+	err := clients.S3().ListObjectsV2Pages(input, func(page *s3.ListObjectsV2Output, _ bool) bool {
+		for _, object := range page.Contents {
+			if strings.HasSuffix(*object.Key, "panther.yml") {
+				// "v1.7.1/panther.yml" => "1.7.1"
+				version := strings.TrimPrefix(*object.Key, "v")
+				version = strings.TrimSuffix(version, "/panther.yml")
+				split := strings.Split(version, ".")
+
+				versions = append(versions, semver{
+					major: mustParseInt(split[0]),
+					minor: mustParseInt(split[1]),
+					patch: mustParseInt(split[2]),
+				})
+			}
+		}
+		return true
+	})
+	if err != nil {
+		return "", err
+	}
+
+	sort.Slice(versions, func(i, j int) bool {
+		if versions[i].major != versions[j].major {
+			return versions[i].major < versions[j].major
+		}
+		if versions[i].minor != versions[j].minor {
+			return versions[i].minor < versions[j].minor
+		}
+		return versions[i].patch < versions[j].patch
+	})
+
+	log.Debugf("found %d published versions in %s: %v", len(versions), bucket, versions)
+	latest := versions[len(versions)-1]
+	return fmt.Sprintf("%d.%d.%d", latest.major, latest.minor, latest.patch), nil
+}
+
+func mustParseInt(x string) int {
+	result, err := strconv.Atoi(x)
+	if err != nil {
+		log.Fatalf("expected int: %s: %v", x, err)
+	}
+	return result
+}
+
 // Delete all objects in panther-* buckets and then remove them.
-func DestroyPantherBuckets(client *s3.S3) {
+func DestroyPantherBuckets(client *s3.S3) error {
 	response, err := client.ListBuckets(&s3.ListBucketsInput{})
 	if err != nil {
-		log.Fatalf("failed to list S3 buckets: %v", err)
+		return fmt.Errorf("failed to list S3 buckets: %v", err)
 	}
 
 	for _, bucket := range response.Buckets {
@@ -80,23 +153,27 @@ func DestroyPantherBuckets(client *s3.S3) {
 		// S3 bucket names are not predictable, and neither are stack names (when using master template).
 		// However, both 'mage deploy' and the master template have these tags set.
 		if hasApplicationTag && hasStackTag {
-			removeBucket(client, bucket.Name)
+			if err := removeBucket(client, bucket.Name); err != nil {
+				return err
+			}
 		}
 	}
+
+	return nil
 }
 
 // Empty, then delete the given S3 bucket.
 //
 // Or, if there are too many objects to delete directly, set a 1-day expiration lifecycle policy instead.
-func removeBucket(client *s3.S3, bucketName *string) {
+func removeBucket(client *s3.S3, bucketName *string) error {
 	// Prevent new writes to the bucket
 	_, err := client.PutBucketAcl(&s3.PutBucketAclInput{ACL: aws.String("private"), Bucket: bucketName})
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NoSuchBucket" {
 			log.Debugf("%s already deleted", *bucketName)
-			return
+			return nil
 		}
-		log.Fatalf("%s put-bucket-acl failed: %v", *bucketName, err)
+		return fmt.Errorf("%s put-bucket-acl failed: %v", *bucketName, err)
 	}
 
 	input := &s3.ListObjectVersionsInput{Bucket: bucketName}
@@ -118,7 +195,7 @@ func removeBucket(client *s3.S3, bucketName *string) {
 		return len(objectVersions) < s3MaxDeletes
 	})
 	if err != nil {
-		log.Fatalf("failed to list object versions for %s: %v", *bucketName, err)
+		return fmt.Errorf("failed to list object versions for %s: %v", *bucketName, err)
 	}
 
 	if len(objectVersions) >= s3MaxDeletes {
@@ -147,7 +224,7 @@ func removeBucket(client *s3.S3, bucketName *string) {
 			},
 		})
 		if err != nil {
-			log.Fatalf("failed to set expiration policy for %s: %v", *bucketName, err)
+			return fmt.Errorf("failed to set expiration policy for %s: %v", *bucketName, err)
 		}
 		// remove any notifications since we are leaving the bucket (best effort)
 		notificationInput := &s3.PutBucketNotificationConfigurationInput{
@@ -159,7 +236,7 @@ func removeBucket(client *s3.S3, bucketName *string) {
 			log.Warnf("Unable to clear S3 event notifications on bucket %s (%v). Use the console to clear.",
 				bucketName, err)
 		}
-		return
+		return nil
 	}
 
 	// Here there aren't too many objects, we can delete them in a handful of BatchDelete calls.
@@ -169,10 +246,12 @@ func removeBucket(client *s3.S3, bucketName *string) {
 		Delete: &s3.Delete{Objects: objectVersions},
 	})
 	if err != nil {
-		log.Fatalf("failed to batch delete objects: %v", err)
+		return fmt.Errorf("failed to batch delete objects: %v", err)
 	}
 	time.Sleep(time.Second) // short pause since S3 is eventually consistent to avoid next call from failing
 	if _, err = client.DeleteBucket(&s3.DeleteBucketInput{Bucket: bucketName}); err != nil {
-		log.Fatalf("failed to delete bucket %s: %v", *bucketName, err)
+		return fmt.Errorf("failed to delete bucket %s: %v", *bucketName, err)
 	}
+
+	return nil
 }
