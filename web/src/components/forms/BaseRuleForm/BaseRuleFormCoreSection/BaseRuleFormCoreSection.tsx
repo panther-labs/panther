@@ -45,11 +45,14 @@ const severityItemToString = (severity: string) => capitalize(severity.toLowerCa
 const dedupPeriodMinutesOptions = [15, 30, 60, 180, 720, 1440];
 
 const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type }) => {
+  const isPolicy = type === 'policy';
+
   // Read the values from the "parent" form. We expect a formik to be declared in the upper scope
   // since this is a "partial" form. If no Formik context is found this will error out intentionally
   const { values, initialValues } = useFormikContext<RuleFormValues | PolicyFormValues>();
   const { pushSnackbar } = useSnackbar();
   const { data } = useListAvailableLogTypes({
+    skip: isPolicy,
     onError: () => pushSnackbar({ title: "Couldn't fetch your available log types" }),
   });
 
@@ -106,7 +109,6 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
     availableOutputIds,
   ]);
 
-  const isPolicy = type === 'policy';
   return (
     <Panel
       title={isPolicy ? 'Policy Settings' : 'Rule Settings'}
