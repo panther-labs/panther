@@ -210,11 +210,12 @@ func tfUpdateDeploymentRole() error {
 
 	// Replace EOT block in TF file.
 	dstPath := filepath.Join("deployments", "auxiliary", "terraform", "panther_deployment_role", "main.tf")
-	tf := readFile(dstPath)
+	tf := util.ReadFile(dstPath)
 	pattern := regexp.MustCompile(`<<EOT(.|\n)+?EOT`)
 	tf = pattern.ReplaceAll(tf, []byte("<<EOT\n"+string(policyText)+"\nEOT"))
+	util.WriteFile(dstPath, tf)
 
-	return writeFile(dstPath, tf)
+	return nil
 }
 
 // Update CloudFormation IAM policy document to be Terraform compatible.

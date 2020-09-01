@@ -48,7 +48,7 @@ func (b Build) API() {
 
 func (b Build) goGenerate() error {
 	const generatePattern = "./..."
-	logger.Info("build:api: generating Go code with go:generate")
+	log.Info("build:api: generating Go code with go:generate")
 	if err := sh.Run("go", "generate", generatePattern); err != nil {
 		return fmt.Errorf("go:generate failed: %s", err)
 	}
