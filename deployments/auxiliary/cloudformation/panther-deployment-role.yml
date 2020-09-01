@@ -120,7 +120,7 @@ Resources:
               - ec2:UpdateSecurityGroupRuleDescriptionsIngress
               - elasticfilesystem:CreateAccessPoint
               - elasticfilesystem:CreateFileSystem
-              - elasticfilesystem:CreateMountPoint
+              - elasticfilesystem:CreateMountTarget
               - elasticfilesystem:DeleteAccessPoint
               - elasticfilesystem:DeleteFileSystem
               - elasticfilesystem:DeleteMountTarget
