@@ -58,7 +58,7 @@ type LambdaInput struct {
 //     }
 // }
 type SendTestAlertInput struct {
-	OutputIds []string `json:"outputIds" validate:"required,gt=0,dive,uuid4"`
+	OutputIds []string `json:"outputIds" validate:"gt=0,dive,uuid4"`
 }
 
 // SendTestAlertOutput is an alias for anything
@@ -77,7 +77,7 @@ type SendTestAlertOutput struct {
 // }
 type DeliverAlertInput struct {
 	AlertID   string   `json:"alertId" validate:"required,hexadecimal,len=32"` // AlertID is an MD5 hash
-	OutputIds []string `json:"outputIds" validate:"required,gt=0,dive,uuid4"`
+	OutputIds []string `json:"outputIds" validate:"gt=0,dive,uuid4"`
 }
 
 // DispatchAlertsInput is an alias for an SQSMessage
