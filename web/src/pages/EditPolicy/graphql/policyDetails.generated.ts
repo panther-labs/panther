@@ -20,6 +20,7 @@ import * as Types from '../../../../__generated__/schema';
 
 import { PolicyDetailsMain } from '../../../graphql/fragments/PolicyDetailsMain.generated';
 import { PolicyDetailsExtra } from '../../../graphql/fragments/PolicyDetailsExtra.generated';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
@@ -82,15 +83,14 @@ export type PolicyDetailsQueryResult = ApolloReactCommon.QueryResult<
 export function mockPolicyDetails({
   data,
   variables,
-  error,
+  errors,
 }: {
   data: PolicyDetails;
   variables?: PolicyDetailsVariables;
-  error?: Error;
+  errors?: GraphQLError[];
 }) {
   return {
     request: { query: PolicyDetailsDocument, variables },
-    result: { data },
-    error,
+    result: { data, errors },
   };
 }

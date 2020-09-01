@@ -1,0 +1,59 @@
+package logtypesapi
+
+/**
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import (
+	"context"
+	"sort"
+
+	"go.uber.org/zap"
+)
+
+// ListAvailableLogTypes lists all available log type ids
+func (api *API) ListAvailableLogTypes(ctx context.Context) (*AvailableLogTypes, error) {
+	logTypes, err := api.ExternalAPI.ListLogTypes(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if api.NativeLogTypes != nil {
+		native := api.NativeLogTypes()
+		L(ctx).Debug(`merging native log types with external API`,
+			zap.Strings(`external`, logTypes),
+			zap.Strings(`native`, native),
+		)
+		logTypes = appendDistinct(logTypes, native)
+	}
+	sort.Strings(logTypes)
+	return &AvailableLogTypes{
+		LogTypes: logTypes,
+	}, nil
+}
+
+func appendDistinct(dst []string, src []string) []string {
+skip:
+	for _, s := range src {
+		for _, d := range dst {
+			if d == s {
+				continue skip
+			}
+		}
+		dst = append(dst, s)
+	}
+	return dst
+}
