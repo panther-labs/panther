@@ -101,12 +101,7 @@ func filterDispatches(dispatchStatuses []DispatchStatus) ([]DispatchStatus, []Di
 	successDispatches := []DispatchStatus{}
 	failedDispatches := []DispatchStatus{}
 	for _, status := range dispatchStatuses {
-		// Always warn of any generic failures
 		if !status.Success {
-			zap.L().Warn(
-				"failed to send alert to output",
-				zap.Any("status", status),
-			)
 			failedDispatches = append(failedDispatches, status)
 			continue
 		}
