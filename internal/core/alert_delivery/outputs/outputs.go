@@ -182,7 +182,7 @@ func generateDetailedAlertMessage(alert *alertModels.Alert) string {
 }
 
 func generateAlertTitle(alert *alertModels.Alert) string {
-	if alert.IsTest {
+	if alert.IsResent {
 		return "Re-sent Alert: " + *alert.Title
 	}
 	if alert.Title != nil {

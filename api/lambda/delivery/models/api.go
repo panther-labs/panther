@@ -129,4 +129,7 @@ type Alert struct {
 
 	// IsTest is a test flag set only to replace the contents of the alert with dummy values
 	IsTest bool `json:"isTest,omitempty"`
+
+	// IsResent is a flag set to indicate the alert is not new
+	IsResent bool `json:"isResent,omitempty"`
 }

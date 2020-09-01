@@ -75,5 +75,6 @@ func generateTestAlert() *deliveryModels.Alert {
 		Title:               aws.String("Test Alert"),
 		RetryCount:          0,
 		IsTest:              true,
+		IsResent:            false,
 	}
 }

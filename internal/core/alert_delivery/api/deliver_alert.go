@@ -131,6 +131,8 @@ func populateAlertData(alertItem *alertTable.AlertItem) (*deliveryModels.Alert, 
 		AlertID:             &alertItem.AlertID,
 		Title:               alertItem.Title,
 		RetryCount:          0,
+		IsTest:              false,
+		IsResent:            true,
 	}, nil
 }
 
