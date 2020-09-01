@@ -90,13 +90,13 @@ func getAlert(input *deliveryModels.DeliverAlertInput) (*alertTable.AlertItem, e
 
 // populateAlertData - queries the rule or policy associated and merges in the details to the alert
 func populateAlertData(alertItem *alertTable.AlertItem) (*deliveryModels.Alert, error) {
-	// TODO: Fetch and merge the related fields from the Rule into the alert.
-	// Alerts triggerd by Policies are not supported.
-	// ...
-	// Note: we need to account for the corner case when there is no rule
-	// because it has been deleted. For now, we are taking the data from Dynamo
-	// and populating as much as we have. Eventually, sending an alert should
-	// be _exactly_ the same as if it were triggered by a Rule.
+	commonFields := []zap.Field{
+		zap.String("alertId", alertItem.AlertID),
+		zap.String("ruleId", alertItem.RuleID),
+		zap.String("ruleVersion", alertItem.RuleVersion),
+	}
+	// Create generic resonse to be sent to the frontend. We log detailed info to CW.
+	genericErrorMessage := "Could not find the rule associated with this alert!"
 
 	response, err := analysisClient.Operations.GetRule(&operations.GetRuleParams{
 		RuleID:     alertItem.RuleID,
@@ -104,18 +104,19 @@ func populateAlertData(alertItem *alertTable.AlertItem) (*deliveryModels.Alert, 
 		HTTPClient: httpClient,
 	})
 	if err != nil {
-		return nil, err
+		zap.L().Error("Error retrieving rule", append(commonFields, zap.Error(err))...)
+		return nil, &genericapi.InternalError{Message: genericErrorMessage}
 	}
 
 	if response == nil {
-		return nil, &genericapi.InvalidInputError{
-			Message: "There was a problem fetching the rule!"}
+		zap.L().Error("Retrieving rule response was nil", commonFields...)
+		return nil, &genericapi.InternalError{Message: genericErrorMessage}
 	}
 
 	rule := response.GetPayload()
 	if rule == nil {
-		return nil, &genericapi.InvalidInputError{
-			Message: "The rule associated with the alert has been deleted!"}
+		zap.L().Error("Rule payload was nil", commonFields...)
+		return nil, &genericapi.InvalidInputError{Message: genericErrorMessage}
 	}
 
 	return &deliveryModels.Alert{
