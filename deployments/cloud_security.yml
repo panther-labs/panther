@@ -1433,8 +1433,6 @@ Resources:
             - Effect: Allow
               Action: ssm:GetParametersByPath
               Resource: '*'
-              # Resource: !Sub arn:${AWS::Partition}:ssm:${AWS::Region}::parameter/aws/service/global-infrastructure/services/*
-              #arn:aws:ssm:us-west-2::parameter/aws/service/global-infrastructure/services/ec2/regions
         - Id: InvokeResourcesAPI
           Version: 2012-10-17
           Statement:
