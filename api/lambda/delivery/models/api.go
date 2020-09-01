@@ -88,7 +88,13 @@ type DeliverAlertInput struct {
 // 	  {
 // 		"MessageId": "messageId",
 // 		"ReceiptHandle": "MessageReceiptHandle",
-// 		"Body": "{\"analysisId\":\"Test.Analysis.ID\",\"type\":\"RULE\",\"createdAt\":\"2020-09-01T21:10:41.80307Z\",\"severity\":\"INFO\",\"outputIds\":[\"1954ae35-f896-4d55-941f-f596ea80da86\",\"d498bac4-7ec3-432c-92b5-9a470d592c16\"],\"analysisDescription\":\"A test alert\",\"analysisName\":\"Test Analysis Name\",\"version\":\"abc\",\"runbook\":\"A runbook link\",\"tags\":[\"test\",\"alert\"],\"alertId\":\"1302cc3f4fab40b37f6f6a441e944206\",\"title\":\"Test Alert\"}",
+// 		"Body": "{\"analysisId\":\"Test.Analysis.ID\",\"type\":\"RULE\", 		\
+//        \"createdAt\":\"2020-09-01T21:10:41.80307Z\",\"severity\":\"INFO\", 	\
+//        \"outputIds\":[\"1954ae35-f896-4d55-941f-f596ea80da86\",				\
+//        \"d498bac4-7ec3-432c-92b5-9a470d592c16\"],\"analysisDescription\":	\
+//        \"A test alert\",\"analysisName\":\"Test Analysis Name\",\"version\":	\
+//        \"abc\",\"runbook\":\"A runbook link\",\"tags\":[\"test\",\"alert\"],	\
+//        \"alertId\":\"1302cc3f4fab40b37f6f6a441e944206\",\"title\":\"Test Alert\"}",
 // 		"Md5OfBody": "7b270e59b47ff90a553787216d55d91d",
 // 		"Attributes": {
 // 		  "ApproximateReceiveCount": "1",
