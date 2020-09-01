@@ -646,6 +646,8 @@ Resources:
           ALERT_URL_PREFIX: !Sub https://${AppDomainURL}/log-analysis/alerts/
           ALERTS_API: panther-alerts-api
           ALERTS_TABLE_NAME: panther-log-alert-info
+          ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+          ANALYSIS_API_PATH: v1
           APP_DOMAIN_URL: !Sub https://${AppDomainURL}
           MAX_RETRY_DELAY_SECS: !FindInMap [Alerts, MaxRetryDelay, Seconds]
           MIN_RETRY_DELAY_SECS: !FindInMap [Alerts, MinRetryDelay, Seconds]
@@ -723,6 +725,12 @@ Resources:
               Action:
                 - dynamodb:GetItem
               Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-log-alert-info
+        - Id: GetRule
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/rule
 
   AlertDeliveryLogGroup:
     Type: AWS::Logs::LogGroup

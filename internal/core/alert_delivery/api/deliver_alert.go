@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/api/gateway/analysis/client/operations"
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertTable "github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
@@ -41,9 +42,11 @@ func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModel
 	if err != nil {
 		return nil, err
 	}
-
 	// Fetch the Policy or Rule associated with the alert to fill in the missing attributes
-	alert := populateAlertData(alertItem)
+	alert, err := populateAlertData(alertItem)
+	if err != nil {
+		return nil, err
+	}
 
 	// Get our Alert -> Output mappings. We determine which destinations an alert should be sent.
 	alertOutputMap, err := getAlertOutputMapping(alert, input.OutputIds)
@@ -86,7 +89,7 @@ func getAlert(input *deliveryModels.DeliverAlertInput) (*alertTable.AlertItem, e
 }
 
 // populateAlertData - queries the rule or policy associated and merges in the details to the alert
-func populateAlertData(alertItem *alertTable.AlertItem) *deliveryModels.Alert {
+func populateAlertData(alertItem *alertTable.AlertItem) (*deliveryModels.Alert, error) {
 	// TODO: Fetch and merge the related fields from the Rule into the alert.
 	// Alerts triggerd by Policies are not supported.
 	// ...
@@ -94,21 +97,41 @@ func populateAlertData(alertItem *alertTable.AlertItem) *deliveryModels.Alert {
 	// because it has been deleted. For now, we are taking the data from Dynamo
 	// and populating as much as we have. Eventually, sending an alert should
 	// be _exactly_ the same as if it were triggered by a Rule.
-	return &deliveryModels.Alert{
-		// AnalysisID: alertItem.AlertID,
-		Type:      deliveryModels.RuleType, // For now, we hard-code this value as only RULE is supported
-		CreatedAt: alertItem.CreationTime,
-		Severity:  alertItem.Severity,
-		OutputIds: alertItem.OutputIds,
-		// AnalysisDescription: alertItem.Title,
-		AnalysisName: alertItem.RuleDisplayName,
-		Version:      &alertItem.RuleVersion,
-		// Runbook:      alertItem.Runbook,
-		// Tags:         alertItem.Tags,
-		AlertID:    &alertItem.AlertID,
-		Title:      aws.String("[re-sent] " + *alertItem.Title),
-		RetryCount: 0,
+
+	response, err := analysisClient.Operations.GetRule(&operations.GetRuleParams{
+		RuleID:     alertItem.RuleID,
+		HTTPClient: httpClient,
+	})
+	if err != nil {
+		return nil, err
 	}
+
+	if response == nil {
+		return nil, &genericapi.InvalidInputError{
+			Message: "There was a problem fetching the rule!"}
+	}
+
+	rule := response.GetPayload()
+	if rule == nil {
+		return nil, &genericapi.InvalidInputError{
+			Message: "The rule associated with the alert has been deleted!"}
+	}
+
+	return &deliveryModels.Alert{
+		AnalysisID:          string(rule.ID),
+		Type:                deliveryModels.RuleType,
+		CreatedAt:           alertItem.CreationTime,
+		Severity:            alertItem.Severity,
+		OutputIds:           alertItem.OutputIds,
+		AnalysisDescription: aws.String(string(rule.Description)),
+		AnalysisName:        aws.String(string(rule.DisplayName)),
+		Version:             &alertItem.RuleVersion,
+		Runbook:             aws.String(string(rule.Runbook)),
+		Tags:                rule.Tags,
+		AlertID:             &alertItem.AlertID,
+		Title:               alertItem.Title,
+		RetryCount:          0,
+	}, nil
 }
 
 // getAlertOutputMapping - gets a map for a given alert to it's outputIds

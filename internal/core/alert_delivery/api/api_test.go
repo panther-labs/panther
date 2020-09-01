@@ -47,5 +47,7 @@ func initEnvironmentTest() {
 	os.Setenv("ALERTS_TABLE_NAME", "alerts-table-name")
 	os.Setenv("RULE_INDEX_NAME", "rule-index")
 	os.Setenv("TIME_INDEX_NAME", "time-index")
+	os.Setenv("ANALYSIS_API_HOST", "analysis-api-host")
+	os.Setenv("ANALYSIS_API_PATH", "analysis-api-path")
 	Setup()
 }
