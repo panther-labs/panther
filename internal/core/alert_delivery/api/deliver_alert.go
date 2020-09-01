@@ -100,6 +100,7 @@ func populateAlertData(alertItem *alertTable.AlertItem) (*deliveryModels.Alert, 
 
 	response, err := analysisClient.Operations.GetRule(&operations.GetRuleParams{
 		RuleID:     alertItem.RuleID,
+		VersionID:  &alertItem.RuleVersion,
 		HTTPClient: httpClient,
 	})
 	if err != nil {

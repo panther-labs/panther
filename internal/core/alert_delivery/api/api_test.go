@@ -48,6 +48,6 @@ func initEnvironmentTest() {
 	os.Setenv("RULE_INDEX_NAME", "rule-index")
 	os.Setenv("TIME_INDEX_NAME", "time-index")
 	os.Setenv("ANALYSIS_API_HOST", "analysis-api-host")
-	os.Setenv("ANALYSIS_API_PATH", "analysis-api-path")
+	os.Setenv("ANALYSIS_API_PATH", "v1")
 	Setup()
 }
