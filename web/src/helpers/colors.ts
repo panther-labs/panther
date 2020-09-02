@@ -14,11 +14,15 @@ const restrictToRange = (number, min, max) => {
   return x + min;
 };
 
+/**
+ * Given a string, it creates a hash which will map to an HSL color which can be "restricted" in
+ * order to produce specific types of colors
+ */
 const stringToHSL = ({
   str,
   hue = [0, 360],
-  saturation = [75, 100],
-  lightness = [40, 60],
+  saturation = [0, 100],
+  lightness = [0, 100],
 }: StringToHSL) => {
   if (!str.length) {
     return `hsl(0,0,0)`;
