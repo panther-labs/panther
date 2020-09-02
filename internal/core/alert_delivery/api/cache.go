@@ -63,5 +63,5 @@ func (c *alertOutputsCache) setExpiry(time time.Time) {
 
 // isExpired - determines if the cache has expired
 func (c *alertOutputsCache) isExpired() bool {
-	return time.Since(c.getExpiry()) > outputsRefreshInterval
+	return time.Since(c.getExpiry()) > env.OutputsRefreshInterval
 }

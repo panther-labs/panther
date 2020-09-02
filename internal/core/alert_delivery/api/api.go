@@ -40,50 +40,36 @@ import (
 type API struct{}
 
 type envConfig struct {
-	AlertRetryCount           int    `required:"true" split_words:"true"`
-	OutputsRefreshIntervalSec int    `required:"true" split_words:"true"`
-	MinRetryDelaySecs         int    `required:"true" split_words:"true"`
-	MaxRetryDelaySecs         int    `required:"true" split_words:"true"`
-	AlertsTableName           string `required:"true" split_words:"true"`
-	RuleIndexName             string `required:"true" split_words:"true"`
-	TimeIndexName             string `required:"true" split_words:"true"`
-	AlertQueueURL             string `required:"true" split_words:"true"`
-	AlertsAPI                 string `required:"true" split_words:"true"`
-	OutputsAPI                string `required:"true" split_words:"true"`
-	AnalysisAPIHost           string `required:"true" split_words:"true"`
-	AnalysisAPIPath           string `required:"true" split_words:"true"`
+	AlertRetryCount        int           `required:"true" split_words:"true"`
+	OutputsRefreshInterval time.Duration `required:"true" split_words:"true"`
+	MinRetryDelaySecs      int           `required:"true" split_words:"true"`
+	MaxRetryDelaySecs      int           `required:"true" split_words:"true"`
+	AlertsTableName        string        `required:"true" split_words:"true"`
+	RuleIndexName          string        `required:"true" split_words:"true"`
+	TimeIndexName          string        `required:"true" split_words:"true"`
+	AlertQueueURL          string        `required:"true" split_words:"true"`
+	AlertsAPI              string        `required:"true" split_words:"true"`
+	OutputsAPI             string        `required:"true" split_words:"true"`
+	AnalysisAPIHost        string        `required:"true" split_words:"true"`
+	AnalysisAPIPath        string        `required:"true" split_words:"true"`
 }
 
 // Globals
 var (
-	env                    envConfig
-	maxRetryCount          int
-	outputsRefreshInterval time.Duration
-	minRetryDelaySecs      int
-	maxRetryDelaySecs      int
-	alertQueueURL          string
-	alertsAPI              string
-	outputsAPI             string
-	awsSession             *session.Session
-	alertsTableClient      *alertTable.AlertsTable
-	lambdaClient           lambdaiface.LambdaAPI
-	outputClient           outputs.API
-	sqsClient              sqsiface.SQSAPI
-	outputsCache           *alertOutputsCache
-	httpClient             *http.Client
-	analysisClient         *analysisApiClient.PantherAnalysis
+	env               envConfig
+	awsSession        *session.Session
+	alertsTableClient *alertTable.AlertsTable
+	lambdaClient      lambdaiface.LambdaAPI
+	outputClient      outputs.API
+	sqsClient         sqsiface.SQSAPI
+	outputsCache      *alertOutputsCache
+	httpClient        *http.Client
+	analysisClient    *analysisApiClient.PantherAnalysis
 )
 
 // Setup - initialize global state
 func Setup() {
 	envconfig.MustProcess("", &env)
-	maxRetryCount = env.AlertRetryCount
-	outputsRefreshInterval = time.Duration(env.OutputsRefreshIntervalSec) * time.Second
-	minRetryDelaySecs = env.MinRetryDelaySecs
-	maxRetryDelaySecs = env.MaxRetryDelaySecs
-	alertQueueURL = env.AlertQueueURL
-	alertsAPI = env.AlertsAPI
-	outputsAPI = env.OutputsAPI
 	awsSession = session.Must(session.NewSession())
 	lambdaClient = lambda.New(awsSession)
 	outputClient = outputs.New(awsSession)

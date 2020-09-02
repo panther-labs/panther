@@ -46,7 +46,7 @@ func retry(alerts []*deliveryModels.Alert) {
 	}
 	input := &sqs.SendMessageBatchInput{
 		Entries:  make([]*sqs.SendMessageBatchRequestEntry, len(alerts)),
-		QueueUrl: aws.String(alertQueueURL),
+		QueueUrl: aws.String(env.AlertQueueURL),
 	}
 
 	rand.Seed(time.Now().UnixNano())
@@ -58,7 +58,7 @@ func retry(alerts []*deliveryModels.Alert) {
 		}
 
 		input.Entries[i] = &sqs.SendMessageBatchRequestEntry{
-			DelaySeconds: aws.Int64(int64(randomInt(minRetryDelaySecs, maxRetryDelaySecs))),
+			DelaySeconds: aws.Int64(int64(randomInt(env.MinRetryDelaySecs, env.MaxRetryDelaySecs))),
 			Id:           aws.String(strconv.Itoa(i)),
 			MessageBody:  aws.String(body),
 		}

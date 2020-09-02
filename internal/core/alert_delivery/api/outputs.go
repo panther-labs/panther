@@ -80,7 +80,7 @@ func fetchOutputs() ([]*outputModels.AlertOutput, error) {
 	zap.L().Debug("getting default outputs")
 	input := outputModels.LambdaInput{GetOutputsWithSecrets: &outputModels.GetOutputsWithSecretsInput{}}
 	outputs := outputModels.GetOutputsOutput{}
-	if err := genericapi.Invoke(lambdaClient, outputsAPI, &input, &outputs); err != nil {
+	if err := genericapi.Invoke(lambdaClient, env.OutputsAPI, &input, &outputs); err != nil {
 		return nil, err
 	}
 	return outputs, nil

@@ -54,7 +54,7 @@ func (API) DispatchAlerts(input []*deliveryModels.DispatchAlertsInput) (interfac
 	zap.L().Debug("Deliveries that succeeded", zap.Int("num_success", len(success)))
 
 	// Obtain a list of alerts that should be retried and put back on to the queue
-	alertsToRetry := getAlertsToRetry(failed, maxRetryCount)
+	alertsToRetry := getAlertsToRetry(failed, env.AlertRetryCount)
 
 	// Put any alerts that need to be retried back into the queue
 	retry(alertsToRetry)

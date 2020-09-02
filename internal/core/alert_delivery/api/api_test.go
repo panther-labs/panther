@@ -38,7 +38,7 @@ func (m *mockLambdaClient) Invoke(input *lambda.InvokeInput) (*lambda.InvokeOutp
 
 func initEnvironmentTest() {
 	os.Setenv("ALERT_RETRY_COUNT", "10")
-	os.Setenv("OUTPUTS_REFRESH_INTERVAL_SEC", "30")
+	os.Setenv("OUTPUTS_REFRESH_INTERVAL", "30s")
 	os.Setenv("MIN_RETRY_DELAY_SECS", "10")
 	os.Setenv("MAX_RETRY_DELAY_SECS", "30")
 	os.Setenv("ALERT_QUEUE_URL", "sqs.url")
