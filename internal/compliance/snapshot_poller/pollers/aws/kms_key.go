@@ -161,7 +161,7 @@ func getKeyPolicy(kmsSvc kmsiface.KMSAPI, keyID *string) (*string, error) {
 		&kms.GetKeyPolicyInput{KeyId: keyID, PolicyName: &defaultPolicyName},
 	)
 	if err != nil {
-		return nil, errors.Wrapf(err, "KMS.GetKeyPolicy: %s", aws.StringValue(keyID))
+		return nil, errors.Wrapf(err, "KMS.GetKeyPolicy: key %s, default policy %s", aws.StringValue(keyID), defaultPolicyName)
 	}
 
 	return out.Policy, nil

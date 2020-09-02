@@ -81,6 +81,14 @@ func getNetworkACL(svc ec2iface.EC2API, networkACLID *string) (*ec2.NetworkAcl, 
 		return nil, errors.Wrapf(err, "EC2.DescribeNetworkACLs: %s", aws.StringValue(networkACLID))
 	}
 
+	if len(nacl.NetworkAcls) != 1 {
+		return nil, errors.WithMessagef(
+			errors.New("EC2.DescribeNetworkACLs"),
+			"expected exactly one network ACL when describing %s, but found %d network ACLs",
+			aws.StringValue(networkACLID),
+			len(nacl.NetworkAcls),
+		)
+	}
 	return nacl.NetworkAcls[0], nil
 }
 

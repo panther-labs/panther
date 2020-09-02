@@ -403,12 +403,17 @@ func getUserPolicy(svc iamiface.IAMAPI, userName *string, policyName *string) (*
 		PolicyName: policyName,
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "IAM.GetUserPolicy: %s", aws.StringValue(userName))
+		return nil, errors.Wrapf(err, "IAM.GetUserPolicy: user %s, policy %s", aws.StringValue(userName), aws.StringValue(policyName))
 	}
 
 	decodedPolicy, err := url.QueryUnescape(*policy.PolicyDocument)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to url decode inline policy document for policy %s", *policyName)
+		return nil, errors.Wrapf(
+			err,
+			"unable to url decode inline policy document of user %s, policy %s",
+			aws.StringValue(userName),
+			aws.StringValue(policyName),
+		)
 	}
 
 	return aws.String(decodedPolicy), nil

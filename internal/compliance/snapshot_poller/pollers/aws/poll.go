@@ -147,7 +147,7 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	roleArn, err := arn.Parse(auditRoleARN)
 	// This error cannot be retried so we don't return it
 	if err != nil {
-		zap.L().Error("unable to parse constructed audit role", zap.Error(err))
+		zap.L().Error("unable to parse constructed audit role", zap.Error(err), zap.String("roleARN", auditRoleARN))
 		return nil, nil
 	}
 
@@ -166,7 +166,7 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	// we don't need to lookup the active regions.
 	if scanRequest.ResourceID != nil {
 		// Individual resource scan
-		zap.L().Info("processing single resource scan")
+		zap.L().Debug("processing single resource scan")
 		return singleResourceScan(scanRequest, pollerResourceInput)
 	}
 
@@ -290,7 +290,7 @@ func singleResourceScan(
 		// Handle cases where the ResourceID is an ARN
 		resourceARN, err := arn.Parse(*scanRequest.ResourceID)
 		if err != nil {
-			zap.L().Error("unable to parse resourceID", zap.Error(err))
+			zap.L().Error("unable to parse resourceID", zap.Error(err), zap.String("resourceID", *scanRequest.ResourceID))
 			// Don't return an error here because the scan request is not retryable
 			return nil, nil
 		}

@@ -115,6 +115,14 @@ func describeCluster(ecsSvc ecsiface.ECSAPI, arn *string) (*ecs.Cluster, error) 
 		return nil, nil
 	}
 
+	if len(out.Clusters) != 1 {
+		return nil, errors.WithMessagef(
+			errors.New("ECS.DescribeClusters"),
+			"expected exactly one ECS cluster when describing %s, but found %d clusters",
+			aws.StringValue(arn),
+			len(out.Clusters),
+		)
+	}
 	return out.Clusters[0], nil
 }
 

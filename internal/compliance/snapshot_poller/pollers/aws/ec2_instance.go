@@ -81,6 +81,19 @@ func getInstance(svc ec2iface.EC2API, instanceID *string) (*ec2.Instance, error)
 		return nil, errors.Wrapf(err, "EC2.DescribeInstances: %s", aws.StringValue(instanceID))
 	}
 
+	if len(instance.Reservations) != 1 || len(instance.Reservations[0].Instances) != 1 {
+		instances := 0
+		for _, reservation := range instance.Reservations {
+			instances += len(reservation.Instances)
+		}
+		return nil, errors.WithMessagef(
+			errors.New("EC2.DescribeInstances"),
+			"expected exactly 1 reservation & 1 instance from EC2.DescribeInstances when describing %s, found %d reservations and %d instances",
+			aws.StringValue(instanceID),
+			len(instance.Reservations),
+			instances,
+		)
+	}
 	return instance.Reservations[0].Instances[0], nil
 }
 

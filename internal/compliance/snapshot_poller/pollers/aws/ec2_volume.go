@@ -82,6 +82,14 @@ func getVolume(svc ec2iface.EC2API, volumeID *string) (*ec2.Volume, error) {
 		}
 		return nil, errors.Wrapf(err, "EC2.DescribeVolumes: %s", aws.StringValue(volumeID))
 	}
+	if len(volume.Volumes) != 1 {
+		return nil, errors.WithMessagef(
+			errors.New("EC2.DescribeVolumes"),
+			"expected exactly one volume when describing %s, but found %d volumes",
+			aws.StringValue(volumeID),
+			len(volume.Volumes),
+		)
+	}
 	return volume.Volumes[0], nil
 }
 

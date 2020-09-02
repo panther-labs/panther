@@ -104,6 +104,14 @@ func getApplicationLoadBalancer(svc elbv2iface.ELBV2API, loadBalancerARN *string
 		return nil, errors.Wrapf(err, "ELBV2.DescribeLoadBalancers: %s", aws.StringValue(loadBalancerARN))
 	}
 
+	if len(loadBalancer.LoadBalancers) != 1 {
+		return nil, errors.WithMessagef(
+			errors.New("ELBV2.DescribeLoadBalancers"),
+			"expected exactly one ELBV2 load balancer when describing %s, but found %d load balancers",
+			aws.StringValue(loadBalancerARN),
+			len(loadBalancer.LoadBalancers),
+		)
+	}
 	return loadBalancer.LoadBalancers[0], nil
 }
 
@@ -290,7 +298,7 @@ func PollElbv2ApplicationLoadBalancers(pollerInput *awsmodels.ResourcePollerInpu
 	// Next generate a list of SSL policies to be shared by the load balancer snapshots
 	err = generateSSLPolicies(elbv2Svc)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
 	resources := make([]*apimodels.AddResourceEntry, 0, len(loadBalancers))

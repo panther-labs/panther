@@ -139,7 +139,7 @@ func getPolicyVersion(
 		&iam.GetPolicyVersionInput{PolicyArn: arn, VersionId: version},
 	)
 	if err != nil {
-		return "", errors.Wrapf(err, "IAM.GetPolicyVersion: %s", aws.StringValue(arn))
+		return "", errors.Wrapf(err, "IAM.GetPolicyVersion: policy %s, version %s", aws.StringValue(arn), aws.StringValue(version))
 	}
 
 	policyDoc, err := url.QueryUnescape(*policy.PolicyVersion.Document)

@@ -99,6 +99,15 @@ func getRedshiftCluster(svc redshiftiface.RedshiftAPI, clusterID *string) (*reds
 		}
 		return nil, errors.Wrapf(err, "Redshift.DescribeClusters: %s", aws.StringValue(clusterID))
 	}
+
+	if len(cluster.Clusters) != 1 {
+		return nil, errors.WithMessagef(
+			errors.New("Redshift.DescribeClusters"),
+			"expected exactly 1 cluster from Redshift.DescribeClusters when describing %s, found %d clusters",
+			aws.StringValue(clusterID),
+			len(cluster.Clusters),
+		)
+	}
 	return cluster.Clusters[0], nil
 }
 

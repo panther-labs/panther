@@ -19,7 +19,6 @@ package aws
  */
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -300,14 +299,14 @@ func buildS3BucketSnapshot(s3Svc s3iface.S3API, bucket *s3.Bucket) (*awsmodels.S
 	//   and return an error if an unexpected one is returned (as above in getPublicAccessBlock).
 	loggingPolicy, err := getBucketLogging(s3Svc, bucket.Name)
 	if err != nil {
-		zap.L().Debug("S3.GetBucketLogging", zap.Error(err))
+		zap.L().Debug("S3.GetBucketLogging", zap.Error(err), zap.String("bucketName", *bucket.Name))
 	} else {
 		s3Snapshot.LoggingPolicy = loggingPolicy.LoggingEnabled
 	}
 
 	versioning, err := getBucketVersioning(s3Svc, bucket.Name)
 	if err != nil {
-		zap.L().Debug("S3.GetBucketVersioning", zap.Error(err))
+		zap.L().Debug("S3.GetBucketVersioning", zap.Error(err), zap.String("bucketName", *bucket.Name))
 	} else {
 		s3Snapshot.Versioning = versioning.Status
 		s3Snapshot.MFADelete = versioning.MFADelete
@@ -315,21 +314,21 @@ func buildS3BucketSnapshot(s3Svc s3iface.S3API, bucket *s3.Bucket) (*awsmodels.S
 
 	lifecycleRules, err := getBucketLifecycleConfiguration(s3Svc, bucket.Name)
 	if err != nil {
-		zap.L().Debug("no bucket lifecycle configuration set", zap.Error(err))
+		zap.L().Debug("no bucket lifecycle configuration set", zap.Error(err), zap.String("bucketName", *bucket.Name))
 	} else {
 		s3Snapshot.LifecycleRules = lifecycleRules
 	}
 
 	encryption, err := getBucketEncryption(s3Svc, bucket.Name)
 	if err != nil {
-		zap.L().Debug("no bucket encryption set", zap.Error(err))
+		zap.L().Debug("no bucket encryption set", zap.Error(err), zap.String("bucketName", *bucket.Name))
 	} else {
 		s3Snapshot.EncryptionRules = encryption
 	}
 
 	policy, err := getBucketPolicy(s3Svc, bucket.Name)
 	if err != nil {
-		zap.L().Debug("no bucket policy set", zap.Error(err))
+		zap.L().Debug("no bucket policy set", zap.Error(err), zap.String("bucketName", *bucket.Name))
 	} else {
 		s3Snapshot.Policy = policy
 	}
@@ -371,7 +370,6 @@ func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Add
 		}
 
 		if *region == *pollerInput.Region {
-			fmt.Println("adding bucket")
 			buckets = append(buckets, bucket)
 		}
 	}

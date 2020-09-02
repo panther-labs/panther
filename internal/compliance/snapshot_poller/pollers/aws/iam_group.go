@@ -142,7 +142,12 @@ func getGroupPolicy(iamSvc iamiface.IAMAPI, groupName *string, policyName *strin
 
 	decodedPolicy, err := url.QueryUnescape(*out.PolicyDocument)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to url decode inline policy document %s", *policyName)
+		return nil, errors.Wrapf(
+			err,
+			"unable to url decode inline policy document %s for group %s",
+			aws.StringValue(policyName),
+			aws.StringValue(groupName),
+		)
 	}
 	return aws.String(decodedPolicy), nil
 }

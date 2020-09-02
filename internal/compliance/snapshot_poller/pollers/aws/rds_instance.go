@@ -97,6 +97,14 @@ func getRDSInstance(svc rdsiface.RDSAPI, instanceARN *string) (*rds.DBInstance, 
 			zap.String("resourceType", awsmodels.RDSInstanceSchema))
 		return nil, nil
 	}
+	if len(instance.DBInstances) != 1 {
+		return nil, errors.WithMessagef(
+			errors.New("RDS.DescribeDBInstances"),
+			"expected exactly 1 DB Instance from RDS.DescribeDBInstances when describing %s, found %d DB instances",
+			aws.StringValue(instanceARN),
+			len(instance.DBInstances),
+		)
+	}
 	return instance.DBInstances[0], nil
 }
 

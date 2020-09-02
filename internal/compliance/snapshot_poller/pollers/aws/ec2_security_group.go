@@ -81,6 +81,14 @@ func getSecurityGroup(svc ec2iface.EC2API, securityGroupID *string) (*ec2.Securi
 		return nil, errors.Wrapf(err, "EC2.DescribeSecurityGroups: %s", aws.StringValue(securityGroupID))
 	}
 
+	if len(securityGroup.SecurityGroups) != 1 {
+		return nil, errors.WithMessagef(
+			errors.New("EC2.DescribeSecurityGroups"),
+			"expected exactly one security group when describing %s, but found %d security groups",
+			aws.StringValue(securityGroupID),
+			len(securityGroup.SecurityGroups),
+		)
+	}
 	return securityGroup.SecurityGroups[0], nil
 }
 

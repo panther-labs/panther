@@ -99,6 +99,14 @@ func getVPC(svc ec2iface.EC2API, vpcID *string) (*ec2.Vpc, error) {
 		}
 		return nil, errors.Wrapf(err, "EC2.DescribeVpcs: %s", aws.StringValue(vpcID))
 	}
+	if len(vpc.Vpcs) != 1 {
+		return nil, errors.WithMessagef(
+			errors.New("EC2.DescribeVpcs"),
+			"expected exactly one VPC when describing %s, but found %d VPCs",
+			aws.StringValue(vpcID),
+			len(vpc.Vpcs),
+		)
+	}
 	return vpc.Vpcs[0], nil
 }
 
