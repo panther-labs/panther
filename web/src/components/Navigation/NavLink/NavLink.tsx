@@ -19,7 +19,7 @@
 import { Box, Icon, IconProps } from 'pouncejs';
 import React from 'react';
 import useRouter from 'Hooks/useRouter';
-import { addTrailingSlash } from 'Helpers/utils';
+import { addTrailingSlash, getPathnameFromURI } from 'Helpers/utils';
 import { Link as RRLink } from 'react-router-dom';
 
 type NavLinkProps = {
@@ -31,7 +31,7 @@ type NavLinkProps = {
 const NavLink: React.FC<NavLinkProps> = ({ icon, label, to }) => {
   const { location } = useRouter();
   const pathname = addTrailingSlash(location.pathname);
-  const destination = addTrailingSlash(to);
+  const destination = addTrailingSlash(getPathnameFromURI(to));
   const isActive = pathname.startsWith(destination);
 
   return (

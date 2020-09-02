@@ -65,11 +65,7 @@ interface BaseDestinationFormProps<AdditionalValues extends Partial<DestinationC
 // The validation checks that Formik will run
 export const defaultValidationSchema = Yup.object().shape({
   displayName: Yup.string().required(),
-  defaultForSeverity: Yup.object<{ [key in SeverityEnum]: boolean }>().test(
-    'atLeastOneSeverity',
-    'You need to select at least one severity type',
-    val => Object.values(val).some(checked => checked)
-  ),
+  defaultForSeverity: Yup.object<{ [key in SeverityEnum]: boolean }>(),
 });
 
 function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigInput>>({

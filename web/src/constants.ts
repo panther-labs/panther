@@ -18,7 +18,7 @@
 
 import { pantherConfig } from 'Source/config';
 import slackLogo from 'Assets/slack-minimal-logo.svg';
-import { DestinationTypeEnum } from 'Generated/schema';
+import { DestinationTypeEnum, SeverityEnum } from 'Generated/schema';
 import msTeamsLogo from 'Assets/ms-teams-minimal-logo.svg';
 import opsgenieLogo from 'Assets/opsgenie-minimal-logo.svg';
 import jiraLogo from 'Assets/jira-minimal-logo.svg';
@@ -28,6 +28,7 @@ import snsLogo from 'Assets/aws-sns-minimal-logo.svg';
 import sqsLogo from 'Assets/aws-sqs-minimal-logo.svg';
 import asanaLogo from 'Assets/asana-minimal-logo.svg';
 import customWebhook from 'Assets/custom-webhook-minimal-logo.svg';
+import { Theme } from 'pouncejs';
 
 export enum LogIntegrationsEnum {
   's3' = 'aws-s3',
@@ -216,4 +217,12 @@ export const DESTINATIONS: Record<
     title: 'Custom Webhook',
     type: DestinationTypeEnum.Customwebhook,
   },
+};
+
+export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: keyof Theme['colors'] } = {
+  [SeverityEnum.Critical]: 'red-400' as const,
+  [SeverityEnum.High]: 'orange-500' as const,
+  [SeverityEnum.Medium]: 'yellow-500' as const,
+  [SeverityEnum.Low]: 'blue-300' as const,
+  [SeverityEnum.Info]: 'gray-300' as const,
 };
