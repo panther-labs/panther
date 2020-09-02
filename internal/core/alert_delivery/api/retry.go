@@ -34,36 +34,53 @@ import (
 
 const maxSQSBackoff = 30 * time.Second
 
-// Generate a random int between lower (inclusive) and upper (exclusive).
-func randomInt(lower, upper int) int {
-	return rand.Intn(upper-lower) + lower
-}
-
 // retry - sends a list of alerts back to the queue with random delays.
-func retry(alerts []*deliveryModels.Alert) {
+func retry(alerts []*deliveryModels.Alert, queueURL string, minDelaySecs int, maxDelaySecs int) {
 	if len(alerts) == 0 {
 		return
 	}
-	input := &sqs.SendMessageBatchInput{
-		Entries:  make([]*sqs.SendMessageBatchRequestEntry, len(alerts)),
-		QueueUrl: aws.String(env.AlertQueueURL),
-	}
 
+	// Set a new seed on every invocation
 	rand.Seed(time.Now().UnixNano())
 
+	input := createInput(alerts, queueURL, minDelaySecs, maxDelaySecs)
+	sendToSQS(input)
+}
+
+func createInput(alerts []*deliveryModels.Alert, queueURL string, minDelaySecs int, maxDelaySecs int) *sqs.SendMessageBatchInput {
+	return &sqs.SendMessageBatchInput{
+		Entries:  createEntries(alerts, minDelaySecs, maxDelaySecs),
+		QueueUrl: aws.String(queueURL),
+	}
+}
+
+func createEntries(alerts []*deliveryModels.Alert, minRetryDelay int, maxRetryDelay int) []*sqs.SendMessageBatchRequestEntry {
+	entries := []*sqs.SendMessageBatchRequestEntry{}
 	for i, alert := range alerts {
 		body, err := jsoniter.MarshalToString(alert)
 		if err != nil {
 			zap.L().Panic("error encoding alert as JSON", zap.Error(err))
 		}
-
-		input.Entries[i] = &sqs.SendMessageBatchRequestEntry{
-			DelaySeconds: aws.Int64(int64(randomInt(env.MinRetryDelaySecs, env.MaxRetryDelaySecs))),
-			Id:           aws.String(strconv.Itoa(i)),
-			MessageBody:  aws.String(body),
-		}
+		delay := randomInt64n(minRetryDelay, maxRetryDelay)
+		entries = append(entries, createEntry(body, i, delay))
 	}
+	return entries
+}
 
+func createEntry(messageBody string, index int, delaySeconds int64) *sqs.SendMessageBatchRequestEntry {
+	return &sqs.SendMessageBatchRequestEntry{
+		Id:           aws.String(strconv.Itoa(index)),
+		DelaySeconds: aws.Int64(delaySeconds),
+		MessageBody:  aws.String(messageBody),
+	}
+}
+
+// Generate a random int between lower (inclusive) and upper (exclusive).
+func randomInt64n(min int, max int) int64 {
+	return rand.Int63n(int64(max)-int64(min)) + int64(min)
+}
+
+func sendToSQS(input *sqs.SendMessageBatchInput) {
 	if _, err := sqsbatch.SendMessageBatch(sqsClient, maxSQSBackoff, input); err != nil {
 		zap.L().Error("unable to retry failed alerts", zap.Error(err))
 	}

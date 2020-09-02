@@ -19,39 +19,49 @@ package api
  */
 
 import (
-	"errors"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
-	"github.com/stretchr/testify/assert"
+	jsoniter "github.com/json-iterator/go"
+	"github.com/stretchr/testify/require"
 
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 )
 
-type mockSQSClient struct {
-	sqsiface.SQSAPI
-	err bool
-}
-
-var sqsMessages int // store number of messages here for tests to verify
-
-func (m mockSQSClient) SendMessageBatch(input *sqs.SendMessageBatchInput) (*sqs.SendMessageBatchOutput, error) {
-	if m.err {
-		return nil, errors.New("internal service error")
-	}
-	sqsMessages = len(input.Entries)
-	return &sqs.SendMessageBatchOutput{
-		Successful: make([]*sqs.SendMessageBatchResultEntry, len(input.Entries)),
-	}, nil
-}
-
 func TestRetry(t *testing.T) {
-	initEnvironmentTest()
-	sqsClient = &mockSQSClient{}
+	mockSQS := &mockSQSClient{}
+	sqsClient = mockSQS
+
 	alert := sampleAlert()
 	alerts := []*deliveryModels.Alert{alert, alert, alert}
-	sqsMessages = 0
-	retry(alerts)
-	assert.Equal(t, 3, sqsMessages)
+	queueURL := "sqs-url"
+
+	body, err := jsoniter.MarshalToString(alert)
+	require.NoError(t, err)
+
+	input := &sqs.SendMessageBatchInput{
+		Entries: []*sqs.SendMessageBatchRequestEntry{
+			{
+				DelaySeconds: aws.Int64(int64(5)),
+				Id:           aws.String("0"),
+				MessageBody:  aws.String(body),
+			},
+			{
+				DelaySeconds: aws.Int64(int64(5)),
+				Id:           aws.String("1"),
+				MessageBody:  aws.String(body),
+			},
+			{
+				DelaySeconds: aws.Int64(int64(5)),
+				Id:           aws.String("2"),
+				MessageBody:  aws.String(body),
+			},
+		},
+		QueueUrl: aws.String(queueURL),
+	}
+
+	mockSQS.On("SendMessageBatch", input).Return(&sqs.SendMessageBatchOutput{}, nil).Once()
+	retry(alerts, queueURL, 5, 6)
+	mockSQS.AssertExpectations(t)
 }

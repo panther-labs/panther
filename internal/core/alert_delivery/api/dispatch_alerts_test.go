@@ -132,8 +132,8 @@ func TestGetAlertOutputMap(t *testing.T) {
 		alerts[0]: outputs,
 	}
 
-	// Need to expire the cache because other tests
-	outputsCache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
+	// Need to expire the cache because other tests mutate this global when run in parallel
+	outputsCache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5)))
 
 	result, err := getAlertOutputMap(alerts)
 	require.NoError(t, err)
@@ -171,8 +171,8 @@ func TestGetAlertOutputMapError(t *testing.T) {
 	// AlertOutputMap map[*deliveryModels.Alert][]*outputModels.AlertOutput
 	expectedResult := AlertOutputMap{}
 
-	// Need to expire the cache because other tests
-	outputsCache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
+	// Need to expire the cache because other tests mutate this global when run in parallel
+	outputsCache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5)))
 
 	result, err := getAlertOutputMap(alerts)
 	require.Error(t, err)

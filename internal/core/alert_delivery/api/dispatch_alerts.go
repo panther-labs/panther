@@ -57,7 +57,7 @@ func (API) DispatchAlerts(input []*deliveryModels.DispatchAlertsInput) (interfac
 	alertsToRetry := getAlertsToRetry(failed, env.AlertRetryCount)
 
 	// Put any alerts that need to be retried back into the queue
-	retry(alertsToRetry)
+	retry(alertsToRetry, env.AlertQueueURL, env.MinRetryDelaySecs, env.MaxRetryDelaySecs)
 
 	return nil, err
 }

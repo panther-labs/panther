@@ -23,6 +23,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
+	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -36,12 +38,22 @@ func (m *mockLambdaClient) Invoke(input *lambda.InvokeInput) (*lambda.InvokeOutp
 	return args.Get(0).(*lambda.InvokeOutput), args.Error(1)
 }
 
+type mockSQSClient struct {
+	sqsiface.SQSAPI
+	mock.Mock
+}
+
+func (m *mockSQSClient) SendMessageBatch(input *sqs.SendMessageBatchInput) (*sqs.SendMessageBatchOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*sqs.SendMessageBatchOutput), args.Error(1)
+}
+
 func initEnvironmentTest() {
 	os.Setenv("ALERT_RETRY_COUNT", "10")
 	os.Setenv("OUTPUTS_REFRESH_INTERVAL", "30s")
 	os.Setenv("MIN_RETRY_DELAY_SECS", "10")
 	os.Setenv("MAX_RETRY_DELAY_SECS", "30")
-	os.Setenv("ALERT_QUEUE_URL", "sqs.url")
+	os.Setenv("ALERT_QUEUE_URL", "sqs-url")
 	os.Setenv("ALERTS_API", "alerts-api")
 	os.Setenv("OUTPUTS_API", "outputs-api")
 	os.Setenv("ALERTS_TABLE_NAME", "alerts-table-name")
