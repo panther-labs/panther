@@ -94,7 +94,7 @@ func listCertificates(acmSvc acmiface.ACMAPI, nextMarker *string) (certs []*acm.
 			return true
 		})
 	if err != nil {
-		utils.LogAWSError("ACM.ListCertificatesPages", err)
+		return nil, nil, errors.Wrapf(err, "ACM.ListCertificatesPages")
 	}
 	return
 }
