@@ -208,7 +208,7 @@ func getClusterServices(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmodel
 		return nil, errors.Wrap(err, "ECS.ListServicesPages")
 	}
 
-	// If there are no services so stop here
+	// If there are no services stop here
 	if len(serviceArns) == 0 {
 		return nil, nil
 	}

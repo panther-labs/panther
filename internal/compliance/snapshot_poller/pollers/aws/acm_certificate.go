@@ -94,7 +94,7 @@ func listCertificates(acmSvc acmiface.ACMAPI, nextMarker *string) (certs []*acm.
 			return true
 		})
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "ACM.ListCertificatesPages")
+		return nil, nil, errors.Wrap(err, "ACM.ListCertificatesPages")
 	}
 	return
 }
@@ -103,7 +103,7 @@ func listCertificates(acmSvc acmiface.ACMAPI, nextMarker *string) (certs []*acm.
 func describeCertificate(acmSvc acmiface.ACMAPI, arn *string) (*acm.CertificateDetail, error) {
 	out, err := acmSvc.DescribeCertificate(&acm.DescribeCertificateInput{CertificateArn: arn})
 	if err != nil {
-		return nil, errors.Wrapf(err, "ACM.DescribeCertificate")
+		return nil, errors.Wrap(err, "ACM.DescribeCertificate")
 	}
 
 	return out.Certificate, nil
@@ -113,7 +113,7 @@ func describeCertificate(acmSvc acmiface.ACMAPI, arn *string) (*acm.CertificateD
 func listTagsForCertificate(acmSvc acmiface.ACMAPI, arn *string) ([]*acm.Tag, error) {
 	out, err := acmSvc.ListTagsForCertificate(&acm.ListTagsForCertificateInput{CertificateArn: arn})
 	if err != nil {
-		return nil, errors.Wrapf(err, "ACM.ListTagsForCertificate")
+		return nil, errors.Wrap(err, "ACM.ListTagsForCertificate")
 	}
 
 	return out.Tags, nil

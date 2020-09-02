@@ -289,7 +289,6 @@ func PollElbv2ApplicationLoadBalancers(pollerInput *awsmodels.ResourcePollerInpu
 	}
 
 	// Next generate a list of SSL policies to be shared by the load balancer snapshots
-	// TODO error check here
 	err = generateSSLPolicies(elbv2Svc)
 	if err != nil {
 		return nil, nil, err

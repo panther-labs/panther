@@ -200,7 +200,7 @@ func PollIamGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Add
 		return nil, nil, err
 	}
 
-	// Start with generating a list of all keys
+	// Start with generating a list of all groups
 	groups, marker, err := listGroups(iamSvc, pollerInput.NextPageToken)
 	if err != nil {
 		return nil, nil, err

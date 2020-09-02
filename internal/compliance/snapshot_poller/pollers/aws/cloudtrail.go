@@ -89,7 +89,7 @@ func getTrail(svc cloudtrailiface.CloudTrailAPI, trailARN *string) (*cloudtrail.
 		TrailNameList: []*string{trailARN},
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "CloudTrail.DescribeTrails")
+		return nil, errors.Wrap(err, "CloudTrail.DescribeTrails")
 	}
 
 	if len(trail.TrailList) == 0 {
@@ -105,7 +105,7 @@ func getTrail(svc cloudtrailiface.CloudTrailAPI, trailARN *string) (*cloudtrail.
 func describeTrails(svc cloudtrailiface.CloudTrailAPI) ([]*cloudtrail.Trail, error) {
 	out, err := svc.DescribeTrails(&cloudtrail.DescribeTrailsInput{IncludeShadowTrails: aws.Bool(true)})
 	if err != nil {
-		return nil, errors.Wrapf(err, "CloudTrail.Describe")
+		return nil, errors.Wrap(err, "CloudTrail.Describe")
 	}
 
 	return out.TrailList, nil
@@ -114,7 +114,7 @@ func describeTrails(svc cloudtrailiface.CloudTrailAPI) ([]*cloudtrail.Trail, err
 func getTrailStatus(svc cloudtrailiface.CloudTrailAPI, trailARN *string) (*cloudtrail.GetTrailStatusOutput, error) {
 	trailStatus, err := svc.GetTrailStatus(&cloudtrail.GetTrailStatusInput{Name: trailARN})
 	if err != nil {
-		return nil, errors.Wrapf(err, "CloudTrail.GetTrailStatus")
+		return nil, errors.Wrap(err, "CloudTrail.GetTrailStatus")
 	}
 
 	return trailStatus, nil
@@ -133,7 +133,7 @@ func listTagsCloudTrail(svc cloudtrailiface.CloudTrailAPI, trailArn *string) ([]
 				return nil, nil
 			}
 		}
-		return nil, errors.Wrapf(err, "CloudTrail.ListTags")
+		return nil, errors.Wrap(err, "CloudTrail.ListTags")
 	}
 
 	// Since we are only specifying one resource, this will always return one value.
@@ -145,7 +145,7 @@ func listTagsCloudTrail(svc cloudtrailiface.CloudTrailAPI, trailArn *string) ([]
 func getEventSelectors(svc cloudtrailiface.CloudTrailAPI, trailARN *string) ([]*cloudtrail.EventSelector, error) {
 	out, err := svc.GetEventSelectors(&cloudtrail.GetEventSelectorsInput{TrailName: trailARN})
 	if err != nil {
-		return nil, errors.Wrapf(err, "CloudTrail.GetEventSelectors")
+		return nil, errors.Wrap(err, "CloudTrail.GetEventSelectors")
 	}
 	return out.EventSelectors, nil
 }

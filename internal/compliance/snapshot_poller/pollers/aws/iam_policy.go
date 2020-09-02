@@ -19,7 +19,6 @@ package aws
  */
 
 import (
-	"fmt"
 	"net/url"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -115,14 +114,6 @@ func listPolicies(iamSvc iamiface.IAMAPI, nextMarker *string) (policies []*iam.P
 func listEntitiesForPolicy(
 	iamSvc iamiface.IAMAPI, arn *string) (*awsmodels.IAMPolicyEntities, error) {
 
-	zap.L().Debug("about to list entities for policy")
-	if arn == nil {
-		zap.L().Debug("arn is nil")
-	}
-	if iamSvc == nil {
-		fmt.Print("iam svc is nil")
-		return nil, nil
-	}
 	entities := &awsmodels.IAMPolicyEntities{}
 	err := iamSvc.ListEntitiesForPolicyPages(
 		&iam.ListEntitiesForPolicyInput{PolicyArn: arn},
@@ -133,7 +124,6 @@ func listEntitiesForPolicy(
 			return true
 		},
 	)
-	zap.L().Debug("done listing entities for policy")
 	if err != nil {
 		return nil, errors.Wrap(err, "IAM.ListEntitiesForPolicyPages")
 	}

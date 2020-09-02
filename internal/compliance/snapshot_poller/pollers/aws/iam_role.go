@@ -91,7 +91,6 @@ func listRoles(iamSvc iamiface.IAMAPI, nextPage *string) (roles []*iam.Role, mar
 	err = iamSvc.ListRolesPages(
 		&iam.ListRolesInput{
 			Marker: nextPage,
-			//MaxItems: aws.Int64(20),
 		},
 		func(page *iam.ListRolesOutput, lastPage bool) bool {
 			roles = append(roles, page.Roles...)

@@ -81,7 +81,7 @@ func getAMI(svc ec2iface.EC2API, imageID *string) (*ec2.Image, error) {
 				return nil, nil
 			}
 		}
-		return nil, errors.Wrapf(err, "EC2.DescribeImages")
+		return nil, errors.Wrap(err, "EC2.DescribeImages")
 	}
 
 	return image.Images[0], nil
@@ -113,7 +113,7 @@ func describeImages(svc ec2iface.EC2API, nextMarker *string) ([]*ec2.Image, *str
 			ImageIds: imageIDs,
 		})
 		if err != nil {
-			return nil, nil, errors.Wrapf(err, "EC2.DescribeImages")
+			return nil, nil, errors.Wrap(err, "EC2.DescribeImages")
 		}
 	}
 
@@ -129,7 +129,7 @@ func describeImages(svc ec2iface.EC2API, nextMarker *string) ([]*ec2.Image, *str
 		},
 	})
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "EC2.DescribeImages")
+		return nil, nil, errors.Wrap(err, "EC2.DescribeImages")
 	}
 	// Most likely at least some of the images this account owns are also in use by this
 	// account, so don't include those duplicates here.

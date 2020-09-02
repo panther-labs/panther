@@ -97,7 +97,7 @@ func PollS3Bucket(
 
 // getBucket returns a specific S3 bucket
 func getBucket(svc s3iface.S3API, bucketName string) (*s3.Bucket, error) {
-	// This horribly efficient bucket lookup is required because (to my knowledge) there is no other
+	// This horribly inefficient bucket lookup is required because (to my knowledge) there is no other
 	// way to get the bucket creation time.
 	buckets, err := listBuckets(svc)
 	if err != nil || buckets == nil {
@@ -297,7 +297,7 @@ func buildS3BucketSnapshot(s3Svc s3iface.S3API, bucket *s3.Bucket) (*awsmodels.S
 	// These api calls check on S3 bucket features which may have no value set.
 	// They return an error when that feature is not set, so we DEBUG log the error message here.
 	// TODO: Check all API calls below for expected errors (when configs do not exist)
-	//   and return an error if an unexpected one is returned (as above getPublicAccessBlock).
+	//   and return an error if an unexpected one is returned (as above in getPublicAccessBlock).
 	loggingPolicy, err := getBucketLogging(s3Svc, bucket.Name)
 	if err != nil {
 		zap.L().Debug("S3.GetBucketLogging", zap.Error(err))
