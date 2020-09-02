@@ -32,6 +32,15 @@ interface ComplianceSourceCardProps {
 }
 
 const ComplianceSourceCard: React.FC<ComplianceSourceCardProps> = ({ source }) => {
+  const healthMetrics = React.useMemo(
+    () => [
+      source.health.auditRoleStatus,
+      source.health.cweRoleStatus,
+      source.health.remediationRoleStatus,
+    ],
+    [source.health]
+  );
+
   return (
     <GenericItemCard>
       <GenericItemCard.Logo src={logo} />
@@ -57,13 +66,7 @@ const ComplianceSourceCard: React.FC<ComplianceSourceCardProps> = ({ source }) =
             value={formatDatetime(source.createdAtTime, true)}
           />
           <Flex ml="auto" mr={0} align="flex-end">
-            <SourceHealthBadge
-              healthMetrics={[
-                source.health.auditRoleStatus,
-                source.health.cweRoleStatus,
-                source.health.remediationRoleStatus,
-              ]}
-            />
+            <SourceHealthBadge healthMetrics={healthMetrics} />
           </Flex>
         </GenericItemCard.ValuesGroup>
       </GenericItemCard.Body>
