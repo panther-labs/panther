@@ -34,6 +34,9 @@ import (
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
+// Create generic resonse to be sent to the frontend. We log detailed info to CW.
+const genericErrorMessage = "Could not find the rule associated with this alert!"
+
 // DeliverAlert sends a specific alert to the specified destinations.
 func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModels.DeliverAlertOutput, error) {
 	// First, fetch the alert
@@ -95,8 +98,6 @@ func populateAlertData(alertItem *alertTable.AlertItem) (*deliveryModels.Alert, 
 		zap.String("ruleId", alertItem.RuleID),
 		zap.String("ruleVersion", alertItem.RuleVersion),
 	}
-	// Create generic resonse to be sent to the frontend. We log detailed info to CW.
-	genericErrorMessage := "Could not find the rule associated with this alert!"
 
 	response, err := analysisClient.Operations.GetRule(&operations.GetRuleParams{
 		RuleID:     alertItem.RuleID,

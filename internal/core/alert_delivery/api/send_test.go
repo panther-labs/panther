@@ -67,8 +67,8 @@ func sampleAlert() *deliveryModels.Alert {
 
 func setCaches() {
 	outputsCache.set(&alertOutputsCache{
-		Outputs:   []*outputModels.AlertOutput{genAlertOutput()},
-		Timestamp: time.Now(),
+		Outputs: []*outputModels.AlertOutput{genAlertOutput()},
+		Expiry:  time.Now(),
 	})
 }
 
