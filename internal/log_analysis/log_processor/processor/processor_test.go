@@ -20,8 +20,6 @@ package processor
 
 import (
 	"fmt"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"strings"
 	"testing"
 	"time"
@@ -37,7 +35,9 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/pkg/metrics"
 	"github.com/panther-labs/panther/pkg/oplog"
