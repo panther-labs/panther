@@ -328,7 +328,11 @@ func PollCloudFormationStacks(pollerInput *awsmodels.ResourcePollerInput) ([]*ap
 				// that might render it entirely inoperable. Putting this error message in to trigger
 				// paging so we can track if it is actually a problem in practice. If not, we can add
 				// the return here.
-				zap.L().Error("unable to perform stack drift detection")
+				zap.L().Error(
+					"unable to perform stack drift detection",
+					zap.String("stackID", *stack.StackId),
+					zap.String("region", *pollerInput.Region),
+				)
 			}
 		}
 	}
@@ -350,7 +354,7 @@ func PollCloudFormationStacks(pollerInput *awsmodels.ResourcePollerInput) ([]*ap
 	}
 
 	// Wait for all stack drift detections to be complete
-	// We could parallelize this and begin the next step for the stacks that complete
+	// TODO: Parallelize this and begin the next step for the stacks that complete
 	for _, driftID := range stackDriftDetectionIds {
 		waitForStackDriftDetection(cloudformationSvc, driftID)
 	}

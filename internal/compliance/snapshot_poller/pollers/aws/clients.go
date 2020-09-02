@@ -166,7 +166,7 @@ func GetServiceRegions(pollerInput *awsmodels.ResourcePollerInput, resourceType 
 	}
 	describeRegionsOutput, err := ec2Svc.(ec2iface.EC2API).DescribeRegions(&ec2.DescribeRegionsInput{})
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "EC2.DescribeRegions")
 	}
 
 	// Create a set of regions to union with the service enabled regions below

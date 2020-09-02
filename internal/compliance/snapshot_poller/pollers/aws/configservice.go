@@ -93,6 +93,9 @@ func getConfigRecorder(svc configserviceiface.ConfigServiceAPI) (*configservice.
 		return nil, errors.Wrap(err, "ConfigService.DescribeConfigurationRecorders")
 	}
 
+	if recorder == nil || len(recorder.ConfigurationRecorders) != 1 {
+		return nil, errors.New("unexpected response from config.DescribeConfigurationRecorders")
+	}
 	return recorder.ConfigurationRecorders[0], nil
 }
 
