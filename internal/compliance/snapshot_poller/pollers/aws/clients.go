@@ -176,7 +176,14 @@ func GetServiceRegions(pollerInput *awsmodels.ResourcePollerInput, resourceType 
 	}
 
 	// Lookup the regions that AWS supports for the service, storing the ones that are also enabled
-	// for this account
+	// for this account.
+	// Important to note that we are not creating this client with credentials from the account being
+	// scanned, we are creating this client with the credentials of the snapshot-poller lambda execution
+	// role. This for two reasons:
+	// 	1. We would have to update all PantherAuditRole's to include this permission, which would be
+	//		a painful migration
+	//	2. This information is globally the same, it doesn't matter what account you're in when you
+	//		make this particular API call the response is always the same
 	ssmSvc := ssm.New(snapshotPollerSession)
 	var regions []*string
 	err = ssmSvc.GetParametersByPathPages(&ssm.GetParametersByPathInput{

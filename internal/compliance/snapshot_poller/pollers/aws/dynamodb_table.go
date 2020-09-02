@@ -139,7 +139,7 @@ func describeTable(dynamoDBSvc dynamodbiface.DynamoDBAPI, name *string) (*dynamo
 				return nil, nil
 			}
 		}
-		return nil, errors.Wrap(err, "DynamoDB.DescribeTable")
+		return nil, errors.Wrapf(err, "DynamoDB.DescribeTable: %s", aws.StringValue(name))
 	}
 
 	return out.Table, nil
@@ -149,7 +149,7 @@ func describeTable(dynamoDBSvc dynamodbiface.DynamoDBAPI, name *string) (*dynamo
 func describeTimeToLive(dynamoDBSvc dynamodbiface.DynamoDBAPI, name *string) (*dynamodb.TimeToLiveDescription, error) {
 	out, err := dynamoDBSvc.DescribeTimeToLive(&dynamodb.DescribeTimeToLiveInput{TableName: name})
 	if err != nil {
-		return nil, errors.Wrap(err, "DynamoDB.DescribeTimeToLive")
+		return nil, errors.Wrapf(err, "DynamoDB.DescribeTimeToLive: %s", aws.StringValue(name))
 	}
 
 	return out.TimeToLiveDescription, nil
@@ -159,7 +159,7 @@ func describeTimeToLive(dynamoDBSvc dynamodbiface.DynamoDBAPI, name *string) (*d
 func listTagsOfResource(dynamoDBSvc dynamodbiface.DynamoDBAPI, arn *string) ([]*dynamodb.Tag, error) {
 	out, err := dynamoDBSvc.ListTagsOfResource(&dynamodb.ListTagsOfResourceInput{ResourceArn: arn})
 	if err != nil {
-		return nil, errors.Wrap(err, "DynamoDB.ListTagsOfResource")
+		return nil, errors.Wrapf(err, "DynamoDB.ListTagsOfResource: %s", aws.StringValue(arn))
 	}
 
 	return out.Tags, nil
@@ -182,6 +182,8 @@ func describeScalableTargets(
 			return true
 		})
 	if err != nil {
+		// Difficult to print the values of a slice of string pointers, so we append context in
+		// the calling function
 		return nil, errors.Wrap(err, "ApplicationAutoScaling.DescribeScalableTargetsPages")
 	}
 
@@ -249,11 +251,9 @@ func buildDynamoDBTableSnapshot(
 	}
 	table.Tags = utils.ParseTagSlice(tags)
 
-	autoScalingDescriptions, err := describeScalableTargets(applicationAutoScalingSvc, resourceIDs)
-	if err != nil {
-		return nil, err
+	if table.AutoScalingDescriptions, err = describeScalableTargets(applicationAutoScalingSvc, resourceIDs); err != nil {
+		return nil, errors.WithMessagef(err, "table: %s", aws.StringValue(tableName))
 	}
-	table.AutoScalingDescriptions = autoScalingDescriptions
 
 	return table, nil
 }
@@ -274,7 +274,7 @@ func PollDynamoDBTables(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 	// Start with generating a list of all tables
 	tables, marker, err := listTables(dynamoDBSvc, pollerInput.NextPageToken)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
 	resources := make([]*apimodels.AddResourceEntry, 0, len(tables))

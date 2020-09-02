@@ -79,7 +79,7 @@ func getIAMPolicy(svc iamiface.IAMAPI, policyARN *string) (*iam.Policy, error) {
 				return nil, nil
 			}
 		}
-		return nil, errors.Wrap(err, "IAM.GetPolicy")
+		return nil, errors.Wrapf(err, "IAM.GetPolicy: %s", aws.StringValue(policyARN))
 	}
 	return policy.Policy, nil
 }
@@ -126,7 +126,7 @@ func listEntitiesForPolicy(
 		},
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "IAM.ListEntitiesForPolicyPages")
+		return nil, errors.Wrapf(err, "IAM.ListEntitiesForPolicyPages: %s", aws.StringValue(arn))
 	}
 	return entities, nil
 }
@@ -139,12 +139,12 @@ func getPolicyVersion(
 		&iam.GetPolicyVersionInput{PolicyArn: arn, VersionId: version},
 	)
 	if err != nil {
-		return "", errors.Wrap(err, "IAM.GetPolicyVersion")
+		return "", errors.Wrapf(err, "IAM.GetPolicyVersion: %s", aws.StringValue(arn))
 	}
 
 	policyDoc, err := url.QueryUnescape(*policy.PolicyVersion.Document)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to url decode policy document")
+		return "", errors.Wrapf(err, "failed to url decode policy document for policy %s", aws.StringValue(arn))
 	}
 
 	return policyDoc, nil

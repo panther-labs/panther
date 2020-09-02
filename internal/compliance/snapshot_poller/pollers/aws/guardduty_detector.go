@@ -64,7 +64,8 @@ func PollGuardDutyDetector(
 
 	detector, err := getGuardDutyDetector(gdClient)
 	if err != nil || detector == nil {
-		return nil, err
+		// errors.WithMessagef() will still return nil if err is nil
+		return nil, errors.WithMessagef(err, "region: %s", parsedResourceID.Region)
 	}
 
 	snapshot, err := buildGuardDutyDetectorSnapshot(gdClient, detector)
@@ -109,7 +110,7 @@ func listDetectors(guardDutySvc guarddutyiface.GuardDutyAPI) (detectorIDs []*str
 func getMasterAccount(guardDutySvc guarddutyiface.GuardDutyAPI, id *string) (*guardduty.Master, error) {
 	out, err := guardDutySvc.GetMasterAccount(&guardduty.GetMasterAccountInput{DetectorId: id})
 	if err != nil {
-		return nil, errors.Wrap(err, "GuardDuty.GetMasterAccount")
+		return nil, errors.Wrapf(err, "GuardDuty.GetMasterAccount: %s", aws.StringValue(id))
 	}
 
 	return out.Master, nil
@@ -119,7 +120,7 @@ func getMasterAccount(guardDutySvc guarddutyiface.GuardDutyAPI, id *string) (*gu
 func getDetector(guardDutySvc guarddutyiface.GuardDutyAPI, detectorID *string) (*guardduty.GetDetectorOutput, error) {
 	out, err := guardDutySvc.GetDetector(&guardduty.GetDetectorInput{DetectorId: detectorID})
 	if err != nil {
-		return nil, errors.Wrap(err, "GuardDuty.GetDetector")
+		return nil, errors.Wrapf(err, "GuardDuty.GetDetector: %s", aws.StringValue(detectorID))
 	}
 
 	return out, nil
@@ -176,7 +177,7 @@ func PollGuardDutyDetectors(pollerInput *awsmodels.ResourcePollerInput) ([]*apim
 		// Start with generating a list of all detectors
 		detectors, err := listDetectors(guardDutySvc)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, errors.WithMessagef(err, "region: %s", *regionID)
 		}
 
 		for _, detectorID := range detectors {

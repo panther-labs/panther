@@ -78,7 +78,7 @@ func getSecurityGroup(svc ec2iface.EC2API, securityGroupID *string) (*ec2.Securi
 				return nil, nil
 			}
 		}
-		return nil, errors.Wrap(err, "EC2.DescribeSecurityGroups")
+		return nil, errors.Wrapf(err, "EC2.DescribeSecurityGroups: %s", aws.StringValue(securityGroupID))
 	}
 
 	return securityGroup.SecurityGroups[0], nil
@@ -142,7 +142,7 @@ func PollEc2SecurityGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimo
 	// Start with generating a list of all Security Groups
 	securityGroups, marker, err := describeSecurityGroups(ec2Svc, pollerInput.NextPageToken)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
 	// For each Security Group, build out a full snapshot

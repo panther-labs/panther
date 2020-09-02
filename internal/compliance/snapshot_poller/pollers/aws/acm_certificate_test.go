@@ -37,6 +37,15 @@ func TestAcmCertificateList(t *testing.T) {
 	assert.NotEmpty(t, out)
 }
 
+func TestAcmCertificateListWithPaging(t *testing.T) {
+	mockSvc := awstest.BuildMockAcmSvc([]string{"ListCertificatesPages"})
+
+	out, marker, err := listCertificates(mockSvc, nil)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, out)
+}
+
 func TestAcmCertificateListError(t *testing.T) {
 	mockSvc := awstest.BuildMockAcmSvcError([]string{"ListCertificatesPages"})
 

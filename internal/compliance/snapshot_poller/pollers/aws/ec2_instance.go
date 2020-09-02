@@ -78,7 +78,7 @@ func getInstance(svc ec2iface.EC2API, instanceID *string) (*ec2.Instance, error)
 				return nil, nil
 			}
 		}
-		return nil, errors.Wrap(err, "EC2.DescribeInstances")
+		return nil, errors.Wrapf(err, "EC2.DescribeInstances: %s", aws.StringValue(instanceID))
 	}
 
 	return instance.Reservations[0].Instances[0], nil
@@ -179,7 +179,7 @@ func PollEc2Instances(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.
 	// Start with generating a list of all EC2 instances
 	instances, marker, err := describeInstances(ec2Svc, pollerInput.NextPageToken)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
 	// For each instance, build out a full snapshot

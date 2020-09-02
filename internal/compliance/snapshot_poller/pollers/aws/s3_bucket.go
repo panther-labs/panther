@@ -101,7 +101,7 @@ func getBucket(svc s3iface.S3API, bucketName string) (*s3.Bucket, error) {
 	// way to get the bucket creation time.
 	buckets, err := listBuckets(svc)
 	if err != nil || buckets == nil {
-		return nil, err
+		return nil, errors.WithMessagef(err, "single resource scan for bucket %s", bucketName)
 	}
 	for _, bucket := range buckets.Buckets {
 		if aws.StringValue(bucket.Name) == bucketName {
@@ -115,7 +115,7 @@ func getBucket(svc s3iface.S3API, bucketName string) (*s3.Bucket, error) {
 func getBucketLogging(s3Svc s3iface.S3API, bucketName *string) (*s3.GetBucketLoggingOutput, error) {
 	out, err := s3Svc.GetBucketLogging(&s3.GetBucketLoggingInput{Bucket: bucketName})
 	if err != nil {
-		return nil, errors.Wrap(err, "S3.GetBucketLogging")
+		return nil, errors.Wrapf(err, "S3.GetBucketLogging: %s", aws.StringValue(bucketName))
 	}
 
 	return out, nil
@@ -131,7 +131,7 @@ func getObjectLockConfiguration(s3Svc s3iface.S3API, bucketName *string) (*s3.Ob
 				return nil, nil
 			}
 		}
-		return nil, errors.Wrap(err, "S3.GetObjectLockConfiguration")
+		return nil, errors.Wrapf(err, "S3.GetObjectLockConfiguration: %s", aws.StringValue(bucketName))
 	}
 
 	return out.ObjectLockConfiguration, nil
@@ -147,7 +147,7 @@ func getBucketTagging(s3Svc s3iface.S3API, bucketName *string) ([]*s3.Tag, error
 				return nil, nil
 			}
 		}
-		return nil, errors.Wrap(err, "S3.GetBucketTagging")
+		return nil, errors.Wrapf(err, "S3.GetBucketTagging: %s", aws.StringValue(bucketName))
 	}
 
 	return tags.TagSet, nil
@@ -157,7 +157,7 @@ func getBucketTagging(s3Svc s3iface.S3API, bucketName *string) ([]*s3.Tag, error
 func getBucketEncryption(s3Svc s3iface.S3API, bucketName *string) ([]*s3.ServerSideEncryptionRule, error) {
 	out, err := s3Svc.GetBucketEncryption(&s3.GetBucketEncryptionInput{Bucket: bucketName})
 	if err != nil {
-		return nil, errors.Wrap(err, "S3.GetBucketEncryption")
+		return nil, errors.Wrapf(err, "S3.GetBucketEncryption: %s", aws.StringValue(bucketName))
 	}
 
 	return out.ServerSideEncryptionConfiguration.Rules, nil
@@ -167,7 +167,7 @@ func getBucketEncryption(s3Svc s3iface.S3API, bucketName *string) ([]*s3.ServerS
 func getBucketPolicy(s3Svc s3iface.S3API, bucketName *string) (*string, error) {
 	out, err := s3Svc.GetBucketPolicy(&s3.GetBucketPolicyInput{Bucket: bucketName})
 	if err != nil {
-		return nil, errors.Wrap(err, "S3.GetBucketPolicy")
+		return nil, errors.Wrapf(err, "S3.GetBucketPolicy: %s", aws.StringValue(bucketName))
 	}
 
 	return out.Policy, nil
@@ -177,7 +177,7 @@ func getBucketPolicy(s3Svc s3iface.S3API, bucketName *string) (*string, error) {
 func getBucketVersioning(s3Svc s3iface.S3API, bucketName *string) (*s3.GetBucketVersioningOutput, error) {
 	out, err := s3Svc.GetBucketVersioning(&s3.GetBucketVersioningInput{Bucket: bucketName})
 	if err != nil {
-		return nil, errors.Wrap(err, "S3.GetBucketVersioning")
+		return nil, errors.Wrapf(err, "S3.GetBucketVersioning: %s", aws.StringValue(bucketName))
 	}
 
 	return out, nil
@@ -195,7 +195,7 @@ func getBucketLocation(s3Svc s3iface.S3API, bucketName *string) (*string, error)
 				return nil, nil
 			}
 		}
-		return nil, errors.Wrap(err, "S3.GetBucketLocation")
+		return nil, errors.Wrapf(err, "S3.GetBucketLocation: %s", aws.StringValue(bucketName))
 	}
 
 	// The get-bucket-location API call returns null for buckets in us-east-1.
@@ -210,7 +210,7 @@ func getBucketLocation(s3Svc s3iface.S3API, bucketName *string) (*string, error)
 func getBucketLifecycleConfiguration(s3Svc s3iface.S3API, bucketName *string) ([]*s3.LifecycleRule, error) {
 	out, err := s3Svc.GetBucketLifecycleConfiguration(&s3.GetBucketLifecycleConfigurationInput{Bucket: bucketName})
 	if err != nil {
-		return nil, errors.Wrap(err, "GetBucketLifecycleConfiguration")
+		return nil, errors.Wrapf(err, "GetBucketLifecycleConfiguration: %s", aws.StringValue(bucketName))
 	}
 
 	return out.Rules, nil
@@ -220,7 +220,7 @@ func getBucketLifecycleConfiguration(s3Svc s3iface.S3API, bucketName *string) ([
 func getBucketACL(s3Svc s3iface.S3API, bucketName *string) (*s3.GetBucketAclOutput, error) {
 	out, err := s3Svc.GetBucketAcl(&s3.GetBucketAclInput{Bucket: bucketName})
 	if err != nil {
-		return nil, errors.Wrap(err, "S3.GetBucketACL")
+		return nil, errors.Wrapf(err, "S3.GetBucketACL: %s", aws.StringValue(bucketName))
 	}
 
 	return out, nil
@@ -246,7 +246,7 @@ func getPublicAccessBlock(s3Svc s3iface.S3API, bucketName *string) (*s3.PublicAc
 				return nil, nil
 			}
 		}
-		return nil, errors.Wrap(err, "S3.GetPublicAccessBlock")
+		return nil, errors.Wrapf(err, "S3.GetPublicAccessBlock: %s", aws.StringValue(bucketName))
 	}
 
 	return out.PublicAccessBlockConfiguration, nil
@@ -348,7 +348,7 @@ func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Add
 	// Start with generating a list of all buckets
 	allBuckets, err := listBuckets(s3Svc)
 	if err != nil || len(allBuckets.Buckets) == 0 {
-		return nil, nil, err
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
 	// For each bucket, determine its region, then only consider the bucket if it's region matches

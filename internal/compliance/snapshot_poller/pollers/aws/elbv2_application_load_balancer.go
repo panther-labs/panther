@@ -101,7 +101,7 @@ func getApplicationLoadBalancer(svc elbv2iface.ELBV2API, loadBalancerARN *string
 				return nil, nil
 			}
 		}
-		return nil, errors.Wrap(err, "ELBV2.DescribeLoadBalancers")
+		return nil, errors.Wrapf(err, "ELBV2.DescribeLoadBalancers: %s", aws.StringValue(loadBalancerARN))
 	}
 
 	return loadBalancer.LoadBalancers[0], nil
@@ -139,7 +139,7 @@ func describeListeners(elbv2Svc elbv2iface.ELBV2API, arn *string) (listeners []*
 			return true
 		})
 	if err != nil {
-		return nil, errors.Wrap(err, "ELBV2.DescribeListenersPages")
+		return nil, errors.Wrapf(err, "ELBV2.DescribeListenersPages: %s", aws.StringValue(arn))
 	}
 	return
 }
@@ -148,7 +148,7 @@ func describeListeners(elbv2Svc elbv2iface.ELBV2API, arn *string) (listeners []*
 func describeTags(svc elbv2iface.ELBV2API, arn *string) ([]*elbv2.Tag, error) {
 	tags, err := svc.DescribeTags(&elbv2.DescribeTagsInput{ResourceArns: []*string{arn}})
 	if err != nil {
-		return nil, errors.Wrap(err, "ELBV2.DescribeTags")
+		return nil, errors.Wrapf(err, "ELBV2.DescribeTags: %s", aws.StringValue(arn))
 	}
 
 	return tags.TagDescriptions[0].Tags, nil
@@ -169,7 +169,7 @@ func getWebACLForResource(wafRegionalSvc wafregionaliface.WAFRegionalAPI, arn *s
 		&wafregional.GetWebACLForResourceInput{ResourceArn: arn},
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "WAF.GetWebACLForResource")
+		return nil, errors.Wrapf(err, "WAF.GetWebACLForResource: %s", aws.StringValue(arn))
 	}
 
 	if out.WebACLSummary == nil {
@@ -260,11 +260,9 @@ func buildElbv2ApplicationLoadBalancerSnapshot(
 	}
 
 	// Try to find a webACL ID
-	webACL, err := getWebACLForResource(wafRegionalSvc, lb.LoadBalancerArn)
-	if err != nil {
-		return nil, errors.Wrap(err, "WAF.Regional.GetWebAclForResource")
+	if applicationLoadBalancer.WebAcl, err = getWebACLForResource(wafRegionalSvc, lb.LoadBalancerArn); err != nil {
+		return nil, err
 	}
-	applicationLoadBalancer.WebAcl = webACL
 
 	return applicationLoadBalancer, nil
 }
@@ -286,7 +284,7 @@ func PollElbv2ApplicationLoadBalancers(pollerInput *awsmodels.ResourcePollerInpu
 	// Start with generating a list of all load balancers
 	loadBalancers, marker, err := describeLoadBalancers(elbv2Svc, pollerInput.NextPageToken)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
 	// Next generate a list of SSL policies to be shared by the load balancer snapshots

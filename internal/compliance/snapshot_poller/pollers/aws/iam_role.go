@@ -81,7 +81,7 @@ func getRole(svc iamiface.IAMAPI, roleName *string) (*iam.Role, error) {
 				return nil, nil
 			}
 		}
-		return nil, errors.Wrap(err, "IAM.GetRole")
+		return nil, errors.Wrapf(err, "IAM.GetRole: %s", aws.StringValue(roleName))
 	}
 	return role.Role, nil
 }
@@ -114,7 +114,7 @@ func listRoles(iamSvc iamiface.IAMAPI, nextPage *string) (roles []*iam.Role, mar
 func getRolePolicy(iamSvc iamiface.IAMAPI, roleName *string, policyName *string) (*string, error) {
 	policy, err := iamSvc.GetRolePolicy(&iam.GetRolePolicyInput{RoleName: roleName, PolicyName: policyName})
 	if err != nil {
-		return nil, errors.Wrap(err, "IAM.GetRolePolicy")
+		return nil, errors.Wrapf(err, "IAM.GetRolePolicy: %s", aws.StringValue(roleName))
 	}
 
 	decodedPolicy, err := url.QueryUnescape(*policy.PolicyDocument)
@@ -137,7 +137,7 @@ func getRolePolicies(iamSvc iamiface.IAMAPI, roleName *string) (
 		},
 	)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "IAM.ListRolePolicies")
+		return nil, nil, errors.Wrapf(err, "IAM.ListRolePolicies: %s", aws.StringValue(roleName))
 	}
 
 	err = iamSvc.ListAttachedRolePoliciesPages(
@@ -150,7 +150,7 @@ func getRolePolicies(iamSvc iamiface.IAMAPI, roleName *string) (
 		},
 	)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "IAM.ListAttachedRolePolicies")
+		return nil, nil, errors.Wrapf(err, "IAM.ListAttachedRolePolicies: %s", aws.StringValue(roleName))
 	}
 
 	return
@@ -181,7 +181,7 @@ func BuildIAMRoleSnapshot(iamSvc iamiface.IAMAPI, role *iam.Role) (*awsmodels.IA
 	// Decode the assume policy document, and overwrite the existing URL encoded one
 	assumeRolePolicyDocument, err := url.QueryUnescape(*role.AssumeRolePolicyDocument)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to parse IAM Role AssumeRolePolicyDocument")
+		return nil, errors.Wrapf(err, "unable to parse IAM Role AssumeRolePolicyDocument for role %s", aws.StringValue(role.Arn))
 	}
 	iamRoleSnapshot.AssumeRolePolicyDocument = aws.String(assumeRolePolicyDocument)
 

@@ -88,7 +88,7 @@ func getRDSInstance(svc rdsiface.RDSAPI, instanceARN *string) (*rds.DBInstance, 
 		},
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "RDS.DescribeDBInstances")
+		return nil, errors.Wrapf(err, "RDS.DescribeDBInstances: %s", aws.StringValue(instanceARN))
 	}
 
 	if len(instance.DBInstances) == 0 {
@@ -130,7 +130,7 @@ func describeDBSnapshots(rdsSvc rdsiface.RDSAPI, dbID *string) (snapshots []*rds
 			return true
 		})
 	if err != nil {
-		return nil, errors.Wrap(err, "RDS.DescribeDBSnapshotsPages")
+		return nil, errors.Wrapf(err, "RDS.DescribeDBSnapshotsPages: %s", aws.StringValue(dbID))
 	}
 	return
 }
@@ -141,7 +141,7 @@ func describeDBSnapshotAttributes(rdsSvc rdsiface.RDSAPI, snapshotID *string) (*
 		&rds.DescribeDBSnapshotAttributesInput{DBSnapshotIdentifier: snapshotID},
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "RDS.DescribeDBSnapshots")
+		return nil, errors.Wrapf(err, "RDS.DescribeDBSnapshots: %s", aws.StringValue(snapshotID))
 	}
 	return out.DBSnapshotAttributesResult, nil
 }
@@ -150,7 +150,7 @@ func describeDBSnapshotAttributes(rdsSvc rdsiface.RDSAPI, snapshotID *string) (*
 func listTagsForResourceRds(svc rdsiface.RDSAPI, arn *string) ([]*rds.Tag, error) {
 	tags, err := svc.ListTagsForResource(&rds.ListTagsForResourceInput{ResourceName: arn})
 	if err != nil {
-		return nil, errors.Wrap(err, "RDS.ListTagsForResource")
+		return nil, errors.Wrapf(err, "RDS.ListTagsForResource: %s", aws.StringValue(arn))
 	}
 
 	return tags.TagList, nil
@@ -258,7 +258,7 @@ func PollRDSInstances(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.
 	// Start with generating a list of all instances
 	instances, marker, err := describeDBInstances(rdsSvc, pollerInput.NextPageToken)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
 	resources := make([]*apimodels.AddResourceEntry, 0, len(instances))

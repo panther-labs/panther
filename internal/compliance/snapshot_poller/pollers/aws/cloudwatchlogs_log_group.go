@@ -40,6 +40,9 @@ var (
 	CloudWatchLogsClientFunc = setupCloudWatchLogsClient
 )
 
+// FIXME: this low batch size means we may be better off just initiating a series of single resource
+// 	scans spread out over several minutes instead of trying to batch 10 at a time, as even this very
+//	low batch size may cause rate limiting issues.
 const cloudwatchlogsBatchSize = 10
 
 func setupCloudWatchLogsClient(sess *session.Session, cfg *aws.Config) interface{} {
@@ -96,7 +99,7 @@ func getLogGroup(svc cloudwatchlogsiface.CloudWatchLogsAPI, logGroupName string)
 		LogGroupNamePrefix: &logGroupName,
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "CloudWatchLogs.DescribeLogGroups")
+		return nil, errors.Wrapf(err, "CloudWatchLogs.DescribeLogGroups: %s", logGroupName)
 	}
 
 	for _, logGroup := range logGroups.LogGroups {
@@ -145,7 +148,7 @@ func listTagsLogGroup(svc cloudwatchlogsiface.CloudWatchLogsAPI, groupName *stri
 		LogGroupName: groupName,
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "CloudWatchLogs ListTagsLogGroup")
+		return nil, errors.Wrapf(err, "CloudWatchLogs.ListTagsLogGroup: %s", aws.StringValue(groupName))
 	}
 	return tags.Tags, nil
 }
@@ -194,7 +197,7 @@ func PollCloudWatchLogsLogGroups(pollerInput *awsmodels.ResourcePollerInput) ([]
 	// Start with generating a list of all log groups
 	logGroups, marker, err := describeLogGroups(cloudwatchLogGroupSvc, pollerInput.NextPageToken)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
 	resources := make([]*apimodels.AddResourceEntry, 0, len(logGroups))

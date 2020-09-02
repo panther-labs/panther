@@ -97,7 +97,7 @@ func getRedshiftCluster(svc redshiftiface.RedshiftAPI, clusterID *string) (*reds
 				return nil, nil
 			}
 		}
-		return nil, errors.Wrap(err, "Redshift.DescribeClusters")
+		return nil, errors.Wrapf(err, "Redshift.DescribeClusters: %s", aws.StringValue(clusterID))
 	}
 	return cluster.Clusters[0], nil
 }
@@ -130,7 +130,7 @@ func describeLoggingStatus(redshiftSvc redshiftiface.RedshiftAPI, clusterID *str
 		&redshift.DescribeLoggingStatusInput{ClusterIdentifier: clusterID},
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "Redshift.DescribeLoggingStatus")
+		return nil, errors.Wrapf(err, "Redshift.DescribeLoggingStatus: %s", aws.StringValue(clusterID))
 	}
 	return out, nil
 }
@@ -208,7 +208,7 @@ func PollRedshiftClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimod
 	// Start with generating a list of all clusters
 	clusters, marker, err := describeClusters(redshiftSvc, pollerInput.NextPageToken)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
 	resources := make([]*apimodels.AddResourceEntry, 0, len(clusters))

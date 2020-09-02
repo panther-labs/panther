@@ -165,7 +165,7 @@ func getUser(svc iamiface.IAMAPI, userName *string) (*iam.User, error) {
 				return nil, nil
 			}
 		}
-		return nil, errors.Wrap(err, "IAM.GetUser")
+		return nil, errors.Wrapf(err, "IAM.GetUser: %s", aws.StringValue(userName))
 	}
 	return user.User, nil
 }
@@ -331,7 +331,7 @@ func getUserPolicies(iamSvc iamiface.IAMAPI, userName *string) (inlinePolicies [
 		},
 	)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "IAM.ListUserPolicies")
+		return nil, nil, errors.Wrapf(err, "IAM.ListUserPolicies: %s", aws.StringValue(userName))
 	}
 
 	err = iamSvc.ListAttachedUserPoliciesPages(
@@ -344,7 +344,7 @@ func getUserPolicies(iamSvc iamiface.IAMAPI, userName *string) (inlinePolicies [
 		},
 	)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "IAM.ListAttachedUserPolicies")
+		return nil, nil, errors.Wrapf(err, "IAM.ListAttachedUserPolicies: %s", aws.StringValue(userName))
 	}
 
 	return
@@ -391,7 +391,7 @@ func listGroupsForUser(iamSvc iamiface.IAMAPI, userName *string) (groups []*iam.
 			return true
 		})
 	if err != nil {
-		return nil, errors.Wrap(err, "IAM.ListGroupsForUserPages")
+		return nil, errors.Wrapf(err, "IAM.ListGroupsForUserPages: %s", aws.StringValue(userName))
 	}
 	return
 }
@@ -403,7 +403,7 @@ func getUserPolicy(svc iamiface.IAMAPI, userName *string, policyName *string) (*
 		PolicyName: policyName,
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "IAM.GetUserPolicy")
+		return nil, errors.Wrapf(err, "IAM.GetUserPolicy: %s", aws.StringValue(userName))
 	}
 
 	decodedPolicy, err := url.QueryUnescape(*policy.PolicyDocument)

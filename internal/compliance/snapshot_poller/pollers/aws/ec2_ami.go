@@ -81,7 +81,7 @@ func getAMI(svc ec2iface.EC2API, imageID *string) (*ec2.Image, error) {
 				return nil, nil
 			}
 		}
-		return nil, errors.Wrap(err, "EC2.DescribeImages")
+		return nil, errors.Wrapf(err, "EC2.DescribeImages: %s", aws.StringValue(imageID))
 	}
 
 	return image.Images[0], nil
@@ -191,7 +191,7 @@ func PollEc2Amis(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddRe
 	// Start with generating a list of all EC2 AMIs
 	amis, marker, err := describeImages(ec2Svc, pollerInput.NextPageToken)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
 	zap.L().Debug("building EC2 AMI snapshots", zap.String("region", *pollerInput.Region))

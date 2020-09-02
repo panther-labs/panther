@@ -103,7 +103,7 @@ func describeCluster(ecsSvc ecsiface.ECSAPI, arn *string) (*ecs.Cluster, error) 
 		Include:  []*string{aws.String("TAGS")},
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "ECS.DescribeClusters")
+		return nil, errors.Wrapf(err, "ECS.DescribeClusters: %s", aws.StringValue(arn))
 	}
 
 	if len(out.Clusters) == 0 {
@@ -129,7 +129,7 @@ func getClusterTasks(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmodels.E
 		})
 
 	if err != nil {
-		return nil, errors.Wrap(err, "ECS.ListTasksPages")
+		return nil, errors.Wrapf(err, "ECS.ListTasksPages: %s", aws.StringValue(clusterArn))
 	}
 
 	// If there are no tasks stop here
@@ -149,7 +149,7 @@ func getClusterTasks(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmodels.E
 		Tasks:   taskArns,
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "ECS.DescribeTasks")
+		return nil, errors.Wrapf(err, "ECS.DescribeTasks: %s", aws.StringValue(clusterArn))
 	}
 
 	tasks := make([]*awsmodels.EcsTask, 0, len(rawTasks.Tasks))
@@ -206,7 +206,7 @@ func getClusterServices(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmodel
 		})
 
 	if err != nil {
-		return nil, errors.Wrap(err, "ECS.ListServicesPages")
+		return nil, errors.Wrapf(err, "ECS.ListServicesPages: %s", aws.StringValue(clusterArn))
 	}
 
 	// If there are no services, stop here
@@ -227,7 +227,7 @@ func getClusterServices(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmodel
 	})
 
 	if err != nil {
-		return nil, errors.Wrap(err, "ECS.DescribeServices")
+		return nil, errors.Wrapf(err, "ECS.DescribeServices: %s", aws.StringValue(clusterArn))
 	}
 
 	services := make([]*awsmodels.EcsService, 0, len(rawServices.Services))
@@ -330,7 +330,7 @@ func PollEcsClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 	// Start with generating a list of all clusters
 	clusters, marker, err := listClusters(ecsSvc, pollerInput.NextPageToken)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
 	resources := make([]*apimodels.AddResourceEntry, 0, len(ecsClusterSnapshots))

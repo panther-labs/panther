@@ -78,7 +78,7 @@ func getNetworkACL(svc ec2iface.EC2API, networkACLID *string) (*ec2.NetworkAcl, 
 				return nil, nil
 			}
 		}
-		return nil, errors.Wrap(err, "EC2.DescribeNetworkACLs")
+		return nil, errors.Wrapf(err, "EC2.DescribeNetworkACLs: %s", aws.StringValue(networkACLID))
 	}
 
 	return nacl.NetworkAcls[0], nil
@@ -138,7 +138,7 @@ func PollEc2NetworkAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 	// Start with generating a list of all Network ACLs
 	networkACLs, marker, err := describeNetworkAcls(ec2Svc, pollerInput.NextPageToken)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
 	// For each Network ACL, build out a full snapshot

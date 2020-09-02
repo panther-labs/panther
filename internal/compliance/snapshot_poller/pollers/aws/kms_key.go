@@ -114,7 +114,7 @@ func listKeys(kmsSvc kmsiface.KMSAPI, nextMarker *string) (keys []*kms.KeyListEn
 func getKeyRotationStatus(kmsSvc kmsiface.KMSAPI, keyID *string) (*bool, error) {
 	out, err := kmsSvc.GetKeyRotationStatus(&kms.GetKeyRotationStatusInput{KeyId: keyID})
 	if err != nil {
-		return nil, errors.Wrap(err, "KMS.GetKeyRotationStatus")
+		return nil, errors.Wrapf(err, "KMS.GetKeyRotationStatus: %s", aws.StringValue(keyID))
 	}
 
 	return out.KeyRotationEnabled, nil
@@ -124,7 +124,7 @@ func getKeyRotationStatus(kmsSvc kmsiface.KMSAPI, keyID *string) (*bool, error) 
 func listResourceTags(kmsSvc kmsiface.KMSAPI, keyID *string) ([]*kms.Tag, error) {
 	tags, err := kmsSvc.ListResourceTags(&kms.ListResourceTagsInput{KeyId: keyID})
 	if err != nil {
-		return nil, errors.Wrap(err, "KMS.ListResourceTags")
+		return nil, errors.Wrapf(err, "KMS.ListResourceTags: %s", aws.StringValue(keyID))
 	}
 
 	return tags.Tags, nil
@@ -149,7 +149,7 @@ func describeKey(kmsSvc kmsiface.KMSAPI, keyID *string) (*kms.KeyMetadata, error
 				return nil, nil
 			}
 		}
-		return nil, errors.Wrap(err, "KMS.DescribeKey")
+		return nil, errors.Wrapf(err, "KMS.DescribeKey: %s", aws.StringValue(keyID))
 	}
 
 	return out.KeyMetadata, err
@@ -161,7 +161,7 @@ func getKeyPolicy(kmsSvc kmsiface.KMSAPI, keyID *string) (*string, error) {
 		&kms.GetKeyPolicyInput{KeyId: keyID, PolicyName: &defaultPolicyName},
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "KMS.GetKeyPolicy")
+		return nil, errors.Wrapf(err, "KMS.GetKeyPolicy: %s", aws.StringValue(keyID))
 	}
 
 	return out.Policy, nil
@@ -224,11 +224,9 @@ func buildKmsKeySnapshot(kmsSvc kmsiface.KMSAPI, key *kms.KeyListEntry) (*awsmod
 
 	// Check that the key was created by the customer's account and not AWS
 	if *metadata.KeyManager == customerKeyManager {
-		rotationStatus, err := getKeyRotationStatus(kmsSvc, key.KeyId)
-		if err != nil {
-			return nil, errors.Wrap(err, "KMS.GetKeyRotationStatus")
+		if kmsKey.KeyRotationEnabled, err = getKeyRotationStatus(kmsSvc, key.KeyId); err != nil {
+			return nil, err
 		}
-		kmsKey.KeyRotationEnabled = rotationStatus
 	}
 
 	return kmsKey, nil
@@ -246,7 +244,7 @@ func PollKmsKeys(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddRe
 	// Start with generating a list of all keys
 	keys, marker, err := listKeys(kmsSvc, pollerInput.NextPageToken)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
 	resources := make([]*apimodels.AddResourceEntry, 0, len(keys))

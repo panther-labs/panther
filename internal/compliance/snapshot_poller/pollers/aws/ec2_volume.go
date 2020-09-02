@@ -80,7 +80,7 @@ func getVolume(svc ec2iface.EC2API, volumeID *string) (*ec2.Volume, error) {
 				return nil, nil
 			}
 		}
-		return nil, errors.Wrap(err, "EC2.DescribeVolumes")
+		return nil, errors.Wrapf(err, "EC2.DescribeVolumes: %s", aws.StringValue(volumeID))
 	}
 	return volume.Volumes[0], nil
 }
@@ -122,7 +122,7 @@ func describeSnapshots(ec2Svc ec2iface.EC2API, volumeID *string) (snapshots []*e
 			return true
 		})
 	if err != nil {
-		return nil, errors.Wrap(err, "EC2.DescribeSnapshots")
+		return nil, errors.Wrapf(err, "EC2.DescribeSnapshots: %s", aws.StringValue(volumeID))
 	}
 	return
 }
@@ -140,7 +140,7 @@ func describeSnapshotAttribute(svc ec2iface.EC2API, snapshotID *string) ([]*ec2.
 				return nil, err
 			}
 		}
-		return nil, errors.Wrap(err, "EC2.DescribeSnapshotAttributes")
+		return nil, errors.Wrapf(err, "EC2.DescribeSnapshotAttributes: %s", aws.StringValue(snapshotID))
 	}
 	return attributes.CreateVolumePermissions, nil
 }
@@ -203,7 +203,7 @@ func PollEc2Volumes(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Ad
 	// Start with generating a list of all volumes
 	volumes, marker, err := describeVolumes(ec2Svc, pollerInput.NextPageToken)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
 	resources := make([]*apimodels.AddResourceEntry, 0, len(volumes))

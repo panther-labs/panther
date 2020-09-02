@@ -104,7 +104,7 @@ func listCertificates(acmSvc acmiface.ACMAPI, nextMarker *string) (certs []*acm.
 func describeCertificate(acmSvc acmiface.ACMAPI, arn *string) (*acm.CertificateDetail, error) {
 	out, err := acmSvc.DescribeCertificate(&acm.DescribeCertificateInput{CertificateArn: arn})
 	if err != nil {
-		return nil, errors.Wrap(err, "ACM.DescribeCertificate")
+		return nil, errors.Wrapf(err, "ACM.DescribeCertificate: %s", aws.StringValue(arn))
 	}
 
 	return out.Certificate, nil
@@ -114,7 +114,7 @@ func describeCertificate(acmSvc acmiface.ACMAPI, arn *string) (*acm.CertificateD
 func listTagsForCertificate(acmSvc acmiface.ACMAPI, arn *string) ([]*acm.Tag, error) {
 	out, err := acmSvc.ListTagsForCertificate(&acm.ListTagsForCertificateInput{CertificateArn: arn})
 	if err != nil {
-		return nil, errors.Wrap(err, "ACM.ListTagsForCertificate")
+		return nil, errors.Wrapf(err, "ACM.ListTagsForCertificate: %s", aws.StringValue(arn))
 	}
 
 	return out.Tags, nil
@@ -192,7 +192,7 @@ func PollAcmCertificates(pollerInput *awsmodels.ResourcePollerInput) ([]*apimode
 	// Start with generating a list of all certificates
 	certificates, marker, err := listCertificates(acmSvc, pollerInput.NextPageToken)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
 	// For each certificate, build a snapshot of that certificate

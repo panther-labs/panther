@@ -97,7 +97,7 @@ func getVPC(svc ec2iface.EC2API, vpcID *string) (*ec2.Vpc, error) {
 				return nil, nil
 			}
 		}
-		return nil, errors.Wrap(err, "EC2.DescribeVpcs")
+		return nil, errors.Wrapf(err, "EC2.DescribeVpcs: %s", aws.StringValue(vpcID))
 	}
 	return vpc.Vpcs[0], nil
 }
@@ -119,7 +119,7 @@ func describeRouteTables(ec2Svc ec2iface.EC2API, vpcID *string) (routeTables []*
 		})
 
 	if err != nil {
-		return nil, errors.Wrap(err, "EC2.DescribeRouteTablesPages")
+		return nil, errors.Wrapf(err, "EC2.DescribeRouteTablesPages: %s", aws.StringValue(vpcID))
 	}
 	return
 }
@@ -165,7 +165,7 @@ func describeFlowLogs(ec2Svc ec2iface.EC2API, vpcID *string) (flowLogs []*ec2.Fl
 		})
 
 	if err != nil {
-		return nil, errors.Wrap(err, "EC2.DescribeFlowLogsPages")
+		return nil, errors.Wrapf(err, "EC2.DescribeFlowLogsPages: %s", aws.StringValue(vpcID))
 	}
 	return
 }
@@ -179,7 +179,7 @@ func describeStaleSecurityGroups(ec2Svc ec2iface.EC2API, vpcID *string) (staleSe
 			return true
 		})
 	if err != nil {
-		return nil, errors.Wrap(err, "EC2.DescribeStaleSecurityGroupsPages")
+		return nil, errors.Wrapf(err, "EC2.DescribeStaleSecurityGroupsPages: %s", aws.StringValue(vpcID))
 	}
 
 	return
@@ -199,7 +199,7 @@ func describeSecurityGroupsVPC(svc ec2iface.EC2API, vpcID *string) (securityGrou
 		return true
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "EC2.DescribeSecurityGroups")
+		return nil, errors.Wrapf(err, "EC2.DescribeSecurityGroups: %s", aws.StringValue(vpcID))
 	}
 
 	return
@@ -219,7 +219,7 @@ func describeNetworkACLsVPC(svc ec2iface.EC2API, vpcID *string) (nacls []*ec2.Ne
 		return true
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "EC2.DescribeNetworkAcls")
+		return nil, errors.Wrapf(err, "EC2.DescribeNetworkAcls: %s", aws.StringValue(vpcID))
 	}
 
 	return
@@ -280,7 +280,7 @@ func PollEc2Vpcs(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddRe
 	// Start with generating a list of all VPCs
 	vpcs, marker, err := describeVpcs(ec2Svc, pollerInput.NextPageToken)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
 	// For each VPC, build out a full snapshot

@@ -151,7 +151,7 @@ func listWebAcls(wafSvc wafiface.WAFAPI, nextMarker *string) ([]*waf.WebACLSumma
 func getWebACL(wafSvc wafiface.WAFAPI, id *string) (*waf.WebACL, error) {
 	out, err := wafSvc.GetWebACL(&waf.GetWebACLInput{WebACLId: id})
 	if err != nil {
-		return nil, errors.Wrap(err, "WAF.GetWebACL")
+		return nil, errors.Wrapf(err, "WAF.GetWebACL: %s", aws.StringValue(id))
 	}
 
 	return out.WebACL, nil
@@ -161,7 +161,7 @@ func getWebACL(wafSvc wafiface.WAFAPI, id *string) (*waf.WebACL, error) {
 func listTagsForResourceWaf(svc wafiface.WAFAPI, arn *string) ([]*waf.Tag, error) {
 	tags, err := svc.ListTagsForResource(&waf.ListTagsForResourceInput{ResourceARN: arn})
 	if err != nil {
-		return nil, errors.Wrap(err, "WAF.ListTagsForResource")
+		return nil, errors.Wrapf(err, "WAF.ListTagsForResource: %s", aws.StringValue(arn))
 	}
 	return tags.TagInfoForResource.TagList, nil
 }
@@ -170,7 +170,7 @@ func listTagsForResourceWaf(svc wafiface.WAFAPI, arn *string) ([]*waf.Tag, error
 func getRule(svc wafiface.WAFAPI, ruleID *string) (*waf.Rule, error) {
 	rule, err := svc.GetRule(&waf.GetRuleInput{RuleId: ruleID})
 	if err != nil {
-		return nil, errors.Wrap(err, "WAF.GetRule")
+		return nil, errors.Wrapf(err, "WAF.GetRule: %s", aws.StringValue(ruleID))
 	}
 	return rule.Rule, nil
 }
@@ -198,9 +198,9 @@ func buildWafWebACLSnapshot(wafSvc wafiface.WAFAPI, webACLID *string) (*awsmodel
 			}
 		}
 		if _, ok := wafSvc.(wafregionaliface.WAFRegionalAPI); ok {
-			return nil, errors.Wrap(err, "WAF.Regional.GetWebAcl")
+			return nil, errors.WithMessage(err, "WAF.Regional.GetWebAcl")
 		}
-		return nil, errors.Wrap(err, "WAF.GetWebAcl")
+		return nil, errors.WithMessage(err, "WAF.GetWebAcl")
 	}
 
 	webACLSnapshot := &awsmodels.WafWebAcl{
@@ -248,7 +248,7 @@ func PollWafRegionalWebAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apim
 	// Start with generating a list of all regional web acls
 	regionalWebACLsSummaries, marker, err := listWebAcls(wafRegionalSvc, pollerInput.NextPageToken)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
 	var resources []*apimodels.AddResourceEntry
@@ -288,7 +288,7 @@ func PollWafWebAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Ad
 	// Start with generating a list of all global web acls
 	globalWebAclsSummaries, marker, err := listWebAcls(wafSvc, pollerInput.NextPageToken)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithMessagef(err, "region: global")
 	}
 	var resources []*apimodels.AddResourceEntry
 	for _, webACL := range globalWebAclsSummaries {

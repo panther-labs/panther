@@ -138,7 +138,7 @@ func getStack(svc cloudformationiface.CloudFormationAPI, stackName string) (*clo
 				return nil, nil
 			}
 		}
-		return nil, errors.Wrap(err, "CloudFormation.DescribeStacks")
+		return nil, errors.Wrapf(err, "CloudFormation.DescribeStacks: %s", stackName)
 	}
 	// When specifying a stack name, there cannot be more than one result. If there are zero results,
 	// an error is returned above.
@@ -179,7 +179,7 @@ func detectStackDrift(cloudformationSvc cloudformationiface.CloudFormationAPI, a
 	awsErr, ok := err.(awserr.Error)
 	if !ok || awsErr.Code() != "ValidationError" {
 		// Run of the mill error, stop scanning this resource
-		return nil, errors.Wrap(err, "CloudFormation.DetectStackDrift")
+		return nil, errors.Wrapf(err, "CloudFormation.DetectStackDrift: %s", aws.StringValue(arn))
 	}
 
 	// A ValidationError could be several things, which have different meanings for us
@@ -204,7 +204,7 @@ func describeStackResourceDrifts(
 			return true
 		})
 	if err != nil {
-		return nil, errors.Wrap(err, "CloudFormation.DescribeStackResourceDriftsPages")
+		return nil, errors.Wrapf(err, "CloudFormation.DescribeStackResourceDriftsPages: %s", aws.StringValue(stackId))
 	}
 	return
 }
@@ -298,7 +298,7 @@ func PollCloudFormationStacks(pollerInput *awsmodels.ResourcePollerInput) ([]*ap
 	// Start with generating a list of all stacks
 	stacks, marker, err := describeStacks(cloudformationSvc, pollerInput.NextPageToken)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
 	// List of stack drift detection statuses

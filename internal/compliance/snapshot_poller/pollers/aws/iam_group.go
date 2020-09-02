@@ -98,7 +98,7 @@ func getGroup(iamSvc iamiface.IAMAPI, name *string) (*iam.GetGroupOutput, error)
 				return nil, nil
 			}
 		}
-		return nil, errors.Wrap(err, "IAM.GetGroup")
+		return nil, errors.Wrapf(err, "IAM.GetGroup: %s", aws.StringValue(name))
 	}
 
 	return out, nil
@@ -112,7 +112,7 @@ func listGroupPolicies(iamSvc iamiface.IAMAPI, groupName *string) (policies []*s
 			return true
 		})
 	if err != nil {
-		return nil, errors.Wrap(err, "IAM.ListGroupPoliciesPages")
+		return nil, errors.Wrapf(err, "IAM.ListGroupPoliciesPages: %s", aws.StringValue(groupName))
 	}
 	return
 }
@@ -127,7 +127,7 @@ func listAttachedGroupPolicies(iamSvc iamiface.IAMAPI, groupName *string) (polic
 			return true
 		})
 	if err != nil {
-		return nil, errors.Wrap(err, "IAM.ListGroups")
+		return nil, errors.Wrapf(err, "IAM.ListGroups: %s", aws.StringValue(groupName))
 	}
 	return
 }
@@ -137,7 +137,7 @@ func getGroupPolicy(iamSvc iamiface.IAMAPI, groupName *string, policyName *strin
 	out, err := iamSvc.GetGroupPolicy(&iam.GetGroupPolicyInput{GroupName: groupName, PolicyName: policyName})
 
 	if err != nil {
-		return nil, errors.Wrap(err, "IAM.GetGroupPolicy")
+		return nil, errors.Wrapf(err, "IAM.GetGroupPolicy: %s", aws.StringValue(groupName))
 	}
 
 	decodedPolicy, err := url.QueryUnescape(*out.PolicyDocument)

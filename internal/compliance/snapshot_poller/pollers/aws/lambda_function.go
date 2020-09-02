@@ -98,7 +98,7 @@ func getLambda(svc lambdaiface.LambdaAPI, functionARN *string) (*lambda.Function
 			return true
 		})
 	if err != nil {
-		return nil, errors.Wrap(err, "Lambda.ListFunctionsPages")
+		return nil, errors.Wrapf(err, "Lambda.ListFunctionsPages: %s", aws.StringValue(functionARN))
 	}
 	if functionConfig == nil {
 		zap.L().Warn("tried to scan non-existent resource",
@@ -136,7 +136,7 @@ func listFunctions(lambdaSvc lambdaiface.LambdaAPI, nextMarker *string) (
 func listTagsLambda(lambdaSvc lambdaiface.LambdaAPI, arn *string) (map[string]*string, error) {
 	out, err := lambdaSvc.ListTags(&lambda.ListTagsInput{Resource: arn})
 	if err != nil {
-		return nil, errors.Wrap(err, "Lambda.ListTags")
+		return nil, errors.Wrapf(err, "Lambda.ListTags: %s", aws.StringValue(arn))
 	}
 
 	return out.Tags, nil
@@ -152,7 +152,7 @@ func getPolicy(lambdaSvc lambdaiface.LambdaAPI, name *string) (*lambda.GetPolicy
 				return nil, nil
 			}
 		}
-		return nil, errors.Wrap(err, "Lambda.GetFunction")
+		return nil, errors.Wrapf(err, "Lambda.GetFunction: %s", aws.StringValue(name))
 	}
 
 	return out, nil
@@ -220,7 +220,7 @@ func PollLambdaFunctions(pollerInput *awsmodels.ResourcePollerInput) ([]*apimode
 	// Start with generating a list of all functions
 	functions, marker, err := listFunctions(lambdaSvc, pollerInput.NextPageToken)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
 	resources := make([]*apimodels.AddResourceEntry, 0, len(functions))

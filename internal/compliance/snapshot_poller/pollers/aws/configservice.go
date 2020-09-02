@@ -66,7 +66,7 @@ func PollConfigService(
 
 	recorder, err := getConfigRecorder(configClient)
 	if err != nil || recorder == nil {
-		return nil, err
+		return nil, errors.WithMessagef(err, "region: %s", parsedResourceID.Region)
 	}
 	snapshot, err := buildConfigServiceSnapshot(configClient, recorder, parsedResourceID.Region)
 	if err != nil {
@@ -121,7 +121,7 @@ func describeConfigurationRecorderStatus(
 			ConfigurationRecorderNames: []*string{name},
 		})
 	if err != nil {
-		return nil, errors.Wrap(err, "ConfigService.DescribeConfigurationRecorderStatus")
+		return nil, errors.Wrapf(err, "ConfigService.DescribeConfigurationRecorderStatus: %s", aws.StringValue(name))
 	}
 
 	if len(status.ConfigurationRecordersStatus) > 0 {
@@ -178,7 +178,7 @@ func PollConfigServices(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 		// Start with generating a list of all recorders
 		recorders, err := describeConfigurationRecorders(configServiceSvc)
 		if err != nil {
-			return nil, nil, errors.Wrap(err, "ConfigService.Describe")
+			return nil, nil, errors.WithMessagef(err, "region: %s", *regionID)
 		}
 
 		for _, recorder := range recorders {
