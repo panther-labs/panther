@@ -28,7 +28,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/magefile/mage/sh"
 
 	analysisclient "github.com/panther-labs/panther/api/gateway/analysis/client"
@@ -139,7 +138,7 @@ func (Test) E2e() {
 	ctx.GatewayClient = clients.HTTPGateway()
 	ctx.Region = clients.Region()
 	//ctx.deployPreviousVersion()
-	ctx.interactWithOldVersion()
+	//ctx.interactWithOldVersion()
 	ctx.migrate() // TODO - mage clean setup?
 	ctx.validateMigration()
 
@@ -147,79 +146,6 @@ func (Test) E2e() {
 	// TODO - stage 7 - integration test
 	// TODO - stage 8 - teardown + verify no leftover resources
 	// TODO - stage 9 - cleanup (bucket, IAM role, ecr repo)
-}
-
-// Interact with the last Panther release to generate some custom data we can verify after the migration.
-func (ctx *e2eContext) interactWithOldVersion() {
-	log.Info("***** test:e2e : Stage 3/8 : Generate Data in Previous Release *****")
-
-	// TODO - directly put a log into the ingestion bucket
-
-	// Add an SQS alert destination
-	queue, err := clients.SQS().CreateQueue(&sqs.CreateQueueInput{
-		QueueName: aws.String("e2e-test"), // TODO - rename "panther-e2e-test" ?
-	})
-	if err != nil {
-		log.Fatalf("failed to create SQS queue: %v", err)
-	}
-
-	input := outputmodels.LambdaInput{
-		AddOutput: &outputmodels.AddOutputInput{
-			UserID:      aws.String(systemUserID),
-			DisplayName: aws.String("e2e-test-queue"),
-			OutputConfig: &outputmodels.OutputConfig{
-				Sqs: &outputmodels.SqsConfig{QueueURL: *queue.QueueUrl},
-			},
-		},
-	}
-	if err := genericapi.Invoke(clients.Lambda(), outputsAPI, &input, &ctx.OutputQueue); err != nil {
-		log.Fatalf("failed to add SQS output in %s: %v", outputsAPI, err)
-	}
-	log.Infof("added SQS queue %s as output ID %s", *queue.QueueUrl, *ctx.OutputQueue.OutputID)
-
-	// TODO - modify an existing policy...
-
-	// Add a policy which scans "panther-" stacks
-	policy, err := ctx.AnalysisClient.Operations.CreatePolicy(&analysisops.CreatePolicyParams{
-		Body: &analysismodels.UpdatePolicy{
-			Body:          e2ePolicyBody,
-			Description:   e2ePolicyDescription,
-			Enabled:       false,
-			ID:            e2ePolicyID,
-			OutputIds:     []string{*ctx.OutputQueue.OutputID},
-			ResourceTypes: []string{"AWS.CloudFormation.Stack"},
-			Severity:      "INFO",
-			UserID:        systemUserID,
-		},
-		HTTPClient: ctx.GatewayClient,
-	})
-	if err != nil {
-		log.Fatalf("failed to create policy from analysis-api: %v", err)
-	}
-	ctx.NewPolicy = *policy.Payload
-	log.Infof("added policy ID \"%s\"", ctx.NewPolicy.ID)
-
-	// Add a rule which matches 10% of all input logs
-	rule, err := ctx.AnalysisClient.Operations.CreateRule(&analysisops.CreateRuleParams{
-		Body: &analysismodels.UpdateRule{
-			Body:               e2eRuleBody,
-			DedupPeriodMinutes: e2eDedupMinutes,
-			Description:        e2eRuleDescription,
-			Enabled:            false,
-			ID:                 e2eRuleID,
-			Severity:           "INFO",
-			UserID:             systemUserID,
-		},
-		HTTPClient: ctx.GatewayClient,
-	})
-	if err != nil {
-		if badReq, ok := err.(*analysisops.CreateRuleBadRequest); ok {
-			log.Errorf("bad request: %s", *badReq.Payload.Message)
-		}
-		log.Fatalf("failed to create rule from analysis-api: %v", err)
-	}
-	ctx.NewRule = *rule.Payload
-	log.Infof("added rule ID \"%s\"", ctx.NewRule.ID)
 }
 
 // Using the deployment role, migrate to the current master stack

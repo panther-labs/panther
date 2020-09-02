@@ -20,6 +20,8 @@ package mage
 
 import (
 	"fmt"
+	"github.com/panther-labs/panther/tools/mage/build"
+	"github.com/panther-labs/panther/tools/mage/deploy"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -37,7 +39,6 @@ import (
 	"github.com/panther-labs/panther/pkg/prompt"
 	"github.com/panther-labs/panther/pkg/shutil"
 	"github.com/panther-labs/panther/tools/cfnstacks"
-	"github.com/panther-labs/panther/tools/config"
 	"github.com/panther-labs/panther/tools/mage/clients"
 	"github.com/panther-labs/panther/tools/mage/logger"
 	"github.com/panther-labs/panther/tools/mage/util"
@@ -152,16 +153,16 @@ func deployPreCheck(checkForOldVersion bool) {
 	}
 }
 
-func getSettings() *config.PantherConfig {
-	settings, err := config.Settings()
+func getSettings() *deploy.PantherConfig {
+	settings, err := deploy.Settings()
 	if err != nil {
-		log.Fatalf("failed to read config file %s: %v", config.Filepath, err)
+		log.Fatalf("failed to read config file %s: %v", deploy.Filepath, err)
 	}
 	return settings
 }
 
 // Prompt for the name and email of the initial user if not already defined.
-func setFirstUser(settings *config.PantherConfig) {
+func setFirstUser(settings *deploy.PantherConfig) {
 	if settings.Setup.FirstUser.Email != "" {
 		// Always use the values in the settings file first, if available
 		return
@@ -186,7 +187,7 @@ func setFirstUser(settings *config.PantherConfig) {
 	firstName := prompt.Read("First name: ", prompt.NonemptyValidator)
 	lastName := prompt.Read("Last name: ", prompt.NonemptyValidator)
 	email := prompt.Read("Email: ", prompt.EmailValidator)
-	settings.Setup.FirstUser = config.FirstUser{
+	settings.Setup.FirstUser = deploy.FirstUser{
 		GivenName:  firstName,
 		FamilyName: lastName,
 		Email:      email,
@@ -202,20 +203,20 @@ func deploySingleStack(stack string) error {
 		_, err := deployBootstrapStack(getSettings())
 		return err
 	case cfnstacks.Gateway:
-		build.Lambda() // custom-resources
+		build.build.Lambda() // custom-resources
 		_, err := deployBootstrapGatewayStack(getSettings(),
 			awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap))
 		return err
 	case cfnstacks.Appsync:
 		return deployAppsyncStack(awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap, cfnstacks.Gateway))
 	case cfnstacks.Cloudsec:
-		build.API()
-		build.Lambda()
+		build.build.API()
+		build.build.Lambda()
 		return deployCloudSecurityStack(getSettings(),
 			awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap, cfnstacks.Gateway))
 	case cfnstacks.Core:
-		build.API()
-		build.Lambda()
+		build.build.API()
+		build.build.Lambda()
 		return deployCoreStack(getSettings(),
 			awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap, cfnstacks.Gateway))
 	case cfnstacks.Dashboard:
@@ -225,8 +226,8 @@ func deploySingleStack(stack string) error {
 		setFirstUser(getSettings())
 		return deployFrontend(awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap, cfnstacks.Gateway), getSettings())
 	case cfnstacks.LogAnalysis:
-		build.API()
-		build.Lambda()
+		build.build.API()
+		build.build.Lambda()
 		return deployLogAnalysisStack(getSettings(),
 			awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap, cfnstacks.Gateway))
 	case cfnstacks.Onboard:
@@ -240,9 +241,9 @@ func deploySingleStack(stack string) error {
 // Deploy bootstrap stacks and build deployment artifacts.
 //
 // Returns combined outputs from bootstrap stacks.
-func bootstrap(settings *config.PantherConfig) map[string]string {
-	build.API()
-	build.Lambda() // Lambda compilation required for most stacks, including bootstrap-gateway
+func bootstrap(settings *deploy.PantherConfig) map[string]string {
+	build.build.API()
+	build.build.Lambda() // Lambda compilation required for most stacks, including bootstrap-gateway
 
 	outputs, err := deployBootstrapStack(settings)
 	if err != nil {
@@ -268,7 +269,7 @@ func bootstrap(settings *config.PantherConfig) map[string]string {
 }
 
 // Deploy main stacks (everything after bootstrap and bootstrap-gateway)
-func deployMainStacks(settings *config.PantherConfig, outputs map[string]string) {
+func deployMainStacks(settings *deploy.PantherConfig, outputs map[string]string) {
 	results := make(chan util.TaskResult)
 	count := 0
 
@@ -321,7 +322,7 @@ func deployMainStacks(settings *config.PantherConfig, outputs map[string]string)
 	util.LogResults(results, "deploy", count+3, cfnstacks.NumStacks, cfnstacks.NumStacks)
 }
 
-func deployBootstrapStack(settings *config.PantherConfig) (map[string]string, error) {
+func deployBootstrapStack(settings *deploy.PantherConfig) (map[string]string, error) {
 	return deployTemplate(cfnstacks.BootstrapTemplate, "", cfnstacks.Bootstrap, map[string]string{
 		"AccessLogsBucket":              settings.Setup.S3AccessLogsBucket,
 		"AlarmTopicArn":                 settings.Monitoring.AlarmSnsTopicArn,
@@ -338,7 +339,7 @@ func deployBootstrapStack(settings *config.PantherConfig) (map[string]string, er
 }
 
 func deployBootstrapGatewayStack(
-	settings *config.PantherConfig,
+	settings *deploy.PantherConfig,
 	outputs map[string]string, // from bootstrap stack
 ) (map[string]string, error) {
 
@@ -413,7 +414,7 @@ func deployAppsyncStack(outputs map[string]string) error {
 	return err
 }
 
-func deployCloudSecurityStack(settings *config.PantherConfig, outputs map[string]string) error {
+func deployCloudSecurityStack(settings *deploy.PantherConfig, outputs map[string]string) error {
 	_, err := deployTemplate(cfnstacks.CloudsecTemplate, outputs["SourceBucket"], cfnstacks.Cloudsec, map[string]string{
 		"AlarmTopicArn":              outputs["AlarmTopicArn"],
 		"AnalysisApiId":              outputs["AnalysisApiId"],
@@ -433,7 +434,7 @@ func deployCloudSecurityStack(settings *config.PantherConfig, outputs map[string
 	return err
 }
 
-func deployCoreStack(settings *config.PantherConfig, outputs map[string]string) error {
+func deployCoreStack(settings *deploy.PantherConfig, outputs map[string]string) error {
 	_, err := deployTemplate(cfnstacks.CoreTemplate, outputs["SourceBucket"], cfnstacks.Core, map[string]string{
 		"AlarmTopicArn":              outputs["AlarmTopicArn"],
 		"AnalysisApiId":              outputs["AnalysisApiId"],
@@ -468,7 +469,7 @@ func deployDashboardStack(bucket string) error {
 	return err
 }
 
-func deployLogAnalysisStack(settings *config.PantherConfig, outputs map[string]string) error {
+func deployLogAnalysisStack(settings *deploy.PantherConfig, outputs map[string]string) error {
 	// this computes a signature of the deployed glue tables used for change detection, for CF use the Panther version
 	tablesSignature, err := gluetables.DeployedTablesSignature(clients.Glue())
 	if err != nil {
@@ -496,7 +497,7 @@ func deployLogAnalysisStack(settings *config.PantherConfig, outputs map[string]s
 	return err
 }
 
-func deployOnboardStack(settings *config.PantherConfig, outputs map[string]string) error {
+func deployOnboardStack(settings *deploy.PantherConfig, outputs map[string]string) error {
 	var err error
 	if settings.Setup.OnboardSelf {
 		_, err = deployTemplate(cfnstacks.OnboardTemplate, outputs["SourceBucket"], cfnstacks.Onboard, map[string]string{

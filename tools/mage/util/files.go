@@ -25,6 +25,35 @@ import (
 	"path/filepath"
 )
 
+const (
+	NpmDir   = "node_modules"
+	SetupDir = ".setup"
+)
+
+var (
+	PyEnv     = filepath.Join(SetupDir, "venv")
+	GoLinter  = filepath.Join(SetupDir, "golangci-lint")
+	Swagger   = filepath.Join(SetupDir, "swagger")
+	Terraform = filepath.Join(SetupDir, "terraform")
+
+	GoTargets = []string{"api", "internal", "pkg", "tools", "cmd", "magefile.go"}
+	PyTargets = []string{
+		"internal/compliance/remediation_aws",
+		"internal/compliance/policy_engine",
+		"internal/log_analysis/rules_engine",
+	}
+)
+
+// Path to a node binary
+func NodePath(binary string) string {
+	return filepath.Join(NpmDir, ".bin", binary)
+}
+
+// Path to a pip binary
+func PipPath(lib string) string {
+	return filepath.Join(PyEnv, "bin", lib)
+}
+
 // Wrapper around filepath.Walk, logging errors as fatal.
 func Walk(root string, handler func(string, os.FileInfo)) {
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
@@ -57,14 +86,4 @@ func WriteFile(path string, data []byte) {
 	if err := ioutil.WriteFile(path, data, 0600); err != nil {
 		log.Fatalf("failed to write file %s: %v", path, err)
 	}
-}
-
-// PythonLibPath the Python venv path of the given library
-func PythonLibPath(lib string) string {
-	return filepath.Join(".setup", "venv", "bin", lib)
-}
-
-// Path to a node binary
-func NodePath(binary string) string {
-	return filepath.Join("node_modules", ".bin", binary)
 }

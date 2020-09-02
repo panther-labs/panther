@@ -28,7 +28,6 @@ import (
 
 	"github.com/magefile/mage/sh"
 
-	"github.com/panther-labs/panther/tools/cfnparse"
 	"github.com/panther-labs/panther/tools/cfnstacks"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
@@ -87,7 +86,7 @@ func testCfnLint() error {
 		}
 
 		var body cfnTemplate
-		if err := cfnparse.ParseTemplate(pythonVirtualEnvPath, template, &body); err != nil {
+		if err := util.ParseTemplate(pythonVirtualEnvPath, template, &body); err != nil {
 			return fmt.Errorf("failed to parse %s: %v", template, err)
 		}
 		parsed[template] = body

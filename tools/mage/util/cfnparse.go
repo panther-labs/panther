@@ -1,4 +1,4 @@
-package cfnparse
+package util
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.

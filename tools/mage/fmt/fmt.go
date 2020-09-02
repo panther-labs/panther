@@ -1,4 +1,4 @@
-package mage
+package fmt
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -31,19 +31,12 @@ import (
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 
-	"github.com/panther-labs/panther/tools/cfnparse"
+	"github.com/panther-labs/panther/tools/mage/logger"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
-var (
-	goTargets = []string{"api", "internal", "pkg", "tools", "cmd", "magefile.go"}
-	pyTargets = []string{
-		"internal/compliance/remediation_aws",
-		"internal/compliance/policy_engine",
-		"internal/log_analysis/rules_engine"}
-)
+var log = logger.Get()
 
-// Fmt Format source files
 func Fmt() {
 	// Add license headers first (don't run in parallel with other formatters)
 	fmtLicenseAll()
@@ -53,12 +46,12 @@ func Fmt() {
 
 	count++
 	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: "fmt: gofmt", Err: gofmt(goTargets...)}
+		c <- util.TaskResult{Summary: "fmt: gofmt", Err: gofmt(util.GoTargets...)}
 	}(results)
 
 	count++
 	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: "fmt: yapf", Err: yapf(pyTargets...)}
+		c <- util.TaskResult{Summary: "fmt: yapf", Err: yapf(util.PyTargets...)}
 	}(results)
 
 	count++
@@ -142,7 +135,7 @@ func removeImportNewlines(path string) error {
 func yapf(paths ...string) error {
 	log.Debug("fmt: python yapf " + strings.Join(paths, " "))
 	args := []string{"--in-place", "--parallel", "--recursive"}
-	if err := sh.Run(util.PythonLibPath("yapf"), append(args, pyTargets...)...); err != nil {
+	if err := sh.Run(util.PipPath("yapf"), append(args, util.PyTargets...)...); err != nil {
 		return fmt.Errorf("failed to format python: %v", err)
 	}
 	return nil
@@ -171,7 +164,7 @@ func terraformFmt() error {
 		return err
 	}
 	root := filepath.Join("deployments", "auxiliary", "terraform")
-	return sh.Run(terraformPath, "fmt", "-recursive", root)
+	return sh.Run(util.Terraform, "fmt", "-recursive", root)
 }
 
 // Generate terraform version of the deployment role
@@ -191,7 +184,7 @@ func tfUpdateDeploymentRole() error {
 	// Parse CF deployment role
 	var cfn template
 	srcPath := filepath.Join("deployments", "auxiliary", "cloudformation", "panther-deployment-role.yml")
-	if err := cfnparse.ParseTemplate(pythonVirtualEnvPath, srcPath, &cfn); err != nil {
+	if err := util.ParseTemplate(util.PyEnv, srcPath, &cfn); err != nil {
 		return err
 	}
 

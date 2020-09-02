@@ -19,6 +19,7 @@ package mage
  */
 
 import (
+	"github.com/panther-labs/panther/tools/mage/build"
 	"os"
 	"path/filepath"
 	"strings"
@@ -40,7 +41,7 @@ func (t Test) Integration() {
 		log.Fatal("integration tests aborted")
 	}
 
-	mg.Deps(build.API)
+	mg.Deps(build.build.API)
 
 	if pkg := os.Getenv("PKG"); pkg != "" {
 		// One specific package requested: run integration tests just for that

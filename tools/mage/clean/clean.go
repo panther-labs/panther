@@ -1,4 +1,4 @@
-package mage
+package clean
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -22,15 +22,17 @@ import (
 	"os"
 	"strings"
 
+	"github.com/panther-labs/panther/tools/mage/logger"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
-// Clean Remove dev libraries and build/test artifacts
+var log = logger.Get()
+
 func Clean() {
-	paths := []string{setupDirectory, "node_modules", "out", "internal/core/analysis_api/main/bulk_upload.zip"}
+	paths := []string{util.SetupDir, util.NpmDir, "out", "internal/core/analysis_api/main/bulk_upload.zip"}
 
 	// Remove __pycache__ folders
-	for _, target := range pyTargets {
+	for _, target := range util.PyTargets {
 		util.Walk(target, func(path string, info os.FileInfo) {
 			if strings.HasSuffix(path, "__pycache__") {
 				paths = append(paths, path)

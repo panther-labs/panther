@@ -25,18 +25,18 @@ import (
 	"github.com/panther-labs/panther/pkg/prompt"
 	"github.com/panther-labs/panther/tools/cfnstacks"
 	"github.com/panther-labs/panther/tools/mage/clients"
-	"github.com/panther-labs/panther/tools/mage/util"
+	"github.com/panther-labs/panther/tools/mage/teardown"
 )
 
 // Teardown Destroy all Panther infrastructure
 func Teardown() {
 	masterStack := teardownConfirmation()
-	if err := util.DestroyCfnStacks(masterStack, pollInterval); err != nil {
+	if err := teardown.DestroyCfnStacks(masterStack); err != nil {
 		log.Fatal(err)
 	}
 
 	// CloudFormation will not delete any Panther S3 buckets (DeletionPolicy: Retain), we do so here.
-	if err := util.DestroyPantherBuckets(clients.S3()); err != nil {
+	if err := teardown.DestroyPantherBuckets(clients.S3()); err != nil {
 		log.Fatal(err)
 	}
 

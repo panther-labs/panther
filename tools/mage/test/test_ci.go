@@ -20,6 +20,8 @@ package mage
 
 import (
 	"fmt"
+	"github.com/panther-labs/panther/tools/mage/build"
+	"github.com/panther-labs/panther/tools/mage/doc"
 	"sort"
 	"strings"
 
@@ -67,7 +69,7 @@ func (Test) CI() {
 		}},
 
 		// mage doc
-		{"doc", doc}, // verify the command works, even if docs aren't committed in this repo
+		{"doc", doc.doc}, // verify the command works, even if docs aren't committed in this repo
 	}
 
 	tests = append(tests, webTests...) // web tests take awhile, queue them earlier
@@ -103,8 +105,8 @@ func testFmtAndGeneratedFiles() error {
 		return err
 	}
 
-	build.API()
-	build.Cfn()
+	build.build.API()
+	build.build.Cfn()
 	Fmt()
 
 	afterHashes, err := sourceHashes()

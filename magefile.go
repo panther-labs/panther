@@ -21,6 +21,24 @@ package main
  */
 
 import (
-	// mage:import
-	_ "github.com/panther-labs/panther/tools/mage"
+	"github.com/panther-labs/panther/tools/mage/clean"
+	"github.com/panther-labs/panther/tools/mage/fmt"
+	"github.com/panther-labs/panther/tools/mage/setup"
 )
+
+// Each exported function and its comment becomes a mage target
+
+// Remove dev libraries and build/test artifacts
+func Clean() {
+	clean.Clean()
+}
+
+// Format source files
+func Fmt() {
+	fmt.Fmt()
+}
+
+// Install all build and development dependencies
+func Setup() {
+	setup.Setup()
+}

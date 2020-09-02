@@ -21,6 +21,7 @@ package mage
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/panther-labs/panther/tools/mage/deploy"
 	"os"
 	"strconv"
 	"strings"
@@ -30,14 +31,13 @@ import (
 	"github.com/magefile/mage/sh"
 
 	"github.com/panther-labs/panther/tools/cfnstacks"
-	"github.com/panther-labs/panther/tools/config"
 	"github.com/panther-labs/panther/tools/mage/clients"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 const awsEnvFile = "out/.env.aws"
 
-func deployFrontend(bootstrapOutputs map[string]string, settings *config.PantherConfig) error {
+func deployFrontend(bootstrapOutputs map[string]string, settings *deploy.PantherConfig) error {
 	// Save .env file (only used when running web server locally)
 	if err := godotenv.Write(
 		map[string]string{

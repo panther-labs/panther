@@ -19,22 +19,21 @@ package mage
  */
 
 import (
+	"github.com/panther-labs/panther/tools/mage/util"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
-
-	"github.com/panther-labs/panther/tools/cfnparse"
 )
 
 func TestEmbedAPIsNoChange(t *testing.T) {
 	var cfn map[string]interface{}
-	err := cfnparse.ParseTemplate(testEnvPath(), "testdata/no-api.yml", &cfn)
+	err := util.ParseTemplate(testEnvPath(), "testdata/no-api.yml", &cfn)
 	require.NoError(t, err)
 	var expectedMap map[string]interface{}
-	err = cfnparse.ParseTemplate(testEnvPath(), "testdata/no-api.yml", &expectedMap)
+	err = util.ParseTemplate(testEnvPath(), "testdata/no-api.yml", &expectedMap)
 	require.NoError(t, err)
 
 	require.NoError(t, embedAPIs(cfn))
@@ -51,10 +50,10 @@ func TestEmbedAPIsNoChange(t *testing.T) {
 
 func TestEmbedAPIs(t *testing.T) {
 	var cfn map[string]interface{}
-	err := cfnparse.ParseTemplate(testEnvPath(), "testdata/valid-api.yml", &cfn)
+	err := util.ParseTemplate(testEnvPath(), "testdata/valid-api.yml", &cfn)
 	require.NoError(t, err)
 	var expectedMap map[string]interface{}
-	err = cfnparse.ParseTemplate(testEnvPath(), "testdata/valid-api-expected-output.yml", &expectedMap)
+	err = util.ParseTemplate(testEnvPath(), "testdata/valid-api-expected-output.yml", &expectedMap)
 	require.NoError(t, err)
 
 	require.NoError(t, embedAPIs(cfn))

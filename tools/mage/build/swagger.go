@@ -25,7 +25,6 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/panther-labs/panther/tools/cfnparse"
 	"github.com/panther-labs/panther/tools/cfnstacks"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
@@ -37,7 +36,7 @@ const (
 // Embed swagger specs into the API gateway template, saving it to out/deployments.
 func embedAPISpec() error {
 	var cfn map[string]interface{}
-	if err := cfnparse.ParseTemplate(pythonVirtualEnvPath, cfnstacks.APITemplate, &cfn); err != nil {
+	if err := util.ParseTemplate(pythonVirtualEnvPath, cfnstacks.APITemplate, &cfn); err != nil {
 		return err
 	}
 
@@ -46,7 +45,7 @@ func embedAPISpec() error {
 	}
 
 	log.Debugf("deploy: transformed %s => %s with embedded APIs", cfnstacks.APITemplate, cfnstacks.APIEmbeddedTemplate)
-	return cfnparse.WriteTemplate(cfn, cfnstacks.APIEmbeddedTemplate)
+	return util.WriteTemplate(cfn, cfnstacks.APIEmbeddedTemplate)
 }
 
 // Transform a single CloudFormation template by embedding Swagger definitions.

@@ -18,7 +18,9 @@ package dashboards
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "github.com/panther-labs/panther/tools/cfngen/cloudwatchcf"
+import (
+	"github.com/panther-labs/panther/tools/mage/build"
+)
 
 /*
 Dashboards are generated rather than explicitly defined
@@ -37,11 +39,11 @@ The methodology for adding dashboards is to:
 */
 
 // Dashboards returns all the declared dashboards
-func Dashboards() (dashboards []*cloudwatchcf.Dashboard) {
-	dashboards = append(dashboards, cloudwatchcf.NewDashboard("PantherOverview", overviewJSON))
-	dashboards = append(dashboards, cloudwatchcf.NewDashboard("PantherCloudSecurity", infraJSON))
-	dashboards = append(dashboards, cloudwatchcf.NewDashboard("PantherAlertProcessing", alertsJSON))
-	dashboards = append(dashboards, cloudwatchcf.NewDashboard("PantherRemediation", remediationJSON))
-	dashboards = append(dashboards, cloudwatchcf.NewDashboard("PantherLogAnalysis", logProcessingJSON))
+func Dashboards() (dashboards []*build.Dashboard) {
+	dashboards = append(dashboards, build.NewDashboard("PantherOverview", overviewJSON))
+	dashboards = append(dashboards, build.NewDashboard("PantherCloudSecurity", infraJSON))
+	dashboards = append(dashboards, build.NewDashboard("PantherAlertProcessing", alertsJSON))
+	dashboards = append(dashboards, build.NewDashboard("PantherRemediation", remediationJSON))
+	dashboards = append(dashboards, build.NewDashboard("PantherLogAnalysis", logProcessingJSON))
 	return dashboards
 }
