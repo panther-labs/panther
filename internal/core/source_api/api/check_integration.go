@@ -162,14 +162,14 @@ func getCredentialsWithStatus(roleARN string) (*credentials.Credentials, models.
 	if err != nil {
 		return roleCredentials, models.SourceIntegrationItemStatus{
 			Healthy:      false,
-			Message:      "We were unable to assume this role.",
+			Message:      fmt.Sprintf("We were unable to assume %s", roleARN),
 			ErrorMessage: err.Error(),
 		}
 	}
 
 	return roleCredentials, models.SourceIntegrationItemStatus{
 		Healthy: true,
-		Message: "We were able to successfully assume this role.",
+		Message: fmt.Sprintf("We were able to successfully assume %s", roleARN),
 	}
 }
 
