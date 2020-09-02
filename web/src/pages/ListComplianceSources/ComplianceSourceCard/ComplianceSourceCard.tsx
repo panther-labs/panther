@@ -24,9 +24,8 @@ import { formatDatetime } from 'Helpers/utils';
 import urls from 'Source/urls';
 import logo from 'Assets/aws-minimal-logo.svg';
 import { Link as RRLink } from 'react-router-dom';
-
+import SourceHealthBadge from 'Components/SourceHealthBadge';
 import ComplianceSourceCardOptions from './ComplianceSourceCardOptions';
-import ComplianceSourceCardHealthBadge from './ComplianceSourceCardHealthBadge';
 
 interface ComplianceSourceCardProps {
   source: ComplianceIntegration;
@@ -58,7 +57,13 @@ const ComplianceSourceCard: React.FC<ComplianceSourceCardProps> = ({ source }) =
             value={formatDatetime(source.createdAtTime, true)}
           />
           <Flex ml="auto" mr={0} align="flex-end">
-            <ComplianceSourceCardHealthBadge complianceSourceHealth={source.health} />
+            <SourceHealthBadge
+              healthMetrics={[
+                source.health.auditRoleStatus,
+                source.health.cweRoleStatus,
+                source.health.remediationRoleStatus,
+              ]}
+            />
           </Flex>
         </GenericItemCard.ValuesGroup>
       </GenericItemCard.Body>
