@@ -21,6 +21,7 @@ package api
 import (
 	"github.com/go-playground/validator"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
@@ -28,12 +29,12 @@ import (
 
 // DispatchAlerts - Sends an alert to sends a specific alert to the specified destinations.
 func (API) DispatchAlerts(input []*deliveryModels.DispatchAlertsInput) (interface{}, error) {
-	zap.L().Info("Dispatching alerts", zap.Int("num_alerts", len(input)))
+	zap.L().Debug("Dispatching alerts", zap.Int("num_alerts", len(input)))
 
 	// Extract alerts from the input payload
 	alerts := getAlerts(input)
 
-	zap.L().Info("Extracted from input", zap.Any("alerts", alerts))
+	zap.L().Debug("Extracted from input", zap.Any("alerts", alerts))
 
 	// Get our Alert -> Output mappings. We determine which destinations an alert should be sent.
 	alertOutputMap, err := getAlertOutputMap(alerts)
@@ -46,11 +47,11 @@ func (API) DispatchAlerts(input []*deliveryModels.DispatchAlertsInput) (interfac
 
 	// Record the delivery statuses to ddb. Ignore the returned output.
 	updateAlerts(dispatchStatuses)
-	zap.L().Info("Finished updating alert delivery statuses")
+	zap.L().Debug("Finished updating alert delivery statuses")
 
 	success, failed := filterDispatches(dispatchStatuses)
-	zap.L().Info("Deliveries that failed", zap.Int("num_failed", len(failed)))
-	zap.L().Info("Deliveries that succeeded", zap.Int("num_success", len(success)))
+	zap.L().Debug("Deliveries that failed", zap.Int("num_failed", len(failed)))
+	zap.L().Debug("Deliveries that succeeded", zap.Int("num_success", len(success)))
 
 	// Obtain a list of alerts that should be retried and put back on to the queue
 	alertsToRetry := getAlertsToRetry(failed, maxRetryCount)
@@ -88,8 +89,7 @@ func getAlertOutputMap(alerts []*deliveryModels.Alert) (AlertOutputMap, error) {
 	for _, alert := range alerts {
 		validOutputIds, err := getAlertOutputs(alert)
 		if err != nil {
-			zap.L().Error("Failed to fetch outputIds", zap.Error(err))
-			return alertOutputMap, err
+			return alertOutputMap, errors.Wrapf(err, "Failed to fetch outputIds")
 		}
 		alertOutputMap[alert] = validOutputIds
 	}

@@ -112,7 +112,7 @@ Mappings:
     QueueRetention:
       Seconds: 259200 # (3 days) How long SQS will retain messages in the alerts queue
     RetryCount:
-      Max: 10 #Alerts which fail to send will be retried this many times
+      Max: 10 # Alerts which fail to send will be retried this many times
     RetryDuration:
       Minutes: 30 # Alerts which fail to send will be retried for this duration
     MinRetryDelay:

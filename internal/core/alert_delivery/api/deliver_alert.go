@@ -19,9 +19,11 @@ package api
  */
 
 import (
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/analysis/client/operations"
@@ -35,7 +37,7 @@ import (
 // DeliverAlert sends a specific alert to the specified destinations.
 func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModels.DeliverAlertOutput, error) {
 	// First, fetch the alert
-	zap.L().Info("Fetching alert", zap.String("AlertID", input.AlertID))
+	zap.L().Debug("Fetching alert", zap.String("AlertID", input.AlertID))
 
 	// Extract the alert from the input and lookup from ddb
 	alertItem, err := getAlert(input)
@@ -59,7 +61,7 @@ func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModel
 
 	// Record the delivery statuses to ddb
 	alertSummaries := updateAlerts(dispatchStatuses)
-	zap.L().Info("Finished updating alert delivery statuses")
+	zap.L().Debug("Finished updating alert delivery statuses")
 
 	// Log any failures and return
 	if err := returnIfFailed(dispatchStatuses); err != nil {
@@ -75,15 +77,13 @@ func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModel
 func getAlert(input *deliveryModels.DeliverAlertInput) (*alertTable.AlertItem, error) {
 	alertItem, err := alertsTableClient.GetAlert(&input.AlertID)
 	if err != nil {
-		zap.L().Error("Failed to fetch alert from ddb", zap.Error(err))
-		return nil, err
+		return nil, errors.Wrapf(err, "Failed to fetch alert %s from ddb", input.AlertID)
 	}
 
 	// If the alertId was not found, log and return
 	if alertItem == nil {
-		zap.L().Error("Alert not found", zap.String("AlertID", input.AlertID))
 		return nil, &genericapi.DoesNotExistError{
-			Message: "Unable to find the specified alert!"}
+			Message: "Unable to find the specified alert: " + input.AlertID}
 	}
 	return alertItem, nil
 }
@@ -143,22 +143,23 @@ func getAlertOutputMapping(alert *deliveryModels.Alert, outputIds []string) (Ale
 	// Initialize our Alert -> Output map
 	alertOutputMap := make(AlertOutputMap)
 
-	// Direct API hits should not use the cache. Only SQS events.
+	// This function is used for the HTTP API and we always need
+	// to fetch the latest outputs instead of using a cache.
+	// The only time we use cached values is when the lambda
+	// is triggered by an SQS event.
 	outputsCache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5)))
 
 	// Fetch outputIds from ddb
 	outputs, err := getOutputs()
 	if err != nil {
-		zap.L().Error("Failed to fetch outputIds", zap.Error(err))
-		return alertOutputMap, err
+		return alertOutputMap, errors.Wrapf(err, "Failed to fetch outputIds")
 	}
 
 	// Check the provided the input outputIds and generate a list of valid outputs
 	validOutputIds := intersection(outputIds, outputs)
 	if len(validOutputIds) == 0 {
-		zap.L().Error("Invalid outputIds specified", zap.Strings("OutputIds", outputIds))
 		return alertOutputMap, &genericapi.InvalidInputError{
-			Message: "Invalid destination(s) specified!"}
+			Message: "Invalid destination(s) specified!" + strings.Join(outputIds, ", ")}
 	}
 
 	// Map the outputs
@@ -168,10 +169,10 @@ func getAlertOutputMapping(alert *deliveryModels.Alert, outputIds []string) (Ale
 
 // intersection - Finds the intersection O(M + N) of panther outputs and the provided input list of outputIds
 func intersection(inputs []string, outputs []*outputModels.AlertOutput) []*outputModels.AlertOutput {
-	m := make(map[string]bool)
+	m := make(map[string]struct{})
 
 	for _, item := range inputs {
-		m[item] = true
+		m[item] = struct{}{}
 	}
 
 	valid := []*outputModels.AlertOutput{}
