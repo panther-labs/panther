@@ -26,6 +26,6 @@ type TestCase struct {
 	ListLogTypesOutput []string
 }
 
-func (t *TestCase) ListLogTypes(ctx context.Context) ([]string, error) {
+func (t *TestCase) IndexLogTypes(_ context.Context) ([]string, error) {
 	return t.ListLogTypesOutput, nil
 }

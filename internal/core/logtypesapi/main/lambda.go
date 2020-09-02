@@ -48,13 +48,13 @@ func main() {
 	// Syncing the zap.Logger always results in Lambda errors. Commented code kept as a reminder.
 	// defer logger.Sync()
 
-	api := &logtypesapi.API{
-		ExternalAPI: &logtypesapi.ExternalAPIDynamoDB{
+	api := &logtypesapi.LogTypesAPI{
+		// Use the default registry with all available log types
+		NativeLogTypes: registry.AvailableLogTypes,
+		Database: &logtypesapi.DynamoDBLogTypes{
 			DB:        dynamodb.New(session.Must(session.NewSession())),
 			TableName: config.LogTypesTableName,
 		},
-		// Use the default registry with all available log types
-		NativeLogTypes: registry.AvailableLogTypes,
 	}
 
 	validate := validator.New()

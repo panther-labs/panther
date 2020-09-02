@@ -45,12 +45,10 @@ func init() {
 	}
 	for _, pkg := range pkgs {
 		if pkg.Name == "context" {
-			obj := pkg.Types.Scope().Lookup("Context")
-			if obj == nil {
-				continue
+			if obj := pkg.Types.Scope().Lookup("Context"); obj != nil {
+				typContext = obj.Type().Underlying().(*types.Interface)
+				return
 			}
-			typContext = obj.Type().Underlying().(*types.Interface)
-			return
 		}
 	}
 	panic("could not resolve context.Context type")
@@ -58,6 +56,7 @@ func init() {
 
 type Method struct {
 	API    string
+	Func   types.Object
 	Input  types.Object
 	Output types.Object
 	Name   string
@@ -153,6 +152,7 @@ func parseMethod(prefix string, method *types.Func) (*Method, error) {
 		return nil, nil
 	}
 	m := Method{
+		Func: method,
 		Name: strings.TrimPrefix(methodName, prefix),
 	}
 	sig := method.Type().(*types.Signature)

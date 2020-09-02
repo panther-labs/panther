@@ -30,26 +30,28 @@ import (
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
-type ExternalAPIDynamoDB struct {
+type DynamoDBLogTypes struct {
 	DB        dynamodbiface.DynamoDBAPI
 	TableName string
 }
 
-var _ ExternalAPI = (*ExternalAPIDynamoDB)(nil)
+var _ LogTypesDatabase = (*DynamoDBLogTypes)(nil)
 
 var L = lambdalogger.FromContext
 
-func (s *ExternalAPIDynamoDB) ListLogTypes(ctx context.Context) ([]string, error) {
-	ddbInput := dynamodb.GetItemInput{
-		TableName:            aws.String(s.TableName),
+const (
+	recordKindStatus      = "status"
+	attrAvailableLogTypes = "AvailableLogTypes"
+)
+
+func (d *DynamoDBLogTypes) IndexLogTypes(ctx context.Context) ([]string, error) {
+	input := dynamodb.GetItemInput{
+		TableName:            aws.String(d.TableName),
 		ProjectionExpression: aws.String(attrAvailableLogTypes),
-		Key: mustMarshalMap(&recordKey{
-			RecordID:   "Status",
-			RecordKind: recordKindStatus,
-		}),
+		Key:                  statusRecordKey(),
 	}
 
-	ddbOutput, err := s.DB.GetItemWithContext(ctx, &ddbInput)
+	output, err := d.DB.GetItemWithContext(ctx, &input)
 	if err != nil {
 		L(ctx).Error(`failed to get DynamoDB item`, zap.Error(err))
 		return nil, err
@@ -58,18 +60,13 @@ func (s *ExternalAPIDynamoDB) ListLogTypes(ctx context.Context) ([]string, error
 	item := struct {
 		AvailableLogTypes []string
 	}{}
-	if err := dynamodbattribute.UnmarshalMap(ddbOutput.Item, &item); err != nil {
+	if err := dynamodbattribute.UnmarshalMap(output.Item, &item); err != nil {
 		L(ctx).Error(`failed to unmarshal DynamoDB item`, zap.Error(err))
 		return nil, err
 	}
 
 	return item.AvailableLogTypes, nil
 }
-
-const (
-	recordKindStatus      = "status"
-	attrAvailableLogTypes = "AvailableLogTypes"
-)
 
 func mustMarshalMap(val interface{}) map[string]*dynamodb.AttributeValue {
 	attr, err := dynamodbattribute.MarshalMap(val)
@@ -80,6 +77,13 @@ func mustMarshalMap(val interface{}) map[string]*dynamodb.AttributeValue {
 }
 
 type recordKey struct {
-	RecordID   string
-	RecordKind string
+	RecordID   string `json:"RecordID" validate:"required"`
+	RecordKind string `json:"RecordKind" validate:"required,oneof=native custom"`
+}
+
+func statusRecordKey() map[string]*dynamodb.AttributeValue {
+	return mustMarshalMap(&recordKey{
+		RecordID:   "Status",
+		RecordKind: recordKindStatus,
+	})
 }
