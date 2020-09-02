@@ -173,7 +173,10 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	// If a resource ID is not provided, a resource type must be present
 	// This error cannot be retried so we don't return it
 	if scanRequest.ResourceType == nil {
-		zap.L().Error("Invalid scan request input")
+		zap.L().Error(
+			"Invalid scan request input - resourceID or resourceType must be specified",
+			zap.Any("input", scanRequest),
+		)
 		return nil, nil
 	}
 
