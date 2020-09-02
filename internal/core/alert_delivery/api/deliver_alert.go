@@ -160,7 +160,7 @@ func getAlertOutputMapping(alert *deliveryModels.Alert, outputIds []string) (Ale
 	validOutputIds := intersection(outputIds, outputs)
 	if len(validOutputIds) == 0 {
 		return alertOutputMap, &genericapi.InvalidInputError{
-			Message: "Invalid destination(s) specified!" + strings.Join(outputIds, ", ")}
+			Message: "Invalid destination(s) specified: " + strings.Join(outputIds, ", ")}
 	}
 
 	// Map the outputs
