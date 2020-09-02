@@ -92,11 +92,14 @@ func PollCloudFormationStack(
 	driftID, err := detectStackDrift(cfClient, aws.String(stackName))
 	if err != nil {
 		if err.Error() == requeueRequiredError {
-			utils.Requeue(pollermodels.ScanMsg{
+			err = utils.Requeue(pollermodels.ScanMsg{
 				Entries: []*pollermodels.ScanEntry{
 					scanRequest,
 				},
 			}, driftDetectionRequeueDelaySeconds)
+			if err != nil {
+				return nil, err
+			}
 		}
 		return nil, nil
 	}
@@ -341,7 +344,9 @@ func PollCloudFormationStacks(pollerInput *awsmodels.ResourcePollerInput) ([]*ap
 				ResourceType:  aws.String(awsmodels.CloudFormationStackSchema),
 			})
 		}
-		utils.Requeue(scanRequest, driftDetectionRequeueDelaySeconds)
+		if err = utils.Requeue(scanRequest, driftDetectionRequeueDelaySeconds); err != nil {
+			return nil, nil, err
+		}
 	}
 
 	// Wait for all stack drift detections to be complete

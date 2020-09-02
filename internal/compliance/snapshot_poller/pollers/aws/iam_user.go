@@ -85,10 +85,10 @@ func PollIAMUser(
 			// Check if we got rate limited, happens sometimes when the credential report takes a long time to generate
 			if awsErr.Code() == throttlingErrorCode {
 				zap.L().Debug("credential report lookup rate limited during single user scan", zap.String("resourceId", *scanRequest.ResourceID))
-				utils.Requeue(pollermodels.ScanMsg{
+				err = utils.Requeue(pollermodels.ScanMsg{
 					Entries: []*pollermodels.ScanEntry{scanRequest},
 				}, credentialReportRequeueDelaySeconds)
-				return nil, nil
+				return nil, err
 			}
 		}
 		return nil, err
@@ -104,11 +104,14 @@ func PollIAMUser(
 	// a user would not have a credential report is if they were recently created and there has not
 	// yet been time for a new credential report that includes them to have been generated.
 	if snapshot.CredentialReport == nil {
-		utils.Requeue(pollermodels.ScanMsg{
+		err = utils.Requeue(pollermodels.ScanMsg{
 			Entries: []*pollermodels.ScanEntry{
 				scanRequest,
 			},
 		}, utils.MaxRequeueDelaySeconds)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
@@ -524,13 +527,16 @@ func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddR
 				zap.L().Debug(
 					"credential report lookup rate limited during all users scan",
 					zap.String("accountId", pollerInput.AuthSourceParsedARN.AccountID))
-				utils.Requeue(pollermodels.ScanMsg{
+				err = utils.Requeue(pollermodels.ScanMsg{
 					Entries: []*pollermodels.ScanEntry{{
 						AWSAccountID:  aws.String(pollerInput.AuthSourceParsedARN.AccountID),
 						IntegrationID: pollerInput.IntegrationID,
 						ResourceType:  aws.String(awsmodels.IAMUserSchema),
 					}},
 				}, credentialReportRequeueDelaySeconds)
+				if err != nil {
+					return nil, nil, err
+				}
 				// Manually re-queueing the re-scan here so we can specify the delay. Don't return
 				// an error so that lambda doesn't also try to re-scan.
 				return nil, nil, nil
@@ -568,7 +574,7 @@ func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddR
 		// a user would not have a credential report is if they were recently created and there has not
 		// yet been time for a new credential report that includes them to have been generated.
 		if iamUserSnapshot.CredentialReport == nil {
-			utils.Requeue(pollermodels.ScanMsg{
+			err = utils.Requeue(pollermodels.ScanMsg{
 				Entries: []*pollermodels.ScanEntry{
 					{
 						AWSAccountID:  iamUserSnapshot.AccountID,
@@ -578,6 +584,9 @@ func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddR
 					},
 				},
 			}, utils.MaxRequeueDelaySeconds)
+			if err != nil {
+				return nil, nil, err
+			}
 		}
 
 		resources = append(resources, &apimodels.AddResourceEntry{

@@ -210,7 +210,7 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		zap.String("resourceType", *scanRequest.ResourceType),
 	)
 	for _, region := range regions {
-		utils.Requeue(pollermodels.ScanMsg{
+		err = utils.Requeue(pollermodels.ScanMsg{
 			Entries: []*pollermodels.ScanEntry{
 				{
 					AWSAccountID:  scanRequest.AWSAccountID,
@@ -219,7 +219,10 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 					ResourceType:  scanRequest.ResourceType,
 				},
 			},
-		}, 0) // We could add a small random delay to reduce burst load on the poller
+		}, int64(pageRequeueDelayer.Intn(30)+1)) // Delay between 1 & 30 seconds to spread out region scans
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return nil, nil
@@ -253,11 +256,14 @@ func serviceScan(
 	if marker != nil {
 		zap.L().Debug("hit max batch size")
 		scanRequest.NextPageToken = marker
-		utils.Requeue(pollermodels.ScanMsg{
+		err = utils.Requeue(pollermodels.ScanMsg{
 			Entries: []*pollermodels.ScanEntry{
 				scanRequest,
 			},
 		}, int64(pageRequeueDelayer.Intn(30)+1)) // Delay between 1 & 30 seconds to spread out page scans
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return generatedEvents, nil
