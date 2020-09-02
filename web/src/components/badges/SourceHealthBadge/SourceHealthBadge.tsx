@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Badge, Box, Flex, Icon, Tooltip, Text } from 'pouncejs';
+import { Badge, Flex, Icon, Tooltip, Text, Box } from 'pouncejs';
 import { IntegrationItemHealthStatus } from 'Generated/schema';
 import { slugify } from 'Helpers/utils';
 
@@ -33,16 +33,30 @@ const SourceHealthBadge: React.FC<SourceHealthBadgeProps> = ({ healthMetrics }) 
       {healthMetrics.map(healthMetric => {
         const id = slugify(healthMetric.message);
         return (
-          <Flex align="center" spacing={2} key={id}>
+          <Flex spacing={2} key={id}>
             <Icon
+              mt="-2px" // we need that due to some alignment needs with `rawErrorMessage`
               aria-labelledby={id}
               size="small"
               type={healthMetric.healthy ? 'check' : 'remove'}
               color={healthMetric.healthy ? 'green-400' : 'red-300'}
             />
-            <Text title={healthMetric.rawErrorMessage || undefined} id={id}>
-              {healthMetric.message}
-            </Text>
+            <Box>
+              <Text id={id} aria-describedby={`${id}-description`}>
+                {healthMetric.message}
+              </Text>
+              {!!healthMetric.rawErrorMessage && (
+                <Text
+                  my={1}
+                  fontSize="x-small"
+                  color="red-200"
+                  id={`${id}-description`}
+                  maxWidth="fit-content"
+                >
+                  {healthMetric.rawErrorMessage}
+                </Text>
+              )}
+            </Box>
           </Flex>
         );
       })}
@@ -55,11 +69,7 @@ const SourceHealthBadge: React.FC<SourceHealthBadgeProps> = ({ healthMetrics }) 
     <Badge color="red-300">UNHEALTHY</Badge>
   );
 
-  return (
-    <Box>
-      <Tooltip content={tooltipContent}>{icon}</Tooltip>
-    </Box>
-  );
+  return <Tooltip content={tooltipContent}>{icon}</Tooltip>;
 };
 
 export default React.memo(SourceHealthBadge);
