@@ -33,7 +33,7 @@ const LogSourceCardHealthBadge: React.FC<LogSourceCardHealthBadgeProps> = ({ log
     case 'SqsLogIntegrationHealth':
       sourceHealth = logSourceHealth as SqsLogSourceIntegration['health'];
       isHealthy = sourceHealth.sqsStatus?.healthy !== false;
-      errorMsg = sourceHealth.sqsStatus?.errorMessage;
+      errorMsg = sourceHealth.sqsStatus?.rawErrorMessage;
       break;
     case 'S3LogIntegrationHealth': {
       sourceHealth = logSourceHealth as S3LogIntegration['health'];
@@ -45,9 +45,9 @@ const LogSourceCardHealthBadge: React.FC<LogSourceCardHealthBadgeProps> = ({ log
         s3BucketStatus?.healthy !== false &&
         kmsKeyStatus?.healthy !== false;
       errorMsg = [
-        processingRoleStatus?.errorMessage,
-        s3BucketStatus?.errorMessage,
-        kmsKeyStatus?.errorMessage,
+        processingRoleStatus?.rawErrorMessage,
+        s3BucketStatus?.rawErrorMessage,
+        kmsKeyStatus?.rawErrorMessage,
       ]
         .filter(Boolean)
         .join('. ');

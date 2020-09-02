@@ -29,17 +29,13 @@ const ComplianceSourceCardHealthBadge: React.FC<ComplianceSourceCardHealthBadgeP
 }) => {
   const { auditRoleStatus, cweRoleStatus, remediationRoleStatus } = complianceSourceHealth;
 
-  // Some status return `null` when they shouldn't be checked. That doesn't mean the source is
-  // unhealthy. That's why we check explicitly for a "false" value
   const isHealthy =
-    auditRoleStatus.healthy !== false &&
-    cweRoleStatus.healthy !== false &&
-    remediationRoleStatus.healthy !== false;
+    auditRoleStatus.healthy && cweRoleStatus.healthy && remediationRoleStatus.healthy;
 
   const errorMessage = [
-    auditRoleStatus.errorMessage,
-    cweRoleStatus.errorMessage,
-    remediationRoleStatus.errorMessage,
+    auditRoleStatus?.rawErrorMessage,
+    cweRoleStatus?.rawErrorMessage,
+    remediationRoleStatus?.rawErrorMessage,
   ]
     .filter(Boolean)
     .join('. ');
