@@ -623,7 +623,8 @@ export const buildIntegrationItemHealthStatus = (
   return {
     __typename: 'IntegrationItemHealthStatus',
     healthy: 'healthy' in overrides ? overrides.healthy : false,
-    errorMessage: 'errorMessage' in overrides ? overrides.errorMessage : 'Nebraska',
+    message: 'message' in overrides ? overrides.message : 'Home Loan Account',
+    rawErrorMessage: 'rawErrorMessage' in overrides ? overrides.rawErrorMessage : 'Markets',
   };
 };
 

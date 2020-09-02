@@ -1,4 +1,5 @@
 fragment IntegrationItemHealthDetails on IntegrationItemHealthStatus {
   healthy
-  errorMessage
+  message
+  rawErrorMessage
 }

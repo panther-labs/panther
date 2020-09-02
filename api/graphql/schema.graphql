@@ -118,8 +118,9 @@ type IntegrationTemplate {
 }
 
 type IntegrationItemHealthStatus {
-  healthy: Boolean
-  errorMessage: String
+  healthy: Boolean!
+  message: String!
+  rawErrorMessage: String
 }
 
 type ComplianceIntegrationHealth {
