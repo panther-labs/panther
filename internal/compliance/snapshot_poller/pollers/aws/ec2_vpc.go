@@ -128,7 +128,8 @@ func describeRouteTables(ec2Svc ec2iface.EC2API, vpcID *string) (routeTables []*
 func describeVpcs(ec2Svc ec2iface.EC2API, nextMarker *string) (vpcs []*ec2.Vpc, marker *string, err error) {
 	err = ec2Svc.DescribeVpcsPages(
 		&ec2.DescribeVpcsInput{
-			NextToken: nextMarker,
+			NextToken:  nextMarker,
+			MaxResults: aws.Int64(int64(defaultBatchSize)),
 		},
 		func(page *ec2.DescribeVpcsOutput, lastPage bool) bool {
 			vpcs = append(vpcs, page.Vpcs...)
@@ -249,24 +250,19 @@ func buildEc2VpcSnapshot(ec2Svc ec2iface.EC2API, vpc *ec2.Vpc) (*awsmodels.Ec2Vp
 	}
 
 	var err error
-	ec2Vpc.SecurityGroups, err = describeSecurityGroupsVPC(ec2Svc, vpc.VpcId)
-	if err != nil {
+	if ec2Vpc.SecurityGroups, err = describeSecurityGroupsVPC(ec2Svc, vpc.VpcId); err != nil {
 		return nil, err
 	}
-	ec2Vpc.NetworkAcls, err = describeNetworkACLsVPC(ec2Svc, vpc.VpcId)
-	if err != nil {
+	if ec2Vpc.NetworkAcls, err = describeNetworkACLsVPC(ec2Svc, vpc.VpcId); err != nil {
 		return nil, err
 	}
-	ec2Vpc.RouteTables, err = describeRouteTables(ec2Svc, vpc.VpcId)
-	if err != nil {
+	if ec2Vpc.RouteTables, err = describeRouteTables(ec2Svc, vpc.VpcId); err != nil {
 		return nil, err
 	}
-	ec2Vpc.FlowLogs, err = describeFlowLogs(ec2Svc, vpc.VpcId)
-	if err != nil {
+	if ec2Vpc.FlowLogs, err = describeFlowLogs(ec2Svc, vpc.VpcId); err != nil {
 		return nil, err
 	}
-	ec2Vpc.StaleSecurityGroups, err = describeStaleSecurityGroups(ec2Svc, vpc.VpcId)
-	if err != nil {
+	if ec2Vpc.StaleSecurityGroups, err = describeStaleSecurityGroups(ec2Svc, vpc.VpcId); err != nil {
 		return nil, err
 	}
 

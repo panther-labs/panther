@@ -89,8 +89,9 @@ func listPolicies(iamSvc iamiface.IAMAPI, nextMarker *string) (policies []*iam.P
 	err = iamSvc.ListPoliciesPages(
 		&iam.ListPoliciesInput{
 			// We only want to scan Customer managed policies
-			Scope:  aws.String(localPolicyScope),
-			Marker: nextMarker,
+			Scope:    aws.String(localPolicyScope),
+			MaxItems: aws.Int64(int64(defaultBatchSize)),
+			Marker:   nextMarker,
 		},
 		func(page *iam.ListPoliciesOutput, lastPage bool) bool {
 			policies = append(policies, page.Policies...)

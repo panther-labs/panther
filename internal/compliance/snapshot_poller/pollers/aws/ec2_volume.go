@@ -88,7 +88,8 @@ func getVolume(svc ec2iface.EC2API, volumeID *string) (*ec2.Volume, error) {
 // describeVolumes returns all the EC2 volumes in the account
 func describeVolumes(ec2Svc ec2iface.EC2API, nextMarker *string) (volumes []*ec2.Volume, marker *string, err error) {
 	err = ec2Svc.DescribeVolumesPages(&ec2.DescribeVolumesInput{
-		NextToken: nextMarker,
+		NextToken:  nextMarker,
+		MaxResults: aws.Int64(int64(defaultBatchSize)),
 	},
 		func(page *ec2.DescribeVolumesOutput, lastPage bool) bool {
 			volumes = append(volumes, page.Volumes...)

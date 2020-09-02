@@ -66,7 +66,10 @@ func PollIAMGroup(
 
 // listGroups returns a list of all IAM groups in the account
 func listGroups(iamSvc iamiface.IAMAPI, nextMarker *string) (groups []*iam.Group, marker *string, err error) {
-	err = iamSvc.ListGroupsPages(&iam.ListGroupsInput{Marker: nextMarker},
+	err = iamSvc.ListGroupsPages(&iam.ListGroupsInput{
+		Marker:   nextMarker,
+		MaxItems: aws.Int64(int64(defaultBatchSize)),
+	},
 		func(page *iam.ListGroupsOutput, lastPage bool) bool {
 			groups = append(groups, page.Groups...)
 			if len(groups) >= defaultBatchSize {

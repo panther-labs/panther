@@ -113,7 +113,8 @@ func listFunctions(lambdaSvc lambdaiface.LambdaAPI, nextMarker *string) (
 	functions []*lambda.FunctionConfiguration, marker *string, err error) {
 
 	err = lambdaSvc.ListFunctionsPages(&lambda.ListFunctionsInput{
-		Marker: nextMarker,
+		Marker:   nextMarker,
+		MaxItems: aws.Int64(int64(defaultBatchSize)),
 	},
 		func(page *lambda.ListFunctionsOutput, lastPage bool) bool {
 			functions = append(functions, page.Functions...)

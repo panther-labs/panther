@@ -49,7 +49,7 @@ var (
 
 	// The default max number of resources to scan at once. We will keep paging until we scan this
 	// many resources, then do one additional page worth of resources
-	defaultBatchSize   = 1000
+	defaultBatchSize   = 100
 	pageRequeueDelayer = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	// IndividualARNResourcePollers maps resource types to their corresponding individual polling

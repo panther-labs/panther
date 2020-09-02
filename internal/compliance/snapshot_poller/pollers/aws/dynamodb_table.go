@@ -20,7 +20,6 @@ package aws
 
 import (
 	"strings"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
@@ -109,6 +108,7 @@ func PollDynamoDBTable(
 func listTables(dynamoDBSvc dynamodbiface.DynamoDBAPI, nextMarker *string) (tables []*string, marker *string, err error) {
 	err = dynamoDBSvc.ListTablesPages(&dynamodb.ListTablesInput{
 		ExclusiveStartTableName: nextMarker,
+		Limit:                   aws.Int64(int64(defaultBatchSize)),
 	},
 		func(page *dynamodb.ListTablesOutput, lastPage bool) bool {
 			tables = append(tables, page.TableNames...)
@@ -279,7 +279,6 @@ func PollDynamoDBTables(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 
 	resources := make([]*apimodels.AddResourceEntry, 0, len(tables))
 	for i, table := range tables {
-		time.Sleep(1000000000)
 		dynamoDBTable, err := buildDynamoDBTableSnapshot(dynamoDBSvc, applicationAutoScalingSvc, table)
 		if err != nil {
 			zap.L().Debug("error occurred building snapshot", zap.Int("table number", i))

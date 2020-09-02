@@ -103,7 +103,8 @@ func getRDSInstance(svc rdsiface.RDSAPI, instanceARN *string) (*rds.DBInstance, 
 // describeDbInstance returns a list of all RDS Instances in the account
 func describeDBInstances(rdsSvc rdsiface.RDSAPI, nextMarker *string) (instances []*rds.DBInstance, marker *string, err error) {
 	err = rdsSvc.DescribeDBInstancesPages(&rds.DescribeDBInstancesInput{
-		Marker: nextMarker,
+		Marker:     nextMarker,
+		MaxRecords: aws.Int64(int64(defaultBatchSize)),
 	},
 		func(page *rds.DescribeDBInstancesOutput, lastPage bool) bool {
 			instances = append(instances, page.DBInstances...)

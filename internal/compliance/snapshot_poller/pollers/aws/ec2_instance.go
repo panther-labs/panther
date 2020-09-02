@@ -87,7 +87,8 @@ func getInstance(svc ec2iface.EC2API, instanceID *string) (*ec2.Instance, error)
 // describeInstances returns all EC2 instances in the current region
 func describeInstances(ec2Svc ec2iface.EC2API, nextMarker *string) (instances []*ec2.Instance, marker *string, err error) {
 	err = ec2Svc.DescribeInstancesPages(&ec2.DescribeInstancesInput{
-		NextToken: nextMarker,
+		NextToken:  nextMarker,
+		MaxResults: aws.Int64(int64(defaultBatchSize)),
 	},
 		func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
 			for _, reservation := range page.Reservations {

@@ -82,6 +82,7 @@ func PollACMCertificate(
 func listCertificates(acmSvc acmiface.ACMAPI, nextMarker *string) (certs []*acm.CertificateSummary, marker *string, err error) {
 	err = acmSvc.ListCertificatesPages(&acm.ListCertificatesInput{
 		NextToken: nextMarker,
+		MaxItems:  aws.Int64(int64(defaultBatchSize)),
 	},
 		func(page *acm.ListCertificatesOutput, lastPage bool) bool {
 			certs = append(certs, page.CertificateSummaryList...)

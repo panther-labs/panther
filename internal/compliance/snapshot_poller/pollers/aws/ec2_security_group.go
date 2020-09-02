@@ -87,7 +87,8 @@ func getSecurityGroup(svc ec2iface.EC2API, securityGroupID *string) (*ec2.Securi
 // describeSecurityGroupsPages returns all Security Groups for a given region
 func describeSecurityGroups(ec2Svc ec2iface.EC2API, nextMarker *string) (securityGroups []*ec2.SecurityGroup, marker *string, err error) {
 	err = ec2Svc.DescribeSecurityGroupsPages(&ec2.DescribeSecurityGroupsInput{
-		NextToken: nextMarker,
+		NextToken:  nextMarker,
+		MaxResults: aws.Int64(int64(defaultBatchSize)),
 	},
 		func(page *ec2.DescribeSecurityGroupsOutput, lastPage bool) bool {
 			securityGroups = append(securityGroups, page.SecurityGroups...)

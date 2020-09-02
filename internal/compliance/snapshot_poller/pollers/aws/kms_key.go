@@ -91,6 +91,7 @@ func listKeys(kmsSvc kmsiface.KMSAPI, nextMarker *string) (keys []*kms.KeyListEn
 	err = kmsSvc.ListKeysPages(
 		&kms.ListKeysInput{
 			Marker: nextMarker,
+			Limit:  aws.Int64(int64(defaultBatchSize)),
 		},
 		func(page *kms.ListKeysOutput, lastPage bool) bool {
 			keys = append(keys, page.Keys...)

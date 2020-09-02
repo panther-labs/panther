@@ -77,7 +77,8 @@ func PollECSCluster(
 // listClusters returns all ECS clusters in the account
 func listClusters(ecsSvc ecsiface.ECSAPI, nextMarker *string) (clusters []*string, marker *string, err error) {
 	err = ecsSvc.ListClustersPages(&ecs.ListClustersInput{
-		NextToken: nextMarker,
+		NextToken:  nextMarker,
+		MaxResults: aws.Int64(int64(defaultBatchSize)),
 	},
 		func(page *ecs.ListClustersOutput, lastPage bool) bool {
 			clusters = append(clusters, page.ClusterArns...)
@@ -208,7 +209,7 @@ func getClusterServices(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmodel
 		return nil, errors.Wrap(err, "ECS.ListServicesPages")
 	}
 
-	// If there are no services stop here
+	// If there are no services, stop here
 	if len(serviceArns) == 0 {
 		return nil, nil
 	}

@@ -146,7 +146,9 @@ func getStack(svc cloudformationiface.CloudFormationAPI, stackName string) (*clo
 func describeStacks(cloudformationSvc cloudformationiface.CloudFormationAPI, nextMarker *string) (
 	stacks []*cloudformation.Stack, marker *string, err error) {
 
-	err = cloudformationSvc.DescribeStacksPages(&cloudformation.DescribeStacksInput{NextToken: nextMarker},
+	err = cloudformationSvc.DescribeStacksPages(&cloudformation.DescribeStacksInput{
+		NextToken: nextMarker,
+	},
 		func(page *cloudformation.DescribeStacksOutput, lastPage bool) bool {
 			stacks = append(stacks, page.Stacks...)
 			if len(stacks) >= defaultBatchSize {

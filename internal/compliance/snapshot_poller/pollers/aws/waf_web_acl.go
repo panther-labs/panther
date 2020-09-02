@@ -124,7 +124,10 @@ func PollWAFRegionalWebACL(
 func listWebAcls(wafSvc wafiface.WAFAPI, nextMarker *string) ([]*waf.WebACLSummary, *string, error) {
 	var webAclsSummaryOut []*waf.WebACLSummary
 	for len(webAclsSummaryOut) < defaultBatchSize {
-		webAclsOutput, err := wafSvc.ListWebACLs(&waf.ListWebACLsInput{NextMarker: nextMarker})
+		webAclsOutput, err := wafSvc.ListWebACLs(&waf.ListWebACLsInput{
+			NextMarker: nextMarker,
+			Limit:      aws.Int64(int64(defaultBatchSize)),
+		})
 		if err != nil {
 			if _, ok := wafSvc.(wafregionaliface.WAFRegionalAPI); ok {
 				return nil, nil, errors.Wrap(err, "WAF.Regional.ListWebAcls")

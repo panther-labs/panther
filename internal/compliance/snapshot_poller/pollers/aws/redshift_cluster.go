@@ -105,7 +105,8 @@ func getRedshiftCluster(svc redshiftiface.RedshiftAPI, clusterID *string) (*reds
 // describeClusters returns a list of all redshift cluster in the account
 func describeClusters(redshiftSvc redshiftiface.RedshiftAPI, nextMarker *string) (clusters []*redshift.Cluster, marker *string, err error) {
 	err = redshiftSvc.DescribeClustersPages(&redshift.DescribeClustersInput{
-		Marker: nextMarker,
+		Marker:     nextMarker,
+		MaxRecords: aws.Int64(int64(defaultBatchSize)),
 	},
 		func(page *redshift.DescribeClustersOutput, lastPage bool) bool {
 			clusters = append(clusters, page.Clusters...)

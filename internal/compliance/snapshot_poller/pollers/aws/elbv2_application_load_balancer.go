@@ -112,7 +112,8 @@ func describeLoadBalancers(elbv2Svc elbv2iface.ELBV2API, nextMarker *string) (
 	loadBalancers []*elbv2.LoadBalancer, marker *string, err error) {
 
 	err = elbv2Svc.DescribeLoadBalancersPages(&elbv2.DescribeLoadBalancersInput{
-		Marker: nextMarker,
+		Marker:   nextMarker,
+		PageSize: aws.Int64(int64(defaultBatchSize)),
 	},
 		func(page *elbv2.DescribeLoadBalancersOutput, lastPage bool) bool {
 			loadBalancers = append(loadBalancers, page.LoadBalancers...)

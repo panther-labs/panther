@@ -87,7 +87,8 @@ func getNetworkACL(svc ec2iface.EC2API, networkACLID *string) (*ec2.NetworkAcl, 
 // describeNetworkAclsPages returns all Network ACLs for a given region
 func describeNetworkAcls(ec2Svc ec2iface.EC2API, nextMarker *string) (networkACLs []*ec2.NetworkAcl, marker *string, err error) {
 	err = ec2Svc.DescribeNetworkAclsPages(&ec2.DescribeNetworkAclsInput{
-		NextToken: nextMarker,
+		NextToken:  nextMarker,
+		MaxResults: aws.Int64(int64(defaultBatchSize)),
 	},
 		func(page *ec2.DescribeNetworkAclsOutput, lastPage bool) bool {
 			networkACLs = append(networkACLs, page.NetworkAcls...)

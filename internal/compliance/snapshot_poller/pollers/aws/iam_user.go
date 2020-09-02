@@ -297,7 +297,8 @@ func buildCredentialReport(
 func listUsers(iamSvc iamiface.IAMAPI, nextMarker *string) (users []*iam.User, marker *string, err error) {
 	err = iamSvc.ListUsersPages(
 		&iam.ListUsersInput{
-			Marker: nextMarker,
+			Marker:   nextMarker,
+			MaxItems: aws.Int64(int64(defaultBatchSize)),
 		},
 		func(page *iam.ListUsersOutput, lastPage bool) bool {
 			users = append(users, page.Users...)
@@ -465,7 +466,6 @@ func buildIAMUserSnapshot(iamSvc iamiface.IAMAPI, user *iam.User) (*awsmodels.IA
 }
 
 func buildIAMRootUserSnapshot() (*awsmodels.IAMRootUser, error) {
-	// Can this map be nil if a root user is being scanned before anything else in a lambda lifetime?
 	rootCredReport, ok := userCredentialReports[rootAccountNameCredReport]
 	if !ok {
 		return nil, errors.New("unable to find credential report for root user")
