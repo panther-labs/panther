@@ -24,7 +24,7 @@ import { formatDatetime } from 'Helpers/utils';
 import urls from 'Source/urls';
 import logo from 'Assets/aws-minimal-logo.svg';
 import { Link as RRLink } from 'react-router-dom';
-import SourceHealthBadge from 'Components/SourceHealthBadge';
+import SourceHealthBadge from 'Components/badges/SourceHealthBadge';
 import ComplianceSourceCardOptions from './ComplianceSourceCardOptions';
 
 interface ComplianceSourceCardProps {

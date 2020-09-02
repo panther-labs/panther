@@ -19,7 +19,7 @@
 import { Box, Link, Table } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
-import SeverityBadge from 'Components/SeverityBadge';
+import SeverityBadge from 'Components/badges/SeverityBadge';
 import React from 'react';
 import { GetOrganizationStats } from 'Pages/ComplianceOverview/graphql/getOrganizationStats.generated';
 

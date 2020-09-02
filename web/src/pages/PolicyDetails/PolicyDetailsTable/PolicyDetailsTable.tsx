@@ -22,7 +22,7 @@ import { Box, Link, Table } from 'pouncejs';
 import urls from 'Source/urls';
 import { formatDatetime } from 'Helpers/utils';
 import { Link as RRLink } from 'react-router-dom';
-import StatusBadge from 'Components/StatusBadge';
+import StatusBadge from 'Components/badges/StatusBadge';
 import PolicyDetailsTableRowOptions from './PolicyDetailsTableRowOptions';
 
 export type PolicyDetailsTableItem = ComplianceItem &
