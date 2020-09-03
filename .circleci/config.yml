@@ -10,6 +10,7 @@ jobs:
   setup:
     executor: panther-buildpack
     resource_class: xlarge
+    working_directory: ~/panther
     steps:
       - checkout
       - restore_cache:
@@ -58,7 +59,13 @@ jobs:
   generate_and_fmt:
     executor: panther-buildpack
     resource_class: medium
+    working_directory: ~/panther
     steps:
+      - run:
+          name: debugging
+          command: |
+            pwd
+            ls -a .
       - run:
           name: Generate and format source files
           command: mage build:api build:cfn fmt
@@ -74,6 +81,7 @@ jobs:
   test_cfn:
     executor: panther-buildpack
     resource_class: medium
+    working_directory: ~/panther
     steps:
       - run:
           command: mage test:cfn
@@ -81,6 +89,7 @@ jobs:
   test_go:
     executor: panther-buildpack
     resource_class: xlarge
+    working_directory: ~/panther
     steps:
       - run:
           command: mage test:go
@@ -88,6 +97,7 @@ jobs:
   test_python:
     executor: panther-buildpack
     resource_class: medium
+    working_directory: ~/panther
     steps:
       - run:
           command: mage test:python
@@ -95,6 +105,7 @@ jobs:
   test_web:
     executor: panther-buildpack
     resource_class: xlarge
+    working_directory: ~/panther
     steps:
       - run:
           command: mage test:web
@@ -103,6 +114,7 @@ jobs:
     executor: panther-buildpack
     resource_class: small
     steps:
+      - checkout
       - run:
           name: Audit NPM packages
           command: npm audit --production # does not require installing packages first
@@ -119,6 +131,7 @@ jobs:
     executor: panther-buildpack
     resource_class: small
     steps:
+      - checkout
       - run: |
           curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | bash
       - run:
