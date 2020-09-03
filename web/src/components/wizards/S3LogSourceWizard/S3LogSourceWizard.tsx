@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { AWS_ACCOUNT_ID_REGEX, LOG_TYPES, S3_BUCKET_NAME_REGEX } from 'Source/constants';
+import { AWS_ACCOUNT_ID_REGEX, S3_BUCKET_NAME_REGEX } from 'Source/constants';
 import { Form, Formik } from 'formik';
 import * as Yup from 'yup';
 import { Wizard, WizardPanel } from 'Components/Wizard';
@@ -52,9 +52,7 @@ const validationSchema = Yup.object().shape<S3LogSourceWizardValues>({
     .matches(AWS_ACCOUNT_ID_REGEX, 'Must be a valid AWS Account ID')
     .required(),
   s3Bucket: Yup.string().matches(S3_BUCKET_NAME_REGEX, 'Must be valid S3 Bucket name').required(),
-  logTypes: Yup.array()
-    .of(Yup.string().oneOf((LOG_TYPES as unknown) as string[]))
-    .required(),
+  logTypes: Yup.array().of(Yup.string()).required(),
   s3Prefix: Yup.string(),
   kmsKey: Yup.string().matches(getArnRegexForService('KMS'), 'Must be a valid KMS ARN'),
 });

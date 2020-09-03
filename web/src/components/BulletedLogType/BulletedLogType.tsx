@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Box, Flex } from 'pouncejs';
-import logTypeColorMappings from 'Helpers/logTypeColorMappings';
+import { stringToPaleColor } from 'Helpers/colors';
 
 interface BulletedLogTypeProps {
   logType: string;
@@ -31,7 +31,7 @@ const BulletedLogType: React.FC<BulletedLogTypeProps> = ({ logType }) => {
         as="span"
         width={12}
         height={12}
-        backgroundColor={logTypeColorMappings[logType]}
+        backgroundColor={stringToPaleColor(logType) as any}
         borderRadius="circle"
       />
       <Box as="span" fontSize="small">

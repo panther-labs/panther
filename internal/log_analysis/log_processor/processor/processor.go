@@ -58,7 +58,7 @@ var (
 // and forwarding the logs to the appropriate destination. Any errors will cause Lambda invocation to fail
 func Process(dataStreams chan *common.DataStream, destination destinations.Destination) error {
 	factory := func(r *common.DataStream) *Processor {
-		return NewProcessor(r, registry.Default())
+		return MustBuildProcessor(r, registry.Default())
 	}
 	return process(dataStreams, destination, factory)
 }
@@ -184,15 +184,27 @@ type Processor struct {
 	operation  *oplog.Operation
 }
 
-func NewProcessor(input *common.DataStream, registry *logtypes.Registry) *Processor {
-	entries := registry.Entries(input.LogTypes...)
-
-	parsers := make(map[string]parsers.Interface, len(entries))
-	for _, entry := range entries {
-		logType := entry.String()
+func MustBuildProcessor(input *common.DataStream, registry *logtypes.Registry) *Processor {
+	proc, err := BuildProcessor(input, registry)
+	if err != nil {
+		zap.L().Error("invalid build log processor for source",
+			zap.String(`source_id`, input.SourceID),
+			zap.String(`source_label`, input.SourceLabel),
+			zap.Error(err))
+		panic(err)
+	}
+	return proc
+}
+func BuildProcessor(input *common.DataStream, registry *logtypes.Registry) (*Processor, error) {
+	parsers := make(map[string]parsers.Interface, len(input.LogTypes))
+	for _, logType := range input.LogTypes {
+		entry := registry.Get(logType)
+		if entry == nil {
+			return nil, errors.Errorf("failed to find %q log type", logType)
+		}
 		parser, err := entry.NewParser(nil)
 		if err != nil {
-			panic(errors.Wrapf(err, "failed to create a parser for %q", logType))
+			return nil, errors.WithMessagef(err, "failed to create %q parser", logType)
 		}
 		parsers[logType] = newSourceFieldsParser(input.SourceID, input.SourceLabel, parser)
 	}
@@ -201,7 +213,7 @@ func NewProcessor(input *common.DataStream, registry *logtypes.Registry) *Proces
 		input:      input,
 		classifier: classification.NewClassifier(parsers),
 		operation:  common.OpLogManager.Start(operationName),
-	}
+	}, nil
 }
 
 func newSourceFieldsParser(id, label string, parser parsers.Interface) parsers.Interface {

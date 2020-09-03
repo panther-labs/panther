@@ -16,14 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { AbstractButton, Box, Collapse, Flex } from 'pouncejs';
+import { AbstractButton, Box, Collapse, Flex, useSnackbar } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import React from 'react';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
-import { LOG_TYPES } from 'Source/constants';
 import { WizardPanel } from 'Components/Wizard';
+import { useListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
 import { S3LogSourceWizardValues } from '../S3LogSourceWizard';
 
 const S3SourceConfigurationPanel: React.FC = () => {
@@ -31,6 +31,10 @@ const S3SourceConfigurationPanel: React.FC = () => {
   const [isAdvancedConfigVisible, showAdvancedConfig] = React.useState(
     Boolean(values.s3Prefix) || Boolean(values.kmsKey)
   );
+  const { pushSnackbar } = useSnackbar();
+  const { data } = useListAvailableLogTypes({
+    onError: () => pushSnackbar({ title: "Couldn't fetch your available log types" }),
+  });
 
   return (
     <Box width={460} m="auto">
@@ -72,7 +76,7 @@ const S3SourceConfigurationPanel: React.FC = () => {
             searchable
             label="* Log Types"
             name="logTypes"
-            items={LOG_TYPES}
+            items={data?.listAvailableLogTypes.logTypes ?? []}
             placeholder="The types of logs that are collected"
           />
         </Flex>
