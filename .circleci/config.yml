@@ -4,7 +4,7 @@ version: 2.1
 executors:
   panther-buildpack:
     docker:
-      - image: pantherlabs/panther-buildpack:1.2.0
+      - image: pantherlabs/panther-buildpack:1.8.0
 
 # Commands which are re-used across multiple jobs
 commands:
@@ -36,17 +36,6 @@ commands:
           keys:
             - venv-{{ checksum "requirements.txt" }}
 
-  restore_workspace:
-    steps:
-      - attach_workspace:
-          at: /tmp/panther
-      - run:
-          name: Move libraries back to repo root
-          command: |
-            mv /tmp/panther/.setup .setup
-            mv /tmp/panther/goimports /go/bin/goimports
-            mv /tmp/panther/node_modules node_modules
-
 jobs:
   setup:
     # Install dependencies and compile the mage binary.
@@ -67,16 +56,10 @@ jobs:
           # "mage setup" will have no effect unless new dependencies have been introduced.
           name: Install new dependencies
           command: /tmp/panther/magebin setup
-      - run:
-          name: Move libs to workspace storage
-          command: |
-            mv .setup /tmp/panther
-            mv node_modules /tmp/panther
-            mv /go/bin/goimports /tmp/panther
       - persist_to_workspace:
           root: /tmp/panther
           paths:
-            - '*'
+            - magebin
       - save_cache:
           name: 'Save cache: .setup binaries'
           key: setup-{{ checksum "tools/mage/setup/setup.go" }}
@@ -107,13 +90,15 @@ jobs:
     # If there are changes committed, CircleCI will automatically stop the remaining jobs
     # and restart the entire workflow with the new commit.
     executor: panther-buildpack
+    resource_class: large
     steps:
+      - attach_workspace:
+          at: /tmp/panther
       - checkout
-      - restore_workspace
-      #      - restore_bin_cache # swagger (build:api) and terraform (fmt)
-      #      - restore_go_cache # goimports (fmt)
-      #      - restore_pip_cache # yapf (fmt)
-      #      - restore_npm_cache # prettier (fmt)
+      - restore_bin_cache # swagger (build:api) and terraform (fmt)
+      - restore_go_cache # goimports (fmt)
+      - restore_npm_cache # prettier (fmt)
+      - restore_pip_cache # yapf (fmt)
       - run:
           name: Generate and format source files
           command: /tmp/panther/magebin build:api build:cfn fmt
@@ -129,10 +114,11 @@ jobs:
   test_cfn:
     executor: panther-buildpack
     steps:
+      - attach_workspace:
+          at: /tmp/panther
       - checkout
-      - restore_workspace
-      #      - restore_bin_cache # Terraform
-      #      - restore_pip_cache # cfn-lint
+      - restore_bin_cache # Terraform
+      - restore_pip_cache # cfn-lint
       - run:
           name: mage test:cfn
           command: /tmp/panther/magebin test:cfn
@@ -141,13 +127,12 @@ jobs:
     executor: panther-buildpack
     resource_class: large
     steps:
-      #      - attach_workspace:
-      #          at: /tmp/panther
+      - attach_workspace:
+          at: /tmp/panther
       - checkout
-      - restore_workspace
-      #      - restore_bin_cache # golangci-lint
-      #      - restore_pip_cache # cfn-flip
-      #      - restore_go_cache
+      - restore_bin_cache # golangci-lint
+      - restore_go_cache
+      - restore_pip_cache # cfn-flip
       - run:
           name: mage test:go
           command: /tmp/panther/magebin test:go
@@ -155,8 +140,10 @@ jobs:
   test_python:
     executor: panther-buildpack
     steps:
+      - attach_workspace:
+          at: /tmp/panther
       - checkout
-      - restore_workspace
+      - restore_pip_cache
       - run:
           name: mage test:python
           command: /tmp/panther/magebin test:python
@@ -165,8 +152,10 @@ jobs:
     executor: panther-buildpack
     resource_class: large
     steps:
+      - attach_workspace:
+          at: /tmp/panther
       - checkout
-      - restore_workspace
+      - restore_npm_cache
       - run:
           name: mage test:web
           command: /tmp/panther/magebin test:web
@@ -184,7 +173,7 @@ jobs:
     executor: panther-buildpack
     steps:
       - checkout
-      - restore_npm_cache # TODO
+      - restore_npm_cache
       - run:
           name: Check bundle size
           command: npm run bundlesize

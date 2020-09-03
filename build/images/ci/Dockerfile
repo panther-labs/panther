@@ -14,38 +14,40 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+# Published version:
+#     pantherlabs/panther-buildpack:1.8.0
+
 FROM buildpack-deps:buster-scm
 
 LABEL description="An image that contains the necessary build tools to build panther"
 
-ENV PYTHON_VERSION="3.7.7"
-ENV GOLANG_VERSION="1.14.3"
-ENV NODE_VERSION="12.17.0"
+ENV GOLANG_VERSION="1.15.1"
+ENV NODE_VERSION="12.18.3"
 
-# ****************     GO     *******************
+
+# ****************     APT Packages     *******************
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        g++ \
-        gcc \
-        libc6-dev \
         make \
-        pkg-config \
+        python3 \
         unzip \
 	&& rm -rf /var/lib/apt/lists/*
 
+
+# ****************     GO     *******************
 # Depending on the CPU architecture of the latest stable debian stretch, pick which GO distribution
 # should install and then download and unpack it
 RUN set -eux \
     && dpkgArch="$(dpkg --print-architecture)" \
     && case "${dpkgArch##*-}" in \
-            amd64) goRelArch='linux-amd64'; goRelSha256='1c39eac4ae95781b066c144c58e45d6859652247f7515f0d2cba7be7d57d2226' ;; \
-            armhf) goRelArch='linux-armv6l'; goRelSha256='b1c3a648c3c8877b98dfba1996dec604c8fb8899db07994b2dfd47b0063367c8' ;; \
-            arm64) goRelArch='linux-arm64'; goRelSha256='a7a593e2ee079d83a1943edcd1c9ed2dae7529666fce04de8c142fb61c7cdd3e' ;; \
-            i386) goRelArch='linux-386'; goRelSha256='46f8c744788103e8aeceb12c7d71eb16a58fe43e7e4711055fa9ef4bae50bff7' ;; \
-            ppc64el) goRelArch='linux-ppc64le'; goRelSha256='329359e2b72839696e78b6c0a96fd939e28e7435d852f31107f68037dd5f7442' ;; \
-            s390x) goRelArch='linux-s390x'; goRelSha256='1aad312fc7fa85d663e8226237cc7519b2599b88a213098abc10de8e84d6cfab' ;; \
+            amd64) goRelArch='linux-amd64'; goRelSha256='70ac0dbf60a8ee9236f337ed0daa7a4c3b98f6186d4497826f68e97c0c0413f6' ;; \
+            armhf) goRelArch='linux-armv6l'; goRelSha256='62db2fac55309f4bc1f73577165dcb331a4c649e39bdbe04943579e0b2b0c06e' ;; \
+            arm64) goRelArch='linux-arm64'; goRelSha256='ca21c771d906fbba8840b3a4831b1aa118f6e09b5d028323592faba382787a03' ;; \
+            i386) goRelArch='linux-386'; goRelSha256='7e0c8e9749be69c28d3333a81ce8386916ba1306b40476a43f7794dc309eaf4c' ;; \
+            ppc64el) goRelArch='linux-ppc64le'; goRelSha256='50bdca87edc30bdc12956dab765c1b85249373a156a7a00eb998cdc70790fb94' ;; \
+            s390x) goRelArch='linux-s390x'; goRelSha256='2c3823790fc5508bd53bb104e6cc0052d1892855546a0eae0ea7809c84160543' ;; \
     		*) echo >&2 "warning: current architecture ($dpkgArch) does not have a corresponding Go binary release"; exit 1 ;; \
     	esac \
-    && wget -O go.tgz https://golang.org/dl/go${GOLANG_VERSION}.${goRelArch}.tar.gz \
+    && wget --no-verbose -O go.tgz https://golang.org/dl/go${GOLANG_VERSION}.${goRelArch}.tar.gz \
     && echo "${goRelSha256} *go.tgz" | sha256sum -c - \
     && tar -C /usr/local -xzf go.tgz \
     && rm go.tgz
@@ -61,32 +63,6 @@ RUN go get github.com/magefile/mage
 
 
 
-# ****************     PYTHON     *******************
-RUN apt-get update && apt-get install -y \
-        build-essential \
-        libreadline-gplv2-dev \
-        libncursesw5-dev \
-        libssl-dev \
-        libsqlite3-dev \
-        libgdbm-dev \
-        libffi-dev \
-        zlib1g-dev \
-        libnss3-dev
-
-# Download the chosen Python3 version, unpack and install it
-RUN wget https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz \
-    && tar xf Python-$PYTHON_VERSION.tar.xz \
-    && cd ./Python-$PYTHON_VERSION \
-    && ./configure \
-    && make \
-    && make install \
-    && pip3 install --upgrade pip \
-    && cd .. \
-    && rm -rf Python-*
-# ****************     END PYTHON     *******************
-
-
-
 # ****************     NODE JS     *******************
 RUN nPackageSrcDir="/usr/src/n" \
     && git clone https://github.com/tj/n $nPackageSrcDir \
@@ -96,5 +72,3 @@ RUN nPackageSrcDir="/usr/src/n" \
     && cd / \
     && rm -rf $nPackageSrcDir
 # ****************     END NODE JS     *******************
-
-
