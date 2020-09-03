@@ -154,7 +154,7 @@ Resources:
       Protocol: HTTPS
       SslPolicy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
 
-  PublicHttpLoadBalancerListener:
+  PublicHttpRedirectListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       DefaultActions:
