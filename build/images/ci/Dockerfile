@@ -26,9 +26,10 @@ ENV NODE_VERSION="12.18.3"
 
 
 # ****************     APT Packages     *******************
-# gcc is necessary for 'go test'
+# gcc and libc6-dev are necessary for 'go test'
 RUN apt-get update && apt-get install -y --no-install-recommends \
         gcc \
+        libc6-dev\
         make \
         python3 \
         python3-venv \
