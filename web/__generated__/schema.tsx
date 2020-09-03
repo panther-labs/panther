@@ -448,7 +448,7 @@ export enum ListAlertsSortFieldsEnum {
 
 export type ListAvailableLogTypesResponse = {
   __typename?: 'ListAvailableLogTypesResponse';
-  logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
+  logTypes: Array<Scalars['String']>;
 };
 
 export type ListComplianceItemsResponse = {
@@ -875,7 +875,7 @@ export type Query = {
   policy?: Maybe<PolicyDetails>;
   policies?: Maybe<ListPoliciesResponse>;
   policiesForResource?: Maybe<ListComplianceItemsResponse>;
-  listAvailableLogTypes?: Maybe<ListAvailableLogTypesResponse>;
+  listAvailableLogTypes: ListAvailableLogTypesResponse;
   listComplianceIntegrations: Array<ComplianceIntegration>;
   listLogIntegrations: Array<LogIntegration>;
   organizationStats?: Maybe<OrganizationStatsResponse>;
@@ -1920,7 +1920,7 @@ export type ListAvailableLogTypesResponseResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['ListAvailableLogTypesResponse'] = ResolversParentTypes['ListAvailableLogTypesResponse']
 > = {
-  logTypes?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
+  logTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2441,7 +2441,7 @@ export type QueryResolvers<
     RequireFields<QueryPoliciesForResourceArgs, never>
   >;
   listAvailableLogTypes?: Resolver<
-    Maybe<ResolversTypes['ListAvailableLogTypesResponse']>,
+    ResolversTypes['ListAvailableLogTypesResponse'],
     ParentType,
     ContextType
   >;

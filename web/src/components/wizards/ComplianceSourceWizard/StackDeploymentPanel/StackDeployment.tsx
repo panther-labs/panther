@@ -16,18 +16,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Text, Box, Spinner, Link, FormError, Flex } from 'pouncejs';
+import { Text, Box, Flex, SimpleGrid, Card, Img, Heading, Button, useSnackbar } from 'pouncejs';
 import React from 'react';
-import { extractErrorMessage } from 'Helpers/utils';
+import { downloadData } from 'Helpers/utils';
 import { useFormikContext } from 'formik';
 import { pantherConfig } from 'Source/config';
-import { WizardPanel } from 'Components/Wizard';
+import { useWizardContext, WizardPanel } from 'Components/Wizard';
+import lightningIllustration from 'Assets/illustrations/lightning.svg';
+import cogsIllustration from 'Assets/illustrations/cogs.svg';
 import { useGetComplianceCfnTemplate } from './graphql/getComplianceCfnTemplate.generated';
 import { ComplianceSourceWizardValues } from '../ComplianceSourceWizard';
 
 const StackDeployment: React.FC = () => {
-  const { initialValues, values, setStatus } = useFormikContext<ComplianceSourceWizardValues>();
-  const { data, loading, error } = useGetComplianceCfnTemplate({
+  const { pushSnackbar } = useSnackbar();
+  const { initialValues, values } = useFormikContext<ComplianceSourceWizardValues>();
+  const { goToNextStep } = useWizardContext();
+  const { data, loading } = useGetComplianceCfnTemplate({
     variables: {
       input: {
         awsAccountId: pantherConfig.AWS_ACCOUNT_ID,
@@ -36,133 +40,87 @@ const StackDeployment: React.FC = () => {
         cweEnabled: values.cweEnabled,
       },
     },
+    onError: () => pushSnackbar({ variant: 'error', title: 'Failed to generate CFN template' }),
   });
 
-  const downloadRef = React.useCallback(
-    node => {
-      if (data && node) {
-        const blob = new Blob([data.getComplianceIntegrationTemplate.body], {
-          type: 'text/yaml;charset=utf-8',
-        });
-
-        const downloadUrl = URL.createObjectURL(blob);
-        node.setAttribute('href', downloadUrl);
-      }
-    },
-    [data]
-  );
-
-  const renderContent = () => {
-    if (loading) {
-      return (
-        <Flex width={1} justify="center" my={5}>
-          <Spinner size="medium" />
-        </Flex>
-      );
-    }
-
-    if (error) {
-      return (
-        <FormError>
-          Couldn{"'"}t generate a Cloudformation template. {extractErrorMessage(error)}
-        </FormError>
-      );
-    }
-
-    const { stackName } = data.getComplianceIntegrationTemplate;
-    const downloadTemplateLink = (
-      <Link
-        href="#"
-        title="Download cloudformation template"
-        download={`${stackName}.yml`}
-        ref={downloadRef}
-        onClick={() => setStatus({ cfnTemplateDownloaded: true })}
-      >
-        Download template
-      </Link>
-    );
-
-    if (!initialValues.integrationId) {
-      const cfnConsoleLink =
-        `https://${pantherConfig.AWS_REGION}.console.aws.amazon.com/cloudformation/home?region=${pantherConfig.AWS_REGION}#/stacks/create/review` +
-        `?templateURL=https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-cloudsec-iam/v1.0.0/template.yml` +
-        `&stackName=${stackName}` +
-        `&param_MasterAccountRegion=${pantherConfig.AWS_REGION}` +
-        `&param_MasterAccountId=${pantherConfig.AWS_ACCOUNT_ID}` +
-        `&param_DeployCloudWatchEventSetup=${values.cweEnabled}` +
-        `&param_DeployRemediation=${values.remediationEnabled}`;
-
-      return (
-        <Box fontSize="medium">
-          <Text color="gray-300" mt={2} mb={2}>
-            The quickest way to do it, is through the AWS console
-          </Text>
-          <Link
-            external
-            title="Launch cloudformation console"
-            href={cfnConsoleLink}
-            onClick={() => setStatus({ cfnTemplateDownloaded: true })}
-          >
-            Launch stack
-          </Link>
-          <Text color="gray-300" mt={10} mb={2}>
-            Alternatively, you can download it and deploy it through the AWS CLI with the stack name{' '}
-            <b>{stackName}</b>
-          </Text>
-          {downloadTemplateLink}
-        </Box>
-      );
-    }
-
-    return (
-      <React.Fragment>
-        <Box as="ol" fontSize="medium">
-          <Box as="li" color="gray-300" mb={3}>
-            1. {downloadTemplateLink}
-          </Box>
-          <Box as="li" color="gray-300" mb={3}>
-            2. Log into your
-            <Link
-              external
-              ml={1}
-              title="Launch Cloudformation console"
-              href={`https://${pantherConfig.AWS_REGION}.console.aws.amazon.com/cloudformation/home`}
-            >
-              Cloudformation console
-            </Link>{' '}
-            of the account <b>{values.awsAccountId}</b>
-          </Box>
-          <Box as="li" color="gray-300" mb={3}>
-            3. Find the stack <b>{stackName}</b>
-          </Box>
-          <Box as="li" color="gray-300" mb={3}>
-            4. Press <b>Update</b>, choose <b>Replace current template</b>
-          </Box>
-          <Box as="li" color="gray-300" mb={3}>
-            5. Press <b>Next</b> and finally click on <b>Update</b>
-          </Box>
-        </Box>
-        <Text color="gray-300" fontSize="medium" mt={10} mb={2}>
-          Alternatively, you can update your stack through the AWS CLI
-        </Text>
-      </React.Fragment>
-    );
-  };
+  const { stackName, body } = data?.getComplianceIntegrationTemplate ?? {};
+  const cfnConsoleLink =
+    `https://${pantherConfig.AWS_REGION}.console.aws.amazon.com/cloudformation/home?region=${pantherConfig.AWS_REGION}#/stacks/create/review` +
+    `?templateURL=https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-cloudsec-iam/v1.0.0/template.yml` +
+    `&stackName=${stackName}` +
+    `&param_MasterAccountRegion=${pantherConfig.AWS_REGION}` +
+    `&param_MasterAccountId=${pantherConfig.AWS_ACCOUNT_ID}` +
+    `&param_DeployCloudWatchEventSetup=${values.cweEnabled}` +
+    `&param_DeployRemediation=${values.remediationEnabled}`;
 
   return (
-    <Box>
+    <WizardPanel>
       <WizardPanel.Heading
-        title="Deploy your configured stack"
-        subtitle={`To proceed, you must deploy the generated Cloudformation template to the AWS account 
-        ${values.awsAccountId}. 
-        ${
-          !initialValues.integrationId
-            ? 'This will generate the necessary IAM Roles.'
-            : 'This will update any previous IAM Roles.'
-        }`}
+        title="Deploy the Panther's IAM roles"
+        subtitle="These roles will allow Panther to get information about the state of your AWS resources"
       />
-      {renderContent()}
-    </Box>
+      <SimpleGrid columns={2} gap={5} px={80} mx="auto" mb={6}>
+        <Card variant="dark" p={6}>
+          <Flex direction="column" align="center" spacing={4}>
+            <Img src={lightningIllustration} alt="Lightning" nativeWidth={40} nativeHeight={40} />
+            <Heading as="h4" size="x-small">
+              Using Cloudformation Console
+            </Heading>
+            <Text fontSize="small-medium" color="gray-300" textAlign="center">
+              Deploy our autogenerated Cloudformation template to the AWS account that you are
+              onboarding, to generate the necessary ReadOnly IAM Roles. After deployment please
+              continue with setup completion.
+              {initialValues.integrationId && (
+                <Box as="b" mt={3} display="block">
+                  Make sure you select Update and then Replace current template
+                </Box>
+              )}
+            </Text>
+            <a href={cfnConsoleLink} target="_blank" rel="noopener noreferrer">
+              <Button as="div" variantColor="teal">
+                Launch Console
+              </Button>
+            </a>
+          </Flex>
+        </Card>
+        <Card variant="dark" p={6}>
+          <Flex direction="column" align="center" spacing={4}>
+            <Img src={cogsIllustration} alt="Cogssn" nativeWidth={40} nativeHeight={40} />
+            <Heading as="h4" size="x-small">
+              Using the AWS CLI
+            </Heading>
+            <Text fontSize="small-medium" color="gray-300" textAlign="center">
+              Download the autogenerated Cloudformation template and deploy it to the AWS account
+              that you are onboarding via the given CLI/SDK. After deployment please continue with
+              setup completion.
+              {initialValues.integrationId && (
+                <Box as="b" mt={3} display="block">
+                  Make sure you update the template of the existing stack
+                </Box>
+              )}
+            </Text>
+            <Button
+              icon="download"
+              variantColor="violet"
+              loading={loading}
+              disabled={loading}
+              onClick={() => downloadData(body, `${stackName}.yaml`)}
+            >
+              Get template file
+            </Button>
+          </Flex>
+        </Card>
+      </SimpleGrid>
+      <WizardPanel.Actions>
+        <WizardPanel.ActionPrev />
+        <Flex spacing={4} direction="column" align="center">
+          <Text fontSize="small">Successfully configured and deployed your stack?</Text>
+          <Button variant="outline" variantColor="navyblue" onClick={goToNextStep}>
+            Continue
+          </Button>
+        </Flex>
+      </WizardPanel.Actions>
+    </WizardPanel>
   );
 };
 

@@ -16,23 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { StepStatus } from './Wizard';
-
-interface WizardContextValue<WizardData> {
-  goToPrevStep: () => void;
-  goToNextStep: () => void;
-  setData: (data: WizardData) => void;
-  updateData: (data: WizardData) => void;
-  resetData: () => void;
-  reset: () => void;
-  data: WizardData;
-  currentStepStatus: StepStatus;
-  setCurrentStepStatus: (stepStatus: StepStatus) => void;
-}
-
-export const WizardContext = React.createContext(null);
-
-export function useWizardContext<WizardData = any>() {
-  return React.useContext<WizardContextValue<WizardData>>(WizardContext);
-}
+export { default } from './ValidationPanel';

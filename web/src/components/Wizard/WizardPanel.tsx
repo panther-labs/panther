@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Button, FadeIn, Flex, Heading, IconButton, Text } from 'pouncejs';
+import { Box, Button, FadeIn, Flex, Heading, IconButton, Img, Text } from 'pouncejs';
 import { useWizardContext } from './WizardContext';
 
 interface WizardPanelAction {
@@ -27,6 +27,7 @@ interface WizardPanelAction {
 interface WizardPanelHeadingProps {
   title: string | React.ReactNode | React.ReactNode[];
   subtitle?: string | React.ReactNode | React.ReactNode[];
+  logo?: string;
 }
 
 interface WizardPanelComposition {
@@ -38,22 +39,23 @@ interface WizardPanelComposition {
 
 const WizardPanel: React.FC & WizardPanelComposition = ({ children }) => {
   return (
-    <Box as="section" width={700} mx="auto">
+    <Box as="section">
       <FadeIn>{children}</FadeIn>
     </Box>
   );
 };
 
-const WizardPanelHeading: React.FC<WizardPanelHeadingProps> = ({ title, subtitle }) => (
+const WizardPanelHeading: React.FC<WizardPanelHeadingProps> = ({ title, subtitle, logo }) => (
   <Box as="header" mb={10} textAlign="center">
-    <Heading size="small" mb={2} fontWeight="medium">
+    <Heading size="small" fontWeight="medium">
       {title}
     </Heading>
     {!!subtitle && (
-      <Text fontSize="medium" color="gray-300">
+      <Text fontSize="medium" mt={2} color="gray-300">
         {subtitle}
       </Text>
     )}
+    {!!logo && <Img alt="logo" src={logo} nativeHeight={60} nativeWidth={60} mt={5} mb={-5} />}
   </Box>
 );
 
