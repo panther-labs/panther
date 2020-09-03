@@ -33,7 +33,6 @@ import (
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
-	"github.com/panther-labs/panther/pkg/box"
 )
 
 type mockLambdaClient struct {
@@ -82,7 +81,7 @@ func sampleAlert() *deliveryModels.Alert {
 		OutputIds:    []string{"output-id"},
 		Severity:     "INFO",
 		AnalysisID:   "test-rule-id",
-		AnalysisName: box.String("test_rule_name"),
+		AnalysisName: aws.String("test_rule_name"),
 		CreatedAt:    time.Now().UTC(),
 	}
 }
