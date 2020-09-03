@@ -58,8 +58,8 @@ func generateSwaggerClients() error {
 
 	log.Infof("build:api: generating Go SDK for %d APIs (%s)", len(specs), swaggerGlob)
 
-	cmd := filepath.Join(".setup", "swagger")
-	if _, err = os.Stat(cmd); err != nil {
+	cmd := util.Swagger
+	if _, err = os.Stat(util.Swagger); err != nil {
 		return fmt.Errorf("%s not found (%v): run 'mage setup'", cmd, err)
 	}
 
