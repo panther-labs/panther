@@ -126,5 +126,4 @@ func checkGitLabAPI(t *testing.T, log string, expectedEvent *API) {
 	nilEvents, err := parserFail.Parse(log)
 	require.Error(t, err)
 	require.Nil(t, nilEvents)
-
 }
