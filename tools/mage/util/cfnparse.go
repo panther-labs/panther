@@ -34,12 +34,12 @@ import (
 // The caller can pass map[string]interface{} or a struct if the format is known.
 //
 // Short-form functions like "!If" and "!Sub" will be replaced with "Fn::" objects.
-func ParseTemplate(pyEnv, path string, out interface{}) error {
+func ParseTemplate(path string, out interface{}) error {
 	// The Go yaml parser doesn't understand short-form functions.
 	// So we first use cfn-flip to flip .yml to .json
 	if strings.ToLower(filepath.Ext(path)) != ".json" {
 		jsonPath := filepath.Join(os.TempDir(), filepath.Base(path)+".json")
-		if err := sh.Run(filepath.Join(pyEnv, "bin", "cfn-flip"), "-j", path, jsonPath); err != nil {
+		if err := sh.Run(PipPath("cfn-flip"), "-j", path, jsonPath); err != nil {
 			return fmt.Errorf("failed to flip %s to json: %v", path, err)
 		}
 		defer os.Remove(jsonPath)

@@ -1,4 +1,4 @@
-package config
+package deploy
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.

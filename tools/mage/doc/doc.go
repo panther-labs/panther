@@ -1,4 +1,4 @@
-package mage
+package doc
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -29,24 +29,23 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
-	"github.com/panther-labs/panther/tools/cfndoc"
-	"github.com/panther-labs/panther/tools/config"
+	"github.com/panther-labs/panther/tools/mage/deploy"
+	"github.com/panther-labs/panther/tools/mage/logger"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
-// Preview auto-generated documentation in out/doc
-func Doc() {
-	if err := doc(); err != nil {
-		log.Fatal(err)
-	}
-	log.Info("doc: generated runbooks and log types in out/docs")
-}
+var log = logger.Get()
 
-func doc() error {
+// Preview auto-generated documentation in out/doc
+func Doc() error {
 	if err := opDocs(); err != nil {
 		return err
 	}
-	return logDocs()
+	if err := logDocs(); err != nil {
+		return err
+	}
+	log.Info("doc: generated runbooks and log types in out/docs")
+	return nil
 }
 
 const (
@@ -75,7 +74,7 @@ func cfnFiles() []string {
 	// Remove the config file
 	var result []string
 	for _, p := range paths {
-		if p != config.Filepath {
+		if p != deploy.Filepath {
 			result = append(result, p)
 		}
 	}
@@ -85,7 +84,7 @@ func cfnFiles() []string {
 // generate operational documentation from deployment CloudFormation
 func opDocs() error {
 	log.Debug("doc: generating operational documentation from cloudformation")
-	docs, err := cfndoc.ReadCfn(cfnFiles()...)
+	docs, err := ReadCfn(cfnFiles()...)
 	if err != nil {
 		return fmt.Errorf("failed to generate operational documentation: %v", err)
 	}

@@ -114,15 +114,15 @@ jobs:
       - persist_python_modules_to_cache
       - persist_binaries_to_cache
       - run:
-          name: Run test suite
-          command: mage fmt doc
+          name: Generate and format source files
+          command: mage build:api build:cfn fmt
       - run:
-          name: Push `mage fmt doc` changes to remote ref (optional - only if `mage fmt doc` produces changes)
+          name: Push changes to remote ref (if there were any)
           command: |
             git config --global user.email "github-service-account@runpanther.io"
             git config --global user.name "panther-bot"
             git add -A .
-            git commit -m "ci: mage fmt doc" || true
+            git commit -m "ci: mage build:api build:cfn fmt" || true
             git push origin $CIRCLE_BRANCH
       - run:
           name: Run test suite

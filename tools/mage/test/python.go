@@ -1,4 +1,4 @@
-package mage
+package test
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -50,7 +50,7 @@ var (
 )
 
 // Test and lint Python source code
-func (Test) Python() {
+func Python() {
 	runTests(pythonTests)
 }
 
@@ -63,7 +63,7 @@ func testPythonUnit() error {
 	}
 
 	for _, target := range []string{"internal/core", "internal/compliance", "internal/log_analysis"} {
-		if err := util.RunWithCapturedOutput(util.PythonLibPath("python3"), append(args, target)...); err != nil {
+		if err := util.RunWithCapturedOutput(util.PipPath("python3"), append(args, target)...); err != nil {
 			return fmt.Errorf("python unit tests failed: %v", err)
 		}
 	}
@@ -80,13 +80,13 @@ func testPythonLint() error {
 
 	// pylint src
 	srcArgs := append(args, "--ignore", "tests", "--disable", strings.Join(pylintSrcDisabled, ","))
-	if err := sh.RunV(util.PythonLibPath("pylint"), append(srcArgs, pyTargets...)...); err != nil {
+	if err := sh.RunV(util.PipPath("pylint"), append(srcArgs, util.PyTargets...)...); err != nil {
 		return fmt.Errorf("pylint source failed: %v", err)
 	}
 
 	// pylint tests
 	testArgs := append(args, "--ignore", "src", "--disable", strings.Join(pylintTestsDisabled, ","))
-	if err := sh.RunV(util.PythonLibPath("pylint"), append(testArgs, pyTargets...)...); err != nil {
+	if err := sh.RunV(util.PipPath("pylint"), append(testArgs, util.PyTargets...)...); err != nil {
 		return fmt.Errorf("pylint tests failed: %v", err)
 	}
 
@@ -100,7 +100,7 @@ func testPythonBandit() error {
 	} else {
 		args = append(args, "--quiet")
 	}
-	return util.RunWithCapturedOutput(util.PythonLibPath("bandit"), append(args, pyTargets...)...)
+	return util.RunWithCapturedOutput(util.PipPath("bandit"), append(args, util.PyTargets...)...)
 }
 
 func testPythonMypy() error {
@@ -109,5 +109,5 @@ func testPythonMypy() error {
 	if mg.Verbose() {
 		args = append(args, "--verbose")
 	}
-	return sh.RunV(util.PythonLibPath("mypy"), append(args, pyTargets...)...)
+	return sh.RunV(util.PipPath("mypy"), append(args, util.PyTargets...)...)
 }

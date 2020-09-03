@@ -1,4 +1,4 @@
-package mage
+package test
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -55,7 +55,7 @@ type cfnResource struct {
 }
 
 // Lint CloudFormation and Terraform templates
-func (Test) Cfn() {
+func Cfn() {
 	runTests(cfnTests)
 }
 
@@ -74,7 +74,7 @@ func testCfnLint() error {
 	// which CFN does not understand. So we force string values to serialize them correctly.
 	args := []string{"-x", "E3012:strict=false", "--"}
 	args = append(args, templates...)
-	if err := sh.RunV(util.PythonLibPath("cfn-lint"), args...); err != nil {
+	if err := sh.RunV(util.PipPath("cfn-lint"), args...); err != nil {
 		return err
 	}
 
@@ -86,7 +86,7 @@ func testCfnLint() error {
 		}
 
 		var body cfnTemplate
-		if err := util.ParseTemplate(pythonVirtualEnvPath, template, &body); err != nil {
+		if err := util.ParseTemplate(template, &body); err != nil {
 			return fmt.Errorf("failed to parse %s: %v", template, err)
 		}
 		parsed[template] = body
@@ -353,11 +353,11 @@ func testTfValidate() error {
 		}
 
 		dir := filepath.Join(root, info.Name())
-		if err := sh.Run(terraformPath, "init", "-backend=false", "-input=false", dir); err != nil {
+		if err := sh.Run(util.Terraform, "init", "-backend=false", "-input=false", dir); err != nil {
 			return fmt.Errorf("tf init %s failed: %v", dir, err)
 		}
 
-		if err := sh.RunWith(env, terraformPath, "validate", dir); err != nil {
+		if err := sh.RunWith(env, util.Terraform, "validate", dir); err != nil {
 			return fmt.Errorf("tf validate %s failed: %v", dir, err)
 		}
 	}

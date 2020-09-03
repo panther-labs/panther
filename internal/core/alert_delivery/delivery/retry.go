@@ -37,7 +37,7 @@ const maxSQSBackoff = 30 * time.Second
 
 // Generate a random int between lower (inclusive) and upper (exclusive).
 func randomInt(lower, upper int) int {
-	return rand.Intn(upper-lower) + lower
+	return rand.Intn(upper-lower) + lower // #nosec (don't need cryptographic randomness for random retry)
 }
 
 // retry a batch of failed outputs by putting them all back on the queue with random delays.

@@ -1,4 +1,4 @@
-package mage
+package test
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,30 +19,20 @@ package mage
  */
 
 import (
-	"fmt"
-	"github.com/panther-labs/panther/tools/mage/build"
 	"github.com/panther-labs/panther/tools/mage/doc"
-	"sort"
-	"strings"
-
-	"github.com/magefile/mage/mg"
-
+	"github.com/panther-labs/panther/tools/mage/logger"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
-
-// Test contains targets for testing code syntax, style, and correctness.
-type Test mg.Namespace
 
 type testTask struct {
 	Name string
 	Task func() error
 }
 
-// CI Run all required checks for a pull request
-func (Test) CI() {
-	// Formatting modifies files (and may generate new ones), so we need to run this first
-	fmtErr := testFmtAndGeneratedFiles()
+var log = logger.Get()
 
+// Run all required checks for a pull request
+func CI() {
 	// Go unit tests and linting already run in multiple processors
 	// When running locally, test these by themselves to avoid locking up dev laptops.
 	var goUnitErr, goLintErr error
@@ -52,8 +42,6 @@ func (Test) CI() {
 	}
 
 	tests := []testTask{
-		{"fmt", func() error { return fmtErr }},
-
 		// mage test:go
 		{"go unit tests", func() error {
 			if util.IsRunningInCI() {
@@ -69,7 +57,7 @@ func (Test) CI() {
 		}},
 
 		// mage doc
-		{"doc", doc.doc}, // verify the command works, even if docs aren't committed in this repo
+		{"doc", doc.Doc}, // verify the command works, even if docs aren't committed in this repo
 	}
 
 	tests = append(tests, webTests...) // web tests take awhile, queue them earlier
@@ -91,39 +79,4 @@ func runTests(tasks []testTask) {
 		util.RunTask(results, task.Name, task.Task)
 	}
 	<-done
-}
-
-// Format source files and build APIs and check for changes.
-//
-// In CI, this returns an error and fails the test if files were not formatted.
-// Locally, we only log a warning if files were not formatted (test:ci will still pass).
-func testFmtAndGeneratedFiles() error {
-	// Formatting is fairly complex: yapf, gofmt, goimports, prettier, docs, license headers, etc
-	// It's easier to just run "fmt" and look for changes than to check diffs from each tool individually
-	beforeHashes, err := sourceHashes()
-	if err != nil {
-		return err
-	}
-
-	build.build.API()
-	build.build.Cfn()
-	Fmt()
-
-	afterHashes, err := sourceHashes()
-	if err != nil {
-		return err
-	}
-
-	if diffs := util.FileDiffs(beforeHashes, afterHashes); len(diffs) > 0 {
-		sort.Strings(diffs)
-		if util.IsRunningInCI() {
-			log.Errorf("%d file diffs after build:api + fmt:\n  %s", len(diffs), strings.Join(diffs, "\n  "))
-			return fmt.Errorf("%d file diffs after 'mage build:api fmt'", len(diffs))
-		}
-
-		log.Warnf("%d file diffs after build:api + fmt:\n  %s", len(diffs), strings.Join(diffs, "\n  "))
-		log.Warn("remember to commit formatted files or CI will fail")
-	}
-
-	return nil
 }

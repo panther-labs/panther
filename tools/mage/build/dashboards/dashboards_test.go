@@ -1,6 +1,4 @@
-package mage
-
-import "github.com/panther-labs/panther/tools/mage/util"
+package dashboards
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -20,25 +18,35 @@ import "github.com/panther-labs/panther/tools/mage/util"
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-var webTests = []testTask{
-	{"npm run test", testWebIntegration},
-	{"npm run eslint", testWebEslint},
-	{"npm run tsc", testWebTsc},
-}
+import (
+	"testing"
 
-// Test and lint web source
-func (Test) Web() {
-	runTests(webTests)
-}
+	"github.com/stretchr/testify/require"
+)
 
-func testWebEslint() error {
-	return util.RunWithCapturedOutput("npm", "run", "eslint")
+func TestDashboards(t *testing.T) {
+	name := "TestDashboard"
+	dashboardJSON := `
+{
+"some-dashboard_parameter": "foo",
+"region": "replace-me",
 }
-
-func testWebTsc() error {
-	return util.RunWithCapturedOutput("npm", "run", "tsc")
+`
+	// the region in the JSON should get replaced and the name the region appended
+	expectedDashboardJSON := `
+{
+"some-dashboard_parameter": "foo",
+"region": "${AWS::Region}",
 }
+`
+	expectedDashboard := &Dashboard{
+		Type: "AWS::CloudWatch::Dashboard",
+		Properties: DashboardProperties{
+			DashboardName: SubString{name + "-${AWS::Region}"},
+			DashboardBody: SubString{expectedDashboardJSON},
+		},
+	}
 
-func testWebIntegration() error {
-	return util.RunWithCapturedOutput("npm", "run", "test")
+	dashboard := NewDashboard(name, dashboardJSON)
+	require.Equal(t, expectedDashboard, dashboard)
 }

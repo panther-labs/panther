@@ -1,4 +1,4 @@
-package mage
+package master
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,24 +19,19 @@ package mage
  */
 
 import (
-	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/magefile/mage/mg"
-	"github.com/magefile/mage/sh"
 
 	"github.com/panther-labs/panther/pkg/prompt"
-	"github.com/panther-labs/panther/tools/cfnparse"
 	"github.com/panther-labs/panther/tools/cfnstacks"
-	"github.com/panther-labs/panther/tools/config"
+	"github.com/panther-labs/panther/tools/mage/clean"
 	"github.com/panther-labs/panther/tools/mage/clients"
+	"github.com/panther-labs/panther/tools/mage/deploy"
+	"github.com/panther-labs/panther/tools/mage/logger"
+	"github.com/panther-labs/panther/tools/mage/setup"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
@@ -47,25 +42,22 @@ const (
 )
 
 var (
+	log            = logger.Get()
 	publishRegions = []string{"us-east-1", "us-east-2", "us-west-2"}
 )
 
-type Master mg.Namespace
-
-// Deploy Deploy single master template (deployments/master.yml) nesting all other stacks
-func (Master) Deploy() {
+// Deploy single master template (deployments/master.yml) nesting all other stacks
+func Deploy() {
 	bucket, firstUserEmail, ecrRegistry := masterDeployPreCheck()
 
-	masterBuild()
-	pkg := masterPackage(clients.Region(), bucket, getMasterVersion(), ecrRegistry)
-
-	err := sh.RunV(filepath.Join(pythonVirtualEnvPath, "bin", "sam"), "deploy",
-		"--capabilities", "CAPABILITY_IAM", "CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND",
-		"--region", clients.Region(),
-		"--stack-name", masterStackName,
-		"-t", pkg,
-		"--parameter-overrides", "FirstUserEmail="+firstUserEmail, "ImageRegistry="+ecrRegistry)
+	Build()
+	version, err := GetVersion()
 	if err != nil {
+		log.Fatal(err)
+	}
+	pkg := Package(clients.Region(), bucket, version, ecrRegistry)
+
+	if err := util.SamDeploy(masterStackName, pkg, "FirstUserEmail="+firstUserEmail, "ImageRegistry="+ecrRegistry); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -74,7 +66,7 @@ func (Master) Deploy() {
 //
 // Returns bucket, firstUserEmail, ecrRegistry
 func masterDeployPreCheck() (string, string, string) {
-	deployPreCheck(false)
+	deploy.PreCheck(false)
 
 	_, err := clients.Cfn().DescribeStacks(
 		&cloudformation.DescribeStacksInput{StackName: aws.String(cfnstacks.Bootstrap)})
@@ -99,10 +91,13 @@ func masterDeployPreCheck() (string, string, string) {
 	return bucket, firstUserEmail, ecrRegistry
 }
 
-// Publish Publish a new Panther release (Panther team only)
-func (Master) Publish() {
-	deployPreCheck(false)
-	version := getMasterVersion()
+// Publish a new Panther release (Panther team only)
+func Publish() {
+	deploy.PreCheck(false)
+	version, err := GetVersion()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	log.Infof("Publishing panther-community v%s to %s", version, strings.Join(publishRegions, ","))
 	result := prompt.Read("Are you sure you want to continue? (yes|no) ", prompt.NonemptyValidator)
@@ -111,12 +106,11 @@ func (Master) Publish() {
 	}
 
 	// To be safe, always clean and reset the repo before building the assets
-	Clean()
-	Setup()
-	masterBuild()
+	clean.Clean()
+	setup.Setup()
+	Build()
 
 	for _, region := range publishRegions {
 		publishToRegion(version, region)
 	}
 }
-

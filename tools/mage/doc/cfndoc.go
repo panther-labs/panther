@@ -1,4 +1,4 @@
-package cfndoc
+package doc
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.

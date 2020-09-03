@@ -67,11 +67,6 @@ func Fmt() {
 	util.LogResults(results, "fmt", 1, count, count)
 }
 
-// Hash every source file in the repo to check for diffs before vs after formatting.
-func sourceHashes() (map[string][16]byte, error) {
-	return util.FileHashMap(licensePaths...)
-}
-
 // Apply full go formatting to the given paths
 func gofmt(paths ...string) error {
 	log.Debug("fmt: gofmt " + strings.Join(paths, " "))
@@ -184,7 +179,7 @@ func tfUpdateDeploymentRole() error {
 	// Parse CF deployment role
 	var cfn template
 	srcPath := filepath.Join("deployments", "auxiliary", "cloudformation", "panther-deployment-role.yml")
-	if err := util.ParseTemplate(util.PyEnv, srcPath, &cfn); err != nil {
+	if err := util.ParseTemplate(srcPath, &cfn); err != nil {
 		return err
 	}
 

@@ -1,4 +1,4 @@
-package mage
+package teardown
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -25,18 +25,17 @@ import (
 	"github.com/panther-labs/panther/pkg/prompt"
 	"github.com/panther-labs/panther/tools/cfnstacks"
 	"github.com/panther-labs/panther/tools/mage/clients"
-	"github.com/panther-labs/panther/tools/mage/teardown"
 )
 
 // Teardown Destroy all Panther infrastructure
 func Teardown() {
 	masterStack := teardownConfirmation()
-	if err := teardown.DestroyCfnStacks(masterStack); err != nil {
+	if err := DestroyCfnStacks(masterStack); err != nil {
 		log.Fatal(err)
 	}
 
 	// CloudFormation will not delete any Panther S3 buckets (DeletionPolicy: Retain), we do so here.
-	if err := teardown.DestroyPantherBuckets(clients.S3()); err != nil {
+	if err := DestroyPantherBuckets(clients.S3()); err != nil {
 		log.Fatal(err)
 	}
 

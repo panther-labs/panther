@@ -20,78 +20,17 @@ package build
 
 import (
 	"fmt"
-	"github.com/panther-labs/panther/tools/mage"
-	"io/ioutil"
 	"os"
 	"path/filepath"
-	"regexp"
-	"runtime"
 	"strings"
 
-	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
-
-// Lambda Compile Go Lambda function source
-func (b Build) Lambda() {
-	if err := b.lambda(); err != nil {
-		mage.log.Fatal(err)
-	}
-}
-
-// "go build" in parallel for each Lambda function.
-//
-// If you don't already have all go modules downloaded, this may fail because each goroutine will
-// automatically modify the go.mod/go.sum files which will cause conflicts with itself.
-//
-// Run "go mod download" or "mage setup" before building to download the go modules.
-// If you're adding a new module, run "go get ./..." before building to fetch the new module.
-func (b Build) lambda() error {
-	var packages []string
-	util.Walk("internal", func(path string, info os.FileInfo) {
-		if info.IsDir() && strings.HasSuffix(path, "main") {
-			packages = append(packages, path)
-		}
-	})
-
-	mage.log.Infof("build:lambda: compiling %d Go Lambda functions (internal/.../main) using %s",
-		len(packages), runtime.Version())
-
-	for _, pkg := range packages {
-		if err := buildLambdaPackage(pkg); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func buildLambdaPackage(pkg string) error {
-	targetDir := filepath.Join("out", "bin", pkg)
-	binary := filepath.Join(targetDir, "main")
-	var buildEnv = map[string]string{"GOARCH": "amd64", "GOOS": "linux"}
-
-	if err := os.MkdirAll(targetDir, 0700); err != nil {
-		return fmt.Errorf("failed to create %s directory: %v", targetDir, err)
-	}
-	if err := sh.RunWith(buildEnv, "go", "build", "-p", "1", "-ldflags", "-s -w", "-o", targetDir, "./"+pkg); err != nil {
-		return fmt.Errorf("go build %s failed: %v", binary, err)
-	}
-
-	return nil
-}
-
-// Tools Compile devtools and opstools
-func (b Build) Tools() {
-	if err := b.tools(); err != nil {
-		mage.log.Fatal(err)
-	}
-}
-
-func (b Build) tools() error {
+// Compile devtools and opstools
+func Tools() error {
 	// cross compile so tools can be copied to other machines easily
 	buildEnvs := []map[string]string{
 		// darwin:arm is not compatible
@@ -117,7 +56,7 @@ func (b Build) tools() error {
 		// used in tools to check/display which Panther version was compiled
 		setVersionVar := fmt.Sprintf("-X 'main.version=%s'", util.RepoVersion())
 
-		mage.log.Infof("build:tools: compiling %s to %s with %d os/arch combinations",
+		log.Infof("build:tools: compiling %s to %s with %d os/arch combinations",
 			path, outDir, len(buildEnvs))
 		for _, env := range buildEnvs {
 			// E.g. "requeue-darwin-amd64"
@@ -136,19 +75,4 @@ func (b Build) tools() error {
 	}
 
 	return nil
-}
-
-// Generate CloudFormation: deployments/dashboards.yml and out/deployments/
-func (b Build) Cfn() {
-	if err := b.cfn(); err != nil {
-		mage.log.Fatal(err)
-	}
-}
-
-func (b Build) cfn() error {
-	if err := mage.embedAPISpec(); err != nil {
-		return err
-	}
-
-	return mage.generateDashboards()
 }

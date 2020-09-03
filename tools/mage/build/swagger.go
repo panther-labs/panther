@@ -1,4 +1,4 @@
-package mage
+package build
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -34,9 +34,9 @@ const (
 )
 
 // Embed swagger specs into the API gateway template, saving it to out/deployments.
-func embedAPISpec() error {
+func EmbedAPISpec() error {
 	var cfn map[string]interface{}
-	if err := util.ParseTemplate(pythonVirtualEnvPath, cfnstacks.APITemplate, &cfn); err != nil {
+	if err := util.ParseTemplate(cfnstacks.APITemplate, &cfn); err != nil {
 		return err
 	}
 

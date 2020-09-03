@@ -1,4 +1,6 @@
-package util
+package test
+
+import "github.com/panther-labs/panther/tools/mage/util"
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -18,19 +20,25 @@ package util
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "github.com/magefile/mage/sh"
+var webTests = []testTask{
+	{"npm run test", testWebIntegration},
+	{"npm run eslint", testWebEslint},
+	{"npm run tsc", testWebTsc},
+}
 
-var gitVersion string
+// Test and lint web source
+func Web() {
+	runTests(webTests)
+}
 
-// Return repo version (e.g. "v1.6.0-85-g8ffbbf60"), warn if not deploying a tagged release
-func RepoVersion() string {
-	if gitVersion == "" {
-		var err error
-		gitVersion, err = sh.Output("git", "describe", "--tags")
-		if err != nil {
-			log.Fatalf("git describe failed: %v", err)
-		}
-	}
+func testWebEslint() error {
+	return util.RunWithCapturedOutput("npm", "run", "eslint")
+}
 
-	return gitVersion
+func testWebTsc() error {
+	return util.RunWithCapturedOutput("npm", "run", "tsc")
+}
+
+func testWebIntegration() error {
+	return util.RunWithCapturedOutput("npm", "run", "test")
 }

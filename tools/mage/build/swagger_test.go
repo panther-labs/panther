@@ -1,4 +1,4 @@
-package mage
+package build
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,21 +19,31 @@ package mage
  */
 
 import (
-	"github.com/panther-labs/panther/tools/mage/util"
+	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
+
+	"github.com/panther-labs/panther/tools/mage/util"
 )
+
+func TestMain(m *testing.M) {
+	// Go unit tests run from the directory of the test file, but mage code
+	// assumes it's running from the repo root.
+	// So we need to adjust the path to the python env.
+	util.PyEnv = filepath.Join("..", "..", "..", util.PyEnv)
+	os.Exit(m.Run())
+}
 
 func TestEmbedAPIsNoChange(t *testing.T) {
 	var cfn map[string]interface{}
-	err := util.ParseTemplate(testEnvPath(), "testdata/no-api.yml", &cfn)
+	err := util.ParseTemplate("testdata/no-api.yml", &cfn)
 	require.NoError(t, err)
 	var expectedMap map[string]interface{}
-	err = util.ParseTemplate(testEnvPath(), "testdata/no-api.yml", &expectedMap)
+	err = util.ParseTemplate("testdata/no-api.yml", &expectedMap)
 	require.NoError(t, err)
 
 	require.NoError(t, embedAPIs(cfn))
@@ -50,10 +60,10 @@ func TestEmbedAPIsNoChange(t *testing.T) {
 
 func TestEmbedAPIs(t *testing.T) {
 	var cfn map[string]interface{}
-	err := util.ParseTemplate(testEnvPath(), "testdata/valid-api.yml", &cfn)
+	err := util.ParseTemplate("testdata/valid-api.yml", &cfn)
 	require.NoError(t, err)
 	var expectedMap map[string]interface{}
-	err = util.ParseTemplate(testEnvPath(), "testdata/valid-api-expected-output.yml", &expectedMap)
+	err = util.ParseTemplate("testdata/valid-api-expected-output.yml", &expectedMap)
 	require.NoError(t, err)
 
 	require.NoError(t, embedAPIs(cfn))
@@ -66,10 +76,4 @@ func TestEmbedAPIs(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.YAMLEq(t, string(expected), string(result))
-}
-
-// Return relative path to python env from *this* directory, not the repo root.
-// Go unit tests run from the directory of the test file.
-func testEnvPath() string {
-	return filepath.Join("..", "..", pythonVirtualEnvPath)
 }

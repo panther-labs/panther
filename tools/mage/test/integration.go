@@ -1,4 +1,4 @@
-package mage
+package test
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,7 +19,6 @@ package mage
  */
 
 import (
-	"github.com/panther-labs/panther/tools/mage/build"
 	"os"
 	"path/filepath"
 	"strings"
@@ -32,16 +31,14 @@ import (
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
-// Integration Run integration tests (integration_test.go,integration.py)
-func (t Test) Integration() {
+// Run integration tests (integration_test.go,integration.py)
+func Integration() {
 	log.Warnf("Integration tests will erase all Panther data in account %s (%s)",
 		clients.AccountID(), clients.Region())
 	result := prompt.Read("Are you sure you want to continue? (yes|no) ", prompt.NonemptyValidator)
 	if strings.ToLower(result) != "yes" {
 		log.Fatal("integration tests aborted")
 	}
-
-	mg.Deps(build.build.API)
 
 	if pkg := os.Getenv("PKG"); pkg != "" {
 		// One specific package requested: run integration tests just for that
@@ -63,7 +60,7 @@ func (t Test) Integration() {
 	})
 
 	log.Info("test:integration: python policy engine")
-	if err := sh.RunV(util.PythonLibPath("python3"), "internal/compliance/policy_engine/tests/integration.py"); err != nil {
+	if err := sh.RunV(util.PipPath("python3"), "internal/compliance/policy_engine/tests/integration.py"); err != nil {
 		log.Errorf("python integration test failed: %v", err)
 		errCount++
 	}

@@ -1,4 +1,4 @@
-package mage
+package deploy
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -22,8 +22,6 @@ import (
 	"crypto/sha1" // nolint: gosec
 	"fmt"
 	"io/ioutil"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -31,11 +29,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/magefile/mage/sh"
 
 	"github.com/panther-labs/panther/pkg/awscfn"
 	"github.com/panther-labs/panther/tools/cfnstacks"
 	"github.com/panther-labs/panther/tools/mage/clients"
+	"github.com/panther-labs/panther/tools/mage/teardown"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
@@ -54,7 +52,7 @@ func deployTemplate(
 ) (map[string]string, error) {
 
 	// 1) Generate final template, with large assets packaged in S3.
-	packagedTemplate, err := samPackage(clients.Region(), templatePath, bucket)
+	packagedTemplate, err := util.SamPackage(clients.Region(), templatePath, bucket)
 	if err != nil {
 		return nil, err
 	}
@@ -83,29 +81,6 @@ func deployTemplate(
 
 	// 4) Execute the change set
 	return executeChangeSet(*changeID, changeSetType, stack)
-}
-
-// Package resources in S3 and return the path to the modified CloudFormation template.
-//
-// This uses "sam package" to be compatible with SAR, which is also more complete and robust than
-// "aws cloudformation package"
-//
-// The bucket name can be blank if no S3 bucket is actually needed (e.g. bootstrap stack).
-func samPackage(region, templatePath, bucket string) (string, error) {
-	log.Debugf("deploy: packaging %s assets", templatePath)
-	if bucket == "" {
-		// "sam package" requires a bucket name even if it isn't used
-		// Put a default value that can't be possibly be a real bucket (names must have 3+ characters)
-		bucket = "NA"
-	}
-
-	outFile := filepath.Join("out", "deployments", "package."+filepath.Base(templatePath))
-	if err := os.MkdirAll(filepath.Dir(outFile), 0700); err != nil {
-		return "", fmt.Errorf("failed to create out/deployments: %v", err)
-	}
-
-	return outFile, sh.Run(filepath.Join(pythonVirtualEnvPath, "bin", "sam"),
-		"package", "--s3-bucket", bucket, "-t", templatePath, "--output-template-file", outFile, "--region", region)
 }
 
 // Upload a CloudFormation asset to S3 if it doesn't already exist, returning s3 object key and version
@@ -170,7 +145,7 @@ func prepareStack(stackName string) (map[string]string, error) {
 			// Otherwise, there may be orphaned S3 buckets that will never be used.
 			log.Warnf("The very first %s stack never created successfully (%s)", cfnstacks.Bootstrap, status)
 			log.Warn("Running 'mage teardown' to fully remove orphaned resources before trying again")
-			Teardown()
+			teardown.Teardown()
 			return nil, nil
 		}
 

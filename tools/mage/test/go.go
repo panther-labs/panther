@@ -1,4 +1,4 @@
-package mage
+package test
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -20,7 +20,6 @@ package mage
 
 import (
 	"fmt"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -31,7 +30,7 @@ import (
 )
 
 // Test and lint Golang source code
-func (Test) Go() {
+func Go() {
 	if err := testGoUnit(); err != nil {
 		log.Fatalf("go unit tests failed: %v", err)
 	}
@@ -74,5 +73,5 @@ func testGoLint() error {
 	if mg.Verbose() {
 		args = append(args, "-v")
 	}
-	return sh.RunV(filepath.Join(setupDirectory, "golangci-lint"), args...)
+	return sh.RunV(util.GoLinter, args...)
 }

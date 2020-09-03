@@ -19,8 +19,22 @@ package dashboards
  */
 
 import (
-	"github.com/panther-labs/panther/tools/mage/build"
+	"regexp"
 )
+
+type Dashboard struct {
+	Type       string              `yaml:"Type"`
+	Properties DashboardProperties `yaml:"Properties"`
+}
+
+type DashboardProperties struct {
+	DashboardBody SubString `yaml:"DashboardBody"`
+	DashboardName SubString `yaml:"DashboardName"`
+}
+
+type SubString struct {
+	Sub string `yaml:"Fn::Sub"`
+}
 
 /*
 Dashboards are generated rather than explicitly defined
@@ -38,12 +52,31 @@ The methodology for adding dashboards is to:
 4. Add a line to Dashboards() below instantiating the CF dashboard resource
 */
 
+var replaceRegion = regexp.MustCompile(`"region":\s*"(?:[\w\-]*)"`)
+
 // Dashboards returns all the declared dashboards
-func Dashboards() (dashboards []*build.Dashboard) {
-	dashboards = append(dashboards, build.NewDashboard("PantherOverview", overviewJSON))
-	dashboards = append(dashboards, build.NewDashboard("PantherCloudSecurity", infraJSON))
-	dashboards = append(dashboards, build.NewDashboard("PantherAlertProcessing", alertsJSON))
-	dashboards = append(dashboards, build.NewDashboard("PantherRemediation", remediationJSON))
-	dashboards = append(dashboards, build.NewDashboard("PantherLogAnalysis", logProcessingJSON))
+func Dashboards() (dashboards []*Dashboard) {
+	dashboards = append(dashboards, NewDashboard("PantherOverview", overviewJSON))
+	dashboards = append(dashboards, NewDashboard("PantherCloudSecurity", infraJSON))
+	dashboards = append(dashboards, NewDashboard("PantherAlertProcessing", alertsJSON))
+	dashboards = append(dashboards, NewDashboard("PantherRemediation", remediationJSON))
+	dashboards = append(dashboards, NewDashboard("PantherLogAnalysis", logProcessingJSON))
 	return dashboards
+}
+
+func NewDashboard(name, body string) *Dashboard {
+	/*
+	 Most graphs in CW dashboards require a region to be specified. In order to
+	 allow a developer to simply paste the JSON from the CloudWatch dashboard,
+	 we will regexp replace the region in the raw json with the AWS::Region parameter.
+	 This is much cleaner and easier than using CF Fn::Sub with escaped JSON.
+	*/
+
+	return &Dashboard{
+		Type: "AWS::CloudWatch::Dashboard",
+		Properties: DashboardProperties{
+			DashboardBody: SubString{replaceRegion.ReplaceAllString(body, `"region": "${AWS::Region}"`)},
+			DashboardName: SubString{name + "-${AWS::Region}"},
+		},
+	}
 }

@@ -1,4 +1,4 @@
-package mage
+package deploy
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -21,7 +21,6 @@ package mage
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/panther-labs/panther/tools/mage/deploy"
 	"os"
 	"strconv"
 	"strings"
@@ -37,7 +36,7 @@ import (
 
 const awsEnvFile = "out/.env.aws"
 
-func deployFrontend(bootstrapOutputs map[string]string, settings *deploy.PantherConfig) error {
+func deployFrontend(bootstrapOutputs map[string]string, settings *PantherConfig) error {
 	// Save .env file (only used when running web server locally)
 	if err := godotenv.Write(
 		map[string]string{
@@ -52,7 +51,7 @@ func deployFrontend(bootstrapOutputs map[string]string, settings *deploy.Panther
 		return fmt.Errorf("failed to write ENV variables to file %s: %v", awsEnvFile, err)
 	}
 
-	dockerImage, err := buildAndPushImageFromSource(bootstrapOutputs["ImageRegistryUri"], "")
+	dockerImage, err := PushWebImg(bootstrapOutputs["ImageRegistryUri"], "")
 	if err != nil {
 		return err
 	}
@@ -84,7 +83,7 @@ func deployFrontend(bootstrapOutputs map[string]string, settings *deploy.Panther
 }
 
 // Build a personalized docker image from source and push it to the private image repo of the user
-func buildAndPushImageFromSource(imageRegistry, tag string) (string, error) {
+func PushWebImg(imageRegistry, tag string) (string, error) {
 	log.Debug("requesting access to remote image repo")
 	response, err := clients.ECR().GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
 	if err != nil {
