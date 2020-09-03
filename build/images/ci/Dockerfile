@@ -26,10 +26,12 @@ ENV NODE_VERSION="12.18.3"
 
 
 # ****************     APT Packages     *******************
+# gcc is necessary for 'go test'
 RUN apt-get update && apt-get install -y --no-install-recommends \
         gcc \
         make \
         python3 \
+        python3-venv \
         unzip \
 	&& rm -rf /var/lib/apt/lists/*
 

@@ -56,11 +56,6 @@ jobs:
           # "mage setup" will have no effect unless new dependencies have been introduced.
           name: Install new dependencies
           command: /tmp/panther/magebin -v setup
-      - run:
-          name: Debugging
-          command: |
-            ls .setup
-            ls .setup/venv/bin
       - persist_to_workspace:
           root: /tmp/panther
           paths:
@@ -172,7 +167,7 @@ jobs:
       - checkout
       - run:
           name: Audit NPM packages
-          command: npm audit --production # does not require installing packages first
+          command: npm audit --production # does not require 'npm install'
 
   bundlesize:
     executor: panther-buildpack
