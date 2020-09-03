@@ -74,7 +74,9 @@ func Setup() {
 	lambdaClient = lambda.New(awsSession)
 	outputClient = outputs.New(awsSession)
 	sqsClient = sqs.New(awsSession)
-	outputsCache = &alertOutputsCache{}
+	outputsCache = &alertOutputsCache{
+		RefreshInterval: env.OutputsRefreshInterval,
+	}
 	alertsTableClient = &alertTable.AlertsTable{
 		AlertsTableName:                    env.AlertsTableName,
 		Client:                             dynamodb.New(awsSession),

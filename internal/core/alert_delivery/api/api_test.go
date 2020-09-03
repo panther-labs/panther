@@ -19,7 +19,6 @@ package api
  */
 
 import (
-	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -85,20 +84,4 @@ func sampleAlert() *deliveryModels.Alert {
 		AnalysisName: box.String("test_rule_name"),
 		CreatedAt:    time.Now().UTC(),
 	}
-}
-
-func initEnvironmentTest() {
-	os.Setenv("ALERT_RETRY_COUNT", "10")
-	os.Setenv("OUTPUTS_REFRESH_INTERVAL", "30s")
-	os.Setenv("MIN_RETRY_DELAY_SECS", "10")
-	os.Setenv("MAX_RETRY_DELAY_SECS", "30")
-	os.Setenv("ALERT_QUEUE_URL", "sqs-url")
-	os.Setenv("ALERTS_API", "alerts-api")
-	os.Setenv("OUTPUTS_API", "outputs-api")
-	os.Setenv("ALERTS_TABLE_NAME", "alerts-table-name")
-	os.Setenv("RULE_INDEX_NAME", "rule-index")
-	os.Setenv("TIME_INDEX_NAME", "time-index")
-	os.Setenv("ANALYSIS_API_HOST", "analysis-api-host")
-	os.Setenv("ANALYSIS_API_PATH", "v1")
-	Setup()
 }

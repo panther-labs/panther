@@ -27,8 +27,9 @@ import (
 // alertOutputsCache - is a singleton holding outputs to send alerts
 type alertOutputsCache struct {
 	// All cached outputs
-	Outputs []*outputModels.AlertOutput
-	Expiry  time.Time
+	Outputs         []*outputModels.AlertOutput
+	Expiry          time.Time
+	RefreshInterval time.Duration
 }
 
 // get - Gets a pointer to the outputsCache singleton
@@ -61,7 +62,17 @@ func (c *alertOutputsCache) setExpiry(time time.Time) {
 	c.get().Expiry = time
 }
 
+// getRefreshInterval - Gets the expiry time in the cache
+func (c *alertOutputsCache) getRefreshInterval() time.Duration {
+	return c.get().RefreshInterval
+}
+
+// setRefreshInterval - Sets the expiry time of the cache
+func (c *alertOutputsCache) setRefreshInterval(duration time.Duration) {
+	c.get().RefreshInterval = duration
+}
+
 // isExpired - determines if the cache has expired
 func (c *alertOutputsCache) isExpired() bool {
-	return time.Since(c.getExpiry()) > env.OutputsRefreshInterval
+	return time.Since(c.getExpiry()) > c.getRefreshInterval()
 }
