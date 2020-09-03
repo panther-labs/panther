@@ -68,7 +68,7 @@ jobs:
             git config --global user.email "github-service-account@runpanther.io"
             git config --global user.name "panther-bot"
             git add -A .
-            git commit -m "ci: mage build:api build:cfn fmt" || true
+            git commit -m "mage build:api build:cfn fmt" || true
             git push origin $CIRCLE_BRANCH
 
   test_cfn:
@@ -103,7 +103,6 @@ jobs:
     executor: panther-buildpack
     resource_class: small
     steps:
-      - checkout
       - run:
           name: Audit NPM packages
           command: npm audit --production # does not require installing packages first
@@ -111,12 +110,6 @@ jobs:
   bundlesize:
     executor: panther-buildpack
     steps:
-      - checkout
-      - restore_node_modules_from_cache
-      - run:
-          name: Install NPM dependencies
-          command: npm i
-      - persist_node_modules_to_cache
       - run:
           name: Check bundle size
           command: npm run bundlesize
@@ -128,7 +121,6 @@ jobs:
     steps:
       - run: |
           curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | bash
-      - checkout
       - run:
           command: fossa # generate config file, run dependency analysis, and upload metadata to FOSSA
 
