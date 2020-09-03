@@ -17,3 +17,4 @@
  */
 
 export { default } from './S3LogSourceWizard';
+export * from './StackDeploymentPanel/graphql/getLogCfnTemplate.generated';
