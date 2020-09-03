@@ -119,4 +119,9 @@ func checkGitLabAPI(t *testing.T, log string, expectedEvent *API) {
 	parser := (&APIParser{}).New()
 	events, err := parser.Parse(log)
 	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
+	parserFail := (&ProductionParser{}).New()
+	nilEvents, err := parserFail.Parse(log)
+	require.Error(t, err)
+	require.Nil(t, nilEvents)
+
 }
