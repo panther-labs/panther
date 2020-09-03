@@ -32,18 +32,9 @@ func TestAcmCertificateList(t *testing.T) {
 	mockSvc := awstest.BuildMockAcmSvc([]string{"ListCertificatesPages"})
 
 	out, marker, err := listCertificates(mockSvc, nil)
-	assert.Nil(t, marker)
+	assert.NotNil(t, marker)
 	assert.NoError(t, err)
-	assert.NotEmpty(t, out)
-}
-
-func TestAcmCertificateListWithPaging(t *testing.T) {
-	mockSvc := awstest.BuildMockAcmSvc([]string{"ListCertificatesPages"})
-
-	out, marker, err := listCertificates(mockSvc, nil)
-	assert.Nil(t, marker)
-	assert.NoError(t, err)
-	assert.NotEmpty(t, out)
+	assert.Len(t, out, 100)
 }
 
 func TestAcmCertificateListError(t *testing.T) {
@@ -58,7 +49,7 @@ func TestAcmCertificateListError(t *testing.T) {
 func TestAcmCertificateDescribe(t *testing.T) {
 	mockSvc := awstest.BuildMockAcmSvc([]string{"DescribeCertificate"})
 
-	out, err := describeCertificate(mockSvc, awstest.ExampleCertificateArn)
+	out, err := describeCertificate(mockSvc, awstest.ExampleCertificateArn1)
 	require.NoError(t, err)
 	assert.NotEmpty(t, out)
 }
@@ -66,7 +57,7 @@ func TestAcmCertificateDescribe(t *testing.T) {
 func TestAcmCertificateDescribeError(t *testing.T) {
 	mockSvc := awstest.BuildMockAcmSvcError([]string{"DescribeCertificate"})
 
-	out, err := describeCertificate(mockSvc, awstest.ExampleCertificateArn)
+	out, err := describeCertificate(mockSvc, awstest.ExampleCertificateArn1)
 	require.Error(t, err)
 	assert.Nil(t, out)
 }
@@ -74,7 +65,7 @@ func TestAcmCertificateDescribeError(t *testing.T) {
 func TestAcmCertificateListTags(t *testing.T) {
 	mockSvc := awstest.BuildMockAcmSvc([]string{"ListTagsForCertificate"})
 
-	out, err := listTagsForCertificate(mockSvc, awstest.ExampleCertificateArn)
+	out, err := listTagsForCertificate(mockSvc, awstest.ExampleCertificateArn1)
 	require.NoError(t, err)
 	assert.NotEmpty(t, out)
 }
@@ -82,7 +73,7 @@ func TestAcmCertificateListTags(t *testing.T) {
 func TestAcmCertificateListTagsError(t *testing.T) {
 	mockSvc := awstest.BuildMockAcmSvcError([]string{"ListTagsForCertificate"})
 
-	out, err := listTagsForCertificate(mockSvc, awstest.ExampleCertificateArn)
+	out, err := listTagsForCertificate(mockSvc, awstest.ExampleCertificateArn1)
 	require.Error(t, err)
 	assert.Nil(t, out)
 }
@@ -92,7 +83,7 @@ func TestAcmCertificateBuildSnapshot(t *testing.T) {
 
 	certSnapshot, err := buildAcmCertificateSnapshot(
 		mockSvc,
-		awstest.ExampleListCertificatesOutput.CertificateSummaryList[0].CertificateArn,
+		awstest.ExampleListCertificatesOutputPage1.CertificateSummaryList[0].CertificateArn,
 	)
 
 	assert.NoError(t, err)
@@ -105,7 +96,7 @@ func TestAcmCertificateBuildSnapshotErrors(t *testing.T) {
 
 	certSnapshot, err := buildAcmCertificateSnapshot(
 		mockSvc,
-		awstest.ExampleListCertificatesOutput.CertificateSummaryList[0].CertificateArn,
+		awstest.ExampleListCertificatesOutputPage1.CertificateSummaryList[0].CertificateArn,
 	)
 
 	assert.Nil(t, certSnapshot)
@@ -127,7 +118,7 @@ func TestAcmCertificatePoller(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Nil(t, marker)
-	assert.Equal(t, *awstest.ExampleCertificateArn, string(resources[0].ID))
+	assert.Equal(t, *awstest.ExampleCertificateArn1, string(resources[0].ID))
 	assert.NotEmpty(t, resources)
 }
 

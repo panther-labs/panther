@@ -49,7 +49,7 @@ func TestCloudFormationStackDescribeError(t *testing.T) {
 func TestCloudFormationStackDetectStackDrift(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudFormationSvc([]string{"DetectStackDrift"})
 
-	out, err := detectStackDrift(mockSvc, awstest.ExampleCertificateArn)
+	out, err := detectStackDrift(mockSvc, awstest.ExampleDescribeStacks.Stacks[0].StackId)
 	require.NoError(t, err)
 	assert.NotEmpty(t, out)
 }
@@ -57,7 +57,7 @@ func TestCloudFormationStackDetectStackDrift(t *testing.T) {
 func TestCloudFormationStackDetectStackDriftError(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudFormationSvcError([]string{"DetectStackDrift"})
 
-	out, err := detectStackDrift(mockSvc, awstest.ExampleCertificateArn)
+	out, err := detectStackDrift(mockSvc, awstest.ExampleDescribeStacks.Stacks[0].StackId)
 	require.Error(t, err)
 	assert.Nil(t, out)
 }
@@ -65,7 +65,7 @@ func TestCloudFormationStackDetectStackDriftError(t *testing.T) {
 func TestCloudFormationStackDescribeResourceDrifts(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudFormationSvc([]string{"DescribeStackResourceDriftsPages"})
 
-	out, err := describeStackResourceDrifts(mockSvc, awstest.ExampleCertificateArn)
+	out, err := describeStackResourceDrifts(mockSvc, awstest.ExampleDescribeStacks.Stacks[0].StackId)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, out)
 }
@@ -73,7 +73,7 @@ func TestCloudFormationStackDescribeResourceDrifts(t *testing.T) {
 func TestCloudFormationStackDescribeResourceDriftsError(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudFormationSvcError([]string{"DescribeStackResourceDriftsPages"})
 
-	out, err := describeStackResourceDrifts(mockSvc, awstest.ExampleCertificateArn)
+	out, err := describeStackResourceDrifts(mockSvc, awstest.ExampleDescribeStacks.Stacks[0].StackId)
 	assert.Error(t, err)
 	assert.Nil(t, out)
 }

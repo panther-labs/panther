@@ -30,20 +30,32 @@ import (
 
 // Example ACM API return values
 var (
-	ExampleCertificateArn = aws.String("arn:aws:acm:us-west-2:123456789012:certificate/asdfasdf-1234-1234-1234-asdfasdf123123")
+	ExampleCertificateArn1 = aws.String("arn:aws:acm:us-west-2:123456789012:certificate/asdfasdf-1234-1234-1234-1")
+	ExampleCertificateArn2 = aws.String("arn:aws:acm:us-west-2:123456789012:certificate/asdfasdf-1234-1234-1234-2")
 
-	ExampleListCertificatesOutput = &acm.ListCertificatesOutput{
+	ExampleListCertificatesOutputPage1 = &acm.ListCertificatesOutput{
 		CertificateSummaryList: []*acm.CertificateSummary{
 			{
 				DomainName:     aws.String("runpanther.xyz"),
-				CertificateArn: ExampleCertificateArn,
+				CertificateArn: ExampleCertificateArn1,
 			},
 		},
+		NextToken: aws.String("1"),
+	}
+
+	ExampleListCertificatesOutputPage2 = &acm.ListCertificatesOutput{
+		CertificateSummaryList: []*acm.CertificateSummary{
+			{
+				DomainName:     aws.String("runpanther.abc"),
+				CertificateArn: ExampleCertificateArn2,
+			},
+		},
+		NextToken: nil,
 	}
 
 	ExampleDescribeCertificateOutput = &acm.DescribeCertificateOutput{
 		Certificate: &acm.CertificateDetail{
-			CertificateArn:     ExampleCertificateArn,
+			CertificateArn:     ExampleCertificateArn1,
 			CreatedAt:          ExampleDate,
 			DomainName:         aws.String("runpanther.xyz"),
 			Serial:             aws.String("b7:5b:09:63:dd:47:9c:46"),
@@ -104,7 +116,7 @@ var (
 // ACM mock
 
 // SetupMockAcm is used to override the ACM Client initializer
-func SetupMockAcm(sess *session.Session, cfg *aws.Config) interface{} {
+func SetupMockAcm(_ *session.Session, _ *aws.Config) interface{} {
 	return MockAcmForSetup
 }
 
@@ -167,7 +179,12 @@ func (m *MockAcm) ListCertificatesPages(
 	if args.Error(0) != nil {
 		return args.Error(0)
 	}
-	paginationFunction(ExampleListCertificatesOutput, true)
+	for ;;{
+		if !paginationFunction(ExampleListCertificatesOutputPage1, false) {
+			break
+		}
+	}
+
 	return args.Error(0)
 }
 
