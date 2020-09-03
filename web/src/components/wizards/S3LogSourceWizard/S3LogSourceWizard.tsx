@@ -59,8 +59,6 @@ const validationSchema = Yup.object().shape<S3LogSourceWizardValues>({
   kmsKey: Yup.string().matches(getArnRegexForService('KMS'), 'Must be a valid KMS ARN'),
 });
 
-const initialStatus = { cfnTemplateDownloaded: false };
-
 const S3LogSourceWizard: React.FC<S3LogSourceWizardProps> = ({
   initialValues,
   onSubmit,
@@ -70,7 +68,6 @@ const S3LogSourceWizard: React.FC<S3LogSourceWizardProps> = ({
     <Formik<S3LogSourceWizardValues>
       enableReinitialize
       initialValues={initialValues}
-      initialStatus={initialStatus}
       validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
@@ -88,14 +85,7 @@ const S3LogSourceWizard: React.FC<S3LogSourceWizardProps> = ({
                 <S3SourceConfigurationPanel />
               </Wizard.Step>
               <Wizard.Step title="Deploy Stack">
-                <WizardPanel>
-                  <StackDeploymentPanel />
-
-                  <WizardPanel.Actions>
-                    <WizardPanel.ActionPrev />
-                    <WizardPanel.ActionNext>Continue Setup</WizardPanel.ActionNext>
-                  </WizardPanel.Actions>
-                </WizardPanel>
+                <StackDeploymentPanel />
               </Wizard.Step>
               <Wizard.Step title="Done!">
                 <WizardPanel>
