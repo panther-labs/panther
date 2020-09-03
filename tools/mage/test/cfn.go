@@ -25,7 +25,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
 	"github.com/magefile/mage/sh"
+
 	"github.com/panther-labs/panther/tools/cfnstacks"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
