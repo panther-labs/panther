@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { AbstractButton, Button, Flex, Img, Link } from 'pouncejs';
+import { AbstractButton, Box, Button, Flex, Img, Link } from 'pouncejs';
 import { useFormikContext } from 'formik';
 import FailureStatus from 'Assets/statuses/failure.svg';
 import WaitingStatus from 'Assets/statuses/waiting.svg';
@@ -51,7 +51,7 @@ const ValidationPanel: React.FC = () => {
   if (currentStepStatus === 'PASSING') {
     return (
       <WizardPanel>
-        <Flex align="center" direction="column" mx="auto" width={350}>
+        <Flex align="center" direction="column" mx="auto" width={375}>
           <WizardPanel.Heading
             title="Everything looks good!"
             subtitle={
@@ -66,21 +66,25 @@ const ValidationPanel: React.FC = () => {
             alt="Stack deployed successfully"
             src={SuccessStatus}
           />
-          <WizardPanel.Heading
-            title="Adding Notifications For New Data"
-            subtitle={[
-              'You can now follow the steps found',
-              <Link
-                key={0}
-                external
-                title="SNS Notification Setup"
-                href={LOG_ONBOARDING_SNS_DOC_URL}
-              >
-                here
-              </Link>,
-              ' to notify Panther when new data becomes available for analysis.',
-            ]}
-          />
+          {!initialValues.integrationId && (
+            <Box mt={10} mb={-10}>
+              <WizardPanel.Heading
+                title="Adding Notifications For New Data"
+                subtitle={[
+                  'You can now follow the ',
+                  <Link
+                    key={0}
+                    external
+                    title="SNS Notification Setup"
+                    href={LOG_ONBOARDING_SNS_DOC_URL}
+                  >
+                    steps found here
+                  </Link>,
+                  ' to notify Panther when new data becomes available for analysis.',
+                ]}
+              />
+            </Box>
+          )}
           <WizardPanel.Actions>
             <Flex direction="column" spacing={4}>
               <RRLink to={urls.compliance.sources.list()}>

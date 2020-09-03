@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { AbstractButton, Box, Collapse, Flex, Icon } from 'pouncejs';
+import { AbstractButton, Box, Collapse, Flex } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -86,24 +86,9 @@ const S3SourceConfigurationPanel: React.FC = () => {
               onClick={() => showAdvancedConfig(!isAdvancedConfigVisible)}
               p={1}
             >
-              <Flex
-                inline
-                align="center"
-                justify="center"
-                width={18}
-                height={18}
-                borderRadius="circle"
-                backgroundColor="navyblue-300"
-                p={1}
-                mr={2}
-              >
-                <Icon type="add" size="x-small" color="white" />
-              </Flex>
-              <Box as="span" ml={2}>
-                {isAdvancedConfigVisible
-                  ? 'Hide advanced configuration'
-                  : 'Show advanced configuration'}
-              </Box>
+              {isAdvancedConfigVisible
+                ? 'Hide advanced configuration'
+                : 'Show advanced configuration'}
             </AbstractButton>
           </Flex>
           <Collapse open={isAdvancedConfigVisible}>
