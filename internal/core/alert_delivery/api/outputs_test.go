@@ -53,7 +53,7 @@ func TestGetAlertOutputsFromDefaultSeverity(t *testing.T) {
 	payload, err := jsoniter.Marshal(output)
 	require.NoError(t, err)
 	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
-	// Set the cache and expire it
+	// Need to expire the cache because other tests mutate this global when run in parallel
 	outputsCache = &alertOutputsCache{
 		RefreshInterval: time.Second * time.Duration(30),
 		Expiry:          time.Now().Add(time.Minute * time.Duration(-5)),
@@ -103,7 +103,7 @@ func TestGetAlertOutputsFromOutputIds(t *testing.T) {
 	require.NoError(t, err)
 	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
 
-	// Set the cache and expire it
+	// Need to expire the cache because other tests mutate this global when run in parallel
 	outputsCache = &alertOutputsCache{
 		RefreshInterval: time.Second * time.Duration(30),
 		Expiry:          time.Now().Add(time.Minute * time.Duration(-5)),
@@ -133,7 +133,7 @@ func TestGetAlertOutputsIdsError(t *testing.T) {
 	mockClient.On("Invoke", mock.Anything).Return((*lambda.InvokeOutput)(nil), errors.New("error"))
 
 	alert := sampleAlert()
-	// Set the cache and expire it
+	// Need to expire the cache because other tests mutate this global when run in parallel
 	outputsCache = &alertOutputsCache{
 		RefreshInterval: time.Second * time.Duration(30),
 		Expiry:          time.Now().Add(time.Minute * time.Duration(-5)),

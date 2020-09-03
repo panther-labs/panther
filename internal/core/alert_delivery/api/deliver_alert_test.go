@@ -253,9 +253,11 @@ func TestGetAlertOutputMapping(t *testing.T) {
 		alert: outputs,
 	}
 
-	// Need to expire the cache because of other tests
-	outputsCache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
-
+	// Need to expire the cache because other tests mutate this global when run in parallel
+	outputsCache = &alertOutputsCache{
+		RefreshInterval: time.Second * time.Duration(30),
+		Expiry:          time.Now().Add(time.Minute * time.Duration(-5)),
+	}
 	result, err := getAlertOutputMapping(alert, input.OutputIds)
 	require.NoError(t, err)
 
@@ -296,8 +298,10 @@ func TestGetAlertOutputMappingError(t *testing.T) {
 	expectedResult := AlertOutputMap{}
 
 	// Need to expire the cache because other tests mutate this global when run in parallel
-	outputsCache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5)))
-
+	outputsCache = &alertOutputsCache{
+		RefreshInterval: time.Second * time.Duration(30),
+		Expiry:          time.Now().Add(time.Minute * time.Duration(-5)),
+	}
 	result, err := getAlertOutputMapping(alert, input.OutputIds)
 	require.Error(t, err)
 
@@ -359,8 +363,10 @@ func TestGetAlertOutputMappingInvalidOutputIds(t *testing.T) {
 	expectedResult := AlertOutputMap{}
 
 	// Need to expire the cache because other tests mutate this global when run in parallel
-	outputsCache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5)))
-
+	outputsCache = &alertOutputsCache{
+		RefreshInterval: time.Second * time.Duration(30),
+		Expiry:          time.Now().Add(time.Minute * time.Duration(-5)),
+	}
 	result, err := getAlertOutputMapping(alert, input.OutputIds)
 	require.Error(t, err)
 
