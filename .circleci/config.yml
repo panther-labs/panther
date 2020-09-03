@@ -44,7 +44,7 @@ commands:
           name: Move libraries back to repo root
           command: |
             mv /tmp/panther/.setup .setup
-            mv /tmp/panther/goimports ~/go/bin/goimports
+            mv /tmp/panther/goimports /go/bin/goimports
             mv /tmp/panther/node_modules node_modules
 
 jobs:
@@ -65,12 +65,14 @@ jobs:
           command: mage -compile /tmp/panther/magebin
       - run:
           # "mage setup" will have no effect unless new dependencies have been introduced.
-          name: Install new dependencies # TODO - separate setup and moving workspace
+          name: Install new dependencies
+          command: /tmp/panther/magebin setup
+      - run:
+          name: Move libs to workspace storage
           command: |
-            /tmp/panther/magebin setup
             mv .setup /tmp/panther
             mv node_modules /tmp/panther
-            mv ~/go/bin/goimports /tmp/panther
+            mv /go/bin/goimports /tmp/panther
       - persist_to_workspace:
           root: /tmp/panther
           paths:
