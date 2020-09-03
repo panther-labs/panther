@@ -22,48 +22,12 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
-	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
-	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/stretchr/testify/mock"
 
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
 )
-
-type mockLambdaClient struct {
-	lambdaiface.LambdaAPI
-	mock.Mock
-}
-
-func (m *mockLambdaClient) Invoke(input *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*lambda.InvokeOutput), args.Error(1)
-}
-
-type mockSQSClient struct {
-	sqsiface.SQSAPI
-	mock.Mock
-}
-
-func (m *mockSQSClient) SendMessageBatch(input *sqs.SendMessageBatchInput) (*sqs.SendMessageBatchOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*sqs.SendMessageBatchOutput), args.Error(1)
-}
-
-type mockDynamoDB struct {
-	dynamodbiface.DynamoDBAPI
-	mock.Mock
-}
-
-func (m *mockDynamoDB) GetItem(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*dynamodb.GetItemOutput), args.Error(1)
-}
 
 type mockOutputsClient struct {
 	outputs.API

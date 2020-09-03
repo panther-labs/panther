@@ -27,10 +27,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 func TestRetry(t *testing.T) {
-	mockSQS := &mockSQSClient{}
+	mockSQS := &testutils.SqsMock{}
 	sqsClient = mockSQS
 
 	alert := sampleAlert()

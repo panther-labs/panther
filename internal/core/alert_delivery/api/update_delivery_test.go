@@ -31,10 +31,11 @@ import (
 
 	alertModels "github.com/panther-labs/panther/api/lambda/alerts/models"
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 func TestUpdateAlerts(t *testing.T) {
-	mockClient := &mockLambdaClient{}
+	mockClient := &testutils.LambdaMock{}
 	lambdaClient = mockClient
 
 	alertID := aws.String("alert-id")
@@ -135,7 +136,7 @@ func TestUpdateAlerts(t *testing.T) {
 }
 
 func TestUpdateAlertSkipPolicy(t *testing.T) {
-	mockClient := &mockLambdaClient{}
+	mockClient := &testutils.LambdaMock{}
 	lambdaClient = mockClient
 
 	alertID := aws.String("alert-id")
@@ -167,7 +168,7 @@ func TestUpdateAlertSkipPolicy(t *testing.T) {
 }
 
 func TestUpdateAlert(t *testing.T) {
-	mockClient := &mockLambdaClient{}
+	mockClient := &testutils.LambdaMock{}
 	lambdaClient = mockClient
 
 	ch := make(chan alertModels.AlertSummary, 1)

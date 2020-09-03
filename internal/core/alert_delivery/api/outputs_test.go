@@ -31,10 +31,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 func TestGetAlertOutputsFromDefaultSeverity(t *testing.T) {
-	mockClient := &mockLambdaClient{}
+	mockClient := &testutils.LambdaMock{}
 	lambdaClient = mockClient
 	output := &outputModels.GetOutputsOutput{
 		{
@@ -82,7 +83,7 @@ func TestGetAlertOutputsFromDefaultSeverity(t *testing.T) {
 }
 
 func TestGetAlertOutputsFromOutputIds(t *testing.T) {
-	mockClient := &mockLambdaClient{}
+	mockClient := &testutils.LambdaMock{}
 	lambdaClient = mockClient
 
 	output := &outputModels.GetOutputsOutput{
@@ -128,7 +129,7 @@ func TestGetAlertOutputsFromOutputIds(t *testing.T) {
 }
 
 func TestGetAlertOutputsIdsError(t *testing.T) {
-	mockClient := &mockLambdaClient{}
+	mockClient := &testutils.LambdaMock{}
 	lambdaClient = mockClient
 	mockClient.On("Invoke", mock.Anything).Return((*lambda.InvokeOutput)(nil), errors.New("error"))
 

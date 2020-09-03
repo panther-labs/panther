@@ -41,11 +41,12 @@ import (
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertTable "github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
+	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 func TestGetAlert(t *testing.T) {
 	// Mock the ddb client and table
-	mockDdbClient := &mockDynamoDB{}
+	mockDdbClient := &testutils.DynamoDBMock{}
 	alertsTableClient = &alertTable.AlertsTable{
 		AlertsTableName:                    "alertTableName",
 		Client:                             mockDdbClient,
@@ -198,7 +199,7 @@ func generateResponse(body interface{}, httpCode int) *http.Response {
 }
 
 func TestGetAlertOutputMapping(t *testing.T) {
-	mockClient := &mockLambdaClient{}
+	mockClient := &testutils.LambdaMock{}
 	lambdaClient = mockClient
 
 	alertID := aws.String("alert-id")
@@ -265,7 +266,7 @@ func TestGetAlertOutputMapping(t *testing.T) {
 }
 
 func TestGetAlertOutputMappingError(t *testing.T) {
-	mockClient := &mockLambdaClient{}
+	mockClient := &testutils.LambdaMock{}
 	lambdaClient = mockClient
 
 	alertID := aws.String("alert-id")
@@ -309,7 +310,7 @@ func TestGetAlertOutputMappingError(t *testing.T) {
 }
 
 func TestGetAlertOutputMappingInvalidOutputIds(t *testing.T) {
-	mockClient := &mockLambdaClient{}
+	mockClient := &testutils.LambdaMock{}
 	lambdaClient = mockClient
 
 	alertID := aws.String("alert-id")

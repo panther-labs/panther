@@ -32,6 +32,7 @@ import (
 
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 func TestGetAlerts(t *testing.T) {
@@ -80,7 +81,7 @@ func TestGetAlerts(t *testing.T) {
 }
 
 func TestGetAlertOutputMap(t *testing.T) {
-	mockClient := &mockLambdaClient{}
+	mockClient := &testutils.LambdaMock{}
 	lambdaClient = mockClient
 
 	alertID := aws.String("alert-id")
@@ -144,7 +145,7 @@ func TestGetAlertOutputMap(t *testing.T) {
 }
 
 func TestGetAlertOutputMapError(t *testing.T) {
-	mockClient := &mockLambdaClient{}
+	mockClient := &testutils.LambdaMock{}
 	lambdaClient = mockClient
 
 	alertID := aws.String("alert-id")
