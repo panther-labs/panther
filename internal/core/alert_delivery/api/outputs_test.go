@@ -53,8 +53,11 @@ func TestGetAlertOutputsFromDefaultSeverity(t *testing.T) {
 	payload, err := jsoniter.Marshal(output)
 	require.NoError(t, err)
 	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
-
-	outputsCache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
+	// Set the cache and expire it
+	outputsCache = &alertOutputsCache{
+		RefreshInterval: time.Second * time.Duration(30),
+		Expiry:          time.Now().Add(time.Minute * time.Duration(-5)),
+	}
 	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
 	alert := sampleAlert()
 	alert.OutputIds = nil
@@ -100,7 +103,11 @@ func TestGetAlertOutputsFromOutputIds(t *testing.T) {
 	require.NoError(t, err)
 	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
 
-	outputsCache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
+	// Set the cache and expire it
+	outputsCache = &alertOutputsCache{
+		RefreshInterval: time.Second * time.Duration(30),
+		Expiry:          time.Now().Add(time.Minute * time.Duration(-5)),
+	}
 	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
 	alert := sampleAlert()
 	alert.OutputIds = []string{"output-id", "output-id-3", "output-id-not"}
@@ -126,8 +133,11 @@ func TestGetAlertOutputsIdsError(t *testing.T) {
 	mockClient.On("Invoke", mock.Anything).Return((*lambda.InvokeOutput)(nil), errors.New("error"))
 
 	alert := sampleAlert()
-	outputsCache.setExpiry(time.Now().Add(time.Minute * time.Duration(-5))) // Trigger cache expiration
-
+	// Set the cache and expire it
+	outputsCache = &alertOutputsCache{
+		RefreshInterval: time.Second * time.Duration(30),
+		Expiry:          time.Now().Add(time.Minute * time.Duration(-5)),
+	}
 	result, err := getAlertOutputs(alert)
 	require.Error(t, err)
 	assert.Nil(t, result)

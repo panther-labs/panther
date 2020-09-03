@@ -42,17 +42,9 @@ func genAlertOutput() *outputModels.AlertOutput {
 	}
 }
 
-func setCaches() {
-	outputsCache.set(&alertOutputsCache{
-		Outputs: []*outputModels.AlertOutput{genAlertOutput()},
-		Expiry:  time.Now(),
-	})
-}
-
 func TestSendPanic(t *testing.T) {
 	mockClient := &mockOutputsClient{}
 	outputClient = mockClient
-	setCaches()
 
 	ch := make(chan DispatchStatus, 1)
 	alert := sampleAlert()
@@ -79,7 +71,6 @@ func TestSendPanic(t *testing.T) {
 func TestSendUnsupportedOutput(t *testing.T) {
 	mockClient := &mockOutputsClient{}
 	outputClient = mockClient
-	setCaches()
 
 	ch := make(chan DispatchStatus, 1)
 	alert := sampleAlert()
@@ -111,7 +102,6 @@ func TestSendUnsupportedOutput(t *testing.T) {
 func TestSendResponseNil(t *testing.T) {
 	mockClient := &mockOutputsClient{}
 	outputClient = mockClient
-	setCaches()
 
 	ch := make(chan DispatchStatus, 1)
 	alert := sampleAlert()
@@ -138,7 +128,6 @@ func TestSendResponseNil(t *testing.T) {
 func TestSendPermanentFailure(t *testing.T) {
 	mockClient := &mockOutputsClient{}
 	outputClient = mockClient
-	setCaches()
 
 	ch := make(chan DispatchStatus, 1)
 	alert := sampleAlert()
@@ -169,7 +158,6 @@ func TestSendPermanentFailure(t *testing.T) {
 func TestSendTransientFailure(t *testing.T) {
 	mockClient := &mockOutputsClient{}
 	outputClient = mockClient
-	setCaches()
 
 	ch := make(chan DispatchStatus, 1)
 	alert := sampleAlert()
@@ -200,7 +188,6 @@ func TestSendTransientFailure(t *testing.T) {
 func TestSendSuccess(t *testing.T) {
 	mockClient := &mockOutputsClient{}
 	outputClient = mockClient
-	setCaches()
 
 	ch := make(chan DispatchStatus, 1)
 	alert := sampleAlert()
