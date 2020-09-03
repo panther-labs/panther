@@ -313,6 +313,18 @@ export enum DestinationTypeEnum {
   Customwebhook = 'customwebhook',
 }
 
+export type FloatSeries = {
+  __typename?: 'FloatSeries';
+  label?: Maybe<Scalars['String']>;
+  values?: Maybe<Array<Maybe<Scalars['Float']>>>;
+};
+
+export type FloatSeriesData = {
+  __typename?: 'FloatSeriesData';
+  timestamps?: Maybe<Array<Maybe<Scalars['AWSDateTime']>>>;
+  series?: Maybe<Array<Maybe<FloatSeries>>>;
+};
+
 export type GeneralSettings = {
   __typename?: 'GeneralSettings';
   displayName?: Maybe<Scalars['String']>;
@@ -563,6 +575,7 @@ export type LogAnalysisMetricsResponse = {
   __typename?: 'LogAnalysisMetricsResponse';
   eventsProcessed?: Maybe<SeriesData>;
   alertsBySeverity?: Maybe<SeriesData>;
+  eventsLatency?: Maybe<FloatSeriesData>;
   totalAlertsDelta?: Maybe<Array<Maybe<SingleValue>>>;
   fromDate: Scalars['AWSDateTime'];
   toDate: Scalars['AWSDateTime'];
@@ -1445,6 +1458,9 @@ export type ResolversTypes = {
   LogAnalysisMetricsResponse: ResolverTypeWrapper<LogAnalysisMetricsResponse>;
   SeriesData: ResolverTypeWrapper<SeriesData>;
   Series: ResolverTypeWrapper<Series>;
+  FloatSeriesData: ResolverTypeWrapper<FloatSeriesData>;
+  FloatSeries: ResolverTypeWrapper<FloatSeries>;
+  Float: ResolverTypeWrapper<Scalars['Float']>;
   SingleValue: ResolverTypeWrapper<SingleValue>;
   GetRuleInput: GetRuleInput;
   RuleDetails: ResolverTypeWrapper<RuleDetails>;
@@ -1585,6 +1601,9 @@ export type ResolversParentTypes = {
   LogAnalysisMetricsResponse: LogAnalysisMetricsResponse;
   SeriesData: SeriesData;
   Series: Series;
+  FloatSeriesData: FloatSeriesData;
+  FloatSeries: FloatSeries;
+  Float: Scalars['Float'];
   SingleValue: SingleValue;
   GetRuleInput: GetRuleInput;
   RuleDetails: RuleDetails;
@@ -1843,6 +1862,28 @@ export type DestinationConfigResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
+export type FloatSeriesResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['FloatSeries'] = ResolversParentTypes['FloatSeries']
+> = {
+  label?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  values?: Resolver<Maybe<Array<Maybe<ResolversTypes['Float']>>>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type FloatSeriesDataResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['FloatSeriesData'] = ResolversParentTypes['FloatSeriesData']
+> = {
+  timestamps?: Resolver<
+    Maybe<Array<Maybe<ResolversTypes['AWSDateTime']>>>,
+    ParentType,
+    ContextType
+  >;
+  series?: Resolver<Maybe<Array<Maybe<ResolversTypes['FloatSeries']>>>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
 export type GeneralSettingsResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['GeneralSettings'] = ResolversParentTypes['GeneralSettings']
@@ -1987,6 +2028,7 @@ export type LogAnalysisMetricsResponseResolvers<
 > = {
   eventsProcessed?: Resolver<Maybe<ResolversTypes['SeriesData']>, ParentType, ContextType>;
   alertsBySeverity?: Resolver<Maybe<ResolversTypes['SeriesData']>, ParentType, ContextType>;
+  eventsLatency?: Resolver<Maybe<ResolversTypes['FloatSeriesData']>, ParentType, ContextType>;
   totalAlertsDelta?: Resolver<
     Maybe<Array<Maybe<ResolversTypes['SingleValue']>>>,
     ParentType,
@@ -2772,6 +2814,8 @@ export type Resolvers<ContextType = any> = {
   CustomWebhookConfig?: CustomWebhookConfigResolvers<ContextType>;
   Destination?: DestinationResolvers<ContextType>;
   DestinationConfig?: DestinationConfigResolvers<ContextType>;
+  FloatSeries?: FloatSeriesResolvers<ContextType>;
+  FloatSeriesData?: FloatSeriesDataResolvers<ContextType>;
   GeneralSettings?: GeneralSettingsResolvers<ContextType>;
   GithubConfig?: GithubConfigResolvers<ContextType>;
   GlobalPythonModule?: GlobalPythonModuleResolvers<ContextType>;

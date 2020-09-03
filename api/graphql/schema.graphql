@@ -382,9 +382,19 @@ type Series {
   values: [Int]
 }
 
+type FloatSeries {
+  label: String
+  values: [Float]
+}
+
 type SeriesData {
   timestamps: [AWSDateTime]
   series: [Series]
+}
+
+type FloatSeriesData {
+  timestamps: [AWSDateTime]
+  series: [FloatSeries]
 }
 
 type SingleValue {
@@ -395,7 +405,7 @@ type SingleValue {
 type LogAnalysisMetricsResponse {
   eventsProcessed: SeriesData
   alertsBySeverity: SeriesData
-  eventsLatency: SeriesData
+  eventsLatency: FloatSeriesData
   totalAlertsDelta: [SingleValue]
   fromDate: AWSDateTime!
   toDate: AWSDateTime!
