@@ -68,13 +68,13 @@ const S3LogSourceWizard: React.FC<S3LogSourceWizardProps> = ({ initialValues, on
     >
       <Form>
         <Wizard>
-          <Wizard.Step title="Configure Logs Source">
+          <Wizard.Step title="Configure Source">
             <S3SourceConfigurationPanel />
           </Wizard.Step>
-          <Wizard.Step title="Deploy Stack">
+          <Wizard.Step title="Setup IAM Roles">
             <StackDeploymentPanel />
           </Wizard.Step>
-          <Wizard.Step title="Done!">
+          <Wizard.Step title="Verify Setup">
             <ValidationPanel />
           </Wizard.Step>
         </Wizard>
