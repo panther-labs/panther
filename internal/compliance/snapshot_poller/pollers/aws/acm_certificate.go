@@ -84,7 +84,7 @@ func listCertificates(acmSvc acmiface.ACMAPI, nextMarker *string) (acmCerts []*a
 		NextToken: nextMarker,
 		MaxItems:  aws.Int64(int64(defaultBatchSize)),
 	}, func(page *acm.ListCertificatesOutput, _ bool) bool {
-			return certificateIterator(page, &acmCerts, &marker)
+		return certificateIterator(page, &acmCerts, &marker)
 	})
 
 	if err != nil {
