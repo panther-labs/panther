@@ -128,21 +128,3 @@ const StackDeployment: React.FC = () => {
 };
 
 export default StackDeployment;
-
-/*
-<WizardPanel.Heading
-            title="Step 2: Adding Notifications For New Data"
-            subtitle={[
-              'After deploying the stack above, follow the steps ',
-              <Link
-                key={0}
-                external
-                title="SNS Notification Setup"
-                href={LOG_ONBOARDING_SNS_DOC_URL}
-              >
-                here
-              </Link>,
-              ' to notify Panther when new data becomes available for analysis.',
-            ]}
-          />
- */
