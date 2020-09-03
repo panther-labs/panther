@@ -158,10 +158,11 @@ Try '%s -help' for more information
 		log.Fatal(err)
 	}
 	if fileName := *opts.Filename; fileName != "" {
-		if err := os.MkdirAll(path.Dir(fileName), os.ModePerm); err != nil {
+		if err := os.MkdirAll(path.Dir(fileName), 0755); err != nil {
 			log.Fatalln("failed to create directory", err)
 		}
-		if err := ioutil.WriteFile(fileName, src, os.ModePerm); err != nil {
+		// nolint:gosec
+		if err := ioutil.WriteFile(fileName, src, 0644); err != nil {
 			log.Fatalln("failed to write", err)
 		}
 		return
