@@ -113,7 +113,11 @@ func describeImages(svc ec2iface.EC2API, nextMarker *string) ([]*ec2.Image, *str
 			ImageIds: imageIDs,
 		})
 		if err != nil {
-			return nil, nil, errors.Wrap(err, "EC2.DescribeImages")
+			var imageIDStrings []string
+			for _, image := range imageIDs {
+				imageIDStrings = append(imageIDStrings, aws.StringValue(image))
+			}
+			return nil, nil, errors.Wrapf(err, "EC2.DescribeImages: %s", imageIDStrings)
 		}
 	}
 
