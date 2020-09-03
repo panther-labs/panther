@@ -56,11 +56,11 @@ func TestAcmCertificateListIterator(t *testing.T) {
 func TestAcmCertificateListIteratorStopEarly(t *testing.T) {
 	acmCerts, acmMarker = nil, nil
 
-	for i := 1; i < 50; i++  {
+	for i := 1; i < 50; i++ {
 		cont := certificateIterator(awstest.ExampleListCertificatesOutputContinue, false)
 		assert.True(t, cont)
 		assert.NotNil(t, acmMarker)
-		assert.Len(t, acmCerts, i * 2)
+		assert.Len(t, acmCerts, i*2)
 	}
 
 	cont := certificateIterator(awstest.ExampleListCertificatesOutputContinue, false)
