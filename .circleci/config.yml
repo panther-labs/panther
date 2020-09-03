@@ -13,28 +13,28 @@ commands:
       - restore_cache:
           name: 'Restore cache: .setup binaries'
           keys:
-            - setup8-{{ checksum "tools/mage/setup/setup.go" }}
+            - setup-{{ checksum "tools/mage/setup/setup.go" }}
 
   restore_go_cache:
     steps:
       - restore_cache:
           name: 'Restore cache: go modules'
           keys:
-            - gomod8-{{ checksum "go.mod" }}
+            - gomod-{{ checksum "go.mod" }}
 
   restore_npm_cache:
     steps:
       - restore_cache:
           name: 'Restore cache: npm'
           keys:
-            - npm8-{{ checksum "package-lock.json" }}
+            - npm-{{ checksum "package-lock.json" }}
 
   restore_pip_cache:
     steps:
       - restore_cache:
           name: 'Restore cache: python env'
           keys:
-            - venv8-{{ checksum "requirements.txt" }}
+            - venv-{{ checksum "requirements.txt" }}
 
 jobs:
   setup:
@@ -62,25 +62,25 @@ jobs:
             - magebin
       - save_cache:
           name: 'Save cache: .setup binaries'
-          key: setup8-{{ checksum "tools/mage/setup/setup.go" }}
+          key: setup-{{ checksum "tools/mage/setup/setup.go" }}
           paths:
             - .setup/golangci-lint
             - .setup/swagger
             - .setup/terraform
       - save_cache:
           name: 'Save cache: go modules'
-          key: gomod8-{{ checksum "go.mod" }}
+          key: gomod-{{ checksum "go.mod" }}
           paths:
             - /go/bin/goimports
             - /go/pkg/mod
       - save_cache:
           name: 'Save cache: npm'
-          key: npm8-{{ checksum "package-lock.json" }}
+          key: npm-{{ checksum "package-lock.json" }}
           paths:
             - node_modules
       - save_cache:
           name: 'Save cache: python env'
-          key: venv8-{{ checksum "requirements.txt" }}
+          key: venv-{{ checksum "requirements.txt" }}
           paths:
             - .setup/venv
 
@@ -92,9 +92,20 @@ jobs:
     executor: panther-buildpack
     resource_class: large
     steps:
+      - checkout
+      - run:
+          # To prevent a feedback loop, do not push a new commit
+          # if the last commit that triggered this build was authored by the bot.
+          name: Check author of last commit
+          command: |
+            git log -1
+            git log -1 --pretty=format:'%an'
+            if [[ "`git log -1 --prety=format:'%an'`" == "panther-bot" ]]; then
+                echo "panther-bot made the last commit, skipping this step"
+                circleci-agent step halt
+            fi
       - attach_workspace:
           at: /tmp/panther
-      - checkout
       - restore_bin_cache # swagger (build:api) and terraform (fmt)
       - restore_go_cache # goimports (fmt)
       - restore_npm_cache # prettier (fmt)
@@ -114,9 +125,9 @@ jobs:
   test_cfn:
     executor: panther-buildpack
     steps:
+      - checkout
       - attach_workspace:
           at: /tmp/panther
-      - checkout
       - restore_bin_cache # Terraform
       - restore_pip_cache # cfn-lint
       - run:
@@ -127,9 +138,9 @@ jobs:
     executor: panther-buildpack
     resource_class: xlarge
     steps:
+      - checkout
       - attach_workspace:
           at: /tmp/panther
-      - checkout
       - restore_bin_cache # golangci-lint
       - restore_go_cache
       - restore_pip_cache # cfn-flip
@@ -140,9 +151,9 @@ jobs:
   test_python:
     executor: panther-buildpack
     steps:
+      - checkout
       - attach_workspace:
           at: /tmp/panther
-      - checkout
       - restore_pip_cache
       - run:
           name: mage test:python
@@ -150,11 +161,11 @@ jobs:
 
   test_web:
     executor: panther-buildpack
-    resource_class: xlarge
+    resource_class: large
     steps:
+      - checkout
       - attach_workspace:
           at: /tmp/panther
-      - checkout
       - restore_npm_cache
       - run:
           name: mage test:web
