@@ -27,10 +27,12 @@ ENV NODE_VERSION="12.18.3"
 
 # ****************     APT Packages     *******************
 RUN apt-get update && apt-get install -y --no-install-recommends \
+        gcc \
         make \
         python3 \
         unzip \
 	&& rm -rf /var/lib/apt/lists/*
+
 
 
 # ****************     GO     *******************
@@ -59,7 +61,6 @@ ENV PATH="$GOPATH/bin:/usr/local/go/bin:$PATH"
 # Install mage
 RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
 RUN go get github.com/magefile/mage
-# ****************     END GO     *******************
 
 
 
@@ -71,4 +72,3 @@ RUN nPackageSrcDir="/usr/src/n" \
     && n $NODE_VERSION \
     && cd / \
     && rm -rf $nPackageSrcDir
-# ****************     END NODE JS     *******************
