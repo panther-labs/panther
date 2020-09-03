@@ -184,6 +184,8 @@ func TestShouldFailIfPartialFailureToPutRecord(t *testing.T) {
 	config.LambdaClient = mockLambda
 	mockFirehose := &testutils.FirehoseMock{}
 	config.FirehoseClient = mockFirehose
+	// This test will trigger backoff, make sure it doesn't take too long
+	config.MaxRetries = 1
 	resetCache()
 
 	sqsEvent := &events.SQSEvent{
@@ -218,6 +220,8 @@ func TestShouldFailIfFailureToPutRecord(t *testing.T) {
 	config.LambdaClient = mockLambda
 	mockFirehose := &testutils.FirehoseMock{}
 	config.FirehoseClient = mockFirehose
+	// This test will trigger backoff, make sure it doesn't take too long
+	config.MaxRetries = 1
 	resetCache()
 
 	sqsEvent := &events.SQSEvent{

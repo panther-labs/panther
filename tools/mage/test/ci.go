@@ -19,7 +19,6 @@ package test
  */
 
 import (
-	"github.com/panther-labs/panther/tools/mage/doc"
 	"github.com/panther-labs/panther/tools/mage/logger"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
@@ -36,7 +35,7 @@ func CI() {
 	// Go unit tests and linting already run in multiple processors
 	// When running locally, test these by themselves to avoid locking up dev laptops.
 	var goUnitErr, goLintErr error
-	if !util.IsRunningInCI() {
+	if !util.IsRunningInCI() { // TODO - may be removed from CI soon
 		goUnitErr = testGoUnit()
 		goLintErr = testGoLint()
 	}
@@ -55,9 +54,6 @@ func CI() {
 			}
 			return goLintErr
 		}},
-
-		// mage doc
-		{"doc", doc.Doc}, // verify the command works, even if docs aren't committed in this repo
 	}
 
 	tests = append(tests, webTests...) // web tests take awhile, queue them earlier

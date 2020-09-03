@@ -20,7 +20,7 @@ commands:
       - restore_cache:
           name: 'Restore cache: go modules'
           keys:
-            - gomod2-{{ checksum "go.mod" }}
+            - gomod-{{ checksum "go.mod" }}
 
   restore_npm_cache:
     steps:
@@ -35,6 +35,17 @@ commands:
           name: 'Restore cache: python env'
           keys:
             - venv-{{ checksum "requirements.txt" }}
+
+  restore_workspace:
+    steps:
+      - attach_workspace:
+          at: /tmp/panther
+      - run:
+          name: Move libraries back to repo root
+          command: |
+            mv /tmp/panther/.setup .setup
+            mv /tmp/panther/goimports ~/go/bin/goimports
+            mv /tmp/panther/node_modules node_modules
 
 jobs:
   setup:
@@ -54,12 +65,16 @@ jobs:
           command: mage -compile /tmp/panther/magebin
       - run:
           # "mage setup" will have no effect unless new dependencies have been introduced.
-          name: Install new dependencies
-          command: /tmp/panther/magebin setup
+          name: Install new dependencies # TODO - separate setup and moving workspace
+          command: |
+            /tmp/panther/magebin setup
+            mv .setup /tmp/panther
+            mv node_modules /tmp/panther
+            mv ~/go/bin/goimports /tmp/panther
       - persist_to_workspace:
           root: /tmp/panther
           paths:
-            - magebin
+            - '*'
       - save_cache:
           name: 'Save cache: .setup binaries'
           key: setup-{{ checksum "tools/mage/setup/setup.go" }}
@@ -69,7 +84,7 @@ jobs:
             - .setup/terraform
       - save_cache:
           name: 'Save cache: go modules'
-          key: gomod2-{{ checksum "go.mod" }}
+          key: gomod-{{ checksum "go.mod" }}
           paths:
             - /go/bin/goimports
             - /go/pkg/mod
@@ -90,15 +105,13 @@ jobs:
     # If there are changes committed, CircleCI will automatically stop the remaining jobs
     # and restart the entire workflow with the new commit.
     executor: panther-buildpack
-    resource_class: medium
     steps:
-      - attach_workspace:
-          at: /tmp/panther
       - checkout
-      - restore_bin_cache # swagger (build:api) and terraform (fmt)
-      - restore_go_cache # goimports (fmt)
-      - restore_pip_cache # yapf (fmt)
-      - restore_npm_cache # prettier (fmt)
+      - restore_workspace
+      #      - restore_bin_cache # swagger (build:api) and terraform (fmt)
+      #      - restore_go_cache # goimports (fmt)
+      #      - restore_pip_cache # yapf (fmt)
+      #      - restore_npm_cache # prettier (fmt)
       - run:
           name: Generate and format source files
           command: /tmp/panther/magebin build:api build:cfn fmt
@@ -113,50 +126,45 @@ jobs:
 
   test_cfn:
     executor: panther-buildpack
-    resource_class: medium
     steps:
-      - attach_workspace:
-          at: /tmp/panther
       - checkout
-      - restore_bin_cache # Terraform
-      - restore_pip_cache # cfn-lint
+      - restore_workspace
+      #      - restore_bin_cache # Terraform
+      #      - restore_pip_cache # cfn-lint
       - run:
           name: mage test:cfn
           command: /tmp/panther/magebin test:cfn
 
   test_go:
     executor: panther-buildpack
-    resource_class: xlarge
+    resource_class: large
     steps:
-      - attach_workspace:
-          at: /tmp/panther
+      #      - attach_workspace:
+      #          at: /tmp/panther
       - checkout
-      - restore_bin_cache # golangci-lint
-      - restore_go_cache
+      - restore_workspace
+      #      - restore_bin_cache # golangci-lint
+      #      - restore_pip_cache # cfn-flip
+      #      - restore_go_cache
       - run:
           name: mage test:go
           command: /tmp/panther/magebin test:go
 
   test_python:
     executor: panther-buildpack
-    resource_class: medium
     steps:
-      - attach_workspace:
-          at: /tmp/panther
       - checkout
-      - restore_pip_cache
+      - restore_workspace
       - run:
           name: mage test:python
           command: /tmp/panther/magebin test:python
 
   test_web:
     executor: panther-buildpack
-    resource_class: xlarge
+    resource_class: large
     steps:
-      - attach_workspace:
-          at: /tmp/panther
       - checkout
-      - restore_npm_cache
+      - restore_workspace
       - run:
           name: mage test:web
           command: /tmp/panther/magebin test:web
@@ -174,7 +182,7 @@ jobs:
     executor: panther-buildpack
     steps:
       - checkout
-      - restore_npm_cache
+      - restore_npm_cache # TODO
       - run:
           name: Check bundle size
           command: npm run bundlesize

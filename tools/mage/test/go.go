@@ -43,7 +43,7 @@ func Go() {
 func testGoUnit() error {
 	log.Info("test:go: running go unit tests")
 	runGoTest := func(args ...string) error {
-		if mg.Verbose() {
+		if mg.Verbose() || util.IsRunningInCI() {
 			// verbose mode - show "go test" output (all package names)
 			return sh.Run("go", args...)
 		}
@@ -64,7 +64,7 @@ func testGoUnit() error {
 	}
 
 	// unit tests and race detection
-	return runGoTest("test", "-race", "-p", strconv.Itoa(util.MaxWorkers), "-vet", "", "-cover", "./...")
+	return runGoTest("test", "-race", "-p", strconv.Itoa(util.MaxWorkers), "-cover", "./...")
 }
 
 func testGoLint() error {
