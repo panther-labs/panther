@@ -26,21 +26,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
-	"github.com/panther-labs/panther/pkg/box"
 )
-
-type mockOutputsClient struct {
-	outputs.API
-	mock.Mock
-}
-
-func (m *mockOutputsClient) Slack(alert *deliveryModels.Alert, config *outputModels.SlackConfig) *outputs.AlertDeliveryResponse {
-	args := m.Called(alert, config)
-	return args.Get(0).(*outputs.AlertDeliveryResponse)
-}
 
 func genAlertOutput() *outputModels.AlertOutput {
 	return &outputModels.AlertOutput{
@@ -51,17 +39,6 @@ func genAlertOutput() *outputModels.AlertOutput {
 			Slack: &outputModels.SlackConfig{WebhookURL: "https://slack.com"},
 		},
 		DefaultForSeverity: []*string{aws.String("INFO")},
-	}
-}
-
-func sampleAlert() *deliveryModels.Alert {
-	return &deliveryModels.Alert{
-		AlertID:      aws.String("alert-id"),
-		OutputIds:    []string{"output-id"},
-		Severity:     "INFO",
-		AnalysisID:   "test-rule-id",
-		AnalysisName: box.String("test_rule_name"),
-		CreatedAt:    time.Now().UTC(),
 	}
 }
 

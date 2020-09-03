@@ -20,11 +20,19 @@ package api
 
 import (
 	"os"
+	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
+	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
+	"github.com/panther-labs/panther/pkg/box"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -46,6 +54,37 @@ type mockSQSClient struct {
 func (m *mockSQSClient) SendMessageBatch(input *sqs.SendMessageBatchInput) (*sqs.SendMessageBatchOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*sqs.SendMessageBatchOutput), args.Error(1)
+}
+
+type mockDynamoDB struct {
+	dynamodbiface.DynamoDBAPI
+	mock.Mock
+}
+
+func (m *mockDynamoDB) GetItem(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*dynamodb.GetItemOutput), args.Error(1)
+}
+
+type mockOutputsClient struct {
+	outputs.API
+	mock.Mock
+}
+
+func (m *mockOutputsClient) Slack(alert *deliveryModels.Alert, config *outputModels.SlackConfig) *outputs.AlertDeliveryResponse {
+	args := m.Called(alert, config)
+	return args.Get(0).(*outputs.AlertDeliveryResponse)
+}
+
+func sampleAlert() *deliveryModels.Alert {
+	return &deliveryModels.Alert{
+		AlertID:      aws.String("alert-id"),
+		OutputIds:    []string{"output-id"},
+		Severity:     "INFO",
+		AnalysisID:   "test-rule-id",
+		AnalysisName: box.String("test_rule_name"),
+		CreatedAt:    time.Now().UTC(),
+	}
 }
 
 func initEnvironmentTest() {
