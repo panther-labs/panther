@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Flex, Spinner, useSnackbar } from 'pouncejs';
+import { Box, Flex, Spinner, useSnackbar } from 'pouncejs';
 import { DestinationConfigInput } from 'Generated/schema';
 import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm';
 import { extractErrorMessage } from 'Helpers/utils';
@@ -90,7 +90,7 @@ const ConfigureDestinationPanel: React.FC = () => {
   );
 
   return (
-    <React.Fragment>
+    <Box maxWidth={700} mx="auto">
       <WizardPanel.Heading
         title="Update Your Destination"
         subtitle="Make changes to the form below in order to update your Destination"
@@ -102,7 +102,7 @@ const ConfigureDestinationPanel: React.FC = () => {
       ) : (
         <DestinationFormSwitcher initialValues={destination} onSubmit={handleSubmit} />
       )}
-    </React.Fragment>
+    </Box>
   );
 };
 

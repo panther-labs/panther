@@ -40,7 +40,6 @@ const CreateDestinationWizard: React.FC = () => {
       <Wizard.Step>
         <WizardPanel>
           <ConfigureDestinationPanel />
-
           <WizardPanel.ActionPrev />
         </WizardPanel>
       </Wizard.Step>
