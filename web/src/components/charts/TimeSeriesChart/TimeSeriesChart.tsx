@@ -19,10 +19,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Box, Flex, Text, useTheme } from 'pouncejs';
-import { formatTime, formatDatetime, remToPx } from 'Helpers/utils';
+import { formatTime, formatDatetime, remToPx, capitalize } from 'Helpers/utils';
 import { SeriesData } from 'Generated/schema';
 import { EChartOption } from 'echarts';
-import logTypeColorMappings from 'Helpers/logTypeColorMappings';
+import mapKeys from 'lodash/mapKeys';
+import { SEVERITY_COLOR_MAP } from 'Source/constants';
+import { stringToPaleColor } from 'Helpers/colors';
 
 interface TimeSeriesLinesProps {
   /** The data for the time series */
@@ -49,6 +51,8 @@ interface TimeSeriesLinesProps {
    */
   maxZoomPeriod?: number;
 }
+
+const severityColors = mapKeys(SEVERITY_COLOR_MAP, (val, key) => capitalize(key.toLowerCase()));
 
 const hourFormat = formatTime('HH:mm');
 const dateFormat = formatTime('MMM DD');
@@ -103,7 +107,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
           type: 'line',
           symbol: 'none',
           itemStyle: {
-            color: theme.colors[logTypeColorMappings[label]],
+            color: theme.colors[severityColors[label]] || stringToPaleColor(label),
           },
           data: values.map((v, i) => {
             return {

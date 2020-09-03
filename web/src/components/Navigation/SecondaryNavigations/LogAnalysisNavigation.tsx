@@ -21,9 +21,17 @@ import { Box, Flex, Heading } from 'pouncejs';
 import urls from 'Source/urls';
 import FadeInTrail from 'Components/utils/FadeInTrail';
 import { AlertStatusesEnum } from 'Generated/schema';
+import { useListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
 import NavLink from '../NavLink';
 
 const LogAnalysisNavigation: React.FC = () => {
+  // We expect that oftentimes the user will go need the available log types if the log analysis
+  // menu was opened. This is because they are used everywhere, from the overview page, to the rule
+  // creation page, to the list rules page. As an optimization, prefetch the list of the available
+  // log types names as soon as the log analysis menu is opened. We also want it to be "passive" so
+  // it should fail silently
+  useListAvailableLogTypes();
+
   return (
     <Box>
       <Heading size="x-small" fontWeight="bold" pt={4} pb={5} truncated>

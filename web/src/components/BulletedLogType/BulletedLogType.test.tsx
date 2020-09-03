@@ -16,4 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './SuccessPanel';
+import React from 'react';
+import { render } from 'test-utils';
+import BulletedLogType from './BulletedLogType';
+
+describe('BulletedLogType', () => {
+  it('renders the same color for the same log type', () => {
+    const { container } = render(<BulletedLogType logType="AWS.EC2" />);
+
+    expect(container).toMatchSnapshot();
+  });
+});

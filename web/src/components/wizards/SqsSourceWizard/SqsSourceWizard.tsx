@@ -17,7 +17,6 @@
  */
 
 import React from 'react';
-import { LOG_TYPES } from 'Source/constants';
 import { Form, Formik } from 'formik';
 import * as Yup from 'yup';
 import { FetchResult } from '@apollo/client';
@@ -44,9 +43,7 @@ export interface SqsLogSourceWizardValues {
 
 const validationSchema = Yup.object().shape<SqsLogSourceWizardValues>({
   integrationLabel: yupIntegrationLabelValidation,
-  logTypes: Yup.array()
-    .of(Yup.string().oneOf((LOG_TYPES as unknown) as string[]))
-    .required(),
+  logTypes: Yup.array().of(Yup.string()).required(),
   allowedPrincipalArns: Yup.array().of(Yup.string()),
   allowedSourceArns: Yup.array().of(Yup.string()),
 });

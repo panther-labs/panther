@@ -55,7 +55,7 @@ const DestinationTestPanel: React.FC = () => {
 
   if (testStatus === 'FAILED') {
     return (
-      <React.Fragment>
+      <Box maxWidth={700} mx="auto">
         <WizardPanel.Heading
           title="Testing your Destination"
           subtitle="Something went wrong and the destination you have configured did not receive the test alert. Please update your destination settings and try again."
@@ -79,13 +79,13 @@ const DestinationTestPanel: React.FC = () => {
             Skip Testing
           </Link>
         </Flex>
-      </React.Fragment>
+      </Box>
     );
   }
 
   if (testStatus === 'PASSED') {
     return (
-      <React.Fragment>
+      <Box maxWidth={700} mx="auto">
         <WizardPanel.Heading
           title="Testing your Destination"
           subtitle="Everything worked as planned and your destination received the triggered alert. You can always send additional test alerts from the destinations page."
@@ -105,12 +105,12 @@ const DestinationTestPanel: React.FC = () => {
             Add Another
           </Link>
         </Flex>
-      </React.Fragment>
+      </Box>
     );
   }
 
   return (
-    <React.Fragment>
+    <Box maxWidth={700} mx="auto">
       <WizardPanel.Heading
         title="Everything looks good!"
         subtitle="Your destination was successfully added and you will receive alerts based on your configuration. You can always edit or delete this destination from the destinations page"
@@ -127,7 +127,7 @@ const DestinationTestPanel: React.FC = () => {
           Finish Setup
         </Link>
       </Flex>
-    </React.Fragment>
+    </Box>
   );
 };
 

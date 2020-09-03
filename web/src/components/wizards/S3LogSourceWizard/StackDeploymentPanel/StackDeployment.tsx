@@ -197,7 +197,11 @@ const StackDeployment: React.FC = () => {
     );
   };
 
-  return <Box>{renderContent()}</Box>;
+  return (
+    <Box maxWidth={700} mx="auto">
+      {renderContent()}
+    </Box>
+  );
 };
 
 export default StackDeployment;
