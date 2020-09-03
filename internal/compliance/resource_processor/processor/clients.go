@@ -56,9 +56,9 @@ var (
 	sqsClient    sqsiface.SQSAPI
 
 	httpClient       *http.Client
-	complianceClient *complianceapi.PantherCompliance
-	analysisClient   *analysisapi.PantherAnalysis
-	resourceClient   *resourceapi.PantherResources
+	complianceClient *complianceapi.PantherComplianceAPI
+	analysisClient   *analysisapi.PantherAnalysisAPI
+	resourceClient   *resourceapi.PantherResourcesAPI
 )
 
 // Setup parses the environment and initializes AWS and API clients.
