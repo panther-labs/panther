@@ -17,18 +17,22 @@
  */
 
 import React from 'react';
-import { Box, Flex, FormHelperText } from 'pouncejs';
+import { Box, Flex, FormHelperText, useSnackbar } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { FastField, Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
-import { LOG_TYPES } from 'Source/constants';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import { WizardPanel } from 'Components/Wizard';
 import { pantherConfig } from 'Source/config';
+import { useListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
 import { SqsLogSourceWizardValues } from '../SqsSourceWizard';
 
 const SqsSourceConfigurationPanel: React.FC = () => {
   const { initialValues } = useFormikContext<SqsLogSourceWizardValues>();
+  const { pushSnackbar } = useSnackbar();
+  const { data } = useListAvailableLogTypes({
+    onError: () => pushSnackbar({ title: "Couldn't fetch your available log types" }),
+  });
 
   return (
     <Box width={460} m="auto">
@@ -51,12 +55,12 @@ const SqsSourceConfigurationPanel: React.FC = () => {
             placeholder="A nickname for this SQS log source"
             required
           />
-          <FastField
+          <Field
             as={FormikMultiCombobox}
             searchable
             label="* Log Types"
             name="logTypes"
-            items={LOG_TYPES}
+            items={data?.listAvailableLogTypes.logTypes ?? []}
             placeholder="Which log types should we monitor?"
           />
           <Box as="fieldset">
