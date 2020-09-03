@@ -112,14 +112,9 @@ func listTables(dynamoDBSvc dynamodbiface.DynamoDBAPI, nextMarker *string) (tabl
 	},
 		func(page *dynamodb.ListTablesOutput, lastPage bool) bool {
 			tables = append(tables, page.TableNames...)
-			if len(tables) >= defaultBatchSize {
-				if !lastPage {
-					// DynamoDB uses the name of the last table evaluated as the pagination marker
-					marker = page.LastEvaluatedTableName
-				}
-				return false
-			}
-			return true
+			// DynamoDB uses the name of the last table evaluated as the pagination marker
+			marker = page.LastEvaluatedTableName
+			return len(tables) >= defaultBatchSize
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "DynamoDB.ListTablesPages")

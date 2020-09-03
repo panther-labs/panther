@@ -86,13 +86,8 @@ func listCertificates(acmSvc acmiface.ACMAPI, nextMarker *string) (certs []*acm.
 	},
 		func(page *acm.ListCertificatesOutput, lastPage bool) bool {
 			certs = append(certs, page.CertificateSummaryList...)
-			if len(certs) >= defaultBatchSize {
-				if !lastPage {
-					marker = page.NextToken
-				}
-				return false
-			}
-			return true
+			marker = page.NextToken
+			return len(certs) < defaultBatchSize
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "ACM.ListCertificatesPages")

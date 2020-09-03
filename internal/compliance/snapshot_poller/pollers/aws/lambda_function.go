@@ -118,13 +118,8 @@ func listFunctions(lambdaSvc lambdaiface.LambdaAPI, nextMarker *string) (
 	},
 		func(page *lambda.ListFunctionsOutput, lastPage bool) bool {
 			functions = append(functions, page.Functions...)
-			if len(functions) >= defaultBatchSize {
-				if !lastPage {
-					marker = page.NextMarker
-				}
-				return false
-			}
-			return true
+			marker = page.NextMarker
+			return len(functions) < defaultBatchSize
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "Lambda.ListFunctionsPages")

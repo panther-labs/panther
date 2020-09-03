@@ -305,13 +305,8 @@ func listUsers(iamSvc iamiface.IAMAPI, nextMarker *string) (users []*iam.User, m
 		},
 		func(page *iam.ListUsersOutput, lastPage bool) bool {
 			users = append(users, page.Users...)
-			if len(users) >= defaultBatchSize {
-				if !lastPage {
-					marker = page.Marker
-				}
-				return false
-			}
-			return true
+			marker = page.Marker
+			return len(users) < defaultBatchSize
 		},
 	)
 	if err != nil {

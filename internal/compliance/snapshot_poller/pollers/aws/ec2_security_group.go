@@ -100,13 +100,8 @@ func describeSecurityGroups(ec2Svc ec2iface.EC2API, nextMarker *string) (securit
 	},
 		func(page *ec2.DescribeSecurityGroupsOutput, lastPage bool) bool {
 			securityGroups = append(securityGroups, page.SecurityGroups...)
-			if len(securityGroups) >= defaultBatchSize {
-				if !lastPage {
-					marker = page.NextToken
-				}
-				return false
-			}
-			return true
+			marker = page.NextToken
+			return len(securityGroups) < defaultBatchSize
 		})
 
 	if err != nil {

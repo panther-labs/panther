@@ -101,13 +101,8 @@ func describeVolumes(ec2Svc ec2iface.EC2API, nextMarker *string) (volumes []*ec2
 	},
 		func(page *ec2.DescribeVolumesOutput, lastPage bool) bool {
 			volumes = append(volumes, page.Volumes...)
-			if len(volumes) >= defaultBatchSize {
-				if !lastPage {
-					marker = page.NextToken
-				}
-				return false
-			}
-			return true
+			marker = page.NextToken
+			return len(volumes) < defaultBatchSize
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "EC2.DescribeVolumes")

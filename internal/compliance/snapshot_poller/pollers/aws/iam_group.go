@@ -72,13 +72,8 @@ func listGroups(iamSvc iamiface.IAMAPI, nextMarker *string) (groups []*iam.Group
 	},
 		func(page *iam.ListGroupsOutput, lastPage bool) bool {
 			groups = append(groups, page.Groups...)
-			if len(groups) >= defaultBatchSize {
-				if !lastPage {
-					marker = page.Marker
-				}
-				return false
-			}
-			return true
+			marker = page.Marker
+			return len(groups) < defaultBatchSize
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "IAM.ListGroupsPages")

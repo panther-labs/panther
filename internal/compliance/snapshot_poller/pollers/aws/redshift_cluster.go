@@ -119,13 +119,8 @@ func describeClusters(redshiftSvc redshiftiface.RedshiftAPI, nextMarker *string)
 	},
 		func(page *redshift.DescribeClustersOutput, lastPage bool) bool {
 			clusters = append(clusters, page.Clusters...)
-			if len(clusters) >= defaultBatchSize {
-				if !lastPage {
-					marker = page.Marker
-				}
-				return false
-			}
-			return true
+			marker = page.Marker
+			return len(clusters) < defaultBatchSize
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "Redshift.DescribeClustersPages")

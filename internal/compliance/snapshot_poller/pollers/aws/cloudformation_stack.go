@@ -154,13 +154,8 @@ func describeStacks(cloudformationSvc cloudformationiface.CloudFormationAPI, nex
 	},
 		func(page *cloudformation.DescribeStacksOutput, lastPage bool) bool {
 			stacks = append(stacks, page.Stacks...)
-			if len(stacks) >= defaultBatchSize {
-				if !lastPage {
-					marker = page.NextToken
-				}
-				return false
-			}
-			return true
+			marker = page.NextToken
+			return len(stacks) < defaultBatchSize
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "CloudFormation.DescribeStacksPages")

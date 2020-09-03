@@ -95,13 +95,8 @@ func listKeys(kmsSvc kmsiface.KMSAPI, nextMarker *string) (keys []*kms.KeyListEn
 		},
 		func(page *kms.ListKeysOutput, lastPage bool) bool {
 			keys = append(keys, page.Keys...)
-			if len(keys) >= defaultBatchSize {
-				if !lastPage {
-					marker = page.NextMarker
-				}
-				return false
-			}
-			return true
+			marker = page.NextMarker
+			return len(keys) < defaultBatchSize
 		},
 	)
 	if err != nil {

@@ -100,13 +100,8 @@ func describeNetworkAcls(ec2Svc ec2iface.EC2API, nextMarker *string) (networkACL
 	},
 		func(page *ec2.DescribeNetworkAclsOutput, lastPage bool) bool {
 			networkACLs = append(networkACLs, page.NetworkAcls...)
-			if len(networkACLs) >= defaultBatchSize {
-				if !lastPage {
-					marker = page.NextToken
-				}
-				return false
-			}
-			return true
+			marker = page.NextToken
+			return len(networkACLs) < defaultBatchSize
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "EC2.DescribeNetworkAclsPages")

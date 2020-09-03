@@ -141,13 +141,8 @@ func describeVpcs(ec2Svc ec2iface.EC2API, nextMarker *string) (vpcs []*ec2.Vpc, 
 		},
 		func(page *ec2.DescribeVpcsOutput, lastPage bool) bool {
 			vpcs = append(vpcs, page.Vpcs...)
-			if len(vpcs) >= defaultBatchSize {
-				if !lastPage {
-					marker = page.NextToken
-				}
-				return false
-			}
-			return true
+			marker = page.NextToken
+			return len(vpcs) < defaultBatchSize
 		})
 
 	if err != nil {

@@ -116,13 +116,8 @@ func describeDBInstances(rdsSvc rdsiface.RDSAPI, nextMarker *string) (instances 
 	},
 		func(page *rds.DescribeDBInstancesOutput, lastPage bool) bool {
 			instances = append(instances, page.DBInstances...)
-			if len(instances) >= defaultBatchSize {
-				if !lastPage {
-					marker = page.Marker
-				}
-				return false
-			}
-			return true
+			marker = page.Marker
+			return len(instances) < defaultBatchSize
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "RDS.DescribeDBInstancesPages")

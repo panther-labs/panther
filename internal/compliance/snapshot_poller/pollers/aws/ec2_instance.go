@@ -107,13 +107,8 @@ func describeInstances(ec2Svc ec2iface.EC2API, nextMarker *string) (instances []
 			for _, reservation := range page.Reservations {
 				instances = append(instances, reservation.Instances...)
 			}
-			if len(instances) >= defaultBatchSize {
-				if !lastPage {
-					marker = page.NextToken
-				}
-				return false
-			}
-			return true
+			marker = page.NextToken
+			return len(instances) < defaultBatchSize
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "EC2.DescribeInstances")

@@ -95,13 +95,8 @@ func listRoles(iamSvc iamiface.IAMAPI, nextPage *string) (roles []*iam.Role, mar
 		},
 		func(page *iam.ListRolesOutput, lastPage bool) bool {
 			roles = append(roles, page.Roles...)
-			if len(roles) >= defaultBatchSize {
-				if !lastPage {
-					marker = page.Marker
-				}
-				return false
-			}
-			return true
+			marker = page.Marker
+			return len(roles) < defaultBatchSize
 		},
 	)
 	if err != nil {

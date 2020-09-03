@@ -82,13 +82,8 @@ func listClusters(ecsSvc ecsiface.ECSAPI, nextMarker *string) (clusters []*strin
 	},
 		func(page *ecs.ListClustersOutput, lastPage bool) bool {
 			clusters = append(clusters, page.ClusterArns...)
-			if len(clusters) >= defaultBatchSize {
-				if !lastPage {
-					marker = page.NextToken
-				}
-				return false
-			}
-			return true
+			marker = page.NextToken
+			return len(clusters) < defaultBatchSize
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "ECS.ListClustersPages")

@@ -125,13 +125,8 @@ func describeLoadBalancers(elbv2Svc elbv2iface.ELBV2API, nextMarker *string) (
 	},
 		func(page *elbv2.DescribeLoadBalancersOutput, lastPage bool) bool {
 			loadBalancers = append(loadBalancers, page.LoadBalancers...)
-			if len(loadBalancers) >= defaultBatchSize {
-				if !lastPage {
-					marker = page.NextMarker
-				}
-				return false
-			}
-			return true
+			marker = page.NextMarker
+			return len(loadBalancers) < defaultBatchSize
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "ELBV2.DescribeLoadBalancersPages")

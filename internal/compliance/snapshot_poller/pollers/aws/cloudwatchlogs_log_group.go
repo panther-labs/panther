@@ -125,13 +125,8 @@ func describeLogGroups(cloudwatchLogsSvc cloudwatchlogsiface.CloudWatchLogsAPI, 
 	},
 		func(page *cloudwatchlogs.DescribeLogGroupsOutput, lastPage bool) bool {
 			logGroups = append(logGroups, page.LogGroups...)
-			if len(logGroups) >= cloudwatchlogsBatchSize {
-				if !lastPage {
-					marker = page.NextToken
-				}
-				return false
-			}
-			return true
+			marker = page.NextToken
+			return len(logGroups) < cloudwatchlogsBatchSize
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "CloudWatchLogs.DescribeLogGroups")

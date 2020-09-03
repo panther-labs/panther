@@ -95,13 +95,8 @@ func listPolicies(iamSvc iamiface.IAMAPI, nextMarker *string) (policies []*iam.P
 		},
 		func(page *iam.ListPoliciesOutput, lastPage bool) bool {
 			policies = append(policies, page.Policies...)
-			if len(policies) >= defaultBatchSize {
-				if !lastPage {
-					marker = page.Marker
-				}
-				return false
-			}
-			return true
+			marker = page.Marker
+			return len(policies) < defaultBatchSize
 		},
 	)
 	if err != nil {
