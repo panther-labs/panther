@@ -74,7 +74,7 @@ const S3LogSourceWizard: React.FC<S3LogSourceWizardProps> = ({
       validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
-      {({ isValid, dirty, status, setStatus }) => {
+      {({ status, setStatus }) => {
         // We want to reset the error message whenever the user goes back to a previous screen.
         // That's why we handle it through status in order to manipulate it internally
         React.useEffect(() => {
@@ -85,15 +85,7 @@ const S3LogSourceWizard: React.FC<S3LogSourceWizardProps> = ({
           <Form>
             <Wizard>
               <Wizard.Step title="Configure Logs Source">
-                <WizardPanel>
-                  <S3SourceConfigurationPanel />
-
-                  <WizardPanel.Actions>
-                    <WizardPanel.ActionNext disabled={!dirty || !isValid}>
-                      Continue Setup
-                    </WizardPanel.ActionNext>
-                  </WizardPanel.Actions>
-                </WizardPanel>
+                <S3SourceConfigurationPanel />
               </Wizard.Step>
               <Wizard.Step title="Deploy Stack">
                 <WizardPanel>
