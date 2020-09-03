@@ -55,7 +55,7 @@ jobs:
       - run:
           # "mage setup" will have no effect unless new dependencies have been introduced.
           name: Install new dependencies
-          command: /tmp/panther/magebin setup
+          command: /tmp/panther/magebin -v setup
       - run:
           name: Debugging
           command: |
