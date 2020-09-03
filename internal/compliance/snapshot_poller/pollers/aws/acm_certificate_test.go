@@ -21,6 +21,7 @@ package aws
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/acm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -39,33 +40,35 @@ func TestAcmCertificateList(t *testing.T) {
 
 // Test the iterator works on two consecutive pages
 func TestAcmCertificateListIterator(t *testing.T) {
-	acmCerts, acmMarker = nil, nil
+	var acmCerts []*acm.CertificateSummary
+	var marker *string
 
-	cont := certificateIterator(awstest.ExampleListCertificatesOutput, false)
+	cont := certificateIterator(awstest.ExampleListCertificatesOutput, &acmCerts, &marker)
 	assert.True(t, cont)
-	assert.Nil(t, acmMarker)
+	assert.Nil(t, marker)
 	assert.Len(t, acmCerts, 1)
 
-	cont = certificateIterator(awstest.ExampleListCertificatesOutput, false)
+	cont = certificateIterator(awstest.ExampleListCertificatesOutput, &acmCerts, &marker)
 	assert.True(t, cont)
-	assert.Nil(t, acmMarker)
+	assert.Nil(t, marker)
 	assert.Len(t, acmCerts, 2)
 }
 
 // Test the iterator works on consecutive pages but stops at max page size
 func TestAcmCertificateListIteratorStopEarly(t *testing.T) {
-	acmCerts, acmMarker = nil, nil
+	var acmCerts []*acm.CertificateSummary
+	var marker *string
 
-	for i := 1; i < 50; i++  {
-		cont := certificateIterator(awstest.ExampleListCertificatesOutputContinue, false)
+	for i := 1; i < 50; i++ {
+		cont := certificateIterator(awstest.ExampleListCertificatesOutputContinue, &acmCerts, &marker)
 		assert.True(t, cont)
-		assert.NotNil(t, acmMarker)
-		assert.Len(t, acmCerts, i * 2)
+		assert.NotNil(t, marker)
+		assert.Len(t, acmCerts, i*2)
 	}
 
-	cont := certificateIterator(awstest.ExampleListCertificatesOutputContinue, false)
+	cont := certificateIterator(awstest.ExampleListCertificatesOutputContinue, &acmCerts, &marker)
 	assert.False(t, cont)
-	assert.NotNil(t, acmMarker)
+	assert.NotNil(t, marker)
 	assert.Len(t, acmCerts, 100)
 }
 

@@ -79,27 +79,25 @@ func PollACMCertificate(
 }
 
 // listCertificates returns all ACM certificates in the account
-func listCertificates(acmSvc acmiface.ACMAPI, nextMarker *string) ([]*acm.CertificateSummary, *string, error) {
-	acmCerts, acmMarker = nil, nil
-	err := acmSvc.ListCertificatesPages(&acm.ListCertificatesInput{
+func listCertificates(acmSvc acmiface.ACMAPI, nextMarker *string) (acmCerts []*acm.CertificateSummary, marker *string, err error) {
+	err = acmSvc.ListCertificatesPages(&acm.ListCertificatesInput{
 		NextToken: nextMarker,
 		MaxItems:  aws.Int64(int64(defaultBatchSize)),
-	}, certificateIterator)
+	}, func(page *acm.ListCertificatesOutput, _ bool) bool {
+			return certificateIterator(page, &acmCerts, &marker)
+	})
 
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "ACM.ListCertificatesPages")
 	}
 
-	return acmCerts, acmMarker, err
+	return
 }
 
-var acmCerts []*acm.CertificateSummary
-var acmMarker *string
-
-func certificateIterator(page *acm.ListCertificatesOutput, _ bool) bool {
-	acmCerts = append(acmCerts, page.CertificateSummaryList...)
-	acmMarker = page.NextToken
-	return len(acmCerts) < defaultBatchSize
+func certificateIterator(page *acm.ListCertificatesOutput, acmCerts *[]*acm.CertificateSummary, marker **string) bool {
+	*acmCerts = append(*acmCerts, page.CertificateSummaryList...)
+	*marker = page.NextToken
+	return len(*acmCerts) < defaultBatchSize
 }
 
 // describeCertificates provides detailed information for a given ACM certificate
