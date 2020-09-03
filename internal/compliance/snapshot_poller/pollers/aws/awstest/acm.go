@@ -30,32 +30,34 @@ import (
 
 // Example ACM API return values
 var (
-	ExampleCertificateArn1 = aws.String("arn:aws:acm:us-west-2:123456789012:certificate/asdfasdf-1234-1234-1234-1")
-	ExampleCertificateArn2 = aws.String("arn:aws:acm:us-west-2:123456789012:certificate/asdfasdf-1234-1234-1234-2")
+	ExampleCertificateArn = aws.String("arn:aws:acm:us-west-2:123456789012:certificate/asdfasdf-1234-1234-1234-1")
 
-	ExampleListCertificatesOutputPage1 = &acm.ListCertificatesOutput{
+	ExampleListCertificatesOutput = &acm.ListCertificatesOutput{
 		CertificateSummaryList: []*acm.CertificateSummary{
 			{
 				DomainName:     aws.String("runpanther.xyz"),
-				CertificateArn: ExampleCertificateArn1,
+				CertificateArn: ExampleCertificateArn,
+			},
+		},
+	}
+
+	ExampleListCertificatesOutputContinue = &acm.ListCertificatesOutput{
+		CertificateSummaryList: []*acm.CertificateSummary{
+			{
+				DomainName:     aws.String("runpanther.123"),
+				CertificateArn: ExampleCertificateArn,
+			},
+			{
+				DomainName:     aws.String("runpanther.abc"),
+				CertificateArn: ExampleCertificateArn,
 			},
 		},
 		NextToken: aws.String("1"),
 	}
 
-	ExampleListCertificatesOutputPage2 = &acm.ListCertificatesOutput{
-		CertificateSummaryList: []*acm.CertificateSummary{
-			{
-				DomainName:     aws.String("runpanther.abc"),
-				CertificateArn: ExampleCertificateArn2,
-			},
-		},
-		NextToken: nil,
-	}
-
 	ExampleDescribeCertificateOutput = &acm.DescribeCertificateOutput{
 		Certificate: &acm.CertificateDetail{
-			CertificateArn:     ExampleCertificateArn1,
+			CertificateArn:     ExampleCertificateArn,
 			CreatedAt:          ExampleDate,
 			DomainName:         aws.String("runpanther.xyz"),
 			Serial:             aws.String("b7:5b:09:63:dd:47:9c:46"),
@@ -179,12 +181,7 @@ func (m *MockAcm) ListCertificatesPages(
 	if args.Error(0) != nil {
 		return args.Error(0)
 	}
-	for ;;{
-		if !paginationFunction(ExampleListCertificatesOutputPage1, false) {
-			break
-		}
-	}
-
+	paginationFunction(ExampleListCertificatesOutput, true)
 	return args.Error(0)
 }
 
