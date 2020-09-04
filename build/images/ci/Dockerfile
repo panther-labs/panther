@@ -64,9 +64,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ENV GOPATH=/go PATH=/go/bin:/usr/local/go/bin:$PATH
 RUN curl -sSL "https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz" | tar -xz -C /usr/local && \
     mkdir -p ${GOPATH}/src ${GOPATH}/bin && \
+    go version && \
     # Install mage (magefile.org)
     curl -sSL "https://github.com/magefile/mage/releases/download/v${MAGE_VERSION}/mage_${MAGE_VERSION}_Linux-64bit.tar.gz" | tar -xz -C /usr/local && \
     mv /usr/local/mage ${GOPATH}/bin && \
+    # mage has a high UID, revert it back to root ownership (https://circleci.com/docs/2.0/high-uid-error)
+    chown -R root:root ${GOPATH} && \
     mage -version
 
 
@@ -76,8 +79,8 @@ RUN curl -L -o node.tar.xz "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NOD
 	tar -xJf node.tar.xz -C /usr/local --strip-components=1 && \
 	rm node.tar.xz && \
 	ln -s /usr/local/bin/node /usr/local/bin/nodejs && \
-	node --version && \
-	npm -version
+	echo "node version: `node --version`" && \
+	echo "npm version: `npm -version`"
 
 
 # ****************     PYTHON     *******************
@@ -86,5 +89,4 @@ ENV PYENV_ROOT=/home/circleci/.pyenv PATH=/home/circleci/.pyenv/shims:/home/circ
 RUN curl https://pyenv.run | bash && \
 	pyenv install ${PYTHON_VERSION} && pyenv global ${PYTHON_VERSION} && \
 	python3 --version && \
-	rm -rf /tmp/* /var/tmp/* && \
-	chown -R root:root /root
+	rm -rf /tmp/* /var/tmp/*
