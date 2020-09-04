@@ -25,6 +25,6 @@ import (
 )
 
 func TestAlertDeliveryError(t *testing.T) {
-	err := &AlertDeliveryError{Message: "http error"}
+	err := &AlertDeliveryResponse{Message: "http error"}
 	assert.Equal(t, err.Message, err.Error())
 }

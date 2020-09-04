@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -32,29 +33,59 @@ import (
 func TestIAMRolesList(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvc([]string{"ListRolesPages"})
 
-	out := listRoles(mockSvc)
+	out, marker, err := listRoles(mockSvc, nil)
 	assert.Equal(t, awstest.ExampleIAMRole, out[0])
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestIamRoleListIterator(t *testing.T) {
+	var roles []*iam.Role
+	var marker *string
+
+	cont := iamRoleIterator(awstest.ExampleListRolesOutput, &roles, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, roles, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = iamRoleIterator(awstest.ExampleListRolesOutputContinue, &roles, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, roles, 1+i*2)
+	}
+
+	cont = iamRoleIterator(awstest.ExampleListRolesOutputContinue, &roles, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, roles, 101)
 }
 
 func TestIAMRolesListError(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvcError([]string{"ListRolesPages"})
 
-	out := listRoles(mockSvc)
+	out, marker, err := listRoles(mockSvc, nil)
 	assert.Nil(t, out)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }
 
 func TestIAMRolesGetPolicy(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvc([]string{"GetRolePolicy"})
 
-	out := getRolePolicy(mockSvc, aws.String("RoleName"), aws.String("PolicyName"))
+	out, err := getRolePolicy(mockSvc, aws.String("RoleName"), aws.String("PolicyName"))
 	assert.NotEmpty(t, out)
+	assert.NoError(t, err)
 }
 
 func TestIAMRolesGetPolicyError(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvcError([]string{"ListRolesPages"})
 
-	out := listRoles(mockSvc)
+	out, marker, err := listRoles(mockSvc, nil)
 	assert.Nil(t, out)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }
 
 func TestIAMRolesGetPolicies(t *testing.T) {
@@ -94,17 +125,18 @@ func TestIAMRolesPoller(t *testing.T) {
 
 	IAMClientFunc = awstest.SetupMockIAM
 
-	resources, err := PollIAMRoles(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollIAMRoles(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
 	assert.NotEmpty(t, resources)
 	assert.Len(t, resources, 1)
 	assert.Equal(t, awstest.ExampleIAMRole.Arn, resources[0].Attributes.(*awsmodels.IAMRole).ARN)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestIAMRolesPollerError(t *testing.T) {
@@ -112,13 +144,14 @@ func TestIAMRolesPollerError(t *testing.T) {
 
 	IAMClientFunc = awstest.SetupMockIAM
 
-	resources, err := PollIAMRoles(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollIAMRoles(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
 	assert.Nil(t, resources)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }

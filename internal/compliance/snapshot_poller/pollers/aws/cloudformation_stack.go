@@ -60,7 +60,7 @@ func getCloudFormationClient(pollerResourceInput *awsmodels.ResourcePollerInput,
 
 	client, err := getClient(pollerResourceInput, CloudFormationClientFunc, "cloudformation", region)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, err
 	}
 
 	return client.(cloudformationiface.CloudFormationAPI), nil
@@ -75,14 +75,14 @@ func PollCloudFormationStack(
 
 	cfClient, err := getCloudFormationClient(pollerResourceInput, resourceARN.Region)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, err
 	}
 
 	// Although CloudFormation API calls may take either an ARN or name in most cases, we must use
-	// the name here as we do not always get the full ARN from the event processor, we may be missing
-	// the 'additional identifiers' portion. This can lead to problems differentiating between live
-	// and deleted stacks with the same name, but we shouldn't have to worry about that as we don't
-	// need to scan deleted stacks.
+	// the name here. This is because we do not always get the full ARN from the event processor, so
+	// we may be missing the 'additional identifiers' portion. Using the name could lead to problems
+	// differentiating between live and deleted stacks with the same name, but we shouldn't have to
+	// worry about that as we don't currently scan deleted stacks.
 
 	// Get just the resource portion of the ARN, and drop the resource type prefix
 	resource := strings.TrimPrefix(resourceARN.Resource, "stack/")
@@ -92,11 +92,14 @@ func PollCloudFormationStack(
 	driftID, err := detectStackDrift(cfClient, aws.String(stackName))
 	if err != nil {
 		if err.Error() == requeueRequiredError {
-			utils.Requeue(pollermodels.ScanMsg{
+			err = utils.Requeue(pollermodels.ScanMsg{
 				Entries: []*pollermodels.ScanEntry{
 					scanRequest,
 				},
 			}, driftDetectionRequeueDelaySeconds)
+			if err != nil {
+				return nil, err
+			}
 		}
 		return nil, nil
 	}
@@ -105,21 +108,24 @@ func PollCloudFormationStack(
 		waitForStackDriftDetection(cfClient, driftID)
 	}
 
-	stack := getStack(cfClient, stackName)
+	stack, err := getStack(cfClient, stackName)
+	if err != nil {
+		return nil, err
+	}
 
-	snapshot := buildCloudFormationStackSnapshot(cfClient, stack)
-	if snapshot == nil {
-		return nil, nil
+	snapshot, err := buildCloudFormationStackSnapshot(cfClient, stack)
+	if err != nil || snapshot == nil {
+		return nil, err
 	}
 	snapshot.Region = aws.String(resourceARN.Region)
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
-	// We need to do this in case the resourceID passed in was missing the additional identifiers
+	// We need to do this in case the resourceID that was passed in was missing the additional identifiers
 	scanRequest.ResourceID = snapshot.ARN
 	return snapshot, nil
 }
 
 // getStack returns a specific CloudFormation stack
-func getStack(svc cloudformationiface.CloudFormationAPI, stackName string) *cloudformation.Stack {
+func getStack(svc cloudformationiface.CloudFormationAPI, stackName string) (*cloudformation.Stack, error) {
 	stack, err := svc.DescribeStacks(&cloudformation.DescribeStacksInput{
 		StackName: aws.String(stackName),
 	})
@@ -129,35 +135,42 @@ func getStack(svc cloudformationiface.CloudFormationAPI, stackName string) *clou
 				zap.L().Warn("tried to scan non-existent resource",
 					zap.String("resource", stackName),
 					zap.String("resourceType", awsmodels.CloudFormationStackSchema))
-				return nil
+				return nil, nil
 			}
 		}
-		utils.LogAWSError("CloudFormation.DescribeStacks", err)
-		return nil
+		return nil, errors.Wrapf(err, "CloudFormation.DescribeStacks: %s", stackName)
 	}
-	return stack.Stacks[0]
+	// When specifying a stack name, there cannot be more than one result. If there are zero results,
+	// an error is returned above.
+	return stack.Stacks[0], nil
 }
 
 // describeStacks returns all CloudFormation stacks in the account
-func describeStacks(cloudformationSvc cloudformationiface.CloudFormationAPI) (stacks []*cloudformation.Stack, err error) {
-	err = cloudformationSvc.DescribeStacksPages(&cloudformation.DescribeStacksInput{},
-		func(page *cloudformation.DescribeStacksOutput, lastPage bool) bool {
-			stacks = append(stacks, page.Stacks...)
-			return true
-		})
+func describeStacks(cloudformationSvc cloudformationiface.CloudFormationAPI, nextMarker *string) (
+	stacks []*cloudformation.Stack, marker *string, err error) {
 
+	err = cloudformationSvc.DescribeStacksPages(&cloudformation.DescribeStacksInput{
+		NextToken: nextMarker,
+	},
+		func(page *cloudformation.DescribeStacksOutput, lastPage bool) bool {
+			return stackIterator(page, &stacks, &marker)
+		})
 	if err != nil {
-		return nil, errors.Wrap(err, "CloudFormation.DescribeStacksPages")
+		return nil, nil, errors.Wrap(err, "CloudFormation.DescribeStacksPages")
 	}
-	return stacks, nil
+
+	return
+}
+
+func stackIterator(page *cloudformation.DescribeStacksOutput, stacks *[]*cloudformation.Stack, marker **string) bool {
+	*stacks = append(*stacks, page.Stacks...)
+	*marker = page.NextToken
+	return len(*stacks) < defaultBatchSize
 }
 
 // detectStackDrift initiates the stack drift detection process, which may take several minutes to complete
 func detectStackDrift(cloudformationSvc cloudformationiface.CloudFormationAPI, arn *string) (*string, error) {
-	detectionID, err := cloudformationSvc.DetectStackDrift(
-		&cloudformation.DetectStackDriftInput{StackName: arn},
-	)
-
+	detectionID, err := cloudformationSvc.DetectStackDrift(&cloudformation.DetectStackDriftInput{StackName: arn})
 	if err == nil {
 		return detectionID.StackDriftDetectionId, nil
 	}
@@ -165,8 +178,7 @@ func detectStackDrift(cloudformationSvc cloudformationiface.CloudFormationAPI, a
 	awsErr, ok := err.(awserr.Error)
 	if !ok || awsErr.Code() != "ValidationError" {
 		// Run of the mill error, stop scanning this resource
-		utils.LogAWSError("CloudFormation.DetectStackDrift", err)
-		return nil, err
+		return nil, errors.Wrapf(err, "CloudFormation.DetectStackDrift: %s", aws.StringValue(arn))
 	}
 
 	// A ValidationError could be several things, which have different meanings for us
@@ -183,27 +195,27 @@ func detectStackDrift(cloudformationSvc cloudformationiface.CloudFormationAPI, a
 
 // describeStackResourceDrifts returns the drift status for each resource in a stack
 func describeStackResourceDrifts(
-	cloudformationSvc cloudformationiface.CloudFormationAPI, stackId *string) (drifts []*cloudformation.StackResourceDrift) {
+	cloudformationSvc cloudformationiface.CloudFormationAPI, stackId *string) (drifts []*cloudformation.StackResourceDrift, err error) {
 
-	err := cloudformationSvc.DescribeStackResourceDriftsPages(&cloudformation.DescribeStackResourceDriftsInput{StackName: stackId},
+	err = cloudformationSvc.DescribeStackResourceDriftsPages(&cloudformation.DescribeStackResourceDriftsInput{StackName: stackId},
 		func(page *cloudformation.DescribeStackResourceDriftsOutput, lastPage bool) bool {
 			drifts = append(drifts, page.StackResourceDrifts...)
 			return true
 		})
 	if err != nil {
-		utils.LogAWSError("CloudFormation.DescribeStackResourceDriftsPages", err)
+		return nil, errors.Wrapf(err, "CloudFormation.DescribeStackResourceDriftsPages: %s", aws.StringValue(stackId))
 	}
 	return
 }
 
-// buildCloudFormationStackSnapshot returns a complete snapshot of an ACM certificate
+// buildCloudFormationStackSnapshot returns a complete snapshot of CloudFormation stack
 func buildCloudFormationStackSnapshot(
 	cloudformationSvc cloudformationiface.CloudFormationAPI,
 	stack *cloudformation.Stack,
-) *awsmodels.CloudFormationStack {
+) (*awsmodels.CloudFormationStack, error) {
 
 	if stack == nil {
-		return nil
+		return nil, nil
 	}
 
 	stackSnapshot := &awsmodels.CloudFormationStack{
@@ -239,9 +251,13 @@ func buildCloudFormationStackSnapshot(
 
 	stackSnapshot.Tags = utils.ParseTagSlice(stack.Tags)
 
-	stackSnapshot.Drifts = describeStackResourceDrifts(cloudformationSvc, stack.StackId)
+	var err error
+	stackSnapshot.Drifts, err = describeStackResourceDrifts(cloudformationSvc, stack.StackId)
+	if err != nil {
+		return nil, err
+	}
 
-	return stackSnapshot
+	return stackSnapshot, nil
 }
 
 // waitForStackDriftDetection blocks and only returns when a given stack drift detection is complete
@@ -269,119 +285,114 @@ func waitForStackDriftDetection(svc cloudformationiface.CloudFormationAPI, drift
 }
 
 // PollCloudFormationStacks gathers information on each CloudFormation Stack for an AWS account.
-func PollCloudFormationStacks(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+//
+// This scanner is a beast, tread carefully.
+func PollCloudFormationStacks(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting CloudFormation Stack resource poller")
-	cloudformationStackSnapshots := make(map[string]*awsmodels.CloudFormationStack)
+	cloudformationSvc, err := getCloudFormationClient(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
+	}
 
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "cloudformation") {
-		cloudformationSvc, err := getCloudFormationClient(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
+	// Start with generating a list of all stacks
+	stacks, marker, err := describeStacks(cloudformationSvc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
+	}
 
-		// Start with generating a list of all stacks
-		stacks, err := describeStacks(cloudformationSvc)
-		if err != nil {
-			return nil, errors.Wrapf(err, "PollCloudFormationStacks(%#v) in region %s", *pollerInput, *regionID)
-		}
-		if len(stacks) == 0 {
-			zap.L().Debug("no CloudFormation stacks found", zap.String("region", *regionID))
-			continue
-		}
+	// List of stack drift detection statuses
+	stackDriftDetectionIds := make(map[string]*string)
+	ignoredIds := make(map[string]bool)
+	var requeueIds []*string
 
-		// List of stack drift detection statuses
-		stackDriftDetectionIds := make(map[string]*string)
-		ignoredIds := make(map[string]bool)
-		var requeueIds []*string
-
-		// Kick off the stack drift detections
-		for _, stack := range stacks {
-			driftID, err := detectStackDrift(cloudformationSvc, stack.StackId)
-			if err == nil {
-				if driftID != nil {
-					// The drift detection worked properly
-					stackDriftDetectionIds[*stack.StackId] = driftID
-				}
-				// Implicit case: the drift detection was unable to complete due to the state of the
-				// stack, continue on building this resource without stack drift detection
+	// Initiate the stack drift detections
+	for _, stack := range stacks {
+		driftID, err := detectStackDrift(cloudformationSvc, stack.StackId)
+		if err == nil {
+			if driftID != nil {
+				// The drift detection worked properly
+				stackDriftDetectionIds[*stack.StackId] = driftID
+			}
+			// Implicit case: the drift detection was unable to complete due to the state of the
+			// stack, continue on building this resource without stack drift detection
+		} else {
+			// Failed resources are always dropped
+			ignoredIds[*stack.StackId] = true
+			if err.Error() == requeueRequiredError {
+				// The drift detection did not work, and we must re-queue a scan for this message
+				requeueIds = append(requeueIds, stack.StackId)
 			} else {
-				// Failed resources are always dropped
-				ignoredIds[*stack.StackId] = true
-				if err.Error() == requeueRequiredError {
-					// The drift detection did not work, and we must re-queue a scan for this message
-					requeueIds = append(requeueIds, stack.StackId)
-				}
-			}
-		}
-
-		// Construct one re-scan request for all the stacks that need to be re-scanned and send it
-		if len(requeueIds) > 0 {
-			scanRequest := pollermodels.ScanMsg{}
-			for _, stackId := range requeueIds {
-				scanRequest.Entries = append(scanRequest.Entries, &pollermodels.ScanEntry{
-					AWSAccountID:     &pollerInput.AuthSourceParsedARN.AccountID,
-					IntegrationID:    pollerInput.IntegrationID,
-					ResourceID:       stackId,
-					ResourceType:     aws.String(awsmodels.CloudFormationStackSchema),
-					ScanAllResources: aws.Bool(false),
-				})
-			}
-			utils.Requeue(scanRequest, driftDetectionRequeueDelaySeconds)
-		}
-
-		// Wait for all stack drift detections to be complete
-		for _, driftID := range stackDriftDetectionIds {
-			waitForStackDriftDetection(cloudformationSvc, driftID)
-		}
-
-		// Now that the stacks have their full drift information, describe them again
-		updatedStacks, err := describeStacks(cloudformationSvc)
-		if err != nil {
-			return nil, errors.Wrapf(err, "PollCloudFormationStacks(%#v) in region %s", *pollerInput, *regionID)
-		}
-
-		// Build the stack snapshots
-		for _, stack := range updatedStacks {
-			// Check if this stack failed an earlier part of the scan
-			if ignoredIds[*stack.StackId] {
-				continue
-			}
-
-			// As of 2019/11/12, the cloudformation describe-stacks API call does not return
-			// termination protection information unless a stack name is specified. I suspect this
-			// is a bug/unintended behavior in the AWS API
-			fullStack := getStack(cloudformationSvc, *stack.StackName)
-			cfnStackSnapshot := buildCloudFormationStackSnapshot(cloudformationSvc, fullStack)
-			if cfnStackSnapshot == nil {
-				continue
-			}
-
-			// Set meta data not known directly by the stack
-			cfnStackSnapshot.Region = regionID
-			cfnStackSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-
-			if _, ok := cloudformationStackSnapshots[*stack.StackId]; !ok {
-				cloudformationStackSnapshots[*stack.StackId] = cfnStackSnapshot
-			} else {
-				zap.L().Info(
-					"overwriting existing CloudFormation Stack snapshot",
-					zap.String("resourceId", *stack.StackId),
+				// To be in line with the policy of "whenever a resource fails to scan cancel the scan",
+				// we should technically exit at this point. But this poller is so finicky that I worry
+				// that might render it entirely inoperable. Putting this error message in to trigger
+				// paging so we can track if it is actually a problem in practice. If not, we can add
+				// the return here.
+				zap.L().Error(
+					"unable to perform stack drift detection",
+					zap.String("stackID", *stack.StackId),
+					zap.String("region", *pollerInput.Region),
 				)
-				cloudformationStackSnapshots[*stack.StackId] = cfnStackSnapshot
 			}
 		}
 	}
 
-	resources := make([]*apimodels.AddResourceEntry, 0, len(cloudformationStackSnapshots))
-	for resourceID, cloudformationSnapshot := range cloudformationStackSnapshots {
+	// Construct and send one re-scan request for all the stacks that need to be re-scanned
+	if len(requeueIds) > 0 {
+		scanRequest := pollermodels.ScanMsg{}
+		for _, stackId := range requeueIds {
+			scanRequest.Entries = append(scanRequest.Entries, &pollermodels.ScanEntry{
+				AWSAccountID:  &pollerInput.AuthSourceParsedARN.AccountID,
+				IntegrationID: pollerInput.IntegrationID,
+				ResourceID:    stackId,
+				ResourceType:  aws.String(awsmodels.CloudFormationStackSchema),
+			})
+		}
+		if err = utils.Requeue(scanRequest, driftDetectionRequeueDelaySeconds); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	// Wait for all stack drift detections to be complete
+	// TODO: Parallelize this and begin the next step for the stacks that complete
+	for _, driftID := range stackDriftDetectionIds {
+		waitForStackDriftDetection(cloudformationSvc, driftID)
+	}
+
+	// Build the stack snapshots
+	resources := make([]*apimodels.AddResourceEntry, 0, len(stacks))
+	for _, stack := range stacks {
+		// Check if this stack failed an earlier part of the scan
+		if ignoredIds[*stack.StackId] {
+			continue
+		}
+
+		// As of 2020/08/15, the cloudformation describe-stacks API call does not return
+		// termination protection information unless a stack name is specified. I suspect this
+		// is a bug/unintended behavior in the AWS API.
+		//
+		// Additionally, we want to update the stack drift information post stack drift detection
+		// completion so we need to make a describe stack call anyways.
+		fullStack, err := getStack(cloudformationSvc, *stack.StackName)
+		if err != nil {
+			return nil, nil, err
+		}
+		cfnStackSnapshot, err := buildCloudFormationStackSnapshot(cloudformationSvc, fullStack)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// Set meta data not known directly by the stack
+		cfnStackSnapshot.Region = pollerInput.Region
+		cfnStackSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
+
 		resources = append(resources, &apimodels.AddResourceEntry{
-			Attributes:      cloudformationSnapshot,
-			ID:              apimodels.ResourceID(resourceID),
+			Attributes:      cfnStackSnapshot,
+			ID:              apimodels.ResourceID(*cfnStackSnapshot.ResourceID),
 			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
 			IntegrationType: apimodels.IntegrationTypeAws,
 			Type:            awsmodels.CloudFormationStackSchema,
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

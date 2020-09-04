@@ -57,6 +57,14 @@ var (
 		},
 	}
 
+	ExampleListFunctionsContinue = &lambda.ListFunctionsOutput{
+		Functions: []*lambda.FunctionConfiguration{
+			ExampleFunctionConfiguration,
+			ExampleFunctionConfiguration,
+		},
+		NextMarker: aws.String("1"),
+	}
+
 	ExampleListTagsLambda = &lambda.ListTagsOutput{
 		Tags: map[string]*string{
 			"Application":                   aws.String("Panther"),
@@ -111,7 +119,7 @@ var (
 // Lambda mock
 
 // SetupMockLambda is used to override the Lambda Client initializer
-func SetupMockLambda(sess *session.Session, cfg *aws.Config) interface{} {
+func SetupMockLambda(_ *session.Session, _ *aws.Config) interface{} {
 	return MockLambdaForSetup
 }
 

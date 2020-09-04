@@ -139,6 +139,13 @@ var (
 			},
 		},
 	}
+	ExampleDescribeDBInstancesOutputContinue = &rds.DescribeDBInstancesOutput{
+		DBInstances: []*rds.DBInstance{
+			ExampleDescribeDBInstancesOutput.DBInstances[0],
+			ExampleDescribeDBInstancesOutput.DBInstances[0],
+		},
+		Marker: aws.String("1"),
+	}
 
 	ExampleDescribeDBSnapshotsOutput = &rds.DescribeDBSnapshotsOutput{
 		DBSnapshots: []*rds.DBSnapshot{
@@ -225,7 +232,7 @@ var (
 // RDS mock
 
 // SetupMockRds is used to override the RDS Client initializer
-func SetupMockRds(sess *session.Session, cfg *aws.Config) interface{} {
+func SetupMockRds(_ *session.Session, _ *aws.Config) interface{} {
 	return MockRdsForSetup
 }
 

@@ -134,7 +134,7 @@ var (
 )
 
 // SetupMockCloudTrail is used to override the CloudTrail client initializer.
-func SetupMockCloudTrail(sess *session.Session, cfg *aws.Config) interface{} {
+func SetupMockCloudTrail(_ *session.Session, _ *aws.Config) interface{} {
 	return MockCloudTrailForSetup
 }
 

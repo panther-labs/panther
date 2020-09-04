@@ -24,7 +24,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws/awstest"
@@ -33,77 +32,112 @@ import (
 func TestIamGroupList(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvc([]string{"ListGroupsPages"})
 
-	out := listGroups(mockSvc)
+	out, marker, err := listGroups(mockSvc, nil)
 	assert.NotEmpty(t, out)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestIamGroupListError(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvcError([]string{"ListGroupsPages"})
 
-	out := listGroups(mockSvc)
+	out, marker, err := listGroups(mockSvc, nil)
 	assert.Nil(t, out)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestIamGroupListIterator(t *testing.T) {
+	var groups []*iam.Group
+	var marker *string
+
+	cont := iamGroupIterator(awstest.ExampleListGroupsOutput, &groups, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, groups, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = iamGroupIterator(awstest.ExampleListGroupsOutputContinue, &groups, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, groups, 1+i*2)
+	}
+
+	cont = iamGroupIterator(awstest.ExampleListGroupsOutputContinue, &groups, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, groups, 101)
 }
 
 func TestIamGroupListPolicies(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvc([]string{"ListGroupPoliciesPages"})
 
-	out := listGroupPolicies(mockSvc, aws.String("ExampleGroup"))
+	out, err := listGroupPolicies(mockSvc, aws.String("ExampleGroup"))
 	assert.NotEmpty(t, out)
+	assert.NoError(t, err)
 }
 
 func TestIamGroupListPoliciesError(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvcError([]string{"ListGroupPoliciesPages"})
 
-	out := listGroupPolicies(mockSvc, aws.String("ExampleGroup"))
+	out, err := listGroupPolicies(mockSvc, aws.String("ExampleGroup"))
 	assert.Nil(t, out)
+	assert.Error(t, err)
 }
 
 func TestIamGroupListAttachedPolicies(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvc([]string{"ListAttachedGroupPoliciesPages"})
 
-	out := listAttachedGroupPolicies(mockSvc, aws.String("ExampleGroup"))
+	out, err := listAttachedGroupPolicies(mockSvc, aws.String("ExampleGroup"))
 	assert.NotEmpty(t, out)
+	assert.NoError(t, err)
 }
 
 func TestIamGroupListAttachedPoliciesError(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvcError([]string{"ListAttachedGroupPoliciesPages"})
 
-	out := listAttachedGroupPolicies(mockSvc, aws.String("ExampleGroup"))
+	out, err := listAttachedGroupPolicies(mockSvc, aws.String("ExampleGroup"))
 	assert.Nil(t, out)
+	assert.Error(t, err)
 }
 
 func TestIamGroupGet(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvc([]string{"GetGroup"})
 
-	out := getGroup(mockSvc, aws.String("groupname"))
+	out, err := getGroup(mockSvc, aws.String("groupname"))
+	assert.NoError(t, err)
 	assert.NotEmpty(t, out.Users)
 }
 
 func TestIamGroupGetError(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvcError([]string{"GetGroup"})
 
-	out := getGroup(mockSvc, aws.String("groupname"))
+	out, err := getGroup(mockSvc, aws.String("groupname"))
 	assert.Nil(t, out)
+	assert.Error(t, err)
 }
 
 func TestIamGroupGetPolicy(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvc([]string{"GetGroupPolicy"})
 
-	out := getGroupPolicy(mockSvc, aws.String("groupname"), aws.String("policyname"))
+	out, err := getGroupPolicy(mockSvc, aws.String("groupname"), aws.String("policyname"))
 	assert.NotEmpty(t, out)
+	assert.NoError(t, err)
 }
 
 func TestIamGroupGetPolicyError(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvcError([]string{"GetGroupPolicy"})
 
-	out := getGroupPolicy(mockSvc, aws.String("groupname"), aws.String("policyname"))
+	out, err := getGroupPolicy(mockSvc, aws.String("groupname"), aws.String("policyname"))
 	assert.Nil(t, out)
+	assert.Error(t, err)
 }
 
 func TestBuildIamGroupSnapshot(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvcAll()
 
-	groupSnapshot := buildIamGroupSnapshot(
+	groupSnapshot, err := buildIamGroupSnapshot(
 		mockSvc,
 		&iam.Group{
 			GroupName:  aws.String("example-group"),
@@ -113,6 +147,7 @@ func TestBuildIamGroupSnapshot(t *testing.T) {
 		},
 	)
 
+	assert.NoError(t, err)
 	assert.NotEmpty(t, groupSnapshot.Users)
 	assert.NotNil(t, groupSnapshot.ID)
 	assert.NotNil(t, groupSnapshot.ARN)
@@ -121,7 +156,7 @@ func TestBuildIamGroupSnapshot(t *testing.T) {
 func TestBuildIamGroupSnapshotError(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvcAllError()
 
-	groupSnapshot := buildIamGroupSnapshot(
+	groupSnapshot, err := buildIamGroupSnapshot(
 		mockSvc,
 		&iam.Group{
 			Arn:        aws.String("arn:::::group/example-group"),
@@ -131,24 +166,9 @@ func TestBuildIamGroupSnapshotError(t *testing.T) {
 		},
 	)
 
-	/*
-		expected := &awsmodels.IamGroup{
-			GenericResource: awsmodels.GenericResource{
-				ResourceID:   aws.String("arn:::::group/example-group"),
-				TimeCreated:  utils.DateTimeFormat(*awstest.ExampleDate),
-				ResourceType: aws.String(awsmodels.IAMGroupSchema),
-			},
-			GenericAWSResource: awsmodels.GenericAWSResource{
-				ARN:    aws.String("arn:::::group/example-group"),
-				ID:     aws.String("123456"),
-				Name:   aws.String("example-group"),
-				Region: aws.String(awsmodels.GlobalRegion),
-			},
-		}
-
-	*/
+	assert.Error(t, err)
 	var expected *awsmodels.IamGroup
-	require.Equal(t, expected, groupSnapshot)
+	assert.Equal(t, expected, groupSnapshot)
 }
 
 func TestIamGroupPoller(t *testing.T) {
@@ -156,16 +176,17 @@ func TestIamGroupPoller(t *testing.T) {
 
 	IAMClientFunc = awstest.SetupMockIAM
 
-	resources, err := PollIamGroups(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollIamGroups(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Len(t, resources, 1)
 	assert.Equal(t, *awstest.ExampleGroup.Arn, string(resources[0].ID))
+	assert.Nil(t, marker)
 }
 
 func TestIamGroupPollerError(t *testing.T) {
@@ -173,15 +194,14 @@ func TestIamGroupPollerError(t *testing.T) {
 
 	IAMClientFunc = awstest.SetupMockIAM
 
-	resources, err := PollIamGroups(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollIamGroups(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
-	for _, event := range resources {
-		assert.Nil(t, event.Attributes)
-	}
+	assert.Error(t, err)
+	assert.Nil(t, resources)
+	assert.Nil(t, marker)
 }
