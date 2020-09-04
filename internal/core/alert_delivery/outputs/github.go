@@ -23,8 +23,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
 // Severity colors match those in the Panther UI
@@ -35,7 +35,7 @@ const (
 
 // Github alert send an issue.
 func (client *OutputClient) Github(
-	alert *alertmodels.Alert, config *outputmodels.GithubConfig) *AlertDeliveryError {
+	alert *alertModels.Alert, config *outputModels.GithubConfig) *AlertDeliveryResponse {
 
 	description := "**Description:** " + aws.StringValue(alert.AnalysisDescription)
 	link := "\n [Click here to view in the Panther UI](" + generateURL(alert) + ")"

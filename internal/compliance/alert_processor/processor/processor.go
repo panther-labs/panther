@@ -40,8 +40,8 @@ import (
 	remediationclient "github.com/panther-labs/panther/api/gateway/remediation/client"
 	remediationoperations "github.com/panther-labs/panther/api/gateway/remediation/client/operations"
 	remediationmodels "github.com/panther-labs/panther/api/gateway/remediation/models"
+	alertmodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/internal/compliance/alert_processor/models"
-	alertmodel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 

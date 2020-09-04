@@ -17,6 +17,7 @@
  */
 
 import React from 'react';
+import { StepStatus } from './Wizard';
 
 interface WizardContextValue<WizardData> {
   goToPrevStep: () => void;
@@ -26,6 +27,8 @@ interface WizardContextValue<WizardData> {
   resetData: () => void;
   reset: () => void;
   data: WizardData;
+  currentStepStatus: StepStatus;
+  setCurrentStepStatus: (stepStatus: StepStatus) => void;
 }
 
 export const WizardContext = React.createContext(null);

@@ -137,6 +137,53 @@ describe('Wizard', () => {
     expect(queryByText('Continue')).toBeInTheDocument();
   });
 
+  it('correctly sets and resets the step Status', () => {
+    const WizardStepStatusSetter = () => {
+      const { setCurrentStepStatus } = useWizardContext();
+      return <button onClick={() => setCurrentStepStatus('FAILING')}>Set Step Status</button>;
+    };
+
+    const WizardStepStatusDisplay = () => {
+      const { currentStepStatus } = useWizardContext();
+      return <div>{currentStepStatus.toLowerCase()}</div>;
+    };
+
+    const { queryByText, getByAriaLabel } = render(
+      <Wizard header={false}>
+        <Wizard.Step>
+          <WizardPanel>
+            A
+            <WizardStepStatusDisplay />
+            <WizardStepStatusSetter />
+            <WizardPanel.ActionNext>Continue</WizardPanel.ActionNext>
+          </WizardPanel>
+        </Wizard.Step>
+        <Wizard.Step>
+          B
+          <WizardStepStatusDisplay />
+          <WizardStepStatusSetter />
+          <WizardPanel.ActionPrev />
+        </Wizard.Step>
+      </Wizard>
+    );
+
+    expect(queryByText('pending')).toBeInTheDocument();
+
+    fireEvent.click(queryByText('Set Step Status'));
+    expect(queryByText('failing')).toBeInTheDocument();
+
+    fireEvent.click(queryByText('Continue'));
+    expect(queryByText('pending')).toBeInTheDocument();
+    expect(queryByText('failing')).not.toBeInTheDocument();
+
+    fireEvent.click(queryByText('Set Step Status'));
+    expect(queryByText('failing')).toBeInTheDocument();
+
+    fireEvent.click(getByAriaLabel('Go Back'));
+    expect(queryByText('pending')).toBeInTheDocument();
+    expect(queryByText('failing')).not.toBeInTheDocument();
+  });
+
   it('prev/next buttons work correctly', () => {
     const { getByText, queryByText, getByAriaLabel } = render(
       <Wizard header={false}>

@@ -92,6 +92,11 @@ func (m *tableMock) UpdateAlertStatus(input *models.UpdateAlertStatusInput) (*ta
 	return args.Get(0).(*table.AlertItem), args.Error(1)
 }
 
+func (m *tableMock) UpdateAlertDelivery(input *models.UpdateAlertDeliveryInput) (*table.AlertItem, error) {
+	args := m.Called(input)
+	return args.Get(0).(*table.AlertItem), args.Error(1)
+}
+
 func init() {
 	env = envConfig{
 		ProcessedDataBucket: "bucket",
@@ -142,6 +147,22 @@ func TestGetAlert(t *testing.T) {
 		LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
 	}
 
+	expectedSummary := &models.AlertSummary{
+		AlertID:           aws.String("alertId"),
+		RuleID:            aws.String("ruleId"),
+		Status:            "OPEN",
+		RuleVersion:       aws.String("ruleVersion"),
+		Severity:          aws.String("INFO"),
+		Title:             aws.String("ruleId"),
+		DedupString:       aws.String("dedupString"),
+		CreationTime:      aws.Time(time.Date(2020, 1, 1, 1, 0, 0, 0, time.UTC)),
+		UpdateTime:        aws.Time(time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)),
+		EventsMatched:     aws.Int(5),
+		LastUpdatedBy:     "userId",
+		LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
+		DeliveryResponses: []*models.DeliveryResponse{},
+	}
+
 	expectedListObjectsRequest := &s3.ListObjectsV2Input{
 		Bucket: aws.String(env.ProcessedDataBucket),
 		Prefix: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/rule_id=ruleId/"),
@@ -178,21 +199,8 @@ func TestGetAlert(t *testing.T) {
 	result, err := api.GetAlert(input)
 	require.NoError(t, err)
 	require.Equal(t, &models.GetAlertOutput{
-		AlertSummary: models.AlertSummary{
-			AlertID:           aws.String("alertId"),
-			RuleID:            aws.String("ruleId"),
-			Status:            "OPEN",
-			RuleVersion:       aws.String("ruleVersion"),
-			Severity:          aws.String("INFO"),
-			Title:             aws.String("ruleId"),
-			DedupString:       aws.String("dedupString"),
-			CreationTime:      aws.Time(time.Date(2020, 1, 1, 1, 0, 0, 0, time.UTC)),
-			UpdateTime:        aws.Time(time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)),
-			EventsMatched:     aws.Int(5),
-			LastUpdatedBy:     "userId",
-			LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
-		},
-		Events: aws.StringSlice([]string{"testEvent"}),
+		AlertSummary: *expectedSummary,
+		Events:       aws.StringSlice([]string{"testEvent"}),
 		EventsLastEvaluatedKey:
 		// nolint
 		aws.String("eyJsb2dUeXBlVG9Ub2tlbiI6eyJsb2d0eXBlIjp7InMzT2JqZWN0S2V5IjoicnVsZXMvbG9ndHlwZS95ZWFyPTIwMjAvbW9udGg9MDEvZGF5PTAxL2hvdXI9MDEvcnVsZV9pZD1ydWxlSWQvMjAyMDAxMDFUMDEwMTAwWi11dWlkNC5qc29uLmd6IiwiZXZlbnRJbmRleCI6MX19fQ=="),
@@ -231,21 +239,8 @@ func TestGetAlert(t *testing.T) {
 	result, err = api.GetAlert(input)
 	require.NoError(t, err)
 	require.Equal(t, &models.GetAlertOutput{
-		AlertSummary: models.AlertSummary{
-			AlertID:           aws.String("alertId"),
-			RuleID:            aws.String("ruleId"),
-			Status:            "OPEN",
-			RuleVersion:       aws.String("ruleVersion"),
-			Severity:          aws.String("INFO"),
-			Title:             aws.String("ruleId"),
-			DedupString:       aws.String("dedupString"),
-			CreationTime:      aws.Time(time.Date(2020, 1, 1, 1, 0, 0, 0, time.UTC)),
-			UpdateTime:        aws.Time(time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)),
-			EventsMatched:     aws.Int(5),
-			LastUpdatedBy:     "userId",
-			LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
-		},
-		Events: aws.StringSlice([]string{}),
+		AlertSummary: *expectedSummary,
+		Events:       aws.StringSlice([]string{}),
 		EventsLastEvaluatedKey:
 		// nolint
 		aws.String("eyJsb2dUeXBlVG9Ub2tlbiI6eyJsb2d0eXBlIjp7InMzT2JqZWN0S2V5IjoicnVsZXMvbG9ndHlwZS95ZWFyPTIwMjAvbW9udGg9MDEvZGF5PTAxL2hvdXI9MDEvcnVsZV9pZD1ydWxlSWQvMjAyMDAxMDFUMDEwMTAwWi11dWlkNC5qc29uLmd6IiwiZXZlbnRJbmRleCI6MH19fQ=="),
@@ -291,6 +286,21 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 		LastUpdatedBy:     "userId",
 		LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
 	}
+	expectedSummary := &models.AlertSummary{
+		AlertID:           aws.String("alertId"),
+		RuleID:            aws.String("ruleId"),
+		Status:            "OPEN",
+		RuleVersion:       aws.String("ruleVersion"),
+		Title:             aws.String("ruleId"),
+		CreationTime:      aws.Time(time.Date(2020, 1, 1, 1, 5, 0, 0, time.UTC)),
+		UpdateTime:        aws.Time(time.Date(2020, 1, 1, 1, 6, 0, 0, time.UTC)),
+		EventsMatched:     aws.Int(5),
+		Severity:          aws.String("INFO"),
+		DedupString:       aws.String("dedupString"),
+		LastUpdatedBy:     "userId",
+		LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
+		DeliveryResponses: []*models.DeliveryResponse{},
+	}
 
 	eventChannel := getChannel("testEvent")
 	mockS3EventReader := &s3SelectStreamReaderMock{}
@@ -309,21 +319,8 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 	result, err := api.GetAlert(input)
 	require.NoError(t, err)
 	require.Equal(t, &models.GetAlertOutput{
-		AlertSummary: models.AlertSummary{
-			AlertID:           aws.String("alertId"),
-			RuleID:            aws.String("ruleId"),
-			Status:            "OPEN",
-			RuleVersion:       aws.String("ruleVersion"),
-			Title:             aws.String("ruleId"),
-			CreationTime:      aws.Time(time.Date(2020, 1, 1, 1, 5, 0, 0, time.UTC)),
-			UpdateTime:        aws.Time(time.Date(2020, 1, 1, 1, 6, 0, 0, time.UTC)),
-			EventsMatched:     aws.Int(5),
-			Severity:          aws.String("INFO"),
-			DedupString:       aws.String("dedupString"),
-			LastUpdatedBy:     "userId",
-			LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
-		},
-		Events: aws.StringSlice([]string{"testEvent"}),
+		AlertSummary: *expectedSummary,
+		Events:       aws.StringSlice([]string{"testEvent"}),
 		EventsLastEvaluatedKey:
 		// nolint
 		aws.String("eyJsb2dUeXBlVG9Ub2tlbiI6eyJsb2d0eXBlIjp7InMzT2JqZWN0S2V5IjoicnVsZXMvbG9ndHlwZS95ZWFyPTIwMjAvbW9udGg9MDEvZGF5PTAxL2hvdXI9MDEvcnVsZV9pZD1ydWxlSWQvMjAyMDAxMDFUMDEwNTAwWi11dWlkNC5qc29uLmd6IiwiZXZlbnRJbmRleCI6MX19fQ=="),

@@ -163,7 +163,7 @@ func getEventsLatency(input *models.GetMetricsInput, output *models.GetMetricsOu
 
 	values, timestamps := normalizeTimeStamps(input, metricData)
 
-	output.EventsProcessed = &models.MetricResult{
+	output.EventsLatency = &models.MetricResult{
 		SeriesData: models.TimeSeriesMetric{
 			Timestamps: timestamps,
 			Series:     values,

@@ -1,4 +1,4 @@
-package delivery
+package api
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,12 +19,13 @@ package delivery
  */
 
 import (
-	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
+	"time"
+
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/mock"
 
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
 )
 
@@ -33,17 +34,18 @@ type mockOutputsClient struct {
 	mock.Mock
 }
 
-func (m *mockOutputsClient) Slack(alert *alertmodels.Alert, config *outputmodels.SlackConfig) *outputs.AlertDeliveryError {
+func (m *mockOutputsClient) Slack(alert *deliveryModels.Alert, config *outputModels.SlackConfig) *outputs.AlertDeliveryResponse {
 	args := m.Called(alert, config)
-	return args.Get(0).(*outputs.AlertDeliveryError)
+	return args.Get(0).(*outputs.AlertDeliveryResponse)
 }
 
-type mockLambdaClient struct {
-	lambdaiface.LambdaAPI
-	mock.Mock
-}
-
-func (m *mockLambdaClient) Invoke(input *lambda.InvokeInput) (*lambda.InvokeOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*lambda.InvokeOutput), args.Error(1)
+func sampleAlert() *deliveryModels.Alert {
+	return &deliveryModels.Alert{
+		AlertID:      aws.String("alert-id"),
+		OutputIds:    []string{"output-id"},
+		Severity:     "INFO",
+		AnalysisID:   "test-rule-id",
+		AnalysisName: aws.String("test_rule_name"),
+		CreatedAt:    time.Now().UTC(),
+	}
 }

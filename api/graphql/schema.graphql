@@ -44,6 +44,7 @@ type Mutation {
 type Query {
   alert(input: GetAlertInput!): AlertDetails
   alerts(input: ListAlertsInput): ListAlertsResponse
+  sendTestAlert(input: SendTestAlertInput!): SendTestAlertResponse
   destination(id: ID!): Destination
   destinations: [Destination]
   generalSettings: GeneralSettings!
@@ -62,7 +63,7 @@ type Query {
   policy(input: GetPolicyInput!): PolicyDetails
   policies(input: ListPoliciesInput): ListPoliciesResponse
   policiesForResource(input: PoliciesForResourceInput): ListComplianceItemsResponse
-  listAvailableLogTypes: ListAvailableLogTypesResponse
+  listAvailableLogTypes: ListAvailableLogTypesResponse!
   listComplianceIntegrations: [ComplianceIntegration!]!
   listLogIntegrations: [LogIntegration!]!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
@@ -525,6 +526,14 @@ type ListPoliciesResponse {
 type ListResourcesResponse {
   paging: PagingData
   resources: [ResourceSummary]
+}
+
+input SendTestAlertInput {
+  outputIds: [ID!]!
+}
+
+type SendTestAlertResponse {
+  success: Boolean
 }
 
 type Destination {
@@ -1005,5 +1014,5 @@ enum AnalysisTypeEnum {
 }
 
 type ListAvailableLogTypesResponse {
-  logTypes: [String]
+  logTypes: [String!]!
 }

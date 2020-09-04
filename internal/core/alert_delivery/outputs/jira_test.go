@@ -26,11 +26,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
-var jiraConfig = &outputmodels.JiraConfig{
+var jiraConfig = &outputModels.JiraConfig{
 	APIKey:     "apikey",
 	AssigneeID: "ae393k930390",
 	OrgDomain:  "https://panther-labs.atlassian.net",
@@ -44,7 +44,7 @@ func TestJiraAlert(t *testing.T) {
 	client := &OutputClient{httpWrapper: httpWrapper}
 
 	var createdAtTime, _ = time.Parse(time.RFC3339, "2019-08-03T11:40:13Z")
-	alert := &alertmodels.Alert{
+	alert := &alertModels.Alert{
 		AnalysisID:          "ruleId",
 		CreatedAt:           createdAtTime,
 		OutputIds:           []string{"output-id"},
@@ -81,7 +81,7 @@ func TestJiraAlert(t *testing.T) {
 		headers: requestHeader,
 	}
 
-	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryError)(nil))
+	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryResponse)(nil))
 
 	require.Nil(t, client.Jira(alert, jiraConfig))
 	httpWrapper.AssertExpectations(t)

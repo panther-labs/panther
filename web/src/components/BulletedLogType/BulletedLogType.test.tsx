@@ -1,5 +1,3 @@
-package delivery
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,29 +16,14 @@ package delivery
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"testing"
+import React from 'react';
+import { render } from 'test-utils';
+import BulletedLogType from './BulletedLogType';
 
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/stretchr/testify/assert"
-)
+describe('BulletedLogType', () => {
+  it('renders the same color for the same log type', () => {
+    const { container } = render(<BulletedLogType logType="AWS.EC2" />);
 
-func TestGetSQSClient(t *testing.T) {
-	assert.NotNil(t, getSQSClient())
-}
-
-// 95 ms / op
-func BenchmarkSessionCreation(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		session.Must(session.NewSession())
-	}
-}
-
-// 2.7 ms / op
-func BenchmarkClientCreation(b *testing.B) {
-	sess := session.Must(session.NewSession())
-	for i := 0; i < b.N; i++ {
-		sqs.New(sess)
-	}
-}
+    expect(container).toMatchSnapshot();
+  });
+});

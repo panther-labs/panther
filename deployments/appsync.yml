@@ -78,6 +78,17 @@ Resources:
       DefinitionS3Location: ../api/graphql/schema.graphql
 
   ########## Data Sources ##########
+  AlertDeliveryAPILambdaDataSource:
+    Type: AWS::AppSync::DataSource
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !Ref ApiId
+      Name: PantherAlertDeliveryAPILambda
+      Type: AWS_LAMBDA
+      ServiceRoleArn: !Ref ServiceRole
+      LambdaConfig:
+        LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-alert-delivery-api
+
   AlertsAPILambdaDataSource:
     Type: AWS::AppSync::DataSource
     DependsOn: GraphQLSchema
@@ -1734,6 +1745,28 @@ Resources:
             $util.error($util.parseJson($ctx.result.body).message, $statusCode, $ctx.args)
         #else
             $util.error($ctx.result.body, $statusCode, $ctx.args)
+        #end
+
+  SendTestAlertResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Query
+      FieldName: sendTestAlert
+      DataSourceName: !GetAtt AlertDeliveryAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "sendTestAlert": $ctx.args.input
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
+        #else
+          $util.toJson($context.result)
         #end
 
   ListAlertsResolver:
