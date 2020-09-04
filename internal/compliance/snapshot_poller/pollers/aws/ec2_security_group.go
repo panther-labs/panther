@@ -99,15 +99,19 @@ func describeSecurityGroups(ec2Svc ec2iface.EC2API, nextMarker *string) (securit
 		MaxResults: aws.Int64(int64(defaultBatchSize)),
 	},
 		func(page *ec2.DescribeSecurityGroupsOutput, lastPage bool) bool {
-			securityGroups = append(securityGroups, page.SecurityGroups...)
-			marker = page.NextToken
-			return len(securityGroups) < defaultBatchSize
+			return ec2SecurityGroupIterator(page, &securityGroups, &marker)
 		})
 
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "EC2.DescribeSecurityGroupsPages")
 	}
 	return
+}
+
+func ec2SecurityGroupIterator(page *ec2.DescribeSecurityGroupsOutput, groups *[]*ec2.SecurityGroup, marker **string) bool {
+	*groups = append(*groups, page.SecurityGroups...)
+	*marker = page.NextToken
+	return len(*groups) < defaultBatchSize
 }
 
 func buildEc2SecurityGroupSnapshot(securityGroup *ec2.SecurityGroup) *awsmodels.Ec2SecurityGroup {

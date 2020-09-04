@@ -21,6 +21,7 @@ package aws
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -44,6 +45,29 @@ func TestCloudFormationStackDescribeError(t *testing.T) {
 	require.Error(t, err)
 	assert.Nil(t, marker)
 	assert.Nil(t, out)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestCloudFormationStackListIterator(t *testing.T) {
+	var stacks []*cloudformation.Stack
+	var marker *string
+
+	cont := stackIterator(awstest.ExampleDescribeStacks, &stacks, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, stacks, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = stackIterator(awstest.ExampleDescribeStacksContinue, &stacks, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, stacks, 1+i*2)
+	}
+
+	cont = stackIterator(awstest.ExampleDescribeStacksContinue, &stacks, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, stacks, 101)
 }
 
 func TestCloudFormationStackDetectStackDrift(t *testing.T) {

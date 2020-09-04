@@ -104,16 +104,20 @@ func describeInstances(ec2Svc ec2iface.EC2API, nextMarker *string) (instances []
 		MaxResults: aws.Int64(int64(defaultBatchSize)),
 	},
 		func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
-			for _, reservation := range page.Reservations {
-				instances = append(instances, reservation.Instances...)
-			}
-			marker = page.NextToken
-			return len(instances) < defaultBatchSize
+			return ec2InstanceIterator(page, &instances, &marker)
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "EC2.DescribeInstances")
 	}
 	return
+}
+
+func ec2InstanceIterator(page *ec2.DescribeInstancesOutput, instances *[]*ec2.Instance, marker **string) bool {
+	for _, reservation := range page.Reservations {
+		*instances = append(*instances, reservation.Instances...)
+	}
+	*marker = page.NextToken
+	return len(*instances) < defaultBatchSize
 }
 
 // buildEc2InstanceSnapshot makes the necessary API calls to build a full Ec2InstanceSnapshot

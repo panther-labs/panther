@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -36,6 +37,29 @@ func TestRDSInstanceDescribe(t *testing.T) {
 	assert.NotEmpty(t, out)
 	assert.Nil(t, marker)
 	assert.NoError(t, err)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestRdsInstanceListIterator(t *testing.T) {
+	var instances []*rds.DBInstance
+	var marker *string
+
+	cont := rdsInstanceIterator(awstest.ExampleDescribeDBInstancesOutput, &instances, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, instances, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = rdsInstanceIterator(awstest.ExampleDescribeDBInstancesOutputContinue, &instances, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, instances, 1+i*2)
+	}
+
+	cont = rdsInstanceIterator(awstest.ExampleDescribeDBInstancesOutputContinue, &instances, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, instances, 101)
 }
 
 func TestRDSInstanceDescribeError(t *testing.T) {

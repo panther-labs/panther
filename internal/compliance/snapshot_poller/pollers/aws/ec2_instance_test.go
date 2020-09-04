@@ -22,6 +22,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -36,6 +37,29 @@ func TestEC2DescribeInstances(t *testing.T) {
 	require.NoError(t, err)
 	assert.Nil(t, marker)
 	assert.NotEmpty(t, out)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestEc2InstanceListIterator(t *testing.T) {
+	var instances []*ec2.Instance
+	var marker *string
+
+	cont := ec2InstanceIterator(awstest.ExampleDescribeInstancesOutput, &instances, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, instances, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = ec2InstanceIterator(awstest.ExampleDescribeInstancesOutputContinue, &instances, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, instances, 1+i*2)
+	}
+
+	cont = ec2InstanceIterator(awstest.ExampleDescribeInstancesOutputContinue, &instances, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, instances, 101)
 }
 
 func TestEC2DescribeInstancesError(t *testing.T) {

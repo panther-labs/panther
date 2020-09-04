@@ -140,15 +140,19 @@ func describeVpcs(ec2Svc ec2iface.EC2API, nextMarker *string) (vpcs []*ec2.Vpc, 
 			MaxResults: aws.Int64(int64(defaultBatchSize)),
 		},
 		func(page *ec2.DescribeVpcsOutput, lastPage bool) bool {
-			vpcs = append(vpcs, page.Vpcs...)
-			marker = page.NextToken
-			return len(vpcs) < defaultBatchSize
+			return ec2VpcIterator(page, &vpcs, &marker)
 		})
 
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "EC2.DescribeVpcsPages")
 	}
 	return
+}
+
+func ec2VpcIterator(page *ec2.DescribeVpcsOutput, vpcs *[]*ec2.Vpc, marker **string) bool {
+	*vpcs = append(*vpcs, page.Vpcs...)
+	*marker = page.NextToken
+	return len(*vpcs) < defaultBatchSize
 }
 
 // describeFlowLogs returns a list of flow logs associated to a given vpcID

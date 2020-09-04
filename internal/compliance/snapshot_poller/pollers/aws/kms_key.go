@@ -94,15 +94,19 @@ func listKeys(kmsSvc kmsiface.KMSAPI, nextMarker *string) (keys []*kms.KeyListEn
 			Limit:  aws.Int64(int64(defaultBatchSize)),
 		},
 		func(page *kms.ListKeysOutput, lastPage bool) bool {
-			keys = append(keys, page.Keys...)
-			marker = page.NextMarker
-			return len(keys) < defaultBatchSize
+			return kmsKeyIterator(page, &keys, &marker)
 		},
 	)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "KMS.ListKeysPages")
 	}
 	return
+}
+
+func kmsKeyIterator(page *kms.ListKeysOutput, keys *[]*kms.KeyListEntry, marker **string) bool {
+	*keys = append(*keys, page.Keys...)
+	*marker = page.NextMarker
+	return len(*keys) < defaultBatchSize
 }
 
 // getKeyRotationStatus returns the rotation status for a given KMS key

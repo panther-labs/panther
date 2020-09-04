@@ -100,14 +100,18 @@ func describeVolumes(ec2Svc ec2iface.EC2API, nextMarker *string) (volumes []*ec2
 		MaxResults: aws.Int64(int64(defaultBatchSize)),
 	},
 		func(page *ec2.DescribeVolumesOutput, lastPage bool) bool {
-			volumes = append(volumes, page.Volumes...)
-			marker = page.NextToken
-			return len(volumes) < defaultBatchSize
+			return ec2VolumeIterator(page, &volumes, &marker)
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "EC2.DescribeVolumes")
 	}
 	return
+}
+
+func ec2VolumeIterator(page *ec2.DescribeVolumesOutput, volumes *[]*ec2.Volume, marker **string) bool {
+	*volumes = append(*volumes, page.Volumes...)
+	*marker = page.NextToken
+	return len(*volumes) < defaultBatchSize
 }
 
 // describeSnapshots returns all the snapshots for a given EC2 volume

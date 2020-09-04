@@ -22,6 +22,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -36,6 +37,29 @@ func TestEC2DescribeSecurityGroups(t *testing.T) {
 	assert.NotEmpty(t, out)
 	assert.Nil(t, marker)
 	assert.NoError(t, err)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestEc2SecurityGroupListIterator(t *testing.T) {
+	var groups []*ec2.SecurityGroup
+	var marker *string
+
+	cont := ec2SecurityGroupIterator(awstest.ExampleDescribeSecurityGroupsOutput, &groups, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, groups, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = ec2SecurityGroupIterator(awstest.ExampleDescribeSecurityGroupsOutputContinue, &groups, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, groups, 1+i*2)
+	}
+
+	cont = ec2SecurityGroupIterator(awstest.ExampleDescribeSecurityGroupsOutputContinue, &groups, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, groups, 101)
 }
 
 func TestEC2DescribeSecurityGroupsError(t *testing.T) {

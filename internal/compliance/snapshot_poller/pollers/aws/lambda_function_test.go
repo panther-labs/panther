@@ -21,6 +21,7 @@ package aws
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -35,6 +36,29 @@ func TestLambdaFunctionsList(t *testing.T) {
 	assert.NotEmpty(t, out)
 	assert.Nil(t, marker)
 	assert.NoError(t, err)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestFunctionListIterator(t *testing.T) {
+	var functions []*lambda.FunctionConfiguration
+	var marker *string
+
+	cont := functionIterator(awstest.ExampleListFunctions, &functions, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, functions, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = functionIterator(awstest.ExampleListFunctionsContinue, &functions, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, functions, 1+i*2)
+	}
+
+	cont = functionIterator(awstest.ExampleListFunctionsContinue, &functions, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, functions, 101)
 }
 
 func TestLambdaFunctionsListError(t *testing.T) {

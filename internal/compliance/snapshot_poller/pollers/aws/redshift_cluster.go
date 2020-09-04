@@ -118,14 +118,18 @@ func describeClusters(redshiftSvc redshiftiface.RedshiftAPI, nextMarker *string)
 		MaxRecords: aws.Int64(int64(defaultBatchSize)),
 	},
 		func(page *redshift.DescribeClustersOutput, lastPage bool) bool {
-			clusters = append(clusters, page.Clusters...)
-			marker = page.Marker
-			return len(clusters) < defaultBatchSize
+			return redshiftClusterIterator(page, &clusters, &marker)
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "Redshift.DescribeClustersPages")
 	}
 	return
+}
+
+func redshiftClusterIterator(page *redshift.DescribeClustersOutput, clusters *[]*redshift.Cluster, marker **string) bool {
+	*clusters = append(*clusters, page.Clusters...)
+	*marker = page.Marker
+	return len(*clusters) < defaultBatchSize
 }
 
 // describeLoggingStatus determines whether or not a redshift cluster has logging enabled

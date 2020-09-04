@@ -21,6 +21,7 @@ package aws
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -35,6 +36,29 @@ func TestEC2DescribeVolumes(t *testing.T) {
 	assert.NotEmpty(t, out)
 	assert.Nil(t, marker)
 	assert.NoError(t, err)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestEc2VolumeListIterator(t *testing.T) {
+	var volumes []*ec2.Volume
+	var marker *string
+
+	cont := ec2VolumeIterator(awstest.ExampleDescribeVolumesOutput, &volumes, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, volumes, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = ec2VolumeIterator(awstest.ExampleDescribeVolumesOutputContinue, &volumes, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, volumes, 1+i*2)
+	}
+
+	cont = ec2VolumeIterator(awstest.ExampleDescribeVolumesOutputContinue, &volumes, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, volumes, 101)
 }
 
 func TestEC2DescribeVolumesError(t *testing.T) {

@@ -117,14 +117,18 @@ func listFunctions(lambdaSvc lambdaiface.LambdaAPI, nextMarker *string) (
 		MaxItems: aws.Int64(int64(defaultBatchSize)),
 	},
 		func(page *lambda.ListFunctionsOutput, lastPage bool) bool {
-			functions = append(functions, page.Functions...)
-			marker = page.NextMarker
-			return len(functions) < defaultBatchSize
+			return functionIterator(page, &functions, &marker)
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "Lambda.ListFunctionsPages")
 	}
 	return
+}
+
+func functionIterator(page *lambda.ListFunctionsOutput, functions *[]*lambda.FunctionConfiguration, marker **string) bool {
+	*functions = append(*functions, page.Functions...)
+	*marker = page.NextMarker
+	return len(*functions) < defaultBatchSize
 }
 
 // listTags returns the tags for a given lambda function

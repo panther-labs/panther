@@ -22,6 +22,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/stretchr/testify/assert"
 
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
@@ -35,6 +36,29 @@ func TestEC2DescribeNetworkAcls(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Nil(t, marker)
 	assert.NotEmpty(t, out)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestEc2NetworkAclListIterator(t *testing.T) {
+	var nacls []*ec2.NetworkAcl
+	var marker *string
+
+	cont := ec2NaclIterator(awstest.ExampleDescribeNetworkAclsOutput, &nacls, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, nacls, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = ec2NaclIterator(awstest.ExampleDescribeNetworkAclsOutputContinue, &nacls, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, nacls, 1+i*2)
+	}
+
+	cont = ec2NaclIterator(awstest.ExampleDescribeNetworkAclsOutputContinue, &nacls, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, nacls, 101)
 }
 
 func TestEC2DescribeNetworkAclsError(t *testing.T) {

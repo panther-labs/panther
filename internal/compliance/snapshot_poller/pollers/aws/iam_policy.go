@@ -94,9 +94,7 @@ func listPolicies(iamSvc iamiface.IAMAPI, nextMarker *string) (policies []*iam.P
 			Marker:   nextMarker,
 		},
 		func(page *iam.ListPoliciesOutput, lastPage bool) bool {
-			policies = append(policies, page.Policies...)
-			marker = page.Marker
-			return len(policies) < defaultBatchSize
+			return iamPolicyIterator(page, &policies, &marker)
 		},
 	)
 	if err != nil {
@@ -104,6 +102,12 @@ func listPolicies(iamSvc iamiface.IAMAPI, nextMarker *string) (policies []*iam.P
 	}
 
 	return
+}
+
+func iamPolicyIterator(page *iam.ListPoliciesOutput, policies *[]*iam.Policy, marker **string) bool {
+	*policies = append(*policies, page.Policies...)
+	*marker = page.Marker
+	return len(*policies) < defaultBatchSize
 }
 
 // listEntitiesForPolicy returns the entities that have the given policy

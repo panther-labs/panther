@@ -304,15 +304,19 @@ func listUsers(iamSvc iamiface.IAMAPI, nextMarker *string) (users []*iam.User, m
 			MaxItems: aws.Int64(int64(defaultBatchSize)),
 		},
 		func(page *iam.ListUsersOutput, lastPage bool) bool {
-			users = append(users, page.Users...)
-			marker = page.Marker
-			return len(users) < defaultBatchSize
+			return iamUserIterator(page, &users, &marker)
 		},
 	)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "IAM.ListUsersPages")
 	}
 	return
+}
+
+func iamUserIterator(page *iam.ListUsersOutput, users *[]*iam.User, marker **string) bool {
+	*users = append(*users, page.Users...)
+	*marker = page.Marker
+	return len(*users) < defaultBatchSize
 }
 
 // getUserPolicies aggregates all the policies assigned to a user by polling both

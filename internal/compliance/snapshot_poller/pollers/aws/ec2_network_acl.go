@@ -99,14 +99,18 @@ func describeNetworkAcls(ec2Svc ec2iface.EC2API, nextMarker *string) (networkACL
 		MaxResults: aws.Int64(int64(defaultBatchSize)),
 	},
 		func(page *ec2.DescribeNetworkAclsOutput, lastPage bool) bool {
-			networkACLs = append(networkACLs, page.NetworkAcls...)
-			marker = page.NextToken
-			return len(networkACLs) < defaultBatchSize
+			return ec2NaclIterator(page, &networkACLs, &marker)
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "EC2.DescribeNetworkAclsPages")
 	}
 	return
+}
+
+func ec2NaclIterator(page *ec2.DescribeNetworkAclsOutput, networkACLs *[]*ec2.NetworkAcl, marker **string) bool {
+	*networkACLs = append(*networkACLs, page.NetworkAcls...)
+	*marker = page.NextToken
+	return len(*networkACLs) < defaultBatchSize
 }
 
 func buildEc2NetworkAclSnapshot(networkACL *ec2.NetworkAcl) *awsmodels.Ec2NetworkAcl {

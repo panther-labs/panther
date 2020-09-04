@@ -39,6 +39,29 @@ func TestEcsClusterList(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// Test the iterator works on consecutive pages but stops at max page size
+func TestEcsClusterListIterator(t *testing.T) {
+	var clusters []*string
+	var marker *string
+
+	cont := ecsClusterIterator(awstest.ExampleListClusters, &clusters, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, clusters, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = ecsClusterIterator(awstest.ExampleListClustersContinue, &clusters, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, clusters, 1+i*2)
+	}
+
+	cont = ecsClusterIterator(awstest.ExampleListClustersContinue, &clusters, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, clusters, 101)
+}
+
 func TestEcsClusterListError(t *testing.T) {
 	mockSvc := awstest.BuildMockEcsSvcError([]string{"ListClustersPages"})
 

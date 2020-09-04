@@ -21,6 +21,7 @@ package aws
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/kms"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -36,6 +37,29 @@ func TestKMSKeyList(t *testing.T) {
 	assert.NotEmpty(t, out)
 	assert.Nil(t, marker)
 	assert.NoError(t, err)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestKmskeyListIterator(t *testing.T) {
+	var keys []*kms.KeyListEntry
+	var marker *string
+
+	cont := kmsKeyIterator(awstest.ExampleListKeysOutput, &keys, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, keys, 2)
+
+	for i := 2; i < 50; i++ {
+		cont = kmsKeyIterator(awstest.ExampleListKeysOutputContinue, &keys, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, keys, i*2)
+	}
+
+	cont = kmsKeyIterator(awstest.ExampleListKeysOutputContinue, &keys, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, keys, 100)
 }
 
 func TestKMSKeyListError(t *testing.T) {

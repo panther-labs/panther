@@ -71,14 +71,18 @@ func listGroups(iamSvc iamiface.IAMAPI, nextMarker *string) (groups []*iam.Group
 		MaxItems: aws.Int64(int64(defaultBatchSize)),
 	},
 		func(page *iam.ListGroupsOutput, lastPage bool) bool {
-			groups = append(groups, page.Groups...)
-			marker = page.Marker
-			return len(groups) < defaultBatchSize
+			return iamGroupIterator(page, &groups, &marker)
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "IAM.ListGroupsPages")
 	}
 	return
+}
+
+func iamGroupIterator(page *iam.ListGroupsOutput, groups *[]*iam.Group, marker **string) bool {
+	*groups = append(*groups, page.Groups...)
+	*marker = page.Marker
+	return len(*groups) < defaultBatchSize
 }
 
 // getGroup provides detailed information about a given IAM Group

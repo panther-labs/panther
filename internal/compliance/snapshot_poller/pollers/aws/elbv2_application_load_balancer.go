@@ -124,14 +124,18 @@ func describeLoadBalancers(elbv2Svc elbv2iface.ELBV2API, nextMarker *string) (
 		PageSize: aws.Int64(int64(defaultBatchSize)),
 	},
 		func(page *elbv2.DescribeLoadBalancersOutput, lastPage bool) bool {
-			loadBalancers = append(loadBalancers, page.LoadBalancers...)
-			marker = page.NextMarker
-			return len(loadBalancers) < defaultBatchSize
+			return loadBalancerIterator(page, &loadBalancers, &marker)
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "ELBV2.DescribeLoadBalancersPages")
 	}
 	return
+}
+
+func loadBalancerIterator(page *elbv2.DescribeLoadBalancersOutput, loadBalancers *[]*elbv2.LoadBalancer, marker **string) bool {
+	*loadBalancers = append(*loadBalancers, page.LoadBalancers...)
+	*marker = page.NextMarker
+	return len(*loadBalancers) < defaultBatchSize
 }
 
 // describeListeners returns all the listeners for a given ELBV2 load balancer

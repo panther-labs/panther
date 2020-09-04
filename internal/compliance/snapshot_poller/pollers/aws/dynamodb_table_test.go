@@ -38,6 +38,29 @@ func TestDynamoDBList(t *testing.T) {
 	assert.NotEmpty(t, out)
 }
 
+// Test the iterator works on consecutive pages but stops at max page size
+func TestDynamodbTableListIterator(t *testing.T) {
+	var tables []*string
+	var marker *string
+
+	cont := dynamoTableIterator(awstest.ExampleListTablesOutput, &tables, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, tables, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = dynamoTableIterator(awstest.ExampleListTablesOutputContinue, &tables, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, tables, 1+i*2)
+	}
+
+	cont = dynamoTableIterator(awstest.ExampleListTablesOutputContinue, &tables, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, tables, 101)
+}
+
 func TestDynamoDBListError(t *testing.T) {
 	mockSvc := awstest.BuildMockDynamoDBSvcError([]string{"ListTablesPages"})
 

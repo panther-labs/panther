@@ -81,14 +81,18 @@ func listClusters(ecsSvc ecsiface.ECSAPI, nextMarker *string) (clusters []*strin
 		MaxResults: aws.Int64(int64(defaultBatchSize)),
 	},
 		func(page *ecs.ListClustersOutput, lastPage bool) bool {
-			clusters = append(clusters, page.ClusterArns...)
-			marker = page.NextToken
-			return len(clusters) < defaultBatchSize
+			return ecsClusterIterator(page, &clusters, &marker)
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "ECS.ListClustersPages")
 	}
 	return
+}
+
+func ecsClusterIterator(page *ecs.ListClustersOutput, clusters *[]*string, marker **string) bool {
+	*clusters = append(*clusters, page.ClusterArns...)
+	*marker = page.NextToken
+	return len(*clusters) < defaultBatchSize
 }
 
 // describeCluster provides detailed information for a given ECS cluster

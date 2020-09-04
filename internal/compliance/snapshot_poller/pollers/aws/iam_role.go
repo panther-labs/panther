@@ -94,15 +94,19 @@ func listRoles(iamSvc iamiface.IAMAPI, nextPage *string) (roles []*iam.Role, mar
 			MaxItems: aws.Int64(int64(defaultBatchSize)),
 		},
 		func(page *iam.ListRolesOutput, lastPage bool) bool {
-			roles = append(roles, page.Roles...)
-			marker = page.Marker
-			return len(roles) < defaultBatchSize
+			return iamRoleIterator(page, &roles, &marker)
 		},
 	)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "IAM.ListRolesPages")
 	}
 	return
+}
+
+func iamRoleIterator(page *iam.ListRolesOutput, roles *[]*iam.Role, marker **string) bool {
+	*roles = append(*roles, page.Roles...)
+	*marker = page.Marker
+	return len(*roles) < defaultBatchSize
 }
 
 // getRolePolicy returns the policy document for a given IAM Role and inline policy name

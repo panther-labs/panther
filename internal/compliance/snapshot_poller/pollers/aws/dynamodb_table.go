@@ -111,15 +111,19 @@ func listTables(dynamoDBSvc dynamodbiface.DynamoDBAPI, nextMarker *string) (tabl
 		Limit:                   aws.Int64(int64(defaultBatchSize)),
 	},
 		func(page *dynamodb.ListTablesOutput, lastPage bool) bool {
-			tables = append(tables, page.TableNames...)
-			// DynamoDB uses the name of the last table evaluated as the pagination marker
-			marker = page.LastEvaluatedTableName
-			return len(tables) >= defaultBatchSize
+			return dynamoTableIterator(page, &tables, &marker)
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "DynamoDB.ListTablesPages")
 	}
 	return
+}
+
+func dynamoTableIterator(page *dynamodb.ListTablesOutput, tables *[]*string, marker **string) bool {
+	*tables = append(*tables, page.TableNames...)
+	// DynamoDB uses the name of the last table evaluated as the pagination marker
+	*marker = page.LastEvaluatedTableName
+	return len(*tables) < defaultBatchSize
 }
 
 // describeTable provides detailed information about a given DynamoDB table

@@ -45,6 +45,20 @@ var (
 		},
 	}
 
+	ExampleListKeysOutputContinue = &kms.ListKeysOutput{
+		Keys: []*kms.KeyListEntry{
+			{
+				KeyArn: aws.String("arn:aws:kms:us-west-2:111111111111:key/188c57ed-b28a-4c0e-9821-f4940d15cb0a"),
+				KeyId:  aws.String("188c57ed-b28a-4c0e-9821-f4940d15cb0a"),
+			},
+			{
+				KeyArn: aws.String("arn:aws:kms:us-west-2:111111111111:key/d15a1e37-3ef7-4882-9be5-ef3a024114db"),
+				KeyId:  aws.String("d15a1e37-3ef7-4882-9be5-ef3a024114db"),
+			},
+		},
+		NextMarker: aws.String("1"),
+	}
+
 	ExampleGetKeyRotationStatusOutput = &kms.GetKeyRotationStatusOutput{
 		KeyRotationEnabled: aws.Bool(true),
 	}
@@ -152,7 +166,7 @@ var (
 // KMS mock
 
 // SetupMockKms is used to override the KMS Client initializer
-func SetupMockKms(sess *session.Session, cfg *aws.Config) interface{} {
+func SetupMockKms(_ *session.Session, _ *aws.Config) interface{} {
 	return MockKmsForSetup
 }
 

@@ -119,6 +119,29 @@ func TestIAMUsersList(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// Test the iterator works on consecutive pages but stops at max page size
+func TestIamUserListIterator(t *testing.T) {
+	var users []*iam.User
+	var marker *string
+
+	cont := iamUserIterator(awstest.ExampleListUsers, &users, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, users, 2)
+
+	for i := 2; i < 50; i++ {
+		cont = iamUserIterator(awstest.ExampleListUsersContinue, &users, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, users, i*2)
+	}
+
+	cont = iamUserIterator(awstest.ExampleListUsersContinue, &users, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, users, 100)
+}
+
 func TestIAMUsersListError(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvcError([]string{"ListUsersPages"})
 

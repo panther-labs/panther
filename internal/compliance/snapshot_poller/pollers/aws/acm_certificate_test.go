@@ -38,7 +38,7 @@ func TestAcmCertificateList(t *testing.T) {
 	assert.Len(t, out, 1)
 }
 
-// Test the iterator works on two consecutive pages
+// Test the iterator works on consecutive pages but stops at max page size
 func TestAcmCertificateListIterator(t *testing.T) {
 	var acmCerts []*acm.CertificateSummary
 	var marker *string
@@ -48,28 +48,17 @@ func TestAcmCertificateListIterator(t *testing.T) {
 	assert.Nil(t, marker)
 	assert.Len(t, acmCerts, 1)
 
-	cont = certificateIterator(awstest.ExampleListCertificatesOutput, &acmCerts, &marker)
-	assert.True(t, cont)
-	assert.Nil(t, marker)
-	assert.Len(t, acmCerts, 2)
-}
-
-// Test the iterator works on consecutive pages but stops at max page size
-func TestAcmCertificateListIteratorStopEarly(t *testing.T) {
-	var acmCerts []*acm.CertificateSummary
-	var marker *string
-
 	for i := 1; i < 50; i++ {
-		cont := certificateIterator(awstest.ExampleListCertificatesOutputContinue, &acmCerts, &marker)
+		cont = certificateIterator(awstest.ExampleListCertificatesOutputContinue, &acmCerts, &marker)
 		assert.True(t, cont)
 		assert.NotNil(t, marker)
-		assert.Len(t, acmCerts, i*2)
+		assert.Len(t, acmCerts, 1+i*2)
 	}
 
-	cont := certificateIterator(awstest.ExampleListCertificatesOutputContinue, &acmCerts, &marker)
+	cont = certificateIterator(awstest.ExampleListCertificatesOutputContinue, &acmCerts, &marker)
 	assert.False(t, cont)
 	assert.NotNil(t, marker)
-	assert.Len(t, acmCerts, 100)
+	assert.Len(t, acmCerts, 101)
 }
 
 func TestAcmCertificateListError(t *testing.T) {

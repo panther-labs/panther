@@ -153,15 +153,19 @@ func describeStacks(cloudformationSvc cloudformationiface.CloudFormationAPI, nex
 		NextToken: nextMarker,
 	},
 		func(page *cloudformation.DescribeStacksOutput, lastPage bool) bool {
-			stacks = append(stacks, page.Stacks...)
-			marker = page.NextToken
-			return len(stacks) < defaultBatchSize
+			return stackIterator(page, &stacks, &marker)
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "CloudFormation.DescribeStacksPages")
 	}
 
 	return
+}
+
+func stackIterator(page *cloudformation.DescribeStacksOutput, stacks *[]*cloudformation.Stack, marker **string) bool {
+	*stacks = append(*stacks, page.Stacks...)
+	*marker = page.NextToken
+	return len(*stacks) < defaultBatchSize
 }
 
 // detectStackDrift initiates the stack drift detection process, which may take several minutes to complete

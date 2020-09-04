@@ -124,14 +124,18 @@ func describeLogGroups(cloudwatchLogsSvc cloudwatchlogsiface.CloudWatchLogsAPI, 
 		NextToken: nextMarker,
 	},
 		func(page *cloudwatchlogs.DescribeLogGroupsOutput, lastPage bool) bool {
-			logGroups = append(logGroups, page.LogGroups...)
-			marker = page.NextToken
-			return len(logGroups) < cloudwatchlogsBatchSize
+			return loggroupIterator(page, &logGroups, &marker)
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "CloudWatchLogs.DescribeLogGroups")
 	}
 	return
+}
+
+func loggroupIterator(page *cloudwatchlogs.DescribeLogGroupsOutput, logGroups *[]*cloudwatchlogs.LogGroup, marker **string) bool {
+	*logGroups = append(*logGroups, page.LogGroups...)
+	*marker = page.NextToken
+	return len(*logGroups) < cloudwatchlogsBatchSize
 }
 
 // listTagsLogGroup returns the tags for a given log group

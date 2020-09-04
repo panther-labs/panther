@@ -23,6 +23,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -38,6 +39,29 @@ func TestEC2DescribeVpcs(t *testing.T) {
 	assert.NotEmpty(t, out)
 	assert.Nil(t, marker)
 	assert.NoError(t, err)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestEc2VpcListIterator(t *testing.T) {
+	var vpcs []*ec2.Vpc
+	var marker *string
+
+	cont := ec2VpcIterator(awstest.ExampleDescribeVpcsOutput, &vpcs, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, vpcs, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = ec2VpcIterator(awstest.ExampleDescribeVpcsOutputContinue, &vpcs, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, vpcs, 1+i*2)
+	}
+
+	cont = ec2VpcIterator(awstest.ExampleDescribeVpcsOutputContinue, &vpcs, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, vpcs, 101)
 }
 
 func TestEC2DescribeVpcsError(t *testing.T) {

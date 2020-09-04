@@ -21,6 +21,7 @@ package aws
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -35,6 +36,29 @@ func TestCloudWatchLogsLogGroupsDescribe(t *testing.T) {
 	require.NoError(t, err)
 	assert.Nil(t, marker)
 	assert.NotEmpty(t, out)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestCloudWatchLogsLogGroupListIterator(t *testing.T) {
+	var logGroups []*cloudwatchlogs.LogGroup
+	var marker *string
+
+	cont := loggroupIterator(awstest.ExampleDescribeLogGroups, &logGroups, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, logGroups, 2)
+
+	for i := 2; i < 5; i++ {
+		cont = loggroupIterator(awstest.ExampleDescribeLogGroupsContinue, &logGroups, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, logGroups, i*2)
+	}
+
+	cont = loggroupIterator(awstest.ExampleDescribeLogGroupsContinue, &logGroups, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, logGroups, 10)
 }
 
 func TestCloudWatchLogsLogGroupsDescribeError(t *testing.T) {

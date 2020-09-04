@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/redshift"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -36,6 +37,29 @@ func TestRedshiftClusterDescribe(t *testing.T) {
 	assert.NotEmpty(t, out)
 	assert.Nil(t, marker)
 	assert.NoError(t, err)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestRedshiftClusterListIterator(t *testing.T) {
+	var clusters []*redshift.Cluster
+	var marker *string
+
+	cont := redshiftClusterIterator(awstest.ExampleDescribeClustersOutput, &clusters, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, clusters, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = redshiftClusterIterator(awstest.ExampleDescribeClustersOutputContinue, &clusters, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, clusters, 1+i*2)
+	}
+
+	cont = redshiftClusterIterator(awstest.ExampleDescribeClustersOutputContinue, &clusters, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, clusters, 101)
 }
 
 func TestRedshiftClusterDescribeError(t *testing.T) {

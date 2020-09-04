@@ -47,6 +47,29 @@ func TestIamGroupListError(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// Test the iterator works on consecutive pages but stops at max page size
+func TestIamGroupListIterator(t *testing.T) {
+	var groups []*iam.Group
+	var marker *string
+
+	cont := iamGroupIterator(awstest.ExampleListGroupsOutput, &groups, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, groups, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = iamGroupIterator(awstest.ExampleListGroupsOutputContinue, &groups, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, groups, 1+i*2)
+	}
+
+	cont = iamGroupIterator(awstest.ExampleListGroupsOutputContinue, &groups, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, groups, 101)
+}
+
 func TestIamGroupListPolicies(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvc([]string{"ListGroupPoliciesPages"})
 

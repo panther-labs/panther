@@ -115,14 +115,18 @@ func describeDBInstances(rdsSvc rdsiface.RDSAPI, nextMarker *string) (instances 
 		MaxRecords: aws.Int64(int64(defaultBatchSize)),
 	},
 		func(page *rds.DescribeDBInstancesOutput, lastPage bool) bool {
-			instances = append(instances, page.DBInstances...)
-			marker = page.Marker
-			return len(instances) < defaultBatchSize
+			return rdsInstanceIterator(page, &instances, &marker)
 		})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "RDS.DescribeDBInstancesPages")
 	}
 	return
+}
+
+func rdsInstanceIterator(page *rds.DescribeDBInstancesOutput, instances *[]*rds.DBInstance, marker **string) bool {
+	*instances = append(*instances, page.DBInstances...)
+	*marker = page.Marker
+	return len(*instances) < defaultBatchSize
 }
 
 // describeDBSnapshots provides information about the snapshots of an RDS instance

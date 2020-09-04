@@ -21,6 +21,7 @@ package aws
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/stretchr/testify/assert"
 
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
@@ -43,6 +44,29 @@ func TestElbv2DescribeLoadBalancersError(t *testing.T) {
 	assert.Nil(t, out)
 	assert.Nil(t, marker)
 	assert.Error(t, err)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestElbv2LoadBalancerListIterator(t *testing.T) {
+	var loadBalancers []*elbv2.LoadBalancer
+	var marker *string
+
+	cont := loadBalancerIterator(awstest.ExampleDescribeLoadBalancersOutput, &loadBalancers, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, loadBalancers, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = loadBalancerIterator(awstest.ExampleDescribeLoadBalancersOutputContinue, &loadBalancers, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, loadBalancers, 1+i*2)
+	}
+
+	cont = loadBalancerIterator(awstest.ExampleDescribeLoadBalancersOutputContinue, &loadBalancers, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, loadBalancers, 101)
 }
 
 func TestElbv2DescribeListeners(t *testing.T) {

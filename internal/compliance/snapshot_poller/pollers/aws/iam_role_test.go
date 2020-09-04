@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -36,6 +37,29 @@ func TestIAMRolesList(t *testing.T) {
 	assert.Equal(t, awstest.ExampleIAMRole, out[0])
 	assert.Nil(t, marker)
 	assert.NoError(t, err)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestIamRoleListIterator(t *testing.T) {
+	var roles []*iam.Role
+	var marker *string
+
+	cont := iamRoleIterator(awstest.ExampleListRolesOutput, &roles, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, roles, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = iamRoleIterator(awstest.ExampleListRolesOutputContinue, &roles, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, roles, 1+i*2)
+	}
+
+	cont = iamRoleIterator(awstest.ExampleListRolesOutputContinue, &roles, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, roles, 101)
 }
 
 func TestIAMRolesListError(t *testing.T) {

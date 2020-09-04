@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -36,6 +37,29 @@ func TestIAMPolicyList(t *testing.T) {
 	assert.NotEmpty(t, out)
 	assert.Nil(t, marker)
 	assert.NoError(t, err)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestIamPolicyListIterator(t *testing.T) {
+	var policies []*iam.Policy
+	var marker *string
+
+	cont := iamPolicyIterator(awstest.ExampleListPolicies, &policies, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, policies, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = iamPolicyIterator(awstest.ExampleListPoliciesContinue, &policies, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, policies, 1+i*2)
+	}
+
+	cont = iamPolicyIterator(awstest.ExampleListPoliciesContinue, &policies, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, policies, 101)
 }
 
 func TestIAMPolicyListError(t *testing.T) {
