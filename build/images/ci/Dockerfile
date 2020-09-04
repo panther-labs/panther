@@ -16,63 +16,74 @@
 
 # Published version:
 #     pantherlabs/panther-buildpack:1.8.0
+#
+# When updating, bump the tag to the upcoming panther release.
 
-# TODO: base off of minimal CI image
 FROM buildpack-deps:buster-scm
 
-LABEL description="An image that contains the necessary build tools to build panther"
+LABEL description="Panther CircleCI combined environment"
 
-ENV GOLANG_VERSION="1.15.1"
-ENV NODE_VERSION="12.18.3"
+ENV GO_VERSION=1.15.1 MAGE_VERSION=1.10.0 NODE_VERSION=12.18.3 PYTHON_VERSION=3.7.9
 
 
 # ****************     APT Packages     *******************
-# gcc and libc6-dev are necessary for 'go test'
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        gcc \
-        libc6-dev \
+		# Common
+        curl \
+        git \
         make \
-        python3 \
-        python3-venv \
         unzip \
-	&& rm -rf /var/lib/apt/lists/*
-
+        wget \
+        # CGO
+        g++ \
+        libc6-dev \
+        # Python
+        build-essential \
+        ca-certificates \
+        libbz2-dev \
+        liblzma-dev \
+        libncurses5-dev \
+        libncursesw5-dev \
+        libreadline-dev \
+        libffi-dev \
+        libsqlite3-dev \
+        libssl-dev \
+        libxml2-dev \
+        libxmlsec1-dev \
+        llvm \
+        python-openssl \
+        tk-dev \
+        xz-utils \
+        zlib1g-dev && \
+	rm -rf /var/lib/apt/lists/*
 
 
 # ****************     GO     *******************
-# Depending on the CPU architecture of the latest stable debian stretch, pick which GO distribution
-# should install and then download and unpack it
-RUN set -eux \
-    && dpkgArch="$(dpkg --print-architecture)" \
-    && case "${dpkgArch##*-}" in \
-            amd64) goRelArch='linux-amd64'; goRelSha256='70ac0dbf60a8ee9236f337ed0daa7a4c3b98f6186d4497826f68e97c0c0413f6' ;; \
-            armhf) goRelArch='linux-armv6l'; goRelSha256='62db2fac55309f4bc1f73577165dcb331a4c649e39bdbe04943579e0b2b0c06e' ;; \
-            arm64) goRelArch='linux-arm64'; goRelSha256='ca21c771d906fbba8840b3a4831b1aa118f6e09b5d028323592faba382787a03' ;; \
-            i386) goRelArch='linux-386'; goRelSha256='7e0c8e9749be69c28d3333a81ce8386916ba1306b40476a43f7794dc309eaf4c' ;; \
-            ppc64el) goRelArch='linux-ppc64le'; goRelSha256='50bdca87edc30bdc12956dab765c1b85249373a156a7a00eb998cdc70790fb94' ;; \
-            s390x) goRelArch='linux-s390x'; goRelSha256='2c3823790fc5508bd53bb104e6cc0052d1892855546a0eae0ea7809c84160543' ;; \
-    		*) echo >&2 "warning: current architecture ($dpkgArch) does not have a corresponding Go binary release"; exit 1 ;; \
-    	esac \
-    && wget --no-verbose -O go.tgz https://golang.org/dl/go${GOLANG_VERSION}.${goRelArch}.tar.gz \
-    && echo "${goRelSha256} *go.tgz" | sha256sum -c - \
-    && tar -C /usr/local -xzf go.tgz \
-    && rm go.tgz
+# Based on https://github.com/CircleCI-Public/cimg-go/blob/master/1.15/Dockerfile
 
-# Update global ENV variables
-ENV GOPATH /go
-ENV PATH="$GOPATH/bin:/usr/local/go/bin:$PATH"
-
-# Install mage
-RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
-RUN go get github.com/magefile/mage
-
+ENV GOPATH=/go PATH=/go/bin:/usr/local/go/bin:$PATH
+RUN curl -sSL "https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz" | tar -xz -C /usr/local && \
+    mkdir -p ${GOPATH}/src ${GOPATH}/bin && \
+    # Install mage (magefile.org)
+    curl -sSL "https://github.com/magefile/mage/releases/download/v${MAGE_VERSION}/mage_${MAGE_VERSION}_Linux-64bit.tar.gz" | tar -xz -C /usr/local && \
+    mv /usr/local/mage ${GOPATH}/bin && \
+    mage -version
 
 
 # ****************     NODE JS     *******************
-RUN nPackageSrcDir="/usr/src/n" \
-    && git clone https://github.com/tj/n $nPackageSrcDir \
-    && cd $nPackageSrcDir \
-    && make install \
-    && n $NODE_VERSION \
-    && cd / \
-    && rm -rf $nPackageSrcDir
+# Based on https://github.com/CircleCI-Public/cimg-node/blob/master/12.18/Dockerfile
+RUN curl -L -o node.tar.xz "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" && \
+	tar -xJf node.tar.xz -C /usr/local --strip-components=1 && \
+	rm node.tar.xz && \
+	ln -s /usr/local/bin/node /usr/local/bin/nodejs && \
+	node --version && \
+	npm -version
+
+
+# ****************     PYTHON     *******************
+# Based on https://github.com/CircleCI-Public/cimg-python/blob/master/3.7/Dockerfile
+ENV PYENV_ROOT=/home/circleci/.pyenv PATH=/home/circleci/.pyenv/shims:/home/circleci/.pyenv/bin:$PATH
+RUN curl https://pyenv.run | bash && \
+	pyenv install ${PYTHON_VERSION} && pyenv global ${PYTHON_VERSION} && \
+	python3 --version && \
+	rm -rf /tmp/* /var/tmp/*

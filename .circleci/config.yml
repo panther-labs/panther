@@ -72,7 +72,7 @@ commands:
           # run if the last commit that triggered this build was authored by the bot.
           name: Autofmt
           command: |
-            if [[ "$CIRCLE_BRANCH" = "master" ]]; then
+            if [[ "$CIRCLE_BRANCH" == "master" ]]; then
                 echo "master branch: skipping autofmt"
                 exit 0
             fi
@@ -117,8 +117,7 @@ jobs:
             - magebin
 
   test_cfn:
-    docker:
-      - image: cimg/python3.7 # points to latest patch release, 3.7.X
+    executor: panther-buildpack
     steps:
       - checkout
       - attach_workspace:
@@ -130,8 +129,7 @@ jobs:
           command: /tmp/panther/magebin test:cfn
 
   test_go:
-    docker:
-      - image: cimg/go:1.15 # points to latest patch release, 1.15.X
+    executor: panther-buildpack
     resource_class: xlarge
     steps:
       - checkout
@@ -145,8 +143,7 @@ jobs:
           command: /tmp/panther/magebin test:go
 
   test_python:
-    docker:
-      - image: cimg/python3.7 # points to latest patch release, 3.7.X
+    executor: panther-buildpack
     steps:
       - checkout
       - attach_workspace:
@@ -157,8 +154,7 @@ jobs:
           command: /tmp/panther/magebin test:python
 
   test_web:
-    docker:
-      - image: cimg/node:12.18 # points to latest patch release, 12.18.X
+    executor: panther-buildpack
     resource_class: large
     steps:
       - checkout
@@ -170,8 +166,7 @@ jobs:
           command: /tmp/panther/magebin test:web
 
   npm_audit:
-    docker:
-      - image: cimg/node:12.18 # points to latest patch release, 12.18.X
+    executor: panther-buildpack
     resource_class: small
     steps:
       - checkout
@@ -180,8 +175,7 @@ jobs:
           command: npm audit --production # does not require 'npm install'
 
   bundlesize:
-    docker:
-      - image: cimg/node:12.18 # points to latest patch release, 12.18.X
+    executor: panther-buildpack
     steps:
       - checkout
       - restore_npm_cache
@@ -222,8 +216,7 @@ workflows:
       - bundlesize:
           requires:
             - setup
-      - fossa_upload # TODO: only enable on master
-#      - fossa_upload:
-#          filters:
-#            branches:
-#              only: master
+      - fossa_upload:
+          filters:
+            branches:
+              only: master
