@@ -40,6 +40,7 @@ const SourceHealthBadge: React.FC<SourceHealthBadgeProps> = ({ healthMetrics }) 
               size="small"
               type={healthMetric.healthy ? 'check' : 'remove'}
               color={healthMetric.healthy ? 'green-400' : 'red-300'}
+              aria-label={healthMetric.healthy ? 'Passing' : 'Failing'}
             />
             <Box>
               <Text id={id} aria-describedby={`${id}-description`}>
