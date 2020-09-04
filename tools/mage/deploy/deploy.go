@@ -145,11 +145,6 @@ func PreCheck(checkForOldVersion bool) error {
 		}
 	}
 
-	// Warn if deploying untagged version
-	// The gitVersion is "v0.3.0" on tagged release, otherwise something like "v0.3.0-128-g77fd9ff"
-	if version := util.RepoVersion(); strings.Contains(util.RepoVersion(), "-") {
-		log.Warnf("%s is not a tagged release, proceed at your own risk", version)
-	}
 	return nil
 }
 
@@ -437,10 +432,6 @@ func deployCoreStack(settings *PantherConfig, outputs map[string]string) error {
 }
 
 func deployDashboardStack(bucket string) error {
-	if err := build.GenerateDashboards(); err != nil {
-		return err
-	}
-
 	_, err := deployTemplate(cfnstacks.DashboardTemplate, bucket, cfnstacks.Dashboard, nil)
 	return err
 }
