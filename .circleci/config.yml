@@ -6,39 +6,92 @@ executors:
     docker:
       - image: pantherlabs/panther-buildpack:1.8.0
 
-# Commands which are re-used across multiple jobs
+# Command definitions which can be re-used across multiple jobs
 commands:
   restore_bin_cache:
     steps:
       - restore_cache:
           name: 'Restore cache: .setup binaries'
           keys:
-            - setup8-{{ checksum "tools/mage/setup/setup.go" }}
+            - &bin_cache_key setup8-{{ checksum "tools/mage/setup/setup.go" }}
 
   restore_go_cache:
     steps:
       - restore_cache:
           name: 'Restore cache: go modules'
           keys:
-            - gomod8-{{ checksum "go.mod" }}
+            - &go_cache_key gomod8-{{ checksum "go.mod" }}
 
   restore_npm_cache:
     steps:
       - restore_cache:
           name: 'Restore cache: npm'
           keys:
-            - npm8-{{ checksum "package-lock.json" }}
+            - &npm_cache_key npm8-{{ checksum "package-lock.json" }}
 
   restore_pip_cache:
     steps:
       - restore_cache:
           name: 'Restore cache: python env'
           keys:
-            - venv8-{{ checksum "requirements.txt" }}
+            - &pip_cache_key venv8-{{ checksum "requirements.txt" }}
+
+  save_caches:
+    steps:
+      - save_cache:
+          name: 'Save cache: .setup binaries'
+          key: *bin_cache_key
+          paths:
+            - .setup/golangci-lint
+            - .setup/swagger
+            - .setup/terraform
+      - save_cache:
+          name: 'Save cache: go modules'
+          key: *go_cache_key
+          paths:
+            - /go/bin/goimports
+            - /go/pkg/mod
+      - save_cache:
+          name: 'Save cache: npm'
+          key: *npm_cache_key
+          paths:
+            - node_modules
+      - save_cache:
+          name: 'Save cache: python env'
+          key: *pip_cache_key
+          paths:
+            - .setup/venv
+
+  autofmt:
+    steps:
+      - run:
+          # Generate source files, fmt the repo, and commit any resulting changes.
+          # If a new commit is pushed, CircleCI will immediately restart the workflow.
+          #
+          # This will not run on the master branch, and to prevent a feedback loop it will also not
+          # run if the last commit that triggered this build was authored by the bot.
+          name: Autofmt
+          command: |
+            if [[ "$CIRCLE_BRANCH" = "master" ]]; then
+                echo "master branch: skipping autofmt"
+                exit 0
+            fi
+
+            if [[ "`git log -1 --pretty=format:'%an'`" == "panther-bot" ]]; then
+                echo "panther-bot made the last commit: skipping autofmt"
+                exit 0
+            fi
+
+            /tmp/panther/magebin build:api build:cfn fmt
+            git config --global user.email "github-service-account@runpanther.io"
+            git config --global user.name "panther-bot"
+            git add -A .
+            git commit -m "mage build:api build:cfn fmt" || true
+            git push origin $CIRCLE_BRANCH
 
 jobs:
   setup:
-    # Install dependencies and compile the mage binary.
+    # Install dependencies, compile the mage binary, and autofmt.
     # Subsequent jobs can load libraries from the cache and mage from workspace storage.
     executor: panther-buildpack
     resource_class: large
@@ -56,72 +109,16 @@ jobs:
           # "mage setup" will have no effect unless new dependencies have been introduced.
           name: Install new dependencies
           command: /tmp/panther/magebin -v setup
+      - save_caches
+      - autofmt
       - persist_to_workspace:
           root: /tmp/panther
           paths:
             - magebin
-      - save_cache:
-          name: 'Save cache: .setup binaries'
-          key: setup8-{{ checksum "tools/mage/setup/setup.go" }}
-          paths:
-            - .setup/golangci-lint
-            - .setup/swagger
-            - .setup/terraform
-      - save_cache:
-          name: 'Save cache: go modules'
-          key: gomod8-{{ checksum "go.mod" }}
-          paths:
-            - /go/bin/goimports
-            - /go/pkg/mod
-      - save_cache:
-          name: 'Save cache: npm'
-          key: npm8-{{ checksum "package-lock.json" }}
-          paths:
-            - node_modules
-      - save_cache:
-          name: 'Save cache: python env'
-          key: venv8-{{ checksum "requirements.txt" }}
-          paths:
-            - .setup/venv
-
-  autofmt:
-    # Runs 'mage build:api build:cfn fmt' and commits any resulting changes.
-    #
-    # If there are changes committed, CircleCI will automatically stop the remaining jobs
-    # and restart the entire workflow with the new commit.
-    executor: panther-buildpack
-    resource_class: large
-    steps:
-      - checkout
-      - run:
-          # To prevent a feedback loop, stop early
-          # if the last commit that triggered this build was authored by the bot.
-          name: Check author of last commit
-          command: |
-            if [[ "`git log -1 --pretty=format:'%an'`" == "panther-bot" ]]; then
-                echo "panther-bot made the last commit, skipping this step"
-                circleci-agent step halt
-            fi
-      - attach_workspace:
-          at: /tmp/panther
-      - restore_bin_cache # swagger (build:api) and terraform (fmt)
-      - restore_go_cache # goimports (fmt)
-      - restore_npm_cache # prettier (fmt)
-      - restore_pip_cache # yapf (fmt)
-      - run:
-          name: Generate and format source files
-          command: /tmp/panther/magebin build:api build:cfn fmt
-      - run:
-          name: Push changes (if any) to remote ref
-          command: |
-            git config --global user.email "github-service-account@runpanther.io"
-            git config --global user.name "panther-bot"
-            git add -A .
-            git commit -m "mage build:api build:cfn fmt" || true
-            git push origin $CIRCLE_BRANCH
 
   test_cfn:
-    executor: panther-buildpack
+    docker:
+      - image: cimg/python3.7 # points to latest patch release, 3.7.X
     steps:
       - checkout
       - attach_workspace:
@@ -133,7 +130,8 @@ jobs:
           command: /tmp/panther/magebin test:cfn
 
   test_go:
-    executor: panther-buildpack
+    docker:
+      - image: cimg/go:1.15 # points to latest patch release, 1.15.X
     resource_class: xlarge
     steps:
       - checkout
@@ -147,7 +145,8 @@ jobs:
           command: /tmp/panther/magebin test:go
 
   test_python:
-    executor: panther-buildpack
+    docker:
+      - image: cimg/python3.7 # points to latest patch release, 3.7.X
     steps:
       - checkout
       - attach_workspace:
@@ -158,7 +157,8 @@ jobs:
           command: /tmp/panther/magebin test:python
 
   test_web:
-    executor: panther-buildpack
+    docker:
+      - image: cimg/node:12.18 # points to latest patch release, 12.18.X
     resource_class: large
     steps:
       - checkout
@@ -170,7 +170,8 @@ jobs:
           command: /tmp/panther/magebin test:web
 
   npm_audit:
-    executor: panther-buildpack
+    docker:
+      - image: cimg/node:12.18 # points to latest patch release, 12.18.X
     resource_class: small
     steps:
       - checkout
@@ -179,7 +180,8 @@ jobs:
           command: npm audit --production # does not require 'npm install'
 
   bundlesize:
-    executor: panther-buildpack
+    docker:
+      - image: cimg/node:12.18 # points to latest patch release, 12.18.X
     steps:
       - checkout
       - restore_npm_cache
@@ -189,7 +191,8 @@ jobs:
 
   # Upload dependency metadata to FOSSA, analyze offline
   fossa_upload:
-    executor: panther-buildpack
+    docker:
+      - image: cimg/base:2020.06
     resource_class: small
     steps:
       - checkout
@@ -204,12 +207,6 @@ workflows:
     jobs:
       - npm_audit
       - setup
-      - autofmt:
-          filters:
-            branches:
-              ignore: master
-          requires:
-            - setup
       - test_cfn:
           requires:
             - setup
@@ -225,7 +222,8 @@ workflows:
       - bundlesize:
           requires:
             - setup
-      - fossa_upload:
-          filters:
-            branches:
-              only: master
+      - fossa_upload # TODO: only enable on master
+#      - fossa_upload:
+#          filters:
+#            branches:
+#              only: master

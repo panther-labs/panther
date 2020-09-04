@@ -17,6 +17,7 @@
 # Published version:
 #     pantherlabs/panther-buildpack:1.8.0
 
+# TODO: base off of minimal CI image
 FROM buildpack-deps:buster-scm
 
 LABEL description="An image that contains the necessary build tools to build panther"
