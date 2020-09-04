@@ -23,7 +23,7 @@ FROM buildpack-deps:buster-scm
 
 LABEL description="Panther CircleCI combined environment"
 
-ENV GO_VERSION=1.15.1 MAGE_VERSION=1.10.0 NODE_VERSION=12.18.3 PYTHON_VERSION=3.7.9
+ENV GO_VERSION=1.15.1 NODE_VERSION=12.18.3 PYTHON_VERSION=3.7.9
 
 
 # ****************     APT Packages     *******************
@@ -66,11 +66,12 @@ RUN curl -sSL "https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz" | tar -
     mkdir -p ${GOPATH}/src ${GOPATH}/bin && \
     go version && \
     # Install mage (magefile.org)
-    curl -sSL "https://github.com/magefile/mage/releases/download/v${MAGE_VERSION}/mage_${MAGE_VERSION}_Linux-64bit.tar.gz" | tar -xz -C /usr/local && \
-    mv /usr/local/mage ${GOPATH}/bin && \
+    go get -u -d github.com/magefile/mage && \
+    cd $GOPATH/src/github.com/magefile/mage && \
+    go run bootstrap.go && \
+    rm -r $GOPATH/src/* && \
     # mage has a high UID, revert it back to root ownership (https://circleci.com/docs/2.0/high-uid-error)
-    chown -R root:root ${GOPATH} && \
-    chown -R root:root /root && \
+    chown -R root:root ${GOPATH}/bin && \
     chmod -R 755 ${GOPATH}/bin && \
     mage -version
 
