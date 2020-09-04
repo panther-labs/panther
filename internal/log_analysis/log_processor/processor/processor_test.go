@@ -35,16 +35,18 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/metrics"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
 
 var (
-	parseDelay = time.Millisecond / 2 // time it takes to process a log line
-	sendDelay  = time.Millisecond / 2 // time it takes to send event to destination
+	parseDelay   = time.Millisecond / 2 // time it takes to process a log line
+	sendDelay    = time.Millisecond / 2 // time it takes to send event to destination
+	testRegistry = &logtypes.Registry{}
 
 	testLogType          = "testLogType"
 	testLogLine          = "line"
@@ -60,6 +62,20 @@ var (
 		ContentType: testContentType,
 	}
 )
+
+func init() {
+	testRegistry.MustRegister(logtypes.Config{
+		Name:         testLogType,
+		Description:  "Test log type",
+		ReferenceURL: "-",
+		Schema: &struct {
+			LogLine string `json:"logLine" description:"log line"`
+		}{},
+		NewParser: parsers.FactoryFunc(func(_ interface{}) (parsers.Interface, error) {
+			return testutil.AlwaysFailParser(errors.New("fail parser")), nil
+		}),
+	})
+}
 
 type testLog struct {
 	logLine string
@@ -79,7 +95,7 @@ func TestProcess(t *testing.T) {
 	destination := (&testDestination{}).standardMock()
 
 	dataStream := makeDataStream()
-	p := NewProcessor(dataStream, registry.Default())
+	p := MustBuildProcessor(dataStream, testRegistry)
 	mockClassifier := &testClassifier{}
 	p.classifier = mockClassifier
 
@@ -117,7 +133,7 @@ func TestProcessDataStreamError(t *testing.T) {
 
 	destination := (&testDestination{}).standardMock()
 	dataStream := makeBadDataStream() // failure to read data, never hits classifier
-	p := NewProcessor(dataStream, registry.Default())
+	p := MustBuildProcessor(dataStream, testRegistry)
 	mockClassifier := &testClassifier{}
 	p.classifier = mockClassifier
 
@@ -182,7 +198,7 @@ func TestProcessDestinationError(t *testing.T) {
 	})
 
 	dataStream := makeDataStream()
-	p := NewProcessor(dataStream, registry.Default())
+	p := MustBuildProcessor(dataStream, testRegistry)
 	mockClassifier := &testClassifier{}
 	p.classifier = mockClassifier
 
@@ -225,7 +241,7 @@ func TestProcessClassifyFailure(t *testing.T) {
 
 	destination := (&testDestination{}).standardMock()
 	dataStream := makeDataStream()
-	p := NewProcessor(dataStream, registry.Default())
+	p := MustBuildProcessor(dataStream, testRegistry)
 	mockClassifier := &testClassifier{}
 	p.classifier = mockClassifier
 

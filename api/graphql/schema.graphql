@@ -62,7 +62,7 @@ type Query {
   policy(input: GetPolicyInput!): PolicyDetails
   policies(input: ListPoliciesInput): ListPoliciesResponse
   policiesForResource(input: PoliciesForResourceInput): ListComplianceItemsResponse
-  listAvailableLogTypes: ListAvailableLogTypesResponse
+  listAvailableLogTypes: ListAvailableLogTypesResponse!
   listComplianceIntegrations: [ComplianceIntegration!]!
   listLogIntegrations: [LogIntegration!]!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
@@ -1006,5 +1006,5 @@ enum AnalysisTypeEnum {
 }
 
 type ListAvailableLogTypesResponse {
-  logTypes: [String]
+  logTypes: [String!]!
 }

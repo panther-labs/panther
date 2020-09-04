@@ -59,7 +59,7 @@ const ComplianceSourceCard: React.FC<ComplianceSourceCardProps> = ({ source }) =
             label="Auto-Remediations"
             value={source.remediationEnabled ? 'Enabled' : 'Disabled'}
           />
-
+          <GenericItemCard.Value label="AWS Stack Name" value={source.stackName} />
           <GenericItemCard.LineBreak />
           <GenericItemCard.Value
             label="Date Created"
