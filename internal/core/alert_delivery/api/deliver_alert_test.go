@@ -84,7 +84,6 @@ func TestGetAlert(t *testing.T) {
 		FirstEventMatchTime: timeNow,
 		CreationTime:        timeNow,
 		DeliveryResponses:   []*alertModels.DeliveryResponse{{}},
-		OutputIds:           alert.OutputIds,
 		Severity:            alert.Severity,
 	}
 
@@ -127,7 +126,6 @@ func TestPopulateAlert(t *testing.T) {
 
 	alertID := aws.String("alert-id")
 	timeNow := time.Now().UTC()
-	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
 	versionID := "version"
 	analysisDisplayName := aws.String("Test Analysis Name")
 	description := "A test aler"
@@ -146,7 +144,7 @@ func TestPopulateAlert(t *testing.T) {
 		RetryCount:          0,
 		Tags:                tags,
 		Type:                deliveryModels.RuleType,
-		OutputIds:           outputIds,
+		OutputIds:           []string{},
 		Severity:            severity,
 		CreatedAt:           timeNow,
 		Version:             aws.String(versionID),
@@ -163,7 +161,6 @@ func TestPopulateAlert(t *testing.T) {
 		FirstEventMatchTime: timeNow,
 		CreationTime:        timeNow,
 		DeliveryResponses:   []*alertModels.DeliveryResponse{{}},
-		OutputIds:           alert.OutputIds,
 		Severity:            alert.Severity,
 	}
 
@@ -215,7 +212,7 @@ func TestGetAlertOutputMapping(t *testing.T) {
 		RetryCount:          0,
 		Tags:                []string{"test", "alert"},
 		Type:                deliveryModels.RuleType,
-		OutputIds:           outputIds,
+		OutputIds:           []string{},
 		Severity:            "INFO",
 		CreatedAt:           time.Now().UTC(),
 		Version:             aws.String("abc"),
@@ -282,7 +279,7 @@ func TestGetAlertOutputMappingError(t *testing.T) {
 		RetryCount:          0,
 		Tags:                []string{"test", "alert"},
 		Type:                deliveryModels.RuleType,
-		OutputIds:           outputIds,
+		OutputIds:           []string{},
 		Severity:            "INFO",
 		CreatedAt:           time.Now().UTC(),
 		Version:             aws.String("abc"),
@@ -326,7 +323,7 @@ func TestGetAlertOutputMappingInvalidOutputIds(t *testing.T) {
 		RetryCount:          0,
 		Tags:                []string{"test", "alert"},
 		Type:                deliveryModels.RuleType,
-		OutputIds:           outputIds,
+		OutputIds:           []string{},
 		Severity:            "INFO",
 		CreatedAt:           time.Now().UTC(),
 		Version:             aws.String("abc"),
@@ -425,7 +422,7 @@ func TestReturnIfFailedSuccess(t *testing.T) {
 		RetryCount:          0,
 		Tags:                []string{"test", "alert"},
 		Type:                deliveryModels.RuleType,
-		OutputIds:           outputIds,
+		OutputIds:           []string{},
 		Severity:            "INFO",
 		CreatedAt:           timeNow,
 		Version:             aws.String("abc"),
@@ -469,7 +466,7 @@ func TestReturnIfFailed(t *testing.T) {
 		RetryCount:          0,
 		Tags:                []string{"test", "alert"},
 		Type:                deliveryModels.RuleType,
-		OutputIds:           outputIds,
+		OutputIds:           []string{},
 		Severity:            "INFO",
 		CreatedAt:           timeNow,
 		Version:             aws.String("abc"),

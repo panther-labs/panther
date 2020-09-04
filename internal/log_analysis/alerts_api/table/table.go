@@ -76,7 +76,6 @@ type AlertItem struct {
 	FirstEventMatchTime time.Time                  `json:"firstEventMatchTime"`
 	CreationTime        time.Time                  `json:"creationTime"`
 	DeliveryResponses   []*models.DeliveryResponse `json:"deliveryResponses"`
-	OutputIds           []string                   `json:"outputIds"`
 	// UpdateTime - stores the timestamp from an update from a dedup event
 	UpdateTime time.Time `json:"updateTime"`
 	Severity   string    `json:"severity"`
