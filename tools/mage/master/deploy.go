@@ -19,6 +19,7 @@ package master
  */
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -47,70 +48,105 @@ var (
 )
 
 // Deploy single master template (deployments/master.yml) nesting all other stacks
-func Deploy() {
-	bucket, firstUserEmail, ecrRegistry := masterDeployPreCheck()
+func Deploy() error {
+	env, err := masterDeployPreCheck()
+	if err != nil {
+		return err
+	}
 
-	Build()
+	if err := Build(); err != nil {
+		return err
+	}
+
 	version, err := GetVersion()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-	pkg := Package(clients.Region(), bucket, version, ecrRegistry)
 
-	if err := util.SamDeploy(masterStackName, pkg, "FirstUserEmail="+firstUserEmail, "ImageRegistry="+ecrRegistry); err != nil {
-		log.Fatal(err)
+	pkg, err := Package(clients.Region(), env.bucketName, version, env.ecrRegistry)
+	if err != nil {
+		return err
 	}
+
+	return util.SamDeploy(masterStackName, pkg,
+		"FirstUserEmail="+env.firstUserEmail, "ImageRegistry="+env.ecrRegistry)
+}
+
+type masterDeployParams struct {
+	bucketName     string
+	firstUserEmail string
+	ecrRegistry    string
 }
 
 // Ensure environment is configured correctly for the master template.
 //
+// TODO - automatically create bucket and repo
+//
 // Returns bucket, firstUserEmail, ecrRegistry
-func masterDeployPreCheck() (string, string, string) {
-	deploy.PreCheck(false)
+func masterDeployPreCheck() (*masterDeployParams, error) {
+	if err := deploy.PreCheck(false); err != nil {
+		return nil, err
+	}
 
 	_, err := clients.Cfn().DescribeStacks(
 		&cloudformation.DescribeStacksInput{StackName: aws.String(cfnstacks.Bootstrap)})
 	if err == nil {
 		// Multiple Panther deployments won't work in the same region in the same account.
 		// Named resources (e.g. IAM roles) will conflict
-		log.Fatalf("%s stack already exists, can't deploy master template", cfnstacks.Bootstrap)
+		return nil, fmt.Errorf("%s stack already exists, can't deploy master template", cfnstacks.Bootstrap)
 	}
 
-	bucket := os.Getenv("BUCKET")
-	firstUserEmail := os.Getenv("EMAIL")
-	ecrRegistry := os.Getenv("ECR_REGISTRY")
-	if bucket == "" || firstUserEmail == "" || ecrRegistry == "" {
+	params := masterDeployParams{
+		bucketName:     os.Getenv("BUCKET"),
+		firstUserEmail: os.Getenv("EMAIL"),
+		ecrRegistry:    os.Getenv("ECR_REGISTRY"),
+	}
+
+	if params.bucketName == "" || params.firstUserEmail == "" || params.ecrRegistry == "" {
 		log.Error("BUCKET, EMAIL, and ECR_REGISTRY env variables must be defined")
 		log.Info("    BUCKET - S3 bucket for staging assets in the deployment region")
 		log.Info("    EMAIL - email for inviting the first Panther admin user")
 		log.Info("    ECR_REGISTRY - where to push docker images, e.g. " +
 			"111122223333.dkr.ecr.us-west-2.amazonaws.com/panther-web")
-		log.Fatal("invalid environment")
+		return nil, fmt.Errorf("invalid environment")
 	}
 
-	return bucket, firstUserEmail, ecrRegistry
+	return &params, nil
 }
 
 // Publish a new Panther release (Panther team only)
-func Publish() {
-	deploy.PreCheck(false)
+func Publish() error {
+	if err := deploy.PreCheck(false); err != nil {
+		return err
+	}
+
 	version, err := GetVersion()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	log.Infof("Publishing panther-community v%s to %s", version, strings.Join(publishRegions, ","))
 	result := prompt.Read("Are you sure you want to continue? (yes|no) ", prompt.NonemptyValidator)
 	if strings.ToLower(result) != "yes" {
-		log.Fatal("publish aborted")
+		return fmt.Errorf("publish aborted")
 	}
 
 	// To be safe, always clean and reset the repo before building the assets
-	clean.Clean()
-	setup.Setup()
-	Build()
+	if err := clean.Clean(); err != nil {
+		return err
+	}
+	if err := setup.Setup(); err != nil {
+		return err
+	}
+	if err := Build(); err != nil {
+		return err
+	}
 
 	for _, region := range publishRegions {
-		publishToRegion(version, region)
+		if err := publishToRegion(version, region); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }

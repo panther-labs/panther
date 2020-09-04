@@ -45,7 +45,13 @@ func EmbedAPISpec() error {
 	}
 
 	log.Debugf("deploy: transformed %s => %s with embedded APIs", cfnstacks.APITemplate, cfnstacks.APIEmbeddedTemplate)
-	return util.WriteTemplate(cfn, cfnstacks.APIEmbeddedTemplate)
+	contents, err := yaml.Marshal(cfn)
+	if err != nil {
+		return fmt.Errorf("yaml marshal failed: %v", err)
+	}
+
+	util.MustWriteFile(cfnstacks.APIEmbeddedTemplate, contents)
+	return nil
 }
 
 // Transform a single CloudFormation template by embedding Swagger definitions.
@@ -76,7 +82,7 @@ func embedAPIs(cfn map[string]interface{}) error {
 // if we just reference a swagger file in S3 - the api spec must be embedded into the CloudFormation itself.
 func loadSwagger(filename string) (map[string]interface{}, error) {
 	var apiBody map[string]interface{}
-	if err := yaml.Unmarshal(util.ReadFile(filename), &apiBody); err != nil {
+	if err := yaml.Unmarshal(util.MustReadFile(filename), &apiBody); err != nil {
 		return nil, fmt.Errorf("failed to parse file %s: %v", filename, err)
 	}
 

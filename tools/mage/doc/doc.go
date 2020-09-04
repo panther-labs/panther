@@ -65,10 +65,10 @@ Each resource describes its function and failure impacts.
 )
 
 // Return the list of Panther's CloudFormation files
-func cfnFiles() []string {
+func cfnFiles() ([]string, error) {
 	paths, err := filepath.Glob("deployments/*.yml")
 	if err != nil {
-		log.Fatalf("failed to glob deployments: %v", err)
+		return nil, fmt.Errorf("failed to glob deployments: %v", err)
 	}
 
 	// Remove the config file
@@ -78,13 +78,18 @@ func cfnFiles() []string {
 			result = append(result, p)
 		}
 	}
-	return result
+	return result, nil
 }
 
 // generate operational documentation from deployment CloudFormation
 func opDocs() error {
 	log.Debug("doc: generating operational documentation from cloudformation")
-	docs, err := ReadCfn(cfnFiles()...)
+	paths, err := cfnFiles()
+	if err != nil {
+		return err
+	}
+
+	docs, err := ReadCfn(paths...)
 	if err != nil {
 		return fmt.Errorf("failed to generate operational documentation: %v", err)
 	}
@@ -95,7 +100,7 @@ func opDocs() error {
 		docsBuffer.WriteString(fmt.Sprintf("## %s\n%s\n\n", doc.Resource, doc.Documentation))
 	}
 
-	util.WriteFile(filepath.Join("out", "docs", "gitbook", "operations", "runbooks.md"), docsBuffer.Bytes())
+	util.MustWriteFile(filepath.Join("out", "docs", "gitbook", "operations", "runbooks.md"), docsBuffer.Bytes())
 	return nil
 }
 
@@ -171,7 +176,7 @@ func (category *logCategory) generateDocFile(outDir string) {
 
 	path := filepath.Join(outDir, category.Name+".md")
 	log.Debugf("writing log category documentation: %s", path)
-	util.WriteFile(path, docsBuffer.Bytes())
+	util.MustWriteFile(path, docsBuffer.Bytes())
 }
 
 func logDocs() error {

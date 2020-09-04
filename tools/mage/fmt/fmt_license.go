@@ -52,17 +52,13 @@ func fmtLicenseAll() {
 
 func fmtLicense(paths ...string) {
 	log.Debugf("fmt: license header %s for %s", agplSource, strings.Join(paths, " "))
-	header := strings.TrimSpace(string(util.ReadFile(agplSource)))
+	header := strings.TrimSpace(string(util.MustReadFile(agplSource)))
 
 	asteriskLicense := "/**\n" + commentEachLine(" *", header) + "\n */"
 	hashtagLicense := commentEachLine("#", header)
 
 	for _, root := range paths {
-		err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-
+		util.MustWalk(root, func(path string, info os.FileInfo) error {
 			if info.IsDir() {
 				// some monorepo dirs have nested node_modules. Until NPM ships their "workspaces" feature,
 				// we can't hoist all node modules in single folder at the project root. This prevents us
@@ -76,9 +72,6 @@ func fmtLicense(paths ...string) {
 
 			return nil
 		})
-		if err != nil {
-			log.Fatalf("failed to walk %s: %v", root, err)
-		}
 	}
 }
 
@@ -108,10 +101,10 @@ func addFileLicense(path, asteriskLicense, hashtagLicense string) {
 
 // Rewrite file contents on disk with the given modifier function.
 func licenseModifier(path string, modifier func(string) string) {
-	contents := string(util.ReadFile(path))
+	contents := string(util.MustReadFile(path))
 	newContents := modifier(contents)
 	if newContents != contents {
-		util.WriteFile(path, []byte(newContents))
+		util.MustWriteFile(path, []byte(newContents))
 	}
 }
 

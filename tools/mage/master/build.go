@@ -44,40 +44,38 @@ func GetVersion() (string, error) {
 }
 
 // Compile Lambda source assets
-func Build() {
+func Build() error {
 	build.API()
 	if err := build.Cfn(); err != nil {
-		log.Fatal(err)
+		return err
 	}
 	if err := build.Lambda(); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	// Use the pip libraries in the default settings file when building the layer.
 	defaultConfig, err := deploy.Settings()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	if err = build.Layer(defaultConfig.Infra.PipLayer); err != nil {
-		log.Fatal(err)
-	}
+	return build.Layer(defaultConfig.Infra.PipLayer)
 }
 
 // Package assets needed for the master template.
 //
 // Returns the path to the final generated template.
-func Package(region, bucket, pantherVersion, imgRegistry string) string {
+func Package(region, bucket, pantherVersion, imgRegistry string) (string, error) {
 	pkg, err := util.SamPackage(region, "deployments/master.yml", bucket)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
 	dockerImage, err := deploy.PushWebImg(imgRegistry, pantherVersion)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
 	log.Infof("successfully published docker image %s", dockerImage)
-	return pkg
+	return pkg, nil
 }

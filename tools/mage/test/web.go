@@ -27,8 +27,8 @@ var webTests = []testTask{
 }
 
 // Test and lint web source
-func Web() {
-	runTests(webTests)
+func Web() error {
+	return runTests(webTests)
 }
 
 func testWebEslint() error {

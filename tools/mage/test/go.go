@@ -30,14 +30,15 @@ import (
 )
 
 // Test and lint Golang source code
-func Go() {
+func Go() error {
 	if err := testGoUnit(); err != nil {
-		log.Fatalf("go unit tests failed: %v", err)
+		return fmt.Errorf("go unit tests failed: %v", err)
 	}
 
 	if err := testGoLint(); err != nil {
-		log.Fatalf("go linting failed: %v", err)
+		return fmt.Errorf("go linting failed: %v", err)
 	}
+	return nil
 }
 
 func testGoUnit() error {

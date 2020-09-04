@@ -26,8 +26,6 @@ import (
 	"strings"
 
 	"github.com/magefile/mage/sh"
-
-	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 // "go build" in parallel for each Lambda function.
@@ -39,11 +37,18 @@ import (
 // If you're adding a new module, run "go get ./..." before building to fetch the new module.
 func Lambda() error {
 	var packages []string
-	util.Walk("internal", func(path string, info os.FileInfo) {
+	if err := filepath.Walk("internal", func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
 		if info.IsDir() && strings.HasSuffix(path, "main") {
 			packages = append(packages, path)
 		}
-	})
+		return nil
+	}); err != nil {
+		return err
+	}
 
 	log.Infof("build:lambda: compiling %d Go Lambda functions (internal/.../main) using %s",
 		len(packages), runtime.Version())

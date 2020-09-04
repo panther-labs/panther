@@ -19,6 +19,7 @@ package clean
  */
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -28,22 +29,25 @@ import (
 
 var log = logger.Get()
 
-func Clean() {
+func Clean() error {
 	paths := []string{util.SetupDir, util.NpmDir, "out", "internal/core/analysis_api/main/bulk_upload.zip"}
 
 	// Remove __pycache__ folders
 	for _, target := range util.PyTargets {
-		util.Walk(target, func(path string, info os.FileInfo) {
+		util.MustWalk(target, func(path string, info os.FileInfo) error {
 			if strings.HasSuffix(path, "__pycache__") {
 				paths = append(paths, path)
 			}
+			return nil
 		})
 	}
 
 	for _, pkg := range paths {
 		log.Info("clean: rm -r " + pkg)
 		if err := os.RemoveAll(pkg); err != nil {
-			log.Fatalf("failed to remove %s: %v", pkg, err)
+			return fmt.Errorf("failed to remove %s: %v", pkg, err)
 		}
 	}
+
+	return nil
 }

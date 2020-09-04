@@ -19,9 +19,9 @@ package deploy
  */
 
 import (
-	"io/ioutil"
-
 	"gopkg.in/yaml.v2"
+
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 const ConfigFilepath = "deployments/panther_config.yml"
@@ -83,10 +83,7 @@ type FirstUser struct {
 
 // Read settings from the config file
 func Settings() (*PantherConfig, error) {
-	bytes, err := ioutil.ReadFile(ConfigFilepath)
-	if err != nil {
-		return nil, err
-	}
+	bytes := util.MustReadFile(ConfigFilepath)
 
 	var settings PantherConfig
 	if err := yaml.Unmarshal(bytes, &settings); err != nil {

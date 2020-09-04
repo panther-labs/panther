@@ -31,7 +31,7 @@ type testTask struct {
 var log = logger.Get()
 
 // Run all required checks for a pull request
-func CI() {
+func CI() error {
 	// Go unit tests and linting already run in multiple processors
 	// When running locally, test these by themselves to avoid locking up dev laptops.
 	var goUnitErr, goLintErr error
@@ -59,20 +59,22 @@ func CI() {
 	tests = append(tests, webTests...) // web tests take awhile, queue them earlier
 	tests = append(tests, cfnTests...)
 	tests = append(tests, pythonTests...)
-	runTests(tests)
+	return runTests(tests)
 }
 
-func runTests(tasks []testTask) {
+func runTests(tasks []testTask) (err error) {
 	results := make(chan util.TaskResult)
 
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		util.LogResults(results, "test:ci", 1, len(tasks), len(tasks))
+		err = util.LogResults(results, "test:ci", 1, len(tasks), len(tasks))
 	}()
 
 	for _, task := range tasks {
 		util.RunTask(results, task.Name, task.Task)
 	}
 	<-done
+
+	return
 }

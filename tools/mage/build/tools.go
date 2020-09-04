@@ -42,10 +42,11 @@ func Tools() error {
 	}
 
 	var paths []string
-	util.Walk("cmd", func(path string, info os.FileInfo) {
+	util.MustWalk("cmd", func(path string, info os.FileInfo) error {
 		if !info.IsDir() && filepath.Base(path) == "main.go" {
 			paths = append(paths, path)
 		}
+		return nil
 	})
 
 	for _, path := range paths {

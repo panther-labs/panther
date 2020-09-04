@@ -19,6 +19,7 @@ package util
  */
 
 import (
+	"fmt"
 	"runtime"
 	"strings"
 
@@ -74,7 +75,7 @@ type TaskResult struct {
 // This will consume exactly (end - start) + 1 messages in the channel.
 //
 // Logs a fatal message at the end if there were any errors.
-func LogResults(results chan TaskResult, command string, start, end, total int) {
+func LogResults(results chan TaskResult, command string, start, end, total int) error {
 	var erroredTasks []string
 	for i := start; i <= end; i++ {
 		r := <-results
@@ -87,6 +88,7 @@ func LogResults(results chan TaskResult, command string, start, end, total int) 
 	}
 
 	if len(erroredTasks) > 0 {
-		log.Fatalf("%s failed: %s", command, strings.Join(erroredTasks, ", "))
+		return fmt.Errorf("%s failed: %s", command, strings.Join(erroredTasks, ", "))
 	}
+	return nil
 }

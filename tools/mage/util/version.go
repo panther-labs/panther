@@ -63,7 +63,7 @@ func LatestPublishedVersion() (string, error) {
 	type semver struct {
 		major int
 		minor int
-		patch int
+		patch string // could be "0-beta"
 	}
 	var versions []semver
 
@@ -78,7 +78,7 @@ func LatestPublishedVersion() (string, error) {
 				versions = append(versions, semver{
 					major: MustParseInt(split[0]),
 					minor: MustParseInt(split[1]),
-					patch: MustParseInt(split[2]),
+					patch: split[2],
 				})
 			}
 		}
@@ -100,7 +100,7 @@ func LatestPublishedVersion() (string, error) {
 
 	log.Debugf("found %d published versions in %s: %v", len(versions), bucket, versions)
 	latest := versions[len(versions)-1]
-	return fmt.Sprintf("%d.%d.%d", latest.major, latest.minor, latest.patch), nil
+	return fmt.Sprintf("%d.%d.%s", latest.major, latest.minor, latest.patch), nil
 }
 
 func MustParseInt(x string) int {

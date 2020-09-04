@@ -50,8 +50,8 @@ var (
 )
 
 // Test and lint Python source code
-func Python() {
-	runTests(pythonTests)
+func Python() error {
+	return runTests(pythonTests)
 }
 
 func testPythonUnit() error {

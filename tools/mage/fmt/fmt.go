@@ -37,7 +37,7 @@ import (
 
 var log = logger.Get()
 
-func Fmt() {
+func Fmt() error {
 	// Add license headers first (don't run in parallel with other formatters)
 	fmtLicenseAll()
 
@@ -64,7 +64,7 @@ func Fmt() {
 		c <- util.TaskResult{Summary: "fmt: tf", Err: terraformFmt()}
 	}(results)
 
-	util.LogResults(results, "fmt", 1, count, count)
+	return util.LogResults(results, "fmt", 1, count, count)
 }
 
 // Apply full go formatting to the given paths
@@ -108,7 +108,7 @@ func gofmt(paths ...string) error {
 func removeImportNewlines(path string) error {
 	var newLines [][]byte
 	inImport := false
-	for _, line := range bytes.Split(util.ReadFile(path), []byte("\n")) {
+	for _, line := range bytes.Split(util.MustReadFile(path), []byte("\n")) {
 		if inImport {
 			if len(line) == 0 {
 				continue // skip empty newlines in import groups
@@ -198,10 +198,10 @@ func tfUpdateDeploymentRole() error {
 
 	// Replace EOT block in TF file.
 	dstPath := filepath.Join("deployments", "auxiliary", "terraform", "panther_deployment_role", "main.tf")
-	tf := util.ReadFile(dstPath)
+	tf := util.MustReadFile(dstPath)
 	pattern := regexp.MustCompile(`<<EOT(.|\n)+?EOT`)
 	tf = pattern.ReplaceAll(tf, []byte("<<EOT\n"+string(policyText)+"\nEOT"))
-	util.WriteFile(dstPath, tf)
+	util.MustWriteFile(dstPath, tf)
 
 	return nil
 }

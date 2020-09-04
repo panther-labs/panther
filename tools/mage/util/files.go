@@ -55,13 +55,12 @@ func PipPath(lib string) string {
 }
 
 // Wrapper around filepath.Walk, logging errors as fatal.
-func Walk(root string, handler func(string, os.FileInfo)) {
+func MustWalk(root string, handler func(string, os.FileInfo) error) {
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return fmt.Errorf("stat %s: %v", path, err)
 		}
-		handler(path, info)
-		return nil
+		return handler(path, info)
 	})
 	if err != nil {
 		log.Fatalf("couldn't traverse %s: %v", root, err)
@@ -69,7 +68,7 @@ func Walk(root string, handler func(string, os.FileInfo)) {
 }
 
 // Wrapper around ioutil.ReadFile, logging errors as fatal.
-func ReadFile(path string) []byte {
+func MustReadFile(path string) []byte {
 	contents, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Fatalf("failed to read %s: %v", path, err)
@@ -78,7 +77,7 @@ func ReadFile(path string) []byte {
 }
 
 // Wrapper around ioutil.WriteFile, creating the parent dirs if needed and logging errors as fatal.
-func WriteFile(path string, data []byte) {
+func MustWriteFile(path string, data []byte) {
 	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
 		log.Fatalf("failed to create directory %s: %v", filepath.Dir(path), err)
 	}

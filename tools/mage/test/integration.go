@@ -19,6 +19,7 @@ package test
  */
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -32,24 +33,21 @@ import (
 )
 
 // Run integration tests (integration_test.go,integration.py)
-func Integration() {
+func Integration() error {
 	log.Warnf("Integration tests will erase all Panther data in account %s (%s)",
 		clients.AccountID(), clients.Region())
 	result := prompt.Read("Are you sure you want to continue? (yes|no) ", prompt.NonemptyValidator)
 	if strings.ToLower(result) != "yes" {
-		log.Fatal("integration tests aborted")
+		return fmt.Errorf("integration tests aborted")
 	}
 
 	if pkg := os.Getenv("PKG"); pkg != "" {
 		// One specific package requested: run integration tests just for that
-		if err := goPkgIntegrationTest("test:integration", pkg, mg.Verbose(), nil); err != nil {
-			log.Fatal(err)
-		}
-		return
+		return goPkgIntegrationTest("test:integration", pkg, mg.Verbose(), nil)
 	}
 
 	errCount := 0
-	util.Walk(".", func(path string, info os.FileInfo) {
+	util.MustWalk(".", func(path string, info os.FileInfo) error {
 		// This intentionally does not include the end-to-end test (e2e_test.go)
 		if filepath.Base(path) == "integration_test.go" {
 			if err := goPkgIntegrationTest("test:integration", "./"+filepath.Dir(path), mg.Verbose(), nil); err != nil {
@@ -57,6 +55,7 @@ func Integration() {
 				errCount++
 			}
 		}
+		return nil
 	})
 
 	log.Info("test:integration: python policy engine")
@@ -66,8 +65,9 @@ func Integration() {
 	}
 
 	if errCount > 0 {
-		log.Fatalf("%d integration test(s) failed", errCount)
+		return fmt.Errorf("%d integration test(s) failed", errCount)
 	}
+	return nil
 }
 
 // Run integration tests for a single Go package.

@@ -29,7 +29,7 @@ import (
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
-func publishToRegion(version, region string) {
+func publishToRegion(version, region string) error {
 	log.Infof("publishing to %s", region)
 	// We need a different client for each region, so we don't use the global AWS clients pkg here.
 	awsSession := session.Must(session.NewSession(
@@ -43,21 +43,24 @@ func publishToRegion(version, region string) {
 	// in the template file and we don't want to overwrite a previous version.
 	_, err := s3.New(awsSession).HeadObject(&s3.HeadObjectInput{Bucket: &bucket, Key: &s3Key})
 	if err == nil {
-		log.Errorf("%s already exists", s3URL)
-		return
+		return fmt.Errorf("%s already exists", s3URL)
 	}
 	if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != "NotFound" {
 		// Some error other than 'not found'
-		log.Fatalf("failed to describe %s : %v", s3URL, err)
+		return fmt.Errorf("failed to describe %s : %v", s3URL, err)
 	}
 
 	// Publish S3 assets and ECR docker image
-	pkg := Package(region, bucket, version, fmt.Sprintf(publicImageRepository, region))
+	pkg, err := Package(region, bucket, version, fmt.Sprintf(publicImageRepository, region))
+	if err != nil {
+		return err
+	}
 
 	// Upload final packaged template
 	if _, err := util.UploadFileToS3(pkg, bucket, s3Key); err != nil {
-		log.Fatalf("failed to upload %s : %v", s3URL, err)
+		return fmt.Errorf("failed to upload %s : %v", s3URL, err)
 	}
 
 	log.Infof("successfully published %s", s3URL)
+	return nil
 }

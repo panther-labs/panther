@@ -19,6 +19,7 @@ package teardown
  */
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -28,21 +29,26 @@ import (
 )
 
 // Teardown Destroy all Panther infrastructure
-func Teardown() {
-	masterStack := teardownConfirmation()
+func Teardown() error {
+	masterStack, err := teardownConfirmation()
+	if err != nil {
+		return err
+	}
+
 	if err := DestroyCfnStacks(masterStack); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	// CloudFormation will not delete any Panther S3 buckets (DeletionPolicy: Retain), we do so here.
 	if err := DestroyPantherBuckets(clients.S3()); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	log.Info("successfully removed Panther infrastructure")
+	return nil
 }
 
-func teardownConfirmation() string {
+func teardownConfirmation() (string, error) {
 	// When deploying from source ('mage deploy'), there will be several top-level stacks.
 	// When deploying the master template, there is only one main stack whose name we do not know.
 	stack := os.Getenv("STACK")
@@ -61,8 +67,8 @@ func teardownConfirmation() string {
 	log.Warnf(template, args...)
 	result := prompt.Read("Are you sure you want to continue? (yes|no) ", prompt.NonemptyValidator)
 	if strings.ToLower(result) != "yes" {
-		log.Fatal("teardown aborted")
+		return "", fmt.Errorf("teardown aborted")
 	}
 
-	return stack
+	return stack, nil
 }

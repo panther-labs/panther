@@ -28,14 +28,11 @@ import (
 	"github.com/panther-labs/panther/tools/mage/deploy"
 	"github.com/panther-labs/panther/tools/mage/doc"
 	"github.com/panther-labs/panther/tools/mage/fmt"
-	"github.com/panther-labs/panther/tools/mage/logger"
 	"github.com/panther-labs/panther/tools/mage/master"
 	"github.com/panther-labs/panther/tools/mage/setup"
 	"github.com/panther-labs/panther/tools/mage/teardown"
 	"github.com/panther-labs/panther/tools/mage/test"
 )
-
-var mageLogger = logger.Get()
 
 // Each exported function and its comment becomes a mage target
 
@@ -47,98 +44,92 @@ func (Build) API() {
 }
 
 // Generate CloudFormation templates in out/deployments
-func (Build) Cfn() {
-	if err := build.Cfn(); err != nil {
-		mageLogger.Fatal(err)
-	}
+func (Build) Cfn() error {
+	return build.Cfn()
 }
 
 // Compile Go Lambda function source
-func (Build) Lambda() {
-	if err := build.Lambda(); err != nil {
-		mageLogger.Fatal(err)
-	}
+func (Build) Lambda() error {
+	return build.Lambda()
 }
 
 // Compile devtools and opstools
-func (Build) Tools() {
-	if err := build.Tools(); err != nil {
-		mageLogger.Fatal(err)
-	}
+func (Build) Tools() error {
+	return build.Tools()
 }
 
 // Remove dev libraries and build/test artifacts
-func Clean() {
-	clean.Clean()
+func Clean() error {
+	return clean.Clean()
 }
 
 // NOTE: Mage ignores the first word of the comment if it matches the function name
 
 // Deploy Deploy Panther to your AWS account
-func Deploy() {
-	deploy.Deploy()
+func Deploy() error {
+	return deploy.Deploy()
 }
 
 // Preview auto-generated documentation in out/doc
-func Doc() {
-	doc.Doc()
+func Doc() error {
+	return doc.Doc()
 }
 
 // Format source files
-func Fmt() {
-	fmt.Fmt()
+func Fmt() error {
+	return fmt.Fmt()
 }
 
 type Master mg.Namespace
 
 // Deploy Deploy single master template (deployments/master.yml) nesting all other stacks
-func (Master) Deploy() {
-	master.Deploy()
+func (Master) Deploy() error {
+	return master.Deploy()
 }
 
 // Publish Publish a new Panther release (Panther team only)
-func (Master) Publish() {
-	master.Publish()
+func (Master) Publish() error {
+	return master.Publish()
 }
 
 // Install build and development dependencies
-func Setup() {
-	setup.Setup()
+func Setup() error {
+	return setup.Setup()
 }
 
 // Destroy Panther infrastructure
-func Teardown() {
-	teardown.Teardown()
+func Teardown() error {
+	return teardown.Teardown()
 }
 
 type Test mg.Namespace
 
 // Lint CloudFormation and Terraform templates
-func (Test) Cfn() {
-	test.Cfn()
+func (Test) Cfn() error {
+	return test.Cfn()
 }
 
 // Run all required checks for a pull request
-func (Test) CI() {
-	test.CI()
+func (Test) CI() error {
+	return test.CI()
 }
 
 // Test and lint Go source
-func (Test) Go() {
-	test.Go()
+func (Test) Go() error {
+	return test.Go()
 }
 
 // Run integration tests against a live deployment
-func (Test) Integration() {
-	test.Integration()
+func (Test) Integration() error {
+	return test.Integration()
 }
 
 // Test and lint Python source
-func (Test) Python() {
-	test.Python()
+func (Test) Python() error {
+	return test.Python()
 }
 
 // Test and lint web source
-func (Test) Web() {
-	test.Web()
+func (Test) Web() error {
+	return test.Web()
 }

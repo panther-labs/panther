@@ -20,7 +20,6 @@ package build
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -90,24 +89,19 @@ func generateSwaggerClients() error {
 		//     import "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
 		// should be
 		//     import "github.com/panther-labs/panther/api/gateway/remediation/client/operations"
-		util.Walk(client, func(path string, info os.FileInfo) {
+		util.MustWalk(client, func(path string, info os.FileInfo) error {
 			if info.IsDir() || filepath.Ext(path) != ".go" {
-				return
+				return nil
 			}
 
-			body, err := ioutil.ReadFile(path)
-			if err != nil {
-				log.Fatalf("failed to open %s: %v", path, err)
-			}
-
+			body := util.MustReadFile(path)
 			correctImport := fmt.Sprintf(
 				`"github.com/panther-labs/panther/api/gateway/%s/client/operations"`,
 				filepath.Base(filepath.Dir(filepath.Dir(path))))
 
 			newBody := clientImport.ReplaceAll(body, []byte(correctImport))
-			if err := ioutil.WriteFile(path, newBody, info.Mode()); err != nil {
-				log.Fatalf("failed to rewrite %s: %v", path, err)
-			}
+			util.MustWriteFile(path, newBody)
+			return nil
 		})
 	}
 	return nil

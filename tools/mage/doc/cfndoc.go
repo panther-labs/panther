@@ -20,12 +20,11 @@ package doc
 
 import (
 	"fmt"
-	"io/ioutil"
 	"regexp"
 	"sort"
 	"strings"
 
-	"github.com/pkg/errors"
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 /*
@@ -74,10 +73,7 @@ type ResourceDoc struct {
 
 func ReadCfn(paths ...string) (docs []*ResourceDoc, err error) {
 	for _, path := range paths {
-		fileDocs, err := Read(path)
-		if err != nil {
-			return nil, err
-		}
+		fileDocs := Parse(string(util.MustReadFile(path)))
 		docs = append(docs, fileDocs...)
 	}
 	sort.Slice(docs, func(i, j int) bool {
@@ -90,15 +86,6 @@ func ReadCfn(paths ...string) (docs []*ResourceDoc, err error) {
 	})
 
 	return docs, nil
-}
-
-func Read(fileName string) ([]*ResourceDoc, error) {
-	cfn, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		return nil, errors.Wrapf(err, "cannot read %s for doc extraction", fileName)
-	}
-
-	return Parse(string(cfn)), nil
 }
 
 func Parse(cfn string) (docs []*ResourceDoc) {

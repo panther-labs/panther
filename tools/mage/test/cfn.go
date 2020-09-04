@@ -55,16 +55,17 @@ type cfnResource struct {
 }
 
 // Lint CloudFormation and Terraform templates
-func Cfn() {
-	runTests(cfnTests)
+func Cfn() error {
+	return runTests(cfnTests)
 }
 
 func testCfnLint() error {
 	var templates []string
-	util.Walk("deployments", func(path string, info os.FileInfo) {
+	util.MustWalk("deployments", func(path string, info os.FileInfo) error {
 		if !info.IsDir() && filepath.Ext(path) == ".yml" && filepath.Base(path) != "panther_config.yml" {
 			templates = append(templates, path)
 		}
+		return nil
 	})
 
 	// cfn-lint will complain:

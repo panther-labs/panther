@@ -20,14 +20,12 @@ package util
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/magefile/mage/sh"
-	"gopkg.in/yaml.v2"
 )
 
 // Parse a CloudFormation template and unmarshal into the out parameter.
@@ -46,24 +44,5 @@ func ParseTemplate(path string, out interface{}) error {
 		path = jsonPath
 	}
 
-	contents, err := ioutil.ReadFile(path)
-	if err != nil {
-		return fmt.Errorf("failed to read %s: %v", path, err)
-	}
-
-	return jsoniter.Unmarshal(contents, out)
-}
-
-// Save the CloudFormation structure as a .yml file.
-func WriteTemplate(cfn map[string]interface{}, path string) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-		return fmt.Errorf("failed to create directory %s: %v", filepath.Dir(path), err)
-	}
-
-	contents, err := yaml.Marshal(cfn)
-	if err != nil {
-		return fmt.Errorf("yaml marshal failed: %v", err)
-	}
-
-	return ioutil.WriteFile(path, contents, 0600)
+	return jsoniter.Unmarshal(MustReadFile(path), out)
 }

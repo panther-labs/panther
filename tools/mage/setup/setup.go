@@ -43,13 +43,13 @@ const (
 var log = logger.Get()
 
 // Install all build and development dependencies
-func Setup() {
+func Setup() error {
 	env, err := sh.Output("uname")
 	if err != nil {
-		log.Fatalf("couldn't determine environment: %v", err)
+		return fmt.Errorf("couldn't determine environment: %v", err)
 	}
-	if err := os.MkdirAll(util.SetupDir, os.ModePerm); err != nil {
-		log.Fatalf("failed to create setup directory %s: %v", util.SetupDir, err)
+	if err := os.MkdirAll(util.SetupDir, 0700); err != nil {
+		return fmt.Errorf("failed to create setup directory %s: %v", util.SetupDir, err)
 	}
 
 	results := make(chan util.TaskResult)
@@ -85,7 +85,7 @@ func Setup() {
 		c <- util.TaskResult{Summary: "npm install", Err: installNodeModules()}
 	}(results)
 
-	util.LogResults(results, "setup", 1, count, count)
+	return util.LogResults(results, "setup", 1, count, count)
 }
 
 // Fetch all Go modules needed for tests and compilation.

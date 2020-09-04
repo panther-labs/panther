@@ -21,7 +21,6 @@ package deploy
 import (
 	"crypto/sha1" // nolint: gosec
 	"fmt"
-	"io/ioutil"
 	"strings"
 	"time"
 
@@ -85,10 +84,7 @@ func deployTemplate(
 
 // Upload a CloudFormation asset to S3 if it doesn't already exist, returning s3 object key and version
 func uploadAsset(assetPath, bucket, stack string) (string, string, error) {
-	contents, err := ioutil.ReadFile(assetPath)
-	if err != nil {
-		return "", "", fmt.Errorf("package %s: failed to open %s: %v", stack, assetPath, err)
-	}
+	contents := util.MustReadFile(assetPath)
 
 	// We are using SHA1 for caching / asset lookup, we don't need strong cryptographic guarantees
 	hash := sha1.Sum(contents) // nolint: gosec
@@ -145,8 +141,7 @@ func prepareStack(stackName string) (map[string]string, error) {
 			// Otherwise, there may be orphaned S3 buckets that will never be used.
 			log.Warnf("The very first %s stack never created successfully (%s)", cfnstacks.Bootstrap, status)
 			log.Warn("Running 'mage teardown' to fully remove orphaned resources before trying again")
-			teardown.Teardown()
-			return nil, nil
+			return nil, teardown.Teardown()
 		}
 
 		log.Warnf("deleting stack %s (%s) before it can be re-deployed", stackName, status)
@@ -203,11 +198,7 @@ func createChangeSet(
 		},
 	}
 
-	template, err := ioutil.ReadFile(templatePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read template %s: %v", templatePath, err)
-	}
-
+	template := util.MustReadFile(templatePath)
 	if len(template) <= maxTemplateSize {
 		createInput.SetTemplateBody(string(template))
 	} else {
