@@ -70,6 +70,8 @@ RUN curl -sSL "https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz" | tar -
     mv /usr/local/mage ${GOPATH}/bin && \
     # mage has a high UID, revert it back to root ownership (https://circleci.com/docs/2.0/high-uid-error)
     chown -R root:root ${GOPATH} && \
+    chown -R root:root /root && \
+    chmod -R 755 ${GOPATH}/bin && \
     mage -version
 
 
