@@ -20,6 +20,7 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
+import SensitiveTextInput from 'Components/fields/SensitiveTextInput';
 import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
@@ -90,8 +91,7 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
           placeholder="What's the email of the reporting user?"
         />
         <Field
-          as={FormikTextInput}
-          type="password"
+          as={SensitiveTextInput}
           name="outputConfig.jira.apiKey"
           label="* Jira API Key"
           placeholder={

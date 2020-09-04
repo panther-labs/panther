@@ -20,6 +20,7 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
+import SensitiveTextInput from 'Components/fields/SensitiveTextInput';
 import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
@@ -65,8 +66,7 @@ const OpsgenieDestinationForm: React.FC<OpsgenieDestinationFormProps> = ({
           required
         />
         <Field
-          as={FormikTextInput}
-          type="password"
+          as={SensitiveTextInput}
           name="outputConfig.opsgenie.apiKey"
           label="Opsgenie API key"
           placeholder={
