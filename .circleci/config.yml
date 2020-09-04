@@ -13,28 +13,30 @@ commands:
       - restore_cache:
           name: 'Restore cache: .setup binaries'
           keys:
-            - &bin_cache_key setup8-{{ checksum "tools/mage/setup/setup.go" }}
+            # These caches are persisted for 15 days. If you need to reset the cache,
+            # just change the "x" to any other value which hasn't been used recently.
+            - &bin_cache_key setup-x-{{ checksum "tools/mage/setup/setup.go" }}
 
   restore_go_cache:
     steps:
       - restore_cache:
           name: 'Restore cache: go modules'
           keys:
-            - &go_cache_key gomod8-{{ checksum "go.mod" }}
+            - &go_cache_key gomod-x-{{ checksum "go.mod" }}
 
   restore_npm_cache:
     steps:
       - restore_cache:
           name: 'Restore cache: npm'
           keys:
-            - &npm_cache_key npm8-{{ checksum "package-lock.json" }}
+            - &npm_cache_key npm-x-{{ checksum "package-lock.json" }}
 
   restore_pip_cache:
     steps:
       - restore_cache:
           name: 'Restore cache: python env'
           keys:
-            - &pip_cache_key venv8-{{ checksum "requirements.txt" }}
+            - &pip_cache_key venv-x-{{ checksum "requirements.txt" }}
 
   save_caches:
     steps:
@@ -82,6 +84,7 @@ commands:
                 exit 0
             fi
 
+            ls .setup/venv/bin
             /tmp/panther/magebin build:api build:cfn fmt
             git config --global user.email "github-service-account@runpanther.io"
             git config --global user.name "panther-bot"
@@ -109,6 +112,7 @@ jobs:
           # "mage setup" will have no effect unless new dependencies have been introduced.
           name: Install new dependencies
           command: /tmp/panther/magebin -v setup
+      - ls -l .setup/venv/bin
       - save_caches
       - autofmt
       - persist_to_workspace:
