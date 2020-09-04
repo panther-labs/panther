@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/redshift"
 	"github.com/aws/aws-sdk-go/service/redshift/redshiftiface"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
@@ -47,7 +48,7 @@ func setupRedshiftClient(sess *session.Session, cfg *aws.Config) interface{} {
 func getRedshiftClient(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (redshiftiface.RedshiftAPI, error) {
 	client, err := getClient(pollerResourceInput, RedshiftClientFunc, "redshift", region)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, err
 	}
 
 	return client.(redshiftiface.RedshiftAPI), nil
@@ -66,11 +67,14 @@ func PollRedshiftCluster(
 	}
 
 	clusterID := strings.Replace(resourceARN.Resource, "cluster:", "", 1)
-	redshiftCluster := getRedshiftCluster(client, aws.String(clusterID))
+	redshiftCluster, err := getRedshiftCluster(client, aws.String(clusterID))
+	if err != nil || redshiftCluster == nil {
+		return nil, err
+	}
 
-	snapshot := buildRedshiftClusterSnapshot(client, redshiftCluster)
-	if snapshot == nil {
-		return nil, nil
+	snapshot, err := buildRedshiftClusterSnapshot(client, redshiftCluster)
+	if err != nil {
+		return nil, err
 	}
 	snapshot.ResourceID = scanRequest.ResourceID
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
@@ -80,7 +84,7 @@ func PollRedshiftCluster(
 }
 
 // getRedshiftCluster returns a specific redshift cluster
-func getRedshiftCluster(svc redshiftiface.RedshiftAPI, clusterID *string) *redshift.Cluster {
+func getRedshiftCluster(svc redshiftiface.RedshiftAPI, clusterID *string) (*redshift.Cluster, error) {
 	cluster, err := svc.DescribeClusters(&redshift.DescribeClustersInput{
 		ClusterIdentifier: clusterID,
 	})
@@ -90,26 +94,42 @@ func getRedshiftCluster(svc redshiftiface.RedshiftAPI, clusterID *string) *redsh
 				zap.L().Warn("tried to scan non-existent resource",
 					zap.String("resource", *clusterID),
 					zap.String("resourceType", awsmodels.RedshiftClusterSchema))
-				return nil
+				return nil, nil
 			}
 		}
-		utils.LogAWSError("Redshift.DescribeClusters", err)
-		return nil
+		return nil, errors.Wrapf(err, "Redshift.DescribeClusters: %s", aws.StringValue(clusterID))
 	}
-	return cluster.Clusters[0]
+
+	if len(cluster.Clusters) != 1 {
+		return nil, errors.WithMessagef(
+			errors.New("Redshift.DescribeClusters"),
+			"expected exactly 1 cluster from Redshift.DescribeClusters when describing %s, found %d clusters",
+			aws.StringValue(clusterID),
+			len(cluster.Clusters),
+		)
+	}
+	return cluster.Clusters[0], nil
 }
 
 // describeClusters returns a list of all redshift cluster in the account
-func describeClusters(redshiftSvc redshiftiface.RedshiftAPI) (clusters []*redshift.Cluster) {
-	err := redshiftSvc.DescribeClustersPages(&redshift.DescribeClustersInput{},
+func describeClusters(redshiftSvc redshiftiface.RedshiftAPI, nextMarker *string) (clusters []*redshift.Cluster, marker *string, err error) {
+	err = redshiftSvc.DescribeClustersPages(&redshift.DescribeClustersInput{
+		Marker:     nextMarker,
+		MaxRecords: aws.Int64(int64(defaultBatchSize)),
+	},
 		func(page *redshift.DescribeClustersOutput, lastPage bool) bool {
-			clusters = append(clusters, page.Clusters...)
-			return true
+			return redshiftClusterIterator(page, &clusters, &marker)
 		})
 	if err != nil {
-		utils.LogAWSError("Redshift.DescribeClustersPages", err)
+		return nil, nil, errors.Wrap(err, "Redshift.DescribeClustersPages")
 	}
 	return
+}
+
+func redshiftClusterIterator(page *redshift.DescribeClustersOutput, clusters *[]*redshift.Cluster, marker **string) bool {
+	*clusters = append(*clusters, page.Clusters...)
+	*marker = page.Marker
+	return len(*clusters) < defaultBatchSize
 }
 
 // describeLoggingStatus determines whether or not a redshift cluster has logging enabled
@@ -118,17 +138,13 @@ func describeLoggingStatus(redshiftSvc redshiftiface.RedshiftAPI, clusterID *str
 		&redshift.DescribeLoggingStatusInput{ClusterIdentifier: clusterID},
 	)
 	if err != nil {
-		utils.LogAWSError("Redshift.DescribeLoggingStatus", err)
-		return nil, err
+		return nil, errors.Wrapf(err, "Redshift.DescribeLoggingStatus: %s", aws.StringValue(clusterID))
 	}
 	return out, nil
 }
 
 // buildRedshiftClusterSnapshot makes all the calls to build up a snapshot of a given Redshift cluster
-func buildRedshiftClusterSnapshot(redshiftSvc redshiftiface.RedshiftAPI, cluster *redshift.Cluster) *awsmodels.RedshiftCluster {
-	if cluster == nil {
-		return nil
-	}
+func buildRedshiftClusterSnapshot(redshiftSvc redshiftiface.RedshiftAPI, cluster *redshift.Cluster) (*awsmodels.RedshiftCluster, error) {
 	clusterSnapshot := &awsmodels.RedshiftCluster{
 		GenericResource: awsmodels.GenericResource{
 			TimeCreated:  utils.DateTimeFormat(*cluster.ClusterCreateTime),
@@ -182,69 +198,55 @@ func buildRedshiftClusterSnapshot(redshiftSvc redshiftiface.RedshiftAPI, cluster
 
 	loggingStatus, err := describeLoggingStatus(redshiftSvc, cluster.ClusterIdentifier)
 	if err != nil {
-		return clusterSnapshot
+		return nil, err
 	}
 	clusterSnapshot.LoggingStatus = loggingStatus
 
-	return clusterSnapshot
+	return clusterSnapshot, nil
 }
 
 // PollRedshiftClusters gathers information on each Redshift Cluster for an AWS account.
-func PollRedshiftClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollRedshiftClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting Redshift Cluster resource poller")
-	redshiftClusterSnapshots := make(map[string]*awsmodels.RedshiftCluster)
-
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "redshift") {
-		redshiftSvc, err := getRedshiftClient(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
-
-		// Start with generating a list of all clusters
-		clusters := describeClusters(redshiftSvc)
-		if len(clusters) == 0 {
-			zap.L().Debug("No Redshift clusters found.", zap.String("region", *regionID))
-			continue
-		}
-
-		for _, cluster := range clusters {
-			redshiftClusterSnapshot := buildRedshiftClusterSnapshot(redshiftSvc, cluster)
-
-			resourceID := strings.Join(
-				[]string{
-					"arn",
-					pollerInput.AuthSourceParsedARN.Partition,
-					"redshift",
-					*regionID,
-					pollerInput.AuthSourceParsedARN.AccountID,
-					"cluster",
-					*redshiftClusterSnapshot.ID},
-				":",
-			)
-			// Populate generic fields
-			redshiftClusterSnapshot.ResourceID = aws.String(resourceID)
-
-			// Populate AWS generic fields
-			redshiftClusterSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			redshiftClusterSnapshot.Region = regionID
-			redshiftClusterSnapshot.ARN = aws.String(resourceID)
-
-			if _, ok := redshiftClusterSnapshots[resourceID]; !ok {
-				redshiftClusterSnapshots[resourceID] = redshiftClusterSnapshot
-			} else {
-				zap.L().Info(
-					"overwriting existing Redshift Cluster snapshot",
-					zap.String("resourceID", resourceID),
-				)
-				redshiftClusterSnapshots[resourceID] = redshiftClusterSnapshot
-			}
-		}
+	redshiftSvc, err := getRedshiftClient(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	resources := make([]*apimodels.AddResourceEntry, 0, len(redshiftClusterSnapshots))
-	for resourceID, clusterSnapshot := range redshiftClusterSnapshots {
+	// Start with generating a list of all clusters
+	clusters, marker, err := describeClusters(redshiftSvc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
+	}
+
+	resources := make([]*apimodels.AddResourceEntry, 0, len(clusters))
+	for _, cluster := range clusters {
+		redshiftClusterSnapshot, err := buildRedshiftClusterSnapshot(redshiftSvc, cluster)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		resourceID := strings.Join(
+			[]string{
+				"arn",
+				pollerInput.AuthSourceParsedARN.Partition,
+				"redshift",
+				*pollerInput.Region,
+				pollerInput.AuthSourceParsedARN.AccountID,
+				"cluster",
+				*redshiftClusterSnapshot.ID},
+			":",
+		)
+		// Populate generic fields
+		redshiftClusterSnapshot.ResourceID = aws.String(resourceID)
+
+		// Populate AWS generic fields
+		redshiftClusterSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
+		redshiftClusterSnapshot.Region = pollerInput.Region
+		redshiftClusterSnapshot.ARN = aws.String(resourceID)
+
 		resources = append(resources, &apimodels.AddResourceEntry{
-			Attributes:      clusterSnapshot,
+			Attributes:      redshiftClusterSnapshot,
 			ID:              apimodels.ResourceID(resourceID),
 			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
 			IntegrationType: apimodels.IntegrationTypeAws,
@@ -252,5 +254,5 @@ func PollRedshiftClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimod
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

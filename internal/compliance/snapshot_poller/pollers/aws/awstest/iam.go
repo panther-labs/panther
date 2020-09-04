@@ -177,6 +177,11 @@ var (
 		},
 	}
 
+	ExampleListUsersContinue = &iam.ListUsersOutput{
+		Users:  ExampleListUsers.Users,
+		Marker: aws.String("1"),
+	}
+
 	ExampleGetUsers = map[string]*iam.GetUserOutput{
 		*ExampleListUsers.Users[0].UserName: {User: ExampleListUsers.Users[0]},
 		*ExampleListUsers.Users[1].UserName: {User: ExampleListUsers.Users[1]},
@@ -254,6 +259,14 @@ var (
 		},
 	}
 
+	ExampleListGroupsOutputContinue = &iam.ListGroupsOutput{
+		Groups: []*iam.Group{
+			ExampleGroup,
+			ExampleGroup,
+		},
+		Marker: aws.String("1"),
+	}
+
 	ExampleGetGroupOutput = &iam.GetGroupOutput{
 		Group: ExampleGroup,
 		Users: []*iam.User{
@@ -305,6 +318,13 @@ var (
 				UpdateDate:                    ExampleDate,
 			},
 		},
+	}
+	ExampleListPoliciesContinue = &iam.ListPoliciesOutput{
+		Policies: []*iam.Policy{
+			ExampleListPolicies.Policies[0],
+			ExampleListPolicies.Policies[0],
+		},
+		Marker: aws.String("1"),
 	}
 
 	ExamplePolicyDocumentEncoded = aws.String(url.QueryEscape(
@@ -363,6 +383,14 @@ var (
 		Roles: []*iam.Role{
 			ExampleIAMRole,
 		},
+	}
+
+	ExampleListRolesOutputContinue = &iam.ListRolesOutput{
+		Roles: []*iam.Role{
+			ExampleIAMRole,
+			ExampleIAMRole,
+		},
+		Marker: aws.String("1"),
 	}
 
 	ExampleGetRoles = map[string]*iam.GetRoleOutput{
@@ -612,7 +640,7 @@ var (
 // IAM mock
 
 // SetupMockIAM is used to override the IAM Client initializer.
-func SetupMockIAM(sess *session.Session, cfg *aws.Config) interface{} {
+func SetupMockIAM(_ *session.Session, _ *aws.Config) interface{} {
 	return MockIAMForSetup
 }
 

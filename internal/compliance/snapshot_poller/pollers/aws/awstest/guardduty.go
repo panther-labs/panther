@@ -98,7 +98,7 @@ var (
 // GuardDuty mock
 
 // SetupMockGuardDuty is used to override the GuardDuty Client initializer
-func SetupMockGuardDuty(sess *session.Session, cfg *aws.Config) interface{} {
+func SetupMockGuardDuty(_ *session.Session, _ *aws.Config) interface{} {
 	return MockGuardDutyForSetup
 }
 

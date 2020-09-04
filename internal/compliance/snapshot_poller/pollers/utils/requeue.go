@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
@@ -36,18 +37,17 @@ const MaxRequeueDelaySeconds = 900
 var queueURL = os.Getenv("SNAPSHOT_QUEUE_URL")
 
 // Requeue sends a scan request back to the poller input queue
-func Requeue(scanRequest poller.ScanMsg, delay int64) {
+func Requeue(scanRequest poller.ScanMsg, delay int64) error {
 	body, err := jsoniter.MarshalToString(scanRequest)
 	if err != nil {
-		zap.L().Error("unable to marshal requeue request", zap.Any("request", scanRequest))
-		return
+		return errors.Wrapf(err, "unable to marshal requeue request: %v", scanRequest)
 	}
 
 	if delay > MaxRequeueDelaySeconds {
 		delay = MaxRequeueDelaySeconds
 	}
 
-	zap.L().Info(
+	zap.L().Debug(
 		"initiating scan re-queue",
 		zap.Int64("delaySeconds", delay),
 		zap.String("requeueRequest", body),
@@ -61,6 +61,7 @@ func Requeue(scanRequest poller.ScanMsg, delay int64) {
 			DelaySeconds: aws.Int64(delay),
 		})
 	if err != nil {
-		zap.L().Error("scan re-queueing failed", zap.Error(err), zap.Any("request", scanRequest))
+		return errors.Wrapf(err, "scan re-queueing failed: %v", scanRequest)
 	}
+	return nil
 }

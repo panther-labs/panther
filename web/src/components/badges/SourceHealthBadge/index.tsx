@@ -1,5 +1,3 @@
-package api
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,27 +16,4 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/panther-labs/panther/api/lambda/alerts/models"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
-)
-
-// UpdateAlertStatus modifies an alert's attributes.
-func (API) UpdateAlertStatus(input *models.UpdateAlertStatusInput) (result *models.UpdateAlertStatusOutput, err error) {
-	// Run the update alert query
-	alertItem, err := alertsDB.UpdateAlertStatus(input)
-	if err != nil {
-		return nil, err
-	}
-
-	// If there was no item from the DB, we return an empty response
-	if alertItem == nil {
-		return &models.UpdateAlertStatusOutput{}, nil
-	}
-
-	// Marshal to an alert summary
-	result = alertItemToAlertSummary(alertItem)
-
-	gatewayapi.ReplaceMapSliceNils(result)
-	return result, nil
-}
+export { default } from './SourceHealthBadge';

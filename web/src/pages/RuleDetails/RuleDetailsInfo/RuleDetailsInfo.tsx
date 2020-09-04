@@ -25,8 +25,8 @@ import { RuleDetails } from 'Generated/schema';
 import urls from 'Source/urls';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
-import SeverityBadge from 'Components/SeverityBadge';
-import StatusBadge from 'Components/StatusBadge';
+import SeverityBadge from 'Components/badges/SeverityBadge';
+import StatusBadge from 'Components/badges/StatusBadge';
 
 interface ResourceDetailsInfoProps {
   rule?: RuleDetails;

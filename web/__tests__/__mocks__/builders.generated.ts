@@ -101,6 +101,8 @@ import {
   S3LogIntegrationHealth,
   ScannedResources,
   ScannedResourceStats,
+  SendTestAlertInput,
+  SendTestAlertResponse,
   Series,
   SeriesData,
   SingleValue,
@@ -623,7 +625,8 @@ export const buildIntegrationItemHealthStatus = (
   return {
     __typename: 'IntegrationItemHealthStatus',
     healthy: 'healthy' in overrides ? overrides.healthy : false,
-    errorMessage: 'errorMessage' in overrides ? overrides.errorMessage : 'Nebraska',
+    message: 'message' in overrides ? overrides.message : 'Home Loan Account',
+    rawErrorMessage: 'rawErrorMessage' in overrides ? overrides.rawErrorMessage : 'Markets',
   };
 };
 
@@ -1219,6 +1222,24 @@ export const buildScannedResourceStats = (
     __typename: 'ScannedResourceStats',
     count: 'count' in overrides ? overrides.count : buildComplianceStatusCounts(),
     type: 'type' in overrides ? overrides.type : 'proactive',
+  };
+};
+
+export const buildSendTestAlertInput = (
+  overrides: Partial<SendTestAlertInput> = {}
+): SendTestAlertInput => {
+  return {
+    outputIds:
+      'outputIds' in overrides ? overrides.outputIds : ['900d0911-ac12-4720-a1a9-89d6f1995c9f'],
+  };
+};
+
+export const buildSendTestAlertResponse = (
+  overrides: Partial<SendTestAlertResponse> = {}
+): SendTestAlertResponse => {
+  return {
+    __typename: 'SendTestAlertResponse',
+    success: 'success' in overrides ? overrides.success : true,
   };
 };
 

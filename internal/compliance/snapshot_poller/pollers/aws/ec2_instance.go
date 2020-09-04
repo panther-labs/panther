@@ -35,10 +35,6 @@ import (
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
 )
 
-var (
-	ec2Amis map[string][]*string
-)
-
 // PollEC2Instance polls a single EC2 Instance resource
 func PollEC2Instance(
 	pollerResourceInput *awsmodels.ResourcePollerInput,
@@ -52,9 +48,12 @@ func PollEC2Instance(
 	}
 
 	instanceID := strings.Replace(resourceARN.Resource, "instance/", "", 1)
-	instance := getInstance(ec2Client, aws.String(instanceID))
+	instance, err := getInstance(ec2Client, aws.String(instanceID))
+	if err != nil {
+		return nil, err
+	}
 
-	snapshot := buildEc2InstanceSnapshot(ec2Client, instance)
+	snapshot := buildEc2InstanceSnapshot(instance)
 	if snapshot == nil {
 		return nil, nil
 	}
@@ -66,7 +65,7 @@ func PollEC2Instance(
 }
 
 // getInstance returns a specific EC2 instance
-func getInstance(svc ec2iface.EC2API, instanceID *string) *ec2.Instance {
+func getInstance(svc ec2iface.EC2API, instanceID *string) (*ec2.Instance, error) {
 	instance, err := svc.DescribeInstances(&ec2.DescribeInstancesInput{
 		InstanceIds: []*string{instanceID},
 	})
@@ -76,37 +75,57 @@ func getInstance(svc ec2iface.EC2API, instanceID *string) *ec2.Instance {
 				zap.L().Warn("tried to scan non-existent resource",
 					zap.String("resource", *instanceID),
 					zap.String("resourceType", awsmodels.Ec2InstanceSchema))
-				return nil
+				return nil, nil
 			}
 		}
-		utils.LogAWSError("EC2.DescribeInstances", err)
-		return nil
+		return nil, errors.Wrapf(err, "EC2.DescribeInstances: %s", aws.StringValue(instanceID))
 	}
 
-	return instance.Reservations[0].Instances[0]
+	if len(instance.Reservations) != 1 || len(instance.Reservations[0].Instances) != 1 {
+		instances := 0
+		for _, reservation := range instance.Reservations {
+			instances += len(reservation.Instances)
+		}
+		return nil, errors.WithMessagef(
+			errors.New("EC2.DescribeInstances"),
+			"expected exactly 1 reservation & 1 instance from EC2.DescribeInstances when describing %s, found %d reservations and %d instances",
+			aws.StringValue(instanceID),
+			len(instance.Reservations),
+			instances,
+		)
+	}
+	return instance.Reservations[0].Instances[0], nil
 }
 
 // describeInstances returns all EC2 instances in the current region
-func describeInstances(ec2Svc ec2iface.EC2API) (instances []*ec2.Instance, err error) {
-	err = ec2Svc.DescribeInstancesPages(&ec2.DescribeInstancesInput{},
+func describeInstances(ec2Svc ec2iface.EC2API, nextMarker *string) (instances []*ec2.Instance, marker *string, err error) {
+	err = ec2Svc.DescribeInstancesPages(&ec2.DescribeInstancesInput{
+		NextToken:  nextMarker,
+		MaxResults: aws.Int64(int64(defaultBatchSize)),
+	},
 		func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
-			for _, reservation := range page.Reservations {
-				instances = append(instances, reservation.Instances...)
-			}
-			return true
+			return ec2InstanceIterator(page, &instances, &marker)
 		})
 	if err != nil {
-		return nil, errors.Wrap(err, "EC2.DescribeInstances")
+		return nil, nil, errors.Wrap(err, "EC2.DescribeInstances")
 	}
 	return
 }
 
+func ec2InstanceIterator(page *ec2.DescribeInstancesOutput, instances *[]*ec2.Instance, marker **string) bool {
+	for _, reservation := range page.Reservations {
+		*instances = append(*instances, reservation.Instances...)
+	}
+	*marker = page.NextToken
+	return len(*instances) < defaultBatchSize
+}
+
 // buildEc2InstanceSnapshot makes the necessary API calls to build a full Ec2InstanceSnapshot
-func buildEc2InstanceSnapshot(_ ec2iface.EC2API, instance *ec2.Instance) *awsmodels.Ec2Instance {
+func buildEc2InstanceSnapshot(instance *ec2.Instance) *awsmodels.Ec2Instance {
 	if instance == nil {
 		return nil
 	}
-	ec2Instance := &awsmodels.Ec2Instance{
+	return &awsmodels.Ec2Instance{
 		GenericResource: awsmodels.GenericResource{
 			TimeCreated:  utils.DateTimeFormat(*instance.LaunchTime),
 			ResourceType: aws.String(awsmodels.Ec2InstanceSchema),
@@ -158,70 +177,52 @@ func buildEc2InstanceSnapshot(_ ec2iface.EC2API, instance *ec2.Instance) *awsmod
 		VirtualizationType:                      instance.VirtualizationType,
 		VpcId:                                   instance.VpcId,
 	}
-
-	return ec2Instance
 }
 
 // PollEc2Instances gathers information on each EC2 instance in an AWS account.
-func PollEc2Instances(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollEc2Instances(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting EC2 Instance resource poller")
-	ec2InstanceSnapshots := make(map[string]*awsmodels.Ec2Instance)
 
-	// Reset list of AMIs
-	ec2Amis = make(map[string][]*string)
-
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "ec2") {
-		ec2Svc, err := getEC2Client(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
-
-		// Start with generating a list of all EC2 instances
-		instances, err := describeInstances(ec2Svc)
-		if err != nil {
-			return nil, errors.Wrapf(err, "PollEc2Instances(%#v) in region %s", *pollerInput, *regionID)
-		}
-
-		// For each instance, build out a full snapshot
-		zap.L().Debug("building EC2 Instance snapshots", zap.String("region", *regionID))
-		for _, instance := range instances {
-			ec2Instance := buildEc2InstanceSnapshot(ec2Svc, instance)
-
-			// arn:aws:ec2:region:account-id:instance/instance-id
-			resourceID := strings.Join(
-				[]string{
-					"arn",
-					pollerInput.AuthSourceParsedARN.Partition,
-					"ec2",
-					*regionID,
-					pollerInput.AuthSourceParsedARN.AccountID,
-					"instance/" + *ec2Instance.ID,
-				},
-				":",
-			)
-
-			// Populate generic fields
-			ec2Instance.ResourceID = aws.String(resourceID)
-
-			// Populate AWS generic fields
-			ec2Instance.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			ec2Instance.Region = regionID
-			ec2Instance.ARN = aws.String(resourceID)
-
-			ec2Amis[*regionID] = append(ec2Amis[*regionID], ec2Instance.ImageId)
-			if _, ok := ec2InstanceSnapshots[resourceID]; !ok {
-				ec2InstanceSnapshots[resourceID] = ec2Instance
-			} else {
-				zap.L().Info("overwriting existing EC2 Instance snapshot", zap.String("resourceId", resourceID))
-				ec2InstanceSnapshots[resourceID] = ec2Instance
-			}
-		}
+	ec2Svc, err := getEC2Client(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	resources := make([]*apimodels.AddResourceEntry, 0, len(ec2InstanceSnapshots))
-	for resourceID, ec2InstanceSnapshot := range ec2InstanceSnapshots {
+	// Start with generating a list of all EC2 instances
+	instances, marker, err := describeInstances(ec2Svc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
+	}
+
+	// For each instance, build out a full snapshot
+	zap.L().Debug("building EC2 Instance snapshots", zap.String("region", *pollerInput.Region))
+	resources := make([]*apimodels.AddResourceEntry, 0, len(instances))
+	for _, instance := range instances {
+		ec2Instance := buildEc2InstanceSnapshot(instance)
+
+		// arn:aws:ec2:region:account-id:instance/instance-id
+		resourceID := strings.Join(
+			[]string{
+				"arn",
+				pollerInput.AuthSourceParsedARN.Partition,
+				"ec2",
+				*pollerInput.Region,
+				pollerInput.AuthSourceParsedARN.AccountID,
+				"instance/" + *ec2Instance.ID,
+			},
+			":",
+		)
+
+		// Populate generic fields
+		ec2Instance.ResourceID = aws.String(resourceID)
+
+		// Populate AWS generic fields
+		ec2Instance.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
+		ec2Instance.Region = pollerInput.Region
+		ec2Instance.ARN = aws.String(resourceID)
+
 		resources = append(resources, &apimodels.AddResourceEntry{
-			Attributes:      ec2InstanceSnapshot,
+			Attributes:      ec2Instance,
 			ID:              apimodels.ResourceID(resourceID),
 			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
 			IntegrationType: apimodels.IntegrationTypeAws,
@@ -229,5 +230,5 @@ func PollEc2Instances(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

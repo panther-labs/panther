@@ -67,6 +67,13 @@ var (
 			},
 		},
 	}
+	ExampleDescribeStacksContinue = &cloudformation.DescribeStacksOutput{
+		Stacks: []*cloudformation.Stack{
+			ExampleDescribeStacks.Stacks[0],
+			ExampleDescribeStacks.Stacks[0],
+		},
+		NextToken: aws.String("1"),
+	}
 
 	ExampleDescribeStackResourceDrifts = &cloudformation.DescribeStackResourceDriftsOutput{
 		StackResourceDrifts: []*cloudformation.StackResourceDrift{
@@ -169,7 +176,7 @@ var (
 // CloudFormation mock
 
 // SetupMockCloudFormation is used to override the CloudFormation Client initializer
-func SetupMockCloudFormation(sess *session.Session, cfg *aws.Config) interface{} {
+func SetupMockCloudFormation(_ *session.Session, _ *aws.Config) interface{} {
 	return MockCloudFormationForSetup
 }
 

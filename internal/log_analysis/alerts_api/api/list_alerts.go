@@ -21,6 +21,7 @@ package api
 import (
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
+	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
@@ -46,44 +47,8 @@ func (API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAlertsO
 		return nil, err
 	}
 
-	result.Alerts = alertItemsToAlertSummary(alertItems)
+	result.Alerts = utils.AlertItemsToSummaries(alertItems)
 
 	gatewayapi.ReplaceMapSliceNils(result)
 	return result, nil
-}
-
-// alertItemsToAlertSummary converts a list of DDB AlertItem(s) to AlertSummary(ies)
-func alertItemsToAlertSummary(items []*table.AlertItem) []*models.AlertSummary {
-	result := make([]*models.AlertSummary, len(items))
-
-	for i, item := range items {
-		result[i] = alertItemToAlertSummary(item)
-	}
-
-	return result
-}
-
-// alertItemToAlertSummary converts a DDB AlertItem to an AlertSummary
-func alertItemToAlertSummary(item *table.AlertItem) *models.AlertSummary {
-	// convert empty status to "OPEN" status
-	alertStatus := item.Status
-	if alertStatus == "" {
-		alertStatus = models.OpenStatus
-	}
-
-	return &models.AlertSummary{
-		AlertID:           &item.AlertID,
-		CreationTime:      &item.CreationTime,
-		DedupString:       &item.DedupString,
-		EventsMatched:     &item.EventCount,
-		RuleDisplayName:   item.RuleDisplayName,
-		RuleID:            &item.RuleID,
-		RuleVersion:       &item.RuleVersion,
-		Severity:          &item.Severity,
-		Status:            alertStatus,
-		Title:             getAlertTitle(item),
-		LastUpdatedBy:     item.LastUpdatedBy,
-		LastUpdatedByTime: item.LastUpdatedByTime,
-		UpdateTime:        &item.UpdateTime,
-	}
 }

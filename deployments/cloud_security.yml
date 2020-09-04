@@ -1427,6 +1427,12 @@ Resources:
                 - kms:Decrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
+        - Id: LookupActiveregions
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: ssm:GetParametersByPath
+              Resource: '*'
         - Id: InvokeResourcesAPI
           Version: 2012-10-17
           Statement:

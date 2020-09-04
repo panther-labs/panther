@@ -104,7 +104,7 @@ var (
 // WAF Regional mock
 
 // SetupMockWafRegional is used to override the WAF Regional Client initializer
-func SetupMockWafRegional(sess *session.Session, cfg *aws.Config) interface{} {
+func SetupMockWafRegional(_ *session.Session, _ *aws.Config) interface{} {
 	return MockWafRegionalForSetup
 }
 

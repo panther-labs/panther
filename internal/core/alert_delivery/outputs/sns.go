@@ -27,8 +27,8 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
 type snsMessage struct {
@@ -39,13 +39,13 @@ type snsMessage struct {
 
 // Sns sends an alert to an SNS Topic.
 // nolint: dupl
-func (client *OutputClient) Sns(alert *alertmodels.Alert, config *outputmodels.SnsConfig) *AlertDeliveryError {
+func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.SnsConfig) *AlertDeliveryResponse {
 	notification := generateNotificationFromAlert(alert)
 	serializedDefaultMessage, err := jsoniter.MarshalToString(notification)
 	if err != nil {
 		errorMsg := "Failed to serialize default message"
 		zap.L().Error(errorMsg, zap.Error(errors.WithStack(err)))
-		return &AlertDeliveryError{Message: errorMsg, Permanent: true}
+		return &AlertDeliveryResponse{Message: errorMsg, Permanent: true}
 	}
 
 	outputMessage := &snsMessage{
@@ -57,7 +57,7 @@ func (client *OutputClient) Sns(alert *alertmodels.Alert, config *outputmodels.S
 	if err != nil {
 		errorMsg := "Failed to serialize message"
 		zap.L().Error(errorMsg, zap.Error(errors.WithStack(err)))
-		return &AlertDeliveryError{Message: errorMsg, Permanent: true}
+		return &AlertDeliveryResponse{Message: errorMsg, Permanent: true}
 	}
 
 	snsMessageInput := &sns.PublishInput{
@@ -72,14 +72,14 @@ func (client *OutputClient) Sns(alert *alertmodels.Alert, config *outputmodels.S
 	if err != nil {
 		errorMsg := "Failed to create SNS client for topic"
 		zap.L().Error(errorMsg, zap.Error(errors.WithStack(err)))
-		return &AlertDeliveryError{Message: errorMsg, Permanent: true}
+		return &AlertDeliveryResponse{Message: errorMsg, Permanent: true}
 	}
 
 	_, err = snsClient.Publish(snsMessageInput)
 	if err != nil {
 		errorMsg := "Failed to send message to SNS topic"
 		zap.L().Error(errorMsg, zap.Error(errors.WithStack(err)))
-		return &AlertDeliveryError{Message: errorMsg}
+		return &AlertDeliveryResponse{Message: errorMsg}
 	}
 	return nil
 }

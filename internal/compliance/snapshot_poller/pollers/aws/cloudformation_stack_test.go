@@ -21,6 +21,7 @@ package aws
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -31,23 +32,48 @@ import (
 func TestCloudFormationStackDescribe(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudFormationSvc([]string{"DescribeStacksPages"})
 
-	out, err := describeStacks(mockSvc)
+	out, marker, err := describeStacks(mockSvc, nil)
 	require.NoError(t, err)
+	assert.Nil(t, marker)
 	assert.NotEmpty(t, out)
 }
 
 func TestCloudFormationStackDescribeError(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudFormationSvcError([]string{"DescribeStacksPages"})
 
-	out, err := describeStacks(mockSvc)
+	out, marker, err := describeStacks(mockSvc, nil)
 	require.Error(t, err)
+	assert.Nil(t, marker)
 	assert.Nil(t, out)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestCloudFormationStackListIterator(t *testing.T) {
+	var stacks []*cloudformation.Stack
+	var marker *string
+
+	cont := stackIterator(awstest.ExampleDescribeStacks, &stacks, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, stacks, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = stackIterator(awstest.ExampleDescribeStacksContinue, &stacks, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, stacks, 1+i*2)
+	}
+
+	cont = stackIterator(awstest.ExampleDescribeStacksContinue, &stacks, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, stacks, 101)
 }
 
 func TestCloudFormationStackDetectStackDrift(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudFormationSvc([]string{"DetectStackDrift"})
 
-	out, err := detectStackDrift(mockSvc, awstest.ExampleCertificateArn)
+	out, err := detectStackDrift(mockSvc, awstest.ExampleDescribeStacks.Stacks[0].StackId)
 	require.NoError(t, err)
 	assert.NotEmpty(t, out)
 }
@@ -55,7 +81,7 @@ func TestCloudFormationStackDetectStackDrift(t *testing.T) {
 func TestCloudFormationStackDetectStackDriftError(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudFormationSvcError([]string{"DetectStackDrift"})
 
-	out, err := detectStackDrift(mockSvc, awstest.ExampleCertificateArn)
+	out, err := detectStackDrift(mockSvc, awstest.ExampleDescribeStacks.Stacks[0].StackId)
 	require.Error(t, err)
 	assert.Nil(t, out)
 }
@@ -63,25 +89,28 @@ func TestCloudFormationStackDetectStackDriftError(t *testing.T) {
 func TestCloudFormationStackDescribeResourceDrifts(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudFormationSvc([]string{"DescribeStackResourceDriftsPages"})
 
-	out := describeStackResourceDrifts(mockSvc, awstest.ExampleCertificateArn)
+	out, err := describeStackResourceDrifts(mockSvc, awstest.ExampleDescribeStacks.Stacks[0].StackId)
+	assert.NoError(t, err)
 	assert.NotEmpty(t, out)
 }
 
 func TestCloudFormationStackDescribeResourceDriftsError(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudFormationSvcError([]string{"DescribeStackResourceDriftsPages"})
 
-	out := describeStackResourceDrifts(mockSvc, awstest.ExampleCertificateArn)
+	out, err := describeStackResourceDrifts(mockSvc, awstest.ExampleDescribeStacks.Stacks[0].StackId)
+	assert.Error(t, err)
 	assert.Nil(t, out)
 }
 
 func TestCloudFormationStackBuildSnapshot(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudFormationSvcAll()
 
-	certSnapshot := buildCloudFormationStackSnapshot(
+	certSnapshot, err := buildCloudFormationStackSnapshot(
 		mockSvc,
 		awstest.ExampleDescribeStacks.Stacks[0],
 	)
 
+	assert.NoError(t, err)
 	assert.NotEmpty(t, certSnapshot.Parameters)
 	assert.NotEmpty(t, certSnapshot.Drifts)
 }
@@ -89,13 +118,13 @@ func TestCloudFormationStackBuildSnapshot(t *testing.T) {
 func TestCloudFormationStackBuildSnapshotError(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudFormationSvcAllError()
 
-	certSnapshot := buildCloudFormationStackSnapshot(
+	certSnapshot, err := buildCloudFormationStackSnapshot(
 		mockSvc,
 		awstest.ExampleDescribeStacks.Stacks[0],
 	)
 
-	assert.NotNil(t, certSnapshot.Name)
-	assert.Nil(t, certSnapshot.Drifts)
+	assert.Error(t, err)
+	assert.Nil(t, certSnapshot)
 }
 
 func TestCloudFormationStackPoller(t *testing.T) {
@@ -103,15 +132,16 @@ func TestCloudFormationStackPoller(t *testing.T) {
 
 	CloudFormationClientFunc = awstest.SetupMockCloudFormation
 
-	resources, err := PollCloudFormationStacks(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollCloudFormationStacks(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
 	require.NoError(t, err)
+	assert.Nil(t, marker)
 	assert.Equal(t, *awstest.ExampleDescribeStacks.Stacks[0].StackId, string(resources[0].ID))
 	assert.NotEmpty(t, resources)
 }
@@ -121,15 +151,16 @@ func TestCloudFormationStackPollerError(t *testing.T) {
 
 	CloudFormationClientFunc = awstest.SetupMockCloudFormation
 
-	resources, err := PollCloudFormationStacks(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollCloudFormationStacks(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
 	require.Error(t, err)
+	assert.Nil(t, marker)
 	for _, event := range resources {
 		assert.Nil(t, event.Attributes)
 	}
@@ -142,15 +173,16 @@ func TestCloudFormationStackDescribeDriftDetectionStatusInProgress(t *testing.T)
 
 	CloudFormationClientFunc = awstest.SetupMockCloudFormation
 
-	resources, err := PollCloudFormationStacks(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollCloudFormationStacks(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
 	require.NoError(t, err)
+	assert.Nil(t, marker)
 	assert.Equal(t, *awstest.ExampleDescribeStacks.Stacks[0].StackId, string(resources[0].ID))
 	assert.NotEmpty(t, resources)
 }

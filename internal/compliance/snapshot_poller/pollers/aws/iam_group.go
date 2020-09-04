@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/iam/iamiface"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
@@ -49,14 +50,14 @@ func PollIAMGroup(
 
 	// See PollIAMRole for an explanation of this behavior
 	resourceSplit := strings.Split(resourceARN.Resource, "/")
-	group := getGroup(iamClient, aws.String(resourceSplit[len(resourceSplit)-1]))
-	if group == nil {
-		return nil, nil
+	group, err := getGroup(iamClient, aws.String(resourceSplit[len(resourceSplit)-1]))
+	if err != nil || group == nil {
+		return nil, err
 	}
 
-	snapshot := buildIamGroupSnapshot(iamClient, group.Group)
-	if snapshot == nil {
-		return nil, nil
+	snapshot, err := buildIamGroupSnapshot(iamClient, group.Group)
+	if err != nil {
+		return nil, err
 	}
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	scanRequest.ResourceID = snapshot.ResourceID
@@ -64,20 +65,28 @@ func PollIAMGroup(
 }
 
 // listGroups returns a list of all IAM groups in the account
-func listGroups(iamSvc iamiface.IAMAPI) (groups []*iam.Group) {
-	err := iamSvc.ListGroupsPages(&iam.ListGroupsInput{},
+func listGroups(iamSvc iamiface.IAMAPI, nextMarker *string) (groups []*iam.Group, marker *string, err error) {
+	err = iamSvc.ListGroupsPages(&iam.ListGroupsInput{
+		Marker:   nextMarker,
+		MaxItems: aws.Int64(int64(defaultBatchSize)),
+	},
 		func(page *iam.ListGroupsOutput, lastPage bool) bool {
-			groups = append(groups, page.Groups...)
-			return true
+			return iamGroupIterator(page, &groups, &marker)
 		})
 	if err != nil {
-		utils.LogAWSError("IAM.ListGroups", err)
+		return nil, nil, errors.Wrap(err, "IAM.ListGroupsPages")
 	}
 	return
 }
 
+func iamGroupIterator(page *iam.ListGroupsOutput, groups *[]*iam.Group, marker **string) bool {
+	*groups = append(*groups, page.Groups...)
+	*marker = page.Marker
+	return len(*groups) < defaultBatchSize
+}
+
 // getGroup provides detailed information about a given IAM Group
-func getGroup(iamSvc iamiface.IAMAPI, name *string) *iam.GetGroupOutput {
+func getGroup(iamSvc iamiface.IAMAPI, name *string) (*iam.GetGroupOutput, error) {
 	out, err := iamSvc.GetGroup(&iam.GetGroupInput{GroupName: name})
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {
@@ -85,33 +94,31 @@ func getGroup(iamSvc iamiface.IAMAPI, name *string) *iam.GetGroupOutput {
 				zap.L().Warn("tried to scan non-existent resource",
 					zap.String("resource", *name),
 					zap.String("resourceType", awsmodels.IAMGroupSchema))
-				return nil
+				return nil, nil
 			}
 		}
-		utils.LogAWSError("IAM.GetGroup", err)
-		return nil
+		return nil, errors.Wrapf(err, "IAM.GetGroup: %s", aws.StringValue(name))
 	}
 
-	return out
+	return out, nil
 }
 
 // listGroupPolicies returns all the inline IAM policies for a given IAM group
-func listGroupPolicies(iamSvc iamiface.IAMAPI, groupName *string) (policies []*string) {
-	err := iamSvc.ListGroupPoliciesPages(&iam.ListGroupPoliciesInput{GroupName: groupName},
+func listGroupPolicies(iamSvc iamiface.IAMAPI, groupName *string) (policies []*string, err error) {
+	err = iamSvc.ListGroupPoliciesPages(&iam.ListGroupPoliciesInput{GroupName: groupName},
 		func(page *iam.ListGroupPoliciesOutput, lastPage bool) bool {
 			policies = append(policies, page.PolicyNames...)
 			return true
 		})
 	if err != nil {
-		utils.LogAWSError("IAM.ListGroupPoliciesPages", err)
-		return nil
+		return nil, errors.Wrapf(err, "IAM.ListGroupPoliciesPages: %s", aws.StringValue(groupName))
 	}
 	return
 }
 
 // listAttachedGroupPolicies returns all the managed IAM policies for a given IAM group
-func listAttachedGroupPolicies(iamSvc iamiface.IAMAPI, groupName *string) (policies []*string) {
-	err := iamSvc.ListAttachedGroupPoliciesPages(&iam.ListAttachedGroupPoliciesInput{GroupName: groupName},
+func listAttachedGroupPolicies(iamSvc iamiface.IAMAPI, groupName *string) (policies []*string, err error) {
+	err = iamSvc.ListAttachedGroupPoliciesPages(&iam.ListAttachedGroupPoliciesInput{GroupName: groupName},
 		func(page *iam.ListAttachedGroupPoliciesOutput, lastPage bool) bool {
 			for _, policy := range page.AttachedPolicies {
 				policies = append(policies, policy.PolicyArn)
@@ -119,40 +126,33 @@ func listAttachedGroupPolicies(iamSvc iamiface.IAMAPI, groupName *string) (polic
 			return true
 		})
 	if err != nil {
-		utils.LogAWSError("IAM.ListGroups", err)
-		return nil
+		return nil, errors.Wrapf(err, "IAM.ListGroups: %s", aws.StringValue(groupName))
 	}
 	return
 }
 
 // getGroupPolicy returns the policy document for a given IAM group and inline policy name
-func getGroupPolicy(iamSvc iamiface.IAMAPI, groupName *string, policyName *string) *string {
-	out, err := iamSvc.GetGroupPolicy(
-		&iam.GetGroupPolicyInput{GroupName: groupName, PolicyName: policyName},
-	)
+func getGroupPolicy(iamSvc iamiface.IAMAPI, groupName *string, policyName *string) (*string, error) {
+	out, err := iamSvc.GetGroupPolicy(&iam.GetGroupPolicyInput{GroupName: groupName, PolicyName: policyName})
 
 	if err != nil {
-		utils.LogAWSError("IAM.GetGroupPolicy", err)
-		return nil
+		return nil, errors.Wrapf(err, "IAM.GetGroupPolicy: %s", aws.StringValue(groupName))
 	}
 
 	decodedPolicy, err := url.QueryUnescape(*out.PolicyDocument)
 	if err != nil {
-		zap.L().Error("IAM: unable to url decode inline policy document",
-			zap.String("policy document", *out.PolicyDocument),
-			zap.String("policy name", *policyName),
-			zap.String("group", *groupName),
+		return nil, errors.Wrapf(
+			err,
+			"unable to url decode inline policy document %s for group %s",
+			aws.StringValue(policyName),
+			aws.StringValue(groupName),
 		)
-		return nil
 	}
-	return aws.String(decodedPolicy)
+	return aws.String(decodedPolicy), nil
 }
 
 // buildIamGroupSnapshot makes all the calls to build up a snapshot of a given IAM Group
-func buildIamGroupSnapshot(iamSvc iamiface.IAMAPI, group *iam.Group) *awsmodels.IamGroup {
-	if group == nil {
-		return nil
-	}
+func buildIamGroupSnapshot(iamSvc iamiface.IAMAPI, group *iam.Group) (*awsmodels.IamGroup, error) {
 	iamGroupSnapshot := &awsmodels.IamGroup{
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   group.Arn,
@@ -168,49 +168,56 @@ func buildIamGroupSnapshot(iamSvc iamiface.IAMAPI, group *iam.Group) *awsmodels.
 		Path: group.Path,
 	}
 
-	fullGroup := getGroup(iamSvc, group.GroupName)
-	if fullGroup == nil {
-		return nil
+	fullGroup, err := getGroup(iamSvc, group.GroupName)
+	// fullGroup could be nil if the resource has been deleted between scan start time and now
+	if err != nil || fullGroup == nil {
+		return nil, err
 	}
 
 	iamGroupSnapshot.Users = fullGroup.Users
-	iamGroupSnapshot.ManagedPolicyARNs = listAttachedGroupPolicies(iamSvc, group.GroupName)
+	iamGroupSnapshot.ManagedPolicyARNs, err = listAttachedGroupPolicies(iamSvc, group.GroupName)
+	if err != nil {
+		return nil, err
+	}
 
-	inlinePolicyNames := listGroupPolicies(iamSvc, group.GroupName)
-	if inlinePolicyNames != nil {
-		iamGroupSnapshot.InlinePolicies = make(map[string]*string, len(inlinePolicyNames))
-		for _, inlinePolicyName := range inlinePolicyNames {
-			iamGroupSnapshot.InlinePolicies[*inlinePolicyName] = getGroupPolicy(
-				iamSvc,
-				group.GroupName,
-				inlinePolicyName,
-			)
+	inlinePolicyNames, err := listGroupPolicies(iamSvc, group.GroupName)
+	if err != nil {
+		return nil, err
+	}
+	iamGroupSnapshot.InlinePolicies = make(map[string]*string, len(inlinePolicyNames))
+	for _, inlinePolicyName := range inlinePolicyNames {
+		iamGroupSnapshot.InlinePolicies[*inlinePolicyName], err = getGroupPolicy(
+			iamSvc,
+			group.GroupName,
+			inlinePolicyName,
+		)
+		if err != nil {
+			return nil, err
 		}
 	}
 
-	return iamGroupSnapshot
+	return iamGroupSnapshot, nil
 }
 
 // PollIamGroups gathers information on each IAM Group for an AWS account.
-func PollIamGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollIamGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting IAM Group resource poller")
 	iamSvc, err := getIAMClient(pollerInput, defaultRegion)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, nil, err
 	}
 
-	// Start with generating a list of all keys
-	groups := listGroups(iamSvc)
-	if len(groups) == 0 {
-		zap.L().Debug("No IAM groups found.")
-		return nil, nil
+	// Start with generating a list of all groups
+	groups, marker, err := listGroups(iamSvc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	var resources []*apimodels.AddResourceEntry
 	for _, group := range groups {
-		iamGroupSnapshot := buildIamGroupSnapshot(iamSvc, group)
-		if iamGroupSnapshot == nil {
-			continue
+		iamGroupSnapshot, err := buildIamGroupSnapshot(iamSvc, group)
+		if err != nil {
+			return nil, nil, err
 		}
 		iamGroupSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 
@@ -223,5 +230,5 @@ func PollIamGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Add
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

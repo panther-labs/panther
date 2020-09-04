@@ -25,18 +25,18 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
-var slackConfig = &outputmodels.SlackConfig{WebhookURL: "slack-channel-url"}
+var slackConfig = &outputModels.SlackConfig{WebhookURL: "slack-channel-url"}
 
 func TestSlackAlert(t *testing.T) {
 	httpWrapper := &mockHTTPWrapper{}
 	client := &OutputClient{httpWrapper: httpWrapper}
 
 	createdAtTime := time.Now()
-	alert := &alertmodels.Alert{
+	alert := &alertModels.Alert{
 		AnalysisID:   "policyId",
 		CreatedAt:    createdAtTime,
 		OutputIds:    []string{"output-id"},
@@ -74,7 +74,7 @@ func TestSlackAlert(t *testing.T) {
 		body: expectedPostPayload,
 	}
 
-	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryError)(nil))
+	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryResponse)(nil))
 
 	require.Nil(t, client.Slack(alert, slackConfig))
 	httpWrapper.AssertExpectations(t)

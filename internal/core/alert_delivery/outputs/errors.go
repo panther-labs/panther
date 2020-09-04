@@ -18,15 +18,21 @@ package outputs
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// AlertDeliveryError indicates whether a failed alert should be retried.
-type AlertDeliveryError struct {
-	// Message is the description of the problem: what went wrong.
+// AlertDeliveryResponse holds the response (success or failure) of an alert delivery request.
+type AlertDeliveryResponse struct {
+	// StatusCode is the http response status code
+	StatusCode int
+
+	// Message is our wrapped description of the problem: what went wrong.
 	Message string
 
 	// Permanent indicates whether the alert output should be retried.
 	// For example, outputs which don't exist or errors creating the request are permanent failures.
 	// But any error talking to the output itself can be retried by the Lambda function later.
 	Permanent bool
+
+	// Success is true if we determine the request executed successfully. False otherwise.
+	Success bool
 }
 
-func (e *AlertDeliveryError) Error() string { return e.Message }
+func (e *AlertDeliveryResponse) Error() string { return e.Message }

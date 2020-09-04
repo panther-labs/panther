@@ -35,62 +35,93 @@ import (
 func TestEC2DescribeVpcs(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2Svc([]string{"DescribeVpcsPages"})
 
-	out, err := describeVpcs(mockSvc)
-	require.NoError(t, err)
+	out, marker, err := describeVpcs(mockSvc, nil)
 	assert.NotEmpty(t, out)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestEc2VpcListIterator(t *testing.T) {
+	var vpcs []*ec2.Vpc
+	var marker *string
+
+	cont := ec2VpcIterator(awstest.ExampleDescribeVpcsOutput, &vpcs, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, vpcs, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = ec2VpcIterator(awstest.ExampleDescribeVpcsOutputContinue, &vpcs, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, vpcs, 1+i*2)
+	}
+
+	cont = ec2VpcIterator(awstest.ExampleDescribeVpcsOutputContinue, &vpcs, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, vpcs, 101)
 }
 
 func TestEC2DescribeVpcsError(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2SvcError([]string{"DescribeVpcsPages"})
 
-	out, err := describeVpcs(mockSvc)
-	require.Error(t, err)
+	out, marker, err := describeVpcs(mockSvc, nil)
 	assert.Nil(t, out)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }
 
 func TestEC2DescribeStaleSecurityGroups(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2Svc([]string{"DescribeStaleSecurityGroupsPages"})
 
-	out := describeStaleSecurityGroups(mockSvc, awstest.ExampleVpcId)
+	out, err := describeStaleSecurityGroups(mockSvc, awstest.ExampleVpcId)
 	assert.NotEmpty(t, out)
+	assert.NoError(t, err)
 }
 
 func TestEC2DescribeStaleSecurityGroupsError(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2SvcError([]string{"DescribeStaleSecurityGroupsPages"})
 
-	out := describeStaleSecurityGroups(mockSvc, awstest.ExampleVpcId)
+	out, err := describeStaleSecurityGroups(mockSvc, awstest.ExampleVpcId)
 	assert.Nil(t, out)
+	assert.Error(t, err)
 }
 
 func TestEC2DescribeRouteTables(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2Svc([]string{"DescribeRouteTablesPages"})
 
-	out := describeRouteTables(mockSvc, awstest.ExampleVpcId)
+	out, err := describeRouteTables(mockSvc, awstest.ExampleVpcId)
 	assert.NotEmpty(t, out)
+	assert.NoError(t, err)
 }
 
 func TestEC2DescribeRouteTablesError(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2SvcError([]string{"DescribeRouteTablesPages"})
 
-	out := describeRouteTables(mockSvc, awstest.ExampleVpcId)
+	out, err := describeRouteTables(mockSvc, awstest.ExampleVpcId)
 	assert.Nil(t, out)
+	assert.Error(t, err)
 }
 
 func TestEC2DescribeFlowLogs(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2Svc([]string{"DescribeFlowLogsPages"})
 
-	out := describeFlowLogs(mockSvc, awstest.ExampleVpcId)
+	out, err := describeFlowLogs(mockSvc, awstest.ExampleVpcId)
 	assert.NotEmpty(t, out)
+	assert.NoError(t, err)
 }
 
 func TestEC2DescribeFlowLogsError(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2SvcError([]string{"DescribeFlowLogsPages"})
 
-	out := describeFlowLogs(mockSvc, awstest.ExampleVpcId)
+	out, err := describeFlowLogs(mockSvc, awstest.ExampleVpcId)
 	assert.Nil(t, out)
+	assert.Error(t, err)
 }
 
-func TestEC2BuildVpcSnapshot(t *testing.T) {
+func TestEC2BuildVpcSnapshotPartialError(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2Svc([]string{
 		"DescribeVpcsPages",
 		"DescribeRouteTablesPages",
@@ -101,12 +132,20 @@ func TestEC2BuildVpcSnapshot(t *testing.T) {
 	})
 	mockSvc.
 		On("DescribeSecurityGroupsPages", mock.Anything).
-		Return(&ec2.DescribeSecurityGroupsOutput{}, errors.New("fake describe security group error"))
+		Return(errors.New("fake describe security group error"))
 	mockSvc.
 		On("DescribeNetworkAclsPages", mock.Anything).
-		Return(&ec2.DescribeNetworkAclsOutput{}, errors.New("fake describe network ACLs error"))
+		Return(errors.New("fake describe network ACLs error"))
 
-	ec2Snapshot := buildEc2VpcSnapshot(mockSvc, awstest.ExampleVpc)
+	ec2Snapshot, err := buildEc2VpcSnapshot(mockSvc, awstest.ExampleVpc)
+	assert.Error(t, err)
+	assert.Nil(t, ec2Snapshot)
+}
+
+func TestEC2BuildVpcSnapshot(t *testing.T) {
+	mockSvc := awstest.BuildMockEC2SvcAll()
+	ec2Snapshot, err := buildEc2VpcSnapshot(mockSvc, awstest.ExampleVpc)
+	assert.NoError(t, err)
 	assert.Len(t, ec2Snapshot.SecurityGroups, 1)
 	require.NotEmpty(t, ec2Snapshot.NetworkAcls)
 	assert.Len(t, ec2Snapshot.NetworkAcls, 1)
@@ -119,21 +158,22 @@ func TestEC2PollVpcs(t *testing.T) {
 
 	EC2ClientFunc = awstest.SetupMockEC2
 
-	resources, err := PollEc2Vpcs(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollEc2Vpcs(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
 	assert.Regexp(
 		t,
 		regexp.MustCompile(`arn:aws:ec2:.*:123456789012:vpc/vpc-6aa60b12`),
 		resources[0].ID,
 	)
 	assert.NotEmpty(t, resources)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestEC2PollVpcsError(t *testing.T) {
@@ -141,14 +181,15 @@ func TestEC2PollVpcsError(t *testing.T) {
 
 	EC2ClientFunc = awstest.SetupMockEC2
 
-	resources, err := PollEc2Vpcs(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollEc2Vpcs(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.Error(t, err)
 	assert.Empty(t, resources)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }

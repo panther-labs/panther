@@ -97,15 +97,17 @@ func TestS3GetObjectLockConfigurationError(t *testing.T) {
 func TestS3BucketsList(t *testing.T) {
 	mockSvc := awstest.BuildMockS3Svc([]string{"ListBuckets"})
 
-	out := listBuckets(mockSvc)
+	out, err := listBuckets(mockSvc)
 	assert.NotEmpty(t, out)
+	assert.NoError(t, err)
 }
 
 func TestS3BucketsListError(t *testing.T) {
 	mockSvc := awstest.BuildMockS3SvcError([]string{"ListBuckets"})
 
-	out := listBuckets(mockSvc)
+	out, err := listBuckets(mockSvc)
 	assert.Empty(t, out)
+	assert.Error(t, err)
 }
 
 func TestS3GetBucketEncryption(t *testing.T) {
@@ -159,7 +161,8 @@ func TestS3GetBucketVersioningError(t *testing.T) {
 func TestS3GetBucketLocation(t *testing.T) {
 	mockSvc := awstest.BuildMockS3Svc([]string{"GetBucketLocation"})
 
-	out := getBucketLocation(mockSvc, awstest.ExampleBucketName)
+	out, err := getBucketLocation(mockSvc, awstest.ExampleBucketName)
+	assert.NoError(t, err)
 	assert.Equal(t, "us-west-2", *out)
 	assert.NotEmpty(t, out)
 }
@@ -175,7 +178,8 @@ func TestS3GetBucketLocationVirginia(t *testing.T) {
 			nil,
 		)
 
-	out := getBucketLocation(mockSvc, awstest.ExampleBucketName)
+	out, err := getBucketLocation(mockSvc, awstest.ExampleBucketName)
+	assert.NoError(t, err)
 	assert.Equal(t, "us-east-1", *out)
 	assert.NotEmpty(t, out)
 }
@@ -183,8 +187,9 @@ func TestS3GetBucketLocationVirginia(t *testing.T) {
 func TestS3GetBucketLocationError(t *testing.T) {
 	mockSvc := awstest.BuildMockS3SvcError([]string{"GetBucketLocation"})
 
-	out := getBucketLocation(mockSvc, awstest.ExampleBucketName)
+	out, err := getBucketLocation(mockSvc, awstest.ExampleBucketName)
 	assert.Nil(t, out)
+	assert.Error(t, err)
 }
 
 func TestS3GetBucketLifecycleConfiguration(t *testing.T) {
@@ -240,17 +245,18 @@ func TestS3BucketPoller(t *testing.T) {
 
 	S3ClientFunc = awstest.SetupMockS3
 
-	resources, err := PollS3Buckets(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollS3Buckets(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	require.NotEmpty(t, resources)
 	assert.Equal(t, "arn:aws:s3:::unit-test-cloudtrail-bucket", string(resources[0].ID))
-	assert.NotEmpty(t, resources)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestS3BucketPollerError(t *testing.T) {
@@ -258,13 +264,15 @@ func TestS3BucketPollerError(t *testing.T) {
 
 	S3ClientFunc = awstest.SetupMockS3
 
-	resources, err := PollS3Buckets(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollS3Buckets(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
 	assert.Empty(t, resources)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }
