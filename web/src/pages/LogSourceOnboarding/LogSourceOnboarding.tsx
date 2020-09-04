@@ -67,7 +67,7 @@ const LogSourceOnboarding: React.FC = () => {
             title="Select a Source Type"
             subtitle="Please select the source type you want to configure from the list below"
           />
-          <Box mx={10}>
+          <Box width={550} mx="auto">
             {logSourcesConfig.map(config => (
               <LogSourceCard
                 key={config.title}

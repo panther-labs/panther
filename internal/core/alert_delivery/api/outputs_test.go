@@ -1,4 +1,4 @@
-package delivery
+package api
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -21,6 +21,7 @@ package delivery
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/lambda"
@@ -29,14 +30,14 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 func TestGetAlertOutputsFromDefaultSeverity(t *testing.T) {
-	mockClient := &mockLambdaClient{}
+	mockClient := &testutils.LambdaMock{}
 	lambdaClient = mockClient
-
-	output := &outputmodels.GetOutputsOutput{
+	output := &outputModels.GetOutputsOutput{
 		{
 			OutputID:           aws.String("default-info-1"),
 			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
@@ -53,13 +54,16 @@ func TestGetAlertOutputsFromDefaultSeverity(t *testing.T) {
 	payload, err := jsoniter.Marshal(output)
 	require.NoError(t, err)
 	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
-
-	cache = nil // Clear the cache
+	// Need to expire the cache because other tests mutate this global when run in parallel
+	outputsCache = &alertOutputsCache{
+		RefreshInterval: time.Second * time.Duration(30),
+		Expiry:          time.Now().Add(time.Minute * time.Duration(-5)),
+	}
 	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
 	alert := sampleAlert()
 	alert.OutputIds = nil
 
-	expectedResult := []*outputmodels.AlertOutput{{
+	expectedResult := []*outputModels.AlertOutput{{
 		OutputID:           aws.String("default-info-1"),
 		DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
 	}, {
@@ -79,10 +83,10 @@ func TestGetAlertOutputsFromDefaultSeverity(t *testing.T) {
 }
 
 func TestGetAlertOutputsFromOutputIds(t *testing.T) {
-	mockClient := &mockLambdaClient{}
+	mockClient := &testutils.LambdaMock{}
 	lambdaClient = mockClient
 
-	output := &outputmodels.GetOutputsOutput{
+	output := &outputModels.GetOutputsOutput{
 		{
 			OutputID:           aws.String("output-id"),
 			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
@@ -100,12 +104,16 @@ func TestGetAlertOutputsFromOutputIds(t *testing.T) {
 	require.NoError(t, err)
 	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
 
-	cache = nil // Clear the cache
+	// Need to expire the cache because other tests mutate this global when run in parallel
+	outputsCache = &alertOutputsCache{
+		RefreshInterval: time.Second * time.Duration(30),
+		Expiry:          time.Now().Add(time.Minute * time.Duration(-5)),
+	}
 	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
 	alert := sampleAlert()
 	alert.OutputIds = []string{"output-id", "output-id-3", "output-id-not"}
 
-	expectedResult := []*outputmodels.AlertOutput{{
+	expectedResult := []*outputModels.AlertOutput{{
 		OutputID:           aws.String("output-id"),
 		DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
 	}, {
@@ -121,13 +129,16 @@ func TestGetAlertOutputsFromOutputIds(t *testing.T) {
 }
 
 func TestGetAlertOutputsIdsError(t *testing.T) {
-	mockClient := &mockLambdaClient{}
+	mockClient := &testutils.LambdaMock{}
 	lambdaClient = mockClient
 	mockClient.On("Invoke", mock.Anything).Return((*lambda.InvokeOutput)(nil), errors.New("error"))
 
 	alert := sampleAlert()
-	cache = nil // Clear the cache
-
+	// Need to expire the cache because other tests mutate this global when run in parallel
+	outputsCache = &alertOutputsCache{
+		RefreshInterval: time.Second * time.Duration(30),
+		Expiry:          time.Now().Add(time.Minute * time.Duration(-5)),
+	}
 	result, err := getAlertOutputs(alert)
 	require.Error(t, err)
 	assert.Nil(t, result)

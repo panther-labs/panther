@@ -16,31 +16,36 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, FormHelperText, Link } from 'pouncejs';
-import ErrorBoundary from 'Components/ErrorBoundary';
+import { Box, Flex, FormHelperText, Link } from 'pouncejs';
 import { Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import React from 'react';
 import FormikCheckbox from 'Components/fields/Checkbox';
+import logo from 'Assets/aws-minimal-logo.svg';
 import { CLOUD_SECURITY_REAL_TIME_DOC_URL, REMEDIATION_DOC_URL } from 'Source/constants';
 import { ComplianceSourceWizardValues } from 'Components/wizards/ComplianceSourceWizard/ComplianceSourceWizard';
 import { WizardPanel } from 'Components/Wizard';
 
 const SourceConfigurationPanel: React.FC = () => {
-  const { initialValues } = useFormikContext<ComplianceSourceWizardValues>();
+  const { initialValues, dirty, isValid } = useFormikContext<ComplianceSourceWizardValues>();
 
   return (
-    <Box width={460} m="auto">
-      <WizardPanel.Heading
-        title={initialValues.integrationId ? 'Update source' : 'First things first'}
-        subtitle={
-          initialValues.integrationId
-            ? 'Feel free to make any changes to your Cloud Security source'
-            : "Let's configure your Cloud Security Source"
-        }
-      />
-      <ErrorBoundary>
-        <Box mb={4}>
+    <WizardPanel>
+      <Box width={400} m="auto">
+        <WizardPanel.Heading
+          title={
+            initialValues.integrationId
+              ? `Update ${initialValues.integrationLabel}`
+              : 'First things first'
+          }
+          subtitle={
+            initialValues.integrationId
+              ? 'Feel free to make any changes to you want'
+              : 'Let’s configure your Cloud Security Source'
+          }
+          logo={logo}
+        />
+        <Flex direction="column" spacing={4}>
           <Field
             name="integrationLabel"
             as={FormikTextInput}
@@ -48,8 +53,6 @@ const SourceConfigurationPanel: React.FC = () => {
             placeholder="A nickname for the AWS account you're onboarding"
             required
           />
-        </Box>
-        <Box mb={8}>
           <Field
             name="awsAccountId"
             as={FormikTextInput}
@@ -58,16 +61,16 @@ const SourceConfigurationPanel: React.FC = () => {
             required
             disabled={!!initialValues.integrationId}
           />
-        </Box>
-        <Box ml={-2}>
-          <Box as="fieldset" mb={8}>
+        </Flex>
+        <Flex direction="column" spacing={6} my={4} ml={-2}>
+          <Box as="fieldset">
             <Field
               as={FormikCheckbox}
               name="cweEnabled"
               aria-describedby="cweEnabled-description"
               label="Real-Time AWS Resource Scans"
             />
-            <FormHelperText id="cweEnabled-description" ml={2}>
+            <FormHelperText id="cweEnabled-description" ml={45}>
               Configure Panther to monitor all AWS resource changes in real-time through CloudWatch
               Events.{' '}
               <Link external href={CLOUD_SECURITY_REAL_TIME_DOC_URL}>
@@ -75,24 +78,28 @@ const SourceConfigurationPanel: React.FC = () => {
               </Link>
             </FormHelperText>
           </Box>
-          <Box as="fieldset" mb={8}>
+          <Box as="fieldset">
             <Field
               as={FormikCheckbox}
               name="remediationEnabled"
               aria-describedby="remediationEnabled-description"
               label="AWS Automatic Remediations"
             />
-            <FormHelperText id="remediationEnabled-description" ml={2}>
-              Allow Panther to fix misconfigured infrastructure as soon as it is detected.
-              <br />
+            <FormHelperText id="remediationEnabled-description" ml={45}>
+              Allow Panther to fix misconfigured infrastructure as soon as it is detected.{' '}
               <Link external href={REMEDIATION_DOC_URL}>
                 Read more
               </Link>
             </FormHelperText>
           </Box>
-        </Box>
-      </ErrorBoundary>
-    </Box>
+        </Flex>
+        <WizardPanel.Actions>
+          <WizardPanel.ActionNext disabled={!dirty || !isValid}>
+            Continue Setup
+          </WizardPanel.ActionNext>
+        </WizardPanel.Actions>
+      </Box>
+    </WizardPanel>
   );
 };
 

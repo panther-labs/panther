@@ -111,6 +111,8 @@ Mappings:
   Alerts:
     QueueRetention:
       Seconds: 259200 # (3 days) How long SQS will retain messages in the alerts queue
+    RetryCount:
+      Max: 10 # Alerts which fail to send will be retried this many times
     RetryDuration:
       Minutes: 30 # Alerts which fail to send will be retried for this duration
     MinRetryDelay:
@@ -121,6 +123,9 @@ Mappings:
   Functions:
     AlertDelivery:
       Memory: 128
+      Timeout: 60
+    AlertsAPI:
+      Memory: 256
       Timeout: 60
     AnalysisAPI:
       Memory: 512
@@ -637,13 +642,20 @@ Resources:
         Variables:
           DEBUG: !Ref Debug
           ALERT_QUEUE_URL: !Ref AlertQueue
-          ALERT_RETRY_DURATION_MINS: !FindInMap [Alerts, RetryDuration, Minutes]
+          ALERT_RETRY_COUNT: !FindInMap [Alerts, RetryCount, Max]
           ALERT_URL_PREFIX: !Sub https://${AppDomainURL}/log-analysis/alerts/
+          ALERTS_API: panther-alerts-api
+          ALERTS_TABLE_NAME: panther-log-alert-info
+          ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+          ANALYSIS_API_PATH: v1
+          APP_DOMAIN_URL: !Sub https://${AppDomainURL}
           MAX_RETRY_DELAY_SECS: !FindInMap [Alerts, MaxRetryDelay, Seconds]
           MIN_RETRY_DELAY_SECS: !FindInMap [Alerts, MinRetryDelay, Seconds]
           OUTPUTS_API: panther-outputs-api
-          OUTPUTS_REFRESH_INTERVAL_MIN: '5'
+          OUTPUTS_REFRESH_INTERVAL: '30s'
           POLICY_URL_PREFIX: !Sub https://${AppDomainURL}/cloud-security/policies/
+          RULE_INDEX_NAME: ruleId-creationTime-index
+          TIME_INDEX_NAME: timePartition-creationTime-index
       Events:
         AlertQueue:
           Type: SQS
@@ -651,7 +663,7 @@ Resources:
             Queue: !GetAtt AlertQueue.Arn
             BatchSize: 10
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
-      FunctionName: panther-alert-delivery
+      FunctionName: panther-alert-delivery-api
       # <cfndoc>
       # This lambda dispatches alerts to their specified outputs (destinations).
       #
@@ -671,6 +683,12 @@ Resources:
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-outputs-api'
+        - Id: AlertsAPI
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-alerts-api'
         - Id: PublishSnsMessage
           Version: 2012-10-17
           Statement:
@@ -700,11 +718,24 @@ Resources:
                 - sqs:GetQueueAttributes
                 - sqs:ReceiveMessage
               Resource: !GetAtt AlertQueue.Arn
+        - Id: UpdateAlertDeliveryStatus
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-log-alert-info
+        - Id: GetRule
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: execute-api:Invoke
+              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/rule
 
   AlertDeliveryLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: /aws/lambda/panther-alert-delivery
+      LogGroupName: /aws/lambda/panther-alert-delivery-api
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
   AlertDeliveryMetricFilters:

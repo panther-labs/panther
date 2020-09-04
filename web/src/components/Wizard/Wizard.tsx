@@ -17,7 +17,7 @@
  */
 
 import React, { ReactElement, ReactNode } from 'react';
-import { Box, Flex, Icon, Text, Divider, Card } from 'pouncejs';
+import { Box, Flex, Icon, Text, Divider, Card, BoxProps, IconProps } from 'pouncejs';
 import { WizardContext } from './WizardContext';
 
 interface WizardProps<Data> {
@@ -26,24 +26,34 @@ interface WizardProps<Data> {
   initialData?: Data;
 }
 
+export type StepStatus = 'PASSING' | 'FAILING' | 'PENDING';
+
 function Wizard<WizardData = any>({
   children,
   header = true,
   initialData = undefined,
 }: WizardProps<WizardData>): ReactElement {
   const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
-  const prevStepIndex = React.useRef<number>(null);
+  const [currentStepStatus, setCurrentStepStatus] = React.useState<StepStatus>('PENDING');
   const [wizardData, setWizardData] = React.useState<WizardData>(initialData);
+  const prevStepIndex = React.useRef<number>(null);
 
   const steps = React.useMemo(() => React.Children.toArray(children) as React.ReactElement[], [
     children,
   ]);
 
   /**
+   * Reset the step status everytime the step changes
+   */
+  React.useEffect(() => {
+    setCurrentStepStatus('PENDING');
+  }, [currentStepIndex, setCurrentStepStatus]);
+
+  /**
    * Goes to the the chosen wizard step
    */
   const goToStep = React.useCallback(
-    stepIndex => {
+    (stepIndex: number) => {
       prevStepIndex.current = stepIndex > currentStepIndex ? currentStepIndex : stepIndex - 1;
       setCurrentStepIndex(stepIndex);
     },
@@ -61,7 +71,7 @@ function Wizard<WizardData = any>({
    *  Merges new data with the existing wizard data
    */
   const updateWizardData = React.useCallback(
-    data => {
+    (data: WizardData) => {
       setWizardData({ ...wizardData, ...data });
     },
     [wizardData, setWizardData]
@@ -91,7 +101,8 @@ function Wizard<WizardData = any>({
   const resetWizard = React.useCallback(() => {
     resetWizardData();
     setCurrentStepIndex(0);
-  }, [resetWizardData, setCurrentStepIndex]);
+    setCurrentStepStatus('PENDING');
+  }, [resetWizardData, setCurrentStepIndex, setCurrentStepStatus]);
 
   /*
    * Exposes handlers to any components below
@@ -105,8 +116,19 @@ function Wizard<WizardData = any>({
       updateData: updateWizardData,
       reset: resetWizard,
       data: wizardData,
+      currentStepStatus,
+      setCurrentStepStatus,
     }),
-    [goToPrevStep, goToNextStep, wizardData, resetWizardData, setWizardData, updateWizardData]
+    [
+      goToPrevStep,
+      goToNextStep,
+      wizardData,
+      currentStepStatus,
+      resetWizardData,
+      setWizardData,
+      updateWizardData,
+      setCurrentStepStatus,
+    ]
   );
 
   return (
@@ -115,8 +137,28 @@ function Wizard<WizardData = any>({
         <Flex as="ul" justify="center" pt="10px" mb={60} zIndex={2}>
           {steps.map((step, index) => {
             const isLast = index === steps.length - 1;
-            const isComplete = currentStepIndex > index || currentStepIndex === steps.length - 1;
+            const isComplete = currentStepIndex > index;
             const isCurrent = currentStepIndex === index;
+            const isPassing = currentStepStatus === 'PASSING';
+            const isFailing = currentStepStatus === 'FAILING';
+
+            let backgroundColor: BoxProps['backgroundColor'];
+            let borderColor: BoxProps['borderColor'];
+            let svgIcon: IconProps['type'];
+
+            if (isComplete || isPassing) {
+              backgroundColor = 'blue-400';
+              borderColor = 'blue-400';
+              svgIcon = 'check';
+            } else if (isFailing) {
+              backgroundColor = 'pink-600';
+              borderColor = 'pink-600';
+              svgIcon = 'alert-circle';
+            } else {
+              backgroundColor = 'transparent';
+              borderColor = 'gray-300';
+              svgIcon = null;
+            }
 
             return (
               <Flex
@@ -136,10 +178,10 @@ function Wizard<WizardData = any>({
                   fontWeight="bold"
                   borderRadius="circle"
                   border="1px solid"
-                  borderColor={isComplete ? 'blue-400' : 'gray-300'}
-                  backgroundColor={isComplete ? 'blue-400' : 'transparent'}
+                  borderColor={borderColor}
+                  backgroundColor={backgroundColor}
                 >
-                  {isComplete ? <Icon type="check" size="x-small" /> : index + 1}
+                  {svgIcon ? <Icon type={svgIcon} size="x-small" /> : index + 1}
                 </Flex>
                 <Text fontSize="medium" ml={2}>
                   {step.props.title}

@@ -27,23 +27,24 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
-var createdAtTime, _ = time.Parse(time.RFC3339, "2019-05-03T11:40:13Z")
-
-var pagerDutyAlert = &alertmodels.Alert{
-	AnalysisName: aws.String("policyName"),
-	AnalysisID:   "policyId",
-	Severity:     "INFO",
-	Runbook:      aws.String("runbook"),
-	CreatedAt:    createdAtTime,
-	Type:         alertmodels.PolicyType,
-}
-var pagerDutyConfig = &outputmodels.PagerDutyConfig{
-	IntegrationKey: "integrationKey",
-}
+var (
+	createdAtTime, _ = time.Parse(time.RFC3339, "2019-05-03T11:40:13Z")
+	pagerDutyAlert   = &alertModels.Alert{
+		AnalysisName: aws.String("policyName"),
+		AnalysisID:   "policyId",
+		Severity:     "INFO",
+		Runbook:      aws.String("runbook"),
+		CreatedAt:    createdAtTime,
+		Type:         alertModels.PolicyType,
+	}
+	pagerDutyConfig = &outputModels.PagerDutyConfig{
+		IntegrationKey: "integrationKey",
+	}
+)
 
 func TestSendPagerDutyAlert(t *testing.T) {
 	httpWrapper := &mockHTTPWrapper{}
@@ -56,7 +57,7 @@ func TestSendPagerDutyAlert(t *testing.T) {
 				ID:        "policyId",
 				CreatedAt: createdAtTime,
 				Severity:  "INFO",
-				Type:      alertmodels.PolicyType,
+				Type:      alertModels.PolicyType,
 				Link:      "https://panther.io/policies/policyId",
 				Title:     "Policy Failure: policyName",
 				Name:      aws.String("policyName"),
@@ -76,7 +77,7 @@ func TestSendPagerDutyAlert(t *testing.T) {
 		body: expectedPostPayload,
 	}
 
-	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryError)(nil))
+	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryResponse)(nil))
 	result := outputClient.PagerDuty(pagerDutyAlert, pagerDutyConfig)
 
 	assert.Nil(t, result)
@@ -87,7 +88,7 @@ func TestSendPagerDutyAlertPostError(t *testing.T) {
 	httpWrapper := &mockHTTPWrapper{}
 	outputClient := &OutputClient{httpWrapper: httpWrapper}
 
-	httpWrapper.On("post", mock.Anything).Return(&AlertDeliveryError{Message: "Exception"})
+	httpWrapper.On("post", mock.Anything).Return(&AlertDeliveryResponse{Message: "Exception"})
 
 	require.Error(t, outputClient.PagerDuty(pagerDutyAlert, pagerDutyConfig))
 	httpWrapper.AssertExpectations(t)

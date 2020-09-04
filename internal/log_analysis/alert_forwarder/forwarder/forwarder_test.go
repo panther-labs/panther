@@ -38,7 +38,7 @@ import (
 
 	policiesclient "github.com/panther-labs/panther/api/gateway/analysis/client"
 	ruleModel "github.com/panther-labs/panther/api/gateway/analysis/models"
-	alertModel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	alertModel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 

@@ -20,7 +20,6 @@ package api
 
 import (
 	"testing"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
@@ -30,42 +29,37 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 )
 
-func TestUpdateAlert(t *testing.T) {
+func TestUpdateAlertDelivery(t *testing.T) {
 	tableMock := &tableMock{}
 	alertsDB = tableMock
 
-	alertID := aws.String("alertId")
-	status := aws.String("")
-	userID := aws.String("userId")
-	timeNow := time.Now()
-	input := &models.UpdateAlertStatusInput{
-		AlertID: alertID,
-		Status:  status,
-		UserID:  userID,
+	alertID := "alertId"
+	input := &models.UpdateAlertDeliveryInput{
+		AlertID:           alertID,
+		DeliveryResponses: []*models.DeliveryResponse{},
+	}
+	deliveryResponse := &models.DeliveryResponse{
+		OutputID: "output-id",
+		Message:  "successful delivery",
+		Success:  true,
 	}
 	output := &table.AlertItem{
-		AlertID:           *alertID,
-		Status:            "CLOSED",
-		LastUpdatedBy:     *userID,
-		LastUpdatedByTime: timeNow,
+		AlertID:           alertID,
+		DeliveryResponses: []*models.DeliveryResponse{deliveryResponse},
 	}
 	expectedSummary := &models.AlertSummary{
-		AlertID:           aws.String("alertId"),
-		Status:            "CLOSED",
-		LastUpdatedBy:     "userId",
-		LastUpdatedByTime: timeNow,
+		AlertID:           aws.String(alertID),
+		DeliveryResponses: []*models.DeliveryResponse{deliveryResponse},
 	}
 
-	tableMock.On("UpdateAlertStatus", input).Return(output, nil).Once()
-	result, err := API{}.UpdateAlertStatus(input)
+	tableMock.On("UpdateAlertDelivery", input).Return(output, nil).Once()
+	result, err := API{}.UpdateAlertDelivery(input)
 	require.NoError(t, err)
 
 	// Marshal to convert "" to nils and focus on our properties
 	resultSummary := &models.AlertSummary{
 		AlertID:           result.AlertID,
-		Status:            result.Status,
-		LastUpdatedBy:     result.LastUpdatedBy,
-		LastUpdatedByTime: result.LastUpdatedByTime,
+		DeliveryResponses: result.DeliveryResponses,
 	}
 
 	assert.Equal(t, expectedSummary, resultSummary)
