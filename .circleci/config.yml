@@ -112,7 +112,9 @@ jobs:
           # "mage setup" will have no effect unless new dependencies have been introduced.
           name: Install new dependencies
           command: /tmp/panther/magebin -v setup
-      - ls -l .setup/venv/bin
+      - run:
+          name: debugging
+          command: ls -l .setup/venv/bin
       - save_caches
       - autofmt
       - persist_to_workspace:
