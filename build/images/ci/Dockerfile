@@ -86,4 +86,5 @@ ENV PYENV_ROOT=/home/circleci/.pyenv PATH=/home/circleci/.pyenv/shims:/home/circ
 RUN curl https://pyenv.run | bash && \
 	pyenv install ${PYTHON_VERSION} && pyenv global ${PYTHON_VERSION} && \
 	python3 --version && \
-	rm -rf /tmp/* /var/tmp/*
+	rm -rf /tmp/* /var/tmp/* && \
+	chown -R root:root /root
