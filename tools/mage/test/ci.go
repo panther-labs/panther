@@ -35,7 +35,7 @@ func CI() {
 	// Go unit tests and linting already run in multiple processors
 	// When running locally, test these by themselves to avoid locking up dev laptops.
 	var goUnitErr, goLintErr error
-	if !util.IsRunningInCI() { // TODO - may be removed from CI soon
+	if !util.IsRunningInCI() {
 		goUnitErr = testGoUnit()
 		goLintErr = testGoLint()
 	}

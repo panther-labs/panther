@@ -147,7 +147,7 @@ func PreCheck(checkForOldVersion bool) {
 func getSettings() *PantherConfig {
 	settings, err := Settings()
 	if err != nil {
-		log.Fatalf("failed to read config file %s: %v", Filepath, err)
+		log.Fatalf("failed to read config file %s: %v", ConfigFilepath, err)
 	}
 	return settings
 }

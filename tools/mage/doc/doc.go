@@ -74,7 +74,7 @@ func cfnFiles() []string {
 	// Remove the config file
 	var result []string
 	for _, p := range paths {
-		if p != deploy.Filepath {
+		if p != deploy.ConfigFilepath {
 			result = append(result, p)
 		}
 	}

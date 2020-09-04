@@ -84,7 +84,7 @@ jobs:
           paths:
             - .setup/venv
 
-  generate_and_fmt:
+  autofmt:
     # Runs 'mage build:api build:cfn fmt' and commits any resulting changes.
     #
     # If there are changes committed, CircleCI will automatically stop the remaining jobs
@@ -94,11 +94,10 @@ jobs:
     steps:
       - checkout
       - run:
-          # To prevent a feedback loop, do not push a new commit
+          # To prevent a feedback loop, stop early
           # if the last commit that triggered this build was authored by the bot.
           name: Check author of last commit
           command: |
-            git log -1 --pretty=format:'%an'
             if [[ "`git log -1 --pretty=format:'%an'`" == "panther-bot" ]]; then
                 echo "panther-bot made the last commit, skipping this step"
                 circleci-agent step halt
@@ -205,7 +204,7 @@ workflows:
     jobs:
       - npm_audit
       - setup
-      - generate_and_fmt:
+      - autofmt:
           filters:
             branches:
               ignore: master

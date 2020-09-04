@@ -24,8 +24,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// Filepath is the config settings file
-const Filepath = "deployments/panther_config.yml"
+const ConfigFilepath = "deployments/panther_config.yml"
 
 type PantherConfig struct {
 	Infra      Infra      `yaml:"Infra"`
@@ -84,7 +83,7 @@ type FirstUser struct {
 
 // Read settings from the config file
 func Settings() (*PantherConfig, error) {
-	bytes, err := ioutil.ReadFile(Filepath)
+	bytes, err := ioutil.ReadFile(ConfigFilepath)
 	if err != nil {
 		return nil, err
 	}
