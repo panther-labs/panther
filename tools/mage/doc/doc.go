@@ -44,7 +44,7 @@ func Doc() error {
 	if err := logDocs(); err != nil {
 		return err
 	}
-	log.Info("doc: generated runbooks and log types in out/docs")
+	log.Info("generated runbooks and log types in out/docs")
 	return nil
 }
 
@@ -83,7 +83,7 @@ func cfnFiles() ([]string, error) {
 
 // generate operational documentation from deployment CloudFormation
 func opDocs() error {
-	log.Debug("doc: generating operational documentation from cloudformation")
+	log.Debug("generating operational documentation from cloudformation")
 	paths, err := cfnFiles()
 	if err != nil {
 		return err
@@ -180,7 +180,7 @@ func (category *logCategory) generateDocFile(outDir string) {
 }
 
 func logDocs() error {
-	log.Debug("doc: generating documentation on supported logs")
+	log.Debug("generating documentation on supported logs")
 
 	// allow large comment descriptions in the docs (by default they are clipped)
 	awsglue.MaxCommentLength = math.MaxInt32

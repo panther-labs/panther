@@ -210,7 +210,7 @@ func createChangeSet(
 		createInput.SetTemplateURL(fmt.Sprintf("https://s3.amazonaws.com/%s/%s", bucket, key))
 	}
 
-	log.Infof("deploy: %s CloudFormation stack %s", strings.ToLower(changeSetType), stack)
+	log.Infof("%s CloudFormation stack %s", strings.ToLower(changeSetType), stack)
 	if _, err := clients.Cfn().CreateChangeSet(createInput); err != nil {
 		return nil, fmt.Errorf("failed to create change set for stack %s: %v", stack, err)
 	}
@@ -242,7 +242,7 @@ func waitForChangeSet(changeSetName, stack string) (*string, error) {
 				strings.HasPrefix(reason, "No updates are to be performed") {
 
 				// no changes needed - delete the change set
-				log.Debugf("deploy: stack %s is already up to date", stack)
+				log.Debugf("stack %s is already up to date", stack)
 				_, err := clients.Cfn().DeleteChangeSet(&cfn.DeleteChangeSetInput{ChangeSetName: &changeSetName, StackName: &stack})
 				if err != nil {
 					log.Warnf("failed to delete change set %s for stack %s: %v", changeSetName, stack, err)

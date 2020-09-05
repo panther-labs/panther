@@ -54,7 +54,7 @@ func Lambda() error {
 		return err
 	}
 
-	log.Infof("build:lambda: compiling %d Go Lambda functions (internal/.../main) using %s",
+	log.Infof("compiling %d Go Lambda functions (internal/.../main) using %s",
 		len(packages), runtime.Version())
 
 	for _, pkg := range packages {

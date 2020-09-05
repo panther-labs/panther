@@ -51,7 +51,7 @@ func fmtLicenseAll() {
 }
 
 func fmtLicense(paths ...string) {
-	log.Debugf("fmt: license header %s for %s", agplSource, strings.Join(paths, " "))
+	log.Debugf("license header %s for %s", agplSource, strings.Join(paths, " "))
 	header := strings.TrimSpace(string(util.MustReadFile(agplSource)))
 
 	asteriskLicense := "/**\n" + commentEachLine(" *", header) + "\n */"

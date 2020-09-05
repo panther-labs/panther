@@ -96,7 +96,7 @@ func Deploy() error {
 		return err
 	}
 
-	log.Infof("deploy: finished successfully in %s", time.Since(start).Round(time.Second))
+	log.Infof("finished successfully in %s", time.Since(start).Round(time.Second))
 	log.Infof("***** Panther URL = https://%s", outputs["LoadBalancerUrl"])
 	return nil
 }

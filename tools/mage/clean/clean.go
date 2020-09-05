@@ -42,7 +42,7 @@ func Clean() error {
 	}
 
 	for _, pkg := range paths {
-		log.Info("clean: rm -r " + pkg)
+		log.Info("rm -r " + pkg)
 		if err := os.RemoveAll(pkg); err != nil {
 			return fmt.Errorf("failed to remove %s: %v", pkg, err)
 		}
