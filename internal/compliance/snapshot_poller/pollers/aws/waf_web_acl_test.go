@@ -23,7 +23,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws/awstest"
@@ -32,15 +31,19 @@ import (
 func TestWafRegionalListWebAcls(t *testing.T) {
 	mockSvc := awstest.BuildMockWafRegionalSvc([]string{"ListWebACLs"})
 
-	out := listWebAcls(mockSvc)
+	out, marker, err := listWebAcls(mockSvc, nil)
 	assert.NotEmpty(t, out)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestWafRegionalListWebAclsError(t *testing.T) {
 	mockSvc := awstest.BuildMockWafRegionalSvcError([]string{"ListWebACLs"})
 
-	out := listWebAcls(mockSvc)
+	out, marker, err := listWebAcls(mockSvc, nil)
 	assert.Nil(t, out)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }
 
 func TestWafRegionalListTagsForResource(t *testing.T) {
@@ -96,11 +99,12 @@ func TestWafRegionalGetWebAclError(t *testing.T) {
 func TestBuildWafRegionalWebAclSnapshot(t *testing.T) {
 	mockWafRegionalSvc := awstest.BuildMockWafRegionalSvcAll()
 
-	wafRegionalWebAclSnapshot := buildWafWebACLSnapshot(
+	wafRegionalWebAclSnapshot, err := buildWafWebACLSnapshot(
 		mockWafRegionalSvc,
 		aws.String("asdfasdf-x123-y123-z123-1234asdf1234"),
 	)
 
+	assert.NoError(t, err)
 	assert.NotEmpty(t, wafRegionalWebAclSnapshot.ID)
 	assert.NotEmpty(t, wafRegionalWebAclSnapshot.Rules)
 	assert.NotEmpty(t, wafRegionalWebAclSnapshot.DefaultAction)
@@ -109,26 +113,31 @@ func TestBuildWafRegionalWebAclSnapshot(t *testing.T) {
 func TestBuildWafRegionalWebAclSnapshotError(t *testing.T) {
 	mockWafRegionalSvc := awstest.BuildMockWafRegionalSvcAllError()
 
-	wafRegionalWebAclSnapshot := buildWafWebACLSnapshot(
+	wafRegionalWebAclSnapshot, err := buildWafWebACLSnapshot(
 		mockWafRegionalSvc,
 		aws.String("asdfasdf-x123-y123-z123-1234asdf1234"),
 	)
 
 	assert.Nil(t, wafRegionalWebAclSnapshot)
+	assert.Error(t, err)
 }
 
 func TestWafListWebAcls(t *testing.T) {
 	mockSvc := awstest.BuildMockWafSvc([]string{"ListWebACLs"})
 
-	out := listWebAcls(mockSvc)
+	out, marker, err := listWebAcls(mockSvc, nil)
 	assert.NotEmpty(t, out)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestWafListWebAclsError(t *testing.T) {
 	mockSvc := awstest.BuildMockWafSvcError([]string{"ListWebACLs"})
 
-	out := listWebAcls(mockSvc)
+	out, marker, err := listWebAcls(mockSvc, nil)
 	assert.Nil(t, out)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }
 
 func TestWafListTagsForResource(t *testing.T) {
@@ -184,11 +193,12 @@ func TestWafGetWebAclError(t *testing.T) {
 func TestBuildWafWebAclSnapshot(t *testing.T) {
 	mockWafSvc := awstest.BuildMockWafSvcAll()
 
-	wafWebAclSnapshot := buildWafWebACLSnapshot(
+	wafWebAclSnapshot, err := buildWafWebACLSnapshot(
 		mockWafSvc,
 		aws.String("asdfasdf-x123-y123-z123-1234asdf1234"),
 	)
 
+	assert.NoError(t, err)
 	assert.NotEmpty(t, wafWebAclSnapshot.ID)
 	assert.NotEmpty(t, wafWebAclSnapshot.DefaultAction)
 	assert.NotEmpty(t, wafWebAclSnapshot.Rules)
@@ -199,12 +209,13 @@ func TestBuildWafWebAclSnapshot(t *testing.T) {
 func TestBuildWafWebAclSnapshotError(t *testing.T) {
 	mockWafSvc := awstest.BuildMockWafSvcAllError()
 
-	wafWebAclSnapshot := buildWafWebACLSnapshot(
+	wafWebAclSnapshot, err := buildWafWebACLSnapshot(
 		mockWafSvc,
 		aws.String("asdfasdf-x123-y123-z123-1234asdf1234"),
 	)
 
 	assert.Nil(t, wafWebAclSnapshot)
+	assert.Error(t, err)
 }
 
 func TestWafWebAclsPoller(t *testing.T) {
@@ -214,17 +225,18 @@ func TestWafWebAclsPoller(t *testing.T) {
 	WafClientFunc = awstest.SetupMockWaf
 	WafRegionalClientFunc = awstest.SetupMockWafRegional
 
-	resources, err := PollWafWebAcls(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollWafWebAcls(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
 	assert.NotEmpty(t, resources)
 	assert.Equal(t, *awstest.ExampleGetWebAclOutput.WebACL.WebACLArn, string(resources[0].ID))
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestWafWebAclsPollerError(t *testing.T) {
@@ -234,18 +246,17 @@ func TestWafWebAclsPollerError(t *testing.T) {
 	WafClientFunc = awstest.SetupMockWaf
 	WafRegionalClientFunc = awstest.SetupMockWafRegional
 
-	resources, err := PollWafWebAcls(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollWafWebAcls(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
-	for _, event := range resources {
-		assert.Nil(t, event.Attributes)
-	}
+	assert.Nil(t, resources)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }
 
 func TestWafRegionalWebAclsPoller(t *testing.T) {
@@ -255,17 +266,18 @@ func TestWafRegionalWebAclsPoller(t *testing.T) {
 	WafClientFunc = awstest.SetupMockWaf
 	WafRegionalClientFunc = awstest.SetupMockWafRegional
 
-	resources, err := PollWafRegionalWebAcls(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollWafRegionalWebAcls(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
 	assert.NotEmpty(t, resources)
 	assert.Equal(t, *awstest.ExampleGetWebAclOutput.WebACL.WebACLArn, string(resources[0].ID))
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestWafRegionalWebAclsPollerError(t *testing.T) {
@@ -275,16 +287,15 @@ func TestWafRegionalWebAclsPollerError(t *testing.T) {
 	WafClientFunc = awstest.SetupMockWaf
 	WafRegionalClientFunc = awstest.SetupMockWafRegional
 
-	resources, err := PollWafRegionalWebAcls(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollWafRegionalWebAcls(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
-	for _, event := range resources {
-		assert.Nil(t, event.Attributes)
-	}
+	assert.Empty(t, resources)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }

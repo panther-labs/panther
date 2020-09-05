@@ -50,6 +50,11 @@ var (
 		},
 	}
 
+	ExampleDescribeLogGroupsContinue = &cloudwatchlogs.DescribeLogGroupsOutput{
+		LogGroups: ExampleDescribeLogGroups.LogGroups,
+		NextToken: aws.String("1"),
+	}
+
 	ExampleListTagsLogGroup = &cloudwatchlogs.ListTagsLogGroupOutput{
 		Tags: map[string]*string{
 			"Key1Name": aws.String("Value1"),
@@ -85,7 +90,7 @@ var (
 // CloudWatchLogs mock
 
 // SetupMockCloudWatchLogs is used to override the CloudWatchLogs Client initializer
-func SetupMockCloudWatchLogs(sess *session.Session, cfg *aws.Config) interface{} {
+func SetupMockCloudWatchLogs(_ *session.Session, _ *aws.Config) interface{} {
 	return MockCloudWatchLogsForSetup
 }
 

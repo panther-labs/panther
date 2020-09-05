@@ -20,8 +20,8 @@ import React from 'react';
 import { Box, Link, Table } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
-import SeverityBadge from 'Components/SeverityBadge';
-import StatusBadge from 'Components/StatusBadge';
+import SeverityBadge from 'Components/badges/SeverityBadge';
+import StatusBadge from 'Components/badges/StatusBadge';
 import { ResourceDetails } from '../graphql/resourceDetails.generated';
 import ResourceDetailsTableRowOptions from './ResourceDetailsTableRowOptions';
 

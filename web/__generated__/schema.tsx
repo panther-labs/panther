@@ -383,8 +383,9 @@ export type GlobalPythonModule = {
 
 export type IntegrationItemHealthStatus = {
   __typename?: 'IntegrationItemHealthStatus';
-  healthy?: Maybe<Scalars['Boolean']>;
-  errorMessage?: Maybe<Scalars['String']>;
+  healthy: Scalars['Boolean'];
+  message: Scalars['String'];
+  rawErrorMessage?: Maybe<Scalars['String']>;
 };
 
 export type IntegrationTemplate = {
@@ -1896,8 +1897,9 @@ export type IntegrationItemHealthStatusResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['IntegrationItemHealthStatus'] = ResolversParentTypes['IntegrationItemHealthStatus']
 > = {
-  healthy?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
-  errorMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  healthy?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  rawErrorMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 

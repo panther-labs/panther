@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/configservice"
 	"github.com/aws/aws-sdk-go/service/configservice/configserviceiface"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
@@ -46,7 +47,7 @@ func getConfigServiceClient(pollerResourceInput *awsmodels.ResourcePollerInput,
 
 	client, err := getClient(pollerResourceInput, ConfigServiceClientFunc, "configservice", region)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, err
 	}
 
 	return client.(configserviceiface.ConfigServiceAPI), nil
@@ -63,10 +64,13 @@ func PollConfigService(
 		return nil, err
 	}
 
-	recorder := getConfigRecorder(configClient)
-	snapshot := buildConfigServiceSnapshot(configClient, recorder, parsedResourceID.Region)
-	if snapshot == nil {
-		return nil, nil
+	recorder, err := getConfigRecorder(configClient)
+	if err != nil || recorder == nil {
+		return nil, errors.WithMessagef(err, "region: %s", parsedResourceID.Region)
+	}
+	snapshot, err := buildConfigServiceSnapshot(configClient, recorder, parsedResourceID.Region)
+	if err != nil {
+		return nil, err
 	}
 	snapshot.ResourceID = scanRequest.ResourceID
 	snapshot.AccountID = aws.String(pollerResourceInput.AuthSourceParsedARN.AccountID)
@@ -74,7 +78,7 @@ func PollConfigService(
 }
 
 // getConfigRecorder returns a specific config recorder
-func getConfigRecorder(svc configserviceiface.ConfigServiceAPI) *configservice.ConfigurationRecorder {
+func getConfigRecorder(svc configserviceiface.ConfigServiceAPI) (*configservice.ConfigurationRecorder, error) {
 	recorder, err := svc.DescribeConfigurationRecorders(&configservice.DescribeConfigurationRecordersInput{
 		ConfigurationRecorderNames: []*string{aws.String("default")},
 	})
@@ -83,14 +87,16 @@ func getConfigRecorder(svc configserviceiface.ConfigServiceAPI) *configservice.C
 			if awsErr.Code() == "NoSuchConfigurationRecorderException" {
 				zap.L().Warn("tried to scan non-existent resource",
 					zap.String("resourceType", awsmodels.ConfigServiceSchema))
-				return nil
+				return nil, nil
 			}
 		}
-		utils.LogAWSError("ConfigService.DescribeConfigurationRecorders", err)
-		return nil
+		return nil, errors.Wrap(err, "ConfigService.DescribeConfigurationRecorders")
 	}
 
-	return recorder.ConfigurationRecorders[0]
+	if recorder == nil || len(recorder.ConfigurationRecorders) != 1 {
+		return nil, errors.New("unexpected response from config.DescribeConfigurationRecorders")
+	}
+	return recorder.ConfigurationRecorders[0], nil
 }
 
 // describeConfigurationRecorders returns a slice of all config recorders in the given region/account
@@ -102,8 +108,7 @@ func describeConfigurationRecorders(
 		&configservice.DescribeConfigurationRecordersInput{},
 	)
 	if err != nil {
-		utils.LogAWSError("ConfigService.DescribeConfigurationRecorderStatus", err)
-		return nil, err
+		return nil, errors.Wrap(err, "ConfigService.DescribeConfigurationRecorderStatus")
 	}
 
 	return recorders.ConfigurationRecorders, nil
@@ -114,18 +119,15 @@ func describeConfigurationRecorderStatus(
 	configServiceSvc configserviceiface.ConfigServiceAPI, name *string,
 ) (*configservice.ConfigurationRecorderStatus, error) {
 
-	in := &configservice.DescribeConfigurationRecorderStatusInput{
-		ConfigurationRecorderNames: []*string{
-			name,
-		},
-	}
-	status, err := configServiceSvc.DescribeConfigurationRecorderStatus(in)
+	status, err := configServiceSvc.DescribeConfigurationRecorderStatus(
+		&configservice.DescribeConfigurationRecorderStatusInput{
+			ConfigurationRecorderNames: []*string{name},
+		})
 	if err != nil {
-		utils.LogAWSError("ConfigService.DescribeConfigurationRecorderStatus", err)
-		return nil, err
+		return nil, errors.Wrapf(err, "ConfigService.DescribeConfigurationRecorderStatus: %s", aws.StringValue(name))
 	}
 
-	if status.ConfigurationRecordersStatus != nil && len(status.ConfigurationRecordersStatus) > 0 {
+	if len(status.ConfigurationRecordersStatus) > 0 {
 		return status.ConfigurationRecordersStatus[0], nil
 	}
 	return nil, nil
@@ -136,11 +138,7 @@ func buildConfigServiceSnapshot(
 	configServiceSvc configserviceiface.ConfigServiceAPI,
 	recorder *configservice.ConfigurationRecorder,
 	regionID string,
-) *awsmodels.ConfigService {
-
-	if recorder == nil {
-		return nil
-	}
+) (*awsmodels.ConfigService, error) {
 
 	configSnapshot := &awsmodels.ConfigService{
 		GenericResource: awsmodels.GenericResource{
@@ -156,37 +154,40 @@ func buildConfigServiceSnapshot(
 
 	status, err := describeConfigurationRecorderStatus(configServiceSvc, recorder.Name)
 	if err != nil {
-		utils.LogAWSError("ConfigService.DescribeStatus", err)
-	} else {
-		configSnapshot.Status = status
+		return nil, err
 	}
+	configSnapshot.Status = status
 
-	return configSnapshot
+	return configSnapshot, nil
 }
 
 // PollConfigServices gathers information on each config service for an AWS account.
-func PollConfigServices(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollConfigServices(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting ConfigService poller")
 	configSnapshots := make(map[string]*awsmodels.ConfigService)
 
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "config") {
+	regions, err := GetServiceRegionsFunc(pollerInput, awsmodels.ConfigServiceSchema)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for _, regionID := range regions {
 		zap.L().Debug("building Config snapshots", zap.String("region", *regionID))
 		configServiceSvc, err := getConfigServiceClient(pollerInput, *regionID)
 		if err != nil {
-			return nil, err // error is logged in getClient()
+			return nil, nil, err
 		}
 
 		// Start with generating a list of all recorders
-		recorders, describeErr := describeConfigurationRecorders(configServiceSvc)
-		if describeErr != nil {
-			utils.LogAWSError("ConfigService.Describe", describeErr)
-			continue
+		recorders, err := describeConfigurationRecorders(configServiceSvc)
+		if err != nil {
+			return nil, nil, errors.WithMessagef(err, "region: %s", *regionID)
 		}
 
 		for _, recorder := range recorders {
-			configServiceSnapshot := buildConfigServiceSnapshot(configServiceSvc, recorder, *regionID)
-			if configServiceSnapshot == nil {
-				continue
+			configServiceSnapshot, err := buildConfigServiceSnapshot(configServiceSvc, recorder, *regionID)
+			if err != nil {
+				return nil, nil, err
 			}
 			configServiceSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 
@@ -252,5 +253,7 @@ func PollConfigServices(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 		Type:            awsmodels.ConfigServiceMetaSchema,
 	})
 
-	return resources, nil
+	// We don't support paging for Config resources. Since you can only have one config recorder per
+	// region anyways, this shouldn't be an issue.
+	return resources, nil, nil
 }

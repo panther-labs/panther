@@ -300,11 +300,10 @@ func TestHandleUpdate(t *testing.T) {
 	expectedRequest := poller.ScanMsg{
 		Entries: []*poller.ScanEntry{
 			{
-				AWSAccountID:     aws.String("111111111111"),
-				IntegrationID:    aws.String("ebb4d69f-177b-4eff-a7a6-9251fdc72d21"),
-				ResourceID:       aws.String("arn:aws:s3:::austin-panther"),
-				ResourceType:     aws.String(schemas.S3BucketSchema),
-				ScanAllResources: aws.Bool(false),
+				AWSAccountID:  aws.String("111111111111"),
+				IntegrationID: aws.String("ebb4d69f-177b-4eff-a7a6-9251fdc72d21"),
+				ResourceID:    aws.String("arn:aws:s3:::austin-panther"),
+				ResourceType:  aws.String(schemas.S3BucketSchema),
 			},
 		},
 	}

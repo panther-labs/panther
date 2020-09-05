@@ -135,7 +135,7 @@ func (api API) validateIntegration(input *models.PutIntegrationInput) error {
 			zap.String("reason", reason),
 			zap.Any("input", input))
 		return &genericapi.InvalidInputError{
-			Message: fmt.Sprintf("source %s did not pass configuration check because of %s",
+			Message: fmt.Sprintf("Source %s did not pass configuration check. %s",
 				input.IntegrationLabel, reason),
 		}
 	}

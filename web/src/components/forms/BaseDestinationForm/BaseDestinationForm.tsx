@@ -23,7 +23,7 @@ import { Field, Form, Formik } from 'formik';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import React from 'react';
 import FormikCheckbox from 'Components/fields/Checkbox';
-import SeverityBadge from 'Components/SeverityBadge';
+import SeverityBadge from 'Components/badges/SeverityBadge';
 
 export interface BaseDestinationFormValues<
   AdditionalValues extends Partial<DestinationConfigInput>
