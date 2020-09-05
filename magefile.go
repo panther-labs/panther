@@ -27,10 +27,10 @@ import (
 	"github.com/panther-labs/panther/tools/mage/clean"
 	"github.com/panther-labs/panther/tools/mage/deploy"
 	"github.com/panther-labs/panther/tools/mage/doc"
-	"github.com/panther-labs/panther/tools/mage/fmt"
 	"github.com/panther-labs/panther/tools/mage/gen"
 	"github.com/panther-labs/panther/tools/mage/master"
 	"github.com/panther-labs/panther/tools/mage/setup"
+	"github.com/panther-labs/panther/tools/mage/srcfmt"
 	"github.com/panther-labs/panther/tools/mage/teardown"
 	"github.com/panther-labs/panther/tools/mage/test"
 )
@@ -68,7 +68,7 @@ func Doc() error {
 
 // Format source files
 func Fmt() error {
-	return fmt.Fmt()
+	return srcfmt.Fmt()
 }
 
 // Autogenerate API-related source files and CloudWatch dashboards

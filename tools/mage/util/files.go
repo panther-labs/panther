@@ -36,7 +36,6 @@ var (
 	Swagger   = filepath.Join(SetupDir, "swagger")
 	Terraform = filepath.Join(SetupDir, "terraform")
 
-	GoTargets = []string{"api", "internal", "pkg", "tools", "cmd", "magefile.go"}
 	PyTargets = []string{
 		"internal/compliance/remediation_aws",
 		"internal/compliance/policy_engine",

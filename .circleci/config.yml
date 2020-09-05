@@ -142,7 +142,7 @@ jobs:
       - restore_pip_cache # cfn-flip
       - run:
           name: mage test:go
-          command: /tmp/panther/magebin test:go
+          command: /tmp/panther/magebin -v test:go
 
   test_python:
     executor: panther-buildpack
@@ -165,7 +165,7 @@ jobs:
       - restore_npm_cache
       - run:
           name: mage test:web
-          command: /tmp/panther/magebin test:web
+          command: /tmp/panther/magebin -v test:web
 
   npm_audit:
     executor: panther-buildpack

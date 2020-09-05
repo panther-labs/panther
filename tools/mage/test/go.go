@@ -44,7 +44,7 @@ func Go() error {
 func testGoUnit() error {
 	log.Info("test:go: running go unit tests")
 	runGoTest := func(args ...string) error {
-		if mg.Verbose() || util.IsRunningInCI() {
+		if mg.Verbose() {
 			// verbose mode - show "go test" output (all package names)
 			return sh.Run("go", args...)
 		}

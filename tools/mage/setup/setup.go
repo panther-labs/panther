@@ -127,9 +127,8 @@ func installSwagger(uname string) error {
 
 // Download golangci-lint if it hasn't been already
 func installGolangCiLint(uname string) error {
-	binary := filepath.Join(util.SetupDir, "golangci-lint")
-	if output, err := sh.Output(binary, "--version"); err == nil && strings.Contains(output, golangciVersion) {
-		log.Infof("setup: %s v%s is already installed", binary, golangciVersion)
+	if output, err := sh.Output(util.GoLinter, "--version"); err == nil && strings.Contains(output, golangciVersion) {
+		log.Infof("setup: %s v%s is already installed", util.GoLinter, golangciVersion)
 		return nil
 	}
 
@@ -153,8 +152,8 @@ func installGolangCiLint(uname string) error {
 
 	// moving golangci-lint from download folder to setupDirectory
 	src := filepath.Join(downloadDir, pkg, "golangci-lint")
-	if err := os.Rename(src, binary); err != nil {
-		return fmt.Errorf("failed to mv %s to %s: %v", src, binary, err)
+	if err := os.Rename(src, util.GoLinter); err != nil {
+		return fmt.Errorf("failed to mv %s to %s: %v", src, util.GoLinter, err)
 	}
 
 	// deleting download folder

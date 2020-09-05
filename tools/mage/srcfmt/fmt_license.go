@@ -1,4 +1,4 @@
-package fmt
+package srcfmt
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.

@@ -1,4 +1,4 @@
-package fmt
+package srcfmt
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -35,7 +35,10 @@ import (
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
-var log = logger.Get()
+var (
+	log       = logger.Get()
+	goTargets = []string{"api", "internal", "pkg", "tools", "cmd", "magefile.go"}
+)
 
 func Fmt() error {
 	// Add license headers first (don't run in parallel with other formatters)
@@ -46,7 +49,7 @@ func Fmt() error {
 
 	count++
 	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: "fmt: gofmt", Err: gofmt(util.GoTargets...)}
+		c <- util.TaskResult{Summary: "fmt: gofmt", Err: gofmt(goTargets...)}
 	}(results)
 
 	count++
