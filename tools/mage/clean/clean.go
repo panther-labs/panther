@@ -28,7 +28,7 @@ import (
 )
 
 func Clean() error {
-	log := logger.Build("clean")
+	log := logger.Build("[clean]")
 	paths := []string{util.SetupDir, util.NpmDir, "out", "internal/core/analysis_api/main/bulk_upload.zip"}
 
 	// Remove __pycache__ folders

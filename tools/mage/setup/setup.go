@@ -40,7 +40,7 @@ const (
 	terraformVersion = "0.13.2"
 )
 
-var log = logger.Build("setup")
+var log = logger.Build("[setup]")
 
 // Install all build and development dependencies
 func Setup() error {

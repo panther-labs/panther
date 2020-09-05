@@ -28,13 +28,13 @@ type testTask struct {
 	Task func() error
 }
 
-var log = logger.Build("test")
+var log = logger.Build("[test]")
 
 // Equivalent to test:go test:web test:cfn test:python
 //
 // CircleCI is configured to run test groups separately, it does not call this function.
 func CI() error {
-	log = logger.Build("test:ci")
+	log = logger.Build("[test:ci]")
 
 	// Go unit tests and linting already run in multiple processors
 	goUnitErr := testGoUnit()

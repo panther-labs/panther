@@ -36,7 +36,7 @@ import (
 )
 
 var (
-	log       = logger.Build("fmt")
+	log       = logger.Build("[fmt]")
 	goTargets = []string{"api", "internal", "pkg", "tools", "cmd", "magefile.go"}
 )
 

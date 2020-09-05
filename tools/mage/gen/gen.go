@@ -33,7 +33,7 @@ import (
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
-var log = logger.Build("gen")
+var log = logger.Build("[gen]")
 
 // Autogenerate parts of the source code: API SDKs, GraphQL types, CW dashboards
 func Gen() error {

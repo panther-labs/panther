@@ -57,7 +57,7 @@ type cfnResource struct {
 
 // Lint CloudFormation and Terraform templates
 func Cfn() error {
-	log = logger.Build("test:cfn")
+	log = logger.Build("[test:cfn]")
 	return runTests(cfnTests)
 }
 

@@ -47,7 +47,7 @@ var publishRegions = []string{"us-east-1", "us-east-2", "us-west-2"}
 
 // Deploy single master template (deployments/master.yml) nesting all other stacks
 func Deploy() error {
-	log := logger.Build("master:deploy")
+	log := logger.Build("[master:deploy]")
 	env, err := masterDeployPreCheck(log)
 	if err != nil {
 		return err
@@ -115,7 +115,7 @@ func masterDeployPreCheck(log *zap.SugaredLogger) (*masterDeployParams, error) {
 
 // Publish a new Panther release (Panther team only)
 func Publish() error {
-	log := logger.Build("master:publish")
+	log := logger.Build("[master:publish]")
 	if err := deploy.PreCheck(false); err != nil {
 		return err
 	}

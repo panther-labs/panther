@@ -38,7 +38,7 @@ import (
 // Run "go mod download" or "mage setup" before building to download the go modules.
 // If you're adding a new module, run "go get ./..." before building to fetch the new module.
 func Lambda() error {
-	log := logger.Build("build:lambda")
+	log := logger.Build("[build:lambda]")
 
 	var packages []string
 	if err := filepath.Walk("internal", func(path string, info os.FileInfo, err error) error {

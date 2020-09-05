@@ -30,7 +30,7 @@ import (
 	"github.com/panther-labs/panther/tools/mage/logger"
 )
 
-var log = logger.Build("teardown")
+var log = logger.Build("[teardown]")
 
 const (
 	// Upper bound on the number of s3 object versions we'll delete manually.

@@ -35,7 +35,7 @@ import (
 
 // Run integration tests (integration_test.go,integration.py)
 func Integration() error {
-	log = logger.Build("test:integration")
+	log = logger.Build("[test:integration]")
 	log.Warnf("Integration tests will erase all Panther data in account %s (%s)",
 		clients.AccountID(), clients.Region())
 	result := prompt.Read("Are you sure you want to continue? (yes|no) ", prompt.NonemptyValidator)

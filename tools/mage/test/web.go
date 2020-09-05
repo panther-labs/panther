@@ -31,7 +31,7 @@ var webTests = []testTask{
 
 // Test and lint web source
 func Web() error {
-	log = logger.Build("test:web")
+	log = logger.Build("[test:web]")
 	return runTests(webTests)
 }
 

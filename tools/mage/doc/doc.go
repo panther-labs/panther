@@ -34,7 +34,7 @@ import (
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
-var log = logger.Build("doc")
+var log = logger.Build("[doc]")
 
 // Preview auto-generated documentation in out/doc
 func Doc() error {

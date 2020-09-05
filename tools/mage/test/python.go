@@ -52,7 +52,7 @@ var (
 
 // Test and lint Python source code
 func Python() error {
-	log = logger.Build("test:python")
+	log = logger.Build("[test:python]")
 	return runTests(pythonTests)
 }
 

@@ -32,7 +32,7 @@ import (
 
 // Compile devtools and opstools
 func Tools() error {
-	var log = logger.Build("build:tools")
+	var log = logger.Build("[build:tools]")
 
 	// cross compile so tools can be copied to other machines easily
 	buildEnvs := []map[string]string{

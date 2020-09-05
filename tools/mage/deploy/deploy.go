@@ -41,7 +41,7 @@ import (
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
-var log = logger.Build("deploy")
+var log = logger.Build("[deploy]")
 
 // Not all AWS services are available in every region. In particular, Panther will currently NOT work in:
 //     n. california, us-gov, china, paris, stockholm, brazil, osaka, or bahrain

@@ -32,7 +32,7 @@ import (
 
 // Test and lint Golang source code
 func Go() error {
-	log = logger.Build("test:go")
+	log = logger.Build("[test:go]")
 	if err := testGoUnit(); err != nil {
 		return fmt.Errorf("go unit tests failed: %v", err)
 	}
