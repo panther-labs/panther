@@ -21,6 +21,8 @@ package master
 import (
 	"path/filepath"
 
+	"go.uber.org/zap"
+
 	"github.com/panther-labs/panther/tools/mage/build"
 	"github.com/panther-labs/panther/tools/mage/deploy"
 	"github.com/panther-labs/panther/tools/mage/gen"
@@ -45,7 +47,7 @@ func GetVersion() (string, error) {
 }
 
 // Compile Lambda source assets
-func Build() error {
+func Build(log *zap.SugaredLogger) error {
 	if err := gen.Gen(); err != nil {
 		return err
 	}
@@ -59,13 +61,13 @@ func Build() error {
 		return err
 	}
 
-	return build.Layer(defaultConfig.Infra.PipLayer)
+	return build.Layer(log, defaultConfig.Infra.PipLayer)
 }
 
 // Package assets needed for the master template.
 //
 // Returns the path to the final generated template.
-func Package(region, bucket, pantherVersion, imgRegistry string) (string, error) {
+func Package(log *zap.SugaredLogger, region, bucket, pantherVersion, imgRegistry string) (string, error) {
 	pkg, err := util.SamPackage(region, "deployments/master.yml", bucket)
 	if err != nil {
 		return "", err

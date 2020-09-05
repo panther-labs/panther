@@ -41,7 +41,7 @@ import (
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
-var log = logger.Get()
+var log = logger.Build("deploy")
 
 // Not all AWS services are available in every region. In particular, Panther will currently NOT work in:
 //     n. california, us-gov, china, paris, stockholm, brazil, osaka, or bahrain
@@ -307,7 +307,7 @@ func deployMainStacks(settings *PantherConfig, outputs map[string]string) error 
 
 	// Wait for stacks to finish.
 	// There are two stacks before and two stacks after.
-	if err := util.LogResults(results, "deploy", 3, count+2, cfnstacks.NumStacks); err != nil {
+	if err := util.WaitForTasks(log, results, 3, count+2, cfnstacks.NumStacks); err != nil {
 		return err
 	}
 
@@ -323,7 +323,7 @@ func deployMainStacks(settings *PantherConfig, outputs map[string]string) error 
 
 	// Log stack results, counting where the last parallel group left off to give the illusion of
 	// one continuous deploy progress tracker.
-	return util.LogResults(results, "deploy", count+3, cfnstacks.NumStacks, cfnstacks.NumStacks)
+	return util.WaitForTasks(log, results, count+3, cfnstacks.NumStacks, cfnstacks.NumStacks)
 }
 
 func deployBootstrapStack(settings *PantherConfig) (map[string]string, error) {
@@ -351,7 +351,7 @@ func deployBootstrapGatewayStack(
 		return nil, err
 	}
 
-	if err := build.Layer(settings.Infra.PipLayer); err != nil {
+	if err := build.Layer(log, settings.Infra.PipLayer); err != nil {
 		return nil, err
 	}
 

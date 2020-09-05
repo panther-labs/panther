@@ -29,11 +29,13 @@ import (
 
 	"github.com/panther-labs/panther/pkg/prompt"
 	"github.com/panther-labs/panther/tools/mage/clients"
+	"github.com/panther-labs/panther/tools/mage/logger"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 // Run integration tests (integration_test.go,integration.py)
 func Integration() error {
+	log = logger.Build("test:integration")
 	log.Warnf("Integration tests will erase all Panther data in account %s (%s)",
 		clients.AccountID(), clients.Region())
 	result := prompt.Read("Are you sure you want to continue? (yes|no) ", prompt.NonemptyValidator)
@@ -43,14 +45,14 @@ func Integration() error {
 
 	if pkg := os.Getenv("PKG"); pkg != "" {
 		// One specific package requested: run integration tests just for that
-		return goPkgIntegrationTest("test:integration", pkg, mg.Verbose(), nil)
+		return goPkgIntegrationTest(pkg, mg.Verbose(), nil)
 	}
 
 	errCount := 0
 	util.MustWalk(".", func(path string, info os.FileInfo) error {
 		// This intentionally does not include the end-to-end test (e2e_test.go)
 		if filepath.Base(path) == "integration_test.go" {
-			if err := goPkgIntegrationTest("test:integration", "./"+filepath.Dir(path), mg.Verbose(), nil); err != nil {
+			if err := goPkgIntegrationTest("./"+filepath.Dir(path), mg.Verbose(), nil); err != nil {
 				log.Error(err)
 				errCount++
 			}
@@ -71,7 +73,7 @@ func Integration() error {
 }
 
 // Run integration tests for a single Go package.
-func goPkgIntegrationTest(mageCmd, pkg string, verbose bool, env map[string]string) error {
+func goPkgIntegrationTest(pkg string, verbose bool, env map[string]string) error {
 	// -count 1 is the idiomatic way to disable test caching
 	// -timeout 0 disables the test timeout
 	args := []string{"test", pkg, "-run=TestIntegration*", "-p", "1", "-count", "1", "-timeout", "0"}
@@ -84,6 +86,5 @@ func goPkgIntegrationTest(mageCmd, pkg string, verbose bool, env map[string]stri
 	}
 	env["INTEGRATION_TEST"] = "True"
 
-	log.Infof("%s: %v go %s", mageCmd, env, strings.Join(args, " "))
 	return sh.RunWithV(env, "go", args...)
 }

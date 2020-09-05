@@ -36,7 +36,7 @@ import (
 )
 
 var (
-	log       = logger.Get()
+	log       = logger.Build("fmt")
 	goTargets = []string{"api", "internal", "pkg", "tools", "cmd", "magefile.go"}
 )
 
@@ -49,30 +49,30 @@ func Fmt() error {
 
 	count++
 	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: "fmt: gofmt", Err: gofmt(goTargets...)}
+		c <- util.TaskResult{Summary: "gofmt", Err: gofmt(goTargets...)}
 	}(results)
 
 	count++
 	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: "fmt: yapf", Err: yapf(util.PyTargets...)}
+		c <- util.TaskResult{Summary: "yapf", Err: yapf(util.PyTargets...)}
 	}(results)
 
 	count++
 	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: "fmt: prettier", Err: prettier("")}
+		c <- util.TaskResult{Summary: "prettier", Err: prettier("")}
 	}(results)
 
 	count++
 	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: "fmt: tf", Err: terraformFmt()}
+		c <- util.TaskResult{Summary: "tf", Err: terraformFmt()}
 	}(results)
 
-	return util.LogResults(results, "fmt", 1, count, count)
+	return util.WaitForTasks(log, results, 1, count, count)
 }
 
 // Apply full go formatting to the given paths
 func gofmt(paths ...string) error {
-	log.Debug("fmt: gofmt " + strings.Join(paths, " "))
+	log.Debug("gofmt " + strings.Join(paths, " "))
 
 	// 1) gofmt to standardize the syntax formatting with code simplification (-s) flag
 	if err := sh.Run("gofmt", append([]string{"-l", "-s", "-w"}, paths...)...); err != nil {
@@ -131,7 +131,7 @@ func removeImportNewlines(path string) error {
 
 // Apply Python formatting to the given paths
 func yapf(paths ...string) error {
-	log.Debug("fmt: python yapf " + strings.Join(paths, " "))
+	log.Debug("python yapf " + strings.Join(paths, " "))
 	args := []string{"--in-place", "--parallel", "--recursive"}
 	if err := sh.Run(util.PipPath("yapf"), append(args, util.PyTargets...)...); err != nil {
 		return fmt.Errorf("failed to format python: %v", err)
@@ -144,7 +144,7 @@ func prettier(pathPattern string) error {
 	if pathPattern == "" {
 		pathPattern = "**/*.{ts,js,tsx,md,json,yaml,yml}"
 	}
-	log.Debug("fmt: prettier " + pathPattern)
+	log.Debug("prettier " + pathPattern)
 	args := []string{"--write", pathPattern}
 	if !mg.Verbose() {
 		args = append(args, "--loglevel", "error")

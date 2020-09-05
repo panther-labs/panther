@@ -1,6 +1,9 @@
 package test
 
-import "github.com/panther-labs/panther/tools/mage/util"
+import (
+	"github.com/panther-labs/panther/tools/mage/logger"
+	"github.com/panther-labs/panther/tools/mage/util"
+)
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -28,6 +31,7 @@ var webTests = []testTask{
 
 // Test and lint web source
 func Web() error {
+	log = logger.Build("test:web")
 	return runTests(webTests)
 }
 

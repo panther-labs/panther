@@ -23,6 +23,7 @@ import (
 	"os"
 
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/tools/mage/clients"
 )
@@ -33,7 +34,7 @@ func PublicAssetsBucket() string {
 }
 
 // Upload a local file to S3.
-func UploadFileToS3(path, bucket, key string) (*s3manager.UploadOutput, error) {
+func UploadFileToS3(log *zap.SugaredLogger, path, bucket, key string) (*s3manager.UploadOutput, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open %s: %v", path, err)

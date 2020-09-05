@@ -40,7 +40,7 @@ const (
 	terraformVersion = "0.13.2"
 )
 
-var log = logger.Get()
+var log = logger.Build("setup")
 
 // Install all build and development dependencies
 func Setup() error {
@@ -85,7 +85,7 @@ func Setup() error {
 		c <- util.TaskResult{Summary: "npm install", Err: installNodeModules()}
 	}(results)
 
-	return util.LogResults(results, "setup", 1, count, count)
+	return util.WaitForTasks(log, results, 1, count, count)
 }
 
 // Fetch all Go modules needed for tests and compilation.
@@ -94,7 +94,7 @@ func Setup() error {
 // to happen in parallel with the rest of the downloads. Pre-installing modules also allows
 // us to build Lambda functions in parallel.
 func installGoModules() error {
-	log.Info("setup: download go modules...")
+	log.Info("download go modules...")
 
 	if err := sh.Run("go", "mod", "download"); err != nil {
 		return err
@@ -107,11 +107,11 @@ func installGoModules() error {
 // Download go-swagger if it hasn't been already
 func installSwagger(uname string) error {
 	if output, err := sh.Output(util.Swagger, "version"); err == nil && strings.Contains(output, swaggerVersion) {
-		log.Infof("setup: %s v%s is already installed", util.Swagger, swaggerVersion)
+		log.Infof("%s v%s is already installed", util.Swagger, swaggerVersion)
 		return nil
 	}
 
-	log.Infof("setup: downloading go-swagger v%s...", swaggerVersion)
+	log.Infof("downloading go-swagger v%s...", swaggerVersion)
 	url := fmt.Sprintf("https://github.com/go-swagger/go-swagger/releases/download/v%s/swagger_%s_amd64",
 		swaggerVersion, strings.ToLower(uname))
 	if err := sh.Run("curl", "-s", "-o", util.Swagger, "-fL", url); err != nil {
@@ -128,11 +128,11 @@ func installSwagger(uname string) error {
 // Download golangci-lint if it hasn't been already
 func installGolangCiLint(uname string) error {
 	if output, err := sh.Output(util.GoLinter, "--version"); err == nil && strings.Contains(output, golangciVersion) {
-		log.Infof("setup: %s v%s is already installed", util.GoLinter, golangciVersion)
+		log.Infof("%s v%s is already installed", util.GoLinter, golangciVersion)
 		return nil
 	}
 
-	log.Infof("setup: downloading golangci-lint v%s...", golangciVersion)
+	log.Infof("downloading golangci-lint v%s...", golangciVersion)
 	downloadDir := filepath.Join(util.SetupDir, "golangci")
 	if err := os.MkdirAll(downloadDir, os.ModePerm); err != nil {
 		return fmt.Errorf("failed to create temporary %s: %v", downloadDir, err)
@@ -166,7 +166,7 @@ func installGolangCiLint(uname string) error {
 func installTerraform(uname string) error {
 	uname = strings.ToLower(uname)
 	if output, err := sh.Output(util.Terraform, "-version"); err == nil && strings.Contains(output, terraformVersion) {
-		log.Infof("setup: %s v%s is already installed", util.Terraform, terraformVersion)
+		log.Infof("%s v%s is already installed", util.Terraform, terraformVersion)
 		return nil
 	}
 
@@ -194,7 +194,7 @@ func installPythonEnv() error {
 	if info, err := os.Stat(util.PyEnv); err == nil && info.IsDir() {
 		if util.IsRunningInCI() {
 			// If .setup/venv already exists in CI, it must have been restored from the cache.
-			log.Info("setup: skipping pip install")
+			log.Info("skipping pip install")
 			return nil
 		}
 	} else {
@@ -204,7 +204,7 @@ func installPythonEnv() error {
 	}
 
 	// pip install requirements
-	log.Infof("setup: pip install requirements.txt to %s...", util.PyEnv)
+	log.Infof("pip install requirements.txt to %s...", util.PyEnv)
 	args := []string{"install", "-r", "requirements.txt"}
 	if !mg.Verbose() {
 		args = append(args, "--quiet")
@@ -226,11 +226,11 @@ func installNodeModules() error {
 	if _, err := os.Stat(util.NpmDir); err == nil && util.IsRunningInCI() {
 		// In CI, if node_modules already exist, they must have been restored from the cache.
 		// Stop early (otherwise, npm install takes ~10 seconds to figure out it has nothing to do).
-		log.Info("setup: skipping npm install")
+		log.Info("skipping npm install")
 		return nil
 	}
 
-	log.Info("setup: npm install...")
+	log.Info("npm install...")
 	args := []string{"install", "--no-progress", "--no-audit"}
 	if !mg.Verbose() {
 		args = append(args, "--silent")

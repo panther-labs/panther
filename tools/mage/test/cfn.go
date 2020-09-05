@@ -29,6 +29,7 @@ import (
 	"github.com/magefile/mage/sh"
 
 	"github.com/panther-labs/panther/tools/cfnstacks"
+	"github.com/panther-labs/panther/tools/mage/logger"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
@@ -56,6 +57,7 @@ type cfnResource struct {
 
 // Lint CloudFormation and Terraform templates
 func Cfn() error {
+	log = logger.Build("test:cfn")
 	return runTests(cfnTests)
 }
 

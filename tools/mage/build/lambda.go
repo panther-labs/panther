@@ -30,8 +30,6 @@ import (
 	"github.com/panther-labs/panther/tools/mage/logger"
 )
 
-var log = logger.Get()
-
 // "go build" in parallel for each Lambda function.
 //
 // If you don't already have all go modules downloaded, this may fail because each goroutine will
@@ -40,6 +38,8 @@ var log = logger.Get()
 // Run "go mod download" or "mage setup" before building to download the go modules.
 // If you're adding a new module, run "go get ./..." before building to fetch the new module.
 func Lambda() error {
+	log := logger.Build("build:lambda")
+
 	var packages []string
 	if err := filepath.Walk("internal", func(path string, info os.FileInfo, err error) error {
 		if err != nil {

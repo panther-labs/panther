@@ -25,11 +25,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
-func publishToRegion(version, region string) error {
+func publishToRegion(log *zap.SugaredLogger, version, region string) error {
 	log.Infof("publishing to %s", region)
 	// We need a different client for each region, so we don't use the global AWS clients pkg here.
 	awsSession := session.Must(session.NewSession(
@@ -51,13 +52,13 @@ func publishToRegion(version, region string) error {
 	}
 
 	// Publish S3 assets and ECR docker image
-	pkg, err := Package(region, bucket, version, fmt.Sprintf(publicImageRepository, region))
+	pkg, err := Package(log, region, bucket, version, fmt.Sprintf(publicImageRepository, region))
 	if err != nil {
 		return err
 	}
 
 	// Upload final packaged template
-	if _, err := util.UploadFileToS3(pkg, bucket, s3Key); err != nil {
+	if _, err := util.UploadFileToS3(log, pkg, bucket, s3Key); err != nil {
 		return fmt.Errorf("failed to upload %s : %v", s3URL, err)
 	}
 

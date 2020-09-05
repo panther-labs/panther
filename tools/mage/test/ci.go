@@ -28,30 +28,24 @@ type testTask struct {
 	Task func() error
 }
 
-var log = logger.Get()
+var log = logger.Build("test")
 
-// Run all required checks for a pull request
+// Equivalent to test:go test:web test:cfn test:python
+//
+// CircleCI is configured to run test groups separately, it does not call this function.
 func CI() error {
+	log = logger.Build("test:ci")
+
 	// Go unit tests and linting already run in multiple processors
-	// When running locally, test these by themselves to avoid locking up dev laptops.
-	var goUnitErr, goLintErr error
-	if !util.IsRunningInCI() {
-		goUnitErr = testGoUnit()
-		goLintErr = testGoLint()
-	}
+	goUnitErr := testGoUnit()
+	goLintErr := testGoLint()
 
 	tests := []testTask{
 		// mage test:go
 		{"go unit tests", func() error {
-			if util.IsRunningInCI() {
-				return testGoUnit()
-			}
 			return goUnitErr
 		}},
 		{"golangci-lint", func() error {
-			if util.IsRunningInCI() {
-				return testGoLint()
-			}
 			return goLintErr
 		}},
 	}
@@ -68,7 +62,7 @@ func runTests(tasks []testTask) (err error) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		err = util.LogResults(results, "test:ci", 1, len(tasks), len(tasks))
+		err = util.WaitForTasks(log, results, 1, len(tasks), len(tasks))
 	}()
 
 	for _, task := range tasks {

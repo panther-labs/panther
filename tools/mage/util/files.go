@@ -62,7 +62,7 @@ func MustWalk(root string, handler func(string, os.FileInfo) error) {
 		return handler(path, info)
 	})
 	if err != nil {
-		log.Fatalf("couldn't traverse %s: %v", root, err)
+		panic(fmt.Errorf("couldn't traverse %s: %v", root, err))
 	}
 }
 
@@ -70,7 +70,7 @@ func MustWalk(root string, handler func(string, os.FileInfo) error) {
 func MustReadFile(path string) []byte {
 	contents, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Fatalf("failed to read %s: %v", path, err)
+		panic(fmt.Errorf("failed to read %s: %v", path, err))
 	}
 	return contents
 }
@@ -78,10 +78,10 @@ func MustReadFile(path string) []byte {
 // Wrapper around ioutil.WriteFile, creating the parent dirs if needed and logging errors as fatal.
 func MustWriteFile(path string, data []byte) {
 	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
-		log.Fatalf("failed to create directory %s: %v", filepath.Dir(path), err)
+		panic(fmt.Errorf("failed to create directory %s: %v", filepath.Dir(path), err))
 	}
 
 	if err := ioutil.WriteFile(path, data, 0600); err != nil {
-		log.Fatalf("failed to write file %s: %v", path, err)
+		panic(fmt.Errorf("failed to write file %s: %v", path, err))
 	}
 }

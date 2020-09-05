@@ -83,7 +83,6 @@ func SamDeploy(stack, path string, params ...string) error {
 //
 // The bucket name can be blank if no S3 bucket is actually needed (e.g. bootstrap stack).
 func SamPackage(region, templatePath, bucket string) (string, error) {
-	log.Debugf("deploy: packaging %s assets", templatePath)
 	if bucket == "" {
 		// "sam package" requires a bucket name even if it isn't used
 		// Put a default value that can't be possibly be a real bucket (names must have 3+ characters)

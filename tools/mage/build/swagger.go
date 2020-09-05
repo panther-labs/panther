@@ -29,9 +29,7 @@ import (
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
-const (
-	pantherLambdaKey = "x-panther-lambda-handler" // top-level key in Swagger file
-)
+const pantherLambdaKey = "x-panther-lambda-handler" // top-level key in Swagger file
 
 // Embed swagger specs into the API gateway template, saving it to out/deployments.
 func EmbedAPISpec() error {
@@ -44,7 +42,6 @@ func EmbedAPISpec() error {
 		return err
 	}
 
-	log.Debugf("deploy: transformed %s => %s with embedded APIs", cfnstacks.APITemplate, cfnstacks.APIEmbeddedTemplate)
 	contents, err := yaml.Marshal(cfn)
 	if err != nil {
 		return fmt.Errorf("yaml marshal failed: %v", err)

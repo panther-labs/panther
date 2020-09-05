@@ -27,9 +27,8 @@ import (
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
-var log = logger.Get()
-
 func Clean() error {
+	log := logger.Build("clean")
 	paths := []string{util.SetupDir, util.NpmDir, "out", "internal/core/analysis_api/main/bulk_upload.zip"}
 
 	// Remove __pycache__ folders

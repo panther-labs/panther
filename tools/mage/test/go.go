@@ -26,11 +26,13 @@ import (
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 
+	"github.com/panther-labs/panther/tools/mage/logger"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 // Test and lint Golang source code
 func Go() error {
+	log = logger.Build("test:go")
 	if err := testGoUnit(); err != nil {
 		return fmt.Errorf("go unit tests failed: %v", err)
 	}
@@ -42,7 +44,7 @@ func Go() error {
 }
 
 func testGoUnit() error {
-	log.Info("test:go: running go unit tests")
+	log.Info("running go unit tests")
 	runGoTest := func(args ...string) error {
 		if mg.Verbose() {
 			// verbose mode - show "go test" output (all package names)
@@ -69,7 +71,7 @@ func testGoUnit() error {
 }
 
 func testGoLint() error {
-	log.Info("test:go: running go metalinter")
+	log.Info("running go metalinter")
 	args := []string{"run", "--timeout", "10m", "-j", strconv.Itoa(util.MaxWorkers)}
 	if mg.Verbose() {
 		args = append(args, "-v")

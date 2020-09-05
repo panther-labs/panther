@@ -33,7 +33,7 @@ import (
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
-var log = logger.Get()
+var log = logger.Build("gen")
 
 // Autogenerate parts of the source code: API SDKs, GraphQL types, CW dashboards
 func Gen() error {
@@ -42,25 +42,25 @@ func Gen() error {
 
 	count++
 	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: "gen: swagger clients", Err: swaggerClients()}
+		c <- util.TaskResult{Summary: "swagger clients", Err: swaggerClients()}
 	}(results)
 
 	count++
 	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: "gen: go generate", Err: goGenerate()}
+		c <- util.TaskResult{Summary: "go generate", Err: goGenerate()}
 	}(results)
 
 	count++
 	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: "gen: graphQL", Err: graphQLCodegen()}
+		c <- util.TaskResult{Summary: "graphQL", Err: graphQLCodegen()}
 	}(results)
 
 	count++
 	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: "gen: cw dashboards", Err: cwDashboards()}
+		c <- util.TaskResult{Summary: "cw dashboards", Err: cwDashboards()}
 	}(results)
 
-	return util.LogResults(results, "gen", 1, count, count)
+	return util.WaitForTasks(log, results, 1, count, count)
 }
 
 func swaggerClients() error {
@@ -70,7 +70,7 @@ func swaggerClients() error {
 		return fmt.Errorf("failed to glob %s: %v", swaggerGlob, err)
 	}
 
-	log.Infof("gen: generating Go SDK for %d APIs (%s)", len(specs), swaggerGlob)
+	log.Debugf("generating Go SDK for %d APIs (%s)", len(specs), swaggerGlob)
 
 	cmd := util.Swagger
 	if _, err = os.Stat(util.Swagger); err != nil {
@@ -124,7 +124,6 @@ func swaggerClients() error {
 
 func goGenerate() error {
 	const generatePattern = "./..."
-	log.Info("gen: generating Go code with go:generate")
 	if err := sh.Run("go", "generate", generatePattern); err != nil {
 		return fmt.Errorf("go:generate failed: %s", err)
 	}
@@ -132,7 +131,6 @@ func goGenerate() error {
 }
 
 func graphQLCodegen() error {
-	log.Info("gen: generating web typescript from graphql")
 	if err := sh.Run("npm", "run", "graphql-codegen"); err != nil {
 		return fmt.Errorf("graphql generation failed: %v", err)
 	}
@@ -142,7 +140,7 @@ func graphQLCodegen() error {
 // Generate deployments/dashboards.yml
 func cwDashboards() error {
 	dashboardResources := dashboards.Dashboards()
-	log.Debugf("gen: loaded %d dashboards", len(dashboardResources))
+	log.Debugf("loaded %d dashboards", len(dashboardResources))
 
 	template := map[string]interface{}{
 		"AWSTemplateFormatVersion": "2010-09-09",

@@ -23,10 +23,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/panther-labs/panther/tools/mage/logger"
+	"go.uber.org/zap"
 )
-
-var log = logger.Get()
 
 // MaxWorkers limits CPU-intensive operations depending on the environment.
 var MaxWorkers = func() int {
@@ -74,8 +72,8 @@ type TaskResult struct {
 //
 // This will consume exactly (end - start) + 1 messages in the channel.
 //
-// Logs a fatal message at the end if there were any errors.
-func LogResults(results chan TaskResult, command string, start, end, total int) error {
+// Returns a combined error message at the end if there were any failures.
+func WaitForTasks(log *zap.SugaredLogger, results chan TaskResult, start, end, total int) error {
 	var erroredTasks []string
 	for i := start; i <= end; i++ {
 		r := <-results
@@ -88,7 +86,7 @@ func LogResults(results chan TaskResult, command string, start, end, total int) 
 	}
 
 	if len(erroredTasks) > 0 {
-		return fmt.Errorf("%s failed: %s", command, strings.Join(erroredTasks, ", "))
+		return fmt.Errorf(strings.Join(erroredTasks, ", "))
 	}
 	return nil
 }

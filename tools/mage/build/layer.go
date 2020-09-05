@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/magefile/mage/sh"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/pkg/shutil"
 )
@@ -35,7 +36,7 @@ const (
 )
 
 // Build standard Python analysis layer in out/layer.zip if that file doesn't already exist.
-func Layer(libs []string) error {
+func Layer(log *zap.SugaredLogger, libs []string) error {
 	if _, err := os.Stat(layerZipfile); err == nil {
 		log.Debugf("%s already exists, not rebuilding layer", layerZipfile)
 		return nil

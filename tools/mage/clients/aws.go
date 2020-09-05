@@ -45,7 +45,7 @@ const (
 )
 
 var (
-	log = logger.Get()
+	log = logger.Build("")
 
 	// Cache all of these privately to force lazy evaluation.
 	awsSession        *session.Session

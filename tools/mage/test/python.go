@@ -25,6 +25,7 @@ import (
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 
+	"github.com/panther-labs/panther/tools/mage/logger"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
@@ -51,6 +52,7 @@ var (
 
 // Test and lint Python source code
 func Python() error {
+	log = logger.Build("test:python")
 	return runTests(pythonTests)
 }
 

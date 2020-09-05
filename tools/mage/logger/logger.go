@@ -27,12 +27,15 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var logger *zap.SugaredLogger
+var rootLogger *zap.SugaredLogger
 
-// Build the dev-friendly mage logger - subsequent calls return the cached logger.
-func Get() *zap.SugaredLogger {
-	if logger != nil {
-		return logger
+// Build a dev-friendly mage logger with the given logger name.
+func Build(name string) *zap.SugaredLogger {
+	if rootLogger != nil {
+		if name == "" {
+			return rootLogger
+		}
+		return rootLogger.Named(name)
 	}
 
 	config := zap.NewDevelopmentConfig() // DEBUG by default
@@ -54,6 +57,7 @@ func Get() *zap.SugaredLogger {
 	if err != nil {
 		log.Fatalf("failed to build logger: %s", err)
 	}
-	logger = rawLogger.Sugar()
-	return logger
+	rootLogger = rawLogger.Sugar()
+
+	return rootLogger.Named(name)
 }

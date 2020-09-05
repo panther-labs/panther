@@ -26,11 +26,14 @@ import (
 
 	"github.com/magefile/mage/sh"
 
+	"github.com/panther-labs/panther/tools/mage/logger"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 // Compile devtools and opstools
 func Tools() error {
+	var log = logger.Build("build:tools")
+
 	// cross compile so tools can be copied to other machines easily
 	buildEnvs := []map[string]string{
 		// darwin:arm is not compatible

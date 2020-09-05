@@ -25,6 +25,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/pkg/prompt"
 	"github.com/panther-labs/panther/tools/cfnstacks"
@@ -42,19 +43,17 @@ const (
 	masterStackName       = "panther"
 )
 
-var (
-	log            = logger.Get()
-	publishRegions = []string{"us-east-1", "us-east-2", "us-west-2"}
-)
+var publishRegions = []string{"us-east-1", "us-east-2", "us-west-2"}
 
 // Deploy single master template (deployments/master.yml) nesting all other stacks
 func Deploy() error {
-	env, err := masterDeployPreCheck()
+	log := logger.Build("master:deploy")
+	env, err := masterDeployPreCheck(log)
 	if err != nil {
 		return err
 	}
 
-	if err := Build(); err != nil {
+	if err := Build(log); err != nil {
 		return err
 	}
 
@@ -63,7 +62,7 @@ func Deploy() error {
 		return err
 	}
 
-	pkg, err := Package(clients.Region(), env.bucketName, version, env.ecrRegistry)
+	pkg, err := Package(log, clients.Region(), env.bucketName, version, env.ecrRegistry)
 	if err != nil {
 		return err
 	}
@@ -83,7 +82,7 @@ type masterDeployParams struct {
 // TODO - automatically create bucket and repo
 //
 // Returns bucket, firstUserEmail, ecrRegistry
-func masterDeployPreCheck() (*masterDeployParams, error) {
+func masterDeployPreCheck(log *zap.SugaredLogger) (*masterDeployParams, error) {
 	if err := deploy.PreCheck(false); err != nil {
 		return nil, err
 	}
@@ -116,6 +115,7 @@ func masterDeployPreCheck() (*masterDeployParams, error) {
 
 // Publish a new Panther release (Panther team only)
 func Publish() error {
+	log := logger.Build("master:publish")
 	if err := deploy.PreCheck(false); err != nil {
 		return err
 	}
@@ -138,12 +138,12 @@ func Publish() error {
 	if err := setup.Setup(); err != nil {
 		return err
 	}
-	if err := Build(); err != nil {
+	if err := Build(log); err != nil {
 		return err
 	}
 
 	for _, region := range publishRegions {
-		if err := publishToRegion(version, region); err != nil {
+		if err := publishToRegion(log, version, region); err != nil {
 			return err
 		}
 	}

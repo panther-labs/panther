@@ -39,7 +39,7 @@ func RepoVersion() string {
 		var err error
 		gitVersion, err = sh.Output("git", "describe", "--tags")
 		if err != nil {
-			log.Fatalf("git describe failed: %v", err)
+			panic(fmt.Errorf("git describe failed: %v", err))
 		}
 	}
 
@@ -98,7 +98,6 @@ func LatestPublishedVersion() (string, error) {
 		return versions[i].patch < versions[j].patch
 	})
 
-	log.Debugf("found %d published versions in %s: %v", len(versions), bucket, versions)
 	latest := versions[len(versions)-1]
 	return fmt.Sprintf("%d.%d.%s", latest.major, latest.minor, latest.patch), nil
 }
@@ -106,7 +105,7 @@ func LatestPublishedVersion() (string, error) {
 func MustParseInt(x string) int {
 	result, err := strconv.Atoi(x)
 	if err != nil {
-		log.Fatalf("expected int: %s: %v", x, err)
+		panic(fmt.Errorf("expected int: %s: %v", x, err))
 	}
 	return result
 }
