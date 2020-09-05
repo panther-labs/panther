@@ -20,10 +20,10 @@ import React from 'react';
 import { ListRulesInput, ListRulesSortFieldsEnum, SortDirEnum } from 'Generated/schema';
 import { formatDatetime } from 'Helpers/utils';
 import { Box, Link, Table } from 'pouncejs';
-import StatusBadge from 'Components/StatusBadge';
+import StatusBadge from 'Components/badges/StatusBadge';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
-import SeverityBadge from 'Components/SeverityBadge';
+import SeverityBadge from 'Components/badges/SeverityBadge';
 import { ListRules } from 'Pages/ListRules';
 import ListRulesTableRowOptions from './ListRulesTableRowOptions';
 

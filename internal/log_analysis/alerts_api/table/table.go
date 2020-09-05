@@ -38,6 +38,7 @@ const (
 	SeverityKey          = "severity"
 	EventCountKey        = "eventCount"
 	StatusKey            = "status"
+	DeliveryResponsesKey = "deliveryResponses"
 	LastUpdatedByKey     = "lastUpdatedBy"
 	LastUpdatedByTimeKey = "lastUpdatedByTime"
 )
@@ -47,6 +48,7 @@ type API interface {
 	GetAlert(*string) (*AlertItem, error)
 	ListAll(*models.ListAlertsInput) ([]*AlertItem, *string, error)
 	UpdateAlertStatus(*models.UpdateAlertStatusInput) (*AlertItem, error)
+	UpdateAlertDelivery(*models.UpdateAlertDeliveryInput) (*AlertItem, error)
 }
 
 // AlertsTable encapsulates a connection to the Dynamo alerts table.
@@ -65,14 +67,15 @@ type DynamoItem = map[string]*dynamodb.AttributeValue
 
 // AlertItem is a DDB representation of an Alert
 type AlertItem struct {
-	AlertID             string    `json:"id"`
-	RuleID              string    `json:"ruleId"`
-	RuleVersion         string    `json:"ruleVersion"`
-	RuleDisplayName     *string   `json:"ruleDisplayName"`
-	Title               *string   `json:"title"`
-	DedupString         string    `json:"dedup"`
-	FirstEventMatchTime time.Time `json:"firstEventMatchTime"`
-	CreationTime        time.Time `json:"creationTime"`
+	AlertID             string                     `json:"id"`
+	RuleID              string                     `json:"ruleId"`
+	RuleVersion         string                     `json:"ruleVersion"`
+	RuleDisplayName     *string                    `json:"ruleDisplayName"`
+	Title               *string                    `json:"title"`
+	DedupString         string                     `json:"dedup"`
+	FirstEventMatchTime time.Time                  `json:"firstEventMatchTime"`
+	CreationTime        time.Time                  `json:"creationTime"`
+	DeliveryResponses   []*models.DeliveryResponse `json:"deliveryResponses"`
 	// UpdateTime - stores the timestamp from an update from a dedup event
 	UpdateTime time.Time `json:"updateTime"`
 	Severity   string    `json:"severity"`

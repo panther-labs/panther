@@ -61,6 +61,13 @@ var (
 			},
 		},
 	}
+	ExampleDescribeLoadBalancersOutputContinue = &elbv2.DescribeLoadBalancersOutput{
+		LoadBalancers: []*elbv2.LoadBalancer{
+			ExampleDescribeLoadBalancersOutput.LoadBalancers[0],
+			ExampleDescribeLoadBalancersOutput.LoadBalancers[0],
+		},
+		NextMarker: aws.String("1"),
+	}
 
 	ExampleDescribeTags = &elbv2.DescribeTagsOutput{
 		TagDescriptions: []*elbv2.TagDescription{
@@ -164,7 +171,7 @@ var (
 // Elbv2 mock
 
 // SetupMockElbv2 is used to override the Elbv2 Client initializer
-func SetupMockElbv2(sess *session.Session, cfg *aws.Config) interface{} {
+func SetupMockElbv2(_ *session.Session, _ *aws.Config) interface{} {
 	return MockElbv2ForSetup
 }
 

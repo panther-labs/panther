@@ -24,11 +24,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
-var customWebhookConfig = &outputmodels.CustomWebhookConfig{
+var customWebhookConfig = &outputModels.CustomWebhookConfig{
 	WebhookURL: "custom-webhook-url",
 }
 
@@ -43,7 +43,7 @@ func TestCustomWebhookAlert(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	alert := &alertmodels.Alert{
+	alert := &alertModels.Alert{
 		AnalysisID: "policyId",
 		CreatedAt:  createdAtTime,
 		Severity:   "INFO",
@@ -69,7 +69,7 @@ func TestCustomWebhookAlert(t *testing.T) {
 		body: expectedNotification,
 	}
 
-	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryError)(nil))
+	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryResponse)(nil))
 
 	require.Nil(t, client.CustomWebhook(alert, customWebhookConfig))
 	httpWrapper.AssertExpectations(t)

@@ -21,7 +21,6 @@ package aws
 import (
 	"bytes"
 	"encoding/csv"
-	"errors"
 	"net/url"
 	"strconv"
 	"strings"
@@ -33,6 +32,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/iam/iamiface"
 	"github.com/cenkalti/backoff/v4"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
@@ -69,12 +69,14 @@ func PollIAMUser(
 
 	// See PollIAMRole for an explanation of this behavior
 	resourceSplit := strings.Split(resourceARN.Resource, "/")
-	user := getUser(iamClient, aws.String(resourceSplit[len(resourceSplit)-1]))
+	user, err := getUser(iamClient, aws.String(resourceSplit[len(resourceSplit)-1]))
+	if err != nil || user == nil {
+		return nil, err
+	}
 
 	// Refresh the caches as needed
 	mfaDeviceMapping, err = listVirtualMFADevices(iamClient)
 	if err != nil {
-		utils.LogAWSError("IAM.ListVirtualMFADevices", err)
 		return nil, err
 	}
 	userCredentialReports, err = buildCredentialReport(iamClient)
@@ -83,19 +85,18 @@ func PollIAMUser(
 			// Check if we got rate limited, happens sometimes when the credential report takes a long time to generate
 			if awsErr.Code() == throttlingErrorCode {
 				zap.L().Debug("credential report lookup rate limited during single user scan", zap.String("resourceId", *scanRequest.ResourceID))
-				utils.Requeue(pollermodels.ScanMsg{
+				err = utils.Requeue(pollermodels.ScanMsg{
 					Entries: []*pollermodels.ScanEntry{scanRequest},
 				}, credentialReportRequeueDelaySeconds)
+				return nil, err
 			}
-			return nil, err
 		}
-		zap.L().Error("failed to build credential report", zap.Error(err))
 		return nil, err
 	}
 
-	snapshot := buildIAMUserSnapshot(iamClient, user)
-	if snapshot == nil {
-		return nil, nil
+	snapshot, err := buildIAMUserSnapshot(iamClient, user)
+	if err != nil {
+		return nil, err
 	}
 
 	// If the user does not have a credential report, then continue on with the snapshot but
@@ -103,11 +104,14 @@ func PollIAMUser(
 	// a user would not have a credential report is if they were recently created and there has not
 	// yet been time for a new credential report that includes them to have been generated.
 	if snapshot.CredentialReport == nil {
-		utils.Requeue(pollermodels.ScanMsg{
+		err = utils.Requeue(pollermodels.ScanMsg{
 			Entries: []*pollermodels.ScanEntry{
 				scanRequest,
 			},
 		}, utils.MaxRequeueDelaySeconds)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
@@ -130,24 +134,15 @@ func PollIAMRootUser(
 	// Refresh the caches as needed
 	mfaDeviceMapping, err = listVirtualMFADevices(iamClient)
 	if err != nil {
-		utils.LogAWSError("IAM.ListVirtualMFADevices", err)
 		return nil, err
 	}
 	userCredentialReports, err = buildCredentialReport(iamClient)
 	if err != nil {
-		zap.L().Error("failed to build credential report", zap.Error(err))
 		return nil, err
 	}
 
-	snapshot := buildIAMRootUserSnapshot()
-	// If the root user does not have a credential report, then continue on with the snapshot but
-	// re-queue the for a scan in fifteen minutes (the maximum delay time).
-	if snapshot == nil || snapshot.CredentialReport == nil {
-		utils.Requeue(pollermodels.ScanMsg{
-			Entries: []*pollermodels.ScanEntry{
-				scanRequest,
-			},
-		}, utils.MaxRequeueDelaySeconds)
+	snapshot, err := buildIAMRootUserSnapshot()
+	if err != nil {
 		return nil, err
 	}
 
@@ -157,7 +152,7 @@ func PollIAMRootUser(
 }
 
 // getUser returns an individual IAM user
-func getUser(svc iamiface.IAMAPI, userName *string) *iam.User {
+func getUser(svc iamiface.IAMAPI, userName *string) (*iam.User, error) {
 	user, err := svc.GetUser(&iam.GetUserInput{
 		UserName: userName,
 	})
@@ -167,13 +162,12 @@ func getUser(svc iamiface.IAMAPI, userName *string) *iam.User {
 				zap.L().Warn("tried to scan non-existent resource",
 					zap.String("resource", *userName),
 					zap.String("resourceType", awsmodels.IAMUserSchema))
-				return nil
+				return nil, nil
 			}
 		}
-		utils.LogAWSError("IAM.GetUser", err)
-		return nil
+		return nil, errors.Wrapf(err, "IAM.GetUser: %s", aws.StringValue(userName))
 	}
-	return user.User
+	return user.User, nil
 }
 
 // getCredentialReport retrieves an existing credential report from AWS
@@ -303,25 +297,31 @@ func buildCredentialReport(
 }
 
 // listUsers returns all the users in the account, excluding the root account.
-func listUsers(iamSvc iamiface.IAMAPI) (users []*iam.User) {
-	err := iamSvc.ListUsersPages(
-		&iam.ListUsersInput{},
+func listUsers(iamSvc iamiface.IAMAPI, nextMarker *string) (users []*iam.User, marker *string, err error) {
+	err = iamSvc.ListUsersPages(
+		&iam.ListUsersInput{
+			Marker:   nextMarker,
+			MaxItems: aws.Int64(int64(defaultBatchSize)),
+		},
 		func(page *iam.ListUsersOutput, lastPage bool) bool {
-			users = append(users, page.Users...)
-			return true
+			return iamUserIterator(page, &users, &marker)
 		},
 	)
 	if err != nil {
-		utils.LogAWSError("IAM.ListUsersPages", err)
+		return nil, nil, errors.Wrap(err, "IAM.ListUsersPages")
 	}
 	return
 }
 
+func iamUserIterator(page *iam.ListUsersOutput, users *[]*iam.User, marker **string) bool {
+	*users = append(*users, page.Users...)
+	*marker = page.Marker
+	return len(*users) < defaultBatchSize
+}
+
 // getUserPolicies aggregates all the policies assigned to a user by polling both
 // the ListUserPolicies and ListAttachedUserPolicies APIs.
-func getUserPolicies(iamSvc iamiface.IAMAPI, userName *string) (
-	inlinePolicies []*string, managedPolicies []*string, err error) {
-
+func getUserPolicies(iamSvc iamiface.IAMAPI, userName *string) (inlinePolicies []*string, managedPolicies []*string, err error) {
 	err = iamSvc.ListUserPoliciesPages(
 		&iam.ListUserPoliciesInput{UserName: userName},
 		func(page *iam.ListUserPoliciesOutput, lastPage bool) bool {
@@ -330,7 +330,7 @@ func getUserPolicies(iamSvc iamiface.IAMAPI, userName *string) (
 		},
 	)
 	if err != nil {
-		utils.LogAWSError("IAM.ListUserPolicies", err)
+		return nil, nil, errors.Wrapf(err, "IAM.ListUserPolicies: %s", aws.StringValue(userName))
 	}
 
 	err = iamSvc.ListAttachedUserPoliciesPages(
@@ -343,7 +343,7 @@ func getUserPolicies(iamSvc iamiface.IAMAPI, userName *string) (
 		},
 	)
 	if err != nil {
-		utils.LogAWSError("IAM.ListAttachedUserPolicies", err)
+		return nil, nil, errors.Wrapf(err, "IAM.ListAttachedUserPolicies: %s", aws.StringValue(userName))
 	}
 
 	return
@@ -366,7 +366,7 @@ func listVirtualMFADevices(
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "IAM.ListVirtualMFADevicesPages")
 	}
 
 	mfaDeviceMapping := make(map[string]*awsmodels.VirtualMFADevice)
@@ -383,48 +383,43 @@ func listVirtualMFADevices(
 }
 
 // listGroupsForUser returns all the IAM Groups a given IAM User belongs to
-func listGroupsForUser(iamSvc iamiface.IAMAPI, userName *string) (groups []*iam.Group) {
-	err := iamSvc.ListGroupsForUserPages(&iam.ListGroupsForUserInput{UserName: userName},
+func listGroupsForUser(iamSvc iamiface.IAMAPI, userName *string) (groups []*iam.Group, err error) {
+	err = iamSvc.ListGroupsForUserPages(&iam.ListGroupsForUserInput{UserName: userName},
 		func(page *iam.ListGroupsForUserOutput, lastPage bool) bool {
 			groups = append(groups, page.Groups...)
 			return true
 		})
 	if err != nil {
-		utils.LogAWSError("IAM.ListGroupsForUserPages", err)
+		return nil, errors.Wrapf(err, "IAM.ListGroupsForUserPages: %s", aws.StringValue(userName))
 	}
 	return
 }
 
 // getUserPolicy gets the inline policy documents for a given IAM user and inline policy name
-func getUserPolicy(svc iamiface.IAMAPI, userName *string, policyName *string) *string {
+func getUserPolicy(svc iamiface.IAMAPI, userName *string, policyName *string) (*string, error) {
 	policy, err := svc.GetUserPolicy(&iam.GetUserPolicyInput{
 		UserName:   userName,
 		PolicyName: policyName,
 	})
-
 	if err != nil {
-		utils.LogAWSError("IAM.GetUserPolicy", err)
-		return nil
+		return nil, errors.Wrapf(err, "IAM.GetUserPolicy: user %s, policy %s", aws.StringValue(userName), aws.StringValue(policyName))
 	}
 
 	decodedPolicy, err := url.QueryUnescape(*policy.PolicyDocument)
 	if err != nil {
-		zap.L().Error("IAM: unable to url decode inline policy document",
-			zap.String("policy document", *policy.PolicyDocument),
-			zap.String("policy name", *policyName),
-			zap.String("user", *userName),
+		return nil, errors.Wrapf(
+			err,
+			"unable to url decode inline policy document of user %s, policy %s",
+			aws.StringValue(userName),
+			aws.StringValue(policyName),
 		)
-		return nil
 	}
 
-	return aws.String(decodedPolicy)
+	return aws.String(decodedPolicy), nil
 }
 
 // buildIAMUserSnapshot builds an IAMUserSnapshot for a given IAM User
-func buildIAMUserSnapshot(iamSvc iamiface.IAMAPI, user *iam.User) *awsmodels.IAMUser {
-	if user == nil {
-		return nil
-	}
+func buildIAMUserSnapshot(iamSvc iamiface.IAMAPI, user *iam.User) (*awsmodels.IAMUser, error) {
 	iamUserSnapshot := &awsmodels.IAMUser{
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   user.Arn,
@@ -444,53 +439,48 @@ func buildIAMUserSnapshot(iamSvc iamiface.IAMAPI, user *iam.User) *awsmodels.IAM
 	}
 
 	// Get IAM Policies associated to the user.
-	// There is no error logging here because it is logged in getUserPolicies.
 	inlinePolicyNames, managedPolicies, err := getUserPolicies(iamSvc, user.UserName)
-	if err == nil {
-		iamUserSnapshot.ManagedPolicyNames = managedPolicies
-		if inlinePolicyNames != nil {
-			iamUserSnapshot.InlinePolicies = make(map[string]*string, len(inlinePolicyNames))
-			for _, inlinePolicy := range inlinePolicyNames {
-				iamUserSnapshot.InlinePolicies[*inlinePolicy] = getUserPolicy(iamSvc, user.UserName, inlinePolicy)
+	if err != nil {
+		return nil, err
+	}
+	iamUserSnapshot.ManagedPolicyNames = managedPolicies
+	if inlinePolicyNames != nil {
+		iamUserSnapshot.InlinePolicies = make(map[string]*string, len(inlinePolicyNames))
+		for _, inlinePolicy := range inlinePolicyNames {
+			iamUserSnapshot.InlinePolicies[*inlinePolicy], err = getUserPolicy(iamSvc, user.UserName, inlinePolicy)
+			if err != nil {
+				return nil, err
 			}
 		}
 	}
 
-	// Build the credential report for all users if they don't exist already
-	if userCredentialReports != nil {
-		if userCredentialReport, ok := userCredentialReports[*user.UserName]; ok {
-			iamUserSnapshot.CredentialReport = userCredentialReport
-		}
+	if userCredentialReport, ok := userCredentialReports[*user.UserName]; ok {
+		iamUserSnapshot.CredentialReport = userCredentialReport
 	}
 
 	// Look up any virtual MFA devices attached to the user
-	if mfaDeviceMapping != nil {
-		if mfaSnapshot, ok := mfaDeviceMapping[*user.UserId]; ok {
-			iamUserSnapshot.VirtualMFA = mfaSnapshot
-		}
+	if mfaSnapshot, ok := mfaDeviceMapping[*user.UserId]; ok {
+		iamUserSnapshot.VirtualMFA = mfaSnapshot
 	}
 
 	// Look up any groups the user is a member of
-	iamUserSnapshot.Groups = listGroupsForUser(iamSvc, user.UserName)
+	iamUserSnapshot.Groups, err = listGroupsForUser(iamSvc, user.UserName)
+	if err != nil {
+		return nil, err
+	}
 
-	return iamUserSnapshot
+	return iamUserSnapshot, nil
 }
 
-func buildIAMRootUserSnapshot() *awsmodels.IAMRootUser {
+func buildIAMRootUserSnapshot() (*awsmodels.IAMRootUser, error) {
 	rootCredReport, ok := userCredentialReports[rootAccountNameCredReport]
 	if !ok {
-		zap.L().Error("unable to find credential report for root user",
-			zap.Any("credential report", userCredentialReports))
-		return nil
+		return nil, errors.New("unable to find credential report for root user")
 	}
 
 	rootARN, err := arn.Parse(*rootCredReport.ARN)
 	if err != nil {
-		zap.L().Error(
-			"unable to extract root user account ID",
-			zap.String("root arn", *rootCredReport.ARN),
-			zap.Error(err))
-		return nil
+		return nil, errors.Wrap(err, "unable to extract root user account ID")
 	}
 	rootSnapshot := &awsmodels.IAMRootUser{
 		GenericResource: awsmodels.GenericResource{
@@ -515,53 +505,54 @@ func buildIAMRootUserSnapshot() *awsmodels.IAMRootUser {
 		}
 	}
 
-	return rootSnapshot
+	return rootSnapshot, nil
 }
 
 // PollIAMUsers generates a snapshot for each IAM User.
-//
-// This function returns a slice of Events.
-func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting IAM User resource poller")
 	iamSvc, err := getIAMClient(pollerInput, defaultRegion)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, nil, err
 	}
 
 	// List all IAM Users in the account
-	users := listUsers(iamSvc)
-	if len(users) == 0 {
-		zap.L().Debug("no IAM users found")
+	users, marker, err := listUsers(iamSvc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	// Build the credential report for all users
 	userCredentialReports, err = buildCredentialReport(iamSvc)
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {
-			// Check if we got rate limited, happens sometimes when the credential report takes a long time to generate
+			// Check if we got rate limited, which happens sometimes when the credential report takes a long time to generate
 			if awsErr.Code() == throttlingErrorCode {
 				zap.L().Debug(
 					"credential report lookup rate limited during all users scan",
 					zap.String("accountId", pollerInput.AuthSourceParsedARN.AccountID))
-				utils.Requeue(pollermodels.ScanMsg{
+				err = utils.Requeue(pollermodels.ScanMsg{
 					Entries: []*pollermodels.ScanEntry{{
 						AWSAccountID:  aws.String(pollerInput.AuthSourceParsedARN.AccountID),
 						IntegrationID: pollerInput.IntegrationID,
 						ResourceType:  aws.String(awsmodels.IAMUserSchema),
 					}},
 				}, credentialReportRequeueDelaySeconds)
-				return nil, nil
+				if err != nil {
+					return nil, nil, err
+				}
+				// Manually re-queueing the re-scan here so we can specify the delay. Don't return
+				// an error so that lambda doesn't also try to re-scan.
+				return nil, nil, nil
 			}
 		}
-		zap.L().Error("failed to build credential report", zap.Error(err))
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Get all VMFA snapshots
 	mfaDeviceMapping, err = listVirtualMFADevices(iamSvc)
 	if err != nil {
-		utils.LogAWSError("IAM.ListVirtualMFADevices", err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Create IAM User snapshots
@@ -572,18 +563,22 @@ func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddR
 		// The API call IAM.ListUsers returns a slice of IAM.User structs, but does not set the tags
 		// field for any of these structs regardless of whether the corresponding user has tags set
 		// This patches that gap
-		fullUser := getUser(iamSvc, user.UserName)
-		iamUserSnapshot := buildIAMUserSnapshot(iamSvc, fullUser)
-		if iamUserSnapshot == nil {
-			continue
+		fullUser, err := getUser(iamSvc, user.UserName)
+		if err != nil {
+			return nil, nil, err
 		}
+		iamUserSnapshot, err := buildIAMUserSnapshot(iamSvc, fullUser)
+		if err != nil {
+			return nil, nil, err
+		}
+
 		iamUserSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 		// If the user does not have a credential report, then continue on with the snapshot but
 		// re-queue the user for a scan in fifteen minutes (the maximum delay time). The primary reason
 		// a user would not have a credential report is if they were recently created and there has not
 		// yet been time for a new credential report that includes them to have been generated.
 		if iamUserSnapshot.CredentialReport == nil {
-			utils.Requeue(pollermodels.ScanMsg{
+			err = utils.Requeue(pollermodels.ScanMsg{
 				Entries: []*pollermodels.ScanEntry{
 					{
 						AWSAccountID:  iamUserSnapshot.AccountID,
@@ -593,6 +588,9 @@ func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddR
 					},
 				},
 			}, utils.MaxRequeueDelaySeconds)
+			if err != nil {
+				return nil, nil, err
+			}
 		}
 
 		resources = append(resources, &apimodels.AddResourceEntry{
@@ -604,28 +602,24 @@ func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddR
 		})
 	}
 
-	rootSnapshot := buildIAMRootUserSnapshot()
-	if rootSnapshot == nil {
-		// Re-scan the root user if there was any error building it
-		utils.Requeue(pollermodels.ScanMsg{
-			Entries: []*pollermodels.ScanEntry{
-				{
-					AWSAccountID:  aws.String(pollerInput.AuthSourceParsedARN.AccountID),
-					IntegrationID: pollerInput.IntegrationID,
-					ResourceType:  aws.String(awsmodels.IAMRootUserSchema),
-				},
-			},
-		}, utils.MaxRequeueDelaySeconds)
-	} else {
-		// Create the IAM Root User snapshot
-		resources = append(resources, &apimodels.AddResourceEntry{
-			Attributes:      rootSnapshot,
-			ID:              apimodels.ResourceID(*rootSnapshot.ARN),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
-			Type:            awsmodels.IAMRootUserSchema,
-		})
+	// We only want to scan the root user once per service scan, so if we're on a subsequent user
+	// scan then just skip the root user
+	if pollerInput.NextPageToken != nil {
+		return resources, marker, nil
 	}
 
-	return resources, nil
+	rootSnapshot, err := buildIAMRootUserSnapshot()
+	if err != nil {
+		return nil, nil, err
+	}
+	// Create the IAM Root User snapshot
+	resources = append(resources, &apimodels.AddResourceEntry{
+		Attributes:      rootSnapshot,
+		ID:              apimodels.ResourceID(*rootSnapshot.ARN),
+		IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
+		IntegrationType: apimodels.IntegrationTypeAws,
+		Type:            awsmodels.IAMRootUserSchema,
+	})
+
+	return resources, marker, nil
 }

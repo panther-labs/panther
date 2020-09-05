@@ -76,6 +76,7 @@ func Handle(ctx context.Context, event events.SQSEvent) (err error) {
 				zap.Int("messageNumber", indx),
 				zap.String("messageBody", message.Body),
 			)
+			// This message is badly formatted, so don't bother re-trying it
 			continue
 		}
 
@@ -88,11 +89,11 @@ func Handle(ctx context.Context, event events.SQSEvent) (err error) {
 			resources, pollErr := pollers.Poll(entry)
 			if pollErr != nil {
 				operation.LogError(errors.Wrap(pollErr, "poll failed"), zap.Any("sqsEntry", entry))
-				continue
+				return pollErr
 			}
 
 			// Send data to the Resources API
-			if resources != nil {
+			if len(resources) > 0 {
 				zap.L().Debug("total resources generated",
 					zap.Int("messageNumber", indx),
 					zap.Int("numResources", len(resources)),

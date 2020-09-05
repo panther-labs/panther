@@ -1,4 +1,4 @@
-package delivery
+package api
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,25 +19,27 @@ package delivery
  */
 
 import (
-	"errors"
-
-	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
+	"github.com/panther-labs/panther/api/lambda/alerts/models"
+	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-type mockSQSClient struct {
-	sqsiface.SQSAPI
-	err bool
-}
-
-var sqsMessages int // store number of messages here for tests to verify
-
-func (m mockSQSClient) SendMessageBatch(input *sqs.SendMessageBatchInput) (*sqs.SendMessageBatchOutput, error) {
-	if m.err {
-		return nil, errors.New("internal service error")
+// UpdateAlertStatus modifies an alert's attributes.
+func (API) UpdateAlertStatus(input *models.UpdateAlertStatusInput) (result *models.UpdateAlertStatusOutput, err error) {
+	// Run the update alert query
+	alertItem, err := alertsDB.UpdateAlertStatus(input)
+	if err != nil {
+		return nil, err
 	}
-	sqsMessages = len(input.Entries)
-	return &sqs.SendMessageBatchOutput{
-		Successful: make([]*sqs.SendMessageBatchResultEntry, len(input.Entries)),
-	}, nil
+
+	// If there was no item from the DB, we return an empty response
+	if alertItem == nil {
+		return &models.UpdateAlertStatusOutput{}, nil
+	}
+
+	// Marshal to an alert summary
+	result = utils.AlertItemToSummary(alertItem)
+
+	gatewayapi.ReplaceMapSliceNils(result)
+	return result, nil
 }

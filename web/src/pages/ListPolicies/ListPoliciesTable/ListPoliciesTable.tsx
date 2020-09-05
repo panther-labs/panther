@@ -22,9 +22,9 @@ import { formatDatetime } from 'Helpers/utils';
 import { Box, Link, Table } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
-import SeverityBadge from 'Components/SeverityBadge';
+import SeverityBadge from 'Components/badges/SeverityBadge';
 import { ListPolicies } from 'Pages/ListPolicies';
-import StatusBadge from 'Components/StatusBadge';
+import StatusBadge from 'Components/badges/StatusBadge';
 import ListPoliciesTableRowOptions from './ListPoliciesTableRowOptions';
 
 interface ListPoliciesTableProps {

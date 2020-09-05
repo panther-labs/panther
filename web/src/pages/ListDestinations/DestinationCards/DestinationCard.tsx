@@ -19,7 +19,7 @@
 import GenericItemCard from 'Components/GenericItemCard';
 import { Flex, Link } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
-import SeverityBadge from 'Components/SeverityBadge';
+import SeverityBadge from 'Components/badges/SeverityBadge';
 import React from 'react';
 import DestinationCardOptions from 'Pages/ListDestinations/DestinationCards/DestinationCardOptions';
 import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';

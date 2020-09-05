@@ -22,7 +22,7 @@ import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import { formatDatetime } from 'Helpers/utils';
 import { ComplianceIntegration, ResourceDetails } from 'Generated/schema';
-import StatusBadge from 'Components/StatusBadge';
+import StatusBadge from 'Components/badges/StatusBadge';
 
 interface ResourceDetailsInfoProps {
   resource?: ResourceDetails & Pick<ComplianceIntegration, 'integrationLabel'>;

@@ -1,4 +1,4 @@
-package delivery
+package api
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,28 +19,27 @@ package delivery
  */
 
 import (
-	"testing"
-
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/stretchr/testify/assert"
+	"github.com/panther-labs/panther/api/lambda/alerts/models"
+	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-func TestGetSQSClient(t *testing.T) {
-	assert.NotNil(t, getSQSClient())
-}
-
-// 95 ms / op
-func BenchmarkSessionCreation(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		session.Must(session.NewSession())
+// UpdateAlertDelivery modifies an alert's attributes.
+func (API) UpdateAlertDelivery(input *models.UpdateAlertDeliveryInput) (result *models.UpdateAlertDeliveryOutput, err error) {
+	// Run the update alert query
+	alertItem, err := alertsDB.UpdateAlertDelivery(input)
+	if err != nil {
+		return nil, err
 	}
-}
 
-// 2.7 ms / op
-func BenchmarkClientCreation(b *testing.B) {
-	sess := session.Must(session.NewSession())
-	for i := 0; i < b.N; i++ {
-		sqs.New(sess)
+	// If there was no item from the DB, we return an empty response
+	if alertItem == nil {
+		return &models.UpdateAlertDeliveryOutput{}, nil
 	}
+
+	// Marshal to an alert summary
+	result = utils.AlertItemToSummary(alertItem)
+
+	gatewayapi.ReplaceMapSliceNils(result)
+	return result, nil
 }

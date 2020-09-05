@@ -67,6 +67,52 @@ func (table *AlertsTable) UpdateAlertStatus(input *models.UpdateAlertStatusInput
 	return updatedAlert, nil
 }
 
+// UpdateAlertDelivery - updates the alert details and returns the updated item
+func (table *AlertsTable) UpdateAlertDelivery(input *models.UpdateAlertDeliveryInput) (*AlertItem, error) {
+	// Create the dynamo key we want to update
+	var alertKey = DynamoItem{AlertIDKey: {S: aws.String(input.AlertID)}}
+
+	// Hack to work around dynamo's expression syntax which cannot simply store an empty slice
+	// https://github.com/aws/aws-sdk-go/issues/682
+	emptyList := dynamodb.AttributeValue{L: []*dynamodb.AttributeValue{}}
+
+	// Create the update builder. If the column was null, we set to an empty list.
+	// Dynamo cannot append to NULL so we must create the empty list
+	updateBuilder := expression.Set(expression.Name(DeliveryResponsesKey),
+		expression.ListAppend(
+			expression.IfNotExists(expression.Name(DeliveryResponsesKey), expression.Value(emptyList)),
+			expression.Value(input.DeliveryResponses),
+		))
+
+	// Create the condition builder
+	conditionBuilder := expression.Equal(expression.Name(AlertIDKey), expression.Value(input.AlertID))
+
+	// Build an expression from our builders
+	expression, err := buildExpression(updateBuilder, conditionBuilder)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create our dynamo update item
+	updateItem := dynamodb.UpdateItemInput{
+		ExpressionAttributeNames:  expression.Names(),
+		ExpressionAttributeValues: expression.Values(),
+		Key:                       alertKey,
+		ReturnValues:              aws.String("ALL_NEW"),
+		TableName:                 &table.AlertsTableName,
+		UpdateExpression:          expression.Update(),
+		ConditionExpression:       expression.Condition(),
+	}
+
+	// Run the update query and marshal
+	updatedAlert := &AlertItem{}
+	if err = table.update(updateItem, &updatedAlert); err != nil {
+		return nil, err
+	}
+
+	return updatedAlert, nil
+}
+
 // createUpdateBuilder - creates an update builder
 func createUpdateBuilder(input *models.UpdateAlertStatusInput) expression.UpdateBuilder {
 	// When settig an "open" status we actually remove the attribute

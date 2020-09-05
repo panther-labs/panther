@@ -28,7 +28,7 @@ import { formatDatetime } from 'Helpers/utils';
 import { Box, Link, Table } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
-import StatusBadge from 'Components/StatusBadge';
+import StatusBadge from 'Components/badges/StatusBadge';
 
 interface ListResourcesTableProps {
   items?: Array<ResourceSummary & Pick<ComplianceIntegration, 'integrationLabel'>>;

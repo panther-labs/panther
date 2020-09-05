@@ -163,7 +163,7 @@ var overviewJSON = `
             "width": 12,
             "height": 3,
             "properties": {
-                "query": "SOURCE '/aws/lambda/panther-alert-forwarder' | SOURCE '/aws/lambda/panther-alert-processor' | SOURCE '/aws/lambda/panther-alert-delivery' | filter level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc | limit 20",
+                "query": "SOURCE '/aws/lambda/panther-alert-forwarder' | SOURCE '/aws/lambda/panther-alert-processor' | SOURCE '/aws/lambda/panther-alert-delivery-api' | filter level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc | limit 20",
                 "region": "us-west-2",
                 "stacked": false,
                 "title": "Alert Processing Recent 20 Errors and Warnings",
@@ -177,7 +177,7 @@ var overviewJSON = `
             "width": 12,
             "height": 3,
             "properties": {
-                "query": "SOURCE '/aws/lambda/panther-alert-forwarder' | SOURCE '/aws/lambda/panther-alert-processor' | SOURCE '/aws/lambda/panther-alert-delivery' | filter  level='error'  or level='warn'\n| stats sum(strcontains(level, 'error')) as errors, sum(strcontains(level, 'warn')) as warns by bin(5m)",
+                "query": "SOURCE '/aws/lambda/panther-alert-forwarder' | SOURCE '/aws/lambda/panther-alert-processor' | SOURCE '/aws/lambda/panther-alert-delivery-api' | filter  level='error'  or level='warn'\n| stats sum(strcontains(level, 'error')) as errors, sum(strcontains(level, 'warn')) as warns by bin(5m)",
                 "region": "us-west-2",
                 "stacked": false,
                 "title": "Alert Processing Errors and Warnings",

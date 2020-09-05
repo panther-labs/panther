@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/acm"
 	"github.com/aws/aws-sdk-go/service/acm/acmiface"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
@@ -46,7 +47,7 @@ func getAcmClient(pollerResourceInput *awsmodels.ResourcePollerInput,
 
 	client, err := getClient(pollerResourceInput, AcmClientFunc, "acm", region)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, err
 	}
 
 	return client.(acmiface.ACMAPI), nil
@@ -64,7 +65,10 @@ func PollACMCertificate(
 		return nil, err
 	}
 
-	snapshot := buildAcmCertificateSnapshot(client, scanRequest.ResourceID)
+	snapshot, err := buildAcmCertificateSnapshot(client, scanRequest.ResourceID)
+	if err != nil {
+		return nil, err
+	}
 	if snapshot == nil {
 		return nil, nil
 	}
@@ -75,24 +79,32 @@ func PollACMCertificate(
 }
 
 // listCertificates returns all ACM certificates in the account
-func listCertificates(acmSvc acmiface.ACMAPI) (certs []*acm.CertificateSummary) {
-	err := acmSvc.ListCertificatesPages(&acm.ListCertificatesInput{},
-		func(page *acm.ListCertificatesOutput, lastPage bool) bool {
-			certs = append(certs, page.CertificateSummaryList...)
-			return true
-		})
+func listCertificates(acmSvc acmiface.ACMAPI, nextMarker *string) (acmCerts []*acm.CertificateSummary, marker *string, err error) {
+	err = acmSvc.ListCertificatesPages(&acm.ListCertificatesInput{
+		NextToken: nextMarker,
+		MaxItems:  aws.Int64(int64(defaultBatchSize)),
+	}, func(page *acm.ListCertificatesOutput, _ bool) bool {
+		return certificateIterator(page, &acmCerts, &marker)
+	})
+
 	if err != nil {
-		utils.LogAWSError("ACM.ListCertificatesPages", err)
+		return nil, nil, errors.Wrap(err, "ACM.ListCertificatesPages")
 	}
+
 	return
+}
+
+func certificateIterator(page *acm.ListCertificatesOutput, acmCerts *[]*acm.CertificateSummary, marker **string) bool {
+	*acmCerts = append(*acmCerts, page.CertificateSummaryList...)
+	*marker = page.NextToken
+	return len(*acmCerts) < defaultBatchSize
 }
 
 // describeCertificates provides detailed information for a given ACM certificate
 func describeCertificate(acmSvc acmiface.ACMAPI, arn *string) (*acm.CertificateDetail, error) {
 	out, err := acmSvc.DescribeCertificate(&acm.DescribeCertificateInput{CertificateArn: arn})
 	if err != nil {
-		utils.LogAWSError("ACM.DescribeCertificate", err)
-		return nil, err
+		return nil, errors.Wrapf(err, "ACM.DescribeCertificate: %s", aws.StringValue(arn))
 	}
 
 	return out.Certificate, nil
@@ -102,22 +114,21 @@ func describeCertificate(acmSvc acmiface.ACMAPI, arn *string) (*acm.CertificateD
 func listTagsForCertificate(acmSvc acmiface.ACMAPI, arn *string) ([]*acm.Tag, error) {
 	out, err := acmSvc.ListTagsForCertificate(&acm.ListTagsForCertificateInput{CertificateArn: arn})
 	if err != nil {
-		utils.LogAWSError("ACM.ListTagsForCertificate", err)
-		return nil, err
+		return nil, errors.Wrapf(err, "ACM.ListTagsForCertificate: %s", aws.StringValue(arn))
 	}
 
 	return out.Tags, nil
 }
 
 // buildAcmCertificateSnapshot returns a complete snapshot of an ACM certificate
-func buildAcmCertificateSnapshot(acmSvc acmiface.ACMAPI, certificateArn *string) *awsmodels.AcmCertificate {
+func buildAcmCertificateSnapshot(acmSvc acmiface.ACMAPI, certificateArn *string) (*awsmodels.AcmCertificate, error) {
 	if certificateArn == nil {
-		return nil
+		return nil, nil
 	}
 
 	metadata, err := describeCertificate(acmSvc, certificateArn)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	acmCertificate := &awsmodels.AcmCertificate{
@@ -162,61 +173,46 @@ func buildAcmCertificateSnapshot(acmSvc acmiface.ACMAPI, certificateArn *string)
 
 	tags, err := listTagsForCertificate(acmSvc, certificateArn)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	acmCertificate.Tags = utils.ParseTagSlice(tags)
 
-	return acmCertificate
+	return acmCertificate, nil
 }
 
 // PollAcmCertificates gathers information on each ACM Certificate for an AWS account.
-func PollAcmCertificates(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollAcmCertificates(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting ACM Certificate resource poller")
-	acmCertificateSnapshots := make(map[string]*awsmodels.AcmCertificate)
 
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "acm") {
-		acmSvc, err := getAcmClient(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
-
-		// Start with generating a list of all certificates
-		certificates := listCertificates(acmSvc)
-		if len(certificates) == 0 {
-			zap.L().Debug("no ACM certificates found", zap.String("region", *regionID))
-			continue
-		}
-
-		for _, certificateSummary := range certificates {
-			acmCertificateSnapshot := buildAcmCertificateSnapshot(acmSvc, certificateSummary.CertificateArn)
-			if acmCertificateSnapshot == nil {
-				continue
-			}
-			acmCertificateSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			acmCertificateSnapshot.Region = regionID
-
-			if _, ok := acmCertificateSnapshots[*acmCertificateSnapshot.ARN]; !ok {
-				acmCertificateSnapshots[*acmCertificateSnapshot.ARN] = acmCertificateSnapshot
-			} else {
-				zap.L().Info(
-					"overwriting existing ACM Certificate snapshot",
-					zap.String("resourceId", *acmCertificateSnapshot.ARN),
-				)
-				acmCertificateSnapshots[*acmCertificateSnapshot.ARN] = acmCertificateSnapshot
-			}
-		}
+	acmSvc, err := getAcmClient(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	resources := make([]*apimodels.AddResourceEntry, 0, len(acmCertificateSnapshots))
-	for resourceID, acmSnapshot := range acmCertificateSnapshots {
+	// Start with generating a list of all certificates
+	certificates, marker, err := listCertificates(acmSvc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
+	}
+
+	// For each certificate, build a snapshot of that certificate
+	resources := make([]*apimodels.AddResourceEntry, 0, len(certificates))
+	for _, certificateSummary := range certificates {
+		acmCertificateSnapshot, err := buildAcmCertificateSnapshot(acmSvc, certificateSummary.CertificateArn)
+		if err != nil {
+			return nil, nil, err
+		}
+		acmCertificateSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
+		acmCertificateSnapshot.Region = pollerInput.Region
+
 		resources = append(resources, &apimodels.AddResourceEntry{
-			Attributes:      acmSnapshot,
-			ID:              apimodels.ResourceID(resourceID),
+			Attributes:      acmCertificateSnapshot,
+			ID:              apimodels.ResourceID(*acmCertificateSnapshot.ResourceID),
 			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
 			IntegrationType: apimodels.IntegrationTypeAws,
 			Type:            awsmodels.AcmCertificateSchema,
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

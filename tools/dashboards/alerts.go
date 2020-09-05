@@ -178,7 +178,7 @@ var alertsJSON = `
             "width": 9,
             "height": 6,
             "properties": {
-                "query": "SOURCE '/aws/lambda/panther-alert-forwarder' | SOURCE '/aws/lambda/panther-alert-processor' | SOURCE '/aws/lambda/panther-alert-delivery' | filter level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc | limit 20",
+                "query": "SOURCE '/aws/lambda/panther-alert-forwarder' | SOURCE '/aws/lambda/panther-alert-processor' | SOURCE '/aws/lambda/panther-alert-delivery-api' | filter level='error' or level='warn'\n| fields @timestamp, @message\n| sort @timestamp desc | limit 20",
                 "region": "us-west-2",
                 "stacked": false,
                 "title": "Most Recent 20 Errors and Warnings",
@@ -192,7 +192,7 @@ var alertsJSON = `
             "width": 9,
             "height": 6,
             "properties": {
-                "query": "SOURCE '/aws/lambda/panther-alert-forwarder' | SOURCE '/aws/lambda/panther-alert-processor' | SOURCE '/aws/lambda/panther-alert-delivery' | filter  level='error'  or level='warn'\n| stats sum(strcontains(level, 'error')) as errors, sum(strcontains(level, 'warn')) as warns by bin(5m)",
+                "query": "SOURCE '/aws/lambda/panther-alert-forwarder' | SOURCE '/aws/lambda/panther-alert-processor' | SOURCE '/aws/lambda/panther-alert-delivery-api' | filter  level='error'  or level='warn'\n| stats sum(strcontains(level, 'error')) as errors, sum(strcontains(level, 'warn')) as warns by bin(5m)",
                 "region": "us-west-2",
                 "stacked": false,
                 "title": "Errors and Warnings",
@@ -482,7 +482,7 @@ var alertsJSON = `
             "height": 3,
             "properties": {
                 "metrics": [
-                    [ "AWS/Lambda", "Invocations", "FunctionName", "panther-alert-delivery", "Resource", "panther-alert-delivery", { "stat": "Sum", "region": "us-west-2" } ]
+                    [ "AWS/Lambda", "Invocations", "FunctionName", "panther-alert-delivery-api", "Resource", "panther-alert-delivery-api", { "stat": "Sum", "region": "us-west-2" } ]
                 ],
                 "region": "us-west-2",
                 "title": "Invocations",
@@ -498,9 +498,9 @@ var alertsJSON = `
             "height": 3,
             "properties": {
                 "metrics": [
-                    [ "AWS/Lambda", "Duration", "FunctionName", "panther-alert-delivery", "Resource", "panther-alert-delivery", { "stat": "Minimum", "region": "us-west-2" } ],
-                    [ "AWS/Lambda", "Duration", "FunctionName", "panther-alert-delivery", "Resource", "panther-alert-delivery", { "stat": "Average", "region": "us-west-2" } ],
-                    [ "AWS/Lambda", "Duration", "FunctionName", "panther-alert-delivery", "Resource", "panther-alert-delivery", { "stat": "Maximum", "region": "us-west-2" } ]
+                    [ "AWS/Lambda", "Duration", "FunctionName", "panther-alert-delivery-api", "Resource", "panther-alert-delivery-api", { "stat": "Minimum", "region": "us-west-2" } ],
+                    [ "AWS/Lambda", "Duration", "FunctionName", "panther-alert-delivery-api", "Resource", "panther-alert-delivery-api", { "stat": "Average", "region": "us-west-2" } ],
+                    [ "AWS/Lambda", "Duration", "FunctionName", "panther-alert-delivery-api", "Resource", "panther-alert-delivery-api", { "stat": "Maximum", "region": "us-west-2" } ]
                 ],
                 "region": "us-west-2",
                 "view": "timeSeries",
@@ -516,8 +516,8 @@ var alertsJSON = `
             "height": 3,
             "properties": {
                 "metrics": [
-                    [ "AWS/Lambda", "Errors", "FunctionName", "panther-alert-delivery", "Resource", "panther-alert-delivery", { "id": "errors", "stat": "Sum", "color": "#d13212", "region": "us-west-2" } ],
-                    [ "AWS/Lambda", "Invocations", "FunctionName", "panther-alert-delivery", "Resource", "panther-alert-delivery", { "id": "invocations", "stat": "Sum", "visible": false, "region": "us-west-2" } ],
+                    [ "AWS/Lambda", "Errors", "FunctionName", "panther-alert-delivery-api", "Resource", "panther-alert-delivery-api", { "id": "errors", "stat": "Sum", "color": "#d13212", "region": "us-west-2" } ],
+                    [ "AWS/Lambda", "Invocations", "FunctionName", "panther-alert-delivery-api", "Resource", "panther-alert-delivery-api", { "id": "invocations", "stat": "Sum", "visible": false, "region": "us-west-2" } ],
                     [ { "expression": "100 - 100 * errors / MAX([errors, invocations])", "label": "Success rate (%)", "id": "availability", "yAxis": "right", "region": "us-west-2" } ]
                 ],
                 "region": "us-west-2",
@@ -538,7 +538,7 @@ var alertsJSON = `
             "width": 3,
             "height": 3,
             "properties": {
-                "query": "SOURCE '/aws/lambda/panther-alert-delivery' | filter component like 'alert_delivery' | stats max(heapSizeMB) as heap by bin(5min)\n",
+                "query": "SOURCE '/aws/lambda/panther-alert-delivery-api' | filter component like 'alert_delivery' | stats max(heapSizeMB) as heap by bin(5min)\n",
                 "region": "us-west-2",
                 "stacked": false,
                 "title": "Heap Usage (MB)",
@@ -552,7 +552,7 @@ var alertsJSON = `
             "width": 3,
             "height": 3,
             "properties": {
-                "query": "SOURCE '/aws/lambda/panther-alert-delivery' | filter component like 'alert_delivery' | stats max(percentMemUsed) as used by bin(5min)\n",
+                "query": "SOURCE '/aws/lambda/panther-alert-delivery-api' | filter component like 'alert_delivery' | stats max(percentMemUsed) as used by bin(5min)\n",
                 "region": "us-west-2",
                 "title": "Memory Usage (%)",
                 "view": "timeSeries",
