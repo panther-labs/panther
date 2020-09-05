@@ -84,12 +84,11 @@ commands:
                 exit 0
             fi
 
-            ls .setup/venv/bin
-            /tmp/panther/magebin build:api build:cfn fmt
+            /tmp/panther/magebin gen fmt
             git config --global user.email "github-service-account@runpanther.io"
             git config --global user.name "panther-bot"
             git add -A .
-            git commit -m "mage build:api build:cfn fmt" || true
+            git commit -m "mage gen fmt" || true
             git push origin $CIRCLE_BRANCH
 
 jobs:
@@ -112,9 +111,6 @@ jobs:
           # "mage setup" will have no effect unless new dependencies have been introduced.
           name: Install new dependencies
           command: /tmp/panther/magebin -v setup
-      - run:
-          name: debugging
-          command: ls -l .setup/venv/bin
       - save_caches
       - autofmt
       - persist_to_workspace:

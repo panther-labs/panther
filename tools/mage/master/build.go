@@ -23,6 +23,7 @@ import (
 
 	"github.com/panther-labs/panther/tools/mage/build"
 	"github.com/panther-labs/panther/tools/mage/deploy"
+	"github.com/panther-labs/panther/tools/mage/gen"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
@@ -45,8 +46,7 @@ func GetVersion() (string, error) {
 
 // Compile Lambda source assets
 func Build() error {
-	build.API()
-	if err := build.Cfn(); err != nil {
+	if err := gen.Gen(); err != nil {
 		return err
 	}
 	if err := build.Lambda(); err != nil {

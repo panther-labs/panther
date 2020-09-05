@@ -28,6 +28,7 @@ import (
 	"github.com/panther-labs/panther/tools/mage/deploy"
 	"github.com/panther-labs/panther/tools/mage/doc"
 	"github.com/panther-labs/panther/tools/mage/fmt"
+	"github.com/panther-labs/panther/tools/mage/gen"
 	"github.com/panther-labs/panther/tools/mage/master"
 	"github.com/panther-labs/panther/tools/mage/setup"
 	"github.com/panther-labs/panther/tools/mage/teardown"
@@ -37,16 +38,6 @@ import (
 // Each exported function and its comment becomes a mage target
 
 type Build mg.Namespace
-
-// Generate API source files
-func (Build) API() {
-	build.API()
-}
-
-// Generate CloudFormation templates in out/deployments
-func (Build) Cfn() error {
-	return build.Cfn()
-}
 
 // Compile Go Lambda function source
 func (Build) Lambda() error {
@@ -78,6 +69,11 @@ func Doc() error {
 // Format source files
 func Fmt() error {
 	return fmt.Fmt()
+}
+
+// Autogenerate API-related source files and CloudWatch dashboards
+func Gen() error {
+	return gen.Gen()
 }
 
 type Master mg.Namespace

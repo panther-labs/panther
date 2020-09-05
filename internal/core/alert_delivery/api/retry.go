@@ -77,7 +77,7 @@ func createEntry(messageBody string, index int, delaySeconds int64) *sqs.SendMes
 
 // Generate a random int between lower (inclusive) and upper (exclusive).
 func randomInt64n(min int, max int) int64 {
-	return rand.Int63n(int64(max)-int64(min)) + int64(min) // #nosec (don't need cryptographic rng)
+	return rand.Int63n(int64(max)-int64(min)) + int64(min) // nolint:gosec
 }
 
 func sendToSQS(input *sqs.SendMessageBatchInput) {

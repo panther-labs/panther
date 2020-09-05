@@ -26,7 +26,11 @@ import (
 	"strings"
 
 	"github.com/magefile/mage/sh"
+
+	"github.com/panther-labs/panther/tools/mage/logger"
 )
+
+var log = logger.Get()
 
 // "go build" in parallel for each Lambda function.
 //
