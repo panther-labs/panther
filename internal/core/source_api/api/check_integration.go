@@ -23,6 +23,7 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/service/kms"
@@ -104,8 +105,21 @@ func checkKey(roleCredentials *credentials.Credentials, key string) models.Sourc
 			Message: "No KMS Key was specified.",
 		}
 	}
-	kmsClient := kms.New(awsSession, &aws.Config{Credentials: roleCredentials})
 
+	keyARN, err := arn.Parse(key)
+	if err != nil {
+		return models.SourceIntegrationItemStatus{
+			Healthy:      false,
+			Message:      fmt.Sprintf("The KMS ARN '%s' is invalid", key),
+			ErrorMessage: err.Error(),
+		}
+	}
+
+	conf := &aws.Config{
+		Credentials: roleCredentials,
+		Region:      &keyARN.Region, // KMS key could be in another region
+	}
+	kmsClient := kms.New(awsSession, conf)
 	info, err := kmsClient.DescribeKey(&kms.DescribeKeyInput{KeyId: &key})
 	if err != nil {
 		return models.SourceIntegrationItemStatus{
