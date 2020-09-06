@@ -40,7 +40,7 @@ var (
 	sqsClient    sqsiface.SQSAPI
 
 	httpClient       *http.Client
-	complianceClient *complianceapi.PantherCompliance
+	complianceClient *complianceapi.PantherComplianceAPI
 )
 
 type envConfig struct {

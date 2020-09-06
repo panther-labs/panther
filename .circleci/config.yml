@@ -4,129 +4,168 @@ version: 2.1
 executors:
   panther-buildpack:
     docker:
-      - image: pantherlabs/panther-buildpack:1.2.0
+      - image: pantherlabs/panther-buildpack:1.8.0
 
+# Command definitions which can be re-used across multiple jobs
 commands:
-  restore_go_modules_from_cache:
-    description: 'Restores all Golang modules that were installed & cached in previous executions'
-    steps:
-      - restore_cache:
-          name: 'Restore cache: go modules'
-          keys:
-            - gomod2-{{ checksum "go.mod" }}
-
-      # Start compiling mage in the background while other caches are restoring
-      - run:
-          name: Compile mage (background)
-          command: mage
-          background: true
-
-  restore_node_modules_from_cache:
-    description: 'Restores all Node modules that were installed & cached in previous executions'
-    steps:
-      - restore_cache:
-          name: 'Restore cache: npm'
-          keys:
-            - npm-{{ checksum "package-lock.json" }}
-
-  restore_python_modules_from_cache:
-    description: 'Restores all Python modules that were installed & cached in previous executions'
-    steps:
-      - restore_cache:
-          name: 'Restore cache: python env'
-          keys:
-            - venv-{{ checksum "requirements.txt" }}
-
-  restore_binaries_from_cache:
-    description: 'Restores all binaries that were installed & cached in previous executions'
+  restore_bin_cache:
     steps:
       - restore_cache:
           name: 'Restore cache: .setup binaries'
           keys:
-            - setup-{{ checksum "tools/mage/setup.go" }}
+            # These caches are persisted for 15 days. If you need to reset the cache,
+            # just change the "x" to any other value which hasn't been used recently.
+            - &bin_cache_key setup-x-{{ checksum "tools/mage/setup/setup.go" }}
 
-  persist_go_modules_to_cache:
-    description: Saves all currently installed Golang modules to the cache, to be used by future jobs
+  restore_go_cache:
     steps:
-      - save_cache:
-          name: 'Save cache: go modules'
-          key: gomod2-{{ checksum "go.mod" }}
-          paths:
-            - /go/pkg/mod
+      - restore_cache:
+          name: 'Restore cache: go modules'
+          keys:
+            - &go_cache_key gomod-x-{{ checksum "go.mod" }}
 
-  persist_node_modules_to_cache:
-    description: Saves all currently installed Node modules to the cache, to be used by future jobs
+  restore_npm_cache:
     steps:
-      - save_cache:
-          name: 'Save cache: npm'
-          key: npm-{{ checksum "package-lock.json" }}
-          paths:
-            - node_modules
+      - restore_cache:
+          name: 'Restore cache: npm'
+          keys:
+            - &npm_cache_key npm-x-{{ checksum "package-lock.json" }}
 
-  persist_python_modules_to_cache:
-    description: Saves all currently installed Python modules to the cache, to be used by future jobs
+  restore_pip_cache:
     steps:
-      - save_cache:
-          name: 'Save cache: python env'
-          key: venv-{{ checksum "requirements.txt" }}
-          paths:
-            - .setup/venv
+      - restore_cache:
+          name: 'Restore cache: python env'
+          keys:
+            - &pip_cache_key venv-x-{{ checksum "requirements.txt" }}
 
-  persist_binaries_to_cache:
-    description: Saves all currently installed binaries to the cache, to be used by future jobs
+  save_caches:
     steps:
       - save_cache:
           name: 'Save cache: .setup binaries'
-          key: setup-{{ checksum "tools/mage/setup.go" }}
+          key: *bin_cache_key
           paths:
             - .setup/golangci-lint
             - .setup/swagger
             - .setup/terraform
+      - save_cache:
+          name: 'Save cache: go modules'
+          key: *go_cache_key
+          paths:
+            - /go/bin/goimports
+            - /go/pkg/mod
+      - save_cache:
+          name: 'Save cache: npm'
+          key: *npm_cache_key
+          paths:
+            - node_modules
+      - save_cache:
+          name: 'Save cache: python env'
+          key: *pip_cache_key
+          paths:
+            - .setup/venv
 
-  setup_dependencies:
-    description: 'Installs all dependencies of the project'
+  autofmt:
     steps:
-      - restore_modules_from_cache
       - run:
-          # By this point, mage is compiled and all dependencies have been restored from the cache.
-          # "mage setup" will be a no-op unless new dependencies have been introduced.
-          name: Install new dependencies
-          command: mage setup
+          # Generate source files, fmt the repo, and commit any resulting changes.
+          # If a new commit is pushed, CircleCI will immediately restart the workflow.
+          #
+          # This will not run on the master branch, and to prevent a feedback loop it will also not
+          # run if the last commit that triggered this build was authored by the bot.
+          name: Autofmt
+          command: |
+            if [[ "$CIRCLE_BRANCH" == "master" ]]; then
+                echo "master branch: skipping autofmt"
+                exit 0
+            fi
 
-# The pool of jobs that that our CI will be able to run
+            if [[ "`git log -1 --pretty=format:'%an'`" == "panther-bot" ]]; then
+                echo "panther-bot made the last commit: skipping autofmt"
+                exit 0
+            fi
+
+            /tmp/panther/magebin gen fmt
+            git config --global user.email "github-service-account@runpanther.io"
+            git config --global user.name "panther-bot"
+            git add -A .
+            git commit -m "mage gen fmt" || true
+            git push origin $CIRCLE_BRANCH
+
 jobs:
-  mage_test_ci:
+  setup:
+    # Install dependencies, compile the mage binary, and autofmt.
+    # Subsequent jobs can load libraries from the cache and mage from workspace storage.
+    executor: panther-buildpack
+    resource_class: large
+    steps:
+      - checkout
+      - restore_bin_cache
+      - restore_go_cache
+      - restore_npm_cache
+      - restore_pip_cache
+      - run:
+          # This is the only time 'mage' is invoked directly in CI
+          name: Compile mage binary
+          command: mage -compile /tmp/panther/magebin
+      - run:
+          # "mage setup" will have no effect unless new dependencies have been introduced.
+          name: Install new dependencies
+          command: /tmp/panther/magebin -v setup
+      - save_caches
+      - autofmt
+      - persist_to_workspace:
+          root: /tmp/panther
+          paths:
+            - magebin
+
+  test_cfn:
+    executor: panther-buildpack
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/panther
+      - restore_bin_cache # Terraform
+      - restore_pip_cache # cfn-lint
+      - run:
+          name: mage test:cfn
+          command: /tmp/panther/magebin test:cfn
+
+  test_go:
     executor: panther-buildpack
     resource_class: xlarge
     steps:
       - checkout
-      - restore_go_modules_from_cache
-      - restore_node_modules_from_cache
-      - restore_python_modules_from_cache
-      - restore_binaries_from_cache
+      - attach_workspace:
+          at: /tmp/panther
+      - restore_bin_cache # golangci-lint
+      - restore_go_cache
+      - restore_pip_cache # cfn-flip
       - run:
-          # By this point, mage is compiled and all dependencies have been restored from the cache.
-          # "mage setup" will be a no-op unless new dependencies have been introduced.
-          name: Install new dependencies
-          command: mage setup
-      - persist_go_modules_to_cache
-      - persist_node_modules_to_cache
-      - persist_python_modules_to_cache
-      - persist_binaries_to_cache
+          name: mage test:go
+          command: /tmp/panther/magebin -v test:go
+
+  test_python:
+    executor: panther-buildpack
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/panther
+      - restore_pip_cache
       - run:
-          name: Run test suite
-          command: mage fmt doc
+          name: mage test:python
+          command: /tmp/panther/magebin test:python
+
+  test_web:
+    executor: panther-buildpack
+    resource_class: large
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/panther
+      - restore_npm_cache
       - run:
-          name: Push `mage fmt doc` changes to remote ref (optional - only if `mage fmt doc` produces changes)
-          command: |
-            git config --global user.email "github-service-account@runpanther.io"
-            git config --global user.name "panther-bot"
-            git add -A .
-            git commit -m "ci: mage fmt doc" || true
-            git push origin $CIRCLE_BRANCH
-      - run:
-          name: Run test suite
-          command: mage test:ci
+          name: mage test:web
+          command: /tmp/panther/magebin -v test:web
 
   npm_audit:
     executor: panther-buildpack
@@ -135,17 +174,13 @@ jobs:
       - checkout
       - run:
           name: Audit NPM packages
-          command: npm audit --production # does not require installing packages first
+          command: npm audit --production # does not require 'npm install'
 
   bundlesize:
     executor: panther-buildpack
     steps:
       - checkout
-      - restore_node_modules_from_cache
-      - run:
-          name: Install NPM dependencies
-          command: npm i
-      - persist_node_modules_to_cache
+      - restore_npm_cache
       - run:
           name: Check bundle size
           command: npm run bundlesize
@@ -155,9 +190,9 @@ jobs:
     executor: panther-buildpack
     resource_class: small
     steps:
+      - checkout
       - run: |
           curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | bash
-      - checkout
       - run:
           command: fossa # generate config file, run dependency analysis, and upload metadata to FOSSA
 
@@ -165,10 +200,24 @@ workflows:
   version: 2
   pipeline:
     jobs:
-      - mage_test_ci:
+      - npm_audit
+      - setup
+      - test_cfn:
+          requires:
+            - setup
+      - test_go:
+          requires:
+            - setup
+      - test_python:
+          requires:
+            - setup
+      - test_web:
+          requires:
+            - setup
+      - bundlesize:
+          requires:
+            - setup
+      - fossa_upload:
           filters:
             branches:
-              ignore: master
-      - npm_audit
-      - bundlesize
-      - fossa_upload
+              only: master

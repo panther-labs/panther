@@ -34,10 +34,10 @@ import (
 type RuleCache struct {
 	cache        *lru.ARCCache
 	httpClient   *http.Client
-	policyClient *policiesclient.PantherAnalysis
+	policyClient *policiesclient.PantherAnalysisAPI
 }
 
-func NewCache(httpClient *http.Client, policyClient *policiesclient.PantherAnalysis) *RuleCache {
+func NewCache(httpClient *http.Client, policyClient *policiesclient.PantherAnalysisAPI) *RuleCache {
 	cache, err := lru.NewARC(1000)
 	if err != nil {
 		panic("failed to create cache")
