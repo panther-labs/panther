@@ -41,6 +41,14 @@ var (
 		},
 	}
 
+	ExampleListClustersContinue = &ecs.ListClustersOutput{
+		ClusterArns: []*string{
+			ExampleClusterArn,
+			ExampleClusterArn,
+		},
+		NextToken: aws.String("1"),
+	}
+
 	ExampleListTasks = &ecs.ListTasksOutput{
 		TaskArns: []*string{
 			ExampleTaskArn,

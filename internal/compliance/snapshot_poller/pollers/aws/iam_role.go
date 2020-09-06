@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/iam/iamiface"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
@@ -51,11 +52,14 @@ func PollIAMRole(
 	// not (depending on whether that information is available in CloudTrail). This extracts just
 	// the actual resource name from the ARN.
 	resourceSplit := strings.Split(resourceARN.Resource, "/")
-	role := getRole(iamClient, aws.String(resourceSplit[len(resourceSplit)-1]))
+	role, err := getRole(iamClient, aws.String(resourceSplit[len(resourceSplit)-1]))
+	if err != nil || role == nil {
+		return nil, err
+	}
 
-	snapshot := BuildIAMRoleSnapshot(iamClient, role)
-	if snapshot == nil {
-		return nil, nil
+	snapshot, err := BuildIAMRoleSnapshot(iamClient, role)
+	if err != nil {
+		return nil, err
 	}
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	// Set the correct ResourceID in case the event processor sent it without the path.
@@ -64,7 +68,7 @@ func PollIAMRole(
 }
 
 // getRole returns a specific IAM role
-func getRole(svc iamiface.IAMAPI, roleName *string) *iam.Role {
+func getRole(svc iamiface.IAMAPI, roleName *string) (*iam.Role, error) {
 	role, err := svc.GetRole(&iam.GetRoleInput{
 		RoleName: roleName,
 	})
@@ -74,48 +78,49 @@ func getRole(svc iamiface.IAMAPI, roleName *string) *iam.Role {
 				zap.L().Warn("tried to scan non-existent resource",
 					zap.String("resource", *roleName),
 					zap.String("resourceType", awsmodels.IAMRoleSchema))
-				return nil
+				return nil, nil
 			}
 		}
-		utils.LogAWSError("IAM.GetRole", err)
-		return nil
+		return nil, errors.Wrapf(err, "IAM.GetRole: %s", aws.StringValue(roleName))
 	}
-	return role.Role
+	return role.Role, nil
 }
 
 // listUsers returns an array of all users in the account, excluding the root account.
-func listRoles(iamSvc iamiface.IAMAPI) (roles []*iam.Role) {
-	err := iamSvc.ListRolesPages(
-		&iam.ListRolesInput{},
+func listRoles(iamSvc iamiface.IAMAPI, nextPage *string) (roles []*iam.Role, marker *string, err error) {
+	err = iamSvc.ListRolesPages(
+		&iam.ListRolesInput{
+			Marker:   nextPage,
+			MaxItems: aws.Int64(int64(defaultBatchSize)),
+		},
 		func(page *iam.ListRolesOutput, lastPage bool) bool {
-			roles = append(roles, page.Roles...)
-			return true
+			return iamRoleIterator(page, &roles, &marker)
 		},
 	)
 	if err != nil {
-		utils.LogAWSError("IAM.ListRolesPages", err)
+		return nil, nil, errors.Wrap(err, "IAM.ListRolesPages")
 	}
 	return
 }
 
+func iamRoleIterator(page *iam.ListRolesOutput, roles *[]*iam.Role, marker **string) bool {
+	*roles = append(*roles, page.Roles...)
+	*marker = page.Marker
+	return len(*roles) < defaultBatchSize
+}
+
 // getRolePolicy returns the policy document for a given IAM Role and inline policy name
-func getRolePolicy(iamSvc iamiface.IAMAPI, roleName *string, policyName *string) *string {
+func getRolePolicy(iamSvc iamiface.IAMAPI, roleName *string, policyName *string) (*string, error) {
 	policy, err := iamSvc.GetRolePolicy(&iam.GetRolePolicyInput{RoleName: roleName, PolicyName: policyName})
 	if err != nil {
-		utils.LogAWSError("IAM.GetRolePolicy", err)
-		return nil
+		return nil, errors.Wrapf(err, "IAM.GetRolePolicy: %s", aws.StringValue(roleName))
 	}
 
 	decodedPolicy, err := url.QueryUnescape(*policy.PolicyDocument)
 	if err != nil {
-		zap.L().Error("IAM: unable to url decode inline policy document",
-			zap.String("policy document", *policy.PolicyDocument),
-			zap.String("policy name", *policyName),
-			zap.String("role", *roleName),
-		)
-		return nil
+		return nil, errors.Wrapf(err, "unable to url decode inline policy document %s", *policyName)
 	}
-	return aws.String(decodedPolicy)
+	return aws.String(decodedPolicy), nil
 }
 
 // getRolePolicies aggregates all the policies assigned to a user by polling both
@@ -131,7 +136,7 @@ func getRolePolicies(iamSvc iamiface.IAMAPI, roleName *string) (
 		},
 	)
 	if err != nil {
-		utils.LogAWSError("IAM.ListRolePolicies", err)
+		return nil, nil, errors.Wrapf(err, "IAM.ListRolePolicies: %s", aws.StringValue(roleName))
 	}
 
 	err = iamSvc.ListAttachedRolePoliciesPages(
@@ -144,17 +149,14 @@ func getRolePolicies(iamSvc iamiface.IAMAPI, roleName *string) (
 		},
 	)
 	if err != nil {
-		utils.LogAWSError("IAM.ListAttachedRolePolicies", err)
+		return nil, nil, errors.Wrapf(err, "IAM.ListAttachedRolePolicies: %s", aws.StringValue(roleName))
 	}
 
 	return
 }
 
 // buildIAMRoleSnapshot builds an IAMRoleSnapshot for a given IAM Role
-func BuildIAMRoleSnapshot(iamSvc iamiface.IAMAPI, role *iam.Role) *awsmodels.IAMRole {
-	if role == nil {
-		return nil
-	}
+func BuildIAMRoleSnapshot(iamSvc iamiface.IAMAPI, role *iam.Role) (*awsmodels.IAMRole, error) {
 	iamRoleSnapshot := &awsmodels.IAMRole{
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   role.Arn,
@@ -178,43 +180,42 @@ func BuildIAMRoleSnapshot(iamSvc iamiface.IAMAPI, role *iam.Role) *awsmodels.IAM
 	// Decode the assume policy document, and overwrite the existing URL encoded one
 	assumeRolePolicyDocument, err := url.QueryUnescape(*role.AssumeRolePolicyDocument)
 	if err != nil {
-		zap.L().Error(
-			"unable to parse IAM Role AssumeRolePolicyDocument",
-			zap.String("roleID", *role.RoleId),
-		)
-	} else {
-		iamRoleSnapshot.AssumeRolePolicyDocument = aws.String(assumeRolePolicyDocument)
+		return nil, errors.Wrapf(err, "unable to parse IAM Role AssumeRolePolicyDocument for role %s", aws.StringValue(role.Arn))
 	}
+	iamRoleSnapshot.AssumeRolePolicyDocument = aws.String(assumeRolePolicyDocument)
 
 	// Get IAM Policies associated to the Role.
 	// There is no error logging here because it is logged in getRolePolicies.
 	inlinePolicies, managedPolicies, err := getRolePolicies(iamSvc, role.RoleName)
-	if err == nil {
-		iamRoleSnapshot.ManagedPolicyNames = managedPolicies
-		if inlinePolicies != nil {
-			iamRoleSnapshot.InlinePolicies = make(map[string]*string, len(inlinePolicies))
-			for _, inlinePolicy := range inlinePolicies {
-				iamRoleSnapshot.InlinePolicies[*inlinePolicy] = getRolePolicy(iamSvc, role.RoleName, inlinePolicy)
+	if err != nil {
+		return nil, err
+	}
+	iamRoleSnapshot.ManagedPolicyNames = managedPolicies
+	if inlinePolicies != nil {
+		iamRoleSnapshot.InlinePolicies = make(map[string]*string, len(inlinePolicies))
+		for _, inlinePolicy := range inlinePolicies {
+			iamRoleSnapshot.InlinePolicies[*inlinePolicy], err = getRolePolicy(iamSvc, role.RoleName, inlinePolicy)
+			if err != nil {
+				return nil, err
 			}
 		}
 	}
 
-	return iamRoleSnapshot
+	return iamRoleSnapshot, nil
 }
 
 // PollIAMRoles generates a snapshot for each IAM Role.
-func PollIAMRoles(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollIAMRoles(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting IAM Role resource poller")
 	iamSvc, err := getIAMClient(pollerInput, defaultRegion)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, nil, err
 	}
 
 	// List all IAM Roles in the account
-	roles := listRoles(iamSvc)
-	if len(roles) == 0 {
-		zap.L().Debug("no IAM roles found")
-		return nil, nil
+	roles, marker, err := listRoles(iamSvc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	// Create IAM Role snapshots
@@ -225,10 +226,13 @@ func PollIAMRoles(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddR
 		// The API call IAM.ListRoles returns a slice of IAM.Role structs, but does not set the tags
 		// field for any of these structs regardless of whether the corresponding role has tags set
 		// This patches that gap
-		fullRole := getRole(iamSvc, role.RoleName)
-		iamRoleSnapshot := BuildIAMRoleSnapshot(iamSvc, fullRole)
-		if iamRoleSnapshot == nil {
-			continue
+		fullRole, err := getRole(iamSvc, role.RoleName)
+		if err != nil {
+			return nil, nil, err
+		}
+		iamRoleSnapshot, err := BuildIAMRoleSnapshot(iamSvc, fullRole)
+		if err != nil {
+			return nil, nil, err
 		}
 		iamRoleSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 
@@ -241,5 +245,5 @@ func PollIAMRoles(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddR
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

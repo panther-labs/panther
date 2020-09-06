@@ -23,6 +23,7 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/service/kms"
@@ -66,8 +67,8 @@ func checkAwsScanIntegration(input *models.CheckIntegrationInput) *models.Source
 	out := &models.SourceIntegrationHealth{
 		IntegrationType: input.IntegrationType,
 		// Default to true, if these need to be checked and they are not healthy they will be overwritten
-		CWERoleStatus:         models.SourceIntegrationItemStatus{Healthy: true},
-		RemediationRoleStatus: models.SourceIntegrationItemStatus{Healthy: true},
+		CWERoleStatus:         models.SourceIntegrationItemStatus{Healthy: true, Message: "Real time event setup is not enabled."},
+		RemediationRoleStatus: models.SourceIntegrationItemStatus{Healthy: true, Message: "Automatic remediation is not enabled."},
 	}
 	_, out.AuditRoleStatus = getCredentialsWithStatus(fmt.Sprintf(auditRoleFormat,
 		input.AWSAccountID, *awsSession.Config.Region))
@@ -101,14 +102,29 @@ func checkKey(roleCredentials *credentials.Credentials, key string) models.Sourc
 		// KMS key is optional
 		return models.SourceIntegrationItemStatus{
 			Healthy: true,
+			Message: "No KMS Key was specified.",
 		}
 	}
-	kmsClient := kms.New(awsSession, &aws.Config{Credentials: roleCredentials})
 
+	keyARN, err := arn.Parse(key)
+	if err != nil {
+		return models.SourceIntegrationItemStatus{
+			Healthy:      false,
+			Message:      fmt.Sprintf("The KMS ARN '%s' is invalid", key),
+			ErrorMessage: err.Error(),
+		}
+	}
+
+	conf := &aws.Config{
+		Credentials: roleCredentials,
+		Region:      &keyARN.Region, // KMS key could be in another region
+	}
+	kmsClient := kms.New(awsSession, conf)
 	info, err := kmsClient.DescribeKey(&kms.DescribeKeyInput{KeyId: &key})
 	if err != nil {
 		return models.SourceIntegrationItemStatus{
 			Healthy:      false,
+			Message:      "An error occurred while trying to describe the specified KMS key.",
 			ErrorMessage: err.Error(),
 		}
 	}
@@ -117,12 +133,14 @@ func checkKey(roleCredentials *credentials.Credentials, key string) models.Sourc
 		// If the key is disabled, we should fail as well
 		return models.SourceIntegrationItemStatus{
 			Healthy:      false,
-			ErrorMessage: "key disabled",
+			Message:      "The specified KMS Key is disabled.",
+			ErrorMessage: "",
 		}
 	}
 
 	return models.SourceIntegrationItemStatus{
 		Healthy: true,
+		Message: "We were able to call kms:DescribeKey on the specified KMS key.",
 	}
 }
 
@@ -133,12 +151,14 @@ func checkBucket(roleCredentials *credentials.Credentials, bucket string) models
 	if err != nil {
 		return models.SourceIntegrationItemStatus{
 			Healthy:      false,
+			Message:      "An error occurred while trying to get the region of the specified S3 bucket.",
 			ErrorMessage: err.Error(),
 		}
 	}
 
 	return models.SourceIntegrationItemStatus{
 		Healthy: true,
+		Message: "We were able to call s3:GetBucketLocation on the specified S3 bucket.",
 	}
 }
 
@@ -156,12 +176,14 @@ func getCredentialsWithStatus(roleARN string) (*credentials.Credentials, models.
 	if err != nil {
 		return roleCredentials, models.SourceIntegrationItemStatus{
 			Healthy:      false,
+			Message:      fmt.Sprintf("We were unable to assume %s", roleARN),
 			ErrorMessage: err.Error(),
 		}
 	}
 
 	return roleCredentials, models.SourceIntegrationItemStatus{
 		Healthy: true,
+		Message: fmt.Sprintf("We were able to successfully assume %s", roleARN),
 	}
 }
 
@@ -178,35 +200,35 @@ func evaluateIntegration(api API, integration *models.CheckIntegrationInput) (st
 	switch integration.IntegrationType {
 	case models.IntegrationTypeAWSScan:
 		if !status.AuditRoleStatus.Healthy {
-			return "cannot assume audit role", false, nil
+			return status.AuditRoleStatus.Message, false, nil
 		}
 
 		if aws.BoolValue(integration.EnableRemediation) && !status.RemediationRoleStatus.Healthy {
-			return "cannot assume remediation role", false, nil
+			return status.RemediationRoleStatus.Message, false, nil
 		}
 
 		if aws.BoolValue(integration.EnableCWESetup) && !status.CWERoleStatus.Healthy {
-			return "cannot assume cwe role", false, nil
+			return status.CWERoleStatus.Message, false, nil
 		}
 		return "", true, nil
 	case models.IntegrationTypeAWS3:
 		if !status.ProcessingRoleStatus.Healthy {
-			return "cannot assume log processing role", false, nil
+			return status.ProcessingRoleStatus.Message, false, nil
 		}
 
 		if !status.S3BucketStatus.Healthy {
-			return "log processing role cannot access s3 bucket", false, nil
+			return status.S3BucketStatus.Message, false, nil
 		}
 
 		if !status.KMSKeyStatus.Healthy {
-			return "log processing role cannot access kms key", false, nil
+			return status.KMSKeyStatus.Message, false, nil
 		}
 		return "", true, nil
 	case models.IntegrationTypeSqs:
 		if !status.SqsStatus.Healthy {
-			return status.SqsStatus.ErrorMessage, false, nil
+			return status.SqsStatus.Message, false, nil
 		}
-		return "", true, nil
+		return status.SqsStatus.Message, true, nil
 
 	default:
 		return "", false, errors.New("invalid integration type")
@@ -225,6 +247,7 @@ func checkSqsQueueHealth(input *models.CheckIntegrationInput) *models.SourceInte
 	// is performed before the SQS queue is created.
 	if len(input.SqsConfig.QueueURL) == 0 {
 		health.SqsStatus.Healthy = true
+		health.SqsStatus.Message = "Queue does not exist yet (first time setup)."
 		return health
 	}
 
@@ -234,10 +257,12 @@ func checkSqsQueueHealth(input *models.CheckIntegrationInput) *models.SourceInte
 	_, err := sqsClient.GetQueueAttributes(getAttributesInput)
 	if err != nil {
 		health.SqsStatus.Healthy = false
-		health.SqsStatus.ErrorMessage = "failed to get queue attributes"
+		health.SqsStatus.Message = "An error occurred while trying to get the attributes of the specified SQS queue."
+		health.SqsStatus.ErrorMessage = err.Error()
 		return health
 	}
 
 	health.SqsStatus.Healthy = true
+	health.SqsStatus.Message = "We were able to call sqs:GetQueueAttributes on the specified SQS queue."
 	return health
 }

@@ -29,8 +29,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
@@ -38,12 +38,12 @@ func TestSendSns(t *testing.T) {
 	client := &testutils.SnsMock{}
 	outputClient := &OutputClient{snsClients: map[string]snsiface.SNSAPI{"us-west-2": client}}
 
-	snsOutputConfig := &outputmodels.SnsConfig{
+	snsOutputConfig := &outputModels.SnsConfig{
 		TopicArn: "arn:aws:sns:us-west-2:123456789012:test-sns-output",
 	}
 
 	createdAtTime := time.Now()
-	alert := &alertmodels.Alert{
+	alert := &alertModels.Alert{
 		AnalysisName:        aws.String("policyName"),
 		AnalysisID:          "policyId",
 		AnalysisDescription: aws.String("policyDescription"),

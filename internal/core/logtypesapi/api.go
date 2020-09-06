@@ -22,22 +22,21 @@ import (
 	"context"
 )
 
-// Generate a lambda client using genlambdamux
-//go:generate go run github.com/panther-labs/panther/pkg/x/apigen -pkg logtypesclient -out ./client/lambdaclient_gen.go
+// Generate a lambda client using apigen
+// nolint:lll
+//go:generate go run github.com/panther-labs/panther/pkg/x/apigen -target LogTypesAPI -type lambdaclient -out ./lambdaclient_gen.go
+// Generate models using apigen
+// nolint:lll
+//go:generate go run github.com/panther-labs/panther/pkg/x/apigen -target LogTypesAPI -type models -out ../../../api/lambda/logtypes/models_gen.go
 
-// API handles the business logic of LogTypesAPI
-type API struct {
-	ExternalAPI    ExternalAPI
+// LogTypesAPI handles the business logic of log types LogTypesAPI
+type LogTypesAPI struct {
 	NativeLogTypes func() []string
+	Database       LogTypesDatabase
 }
 
-// ExternalAPI handles the external actions required for API to be implemented
-type ExternalAPI interface {
-	ListLogTypes(ctx context.Context) ([]string, error)
-}
-
-// Models
-// We should list all API models here until we update the generator to produce docs for the models used.
-type AvailableLogTypes struct {
-	LogTypes []string `json:"logTypes"`
+// LogTypesDatabase handles the external actions required for LogTypesAPI to be implemented
+type LogTypesDatabase interface {
+	// Return an index of available log types
+	IndexLogTypes(ctx context.Context) ([]string, error)
 }

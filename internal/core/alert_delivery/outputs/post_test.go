@@ -35,7 +35,7 @@ type mockHTTPClient struct {
 	requestBody  string // Request body is saved here for tests to verify
 }
 
-var requestEndpoint = "https://runpanther.io"
+const requestEndpoint = "https://runpanther.io"
 
 func (m *mockHTTPClient) Do(request *http.Request) (*http.Response, error) {
 	if m.requestError {
@@ -85,7 +85,12 @@ func TestPostOk(t *testing.T) {
 		url:  requestEndpoint,
 		body: map[string]interface{}{"abc": 123},
 	}
-	assert.Nil(t, c.post(postInput))
+	assert.Equal(t, &AlertDeliveryResponse{
+		StatusCode: 200,
+		Success:    true,
+		Message:    "response",
+		Permanent:  false,
+	}, c.post(postInput))
 }
 
 func TestPostCreated(t *testing.T) {
@@ -94,5 +99,10 @@ func TestPostCreated(t *testing.T) {
 		url:  requestEndpoint,
 		body: map[string]interface{}{"abc": 123},
 	}
-	assert.Nil(t, c.post(postInput))
+	assert.Equal(t, &AlertDeliveryResponse{
+		StatusCode: 201,
+		Success:    true,
+		Message:    "response",
+		Permanent:  false,
+	}, c.post(postInput))
 }

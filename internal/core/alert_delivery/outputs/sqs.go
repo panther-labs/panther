@@ -27,19 +27,19 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
 // Sqs sends an alert to an SQS Queue.
 // nolint: dupl
-func (client *OutputClient) Sqs(alert *alertmodels.Alert, config *outputmodels.SqsConfig) *AlertDeliveryError {
+func (client *OutputClient) Sqs(alert *alertModels.Alert, config *outputModels.SqsConfig) *AlertDeliveryResponse {
 	notification := generateNotificationFromAlert(alert)
 
 	serializedMessage, err := jsoniter.MarshalToString(notification)
 	if err != nil {
 		zap.L().Error("Failed to serialize message", zap.Error(err))
-		return &AlertDeliveryError{Message: "Failed to serialize message"}
+		return &AlertDeliveryResponse{Message: "Failed to serialize message"}
 	}
 
 	sqsSendMessageInput := &sqs.SendMessageInput{
@@ -52,7 +52,7 @@ func (client *OutputClient) Sqs(alert *alertmodels.Alert, config *outputmodels.S
 	_, err = sqsClient.SendMessage(sqsSendMessageInput)
 	if err != nil {
 		zap.L().Error("Failed to send message to SQS queue", zap.Error(err))
-		return &AlertDeliveryError{Message: "Failed to send message to SQS queue"}
+		return &AlertDeliveryResponse{Message: "Failed to send message to SQS queue"}
 	}
 	return nil
 }

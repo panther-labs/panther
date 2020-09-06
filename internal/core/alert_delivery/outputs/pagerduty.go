@@ -21,17 +21,17 @@ package outputs
 import (
 	"time"
 
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
-var (
+const (
 	pagerDutyEndpoint  = "https://events.pagerduty.com/v2/enqueue"
 	triggerEventAction = "trigger"
 )
 
 // PagerDuty sends an alert to a pager duty integration endpoint.
-func (client *OutputClient) PagerDuty(alert *alertmodels.Alert, config *outputmodels.PagerDutyConfig) *AlertDeliveryError {
+func (client *OutputClient) PagerDuty(alert *alertModels.Alert, config *outputModels.PagerDutyConfig) *AlertDeliveryResponse {
 	severity, err := pantherSeverityToPagerDuty(alert.Severity)
 	if err != nil {
 		return err
@@ -59,7 +59,7 @@ func (client *OutputClient) PagerDuty(alert *alertmodels.Alert, config *outputmo
 	return client.httpWrapper.post(postInput)
 }
 
-func pantherSeverityToPagerDuty(severity string) (string, *AlertDeliveryError) {
+func pantherSeverityToPagerDuty(severity string) (string, *AlertDeliveryResponse) {
 	switch severity {
 	case "INFO", "LOW":
 		return "info", nil
@@ -70,6 +70,6 @@ func pantherSeverityToPagerDuty(severity string) (string, *AlertDeliveryError) {
 	case "CRITICAL":
 		return "critical", nil
 	default:
-		return "", &AlertDeliveryError{Message: "unknown severity" + severity}
+		return "", &AlertDeliveryResponse{Message: "unknown severity" + severity}
 	}
 }

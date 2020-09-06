@@ -148,7 +148,7 @@ var (
 // WAF mock
 
 // SetupMockWaf is used to override the WAF Client initializer
-func SetupMockWaf(sess *session.Session, cfg *aws.Config) interface{} {
+func SetupMockWaf(_ *session.Session, _ *aws.Config) interface{} {
 	return MockWafForSetup
 }
 

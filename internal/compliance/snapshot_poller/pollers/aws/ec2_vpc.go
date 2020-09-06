@@ -45,7 +45,7 @@ func setupEC2Client(sess *session.Session, cfg *aws.Config) interface{} {
 func getEC2Client(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (ec2iface.EC2API, error) {
 	client, err := getClient(pollerResourceInput, EC2ClientFunc, "ec2", region)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, err
 	}
 
 	return client.(ec2iface.EC2API), nil
@@ -64,9 +64,15 @@ func PollEC2VPC(
 	}
 
 	vpcID := strings.Replace(resourceARN.Resource, "vpc/", "", 1)
-	vpc := getVPC(ec2Client, aws.String(vpcID))
+	vpc, err := getVPC(ec2Client, aws.String(vpcID))
+	if err != nil {
+		return nil, err
+	}
 
-	snapshot := buildEc2VpcSnapshot(ec2Client, vpc)
+	snapshot, err := buildEc2VpcSnapshot(ec2Client, vpc)
+	if err != nil {
+		return nil, err
+	}
 	if snapshot == nil {
 		return nil, nil
 	}
@@ -78,7 +84,7 @@ func PollEC2VPC(
 }
 
 // getVPC returns a specific EC2 VPC
-func getVPC(svc ec2iface.EC2API, vpcID *string) *ec2.Vpc {
+func getVPC(svc ec2iface.EC2API, vpcID *string) (*ec2.Vpc, error) {
 	vpc, err := svc.DescribeVpcs(&ec2.DescribeVpcsInput{
 		VpcIds: []*string{vpcID},
 	})
@@ -88,18 +94,25 @@ func getVPC(svc ec2iface.EC2API, vpcID *string) *ec2.Vpc {
 				zap.L().Warn("tried to scan non-existent resource",
 					zap.String("resource", *vpcID),
 					zap.String("resourceType", awsmodels.Ec2VpcSchema))
-				return nil
+				return nil, nil
 			}
 		}
-		utils.LogAWSError("EC2.DescribeVpcs", err)
-		return nil
+		return nil, errors.Wrapf(err, "EC2.DescribeVpcs: %s", aws.StringValue(vpcID))
 	}
-	return vpc.Vpcs[0]
+	if len(vpc.Vpcs) != 1 {
+		return nil, errors.WithMessagef(
+			errors.New("EC2.DescribeVpcs"),
+			"expected exactly one VPC when describing %s, but found %d VPCs",
+			aws.StringValue(vpcID),
+			len(vpc.Vpcs),
+		)
+	}
+	return vpc.Vpcs[0], nil
 }
 
 // describeRouteTables returns a list of all route tables for a given vpcID
-func describeRouteTables(ec2Svc ec2iface.EC2API, vpcID *string) (routeTables []*ec2.RouteTable) {
-	err := ec2Svc.DescribeRouteTablesPages(
+func describeRouteTables(ec2Svc ec2iface.EC2API, vpcID *string) (routeTables []*ec2.RouteTable, err error) {
+	err = ec2Svc.DescribeRouteTablesPages(
 		&ec2.DescribeRouteTablesInput{
 			Filters: []*ec2.Filter{
 				{
@@ -114,30 +127,37 @@ func describeRouteTables(ec2Svc ec2iface.EC2API, vpcID *string) (routeTables []*
 		})
 
 	if err != nil {
-		utils.LogAWSError("EC2.DescribeRouteTablesPages", err)
-		return nil
+		return nil, errors.Wrapf(err, "EC2.DescribeRouteTablesPages: %s", aws.StringValue(vpcID))
 	}
 	return
 }
 
 // describeVpcs describes all VPCs for a given region
-func describeVpcs(ec2Svc ec2iface.EC2API) (vpcs []*ec2.Vpc, err error) {
+func describeVpcs(ec2Svc ec2iface.EC2API, nextMarker *string) (vpcs []*ec2.Vpc, marker *string, err error) {
 	err = ec2Svc.DescribeVpcsPages(
-		&ec2.DescribeVpcsInput{},
+		&ec2.DescribeVpcsInput{
+			NextToken:  nextMarker,
+			MaxResults: aws.Int64(int64(defaultBatchSize)),
+		},
 		func(page *ec2.DescribeVpcsOutput, lastPage bool) bool {
-			vpcs = append(vpcs, page.Vpcs...)
-			return true
+			return ec2VpcIterator(page, &vpcs, &marker)
 		})
 
 	if err != nil {
-		return nil, errors.Wrap(err, "EC2.DescribeVpcsPages")
+		return nil, nil, errors.Wrap(err, "EC2.DescribeVpcsPages")
 	}
 	return
 }
 
+func ec2VpcIterator(page *ec2.DescribeVpcsOutput, vpcs *[]*ec2.Vpc, marker **string) bool {
+	*vpcs = append(*vpcs, page.Vpcs...)
+	*marker = page.NextToken
+	return len(*vpcs) < defaultBatchSize
+}
+
 // describeFlowLogs returns a list of flow logs associated to a given vpcID
-func describeFlowLogs(ec2Svc ec2iface.EC2API, vpcID *string) (flowLogs []*ec2.FlowLog) {
-	err := ec2Svc.DescribeFlowLogsPages(
+func describeFlowLogs(ec2Svc ec2iface.EC2API, vpcID *string) (flowLogs []*ec2.FlowLog, err error) {
+	err = ec2Svc.DescribeFlowLogsPages(
 		&ec2.DescribeFlowLogsInput{
 			Filter: []*ec2.Filter{
 				{
@@ -152,68 +172,70 @@ func describeFlowLogs(ec2Svc ec2iface.EC2API, vpcID *string) (flowLogs []*ec2.Fl
 		})
 
 	if err != nil {
-		utils.LogAWSError("EC2.DescribeFlowLogsPages", err)
-		return nil
+		return nil, errors.Wrapf(err, "EC2.DescribeFlowLogsPages: %s", aws.StringValue(vpcID))
 	}
 	return
 }
 
 // describeStaleSecurityGroups returns all the stale security groups for the given EC2 VPC
-func describeStaleSecurityGroups(ec2Svc ec2iface.EC2API, vpcID *string) []*ec2.StaleSecurityGroup {
-	var result []*ec2.StaleSecurityGroup
-	err := ec2Svc.DescribeStaleSecurityGroupsPages(
+func describeStaleSecurityGroups(ec2Svc ec2iface.EC2API, vpcID *string) (staleSecurityGroups []*ec2.StaleSecurityGroup, err error) {
+	err = ec2Svc.DescribeStaleSecurityGroupsPages(
 		&ec2.DescribeStaleSecurityGroupsInput{VpcId: vpcID},
 		func(page *ec2.DescribeStaleSecurityGroupsOutput, lastPage bool) bool {
-			result = append(result, page.StaleSecurityGroupSet...)
+			staleSecurityGroups = append(staleSecurityGroups, page.StaleSecurityGroupSet...)
 			return true
 		})
-
 	if err != nil {
-		utils.LogAWSError("EC2.DescribeStaleSecurityGroupsPages", err)
-		return nil
+		return nil, errors.Wrapf(err, "EC2.DescribeStaleSecurityGroupsPages: %s", aws.StringValue(vpcID))
 	}
 
-	return result
+	return
 }
 
 // describeSecurityGroupsVPC returns all the security groups for given VPC
-func describeSecurityGroupsVPC(svc ec2iface.EC2API, vpcID *string) []*ec2.SecurityGroup {
-	securityGroups, err := svc.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{
+func describeSecurityGroupsVPC(svc ec2iface.EC2API, vpcID *string) (securityGroups []*ec2.SecurityGroup, err error) {
+	err = svc.DescribeSecurityGroupsPages(&ec2.DescribeSecurityGroupsInput{
 		Filters: []*ec2.Filter{
 			{
 				Name:   aws.String("vpc-id"),
 				Values: []*string{vpcID},
 			},
 		},
+	}, func(page *ec2.DescribeSecurityGroupsOutput, lastPage bool) bool {
+		securityGroups = append(securityGroups, page.SecurityGroups...)
+		return true
 	})
 	if err != nil {
-		utils.LogAWSError("EC2.DescribeSecurityGroups", err)
-		return nil
+		return nil, errors.Wrapf(err, "EC2.DescribeSecurityGroups: %s", aws.StringValue(vpcID))
 	}
-	return securityGroups.SecurityGroups
+
+	return
 }
 
 // describeNetworkACLsVPC returns all the network ACLs for given VPC
-func describeNetworkACLsVPC(svc ec2iface.EC2API, vpcID *string) []*ec2.NetworkAcl {
-	networkACLs, err := svc.DescribeNetworkAcls(&ec2.DescribeNetworkAclsInput{
+func describeNetworkACLsVPC(svc ec2iface.EC2API, vpcID *string) (nacls []*ec2.NetworkAcl, err error) {
+	err = svc.DescribeNetworkAclsPages(&ec2.DescribeNetworkAclsInput{
 		Filters: []*ec2.Filter{
 			{
 				Name:   aws.String("vpc-id"),
 				Values: []*string{vpcID},
 			},
 		},
+	}, func(page *ec2.DescribeNetworkAclsOutput, lastPage bool) bool {
+		nacls = append(nacls, page.NetworkAcls...)
+		return true
 	})
 	if err != nil {
-		utils.LogAWSError("EC2.DescribeNetworkAcls", err)
-		return nil
+		return nil, errors.Wrapf(err, "EC2.DescribeNetworkAcls: %s", aws.StringValue(vpcID))
 	}
-	return networkACLs.NetworkAcls
+
+	return
 }
 
 // buildEc2VpcSnapshot builds a full Ec2VpcSnapshot for a given EC2 VPC
-func buildEc2VpcSnapshot(ec2Svc ec2iface.EC2API, vpc *ec2.Vpc) *awsmodels.Ec2Vpc {
+func buildEc2VpcSnapshot(ec2Svc ec2iface.EC2API, vpc *ec2.Vpc) (*awsmodels.Ec2Vpc, error) {
 	if vpc == nil {
-		return nil
+		return nil, nil
 	}
 	ec2Vpc := &awsmodels.Ec2Vpc{
 		GenericResource: awsmodels.GenericResource{
@@ -234,74 +256,70 @@ func buildEc2VpcSnapshot(ec2Svc ec2iface.EC2API, vpc *ec2.Vpc) *awsmodels.Ec2Vpc
 		State:                       vpc.State,
 	}
 
-	ec2Vpc.SecurityGroups = describeSecurityGroupsVPC(ec2Svc, vpc.VpcId)
-	ec2Vpc.NetworkAcls = describeNetworkACLsVPC(ec2Svc, vpc.VpcId)
-	ec2Vpc.RouteTables = describeRouteTables(ec2Svc, vpc.VpcId)
-	ec2Vpc.FlowLogs = describeFlowLogs(ec2Svc, vpc.VpcId)
-	ec2Vpc.StaleSecurityGroups = describeStaleSecurityGroups(ec2Svc, vpc.VpcId)
+	var err error
+	if ec2Vpc.SecurityGroups, err = describeSecurityGroupsVPC(ec2Svc, vpc.VpcId); err != nil {
+		return nil, err
+	}
+	if ec2Vpc.NetworkAcls, err = describeNetworkACLsVPC(ec2Svc, vpc.VpcId); err != nil {
+		return nil, err
+	}
+	if ec2Vpc.RouteTables, err = describeRouteTables(ec2Svc, vpc.VpcId); err != nil {
+		return nil, err
+	}
+	if ec2Vpc.FlowLogs, err = describeFlowLogs(ec2Svc, vpc.VpcId); err != nil {
+		return nil, err
+	}
+	if ec2Vpc.StaleSecurityGroups, err = describeStaleSecurityGroups(ec2Svc, vpc.VpcId); err != nil {
+		return nil, err
+	}
 
-	return ec2Vpc
+	return ec2Vpc, nil
 }
 
 // PollEc2Vpcs gathers information on each VPC in an AWS account.
-func PollEc2Vpcs(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
-	zap.L().Debug("starting EC2 VPC resource poller")
-	ec2VpcSnapshots := make(map[string]*awsmodels.Ec2Vpc)
-
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "ec2") {
-		zap.L().Debug("building EC2 VPC snapshots", zap.String("region", *regionID))
-		ec2Svc, err := getEC2Client(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
-
-		// Start with generating a list of all VPCs
-		vpcs, err := describeVpcs(ec2Svc)
-		if err != nil {
-			return nil, errors.Wrapf(err, "PollEc2Vpcs(%#v) in region %s", *pollerInput, *regionID)
-		}
-		if len(vpcs) == 0 {
-			zap.L().Debug("no EC2 VPCs found", zap.String("region", *regionID))
-			continue
-		}
-
-		// For each VPC, build out a full snapshot
-		for _, vpc := range vpcs {
-			ec2Vpc := buildEc2VpcSnapshot(ec2Svc, vpc)
-
-			// arn:aws:ec2:region:account-id:vpc/vpc-id
-			resourceID := strings.Join(
-				[]string{
-					"arn",
-					pollerInput.AuthSourceParsedARN.Partition,
-					"ec2",
-					*regionID,
-					*ec2Vpc.OwnerId,
-					"vpc/" + *ec2Vpc.ID,
-				},
-				":",
-			)
-			// Populate generic fields
-			ec2Vpc.ResourceID = aws.String(resourceID)
-
-			// Populate AWS generic fields
-			ec2Vpc.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			ec2Vpc.Region = regionID
-			ec2Vpc.ARN = aws.String(resourceID)
-
-			if _, ok := ec2VpcSnapshots[resourceID]; !ok {
-				ec2VpcSnapshots[resourceID] = ec2Vpc
-			} else {
-				zap.L().Info("overwriting existing EC2 VPC snapshot", zap.String("resourceId", resourceID))
-				ec2VpcSnapshots[resourceID] = ec2Vpc
-			}
-		}
+func PollEc2Vpcs(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+	zap.L().Debug("building EC2 VPC snapshots", zap.String("region", *pollerInput.Region))
+	ec2Svc, err := getEC2Client(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	resources := make([]*apimodels.AddResourceEntry, 0, len(ec2VpcSnapshots))
-	for resourceID, ec2VpcSnapshot := range ec2VpcSnapshots {
+	// Start with generating a list of all VPCs
+	vpcs, marker, err := describeVpcs(ec2Svc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
+	}
+
+	// For each VPC, build out a full snapshot
+	resources := make([]*apimodels.AddResourceEntry, 0, len(vpcs))
+	for _, vpc := range vpcs {
+		ec2Vpc, err := buildEc2VpcSnapshot(ec2Svc, vpc)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// arn:aws:ec2:region:account-id:vpc/vpc-id
+		resourceID := strings.Join(
+			[]string{
+				"arn",
+				pollerInput.AuthSourceParsedARN.Partition,
+				"ec2",
+				*pollerInput.Region,
+				*ec2Vpc.OwnerId,
+				"vpc/" + *ec2Vpc.ID,
+			},
+			":",
+		)
+		// Populate generic fields
+		ec2Vpc.ResourceID = aws.String(resourceID)
+
+		// Populate AWS generic fields
+		ec2Vpc.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
+		ec2Vpc.Region = pollerInput.Region
+		ec2Vpc.ARN = aws.String(resourceID)
+
 		resources = append(resources, &apimodels.AddResourceEntry{
-			Attributes:      ec2VpcSnapshot,
+			Attributes:      ec2Vpc,
 			ID:              apimodels.ResourceID(resourceID),
 			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
 			IntegrationType: apimodels.IntegrationTypeAws,
@@ -309,5 +327,5 @@ func PollEc2Vpcs(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddRe
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

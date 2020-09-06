@@ -32,23 +32,49 @@ import (
 func TestDynamoDBList(t *testing.T) {
 	mockSvc := awstest.BuildMockDynamoDBSvc([]string{"ListTablesPages"})
 
-	out, err := listTables(mockSvc)
+	out, marker, err := listTables(mockSvc, nil)
 	require.NoError(t, err)
+	assert.Nil(t, marker)
 	assert.NotEmpty(t, out)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestDynamodbTableListIterator(t *testing.T) {
+	var tables []*string
+	var marker *string
+
+	cont := dynamoTableIterator(awstest.ExampleListTablesOutput, &tables, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, tables, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = dynamoTableIterator(awstest.ExampleListTablesOutputContinue, &tables, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, tables, 1+i*2)
+	}
+
+	cont = dynamoTableIterator(awstest.ExampleListTablesOutputContinue, &tables, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, tables, 101)
 }
 
 func TestDynamoDBListError(t *testing.T) {
 	mockSvc := awstest.BuildMockDynamoDBSvcError([]string{"ListTablesPages"})
 
-	out, err := listTables(mockSvc)
+	out, marker, err := listTables(mockSvc, nil)
 	require.Error(t, err)
+	assert.Nil(t, marker)
 	assert.Nil(t, out)
 }
 
 func TestDynamoDBDescribeTable(t *testing.T) {
 	mockSvc := awstest.BuildMockDynamoDBSvc([]string{"DescribeTable"})
 
-	out := describeTable(mockSvc, awstest.ExampleTableName)
+	out, err := describeTable(mockSvc, awstest.ExampleTableName)
+	assert.NoError(t, err)
 	assert.NotEmpty(t, out)
 	assert.Equal(t, "example-table", *out.TableName)
 }
@@ -56,7 +82,8 @@ func TestDynamoDBDescribeTable(t *testing.T) {
 func TestDynamoDBDescribeTableError(t *testing.T) {
 	mockSvc := awstest.BuildMockDynamoDBSvcError([]string{"DescribeTable"})
 
-	out := describeTable(mockSvc, awstest.ExampleTableName)
+	out, err := describeTable(mockSvc, awstest.ExampleTableName)
+	assert.Error(t, err)
 	assert.Nil(t, out)
 }
 
@@ -96,12 +123,13 @@ func TestBuildDynamoDBSnapshot(t *testing.T) {
 	mockSvc := awstest.BuildMockDynamoDBSvcAll()
 	mockApplicationAutoScalerSvc := awstest.BuildMockApplicationAutoScalingSvcAll()
 
-	tableSnapshot := buildDynamoDBTableSnapshot(
+	tableSnapshot, err := buildDynamoDBTableSnapshot(
 		mockSvc,
 		mockApplicationAutoScalerSvc,
 		awstest.ExampleTableName,
 	)
 
+	assert.NoError(t, err)
 	assert.NotNil(t, tableSnapshot.ARN)
 	assert.NotEmpty(t, tableSnapshot.GlobalSecondaryIndexes)
 }
@@ -110,12 +138,13 @@ func TestBuildDynamoDBSnapshotErrors(t *testing.T) {
 	mockSvc := awstest.BuildMockDynamoDBSvcAllError()
 	mockApplicationAutoScalerSvc := awstest.BuildMockApplicationAutoScalingSvcAllError()
 
-	tableSnapshot := buildDynamoDBTableSnapshot(
+	tableSnapshot, err := buildDynamoDBTableSnapshot(
 		mockSvc,
 		mockApplicationAutoScalerSvc,
 		awstest.ExampleTableName,
 	)
 
+	assert.Error(t, err)
 	var expected *awsmodels.DynamoDBTable
 	assert.Equal(t, expected, tableSnapshot)
 }
@@ -127,15 +156,16 @@ func TestDynamoDBPoller(t *testing.T) {
 	DynamoDBClientFunc = awstest.SetupMockDynamoDB
 	ApplicationAutoScalingClientFunc = awstest.SetupMockApplicationAutoScaling
 
-	resources, err := PollDynamoDBTables(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollDynamoDBTables(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
 	require.NoError(t, err)
+	assert.Nil(t, marker)
 	assert.NotEmpty(t, resources)
 	table := resources[0].Attributes.(*awsmodels.DynamoDBTable)
 	// Test a string, nested struct/string, and Int64 in Details
@@ -153,15 +183,16 @@ func TestDynamoDBPollerError(t *testing.T) {
 
 	DynamoDBClientFunc = awstest.SetupMockDynamoDB
 
-	resources, err := PollDynamoDBTables(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollDynamoDBTables(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
 	require.Error(t, err)
+	assert.Nil(t, marker)
 	for _, event := range resources {
 		assert.Nil(t, event.Attributes)
 	}

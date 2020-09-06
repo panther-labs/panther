@@ -13,11 +13,11 @@
 # deactivate
 aws-sam-cli
 bandit
-boto3==1.12.49  # Matches version in Lambda: https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html
+boto3~=1.14.17  # Matches version in Lambda: https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html
 cfn-lint
 cfn-flip
 mypy
-pip==20.1.1
+pip==20.2.2
 pylint
-requests
+requests==2.23.0  # this version required by aws-sam-cli
 yapf

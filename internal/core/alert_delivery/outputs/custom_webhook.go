@@ -19,13 +19,13 @@ package outputs
  */
 
 import (
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
 // CustomWebhook alert send an alert.
 func (client *OutputClient) CustomWebhook(
-	alert *alertmodels.Alert, config *outputmodels.CustomWebhookConfig) *AlertDeliveryError {
+	alert *alertModels.Alert, config *outputModels.CustomWebhookConfig) *AlertDeliveryResponse {
 
 	postInput := &PostInput{
 		url:  config.WebhookURL,

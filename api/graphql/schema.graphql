@@ -44,6 +44,7 @@ type Mutation {
 type Query {
   alert(input: GetAlertInput!): AlertDetails
   alerts(input: ListAlertsInput): ListAlertsResponse
+  sendTestAlert(input: SendTestAlertInput!): SendTestAlertResponse
   destination(id: ID!): Destination
   destinations: [Destination]
   generalSettings: GeneralSettings!
@@ -118,8 +119,9 @@ type IntegrationTemplate {
 }
 
 type IntegrationItemHealthStatus {
-  healthy: Boolean
-  errorMessage: String
+  healthy: Boolean!
+  message: String!
+  rawErrorMessage: String
 }
 
 type ComplianceIntegrationHealth {
@@ -525,6 +527,14 @@ type ListPoliciesResponse {
 type ListResourcesResponse {
   paging: PagingData
   resources: [ResourceSummary]
+}
+
+input SendTestAlertInput {
+  outputIds: [ID!]!
+}
+
+type SendTestAlertResponse {
+  success: Boolean
 }
 
 type Destination {

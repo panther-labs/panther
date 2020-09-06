@@ -31,8 +31,6 @@ type Mux struct {
 	RouteName func(name string) string
 	// Decorate can intercept new handlers and add decorations
 	Decorate func(key string, handler Handler) Handler
-	// Demux sets the routing method.
-	Demux Demuxer // defaults to DemuxKeyValue
 	// JSON
 	JSON jsoniter.API // defaults to jsoniter.ConfigCompatibleWithStandardLibrary
 	// Validate sets a custom validation function to be injected into every route handler
@@ -165,36 +163,12 @@ func (m *Mux) Handle(name string, handler interface{}) error {
 func (m *Mux) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
 	iter := resolveJSON(m.JSON).BorrowIterator(payload)
 	defer iter.Pool().ReturnIterator(iter)
-	switch next := iter.WhatIsNext(); next {
-	case jsoniter.ObjectValue:
-		p, name := m.demux(iter, payload)
-		if err := iter.Error; err != nil {
-			return nil, errors.Wrap(err, `invalid JSON payload`)
-		}
-		handler, err := m.Get(name)
-		if err != nil {
-			return nil, err
-		}
-		return handler.Invoke(ctx, p)
-	case jsoniter.ArrayValue:
-		b := borrowBatch()
-		defer b.Recycle()
-		if err := b.ReadJobs(m, iter); err != nil {
-			return nil, err
-		}
-		return m.runBatch(ctx, b)
-	default:
-		return nil, errors.Wrapf(ErrNotFound, `invalid JSON payload %q`, next)
+	name := iter.ReadObject()
+	handler, err := m.Get(name)
+	if err != nil {
+		return nil, err
 	}
-}
-
-var defaultDemux = &demuxKeyValue{}
-
-func (m *Mux) demux(iter *jsoniter.Iterator, payload []byte) ([]byte, string) {
-	if d := m.Demux; d != nil {
-		return d.Demux(iter, payload)
-	}
-	return defaultDemux.Demux(iter, payload)
+	return handler.Invoke(ctx, iter.SkipAndReturnBytes())
 }
 
 func (m *Mux) Get(name string) (Handler, error) {

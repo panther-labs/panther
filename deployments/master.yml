@@ -373,6 +373,7 @@ Resources:
     DependsOn: [CloudSecurity, Core, LogAnalysis]
     Properties:
       TemplateURL: web_server.yml
+      TimeoutInMinutes: 20 # if something goes wrong, the ECS service will get stuck in a retry loop for 4 hours
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AnalysisApiEndpoint: !GetAtt BootstrapGateway.Outputs.AnalysisApiEndpoint

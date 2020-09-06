@@ -29,7 +29,7 @@ import {
   IconButton,
 } from 'pouncejs';
 import { AlertStatusesEnum } from 'Generated/schema';
-import AlertStatusBadge from 'Components/AlertStatusBadge';
+import AlertStatusBadge from 'Components/badges/AlertStatusBadge';
 import { extractErrorMessage, formatDatetime, getUserDisplayName, capitalize } from 'Helpers/utils';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 import { useListUsers } from 'Pages/Users/graphql/listUsers.generated';
