@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/aws/aws-lambda-go v1.19.1
-	github.com/aws/aws-sdk-go v1.34.17
+	github.com/aws/aws-sdk-go v1.34.18
 	github.com/cenkalti/backoff/v4 v4.0.2
 	github.com/fatih/structtag v1.2.0
 	github.com/go-openapi/errors v0.19.6

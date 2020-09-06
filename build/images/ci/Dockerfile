@@ -37,7 +37,7 @@ RUN apt-get update && \
         subversion && \
     apt-get full-upgrade -y && \
     apt-get install -y --no-install-recommends \
-		# Common
+        # Common
         make \
         unzip \
         xz-utils \

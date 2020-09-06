@@ -40,8 +40,8 @@ func deployFrontend(bootstrapOutputs map[string]string, settings *PantherConfig)
 	// Save .env file (only used when running web server locally)
 	if err := godotenv.Write(
 		map[string]string{
-			"AWS_REGION":                           clients.Region(),
 			"AWS_ACCOUNT_ID":                       clients.AccountID(),
+			"AWS_REGION":                           clients.Region(),
 			"WEB_APPLICATION_GRAPHQL_API_ENDPOINT": bootstrapOutputs["GraphQLApiEndpoint"],
 			"WEB_APPLICATION_USER_POOL_ID":         bootstrapOutputs["UserPoolId"],
 			"WEB_APPLICATION_USER_POOL_CLIENT_ID":  bootstrapOutputs["AppClientId"],
