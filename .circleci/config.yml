@@ -187,8 +187,7 @@ jobs:
 
   # Upload dependency metadata to FOSSA, analyze offline
   fossa_upload:
-    docker:
-      - image: cimg/base:2020.06
+    executor: panther-buildpack
     resource_class: small
     steps:
       - checkout

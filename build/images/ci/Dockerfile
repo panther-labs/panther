@@ -21,41 +21,32 @@
 
 FROM buildpack-deps:buster-scm
 
-LABEL description="Panther CircleCI combined environment"
+LABEL description="Panther CircleCI combined Go/Node/Python environment"
 
 ENV GO_VERSION=1.15.1 NODE_VERSION=12.18.3 PYTHON_VERSION=3.7.9
 
 
 # ****************     APT Packages     *******************
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# NOTE: To keep the image as small as possible, always remove temp files and libraries we don't need.
+RUN apt-get update && \
+    apt-get purge -y \
+        mercurial \
+        python \
+        python2 \
+        python2.7 \
+        subversion && \
+    apt-get full-upgrade -y && \
+    apt-get install -y --no-install-recommends \
 		# Common
-        curl \
-        git \
         make \
         unzip \
-        wget \
+        xz-utils \
         # CGO
         g++ \
-        libc6-dev \
-        # Python
-        build-essential \
-        ca-certificates \
-        libbz2-dev \
-        liblzma-dev \
-        libncurses5-dev \
-        libncursesw5-dev \
-        libreadline-dev \
-        libffi-dev \
-        libsqlite3-dev \
-        libssl-dev \
-        libxml2-dev \
-        libxmlsec1-dev \
-        llvm \
-        python-openssl \
-        tk-dev \
-        xz-utils \
-        zlib1g-dev && \
-	rm -rf /var/lib/apt/lists/*
+        libc6-dev && \
+    apt-get autoremove -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 
 # ****************     GO     *******************
@@ -79,18 +70,57 @@ RUN curl -sSL "https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz" | tar -
 # ****************     NODE JS     *******************
 # Based on https://github.com/CircleCI-Public/cimg-node/blob/master/12.18/Dockerfile
 RUN curl -L -o node.tar.xz "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" && \
-	tar -xJf node.tar.xz -C /usr/local --strip-components=1 && \
-	rm node.tar.xz && \
-	ln -s /usr/local/bin/node /usr/local/bin/nodejs && \
-	echo "node version: `node --version`" && \
-	echo "npm version: `npm -version`"
+    tar -xJf node.tar.xz -C /usr/local --strip-components=1 && \
+    rm node.tar.xz && \
+    ln -s /usr/local/bin/node /usr/local/bin/nodejs && \
+    echo "node version: `node --version`" && \
+    echo "npm version: `npm -version`"
 
 
 # ****************     PYTHON     *******************
 # Based on https://github.com/CircleCI-Public/cimg-python/blob/master/3.7/Dockerfile
 ENV PYENV_ROOT=/home/circleci/.pyenv PATH=/home/circleci/.pyenv/shims:/home/circleci/.pyenv/bin:$PATH
-RUN curl https://pyenv.run | bash && \
-	pyenv install ${PYTHON_VERSION} && pyenv global ${PYTHON_VERSION} && \
-	python3 --version && \
-	pip3 install --upgrade pip wheel && \
-	rm -rf /tmp/* /var/tmp/*
+
+RUN apt-get update && \
+    # Install libraries needed to compile Python from source
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        libbz2-dev \
+        liblzma-dev \
+        libncurses5-dev \
+        libncursesw5-dev \
+        libreadline-dev \
+        libffi-dev \
+        libsqlite3-dev \
+        libssl-dev \
+        libxml2-dev \
+        libxmlsec1-dev \
+        llvm \
+        python-openssl \
+        tk-dev \
+        zlib1g-dev && \
+    # Build and install Python via pyenv
+    curl https://pyenv.run | bash && \
+    pyenv install ${PYTHON_VERSION} && pyenv global ${PYTHON_VERSION} && \
+    python3 --version && \
+    pip3 install --upgrade pip wheel && \
+    # Purge build/dev libraries which are no longer needed
+    apt-get purge -y \
+        build-essential \
+        libbz2-dev \
+        liblzma-dev \
+        libncurses5-dev \
+        libncursesw5-dev \
+        libreadline-dev \
+        libffi-dev \
+        libsqlite3-dev \
+        libssl-dev \
+        libxml2-dev \
+        libxmlsec1-dev \
+        llvm \
+        tk-dev \
+        zlib1g-dev && \
+    apt-get autoremove -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
