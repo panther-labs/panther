@@ -69,11 +69,7 @@ const AsanaDestinationForm: React.FC<AsanaDestinationFormProps> = ({ onSubmit, i
           as={SensitiveTextInput}
           name="outputConfig.asana.personalAccessToken"
           label="Access Token"
-          placeholder={
-            existing
-              ? 'Information is hidden. New values will override the existing ones.'
-              : "What's  your access token?"
-          }
+          placeholder="What's  your access token?"
           required={!existing}
         />
       </SimpleGrid>

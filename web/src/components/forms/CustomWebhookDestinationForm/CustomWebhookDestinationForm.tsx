@@ -72,11 +72,7 @@ const CustomWebhookDestinationForm: React.FC<CustomWebhookDestinationFormProps> 
           as={SensitiveTextInput}
           name="outputConfig.customWebhook.webhookURL"
           label="Custom Webhook URL"
-          placeholder={
-            existing
-              ? 'Information is hidden. New values will override the existing ones.'
-              : 'Where should we send a push notification to?'
-          }
+          placeholder="Where should we send a push notification to?"
           required={!existing}
         />
       </SimpleGrid>

@@ -77,11 +77,7 @@ const GithubDestinationForm: React.FC<GithubDestinationFormProps> = ({
           as={SensitiveTextInput}
           name="outputConfig.github.token"
           label="Token"
-          placeholder={
-            existing
-              ? 'Information is hidden. New values will override the existing ones.'
-              : "What's your API token?"
-          }
+          placeholder="What's your API token?"
           autoComplete="new-password"
           required={!existing}
         />
