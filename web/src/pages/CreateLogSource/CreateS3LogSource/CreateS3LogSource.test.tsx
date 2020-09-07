@@ -23,62 +23,42 @@ import {
   fireEvent,
   buildS3LogIntegration,
   waitFor,
-  buildGetS3LogIntegrationTemplateInput,
-  buildIntegrationTemplate,
   waitMs,
+  buildListAvailableLogTypesResponse,
+  buildAddS3LogIntegrationInput,
 } from 'test-utils';
 import { mockListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
-import { mockGetLogCfnTemplate } from 'Components/wizards/S3LogSourceWizard';
 import { mockAddS3LogSource } from './graphql/addS3LogSource.generated';
 import CreateS3LogSource from './CreateS3LogSource';
 
-const testName = 'test';
-const testAwsAccountID = '123123123123';
-const testBucketName = 's3-test-bucket';
-const mockPantherAwsAccountId = '456456456456';
-const testLogType = 'AWS.S3';
-
 describe('CreateS3LogSource', () => {
-  let prevPantherAwsAccountId;
-  beforeAll(() => {
-    prevPantherAwsAccountId = process.env.AWS_ACCOUNT_ID;
-    process.env.PANTHER_VERSION = mockPantherAwsAccountId;
-  });
-
-  afterAll(() => {
-    process.env.PANTHER_VERSION = prevPantherAwsAccountId;
-  });
-
   it('can successfully onboard an S3 log source', async () => {
+    const logTypesResponse = buildListAvailableLogTypesResponse();
+    const logSource = buildS3LogIntegration({
+      awsAccountId: '123123123123',
+      logTypes: logTypesResponse.logTypes,
+      kmsKey: '',
+    });
+
     const mocks = [
       mockListAvailableLogTypes({
         data: {
-          listAvailableLogTypes: {
-            logTypes: [testLogType],
-          },
-        },
-      }),
-      mockGetLogCfnTemplate({
-        variables: {
-          input: buildGetS3LogIntegrationTemplateInput(),
-        },
-        data: {
-          getS3LogIntegrationTemplate: buildIntegrationTemplate(),
+          listAvailableLogTypes: logTypesResponse,
         },
       }),
       mockAddS3LogSource({
         variables: {
-          input: {
-            integrationLabel: testName,
-            awsAccountId: testAwsAccountID,
-            s3Bucket: testBucketName,
-            logTypes: [testLogType],
+          input: buildAddS3LogIntegrationInput({
+            integrationLabel: logSource.integrationLabel,
+            awsAccountId: logSource.awsAccountId,
+            s3Bucket: logSource.s3Bucket,
+            logTypes: logSource.logTypes,
             kmsKey: null,
             s3Prefix: null,
-          },
+          }),
         },
         data: {
-          addS3LogIntegration: buildS3LogIntegration(),
+          addS3LogIntegration: logSource,
         },
       }),
     ];
@@ -90,11 +70,11 @@ describe('CreateS3LogSource', () => {
     );
 
     // Fill in  the form and press continue
-    fireEvent.change(getByLabelText('Name'), { target: { value: testName } });
-    fireEvent.change(getByLabelText('AWS Account ID'), { target: { value: testAwsAccountID } });
-    fireEvent.change(getByLabelText('Bucket Name'), { target: { value: testBucketName } });
-    fireEvent.change(getAllByLabelText('Log Types')[0], { target: { value: testLogType } });
-    fireEvent.click(await findByText(testLogType));
+    fireEvent.change(getByLabelText('Name'), { target: { value: logSource.integrationLabel } });
+    fireEvent.change(getByLabelText('AWS Account ID'), {target: {value: logSource.awsAccountId } }); // prettier-ignore
+    fireEvent.change(getByLabelText('Bucket Name'), { target: { value: logSource.s3Bucket } });
+    fireEvent.change(getAllByLabelText('Log Types')[0], {target: {value: logSource.logTypes[0] } }); // prettier-ignore
+    fireEvent.click(await findByText(logSource.logTypes[0]));
 
     // Wait for form validation to kick in and move on to the next screen
     await waitMs(50);
@@ -121,32 +101,30 @@ describe('CreateS3LogSource', () => {
 
   it('shows a proper fail message when source validation fails', async () => {
     const errorMessage = "No-can-do's-ville, baby doll";
+    const logTypesResponse = buildListAvailableLogTypesResponse();
+    const logSource = buildS3LogIntegration({
+      awsAccountId: '123123123123',
+      logTypes: logTypesResponse.logTypes,
+      kmsKey: '',
+      s3Prefix: '',
+    });
+
     const mocks = [
       mockListAvailableLogTypes({
         data: {
-          listAvailableLogTypes: {
-            logTypes: [testLogType],
-          },
-        },
-      }),
-      mockGetLogCfnTemplate({
-        variables: {
-          input: buildGetS3LogIntegrationTemplateInput(),
-        },
-        data: {
-          getS3LogIntegrationTemplate: buildIntegrationTemplate(),
+          listAvailableLogTypes: logTypesResponse,
         },
       }),
       mockAddS3LogSource({
         variables: {
-          input: {
-            integrationLabel: testName,
-            awsAccountId: testAwsAccountID,
-            s3Bucket: testBucketName,
-            logTypes: [testLogType],
+          input: buildAddS3LogIntegrationInput({
+            integrationLabel: logSource.integrationLabel,
+            awsAccountId: logSource.awsAccountId,
+            s3Bucket: logSource.s3Bucket,
+            logTypes: logSource.logTypes,
             kmsKey: null,
             s3Prefix: null,
-          },
+          }),
         },
         data: null,
         errors: [new GraphQLError(errorMessage)],
@@ -161,11 +139,11 @@ describe('CreateS3LogSource', () => {
     );
 
     // Fill in  the form and press continue
-    fireEvent.change(getByLabelText('Name'), { target: { value: testName } });
-    fireEvent.change(getByLabelText('AWS Account ID'), { target: { value: testAwsAccountID } });
-    fireEvent.change(getByLabelText('Bucket Name'), { target: { value: testBucketName } });
-    fireEvent.change(getAllByLabelText('Log Types')[0], { target: { value: testLogType } });
-    fireEvent.click(await findByText(testLogType));
+    fireEvent.change(getByLabelText('Name'), { target: { value: logSource.integrationLabel } });
+    fireEvent.change(getByLabelText('AWS Account ID'), { target: {value: logSource.awsAccountId} }); // prettier-ignore
+    fireEvent.change(getByLabelText('Bucket Name'), { target: { value: logSource.s3Bucket } });
+    fireEvent.change(getAllByLabelText('Log Types')[0], { target: { value: logSource.logTypes[0] } }); // prettier-ignore
+    fireEvent.click(await findByText(logSource.logTypes[0]));
 
     // Wait for form validation to kick in and move on to the next screen
     await waitMs(50);

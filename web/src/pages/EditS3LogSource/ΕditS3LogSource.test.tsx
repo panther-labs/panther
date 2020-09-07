@@ -20,59 +20,67 @@ import React from 'react';
 import {
   render,
   fireEvent,
-  buildComplianceIntegration,
+  buildS3LogIntegration,
   waitFor,
   waitMs,
-  buildUpdateComplianceIntegrationInput,
+  buildListAvailableLogTypesResponse,
+  buildUpdateS3LogIntegrationInput,
 } from 'test-utils';
-import EditComplianceSource from './EditComplianceSource';
-import { mockGetComplianceSource } from './graphql/getComplianceSource.generated';
-import { mockUpdateComplianceSource } from './graphql/updateComplianceSource.generated';
+import { mockListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
+import EditS3LogSource from './EditS3LogSource';
+import { mockGetS3LogSource } from './graphql/getS3LogSource.generated';
+import { mockUpdateS3LogSource } from './graphql/updateS3LogSource.generated';
 
-describe('EditComplianceSource', () => {
-  it('can successfully update a compliance source', async () => {
-    const complianceSource = buildComplianceIntegration({
+describe('EditS3LogSource', () => {
+  it('can successfully update an S3 log source', async () => {
+    const logTypesResponse = buildListAvailableLogTypesResponse();
+    const logSource = buildS3LogIntegration({
       awsAccountId: '123123123123',
+      logTypes: logTypesResponse.logTypes,
+      kmsKey: '',
     });
 
-    const updatedComplianceSource = buildComplianceIntegration({
-      ...complianceSource,
-      integrationLabel: 'new-test',
-    });
+    const updatedLogSource = buildS3LogIntegration({ ...logSource, integrationLabel: 'new-value' });
 
     const mocks = [
-      mockGetComplianceSource({
+      mockGetS3LogSource({
         data: {
-          getComplianceIntegration: complianceSource,
+          getS3LogIntegration: logSource,
         },
       }),
-      mockUpdateComplianceSource({
+      mockListAvailableLogTypes({
+        data: {
+          listAvailableLogTypes: logTypesResponse,
+        },
+      }),
+      mockUpdateS3LogSource({
         variables: {
-          input: buildUpdateComplianceIntegrationInput({
-            integrationId: complianceSource.integrationId,
-            integrationLabel: updatedComplianceSource.integrationLabel,
-            cweEnabled: complianceSource.cweEnabled,
-            remediationEnabled: complianceSource.remediationEnabled,
+          input: buildUpdateS3LogIntegrationInput({
+            integrationId: logSource.integrationId,
+            integrationLabel: updatedLogSource.integrationLabel,
+            s3Bucket: logSource.s3Bucket,
+            logTypes: logSource.logTypes,
+            s3Prefix: logSource.s3Prefix,
+            kmsKey: null,
           }),
         },
         data: {
-          updateComplianceIntegration: updatedComplianceSource,
+          updateS3LogIntegration: updatedLogSource,
         },
       }),
     ];
-    const { getByText, getByLabelText, getByAltText, findByText } = render(
-      <EditComplianceSource />,
-      { mocks }
-    );
+    const { getByText, getByLabelText, getByAltText, findByText } = render(<EditS3LogSource />, {
+      mocks,
+    });
 
     const nameField = getByLabelText('Name') as HTMLInputElement;
 
     //  Wait for GET api request to populate the form
     await waitFor(() => expect(nameField).toHaveValue('Loading...'));
-    await waitFor(() => expect(nameField).toHaveValue(complianceSource.integrationLabel));
+    await waitFor(() => expect(nameField).toHaveValue(logSource.integrationLabel));
 
-    // Update the name  and press continue
-    fireEvent.change(nameField, { target: { value: updatedComplianceSource.integrationLabel } });
+    // Fill in  the form and press continue
+    fireEvent.change(nameField, { target: { value: updatedLogSource.integrationLabel } });
 
     // Wait for form validation to kick in and move on to the next screen
     await waitMs(50);
