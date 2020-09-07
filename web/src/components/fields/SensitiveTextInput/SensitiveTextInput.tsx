@@ -21,12 +21,14 @@ import { Box, FormError, TextInput, TextInputProps, Tooltip } from 'pouncejs';
 import { FieldConfig, useField } from 'formik';
 import { DEFAULT_SENSITIVE_VALUE } from 'Source/constants';
 
+const iconProps: TextInputProps['iconProps'] = { color: 'violet-300' };
+
 const FormikTextInput: React.FC<TextInputProps & Required<Pick<FieldConfig, 'name'>>> = props => {
   const [isFocused, setFocused] = React.useState(false);
   const [, meta] = useField(props.name);
 
   const { touched, error, value } = meta;
-  const masked = React.useMemo(() => value === '' && !isFocused, [value, isFocused]);
+  const masked = value === '' && !isFocused;
   const isInvalid = touched && !!error;
   const errorElementId = isInvalid ? `${props.name}-error` : undefined;
 
@@ -49,7 +51,7 @@ const FormikTextInput: React.FC<TextInputProps & Required<Pick<FieldConfig, 'nam
           value={masked ? DEFAULT_SENSITIVE_VALUE : value}
           type="password"
           icon="alert-circle-filled"
-          iconProps={{ color: 'violet-300' }}
+          iconProps={iconProps}
         />
       </Tooltip>
       {isInvalid && (
