@@ -41,7 +41,7 @@ module.exports = {
   },
 
   // mocks sessionStorage & localStorage
-  setupFiles: ['jest-localstorage-mock', 'jest-canvas-mock'],
+  setupFiles: ['jest-localstorage-mock', 'jest-canvas-mock', '<rootDir>/__tests__/env.ts'],
 
   // additional browser API mocks & assertions
   setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
