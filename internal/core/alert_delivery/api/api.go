@@ -64,7 +64,7 @@ var (
 	sqsClient         sqsiface.SQSAPI
 	outputsCache      *alertOutputsCache
 	httpClient        *http.Client
-	analysisClient    *analysisApiClient.PantherAnalysis
+	analysisClient    *analysisApiClient.PantherAnalysisAPI
 )
 
 // Setup - initialize global state

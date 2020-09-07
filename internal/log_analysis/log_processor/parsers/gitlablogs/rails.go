@@ -32,7 +32,7 @@ type Production struct {
 	Path                  *string            `json:"path" validate:"required" description:"The URL path for the request"`
 	Format                *string            `json:"format" description:"The response output format"`
 	Controller            *string            `json:"controller,omitempty" description:"The Production controller class name"`
-	Action                *string            `json:"action,omitempty" description:"The Production controller action"`
+	Action                *string            `json:"action,omitempty" validate:"required_without=EtagRoute" description:"The Production controller action"`
 	Status                *int               `json:"status" validate:"required" description:"The HTTP response status code"`
 	Time                  *timestamp.RFC3339 `json:"time" validate:"required" description:"The request timestamp"`
 	Params                []QueryParam       `json:"params,omitempty" description:"The URL query parameters"`
@@ -57,6 +57,7 @@ type Production struct {
 	ExceptionClass        *string            `json:"exception.class,omitempty" description:"Class name of the exception that occurred"`
 	ExceptionMessage      *string            `json:"exception.message,omitempty" description:"Message of the exception that occurred"`
 	ExceptionBacktrace    []string           `json:"exception.backtrace,omitempty" description:"Stack trace of the exception that occurred"`
+	EtagRoute             *string            `json:"etag_route,omitempty" validate:"required_without=Action" description:"Route name etag (on redirects)"`
 
 	parsers.PantherLog
 }

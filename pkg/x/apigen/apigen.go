@@ -35,6 +35,11 @@ import (
 	"github.com/panther-labs/panther/pkg/x/apigen/internal"
 )
 
+const (
+	typeLambdaClient = "lambdaclient"
+	typeModels       = "models"
+)
+
 var (
 	generatorName string
 	printUsage    = func() {
@@ -52,21 +57,19 @@ OPTIONS
 
 	opts = struct {
 		Filename     *string
+		Type         *string
 		TargetAPI    *string `validate:"required,min=1"`
 		MethodPrefix *string
 		PackageName  *string
 		Debug        *bool
 	}{
 		Filename:     flag.String(`out`, "", "Output file name (defaults to stdout)"),
+		Type:         flag.String(`type`, typeLambdaClient, "Type of code to generate (lambdaclient|models)"),
 		TargetAPI:    flag.String(`target`, "API", "Target API type name (defaults to 'API')"),
 		MethodPrefix: flag.String(`prefix`, "", "Method name prefix (defaults to no prefix)"),
 		PackageName:  flag.String(`pkg`, "", "Go package name to use (defaults to the package name of TYPE"),
 		Debug:        flag.Bool(`debug`, false, "Print debug output to stderr"),
 	}
-
-	clientPkgPath = "github.com/panther-labs/panther/pkg/x/apigen/lambdaclient"
-	clientPkgName = "lambdaclient"
-	clientPkg     = types.NewPackage(clientPkgPath, clientPkgName)
 )
 
 func init() {
@@ -122,33 +125,44 @@ Try '%s -help' for more information
 	if !ok {
 		log.Fatalf("invalid API object %s", apiObj)
 	}
+	clientPkg := apiType.Obj().Pkg()
+	if name := *opts.PackageName; name != "" {
+		clientPkg = types.NewPackage(".", *opts.PackageName)
+	}
 
 	methods, err := internal.ParseAPI(*opts.MethodPrefix, apiType)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	clientPkg := types.NewPackage(".", *opts.PackageName)
-	if *opts.PackageName == "" {
-		clientPkg = apiType.Obj().Pkg()
-	}
+	var unformatted []byte
 
-	logger.Printf("Generating lambda client %s.TargetAPI for %s with %d methods", clientPkg.Name(), apiName, len(methods))
-	src, err := GenerateClient(clientPkg, apiName, methods)
+	switch *opts.Type {
+	case typeModels:
+		logger.Printf("Generating API models for %s with %d methods", apiName, len(methods))
+		unformatted, err = GenerateModels(clientPkg, apiName, methods)
+	case typeLambdaClient:
+		logger.Printf("Generating API client %s.%sClient with %d methods", clientPkg.Name(), apiName, len(methods))
+		unformatted, err = GenerateLambdaClient(clientPkg, apiName, methods)
+	default:
+		log.Fatalf("invalid type %q", *opts.Type)
+	}
 	if err != nil {
 		logger.Fatal(err)
 	}
-	if !*opts.Debug {
-		src, err = format.Source(src)
-		if err != nil {
-			log.Fatal(err)
+	src, err := format.Source(unformatted)
+	if err != nil {
+		if *opts.Debug {
+			logger.Println(string(unformatted))
 		}
+		log.Fatal(err)
 	}
 	if fileName := *opts.Filename; fileName != "" {
-		if err := os.MkdirAll(path.Dir(fileName), os.ModePerm); err != nil {
+		if err := os.MkdirAll(path.Dir(fileName), 0755); err != nil {
 			log.Fatalln("failed to create directory", err)
 		}
-		if err := ioutil.WriteFile(fileName, src, os.ModePerm); err != nil {
+		// nolint:gosec
+		if err := ioutil.WriteFile(fileName, src, 0644); err != nil {
 			log.Fatalln("failed to write", err)
 		}
 		return
@@ -178,7 +192,7 @@ func (pkgs pkgIndex) Find(name string) *packages.Package {
 	return nil
 }
 
-func GenerateClient(pkg *types.Package, apiName string, methods []*Method) ([]byte, error) {
+func GenerateModels(pkg *types.Package, apiName string, methods []*Method) ([]byte, error) {
 	models := internal.NewModels()
 	if err := models.AddMethods(methods...); err != nil {
 		return nil, err
@@ -187,41 +201,64 @@ func GenerateClient(pkg *types.Package, apiName string, methods []*Method) ([]by
 	models.Write(&modelsBuffer, pkg)
 	data := struct {
 		Generator string
-		PkgName   string
+		Pkg       *types.Package
 		API       string
 		Methods   []*Method
 		Models    string
-		Aliases   map[string]string
 		Imports   []*types.Package
 	}{
 		Generator: generatorName,
-		PkgName:   pkg.Name(),
+		Pkg:       pkg,
 		API:       apiName,
 		Methods:   methods,
 		Models:    modelsBuffer.String(),
-		Imports: []*types.Package{
-			clientPkg,
-		},
+		Imports:   models.Imports(),
 	}
 	buffer := &bytes.Buffer{}
-	if err := tplClient.Execute(buffer, data); err != nil {
+	if err := tplModels.Execute(buffer, data); err != nil {
 		return nil, err
 	}
-	for _, m := range methods {
-		var err error
-		switch {
-		case m.Input != nil && m.Output != nil:
-			err = tplMethodInputOutput.Execute(buffer, m)
-		case m.Input != nil:
-			err = tplMethodInput.Execute(buffer, m)
-		case m.Output != nil:
-			err = tplMethodOutput.Execute(buffer, m)
-		}
-		if err != nil {
-			return nil, err
-		}
+
+	return buffer.Bytes(), nil
+}
+func GenerateLambdaClient(pkg *types.Package, apiName string, methods []*Method) ([]byte, error) {
+	data := struct {
+		Generator string
+		Pkg       *types.Package
+		API       string
+		Methods   []*Method
+		Imports   []*types.Package
+	}{
+		Generator: generatorName,
+		Pkg:       pkg,
+		API:       apiName,
+		Methods:   methods,
+		Imports:   methodsImports(pkg, methods...),
+	}
+	buffer := &bytes.Buffer{}
+	if err := tplLambdaClient.Execute(buffer, data); err != nil {
+		return nil, err
 	}
 	return buffer.Bytes(), nil
 }
 
 type Method = internal.Method
+
+func methodsImports(pkg *types.Package, methods ...*Method) []*types.Package {
+	index := make(map[string]*types.Package)
+	for _, method := range methods {
+		if obj := method.Input; obj != nil {
+			index[obj.Pkg().Path()] = obj.Pkg()
+		}
+		if obj := method.Output; obj != nil {
+			index[obj.Pkg().Path()] = obj.Pkg()
+		}
+	}
+	var imports []*types.Package
+	for _, imp := range index {
+		if imp.Path() != pkg.Path() {
+			imports = append(imports, imp)
+		}
+	}
+	return imports
+}

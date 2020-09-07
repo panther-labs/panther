@@ -21,6 +21,7 @@ package forwarder
 import (
 	"context"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -28,7 +29,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/firehose"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/sns"
-	snsiface "github.com/aws/aws-sdk-go/service/sns/snsiface"
+	"github.com/aws/aws-sdk-go/service/sns/snsiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/mock"
@@ -59,6 +60,16 @@ var availableSqsSources = []*models.SourceIntegration{
 			},
 		},
 	},
+}
+
+func TestMain(m *testing.M) {
+	// The failure tests will trigger backoff, make sure it doesn't take too long
+	oldRetries := config.MaxRetries
+	config.MaxRetries = 1
+	exitVal := m.Run()
+	config.MaxRetries = oldRetries
+
+	os.Exit(exitVal)
 }
 
 func TestShouldSendBatchRequest(t *testing.T) {

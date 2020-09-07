@@ -22,13 +22,15 @@ import (
 	"bytes"
 	"fmt"
 	"go/types"
+	"sort"
 	"strings"
 
 	"github.com/pkg/errors"
 )
 
 type Models struct {
-	models map[string]types.Type
+	models  map[string]types.Type
+	imports map[string]*types.Package
 }
 
 func NewModels() *Models {
@@ -37,12 +39,40 @@ func NewModels() *Models {
 	}
 }
 
+func (m *Models) Imports() (imports []*types.Package) {
+	for _, pkg := range m.imports {
+		imports = append(imports, pkg)
+	}
+	sort.Slice(imports, func(i, j int) bool {
+		return imports[i].Path() < imports[j].Path()
+	})
+	return
+}
+
+type ModelType struct {
+	Name string
+	Type types.Type
+}
+
+func (m *Models) Types() (modelTypes []ModelType) {
+	for name, typ := range m.models {
+		modelTypes = append(modelTypes, ModelType{
+			Name: name,
+			Type: typ,
+		})
+	}
+	sort.Slice(modelTypes, func(i, j int) bool {
+		return modelTypes[i].Name < modelTypes[j].Name
+	})
+	return modelTypes
+}
+
 func (m *Models) Write(buf *bytes.Buffer, pkg *types.Package) {
 	qualifier := types.RelativeTo(pkg)
-	for name, typ := range m.models {
-		src := types.TypeString(typ, qualifier)
+	for _, m := range m.Types() {
+		src := types.TypeString(m.Type, qualifier)
 		src = fixTagQuotes(src)
-		src = fmt.Sprintf(`type %s %s`, name, src)
+		src = fmt.Sprintf("type %s %s\n\n", m.Name, src)
 		buf.WriteString(src)
 	}
 }
@@ -72,7 +102,7 @@ func (m *Models) AddMethods(methods ...*Method) error {
 			}
 		}
 		if obj := method.Output; obj != nil {
-			name := withSuffix(method.Name, "Output")
+			name := withSuffix(method.Name, "Response")
 			if err := m.AddType(name, obj.Type()); err != nil {
 				return err
 			}
@@ -88,6 +118,12 @@ func withSuffix(name, suffix string) string {
 	return name + suffix
 }
 
+func (m *Models) AddImport(pkg *types.Package) {
+	if m.imports == nil {
+		m.imports = map[string]*types.Package{}
+	}
+	m.imports[pkg.Path()] = pkg
+}
 func (m *Models) AddType(name string, typ types.Type) error {
 	if name == "" {
 		named, ok := typ.(*types.Named)
@@ -99,6 +135,10 @@ func (m *Models) AddType(name string, typ types.Type) error {
 	model := modelType(typ)
 	if model == nil {
 		return errors.Errorf("invalid model type %s %s", name, typ)
+	}
+	if isTime(model) {
+		m.AddImport(types.NewPackage("time", "time"))
+		return nil
 	}
 	switch typ := model.Underlying().(type) {
 	case *types.Struct:
@@ -118,6 +158,9 @@ func (m *Models) AddType(name string, typ types.Type) error {
 }
 
 func modelType(typ types.Type) types.Type {
+	if isTime(typ) {
+		return typ
+	}
 	switch typ := typ.Underlying().(type) {
 	case *types.Pointer:
 		return modelType(typ.Elem())
@@ -142,10 +185,10 @@ func modelType(typ types.Type) types.Type {
 }
 
 func FlatStruct(s *types.Struct) *types.Struct {
-	return types.NewStruct(flattenStruct(nil, nil, s))
+	return types.NewStruct(flattenStructFields(nil, nil, s))
 }
 
-func flattenStruct(fields []*types.Var, tags []string, s *types.Struct) ([]*types.Var, []string) {
+func flattenStructFields(fields []*types.Var, tags []string, s *types.Struct) ([]*types.Var, []string) {
 	for i := 0; i < s.NumFields(); i++ {
 		field := s.Field(i)
 		if !field.Exported() {
@@ -153,7 +196,7 @@ func flattenStruct(fields []*types.Var, tags []string, s *types.Struct) ([]*type
 		}
 		if field.Anonymous() {
 			if typ, ok := field.Type().Underlying().(*types.Struct); ok {
-				fields, tags = flattenStruct(fields, tags, typ)
+				fields, tags = flattenStructFields(fields, tags, typ)
 				continue
 			}
 		}
@@ -162,4 +205,11 @@ func flattenStruct(fields []*types.Var, tags []string, s *types.Struct) ([]*type
 		tags = append(tags, s.Tag(i))
 	}
 	return fields, tags
+}
+
+func isTime(typ types.Type) bool {
+	if named, ok := typ.(*types.Named); ok {
+		return named.Obj().Pkg().Path() == "time" && named.Obj().Name() == "Time"
+	}
+	return false
 }

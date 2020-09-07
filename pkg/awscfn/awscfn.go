@@ -54,6 +54,16 @@ func WaitForStackUpdate(client *cloudformation.CloudFormation, logger *zap.Sugar
 		cloudformation.StackStatusUpdateInProgress, cloudformation.StackStatusUpdateCompleteCleanupInProgress)
 }
 
+// Trigger stack deletion and wait for it to finish.
+func DeleteStack(client *cloudformation.CloudFormation, logger *zap.SugaredLogger, stackName string, pollInterval time.Duration) error {
+	if _, err := client.DeleteStack(&cloudformation.DeleteStackInput{StackName: &stackName}); err != nil {
+		return err
+	}
+
+	_, err := WaitForStackDelete(client, logger, stackName, pollInterval)
+	return err
+}
+
 func WaitForStackDelete(client *cloudformation.CloudFormation, logger *zap.SugaredLogger, stackName string,
 	pollInterval time.Duration) (*cloudformation.Stack, error) {
 
@@ -119,8 +129,8 @@ func WaitForStack(client *cloudformation.CloudFormation, logger *zap.SugaredLogg
 
 		if err != nil {
 			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "ExpiredToken" {
-				return nil, fmt.Errorf("deploy: %s: security token expired; "+
-					"redeploy with fresh credentials to pick up where you left off. "+
+				return nil, fmt.Errorf("%s: security token expired; "+
+					"run again with fresh credentials to pick up where you left off. "+
 					"CloudFormation is still running in your AWS account, "+
 					"see https://console.aws.amazon.com/cloudformation", stackName)
 			}

@@ -20,6 +20,7 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
+import SensitiveTextInput from 'Components/fields/SensitiveTextInput';
 import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
@@ -73,15 +74,10 @@ const GithubDestinationForm: React.FC<GithubDestinationFormProps> = ({
           required
         />
         <Field
-          as={FormikTextInput}
-          type="password"
+          as={SensitiveTextInput}
           name="outputConfig.github.token"
           label="Token"
-          placeholder={
-            existing
-              ? 'Information is hidden. New values will override the existing ones.'
-              : "What's your API token?"
-          }
+          placeholder="What's your API token?"
           autoComplete="new-password"
           required={!existing}
         />

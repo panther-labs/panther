@@ -43,7 +43,7 @@ In the above command:
 An example of that would be:
 
 ```
-docker build -f build/deployment/Dockerfile -t pantherlabs/panther-development-pack:1.1.0 .
+docker build -f build/images/deployment/Dockerfile -t pantherlabs/panther-development-pack:1.1.0 .
 ```
 
 which will produce the image `pantherlabs/panther-development-pack:1.1.0` in your local machine. Typically,
@@ -54,7 +54,7 @@ the `IMAGE_NAME` should be `{ORGANIZATION}/${NAME}` to mimic the way it will be 
 In the previous command the `-t` flag was just a tag. We could just as easily have written:
 
 ```
-docker build -f build/deployment/Dockerfile -t mickey_mouse .
+docker build -f build/images/deployment/Dockerfile -t mickey_mouse .
 ```
 
 and the image `mickey_mouse` would have been locally created. Typically, whenever we build a new version
@@ -91,7 +91,7 @@ With that being satisfied, pushing a new image is as simple as:
 docker push {IMAGE_NAME}:{TAG} {IMAGE_NAME}:{TAG}
 ```
 
-which mimicks the way `git` works, where you push a local branch to a remote one. Just like `git`,
+which mimics the way `git` works, where you push a local branch to a remote one. Just like `git`,
 branches don't need to match in name, but it's a convention that they should. If they do match, the
 above command can be simplified like so:
 
@@ -118,6 +118,6 @@ docker push pantherlabs/panther-development-pack
 In the following example, we will build a new image version, tag it as latest and push it to dockerhub:
 
 ```
-docker build -f build/deployment/Dockerfile -t pantherlabs/panther-development-pack:1.1.0  -t pantherlabs/panther-development-pack:latest .
+docker build -f build/images/deployment/Dockerfile -t pantherlabs/panther-development-pack:1.1.0 -t pantherlabs/panther-development-pack:latest .
 docker push pantherlabs/panther-development-pack
 ```

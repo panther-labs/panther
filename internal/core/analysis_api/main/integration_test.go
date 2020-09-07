@@ -58,7 +58,7 @@ var (
 	integrationTest bool
 	awsSession      = session.Must(session.NewSession())
 	httpClient      = gatewayapi.GatewayClient(awsSession)
-	apiClient       *client.PantherAnalysis
+	apiClient       *client.PantherAnalysisAPI
 
 	userID = models.UserID("521a1c7b-273f-4a03-99a7-5c661de5b0e8")
 
