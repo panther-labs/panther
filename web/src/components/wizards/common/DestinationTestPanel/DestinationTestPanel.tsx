@@ -35,7 +35,6 @@ const DestinationTestPanel: React.FC = () => {
   const {
     data: { destination },
     reset,
-    goToPrevStep,
   } = useWizardContext<CreateWizardData & EditWizardData>();
 
   const [sendTestAlert, { loading }] = useSendTestAlertLazyQuery({
@@ -71,9 +70,7 @@ const DestinationTestPanel: React.FC = () => {
             If you don{"'"}t feel like it right now, you can always change the configuration later
           </Text>
           <Link as={RRLink} mb={6} to={urls.settings.destinations.edit(destination.outputId)}>
-            <Button as="div" onClick={goToPrevStep}>
-              Back to Configuration
-            </Button>
+            <Button as="div">Back to Configuration</Button>
           </Link>
           <Link as={RRLink} variant="discreet" to={urls.settings.destinations.list()}>
             Skip Testing

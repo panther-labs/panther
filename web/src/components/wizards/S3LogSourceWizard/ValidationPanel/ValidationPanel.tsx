@@ -32,8 +32,8 @@ import { S3LogSourceWizardValues } from '../S3LogSourceWizard';
 
 const ValidationPanel: React.FC = () => {
   const [errorMessage, setErrorMessage] = React.useState('');
-  const { goToPrevStep, reset, currentStepStatus, setCurrentStepStatus } = useWizardContext();
-  const { initialValues, submitForm } = useFormikContext<S3LogSourceWizardValues>();
+  const { goToPrevStep, reset: resetWizard, currentStepStatus, setCurrentStepStatus } = useWizardContext(); // prettier-ignore
+  const { initialValues, submitForm, resetForm } = useFormikContext<S3LogSourceWizardValues>();
 
   React.useEffect(() => {
     (async () => {
@@ -87,13 +87,18 @@ const ValidationPanel: React.FC = () => {
           )}
           <WizardPanel.Actions>
             <Flex direction="column" spacing={4}>
-              <RRLink to={urls.compliance.sources.list()}>
-                <Button as="div" onClick={goToPrevStep}>
-                  Finish Setup
-                </Button>
+              <RRLink to={urls.logAnalysis.sources.list()}>
+                <Button as="div">Finish Setup</Button>
               </RRLink>
               {!initialValues.integrationId && (
-                <Link as={AbstractButton} variant="discreet" onClick={reset}>
+                <Link
+                  as={AbstractButton}
+                  variant="discreet"
+                  onClick={() => {
+                    resetForm();
+                    resetWizard();
+                  }}
+                >
                   Add Another
                 </Link>
               )}
@@ -116,7 +121,7 @@ const ValidationPanel: React.FC = () => {
             src={FailureStatus}
           />
           <WizardPanel.Actions>
-            <Button onClick={reset}>Start over</Button>
+            <Button onClick={resetWizard}>Start over</Button>
           </WizardPanel.Actions>
         </Flex>
       </WizardPanel>
