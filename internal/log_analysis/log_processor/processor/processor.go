@@ -21,19 +21,20 @@ package processor
 import (
 	"bufio"
 	"io"
-	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
+	"github.com/panther-labs/panther/internal/log_analysis/message_forwarder/forwarder"
 	"github.com/panther-labs/panther/pkg/metrics"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
@@ -142,14 +143,16 @@ func (p *Processor) processLogLine(line string, outputChan chan *parsers.Result)
 }
 
 func (p *Processor) classifyLogLine(line string) *classification.ClassifierResult {
-	result := p.classifier.Classify(line)
-	if result.LogType == nil && len(strings.TrimSpace(line)) != 0 { // only if line is not empty do we log (often we get trailing \n's)
-		if p.input.Hints.S3 != nil { // make easy to troubleshoot but do not add log line (even partial) to avoid leaking data into CW
-			p.operation.LogWarn(errors.New("failed to classify log line"),
-				zap.Uint64("lineNum", p.classifier.Stats().LogLineCount),
-				zap.String("bucket", p.input.Hints.S3.Bucket),
-				zap.String("key", p.input.Hints.S3.Key))
-		}
+	result, err := p.classifier.Classify(line)
+	if err != nil {
+		// make easy to troubleshoot but do not add log line (even partial) to avoid leaking data into CW
+		p.operation.LogWarn(errors.New("failed to classify log line"),
+			zap.Uint64("lineNum", p.classifier.Stats().LogLineCount),
+			zap.String("sourceId", p.input.Source.IntegrationID),
+			zap.String("sourceLabel", p.input.Source.IntegrationLabel),
+			zap.String("s3Bucket", p.input.S3Bucket),
+			zap.String("s3ObjectKey", p.input.S3ObjectKey),
+		)
 	}
 	return result
 }
@@ -188,62 +191,88 @@ func MustBuildProcessor(input *common.DataStream, registry *logtypes.Registry) *
 	proc, err := BuildProcessor(input, registry)
 	if err != nil {
 		zap.L().Error("invalid build log processor for source",
-			zap.String(`source_id`, input.SourceID),
-			zap.String(`source_label`, input.SourceLabel),
+			zap.String(`source_id`, input.Source.IntegrationID),
+			zap.String(`source_label`, input.Source.IntegrationLabel),
 			zap.Error(err))
 		panic(err)
 	}
 	return proc
 }
+
 func BuildProcessor(input *common.DataStream, registry *logtypes.Registry) (*Processor, error) {
-	parsers := make(map[string]parsers.Interface, len(input.LogTypes))
-	for _, logType := range input.LogTypes {
-		entry := registry.Get(logType)
-		if entry == nil {
-			return nil, errors.Errorf("failed to find %q log type", logType)
-		}
-		parser, err := entry.NewParser(nil)
+	switch src := input.Source; src.IntegrationType {
+	case models.IntegrationTypeSqs:
+		return &Processor{
+			operation: common.OpLogManager.Start(operationName),
+			input:     input,
+			classifier: &sqsClassifier{
+				registry:    registry,
+				classifiers: make(map[string]classification.ClassifierAPI),
+				parserStats: make(map[string]*classification.ParserStats),
+			},
+		}, nil
+	case models.IntegrationTypeAWS3:
+		c, err := sources.BuildClassifier(src, registry)
 		if err != nil {
-			return nil, errors.WithMessagef(err, "failed to create %q parser", logType)
+			return nil, err
 		}
-		parsers[logType] = newSourceFieldsParser(input.SourceID, input.SourceLabel, parser)
-	}
-
-	return &Processor{
-		input:      input,
-		classifier: classification.NewClassifier(parsers),
-		operation:  common.OpLogManager.Start(operationName),
-	}, nil
-}
-
-func newSourceFieldsParser(id, label string, parser parsers.Interface) parsers.Interface {
-	return &sourceFieldsParser{
-		Interface:   parser,
-		SourceID:    id,
-		SourceLabel: label,
+		return &Processor{
+			operation:  common.OpLogManager.Start(operationName),
+			input:      input,
+			classifier: c,
+		}, nil
+	default:
+		return nil, errors.Errorf("invalid source type %s", src.IntegrationType)
 	}
 }
 
-type sourceFieldsParser struct {
-	parsers.Interface
-	SourceID    string
-	SourceLabel string
+type sqsClassifier struct {
+	registry    *logtypes.Registry
+	stats       classification.ClassifierStats
+	parserStats map[string]*classification.ParserStats
+	classifiers map[string]classification.ClassifierAPI
 }
 
-func (p *sourceFieldsParser) ParseLog(log string) ([]*pantherlog.Result, error) {
-	results, err := p.Interface.ParseLog(log)
+var _ classification.ClassifierAPI = (*sqsClassifier)(nil)
+
+var jsonAPI = common.BuildJSON()
+
+func (c *sqsClassifier) Stats() *classification.ClassifierStats {
+	return &c.stats
+}
+
+func (c *sqsClassifier) ParserStats() map[string]*classification.ParserStats {
+	return c.parserStats
+}
+
+func (c *sqsClassifier) Classify(log string) (*classification.ClassifierResult, error) {
+	msg := forwarder.Message{}
+	err := jsonAPI.UnmarshalFromString(log, &msg)
 	if err != nil {
 		return nil, err
 	}
-	for _, result := range results {
-		if result.EventIncludesPantherFields {
-			if event, ok := result.Event.(parsers.PantherSourceSetter); ok {
-				event.SetPantherSource(p.SourceID, p.SourceLabel)
-				continue
-			}
+	cls, ok := c.classifiers[msg.SourceIntegrationID]
+	if !ok {
+		cls, err = c.buildClassifier(msg.SourceIntegrationID)
+		if err != nil {
+			return nil, err
 		}
-		result.PantherSourceID = p.SourceID
-		result.PantherSourceLabel = p.SourceLabel
+		c.classifiers[msg.SourceIntegrationID] = cls
 	}
-	return results, nil
+	result, err := cls.Classify(log)
+	c.stats.Add(cls.Stats())
+	classification.MergeParserStats(c.parserStats, cls.ParserStats())
+	cls.ParserStats()
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *sqsClassifier) buildClassifier(id string) (classification.ClassifierAPI, error) {
+	src := sources.Lookup(id)
+	if src == nil {
+		return nil, errors.Errorf("unknown source id %q", id)
+	}
+	return sources.BuildClassifier(src, c.registry)
 }

@@ -80,7 +80,12 @@ func main() {
 			continue
 		}
 		numLines++
-		result := classifier.Classify(line)
+		result, err := classifier.Classify(line)
+		if err != nil {
+			debugLog.Printf("Failed to classify line %d: %s\n", numLines, err)
+			os.Exit(1)
+			return
+		}
 		if result == nil {
 			debugLog.Printf("Failed to classify line %d\n", numLines)
 			os.Exit(1)

@@ -32,7 +32,7 @@ import (
 // ClassifierAPI is the interface for a classifier
 type ClassifierAPI interface {
 	// Classify attempts to classify the provided log line
-	Classify(log string) *ClassifierResult
+	Classify(log string) (*ClassifierResult, error)
 	// aggregate stats
 	Stats() *ClassifierStats
 	// per-parser stats, map of LogType -> stats
@@ -90,14 +90,14 @@ func safeLogParse(logType string, parser parsers.Interface, log string) (results
 }
 
 // Classify attempts to classify the provided log line
-func (c *Classifier) Classify(log string) *ClassifierResult {
+func (c *Classifier) Classify(log string) (*ClassifierResult, error) {
 	startClassify := time.Now().UTC()
 	// Slice containing the popped queue items
 	var popped []interface{}
 	result := &ClassifierResult{}
 
 	if len(log) == 0 { // likely empty file, nothing to do
-		return result
+		return result, nil
 	}
 
 	// update aggregate stats
@@ -118,9 +118,10 @@ func (c *Classifier) Classify(log string) *ClassifierResult {
 	log = strings.TrimSpace(log) // often the last line has \n only, could happen mid file tho
 
 	if len(log) == 0 { // we count above (because it is a line in the file) then skip
-		return result
+		return result, nil
 	}
 
+	failed := true
 	for c.parsers.Len() > 0 {
 		currentItem := c.parsers.Peek()
 
@@ -140,6 +141,7 @@ func (c *Classifier) Classify(log string) *ClassifierResult {
 			// record failure
 			continue
 		}
+		failed = false
 
 		// Since the parsing was successful, remove all penalty from the parser
 		// The parser will be higher priority in the queue
@@ -171,7 +173,10 @@ func (c *Classifier) Classify(log string) *ClassifierResult {
 	for _, item := range popped {
 		heap.Push(c.parsers, item)
 	}
-	return result
+	if failed {
+		return result, errors.New("failed to classify log line")
+	}
+	return result, nil
 }
 
 // aggregate stats
@@ -184,6 +189,15 @@ type ClassifierStats struct {
 	ClassificationFailureCount  uint64
 }
 
+func (s *ClassifierStats) Add(other *ClassifierStats) {
+	s.ClassifyTimeMicroseconds += other.ClassifyTimeMicroseconds
+	s.BytesProcessedCount += other.BytesProcessedCount
+	s.LogLineCount += other.LogLineCount
+	s.EventCount += other.EventCount
+	s.SuccessfullyClassifiedCount += other.EventCount
+	s.ClassificationFailureCount += other.ClassificationFailureCount
+}
+
 // per parser stats
 type ParserStats struct {
 	ParserTimeMicroseconds uint64 // total time parsing
@@ -192,4 +206,25 @@ type ParserStats struct {
 	EventCount             uint64 // output records
 	CombinedLatency        uint64 // sum of latency of events
 	LogType                string
+}
+
+func (s *ParserStats) Add(other *ParserStats) {
+	s.ParserTimeMicroseconds += other.ParserTimeMicroseconds
+	s.BytesProcessedCount += other.BytesProcessedCount
+	s.LogLineCount += other.LogLineCount
+	s.EventCount += other.EventCount
+	s.CombinedLatency += other.CombinedLatency
+}
+
+func MergeParserStats(dst map[string]*ParserStats, src map[string]*ParserStats) {
+	for name, s := range src {
+		d := dst[name]
+		if d == nil {
+			d = &ParserStats{
+				LogType: d.LogType,
+			}
+		}
+		d.Add(s)
+		dst[name] = d
+	}
 }

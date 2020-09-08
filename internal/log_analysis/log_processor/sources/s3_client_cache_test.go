@@ -236,27 +236,27 @@ func TestSourceCacheStruct_Find(t *testing.T) {
 	assert := require.New(t)
 	cache.Update(now, sources)
 	{
-		src := cache.Find("foo", "/bar")
+		src := cache.FindS3("foo", "/bar")
 		assert.NotNil(src)
 		assert.Equal("", src.S3Prefix)
 	}
 	{
-		src := cache.Find("foo", "/foo/bar.json")
+		src := cache.FindS3("foo", "/foo/bar.json")
 		assert.NotNil(src)
 		assert.Equal("/foo", src.S3Prefix)
 	}
 	{
-		src := cache.Find("foo", "/foo/bar/baz.json")
+		src := cache.FindS3("foo", "/foo/bar/baz.json")
 		assert.NotNil(src)
 		assert.Equal("/foo/bar/baz", src.S3Prefix)
 	}
 	{
-		src := cache.Find("foo", "/foo/bar/baz/qux.json")
+		src := cache.FindS3("foo", "/foo/bar/baz/qux.json")
 		assert.NotNil(src)
 		assert.Equal("/foo/bar/baz", src.S3Prefix)
 	}
 	{
-		src := cache.Find("goo", "/foo/bar/baz/qux.json")
+		src := cache.FindS3("goo", "/foo/bar/baz/qux.json")
 		assert.Nil(src)
 	}
 }

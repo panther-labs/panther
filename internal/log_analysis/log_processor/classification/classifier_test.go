@@ -89,7 +89,8 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 	}
 
 	for i := 0; i < repetitions; i++ {
-		result := classifier.Classify(logLine)
+		result, err := classifier.Classify(logLine)
+		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
 	}
 
@@ -124,7 +125,8 @@ func TestClassifyNoMatch(t *testing.T) {
 		ClassificationFailureCount:  1,
 	}
 
-	result := classifier.Classify(logLine)
+	result, err := classifier.Classify(logLine)
+	require.Error(t, err)
 
 	// skipping specifically validating the times
 	expectedStats.ClassifyTimeMicroseconds = classifier.Stats().ClassifyTimeMicroseconds
@@ -160,7 +162,8 @@ func TestClassifyParserPanic(t *testing.T) {
 		ClassificationFailureCount:  1,
 	}
 
-	result := classifier.Classify(logLine)
+	result, err := classifier.Classify(logLine)
+	require.Error(t, err)
 
 	// skipping specifically validating the times
 	expectedStats.ClassifyTimeMicroseconds = classifier.Stats().ClassifyTimeMicroseconds
@@ -187,7 +190,8 @@ func TestClassifyParserReturningEmptyResults(t *testing.T) {
 		ClassificationFailureCount:  0,
 	}
 
-	result := classifier.Classify(logLine)
+	result, err := classifier.Classify(logLine)
+	require.NoError(t, err)
 
 	// skipping specifically validating the times
 	expectedStats.ClassifyTimeMicroseconds = classifier.Stats().ClassifyTimeMicroseconds
@@ -236,7 +240,8 @@ func testSkipClassify(logLine string, t *testing.T) {
 	}
 
 	for i := 0; i < repetitions; i++ {
-		result := classifier.Classify(logLine)
+		result, err := classifier.Classify(logLine)
+		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
 	}
 

@@ -57,15 +57,18 @@ type s3ClientCacheKey struct {
 
 type sourceCacheStruct struct {
 	cacheUpdateTime time.Time
+	index           map[string]*models.SourceIntegration
 	byBucket        map[string][]*models.SourceIntegration
 }
 
 func (c *sourceCacheStruct) Update(now time.Time, sources []*models.SourceIntegration) {
 	byBucket := make(map[string][]*models.SourceIntegration)
+	index := make(map[string]*models.SourceIntegration)
 	for _, source := range sources {
 		bucketName, _ := getSourceS3Info(source)
 		bucketSources := byBucket[bucketName]
 		byBucket[bucketName] = append(bucketSources, source)
+		index[source.IntegrationID] = source
 	}
 	// Sort sources for each bucket
 	// It is important to have the sources sorted by longest prefix first.
@@ -84,10 +87,16 @@ func (c *sourceCacheStruct) Update(now time.Time, sources []*models.SourceIntegr
 	}
 	*c = sourceCacheStruct{
 		byBucket:        byBucket,
+		index:           index,
 		cacheUpdateTime: now,
 	}
 }
-func (c *sourceCacheStruct) Find(bucketName, objectKey string) *models.SourceIntegration {
+
+func (c *sourceCacheStruct) Find(id string) *models.SourceIntegration {
+	return c.index[id]
+}
+
+func (c *sourceCacheStruct) FindS3(bucketName, objectKey string) *models.SourceIntegration {
 	sources := c.byBucket[bucketName]
 	for _, source := range sources {
 		if strings.HasPrefix(objectKey, source.S3Prefix) {
@@ -228,7 +237,7 @@ func getSourceInfo(s3Object *S3ObjectInfo) (result *models.SourceIntegration, er
 		sourceCache.Update(now, output)
 	}
 
-	result = sourceCache.Find(s3Object.S3Bucket, s3Object.S3ObjectKey)
+	result = sourceCache.FindS3(s3Object.S3Bucket, s3Object.S3ObjectKey)
 
 	// If the incoming notification maps to a known source, update the source information
 	if result != nil {
