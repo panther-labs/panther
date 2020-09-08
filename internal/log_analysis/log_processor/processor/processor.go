@@ -144,6 +144,7 @@ func (p *Processor) processLogLine(line string, outputChan chan *parsers.Result)
 		//FIXME: remove this after debug
 		zap.L().Debug("classification failed",
 			zap.String("line", line),
+			zap.Error(err),
 			zap.Uint64("lineNum", p.classifier.Stats().LogLineCount),
 			zap.String("sourceId", p.input.Source.IntegrationID),
 			zap.String("sourceLabel", p.input.Source.IntegrationLabel),
