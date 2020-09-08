@@ -29,6 +29,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/waf/wafiface"
 	"github.com/aws/aws-sdk-go/service/wafregional"
 	"github.com/aws/aws-sdk-go/service/wafregional/wafregionaliface"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
@@ -51,7 +52,7 @@ func setupWafRegionalClient(sess *session.Session, cfg *aws.Config) interface{} 
 func getWafRegionalClient(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (wafregionaliface.WAFRegionalAPI, error) {
 	client, err := getClient(pollerResourceInput, WafRegionalClientFunc, "waf-regional", region)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, err
 	}
 
 	return client.(wafregionaliface.WAFRegionalAPI), nil
@@ -64,7 +65,7 @@ func setupWafClient(sess *session.Session, cfg *aws.Config) interface{} {
 func getWafClient(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (wafiface.WAFAPI, error) {
 	client, err := getClient(pollerResourceInput, WafClientFunc, "waf", region)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, err
 	}
 
 	return client.(wafiface.WAFAPI), nil
@@ -83,9 +84,9 @@ func PollWAFWebACL(
 	}
 	webACLID := strings.Replace(resourceARN.Resource, "webacl/", "", 1)
 
-	snapshot := buildWafWebACLSnapshot(client, aws.String(webACLID))
-	if snapshot == nil {
-		return nil, nil
+	snapshot, err := buildWafWebACLSnapshot(client, aws.String(webACLID))
+	if err != nil || snapshot == nil {
+		return nil, err
 	}
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	snapshot.Region = aws.String(awsmodels.GlobalRegion)
@@ -106,9 +107,9 @@ func PollWAFRegionalWebACL(
 	}
 	webACLID := strings.Replace(resourceARN.Resource, "webacl/", "", 1)
 
-	snapshot := buildWafWebACLSnapshot(client, aws.String(webACLID))
-	if snapshot == nil {
-		return nil, nil
+	snapshot, err := buildWafWebACLSnapshot(client, aws.String(webACLID))
+	if err != nil || snapshot == nil {
+		return nil, err
 	}
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	snapshot.Region = aws.String(resourceARN.Region)
@@ -116,43 +117,41 @@ func PollWAFRegionalWebACL(
 	return snapshot, nil
 }
 
-// listWebAclsRecursive is a helper function for listWebAcls, used to enumerate the web ACLs in an account
-func listWebAclsRecursive(wafSvc wafiface.WAFAPI, webAclsSummaryIn []*waf.WebACLSummary, next *string) (
-	webAclsSummaryOut []*waf.WebACLSummary) {
-
-	webAclsOutput, err := wafSvc.ListWebACLs(&waf.ListWebACLsInput{NextMarker: next})
-	if err != nil {
-		if _, ok := wafSvc.(wafregionaliface.WAFRegionalAPI); ok {
-			utils.LogAWSError("WAF.Regional.ListWebAcls", err)
-		} else {
-			utils.LogAWSError("WAF.ListWebAcls", err)
-		}
-		return
-	}
-
-	// base case, there is no way to know if a particular response is the last response without
-	// requesting the next response and seeing that you get nothing
-	if len(webAclsOutput.WebACLs) == 0 {
-		return webAclsSummaryIn
-	}
-	webAclsSummaryOut = append(webAclsSummaryIn, webAclsOutput.WebACLs...)
-	return listWebAclsRecursive(wafSvc, webAclsSummaryOut, webAclsOutput.NextMarker)
-}
-
 // listWebAcls returns a list web ACLs in the account
 //
 // The AWS go SDK's do not appear to have built in functions to handle pagination for this API call,
 // so it is being done here explicitly.
-func listWebAcls(wafSvc wafiface.WAFAPI) (webAclsSummaryOut []*waf.WebACLSummary) {
-	var emptyWebAcls []*waf.WebACLSummary
-	return listWebAclsRecursive(wafSvc, emptyWebAcls, nil)
+func listWebAcls(wafSvc wafiface.WAFAPI, nextMarker *string) ([]*waf.WebACLSummary, *string, error) {
+	var webAclsSummaryOut []*waf.WebACLSummary
+	for len(webAclsSummaryOut) < defaultBatchSize {
+		webAclsOutput, err := wafSvc.ListWebACLs(&waf.ListWebACLsInput{
+			NextMarker: nextMarker,
+			Limit:      aws.Int64(int64(defaultBatchSize)),
+		})
+		if err != nil {
+			if _, ok := wafSvc.(wafregionaliface.WAFRegionalAPI); ok {
+				return nil, nil, errors.Wrap(err, "WAF.Regional.ListWebAcls")
+			}
+			return nil, nil, errors.Wrap(err, "WAF.ListWebAcls")
+		}
+
+		// There is no explicit indicator that we've reached the last page of results, we just know
+		// that when a page returns 0 results that the previous page was the last page
+		if len(webAclsOutput.WebACLs) == 0 {
+			return webAclsSummaryOut, nil, nil
+		}
+		webAclsSummaryOut = append(webAclsSummaryOut, webAclsOutput.WebACLs...)
+		nextMarker = webAclsOutput.NextMarker
+	}
+
+	return webAclsSummaryOut, nextMarker, nil
 }
 
 // getWebACL gets detailed information about a given WEB acl
 func getWebACL(wafSvc wafiface.WAFAPI, id *string) (*waf.WebACL, error) {
 	out, err := wafSvc.GetWebACL(&waf.GetWebACLInput{WebACLId: id})
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "WAF.GetWebACL: %s", aws.StringValue(id))
 	}
 
 	return out.WebACL, nil
@@ -162,16 +161,7 @@ func getWebACL(wafSvc wafiface.WAFAPI, id *string) (*waf.WebACL, error) {
 func listTagsForResourceWaf(svc wafiface.WAFAPI, arn *string) ([]*waf.Tag, error) {
 	tags, err := svc.ListTagsForResource(&waf.ListTagsForResourceInput{ResourceARN: arn})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "AccessDeniedException" {
-				zap.L().Error(
-					"AccessDeniedException, additional permissions were not granted",
-					zap.String("API", "WAF.ListTagsForResource"))
-				return nil, err
-			}
-		}
-		utils.LogAWSError("WAF.ListTagsForResource", err)
-		return nil, err
+		return nil, errors.Wrapf(err, "WAF.ListTagsForResource: %s", aws.StringValue(arn))
 	}
 	return tags.TagInfoForResource.TagList, nil
 }
@@ -180,53 +170,37 @@ func listTagsForResourceWaf(svc wafiface.WAFAPI, arn *string) ([]*waf.Tag, error
 func getRule(svc wafiface.WAFAPI, ruleID *string) (*waf.Rule, error) {
 	rule, err := svc.GetRule(&waf.GetRuleInput{RuleId: ruleID})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "AccessDeniedException" {
-				zap.L().Error(
-					"AccessDeniedException, additional permissions were not granted",
-					zap.String("API", "WAF.GetRule"))
-				return nil, err
-			}
-		}
-		utils.LogAWSError("WAF.GetRule", err)
-		return nil, err
+		return nil, errors.Wrapf(err, "WAF.GetRule: %s", aws.StringValue(ruleID))
 	}
 	return rule.Rule, nil
 }
 
 // buildWafWebACLSnapshot makes all the calls to build up a snapshot of a given web acl
-func buildWafWebACLSnapshot(wafSvc wafiface.WAFAPI, webACLID *string) *awsmodels.WafWebAcl {
+func buildWafWebACLSnapshot(wafSvc wafiface.WAFAPI, webACLID *string) (*awsmodels.WafWebAcl, error) {
 	if webACLID == nil {
-		return nil
+		return nil, nil
 	}
 
 	webACL, err := getWebACL(wafSvc, webACLID)
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "AccessDeniedException" {
-				zap.L().Error(
-					"AccessDeniedException, additional permissions were not granted",
-					zap.String("API", "WAF.GetWebAcl"))
-				return nil
-			} else if awsErr.Code() == "WAFNonexistentItemException" {
+			if awsErr.Code() == "WAFNonexistentItemException" {
 				if _, ok := wafSvc.(wafregionaliface.WAFRegionalAPI); ok {
 					zap.L().Warn("tried to scan non-existent resource",
 						zap.String("resource", *webACLID),
 						zap.String("resourceType", awsmodels.WafRegionalWebAclSchema))
-				} else {
-					zap.L().Warn("tried to scan non-existent resource",
-						zap.String("resource", *webACLID),
-						zap.String("resourceType", awsmodels.WafWebAclSchema))
+					return nil, nil
 				}
-				return nil
+				zap.L().Warn("tried to scan non-existent resource",
+					zap.String("resource", *webACLID),
+					zap.String("resourceType", awsmodels.WafWebAclSchema))
+				return nil, nil
 			}
 		}
 		if _, ok := wafSvc.(wafregionaliface.WAFRegionalAPI); ok {
-			utils.LogAWSError("WAF.Regional.GetWebAcl", err)
-		} else {
-			utils.LogAWSError("WAF.GetWebAcl", err)
+			return nil, errors.WithMessage(err, "WAF.Regional.GetWebAcl")
 		}
-		return nil
+		return nil, errors.WithMessage(err, "WAF.GetWebAcl")
 	}
 
 	webACLSnapshot := &awsmodels.WafWebAcl{
@@ -244,78 +218,84 @@ func buildWafWebACLSnapshot(wafSvc wafiface.WAFAPI, webACLID *string) *awsmodels
 
 	for _, rule := range webACL.Rules {
 		ruleBody, err := getRule(wafSvc, rule.RuleId)
-		if err == nil {
-			webACLSnapshot.Rules = append(webACLSnapshot.Rules, &awsmodels.WafRule{
-				ActivatedRule: rule,
-				Rule:          ruleBody,
-				RuleId:        rule.RuleId,
-			})
+		if err != nil {
+			return nil, err
 		}
+		webACLSnapshot.Rules = append(webACLSnapshot.Rules, &awsmodels.WafRule{
+			ActivatedRule: rule,
+			Rule:          ruleBody,
+			RuleId:        rule.RuleId,
+		})
 	}
 
 	tags, err := listTagsForResourceWaf(wafSvc, webACLSnapshot.ARN)
-	if err == nil {
-		webACLSnapshot.Tags = utils.ParseTagSlice(tags)
+	if err != nil {
+		return nil, err
 	}
+	webACLSnapshot.Tags = utils.ParseTagSlice(tags)
 
-	return webACLSnapshot
+	return webACLSnapshot, nil
 }
 
-func PollWafRegionalWebAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollWafRegionalWebAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting regional WAF Web Acl resource poller")
 
-	// Get regional ACLs for Application Load balancers and API gateways using WAF Regional API
-	var resources []*apimodels.AddResourceEntry
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "waf-regional") {
-		wafRegionalSvc, err := getWafRegionalClient(pollerInput, *regionID)
-		if err != nil {
-			continue // error is logged in getClient()
-		}
-
-		// Start with generating a list of all regional web acls
-		regionalWebACLsSummaries := listWebAcls(wafRegionalSvc)
-		if len(regionalWebACLsSummaries) == 0 {
-			zap.L().Debug("No WAF Regional web ACLs found.", zap.String("region", *regionID))
-			continue
-		}
-
-		for _, regionalWebACL := range regionalWebACLsSummaries {
-			regionalWebACLSnapshot := buildWafWebACLSnapshot(wafRegionalSvc, regionalWebACL.WebACLId)
-			if regionalWebACLSnapshot == nil {
-				continue
-			}
-			regionalWebACLSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			regionalWebACLSnapshot.Region = regionID
-			regionalWebACLSnapshot.ResourceType = aws.String(awsmodels.WafRegionalWebAclSchema)
-
-			resources = append(resources, &apimodels.AddResourceEntry{
-				Attributes:      regionalWebACLSnapshot,
-				ID:              apimodels.ResourceID(*regionalWebACLSnapshot.ARN),
-				IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-				IntegrationType: apimodels.IntegrationTypeAws,
-				Type:            awsmodels.WafRegionalWebAclSchema,
-			})
-		}
+	wafRegionalSvc, err := getWafRegionalClient(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return resources, nil
+	// Start with generating a list of all regional web acls
+	regionalWebACLsSummaries, marker, err := listWebAcls(wafRegionalSvc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
+	}
+
+	var resources []*apimodels.AddResourceEntry
+	for _, regionalWebACL := range regionalWebACLsSummaries {
+		regionalWebACLSnapshot, err := buildWafWebACLSnapshot(wafRegionalSvc, regionalWebACL.WebACLId)
+		if err != nil {
+			return nil, nil, err
+		}
+		if regionalWebACLSnapshot == nil {
+			continue
+		}
+		regionalWebACLSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
+		regionalWebACLSnapshot.Region = pollerInput.Region
+		regionalWebACLSnapshot.ResourceType = aws.String(awsmodels.WafRegionalWebAclSchema)
+
+		resources = append(resources, &apimodels.AddResourceEntry{
+			Attributes:      regionalWebACLSnapshot,
+			ID:              apimodels.ResourceID(*regionalWebACLSnapshot.ARN),
+			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
+			IntegrationType: apimodels.IntegrationTypeAws,
+			Type:            awsmodels.WafRegionalWebAclSchema,
+		})
+	}
+
+	return resources, marker, nil
 }
 
 // PollWafWebAcls gathers information on each Web ACL for an AWS account.
-func PollWafWebAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollWafWebAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting global WAF Web Acl resource poller")
 
-	// Get global ACLs for CloudFront distribution using WAF API
 	wafSvc, err := getWafClient(pollerInput, defaultRegion)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, nil, err
 	}
 
 	// Start with generating a list of all global web acls
-	globalWebAclsSummaries := listWebAcls(wafSvc)
+	globalWebAclsSummaries, marker, err := listWebAcls(wafSvc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, errors.WithMessagef(err, "region: global")
+	}
 	var resources []*apimodels.AddResourceEntry
 	for _, webACL := range globalWebAclsSummaries {
-		webACLSnapshot := buildWafWebACLSnapshot(wafSvc, webACL.WebACLId)
+		webACLSnapshot, err := buildWafWebACLSnapshot(wafSvc, webACL.WebACLId)
+		if err != nil {
+			return nil, nil, err
+		}
 		if webACLSnapshot == nil {
 			continue
 		}
@@ -332,5 +312,5 @@ func PollWafWebAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Ad
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

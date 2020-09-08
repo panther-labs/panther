@@ -98,47 +98,6 @@ export const RESOURCE_TYPES = [
   'AWS.WAF.WebACL',
 ] as const;
 
-export const LOG_TYPES = [
-  'Apache.AccessCombined',
-  'Apache.AccessCommon',
-  'AWS.ALB',
-  'AWS.AuroraMySQLAudit',
-  'AWS.CloudTrail',
-  'AWS.CloudTrailDigest',
-  'AWS.CloudTrailInsight',
-  'AWS.CloudWatchEvents',
-  'AWS.GuardDuty',
-  'AWS.S3ServerAccess',
-  'AWS.VPCFlow',
-  'Fluentd.Syslog3164',
-  'Fluentd.Syslog5424',
-  'GitLab.API',
-  'GitLab.Audit',
-  'GitLab.Exceptions',
-  'GitLab.Git',
-  'GitLab.Integrations',
-  'GitLab.Production',
-  'Juniper.Access',
-  'Juniper.Audit',
-  'Juniper.Firewall',
-  'Juniper.MWS',
-  'Juniper.Postgres',
-  'Juniper.Security',
-  'Nginx.Access',
-  'Osquery.Batch',
-  'Osquery.Differential',
-  'Osquery.Snapshot',
-  'Osquery.Status',
-  'OSSEC.EventInfo',
-  'Suricata.Anomaly',
-  'Suricata.DNS',
-  'Syslog.RFC3164',
-  'Syslog.RFC5424',
-  'Gravitational.TeleportAudit',
-  'Zeek.DNS',
-  'Lacework.Events',
-] as const;
-
 const PANTHER_DOCS_BASE = 'https://docs.runpanther.io';
 
 export const STABLE_PANTHER_VERSION = pantherConfig.PANTHER_VERSION.split('-')[0]; // e.g. "v1.7.1"
@@ -162,6 +121,8 @@ export const ERROR_REPORTING_CONSENT_STORAGE_KEY = 'panther.generalSettings.erro
 
 // The default panther system user id
 export const PANTHER_USER_ID = '00000000-0000-4000-8000-000000000000';
+
+export const DEFAULT_SENSITIVE_VALUE = '*******************';
 
 export const DESTINATIONS: Record<
   DestinationTypeEnum,

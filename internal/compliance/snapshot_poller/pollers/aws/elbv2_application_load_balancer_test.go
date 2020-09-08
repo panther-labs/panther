@@ -21,8 +21,8 @@ package aws
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws/awstest"
@@ -31,31 +31,58 @@ import (
 func TestElbv2DescribeLoadBalancers(t *testing.T) {
 	mockSvc := awstest.BuildMockElbv2Svc([]string{"DescribeLoadBalancersPages"})
 
-	out, err := describeLoadBalancers(mockSvc)
-	require.NoError(t, err)
+	out, marker, err := describeLoadBalancers(mockSvc, nil)
 	assert.NotEmpty(t, out)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestElbv2DescribeLoadBalancersError(t *testing.T) {
 	mockSvc := awstest.BuildMockElbv2SvcError([]string{"DescribeLoadBalancersPages"})
 
-	out, err := describeLoadBalancers(mockSvc)
-	require.Error(t, err)
+	out, marker, err := describeLoadBalancers(mockSvc, nil)
 	assert.Nil(t, out)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestElbv2LoadBalancerListIterator(t *testing.T) {
+	var loadBalancers []*elbv2.LoadBalancer
+	var marker *string
+
+	cont := loadBalancerIterator(awstest.ExampleDescribeLoadBalancersOutput, &loadBalancers, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, loadBalancers, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = loadBalancerIterator(awstest.ExampleDescribeLoadBalancersOutputContinue, &loadBalancers, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, loadBalancers, 1+i*2)
+	}
+
+	cont = loadBalancerIterator(awstest.ExampleDescribeLoadBalancersOutputContinue, &loadBalancers, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, loadBalancers, 101)
 }
 
 func TestElbv2DescribeListeners(t *testing.T) {
 	mockSvc := awstest.BuildMockElbv2Svc([]string{"DescribeListenersPages"})
 
-	out := describeListeners(mockSvc, awstest.ExampleDescribeLoadBalancersOutput.LoadBalancers[0].LoadBalancerArn)
+	out, err := describeListeners(mockSvc, awstest.ExampleDescribeLoadBalancersOutput.LoadBalancers[0].LoadBalancerArn)
 	assert.NotEmpty(t, out)
+	assert.NoError(t, err)
 }
 
 func TestElbv2DescribeListenersError(t *testing.T) {
 	mockSvc := awstest.BuildMockElbv2SvcError([]string{"DescribeListenersPages"})
 
-	out := describeListeners(mockSvc, awstest.ExampleDescribeLoadBalancersOutput.LoadBalancers[0].LoadBalancerArn)
+	out, err := describeListeners(mockSvc, awstest.ExampleDescribeLoadBalancersOutput.LoadBalancers[0].LoadBalancerArn)
 	assert.Nil(t, out)
+	assert.Error(t, err)
 }
 
 func TestElbv2DescribeTags(t *testing.T) {
@@ -97,12 +124,13 @@ func TestBuildElbv2ApplicationLoadBalancerSnapshot(t *testing.T) {
 	mockElbv2Svc := awstest.BuildMockElbv2SvcAll()
 	mockWafRegionalSvc := awstest.BuildMockWafRegionalSvcAll()
 
-	elbv2Snapshot := buildElbv2ApplicationLoadBalancerSnapshot(
+	elbv2Snapshot, err := buildElbv2ApplicationLoadBalancerSnapshot(
 		mockElbv2Svc,
 		mockWafRegionalSvc,
 		awstest.ExampleDescribeLoadBalancersOutput.LoadBalancers[0],
 	)
 
+	assert.NoError(t, err)
 	assert.NotEmpty(t, elbv2Snapshot.SecurityGroups)
 	assert.NotNil(t, elbv2Snapshot.WebAcl)
 	assert.NotEmpty(t, elbv2Snapshot.Name)
@@ -112,18 +140,14 @@ func TestBuildElbv2ApplicationLoadBalancerSnapshotError(t *testing.T) {
 	mockElbv2Svc := awstest.BuildMockElbv2SvcAllError()
 	mockWafRegionalSvc := awstest.BuildMockWafRegionalSvcAllError()
 
-	elbv2Snapshot := buildElbv2ApplicationLoadBalancerSnapshot(
+	elbv2Snapshot, err := buildElbv2ApplicationLoadBalancerSnapshot(
 		mockElbv2Svc,
 		mockWafRegionalSvc,
 		awstest.ExampleDescribeLoadBalancersOutput.LoadBalancers[0],
 	)
 
-	assert.Nil(t, elbv2Snapshot.WebAcl)
-	assert.Equal(
-		t,
-		awstest.ExampleDescribeLoadBalancersOutput.LoadBalancers[0].LoadBalancerArn,
-		elbv2Snapshot.ResourceID,
-	)
+	assert.Error(t, err)
+	assert.Nil(t, elbv2Snapshot)
 }
 
 func TestElbv2ApplicationLoadBalancersPoller(t *testing.T) {
@@ -133,15 +157,15 @@ func TestElbv2ApplicationLoadBalancersPoller(t *testing.T) {
 	Elbv2ClientFunc = awstest.SetupMockElbv2
 	WafRegionalClientFunc = awstest.SetupMockWafRegional
 
-	resources, err := PollElbv2ApplicationLoadBalancers(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollElbv2ApplicationLoadBalancers(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(
 		t,
 		*awstest.ExampleDescribeLoadBalancersOutput.LoadBalancers[0].LoadBalancerArn,
@@ -151,6 +175,7 @@ func TestElbv2ApplicationLoadBalancersPoller(t *testing.T) {
 	assert.NotNil(t, resources[0].Attributes.(*awsmodels.Elbv2ApplicationLoadBalancer).SSLPolicies)
 	assert.NotNil(t, resources[0].Attributes.(*awsmodels.Elbv2ApplicationLoadBalancer).SSLPolicies["ELBSecurityPolicy1"])
 	assert.NotEmpty(t, resources)
+	assert.Nil(t, marker)
 }
 
 func TestElbv2ApplicationLoadBalancersPollerError(t *testing.T) {
@@ -160,16 +185,17 @@ func TestElbv2ApplicationLoadBalancersPollerError(t *testing.T) {
 	Elbv2ClientFunc = awstest.SetupMockElbv2
 	WafRegionalClientFunc = awstest.SetupMockWafRegional
 
-	resources, err := PollElbv2ApplicationLoadBalancers(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollElbv2ApplicationLoadBalancers(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.Error(t, err)
+	assert.Error(t, err)
 	for _, event := range resources {
 		assert.Nil(t, event.Attributes)
 	}
+	assert.Nil(t, marker)
 }

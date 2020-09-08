@@ -33,11 +33,12 @@ var (
 	AwsSession     *session.Session
 	FirehoseClient firehoseiface.FirehoseAPI
 	LambdaClient   lambdaiface.LambdaAPI
+
+	MaxRetries = 10
 )
 
 const (
 	SourceAPIFunctionName = "panther-source-api"
-	MaxRetries            = 10
 )
 
 type EnvConfig struct {

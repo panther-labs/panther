@@ -49,16 +49,17 @@ func TestPasswordPolicyPoller(t *testing.T) {
 
 	IAMClientFunc = awstest.SetupMockIAM
 
-	resources, err := PollPasswordPolicy(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollPasswordPolicy(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
 	assert.Len(t, resources, 1)
 	assert.Equal(t, "123456789012::AWS.PasswordPolicy", string(resources[0].ID))
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestPasswordPolicyPollerError(t *testing.T) {
@@ -66,13 +67,14 @@ func TestPasswordPolicyPollerError(t *testing.T) {
 
 	IAMClientFunc = awstest.SetupMockIAM
 
-	resources, err := PollPasswordPolicy(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollPasswordPolicy(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
-	assert.Len(t, resources, 1)
+	assert.Empty(t, resources)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }

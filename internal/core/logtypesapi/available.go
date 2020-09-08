@@ -26,26 +26,31 @@ import (
 )
 
 // ListAvailableLogTypes lists all available log type ids
-func (api *API) ListAvailableLogTypes(ctx context.Context) (*AvailableLogTypes, error) {
-	logTypes, err := api.ExternalAPI.ListLogTypes(ctx)
+func (api *LogTypesAPI) ListAvailableLogTypes(ctx context.Context) (*AvailableLogTypes, error) {
+	logTypes, err := api.Database.IndexLogTypes(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if api.NativeLogTypes != nil {
 		native := api.NativeLogTypes()
-		L(ctx).Debug(`merging native log types with external API`,
+		L(ctx).Debug(`merging native log types with database log types`,
 			zap.Strings(`external`, logTypes),
 			zap.Strings(`native`, native),
 		)
-		logTypes = appendDistinct(logTypes, native)
+		logTypes = appendDistinct(logTypes, native...)
 	}
+	// Sort available log types by name
 	sort.Strings(logTypes)
 	return &AvailableLogTypes{
 		LogTypes: logTypes,
 	}, nil
 }
 
-func appendDistinct(dst []string, src []string) []string {
+type AvailableLogTypes struct {
+	LogTypes []string `json:"logTypes"`
+}
+
+func appendDistinct(dst []string, src ...string) []string {
 skip:
 	for _, s := range src {
 		for _, d := range dst {

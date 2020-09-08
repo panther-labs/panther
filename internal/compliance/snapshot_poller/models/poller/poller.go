@@ -25,13 +25,14 @@ type ScanMsg struct {
 
 // ScanEntry indicates what type of scan should be performed, and provides the information needed
 // to carry out that scan.
-// The poller can scan a single resource, all resources of a given type, or all resources.
-// Scanning all resources in an account is discouraged for performance reasons.
+// The poller can scan a single resource, all resources of a given type in a given region, or all
+// resources of a given type in all regions. The all region scan is accomplished by breaking the
+// request into multiple smaller requests, one per supported region.
 type ScanEntry struct {
-	AWSAccountID     *string `json:"awsAccountId"`
-	IntegrationID    *string `json:"integrationId"`
-	Region           *string `json:"region"`
-	ResourceID       *string `json:"resourceId"`
-	ResourceType     *string `json:"resourceType"`
-	ScanAllResources *bool   `json:"scanAllResources"`
+	AWSAccountID  *string `json:"awsAccountId"`
+	IntegrationID *string `json:"integrationId"`
+	Region        *string `json:"region"`
+	ResourceID    *string `json:"resourceId"`
+	ResourceType  *string `json:"resourceType"`
+	NextPageToken *string `json:"nextPageToken"`
 }

@@ -1,0 +1,43 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SourceHealthBadge matches original snapshoot 1`] = `
+.panther-0 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  cursor: default;
+  width: -webkit-fit-content;
+  width: -moz-content;
+  width: fit-content;
+  min-width: 85px;
+  text-align: center;
+  font-weight: 700;
+  border-radius: 40px;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 16px;
+  padding-right: 16px;
+  background-color: #d64242;
+}
+
+<div>
+  <div
+    aria-atomic="true"
+    class="panther-0"
+    data-reach-tooltip-trigger=""
+    role="status"
+  >
+    UNHEALTHY
+  </div>
+</div>
+`;

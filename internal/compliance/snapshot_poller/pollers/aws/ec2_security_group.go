@@ -26,6 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
@@ -47,9 +48,12 @@ func PollEC2SecurityGroup(
 	}
 
 	sgID := strings.Replace(resourceARN.Resource, "security-group/", "", 1)
-	securityGroup := getSecurityGroup(ec2Client, aws.String(sgID))
+	securityGroup, err := getSecurityGroup(ec2Client, aws.String(sgID))
+	if err != nil {
+		return nil, err
+	}
 
-	snapshot := buildEc2SecurityGroupSnapshot(ec2Client, securityGroup)
+	snapshot := buildEc2SecurityGroupSnapshot(securityGroup)
 	if snapshot == nil {
 		return nil, nil
 	}
@@ -61,7 +65,7 @@ func PollEC2SecurityGroup(
 }
 
 // getSecurityGroup returns a specific EC2 security group
-func getSecurityGroup(svc ec2iface.EC2API, securityGroupID *string) *ec2.SecurityGroup {
+func getSecurityGroup(svc ec2iface.EC2API, securityGroupID *string) (*ec2.SecurityGroup, error) {
 	securityGroup, err := svc.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{
 		GroupIds: []*string{securityGroupID},
 	})
@@ -71,31 +75,46 @@ func getSecurityGroup(svc ec2iface.EC2API, securityGroupID *string) *ec2.Securit
 				zap.L().Warn("tried to scan non-existent resource",
 					zap.String("resource", *securityGroupID),
 					zap.String("resourceType", awsmodels.Ec2SecurityGroupSchema))
-				return nil
+				return nil, nil
 			}
 		}
-		utils.LogAWSError("EC2.DescribeSecurityGroups", err)
-		return nil
+		return nil, errors.Wrapf(err, "EC2.DescribeSecurityGroups: %s", aws.StringValue(securityGroupID))
 	}
 
-	return securityGroup.SecurityGroups[0]
+	if len(securityGroup.SecurityGroups) != 1 {
+		return nil, errors.WithMessagef(
+			errors.New("EC2.DescribeSecurityGroups"),
+			"expected exactly one security group when describing %s, but found %d security groups",
+			aws.StringValue(securityGroupID),
+			len(securityGroup.SecurityGroups),
+		)
+	}
+	return securityGroup.SecurityGroups[0], nil
 }
 
 // describeSecurityGroupsPages returns all Security Groups for a given region
-func describeSecurityGroups(ec2Svc ec2iface.EC2API) (securityGroups []*ec2.SecurityGroup) {
-	err := ec2Svc.DescribeSecurityGroupsPages(&ec2.DescribeSecurityGroupsInput{},
+func describeSecurityGroups(ec2Svc ec2iface.EC2API, nextMarker *string) (securityGroups []*ec2.SecurityGroup, marker *string, err error) {
+	err = ec2Svc.DescribeSecurityGroupsPages(&ec2.DescribeSecurityGroupsInput{
+		NextToken:  nextMarker,
+		MaxResults: aws.Int64(int64(defaultBatchSize)),
+	},
 		func(page *ec2.DescribeSecurityGroupsOutput, lastPage bool) bool {
-			securityGroups = append(securityGroups, page.SecurityGroups...)
-			return true
+			return ec2SecurityGroupIterator(page, &securityGroups, &marker)
 		})
 
 	if err != nil {
-		utils.LogAWSError("EC2.DescribeSecurityGroupsPages", err)
+		return nil, nil, errors.Wrap(err, "EC2.DescribeSecurityGroupsPages")
 	}
 	return
 }
 
-func buildEc2SecurityGroupSnapshot(_ ec2iface.EC2API, securityGroup *ec2.SecurityGroup) *awsmodels.Ec2SecurityGroup {
+func ec2SecurityGroupIterator(page *ec2.DescribeSecurityGroupsOutput, groups *[]*ec2.SecurityGroup, marker **string) bool {
+	*groups = append(*groups, page.SecurityGroups...)
+	*marker = page.NextToken
+	return len(*groups) < defaultBatchSize
+}
+
+func buildEc2SecurityGroupSnapshot(securityGroup *ec2.SecurityGroup) *awsmodels.Ec2SecurityGroup {
 	if securityGroup == nil {
 		return nil
 	}
@@ -119,60 +138,46 @@ func buildEc2SecurityGroupSnapshot(_ ec2iface.EC2API, securityGroup *ec2.Securit
 }
 
 // PollEc2SecurityGroups gathers information on each Security Group in an AWS account.
-func PollEc2SecurityGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollEc2SecurityGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting EC2 Security Group resource poller")
-	ec2SecurityGroupSnapshots := make(map[string]*awsmodels.Ec2SecurityGroup)
 
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "ec2") {
-		ec2Svc, err := getEC2Client(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
-
-		// Start with generating a list of all Security Groups
-		securityGroups := describeSecurityGroups(ec2Svc)
-		if len(securityGroups) == 0 {
-			zap.L().Debug("no EC2 Security Groups found", zap.String("region", *regionID))
-			continue
-		}
-
-		// For each Security Group, build out a full snapshot
-		for _, securityGroup := range securityGroups {
-			ec2SecurityGroupSnapshot := buildEc2SecurityGroupSnapshot(ec2Svc, securityGroup)
-
-			// arn:aws:ec2:region:account-id:security-group/sg-id
-			resourceID := strings.Join(
-				[]string{
-					"arn",
-					pollerInput.AuthSourceParsedARN.Partition,
-					"ec2",
-					*regionID,
-					*ec2SecurityGroupSnapshot.OwnerId,
-					"security-group/" + *ec2SecurityGroupSnapshot.ID,
-				},
-				":",
-			)
-
-			// Populate generic fields
-			ec2SecurityGroupSnapshot.ResourceID = aws.String(resourceID)
-
-			// Populate AWS generic fields
-			ec2SecurityGroupSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			ec2SecurityGroupSnapshot.Region = regionID
-			ec2SecurityGroupSnapshot.ARN = aws.String(resourceID)
-
-			if _, ok := ec2SecurityGroupSnapshots[resourceID]; !ok {
-				ec2SecurityGroupSnapshots[resourceID] = ec2SecurityGroupSnapshot
-			} else {
-				zap.L().Info("overwriting existing EC2 Security Group snapshot",
-					zap.String("resourceId", resourceID))
-				ec2SecurityGroupSnapshots[resourceID] = ec2SecurityGroupSnapshot
-			}
-		}
+	ec2Svc, err := getEC2Client(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	resources := make([]*apimodels.AddResourceEntry, 0, len(ec2SecurityGroupSnapshots))
-	for resourceID, ec2SecurityGroupSnapshot := range ec2SecurityGroupSnapshots {
+	// Start with generating a list of all Security Groups
+	securityGroups, marker, err := describeSecurityGroups(ec2Svc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
+	}
+
+	// For each Security Group, build out a full snapshot
+	resources := make([]*apimodels.AddResourceEntry, 0, len(securityGroups))
+	for _, securityGroup := range securityGroups {
+		ec2SecurityGroupSnapshot := buildEc2SecurityGroupSnapshot(securityGroup)
+
+		// arn:aws:ec2:region:account-id:security-group/sg-id
+		resourceID := strings.Join(
+			[]string{
+				"arn",
+				pollerInput.AuthSourceParsedARN.Partition,
+				"ec2",
+				*pollerInput.Region,
+				*ec2SecurityGroupSnapshot.OwnerId,
+				"security-group/" + *ec2SecurityGroupSnapshot.ID,
+			},
+			":",
+		)
+
+		// Populate generic fields
+		ec2SecurityGroupSnapshot.ResourceID = aws.String(resourceID)
+
+		// Populate AWS generic fields
+		ec2SecurityGroupSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
+		ec2SecurityGroupSnapshot.Region = pollerInput.Region
+		ec2SecurityGroupSnapshot.ARN = aws.String(resourceID)
+
 		resources = append(resources, &apimodels.AddResourceEntry{
 			Attributes:      ec2SecurityGroupSnapshot,
 			ID:              apimodels.ResourceID(resourceID),
@@ -182,5 +187,5 @@ func PollEc2SecurityGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimo
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

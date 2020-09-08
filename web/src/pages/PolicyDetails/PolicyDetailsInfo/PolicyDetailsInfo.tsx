@@ -38,8 +38,8 @@ import urls from 'Source/urls';
 import JsonViewer from 'Components/JsonViewer';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
-import SeverityBadge from 'Components/SeverityBadge';
-import StatusBadge from 'Components/StatusBadge';
+import SeverityBadge from 'Components/badges/SeverityBadge';
+import StatusBadge from 'Components/badges/StatusBadge';
 
 interface ResourceDetailsInfoProps {
   policy?: PolicyDetails;

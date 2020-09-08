@@ -55,7 +55,7 @@ func getDynamoDBClient(pollerResourceInput *awsmodels.ResourcePollerInput,
 
 	client, err := getClient(pollerResourceInput, DynamoDBClientFunc, "dynamodb", region)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, err
 	}
 
 	return client.(dynamodbiface.DynamoDBAPI), nil
@@ -70,7 +70,7 @@ func getApplicationAutoScalingClient(pollerResourceInput *awsmodels.ResourcePoll
 
 	client, err := getClient(pollerResourceInput, ApplicationAutoScalingClientFunc, "applicationautoscaling", region)
 	if err != nil {
-		return nil, err // error is logged in getClient()
+		return nil, err
 	}
 
 	return client.(applicationautoscalingiface.ApplicationAutoScalingAPI), nil
@@ -95,9 +95,9 @@ func PollDynamoDBTable(
 
 	table := strings.Replace(resourceARN.Resource, "table/", "", 1)
 
-	snapshot := buildDynamoDBTableSnapshot(dynamoClient, autoscalingClient, aws.String(table))
-	if snapshot == nil {
-		return nil, nil
+	snapshot, err := buildDynamoDBTableSnapshot(dynamoClient, autoscalingClient, aws.String(table))
+	if err != nil || snapshot == nil {
+		return nil, err
 	}
 	snapshot.Region = aws.String(resourceARN.Region)
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
@@ -105,20 +105,29 @@ func PollDynamoDBTable(
 }
 
 // listTables returns a list of all Dynamo DB tables in the account
-func listTables(dynamoDBSvc dynamodbiface.DynamoDBAPI) (tables []*string, err error) {
-	err = dynamoDBSvc.ListTablesPages(&dynamodb.ListTablesInput{},
+func listTables(dynamoDBSvc dynamodbiface.DynamoDBAPI, nextMarker *string) (tables []*string, marker *string, err error) {
+	err = dynamoDBSvc.ListTablesPages(&dynamodb.ListTablesInput{
+		ExclusiveStartTableName: nextMarker,
+		Limit:                   aws.Int64(int64(defaultBatchSize)),
+	},
 		func(page *dynamodb.ListTablesOutput, lastPage bool) bool {
-			tables = append(tables, page.TableNames...)
-			return true
+			return dynamoTableIterator(page, &tables, &marker)
 		})
 	if err != nil {
-		return nil, errors.Wrap(err, "DynamoDB.ListTablesPages")
+		return nil, nil, errors.Wrap(err, "DynamoDB.ListTablesPages")
 	}
 	return
 }
 
+func dynamoTableIterator(page *dynamodb.ListTablesOutput, tables *[]*string, marker **string) bool {
+	*tables = append(*tables, page.TableNames...)
+	// DynamoDB uses the name of the last table evaluated as the pagination marker
+	*marker = page.LastEvaluatedTableName
+	return len(*tables) < defaultBatchSize
+}
+
 // describeTable provides detailed information about a given DynamoDB table
-func describeTable(dynamoDBSvc dynamodbiface.DynamoDBAPI, name *string) *dynamodb.TableDescription {
+func describeTable(dynamoDBSvc dynamodbiface.DynamoDBAPI, name *string) (*dynamodb.TableDescription, error) {
 	out, err := dynamoDBSvc.DescribeTable(&dynamodb.DescribeTableInput{TableName: name})
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {
@@ -126,22 +135,20 @@ func describeTable(dynamoDBSvc dynamodbiface.DynamoDBAPI, name *string) *dynamod
 				zap.L().Warn("tried to scan non-existent resource",
 					zap.String("resource", *name),
 					zap.String("resourceType", awsmodels.DynamoDBTableSchema))
-				return nil
+				return nil, nil
 			}
 		}
-		utils.LogAWSError("DynamoDB.DescribeTable", err)
-		return nil
+		return nil, errors.Wrapf(err, "DynamoDB.DescribeTable: %s", aws.StringValue(name))
 	}
 
-	return out.Table
+	return out.Table, nil
 }
 
 // describeTimeToLive provides time to live configuration information
 func describeTimeToLive(dynamoDBSvc dynamodbiface.DynamoDBAPI, name *string) (*dynamodb.TimeToLiveDescription, error) {
 	out, err := dynamoDBSvc.DescribeTimeToLive(&dynamodb.DescribeTimeToLiveInput{TableName: name})
 	if err != nil {
-		utils.LogAWSError("DynamoDB.DescribeTimeToLive", err)
-		return nil, err
+		return nil, errors.Wrapf(err, "DynamoDB.DescribeTimeToLive: %s", aws.StringValue(name))
 	}
 
 	return out.TimeToLiveDescription, nil
@@ -151,17 +158,7 @@ func describeTimeToLive(dynamoDBSvc dynamodbiface.DynamoDBAPI, name *string) (*d
 func listTagsOfResource(dynamoDBSvc dynamodbiface.DynamoDBAPI, arn *string) ([]*dynamodb.Tag, error) {
 	out, err := dynamoDBSvc.ListTagsOfResource(&dynamodb.ListTagsOfResourceInput{ResourceArn: arn})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "AccessDeniedException" {
-				zap.L().Error(
-					"AccessDeniedException, additional permissions were not granted",
-					zap.String("API", "DynamoDB.ListTagsOfResource"))
-				return nil, err
-			}
-		}
-
-		utils.LogAWSError("DynamoDB.ListTagsOfResource ", err)
-		return nil, err
+		return nil, errors.Wrapf(err, "DynamoDB.ListTagsOfResource: %s", aws.StringValue(arn))
 	}
 
 	return out.Tags, nil
@@ -184,8 +181,9 @@ func describeScalableTargets(
 			return true
 		})
 	if err != nil {
-		utils.LogAWSError("ApplicationAutoScaling.DescribeScalableTargetsPages", err)
-		return
+		// Difficult to print the values of a slice of string pointers, so we append context in
+		// the calling function
+		return nil, errors.Wrap(err, "ApplicationAutoScaling.DescribeScalableTargetsPages")
 	}
 
 	return
@@ -197,13 +195,12 @@ func buildDynamoDBTableSnapshot(
 	dynamoDBSvc dynamodbiface.DynamoDBAPI,
 	applicationAutoScalingSvc applicationautoscalingiface.ApplicationAutoScalingAPI,
 	tableName *string,
-) *awsmodels.DynamoDBTable {
+) (*awsmodels.DynamoDBTable, error) {
 
-	description := describeTable(dynamoDBSvc, tableName)
-	// Some type of error occurred, it's already been logged appropriately in describeTable but we
-	// cannot continue building this resource.
-	if description == nil {
-		return nil
+	description, err := describeTable(dynamoDBSvc, tableName)
+	// description will be nil if the resource no longer exists
+	if err != nil || description == nil {
+		return nil, err
 	}
 
 	table := &awsmodels.DynamoDBTable{
@@ -237,9 +234,10 @@ func buildDynamoDBTableSnapshot(
 	resourceIDs := []*string{tableID}
 
 	ttl, err := describeTimeToLive(dynamoDBSvc, tableName)
-	if err == nil {
-		table.TimeToLiveDescription = ttl
+	if err != nil {
+		return nil, err
 	}
+	table.TimeToLiveDescription = ttl
 
 	for _, index := range description.GlobalSecondaryIndexes {
 		indexID := aws.String(*tableID + "/index/" + *index.IndexName)
@@ -247,80 +245,58 @@ func buildDynamoDBTableSnapshot(
 	}
 
 	tags, err := listTagsOfResource(dynamoDBSvc, table.ARN)
-	if err == nil {
-		table.Tags = utils.ParseTagSlice(tags)
-	}
-
-	autoScalingDescriptions, err := describeScalableTargets(applicationAutoScalingSvc, resourceIDs)
 	if err != nil {
-		utils.LogAWSError("ApplicationAutoScaling.DescribeScalableTargets", err)
-		return table
+		return nil, err
 	}
-	table.AutoScalingDescriptions = autoScalingDescriptions
+	table.Tags = utils.ParseTagSlice(tags)
 
-	return table
+	if table.AutoScalingDescriptions, err = describeScalableTargets(applicationAutoScalingSvc, resourceIDs); err != nil {
+		return nil, errors.WithMessagef(err, "table: %s", aws.StringValue(tableName))
+	}
+
+	return table, nil
 }
 
 // PollDynamoDBTables gathers information on each Dynamo DB Table for an AWS account.
-func PollDynamoDBTables(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, error) {
+func PollDynamoDBTables(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting DynamoDB Table resource poller")
-	dynamoDBTableSnapshots := make(map[string]*awsmodels.DynamoDBTable)
-
-	for _, regionID := range utils.GetServiceRegions(pollerInput.Regions, "dynamodb") {
-		dynamoDBSvc, err := getDynamoDBClient(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
-
-		applicationAutoScalingSvc, err := getApplicationAutoScalingClient(pollerInput, *regionID)
-		if err != nil {
-			return nil, err // error is logged in getClient()
-		}
-
-		// Start with generating a list of all tables
-		tables, err := listTables(dynamoDBSvc)
-		if err != nil {
-			return nil, errors.Wrapf(err, "PollDynamoDBTables(%#v) in region %s", *pollerInput, *regionID)
-		}
-		if len(tables) == 0 {
-			zap.L().Debug("no DynamoDB tables found.", zap.String("region", *regionID))
-			continue
-		}
-
-		for _, table := range tables {
-			dynamoDBTable := buildDynamoDBTableSnapshot(
-				dynamoDBSvc,
-				applicationAutoScalingSvc,
-				table,
-			)
-			if dynamoDBTable == nil {
-				continue
-			}
-			dynamoDBTable.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
-			dynamoDBTable.Region = regionID
-
-			if _, ok := dynamoDBTableSnapshots[*dynamoDBTable.ARN]; !ok {
-				dynamoDBTableSnapshots[*dynamoDBTable.ARN] = dynamoDBTable
-			} else {
-				zap.L().Info(
-					"overwriting existing DynamoDB Table snapshot",
-					zap.String("resourceID", *dynamoDBTable.ARN),
-				)
-				dynamoDBTableSnapshots[*dynamoDBTable.ARN] = dynamoDBTable
-			}
-		}
+	dynamoDBSvc, err := getDynamoDBClient(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	resources := make([]*apimodels.AddResourceEntry, 0, len(dynamoDBTableSnapshots))
-	for resourceID, table := range dynamoDBTableSnapshots {
+	applicationAutoScalingSvc, err := getApplicationAutoScalingClient(pollerInput, *pollerInput.Region)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Start with generating a list of all tables
+	tables, marker, err := listTables(dynamoDBSvc, pollerInput.NextPageToken)
+	if err != nil {
+		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
+	}
+
+	resources := make([]*apimodels.AddResourceEntry, 0, len(tables))
+	for i, table := range tables {
+		dynamoDBTable, err := buildDynamoDBTableSnapshot(dynamoDBSvc, applicationAutoScalingSvc, table)
+		if err != nil {
+			zap.L().Debug("error occurred building snapshot", zap.Int("table number", i))
+			return nil, nil, err
+		}
+		if dynamoDBTable == nil {
+			continue
+		}
+		dynamoDBTable.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
+		dynamoDBTable.Region = pollerInput.Region
+
 		resources = append(resources, &apimodels.AddResourceEntry{
-			Attributes:      table,
-			ID:              apimodels.ResourceID(resourceID),
+			Attributes:      dynamoDBTable,
+			ID:              apimodels.ResourceID(*dynamoDBTable.ResourceID),
 			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
 			IntegrationType: apimodels.IntegrationTypeAws,
 			Type:            awsmodels.DynamoDBTableSchema,
 		})
 	}
 
-	return resources, nil
+	return resources, marker, nil
 }

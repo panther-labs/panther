@@ -11,7 +11,7 @@ exports[`Wizard renders a step 1`] = `
   }
 }
 
-.panther-13 {
+.panther-12 {
   background-color: #23344e;
   border-radius: 4px;
   padding: 24px;
@@ -20,7 +20,7 @@ exports[`Wizard renders a step 1`] = `
   position: relative;
 }
 
-.panther-4 {
+.panther-3 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -34,7 +34,7 @@ exports[`Wizard renders a step 1`] = `
   z-index: 2;
 }
 
-.panther-3 {
+.panther-2 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -51,7 +51,7 @@ exports[`Wizard renders a step 1`] = `
   opacity: 1;
 }
 
-.panther-1 {
+.panther-0 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -70,59 +70,42 @@ exports[`Wizard renders a step 1`] = `
   font-weight: 700;
   border-radius: 99999px;
   border: 1px solid;
-  border-color: #0081c5;
-  background-color: #0081c5;
+  border-color: #bdbdbd;
+  background-color: transparent;
 }
 
-.panther-0 {
-  display: inline-block;
-  vertical-align: sub;
-  -webkit-flex-shrink: 0;
-  -ms-flex-negative: 0;
-  flex-shrink: 0;
-  width: 12px;
-  height: 12px;
-  color: currentColor;
-}
-
-.panther-2 {
+.panther-1 {
   font-size: 0.875rem;
   margin-left: 8px;
 }
 
-.panther-12 {
+.panther-11 {
   padding-top: 12px;
 }
 
-.panther-11 {
-  width: 700px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.panther-10 {
+.panther-9 {
   will-change: opacity;
   -webkit-animation: animation-0 300ms 0ms ease-in-out both;
   animation: animation-0 300ms 0ms ease-in-out both;
 }
 
-.panther-7 {
+.panther-6 {
   margin-bottom: 40px;
   text-align: center;
 }
 
-.panther-5 {
+.panther-4 {
   font-weight: 500;
   font-size: 1.25rem;
-  margin-bottom: 8px;
 }
 
-.panther-6 {
+.panther-5 {
   font-size: 0.875rem;
+  margin-top: 8px;
   color: #bdbdbd;
 }
 
-.panther-9 {
+.panther-8 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -135,14 +118,7 @@ exports[`Wizard renders a step 1`] = `
   margin-bottom: 16px;
 }
 
-.panther-8 {
-  cursor: pointer;
-  color: #f6f6f6;
-  -webkit-text-decoration: none;
-  text-decoration: none;
-  background-color: #0081c5;
-  -webkit-transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
-  transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+.panther-7 {
   width: auto;
   padding-left: 20px;
   padding-right: 20px;
@@ -150,86 +126,85 @@ exports[`Wizard renders a step 1`] = `
   padding-bottom: 12px;
   font-size: 0.938rem;
   outline: none;
+  -webkit-transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
   border-radius: 4px;
   border: 1px solid;
   border-color: #0081c5;
+  background-color: #0081c5;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
 }
 
-.panther-8:hover {
+.panther-7:hover {
   background-color: #0a8bcf;
   border-color: #0a8bcf;
 }
 
-.panther-8:focus {
+.panther-7:focus {
   background-color: #0a8bcf;
   border-color: #55d6ff;
 }
 
-.panther-8:active,
-.panther-8[data-active=true] {
+.panther-7:active,
+.panther-7[data-active=true] {
   background-color: #0077bb;
   border-color: #0077bb;
 }
 
 <div>
   <article
-    class="panther-13"
+    class="panther-12"
   >
     <ul
-      class="panther-4"
+      class="panther-3"
     >
       <li
-        class="panther-3"
+        class="panther-2"
       >
         <div
-          class="panther-1"
+          class="panther-0"
         >
-          <svg
-            class="panther-0"
-            role="presentation"
-            viewBox="0 0 24 24"
-          >
-            <path
-              d="M8.99991 16.17L4.82991 12L3.40991 13.41L8.99991 19L20.9999 6.99997L19.5899 5.58997L8.99991 16.17Z"
-            />
-          </svg>
+          1
         </div>
         <p
-          class="panther-2"
+          class="panther-1"
         >
           Step Nickname
         </p>
       </li>
     </ul>
     <div
-      class="panther-12"
+      class="panther-11"
     >
       <section
-        class="panther-11"
+        class="panther-10"
       >
         <div
-          class="panther-10"
+          class="panther-9"
         >
           <header
-            class="panther-7"
+            class="panther-6"
           >
             <h1
-              class="panther-5"
+              class="panther-4"
             >
               Title
             </h1>
             <p
-              class="panther-6"
+              class="panther-5"
             >
               Subtitle
             </p>
           </header>
           Content
           <div
-            class="panther-9"
+            class="panther-8"
           >
             <button
-              class="panther-8"
+              class="panther-7"
               type="button"
             >
               Continue

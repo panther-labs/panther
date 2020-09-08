@@ -395,8 +395,9 @@ export type GlobalPythonModule = {
 
 export type IntegrationItemHealthStatus = {
   __typename?: 'IntegrationItemHealthStatus';
-  healthy?: Maybe<Scalars['Boolean']>;
-  errorMessage?: Maybe<Scalars['String']>;
+  healthy: Scalars['Boolean'];
+  message: Scalars['String'];
+  rawErrorMessage?: Maybe<Scalars['String']>;
 };
 
 export type IntegrationTemplate = {
@@ -459,7 +460,7 @@ export enum ListAlertsSortFieldsEnum {
 
 export type ListAvailableLogTypesResponse = {
   __typename?: 'ListAvailableLogTypesResponse';
-  logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
+  logTypes: Array<Scalars['String']>;
 };
 
 export type ListComplianceItemsResponse = {
@@ -871,6 +872,7 @@ export type Query = {
   __typename?: 'Query';
   alert?: Maybe<AlertDetails>;
   alerts?: Maybe<ListAlertsResponse>;
+  sendTestAlert?: Maybe<SendTestAlertResponse>;
   destination?: Maybe<Destination>;
   destinations?: Maybe<Array<Maybe<Destination>>>;
   generalSettings: GeneralSettings;
@@ -887,7 +889,7 @@ export type Query = {
   policy?: Maybe<PolicyDetails>;
   policies?: Maybe<ListPoliciesResponse>;
   policiesForResource?: Maybe<ListComplianceItemsResponse>;
-  listAvailableLogTypes?: Maybe<ListAvailableLogTypesResponse>;
+  listAvailableLogTypes: ListAvailableLogTypesResponse;
   listComplianceIntegrations: Array<ComplianceIntegration>;
   listLogIntegrations: Array<LogIntegration>;
   organizationStats?: Maybe<OrganizationStatsResponse>;
@@ -904,6 +906,10 @@ export type QueryAlertArgs = {
 
 export type QueryAlertsArgs = {
   input?: Maybe<ListAlertsInput>;
+};
+
+export type QuerySendTestAlertArgs = {
+  input: SendTestAlertInput;
 };
 
 export type QueryDestinationArgs = {
@@ -1080,6 +1086,15 @@ export type ScannedResourceStats = {
   __typename?: 'ScannedResourceStats';
   count?: Maybe<ComplianceStatusCounts>;
   type?: Maybe<Scalars['String']>;
+};
+
+export type SendTestAlertInput = {
+  outputIds: Array<Scalars['ID']>;
+};
+
+export type SendTestAlertResponse = {
+  __typename?: 'SendTestAlertResponse';
+  success?: Maybe<Scalars['Boolean']>;
 };
 
 export type Series = {
@@ -1398,6 +1413,9 @@ export type ResolversTypes = {
   SortDirEnum: SortDirEnum;
   ListAlertsResponse: ResolverTypeWrapper<ListAlertsResponse>;
   AlertSummary: ResolverTypeWrapper<AlertSummary>;
+  SendTestAlertInput: SendTestAlertInput;
+  SendTestAlertResponse: ResolverTypeWrapper<SendTestAlertResponse>;
+  Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
   Destination: ResolverTypeWrapper<Destination>;
   DestinationTypeEnum: DestinationTypeEnum;
   DestinationConfig: ResolverTypeWrapper<DestinationConfig>;
@@ -1412,7 +1430,6 @@ export type ResolversTypes = {
   AsanaConfig: ResolverTypeWrapper<AsanaConfig>;
   CustomWebhookConfig: ResolverTypeWrapper<CustomWebhookConfig>;
   GeneralSettings: ResolverTypeWrapper<GeneralSettings>;
-  Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
   ComplianceIntegration: ResolverTypeWrapper<ComplianceIntegration>;
   ComplianceIntegrationHealth: ResolverTypeWrapper<ComplianceIntegrationHealth>;
   IntegrationItemHealthStatus: ResolverTypeWrapper<IntegrationItemHealthStatus>;
@@ -1539,6 +1556,9 @@ export type ResolversParentTypes = {
   SortDirEnum: SortDirEnum;
   ListAlertsResponse: ListAlertsResponse;
   AlertSummary: AlertSummary;
+  SendTestAlertInput: SendTestAlertInput;
+  SendTestAlertResponse: SendTestAlertResponse;
+  Boolean: Scalars['Boolean'];
   Destination: Destination;
   DestinationTypeEnum: DestinationTypeEnum;
   DestinationConfig: DestinationConfig;
@@ -1553,7 +1573,6 @@ export type ResolversParentTypes = {
   AsanaConfig: AsanaConfig;
   CustomWebhookConfig: CustomWebhookConfig;
   GeneralSettings: GeneralSettings;
-  Boolean: Scalars['Boolean'];
   ComplianceIntegration: ComplianceIntegration;
   ComplianceIntegrationHealth: ComplianceIntegrationHealth;
   IntegrationItemHealthStatus: IntegrationItemHealthStatus;
@@ -1919,8 +1938,9 @@ export type IntegrationItemHealthStatusResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['IntegrationItemHealthStatus'] = ResolversParentTypes['IntegrationItemHealthStatus']
 > = {
-  healthy?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
-  errorMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  healthy?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  rawErrorMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -1959,7 +1979,7 @@ export type ListAvailableLogTypesResponseResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['ListAvailableLogTypesResponse'] = ResolversParentTypes['ListAvailableLogTypesResponse']
 > = {
-  logTypes?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
+  logTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2395,6 +2415,12 @@ export type QueryResolvers<
     ContextType,
     RequireFields<QueryAlertsArgs, never>
   >;
+  sendTestAlert?: Resolver<
+    Maybe<ResolversTypes['SendTestAlertResponse']>,
+    ParentType,
+    ContextType,
+    RequireFields<QuerySendTestAlertArgs, 'input'>
+  >;
   destination?: Resolver<
     Maybe<ResolversTypes['Destination']>,
     ParentType,
@@ -2481,7 +2507,7 @@ export type QueryResolvers<
     RequireFields<QueryPoliciesForResourceArgs, never>
   >;
   listAvailableLogTypes?: Resolver<
-    Maybe<ResolversTypes['ListAvailableLogTypesResponse']>,
+    ResolversTypes['ListAvailableLogTypesResponse'],
     ParentType,
     ContextType
   >;
@@ -2652,6 +2678,14 @@ export type ScannedResourceStatsResolvers<
 > = {
   count?: Resolver<Maybe<ResolversTypes['ComplianceStatusCounts']>, ParentType, ContextType>;
   type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type SendTestAlertResponseResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['SendTestAlertResponse'] = ResolversParentTypes['SendTestAlertResponse']
+> = {
+  success?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2851,6 +2885,7 @@ export type Resolvers<ContextType = any> = {
   S3LogIntegrationHealth?: S3LogIntegrationHealthResolvers<ContextType>;
   ScannedResources?: ScannedResourcesResolvers<ContextType>;
   ScannedResourceStats?: ScannedResourceStatsResolvers<ContextType>;
+  SendTestAlertResponse?: SendTestAlertResponseResolvers<ContextType>;
   Series?: SeriesResolvers<ContextType>;
   SeriesData?: SeriesDataResolvers<ContextType>;
   SingleValue?: SingleValueResolvers<ContextType>;

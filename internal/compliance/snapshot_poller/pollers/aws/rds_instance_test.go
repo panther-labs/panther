@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -32,15 +33,42 @@ import (
 func TestRDSInstanceDescribe(t *testing.T) {
 	mockSvc := awstest.BuildMockRdsSvc([]string{"DescribeDBInstancesPages"})
 
-	out := describeDBInstances(mockSvc)
+	out, marker, err := describeDBInstances(mockSvc, nil)
 	assert.NotEmpty(t, out)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestRdsInstanceListIterator(t *testing.T) {
+	var instances []*rds.DBInstance
+	var marker *string
+
+	cont := rdsInstanceIterator(awstest.ExampleDescribeDBInstancesOutput, &instances, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, instances, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = rdsInstanceIterator(awstest.ExampleDescribeDBInstancesOutputContinue, &instances, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, instances, 1+i*2)
+	}
+
+	cont = rdsInstanceIterator(awstest.ExampleDescribeDBInstancesOutputContinue, &instances, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, instances, 101)
 }
 
 func TestRDSInstanceDescribeError(t *testing.T) {
 	mockSvc := awstest.BuildMockRdsSvcError([]string{"DescribeDBInstancesPages"})
 
-	out := describeDBInstances(mockSvc)
+	out, marker, err := describeDBInstances(mockSvc, nil)
 	assert.Nil(t, out)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }
 
 func TestRDSInstanceDescribeSnapshots(t *testing.T) {
@@ -94,11 +122,12 @@ func TestRDSInstanceDescribeSnapshotAttributesError(t *testing.T) {
 func TestRDSInstanceBuildSnapshot(t *testing.T) {
 	mockSvc := awstest.BuildMockRdsSvcAll()
 
-	instanceSnapshot := buildRDSInstanceSnapshot(
+	instanceSnapshot, err := buildRDSInstanceSnapshot(
 		mockSvc,
 		awstest.ExampleDescribeDBInstancesOutput.DBInstances[0],
 	)
 
+	assert.NoError(t, err)
 	assert.NotEmpty(t, instanceSnapshot.ARN)
 	assert.NotEmpty(t, instanceSnapshot.SnapshotAttributes)
 }
@@ -106,14 +135,13 @@ func TestRDSInstanceBuildSnapshot(t *testing.T) {
 func TestRDSInstanceBuildSnapshotErrors(t *testing.T) {
 	mockSvc := awstest.BuildMockRdsSvcAllError()
 
-	instance := buildRDSInstanceSnapshot(
+	instance, err := buildRDSInstanceSnapshot(
 		mockSvc,
 		awstest.ExampleDescribeDBInstancesOutput.DBInstances[0],
 	)
 
-	assert.Equal(t, "db.t2.micro", *instance.DBInstanceClass)
-	assert.Equal(t, *awstest.ExampleRDSInstanceName, *instance.ID)
-	assert.Equal(t, awstest.ExampleDescribeDBInstancesOutput.DBInstances[0].OptionGroupMemberships, instance.OptionGroupMemberships)
+	assert.Error(t, err)
+	assert.Nil(t, instance)
 }
 
 func TestRDSInstancePoller(t *testing.T) {
@@ -121,15 +149,14 @@ func TestRDSInstancePoller(t *testing.T) {
 
 	RDSClientFunc = awstest.SetupMockRds
 
-	resources, err := PollRDSInstances(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollRDSInstances(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
 	assert.NotEmpty(t, resources)
 	instance := resources[0].Attributes.(*awsmodels.RDSInstance)
 	assert.Equal(t, aws.String("superuser"), instance.MasterUsername)
@@ -140,6 +167,8 @@ func TestRDSInstancePoller(t *testing.T) {
 	assert.Equal(t, aws.Int64(3306), instance.Endpoint.Port)
 	assert.NotEmpty(t, instance.DBSubnetGroup.Subnets)
 	assert.Equal(t, aws.String("in-sync"), instance.OptionGroupMemberships[0].Status)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestRDSInstancePollerError(t *testing.T) {
@@ -147,16 +176,15 @@ func TestRDSInstancePollerError(t *testing.T) {
 
 	RDSClientFunc = awstest.SetupMockRds
 
-	resources, err := PollRDSInstances(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollRDSInstances(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
-	for _, event := range resources {
-		assert.Nil(t, event.Attributes)
-	}
+	assert.Empty(t, resources)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }

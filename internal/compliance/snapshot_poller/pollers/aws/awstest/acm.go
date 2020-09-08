@@ -30,7 +30,7 @@ import (
 
 // Example ACM API return values
 var (
-	ExampleCertificateArn = aws.String("arn:aws:acm:us-west-2:123456789012:certificate/asdfasdf-1234-1234-1234-asdfasdf123123")
+	ExampleCertificateArn = aws.String("arn:aws:acm:us-west-2:123456789012:certificate/asdfasdf-1234-1234-1234-1")
 
 	ExampleListCertificatesOutput = &acm.ListCertificatesOutput{
 		CertificateSummaryList: []*acm.CertificateSummary{
@@ -39,6 +39,20 @@ var (
 				CertificateArn: ExampleCertificateArn,
 			},
 		},
+	}
+
+	ExampleListCertificatesOutputContinue = &acm.ListCertificatesOutput{
+		CertificateSummaryList: []*acm.CertificateSummary{
+			{
+				DomainName:     aws.String("runpanther.123"),
+				CertificateArn: ExampleCertificateArn,
+			},
+			{
+				DomainName:     aws.String("runpanther.abc"),
+				CertificateArn: ExampleCertificateArn,
+			},
+		},
+		NextToken: aws.String("1"),
 	}
 
 	ExampleDescribeCertificateOutput = &acm.DescribeCertificateOutput{
@@ -104,7 +118,7 @@ var (
 // ACM mock
 
 // SetupMockAcm is used to override the ACM Client initializer
-func SetupMockAcm(sess *session.Session, cfg *aws.Config) interface{} {
+func SetupMockAcm(_ *session.Session, _ *aws.Config) interface{} {
 	return MockAcmForSetup
 }
 

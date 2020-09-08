@@ -47,7 +47,7 @@ var (
 	lambdaClient lambdaiface.LambdaAPI
 
 	httpClient       *http.Client
-	complianceClient *complianceapi.PantherCompliance
+	complianceClient *complianceapi.PantherComplianceAPI
 	policyEngine     analysis.PolicyEngine
 	ruleEngine       analysis.RuleEngine
 )

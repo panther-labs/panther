@@ -18,7 +18,6 @@
 
 import React from 'react';
 import { useSnackbar } from 'pouncejs';
-import urls from 'Source/urls';
 import Page404 from 'Pages/404';
 import useRouter from 'Hooks/useRouter';
 import withSEO from 'Hoc/withSEO';
@@ -29,7 +28,8 @@ import { useUpdateComplianceSource } from './graphql/updateComplianceSource.gene
 
 const EditComplianceSource: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
-  const { match, history } = useRouter<{ id: string }>();
+  const { match } = useRouter<{ id: string }>();
+
   const { data, error: getError } = useGetComplianceSource({
     variables: { id: match.params.id },
     onError: error => {
@@ -40,9 +40,7 @@ const EditComplianceSource: React.FC = () => {
     },
   });
 
-  const [updateComplianceSource, { error: updateError }] = useUpdateComplianceSource({
-    onCompleted: () => history.push(urls.compliance.sources.list()),
-  });
+  const [updateComplianceSource] = useUpdateComplianceSource();
 
   const initialValues = React.useMemo(
     () => ({
@@ -63,7 +61,6 @@ const EditComplianceSource: React.FC = () => {
   return (
     <ComplianceSourceWizard
       initialValues={initialValues}
-      externalErrorMessage={updateError && extractErrorMessage(updateError)}
       onSubmit={values =>
         updateComplianceSource({
           variables: {

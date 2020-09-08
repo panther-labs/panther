@@ -43,7 +43,7 @@ var (
 	integrationTest bool
 	awsSession      = session.Must(session.NewSession())
 	httpClient      = gatewayapi.GatewayClient(awsSession)
-	apiClient       *client.PantherCompliance
+	apiClient       *client.PantherComplianceAPI
 
 	integrationID = models.IntegrationID("f0e95b8b-6d93-4de5-a963-a2974fd2ba72")
 

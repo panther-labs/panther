@@ -45,6 +45,20 @@ var (
 		},
 	}
 
+	ExampleListKeysOutputContinue = &kms.ListKeysOutput{
+		Keys: []*kms.KeyListEntry{
+			{
+				KeyArn: aws.String("arn:aws:kms:us-west-2:111111111111:key/188c57ed-b28a-4c0e-9821-f4940d15cb0a"),
+				KeyId:  aws.String("188c57ed-b28a-4c0e-9821-f4940d15cb0a"),
+			},
+			{
+				KeyArn: aws.String("arn:aws:kms:us-west-2:111111111111:key/d15a1e37-3ef7-4882-9be5-ef3a024114db"),
+				KeyId:  aws.String("d15a1e37-3ef7-4882-9be5-ef3a024114db"),
+			},
+		},
+		NextMarker: aws.String("1"),
+	}
+
 	ExampleGetKeyRotationStatusOutput = &kms.GetKeyRotationStatusOutput{
 		KeyRotationEnabled: aws.Bool(true),
 	}
@@ -93,9 +107,9 @@ var (
 	}
 
 	svcKmsSetupCalls = map[string]func(*MockKms){
-		"ListKeys": func(svc *MockKms) {
-			svc.On("ListKeys", mock.Anything).
-				Return(ExampleListKeysOutput, nil)
+		"ListKeysPages": func(svc *MockKms) {
+			svc.On("ListKeysPages", mock.Anything).
+				Return(nil)
 		},
 		"GetKeyRotationStatus": func(svc *MockKms) {
 			svc.On("GetKeyRotationStatus", mock.Anything).
@@ -116,11 +130,9 @@ var (
 	}
 
 	svcKmsSetupCallsError = map[string]func(*MockKms){
-		"ListKeys": func(svc *MockKms) {
-			svc.On("ListKeys", mock.Anything).
-				Return(&kms.ListKeysOutput{},
-					errors.New("KMS.ListKeys error"),
-				)
+		"ListKeysPages": func(svc *MockKms) {
+			svc.On("ListKeysPages", mock.Anything).
+				Return(errors.New("KMS.ListKeys error"))
 		},
 		"GetKeyRotationStatus": func(svc *MockKms) {
 			svc.On("GetKeyRotationStatus", mock.Anything).
@@ -154,7 +166,7 @@ var (
 // KMS mock
 
 // SetupMockKms is used to override the KMS Client initializer
-func SetupMockKms(sess *session.Session, cfg *aws.Config) interface{} {
+func SetupMockKms(_ *session.Session, _ *aws.Config) interface{} {
 	return MockKmsForSetup
 }
 
@@ -208,9 +220,17 @@ func BuildMockKmsSvcAllError() (mockSvc *MockKms) {
 	return
 }
 
-func (m *MockKms) ListKeys(in *kms.ListKeysInput) (*kms.ListKeysOutput, error) {
+func (m *MockKms) ListKeysPages(
+	in *kms.ListKeysInput,
+	paginationFunction func(*kms.ListKeysOutput, bool) bool,
+) error {
+
 	args := m.Called(in)
-	return args.Get(0).(*kms.ListKeysOutput), args.Error(1)
+	if args.Error(0) != nil {
+		return args.Error(0)
+	}
+	paginationFunction(ExampleListKeysOutput, true)
+	return args.Error(0)
 }
 
 func (m *MockKms) GetKeyRotationStatus(in *kms.GetKeyRotationStatusInput) (*kms.GetKeyRotationStatusOutput, error) {

@@ -237,9 +237,12 @@ func TestGitLabProductionType(t *testing.T) {
 func TestGitLabProductionSamples(t *testing.T) {
 	samples := testutil.MustReadFileJSONLines("testdata/productionlog_samples.jsonl")
 	parser := (&ProductionParser{}).New()
+	apiParser := (&APIParser{}).New()
 	for i, sample := range samples {
 		_, err := parser.Parse(sample)
 		assert.NoErrorf(t, err, "failed to parse line %d", i)
+		_, err = apiParser.Parse(sample)
+		assert.Error(t, err, "Production log passes as API")
 	}
 }
 
