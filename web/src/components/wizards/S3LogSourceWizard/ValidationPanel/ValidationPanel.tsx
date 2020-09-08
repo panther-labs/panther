@@ -69,7 +69,7 @@ const ValidationPanel: React.FC = () => {
           {!initialValues.integrationId && (
             <Box mt={10} mb={-10}>
               <WizardPanel.Heading
-                title="Adding Notifications For New Data"
+                title="Configure Notifications For New Data"
                 subtitle={[
                   'You can now follow the ',
                   <Link
