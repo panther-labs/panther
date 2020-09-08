@@ -57,12 +57,7 @@ func (client *OutputClient) Sqs(alert *alertModels.Alert, config *outputModels.S
 	response, err := sqsClient.SendMessage(sqsSendMessageInput)
 	if err != nil {
 		zap.L().Error("Failed to send message to SQS queue", zap.Error(err))
-		return &AlertDeliveryResponse{
-			StatusCode: 500,
-			Message:    "Failed to send message to SQS queue",
-			Permanent:  false,
-			Success:    false,
-		}
+		return getAlertResponseFromSQSError(err)
 	}
 
 	if response == nil {

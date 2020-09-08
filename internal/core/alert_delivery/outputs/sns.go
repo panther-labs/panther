@@ -92,14 +92,8 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 
 	response, err := snsClient.Publish(snsMessageInput)
 	if err != nil {
-		errorMsg := "Failed to send message to SNS topic"
-		zap.L().Error(errorMsg, zap.Error(errors.WithStack(err)))
-		return &AlertDeliveryResponse{
-			StatusCode: 500,
-			Message:    errorMsg,
-			Permanent:  false,
-			Success:    false,
-		}
+		zap.L().Error("Failed to send message to SNS topic", zap.Error(err))
+		return getAlertResponseFromSNSError(err)
 	}
 
 	if response == nil {
