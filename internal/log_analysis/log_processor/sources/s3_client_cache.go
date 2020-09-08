@@ -99,7 +99,8 @@ func (c *sourceCacheStruct) Find(id string) *models.SourceIntegration {
 func (c *sourceCacheStruct) FindS3(bucketName, objectKey string) *models.SourceIntegration {
 	sources := c.byBucket[bucketName]
 	for _, source := range sources {
-		if strings.HasPrefix(objectKey, source.S3Prefix) {
+		_, sourcePrefix := getSourceS3Info(source)
+		if strings.HasPrefix(objectKey, sourcePrefix) {
 			return source
 		}
 	}
