@@ -207,7 +207,7 @@ func resetCaches() {
 	s3ClientCache, _ = lru.NewARC(s3ClientCacheSize)
 }
 
-func TestSourceCacheStructFind2(t *testing.T) {
+func TestSourceCacheStructFind(t *testing.T) {
 	cache := sourceCacheStruct{}
 	now := time.Now()
 	sources := []*models.SourceIntegration{
