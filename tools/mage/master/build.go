@@ -68,6 +68,10 @@ func Build(log *zap.SugaredLogger) error {
 //
 // Returns the path to the final generated template.
 func Package(log *zap.SugaredLogger, region, bucket, pantherVersion, imgRegistry string) (string, error) {
+	if err := build.EmbedAPISpec(); err != nil {
+		return "", err
+	}
+
 	pkg, err := util.SamPackage(region, "deployments/master.yml", bucket)
 	if err != nil {
 		return "", err
