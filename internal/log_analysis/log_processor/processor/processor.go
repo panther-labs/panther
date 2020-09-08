@@ -141,6 +141,15 @@ func (p *Processor) processLogLine(line string, outputChan chan *parsers.Result)
 		if line == "" {
 			return
 		}
+		//FIXME: remove this after debug
+		zap.L().Debug("classification failed",
+			zap.String("line", line),
+			zap.Uint64("lineNum", p.classifier.Stats().LogLineCount),
+			zap.String("sourceId", p.input.Source.IntegrationID),
+			zap.String("sourceLabel", p.input.Source.IntegrationLabel),
+			zap.String("s3Bucket", p.input.S3Bucket),
+			zap.String("s3ObjectKey", p.input.S3ObjectKey),
+		)
 		// make easy to troubleshoot but do not add log line (even partial) to avoid leaking data into CW
 		p.operation.LogWarn(errors.New("failed to classify log line"),
 			zap.Uint64("lineNum", p.classifier.Stats().LogLineCount),
