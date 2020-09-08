@@ -45,7 +45,12 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 	if err != nil {
 		errorMsg := "Failed to serialize default message"
 		zap.L().Error(errorMsg, zap.Error(errors.WithStack(err)))
-		return &AlertDeliveryResponse{Message: errorMsg, Permanent: true}
+		return &AlertDeliveryResponse{
+			StatusCode: 500,
+			Message:    errorMsg,
+			Permanent:  true,
+			Success:    false,
+		}
 	}
 
 	outputMessage := &snsMessage{
@@ -57,7 +62,12 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 	if err != nil {
 		errorMsg := "Failed to serialize message"
 		zap.L().Error(errorMsg, zap.Error(errors.WithStack(err)))
-		return &AlertDeliveryResponse{Message: errorMsg, Permanent: true}
+		return &AlertDeliveryResponse{
+			StatusCode: 500,
+			Message:    errorMsg,
+			Permanent:  true,
+			Success:    false,
+		}
 	}
 
 	snsMessageInput := &sns.PublishInput{
@@ -72,16 +82,50 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 	if err != nil {
 		errorMsg := "Failed to create SNS client for topic"
 		zap.L().Error(errorMsg, zap.Error(errors.WithStack(err)))
-		return &AlertDeliveryResponse{Message: errorMsg, Permanent: true}
+		return &AlertDeliveryResponse{
+			StatusCode: 500,
+			Message:    errorMsg,
+			Permanent:  true,
+			Success:    false,
+		}
 	}
 
-	_, err = snsClient.Publish(snsMessageInput)
+	response, err := snsClient.Publish(snsMessageInput)
 	if err != nil {
 		errorMsg := "Failed to send message to SNS topic"
 		zap.L().Error(errorMsg, zap.Error(errors.WithStack(err)))
-		return &AlertDeliveryResponse{Message: errorMsg}
+		return &AlertDeliveryResponse{
+			StatusCode: 500,
+			Message:    errorMsg,
+			Permanent:  false,
+			Success:    false,
+		}
 	}
-	return nil
+
+	if response == nil {
+		return &AlertDeliveryResponse{
+			StatusCode: 500,
+			Message:    "sns response was nil",
+			Permanent:  false,
+			Success:    false,
+		}
+	}
+
+	if response.MessageId == nil {
+		return &AlertDeliveryResponse{
+			StatusCode: 500,
+			Message:    "sns messageId was nil",
+			Permanent:  false,
+			Success:    false,
+		}
+	}
+
+	return &AlertDeliveryResponse{
+		StatusCode: 200,
+		Message:    aws.StringValue(response.MessageId),
+		Permanent:  false,
+		Success:    true,
+	}
 }
 
 func (client *OutputClient) getSnsClient(topicArn string) (snsiface.SNSAPI, error) {
