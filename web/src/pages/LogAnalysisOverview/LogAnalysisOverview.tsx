@@ -22,12 +22,12 @@ import withSEO from 'Hoc/withSEO';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { extractErrorMessage, getCurrentDate, subtractDays } from 'Helpers/utils';
 import Panel from 'Components/Panel';
-import EventsByLogType from 'Pages/LogAnalysisOverview/EventsByLogType';
 import AlertsTable from 'Pages/LogAnalysisOverview/AlertsTable';
 import LogAnalysisOverviewPageSkeleton from './Skeleton';
 import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
 import AlertsBySeverity from './AlertsBySeverity';
 import AlertSummary from './AlertSummary';
+import SecondRowTabs from './SecondRowTabs';
 import { useGetTopAlerts } from './graphql/getTopAlerts.generated';
 
 export const intervalMinutes = 60;
@@ -69,7 +69,7 @@ const LogAnalysisOverview: React.FC = () => {
     );
   }
 
-  const { alertsBySeverity, totalAlertsDelta, eventsProcessed } = data.getLogAnalysisMetrics;
+  const { alertsBySeverity, totalAlertsDelta, eventsProcessed, eventsLatency } = data.getLogAnalysisMetrics; // prettier-ignore
   const alertItems = alerts?.alerts.alertSummaries || [];
 
   return (
@@ -85,11 +85,7 @@ const LogAnalysisOverview: React.FC = () => {
         </Panel>
       </SimpleGrid>
       <SimpleGrid columns={1} spacingX={3} spacingY={2} my={5}>
-        <Panel title="Events by Log Type">
-          <Box height={200}>
-            <EventsByLogType events={eventsProcessed} />
-          </Box>
-        </Panel>
+        <SecondRowTabs eventsProcessed={eventsProcessed} eventsLatency={eventsLatency} />
       </SimpleGrid>
       <SimpleGrid columns={1} spacingX={3} spacingY={2}>
         <Panel title="Recent High Severity Alerts">

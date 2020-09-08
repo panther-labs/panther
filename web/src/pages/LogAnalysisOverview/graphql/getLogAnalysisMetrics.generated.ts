@@ -34,6 +34,11 @@ export type GetLogAnalysisMetrics = {
         series?: Types.Maybe<Array<Types.Maybe<Pick<Types.Series, 'label' | 'values'>>>>;
       }
     >;
+    eventsLatency?: Types.Maybe<
+      Pick<Types.FloatSeriesData, 'timestamps'> & {
+        series?: Types.Maybe<Array<Types.Maybe<Pick<Types.FloatSeries, 'label' | 'values'>>>>;
+      }
+    >;
     alertsBySeverity?: Types.Maybe<
       Pick<Types.SeriesData, 'timestamps'> & {
         series?: Types.Maybe<Array<Types.Maybe<Pick<Types.Series, 'label' | 'values'>>>>;
@@ -47,6 +52,13 @@ export const GetLogAnalysisMetricsDocument = gql`
   query GetLogAnalysisMetrics($input: LogAnalysisMetricsInput!) {
     getLogAnalysisMetrics(input: $input) {
       eventsProcessed {
+        series {
+          label
+          values
+        }
+        timestamps
+      }
+      eventsLatency {
         series {
           label
           values
