@@ -90,7 +90,8 @@ func (c *sourceCacheStruct) Update(now time.Time, sources []*models.SourceIntegr
 func (c *sourceCacheStruct) Find(bucketName, objectKey string) *models.SourceIntegration {
 	sources := c.byBucket[bucketName]
 	for _, source := range sources {
-		if strings.HasPrefix(objectKey, source.S3Prefix) {
+		_, sourcePrefix := getSourceS3Info(source)
+		if strings.HasPrefix(objectKey, sourcePrefix) {
 			return source
 		}
 	}
