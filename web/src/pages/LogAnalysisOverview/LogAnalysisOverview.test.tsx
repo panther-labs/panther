@@ -27,6 +27,7 @@ import {
   waitForElementToBeRemoved,
   buildSingleValue,
   buildListAlertsResponse,
+  fireEvent,
 } from 'test-utils';
 import { mockListAlerts } from 'Pages/ListAlerts/graphql/listAlerts.generated';
 import LogAnalysisOverview, { intervalMinutes, defaultPastDays } from './LogAnalysisOverview';
@@ -38,7 +39,7 @@ describe('Log Analysis Overview', () => {
     const getLogAnalysisMetrics = buildLogAnalysisMetricsResponse();
     const mockedFromDate = utils.subtractDays(mockedToDate, defaultPastDays);
     const getLogAnalysisMetricsInput = buildLogAnalysisMetricsInput({
-      metricNames: ['eventsProcessed', 'totalAlertsDelta', 'alertsBySeverity'],
+      metricNames: ['eventsProcessed', 'totalAlertsDelta', 'alertsBySeverity', 'eventsLatency'],
       fromDate: mockedFromDate,
       toDate: mockedToDate,
       intervalMinutes,
@@ -73,7 +74,7 @@ describe('Log Analysis Overview', () => {
       }),
     ];
 
-    const { getByTestId, getAllByTitle } = render(<LogAnalysisOverview />, {
+    const { getByTestId, getAllByTitle, getByText } = render(<LogAnalysisOverview />, {
       mocks,
     });
 
@@ -89,5 +90,11 @@ describe('Log Analysis Overview', () => {
 
     expect(alertsChart).toBeTruthy();
     expect(eventChart).toBeTruthy();
+
+    // Checking tab click works and renders Data Latency chart
+    const latencyChartTabButton = getByText('Data Latency');
+    fireEvent.click(latencyChartTabButton);
+    const latencyChart = getByTestId('events-by-latency');
+    expect(latencyChart).toBeTruthy();
   });
 });

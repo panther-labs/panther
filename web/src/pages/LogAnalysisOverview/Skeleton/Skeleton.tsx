@@ -33,7 +33,7 @@ const ComplianceOverviewPageSkeleton: React.FC = () => {
           </Panel>
         </SimpleGrid>
         <SimpleGrid columns={1} spacingX={3} spacingY={2} mb={3}>
-          <Panel title="Events by Log Type">
+          <Panel title="Events by Log Type | Data Latency">
             <Box height={200}>
               <TablePlaceholder />
             </Box>

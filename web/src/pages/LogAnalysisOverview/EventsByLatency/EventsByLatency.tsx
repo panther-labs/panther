@@ -36,7 +36,7 @@ const EventsByLatency: React.FC<EventsByLatencyProps> = ({ events: { timestamps,
   );
   return (
     <Flex
-      data-testid="events-by-log-type-chart"
+      data-testid="events-by-latency"
       height="100%"
       pt={4}
       px={4}
