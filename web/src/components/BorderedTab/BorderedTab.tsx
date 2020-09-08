@@ -48,6 +48,7 @@ const BorderedTab: React.FC<BorderedTabProps> = ({ isSelected, isFocused, childr
     <Box
       mx={4}
       borderBottom="3px solid"
+      width={1}
       zIndex={5}
       py={4}
       transition="border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms"
