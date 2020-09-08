@@ -141,16 +141,6 @@ func (p *Processor) processLogLine(line string, outputChan chan *parsers.Result)
 		if line == "" {
 			return
 		}
-		//FIXME: remove this after debug
-		zap.L().Debug("classification failed",
-			zap.String("line", line),
-			zap.Error(err),
-			zap.Uint64("lineNum", p.classifier.Stats().LogLineCount),
-			zap.String("sourceId", p.input.Source.IntegrationID),
-			zap.String("sourceLabel", p.input.Source.IntegrationLabel),
-			zap.String("s3Bucket", p.input.S3Bucket),
-			zap.String("s3ObjectKey", p.input.S3ObjectKey),
-		)
 		// make easy to troubleshoot but do not add log line (even partial) to avoid leaking data into CW
 		p.operation.LogWarn(errors.New("failed to classify log line"),
 			zap.Uint64("lineNum", p.classifier.Stats().LogLineCount),
@@ -213,6 +203,7 @@ func BuildProcessor(input *common.DataStream, registry *logtypes.Registry) (*Pro
 			input:     input,
 			classifier: &sqsClassifier{
 				registry:    registry,
+				lookup:      sources.Lookup,
 				classifiers: make(map[string]classification.ClassifierAPI),
 			},
 		}, nil
@@ -233,6 +224,8 @@ func BuildProcessor(input *common.DataStream, registry *logtypes.Registry) (*Pro
 
 type sqsClassifier struct {
 	registry    *logtypes.Registry
+	stats       classification.ClassifierStats
+	lookup      func(string) *models.SourceIntegration
 	classifiers map[string]classification.ClassifierAPI
 }
 
@@ -242,6 +235,7 @@ var jsonAPI = common.BuildJSON()
 
 func (c *sqsClassifier) Stats() *classification.ClassifierStats {
 	stats := &classification.ClassifierStats{}
+	stats.Add(&c.stats)
 	for _, child := range c.classifiers {
 		stats.Add(child.Stats())
 	}
@@ -261,14 +255,15 @@ func (c *sqsClassifier) ParserStats() map[string]*classification.ParserStats {
 }
 
 func (c *sqsClassifier) Classify(log string) (*classification.ClassifierResult, error) {
+	log = strings.TrimSpace(log)
+	if len(log) == 0 {
+		c.stats.LogLineCount++
+		return &classification.ClassifierResult{}, nil
+	}
 	msg := forwarder.Message{}
 	err := jsonAPI.UnmarshalFromString(log, &msg)
 	if err != nil {
-		// This is a nasty workaround because we don't handle JSONL properly and we rely on line splitting
-		if len(strings.TrimSpace(log)) == 0 {
-			return &classification.ClassifierResult{}, nil
-		}
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to parse JSON message")
 	}
 	cls, ok := c.classifiers[msg.SourceIntegrationID]
 	if !ok {
@@ -280,11 +275,11 @@ func (c *sqsClassifier) Classify(log string) (*classification.ClassifierResult, 
 		}
 		c.classifiers[msg.SourceIntegrationID] = cls
 	}
-	return cls.Classify(log)
+	return cls.Classify(msg.Payload)
 }
 
 func (c *sqsClassifier) buildClassifier(id string) (classification.ClassifierAPI, error) {
-	src := sources.Lookup(id)
+	src := c.lookup(id)
 	if src == nil {
 		return nil, errors.Errorf("unknown source id %q", id)
 	}
