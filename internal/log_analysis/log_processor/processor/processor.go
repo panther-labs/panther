@@ -21,6 +21,7 @@ package processor
 import (
 	"bufio"
 	"io"
+	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -135,16 +136,11 @@ func (p *Processor) run(outputChan chan *parsers.Result) error {
 }
 
 func (p *Processor) processLogLine(line string, outputChan chan *parsers.Result) {
-	classificationResult := p.classifyLogLine(line)
-	if classificationResult.LogType == nil { // unable to classify, no error, keep parsing (best effort, will be logged)
-		return
-	}
-	p.sendEvents(classificationResult, outputChan)
-}
-
-func (p *Processor) classifyLogLine(line string) *classification.ClassifierResult {
 	result, err := p.classifier.Classify(line)
 	if err != nil {
+		if line == "" {
+			return
+		}
 		// make easy to troubleshoot but do not add log line (even partial) to avoid leaking data into CW
 		p.operation.LogWarn(errors.New("failed to classify log line"),
 			zap.Uint64("lineNum", p.classifier.Stats().LogLineCount),
@@ -153,11 +149,11 @@ func (p *Processor) classifyLogLine(line string) *classification.ClassifierResul
 			zap.String("s3Bucket", p.input.S3Bucket),
 			zap.String("s3ObjectKey", p.input.S3ObjectKey),
 		)
+		return
 	}
-	return result
-}
-
-func (p *Processor) sendEvents(result *classification.ClassifierResult, outputChan chan *parsers.Result) {
+	if result == nil {
+		return
+	}
 	for _, event := range result.Events {
 		outputChan <- event
 	}
@@ -208,7 +204,6 @@ func BuildProcessor(input *common.DataStream, registry *logtypes.Registry) (*Pro
 			classifier: &sqsClassifier{
 				registry:    registry,
 				classifiers: make(map[string]classification.ClassifierAPI),
-				parserStats: make(map[string]*classification.ParserStats),
 			},
 		}, nil
 	case models.IntegrationTypeAWS3:
@@ -228,8 +223,6 @@ func BuildProcessor(input *common.DataStream, registry *logtypes.Registry) (*Pro
 
 type sqsClassifier struct {
 	registry    *logtypes.Registry
-	stats       classification.ClassifierStats
-	parserStats map[string]*classification.ParserStats
 	classifiers map[string]classification.ClassifierAPI
 }
 
@@ -238,35 +231,42 @@ var _ classification.ClassifierAPI = (*sqsClassifier)(nil)
 var jsonAPI = common.BuildJSON()
 
 func (c *sqsClassifier) Stats() *classification.ClassifierStats {
-	return &c.stats
+	stats := &classification.ClassifierStats{}
+	for _, child := range c.classifiers {
+		stats.Add(child.Stats())
+	}
+	return stats
 }
 
 func (c *sqsClassifier) ParserStats() map[string]*classification.ParserStats {
-	return c.parserStats
+	stats := map[string]*classification.ParserStats{}
+	for _, child := range c.classifiers {
+		classification.MergeParserStats(stats, child.ParserStats())
+	}
+	return stats
 }
 
 func (c *sqsClassifier) Classify(log string) (*classification.ClassifierResult, error) {
 	msg := forwarder.Message{}
 	err := jsonAPI.UnmarshalFromString(log, &msg)
 	if err != nil {
+		// This is a nasty workaround because we don't handle JSONL properly and we rely on line splitting
+		if len(strings.TrimSpace(log)) == 0 {
+			return &classification.ClassifierResult{}, nil
+		}
 		return nil, err
 	}
 	cls, ok := c.classifiers[msg.SourceIntegrationID]
 	if !ok {
 		cls, err = c.buildClassifier(msg.SourceIntegrationID)
+
 		if err != nil {
+			// Just update the stats
 			return nil, err
 		}
 		c.classifiers[msg.SourceIntegrationID] = cls
 	}
-	result, err := cls.Classify(log)
-	c.stats.Add(cls.Stats())
-	classification.MergeParserStats(c.parserStats, cls.ParserStats())
-	cls.ParserStats()
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+	return cls.Classify(log)
 }
 
 func (c *sqsClassifier) buildClassifier(id string) (classification.ClassifierAPI, error) {

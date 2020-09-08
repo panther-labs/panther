@@ -192,9 +192,9 @@ type ClassifierStats struct {
 func (s *ClassifierStats) Add(other *ClassifierStats) {
 	s.ClassifyTimeMicroseconds += other.ClassifyTimeMicroseconds
 	s.BytesProcessedCount += other.BytesProcessedCount
-	s.LogLineCount += other.LogLineCount
 	s.EventCount += other.EventCount
 	s.SuccessfullyClassifiedCount += other.EventCount
+	s.LogLineCount += other.LogLineCount
 	s.ClassificationFailureCount += other.ClassificationFailureCount
 }
 
@@ -211,8 +211,8 @@ type ParserStats struct {
 func (s *ParserStats) Add(other *ParserStats) {
 	s.ParserTimeMicroseconds += other.ParserTimeMicroseconds
 	s.BytesProcessedCount += other.BytesProcessedCount
-	s.LogLineCount += other.LogLineCount
 	s.EventCount += other.EventCount
+	s.LogLineCount += other.LogLineCount
 	s.CombinedLatency += other.CombinedLatency
 }
 
