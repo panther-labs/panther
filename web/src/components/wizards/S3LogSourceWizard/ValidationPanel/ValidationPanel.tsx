@@ -57,7 +57,7 @@ const ValidationPanel: React.FC = () => {
             subtitle={
               initialValues.integrationId
                 ? 'Your stack was successfully updated'
-                : 'Your configured stack was deployed successfully and your source’s setup is now complete!'
+                : 'Your configured stack was deployed successfully and Panther now has permissions to pull data!'
             }
           />
           <Img
