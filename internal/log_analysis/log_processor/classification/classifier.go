@@ -218,10 +218,13 @@ func (s *ParserStats) Add(other *ParserStats) {
 
 func MergeParserStats(dst map[string]*ParserStats, src map[string]*ParserStats) {
 	for name, s := range src {
+		if s == nil {
+			continue
+		}
 		d := dst[name]
 		if d == nil {
 			d = &ParserStats{
-				LogType: d.LogType,
+				LogType: s.LogType,
 			}
 		}
 		d.Add(s)

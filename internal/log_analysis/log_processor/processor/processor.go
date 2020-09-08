@@ -241,7 +241,11 @@ func (c *sqsClassifier) Stats() *classification.ClassifierStats {
 func (c *sqsClassifier) ParserStats() map[string]*classification.ParserStats {
 	stats := map[string]*classification.ParserStats{}
 	for _, child := range c.classifiers {
-		classification.MergeParserStats(stats, child.ParserStats())
+		childStats := child.ParserStats()
+		if childStats == nil {
+			continue
+		}
+		classification.MergeParserStats(stats, childStats)
 	}
 	return stats
 }
