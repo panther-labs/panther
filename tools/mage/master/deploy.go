@@ -20,6 +20,7 @@ package master
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -38,7 +39,7 @@ import (
 const (
 	// The region will be interpolated in these names
 	publicImageRepository = "349240696275.dkr.ecr.%s.amazonaws.com/panther-community"
-	masterStackName       = "panther"
+	defaultStackName      = "panther"
 )
 
 var publishRegions = []string{"us-east-1", "us-east-2", "us-west-2"}
@@ -58,7 +59,12 @@ func Deploy() error {
 		return err
 	}
 
-	log.Infof("deploying %s v%s to %s (%s)", masterTemplate, version, clients.AccountID(), clients.Region())
+	var stack string
+	if stack = os.Getenv("STACK"); stack == "" {
+		stack = defaultStackName
+	}
+
+	log.Infof("deploying %s v%s to %s (%s) as stack '%s'", masterTemplate, version, clients.AccountID(), clients.Region(), stack)
 	email := prompt.Read("First user email: ", prompt.EmailValidator)
 
 	if err := Build(log); err != nil {
@@ -115,7 +121,7 @@ func Deploy() error {
 		return err
 	}
 
-	return util.SamDeploy(masterStackName, pkg, "FirstUserEmail="+email, "ImageRegistry="+registryURI)
+	return util.SamDeploy(defaultStackName, pkg, "FirstUserEmail="+email, "ImageRegistry="+registryURI)
 }
 
 // Stop early if there is a known issue with the dev environment.
