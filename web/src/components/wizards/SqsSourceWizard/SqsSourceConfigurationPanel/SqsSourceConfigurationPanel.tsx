@@ -86,7 +86,7 @@ const SqsSourceConfigurationPanel: React.FC = () => {
             <Box as="fieldset">
               <FastField
                 as={FormikMultiCombobox}
-                label="Allowed source ARNs"
+                label="Allowed Source ARNs"
                 name="allowedSourceArns"
                 searchable
                 allowAdditions
