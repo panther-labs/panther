@@ -36,8 +36,10 @@ func (g *UsersGateway) CreateUser(input *models.InviteUserInput) (*models.User, 
 		DesiredDeliveryMediums: []*string{aws.String("EMAIL")},
 		MessageAction:          input.MessageAction,
 		UserAttributes:         userAttributes(input.GivenName, input.FamilyName, input.Email),
-		Username:               aws.String(strings.ToLower(*input.Email)),
-		UserPoolId:             g.userPoolID,
+		// Cognito is case-sensitive for emails - it will allow multiple users with the same email
+		// address if they have different casing. For that reason, we lowercase the email here.
+		Username:   aws.String(strings.ToLower(*input.Email)),
+		UserPoolId: g.userPoolID,
 	})
 	if err != nil {
 		return nil, &genericapi.AWSError{Method: "cognito.AdminCreateUser", Err: err}
