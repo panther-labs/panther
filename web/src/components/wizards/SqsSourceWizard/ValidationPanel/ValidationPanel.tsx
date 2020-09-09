@@ -51,7 +51,7 @@ const ValidationPanel: React.FC = () => {
     })();
   }, []);
 
-  if (true) {
+  if (currentStepStatus === 'PASSING') {
     return (
       <WizardPanel>
         <Flex align="center" direction="column" mx="auto" width={400}>
