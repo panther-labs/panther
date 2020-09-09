@@ -63,7 +63,8 @@ type SendTestAlertInput struct {
 
 // SendTestAlertOutput is an alias for anything
 type SendTestAlertOutput struct {
-	Success bool `json:"success"`
+	Success bool   `json:"success"`
+	Message string `json:"message"`
 }
 
 // DeliverAlertInput sends an alert to the specified destinations

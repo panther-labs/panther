@@ -40,6 +40,7 @@ func (API) SendTestAlert(input *deliveryModels.SendTestAlertInput) (*deliveryMod
 	if err != nil {
 		return &deliveryModels.SendTestAlertOutput{
 			Success: false,
+			Message: err.Error(),
 		}, err
 	}
 
@@ -50,11 +51,13 @@ func (API) SendTestAlert(input *deliveryModels.SendTestAlertInput) (*deliveryMod
 	if err := returnIfFailed(dispatchStatuses); err != nil {
 		return &deliveryModels.SendTestAlertOutput{
 			Success: false,
+			Message: err.Error(),
 		}, err
 	}
 	zap.L().Debug("Test Succeeded")
 	return &deliveryModels.SendTestAlertOutput{
 		Success: true,
+		Message: "successfully sent test alert!",
 	}, nil
 }
 

@@ -108,6 +108,7 @@ export type AddSqsLogIntegrationInput = {
 export type Alert = {
   alertId: Scalars['ID'];
   creationTime: Scalars['AWSDateTime'];
+  deliveryResponses?: Maybe<Array<Maybe<DeliveryResponse>>>;
   eventsMatched: Scalars['Int'];
   ruleId?: Maybe<Scalars['ID']>;
   severity: SeverityEnum;
@@ -122,6 +123,7 @@ export type AlertDetails = Alert & {
   __typename?: 'AlertDetails';
   alertId: Scalars['ID'];
   creationTime: Scalars['AWSDateTime'];
+  deliveryResponses?: Maybe<Array<Maybe<DeliveryResponse>>>;
   eventsMatched: Scalars['Int'];
   ruleId?: Maybe<Scalars['ID']>;
   severity: SeverityEnum;
@@ -146,6 +148,7 @@ export type AlertSummary = Alert & {
   __typename?: 'AlertSummary';
   alertId: Scalars['ID'];
   creationTime: Scalars['AWSDateTime'];
+  deliveryResponses?: Maybe<Array<Maybe<DeliveryResponse>>>;
   eventsMatched: Scalars['Int'];
   ruleId?: Maybe<Scalars['ID']>;
   severity: SeverityEnum;
@@ -249,6 +252,20 @@ export type DeleteRuleInput = {
 
 export type DeleteRuleInputItem = {
   id: Scalars['ID'];
+};
+
+export type DeliverAlertInput = {
+  alertId: Scalars['ID'];
+  outputIds: Array<Scalars['ID']>;
+};
+
+export type DeliveryResponse = {
+  __typename?: 'DeliveryResponse';
+  outputId?: Maybe<Scalars['ID']>;
+  message?: Maybe<Scalars['String']>;
+  statusCode?: Maybe<Scalars['Int']>;
+  success?: Maybe<Scalars['Boolean']>;
+  dispatchedAt?: Maybe<Scalars['AWSDateTime']>;
 };
 
 export type Destination = {
@@ -605,6 +622,7 @@ export type Mutation = {
   deleteUser?: Maybe<Scalars['Boolean']>;
   inviteUser: User;
   remediateResource?: Maybe<Scalars['Boolean']>;
+  deliverAlert?: Maybe<AlertSummary>;
   resetUserPassword: User;
   suppressPolicies?: Maybe<Scalars['Boolean']>;
   testPolicy?: Maybe<TestPolicyResponse>;
@@ -683,6 +701,10 @@ export type MutationInviteUserArgs = {
 
 export type MutationRemediateResourceArgs = {
   input: RemediateResourceInput;
+};
+
+export type MutationDeliverAlertArgs = {
+  input: DeliverAlertInput;
 };
 
 export type MutationResetUserPasswordArgs = {
@@ -1082,6 +1104,7 @@ export type SendTestAlertInput = {
 export type SendTestAlertResponse = {
   __typename?: 'SendTestAlertResponse';
   success?: Maybe<Scalars['Boolean']>;
+  message?: Maybe<Scalars['String']>;
 };
 
 export type Series = {
@@ -1392,6 +1415,8 @@ export type ResolversTypes = {
   AlertDetails: ResolverTypeWrapper<AlertDetails>;
   Alert: ResolversTypes['AlertDetails'] | ResolversTypes['AlertSummary'];
   AWSDateTime: ResolverTypeWrapper<Scalars['AWSDateTime']>;
+  DeliveryResponse: ResolverTypeWrapper<DeliveryResponse>;
+  Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
   SeverityEnum: SeverityEnum;
   AlertStatusesEnum: AlertStatusesEnum;
   AWSJSON: ResolverTypeWrapper<Scalars['AWSJSON']>;
@@ -1402,7 +1427,6 @@ export type ResolversTypes = {
   AlertSummary: ResolverTypeWrapper<AlertSummary>;
   SendTestAlertInput: SendTestAlertInput;
   SendTestAlertResponse: ResolverTypeWrapper<SendTestAlertResponse>;
-  Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
   Destination: ResolverTypeWrapper<Destination>;
   DestinationTypeEnum: DestinationTypeEnum;
   DestinationConfig: ResolverTypeWrapper<DestinationConfig>;
@@ -1503,6 +1527,7 @@ export type ResolversTypes = {
   DeleteGlobalPythonInputItem: DeleteGlobalPythonInputItem;
   InviteUserInput: InviteUserInput;
   RemediateResourceInput: RemediateResourceInput;
+  DeliverAlertInput: DeliverAlertInput;
   SuppressPoliciesInput: SuppressPoliciesInput;
   TestPolicyInput: TestPolicyInput;
   AnalysisTypeEnum: AnalysisTypeEnum;
@@ -1532,6 +1557,8 @@ export type ResolversParentTypes = {
   AlertDetails: AlertDetails;
   Alert: ResolversParentTypes['AlertDetails'] | ResolversParentTypes['AlertSummary'];
   AWSDateTime: Scalars['AWSDateTime'];
+  DeliveryResponse: DeliveryResponse;
+  Boolean: Scalars['Boolean'];
   SeverityEnum: SeverityEnum;
   AlertStatusesEnum: AlertStatusesEnum;
   AWSJSON: Scalars['AWSJSON'];
@@ -1542,7 +1569,6 @@ export type ResolversParentTypes = {
   AlertSummary: AlertSummary;
   SendTestAlertInput: SendTestAlertInput;
   SendTestAlertResponse: SendTestAlertResponse;
-  Boolean: Scalars['Boolean'];
   Destination: Destination;
   DestinationTypeEnum: DestinationTypeEnum;
   DestinationConfig: DestinationConfig;
@@ -1645,6 +1671,7 @@ export type ResolversParentTypes = {
   DeleteGlobalPythonInputItem: DeleteGlobalPythonInputItem;
   InviteUserInput: InviteUserInput;
   RemediateResourceInput: RemediateResourceInput;
+  DeliverAlertInput: DeliverAlertInput;
   SuppressPoliciesInput: SuppressPoliciesInput;
   TestPolicyInput: TestPolicyInput;
   AnalysisTypeEnum: AnalysisTypeEnum;
@@ -1680,6 +1707,11 @@ export type AlertResolvers<
   __resolveType: TypeResolveFn<'AlertDetails' | 'AlertSummary', ParentType, ContextType>;
   alertId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   creationTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
+  deliveryResponses?: Resolver<
+    Maybe<Array<Maybe<ResolversTypes['DeliveryResponse']>>>,
+    ParentType,
+    ContextType
+  >;
   eventsMatched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   ruleId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   severity?: Resolver<ResolversTypes['SeverityEnum'], ParentType, ContextType>;
@@ -1696,6 +1728,11 @@ export type AlertDetailsResolvers<
 > = {
   alertId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   creationTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
+  deliveryResponses?: Resolver<
+    Maybe<Array<Maybe<ResolversTypes['DeliveryResponse']>>>,
+    ParentType,
+    ContextType
+  >;
   eventsMatched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   ruleId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   severity?: Resolver<ResolversTypes['SeverityEnum'], ParentType, ContextType>;
@@ -1716,6 +1753,11 @@ export type AlertSummaryResolvers<
 > = {
   alertId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   creationTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
+  deliveryResponses?: Resolver<
+    Maybe<Array<Maybe<ResolversTypes['DeliveryResponse']>>>,
+    ParentType,
+    ContextType
+  >;
   eventsMatched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   ruleId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   severity?: Resolver<ResolversTypes['SeverityEnum'], ParentType, ContextType>;
@@ -1821,6 +1863,18 @@ export type CustomWebhookConfigResolvers<
   ParentType extends ResolversParentTypes['CustomWebhookConfig'] = ResolversParentTypes['CustomWebhookConfig']
 > = {
   webhookURL?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type DeliveryResponseResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['DeliveryResponse'] = ResolversParentTypes['DeliveryResponse']
+> = {
+  outputId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  statusCode?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  success?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  dispatchedAt?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2136,6 +2190,12 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationRemediateResourceArgs, 'input'>
+  >;
+  deliverAlert?: Resolver<
+    Maybe<ResolversTypes['AlertSummary']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationDeliverAlertArgs, 'input'>
   >;
   resetUserPassword?: Resolver<
     ResolversTypes['User'],
@@ -2644,6 +2704,7 @@ export type SendTestAlertResponseResolvers<
   ParentType extends ResolversParentTypes['SendTestAlertResponse'] = ResolversParentTypes['SendTestAlertResponse']
 > = {
   success?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2804,6 +2865,7 @@ export type Resolvers<ContextType = any> = {
   ComplianceItem?: ComplianceItemResolvers<ContextType>;
   ComplianceStatusCounts?: ComplianceStatusCountsResolvers<ContextType>;
   CustomWebhookConfig?: CustomWebhookConfigResolvers<ContextType>;
+  DeliveryResponse?: DeliveryResponseResolvers<ContextType>;
   Destination?: DestinationResolvers<ContextType>;
   DestinationConfig?: DestinationConfigResolvers<ContextType>;
   GeneralSettings?: GeneralSettingsResolvers<ContextType>;

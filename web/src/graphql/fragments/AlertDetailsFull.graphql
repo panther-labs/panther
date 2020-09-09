@@ -3,6 +3,9 @@ fragment AlertDetailsFull on AlertDetails {
   ruleId
   title
   creationTime
+  deliveryResponses {
+    ...DeliveryResponseFull
+  }
   eventsMatched
   updateTime
   eventsLastEvaluatedKey

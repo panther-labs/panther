@@ -18,39 +18,20 @@
 
 import * as Types from '../../../__generated__/schema';
 
-import { DeliveryResponseFull } from './DeliveryResponseFull.generated';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 
-export type AlertSummaryFull = Pick<
-  Types.AlertSummary,
-  | 'alertId'
-  | 'ruleId'
-  | 'title'
-  | 'severity'
-  | 'status'
-  | 'creationTime'
-  | 'eventsMatched'
-  | 'updateTime'
-  | 'lastUpdatedBy'
-  | 'lastUpdatedByTime'
-> & { deliveryResponses?: Types.Maybe<Array<Types.Maybe<DeliveryResponseFull>>> };
+export type DeliveryResponseFull = Pick<
+  Types.DeliveryResponse,
+  'outputId' | 'statusCode' | 'message' | 'success' | 'dispatchedAt'
+>;
 
-export const AlertSummaryFull = gql`
-  fragment AlertSummaryFull on AlertSummary {
-    alertId
-    ruleId
-    title
-    severity
-    status
-    creationTime
-    deliveryResponses {
-      ...DeliveryResponseFull
-    }
-    eventsMatched
-    updateTime
-    lastUpdatedBy
-    lastUpdatedByTime
+export const DeliveryResponseFull = gql`
+  fragment DeliveryResponseFull on DeliveryResponse {
+    outputId
+    statusCode
+    message
+    success
+    dispatchedAt
   }
-  ${DeliveryResponseFull}
 `;

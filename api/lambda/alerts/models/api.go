@@ -187,7 +187,7 @@ type AlertSummary struct {
 	RuleDisplayName   *string             `json:"ruleDisplayName,omitempty"`
 	RuleVersion       *string             `json:"ruleVersion" validate:"required"`
 	DedupString       *string             `json:"dedupString,omitempty"`
-	DeliveryResponses []*DeliveryResponse `json:"deliveryReponses,omitempty"`
+	DeliveryResponses []*DeliveryResponse `json:"deliveryResponses" validate:"required"`
 	CreationTime      *time.Time          `json:"creationTime" validate:"required"`
 	UpdateTime        *time.Time          `json:"updateTime" validate:"required"`
 	EventsMatched     *int                `json:"eventsMatched" validate:"required"`

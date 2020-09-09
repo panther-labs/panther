@@ -28,13 +28,14 @@ export type SendTestAlertVariables = {
 };
 
 export type SendTestAlert = {
-  sendTestAlert?: Types.Maybe<Pick<Types.SendTestAlertResponse, 'success'>>;
+  sendTestAlert?: Types.Maybe<Pick<Types.SendTestAlertResponse, 'success' | 'message'>>;
 };
 
 export const SendTestAlertDocument = gql`
   query SendTestAlert($input: SendTestAlertInput!) {
     sendTestAlert(input: $input) {
       success
+      message
     }
   }
 `;

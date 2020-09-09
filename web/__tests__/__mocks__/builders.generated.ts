@@ -40,6 +40,8 @@ import {
   DeletePolicyInputItem,
   DeleteRuleInput,
   DeleteRuleInputItem,
+  DeliverAlertInput,
+  DeliveryResponse,
   Destination,
   DestinationConfig,
   DestinationConfigInput,
@@ -249,6 +251,8 @@ export const buildAlertDetails = (overrides: Partial<AlertDetails> = {}): AlertD
     __typename: 'AlertDetails',
     alertId: 'alertId' in overrides ? overrides.alertId : '2c5aa76d-eb43-49f0-a65c-50e4daa756a4',
     creationTime: 'creationTime' in overrides ? overrides.creationTime : '2020-10-28T02:06:29.865Z',
+    deliveryResponses:
+      'deliveryResponses' in overrides ? overrides.deliveryResponses : [buildDeliveryResponse()],
     eventsMatched: 'eventsMatched' in overrides ? overrides.eventsMatched : 516,
     ruleId: 'ruleId' in overrides ? overrides.ruleId : '9ad2c6da-417d-414f-a3e5-7959acdeaa9e',
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
@@ -273,6 +277,8 @@ export const buildAlertSummary = (overrides: Partial<AlertSummary> = {}): AlertS
     __typename: 'AlertSummary',
     alertId: 'alertId' in overrides ? overrides.alertId : 'f67b8f04-5fac-404a-93a4-38db29f258ba',
     creationTime: 'creationTime' in overrides ? overrides.creationTime : '2020-08-08T12:15:31.121Z',
+    deliveryResponses:
+      'deliveryResponses' in overrides ? overrides.deliveryResponses : [buildDeliveryResponse()],
     eventsMatched: 'eventsMatched' in overrides ? overrides.eventsMatched : 670,
     ruleId: 'ruleId' in overrides ? overrides.ruleId : '6eb9c948-5a13-4955-bd91-b98801b55bed',
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Medium,
@@ -438,6 +444,29 @@ export const buildDeleteRuleInputItem = (
 ): DeleteRuleInputItem => {
   return {
     id: 'id' in overrides ? overrides.id : '9c1a40a6-8106-4f56-82b7-b71d4afc0065',
+  };
+};
+
+export const buildDeliverAlertInput = (
+  overrides: Partial<DeliverAlertInput> = {}
+): DeliverAlertInput => {
+  return {
+    alertId: 'alertId' in overrides ? overrides.alertId : '30b3fadd-7760-4b10-8f08-4d180b56cbc8',
+    outputIds:
+      'outputIds' in overrides ? overrides.outputIds : ['ce7260ff-2562-4f2d-b5db-362c013dec73'],
+  };
+};
+
+export const buildDeliveryResponse = (
+  overrides: Partial<DeliveryResponse> = {}
+): DeliveryResponse => {
+  return {
+    __typename: 'DeliveryResponse',
+    outputId: 'outputId' in overrides ? overrides.outputId : 'bb9f4174-594c-4dc0-9308-f4c28c0e29eb',
+    message: 'message' in overrides ? overrides.message : 'Delaware',
+    statusCode: 'statusCode' in overrides ? overrides.statusCode : 319,
+    success: 'success' in overrides ? overrides.success : true,
+    dispatchedAt: 'dispatchedAt' in overrides ? overrides.dispatchedAt : '2020-09-25T00:14:42.514Z',
   };
 };
 
@@ -1240,6 +1269,7 @@ export const buildSendTestAlertResponse = (
   return {
     __typename: 'SendTestAlertResponse',
     success: 'success' in overrides ? overrides.success : true,
+    message: 'message' in overrides ? overrides.message : 'Russian Federation',
   };
 };
 

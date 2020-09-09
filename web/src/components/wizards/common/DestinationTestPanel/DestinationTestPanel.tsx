@@ -24,14 +24,21 @@ import urls from 'Source/urls';
 import SuccessStatus from 'Assets/statuses/success.svg';
 import FailureStatus from 'Assets/statuses/failure.svg';
 import NotificationStatus from 'Assets/statuses/notification.svg';
+import { extractErrorMessage } from 'Helpers/utils';
 import { WizardData as CreateWizardData } from '../../CreateDestinationWizard';
 import { WizardData as EditWizardData } from '../../EditDestinationWizard';
 import { useSendTestAlertLazyQuery } from './graphql/sendTestAlert.generated';
 
-type TestStatus = 'PASSED' | 'FAILED' | null;
+type TestResponse = {
+  success: string;
+  message: string;
+};
 
 const DestinationTestPanel: React.FC = () => {
-  const [testStatus, setTestStatus] = React.useState<TestStatus>(null);
+  const [testResponse, setTestResponse] = React.useState<TestResponse>({
+    success: '',
+    message: '',
+  });
   const {
     data: { destination },
     reset,
@@ -45,15 +52,16 @@ const DestinationTestPanel: React.FC = () => {
         outputIds: [destination.outputId],
       },
     },
-    onCompleted: () => setTestStatus('PASSED'),
-    onError: () => setTestStatus('FAILED'),
+    onCompleted: data =>
+      setTestResponse({ success: 'PASSED', message: data.sendTestAlert.message }),
+    onError: err => setTestResponse({ success: 'FAILED', message: extractErrorMessage(err) }),
   });
 
   const handleTestAlertClick = React.useCallback(() => {
     sendTestAlert();
   }, []);
 
-  if (testStatus === 'FAILED') {
+  if (testResponse.success === 'FAILED') {
     return (
       <Box maxWidth={700} mx="auto">
         <WizardPanel.Heading
@@ -83,7 +91,7 @@ const DestinationTestPanel: React.FC = () => {
     );
   }
 
-  if (testStatus === 'PASSED') {
+  if (testResponse.success === 'PASSED') {
     return (
       <Box maxWidth={700} mx="auto">
         <WizardPanel.Heading

@@ -5,6 +5,9 @@ fragment AlertSummaryFull on AlertSummary {
   severity
   status
   creationTime
+  deliveryResponses {
+    ...DeliveryResponseFull
+  }
   eventsMatched
   updateTime
   lastUpdatedBy
