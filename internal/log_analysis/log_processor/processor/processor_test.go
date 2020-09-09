@@ -263,9 +263,8 @@ func TestProcessClassifyFailure(t *testing.T) {
 	// first one fails
 	mockClassifier.On("Classify", mock.Anything).Return(&classification.ClassifierResult{}, errFailingReader).Once()
 	mockClassifier.On("Classify", mock.Anything).Return(&classification.ClassifierResult{
-		Events:            []*parsers.Result{newTestLog()},
-		Matched:           true,
-		MatchedParserName: testLogType,
+		Events:  []*parsers.Result{newTestLog()},
+		Matched: true,
 	}, nil)
 	mockClassifier.On("Stats", mock.Anything).Return(mockStats)
 	mockClassifier.On("ParserStats", mock.Anything).Return(mockParserStats)
@@ -479,9 +478,8 @@ func (c *testClassifier) ParserStats() map[string]*classification.ParserStats {
 // mocks for normal processing
 func (c *testClassifier) standardMocks(cStats *classification.ClassifierStats, pStats map[string]*classification.ParserStats) {
 	c.On("Classify", mock.Anything).Return(&classification.ClassifierResult{
-		Events:            []*parsers.Result{newTestLog()},
-		Matched:           true,
-		MatchedParserName: testLogType,
+		Events:  []*parsers.Result{newTestLog()},
+		Matched: true,
 	}, nil).After(parseDelay)
 	c.On("Stats", mock.Anything).Return(cStats)
 	c.On("ParserStats", mock.Anything).Return(pStats)

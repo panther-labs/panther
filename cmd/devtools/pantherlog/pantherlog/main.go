@@ -85,7 +85,7 @@ func main() {
 			os.Exit(1)
 			return
 		}
-		debugLog.Printf("Line=%d Type=%q NumEvents=%d\n", numLines, result.MatchedParserName, len(result.Events))
+		debugLog.Printf("Line=%d NumEvents=%d\n", numLines, len(result.Events))
 		for _, event := range result.Events {
 			// Add source fields
 			event.PantherSourceID = *sourceID

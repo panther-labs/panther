@@ -67,8 +67,7 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 	repetitions := 1000
 
 	expectedResult := &ClassifierResult{
-		MatchedParserName: "success",
-		Matched:           true,
+		Matched: true,
 		Events: []*parsers.Result{
 			expectResult,
 		},
@@ -202,9 +201,8 @@ func TestClassifyParserReturningEmptyResults(t *testing.T) {
 	require.Equal(t, expectedStats, classifier.Stats())
 
 	require.Equal(t, &ClassifierResult{
-		Events:            []*parsers.Result{},
-		Matched:           true,
-		MatchedParserName: "parser",
+		Events:  []*parsers.Result{},
+		Matched: true,
 	}, result)
 	parser.AssertExpectations(t)
 }
