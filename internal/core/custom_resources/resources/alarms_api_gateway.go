@@ -41,7 +41,7 @@ type APIGatewayAlarmProperties struct {
 
 func customAPIGatewayAlarms(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
 	const (
-		defaultErrorThreshold = 1
+		defaultErrorThreshold     = 1
 		defaultLatencyThresholdMs = 1000
 	)
 
