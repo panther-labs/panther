@@ -51,3 +51,26 @@ func TestAccessCommonParser(t *testing.T) {
 	event.AppendAnyIPAddress("127.0.0.1")
 	testutil.CheckPantherParser(t, log, NewAccessCommonParser(), &event.PantherLog)
 }
+
+func TestAccessCommonParseEmptySizeDash(t *testing.T) {
+	log := `127.0.0.1 - frank [10/Oct/2000:13:55:36 -0700] "GET /apache_pb.gif HTTP/1.0" 200 -`
+	tm, err := time.Parse(layoutApacheTimestamp, `[10/Oct/2000:13:55:36 -0700]`)
+	require.NoError(t, err)
+	event := AccessCommon{
+		AccessCommonLog: AccessCommonLog{
+			RemoteHostIPAddress: aws.String("127.0.0.1"),
+			UserID:              aws.String("frank"),
+			RequestTime:         (*timestamp.RFC3339)(&tm),
+			RequestMethod:       aws.String("GET"),
+			RequestURI:          aws.String("/apache_pb.gif"),
+			RequestProtocol:     aws.String("HTTP/1.0"),
+			ResponseStatus:      aws.Int16(200),
+			ResponseSize:        aws.Int64(0),
+		},
+	}
+	event.PantherEventTime = (*timestamp.RFC3339)(&tm)
+	event.PantherLogType = aws.String(TypeAccessCommon)
+	event.SetEvent(&event)
+	event.AppendAnyIPAddress("127.0.0.1")
+	testutil.CheckPantherParser(t, log, NewAccessCommonParser(), &event.PantherLog)
+}

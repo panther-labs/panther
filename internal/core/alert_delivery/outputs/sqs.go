@@ -39,7 +39,12 @@ func (client *OutputClient) Sqs(alert *alertModels.Alert, config *outputModels.S
 	serializedMessage, err := jsoniter.MarshalToString(notification)
 	if err != nil {
 		zap.L().Error("Failed to serialize message", zap.Error(err))
-		return &AlertDeliveryResponse{Message: "Failed to serialize message"}
+		return &AlertDeliveryResponse{
+			StatusCode: 500,
+			Message:    "Failed to serialize message",
+			Permanent:  true,
+			Success:    false,
+		}
 	}
 
 	sqsSendMessageInput := &sqs.SendMessageInput{
@@ -49,12 +54,36 @@ func (client *OutputClient) Sqs(alert *alertModels.Alert, config *outputModels.S
 
 	sqsClient := client.getSqsClient(config.QueueURL)
 
-	_, err = sqsClient.SendMessage(sqsSendMessageInput)
+	response, err := sqsClient.SendMessage(sqsSendMessageInput)
 	if err != nil {
 		zap.L().Error("Failed to send message to SQS queue", zap.Error(err))
-		return &AlertDeliveryResponse{Message: "Failed to send message to SQS queue"}
+		return getAlertResponseFromSQSError(err)
 	}
-	return nil
+
+	if response == nil {
+		return &AlertDeliveryResponse{
+			StatusCode: 500,
+			Message:    "sqs response was nil",
+			Permanent:  false,
+			Success:    false,
+		}
+	}
+
+	if response.MessageId == nil {
+		return &AlertDeliveryResponse{
+			StatusCode: 500,
+			Message:    "sqs messageId was nil",
+			Permanent:  false,
+			Success:    false,
+		}
+	}
+
+	return &AlertDeliveryResponse{
+		StatusCode: 200,
+		Message:    aws.StringValue(response.MessageId),
+		Permanent:  false,
+		Success:    true,
+	}
 }
 
 func (client *OutputClient) getSqsClient(queueURL string) sqsiface.SQSAPI {
