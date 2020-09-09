@@ -19,13 +19,15 @@ package sources
  */
 
 import (
+	"time"
+
+	"github.com/pkg/errors"
+
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	"github.com/pkg/errors"
-	"time"
 )
 
 // LoadSource loads the source configuration for an source id.
