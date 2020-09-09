@@ -111,6 +111,7 @@ def log_analysis(event: Dict[str, Any]) -> None:
                     continue
 
                 for analysis_result in _RULES_ENGINE.analyze(log_type, json_data):
+                    # The analysis results can be either a. Rule matches b. Rule errors
                     if not analysis_result.error_message:
                         matches += 1
                     output_buffer.add_event(analysis_result)

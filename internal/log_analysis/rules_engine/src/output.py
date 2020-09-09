@@ -124,6 +124,7 @@ class MatchedEventsBuffer:
 def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EngineResult]) -> None:
     # 'version', 'title', 'dedup_period' of a rule might differ if the rule was modified
     # while the rules engine was running. We pick the first encountered set of values.
+    is_rule_errors = True if events[0].error_message else False
     group_info = MatchingGroupInfo(
         rule_id=key.rule_id,
         rule_version=events[0].rule_version,
@@ -133,7 +134,7 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EngineResu
         num_matches=len(events),
         title=events[0].title,
         processing_time=time,
-        is_rule_error=True if events[0].error_message else False
+        is_rule_error=is_rule_errors
     )
     alert_info = update_get_alert_info(group_info)
     data_stream = BytesIO()
@@ -145,7 +146,7 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EngineResu
     writer.close()
     data_stream.seek(0)
     output_uuid = uuid.uuid4()
-    if events[0].error_message:
+    if is_rule_errors:
         key_format = _RULE_ERRORS_KEY_FORMAT
     else:
         key_format = _RULE_MATCHES_KEY_FORMAT
@@ -160,7 +161,7 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EngineResu
 
     # Send notification to SNS topic
     notification = _s3_put_object_notification(_S3_BUCKET, object_key, byte_size)
-
+    data_type = 'RuleErrors' if is_rule_errors  else 'RuleMatches'
     # MessageAttributes are required so that subscribers to SNS topic can filter events in the subscription
     _SNS_CLIENT.publish(
         TopicArn=_SNS_TOPIC_ARN,
@@ -168,7 +169,7 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EngineResu
         MessageAttributes={
             'type': {
                 'DataType': 'String',
-                'StringValue': 'RuleErrors' if events[0].error_message  else 'RuleMatches'
+                'StringValue': data_type
             },
             'id': {
                 'DataType': 'String',
