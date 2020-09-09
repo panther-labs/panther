@@ -65,7 +65,7 @@ describe('CreateSqsLogSource', () => {
         },
       }),
     ];
-    const { getByText, getByLabelText, findByText, getAllByLabelText, debug } = render(
+    const { getByText, getByLabelText, findByText, getAllByLabelText } = render(
       <CreateSqsLogSource />,
       {
         mocks,
@@ -93,7 +93,6 @@ describe('CreateSqsLogSource', () => {
 
     // Wait for form validation to kick in and move on to the next screen
     await waitMs(50);
-    debug();
     fireEvent.click(getByText('Continue Setup'));
 
     // Expect to see a loading animation while the resource is being validated ...
