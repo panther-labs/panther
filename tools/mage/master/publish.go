@@ -20,6 +20,7 @@ package master
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -27,8 +28,51 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/pkg/prompt"
+	"github.com/panther-labs/panther/tools/mage/clean"
+	"github.com/panther-labs/panther/tools/mage/deploy"
+	"github.com/panther-labs/panther/tools/mage/logger"
+	"github.com/panther-labs/panther/tools/mage/setup"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
+
+// Publish a new Panther release (Panther team only)
+func Publish() error {
+	log := logger.Build("[master:publish]")
+	if err := deploy.PreCheck(false); err != nil {
+		return err
+	}
+
+	version, err := GetVersion()
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Publishing panther-community v%s to %s", version, strings.Join(publishRegions, ","))
+	result := prompt.Read("Are you sure you want to continue? (yes|no) ", prompt.NonemptyValidator)
+	if strings.ToLower(result) != "yes" {
+		return fmt.Errorf("publish aborted")
+	}
+
+	// To be safe, always clean and reset the repo before building the assets
+	if err := clean.Clean(); err != nil {
+		return err
+	}
+	if err := setup.Setup(); err != nil {
+		return err
+	}
+	if err := Build(log); err != nil {
+		return err
+	}
+
+	for _, region := range publishRegions {
+		if err := publishToRegion(log, version, region); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 
 func publishToRegion(log *zap.SugaredLogger, version, region string) error {
 	log.Infof("publishing to %s", region)

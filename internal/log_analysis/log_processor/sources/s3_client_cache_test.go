@@ -207,29 +207,46 @@ func resetCaches() {
 	s3ClientCache, _ = lru.NewARC(s3ClientCacheSize)
 }
 
-func TestSourceCacheStruct_Find(t *testing.T) {
+func TestSourceCacheStructFind(t *testing.T) {
 	cache := sourceCacheStruct{}
 	now := time.Now()
 	sources := []*models.SourceIntegration{
 		{
 			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				S3Bucket: "foo",
-				S3Prefix: "",
-				LogTypes: []string{"Foo.Bar"},
+				IntegrationID:   "1",
+				IntegrationType: models.IntegrationTypeAWS3,
+				S3Bucket:        "foo",
+				S3Prefix:        "",
+				LogTypes:        []string{"Foo.Bar"},
 			},
 		},
 		{
 			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				S3Bucket: "foo",
-				S3Prefix: "/foo",
-				LogTypes: []string{"Foo.Baz"},
+				IntegrationID:   "2",
+				IntegrationType: models.IntegrationTypeAWS3,
+				S3Bucket:        "foo",
+				S3Prefix:        "foo",
+				LogTypes:        []string{"Foo.Baz"},
 			},
 		},
 		{
 			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				S3Bucket: "foo",
-				S3Prefix: "/foo/bar/baz",
-				LogTypes: []string{"Foo.Qux"},
+				IntegrationID:   "3",
+				IntegrationType: models.IntegrationTypeSqs,
+				SqsConfig: &models.SqsConfig{
+					S3Bucket: "foo",
+					S3Prefix: "foo/bar/sqs",
+					LogTypes: []string{"Foo.Sqs"},
+				},
+			},
+		},
+		{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
+				IntegrationID:   "4",
+				IntegrationType: models.IntegrationTypeAWS3,
+				S3Bucket:        "foo",
+				S3Prefix:        "foo/bar/baz",
+				LogTypes:        []string{"Foo.Qux"},
 			},
 		},
 	}
@@ -238,25 +255,30 @@ func TestSourceCacheStruct_Find(t *testing.T) {
 	{
 		src := cache.FindS3("foo", "/bar")
 		assert.NotNil(src)
-		assert.Equal("", src.S3Prefix)
+		assert.Equal("1", src.IntegrationID)
 	}
 	{
 		src := cache.FindS3("foo", "/foo/bar.json")
 		assert.NotNil(src)
-		assert.Equal("/foo", src.S3Prefix)
+		assert.Equal("2", src.IntegrationID)
 	}
 	{
-		src := cache.FindS3("foo", "/foo/bar/baz.json")
+		src := cache.FindS3("foo", "foo/bar/baz.json")
 		assert.NotNil(src)
-		assert.Equal("/foo/bar/baz", src.S3Prefix)
+		assert.Equal("4", src.IntegrationID)
 	}
 	{
-		src := cache.FindS3("foo", "/foo/bar/baz/qux.json")
+		src := cache.FindS3("foo", "foo/bar/sqs/test.json")
 		assert.NotNil(src)
-		assert.Equal("/foo/bar/baz", src.S3Prefix)
+		assert.Equal("3", src.IntegrationID)
 	}
 	{
-		src := cache.FindS3("goo", "/foo/bar/baz/qux.json")
+		src := cache.FindS3("foo", "foo/bar/baz/qux.json")
+		assert.NotNil(src)
+		assert.Equal("4", src.IntegrationID)
+	}
+	{
+		src := cache.FindS3("goo", "foo/bar/baz/qux.json")
 		assert.Nil(src)
 	}
 }

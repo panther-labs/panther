@@ -78,7 +78,7 @@ func Gen() error {
 
 type Master mg.Namespace
 
-// Deploy Deploy single master template (deployments/master.yml) nesting all other stacks
+// Deploy Deploy single master template nesting all other stacks
 func (Master) Deploy() error {
 	return master.Deploy()
 }

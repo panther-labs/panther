@@ -65,8 +65,14 @@ func TestSendSqs(t *testing.T) {
 		MessageBody: &expectedSerializedSqsMessage,
 	}
 
-	client.On("SendMessage", expectedSqsSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
+	client.On("SendMessage", expectedSqsSendMessageInput).Return(&sqs.SendMessageOutput{MessageId: aws.String("messageId")}, nil)
 	result := outputClient.Sqs(alert, sqsOutputConfig)
-	assert.Nil(t, result)
+	assert.NotNil(t, result)
+	assert.Equal(t, &AlertDeliveryResponse{
+		Message:    "messageId",
+		StatusCode: 200,
+		Success:    true,
+		Permanent:  false,
+	}, result)
 	client.AssertExpectations(t)
 }
