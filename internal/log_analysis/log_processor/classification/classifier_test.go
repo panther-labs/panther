@@ -29,7 +29,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
-	"github.com/panther-labs/panther/pkg/box"
 )
 
 // TODO: thorough test when parsers return parsers.Result
@@ -68,8 +67,8 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 	repetitions := 1000
 
 	expectedResult := &ClassifierResult{
-		LogType: box.String("success"),
-		Matched: true,
+		MatchedParserName: "success",
+		Matched:           true,
 		Events: []*parsers.Result{
 			expectResult,
 		},
@@ -202,7 +201,11 @@ func TestClassifyParserReturningEmptyResults(t *testing.T) {
 	expectedStats.ClassifyTimeMicroseconds = classifier.Stats().ClassifyTimeMicroseconds
 	require.Equal(t, expectedStats, classifier.Stats())
 
-	require.Equal(t, &ClassifierResult{Events: []*parsers.Result{}, Matched: true, LogType: box.String("parser")}, result)
+	require.Equal(t, &ClassifierResult{
+		Events:            []*parsers.Result{},
+		Matched:           true,
+		MatchedParserName: "parser",
+	}, result)
 	parser.AssertExpectations(t)
 }
 

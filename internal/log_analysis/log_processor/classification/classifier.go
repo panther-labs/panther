@@ -50,8 +50,8 @@ type ClassifierResult struct {
 	// NumMiss counts the number for failed classification attempts
 	NumMiss int
 
-	// LogType is the identified type of the log
-	LogType *string
+	// MatchedParserName is the name of the parser that matched the log line
+	MatchedParserName string
 }
 
 // NewClassifier returns a new instance of a ClassifierAPI implementation
@@ -150,7 +150,7 @@ func (c *Classifier) Classify(log string) (*ClassifierResult, error) {
 		// Since the parsing was successful, remove all penalty from the parser
 		// The parser will be higher priority in the queue
 		currentItem.penalty = 0
-		result.LogType = &logType
+		result.MatchedParserName = logType
 		result.Events = parsedEvents
 
 		// update per-parser stats
