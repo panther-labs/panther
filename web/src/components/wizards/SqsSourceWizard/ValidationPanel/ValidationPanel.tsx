@@ -85,7 +85,7 @@ const ValidationPanel: React.FC = () => {
                   ? (result.current as UpdateSqsLogSourceMutationResult).data.updateSqsLogIntegration.sqsConfig.queueUrl // prettier-ignore
                   : (result.current as AddSqsLogSourceMutationResult).data.addSqsLogIntegration.sqsConfig.queueUrl // prettier-ignore
               );
-              pushSnackbar({ variant: 'default', title: 'Copied to clipboard' });
+              pushSnackbar({ variant: 'default', title: 'Copied to clipboard', duration: 2000 });
             }}
           >
             Copy SQS Queue URL
