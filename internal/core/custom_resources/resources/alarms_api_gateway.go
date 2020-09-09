@@ -40,8 +40,10 @@ type APIGatewayAlarmProperties struct {
 }
 
 func customAPIGatewayAlarms(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
-	const defaultGatewayLatencyThresholdMs = 1000
-	const defaultGatewayErrorThreshold = 5
+	const (
+		defaultErrorThreshold = 1
+		defaultLatencyThresholdMs = 1000
+	)
 
 	switch event.RequestType {
 	case cfn.RequestCreate, cfn.RequestUpdate:
@@ -51,10 +53,10 @@ func customAPIGatewayAlarms(_ context.Context, event cfn.Event) (string, map[str
 		}
 
 		if props.ErrorThreshold == nil {
-			props.ErrorThreshold = aws.Int64(defaultGatewayErrorThreshold)
+			props.ErrorThreshold = aws.Int64(defaultErrorThreshold)
 		}
 		if props.LatencyThresholdMs == 0 {
-			props.LatencyThresholdMs = defaultGatewayLatencyThresholdMs
+			props.LatencyThresholdMs = defaultLatencyThresholdMs
 		}
 
 		return "custom:alarms:api:" + props.APIName, nil, putGatewayAlarmGroup(props)
