@@ -110,13 +110,11 @@ func (c *Classifier) Classify(log string) (*ClassifierResult, error) {
 		c.stats.ClassifyTimeMicroseconds = uint64(time.Since(startClassify).Microseconds())
 		c.stats.BytesProcessedCount += uint64(len(log))
 		c.stats.LogLineCount++
-		c.stats.EventCount += uint64(len(result.Events))
-		if len(log) > 0 {
-			if result.LogType == nil {
-				c.stats.ClassificationFailureCount++
-			} else {
-				c.stats.SuccessfullyClassifiedCount++
-			}
+		if result.Matched {
+			c.stats.SuccessfullyClassifiedCount++
+			c.stats.EventCount += uint64(len(result.Events))
+		} else if result.NumMiss != 0 {
+			c.stats.ClassificationFailureCount++
 		}
 	}()
 

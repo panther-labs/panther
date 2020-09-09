@@ -135,10 +135,8 @@ func (p *Processor) run(outputChan chan *parsers.Result) error {
 
 func (p *Processor) processLogLine(line string, outputChan chan *parsers.Result) {
 	result, err := p.classifier.Classify(line)
+	// A classifier returns an error when it cannot classify a non-empty log line
 	if err != nil {
-		if line == "" {
-			return
-		}
 		// make easy to troubleshoot but do not add log line (even partial) to avoid leaking data into CW
 		p.operation.LogWarn(errors.New("failed to classify log line"),
 			zap.Uint64("lineNum", p.classifier.Stats().LogLineCount),

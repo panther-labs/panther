@@ -202,13 +202,13 @@ func TestGetS3ClientSourceNoPrefix(t *testing.T) {
 
 func resetCaches() {
 	// resetting cache
-	sourceCache.cacheUpdateTime = time.Unix(0, 0)
+	globalSourceCache.cacheUpdateTime = time.Unix(0, 0)
 	bucketCache, _ = lru.NewARC(s3BucketLocationCacheSize)
 	s3ClientCache, _ = lru.NewARC(s3ClientCacheSize)
 }
 
 func TestSourceCacheStructFind(t *testing.T) {
-	cache := sourceCacheStruct{}
+	cache := sourceCache{}
 	now := time.Now()
 	sources := []*models.SourceIntegration{
 		{

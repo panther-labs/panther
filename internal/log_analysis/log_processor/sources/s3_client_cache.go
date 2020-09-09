@@ -55,13 +55,19 @@ type s3ClientCacheKey struct {
 	awsRegion string
 }
 
-type sourceCacheStruct struct {
+type sourceCache struct {
+	// last time the cache was updated
 	cacheUpdateTime time.Time
-	index           map[string]*models.SourceIntegration
-	byBucket        map[string][]*models.SourceIntegration
+	// sources by id
+	index map[string]*models.SourceIntegration
+	// sources by s3 bucket sorted by longest prefix first
+	byBucket map[string][]*models.SourceIntegration
 }
 
-func (c *sourceCacheStruct) LoadS3(bucketName, objectKey string) (*models.SourceIntegration, error) {
+// LoadS3 loads the source configuration for an S3 object.
+// This will update the cache if needed.
+// It will return error if it encountered an issue retrieving the source information or if the source is not found.
+func (c *sourceCache) LoadS3(bucketName, objectKey string) (*models.SourceIntegration, error) {
 	if err := c.Sync(time.Now()); err != nil {
 		return nil, err
 	}
@@ -72,7 +78,10 @@ func (c *sourceCacheStruct) LoadS3(bucketName, objectKey string) (*models.Source
 	return nil, errors.Errorf("source for s3://%s/%s not found", bucketName, objectKey)
 }
 
-func (c *sourceCacheStruct) Load(id string) (*models.SourceIntegration, error) {
+// Loads the source configuration for an source id.
+// This will update the cache if needed.
+// It will return error if it encountered an issue retrieving the source information or if the source is not found.
+func (c *sourceCache) Load(id string) (*models.SourceIntegration, error) {
 	if err := c.Sync(time.Now()); err != nil {
 		return nil, err
 	}
@@ -83,7 +92,8 @@ func (c *sourceCacheStruct) Load(id string) (*models.SourceIntegration, error) {
 	return nil, errors.Errorf("source %q not found", id)
 }
 
-func (c *sourceCacheStruct) Sync(now time.Time) error {
+// Sync will update the cache if too much time has passed
+func (c *sourceCache) Sync(now time.Time) error {
 	if c.cacheUpdateTime.Add(sourceCacheDuration).Before(now) {
 		// we need to update the cache
 		input := &models.LambdaInput{
@@ -98,7 +108,8 @@ func (c *sourceCacheStruct) Sync(now time.Time) error {
 	return nil
 }
 
-func (c *sourceCacheStruct) Update(now time.Time, sources []*models.SourceIntegration) {
+// Update updates the cache
+func (c *sourceCache) Update(now time.Time, sources []*models.SourceIntegration) {
 	byBucket := make(map[string][]*models.SourceIntegration)
 	index := make(map[string]*models.SourceIntegration)
 	for _, source := range sources {
@@ -122,18 +133,20 @@ func (c *sourceCacheStruct) Update(now time.Time, sources []*models.SourceIntegr
 		})
 		byBucket[bucketName] = sourcesSorted
 	}
-	*c = sourceCacheStruct{
+	*c = sourceCache{
 		byBucket:        byBucket,
 		index:           index,
 		cacheUpdateTime: now,
 	}
 }
 
-func (c *sourceCacheStruct) Find(id string) *models.SourceIntegration {
+// Find looks up a source by id without updating the cache
+func (c *sourceCache) Find(id string) *models.SourceIntegration {
 	return c.index[id]
 }
 
-func (c *sourceCacheStruct) FindS3(bucketName, objectKey string) *models.SourceIntegration {
+// FindS3 looks up a source by bucket name and prefix without updating the cache
+func (c *sourceCache) FindS3(bucketName, objectKey string) *models.SourceIntegration {
 	sources := c.byBucket[bucketName]
 	for _, source := range sources {
 		_, sourcePrefix := getSourceS3Info(source)
@@ -151,9 +164,7 @@ var (
 	// s3ClientCacheKey -> S3 client
 	s3ClientCache *lru.ARCCache
 
-	sourceCache = &sourceCacheStruct{
-		cacheUpdateTime: time.Unix(0, 0),
-	}
+	globalSourceCache = &sourceCache{}
 
 	//used to simplify mocking during testing
 	newCredentialsFunc = stscreds.NewCredentials
