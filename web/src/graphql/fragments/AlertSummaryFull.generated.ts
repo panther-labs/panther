@@ -34,7 +34,7 @@ export type AlertSummaryFull = Pick<
   | 'updateTime'
   | 'lastUpdatedBy'
   | 'lastUpdatedByTime'
-> & { deliveryResponses?: Types.Maybe<Array<Types.Maybe<DeliveryResponseFull>>> };
+> & { deliveryResponses: Array<Types.Maybe<DeliveryResponseFull>> };
 
 export const AlertSummaryFull = gql`
   fragment AlertSummaryFull on AlertSummary {

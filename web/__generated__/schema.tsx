@@ -108,7 +108,7 @@ export type AddSqsLogIntegrationInput = {
 export type Alert = {
   alertId: Scalars['ID'];
   creationTime: Scalars['AWSDateTime'];
-  deliveryResponses?: Maybe<Array<Maybe<DeliveryResponse>>>;
+  deliveryResponses: Array<Maybe<DeliveryResponse>>;
   eventsMatched: Scalars['Int'];
   ruleId?: Maybe<Scalars['ID']>;
   severity: SeverityEnum;
@@ -123,7 +123,7 @@ export type AlertDetails = Alert & {
   __typename?: 'AlertDetails';
   alertId: Scalars['ID'];
   creationTime: Scalars['AWSDateTime'];
-  deliveryResponses?: Maybe<Array<Maybe<DeliveryResponse>>>;
+  deliveryResponses: Array<Maybe<DeliveryResponse>>;
   eventsMatched: Scalars['Int'];
   ruleId?: Maybe<Scalars['ID']>;
   severity: SeverityEnum;
@@ -148,7 +148,7 @@ export type AlertSummary = Alert & {
   __typename?: 'AlertSummary';
   alertId: Scalars['ID'];
   creationTime: Scalars['AWSDateTime'];
-  deliveryResponses?: Maybe<Array<Maybe<DeliveryResponse>>>;
+  deliveryResponses: Array<Maybe<DeliveryResponse>>;
   eventsMatched: Scalars['Int'];
   ruleId?: Maybe<Scalars['ID']>;
   severity: SeverityEnum;
@@ -261,11 +261,11 @@ export type DeliverAlertInput = {
 
 export type DeliveryResponse = {
   __typename?: 'DeliveryResponse';
-  outputId?: Maybe<Scalars['ID']>;
-  message?: Maybe<Scalars['String']>;
-  statusCode?: Maybe<Scalars['Int']>;
-  success?: Maybe<Scalars['Boolean']>;
-  dispatchedAt?: Maybe<Scalars['AWSDateTime']>;
+  outputId: Scalars['ID'];
+  message: Scalars['String'];
+  statusCode: Scalars['Int'];
+  success: Scalars['Boolean'];
+  dispatchedAt: Scalars['AWSDateTime'];
 };
 
 export type Destination = {
@@ -1708,7 +1708,7 @@ export type AlertResolvers<
   alertId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   creationTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   deliveryResponses?: Resolver<
-    Maybe<Array<Maybe<ResolversTypes['DeliveryResponse']>>>,
+    Array<Maybe<ResolversTypes['DeliveryResponse']>>,
     ParentType,
     ContextType
   >;
@@ -1729,7 +1729,7 @@ export type AlertDetailsResolvers<
   alertId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   creationTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   deliveryResponses?: Resolver<
-    Maybe<Array<Maybe<ResolversTypes['DeliveryResponse']>>>,
+    Array<Maybe<ResolversTypes['DeliveryResponse']>>,
     ParentType,
     ContextType
   >;
@@ -1754,7 +1754,7 @@ export type AlertSummaryResolvers<
   alertId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   creationTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   deliveryResponses?: Resolver<
-    Maybe<Array<Maybe<ResolversTypes['DeliveryResponse']>>>,
+    Array<Maybe<ResolversTypes['DeliveryResponse']>>,
     ParentType,
     ContextType
   >;
@@ -1870,11 +1870,11 @@ export type DeliveryResponseResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['DeliveryResponse'] = ResolversParentTypes['DeliveryResponse']
 > = {
-  outputId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
-  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  statusCode?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  success?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
-  dispatchedAt?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
+  outputId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  statusCode?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  dispatchedAt?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
