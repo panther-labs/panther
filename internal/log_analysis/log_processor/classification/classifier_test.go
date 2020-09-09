@@ -69,6 +69,7 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 
 	expectedResult := &ClassifierResult{
 		LogType: box.String("success"),
+		Matched: true,
 		Events: []*parsers.Result{
 			expectResult,
 		},
@@ -90,6 +91,10 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 
 	for i := 0; i < repetitions; i++ {
 		result, err := classifier.Classify(logLine)
+		if i == 0 {
+			// Maps are not ordered, we do not know if first result can miss
+			result.NumMiss = 0
+		}
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
 	}
@@ -132,7 +137,7 @@ func TestClassifyNoMatch(t *testing.T) {
 	expectedStats.ClassifyTimeMicroseconds = classifier.Stats().ClassifyTimeMicroseconds
 	require.Equal(t, expectedStats, classifier.Stats())
 
-	require.Equal(t, &ClassifierResult{}, result)
+	require.Equal(t, &ClassifierResult{NumMiss: 1}, result)
 	failingParser.AssertNumberOfCalls(t, "Parse", 1)
 	require.Nil(t, classifier.ParserStats()["failure"])
 }
@@ -169,7 +174,7 @@ func TestClassifyParserPanic(t *testing.T) {
 	expectedStats.ClassifyTimeMicroseconds = classifier.Stats().ClassifyTimeMicroseconds
 	require.Equal(t, expectedStats, classifier.Stats())
 
-	require.Equal(t, &ClassifierResult{}, result)
+	require.Equal(t, &ClassifierResult{NumMiss: 1}, result)
 	panicParser.AssertNumberOfCalls(t, "Parse", 1)
 }
 
@@ -197,7 +202,7 @@ func TestClassifyParserReturningEmptyResults(t *testing.T) {
 	expectedStats.ClassifyTimeMicroseconds = classifier.Stats().ClassifyTimeMicroseconds
 	require.Equal(t, expectedStats, classifier.Stats())
 
-	require.Equal(t, &ClassifierResult{Events: []*parsers.Result{}, LogType: box.String("parser")}, result)
+	require.Equal(t, &ClassifierResult{Events: []*parsers.Result{}, Matched: true, LogType: box.String("parser")}, result)
 	parser.AssertExpectations(t)
 }
 

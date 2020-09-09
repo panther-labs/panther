@@ -19,17 +19,44 @@ package sources
  */
 
 import (
-	"github.com/pkg/errors"
-
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/pkg/errors"
+	"time"
 )
 
-func Lookup(id string) *models.SourceIntegration {
-	return sourceCache.Find(id)
+func LoadSource(id string) (*models.SourceIntegration, error) {
+	return sourceCache.Load(id)
+}
+
+// Loads the source configuration for an S3 object.
+// It will update the global cache if needed
+// It will return error if it encountered an issue retrieving the source information.
+// It will return an error and nil result if no source exists for this object.
+func LoadSourceS3(bucketName, objectKey string) (*models.SourceIntegration, error) {
+	result, err := sourceCache.LoadS3(bucketName, objectKey)
+	if err != nil {
+		return nil, err
+	}
+
+	// FIXME: This does not work for SQS sources. The update needs to happen in the destination when writing.
+	//        Since we now have the source id available in the Result this is now possible
+	//        Because of mocks and globals that check the number of calls it is not an easy refactor to perform
+	// If the incoming notification maps to a known source, update the source information
+	if result != nil {
+		now := time.Now() // No need to be UTC. We care about relative time
+		deadline := lastEventReceived[result.IntegrationID].Add(statusUpdateFrequency)
+		// if more than 'statusUpdateFrequency' time has passed, update status
+		if now.After(deadline) {
+			updateIntegrationStatus(result.IntegrationID, now)
+			lastEventReceived[result.IntegrationID] = now
+		}
+	}
+
+	return result, nil
 }
 
 func BuildClassifier(src *models.SourceIntegration, r *logtypes.Registry) (classification.ClassifierAPI, error) {

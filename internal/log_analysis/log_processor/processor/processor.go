@@ -21,7 +21,6 @@ package processor
 import (
 	"bufio"
 	"io"
-	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -35,7 +34,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
-	"github.com/panther-labs/panther/internal/log_analysis/message_forwarder/forwarder"
 	"github.com/panther-labs/panther/pkg/metrics"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
@@ -187,8 +185,8 @@ func MustBuildProcessor(input *common.DataStream, registry *logtypes.Registry) *
 	proc, err := BuildProcessor(input, registry)
 	if err != nil {
 		zap.L().Error("invalid build log processor for source",
-			zap.String(`source_id`, input.Source.IntegrationID),
-			zap.String(`source_label`, input.Source.IntegrationLabel),
+			zap.String("sourceId", input.Source.IntegrationID),
+			zap.String("sourceLabel", input.Source.IntegrationLabel),
 			zap.Error(err))
 		panic(err)
 	}
@@ -201,10 +199,9 @@ func BuildProcessor(input *common.DataStream, registry *logtypes.Registry) (*Pro
 		return &Processor{
 			operation: common.OpLogManager.Start(operationName),
 			input:     input,
-			classifier: &sqsClassifier{
-				registry:    registry,
-				lookup:      sources.Lookup,
-				classifiers: make(map[string]classification.ClassifierAPI),
+			classifier: &sources.SQSClassifier{
+				Registry:   registry,
+				LoadSource: sources.LoadSource,
 			},
 		}, nil
 	case models.IntegrationTypeAWS3:
@@ -220,68 +217,4 @@ func BuildProcessor(input *common.DataStream, registry *logtypes.Registry) (*Pro
 	default:
 		return nil, errors.Errorf("invalid source type %s", src.IntegrationType)
 	}
-}
-
-type sqsClassifier struct {
-	registry    *logtypes.Registry
-	stats       classification.ClassifierStats
-	lookup      func(string) *models.SourceIntegration
-	classifiers map[string]classification.ClassifierAPI
-}
-
-var _ classification.ClassifierAPI = (*sqsClassifier)(nil)
-
-var jsonAPI = common.BuildJSON()
-
-func (c *sqsClassifier) Stats() *classification.ClassifierStats {
-	stats := &classification.ClassifierStats{}
-	stats.Add(&c.stats)
-	for _, child := range c.classifiers {
-		stats.Add(child.Stats())
-	}
-	return stats
-}
-
-func (c *sqsClassifier) ParserStats() map[string]*classification.ParserStats {
-	stats := map[string]*classification.ParserStats{}
-	for _, child := range c.classifiers {
-		childStats := child.ParserStats()
-		if childStats == nil {
-			continue
-		}
-		classification.MergeParserStats(stats, childStats)
-	}
-	return stats
-}
-
-func (c *sqsClassifier) Classify(log string) (*classification.ClassifierResult, error) {
-	log = strings.TrimSpace(log)
-	if len(log) == 0 {
-		c.stats.LogLineCount++
-		return &classification.ClassifierResult{}, nil
-	}
-	msg := forwarder.Message{}
-	err := jsonAPI.UnmarshalFromString(log, &msg)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse JSON message")
-	}
-	cls, ok := c.classifiers[msg.SourceIntegrationID]
-	if !ok {
-		cls, err = c.buildClassifier(msg.SourceIntegrationID)
-
-		if err != nil {
-			// Just update the stats
-			return nil, err
-		}
-		c.classifiers[msg.SourceIntegrationID] = cls
-	}
-	return cls.Classify(msg.Payload)
-}
-
-func (c *sqsClassifier) buildClassifier(id string) (classification.ClassifierAPI, error) {
-	src := c.lookup(id)
-	if src == nil {
-		return nil, errors.Errorf("unknown source id %q", id)
-	}
-	return sources.BuildClassifier(src, c.registry)
 }

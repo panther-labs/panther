@@ -86,13 +86,13 @@ func TestGetS3Client(t *testing.T) {
 		S3Bucket:    "test-bucket",
 		S3ObjectKey: "prefix/key",
 	}
-	result, sourceInfo, err := getS3Client(s3Object)
+	result, sourceInfo, err := getS3Client(s3Object.S3Bucket, s3Object.S3ObjectKey)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	require.Equal(t, models.IntegrationTypeAWS3, sourceInfo.IntegrationType)
 
 	// Subsequent calls should use cache
-	result, sourceInfo, err = getS3Client(s3Object)
+	result, sourceInfo, err = getS3Client(s3Object.S3Bucket, s3Object.S3ObjectKey)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	require.Equal(t, models.IntegrationTypeAWS3, sourceInfo.IntegrationType)
@@ -137,7 +137,7 @@ func TestGetS3ClientUnknownBucket(t *testing.T) {
 		S3ObjectKey: "prefix/key",
 	}
 
-	result, sourceInfo, err := getS3Client(s3Object)
+	result, sourceInfo, err := getS3Client(s3Object.S3Bucket, s3Object.S3ObjectKey)
 	require.Error(t, err)
 	require.Nil(t, result)
 	require.Nil(t, sourceInfo)
@@ -191,7 +191,7 @@ func TestGetS3ClientSourceNoPrefix(t *testing.T) {
 		S3ObjectKey: "test",
 	}
 
-	result, sourceInfo, err := getS3Client(s3Object)
+	result, sourceInfo, err := getS3Client(s3Object.S3Bucket, s3Object.S3Bucket)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	require.Equal(t, models.IntegrationTypeAWS3, sourceInfo.IntegrationType)

@@ -45,6 +45,11 @@ type ClassifierResult struct {
 	// If the classification process was not successful and the log is from an
 	// unsupported type, this will be nil
 	Events []*parsers.Result
+	// Matched signifies that the classifier matched the log entry
+	Matched bool
+	// NumMiss counts the number for failed classification attempts
+	NumMiss int
+
 	// LogType is the identified type of the log
 	LogType *string
 }
@@ -121,7 +126,6 @@ func (c *Classifier) Classify(log string) (*ClassifierResult, error) {
 		return result, nil
 	}
 
-	failed := true
 	for c.parsers.Len() > 0 {
 		currentItem := c.parsers.Peek()
 
@@ -138,10 +142,12 @@ func (c *Classifier) Classify(log string) (*ClassifierResult, error) {
 			// Increasing penalty of the parser
 			// Due to increased penalty the parser will be lower priority in the queue
 			currentItem.penalty++
+			// Increment the number of misses in the result
+			result.NumMiss++
 			// record failure
 			continue
 		}
-		failed = false
+		result.Matched = true
 
 		// Since the parsing was successful, remove all penalty from the parser
 		// The parser will be higher priority in the queue
@@ -173,7 +179,7 @@ func (c *Classifier) Classify(log string) (*ClassifierResult, error) {
 	for _, item := range popped {
 		heap.Push(c.parsers, item)
 	}
-	if failed {
+	if !result.Matched {
 		return result, errors.New("failed to classify log line")
 	}
 	return result, nil
