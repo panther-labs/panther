@@ -99,7 +99,7 @@ Mappings:
       Memory: 128
       Timeout: 60
     Poller:
-      Memory: 128
+      Memory: 512
       Timeout: 900
     Remediation:
       Memory: 128
