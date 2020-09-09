@@ -106,9 +106,13 @@ func (log *AccessCommonLog) SetRow(row []string) error {
 			return err
 		}
 		statusCode := int16(n)
-		numBytes, err := strconv.ParseInt(responseSize, 10, 64)
-		if err != nil {
-			return err
+
+		var numBytes int64
+		if responseSize != "-" {
+			numBytes, err = strconv.ParseInt(responseSize, 10, 64)
+			if err != nil {
+				return err
+			}
 		}
 		*log = AccessCommonLog{
 			RemoteHostIPAddress:   nonEmptyLogField(remoteIP),
