@@ -385,8 +385,8 @@ type Series {
 }
 
 type FloatSeries {
-  label: String
-  values: [Float]
+  label: String!
+  values: [Float!]!
 }
 
 type SeriesData {
@@ -395,8 +395,8 @@ type SeriesData {
 }
 
 type FloatSeriesData {
-  timestamps: [AWSDateTime]
-  series: [FloatSeries]
+  timestamps: [AWSDateTime!]!
+  series: [FloatSeries!]!
 }
 
 type SingleValue {

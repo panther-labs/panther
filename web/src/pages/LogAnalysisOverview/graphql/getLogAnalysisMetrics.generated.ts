@@ -36,7 +36,7 @@ export type GetLogAnalysisMetrics = {
     >;
     eventsLatency?: Types.Maybe<
       Pick<Types.FloatSeriesData, 'timestamps'> & {
-        series?: Types.Maybe<Array<Types.Maybe<Pick<Types.FloatSeries, 'label' | 'values'>>>>;
+        series: Array<Pick<Types.FloatSeries, 'label' | 'values'>>;
       }
     >;
     alertsBySeverity?: Types.Maybe<

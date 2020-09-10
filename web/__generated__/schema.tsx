@@ -315,14 +315,14 @@ export enum DestinationTypeEnum {
 
 export type FloatSeries = {
   __typename?: 'FloatSeries';
-  label?: Maybe<Scalars['String']>;
-  values?: Maybe<Array<Maybe<Scalars['Float']>>>;
+  label: Scalars['String'];
+  values: Array<Scalars['Float']>;
 };
 
 export type FloatSeriesData = {
   __typename?: 'FloatSeriesData';
-  timestamps?: Maybe<Array<Maybe<Scalars['AWSDateTime']>>>;
-  series?: Maybe<Array<Maybe<FloatSeries>>>;
+  timestamps: Array<Scalars['AWSDateTime']>;
+  series: Array<FloatSeries>;
 };
 
 export type GeneralSettings = {
@@ -1885,8 +1885,8 @@ export type FloatSeriesResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['FloatSeries'] = ResolversParentTypes['FloatSeries']
 > = {
-  label?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  values?: Resolver<Maybe<Array<Maybe<ResolversTypes['Float']>>>, ParentType, ContextType>;
+  label?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  values?: Resolver<Array<ResolversTypes['Float']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -1894,12 +1894,8 @@ export type FloatSeriesDataResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['FloatSeriesData'] = ResolversParentTypes['FloatSeriesData']
 > = {
-  timestamps?: Resolver<
-    Maybe<Array<Maybe<ResolversTypes['AWSDateTime']>>>,
-    ParentType,
-    ContextType
-  >;
-  series?: Resolver<Maybe<Array<Maybe<ResolversTypes['FloatSeries']>>>, ParentType, ContextType>;
+  timestamps?: Resolver<Array<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
+  series?: Resolver<Array<ResolversTypes['FloatSeries']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
