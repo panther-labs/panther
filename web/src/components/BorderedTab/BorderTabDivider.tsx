@@ -22,6 +22,7 @@ import { Box } from 'pouncejs';
 const BorderTabDivider: React.FC = () => {
   return (
     <Box
+      position="absolute"
       width="100%"
       height={1}
       backgroundColor="navyblue-300"

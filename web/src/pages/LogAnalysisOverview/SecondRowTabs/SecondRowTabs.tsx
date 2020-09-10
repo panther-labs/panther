@@ -32,7 +32,7 @@ const SecondRowTabs: React.FC<SecondRowTabsProps> = ({ eventsProcessed, eventsLa
   return (
     <Card as="section" width={1}>
       <Tabs width={1}>
-        <Box>
+        <Box position="relative">
           <TabList>
             <Tab>
               {({ isSelected, isFocused }) => (
