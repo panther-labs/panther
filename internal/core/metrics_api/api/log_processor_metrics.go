@@ -148,7 +148,7 @@ func getEventsLatency(input *models.GetMetricsInput, output *models.GetMetricsOu
 			// Add the latency / event count expression
 			&cloudwatch.MetricDataQuery{
 				Id:         aws.String("avg_latency_query" + index),
-				Label:      aws.String(aws.StringValue(metric.Dimensions[0].Value) + " latency"),
+				Label:      aws.String(aws.StringValue(metric.Dimensions[0].Value)),
 				Expression: aws.String("latency_query_" + index + " / events_query_" + index),
 				ReturnData: aws.Bool(true),
 			},
