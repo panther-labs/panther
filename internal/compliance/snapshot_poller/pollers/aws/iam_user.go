@@ -522,8 +522,6 @@ func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddR
 	}
 
 	// Build the credential report for all users
-	// NOTE: the returned error here is *not* wrapped with "errors". If that changes,
-	// be sure
 	userCredentialReports, err = buildCredentialReport(iamSvc)
 	if err != nil {
 		var awsErr awserr.Error
