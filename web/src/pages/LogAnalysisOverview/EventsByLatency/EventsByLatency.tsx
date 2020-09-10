@@ -42,7 +42,7 @@ const EventsByLatency: React.FC<EventsByLatencyProps> = ({ events: { timestamps,
       px={4}
       backgroundColor="navyblue-500"
     >
-      <TimeSeriesChart data={timeseriesData} units="seconds" zoomable />
+      <TimeSeriesChart data={timeseriesData} units="sec" zoomable />
     </Flex>
   );
 };

@@ -54,18 +54,8 @@ interface TimeSeriesLinesProps {
   /**
    * This is parameter determines if we need to display the values with an appropriate suffix
    */
-  units?: 'seconds';
+  units?: string;
 }
-
-const addUnits = unit => {
-  switch (unit) {
-    case 'seconds': {
-      return ' sec';
-    }
-    default:
-      return '';
-  }
-};
 
 const severityColors = mapKeys(SEVERITY_COLOR_MAP, (val, key) => capitalize(key.toLowerCase()));
 
@@ -173,7 +163,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
                       </Box>
                       <Box as="dd" font="mono" fontWeight="bold">
                         {seriesTooltip.value[1].toLocaleString('en')}
-                        {addUnits(units)}
+                        {units ? ` ${units}` : ''}
                       </Box>
                     </Flex>
                   ))}
@@ -244,7 +234,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
             fontWeight: theme.fontWeights.medium as any,
             fontFamily: theme.fonts.primary,
             color: theme.colors['gray-50'],
-            formatter: `{value}${addUnits(units)}`,
+            formatter: `{value}${units ? ` ${units}` : ''}`,
           },
           minorSplitLine: {
             show: false,
