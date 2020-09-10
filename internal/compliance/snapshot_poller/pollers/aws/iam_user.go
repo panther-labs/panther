@@ -81,15 +81,14 @@ func PollIAMUser(
 	}
 	userCredentialReports, err = buildCredentialReport(iamClient)
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == throttlingErrorCode {
 			// Check if we got rate limited, happens sometimes when the credential report takes a long time to generate
-			if awsErr.Code() == throttlingErrorCode {
-				zap.L().Debug("credential report lookup rate limited during single user scan", zap.String("resourceId", *scanRequest.ResourceID))
-				err = utils.Requeue(pollermodels.ScanMsg{
-					Entries: []*pollermodels.ScanEntry{scanRequest},
-				}, credentialReportRequeueDelaySeconds)
-				return nil, err
-			}
+			zap.L().Debug("credential report lookup rate limited during single user scan", zap.String("resourceId", *scanRequest.ResourceID))
+			err = utils.Requeue(pollermodels.ScanMsg{
+				Entries: []*pollermodels.ScanEntry{scanRequest},
+			}, credentialReportRequeueDelaySeconds)
+			return nil, err
 		}
 		return nil, err
 	}
@@ -157,13 +156,12 @@ func getUser(svc iamiface.IAMAPI, userName *string) (*iam.User, error) {
 		UserName: userName,
 	})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "NoSuchEntity" {
-				zap.L().Warn("tried to scan non-existent resource",
-					zap.String("resource", *userName),
-					zap.String("resourceType", awsmodels.IAMUserSchema))
-				return nil, nil
-			}
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == iam.ErrCodeNoSuchEntityException {
+			zap.L().Warn("tried to scan non-existent resource",
+				zap.String("resource", *userName),
+				zap.String("resourceType", awsmodels.IAMUserSchema))
+			return nil, nil
 		}
 		return nil, errors.Wrapf(err, "IAM.GetUser: %s", aws.StringValue(userName))
 	}
@@ -276,7 +274,8 @@ func buildCredentialReport(
 	// Try to get the credential report
 	credentialReportRaw, err = getCredentialReport(iamSvc)
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) {
 			switch awsErr.Code() {
 			case iam.ErrCodeCredentialReportNotPresentException, iam.ErrCodeCredentialReportExpiredException:
 				zap.L().Debug("no credential report found, generating a new one")
@@ -523,9 +522,12 @@ func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddR
 	}
 
 	// Build the credential report for all users
+	// NOTE: the returned error here is *not* wrapped with "errors". If that changes,
+	// be sure
 	userCredentialReports, err = buildCredentialReport(iamSvc)
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == throttlingErrorCode {
 			// Check if we got rate limited, which happens sometimes when the credential report takes a long time to generate
 			if awsErr.Code() == throttlingErrorCode {
 				zap.L().Debug(

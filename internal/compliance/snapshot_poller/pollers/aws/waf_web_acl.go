@@ -183,7 +183,8 @@ func buildWafWebACLSnapshot(wafSvc wafiface.WAFAPI, webACLID *string) (*awsmodel
 
 	webACL, err := getWebACL(wafSvc, webACLID)
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) {
 			if awsErr.Code() == "WAFNonexistentItemException" {
 				if _, ok := wafSvc.(wafregionaliface.WAFRegionalAPI); ok {
 					zap.L().Warn("tried to scan non-existent resource",

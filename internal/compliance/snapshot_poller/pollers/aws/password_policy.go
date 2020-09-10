@@ -88,13 +88,11 @@ func PollPasswordPolicy(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 	anyExist := true
 	passwordPolicy, err := getPasswordPolicy(iamSvc)
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == iam.ErrCodeNoSuchEntityException {
-				anyExist = false
-			}
-		}
-		// If the error wasn't caused by the password policy not existing, then return it
-		if anyExist {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == iam.ErrCodeNoSuchEntityException {
+			anyExist = false
+		} else {
+			// The error wasn't caused by the password policy not existing: return it
 			return nil, nil, err
 		}
 	}

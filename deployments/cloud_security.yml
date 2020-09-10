@@ -96,8 +96,8 @@ Mappings:
       Memory: 128
       Timeout: 120
     PolicyEngine:
-      Memory: 128
-      Timeout: 60
+      Memory: 256
+      Timeout: 900
     Poller:
       Memory: 512
       Timeout: 900

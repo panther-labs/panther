@@ -89,13 +89,12 @@ func getRedshiftCluster(svc redshiftiface.RedshiftAPI, clusterID *string) (*reds
 		ClusterIdentifier: clusterID,
 	})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "ClusterNotFound" {
-				zap.L().Warn("tried to scan non-existent resource",
-					zap.String("resource", *clusterID),
-					zap.String("resourceType", awsmodels.RedshiftClusterSchema))
-				return nil, nil
-			}
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == redshift.ErrCodeClusterNotFoundFault {
+			zap.L().Warn("tried to scan non-existent resource",
+				zap.String("resource", *clusterID),
+				zap.String("resourceType", awsmodels.RedshiftClusterSchema))
+			return nil, nil
 		}
 		return nil, errors.Wrapf(err, "Redshift.DescribeClusters: %s", aws.StringValue(clusterID))
 	}
