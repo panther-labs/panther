@@ -18,10 +18,6 @@
 
 import React from 'react';
 import withSEO from 'Hoc/withSEO';
-import { extractErrorMessage } from 'Helpers/utils';
-import urls from 'Source/urls';
-import { useSnackbar } from 'pouncejs';
-import useRouter from 'Hooks/useRouter';
 import SqsSourceWizard from 'Components/wizards/SqsSourceWizard';
 import { useAddSqsLogSource } from './graphql/addSqsLogSource.generated';
 
@@ -33,10 +29,7 @@ const initialValues = {
 };
 
 const CreateSqsLogSource: React.FC = () => {
-  const { history } = useRouter();
-  const { pushSnackbar } = useSnackbar();
-
-  const [addSqsLogSource, { error: sqsError }] = useAddSqsLogSource({
+  const [addSqsLogSource] = useAddSqsLogSource({
     update: (cache, { data }) => {
       cache.modify('ROOT_QUERY', {
         listLogIntegrations: (queryData, { toReference }) => {
@@ -45,21 +38,11 @@ const CreateSqsLogSource: React.FC = () => {
         },
       });
     },
-    onCompleted: () => {
-      history.push(urls.logAnalysis.sources.list());
-      pushSnackbar({
-        duration: 10000,
-        variant: 'default',
-        title: 'An SQS Queue has been created for you',
-        description: 'Panther will now automatically process any events you send to this queue',
-      });
-    },
   });
 
   return (
     <SqsSourceWizard
       initialValues={initialValues}
-      externalErrorMessage={sqsError && extractErrorMessage(sqsError)}
       onSubmit={values =>
         addSqsLogSource({
           variables: {

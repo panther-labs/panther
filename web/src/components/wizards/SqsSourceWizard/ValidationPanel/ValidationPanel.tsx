@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { AbstractButton, Box, Button, Flex, Img, Link } from 'pouncejs';
+import { AbstractButton, Button, Flex, Img, Link, useSnackbar } from 'pouncejs';
 import { useFormikContext } from 'formik';
 import FailureStatus from 'Assets/statuses/failure.svg';
 import WaitingStatus from 'Assets/statuses/waiting.svg';
@@ -25,20 +25,23 @@ import SuccessStatus from 'Assets/statuses/success.svg';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import { useWizardContext, WizardPanel } from 'Components/Wizard';
-import { extractErrorMessage } from 'Helpers/utils';
+import { copyTextToClipboard, extractErrorMessage } from 'Helpers/utils';
 import { ApolloError } from '@apollo/client';
-import { LOG_ONBOARDING_SNS_DOC_URL } from 'Source/constants';
-import { S3LogSourceWizardValues } from '../S3LogSourceWizard';
+import { AddSqsLogSourceMutationResult } from 'Pages/CreateLogSource/CreateSqsLogSource/graphql/addSqsLogSource.generated';
+import { UpdateSqsLogSourceMutationResult } from 'Pages/EditSqsLogSource/graphql/updateSqsLogSource.generated';
+import { SqsLogSourceWizardValues } from '../SqsSourceWizard';
 
 const ValidationPanel: React.FC = () => {
+  const { pushSnackbar } = useSnackbar();
   const [errorMessage, setErrorMessage] = React.useState('');
+  const result = React.useRef<AddSqsLogSourceMutationResult | UpdateSqsLogSourceMutationResult>(null); // prettier-ignore
   const { goToPrevStep, reset: resetWizard, currentStepStatus, setCurrentStepStatus } = useWizardContext(); // prettier-ignore
-  const { initialValues, submitForm, resetForm } = useFormikContext<S3LogSourceWizardValues>();
+  const { initialValues, submitForm, resetForm } = useFormikContext<SqsLogSourceWizardValues>();
 
   React.useEffect(() => {
     (async () => {
       try {
-        await submitForm();
+        result.current = await (submitForm() as Promise<any>);
         setErrorMessage('');
         setCurrentStepStatus('PASSING');
       } catch (err) {
@@ -51,13 +54,17 @@ const ValidationPanel: React.FC = () => {
   if (currentStepStatus === 'PASSING') {
     return (
       <WizardPanel>
-        <Flex align="center" direction="column" mx="auto" width={375}>
+        <Flex align="center" direction="column" mx="auto" width={400}>
           <WizardPanel.Heading
-            title="Everything looks good!"
+            title={
+              initialValues.integrationId
+                ? 'Everything looks good!'
+                : 'An SQS Queue has been created for you!'
+            }
             subtitle={
               initialValues.integrationId
-                ? 'Your stack was successfully updated'
-                : 'Your configured stack was deployed successfully and Panther now has permissions to pull data!'
+                ? 'Your SQS source was successfully updated'
+                : 'Panther will now automatically process any events you send to this queue'
             }
           />
           <Img
@@ -66,28 +73,26 @@ const ValidationPanel: React.FC = () => {
             alt="Stack deployed successfully"
             src={SuccessStatus}
           />
-          {!initialValues.integrationId && (
-            <Box mt={10} mb={-10}>
-              <WizardPanel.Heading
-                title="Configure Notifications For New Data"
-                subtitle={[
-                  'You can now follow the ',
-                  <Link
-                    key={0}
-                    external
-                    title="SNS Notification Setup"
-                    href={LOG_ONBOARDING_SNS_DOC_URL}
-                  >
-                    steps found here
-                  </Link>,
-                  ' to notify Panther when new data becomes available for analysis.',
-                ]}
-              />
-            </Box>
-          )}
+          <AbstractButton
+            mt={6}
+            p={1}
+            color="blue-200"
+            fontSize="medium"
+            _hover={{ color: 'blue-100' }}
+            onClick={() => {
+              copyTextToClipboard(
+                initialValues.integrationId
+                  ? (result.current as UpdateSqsLogSourceMutationResult).data.updateSqsLogIntegration.sqsConfig.queueUrl // prettier-ignore
+                  : (result.current as AddSqsLogSourceMutationResult).data.addSqsLogIntegration.sqsConfig.queueUrl // prettier-ignore
+              );
+              pushSnackbar({ variant: 'default', title: 'Copied to clipboard', duration: 2000 });
+            }}
+          >
+            Copy SQS Queue URL
+          </AbstractButton>
           <WizardPanel.Actions>
             <Flex direction="column" spacing={4}>
-              <RRLink to={urls.logAnalysis.sources.list()}>
+              <RRLink to={urls.compliance.sources.list()}>
                 <Button as="div">Finish Setup</Button>
               </RRLink>
               {!initialValues.integrationId && (
@@ -132,8 +137,12 @@ const ValidationPanel: React.FC = () => {
     <WizardPanel>
       <Flex align="center" direction="column" mx="auto">
         <WizardPanel.Heading
-          title="Almost There!"
-          subtitle="We are just making sure that everything is setup correctly. Hold on tight..."
+          title={initialValues.integrationId ? 'Updating your SQS queue' : 'Creating an SQS queue'}
+          subtitle={
+            initialValues.integrationId
+              ? 'Hold on tight...'
+              : 'We are generating a queue for you to push messages to. Hold on tight...'
+          }
         />
         <Img
           nativeWidth={120}

@@ -21,14 +21,16 @@ import {
   render,
   fireEvent,
   buildSqsLogSourceIntegration,
+  waitFor,
   waitMs,
-  buildAddSqsLogIntegrationInput,
+  buildUpdateSqsLogIntegrationInput,
 } from 'test-utils';
 import { mockListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
-import CreateSqsLogSource from './CreateSqsLogSource';
-import { mockAddSqsLogSource } from './graphql/addSqsLogSource.generated';
+import EditSqsLogSource from './EditSqsLogSource';
+import { mockGetSqsLogSource } from './graphql/getSqsLogSource.generated';
+import { mockUpdateSqsLogSource } from './graphql/updateSqsLogSource.generated';
 
-describe('CreateSqsLogSource', () => {
+describe('EditSqsLogSource', () => {
   beforeAll(() => {
     document.execCommand = jest.fn();
   });
@@ -41,7 +43,17 @@ describe('CreateSqsLogSource', () => {
     const logSource = buildSqsLogSourceIntegration();
     const { logTypes } = logSource.sqsConfig;
 
+    const updatedLogSource = buildSqsLogSourceIntegration({
+      ...logSource,
+      integrationLabel: 'new-value',
+    });
+
     const mocks = [
+      mockGetSqsLogSource({
+        data: {
+          getSqsLogIntegration: logSource,
+        },
+      }),
       mockListAvailableLogTypes({
         data: {
           listAvailableLogTypes: {
@@ -49,10 +61,11 @@ describe('CreateSqsLogSource', () => {
           },
         },
       }),
-      mockAddSqsLogSource({
+      mockUpdateSqsLogSource({
         variables: {
-          input: buildAddSqsLogIntegrationInput({
-            integrationLabel: logSource.integrationLabel,
+          input: buildUpdateSqsLogIntegrationInput({
+            integrationId: logSource.integrationId,
+            integrationLabel: updatedLogSource.integrationLabel,
             sqsConfig: {
               logTypes: logSource.sqsConfig.logTypes,
               allowedPrincipalArns: logSource.sqsConfig.allowedPrincipalArns,
@@ -61,48 +74,34 @@ describe('CreateSqsLogSource', () => {
           }),
         },
         data: {
-          addSqsLogIntegration: logSource,
+          updateSqsLogIntegration: updatedLogSource,
         },
       }),
     ];
-    const { getByText, getByLabelText, findByText, getAllByLabelText } = render(
-      <CreateSqsLogSource />,
-      {
-        mocks,
-      }
-    );
+    const { getByText, getByLabelText, findByText } = render(<EditSqsLogSource />, {
+      mocks,
+    });
+
+    const nameField = getByLabelText('Name') as HTMLInputElement;
+
+    //  Wait for GET api request to populate the form
+    await waitFor(() => expect(nameField).toHaveValue('Loading...'));
+    await waitFor(() => expect(nameField).toHaveValue(logSource.integrationLabel));
 
     // Fill in  the form and press continue
-    fireEvent.change(getByLabelText('Name'), { target: { value: logSource.integrationLabel } });
-
-    const logTypesField = getAllByLabelText('Log Types')[0];
-    fireEvent.change(logTypesField, { target: { value: logSource.sqsConfig.logTypes[0] } });
-    fireEvent.click(await findByText(logSource.sqsConfig.logTypes[0]));
-
-    const principalArnField = getAllByLabelText('Allowed AWS Principal ARNs')[0];
-    fireEvent.change(principalArnField, {
-      target: { value: logSource.sqsConfig.allowedPrincipalArns[0] },
-    });
-    fireEvent.keyDown(principalArnField, { key: 'Enter', code: 'Enter' });
-
-    const sourceArnField = getAllByLabelText('Allowed Source ARNs')[0];
-    fireEvent.change(sourceArnField, {
-      target: { value: logSource.sqsConfig.allowedSourceArns[0] },
-    });
-    fireEvent.keyDown(sourceArnField, { key: 'Enter', code: 'Enter' });
+    fireEvent.change(nameField, { target: { value: updatedLogSource.integrationLabel } });
 
     // Wait for form validation to kick in and move on to the next screen
     await waitMs(50);
     fireEvent.click(getByText('Continue Setup'));
 
     // Expect to see a loading animation while the resource is being validated ...
-    expect(getByText('Creating an SQS queue')).toBeInTheDocument();
+    expect(getByText('Updating your SQS queue')).toBeInTheDocument();
     expect(getByText('Cancel')).toBeInTheDocument();
 
     // ... replaced by a success screen
-    expect(await findByText('An SQS Queue has been created for you!')).toBeInTheDocument();
+    expect(await findByText('Your SQS source was successfully updated')).toBeInTheDocument();
     expect(getByText('Finish Setup')).toBeInTheDocument();
-    expect(getByText('Add Another')).toBeInTheDocument();
 
     // Expect to see a copy button that works
     fireEvent.click(getByText('Copy SQS Queue URL'));
