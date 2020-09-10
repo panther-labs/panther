@@ -27,7 +27,7 @@ import LogAnalysisOverviewPageSkeleton from './Skeleton';
 import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
 import AlertsBySeverity from './AlertsBySeverity';
 import AlertSummary from './AlertSummary';
-import SecondRowTabs from './SecondRowTabs';
+import LogTypeCharts from './LogTypeCharts';
 import { useGetTopAlerts } from './graphql/getTopAlerts.generated';
 
 export const intervalMinutes = 60;
@@ -85,7 +85,7 @@ const LogAnalysisOverview: React.FC = () => {
         </Panel>
       </SimpleGrid>
       <SimpleGrid columns={1} spacingX={3} spacingY={2} my={5}>
-        <SecondRowTabs eventsProcessed={eventsProcessed} eventsLatency={eventsLatency} />
+        <LogTypeCharts eventsProcessed={eventsProcessed} eventsLatency={eventsLatency} />
       </SimpleGrid>
       <SimpleGrid columns={1} spacingX={3} spacingY={2}>
         <Panel title="Recent High Severity Alerts">

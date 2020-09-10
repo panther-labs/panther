@@ -23,12 +23,12 @@ import EventsByLogType from 'Pages/LogAnalysisOverview/EventsByLogType/EventsByL
 import { SeriesData } from 'Generated/schema';
 import EventsByLatency from '../EventsByLatency';
 
-interface SecondRowTabsProps {
+interface LogTypeChartsProps {
   eventsProcessed: SeriesData;
   eventsLatency: SeriesData;
 }
 
-const SecondRowTabs: React.FC<SecondRowTabsProps> = ({ eventsProcessed, eventsLatency }) => {
+const LogTypeCharts: React.FC<LogTypeChartsProps> = ({ eventsProcessed, eventsLatency }) => {
   return (
     <Card as="section" width={1}>
       <Tabs width={1}>
@@ -74,4 +74,4 @@ const SecondRowTabs: React.FC<SecondRowTabsProps> = ({ eventsProcessed, eventsLa
   );
 };
 
-export default SecondRowTabs;
+export default LogTypeCharts;
