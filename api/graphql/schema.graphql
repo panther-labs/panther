@@ -25,7 +25,7 @@ type Mutation {
   deleteUser(id: ID!): Boolean
   inviteUser(input: InviteUserInput): User!
   remediateResource(input: RemediateResourceInput!): Boolean
-  deliverAlert(input: DeliverAlertInput!): AlertSummary
+  deliverAlert(input: DeliverAlertInput!): AlertSummary!
   resetUserPassword(id: ID!): User!
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
   testPolicy(input: TestPolicyInput): TestPolicyResponse

@@ -622,7 +622,7 @@ export type Mutation = {
   deleteUser?: Maybe<Scalars['Boolean']>;
   inviteUser: User;
   remediateResource?: Maybe<Scalars['Boolean']>;
-  deliverAlert?: Maybe<AlertSummary>;
+  deliverAlert: AlertSummary;
   resetUserPassword: User;
   suppressPolicies?: Maybe<Scalars['Boolean']>;
   testPolicy?: Maybe<TestPolicyResponse>;
@@ -2184,7 +2184,7 @@ export type MutationResolvers<
     RequireFields<MutationRemediateResourceArgs, 'input'>
   >;
   deliverAlert?: Resolver<
-    Maybe<ResolversTypes['AlertSummary']>,
+    ResolversTypes['AlertSummary'],
     ParentType,
     ContextType,
     RequireFields<MutationDeliverAlertArgs, 'input'>
