@@ -84,7 +84,7 @@ type ListAlertsInput struct {
 	// Filtering
 	Severity        []*string  `json:"severity" validate:"omitempty,dive,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 	NameContains    *string    `json:"nameContains"`
-	Status          []string   `json:"status" validate:"omitempty,dive,oneof=OPEN TRIAGED CLOSED RESOLVED"`
+	Status          []string   `json:"status" validate:"omitempty,dive,oneof=OPEN TRIAGED INVALID RESOLVED"`
 	CreatedAtBefore *time.Time `json:"createdAtBefore"`
 	CreatedAtAfter  *time.Time `json:"createdAtAfter"`
 	RuleIDContains  *string    `json:"ruleIdContains"`
@@ -100,7 +100,7 @@ type ListAlertsInput struct {
 // {
 //     "updateAlertStatus": {
 //         "alertId": "84c3e4b27c702a1c31e6eb412fc377f6",
-//         "status": "CLOSED"
+//         "status": "INVALID"
 //         // userId is added by AppSync resolver (UpdateAlertStatusResolver)
 //         "userId": "5f54cf4a-ec56-44c2-83bc-8b742600f307"
 //     }
@@ -110,7 +110,7 @@ type UpdateAlertStatusInput struct {
 	AlertID *string `json:"alertId" validate:"hexadecimal,len=32"` // AlertID is an MD5 hash
 
 	// Variables that we allow updating:
-	Status *string `json:"status" validate:"oneof=OPEN TRIAGED CLOSED RESOLVED"`
+	Status *string `json:"status" validate:"oneof=OPEN TRIAGED INVALID RESOLVED"`
 
 	// User who made the change
 	UserID *string `json:"userId" validate:"uuid4"`
@@ -162,8 +162,11 @@ const (
 	// Triaged sets the alert to actively investigating
 	TriagedStatus = "TRIAGED"
 
-	// Closed is set for false positive or anything other reason than resolved
+	// [deprecated] Closed is set for false positive or anything other reason than resolved
 	ClosedStatus = "CLOSED"
+
+	// Invalid is set for false positive or anything other reason than resolved
+	InvalidStatus = "INVALID"
 
 	// Resolved is set when the issue was found and remediated
 	ResolvedStatus = "RESOLVED"

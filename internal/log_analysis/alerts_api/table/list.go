@@ -104,7 +104,9 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 			alert = filterByAlertIDContains(input, alert)
 
 			if alert != nil {
-				summaries = append(summaries, alert)
+				// Check for the deprecated Closed status and replace with Invalid
+				alertFixed := changeClosedToInvalid(alert)
+				summaries = append(summaries, alertFixed)
 			}
 
 			// If we've reached the page size defined by (default 25)
@@ -261,6 +263,10 @@ func filterByStatus(filter *expression.ConditionBuilder, input *models.ListAlert
 					expression.AttributeNotExists(expression.Name(StatusKey)),
 					expression.Equal(expression.Name(StatusKey), expression.Value("")),
 				)
+		} else if input.Status[0] == models.InvalidStatus {
+			// If we're filtering by the new Invalid status, we also need to check for the deprecated Closed status
+			multiFilter = expression.Name(StatusKey).Equal(expression.Value(input.Status[0])).
+				Or(expression.Name(StatusKey).Equal(expression.Value(models.ClosedStatus)))
 		} else {
 			multiFilter = expression.Name(StatusKey).Equal(expression.Value(input.Status[0]))
 		}
@@ -273,6 +279,13 @@ func filterByStatus(filter *expression.ConditionBuilder, input *models.ListAlert
 					Or(
 						expression.AttributeNotExists(expression.Name(StatusKey)),
 						expression.Equal(expression.Name(StatusKey), expression.Value("")),
+					)
+			} else if statusSetting == models.InvalidStatus {
+				// If we're filtering by the new Invalid status, we also need to check for the deprecated Closed status
+				multiFilter = multiFilter.
+					Or(
+						expression.Name(StatusKey).Equal(expression.Value(statusSetting)).
+							Or(expression.Name(StatusKey).Equal(expression.Value(models.ClosedStatus))),
 					)
 			} else {
 				multiFilter = multiFilter.Or(expression.Name(StatusKey).Equal(expression.Value(statusSetting)))

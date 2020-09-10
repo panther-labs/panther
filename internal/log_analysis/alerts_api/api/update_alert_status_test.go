@@ -45,14 +45,14 @@ func TestUpdateAlert(t *testing.T) {
 	}
 	output := &table.AlertItem{
 		AlertID:           *alertID,
-		Status:            "CLOSED",
+		Status:            "INVALID",
 		LastUpdatedBy:     *userID,
 		LastUpdatedByTime: timeNow,
 		DeliveryResponses: []*models.DeliveryResponse{},
 	}
 	expectedSummary := &models.AlertSummary{
 		AlertID:           aws.String("alertId"),
-		Status:            "CLOSED",
+		Status:            "INVALID",
 		LastUpdatedBy:     "userId",
 		LastUpdatedByTime: timeNow,
 		DeliveryResponses: []*models.DeliveryResponse{},

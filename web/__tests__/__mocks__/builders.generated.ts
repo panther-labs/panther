@@ -252,7 +252,7 @@ export const buildAlertDetails = (overrides: Partial<AlertDetails> = {}): AlertD
     eventsMatched: 'eventsMatched' in overrides ? overrides.eventsMatched : 516,
     ruleId: 'ruleId' in overrides ? overrides.ruleId : '9ad2c6da-417d-414f-a3e5-7959acdeaa9e',
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
-    status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Closed,
+    status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Invalid,
     title: 'title' in overrides ? overrides.title : 'Steel',
     lastUpdatedBy:
       'lastUpdatedBy' in overrides
@@ -1405,7 +1405,7 @@ export const buildUpdateAlertStatusInput = (
 ): UpdateAlertStatusInput => {
   return {
     alertId: 'alertId' in overrides ? overrides.alertId : '344a4508-25bd-42d0-bc1a-11a8551110cc',
-    status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Closed,
+    status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Invalid,
   };
 };
 

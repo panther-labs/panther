@@ -46,5 +46,9 @@ func (table *AlertsTable) GetAlert(alertID *string) (*AlertItem, error) {
 	if err = dynamodbattribute.UnmarshalMap(ddbResult.Item, alertItem); err != nil {
 		return nil, errors.Wrap(err, "UnmarshalMap() failed for: "+*alertID)
 	}
-	return alertItem, nil
+
+	// Ensure we change the previous Closed status to Invalid
+	alert := changeClosedToInvalid(alertItem)
+
+	return alert, nil
 }

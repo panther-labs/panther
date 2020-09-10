@@ -25,7 +25,7 @@ const STATUS_COLOR_MAP: {
 } = {
   [AlertStatusesEnum.Open]: 'red-300' as const,
   [AlertStatusesEnum.Triaged]: 'yellow-500' as const,
-  [AlertStatusesEnum.Closed]: 'navyblue-200' as const,
+  [AlertStatusesEnum.Invalid]: 'navyblue-200' as const,
   [AlertStatusesEnum.Resolved]: 'navyblue-300' as const,
 };
 

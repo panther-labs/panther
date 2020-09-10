@@ -138,7 +138,7 @@ export type AlertDetails = Alert & {
 export enum AlertStatusesEnum {
   Open = 'OPEN',
   Triaged = 'TRIAGED',
-  Closed = 'CLOSED',
+  Invalid = 'INVALID',
   Resolved = 'RESOLVED',
 }
 

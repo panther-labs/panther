@@ -975,7 +975,7 @@ enum ListAlertsSortFieldsEnum {
 enum AlertStatusesEnum {
   OPEN
   TRIAGED
-  CLOSED
+  INVALID
   RESOLVED
 }
 

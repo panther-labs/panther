@@ -40,6 +40,19 @@ func TestGetAlert(t *testing.T) {
 		Client:                             mockDdbClient,
 	}
 
+	timeNow := time.Now().UTC()
+
+	alert := &AlertItem{
+		AlertID:      "alertId",
+		RuleID:       "ruleId",
+		CreationTime: timeNow,
+		UpdateTime:   timeNow,
+		Severity:     "INFO",
+		Status:       "CLOSED",
+		EventCount:   10,
+		LogTypes:     []string{"logtype"},
+	}
+
 	expectedGetItemRequest := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
 			"id": {S: aws.String("alertId")},
@@ -47,16 +60,9 @@ func TestGetAlert(t *testing.T) {
 		TableName: aws.String(table.AlertsTableName),
 	}
 
-	expectedAlert := &AlertItem{
-		AlertID:      "alertId",
-		RuleID:       "ruleId",
-		CreationTime: time.Now().UTC(),
-		UpdateTime:   time.Now().UTC(),
-		Severity:     "INFO",
-		Status:       "TRIAGED",
-		EventCount:   10,
-		LogTypes:     []string{"logtype"},
-	}
+	// Create a copy to change the status
+	expectedAlert := alert
+	expectedAlert.Status = "INVALID"
 
 	item, err := dynamodbattribute.MarshalMap(expectedAlert)
 	require.NoError(t, err)
@@ -66,6 +72,7 @@ func TestGetAlert(t *testing.T) {
 	result, err := table.GetAlert(aws.String("alertId"))
 	require.NoError(t, err)
 	require.Equal(t, expectedAlert, result)
+	require.Equal(t, alert, result)
 }
 
 func TestGetAlertDoesNotExist(t *testing.T) {
