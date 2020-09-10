@@ -16,4 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './SuccessPanel';
+import path from 'path';
+import { loadDotEnvVars } from '../scripts/utils';
+
+loadDotEnvVars(path.resolve(__dirname, '.env.test'));

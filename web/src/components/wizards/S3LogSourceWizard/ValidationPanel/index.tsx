@@ -16,5 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './S3LogSourceWizard';
-export * from './StackDeploymentPanel/graphql/getLogCfnTemplate.generated';
+export { default } from './ValidationPanel';

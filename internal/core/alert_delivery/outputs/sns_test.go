@@ -80,8 +80,14 @@ func TestSendSns(t *testing.T) {
 		Subject:          aws.String("Policy Failure: policyName"),
 	}
 
-	client.On("Publish", expectedSnsPublishInput).Return(&sns.PublishOutput{}, nil)
+	client.On("Publish", expectedSnsPublishInput).Return(&sns.PublishOutput{MessageId: aws.String("messageId")}, nil)
 	result := outputClient.Sns(alert, snsOutputConfig)
-	assert.Nil(t, result)
+	assert.NotNil(t, result)
+	assert.Equal(t, &AlertDeliveryResponse{
+		Message:    "messageId",
+		StatusCode: 200,
+		Success:    true,
+		Permanent:  false,
+	}, result)
 	client.AssertExpectations(t)
 }

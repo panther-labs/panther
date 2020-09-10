@@ -21,54 +21,60 @@ import { GraphQLError } from 'graphql';
 import {
   render,
   fireEvent,
-  buildComplianceIntegration,
+  buildS3LogIntegration,
   waitFor,
   waitMs,
-  buildAddComplianceIntegrationInput,
+  buildListAvailableLogTypesResponse,
+  buildAddS3LogIntegrationInput,
 } from 'test-utils';
-import { mockAddComplianceSource } from './graphql/addComplianceSource.generated';
-import CreateComplianceSource from './CreateComplianceSource';
+import { mockListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
+import { mockAddS3LogSource } from './graphql/addS3LogSource.generated';
+import CreateS3LogSource from './CreateS3LogSource';
 
-describe('CreateComplianceSource', () => {
-  it('can successfully onboard a compliance source', async () => {
-    const complianceSource = buildComplianceIntegration({
+describe('CreateS3LogSource', () => {
+  it('can successfully onboard an S3 log source', async () => {
+    const logTypesResponse = buildListAvailableLogTypesResponse();
+    const logSource = buildS3LogIntegration({
       awsAccountId: '123123123123',
-      remediationEnabled: false,
-      cweEnabled: false,
+      logTypes: logTypesResponse.logTypes,
+      kmsKey: '',
     });
 
     const mocks = [
-      mockAddComplianceSource({
+      mockListAvailableLogTypes({
+        data: {
+          listAvailableLogTypes: logTypesResponse,
+        },
+      }),
+      mockAddS3LogSource({
         variables: {
-          input: buildAddComplianceIntegrationInput({
-            integrationLabel: complianceSource.integrationLabel,
-            awsAccountId: complianceSource.awsAccountId,
-            cweEnabled: complianceSource.cweEnabled,
-            remediationEnabled: complianceSource.remediationEnabled,
+          input: buildAddS3LogIntegrationInput({
+            integrationLabel: logSource.integrationLabel,
+            awsAccountId: logSource.awsAccountId,
+            s3Bucket: logSource.s3Bucket,
+            logTypes: logSource.logTypes,
+            kmsKey: null,
+            s3Prefix: null,
           }),
         },
         data: {
-          addComplianceIntegration: buildComplianceIntegration() as any,
+          addS3LogIntegration: logSource,
         },
       }),
     ];
-
-    const {
-      getByText,
-      getByLabelText,
-      getByAltText,
-      findByText,
-    } = render(<CreateComplianceSource />, { mocks });
+    const { getByText, getByLabelText, getByAltText, findByText, getAllByLabelText } = render(
+      <CreateS3LogSource />,
+      {
+        mocks,
+      }
+    );
 
     // Fill in  the form and press continue
-    fireEvent.change(getByLabelText('Name'), {
-      target: { value: complianceSource.integrationLabel },
-    });
-    fireEvent.change(getByLabelText('AWS Account ID'), {
-      target: { value: complianceSource.awsAccountId },
-    });
-    fireEvent.click(getByLabelText('Real-Time AWS Resource Scans'));
-    fireEvent.click(getByLabelText('AWS Automatic Remediations'));
+    fireEvent.change(getByLabelText('Name'), { target: { value: logSource.integrationLabel } });
+    fireEvent.change(getByLabelText('AWS Account ID'), {target: {value: logSource.awsAccountId } }); // prettier-ignore
+    fireEvent.change(getByLabelText('Bucket Name'), { target: { value: logSource.s3Bucket } });
+    fireEvent.change(getAllByLabelText('Log Types')[0], {target: {value: logSource.logTypes[0] } }); // prettier-ignore
+    fireEvent.click(await findByText(logSource.logTypes[0]));
 
     // Wait for form validation to kick in and move on to the next screen
     await waitMs(50);
@@ -95,21 +101,29 @@ describe('CreateComplianceSource', () => {
 
   it('shows a proper fail message when source validation fails', async () => {
     const errorMessage = "No-can-do's-ville, baby doll";
-
-    const complianceSource = buildComplianceIntegration({
+    const logTypesResponse = buildListAvailableLogTypesResponse();
+    const logSource = buildS3LogIntegration({
       awsAccountId: '123123123123',
-      remediationEnabled: false,
-      cweEnabled: false,
+      logTypes: logTypesResponse.logTypes,
+      kmsKey: '',
+      s3Prefix: '',
     });
 
     const mocks = [
-      mockAddComplianceSource({
+      mockListAvailableLogTypes({
+        data: {
+          listAvailableLogTypes: logTypesResponse,
+        },
+      }),
+      mockAddS3LogSource({
         variables: {
-          input: buildAddComplianceIntegrationInput({
-            integrationLabel: complianceSource.integrationLabel,
-            awsAccountId: complianceSource.awsAccountId,
-            cweEnabled: complianceSource.cweEnabled,
-            remediationEnabled: complianceSource.remediationEnabled,
+          input: buildAddS3LogIntegrationInput({
+            integrationLabel: logSource.integrationLabel,
+            awsAccountId: logSource.awsAccountId,
+            s3Bucket: logSource.s3Bucket,
+            logTypes: logSource.logTypes,
+            kmsKey: null,
+            s3Prefix: null,
           }),
         },
         data: null,
@@ -117,22 +131,19 @@ describe('CreateComplianceSource', () => {
       }),
     ];
 
-    const {
-      getByText,
-      getByLabelText,
-      getByAltText,
-      findByText,
-    } = render(<CreateComplianceSource />, { mocks });
+    const { getByText, findByText, getByLabelText, getByAltText, getAllByLabelText } = render(
+      <CreateS3LogSource />,
+      {
+        mocks,
+      }
+    );
 
     // Fill in  the form and press continue
-    fireEvent.change(getByLabelText('Name'), {
-      target: { value: complianceSource.integrationLabel },
-    });
-    fireEvent.change(getByLabelText('AWS Account ID'), {
-      target: { value: complianceSource.awsAccountId },
-    });
-    fireEvent.click(getByLabelText('Real-Time AWS Resource Scans'));
-    fireEvent.click(getByLabelText('AWS Automatic Remediations'));
+    fireEvent.change(getByLabelText('Name'), { target: { value: logSource.integrationLabel } });
+    fireEvent.change(getByLabelText('AWS Account ID'), { target: {value: logSource.awsAccountId} }); // prettier-ignore
+    fireEvent.change(getByLabelText('Bucket Name'), { target: { value: logSource.s3Bucket } });
+    fireEvent.change(getAllByLabelText('Log Types')[0], { target: { value: logSource.logTypes[0] } }); // prettier-ignore
+    fireEvent.click(await findByText(logSource.logTypes[0]));
 
     // Wait for form validation to kick in and move on to the next screen
     await waitMs(50);

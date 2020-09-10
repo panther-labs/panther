@@ -21,7 +21,7 @@ import { buildIntegrationItemHealthStatus, render, fireEvent } from 'test-utils'
 import SourceHealthBadge from './index';
 
 describe('SourceHealthBadge', () => {
-  it('matches original snapshoot', () => {
+  it('matches original snapshot', () => {
     const { container } = render(
       <SourceHealthBadge healthMetrics={[buildIntegrationItemHealthStatus()]} />
     );
