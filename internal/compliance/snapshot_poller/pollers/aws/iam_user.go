@@ -527,24 +527,22 @@ func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddR
 		var awsErr awserr.Error
 		if errors.As(err, &awsErr) && awsErr.Code() == throttlingErrorCode {
 			// Check if we got rate limited, which happens sometimes when the credential report takes a long time to generate
-			if awsErr.Code() == throttlingErrorCode {
-				zap.L().Debug(
-					"credential report lookup rate limited during all users scan",
-					zap.String("accountId", pollerInput.AuthSourceParsedARN.AccountID))
-				err = utils.Requeue(pollermodels.ScanMsg{
-					Entries: []*pollermodels.ScanEntry{{
-						AWSAccountID:  aws.String(pollerInput.AuthSourceParsedARN.AccountID),
-						IntegrationID: pollerInput.IntegrationID,
-						ResourceType:  aws.String(awsmodels.IAMUserSchema),
-					}},
-				}, credentialReportRequeueDelaySeconds)
-				if err != nil {
-					return nil, nil, err
-				}
-				// Manually re-queueing the re-scan here so we can specify the delay. Don't return
-				// an error so that lambda doesn't also try to re-scan.
-				return nil, nil, nil
+			zap.L().Debug(
+				"credential report lookup rate limited during all users scan",
+				zap.String("accountId", pollerInput.AuthSourceParsedARN.AccountID))
+			err = utils.Requeue(pollermodels.ScanMsg{
+				Entries: []*pollermodels.ScanEntry{{
+					AWSAccountID:  aws.String(pollerInput.AuthSourceParsedARN.AccountID),
+					IntegrationID: pollerInput.IntegrationID,
+					ResourceType:  aws.String(awsmodels.IAMUserSchema),
+				}},
+			}, credentialReportRequeueDelaySeconds)
+			if err != nil {
+				return nil, nil, err
 			}
+			// Manually re-queueing the re-scan here so we can specify the delay. Don't return
+			// an error so that lambda doesn't also try to re-scan.
+			return nil, nil, nil
 		}
 		return nil, nil, err
 	}
