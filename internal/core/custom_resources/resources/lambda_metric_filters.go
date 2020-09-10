@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -153,7 +154,8 @@ func deleteMetricFilterGroup(physicalID string) error {
 		})
 
 		if err != nil {
-			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == cloudwatchlogs.ErrCodeResourceNotFoundException {
+			var awsErr awserr.Error
+			if errors.As(err, &awsErr) && awsErr.Code() == cloudwatchlogs.ErrCodeResourceNotFoundException {
 				zap.L().Info("metric filter has already been deleted")
 				continue
 			}

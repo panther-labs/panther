@@ -26,6 +26,7 @@ import (
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/pkg/errors"
 )
 
 type S3BucketNotificationProperties = s3.PutBucketNotificationConfigurationInput
@@ -59,7 +60,8 @@ func customS3BucketNotification(_ context.Context, event cfn.Event) (string, map
 			Bucket:                    &bucketName,
 			NotificationConfiguration: &s3.NotificationConfiguration{},
 		})
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == s3.ErrCodeNoSuchBucket {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == s3.ErrCodeNoSuchBucket {
 			err = nil // bucket already deleted
 		}
 

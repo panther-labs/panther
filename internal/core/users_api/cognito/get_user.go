@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	provider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
@@ -33,7 +34,8 @@ func (g *UsersGateway) GetUser(id *string) (*models.User, error) {
 	get, err := g.userPoolClient.AdminGetUser(
 		&provider.AdminGetUserInput{Username: id, UserPoolId: g.userPoolID})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == provider.ErrCodeUserNotFoundException {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == provider.ErrCodeUserNotFoundException {
 			return nil, &genericapi.DoesNotExistError{Message: "userID=" + *id + " does not exist"}
 		}
 		return nil, &genericapi.AWSError{Method: "cognito.AdminGetUser", Err: err}
