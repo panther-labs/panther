@@ -17,9 +17,10 @@
  */
 
 import React from 'react';
-import { Box, FadeIn, SimpleGrid } from 'pouncejs';
+import { Box, Card, FadeIn, Heading, SimpleGrid, Tab, TabList, TabPanel, TabPanels, Tabs } from "pouncejs"; // prettier-ignore
 import Panel from 'Components/Panel';
 import TablePlaceholder from 'Components/TablePlaceholder';
+import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
 
 const ComplianceOverviewPageSkeleton: React.FC = () => {
   return (
@@ -33,11 +34,47 @@ const ComplianceOverviewPageSkeleton: React.FC = () => {
           </Panel>
         </SimpleGrid>
         <SimpleGrid columns={1} spacingX={3} spacingY={2} mb={3}>
-          <Panel title="Events by Log Type | Data Latency">
-            <Box height={200}>
-              <TablePlaceholder />
-            </Box>
-          </Panel>
+          <Card as="section" width={1} pt={2}>
+            <Tabs width={1}>
+              <Box position="relative" pl={2} pr={4}>
+                <TabList>
+                  <Tab>
+                    {({ isSelected, isFocused }) => (
+                      <BorderedTab isSelected={isSelected} isFocused={isFocused}>
+                        <Heading size="x-small" as="h4">
+                          Events by Log Type
+                        </Heading>
+                      </BorderedTab>
+                    )}
+                  </Tab>
+                  <Tab>
+                    {({ isSelected, isFocused }) => (
+                      <BorderedTab isSelected={isSelected} isFocused={isFocused}>
+                        <Heading size="x-small" as="h4">
+                          Data Latency by Log Type
+                        </Heading>
+                      </BorderedTab>
+                    )}
+                  </Tab>
+                </TabList>
+                <BorderTabDivider />
+              </Box>
+              <Box p={6}>
+                <TabPanels>
+                  <TabPanel unmountWhenInactive={true} lazy={true}>
+                    <Box height={200}>
+                      <TablePlaceholder />
+                    </Box>
+                  </TabPanel>
+                  <TabPanel unmountWhenInactive={true} lazy={true}>
+                    <Box height={200}>
+                      <TablePlaceholder />
+                    </Box>
+                  </TabPanel>
+                </TabPanels>
+              </Box>
+            </Tabs>
+          </Card>
         </SimpleGrid>
         <SimpleGrid columns={1} spacingX={3} spacingY={2}>
           <Panel title="Recent High Severity Alerts">

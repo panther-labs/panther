@@ -47,7 +47,7 @@ const LogTypeCharts: React.FC<LogTypeChartsProps> = ({ eventsProcessed, eventsLa
               {({ isSelected, isFocused }) => (
                 <BorderedTab isSelected={isSelected} isFocused={isFocused}>
                   <Heading size="x-small" as="h4">
-                    Data Latency
+                    Data Latency by Log Type
                   </Heading>
                 </BorderedTab>
               )}
