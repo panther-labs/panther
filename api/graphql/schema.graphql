@@ -45,7 +45,7 @@ type Mutation {
 type Query {
   alert(input: GetAlertInput!): AlertDetails
   alerts(input: ListAlertsInput): ListAlertsResponse
-  sendTestAlert(input: SendTestAlertInput!): SendTestAlertResponse
+  sendTestAlert(input: SendTestAlertInput!): [DeliveryResponse]!
   destination(id: ID!): Destination
   destinations: [Destination]
   generalSettings: GeneralSettings!
@@ -211,11 +211,6 @@ input UpdateAlertStatusInput {
 
 input SendTestAlertInput {
   outputIds: [ID!]!
-}
-
-type SendTestAlertResponse {
-  success: Boolean
-  message: String
 }
 
 input ListRulesInput {
