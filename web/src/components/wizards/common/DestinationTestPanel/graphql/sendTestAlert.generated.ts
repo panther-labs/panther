@@ -28,7 +28,7 @@ export type SendTestAlertVariables = {
 };
 
 export type SendTestAlert = {
-  sendTestAlert?: Types.Maybe<Pick<Types.SendTestAlertResponse, 'success' | 'message'>>;
+  sendTestAlert: Array<Types.Maybe<Pick<Types.DeliveryResponse, 'success' | 'message'>>>;
 };
 
 export const SendTestAlertDocument = gql`

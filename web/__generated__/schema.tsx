@@ -881,7 +881,7 @@ export type Query = {
   __typename?: 'Query';
   alert?: Maybe<AlertDetails>;
   alerts?: Maybe<ListAlertsResponse>;
-  sendTestAlert?: Maybe<SendTestAlertResponse>;
+  sendTestAlert: Array<Maybe<DeliveryResponse>>;
   destination?: Maybe<Destination>;
   destinations?: Maybe<Array<Maybe<Destination>>>;
   generalSettings: GeneralSettings;
@@ -1099,12 +1099,6 @@ export type ScannedResourceStats = {
 
 export type SendTestAlertInput = {
   outputIds: Array<Scalars['ID']>;
-};
-
-export type SendTestAlertResponse = {
-  __typename?: 'SendTestAlertResponse';
-  success?: Maybe<Scalars['Boolean']>;
-  message?: Maybe<Scalars['String']>;
 };
 
 export type Series = {
@@ -1426,7 +1420,6 @@ export type ResolversTypes = {
   ListAlertsResponse: ResolverTypeWrapper<ListAlertsResponse>;
   AlertSummary: ResolverTypeWrapper<AlertSummary>;
   SendTestAlertInput: SendTestAlertInput;
-  SendTestAlertResponse: ResolverTypeWrapper<SendTestAlertResponse>;
   Destination: ResolverTypeWrapper<Destination>;
   DestinationTypeEnum: DestinationTypeEnum;
   DestinationConfig: ResolverTypeWrapper<DestinationConfig>;
@@ -1568,7 +1561,6 @@ export type ResolversParentTypes = {
   ListAlertsResponse: ListAlertsResponse;
   AlertSummary: AlertSummary;
   SendTestAlertInput: SendTestAlertInput;
-  SendTestAlertResponse: SendTestAlertResponse;
   Destination: Destination;
   DestinationTypeEnum: DestinationTypeEnum;
   DestinationConfig: DestinationConfig;
@@ -2434,7 +2426,7 @@ export type QueryResolvers<
     RequireFields<QueryAlertsArgs, never>
   >;
   sendTestAlert?: Resolver<
-    Maybe<ResolversTypes['SendTestAlertResponse']>,
+    Array<Maybe<ResolversTypes['DeliveryResponse']>>,
     ParentType,
     ContextType,
     RequireFields<QuerySendTestAlertArgs, 'input'>
@@ -2699,15 +2691,6 @@ export type ScannedResourceStatsResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
-export type SendTestAlertResponseResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['SendTestAlertResponse'] = ResolversParentTypes['SendTestAlertResponse']
-> = {
-  success?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
-  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
 export type SeriesResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['Series'] = ResolversParentTypes['Series']
@@ -2903,7 +2886,6 @@ export type Resolvers<ContextType = any> = {
   S3LogIntegrationHealth?: S3LogIntegrationHealthResolvers<ContextType>;
   ScannedResources?: ScannedResourcesResolvers<ContextType>;
   ScannedResourceStats?: ScannedResourceStatsResolvers<ContextType>;
-  SendTestAlertResponse?: SendTestAlertResponseResolvers<ContextType>;
   Series?: SeriesResolvers<ContextType>;
   SeriesData?: SeriesDataResolvers<ContextType>;
   SingleValue?: SingleValueResolvers<ContextType>;
