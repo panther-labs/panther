@@ -31,7 +31,7 @@ interface LogTypeChartsProps {
 const LogTypeCharts: React.FC<LogTypeChartsProps> = ({ eventsProcessed, eventsLatency }) => {
   return (
     <Card as="section" width={1} pt={2}>
-      <Tabs width={1}>
+      <Tabs>
         <Box position="relative" pl={2} pr={4}>
           <TabList>
             <Tab>
@@ -57,12 +57,12 @@ const LogTypeCharts: React.FC<LogTypeChartsProps> = ({ eventsProcessed, eventsLa
         </Box>
         <Box p={6}>
           <TabPanels>
-            <TabPanel unmountWhenInactive={true} lazy={true}>
+            <TabPanel unmountWhenInactive lazy>
               <Box height={200}>
                 <EventsByLogType events={eventsProcessed} />
               </Box>
             </TabPanel>
-            <TabPanel unmountWhenInactive={true} lazy={true}>
+            <TabPanel unmountWhenInactive lazy>
               <Box height={200}>
                 <EventsByLatency events={eventsLatency} />
               </Box>

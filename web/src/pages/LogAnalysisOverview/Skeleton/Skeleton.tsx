@@ -35,7 +35,7 @@ const ComplianceOverviewPageSkeleton: React.FC = () => {
         </SimpleGrid>
         <SimpleGrid columns={1} spacingX={3} spacingY={2} mb={3}>
           <Card as="section" width={1} pt={2}>
-            <Tabs width={1}>
+            <Tabs>
               <Box position="relative" pl={2} pr={4}>
                 <TabList>
                   <Tab>
@@ -61,12 +61,12 @@ const ComplianceOverviewPageSkeleton: React.FC = () => {
               </Box>
               <Box p={6}>
                 <TabPanels>
-                  <TabPanel unmountWhenInactive={true} lazy={true}>
+                  <TabPanel unmountWhenInactive lazy>
                     <Box height={200}>
                       <TablePlaceholder />
                     </Box>
                   </TabPanel>
-                  <TabPanel unmountWhenInactive={true} lazy={true}>
+                  <TabPanel unmountWhenInactive lazy>
                     <Box height={200}>
                       <TablePlaceholder />
                     </Box>
