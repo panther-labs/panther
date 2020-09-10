@@ -157,7 +157,7 @@ jobs:
 
   test_web:
     executor: panther-buildpack
-    resource_class: large
+    resource_class: xlarge
     steps:
       - checkout
       - attach_workspace:
