@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { render, fireEvent, waitFor, waitMs } from 'test-utils';
+import { render, fireEvent, waitFor, waitMs, faker } from 'test-utils';
 import { SeverityEnum } from 'Generated/schema';
 import SlackDestinationForm from './index';
 
@@ -28,9 +28,20 @@ const emptyInitialValues = {
   outputConfig: {},
 };
 
-const validUrl = 'https://valid.url';
+const validUrl = faker.internet.url();
 const displayName = 'slack';
 const severity = SeverityEnum.Critical;
+
+const initialValues = {
+  outputId: '123',
+  displayName,
+  outputConfig: {
+    slack: {
+      webhookURL: '',
+    },
+  },
+  defaultForSeverity: [severity],
+};
 
 describe('SlackDestinationForm', () => {
   it('renders the correct fields', () => {
@@ -73,7 +84,7 @@ describe('SlackDestinationForm', () => {
   });
 
   it('submit is triggering successfully', async () => {
-    const submitMockFunc = jest.fn(values => console.log('valu', values));
+    const submitMockFunc = jest.fn();
     const { getByLabelText, getByText } = render(
       <SlackDestinationForm onSubmit={submitMockFunc} initialValues={emptyInitialValues} />
     );
@@ -97,6 +108,31 @@ describe('SlackDestinationForm', () => {
       displayName,
       outputConfig: { slack: { webhookURL: validUrl } },
       defaultForSeverity: [severity],
+    });
+  });
+
+  it('should edit Slack Destination successfully', async () => {
+    const submitMockFunc = jest.fn();
+    const { getByLabelText, getByText } = render(
+      <SlackDestinationForm onSubmit={submitMockFunc} initialValues={initialValues} />
+    );
+    const displayNameField = getByLabelText('* Display Name');
+    const submitButton = getByText('Update Destination');
+    expect(displayNameField).toHaveValue(initialValues.displayName);
+    expect(submitButton).toHaveAttribute('disabled');
+
+    const newDisplayName = 'New Slack Name';
+    fireEvent.change(displayNameField, { target: { value: newDisplayName } });
+    await waitMs(50);
+    expect(submitButton).not.toHaveAttribute('disabled');
+
+    fireEvent.click(submitButton);
+    await waitFor(() => expect(submitMockFunc).toHaveBeenCalledTimes(1));
+    expect(submitMockFunc).toHaveBeenCalledWith({
+      outputId: initialValues.outputId,
+      displayName: newDisplayName,
+      outputConfig: initialValues.outputConfig,
+      defaultForSeverity: initialValues.defaultForSeverity,
     });
   });
 });
