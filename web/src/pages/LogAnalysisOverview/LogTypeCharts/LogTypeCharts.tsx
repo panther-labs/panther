@@ -30,9 +30,9 @@ interface LogTypeChartsProps {
 
 const LogTypeCharts: React.FC<LogTypeChartsProps> = ({ eventsProcessed, eventsLatency }) => {
   return (
-    <Card as="section" width={1}>
+    <Card as="section" width={1} pt={2}>
       <Tabs width={1}>
-        <Box position="relative">
+        <Box position="relative" pl={2} pr={4}>
           <TabList>
             <Tab>
               {({ isSelected, isFocused }) => (
