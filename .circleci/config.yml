@@ -178,6 +178,7 @@ jobs:
 
   bundlesize:
     executor: panther-buildpack
+    resource_class: large
     steps:
       - checkout
       - restore_npm_cache
