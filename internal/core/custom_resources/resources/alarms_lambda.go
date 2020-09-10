@@ -60,13 +60,13 @@ func customLambdaAlarms(_ context.Context, event cfn.Event) (string, map[string]
 
 		// Set defaults
 		if props.LoggedErrorThreshold == nil {
-			props.LoggedErrorThreshold = aws.Int(1)
+			props.LoggedErrorThreshold = aws.Int(0)
 		}
 		if props.LoggedWarnThreshold == nil {
 			props.LoggedWarnThreshold = aws.Int(25)
 		}
 		if props.ExecutionErrorThreshold == nil {
-			props.ExecutionErrorThreshold = aws.Int(1)
+			props.ExecutionErrorThreshold = aws.Int(0)
 		}
 		if props.ThrottleThreshold == nil {
 			props.ThrottleThreshold = aws.Int(5)

@@ -35,16 +35,11 @@ const (
 type APIGatewayAlarmProperties struct {
 	APIName            string  `json:"ApiName" validate:"required"`
 	AlarmTopicArn      string  `validate:"required"`
-	ErrorThreshold     *int64  `json:",string" validate:"omitempty,min=0"`
+	ErrorThreshold     int     `json:",string" validate:"omitempty,min=0"`
 	LatencyThresholdMs float64 `json:",string" validate:"omitempty,min=1"`
 }
 
 func customAPIGatewayAlarms(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
-	const (
-		defaultErrorThreshold = 1
-		defaultLatencyThresholdMs = 1000
-	)
-
 	switch event.RequestType {
 	case cfn.RequestCreate, cfn.RequestUpdate:
 		var props APIGatewayAlarmProperties
@@ -52,11 +47,8 @@ func customAPIGatewayAlarms(_ context.Context, event cfn.Event) (string, map[str
 			return "", nil, err
 		}
 
-		if props.ErrorThreshold == nil {
-			props.ErrorThreshold = aws.Int64(defaultErrorThreshold)
-		}
 		if props.LatencyThresholdMs == 0 {
-			props.LatencyThresholdMs = defaultLatencyThresholdMs
+			props.LatencyThresholdMs = 1000
 		}
 
 		return "custom:alarms:api:" + props.APIName, nil, putGatewayAlarmGroup(props)
@@ -93,15 +85,17 @@ func putGatewayAlarmGroup(props APIGatewayAlarmProperties) error {
 		return err
 	}
 
+	// 5XX errors are usually not problems in API gateway itself, but internal server error codes
+	// returned by the Lambda function which processed the request.
 	input.AlarmDescription = aws.String(fmt.Sprintf(
-		"API Gateway %s is reporting 5XX internal errors. See: %s#%s",
+		"API Gateway %s is reporting 5XX internal errors from its lambda handler. See: %s#%s",
 		props.APIName, alarmRunbook, props.APIName))
 	input.AlarmName = aws.String(fmt.Sprintf("Panther-%s-%s", gatewayErrorAlarm, props.APIName))
 	input.EvaluationPeriods = aws.Int64(1)
 	input.MetricName = aws.String("5XXError")
 	input.Period = aws.Int64(300)
 	input.Statistic = aws.String(cloudwatch.StatisticSum)
-	input.Threshold = aws.Float64(float64(*props.ErrorThreshold))
+	input.Threshold = aws.Float64(float64(props.ErrorThreshold))
 	input.Unit = aws.String(cloudwatch.StandardUnitCount)
 	return putMetricAlarm(input)
 }
