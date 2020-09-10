@@ -19,8 +19,7 @@
   },
   "homepage": "https://github.com/panther-labs/panther#readme",
   "peerDependencies": {
-    "@emotion/react": "^11.0.0-next.12",
-    "node-fetch": "^2.6.1"
+    "@emotion/react": "^11.0.0-next.12"
   },
   "devDependencies": {
     "@babel/core": "^7.8.4",
@@ -121,7 +120,6 @@
     "history": "^4.10.1",
     "linkifyjs": "^2.1.9",
     "lodash": "^4.17.19",
-    "node-fetch": "^2.6.1",
     "pouncejs": "^0.64.0",
     "qrcode.react": "^1.0.0",
     "query-string": "^6.10.1",
