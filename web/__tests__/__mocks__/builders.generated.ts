@@ -104,7 +104,6 @@ import {
   ScannedResources,
   ScannedResourceStats,
   SendTestAlertInput,
-  SendTestAlertResponse,
   Series,
   SeriesData,
   SingleValue,
@@ -1260,16 +1259,6 @@ export const buildSendTestAlertInput = (
   return {
     outputIds:
       'outputIds' in overrides ? overrides.outputIds : ['900d0911-ac12-4720-a1a9-89d6f1995c9f'],
-  };
-};
-
-export const buildSendTestAlertResponse = (
-  overrides: Partial<SendTestAlertResponse> = {}
-): SendTestAlertResponse => {
-  return {
-    __typename: 'SendTestAlertResponse',
-    success: 'success' in overrides ? overrides.success : true,
-    message: 'message' in overrides ? overrides.message : 'Russian Federation',
   };
 };
 
