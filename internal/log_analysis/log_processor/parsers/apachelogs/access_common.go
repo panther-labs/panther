@@ -57,6 +57,7 @@ func NewAccessCommonParser() parsers.LogParser {
 func (p *AccessCommonParser) New() parsers.LogParser {
 	return NewAccessCommonParser()
 }
+
 func (p *AccessCommonParser) LogType() string {
 	return TypeAccessCommon
 }
@@ -67,6 +68,7 @@ func (p *AccessCommonParser) Parse(log string) ([]*parsers.PantherLog, error) {
 		return nil, err
 	}
 	access.updatePantherFields(&access.PantherLog)
+
 	return access.Logs(), nil
 }
 
@@ -108,12 +110,13 @@ func (log *AccessCommonLog) SetRow(row []string) error {
 		statusCode := int16(n)
 
 		var numBytes int64
-		if responseSize != "-" {
+		if nonEmptyLogField(responseSize) != nil {
 			numBytes, err = strconv.ParseInt(responseSize, 10, 64)
 			if err != nil {
 				return err
 			}
 		}
+
 		*log = AccessCommonLog{
 			RemoteHostIPAddress:   nonEmptyLogField(remoteIP),
 			ClientIdentityRFC1413: nonEmptyLogField(idRFC1413),
