@@ -83,12 +83,11 @@ func getConfigRecorder(svc configserviceiface.ConfigServiceAPI) (*configservice.
 		ConfigurationRecorderNames: []*string{aws.String("default")},
 	})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "NoSuchConfigurationRecorderException" {
-				zap.L().Warn("tried to scan non-existent resource",
-					zap.String("resourceType", awsmodels.ConfigServiceSchema))
-				return nil, nil
-			}
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == configservice.ErrCodeNoSuchConfigurationRecorderException {
+			zap.L().Warn("tried to scan non-existent resource",
+				zap.String("resourceType", awsmodels.ConfigServiceSchema))
+			return nil, nil
 		}
 		return nil, errors.Wrap(err, "ConfigService.DescribeConfigurationRecorders")
 	}

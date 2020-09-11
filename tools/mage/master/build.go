@@ -29,6 +29,8 @@ import (
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
+var masterTemplate = filepath.Join("deployments", "master.yml")
+
 // Get the Panther version indicated in the master template.
 func GetVersion() (string, error) {
 	type template struct {
@@ -42,7 +44,7 @@ func GetVersion() (string, error) {
 	}
 
 	var cfn template
-	err := util.ParseTemplate(filepath.Join("deployments", "master.yml"), &cfn)
+	err := util.ParseTemplate(masterTemplate, &cfn)
 	return cfn.Mappings.Constants.Panther.Version, err
 }
 
@@ -68,7 +70,11 @@ func Build(log *zap.SugaredLogger) error {
 //
 // Returns the path to the final generated template.
 func Package(log *zap.SugaredLogger, region, bucket, pantherVersion, imgRegistry string) (string, error) {
-	pkg, err := util.SamPackage(region, "deployments/master.yml", bucket)
+	if err := build.EmbedAPISpec(); err != nil {
+		return "", err
+	}
+
+	pkg, err := util.SamPackage(region, masterTemplate, bucket)
 	if err != nil {
 		return "", err
 	}

@@ -52,9 +52,9 @@ func customUpdateGlueTables(_ context.Context, event cfn.Event) (string, map[str
 		// ensure databases are all there
 		for pantherDatabase, pantherDatabaseDescription := range awsglue.PantherDatabases {
 			zap.L().Info("creating database", zap.String("database", pantherDatabase))
-			_, err := awsglue.CreateDatabase(glueClient, pantherDatabase, pantherDatabaseDescription)
-			if err != nil {
-				if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == glue.ErrCodeAlreadyExistsException {
+			if _, err := awsglue.CreateDatabase(glueClient, pantherDatabase, pantherDatabaseDescription); err != nil {
+				var awsErr awserr.Error
+				if errors.As(err, &awsErr) && awsErr.Code() == glue.ErrCodeAlreadyExistsException {
 					zap.L().Info("database exists", zap.String("database", pantherDatabase))
 				} else {
 					return "", nil, errors.Wrapf(err, "failed creating database %s", pantherDatabase)
@@ -100,9 +100,9 @@ func customUpdateGlueTables(_ context.Context, event cfn.Event) (string, map[str
 	case cfn.RequestDelete:
 		for pantherDatabase := range awsglue.PantherDatabases {
 			zap.L().Info("deleting database", zap.String("database", pantherDatabase))
-			_, err := awsglue.DeleteDatabase(glueClient, pantherDatabase)
-			if err != nil {
-				if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == glue.ErrCodeEntityNotFoundException {
+			if _, err := awsglue.DeleteDatabase(glueClient, pantherDatabase); err != nil {
+				var awsErr awserr.Error
+				if errors.As(err, &awsErr) && awsErr.Code() == glue.ErrCodeEntityNotFoundException {
 					zap.L().Info("already deleted", zap.String("database", pantherDatabase))
 				} else {
 					return "", nil, errors.Wrapf(err, "failed deleting %s", pantherDatabase)

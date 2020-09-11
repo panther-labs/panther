@@ -72,13 +72,12 @@ func getVolume(svc ec2iface.EC2API, volumeID *string) (*ec2.Volume, error) {
 		VolumeIds: []*string{volumeID},
 	})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "InvalidVolume.NotFound" {
-				zap.L().Warn("tried to scan non-existent resource",
-					zap.String("resource", *volumeID),
-					zap.String("resourceType", awsmodels.Ec2VolumeSchema))
-				return nil, nil
-			}
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == "InvalidVolume.NotFound" {
+			zap.L().Warn("tried to scan non-existent resource",
+				zap.String("resource", *volumeID),
+				zap.String("resourceType", awsmodels.Ec2VolumeSchema))
+			return nil, nil
 		}
 		return nil, errors.Wrapf(err, "EC2.DescribeVolumes: %s", aws.StringValue(volumeID))
 	}
@@ -141,11 +140,10 @@ func describeSnapshotAttribute(svc ec2iface.EC2API, snapshotID *string) ([]*ec2.
 		Attribute:  aws.String("createVolumePermission")},
 	)
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "InvalidSnapshot.NotFound" {
-				zap.L().Debug("invalid snapshot for attribute")
-				return nil, err
-			}
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == "InvalidSnapshot.NotFound" {
+			zap.L().Debug("invalid snapshot for attribute")
+			return nil, err
 		}
 		return nil, errors.Wrapf(err, "EC2.DescribeSnapshotAttributes: %s", aws.StringValue(snapshotID))
 	}

@@ -71,13 +71,12 @@ func getIAMPolicy(svc iamiface.IAMAPI, policyARN *string) (*iam.Policy, error) {
 		PolicyArn: policyARN,
 	})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "NoSuchEntity" {
-				zap.L().Warn("tried to scan non-existent resource",
-					zap.String("resource", *policyARN),
-					zap.String("resourceType", awsmodels.IAMPolicySchema))
-				return nil, nil
-			}
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == iam.ErrCodeNoSuchEntityException {
+			zap.L().Warn("tried to scan non-existent resource",
+				zap.String("resource", *policyARN),
+				zap.String("resourceType", awsmodels.IAMPolicySchema))
+			return nil, nil
 		}
 		return nil, errors.Wrapf(err, "IAM.GetPolicy: %s", aws.StringValue(policyARN))
 	}

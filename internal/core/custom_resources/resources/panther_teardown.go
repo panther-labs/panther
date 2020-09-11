@@ -30,6 +30,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -79,7 +80,8 @@ func destroyEcrRepo(repoName string) error {
 		RepositoryName: &repoName,
 	})
 
-	if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == ecr.ErrCodeRepositoryNotFoundException {
+	var awsErr awserr.Error
+	if errors.As(err, &awsErr) && awsErr.Code() == ecr.ErrCodeRepositoryNotFoundException {
 		// repo doesn't exist - that's fine, nothing to do here
 		err = nil
 	}
@@ -163,7 +165,8 @@ func deleteLogGroup(name *string) error {
 	zap.L().Info("deleting log group", zap.String("groupName", *name))
 	_, err := cloudWatchLogsClient.DeleteLogGroup(&cloudwatchlogs.DeleteLogGroupInput{LogGroupName: name})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == cloudwatchlogs.ErrCodeResourceNotFoundException {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == cloudwatchlogs.ErrCodeResourceNotFoundException {
 			// log group no longer exists, carry on
 			return nil
 		}

@@ -89,13 +89,12 @@ func iamGroupIterator(page *iam.ListGroupsOutput, groups *[]*iam.Group, marker *
 func getGroup(iamSvc iamiface.IAMAPI, name *string) (*iam.GetGroupOutput, error) {
 	out, err := iamSvc.GetGroup(&iam.GetGroupInput{GroupName: name})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "NoSuchEntity" {
-				zap.L().Warn("tried to scan non-existent resource",
-					zap.String("resource", *name),
-					zap.String("resourceType", awsmodels.IAMGroupSchema))
-				return nil, nil
-			}
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == iam.ErrCodeNoSuchEntityException {
+			zap.L().Warn("tried to scan non-existent resource",
+				zap.String("resource", *name),
+				zap.String("resourceType", awsmodels.IAMGroupSchema))
+			return nil, nil
 		}
 		return nil, errors.Wrapf(err, "IAM.GetGroup: %s", aws.StringValue(name))
 	}
