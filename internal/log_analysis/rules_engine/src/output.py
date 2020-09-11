@@ -56,6 +56,7 @@ class EventCommonFields:
     p_alert_update_time: str
     p_rule_tags: Optional[List[str]] = None
     p_rule_reports: Optional[Dict[str, List[str]]] = None
+    # If running a rule on an event trigged an exception, this field will contain the exception message
     p_rule_error: Optional[str] = None
 
 
@@ -84,6 +85,7 @@ class MatchedEventsBuffer:
         # Getting estimation of struct size in memory
         size = sys.getsizeof(match)
 
+        # Add event to the buffer
         value = self.data.get(key)
         if value:
             value.matches.append(match)
@@ -124,7 +126,7 @@ class MatchedEventsBuffer:
 def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EngineResult]) -> None:
     # 'version', 'title', 'dedup_period' of a rule might differ if the rule was modified
     # while the rules engine was running. We pick the first encountered set of values.
-    is_rule_errors = True if events[0].error_message else False
+
     group_info = MatchingGroupInfo(
         rule_id=key.rule_id,
         rule_version=events[0].rule_version,
@@ -134,7 +136,7 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EngineResu
         num_matches=len(events),
         title=events[0].title,
         processing_time=time,
-        is_rule_error=is_rule_errors
+        is_rule_error=key.is_rule_error
     )
     alert_info = update_get_alert_info(group_info)
     data_stream = BytesIO()
@@ -146,7 +148,7 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EngineResu
     writer.close()
     data_stream.seek(0)
     output_uuid = uuid.uuid4()
-    if is_rule_errors:
+    if key.is_rule_error:
         key_format = _RULE_ERRORS_KEY_FORMAT
     else:
         key_format = _RULE_MATCHES_KEY_FORMAT
@@ -161,7 +163,7 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EngineResu
 
     # Send notification to SNS topic
     notification = _s3_put_object_notification(_S3_BUCKET, object_key, byte_size)
-    data_type = 'RuleErrors' if is_rule_errors  else 'RuleMatches'
+    data_type = 'RuleErrors' if key.is_rule_error  else 'RuleMatches'
     # MessageAttributes are required so that subscribers to SNS topic can filter events in the subscription
     _SNS_CLIENT.publish(
         TopicArn=_SNS_TOPIC_ARN,
@@ -177,7 +179,6 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EngineResu
             }
         }
     )
-
 
 def _s3_put_object_notification(bucket: str, key: str, byte_size: int) -> Dict[str, list]:
     """The notification that will be sent to the SNS topic when we create a new object in S3.
