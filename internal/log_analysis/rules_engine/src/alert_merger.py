@@ -93,6 +93,10 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
 
     if group_info.title:
         update_expression += ', #11=:11'
+
+    if group_info.is_rule_error:
+        update_expression += ', #12=:12'
+
     expresion_attribute_names = {
         '#1': _ALERT_CREATION_TIME_ATTR_NAME,
         '#2': _PARTITION_KEY_NAME,
@@ -110,7 +114,6 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
 
     if group_info.is_rule_error:
         expresion_attribute_names['#12'] = _ERROR_TYPE
-
 
     expression_attribute_values = {
         ':1':
@@ -149,7 +152,6 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
     if group_info.is_rule_error:
         expression_attribute_values[':12'] = {'S': 'RULE_ERROR'}
 
-
     response = _DDB_CLIENT.update_item(
         TableName=_DDB_TABLE_NAME,
         Key={_PARTITION_KEY_NAME: {
@@ -164,8 +166,7 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
     )
     alert_count = response['Attributes'][_ALERT_COUNT_ATTR_NAME]['N']
     alert_id = _generate_alert_id(group_info.rule_id, group_info.dedup, alert_count)
-    return AlertInfo(alert_id=alert_id, alert_creation_time=group_info.processing_time,
-                     alert_update_time=group_info.processing_time)
+    return AlertInfo(alert_id=alert_id, alert_creation_time=group_info.processing_time, alert_update_time=group_info.processing_time)
 
 
 def _update_get(group_info: MatchingGroupInfo) -> AlertInfo:

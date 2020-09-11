@@ -31,7 +31,9 @@ from . import AlertInfo, EngineResult, OutputGroupingKey
 from .alert_merger import MatchingGroupInfo, update_get_alert_info
 from .logging import get_logger
 
+# Format of the S3 objects containing the events that matched a rule
 _RULE_MATCHES_KEY_FORMAT = 'rules/{}/year={:d}/month={:02d}/day={:02d}/hour={:02d}/rule_id={}/{}-{}.json.gz'
+# Format of the S3 objects containing the events that caused an exception on the rule
 _RULE_ERRORS_KEY_FORMAT = 'rule_errors/{}/year={:d}/month={:02d}/day={:02d}/hour={:02d}/rule_id={}/{}-{}.json.gz'
 # Maximum number of events in an S3 object
 _MAX_BYTES_IN_MEMORY = 100000000
@@ -76,22 +78,25 @@ class MatchedEventsBuffer:
         self.max_bytes = _MAX_BYTES_IN_MEMORY
         self.total_events = 0
 
-    def add_event(self, match: EngineResult) -> None:
+    def add_event(self, engine_result: EngineResult) -> None:
         """Adds a matched event to the buffer"""
-        if match.error_message:
-            key = OutputGroupingKey(match.rule_id, match.log_type, match.dedup, is_rule_error=True)
+        if engine_result.error_message:
+            # If the engine result contains an error message, it means that the event in the result caused
+            # the rule engine to throw an exception
+            key = OutputGroupingKey(engine_result.rule_id, engine_result.log_type, engine_result.dedup, is_rule_error=True)
         else:
-            key = OutputGroupingKey(match.rule_id, match.log_type, match.dedup, is_rule_error=False)
+            # If the engine result doesn't contain an error message, it means the event in the result matched a rule
+            key = OutputGroupingKey(engine_result.rule_id, engine_result.log_type, engine_result.dedup, is_rule_error=False)
         # Getting estimation of struct size in memory
-        size = sys.getsizeof(match)
+        size = sys.getsizeof(engine_result)
 
         # Add event to the buffer
         value = self.data.get(key)
         if value:
-            value.matches.append(match)
+            value.matches.append(engine_result)
             value.size_in_bytes += size
         else:
-            value = BufferValue([match], size)
+            value = BufferValue([engine_result], size)
             self.data[key] = value
 
         self.bytes_in_memory += size
@@ -161,9 +166,14 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EngineResu
     # Write data to S3
     _S3_CLIENT.put_object(Bucket=_S3_BUCKET, ContentType='gzip', Body=data_stream, Key=object_key)
 
+    # If the object written contains events that caused a rule engine error
+    # don't send an SNS notification. TODO: Remove this condition and send a notification once
+    # the backend supports rule errors end to end.
+    if key.is_rule_error:
+        return
     # Send notification to SNS topic
     notification = _s3_put_object_notification(_S3_BUCKET, object_key, byte_size)
-    data_type = 'RuleErrors' if key.is_rule_error  else 'RuleMatches'
+
     # MessageAttributes are required so that subscribers to SNS topic can filter events in the subscription
     _SNS_CLIENT.publish(
         TopicArn=_SNS_TOPIC_ARN,
@@ -171,7 +181,7 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EngineResu
         MessageAttributes={
             'type': {
                 'DataType': 'String',
-                'StringValue': data_type
+                'StringValue': 'RuleMatches'
             },
             'id': {
                 'DataType': 'String',
@@ -179,6 +189,7 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EngineResu
             }
         }
     )
+
 
 def _s3_put_object_notification(bucket: str, key: str, byte_size: int) -> Dict[str, list]:
     """The notification that will be sent to the SNS topic when we create a new object in S3.
