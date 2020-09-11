@@ -1,6 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`SensitiveTextInput renders 1`] = `
+
+
 .panther-4 {
   min-height: 47px;
   position: relative;
@@ -91,6 +93,8 @@ exports[`SensitiveTextInput renders 1`] = `
   transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
   font-weight: 500;
 }
+
+
 
 .panther-0:focus::-webkit-input-placeholder {
   opacity: 0.4;
