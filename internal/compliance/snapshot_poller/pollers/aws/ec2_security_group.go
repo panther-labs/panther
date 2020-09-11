@@ -70,13 +70,12 @@ func getSecurityGroup(svc ec2iface.EC2API, securityGroupID *string) (*ec2.Securi
 		GroupIds: []*string{securityGroupID},
 	})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "InvalidGroup.NotFound" {
-				zap.L().Warn("tried to scan non-existent resource",
-					zap.String("resource", *securityGroupID),
-					zap.String("resourceType", awsmodels.Ec2SecurityGroupSchema))
-				return nil, nil
-			}
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == "InvalidGroup.NotFound" {
+			zap.L().Warn("tried to scan non-existent resource",
+				zap.String("resource", *securityGroupID),
+				zap.String("resourceType", awsmodels.Ec2SecurityGroupSchema))
+			return nil, nil
 		}
 		return nil, errors.Wrapf(err, "EC2.DescribeSecurityGroups: %s", aws.StringValue(securityGroupID))
 	}

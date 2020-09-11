@@ -32,6 +32,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
 
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
@@ -54,13 +55,10 @@ var (
 	testLogEvents        = testLogLines // for these tests they are 1-1
 
 	testBucket      = "testBucket"
+	testSourceID    = "testSource"
+	testSourceLabel = "testSourceLabel"
 	testKey         = "testKey"
 	testContentType = "testContentType"
-	s3Hint          = &common.S3DataStreamHints{
-		Bucket:      testBucket,
-		Key:         testKey,
-		ContentType: testContentType,
-	}
 )
 
 func init() {
@@ -153,7 +151,6 @@ func TestProcessDataStreamError(t *testing.T) {
 	// confirm error log is as expected
 	expectedLogMesg := common.OpLogNamespace + ":" + common.OpLogComponent + ":" + operationName
 	expectedLog := observer.LoggedEntry{
-
 		Entry: zapcore.Entry{
 			Level:   zapcore.ErrorLevel,
 			Message: expectedLogMesg,
@@ -264,14 +261,11 @@ func TestProcessClassifyFailure(t *testing.T) {
 	}
 
 	// first one fails
-	mockClassifier.On("Classify", mock.Anything).Return(&classification.ClassifierResult{
-		Events:  []*parsers.Result{},
-		LogType: nil,
-	}).Once()
+	mockClassifier.On("Classify", mock.Anything).Return(&classification.ClassifierResult{}, errFailingReader).Once()
 	mockClassifier.On("Classify", mock.Anything).Return(&classification.ClassifierResult{
 		Events:  []*parsers.Result{newTestLog()},
-		LogType: &testLogType,
-	})
+		Matched: true,
+	}, nil)
 	mockClassifier.On("Stats", mock.Anything).Return(mockStats)
 	mockClassifier.On("ParserStats", mock.Anything).Return(mockParserStats)
 
@@ -316,8 +310,10 @@ func TestProcessClassifyFailure(t *testing.T) {
 			Context: []zapcore.Field{
 				// custom
 				zap.Uint64("lineNum", actual[0].ContextMap()["lineNum"].(uint64)), // this one varies due to mock, skip in validation
-				zap.String("bucket", testBucket),
-				zap.String("key", testKey),
+				zap.String("sourceId", testSourceID),
+				zap.String("sourceLabel", testSourceLabel),
+				zap.String("s3Bucket", testBucket),
+				zap.String("s3ObjectKey", testKey),
 
 				// error
 				zap.Error(errors.New("failed to classify log line")),
@@ -464,9 +460,9 @@ type testClassifier struct {
 	mock.Mock
 }
 
-func (c *testClassifier) Classify(log string) *classification.ClassifierResult {
+func (c *testClassifier) Classify(log string) (*classification.ClassifierResult, error) {
 	args := c.Called(log)
-	return args.Get(0).(*classification.ClassifierResult)
+	return args.Get(0).(*classification.ClassifierResult), args.Error(1)
 }
 
 func (c *testClassifier) Stats() *classification.ClassifierStats {
@@ -483,8 +479,8 @@ func (c *testClassifier) ParserStats() map[string]*classification.ParserStats {
 func (c *testClassifier) standardMocks(cStats *classification.ClassifierStats, pStats map[string]*classification.ParserStats) {
 	c.On("Classify", mock.Anything).Return(&classification.ClassifierResult{
 		Events:  []*parsers.Result{newTestLog()},
-		LogType: &testLogType,
-	}).After(parseDelay)
+		Matched: true,
+	}, nil).After(parseDelay)
 	c.On("Stats", mock.Anything).Return(cStats)
 	c.On("ParserStats", mock.Anything).Return(pStats)
 }
@@ -495,9 +491,11 @@ func makeDataStream() (dataStream *common.DataStream) {
 		testData[i] = testLogLine
 	}
 	dataStream = &common.DataStream{
-		Reader:   strings.NewReader(strings.Join(testData, "\n")),
-		LogTypes: []string{testLogType},
-		Hints:    common.DataStreamHints{S3: s3Hint},
+		Reader:      strings.NewReader(strings.Join(testData, "\n")),
+		Source:      testSource,
+		S3ObjectKey: testKey,
+		S3Bucket:    testBucket,
+		ContentType: testContentType,
 	}
 	return
 }
@@ -510,12 +508,21 @@ func (fr *failingReader) Read(_ []byte) (int, error) {
 	return 0, errFailingReader
 }
 
+var testSource = &models.SourceIntegration{
+	SourceIntegrationMetadata: models.SourceIntegrationMetadata{
+		IntegrationID:    testSourceID,
+		IntegrationLabel: testSourceLabel,
+		IntegrationType:  models.IntegrationTypeAWS3,
+		S3Bucket:         testBucket,
+		LogTypes:         []string{testLogType},
+	},
+}
+
 // returns a dataStream that will cause the parse to fail
 func makeBadDataStream() (dataStream *common.DataStream) {
-	testLogType := "testLogType"
 	dataStream = &common.DataStream{
-		Reader:   &failingReader{},
-		LogTypes: []string{testLogType},
+		Reader: &failingReader{},
+		Source: testSource,
 	}
 	return
 }

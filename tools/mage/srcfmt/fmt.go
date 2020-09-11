@@ -104,6 +104,11 @@ func gofmt(paths ...string) error {
 		return fmt.Errorf("goimports failed: %v", err)
 	}
 
+	// 4) go mod tidy
+	if err := sh.Run("go", "mod", "tidy"); err != nil {
+		return fmt.Errorf("go mod tidy failed: %v", err)
+	}
+
 	return nil
 }
 

@@ -34,6 +34,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/kelseyhightower/envconfig"
 
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/pkg/awsretry"
 )
 
@@ -78,20 +79,8 @@ func Setup() {
 // DataStream represents a data stream that read by the processor
 type DataStream struct {
 	Reader      io.Reader
-	Hints       DataStreamHints
-	SourceID    string
-	SourceLabel string
-	LogTypes    []string
-}
-
-// Used in a DataStream as meta data to describe the data
-type DataStreamHints struct {
-	S3 *S3DataStreamHints // if nil, no hint
-}
-
-// Used in a DataStreamHints as meta data to describe the S3 object backing the stream
-type S3DataStreamHints struct {
-	Bucket      string
-	Key         string
+	Source      *models.SourceIntegration
+	S3ObjectKey string
+	S3Bucket    string
 	ContentType string
 }

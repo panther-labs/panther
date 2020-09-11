@@ -73,13 +73,12 @@ func getRole(svc iamiface.IAMAPI, roleName *string) (*iam.Role, error) {
 		RoleName: roleName,
 	})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "NoSuchEntity" {
-				zap.L().Warn("tried to scan non-existent resource",
-					zap.String("resource", *roleName),
-					zap.String("resourceType", awsmodels.IAMRoleSchema))
-				return nil, nil
-			}
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == iam.ErrCodeNoSuchEntityException {
+			zap.L().Warn("tried to scan non-existent resource",
+				zap.String("resource", *roleName),
+				zap.String("resourceType", awsmodels.IAMRoleSchema))
+			return nil, nil
 		}
 		return nil, errors.Wrapf(err, "IAM.GetRole: %s", aws.StringValue(roleName))
 	}

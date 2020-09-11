@@ -37,7 +37,8 @@ func DeployedLogTables(glueClient glueiface.GlueAPI) (deployedLogTables []*awsgl
 	for _, gm := range registry.AvailableTables() {
 		_, err := awsglue.GetTable(glueClient, gm.DatabaseName(), gm.TableName())
 		if err != nil {
-			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == glue.ErrCodeEntityNotFoundException {
+			var awsErr awserr.Error
+			if errors.As(err, &awsErr) && awsErr.Code() == glue.ErrCodeEntityNotFoundException {
 				continue
 			} else {
 				return nil, errors.Wrapf(err, "failure checking existence of %s.%s",
