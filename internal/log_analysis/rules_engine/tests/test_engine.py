@@ -113,7 +113,7 @@ class TestEngine(TestCase):
                 log_type='log',
                 dedup='Exception',
                 event={},
-                dedup_period_mins=60,
+                dedup_period_mins=1440,
                 error_message="Exception('Found an issue')"
             ),
             EngineResult(
