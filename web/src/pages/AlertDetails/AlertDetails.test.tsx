@@ -2,6 +2,7 @@ import React from 'react';
 import { buildAlertDetails, buildRuleDetails, render } from 'test-utils';
 import urls from 'Source/urls';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
+import { Route } from 'react-router-dom';
 import { mockAlertDetails } from './graphql/alertDetails.generated';
 import { mockRuleTeaser } from './graphql/ruleTeaser.generated';
 import AlertDetails from './AlertDetails';
@@ -14,7 +15,7 @@ it('renders the correct tab based on a URL param', async () => {
     mockAlertDetails({
       variables: {
         input: {
-          alertId: undefined,
+          alertId: alert.alertId,
           eventsPageSize: DEFAULT_LARGE_PAGE_SIZE,
         },
       },
@@ -31,10 +32,15 @@ it('renders the correct tab based on a URL param', async () => {
   ];
 
   // render initially with the "details" section
-  const { findByText, getByText, queryByText, unmount } = render(<AlertDetails />, {
-    mocks,
-    initialRoute: `${urls.logAnalysis.alerts.details(alert.alertId)}?section=details`,
-  });
+  const { findByText, getByText, queryByText, unmount } = render(
+    <Route exact path={urls.logAnalysis.alerts.details(':id')}>
+      <AlertDetails />
+    </Route>,
+    {
+      mocks,
+      initialRoute: `${urls.logAnalysis.alerts.details(alert.alertId)}?section=details`,
+    }
+  );
 
   // expect to see all the data, but not to see the "Triggered events
   expect(await findByText('Rule')).toBeInTheDocument();
@@ -48,10 +54,15 @@ it('renders the correct tab based on a URL param', async () => {
   unmount();
 
   // remount with the events section
-  const { findByText: _findByText, getByText: _getByText } = render(<AlertDetails />, {
-    mocks,
-    initialRoute: `${urls.logAnalysis.alerts.details(alert.alertId)}?section=events`,
-  });
+  const { findByText: _findByText, getByText: _getByText } = render(
+    <Route exact path={urls.logAnalysis.alerts.details(':id')}>
+      <AlertDetails />
+    </Route>,
+    {
+      mocks,
+      initialRoute: `${urls.logAnalysis.alerts.details(alert.alertId)}?section=events`,
+    }
+  );
 
   // expect to see all the data as "hidden" (since the details tab is always loaded (i.e. no lazy load)
   // and the "Triggered events" being shown
