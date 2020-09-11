@@ -405,10 +405,10 @@ type SingleValue {
 }
 
 type LogAnalysisMetricsResponse {
-  eventsProcessed: SeriesData
-  alertsBySeverity: SeriesData
-  eventsLatency: FloatSeriesData
-  totalAlertsDelta: [SingleValue]
+  eventsProcessed: SeriesData!
+  alertsBySeverity: SeriesData!
+  eventsLatency: FloatSeriesData!
+  totalAlertsDelta: [SingleValue!]!
   fromDate: AWSDateTime!
   toDate: AWSDateTime!
   intervalMinutes: Int!

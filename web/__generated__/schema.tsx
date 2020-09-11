@@ -574,10 +574,10 @@ export type LogAnalysisMetricsInput = {
 
 export type LogAnalysisMetricsResponse = {
   __typename?: 'LogAnalysisMetricsResponse';
-  eventsProcessed?: Maybe<SeriesData>;
-  alertsBySeverity?: Maybe<SeriesData>;
-  eventsLatency?: Maybe<FloatSeriesData>;
-  totalAlertsDelta?: Maybe<Array<Maybe<SingleValue>>>;
+  eventsProcessed: SeriesData;
+  alertsBySeverity: SeriesData;
+  eventsLatency: FloatSeriesData;
+  totalAlertsDelta: Array<SingleValue>;
   fromDate: Scalars['AWSDateTime'];
   toDate: Scalars['AWSDateTime'];
   intervalMinutes: Scalars['Int'];
@@ -2042,14 +2042,10 @@ export type LogAnalysisMetricsResponseResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['LogAnalysisMetricsResponse'] = ResolversParentTypes['LogAnalysisMetricsResponse']
 > = {
-  eventsProcessed?: Resolver<Maybe<ResolversTypes['SeriesData']>, ParentType, ContextType>;
-  alertsBySeverity?: Resolver<Maybe<ResolversTypes['SeriesData']>, ParentType, ContextType>;
-  eventsLatency?: Resolver<Maybe<ResolversTypes['FloatSeriesData']>, ParentType, ContextType>;
-  totalAlertsDelta?: Resolver<
-    Maybe<Array<Maybe<ResolversTypes['SingleValue']>>>,
-    ParentType,
-    ContextType
-  >;
+  eventsProcessed?: Resolver<ResolversTypes['SeriesData'], ParentType, ContextType>;
+  alertsBySeverity?: Resolver<ResolversTypes['SeriesData'], ParentType, ContextType>;
+  eventsLatency?: Resolver<ResolversTypes['FloatSeriesData'], ParentType, ContextType>;
+  totalAlertsDelta?: Resolver<Array<ResolversTypes['SingleValue']>, ParentType, ContextType>;
   fromDate?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   toDate?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   intervalMinutes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
