@@ -27,13 +27,30 @@ import ErrorBoundary from 'Components/ErrorBoundary';
 import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
 import { extractErrorMessage, shortenId } from 'Helpers/utils';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
+import invert from 'lodash/invert';
+import useUrlParams from 'Hooks/useUrlParams';
 import { useAlertDetails } from './graphql/alertDetails.generated';
 import { useRuleTeaser } from './graphql/ruleTeaser.generated';
 import AlertDetailsBanner from './AlertDetailsBanner';
 import AlertDetailsInfo from './AlertDetailsInfo';
 
+interface AlertDetailsPageUrlParams {
+  section?: 'details' | 'events';
+}
+
+const sectionToTabIndex: Record<AlertDetailsPageUrlParams['section'], number> = {
+  details: 0,
+  events: 1,
+};
+
+const tabIndexToSection = invert(sectionToTabIndex) as Record<
+  number,
+  AlertDetailsPageUrlParams['section']
+>;
+
 const AlertDetailsPage = () => {
   const { match } = useRouter<{ id: string }>();
+  const { urlParams, updateUrlParams } = useUrlParams<AlertDetailsPageUrlParams>();
 
   const {
     data: alertData,
@@ -110,7 +127,10 @@ const AlertDetailsPage = () => {
       <Flex direction="column" spacing={6} my={6}>
         <AlertDetailsBanner alert={alertData.alert} rule={ruleData?.rule} />
         <Card position="relative">
-          <Tabs>
+          <Tabs
+            index={sectionToTabIndex[urlParams.section] || 0}
+            onChange={index => updateUrlParams({ section: tabIndexToSection[index] })}
+          >
             <Box px={2}>
               <TabList>
                 <Tab>
@@ -137,7 +157,7 @@ const AlertDetailsPage = () => {
                     <AlertDetailsInfo alert={alertData.alert} rule={ruleData?.rule} />
                   </ErrorBoundary>
                 </TabPanel>
-                <TabPanel>
+                <TabPanel lazy>
                   <ErrorBoundary>
                     <AlertEvents alert={alertData.alert} fetchMore={fetchMoreEvents} />
                   </ErrorBoundary>
