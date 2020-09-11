@@ -63,13 +63,18 @@ var (
 )
 
 // Build the AWS session from credentials - subsequent calls return the cached result.
-func getSession() *session.Session {
-	if awsSession != nil {
+func getSession(region string) *session.Session {
+	if awsSession != nil && (region == "" || *awsSession.Config.Region == region) {
 		return awsSession
 	}
 
+	config := aws.NewConfig().WithMaxRetries(maxRetries)
+	if region != "" {
+		config = config.WithRegion(region)
+	}
+
 	var err error
-	awsSession, err = session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries))
+	awsSession, err = session.NewSession(config)
 	if err != nil {
 		log.Fatalf("failed to create AWS session: %v", err)
 	}
@@ -95,7 +100,20 @@ func getSession() *session.Session {
 
 // Returns the current AWS region.
 func Region() string {
-	return *getSession().Config.Region
+	return *getSession("").Config.Region
+}
+
+// Rebuild sessions with a specific region.
+func SetRegion(region string) {
+	getSession(region)
+	cfnClient = nil
+	ecrClient = nil
+	glueClient = nil
+	lambdaClient = nil
+	s3Client = nil
+	s3Uploader = nil
+	sqsClient = nil
+	stsClient = nil
 }
 
 // Returns the current AWS account ID - subsequent calls return the cached result.
@@ -114,63 +132,63 @@ func AccountID() string {
 // HTTP client which can sign requests to Panther's API gateways
 func HTTPGateway() *http.Client {
 	if httpGatewayClient == nil {
-		httpGatewayClient = gatewayapi.GatewayClient(getSession())
+		httpGatewayClient = gatewayapi.GatewayClient(getSession(""))
 	}
 	return httpGatewayClient
 }
 
 func Cfn() *cloudformation.CloudFormation {
 	if cfnClient == nil {
-		cfnClient = cloudformation.New(getSession())
+		cfnClient = cloudformation.New(getSession(""))
 	}
 	return cfnClient
 }
 
 func ECR() *ecr.ECR {
 	if ecrClient == nil {
-		ecrClient = ecr.New(getSession())
+		ecrClient = ecr.New(getSession(""))
 	}
 	return ecrClient
 }
 
 func Glue() *glue.Glue {
 	if glueClient == nil {
-		glueClient = glue.New(getSession())
+		glueClient = glue.New(getSession(""))
 	}
 	return glueClient
 }
 
 func Lambda() *lambda.Lambda {
 	if lambdaClient == nil {
-		lambdaClient = lambda.New(getSession())
+		lambdaClient = lambda.New(getSession(""))
 	}
 	return lambdaClient
 }
 
 func S3() *s3.S3 {
 	if s3Client == nil {
-		s3Client = s3.New(getSession())
+		s3Client = s3.New(getSession(""))
 	}
 	return s3Client
 }
 
 func S3Uploader() *s3manager.Uploader {
 	if s3Uploader == nil {
-		s3Uploader = s3manager.NewUploader(getSession())
+		s3Uploader = s3manager.NewUploader(getSession(""))
 	}
 	return s3Uploader
 }
 
 func SQS() *sqs.SQS {
 	if sqsClient == nil {
-		sqsClient = sqs.New(getSession())
+		sqsClient = sqs.New(getSession(""))
 	}
 	return sqsClient
 }
 
 func STS() *sts.STS {
 	if stsClient == nil {
-		stsClient = sts.New(getSession())
+		stsClient = sts.New(getSession(""))
 	}
 	return stsClient
 }

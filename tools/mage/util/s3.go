@@ -29,8 +29,8 @@ import (
 )
 
 // The name of the bucket containing published Panther releases
-func PublicAssetsBucket(region string) string {
-	return "panther-community-" + region
+func PublicAssetsBucket() string {
+	return "panther-community-" + clients.Region()
 }
 
 // Upload a local file to S3.
