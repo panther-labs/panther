@@ -18,7 +18,6 @@
 
 import React from 'react';
 import { useSnackbar } from 'pouncejs';
-import urls from 'Source/urls';
 import Page404 from 'Pages/404';
 import useRouter from 'Hooks/useRouter';
 import withSEO from 'Hoc/withSEO';
@@ -29,7 +28,7 @@ import { useUpdateSqsLogSource } from './graphql/updateSqsLogSource.generated';
 
 const EditSqsLogSource: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
-  const { match, history } = useRouter<{ id: string }>();
+  const { match } = useRouter<{ id: string }>();
   const { data, error: getError } = useGetSqsLogSource({
     variables: { id: match.params.id },
     onError: error => {
@@ -40,9 +39,7 @@ const EditSqsLogSource: React.FC = () => {
     },
   });
 
-  const [updateSqsLogSource, { error: updateError }] = useUpdateSqsLogSource({
-    onCompleted: () => history.push(urls.logAnalysis.sources.list()),
-  });
+  const [updateSqsLogSource] = useUpdateSqsLogSource();
 
   const initialValues = React.useMemo(
     () => ({
@@ -64,7 +61,6 @@ const EditSqsLogSource: React.FC = () => {
   return (
     <SqsSourceWizard
       initialValues={initialValues}
-      externalErrorMessage={updateError && extractErrorMessage(updateError)}
       onSubmit={values =>
         updateSqsLogSource({
           variables: {

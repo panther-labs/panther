@@ -16,4 +16,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './SuccessPanel';
+import React from 'react';
+
+const { DialogOverlay, ...otherModules } = jest.requireActual('@reach/dialog');
+
+const MockedDialogOverlay: React.FC = props => (
+  <DialogOverlay {...props} dangerouslyBypassScrollLock dangerouslyBypassFocusLock />
+);
+
+module.exports = {
+  ...otherModules,
+  DialogOverlay: MockedDialogOverlay,
+};
