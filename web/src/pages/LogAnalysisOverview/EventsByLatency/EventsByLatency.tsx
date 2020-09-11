@@ -17,37 +17,34 @@
  */
 
 import React from 'react';
-import { Box, Flex } from 'pouncejs';
+import { Flex } from 'pouncejs';
 import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
-import { capitalize } from 'Helpers/utils';
 import { SeriesData } from 'Generated/schema';
 
-interface AlertsBySeverityProps {
-  alerts: SeriesData;
+interface EventsByLatencyProps {
+  events: SeriesData;
 }
 
-const AlertsBySeverity: React.FC<AlertsBySeverityProps> = ({ alerts: { series, timestamps } }) => {
-  const timeSeriesData = React.useMemo(
+const EventsByLatency: React.FC<EventsByLatencyProps> = ({ events: { timestamps, series } }) => {
+  // Transforming milliseconds to seconds
+  const timeseriesData = React.useMemo(
     () => ({
       timestamps,
-      series: series.map(serie => ({ ...serie, label: capitalize(serie.label.toLowerCase()) })),
+      series: series.map(serie => ({ ...serie, values: serie.values.map(value => value / 1000) })),
     }),
-    [series, timestamps]
+    [timestamps, series]
   );
-
   return (
-    <Box ml={2} px={4} py={4} height={200} width="80%" backgroundColor="navyblue-500">
-      <Flex
-        data-testid="alert-by-severity-chart"
-        height="100%"
-        pt={4}
-        px={4}
-        backgroundColor="navyblue-500"
-      >
-        <TimeSeriesChart data={timeSeriesData} zoomable />
-      </Flex>
-    </Box>
+    <Flex
+      data-testid="events-by-latency"
+      height="100%"
+      pt={4}
+      px={4}
+      backgroundColor="navyblue-500"
+    >
+      <TimeSeriesChart data={timeseriesData} units="sec" zoomable />
+    </Flex>
   );
 };
 
-export default React.memo(AlertsBySeverity);
+export default React.memo(EventsByLatency);
