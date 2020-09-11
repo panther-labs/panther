@@ -80,7 +80,7 @@ func publishToRegion(log *zap.SugaredLogger, version, region string) error {
 	awsSession := session.Must(session.NewSession(
 		aws.NewConfig().WithMaxRetries(10).WithRegion(region)))
 
-	bucket := util.PublicAssetsBucket()
+	bucket := util.PublicAssetsBucket(region)
 	s3Key := fmt.Sprintf("v%s/panther.yml", version)
 	s3URL := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucket, s3Key)
 
