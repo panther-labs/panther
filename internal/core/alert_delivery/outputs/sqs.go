@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
@@ -30,6 +31,9 @@ import (
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
+
+// Tests can replace this with a mock implementation
+var getSqsClient = buildSqsClient
 
 // Sqs sends an alert to an SQS Queue.
 // nolint: dupl
@@ -52,7 +56,7 @@ func (client *OutputClient) Sqs(alert *alertModels.Alert, config *outputModels.S
 		MessageBody: aws.String(serializedMessage),
 	}
 
-	sqsClient := client.getSqsClient(config.QueueURL)
+	sqsClient := getSqsClient(client.session, config.QueueURL)
 
 	response, err := sqsClient.SendMessage(sqsSendMessageInput)
 	if err != nil {
@@ -86,13 +90,8 @@ func (client *OutputClient) Sqs(alert *alertModels.Alert, config *outputModels.S
 	}
 }
 
-func (client *OutputClient) getSqsClient(queueURL string) sqsiface.SQSAPI {
+func buildSqsClient(awsSession *session.Session, queueURL string) sqsiface.SQSAPI {
 	// Queue URL is like "https://sqs.us-west-2.amazonaws.com/123456789012/panther-alert-queue"
 	region := strings.Split(queueURL, ".")[1]
-	sqsClient, ok := client.sqsClients[region]
-	if !ok {
-		sqsClient = sqs.New(client.session, aws.NewConfig().WithRegion(region))
-		client.sqsClients[region] = sqsClient
-	}
-	return sqsClient
+	return sqs.New(awsSession, aws.NewConfig().WithRegion(region))
 }
