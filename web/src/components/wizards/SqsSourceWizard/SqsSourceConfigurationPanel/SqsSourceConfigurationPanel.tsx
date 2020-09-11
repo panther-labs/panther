@@ -24,80 +24,93 @@ import FormikTextInput from 'Components/fields/TextInput';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import { WizardPanel } from 'Components/Wizard';
 import { pantherConfig } from 'Source/config';
+import logo from 'Assets/sqs-minimal-logo.svg';
 import { useListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
 import { SqsLogSourceWizardValues } from '../SqsSourceWizard';
 
+const emptyArray = [];
+
 const SqsSourceConfigurationPanel: React.FC = () => {
-  const { initialValues } = useFormikContext<SqsLogSourceWizardValues>();
+  const { initialValues, values, isValid, dirty } = useFormikContext<SqsLogSourceWizardValues>();
   const { pushSnackbar } = useSnackbar();
   const { data } = useListAvailableLogTypes({
     onError: () => pushSnackbar({ title: "Couldn't fetch your available log types" }),
   });
 
   return (
-    <Box width={460} m="auto">
-      <WizardPanel.Heading
-        title={
-          initialValues.integrationId ? 'Update the SQS source' : "Let's start with the basics"
-        }
-        subtitle={
-          initialValues.integrationId
-            ? 'Feel free to make any changes to your SQS log source'
-            : 'We need to know where to get your logs from'
-        }
-      />
-      <ErrorBoundary>
-        <Flex direction="column" spacing={5}>
-          <Field
-            name="integrationLabel"
-            as={FormikTextInput}
-            label="* Name"
-            placeholder="A nickname for this SQS log source"
-            required
-          />
-          <Field
-            as={FormikMultiCombobox}
-            searchable
-            label="* Log Types"
-            name="logTypes"
-            items={data?.listAvailableLogTypes.logTypes ?? []}
-            placeholder="Which log types should we monitor?"
-          />
-          <Box as="fieldset">
-            <FastField
-              as={FormikMultiCombobox}
-              label="Allowed AWS Principal ARNs"
-              name="allowedPrincipalArns"
-              searchable
-              allowAdditions
-              items={[]}
-              placeholder="The allowed AWS Principals ARNs (separated with <Enter>)"
+    <WizardPanel>
+      <Box width={400} m="auto">
+        <WizardPanel.Heading
+          title={
+            initialValues.integrationId ? 'Update the SQS source' : "Let's start with the basics"
+          }
+          subtitle={
+            initialValues.integrationId
+              ? 'Feel free to make any changes to your SQS log source'
+              : 'We need to know where to get your logs from'
+          }
+          logo={logo}
+        />
+        <ErrorBoundary>
+          <Flex direction="column" spacing={5}>
+            <Field
+              name="integrationLabel"
+              as={FormikTextInput}
+              label="Name"
+              placeholder="A nickname for this SQS log source"
+              required
             />
-            <FormHelperText id="aws-principals-arn-helper" mt={2}>
-              The ARN of the AWS Principals that are allowed to send data to the queue, separated
-              with {'<'}Enter{'>'} (i.e. arn:aws:iam::{pantherConfig.AWS_ACCOUNT_ID}:root)
-            </FormHelperText>
-          </Box>
-          <Box as="fieldset">
-            <FastField
+            <Field
               as={FormikMultiCombobox}
-              label="Allowed source ARNs"
-              name="allowedSourceArns"
               searchable
-              allowAdditions
-              items={[]}
-              placeholder="The allowed AWS resources ARNs (separated with <Enter>)"
+              label="Log Types"
+              name="logTypes"
+              items={data?.listAvailableLogTypes.logTypes ?? []}
+              placeholder="Which log types should we monitor?"
             />
-            <FormHelperText id="aws-resources-arn-helper" mt={2}>
-              The AWS resources (SNS topics, S3 buckets, etc) that are allowed to send data to the
-              queue, separated with {'<'}Enter{'>'} (i.e. arn:aws:sns:{pantherConfig.AWS_REGION}:
-              {pantherConfig.AWS_ACCOUNT_ID}
-              :my-topic).
-            </FormHelperText>
-          </Box>
-        </Flex>
-      </ErrorBoundary>
-    </Box>
+            <Box as="fieldset">
+              <FastField
+                as={FormikMultiCombobox}
+                label="Allowed AWS Principal ARNs"
+                name="allowedPrincipalArns"
+                searchable
+                allowAdditions
+                items={emptyArray}
+                placeholder="The allowed AWS Principals ARNs (separated with <Enter>)"
+              />
+              <FormHelperText id="aws-principals-arn-helper" mt={2}>
+                The ARN of the AWS Principals that are allowed to send data to the queue, separated
+                with {'<'}Enter{'>'} (i.e. arn:aws:iam::{pantherConfig.AWS_ACCOUNT_ID}:root)
+              </FormHelperText>
+            </Box>
+            <Box as="fieldset">
+              <FastField
+                as={FormikMultiCombobox}
+                label="Allowed Source ARNs"
+                name="allowedSourceArns"
+                searchable
+                allowAdditions
+                items={emptyArray}
+                placeholder="The allowed AWS resources ARNs (separated with <Enter>)"
+              />
+              <FormHelperText id="aws-resources-arn-helper" mt={2}>
+                The AWS resources (SNS topics, S3 buckets, etc) that are allowed to send data to the
+                queue, separated with {'<'}Enter{'>'} (i.e. arn:aws:sns:{pantherConfig.AWS_REGION}:
+                {pantherConfig.AWS_ACCOUNT_ID}
+                :my-topic).
+              </FormHelperText>
+            </Box>
+          </Flex>
+        </ErrorBoundary>
+      </Box>
+      <WizardPanel.Actions>
+        <WizardPanel.ActionNext
+          disabled={(!values.logTypes.length && !values.integrationLabel) || !isValid || !dirty}
+        >
+          Continue Setup
+        </WizardPanel.ActionNext>
+      </WizardPanel.Actions>
+    </WizardPanel>
   );
 };
 

@@ -61,10 +61,13 @@ type SendTestAlertInput struct {
 	OutputIds []string `json:"outputIds" validate:"gt=0,dive,uuid4"`
 }
 
-// SendTestAlertOutput is an alias for anything
+// SendTestAlertOutput holds only the attributes we want to return to the user
 type SendTestAlertOutput struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
+	OutputID     string    `json:"outputId"`
+	Message      string    `json:"message"`
+	StatusCode   int       `json:"statusCode"`
+	Success      bool      `json:"success"`
+	DispatchedAt time.Time `json:"dispatchedAt"`
 }
 
 // DeliverAlertInput sends an alert to the specified destinations

@@ -18,32 +18,29 @@
 
 import React from 'react';
 import { useWizardContext, WizardPanel } from 'Components/Wizard';
-import { Button, Text, Link, Img, Flex, Box, AbstractButton } from 'pouncejs';
+import { Button, Text, Link, Img, Flex, Box, AbstractButton, useSnackbar } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import SuccessStatus from 'Assets/statuses/success.svg';
 import FailureStatus from 'Assets/statuses/failure.svg';
 import NotificationStatus from 'Assets/statuses/notification.svg';
 import { extractErrorMessage } from 'Helpers/utils';
+import { DeliveryResponseFull } from 'Source/graphql/fragments/DeliveryResponseFull.generated';
 import { WizardData as CreateWizardData } from '../../CreateDestinationWizard';
 import { WizardData as EditWizardData } from '../../EditDestinationWizard';
 import { useSendTestAlertLazyQuery } from './graphql/sendTestAlert.generated';
 
-type TestResponse = {
-  success: string;
-  message: string;
-};
+type DeliveryResponses = Array<DeliveryResponseFull>;
 
 const DestinationTestPanel: React.FC = () => {
-  const [testResponse, setTestResponse] = React.useState<TestResponse>({
-    success: '',
-    message: '',
-  });
+  const [testResponses, setTestResponses] = React.useState<DeliveryResponses>([]);
   const {
     data: { destination },
     reset,
     goToPrevStep,
   } = useWizardContext<CreateWizardData & EditWizardData>();
+
+  const { pushSnackbar } = useSnackbar();
 
   const [sendTestAlert, { loading }] = useSendTestAlertLazyQuery({
     fetchPolicy: 'network-only', // Don't use cache
@@ -52,16 +49,23 @@ const DestinationTestPanel: React.FC = () => {
         outputIds: [destination.outputId],
       },
     },
-    onCompleted: data =>
-      setTestResponse({ success: 'PASSED', message: data.sendTestAlert.message }),
-    onError: err => setTestResponse({ success: 'FAILED', message: extractErrorMessage(err) }),
+    // Failed deliveries will also trigger onCompleted as we don't return exceptions
+    onCompleted: data => setTestResponses(data.sendTestAlert),
+    // This will be fired if there was a network issue or other unknown internal exception
+    onError: error => {
+      pushSnackbar({
+        variant: 'error',
+        title:
+          extractErrorMessage(error) || 'Failed to send a test alert to the given destination(s)',
+      });
+    },
   });
 
   const handleTestAlertClick = React.useCallback(() => {
     sendTestAlert();
   }, []);
 
-  if (testResponse.success === 'FAILED') {
+  if (testResponses.length && testResponses.some(response => response.success === false)) {
     return (
       <Box maxWidth={700} mx="auto">
         <WizardPanel.Heading
@@ -91,7 +95,7 @@ const DestinationTestPanel: React.FC = () => {
     );
   }
 
-  if (testResponse.success === 'PASSED') {
+  if (testResponses.length && testResponses.every(response => response.success === true)) {
     return (
       <Box maxWidth={700} mx="auto">
         <WizardPanel.Heading
