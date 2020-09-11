@@ -13,7 +13,7 @@
     "javascript"
   ],
   "author": "panther-labs",
-  "license": "Apache v2.0",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/panther-labs/panther/issues"
   },
@@ -120,7 +120,7 @@
     "history": "^4.10.1",
     "linkifyjs": "^2.1.9",
     "lodash": "^4.17.19",
-    "pouncejs": "^0.64.0",
+    "pouncejs": "^0.66.2",
     "qrcode.react": "^1.0.0",
     "query-string": "^6.10.1",
     "react": "^16.12.0",

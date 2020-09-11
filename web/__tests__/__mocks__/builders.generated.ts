@@ -46,6 +46,8 @@ import {
   DestinationConfig,
   DestinationConfigInput,
   DestinationInput,
+  FloatSeries,
+  FloatSeriesData,
   GeneralSettings,
   GetAlertInput,
   GetComplianceIntegrationTemplateInput,
@@ -539,6 +541,22 @@ export const buildDestinationInput = (
   };
 };
 
+export const buildFloatSeries = (overrides: Partial<FloatSeries> = {}): FloatSeries => {
+  return {
+    __typename: 'FloatSeries',
+    label: 'label' in overrides ? overrides.label : 'functionalities',
+    values: 'values' in overrides ? overrides.values : [5.25],
+  };
+};
+
+export const buildFloatSeriesData = (overrides: Partial<FloatSeriesData> = {}): FloatSeriesData => {
+  return {
+    __typename: 'FloatSeriesData',
+    timestamps: 'timestamps' in overrides ? overrides.timestamps : ['2020-04-22T20:42:06.736Z'],
+    series: 'series' in overrides ? overrides.series : [buildFloatSeries()],
+  };
+};
+
 export const buildGeneralSettings = (overrides: Partial<GeneralSettings> = {}): GeneralSettings => {
   return {
     __typename: 'GeneralSettings',
@@ -877,6 +895,7 @@ export const buildLogAnalysisMetricsResponse = (
     eventsProcessed: 'eventsProcessed' in overrides ? overrides.eventsProcessed : buildSeriesData(),
     alertsBySeverity:
       'alertsBySeverity' in overrides ? overrides.alertsBySeverity : buildSeriesData(),
+    eventsLatency: 'eventsLatency' in overrides ? overrides.eventsLatency : buildFloatSeriesData(),
     totalAlertsDelta:
       'totalAlertsDelta' in overrides ? overrides.totalAlertsDelta : [buildSingleValue()],
     fromDate: 'fromDate' in overrides ? overrides.fromDate : '2020-06-15T22:39:08.690Z',
