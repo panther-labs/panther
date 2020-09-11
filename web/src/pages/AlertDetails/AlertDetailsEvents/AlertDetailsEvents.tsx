@@ -18,7 +18,7 @@
 
 import React from 'react';
 import JsonViewer from 'Components/JsonViewer';
-import Panel from 'Components/Panel';
+import { Box, Card, Flex, Heading, Icon, Tooltip } from 'pouncejs';
 import { TableControlsPagination as PaginationControls } from 'Components/utils/TableControls';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { AlertDetails } from '../graphql/alertDetails.generated';
@@ -42,18 +42,33 @@ const AlertDetailsEvents: React.FC<AlertDetailsEventsProps> = ({ alert, fetchMor
   }, [eventDisplayIndex, alert.events.length]);
 
   return (
-    <Panel
-      title="Events"
-      actions={
+    <Flex direction="column" spacing={6}>
+      <Flex justify="space-between" align="center">
+        <Flex align="center" spacing={2}>
+          <Heading size="x-small">
+            <b>{alert.eventsMatched}</b> Triggered Event{alert.eventsMatched > 1 ? 's' : ''}
+          </Heading>
+          <Tooltip
+            content={
+              <Box maxWidth={300}>
+                Each triggered event contains a set of extended metadata for a log entry that was
+                matched against your rule
+              </Box>
+            }
+          >
+            <Icon type="info" size="small" />
+          </Tooltip>
+        </Flex>
         <PaginationControls
           page={eventDisplayIndex}
           totalPages={alert.eventsMatched}
           onPageChange={setEventDisplayIndex}
         />
-      }
-    >
-      <JsonViewer data={JSON.parse(JSON.parse(alert.events[eventDisplayIndex - 1]))} />
-    </Panel>
+      </Flex>
+      <Card variant="dark" p={6}>
+        <JsonViewer data={JSON.parse(JSON.parse(alert.events[eventDisplayIndex - 1]))} />
+      </Card>
+    </Flex>
   );
 };
 
