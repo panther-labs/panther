@@ -68,6 +68,8 @@ func getSession(region string) *session.Session {
 		return awsSession
 	}
 
+	// Build a new session if it doesn't exist yet or the region changed.
+
 	config := aws.NewConfig().WithMaxRetries(maxRetries)
 	if region != "" {
 		config = config.WithRegion(region)
@@ -103,9 +105,11 @@ func Region() string {
 	return *getSession("").Config.Region
 }
 
-// Rebuild sessions with a specific region.
+// Rebuild sessions with a specific region, overriding the environment.
 func SetRegion(region string) {
 	getSession(region)
+
+	// Reset global cached clients so that they rebuild with correct region when needed.
 	cfnClient = nil
 	ecrClient = nil
 	glueClient = nil

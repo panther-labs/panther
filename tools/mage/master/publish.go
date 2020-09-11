@@ -54,16 +54,14 @@ func Publish() error {
 	}
 
 	// To be safe, always clean and reset the repo before building the assets
-	if false {
-		if err := clean.Clean(); err != nil {
-			return err
-		}
-		if err := setup.Setup(); err != nil {
-			return err
-		}
-		if err := Build(log); err != nil {
-			return err
-		}
+	if err := clean.Clean(); err != nil {
+		return err
+	}
+	if err := setup.Setup(); err != nil {
+		return err
+	}
+	if err := Build(log); err != nil {
+		return err
 	}
 
 	for _, region := range publishRegions {
@@ -77,7 +75,7 @@ func Publish() error {
 
 func publishToRegion(log *zap.SugaredLogger, version, region string) error {
 	log.Infof("publishing to %s", region)
-	// Replace global clients with ones for this region
+	// Override the region for the AWS session and clients.
 	clients.SetRegion(region)
 
 	bucket := util.PublicAssetsBucket()
