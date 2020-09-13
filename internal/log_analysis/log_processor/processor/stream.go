@@ -106,12 +106,12 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 			}
 
 			// under low load we do not read from the sqs queue and just exit
-			numberOfQueuedMessages, err := queueDepth(sqsClient)
+			totalQueuedMessages, err := queueDepth(sqsClient) // this includes queued and delayed messages
 			if err != nil {
 				readEventErrorChan <- err
 				return
 			}
-			if numberOfQueuedMessages == 0 {
+			if totalQueuedMessages == 0 {
 				break
 			}
 
@@ -186,29 +186,46 @@ func sqsDataStreams(messages []*sqs.Message,
 	return readSnsMessagesFunc(eventMessages)
 }
 
-func queueDepth(sqsClient sqsiface.SQSAPI) (numberOfQueuedMessages int, err error) {
+func queueDepth(sqsClient sqsiface.SQSAPI) (totalQueuedMessages int, err error) {
 	getQueueAttributesInput := &sqs.GetQueueAttributesInput{
-		AttributeNames: []*string{aws.String(sqs.QueueAttributeNameApproximateNumberOfMessages)},
-		QueueUrl:       &common.Config.SqsQueueURL,
+		AttributeNames: []*string{
+			aws.String(sqs.QueueAttributeNameApproximateNumberOfMessages),
+			aws.String(sqs.QueueAttributeNameApproximateNumberOfMessagesDelayed), // so we can see into the future!
+		},
+		QueueUrl: &common.Config.SqsQueueURL,
 	}
 	getQueueAttributesOutput, err := sqsClient.GetQueueAttributes(getQueueAttributesInput)
 	if err != nil {
 		err = errors.Wrapf(err, "failure getting message count from %s", common.Config.SqsQueueURL)
 		return 0, err
 	}
-	approximateNumberOfMessages := getQueueAttributesOutput.Attributes[sqs.QueueAttributeNameApproximateNumberOfMessages]
-	if approximateNumberOfMessages == nil {
-		err = errors.Errorf("failure getting %s count from %s",
-			sqs.QueueAttributeNameApproximateNumberOfMessages, common.Config.SqsQueueURL)
-		return 0, err
-	}
-	numberOfQueuedMessages, err = strconv.Atoi(*approximateNumberOfMessages)
+	// number of messages
+	numberOfQueuedMessages, err := getQueueIntegerAttribute(getQueueAttributesOutput.Attributes,
+		sqs.QueueAttributeNameApproximateNumberOfMessages)
 	if err != nil {
-		err = errors.Wrapf(err, "failure reading %s (%s) count from %s",
-			sqs.QueueAttributeNameApproximateNumberOfMessages, *approximateNumberOfMessages, common.Config.SqsQueueURL)
 		return 0, err
 	}
-	return numberOfQueuedMessages, err
+	// number of delayed messages, the q should be set up with a 20sec delay so we can "see" if there are more events
+	numberOfQueuedMessagesDelayed, err := getQueueIntegerAttribute(getQueueAttributesOutput.Attributes,
+		sqs.QueueAttributeNameApproximateNumberOfMessagesDelayed)
+	if err != nil {
+		return 0, err
+	}
+	return numberOfQueuedMessages + numberOfQueuedMessagesDelayed, err
+}
+
+func getQueueIntegerAttribute(attrs map[string]*string, attr string) (count int, err error) {
+	intAsStringPtr := attrs[attr]
+	if intAsStringPtr == nil {
+		err = errors.Errorf("failure getting %s count from %s", attr, common.Config.SqsQueueURL)
+		return 0, err
+	}
+	count, err = strconv.Atoi(*intAsStringPtr)
+	if err != nil {
+		err = errors.Wrapf(err, "failure reading %s (%s) count from %s", attr, *intAsStringPtr, common.Config.SqsQueueURL)
+		return 0, err
+	}
+	return count, err
 }
 
 func highMemoryUsage() (heapUsedMB, memAvailableMB float32, isHigh bool) {
