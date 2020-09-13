@@ -42,7 +42,7 @@ const (
 	processingTimeLimitScalar = 0.5  // the processing runtime should be shorter than lambda timeout to make room to flush buffers
 
 	sqsMaxBatchSize    = 10 // max messages per read for SQS (can't find an sqs constant to refer to)
-	sqsWaitTimeSeconds = 20 //  note: 20 is max for sqs
+	sqsWaitTimeSeconds = 5 //  note: 20 is max for sqs
 )
 
 /*
