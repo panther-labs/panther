@@ -134,14 +134,6 @@ func (gm *GlueTableMetadata) RuleTable() *GlueTableMetadata {
 	return NewGlueTableMetadata(models.RuleData, gm.LogType(), gm.Description(), GlueTableHourly, gm.EventStruct())
 }
 
-func (gm *GlueTableMetadata) RuleErrorTable() *GlueTableMetadata {
-	if gm.dataType == models.RuleErrors {
-		return gm
-	}
-	// the corresponding rule table shares the same structure as the log table + some columns
-	return NewGlueTableMetadata(models.RuleErrors, gm.LogType(), gm.Description(), GlueTableHourly, gm.EventStruct())
-}
-
 func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput {
 	// partition keys -> []*glue.Column
 	partitionKeys := gm.PartitionKeys()

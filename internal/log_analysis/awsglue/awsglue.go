@@ -27,8 +27,8 @@ import (
 // This file registers the Panther specific assumptions about tables and partition formats with associated functions.
 
 const (
-	logS3Prefix        = "logs"
-	ruleMatchS3Prefix  = "rules"
+	logS3Prefix       = "logs"
+	ruleMatchS3Prefix = "rules"
 	ruleErrorsS3Prefix = "rule_errors"
 
 	LogProcessingDatabaseName        = "panther_logs"
