@@ -28,6 +28,7 @@ require (
 	github.com/tidwall/gjson v1.6.1
 	go.uber.org/zap v1.16.0
 	golang.org/x/tools v0.0.0-20200729183129-03a346b9e509
+	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0
 	gopkg.in/yaml.v2 v2.3.0
 )

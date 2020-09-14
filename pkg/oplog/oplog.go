@@ -184,3 +184,9 @@ func (o *Operation) LogError(err error, fields ...zap.Field) {
 	fields = append(fields, zap.Error(err))
 	zap.L().Error(o.zapMsg(), append(fields, o.fields(Failure)...)...)
 }
+
+// Errors which are good to know about, but do not need to trigger ops alarms from Warn/Error log msgs
+func (o *Operation) LogNonCriticalError(err error, fields ...zap.Field) {
+	fields = append(fields, zap.Error(err))
+	zap.L().Info(o.zapMsg(), append(fields, o.fields(Failure)...)...)
+}

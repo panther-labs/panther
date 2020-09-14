@@ -21,6 +21,7 @@ package cognito
 import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	provider "github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
+	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
@@ -34,7 +35,8 @@ func (g *UsersGateway) UpdateUser(input *models.UpdateUserInput) error {
 		Username:       input.ID,
 	}
 	if _, err := g.userPoolClient.AdminUpdateUserAttributes(cognitoInput); err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == provider.ErrCodeUserNotFoundException {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == provider.ErrCodeUserNotFoundException {
 			return &genericapi.DoesNotExistError{Message: "userID=" + *input.ID + " does not exist"}
 		}
 		return &genericapi.AWSError{Method: "cognito.AdminUpdateUserAttributes", Err: err}
