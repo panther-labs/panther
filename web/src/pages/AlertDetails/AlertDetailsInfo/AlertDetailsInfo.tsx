@@ -23,6 +23,7 @@ import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import { formatDatetime, minutesToString } from 'Helpers/utils';
 import { AlertDetails, RuleTeaser } from 'Pages/AlertDetails';
+import AlertDeliverySection from 'Pages/AlertDetails/AlertDetailsInfo/AlertDeliverySection';
 
 interface AlertDetailsInfoProps {
   alert: AlertDetails['alert'];
@@ -135,6 +136,9 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
             </Flex>
           </Flex>
         </SimpleGrid>
+      </Card>
+      <Card variant="dark" as="section" p={4}>
+        <AlertDeliverySection alert={alert} />
       </Card>
     </Flex>
   );
