@@ -39,7 +39,6 @@ _ALERT_EVENT_COUNT = 'eventCount'
 _ALERT_LOG_TYPES = 'logTypes'
 _ALERT_TITLE = 'title'
 # The attribute defining the type of the error
-# If the error is of
 _ERROR_TYPE = 'errorType'
 
 

@@ -38,6 +38,7 @@ func TestConvertAttribute(t *testing.T) {
 		EventCount:          100,
 		LogTypes:            []string{"Log.Type.1", "Log.Type.2"},
 		GeneratedTitle:      aws.String("test title"),
+		ErrorType: aws.String("RULE_ERROR"),
 	}
 
 	alertDedupEvent, err := FromDynamodDBAttribute(getNewTestCase())
@@ -65,6 +66,7 @@ func TestConvertAttributeWithoutOptionalFields(t *testing.T) {
 
 	ddbItem := getNewTestCase()
 	delete(ddbItem, "title")
+	delete(ddbItem, "errorType")
 	alertDedupEvent, err := FromDynamodDBAttribute(ddbItem)
 	require.NoError(t, err)
 	require.Equal(t, expectedAlertDedup, alertDedupEvent)
@@ -154,5 +156,6 @@ func getNewTestCase() map[string]events.DynamoDBAttributeValue {
 		"logTypes":          events.NewStringSetAttribute([]string{"Log.Type.1", "Log.Type.2"}),
 		"title":             events.NewStringAttribute("test title"),
 		"status":            events.NewStringAttribute("OPEN"),
+		"errorType":            events.NewStringAttribute("RULE_ERROR"),
 	}
 }
