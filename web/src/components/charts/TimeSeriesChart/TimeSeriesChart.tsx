@@ -50,6 +50,11 @@ interface TimeSeriesLinesProps {
    * @default 3600 * 1000 * 24
    */
   maxZoomPeriod?: number;
+
+  /**
+   * This is parameter determines if we need to display the values with an appropriate suffix
+   */
+  units?: string;
 }
 
 const severityColors = mapKeys(SEVERITY_COLOR_MAP, (val, key) => capitalize(key.toLowerCase()));
@@ -66,6 +71,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
   zoomable = false,
   segments = 12,
   maxZoomPeriod = 3600 * 1000 * 24,
+  units,
 }) => {
   const theme = useTheme();
   const container = React.useRef<HTMLDivElement>(null);
@@ -157,6 +163,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
                       </Box>
                       <Box as="dd" font="mono" fontWeight="bold">
                         {seriesTooltip.value[1].toLocaleString('en')}
+                        {units ? ` ${units}` : ''}
                       </Box>
                     </Flex>
                   ))}
@@ -227,6 +234,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
             fontWeight: theme.fontWeights.medium as any,
             fontFamily: theme.fonts.primary,
             color: theme.colors['gray-50'],
+            formatter: `{value}${units ? ` ${units}` : ''}`,
           },
           minorSplitLine: {
             show: false,

@@ -43,7 +43,9 @@ const AlertStatusBadge: React.FC<StatusBadgeProps> = ({
   const statusBadge = React.useMemo(
     () => (
       <Flex width={'85px'}>
-        <Badge color={STATUS_COLOR_MAP[status]}>{status}</Badge>
+        <Badge color={STATUS_COLOR_MAP[status]}>
+          {status === AlertStatusesEnum.Closed ? 'INVALID' : status}
+        </Badge>
       </Flex>
     ),
     [status]

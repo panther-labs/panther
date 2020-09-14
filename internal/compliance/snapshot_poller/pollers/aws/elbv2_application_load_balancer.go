@@ -93,13 +93,12 @@ func getApplicationLoadBalancer(svc elbv2iface.ELBV2API, loadBalancerARN *string
 		LoadBalancerArns: []*string{loadBalancerARN},
 	})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "LoadBalancerNotFound" {
-				zap.L().Warn("tried to scan non-existent resource",
-					zap.String("resource", *loadBalancerARN),
-					zap.String("resourceType", awsmodels.Elbv2LoadBalancerSchema))
-				return nil, nil
-			}
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == elbv2.ErrCodeLoadBalancerNotFoundException {
+			zap.L().Warn("tried to scan non-existent resource",
+				zap.String("resource", *loadBalancerARN),
+				zap.String("resourceType", awsmodels.Elbv2LoadBalancerSchema))
+			return nil, nil
 		}
 		return nil, errors.Wrapf(err, "ELBV2.DescribeLoadBalancers: %s", aws.StringValue(loadBalancerARN))
 	}

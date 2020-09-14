@@ -36,6 +36,17 @@ const LogSourceCard: React.FC<LogSourceCardProps> = ({ source, children, logo })
   const isCreatedByPanther = source.createdBy === PANTHER_USER_ID;
   const { health: sourceHealth } = source;
 
+  const sourceType = React.useMemo(() => {
+    switch (source.__typename) {
+      case 'SqsLogSourceIntegration':
+        return 'sqs';
+      case 'S3LogIntegration':
+        return 's3';
+      default:
+        throw new Error(`Unknown source health item`);
+    }
+  }, [source]);
+
   const healthMetrics = React.useMemo(() => {
     switch (sourceHealth.__typename) {
       case 'SqsLogIntegrationHealth':
@@ -58,7 +69,7 @@ const LogSourceCard: React.FC<LogSourceCardProps> = ({ source, children, logo })
       <GenericItemCard.Body>
         <Link
           as={RRLink}
-          to={urls.logAnalysis.sources.edit(source.integrationId, 'sqs')}
+          to={urls.logAnalysis.sources.edit(source.integrationId, sourceType)}
           cursor="pointer"
         >
           <GenericItemCard.Heading>{source.integrationLabel}</GenericItemCard.Heading>

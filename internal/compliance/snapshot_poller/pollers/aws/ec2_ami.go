@@ -73,13 +73,12 @@ func getAMI(svc ec2iface.EC2API, imageID *string) (*ec2.Image, error) {
 	})
 
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "InvalidAMIID.NotFound" {
-				zap.L().Warn("tried to scan non-existent resource",
-					zap.String("resource", *imageID),
-					zap.String("resourceType", awsmodels.Ec2AmiSchema))
-				return nil, nil
-			}
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == "InvalidAMIID.NotFound" {
+			zap.L().Warn("tried to scan non-existent resource",
+				zap.String("resource", *imageID),
+				zap.String("resourceType", awsmodels.Ec2AmiSchema))
+			return nil, nil
 		}
 		return nil, errors.Wrapf(err, "EC2.DescribeImages: %s", aws.StringValue(imageID))
 	}
