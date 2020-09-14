@@ -22,19 +22,18 @@ import Linkify from 'Components/Linkify';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import { formatDatetime, minutesToString } from 'Helpers/utils';
-import { AlertDetailsFull } from 'Source/graphql/fragments/AlertDetailsFull.generated';
-import { RuleDetails } from 'Generated/schema';
+import { AlertDetails, RuleTeaser } from 'Pages/AlertDetails';
 
 interface AlertDetailsInfoProps {
-  alert: AlertDetailsFull;
-  rule: Partial<RuleDetails>;
+  alert: AlertDetails['alert'];
+  rule: RuleTeaser['rule'];
 }
 
 const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
   return (
     <Flex direction="column" spacing={4}>
       {rule && (
-        <Card variant="dark" as="section" p={4} mb={4}>
+        <Card variant="dark" as="section" p={4}>
           <SimpleGrid columns={2} spacing={5}>
             <Flex direction="column" spacing={2}>
               <Box

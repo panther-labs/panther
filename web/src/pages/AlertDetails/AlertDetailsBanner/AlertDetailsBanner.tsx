@@ -18,15 +18,14 @@
 
 import { Box, Flex, Heading, Tooltip, Icon, Card } from 'pouncejs';
 import React from 'react';
-import { RuleDetails } from 'Generated/schema';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import UpdateAlertDropdown from 'Components/dropdowns/UpdateAlertDropdown';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
-import { AlertDetailsFull } from 'Source/graphql/fragments/AlertDetailsFull.generated';
+import { AlertDetails, RuleTeaser } from 'Pages/AlertDetails';
 
 interface AlertDetailsBannerProps {
-  alert: AlertDetailsFull;
-  rule: Partial<RuleDetails>;
+  alert: AlertDetails['alert'];
+  rule: RuleTeaser['rule'];
 }
 
 const AlertDetailsBanner: React.FC<AlertDetailsBannerProps> = ({ alert, rule }) => {
