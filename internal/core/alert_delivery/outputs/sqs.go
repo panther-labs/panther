@@ -92,6 +92,10 @@ func (client *OutputClient) Sqs(alert *alertModels.Alert, config *outputModels.S
 
 func buildSqsClient(awsSession *session.Session, queueURL string) sqsiface.SQSAPI {
 	// Queue URL is like "https://sqs.us-west-2.amazonaws.com/123456789012/panther-alert-queue"
+	parts := strings.Split(queueURL, ".")
+	if len(parts) == 1 {
+		panic("expected queueURL with periods, found none: " + queueURL)
+	}
 	region := strings.Split(queueURL, ".")[1]
 	return sqs.New(awsSession, aws.NewConfig().WithRegion(region))
 }
