@@ -25,69 +25,96 @@ import { mockAlertDetails } from './graphql/alertDetails.generated';
 import { mockRuleTeaser } from './graphql/ruleTeaser.generated';
 import AlertDetails from './AlertDetails';
 
-it('renders the correct tab based on a URL param', async () => {
-  const alert = buildAlertDetails({ events: ['"{}"', '"{}"'] });
-  const rule = buildRuleDetails();
+describe('AlertDetails', () => {
+  it('renders the correct tab based on a URL param', async () => {
+    const alert = buildAlertDetails({ events: ['"{}"', '"{}"'] });
+    const rule = buildRuleDetails();
 
-  const mocks = [
-    mockAlertDetails({
-      variables: {
-        input: {
-          alertId: alert.alertId,
-          eventsPageSize: DEFAULT_LARGE_PAGE_SIZE,
+    const mocks = [
+      mockAlertDetails({
+        variables: {
+          input: {
+            alertId: alert.alertId,
+            eventsPageSize: DEFAULT_LARGE_PAGE_SIZE,
+          },
         },
-      },
-      data: { alert },
-    }),
-    mockRuleTeaser({
-      variables: {
-        input: {
-          ruleId: alert.ruleId,
+        data: { alert },
+      }),
+      mockRuleTeaser({
+        variables: {
+          input: {
+            ruleId: alert.ruleId,
+          },
         },
-      },
-      data: { rule },
-    }),
-  ];
+        data: { rule },
+      }),
+    ];
 
-  // render initially with the "details" section
-  const { findByText, getByText, queryByText, unmount } = render(
-    <Route exact path={urls.logAnalysis.alerts.details(':id')}>
-      <AlertDetails />
-    </Route>,
-    {
-      mocks,
-      initialRoute: `${urls.logAnalysis.alerts.details(alert.alertId)}?section=details`,
-    }
-  );
+    // render initially with the "details" section
+    const { findByText, getByText, queryByText } = render(
+      <Route exact path={urls.logAnalysis.alerts.details(':id')}>
+        <AlertDetails />
+      </Route>,
+      {
+        mocks,
+        initialRoute: `${urls.logAnalysis.alerts.details(alert.alertId)}?section=details`,
+      }
+    );
 
-  // expect to see all the data, but not to see the "Triggered events
-  expect(await findByText('Rule')).toBeInTheDocument();
-  expect(getByText('Rule').closest('[hidden]')).not.toBeInTheDocument();
-  expect(getByText('Rule Threshold')).toBeInTheDocument();
-  expect(getByText('Deduplication Period')).toBeInTheDocument();
-  expect(getByText('Deduplication String')).toBeInTheDocument();
-  expect(queryByText('Triggered Events')).not.toBeInTheDocument();
+    // expect to see all the data, but not to see the "Triggered events
+    expect(await findByText('Rule')).toBeInTheDocument();
+    expect(getByText('Rule').closest('[hidden]')).not.toBeInTheDocument();
+    expect(getByText('Rule Threshold')).toBeInTheDocument();
+    expect(getByText('Deduplication Period')).toBeInTheDocument();
+    expect(getByText('Deduplication String')).toBeInTheDocument();
 
-  // unmount everything
-  unmount();
+    // Expect the Triggered Events tab to be lazy loaded
+    expect(queryByText('Triggered Events')).not.toBeInTheDocument();
+  });
 
-  // remount with the events section
-  const { findByText: _findByText, getByText: _getByText } = render(
-    <Route exact path={urls.logAnalysis.alerts.details(':id')}>
-      <AlertDetails />
-    </Route>,
-    {
-      mocks,
-      initialRoute: `${urls.logAnalysis.alerts.details(alert.alertId)}?section=events`,
-    }
-  );
+  it('correctly lazy loads event tab', async () => {
+    const alert = buildAlertDetails({ events: ['"{}"', '"{}"'] });
+    const rule = buildRuleDetails();
 
-  // expect to see all the data as "hidden" (since the details tab is always loaded (i.e. no lazy load)
-  // and the "Triggered events" being shown
-  expect((await _findByText('Rule')).closest('[hidden]')).toBeInTheDocument();
-  expect(_getByText('Rule Threshold').closest('[hidden]')).toBeInTheDocument();
-  expect(_getByText('Deduplication Period').closest('[hidden]')).toBeInTheDocument();
-  expect(_getByText('Deduplication String').closest('[hidden]')).toBeInTheDocument();
-  expect(await _findByText('Triggered Events')).toBeInTheDocument();
-  expect(getByText('Triggered Events').closest('[hidden]')).not.toBeInTheDocument();
+    const mocks = [
+      mockAlertDetails({
+        variables: {
+          input: {
+            alertId: alert.alertId,
+            eventsPageSize: DEFAULT_LARGE_PAGE_SIZE,
+          },
+        },
+        data: { alert },
+      }),
+      mockRuleTeaser({
+        variables: {
+          input: {
+            ruleId: alert.ruleId,
+          },
+        },
+        data: { rule },
+      }),
+    ];
+
+    // remount with the events section
+    const { findByText, getByText } = render(
+      <Route exact path={urls.logAnalysis.alerts.details(':id')}>
+        <AlertDetails />
+      </Route>,
+      {
+        mocks,
+        initialRoute: `${urls.logAnalysis.alerts.details(alert.alertId)}?section=events`,
+      }
+    );
+
+    // expect to see all the data as "hidden" (since the details tab is always loaded i.e. no lazy load)
+    expect((await findByText('Rule')).closest('[hidden]')).toBeInTheDocument();
+    expect(getByText('Rule Threshold').closest('[hidden]')).toBeInTheDocument();
+    expect(getByText('Deduplication Period').closest('[hidden]')).toBeInTheDocument();
+    expect(getByText('Deduplication String').closest('[hidden]')).toBeInTheDocument();
+
+    // Expect the triggered events to be visible and NOT hidden
+    expect(await findByText('Triggered Events')).toBeInTheDocument();
+    expect(getByText('Triggered Events').closest('[hidden]')).not.toBeInTheDocument();
+  });
 });
