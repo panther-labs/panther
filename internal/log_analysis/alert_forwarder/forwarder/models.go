@@ -44,7 +44,7 @@ type AlertDedupEvent struct {
 	LogTypes            []string  `dynamodbav:"logTypes,stringset"`
 	GeneratedTitle      *string   `dynamodbav:"-"` // The title that was generated dynamically using Python. Might be null.
 	AlertCount          int64     `dynamodbav:"-"` // There is no need to store this item in DDB
-	ErrorType          *string     `dynamodbav:"-"` // There is no need to store this item in DDB
+	ErrorType           *string   `dynamodbav:"-"` // There is no need to store this item in DDB
 }
 
 // Alert contains all the fields associated to the alert stored in DDB
