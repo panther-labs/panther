@@ -154,10 +154,10 @@ func getEventsForLogType(
 			if strings.HasPrefix(token.S3ObjectKey, partitionPrefix) {
 				listRequest.StartAfter = aws.String(token.S3ObjectKey)
 			}
-		} else {  // not starting from a pagination token
+		} else { // not starting from a pagination token
 			// objects have a creation time as prefix we can use to speed listing,
 			// for example: '20200914T021539Z-0e54cab2-80a6-4c27-b622-55ad4d355175.json.gz'
-			listRequest.StartAfter = aws.String(partitionPrefix+alert.CreationTime.Format("20060102T150405Z"))
+			listRequest.StartAfter = aws.String(partitionPrefix + alert.CreationTime.Format("20060102T150405Z"))
 		}
 
 		var paginationError error
