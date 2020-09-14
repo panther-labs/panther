@@ -21,6 +21,7 @@ import JsonViewer from 'Components/JsonViewer';
 import { Box, Card, Flex, Heading, Icon, Tooltip } from 'pouncejs';
 import { TableControlsPagination as PaginationControls } from 'Components/utils/TableControls';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
+import toPlural from 'Helpers/utils';
 import { AlertDetails } from '../graphql/alertDetails.generated';
 
 interface AlertDetailsEventsProps {
@@ -46,7 +47,7 @@ const AlertDetailsEvents: React.FC<AlertDetailsEventsProps> = ({ alert, fetchMor
       <Flex justify="space-between" align="center">
         <Flex align="center" spacing={2}>
           <Heading size="x-small">
-            <b>{alert.eventsMatched}</b> Triggered Event{alert.eventsMatched > 1 ? 's' : ''}
+            <b>{alert.eventsMatched}</b> Triggered {toPlural('Event', alert.eventsMatched)}
           </Heading>
           <Tooltip
             content={
