@@ -51,7 +51,7 @@ describe('AlertDetails', () => {
     ];
 
     // render initially with the "details" section
-    const { findByText, getByText, queryByText } = render(
+    const { getByText, getByTestId, findByTestId } = render(
       <Route exact path={urls.logAnalysis.alerts.details(':id')}>
         <AlertDetails />
       </Route>,
@@ -62,14 +62,17 @@ describe('AlertDetails', () => {
     );
 
     // expect to see all the data, but not to see the "Triggered events
-    expect(await findByText('Rule')).toBeInTheDocument();
-    expect(getByText('Rule').closest('[hidden]')).not.toBeInTheDocument();
+    const detailsTabPanel = await findByTestId('alert-details-tabpanel');
+    expect(detailsTabPanel).toBeInTheDocument();
     expect(getByText('Rule Threshold')).toBeInTheDocument();
     expect(getByText('Deduplication Period')).toBeInTheDocument();
     expect(getByText('Deduplication String')).toBeInTheDocument();
+    expect(getByTestId('alert-details-tabpanel')).toBeVisible();
 
-    // Expect the Triggered Events tab to be lazy loaded
-    expect(queryByText('Triggered Events')).not.toBeInTheDocument();
+    // Expect the Triggered Events tab to be hidden & lazy loaded
+    const eventsTabPanel = getByTestId('alert-events-tabpanel');
+    expect(eventsTabPanel).not.toBeVisible();
+    expect(eventsTabPanel).toBeEmptyDOMElement();
   });
 
   it('correctly lazy loads event tab', async () => {
@@ -97,7 +100,7 @@ describe('AlertDetails', () => {
     ];
 
     // remount with the events section
-    const { findByText, getByText } = render(
+    const { findByTestId, getByTestId } = render(
       <Route exact path={urls.logAnalysis.alerts.details(':id')}>
         <AlertDetails />
       </Route>,
@@ -108,13 +111,14 @@ describe('AlertDetails', () => {
     );
 
     // expect to see all the data as "hidden" (since the details tab is always loaded i.e. no lazy load)
-    expect((await findByText('Rule')).closest('[hidden]')).toBeInTheDocument();
-    expect(getByText('Rule Threshold').closest('[hidden]')).toBeInTheDocument();
-    expect(getByText('Deduplication Period').closest('[hidden]')).toBeInTheDocument();
-    expect(getByText('Deduplication String').closest('[hidden]')).toBeInTheDocument();
+    const detailsTabPanel = await findByTestId('alert-details-tabpanel');
+    expect(detailsTabPanel).toBeInTheDocument();
+    expect(detailsTabPanel).not.toBeVisible();
+    expect(detailsTabPanel).not.toBeEmptyDOMElement();
 
     // Expect the triggered events to be visible and NOT hidden
-    expect(await findByText('Triggered Events')).toBeInTheDocument();
-    expect(getByText('Triggered Events').closest('[hidden]')).not.toBeInTheDocument();
+    const eventsTabPanel = getByTestId('alert-events-tabpanel');
+    expect(eventsTabPanel).toBeVisible();
+    expect(eventsTabPanel).not.toBeEmptyDOMElement();
   });
 });
