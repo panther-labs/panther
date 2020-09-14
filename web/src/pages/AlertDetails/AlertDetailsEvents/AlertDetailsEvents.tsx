@@ -24,6 +24,11 @@ import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import toPlural from 'Helpers/utils';
 import { AlertDetails } from '../graphql/alertDetails.generated';
 
+// Given an event received as a string, this function converts it to JSON
+const parseAlertEventToJson = (event: string) => {
+  return JSON.parse(JSON.parse(event));
+};
+
 interface AlertDetailsEventsProps {
   alert: AlertDetails['alert'];
   fetchMore: () => void;
@@ -67,7 +72,7 @@ const AlertDetailsEvents: React.FC<AlertDetailsEventsProps> = ({ alert, fetchMor
         />
       </Flex>
       <Card variant="dark" p={6}>
-        <JsonViewer data={JSON.parse(JSON.parse(alert.events[eventDisplayIndex - 1]))} />
+        <JsonViewer data={parseAlertEventToJson(alert.events[eventDisplayIndex - 1])} />
       </Card>
     </Flex>
   );
