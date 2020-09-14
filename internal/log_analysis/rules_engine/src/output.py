@@ -53,12 +53,11 @@ _LOGGER = get_logger()
 class EventCommonFields:
     """Fields that will be added to all stored events"""
     p_rule_id: str
+    p_rule_tags: List[str]
+    p_rule_reports: Dict[str, List[str]]
     p_alert_id: str
     p_alert_creation_time: str
     p_alert_update_time: str
-    p_rule_tags: Optional[List[str]] = None
-    p_rule_reports: Optional[Dict[str, List[str]]] = None
-    # If running a rule on an event trigged an exception, this field will contain the exception message
     p_rule_error: Optional[str] = None
 
 
@@ -254,9 +253,11 @@ def _get_common_fields(match: EngineResult, alert_info: AlertInfo) -> Dict[str, 
         common_fields = EventCommonFields(
             p_rule_id=match.rule_id,
             p_alert_id=alert_info.alert_id,
-            p_rule_error=match.error_message,
+            p_rule_tags=match.rule_tags,
+            p_rule_reports=match.rule_reports,
             p_alert_creation_time=alert_info.alert_creation_time.strftime(_DATE_FORMAT),
-            p_alert_update_time=alert_info.alert_update_time.strftime(_DATE_FORMAT)
+            p_alert_update_time=alert_info.alert_update_time.strftime(_DATE_FORMAT),
+            p_rule_error=match.error_message,
         )
         return asdict(common_fields)
     common_fields = EventCommonFields(
