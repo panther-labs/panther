@@ -166,6 +166,7 @@ func TestGetAlert(t *testing.T) {
 	expectedListObjectsRequest := &s3.ListObjectsV2Input{
 		Bucket: aws.String(env.ProcessedDataBucket),
 		Prefix: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/rule_id=ruleId/"),
+		StartAfter:  aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/rule_id=ruleId/20200101T010000Z"),
 	}
 
 	expectedSelectObjectInput := &s3.SelectObjectContentInput{
