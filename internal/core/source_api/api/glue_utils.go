@@ -25,7 +25,7 @@ import (
 
 func addGlueTables(logTypes []string) error {
 	for _, logType := range logTypes {
-		_, _, err := gluetables.CreateOrUpdateGlueTablesForLogType(glueClient, logType, env.ProcessedDataBucket)
+		_, err := gluetables.CreateOrUpdateGlueTablesForLogType(glueClient, logType, env.ProcessedDataBucket)
 		if err != nil {
 			return err
 		}

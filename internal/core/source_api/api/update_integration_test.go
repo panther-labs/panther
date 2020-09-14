@@ -83,7 +83,7 @@ func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 	mockClient.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
 
 	// create the tables
-	mockGlue.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, nil).Twice()
+	mockGlue.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, nil).Times(3)
 	// create/replace the view
 	mockGlue.On("GetTable", mock.Anything).Return(&glue.GetTableOutput{}, nil).Times(len(registry.AvailableLogTypes()))
 	mockAthena.On("StartQueryExecution", mock.Anything).Return(&athena.StartQueryExecutionOutput{

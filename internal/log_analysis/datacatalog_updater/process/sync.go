@@ -59,12 +59,21 @@ func Sync(event *SyncEvent, deadline time.Time) error {
 		logType := event.Continuation.LogType
 		logTable := registry.Lookup(logType).GlueTableMeta() // get the table description
 
-		if event.Continuation.DataType == models.RuleData { // just finish rule matches, log aleady done
+		switch dataType := event.Continuation.DataType; dataType {
+		case models.RuleData:
+			// just finish rule matches, log already done
 			deadlineExpired, err := syncTable(logTable.RuleTable(), event, startTime, deadline)
 			if err != nil || deadlineExpired {
 				return err
 			}
-		} else { // finish log table, then do rule table from zeroStartTime
+		case models.RuleErrors:
+			// finish the rule errors
+			deadlineExpired, err := syncTable(logTable.RuleErrorTable(), event, startTime, deadline)
+			if err != nil || deadlineExpired {
+				return err
+			}
+		case models.LogData:
+			// finish log table, then do rule table from zeroStartTime
 			deadlineExpired, err := syncTable(logTable, event, startTime, deadline)
 			if err != nil || deadlineExpired {
 				return err
@@ -74,6 +83,8 @@ func Sync(event *SyncEvent, deadline time.Time) error {
 			if err != nil || deadlineExpired {
 				return err
 			}
+		default:
+			return errors.New("Unknown data type " + dataType.String())
 		}
 
 		// advance to next log type now that we are done with continuation

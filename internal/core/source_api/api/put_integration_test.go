@@ -269,7 +269,7 @@ func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 
 	expectedGetQueueAttributesInput := &sqs.GetQueueAttributesInput{
 		AttributeNames: aws.StringSlice([]string{"Policy"}),
-		QueueUrl:       aws.String(env.LogProcessorQueueURL),
+		QueueUrl:       &env.LogProcessorQueueURL,
 	}
 	alreadyExistingAttributes := generateQueueAttributeOutput(t, []string{})
 	mockSQS.On("GetQueueAttributes", expectedGetQueueAttributesInput).
@@ -277,12 +277,12 @@ func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 	expectedAttributes := generateQueueAttributeOutput(t, []string{testAccountID})
 	expectedSetAttributes := &sqs.SetQueueAttributesInput{
 		Attributes: expectedAttributes,
-		QueueUrl:   aws.String(env.LogProcessorQueueURL),
+		QueueUrl:   &env.LogProcessorQueueURL,
 	}
 	mockSQS.On("SetQueueAttributes", expectedSetAttributes).Return(&sqs.SetQueueAttributesOutput{}, nil).Once()
 
 	// create the tables
-	mockGlue.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, nil).Twice()
+	mockGlue.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, nil).Times(3)
 	// create/replace the view
 	mockGlue.On("GetTable", mock.Anything).Return(&glue.GetTableOutput{}, nil).Times(len(registry.AvailableLogTypes()))
 	mockAthena.On("StartQueryExecution", mock.Anything).Return(&athena.StartQueryExecutionOutput{
@@ -328,7 +328,7 @@ func TestPutLogIntegrationUpdateSqsQueuePermissionsFailure(t *testing.T) {
 	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
 	mockSQS.On("GetQueueAttributes", mock.Anything).Return(&sqs.GetQueueAttributesOutput{}, errors.New("error")).Once()
-	mockGlue.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, nil).Twice()
+	mockGlue.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, nil).Times(3)
 	mockGlue.On("GetTable", mock.Anything).Return(&glue.GetTableOutput{}, nil).Times(len(registry.AvailableTables()))
 	mockAthena.On("StartQueryExecution", mock.Anything).Return(&athena.StartQueryExecutionOutput{
 		QueryExecutionId: aws.String("test-query-1234"),
@@ -392,7 +392,7 @@ func TestPutSqsIntegration(t *testing.T) {
 	mockSQS.On("CreateQueue", mock.Anything).Return(&sqs.CreateQueueOutput{}, nil).Once()
 
 	// create the Glue tables
-	mockGlue.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, nil).Twice()
+	mockGlue.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, nil).Times(3)
 	// create/replace the view
 	mockGlue.On("GetTable", mock.Anything).Return(&glue.GetTableOutput{}, nil).Times(len(registry.AvailableLogTypes()))
 	mockAthena.On("StartQueryExecution", mock.Anything).Return(&athena.StartQueryExecutionOutput{

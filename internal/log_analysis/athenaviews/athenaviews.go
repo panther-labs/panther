@@ -95,6 +95,18 @@ func generateViewAllRuleMatches(tables []*awsglue.GlueTableMetadata) (sql string
 	return generateViewAllHelper("all_rule_matches", ruleTables, awsglue.RuleMatchColumns)
 }
 
+// generateViewAllRuleMatches creates a view over all log sources in rule match db the using "panther" fields
+func generateViewAllRuleErrors(tables []*awsglue.GlueTableMetadata) (sql string, err error) {
+	// the rule match tables share the same structure as the logs with some extra columns
+	var ruleErrorTables []*awsglue.GlueTableMetadata
+	for _, table := range tables {
+		ruleTable := awsglue.NewGlueTableMetadata(
+			models.RuleErrors, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
+		ruleErrorTables = append(ruleErrorTables, ruleTable)
+	}
+	return generateViewAllHelper("all_rule_errors", ruleErrorTables, awsglue.RuleErrorColumns)
+}
+
 func generateViewAllHelper(viewName string, tables []*awsglue.GlueTableMetadata, extraColumns []awsglue.Column) (sql string, err error) {
 	// validate they all have the same partition keys
 	if len(tables) > 1 {
