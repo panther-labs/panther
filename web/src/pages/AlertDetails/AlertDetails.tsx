@@ -18,20 +18,39 @@
 
 import React from 'react';
 import useRouter from 'Hooks/useRouter';
-import { Alert, Box } from 'pouncejs';
+import { Alert, Box, Card, Flex, Tab, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
 import Skeleton from 'Pages/AlertDetails/Skeleton';
-import AlertDetailsInfo from 'Pages/AlertDetails/AlertDetailsInfo';
 import AlertEvents from 'Pages/AlertDetails/AlertDetailsEvents';
 import Page404 from 'Pages/404';
 import withSEO from 'Hoc/withSEO';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
 import { extractErrorMessage, shortenId } from 'Helpers/utils';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
+import invert from 'lodash/invert';
+import useUrlParams from 'Hooks/useUrlParams';
 import { useAlertDetails } from './graphql/alertDetails.generated';
 import { useRuleTeaser } from './graphql/ruleTeaser.generated';
+import AlertDetailsBanner from './AlertDetailsBanner';
+import AlertDetailsInfo from './AlertDetailsInfo';
+
+interface AlertDetailsPageUrlParams {
+  section?: 'details' | 'events';
+}
+
+const sectionToTabIndex: Record<AlertDetailsPageUrlParams['section'], number> = {
+  details: 0,
+  events: 1,
+};
+
+const tabIndexToSection = invert(sectionToTabIndex) as Record<
+  number,
+  AlertDetailsPageUrlParams['section']
+>;
 
 const AlertDetailsPage = () => {
   const { match } = useRouter<{ id: string }>();
+  const { urlParams, updateUrlParams } = useUrlParams<AlertDetailsPageUrlParams>();
 
   const {
     data: alertData,
@@ -105,16 +124,49 @@ const AlertDetailsPage = () => {
 
   return (
     <Box as="article">
-      <Box mb={6}>
-        <Box mb={4}>
-          <ErrorBoundary>
-            <AlertDetailsInfo alert={alertData.alert} rule={ruleData?.rule} />
-          </ErrorBoundary>
-        </Box>
-        <ErrorBoundary>
-          <AlertEvents alert={alertData.alert} fetchMore={fetchMoreEvents} />
-        </ErrorBoundary>
-      </Box>
+      <Flex direction="column" spacing={6} my={6}>
+        <AlertDetailsBanner alert={alertData.alert} rule={ruleData?.rule} />
+        <Card position="relative">
+          <Tabs
+            index={sectionToTabIndex[urlParams.section] || 0}
+            onChange={index => updateUrlParams({ section: tabIndexToSection[index] })}
+          >
+            <Box px={2}>
+              <TabList>
+                <Tab>
+                  {({ isSelected, isFocused }) => (
+                    <BorderedTab isSelected={isSelected} isFocused={isFocused}>
+                      Details
+                    </BorderedTab>
+                  )}
+                </Tab>
+                <Tab>
+                  {({ isSelected, isFocused }) => (
+                    <BorderedTab isSelected={isSelected} isFocused={isFocused}>
+                      Events ({alertData.alert.eventsMatched})
+                    </BorderedTab>
+                  )}
+                </Tab>
+              </TabList>
+            </Box>
+            <BorderTabDivider />
+            <Box p={6}>
+              <TabPanels>
+                <TabPanel data-testid="alert-details-tabpanel">
+                  <ErrorBoundary>
+                    <AlertDetailsInfo alert={alertData.alert} rule={ruleData?.rule} />
+                  </ErrorBoundary>
+                </TabPanel>
+                <TabPanel lazy data-testid="alert-events-tabpanel">
+                  <ErrorBoundary>
+                    <AlertEvents alert={alertData.alert} fetchMore={fetchMoreEvents} />
+                  </ErrorBoundary>
+                </TabPanel>
+              </TabPanels>
+            </Box>
+          </Tabs>
+        </Card>
+      </Flex>
     </Box>
   );
 };
