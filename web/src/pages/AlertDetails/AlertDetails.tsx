@@ -152,12 +152,12 @@ const AlertDetailsPage = () => {
             <BorderTabDivider />
             <Box p={6}>
               <TabPanels>
-                <TabPanel>
+                <TabPanel data-testid="alert-details-tabpanel">
                   <ErrorBoundary>
                     <AlertDetailsInfo alert={alertData.alert} rule={ruleData?.rule} />
                   </ErrorBoundary>
                 </TabPanel>
-                <TabPanel lazy>
+                <TabPanel lazy data-testid="alert-events-tabpanel">
                   <ErrorBoundary>
                     <AlertEvents alert={alertData.alert} fetchMore={fetchMoreEvents} />
                   </ErrorBoundary>
