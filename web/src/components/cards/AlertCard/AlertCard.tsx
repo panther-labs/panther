@@ -24,6 +24,7 @@ import React from 'react';
 import urls from 'Source/urls';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 import { formatDatetime } from 'Helpers/utils';
+import BulletedLogType from 'Components/BulletedLogType';
 import UpdateAlertDropdown from '../../dropdowns/UpdateAlertDropdown';
 
 interface AlertCardProps {
@@ -49,6 +50,16 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
             </Button>
           </Link>
           <GenericItemCard.Value label="Events" value={alert.eventsMatched} />
+          <GenericItemCard.Value
+            label="Log Types"
+            value={
+              <Flex align="center" spacing={6} mt={1}>
+                {alert.logTypes.map(logType => (
+                  <BulletedLogType key={logType} logType={logType} />
+                ))}
+              </Flex>
+            }
+          />
           <GenericItemCard.Value label="Time Created" value={formatDatetime(alert.creationTime)} />
           <Flex ml="auto" mr={0} align="flex-end" alignItems="center" spacing={2}>
             <SeverityBadge severity={alert.severity} />
