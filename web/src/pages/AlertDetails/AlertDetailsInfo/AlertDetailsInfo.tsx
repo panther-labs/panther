@@ -75,68 +75,126 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule, alertD
       )}
       <Card variant="dark" as="section" p={4}>
         <SimpleGrid columns={2} spacing={5} fontSize="small-medium">
-          {rule ? (
-            <Flex spacing={5}>
-              <Flex direction="column" spacing={2} color="navyblue-100" flexShrink={0}>
-                <Box aria-describedby="rule-link">Rule</Box>
-                <Box aria-describedby="threshold">Rule Threshold</Box>
-                <Box aria-describedby="deduplication-period">Deduplication Period</Box>
-                <Box aria-describedby="deduplication-string">Deduplication String</Box>
-                <Box aria-describedby="tags-list">Tags</Box>
-              </Flex>
-              <Flex direction="column" spacing={2}>
-                <Link id="rule-link" as={RRLink} to={urls.logAnalysis.rules.details(rule.id)}>
-                  {rule.displayName || rule.id}
-                </Link>
-                <Box id="threshold">{minutesToString(rule.threshold)}</Box>
-                <Box id="deduplication-period">
-                  {rule.dedupPeriodMinutes
-                    ? minutesToString(rule.dedupPeriodMinutes)
-                    : 'Not specified'}
-                </Box>
-                <Box id="deduplication-string">{alert.dedupString}</Box>
-                {rule.tags.length > 0 ? (
-                  <Box id="tags-list">
-                    {rule.tags.map((tag, index) => (
-                      <Link
-                        key={tag}
-                        as={RRLink}
-                        to={`${urls.logAnalysis.rules.list()}?page=1&tags[]=${tag}`}
-                      >
-                        {tag}
-                        {index !== rule.tags.length - 1 ? ', ' : null}
-                      </Link>
-                    ))}
+          <Box>
+            <SimpleGrid gap={2} columns={8} spacing={2}>
+              {rule ? (
+                <>
+                  <Box color="navyblue-100" gridColumn="1/3" aria-describedby="rule-link">
+                    Rule
                   </Box>
-                ) : (
-                  <Box fontStyle="italic" color="navyblue-100" id="tags-list">
-                    This rule has no tags
+
+                  <Link
+                    id="rule-link"
+                    gridColumn="3/8"
+                    as={RRLink}
+                    to={urls.logAnalysis.rules.details(rule.id)}
+                  >
+                    {rule.displayName || rule.id}
+                  </Link>
+
+                  <Box color="navyblue-100" gridColumn="1/3" aria-describedby="threshold">
+                    Rule Threshold
                   </Box>
-                )}
-              </Flex>
-            </Flex>
-          ) : (
-            <Flex spacing={5}>
-              <Flex direction="column" spacing={2} color="navyblue-100" flexShrink={0}>
-                <Box aria-describedby="rule-link">Rule</Box>
-                <Box aria-describedby="deduplication-string">Deduplication String</Box>
-              </Flex>
-              <Flex direction="column" spacing={2}>
-                <Box color="red-300">Associated rule has been deleted</Box>
-                <Box id="deduplication-string">{alert.dedupString}</Box>
-              </Flex>
-            </Flex>
-          )}
-          <Flex spacing={60}>
-            <Flex direction="column" color="navyblue-100" spacing={2}>
-              <Box aria-describedby="created-at">Created</Box>
-              <Box aria-describedby="last-matched-at">Last Matched</Box>
-              <Box aria-describedby="destinations">Destinations</Box>
-            </Flex>
-            <Flex direction="column" spacing={2}>
-              <Box id="created-at">{formatDatetime(alert.creationTime)}</Box>
-              <Box id="last-matched-at">{formatDatetime(alert.updateTime)}</Box>
-              <Box id="destinations">
+
+                  <Box id="threshold" gridColumn="3/8">
+                    {minutesToString(rule.threshold)}
+                  </Box>
+
+                  <Box
+                    color="navyblue-100"
+                    gridColumn="1/3"
+                    aria-describedby="deduplication-period"
+                  >
+                    Deduplication Period
+                  </Box>
+
+                  <Box id="deduplication-period" gridColumn="3/8">
+                    {rule.dedupPeriodMinutes
+                      ? minutesToString(rule.dedupPeriodMinutes)
+                      : 'Not specified'}
+                  </Box>
+
+                  <Box
+                    color="navyblue-100"
+                    gridColumn="1/3"
+                    aria-describedby="deduplication-string"
+                  >
+                    Deduplication String
+                  </Box>
+
+                  <Box id="deduplication-string" gridColumn="3/8">
+                    {alert.dedupString}
+                  </Box>
+
+                  <Box color="navyblue-100" gridColumn="1/3" aria-describedby="tags-list">
+                    Tags
+                  </Box>
+
+                  {rule.tags.length > 0 ? (
+                    <Box id="tags-list" gridColumn="3/8">
+                      {rule.tags.map((tag, index) => (
+                        <Link
+                          key={tag}
+                          as={RRLink}
+                          to={`${urls.logAnalysis.rules.list()}?page=1&tags[]=${tag}`}
+                        >
+                          {tag}
+                          {index !== rule.tags.length - 1 ? ', ' : null}
+                        </Link>
+                      ))}
+                    </Box>
+                  ) : (
+                    <Box fontStyle="italic" color="navyblue-100" id="tags-list" gridColumn="3/8">
+                      This rule has no tags
+                    </Box>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Box color="navyblue-100" gridColumn="1/3" aria-describedby="rule-link">
+                    Rule
+                  </Box>
+                  <Box gridColumn="3/8" color="red-300">
+                    Associated rule has been deleted
+                  </Box>
+
+                  <Box
+                    color="navyblue-100"
+                    gridColumn="1/3"
+                    aria-describedby="deduplication-string"
+                  >
+                    Deduplication String
+                  </Box>
+                  <Box gridColumn="3/8" id="deduplication-string">
+                    {alert.dedupString}
+                  </Box>
+                </>
+              )}
+            </SimpleGrid>
+          </Box>
+
+          <Box>
+            <SimpleGrid gap={2} columns={8} spacing={2}>
+              <Box color="navyblue-100" gridColumn="1/3" aria-describedby="created-at">
+                Created
+              </Box>
+
+              <Box id="created-at" gridColumn="3/8">
+                {formatDatetime(alert.creationTime)}
+              </Box>
+
+              <Box color="navyblue-100" gridColumn="1/3" aria-describedby="last-matched-at">
+                Last Matched
+              </Box>
+              <Box gridColumn="3/8" id="last-matched-at">
+                {formatDatetime(alert.updateTime)}
+              </Box>
+
+              <Box color="navyblue-100" gridColumn="1/3" aria-describedby="destinations">
+                Destinations
+              </Box>
+
+              <Box id="destinations" gridColumn="3/8">
                 {alertDestinations.map(destination => (
                   <Flex key={destination.outputId} align="center" mb={2}>
                     <Img
@@ -150,8 +208,8 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule, alertD
                   </Flex>
                 ))}
               </Box>
-            </Flex>
-          </Flex>
+            </SimpleGrid>
+          </Box>
         </SimpleGrid>
       </Card>
       <Card variant="dark" as="section" p={4}>
