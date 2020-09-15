@@ -28,9 +28,12 @@ import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
 import { extractErrorMessage, shortenId } from 'Helpers/utils';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import invert from 'lodash/invert';
+import uniqBy from 'lodash/uniqBy';
+import intersectionBy from 'lodash/intersectionBy';
 import useUrlParams from 'Hooks/useUrlParams';
 import { useAlertDetails } from './graphql/alertDetails.generated';
 import { useRuleTeaser } from './graphql/ruleTeaser.generated';
+import { useListDestinations } from './graphql/listDestinations.generated';
 import AlertDetailsBanner from './AlertDetailsBanner';
 import AlertDetailsInfo from './AlertDetailsInfo';
 
@@ -77,6 +80,19 @@ const AlertDetailsPage = () => {
     },
   });
 
+  // FIXME: The destination information should come directly from GraphQL, by executing another
+  //  query in the Front-end and using the results of both to calculate it.
+  const { data: destinationData, loading: destinationLoading } = useListDestinations();
+
+  const configuredAlertDestinations = React.useMemo(() => {
+    if (!alertData?.alert || !destinationData?.destinations) {
+      return [];
+    }
+
+    const uniqueDestinations = uniqBy(alertData.alert.deliveryResponses, 'outputId');
+    return intersectionBy(destinationData.destinations, uniqueDestinations, d => d.outputId);
+  }, [alertData, destinationData]);
+
   const fetchMoreEvents = React.useCallback(() => {
     fetchMore({
       variables: {
@@ -99,7 +115,11 @@ const AlertDetailsPage = () => {
     });
   }, [fetchMore, variables, alertData]);
 
-  if ((alertLoading && !alertData) || (ruleLoading && !ruleData)) {
+  if (
+    (alertLoading && !alertData) ||
+    (ruleLoading && !ruleData) ||
+    (destinationLoading && !destinationData)
+  ) {
     return <Skeleton />;
   }
 
@@ -154,7 +174,11 @@ const AlertDetailsPage = () => {
               <TabPanels>
                 <TabPanel data-testid="alert-details-tabpanel">
                   <ErrorBoundary>
-                    <AlertDetailsInfo alert={alertData.alert} rule={ruleData?.rule} />
+                    <AlertDetailsInfo
+                      alert={alertData.alert}
+                      rule={ruleData?.rule}
+                      configuredAlertDestinations={configuredAlertDestinations}
+                    />
                   </ErrorBoundary>
                 </TabPanel>
                 <TabPanel lazy data-testid="alert-events-tabpanel">

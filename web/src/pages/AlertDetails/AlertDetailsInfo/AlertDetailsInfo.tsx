@@ -17,20 +17,26 @@
  */
 
 import React from 'react';
-import { Box, Card, Flex, Link, SimpleGrid } from 'pouncejs';
+import { Box, Card, Flex, Img, Link, SimpleGrid } from 'pouncejs';
 import Linkify from 'Components/Linkify';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import { formatDatetime, minutesToString } from 'Helpers/utils';
-import { AlertDetails, RuleTeaser } from 'Pages/AlertDetails';
+import { AlertDetails, RuleTeaser, ListDestinations } from 'Pages/AlertDetails';
 import AlertDeliverySection from 'Pages/AlertDetails/AlertDetailsInfo/AlertDeliverySection';
+import { DESTINATIONS } from 'Source/constants';
 
 interface AlertDetailsInfoProps {
   alert: AlertDetails['alert'];
   rule: RuleTeaser['rule'];
+  configuredAlertDestinations: ListDestinations['destinations'];
 }
 
-const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
+const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({
+  alert,
+  rule,
+  configuredAlertDestinations,
+}) => {
   return (
     <Flex direction="column" spacing={4}>
       {rule && (
@@ -129,10 +135,28 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
             <Flex direction="column" color="navyblue-100" spacing={2}>
               <Box aria-describedby="created-at">Created</Box>
               <Box aria-describedby="last-matched-at">Last Matched</Box>
+              <Box aria-describedby="destinations">Destinations</Box>
             </Flex>
             <Flex direction="column" spacing={2}>
               <Box id="created-at">{formatDatetime(alert.creationTime)}</Box>
               <Box id="last-matched-at">{formatDatetime(alert.updateTime)}</Box>
+              <Box id="destinations">
+                {configuredAlertDestinations.map(destination => {
+                  const destData = DESTINATIONS[destination.outputType];
+                  return (
+                    <Flex key={destination.outputId} mb={2}>
+                      <Img
+                        alt={`${destination.outputType} logo`}
+                        src={destData.logo}
+                        nativeWidth={18}
+                        nativeHeight={18}
+                        mr={2}
+                      />
+                      {destData.title}
+                    </Flex>
+                  );
+                })}
+              </Box>
             </Flex>
           </Flex>
         </SimpleGrid>
