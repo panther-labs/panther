@@ -205,7 +205,7 @@ func queueDepth(sqsClient sqsiface.SQSAPI) (totalQueuedMessages int, err error) 
 	if err != nil {
 		return 0, err
 	}
-	// number of delayed messages, the q should be set up with a 20sec delay so we can "see" if there are more events
+	// number of delayed messages, the q should be set up with a delay so we can "see" if there are more events
 	numberOfQueuedMessagesDelayed, err := getQueueIntegerAttribute(getQueueAttributesOutput.Attributes,
 		sqs.QueueAttributeNameApproximateNumberOfMessagesDelayed)
 	if err != nil {
