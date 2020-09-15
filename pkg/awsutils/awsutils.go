@@ -18,13 +18,16 @@ package awsutils
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "github.com/aws/aws-sdk-go/aws/awserr"
+import (
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/pkg/errors"
+)
 
 // Method returns true if the provided error is an AWS error with any
 // of the given codes.
 func IsAnyError(err error, codes ...string) bool {
-	awserror, ok := err.(awserr.Error)
-	if !ok {
+	var awserror awserr.Error
+	if !errors.As(err, &awserror) {
 		return false
 	}
 	for _, code := range codes {
