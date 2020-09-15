@@ -130,6 +130,9 @@ type Alert struct {
 	// OutputIds is the set of outputs for this alert.
 	OutputIds []string `json:"outputIds,omitempty"`
 
+	// LogTypes is the set of logs that could trigger the alert.
+	LogTypes []string `json:"logTypes,omitempty"`
+
 	// AnalysisDescription is the description of the rule that triggered the alert.
 	AnalysisDescription *string `json:"analysisDescription,omitempty"`
 
