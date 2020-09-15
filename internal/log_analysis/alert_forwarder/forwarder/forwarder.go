@@ -172,6 +172,7 @@ func (h *Handler) storeNewAlert(rule *ruleModel.Rule, alertDedup *AlertDedupEven
 		RuleDisplayName:     getRuleDisplayName(rule),
 		Title:               getAlertTitle(rule, alertDedup),
 		FirstEventMatchTime: alertDedup.CreationTime,
+		LogTypes:            rule.LogTypes,
 		AlertDedupEvent: AlertDedupEvent{
 			RuleID:              alertDedup.RuleID,
 			RuleVersion:         alertDedup.RuleVersion,
