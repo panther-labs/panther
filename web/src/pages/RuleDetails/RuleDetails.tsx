@@ -129,7 +129,6 @@ const RuleDetailsPage = () => {
         <Panel title="Alerts">
           <ErrorBoundary>
             {hasAnyAlerts &&
-              // <RuleDetailsAlertsTable alerts={listAlertsData.alerts.alertSummaries} />
               listAlertsData.alerts.alertSummaries.map((alert, i) => (
                 <Box key={i} my={2}>
                   <AlertCard alert={alert} />
