@@ -86,10 +86,10 @@ jobs:
           token: ${{ secrets.PR_SYNC_TOKEN }}
 
   sync_prs_from_master_to_release:
-    name: Syncs merged PRs from the master to the release branch if a label is present
+    name: Syncs merged PRs from master to release branch, if a certain label is present
     runs-on: ubuntu-latest
     env:
-      HEAD: ${{ format('release-{0}', github.event.pull_request.head.ref) }}
+      HEAD: ${{ format('sync-release-{0}', github.event.pull_request.head.ref) }}
       SYNC_LABEL: sync-to-release
     steps:
       - name: Checkout Source Repo
