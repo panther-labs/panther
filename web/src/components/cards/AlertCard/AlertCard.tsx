@@ -49,10 +49,7 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
             </Button>
           </Link>
           <GenericItemCard.Value label="Events" value={alert.eventsMatched} />
-          <GenericItemCard.Value
-            label="Time Created"
-            value={formatDatetime(alert.creationTime, true)}
-          />
+          <GenericItemCard.Value label="Time Created" value={formatDatetime(alert.creationTime)} />
           <Flex ml="auto" mr={0} align="flex-end" alignItems="center" spacing={2}>
             <SeverityBadge severity={alert.severity} />
             <UpdateAlertDropdown alert={alert} />
