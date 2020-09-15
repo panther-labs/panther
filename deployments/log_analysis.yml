@@ -66,7 +66,6 @@ Parameters:
   LogProcessorSQSDelaySeconds:
     Type: Number
     Description: The number of seconds to delay events into the log processor queue
-    Default: 5
     MinValue: 0 # no delay, poor aggregation
     MaxValue: 20 # this is the max time we can long poll sqs
   ProcessedDataBucket:
