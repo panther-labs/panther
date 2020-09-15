@@ -84,3 +84,51 @@ jobs:
           repo: ${{ env.DEST_REPO }}
           head: ${{ env.HEAD }}
           token: ${{ secrets.PR_SYNC_TOKEN }}
+
+  sync_prs_from_master_to_release:
+    name: Syncs merged PRs from the master to the release branch if a label is present
+    runs-on: ubuntu-latest
+    env:
+      HEAD: ${{ format('release-{0}', github.event.pull_request.head.ref) }}
+      SYNC_LABEL: sync-to-release
+    steps:
+      - name: Checkout Source Repo
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.PR_SYNC_TOKEN }}
+          fetch-depth: 1
+
+      - name: Validate that PR was merged and not closed
+        if: ${{ github.event.pull_request.merged == false }}
+        run: exit 1
+
+      - name: Validate that PR should be synced to the release branch
+        if: ${{ !contains(github.event.pull_request.labels, env.SYNC_LABEL) }}
+        run: exit 1
+
+      - name: Setup Git Credentials
+        if: ${{ success() }}
+        run: |
+          git config --global user.email "github-service-account@runpanther.io"
+          git config --global user.name "panther-bot"
+
+      - name: Bootstrap a PR branch
+        if: ${{ success() }}
+        working-directory: ${{ env.DEST_REPO_CHECKOUT_PATH }}
+        run: |
+          git checkout -b $HEAD
+          git cherry-pick ${{ github.event.pull_request.merge_commit_sha }} || true
+          git add -A .
+          git commit -m "merge changes from $GITHUB_REPOSITORY" || true
+          git push origin $HEAD
+
+      - name: Clone original PR
+        if: ${{ success() }}
+        uses: ./src/build/actions/pr_sync # Github actions has a bug and we can't use ENV var here
+        id: pr_sync
+        env:
+          ACTIONS_STEP_DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
+        with:
+          repo: ${{ env.GITHUB_REPOSITORY }}
+          head: ${{ env.HEAD }}
+          token: ${{ secrets.PR_SYNC_TOKEN }}
