@@ -184,7 +184,7 @@ describe('Wizard', () => {
     expect(queryByText('failing')).not.toBeInTheDocument();
   });
 
-  it('prev/next buttons work correctly', () => {
+  it('prev/next and start over buttons work correctly', () => {
     const { getByText, queryByText, getByAriaLabel } = render(
       <Wizard header={false}>
         <Wizard.Step>
@@ -209,6 +209,15 @@ describe('Wizard', () => {
             C
             <WizardPanel.Actions>
               <WizardPanel.ActionPrev />
+              <WizardPanel.ActionNext />
+            </WizardPanel.Actions>
+          </WizardPanel>
+        </Wizard.Step>
+        <Wizard.Step>
+          <WizardPanel>
+            D
+            <WizardPanel.Actions>
+              <WizardPanel.ActionStart />
             </WizardPanel.Actions>
           </WizardPanel>
         </Wizard.Step>
@@ -232,6 +241,17 @@ describe('Wizard', () => {
     fireEvent.click(getByAriaLabel('Go Back'));
     expect(getByText('A')).toBeInTheDocument();
     expect(queryByText('B')).not.toBeInTheDocument();
+
+    fireEvent.click(getByText('Next'));
+    fireEvent.click(getByText('Next'));
+    expect(queryByText('C')).toBeInTheDocument();
+
+    fireEvent.click(getByText('Next'));
+    expect(queryByText('D')).toBeInTheDocument();
+
+    fireEvent.click(getByText('Start Over'));
+    expect(queryByText('D')).not.toBeInTheDocument();
+    expect(queryByText('A')).toBeInTheDocument();
   });
 
   it('allows updating the context data correctly', () => {

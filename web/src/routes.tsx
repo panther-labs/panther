@@ -55,6 +55,7 @@ import EditComplianceSourcePage from 'Pages/EditComplianceSource';
 import EditS3LogSourcePage from 'Pages/EditS3LogSource';
 import PromptController from 'Components/utils/PromptController';
 import LogSourceOnboarding from 'Pages/LogSourceOnboarding';
+import BulkUploaderPage from 'Pages/BulkUploader';
 import ListGlobalPythonModulesPage from 'Pages/ListGlobalPythonModules';
 import CreateGlobalPythonModulePage from 'Pages/CreateGlobalPythonModule';
 import EditGlobalPythonModulePage from 'Pages/EditGlobalPythonModule';
@@ -197,6 +198,11 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   exact
                   path={urls.settings.globalPythonModules.edit(':id')}
                   component={EditGlobalPythonModulePage}
+                />
+                <Route
+                  exact
+                  path={urls.settings.bulkUploader.list()}
+                  component={BulkUploaderPage}
                 />
                 <Redirect
                   exact
