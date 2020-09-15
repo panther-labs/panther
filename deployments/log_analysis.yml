@@ -66,9 +66,9 @@ Parameters:
   LogProcessorSQSDelaySeconds:
     Type: Number
     Description: The number of seconds to delay events into the log porcessor queue
-    Default: 10
+    Default: 5
     MinValue: 0 # no delay, poor aggregation
-    MaxValue: 20 # this is the max time we can long poll to sqs
+    MaxValue: 20 # this is the max time we can long poll sqs
   ProcessedDataBucket:
     Type: String
     Description: Name of the S3 bucket which stores processed logs

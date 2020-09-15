@@ -37,6 +37,7 @@ type Infra struct {
 	BaseLayerVersionArns          string   `yaml:"BaseLayerVersionArns"`
 	LoadBalancerSecurityGroupCidr string   `yaml:"LoadBalancerSecurityGroupCidr"`
 	LogProcessorLambdaMemorySize  int      `yaml:"LogProcessorLambdaMemorySize"`
+	LogProcessorSQSDelaySeconds   int      `yaml:"LogProcessorSQSDelaySeconds"`
 	PipLayer                      []string `yaml:"PipLayer"`
 	PythonLayerVersionArn         string   `yaml:"PythonLayerVersionArn"`
 }
