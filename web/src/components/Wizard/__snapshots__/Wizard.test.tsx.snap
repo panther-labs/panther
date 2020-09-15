@@ -83,6 +83,8 @@ exports[`Wizard renders a step 1`] = `
   padding-top: 12px;
 }
 
+
+
 .panther-9 {
   will-change: opacity;
   -webkit-animation: animation-0 300ms 0ms ease-in-out both;

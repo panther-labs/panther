@@ -330,27 +330,21 @@ Resources:
   AppClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
+      AccessTokenValidity: 15 # minutes
       ClientName: Panther
       GenerateSecret: false
-      RefreshTokenValidity: 1
-      UserPoolId: !Ref UserPoolId
+      IdTokenValidity: 12 # hours
       PreventUserExistenceErrors: ENABLED
+      RefreshTokenValidity: 12 # hours
+      TokenValidityUnits:
+        AccessToken: minutes
+        IdToken: hours
+        RefreshToken: hours
+      UserPoolId: !Ref UserPoolId
       WriteAttributes:
         - email
         - given_name
         - family_name
-
-  AppClientTokenExpiration:
-    Type: Custom::CognitoClientTokenExpiration
-    Properties:
-      AccessTokenValidityMinutes: 15
-      IdTokenValidityMinutes: 720 # 12 hours
-      RefreshTokenValidityMinutes: 720 # 12 hours
-
-      AppClientId: !Ref AppClient
-      CustomResourceVersion: !Ref CustomResourceVersion
-      ServiceToken: !GetAtt CustomResourceFunction.Arn
-      UserPoolId: !Ref UserPoolId
 
   AnalysisApi:
     Type: AWS::Serverless::Api

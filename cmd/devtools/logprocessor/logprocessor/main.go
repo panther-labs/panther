@@ -29,6 +29,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor"
@@ -99,10 +100,15 @@ func main() {
 	}
 
 	dataStream := &common.DataStream{
-		Reader:      gzipReader,
-		SourceID:    *flagSourceID,
-		SourceLabel: *flagSourceLabel,
-		LogTypes:    logTypes,
+		Reader: gzipReader,
+		Source: &models.SourceIntegration{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
+				IntegrationID:    *flagSourceID,
+				IntegrationType:  models.IntegrationTypeAWS3,
+				IntegrationLabel: *flagSourceLabel,
+				LogTypes:         logTypes,
+			},
+		},
 	}
 
 	streamChan <- dataStream

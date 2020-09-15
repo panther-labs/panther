@@ -27,11 +27,14 @@ from typing import Dict, List, Optional
 
 import boto3
 
-from . import AlertInfo, EventMatch, OutputGroupingKey
+from . import AlertInfo, EngineResult, OutputGroupingKey
 from .alert_merger import MatchingGroupInfo, update_get_alert_info
 from .logging import get_logger
 
-_KEY_FORMAT = 'rules/{}/year={:d}/month={:02d}/day={:02d}/hour={:02d}/rule_id={}/{}-{}.json.gz'
+# Format of the S3 objects containing the events that matched a rule
+_RULE_MATCHES_KEY_FORMAT = 'rules/{}/year={:d}/month={:02d}/day={:02d}/hour={:02d}/rule_id={}/{}-{}.json.gz'
+# Format of the S3 objects containing the events that caused an exception on the rule
+_RULE_ERRORS_KEY_FORMAT = 'rule_errors/{}/year={:d}/month={:02d}/day={:02d}/hour={:02d}/rule_id={}/{}-{}.json.gz'
 # Maximum number of events in an S3 object
 _MAX_BYTES_IN_MEMORY = 100000000
 _S3_KEY_DATE_FORMAT = '%Y%m%dT%H%M%SZ'
@@ -55,12 +58,13 @@ class EventCommonFields:
     p_alert_id: str
     p_alert_creation_time: str
     p_alert_update_time: str
+    p_rule_error: Optional[str] = None
 
 
 @dataclass
 class BufferValue:
     """Class representing the value of the internal buffer"""
-    matches: List[EventMatch]
+    matches: List[EngineResult]
     size_in_bytes: int
 
 
@@ -73,18 +77,25 @@ class MatchedEventsBuffer:
         self.max_bytes = _MAX_BYTES_IN_MEMORY
         self.total_events = 0
 
-    def add_event(self, match: EventMatch) -> None:
+    def add_event(self, engine_result: EngineResult) -> None:
         """Adds a matched event to the buffer"""
-        key = OutputGroupingKey(match.rule_id, match.log_type, match.dedup)
+        if engine_result.error_message:
+            # If the engine result contains an error message, it means that the event in the result caused
+            # the rule engine to throw an exception
+            key = OutputGroupingKey(engine_result.rule_id, engine_result.log_type, engine_result.dedup, is_rule_error=True)
+        else:
+            # If the engine result doesn't contain an error message, it means the event in the result matched a rule
+            key = OutputGroupingKey(engine_result.rule_id, engine_result.log_type, engine_result.dedup, is_rule_error=False)
         # Getting estimation of struct size in memory
-        size = sys.getsizeof(match)
+        size = sys.getsizeof(engine_result)
 
+        # Add event to the buffer
         value = self.data.get(key)
         if value:
-            value.matches.append(match)
+            value.matches.append(engine_result)
             value.size_in_bytes += size
         else:
-            value = BufferValue([match], size)
+            value = BufferValue([engine_result], size)
             self.data[key] = value
 
         self.bytes_in_memory += size
@@ -116,9 +127,10 @@ class MatchedEventsBuffer:
         self.total_events = 0
 
 
-def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EventMatch]) -> None:
+def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EngineResult]) -> None:
     # 'version', 'title', 'dedup_period' of a rule might differ if the rule was modified
     # while the rules engine was running. We pick the first encountered set of values.
+
     group_info = MatchingGroupInfo(
         rule_id=key.rule_id,
         rule_version=events[0].rule_version,
@@ -127,7 +139,8 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EventMatch
         dedup_period_mins=events[0].dedup_period_mins,
         num_matches=len(events),
         title=events[0].title,
-        processing_time=time
+        processing_time=time,
+        is_rule_error=key.is_rule_error
     )
     alert_info = update_get_alert_info(group_info)
     data_stream = BytesIO()
@@ -139,7 +152,12 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EventMatch
     writer.close()
     data_stream.seek(0)
     output_uuid = uuid.uuid4()
-    object_key = _KEY_FORMAT.format(
+    if key.is_rule_error:
+        key_format = _RULE_ERRORS_KEY_FORMAT
+    else:
+        key_format = _RULE_MATCHES_KEY_FORMAT
+
+    object_key = key_format.format(
         key.table_name(), time.year, time.month, time.day, time.hour, key.rule_id, time.strftime(_S3_KEY_DATE_FORMAT), output_uuid
     )
 
@@ -147,6 +165,11 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EventMatch
     # Write data to S3
     _S3_CLIENT.put_object(Bucket=_S3_BUCKET, ContentType='gzip', Body=data_stream, Key=object_key)
 
+    # If the object written contains events that caused a rule engine error
+    # don't send an SNS notification. TODO: Remove this condition and send a notification once
+    # the backend supports rule errors end to end.
+    if key.is_rule_error:
+        return
     # Send notification to SNS topic
     notification = _s3_put_object_notification(_S3_BUCKET, object_key, byte_size)
 
@@ -216,7 +239,7 @@ def _s3_put_object_notification(bucket: str, key: str, byte_size: int) -> Dict[s
     }
 
 
-def _serialize_event(match: EventMatch, alert_info: AlertInfo) -> bytes:
+def _serialize_event(match: EngineResult, alert_info: AlertInfo) -> bytes:
     """Serializes an event match"""
     common_fields = _get_common_fields(match, alert_info)
     common_fields.update(match.event)
@@ -224,8 +247,19 @@ def _serialize_event(match: EventMatch, alert_info: AlertInfo) -> bytes:
     return data.encode('utf-8')
 
 
-def _get_common_fields(match: EventMatch, alert_info: AlertInfo) -> Dict[str, str]:
+def _get_common_fields(match: EngineResult, alert_info: AlertInfo) -> Dict[str, str]:
     """Retrieves a dictionary with common fields"""
+    if match.error_message:
+        common_fields = EventCommonFields(
+            p_rule_id=match.rule_id,
+            p_alert_id=alert_info.alert_id,
+            p_rule_tags=match.rule_tags,
+            p_rule_reports=match.rule_reports,
+            p_alert_creation_time=alert_info.alert_creation_time.strftime(_DATE_FORMAT),
+            p_alert_update_time=alert_info.alert_update_time.strftime(_DATE_FORMAT),
+            p_rule_error=match.error_message,
+        )
+        return asdict(common_fields)
     common_fields = EventCommonFields(
         p_rule_id=match.rule_id,
         p_alert_id=alert_info.alert_id,

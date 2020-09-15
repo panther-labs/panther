@@ -130,13 +130,12 @@ func dynamoTableIterator(page *dynamodb.ListTablesOutput, tables *[]*string, mar
 func describeTable(dynamoDBSvc dynamodbiface.DynamoDBAPI, name *string) (*dynamodb.TableDescription, error) {
 	out, err := dynamoDBSvc.DescribeTable(&dynamodb.DescribeTableInput{TableName: name})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "ResourceNotFoundException" {
-				zap.L().Warn("tried to scan non-existent resource",
-					zap.String("resource", *name),
-					zap.String("resourceType", awsmodels.DynamoDBTableSchema))
-				return nil, nil
-			}
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == dynamodb.ErrCodeResourceNotFoundException {
+			zap.L().Warn("tried to scan non-existent resource",
+				zap.String("resource", *name),
+				zap.String("resourceType", awsmodels.DynamoDBTableSchema))
+			return nil, nil
 		}
 		return nil, errors.Wrapf(err, "DynamoDB.DescribeTable: %s", aws.StringValue(name))
 	}

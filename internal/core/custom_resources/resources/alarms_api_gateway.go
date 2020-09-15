@@ -85,8 +85,10 @@ func putGatewayAlarmGroup(props APIGatewayAlarmProperties) error {
 		return err
 	}
 
+	// 5XX errors are usually not problems in API gateway itself, but internal server error codes
+	// returned by the Lambda function which processed the request.
 	input.AlarmDescription = aws.String(fmt.Sprintf(
-		"API Gateway %s is reporting 5XX internal errors. See: %s#%s",
+		"API Gateway %s is reporting 5XX internal errors from its lambda handler. See: %s#%s",
 		props.APIName, alarmRunbook, props.APIName))
 	input.AlarmName = aws.String(fmt.Sprintf("Panther-%s-%s", gatewayErrorAlarm, props.APIName))
 	input.EvaluationPeriods = aws.Int64(1)
