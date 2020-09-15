@@ -28,12 +28,11 @@ import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import ListAlertsPageEmptyDataFallback from 'Pages/ListAlerts/EmptyDataFallback/EmptyDataFallback';
-
+import AlertCard from 'Components/cards/AlertCard/AlertCard';
 import RuleDetailsPageSkeleton from './Skeleton';
 import RuleDetailsInfo from './RuleDetailsInfo';
 import { useRuleDetails } from './graphql/ruleDetails.generated';
 import { useListAlertsForRule } from './graphql/listAlertsForRule.generated';
-import RuleDetailsAlertsTable from './RuleDetailsAlertsTable';
 
 const RuleDetailsPage = () => {
   const { match } = useRouter<{ id: string }>();
@@ -129,9 +128,13 @@ const RuleDetailsPage = () => {
       <Box mt={5} mb={6}>
         <Panel title="Alerts">
           <ErrorBoundary>
-            {hasAnyAlerts && (
-              <RuleDetailsAlertsTable alerts={listAlertsData.alerts.alertSummaries} />
-            )}
+            {hasAnyAlerts &&
+              // <RuleDetailsAlertsTable alerts={listAlertsData.alerts.alertSummaries} />
+              listAlertsData.alerts.alertSummaries.map((alert, i) => (
+                <Box key={i} my={2}>
+                  <AlertCard alert={alert} />
+                </Box>
+              ))}
             {!hasAnyAlerts && <ListAlertsPageEmptyDataFallback />}
             {hasMoreAlerts && hasAnyAlerts && (
               <Box mt={8} ref={sentinelRef}>
