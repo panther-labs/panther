@@ -38,6 +38,8 @@ _ALERT_COUNT_ATTR_NAME = 'alertCount'
 _ALERT_EVENT_COUNT = 'eventCount'
 _ALERT_LOG_TYPES = 'logTypes'
 _ALERT_TITLE = 'title'
+# The attribute defining the type of the error
+_ERROR_TYPE = 'errorType'
 
 
 # pylint: disable=too-many-instance-attributes
@@ -50,12 +52,15 @@ class MatchingGroupInfo:
     dedup: str
     dedup_period_mins: int
     num_matches: int
-    title: Optional[str]
     processing_time: datetime
+    title: Optional[str]
+    is_rule_error: bool = False
 
 
-def _generate_dedup_key(rule_id: str, dedup: str) -> str:
+def _generate_dedup_key(rule_id: str, dedup: str, is_rule_error: bool) -> str:
     key = rule_id + ':' + dedup
+    if is_rule_error:
+        key += ":error"
     return hashlib.md5(key.encode('utf-8')).hexdigest()  # nosec
 
 
@@ -87,6 +92,10 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
 
     if group_info.title:
         update_expression += ', #11=:11'
+
+    if group_info.is_rule_error:
+        update_expression += ', #12=:12'
+
     expresion_attribute_names = {
         '#1': _ALERT_CREATION_TIME_ATTR_NAME,
         '#2': _PARTITION_KEY_NAME,
@@ -99,9 +108,11 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
         '#9': _ALERT_LOG_TYPES,
         '#10': _RULE_VERSION_ATTR_NAME,
     }
-
     if group_info.title:
         expresion_attribute_names['#11'] = _ALERT_TITLE
+
+    if group_info.is_rule_error:
+        expresion_attribute_names['#12'] = _ERROR_TYPE
 
     expression_attribute_values = {
         ':1':
@@ -134,14 +145,16 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
             'S': group_info.rule_version
         },
     }
-
     if group_info.title:
         expression_attribute_values[':11'] = {'S': group_info.title}
+
+    if group_info.is_rule_error:
+        expression_attribute_values[':12'] = {'S': 'RULE_ERROR'}
 
     response = _DDB_CLIENT.update_item(
         TableName=_DDB_TABLE_NAME,
         Key={_PARTITION_KEY_NAME: {
-            'S': _generate_dedup_key(group_info.rule_id, group_info.dedup)
+            'S': _generate_dedup_key(group_info.rule_id, group_info.dedup, group_info.is_rule_error)
         }},
         # Setting proper values for alertCreationTime, alertUpdateTime,
         UpdateExpression=update_expression,
@@ -164,7 +177,7 @@ def _update_get(group_info: MatchingGroupInfo) -> AlertInfo:
     response = _DDB_CLIENT.update_item(
         TableName=_DDB_TABLE_NAME,
         Key={_PARTITION_KEY_NAME: {
-            'S': _generate_dedup_key(group_info.rule_id, group_info.dedup)
+            'S': _generate_dedup_key(group_info.rule_id, group_info.dedup, group_info.is_rule_error)
         }},
         # Setting proper value to alertUpdateTime. Increase event count
         UpdateExpression='SET #1=:1\nADD #2 :2, #3 :3',
