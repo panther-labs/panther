@@ -20,6 +20,7 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
+import SensitiveTextInput from 'Components/fields/SensitiveTextInput';
 import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
@@ -66,8 +67,7 @@ const MicrosoftTeamsDestinationForm: React.FC<MicrosoftTeamsDestinationFormProps
           required
         />
         <Field
-          as={FormikTextInput}
-          type="password"
+          as={SensitiveTextInput}
           name="outputConfig.msTeams.webhookURL"
           label="Microsoft Teams Webhook URL"
           placeholder={

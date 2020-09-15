@@ -911,6 +911,13 @@ Resources:
                 - s3:GetObject
                 - s3:PutObject
               Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/rules/*
+        - Id: WriteRuleErrors
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:PutObject
+              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/rule_errors/*
         - Id: DDBUpdate
           Version: 2012-10-17
           Statement:

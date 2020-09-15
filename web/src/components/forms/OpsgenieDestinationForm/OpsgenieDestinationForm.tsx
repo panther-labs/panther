@@ -20,6 +20,7 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
+import SensitiveTextInput from 'Components/fields/SensitiveTextInput';
 import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
@@ -65,15 +66,10 @@ const OpsgenieDestinationForm: React.FC<OpsgenieDestinationFormProps> = ({
           required
         />
         <Field
-          as={FormikTextInput}
-          type="password"
+          as={SensitiveTextInput}
           name="outputConfig.opsgenie.apiKey"
           label="Opsgenie API key"
-          placeholder={
-            existing
-              ? 'Information is hidden. New values will override the existing ones.'
-              : "What's your organization's Opsgenie API key?"
-          }
+          placeholder="What's your organization's Opsgenie API key?"
           required={!existing}
           autoComplete="new-password"
         />
