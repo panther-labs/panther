@@ -34,6 +34,7 @@ export type AlertDetailsFull = Pick<
   | 'dedupString'
   | 'severity'
   | 'status'
+  | 'logTypes'
   | 'lastUpdatedBy'
   | 'lastUpdatedByTime'
 >;
@@ -51,6 +52,7 @@ export const AlertDetailsFull = gql`
     dedupString
     severity
     status
+    logTypes
     lastUpdatedBy
     lastUpdatedByTime
   }

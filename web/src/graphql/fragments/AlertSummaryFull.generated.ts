@@ -31,6 +31,7 @@ export type AlertSummaryFull = Pick<
   | 'creationTime'
   | 'eventsMatched'
   | 'updateTime'
+  | 'logTypes'
   | 'lastUpdatedBy'
   | 'lastUpdatedByTime'
 >;
@@ -45,6 +46,7 @@ export const AlertSummaryFull = gql`
     creationTime
     eventsMatched
     updateTime
+    logTypes
     lastUpdatedBy
     lastUpdatedByTime
   }
