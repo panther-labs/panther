@@ -116,7 +116,7 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 
 			// keep reading from SQS to maximize output aggregation
 			messages, messageReceipts, err := sqsbatch.ReceiveMessage(sqsClient,
-				common.Config.SqsQueueURL, common.Config.SqsDelaySec)
+				common.Config.SqsQueueURL, common.SQSWaitTime)
 			if err != nil {
 				readEventErrorChan <- err
 				return
@@ -189,8 +189,8 @@ func sqsDataStreams(messages []*sqs.Message,
 func queueDepth(sqsClient sqsiface.SQSAPI) (totalQueuedMessages int, err error) {
 	getQueueAttributesInput := &sqs.GetQueueAttributesInput{
 		AttributeNames: []*string{
-			aws.String(sqs.QueueAttributeNameApproximateNumberOfMessages),
-			aws.String(sqs.QueueAttributeNameApproximateNumberOfMessagesDelayed), // so we can see into the future!
+			aws.String(sqs.QueueAttributeNameApproximateNumberOfMessages),        // tells us there is waiting events now
+			aws.String(sqs.QueueAttributeNameApproximateNumberOfMessagesDelayed), // tells us that there will be events in the near future
 		},
 		QueueUrl: &common.Config.SqsQueueURL,
 	}

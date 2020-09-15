@@ -52,6 +52,8 @@ var (
 	SnsClient    snsiface.SNSAPI
 
 	Config EnvConfig
+
+	SQSWaitTime int64 // set by env
 )
 
 type EnvConfig struct {
@@ -76,11 +78,14 @@ func Setup() {
 		panic(err)
 	}
 
-	// we will use this as the sqs WaitTime, so we want it at least 1 and at most 20
+	// we will use the queue delay as the sqs WaitTime
+	// NOTE: we want it at least 1 and at most 20
 	if Config.SqsDelaySec < 1 {
-		Config.SqsDelaySec = 1
+		SQSWaitTime = 1
 	} else if Config.SqsDelaySec > 20 {
-		Config.SqsDelaySec = 20 //  note: 20 is max for sqs
+		SQSWaitTime = 20 //  note: 20 is max for sqs
+	} else {
+		SQSWaitTime = Config.SqsDelaySec
 	}
 }
 
