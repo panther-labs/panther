@@ -142,7 +142,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({
               <Box id="last-matched-at">{formatDatetime(alert.updateTime)}</Box>
               <Box id="destinations">
                 {configuredAlertDestinations.map(destination => (
-                  <Flex key={destination.outputId} mb={2}>
+                  <Flex key={destination.outputId} align="center" mb={2}>
                     <Img
                       alt={`${destination.outputType} logo`}
                       src={DESTINATIONS[destination.outputType].logo}
@@ -159,7 +159,10 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({
         </SimpleGrid>
       </Card>
       <Card variant="dark" as="section" p={4}>
-        <AlertDeliverySection alertDeliveries={alert.deliveryResponses} />
+        <AlertDeliverySection
+          alertDeliveries={alert.deliveryResponses}
+          configuredAlertDestinations={configuredAlertDestinations}
+        />
       </Card>
     </Flex>
   );

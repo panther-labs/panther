@@ -5,7 +5,9 @@ import AlertDeliverySection from './index';
 describe('AlertDeliveryTable', () => {
   it('renders the correct message on successful alert delivery', () => {
     const alertDelivery = buildDeliveryResponse({ success: true });
-    const { queryByText } = render(<AlertDeliverySection alertDeliveries={[alertDelivery]} />);
+    const { queryByText } = render(
+      <AlertDeliverySection alertDeliveries={[alertDelivery]} configuredAlertDestinations={[]} />
+    );
 
     expect(queryByText('Alert was delivered successfully')).toBeInTheDocument();
     expect(queryByText('Show History')).toBeInTheDocument();
@@ -13,14 +15,18 @@ describe('AlertDeliveryTable', () => {
 
   it('renders the correct message on failed alert delivery', () => {
     const alertDelivery = buildDeliveryResponse({ success: false });
-    const { queryByText } = render(<AlertDeliverySection alertDeliveries={[alertDelivery]} />);
+    const { queryByText } = render(
+      <AlertDeliverySection alertDeliveries={[alertDelivery]} configuredAlertDestinations={[]} />
+    );
 
     expect(queryByText('Alert delivery failed')).toBeInTheDocument();
     expect(queryByText('Show History')).toBeInTheDocument();
   });
 
   it('renders the correct message on no alert deliverires', () => {
-    const { queryByText } = render(<AlertDeliverySection alertDeliveries={[]} />);
+    const { queryByText } = render(
+      <AlertDeliverySection alertDeliveries={[]} configuredAlertDestinations={[]} />
+    );
 
     expect(queryByText('Delivery information could not be retrieved')).toBeInTheDocument();
     expect(queryByText('Show History')).not.toBeInTheDocument();
@@ -29,7 +35,7 @@ describe('AlertDeliveryTable', () => {
   it('correctly toggles between showing and hiding the  delivery table', async () => {
     const alertDelivery = buildDeliveryResponse({ success: false });
     const { queryByText, queryByTestId } = render(
-      <AlertDeliverySection alertDeliveries={[alertDelivery]} />
+      <AlertDeliverySection alertDeliveries={[alertDelivery]} configuredAlertDestinations={[]} />
     );
 
     expect(queryByTestId('alert-delivery-table')).not.toBeInTheDocument();

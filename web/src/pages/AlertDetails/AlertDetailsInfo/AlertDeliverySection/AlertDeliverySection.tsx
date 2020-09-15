@@ -1,32 +1,29 @@
-/**
- * Panther is a Cloud-Native SIEM for the Modern Security Team.
- * Copyright (C) 2020 Panther Labs Inc
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 import React from 'react';
 import { Text, Flex, Icon, AbstractButton, Box, Collapse } from 'pouncejs';
-import { AlertDetails } from 'Pages/AlertDetails';
+import { AlertDetails, ListDestinations } from 'Pages/AlertDetails';
 import AlertDeliveryTable from 'Pages/AlertDetails/AlertDetailsInfo/AlertDeliverySection/AlertDeliveryTable';
 
 interface AlertDeliverySectionProps {
   alertDeliveries: AlertDetails['alert']['deliveryResponses'];
+  configuredAlertDestinations: ListDestinations['destinations'];
 }
 
-const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({ alertDeliveries }) => {
+const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
+  alertDeliveries,
+  configuredAlertDestinations,
+}) => {
   const [isHistoryVisible, setHistoryVisibility] = React.useState(false);
+
+  // FIXME: `configuredAlertDestinations` should be part of Alert & coming directly from GraphQL
+  //  Someday...
+  const enhancedAlertDeliveries = React.useMemo(() => {
+    return alertDeliveries
+      .map(dr => ({
+        ...dr,
+        ...configuredAlertDestinations.find(d => d.outputId === dr.outputId),
+      }))
+      .reverse();
+  }, [alertDeliveries, configuredAlertDestinations]);
 
   if (!alertDeliveries.length) {
     return (
@@ -65,7 +62,7 @@ const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({ alertDelive
       </Flex>
       <Collapse open={isHistoryVisible}>
         <Box backgroundColor="navyblue-400" mt={6}>
-          <AlertDeliveryTable alertDeliveries={alertDeliveries} />
+          <AlertDeliveryTable alertDeliveries={enhancedAlertDeliveries} />
         </Box>
       </Collapse>
     </Box>

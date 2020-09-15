@@ -1,13 +1,21 @@
 import React from 'react';
 import { formatDatetime } from 'Helpers/utils';
-import { buildDeliveryResponse, render } from 'test-utils';
+import { buildDeliveryResponse, buildDestination, render } from 'test-utils';
 import AlertDeliveryTable from './index';
 
 describe('AlertDeliveryTable', () => {
   it('renders information about a list of delivery Responses', () => {
     const alertDelivery = buildDeliveryResponse({ success: false });
+    const destination = buildDestination({ outputId: alertDelivery.outputId });
+
+    const enhancedAlertDelivery = {
+      ...alertDelivery,
+      outputType: destination.outputType,
+      displayName: destination.displayName,
+    };
+
     const { getByText, getByAriaLabel } = render(
-      <AlertDeliveryTable alertDeliveries={[alertDelivery]} />
+      <AlertDeliveryTable alertDeliveries={[enhancedAlertDelivery]} />
     );
 
     expect(getByText(formatDatetime(alertDelivery.dispatchedAt))).toBeInTheDocument();
@@ -21,8 +29,16 @@ describe('AlertDeliveryTable', () => {
 
   it('doesn\'t render a "retry" button for  successful deliveries', () => {
     const alertDelivery = buildDeliveryResponse({ success: true });
+    const destination = buildDestination({ outputId: alertDelivery.outputId });
+
+    const enhancedAlertDelivery = {
+      ...alertDelivery,
+      outputType: destination.outputType,
+      displayName: destination.displayName,
+    };
+
     const { getByText, queryByAriaLabel } = render(
-      <AlertDeliveryTable alertDeliveries={[alertDelivery]} />
+      <AlertDeliveryTable alertDeliveries={[enhancedAlertDelivery]} />
     );
 
     expect(getByText('SUCCESS')).toBeInTheDocument();
