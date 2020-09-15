@@ -26,7 +26,7 @@ interface GenericItemCardLogoProps {
 
 interface GenericItemCardValueProps {
   label: string;
-  value: string | React.ReactElement;
+  value: string | number | React.ReactElement;
 }
 
 interface GenericItemCardComposition {
