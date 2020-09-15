@@ -17,20 +17,33 @@
  */
 
 import React from 'react';
-import { buildAlertDetails, buildRuleDetails, render } from 'test-utils';
+import {
+  buildAlertDetails,
+  buildDeliveryResponse,
+  buildDestination,
+  buildRuleDetails,
+  render,
+  within,
+} from 'test-utils';
 import urls from 'Source/urls';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { Route } from 'react-router-dom';
 import { mockAlertDetails } from './graphql/alertDetails.generated';
 import { mockRuleTeaser } from './graphql/ruleTeaser.generated';
+import { mockListDestinations } from './graphql/listDestinations.generated';
 import AlertDetails from './AlertDetails';
 
 describe('AlertDetails', () => {
   it('renders the correct tab based on a URL param', async () => {
-    const alert = buildAlertDetails({ events: ['"{}"', '"{}"'] });
+    const destination = buildDestination();
+    const alert = buildAlertDetails({
+      events: ['"{}"', '"{}"'],
+      deliveryResponses: [buildDeliveryResponse({ outputId: destination.outputId })],
+    });
     const rule = buildRuleDetails();
 
     const mocks = [
+      mockListDestinations({ data: { destinations: [destination] } }),
       mockAlertDetails({
         variables: {
           input: {
@@ -76,10 +89,15 @@ describe('AlertDetails', () => {
   });
 
   it('correctly lazy loads event tab', async () => {
-    const alert = buildAlertDetails({ events: ['"{}"', '"{}"'] });
+    const destination = buildDestination();
+    const alert = buildAlertDetails({
+      events: ['"{}"', '"{}"'],
+      deliveryResponses: [buildDeliveryResponse({ outputId: destination.outputId })],
+    });
     const rule = buildRuleDetails();
 
     const mocks = [
+      mockListDestinations({ data: { destinations: [destination] } }),
       mockAlertDetails({
         variables: {
           input: {
@@ -120,5 +138,52 @@ describe('AlertDetails', () => {
     const eventsTabPanel = getByTestId('alert-events-tabpanel');
     expect(eventsTabPanel).toBeVisible();
     expect(eventsTabPanel).not.toBeEmptyDOMElement();
+  });
+
+  it('shows destination information in the details tab', async () => {
+    const destination = buildDestination();
+    const alert = buildAlertDetails({
+      events: ['"{}"', '"{}"'],
+      deliveryResponses: [buildDeliveryResponse({ outputId: destination.outputId })],
+    });
+    const rule = buildRuleDetails();
+
+    const mocks = [
+      mockListDestinations({ data: { destinations: [destination] } }),
+      mockAlertDetails({
+        variables: {
+          input: {
+            alertId: alert.alertId,
+            eventsPageSize: DEFAULT_LARGE_PAGE_SIZE,
+          },
+        },
+        data: { alert },
+      }),
+      mockRuleTeaser({
+        variables: {
+          input: {
+            ruleId: alert.ruleId,
+          },
+        },
+        data: { rule },
+      }),
+    ];
+
+    // render initially with the "details" section
+    const { findByTestId } = render(
+      <Route exact path={urls.logAnalysis.alerts.details(':id')}>
+        <AlertDetails />
+      </Route>,
+      {
+        mocks,
+        initialRoute: `${urls.logAnalysis.alerts.details(alert.alertId)}?section=details`,
+      }
+    );
+
+    // expect to see all the data, but not to see the "Triggered events
+
+    const detailsTabPanel = await findByTestId('alert-details-tabpanel');
+    const { getByText: getByTextWithinDetailsTabPanel } = within(detailsTabPanel);
+    expect(getByTextWithinDetailsTabPanel(destination.displayName)).toBeInTheDocument();
   });
 });

@@ -10,7 +10,7 @@ interface AlertDeliveryTableProps {
 
 const AlertDeliveryTable: React.FC<AlertDeliveryTableProps> = ({ alertDeliveries }) => {
   return (
-    <Table>
+    <Table data-testid="alert-delivery-table">
       <Table.Head>
         <Table.Row>
           <Table.HeaderCell />
@@ -33,6 +33,7 @@ const AlertDeliveryTable: React.FC<AlertDeliveryTableProps> = ({ alertDeliveries
                 borderRadius="circle"
                 display="flex"
                 p="2px"
+                aria-label="Expand delivery information"
               >
                 <Icon type="add" size="x-small" />
               </AbstractButton>

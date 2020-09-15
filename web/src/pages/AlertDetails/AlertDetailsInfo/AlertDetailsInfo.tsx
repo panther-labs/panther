@@ -141,28 +141,25 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({
               <Box id="created-at">{formatDatetime(alert.creationTime)}</Box>
               <Box id="last-matched-at">{formatDatetime(alert.updateTime)}</Box>
               <Box id="destinations">
-                {configuredAlertDestinations.map(destination => {
-                  const destData = DESTINATIONS[destination.outputType];
-                  return (
-                    <Flex key={destination.outputId} mb={2}>
-                      <Img
-                        alt={`${destination.outputType} logo`}
-                        src={destData.logo}
-                        nativeWidth={18}
-                        nativeHeight={18}
-                        mr={2}
-                      />
-                      {destData.title}
-                    </Flex>
-                  );
-                })}
+                {configuredAlertDestinations.map(destination => (
+                  <Flex key={destination.outputId} mb={2}>
+                    <Img
+                      alt={`${destination.outputType} logo`}
+                      src={DESTINATIONS[destination.outputType].logo}
+                      nativeWidth={18}
+                      nativeHeight={18}
+                      mr={2}
+                    />
+                    {destination.displayName}
+                  </Flex>
+                ))}
               </Box>
             </Flex>
           </Flex>
         </SimpleGrid>
       </Card>
       <Card variant="dark" as="section" p={4}>
-        <AlertDeliverySection alert={alert} />
+        <AlertDeliverySection alertDeliveries={alert.deliveryResponses} />
       </Card>
     </Flex>
   );
