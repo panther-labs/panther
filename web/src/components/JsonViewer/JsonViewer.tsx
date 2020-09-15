@@ -37,7 +37,7 @@ const JsonViewer: React.FC<JsonViewerProps> = ({ data, collapsed }) => {
       fontFamily: 'inherit',
       fontSize: remToPx(theme.fontSizes.medium),
       background: 'transparent',
-      wordBreak: 'break-all',
+      wordBreak: 'break-all' as const,
     }),
     [theme]
   );
