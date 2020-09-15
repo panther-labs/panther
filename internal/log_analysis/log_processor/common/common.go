@@ -58,6 +58,7 @@ type EnvConfig struct {
 	AwsLambdaFunctionMemorySize int    `required:"true" split_words:"true"`
 	ProcessedDataBucket         string `required:"true" split_words:"true"`
 	SqsQueueURL                 string `required:"true" split_words:"true"`
+	SqsDelaySec                 int64  `required:"true" split_words:"true"`
 	SnsTopicARN                 string `required:"true" split_words:"true"`
 }
 
@@ -73,6 +74,13 @@ func Setup() {
 	err := envconfig.Process("", &Config)
 	if err != nil {
 		panic(err)
+	}
+
+	// we will use this as the sqs WaitTime, so we want it at least 1 and at most 20
+	if Config.SqsDelaySec < 1 {
+		Config.SqsDelaySec = 1
+	} else if Config.SqsDelaySec > 20 {
+		Config.SqsDelaySec = 20 //  note: 20 is max for sqs
 	}
 }
 

@@ -41,8 +41,7 @@ const (
 	processingMaxFilesLimit   = 5000 // limit this so there is time to delete from the queue at the end
 	processingTimeLimitScalar = 0.5  // the processing runtime should be shorter than lambda timeout to make room to flush buffers
 
-	sqsMaxBatchSize    = 10 // max messages per read for SQS (can't find an sqs constant to refer to)
-	sqsWaitTimeSeconds = 5 //  note: 20 is max for sqs
+	sqsMaxBatchSize = 10 // max messages per read for SQS (can't find an sqs constant to refer to)
 )
 
 /*
@@ -116,7 +115,8 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 			}
 
 			// keep reading from SQS to maximize output aggregation
-			messages, messageReceipts, err := sqsbatch.ReceiveMessage(sqsClient, common.Config.SqsQueueURL, sqsWaitTimeSeconds)
+			messages, messageReceipts, err := sqsbatch.ReceiveMessage(sqsClient,
+				common.Config.SqsQueueURL, common.Config.SqsDelaySec)
 			if err != nil {
 				readEventErrorChan <- err
 				return
