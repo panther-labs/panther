@@ -230,8 +230,14 @@ func installNodeModules() error {
 		return nil
 	}
 
-	log.Info("npm install...")
-	args := []string{"install", "--no-progress", "--no-audit"}
+	if util.IsRunningInCI() {
+		log.Info("npm ci...")
+	    args := []string{"ci", "--no-progress", "--no-audit"}
+	} else {
+	    log.Info("npm install...")
+	    args := []string{"install", "--no-progress", "--no-audit"}
+	}
+
 	if !mg.Verbose() {
 		args = append(args, "--silent")
 	}
