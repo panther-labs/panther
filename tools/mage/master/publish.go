@@ -22,10 +22,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/pkg/prompt"
 	"github.com/panther-labs/panther/tools/mage/clean"
 	"github.com/panther-labs/panther/tools/mage/clients"
@@ -88,7 +88,7 @@ func publishToRegion(log *zap.SugaredLogger, version, region string) error {
 	if err == nil {
 		return fmt.Errorf("%s already exists", s3URL)
 	}
-	if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != "NotFound" {
+	if !awsutils.IsAnyError(err, "NotFound") {
 		// Some error other than 'not found'
 		return fmt.Errorf("failed to describe %s : %v", s3URL, err)
 	}

@@ -66,6 +66,7 @@ var (
 			DedupString:       aws.String("dedupString"),
 			EventsMatched:     aws.Int(100),
 			Title:             aws.String("title"),
+			LogTypes:          []string{"AWS.CloudTrail"},
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: timeInTest,
 			DeliveryResponses: []*models.DeliveryResponse{},
@@ -174,6 +175,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			DedupString:       aws.String("dedupString"),
 			EventsMatched:     aws.Int(100),
 			Title:             aws.String("ruleId"),
+			LogTypes:          []string{"AWS.CloudTrail"},
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: timeInTest,
 			DeliveryResponses: []*models.DeliveryResponse{},
@@ -192,6 +194,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			// Since there is no dynamically generated title,
 			// we return the display name
 			Title:             aws.String("ruleDisplayName"),
+			LogTypes:          []string{"AWS.CloudTrail"},
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: timeInTest,
 			DeliveryResponses: []*models.DeliveryResponse{},

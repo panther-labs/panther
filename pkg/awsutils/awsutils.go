@@ -1,3 +1,5 @@
+package awsutils
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,44 +18,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as Types from '../../../__generated__/schema';
+import (
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/pkg/errors"
+)
 
-import { GraphQLError } from 'graphql';
-import gql from 'graphql-tag';
-
-export type AlertDetailsFull = Pick<
-  Types.AlertDetails,
-  | 'alertId'
-  | 'ruleId'
-  | 'title'
-  | 'creationTime'
-  | 'eventsMatched'
-  | 'updateTime'
-  | 'eventsLastEvaluatedKey'
-  | 'events'
-  | 'dedupString'
-  | 'severity'
-  | 'status'
-  | 'logTypes'
-  | 'lastUpdatedBy'
-  | 'lastUpdatedByTime'
->;
-
-export const AlertDetailsFull = gql`
-  fragment AlertDetailsFull on AlertDetails {
-    alertId
-    ruleId
-    title
-    creationTime
-    eventsMatched
-    updateTime
-    eventsLastEvaluatedKey
-    events
-    dedupString
-    severity
-    status
-    logTypes
-    lastUpdatedBy
-    lastUpdatedByTime
-  }
-`;
+// Method returns true if the provided error is an AWS error with any
+// of the given codes.
+func IsAnyError(err error, codes ...string) bool {
+	var awserror awserr.Error
+	if !errors.As(err, &awserror) {
+		return false
+	}
+	for _, code := range codes {
+		if awserror.Code() == code {
+			return true
+		}
+	}
+	return false
+}

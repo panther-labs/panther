@@ -26,8 +26,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/sns/snsiface"
-	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
@@ -78,11 +76,10 @@ type API interface {
 
 // OutputClient encapsulates the clients that allow sending alerts to multiple outputs
 type OutputClient struct {
-	session     *session.Session
+	// WARNING: This is shared by concurrent goroutines.
+	// Do not mutate any fields in the goroutines, and do not use maps without proper locking.
+	session     *session.Session // safe for concurrent reads, not writes
 	httpWrapper HTTPWrapperiface
-	// Map from region -> client
-	sqsClients map[string]sqsiface.SQSAPI
-	snsClients map[string]snsiface.SNSAPI
 }
 
 // OutputClient must satisfy the API interface.
@@ -93,9 +90,6 @@ func New(sess *session.Session) *OutputClient {
 	return &OutputClient{
 		session:     sess,
 		httpWrapper: &HTTPWrapper{httpClient: &http.Client{}},
-		// TODO Lazy initialization of clients
-		sqsClients: make(map[string]sqsiface.SQSAPI),
-		snsClients: make(map[string]snsiface.SNSAPI),
 	}
 }
 
