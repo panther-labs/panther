@@ -226,12 +226,12 @@ func getClusterServices(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmodel
 	// The DescribeServices API call does not have a version with builtin paging like the list
 	// API call does. API set a limit of 10 services to describe in a single operation.
 	// Loop through results 10 elements at a time and aggregate the results
-	const ecsServicebatchSize = 10
+	const ecsServiceBatchSize = 10
 	// initialize the rawServices variable
 	var rawServices ecs.DescribeServicesOutput
 	// loop through the items in serviceArns, 10 at a time
-	for i := 0; i < len(serviceArns); i += ecsServicebatchSize {
-		end := i + ecsServicebatchSize
+	for i := 0; i < len(serviceArns); i += ecsServiceBatchSize {
+		end := i + ecsServiceBatchSize
 		if end > len(serviceArns) {
 			end = len(serviceArns)
 		}
