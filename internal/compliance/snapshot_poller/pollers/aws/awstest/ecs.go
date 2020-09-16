@@ -320,6 +320,7 @@ func (m *MockEcs) ListServicesPages(
 	in *ecs.ListServicesInput,
 	paginationFunction func(*ecs.ListServicesOutput, bool) bool,
 ) error {
+
 	args := m.Called(in)
 	if args.Error(0) != nil {
 		return args.Error(0)
