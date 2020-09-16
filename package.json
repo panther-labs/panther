@@ -120,7 +120,6 @@
     "history": "^4.10.1",
     "linkifyjs": "^2.1.9",
     "lodash": "^4.17.19",
-    "npm-force-resolutions": "0.0.3",
     "pouncejs": "^0.66.2",
     "qrcode.react": "^1.0.0",
     "query-string": "^6.10.1",
@@ -138,7 +137,7 @@
     "node-fetch": "2.6.1"
   },
   "scripts": {
-    "preinstall": "npm-force-resolutions",
+    "preinstall": "npx npm-force-resolutions",
     "build": "node web/scripts/build.js",
     "build:analysis": "cross-env PERFORMANCE_ANALYSIS=true node web/scripts/build.js",
     "start": "node web/scripts/start.js",
