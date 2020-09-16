@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
@@ -35,7 +36,7 @@ import (
 
 func TestSendSqs(t *testing.T) {
 	client := &testutils.SqsMock{}
-	outputClient := &OutputClient{sqsClients: map[string]sqsiface.SQSAPI{"us-west-2": client}}
+	outputClient := &OutputClient{}
 
 	sqsOutputConfig := &outputModels.SqsConfig{
 		QueueURL: "https://sqs.us-west-2.amazonaws.com/123456789012/test-output",
@@ -66,6 +67,10 @@ func TestSendSqs(t *testing.T) {
 	}
 
 	client.On("SendMessage", expectedSqsSendMessageInput).Return(&sqs.SendMessageOutput{MessageId: aws.String("messageId")}, nil)
+	getSqsClient = func(*session.Session, string) sqsiface.SQSAPI {
+		return client
+	}
+
 	result := outputClient.Sqs(alert, sqsOutputConfig)
 	assert.NotNil(t, result)
 	assert.Equal(t, &AlertDeliveryResponse{
