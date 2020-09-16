@@ -22,7 +22,7 @@ import { AlertStatusesEnum, SeverityEnum } from 'Generated/schema';
 import AlertCard from './index';
 
 describe('AlertCard', () => {
-  it('displays Alert data in the card', async () => {
+  it('displays the correct Alert data in the card', async () => {
     const alertData = buildAlertSummary();
 
     const { getByText, getByAriaLabel } = render(<AlertCard alert={alertData} />);
