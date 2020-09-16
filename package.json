@@ -134,7 +134,7 @@
     "yup": "^0.28.1"
   },
   "resolutions": {
-    "node-fetch": "^2.6.1"
+    "node-fetch": "2.6.1"
   },
   "scripts": {
     "preinstall": "npx npm-force-resolutions",
