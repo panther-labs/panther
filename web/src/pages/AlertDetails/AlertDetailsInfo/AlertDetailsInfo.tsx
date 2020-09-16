@@ -17,24 +17,30 @@
  */
 
 import React from 'react';
-import { Box, Card, Flex, Link, SimpleGrid } from 'pouncejs';
+import { Box, Card, Flex, Img, Link, SimpleGrid } from 'pouncejs';
 import Linkify from 'Components/Linkify';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import { formatDatetime, minutesToString } from 'Helpers/utils';
-import { AlertDetailsFull } from 'Source/graphql/fragments/AlertDetailsFull.generated';
-import { RuleDetails } from 'Generated/schema';
+import { AlertDetails, RuleTeaser, ListDestinations } from 'Pages/AlertDetails';
+import AlertDeliverySection from 'Pages/AlertDetails/AlertDetailsInfo/AlertDeliverySection';
+import { DESTINATIONS } from 'Source/constants';
 
 interface AlertDetailsInfoProps {
-  alert: AlertDetailsFull;
-  rule: Partial<RuleDetails>;
+  alert: AlertDetails['alert'];
+  rule: RuleTeaser['rule'];
+  configuredAlertDestinations: ListDestinations['destinations'];
 }
 
-const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
+const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({
+  alert,
+  rule,
+  configuredAlertDestinations,
+}) => {
   return (
     <Flex direction="column" spacing={4}>
       {rule && (
-        <Card variant="dark" as="section" p={4} mb={4}>
+        <Card variant="dark" as="section" p={4}>
           <SimpleGrid columns={2} spacing={5}>
             <Flex direction="column" spacing={2}>
               <Box
@@ -129,13 +135,31 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
             <Flex direction="column" color="navyblue-100" spacing={2}>
               <Box aria-describedby="created-at">Created</Box>
               <Box aria-describedby="last-matched-at">Last Matched</Box>
+              <Box aria-describedby="destinations">Destinations</Box>
             </Flex>
             <Flex direction="column" spacing={2}>
               <Box id="created-at">{formatDatetime(alert.creationTime)}</Box>
               <Box id="last-matched-at">{formatDatetime(alert.updateTime)}</Box>
+              <Box id="destinations">
+                {configuredAlertDestinations.map(destination => (
+                  <Flex key={destination.outputId} mb={2}>
+                    <Img
+                      alt={`${destination.outputType} logo`}
+                      src={DESTINATIONS[destination.outputType].logo}
+                      nativeWidth={18}
+                      nativeHeight={18}
+                      mr={2}
+                    />
+                    {destination.displayName}
+                  </Flex>
+                ))}
+              </Box>
             </Flex>
           </Flex>
         </SimpleGrid>
+      </Card>
+      <Card variant="dark" as="section" p={4}>
+        <AlertDeliverySection alertDeliveries={alert.deliveryResponses} />
       </Card>
     </Flex>
   );
