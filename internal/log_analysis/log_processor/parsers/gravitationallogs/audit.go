@@ -85,7 +85,7 @@ type TeleportAudit struct {
 	CGroupID   pantherlog.Int64  `json:"cgroup_id" description:"Control group id"`
 	ReturnCode pantherlog.Int32  `json:"return_code" description:"Return code of the command"`
 	Program    pantherlog.String `json:"program" description:"Name of the command"`
-	ArgV       []string    `json:"argv" description:"Arguments passed to command"`
+	ArgV       []string          `json:"argv" description:"Arguments passed to command"`
 
 	// scp event type fields
 	Path   pantherlog.String `json:"path" description:"Executable path or SCP action target file path (scp, session.command)"`
@@ -93,11 +93,11 @@ type TeleportAudit struct {
 	Action pantherlog.String `json:"action" description:"SCP action (scp)"`
 
 	// user.login event type fields
-	Method     pantherlog.String          `json:"method" description:"Login method used (user.login)"`
+	Method     pantherlog.String      `json:"method" description:"Login method used (user.login)"`
 	Attributes *pantherlog.RawMessage `json:"attributes" description:"User login attributes (user.login)"`
 
 	// user.create event type fields
-	Roles     []string    `json:"roles" description:"Roles for the new user (user.create)"`
+	Roles     []string          `json:"roles" description:"Roles for the new user (user.create)"`
 	Connector pantherlog.String `json:"connector" description:"Connector that created the user (user.create)"`
 	Expires   pantherlog.Time   `json:"expires" tcodec:"rfc3339" description:"Expiration date "`
 
@@ -110,15 +110,15 @@ type TeleportAudit struct {
 
 	// session.start
 	ServerLabels   map[string]string `json:"server_labels" description:"Server labels"`
-	ServerHostname pantherlog.String       `json:"server_hostname" panther:"hostname" description:"Server hostname"`
-	ServerAddress  pantherlog.String       `json:"server_addr" panther:"net_addr" description:"Server hostname"`
+	ServerHostname pantherlog.String `json:"server_hostname" panther:"hostname" description:"Server hostname"`
+	ServerAddress  pantherlog.String `json:"server_addr" panther:"net_addr" description:"Server hostname"`
 
 	// session.end
 	SessionStart      pantherlog.Time `json:"session_start" tcodec:"rfc3339" description:"Timestamp of session start"`
 	SessionStop       pantherlog.Time `json:"session_stop" tcodec:"rfc3339" description:"Timestamp of session end"`
 	Interactive       pantherlog.Bool `json:"interactive" description:"Whether the session was interactive"`
 	EnhancedRecording pantherlog.Bool `json:"enhanced_recording" description:"Whether enhanced recording is enabled"`
-	Participants      []string  `json:"participants" description:"Users that participated in the session"`
+	Participants      []string        `json:"participants" description:"Users that participated in the session"`
 
 	// session.network
 	DestinationAddress pantherlog.String `json:"dst_addr" panther:"ip" description:"Destination IP address"`
