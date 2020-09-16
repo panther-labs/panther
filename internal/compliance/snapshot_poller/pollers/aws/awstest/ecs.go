@@ -31,9 +31,10 @@ import (
 
 // Example ECS API return values
 var (
-	ExampleClusterArn = aws.String("arn:aws:ecs:us-west-2:123456789012:cluster/example-cluster")
-	ExampleTaskArn    = aws.String("arn:aws:ecs:us-west-2:123456789012:task/1111-2222")
-	ExampleServiceArn = aws.String("arn:aws:ecs:us-west-2:123456789012:service/example-service")
+	ExampleClusterArn         = aws.String("arn:aws:ecs:us-west-2:123456789012:cluster/example-cluster")
+	ExampleClusterMultiSvcArn = aws.String("arn:aws:ecs:us-west-2:123456789012:cluster/example-cluster-multi-service")
+	ExampleTaskArn            = aws.String("arn:aws:ecs:us-west-2:123456789012:task/1111-2222")
+	ExampleServiceArn         = aws.String("arn:aws:ecs:us-west-2:123456789012:service/example-service")
 
 	ExampleListClusters = &ecs.ListClustersOutput{
 		ClusterArns: []*string{
@@ -57,6 +58,23 @@ var (
 
 	ExampleListServices = &ecs.ListServicesOutput{
 		ServiceArns: []*string{
+			ExampleServiceArn,
+		},
+	}
+
+	ExampleListServicesMultiSvc = &ecs.ListServicesOutput{
+		ServiceArns: []*string{
+			ExampleServiceArn,
+			ExampleServiceArn,
+			ExampleServiceArn,
+			ExampleServiceArn,
+			ExampleServiceArn,
+			ExampleServiceArn,
+			ExampleServiceArn,
+			ExampleServiceArn,
+			ExampleServiceArn,
+			ExampleServiceArn,
+			ExampleServiceArn,
 			ExampleServiceArn,
 		},
 	}
@@ -302,9 +320,13 @@ func (m *MockEcs) ListServicesPages(
 	in *ecs.ListServicesInput,
 	paginationFunction func(*ecs.ListServicesOutput, bool) bool,
 ) error {
-
 	args := m.Called(in)
 	if args.Error(0) != nil {
+		return args.Error(0)
+	}
+	// Return appropriate ListServices output based on input ClusterARN
+	if in.Cluster == ExampleClusterMultiSvcArn {
+		paginationFunction(ExampleListServicesMultiSvc, true)
 		return args.Error(0)
 	}
 	paginationFunction(ExampleListServices, true)
@@ -331,6 +353,11 @@ func (m *MockEcs) DescribeClusters(in *ecs.DescribeClustersInput) (*ecs.Describe
 
 func (m *MockEcs) DescribeServices(in *ecs.DescribeServicesInput) (*ecs.DescribeServicesOutput, error) {
 	args := m.Called(in)
+	// API only allows describing 10 services at a time.
+	// Return error if input has more than 10 ServiceArns.
+	if len(in.Services) > 10 {
+		return nil, errors.New("ECS.DescribeServices error: Too many service ARNS passed to DescribeServices")
+	}
 	return args.Get(0).(*ecs.DescribeServicesOutput), args.Error(1)
 }
 
