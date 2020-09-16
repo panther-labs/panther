@@ -24,6 +24,7 @@ on:
 jobs:
   sync_prs_from_community_to_enterprise:
     name: Syncs merged PRs from Panther Community to Panther Enterprise
+    if: ${{ github.event.pull_request.merged == true && !contains(github.event.pull_request.labels, env.IGNORE_LABEL) }}
     runs-on: ubuntu-latest
     env:
       SOURCE_REPO_CHECKOUT_PATH: src
@@ -47,23 +48,13 @@ jobs:
           token: ${{ secrets.PR_SYNC_TOKEN }}
           fetch-depth: 1
 
-      - name: Validate that PR was merged and not closed
-        if: ${{ github.event.pull_request.merged == false }}
-        run: exit 1
-
-      - name: Validate that PR shouldn't be excempt from syncing
-        if: ${{ contains(github.event.pull_request.labels, env.IGNORE_LABEL) }}
-        run: exit 1
-
       - name: Setup Git Credentials
-        if: ${{ success() }}
         working-directory: ${{ env.DEST_REPO_CHECKOUT_PATH }}
         run: |
           git config --global user.email "github-service-account@runpanther.io"
           git config --global user.name "panther-bot"
 
       - name: Bootstrap a PR branch
-        if: ${{ success() }}
         working-directory: ${{ env.DEST_REPO_CHECKOUT_PATH }}
         run: |
           git checkout -b $HEAD
@@ -75,7 +66,6 @@ jobs:
           git push origin $HEAD
 
       - name: Clone original PR
-        if: ${{ success() }}
         uses: ./src/build/actions/pr_sync # Github actions has a bug and we can't use ENV var here
         id: pr_sync
         env:
@@ -87,6 +77,7 @@ jobs:
 
   sync_prs_from_master_to_release:
     name: Syncs merged PRs from master to release branch, if a certain label is present
+    if: ${{ github.event.pull_request.merged == true && contains(github.event.pull_request.labels, env.SYNC_LABEL) }}
     runs-on: ubuntu-latest
     env:
       HEAD: ${{ format('sync-release-{0}', github.event.pull_request.head.ref) }}
@@ -98,22 +89,12 @@ jobs:
           token: ${{ secrets.PR_SYNC_TOKEN }}
           fetch-depth: 1
 
-      - name: Validate that PR was merged and not closed
-        if: ${{ github.event.pull_request.merged == false }}
-        run: exit 1
-
-      - name: Validate that PR should be synced to the release branch
-        if: ${{ !contains(github.event.pull_request.labels, env.SYNC_LABEL) }}
-        run: exit 1
-
       - name: Setup Git Credentials
-        if: ${{ success() }}
         run: |
           git config --global user.email "github-service-account@runpanther.io"
           git config --global user.name "panther-bot"
 
       - name: Bootstrap a PR branch
-        if: ${{ success() }}
         working-directory: ${{ env.DEST_REPO_CHECKOUT_PATH }}
         run: |
           git checkout -b $HEAD
@@ -123,7 +104,6 @@ jobs:
           git push origin $HEAD
 
       - name: Clone original PR
-        if: ${{ success() }}
         uses: ./src/build/actions/pr_sync # Github actions has a bug and we can't use ENV var here
         id: pr_sync
         env:
