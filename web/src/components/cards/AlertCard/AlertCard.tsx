@@ -39,7 +39,7 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
           <GenericItemCard.Heading>{alert.title}</GenericItemCard.Heading>
         </Link>
         <GenericItemCard.ValuesGroup>
-          <Link external as={RRLink} mt={4} to={urls.logAnalysis.rules.details(alert.ruleId)}>
+          <Link as={RRLink} to={urls.logAnalysis.rules.details(alert.ruleId)}>
             <Button variantColor="navyblue" as="div" size="small">
               View Rule
             </Button>

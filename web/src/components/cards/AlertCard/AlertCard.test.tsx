@@ -19,6 +19,7 @@
 import { buildAlertSummary, render } from 'test-utils';
 import React from 'react';
 import { AlertStatusesEnum, SeverityEnum } from 'Generated/schema';
+import urls from 'Source/urls';
 import AlertCard from './index';
 
 describe('AlertCard', () => {
@@ -34,5 +35,18 @@ describe('AlertCard', () => {
     expect(getByText(SeverityEnum.Medium)).toBeInTheDocument();
     expect(getByText(AlertStatusesEnum.Triaged)).toBeInTheDocument();
     expect(getByAriaLabel('Change Alert Status')).toBeInTheDocument();
+  });
+
+  it('should check links are valid', async () => {
+    const alertData = buildAlertSummary();
+    const { getByText } = render(<AlertCard alert={alertData} />);
+    expect(getByText(alertData.title).closest('a')).toHaveAttribute(
+      'href',
+      urls.logAnalysis.alerts.details(alertData.alertId)
+    );
+    expect(getByText('View Rule').closest('a')).toHaveAttribute(
+      'href',
+      urls.logAnalysis.rules.details(alertData.ruleId)
+    );
   });
 });
