@@ -50,10 +50,10 @@ describe('PagerdutyDestinationForm', () => {
       <PagerdutyDestinationForm onSubmit={() => {}} initialValues={emptyInitialValues} />
     );
     const displayNameField = getByLabelText('* Display Name');
-    const topicArnField = getByLabelText('Topic ARN');
+    const integrationKeyField = getByLabelText('Integration Key');
     const submitButton = getByText('Add Destination');
     expect(displayNameField).toBeInTheDocument();
-    expect(topicArnField).toBeInTheDocument();
+    expect(integrationKeyField).toBeInTheDocument();
     Object.values(SeverityEnum).forEach(sev => {
       expect(getByText(sev)).toBeInTheDocument();
     });
@@ -66,7 +66,7 @@ describe('PagerdutyDestinationForm', () => {
       <PagerdutyDestinationForm onSubmit={() => {}} initialValues={emptyInitialValues} />
     );
     const displayNameField = getByLabelText('* Display Name');
-    const topicArnField = getByLabelText('Topic ARN');
+    const integrationKeyField = getByLabelText('Integration Key');
     const submitButton = getByText('Add Destination');
     const criticalSeverityCheckBox = document.getElementById(severity);
     expect(criticalSeverityCheckBox).not.toBeNull();
@@ -76,11 +76,11 @@ describe('PagerdutyDestinationForm', () => {
     fireEvent.click(criticalSeverityCheckBox);
     await waitMs(50);
     expect(submitButton).toHaveAttribute('disabled');
-    fireEvent.change(topicArnField, { target: { value: '123' } });
+    fireEvent.change(integrationKeyField, { target: { value: '123' } });
     await waitMs(50);
     // Topic Arn has specific form
     expect(submitButton).toHaveAttribute('disabled');
-    fireEvent.change(topicArnField, { target: { value: pagerDutyIntegrationKey } });
+    fireEvent.change(integrationKeyField, { target: { value: pagerDutyIntegrationKey } });
     await waitMs(50);
     expect(submitButton).not.toHaveAttribute('disabled');
   });
