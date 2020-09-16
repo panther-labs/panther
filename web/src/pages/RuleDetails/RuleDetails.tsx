@@ -19,7 +19,7 @@
 import React from 'react';
 
 import useRouter from 'Hooks/useRouter';
-import { Alert, Box } from 'pouncejs';
+import { Alert, Box, Flex } from 'pouncejs';
 import Panel from 'Components/Panel';
 import { extractErrorMessage } from 'Helpers/utils';
 import withSEO from 'Hoc/withSEO';
@@ -128,12 +128,13 @@ const RuleDetailsPage = () => {
       <Box mt={5} mb={6}>
         <Panel title="Alerts">
           <ErrorBoundary>
-            {hasAnyAlerts &&
-              listAlertsData.alerts.alertSummaries.map((alert, i) => (
-                <Box key={i} my={2}>
-                  <AlertCard alert={alert} />
-                </Box>
-              ))}
+            {hasAnyAlerts && (
+              <Flex direction="column" spacing={2}>
+                {listAlertsData.alerts.alertSummaries.map(alert => (
+                  <AlertCard key={alert.alertId} alert={alert} />
+                ))}
+              </Flex>
+            )}
             {!hasAnyAlerts && <ListAlertsPageEmptyDataFallback />}
             {hasMoreAlerts && hasAnyAlerts && (
               <Box mt={8} ref={sentinelRef}>

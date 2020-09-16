@@ -17,7 +17,7 @@
  */
 
 import GenericItemCard from 'Components/GenericItemCard';
-import { Flex, Link, Button, Text } from 'pouncejs';
+import { Flex, Link, Button } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import React from 'react';
@@ -35,18 +35,13 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
   return (
     <GenericItemCard>
       <GenericItemCard.Body>
-        <Link
-          external
-          as={RRLink}
-          to={urls.logAnalysis.alerts.details(alert.alertId)}
-          cursor="pointer"
-        >
+        <Link as={RRLink} to={urls.logAnalysis.alerts.details(alert.alertId)} cursor="pointer">
           <GenericItemCard.Heading>{alert.title}</GenericItemCard.Heading>
         </Link>
         <GenericItemCard.ValuesGroup>
           <Link external as={RRLink} mt={4} to={urls.logAnalysis.rules.details(alert.ruleId)}>
-            <Button variantColor="navyblue" as="div">
-              <Text fontSize="small">View Rule</Text>
+            <Button variantColor="navyblue" as="div" size="small">
+              View Rule
             </Button>
           </Link>
           <GenericItemCard.Value label="Events" value={alert.eventsMatched} />

@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Alert, Box, Card } from 'pouncejs';
+import { Alert, Box, Card, Flex } from 'pouncejs';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
 import { ListAlertsInput } from 'Generated/schema';
@@ -120,11 +120,11 @@ const ListAlerts = () => {
       )}
       <ListAlertsActions showActions={hasError} />
       <Card as="section" px={8} py={4} mb={6} position="relative">
-        {alertItems.map((alert, i) => (
-          <Box key={i} my={2}>
-            <AlertCard alert={alert} />
-          </Box>
-        ))}
+        <Flex direction="column" spacing={2}>
+          {alertItems.map(alert => (
+            <AlertCard key={alert.alertId} alert={alert} />
+          ))}
+        </Flex>
         {hasNextPage && (
           <Box py={8} ref={sentinelRef}>
             <TablePlaceholder rowCount={10} />
