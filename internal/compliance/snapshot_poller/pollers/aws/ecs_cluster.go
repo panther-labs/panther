@@ -243,9 +243,10 @@ func getClusterServices(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmodel
 		if err != nil {
 			return nil, errors.Wrapf(err, "ECS.DescribeServices: %s", aws.StringValue(clusterArn))
 		}
-		// append each round of results to the overall rawServices var
+		// Append each round of rawServicesPage.Services results to overall rawServices var.
+		// rawServices.Failures will only contain details of services deleted between
+		// ListServicesPages and DescribeServices, we can safely discard those results.
 		rawServices.Services = append(rawServices.Services, rawServicesPage.Services...)
-		rawServices.Failures = append(rawServices.Failures, rawServicesPage.Failures...)
 	}
 
 	services := make([]*awsmodels.EcsService, 0, len(rawServices.Services))
