@@ -94,7 +94,7 @@ const AlertDeliveryTable: React.FC<AlertDeliveryTableProps> = ({
                   <Flex align="center">
                     <Img
                       alt={`${mostRecentDelivery.outputType} logo`}
-                      src={DESTINATIONS[mostRecentDelivery.outputType].logo}
+                      src={DESTINATIONS[mostRecentDelivery.outputType]?.logo}
                       nativeWidth={18}
                       nativeHeight={18}
                       mr={2}
