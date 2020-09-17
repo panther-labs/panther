@@ -147,6 +147,7 @@ func TestAcmCertificatePoller(t *testing.T) {
 }
 
 func TestAcmCertificatePollerError(t *testing.T) {
+	resetCache()
 	awstest.MockAcmForSetup = awstest.BuildMockAcmSvcAllError()
 
 	AcmClientFunc = awstest.SetupMockAcm
@@ -164,4 +165,8 @@ func TestAcmCertificatePollerError(t *testing.T) {
 	for _, event := range resources {
 		assert.Nil(t, event.Attributes)
 	}
+}
+
+func resetCache() {
+	clientCache = make(map[clientKey]cachedClient)
 }

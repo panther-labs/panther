@@ -140,6 +140,7 @@ func TestIAMPolicyBuildSnapshotError(t *testing.T) {
 }
 
 func TestIAMPolicyPoller(t *testing.T) {
+	resetCache()
 	awstest.MockIAMForSetup = awstest.BuildMockIAMSvcAll()
 
 	IAMClientFunc = awstest.SetupMockIAM
@@ -158,6 +159,7 @@ func TestIAMPolicyPoller(t *testing.T) {
 }
 
 func TestIAMPolicyPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockIAMForSetup = awstest.BuildMockIAMSvcAllError()
 
 	IAMClientFunc = awstest.SetupMockIAM

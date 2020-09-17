@@ -179,6 +179,7 @@ func TestElbv2ApplicationLoadBalancersPoller(t *testing.T) {
 }
 
 func TestElbv2ApplicationLoadBalancersPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockElbv2ForSetup = awstest.BuildMockElbv2SvcAllError()
 	awstest.MockWafRegionalForSetup = awstest.BuildMockWafRegionalSvcAllError()
 

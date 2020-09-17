@@ -72,6 +72,7 @@ func TestEC2DescribeSecurityGroupsError(t *testing.T) {
 }
 
 func TestEC2PollSecurityGroups(t *testing.T) {
+	resetCache()
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAll()
 
 	assumeRoleFunc = awstest.AssumeRoleMock
@@ -96,6 +97,7 @@ func TestEC2PollSecurityGroups(t *testing.T) {
 }
 
 func TestEC2PollSecurityGroupsError(t *testing.T) {
+	resetCache()
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAllError()
 
 	assumeRoleFunc = awstest.AssumeRoleMock
