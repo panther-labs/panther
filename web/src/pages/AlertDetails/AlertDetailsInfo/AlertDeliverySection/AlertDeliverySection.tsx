@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text, Flex, Icon, AbstractButton, Box, Collapse, useSnackbar } from 'pouncejs';
 import { AlertDetails, ListDestinations } from 'Pages/AlertDetails';
+import last from 'lodash/last';
 import AlertDeliveryTable from './AlertDeliveryTable';
 import { useRetryAlertDelivery } from './graphql/retryAlertDelivery.generated';
 
@@ -28,7 +29,14 @@ const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
       });
     },
     onError: () => pushSnackbar({ variant: 'error', title: 'Failed to deliver alert' }),
-    onCompleted: () => pushSnackbar({ variant: 'success', title: 'Successfully delivered alert' }),
+    onCompleted: data => {
+      const attemptedDelivery = last(data.deliverAlert.deliveryResponses);
+      if (attemptedDelivery.success) {
+        pushSnackbar({ variant: 'success', title: 'Successfully delivered alert' });
+      } else {
+        pushSnackbar({ variant: 'error', title: 'Failed to deliver alert' });
+      }
+    },
   });
 
   const onAlertDeliveryRetry = React.useCallback(
