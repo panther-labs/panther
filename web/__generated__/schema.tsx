@@ -1313,6 +1313,9 @@ export type UploadPoliciesResponse = {
   totalRules?: Maybe<Scalars['Int']>;
   newRules?: Maybe<Scalars['Int']>;
   modifiedRules?: Maybe<Scalars['Int']>;
+  totalGlobals?: Maybe<Scalars['Int']>;
+  newGlobals?: Maybe<Scalars['Int']>;
+  modifiedGlobals?: Maybe<Scalars['Int']>;
 };
 
 export type User = {
@@ -2857,6 +2860,9 @@ export type UploadPoliciesResponseResolvers<
   totalRules?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   newRules?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   modifiedRules?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  totalGlobals?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  newGlobals?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  modifiedGlobals?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 

@@ -1570,6 +1570,9 @@ export const buildUploadPoliciesResponse = (
     totalRules: 'totalRules' in overrides ? overrides.totalRules : 916,
     newRules: 'newRules' in overrides ? overrides.newRules : 898,
     modifiedRules: 'modifiedRules' in overrides ? overrides.modifiedRules : 463,
+    totalGlobals: 'totalGlobals' in overrides ? overrides.totalGlobals : 491,
+    newGlobals: 'newGlobals' in overrides ? overrides.newGlobals : 544,
+    modifiedGlobals: 'modifiedGlobals' in overrides ? overrides.modifiedGlobals : 197,
   };
 };
 
