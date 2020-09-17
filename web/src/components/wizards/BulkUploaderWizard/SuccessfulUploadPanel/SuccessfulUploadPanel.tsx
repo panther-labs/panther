@@ -24,16 +24,22 @@ import { UploadPolicies } from '../UploadPanel/graphql/uploadPolicies.generated'
 const createRows = (newItems = 0, modifiedItems = 0, totalItems = 0) => (
   <>
     <SimpleGrid columns={2} mb={2}>
-      <Text>New</Text>
-      <Text textAlign="right">{newItems}</Text>
+      <Text color="gray-300">New</Text>
+      <Text fontWeight="bold" textAlign="right">
+        {newItems}
+      </Text>
     </SimpleGrid>
     <SimpleGrid columns={2} mb={2}>
-      <Text>Modified</Text>
-      <Text textAlign="right">{modifiedItems}</Text>
+      <Text color="gray-300">Modified</Text>
+      <Text fontWeight="bold" textAlign="right">
+        {modifiedItems}
+      </Text>
     </SimpleGrid>
     <SimpleGrid columns={2}>
-      <Text>Total</Text>
-      <Text textAlign="right">{totalItems}</Text>
+      <Text color="gray-300">Total</Text>
+      <Text fontWeight="bold" textAlign="right">
+        {totalItems}
+      </Text>
     </SimpleGrid>
   </>
 );
