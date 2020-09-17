@@ -62,7 +62,7 @@ jobs:
           git fetch source master --depth 15
           git cherry-pick ${{ github.event.pull_request.merge_commit_sha }} || true
           git add -A .
-          git commit -m "merge changes from $GITHUB_REPOSITORY#${{ github.event.pull_request.number }}" || true
+          git commit -m "merge changes from $GITHUB_REPOSITORY#${{ github.event.pull_request.number }}" -m "$(git diff --name-only --diff-filter=U)" || true
           git push origin $HEAD
 
       - name: Clone original PR
@@ -100,7 +100,7 @@ jobs:
           git checkout -b $HEAD release
           git cherry-pick ${{ github.event.pull_request.merge_commit_sha }} || true
           git add -A .
-          git commit -m "merge changes from $GITHUB_REPOSITORY#${{ github.event.pull_request.number }}" || true
+          git commit -m "merge changes from $GITHUB_REPOSITORY#${{ github.event.pull_request.number }}" -m "$(git diff --name-only --diff-filter=U)" || true
           git push origin $HEAD
 
       - name: Clone original PR
