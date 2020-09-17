@@ -133,7 +133,11 @@
     "react-router-dom": "^5.1.2",
     "yup": "^0.28.1"
   },
+  "resolutions": {
+    "node-fetch": "2.6.1"
+  },
   "scripts": {
+    "preinstall": "npx npm-force-resolutions",
     "build": "node web/scripts/build.js",
     "build:analysis": "cross-env PERFORMANCE_ANALYSIS=true node web/scripts/build.js",
     "start": "node web/scripts/start.js",
