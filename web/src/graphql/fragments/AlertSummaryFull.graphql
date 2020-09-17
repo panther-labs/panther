@@ -10,6 +10,7 @@ fragment AlertSummaryFull on AlertSummary {
   }
   eventsMatched
   updateTime
+  logTypes
   lastUpdatedBy
   lastUpdatedByTime
 }

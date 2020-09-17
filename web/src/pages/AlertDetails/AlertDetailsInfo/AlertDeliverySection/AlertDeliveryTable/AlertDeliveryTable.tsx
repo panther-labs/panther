@@ -17,16 +17,31 @@
  */
 
 import React from 'react';
-import { AbstractButton, Badge, Box, Icon, IconButton, Table, Tooltip } from 'pouncejs';
+import { AbstractButton, Badge, Box, Flex, Icon, IconButton, Img, Table, Tooltip } from 'pouncejs';
+import { Destination } from 'Generated/schema';
 import { AlertDetails } from 'Pages/AlertDetails';
 import { formatDatetime } from 'Helpers/utils';
+import groupBy from 'lodash/groupBy';
+import { DESTINATIONS } from 'Source/constants';
 
 // We expect an "enhanced" set of alert deliveriest that contains the delivery type & name
 interface AlertDeliveryTableProps {
-  alertDeliveries: AlertDetails['alert']['deliveryResponses'];
+  alertDeliveries: (AlertDetails['alert']['deliveryResponses'][0] &
+    Pick<Destination, 'displayName' | 'outputType'>)[];
+  onAlertDeliveryRetry: (outputId: string) => void;
 }
 
-const AlertDeliveryTable: React.FC<AlertDeliveryTableProps> = ({ alertDeliveries }) => {
+const AlertDeliveryTable: React.FC<AlertDeliveryTableProps> = ({
+  alertDeliveries,
+  onAlertDeliveryRetry,
+}) => {
+  const [expandedDestination, setExpandedDestination] = React.useState<string>(null);
+
+  const alertDeliveriesByDestination = React.useMemo(() => {
+    const destinationsByOutputId = groupBy(alertDeliveries, d => d.outputId);
+    return Object.values(destinationsByOutputId);
+  }, [alertDeliveries]);
+
   return (
     <Table data-testid="alert-delivery-table">
       <Table.Head>
@@ -42,61 +57,120 @@ const AlertDeliveryTable: React.FC<AlertDeliveryTableProps> = ({ alertDeliveries
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {alertDeliveries.map(alertDelivery => (
-          <Table.Row key={`${alertDelivery.outputId}${alertDelivery.dispatchedAt}`}>
-            <Table.Cell>
-              {/* FIXME: This actually needs to do something */}
-              <AbstractButton
-                backgroundColor="navyblue-300"
-                borderRadius="circle"
-                display="flex"
-                p="2px"
-                aria-label="Expand delivery information"
-              >
-                <Icon type="add" size="x-small" />
-              </AbstractButton>
-            </Table.Cell>
-            <Table.Cell>{formatDatetime(alertDelivery.dispatchedAt)}</Table.Cell>
-            {/* FIXME This needs to showcase logo + destination display name */}
-            <Table.Cell>{alertDelivery.outputId}</Table.Cell>
-            <Table.Cell align="center">
-              <Box my={-1} display="inline-block">
-                <Badge color={alertDelivery.success ? 'green-400' : 'red-200'}>
-                  {alertDelivery.success ? 'SUCCESS' : 'FAIL'}
-                </Badge>
-              </Box>
-            </Table.Cell>
-            <Table.Cell align="center">{alertDelivery.statusCode}</Table.Cell>
-            {/* FIXME This needs to actually be calculated in the FE based on `deliveryResponses` */}
-            <Table.Cell align="center">TBD</Table.Cell>
-            <Table.Cell align="right" maxWidth={150}>
-              <Tooltip
-                content={
-                  <Box maxWidth={300} wordBreak="break-word">
-                    {alertDelivery.message}
+        {alertDeliveriesByDestination.map(destinationDeliveries => {
+          const [mostRecentDelivery, ...restDeliveries] = destinationDeliveries;
+          return (
+            <React.Fragment
+              key={`${mostRecentDelivery.outputId}${mostRecentDelivery.dispatchedAt}`}
+            >
+              <Table.Row>
+                <Table.Cell>
+                  {!!restDeliveries.length && (
+                    <AbstractButton
+                      backgroundColor="navyblue-300"
+                      borderRadius="circle"
+                      display="flex"
+                      p="2px"
+                      aria-label="Expand delivery information"
+                      onClick={() =>
+                        setExpandedDestination(
+                          expandedDestination === mostRecentDelivery.outputId
+                            ? null
+                            : mostRecentDelivery.outputId
+                        )
+                      }
+                    >
+                      <Icon
+                        size="x-small"
+                        type={
+                          expandedDestination === mostRecentDelivery.outputId ? 'subtract' : 'add'
+                        }
+                      />
+                    </AbstractButton>
+                  )}
+                </Table.Cell>
+                <Table.Cell>{formatDatetime(mostRecentDelivery.dispatchedAt)}</Table.Cell>
+                <Table.Cell>
+                  <Flex align="center">
+                    <Img
+                      alt={`${mostRecentDelivery.outputType} logo`}
+                      src={DESTINATIONS[mostRecentDelivery.outputType]?.logo}
+                      nativeWidth={18}
+                      nativeHeight={18}
+                      mr={2}
+                    />
+                    {mostRecentDelivery.displayName}
+                  </Flex>
+                </Table.Cell>
+                <Table.Cell align="center">
+                  <Box my={-1} display="inline-block">
+                    <Badge color={mostRecentDelivery.success ? 'green-400' : 'red-200'}>
+                      {mostRecentDelivery.success ? 'SUCCESS' : 'FAIL'}
+                    </Badge>
                   </Box>
-                }
-              >
-                <Box truncated>{alertDelivery.message}</Box>
-              </Tooltip>
-            </Table.Cell>
-            <Table.Cell>
-              {!alertDelivery.success && (
-                // FIXME: This needs to actually do something
-                <Box my={-1}>
-                  <IconButton
-                    title="Retry delivery"
-                    icon="refresh"
-                    variant="ghost"
-                    variantColor="navyblue"
-                    size="small"
-                    aria-label="Retry delivery"
-                  />
-                </Box>
-              )}
-            </Table.Cell>
-          </Table.Row>
-        ))}
+                </Table.Cell>
+                <Table.Cell align="center">{mostRecentDelivery.statusCode}</Table.Cell>
+                <Table.Cell align="center">{destinationDeliveries.length}</Table.Cell>
+                <Table.Cell align="right" maxWidth={150}>
+                  <Tooltip
+                    content={
+                      <Box maxWidth={300} wordBreak="break-word">
+                        {mostRecentDelivery.message}
+                      </Box>
+                    }
+                  >
+                    <Box truncated>{mostRecentDelivery.message}</Box>
+                  </Tooltip>
+                </Table.Cell>
+                <Table.Cell>
+                  {!mostRecentDelivery.success && (
+                    <Box my={-2}>
+                      <IconButton
+                        title="Retry delivery"
+                        icon="refresh"
+                        variant="ghost"
+                        variantColor="navyblue"
+                        size="small"
+                        aria-label="Retry delivery"
+                        onClick={() => onAlertDeliveryRetry(mostRecentDelivery.outputId)}
+                      />
+                    </Box>
+                  )}
+                </Table.Cell>
+              </Table.Row>
+              {expandedDestination === mostRecentDelivery.outputId &&
+                restDeliveries.map(destinationDelivery => (
+                  <Table.Row
+                    selected
+                    key={`${destinationDelivery.outputId}${destinationDelivery.dispatchedAt}`}
+                  >
+                    <Table.Cell />
+                    <Table.Cell>{formatDatetime(destinationDelivery.dispatchedAt)}</Table.Cell>
+                    <Table.Cell />
+                    <Table.Cell align="center">
+                      <Box as="b" color={destinationDelivery.success ? 'green-400' : 'red-200'}>
+                        {destinationDelivery.success ? 'SUCCESS' : 'FAIL'}
+                      </Box>
+                    </Table.Cell>
+                    <Table.Cell align="center">{destinationDelivery.statusCode}</Table.Cell>
+                    <Table.Cell align="center" />
+                    <Table.Cell align="right" maxWidth={150}>
+                      <Tooltip
+                        content={
+                          <Box maxWidth={300} wordBreak="break-word">
+                            {destinationDelivery.message}
+                          </Box>
+                        }
+                      >
+                        <Box truncated>{destinationDelivery.message}</Box>
+                      </Tooltip>
+                    </Table.Cell>
+                    <Table.Cell />
+                  </Table.Row>
+                ))}
+            </React.Fragment>
+          );
+        })}
       </Table.Body>
     </Table>
   );

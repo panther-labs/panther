@@ -23,7 +23,6 @@ import (
 	"net/http"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/ecr"
@@ -34,6 +33,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sts"
 
+	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/tools/mage/logger"
 )
@@ -87,7 +87,7 @@ func getSession(region string) *session.Session {
 	// Load and cache credentials now so we can report a meaningful error
 	creds, err := awsSession.Config.Credentials.Get()
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NoCredentialProviders" {
+		if awsutils.IsAnyError(err, "NoCredentialProviders") {
 			log.Fatalf("no AWS credentials found, set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY")
 		}
 		log.Fatalf("failed to load AWS credentials: %v", err)

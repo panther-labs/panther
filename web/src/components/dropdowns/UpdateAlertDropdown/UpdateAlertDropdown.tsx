@@ -94,7 +94,12 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
     onCompleted: data => {
       pushSnackbar({
         variant: 'success',
-        title: `Alert set to ${capitalize(data.updateAlertStatus.status.toLowerCase())}`,
+        title: `Alert set to ${capitalize(
+          (data.updateAlertStatus.status === AlertStatusesEnum.Closed
+            ? 'INVALID'
+            : data.updateAlertStatus.status
+          ).toLowerCase()
+        )}`,
       });
     },
     onError: error => {
@@ -142,7 +147,7 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
               }
             >
               <Flex minWidth={85} spacing={2} justify="space-between" align="center">
-                <Box>{statusKey}</Box>
+                <Box>{statusKey === 'Closed' ? 'Invalid' : statusKey}</Box>
                 {alert.status === statusVal && <Icon size="x-small" type="check" />}
               </Flex>
             </DropdownItem>

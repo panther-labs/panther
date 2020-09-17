@@ -35,6 +35,7 @@ export type AlertDetailsFull = Pick<
   | 'dedupString'
   | 'severity'
   | 'status'
+  | 'logTypes'
   | 'lastUpdatedBy'
   | 'lastUpdatedByTime'
 > & { deliveryResponses: Array<Types.Maybe<DeliveryResponseFull>> };
@@ -55,6 +56,7 @@ export const AlertDetailsFull = gql`
     dedupString
     severity
     status
+    logTypes
     lastUpdatedBy
     lastUpdatedByTime
   }

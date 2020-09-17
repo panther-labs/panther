@@ -84,7 +84,7 @@ const AlertDetailsPage = () => {
   //  query in the Front-end and using the results of both to calculate it.
   const { data: destinationData, loading: destinationLoading } = useListDestinations();
 
-  const configuredAlertDestinations = React.useMemo(() => {
+  const alertDestinations = React.useMemo(() => {
     if (!alertData?.alert || !destinationData?.destinations) {
       return [];
     }
@@ -177,7 +177,7 @@ const AlertDetailsPage = () => {
                     <AlertDetailsInfo
                       alert={alertData.alert}
                       rule={ruleData?.rule}
-                      configuredAlertDestinations={configuredAlertDestinations}
+                      alertDestinations={alertDestinations}
                     />
                   </ErrorBoundary>
                 </TabPanel>

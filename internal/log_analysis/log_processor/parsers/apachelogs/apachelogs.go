@@ -88,7 +88,7 @@ func buildRx(rxFields ...string) string {
 
 func nonEmptyLogField(s string) *string {
 	switch s {
-	case "", "-":
+	case "", "-", "\"-\"":
 		return nil
 	default:
 		return &s

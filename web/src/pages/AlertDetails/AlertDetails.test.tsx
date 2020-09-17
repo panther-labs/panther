@@ -19,9 +19,11 @@
 import React from 'react';
 import {
   buildAlertDetails,
+  buildAlertSummary,
   buildDeliveryResponse,
   buildDestination,
   buildRuleDetails,
+  fireEvent,
   render,
   within,
 } from 'test-utils';
@@ -31,6 +33,7 @@ import { Route } from 'react-router-dom';
 import { mockAlertDetails } from './graphql/alertDetails.generated';
 import { mockRuleTeaser } from './graphql/ruleTeaser.generated';
 import { mockListDestinations } from './graphql/listDestinations.generated';
+import { mockRetryAlertDelivery } from './AlertDetailsInfo/AlertDeliverySection/graphql/retryAlertDelivery.generated';
 import AlertDetails from './AlertDetails';
 
 describe('AlertDetails', () => {
@@ -185,5 +188,73 @@ describe('AlertDetails', () => {
     const detailsTabPanel = await findByTestId('alert-details-tabpanel');
     const { getByText: getByTextWithinDetailsTabPanel } = within(detailsTabPanel);
     expect(getByTextWithinDetailsTabPanel(destination.displayName)).toBeInTheDocument();
+  });
+
+  it('correctly updates the delivery status on a delivery retry', async () => {
+    const rule = buildRuleDetails();
+    const destination = buildDestination();
+
+    const previousDeliveryResponse = buildDeliveryResponse({
+      success: false,
+      outputId: destination.outputId,
+    });
+    const updatedDeliveryResponse = { ...previousDeliveryResponse, success: true };
+
+    const alert = buildAlertDetails({
+      deliveryResponses: [previousDeliveryResponse],
+    });
+    const updatedAlert = buildAlertSummary({
+      alertId: alert.alertId,
+      deliveryResponses: [previousDeliveryResponse, updatedDeliveryResponse],
+    });
+
+    const mocks = [
+      mockListDestinations({ data: { destinations: [destination] } }),
+      mockAlertDetails({
+        variables: {
+          input: {
+            alertId: alert.alertId,
+            eventsPageSize: DEFAULT_LARGE_PAGE_SIZE,
+          },
+        },
+        data: { alert },
+      }),
+      mockRuleTeaser({
+        variables: {
+          input: {
+            ruleId: alert.ruleId,
+          },
+        },
+        data: { rule },
+      }),
+      mockRetryAlertDelivery({
+        variables: {
+          input: {
+            alertId: alert.alertId,
+            outputIds: [previousDeliveryResponse.outputId],
+          },
+        },
+        data: {
+          deliverAlert: updatedAlert,
+        },
+      }),
+    ];
+
+    const { queryByText, findByText, getByAriaLabel } = render(
+      <Route exact path={urls.logAnalysis.alerts.details(':id')}>
+        <AlertDetails />
+      </Route>,
+      { mocks, initialRoute: `${urls.logAnalysis.alerts.details(alert.alertId)}` }
+    );
+
+    expect(await findByText('Alert delivery failed')).toBeInTheDocument();
+
+    fireEvent.click(queryByText('Show History'));
+    fireEvent.click(getByAriaLabel('Retry delivery'));
+
+    // Expect section banner to change
+    expect(await findByText('Alert was delivered successfully')).toBeInTheDocument();
+    // Expect to see snackbar
+    expect(queryByText('Successfully delivered alert')).toBeInTheDocument();
   });
 });

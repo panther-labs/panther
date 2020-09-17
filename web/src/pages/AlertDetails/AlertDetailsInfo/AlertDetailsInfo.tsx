@@ -29,14 +29,10 @@ import { DESTINATIONS } from 'Source/constants';
 interface AlertDetailsInfoProps {
   alert: AlertDetails['alert'];
   rule: RuleTeaser['rule'];
-  configuredAlertDestinations: ListDestinations['destinations'];
+  alertDestinations: ListDestinations['destinations'];
 }
 
-const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({
-  alert,
-  rule,
-  configuredAlertDestinations,
-}) => {
+const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule, alertDestinations }) => {
   return (
     <Flex direction="column" spacing={4}>
       {rule && (
@@ -141,8 +137,8 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({
               <Box id="created-at">{formatDatetime(alert.creationTime)}</Box>
               <Box id="last-matched-at">{formatDatetime(alert.updateTime)}</Box>
               <Box id="destinations">
-                {configuredAlertDestinations.map(destination => (
-                  <Flex key={destination.outputId} mb={2}>
+                {alertDestinations.map(destination => (
+                  <Flex key={destination.outputId} align="center" mb={2}>
                     <Img
                       alt={`${destination.outputType} logo`}
                       src={DESTINATIONS[destination.outputType].logo}
@@ -159,7 +155,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({
         </SimpleGrid>
       </Card>
       <Card variant="dark" as="section" p={4}>
-        <AlertDeliverySection alertDeliveries={alert.deliveryResponses} />
+        <AlertDeliverySection alert={alert} alertDestinations={alertDestinations} />
       </Card>
     </Flex>
   );

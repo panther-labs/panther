@@ -150,6 +150,7 @@ interface Alert {
   severity: SeverityEnum!
   status: AlertStatusesEnum!
   title: String!
+  logTypes: [String!]!
   lastUpdatedBy: ID # gets mapped to a User in the frontend
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
   updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
@@ -164,6 +165,7 @@ type AlertDetails implements Alert {
   severity: SeverityEnum!
   status: AlertStatusesEnum!
   title: String!
+  logTypes: [String!]!
   lastUpdatedBy: ID # gets mapped to a User in the frontend
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
   updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
@@ -181,6 +183,7 @@ type AlertSummary implements Alert {
   severity: SeverityEnum!
   status: AlertStatusesEnum!
   title: String!
+  logTypes: [String!]!
   lastUpdatedBy: ID # gets mapped to a User in the frontend
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
   updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
