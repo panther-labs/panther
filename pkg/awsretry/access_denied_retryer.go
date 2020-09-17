@@ -31,6 +31,8 @@ func NewAccessDeniedRetryer(maxRetries int) *AccessDeniedRetryer {
 }
 
 // AccessDeniedRetryer wraps the ConnectionErrRetryer with extra logic that retries AccessDenied exceptions
+// TODO: This could be refactored slightly for a more composable type of Retryer where each caller
+// can pick different retry strategies depending on their needs
 type AccessDeniedRetryer struct {
 	*ConnectionErrRetryer
 }
