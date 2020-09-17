@@ -92,11 +92,11 @@ const LogAnalysisOverview: React.FC = () => {
           {loadingAlerts ? (
             <TablePlaceholder />
           ) : (
-            alertItems.map((alert, i) => (
-              <Box key={i} my={2}>
-                <AlertCard alert={alert} />
-              </Box>
-            ))
+            <Flex direction="column" spacing={2}>
+              {alertItems.map(alert => (
+                <AlertCard key={alert.alertId} alert={alert} />
+              ))}
+            </Flex>
           )}
         </Panel>
       </SimpleGrid>
