@@ -56,7 +56,7 @@ const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
   // FIXME: `alertDestinations` should be part of Alert & coming directly from GraphQL
   //  Someday...
   const { deliveryResponses } = alert;
-  const enhancedAlertDeliveries = React.useMemo(() => {
+  const enhancedAndSortedAlertDeliveries = React.useMemo(() => {
     return deliveryResponses
       .map(dr => ({
         ...dr,
@@ -74,7 +74,7 @@ const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
     );
   }
 
-  const isMostRecentDeliverySuccessful = deliveryResponses[0].success;
+  const isMostRecentDeliverySuccessful = enhancedAndSortedAlertDeliveries[0].success;
   return (
     <Box>
       <Flex justify="space-between">
@@ -103,7 +103,7 @@ const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
       <Collapse open={isHistoryVisible}>
         <Box backgroundColor="navyblue-400" mt={6}>
           <AlertDeliveryTable
-            alertDeliveries={enhancedAlertDeliveries}
+            alertDeliveries={enhancedAndSortedAlertDeliveries}
             onAlertDeliveryRetry={onAlertDeliveryRetry}
           />
         </Box>
