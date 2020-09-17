@@ -1,31 +1,63 @@
 import React from 'react';
-import { Text, Flex, Icon, AbstractButton, Box, Collapse } from 'pouncejs';
+import { Text, Flex, Icon, AbstractButton, Box, Collapse, useSnackbar } from 'pouncejs';
 import { AlertDetails, ListDestinations } from 'Pages/AlertDetails';
-import AlertDeliveryTable from 'Pages/AlertDetails/AlertDetailsInfo/AlertDeliverySection/AlertDeliveryTable';
+import AlertDeliveryTable from './AlertDeliveryTable';
+import { useRetryAlertDelivery } from './graphql/retryAlertDelivery.generated';
 
 interface AlertDeliverySectionProps {
-  alertDeliveries: AlertDetails['alert']['deliveryResponses'];
-  configuredAlertDestinations: ListDestinations['destinations'];
+  alert: AlertDetails['alert'];
+  alertDestinations: ListDestinations['destinations'];
 }
 
 const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
-  alertDeliveries,
-  configuredAlertDestinations,
+  alert,
+  alertDestinations,
 }) => {
   const [isHistoryVisible, setHistoryVisibility] = React.useState(false);
 
-  // FIXME: `configuredAlertDestinations` should be part of Alert & coming directly from GraphQL
+  const { pushSnackbar } = useSnackbar();
+  const [retryAlertDelivery] = useRetryAlertDelivery({
+    update: (cache, { data }) => {
+      const dataId = cache.identify({
+        __typename: 'AlertDetails',
+        alertId: data.deliverAlert.alertId,
+      });
+
+      cache.modify(dataId, {
+        deliveryResponses: () => data.deliverAlert.deliveryResponses,
+      });
+    },
+    onError: () => pushSnackbar({ variant: 'error', title: 'Failed to deliver alert' }),
+    onCompleted: () => pushSnackbar({ variant: 'success', title: 'Successfully delivered alert' }),
+  });
+
+  const onAlertDeliveryRetry = React.useCallback(
+    (outputId: string) => {
+      retryAlertDelivery({
+        variables: {
+          input: {
+            alertId: alert.alertId,
+            outputIds: [outputId],
+          },
+        },
+      });
+    },
+    [retryAlertDelivery, alert]
+  );
+
+  // FIXME: `alertDestinations` should be part of Alert & coming directly from GraphQL
   //  Someday...
+  const { deliveryResponses } = alert;
   const enhancedAlertDeliveries = React.useMemo(() => {
-    return alertDeliveries
+    return deliveryResponses
       .map(dr => ({
         ...dr,
-        ...configuredAlertDestinations.find(d => d.outputId === dr.outputId),
+        ...alertDestinations.find(d => d.outputId === dr.outputId),
       }))
       .reverse();
-  }, [alertDeliveries, configuredAlertDestinations]);
+  }, [deliveryResponses, alertDestinations]);
 
-  if (!alertDeliveries.length) {
+  if (!deliveryResponses.length) {
     return (
       <Flex align="warning" spacing={4}>
         <Icon type="info" size="small" color="blue-400" />
@@ -34,7 +66,7 @@ const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
     );
   }
 
-  const isMostRecentDeliverySuccessful = alertDeliveries[0].success;
+  const isMostRecentDeliverySuccessful = deliveryResponses[0].success;
   return (
     <Box>
       <Flex justify="space-between">
@@ -62,7 +94,10 @@ const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
       </Flex>
       <Collapse open={isHistoryVisible}>
         <Box backgroundColor="navyblue-400" mt={6}>
-          <AlertDeliveryTable alertDeliveries={enhancedAlertDeliveries} />
+          <AlertDeliveryTable
+            alertDeliveries={enhancedAlertDeliveries}
+            onAlertDeliveryRetry={onAlertDeliveryRetry}
+          />
         </Box>
       </Collapse>
     </Box>

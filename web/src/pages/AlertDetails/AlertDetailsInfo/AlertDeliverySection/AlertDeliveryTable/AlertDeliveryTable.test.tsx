@@ -15,7 +15,10 @@ describe('AlertDeliveryTable', () => {
     };
 
     const { getByText, getByAriaLabel } = render(
-      <AlertDeliveryTable alertDeliveries={[enhancedAlertDelivery]} />
+      <AlertDeliveryTable
+        alertDeliveries={[enhancedAlertDelivery]}
+        onAlertDeliveryRetry={() => {}}
+      />
     );
 
     expect(getByText(formatDatetime(alertDelivery.dispatchedAt))).toBeInTheDocument();
@@ -38,7 +41,10 @@ describe('AlertDeliveryTable', () => {
     };
 
     const { getByText, queryByAriaLabel } = render(
-      <AlertDeliveryTable alertDeliveries={[enhancedAlertDelivery]} />
+      <AlertDeliveryTable
+        alertDeliveries={[enhancedAlertDelivery]}
+        onAlertDeliveryRetry={() => {}}
+      />
     );
 
     expect(getByText('SUCCESS')).toBeInTheDocument();

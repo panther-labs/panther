@@ -28,9 +28,13 @@ import { DESTINATIONS } from 'Source/constants';
 interface AlertDeliveryTableProps {
   alertDeliveries: (AlertDetails['alert']['deliveryResponses'][0] &
     Pick<Destination, 'displayName' | 'outputType'>)[];
+  onAlertDeliveryRetry: (outputId: string) => void;
 }
 
-const AlertDeliveryTable: React.FC<AlertDeliveryTableProps> = ({ alertDeliveries }) => {
+const AlertDeliveryTable: React.FC<AlertDeliveryTableProps> = ({
+  alertDeliveries,
+  onAlertDeliveryRetry,
+}) => {
   const [expandedDestination, setExpandedDestination] = React.useState<string>(null);
 
   const alertDeliveriesByDestination = React.useMemo(() => {
@@ -61,25 +65,31 @@ const AlertDeliveryTable: React.FC<AlertDeliveryTableProps> = ({ alertDeliveries
             >
               <Table.Row>
                 <Table.Cell>
-                  <AbstractButton
-                    backgroundColor="navyblue-300"
-                    borderRadius="circle"
-                    display="flex"
-                    p="2px"
-                    aria-label="Expand delivery information"
-                    onClick={() =>
-                      setExpandedDestination(
-                        expandedDestination === mostRecentDelivery.outputId
-                          ? null
-                          : mostRecentDelivery.outputId
-                      )
-                    }
-                  >
-                    <Icon type="add" size="x-small" />
-                  </AbstractButton>
+                  {!!restDeliveries.length && (
+                    <AbstractButton
+                      backgroundColor="navyblue-300"
+                      borderRadius="circle"
+                      display="flex"
+                      p="2px"
+                      aria-label="Expand delivery information"
+                      onClick={() =>
+                        setExpandedDestination(
+                          expandedDestination === mostRecentDelivery.outputId
+                            ? null
+                            : mostRecentDelivery.outputId
+                        )
+                      }
+                    >
+                      <Icon
+                        size="x-small"
+                        type={
+                          expandedDestination === mostRecentDelivery.outputId ? 'subtract' : 'add'
+                        }
+                      />
+                    </AbstractButton>
+                  )}
                 </Table.Cell>
                 <Table.Cell>{formatDatetime(mostRecentDelivery.dispatchedAt)}</Table.Cell>
-                {/* FIXME This needs to showcase logo + destination display name */}
                 <Table.Cell>
                   <Flex align="center">
                     <Img
@@ -114,7 +124,6 @@ const AlertDeliveryTable: React.FC<AlertDeliveryTableProps> = ({ alertDeliveries
                 </Table.Cell>
                 <Table.Cell>
                   {!mostRecentDelivery.success && (
-                    // FIXME: This needs to actually do something
                     <Box my={-2}>
                       <IconButton
                         title="Retry delivery"
@@ -123,6 +132,7 @@ const AlertDeliveryTable: React.FC<AlertDeliveryTableProps> = ({ alertDeliveries
                         variantColor="navyblue"
                         size="small"
                         aria-label="Retry delivery"
+                        onClick={() => onAlertDeliveryRetry(mostRecentDelivery.outputId)}
                       />
                     </Box>
                   )}
