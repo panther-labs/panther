@@ -18,42 +18,14 @@
 
 import React from 'react';
 import urls from 'Source/urls';
-import {
-  Button,
-  DropdownButton,
-  Dropdown,
-  DropdownMenu,
-  DropdownItem,
-  DropdownLink,
-} from 'pouncejs';
+import { Button } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
-import useSidesheet from 'Hooks/useSidesheet';
-import { SIDESHEETS } from 'Components/utils/Sidesheet';
 
 const CreateButton: React.FC = () => {
-  const { showSidesheet } = useSidesheet();
-
   return (
-    <Dropdown>
-      <DropdownButton as={Button} icon="add">
-        Create New
-      </DropdownButton>
-      <DropdownMenu alignment="match-width">
-        <DropdownLink as={RRLink} to={urls.compliance.policies.create()}>
-          Single
-        </DropdownLink>
-        <DropdownItem
-          onSelect={() =>
-            showSidesheet({
-              sidesheet: SIDESHEETS.POLICY_BULK_UPLOAD,
-              props: { type: 'policy' },
-            })
-          }
-        >
-          Bulk
-        </DropdownItem>
-      </DropdownMenu>
-    </Dropdown>
+    <Button as={RRLink} to={urls.compliance.policies.create()}>
+      Create New Policy
+    </Button>
   );
 };
 

@@ -18,42 +18,14 @@
 
 import React from 'react';
 import urls from 'Source/urls';
-import {
-  Button,
-  Dropdown,
-  DropdownItem,
-  DropdownLink,
-  DropdownMenu,
-  DropdownButton,
-} from 'pouncejs';
-import useSidesheet from 'Hooks/useSidesheet';
-import { SIDESHEETS } from 'Components/utils/Sidesheet';
+import { Button } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 
 const CreateButton: React.FC = () => {
-  const { showSidesheet } = useSidesheet();
-
   return (
-    <Dropdown>
-      <DropdownButton as={Button} icon="add">
-        Create new
-      </DropdownButton>
-      <DropdownMenu alignment="match-width">
-        <DropdownLink as={RRLink} to={urls.logAnalysis.rules.create()}>
-          Single
-        </DropdownLink>
-        <DropdownItem
-          onSelect={() =>
-            showSidesheet({
-              sidesheet: SIDESHEETS.POLICY_BULK_UPLOAD,
-              props: { type: 'rule' },
-            })
-          }
-        >
-          Bulk
-        </DropdownItem>
-      </DropdownMenu>
-    </Dropdown>
+    <Button as={RRLink} to={urls.logAnalysis.rules.create()}>
+      Create New Rule
+    </Button>
   );
 };
 
