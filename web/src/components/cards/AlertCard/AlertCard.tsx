@@ -35,11 +35,20 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
   return (
     <GenericItemCard>
       <GenericItemCard.Body>
-        <Link as={RRLink} to={urls.logAnalysis.alerts.details(alert.alertId)} cursor="pointer">
+        <Link
+          as={RRLink}
+          aria-label="Link to Alert"
+          to={urls.logAnalysis.alerts.details(alert.alertId)}
+          cursor="pointer"
+        >
           <GenericItemCard.Heading>{alert.title}</GenericItemCard.Heading>
         </Link>
         <GenericItemCard.ValuesGroup>
-          <Link as={RRLink} to={urls.logAnalysis.rules.details(alert.ruleId)}>
+          <Link
+            as={RRLink}
+            aria-label="Link to Rule"
+            to={urls.logAnalysis.rules.details(alert.ruleId)}
+          >
             <Button variantColor="navyblue" as="div" size="small">
               View Rule
             </Button>

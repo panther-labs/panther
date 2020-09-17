@@ -39,12 +39,12 @@ describe('AlertCard', () => {
 
   it('should check links are valid', async () => {
     const alertData = buildAlertSummary();
-    const { getByText } = render(<AlertCard alert={alertData} />);
-    expect(getByText(alertData.title).closest('a')).toHaveAttribute(
+    const { getByAriaLabel } = render(<AlertCard alert={alertData} />);
+    expect(getByAriaLabel('Link to Alert')).toHaveAttribute(
       'href',
       urls.logAnalysis.alerts.details(alertData.alertId)
     );
-    expect(getByText('View Rule').closest('a')).toHaveAttribute(
+    expect(getByAriaLabel('Link to Rule')).toHaveAttribute(
       'href',
       urls.logAnalysis.rules.details(alertData.ruleId)
     );
