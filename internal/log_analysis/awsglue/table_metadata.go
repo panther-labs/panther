@@ -210,6 +210,23 @@ func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, b
 	createTableInput := &glue.CreateTableInput{
 		DatabaseName: &gm.databaseName,
 		TableInput:   tableInput,
+		PartitionIndexes: []*glue.PartitionIndex{
+			{
+				IndexName: aws.String("month_idx"),
+				Keys: []*string{
+					aws.String("year"),
+					aws.String("month"),
+				},
+			},
+			{
+				IndexName: aws.String("day_idx"),
+				Keys: []*string{
+					aws.String("year"),
+					aws.String("month"),
+					aws.String("day"),
+				},
+			},
+		},
 	}
 	_, err := glueClient.CreateTable(createTableInput)
 	if err != nil {

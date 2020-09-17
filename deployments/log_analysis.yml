@@ -63,6 +63,11 @@ Parameters:
     Description: Log processor Lambda memory allocation
     MinValue: 256 # 128 is too small, risks OOM errors
     MaxValue: 3008
+  LogProcessorSQSDelaySeconds:
+    Type: Number
+    Description: The number of seconds to delay events into the log processor queue
+    MinValue: 0 # no delay, poor aggregation
+    MaxValue: 20 # this is the max time we can long poll sqs
   ProcessedDataBucket:
     Type: String
     Description: Name of the S3 bucket which stores processed logs
@@ -403,6 +408,7 @@ Resources:
       KmsMasterKeyId: !Ref SqsKeyId
       # Reference on KeyReuse: https://amzn.to/2ngIsFB
       KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
+      DelaySeconds: !Ref LogProcessorSQSDelaySeconds # Allows log processor to see into the future!
       VisibilityTimeout: !FindInMap [Functions, LogProcessor, Timeout]
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt LogProcessorDLQ.Arn
@@ -484,6 +490,7 @@ Resources:
           PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
           SNS_TOPIC_ARN: !Ref ProcessedDataTopicArn
           SQS_QUEUE_URL: !Ref LogProcessorQueue
+          SQS_DELAY_SEC: !Ref LogProcessorSQSDelaySeconds
           INPUT_DATA_BUCKET: !Ref InputDataBucket
       Events:
         Queue:
