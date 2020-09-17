@@ -50,7 +50,7 @@ const SuccessfulUpload: React.FC = () => {
         title="Your file was successfuly processed and the following changes were made"
         subtitle="You can visit the corresponding pages to view or edit your modules, rules or policies"
       />
-      <Flex justify="center">
+      <Flex justify="center" data-testid="success-indicator">
         <SimpleGrid gap={5} columns={3} mb={5}>
           <BoxColumn>
             <Flex mb={5} width={220} align="center">
