@@ -5,6 +5,7 @@ venv/
 __pycache__/
 *.zip
 .vscode
+.history/
 
 # Dependencies
 node_modules/
