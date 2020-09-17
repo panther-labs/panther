@@ -23,10 +23,10 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
 
 	"github.com/panther-labs/panther/pkg/awsbatch/s3batch"
+	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/tools/mage/logger"
 )
 
@@ -80,7 +80,7 @@ func removeBucket(client *s3.S3, bucketName *string) error {
 	// Prevent new writes to the bucket
 	_, err := client.PutBucketAcl(&s3.PutBucketAclInput{ACL: aws.String("private"), Bucket: bucketName})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NoSuchBucket" {
+		if awsutils.IsAnyError(err, s3.ErrCodeNoSuchBucket) {
 			log.Debugf("%s already deleted", *bucketName)
 			return nil
 		}

@@ -259,6 +259,7 @@ export const buildAlertDetails = (overrides: Partial<AlertDetails> = {}): AlertD
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
     status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Closed,
     title: 'title' in overrides ? overrides.title : 'Steel',
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Books'],
     lastUpdatedBy:
       'lastUpdatedBy' in overrides
         ? overrides.lastUpdatedBy
@@ -285,6 +286,7 @@ export const buildAlertSummary = (overrides: Partial<AlertSummary> = {}): AlertS
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Medium,
     status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Triaged,
     title: 'title' in overrides ? overrides.title : 'indexing',
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Costa Rica'],
     lastUpdatedBy:
       'lastUpdatedBy' in overrides
         ? overrides.lastUpdatedBy

@@ -12,8 +12,8 @@ github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535 h1:4daAzAu0
 github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535/go.mod h1:oGkLhpf+kjZl6xBf758TQhh5XrAeiJv/7FRz/2spLIg=
 github.com/aws/aws-lambda-go v1.19.1 h1:5iUHbIZ2sG6Yq/J1IN3sWm3+vAB1CWwhI21NffLNuNI=
 github.com/aws/aws-lambda-go v1.19.1/go.mod h1:jJmlefzPfGnckuHdXX7/80O3BvUUi12XOkbv4w9SGLU=
-github.com/aws/aws-sdk-go v1.34.18 h1:Mo/Clq3u1dQFzpg8YQqBii8m+Vl3fWIfHi6kXs5wpuM=
-github.com/aws/aws-sdk-go v1.34.18/go.mod h1:5zCpMtNQVjRREroY7sYe8lOMRSxkhG6MZveU8YkpAk0=
+github.com/aws/aws-sdk-go v1.34.23 h1:ZUqMEJRjQUpZNA/OOhFmjWtWxD3n8XbOrC5rC1djl5s=
+github.com/aws/aws-sdk-go v1.34.23/go.mod h1:5zCpMtNQVjRREroY7sYe8lOMRSxkhG6MZveU8YkpAk0=
 github.com/cenkalti/backoff/v4 v4.0.2 h1:JIufpQLbh4DkbQoii76ItQIUFzevQSqOLZca4eamEDs=
 github.com/cenkalti/backoff/v4 v4.0.2/go.mod h1:eEew/i+1Q6OrCDZh3WiXYv3+nJwBASZ8Bog/87DQnVg=
 github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsrgA7czyZG/E6dU=
