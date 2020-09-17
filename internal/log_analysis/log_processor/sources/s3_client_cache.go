@@ -27,6 +27,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
+	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	lru "github.com/hashicorp/golang-lru"
@@ -35,6 +37,7 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	"github.com/panther-labs/panther/pkg/awsretry"
 	"github.com/panther-labs/panther/pkg/box"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
@@ -48,6 +51,7 @@ const (
 
 	s3BucketLocationCacheSize = 1000
 	s3ClientCacheSize         = 1000
+	s3ClientMaxRetries = 10 // ~1'
 )
 
 type s3ClientCacheKey struct {
@@ -288,7 +292,11 @@ func getNewS3Client(region *string, creds *credentials.Credentials) (result s3if
 	if region != nil {
 		config.WithRegion(*region)
 	}
-	return s3.New(common.Session, config)
+	// We have seen that in some case AWS will return AccessDenied while accessing data
+	// through STS creds. The issue seems to disappear
+	session := session.Must(session.NewSession(request.WithRetryer(config,
+		awsretry.NewAccessDeniedRetryer(s3ClientMaxRetries))))
+	return s3.New(session, config)
 }
 
 // Returns the configured S3 bucket and S3 object prefix for this source
