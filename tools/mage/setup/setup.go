@@ -232,7 +232,6 @@ func installNodeModules() error {
 
 	// 'npm ci' is a lightweight alternative to `npm install` that's faster since it omits
 	// lots of user-oriented features. In CIs, it's the recommended way to install packages
-
 	var args []string
 	if util.IsRunningInCI() {
 		log.Info("npm ci...")
