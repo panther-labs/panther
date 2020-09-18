@@ -17,27 +17,28 @@
  */
 
 import React from 'react';
-import { Box, Flex, Heading, Text, Button } from 'pouncejs';
-import EmptyNotepadImg from 'Assets/illustrations/empty-notepad.svg';
-import { Link as RRLink } from 'react-router-dom';
-import urls from 'Source/urls';
+import { Box, Card, Link, Text } from 'pouncejs';
+import BulkUploaderWizard from 'Components/wizards/BulkUploaderWizard';
+import { ANALYSIS_UPLOAD_DOC_URL } from 'Source/constants';
+import withSEO from 'Hoc/withSEO';
 
-const ListPoliciesPageEmptyDataFallback: React.FC = () => {
+const BulkUploader = () => {
   return (
-    <Flex justify="center" align="center" direction="column">
-      <Box my={10}>
-        <img alt="Empty Notepad Illustration" src={EmptyNotepadImg} width="auto" height={300} />
+    <>
+      <Card as="section" width={1} mb={6}>
+        <BulkUploaderWizard />
+      </Card>
+      <Box>
+        <Text fontSize="medium">
+          You can find a detailed description of the process in our{' '}
+          <Link external href={ANALYSIS_UPLOAD_DOC_URL}>
+            designated docs page
+          </Link>
+          .
+        </Text>
       </Box>
-      <Heading mb={6}>No policies found</Heading>
-
-      <Text color="gray-300" textAlign="center" mb={8}>
-        Writing policies is the only way to secure your infrastructure against misconfigurations
-      </Text>
-      <Button as={RRLink} to={urls.compliance.policies.create()}>
-        Create New Policy
-      </Button>
-    </Flex>
+    </>
   );
 };
 
-export default ListPoliciesPageEmptyDataFallback;
+export default withSEO({ title: 'Global Python Modules' })(BulkUploader);

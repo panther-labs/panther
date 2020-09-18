@@ -82,6 +82,7 @@ const urls = {
       edit: (id: GlobalPythonModule['id']) =>
         `${urls.settings.globalPythonModules.list()}${urlEncode(id)}/edit/`,
     },
+    bulkUploader: () => `${urls.settings.home()}bulk-uploader/`,
     users: () => `${urls.settings.home()}users/`,
     destinations: {
       list: () => `${urls.settings.home()}destinations/`,

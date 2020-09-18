@@ -17,6 +17,8 @@
  */
 
 import React from 'react';
+import { Link as RRLink } from 'react-router-dom';
+import urls from 'Source/urls';
 import { SeverityEnum, ListRulesInput } from 'Generated/schema';
 import GenerateFiltersGroup from 'Components/utils/GenerateFiltersGroup';
 import { capitalize } from 'Helpers/utils';
@@ -24,7 +26,6 @@ import FormikCombobox from 'Components/fields/ComboBox';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import FormikTextInput from 'Components/fields/TextInput';
 import { Box, Button, Card, Collapse, Flex, useSnackbar } from 'pouncejs';
-import CreateButton from 'Pages/ListRules/CreateButton';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import isEmpty from 'lodash/isEmpty';
@@ -135,7 +136,9 @@ const ListRulesActions: React.FC = () => {
             >
               Filter Options {filtersCount ? `(${filtersCount})` : ''}
             </Button>
-            <CreateButton />
+            <Button as={RRLink} to={urls.logAnalysis.rules.create()}>
+              Create New Rule
+            </Button>
           </Flex>
         </Flex>
       </Breadcrumbs.Actions>
