@@ -50,9 +50,7 @@ const UploadPanel: React.FC = () => {
     },
     onError: error => {
       resetData();
-      setErrorMsg(
-        extractErrorMessage(error) || 'An unknown error occurred while during the upload'
-      );
+      setErrorMsg(extractErrorMessage(error) || 'An unknown error occurred during the upload');
       setUploadingState(ERROR);
     },
   });
