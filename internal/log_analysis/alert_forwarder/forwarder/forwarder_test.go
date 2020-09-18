@@ -135,6 +135,7 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 		RuleDisplayName:     aws.String(string(testRuleResponse.DisplayName)),
 		Title:               aws.StringValue(newAlertDedupEvent.GeneratedTitle),
 		FirstEventMatchTime: newAlertDedupEvent.CreationTime,
+		LogTypes:            newAlertDedupEvent.LogTypes,
 		AlertDedupEvent: AlertDedupEvent{
 			RuleID:              newAlertDedupEvent.RuleID,
 			RuleVersion:         newAlertDedupEvent.RuleVersion,
@@ -229,6 +230,7 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 		Severity:            string(testRuleResponse.Severity),
 		Title:               newAlertDedupEventWithoutTitle.RuleID,
 		FirstEventMatchTime: newAlertDedupEventWithoutTitle.CreationTime,
+		LogTypes:            newAlertDedupEvent.LogTypes,
 		AlertDedupEvent: AlertDedupEvent{
 			RuleID:              newAlertDedupEventWithoutTitle.RuleID,
 			RuleVersion:         newAlertDedupEventWithoutTitle.RuleVersion,
@@ -306,6 +308,7 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 		RuleDisplayName:     aws.String(string(testRuleResponse.DisplayName)),
 		Title:               "DisplayName",
 		FirstEventMatchTime: newAlertDedupEvent.CreationTime,
+		LogTypes:            newAlertDedupEvent.LogTypes,
 		AlertDedupEvent: AlertDedupEvent{
 			RuleID:              newAlertDedupEvent.RuleID,
 			RuleVersion:         newAlertDedupEvent.RuleVersion,
@@ -394,6 +397,7 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 		Title:               aws.StringValue(newAlertDedupEvent.GeneratedTitle),
 		RuleDisplayName:     aws.String(string(testRuleResponse.DisplayName)),
 		FirstEventMatchTime: newAlertDedupEvent.CreationTime,
+		LogTypes:            newAlertDedupEvent.LogTypes,
 		AlertDedupEvent: AlertDedupEvent{
 			RuleID:              newAlertDedupEvent.RuleID,
 			RuleVersion:         newAlertDedupEvent.RuleVersion,

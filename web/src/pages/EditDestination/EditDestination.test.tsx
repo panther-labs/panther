@@ -26,6 +26,8 @@ import EditDestination, {
 import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
 import { DestinationTypeEnum, SeverityEnum } from 'Generated/schema';
 
+const validUrl = faker.internet.url();
+
 describe('EditDestination', () => {
   it('shows a spinner that gets replaced by a form as soon as data arrives', async () => {
     const destination = buildDestination({
@@ -54,7 +56,7 @@ describe('EditDestination', () => {
     expect(criticalSeverityCheckbox.value).toBeTruthy();
   });
 
-  it('can successfully edit a destination', async () => {
+  it('can successfully edit Slack destination', async () => {
     const oldDisplayName = 'OldSlackName';
     const newDisplayName = 'NewSlackName';
 
@@ -77,6 +79,455 @@ describe('EditDestination', () => {
             outputConfig: {
               slack: {
                 webhookURL: destination.outputConfig.slack.webhookURL,
+              },
+            },
+          },
+        },
+        data: { updateDestination: { ...destination, displayName: newDisplayName } },
+      }),
+    ];
+
+    const { findByLabelText, findByText, getByText } = render(<EditDestination />, { mocks });
+
+    // Wait for fields to show
+    const displayInput = (await findByLabelText('* Display Name')) as HTMLInputElement;
+    const submitButton = getByText('Update Destination');
+
+    // Expect the submit button to be disabled when no changes are present
+    expect(submitButton).toHaveAttribute('disabled');
+
+    // Change the value + submit
+    fireEvent.change(displayInput, { target: { value: newDisplayName } });
+    fireEvent.click(submitButton);
+
+    // Expect success screen with proper redirect link
+    expect(await findByText('Everything looks good!'));
+    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+  });
+
+  it('can successfully edit Github destination', async () => {
+    const oldDisplayName = 'OldName';
+    const newDisplayName = 'NewName';
+
+    const destination = buildDestination({
+      displayName: oldDisplayName,
+      outputType: DestinationTypeEnum.Github,
+      defaultForSeverity: [SeverityEnum.Critical],
+    }) as DestinationFull;
+
+    const mocks = [
+      mockGetDestinationDetails({ data: { destination } }),
+      mockUpdateDestination({
+        variables: {
+          input: {
+            displayName: newDisplayName,
+            outputId: destination.outputId,
+            outputType: destination.outputType,
+            defaultForSeverity: destination.defaultForSeverity,
+            outputConfig: {
+              github: {
+                token: destination.outputConfig.github.token,
+                repoName: destination.outputConfig.github.repoName,
+              },
+            },
+          },
+        },
+        data: { updateDestination: { ...destination, displayName: newDisplayName } },
+      }),
+    ];
+
+    const { findByLabelText, findByText, getByText } = render(<EditDestination />, { mocks });
+
+    // Wait for fields to show
+    const displayInput = (await findByLabelText('* Display Name')) as HTMLInputElement;
+    const submitButton = getByText('Update Destination');
+
+    // Expect the submit button to be disabled when no changes are present
+    expect(submitButton).toHaveAttribute('disabled');
+
+    // Change the value + submit
+    fireEvent.change(displayInput, { target: { value: newDisplayName } });
+    fireEvent.click(submitButton);
+
+    // Expect success screen with proper redirect link
+    expect(await findByText('Everything looks good!'));
+    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+  });
+
+  it('can successfully edit Jira destination', async () => {
+    const oldDisplayName = 'OldName';
+    const newDisplayName = 'NewName';
+
+    const destination = buildDestination({
+      displayName: oldDisplayName,
+      outputType: DestinationTypeEnum.Jira,
+      defaultForSeverity: [SeverityEnum.Critical],
+    }) as DestinationFull;
+    destination.outputConfig.jira.orgDomain = validUrl;
+
+    const mocks = [
+      mockGetDestinationDetails({ data: { destination } }),
+      mockUpdateDestination({
+        variables: {
+          input: {
+            displayName: newDisplayName,
+            outputId: destination.outputId,
+            outputType: destination.outputType,
+            defaultForSeverity: destination.defaultForSeverity,
+            outputConfig: {
+              jira: {
+                orgDomain: destination.outputConfig.jira.orgDomain,
+                projectKey: destination.outputConfig.jira.projectKey,
+                userName: destination.outputConfig.jira.userName,
+                apiKey: destination.outputConfig.jira.apiKey,
+                assigneeId: destination.outputConfig.jira.assigneeId,
+                issueType: destination.outputConfig.jira.issueType,
+              },
+            },
+          },
+        },
+        data: { updateDestination: { ...destination, displayName: newDisplayName } },
+      }),
+    ];
+
+    const { findByLabelText, findByText, getByText } = render(<EditDestination />, { mocks });
+
+    // Wait for fields to show
+    const displayInput = (await findByLabelText('* Display Name')) as HTMLInputElement;
+    const submitButton = getByText('Update Destination');
+
+    // Expect the submit button to be disabled when no changes are present
+    expect(submitButton).toHaveAttribute('disabled');
+
+    // Change the value + submit
+    fireEvent.change(displayInput, { target: { value: newDisplayName } });
+    fireEvent.click(submitButton);
+
+    // Expect success screen with proper redirect link
+    expect(await findByText('Everything looks good!'));
+    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+  });
+
+  it('can successfully edit PagerDuty destination', async () => {
+    const oldDisplayName = 'OldName';
+    const newDisplayName = 'NewName';
+    const deductedPagerDutyIntegrationKey = '';
+
+    const destination = buildDestination({
+      displayName: oldDisplayName,
+      outputType: DestinationTypeEnum.Pagerduty,
+      defaultForSeverity: [SeverityEnum.Critical],
+    }) as DestinationFull;
+    destination.outputConfig.pagerDuty.integrationKey = deductedPagerDutyIntegrationKey;
+
+    const mocks = [
+      mockGetDestinationDetails({ data: { destination } }),
+      mockUpdateDestination({
+        variables: {
+          input: {
+            displayName: newDisplayName,
+            outputId: destination.outputId,
+            outputType: destination.outputType,
+            defaultForSeverity: destination.defaultForSeverity,
+            outputConfig: {
+              pagerDuty: {
+                integrationKey: destination.outputConfig.pagerDuty.integrationKey,
+              },
+            },
+          },
+        },
+        data: { updateDestination: { ...destination, displayName: newDisplayName } },
+      }),
+    ];
+
+    const { findByLabelText, findByText, getByText } = render(<EditDestination />, { mocks });
+
+    // Wait for fields to show
+    const displayInput = (await findByLabelText('* Display Name')) as HTMLInputElement;
+    const submitButton = getByText('Update Destination');
+
+    // Expect the submit button to be disabled when no changes are present
+    expect(submitButton).toHaveAttribute('disabled');
+
+    // Change the value + submit
+    fireEvent.change(displayInput, { target: { value: newDisplayName } });
+    fireEvent.click(submitButton);
+
+    // Expect success screen with proper redirect link
+    expect(await findByText('Everything looks good!'));
+    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+  });
+
+  it('can successfully edit SQS destination', async () => {
+    const oldDisplayName = 'OldName';
+    const newDisplayName = 'NewName';
+
+    const destination = buildDestination({
+      displayName: oldDisplayName,
+      outputType: DestinationTypeEnum.Sqs,
+      defaultForSeverity: [SeverityEnum.Critical],
+    }) as DestinationFull;
+    destination.outputConfig.sqs.queueUrl = validUrl;
+
+    const mocks = [
+      mockGetDestinationDetails({ data: { destination } }),
+      mockUpdateDestination({
+        variables: {
+          input: {
+            displayName: newDisplayName,
+            outputId: destination.outputId,
+            outputType: destination.outputType,
+            defaultForSeverity: destination.defaultForSeverity,
+            outputConfig: {
+              sqs: {
+                queueUrl: destination.outputConfig.sqs.queueUrl,
+              },
+            },
+          },
+        },
+        data: { updateDestination: { ...destination, displayName: newDisplayName } },
+      }),
+    ];
+
+    const { findByLabelText, findByText, getByText } = render(<EditDestination />, { mocks });
+
+    // Wait for fields to show
+    const displayInput = (await findByLabelText('* Display Name')) as HTMLInputElement;
+    const submitButton = getByText('Update Destination');
+
+    // Expect the submit button to be disabled when no changes are present
+    expect(submitButton).toHaveAttribute('disabled');
+
+    // Change the value + submit
+    fireEvent.change(displayInput, { target: { value: newDisplayName } });
+    fireEvent.click(submitButton);
+
+    // Expect success screen with proper redirect link
+    expect(await findByText('Everything looks good!'));
+    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+  });
+
+  it('can successfully edit SNS destination', async () => {
+    const oldDisplayName = 'OldName';
+    const newDisplayName = 'NewName';
+    const topicArn = 'arn:aws:sns:us-east-2:123456789012:MyTopic';
+
+    const destination = buildDestination({
+      displayName: oldDisplayName,
+      outputType: DestinationTypeEnum.Sns,
+      defaultForSeverity: [SeverityEnum.Critical],
+    }) as DestinationFull;
+    destination.outputConfig.sns.topicArn = topicArn;
+
+    const mocks = [
+      mockGetDestinationDetails({ data: { destination } }),
+      mockUpdateDestination({
+        variables: {
+          input: {
+            displayName: newDisplayName,
+            outputId: destination.outputId,
+            outputType: destination.outputType,
+            defaultForSeverity: destination.defaultForSeverity,
+            outputConfig: {
+              sns: {
+                topicArn: destination.outputConfig.sns.topicArn,
+              },
+            },
+          },
+        },
+        data: { updateDestination: { ...destination, displayName: newDisplayName } },
+      }),
+    ];
+
+    const { findByLabelText, findByText, getByText } = render(<EditDestination />, { mocks });
+
+    // Wait for fields to show
+    const displayInput = (await findByLabelText('* Display Name')) as HTMLInputElement;
+    const submitButton = getByText('Update Destination');
+
+    // Expect the submit button to be disabled when no changes are present
+    expect(submitButton).toHaveAttribute('disabled');
+
+    // Change the value + submit
+    fireEvent.change(displayInput, { target: { value: newDisplayName } });
+    fireEvent.click(submitButton);
+
+    // Expect success screen with proper redirect link
+    expect(await findByText('Everything looks good!'));
+    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+  });
+
+  it('can successfully edit Custom Webhook destination', async () => {
+    const oldDisplayName = 'OldName';
+    const newDisplayName = 'NewName';
+
+    const destination = buildDestination({
+      displayName: oldDisplayName,
+      outputType: DestinationTypeEnum.Customwebhook,
+      defaultForSeverity: [SeverityEnum.Critical],
+    }) as DestinationFull;
+    destination.outputConfig.customWebhook.webhookURL = validUrl;
+
+    const mocks = [
+      mockGetDestinationDetails({ data: { destination } }),
+      mockUpdateDestination({
+        variables: {
+          input: {
+            displayName: newDisplayName,
+            outputId: destination.outputId,
+            outputType: destination.outputType,
+            defaultForSeverity: destination.defaultForSeverity,
+            outputConfig: {
+              customWebhook: {
+                webhookURL: destination.outputConfig.customWebhook.webhookURL,
+              },
+            },
+          },
+        },
+        data: { updateDestination: { ...destination, displayName: newDisplayName } },
+      }),
+    ];
+
+    const { findByLabelText, findByText, getByText } = render(<EditDestination />, { mocks });
+
+    // Wait for fields to show
+    const displayInput = (await findByLabelText('* Display Name')) as HTMLInputElement;
+    const submitButton = getByText('Update Destination');
+
+    // Expect the submit button to be disabled when no changes are present
+    expect(submitButton).toHaveAttribute('disabled');
+
+    // Change the value + submit
+    fireEvent.change(displayInput, { target: { value: newDisplayName } });
+    fireEvent.click(submitButton);
+
+    // Expect success screen with proper redirect link
+    expect(await findByText('Everything looks good!'));
+    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+  });
+
+  it('can successfully edit MS Teams destination', async () => {
+    const oldDisplayName = 'OldName';
+    const newDisplayName = 'NewName';
+
+    const destination = buildDestination({
+      displayName: oldDisplayName,
+      outputType: DestinationTypeEnum.Msteams,
+      defaultForSeverity: [SeverityEnum.Critical],
+    }) as DestinationFull;
+    destination.outputConfig.msTeams.webhookURL = validUrl;
+
+    const mocks = [
+      mockGetDestinationDetails({ data: { destination } }),
+      mockUpdateDestination({
+        variables: {
+          input: {
+            displayName: newDisplayName,
+            outputId: destination.outputId,
+            outputType: destination.outputType,
+            defaultForSeverity: destination.defaultForSeverity,
+            outputConfig: {
+              msTeams: {
+                webhookURL: destination.outputConfig.msTeams.webhookURL,
+              },
+            },
+          },
+        },
+        data: { updateDestination: { ...destination, displayName: newDisplayName } },
+      }),
+    ];
+
+    const { findByLabelText, findByText, getByText } = render(<EditDestination />, { mocks });
+
+    // Wait for fields to show
+    const displayInput = (await findByLabelText('* Display Name')) as HTMLInputElement;
+    const submitButton = getByText('Update Destination');
+
+    // Expect the submit button to be disabled when no changes are present
+    expect(submitButton).toHaveAttribute('disabled');
+
+    // Change the value + submit
+    fireEvent.change(displayInput, { target: { value: newDisplayName } });
+    fireEvent.click(submitButton);
+
+    // Expect success screen with proper redirect link
+    expect(await findByText('Everything looks good!'));
+    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+  });
+
+  it('can successfully edit Opsgenie destination', async () => {
+    const oldDisplayName = 'OldName';
+    const newDisplayName = 'NewName';
+
+    const destination = buildDestination({
+      displayName: oldDisplayName,
+      outputType: DestinationTypeEnum.Opsgenie,
+      defaultForSeverity: [SeverityEnum.Critical],
+    }) as DestinationFull;
+    destination.outputConfig.opsgenie.apiKey = '';
+
+    const mocks = [
+      mockGetDestinationDetails({ data: { destination } }),
+      mockUpdateDestination({
+        variables: {
+          input: {
+            displayName: newDisplayName,
+            outputId: destination.outputId,
+            outputType: destination.outputType,
+            defaultForSeverity: destination.defaultForSeverity,
+            outputConfig: {
+              opsgenie: {
+                apiKey: destination.outputConfig.opsgenie.apiKey,
+              },
+            },
+          },
+        },
+        data: { updateDestination: { ...destination, displayName: newDisplayName } },
+      }),
+    ];
+
+    const { findByLabelText, findByText, getByText } = render(<EditDestination />, { mocks });
+
+    // Wait for fields to show
+    const displayInput = (await findByLabelText('* Display Name')) as HTMLInputElement;
+    const submitButton = getByText('Update Destination');
+
+    // Expect the submit button to be disabled when no changes are present
+    expect(submitButton).toHaveAttribute('disabled');
+
+    // Change the value + submit
+    fireEvent.change(displayInput, { target: { value: newDisplayName } });
+    fireEvent.click(submitButton);
+
+    // Expect success screen with proper redirect link
+    expect(await findByText('Everything looks good!'));
+    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+  });
+
+  it('can successfully edit Asana destination', async () => {
+    const oldDisplayName = 'OldName';
+    const newDisplayName = 'NewName';
+
+    const destination = buildDestination({
+      displayName: oldDisplayName,
+      outputType: DestinationTypeEnum.Asana,
+      defaultForSeverity: [SeverityEnum.Critical],
+    }) as DestinationFull;
+    destination.outputConfig.asana.projectGids = ['123'];
+
+    const mocks = [
+      mockGetDestinationDetails({ data: { destination } }),
+      mockUpdateDestination({
+        variables: {
+          input: {
+            displayName: newDisplayName,
+            outputId: destination.outputId,
+            outputType: destination.outputType,
+            defaultForSeverity: destination.defaultForSeverity,
+            outputConfig: {
+              asana: {
+                projectGids: destination.outputConfig.asana.projectGids,
+                personalAccessToken: destination.outputConfig.asana.personalAccessToken,
               },
             },
           },
