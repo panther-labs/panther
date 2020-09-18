@@ -82,6 +82,8 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Setup Git Credentials
         run: |
@@ -90,9 +92,7 @@ jobs:
 
       - name: Bootstrap a PR branch
         run: |
-          git fetch origin release --depth=5
-          git checkout release
-          git checkout -b $HEAD
+          git checkout -b $HEAD origin/release
           git cherry-pick ${{ github.event.pull_request.merge_commit_sha }} || true
           CONFLICTS=$(git diff --name-only --diff-filter=U)
           git add -A .
