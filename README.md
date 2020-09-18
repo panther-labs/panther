@@ -82,7 +82,7 @@ def dedup(event):
     return event.get('name')
 ```
 
-If this rule returns `True`, an alert will dispatch to your team based on the defined severity.
+If this rule returns `True`, an alert will be dispatched to your team based on the defined severity.
 
 ## Cloud Security
 
