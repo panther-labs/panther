@@ -24,14 +24,13 @@ on:
 jobs:
   sync_prs_from_community_to_enterprise:
     name: Syncs merged PRs from Panther Community to Panther Enterprise
-    if: ${{ github.event.pull_request.merged == true && !contains(github.event.pull_request.labels, env.IGNORE_LABEL) }}
+    if: ${{ github.event.pull_request.merged == true && !contains(github.event.pull_request.labels.*.name, 'enterprise-backport') }}
     runs-on: ubuntu-latest
     env:
       SOURCE_REPO_CHECKOUT_PATH: src
       DEST_REPO_CHECKOUT_PATH: dest
       DEST_REPO: panther-labs/panther-enterprise
       HEAD: ${{ format('sync-{0}', github.event.pull_request.head.ref) }}
-      IGNORE_LABEL: enterprise-backport
     steps:
       - name: Checkout Source Repo
         uses: actions/checkout@v2
@@ -77,11 +76,10 @@ jobs:
 
   sync_prs_from_master_to_release:
     name: Syncs merged PRs from master to release branch, if a certain label is present
-    if: ${{ github.event.pull_request.merged == true && contains(github.event.pull_request.labels, env.SYNC_LABEL) }}
+    if: ${{ github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'sync-to-release') }}
     runs-on: ubuntu-latest
     env:
       HEAD: ${{ format('sync-release-{0}', github.event.pull_request.head.ref) }}
-      SYNC_LABEL: sync-to-release
     steps:
       - name: Checkout Source Repo
         uses: actions/checkout@v2
