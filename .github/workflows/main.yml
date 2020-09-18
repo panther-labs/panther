@@ -21,14 +21,10 @@ on:
     types:
       - closed
 
-env:
-  ENTERPRISE_IGNORE_LABEL: enterprise-backport
-  RELEASE_SYNC_LABEL: sync-to-release
-
 jobs:
   sync_prs_from_community_to_enterprise:
     name: Syncs merged PRs from Panther Community to Panther Enterprise
-    if: ${{ github.event.pull_request.merged == true && !contains(github.event.pull_request.labels, env.ENTERPRISE_IGNORE_LABEL) }}
+    if: ${{ github.event.pull_request.merged == true && !contains(github.event.pull_request.labels, 'enterprise-backport') }}
     runs-on: ubuntu-latest
     env:
       SOURCE_REPO_CHECKOUT_PATH: src
@@ -80,7 +76,7 @@ jobs:
 
   sync_prs_from_master_to_release:
     name: Syncs merged PRs from master to release branch, if a certain label is present
-    if: ${{ github.event.pull_request.merged == true && contains(github.event.pull_request.labels, env.RELEASE_SYNC_LABEL) }}
+    if: ${{ github.event.pull_request.merged == true && contains(github.event.pull_request.labels, 'sync-to-release') }}
     runs-on: ubuntu-latest
     env:
       HEAD: ${{ format('sync-release-{0}', github.event.pull_request.head.ref) }}
