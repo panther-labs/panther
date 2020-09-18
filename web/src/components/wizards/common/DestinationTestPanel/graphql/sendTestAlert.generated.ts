@@ -18,6 +18,7 @@
 
 import * as Types from '../../../../../../__generated__/schema';
 
+import { DeliveryResponseFull } from '../../../../../graphql/fragments/DeliveryResponseFull.generated';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
@@ -27,16 +28,15 @@ export type SendTestAlertVariables = {
   input: Types.SendTestAlertInput;
 };
 
-export type SendTestAlert = {
-  sendTestAlert?: Types.Maybe<Pick<Types.SendTestAlertResponse, 'success'>>;
-};
+export type SendTestAlert = { sendTestAlert: Array<Types.Maybe<DeliveryResponseFull>> };
 
 export const SendTestAlertDocument = gql`
   query SendTestAlert($input: SendTestAlertInput!) {
     sendTestAlert(input: $input) {
-      success
+      ...DeliveryResponseFull
     }
   }
+  ${DeliveryResponseFull}
 `;
 
 /**

@@ -333,12 +333,12 @@ Resources:
       AccessTokenValidity: 15 # minutes
       ClientName: Panther
       GenerateSecret: false
-      IdTokenValidity: 12 # hours
+      IdTokenValidity: 15
       PreventUserExistenceErrors: ENABLED
       RefreshTokenValidity: 12 # hours
       TokenValidityUnits:
         AccessToken: minutes
-        IdToken: hours
+        IdToken: minutes
         RefreshToken: hours
       UserPoolId: !Ref UserPoolId
       WriteAttributes:

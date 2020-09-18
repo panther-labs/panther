@@ -142,6 +142,7 @@ func TestGuardDutyDetectorsPoller(t *testing.T) {
 }
 
 func TestGuardDutyDetectorsPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockGuardDutyForSetup = awstest.BuildMockGuardDutySvcAllError()
 
 	GuardDutyClientFunc = awstest.SetupMockGuardDuty

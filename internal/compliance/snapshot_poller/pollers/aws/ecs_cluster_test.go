@@ -148,6 +148,7 @@ func TestEcsClusterPoller(t *testing.T) {
 }
 
 func TestEcsClusterPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockEcsForSetup = awstest.BuildMockEcsSvcAllError()
 
 	EcsClientFunc = awstest.SetupMockEcs

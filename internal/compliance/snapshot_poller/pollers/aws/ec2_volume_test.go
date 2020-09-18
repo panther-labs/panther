@@ -119,6 +119,7 @@ func TestBuildEc2VolumeSnapshot(t *testing.T) {
 }
 
 func TestEc2VolumePoller(t *testing.T) {
+	resetCache()
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAll()
 
 	EC2ClientFunc = awstest.SetupMockEC2
@@ -137,6 +138,7 @@ func TestEc2VolumePoller(t *testing.T) {
 }
 
 func TestEc2VolumePollerError(t *testing.T) {
+	resetCache()
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAllError()
 
 	EC2ClientFunc = awstest.SetupMockEC2

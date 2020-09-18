@@ -119,6 +119,7 @@ func TestCloudWatchLogsLogGroupPoller(t *testing.T) {
 }
 
 func TestCloudWatchLogsLogGroupPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockCloudWatchLogsForSetup = awstest.BuildMockCloudWatchLogsSvcAllError()
 
 	AcmClientFunc = awstest.SetupMockAcm

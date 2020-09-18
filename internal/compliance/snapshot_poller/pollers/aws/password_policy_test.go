@@ -63,6 +63,7 @@ func TestPasswordPolicyPoller(t *testing.T) {
 }
 
 func TestPasswordPolicyPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockIAMForSetup = awstest.BuildMockIAMSvcError([]string{"GetAccountPasswordPolicy"})
 
 	IAMClientFunc = awstest.SetupMockIAM
