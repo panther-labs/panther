@@ -1,8 +1,6 @@
 fragment RuleFull on RuleDetails {
   ...RuleBasic
-  ...RuleDates
   body
-  threshold
   tests {
     expectedResult
     name

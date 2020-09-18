@@ -34,16 +34,18 @@ const TableControlsPagination: React.FC<TableControlsPagination> = ({
     <Flex align="center" justify="center">
       <Flex align="center">
         <IconButton
+          variantColor="navyblue"
           aria-label="Go to previous page"
           variant="ghost"
           icon="chevron-left"
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
         />
-        <Box mx={4}>
+        <Box mx={2} fontSize="medium">
           {page} of {totalPages}
         </Box>
         <IconButton
+          variantColor="navyblue"
           aria-label="Go to next page"
           variant="ghost"
           icon="chevron-right"

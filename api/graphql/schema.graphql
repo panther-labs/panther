@@ -25,6 +25,7 @@ type Mutation {
   deleteUser(id: ID!): Boolean
   inviteUser(input: InviteUserInput): User!
   remediateResource(input: RemediateResourceInput!): Boolean
+  deliverAlert(input: DeliverAlertInput!): AlertSummary!
   resetUserPassword(id: ID!): User!
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
   testPolicy(input: TestPolicyInput): TestPolicyResponse
@@ -44,7 +45,7 @@ type Mutation {
 type Query {
   alert(input: GetAlertInput!): AlertDetails
   alerts(input: ListAlertsInput): ListAlertsResponse
-  sendTestAlert(input: SendTestAlertInput!): SendTestAlertResponse
+  sendTestAlert(input: SendTestAlertInput!): [DeliveryResponse]!
   destination(id: ID!): Destination
   destinations: [Destination]
   generalSettings: GeneralSettings!
@@ -143,6 +144,7 @@ type SqsLogIntegrationHealth {
 interface Alert {
   alertId: ID!
   creationTime: AWSDateTime!
+  deliveryResponses: [DeliveryResponse]!
   eventsMatched: Int!
   ruleId: ID
   severity: SeverityEnum!
@@ -157,6 +159,7 @@ interface Alert {
 type AlertDetails implements Alert {
   alertId: ID!
   creationTime: AWSDateTime!
+  deliveryResponses: [DeliveryResponse]!
   eventsMatched: Int!
   ruleId: ID
   severity: SeverityEnum!
@@ -174,6 +177,7 @@ type AlertDetails implements Alert {
 type AlertSummary implements Alert {
   alertId: ID!
   creationTime: AWSDateTime!
+  deliveryResponses: [DeliveryResponse]!
   eventsMatched: Int!
   ruleId: ID
   severity: SeverityEnum!
@@ -185,14 +189,31 @@ type AlertSummary implements Alert {
   updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
 }
 
+type DeliveryResponse {
+  outputId: ID!
+  message: String!
+  statusCode: Int!
+  success: Boolean!
+  dispatchedAt: AWSDateTime!
+}
+
 type ListAlertsResponse {
   alertSummaries: [AlertSummary]!
   lastEvaluatedKey: String
 }
 
+input DeliverAlertInput {
+  alertId: ID!
+  outputIds: [ID!]!
+}
+
 input UpdateAlertStatusInput {
   alertId: ID!
   status: AlertStatusesEnum!
+}
+
+input SendTestAlertInput {
+  outputIds: [ID!]!
 }
 
 input ListRulesInput {
@@ -541,14 +562,6 @@ type ListPoliciesResponse {
 type ListResourcesResponse {
   paging: PagingData
   resources: [ResourceSummary]
-}
-
-input SendTestAlertInput {
-  outputIds: [ID!]!
-}
-
-type SendTestAlertResponse {
-  success: Boolean
 }
 
 type Destination {

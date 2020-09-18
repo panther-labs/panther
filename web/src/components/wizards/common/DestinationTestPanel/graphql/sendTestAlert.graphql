@@ -1,5 +1,5 @@
 query SendTestAlert($input: SendTestAlertInput!) {
   sendTestAlert(input: $input) {
-    success
+    ...DeliveryResponseFull
   }
 }
