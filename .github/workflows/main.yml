@@ -105,6 +105,7 @@ jobs:
         env:
           ACTIONS_STEP_DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
         with:
-          repo: ${{ env.GITHUB_REPOSITORY }}
+          repo: ${{ github.repository }}
           head: ${{ env.HEAD }}
+          base: release
           token: ${{ secrets.PR_SYNC_TOKEN }}
