@@ -1,0 +1,7 @@
+query ListDestinations {
+  destinations {
+    outputId
+    outputType
+    displayName
+  }
+}

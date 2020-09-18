@@ -16,27 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as Types from '../../../__generated__/schema';
-
-import { RuleBasic } from './RuleBasic.generated';
-import { GraphQLError } from 'graphql';
-import gql from 'graphql-tag';
-
-export type RuleFull = Pick<Types.RuleDetails, 'body'> & {
-  tests?: Types.Maybe<
-    Array<Types.Maybe<Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource'>>>
-  >;
-} & RuleBasic;
-
-export const RuleFull = gql`
-  fragment RuleFull on RuleDetails {
-    ...RuleBasic
-    body
-    tests {
-      expectedResult
-      name
-      resource
-    }
-  }
-  ${RuleBasic}
-`;
+export { default } from './AlertDetailsBanner';
