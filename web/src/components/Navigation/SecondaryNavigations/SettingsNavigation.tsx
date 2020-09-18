@@ -38,11 +38,7 @@ const SettingsNavigation: React.FC = () => {
             to={urls.settings.globalPythonModules.list()}
             label="Global Modules"
           />
-          <NavLink
-            icon="multiple-upload"
-            to={urls.settings.bulkUploader.list()}
-            label="Bulk Uploader"
-          />
+          <NavLink icon="multiple-upload" to={urls.settings.bulkUploader()} label="Bulk Uploader" />
         </FadeInTrail>
       </Flex>
     </Box>

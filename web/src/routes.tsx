@@ -199,11 +199,7 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   path={urls.settings.globalPythonModules.edit(':id')}
                   component={EditGlobalPythonModulePage}
                 />
-                <Route
-                  exact
-                  path={urls.settings.bulkUploader.list()}
-                  component={BulkUploaderPage}
-                />
+                <Route exact path={urls.settings.bulkUploader()} component={BulkUploaderPage} />
                 <Redirect
                   exact
                   from={`${urls.settings.globalPythonModules.list()}:id`}
