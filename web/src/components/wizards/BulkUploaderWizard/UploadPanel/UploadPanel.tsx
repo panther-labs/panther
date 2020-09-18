@@ -27,13 +27,15 @@ import UploadError from './Error';
 import UploadForm from './Upload';
 import Processing from './Processing';
 
-const STALE = 'STALE';
+const PENDING = 'PENDING';
 const PROCESSING = 'PROCESSING';
 const ERROR = 'ERROR';
 
+type UploadState = 'PENDING' | 'PROCESSING' | 'ERROR';
+
 const UploadPanel: React.FC = () => {
   const controller = new window.AbortController();
-  const [uploadingState, setUploadingState] = React.useState(STALE);
+  const [uploadingState, setUploadingState] = React.useState<UploadState>(PENDING);
   const [errorMsg, setErrorMsg] = React.useState('');
   const { goToNextStep, resetData, setData } = useWizardContext();
 
@@ -60,8 +62,8 @@ const UploadPanel: React.FC = () => {
     controller.abort();
     // Reset panel data
     resetData();
-    // Reset to stale
-    setUploadingState(STALE);
+    // Reset to pending state
+    setUploadingState(PENDING);
   }, [controller, resetData]);
 
   const onFilesDropped = React.useCallback(
@@ -105,14 +107,14 @@ const UploadPanel: React.FC = () => {
   );
 
   const restartUploading = React.useCallback(() => {
-    setUploadingState(STALE);
+    setUploadingState(PENDING);
     setErrorMsg('');
   }, [setUploadingState, setErrorMsg]);
 
   return (
     <WizardPanel>
       <FadeIn>
-        {uploadingState === STALE && <UploadForm onFilesDropped={onFilesDropped} />}
+        {uploadingState === PENDING && <UploadForm onFilesDropped={onFilesDropped} />}
         {uploadingState === PROCESSING && <Processing onAbort={onAbort} />}
         {uploadingState === ERROR && (
           <UploadError errorMsg={errorMsg} onRestartUploading={restartUploading} />
