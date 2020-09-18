@@ -82,14 +82,14 @@ var (
 // If the resource is not compliant, it will trigger an auto-remediation action
 // and an alert - if alerting is not suppressed
 func Handle(event *models.ComplianceNotification) error {
-	zap.L().Debug("received new event", zap.String("resourceId", *event.ResourceID))
+	zap.L().Debug("received new event", zap.String("resourceId", event.ResourceID))
 
 	triggerActions, err := shouldTriggerActions(event)
 	if err != nil {
 		return err
 	}
 	if !triggerActions {
-		zap.L().Debug("no action needed for resources", zap.String("resourceId", *event.ResourceID))
+		zap.L().Debug("no action needed for resources", zap.String("resourceId", event.ResourceID))
 		return nil
 	}
 
@@ -104,39 +104,40 @@ func Handle(event *models.ComplianceNotification) error {
 		}
 	}
 
-	zap.L().Debug("finished processing event", zap.String("resourceId", *event.ResourceID))
+	zap.L().Debug("finished processing event", zap.String("resourceId", event.ResourceID))
 	return nil
 }
 
 // We should trigger actions on resource if the resource is failing for a policy
 func shouldTriggerActions(event *models.ComplianceNotification) (bool, error) {
 	zap.L().Debug("getting resource status",
-		zap.String("policyId", *event.PolicyID),
-		zap.String("resourceId", *event.ResourceID))
+		zap.String("policyId", event.PolicyID),
+		zap.String("resourceId", event.ResourceID))
 	response, err := complianceClient.Operations.GetStatus(
 		&complianceoperations.GetStatusParams{
-			PolicyID:   *event.PolicyID,
-			ResourceID: *event.ResourceID,
+			PolicyID:   event.PolicyID,
+			ResourceID: event.ResourceID,
 			HTTPClient: httpClient,
 		})
 	if err != nil {
 		if _, ok := err.(*complianceoperations.GetStatusNotFound); ok {
 			return false, nil
 		}
-		return false, err
+		return false, errors.Wrapf(err, "failed to get compliance status for policyID %s and resource %s",
+			event.PolicyID, event.ResourceID)
 	}
 
 	zap.L().Debug("got resource status",
-		zap.String("policyId", *event.PolicyID),
-		zap.String("resourceId", *event.ResourceID),
+		zap.String("policyId", event.PolicyID),
+		zap.String("resourceId", event.ResourceID),
 		zap.String("status", string(response.Payload.Status)))
 
 	return response.Payload.Status == compliancemodels.StatusFAIL, nil
 }
 
 func triggerAlert(event *models.ComplianceNotification) (canRemediate bool, err error) {
-	if !aws.BoolValue(event.ShouldAlert) {
-		zap.L().Debug("skipping alert notification", zap.String("policyId", *event.PolicyID))
+	if !event.ShouldAlert {
+		zap.L().Debug("skipping alert notification", zap.String("policyId", event.PolicyID))
 		return false, nil
 	}
 	timeNow := time.Now().Unix()
@@ -145,12 +146,12 @@ func triggerAlert(event *models.ComplianceNotification) (canRemediate bool, err 
 	var alertConfig *alertmodel.Alert
 	alertConfig, canRemediate, err = getAlertConfigPolicy(event)
 	if err != nil {
-		return false, errors.Wrapf(err, "encountered issue when getting policy: %s", *event.PolicyID)
+		return false, errors.Wrapf(err, "encountered issue when getting policy: %s", event.PolicyID)
 	}
 
 	marshalledAlertConfig, err := jsoniter.Marshal(alertConfig)
 	if err != nil {
-		return false, errors.Wrapf(err, "failed to marshal alerting config for policy %s", *event.PolicyID)
+		return false, errors.Wrapf(err, "failed to marshal alerting config for policy %s", event.PolicyID)
 	}
 
 	updateExpression := expression.
@@ -168,13 +169,13 @@ func triggerAlert(event *models.ComplianceNotification) (canRemediate bool, err 
 		WithCondition(conditionExpression).
 		Build()
 	if err != nil {
-		return false, errors.Wrapf(err, "could not build ddb expression for policy: %s", *event.PolicyID)
+		return false, errors.Wrapf(err, "could not build ddb expression for policy: %s", event.PolicyID)
 	}
 
 	input := &dynamodb.UpdateItemInput{
 		TableName: aws.String(ddbTable),
 		Key: map[string]*dynamodb.AttributeValue{
-			"policyId": {S: event.PolicyID},
+			"policyId": {S: &event.PolicyID},
 		},
 		UpdateExpression:          combinedExpression.Update(),
 		ConditionExpression:       combinedExpression.Condition(),
@@ -182,7 +183,7 @@ func triggerAlert(event *models.ComplianceNotification) (canRemediate bool, err 
 		ExpressionAttributeValues: combinedExpression.Values(),
 	}
 
-	zap.L().Debug("updating recent alerts table", zap.String("policyId", *event.PolicyID))
+	zap.L().Debug("updating recent alerts table", zap.String("policyId", event.PolicyID))
 	_, err = ddbClient.UpdateItem(input)
 	if err != nil {
 		aerr, ok := err.(awserr.Error)
@@ -190,29 +191,29 @@ func triggerAlert(event *models.ComplianceNotification) (canRemediate bool, err 
 			zap.L().Debug("update on ddb failed on condition, we will not trigger an alert")
 			return false, nil
 		}
-		return false, errors.Wrapf(err, "experienced issue while updating ddb table for policy: %s", *event.PolicyID)
+		return false, errors.Wrapf(err, "experienced issue while updating ddb table for policy: %s", event.PolicyID)
 	}
 	return canRemediate, nil
 }
 
 func triggerRemediation(event *models.ComplianceNotification) error {
 	zap.L().Debug("Triggering auto-remediation",
-		zap.String("policyId", *event.PolicyID),
-		zap.String("resourceId", *event.ResourceID),
+		zap.String("policyId", event.PolicyID),
+		zap.String("resourceId", event.ResourceID),
 	)
 
 	_, err := remediationClient.Operations.RemediateResourceAsync(
 		&remediationoperations.RemediateResourceAsyncParams{
 			Body: &remediationmodels.RemediateResource{
-				PolicyID:   remediationmodels.PolicyID(*event.PolicyID),
-				ResourceID: remediationmodels.ResourceID(*event.ResourceID),
+				PolicyID:   remediationmodels.PolicyID(event.PolicyID),
+				ResourceID: remediationmodels.ResourceID(event.ResourceID),
 			},
 			HTTPClient: httpClient,
 		})
 
 	if err != nil {
 		return errors.Wrapf(err, "failed to trigger remediation on policy %s for resource %s",
-			*event.PolicyID, *event.ResourceID)
+			event.PolicyID, event.ResourceID)
 	}
 
 	zap.L().Debug("successfully triggered auto-remediation action")
@@ -221,7 +222,7 @@ func triggerRemediation(event *models.ComplianceNotification) error {
 
 func getAlertConfigPolicy(event *models.ComplianceNotification) (*alertmodel.Alert, bool, error) {
 	policy, err := policyClient.Operations.GetPolicy(&analysisoperations.GetPolicyParams{
-		PolicyID:   *event.PolicyID,
+		PolicyID:   event.PolicyID,
 		HTTPClient: httpClient,
 	})
 
@@ -231,15 +232,15 @@ func getAlertConfigPolicy(event *models.ComplianceNotification) (*alertmodel.Ale
 
 	return &alertmodel.Alert{
 			AnalysisDescription: aws.String(string(policy.Payload.Description)),
-			AnalysisID:          *event.PolicyID,
+			AnalysisID:          event.PolicyID,
 			AnalysisName:        aws.String(string(policy.Payload.DisplayName)),
-			CreatedAt:           *event.Timestamp,
+			CreatedAt:           event.Timestamp,
 			OutputIds:           event.OutputIds,
 			Runbook:             aws.String(string(policy.Payload.Runbook)),
 			Severity:            string(policy.Payload.Severity),
 			Tags:                policy.Payload.Tags,
 			Type:                alertmodel.PolicyType,
-			Version:             event.PolicyVersionID,
+			Version:             &event.PolicyVersionID,
 		},
 		policy.Payload.AutoRemediationID != "", // means we can remediate
 		nil
