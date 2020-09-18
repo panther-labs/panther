@@ -432,6 +432,10 @@ Resources:
       AlarmTopicArn: !Ref AlarmTopicArn
       CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
+      # The `get resource` operation invokes the `describe-org` operation of the compliance-api in order
+      # to see if a resource is compliant or not. Setting the same threshold
+      # here as for the compliance-api
+      LatencyThresholdMs: 3000
 
 Outputs:
   AppClientId:
