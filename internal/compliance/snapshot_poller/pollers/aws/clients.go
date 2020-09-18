@@ -214,17 +214,13 @@ func getClient(pollerInput *awsmodels.ResourcePollerInput,
 		Region:        region,
 	}
 
-	// Return the cached client if the credentials used to build it are not expired
+	// Return the cached client
 	if cachedClient, exists := clientCache[cacheKey]; exists {
-		if !cachedClient.Credentials.IsExpired() {
-			if cachedClient.Client != nil {
-				return cachedClient.Client, nil
-			}
-			zap.L().Debug("expired client was cached", zap.Any("cache key", cacheKey))
-		}
+		zap.L().Debug("client was cached", zap.Any("cache key", cacheKey))
+		return cachedClient.Client, nil
 	}
 
-	// Build a new client on cache miss OR if the client in the cache has expired credentials
+	// Build a new client on cache miss
 	creds := assumeRoleFunc(pollerInput, snapshotPollerSession, region)
 	err := verifyAssumedCredsFunc(creds, region)
 	if err != nil {

@@ -42,7 +42,7 @@ const ProfileSettingsModal: React.FC<ModalProps> = ({ onClose, ...rest }) => {
     <Modal showCloseButton aria-label="Profile & Account Settings" onClose={onClose} {...rest}>
       <Box width={450}>
         <Tabs>
-          <Box mt={-6} mx={-4}>
+          <Box mt={-8} mx={-6}>
             <TabList>
               <Tab>
                 {({ isSelected, isFocused }) => (

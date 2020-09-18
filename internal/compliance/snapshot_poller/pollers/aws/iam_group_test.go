@@ -190,6 +190,7 @@ func TestIamGroupPoller(t *testing.T) {
 }
 
 func TestIamGroupPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockIAMForSetup = awstest.BuildMockIAMSvcAllError()
 
 	IAMClientFunc = awstest.SetupMockIAM

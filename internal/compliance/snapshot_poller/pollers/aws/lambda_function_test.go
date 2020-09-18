@@ -148,6 +148,7 @@ func TestLambdaFunctionPoller(t *testing.T) {
 }
 
 func TestLambdaFunctionPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockLambdaForSetup = awstest.BuildMockLambdaSvcAllError()
 
 	LambdaClientFunc = awstest.SetupMockLambda

@@ -25,7 +25,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
@@ -55,11 +54,11 @@ func TestHandleEventWithAlert(t *testing.T) {
 	httpClient = &http.Client{Transport: mockRoundTripper}
 
 	input := &models.ComplianceNotification{
-		ResourceID:      aws.String("test-resource"),
-		PolicyID:        aws.String("test-policy"),
-		PolicyVersionID: aws.String("test-version"),
-		ShouldAlert:     aws.Bool(true),
-		Timestamp:       aws.Time(time.Now()),
+		ResourceID:      "test-resource",
+		PolicyID:        "test-policy",
+		PolicyVersionID: "test-version",
+		ShouldAlert:     true,
+		Timestamp:       time.Now(),
 	}
 
 	complianceResponse := &compliancemodels.ComplianceStatus{
@@ -101,11 +100,11 @@ func TestHandleEventWithAlertButNoAutoRemediationID(t *testing.T) {
 	httpClient = &http.Client{Transport: mockRoundTripper}
 
 	input := &models.ComplianceNotification{
-		ResourceID:      aws.String("test-resource"),
-		PolicyID:        aws.String("test-policy"),
-		PolicyVersionID: aws.String("test-version"),
-		ShouldAlert:     aws.Bool(true),
-		Timestamp:       aws.Time(time.Now()),
+		ResourceID:      "test-resource",
+		PolicyID:        "test-policy",
+		PolicyVersionID: "test-version",
+		ShouldAlert:     true,
+		Timestamp:       time.Now(),
 	}
 
 	complianceResponse := &compliancemodels.ComplianceStatus{
@@ -145,10 +144,10 @@ func TestHandleEventWithoutAlert(t *testing.T) {
 	httpClient = &http.Client{Transport: mockRoundTripper}
 
 	input := &models.ComplianceNotification{
-		ResourceID:      aws.String("test-resource"),
-		PolicyID:        aws.String("test-policy"),
-		PolicyVersionID: aws.String("test-version"),
-		ShouldAlert:     aws.Bool(false),
+		ResourceID:      "test-resource",
+		PolicyID:        "test-policy",
+		PolicyVersionID: "test-version",
+		ShouldAlert:     false,
 	}
 
 	complianceResponse := &compliancemodels.ComplianceStatus{
@@ -181,10 +180,10 @@ func TestSkipActionsIfResourceIsNotFailing(t *testing.T) {
 	httpClient = &http.Client{Transport: mockRoundTripper}
 
 	input := &models.ComplianceNotification{
-		ResourceID:      aws.String("test-resource"),
-		PolicyID:        aws.String("test-policy"),
-		PolicyVersionID: aws.String("test-version"),
-		ShouldAlert:     aws.Bool(true),
+		ResourceID:      "test-resource",
+		PolicyID:        "test-policy",
+		PolicyVersionID: "test-version",
+		ShouldAlert:     true,
 	}
 
 	responseBody := &compliancemodels.ComplianceStatus{
@@ -211,9 +210,9 @@ func TestSkipActionsIfLookupFailed(t *testing.T) {
 	httpClient = &http.Client{Transport: mockRoundTripper}
 
 	input := &models.ComplianceNotification{
-		ResourceID:  aws.String("test-resource"),
-		PolicyID:    aws.String("test-policy"),
-		ShouldAlert: aws.Bool(true),
+		ResourceID:  "test-resource",
+		PolicyID:    "test-policy",
+		ShouldAlert: true,
 	}
 
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse("", http.StatusInternalServerError), nil)
