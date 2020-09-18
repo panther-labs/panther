@@ -58,12 +58,13 @@ jobs:
           git remote add source https://github.com/$GITHUB_REPOSITORY.git
           git fetch source master --depth 15
           git cherry-pick ${{ github.event.pull_request.merge_commit_sha }} || true
+          CONFLICTS=$(git diff --name-only --diff-filter=U)
           git add -A .
-          git commit -m "merge changes from $GITHUB_REPOSITORY#${{ github.event.pull_request.number }}" -m "$(git diff --name-only --diff-filter=U)" || true
+          git commit -m "merge changes from $GITHUB_REPOSITORY#${{ github.event.pull_request.number }}" -m "$CONFLICTS" || true
           git push origin $HEAD
 
       - name: Clone original PR
-        uses: ./src/build/actions/pr_sync # Github actions has a bug and we can't use ENV var here
+        uses: ./src/build/actions/pr_sync
         id: pr_sync
         env:
           ACTIONS_STEP_DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
@@ -88,17 +89,18 @@ jobs:
           git config --global user.name "panther-bot"
 
       - name: Bootstrap a PR branch
-        working-directory: ${{ env.DEST_REPO_CHECKOUT_PATH }}
         run: |
-          git fetch origin release
-          git checkout -b $HEAD release
+          git fetch origin release --depth=5
+          git checkout release
+          git checkout -b $HEAD
           git cherry-pick ${{ github.event.pull_request.merge_commit_sha }} || true
+          CONFLICTS=$(git diff --name-only --diff-filter=U)
           git add -A .
-          git commit -m "merge changes from $GITHUB_REPOSITORY#${{ github.event.pull_request.number }}" -m "$(git diff --name-only --diff-filter=U)" || true
+          git commit -m "merge changes from $GITHUB_REPOSITORY#${{ github.event.pull_request.number }}" -m "CONFLICTS" || true
           git push origin $HEAD
 
       - name: Clone original PR
-        uses: ./src/build/actions/pr_sync # Github actions has a bug and we can't use ENV var here
+        uses: ./build/actions/pr_sync
         id: pr_sync
         env:
           ACTIONS_STEP_DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
