@@ -89,7 +89,7 @@ const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
       .reverse();
   }, [deliveryResponses, alertDestinations]);
 
-  if (!deliveryResponses.length) {
+  if (!deliveryResponses.length || !enhancedAndSortedAlertDeliveries.length) {
     return (
       <Flex align="warning" spacing={4}>
         <Icon type="info" size="small" color="blue-400" />
