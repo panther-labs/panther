@@ -227,7 +227,7 @@ func getAlertConfigPolicy(event *models.ComplianceNotification) (*alertmodel.Ale
 	})
 
 	if err != nil {
-		return nil, false, err
+		return nil, false, errors.Wrapf(err, "encountered issue when getting policy: %s", event.PolicyID)
 	}
 
 	return &alertmodel.Alert{
