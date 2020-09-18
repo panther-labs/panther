@@ -76,10 +76,16 @@ const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
   const { deliveryResponses } = alert;
   const enhancedAndSortedAlertDeliveries = React.useMemo(() => {
     return deliveryResponses
-      .map(dr => ({
-        ...dr,
-        ...alertDestinations.find(d => d.outputId === dr.outputId),
-      }))
+      .reduce((acc, dr) => {
+        const dest = alertDestinations.find(d => d.outputId === dr.outputId);
+        if (dest) {
+          acc.push({
+            ...dr,
+            ...dest,
+          });
+        }
+        return acc;
+      }, [])
       .reverse();
   }, [deliveryResponses, alertDestinations]);
 
