@@ -134,7 +134,7 @@ It's no longer feasible to find the needle in the security-log-haystack _manuall
 
 ## Contributing
 
-We welcome all contributions! Please read the contributing [guidelines](https://github.com/panther-labs/panther/blob/master/docs/CONTRIBUTING.md) before submitting pull requests.
+We welcome all contributions! Please read our contributing [guidelines](https://github.com/panther-labs/panther/blob/master/docs/CONTRIBUTING.md) before submitting pull requests.
 
 ## License
 
