@@ -37,7 +37,6 @@ jobs:
         with:
           path: ${{ env.SOURCE_REPO_CHECKOUT_PATH }}
           token: ${{ secrets.PR_SYNC_TOKEN }}
-          fetch-depth: 1
 
       - name: Checkout Dest Repo
         uses: actions/checkout@v2
@@ -45,7 +44,6 @@ jobs:
           path: ${{ env.DEST_REPO_CHECKOUT_PATH }}
           repository: ${{ env.DEST_REPO }}
           token: ${{ secrets.PR_SYNC_TOKEN }}
-          fetch-depth: 1
 
       - name: Setup Git Credentials
         working-directory: ${{ env.DEST_REPO_CHECKOUT_PATH }}
@@ -81,11 +79,8 @@ jobs:
     env:
       HEAD: ${{ format('sync-release-{0}', github.event.pull_request.head.ref) }}
     steps:
-      - name: Checkout Source Repo
+      - name: Checkout Repo
         uses: actions/checkout@v2
-        with:
-          token: ${{ secrets.PR_SYNC_TOKEN }}
-          fetch-depth: 1
 
       - name: Setup Git Credentials
         run: |
@@ -95,6 +90,7 @@ jobs:
       - name: Bootstrap a PR branch
         working-directory: ${{ env.DEST_REPO_CHECKOUT_PATH }}
         run: |
+          git fetch origin release
           git checkout -b $HEAD release
           git cherry-pick ${{ github.event.pull_request.merge_commit_sha }} || true
           git add -A .
