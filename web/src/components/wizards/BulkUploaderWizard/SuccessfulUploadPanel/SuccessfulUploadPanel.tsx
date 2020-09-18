@@ -19,30 +19,8 @@
 import React from 'react';
 import { SimpleGrid, Flex, Box, Text, Icon } from 'pouncejs';
 import { WizardPanel, useWizardContext } from 'Components/Wizard';
+import Rows from './Rows';
 import { UploadPolicies } from '../UploadPanel/graphql/uploadPolicies.generated';
-
-const createRows = (newItems = 0, modifiedItems = 0, totalItems = 0) => (
-  <>
-    <SimpleGrid columns={2} mb={2}>
-      <Text color="gray-300">New</Text>
-      <Text fontWeight="bold" textAlign="right">
-        {newItems}
-      </Text>
-    </SimpleGrid>
-    <SimpleGrid columns={2} mb={2}>
-      <Text color="gray-300">Modified</Text>
-      <Text fontWeight="bold" textAlign="right">
-        {modifiedItems}
-      </Text>
-    </SimpleGrid>
-    <SimpleGrid columns={2}>
-      <Text color="gray-300">Total</Text>
-      <Text fontWeight="bold" textAlign="right">
-        {totalItems}
-      </Text>
-    </SimpleGrid>
-  </>
-);
 
 const BoxColumn: React.FC = props => <Box p={6} backgroundColor="navyblue-500" {...props} />;
 
@@ -63,33 +41,33 @@ const SuccessfulUpload: React.FC = () => {
               <Icon type="source-code" mr={4} />
               <Text fontWeight="bold">Python Modules</Text>
             </Flex>
-            {createRows(
-              uploadPolicies.newGlobals,
-              uploadPolicies.modifiedGlobals,
-              uploadPolicies.totalGlobals
-            )}
+            <Rows
+              newItems={uploadPolicies.newGlobals}
+              modifiedItems={uploadPolicies.modifiedGlobals}
+              totalItems={uploadPolicies.totalGlobals}
+            />
           </BoxColumn>
           <BoxColumn>
             <Flex mb={5} width={220} align="center">
               <Icon type="rule" mr={4} />
               <Text fontWeight="bold">Rules</Text>
             </Flex>
-            {createRows(
-              uploadPolicies.newPolicies,
-              uploadPolicies.modifiedRules,
-              uploadPolicies.totalRules
-            )}
+            <Rows
+              newItems={uploadPolicies.newPolicies}
+              modifiedItems={uploadPolicies.modifiedRules}
+              totalItems={uploadPolicies.totalRules}
+            />
           </BoxColumn>
           <BoxColumn>
             <Flex mb={5} width={220} align="center">
               <Icon type="policy" mr={4} />
               <Text fontWeight="bold">Policies</Text>
             </Flex>
-            {createRows(
-              uploadPolicies.newRules,
-              uploadPolicies.modifiedPolicies,
-              uploadPolicies.totalPolicies
-            )}
+            <Rows
+              newItems={uploadPolicies.newRules}
+              modifiedItems={uploadPolicies.modifiedPolicies}
+              totalItems={uploadPolicies.totalPolicies}
+            />
           </BoxColumn>
         </SimpleGrid>
       </Flex>
