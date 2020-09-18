@@ -75,6 +75,7 @@ func TestEC2PollAmis(t *testing.T) {
 }
 
 func TestEC2PollAmiError(t *testing.T) {
+	resetCache()
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAllError()
 
 	EC2ClientFunc = awstest.SetupMockEC2
