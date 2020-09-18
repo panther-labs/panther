@@ -23,7 +23,7 @@ import folderIllustration from 'Assets/illustrations/folder.svg';
 import { WizardPanel } from 'Components/Wizard';
 
 interface UploadProps {
-  onFilesDropped: (acceptedFiles: [File]) => void;
+  onFilesDropped: (acceptedFiles: File[]) => void;
 }
 
 const Upload: React.FC<UploadProps> = ({ onFilesDropped }) => {
@@ -39,7 +39,6 @@ const Upload: React.FC<UploadProps> = ({ onFilesDropped }) => {
           multiple={false}
           onDragOver={() => setDrag(true)}
           onDragLeave={() => setDrag(false)}
-          // @ts-ignore
           onDrop={onFilesDropped}
           accept="zip,application/octet-stream,application/zip,application/x-zip,application/x-zip-compressed"
         >
