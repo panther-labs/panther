@@ -181,6 +181,7 @@ func TestKMSKeyPoller(t *testing.T) {
 }
 
 func TestKMSKeyPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockKmsForSetup = awstest.BuildMockKmsSvcAllError()
 
 	KmsClientFunc = awstest.SetupMockKms

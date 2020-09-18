@@ -66,11 +66,6 @@ func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModel
 	alertSummaries := updateAlerts(dispatchStatuses)
 	zap.L().Debug("Finished updating alert delivery statuses")
 
-	// Log any failures and return
-	if err := returnIfFailed(dispatchStatuses); err != nil {
-		return nil, err
-	}
-
 	alertSummary := alertSummaries[0]
 	gatewayapi.ReplaceMapSliceNils(alertSummary)
 	return alertSummary, nil
@@ -184,28 +179,4 @@ func intersection(inputs []string, outputs []*outputModels.AlertOutput) []*outpu
 	}
 
 	return valid
-}
-
-// returnIfFailed - logs failed deliveries and returns an error
-func returnIfFailed(dispatchStatuses []DispatchStatus) error {
-	shouldReturn := false
-	for _, delivery := range dispatchStatuses {
-		if !delivery.Success {
-			zap.L().Error(
-				"failed to send alert to output",
-				zap.Any("alert", delivery.Alert),
-				zap.String("outputID", delivery.OutputID),
-				zap.Int("statusCode", delivery.StatusCode),
-				zap.String("message", delivery.Message),
-			)
-			shouldReturn = true
-		}
-	}
-
-	if shouldReturn {
-		return &genericapi.InternalError{
-			Message: "Some alerts failed to be delivered"}
-	}
-
-	return nil
 }

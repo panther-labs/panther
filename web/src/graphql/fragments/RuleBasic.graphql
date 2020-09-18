@@ -6,6 +6,11 @@ fragment RuleBasic on RuleDetails {
   threshold
   outputIds
   runbook
+  reference
   severity
   tags
+  dedupPeriodMinutes
+  createdAt
+  lastModified
+  enabled
 }
