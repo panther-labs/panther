@@ -35,6 +35,39 @@ describe('BulkUploaderWizard', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows an error screen', async () => {
+    const file = new File([JSON.stringify({ ping: true })], 'bulkfile.zip', {
+      type: 'zip',
+    });
+
+    const { getByTestId, getByText } = render(<BulkUploaderWizard />);
+
+    expect(getByText('Bulk Upload your rules, policies & python modules!')).toBeInTheDocument();
+    expect(getByText('Select file')).toBeInTheDocument();
+    expect(getByText('Drag & Drop your .zip file here')).toBeInTheDocument();
+
+    const uploadInput = getByTestId('input-upload');
+
+    Object.defineProperty(uploadInput, 'files', {
+      value: [file],
+    });
+    fireEvent.change(uploadInput);
+
+    // Processing
+    await waitFor(() => getByTestId('processing-indicator'));
+
+    // Error screen
+    expect(getByText('Could not upload your rules')).toBeInTheDocument();
+    expect(getByText('Try Again')).toBeInTheDocument();
+
+    const retryButton = getByText('Try Again');
+    fireEvent.click(retryButton);
+
+    // Return to uploading screen
+    await waitFor(() => getByText('Bulk Upload your rules, policies & python modules!'));
+    expect(getByText('Select file')).toBeInTheDocument();
+  });
+
   it('allows selecting and uploading file', async () => {
     const mocks = [
       mockUploadPolicies({
@@ -65,9 +98,14 @@ describe('BulkUploaderWizard', () => {
       value: [file],
     });
     fireEvent.change(uploadInput);
-    const indicator = await waitFor(() => getByTestId('success-indicator'));
 
-    expect(indicator).toBeInTheDocument();
+    // Processing state
+    const processinIndicator = await waitFor(() => getByTestId('processing-indicator'));
+    expect(processinIndicator).toBeInTheDocument();
+
+    const successfulIndicator = await waitFor(() => getByTestId('success-indicator'));
+
+    expect(successfulIndicator).toBeInTheDocument();
     expect(getByText('Python Modules')).toBeInTheDocument();
     expect(getByText('Rules')).toBeInTheDocument();
     expect(getByText('Policies')).toBeInTheDocument();

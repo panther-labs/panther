@@ -34,7 +34,7 @@ const ProcessingUploader: React.FC<ProcessingUploaderProps> = ({ onAbort }) => {
       />
       <Flex justify="center">
         <Box backgroundColor="navyblue-500" textAlign="center" p={6} minWidth={600}>
-          <Text color="gray-50" data-testid="processing-indicator" fontSize="medium">
+          <Text data-testid="processing-indicator" fontSize="medium">
             Your file is being processed…
           </Text>
           <Flex justify="center" mt={3}>

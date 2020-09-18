@@ -47,7 +47,7 @@ const createRows = (newItems = 0, modifiedItems = 0, totalItems = 0) => (
 const BoxColumn: React.FC = props => <Box p={6} backgroundColor="navyblue-500" {...props} />;
 
 const SuccessfulUpload: React.FC = () => {
-  const { data = {} as UploadPolicies } = useWizardContext();
+  const { data = {} } = useWizardContext<UploadPolicies>();
   const { uploadPolicies = {} } = data;
 
   return (
