@@ -26,10 +26,8 @@ package operations
 import (
 	"fmt"
 	"io"
-
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
-
 	"github.com/panther-labs/panther/api/gateway/resources/models"
 )
 

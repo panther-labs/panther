@@ -253,5 +253,6 @@ def _get_common_fields(match: EngineResult, alert_info: AlertInfo) -> Dict[str, 
         p_rule_reports=match.rule_reports,
         p_alert_creation_time=alert_info.alert_creation_time.strftime(_DATE_FORMAT),
         p_alert_update_time=alert_info.alert_update_time.strftime(_DATE_FORMAT),
-        p_rule_error=match.error_message)
+        p_rule_error=match.error_message
+    )
     return asdict(common_fields)

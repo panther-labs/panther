@@ -20,13 +20,11 @@ package apihandlers
 
 import (
 	"net/http"
-
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
-
 	"github.com/panther-labs/panther/api/gateway/remediation/models"
 	"github.com/panther-labs/panther/internal/compliance/remediation_api/remediation"
 	"github.com/panther-labs/panther/pkg/gatewayapi"

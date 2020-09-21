@@ -20,9 +20,7 @@ package models
 
 import (
 	"time"
-
 	"github.com/aws/aws-lambda-go/events"
-
 	alertModels "github.com/panther-labs/panther/api/lambda/alerts/models"
 )
 

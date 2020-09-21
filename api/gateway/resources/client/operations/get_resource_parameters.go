@@ -27,7 +27,6 @@ import (
 	"context"
 	"net/http"
 	"time"
-
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"

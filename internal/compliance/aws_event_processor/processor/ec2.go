@@ -20,11 +20,9 @@ package processor
 
 import (
 	"strings"
-
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
-
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 )
 

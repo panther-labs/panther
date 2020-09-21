@@ -20,11 +20,9 @@ package processor
 
 import (
 	"os"
-
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
-
 	"github.com/panther-labs/panther/api/gateway/resources/client"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )

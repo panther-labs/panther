@@ -20,10 +20,8 @@ package main
 
 import (
 	"context"
-
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-
 	"github.com/panther-labs/panther/internal/compliance/aws_event_processor/processor"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
