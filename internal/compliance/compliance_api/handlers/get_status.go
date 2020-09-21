@@ -22,10 +22,12 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"go.uber.org/zap"
+
 	"github.com/panther-labs/panther/api/gateway/compliance/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )

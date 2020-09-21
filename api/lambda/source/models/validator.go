@@ -21,6 +21,7 @@ package models
 import (
 	"regexp"
 	"strings"
+
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"gopkg.in/go-playground/validator.v9"
 )

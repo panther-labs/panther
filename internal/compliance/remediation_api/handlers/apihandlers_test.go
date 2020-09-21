@@ -20,6 +20,7 @@ package apihandlers
 
 import (
 	"github.com/stretchr/testify/mock"
+
 	"github.com/panther-labs/panther/api/gateway/remediation/models"
 	"github.com/panther-labs/panther/internal/compliance/remediation_api/remediation"
 )

@@ -21,6 +21,7 @@ package processor
 import (
 	"os"
 	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -30,6 +31,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+
 	analysisclient "github.com/panther-labs/panther/api/gateway/analysis/client"
 	analysisoperations "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
 	complianceclient "github.com/panther-labs/panther/api/gateway/compliance/client"

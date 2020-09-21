@@ -20,12 +20,14 @@ package forwarder
 
 import (
 	"os"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
+
 	"github.com/panther-labs/panther/api/lambda/delivery/models"
 )
 

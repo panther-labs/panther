@@ -21,6 +21,7 @@ package main
 import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/kelseyhightower/envconfig"
+
 	"github.com/panther-labs/panther/internal/compliance/compliance_api/handlers"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
