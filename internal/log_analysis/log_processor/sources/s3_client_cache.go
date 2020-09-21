@@ -296,7 +296,7 @@ func getNewS3Client(region *string, creds *credentials.Credentials) (result s3if
 	// through STS creds. The issue seems to disappear after some retries
 	session := session.Must(session.NewSession(request.WithRetryer(config,
 		awsretry.NewAccessDeniedRetryer(s3ClientMaxRetries))))
-	return s3.New(session, config)
+	return s3.New(session)
 }
 
 // Returns the configured S3 bucket and S3 object prefix for this source
