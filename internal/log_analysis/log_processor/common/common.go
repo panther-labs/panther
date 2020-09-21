@@ -39,7 +39,7 @@ import (
 )
 
 const (
-	MaxRetries     = 12 // ~7'
+	MaxRetries     = 13 // ~7'
 	EventDelimiter = '\n'
 )
 
