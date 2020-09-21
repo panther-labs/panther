@@ -25,6 +25,7 @@ import (
 	"io/ioutil"
 	"strings"
 	"testing"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/aws/aws-sdk-go/aws"
@@ -37,6 +38,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+
 	schemas "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/pkg/testutils"

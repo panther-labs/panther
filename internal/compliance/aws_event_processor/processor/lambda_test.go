@@ -21,6 +21,7 @@ package processor
 import (
 	"sort"
 	"testing"
+
 	"github.com/stretchr/testify/assert"
 )
 

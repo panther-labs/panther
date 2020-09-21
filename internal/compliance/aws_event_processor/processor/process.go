@@ -20,6 +20,7 @@ package processor
 
 import (
 	"strings"
+
 	"github.com/pkg/errors"
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"

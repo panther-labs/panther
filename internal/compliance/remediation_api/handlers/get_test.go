@@ -21,10 +21,12 @@ package apihandlers
 import (
 	"net/http"
 	"testing"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/panther-labs/panther/api/gateway/remediation/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )

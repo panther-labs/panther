@@ -21,9 +21,11 @@ package handlers
 import (
 	"errors"
 	"strconv"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+
 	"github.com/panther-labs/panther/api/gateway/compliance/models"
 )
 

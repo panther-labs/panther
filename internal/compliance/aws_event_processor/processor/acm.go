@@ -21,6 +21,7 @@ package processor
 import (
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
+
 	schemas "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 )
 

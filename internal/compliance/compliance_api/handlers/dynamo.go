@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"go.uber.org/zap"
+
 	"github.com/panther-labs/panther/api/gateway/compliance/models"
 )
 
