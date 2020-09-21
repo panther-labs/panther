@@ -916,6 +916,9 @@ type UploadPoliciesResponse {
   totalRules: Int
   newRules: Int
   modifiedRules: Int
+  totalGlobals: Int
+  newGlobals: Int
+  modifiedGlobals: Int
 }
 
 type PolicyUnitTestError {

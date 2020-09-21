@@ -20,7 +20,6 @@
 import React from 'react';
 import useSidesheet from 'Hooks/useSidesheet';
 import { SIDESHEETS } from 'Components/utils/Sidesheet';
-import PolicyBulkUploadSidesheet from 'Components/sidesheets/PolicyBulkUploadSidesheet';
 import EditUserSidesheet from 'Components/sidesheets/EditUserSidesheet';
 import UserInvitationSidesheet from 'Components/sidesheets/UserInvitationSidesheet';
 
@@ -29,9 +28,6 @@ const SidesheetManager: React.FC = () => {
 
   let Component;
   switch (sidesheetState.sidesheet) {
-    case SIDESHEETS.POLICY_BULK_UPLOAD:
-      Component = PolicyBulkUploadSidesheet;
-      break;
     case SIDESHEETS.EDIT_USER:
       Component = EditUserSidesheet;
       break;

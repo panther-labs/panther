@@ -23,6 +23,7 @@ import {
   fireEvent,
   waitForElementToBeRemoved,
   buildAlertDetails,
+  buildDestination,
 } from 'test-utils';
 import AlertDeliverySection from './index';
 
@@ -30,8 +31,11 @@ describe('AlertDeliveryTable', () => {
   it('renders the correct message on successful alert delivery', () => {
     const deliveryResponses = [buildDeliveryResponse({ success: true })];
     const alert = buildAlertDetails({ deliveryResponses });
+    const destination = buildDestination({ outputId: alert.deliveryResponses[0].outputId });
 
-    const { queryByText } = render(<AlertDeliverySection alert={alert} alertDestinations={[]} />);
+    const { queryByText } = render(
+      <AlertDeliverySection alert={alert} alertDestinations={[destination]} />
+    );
 
     expect(queryByText('Alert was delivered successfully')).toBeInTheDocument();
     expect(queryByText('Show History')).toBeInTheDocument();
@@ -40,8 +44,11 @@ describe('AlertDeliveryTable', () => {
   it('renders the correct message on failed alert delivery', () => {
     const deliveryResponses = [buildDeliveryResponse({ success: false })];
     const alert = buildAlertDetails({ deliveryResponses });
+    const destination = buildDestination({ outputId: alert.deliveryResponses[0].outputId });
 
-    const { queryByText } = render(<AlertDeliverySection alert={alert} alertDestinations={[]} />);
+    const { queryByText } = render(
+      <AlertDeliverySection alert={alert} alertDestinations={[destination]} />
+    );
 
     expect(queryByText('Alert delivery failed')).toBeInTheDocument();
     expect(queryByText('Show History')).toBeInTheDocument();
@@ -59,9 +66,10 @@ describe('AlertDeliveryTable', () => {
   it('correctly toggles between showing and hiding the  delivery table', async () => {
     const deliveryResponses = [buildDeliveryResponse({ success: false })];
     const alert = buildAlertDetails({ deliveryResponses });
+    const destination = buildDestination({ outputId: alert.deliveryResponses[0].outputId });
 
     const { queryByText, queryByTestId } = render(
-      <AlertDeliverySection alert={alert} alertDestinations={[]} />
+      <AlertDeliverySection alert={alert} alertDestinations={[destination]} />
     );
 
     expect(queryByTestId('alert-delivery-table')).not.toBeInTheDocument();
