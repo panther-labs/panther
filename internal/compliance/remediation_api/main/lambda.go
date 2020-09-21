@@ -20,7 +20,6 @@ package main
 
 import (
 	"github.com/aws/aws-lambda-go/lambda"
-
 	apihandlers "github.com/panther-labs/panther/internal/compliance/remediation_api/handlers"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )

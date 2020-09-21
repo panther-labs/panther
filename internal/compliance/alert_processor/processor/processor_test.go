@@ -24,13 +24,11 @@ import (
 	"strings"
 	"testing"
 	"time"
-
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-
 	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
 	compliancemodels "github.com/panther-labs/panther/api/gateway/compliance/models"
 	"github.com/panther-labs/panther/internal/compliance/alert_processor/models"

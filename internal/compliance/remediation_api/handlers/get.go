@@ -20,11 +20,9 @@ package apihandlers
 
 import (
 	"net/http"
-
 	"github.com/aws/aws-lambda-go/events"
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
-
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )

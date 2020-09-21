@@ -20,7 +20,6 @@ package main
 
 import (
 	"context"
-
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/lambdacontext"
@@ -28,7 +27,6 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
-
 	"github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/internal/compliance/alert_forwarder/forwarder"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
