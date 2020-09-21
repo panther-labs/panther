@@ -73,7 +73,7 @@ func putGatewayAlarmGroup(props APIGatewayAlarmProperties) error {
 		Dimensions: []*cloudwatch.Dimension{
 			{Name: aws.String("ApiName"), Value: &props.APIName},
 		},
-		EvaluationPeriods: aws.Int64(5),
+		EvaluationPeriods: aws.Int64(3),
 		MetricName:        aws.String("IntegrationLatency"),
 		Namespace:         aws.String("AWS/ApiGateway"),
 		Period:            aws.Int64(60),

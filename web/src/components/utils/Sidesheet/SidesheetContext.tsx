@@ -17,7 +17,6 @@
  */
 
 import React from 'react';
-import { PolicyBulkUploadSideSheetProps } from 'Components/sidesheets/PolicyBulkUploadSidesheet';
 import { EditUserSidesheetProps } from 'Components/sidesheets/EditUserSidesheet';
 
 const SHOW_SIDESHEET = 'SHOW_SIDESHEET';
@@ -25,7 +24,6 @@ const HIDE_SIDESHEET = 'HIDE_SIDESHEET';
 
 /* The available list of sidesheets to dispatch */
 export enum SIDESHEETS {
-  POLICY_BULK_UPLOAD = 'POLICY_BULK_UPLOAD',
   UPDATE_DESTINATION = 'UPDATE_DESTINATION',
   EDIT_USER = 'EDIT_USER',
   USER_INVITATION = 'USER_INVITATION',
@@ -42,15 +40,6 @@ interface SidesheetStateShape {
 
 interface HideSidesheetAction {
   type: typeof HIDE_SIDESHEET;
-}
-
-/* Bulk upload policies action */
-interface PolicyBulkUploadSideSheetAction {
-  type: typeof SHOW_SIDESHEET;
-  payload: {
-    sidesheet: SIDESHEETS.POLICY_BULK_UPLOAD;
-    props: OmitControlledProps<PolicyBulkUploadSideSheetProps>;
-  };
 }
 
 interface EditUserSideSheetAction {
@@ -70,7 +59,6 @@ interface UserInvitationSideSheetAction {
 
 /* The available actions that can be dispatched */
 type SidesheetStateAction =
-  | PolicyBulkUploadSideSheetAction
   | EditUserSideSheetAction
   | UserInvitationSideSheetAction
   | HideSidesheetAction;

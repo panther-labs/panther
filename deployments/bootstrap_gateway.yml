@@ -387,6 +387,9 @@ Resources:
       AlarmTopicArn: !Ref AlarmTopicArn
       CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
+      # The `describe-org` operation has to scan through the DDB resources table to generate
+      # some statistics about an organization and is a high-latency operation
+      LatencyThresholdMs: 3000
 
   RemediationApi:
     Type: AWS::Serverless::Api
