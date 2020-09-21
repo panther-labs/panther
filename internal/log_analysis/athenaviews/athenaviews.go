@@ -74,6 +74,11 @@ func GenerateLogViews(tables []*awsglue.GlueTableMetadata) (sqlStatements []stri
 		return nil, err
 	}
 	sqlStatements = append(sqlStatements, sqlStatement)
+	sqlStatement, err = generateViewAllRuleErrors(tables)
+	if err != nil {
+		return nil, err
+	}
+	sqlStatements = append(sqlStatements, sqlStatement)
 	// add future views here
 	return sqlStatements, nil
 }

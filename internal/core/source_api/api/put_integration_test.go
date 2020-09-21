@@ -287,7 +287,7 @@ func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 	mockGlue.On("GetTable", mock.Anything).Return(&glue.GetTableOutput{}, nil).Times(len(registry.AvailableLogTypes()))
 	mockAthena.On("StartQueryExecution", mock.Anything).Return(&athena.StartQueryExecutionOutput{
 		QueryExecutionId: aws.String("test-query-1234"),
-	}, nil).Twice()
+	}, nil).Times(3)
 	mockAthena.On("GetQueryExecution", mock.Anything).Return(&athena.GetQueryExecutionOutput{
 		QueryExecution: &athena.QueryExecution{
 			QueryExecutionId: aws.String("test-query-1234"),
@@ -295,8 +295,8 @@ func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 				State: aws.String(athena.QueryExecutionStateSucceeded),
 			},
 		},
-	}, nil).Twice()
-	mockAthena.On("GetQueryResults", mock.Anything).Return(&athena.GetQueryResultsOutput{}, nil).Twice()
+	}, nil).Times(3)
+	mockAthena.On("GetQueryResults", mock.Anything).Return(&athena.GetQueryResultsOutput{}, nil).Times(3)
 
 	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
 		PutIntegrationSettings: models.PutIntegrationSettings{
@@ -332,7 +332,7 @@ func TestPutLogIntegrationUpdateSqsQueuePermissionsFailure(t *testing.T) {
 	mockGlue.On("GetTable", mock.Anything).Return(&glue.GetTableOutput{}, nil).Times(len(registry.AvailableTables()))
 	mockAthena.On("StartQueryExecution", mock.Anything).Return(&athena.StartQueryExecutionOutput{
 		QueryExecutionId: aws.String("test-query-1234"),
-	}, nil).Twice()
+	}, nil).Times(3)
 	mockAthena.On("GetQueryExecution", mock.Anything).Return(&athena.GetQueryExecutionOutput{
 		QueryExecution: &athena.QueryExecution{
 			QueryExecutionId: aws.String("test-query-1234"),
@@ -340,8 +340,8 @@ func TestPutLogIntegrationUpdateSqsQueuePermissionsFailure(t *testing.T) {
 				State: aws.String(athena.QueryExecutionStateSucceeded),
 			},
 		},
-	}, nil).Twice()
-	mockAthena.On("GetQueryResults", mock.Anything).Return(&athena.GetQueryResultsOutput{}, nil).Twice()
+	}, nil).Times(3)
+	mockAthena.On("GetQueryResults", mock.Anything).Return(&athena.GetQueryResultsOutput{}, nil).Times(3)
 
 	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
 		PutIntegrationSettings: models.PutIntegrationSettings{
@@ -397,7 +397,7 @@ func TestPutSqsIntegration(t *testing.T) {
 	mockGlue.On("GetTable", mock.Anything).Return(&glue.GetTableOutput{}, nil).Times(len(registry.AvailableLogTypes()))
 	mockAthena.On("StartQueryExecution", mock.Anything).Return(&athena.StartQueryExecutionOutput{
 		QueryExecutionId: aws.String("test-query-1234"),
-	}, nil).Twice()
+	}, nil).Times(3)
 	mockAthena.On("GetQueryExecution", mock.Anything).Return(&athena.GetQueryExecutionOutput{
 		QueryExecution: &athena.QueryExecution{
 			QueryExecutionId: aws.String("test-query-1234"),
@@ -405,8 +405,8 @@ func TestPutSqsIntegration(t *testing.T) {
 				State: aws.String(athena.QueryExecutionStateSucceeded),
 			},
 		},
-	}, nil).Twice()
-	mockAthena.On("GetQueryResults", mock.Anything).Return(&athena.GetQueryResultsOutput{}, nil).Twice()
+	}, nil).Times(3)
+	mockAthena.On("GetQueryResults", mock.Anything).Return(&athena.GetQueryResultsOutput{}, nil).Times(3)
 
 	mockLambda.On("CreateEventSourceMapping", mock.Anything).Return(&lambda.EventSourceMappingConfiguration{}, nil)
 

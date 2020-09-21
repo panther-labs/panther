@@ -154,8 +154,10 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EngineResu
     output_uuid = uuid.uuid4()
     if key.is_rule_error:
         key_format = _RULE_ERRORS_KEY_FORMAT
+        data_type = 'RuleErrors'
     else:
         key_format = _RULE_MATCHES_KEY_FORMAT
+        data_type = 'RuleMatches'
 
     object_key = key_format.format(
         key.table_name(), time.year, time.month, time.day, time.hour, key.rule_id, time.strftime(_S3_KEY_DATE_FORMAT), output_uuid
@@ -165,11 +167,6 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EngineResu
     # Write data to S3
     _S3_CLIENT.put_object(Bucket=_S3_BUCKET, ContentType='gzip', Body=data_stream, Key=object_key)
 
-    # If the object written contains events that caused a rule engine error
-    # don't send an SNS notification. TODO: Remove this condition and send a notification once
-    # the backend supports rule errors end to end.
-    if key.is_rule_error:
-        return
     # Send notification to SNS topic
     notification = _s3_put_object_notification(_S3_BUCKET, object_key, byte_size)
 
@@ -180,7 +177,7 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EngineResu
         MessageAttributes={
             'type': {
                 'DataType': 'String',
-                'StringValue': 'RuleMatches'
+                'StringValue': data_type,
             },
             'id': {
                 'DataType': 'String',
@@ -249,23 +246,12 @@ def _serialize_event(match: EngineResult, alert_info: AlertInfo) -> bytes:
 
 def _get_common_fields(match: EngineResult, alert_info: AlertInfo) -> Dict[str, str]:
     """Retrieves a dictionary with common fields"""
-    if match.error_message:
-        common_fields = EventCommonFields(
-            p_rule_id=match.rule_id,
-            p_alert_id=alert_info.alert_id,
-            p_rule_tags=match.rule_tags,
-            p_rule_reports=match.rule_reports,
-            p_alert_creation_time=alert_info.alert_creation_time.strftime(_DATE_FORMAT),
-            p_alert_update_time=alert_info.alert_update_time.strftime(_DATE_FORMAT),
-            p_rule_error=match.error_message,
-        )
-        return asdict(common_fields)
     common_fields = EventCommonFields(
         p_rule_id=match.rule_id,
         p_alert_id=alert_info.alert_id,
         p_rule_tags=match.rule_tags,
         p_rule_reports=match.rule_reports,
         p_alert_creation_time=alert_info.alert_creation_time.strftime(_DATE_FORMAT),
-        p_alert_update_time=alert_info.alert_update_time.strftime(_DATE_FORMAT)
-    )
+        p_alert_update_time=alert_info.alert_update_time.strftime(_DATE_FORMAT),
+        p_rule_error=match.error_message)
     return asdict(common_fields)
