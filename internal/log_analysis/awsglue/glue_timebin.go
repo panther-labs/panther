@@ -139,8 +139,9 @@ func (tb GlueTableTimebin) PartitionValuesFromTime(t time.Time) (values []*strin
 	return
 }
 
+// TimebinFromTable resolves the timebin from a table storage descriptor
 func TimebinFromTable(tbl *glue.TableData) (GlueTableTimebin, error) {
-	keyNames := ColumnNames(tbl.PartitionKeys)
+	keyNames := columnNames(tbl.PartitionKeys)
 	switch len(keyNames) {
 	case 2:
 		if keyNames[0] == "year" && keyNames[1] == "month" {
@@ -158,7 +159,8 @@ func TimebinFromTable(tbl *glue.TableData) (GlueTableTimebin, error) {
 	return 0, errors.Errorf("cannot determine the table time bin %s [%s]", aws.StringValue(tbl.Name), strings.Join(keyNames, ", "))
 }
 
-func ColumnNames(cols []*glue.Column) []string {
+// columnNames is a helper to extract just the column names from a list of columns
+func columnNames(cols []*glue.Column) []string {
 	if cols == nil {
 		return nil
 	}
@@ -169,6 +171,7 @@ func ColumnNames(cols []*glue.Column) []string {
 	return names
 }
 
+// PartitionTimeFromValues gets the partition time from the partition values of a Glue partition
 func (tb GlueTableTimebin) PartitionTimeFromValues(values []string) (tm time.Time, ok bool) {
 	if len(values) == 0 {
 		return
@@ -207,18 +210,9 @@ func (tb GlueTableTimebin) PartitionS3PathFromTime(t time.Time) (s3Path string) 
 		return fmt.Sprintf("year=%d/month=%02d/", t.Year(), t.Month())
 	}
 }
-func (tb GlueTableTimebin) S3PathLayout() string {
-	switch tb {
-	case GlueTableMonthly:
-		return "year=2006/month=01"
-	case GlueTableDaily:
-		return "year=2006/month=01/day=02"
-	case GlueTableHourly:
-		return "year=2006/month=01/day=02/hour=15"
-	default:
-		return ""
-	}
-}
+
+// TimeFromS3Path converts an S3 path to time.
+// The path must not contain any prefixes such as db/table name
 func (tb GlueTableTimebin) TimeFromS3Path(path string) (time.Time, bool) {
 	// Trim leading slash
 	if len(path) > 0 && path[0] == '/' {
@@ -231,6 +225,20 @@ func (tb GlueTableTimebin) TimeFromS3Path(path string) (time.Time, bool) {
 		}
 	}
 	return time.Time{}, false
+}
+
+// S3PathLayout returns a go time layout to format/parse S3 paths for Glue partitions
+func (tb GlueTableTimebin) S3PathLayout() string {
+	switch tb {
+	case GlueTableMonthly:
+		return "year=2006/month=01"
+	case GlueTableDaily:
+		return "year=2006/month=01/day=02"
+	case GlueTableHourly:
+		return "year=2006/month=01/day=02/hour=15"
+	default:
+		return ""
+	}
 }
 
 // PartitionHasData checks if there is at least 1 s3 object in the partition
