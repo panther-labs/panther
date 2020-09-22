@@ -35,7 +35,7 @@ if (envCheck) {
 }
 
 enum TrackEventEnum {
-  'choose-destination-to-create' = 'Choose Destination to create',
+  'picked-destination-to-create' = 'Picked Destination to create',
   'added-destination' = 'Added Destination',
   'added-rule' = 'Added Rule',
   'success-sign-in' = 'Successful Sign in',
@@ -73,25 +73,37 @@ interface TrackErrorProps {
 
 const actions = {
   identify: id => {
-    if (envCheck) mixpanel.identify(id);
+    if (envCheck) {
+      mixpanel.identify(id);
+    }
   },
   alias: id => {
-    if (envCheck) mixpanel.alias(id);
+    if (envCheck) {
+      mixpanel.alias(id);
+    }
   },
   people: {
     set: props => {
-      if (envCheck) mixpanel.people.set(props);
+      if (envCheck) {
+        mixpanel.people.set(props);
+      }
     },
   },
   // TODO: Above functions are not used for the moment, either utilize or remove
   pageView: ({ name }: TrackPageViewProps) => {
-    if (envCheck) mixpanel.track(TrackPageViewEnum[name], { type: 'pageview' });
+    if (envCheck) {
+      mixpanel.track(TrackPageViewEnum[name], { type: 'pageview' });
+    }
   },
   track: ({ name, src, ctx }: TrackEventProps) => {
-    if (envCheck) mixpanel.track(TrackEventEnum[name], { type: 'event', src, ctx });
+    if (envCheck) {
+      mixpanel.track(TrackEventEnum[name], { type: 'event', src, ctx });
+    }
   },
   error: ({ name, src, ctx, data }: TrackErrorProps) => {
-    if (envCheck) mixpanel.track(TrackErrorEnum[name], { type: 'error', src, ctx, data });
+    if (envCheck) {
+      mixpanel.track(TrackErrorEnum[name], { type: 'error', src, ctx, data });
+    }
   },
 };
 
