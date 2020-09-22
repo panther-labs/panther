@@ -24,10 +24,13 @@ import { DEFAULT_SENSITIVE_VALUE } from 'Source/constants';
 const iconProps: TextInputProps['iconProps'] = { color: 'violet-300' };
 
 interface MaskedInputProps {
-  shouldMask: boolean;
+  shouldMask?: boolean;
 }
+
+export type SensitiveInputProps = TextInputProps & MaskedInputProps;
+
 const FormikSensitiveTextInput: React.FC<
-  TextInputProps & MaskedInputProps & Required<Pick<FieldConfig, 'name'>>
+  SensitiveInputProps & Required<Pick<FieldConfig, 'name'>>
 > = ({ shouldMask = true, ...props }) => {
   const [isFocused, setFocused] = React.useState(false);
   const [, meta] = useField(props.name);
