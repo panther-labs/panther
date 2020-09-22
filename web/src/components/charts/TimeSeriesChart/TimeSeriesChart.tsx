@@ -128,16 +128,37 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
         grid: {
           left: 180,
           right: 20,
-          bottom: 20,
+          bottom: 50,
           top: 10,
           containLabel: true,
         },
         ...(zoomable && {
           dataZoom: [
             {
-              type: 'inside',
-              orient: 'horizontal',
+              show: true,
+              type: 'slider',
+              start: 30,
+              end: 70,
+              xAxisIndex: 0,
               minValueSpan: maxZoomPeriod,
+              handleIcon: 'M 25, 50 a 25,25 0 1,1 50,0 a 25,25 0 1,1 -50,0',
+              handleStyle: {
+                color: theme.colors['navyblue-200'],
+              },
+              handleSize: 12,
+              dataBackground: {
+                areaStyle: {
+                  color: theme.colors['navyblue-200'],
+                },
+              },
+
+              borderColor: theme.colors['navyblue-200'],
+              // + 33 is opacity at 20%, what's the best way to do this?
+              fillerColor: theme.colors['navyblue-200'] + 33,
+              textStyle: {
+                color: theme.colors['gray-50'],
+                fontSize: remToPx(theme.fontSizes['x-small']),
+              },
             },
           ],
         }),
