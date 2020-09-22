@@ -1,4 +1,4 @@
-package api
+package awsretry
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,18 +19,31 @@ package api
  */
 
 import (
-	"github.com/panther-labs/panther/internal/log_analysis/athenaviews"
-	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
+	"errors"
+	"testing"
+
+	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/stretchr/testify/assert"
 )
 
-func addGlueTables(logTypes []string) error {
-	for _, logType := range logTypes {
-		_, err := gluetables.CreateOrUpdateGlueTablesForLogType(glueClient, logType, env.ProcessedDataBucket)
-		if err != nil {
-			return err
-		}
+func TestAcessDeniedRetryerShouldRetryThrottledException(t *testing.T) {
+	retryer := NewAccessDeniedRetryer(1)
+	sdkRequest := &request.Request{
+		Error: errors.New("AccessDenied"),
 	}
+	assert.True(t, retryer.ShouldRetry(sdkRequest))
+}
 
-	// update the views with the new tables
-	return athenaviews.CreateOrReplaceViews(glueClient, athenaClient)
+func TestAcessDeniedRetryerShouldRetryOtherErrors(t *testing.T) {
+	retryer := NewConnectionErrRetryer(1)
+	sdkRequest := &request.Request{
+		Error: errors.New("random error"),
+	}
+	assert.True(t, retryer.ShouldRetry(sdkRequest))
+}
+
+func TestAcessDeniedRetryerShouldNotRetryNoErrors(t *testing.T) {
+	retryer := NewConnectionErrRetryer(1)
+	sdkRequest := &request.Request{}
+	assert.False(t, retryer.ShouldRetry(sdkRequest))
 }

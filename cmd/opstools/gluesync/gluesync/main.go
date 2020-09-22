@@ -258,12 +258,13 @@ func updateRegisteredTables() (tables []*awsglue.GlueTableMetadata) {
 		if *VERBOSE {
 			logger.Infof("updating registered tables for %s", logType)
 		}
-		logTable, ruleTable, err := gluetables.CreateOrUpdateGlueTablesForLogType(glueClient, logType, dataBucket)
+		createdTables, err := gluetables.CreateOrUpdateGlueTablesForLogType(glueClient, logType, dataBucket)
 		if err != nil {
 			logger.Fatalf("error updating table definitions: %v", err)
 		}
-		tables = append(tables, logTable)
-		tables = append(tables, ruleTable)
+		tables = append(tables, createdTables.LogTable)
+		tables = append(tables, createdTables.RuleTable)
+		tables = append(tables, createdTables.RuleErrorTable)
 	}
 
 	// update the views with the new tables

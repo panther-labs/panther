@@ -27,8 +27,9 @@ import (
 // This file registers the Panther specific assumptions about tables and partition formats with associated functions.
 
 const (
-	logS3Prefix       = "logs"
-	ruleMatchS3Prefix = "rules"
+	logS3Prefix        = "logs"
+	ruleMatchS3Prefix  = "rules"
+	ruleErrorsS3Prefix = "rule_errors"
 
 	LogProcessingDatabaseName        = "panther_logs"
 	LogProcessingDatabaseDescription = "Holds tables with data from Panther log processing"
@@ -39,6 +40,9 @@ const (
 	ViewsDatabaseName        = "panther_views"
 	ViewsDatabaseDescription = "Holds views useful for querying Panther data"
 
+	RuleErrorsDatabaseName        = "panther_rule_errors"
+	RuleErrorsDatabaseDescription = "Holds tables with data that failed Panther rule matching (same table structure as panther_logs)"
+
 	TempDatabaseName        = "panther_temp"
 	TempDatabaseDescription = "Holds temporary tables used for processing tasks"
 )
@@ -48,6 +52,7 @@ var (
 	PantherDatabases = map[string]string{
 		LogProcessingDatabaseName: LogProcessingDatabaseDescription,
 		RuleMatchDatabaseName:     RuleMatchDatabaseDescription,
+		RuleErrorsDatabaseName:    RuleErrorsDatabaseDescription,
 		ViewsDatabaseName:         ViewsDatabaseDescription,
 		TempDatabaseName:          TempDatabaseDescription,
 	}
@@ -55,18 +60,30 @@ var (
 
 // Returns the prefix of the table in S3 or error if it failed to generate it
 func getDatabase(dataType models.DataType) string {
-	if dataType == models.LogData {
+	switch dataType {
+	case models.LogData:
 		return LogProcessingDatabaseName
+	case models.RuleData:
+		return RuleMatchDatabaseName
+	case models.RuleErrors:
+		return RuleErrorsDatabaseName
+	default:
+		panic("Invalid DataType provided " + dataType)
 	}
-	return RuleMatchDatabaseName
 }
 
 // Returns the prefix of the table in S3 or error if it failed to generate it
 func getTablePrefix(dataType models.DataType, tableName string) string {
-	if dataType == models.LogData {
+	switch dataType {
+	case models.LogData:
 		return logS3Prefix + "/" + tableName + "/"
+	case models.RuleData:
+		return ruleMatchS3Prefix + "/" + tableName + "/"
+	case models.RuleErrors:
+		return ruleErrorsS3Prefix + "/" + tableName + "/"
+	default:
+		panic("Invalid DataType provided " + dataType)
 	}
-	return ruleMatchS3Prefix + "/" + tableName + "/"
 }
 
 func GetTableName(logType string) string {
@@ -81,6 +98,8 @@ func GetDataPrefix(databaseName string) string {
 		return logS3Prefix
 	case RuleMatchDatabaseName:
 		return ruleMatchS3Prefix
+	case RuleErrorsDatabaseName:
+		return ruleErrorsS3Prefix
 	default:
 		if strings.Contains(databaseName, "test") {
 			return logS3Prefix // assume logs, used for integration tests

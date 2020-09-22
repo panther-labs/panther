@@ -72,7 +72,7 @@ var (
 
 func TestSync(t *testing.T) {
 	// this will sync 2 tables for a day
-	nTableUpates := 2
+	nTableUpates := 3
 	nPartitionUpdates := 24 * nTableUpates
 	glueMock := &testutils.GlueMock{}
 	glueClient = glueMock
@@ -104,8 +104,8 @@ func TestSync(t *testing.T) {
 }
 
 func TestSyncContinuationFromLogData(t *testing.T) {
-	// this will sync 4 tables (2 from first logType, 2 from 2nd) for a day
-	nTableUpates := 4
+	// this will sync 6 tables (3 from first logType, 3 from 2nd) for a day
+	nTableUpates := 6
 	nPartitionUpdates := 24 * nTableUpates
 	glueMock := &testutils.GlueMock{}
 	glueClient = glueMock
@@ -142,8 +142,9 @@ func TestSyncContinuationFromLogData(t *testing.T) {
 }
 
 func TestSyncContinuationFromRuleData(t *testing.T) {
-	// this will sync 3 tables (1 from first logType, 2 from 2nd) for a day
-	nTableUpates := 3
+	// this will sync 5 tables. rule matches, rule errors from first logType
+	// Then logs, rule matches, rule errors from 2nd) for a day
+	nTableUpates := 5
 	nPartitionUpdates := 24 * nTableUpates
 	glueMock := &testutils.GlueMock{}
 	glueClient = glueMock
@@ -162,6 +163,44 @@ func TestSyncContinuationFromRuleData(t *testing.T) {
 		Continuation: &Continuation{
 			LogType:           "AWS.VPCFlow",
 			DataType:          models.RuleData,
+			NextPartitionTime: (*syncTestGetTableOutput.Table.CreateTime).Truncate(time.Hour),
+		},
+	}, time.Now().UTC().Add(time.Hour))
+	assert.NoError(t, err)
+	glueMock.AssertExpectations(t)
+	s3Mock.AssertExpectations(t)
+	lambdaMock.AssertExpectations(t)
+
+	// check that schema was updated
+	for _, updateCall := range glueMock.Calls {
+		switch updateInput := updateCall.Arguments.Get(0).(type) {
+		case *glue.UpdatePartitionInput:
+			assert.Equal(t, syncTestGetTableOutput.Table.StorageDescriptor.Columns, updateInput.PartitionInput.StorageDescriptor.Columns)
+		}
+	}
+}
+
+func TestSyncContinuationFromRuleErrorData(t *testing.T) {
+	// this will sync 4 tables (rule errors from first logType then logs, rule matches, rule errors from 2nd) for a day
+	nTableUpates := 4
+	nPartitionUpdates := 24 * nTableUpates
+	glueMock := &testutils.GlueMock{}
+	glueClient = glueMock
+	glueMock.On("GetTable", mock.Anything).Return(syncTestGetTableOutput, nil).Times(nTableUpates)
+	glueMock.On("GetPartition", mock.Anything).Return(syncTestGetPartitionOutput, nil).Times(nPartitionUpdates)
+	glueMock.On("UpdatePartition", mock.Anything).Return(syncTestUpdatePartitionOutput, nil).Times(nPartitionUpdates)
+	s3Mock := &testutils.S3Mock{}
+	s3Client = s3Mock
+	lambdaMock := &testutils.LambdaMock{}
+	lambdaClient = lambdaMock
+
+	// start the continuation at the create time of the table to get a full day
+	err := Sync(&SyncEvent{
+		Sync:     true,
+		LogTypes: []string{"AWS.VPCFlow", "AWS.CloudTrail"}, // use 2 so we invoke lambda on the 2nd logType
+		Continuation: &Continuation{
+			LogType:           "AWS.VPCFlow",
+			DataType:          models.RuleErrors,
 			NextPartitionTime: (*syncTestGetTableOutput.Table.CreateTime).Truncate(time.Hour),
 		},
 	}, time.Now().UTC().Add(time.Hour))
