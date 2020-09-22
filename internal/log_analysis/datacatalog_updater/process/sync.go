@@ -51,7 +51,7 @@ type Continuation struct {
 
 // Sync does one logType then re-invokes, this way we have 15min/logType/sync and we do not overload the glue api
 func Sync(event *SyncEvent, deadline time.Time) error {
-	var zeroStartTime time.Time // setting the startTime to 0, means use createTime for the table
+	var zeroStartTime time.Time // When setting the startTime to 0, the underlying code will use the table creation time.
 
 	// first, finish any pending work
 	if event.Continuation != nil {
