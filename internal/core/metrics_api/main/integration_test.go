@@ -46,6 +46,11 @@ type metricDatum struct {
 	LogType   *string
 }
 
+type metricRuleIDDatum struct {
+	Timestamp *time.Time
+	Value     *float64
+}
+
 var (
 	integrationTest  bool
 	sess             *session.Session
@@ -84,6 +89,35 @@ var (
 		Value:     aws.Float64(125),
 		LogType:   nil,
 	}
+
+	// RuleID Metric Events
+	numRulesTriggered  = 10.0
+	ruleTriggeredSmall = metricRuleIDDatum{
+		Timestamp: aws.Time(endTime.Add(-15 * time.Minute)),
+		Value:     aws.Float64(numRulesTriggered),
+	}
+	ruleTriggeredMedium = metricRuleIDDatum{
+		Timestamp: aws.Time(endTime.Add(-15 * time.Minute)),
+		Value:     aws.Float64(numRulesTriggered * 10.0),
+	}
+	ruleTriggeredLarge = metricRuleIDDatum{
+		Timestamp: aws.Time(endTime.Add(-15 * time.Minute)),
+		Value:     aws.Float64(numRulesTriggered * 100.0),
+	}
+	ruleIDs        = []string{"rule.id.test.small", "rule.id.test.medium", "rule.id.test.large"}
+	ruleDimensions = []*cloudwatch.Dimension{
+		{
+			Name:  aws.String("RuleID"),
+			Value: aws.String(ruleIDs[0]),
+		},
+		{
+			Name:  aws.String("RuleID"),
+			Value: aws.String(ruleIDs[1]),
+		}, {
+			Name:  aws.String("RuleID"),
+			Value: aws.String(ruleIDs[2]),
+		},
+	}
 )
 
 func TestMain(m *testing.M) {
@@ -100,9 +134,16 @@ func TestIntegration(t *testing.T) {
 	lambdaClient = lambda.New(sess)
 	cloudwatchClient = cloudwatch.New(sess)
 
-	// Setup a few test metrics to be retrieved
+	// Setup a few EventsProcessed test metrics to be retrieved
 	err := setupEvents()
 	require.NoError(t, err)
+
+	// Setup RuleID test metrics
+	err = setupRuleIDEvents()
+	require.NoError(t, err)
+
+	// Sleep before querying placed metrics
+	time.Sleep(time.Minute)
 
 	t.Run("API", func(t *testing.T) {
 		t.Run("GetMetrics", getMetrics)
@@ -112,6 +153,7 @@ func TestIntegration(t *testing.T) {
 func setupEvents() error {
 	_, err := cloudwatchClient.PutMetricData(&cloudwatch.PutMetricDataInput{
 		MetricData: []*cloudwatch.MetricDatum{
+			// EventsProcessed events
 			{
 				Dimensions: []*cloudwatch.Dimension{
 					dimensions[0], // Type 1
@@ -143,11 +185,55 @@ func setupEvents() error {
 		Namespace: aws.String(namespace),
 	})
 
-	time.Sleep(time.Minute)
+	return err
+}
+
+func setupRuleIDEvents() error {
+	_, err := cloudwatchClient.PutMetricData(&cloudwatch.PutMetricDataInput{
+		MetricData: []*cloudwatch.MetricDatum{
+			// AlertsTriggered Events
+			{
+				Dimensions: []*cloudwatch.Dimension{
+					ruleDimensions[0],
+				},
+				MetricName: aws.String("AlertsTriggered"),
+				Timestamp:  ruleTriggeredSmall.Timestamp,
+				Unit:       aws.String("Count"),
+				Value:      ruleTriggeredSmall.Value,
+			},
+			{
+				Dimensions: []*cloudwatch.Dimension{
+					ruleDimensions[1],
+				},
+				MetricName: aws.String("AlertsTriggered"),
+				Timestamp:  ruleTriggeredMedium.Timestamp,
+				Unit:       aws.String("Count"),
+				Value:      ruleTriggeredMedium.Value,
+			},
+			{
+				Dimensions: []*cloudwatch.Dimension{
+					ruleDimensions[2],
+				},
+				MetricName: aws.String("AlertsTriggered"),
+				Timestamp:  ruleTriggeredLarge.Timestamp,
+				Unit:       aws.String("Count"),
+				Value:      ruleTriggeredLarge.Value,
+			},
+		},
+		Namespace: aws.String(namespace),
+	})
+
 	return err
 }
 
 func getMetrics(t *testing.T) {
+	// Test EventsProcessed metrics
+	getLogTypeMetrics(t)
+	// Test AlertsTriggered Metrics
+	getRuleIDMetrics(t)
+}
+
+func getLogTypeMetrics(t *testing.T) {
 	input := &models.LambdaInput{GetMetrics: &models.GetMetricsInput{
 		MetricNames:     []string{"eventsProcessed"},
 		FromDate:        startTime,
@@ -182,5 +268,62 @@ func getMetrics(t *testing.T) {
 			assert.Equal(t, seriesData.Values[0], thirdEvent.Value)
 			assert.Equal(t, *seriesData.Values[1], float64(0))
 		}
+	}
+}
+
+func getRuleIDMetrics(t *testing.T) {
+	input := &models.LambdaInput{GetMetrics: &models.GetMetricsInput{
+		MetricNames:     []string{"alertsByRuleID"},
+		FromDate:        startTime,
+		ToDate:          endTime,
+		IntervalMinutes: 120,
+		Namespace:       namespace,
+	}}
+	var output models.GetMetricsOutput
+	err := genericapi.Invoke(lambdaClient, functionName, input, &output)
+	metricResult := output.AlertsByRuleID
+	require.NoError(t, err)
+	// There should be a single metric per dimension, and three dimensions
+	assert.Len(t, metricResult.SeriesData.Series, 3)
+	assert.Len(t, metricResult.SeriesData.Timestamps, 1)
+	for _, seriesData := range metricResult.SeriesData.Series {
+		// There should be a single series event per dimension (ToDate-FromDate/IntervalMinutes)
+		require.Equal(t, len(seriesData.Values), len(metricResult.SeriesData.Timestamps))
+		require.NotNil(t, seriesData.Label)
+		require.Subset(t, ruleIDs, []string{*seriesData.Label})
+		// Verify each dimension got the correct value set
+		if *seriesData.Label == *ruleDimensions[0].Value {
+			require.Len(t, seriesData.Values, 1)
+			assert.Equal(t, numRulesTriggered, *seriesData.Values[0])
+		} else if *seriesData.Label == *ruleDimensions[1].Value {
+			require.Len(t, seriesData.Values, 1)
+			assert.Equal(t, numRulesTriggered*10.0, *seriesData.Values[0])
+		} else {
+			require.Len(t, seriesData.Values, 1)
+			assert.Equal(t, numRulesTriggered*100.0, *seriesData.Values[0])
+		}
+	}
+	// test limit returns only top N events (N=2 in this case)
+	input = &models.LambdaInput{GetMetrics: &models.GetMetricsInput{
+		MetricNames:     []string{"alertsByRuleID"},
+		FromDate:        startTime,
+		ToDate:          endTime,
+		IntervalMinutes: 120,
+		Namespace:       namespace,
+		Limit:           2,
+	}}
+	err = genericapi.Invoke(lambdaClient, functionName, input, &output)
+	metricResult = output.AlertsByRuleID
+	require.NoError(t, err)
+	// There should be a single metric per dimension, and two dimensions
+	assert.Len(t, metricResult.SeriesData.Series, 2)
+	assert.Len(t, metricResult.SeriesData.Timestamps, 1)
+	for _, seriesData := range metricResult.SeriesData.Series {
+		// There should be a single metric per dimension (ToDate-FromDate/IntervalMinutes)
+		require.Equal(t, len(seriesData.Values), len(metricResult.SeriesData.Timestamps))
+		require.NotNil(t, seriesData.Label)
+		// This should only have the top two most triggered RuleIDs
+		require.Subset(t, ruleIDs, []string{*seriesData.Label})
+		require.Greater(t, *seriesData.Values[0], numRulesTriggered)
 	}
 }

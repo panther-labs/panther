@@ -40,27 +40,6 @@ import (
 
 const defaultTimePartition = "defaultPartition"
 
-var (
-	staticLogger = metrics.MustStaticLogger([]metrics.DimensionSet{
-		{
-			"AnalysisType",
-			"Severity",
-		},
-		{
-			"AnalysisType",
-		},
-	}, []metrics.Metric{
-		{
-			Name: "AlertsCreated",
-			Unit: metrics.UnitCount,
-		},
-	})
-	analysisTypeDimension = metrics.Dimension{
-		Name:  "AnalysisType",
-		Value: "Rule",
-	}
-)
-
 type Handler struct {
 	SqsClient        sqsiface.SQSAPI
 	Cache            *RuleCache
@@ -86,7 +65,6 @@ func (h *Handler) Do(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) (e
 	if shouldIgnoreChange(newRule, newAlertDedupEvent) {
 		return nil
 	}
-
 	if needToCreateNewAlert(oldRule, oldAlertDedupEvent, newAlertDedupEvent) {
 		return h.handleNewAlert(newRule, newAlertDedupEvent)
 	}
@@ -125,12 +103,25 @@ func (h *Handler) handleNewAlert(rule *ruleModel.Rule, event *AlertDedupEvent) e
 
 	err := h.sendAlertNotification(rule, event)
 	if err == nil {
-		staticLogger.LogSingle(1,
-			metrics.Dimension{Name: "Severity", Value: string(rule.Severity)},
-			analysisTypeDimension,
-		)
+		logStats(rule)
 	}
 	return err
+}
+
+func logStats(rule *ruleModel.Rule) {
+	// Severity Information
+	StaticLogger.LogSingle(1,
+		metrics.Dimension{Name: "Severity", Value: string(rule.Severity)},
+		AnalysisTypeDimension,
+	)
+	// Alerts Triggered
+	ruleID := RuleIDDimension
+	ruleID.Value = string(rule.ID)
+	rMetrics := []metrics.Metric{
+		{Name: "AlertsTriggered"},
+	}
+	rMetrics[0].Value = 1
+	AlertsTriggeredLogger.Log(rMetrics, ruleID)
 }
 
 func (h *Handler) updateExistingAlert(event *AlertDedupEvent) error {

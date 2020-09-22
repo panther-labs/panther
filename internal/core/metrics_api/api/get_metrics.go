@@ -46,6 +46,7 @@ var (
 		"eventsLatency":    getEventsLatency,
 		"eventsProcessed":  getEventsProcessed,
 		"totalAlertsDelta": getTotalAlertsDelta,
+		"alertsByRuleID":   getAlertsByRuleID,
 	}
 )
 
