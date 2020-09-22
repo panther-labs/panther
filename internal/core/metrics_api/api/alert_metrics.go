@@ -174,7 +174,7 @@ func getAlertsByRuleID(input *models.GetMetricsInput, output *models.GetMetricsO
 		zap.L().Error("unable to list metrics", zap.String("metric", alertsTriggeredMetric), zap.Error(err))
 		return metricsInternalError
 	}
-	zap.L().Warn("found applicable metrics", zap.Any("metrics", listMetricsResponse))
+	zap.L().Debug("found applicable metrics", zap.Any("metrics", listMetricsResponse))
 
 	// Build the query based on the applicable metric dimensions
 	var queries []*cloudwatch.MetricDataQuery
@@ -190,7 +190,7 @@ func getAlertsByRuleID(input *models.GetMetricsInput, output *models.GetMetricsO
 			},
 		})
 	}
-	zap.L().Warn("prepared metric queries", zap.Any("queries", queries), zap.Any("toDate", input.ToDate), zap.Any("fromDate", input.FromDate))
+	zap.L().Debug("prepared metric queries", zap.Any("queries", queries), zap.Any("toDate", input.ToDate), zap.Any("fromDate", input.FromDate))
 
 	metricData, err := getMetricData(input, queries)
 	if err != nil {
@@ -198,13 +198,9 @@ func getAlertsByRuleID(input *models.GetMetricsInput, output *models.GetMetricsO
 	}
 
 	values, timestamps := normalizeTimeStamps(input, metricData)
-	// By default, return top 10 entries
-	limit := 10
-	if input.Limit != 0 {
-		limit = input.Limit
-	}
-	if limit > len(values) {
-		limit = len(values)
+	// prevent index out of bounds errors
+	if input.Limit > len(values) {
+		input.Limit = len(values)
 	}
 	// Sort the results in order of total number of alerts over the given time period
 	sort.Slice(values[:], func(i, j int) bool {
@@ -213,16 +209,8 @@ func getAlertsByRuleID(input *models.GetMetricsInput, output *models.GetMetricsO
 	output.AlertsByRuleID = &models.MetricResult{
 		SeriesData: models.TimeSeriesMetric{
 			Timestamps: timestamps,
-			Series:     values[0:limit],
+			Series:     values[0:input.Limit],
 		},
 	}
 	return nil
-}
-
-func totalValue(values []*float64) float64 {
-	result := 0.0
-	for _, v := range values {
-		result += *v
-	}
-	return result
 }
