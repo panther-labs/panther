@@ -78,6 +78,7 @@ func TestEC2BuildInstanceSnapshot(t *testing.T) {
 }
 
 func TestEC2PollInstances(t *testing.T) {
+	resetCache()
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAll()
 
 	EC2ClientFunc = awstest.SetupMockEC2
@@ -101,6 +102,7 @@ func TestEC2PollInstances(t *testing.T) {
 }
 
 func TestEC2PollInstancesError(t *testing.T) {
+	resetCache()
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAllError()
 
 	EC2ClientFunc = awstest.SetupMockEC2

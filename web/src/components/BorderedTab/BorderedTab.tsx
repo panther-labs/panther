@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, BoxProps } from 'pouncejs';
+import { Heading, HeadingProps } from 'pouncejs';
 
 /**
  * These props are automatically passed by `TabList` and not by the developer
@@ -35,7 +35,7 @@ const BorderedTab: React.FC<BorderedTabProps> = ({ isSelected, isFocused, childr
   const selectedColor = 'blue-400';
   const focusedColor = 'navyblue-300';
 
-  let borderColor: BoxProps['borderColor'];
+  let borderColor: HeadingProps['borderColor'];
   if (isSelected) {
     borderColor = selectedColor;
   } else if (isFocused) {
@@ -45,11 +45,13 @@ const BorderedTab: React.FC<BorderedTabProps> = ({ isSelected, isFocused, childr
   }
 
   return (
-    <Box
-      mx={4}
+    <Heading
+      size="x-small"
+      as="h4"
       borderBottom="3px solid"
       zIndex={5}
-      py={4}
+      mx={4}
+      py={6}
       transition="border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms"
       borderColor={borderColor}
       _hover={{
@@ -57,7 +59,7 @@ const BorderedTab: React.FC<BorderedTabProps> = ({ isSelected, isFocused, childr
       }}
     >
       {children}
-    </Box>
+    </Heading>
   );
 };
 

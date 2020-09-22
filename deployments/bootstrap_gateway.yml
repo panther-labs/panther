@@ -333,12 +333,12 @@ Resources:
       AccessTokenValidity: 15 # minutes
       ClientName: Panther
       GenerateSecret: false
-      IdTokenValidity: 12 # hours
+      IdTokenValidity: 15
       PreventUserExistenceErrors: ENABLED
       RefreshTokenValidity: 12 # hours
       TokenValidityUnits:
         AccessToken: minutes
-        IdToken: hours
+        IdToken: minutes
         RefreshToken: hours
       UserPoolId: !Ref UserPoolId
       WriteAttributes:
@@ -387,6 +387,9 @@ Resources:
       AlarmTopicArn: !Ref AlarmTopicArn
       CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
+      # The `describe-org` operation has to scan through the DDB resources table to generate
+      # some statistics about an organization and is a high-latency operation
+      LatencyThresholdMs: 3000
 
   RemediationApi:
     Type: AWS::Serverless::Api
@@ -429,6 +432,10 @@ Resources:
       AlarmTopicArn: !Ref AlarmTopicArn
       CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
+      # The `get resource` operation invokes the `describe-org` operation of the compliance-api in order
+      # to see if a resource is compliant or not. Setting the same threshold
+      # here as for the compliance-api
+      LatencyThresholdMs: 3000
 
 Outputs:
   AppClientId:

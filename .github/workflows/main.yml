@@ -24,20 +24,19 @@ on:
 jobs:
   sync_prs_from_community_to_enterprise:
     name: Syncs merged PRs from Panther Community to Panther Enterprise
+    if: ${{ github.event.pull_request.merged == true && !contains(github.event.pull_request.labels.*.name, 'enterprise-backport') }}
     runs-on: ubuntu-latest
     env:
       SOURCE_REPO_CHECKOUT_PATH: src
       DEST_REPO_CHECKOUT_PATH: dest
       DEST_REPO: panther-labs/panther-enterprise
       HEAD: ${{ format('sync-{0}', github.event.pull_request.head.ref) }}
-      IGNORE_LABEL: enterprise-backport
     steps:
       - name: Checkout Source Repo
         uses: actions/checkout@v2
         with:
           path: ${{ env.SOURCE_REPO_CHECKOUT_PATH }}
           token: ${{ secrets.PR_SYNC_TOKEN }}
-          fetch-depth: 1
 
       - name: Checkout Dest Repo
         uses: actions/checkout@v2
@@ -45,42 +44,68 @@ jobs:
           path: ${{ env.DEST_REPO_CHECKOUT_PATH }}
           repository: ${{ env.DEST_REPO }}
           token: ${{ secrets.PR_SYNC_TOKEN }}
-          fetch-depth: 1
-
-      - name: Validate that PR was merged and not closed
-        if: ${{ github.event.pull_request.merged == false }}
-        run: exit 1
-
-      - name: Validate that PR shouldn't be excempt from syncing
-        if: ${{ contains(github.event.pull_request.labels, env.IGNORE_LABEL) }}
-        run: exit 1
 
       - name: Setup Git Credentials
-        if: ${{ success() }}
         working-directory: ${{ env.DEST_REPO_CHECKOUT_PATH }}
         run: |
           git config --global user.email "github-service-account@runpanther.io"
           git config --global user.name "panther-bot"
 
       - name: Bootstrap a PR branch
-        if: ${{ success() }}
         working-directory: ${{ env.DEST_REPO_CHECKOUT_PATH }}
         run: |
           git checkout -b $HEAD
           git remote add source https://github.com/$GITHUB_REPOSITORY.git
           git fetch source master --depth 15
           git cherry-pick ${{ github.event.pull_request.merge_commit_sha }} || true
+          CONFLICTS=$(git diff --name-only --diff-filter=U)
           git add -A .
-          git commit -m "merge changes from $GITHUB_REPOSITORY" || true
+          git commit -m "merge changes from $GITHUB_REPOSITORY#${{ github.event.pull_request.number }}" -m "$CONFLICTS" || true
           git push origin $HEAD
 
       - name: Clone original PR
-        if: ${{ success() }}
-        uses: ./src/build/actions/pr_sync # Github actions has a bug and we can't use ENV var here
+        uses: ./src/build/actions/pr_sync
         id: pr_sync
         env:
           ACTIONS_STEP_DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
         with:
           repo: ${{ env.DEST_REPO }}
           head: ${{ env.HEAD }}
+          token: ${{ secrets.PR_SYNC_TOKEN }}
+
+  sync_prs_from_master_to_release:
+    name: Syncs merged PRs from master to release branch, if a certain label is present
+    if: ${{ github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'sync-to-release') }}
+    runs-on: ubuntu-latest
+    env:
+      HEAD: ${{ format('sync-release-{0}', github.event.pull_request.head.ref) }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Git Credentials
+        run: |
+          git config --global user.email "github-service-account@runpanther.io"
+          git config --global user.name "panther-bot"
+
+      - name: Bootstrap a PR branch
+        run: |
+          git checkout -b $HEAD origin/release
+          git cherry-pick ${{ github.event.pull_request.merge_commit_sha }} || true
+          CONFLICTS=$(git diff --name-only --diff-filter=U)
+          git add -A .
+          git commit -m "merge changes from $GITHUB_REPOSITORY#${{ github.event.pull_request.number }}" -m "CONFLICTS" || true
+          git push origin $HEAD
+
+      - name: Clone original PR
+        uses: ./build/actions/pr_sync
+        id: pr_sync
+        env:
+          ACTIONS_STEP_DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
+        with:
+          repo: ${{ github.repository }}
+          head: ${{ env.HEAD }}
+          base: release
           token: ${{ secrets.PR_SYNC_TOKEN }}

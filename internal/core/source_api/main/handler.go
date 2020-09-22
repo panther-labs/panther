@@ -36,7 +36,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	router = genericapi.NewRouter("cloudsec", "snapshot", validator, api.API{})
+	router = genericapi.NewRouter("api", "sources", validator, api.API{})
 }
 
 func lambdaHandler(ctx context.Context, request *models.LambdaInput) (interface{}, error) {

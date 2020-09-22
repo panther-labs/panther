@@ -121,6 +121,7 @@ func TestIAMRolesGetPoliciesErrors(t *testing.T) {
 }
 
 func TestIAMRolesPoller(t *testing.T) {
+	resetCache()
 	awstest.MockIAMForSetup = awstest.BuildMockIAMSvcAll()
 
 	IAMClientFunc = awstest.SetupMockIAM
@@ -140,6 +141,7 @@ func TestIAMRolesPoller(t *testing.T) {
 }
 
 func TestIAMRolesPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockIAMForSetup = awstest.BuildMockIAMSvcAllError()
 
 	IAMClientFunc = awstest.SetupMockIAM

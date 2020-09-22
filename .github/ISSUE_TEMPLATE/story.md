@@ -10,10 +10,21 @@ assignees: ''
 
 Explain what you are trying to achieve and why this story needs to be implemented. What is the value that this will provide?
 
+### Related Services
+
+Which backend services must change for this story to be completed?
+
+### Designs
+
+Paste the link to your designs here
+
 ### Acceptance Criteria
 
-Create a concise list of criteria that have to be matched to consider this story done. This should act as a checklist that
-would allow anyone reading this issue to be able to verify that your implementation is complete and working as expected. For example:
+A concise list of specific user stories that qualify this story as done.
+
+This acts as a checklist and high-level context for anyone reading this issue to verify your implementation.
+
+For example:
 
 - We can collect anonymized frontend crash logs from user browsers
 - Users can opt in to send these logs to panther

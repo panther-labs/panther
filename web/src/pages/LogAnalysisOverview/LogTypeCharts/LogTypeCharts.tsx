@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Card, Heading, Tab, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
+import { Box, Card, Tab, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
 import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
 import EventsByLogType from 'Pages/LogAnalysisOverview/EventsByLogType/EventsByLogType';
 import { SeriesData } from 'Generated/schema';
@@ -30,25 +30,21 @@ interface LogTypeChartsProps {
 
 const LogTypeCharts: React.FC<LogTypeChartsProps> = ({ eventsProcessed, eventsLatency }) => {
   return (
-    <Card as="section" width={1} pt={2}>
+    <Card as="section">
       <Tabs>
         <Box position="relative" pl={2} pr={4}>
           <TabList>
             <Tab>
               {({ isSelected, isFocused }) => (
                 <BorderedTab isSelected={isSelected} isFocused={isFocused}>
-                  <Heading size="x-small" as="h4">
-                    Events by Log Type
-                  </Heading>
+                  Events by Log Type
                 </BorderedTab>
               )}
             </Tab>
             <Tab>
               {({ isSelected, isFocused }) => (
                 <BorderedTab isSelected={isSelected} isFocused={isFocused}>
-                  <Heading size="x-small" as="h4">
-                    Data Latency by Log Type
-                  </Heading>
+                  Data Latency by Log Type
                 </BorderedTab>
               )}
             </Tab>

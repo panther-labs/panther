@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as Types from '../../../../../__generated__/schema';
+import * as Types from '../../../../../../__generated__/schema';
 
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
@@ -37,6 +37,9 @@ export type UploadPolicies = {
       | 'totalRules'
       | 'modifiedRules'
       | 'newRules'
+      | 'totalGlobals'
+      | 'newGlobals'
+      | 'modifiedGlobals'
     >
   >;
 };
@@ -50,6 +53,9 @@ export const UploadPoliciesDocument = gql`
       totalRules
       modifiedRules
       newRules
+      totalGlobals
+      newGlobals
+      modifiedGlobals
     }
   }
 `;

@@ -16,22 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as Types from '../../../__generated__/schema';
-
-import { GraphQLError } from 'graphql';
-import gql from 'graphql-tag';
-
-export type RuleDates = Pick<
-  Types.RuleDetails,
-  'createdAt' | 'enabled' | 'dedupPeriodMinutes' | 'lastModified' | 'reference'
->;
-
-export const RuleDates = gql`
-  fragment RuleDates on RuleDetails {
-    createdAt
-    enabled
-    dedupPeriodMinutes
-    lastModified
-    reference
-  }
-`;
+export { default } from './BulkUploader';
