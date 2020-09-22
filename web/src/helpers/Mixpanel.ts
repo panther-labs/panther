@@ -30,7 +30,9 @@ const envCheck =
   storage.local.read<boolean>(ANALYTICS_CONSENT_STORAGE_KEY) &&
   process.env.NODE_ENV === 'production';
 
-if (envCheck) mixpanel.init(mixpanelPublicToken);
+if (envCheck) {
+  mixpanel.init(mixpanelPublicToken);
+}
 
 enum TrackEventEnum {
   'choose-destination-to-create' = 'Choose Destination to create',
