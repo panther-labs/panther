@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/pkg/awsutils"
@@ -46,6 +47,13 @@ func Publish() error {
 	version, err := GetVersion()
 	if err != nil {
 		return err
+	}
+
+	// ensure the compiled version matches the declared version in master template
+	repoVersion := util.RepoVersion()
+	if version != repoVersion {
+		return errors.Errorf("master panther version %s does not match repo version %s",
+			version, repoVersion)
 	}
 
 	if err = getPublicationApproval(log, version); err != nil {
