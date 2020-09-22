@@ -41,7 +41,7 @@ export const ChooseDestinationPanel: React.FC = () => {
             logo={destinationConfig.logo}
             title={destinationConfig.title}
             onClick={() => {
-              trackEvent({ name: 'picked-destination-to-create', src: 'destinations', ctx: destinationConfig.type }); // prettier-ignore
+              trackEvent({ event: 'picked-destination-to-create', src: 'destinations', ctx: destinationConfig.type }); // prettier-ignore
               setData({ selectedDestinationType: destinationConfig.type });
               goToNextStep();
             }}

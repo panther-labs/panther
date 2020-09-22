@@ -65,11 +65,11 @@ const ConfigureDestinationPanel: React.FC = () => {
   const [addDestination] = useAddDestination({
     onCompleted: data => {
       updateData({ destination: data.addDestination });
-      trackEvent({ name: 'added-destination', src: 'destinations', ctx: selectedDestinationType });
+      trackEvent({ event: 'added-destination', src: 'destinations', ctx: selectedDestinationType });
       goToNextStep();
     },
     onError: error => {
-      trackError({ name:  'failed-to-add-destination', src: 'destinations', ctx: selectedDestinationType, data: error }); // prettier-ignore
+      trackError({ error: 'failed-to-add-destination', src: 'destinations', ctx: selectedDestinationType, data: error }); // prettier-ignore
       pushSnackbar({
         variant: 'error',
         title:

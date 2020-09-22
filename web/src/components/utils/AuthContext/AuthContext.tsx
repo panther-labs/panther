@@ -274,10 +274,10 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         const confirmedUser = await Auth.currentAuthenticatedUser();
         setAuthUser(confirmedUser);
         setAuthenticated(true);
-        trackEvent({ name: 'success-sign-in' });
+        trackEvent({ event: 'success-sign-in' });
         onSuccess();
       } catch (err) {
-        trackError({ name: 'failed-mfa', data: err });
+        trackError({ error: 'failed-mfa', data: err });
         onError(err as AuthError);
       }
     },

@@ -59,13 +59,13 @@ interface TrackPageViewProps {
 }
 
 interface TrackEventProps {
-  name: keyof typeof TrackEventEnum;
+  event: keyof typeof TrackEventEnum;
   src?: srcType;
   ctx?: ctxType;
 }
 
 interface TrackErrorProps {
-  name: keyof typeof TrackErrorEnum;
+  error: keyof typeof TrackErrorEnum;
   src?: srcType;
   ctx?: ctxType;
   data?: any;
@@ -77,14 +77,14 @@ export const trackPageView = ({ page }: TrackPageViewProps) => {
   }
 };
 
-export const trackEvent = ({ name, src, ctx }: TrackEventProps) => {
+export const trackEvent = ({ event, src, ctx }: TrackEventProps) => {
   if (envCheck) {
-    mixpanel.track(TrackEventEnum[name], { type: 'event', src, ctx });
+    mixpanel.track(TrackEventEnum[event], { type: 'event', src, ctx });
   }
 };
 
-export const trackError = ({ name, src, ctx, data }: TrackErrorProps) => {
+export const trackError = ({ error, src, ctx, data }: TrackErrorProps) => {
   if (envCheck) {
-    mixpanel.track(TrackErrorEnum[name], { type: 'error', src, ctx, data });
+    mixpanel.track(TrackErrorEnum[error], { type: 'error', src, ctx, data });
   }
 };
