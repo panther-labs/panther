@@ -2,7 +2,7 @@
 name: Epic
 about: A collection of User Stories
 title: ''
-labels: Epic
+labels: ''
 assignees: ''
 ---
 
@@ -20,7 +20,7 @@ The link to the feature's designs
 
 ### Acceptance Criteria
 
-A concise list of specific user stories that qualify this story as done.
+A concise list of specific user stories that qualify this story as done and tell the user journey.
 
 This acts as a checklist and high-level context for anyone reading this issue to verify your implementation.
 
