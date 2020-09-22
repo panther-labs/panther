@@ -64,6 +64,7 @@ const CustomWebhookDestinationForm: React.FC<CustomWebhookDestinationFormProps> 
         <Field
           name="displayName"
           as={FormikTextInput}
+          shouldMask={!!existing}
           label="* Display Name"
           placeholder="How should we name this?"
           required

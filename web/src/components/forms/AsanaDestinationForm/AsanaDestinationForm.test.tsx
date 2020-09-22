@@ -51,12 +51,12 @@ const initialValues = {
 
 describe('AsanaDestinationForm', () => {
   it('renders the correct fields', () => {
-    const { getByLabelText, getByText, getAllByLabelText } = render(
+    const { getByLabelText, getByText } = render(
       <AsanaDestinationForm onSubmit={() => {}} initialValues={emptyInitialValues} />
     );
     const displayNameField = getByLabelText('* Display Name');
     const tokenField = getByLabelText('Access Token');
-    const projectGidsField = getAllByLabelText('Project GIDs')[0];
+    const projectGidsField = getByLabelText('Project GIDs', { selector: 'input' });
     const submitButton = getByText('Add Destination');
     expect(displayNameField).toBeInTheDocument();
     expect(tokenField).toBeInTheDocument();
@@ -69,12 +69,12 @@ describe('AsanaDestinationForm', () => {
   });
 
   it('has proper validation', async () => {
-    const { getByLabelText, getByText, getAllByLabelText } = render(
+    const { getByLabelText, getByText } = render(
       <AsanaDestinationForm onSubmit={() => {}} initialValues={emptyInitialValues} />
     );
     const displayNameField = getByLabelText('* Display Name');
     const tokenField = getByLabelText('Access Token');
-    const projectGidsField = getAllByLabelText('Project GIDs')[0];
+    const projectGidsField = getByLabelText('Project GIDs', { selector: 'input' });
     const submitButton = getByText('Add Destination');
     const criticalSeverityCheckBox = document.getElementById(severity);
     expect(criticalSeverityCheckBox).not.toBeNull();
@@ -101,12 +101,12 @@ describe('AsanaDestinationForm', () => {
 
   it('should trigger submit successfully', async () => {
     const submitMockFunc = jest.fn();
-    const { getByLabelText, getByText, getAllByLabelText } = render(
+    const { getByLabelText, getByText } = render(
       <AsanaDestinationForm onSubmit={submitMockFunc} initialValues={emptyInitialValues} />
     );
     const displayNameField = getByLabelText('* Display Name');
     const tokenField = getByLabelText('Access Token');
-    const projectGidsField = getAllByLabelText('Project GIDs')[0];
+    const projectGidsField = getByLabelText('Project GIDs', { selector: 'input' });
     const submitButton = getByText('Add Destination');
     const criticalSeverityCheckBox = document.getElementById(severity);
     expect(criticalSeverityCheckBox).not.toBeNull();
