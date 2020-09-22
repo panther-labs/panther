@@ -30,7 +30,7 @@ import {
 } from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
 import useRouter from 'Hooks/useRouter';
-import Mxp from 'Helpers/Mixpanel';
+import { trackError, trackEvent } from 'Helpers/analytics';
 import { useCreateRule } from './graphql/createRule.generated';
 
 const initialValues: Required<AddRuleInput> = {
@@ -55,10 +55,10 @@ const CreateRulePage: React.FC = () => {
   const [createRule, { error }] = useCreateRule({
     refetchQueries: [{ query: ListRulesDocument, variables: { input: {} } }],
     onCompleted: data => {
-      Mxp.track({ name: 'added-rule' });
+      trackEvent({ name: 'added-rule' });
       history.push(urls.logAnalysis.rules.details(data.addRule.id));
     },
-    onError: err => Mxp.error({ name: 'failed-to-create-rule', data: err }),
+    onError: err => trackError({ name: 'failed-to-create-rule', data: err }),
   });
 
   const handleSubmit = React.useCallback(

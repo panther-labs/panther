@@ -71,40 +71,20 @@ interface TrackErrorProps {
   data?: any;
 }
 
-const actions = {
-  identify: id => {
-    if (envCheck) {
-      mixpanel.identify(id);
-    }
-  },
-  alias: id => {
-    if (envCheck) {
-      mixpanel.alias(id);
-    }
-  },
-  people: {
-    set: props => {
-      if (envCheck) {
-        mixpanel.people.set(props);
-      }
-    },
-  },
-  // TODO: Above functions are not used for the moment, either utilize or remove
-  pageView: ({ name }: TrackPageViewProps) => {
-    if (envCheck) {
-      mixpanel.track(TrackPageViewEnum[name], { type: 'pageview' });
-    }
-  },
-  track: ({ name, src, ctx }: TrackEventProps) => {
-    if (envCheck) {
-      mixpanel.track(TrackEventEnum[name], { type: 'event', src, ctx });
-    }
-  },
-  error: ({ name, src, ctx, data }: TrackErrorProps) => {
-    if (envCheck) {
-      mixpanel.track(TrackErrorEnum[name], { type: 'error', src, ctx, data });
-    }
-  },
+export const trackPageView = ({ name }: TrackPageViewProps) => {
+  if (envCheck) {
+    mixpanel.track(TrackPageViewEnum[name], { type: 'pageview' });
+  }
 };
 
-export default actions;
+export const trackEvent = ({ name, src, ctx }: TrackEventProps) => {
+  if (envCheck) {
+    mixpanel.track(TrackEventEnum[name], { type: 'event', src, ctx });
+  }
+};
+
+export const trackError = ({ name, src, ctx, data }: TrackErrorProps) => {
+  if (envCheck) {
+    mixpanel.track(TrackErrorEnum[name], { type: 'error', src, ctx, data });
+  }
+};

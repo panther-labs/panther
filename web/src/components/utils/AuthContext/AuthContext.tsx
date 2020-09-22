@@ -21,7 +21,7 @@ import Auth, { CognitoUser } from '@aws-amplify/auth';
 import { USER_INFO_STORAGE_KEY } from 'Source/constants';
 import { pantherConfig } from 'Source/config';
 import storage from 'Helpers/storage';
-import Mxp from 'Helpers/Mixpanel';
+import { trackError, trackEvent } from 'Helpers/analytics';
 
 // Challenge names from Cognito from
 // https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_RespondToAuthChallenge.html#API_RespondToAuthChallenge_RequestSyntax
@@ -274,10 +274,10 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         const confirmedUser = await Auth.currentAuthenticatedUser();
         setAuthUser(confirmedUser);
         setAuthenticated(true);
-        Mxp.track({ name: 'success-sign-in' });
+        trackEvent({ name: 'success-sign-in' });
         onSuccess();
       } catch (err) {
-        Mxp.error({ name: 'failed-mfa', data: err });
+        trackError({ name: 'failed-mfa', data: err });
         onError(err as AuthError);
       }
     },

@@ -23,7 +23,7 @@ import TablePlaceholder from 'Components/TablePlaceholder';
 import { extractErrorMessage, getCurrentDate, subtractDays } from 'Helpers/utils';
 import Panel from 'Components/Panel';
 import AlertsTable from 'Pages/LogAnalysisOverview/AlertsTable';
-import Mxp from 'Helpers/Mixpanel';
+import { trackPageView } from 'Helpers/analytics';
 import LogAnalysisOverviewPageSkeleton from './Skeleton';
 import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
 import AlertsBySeverity from './AlertsBySeverity';
@@ -73,7 +73,7 @@ const LogAnalysisOverview: React.FC = () => {
   const { alertsBySeverity, totalAlertsDelta, eventsProcessed, eventsLatency } = data.getLogAnalysisMetrics; // prettier-ignore
   const alertItems = alerts?.alerts.alertSummaries || [];
 
-  Mxp.pageView({ name: 'log-analysis-overview' });
+  trackPageView({ name: 'log-analysis-overview' });
   return (
     <Box as="article" mb={6}>
       <SimpleGrid columns={1} spacingX={3} spacingY={2} as="section" mb={5}>
