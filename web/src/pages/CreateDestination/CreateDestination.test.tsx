@@ -473,19 +473,16 @@ describe('CreateDestination', () => {
         data: { addDestination: createdDestination },
       }),
     ];
-    const { getByText, findByText, getByLabelText, getAllByLabelText } = render(
-      <CreateDestination />,
-      {
-        mocks,
-      }
-    );
+    const { getByText, findByText, getByLabelText } = render(<CreateDestination />, {
+      mocks,
+    });
 
     // Select Asana
     fireEvent.click(getByText('Asana'));
 
     const displayInput = getByLabelText('* Display Name');
     const tokenInput = getByLabelText('Access Token');
-    const projectGidsInput = getAllByLabelText('Project GIDs')[0];
+    const projectGidsInput = getByLabelText('Project GIDs', { selector: 'input' });
     const criticalSeverityCheckbox = getByLabelText(criticalSeverity);
 
     // Fill in the correct data + submit

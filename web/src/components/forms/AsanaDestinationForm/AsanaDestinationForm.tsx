@@ -67,6 +67,7 @@ const AsanaDestinationForm: React.FC<AsanaDestinationFormProps> = ({ onSubmit, i
         />
         <Field
           as={SensitiveTextInput}
+          shouldMask={!!existing}
           name="outputConfig.asana.personalAccessToken"
           label="Access Token"
           placeholder="What's  your access token?"

@@ -75,6 +75,7 @@ const GithubDestinationForm: React.FC<GithubDestinationFormProps> = ({
         />
         <Field
           as={SensitiveTextInput}
+          shouldMask={!!existing}
           name="outputConfig.github.token"
           label="Token"
           placeholder="What's your API token?"
