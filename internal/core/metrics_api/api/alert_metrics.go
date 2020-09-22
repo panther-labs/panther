@@ -206,7 +206,7 @@ func getAlertsByRuleID(input *models.GetMetricsInput, output *models.GetMetricsO
 	if limit > len(values) {
 		limit = len(values)
 	}
-	// Sort the results so in order of total number of alerts over the given time period
+	// Sort the results in order of total number of alerts over the given time period
 	sort.Slice(values[:], func(i, j int) bool {
 		return totalValue(values[i].Values) > totalValue(values[j].Values)
 	})
