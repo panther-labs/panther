@@ -30,8 +30,8 @@ import (
 func TestAPI_ListAvailableLogTypes(t *testing.T) {
 	assert := require.New(t)
 	ctx := context.Background()
-	api := logtypesapi.API{
-		ExternalAPI: &TestCase{
+	api := logtypesapi.LogTypesAPI{
+		Database: &TestCase{
 			ListLogTypesOutput: []string{"foo", "bar", "baz"},
 		},
 	}

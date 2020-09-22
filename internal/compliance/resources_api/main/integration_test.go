@@ -43,7 +43,7 @@ var (
 	integrationTest bool
 	awsSession      = session.Must(session.NewSession())
 	httpClient      = gatewayapi.GatewayClient(awsSession)
-	apiClient       *client.PantherResources
+	apiClient       *client.PantherResourcesAPI
 
 	bucket = &models.Resource{
 		Attributes:       map[string]interface{}{"Panther": "Labs"},

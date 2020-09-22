@@ -17,64 +17,46 @@
  */
 
 import React from 'react';
-import { render, fireEvent, buildComplianceIntegration, waitFor } from 'test-utils';
-import { mockGetComplianceCfnTemplate } from 'Components/wizards/ComplianceSourceWizard';
+import {
+  render,
+  fireEvent,
+  buildComplianceIntegration,
+  waitFor,
+  waitMs,
+  buildUpdateComplianceIntegrationInput,
+} from 'test-utils';
 import EditComplianceSource from './EditComplianceSource';
 import { mockGetComplianceSource } from './graphql/getComplianceSource.generated';
 import { mockUpdateComplianceSource } from './graphql/updateComplianceSource.generated';
 
-const newTestName = 'new-test';
-const mockPantherAwsAccountId = '456456456456';
-
 describe('EditComplianceSource', () => {
-  let prevPantherAwsAccountId;
-  beforeAll(() => {
-    prevPantherAwsAccountId = process.env.AWS_ACCOUNT_ID;
-    process.env.PANTHER_VERSION = mockPantherAwsAccountId;
-  });
-
-  afterAll(() => {
-    process.env.PANTHER_VERSION = prevPantherAwsAccountId;
-  });
-
   it('can successfully update a compliance source', async () => {
-    const complianceSource = buildComplianceIntegration();
+    const complianceSource = buildComplianceIntegration({
+      awsAccountId: '123123123123',
+    });
+
+    const updatedComplianceSource = buildComplianceIntegration({
+      ...complianceSource,
+      integrationLabel: 'new-test',
+    });
+
     const mocks = [
       mockGetComplianceSource({
         data: {
           getComplianceIntegration: complianceSource,
         },
       }),
-      mockGetComplianceCfnTemplate({
-        variables: {
-          input: {
-            awsAccountId: mockPantherAwsAccountId,
-            integrationLabel: newTestName,
-            remediationEnabled: false,
-            cweEnabled: false,
-          },
-        },
-        data: {
-          getComplianceIntegrationTemplate: {
-            stackName: 'test-stackname',
-            body: 'test-body',
-          },
-        },
-      }),
       mockUpdateComplianceSource({
         variables: {
-          input: {
+          input: buildUpdateComplianceIntegrationInput({
             integrationId: complianceSource.integrationId,
-            integrationLabel: newTestName,
+            integrationLabel: updatedComplianceSource.integrationLabel,
             cweEnabled: complianceSource.cweEnabled,
             remediationEnabled: complianceSource.remediationEnabled,
-          },
+          }),
         },
         data: {
-          updateComplianceIntegration: {
-            ...buildComplianceIntegration(),
-            integrationLabel: newTestName,
-          },
+          updateComplianceIntegration: updatedComplianceSource,
         },
       }),
     ];
@@ -83,8 +65,17 @@ describe('EditComplianceSource', () => {
       { mocks }
     );
 
-    // Fill in  the form and press continue
-    fireEvent.change(getByLabelText('Name'), { target: { value: newTestName } });
+    const nameField = getByLabelText('Name') as HTMLInputElement;
+
+    //  Wait for GET api request to populate the form
+    await waitFor(() => expect(nameField).toHaveValue('Loading...'));
+    await waitFor(() => expect(nameField).toHaveValue(complianceSource.integrationLabel));
+
+    // Update the name  and press continue
+    fireEvent.change(nameField, { target: { value: updatedComplianceSource.integrationLabel } });
+
+    // Wait for form validation to kick in and move on to the next screen
+    await waitMs(50);
     fireEvent.click(getByText('Continue Setup'));
 
     // Initially we expect a disabled button while the template is being fetched ...

@@ -240,6 +240,7 @@ func TestWafWebAclsPoller(t *testing.T) {
 }
 
 func TestWafWebAclsPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockWafForSetup = awstest.BuildMockWafSvcAllError()
 	awstest.MockWafRegionalForSetup = awstest.BuildMockWafRegionalSvcAllError()
 
@@ -281,6 +282,7 @@ func TestWafRegionalWebAclsPoller(t *testing.T) {
 }
 
 func TestWafRegionalWebAclsPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockWafForSetup = awstest.BuildMockWafSvcAllError()
 	awstest.MockWafRegionalForSetup = awstest.BuildMockWafRegionalSvcAllError()
 

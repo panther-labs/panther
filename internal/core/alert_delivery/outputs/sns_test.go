@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sns/snsiface"
 	jsoniter "github.com/json-iterator/go"
@@ -36,7 +37,7 @@ import (
 
 func TestSendSns(t *testing.T) {
 	client := &testutils.SnsMock{}
-	outputClient := &OutputClient{snsClients: map[string]snsiface.SNSAPI{"us-west-2": client}}
+	outputClient := &OutputClient{}
 
 	snsOutputConfig := &outputModels.SnsConfig{
 		TopicArn: "arn:aws:sns:us-west-2:123456789012:test-sns-output",
@@ -80,8 +81,18 @@ func TestSendSns(t *testing.T) {
 		Subject:          aws.String("Policy Failure: policyName"),
 	}
 
-	client.On("Publish", expectedSnsPublishInput).Return(&sns.PublishOutput{}, nil)
+	client.On("Publish", expectedSnsPublishInput).Return(&sns.PublishOutput{MessageId: aws.String("messageId")}, nil)
+	getSnsClient = func(*session.Session, string) (snsiface.SNSAPI, error) {
+		return client, nil
+	}
+
 	result := outputClient.Sns(alert, snsOutputConfig)
-	assert.Nil(t, result)
+	assert.NotNil(t, result)
+	assert.Equal(t, &AlertDeliveryResponse{
+		Message:    "messageId",
+		StatusCode: 200,
+		Success:    true,
+		Permanent:  false,
+	}, result)
 	client.AssertExpectations(t)
 }

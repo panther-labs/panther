@@ -30,8 +30,13 @@ export type RuleBasic = Pick<
   | 'threshold'
   | 'outputIds'
   | 'runbook'
+  | 'reference'
   | 'severity'
   | 'tags'
+  | 'dedupPeriodMinutes'
+  | 'createdAt'
+  | 'lastModified'
+  | 'enabled'
 >;
 
 export const RuleBasic = gql`
@@ -43,7 +48,12 @@ export const RuleBasic = gql`
     threshold
     outputIds
     runbook
+    reference
     severity
     tags
+    dedupPeriodMinutes
+    createdAt
+    lastModified
+    enabled
   }
 `;

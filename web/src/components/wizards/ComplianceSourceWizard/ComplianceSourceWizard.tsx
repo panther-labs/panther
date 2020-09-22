@@ -49,8 +49,6 @@ const validationSchema = Yup.object().shape<ComplianceSourceWizardValues>({
   remediationEnabled: Yup.boolean().required(),
 });
 
-const initialStatus = { cfnTemplateDownloaded: false };
-
 const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
   initialValues,
   onSubmit,
@@ -59,7 +57,6 @@ const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
     <Formik<ComplianceSourceWizardValues>
       enableReinitialize
       initialValues={initialValues}
-      initialStatus={initialStatus}
       validationSchema={validationSchema}
       onSubmit={onSubmit}
     >

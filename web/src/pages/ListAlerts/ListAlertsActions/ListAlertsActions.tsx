@@ -48,7 +48,8 @@ export const filters = {
     props: {
       label: 'Status',
       items: statusOptions,
-      itemToString: (status: AlertStatusesEnum) => capitalize(status.toLowerCase()),
+      itemToString: (status: AlertStatusesEnum) =>
+        capitalize((status === AlertStatusesEnum.Closed ? 'INVALID' : status).toLowerCase()),
       placeholder: 'Choose a status...',
     },
   },

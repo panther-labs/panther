@@ -18,7 +18,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: IAM role for deploying Panther
 
 Metadata:
-  Version: v1.7.1
+  Version: v1.8.0
 
 Parameters:
   DeploymentRoleName:
@@ -48,6 +48,13 @@ Resources:
                 - AccountSpecified
                 - !Sub arn:${AWS::Partition}:iam::${IdentityAccountId}:root
                 - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+            Action: sts:AssumeRole
+            Condition:
+              Bool:
+                aws:SecureTransport: true
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
             Action: sts:AssumeRole
             Condition:
               Bool:
@@ -118,6 +125,7 @@ Resources:
               - ec2:DisassociateSubnetCidrBlock
               - ec2:ModifySubnetAttribute
               - ec2:ModifyVpcAttribute
+              - ec2:ReleaseAddress
               - ec2:ReplaceRoute
               - ec2:ReplaceRouteTableAssociation
               - ec2:RevokeSecurityGroupEgress

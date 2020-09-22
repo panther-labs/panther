@@ -61,9 +61,13 @@ type SendTestAlertInput struct {
 	OutputIds []string `json:"outputIds" validate:"gt=0,dive,uuid4"`
 }
 
-// SendTestAlertOutput is an alias for anything
+// SendTestAlertOutput holds only the attributes we want to return to the user
 type SendTestAlertOutput struct {
-	Success bool `json:"success"`
+	OutputID     string    `json:"outputId"`
+	Message      string    `json:"message"`
+	StatusCode   int       `json:"statusCode"`
+	Success      bool      `json:"success"`
+	DispatchedAt time.Time `json:"dispatchedAt"`
 }
 
 // DeliverAlertInput sends an alert to the specified destinations
@@ -129,6 +133,9 @@ type Alert struct {
 
 	// OutputIds is the set of outputs for this alert.
 	OutputIds []string `json:"outputIds,omitempty"`
+
+	// LogTypes is the set of logs that could trigger the alert.
+	LogTypes []string `json:"logTypes,omitempty"`
 
 	// AnalysisDescription is the description of the rule that triggered the alert.
 	AnalysisDescription *string `json:"analysisDescription,omitempty"`

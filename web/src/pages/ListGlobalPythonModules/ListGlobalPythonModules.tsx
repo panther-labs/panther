@@ -63,7 +63,7 @@ const ListGlobalPythonModules = () => {
       title="Python Modules"
       actions={
         <Button as={RRLink} to={urls.settings.globalPythonModules.create()}>
-          Create New
+          Create New Python Module
         </Button>
       }
     >

@@ -124,11 +124,10 @@ func getBucketLogging(s3Svc s3iface.S3API, bucketName *string) (*s3.GetBucketLog
 func getObjectLockConfiguration(s3Svc s3iface.S3API, bucketName *string) (*s3.ObjectLockConfiguration, error) {
 	out, err := s3Svc.GetObjectLockConfiguration(&s3.GetObjectLockConfigurationInput{Bucket: bucketName})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "ObjectLockConfigurationNotFoundError" {
-				zap.L().Debug("no object lock configuration found", zap.String("bucket", *bucketName))
-				return nil, nil
-			}
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == "ObjectLockConfigurationNotFoundError" {
+			zap.L().Debug("no object lock configuration found", zap.String("bucket", *bucketName))
+			return nil, nil
 		}
 		return nil, errors.Wrapf(err, "S3.GetObjectLockConfiguration: %s", aws.StringValue(bucketName))
 	}
@@ -140,11 +139,10 @@ func getObjectLockConfiguration(s3Svc s3iface.S3API, bucketName *string) (*s3.Ob
 func getBucketTagging(s3Svc s3iface.S3API, bucketName *string) ([]*s3.Tag, error) {
 	tags, err := s3Svc.GetBucketTagging(&s3.GetBucketTaggingInput{Bucket: bucketName})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "NoSuchTagSet" {
-				zap.L().Debug("no tags found", zap.String("bucket", *bucketName))
-				return nil, nil
-			}
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == "NoSuchTagSet" {
+			zap.L().Debug("no tags found", zap.String("bucket", *bucketName))
+			return nil, nil
 		}
 		return nil, errors.Wrapf(err, "S3.GetBucketTagging: %s", aws.StringValue(bucketName))
 	}
@@ -186,13 +184,12 @@ func getBucketVersioning(s3Svc s3iface.S3API, bucketName *string) (*s3.GetBucket
 func getBucketLocation(s3Svc s3iface.S3API, bucketName *string) (*string, error) {
 	out, err := s3Svc.GetBucketLocation(&s3.GetBucketLocationInput{Bucket: bucketName})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "NoSuchBucket" {
-				zap.L().Warn("tried to scan non-existent resource",
-					zap.String("resource", *bucketName),
-					zap.String("resourceType", awsmodels.S3BucketSchema))
-				return nil, nil
-			}
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == s3.ErrCodeNoSuchBucket {
+			zap.L().Warn("tried to scan non-existent resource",
+				zap.String("resource", *bucketName),
+				zap.String("resourceType", awsmodels.S3BucketSchema))
+			return nil, nil
 		}
 		return nil, errors.Wrapf(err, "S3.GetBucketLocation: %s", aws.StringValue(bucketName))
 	}
@@ -238,12 +235,11 @@ func listBuckets(s3Svc s3iface.S3API) (*s3.ListBucketsOutput, error) {
 func getPublicAccessBlock(s3Svc s3iface.S3API, bucketName *string) (*s3.PublicAccessBlockConfiguration, error) {
 	out, err := s3Svc.GetPublicAccessBlock(&s3.GetPublicAccessBlockInput{Bucket: bucketName})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "NoSuchPublicAccessBlockConfiguration" {
-				zap.L().Debug(
-					"no public access block configuration found", zap.String("bucketName", *bucketName))
-				return nil, nil
-			}
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == "NoSuchPublicAccessBlockConfiguration" {
+			zap.L().Debug(
+				"no public access block configuration found", zap.String("bucketName", *bucketName))
+			return nil, nil
 		}
 		return nil, errors.Wrapf(err, "S3.GetPublicAccessBlock: %s", aws.StringValue(bucketName))
 	}

@@ -21,6 +21,7 @@ package aws
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -147,6 +148,7 @@ func TestEcsClusterPoller(t *testing.T) {
 }
 
 func TestEcsClusterPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockEcsForSetup = awstest.BuildMockEcsSvcAllError()
 
 	EcsClientFunc = awstest.SetupMockEcs
@@ -164,4 +166,31 @@ func TestEcsClusterPollerError(t *testing.T) {
 		assert.Nil(t, event.Attributes)
 	}
 	assert.Nil(t, marker)
+}
+
+// Test paging through DescribeServices with 10 ServiceArns at a time
+func TestEcsClusterDescribeServices(t *testing.T) {
+	mockSvc := awstest.BuildMockEcsSvc([]string{"ListServicesPages"})
+	mockSvc.On("DescribeServices", &ecs.DescribeServicesInput{
+		Cluster:  awstest.ExampleClusterMultiSvcArn,
+		Include:  []*string{aws.String("TAGS")},
+		Services: awstest.ExampleListServicesMultiSvc.ServiceArns[0:10],
+	}).
+		Return(
+			awstest.ExampleEcsDescribeServicesOutput,
+			nil,
+		)
+	mockSvc.On("DescribeServices", &ecs.DescribeServicesInput{
+		Cluster:  awstest.ExampleClusterMultiSvcArn,
+		Include:  []*string{aws.String("TAGS")},
+		Services: awstest.ExampleListServicesMultiSvc.ServiceArns[10:12],
+	}).
+		Return(
+			awstest.ExampleEcsDescribeServicesOutput,
+			nil,
+		)
+	out, err := getClusterServices(mockSvc, awstest.ExampleClusterMultiSvcArn)
+	mockSvc.AssertExpectations(t)
+	require.NoError(t, err)
+	assert.NotEmpty(t, out)
 }

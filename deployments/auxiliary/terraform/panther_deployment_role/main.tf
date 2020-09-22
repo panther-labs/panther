@@ -30,7 +30,17 @@ resource "aws_iam_role" "deployment" {
         Condition : {
           Bool : { "aws:SecureTransport" : true }
         }
-      }
+      },
+      {
+        Effect : "Allow",
+        Principal : {
+          Service : "cloudformation.amazonaws.com"
+        }
+        Action : "sts:AssumeRole",
+        Condition : {
+          Bool : { "aws:SecureTransport" : true }
+        }
+      },
     ]
   })
 
@@ -97,6 +107,7 @@ resource "aws_iam_policy" "deployment" {
         "ec2:DisassociateSubnetCidrBlock",
         "ec2:ModifySubnetAttribute",
         "ec2:ModifyVpcAttribute",
+        "ec2:ReleaseAddress",
         "ec2:ReplaceRoute",
         "ec2:ReplaceRouteTableAssociation",
         "ec2:RevokeSecurityGroupEgress",

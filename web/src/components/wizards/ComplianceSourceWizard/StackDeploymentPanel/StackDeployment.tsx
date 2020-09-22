@@ -56,7 +56,7 @@ const StackDeployment: React.FC = () => {
   return (
     <WizardPanel>
       <WizardPanel.Heading
-        title="Deploy the Panther's IAM roles"
+        title="Deploy Panther's IAM roles"
         subtitle="These roles will allow Panther to get information about the state of your AWS resources"
       />
       <SimpleGrid columns={2} gap={5} px={80} mx="auto" mb={6}>

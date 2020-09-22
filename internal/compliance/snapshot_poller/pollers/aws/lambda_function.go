@@ -145,11 +145,10 @@ func listTagsLambda(lambdaSvc lambdaiface.LambdaAPI, arn *string) (map[string]*s
 func getPolicy(lambdaSvc lambdaiface.LambdaAPI, name *string) (*lambda.GetPolicyOutput, error) {
 	out, err := lambdaSvc.GetPolicy(&lambda.GetPolicyInput{FunctionName: name})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "ResourceNotFoundException" {
-				zap.L().Debug("No Lambda Policy set", zap.String("function name", *name))
-				return nil, nil
-			}
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == lambda.ErrCodeResourceNotFoundException {
+			zap.L().Debug("No Lambda Policy set", zap.String("function name", *name))
+			return nil, nil
 		}
 		return nil, errors.Wrapf(err, "Lambda.GetFunction: %s", aws.StringValue(name))
 	}

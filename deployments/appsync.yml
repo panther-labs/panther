@@ -1349,6 +1349,7 @@ Resources:
           #set($response = {
             "eventsProcessed": $ctx.result.eventsProcessed.seriesData,
             "alertsBySeverity": $ctx.result.alertsBySeverity.seriesData,
+            "eventsLatency": $ctx.result.eventsLatency.seriesData,
             "totalAlertsDelta": $ctx.result.totalAlertsDelta.singleValue,
             "fromDate": $ctx.result.fromDate,
             "toDate": $ctx.result.toDate,
@@ -1760,6 +1761,28 @@ Resources:
           "operation": "Invoke",
           "payload": $util.toJson({
             "sendTestAlert": $ctx.args.input
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($context.error)
+          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
+        #else
+          $util.toJson($context.result)
+        #end
+
+  DeliverAlertResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: deliverAlert
+      DataSourceName: !GetAtt AlertDeliveryAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "deliverAlert": $ctx.args.input
           })
         }
       ResponseMappingTemplate: |

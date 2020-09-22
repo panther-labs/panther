@@ -49,9 +49,8 @@ var (
 
 	// The default max number of resources to scan at once. We will keep paging until we scan this
 	// many resources, then do one additional page worth of resources
-	defaultBatchSize = 100
-	// nolint: gosec
-	pageRequeueDelayer = rand.New(rand.NewSource(time.Now().UnixNano()))
+	defaultBatchSize   = 100
+	pageRequeueDelayer = rand.New(rand.NewSource(time.Now().UnixNano())) // nolint:gosec
 
 	// IndividualARNResourcePollers maps resource types to their corresponding individual polling
 	// functions for resources whose ID is their ARN.

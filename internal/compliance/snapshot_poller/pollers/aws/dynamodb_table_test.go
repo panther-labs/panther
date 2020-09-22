@@ -178,6 +178,7 @@ func TestDynamoDBPoller(t *testing.T) {
 }
 
 func TestDynamoDBPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockDynamoDBForSetup = awstest.BuildMockDynamoDBSvcAllError()
 	awstest.MockApplicationAutoScalingForSetup = awstest.BuildMockApplicationAutoScalingSvcAllError()
 

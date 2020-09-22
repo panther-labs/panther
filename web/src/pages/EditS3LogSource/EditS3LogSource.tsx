@@ -18,7 +18,6 @@
 
 import React from 'react';
 import { useSnackbar } from 'pouncejs';
-import urls from 'Source/urls';
 import Page404 from 'Pages/404';
 import useRouter from 'Hooks/useRouter';
 import withSEO from 'Hoc/withSEO';
@@ -29,7 +28,7 @@ import { useUpdateS3LogSource } from './graphql/updateS3LogSource.generated';
 
 const EditS3LogSource: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
-  const { match, history } = useRouter<{ id: string }>();
+  const { match } = useRouter<{ id: string }>();
   const { data, error: getError } = useGetS3LogSource({
     variables: { id: match.params.id },
     onError: error => {
@@ -40,9 +39,7 @@ const EditS3LogSource: React.FC = () => {
     },
   });
 
-  const [updateLogSource, { error: updateError }] = useUpdateS3LogSource({
-    onCompleted: () => history.push(urls.logAnalysis.sources.list()),
-  });
+  const [updateLogSource] = useUpdateS3LogSource();
 
   const initialValues = React.useMemo(
     () => ({
@@ -66,7 +63,6 @@ const EditS3LogSource: React.FC = () => {
   return (
     <S3LogSourceWizard
       initialValues={initialValues}
-      externalErrorMessage={updateError && extractErrorMessage(updateError)}
       onSubmit={values =>
         updateLogSource({
           variables: {

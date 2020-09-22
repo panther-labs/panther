@@ -39,7 +39,7 @@ var (
 	sqsClient  sqsiface.SQSAPI
 
 	httpClient   *http.Client
-	policyClient *policiesclient.PantherAnalysis
+	policyClient *policiesclient.PantherAnalysisAPI
 	policyConfig *policiesclient.TransportConfig
 )
 

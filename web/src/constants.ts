@@ -122,6 +122,8 @@ export const ERROR_REPORTING_CONSENT_STORAGE_KEY = 'panther.generalSettings.erro
 // The default panther system user id
 export const PANTHER_USER_ID = '00000000-0000-4000-8000-000000000000';
 
+export const DEFAULT_SENSITIVE_VALUE = '*******************';
+
 export const DESTINATIONS: Record<
   DestinationTypeEnum,
   { logo: string; title: string; type: DestinationTypeEnum }

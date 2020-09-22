@@ -15,9 +15,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import path from 'path';
 import { createSerializer } from 'jest-emotion';
-import { loadDotEnvVars, getAppTemplateParams } from '../scripts/utils';
+import { getAppTemplateParams } from '../scripts/utils';
 
 // extends the basic `expect` function, by adding additional DOM assertions such as
 // `.toHaveAttribute`, `.toHaveTextContent` etc.
@@ -60,7 +59,6 @@ if (window.URL.revokeObjectURL === undefined) {
  * Mock the server-side EJS-injected AWS configuration.
  * See `web/public/index.ejs`
  */
-loadDotEnvVars(path.resolve(__dirname, '.env.test'));
 const { PANTHER_CONFIG } = getAppTemplateParams();
 
 const scriptTag = document.createElement('script');

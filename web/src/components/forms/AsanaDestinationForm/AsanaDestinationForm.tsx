@@ -20,6 +20,7 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
+import SensitiveTextInput from 'Components/fields/SensitiveTextInput';
 import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
@@ -65,15 +66,10 @@ const AsanaDestinationForm: React.FC<AsanaDestinationFormProps> = ({ onSubmit, i
           required
         />
         <Field
-          as={FormikTextInput}
-          type="password"
+          as={SensitiveTextInput}
           name="outputConfig.asana.personalAccessToken"
           label="Access Token"
-          placeholder={
-            existing
-              ? 'Information is hidden. New values will override the existing ones.'
-              : "What's  your access token?"
-          }
+          placeholder="What's  your access token?"
           required={!existing}
         />
       </SimpleGrid>
