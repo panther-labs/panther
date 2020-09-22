@@ -92,6 +92,7 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
         />
         <Field
           as={SensitiveTextInput}
+          shouldMask={!!existing}
           name="outputConfig.jira.apiKey"
           label="* Jira API Key"
           placeholder="What's the API key of the Jira account?"

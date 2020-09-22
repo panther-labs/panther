@@ -65,6 +65,7 @@ const SlackDestinationForm: React.FC<SlackDestinationFormProps> = ({ onSubmit, i
         />
         <Field
           as={SensitiveTextInput}
+          shouldMask={!!existing}
           name="outputConfig.slack.webhookURL"
           label="Slack Webhook URL"
           placeholder="Where should we send a push notification to?"
