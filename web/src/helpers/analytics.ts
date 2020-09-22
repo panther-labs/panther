@@ -55,7 +55,7 @@ type srcType = 'destinations';
 type ctxType = DestinationTypeEnum;
 
 interface TrackPageViewProps {
-  name: keyof typeof TrackPageViewEnum;
+  page: keyof typeof TrackPageViewEnum;
 }
 
 interface TrackEventProps {
@@ -71,9 +71,9 @@ interface TrackErrorProps {
   data?: any;
 }
 
-export const trackPageView = ({ name }: TrackPageViewProps) => {
+export const trackPageView = ({ page }: TrackPageViewProps) => {
   if (envCheck) {
-    mixpanel.track(TrackPageViewEnum[name], { type: 'pageview' });
+    mixpanel.track(TrackPageViewEnum[page], { type: 'pageview' });
   }
 };
 
