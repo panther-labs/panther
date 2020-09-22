@@ -192,11 +192,12 @@ type AlertSummary struct {
 	CreationTime      *time.Time          `json:"creationTime" validate:"required"`
 	UpdateTime        *time.Time          `json:"updateTime" validate:"required"`
 	EventsMatched     *int                `json:"eventsMatched" validate:"required"`
-	Severity          *string             `json:"severity" validate:"required"`
+	Severity          *string             `json:"severity,omitempty"`
 	Status            string              `json:"status,omitempty"`
 	Title             *string             `json:"title" validate:"required"`
 	LastUpdatedBy     string              `json:"lastUpdatedBy,omitempty"`
 	LastUpdatedByTime time.Time           `json:"lastUpdatedByTime,omitempty"`
+	ErrorType         string              `json:"errorType,omitempty"`
 }
 
 // Alert contains the details of an alert

@@ -86,4 +86,5 @@ type AlertItem struct {
 	LastUpdatedBy string `json:"lastUpdatedBy"`
 	// LastUpdatedByTime - stores the timestamp of the last person who modified the Alert
 	LastUpdatedByTime time.Time `json:"lastUpdatedByTime"`
+	ErrorType         string    `json:"errorType"`
 }
