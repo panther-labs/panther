@@ -42,9 +42,9 @@ type AlertDedupEvent struct {
 	UpdateTime          time.Time `dynamodbav:"updateTime"`
 	EventCount          int64     `dynamodbav:"eventCount"`
 	LogTypes            []string  `dynamodbav:"logTypes,stringset"`
-	ErrorType           string   `dynamodbav:"errorType"`
-	GeneratedTitle      *string   `dynamodbav:"-"`         // The title that was generated dynamically using Python. Might be null.
-	AlertCount          int64     `dynamodbav:"-"`         // There is no need to store this item in DDB
+	ErrorType           string    `dynamodbav:"errorType"`
+	GeneratedTitle      *string   `dynamodbav:"-"` // The title that was generated dynamically using Python. Might be null.
+	AlertCount          int64     `dynamodbav:"-"` // There is no need to store this item in DDB
 
 }
 
