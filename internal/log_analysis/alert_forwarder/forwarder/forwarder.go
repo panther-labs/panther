@@ -109,19 +109,12 @@ func (h *Handler) handleNewAlert(rule *ruleModel.Rule, event *AlertDedupEvent) e
 }
 
 func logStats(rule *ruleModel.Rule) {
-	// Severity Information
+	// Severity, AnalysisType, and RuleID Information
 	StaticLogger.LogSingle(1,
 		metrics.Dimension{Name: "Severity", Value: string(rule.Severity)},
+		metrics.Dimension{Name: "RuleID", Value: string(rule.ID)},
 		AnalysisTypeDimension,
 	)
-	// Alerts Triggered
-	ruleID := RuleIDDimension
-	ruleID.Value = string(rule.ID)
-	rMetrics := []metrics.Metric{
-		{Name: "AlertsTriggered"},
-	}
-	rMetrics[0].Value = 1
-	AlertsTriggeredLogger.Log(rMetrics, ruleID)
 }
 
 func (h *Handler) updateExistingAlert(event *AlertDedupEvent) error {

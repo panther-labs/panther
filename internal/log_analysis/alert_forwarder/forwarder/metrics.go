@@ -31,6 +31,9 @@ var (
 		{
 			"AnalysisType",
 		},
+		{
+			"RuleID",
+		},
 	}, []metrics.Metric{
 		{
 			Name: "AlertsCreated",
@@ -40,20 +43,5 @@ var (
 	AnalysisTypeDimension = metrics.Dimension{
 		Name:  "AnalysisType",
 		Value: "Rule",
-	}
-	AlertsTriggeredLogger = metrics.MustStaticLogger([]metrics.DimensionSet{
-		{
-			// TODO: remove these comments
-			// This is the first dimension
-			"RuleID",
-		},
-	}, []metrics.Metric{ // metric name and unit used
-		{
-			Name: "AlertsTriggered",
-			Unit: metrics.UnitCount,
-		},
-	})
-	RuleIDDimension = metrics.Dimension{
-		Name: "RuleID",
 	}
 )
