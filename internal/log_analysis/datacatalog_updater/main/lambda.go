@@ -37,6 +37,8 @@ import (
 type DataCatalogEvent struct {
 	events.SQSEvent
 	process.SyncEvent
+	SyncDatabase *process.SyncDatabaseEvent
+	SyncTable    *process.SyncTableEvent
 }
 
 func handle(ctx context.Context, event DataCatalogEvent) (err error) {
@@ -47,13 +49,20 @@ func handle(ctx context.Context, event DataCatalogEvent) (err error) {
 			zap.Int("sqsMessageCount", len(event.Records)))
 	}()
 
+	if event.SyncTable != nil {
+		err = process.SyncTable(ctx, event.SyncTable)
+		return
+	}
+
 	if event.Sync {
 		lambdaDeadline, _ := ctx.Deadline()
 		syncDuration := time.Since(lambdaDeadline) / 2 //  allocate a fraction of total time, this value will be negative!
 		syncDeadline := lambdaDeadline.Add(syncDuration)
-		return process.Sync(&event.SyncEvent, syncDeadline)
+		err = process.Sync(&event.SyncEvent, syncDeadline)
+		return
 	}
-	return process.SQS(event.SQSEvent)
+	err = process.SQS(event.SQSEvent)
+	return
 }
 
 func main() {

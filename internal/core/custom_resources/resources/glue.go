@@ -40,7 +40,7 @@ type UpdateGlueTablesProperties struct {
 	ProcessedDataBucket string `validate:"required"`
 }
 
-func customUpdateGlueTables(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
+func customUpdateGlueTables(ctx context.Context, event cfn.Event) (string, map[string]interface{}, error) {
 	const resourceID = "custom:glue:update-tables"
 	switch event.RequestType {
 	case cfn.RequestCreate, cfn.RequestUpdate:
@@ -89,7 +89,7 @@ func customUpdateGlueTables(_ context.Context, event cfn.Event) (string, map[str
 
 		// sync partitions via recursive lambda to avoid blocking the deployment
 		if len(logTypes) > 0 {
-			err = process.InvokeSyncGluePartitions(lambdaClient, logTypes)
+			err = process.InvokeSyncDatabase(ctx, awsglue.LogProcessingDatabaseName, awsglue.RuleMatchDatabaseName)
 			if err != nil {
 				return "", nil, errors.Wrap(err, "failed invoking sync")
 			}

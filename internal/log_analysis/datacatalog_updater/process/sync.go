@@ -19,6 +19,10 @@ package process
  */
 
 import (
+	"context"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/glue"
+	"go.uber.org/multierr"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/lambda"
@@ -43,10 +47,137 @@ type SyncEvent struct {
 	Continuation *Continuation // if not nil, start here
 }
 
+type SyncDatabaseEvent struct {
+	Databases []string
+}
+
+type SyncDatabaseOutput struct {
+	NumTables int
+	NumSynced int
+}
+
+type SyncTableEvent struct {
+	Table     *glue.TableData
+	NextToken string
+}
+
 type Continuation struct {
 	LogType           string
 	DataType          models.DataType
 	NextPartitionTime time.Time
+}
+
+func SyncDatabase(ctx context.Context, event *SyncDatabaseEvent) (result map[string]*SyncDatabaseOutput, err error) {
+	sync := awsglue.SyncTask{
+		DryRun:      false,
+		NumRequests: 8,
+		Logger:      zap.L(),
+		GlueClient:  glueClient.(*glue.Glue),
+	}
+	result = make(map[string]*SyncDatabaseOutput, len(event.Databases))
+	for _, db := range event.Databases {
+		tables, err := sync.ScanTables(ctx, db, nil)
+		if err != nil {
+			return
+		}
+		r := &SyncDatabaseOutput{
+			NumTables: len(tables),
+		}
+		for _, table := range tables {
+			invokeErr := invokeSyncTable(ctx, table, "")
+			if invokeErr != nil {
+				err = multierr.Append(err, invokeErr)
+				continue
+			}
+			r.NumSynced++
+		}
+		result[db] = r
+	}
+	return
+}
+
+func InvokeSyncDatabase(ctx context.Context, databases ...string) error {
+	payload, err := jsoniter.Marshal(struct {
+		SyncDatabase *SyncDatabaseEvent
+	}{
+		SyncDatabase: &SyncDatabaseEvent{
+			Databases: databases,
+		},
+	})
+	if err != nil {
+		return err
+	}
+	output, err := lambdaClient.InvokeWithContext(ctx, &lambda.InvokeInput{
+		FunctionName:   aws.String(lambdaFunctionName),
+		InvocationType: aws.String(lambda.InvocationTypeEvent),
+		Payload:        payload,
+	})
+	if err != nil {
+		return err
+	}
+	if output.FunctionError != nil {
+		return errors.Errorf("%s: failed to invoke %#v", *output.FunctionError, syncTable)
+	}
+	return nil
+}
+
+func invokeSyncTable(ctx context.Context, table *glue.TableData, nextToken string) error {
+	payload, err := jsoniter.Marshal(struct {
+		SyncTable *SyncTableEvent
+	}{
+		SyncTable: &SyncTableEvent{
+			Table:     table,
+			NextToken: nextToken,
+		},
+	})
+	if err != nil {
+		return err
+	}
+	output, err := lambdaClient.InvokeWithContext(ctx, &lambda.InvokeInput{
+		FunctionName:   aws.String(lambdaFunctionName),
+		InvocationType: aws.String(lambda.InvocationTypeEvent),
+		Payload:        payload,
+	})
+	if err != nil {
+		return err
+	}
+	if output.FunctionError != nil {
+		return errors.Errorf("%s: failed to invoke %#v", *output.FunctionError, syncTable)
+	}
+	return nil
+}
+
+func SyncTable(ctx context.Context, event *SyncTableEvent) (err error) {
+	nextToken := event.NextToken
+	// defer invoking continuation
+	defer func() {
+		if err == context.DeadlineExceeded && nextToken != "" {
+			// We use context.Background to limit the probability of missing the request
+			err = invokeSyncTable(context.Background(), event.Table, nextToken)
+		}
+	}()
+	if deadline, ok := ctx.Deadline(); ok {
+		// Reserve some time for continuing the task in a new lambda invocation
+		// If the timeout too short we resort to using context.Background to send the request outside of the
+		// lambda handler time slot.
+		const gracefulExitTimeout = time.Second
+		timeout := time.Until(deadline)
+		if timeout > gracefulExitTimeout {
+			timeout = timeout - gracefulExitTimeout
+			ctx, _ = context.WithTimeout(ctx, timeout)
+		}
+	}
+
+	task := awsglue.SyncTask{
+		Logger:     zap.L(),
+		GlueClient: glueClient,
+	}
+
+	result, err := task.SyncTable(ctx, event.Table, event.NextToken)
+	if result != nil {
+		nextToken = result.NextToken
+	}
+	return
 }
 
 // Sync does one logType then re-invokes, this way we have 15min/logType/sync and we do not overload the glue api
@@ -155,7 +286,7 @@ func invokeSyncGluePartitions(lambdaClient lambdaiface.LambdaAPI, logTypes []str
 	resp, err := lambdaClient.Invoke(&lambda.InvokeInput{
 		FunctionName:   box.String(lambdaFunctionName),
 		Payload:        eventJSON,
-		InvocationType: box.String("Event"), // don't wait for response
+		InvocationType: box.String(lambda.InvocationTypeEvent), // don't wait for response
 	})
 	if err != nil {
 		err = errors.Wrapf(err, "failed to invoke %#v", event)

@@ -22,6 +22,8 @@ import (
 	"context"
 	goerr "errors"
 	"fmt"
+	"github.com/aws/aws-sdk-go/service/glue/glueiface"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"path"
 	"reflect"
 	"regexp"
@@ -43,8 +45,8 @@ type SyncTask struct {
 	Logger      *zap.Logger
 	Start       time.Time
 	End         time.Time
-	GlueClient  *glue.Glue
-	S3Client    *s3.S3
+	GlueClient  glueiface.GlueAPI
+	S3Client    s3iface.S3API
 }
 
 // ScanTables returns a list of available tables in the log processing database
@@ -69,7 +71,7 @@ func (s *SyncTask) ScanTables(ctx context.Context, dbName string, match *regexp.
 type PartitionScanFunc func(p *glue.GetPartitionsOutput, isLast bool) bool
 
 // ScanPartitions scans all Glue partitions in a time range
-func (s *SyncTask) ScanPartitions(ctx context.Context, tbl *glue.TableData, scan PartitionScanFunc) error {
+func (s *SyncTask) ScanPartitions(ctx context.Context, lastToken string, tbl *glue.TableData, scan PartitionScanFunc) error {
 	bin, err := TimebinFromTable(tbl)
 	if err != nil {
 		return err
@@ -78,6 +80,9 @@ func (s *SyncTask) ScanPartitions(ctx context.Context, tbl *glue.TableData, scan
 		CatalogId:    tbl.CatalogId,
 		TableName:    tbl.Name,
 		DatabaseName: tbl.DatabaseName,
+	}
+	if lastToken != "" {
+		input.NextToken = &lastToken
 	}
 	start, end := s.Start, s.End
 	if end.IsZero() {
@@ -119,7 +124,7 @@ func (s *SyncTask) SyncDatabase(ctx context.Context, dbName string, matchTable *
 		tblError := &tblErrors[i]
 		go func() {
 			defer wg.Done()
-			r, err := s.SyncTable(ctx, tbl)
+			r, err := s.SyncTable(ctx, tbl, "")
 			*tblError = err
 			if r != nil {
 				*tblResult = *r
@@ -137,16 +142,18 @@ func (s *SyncTask) SyncDatabase(ctx context.Context, dbName string, matchTable *
 }
 
 // SyncTable scans all Glue partitions in a time range and updates their descriptors to match the table descriptor.
-func (s *SyncTask) SyncTable(ctx context.Context, tbl *glue.TableData) (*SyncSummary, error) {
+func (s *SyncTask) SyncTable(ctx context.Context, tbl *glue.TableData, nextToken string) (*SyncSummary, error) {
 	bin, err := TimebinFromTable(tbl)
 	if err != nil {
 		return nil, err
 	}
 	log := s.log(tbl.DatabaseName, tbl.Name)
 	log.Info("syncing table")
-	result := SyncSummary{}
+	result := SyncSummary{
+		NextToken: nextToken,
+	}
 	// Scan partitions
-	scanError := s.ScanPartitions(ctx, tbl, func(page *glue.GetPartitionsOutput, _ bool) bool {
+	scanError := s.ScanPartitions(ctx, nextToken, tbl, func(page *glue.GetPartitionsOutput, _ bool) bool {
 		result.NumPages++
 		for _, p := range page.Partitions {
 			tm, ok := partitionTime(bin, p)
@@ -171,6 +178,10 @@ func (s *SyncTask) SyncTable(ctx context.Context, tbl *glue.TableData) (*SyncSum
 			} else {
 				result.NumSynced++
 			}
+		}
+		// Only update next token if all partitions synced ok
+		if len(result.syncErrors) == 0 {
+			result.NextToken = aws.StringValue(page.NextToken)
 		}
 		log.Info("partitions synced", zap.Any("progress", result))
 		return true
@@ -607,6 +618,8 @@ type SyncSummary struct {
 	NumDiff int64
 	// Number of partitions synced successfully
 	NumSynced int64
+	// Last partition scan token successfully synced
+	NextToken string
 	// Accumulate all sync errors here
 	syncErrors []error
 }
