@@ -21,7 +21,7 @@ import { Box, Card, Flex, Img, Link, SimpleGrid } from 'pouncejs';
 import Linkify from 'Components/Linkify';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
-import { formatDatetime, minutesToString } from 'Helpers/utils';
+import { formatDatetime, formatNumber, minutesToString } from 'Helpers/utils';
 import { AlertDetails, RuleTeaser, ListDestinations } from 'Pages/AlertDetails';
 import AlertDeliverySection from 'Pages/AlertDetails/AlertDetailsInfo/AlertDeliverySection';
 import { DESTINATIONS } from 'Source/constants';
@@ -97,7 +97,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule, alertD
                   </Box>
 
                   <Box id="threshold" gridColumn="3/8">
-                    {minutesToString(rule.threshold)}
+                    {formatNumber(rule.threshold)}
                   </Box>
 
                   <Box
