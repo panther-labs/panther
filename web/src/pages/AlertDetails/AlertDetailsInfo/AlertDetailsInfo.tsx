@@ -75,7 +75,6 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule, alertD
       )}
       <Card variant="dark" as="section" p={4}>
         <SimpleGrid columns={2} spacing={5} fontSize="small-medium">
-<<<<<<< HEAD
           {rule ? (
             <Flex spacing={5}>
               <Flex direction="column" spacing={2} color="navyblue-100" flexShrink={0}>
@@ -89,7 +88,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule, alertD
                 <Link id="rule-link" as={RRLink} to={urls.logAnalysis.rules.details(rule.id)}>
                   {rule.displayName || rule.id}
                 </Link>
-                <Box id="threshold">{minutesToString(rule.threshold)}</Box>
+                <Box id="threshold">{formatNumber(rule.threshold)}</Box>
                 <Box id="deduplication-period">
                   {rule.dedupPeriodMinutes
                     ? minutesToString(rule.dedupPeriodMinutes)
@@ -108,97 +107,6 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule, alertD
                         {index !== rule.tags.length - 1 ? ', ' : null}
                       </Link>
                     ))}
-=======
-          <Box>
-            <SimpleGrid gap={2} columns={8} spacing={2}>
-              {rule ? (
-                <>
-                  <Box color="navyblue-100" gridColumn="1/3" aria-describedby="rule-link">
-                    Rule
-                  </Box>
-
-                  <Link
-                    id="rule-link"
-                    gridColumn="3/8"
-                    as={RRLink}
-                    to={urls.logAnalysis.rules.details(rule.id)}
-                  >
-                    {rule.displayName || rule.id}
-                  </Link>
-
-                  <Box color="navyblue-100" gridColumn="1/3" aria-describedby="threshold">
-                    Rule Threshold
-                  </Box>
-
-                  <Box id="threshold" gridColumn="3/8">
-                    {formatNumber(rule.threshold)}
-                  </Box>
-
-                  <Box
-                    color="navyblue-100"
-                    gridColumn="1/3"
-                    aria-describedby="deduplication-period"
-                  >
-                    Deduplication Period
-                  </Box>
-
-                  <Box id="deduplication-period" gridColumn="3/8">
-                    {rule.dedupPeriodMinutes
-                      ? minutesToString(rule.dedupPeriodMinutes)
-                      : 'Not specified'}
-                  </Box>
-
-                  <Box
-                    color="navyblue-100"
-                    gridColumn="1/3"
-                    aria-describedby="deduplication-string"
-                  >
-                    Deduplication String
-                  </Box>
-
-                  <Box id="deduplication-string" gridColumn="3/8">
-                    {alert.dedupString}
-                  </Box>
-
-                  <Box color="navyblue-100" gridColumn="1/3" aria-describedby="tags-list">
-                    Tags
-                  </Box>
-
-                  {rule.tags.length > 0 ? (
-                    <Box id="tags-list" gridColumn="3/8">
-                      {rule.tags.map((tag, index) => (
-                        <Link
-                          key={tag}
-                          as={RRLink}
-                          to={`${urls.logAnalysis.rules.list()}?page=1&tags[]=${tag}`}
-                        >
-                          {tag}
-                          {index !== rule.tags.length - 1 ? ', ' : null}
-                        </Link>
-                      ))}
-                    </Box>
-                  ) : (
-                    <Box fontStyle="italic" color="navyblue-100" id="tags-list" gridColumn="3/8">
-                      This rule has no tags
-                    </Box>
-                  )}
-                </>
-              ) : (
-                <>
-                  <Box color="navyblue-100" gridColumn="1/3" aria-describedby="rule-link">
-                    Rule
-                  </Box>
-                  <Box gridColumn="3/8" color="red-300">
-                    Associated rule has been deleted
-                  </Box>
-
-                  <Box
-                    color="navyblue-100"
-                    gridColumn="1/3"
-                    aria-describedby="deduplication-string"
-                  >
-                    Deduplication String
->>>>>>> 12d221a0... Fixing minor UI issue (#1594)
                   </Box>
                 ) : (
                   <Box fontStyle="italic" color="navyblue-100" id="tags-list">
