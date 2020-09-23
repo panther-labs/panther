@@ -85,10 +85,10 @@ func Publish() error {
 }
 
 func getPublicationApproval(log *zap.SugaredLogger, version string) error {
-	log.Infof("Publishing panther-community v%s to %s", version, strings.Join(publishRegions, ","))
+	log.Infof("Publishing panther-community %s to %s", version, strings.Join(publishRegions, ","))
 	result := prompt.Read("Are you sure you want to continue? (yes|no) ", prompt.NonemptyValidator)
 	if strings.ToLower(result) != "yes" {
-		return fmt.Errorf("publish v%s aborted by user", version)
+		return fmt.Errorf("publish %s aborted by user", version)
 	}
 
 	// Check if the version already exists in any region - it's easy to forget to update the version
@@ -142,7 +142,7 @@ func publishToRegion(log *zap.SugaredLogger, version, region string) error {
 // Returns bucket name, s3 object key, and S3 URL for the master template in the current region.
 func s3MasterTemplate(version string) (string, string, string) {
 	bucket := util.PublicAssetsBucket()
-	s3Key := fmt.Sprintf("v%s/panther.yml", version)
+	s3Key := version + "/panther.yml"
 	s3URL := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucket, s3Key)
 	return bucket, s3Key, s3URL
 }
