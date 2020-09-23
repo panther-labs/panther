@@ -58,8 +58,10 @@ type DataType string
 const (
 	// LogData represents log data processed by Panther
 	LogData DataType = "LogData"
-	// RuleData represents log data that have matched some rule
+	// RuleData represents parsed log data that have matched some rule
 	RuleData DataType = "RuleMatches"
+	// RuleData represents parsed log data that have generated an error while running over rules
+	RuleErrors DataType = "RuleErrors"
 )
 
 func (d DataType) String() string {

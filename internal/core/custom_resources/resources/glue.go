@@ -32,6 +32,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
 	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
+	"github.com/panther-labs/panther/pkg/awsutils"
 )
 
 type UpdateGlueTablesProperties struct {
@@ -53,8 +54,7 @@ func customUpdateGlueTables(_ context.Context, event cfn.Event) (string, map[str
 		for pantherDatabase, pantherDatabaseDescription := range awsglue.PantherDatabases {
 			zap.L().Info("creating database", zap.String("database", pantherDatabase))
 			if _, err := awsglue.CreateDatabase(glueClient, pantherDatabase, pantherDatabaseDescription); err != nil {
-				var awsErr awserr.Error
-				if errors.As(err, &awsErr) && awsErr.Code() == glue.ErrCodeAlreadyExistsException {
+				if awsutils.IsAnyError(err, glue.ErrCodeAlreadyExistsException) {
 					zap.L().Info("database exists", zap.String("database", pantherDatabase))
 				} else {
 					return "", nil, errors.Wrapf(err, "failed creating database %s", pantherDatabase)

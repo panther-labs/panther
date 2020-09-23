@@ -51,7 +51,7 @@ type Continuation struct {
 
 // Sync does one logType then re-invokes, this way we have 15min/logType/sync and we do not overload the glue api
 func Sync(event *SyncEvent, deadline time.Time) error {
-	var zeroStartTime time.Time // setting the startTime to 0, means use createTime for the table
+	var zeroStartTime time.Time // When setting the startTime to 0, the underlying code will use the table creation time.
 
 	// first, finish any pending work
 	if event.Continuation != nil {
@@ -59,12 +59,9 @@ func Sync(event *SyncEvent, deadline time.Time) error {
 		logType := event.Continuation.LogType
 		logTable := registry.Lookup(logType).GlueTableMeta() // get the table description
 
-		if event.Continuation.DataType == models.RuleData { // just finish rule matches, log aleady done
-			deadlineExpired, err := syncTable(logTable.RuleTable(), event, startTime, deadline)
-			if err != nil || deadlineExpired {
-				return err
-			}
-		} else { // finish log table, then do rule table from zeroStartTime
+		switch dataType := event.Continuation.DataType; dataType {
+		case models.LogData:
+			// finish log table, then do rule and rule error table from zeroStartTime
 			deadlineExpired, err := syncTable(logTable, event, startTime, deadline)
 			if err != nil || deadlineExpired {
 				return err
@@ -74,6 +71,31 @@ func Sync(event *SyncEvent, deadline time.Time) error {
 			if err != nil || deadlineExpired {
 				return err
 			}
+
+			deadlineExpired, err = syncTable(logTable.RuleErrorTable(), event, zeroStartTime, deadline)
+			if err != nil || deadlineExpired {
+				return err
+			}
+
+		case models.RuleData:
+			// finish rule matches (log already done) then do error table from zeroStartTime
+			deadlineExpired, err := syncTable(logTable.RuleTable(), event, startTime, deadline)
+			if err != nil || deadlineExpired {
+				return err
+			}
+
+			deadlineExpired, err = syncTable(logTable.RuleErrorTable(), event, zeroStartTime, deadline)
+			if err != nil || deadlineExpired {
+				return err
+			}
+		case models.RuleErrors:
+			// // finish the rule errors  (rule and log already done)
+			deadlineExpired, err := syncTable(logTable.RuleErrorTable(), event, startTime, deadline)
+			if err != nil || deadlineExpired {
+				return err
+			}
+		default:
+			return errors.New("Unknown data type " + dataType.String())
 		}
 
 		// advance to next log type now that we are done with continuation
@@ -88,13 +110,18 @@ func Sync(event *SyncEvent, deadline time.Time) error {
 		logType := event.LogTypes[0]
 		logTable := registry.Lookup(logType).GlueTableMeta() // get the table description
 
-		// sync table and companion rule match table
+		// sync log table, rule match table and rule error table
 		deadlineExpired, err := syncTable(logTable, event, zeroStartTime, deadline)
 		if err != nil || deadlineExpired {
 			return err
 		}
 
 		deadlineExpired, err = syncTable(logTable.RuleTable(), event, zeroStartTime, deadline)
+		if err != nil || deadlineExpired {
+			return err
+		}
+
+		deadlineExpired, err = syncTable(logTable.RuleErrorTable(), event, zeroStartTime, deadline)
 		if err != nil || deadlineExpired {
 			return err
 		}

@@ -1,26 +1,26 @@
 ---
-name: Story
-about: Planned or ongoing development work
+name: Epic
+about: A collection of User Stories
 title: ''
-labels: story
+labels: ''
 assignees: ''
 ---
 
 ### Description
 
-Explain what you are trying to achieve and why this story needs to be implemented. What is the value that this will provide?
+A couple high-level sentences of the feature
 
-### Related Services
+### RFC
 
-Which backend services must change for this story to be completed?
+The link to the internal Request for Comments document
 
 ### Designs
 
-Paste the link to your designs here
+The link to the feature's designs
 
 ### Acceptance Criteria
 
-A concise list of specific user stories that qualify this story as done.
+A concise list of specific user stories that qualify this story as done and tell the user journey.
 
 This acts as a checklist and high-level context for anyone reading this issue to verify your implementation.
 

@@ -66,7 +66,7 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (newIntegration
 	// First creating table - this action is idempotent. In case we succeed here and
 	// fail at a later stage, in case of retry this will succeed again.
 	if err = createTables(newIntegration); err != nil {
-		err = errors.Wrap(err, "Failed to create Glue tables")
+		err = errors.Wrap(err, "failed to create Glue tables")
 		return nil, putIntegrationInternalError
 	}
 

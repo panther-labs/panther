@@ -48,6 +48,13 @@ func Publish() error {
 		return err
 	}
 
+	// ensure the git tag in the repo matches the declared version in master template
+	repoVersion := util.RepoVersion()
+	if version != repoVersion {
+		return fmt.Errorf("master panther version %s does not match repo version %s",
+			version, repoVersion)
+	}
+
 	if err = getPublicationApproval(log, version); err != nil {
 		return err
 	}

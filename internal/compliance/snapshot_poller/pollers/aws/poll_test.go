@@ -26,5 +26,5 @@ import (
 
 // Unit tests
 func TestAssumeRoleMissingParams(t *testing.T) {
-	assert.Panics(t, func() { _ = assumeRole(nil, nil, "") })
+	assert.Panics(t, func() { _ = assumeRole(nil, nil) })
 }
