@@ -56,6 +56,8 @@ const (
 )
 
 var (
+	MASTERSTACK = flag.String("master-stack", "",
+		"if set, this is the name of the Panther master stack used to deploy, if not set the deployment is assumed from source")
 	REGION = flag.String("region", "",
 		"The Panther AWS region (optional, defaults to session env vars) where the queue exists.")
 	REGEXP = flag.String("regexp", "",
@@ -203,23 +205,25 @@ func validateFlags() {
 	matchLogType, err = regexp.Compile(*REGEXP)
 	if err != nil {
 		err = errors.Wrapf(err, "cannot read -regexp")
-		return
 	}
 }
 
 func updateRegisteredTables() (tables []*awsglue.GlueTableMetadata) {
 	// find the bucket to associate with the table
-	const processDataBucketStack = cfnstacks.Bootstrap
-	outputs := awscfn.StackOutputs(cfnClient, logger, processDataBucketStack)
+	bootstrapStack, err := cfnstacks.GetBootstrapStack(cfnClient, *MASTERSTACK)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	outputs := awscfn.StackOutputs(cfnClient, logger, bootstrapStack)
 	var dataBucket string
 	if dataBucket = outputs["ProcessedDataBucket"]; dataBucket == "" {
-		logger.Fatalf("could not find processed data bucket in %s outputs", processDataBucketStack)
+		logger.Fatalf("could not find processed data bucket in %s outputs", bootstrapStack)
 	}
 
 	// check the version of Panther deployed against what this as compiled against, they _must_ match!
 	tagResponse, err := s3Client.GetBucketTagging(&s3.GetBucketTaggingInput{Bucket: &dataBucket})
 	if err != nil {
-		logger.Fatalf("could not read processed data bucket tags for %$: %s", processDataBucketStack, err)
+		logger.Fatalf("could not read processed data bucket tags for %$: %s", bootstrapStack, err)
 	}
 	var deployedPantherVersion string
 	for _, tag := range tagResponse.TagSet {
@@ -227,6 +231,7 @@ func updateRegisteredTables() (tables []*awsglue.GlueTableMetadata) {
 			deployedPantherVersion = *tag.Value
 		}
 	}
+
 	if version != deployedPantherVersion {
 		logger.Fatalf("deployed Panther version '%s' does not match compiled Panther version '%s'",
 			deployedPantherVersion, version)

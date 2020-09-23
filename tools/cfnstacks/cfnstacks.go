@@ -1,6 +1,16 @@
 // Package cfnstacks declares public constants and vars for Panther stacks and templates for use by tools
 package cfnstacks
 
+import (
+	"strings"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/arn"
+	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
+	"github.com/aws/aws-sdk-go/service/cloudformation/cloudformationiface"
+	"github.com/pkg/errors"
+)
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -61,3 +71,29 @@ var (
 	}
 	NumStacks = len(AllStacks)
 )
+
+// GetBootstrapStack will return the above constant if `masterStack` is empty (deployed src), else look it up in the master stack
+func GetBootstrapStack(cfnClient cloudformationiface.CloudFormationAPI, masterStack string) (string, error) {
+	if masterStack == "" {
+		return Bootstrap, nil // this is fixed for source deployments
+	}
+	// search through master stack to find the bootstrap stack
+	output, err := cfnClient.DescribeStackResource(&cfn.DescribeStackResourceInput{
+		StackName:         &masterStack,
+		LogicalResourceId: aws.String("Bootstrap"),
+	})
+	if err != nil {
+		return "", errors.WithMessagef(err, "cannot read %s", masterStack)
+	}
+
+	parsedArn, err := arn.Parse(aws.StringValue(output.StackResourceDetail.PhysicalResourceId))
+	if err != nil {
+		return "", errors.WithMessagef(err, "cannot parse %s", aws.StringValue(output.StackResourceDetail.PhysicalResourceId))
+	}
+	resourceParts := strings.Split(parsedArn.Resource, "/")
+	if len(resourceParts) != 3 {
+		return "", errors.Errorf("wrong number of resource parts for %s", parsedArn.Resource)
+	}
+
+	return resourceParts[1], nil // the second part has the stack name
+}

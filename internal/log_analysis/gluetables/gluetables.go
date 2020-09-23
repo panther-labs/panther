@@ -23,13 +23,13 @@ import (
 	"encoding/hex"
 	"sort"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
+	"github.com/panther-labs/panther/pkg/awsutils"
 )
 
 // DeployedLogTables returns the glue tables from the registry that have been deployed
@@ -37,8 +37,7 @@ func DeployedLogTables(glueClient glueiface.GlueAPI) (deployedLogTables []*awsgl
 	for _, gm := range registry.AvailableTables() {
 		_, err := awsglue.GetTable(glueClient, gm.DatabaseName(), gm.TableName())
 		if err != nil {
-			var awsErr awserr.Error
-			if errors.As(err, &awsErr) && awsErr.Code() == glue.ErrCodeEntityNotFoundException {
+			if awsutils.IsAnyError(err, glue.ErrCodeEntityNotFoundException) {
 				continue
 			} else {
 				return nil, errors.Wrapf(err, "failure checking existence of %s.%s",
@@ -69,6 +68,14 @@ func DeployedTablesSignature(glueClient glueiface.GlueAPI) (deployedLogTablesSig
 		// the corresponding rule table shares the same structure as the log table + some columns
 		ruleTable := logTable.RuleTable()
 		sig, err = ruleTable.Signature()
+		if err != nil {
+			return "", err
+		}
+		tableSignatures = append(tableSignatures, sig)
+
+		// the corresponding rule error table shares the same structure as the log table + some columns
+		ruleErrorTable := logTable.RuleErrorTable()
+		sig, err = ruleErrorTable.Signature()
 		if err != nil {
 			return "", err
 		}

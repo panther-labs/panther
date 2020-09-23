@@ -35,6 +35,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/pkg/box"
 )
 
@@ -241,8 +242,7 @@ func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, b
 	}
 	_, err := glueClient.CreateTable(createTableInput)
 	if err != nil {
-		var awsErr awserr.Error
-		if errors.As(err, &awsErr) && awsErr.Code() == glue.ErrCodeAlreadyExistsException {
+		if awsutils.IsAnyError(err, glue.ErrCodeAlreadyExistsException) {
 			// need to do an update
 			updateTableInput := &glue.UpdateTableInput{
 				DatabaseName: &gm.databaseName,
