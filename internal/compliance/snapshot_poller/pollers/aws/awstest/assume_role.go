@@ -26,8 +26,6 @@ import (
 )
 
 // AssumeRoleMock generates a set of fake credentials for testing.
-func AssumeRoleMock(pollerInput *awsmodels.ResourcePollerInput, sess *session.Session,
-	region string) *credentials.Credentials {
-
+func AssumeRoleMock(_ *awsmodels.ResourcePollerInput, _ *session.Session) *credentials.Credentials {
 	return &credentials.Credentials{}
 }

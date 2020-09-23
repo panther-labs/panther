@@ -221,14 +221,31 @@ func getClient(pollerInput *awsmodels.ResourcePollerInput,
 	}
 
 	// Build a new client on cache miss
-	creds := assumeRoleFunc(pollerInput, snapshotPollerSession, region)
-	err := verifyAssumedCredsFunc(creds, region)
+
+	// First we need to use our existing AWS session (in the Panther account) to create credentials
+	// for the IAM role in the account to be scanned
+	creds := assumeRoleFunc(pollerInput, snapshotPollerSession)
+
+	// Second, we need to create a new session in the account to be scanned using the credentials
+	// we just created. This works around a situation where the account being scanned has an opt-in
+	// region enabled that the Panther account does not.
+	//
+	// The region does not matter here, since we are just creating the session. When we create the
+	// client, we will need to specify the region.
+	clientSession, err := session.NewSession(&aws.Config{Credentials: creds})
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get %s client session in %s region", service, region)
+	}
+
+	// Verify that the session is valid
+	err = verifyAssumedCredsFunc(clientSession, region)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get %s client in %s region", service, region)
 	}
-	client := clientFunc(snapshotPollerSession, &aws.Config{
-		Credentials: creds,
-		Region:      &region,
+
+	// Finally, actually create the client based on the specified service in the specified region
+	client := clientFunc(clientSession, &aws.Config{
+		Region: &region, // This makes it work with regional endpoints
 	})
 	clientCache[cacheKey] = cachedClient{
 		Client:      client,
@@ -238,7 +255,7 @@ func getClient(pollerInput *awsmodels.ResourcePollerInput,
 }
 
 //  assumes an IAM role associated with an AWS Snapshot Integration.
-func assumeRole(pollerInput *awsmodels.ResourcePollerInput, sess *session.Session, region string) *credentials.Credentials {
+func assumeRole(pollerInput *awsmodels.ResourcePollerInput, sess *session.Session) *credentials.Credentials {
 	zap.L().Debug("assuming role", zap.String("roleArn", *pollerInput.AuthSource))
 
 	if pollerInput.AuthSource == nil {
@@ -246,9 +263,7 @@ func assumeRole(pollerInput *awsmodels.ResourcePollerInput, sess *session.Sessio
 	}
 
 	creds := stscreds.NewCredentials(
-		sess.Copy(&aws.Config{
-			Region: &region, // this makes it work with regional endpoints
-		}),
+		sess,
 		*pollerInput.AuthSource,
 		func(p *stscreds.AssumeRoleProvider) {
 			p.Duration = assumeRoleDuration
@@ -258,12 +273,10 @@ func assumeRole(pollerInput *awsmodels.ResourcePollerInput, sess *session.Sessio
 	return creds
 }
 
-func verifyAssumedCreds(creds *credentials.Credentials, region string) error {
-	svc := sts.New(
-		snapshotPollerSession,
+func verifyAssumedCreds(sess *session.Session, region string) error {
+	svc := sts.New(sess,
 		&aws.Config{
-			Credentials: creds,
-			Region:      &region,
+			Region: &region,
 		},
 	)
 	_, err := svc.GetCallerIdentity(&sts.GetCallerIdentityInput{})
