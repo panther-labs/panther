@@ -91,18 +91,18 @@ var (
 	}
 
 	// RuleID Metric Events
-	numRulesTriggered  = 10.0
-	ruleTriggeredSmall = metricRuleIDDatum{
+	numAlertsCreated   = 10.0
+	alertsCreatedSmall = metricRuleIDDatum{
 		Timestamp: aws.Time(endTime.Add(-15 * time.Minute)),
-		Value:     aws.Float64(numRulesTriggered),
+		Value:     aws.Float64(numAlertsCreated),
 	}
-	ruleTriggeredMedium = metricRuleIDDatum{
+	alertsCreatedMedium = metricRuleIDDatum{
 		Timestamp: aws.Time(endTime.Add(-15 * time.Minute)),
-		Value:     aws.Float64(numRulesTriggered * 10.0),
+		Value:     aws.Float64(numAlertsCreated * 10.0),
 	}
-	ruleTriggeredLarge = metricRuleIDDatum{
+	alertsCreatedLarge = metricRuleIDDatum{
 		Timestamp: aws.Time(endTime.Add(-15 * time.Minute)),
-		Value:     aws.Float64(numRulesTriggered * 100.0),
+		Value:     aws.Float64(numAlertsCreated * 100.0),
 	}
 	ruleIDs        = []string{"rule.id.test.small", "rule.id.test.medium", "rule.id.test.large"}
 	ruleDimensions = []*cloudwatch.Dimension{
@@ -191,33 +191,33 @@ func setupEvents() error {
 func setupRuleIDEvents() error {
 	_, err := cloudwatchClient.PutMetricData(&cloudwatch.PutMetricDataInput{
 		MetricData: []*cloudwatch.MetricDatum{
-			// AlertsTriggered Events
+			// AlertsCreated Events
 			{
 				Dimensions: []*cloudwatch.Dimension{
 					ruleDimensions[0],
 				},
-				MetricName: aws.String("AlertsTriggered"),
-				Timestamp:  ruleTriggeredSmall.Timestamp,
+				MetricName: aws.String("AlertsCreated"),
+				Timestamp:  alertsCreatedSmall.Timestamp,
 				Unit:       aws.String("Count"),
-				Value:      ruleTriggeredSmall.Value,
+				Value:      alertsCreatedSmall.Value,
 			},
 			{
 				Dimensions: []*cloudwatch.Dimension{
 					ruleDimensions[1],
 				},
-				MetricName: aws.String("AlertsTriggered"),
-				Timestamp:  ruleTriggeredMedium.Timestamp,
+				MetricName: aws.String("AlertsCreated"),
+				Timestamp:  alertsCreatedMedium.Timestamp,
 				Unit:       aws.String("Count"),
-				Value:      ruleTriggeredMedium.Value,
+				Value:      alertsCreatedMedium.Value,
 			},
 			{
 				Dimensions: []*cloudwatch.Dimension{
 					ruleDimensions[2],
 				},
-				MetricName: aws.String("AlertsTriggered"),
-				Timestamp:  ruleTriggeredLarge.Timestamp,
+				MetricName: aws.String("AlertsCreated"),
+				Timestamp:  alertsCreatedLarge.Timestamp,
 				Unit:       aws.String("Count"),
-				Value:      ruleTriggeredLarge.Value,
+				Value:      alertsCreatedLarge.Value,
 			},
 		},
 		Namespace: aws.String(namespace),
@@ -229,7 +229,7 @@ func setupRuleIDEvents() error {
 func getMetrics(t *testing.T) {
 	// Test EventsProcessed metrics
 	getLogTypeMetrics(t)
-	// Test AlertsTriggered Metrics
+	// Test AlertsCreated Metrics
 	getRuleIDMetrics(t)
 }
 
@@ -294,13 +294,13 @@ func getRuleIDMetrics(t *testing.T) {
 		// Verify each dimension got the correct value set
 		if *seriesData.Label == *ruleDimensions[0].Value {
 			require.Len(t, seriesData.Values, 1)
-			assert.Equal(t, numRulesTriggered, *seriesData.Values[0])
+			assert.Equal(t, numAlertsCreated, *seriesData.Values[0])
 		} else if *seriesData.Label == *ruleDimensions[1].Value {
 			require.Len(t, seriesData.Values, 1)
-			assert.Equal(t, numRulesTriggered*10.0, *seriesData.Values[0])
+			assert.Equal(t, numAlertsCreated*10.0, *seriesData.Values[0])
 		} else {
 			require.Len(t, seriesData.Values, 1)
-			assert.Equal(t, numRulesTriggered*100.0, *seriesData.Values[0])
+			assert.Equal(t, numAlertsCreated*100.0, *seriesData.Values[0])
 		}
 	}
 	// test limit returns only top N events (N=2 in this case)
@@ -324,6 +324,6 @@ func getRuleIDMetrics(t *testing.T) {
 		require.NotNil(t, seriesData.Label)
 		// This should only have the top two most triggered RuleIDs
 		require.Subset(t, ruleIDs, []string{*seriesData.Label})
-		require.Greater(t, *seriesData.Values[0], numRulesTriggered)
+		require.Greater(t, *seriesData.Values[0], numAlertsCreated)
 	}
 }
