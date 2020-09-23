@@ -17,6 +17,7 @@
  */
 
 import { DestinationTypeEnum } from 'Generated/schema';
+import mx from 'mixpanel-browser';
 import storage from 'Helpers/storage';
 import { ANALYTICS_CONSENT_STORAGE_KEY } from 'Source/constants';
 
@@ -31,10 +32,8 @@ const envCheck =
 
 const evaluateTracking = (...args) => {
   if (envCheck) {
-    import('mixpanel-browser').then(mx => {
-      mx.init(mixpanelPublicToken);
-      mx.track(...args);
-    });
+    mx.init(mixpanelPublicToken);
+    mx.track(...args);
   }
 };
 
