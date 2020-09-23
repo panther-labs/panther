@@ -16,7 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import mixpanel from 'mixpanel-browser';
 import { DestinationTypeEnum } from 'Generated/schema';
 import storage from 'Helpers/storage';
 import { ANALYTICS_CONSENT_STORAGE_KEY } from 'Source/constants';
@@ -30,9 +29,14 @@ const envCheck =
   storage.local.read<boolean>(ANALYTICS_CONSENT_STORAGE_KEY) &&
   process.env.NODE_ENV === 'production';
 
-if (envCheck) {
-  mixpanel.init(mixpanelPublicToken);
-}
+const evaluateTracking = (...args) => {
+  if (envCheck) {
+    import('mixpanel-browser').then(mx => {
+      mx.init(mixpanelPublicToken);
+      mx.track(...args);
+    });
+  }
+};
 
 enum TrackEventEnum {
   'picked-destination-to-create' = 'Picked Destination to create',
@@ -72,19 +76,13 @@ interface TrackErrorProps {
 }
 
 export const trackPageView = ({ page }: TrackPageViewProps) => {
-  if (envCheck) {
-    mixpanel.track(TrackPageViewEnum[page], { type: 'pageview' });
-  }
+  evaluateTracking(TrackPageViewEnum[page], { type: 'pageview' });
 };
 
 export const trackEvent = ({ event, src, ctx }: TrackEventProps) => {
-  if (envCheck) {
-    mixpanel.track(TrackEventEnum[event], { type: 'event', src, ctx });
-  }
+  evaluateTracking(TrackEventEnum[event], { type: 'event', src, ctx });
 };
 
 export const trackError = ({ error, src, ctx, data }: TrackErrorProps) => {
-  if (envCheck) {
-    mixpanel.track(TrackErrorEnum[error], { type: 'error', src, ctx, data });
-  }
+  evaluateTracking(TrackErrorEnum[error], { type: 'error', src, ctx, data });
 };
