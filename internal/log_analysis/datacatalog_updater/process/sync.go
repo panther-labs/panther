@@ -103,13 +103,11 @@ func SyncDatabase(ctx context.Context, event *SyncDatabaseEvent) (map[string]*Sy
 	return result, nil
 }
 
-func InvokeSyncDatabase(ctx context.Context, databases ...string) error {
+func InvokeSyncDatabase(ctx context.Context, event *SyncDatabaseEvent) error {
 	payload, err := jsoniter.Marshal(struct {
 		SyncDatabase *SyncDatabaseEvent
 	}{
-		SyncDatabase: &SyncDatabaseEvent{
-			Databases: databases,
-		},
+		SyncDatabase: event,
 	})
 	if err != nil {
 		return err

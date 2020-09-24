@@ -89,7 +89,12 @@ func customUpdateGlueTables(ctx context.Context, event cfn.Event) (string, map[s
 
 		// sync partitions via recursive lambda to avoid blocking the deployment
 		if len(logTypes) > 0 {
-			err = process.InvokeSyncDatabase(ctx, awsglue.LogProcessingDatabaseName, awsglue.RuleMatchDatabaseName)
+			err = process.InvokeSyncDatabase(ctx, &process.SyncDatabaseEvent{
+				Databases: []string{
+					awsglue.LogProcessingDatabaseName,
+					awsglue.RuleMatchDatabaseName,
+				},
+			})
 			if err != nil {
 				return "", nil, errors.Wrap(err, "failed invoking sync")
 			}
