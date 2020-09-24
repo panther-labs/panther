@@ -35,10 +35,10 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/omitempty"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
 
+// RunTestsFromYAML reads all test cases in a YAML file and runs them.
 func RunTestsFromYAML(t *testing.T, resolve *logtypes.Registry, filename string) {
 	t.Helper()
 	f, err := os.Open(filename)
@@ -63,6 +63,7 @@ func RunTestsFromYAML(t *testing.T, resolve *logtypes.Registry, filename string)
 	}
 }
 
+// RunTests is a helper that runs all test cases in sequence
 func RunTests(t *testing.T, tests ...TestCase) {
 	t.Helper()
 	for _, tc := range tests {
@@ -70,6 +71,8 @@ func RunTests(t *testing.T, tests ...TestCase) {
 	}
 }
 
+// TestCase is a test case validating the input and output for a parser
+// TODO: add fields to allow test cases to test that a parser produces errors
 type TestCase struct {
 	Name    string             `json:"name" yaml:"name"`
 	Input   string             `json:"input" yaml:"input"`
@@ -79,11 +82,13 @@ type TestCase struct {
 	Resolve *logtypes.Registry `json:"-" yaml:"-"`
 }
 
+// Run runs a test case
 func (c *TestCase) Run(t *testing.T) {
-	TestLogType(t, c.Resolve, c.LogType, c.Input, append([]string{c.Result}, c.Results...)...)
+	TestRegisteredParser(t, c.Resolve, c.LogType, c.Input, append([]string{c.Result}, c.Results...)...)
 }
 
-func TestLogType(t *testing.T, resolve *logtypes.Registry, logType, input string, expect ...string) {
+// TestRegisteredParser is a helper to run a test for a registered log parser
+func TestRegisteredParser(t *testing.T, resolve *logtypes.Registry, logType, input string, expect ...string) {
 	t.Helper()
 	assert := require.New(t)
 	if resolve == nil {
@@ -110,22 +115,9 @@ func TestLogType(t *testing.T, resolve *logtypes.Registry, logType, input string
 	}
 }
 
-func TestParser(t *testing.T, p parsers.Interface, input string, expect ...string) {
-	t.Helper()
-	results, err := p.ParseLog(input)
-	require.NoError(t, err)
-	if len(expect) == 0 {
-		require.Nil(t, results)
-		return
-	}
-	require.NotNil(t, results)
-	require.Equal(t, len(expect), len(results), "Invalid number of patherlog results produced by parser")
-	for i, result := range results {
-		expect := expect[i]
-		TestResult(t, expect, result)
-	}
-}
-
+// JSON returns a jsoniter.API to be used for parser tests.
+// The returned API forces omitempty to all fields and relies on global tcodec registration.
+// It does not include conversion of output timestamp formats to make it easier to write test cases.
 func JSON() jsoniter.API {
 	api := jsoniter.Config{
 		EscapeHTML:             true,
@@ -133,7 +125,6 @@ func JSON() jsoniter.API {
 		ValidateJsonRawMessage: true,
 	}.Froze()
 	api.RegisterExtension(omitempty.New("json"))
-	//api.RegisterExtension(&tcodec.Extension{})
 	return api
 }
 
@@ -190,6 +181,7 @@ func TestResult(t *testing.T, expect string, actual *pantherlog.Result, indicato
 	require.JSONEq(t, expectJSON, actualJSON)
 }
 
+// EqualTimestamp is a helper that checks timestamps for equality with human readable message
 func EqualTimestamp(t *testing.T, expect, actual time.Time, msgAndArgs ...interface{}) {
 	t.Helper()
 	require.False(t, actual.IsZero(), "zero timestamp")
