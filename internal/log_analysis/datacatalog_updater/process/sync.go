@@ -20,15 +20,15 @@ package process
 
 import (
 	"context"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/glue"
-	"go.uber.org/multierr"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
@@ -70,18 +70,18 @@ type Continuation struct {
 	NextPartitionTime time.Time
 }
 
-func SyncDatabase(ctx context.Context, event *SyncDatabaseEvent) (result map[string]*SyncDatabaseOutput, err error) {
+func SyncDatabase(ctx context.Context, event *SyncDatabaseEvent) (map[string]*SyncDatabaseOutput, error) {
 	sync := awsglue.SyncTask{
 		DryRun:      event.DryRun,
 		NumRequests: 8,
 		Logger:      zap.L(),
 		GlueClient:  glueClient.(*glue.Glue),
 	}
-	result = make(map[string]*SyncDatabaseOutput, len(event.Databases))
+	result := make(map[string]*SyncDatabaseOutput, len(event.Databases))
 	for _, db := range event.Databases {
 		tables, err := sync.ScanTables(ctx, db, nil)
 		if err != nil {
-			return
+			return nil, err
 		}
 		r := &SyncDatabaseOutput{
 			NumTables: len(tables),
@@ -100,7 +100,7 @@ func SyncDatabase(ctx context.Context, event *SyncDatabaseEvent) (result map[str
 		}
 		result[db] = r
 	}
-	return
+	return result, nil
 }
 
 func InvokeSyncDatabase(ctx context.Context, databases ...string) error {
@@ -123,7 +123,7 @@ func InvokeSyncDatabase(ctx context.Context, databases ...string) error {
 		return err
 	}
 	if output.FunctionError != nil {
-		return errors.Errorf("%s: failed to invoke %#v", *output.FunctionError, syncTable)
+		return errors.Errorf("%s: failed to invoke %s", *output.FunctionError, lambdaFunctionName)
 	}
 	return nil
 }
@@ -146,13 +146,14 @@ func invokeSyncTable(ctx context.Context, event *SyncTableEvent) error {
 		return err
 	}
 	if output.FunctionError != nil {
-		return errors.Errorf("%s: failed to invoke %#v", *output.FunctionError, syncTable)
+		return errors.Errorf("%s: failed to invoke %s", *output.FunctionError, lambdaFunctionName)
 	}
 	return nil
 }
 
 const maxNumCalls = 1000
 
+// nolint: nakedret
 func SyncTable(ctx context.Context, event *SyncTableEvent) (err error) {
 	nextToken := event.NextToken
 	// defer invoking continuation
@@ -188,7 +189,9 @@ func SyncTable(ctx context.Context, event *SyncTableEvent) (err error) {
 		timeout := time.Until(deadline)
 		if timeout > gracefulExitTimeout {
 			timeout = timeout - gracefulExitTimeout
-			ctx, _ = context.WithTimeout(ctx, timeout)
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, timeout)
+			defer cancel()
 		}
 	}
 
