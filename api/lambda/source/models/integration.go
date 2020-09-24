@@ -73,6 +73,10 @@ func (info *SourceIntegration) RequiredLogTypes() (logTypes []string) {
 	}
 }
 
+func (info *SourceIntegration) IsLogAnalysisIntegration() bool {
+	return info.IntegrationType != IntegrationTypeAWSScan
+}
+
 type SourceIntegrationHealth struct {
 	IntegrationType string `json:"integrationType"`
 
