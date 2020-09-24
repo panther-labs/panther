@@ -26,37 +26,35 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
 )
 
-var cloudflareCodec = tcodec.Join(
-	&cloudflareDecoder{},
-	tcodec.LayoutCodec(time.RFC3339), // encoder
-)
+// Handle the decoding for RFC3339 using the LayoutCodec method
+var decodeRFC3339 = tcodec.LayoutCodec(time.RFC3339).DecodeTime
 
-// cloudflareDecoder decodes timestamps from cloudflare logs.
+type timeDecoder struct{}
+
+// DecodeTime implements tcodec.TimeDecoder for timestamps in cloudflare logs.
 // It uses RFC3339 for string values and detects seconds/nanoseconds in number timestamps.
 // To decide whether the timestamp is in seconds or nanoseconds, we check if the value is too big to be expressing seconds.
-type cloudflareDecoder struct{}
-
-func (c *cloudflareDecoder) DecodeTime(iter *jsoniter.Iterator) time.Time {
+func (c *timeDecoder) DecodeTime(iter *jsoniter.Iterator) time.Time {
 	const opName = "ParseCloudflareTimestamp"
 	switch iter.WhatIsNext() {
 	case jsoniter.StringValue:
-		tm, err := time.Parse(time.RFC3339, iter.ReadString())
-		if err != nil {
-			iter.ReportError(opName, err.Error())
-			return time.Time{}
-		}
-		return tm
+		// If the value is a string we use the RFC3339 layout. This handles
+		return decodeRFC3339(iter)
 	case jsoniter.NumberValue:
+		// Cloudflare unix timestamps are integers of either seconds or nanoseconds
 		n := iter.ReadInt64()
 		if err := iter.Error; err != nil {
 			return time.Time{}
 		}
-		// 1 minute nanoseconds means `3871-04-29 10:40:00 +0000 UTC`
-		if n > int64(time.Minute) {
-			// must be in nanos
-			return time.Unix(0, n).UTC()
+		// Detect if it's nanoseconds or seconds
+		// 60000000000 seconds since UNIX epoch is `3871-04-29 10:40:00 +0000 UTC`
+		const maxSeconds = int64(time.Minute)
+		if n < maxSeconds {
+			// timestamp is expressed in seconds
+			return time.Unix(n, 0).UTC()
 		}
-		return time.Unix(n, 0).UTC()
+		// timestamp is expressed in nanoseconds
+		return time.Unix(0, n).UTC()
 	default:
 		iter.ReportError(opName, "invalid JSON value")
 		return time.Time{}

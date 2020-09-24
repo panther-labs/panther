@@ -21,10 +21,14 @@ package cloudflarelogs
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
+	"time"
 )
 
 func init() {
-	tcodec.MustRegister(`cloudflare`, cloudflareCodec)
+	tcodec.MustRegister(`cloudflare`, tcodec.Join(
+		&timeDecoder{},
+		tcodec.LayoutCodec(time.RFC3339), // encoder
+	))
 
 	logtypes.MustRegisterJSON(logtypes.Desc{
 		Name:         "Cloudflare.HttpRequest",
