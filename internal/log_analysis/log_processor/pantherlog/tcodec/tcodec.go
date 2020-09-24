@@ -19,6 +19,7 @@ package tcodec
  */
 
 import (
+	"io"
 	"reflect"
 	"strconv"
 	"time"
@@ -380,7 +381,7 @@ func (d *tryDecoder) DecodeTime(iter *jsoniter.Iterator) time.Time {
 			child.Error = nil
 		}
 		tm := dec.DecodeTime(child)
-		if child.Error == nil {
+		if child.Error == nil || child.Error == io.EOF {
 			child.Pool().ReturnIterator(child)
 			return tm
 		}
