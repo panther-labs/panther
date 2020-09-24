@@ -262,7 +262,7 @@ func jsonAPI() jsoniter.API {
 func CheckParserResults(t *testing.T, want string, actual *pantherlog.Result, indicators ...pantherlog.FieldID) {
 	t.Helper()
 	logType := jsoniter.Get([]byte(want), pantherlog.FieldLogTypeJSON).ToString()
-	require.Equal(t, logType, actual.PantherLogType)
+	require.Equal(t, logType, actual.PantherLogType, pantherlog.FieldLogTypeJSON)
 	expect := pantherlog.Result{}
 	if indicators == nil {
 		indicators = pantherlog.FieldSetFromJSON([]byte(want))

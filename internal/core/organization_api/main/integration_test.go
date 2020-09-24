@@ -92,6 +92,7 @@ func updateSettings(t *testing.T) {
 		UpdateSettings: &models.UpdateSettingsInput{
 			DisplayName:           aws.String("panther-test"),
 			ErrorReportingConsent: aws.Bool(true),
+			AnalyticsConsent:      aws.Bool(true),
 		},
 	}
 	require.NoError(t, genericapi.Invoke(lambdaClient, orgAPI, &input, &output))
@@ -100,6 +101,7 @@ func updateSettings(t *testing.T) {
 		DisplayName:           aws.String("panther-test"),
 		Email:                 aws.String("test@example.com"),
 		ErrorReportingConsent: aws.Bool(true),
+		AnalyticsConsent:      aws.Bool(true),
 	}
 	assert.Equal(t, expected, output)
 }
@@ -113,6 +115,7 @@ func getSettings(t *testing.T) {
 		DisplayName:           aws.String("panther-test"),
 		Email:                 aws.String("test@example.com"),
 		ErrorReportingConsent: aws.Bool(true),
+		AnalyticsConsent:      aws.Bool(true),
 	}
 	assert.Equal(t, expected, output)
 }

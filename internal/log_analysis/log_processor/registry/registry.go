@@ -28,6 +28,7 @@ import (
 	// Register log types in init() blocks
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/apachelogs"
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/cloudflarelogs"
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/fastlylogs"
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/fluentdsyslogs"
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/gitlablogs"

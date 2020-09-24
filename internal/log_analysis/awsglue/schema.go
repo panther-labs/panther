@@ -398,6 +398,11 @@ func inferStruct(structType reflect.Type, customMappingsTable map[string]string)
 // Recursively expand a map
 func inferMap(t reflect.Type, customMappingsTable map[string]string) (glueType string, structFieldNames []string) {
 	mapOfType := t.Elem()
+	if mapGlueType, found := customMappingsTable[mapOfType.String()]; found {
+		glueType = fmt.Sprintf("map<%s,%s>", t.Key(), mapGlueType)
+		return
+	}
+
 	if mapOfType.Kind() == reflect.Struct {
 		structGlueType, nestedStructFieldNames := inferStruct(mapOfType, customMappingsTable)
 		structFieldNames = append(structFieldNames, nestedStructFieldNames...)
