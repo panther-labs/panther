@@ -19,6 +19,7 @@ package cloudflarelogs
  */
 
 import (
+	"io"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
@@ -44,7 +45,11 @@ func (c *timeDecoder) DecodeTime(iter *jsoniter.Iterator) time.Time {
 		// Cloudflare unix timestamps are integers of either seconds or nanoseconds
 		n := iter.ReadInt64()
 		if err := iter.Error; err != nil {
-			return time.Time{}
+			// This is a weird behavior of jsoniter only trigered when the parsed JSON is just a number
+			if err != io.EOF {
+				return time.Time{}
+			}
+			iter.Error = nil
 		}
 		// Detect if it's nanoseconds or seconds
 		// 60000000000 seconds since UNIX epoch is `3871-04-29 10:40:00 +0000 UTC`
