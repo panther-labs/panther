@@ -273,15 +273,11 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 	}
 }
 
-func createTables(integration *models.SourceIntegration) (err error) {
-	switch integration.IntegrationType {
-	case models.IntegrationTypeAWS3:
-		err = addGlueTables(integration.LogTypes)
-	case models.IntegrationTypeSqs:
-		err = addGlueTables(integration.SqsConfig.LogTypes)
-	}
-	if err != nil {
-		return errors.Wrap(err, "failed to create Glue tables")
+func createTables(integration *models.SourceIntegration) error {
+	if integration.IsLogAnalysisIntegration() {
+		if err := addGlueTables(integration.RequiredLogTypes()); err != nil {
+			return errors.Wrap(err, "failed to create Glue tables")
+		}
 	}
 	return nil
 }

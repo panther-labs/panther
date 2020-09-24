@@ -248,8 +248,8 @@ func updateRegisteredTables() (tables []*awsglue.GlueTableMetadata) {
 	// get unique set of logTypes
 	logTypeSet := make(map[string]struct{})
 	for _, integration := range listOutput {
-		if integration.IntegrationType == models.IntegrationTypeAWS3 {
-			for _, logType := range integration.LogTypes {
+		if integration.IsLogAnalysisIntegration() {
+			for _, logType := range integration.RequiredLogTypes() {
 				logTypeSet[logType] = struct{}{}
 			}
 		}
