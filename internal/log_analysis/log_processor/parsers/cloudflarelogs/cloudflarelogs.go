@@ -19,9 +19,10 @@ package cloudflarelogs
  */
 
 import (
+	"time"
+
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
-	"time"
 )
 
 func init() {
