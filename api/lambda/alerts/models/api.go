@@ -91,7 +91,7 @@ type ListAlertsInput struct {
 	AlertIDContains *string    `json:"alertIdContains"`
 	EventCountMin   *int       `json:"eventCountMin" validate:"omitempty,min=0"`
 	EventCountMax   *int       `json:"eventCountMax" validate:"omitempty,min=1"`
-
+	LogTypes        []string   `json:"logTypes" validate:"omitempty"`
 	// Sorting
 	SortDir *string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
 }

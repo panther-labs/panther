@@ -102,6 +102,7 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 			alert = filterByTitleContains(input, alert)
 			alert = filterByRuleIDContains(input, alert)
 			alert = filterByAlertIDContains(input, alert)
+			alert = filterByLogType(input, alert)
 
 			if alert != nil {
 				summaries = append(summaries, alert)
@@ -314,6 +315,21 @@ func filterByAlertIDContains(input *models.ListAlertsInput, alert *AlertItem) *A
 		strings.ToLower(*input.AlertIDContains),
 	) {
 
+		return nil
+	}
+	return alert
+}
+
+// filterByLogType - filters by list of log types
+func filterByLogType(input *models.ListAlertsInput, alert *AlertItem) *AlertItem {
+	if alert != nil && len(alert.LogTypes) > 0 && len(input.LogTypes) > 0 {
+		for _, logType := range alert.LogTypes {
+			for _, inputType := range input.LogTypes {
+				if logType == inputType {
+					return alert
+				}
+			}
+		}
 		return nil
 	}
 	return alert
