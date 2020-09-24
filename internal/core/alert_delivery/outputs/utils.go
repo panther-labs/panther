@@ -21,10 +21,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/pkg/errors"
 )
 
 func getAlertResponseFromSQSError(err error) *AlertDeliveryResponse {
-	if awsErr, ok := err.(awserr.Error); ok {
+	var awsErr awserr.Error
+	if errors.As(err, &awsErr) {
 		statusCode := mapSQSSendMessageErrorCodeToStatusCode(awsErr)
 		return getResponse(statusCode, awsErr.Error())
 	}
@@ -32,7 +34,8 @@ func getAlertResponseFromSQSError(err error) *AlertDeliveryResponse {
 }
 
 func getAlertResponseFromSNSError(err error) *AlertDeliveryResponse {
-	if awsErr, ok := err.(awserr.Error); ok {
+	var awsErr awserr.Error
+	if errors.As(err, &awsErr) {
 		statusCode := mapSNSPublishErrorCodeToStatusCode(awsErr)
 		return getResponse(statusCode, awsErr.Error())
 	}

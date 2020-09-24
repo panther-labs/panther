@@ -671,6 +671,9 @@ Resources:
       EnableDnsSupport: true
       EnableDnsHostnames: true
       CidrBlock: !FindInMap [SubnetConfig, VPC, CIDR]
+      Tags:
+        - Key: Name
+          Value: panther-vpc
 
   FlowLogs:
     DependsOn: AuditLogsBucketPolicy
@@ -681,6 +684,9 @@ Resources:
       ResourceId: !Ref VPC
       ResourceType: VPC
       TrafficType: ALL
+      Tags:
+        - Key: Name
+          Value: panther-flowlogs
 
   # We define a public subnet so that we can access our web server from a public IP. The empty
   # string in !GetAZs is equivalent to AWS::Region
@@ -691,6 +697,9 @@ Resources:
       VpcId: !Ref VPC
       CidrBlock: !FindInMap [SubnetConfig, PublicOne, CIDR]
       MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: panther-subnet-one
 
   PublicSubnetTwo:
     Type: AWS::EC2::Subnet
@@ -699,11 +708,18 @@ Resources:
       VpcId: !Ref VPC
       CidrBlock: !FindInMap [SubnetConfig, PublicTwo, CIDR]
       MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: panther-subnet-two
 
   # The lines below setup networking resources for the public subnets. Containers in the public
   # subnets have public IP addresses and the routing table sends network traffic via the IG.
   InternetGateway:
     Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: panther-internet-gateway
 
   # Attach the public Internet Gateway to our VPC
   GatewayAttachment:
@@ -717,6 +733,9 @@ Resources:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: panther-public-route-table
 
   # Because we have a public VPC, we need to map 0.0.0.0/0 through an Internet Gateway in order
   # to be out there in the network
@@ -761,6 +780,9 @@ Resources:
           FromPort: 443
           ToPort: 443
           IpProtocol: tcp
+      Tags:
+        - Key: Name
+          Value: panther-web-lb-sg
 
   PublicLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -823,6 +845,9 @@ Resources:
           ToPort: 80
           SourceSecurityGroupId: !Ref PublicLoadBalancerSecurityGroup
       VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: panther-web-container-sg
 
   EcsSecurityGroupIngressFromPublicALB:
     Type: AWS::EC2::SecurityGroupIngress

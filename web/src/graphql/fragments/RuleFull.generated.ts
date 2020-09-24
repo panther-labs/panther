@@ -19,23 +19,19 @@
 import * as Types from '../../../__generated__/schema';
 
 import { RuleBasic } from './RuleBasic.generated';
-import { RuleDates } from './RuleDates.generated';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 
-export type RuleFull = Pick<Types.RuleDetails, 'body' | 'threshold'> & {
+export type RuleFull = Pick<Types.RuleDetails, 'body'> & {
   tests?: Types.Maybe<
     Array<Types.Maybe<Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource'>>>
   >;
-} & RuleBasic &
-  RuleDates;
+} & RuleBasic;
 
 export const RuleFull = gql`
   fragment RuleFull on RuleDetails {
     ...RuleBasic
-    ...RuleDates
     body
-    threshold
     tests {
       expectedResult
       name
@@ -43,5 +39,4 @@ export const RuleFull = gql`
     }
   }
   ${RuleBasic}
-  ${RuleDates}
 `;

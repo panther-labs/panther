@@ -33,6 +33,7 @@ interface WizardPanelHeadingProps {
 interface WizardPanelComposition {
   Actions: React.FC;
   ActionNext: React.FC<WizardPanelAction>;
+  ActionStart: React.FC<WizardPanelAction>;
   ActionPrev: React.FC<WizardPanelAction>;
   Heading: React.FC<WizardPanelHeadingProps>;
 }
@@ -82,6 +83,15 @@ const WizardPanelActionPrev: React.FC<WizardPanelAction> = ({ disabled }) => {
   );
 };
 
+const WizardPanelActionStart: React.FC<WizardPanelAction> = ({ disabled, children }) => {
+  const { reset } = useWizardContext();
+  return (
+    <Button onClick={reset} disabled={disabled}>
+      {children || 'Start Over'}
+    </Button>
+  );
+};
+
 const WizardPanelActionNext: React.FC<WizardPanelAction> = ({ disabled, children }) => {
   const { goToNextStep } = useWizardContext();
   return (
@@ -94,6 +104,7 @@ const WizardPanelActionNext: React.FC<WizardPanelAction> = ({ disabled, children
 WizardPanel.Actions = React.memo(WizardPanelActions);
 WizardPanel.ActionPrev = React.memo(WizardPanelActionPrev);
 WizardPanel.ActionNext = React.memo(WizardPanelActionNext);
+WizardPanel.ActionStart = React.memo(WizardPanelActionStart);
 WizardPanel.Heading = React.memo(WizardPanelHeading);
 
 export default WizardPanel;

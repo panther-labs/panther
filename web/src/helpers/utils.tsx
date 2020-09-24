@@ -398,3 +398,29 @@ export const downloadData = (data: string, filename: string) => {
 
   window.URL.revokeObjectURL(url);
 };
+
+/**
+ * Converts a word to its plural form
+ *
+ * @returns {String} pluralized word
+ *
+ * @example
+ * toPlural('example'); // => 'examples'
+ * toPlural('example', 10); // => 'examples'
+ * toPlural('example', 1); // => 'example'
+ * toPlural('example', 'examplez', 10); // => 'examplez'
+ * toPlural('example', 'examplez', 1); // => 'example'
+ */
+function toPlural(word: string): string;
+function toPlural(word: string, count: number): string;
+function toPlural(word: string, pluralForm: string, count: number): string;
+function toPlural(word: string, pluralFormOrCount?: number | string, count?: number) {
+  const plrl = typeof pluralFormOrCount === 'string' ? pluralFormOrCount : undefined;
+  const cnt = typeof pluralFormOrCount === 'number' ? pluralFormOrCount : count;
+
+  const pluralForm = plrl || `${word}s`;
+
+  return cnt === 1 ? word : pluralForm;
+}
+
+export default toPlural;

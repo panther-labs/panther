@@ -26,7 +26,8 @@ import (
 
 // LogAWSError logs an AWS error to zap in a digestable format.
 func LogAWSError(apiCall string, err error) {
-	if awsErr, ok := err.(awserr.Error); ok {
+	var awsErr awserr.Error
+	if errors.As(err, &awsErr) {
 		zap.L().Error(
 			apiCall,
 			zap.String("errorCode", awsErr.Code()),

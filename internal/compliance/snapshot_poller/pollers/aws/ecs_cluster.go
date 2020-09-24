@@ -223,18 +223,30 @@ func getClusterServices(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmodel
 
 	// Describe services
 	//
-	// Oddly, the DescribeServices API call does not have a version with builtin paging like the list
-	// API call does. If we run into issues here we may need to implement paging ourselves.
-	rawServices, err := ecsSvc.DescribeServices(&ecs.DescribeServicesInput{
-		Cluster: clusterArn,
-		// This only accepts one argument, which is the string TAGS
-		// Indicates that we want to included the task tags
-		Include:  []*string{aws.String("TAGS")},
-		Services: serviceArns,
-	})
-
-	if err != nil {
-		return nil, errors.Wrapf(err, "ECS.DescribeServices: %s", aws.StringValue(clusterArn))
+	// The DescribeServices API call does not have a version with builtin paging like the list
+	// API call does. API set a limit of 10 services to describe in a single operation.
+	// Loop through results 10 elements at a time and aggregate the results
+	const ecsServiceBatchSize = 10
+	// initialize the rawServices variable
+	var rawServices ecs.DescribeServicesOutput
+	// loop through the items in serviceArns, 10 at a time
+	for i := 0; i < len(serviceArns); i += ecsServiceBatchSize {
+		end := i + ecsServiceBatchSize
+		if end > len(serviceArns) {
+			end = len(serviceArns)
+		}
+		rawServicesPage, err := ecsSvc.DescribeServices(&ecs.DescribeServicesInput{
+			Cluster:  clusterArn,
+			Include:  []*string{aws.String("TAGS")},
+			Services: serviceArns[i:end],
+		})
+		if err != nil {
+			return nil, errors.Wrapf(err, "ECS.DescribeServices: %s", aws.StringValue(clusterArn))
+		}
+		// Append each round of rawServicesPage.Services results to overall rawServices var.
+		// rawServices.Failures will only contain details of services deleted between
+		// ListServicesPages and DescribeServices, we can safely discard those results.
+		rawServices.Services = append(rawServices.Services, rawServicesPage.Services...)
 	}
 
 	services := make([]*awsmodels.EcsService, 0, len(rawServices.Services))

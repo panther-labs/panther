@@ -25,7 +25,7 @@ from unittest import TestCase, mock
 import boto3
 
 from . import mock_to_return, DDB_MOCK, S3_MOCK, SNS_MOCK
-from ..src import EventMatch
+from ..src import EngineResult
 
 with mock.patch.dict(os.environ, {'ALERTS_DEDUP_TABLE': 'table_name', 'S3_BUCKET': 's3_bucket', 'NOTIFICATIONS_TOPIC': 'sns_topic'}), \
      mock.patch.object(boto3, 'client', side_effect=mock_to_return) as mock_boto:
@@ -41,7 +41,7 @@ class TestMatchedEventsBuffer(TestCase):
 
     def test_add_and_flush_event_generate_new_alert(self) -> None:
         buffer = MatchedEventsBuffer()
-        event_match = EventMatch(
+        event_match = EngineResult(
             rule_id='rule_id',
             rule_version='rule_version',
             log_type='log_type',
@@ -157,12 +157,12 @@ class TestMatchedEventsBuffer(TestCase):
     def test_add_same_rule_different_log(self) -> None:
         buffer = MatchedEventsBuffer()
         buffer.add_event(
-            EventMatch(
+            EngineResult(
                 rule_id='id', rule_version='version', log_type='log1', dedup='dedup', dedup_period_mins=100, event={'key1': 'value1'}
             )
         )
         buffer.add_event(
-            EventMatch(
+            EngineResult(
                 rule_id='id', rule_version='version', log_type='log2', dedup='dedup', dedup_period_mins=100, event={'key2': 'value2'}
             )
         )
@@ -207,7 +207,7 @@ class TestMatchedEventsBuffer(TestCase):
     def test_add_same_log_different_rules(self) -> None:
         buffer = MatchedEventsBuffer()
         buffer.add_event(
-            EventMatch(
+            EngineResult(
                 rule_id='id1',
                 rule_version='version',
                 log_type='log',
@@ -219,7 +219,7 @@ class TestMatchedEventsBuffer(TestCase):
             )
         )
         buffer.add_event(
-            EventMatch(
+            EngineResult(
                 rule_id='id2', rule_version='version', log_type='log', dedup='dedup', dedup_period_mins=100, event={'key2': 'value2'}
             )
         )
@@ -269,12 +269,12 @@ class TestMatchedEventsBuffer(TestCase):
     def test_group_events_together(self) -> None:
         buffer = MatchedEventsBuffer()
         buffer.add_event(
-            EventMatch(
+            EngineResult(
                 rule_id='id', rule_version='version', log_type='log', dedup='dedup', dedup_period_mins=100, event={'key1': 'value1'}
             )
         )
         buffer.add_event(
-            EventMatch(
+            EngineResult(
                 rule_id='id', rule_version='version', log_type='log', dedup='dedup', dedup_period_mins=100, event={'key2': 'value2'}
             )
         )
@@ -315,7 +315,7 @@ class TestMatchedEventsBuffer(TestCase):
         buffer = MatchedEventsBuffer()
         # Reducing max_bytes so that it will cause the overflow condition to trigger earlier
         buffer.max_bytes = 50
-        event_match = EventMatch(
+        event_match = EngineResult(
             rule_id='rule_id',
             rule_version='rule_version',
             log_type='log_type',

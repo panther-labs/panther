@@ -89,13 +89,12 @@ func getVPC(svc ec2iface.EC2API, vpcID *string) (*ec2.Vpc, error) {
 		VpcIds: []*string{vpcID},
 	})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "InvalidVpcID.NotFound" {
-				zap.L().Warn("tried to scan non-existent resource",
-					zap.String("resource", *vpcID),
-					zap.String("resourceType", awsmodels.Ec2VpcSchema))
-				return nil, nil
-			}
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == "InvalidVpcID.NotFound" {
+			zap.L().Warn("tried to scan non-existent resource",
+				zap.String("resource", *vpcID),
+				zap.String("resourceType", awsmodels.Ec2VpcSchema))
+			return nil, nil
 		}
 		return nil, errors.Wrapf(err, "EC2.DescribeVpcs: %s", aws.StringValue(vpcID))
 	}

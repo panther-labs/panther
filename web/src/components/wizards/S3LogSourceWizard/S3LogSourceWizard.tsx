@@ -20,17 +20,16 @@ import React from 'react';
 import { AWS_ACCOUNT_ID_REGEX, S3_BUCKET_NAME_REGEX } from 'Source/constants';
 import { Form, Formik } from 'formik';
 import * as Yup from 'yup';
-import { Wizard, WizardPanel } from 'Components/Wizard';
+import { Wizard } from 'Components/Wizard';
 import { FetchResult } from '@apollo/client';
 import { getArnRegexForService, yupIntegrationLabelValidation } from 'Helpers/utils';
 import StackDeploymentPanel from './StackDeploymentPanel';
-import SuccessPanel from './SuccessPanel';
 import S3SourceConfigurationPanel from './S3SourceConfigurationPanel';
+import ValidationPanel from './ValidationPanel';
 
 interface S3LogSourceWizardProps {
   initialValues: S3LogSourceWizardValues;
   onSubmit: (values: S3LogSourceWizardValues) => Promise<FetchResult<any>>;
-  externalErrorMessage?: string;
 }
 
 export interface S3LogSourceWizardValues {
@@ -57,65 +56,27 @@ const validationSchema = Yup.object().shape<S3LogSourceWizardValues>({
   kmsKey: Yup.string().matches(getArnRegexForService('KMS'), 'Must be a valid KMS ARN'),
 });
 
-const initialStatus = { cfnTemplateDownloaded: false };
-
-const S3LogSourceWizard: React.FC<S3LogSourceWizardProps> = ({
-  initialValues,
-  onSubmit,
-  externalErrorMessage,
-}) => {
+const S3LogSourceWizard: React.FC<S3LogSourceWizardProps> = ({ initialValues, onSubmit }) => {
   return (
     <Formik<S3LogSourceWizardValues>
       enableReinitialize
       initialValues={initialValues}
-      initialStatus={initialStatus}
       validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
-      {({ isValid, dirty, status, setStatus }) => {
-        // We want to reset the error message whenever the user goes back to a previous screen.
-        // That's why we handle it through status in order to manipulate it internally
-        React.useEffect(() => {
-          setStatus({ ...status, errorMessage: externalErrorMessage });
-        }, [externalErrorMessage]);
-
-        return (
-          <Form>
-            <Wizard>
-              <Wizard.Step title="Configure Logs Source">
-                <WizardPanel>
-                  <S3SourceConfigurationPanel />
-
-                  <WizardPanel.Actions>
-                    <WizardPanel.ActionNext disabled={!dirty || !isValid}>
-                      Continue Setup
-                    </WizardPanel.ActionNext>
-                  </WizardPanel.Actions>
-                </WizardPanel>
-              </Wizard.Step>
-              <Wizard.Step title="Deploy Stack">
-                <WizardPanel>
-                  <StackDeploymentPanel />
-
-                  <WizardPanel.Actions>
-                    <WizardPanel.ActionPrev />
-                    <WizardPanel.ActionNext>Continue Setup</WizardPanel.ActionNext>
-                  </WizardPanel.Actions>
-                </WizardPanel>
-              </Wizard.Step>
-              <Wizard.Step title="Done!">
-                <WizardPanel>
-                  <SuccessPanel />
-
-                  <WizardPanel.Actions>
-                    <WizardPanel.ActionPrev />
-                  </WizardPanel.Actions>
-                </WizardPanel>
-              </Wizard.Step>
-            </Wizard>
-          </Form>
-        );
-      }}
+      <Form>
+        <Wizard>
+          <Wizard.Step title="Configure Source">
+            <S3SourceConfigurationPanel />
+          </Wizard.Step>
+          <Wizard.Step title="Setup IAM Roles">
+            <StackDeploymentPanel />
+          </Wizard.Step>
+          <Wizard.Step title="Verify Setup">
+            <ValidationPanel />
+          </Wizard.Step>
+        </Wizard>
+      </Form>
     </Formik>
   );
 };

@@ -172,6 +172,7 @@ func TestRDSInstancePoller(t *testing.T) {
 }
 
 func TestRDSInstancePollerError(t *testing.T) {
+	resetCache()
 	awstest.MockRdsForSetup = awstest.BuildMockRdsSvcAllError()
 
 	RDSClientFunc = awstest.SetupMockRds

@@ -20,6 +20,7 @@ import React from 'react';
 import { Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
+import SensitiveTextInput from 'Components/fields/SensitiveTextInput';
 import { DestinationConfigInput } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
@@ -39,7 +40,6 @@ const PagerDutyDestinationForm: React.FC<PagerDutyDestinationFormProps> = ({
   initialValues,
 }) => {
   const existing = initialValues.outputId;
-
   const pagerDutyKey = Yup.string().length(32, 'Must be exactly 32 characters');
   const pagerDutyFieldsValidationSchema = Yup.object().shape({
     outputConfig: Yup.object().shape({
@@ -66,15 +66,11 @@ const PagerDutyDestinationForm: React.FC<PagerDutyDestinationFormProps> = ({
           required
         />
         <Field
-          as={FormikTextInput}
-          type="password"
+          as={SensitiveTextInput}
+          shouldMask={!!existing}
           name="outputConfig.pagerDuty.integrationKey"
           label="Integration Key"
-          placeholder={
-            existing
-              ? 'Information is hidden. New values will override the existing ones.'
-              : "What's your PagerDuty Integration Key?"
-          }
+          placeholder="What's your PagerDuty Integration Key?"
           required={!existing}
           autoComplete="new-password"
         />

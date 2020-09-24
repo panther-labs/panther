@@ -21,6 +21,7 @@ package outputs
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sns/snsiface"
 	jsoniter "github.com/json-iterator/go"
@@ -36,6 +37,9 @@ type snsMessage struct {
 	// EmailMessage contains the message that will be delivered to email subscribers
 	EmailMessage string `json:"email"`
 }
+
+// Tests can replace this with a mock implementation
+var getSnsClient = buildSnsClient
 
 // Sns sends an alert to an SNS Topic.
 // nolint: dupl
@@ -78,7 +82,7 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 		MessageStructure: aws.String("json"),
 	}
 
-	snsClient, err := client.getSnsClient(config.TopicArn)
+	snsClient, err := getSnsClient(client.session, config.TopicArn)
 	if err != nil {
 		errorMsg := "Failed to create SNS client for topic"
 		zap.L().Error(errorMsg, zap.Error(errors.WithStack(err)))
@@ -122,16 +126,11 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 	}
 }
 
-func (client *OutputClient) getSnsClient(topicArn string) (snsiface.SNSAPI, error) {
+func buildSnsClient(awsSession *session.Session, topicArn string) (snsiface.SNSAPI, error) {
 	parsedArn, err := arn.Parse(topicArn)
 	if err != nil {
 		zap.L().Error("failed to parse topic ARN", zap.Error(err))
 		return nil, err
 	}
-	snsClient, ok := client.snsClients[parsedArn.Region]
-	if !ok {
-		snsClient = sns.New(client.session, aws.NewConfig().WithRegion(parsedArn.Region))
-		client.snsClients[parsedArn.Region] = snsClient
-	}
-	return snsClient, nil
+	return sns.New(awsSession, aws.NewConfig().WithRegion(parsedArn.Region)), nil
 }
