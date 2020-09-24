@@ -58,8 +58,8 @@ func buildGeneralSettingsExpression(settings *models.GeneralSettings) (expressio
 		update = update.Set(expression.Name("errorReportingConsent"), expression.Value(*settings.ErrorReportingConsent))
 	}
 	if settings.AnalyticsConsent != nil {
-        update = update.Set(expression.Name("analyticsConsent"), expression.Value(*settings.AnalyticsConsent))
-    }
+		update = update.Set(expression.Name("analyticsConsent"), expression.Value(*settings.AnalyticsConsent))
+	}
 
 	expr, err := expression.NewBuilder().WithUpdate(update).Build()
 	if err != nil {
