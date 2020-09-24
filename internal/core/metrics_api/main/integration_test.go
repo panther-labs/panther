@@ -284,23 +284,18 @@ func getRuleIDMetrics(t *testing.T) {
 	metricResult := output.AlertsByRuleID
 	require.NoError(t, err)
 	// There should be a single metric per dimension, and three dimensions
-	assert.Len(t, metricResult.SeriesData.Series, 3)
-	assert.Len(t, metricResult.SeriesData.Timestamps, 1)
-	for _, seriesData := range metricResult.SeriesData.Series {
+	assert.Len(t, metricResult.SingleValue, 3)
+	for _, singleValueData := range metricResult.SingleValue {
 		// There should be a single series event per dimension (ToDate-FromDate/IntervalMinutes)
-		require.Equal(t, len(seriesData.Values), len(metricResult.SeriesData.Timestamps))
-		require.NotNil(t, seriesData.Label)
-		require.Subset(t, ruleIDs, []string{*seriesData.Label})
+		require.NotNil(t, *singleValueData.Label)
+		require.Subset(t, ruleIDs, []string{*singleValueData.Label})
 		// Verify each dimension got the correct value set
-		if *seriesData.Label == *ruleDimensions[0].Value {
-			require.Len(t, seriesData.Values, 1)
-			assert.Equal(t, numAlertsCreated, *seriesData.Values[0])
-		} else if *seriesData.Label == *ruleDimensions[1].Value {
-			require.Len(t, seriesData.Values, 1)
-			assert.Equal(t, numAlertsCreated*10.0, *seriesData.Values[0])
+		if *singleValueData.Label == *ruleDimensions[0].Value {
+			assert.Equal(t, numAlertsCreated, *singleValueData.Value)
+		} else if *singleValueData.Label == *ruleDimensions[1].Value {
+			assert.Equal(t, numAlertsCreated*10.0, *singleValueData.Value)
 		} else {
-			require.Len(t, seriesData.Values, 1)
-			assert.Equal(t, numAlertsCreated*100.0, *seriesData.Values[0])
+			assert.Equal(t, numAlertsCreated*100.0, *singleValueData.Value)
 		}
 	}
 	/** test limit returns only top N events (N=2 in this case)
