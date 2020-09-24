@@ -61,6 +61,7 @@ type SyncTableEvent struct {
 	Table     *glue.TableData
 	NextToken string
 	DryRun    bool
+	NumCalls  int
 }
 
 type Continuation struct {
@@ -150,19 +151,39 @@ func invokeSyncTable(ctx context.Context, event *SyncTableEvent) error {
 	return nil
 }
 
+const maxNumCalls = 1000
+
 func SyncTable(ctx context.Context, event *SyncTableEvent) (err error) {
 	nextToken := event.NextToken
 	// defer invoking continuation
 	defer func() {
-		if err == context.DeadlineExceeded && nextToken != "" {
+		if errors.Is(err, context.DeadlineExceeded) && nextToken != "" {
+			numCalls := event.NumCalls + 1
+			// protect against infinite recursion
+			if numCalls > maxNumCalls {
+				zap.L().Error("max calls exceeded",
+					zap.String("table", aws.StringValue(event.Table.Name)),
+					zap.String("database", aws.StringValue(event.Table.DatabaseName)),
+					zap.String("token", nextToken), zap.Error(err),
+				)
+				return
+			}
+
+			zap.L().Debug("continuing sync", zap.String("token", nextToken))
 			// We use context.Background to limit the probability of missing the request
-			err = invokeSyncTable(context.Background(), event)
+			err = invokeSyncTable(context.Background(), &SyncTableEvent{
+				NextToken: nextToken,
+				NumCalls:  numCalls,
+				Table:     event.Table,
+				DryRun:    event.DryRun,
+			})
 		}
 	}()
+
+	// Reserve some time for continuing the task in a new lambda invocation
+	// If the timeout too short we resort to using context.Background to send the request outside of the
+	// lambda handler time slot.
 	if deadline, ok := ctx.Deadline(); ok {
-		// Reserve some time for continuing the task in a new lambda invocation
-		// If the timeout too short we resort to using context.Background to send the request outside of the
-		// lambda handler time slot.
 		const gracefulExitTimeout = time.Second
 		timeout := time.Until(deadline)
 		if timeout > gracefulExitTimeout {
@@ -178,6 +199,7 @@ func SyncTable(ctx context.Context, event *SyncTableEvent) (err error) {
 	}
 
 	result, err := task.SyncTable(ctx, event.Table, event.NextToken)
+	zap.L().Debug("sync table complete", zap.Any("result", result), zap.Error(err))
 	if result != nil {
 		nextToken = result.NextToken
 	}
