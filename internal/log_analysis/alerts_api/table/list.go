@@ -102,7 +102,6 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 			alert = filterByTitleContains(input, alert)
 			alert = filterByRuleIDContains(input, alert)
 			alert = filterByAlertIDContains(input, alert)
-			alert = filterByLogType(input, alert)
 
 			if alert != nil {
 				summaries = append(summaries, alert)
@@ -229,6 +228,7 @@ func (table *AlertsTable) applyFilters(builder *expression.Builder, input *model
 	filterBySeverity(&filter, input)
 	filterByStatus(&filter, input)
 	filterByEventCount(&filter, input)
+	filterByLogType(&filter, input)
 
 	// Finally, overwrite the existing condition filter on the builder
 	*builder = builder.WithFilter(filter)
@@ -284,6 +284,21 @@ func filterByStatus(filter *expression.ConditionBuilder, input *models.ListAlert
 	}
 }
 
+// filterByLogType - filters by list of log types
+func filterByLogType(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
+	if len(input.LogTypes) > 0 {
+		// Start with the first known key
+		multiFilter := expression.Name(LogTypesKey).Contains(input.LogTypes[0])
+
+		// Then add or conditions starting at a new slice from the second index
+		for _, logType := range input.LogTypes[1:] {
+			multiFilter = multiFilter.Or(expression.Name(LogTypesKey).Contains(logType))
+		}
+
+		*filter = filter.And(multiFilter)
+	}
+}
+
 // filterByTitleContains - filters by a name that contains a string (case insensitive)
 func filterByTitleContains(input *models.ListAlertsInput, alert *AlertItem) *AlertItem {
 	if alert != nil && input.NameContains != nil && alert.Title != nil && !strings.Contains(
@@ -315,21 +330,6 @@ func filterByAlertIDContains(input *models.ListAlertsInput, alert *AlertItem) *A
 		strings.ToLower(*input.AlertIDContains),
 	) {
 
-		return nil
-	}
-	return alert
-}
-
-// filterByLogType - filters by list of log types
-func filterByLogType(input *models.ListAlertsInput, alert *AlertItem) *AlertItem {
-	if alert != nil && len(alert.LogTypes) > 0 && len(input.LogTypes) > 0 {
-		for _, logType := range alert.LogTypes {
-			for _, inputType := range input.LogTypes {
-				if logType == inputType {
-					return alert
-				}
-			}
-		}
 		return nil
 	}
 	return alert
