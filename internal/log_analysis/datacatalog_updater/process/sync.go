@@ -20,15 +20,15 @@ package process
 
 import (
 	"context"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/glue"
-	"go.uber.org/multierr"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
