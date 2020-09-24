@@ -270,7 +270,7 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 	}
 }
 
-func createTables(integration *models.SourceIntegration)  error {
+func createTables(integration *models.SourceIntegration) error {
 	if integration.IsLogAnalysisIntegration() {
 		if err := addGlueTables(integration.RequiredLogTypes()); err != nil {
 			return errors.Wrap(err, "failed to create Glue tables")
