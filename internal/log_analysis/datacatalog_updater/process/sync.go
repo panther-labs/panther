@@ -103,7 +103,7 @@ func SyncDatabase(ctx context.Context, event *SyncDatabaseEvent) (map[string]*Sy
 	return result, nil
 }
 
-func InvokeSyncDatabase(ctx context.Context, event *SyncDatabaseEvent) error {
+func InvokeSyncDatabase(ctx context.Context, lambdaClient lambdaiface.LambdaAPI, event *SyncDatabaseEvent) error {
 	payload, err := jsoniter.Marshal(struct {
 		SyncDatabase *SyncDatabaseEvent
 	}{
