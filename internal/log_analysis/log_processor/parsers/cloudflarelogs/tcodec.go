@@ -56,6 +56,7 @@ func (c *timeDecoder) DecodeTime(iter *jsoniter.Iterator) time.Time {
 		// timestamp is expressed in nanoseconds
 		return time.Unix(0, n).UTC()
 	default:
+		iter.Skip()
 		iter.ReportError(opName, "invalid JSON value")
 		return time.Time{}
 	}
