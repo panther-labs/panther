@@ -20,13 +20,14 @@ package awsglue
 
 import (
 	"fmt"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"reflect"
 	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
 type TestCustomSimpleType int
