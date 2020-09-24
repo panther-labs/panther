@@ -49,6 +49,7 @@ type SyncEvent struct {
 
 type SyncDatabaseEvent struct {
 	Databases []string
+	DryRun    bool
 }
 
 type SyncDatabaseOutput struct {
@@ -59,6 +60,7 @@ type SyncDatabaseOutput struct {
 type SyncTableEvent struct {
 	Table     *glue.TableData
 	NextToken string
+	DryRun    bool
 }
 
 type Continuation struct {
@@ -69,7 +71,7 @@ type Continuation struct {
 
 func SyncDatabase(ctx context.Context, event *SyncDatabaseEvent) (result map[string]*SyncDatabaseOutput, err error) {
 	sync := awsglue.SyncTask{
-		DryRun:      false,
+		DryRun:      event.DryRun,
 		NumRequests: 8,
 		Logger:      zap.L(),
 		GlueClient:  glueClient.(*glue.Glue),
@@ -84,7 +86,11 @@ func SyncDatabase(ctx context.Context, event *SyncDatabaseEvent) (result map[str
 			NumTables: len(tables),
 		}
 		for _, table := range tables {
-			invokeErr := invokeSyncTable(ctx, table, "")
+			invokeErr := invokeSyncTable(ctx, &SyncTableEvent{
+				Table:     table,
+				NextToken: "",
+				DryRun:    event.DryRun,
+			})
 			if invokeErr != nil {
 				err = multierr.Append(err, invokeErr)
 				continue
@@ -121,14 +127,11 @@ func InvokeSyncDatabase(ctx context.Context, databases ...string) error {
 	return nil
 }
 
-func invokeSyncTable(ctx context.Context, table *glue.TableData, nextToken string) error {
+func invokeSyncTable(ctx context.Context, event *SyncTableEvent) error {
 	payload, err := jsoniter.Marshal(struct {
 		SyncTable *SyncTableEvent
 	}{
-		SyncTable: &SyncTableEvent{
-			Table:     table,
-			NextToken: nextToken,
-		},
+		SyncTable: event,
 	})
 	if err != nil {
 		return err
@@ -153,7 +156,7 @@ func SyncTable(ctx context.Context, event *SyncTableEvent) (err error) {
 	defer func() {
 		if err == context.DeadlineExceeded && nextToken != "" {
 			// We use context.Background to limit the probability of missing the request
-			err = invokeSyncTable(context.Background(), event.Table, nextToken)
+			err = invokeSyncTable(context.Background(), event)
 		}
 	}()
 	if deadline, ok := ctx.Deadline(); ok {
@@ -169,6 +172,7 @@ func SyncTable(ctx context.Context, event *SyncTableEvent) (err error) {
 	}
 
 	task := awsglue.SyncTask{
+		DryRun:     event.DryRun,
 		Logger:     zap.L(),
 		GlueClient: glueClient,
 	}

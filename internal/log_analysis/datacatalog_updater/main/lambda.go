@@ -42,12 +42,19 @@ type DataCatalogEvent struct {
 }
 
 func handle(ctx context.Context, event DataCatalogEvent) (err error) {
-	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
+	lc, log := lambdalogger.ConfigureGlobal(ctx, nil)
 	operation := common.OpLogManager.Start(lc.InvokedFunctionArn, common.OpLogLambdaServiceDim).WithMemUsed(lambdacontext.MemoryLimitInMB)
 	defer func() {
 		operation.Stop().Log(err,
 			zap.Int("sqsMessageCount", len(event.Records)))
 	}()
+
+	if event.SyncDatabase != nil {
+		var result map[string]*process.SyncDatabaseOutput
+		result, err = process.SyncDatabase(ctx, event.SyncDatabase)
+		log.Info("database sync submitted", zap.Any("tasks", result))
+		return
+	}
 
 	if event.SyncTable != nil {
 		err = process.SyncTable(ctx, event.SyncTable)
