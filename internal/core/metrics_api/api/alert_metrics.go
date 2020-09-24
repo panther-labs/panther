@@ -158,7 +158,7 @@ func getTotalAlertsDelta(input *models.GetMetricsInput, output *models.GetMetric
 
 // getAlertsByRuleID returns the total count of alerts in the given time period
 //
-// This is a time series metric.
+// This is a single value metric.
 func getAlertsByRuleID(input *models.GetMetricsInput, output *models.GetMetricsOutput) error {
 	// Determine applicable metric dimensions
 	var listMetricsResponse []*cloudwatch.Metric
@@ -179,6 +179,11 @@ func getAlertsByRuleID(input *models.GetMetricsInput, output *models.GetMetricsO
 		return metricsInternalError
 	}
 	zap.L().Debug("found applicable metrics", zap.Any("metrics", listMetricsResponse))
+
+	// intervalMinutes does not apply for this metric, overwrite whatever was
+	// passed with the interval covering the entire timeframe.
+	timeFrame := input.FromDate.Sub(input.ToDate)
+	input.IntervalMinutes = int64(math.Abs(timeFrame.Minutes()))
 
 	// Build the query based on the applicable metric dimensions
 	var queries []*cloudwatch.MetricDataQuery
@@ -201,20 +206,23 @@ func getAlertsByRuleID(input *models.GetMetricsInput, output *models.GetMetricsO
 		return err
 	}
 
-	values, timestamps := normalizeTimeStamps(input, metricData)
-	// prevent index out of bounds errors
-	if input.Limit > len(values) {
-		input.Limit = len(values)
-	}
+	values, _ := normalizeTimeStamps(input, metricData)
+
 	// Sort the results in order of total number of alerts over the given time period
 	sort.Slice(values[:], func(i, j int) bool {
 		return totalValue(values[i].Values) > totalValue(values[j].Values)
 	})
+
+	// build out the single metric output
+	singleMetrics := make([]models.SingleMetric, len(values))
+	for i := 0; i < len(values); i++ {
+		singleMetrics[i] = models.SingleMetric{
+			Label: aws.String(*values[i].Label),
+			Value: values[i].Values[0],
+		}
+	}
 	output.AlertsByRuleID = &models.MetricResult{
-		SeriesData: models.TimeSeriesMetric{
-			Timestamps: timestamps,
-			Series:     values[0:input.Limit],
-		},
+		SingleValue: singleMetrics,
 	}
 	return nil
 }

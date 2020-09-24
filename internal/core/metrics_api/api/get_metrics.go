@@ -70,11 +70,6 @@ func (API) GetMetrics(input *models.GetMetricsInput) (*models.GetMetricsOutput, 
 		input.Namespace = metrics.Namespace
 	}
 
-	// If a limit is not specified, default to 10
-	if input.Limit == 0 {
-		input.Limit = 10
-	}
-
 	for _, metricName := range input.MetricNames {
 		resolver, ok := metricResolvers[metricName]
 		if !ok {

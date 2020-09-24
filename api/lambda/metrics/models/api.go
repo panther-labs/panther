@@ -36,7 +36,6 @@ type GetMetricsInput struct {
 	FromDate        time.Time `json:"fromDate" validate:"required"`
 	ToDate          time.Time `json:"toDate" validate:"required,gtfield=FromDate"`
 	IntervalMinutes int64     `json:"intervalMinutes" validate:"required,gt=0"`
-	Limit           int       `json:"limit" validate:"omitempty,gt=0"`
 }
 
 // GetMetricsOutput contains data points for a number of metrics over the specified time frame
