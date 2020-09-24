@@ -35,6 +35,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/pkg/box"
 )
 
@@ -134,6 +135,14 @@ func (gm *GlueTableMetadata) RuleTable() *GlueTableMetadata {
 	return NewGlueTableMetadata(models.RuleData, gm.LogType(), gm.Description(), GlueTableHourly, gm.EventStruct())
 }
 
+func (gm *GlueTableMetadata) RuleErrorTable() *GlueTableMetadata {
+	if gm.dataType == models.RuleErrors {
+		return gm
+	}
+	// the corresponding rule table shares the same structure as the log table + some columns
+	return NewGlueTableMetadata(models.RuleErrors, gm.LogType(), gm.Description(), GlueTableHourly, gm.EventStruct())
+}
+
 func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput {
 	// partition keys -> []*glue.Column
 	partitionKeys := gm.PartitionKeys()
@@ -149,6 +158,9 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput 
 	columns, structFieldNames := InferJSONColumns(gm.eventStruct, GlueMappings...)
 	if gm.dataType == models.RuleData { // append the columns added by the rule engine
 		columns = append(columns, RuleMatchColumns...)
+	} else if gm.dataType == models.RuleErrors {
+		// append the rule match & and rule error columns
+		columns = append(columns, RuleErrorColumns...)
 	}
 	glueColumns := make([]*glue.Column, len(columns))
 	for i := range columns {
@@ -230,8 +242,7 @@ func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, b
 	}
 	_, err := glueClient.CreateTable(createTableInput)
 	if err != nil {
-		var awsErr awserr.Error
-		if errors.As(err, &awsErr) && awsErr.Code() == glue.ErrCodeAlreadyExistsException {
+		if awsutils.IsAnyError(err, glue.ErrCodeAlreadyExistsException) {
 			// need to do an update
 			updateTableInput := &glue.UpdateTableInput{
 				DatabaseName: &gm.databaseName,

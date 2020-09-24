@@ -153,6 +153,7 @@ func buildEc2InstanceSnapshot(instance *ec2.Instance) *awsmodels.Ec2Instance {
 		KernelId:                                instance.KernelId,
 		KeyName:                                 instance.KeyName,
 		Licenses:                                instance.Licenses,
+		MetadataOptions:                         instance.MetadataOptions,
 		Monitoring:                              instance.Monitoring,
 		NetworkInterfaces:                       instance.NetworkInterfaces,
 		Placement:                               instance.Placement,

@@ -68,6 +68,7 @@ const MicrosoftTeamsDestinationForm: React.FC<MicrosoftTeamsDestinationFormProps
         />
         <Field
           as={SensitiveTextInput}
+          shouldMask={!!existing}
           name="outputConfig.msTeams.webhookURL"
           label="Microsoft Teams Webhook URL"
           placeholder={
