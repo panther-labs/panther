@@ -70,13 +70,12 @@ func getNetworkACL(svc ec2iface.EC2API, networkACLID *string) (*ec2.NetworkAcl, 
 		NetworkAclIds: []*string{networkACLID},
 	})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "InvalidNetworkAclID.NotFound" {
-				zap.L().Warn("tried to scan non-existent resource",
-					zap.String("resource", *networkACLID),
-					zap.String("resourceType", awsmodels.Ec2NetworkAclSchema))
-				return nil, nil
-			}
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == "InvalidNetworkAclID.NotFound" {
+			zap.L().Warn("tried to scan non-existent resource",
+				zap.String("resource", *networkACLID),
+				zap.String("resourceType", awsmodels.Ec2NetworkAclSchema))
+			return nil, nil
 		}
 		return nil, errors.Wrapf(err, "EC2.DescribeNetworkACLs: %s", aws.StringValue(networkACLID))
 	}

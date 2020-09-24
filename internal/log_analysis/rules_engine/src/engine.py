@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 from timeit import default_timer
 from typing import Any, Dict, List
 
-from . import EventMatch
+from . import EngineResult
 from .analysis_api import AnalysisAPIClient
 from .logging import get_logger
 from .rule import Rule
@@ -37,22 +37,35 @@ class Engine:
         self._analysis_client = analysis_api
         self._populate_rules()
 
-    def analyze(self, log_type: str, event: Dict[str, Any]) -> List[EventMatch]:
+    def analyze(self, log_type: str, event: Dict[str, Any]) -> List[EngineResult]:
         """Analyze an event by running all the rules that apply to the log type.
         """
         if datetime.utcnow() - self._last_update > _RULES_CACHE_DURATION:
             self._populate_rules()
 
-        matched: List[EventMatch] = []
+        engine_results: List[EngineResult] = []
 
         for rule in self.log_type_to_rules[log_type]:
             self.logger.debug('running rule [%s]', rule.rule_id)
             result = rule.run(event)
             if result.exception:
+                # TODO(kostaspap): remove error logging once error reporting notification system is in place
                 self.logger.error('failed to run rule %s %s %s', rule.rule_id, type(result).__name__, repr(result.exception))
-                continue
+                error_type = type(result.exception).__name__
+                rule_error = EngineResult(
+                    rule_id=rule.rule_id,
+                    rule_version=rule.rule_version,
+                    rule_tags=rule.rule_tags,
+                    rule_reports=rule.rule_reports,
+                    log_type=log_type,
+                    dedup=error_type,
+                    dedup_period_mins=1440,  # one day
+                    event=event,
+                    error_message=repr(result.exception)
+                )
+                engine_results.append(rule_error)
             if result.matched:
-                match = EventMatch(
+                match = EngineResult(
                     rule_id=rule.rule_id,
                     rule_version=rule.rule_version,
                     rule_tags=rule.rule_tags,
@@ -63,9 +76,9 @@ class Engine:
                     event=event,
                     title=result.title
                 )
-                matched.append(match)
+                engine_results.append(match)
 
-        return matched
+        return engine_results
 
     def _populate_rules(self) -> None:
         """Import all rules."""

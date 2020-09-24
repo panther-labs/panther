@@ -1,0 +1,8 @@
+mutation RetryAlertDelivery($input: DeliverAlertInput!) {
+    deliverAlert(input: $input) {
+        alertId
+        deliveryResponses {
+            ...DeliveryResponseFull
+        }
+    }
+}

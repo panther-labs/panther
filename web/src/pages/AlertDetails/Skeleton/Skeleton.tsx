@@ -24,7 +24,7 @@ const AlertDetailsPageSkeleton: React.FC = () => {
   return (
     <FadeIn from="bottom">
       <Card p={6}>
-        <TablePlaceholder rowCount={3} />
+        <TablePlaceholder rowCount={2} />
       </Card>
       <Card p={6} mt={5}>
         <TablePlaceholder />

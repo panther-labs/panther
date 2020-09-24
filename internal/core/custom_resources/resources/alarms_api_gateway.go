@@ -73,7 +73,7 @@ func putGatewayAlarmGroup(props APIGatewayAlarmProperties) error {
 		Dimensions: []*cloudwatch.Dimension{
 			{Name: aws.String("ApiName"), Value: &props.APIName},
 		},
-		EvaluationPeriods: aws.Int64(5),
+		EvaluationPeriods: aws.Int64(3),
 		MetricName:        aws.String("IntegrationLatency"),
 		Namespace:         aws.String("AWS/ApiGateway"),
 		Period:            aws.Int64(60),
@@ -85,11 +85,14 @@ func putGatewayAlarmGroup(props APIGatewayAlarmProperties) error {
 		return err
 	}
 
+	// 5XX errors can be triggered by GatewayAPI internal errors or Lambda execution errors.
+	// We don't have a way to differentiate between the two through Gateway API metrics. However, we have already
+	// alarms on AWS Lambda invocation failures that would capture errors caused by Lambda failures.
 	input.AlarmDescription = aws.String(fmt.Sprintf(
-		"API Gateway %s is reporting 5XX internal errors. See: %s#%s",
+		"API Gateway %s is reporting 5XX internal errors from its lambda handler. See: %s#%s",
 		props.APIName, alarmRunbook, props.APIName))
 	input.AlarmName = aws.String(fmt.Sprintf("Panther-%s-%s", gatewayErrorAlarm, props.APIName))
-	input.EvaluationPeriods = aws.Int64(1)
+	input.EvaluationPeriods = aws.Int64(3)
 	input.MetricName = aws.String("5XXError")
 	input.Period = aws.Int64(300)
 	input.Statistic = aws.String(cloudwatch.StatisticSum)

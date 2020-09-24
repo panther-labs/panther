@@ -130,13 +130,12 @@ func getStack(svc cloudformationiface.CloudFormationAPI, stackName string) (*clo
 		StackName: aws.String(stackName),
 	})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Message() == "Stack with id "+stackName+" does not exist" {
-				zap.L().Warn("tried to scan non-existent resource",
-					zap.String("resource", stackName),
-					zap.String("resourceType", awsmodels.CloudFormationStackSchema))
-				return nil, nil
-			}
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Message() == "Stack with id "+stackName+" does not exist" {
+			zap.L().Warn("tried to scan non-existent resource",
+				zap.String("resource", stackName),
+				zap.String("resourceType", awsmodels.CloudFormationStackSchema))
+			return nil, nil
 		}
 		return nil, errors.Wrapf(err, "CloudFormation.DescribeStacks: %s", stackName)
 	}
@@ -175,8 +174,8 @@ func detectStackDrift(cloudformationSvc cloudformationiface.CloudFormationAPI, a
 		return detectionID.StackDriftDetectionId, nil
 	}
 
-	awsErr, ok := err.(awserr.Error)
-	if !ok || awsErr.Code() != "ValidationError" {
+	var awsErr awserr.Error
+	if !errors.As(err, &awsErr) || awsErr.Code() != "ValidationError" {
 		// Run of the mill error, stop scanning this resource
 		return nil, errors.Wrapf(err, "CloudFormation.DetectStackDrift: %s", aws.StringValue(arn))
 	}

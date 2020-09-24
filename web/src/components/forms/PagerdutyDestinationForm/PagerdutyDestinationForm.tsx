@@ -40,7 +40,6 @@ const PagerDutyDestinationForm: React.FC<PagerDutyDestinationFormProps> = ({
   initialValues,
 }) => {
   const existing = initialValues.outputId;
-
   const pagerDutyKey = Yup.string().length(32, 'Must be exactly 32 characters');
   const pagerDutyFieldsValidationSchema = Yup.object().shape({
     outputConfig: Yup.object().shape({
@@ -68,6 +67,7 @@ const PagerDutyDestinationForm: React.FC<PagerDutyDestinationFormProps> = ({
         />
         <Field
           as={SensitiveTextInput}
+          shouldMask={!!existing}
           name="outputConfig.pagerDuty.integrationKey"
           label="Integration Key"
           placeholder="What's your PagerDuty Integration Key?"

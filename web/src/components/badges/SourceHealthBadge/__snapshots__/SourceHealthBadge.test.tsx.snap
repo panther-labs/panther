@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`SourceHealthBadge matches original snapshoot 1`] = `
+exports[`SourceHealthBadge matches original snapshot 1`] = `
 .panther-0 {
   display: -webkit-box;
   display: -webkit-flex;

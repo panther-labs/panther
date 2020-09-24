@@ -227,6 +227,7 @@ func TestIAMUsersListVirtualMFADevicesError(t *testing.T) {
 }
 
 func TestIAMUsersPoller(t *testing.T) {
+	resetCache()
 	awstest.MockIAMForSetup = awstest.BuildMockIAMSvcAll()
 
 	IAMClientFunc = awstest.SetupMockIAM
@@ -327,6 +328,7 @@ func TestIAMUsersPoller(t *testing.T) {
 }
 
 func TestIAMUsersPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockIAMForSetup = awstest.BuildMockIAMSvcAllError()
 
 	IAMClientFunc = awstest.SetupMockIAM

@@ -35,7 +35,6 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 )
 
@@ -129,13 +128,12 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 			zap.String("key", s3Object.S3ObjectKey))
 	}()
 
-	s3Client, sourceInfo, err := getS3Client(s3Object)
+	s3Client, sourceInfo, err := getS3Client(s3Object.S3Bucket, s3Object.S3ObjectKey)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to get S3 client for s3://%s/%s",
 			s3Object.S3Bucket, s3Object.S3ObjectKey)
 		return
 	}
-	sourceType := sourceInfo.IntegrationType
 
 	getObjectInput := &s3.GetObjectInput{
 		Bucket: &s3Object.S3Bucket,
@@ -177,22 +175,12 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 		return
 	}
 
-	if sourceType == models.IntegrationTypeSqs {
-		streamReader = NewMessageForwarderReader(streamReader)
-	}
-
 	dataStream = &common.DataStream{
 		Reader:      streamReader,
-		SourceID:    sourceInfo.IntegrationID,
-		SourceLabel: sourceInfo.IntegrationLabel,
-		LogTypes:    sourceInfo.RequiredLogTypes(),
-		Hints: common.DataStreamHints{
-			S3: &common.S3DataStreamHints{
-				Bucket:      s3Object.S3Bucket,
-				Key:         s3Object.S3ObjectKey,
-				ContentType: contentType,
-			},
-		},
+		Source:      sourceInfo,
+		S3Bucket:    s3Object.S3Bucket,
+		S3ObjectKey: s3Object.S3ObjectKey,
+		ContentType: contentType,
 	}
 	return dataStream, err
 }

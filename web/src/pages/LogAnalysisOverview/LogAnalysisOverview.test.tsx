@@ -27,18 +27,19 @@ import {
   waitForElementToBeRemoved,
   buildSingleValue,
   buildListAlertsResponse,
+  fireEvent,
 } from 'test-utils';
 import { mockListAlerts } from 'Pages/ListAlerts/graphql/listAlerts.generated';
 import LogAnalysisOverview, { intervalMinutes, defaultPastDays } from './LogAnalysisOverview';
 import { mockGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
 
 describe('Log Analysis Overview', () => {
-  test('render 2 canvas', async () => {
+  test('render 2 canvas, click on tab button and render latency chart', async () => {
     const mockedToDate = '2020-07-22T19:04:33Z';
     const getLogAnalysisMetrics = buildLogAnalysisMetricsResponse();
     const mockedFromDate = utils.subtractDays(mockedToDate, defaultPastDays);
     const getLogAnalysisMetricsInput = buildLogAnalysisMetricsInput({
-      metricNames: ['eventsProcessed', 'totalAlertsDelta', 'alertsBySeverity'],
+      metricNames: ['eventsProcessed', 'totalAlertsDelta', 'alertsBySeverity', 'eventsLatency'],
       fromDate: mockedFromDate,
       toDate: mockedToDate,
       intervalMinutes,
@@ -73,7 +74,7 @@ describe('Log Analysis Overview', () => {
       }),
     ];
 
-    const { getByTestId, getAllByTitle } = render(<LogAnalysisOverview />, {
+    const { getByTestId, getAllByTitle, getByText } = render(<LogAnalysisOverview />, {
       mocks,
     });
 
@@ -87,7 +88,13 @@ describe('Log Analysis Overview', () => {
     const alertsChart = getByTestId('alert-by-severity-chart');
     const eventChart = getByTestId('events-by-log-type-chart');
 
-    expect(alertsChart).toBeTruthy();
-    expect(eventChart).toBeTruthy();
+    expect(alertsChart).toBeInTheDocument();
+    expect(eventChart).toBeInTheDocument();
+
+    // Checking tab click works and renders Data Latency chart
+    const latencyChartTabButton = getByText('Data Latency by Log Type');
+    fireEvent.click(latencyChartTabButton);
+    const latencyChart = getByTestId('events-by-latency');
+    expect(latencyChart).toBeInTheDocument();
   });
 });

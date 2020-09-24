@@ -47,6 +47,12 @@ describe('SensitiveTextInput', () => {
     expect(container).toMatchSnapshot();
   });
 
+  it('renders without masked values on demand', async () => {
+    const onSubmit = jest.fn();
+    const { container } = render(<TestForm shouldMask={false} onSubmit={onSubmit} />);
+    expect(container).toMatchSnapshot();
+  });
+
   it('renders a default value', async () => {
     const onSubmit = jest.fn();
     const { findByLabelText } = render(<TestForm onSubmit={onSubmit} />);

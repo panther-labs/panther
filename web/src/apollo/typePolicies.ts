@@ -128,7 +128,7 @@ const typePolicies: TypePolicies = {
     keyFields: ['integrationId'],
   },
   GeneralSettings: {
-    keyFields: ['email'],
+    keyFields: ['__typename'],
     fields: {
       errorReportingConsent: {
         merge(_, incoming) {

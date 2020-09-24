@@ -19,7 +19,6 @@
 import * as Types from '../../../../__generated__/schema';
 
 import { RuleBasic } from '../../../graphql/fragments/RuleBasic.generated';
-import { RuleDates } from '../../../graphql/fragments/RuleDates.generated';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
@@ -29,17 +28,15 @@ export type RuleDetailsVariables = {
   input: Types.GetRuleInput;
 };
 
-export type RuleDetails = { rule?: Types.Maybe<RuleBasic & RuleDates> };
+export type RuleDetails = { rule?: Types.Maybe<RuleBasic> };
 
 export const RuleDetailsDocument = gql`
   query RuleDetails($input: GetRuleInput!) {
     rule(input: $input) {
       ...RuleBasic
-      ...RuleDates
     }
   }
   ${RuleBasic}
-  ${RuleDates}
 `;
 
 /**

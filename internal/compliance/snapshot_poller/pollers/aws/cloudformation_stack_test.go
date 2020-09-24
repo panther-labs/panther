@@ -147,6 +147,7 @@ func TestCloudFormationStackPoller(t *testing.T) {
 }
 
 func TestCloudFormationStackPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockCloudFormationForSetup = awstest.BuildMockCloudFormationSvcAllError()
 
 	CloudFormationClientFunc = awstest.SetupMockCloudFormation
@@ -167,6 +168,7 @@ func TestCloudFormationStackPollerError(t *testing.T) {
 }
 
 func TestCloudFormationStackDescribeDriftDetectionStatusInProgress(t *testing.T) {
+	resetCache()
 	awstest.StackDriftDetectionInProgress = true
 	defer func() { awstest.StackDriftDetectionInProgress = false }()
 	awstest.MockCloudFormationForSetup = awstest.BuildMockCloudFormationSvcAll()

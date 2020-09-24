@@ -23,12 +23,20 @@ import { DEFAULT_SENSITIVE_VALUE } from 'Source/constants';
 
 const iconProps: TextInputProps['iconProps'] = { color: 'violet-300' };
 
-const FormikTextInput: React.FC<TextInputProps & Required<Pick<FieldConfig, 'name'>>> = props => {
+interface MaskedInputProps {
+  shouldMask?: boolean;
+}
+
+export type SensitiveInputProps = TextInputProps & MaskedInputProps;
+
+const FormikSensitiveTextInput: React.FC<
+  SensitiveInputProps & Required<Pick<FieldConfig, 'name'>>
+> = ({ shouldMask = true, ...props }) => {
   const [isFocused, setFocused] = React.useState(false);
   const [, meta] = useField(props.name);
 
   const { touched, error, value } = meta;
-  const masked = value === '' && !isFocused;
+  const masked = value === '' && !isFocused && shouldMask;
   const isInvalid = touched && !!error;
   const errorElementId = isInvalid ? `${props.name}-error` : undefined;
 
@@ -42,17 +50,24 @@ const FormikTextInput: React.FC<TextInputProps & Required<Pick<FieldConfig, 'nam
   return (
     <Box>
       <Tooltip content="This information is sensitive and we hide it for your own protection">
-        <TextInput
-          {...props}
-          onFocus={onFocus}
-          onBlur={onBlur}
-          invalid={isInvalid}
-          aria-describedby={isInvalid ? errorElementId : undefined}
-          value={masked ? DEFAULT_SENSITIVE_VALUE : value}
-          type="password"
-          icon="alert-circle-filled"
-          iconProps={iconProps}
-        />
+        <Box position="relative">
+          {/* 
+            The Box above is used in order to bubble the focus events upwards. 
+            The tooltip wrapping the sensitive text input stop the focus propagation.
+          */}
+          <TextInput
+            {...props}
+            autoComplete="off"
+            onBlur={onBlur}
+            onFocus={onFocus}
+            invalid={isInvalid}
+            aria-describedby={isInvalid ? errorElementId : undefined}
+            value={masked ? DEFAULT_SENSITIVE_VALUE : value}
+            type="password"
+            icon="alert-circle-filled"
+            iconProps={iconProps}
+          />
+        </Box>
       </Tooltip>
       {isInvalid && (
         <FormError mt={2} id={errorElementId}>
@@ -63,4 +78,4 @@ const FormikTextInput: React.FC<TextInputProps & Required<Pick<FieldConfig, 'nam
   );
 };
 
-export default FormikTextInput;
+export default FormikSensitiveTextInput;

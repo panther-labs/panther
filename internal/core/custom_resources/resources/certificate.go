@@ -38,6 +38,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/acm"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/cenkalti/backoff/v4"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -194,18 +195,19 @@ func deleteCert(certArn string) error {
 				return nil
 			}
 
-			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == acm.ErrCodeResourceNotFoundException {
-				zap.L().Info("ACM certificate has already been deleted")
-				return nil
-			}
-
-			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == acm.ErrCodeResourceInUseException {
-				// The certificate is still in use - log a warning and try again with backoff.
-				// When the cert is deleted in the same stack it is used, it can take awhile for ACM
-				// to realize it's safe to delete.
-				zap.L().Warn("ACM certificate still in use", zap.Error(err))
-
-				return err
+			var awsErr awserr.Error
+			if errors.As(err, &awsErr) {
+				switch awsErr.Code() {
+				case acm.ErrCodeResourceNotFoundException:
+					zap.L().Info("ACM certificate has already been deleted")
+					return nil
+				case acm.ErrCodeResourceInUseException:
+					// The certificate is still in use - log a warning and try again with backoff.
+					// When the cert is deleted in the same stack it is used, it can take awhile for ACM
+					// to realize it's safe to delete.
+					zap.L().Warn("ACM certificate still in use", zap.Error(err))
+					return err
+				}
 			}
 
 			// Some other error - don't retry
@@ -228,20 +230,20 @@ func deleteCert(certArn string) error {
 				return nil
 			}
 
-			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == iam.ErrCodeNoSuchEntityException {
-				zap.L().Info("IAM server certificate has already been deleted")
-				return nil
+			var awsErr awserr.Error
+			if errors.As(err, &awsErr) {
+				switch awsErr.Code() {
+				case iam.ErrCodeNoSuchEntityException:
+					zap.L().Info("IAM server certificate has already been deleted")
+					return nil
+				case iam.ErrCodeDeleteConflictException:
+					// The certificate is still in use - log a warning and try again with backoff.
+					// When the cert is deleted in the same stack it is used, it can take awhile for IAM
+					// to realize it's safe to delete.
+					zap.L().Warn("iam server certificate still in use", zap.Error(err))
+					return err
+				}
 			}
-
-			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == iam.ErrCodeDeleteConflictException {
-				// The certificate is still in use - log a warning and try again with backoff.
-				// When the cert is deleted in the same stack it is used, it can take awhile for IAM
-				// to realize it's safe to delete.
-				zap.L().Warn("iam server certificate still in use", zap.Error(err))
-
-				return err
-			}
-
 			// Some other error - don't retry
 			return backoff.Permanent(err)
 		}

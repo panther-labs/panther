@@ -25,11 +25,11 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/s3"
 
 	"github.com/panther-labs/panther/pkg/awscfn"
+	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/tools/cfnstacks"
 	"github.com/panther-labs/panther/tools/mage/clients"
 	"github.com/panther-labs/panther/tools/mage/teardown"
@@ -94,7 +94,7 @@ func uploadAsset(assetPath, bucket, stack string) (string, string, error) {
 		return s3Key, *response.VersionId, nil // object already exists in S3 with the same hash
 	}
 
-	if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NotFound" {
+	if awsutils.IsAnyError(err, "NotFound") {
 		// object does not exist yet - upload it!
 		response, err := util.UploadFileToS3(log, assetPath, bucket, s3Key)
 		if err != nil {

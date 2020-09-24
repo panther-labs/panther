@@ -65,7 +65,7 @@ const EditComplianceSource: React.FC = () => {
         updateComplianceSource({
           variables: {
             input: {
-              integrationId: match.params.id,
+              integrationId: values.integrationId,
               integrationLabel: values.integrationLabel,
               cweEnabled: values.cweEnabled,
               remediationEnabled: values.remediationEnabled,

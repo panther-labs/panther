@@ -18,58 +18,41 @@
 
 import React from 'react';
 import { GraphQLError } from 'graphql';
-import { render, fireEvent, buildComplianceIntegration, waitFor } from 'test-utils';
-import { mockGetComplianceCfnTemplate } from 'Components/wizards/ComplianceSourceWizard';
+import {
+  render,
+  fireEvent,
+  buildComplianceIntegration,
+  waitFor,
+  waitMs,
+  buildAddComplianceIntegrationInput,
+} from 'test-utils';
 import { mockAddComplianceSource } from './graphql/addComplianceSource.generated';
 import CreateComplianceSource from './CreateComplianceSource';
 
-const testName = 'test';
-const testAwsAccountID = '123123123123';
-const mockPantherAwsAccountId = '456456456456';
-
 describe('CreateComplianceSource', () => {
-  let prevPantherAwsAccountId;
-  beforeAll(() => {
-    prevPantherAwsAccountId = process.env.AWS_ACCOUNT_ID;
-    process.env.PANTHER_VERSION = mockPantherAwsAccountId;
-  });
-
-  afterAll(() => {
-    process.env.PANTHER_VERSION = prevPantherAwsAccountId;
-  });
-
   it('can successfully onboard a compliance source', async () => {
+    const complianceSource = buildComplianceIntegration({
+      awsAccountId: '123123123123',
+      remediationEnabled: false,
+      cweEnabled: false,
+    });
+
     const mocks = [
-      mockGetComplianceCfnTemplate({
-        variables: {
-          input: {
-            awsAccountId: mockPantherAwsAccountId,
-            integrationLabel: testName,
-            remediationEnabled: false,
-            cweEnabled: false,
-          },
-        },
-        data: {
-          getComplianceIntegrationTemplate: {
-            stackName: 'test-stackname',
-            body: 'test-body',
-          },
-        },
-      }),
       mockAddComplianceSource({
         variables: {
-          input: {
-            integrationLabel: testName,
-            awsAccountId: testAwsAccountID,
-            cweEnabled: false,
-            remediationEnabled: false,
-          },
+          input: buildAddComplianceIntegrationInput({
+            integrationLabel: complianceSource.integrationLabel,
+            awsAccountId: complianceSource.awsAccountId,
+            cweEnabled: complianceSource.cweEnabled,
+            remediationEnabled: complianceSource.remediationEnabled,
+          }),
         },
         data: {
           addComplianceIntegration: buildComplianceIntegration() as any,
         },
       }),
     ];
+
     const {
       getByText,
       getByLabelText,
@@ -78,10 +61,17 @@ describe('CreateComplianceSource', () => {
     } = render(<CreateComplianceSource />, { mocks });
 
     // Fill in  the form and press continue
-    fireEvent.change(getByLabelText('Name'), { target: { value: testName } });
-    fireEvent.change(getByLabelText('AWS Account ID'), { target: { value: testAwsAccountID } });
+    fireEvent.change(getByLabelText('Name'), {
+      target: { value: complianceSource.integrationLabel },
+    });
+    fireEvent.change(getByLabelText('AWS Account ID'), {
+      target: { value: complianceSource.awsAccountId },
+    });
     fireEvent.click(getByLabelText('Real-Time AWS Resource Scans'));
     fireEvent.click(getByLabelText('AWS Automatic Remediations'));
+
+    // Wait for form validation to kick in and move on to the next screen
+    await waitMs(50);
     fireEvent.click(getByText('Continue Setup'));
 
     // Initially we expect a disabled button while the template is being fetched ...
@@ -105,36 +95,28 @@ describe('CreateComplianceSource', () => {
 
   it('shows a proper fail message when source validation fails', async () => {
     const errorMessage = "No-can-do's-ville, baby doll";
+
+    const complianceSource = buildComplianceIntegration({
+      awsAccountId: '123123123123',
+      remediationEnabled: false,
+      cweEnabled: false,
+    });
+
     const mocks = [
-      mockGetComplianceCfnTemplate({
-        variables: {
-          input: {
-            awsAccountId: mockPantherAwsAccountId,
-            integrationLabel: testName,
-            remediationEnabled: false,
-            cweEnabled: false,
-          },
-        },
-        data: {
-          getComplianceIntegrationTemplate: {
-            stackName: 'test-stackname',
-            body: 'test-body',
-          },
-        },
-      }),
       mockAddComplianceSource({
         variables: {
-          input: {
-            integrationLabel: testName,
-            awsAccountId: testAwsAccountID,
-            cweEnabled: false,
-            remediationEnabled: false,
-          },
+          input: buildAddComplianceIntegrationInput({
+            integrationLabel: complianceSource.integrationLabel,
+            awsAccountId: complianceSource.awsAccountId,
+            cweEnabled: complianceSource.cweEnabled,
+            remediationEnabled: complianceSource.remediationEnabled,
+          }),
         },
         data: null,
         errors: [new GraphQLError(errorMessage)],
       }),
     ];
+
     const {
       getByText,
       getByLabelText,
@@ -143,12 +125,17 @@ describe('CreateComplianceSource', () => {
     } = render(<CreateComplianceSource />, { mocks });
 
     // Fill in  the form and press continue
-    fireEvent.change(getByLabelText('Name'), { target: { value: testName } });
-    fireEvent.change(getByLabelText('AWS Account ID'), { target: { value: testAwsAccountID } });
+    fireEvent.change(getByLabelText('Name'), {
+      target: { value: complianceSource.integrationLabel },
+    });
+    fireEvent.change(getByLabelText('AWS Account ID'), {
+      target: { value: complianceSource.awsAccountId },
+    });
     fireEvent.click(getByLabelText('Real-Time AWS Resource Scans'));
     fireEvent.click(getByLabelText('AWS Automatic Remediations'));
 
-    // Move on to the next screen
+    // Wait for form validation to kick in and move on to the next screen
+    await waitMs(50);
     fireEvent.click(getByText('Continue Setup'));
 
     // We move on to the final screen

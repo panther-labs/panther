@@ -260,6 +260,7 @@ func TestS3BucketPoller(t *testing.T) {
 }
 
 func TestS3BucketPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockS3ForSetup = awstest.BuildMockS3SvcAllError()
 
 	S3ClientFunc = awstest.SetupMockS3
