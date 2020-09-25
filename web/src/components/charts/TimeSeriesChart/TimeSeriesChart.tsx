@@ -25,6 +25,7 @@ import { EChartOption } from 'echarts';
 import mapKeys from 'lodash/mapKeys';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { stringToPaleColor } from 'Helpers/colors';
+import ScaleControls from '../ScaleControls';
 
 interface TimeSeriesLinesProps {
   /** The data for the time series */
@@ -41,6 +42,12 @@ interface TimeSeriesLinesProps {
    * @default false
    */
   zoomable?: boolean;
+
+  /**
+   * Whether the chart will allow to change scale type
+   * @default true
+   */
+  scaleControls?: boolean;
 
   /**
    * If defined, the chart will be zoomable and will zoom up to a range specified in `ms` by this
@@ -69,10 +76,12 @@ function formatDateString(timestamp) {
 const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
   data,
   zoomable = false,
+  scaleControls = true,
   segments = 12,
   maxZoomPeriod = 3600 * 1000 * 24,
   units,
 }) => {
+  const [scaleType, setScaleType] = React.useState('value');
   const theme = useTheme();
   const container = React.useRef<HTMLDivElement>(null);
   const tooltip = React.useRef<HTMLDivElement>(document.createElement('div'));
@@ -86,6 +95,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
           import(/* webpackChunkName: "echarts" */ 'echarts/lib/chart/line'),
           import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/tooltip'),
           zoomable && import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/dataZoom'),
+          zoomable && import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/toolbox'),
           import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/legendScroll'),
         ].filter(Boolean)
       );
@@ -129,16 +139,32 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
           left: 180,
           right: 20,
           bottom: 50,
-          top: 10,
+          top: 50,
           containLabel: true,
+        },
+        toolbox: {
+          show: true,
+          iconStyle: {
+            color: '#FFFFFF',
+          },
+          feature: {
+            dataZoom: {
+              yAxisIndex: 'none',
+              icon: {
+                zoom:
+                  'M7,0 C10.8659932,0 14,3.13400675 14,7 C14,8.66283733 13.4202012,10.1902554 12.4517398,11.3911181 L16.0303301,14.9696699 L14.9696699,16.0303301 L11.3911181,12.4517398 C10.1902554,13.4202012 8.66283733,14 7,14 C3.13400675,14 0,10.8659932 0,7 C0,3.13400675 3.13400675,0 7,0 Z M7,1.5 C3.96243388,1.5 1.5,3.96243388 1.5,7 C1.5,10.0375661 3.96243388,12.5 7,12.5 C10.0375661,12.5 12.5,10.0375661 12.5,7 C12.5,3.96243388 10.0375661,1.5 7,1.5 Z M7.75,4.25 L7.75,6.25 L9.75,6.25 L9.75,7.75 L7.75,7.75 L7.75,9.75 L6.25,9.75 L6.25,7.75 L4.25,7.75 L4.25,6.25 L6.25,6.25 L6.25,4.25 L7.75,4.25 Z',
+                back:
+                  'M11.9155597,0.5 C13.9198189,0.5 15.5568334,2.07236105 15.6603617,4.05084143 L15.6655597,4.25 L15.6655597,9.37367275 C15.6655597,11.3779319 14.0931986,13.0149465 12.1147183,13.1184747 L11.9155597,13.1236727 L4.08444032,13.1236727 C2.08018115,13.1236727 0.443166576,11.5513117 0.33963833,9.57283132 L0.334440321,9.37367275 L0.334440321,4.82102515 L1.83444032,4.82102515 L1.83444032,9.37367275 C1.83444032,10.5645367 2.75960191,11.5393177 3.93039151,11.6184819 L4.08444032,11.6236727 L11.9155597,11.6236727 C13.1064237,11.6236727 14.0812046,10.6985112 14.1603689,9.52772156 L14.1655597,9.37367275 L14.1655597,4.25 C14.1655597,3.05913601 13.2403981,2.08435508 12.0696085,2.00519081 L11.9155597,2 L2.17129777,2 L2.17129777,0.5 L11.9155597,0.5 Z',
+              },
+              title: '',
+            },
+          },
         },
         ...(zoomable && {
           dataZoom: [
             {
               show: true,
               type: 'slider',
-              start: 30,
-              end: 70,
               xAxisIndex: 0,
               minValueSpan: maxZoomPeriod,
               handleIcon: 'M 25, 50 a 25,25 0 1,1 50,0 a 25,25 0 1,1 -50,0',
@@ -243,7 +269,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
           splitArea: { show: false }, // remove the grid area
         },
         yAxis: {
-          type: 'value' as const,
+          type: scaleType as EChartOption.BasicComponents.CartesianAxis.Type,
           axisLine: {
             lineStyle: {
               color: 'transparent',
@@ -275,9 +301,14 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
       const timeSeriesChart = echarts.init(container.current);
       timeSeriesChart.setOption(options);
     })();
-  }, [data]);
+  }, [data, scaleType]);
 
-  return <Box ref={container} width="100%" height="100%" />;
+  return (
+    <React.Fragment>
+      {scaleControls && <ScaleControls scaleType={scaleType} onSelection={setScaleType} />}
+      <Box ref={container} width="100%" height="100%" />
+    </React.Fragment>
+  );
 };
 
 export default React.memo(TimeSeriesChart);
