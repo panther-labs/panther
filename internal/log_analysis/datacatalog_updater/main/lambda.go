@@ -20,9 +20,7 @@ package main
 
 import (
 	"context"
-	"time"
 
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/lambdacontext"
 	"go.uber.org/zap"
@@ -34,40 +32,24 @@ import (
 
 // The panther-datacatalog-updater lambda is responsible for managing Glue partitions as data is created.
 
-type DataCatalogEvent struct {
-	events.SQSEvent
-	process.SyncEvent
-	SyncDatabase *process.SyncDatabaseEvent
-	SyncTable    *process.SyncTableEvent
-}
-
-func handle(ctx context.Context, event DataCatalogEvent) (err error) {
-	lc, log := lambdalogger.ConfigureGlobal(ctx, nil)
+func handle(ctx context.Context, event *process.DataCatalogEvent) (err error) {
+	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
 	operation := common.OpLogManager.Start(lc.InvokedFunctionArn, common.OpLogLambdaServiceDim).WithMemUsed(lambdacontext.MemoryLimitInMB)
 	defer func() {
 		operation.Stop().Log(err,
 			zap.Int("sqsMessageCount", len(event.Records)))
 	}()
 
-	if event.SyncDatabase != nil {
-		var result map[string]*process.SyncDatabaseOutput
-		result, err = process.SyncDatabase(ctx, event.SyncDatabase)
-		log.Info("database sync submitted", zap.Any("tasks", result))
+	if event.SyncDatabaseEvent != nil {
+		err = process.HandleSyncDatabase(ctx, event.SyncDatabaseEvent)
 		return
 	}
 
-	if event.SyncTable != nil {
-		err = process.SyncTable(ctx, event.SyncTable)
+	if event.SyncTablePartitions != nil {
+		err = process.HandleSyncTable(ctx, event.SyncTablePartitions)
 		return
 	}
 
-	if event.Sync {
-		lambdaDeadline, _ := ctx.Deadline()
-		syncDuration := time.Since(lambdaDeadline) / 2 //  allocate a fraction of total time, this value will be negative!
-		syncDeadline := lambdaDeadline.Add(syncDuration)
-		err = process.Sync(&event.SyncEvent, syncDeadline)
-		return
-	}
 	err = process.SQS(event.SQSEvent)
 	return
 }

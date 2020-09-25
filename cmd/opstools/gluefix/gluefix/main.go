@@ -21,42 +21,40 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
-	"regexp"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 )
 
 var opts = struct {
-	SyncEnd       *string
-	SyncStart     *string
-	DryRun        *bool
-	Debug         *bool
-	Recover       *bool
-	Region        *string
-	NumRequests   *int
-	MaxRetries    *int
-	LogTypePrefix *string
+	Recover        *bool
+	RecoverEnd     *string
+	RecoverStart   *string
+	DryRun         *bool
+	Debug          *bool
+	Region         *string
+	NumWorkers     *int
+	MaxConnections *int
+	MaxRetries     *int
+	LogTypePrefix  *string
 }{
-	SyncStart:     flag.String("start", "", "Fix partitions after this date YYYY-MM-DD"),
-	SyncEnd:       flag.String("end", "", "Fix partitions until this date YYYY-MM-DD"),
-	Recover:       flag.Bool("recover", false, "Try to recover missing partitions by scanning S3 (slow)"),
-	DryRun:        flag.Bool("dry-run", false, "Scan for partitions to update without applying any modifications"),
-	Debug:         flag.Bool("debug", false, "Enable additional logging"),
-	Region:        flag.String("region", "", "Set the AWS region to run on"),
-	MaxRetries:    flag.Int("max-retries", 5, "Max retries for AWS requests"),
-	NumRequests:   flag.Int("num-requests", 8, "Number of parallel AWS requests"),
-	LogTypePrefix: flag.String("prefix", "", "A prefix to filter log type names"),
+	RecoverStart:   flag.String("start", "", "Recover partitions after this date YYYY-MM-DD"),
+	RecoverEnd:     flag.String("end", "", "Recover partitions until this date YYYY-MM-DD"),
+	Recover:        flag.Bool("recover", false, "Try to recover missing table partitions by scanning S3 (slow)"),
+	DryRun:         flag.Bool("dry-run", false, "Scan for partitions to update without applying any modifications"),
+	Debug:          flag.Bool("debug", false, "Enable additional logging"),
+	Region:         flag.String("region", "", "Set the AWS region to run on"),
+	MaxRetries:     flag.Int("max-retries", 12, "Max retries for AWS requests"),
+	MaxConnections: flag.Int("max-connections", 100, "Max number of connections to AWS"),
+	NumWorkers:     flag.Int("workers", 8, "Number of parallel workers for each table"),
+	LogTypePrefix:  flag.String("prefix", "", "A prefix to filter log type names"),
 }
+
+const layoutDate = "2006-01-02"
 
 func main() {
 	flag.Parse()
@@ -69,59 +67,16 @@ func main() {
 	if err != nil {
 		logger.Fatalf("failed to start AWS session: %s", err)
 	}
-
-	var start, end time.Time
-	if opt := *opts.SyncEnd; opt != "" {
-		const layoutDate = "2006-01-02"
-		tm, err := time.Parse(layoutDate, opt)
-		if err != nil {
-			logger.Fatalf("could not parse 'end' flag %q (want YYYY-MM-DD): %s", opt, err)
-		}
-		end = tm
-	}
-	if opt := *opts.SyncStart; opt != "" {
-		const layoutDate = "2006-01-02"
-		tm, err := time.Parse(layoutDate, opt)
-		if err != nil {
-			logger.Fatalf("could not parse 'start' flag %q (want YYYY-MM-DD): %s", opt, err)
-		}
-		start = tm
-	}
-
-	var match *regexp.Regexp
-	if optPrefix := *opts.LogTypePrefix; optPrefix != "" {
-		pattern := fmt.Sprintf("^%s", awsglue.GetTableName(optPrefix))
-		re, err := regexp.Compile(pattern)
-		if err != nil {
-			logger.Fatalf("invalid log type prefix %q: %s", optPrefix, err)
-		}
-		match = re
-	}
-
-	task := awsglue.SyncTask{
-		NumRequests: *opts.NumRequests,
-		DryRun:      *opts.DryRun,
-		Start:       start,
-		End:         end,
-		GlueClient:  glue.New(sess),
-		Logger:      logger.Desugar(),
-	}
 	ctx := context.Background()
-	logger.Infof(" for log tables")
 	if *opts.Recover {
-		if _, err := task.RecoverDatabase(ctx, awsglue.LogProcessingDatabaseName, match); err != nil {
-			logger.Errorf("failed to recover %q: %s", awsglue.LogProcessingDatabaseName, err)
-		}
-		if _, err := task.RecoverDatabase(ctx, awsglue.RuleMatchDatabaseName, match); err != nil {
-			logger.Errorf("failed to recover %q: %s", awsglue.LogProcessingDatabaseName, err)
-		}
+		logger.Info("starting to recover partitions")
+		err = runRecover(ctx, sess, logger)
 	} else {
-		if _, err := task.SyncDatabase(ctx, awsglue.LogProcessingDatabaseName, match); err != nil {
-			logger.Errorf("failed to sync %q: %s", awsglue.LogProcessingDatabaseName, err)
-		}
-		if _, err := task.SyncDatabase(ctx, awsglue.RuleMatchDatabaseName, match); err != nil {
-			logger.Errorf("failed to sync %q: %s", awsglue.LogProcessingDatabaseName, err)
-		}
+		logger.Info("starting to sync partitions")
+		err = runSync(ctx, sess, logger)
+	}
+	if err != nil {
+		logger.Fatalf("process ended with errors: %s", err)
 	}
 }
 

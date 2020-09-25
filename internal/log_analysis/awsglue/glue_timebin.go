@@ -96,6 +96,20 @@ func (tb GlueTableTimebin) PartitionsBefore(tm time.Time) string {
 	return strings.Join(values, " OR ")
 }
 
+// PartitionFilter returns a partition filter expression
+func (tb GlueTableTimebin) PartitionFilter(start, end time.Time) string {
+	if start.IsZero() && end.IsZero() {
+		return ""
+	}
+	if start.IsZero() {
+		return tb.PartitionsBefore(end.UTC())
+	}
+	if end.IsZero() {
+		return tb.PartitionsAfter(start.UTC())
+	}
+	return tb.PartitionsBetween(start.UTC(), end.UTC())
+}
+
 // PartitionsAfter returns an expression to scan for partitions after tm
 // see https://docs.aws.amazon.com/glue/latest/webapi/API_GetPartitions.html
 // nolint:lll
@@ -171,34 +185,6 @@ func columnNames(cols []*glue.Column) []string {
 	return names
 }
 
-// PartitionTimeFromValues gets the partition time from the partition values of a Glue partition
-func (tb GlueTableTimebin) PartitionTimeFromValues(values []string) (tm time.Time, ok bool) {
-	if len(values) == 0 {
-		return
-	}
-	year, err := strconv.Atoi(values[0])
-	if err != nil {
-		return
-	}
-	var month, day, hour int
-	if len(values) > 1 && tb >= GlueTableMonthly {
-		if month, err = strconv.Atoi(values[1]); err != nil {
-			return
-		}
-	}
-	if len(values) > 2 && tb >= GlueTableDaily {
-		if day, err = strconv.Atoi(values[2]); err != nil {
-			return
-		}
-	}
-	if len(values) > 3 && tb >= GlueTableHourly {
-		if hour, err = strconv.Atoi(values[3]); err != nil {
-			return
-		}
-	}
-	return time.Date(year, time.Month(month), day, hour, 0, 0, 0, time.UTC), true
-}
-
 // PartitionS3PathFromTime constructs the S3 path for this partition
 func (tb GlueTableTimebin) PartitionS3PathFromTime(t time.Time) (s3Path string) {
 	switch tb {
@@ -266,4 +252,48 @@ func (tb GlueTableTimebin) PartitionHasData(client s3iface.S3API, t time.Time, t
 	})
 
 	return hasData, err
+}
+
+// PartitionTimeFromValues resolves the timebin from a table storage descriptor
+func PartitionTimeFromValues(values []*string) (tm time.Time, err error) {
+	switch len(values) {
+	case 2:
+		tm = unpackValues(values[0], values[1], nil, nil)
+	case 3:
+		tm = unpackValues(values[0], values[1], values[2], nil)
+	case 4:
+		tm = unpackValues(values[0], values[1], values[2], values[3])
+	}
+	if tm.IsZero() {
+		return time.Time{}, errors.Errorf("invalid partition values [%s]", strings.Join(aws.StringValueSlice(values), ", "))
+	}
+	return tm, nil
+}
+
+func unpackValues(y, m, d, h *string) (tm time.Time) {
+	var (
+		year, month, day, hour int
+		err                    error
+	)
+	if y != nil {
+		if year, err = strconv.Atoi(*y); err != nil {
+			return
+		}
+	}
+	if m != nil {
+		if month, err = strconv.Atoi(*m); err != nil {
+			return
+		}
+	}
+	if d != nil {
+		if day, err = strconv.Atoi(*d); err != nil {
+			return
+		}
+	}
+	if h != nil {
+		if hour, err = strconv.Atoi(*h); err != nil {
+			return
+		}
+	}
+	return time.Date(year, time.Month(month), day, hour, 0, 0, 0, time.UTC)
 }

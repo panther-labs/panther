@@ -115,12 +115,14 @@ func updateGlueTables(ctx context.Context, props *UpdateGlueTablesProperties) er
 
 	// sync partitions via recursive lambda to avoid blocking the deployment
 	if len(logTypes) > 0 {
-		err = process.InvokeSyncDatabase(ctx, lambdaClient, &process.SyncDatabaseEvent{
-			Databases: []string{
+		err = process.InvokeSyncDatabases(ctx, lambdaClient, &process.SyncEvent{
+			DatabaseNames: []string{
 				awsglue.LogProcessingDatabaseName,
 				awsglue.RuleMatchDatabaseName,
 				awsglue.RuleErrorsDatabaseName,
 			},
+			LogTypes: logTypes,
+			DryRun:   false,
 		})
 		if err != nil {
 			return errors.Wrap(err, "failed invoking sync")

@@ -25,8 +25,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 )
 
 const (
@@ -37,12 +35,10 @@ var (
 	awsSession   *session.Session
 	glueClient   glueiface.GlueAPI
 	lambdaClient lambdaiface.LambdaAPI
-	s3Client     s3iface.S3API
 )
 
 func Setup() {
 	awsSession = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries)))
 	glueClient = glue.New(awsSession)
 	lambdaClient = lambda.New(awsSession)
-	s3Client = s3.New(awsSession)
 }
