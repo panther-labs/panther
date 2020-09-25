@@ -46,7 +46,7 @@ type Handler struct {
 	DdbClient        dynamodbiface.DynamoDBAPI
 	AlertTable       string
 	AlertingQueueURL string
-	MetricsLogger    metrics.LoggerAPI
+	MetricsLogger    metrics.Logger
 }
 
 func (h *Handler) Do(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) (err error) {

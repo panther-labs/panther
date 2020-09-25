@@ -112,19 +112,19 @@ type Dimension struct {
 	Value string
 }
 
-type LoggerAPI interface {
+type Logger interface {
 	Log(dimensions []Dimension, values ...Metric)
 }
 
 // Logger conveniently stores repeatedly used embedded metric format configurations such as
 // dimensions so that they do not need to be specified for each log.
-type Logger struct {
+type logger struct {
 	dimensionSets []DimensionSet
 	dimensionKeys map[string]struct{}
 }
 
 // MustLogger creates a new Logger based on the given input, and panics if the input is invalid
-func MustLogger(dimensionSets []DimensionSet) *Logger {
+func MustLogger(dimensionSets []DimensionSet) Logger {
 	logger, err := NewLogger(dimensionSets)
 	if err != nil {
 		panic(err)
@@ -133,20 +133,20 @@ func MustLogger(dimensionSets []DimensionSet) *Logger {
 }
 
 // NewLogger create a new logger for a set of dimensions, returning an error if dimensions are invalid
-func NewLogger(dimensionSets []DimensionSet) (*Logger, error) {
+func NewLogger(dimensionSets []DimensionSet) (Logger, error) {
 	dimensionKeys, err := buildDimensionKeys(dimensionSets)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Logger{
+	return &logger{
 		dimensionSets: dimensionSets,
 		dimensionKeys: dimensionKeys,
 	}, nil
 }
 
 // Log sends a log formatted in the CloudWatch embedded metric format
-func (l *Logger) Log(dimensions []Dimension, values ...Metric) {
+func (l *logger) Log(dimensions []Dimension, values ...Metric) {
 	err := l.logEmbedded(dimensions, values...)
 	if err != nil {
 		zap.L().Error("metric failed", zap.Error(err))
@@ -154,7 +154,7 @@ func (l *Logger) Log(dimensions []Dimension, values ...Metric) {
 }
 
 // logEmbedded constructs an object in the AWS embedded metric format and logs it
-func (l *Logger) logEmbedded(dimensions []Dimension, values ...Metric) error {
+func (l *logger) logEmbedded(dimensions []Dimension, values ...Metric) error {
 	// Validate input
 	if len(values) == 0 {
 		return errors.New("at least one metric must be specified")

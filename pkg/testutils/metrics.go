@@ -25,7 +25,7 @@ import (
 )
 
 type LoggerMock struct {
-	metrics.LoggerAPI
+	metrics.Logger
 	mock.Mock
 }
 
