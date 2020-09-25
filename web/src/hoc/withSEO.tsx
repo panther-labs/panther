@@ -20,7 +20,6 @@ import React from 'react';
 import { Helmet } from 'react-helmet';
 import useRouter from 'Hooks/useRouter';
 import { RouteComponentProps } from 'react-router';
-import { trackPageView } from 'Helpers/analytics';
 
 interface Options {
   title: string | ((routerData: RouteComponentProps<any, undefined>) => string);
@@ -30,10 +29,6 @@ function withSEO<P>({ title }: Options) {
   return (Component: React.FC<P>) => {
     const ComponentWithSEO: React.FC<P> = props => {
       const routerData = useRouter();
-
-      React.useEffect(() => {
-        trackPageView({ path: routerData.history.location.pathname });
-      }, [routerData.history.location.pathname]);
 
       return (
         <React.Fragment>
