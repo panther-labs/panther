@@ -42,8 +42,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/stretchr/testify/mock"
-
-	"github.com/panther-labs/panther/pkg/metrics"
 )
 
 type S3UploaderMock struct {
@@ -311,17 +309,4 @@ func (m *FirehoseMock) PutRecordBatchWithContext(
 
 	args := m.Called(ctx, input, options)
 	return args.Get(0).(*firehose.PutRecordBatchOutput), args.Error(1)
-}
-
-type StaticLoggerMock struct {
-	metrics.StaticLoggerAPI
-	mock.Mock
-}
-
-func (m *StaticLoggerMock) Log(metrics []metrics.Metric, dimensions ...metrics.Dimension) {
-	m.Called(metrics, dimensions)
-}
-
-func (m *StaticLoggerMock) LogSingle(value interface{}, dimensions ...metrics.Dimension) {
-	m.Called(value, dimensions)
 }

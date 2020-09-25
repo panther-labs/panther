@@ -39,18 +39,13 @@ func init() {
 	// Required only once per Lambda container
 	Setup()
 	// TODO: revisit this. Not sure why we neeed Dimension sets and why just an array of dimensions is not enough
-	staticLogger := metrics.MustStaticLogger([]metrics.DimensionSet{
+	metricsLogger := metrics.MustLogger([]metrics.DimensionSet{
 		{
 			"AnalysisType",
 			"Severity",
 		},
 		{
 			"AnalysisType",
-		},
-	}, []metrics.Metric{
-		{
-			Name: "AlertsCreated",
-			Unit: metrics.UnitCount,
 		},
 	})
 	cache := forwarder.NewCache(httpClient, policyClient)
@@ -60,7 +55,7 @@ func init() {
 		Cache:            cache,
 		AlertingQueueURL: env.AlertingQueueURL,
 		AlertTable:       env.AlertsTable,
-		MetricsLogger:    staticLogger,
+		MetricsLogger:    metricsLogger,
 	}
 }
 

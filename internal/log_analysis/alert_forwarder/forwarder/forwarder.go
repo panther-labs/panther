@@ -46,7 +46,7 @@ type Handler struct {
 	DdbClient        dynamodbiface.DynamoDBAPI
 	AlertTable       string
 	AlertingQueueURL string
-	MetricsLogger    metrics.StaticLoggerAPI
+	MetricsLogger    metrics.LoggerAPI
 }
 
 func (h *Handler) Do(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) (err error) {
@@ -101,9 +101,16 @@ func (h *Handler) handleNewAlert(rule *ruleModel.Rule, event *AlertDedupEvent) e
 
 	err := h.sendAlertNotification(rule, event)
 	if err == nil && !event.IsError() {
-		h.MetricsLogger.LogSingle(1,
-			metrics.Dimension{Name: "Severity", Value: string(rule.Severity)},
-			metrics.Dimension{Name: "AnalysisType", Value: "Rule"},
+		h.MetricsLogger.Log(
+			[]metrics.Dimension{
+				{Name: "Severity", Value: string(rule.Severity)},
+				{Name: "AnalysisType", Value: "Rule"},
+			},
+			metrics.Metric{
+				Name:  "AlertsCreated",
+				Value: 1,
+				Unit:  metrics.UnitCount,
+			},
 		)
 	}
 	return err
