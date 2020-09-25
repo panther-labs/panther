@@ -87,7 +87,7 @@ var (
 		Tags:        []string{"Tag"},
 	}
 
-	expectedMetric     = metrics.Metric{Name: "AlertsCreated", Value: 1, Unit: metrics.UnitCount}
+	expectedMetric     = []metrics.Metric{{Name: "AlertsCreated", Value: 1, Unit: metrics.UnitCount}}
 	expectedDimensions = []metrics.Dimension{{Name: "Severity", Value: "INFO"}, {Name: "AnalysisType", Value: "Rule"}}
 )
 
