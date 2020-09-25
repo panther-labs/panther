@@ -501,7 +501,8 @@ func TestHandleUpdateAlert(t *testing.T) {
 	}
 
 	ddbMock.On("UpdateItem", expectedUpdateItemInput).Return(&dynamodb.UpdateItemOutput{}, nil)
-	metricsMock.On("Log", expectedDimensions, expectedMetric).Once()
+	// We shouldn't log any metric - we are not creating a new Alert
+	metricsMock.AssertNotCalled(t, "Log")
 
 	assert.NoError(t, handler.Do(newAlertDedupEvent, dedupEventWithUpdatedFields))
 
