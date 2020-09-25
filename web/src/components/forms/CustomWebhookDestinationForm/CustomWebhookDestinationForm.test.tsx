@@ -18,14 +18,18 @@
 
 import React from 'react';
 import { render, fireEvent, waitFor, waitMs, faker } from 'test-utils';
-import { CustomWebhookConfig, SeverityEnum } from 'Generated/schema';
+import { SeverityEnum } from 'Generated/schema';
 import CustomWebhookDestinationForm from './index';
 
 const emptyInitialValues = {
   outputId: null,
   displayName: '',
   defaultForSeverity: [],
-  outputConfig: {},
+  outputConfig: {
+    customWebhook: {
+      webhookURL: '',
+    },
+  },
 };
 
 const validUrl = faker.internet.url();
@@ -38,7 +42,7 @@ const initialValues = {
   outputConfig: {
     customWebhook: {
       webhookURL: validUrl,
-    } as CustomWebhookConfig,
+    },
   },
   defaultForSeverity: [severity],
 };

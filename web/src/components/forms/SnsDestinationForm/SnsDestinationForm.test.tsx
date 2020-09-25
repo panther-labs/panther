@@ -18,14 +18,18 @@
 
 import React from 'react';
 import { render, fireEvent, waitFor, waitMs } from 'test-utils';
-import { SeverityEnum, SnsConfig } from 'Generated/schema';
+import { SeverityEnum } from 'Generated/schema';
 import SnsDestinationForm from './index';
 
 const emptyInitialValues = {
   outputId: null,
   displayName: '',
   defaultForSeverity: [],
-  outputConfig: {},
+  outputConfig: {
+    sns: {
+      topicArn: '',
+    },
+  },
 };
 
 const validTopicArn = 'arn:aws:sns:us-east-2:123456789012:MyTopic';
@@ -38,7 +42,7 @@ const initialValues = {
   outputConfig: {
     sns: {
       topicArn: validTopicArn,
-    } as SnsConfig,
+    },
   },
   defaultForSeverity: [severity],
 };
