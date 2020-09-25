@@ -30,6 +30,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
+	"github.com/panther-labs/panther/pkg/metrics"
 )
 
 var handler *forwarder.Handler
@@ -37,6 +38,21 @@ var handler *forwarder.Handler
 func init() {
 	// Required only once per Lambda container
 	Setup()
+	// TODO: revisit this. Not sure why we neeed Dimension sets and why just an array of dimensions is not enough
+	staticLogger := metrics.MustStaticLogger([]metrics.DimensionSet{
+		{
+			"AnalysisType",
+			"Severity",
+		},
+		{
+			"AnalysisType",
+		},
+	}, []metrics.Metric{
+		{
+			Name: "AlertsCreated",
+			Unit: metrics.UnitCount,
+		},
+	})
 	cache := forwarder.NewCache(httpClient, policyClient)
 	handler = &forwarder.Handler{
 		SqsClient:        sqsClient,
@@ -44,6 +60,7 @@ func init() {
 		Cache:            cache,
 		AlertingQueueURL: env.AlertingQueueURL,
 		AlertTable:       env.AlertsTable,
+		MetricsLogger:    staticLogger,
 	}
 }
 

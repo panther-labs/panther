@@ -48,6 +48,10 @@ type AlertDedupEvent struct {
 
 }
 
+func (e *AlertDedupEvent) IsError() bool {
+	return len(e.ErrorType) != 0
+}
+
 // Alert contains all the fields associated to the alert stored in DDB
 type Alert struct {
 	ID                  string    `dynamodbav:"id,string"`

@@ -39,6 +39,7 @@ import (
 	policiesclient "github.com/panther-labs/panther/api/gateway/analysis/client"
 	ruleModel "github.com/panther-labs/panther/api/gateway/analysis/models"
 	alertModel "github.com/panther-labs/panther/api/lambda/delivery/models"
+	"github.com/panther-labs/panther/pkg/metrics"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
@@ -91,6 +92,7 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
+	metricsMock := &testutils.StaticLoggerMock{}
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient := &http.Client{Transport: mockRoundTripper}
 	policyConfig := policiesclient.DefaultTransportConfig().
@@ -103,13 +105,14 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 		Cache:            NewCache(httpClient, policyClient),
 		DdbClient:        ddbMock,
 		SqsClient:        sqsMock,
+		MetricsLogger:    metricsMock,
 	}
 
 	expectedAlertNotification := &alertModel.Alert{
 		CreatedAt:           newAlertDedupEvent.UpdateTime,
 		AnalysisDescription: aws.String(string(testRuleResponse.Description)),
 		AnalysisID:          newAlertDedupEvent.RuleID,
-		Version:             aws.String(newAlertDedupEvent.RuleVersion),
+		Version:             &newAlertDedupEvent.RuleVersion,
 		AnalysisName:        aws.String(string(testRuleResponse.DisplayName)),
 		Runbook:             aws.String(string(testRuleResponse.Runbook)),
 		Severity:            string(testRuleResponse.Severity),
@@ -158,17 +161,21 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 	}
 
 	ddbMock.On("PutItem", expectedPutItemRequest).Return(&dynamodb.PutItemOutput{}, nil)
+	metricsMock.On("LogSingle", 1, []metrics.Dimension{{Name: "Severity", Value: "INFO"}, {Name: "AnalysisType", Value: "Rule"}}).
+		Once()
 	assert.NoError(t, handler.Do(oldAlertDedupEvent, newAlertDedupEvent))
 
 	ddbMock.AssertExpectations(t)
 	sqsMock.AssertExpectations(t)
 	mockRoundTripper.AssertExpectations(t)
+	metricsMock.AssertExpectations(t)
 }
 
 func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
+	metricsMock := &testutils.StaticLoggerMock{}
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient := &http.Client{Transport: mockRoundTripper}
 	policyConfig := policiesclient.DefaultTransportConfig().
@@ -181,6 +188,7 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 		Cache:            NewCache(httpClient, policyClient),
 		DdbClient:        ddbMock,
 		SqsClient:        sqsMock,
+		MetricsLogger:    metricsMock,
 	}
 
 	newAlertDedupEventWithoutTitle := &AlertDedupEvent{
@@ -253,17 +261,22 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 	}
 
 	ddbMock.On("PutItem", expectedPutItemRequest).Return(&dynamodb.PutItemOutput{}, nil)
+	metricsMock.On("LogSingle", 1, []metrics.Dimension{{Name: "Severity", Value: "INFO"}, {Name: "AnalysisType", Value: "Rule"}}).
+		Once()
+
 	assert.NoError(t, handler.Do(oldAlertDedupEvent, newAlertDedupEventWithoutTitle))
 
 	ddbMock.AssertExpectations(t)
 	sqsMock.AssertExpectations(t)
 	mockRoundTripper.AssertExpectations(t)
+	metricsMock.AssertExpectations(t)
 }
 
 func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
+	metricsMock := &testutils.StaticLoggerMock{}
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient := &http.Client{Transport: mockRoundTripper}
 	policyConfig := policiesclient.DefaultTransportConfig().
@@ -276,6 +289,7 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 		Cache:            NewCache(httpClient, policyClient),
 		DdbClient:        ddbMock,
 		SqsClient:        sqsMock,
+		MetricsLogger:    metricsMock,
 	}
 
 	expectedAlertNotification := &alertModel.Alert{
@@ -342,17 +356,22 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 	}
 
 	ddbMock.On("PutItem", expectedPutItemRequest).Return(&dynamodb.PutItemOutput{}, nil)
+	metricsMock.On("LogSingle", 1, []metrics.Dimension{{Name: "Severity", Value: "INFO"}, {Name: "AnalysisType", Value: "Rule"}}).
+		Once()
+
 	assert.NoError(t, handler.Do(oldAlertDedupEvent, dedupEventWithoutTitle))
 
 	ddbMock.AssertExpectations(t)
 	sqsMock.AssertExpectations(t)
 	mockRoundTripper.AssertExpectations(t)
+	metricsMock.AssertExpectations(t)
 }
 
 func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
+	metricsMock := &testutils.StaticLoggerMock{}
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient := &http.Client{Transport: mockRoundTripper}
 	policyConfig := policiesclient.DefaultTransportConfig().
@@ -365,6 +384,7 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 		Cache:            NewCache(httpClient, policyClient),
 		DdbClient:        ddbMock,
 		SqsClient:        sqsMock,
+		MetricsLogger:    metricsMock,
 	}
 
 	expectedAlertNotification := &alertModel.Alert{
@@ -420,17 +440,22 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 	}
 
 	ddbMock.On("PutItem", expectedPutItemRequest).Return(&dynamodb.PutItemOutput{}, nil)
+	metricsMock.On("LogSingle", 1, []metrics.Dimension{{Name: "Severity", Value: "INFO"}, {Name: "AnalysisType", Value: "Rule"}}).
+		Once()
+
 	require.NoError(t, handler.Do(nil, newAlertDedupEvent))
 
 	ddbMock.AssertExpectations(t)
 	sqsMock.AssertExpectations(t)
 	mockRoundTripper.AssertExpectations(t)
+	metricsMock.AssertExpectations(t)
 }
 
 func TestHandleUpdateAlert(t *testing.T) {
 	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
+	metricsMock := &testutils.StaticLoggerMock{}
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient := &http.Client{Transport: mockRoundTripper}
 	policyConfig := policiesclient.DefaultTransportConfig().
@@ -443,6 +468,7 @@ func TestHandleUpdateAlert(t *testing.T) {
 		Cache:            NewCache(httpClient, policyClient),
 		DdbClient:        ddbMock,
 		SqsClient:        sqsMock,
+		MetricsLogger:    metricsMock,
 	}
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusOK), nil).Once()
 
@@ -476,15 +502,22 @@ func TestHandleUpdateAlert(t *testing.T) {
 	}
 
 	ddbMock.On("UpdateItem", expectedUpdateItemInput).Return(&dynamodb.UpdateItemOutput{}, nil)
+	metricsMock.On("LogSingle", 1, []metrics.Dimension{{Name: "Severity", Value: "INFO"}, {Name: "AnalysisType", Value: "Rule"}}).
+		Once()
+
 	assert.NoError(t, handler.Do(newAlertDedupEvent, dedupEventWithUpdatedFields))
 
 	ddbMock.AssertExpectations(t)
+	sqsMock.AssertExpectations(t)
+	mockRoundTripper.AssertExpectations(t)
+	metricsMock.AssertExpectations(t)
 }
 
 func TestHandleUpdateAlertDDBError(t *testing.T) {
 	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
+	metricsMock := &testutils.StaticLoggerMock{}
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient := &http.Client{Transport: mockRoundTripper}
 	policyConfig := policiesclient.DefaultTransportConfig().
@@ -497,6 +530,7 @@ func TestHandleUpdateAlertDDBError(t *testing.T) {
 		Cache:            NewCache(httpClient, policyClient),
 		DdbClient:        ddbMock,
 		SqsClient:        sqsMock,
+		MetricsLogger:    metricsMock,
 	}
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusOK), nil).Once()
 
@@ -514,12 +548,18 @@ func TestHandleUpdateAlertDDBError(t *testing.T) {
 
 	ddbMock.On("UpdateItem", mock.Anything).Return(&dynamodb.UpdateItemOutput{}, errors.New("error"))
 	assert.Error(t, handler.Do(newAlertDedupEvent, dedupEventWithUpdatedFields))
+
+	ddbMock.AssertExpectations(t)
+	sqsMock.AssertExpectations(t)
+	mockRoundTripper.AssertExpectations(t)
+	metricsMock.AssertExpectations(t)
 }
 
 func TestHandleShouldNotCreateOrUpdateAlertIfThresholdNotReached(t *testing.T) {
 	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
+	metricsMock := &testutils.StaticLoggerMock{}
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient := &http.Client{Transport: mockRoundTripper}
 	policyConfig := policiesclient.DefaultTransportConfig().
@@ -532,6 +572,7 @@ func TestHandleShouldNotCreateOrUpdateAlertIfThresholdNotReached(t *testing.T) {
 		Cache:            NewCache(httpClient, policyClient),
 		DdbClient:        ddbMock,
 		SqsClient:        sqsMock,
+		MetricsLogger:    metricsMock,
 	}
 
 	ruleWithThreshold := &ruleModel.Rule{
@@ -550,12 +591,14 @@ func TestHandleShouldNotCreateOrUpdateAlertIfThresholdNotReached(t *testing.T) {
 	ddbMock.AssertExpectations(t)
 	sqsMock.AssertExpectations(t)
 	mockRoundTripper.AssertExpectations(t)
+	metricsMock.AssertExpectations(t)
 }
 
 func TestHandleShouldCreateAlertIfThresholdNowReached(t *testing.T) {
 	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
+	metricsMock := &testutils.StaticLoggerMock{}
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient := &http.Client{Transport: mockRoundTripper}
 	policyConfig := policiesclient.DefaultTransportConfig().
@@ -568,6 +611,7 @@ func TestHandleShouldCreateAlertIfThresholdNowReached(t *testing.T) {
 		Cache:            NewCache(httpClient, policyClient),
 		DdbClient:        ddbMock,
 		SqsClient:        sqsMock,
+		MetricsLogger:    metricsMock,
 	}
 
 	ruleWithThreshold := &ruleModel.Rule{
@@ -594,6 +638,8 @@ func TestHandleShouldCreateAlertIfThresholdNowReached(t *testing.T) {
 
 	ddbMock.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil).Once()
 	sqsMock.On("SendMessage", mock.Anything).Return(&sqs.SendMessageOutput{}, nil).Once()
+	metricsMock.On("LogSingle", 1, []metrics.Dimension{{Name: "Severity", Value: "INFO"}, {Name: "AnalysisType", Value: "Rule"}}).
+		Once()
 
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(ruleWithThreshold, http.StatusOK), nil).Once()
 	assert.NoError(t, handler.Do(oldAlertDedupEvent, newAlertDedup))
@@ -601,6 +647,46 @@ func TestHandleShouldCreateAlertIfThresholdNowReached(t *testing.T) {
 	ddbMock.AssertExpectations(t)
 	sqsMock.AssertExpectations(t)
 	mockRoundTripper.AssertExpectations(t)
+	metricsMock.AssertExpectations(t)
+}
+
+func TestHandleError(t *testing.T) {
+	// In case of an RULE_ERROR alert type, behave the same
+	// but don't log Severity metric
+	t.Parallel()
+	ddbMock := &testutils.DynamoDBMock{}
+	sqsMock := &testutils.SqsMock{}
+	metricsMock := &testutils.StaticLoggerMock{}
+	mockRoundTripper := &mockRoundTripper{}
+	httpClient := &http.Client{Transport: mockRoundTripper}
+	policyConfig := policiesclient.DefaultTransportConfig().
+		WithHost("host").
+		WithBasePath("path")
+	policyClient := policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
+	handler := &Handler{
+		AlertTable:       "alertsTable",
+		AlertingQueueURL: "queueUrl",
+		Cache:            NewCache(httpClient, policyClient),
+		DdbClient:        ddbMock,
+		SqsClient:        sqsMock,
+		MetricsLogger:    metricsMock,
+	}
+
+	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusOK), nil).Once()
+	sqsMock.On("SendMessage", mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
+	ddbMock.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
+	metricsMock.AssertNotCalled(t, "LogSingle")
+
+	oldErrorDedupEvent := *oldAlertDedupEvent
+	newErrorDedupEvent := *newAlertDedupEvent
+	oldErrorDedupEvent.ErrorType = "RULE_ERROR"
+	newErrorDedupEvent.ErrorType = "RULE_ERROR"
+	assert.NoError(t, handler.Do(&oldErrorDedupEvent, &newErrorDedupEvent))
+
+	ddbMock.AssertExpectations(t)
+	sqsMock.AssertExpectations(t)
+	mockRoundTripper.AssertExpectations(t)
+	metricsMock.AssertExpectations(t)
 }
 
 func generateResponse(body interface{}, httpCode int) *http.Response {

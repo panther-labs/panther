@@ -206,6 +206,11 @@ func (l *Logger) logEmbedded(values []Metric, dimensions []Dimension) error {
 	return nil
 }
 
+type StaticLoggerAPI interface {
+	Log(metrics []Metric, dimensions ...Dimension)
+	LogSingle(value interface{}, dimensions ...Dimension)
+}
+
 // StaticLogger conveniently stores repeatedly used embedded metric format configurations such as
 // dimensionSets and metric name/unit so that they do not need to be specified each time. StaticLogger
 // only supports one dimension set and one metric which must be set at initialization.
