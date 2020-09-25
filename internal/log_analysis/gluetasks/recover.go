@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"path"
 	"regexp"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -36,6 +35,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 )
@@ -57,11 +57,9 @@ type RecoverDatabaseTables struct {
 }
 
 func (r *RecoverDatabaseTables) Run(ctx context.Context, glueAPI glueiface.GlueAPI, s3API s3iface.S3API, log *zap.Logger) error {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	group, ctx := errgroup.WithContext(ctx)
 	tables := make(chan []*glue.TableData)
-	var scanTablesErr error
-	go func() {
+	group.Go(func() error {
 		defer close(tables)
 		input := glue.GetTablesInput{
 			DatabaseName: &r.DatabaseName,
@@ -70,7 +68,7 @@ func (r *RecoverDatabaseTables) Run(ctx context.Context, glueAPI glueiface.GlueA
 			expr := "^" + regexp.QuoteMeta(r.MatchPrefix)
 			input.Expression = &expr
 		}
-		scanTablesErr = glueAPI.GetTablesPagesWithContext(ctx, &input, func(page *glue.GetTablesOutput, _ bool) bool {
+		return glueAPI.GetTablesPagesWithContext(ctx, &input, func(page *glue.GetTablesOutput, _ bool) bool {
 			select {
 			case tables <- page.TableList:
 				return true
@@ -78,56 +76,45 @@ func (r *RecoverDatabaseTables) Run(ctx context.Context, glueAPI glueiface.GlueA
 				return false
 			}
 		})
-		if scanTablesErr != nil {
-			cancel()
-		}
-	}()
-	for page := range tables {
-		tasks := make([]RecoverTablePartitions, len(page))
-		taskErrors := make([]error, len(page))
-		wg := sync.WaitGroup{}
-		wg.Add(len(page))
-		for i, tbl := range page {
-			tbl := tbl
-			i := i
-			task := &tasks[i]
-			start := r.Start
-			if start.IsZero() {
-				start = *tbl.CreateTime
+	})
+	group.Go(func() error {
+		for page := range tables {
+			tasks := make([]*RecoverTablePartitions, len(page))
+			childGroup, ctx := errgroup.WithContext(ctx)
+			for i, tbl := range page {
+				i, tbl := i, tbl
+				childGroup.Go(func() error {
+					start := r.Start
+					if start.IsZero() {
+						start = *tbl.CreateTime
+					}
+					end := r.End
+					if end.IsZero() {
+						end = time.Now()
+					}
+					task := &RecoverTablePartitions{
+						Start:        r.Start,
+						End:          r.End,
+						DatabaseName: r.DatabaseName,
+						TableName:    aws.StringValue(tbl.Name),
+						NumWorkers:   r.NumWorkers,
+						DryRun:       r.DryRun,
+					}
+					tasks[i] = task
+					return task.recoverTable(ctx, glueAPI, s3API, log, tbl)
+				})
 			}
-			end := r.End
-			if end.IsZero() {
-				end = time.Now()
+			err := childGroup.Wait()
+			for _, task := range tasks {
+				r.Stats.merge(task.Stats)
 			}
-			*task = RecoverTablePartitions{
-				Start:        r.Start,
-				End:          r.End,
-				DatabaseName: r.DatabaseName,
-				TableName:    aws.StringValue(tbl.Name),
-				NumWorkers:   r.NumWorkers,
-				DryRun:       r.DryRun,
+			if err != nil {
+				return err
 			}
-			go func() {
-				defer wg.Done()
-				err := task.recoverTable(ctx, glueAPI, s3API, log, tbl)
-				if err != nil {
-					taskErrors[i] = err
-				}
-			}()
 		}
-		wg.Wait()
-
-		var err error
-		for i, task := range tasks {
-			err = multierr.Append(err, taskErrors[i])
-			r.Stats.merge(&task.Status)
-		}
-		if err != nil {
-			cancel()
-			return err
-		}
-	}
-	return nil
+		return nil
+	})
+	return group.Wait()
 }
 
 type RecoverTablePartitions struct {
@@ -138,7 +125,7 @@ type RecoverTablePartitions struct {
 	Start        time.Time
 	End          time.Time
 	LastDate     time.Time
-	Status       RecoverStats
+	Stats        RecoverStats
 }
 
 func (r *RecoverTablePartitions) Run(ctx context.Context, apiGlue glueiface.GlueAPI, apiS3 s3iface.S3API, log *zap.Logger) error {
@@ -198,40 +185,37 @@ type recoverTask struct {
 }
 
 func (r *RecoverTablePartitions) processRecoverTasks(ctx context.Context, tasks <-chan recoverTask, w recoverWorker, numWorkers int) error {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	group, ctx := errgroup.WithContext(ctx)
 	if numWorkers < 1 {
 		numWorkers = 1
 	}
-	wg := sync.WaitGroup{}
 	workers := make([]recoverWorker, numWorkers)
-	wg.Add(numWorkers)
 	for i := range workers {
 		workers[i] = w
 	}
 	for i := range workers {
 		w := &workers[i]
-		go func() {
-			defer wg.Done()
+		group.Go(func() error {
 			for task := range tasks {
 				err := w.recoverPartitionAt(ctx, task.table, task.date)
 				switch err {
 				case nil:
 					w.lastDateProcessed = task.date
+					continue
 				case context.DeadlineExceeded, context.Canceled:
-					return
+					return nil
 				default:
 					w.err = err
-					cancel()
-					return
+					return err
 				}
 			}
-		}()
+			return nil
+		})
 	}
-	wg.Wait()
-	var err error
-	for _, w := range workers {
-		r.Status.merge(&w.status)
+	err := group.Wait()
+	for i := range workers {
+		w := &workers[i]
+		r.Stats.merge(w.stats)
 		if r.LastDate.Before(w.lastDateProcessed) {
 			r.LastDate = w.lastDateProcessed
 		}
@@ -246,13 +230,13 @@ type recoverWorker struct {
 	s3                s3iface.S3API
 	log               *zap.Logger
 	lastDateProcessed time.Time
-	status            RecoverStats
+	stats             RecoverStats
 	err               error
 }
 
 func (w *recoverWorker) recoverPartitionAt(ctx context.Context, tbl *glue.TableData, tm time.Time) error {
 	partitions, err := w.findGluePartitionsAt(ctx, tbl, tm)
-	w.status.NumProcessed += len(partitions)
+	w.stats.NumProcessed += len(partitions)
 	if err != nil {
 		return err
 	}
@@ -277,12 +261,12 @@ func (w *recoverWorker) recoverPartitionAt(ctx context.Context, tbl *glue.TableD
 		if err != nil {
 			// No data found, skip to the next hour
 			if errors.Is(err, errS3ObjectNotFound) {
-				w.status.NumS3Miss++
+				w.stats.NumS3Miss++
 				continue
 			}
 			return err
 		}
-		w.status.NumS3Hit++
+		w.stats.NumS3Hit++
 		// We found a partition to be recovered
 		desc := *tbl.StorageDescriptor
 		desc.Location = aws.String(location)
@@ -299,10 +283,10 @@ func (w *recoverWorker) recoverPartitionAt(ctx context.Context, tbl *glue.TableD
 	// RecoverTable all partitions with a single API call
 	reply, err := w.glue.BatchCreatePartitionWithContext(ctx, batch)
 	if err != nil {
-		w.status.NumFailed += batchSize
+		w.stats.NumFailed += batchSize
 		return errors.Wrapf(err, "failed to recover %d partitions", batchSize)
 	}
-	w.status.NumRecovered += batchSize
+	w.stats.NumRecovered += batchSize
 	// Collect errors, ignoring AlreadyExists
 	if err := w.collectErrors(reply.Errors); err != nil {
 		return err
@@ -315,7 +299,7 @@ func (w *recoverWorker) collectErrors(replyErrors []*glue.PartitionError) (err e
 		if e == nil {
 			continue
 		}
-		w.status.NumRecovered--
+		w.stats.NumRecovered--
 		if e.ErrorDetail == nil {
 			continue
 		}
@@ -323,7 +307,7 @@ func (w *recoverWorker) collectErrors(replyErrors []*glue.PartitionError) (err e
 		if code == glue.ErrCodeAlreadyExistsException {
 			continue
 		}
-		w.status.NumFailed++
+		w.stats.NumFailed++
 		message := aws.StringValue(e.ErrorDetail.ErrorMessage)
 		tm, _ := awsglue.PartitionTimeFromValues(e.PartitionValues)
 		// Using fmt.Errorf to not add stack (this is a helper)
@@ -432,10 +416,12 @@ type RecoverStats struct {
 	NumProcessed int
 }
 
-func (s *RecoverStats) merge(other *RecoverStats) {
-	s.NumRecovered += other.NumRecovered
-	s.NumS3Hit += other.NumS3Hit
-	s.NumS3Miss += other.NumS3Miss
-	s.NumProcessed += other.NumProcessed
-	s.NumFailed += other.NumFailed
+func (s *RecoverStats) merge(others ...RecoverStats) {
+	for _, other := range others {
+		s.NumRecovered += other.NumRecovered
+		s.NumS3Hit += other.NumS3Hit
+		s.NumS3Miss += other.NumS3Miss
+		s.NumProcessed += other.NumProcessed
+		s.NumFailed += other.NumFailed
+	}
 }

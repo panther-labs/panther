@@ -20,12 +20,11 @@ package main
 
 import (
 	"context"
-	"sync"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/glue"
-	"go.uber.org/multierr"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/gluetasks"
@@ -36,7 +35,9 @@ func runSync(ctx context.Context, sess *session.Session, log *zap.SugaredLogger)
 	if optPrefix := *opts.LogTypePrefix; optPrefix != "" {
 		matchPrefix = awsglue.GetTableName(optPrefix)
 	}
-	tasks := []*gluetasks.SyncDatabaseTables{
+	glueAPI := glue.New(sess)
+	group, ctx := errgroup.WithContext(ctx)
+	tasks := []gluetasks.SyncDatabaseTables{
 		{
 			DatabaseName: awsglue.LogProcessingDatabaseName,
 			DryRun:       *opts.DryRun,
@@ -58,18 +59,11 @@ func runSync(ctx context.Context, sess *session.Session, log *zap.SugaredLogger)
 			NumWorkers:           *opts.NumWorkers,
 		},
 	}
-	glueAPI := glue.New(sess)
-	taskErrors := make([]error, len(tasks))
-	wg := sync.WaitGroup{}
-	wg.Add(len(tasks))
-	for i, task := range tasks {
-		task := task
-		i := i
-		go func() {
-			defer wg.Done()
-			taskErrors[i] = task.Run(ctx, glueAPI, log.Desugar())
-		}()
+	for i := range tasks {
+		task := &tasks[i]
+		group.Go(func() error {
+			return task.Run(ctx, glueAPI, log.Desugar())
+		})
 	}
-	wg.Wait()
-	return multierr.Combine(taskErrors...)
+	return group.Wait()
 }

@@ -22,7 +22,6 @@ import (
 	"context"
 	"reflect"
 	"regexp"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -30,8 +29,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
-	"go.uber.org/multierr"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 )
@@ -47,8 +46,7 @@ type SyncDatabaseTables struct {
 }
 
 func (s *SyncDatabaseTables) Run(ctx context.Context, api glueiface.GlueAPI, log *zap.Logger) error {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	group, ctx := errgroup.WithContext(ctx)
 	if log == nil {
 		log = zap.NewNop()
 	}
@@ -61,8 +59,7 @@ func (s *SyncDatabaseTables) Run(ctx context.Context, api glueiface.GlueAPI, log
 		log.Info("db sync finished", zap.Any("stats", &s.Stats), zap.Duration("duration", time.Since(since)))
 	}(time.Now())
 	tablePages := make(chan []*glue.TableData)
-	var scanTablesErr error
-	go func() {
+	group.Go(func() error {
 		defer close(tablePages)
 		input := glue.GetTablesInput{
 			DatabaseName: &s.DatabaseName,
@@ -72,7 +69,7 @@ func (s *SyncDatabaseTables) Run(ctx context.Context, api glueiface.GlueAPI, log
 			input.Expression = &expr
 		}
 		log.Info("scanning for tables")
-		scanTablesErr = api.GetTablesPagesWithContext(ctx, &input, func(page *glue.GetTablesOutput, _ bool) bool {
+		err := api.GetTablesPagesWithContext(ctx, &input, func(page *glue.GetTablesOutput, _ bool) bool {
 			log.Debug("table list found", zap.Int("numTables", len(page.TableList)))
 			select {
 			case tablePages <- page.TableList:
@@ -81,48 +78,41 @@ func (s *SyncDatabaseTables) Run(ctx context.Context, api glueiface.GlueAPI, log
 				return false
 			}
 		})
-		if scanTablesErr != nil {
-			log.Error("table scan failed", zap.Error(scanTablesErr))
-			cancel()
-		}
-	}()
-	for page := range tablePages {
-		tasks := make([]*SyncTablePartitions, len(page))
-		taskErrors := make([]error, len(page))
-		wg := sync.WaitGroup{}
-		wg.Add(len(page))
-		for i, tbl := range page {
-			tbl := tbl
-			task := &SyncTablePartitions{
-				DatabaseName:         s.DatabaseName,
-				AfterTableCreateTime: s.AfterTableCreateTime,
-				TableName:            aws.StringValue(tbl.Name),
-				NumWorkers:           s.NumWorkers,
-				DryRun:               s.DryRun,
-			}
-			tasks[i] = task
-			go func(i int) {
-				defer wg.Done()
-				err := task.syncTable(ctx, api, log, tbl)
-				if err != nil {
-					taskErrors[i] = err
-				}
-			}(i)
-		}
-		wg.Wait()
-
-		var err error
-		for i, task := range tasks {
-			err = multierr.Append(err, taskErrors[i])
-			s.Stats.merge(&task.Stats)
-		}
 		if err != nil {
-			log.Error("failed to sync table", zap.Error(err))
-			cancel()
-			return err
+			log.Error("table scan failed", zap.Error(err))
 		}
-	}
-	return nil
+		return err
+	})
+	group.Go(func() error {
+		for page := range tablePages {
+			tasks := make([]*SyncTablePartitions, len(page))
+			childGroup, ctx := errgroup.WithContext(ctx)
+			for i, tbl := range page {
+				i, tbl := i, tbl
+				task := &SyncTablePartitions{
+					DatabaseName:         s.DatabaseName,
+					AfterTableCreateTime: s.AfterTableCreateTime,
+					TableName:            aws.StringValue(tbl.Name),
+					NumWorkers:           s.NumWorkers,
+					DryRun:               s.DryRun,
+				}
+				tasks[i] = task
+				childGroup.Go(func() error {
+					return task.syncTable(ctx, api, log, tbl)
+				})
+			}
+			err := childGroup.Wait()
+			for _, task := range tasks {
+				s.Stats.merge(&task.Stats)
+			}
+			if err != nil {
+				log.Error("failed to sync db tables", zap.Error(err))
+				return err
+			}
+		}
+		return nil
+	})
+	return group.Wait()
 }
 
 type SyncTablePartitions struct {
@@ -158,11 +148,9 @@ func (s *SyncTablePartitions) Run(ctx context.Context, api glueiface.GlueAPI, lo
 }
 
 func (s *SyncTablePartitions) syncTable(ctx context.Context, api glueiface.GlueAPI, log *zap.Logger, tbl *glue.TableData) error {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	group, ctx := errgroup.WithContext(ctx)
 	pageQueue := make(chan *glue.GetPartitionsOutput)
-	var scanError error
-	go func() {
+	group.Go(func() error {
 		defer close(pageQueue)
 		input := glue.GetPartitionsInput{
 			DatabaseName: tbl.DatabaseName,
@@ -177,7 +165,7 @@ func (s *SyncTablePartitions) syncTable(ctx context.Context, api glueiface.GlueA
 			input.NextToken = &s.NextToken
 		}
 		log.Info("scanning partitions")
-		scanError = api.GetPartitionsPagesWithContext(ctx, &input, func(page *glue.GetPartitionsOutput, _ bool) bool {
+		err := api.GetPartitionsPagesWithContext(ctx, &input, func(page *glue.GetPartitionsOutput, _ bool) bool {
 			log.Debug("partitions found", zap.Int("numPartitions", len(page.Partitions)))
 			select {
 			case pageQueue <- page:
@@ -186,63 +174,53 @@ func (s *SyncTablePartitions) syncTable(ctx context.Context, api glueiface.GlueA
 				return false
 			}
 		})
-		if scanError != nil {
-			log.Error("partition scan failed", zap.Error(scanError))
-			// abort early
-			cancel()
+		if err != nil {
+			log.Error("partition scan failed", zap.Error(err))
 		}
-	}()
-
-	for page := range pageQueue {
-		s.Stats.NumPages++
-		var tasks []partitionUpdate
-		for _, p := range page.Partitions {
-			tm, err := awsglue.PartitionTimeFromValues(p.Values)
-			if err != nil {
-				log.Warn("invalid partition", zap.Strings("values", aws.StringValueSlice(p.Values)), zap.Error(err))
-				return errors.Wrapf(err, "failed to sync %s.%s partitions", s.DatabaseName, s.TableName)
-			}
-			s.Stats.observePartition(tm)
-			if isSynced(tbl, p) {
-				continue
-			}
-			s.Stats.NumDiff++
-			if s.DryRun {
-				log.Debug("skipping partition update", zap.String("reason", "dryRun"), zap.String("partition", tm.Format(time.RFC3339)))
-				continue
-			}
-			tasks = append(tasks, partitionUpdate{
-				Partition: p,
-				Table:     tbl,
-				Time:      tm,
-			})
-		}
-		if len(tasks) == 0 {
-			continue
-		}
-		queue := make(chan partitionUpdate)
-		go func() {
-			// signals workers to exit
-			defer close(queue)
-			for _, task := range tasks {
-				select {
-				case queue <- task:
-					log.Info("updating partition", zap.Stringer("partitionTime", task.Time))
-				case <-ctx.Done():
-					return
+		return err
+	})
+	group.Go(func() error {
+		for page := range pageQueue {
+			s.Stats.NumPages++
+			var tasks []partitionUpdate
+			for _, p := range page.Partitions {
+				tm, err := awsglue.PartitionTimeFromValues(p.Values)
+				if err != nil {
+					log.Warn("invalid partition", zap.Strings("values", aws.StringValueSlice(p.Values)), zap.Error(err))
+					return errors.Wrapf(err, "failed to sync %s.%s partitions", s.DatabaseName, s.TableName)
 				}
+				s.Stats.observePartition(tm)
+				if isSynced(tbl, p) {
+					continue
+				}
+				s.Stats.NumDiff++
+				if s.DryRun {
+					log.Debug("skipping partition update", zap.String("reason", "dryRun"), zap.String("partition", tm.Format(time.RFC3339)))
+					continue
+				}
+				tasks = append(tasks, partitionUpdate{
+					Partition: p,
+					Table:     tbl,
+					Time:      tm,
+				})
 			}
-		}()
-		// Process updates in parallel
-		numSynced, err := processPartitionUpdates(ctx, api, queue, s.NumWorkers)
-		s.Stats.NumSynced += int(numSynced)
-		if err := multierr.Append(ctx.Err(), err); err != nil {
-			return err
+			if len(tasks) == 0 {
+				continue
+			}
+
+			// Process updates in parallel
+			log.Info("updating partitions", zap.Int("numPartitions", len(tasks)))
+			numSynced, err := processPartitionUpdates(ctx, api, tasks, s.NumWorkers)
+			s.Stats.NumSynced += int(numSynced)
+			if err != nil {
+				return err
+			}
+			// Only update next token if all partitions in page were processed
+			s.NextToken = aws.StringValue(page.NextToken)
 		}
-		// Only update next token if all partitions in page were processed
-		s.NextToken = aws.StringValue(page.NextToken)
-	}
-	return scanError
+		return nil
+	})
+	return group.Wait()
 }
 
 func findTable(ctx context.Context, api glueiface.GlueAPI, dbName, tblName string) (*glue.TableData, error) {
@@ -271,38 +249,43 @@ type partitionUpdate struct {
 	Time      time.Time
 }
 
-func processPartitionUpdates(ctx context.Context, api glueiface.GlueAPI, queue <-chan partitionUpdate, numWorkers int) (int64, error) {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+func processPartitionUpdates(ctx context.Context, api glueiface.GlueAPI, tasks []partitionUpdate, numWorkers int) (int64, error) {
+	group, ctx := errgroup.WithContext(ctx)
+	queue := make(chan partitionUpdate)
+	group.Go(func() error {
+		// signals workers to exit
+		defer close(queue)
+		for _, task := range tasks {
+			select {
+			case queue <- task:
+			case <-ctx.Done():
+				break
+			}
+		}
+		return nil
+	})
 	if numWorkers < 1 {
 		numWorkers = 1
 	}
 	var numSynced int64
-	syncErrors := make([]error, numWorkers)
-	wg := sync.WaitGroup{}
-	wg.Add(numWorkers)
 	for i := 0; i < numWorkers; i++ {
-		i := i
-		go func() {
-			defer wg.Done()
+		group.Go(func() error {
 			for task := range queue {
 				err := syncPartition(ctx, api, task.Table, task.Partition)
 				switch err {
 				case nil:
 					atomic.AddInt64(&numSynced, 1)
+					continue
 				case context.Canceled, context.DeadlineExceeded:
-					return
+					return nil
 				default:
-					syncErrors[i] = err
-					// abort early
-					cancel()
-					return
+					return err
 				}
 			}
-		}()
+			return nil
+		})
 	}
-	wg.Wait()
-	return numSynced, multierr.Combine(syncErrors...)
+	return numSynced, group.Wait()
 }
 
 func syncPartition(ctx context.Context, api glueiface.GlueAPI, tbl *glue.TableData, p *glue.Partition) error {

@@ -20,14 +20,13 @@ package main
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"go.uber.org/multierr"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/gluetasks"
@@ -79,19 +78,14 @@ func runRecover(ctx context.Context, sess *session.Session, log *zap.SugaredLogg
 			NumWorkers:   *opts.NumWorkers,
 		},
 	}
+	g, ctx := errgroup.WithContext(ctx)
 	glueAPI := glue.New(sess)
 	s3API := s3.New(sess)
-	taskErrors := make([]error, len(tasks))
-	wg := sync.WaitGroup{}
-	wg.Add(len(tasks))
 	for i := range tasks {
-		go func(i int) {
-			task := &tasks[i]
-			defer wg.Done()
-			taskErrors[i] = task.Run(ctx, glueAPI, s3API, log.Desugar())
-			log.Info("finished recovering %q: %v", task.DatabaseName, task.Stats)
-		}(i)
+		task := &tasks[i]
+		g.Go(func() error {
+			return task.Run(ctx, glueAPI, s3API, log.Desugar())
+		})
 	}
-	wg.Wait()
-	return multierr.Combine(taskErrors...)
+	return g.Wait()
 }
