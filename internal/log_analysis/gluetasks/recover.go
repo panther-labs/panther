@@ -57,10 +57,17 @@ type RecoverDatabaseTables struct {
 }
 
 func (r *RecoverDatabaseTables) Run(ctx context.Context, glueAPI glueiface.GlueAPI, s3API s3iface.S3API, log *zap.Logger) error {
+	if log == nil {
+		log = zap.NewNop()
+	}
+	log = log.Named("RecoverDatabase").With(
+		zap.String("database", r.DatabaseName),
+	)
 	group, ctx := errgroup.WithContext(ctx)
 	tables := make(chan []*glue.TableData)
 	group.Go(func() error {
 		defer close(tables)
+		log.Info("scanning for tables")
 		input := glue.GetTablesInput{
 			DatabaseName: &r.DatabaseName,
 		}
@@ -68,7 +75,7 @@ func (r *RecoverDatabaseTables) Run(ctx context.Context, glueAPI glueiface.GlueA
 			expr := "^" + regexp.QuoteMeta(r.MatchPrefix)
 			input.Expression = &expr
 		}
-		return glueAPI.GetTablesPagesWithContext(ctx, &input, func(page *glue.GetTablesOutput, _ bool) bool {
+		err := glueAPI.GetTablesPagesWithContext(ctx, &input, func(page *glue.GetTablesOutput, _ bool) bool {
 			select {
 			case tables <- page.TableList:
 				return true
@@ -76,31 +83,37 @@ func (r *RecoverDatabaseTables) Run(ctx context.Context, glueAPI glueiface.GlueA
 				return false
 			}
 		})
+		if err != nil {
+			log.Error("failed to scan tables", zap.Error(err))
+		}
+		return err
 	})
 	group.Go(func() error {
 		for page := range tables {
 			tasks := make([]*RecoverTablePartitions, len(page))
+			log.Info("recovering tables in parallel", zap.Int("numTables", len(tasks)))
 			childGroup, ctx := errgroup.WithContext(ctx)
 			for i, tbl := range page {
 				i, tbl := i, tbl
+				start := r.Start
+				if start.IsZero() {
+					start = *tbl.CreateTime
+				}
+				end := r.End
+				if end.IsZero() {
+					end = time.Now()
+				}
+				task := &RecoverTablePartitions{
+					Start:        r.Start,
+					End:          r.End,
+					DatabaseName: r.DatabaseName,
+					TableName:    aws.StringValue(tbl.Name),
+					NumWorkers:   r.NumWorkers,
+					DryRun:       r.DryRun,
+				}
+				tasks[i] = task
 				childGroup.Go(func() error {
-					start := r.Start
-					if start.IsZero() {
-						start = *tbl.CreateTime
-					}
-					end := r.End
-					if end.IsZero() {
-						end = time.Now()
-					}
-					task := &RecoverTablePartitions{
-						Start:        r.Start,
-						End:          r.End,
-						DatabaseName: r.DatabaseName,
-						TableName:    aws.StringValue(tbl.Name),
-						NumWorkers:   r.NumWorkers,
-						DryRun:       r.DryRun,
-					}
-					tasks[i] = task
+					log := log.With(zap.String("table", task.TableName))
 					return task.recoverTable(ctx, glueAPI, s3API, log, tbl)
 				})
 			}
@@ -130,7 +143,15 @@ type RecoverTablePartitions struct {
 
 func (r *RecoverTablePartitions) Run(ctx context.Context, apiGlue glueiface.GlueAPI, apiS3 s3iface.S3API, log *zap.Logger) error {
 	tbl, err := findTable(ctx, apiGlue, r.DatabaseName, r.TableName)
+	if log == nil {
+		log = zap.NewNop()
+	}
+	log = log.Named("RecoverTablePartitions").With(
+		zap.String("database", r.DatabaseName),
+		zap.String("table", r.TableName),
+	)
 	if err != nil {
+		log.Error("table not found", zap.Error(err))
 		return err
 	}
 	return r.recoverTable(ctx, apiGlue, apiS3, log, tbl)
@@ -138,7 +159,6 @@ func (r *RecoverTablePartitions) Run(ctx context.Context, apiGlue glueiface.Glue
 
 func (r *RecoverTablePartitions) recoverTable(ctx context.Context,
 	glueAPI glueiface.GlueAPI, s3API s3iface.S3API, log *zap.Logger, tbl *glue.TableData) error {
-
 	start := r.LastDate
 	if start.IsZero() {
 		start = r.Start
@@ -147,16 +167,7 @@ func (r *RecoverTablePartitions) recoverTable(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	if log == nil {
-		log = zap.NewNop()
-	}
-	log = log.With(
-		zap.String("gluetask", "recover"),
-		zap.String("database", r.DatabaseName),
-		zap.String("table", r.TableName),
-		zap.Stringer("start", start),
-		zap.Stringer("end", end),
-	)
+	log.Info("starting recovery", zap.Stringer("start", start), zap.Stringer("end", end))
 	tasks := make(chan recoverTask)
 	go func() {
 		defer close(tasks)

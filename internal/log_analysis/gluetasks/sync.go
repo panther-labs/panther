@@ -50,10 +50,7 @@ func (s *SyncDatabaseTables) Run(ctx context.Context, api glueiface.GlueAPI, log
 	if log == nil {
 		log = zap.NewNop()
 	}
-	log = log.With(
-		zap.String("gluetask", "SyncDatabaseTables"),
-		zap.String("db", s.DatabaseName),
-	)
+	log = log.Named("SyncDatabaseTables").With(zap.String("database", s.DatabaseName))
 	log.Info("sync started")
 	defer func(since time.Time) {
 		log.Info("db sync finished", zap.Any("stats", &s.Stats), zap.Duration("duration", time.Since(since)))
@@ -98,6 +95,7 @@ func (s *SyncDatabaseTables) Run(ctx context.Context, api glueiface.GlueAPI, log
 				}
 				tasks[i] = task
 				childGroup.Go(func() error {
+					log := log.With(zap.String("table", task.TableName))
 					return task.syncTable(ctx, api, log, tbl)
 				})
 			}
@@ -114,6 +112,12 @@ func (s *SyncDatabaseTables) Run(ctx context.Context, api glueiface.GlueAPI, log
 	})
 	return group.Wait()
 }
+func (s *SyncDatabaseTables) buildLogger(log *zap.Logger) *zap.Logger {
+	if log == nil {
+		log = zap.NewNop()
+	}
+	return log.With(zap.String("database", s.DatabaseName))
+}
 
 type SyncTablePartitions struct {
 	DatabaseName         string
@@ -126,22 +130,22 @@ type SyncTablePartitions struct {
 }
 
 func (s *SyncTablePartitions) Run(ctx context.Context, api glueiface.GlueAPI, log *zap.Logger) error {
-	if log == nil {
-		log = zap.NewNop()
-	}
-	log = log.With(
-		zap.String("gluetask", "SyncTablePartitions"),
-		zap.String("db", s.DatabaseName),
-		zap.String("table", s.TableName),
+	log = s.buildLogger(log).Named("SyncTablePartitions").With(
+		zap.String("database", s.DatabaseName),
 	)
-
 	defer func(since time.Time) {
-		log.Info("table sync finished", zap.Duration("duration", time.Since(since)), zap.Any("stats", &s.Stats))
+		log.Info("table sync finished",
+			zap.Duration("duration", time.Since(since)),
+			zap.Any("stats", &s.Stats),
+		)
 	}(time.Now())
 
 	tbl, err := findTable(ctx, api, s.DatabaseName, s.TableName)
 	if err != nil {
-		log.Error("table not found", zap.Error(err))
+		log.Error("table not found",
+			zap.String("database", s.DatabaseName),
+			zap.String("table", s.TableName),
+			zap.Error(err))
 		return err
 	}
 	return s.syncTable(ctx, api, log, tbl)
@@ -221,6 +225,10 @@ func (s *SyncTablePartitions) syncTable(ctx context.Context, api glueiface.GlueA
 		return nil
 	})
 	return group.Wait()
+}
+
+func (s *SyncTablePartitions) buildLogger(log *zap.Logger) *zap.Logger {
+	return log.With(zap.String("table", s.TableName))
 }
 
 func findTable(ctx context.Context, api glueiface.GlueAPI, dbName, tblName string) (*glue.TableData, error) {
