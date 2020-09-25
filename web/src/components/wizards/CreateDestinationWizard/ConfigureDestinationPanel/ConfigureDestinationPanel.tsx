@@ -23,7 +23,7 @@ import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm'
 import DestinationFormSwitcher from 'Components/forms/DestinationFormSwitcher';
 import { capitalize, extractErrorMessage } from 'Helpers/utils';
 import { useWizardContext, WizardPanel } from 'Components/Wizard';
-import { trackError, trackEvent } from 'Helpers/analytics';
+import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { useAddDestination } from './graphql/addDestination.generated';
 import { WizardData } from '../CreateDestinationWizard';
 
@@ -65,11 +65,11 @@ const ConfigureDestinationPanel: React.FC = () => {
   const [addDestination] = useAddDestination({
     onCompleted: data => {
       updateData({ destination: data.addDestination });
-      trackEvent({ event: 'added-destination', src: 'destinations', ctx: selectedDestinationType });
+      trackEvent({ event: EventEnum.AddedDestination, src: SrcEnum.Destinations, ctx: selectedDestinationType }); // prettier-ignore
       goToNextStep();
     },
     onError: error => {
-      trackError({ error: 'failed-to-add-destination', src: 'destinations', ctx: selectedDestinationType, data: error }); // prettier-ignore
+      trackError({ error: TrackErrorEnum.FailedToAddDestination, src: SrcEnum.Destinations, ctx: selectedDestinationType, data: error }); // prettier-ignore
       pushSnackbar({
         variant: 'error',
         title:

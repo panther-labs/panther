@@ -19,7 +19,7 @@
 import React from 'react';
 import { Box, SimpleGrid } from 'pouncejs';
 import { DESTINATIONS } from 'Source/constants';
-import { trackEvent } from 'Helpers/analytics';
+import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
 import { useWizardContext, WizardPanel } from 'Components/Wizard';
 import DestinationCard from './DestinationCard';
 import { WizardData } from '../CreateDestinationWizard';
@@ -41,7 +41,7 @@ export const ChooseDestinationPanel: React.FC = () => {
             logo={destinationConfig.logo}
             title={destinationConfig.title}
             onClick={() => {
-              trackEvent({ event: 'picked-destination-to-create', src: 'destinations', ctx: destinationConfig.type }); // prettier-ignore
+              trackEvent({ event: EventEnum.PickedDestination, src: SrcEnum.Destinations, ctx: destinationConfig.type }); // prettier-ignore
               setData({ selectedDestinationType: destinationConfig.type });
               goToNextStep();
             }}

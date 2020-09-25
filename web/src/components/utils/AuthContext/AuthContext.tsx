@@ -21,7 +21,7 @@ import Auth, { CognitoUser } from '@aws-amplify/auth';
 import { USER_INFO_STORAGE_KEY } from 'Source/constants';
 import { pantherConfig } from 'Source/config';
 import storage from 'Helpers/storage';
-import { trackError, trackEvent } from 'Helpers/analytics';
+import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 
 // Challenge names from Cognito from
 // https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_RespondToAuthChallenge.html#API_RespondToAuthChallenge_RequestSyntax
@@ -274,10 +274,10 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         const confirmedUser = await Auth.currentAuthenticatedUser();
         setAuthUser(confirmedUser);
         setAuthenticated(true);
-        trackEvent({ event: 'success-sign-in' });
+        trackEvent({ event: EventEnum.SignedIn, src: SrcEnum.Auth });
         onSuccess();
       } catch (err) {
-        trackError({ error: 'failed-mfa', data: err });
+        trackError({ error: TrackErrorEnum.FailedMfa, src: SrcEnum.Auth, data: err });
         onError(err as AuthError);
       }
     },

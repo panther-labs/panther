@@ -30,7 +30,7 @@ import {
 } from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
 import useRouter from 'Hooks/useRouter';
-import { trackError, trackEvent } from 'Helpers/analytics';
+import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { useCreateRule } from './graphql/createRule.generated';
 
 const initialValues: Required<AddRuleInput> = {
@@ -55,10 +55,11 @@ const CreateRulePage: React.FC = () => {
   const [createRule, { error }] = useCreateRule({
     refetchQueries: [{ query: ListRulesDocument, variables: { input: {} } }],
     onCompleted: data => {
-      trackEvent({ event: 'added-rule' });
+      trackEvent({ event: EventEnum.AddedRule, src: SrcEnum.Rules });
       history.push(urls.logAnalysis.rules.details(data.addRule.id));
     },
-    onError: err => trackError({ error: 'failed-to-create-rule', data: err }),
+    onError: err =>
+      trackError({ error: TrackErrorEnum.FailedToAddRule, src: SrcEnum.Rules, data: err }),
   });
 
   const handleSubmit = React.useCallback(

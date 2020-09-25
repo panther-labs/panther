@@ -37,51 +37,94 @@ const evaluateTracking = (...args) => {
   }
 };
 
-enum TrackEventEnum {
-  'picked-destination-to-create' = 'Picked Destination to create',
-  'added-destination' = 'Added Destination',
-  'added-rule' = 'Added Rule',
-  'success-sign-in' = 'Successful Sign in',
-}
-
-enum TrackErrorEnum {
-  'failed-to-add-destination' = 'Failed to create destination',
-  'failed-to-create-rule' = 'Failed to create Rule',
-  'failed-mfa' = 'Failed MFA',
-}
-
 enum TrackPageViewEnum {
   'log-analysis-overview' = 'Log Analysis Overview',
 }
-
-type srcType = 'destinations';
-type ctxType = DestinationTypeEnum;
 
 interface TrackPageViewProps {
   page: keyof typeof TrackPageViewEnum;
 }
 
-interface TrackEventProps {
-  event: keyof typeof TrackEventEnum;
-  src?: srcType;
-  ctx?: ctxType;
+export enum EventEnum {
+  SignedIn = 'Signed in successfully',
+  AddedRule = 'Added Rule',
+  AddedDestination = 'Added Destination',
+  PickedDestination = 'Picked Destination to create',
 }
 
-interface TrackErrorProps {
-  error: keyof typeof TrackErrorEnum;
-  src?: srcType;
-  ctx?: ctxType;
-  data?: any;
+export enum SrcEnum {
+  Destinations = 'destinations',
+  Rules = 'rules',
+  Auth = 'auth',
 }
+
+interface SignInEvent {
+  event: EventEnum.SignedIn;
+  src: SrcEnum.Auth;
+}
+
+interface AddedRuleEvent {
+  event: EventEnum.AddedRule;
+  src: SrcEnum.Rules;
+}
+
+interface AddedDestinationEvent {
+  event: EventEnum.AddedDestination;
+  src: SrcEnum.Destinations;
+  ctx: DestinationTypeEnum;
+}
+
+interface PickedDestinationEvent {
+  event: EventEnum.PickedDestination;
+  src: SrcEnum.Destinations;
+  ctx: DestinationTypeEnum;
+}
+
+type TrackEvent = AddedDestinationEvent | SignInEvent | AddedRuleEvent | PickedDestinationEvent;
 
 export const trackPageView = ({ page }: TrackPageViewProps) => {
   evaluateTracking(TrackPageViewEnum[page], { type: 'pageview' });
 };
 
-export const trackEvent = ({ event, src, ctx }: TrackEventProps) => {
-  evaluateTracking(TrackEventEnum[event], { type: 'event', src, ctx });
+export const trackEvent = (payload: TrackEvent) => {
+  evaluateTracking(payload.event, {
+    type: 'event',
+    src: payload.src,
+    ctx: 'ctx' in payload ? payload.ctx : null,
+  });
 };
 
-export const trackError = ({ error, src, ctx, data }: TrackErrorProps) => {
-  evaluateTracking(TrackErrorEnum[error], { type: 'error', src, ctx, data });
+export enum TrackErrorEnum {
+  FailedToAddDestination = 'Failed to create Destination',
+  FailedToAddRule = 'Failed to create Rule',
+  FailedMfa = 'Failed MFA',
+}
+
+interface ErrorEvent {
+  data: any;
+}
+interface AddDestinationError extends ErrorEvent {
+  error: TrackErrorEnum.FailedToAddDestination;
+  src: SrcEnum.Destinations;
+  ctx: DestinationTypeEnum;
+}
+
+interface AddRuleError extends ErrorEvent {
+  error: TrackErrorEnum.FailedToAddRule;
+  src: SrcEnum.Rules;
+}
+interface MfaError extends ErrorEvent {
+  error: TrackErrorEnum.FailedMfa;
+  src: SrcEnum.Auth;
+}
+
+type TrackError = AddDestinationError | AddRuleError | MfaError;
+
+export const trackError = (payload: TrackError) => {
+  evaluateTracking(payload.error, {
+    type: 'error',
+    src: payload,
+    ctx: 'ctx' in payload ? payload.ctx : null,
+    data: 'data' in payload ? payload.data : null,
+  });
 };
