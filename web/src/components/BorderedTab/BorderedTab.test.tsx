@@ -20,7 +20,7 @@ describe('BorderedTab', () => {
     expect(container).toMatchSnapshot();
   });
 
-  it('expect to work like a normal `Tab` element', () => {
+  it('works like a normal `Tab` element', () => {
     const { getByText } = render(
       <Tabs>
         <TabList>
