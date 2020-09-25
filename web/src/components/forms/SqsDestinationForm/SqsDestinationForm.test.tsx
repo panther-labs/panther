@@ -18,14 +18,18 @@
 
 import React from 'react';
 import { render, fireEvent, waitFor, waitMs, faker } from 'test-utils';
-import { SeverityEnum, SqsConfig } from 'Generated/schema';
+import { SeverityEnum } from 'Generated/schema';
 import SqsDestinationForm from './index';
 
 const emptyInitialValues = {
   outputId: null,
   displayName: '',
   defaultForSeverity: [],
-  outputConfig: {},
+  outputConfig: {
+    sqs: {
+      queueUrl: '',
+    },
+  },
 };
 
 const validUrl = faker.internet.url();
@@ -38,7 +42,7 @@ const initialValues = {
   outputConfig: {
     sqs: {
       queueUrl: validUrl,
-    } as SqsConfig,
+    },
   },
   defaultForSeverity: [severity],
 };

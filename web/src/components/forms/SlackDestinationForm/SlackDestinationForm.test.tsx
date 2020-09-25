@@ -25,7 +25,11 @@ const emptyInitialValues = {
   outputId: null,
   displayName: '',
   defaultForSeverity: [],
-  outputConfig: {},
+  outputConfig: {
+    slack: {
+      webhookURL: '',
+    },
+  },
 };
 
 const validUrl = faker.internet.url();
@@ -35,12 +39,12 @@ const severity = SeverityEnum.Critical;
 const initialValues = {
   outputId: '123',
   displayName,
+  defaultForSeverity: [severity],
   outputConfig: {
     slack: {
       webhookURL: '',
     },
   },
-  defaultForSeverity: [severity],
 };
 
 describe('SlackDestinationForm', () => {
