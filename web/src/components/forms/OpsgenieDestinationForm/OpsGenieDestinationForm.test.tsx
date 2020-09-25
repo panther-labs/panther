@@ -18,14 +18,18 @@
 
 import React from 'react';
 import { render, fireEvent, waitFor, waitMs } from 'test-utils';
-import { OpsgenieConfig, SeverityEnum } from 'Generated/schema';
+import { SeverityEnum } from 'Generated/schema';
 import OpsgenieDestinationForm from './index';
 
 const emptyInitialValues = {
   outputId: null,
   displayName: '',
   defaultForSeverity: [],
-  outputConfig: {},
+  outputConfig: {
+    opsgenie: {
+      apiKey: '',
+    },
+  },
 };
 
 const displayName = 'Opsgenie';
@@ -37,7 +41,7 @@ const initialValues = {
   outputConfig: {
     opsgenie: {
       apiKey: '',
-    } as OpsgenieConfig,
+    },
   },
   defaultForSeverity: [severity],
 };
