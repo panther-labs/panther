@@ -22,6 +22,8 @@ import Panel from 'Components/Panel';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage } from 'Helpers/utils';
+import useAnalytics from 'Hooks/useAnalytics';
+import { PageViewEnum } from 'Helpers/analytics';
 import { useGetOrganizationStats } from './graphql/getOrganizationStats.generated';
 import PoliciesBySeverityChart from './PoliciesBySeverityChart';
 import PoliciesByStatusChart from './PoliciesByStatusChart';
@@ -33,6 +35,9 @@ import TopFailingPoliciesTable from './TopFailingPoliciesTable';
 import TopFailingResourcesTable from './TopFailingResourcesTable';
 
 const ComplianceOverview: React.FC = () => {
+  const { trackPage } = useAnalytics();
+  trackPage(PageViewEnum.ComplianceOverview);
+
   const { data, loading, error } = useGetOrganizationStats({
     fetchPolicy: 'cache-and-network',
   });

@@ -37,13 +37,22 @@ const evaluateTracking = (...args) => {
   }
 };
 
-enum TrackPageViewEnum {
-  'log-analysis-overview' = 'Log Analysis Overview',
+export enum PageViewEnum {
+  LogAnalysisOverview = 'Log Analysis Overview',
+  ComplianceOverview = 'Compliance Overview',
+  ListRules = 'List Rules',
+  ListAlerts = 'List Alerts',
+  ListLogSources = 'List Log Sources',
+  Home = 'Home',
 }
 
 interface TrackPageViewProps {
-  page: keyof typeof TrackPageViewEnum;
+  page: PageViewEnum;
 }
+
+export const trackPageView = ({ page }: TrackPageViewProps) => {
+  evaluateTracking(page, { type: 'pageview' });
+};
 
 export enum EventEnum {
   SignedIn = 'Signed in successfully',
@@ -81,10 +90,6 @@ interface PickedDestinationEvent {
 }
 
 type TrackEvent = AddedDestinationEvent | SignInEvent | AddedRuleEvent | PickedDestinationEvent;
-
-export const trackPageView = ({ page }: TrackPageViewProps) => {
-  evaluateTracking(TrackPageViewEnum[page], { type: 'pageview' });
-};
 
 export const trackEvent = (payload: TrackEvent) => {
   evaluateTracking(payload.event, {

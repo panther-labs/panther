@@ -25,6 +25,8 @@ import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination
 import isEmpty from 'lodash/isEmpty';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import withSEO from 'Hoc/withSEO';
+import useAnalytics from 'Hooks/useAnalytics';
+import { PageViewEnum } from 'Helpers/analytics';
 import ListRulesTable from './ListRulesTable';
 import ListRulesActions from './ListRulesActions';
 import ListRulesPageSkeleton from './Skeleton';
@@ -37,6 +39,9 @@ const ListRules = () => {
     updateRequestParamsAndResetPaging,
     updatePagingParams,
   } = useRequestParamsWithPagination<ListRulesInput>();
+
+  const { trackPage } = useAnalytics();
+  trackPage(PageViewEnum.ListRules);
 
   const { loading, error, data } = useListRules({
     fetchPolicy: 'cache-and-network',
