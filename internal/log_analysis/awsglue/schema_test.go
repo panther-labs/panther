@@ -241,9 +241,9 @@ func TestInferJsonColumns(t *testing.T) {
 	cols, structFieldNames := InferJSONColumns(obj, customSimpleTypeMapping, customSliceTypeMapping, customStructTypeMapping)
 
 	// uncomment to see results
-	//for _, col := range cols {
-	//	fmt.Printf(`{Name: \"%s\", Type: \"%s\",Comment: "test field"},\n`, col.Name, col.Type)
-	//}
+	// for _, col := range cols {
+	// 	fmt.Printf(`{Name: \"%s\", Type: \"%s\",Comment: "test field"},\n`, col.Name, col.Type)
+	// }
 	assert.Equal(t, expectedCols, cols, "Expected columns not found")
 	assert.Equal(t, expectedStructFieldNames, structFieldNames)
 
