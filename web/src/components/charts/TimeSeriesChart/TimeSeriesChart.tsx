@@ -270,6 +270,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
         },
         yAxis: {
           type: scaleType as EChartOption.BasicComponents.CartesianAxis.Type,
+          logBase: 10,
           axisLine: {
             lineStyle: {
               color: 'transparent',
@@ -282,9 +283,6 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
             fontFamily: theme.fonts.primary,
             color: theme.colors['gray-50'],
             formatter: `{value}${units ? ` ${units}` : ''}`,
-          },
-          minorSplitLine: {
-            show: false,
           },
           splitLine: {
             lineStyle: {
