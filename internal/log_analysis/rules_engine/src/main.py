@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import boto3
 import collections
 import json
 from gzip import GzipFile
@@ -21,13 +22,11 @@ from io import TextIOWrapper
 from timeit import default_timer
 from typing import Any, Dict, List, Optional, Tuple
 
-import boto3
-
-from .engine import Engine
 from .analysis_api import AnalysisAPIClient
+from .engine import Engine
 from .logging import get_logger
 from .output import MatchedEventsBuffer
-from .rule import Rule
+from .rule import Rule, RuleResult
 
 _S3_CLIENT = boto3.client('s3')
 _LOGGER = get_logger()
@@ -60,36 +59,37 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
     except Exception as err:  # pylint: disable=broad-except
         rule_exception = err
 
-    response: Dict[str, Any] = {'events': []}
+    results = []
+    response: Dict[str, Any] = {'results': results}
     for event in request['events']:
-        result = {
-            'id': event['id'],
-            'matched': [],
-            'notMatched': [],
-            'errored': [],
-        }
         if rule_exception:
-            result['errored'] = [{
-                'id': raw_rule['id'],
-                'message': '{}: {}'.format(type(rule_exception).__name__, rule_exception),
-            }]
+            results.append(
+                {
+                    'id': event['id'],
+                    'rule_id': raw_rule['id'],
+                    'matched': False,
+                    'errored': True,
+                    'error_message': '{}: {}'.format(type(rule_exception).__name__, rule_exception),
+                }
+            )
             # If rule was invalid, no need to try to run it
 
         else:
             rule_result = test_rule.run(event['data'])
             if rule_result.exception:
-                result['errored'] = [
+                results.append(
                     {
-                        'id': raw_rule['id'],
-                        'message': '{}: {}'.format(type(rule_result.exception).__name__, rule_result.exception),
+                        'id': event['id'],
+                        'rule_id': raw_rule['id'],
+                        'matched': rule_result.matched,
+                        'title_output': rule_result.title,
+                        'dedup_output': rule_result.dedup_string,
+                        'errored': rule_result.exception is not None,
+                        'error_message':
+                            '{}: {}'.format(type(rule_result.exception).__name__, rule_result.exception) if rule_result.exception else None,
                     }
-                ]
-            elif rule_result.matched:
-                result['matched'] = [raw_rule['id']]
-            else:
-                result['notMatched'] = [raw_rule['id']]
+                )
 
-        response['events'].append(result)
     return response
 
 

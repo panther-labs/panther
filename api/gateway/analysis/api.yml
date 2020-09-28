@@ -688,6 +688,28 @@ paths:
         500:
           description: Internal server error
 
+  /rule/test:
+    post:
+      operationId: TestRule
+      summary: Test a rule against a set of unit tests
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/TestPolicy' # Reuse the input model since it is the same
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/TestRuleResult'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+
   /global/update:
     # Same as UpdatePolicy, but for a global module
     post:
@@ -1116,7 +1138,7 @@ definitions:
       - newGlobals
       - modifiedGlobals
 
-  ##### TestPolicy #####
+  ##### TestPolicy / TestRule #####
   TestPolicy:
     type: object
     properties:
@@ -1150,6 +1172,49 @@ definitions:
       - testsPassed
       - testsFailed
       - testsErrored
+
+  TestRuleResult:
+    type: object
+    properties:
+      testSummary:
+        $ref: '#/definitions/testSummary'
+      testsPassed:
+        type: 'array'
+        items:
+          $ref: '#/definitions/rulePassResult'
+      testsFailed:
+        $ref: '#/definitions/testsFailed'
+      testsErrored:
+        $ref: '#/definitions/testsErrored'
+    required:
+      - testSummary
+      - testsPassed
+      - testsFailed
+      - testsErrored
+
+  rulePassResult:
+    # We already have a RuleResult struct with same fields as this model. The go-swagger extension below
+    # could allow us to use it. However, it is not supported by the AWS API Gateway.
+    #    x-go-type:
+    #      import:
+    #        package: 'github.com/panther-labs/panther/api/gateway/analysis'
+    #      type: 'RuleResult'
+    type: object
+    properties:
+      id:
+        type: string
+      rule_id:
+        type: string
+      matched:
+        type: boolean
+      title_output:
+        type: string
+      dedup_output:
+        type: string
+      errored:
+        type: boolean
+      error_message:
+        type: string
 
   ##### Suppress #####
   Suppress:

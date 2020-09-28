@@ -21,6 +21,7 @@ package analysis
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	jsoniter "github.com/json-iterator/go"
@@ -44,16 +45,14 @@ func NewRuleEngine(lambdaClient lambdaiface.LambdaAPI, lambdaName string) RuleEn
 	}
 }
 
-func (e *RuleEngine) TestRule(rule *models.TestPolicy) (models.TestPolicyResult, error) {
-	empty := models.TestPolicyResult{}
-
+func (e *RuleEngine) TestRule(rule *models.TestPolicy) (*models.TestRuleResult, error) {
 	// Build the list of events to run the rule against
 	inputEvents := make([]enginemodels.Event, len(rule.Tests))
 	for i, test := range rule.Tests {
 		var attrs map[string]interface{}
 		if err := jsoniter.UnmarshalFromString(string(test.Resource), &attrs); err != nil {
 			//nolint // Error is capitalized because will be returned to the UI
-			return empty, &TestInputError{fmt.Errorf(`Event for test "%s" is not valid json: %w`, test.Name, err)}
+			return nil, &TestInputError{fmt.Errorf(`Event for test "%s" is not valid json: %w`, test.Name, err)}
 		}
 
 		inputEvents[i] = enginemodels.Event{
@@ -66,7 +65,7 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (models.TestPolicyResult,
 		Rules: []enginemodels.Rule{
 			{
 				Body:     string(rule.Body),
-				ID:       testPolicyID, // doesn't matter as we're only running one rule
+				ID:       testRuleID, // doesn't matter as we're only running one rule
 				LogTypes: rule.ResourceTypes,
 			},
 		},
@@ -74,25 +73,44 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (models.TestPolicyResult,
 	}
 
 	// Send the request to the rule-engine
-	var engineOutput enginemodels.RulesEngineOutput
+	var engineOutput enginemodels.RuleEngineOutput
 	err := genericapi.Invoke(e.lambdaClient, e.lambdaName, &input, &engineOutput)
 	if err != nil {
-		return empty, errors.Wrap(err, "error invoking rule engine")
+		return nil, errors.Wrap(err, "error invoking rule engine")
 	}
 
 	// Translate rule engine output to test results.
-	testResults, err := makeTestSummaryRule(rule, engineOutput)
-	return testResults, err
+	testResult := &models.TestRuleResult{}
+	for _, result := range engineOutput.Results {
+		// Determine which test case this result corresponds to. We constructed resourceID with the
+		// format Panther:Test:Resource:TestNumber (see testResourceID),
+		testIndex, err := strconv.Atoi(strings.Split(result.ID, ":")[3])
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to extract test number from test result resourceID %s", result.ID)
+		}
+		test := rule.Tests[testIndex]
+
+		if result.Errored {
+			testResult.TestsErrored = append(testResult.TestsErrored, &models.TestErrorResult{
+				ErrorMessage: result.ErrorMessage,
+				Name:         string(test.Name),
+			})
+		} else if (result.Matched && bool(test.ExpectedResult)) || (!result.Matched && !bool(test.ExpectedResult)) {
+			testResult.TestsPassed = append(testResult.TestsPassed, &models.RulePassResult{
+				DedupOutput:  result.DedupOutput,
+				ErrorMessage: result.ErrorMessage,
+				Errored:      result.Errored,
+				ID:           result.ID,
+				Matched:      result.Matched,
+				RuleID:       result.RuleID,
+				TitleOutput:  result.TitleOutput,
+			})
+		} else {
+			testResult.TestsFailed = append(testResult.TestsFailed, string(test.Name))
+		}
+	}
+	testResult.TestSummary = len(testResult.TestsFailed) == 0 && len(testResult.TestsErrored) == 0
+	return testResult, nil
 }
 
-func makeTestSummaryRule(rule *models.TestPolicy, engineOutput enginemodels.RulesEngineOutput) (models.TestPolicyResult, error) {
-	// Normalize rule engine output to policy engine output to facilitate consistent handling
-	// in makeTestSummary().
-	output := enginemodels.PolicyEngineOutput{
-		Resources: make([]enginemodels.Result, len(engineOutput.Events)),
-	}
-	for i, event := range engineOutput.Events {
-		output.Resources[i] = event.ToResult()
-	}
-	return makeTestSummary(rule, output)
-}
+const testRuleID = "RuleAPITestRule"

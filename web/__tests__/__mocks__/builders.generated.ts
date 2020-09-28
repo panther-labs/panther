@@ -100,6 +100,7 @@ import {
   ResourcesForPolicyInput,
   ResourceSummary,
   RuleDetails,
+  RuleResult,
   RuleSummary,
   S3LogIntegration,
   S3LogIntegrationHealth,
@@ -122,6 +123,7 @@ import {
   SuppressPoliciesInput,
   TestPolicyInput,
   TestPolicyResponse,
+  TestRuleResponse,
   UpdateAlertStatusInput,
   UpdateComplianceIntegrationInput,
   UpdateGeneralSettingsInput,
@@ -1201,6 +1203,19 @@ export const buildRuleDetails = (overrides: Partial<RuleDetails> = {}): RuleDeta
   };
 };
 
+export const buildRuleResult = (overrides: Partial<RuleResult> = {}): RuleResult => {
+  return {
+    __typename: 'RuleResult',
+    id: 'id' in overrides ? overrides.id : 'Global',
+    rule_id: 'rule_id' in overrides ? overrides.rule_id : 'SDD',
+    matched: 'matched' in overrides ? overrides.matched : false,
+    title_output: 'title_output' in overrides ? overrides.title_output : 'Corporate',
+    dedup_output: 'dedup_output' in overrides ? overrides.dedup_output : 'ROI',
+    errored: 'errored' in overrides ? overrides.errored : true,
+    error_message: 'error_message' in overrides ? overrides.error_message : 'array',
+  };
+};
+
 export const buildRuleSummary = (overrides: Partial<RuleSummary> = {}): RuleSummary => {
   return {
     __typename: 'RuleSummary',
@@ -1437,6 +1452,19 @@ export const buildTestPolicyResponse = (
     testSummary: 'testSummary' in overrides ? overrides.testSummary : false,
     testsPassed: 'testsPassed' in overrides ? overrides.testsPassed : ['Producer'],
     testsFailed: 'testsFailed' in overrides ? overrides.testsFailed : ['Granite'],
+    testsErrored:
+      'testsErrored' in overrides ? overrides.testsErrored : [buildPolicyUnitTestError()],
+  };
+};
+
+export const buildTestRuleResponse = (
+  overrides: Partial<TestRuleResponse> = {}
+): TestRuleResponse => {
+  return {
+    __typename: 'TestRuleResponse',
+    testSummary: 'testSummary' in overrides ? overrides.testSummary : true,
+    testsPassed: 'testsPassed' in overrides ? overrides.testsPassed : [buildRuleResult()],
+    testsFailed: 'testsFailed' in overrides ? overrides.testsFailed : ['parse'],
     testsErrored:
       'testsErrored' in overrides ? overrides.testsErrored : [buildPolicyUnitTestError()],
   };
