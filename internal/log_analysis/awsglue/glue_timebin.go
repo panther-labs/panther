@@ -40,16 +40,7 @@ const (
 	GlueTableHourly
 )
 
-func (tb GlueTableTimebin) Validate() (err error) {
-	switch tb {
-	case GlueTableHourly, GlueTableDaily, GlueTableMonthly:
-		return
-	default:
-		err = fmt.Errorf("unknown GlueTableMetadata table time bin: %d", tb)
-	}
-	return
-}
-
+// Truncate truncates the date to the time bin time unit
 func (tb GlueTableTimebin) Truncate(t time.Time) time.Time {
 	switch tb {
 	case GlueTableHourly:
@@ -57,7 +48,7 @@ func (tb GlueTableTimebin) Truncate(t time.Time) time.Time {
 	case GlueTableDaily:
 		return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 	case GlueTableMonthly:
-		return time.Date(t.Year(), t.Month(), 0, 0, 0, 0, 0, t.Location())
+		return time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, t.Location())
 	default:
 		panic(fmt.Sprintf("unknown GlueTableMetadata table time bin: %d", tb))
 	}
@@ -192,8 +183,10 @@ func (tb GlueTableTimebin) PartitionPathS3(t time.Time) (s3Path string) {
 		return fmt.Sprintf("year=%d/month=%02d/day=%02d/hour=%02d/", t.Year(), t.Month(), t.Day(), t.Hour())
 	case GlueTableDaily:
 		return fmt.Sprintf("year=%d/month=%02d/day=%02d/", t.Year(), t.Month(), t.Day())
-	default:
+	case GlueTableMonthly:
 		return fmt.Sprintf("year=%d/month=%02d/", t.Year(), t.Month())
+	default:
+		return ""
 	}
 }
 
@@ -216,18 +209,18 @@ func (tb GlueTableTimebin) TimeFromS3Path(path string) (time.Time, bool) {
 // S3PathLayout returns a go time layout to format/parse S3 paths for Glue partitions
 func (tb GlueTableTimebin) S3PathLayout() string {
 	switch tb {
-	case GlueTableMonthly:
-		return "year=2006/month=01"
-	case GlueTableDaily:
-		return "year=2006/month=01/day=02"
 	case GlueTableHourly:
-		return "year=2006/month=01/day=02/hour=15"
+		return "year=2006/month=01/day=02/hour=15/"
+	case GlueTableDaily:
+		return "year=2006/month=01/day=02/"
+	case GlueTableMonthly:
+		return "year=2006/month=01/"
 	default:
 		return ""
 	}
 }
 
-// PartitionHasData checks if there is at least 1 s3 object in the partition
+// PartitionHasData checks if there is at least 1 S3 object in the partition
 func (tb GlueTableTimebin) PartitionHasData(client s3iface.S3API, t time.Time, tableOutput *glue.GetTableOutput) (bool, error) {
 	bucket, prefix, err := ParseS3URL(*tableOutput.Table.StorageDescriptor.Location)
 	if err != nil {
@@ -254,7 +247,7 @@ func (tb GlueTableTimebin) PartitionHasData(client s3iface.S3API, t time.Time, t
 	return hasData, err
 }
 
-// PartitionTimeFromValues resolves the timebin from a table storage descriptor
+// PartitionTimeFromValues resolves the timebin from a glue partition's values
 func PartitionTimeFromValues(values []*string) (tm time.Time, err error) {
 	switch len(values) {
 	case 2:
@@ -272,8 +265,11 @@ func PartitionTimeFromValues(values []*string) (tm time.Time, err error) {
 
 func unpackValues(y, m, d, h *string) (tm time.Time) {
 	var (
-		year, month, day, hour int
-		err                    error
+		year  int
+		month = 1
+		day   = 1
+		hour  = 0
+		err   error
 	)
 	if y != nil {
 		if year, err = strconv.Atoi(*y); err != nil {
