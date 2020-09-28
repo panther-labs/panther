@@ -31,6 +31,7 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	logprocessormodels "github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
@@ -142,7 +143,7 @@ func getEventsForLogType(
 		}
 
 		var dataType logprocessormodels.DataType
-		if len(alert.ErrorType) > 0 {
+		if alert.Type == alertmodels.RuleErrorType {
 			dataType = logprocessormodels.RuleErrors
 		} else {
 			dataType = logprocessormodels.RuleData

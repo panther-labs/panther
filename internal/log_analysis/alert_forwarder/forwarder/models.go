@@ -24,6 +24,8 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
+
+	"github.com/panther-labs/panther/api/lambda/delivery/models"
 )
 
 const (
@@ -42,14 +44,13 @@ type AlertDedupEvent struct {
 	UpdateTime          time.Time `dynamodbav:"updateTime"`
 	EventCount          int64     `dynamodbav:"eventCount"`
 	LogTypes            []string  `dynamodbav:"logTypes,stringset"`
-	ErrorType           string    `dynamodbav:"errorType"`
+	Type                string    `dynamodbav:"alertType"`
 	GeneratedTitle      *string   `dynamodbav:"-"` // The title that was generated dynamically using Python. Might be null.
 	AlertCount          int64     `dynamodbav:"-"` // There is no need to store this item in DDB
-
 }
 
 func (e *AlertDedupEvent) IsError() bool {
-	return len(e.ErrorType) != 0
+	return e.Type == models.RuleErrorType
 }
 
 // Alert contains all the fields associated to the alert stored in DDB
@@ -136,9 +137,9 @@ func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (eve
 		result.GeneratedTitle = aws.String(generatedTitle.String())
 	}
 
-	errorType := getOptionalAttribute("errorType", input)
-	if errorType != nil {
-		result.ErrorType = errorType.String()
+	alertType := getOptionalAttribute("alertType", input)
+	if alertType != nil {
+		result.Type = alertType.String()
 	}
 	return result, nil
 }

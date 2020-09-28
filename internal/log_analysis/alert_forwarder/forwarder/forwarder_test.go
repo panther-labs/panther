@@ -680,8 +680,8 @@ func TestHandleError(t *testing.T) {
 
 	oldErrorDedupEvent := *oldAlertDedupEvent
 	newErrorDedupEvent := *newAlertDedupEvent
-	oldErrorDedupEvent.ErrorType = "RULE_ERROR"
-	newErrorDedupEvent.ErrorType = "RULE_ERROR"
+	oldErrorDedupEvent.Type = "RULE_ERROR"
+	newErrorDedupEvent.Type = "RULE_ERROR"
 	assert.NoError(t, handler.Do(&oldErrorDedupEvent, &newErrorDedupEvent))
 
 	ddbMock.AssertExpectations(t)

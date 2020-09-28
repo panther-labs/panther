@@ -27,8 +27,11 @@ import (
 )
 
 const (
-	// RuleType identifies the Alert to be for a Policy
+	// RuleType identifies the Alert to be for a Rule
 	RuleType = "RULE"
+
+	// RuleErrorType identifies the Alert to be for a Rule error
+	RuleErrorType = "RULE_ERROR"
 
 	// PolicyType identifies the Alert to be for a Policy
 	PolicyType = "POLICY"
@@ -123,7 +126,7 @@ type Alert struct {
 	AnalysisID string `json:"analysisId" validate:"required"`
 
 	// Type specifies if an alert is for a policy or a rule
-	Type string `json:"type" validate:"oneof=RULE POLICY"`
+	Type string `json:"type" validate:"oneof=RULE POLICY RULE_ERROR"`
 
 	// CreatedAt is the creation timestamp (seconds since epoch).
 	CreatedAt time.Time `json:"createdAt" validate:"required"`
@@ -166,9 +169,4 @@ type Alert struct {
 
 	// IsResent is a flag set to indicate the alert is not new
 	IsResent bool `json:"isResent,omitempty"`
-
-	// ErrorType declares the type of the error. Currently only "RULE_ERROR" is supported
-	// If the alert is not because of an error in the system but because of a rule match,
-	// this field will be empty
-	ErrorType string `json:"errorType"`
 }
