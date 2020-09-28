@@ -61,10 +61,11 @@ class Engine:
                     dedup=error_type,
                     dedup_period_mins=1440,  # one day
                     event=event,
+                    title=repr(result.exception),
                     error_message=repr(result.exception)
                 )
                 engine_results.append(rule_error)
-            if result.matched:
+            elif result.matched:
                 match = EngineResult(
                     rule_id=rule.rule_id,
                     rule_version=rule.rule_version,

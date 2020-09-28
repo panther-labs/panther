@@ -27,6 +27,8 @@ import TablePlaceholder from 'Components/TablePlaceholder';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import isEmpty from 'lodash/isEmpty';
 import withSEO from 'Hoc/withSEO';
+import useTrackPageView from 'Hooks/useTrackPageView';
+import { PageViewEnum } from 'Helpers/analytics';
 import { useListAlerts } from './graphql/listAlerts.generated';
 import ListAlertsTable from './ListAlertsTable';
 import ListAlertsActions from './ListAlertsActions';
@@ -34,6 +36,7 @@ import ListAlertsPageSkeleton from './Skeleton';
 import ListAlertsPageEmptyDataFallback from './EmptyDataFallback';
 
 const ListAlerts = () => {
+  useTrackPageView(PageViewEnum.ListAlerts);
   const { requestParams, updateRequestParams } = useRequestParamsWithoutPagination<
     ListAlertsInput
   >();
