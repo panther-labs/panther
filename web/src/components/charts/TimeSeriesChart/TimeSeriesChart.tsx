@@ -137,13 +137,13 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
       const options: EChartOption = {
         grid: {
           left: 180,
-          right: 20,
+          right: 50,
           bottom: 50,
-          top: 50,
           containLabel: true,
         },
         toolbox: {
           show: true,
+          right: 50,
           iconStyle: {
             color: '#FFFFFF',
           },
