@@ -60,6 +60,7 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
     values.tags,
   ]);
 
+  console.log(values);
   const {
     loading: destinationsLoading,
     destinationOutputIds: availableOutputIds,
