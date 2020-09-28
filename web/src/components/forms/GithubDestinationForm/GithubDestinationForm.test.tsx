@@ -18,14 +18,19 @@
 
 import React from 'react';
 import { render, fireEvent, waitFor, waitMs, buildGithubConfigInput } from 'test-utils';
-import { GithubConfig, SeverityEnum } from 'Generated/schema';
+import { SeverityEnum } from 'Generated/schema';
 import GithubDestinationForm from './index';
 
 const emptyInitialValues = {
   outputId: null,
   displayName: '',
   defaultForSeverity: [],
-  outputConfig: {},
+  outputConfig: {
+    github: {
+      token: '',
+      repoName: '',
+    },
+  },
 };
 
 const displayName = 'Github';
@@ -38,7 +43,7 @@ const initialValues = {
     github: {
       token: '123',
       repoName: 'repo-name',
-    } as GithubConfig,
+    },
   },
   defaultForSeverity: [severity],
 };

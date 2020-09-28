@@ -18,14 +18,18 @@
 
 import React from 'react';
 import { render, fireEvent, waitFor, waitMs } from 'test-utils';
-import { PagerDutyConfig, SeverityEnum } from 'Generated/schema';
+import { SeverityEnum } from 'Generated/schema';
 import PagerdutyDestinationForm from './index';
 
 const emptyInitialValues = {
   outputId: null,
   displayName: '',
   defaultForSeverity: [],
-  outputConfig: {},
+  outputConfig: {
+    pagerDuty: {
+      integrationKey: '',
+    },
+  },
 };
 
 const displayName = 'PagerDuty';
@@ -39,7 +43,7 @@ const initialValues = {
   outputConfig: {
     pagerDuty: {
       integrationKey: '',
-    } as PagerDutyConfig,
+    },
   },
   defaultForSeverity: [severity],
 };
