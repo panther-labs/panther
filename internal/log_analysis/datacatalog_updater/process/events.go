@@ -35,19 +35,24 @@ const (
 	lambdaFunctionName = "panther-datacatalog-updater"
 )
 
+// DataCatalogEvent is the event that this lambda accepts.
 type DataCatalogEvent struct {
 	events.SQSEvent
 	SyncDatabaseEvent   *SyncEvent
 	SyncTablePartitions *SyncTableEvent
 }
 
-func InvokeSyncDatabases(ctx context.Context, lambdaAPI lambdaiface.LambdaAPI, event *SyncEvent) (err error) {
-	var traceID string
-	if lambdaCtx, ok := lambdacontext.FromContext(ctx); ok {
-		traceID = lambdaCtx.AwsRequestID
-	}
+// InvokeBackgroundSync triggers a database sync in the background.
+// The sync is kicked-off using a Lambda call and will be a long running task.
+// This function does not wait for it to finish.
+// If no TraceID is provided this function will try to use the AWS request id.
+func InvokeBackgroundSync(ctx context.Context, lambdaAPI lambdaiface.LambdaAPI, event *SyncEvent) (err error) {
 	syncEvent := *event
-	syncEvent.TraceID = traceID
+	if syncEvent.TraceID == "" {
+		if lambdaCtx, ok := lambdacontext.FromContext(ctx); ok {
+			syncEvent.TraceID = lambdaCtx.AwsRequestID
+		}
+	}
 	return invokeEvent(ctx, lambdaAPI, &DataCatalogEvent{
 		SyncDatabaseEvent: &syncEvent,
 	})

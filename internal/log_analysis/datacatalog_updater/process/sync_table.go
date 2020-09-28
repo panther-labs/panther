@@ -30,49 +30,62 @@ import (
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
+// SyncTableEvent initializes or continues a gluetasks.SyncTablePartitions task
 type SyncTableEvent struct {
-	TraceID  string
+	// Use a common trace id (the SyncDatabase request id) for all events triggered by a sync event.
+	// This is used in all logging done by the SyncTablePartitions task to be able to trace all lambda invocations
+	// back to their original SyncDatabase request.
+	TraceID string
+	// NumCalls keeps track of the number of recursive calls for the specific sync table event.
+	// It acts as a guard against infinite recursion.
 	NumCalls int
+	// Embed the full sync table partitions task state
+	// This allows us to continue the task by recursively calling the lambda.
+	// The task carries all status information over
 	gluetasks.SyncTablePartitions
 }
 
 const maxNumCalls = 1000
 
+// HandleSyncTableEvent starts or continues a gluetasks.SyncTablePartitions task.
 // nolint: nakedret
-func HandleSyncTable(ctx context.Context, event *SyncTableEvent) (err error) {
-	nextToken := event.NextToken
+func HandleSyncTableEvent(ctx context.Context, event *SyncTableEvent) (err error) {
 	log := lambdalogger.FromContext(ctx)
 	log = log.With(
 		zap.String("traceId", event.TraceID),
 		zap.Int("numCalls", event.NumCalls),
 	)
-	syncTask := event.SyncTablePartitions
-	syncTask.NumWorkers = runtime.NumCPU() + 1
+	sync := event.SyncTablePartitions
+	sync.NumWorkers = runtime.NumCPU() + 1
 	// defer invoking continuation
 	defer func() {
-		if errors.Is(err, context.DeadlineExceeded) && nextToken != "" {
-			numCalls := event.NumCalls + 1
-			// protect against infinite recursion
-			if numCalls > maxNumCalls {
-				log.Error("max calls exceeded",
-					zap.String("table", event.TableName),
-					zap.String("database", event.DatabaseName),
-					zap.String("token", nextToken),
-					zap.Error(err),
-				)
-				return
-			}
-
-			zap.L().Debug("continuing sync", zap.String("token", nextToken))
-			// We use context.Background to limit the probability of missing the request
-			err = invokeEvent(context.Background(), lambdaClient, &DataCatalogEvent{
-				SyncTablePartitions: &SyncTableEvent{
-					SyncTablePartitions: syncTask,
-					NumCalls:            numCalls,
-					TraceID:             event.TraceID,
-				},
-			})
+		if err == nil {
+			return
 		}
+		if !errors.Is(err, context.DeadlineExceeded) {
+			return
+		}
+		// protect against infinite recursion
+		numCalls := event.NumCalls + 1
+		if numCalls > maxNumCalls {
+			log.Error("max calls exceeded",
+				zap.String("table", event.TableName),
+				zap.String("database", event.DatabaseName),
+				zap.String("token", sync.NextToken),
+				zap.Error(err),
+			)
+			return
+		}
+
+		log.Debug("continuing sync", zap.String("token", sync.NextToken))
+		// We use context.Background to limit the probability of missing the continuation request
+		err = invokeEvent(context.Background(), lambdaClient, &DataCatalogEvent{
+			SyncTablePartitions: &SyncTableEvent{
+				SyncTablePartitions: sync,
+				NumCalls:            numCalls,
+				TraceID:             event.TraceID, // keep the original trace id
+			},
+		})
 	}()
 
 	// Reserve some time for continuing the task in a new lambda invocation
@@ -89,8 +102,8 @@ func HandleSyncTable(ctx context.Context, event *SyncTableEvent) (err error) {
 		}
 	}
 
-	err = syncTask.Run(ctx, glueClient, log)
-	stats := syncTask.Stats
+	err = sync.Run(ctx, glueClient, log)
+	stats := sync.Stats
 	log.Debug("sync table complete", zap.Any("stats", &stats), zap.Error(err))
 	return
 }

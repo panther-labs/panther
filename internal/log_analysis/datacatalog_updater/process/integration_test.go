@@ -46,7 +46,7 @@ func TestIntegrationSyncPartitions(t *testing.T) {
 		t.Skip()
 	}
 	// this assumes the self onboarding was enables (default true)
-	err := InvokeSyncDatabases(context.Background(), lambdaClient, &SyncEvent{
+	err := InvokeBackgroundSync(context.Background(), lambdaClient, &SyncEvent{
 		LogTypes: []string{"AWS.VPCFlow"},
 		DatabaseNames: []string{
 			awsglue.LogProcessingDatabaseName,
