@@ -169,4 +169,9 @@ type Alert struct {
 
 	// IsResent is a flag set to indicate the alert is not new
 	IsResent bool `json:"isResent,omitempty"`
+
+	// ErrorType declares the type of the error. Currently only "RULE_ERROR" is supported
+	// If the alert is not because of an error in the system but because of a rule match,
+	// this field will be empty
+	ErrorType string `json:"errorType"`
 }
