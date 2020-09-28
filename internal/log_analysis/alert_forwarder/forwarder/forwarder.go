@@ -112,7 +112,7 @@ func logStats(rule *ruleModel.Rule) {
 	// Severity, AnalysisType, and RuleID Information
 	StaticLogger.LogSingle(1,
 		metrics.Dimension{Name: "Severity", Value: string(rule.Severity)},
-		metrics.Dimension{Name: "RuleID", Value: string(rule.ID)},
+		metrics.Dimension{Name: "AnalysisID", Value: string(rule.ID)},
 		AnalysisTypeDimension,
 	)
 }
