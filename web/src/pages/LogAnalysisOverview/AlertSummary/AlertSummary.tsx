@@ -37,8 +37,8 @@ const getText = diff => {
 };
 
 const AlertSummary: React.FC<AlertSummaryProps> = ({ data }) => {
-  const alertsCurrentPeriod = 123 || data.find(d => d.label === 'Current Period').value;
-  const alertPreviousPeriod = 231 || data.find(d => d.label === 'Previous Period').value;
+  const alertsCurrentPeriod = data.find(d => d.label === 'Current Period').value;
+  const alertPreviousPeriod = data.find(d => d.label === 'Previous Period').value;
 
   const diff = alertPreviousPeriod - alertsCurrentPeriod;
   return (
