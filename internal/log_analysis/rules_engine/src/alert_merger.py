@@ -39,7 +39,7 @@ _ALERT_EVENT_COUNT = 'eventCount'
 _ALERT_LOG_TYPES = 'logTypes'
 _ALERT_TITLE = 'title'
 # The attribute defining the type of the error
-_ERROR_TYPE = 'errorType'
+_ALERT_TYPE = 'alertType'
 
 
 # pylint: disable=too-many-instance-attributes
@@ -112,7 +112,7 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
         expresion_attribute_names['#11'] = _ALERT_TITLE
 
     if group_info.is_rule_error:
-        expresion_attribute_names['#12'] = _ERROR_TYPE
+        expresion_attribute_names['#12'] = _ALERT_TYPE
 
     expression_attribute_values = {
         ':1':
