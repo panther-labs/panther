@@ -155,6 +155,7 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	//     DisplayName:           string
 	//     Email:                 string
 	//     ErrorReportingConsent: bool
+	//     AnalyticsConsent:      bool
 	// Outputs: None
 	// PhysicalId: custom:panther-settings:singleton
 	"Custom::PantherSettings": customPantherSettings,

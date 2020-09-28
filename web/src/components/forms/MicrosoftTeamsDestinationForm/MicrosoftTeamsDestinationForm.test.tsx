@@ -18,14 +18,18 @@
 
 import React from 'react';
 import { render, fireEvent, waitFor, waitMs, faker } from 'test-utils';
-import { MsTeamsConfig, SeverityEnum } from 'Generated/schema';
+import { SeverityEnum } from 'Generated/schema';
 import MicrosoftTeamsDestinationForm from './index';
 
 const emptyInitialValues = {
   outputId: null,
   displayName: '',
   defaultForSeverity: [],
-  outputConfig: {},
+  outputConfig: {
+    msTeams: {
+      webhookURL: '',
+    },
+  },
 };
 
 const validUrl = faker.internet.url();
@@ -38,7 +42,7 @@ const initialValues = {
   outputConfig: {
     msTeams: {
       webhookURL: validUrl,
-    } as MsTeamsConfig,
+    },
   },
   defaultForSeverity: [severity],
 };
