@@ -21,17 +21,18 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/aws/aws-sdk-go/service/glue"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/panther-labs/panther/cmd/opstools"
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
-	"github.com/panther-labs/panther/internal/log_analysis/gluetasks"
-	"github.com/pkg/errors"
-	"golang.org/x/sync/errgroup"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
+
+	"github.com/panther-labs/panther/cmd/opstools"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/gluetasks"
 )
 
 var opts = struct {

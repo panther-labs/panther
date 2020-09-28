@@ -112,12 +112,6 @@ func (s *SyncDatabaseTables) Run(ctx context.Context, api glueiface.GlueAPI, log
 	})
 	return group.Wait()
 }
-func (s *SyncDatabaseTables) buildLogger(log *zap.Logger) *zap.Logger {
-	if log == nil {
-		log = zap.NewNop()
-	}
-	return log.With(zap.String("database", s.DatabaseName))
-}
 
 type SyncTablePartitions struct {
 	DatabaseName         string

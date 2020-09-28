@@ -409,33 +409,6 @@ func (w *recoverWorker) findS3PartitionAt(ctx context.Context, tbl *glue.TableDa
 	return fmt.Sprintf("s3://%s/%s", bucket, objPrefix), nil
 }
 
-// nolint:lll
-func (w *recoverWorker) findGluePartitionsAt(ctx context.Context, tbl *glue.TableData, tm time.Time) (map[time.Time]*glue.Partition, error) {
-	tm = tm.UTC()
-	filter := fmt.Sprintf(`(year = %d) AND (month = %02d) AND (day = %02d)`, tm.Year(), tm.Month(), tm.Day())
-	input := glue.GetPartitionsInput{
-		CatalogId:    tbl.CatalogId,
-		DatabaseName: tbl.DatabaseName,
-		TableName:    tbl.Name,
-		Expression:   &filter,
-	}
-	partitions := make(map[time.Time]*glue.Partition, 24)
-	err := w.glue.GetPartitionsPagesWithContext(ctx, &input, func(page *glue.GetPartitionsOutput, _ bool) bool {
-		for _, p := range page.Partitions {
-			tm, err := awsglue.PartitionTimeFromValues(p.Values)
-			if err != nil {
-				continue
-			}
-			partitions[tm] = p
-		}
-		return true
-	})
-	if err != nil {
-		return nil, err
-	}
-	return partitions, nil
-}
-
 func buildRecoverRange(tbl *glue.TableData, start, end time.Time) (time.Time, time.Time, error) {
 	createTime := aws.TimeValue(tbl.CreateTime)
 	maxTime := daily.Next(time.Now())
