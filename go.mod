@@ -15,6 +15,7 @@ require (
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/google/uuid v1.1.2
+	github.com/hashicorp/go-cleanhttp v0.5.1
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/influxdata/go-syslog/v3 v3.0.0
 	github.com/joho/godotenv v1.3.0

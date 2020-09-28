@@ -185,8 +185,8 @@ func columnNames(cols []*glue.Column) []string {
 	return names
 }
 
-// PartitionS3PathFromTime constructs the S3 path for this partition
-func (tb GlueTableTimebin) PartitionS3PathFromTime(t time.Time) (s3Path string) {
+// PartitionPathS3 constructs the S3 path for this partition
+func (tb GlueTableTimebin) PartitionPathS3(t time.Time) (s3Path string) {
 	switch tb {
 	case GlueTableHourly:
 		return fmt.Sprintf("year=%d/month=%02d/day=%02d/hour=%02d/", t.Year(), t.Month(), t.Day(), t.Hour())
@@ -238,7 +238,7 @@ func (tb GlueTableTimebin) PartitionHasData(client s3iface.S3API, t time.Time, t
 	// list files w/pagination
 	inputParams := &s3.ListObjectsV2Input{
 		Bucket:  aws.String(bucket),
-		Prefix:  aws.String(prefix + tb.PartitionS3PathFromTime(t)),
+		Prefix:  aws.String(prefix + tb.PartitionPathS3(t)),
 		MaxKeys: aws.Int64(1), // look for at least 1
 	}
 	var hasData bool

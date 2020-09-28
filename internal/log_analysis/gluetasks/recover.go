@@ -46,16 +46,23 @@ const (
 )
 
 type RecoverDatabaseTables struct {
-	MatchPrefix  string
+	// DatabaseName scans this Glue database for missing partitions
 	DatabaseName string
-	Start        time.Time
-	End          time.Time
-	NumWorkers   int
-	DryRun       bool
-	LastDate     time.Time
-	Stats        RecoverStats
+	// MatchPrefix will match tables whose name begins with this prefix
+	MatchPrefix string
+	// Start sets the start of the scan range
+	Start time.Time
+	// End sets the end of the scan range
+	End time.Time
+	// NumWorkers sets the number of parallel scans to run on each table
+	NumWorkers int
+	// DryRun is a flag to not modify any partitions
+	DryRun bool
+	// Stats holds the stats for all tables recovered
+	Stats RecoverStats
 }
 
+// Run executes the recovery
 func (r *RecoverDatabaseTables) Run(ctx context.Context, glueAPI glueiface.GlueAPI, s3API s3iface.S3API, log *zap.Logger) error {
 	if log == nil {
 		log = zap.NewNop()
@@ -130,6 +137,7 @@ func (r *RecoverDatabaseTables) Run(ctx context.Context, glueAPI glueiface.GlueA
 	return group.Wait()
 }
 
+// RecoverTablePartitions scans a date range to recover missing partitions
 type RecoverTablePartitions struct {
 	DatabaseName string
 	TableName    string
@@ -209,16 +217,12 @@ func (r *RecoverTablePartitions) processRecoverTasks(ctx context.Context, tasks 
 		group.Go(func() error {
 			for task := range tasks {
 				err := w.recoverPartitionAt(ctx, task.table, task.date)
-				switch err {
-				case nil:
-					w.lastDateProcessed = task.date
-					continue
-				case context.DeadlineExceeded, context.Canceled:
-					return nil
-				default:
+				if err != nil {
 					w.err = err
 					return err
 				}
+				// Since dates are always delivered in ascending order no need to check the current value
+				w.lastDateProcessed = task.date
 			}
 			return nil
 		})
@@ -230,7 +234,6 @@ func (r *RecoverTablePartitions) processRecoverTasks(ctx context.Context, tasks 
 		if r.LastDate.Before(w.lastDateProcessed) {
 			r.LastDate = w.lastDateProcessed
 		}
-		err = multierr.Append(err, w.err)
 	}
 	return err
 }
@@ -246,16 +249,18 @@ type recoverWorker struct {
 }
 
 func (w *recoverWorker) recoverPartitionAt(ctx context.Context, tbl *glue.TableData, tm time.Time) error {
+	// First we get all partitions for the particular date
 	partitions, err := w.findGluePartitionsAt(ctx, tbl, tm)
 	w.stats.NumProcessed += len(partitions)
 	if err != nil {
 		return err
 	}
+	// Check if no partitions is missing
 	if len(partitions) == 24 {
 		return nil
 	}
 	start := daily.Truncate(tm)
-	end := daily.Next(tm)
+	end := daily.Next(start)
 	batch := &glue.BatchCreatePartitionInput{
 		CatalogId:    tbl.CatalogId,
 		DatabaseName: tbl.DatabaseName,
@@ -291,7 +296,7 @@ func (w *recoverWorker) recoverPartitionAt(ctx context.Context, tbl *glue.TableD
 		w.log.Info("dryrun, skipping partition creation", zap.Int("numFound", batchSize))
 		return nil
 	}
-	// RecoverTable all partitions with a single API call
+	// Recover all partitions with a single batch API call
 	reply, err := w.glue.BatchCreatePartitionWithContext(ctx, batch)
 	if err != nil {
 		w.stats.NumFailed += batchSize
@@ -321,11 +326,9 @@ func (w *recoverWorker) collectErrors(replyErrors []*glue.PartitionError) (err e
 		w.stats.NumFailed++
 		message := aws.StringValue(e.ErrorDetail.ErrorMessage)
 		tm, _ := awsglue.PartitionTimeFromValues(e.PartitionValues)
-		// Using fmt.Errorf to not add stack (this is a helper)
-		reason := fmt.Errorf("failed to recover Glue partition at %s", tm)
+		reason := errors.Errorf("failed to recover Glue partition at %s", tm)
 		awsErr := awserr.New(code, message, reason)
-
-		err = multierr.Append(err, errors.WithStack(awsErr))
+		err = multierr.Append(err, awsErr)
 	}
 	return
 }
@@ -341,26 +344,30 @@ func (w *recoverWorker) findS3PartitionAt(ctx context.Context, tbl *glue.TableDa
 	if err != nil {
 		return "", errors.WithMessagef(err, "failed to parse S3 path for table %q", aws.StringValue(tbl.Name))
 	}
-	objPrefix := path.Join(tblPrefix, bin.PartitionS3PathFromTime(tm)) + "/"
+	objPrefix := path.Join(tblPrefix, bin.PartitionPathS3(tm))
+	objPrefix = objPrefix + "/"
+	// We use as small number of max keys to avoid multiple calls in case there are empty objects
+	const maxKeys = 100
 	listObjectsInput := s3.ListObjectsV2Input{
-		Bucket:  aws.String(bucket),
-		Prefix:  aws.String(objPrefix),
-		MaxKeys: aws.Int64(10),
+		Bucket:  &bucket,
+		Prefix:  &objPrefix,
+		MaxKeys: aws.Int64(maxKeys),
 	}
 	hasData := false
 	onPage := func(page *s3.ListObjectsV2Output, isLast bool) bool {
 		for _, obj := range page.Contents {
 			if aws.Int64Value(obj.Size) > 0 {
 				hasData = true
-				return false
+				return false // Stop S3 scan iterator
 			}
 		}
-		return true
+		return true // All objects where empty, keep looking
 	}
 	if err := w.s3.ListObjectsV2PagesWithContext(ctx, &listObjectsInput, onPage); err != nil {
 		return "", err
 	}
 	if !hasData {
+		// We use the well-known error to communicate the not found case
 		return "", errors.Wrapf(errS3ObjectNotFound, "no partition data for %q at %s", aws.StringValue(tbl.Name), tm)
 	}
 	return fmt.Sprintf("s3://%s/%s", bucket, objPrefix), nil
