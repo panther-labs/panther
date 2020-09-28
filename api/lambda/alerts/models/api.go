@@ -197,6 +197,7 @@ type AlertSummary struct {
 	Title             *string             `json:"title" validate:"required"`
 	LastUpdatedBy     string              `json:"lastUpdatedBy,omitempty"`
 	LastUpdatedByTime time.Time           `json:"lastUpdatedByTime,omitempty"`
+	ErrorType         string              `json:"errorType,omitempty"`
 }
 
 // Alert contains the details of an alert

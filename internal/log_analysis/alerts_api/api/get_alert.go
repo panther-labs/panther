@@ -96,7 +96,7 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 	result = &models.Alert{
 		AlertSummary:           *alertSummary,
 		Events:                 aws.StringSlice(events),
-		EventsLastEvaluatedKey: aws.String(encodedToken),
+		EventsLastEvaluatedKey: &encodedToken,
 	}
 
 	gatewayapi.ReplaceMapSliceNils(result)
@@ -141,18 +141,24 @@ func getEventsForLogType(
 			break
 		}
 
-		partitionPrefix := awsglue.GetPartitionPrefix(logprocessormodels.RuleData, logType, awsglue.GlueTableHourly, nextTime)
+		var dataType logprocessormodels.DataType
+		if len(alert.ErrorType) > 0 {
+			dataType = logprocessormodels.RuleErrors
+		} else {
+			dataType = logprocessormodels.RuleData
+		}
+		partitionPrefix := awsglue.GetPartitionPrefix(dataType, logType, awsglue.GlueTableHourly, nextTime)
 		partitionPrefix += fmt.Sprintf(ruleSuffixFormat, alert.RuleID) // JSON data has more specific paths based on ruleID
 
 		listRequest := &s3.ListObjectsV2Input{
-			Bucket: aws.String(env.ProcessedDataBucket),
-			Prefix: aws.String(partitionPrefix),
+			Bucket: &env.ProcessedDataBucket,
+			Prefix: &partitionPrefix,
 		}
 
 		// if we are paginating and in the same partition, set the cursor
 		if token != nil {
 			if strings.HasPrefix(token.S3ObjectKey, partitionPrefix) {
-				listRequest.StartAfter = aws.String(token.S3ObjectKey)
+				listRequest.StartAfter = &token.S3ObjectKey
 			}
 		} else { // not starting from a pagination token
 			// objects have a creation time as prefix we can use to speed listing,
@@ -228,8 +234,8 @@ func queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]
 		zap.String("query", query),
 		zap.Int("index", exclusiveStartIndex))
 	input := &s3.SelectObjectContentInput{
-		Bucket: aws.String(env.ProcessedDataBucket),
-		Key:    aws.String(key),
+		Bucket: &env.ProcessedDataBucket,
+		Key:    &key,
 		InputSerialization: &s3.InputSerialization{
 			CompressionType: aws.String(s3.CompressionTypeGzip),
 			JSON:            &s3.JSONInput{Type: aws.String(s3.JSONTypeLines)},
@@ -238,7 +244,7 @@ func queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]
 			JSON: &s3.JSONOutput{RecordDelimiter: aws.String(recordDelimiter)},
 		},
 		ExpressionType: aws.String(s3.ExpressionTypeSql),
-		Expression:     aws.String(query),
+		Expression:     &query,
 	}
 
 	output, err := s3Client.SelectObjectContent(input)

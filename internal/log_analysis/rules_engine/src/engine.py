@@ -49,16 +49,13 @@ class Engine:
             self.logger.debug('running rule [%s]', rule.rule_id)
             result = rule.run(event)
             if result.exception:
-                # TODO(kostaspap): remove error logging once error reporting notification system is in place
-                self.logger.error('failed to run rule %s %s %s', rule.rule_id, type(result).__name__, repr(result.exception))
-                error_type = type(result.exception).__name__
                 rule_error = EngineResult(
                     rule_id=rule.rule_id,
                     rule_version=rule.rule_version,
                     rule_tags=rule.rule_tags,
                     rule_reports=rule.rule_reports,
                     log_type=log_type,
-                    dedup=error_type,
+                    dedup=type(result.exception).__name__,
                     dedup_period_mins=1440,  # one day
                     event=event,
                     title=repr(result.exception),

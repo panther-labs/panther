@@ -38,12 +38,12 @@ const (
 
 // AlertDedupEvent represents the event stored in the alert dedup DDB table by the rules engine
 type AlertDedupEvent struct {
-	RuleID              string    `dynamodbav:"ruleId,string"`
-	RuleVersion         string    `dynamodbav:"ruleVersion,string"`
-	DeduplicationString string    `dynamodbav:"dedup,string"`
-	CreationTime        time.Time `dynamodbav:"creationTime,string"`
-	UpdateTime          time.Time `dynamodbav:"updateTime,string"`
-	EventCount          int64     `dynamodbav:"eventCount,number"`
+	RuleID              string    `dynamodbav:"ruleId"`
+	RuleVersion         string    `dynamodbav:"ruleVersion"`
+	DeduplicationString string    `dynamodbav:"dedup"`
+	CreationTime        time.Time `dynamodbav:"creationTime"`
+	UpdateTime          time.Time `dynamodbav:"updateTime"`
+	EventCount          int64     `dynamodbav:"eventCount"`
 	LogTypes            []string  `dynamodbav:"logTypes,stringset"`
 	Type                *string   `dynamodbav:"-"` // There is no need to store this item in DDB
 	GeneratedTitle      *string   `dynamodbav:"-"` // The title that was generated dynamically using Python. Might be null.
