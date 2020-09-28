@@ -25,7 +25,7 @@ import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination
 import isEmpty from 'lodash/isEmpty';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import withSEO from 'Hoc/withSEO';
-import useAnalytics from 'Hooks/useAnalytics';
+import useTrackPageView from 'Hooks/useTrackPageView';
 import { PageViewEnum } from 'Helpers/analytics';
 import ListRulesTable from './ListRulesTable';
 import ListRulesActions from './ListRulesActions';
@@ -34,14 +34,12 @@ import ListRulesPageEmptyDataFallback from './EmptyDataFallback';
 import { useListRules } from './graphql/listRules.generated';
 
 const ListRules = () => {
+  useTrackPageView(PageViewEnum.ListRules);
   const {
     requestParams,
     updateRequestParamsAndResetPaging,
     updatePagingParams,
   } = useRequestParamsWithPagination<ListRulesInput>();
-
-  const { trackPage } = useAnalytics();
-  trackPage(PageViewEnum.ListRules);
 
   const { loading, error, data } = useListRules({
     fetchPolicy: 'cache-and-network',

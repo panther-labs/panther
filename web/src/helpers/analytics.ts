@@ -50,6 +50,9 @@ interface TrackPageViewProps {
   page: PageViewEnum;
 }
 
+/* NOTE: Instead of using this directly, you MUST use the relevant hook
+ * 'useTrackPageView' to avoid duplicates events
+ */
 export const trackPageView = ({ page }: TrackPageViewProps) => {
   evaluateTracking(page, { type: 'pageview' });
 };
@@ -108,27 +111,28 @@ export enum TrackErrorEnum {
 interface ErrorEvent {
   data: any;
 }
+
 interface AddDestinationError extends ErrorEvent {
-  error: TrackErrorEnum.FailedToAddDestination;
+  event: TrackErrorEnum.FailedToAddDestination;
   src: SrcEnum.Destinations;
   ctx: DestinationTypeEnum;
 }
 
 interface AddRuleError extends ErrorEvent {
-  error: TrackErrorEnum.FailedToAddRule;
+  event: TrackErrorEnum.FailedToAddRule;
   src: SrcEnum.Rules;
 }
 interface MfaError extends ErrorEvent {
-  error: TrackErrorEnum.FailedMfa;
+  event: TrackErrorEnum.FailedMfa;
   src: SrcEnum.Auth;
 }
 
 type TrackError = AddDestinationError | AddRuleError | MfaError;
 
 export const trackError = (payload: TrackError) => {
-  evaluateTracking(payload.error, {
+  evaluateTracking(payload.event, {
     type: 'error',
-    src: payload,
+    src: payload.src,
     ctx: 'ctx' in payload ? payload.ctx : null,
     data: 'data' in payload ? payload.data : null,
   });

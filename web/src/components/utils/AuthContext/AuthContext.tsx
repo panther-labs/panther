@@ -277,7 +277,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         trackEvent({ event: EventEnum.SignedIn, src: SrcEnum.Auth });
         onSuccess();
       } catch (err) {
-        trackError({ error: TrackErrorEnum.FailedMfa, src: SrcEnum.Auth, data: err });
+        trackError({ event: TrackErrorEnum.FailedMfa, src: SrcEnum.Auth, data: err });
         onError(err as AuthError);
       }
     },

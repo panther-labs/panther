@@ -17,15 +17,12 @@
  */
 
 import React from 'react';
-
 import { PageViewEnum, trackPageView } from 'Helpers/analytics';
 
-function useAnalytics() {
-  const trackPage = (page: PageViewEnum) =>
-    React.useMemo(() => {
-      trackPageView({ page });
-    }, [page]);
-  return { trackPage };
-}
+const useTrackPageView = (page: PageViewEnum) => {
+  React.useEffect(() => {
+    trackPageView({ page });
+  }, [page]);
+};
 
-export default useAnalytics;
+export default useTrackPageView;
