@@ -271,6 +271,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
         yAxis: {
           type: scaleType as EChartOption.BasicComponents.CartesianAxis.Type,
           logBase: 10,
+          min: scaleType === 'log' ? 1 : 0,
           axisLine: {
             lineStyle: {
               color: 'transparent',
