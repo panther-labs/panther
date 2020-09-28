@@ -330,7 +330,6 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
       // eslint-disable-next-line func-names
       timeSeriesChart.on('legendselectchanged', function (obj) {
         const { selected, name } = obj;
-
         if (allSelected && selected) {
           Object.keys(selected).forEach(key => {
             selected[key] = key === name;
@@ -343,6 +342,23 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
           allSelected = Object.keys(selected).every(key => selected[key]);
         }
         options.legend.selected = selected;
+        this.setOption(options);
+      });
+
+      /*
+       * Overriding default behaviour for restore functionality. With this functionality,
+       * we reset all legend selections, zooms and scaleType
+       */
+      // eslint-disable-next-line func-names
+      timeSeriesChart.on('restore', function () {
+        allSelected = true;
+        if (options.legend.selected) {
+          options.legend.selected = Object.keys(options.legend.selected).reduce((acc, cur) => {
+            acc[cur] = true;
+            return acc;
+          }, {});
+        }
+        setScaleType('value');
         this.setOption(options);
       });
 
