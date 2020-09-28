@@ -88,7 +88,10 @@ var (
 	}
 
 	expectedMetric     = []metrics.Metric{{Name: "AlertsCreated", Value: 1, Unit: metrics.UnitCount}}
-	expectedDimensions = []metrics.Dimension{{Name: "Severity", Value: "INFO"}, {Name: "AnalysisType", Value: "Rule"}}
+	expectedDimensions = []metrics.Dimension{
+		{Name: "Severity", Value: "INFO"},
+		{Name: "AnalysisType", Value: "Rule"},
+		{Name: "RuleID", Value: "ruleId"}}
 )
 
 func TestHandleStoreAndSendNotification(t *testing.T) {

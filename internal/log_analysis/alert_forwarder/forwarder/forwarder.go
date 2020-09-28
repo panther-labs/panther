@@ -99,7 +99,7 @@ func (h *Handler) handleNewAlert(rule *ruleModel.Rule, event *AlertDedupEvent) e
 	}
 
 	err := h.sendAlertNotification(rule, event)
-	if err == nil && !event.IsError(){
+	if err == nil && !event.IsError() {
 		h.logStats(rule)
 	}
 	return err
