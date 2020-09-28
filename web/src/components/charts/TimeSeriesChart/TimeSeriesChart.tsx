@@ -62,6 +62,11 @@ interface TimeSeriesLinesProps {
    * This is parameter determines if we need to display the values with an appropriate suffix
    */
   units?: string;
+
+  /**
+   * This is an optional parameter that will render the text provided above legend if defined
+   */
+  title?: string;
 }
 
 const severityColors = mapKeys(SEVERITY_COLOR_MAP, (val, key) => capitalize(key.toLowerCase()));
@@ -80,6 +85,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
   segments = 12,
   maxZoomPeriod = 3600 * 1000 * 24,
   units,
+  title,
 }) => {
   const [scaleType, setScaleType] = React.useState('value');
   const theme = useTheme();
@@ -227,6 +233,8 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
           orient: 'vertical' as const,
           left: 'auto',
           right: 'auto',
+          // Pushing down legend to fit title
+          top: title ? 30 : 'auto',
           icon: 'circle',
           data: legendData,
           textStyle: {
@@ -304,6 +312,9 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
 
   return (
     <React.Fragment>
+      <Box position="absolute" ml={1} fontWeight="bold">
+        {title}
+      </Box>
       {scaleControls && <ScaleControls scaleType={scaleType} onSelection={setScaleType} />}
       <Box ref={container} width="100%" height="100%" />
     </React.Fragment>

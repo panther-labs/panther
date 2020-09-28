@@ -44,7 +44,7 @@ const AlertsBySeverity: React.FC<AlertsBySeverityProps> = ({ alerts: { series, t
         px={4}
         backgroundColor="navyblue-500"
       >
-        <TimeSeriesChart data={timeSeriesData} zoomable />
+        <TimeSeriesChart data={timeSeriesData} zoomable title="Alert Severity" />
       </Flex>
     </Box>
   );
