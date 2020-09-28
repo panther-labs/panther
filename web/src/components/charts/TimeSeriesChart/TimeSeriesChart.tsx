@@ -164,6 +164,9 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
               },
               title: '',
             },
+            restore: {
+              title: ' ',
+            },
           },
         },
         ...(zoomable && {
@@ -306,6 +309,32 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
 
       // load the timeSeriesChart
       const timeSeriesChart = echarts.init(container.current);
+
+      /*
+       * Overriding default behaviour for legend selection. With this functionality,
+       * when user select an specific series, we isolate this series only, subsequent clicks on
+       * other series will show them up too. When all series are enabled again this behaviour is reseted
+       */
+      let allSelected = true;
+      // eslint-disable-next-line func-names
+      timeSeriesChart.on('legendselectchanged', function (obj) {
+        const { selected, name } = obj;
+
+        if (allSelected && selected) {
+          Object.keys(selected).forEach(key => {
+            selected[key] = key === name;
+          });
+          allSelected = false;
+        } else {
+          const open = selected[name];
+          selected[name] = open;
+          // With this we check if every series is selected so we can reset behaviour
+          allSelected = Object.keys(selected).every(key => selected[key]);
+        }
+        options.legend.selected = selected;
+        this.setOption(options);
+      });
+
       timeSeriesChart.setOption(options);
     })();
   }, [data, scaleType]);

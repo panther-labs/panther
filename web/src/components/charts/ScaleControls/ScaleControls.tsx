@@ -27,7 +27,7 @@ interface ChartSummaryProps {
 
 const ScaleControls: React.FC<ChartSummaryProps> = ({ scaleType = 'value', onSelection }) => {
   return (
-    <Flex position="absolute" width="100%" ml="210px" justify="left" spacing={2} zIndex={5}>
+    <Flex position="absolute" width="30%" ml="210px" justify="left" spacing={2} zIndex={5}>
       <Box
         borderRadius="circle"
         py={1}
