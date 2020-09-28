@@ -566,6 +566,7 @@ export const buildGeneralSettings = (overrides: Partial<GeneralSettings> = {}): 
     email: 'email' in overrides ? overrides.email : 'tertiary',
     errorReportingConsent:
       'errorReportingConsent' in overrides ? overrides.errorReportingConsent : false,
+    analyticsConsent: 'analyticsConsent' in overrides ? overrides.analyticsConsent : true,
   };
 };
 
@@ -1468,6 +1469,7 @@ export const buildUpdateGeneralSettingsInput = (
     email: 'email' in overrides ? overrides.email : 'olive',
     errorReportingConsent:
       'errorReportingConsent' in overrides ? overrides.errorReportingConsent : true,
+    analyticsConsent: 'analyticsConsent' in overrides ? overrides.analyticsConsent : false,
   };
 };
 

@@ -27,8 +27,9 @@ const emptyInitialValues = {
   defaultForSeverity: [],
   outputConfig: {
     asana: {
+      personalAccessToken: '',
       projectGids: [],
-    } as AsanaConfig,
+    },
   },
 };
 
@@ -44,7 +45,7 @@ const initialValues = {
     asana: {
       personalAccessToken: '',
       projectGids: ['123', '456'],
-    } as AsanaConfig,
+    },
   },
   defaultForSeverity: [severity],
 };
