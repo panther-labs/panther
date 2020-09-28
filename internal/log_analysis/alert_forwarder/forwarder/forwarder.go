@@ -66,7 +66,6 @@ func (h *Handler) Do(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) (e
 	if shouldIgnoreChange(newRule, newAlertDedupEvent) {
 		return nil
 	}
-
 	if needToCreateNewAlert(oldRule, oldAlertDedupEvent, newAlertDedupEvent) {
 		return h.handleNewAlert(newRule, newAlertDedupEvent)
 	}
@@ -100,20 +99,25 @@ func (h *Handler) handleNewAlert(rule *ruleModel.Rule, event *AlertDedupEvent) e
 	}
 
 	err := h.sendAlertNotification(rule, event)
-	if err == nil && !event.IsError() {
-		h.MetricsLogger.Log(
-			[]metrics.Dimension{
-				{Name: "Severity", Value: string(rule.Severity)},
-				{Name: "AnalysisType", Value: "Rule"},
-			},
-			metrics.Metric{
-				Name:  "AlertsCreated",
-				Value: 1,
-				Unit:  metrics.UnitCount,
-			},
-		)
+	if err == nil && !event.IsError(){
+		h.logStats(rule)
 	}
 	return err
+}
+
+func (h *Handler) logStats(rule *ruleModel.Rule) {
+	h.MetricsLogger.Log(
+		[]metrics.Dimension{
+			{Name: "Severity", Value: string(rule.Severity)},
+			{Name: "AnalysisType", Value: "Rule"},
+			{Name: "RuleID", Value: string(rule.ID)},
+		},
+		metrics.Metric{
+			Name:  "AlertsCreated",
+			Value: 1,
+			Unit:  metrics.UnitCount,
+		},
+	)
 }
 
 func (h *Handler) updateExistingAlert(event *AlertDedupEvent) error {
