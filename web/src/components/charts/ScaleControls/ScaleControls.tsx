@@ -20,12 +20,12 @@ import React from 'react';
 import { Box, Flex } from 'pouncejs';
 import { EChartOption } from 'echarts';
 
-interface ChartSummaryProps {
+interface ScaleControlsProps {
   scaleType: string;
   onSelection: (option: EChartOption.BasicComponents.CartesianAxis.Type) => void;
 }
 
-const ScaleControls: React.FC<ChartSummaryProps> = ({ scaleType = 'value', onSelection }) => {
+const ScaleControls: React.FC<ScaleControlsProps> = ({ scaleType = 'value', onSelection }) => {
   return (
     <Flex
       position="absolute"
