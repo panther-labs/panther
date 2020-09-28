@@ -38,7 +38,7 @@ func TestConvertAttribute(t *testing.T) {
 		EventCount:          100,
 		LogTypes:            []string{"Log.Type.1", "Log.Type.2"},
 		GeneratedTitle:      aws.String("test title"),
-		ErrorType:           aws.String("RULE_ERROR"),
+		ErrorType:           "RULE_ERROR",
 	}
 
 	alertDedupEvent, err := FromDynamodDBAttribute(getNewTestCase())

@@ -35,16 +35,21 @@ const (
 
 // AlertDedupEvent represents the event stored in the alert dedup DDB table by the rules engine
 type AlertDedupEvent struct {
-	RuleID              string    `dynamodbav:"ruleId,string"`
-	RuleVersion         string    `dynamodbav:"ruleVersion,string"`
-	DeduplicationString string    `dynamodbav:"dedup,string"`
-	CreationTime        time.Time `dynamodbav:"creationTime,string"`
-	UpdateTime          time.Time `dynamodbav:"updateTime,string"`
-	EventCount          int64     `dynamodbav:"eventCount,number"`
+	RuleID              string    `dynamodbav:"ruleId"`
+	RuleVersion         string    `dynamodbav:"ruleVersion"`
+	DeduplicationString string    `dynamodbav:"dedup"`
+	CreationTime        time.Time `dynamodbav:"creationTime"`
+	UpdateTime          time.Time `dynamodbav:"updateTime"`
+	EventCount          int64     `dynamodbav:"eventCount"`
 	LogTypes            []string  `dynamodbav:"logTypes,stringset"`
+	ErrorType           string    `dynamodbav:"errorType"`
 	GeneratedTitle      *string   `dynamodbav:"-"` // The title that was generated dynamically using Python. Might be null.
 	AlertCount          int64     `dynamodbav:"-"` // There is no need to store this item in DDB
-	ErrorType           *string   `dynamodbav:"-"` // There is no need to store this item in DDB
+
+}
+
+func (e *AlertDedupEvent) IsError() bool {
+	return len(e.ErrorType) != 0
 }
 
 // Alert contains all the fields associated to the alert stored in DDB
@@ -133,7 +138,7 @@ func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (eve
 
 	errorType := getOptionalAttribute("errorType", input)
 	if errorType != nil {
-		result.ErrorType = aws.String(errorType.String())
+		result.ErrorType = errorType.String()
 	}
 	return result, nil
 }
