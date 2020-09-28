@@ -27,6 +27,9 @@ import (
 )
 
 const (
+	// The type of an Alert that is triggered because of a rule encountering an error
+	RuleErrorType = "RULE_ERROR"
+
 	alertTablePartitionKey        = "id"
 	alertTableLogTypesAttribute   = "logTypes"
 	alertTableEventCountAttribute = "eventCount"
@@ -42,9 +45,10 @@ type AlertDedupEvent struct {
 	UpdateTime          time.Time `dynamodbav:"updateTime,string"`
 	EventCount          int64     `dynamodbav:"eventCount,number"`
 	LogTypes            []string  `dynamodbav:"logTypes,stringset"`
+	Type                *string   `dynamodbav:"-"` // There is no need to store this item in DDB
 	GeneratedTitle      *string   `dynamodbav:"-"` // The title that was generated dynamically using Python. Might be null.
 	AlertCount          int64     `dynamodbav:"-"` // There is no need to store this item in DDB
-	ErrorType           *string   `dynamodbav:"-"` // There is no need to store this item in DDB
+
 }
 
 // Alert contains all the fields associated to the alert stored in DDB
@@ -131,9 +135,9 @@ func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (eve
 		result.GeneratedTitle = aws.String(generatedTitle.String())
 	}
 
-	errorType := getOptionalAttribute("errorType", input)
-	if errorType != nil {
-		result.ErrorType = aws.String(errorType.String())
+	alertType := getOptionalAttribute("alertType", input)
+	if alertType != nil {
+		result.Type = aws.String(alertType.String())
 	}
 	return result, nil
 }

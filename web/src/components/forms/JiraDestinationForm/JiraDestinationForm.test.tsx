@@ -18,14 +18,23 @@
 
 import React from 'react';
 import { render, fireEvent, waitFor, waitMs, faker, buildJiraConfigInput } from 'test-utils';
-import { JiraConfig, SeverityEnum } from 'Generated/schema';
+import { SeverityEnum } from 'Generated/schema';
 import JiraDestinationForm from './index';
 
 const emptyInitialValues = {
   outputId: null,
   displayName: '',
   defaultForSeverity: [],
-  outputConfig: {},
+  outputConfig: {
+    jira: {
+      orgDomain: '',
+      apiKey: '',
+      assigneeId: '',
+      projectKey: '',
+      issueType: '',
+      userName: '',
+    },
+  },
 };
 
 const displayName = 'Jira';
@@ -42,7 +51,7 @@ const initialValues = {
       projectKey: 'key',
       issueType: 'Bug',
       userName: faker.internet.email(),
-    } as JiraConfig,
+    },
   },
   defaultForSeverity: [severity],
 };

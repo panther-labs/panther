@@ -442,12 +442,14 @@ input UpdateGeneralSettingsInput {
   displayName: String
   email: String
   errorReportingConsent: Boolean
+  analyticsConsent: Boolean
 }
 
 type GeneralSettings {
   displayName: String
   email: String
   errorReportingConsent: Boolean
+  analyticsConsent: Boolean
 }
 
 input TestPolicyInput {

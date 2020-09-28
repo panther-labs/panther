@@ -51,6 +51,7 @@ type Ec2Instance struct {
 	KernelId                                *string
 	KeyName                                 *string
 	Licenses                                []*ec2.LicenseConfiguration
+	MetadataOptions                         *ec2.InstanceMetadataOptionsResponse
 	Monitoring                              *ec2.Monitoring
 	NetworkInterfaces                       []*ec2.InstanceNetworkInterface
 	Placement                               *ec2.Placement

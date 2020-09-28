@@ -119,7 +119,7 @@ func PushWebImg(imageRegistry, tag string) (string, error) {
 		return "", fmt.Errorf("docker tag %s %s failed: %v", localImageID, remoteImage, err)
 	}
 
-	log.Info("pushing docker image to remote repo")
+	log.Infof("pushing docker image %s to remote repo", remoteImage)
 	if err := sh.Run("docker", "push", remoteImage); err != nil {
 		return "", err
 	}

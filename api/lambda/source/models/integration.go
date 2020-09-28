@@ -73,6 +73,17 @@ func (info *SourceIntegration) RequiredLogTypes() (logTypes []string) {
 	}
 }
 
+func (info *SourceIntegration) IsLogAnalysisIntegration() bool {
+	switch integType := info.IntegrationType; integType {
+	case IntegrationTypeAWSScan:
+		return false
+	case IntegrationTypeAWS3, IntegrationTypeSqs:
+		return true
+	default:
+		panic("Unexpected integration type " + integType)
+	}
+}
+
 type SourceIntegrationHealth struct {
 	IntegrationType string `json:"integrationType"`
 
