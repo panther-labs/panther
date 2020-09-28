@@ -104,7 +104,7 @@ input ListAlertsInput {
   status: [AlertStatusesEnum]
   eventCountMin: Int
   eventCountMax: Int
-  logTypes: [String]
+  logTypes: [String!]
   sortBy: ListAlertsSortFieldsEnum # defaults to `createdAt`
   sortDir: SortDirEnum # defaults to `descending` (always on `createdAt` field)
 }
