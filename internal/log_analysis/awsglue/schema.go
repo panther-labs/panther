@@ -56,6 +56,10 @@ var (
 			To:   GlueStringType,
 		},
 		{
+			From: reflect.TypeOf([]jsoniter.RawMessage{}),
+			To:   ArrayOf(GlueStringType),
+		},
+		{
 			From: reflect.TypeOf(numerics.Integer(0)),
 			To:   "bigint",
 		},
@@ -338,7 +342,7 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 			glueType = ArrayOf(structType)
 			return
 		default:
-			elementType := inferType(sliceOfType, customMappingsTable)
+			elementType := toGlueType(sliceOfType)
 			glueType = ArrayOf(elementType)
 			return
 		}
@@ -363,7 +367,7 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 		}
 
 		// simple types
-		glueType = inferType(t, customMappingsTable)
+		glueType = toGlueType(t)
 		return
 	}
 }
@@ -410,14 +414,12 @@ func inferMap(t reflect.Type, customMappingsTable map[string]string) (glueType s
 		glueType = fmt.Sprintf("map<%s,%s>", t.Key(), mapGlueType)
 		return
 	}
-	glueType = fmt.Sprintf("map<%s,%s>", t.Key(), inferType(mapOfType, customMappingsTable))
+	glueType = fmt.Sprintf("map<%s,%s>", t.Key(), toGlueType(mapOfType))
 	return glueType, structFieldNames
 }
 
-func inferType(t reflect.Type, customMappings map[string]string) (glueType string) {
-	if customType, ok := customMappings[t.String()]; ok {
-		return customType
-	}
+// Primitive mappings
+func toGlueType(t reflect.Type) (glueType string) {
 	switch t.String() {
 	case "bool":
 		glueType = "boolean"
