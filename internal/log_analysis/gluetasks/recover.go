@@ -98,7 +98,6 @@ func (r *RecoverDatabaseTables) Run(ctx context.Context, glueAPI glueiface.GlueA
 	group.Go(func() error {
 		for page := range tables {
 			tasks := make([]*RecoverTablePartitions, len(page))
-			log.Info("recovering tables in parallel", zap.Int("numTables", len(tasks)))
 			childGroup, ctx := errgroup.WithContext(ctx)
 			for i, tbl := range page {
 				i, tbl := i, tbl
@@ -165,8 +164,10 @@ func (r *RecoverTablePartitions) Run(ctx context.Context, apiGlue glueiface.Glue
 	return r.recoverTable(ctx, apiGlue, apiS3, log, tbl)
 }
 
-func (r *RecoverTablePartitions) recoverTable(ctx context.Context,
-	glueAPI glueiface.GlueAPI, s3API s3iface.S3API, log *zap.Logger, tbl *glue.TableData) error {
+func (r *RecoverTablePartitions) recoverTable(ctx context.Context, glueAPI glueiface.GlueAPI, s3API s3iface.S3API,
+
+	log *zap.Logger, tbl *glue.TableData) (err error) {
+
 	start := r.LastDate
 	if start.IsZero() {
 		start = r.Start
@@ -176,14 +177,48 @@ func (r *RecoverTablePartitions) recoverTable(ctx context.Context,
 		return err
 	}
 	log.Info("starting recovery", zap.Stringer("start", start), zap.Stringer("end", end))
+	defer func(since time.Time) {
+		delta := time.Since(since)
+		if err != nil {
+			log.Error("recover failed", zap.Error(err), zap.Duration("duration", delta), zap.Any("stats", &r.Stats))
+		} else {
+			log.Info("recover finished", zap.Duration("duration", delta), zap.Any("stats", &r.Stats))
+		}
+	}(time.Now())
+
+	partitions := make(map[time.Time]bool)
+	expr := hourly.PartitionsBetween(start, end)
+	input := glue.GetPartitionsInput{
+		CatalogId:    tbl.CatalogId,
+		DatabaseName: tbl.DatabaseName,
+		TableName:    tbl.Name,
+		Expression:   &expr,
+	}
+	log.Info("scanning for partitions")
+	err = glueAPI.GetPartitionsPagesWithContext(ctx, &input, func(page *glue.GetPartitionsOutput, _ bool) bool {
+		for _, p := range page.Partitions {
+			tm, err := awsglue.PartitionTimeFromValues(p.Values)
+			if err != nil {
+				continue
+			}
+			partitions[tm] = true
+		}
+		return true
+	})
+	if err != nil {
+		log.Error("partition scan failed", zap.Error(err))
+		return err
+	}
+	log.Info("partitions scanned", zap.Int("numPartitions", len(partitions)))
 	tasks := make(chan recoverTask)
 	go func() {
 		defer close(tasks)
 		for tm := start; tm.Before(end); tm = daily.Next(tm) {
 			select {
 			case tasks <- recoverTask{
-				table: tbl,
-				date:  tm,
+				table:      tbl,
+				partitions: partitions,
+				date:       tm,
 			}:
 			case <-ctx.Done():
 				return
@@ -199,8 +234,9 @@ func (r *RecoverTablePartitions) recoverTable(ctx context.Context,
 }
 
 type recoverTask struct {
-	table *glue.TableData
-	date  time.Time
+	table      *glue.TableData
+	partitions map[time.Time]bool
+	date       time.Time
 }
 
 func (r *RecoverTablePartitions) processRecoverTasks(ctx context.Context, tasks <-chan recoverTask, w recoverWorker, numWorkers int) error {
@@ -216,7 +252,7 @@ func (r *RecoverTablePartitions) processRecoverTasks(ctx context.Context, tasks 
 		w := &workers[i]
 		group.Go(func() error {
 			for task := range tasks {
-				err := w.recoverPartitionAt(ctx, task.table, task.date)
+				err := w.recoverPartitionAt(ctx, task.table, task.date, task.partitions)
 				if err != nil {
 					w.err = err
 					return err
@@ -248,17 +284,7 @@ type recoverWorker struct {
 	err               error
 }
 
-func (w *recoverWorker) recoverPartitionAt(ctx context.Context, tbl *glue.TableData, tm time.Time) error {
-	// First we get all partitions for the particular date
-	partitions, err := w.findGluePartitionsAt(ctx, tbl, tm)
-	w.stats.NumProcessed += len(partitions)
-	if err != nil {
-		return err
-	}
-	// Check if no partitions is missing
-	if len(partitions) == 24 {
-		return nil
-	}
+func (w *recoverWorker) recoverPartitionAt(ctx context.Context, tbl *glue.TableData, tm time.Time, partitions map[time.Time]bool) error {
 	start := daily.Truncate(tm)
 	end := daily.Next(start)
 	batch := &glue.BatchCreatePartitionInput{
@@ -270,28 +296,38 @@ func (w *recoverWorker) recoverPartitionAt(ctx context.Context, tbl *glue.TableD
 	for tm := start; tm.Before(end); tm = hourly.Next(tm) {
 		// Skip an hour if a partition already exists
 		if _, ok := partitions[tm]; ok {
+			w.log.Debug("partition already exists", zap.String("time", tm.Format("2006-01-02 15:04")))
 			continue
 		}
+		w.log.Info("scanning partition", zap.String("time", tm.Format("2006-01-02 15:04")))
 		// Check to see if there are data for this partition in S3
-		location, err := w.findS3PartitionAt(ctx, tbl, tm)
+		s3Location, err := w.findS3PartitionAt(ctx, tbl, tm)
 		if err != nil {
 			// No data found, skip to the next hour
 			if errors.Is(err, errS3ObjectNotFound) {
+				w.log.Debug("no partition data found", zap.String("time", tm.Format("2006-01-02 15:04")))
 				w.stats.NumS3Miss++
 				continue
 			}
 			return err
 		}
+		w.log.Debug("found recoverable partition",
+			zap.String("location", s3Location),
+			zap.String("time", tm.Format("2006-01-02 15:04")),
+		)
 		w.stats.NumS3Hit++
 		// We found a partition to be recovered
 		desc := *tbl.StorageDescriptor
-		desc.Location = aws.String(location)
+		desc.Location = aws.String(s3Location)
 		batch.PartitionInputList = append(batch.PartitionInputList, &glue.PartitionInput{
 			StorageDescriptor: &desc,
 			Values:            hourly.PartitionValuesFromTime(tm),
 		})
 	}
 	batchSize := len(batch.PartitionInputList)
+	if batchSize == 0 {
+		return nil
+	}
 	if w.dryRun {
 		w.log.Info("dryrun, skipping partition creation", zap.Int("numFound", batchSize))
 		return nil
@@ -376,42 +412,50 @@ func (w *recoverWorker) findS3PartitionAt(ctx context.Context, tbl *glue.TableDa
 // nolint:lll
 func (w *recoverWorker) findGluePartitionsAt(ctx context.Context, tbl *glue.TableData, tm time.Time) (map[time.Time]*glue.Partition, error) {
 	tm = tm.UTC()
-	filter := fmt.Sprintf(`year = %d AND month = %d AND day = %d`, tm.Year(), tm.Month(), tm.Day())
-	reply, err := w.glue.GetPartitionsWithContext(ctx, &glue.GetPartitionsInput{
+	filter := fmt.Sprintf(`(year = %d) AND (month = %02d) AND (day = %02d)`, tm.Year(), tm.Month(), tm.Day())
+	input := glue.GetPartitionsInput{
 		CatalogId:    tbl.CatalogId,
 		DatabaseName: tbl.DatabaseName,
 		TableName:    tbl.Name,
 		Expression:   &filter,
+	}
+	partitions := make(map[time.Time]*glue.Partition, 24)
+	err := w.glue.GetPartitionsPagesWithContext(ctx, &input, func(page *glue.GetPartitionsOutput, _ bool) bool {
+		for _, p := range page.Partitions {
+			tm, err := awsglue.PartitionTimeFromValues(p.Values)
+			if err != nil {
+				continue
+			}
+			partitions[tm] = p
+		}
+		return true
 	})
 	if err != nil {
 		return nil, err
-	}
-	partitions := make(map[time.Time]*glue.Partition, 24)
-	for _, p := range reply.Partitions {
-		tm, err := awsglue.PartitionTimeFromValues(p.Values)
-		if err != nil {
-			return partitions, err
-		}
-		partitions[tm] = p
 	}
 	return partitions, nil
 }
 
 func buildRecoverRange(tbl *glue.TableData, start, end time.Time) (time.Time, time.Time, error) {
 	createTime := aws.TimeValue(tbl.CreateTime)
+	maxTime := daily.Next(time.Now())
 	dbName := aws.StringValue(tbl.DatabaseName)
 	if start.IsZero() {
 		start = createTime
 	}
 	if end.IsZero() {
-		end = time.Now()
+		end = maxTime
 	}
-	if dbName != awsglue.LogProcessingDatabaseName {
+	switch dbName {
+	case awsglue.LogProcessingDatabaseName:
+		// Do not cap dates for log tables.
+		// Log tables are partitioned by event time and that could be in the past or future.
+	default:
 		if start.Before(createTime) {
 			start = createTime
 		}
-		if now := time.Now(); end.After(now) {
-			end = now
+		if end.After(maxTime) {
+			end = maxTime
 		}
 	}
 	start = daily.Truncate(start.UTC())
