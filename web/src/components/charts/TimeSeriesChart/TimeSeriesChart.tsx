@@ -21,7 +21,7 @@ import ReactDOM from 'react-dom';
 import { Box, Flex, Text, useTheme } from 'pouncejs';
 import { formatTime, formatDatetime, remToPx, capitalize } from 'Helpers/utils';
 import { SeriesData } from 'Generated/schema';
-import { EChartOption } from 'echarts';
+import { EChartOption, ECharts } from 'echarts';
 import mapKeys from 'lodash/mapKeys';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { stringToPaleColor } from 'Helpers/colors';
@@ -95,11 +95,14 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
   title,
 }) => {
   const [scaleType, setScaleType] = React.useState('value');
-  const [timeSeriesChart, setChart] = React.useState();
   const theme = useTheme();
+  const timeSeriesChart = React.useRef<ECharts>(null);
   const container = React.useRef<HTMLDivElement>(null);
   const tooltip = React.useRef<HTMLDivElement>(document.createElement('div'));
 
+  /*
+   * Defining ChartOptions
+   */
   const chartOptions = React.useMemo(() => {
     /*
      *  Timestamps are common for all series since everything has the same interval
@@ -321,7 +324,8 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
 
     return options;
   }, [data, scaleType]);
-  // load the timeSeriesChart
+
+  // initialize and load the timeSeriesChart
   React.useEffect(() => {
     (async () => {
       const [echarts] = await Promise.all(
@@ -375,14 +379,14 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
         this.setOption(options);
       });
       newChart.setOption(chartOptions);
-      setChart(newChart);
+      timeSeriesChart.current = newChart;
     })();
   }, []);
 
+  // useEffect to apply changes from chartOptions
   React.useEffect(() => {
-    if (!timeSeriesChart) return;
-    // @ts-ignore
-    timeSeriesChart.setOption(chartOptions);
+    if (!timeSeriesChart.current) return;
+    timeSeriesChart.current.setOption(chartOptions);
   }, [chartOptions]);
 
   return (
