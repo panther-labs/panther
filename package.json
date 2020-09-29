@@ -120,6 +120,7 @@
     "history": "^4.10.1",
     "linkifyjs": "^2.1.9",
     "lodash": "^4.17.19",
+    "mixpanel-browser": "^2.39.0",
     "pouncejs": "^0.69.0",
     "qrcode.react": "^1.0.0",
     "query-string": "^6.10.1",
