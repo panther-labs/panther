@@ -149,23 +149,14 @@ func TestResult(t *testing.T, expect string, actual *pantherlog.Result, indicato
 	data, err := JSON().Marshal(actual)
 	require.NoError(t, err)
 	require.NoError(t, jsoniter.Unmarshal(data, &actualAny))
-	if expectResult.PantherParseTime.IsZero() {
-		require.False(t, actual.PantherParseTime.IsZero(), "zero parse time")
-	} else {
-		EqualTimestamp(t, expectResult.PantherParseTime, actual.PantherParseTime, "invalid parse time")
-	}
+	require.False(t, actual.PantherParseTime.IsZero(), "zero parse time")
 	if expectResult.PantherEventTime.IsZero() {
 		EqualTimestamp(t, actual.PantherParseTime, actual.PantherEventTime, "event time not equal to parse time")
 	} else {
 		EqualTimestamp(t, expectResult.PantherEventTime, actual.PantherEventTime, "invalid event time")
 	}
-	if len(expectResult.PantherRowID) == 0 {
-		require.NotEmpty(t, actual.PantherRowID)
-	} else {
-		require.Equal(t, expectResult.PantherRowID, actual.PantherRowID)
-	}
+	require.NotEmpty(t, actual.PantherRowID)
 	// The following dance ensures that produced JSON matches values from `actual` result
-
 	require.Equal(t, actual.PantherEventTime.UTC().Format(time.RFC3339Nano), actualAny["p_event_time"], "Invalid JSON event time")
 	require.Equal(t, actual.PantherParseTime.UTC().Format(time.RFC3339Nano), actualAny["p_parse_time"], "Invalid JSON parse time")
 	require.Equal(t, actual.PantherRowID, actualAny["p_row_id"], "Invalid JSON row id")
