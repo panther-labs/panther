@@ -95,11 +95,11 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
   title,
 }) => {
   const [scaleType, setScaleType] = React.useState('value');
+  const [timeSeriesChart, setChart] = React.useState();
   const theme = useTheme();
   const container = React.useRef<HTMLDivElement>(null);
   const tooltip = React.useRef<HTMLDivElement>(document.createElement('div'));
 
-  let timeSeriesChart;
   const chartOptions = React.useMemo(() => {
     /*
      *  Timestamps are common for all series since everything has the same interval
@@ -334,14 +334,14 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
           import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/legendScroll'),
         ].filter(Boolean)
       );
-      timeSeriesChart = echarts.init(container.current);
+      const newChart = echarts.init(container.current);
       /*
        * Overriding default behaviour for legend selection. With this functionality,
        * when user select an specific series, we isolate this series only, subsequent clicks on
        * other series will show them up too. When all series are enabled again this behaviour is reseted
        */
       // eslint-disable-next-line func-names
-      timeSeriesChart.on('legendselectchanged', function (obj) {
+      newChart.on('legendselectchanged', function (obj) {
         const { selected, name } = obj;
         const currentSelected = chartOptions.legend.selected;
         // On first selection currentSelected is 'undefined'
@@ -362,8 +362,8 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
        * we reset all legend selections, zooms and scaleType
        */
       // eslint-disable-next-line func-names
-      timeSeriesChart.on('restore', function () {
-        const options = this.getOption();
+      newChart.on('restore', function () {
+        const options = chartOptions;
         if (options.legend.selected) {
           options.legend.selected = Object.keys(options.legend.selected).reduce((acc, cur) => {
             acc[cur] = true;
@@ -374,12 +374,14 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
 
         this.setOption(options);
       });
-      timeSeriesChart.setOption(chartOptions);
+      newChart.setOption(chartOptions);
+      setChart(newChart);
     })();
   }, []);
 
   React.useEffect(() => {
     if (!timeSeriesChart) return;
+    // @ts-ignore
     timeSeriesChart.setOption(chartOptions);
   }, [chartOptions]);
 
