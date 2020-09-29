@@ -23,6 +23,8 @@ import TablePlaceholder from 'Components/TablePlaceholder';
 import { extractErrorMessage, getCurrentDate, subtractDays } from 'Helpers/utils';
 import Panel from 'Components/Panel';
 import AlertsTable from 'Pages/LogAnalysisOverview/AlertsTable';
+import { PageViewEnum } from 'Helpers/analytics';
+import useTrackPageView from 'Hooks/useTrackPageView';
 import LogAnalysisOverviewPageSkeleton from './Skeleton';
 import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
 import AlertsBySeverity from './AlertsBySeverity';
@@ -34,6 +36,8 @@ export const intervalMinutes = 60;
 export const defaultPastDays = 3;
 
 const LogAnalysisOverview: React.FC = () => {
+  useTrackPageView(PageViewEnum.LogAnalysisOverview);
+
   const [fromDate, toDate] = React.useMemo(() => {
     const utcnow = getCurrentDate();
     return [subtractDays(utcnow, defaultPastDays), utcnow];

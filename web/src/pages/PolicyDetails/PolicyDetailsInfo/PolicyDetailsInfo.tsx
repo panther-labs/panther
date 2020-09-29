@@ -201,10 +201,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
                 </Box>
                 {policy.suppressions.length > 0 ? (
                   <Box gridColumn="3/8" id="ignore-patterns-list">
-                    {policy.suppressions.map(
-                      (suppression, index) =>
-                        `${suppression}${index !== policy.suppressions.length - 1 ? ', ' : null}`
-                    )}
+                    {policy.suppressions?.length > 0 ? policy.suppressions.join(', ') : null}
                   </Box>
                 ) : (
                   <Box gridColumn="3/8" id="ignore-patterns-list">

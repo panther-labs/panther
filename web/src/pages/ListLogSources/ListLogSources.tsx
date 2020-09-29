@@ -24,12 +24,16 @@ import urls from 'Source/urls';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
 import withSEO from 'Hoc/withSEO';
+import useTrackPageView from 'Hooks/useTrackPageView';
+import { PageViewEnum } from 'Helpers/analytics';
 import { useListLogSources } from './graphql/listLogSources.generated';
 import EmptyDataFallback from './EmptyDataFallback';
 import Skeleton from './Skeleton';
 import ListDestinationsCards from './ListLogSourceCards';
 
 const ListLogSources = () => {
+  useTrackPageView(PageViewEnum.ListAlerts);
+
   const { loading, error, data } = useListLogSources();
 
   if (loading && !data) {
