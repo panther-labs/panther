@@ -27,15 +27,7 @@ interface ScaleControlsProps {
 
 const ScaleControls: React.FC<ScaleControlsProps> = ({ scaleType = 'value', onSelection }) => {
   return (
-    <Flex
-      position="absolute"
-      width="30%"
-      maxWidth="200px"
-      ml="210px"
-      justify="left"
-      spacing={2}
-      zIndex={5}
-    >
+    <Flex spacing={2}>
       <Box
         borderRadius="circle"
         py={1}

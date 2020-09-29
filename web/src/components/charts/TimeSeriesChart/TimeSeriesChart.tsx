@@ -371,7 +371,11 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
       <Box position="absolute" width="200px" ml={1} fontWeight="bold">
         {title}
       </Box>
-      {scaleControls && <ScaleControls scaleType={scaleType} onSelection={setScaleType} />}
+      {scaleControls && (
+        <Box position="absolute" ml="210px" zIndex={5}>
+          <ScaleControls scaleType={scaleType} onSelection={setScaleType} />
+        </Box>
+      )}
       <Box ref={container} width="100%" height="100%" />
     </React.Fragment>
   );
