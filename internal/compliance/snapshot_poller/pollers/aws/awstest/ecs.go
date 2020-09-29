@@ -31,21 +31,21 @@ import (
 
 // Example ECS API return values
 var (
-	ExampleClusterArn         = aws.String("arn:aws:ecs:us-west-2:123456789012:cluster/example-cluster")
-	ExampleClusterMultiSvcArn = aws.String("arn:aws:ecs:us-west-2:123456789012:cluster/example-cluster-multi-service")
-	ExampleTaskArn            = aws.String("arn:aws:ecs:us-west-2:123456789012:task/1111-2222")
-	ExampleServiceArn         = aws.String("arn:aws:ecs:us-west-2:123456789012:service/example-service")
+	ExampleEcsClusterArn         = aws.String("arn:aws:ecs:us-west-2:123456789012:cluster/example-cluster")
+	ExampleEcsClusterMultiSvcArn = aws.String("arn:aws:ecs:us-west-2:123456789012:cluster/example-cluster-multi-service")
+	ExampleTaskArn               = aws.String("arn:aws:ecs:us-west-2:123456789012:task/1111-2222")
+	ExampleServiceArn            = aws.String("arn:aws:ecs:us-west-2:123456789012:service/example-service")
 
 	ExampleListClusters = &ecs.ListClustersOutput{
 		ClusterArns: []*string{
-			ExampleClusterArn,
+			ExampleEcsClusterArn,
 		},
 	}
 
 	ExampleListClustersContinue = &ecs.ListClustersOutput{
 		ClusterArns: []*string{
-			ExampleClusterArn,
-			ExampleClusterArn,
+			ExampleEcsClusterArn,
+			ExampleEcsClusterArn,
 		},
 		NextToken: aws.String("1"),
 	}
@@ -62,7 +62,7 @@ var (
 		},
 	}
 
-	ExampleListServicesMultiSvc = &ecs.ListServicesOutput{
+	ExampleEcsListServicesMultiSvc = &ecs.ListServicesOutput{
 		ServiceArns: []*string{
 			ExampleServiceArn,
 			ExampleServiceArn,
@@ -82,7 +82,7 @@ var (
 	ExampleEcsDescribeClustersOutput = &ecs.DescribeClustersOutput{
 		Clusters: []*ecs.Cluster{
 			{
-				ClusterArn:                        ExampleClusterArn,
+				ClusterArn:                        ExampleEcsClusterArn,
 				ClusterName:                       aws.String("example-cluster"),
 				Status:                            aws.String("ACTIVE"),
 				RegisteredContainerInstancesCount: aws.Int64(0),
@@ -326,8 +326,8 @@ func (m *MockEcs) ListServicesPages(
 		return args.Error(0)
 	}
 	// Return appropriate ListServices output based on input ClusterARN
-	if in.Cluster == ExampleClusterMultiSvcArn {
-		paginationFunction(ExampleListServicesMultiSvc, true)
+	if in.Cluster == ExampleEcsClusterMultiSvcArn {
+		paginationFunction(ExampleEcsListServicesMultiSvc, true)
 		return args.Error(0)
 	}
 	paginationFunction(ExampleListServices, true)

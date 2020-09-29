@@ -34,7 +34,7 @@ import (
 func TestEcsClusterList(t *testing.T) {
 	mockSvc := awstest.BuildMockEcsSvc([]string{"ListClustersPages"})
 
-	out, marker, err := listClusters(mockSvc, nil)
+	out, marker, err := listECSClusters(mockSvc, nil)
 	assert.NotEmpty(t, out)
 	assert.Nil(t, marker)
 	assert.NoError(t, err)
@@ -66,7 +66,7 @@ func TestEcsClusterListIterator(t *testing.T) {
 func TestEcsClusterListError(t *testing.T) {
 	mockSvc := awstest.BuildMockEcsSvcError([]string{"ListClustersPages"})
 
-	out, marker, err := listClusters(mockSvc, nil)
+	out, marker, err := listECSClusters(mockSvc, nil)
 	assert.Nil(t, out)
 	assert.Nil(t, marker)
 	assert.Error(t, err)
@@ -75,7 +75,7 @@ func TestEcsClusterListError(t *testing.T) {
 func TestEcsClusterDescribe(t *testing.T) {
 	mockSvc := awstest.BuildMockEcsSvc([]string{"DescribeClusters"})
 
-	out, err := describeCluster(mockSvc, awstest.ExampleClusterArn)
+	out, err := describeECSCluster(mockSvc, awstest.ExampleEcsClusterArn)
 	require.NoError(t, err)
 	assert.NotEmpty(t, out)
 }
@@ -90,7 +90,7 @@ func TestEcsClusterDescribeDoesNotExist(t *testing.T) {
 			nil,
 		)
 
-	out, err := describeCluster(mockSvc, awstest.ExampleClusterArn)
+	out, err := describeECSCluster(mockSvc, awstest.ExampleEcsClusterArn)
 	require.NoError(t, err)
 	assert.Nil(t, out)
 }
@@ -98,7 +98,7 @@ func TestEcsClusterDescribeDoesNotExist(t *testing.T) {
 func TestEcsClusterDescribeError(t *testing.T) {
 	mockSvc := awstest.BuildMockEcsSvcError([]string{"DescribeClusters"})
 
-	out, err := describeCluster(mockSvc, awstest.ExampleClusterArn)
+	out, err := describeECSCluster(mockSvc, awstest.ExampleEcsClusterArn)
 	require.Error(t, err)
 	assert.Nil(t, out)
 }
@@ -142,7 +142,7 @@ func TestEcsClusterPoller(t *testing.T) {
 	})
 
 	assert.NoError(t, err)
-	assert.Equal(t, *awstest.ExampleClusterArn, string(resources[0].ID))
+	assert.Equal(t, *awstest.ExampleEcsClusterArn, string(resources[0].ID))
 	assert.NotEmpty(t, resources)
 	assert.Nil(t, marker)
 }
@@ -172,24 +172,24 @@ func TestEcsClusterPollerError(t *testing.T) {
 func TestEcsClusterDescribeServices(t *testing.T) {
 	mockSvc := awstest.BuildMockEcsSvc([]string{"ListServicesPages"})
 	mockSvc.On("DescribeServices", &ecs.DescribeServicesInput{
-		Cluster:  awstest.ExampleClusterMultiSvcArn,
+		Cluster:  awstest.ExampleEcsClusterMultiSvcArn,
 		Include:  []*string{aws.String("TAGS")},
-		Services: awstest.ExampleListServicesMultiSvc.ServiceArns[0:10],
+		Services: awstest.ExampleEcsListServicesMultiSvc.ServiceArns[0:10],
 	}).
 		Return(
 			awstest.ExampleEcsDescribeServicesOutput,
 			nil,
 		)
 	mockSvc.On("DescribeServices", &ecs.DescribeServicesInput{
-		Cluster:  awstest.ExampleClusterMultiSvcArn,
+		Cluster:  awstest.ExampleEcsClusterMultiSvcArn,
 		Include:  []*string{aws.String("TAGS")},
-		Services: awstest.ExampleListServicesMultiSvc.ServiceArns[10:12],
+		Services: awstest.ExampleEcsListServicesMultiSvc.ServiceArns[10:12],
 	}).
 		Return(
 			awstest.ExampleEcsDescribeServicesOutput,
 			nil,
 		)
-	out, err := getClusterServices(mockSvc, awstest.ExampleClusterMultiSvcArn)
+	out, err := getECSClusterServices(mockSvc, awstest.ExampleEcsClusterMultiSvcArn)
 	mockSvc.AssertExpectations(t)
 	require.NoError(t, err)
 	assert.NotEmpty(t, out)
