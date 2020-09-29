@@ -1,0 +1,283 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AlertDetailsBanner renders 1`] = `
+.panther-13 {
+  background-color: #23344e;
+  border-radius: 4px;
+  padding: 24px;
+}
+
+.panther-12 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: top;
+  -webkit-box-align: top;
+  -ms-flex-align: top;
+  align-items: top;
+}
+
+.panther-1 {
+  font-weight: 700;
+  font-size: 1.5rem;
+  word-break: break-word;
+  -webkit-flex-shrink: 1;
+  -ms-flex-negative: 1;
+  flex-shrink: 1;
+  margin-right: 100px;
+}
+
+.panther-0 {
+  display: inline-block;
+  vertical-align: unset;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: currentColor;
+  margin-left: 8px;
+}
+
+.panther-11 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.panther-11>*:not(:last-child) {
+  margin-right: 8px;
+}
+
+
+
+.panther-2 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  cursor: default;
+  width: -webkit-fit-content;
+  width: -moz-content;
+  width: fit-content;
+  min-width: 85px;
+  text-align: center;
+  font-weight: 700;
+  border-radius: 40px;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 16px;
+  padding-right: 16px;
+  border: 1px solid;
+  border-color: #c82727;
+  background-color: transparent;
+}
+
+.panther-9 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-9>*:not(:last-child) {
+  margin-right: 4px;
+}
+
+.panther-5 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  width: 85px;
+}
+
+.panther-4 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  cursor: default;
+  width: -webkit-fit-content;
+  width: -moz-content;
+  width: fit-content;
+  min-width: 85px;
+  text-align: center;
+  font-weight: 700;
+  border-radius: 40px;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 16px;
+  padding-right: 16px;
+  background-color: #3e516b;
+}
+
+.panther-8 {
+  display: -webkit-inline-box;
+  display: -webkit-inline-flex;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+}
+
+.panther-7 {
+  padding: 1px;
+  outline: none;
+  -webkit-transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  border-radius: 99999px;
+  border: 1px solid;
+  border-color: #3e516b;
+  background-color: transparent;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+
+.panther-7:hover {
+  background-color: #465973;
+  border-color: #465973;
+}
+
+.panther-7:focus {
+  background-color: #465973;
+  border-color: #93a6c0;
+}
+
+.panther-7:active,
+.panther-7[data-active=true] {
+  background-color: #253852;
+  border-color: #253852;
+}
+
+.panther-6 {
+  display: block;
+  vertical-align: sub;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: currentColor;
+}
+
+<div>
+  <article
+    class="panther-13"
+  >
+    <header
+      class="panther-12"
+    >
+      <h1
+        class="panther-1"
+      >
+        Steel
+        <svg
+          class="panther-0"
+          data-reach-tooltip-trigger=""
+          role="presentation"
+          viewBox="0 0 24 24"
+        >
+          <path
+            d="M12,2 C17.5228475,2 22,6.4771525 22,12 C22,17.5228475 17.5228475,22 12,22 C6.4771525,22 2,17.5228475 2,12 C2,6.4771525 6.4771525,2 12,2 Z M13,15.5 L11,15.5 L11,17.5 L13,17.5 L13,15.5 Z M13,7 L11,7 L11,14 L13,14 L13,7 Z"
+            transform="translate(12.000000, 12.000000) rotate(-180.000000) translate(-12.000000, -12.000000) "
+          />
+        </svg>
+      </h1>
+      <ul
+        class="panther-11"
+      >
+        <li
+          aria-describedby="alert-severity-description"
+          class="panther-3"
+        >
+          <div
+            aria-atomic="true"
+            class="panther-2"
+            role="status"
+          >
+            CRITICAL
+          </div>
+        </li>
+        <li
+          aria-describedby="alert-status-description"
+          class="panther-3"
+        >
+          <div
+            class="panther-9"
+          >
+            <div
+              class="panther-5"
+            >
+              <div
+                aria-atomic="true"
+                class="panther-4"
+                role="status"
+              >
+                INVALID
+              </div>
+            </div>
+            <div
+              aria-controls="menu--2"
+              aria-haspopup="true"
+              class="panther-8"
+              data-reach-menu-button=""
+              id="menu-button--menu--2"
+              type="button"
+            >
+              <button
+                aria-label="Change Alert Status"
+                aria-pressed="false"
+                class="panther-7"
+                type="button"
+              >
+                <svg
+                  class="panther-6"
+                  role="presentation"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M7 10L12 15L17 10H7Z"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </header>
+  </article>
+</div>
+`;
