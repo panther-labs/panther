@@ -38,6 +38,7 @@ const (
 	SeverityKey          = "severity"
 	EventCountKey        = "eventCount"
 	StatusKey            = "status"
+	LogTypesKey          = "logTypes"
 	DeliveryResponsesKey = "deliveryResponses"
 	LastUpdatedByKey     = "lastUpdatedBy"
 	LastUpdatedByTimeKey = "lastUpdatedByTime"
