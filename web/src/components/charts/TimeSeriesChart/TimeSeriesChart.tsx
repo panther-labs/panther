@@ -209,10 +209,10 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
                   color: theme.colors['navyblue-200'],
                 },
               },
-
+              labelFormatter: value => formatDateString(value),
               borderColor: theme.colors['navyblue-200'],
-              // + 33 is opacity at 20%, what's the best way to do this?
-              fillerColor: theme.colors['navyblue-200'] + 33,
+              // + 33 is opacity at 40%, what's the best way to do this?
+              fillerColor: `${theme.colors['navyblue-200']}4D`,
               textStyle: {
                 color: theme.colors['gray-50'],
                 fontSize: remToPx(theme.fontSizes['x-small']),
