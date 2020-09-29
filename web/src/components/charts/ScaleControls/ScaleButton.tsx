@@ -15,32 +15,29 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 import React from 'react';
-import { Flex } from 'pouncejs';
-import { EChartOption } from 'echarts';
-import ScaleButton from 'Components/charts/ScaleControls/ScaleButton';
+import { AbstractButton } from 'pouncejs';
 
-interface ScaleControlsProps {
-  scaleType: string;
-  onSelection: (option: EChartOption.BasicComponents.CartesianAxis.Type) => void;
+interface ScaleButtonProps {
+  title: string;
+  selected: boolean;
+  onClick: () => void;
 }
 
-const ScaleControls: React.FC<ScaleControlsProps> = ({ scaleType = 'value', onSelection }) => {
+const ScaleButton: React.FC<ScaleButtonProps> = ({ title, selected, onClick }) => {
   return (
-    <Flex spacing={2}>
-      <ScaleButton
-        title="Linear"
-        selected={scaleType === 'value'}
-        onClick={() => onSelection('value')}
-      />
-      <ScaleButton
-        title="Logarithmic"
-        selected={scaleType === 'log'}
-        onClick={() => onSelection('log')}
-      />
-    </Flex>
+    <AbstractButton
+      borderRadius="pill"
+      py={1}
+      px={4}
+      fontSize="small"
+      backgroundColor={selected ? 'blue-400' : 'transparent'}
+      _hover={!selected && { backgroundColor: 'navyblue-300' }}
+      onClick={onClick}
+    >
+      {title}
+    </AbstractButton>
   );
 };
 
-export default ScaleControls;
+export default ScaleButton;
