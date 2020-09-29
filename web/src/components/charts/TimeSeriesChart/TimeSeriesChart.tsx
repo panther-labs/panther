@@ -135,6 +135,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
           name: label,
           type: 'line',
           symbol: 'none',
+          smooth: true,
           itemStyle: {
             color: theme.colors[severityColors[label]] || stringToPaleColor(label),
           },
@@ -159,11 +160,16 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
             show: true,
             right: 50,
             iconStyle: {
-              color: '#FFFFFF',
+              color: theme.colors.white,
             },
             feature: {
               dataZoom: {
                 yAxisIndex: 'none',
+                iconStyle: {
+                  color: theme.colors.white,
+                  borderWidth: 0.5,
+                  borderColor: theme.colors.white,
+                },
                 icon: {
                   zoom:
                     'M7,0 C10.8659932,0 14,3.13400675 14,7 C14,8.66283733 13.4202012,10.1902554 12.4517398,11.3911181 L16.0303301,14.9696699 L14.9696699,16.0303301 L11.3911181,12.4517398 C10.1902554,13.4202012 8.66283733,14 7,14 C3.13400675,14 0,10.8659932 0,7 C0,3.13400675 3.13400675,0 7,0 Z M7,1.5 C3.96243388,1.5 1.5,3.96243388 1.5,7 C1.5,10.0375661 3.96243388,12.5 7,12.5 C10.0375661,12.5 12.5,10.0375661 12.5,7 C12.5,3.96243388 10.0375661,1.5 7,1.5 Z M7.75,4.25 L7.75,6.25 L9.75,6.25 L9.75,7.75 L7.75,7.75 L7.75,9.75 L6.25,9.75 L6.25,7.75 L4.25,7.75 L4.25,6.25 L6.25,6.25 L6.25,4.25 L7.75,4.25 Z',
@@ -173,8 +179,14 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
                 title: '',
               },
               restore: {
+                iconStyle: {
+                  color: theme.colors.white,
+                  borderWidth: 0.5,
+                  borderColor: theme.colors.white,
+                },
                 icon:
                   'M8.44995646,1.53927764 C12.0181149,1.53927764 14.9106788,4.43184157 14.9106788,8 C14.9106788,11.4922402 12.1398933,14.3373287 8.67677239,14.4568154 L8.44995646,14.4607224 L8.44995646,13.0250063 C11.2251908,13.0250063 13.4749627,10.7752343 13.4749627,8 C13.4749627,5.22476566 11.2251908,2.97499372 8.44995646,2.97499372 C7.70164195,2.97499372 6.97787869,3.13820882 6.31642193,3.44891204 C4.74395282,4.18754113 3.66310947,5.68398014 3.45972717,7.40740116 L4.93752431,6.29534746 L5.71955998,7.33314384 L2.47644628,9.77700531 L-2.22044605e-14,6.49065009 L1.02414117,5.71890437 L2.05370112,7.08637716 C2.35948084,4.93510009 3.73142984,3.07693159 5.70601612,2.14941775 C6.55747933,1.74946363 7.48953092,1.53927764 8.44995646,1.53927764 Z',
+                // Note: the empty space in title is sadly necessary to override default title
                 title: ' ',
               },
             },
