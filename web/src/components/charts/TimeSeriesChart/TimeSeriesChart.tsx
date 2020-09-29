@@ -385,8 +385,9 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
 
   // useEffect to apply changes from chartOptions
   React.useEffect(() => {
-    if (!timeSeriesChart.current) return;
-    timeSeriesChart.current.setOption(chartOptions);
+    if (timeSeriesChart.current) {
+      timeSeriesChart.current.setOption(chartOptions);
+    }
   }, [chartOptions]);
 
   return (
