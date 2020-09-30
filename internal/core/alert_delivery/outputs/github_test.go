@@ -37,18 +37,19 @@ func TestGithubAlert(t *testing.T) {
 
 	var createdAtTime, _ = time.Parse(time.RFC3339, "2019-08-03T11:40:13Z")
 	alert := &alertModels.Alert{
-		AnalysisID:          "ruleId",
+		AnalysisID:          "policyId",
+		Type:                alertModels.PolicyType,
 		CreatedAt:           createdAtTime,
 		OutputIds:           []string{"output-id"},
 		AnalysisDescription: aws.String("description"),
-		AnalysisName:        aws.String("rule_name"),
+		AnalysisName:        aws.String("policy_name"),
 		Severity:            "INFO",
 	}
 
 	githubRequest := map[string]interface{}{
-		"title": "Policy Failure: rule_name",
+		"title": "Policy Failure: policy_name",
 		"body": "**Description:** description\n " +
-			"[Click here to view in the Panther UI](https://panther.io/policies/ruleId)\n" +
+			"[Click here to view in the Panther UI](https://panther.io/policies/policyId)\n" +
 			" **Runbook:** \n **Severity:** INFO\n **Tags:** ",
 	}
 

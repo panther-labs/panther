@@ -45,6 +45,7 @@ func TestCustomWebhookAlert(t *testing.T) {
 	}
 	alert := &alertModels.Alert{
 		AnalysisID: "policyId",
+		Type:       alertModels.PolicyType,
 		CreatedAt:  createdAtTime,
 		Severity:   "INFO",
 	}

@@ -69,6 +69,7 @@ type DynamoItem = map[string]*dynamodb.AttributeValue
 // AlertItem is a DDB representation of an Alert
 type AlertItem struct {
 	AlertID             string                     `json:"id"`
+	Type                string                     `json:"type"`
 	RuleID              string                     `json:"ruleId"`
 	RuleVersion         string                     `json:"ruleVersion"`
 	RuleDisplayName     *string                    `json:"ruleDisplayName"`
@@ -87,5 +88,4 @@ type AlertItem struct {
 	LastUpdatedBy string `json:"lastUpdatedBy"`
 	// LastUpdatedByTime - stores the timestamp of the last person who modified the Alert
 	LastUpdatedByTime time.Time `json:"lastUpdatedByTime"`
-	ErrorType         string    `json:"errorType"`
 }

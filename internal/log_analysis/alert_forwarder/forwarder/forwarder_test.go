@@ -58,6 +58,7 @@ var (
 		RuleID:              "ruleId",
 		RuleVersion:         "ruleVersion",
 		DeduplicationString: "dedupString",
+		Type:                alertModel.RuleType,
 		AlertCount:          10,
 		CreationTime:        time.Now().UTC(),
 		UpdateTime:          time.Now().UTC().Add(1 * time.Minute),
@@ -70,6 +71,7 @@ var (
 		RuleID:              oldAlertDedupEvent.RuleID,
 		RuleVersion:         oldAlertDedupEvent.RuleVersion,
 		DeduplicationString: oldAlertDedupEvent.DeduplicationString,
+		Type:                oldAlertDedupEvent.Type,
 		AlertCount:          oldAlertDedupEvent.AlertCount + 1,
 		CreationTime:        time.Now().UTC(),
 		UpdateTime:          time.Now().UTC().Add(1 * time.Minute),
@@ -147,6 +149,7 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 		LogTypes:            newAlertDedupEvent.LogTypes,
 		AlertDedupEvent: AlertDedupEvent{
 			RuleID:              newAlertDedupEvent.RuleID,
+			Type:                newAlertDedupEvent.Type,
 			RuleVersion:         newAlertDedupEvent.RuleVersion,
 			LogTypes:            newAlertDedupEvent.LogTypes,
 			EventCount:          newAlertDedupEvent.EventCount,
@@ -205,6 +208,7 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 		UpdateTime:          time.Now().UTC().Add(1 * time.Minute),
 		EventCount:          oldAlertDedupEvent.EventCount,
 		LogTypes:            oldAlertDedupEvent.LogTypes,
+		Type:                oldAlertDedupEvent.Type,
 	}
 
 	expectedAlertNotification := &alertModel.Alert{
@@ -254,6 +258,7 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 			GeneratedTitle:      newAlertDedupEventWithoutTitle.GeneratedTitle,
 			UpdateTime:          newAlertDedupEventWithoutTitle.UpdateTime,
 			CreationTime:        newAlertDedupEventWithoutTitle.UpdateTime,
+			Type:                newAlertDedupEventWithoutTitle.Type,
 		},
 	}
 
@@ -305,7 +310,7 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 		Runbook:             aws.String(string(testRuleResponse.Runbook)),
 		Severity:            string(testRuleResponse.Severity),
 		Tags:                []string{"Tag"},
-		Type:                alertModel.RuleType,
+		Type:                newAlertDedupEvent.Type,
 		AlertID:             aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
 		Title:               aws.String("DisplayName"),
 	}
@@ -331,6 +336,7 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 			RuleID:              newAlertDedupEvent.RuleID,
 			RuleVersion:         newAlertDedupEvent.RuleVersion,
 			LogTypes:            newAlertDedupEvent.LogTypes,
+			Type:                newAlertDedupEvent.Type,
 			EventCount:          newAlertDedupEvent.EventCount,
 			AlertCount:          newAlertDedupEvent.AlertCount,
 			DeduplicationString: newAlertDedupEvent.DeduplicationString,
@@ -351,6 +357,7 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 	dedupEventWithoutTitle := &AlertDedupEvent{
 		RuleID:              newAlertDedupEvent.RuleID,
 		RuleVersion:         newAlertDedupEvent.RuleVersion,
+		Type:                newAlertDedupEvent.Type,
 		DeduplicationString: newAlertDedupEvent.DeduplicationString,
 		AlertCount:          newAlertDedupEvent.AlertCount,
 		CreationTime:        newAlertDedupEvent.CreationTime,
@@ -423,6 +430,7 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 		LogTypes:            newAlertDedupEvent.LogTypes,
 		AlertDedupEvent: AlertDedupEvent{
 			RuleID:              newAlertDedupEvent.RuleID,
+			Type:                newAlertDedupEvent.Type,
 			RuleVersion:         newAlertDedupEvent.RuleVersion,
 			LogTypes:            newAlertDedupEvent.LogTypes,
 			EventCount:          newAlertDedupEvent.EventCount,
@@ -628,6 +636,7 @@ func TestHandleShouldCreateAlertIfThresholdNowReached(t *testing.T) {
 
 	newAlertDedup := &AlertDedupEvent{
 		RuleID:              oldAlertDedupEvent.RuleID,
+		Type:                oldAlertDedupEvent.Type,
 		RuleVersion:         oldAlertDedupEvent.RuleVersion,
 		DeduplicationString: oldAlertDedupEvent.DeduplicationString,
 		AlertCount:          oldAlertDedupEvent.AlertCount + 1,
@@ -680,8 +689,8 @@ func TestHandleError(t *testing.T) {
 
 	oldErrorDedupEvent := *oldAlertDedupEvent
 	newErrorDedupEvent := *newAlertDedupEvent
-	oldErrorDedupEvent.ErrorType = "RULE_ERROR"
-	newErrorDedupEvent.ErrorType = "RULE_ERROR"
+	oldErrorDedupEvent.Type = "RULE_ERROR"
+	newErrorDedupEvent.Type = "RULE_ERROR"
 	assert.NoError(t, handler.Do(&oldErrorDedupEvent, &newErrorDedupEvent))
 
 	ddbMock.AssertExpectations(t)

@@ -45,7 +45,7 @@ type AlertDedupEvent struct {
 	UpdateTime          time.Time `dynamodbav:"updateTime"`
 	EventCount          int64     `dynamodbav:"eventCount"`
 	LogTypes            []string  `dynamodbav:"logTypes,stringset"`
-	Type                *string   `dynamodbav:"-"` // There is no need to store this item in DDB
+	Type                string    `dynamodbav:"type"`
 	GeneratedTitle      *string   `dynamodbav:"-"` // The title that was generated dynamically using Python. Might be null.
 	AlertCount          int64     `dynamodbav:"-"` // There is no need to store this item in DDB
 
@@ -135,9 +135,9 @@ func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (eve
 		result.GeneratedTitle = aws.String(generatedTitle.String())
 	}
 
-	alertType := getOptionalAttribute("alertType", input)
+	alertType := getOptionalAttribute("type", input)
 	if alertType != nil {
-		result.Type = aws.String(alertType.String())
+		result.Type = alertType.String()
 	}
 	return result, nil
 }

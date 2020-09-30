@@ -43,6 +43,7 @@ func TestSendSqs(t *testing.T) {
 	}
 	alert := &alertModels.Alert{
 		AnalysisName:        aws.String("policyName"),
+		Type:                alertModels.PolicyType,
 		AnalysisID:          "policyId",
 		AnalysisDescription: aws.String("policyDescription"),
 		Severity:            "severity",
@@ -51,6 +52,7 @@ func TestSendSqs(t *testing.T) {
 
 	expectedSqsMessage := &Notification{
 		ID:          alert.AnalysisID,
+		Type:        alertModels.PolicyType,
 		Name:        alert.AnalysisName,
 		Description: alert.AnalysisDescription,
 		Severity:    alert.Severity,

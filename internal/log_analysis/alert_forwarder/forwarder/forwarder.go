@@ -99,7 +99,7 @@ func (h *Handler) handleNewAlert(rule *ruleModel.Rule, event *AlertDedupEvent) e
 	}
 
 	err := h.sendAlertNotification(rule, event)
-	if err == nil && !event.IsError() {
+	if err == nil && event.Type == alertModel.RuleType {
 		h.logStats(rule)
 	}
 	return err
@@ -171,6 +171,7 @@ func (h *Handler) storeNewAlert(rule *ruleModel.Rule, alertDedup *AlertDedupEven
 			UpdateTime:   alertDedup.UpdateTime,
 			EventCount:   alertDedup.EventCount,
 			LogTypes:     alertDedup.LogTypes,
+			Type:         alertDedup.Type,
 		},
 	}
 
@@ -204,10 +205,9 @@ func (h *Handler) sendAlertNotification(rule *ruleModel.Rule, alertDedup *AlertD
 		Runbook:      aws.String(string(rule.Runbook)),
 		Severity:     string(rule.Severity),
 		Tags:         rule.Tags,
-		Type:         alertModel.RuleType,
+		Type:         alertDedup.Type,
 		Title:        aws.String(getAlertTitle(rule, alertDedup)),
 		Version:      &alertDedup.RuleVersion,
-		ErrorType:    alertDedup.ErrorType,
 	}
 
 	msgBody, err := jsoniter.MarshalToString(alertNotification)
