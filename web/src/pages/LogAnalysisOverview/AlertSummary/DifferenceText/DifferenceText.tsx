@@ -26,34 +26,25 @@ interface DifferenceTextProps {
 const DifferenceText: React.FC<DifferenceTextProps> = ({ diff }) => {
   if (diff === 0) {
     return (
-      <React.Fragment>
-        <Text fontSize="small">No change</Text>
-        <Flex>
-          <Text fontSize="small">{diff}</Text>
-        </Flex>
-      </React.Fragment>
+      <Text pt={2} fontWeight="bold">
+        {diff}
+      </Text>
     );
   }
   if (diff > 0) {
     return (
-      <React.Fragment>
-        <Text fontSize="small">Decreased by</Text>
-        <Flex>
-          <Icon type="caret-down" size="small" color="green-400" />
-          <Text fontSize="small">{diff}</Text>
-        </Flex>
-      </React.Fragment>
+      <Flex pt={2}>
+        <Icon type="caret-down" size="small" color="green-400" />
+        <Text fontWeight="bold">{diff}</Text>
+      </Flex>
     );
   }
 
   return (
-    <React.Fragment>
-      <Text fontSize="small">Increased by</Text>
-      <Flex>
-        <Icon type="caret-up" size="small" color="red-300" />
-        <Text fontSize="small">{-diff}</Text>
-      </Flex>
-    </React.Fragment>
+    <Flex pt={2}>
+      <Icon type="caret-up" size="small" color="red-300" />
+      <Text fontWeight="bold">{-diff}</Text>
+    </Flex>
   );
 };
 

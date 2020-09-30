@@ -145,7 +145,7 @@ const AlertDetailsPage = () => {
   return (
     <Box as="article">
       <Flex direction="column" spacing={6} my={6}>
-        <AlertDetailsBanner alert={alertData.alert} rule={ruleData?.rule} />
+        <AlertDetailsBanner alert={alertData.alert} />
         <Card position="relative">
           <Tabs
             index={sectionToTabIndex[urlParams.section] || 0}

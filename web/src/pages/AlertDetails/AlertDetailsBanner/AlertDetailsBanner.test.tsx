@@ -17,28 +17,14 @@
  */
 
 import React from 'react';
-import { Flex } from 'pouncejs';
-import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
-import { SeriesData } from 'Generated/schema';
+import { buildAlertDetails, render } from 'test-utils';
+import AlertDetailsBanner from './index';
 
-interface EventsByLatencyProps {
-  events: SeriesData;
-}
+describe('AlertDetailsBanner', () => {
+  it('renders', () => {
+    const alert = buildAlertDetails();
 
-const EventsByLatency: React.FC<EventsByLatencyProps> = ({ events: { timestamps, series } }) => {
-  // Transforming milliseconds to seconds
-  const timeseriesData = React.useMemo(
-    () => ({
-      timestamps,
-      series: series.map(serie => ({ ...serie, values: serie.values.map(value => value / 1000) })),
-    }),
-    [timestamps, series]
-  );
-  return (
-    <Flex data-testid="events-by-latency" height="100%">
-      <TimeSeriesChart data={timeseriesData} units="sec" zoomable />
-    </Flex>
-  );
-};
-
-export default React.memo(EventsByLatency);
+    const { container } = render(<AlertDetailsBanner alert={alert} />);
+    expect(container).toMatchSnapshot();
+  });
+});

@@ -228,6 +228,7 @@ func (table *AlertsTable) applyFilters(builder *expression.Builder, input *model
 	filterBySeverity(&filter, input)
 	filterByStatus(&filter, input)
 	filterByEventCount(&filter, input)
+	filterByLogType(&filter, input)
 
 	// Finally, overwrite the existing condition filter on the builder
 	*builder = builder.WithFilter(filter)
@@ -277,6 +278,21 @@ func filterByStatus(filter *expression.ConditionBuilder, input *models.ListAlert
 			} else {
 				multiFilter = multiFilter.Or(expression.Name(StatusKey).Equal(expression.Value(statusSetting)))
 			}
+		}
+
+		*filter = filter.And(multiFilter)
+	}
+}
+
+// filterByLogType - filters by list of log types
+func filterByLogType(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
+	if len(input.LogTypes) > 0 {
+		// Start with the first known key
+		multiFilter := expression.Name(LogTypesKey).Contains(input.LogTypes[0])
+
+		// Then add or conditions starting at a new slice from the second index
+		for _, logType := range input.LogTypes[1:] {
+			multiFilter = multiFilter.Or(expression.Name(LogTypesKey).Contains(logType))
 		}
 
 		*filter = filter.And(multiFilter)
