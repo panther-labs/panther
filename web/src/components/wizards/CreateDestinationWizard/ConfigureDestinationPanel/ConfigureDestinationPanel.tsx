@@ -23,6 +23,7 @@ import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm'
 import DestinationFormSwitcher from 'Components/forms/DestinationFormSwitcher';
 import { capitalize, extractErrorMessage } from 'Helpers/utils';
 import { useWizardContext, WizardPanel } from 'Components/Wizard';
+import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { useAddDestination } from './graphql/addDestination.generated';
 import { WizardData } from '../CreateDestinationWizard';
 
@@ -30,24 +31,24 @@ const initialValues: Omit<DestinationInput, 'outputType'> = {
   displayName: '',
   defaultForSeverity: [],
   outputConfig: {
-    pagerDuty: { integrationKey: null },
-    github: { repoName: '', token: null },
+    pagerDuty: { integrationKey: '' },
+    github: { repoName: '', token: '' },
     jira: {
       orgDomain: '',
       projectKey: '',
       userName: '',
-      apiKey: null,
+      apiKey: '',
       assigneeId: '',
-      issueType: null,
+      issueType: '',
     },
-    opsgenie: { apiKey: null },
-    slack: { webhookURL: null },
-    msTeams: { webhookURL: null },
+    opsgenie: { apiKey: '' },
+    slack: { webhookURL: '' },
+    msTeams: { webhookURL: '' },
     sns: { topicArn: '' },
     sqs: { queueUrl: '' },
-    asana: { personalAccessToken: null, projectGids: [] },
+    asana: { personalAccessToken: '', projectGids: [] },
     customWebhook: {
-      webhookURL: null,
+      webhookURL: '',
     },
   },
 };
@@ -64,9 +65,11 @@ const ConfigureDestinationPanel: React.FC = () => {
   const [addDestination] = useAddDestination({
     onCompleted: data => {
       updateData({ destination: data.addDestination });
+      trackEvent({ event: EventEnum.AddedDestination, src: SrcEnum.Destinations, ctx: selectedDestinationType }); // prettier-ignore
       goToNextStep();
     },
     onError: error => {
+      trackError({ event: TrackErrorEnum.FailedToAddDestination, src: SrcEnum.Destinations, ctx: selectedDestinationType, data: error }); // prettier-ignore
       pushSnackbar({
         variant: 'error',
         title:

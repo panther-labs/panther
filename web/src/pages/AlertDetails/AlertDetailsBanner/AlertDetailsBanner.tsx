@@ -21,14 +21,13 @@ import React from 'react';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import UpdateAlertDropdown from 'Components/dropdowns/UpdateAlertDropdown';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
-import { AlertDetails, RuleTeaser } from 'Pages/AlertDetails';
+import { AlertDetails } from 'Pages/AlertDetails';
 
 interface AlertDetailsBannerProps {
   alert: AlertDetails['alert'];
-  rule: RuleTeaser['rule'];
 }
 
-const AlertDetailsBanner: React.FC<AlertDetailsBannerProps> = ({ alert, rule }) => {
+const AlertDetailsBanner: React.FC<AlertDetailsBannerProps> = ({ alert }) => {
   return (
     <Card as="article" p={6}>
       <Flex as="header" align="top">
@@ -44,7 +43,7 @@ const AlertDetailsBanner: React.FC<AlertDetailsBannerProps> = ({ alert, rule }) 
                 <Flex direction="column" spacing={2} fontWeight="bold">
                   <Box aria-labelledby="alert-id-label">{alert.alertId}</Box>
                   <Box aria-labelledby="log-types-label">
-                    {rule?.logTypes.map(logType => <Box key={logType}>{logType}</Box>) ?? 'N/A'}
+                    {alert.logTypes.map(logType => <Box key={logType}>{logType}</Box>) ?? 'N/A'}
                   </Box>
                 </Flex>
               </Flex>
@@ -54,11 +53,9 @@ const AlertDetailsBanner: React.FC<AlertDetailsBannerProps> = ({ alert, rule }) 
           </Tooltip>
         </Heading>
         <Flex spacing={2} as="ul" flexShrink={0} ml="auto">
-          {rule && (
-            <Box as="li" aria-describedby="alert-severity-description">
-              <SeverityBadge severity={rule.severity} />
-            </Box>
-          )}
+          <Box as="li" aria-describedby="alert-severity-description">
+            <SeverityBadge severity={alert.severity} />
+          </Box>
           <Box as="li" aria-describedby="alert-status-description">
             <UpdateAlertDropdown alert={alert as AlertSummaryFull} />
           </Box>

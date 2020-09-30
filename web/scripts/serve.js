@@ -38,7 +38,7 @@ app.use('*', (req, res, next) => {
   res.header('X-Content-Type-Options', 'nosniff');
   res.header(
     'Content-Security-Policy',
-    "default-src 'none'; script-src 'self' 'unsafe-inline'; connect-src 'self' *.amazonaws.com sentry.io; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; base-uri 'self';form-action 'self'"
+    "default-src 'none'; script-src 'self' 'unsafe-inline'; connect-src 'self' *.amazonaws.com api-js.mixpanel.com sentry.io; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; base-uri 'self';form-action 'self'"
   );
   res.header('Referrer-Policy', 'no-referrer');
   res.header(

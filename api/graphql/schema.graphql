@@ -104,6 +104,7 @@ input ListAlertsInput {
   status: [AlertStatusesEnum]
   eventCountMin: Int
   eventCountMax: Int
+  logTypes: [String!]
   sortBy: ListAlertsSortFieldsEnum # defaults to `createdAt`
   sortDir: SortDirEnum # defaults to `descending` (always on `createdAt` field)
 }
@@ -442,12 +443,14 @@ input UpdateGeneralSettingsInput {
   displayName: String
   email: String
   errorReportingConsent: Boolean
+  analyticsConsent: Boolean
 }
 
 type GeneralSettings {
   displayName: String
   email: String
   errorReportingConsent: Boolean
+  analyticsConsent: Boolean
 }
 
 input TestPolicyInput {

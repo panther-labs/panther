@@ -56,10 +56,6 @@ var (
 			To:   GlueStringType,
 		},
 		{
-			From: reflect.TypeOf([]jsoniter.RawMessage{}),
-			To:   ArrayOf(GlueStringType),
-		},
-		{
 			From: reflect.TypeOf(numerics.Integer(0)),
 			To:   "bigint",
 		},
@@ -342,7 +338,7 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 			glueType = ArrayOf(structType)
 			return
 		default:
-			elementType := toGlueType(sliceOfType)
+			elementType := inferType(sliceOfType, customMappingsTable)
 			glueType = ArrayOf(elementType)
 			return
 		}
@@ -367,7 +363,7 @@ func inferStructFieldType(sf reflect.StructField, customMappingsTable map[string
 		}
 
 		// simple types
-		glueType = toGlueType(t)
+		glueType = inferType(t, customMappingsTable)
 		return
 	}
 }
@@ -398,6 +394,11 @@ func inferStruct(structType reflect.Type, customMappingsTable map[string]string)
 // Recursively expand a map
 func inferMap(t reflect.Type, customMappingsTable map[string]string) (glueType string, structFieldNames []string) {
 	mapOfType := t.Elem()
+	if mapGlueType, found := customMappingsTable[mapOfType.String()]; found {
+		glueType = fmt.Sprintf("map<%s,%s>", t.Key(), mapGlueType)
+		return
+	}
+
 	if mapOfType.Kind() == reflect.Struct {
 		structGlueType, nestedStructFieldNames := inferStruct(mapOfType, customMappingsTable)
 		structFieldNames = append(structFieldNames, nestedStructFieldNames...)
@@ -409,12 +410,14 @@ func inferMap(t reflect.Type, customMappingsTable map[string]string) (glueType s
 		glueType = fmt.Sprintf("map<%s,%s>", t.Key(), mapGlueType)
 		return
 	}
-	glueType = fmt.Sprintf("map<%s,%s>", t.Key(), toGlueType(mapOfType))
+	glueType = fmt.Sprintf("map<%s,%s>", t.Key(), inferType(mapOfType, customMappingsTable))
 	return glueType, structFieldNames
 }
 
-// Primitive mappings
-func toGlueType(t reflect.Type) (glueType string) {
+func inferType(t reflect.Type, customMappings map[string]string) (glueType string) {
+	if customType, ok := customMappings[t.String()]; ok {
+		return customType
+	}
 	switch t.String() {
 	case "bool":
 		glueType = "boolean"

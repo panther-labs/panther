@@ -566,6 +566,7 @@ export const buildGeneralSettings = (overrides: Partial<GeneralSettings> = {}): 
     email: 'email' in overrides ? overrides.email : 'tertiary',
     errorReportingConsent:
       'errorReportingConsent' in overrides ? overrides.errorReportingConsent : false,
+    analyticsConsent: 'analyticsConsent' in overrides ? overrides.analyticsConsent : true,
   };
 };
 
@@ -736,6 +737,7 @@ export const buildListAlertsInput = (overrides: Partial<ListAlertsInput> = {}): 
     status: 'status' in overrides ? overrides.status : [AlertStatusesEnum.Open],
     eventCountMin: 'eventCountMin' in overrides ? overrides.eventCountMin : 694,
     eventCountMax: 'eventCountMax' in overrides ? overrides.eventCountMax : 911,
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Awesome Wooden Mouse'],
     sortBy: 'sortBy' in overrides ? overrides.sortBy : ListAlertsSortFieldsEnum.CreatedAt,
     sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Descending,
   };
@@ -1468,6 +1470,7 @@ export const buildUpdateGeneralSettingsInput = (
     email: 'email' in overrides ? overrides.email : 'olive',
     errorReportingConsent:
       'errorReportingConsent' in overrides ? overrides.errorReportingConsent : true,
+    analyticsConsent: 'analyticsConsent' in overrides ? overrides.analyticsConsent : false,
   };
 };
 

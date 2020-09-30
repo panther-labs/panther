@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Card, Tab, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
+import { Box, Card, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
 import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
 import EventsByLogType from 'Pages/LogAnalysisOverview/EventsByLogType/EventsByLogType';
 import { SeriesData } from 'Generated/schema';
@@ -34,32 +34,20 @@ const LogTypeCharts: React.FC<LogTypeChartsProps> = ({ eventsProcessed, eventsLa
       <Tabs>
         <Box position="relative" pl={2} pr={4}>
           <TabList>
-            <Tab>
-              {({ isSelected, isFocused }) => (
-                <BorderedTab isSelected={isSelected} isFocused={isFocused}>
-                  Events by Log Type
-                </BorderedTab>
-              )}
-            </Tab>
-            <Tab>
-              {({ isSelected, isFocused }) => (
-                <BorderedTab isSelected={isSelected} isFocused={isFocused}>
-                  Data Latency by Log Type
-                </BorderedTab>
-              )}
-            </Tab>
+            <BorderedTab>Events by Log Type</BorderedTab>
+            <BorderedTab>Data Latency by Log Type</BorderedTab>
           </TabList>
           <BorderTabDivider />
         </Box>
         <Box p={6}>
           <TabPanels>
             <TabPanel unmountWhenInactive lazy>
-              <Box height={200}>
+              <Box height={289} py={5} pl={4} backgroundColor="navyblue-500">
                 <EventsByLogType events={eventsProcessed} />
               </Box>
             </TabPanel>
             <TabPanel unmountWhenInactive lazy>
-              <Box height={200}>
+              <Box height={289} py={5} pl={4} backgroundColor="navyblue-500">
                 <EventsByLatency events={eventsLatency} />
               </Box>
             </TabPanel>

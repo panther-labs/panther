@@ -37,8 +37,12 @@ import { PANTHER_DOCS_LINK } from 'Source/constants';
 import { pantherConfig } from 'Source/config';
 import withSEO from 'Hoc/withSEO';
 import { AlertStatusesEnum } from 'Generated/schema';
+import useTrackPageView from 'Hooks/useTrackPageView';
+import { PageViewEnum } from 'Helpers/analytics';
 
 const LandingPage: React.FC = () => {
+  useTrackPageView(PageViewEnum.Home);
+
   return (
     <FadeIn delay={100}>
       <Box as="article" textAlign="center">

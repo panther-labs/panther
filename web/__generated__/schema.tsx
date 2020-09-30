@@ -350,6 +350,7 @@ export type GeneralSettings = {
   displayName?: Maybe<Scalars['String']>;
   email?: Maybe<Scalars['String']>;
   errorReportingConsent?: Maybe<Scalars['Boolean']>;
+  analyticsConsent?: Maybe<Scalars['Boolean']>;
 };
 
 export type GetAlertInput = {
@@ -464,6 +465,7 @@ export type ListAlertsInput = {
   status?: Maybe<Array<Maybe<AlertStatusesEnum>>>;
   eventCountMin?: Maybe<Scalars['Int']>;
   eventCountMax?: Maybe<Scalars['Int']>;
+  logTypes?: Maybe<Array<Scalars['String']>>;
   sortBy?: Maybe<ListAlertsSortFieldsEnum>;
   sortDir?: Maybe<SortDirEnum>;
 };
@@ -1242,6 +1244,7 @@ export type UpdateGeneralSettingsInput = {
   displayName?: Maybe<Scalars['String']>;
   email?: Maybe<Scalars['String']>;
   errorReportingConsent?: Maybe<Scalars['Boolean']>;
+  analyticsConsent?: Maybe<Scalars['Boolean']>;
 };
 
 export type UpdatePolicyInput = {
@@ -1961,6 +1964,7 @@ export type GeneralSettingsResolvers<
   displayName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   errorReportingConsent?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  analyticsConsent?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 

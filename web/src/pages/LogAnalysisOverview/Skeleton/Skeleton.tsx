@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Card, FadeIn, SimpleGrid, Tab, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
+import { Box, Card, FadeIn, SimpleGrid, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
 import Panel from 'Components/Panel';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
@@ -38,20 +38,8 @@ const ComplianceOverviewPageSkeleton: React.FC = () => {
             <Tabs>
               <Box position="relative" pl={2} pr={4}>
                 <TabList>
-                  <Tab>
-                    {({ isSelected, isFocused }) => (
-                      <BorderedTab isSelected={isSelected} isFocused={isFocused}>
-                        Events by Log Type
-                      </BorderedTab>
-                    )}
-                  </Tab>
-                  <Tab>
-                    {({ isSelected, isFocused }) => (
-                      <BorderedTab isSelected={isSelected} isFocused={isFocused}>
-                        Data Latency by Log Type
-                      </BorderedTab>
-                    )}
-                  </Tab>
+                  <BorderedTab>Events by Log Type</BorderedTab>
+                  <BorderedTab>Data Latency by Log Type</BorderedTab>
                 </TabList>
                 <BorderTabDivider />
               </Box>

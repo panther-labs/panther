@@ -18,7 +18,7 @@
 
 import React from 'react';
 import useRouter from 'Hooks/useRouter';
-import { Alert, Box, Card, Flex, Tab, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
+import { Alert, Box, Card, Flex, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
 import Skeleton from 'Pages/AlertDetails/Skeleton';
 import AlertEvents from 'Pages/AlertDetails/AlertDetailsEvents';
 import Page404 from 'Pages/404';
@@ -145,7 +145,7 @@ const AlertDetailsPage = () => {
   return (
     <Box as="article">
       <Flex direction="column" spacing={6} my={6}>
-        <AlertDetailsBanner alert={alertData.alert} rule={ruleData?.rule} />
+        <AlertDetailsBanner alert={alertData.alert} />
         <Card position="relative">
           <Tabs
             index={sectionToTabIndex[urlParams.section] || 0}
@@ -153,20 +153,8 @@ const AlertDetailsPage = () => {
           >
             <Box px={2}>
               <TabList>
-                <Tab>
-                  {({ isSelected, isFocused }) => (
-                    <BorderedTab isSelected={isSelected} isFocused={isFocused}>
-                      Details
-                    </BorderedTab>
-                  )}
-                </Tab>
-                <Tab>
-                  {({ isSelected, isFocused }) => (
-                    <BorderedTab isSelected={isSelected} isFocused={isFocused}>
-                      Events ({alertData.alert.eventsMatched})
-                    </BorderedTab>
-                  )}
-                </Tab>
+                <BorderedTab>Details</BorderedTab>
+                <BorderedTab>Events ({alertData.alert.eventsMatched})</BorderedTab>
               </TabList>
             </Box>
             <BorderTabDivider />
