@@ -33,28 +33,28 @@ import (
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
 )
 
-// TestPolicyReader is a Reader for the TestPolicy structure.
-type TestPolicyReader struct {
+// TestRuleReader is a Reader for the TestRule structure.
+type TestRuleReader struct {
 	formats strfmt.Registry
 }
 
 // ReadResponse reads a server response into the received o.
-func (o *TestPolicyReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
+func (o *TestRuleReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
 	case 200:
-		result := NewTestPolicyOK()
+		result := NewTestRuleOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
 	case 400:
-		result := NewTestPolicyBadRequest()
+		result := NewTestRuleBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
 	case 500:
-		result := NewTestPolicyInternalServerError()
+		result := NewTestRuleInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
@@ -65,30 +65,30 @@ func (o *TestPolicyReader) ReadResponse(response runtime.ClientResponse, consume
 	}
 }
 
-// NewTestPolicyOK creates a TestPolicyOK with default headers values
-func NewTestPolicyOK() *TestPolicyOK {
-	return &TestPolicyOK{}
+// NewTestRuleOK creates a TestRuleOK with default headers values
+func NewTestRuleOK() *TestRuleOK {
+	return &TestRuleOK{}
 }
 
-/*TestPolicyOK handles this case with default header values.
+/*TestRuleOK handles this case with default header values.
 
 OK
 */
-type TestPolicyOK struct {
-	Payload *models.TestPolicyResult
+type TestRuleOK struct {
+	Payload *models.TestRuleResult
 }
 
-func (o *TestPolicyOK) Error() string {
-	return fmt.Sprintf("[POST /policy/test][%d] testPolicyOK  %+v", 200, o.Payload)
+func (o *TestRuleOK) Error() string {
+	return fmt.Sprintf("[POST /rule/test][%d] testRuleOK  %+v", 200, o.Payload)
 }
 
-func (o *TestPolicyOK) GetPayload() *models.TestPolicyResult {
+func (o *TestRuleOK) GetPayload() *models.TestRuleResult {
 	return o.Payload
 }
 
-func (o *TestPolicyOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+func (o *TestRuleOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
-	o.Payload = new(models.TestPolicyResult)
+	o.Payload = new(models.TestRuleResult)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
@@ -98,28 +98,28 @@ func (o *TestPolicyOK) readResponse(response runtime.ClientResponse, consumer ru
 	return nil
 }
 
-// NewTestPolicyBadRequest creates a TestPolicyBadRequest with default headers values
-func NewTestPolicyBadRequest() *TestPolicyBadRequest {
-	return &TestPolicyBadRequest{}
+// NewTestRuleBadRequest creates a TestRuleBadRequest with default headers values
+func NewTestRuleBadRequest() *TestRuleBadRequest {
+	return &TestRuleBadRequest{}
 }
 
-/*TestPolicyBadRequest handles this case with default header values.
+/*TestRuleBadRequest handles this case with default header values.
 
 Bad request
 */
-type TestPolicyBadRequest struct {
+type TestRuleBadRequest struct {
 	Payload *models.Error
 }
 
-func (o *TestPolicyBadRequest) Error() string {
-	return fmt.Sprintf("[POST /policy/test][%d] testPolicyBadRequest  %+v", 400, o.Payload)
+func (o *TestRuleBadRequest) Error() string {
+	return fmt.Sprintf("[POST /rule/test][%d] testRuleBadRequest  %+v", 400, o.Payload)
 }
 
-func (o *TestPolicyBadRequest) GetPayload() *models.Error {
+func (o *TestRuleBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
 
-func (o *TestPolicyBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+func (o *TestRuleBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -131,23 +131,23 @@ func (o *TestPolicyBadRequest) readResponse(response runtime.ClientResponse, con
 	return nil
 }
 
-// NewTestPolicyInternalServerError creates a TestPolicyInternalServerError with default headers values
-func NewTestPolicyInternalServerError() *TestPolicyInternalServerError {
-	return &TestPolicyInternalServerError{}
+// NewTestRuleInternalServerError creates a TestRuleInternalServerError with default headers values
+func NewTestRuleInternalServerError() *TestRuleInternalServerError {
+	return &TestRuleInternalServerError{}
 }
 
-/*TestPolicyInternalServerError handles this case with default header values.
+/*TestRuleInternalServerError handles this case with default header values.
 
 Internal server error
 */
-type TestPolicyInternalServerError struct {
+type TestRuleInternalServerError struct {
 }
 
-func (o *TestPolicyInternalServerError) Error() string {
-	return fmt.Sprintf("[POST /policy/test][%d] testPolicyInternalServerError ", 500)
+func (o *TestRuleInternalServerError) Error() string {
+	return fmt.Sprintf("[POST /rule/test][%d] testRuleInternalServerError ", 500)
 }
 
-func (o *TestPolicyInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+func (o *TestRuleInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	return nil
 }
