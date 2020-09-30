@@ -1,4 +1,4 @@
-package gravitationallogs_test
+package cloudflarelogs_test
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -21,10 +21,10 @@ package gravitationallogs_test
 import (
 	"testing"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
 
-func TestTeleportAudit(t *testing.T) {
-	logtesting.RunTestsFromYAML(t, logtypes.DefaultRegistry(), "./testdata/audit_tests.yml")
+func TestCloudflareLogParsers(t *testing.T) {
+	logtesting.RunTestsFromYAML(t, registry.Default(), "./testdata/cloudflare_tests.yml")
 }
