@@ -142,7 +142,6 @@ func TestResult(t *testing.T, expect string, actual *pantherlog.Result, indicato
 		indicators = pantherlog.FieldSetFromJSON([]byte(expect))
 	}
 	require.NoError(t, unmarshalResultJSON([]byte(expect), &expectResult, indicators))
-	//require.Equal(t, -1, bytes.IndexByte(actual.JSON, '\n'), "Result JSON contains newlines")
 	var expectAny map[string]interface{}
 	require.NoError(t, jsoniter.UnmarshalFromString(expect, &expectAny))
 	var actualAny map[string]interface{}
