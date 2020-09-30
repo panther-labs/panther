@@ -95,7 +95,7 @@ func TestRegisteredParser(t *testing.T, resolve *logtypes.Registry, logType, inp
 		resolve = registry.Default()
 	}
 	entry := resolve.Get(logType)
-	assert.NotNil(entry)
+	assert.NotNil(entry, "unregistered parser %q", logType)
 	p, err := entry.NewParser(nil)
 	assert.NoError(err, "failed to create log parser")
 	results, err := p.ParseLog(input)
