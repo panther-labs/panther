@@ -96,12 +96,12 @@ const ListAlertsActions: React.FC = () => {
           {() => (
             <Form>
               <FormikAutosave threshold={50} />
-              <Flex>
+              <Flex spacing={4}>
                 {!logTypesLoading && !logTypesError && (
                   <Field
                     as={FormikCombobox}
                     variant="solid"
-                    label="Log Types"
+                    label="Log Type"
                     searchable
                     name="logTypes"
                     items={availableLogTypes}
