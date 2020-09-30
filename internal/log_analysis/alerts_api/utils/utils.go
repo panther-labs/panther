@@ -60,7 +60,6 @@ func AlertItemToSummary(item *table.AlertItem) *models.AlertSummary {
 		LastUpdatedByTime: item.LastUpdatedByTime,
 		UpdateTime:        &item.UpdateTime,
 		DeliveryResponses: item.DeliveryResponses,
-		ErrorType:         item.ErrorType,
 	}
 }
 

@@ -208,7 +208,6 @@ func (h *Handler) sendAlertNotification(rule *ruleModel.Rule, alertDedup *AlertD
 		Type:         alertDedup.Type,
 		Title:        aws.String(getAlertTitle(rule, alertDedup)),
 		Version:      &alertDedup.RuleVersion,
-		ErrorType:    alertDedup.ErrorType,
 	}
 
 	msgBody, err := jsoniter.MarshalToString(alertNotification)
