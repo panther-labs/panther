@@ -30,8 +30,10 @@ import withSEO from 'Hoc/withSEO';
 import useTrackPageView from 'Hooks/useTrackPageView';
 import { PageViewEnum } from 'Helpers/analytics';
 import AlertCard from 'Components/cards/AlertCard/AlertCard';
+import Panel from 'Components/Panel';
 import { useListAlerts } from './graphql/listAlerts.generated';
 import ListAlertsActions from './ListAlertsActions';
+import ListAlertFilters from './ListAlertFilters';
 import ListAlertsPageSkeleton from './Skeleton';
 import ListAlertsPageEmptyDataFallback from './EmptyDataFallback';
 
@@ -121,19 +123,23 @@ const ListAlerts = () => {
           />
         </Box>
       )}
-      <ListAlertsActions showActions={hasError} />
-      <Card as="section" px={8} py={4} mb={6} position="relative">
-        <Flex direction="column" spacing={2}>
-          {alertItems.map(alert => (
-            <AlertCard key={alert.alertId} alert={alert} />
-          ))}
-        </Flex>
-        {hasNextPage && (
-          <Box py={8} ref={sentinelRef}>
-            <TablePlaceholder rowCount={10} />
+      <ListAlertsActions />
+      <Panel title="Alerts" actions={<ListAlertFilters />}>
+        <Card as="section" position="relative">
+          <Box position="relative">
+            <Flex direction="column" spacing={2}>
+              {alertItems.map(alert => (
+                <AlertCard key={alert.alertId} alert={alert} />
+              ))}
+            </Flex>
+            {hasNextPage && (
+              <Box py={8} ref={sentinelRef}>
+                <TablePlaceholder rowCount={10} />
+              </Box>
+            )}
           </Box>
-        )}
-      </Card>
+        </Card>
+      </Panel>
     </ErrorBoundary>
   );
 };

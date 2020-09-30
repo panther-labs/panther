@@ -17,232 +17,115 @@
  */
 
 import React from 'react';
-import { SeverityEnum, ListAlertsInput, AlertStatusesEnum } from 'Generated/schema';
-import GenerateFiltersGroup from 'Components/utils/GenerateFiltersGroup';
-import { capitalize, formatTime } from 'Helpers/utils';
-import FormikTextInput from 'Components/fields/TextInput';
+import { Form, Formik, Field } from 'formik';
+import { ListAlertsInput } from 'Generated/schema';
+import { Flex } from 'pouncejs';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
-import { Box, Button, Card, Collapse, Flex, useSnackbar } from 'pouncejs';
-import ErrorBoundary from 'Components/ErrorBoundary';
+
+import pickBy from 'lodash/pickBy';
+import identity from 'lodash/identity';
 import isEmpty from 'lodash/isEmpty';
-import isNumber from 'lodash/isNumber';
 import pick from 'lodash/pick';
-import FormikMultiCombobox from 'Components/fields/MultiComboBox';
+
+import FormikDateRangeInput from 'Components/fields/DateRangeInput';
+import FormikCombobox from 'Components/fields/ComboBox';
+import FormikAutosave from 'Components/fields/Autosave';
 import Breadcrumbs from 'Components/Breadcrumbs';
 import { useListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
 
-const severityOptions = Object.values(SeverityEnum);
-const statusOptions = Object.values(AlertStatusesEnum);
-
-export const filters = {
-  severity: {
-    component: FormikMultiCombobox,
-    props: {
-      label: 'Severity',
-      items: severityOptions,
-      itemToString: (severity: SeverityEnum) => capitalize(severity.toLowerCase()),
-      placeholder: 'Choose a severity...',
-    },
-  },
-  status: {
-    component: FormikMultiCombobox,
-    props: {
-      label: 'Status',
-      items: statusOptions,
-      itemToString: (status: AlertStatusesEnum) =>
-        capitalize((status === AlertStatusesEnum.Closed ? 'INVALID' : status).toLowerCase()),
-      placeholder: 'Choose a status...',
-    },
-  },
-  logTypes: {
-    component: FormikMultiCombobox,
-    props: {
-      searchable: true,
-      items: [],
-      label: 'Log Types',
-      placeholder: 'Start typing logs...',
-    },
-  },
-  nameContains: {
-    component: FormikTextInput,
-    props: {
-      label: 'Title',
-      placeholder: 'Enter an alert title...',
-    },
-  },
-  createdAtAfter: {
-    component: FormikTextInput,
-    props: {
-      label: 'Date Start',
-      placeholder: 'YYYY-MM-DDTHH:mm:ss',
-      height: 46,
-      onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
-        e.target.type = 'datetime-local';
-      },
-      onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
-        e.target.type = 'text';
-      },
-    },
-  },
-  createdAtBefore: {
-    component: FormikTextInput,
-    props: {
-      label: 'Date End',
-      placeholder: 'YYYY-MM-DDTHH:mm:ss',
-      height: 46,
-      onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
-        e.target.type = 'datetime-local';
-      },
-      onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
-        e.target.type = 'text';
-      },
-    },
-  },
-  ruleIdContains: {
-    component: FormikTextInput,
-    props: {
-      label: 'Rule',
-      placeholder: 'Enter a rule ID...',
-    },
-  },
-  alertIdContains: {
-    component: FormikTextInput,
-    props: {
-      label: 'Alert',
-      placeholder: 'Enter an alert ID...',
-    },
-  },
-  eventCountMin: {
-    component: FormikTextInput,
-    props: {
-      label: 'Event Count (min)',
-      placeholder: 'Enter a number...',
-      type: 'number',
-      min: 0,
-    },
-  },
-  eventCountMax: {
-    component: FormikTextInput,
-    props: {
-      label: 'Event Count (max)',
-      placeholder: 'Enter a number...',
-      type: 'number',
-      min: 1,
-    },
-  },
-};
-
 export type ListAlertsFiltersValues = Pick<
   ListAlertsInput,
-  | 'severity'
-  | 'status'
-  | 'logTypes'
-  | 'nameContains'
-  | 'createdAtAfter'
-  | 'createdAtBefore'
-  | 'ruleIdContains'
-  | 'alertIdContains'
-  | 'eventCountMin'
-  | 'eventCountMax'
+  'logTypes' | 'createdAtAfter' | 'createdAtBefore'
 >;
 
-type ListAlertsActionsProps = {
-  showActions: boolean;
+const ALL_TYPES = 'All types';
+const filterKeys = ['logTypes', 'createdAtAfter', 'createdAtBefore'];
+
+const sanitizeLogTypes = (logTypes = []) => {
+  if (Array.isArray(logTypes)) {
+    return logTypes.filter(type => type === 'ALL_TYPES');
+  }
+  return logTypes !== ALL_TYPES ? [logTypes] : [];
 };
 
-// Keys that we know will use a date string format
-const dateKeys = ['createdAtAfter', 'createdAtBefore'];
+const ListAlertsActions: React.FC = () => {
+  const { data, loading: logTypesLoading, error: logTypesError } = useListAvailableLogTypes({
+    fetchPolicy: 'cache-first',
+  });
 
-// Creates a datetime formatter to use based on the dayjs format
-const createFormat = (format: string): any => formatTime(format);
-const postFormatter = createFormat('YYYY-MM-DDTHH:mm:ss[Z]');
-const preFormatter = createFormat('YYYY-MM-DDTHH:mm:ss');
-
-// Checks every key in an object for date-like values and converts them to a desired format
-const sanitizeDates = (formatter: any, utcIn?: boolean, utcOut?: boolean) => (
-  parms: Partial<any>
-) =>
-  Object.entries(parms).reduce((acc, [k, v]) => {
-    if (dateKeys.includes(k) && Date.parse(v)) {
-      acc[k] = formatter(v, utcIn, utcOut);
-      return acc;
-    }
-    acc[k] = v;
-    return acc;
-  }, {});
-
-// These are needed to marshal UTC timestamps in the format the backend requires
-// Create a formatter for date form field submit (local) -> URL parameter (UTC)
-const postProcessDate = sanitizeDates(postFormatter, false, true);
-// Create a formatter for URL parameter (UTC) -> date form field (local)
-const preProcessDate = sanitizeDates(preFormatter, true, false);
-
-const ListAlertsActions: React.FC<ListAlertsActionsProps> = ({ showActions }) => {
-  const [areFiltersVisible, setFiltersVisibility] = React.useState(false);
   const { requestParams, updateRequestParams } = useRequestParamsWithoutPagination<
     ListAlertsInput
   >();
 
-  const { pushSnackbar } = useSnackbar();
-  const { data } = useListAvailableLogTypes({
-    onError: () => pushSnackbar({ title: "Couldn't fetch your available log types" }),
-  });
-
-  // Get all of the keys we can filter by
-  const filterKeys = Object.keys(filters) as (keyof ListAlertsInput)[];
-  // Define a partial which will filter out URL params against our keys
-  const filterValid = (key: keyof ListAlertsInput) =>
-    !isEmpty(requestParams[key]) || isNumber(requestParams[key]);
-  // Get the number of valid filters present in the URL params
-  const filtersCount = filterKeys.filter(filterValid).length;
-
-  // If there is at least one filter set visibility to true
-  // -or- if there's an override
-  React.useEffect(() => {
-    if (filtersCount > 0 || showActions) {
-      setFiltersVisibility(true);
-    }
-  }, [filtersCount, showActions]);
-
-  // The initial filter values for when the filters component first renders. If you see down below,
-  // we mount and unmount it depending on whether it's visible or not
-  const initialFilterValues = React.useMemo(
-    () => preProcessDate(pick(requestParams, filterKeys) as ListAlertsFiltersValues),
-    [requestParams]
+  const availableLogTypes = React.useMemo(
+    () =>
+      data?.listAvailableLogTypes.logTypes
+        ? [ALL_TYPES, ...data.listAvailableLogTypes.logTypes]
+        : [],
+    [data]
   );
 
-  // FIXME: I know this sucks, but we plan to refactor all this logic in the upcoming release
-  filters.logTypes.props.items = data?.listAvailableLogTypes.logTypes ?? [];
+  const initialFilterValues = React.useMemo(() => {
+    const { logTypes, ...params } = requestParams;
+    return {
+      ...pick(params, filterKeys),
+      logTypes: logTypes && logTypes?.length > 0 ? logTypes : [ALL_TYPES],
+    } as ListAlertsFiltersValues;
+  }, [requestParams]);
+
+  const onFiltersChange = React.useCallback(
+    values => {
+      const { logTypes, ...rest } = values;
+      const sanitizedLogTypes = sanitizeLogTypes(logTypes);
+      const params = pickBy(
+        { ...rest, logTypes: sanitizedLogTypes },
+        param => !isEmpty(identity(param))
+      );
+      updateRequestParams({ ...requestParams, ...params });
+    },
+    [requestParams, updateRequestParams]
+  );
 
   return (
-    <React.Fragment>
-      <Breadcrumbs.Actions>
-        <Flex justify="flex-end">
-          <Button
-            active={areFiltersVisible}
-            icon="filter"
-            variant="outline"
-            variantColor="navyblue"
-            onClick={() => setFiltersVisibility(!areFiltersVisible)}
-          >
-            Filter Options {filtersCount ? `(${filtersCount})` : ''}
-          </Button>
-        </Flex>
-      </Breadcrumbs.Actions>
-      <Collapse open={areFiltersVisible}>
-        <Box pb={6} as="section">
-          <Card p={8}>
-            <ErrorBoundary>
-              <GenerateFiltersGroup<ListAlertsFiltersValues>
-                filters={filters}
-                onSubmit={newParams => updateRequestParams(postProcessDate(newParams))}
-                initialValues={initialFilterValues}
-              />
-            </ErrorBoundary>
-          </Card>
-        </Box>
-      </Collapse>
-    </React.Fragment>
+    <Breadcrumbs.Actions>
+      <Flex justify="flex-end">
+        <Formik<ListAlertsFiltersValues>
+          initialValues={initialFilterValues}
+          onSubmit={onFiltersChange}
+        >
+          {() => (
+            <Form>
+              <FormikAutosave threshold={50} />
+              <Flex>
+                {!logTypesLoading && !logTypesError && (
+                  <Field
+                    as={FormikCombobox}
+                    variant="solid"
+                    label="Log Types"
+                    searchable
+                    name="logTypes"
+                    items={availableLogTypes}
+                  />
+                )}
+                <FormikDateRangeInput
+                  alignment="right"
+                  withPresets
+                  withTime
+                  variant="solid"
+                  format="MM/DD/YY HH:mm"
+                  labelStart="Date Start"
+                  labelEnd="Date End"
+                  placeholderStart="MM/DD/YY HH:mm"
+                  placeholderEnd="MM/DD/YY HH:mm"
+                  nameStart="createdAtAfter"
+                  nameEnd="createdAtBefore"
+                />
+              </Flex>
+            </Form>
+          )}
+        </Formik>
+      </Flex>
+    </Breadcrumbs.Actions>
   );
 };
 
