@@ -1,5 +1,3 @@
-package forwarder
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,31 +16,15 @@ package forwarder
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/panther-labs/panther/pkg/metrics"
-)
+import React from 'react';
+import { buildAlertDetails, render } from 'test-utils';
+import AlertDetailsBanner from './index';
 
-var (
-	StaticLogger = metrics.MustStaticLogger([]metrics.DimensionSet{
-		{
-			"AnalysisType",
-			"Severity",
-		},
-		{
-			"AnalysisType",
-			"AnalysisID",
-		},
-		{
-			"AnalysisType",
-		},
-	}, []metrics.Metric{
-		{
-			Name: "AlertsCreated",
-			Unit: metrics.UnitCount,
-		},
-	})
-	AnalysisTypeDimension = metrics.Dimension{
-		Name:  "AnalysisType",
-		Value: "Rule",
-	}
-)
+describe('AlertDetailsBanner', () => {
+  it('renders', () => {
+    const alert = buildAlertDetails();
+
+    const { container } = render(<AlertDetailsBanner alert={alert} />);
+    expect(container).toMatchSnapshot();
+  });
+});
