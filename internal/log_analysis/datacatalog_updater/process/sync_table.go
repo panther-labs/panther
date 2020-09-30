@@ -45,6 +45,13 @@ type SyncTableEvent struct {
 	gluetasks.SyncTablePartitions
 }
 
+// Max number of calls for a single table sync.
+// Each year of hourly partitions is 8760 partitions.
+// Avg page size seems to vary between 100-200 partitions per page.
+// We expect ~100 pages per year of data.
+// Each invocation should handle 1-4 pages within the time limit.
+// This value is high enough to not block updates on tables with many partitions and low enough to not let costs
+// spiral out of control when we encounter network outage/latency or other such rare failure scenarios.
 const maxNumCalls = 1000
 
 // HandleSyncTableEvent starts or continues a gluetasks.SyncTablePartitions task.
