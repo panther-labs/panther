@@ -21,7 +21,6 @@ package analysis
 import (
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	jsoniter "github.com/json-iterator/go"
@@ -57,7 +56,7 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (*models.TestRuleResult, 
 
 		inputEvents[i] = enginemodels.Event{
 			Data: attrs,
-			ID:   testResourceID + strconv.Itoa(i),
+			ID:   strconv.Itoa(i),
 		}
 	}
 
@@ -80,11 +79,14 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (*models.TestRuleResult, 
 	}
 
 	// Translate rule engine output to test results.
-	testResult := &models.TestRuleResult{}
+	testResult := &models.TestRuleResult{
+		TestsErrored: models.TestsErrored{},
+		TestsFailed:  models.TestsFailed{},
+		TestsPassed:  []*models.RulePassResult{},
+	}
 	for _, result := range engineOutput.Results {
-		// Determine which test case this result corresponds to. We constructed resourceID with the
-		// format Panther:Test:Resource:TestNumber (see testResourceID),
-		testIndex, err := strconv.Atoi(strings.Split(result.ID, ":")[3])
+		// Determine which test case this result corresponds to.
+		testIndex, err := strconv.Atoi(result.ID)
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to extract test number from test result resourceID %s", result.ID)
 		}

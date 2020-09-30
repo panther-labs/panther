@@ -676,7 +676,7 @@ func (a *Client) TestPolicy(params *TestPolicyParams) (*TestPolicyOK, error) {
 	result, err := a.transport.Submit(&runtime.ClientOperation{
 		ID:                 "TestPolicy",
 		Method:             "POST",
-		PathPattern:        "/test",
+		PathPattern:        "/policy/test",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},

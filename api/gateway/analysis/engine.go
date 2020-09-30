@@ -84,6 +84,7 @@ type RuleEngineOutput struct {
 }
 
 // The result of a evaluating a rule with an event.
+//nolint:maligned
 type RuleResult struct {
 	ID           string `json:"id"`
 	RuleID       string `json:"rule_id"`

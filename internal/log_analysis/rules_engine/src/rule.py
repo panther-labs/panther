@@ -203,7 +203,7 @@ class Rule:
         result = function(event)
         if not isinstance(result, expected_type):
             raise Exception(
-                'rule [{}] fuction [{}] returned [{}], expected [{}]'.format(
+                'rule [{}] function [{}] returned [{}], expected [{}]'.format(
                     self.rule_id, function.__name__,
                     type(result).__name__, expected_type.__name__
                 )

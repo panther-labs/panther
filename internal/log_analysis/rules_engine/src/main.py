@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import boto3
 import collections
 import json
 from gzip import GzipFile
@@ -22,11 +21,13 @@ from io import TextIOWrapper
 from timeit import default_timer
 from typing import Any, Dict, List, Optional, Tuple
 
+import boto3
+
 from .analysis_api import AnalysisAPIClient
 from .engine import Engine
 from .logging import get_logger
 from .output import MatchedEventsBuffer
-from .rule import Rule, RuleResult
+from .rule import Rule
 
 _S3_CLIENT = boto3.client('s3')
 _LOGGER = get_logger()
@@ -60,7 +61,6 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
         rule_exception = err
 
     results = []
-    response: Dict[str, Any] = {'results': results}
     for event in request['events']:
         if rule_exception:
             results.append(
@@ -76,20 +76,20 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
 
         else:
             rule_result = test_rule.run(event['data'])
-            if rule_result.exception:
-                results.append(
-                    {
-                        'id': event['id'],
-                        'rule_id': raw_rule['id'],
-                        'matched': rule_result.matched,
-                        'title_output': rule_result.title,
-                        'dedup_output': rule_result.dedup_string,
-                        'errored': rule_result.exception is not None,
-                        'error_message':
-                            '{}: {}'.format(type(rule_result.exception).__name__, rule_result.exception) if rule_result.exception else None,
-                    }
-                )
+            results.append(
+                {
+                    'id': event['id'],
+                    'rule_id': raw_rule['id'],
+                    'matched': rule_result.matched,
+                    'title_output': rule_result.title,
+                    'dedup_output': rule_result.dedup_string,
+                    'errored': rule_result.exception is not None,
+                    'error_message':
+                        '{}: {}'.format(type(rule_result.exception).__name__, rule_result.exception) if rule_result.exception else None,
+                }
+            )
 
+    response: Dict[str, Any] = {'results': results}
     return response
 
 

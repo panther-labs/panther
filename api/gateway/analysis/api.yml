@@ -775,7 +775,7 @@ paths:
         500:
           description: Internal server error
 
-  /test:
+  /policy/test:
     post:
       operationId: TestPolicy
       summary: Test a policy against a set of unit tests

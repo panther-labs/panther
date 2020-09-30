@@ -49,7 +49,7 @@ func TestRuleEngine_TestRule(t *testing.T) {
 		Payload: mustMarshal(analysis.RuleEngineOutput{
 			Results: []analysis.RuleResult{
 				{
-					ID:           testResourceID + "0",
+					ID:           "0",
 					RuleID:       testRuleID,
 					Matched:      true,
 					Errored:      false,
@@ -96,11 +96,11 @@ def dedup(e):
 
 	expected := &models.TestRuleResult{
 		TestSummary:  true,
-		TestsErrored: nil,
-		TestsFailed:  nil,
+		TestsErrored: models.TestsErrored{},
+		TestsFailed:  models.TestsFailed{},
 		TestsPassed: []*models.RulePassResult{
 			{
-				ID:           "Panther:Test:Resource:0",
+				ID:           "0",
 				RuleID:       testRuleID,
 				Matched:      true,
 				TitleOutput:  "alert-title",
