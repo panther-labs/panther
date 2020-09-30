@@ -32,26 +32,27 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/gluetasks"
 )
 
-var opts = struct {
-	DryRun         *bool
-	Debug          *bool
-	Region         *string
-	NumWorkers     *int
-	MaxConnections *int
-	MaxRetries     *int
-	Prefix         *string
-}{
-	DryRun:         flag.Bool("dry-run", false, "Scan for partitions to sync without applying any modifications"),
-	Debug:          flag.Bool("debug", false, "Enable additional logging"),
-	Region:         flag.String("region", "", "Set the AWS region to run on"),
-	MaxRetries:     flag.Int("max-retries", 12, "Max retries for AWS requests"),
-	MaxConnections: flag.Int("max-connections", 100, "Max number of connections to AWS"),
-	NumWorkers:     flag.Int("workers", 8, "Number of parallel workers for each table"),
-	Prefix:         flag.String("prefix", "", "A prefix to filter log type names"),
-}
-
 func main() {
+	opstools.SetUsage("syncs AWS Glue partition schemas to match the schema of the table they belong to")
+	opts := struct {
+		DryRun         *bool
+		Debug          *bool
+		Region         *string
+		NumWorkers     *int
+		MaxConnections *int
+		MaxRetries     *int
+		Prefix         *string
+	}{
+		DryRun:         flag.Bool("dry-run", false, "Scan for partitions to sync without applying any modifications"),
+		Debug:          flag.Bool("debug", false, "Enable additional logging"),
+		Region:         flag.String("region", "", "Set the AWS region to run on"),
+		MaxRetries:     flag.Int("max-retries", 12, "Max retries for AWS requests"),
+		MaxConnections: flag.Int("max-connections", 100, "Max number of connections to AWS"),
+		NumWorkers:     flag.Int("workers", 8, "Number of parallel workers for each table"),
+		Prefix:         flag.String("prefix", "", "A prefix to filter log type names"),
+	}
 	flag.Parse()
+
 	log := opstools.MustBuildLogger(*opts.Debug)
 
 	var matchPrefix string

@@ -50,6 +50,8 @@ func HandleSyncEvent(ctx context.Context, event *SyncEvent) error {
 	)
 	var tableEvents []*SyncTableEvent
 	for _, dbName := range event.DatabaseNames {
+		// Tables in panther_logs database can have partitions at any point in time.
+		// The rest can only have partitions in the range TableCreateTime <= PartitionTime < now
 		afterTableCreateTime := dbName != awsglue.LogProcessingDatabaseName
 		for _, logType := range event.LogTypes {
 			tblName := awsglue.GetTableName(logType)

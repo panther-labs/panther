@@ -101,7 +101,7 @@ func FromContext(ctx context.Context) *zap.Logger {
 	if logger, ok := ctx.Value(contextKey).(*zap.Logger); ok {
 		return logger
 	}
-	return withLambdaFieldsFromContext(ctx, zap.L())
+	return zap.L()
 }
 
 type middleware struct {

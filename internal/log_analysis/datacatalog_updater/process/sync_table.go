@@ -20,7 +20,6 @@ package process
 
 import (
 	"context"
-	"runtime"
 	"time"
 
 	"github.com/pkg/errors"
@@ -39,6 +38,8 @@ type SyncTableEvent struct {
 	// NumCalls keeps track of the number of recursive calls for the specific sync table event.
 	// It acts as a guard against infinite recursion.
 	NumCalls int
+	// NumTimeouts keeps track of how many times the last token was retried because of timeout.
+	NumTimeouts int
 	// Embed the full sync table partitions task state
 	// This allows us to continue the task by recursively calling the lambda.
 	// The task carries all status information over
@@ -54,52 +55,17 @@ type SyncTableEvent struct {
 // spiral out of control when we encounter network outage/latency or other such rare failure scenarios.
 const maxNumCalls = 1000
 
+// Max number of retries on the same token without progress
+const maxConsecutiveSyncTimeouts = 5
+
 // HandleSyncTableEvent starts or continues a gluetasks.SyncTablePartitions task.
 // nolint: nakedret
-func HandleSyncTableEvent(ctx context.Context, event *SyncTableEvent) (err error) {
-	log := lambdalogger.FromContext(ctx)
-	log = log.With(
-		zap.String("traceId", event.TraceID),
-		zap.Int("numCalls", event.NumCalls),
-	)
-	sync := event.SyncTablePartitions
-	sync.NumWorkers = runtime.NumCPU() + 1
-	// defer invoking continuation
-	defer func() {
-		if err == nil {
-			return
-		}
-		if !errors.Is(err, context.DeadlineExceeded) {
-			return
-		}
-		// protect against infinite recursion
-		numCalls := event.NumCalls + 1
-		if numCalls > maxNumCalls {
-			log.Error("max calls exceeded",
-				zap.String("table", event.TableName),
-				zap.String("database", event.DatabaseName),
-				zap.String("token", sync.NextToken),
-				zap.Error(err),
-			)
-			return
-		}
-
-		log.Debug("continuing sync", zap.String("token", sync.NextToken))
-		// We use context.Background to limit the probability of missing the continuation request
-		err = invokeEvent(context.Background(), lambdaClient, &DataCatalogEvent{
-			SyncTablePartitions: &SyncTableEvent{
-				SyncTablePartitions: sync,
-				NumCalls:            numCalls,
-				TraceID:             event.TraceID, // keep the original trace id
-			},
-		})
-	}()
-
+func HandleSyncTableEvent(ctx context.Context, event *SyncTableEvent) error {
 	// Reserve some time for continuing the task in a new lambda invocation
 	// If the timeout too short we resort to using context.Background to send the request outside of the
 	// lambda handler time slot.
 	if deadline, ok := ctx.Deadline(); ok {
-		const gracefulExitTimeout = time.Second
+		const gracefulExitTimeout = time.Minute
 		timeout := time.Until(deadline)
 		if timeout > gracefulExitTimeout {
 			timeout = timeout - gracefulExitTimeout
@@ -109,8 +75,72 @@ func HandleSyncTableEvent(ctx context.Context, event *SyncTableEvent) (err error
 		}
 	}
 
-	err = sync.Run(ctx, glueClient, log)
-	stats := sync.Stats
-	log.Debug("sync table complete", zap.Any("stats", &stats), zap.Error(err))
-	return
+	logger := lambdalogger.FromContext(ctx).With(
+		zap.String("traceId", event.TraceID),
+		zap.Int("numCalls", event.NumCalls),
+		zap.Int("numTimeouts", event.NumTimeouts),
+	)
+	sync := event.SyncTablePartitions
+	// Set the number of parallel partition updates from env
+	sync.NumWorkers = config.SyncWorkersPerTable
+
+	err := sync.Run(ctx, glueClient, logger)
+
+	// We add these fields after Run() to avoid duplicate fields in the log output of sync.Run()
+	logger = logger.With(
+		zap.String("table", event.TableName),
+		zap.String("database", event.DatabaseName),
+	)
+	if err == nil {
+		logger.Info("sync complete", zap.Any("stats", &sync.Stats))
+		return nil
+	}
+
+	logger.Info("sync progress", zap.Any("stats", &sync.Stats))
+
+	// We only continue our work if failure was due to timeout
+	if errors.Is(err, context.DeadlineExceeded) {
+		// We use context.Background to limit the probability of missing the continuation request
+		if continueErr := continueSyncTableEvent(context.Background(), event, &sync); continueErr != nil {
+			err = errors.WithMessage(continueErr, "sync failed to continue")
+		}
+	}
+
+	if err != nil {
+		// We log the error here to take advantage of zap fields for tracing
+		logger.Error("sync failed", zap.Error(err))
+		// Add some helpful message to the returned error
+		return errors.WithMessagef(err, "sync %s.%s failed", event.DatabaseName, event.TableName)
+	}
+
+	return nil
+}
+
+func continueSyncTableEvent(ctx context.Context, event *SyncTableEvent, sync *gluetasks.SyncTablePartitions) error {
+	numTimeouts := 0
+	if sync.NextToken != "" && sync.NextToken == event.NextToken {
+		// Deadline reached without any progress
+		numTimeouts = event.NumTimeouts + 1
+	}
+	if numTimeouts > maxConsecutiveSyncTimeouts {
+		return errors.Errorf("no progress after %d retries", numTimeouts)
+	}
+	// protect against infinite recursion
+	numCalls := event.NumCalls + 1
+	if numCalls > maxNumCalls {
+		return errors.Errorf("sync did not complete after %d lambdsa calls", numCalls)
+	}
+
+	err := invokeEvent(ctx, lambdaClient, &DataCatalogEvent{
+		SyncTablePartitions: &SyncTableEvent{
+			SyncTablePartitions: *sync,
+			NumCalls:            numCalls,
+			NumTimeouts:         numTimeouts,
+			TraceID:             event.TraceID, // keep the original trace id
+		},
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }

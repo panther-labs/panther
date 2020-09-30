@@ -19,8 +19,12 @@ package opstools
  */
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/hashicorp/go-cleanhttp"
@@ -51,5 +55,14 @@ func NewHTTPClient(maxConnections int, timeout time.Duration) *http.Client {
 	return &http.Client{
 		Transport: transport,
 		Timeout:   timeout,
+	}
+}
+
+func SetUsage(banner string) {
+	flag.Usage = func() {
+		fmt.Fprintf(flag.CommandLine.Output(),
+			"%s %s\nUsage:\n",
+			filepath.Base(os.Args[0]), banner)
+		flag.PrintDefaults()
 	}
 }

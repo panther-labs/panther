@@ -184,7 +184,7 @@ func (s *SyncTablePartitions) syncTable(ctx context.Context, api glueiface.GlueA
 			for _, p := range page.Partitions {
 				tm, err := awsglue.PartitionTimeFromValues(p.Values)
 				if err != nil {
-					log.Warn("invalid partition", zap.Strings("values", aws.StringValueSlice(p.Values)), zap.Error(err))
+					log.Warn("invalid partition values", zap.Strings("values", aws.StringValueSlice(p.Values)), zap.Error(err))
 					return errors.Wrapf(err, "failed to sync %s.%s partitions", s.DatabaseName, s.TableName)
 				}
 				s.Stats.observePartition(tm)

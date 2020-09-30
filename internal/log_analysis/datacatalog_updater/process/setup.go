@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
+	"github.com/kelseyhightower/envconfig"
 )
 
 const (
@@ -32,12 +33,16 @@ const (
 )
 
 var (
+	config = struct {
+		SyncWorkersPerTable int `default:"10" split_words:"true"`
+	}{}
 	awsSession   *session.Session
 	glueClient   glueiface.GlueAPI
 	lambdaClient lambdaiface.LambdaAPI
 )
 
 func Setup() {
+	envconfig.MustProcess("", &config)
 	awsSession = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries)))
 	glueClient = glue.New(awsSession)
 	lambdaClient = lambda.New(awsSession)

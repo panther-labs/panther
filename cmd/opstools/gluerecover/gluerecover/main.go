@@ -35,30 +35,31 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/gluetasks"
 )
 
-var opts = struct {
-	End            *string
-	Start          *string
-	DryRun         *bool
-	Debug          *bool
-	Region         *string
-	NumWorkers     *int
-	MaxConnections *int
-	MaxRetries     *int
-	Prefix         *string
-}{
-	Start:          flag.String("start", "", "Recover partitions after this date YYYY-MM-DD"),
-	End:            flag.String("end", "", "Recover partitions until this date YYYY-MM-DD"),
-	DryRun:         flag.Bool("dry-run", false, "Scan for missing partitions without without applying any changes"),
-	Debug:          flag.Bool("debug", false, "Enable additional logging"),
-	Region:         flag.String("region", "", "Set the AWS region to run on"),
-	MaxRetries:     flag.Int("max-retries", 12, "Max retries for AWS requests"),
-	MaxConnections: flag.Int("max-connections", 100, "Max number of connections to AWS"),
-	NumWorkers:     flag.Int("workers", 8, "Number of parallel workers for each table"),
-	Prefix:         flag.String("prefix", "", "A prefix to filter log type names"),
-}
-
 func main() {
+	opstools.SetUsage("scans S3 for missing AWS Glue partitions and recovers them")
+	opts := struct {
+		End            *string
+		Start          *string
+		DryRun         *bool
+		Debug          *bool
+		Region         *string
+		NumWorkers     *int
+		MaxConnections *int
+		MaxRetries     *int
+		Prefix         *string
+	}{
+		Start:          flag.String("start", "", "Recover partitions after this date YYYY-MM-DD"),
+		End:            flag.String("end", "", "Recover partitions until this date YYYY-MM-DD"),
+		DryRun:         flag.Bool("dry-run", false, "Scan for missing partitions without without applying any changes"),
+		Debug:          flag.Bool("debug", false, "Enable additional logging"),
+		Region:         flag.String("region", "", "Set the AWS region to run on"),
+		MaxRetries:     flag.Int("max-retries", 12, "Max retries for AWS requests"),
+		MaxConnections: flag.Int("max-connections", 100, "Max number of connections to AWS"),
+		NumWorkers:     flag.Int("workers", 8, "Number of parallel workers for each table"),
+		Prefix:         flag.String("prefix", "", "A prefix to filter log type names"),
+	}
 	flag.Parse()
+
 	log := opstools.MustBuildLogger(*opts.Debug)
 	var start, end time.Time
 	if opt := *opts.Start; opt != "" {
