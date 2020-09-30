@@ -78,8 +78,8 @@ type Event struct {
 	ID   string      `json:"id"`
 }
 
-// RuleEngineOutput is the response returned when invoking in log analysis mode.
-type RuleEngineOutput struct {
+// RulesEngineOutput is the response returned when invoking in log analysis mode.
+type RulesEngineOutput struct {
 	Results []RuleResult `json:"results"`
 }
 

@@ -30,7 +30,7 @@ var methodHandlers = map[string]gatewayapi.RequestHandler{
 	"GET /list":         handlers.ListPolicies,
 	"GET /policy":       handlers.GetPolicy,
 	"POST /policy":      handlers.CreatePolicy,
-	"POST /policy/test": handlers.TestPolicyOrRule,
+	"POST /policy/test": handlers.TestAnalysis,
 	"POST /suppress":    handlers.Suppress,
 	"POST /update":      handlers.ModifyPolicy,
 	"POST /upload":      handlers.BulkUpload,
@@ -40,7 +40,7 @@ var methodHandlers = map[string]gatewayapi.RequestHandler{
 	"POST /rule":        handlers.CreateRule,
 	"GET /rule/list":    handlers.ListRules,
 	"POST /rule/update": handlers.ModifyRule,
-	"POST /rule/test":   handlers.TestPolicyOrRule,
+	"POST /rule/test":   handlers.TestAnalysis,
 
 	// Rules and Policies handled in common
 	"POST /delete": handlers.DeletePolicies,

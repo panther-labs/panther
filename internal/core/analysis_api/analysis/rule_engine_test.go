@@ -46,7 +46,7 @@ var lambdaClient = mockLambdaClient{}
 
 func TestRuleEngine_TestRule(t *testing.T) {
 	output := lambda.InvokeOutput{
-		Payload: mustMarshal(analysis.RuleEngineOutput{
+		Payload: mustMarshal(analysis.RulesEngineOutput{
 			Results: []analysis.RuleResult{
 				{
 					ID:           "0",

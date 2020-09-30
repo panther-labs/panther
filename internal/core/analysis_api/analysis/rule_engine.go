@@ -72,7 +72,7 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (*models.TestRuleResult, 
 	}
 
 	// Send the request to the rule-engine
-	var engineOutput enginemodels.RuleEngineOutput
+	var engineOutput enginemodels.RulesEngineOutput
 	err := genericapi.Invoke(e.lambdaClient, e.lambdaName, &input, &engineOutput)
 	if err != nil {
 		return nil, errors.Wrap(err, "error invoking rule engine")
