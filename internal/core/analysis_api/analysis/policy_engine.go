@@ -79,7 +79,11 @@ func (e *PolicyEngine) TestPolicy(policy *models.TestPolicy) (models.TestPolicyR
 }
 
 func makeTestSummary(policy *models.TestPolicy, engineOutput enginemodels.PolicyEngineOutput) (models.TestPolicyResult, error) {
-	var testResults models.TestPolicyResult
+	testResults := models.TestPolicyResult{
+		TestsErrored: models.TestsErrored{},
+		TestsFailed:  models.TestsFailed{},
+		TestsPassed:  models.TestsPassed{},
+	}
 	for _, result := range engineOutput.Resources {
 		// Determine which test case this result corresponds to. We constructed resourceID with the
 		// format Panther:Test:Resource:TestNumber (see testResourceID),

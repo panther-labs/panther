@@ -45,13 +45,39 @@ class TestMainDirectAnalysis(TestCase):
     def test_direct_analysis_event_matching(self) -> None:
         rule_body = 'def rule(event):\n\treturn True'
         payload = {'rules': [{'id': 'rule_id', 'body': rule_body}], 'events': [{'id': 'event_id', 'data': 'data'}]}
-        expected_response = {'events': [{'id': 'event_id', 'matched': ['rule_id'], 'notMatched': [], 'errored': []}]}
+        expected_response = {
+            'results':
+                [
+                    {
+                        'id': 'event_id',
+                        'rule_id': 'rule_id',
+                        'matched': True,
+                        'dedup_output': 'defaultDedupString:rule_id',
+                        'title_output': None,
+                        'errored': False,
+                        'error_message': None,
+                    }
+                ]
+        }
         self.assertEqual(expected_response, lambda_handler(payload, None))
 
     def test_direct_analysis_event_not_matching(self) -> None:
         rule_body = 'def rule(event):\n\treturn False'
         payload = {'rules': [{'id': 'rule_id', 'body': rule_body}], 'events': [{'id': 'event_id', 'data': 'data'}]}
-        expected_response = {'events': [{'id': 'event_id', 'matched': [], 'notMatched': ['rule_id'], 'errored': []}]}
+        expected_response = {
+            'results':
+                [
+                    {
+                        'id': 'event_id',
+                        'rule_id': 'rule_id',
+                        'matched': False,
+                        'dedup_output': None,
+                        'title_output': None,
+                        'errored': False,
+                        'error_message': None,
+                    }
+                ]
+        }
         self.assertEqual(expected_response, lambda_handler(payload, None))
 
     def test_direct_analysis_rule_throwing_exception(self) -> None:
@@ -66,16 +92,16 @@ class TestMainDirectAnalysis(TestCase):
             }]
         }
         expected_response = {
-            'events':
+            'results':
                 [
                     {
                         'id': 'event_id',
-                        'matched': [],
-                        'notMatched': [],
-                        'errored': [{
-                            'id': 'rule_id',
-                            'message': 'Exception: Failure message'
-                        }]
+                        'rule_id': 'rule_id',
+                        'matched': None,
+                        'dedup_output': None,
+                        'title_output': None,
+                        'errored': True,
+                        'error_message': 'Exception: Failure message',
                     }
                 ]
         }
@@ -84,16 +110,14 @@ class TestMainDirectAnalysis(TestCase):
     def test_direct_analysis_rule_invalid(self) -> None:
         payload = {'rules': [{'id': 'rule_id', 'body': 'import stuff'}], 'events': [{'id': 'event_id', 'data': 'data'}]}
         expected_response = {
-            'events':
+            'results':
                 [
                     {
                         'id': 'event_id',
-                        'matched': [],
-                        'notMatched': [],
-                        'errored': [{
-                            'id': 'rule_id',
-                            'message': 'ModuleNotFoundError: No module named \'stuff\''
-                        }]
+                        'rule_id': 'rule_id',
+                        'matched': False,
+                        'errored': True,
+                        'error_message': 'ModuleNotFoundError: No module named \'stuff\'',
                     }
                 ]
         }
@@ -112,17 +136,20 @@ class TestMainDirectAnalysis(TestCase):
             }]
         }
         expected_response = {
-            'events':
-                [{
-                    'id': 'event_id',
-                    'matched': [],
-                    'notMatched': [],
-                    'errored': [{
-                        'id': 'rule_id',
-                        'message': 'Exception: dedup error'
-                    }]
-                }]
+            'results':
+                [
+                    {
+                        'dedup_output': None,
+                        'error_message': 'Exception: dedup error',
+                        'errored': True,
+                        'id': 'event_id',
+                        'matched': None,
+                        'rule_id': 'rule_id',
+                        'title_output': None
+                    }
+                ]
         }
+
         self.assertEqual(expected_response, lambda_handler(payload, None))
 
     def test_title_exception_fails_test(self) -> None:
@@ -139,16 +166,18 @@ class TestMainDirectAnalysis(TestCase):
         }
 
         expected_response = {
-            'events':
-                [{
-                    'id': 'event_id',
-                    'matched': [],
-                    'notMatched': [],
-                    'errored': [{
-                        'id': 'rule_id',
-                        'message': 'Exception: title error'
-                    }]
-                }]
+            'results':
+                [
+                    {
+                        'dedup_output': None,
+                        'error_message': 'Exception: title error',
+                        'errored': True,
+                        'id': 'event_id',
+                        'matched': None,
+                        'rule_id': 'rule_id',
+                        'title_output': None
+                    }
+                ]
         }
         self.assertEqual(expected_response, lambda_handler(payload, None))
 

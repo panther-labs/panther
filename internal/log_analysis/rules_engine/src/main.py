@@ -21,12 +21,12 @@ from io import TextIOWrapper
 from timeit import default_timer
 from typing import Any, Dict, List, Optional, Tuple
 
-from .engine import Engine
 from .analysis_api import AnalysisAPIClient
+from .aws_clients import S3_CLIENT
+from .engine import Engine
 from .logging import get_logger
 from .output import MatchedEventsBuffer
 from .rule import Rule
-from .aws_clients import S3_CLIENT
 
 _LOGGER = get_logger()
 
@@ -59,36 +59,36 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
     except Exception as err:  # pylint: disable=broad-except
         rule_exception = err
 
-    response: Dict[str, Any] = {'events': []}
+    results = []
     for event in request['events']:
-        result = {
-            'id': event['id'],
-            'matched': [],
-            'notMatched': [],
-            'errored': [],
-        }
         if rule_exception:
-            result['errored'] = [{
-                'id': raw_rule['id'],
-                'message': '{}: {}'.format(type(rule_exception).__name__, rule_exception),
-            }]
+            results.append(
+                {
+                    'id': event['id'],
+                    'rule_id': raw_rule['id'],
+                    'matched': False,
+                    'errored': True,
+                    'error_message': '{}: {}'.format(type(rule_exception).__name__, rule_exception),
+                }
+            )
             # If rule was invalid, no need to try to run it
 
         else:
             rule_result = test_rule.run(event['data'], raise_title_dedup=True)
-            if rule_result.exception:
-                result['errored'] = [
-                    {
-                        'id': raw_rule['id'],
-                        'message': '{}: {}'.format(type(rule_result.exception).__name__, rule_result.exception),
-                    }
-                ]
-            elif rule_result.matched:
-                result['matched'] = [raw_rule['id']]
-            else:
-                result['notMatched'] = [raw_rule['id']]
+            results.append(
+                {
+                    'id': event['id'],
+                    'rule_id': raw_rule['id'],
+                    'matched': rule_result.matched,
+                    'title_output': rule_result.title,
+                    'dedup_output': rule_result.dedup_string,
+                    'errored': rule_result.exception is not None,
+                    'error_message':
+                        '{}: {}'.format(type(rule_result.exception).__name__, rule_result.exception) if rule_result.exception else None,
+                }
+            )
 
-        response['events'].append(result)
+    response: Dict[str, Any] = {'results': results}
     return response
 
 

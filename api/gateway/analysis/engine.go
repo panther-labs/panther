@@ -80,28 +80,17 @@ type Event struct {
 
 // RulesEngineOutput is the response returned when invoking in log analysis mode.
 type RulesEngineOutput struct {
-	Events []EventAnalysis `json:"events"`
+	Results []RuleResult `json:"results"`
 }
 
-// EventAnalysis is the python evaluation for a single event in the input.
-type EventAnalysis struct {
-	ID         string        `json:"id"`
-	Errored    []PolicyError `json:"errored"`
-	Matched    []string      `json:"matched"`    // set of rule IDs which returned True
-	NotMatched []string      `json:"notMatched"` // set of rule IDs which returned False
-}
-
-// ToResult normalizes an event analysis rule result into a Result.
-// Since rule and policy analysis result are quite similar, this allows them to
-// be handled consistently.
-func (e EventAnalysis) ToResult() Result {
-	return Result{
-		ID:      e.ID,
-		Errored: e.Errored,
-		// These are flipped from what would be expected due to the fact that a
-		// 'True' return in a policy means it is compliant while in a rule means
-		// it should fire an alert.
-		Failed: e.NotMatched,
-		Passed: e.Matched,
-	}
+// The result of a evaluating a rule with an event.
+//nolint:maligned
+type RuleResult struct {
+	ID           string `json:"id"`
+	RuleID       string `json:"rule_id"`
+	Matched      bool   `json:"matched"`
+	TitleOutput  string `json:"title_output"`
+	DedupOutput  string `json:"dedup_output"`
+	Errored      bool   `json:"errored"`
+	ErrorMessage string `json:"error_message"`
 }
