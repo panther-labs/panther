@@ -96,6 +96,7 @@ input ListAlertsInput {
   pageSize: Int # defaults to `25`
   exclusiveStartKey: String
   severity: [SeverityEnum]
+  logTypes: [String]
   nameContains: String
   createdAtBefore: AWSDateTime
   createdAtAfter: AWSDateTime
