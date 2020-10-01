@@ -54,7 +54,10 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
               View Rule
             </Button>
           </Link>
-          <GenericItemCard.Value label="Events" value={alert.eventsMatched} />
+          <GenericItemCard.Value
+            label="Events"
+            value={alert?.eventsMatched ? alert?.eventsMatched.toLocaleString() : '0'}
+          />
           <GenericItemCard.Value
             label="Log Types"
             value={

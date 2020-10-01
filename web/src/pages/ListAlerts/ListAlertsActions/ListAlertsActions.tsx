@@ -29,7 +29,7 @@ import pick from 'lodash/pick';
 
 import FormikDateRangeInput from 'Components/fields/DateRangeInput';
 import FormikCombobox from 'Components/fields/ComboBox';
-import FormikAutosave from 'Components/fields/Autosave';
+import FormikAutosave from 'Components/utils/Autosave';
 import Breadcrumbs from 'Components/Breadcrumbs';
 import { useListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
 

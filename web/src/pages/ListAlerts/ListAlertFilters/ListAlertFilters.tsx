@@ -25,7 +25,7 @@ import { capitalize } from 'Helpers/utils';
 
 import pick from 'lodash/pick';
 
-import FormikAutosave from 'Components/fields/Autosave';
+import FormikAutosave from 'Components/utils/Autosave';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import FormikTextInput from 'Components/fields/TextInput';
 
