@@ -22,7 +22,6 @@ import storage from 'Helpers/storage';
 import { ANALYTICS_CONSENT_STORAGE_KEY } from 'Source/constants';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 
-// TODO: Pending backend to work
 const mixpanelPublicToken = process.env.MIXPANEL_PUBLIC_TOKEN;
 
 const envCheck = mixpanelPublicToken && storage.local.read<boolean>(ANALYTICS_CONSENT_STORAGE_KEY);
