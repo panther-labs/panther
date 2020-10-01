@@ -17,14 +17,12 @@
  */
 
 import React from 'react';
-import { Form, Formik, Field } from 'formik';
+import { Form, Formik, FastField } from 'formik';
 import { Box, Flex } from 'pouncejs';
 import { ListAlertsInput, SeverityEnum, AlertStatusesEnum } from 'Generated/schema';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import { capitalize } from 'Helpers/utils';
-
 import pick from 'lodash/pick';
-
 import FormikAutosave from 'Components/utils/Autosave';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -36,6 +34,9 @@ export type ListAlertsInlineFiltersValues = Pick<
 
 const severityOptions = Object.values(SeverityEnum);
 const statusOptions = Object.values(AlertStatusesEnum);
+
+const filterItemToString = (item: SeverityEnum | AlertStatusesEnum) =>
+  capitalize(item.toLowerCase());
 
 const filters = [
   'severity',
@@ -81,7 +82,7 @@ const ListAlertFilters: React.FC = () => {
           <FormikAutosave threshold={200} />
           <Flex spacing={4}>
             <Box width={300}>
-              <Field
+              <FastField
                 name="nameContains"
                 icon="search"
                 iconAlignment="left"
@@ -90,20 +91,20 @@ const ListAlertFilters: React.FC = () => {
               />
             </Box>
             <Box>
-              <Field
+              <FastField
                 name="severity"
                 as={FormikMultiCombobox}
                 items={severityOptions}
-                itemToString={(severity: SeverityEnum) => capitalize(severity.toLowerCase())}
+                itemToString={filterItemToString}
                 label="Severity"
               />
             </Box>
             <Box>
-              <Field
+              <FastField
                 name="status"
                 as={FormikMultiCombobox}
                 items={statusOptions}
-                itemToString={(status: AlertStatusesEnum) => capitalize(status.toLowerCase())}
+                itemToString={filterItemToString}
                 label="Status"
               />
             </Box>

@@ -44,16 +44,20 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
           <GenericItemCard.Heading>{alert.title}</GenericItemCard.Heading>
         </Link>
         <GenericItemCard.ValuesGroup>
-          <Link
-            as={RRLink}
-            aria-label="Link to Rule"
-            mt={4}
-            to={urls.logAnalysis.rules.details(alert.ruleId)}
-          >
-            <Button variantColor="navyblue" as="div" size="small">
-              View Rule
-            </Button>
-          </Link>
+          <GenericItemCard.Value
+            value={
+              <Link
+                as={RRLink}
+                aria-label="Link to Rule"
+                to={urls.logAnalysis.rules.details(alert.ruleId)}
+              >
+                <Button variantColor="navyblue" as="div" size="small">
+                  View Rule
+                </Button>
+              </Link>
+            }
+          />
+
           <GenericItemCard.Value
             label="Events"
             value={alert?.eventsMatched ? alert?.eventsMatched.toLocaleString() : '0'}
@@ -69,7 +73,7 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
             }
           />
           <GenericItemCard.Value label="Time Created" value={formatDatetime(alert.creationTime)} />
-          <Flex ml="auto" mr={0} align="flex-end" alignItems="center" spacing={2}>
+          <Flex ml="auto" mr={0} align="flex-end" spacing={2}>
             <SeverityBadge severity={alert.severity} />
             <UpdateAlertDropdown alert={alert} />
           </Flex>
