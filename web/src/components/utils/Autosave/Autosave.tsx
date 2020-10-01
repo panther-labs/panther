@@ -36,7 +36,7 @@ const FormikAutosave: React.FC<AutosaveProps> = ({ threshold = 0 }) => {
 
   React.useEffect(() => {
     debouncedSubmit();
-  }, [submitForm, values]);
+  }, [debouncedSubmit, values]);
 
   return null;
 };
