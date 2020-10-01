@@ -34,9 +34,9 @@ interface ErrorData {
  */
 export const logError = (error: Error | ErrorResponse, { operation, extras }: ErrorData = {}) => {
   // On some environments we have sentry disabled
-  const sentryDsn = process.env.SENTRY_DSN;
+  const sentryDsn = pantherConfig.SENTRY_DSN;
   const sentryRelease = pantherConfig.PANTHER_VERSION;
-  if (!sentryDsn) {
+  if (!sentryDsn || pantherConfig.NODE_ENV === 'development') {
     return;
   }
 

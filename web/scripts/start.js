@@ -25,5 +25,9 @@ process.env.PANTHER_VERSION = execSync('git describe --tags').toString().trim();
 
 // Add all the aws-related ENV vars to process.env
 loadDotEnvVars('out/.env.aws');
+// Add all the sentry-related ENV vars to process.env
+loadDotEnvVars('web/.env.sentry');
+// Add all the analytics-related ENV vars to process.env
+loadDotEnvVars('web/.env.analytics');
 
 require('./serve');
