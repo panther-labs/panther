@@ -32,7 +32,7 @@ import { PageViewEnum } from 'Helpers/analytics';
 import AlertCard from 'Components/cards/AlertCard/AlertCard';
 import Panel from 'Components/Panel';
 import { useListAlerts } from './graphql/listAlerts.generated';
-import ListAlertsActions from './ListAlertsActions';
+import ListAlertsActions from './ListAlertBreadcrumbFilters';
 import ListAlertFilters from './ListAlertFilters';
 import ListAlertsPageSkeleton from './Skeleton';
 import ListAlertsPageEmptyDataFallback from './EmptyDataFallback';

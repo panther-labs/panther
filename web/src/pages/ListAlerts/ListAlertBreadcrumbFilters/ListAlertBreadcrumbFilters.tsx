@@ -48,7 +48,7 @@ const sanitizeLogTypes = (logTypes = []) => {
   return logTypes !== ALL_TYPES ? [logTypes] : [];
 };
 
-const ListAlertsActions: React.FC = () => {
+const ListAlertBreadcrumbFilters: React.FC = () => {
   const { data, loading: logTypesLoading, error: logTypesError } = useListAvailableLogTypes({
     fetchPolicy: 'cache-first',
   });
@@ -93,40 +93,38 @@ const ListAlertsActions: React.FC = () => {
           initialValues={initialFilterValues}
           onSubmit={onFiltersChange}
         >
-          {() => (
-            <Form>
-              <FormikAutosave threshold={50} />
-              <Flex spacing={4}>
-                {!logTypesLoading && !logTypesError && (
-                  <Field
-                    as={FormikCombobox}
-                    variant="solid"
-                    label="Log Type"
-                    searchable
-                    name="logTypes"
-                    items={availableLogTypes}
-                  />
-                )}
-                <FormikDateRangeInput
-                  alignment="right"
-                  withPresets
-                  withTime
+          <Form>
+            <FormikAutosave threshold={50} />
+            <Flex spacing={4}>
+              {!logTypesLoading && !logTypesError && (
+                <Field
+                  as={FormikCombobox}
                   variant="solid"
-                  format="MM/DD/YY HH:mm"
-                  labelStart="Date Start"
-                  labelEnd="Date End"
-                  placeholderStart="MM/DD/YY HH:mm"
-                  placeholderEnd="MM/DD/YY HH:mm"
-                  nameStart="createdAtAfter"
-                  nameEnd="createdAtBefore"
+                  label="Log Type"
+                  searchable
+                  name="logTypes"
+                  items={availableLogTypes}
                 />
-              </Flex>
-            </Form>
-          )}
+              )}
+              <FormikDateRangeInput
+                alignment="right"
+                withPresets
+                withTime
+                variant="solid"
+                format="MM/DD/YY HH:mm"
+                labelStart="Date Start"
+                labelEnd="Date End"
+                placeholderStart="MM/DD/YY HH:mm"
+                placeholderEnd="MM/DD/YY HH:mm"
+                nameStart="createdAtAfter"
+                nameEnd="createdAtBefore"
+              />
+            </Flex>
+          </Form>
         </Formik>
       </Flex>
     </Breadcrumbs.Actions>
   );
 };
 
-export default React.memo(ListAlertsActions);
+export default React.memo(ListAlertBreadcrumbFilters);
