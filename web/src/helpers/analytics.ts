@@ -61,6 +61,7 @@ export enum EventEnum {
   AddedDestination = 'Added Destination',
   PickedDestination = 'Picked Destination to create',
   PickedLogSource = 'Picked Log Source to created',
+  InvitedUser = 'Invited user',
 }
 
 export enum SrcEnum {
@@ -68,6 +69,7 @@ export enum SrcEnum {
   Rules = 'rules',
   Policies = 'policies',
   Auth = 'auth',
+  Users = 'users',
   LogSources = 'log sources',
 }
 
@@ -112,6 +114,11 @@ interface AddedLogSourceEvent {
   ctx: LogSources;
 }
 
+interface InvitedUserEvent {
+  event: EventEnum.InvitedUser;
+  src: SrcEnum.Users;
+}
+
 type TrackEvent =
   | AddedDestinationEvent
   | SignInEvent
@@ -119,7 +126,8 @@ type TrackEvent =
   | AddedPolicyEvent
   | AddedLogSourceEvent
   | PickedDestinationEvent
-  | PickedLogSourceEvent;
+  | PickedLogSourceEvent
+  | InvitedUserEvent;
 
 export const trackEvent = (payload: TrackEvent) => {
   evaluateTracking(payload.event, {
