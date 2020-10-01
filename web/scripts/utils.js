@@ -29,8 +29,6 @@ function loadDotEnvVars(path) {
 function getAppTemplateParams() {
   const PANTHER_CONFIG = {
     PANTHER_VERSION: process.env.PANTHER_VERSION,
-    SENTRY_DSN: process.env.SENTRY_DSN,
-    MIXPANEL_PUBLIC_TOKEN: process.env.MIXPANEL_PUBLIC_TOKEN,
     AWS_REGION: process.env.AWS_REGION,
     AWS_ACCOUNT_ID: process.env.AWS_ACCOUNT_ID,
     WEB_APPLICATION_GRAPHQL_API_ENDPOINT: process.env.WEB_APPLICATION_GRAPHQL_API_ENDPOINT,

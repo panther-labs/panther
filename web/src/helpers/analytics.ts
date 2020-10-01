@@ -20,15 +20,11 @@ import { DestinationTypeEnum } from 'Generated/schema';
 import mx from 'mixpanel-browser';
 import storage from 'Helpers/storage';
 import { ANALYTICS_CONSENT_STORAGE_KEY } from 'Source/constants';
-import { pantherConfig } from 'Source/config';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 
-const mixpanelPublicToken = pantherConfig.MIXPANEL_PUBLIC_TOKEN;
+const mixpanelPublicToken = process.env.MIXPANEL_PUBLIC_TOKEN;
 
-const envCheck =
-  mixpanelPublicToken &&
-  storage.local.read<boolean>(ANALYTICS_CONSENT_STORAGE_KEY) &&
-  pantherConfig.NODE_ENV === 'production';
+const envCheck = mixpanelPublicToken && storage.local.read<boolean>(ANALYTICS_CONSENT_STORAGE_KEY);
 
 const evaluateTracking = (...args) => {
   if (envCheck) {
