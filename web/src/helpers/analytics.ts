@@ -57,8 +57,10 @@ export enum EventEnum {
   SignedIn = 'Signed in successfully',
   AddedRule = 'Added Rule',
   AddedPolicy = 'Added Policy',
+  AddedLogSource = 'Added Log Source',
   AddedDestination = 'Added Destination',
   PickedDestination = 'Picked Destination to create',
+  PickedLogSource = 'Picked Log Source to created',
 }
 
 export enum SrcEnum {
@@ -66,7 +68,10 @@ export enum SrcEnum {
   Rules = 'rules',
   Policies = 'policies',
   Auth = 'auth',
+  LogSources = 'log sources',
 }
+
+type LogSources = 'S3' | 'SQS';
 
 interface SignInEvent {
   event: EventEnum.SignedIn;
@@ -95,12 +100,26 @@ interface PickedDestinationEvent {
   ctx: DestinationTypeEnum;
 }
 
+interface PickedLogSourceEvent {
+  event: EventEnum.PickedLogSource;
+  src: SrcEnum.LogSources;
+  ctx: LogSources;
+}
+
+interface AddedLogSourceEvent {
+  event: EventEnum.AddedLogSource;
+  src: SrcEnum.LogSources;
+  ctx: LogSources;
+}
+
 type TrackEvent =
   | AddedDestinationEvent
   | SignInEvent
   | AddedRuleEvent
   | AddedPolicyEvent
-  | PickedDestinationEvent;
+  | AddedLogSourceEvent
+  | PickedDestinationEvent
+  | PickedLogSourceEvent;
 
 export const trackEvent = (payload: TrackEvent) => {
   evaluateTracking(payload.event, {
