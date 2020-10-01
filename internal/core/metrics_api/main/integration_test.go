@@ -90,7 +90,7 @@ var (
 		LogType:   nil,
 	}
 
-	// RuleID Metric Events
+	// AnalysisID Metric Events
 	numAlertsCreated   = 10.0
 	alertsCreatedSmall = metricRuleIDDatum{
 		Timestamp: aws.Time(endTime.Add(-15 * time.Minute)),
@@ -107,15 +107,20 @@ var (
 	ruleIDs        = []string{"rule.id.test.small", "rule.id.test.medium", "rule.id.test.large"}
 	ruleDimensions = []*cloudwatch.Dimension{
 		{
-			Name:  aws.String("RuleID"),
+			Name:  aws.String("AnalysisID"),
 			Value: aws.String(ruleIDs[0]),
 		},
 		{
-			Name:  aws.String("RuleID"),
+			Name:  aws.String("AnalysisID"),
 			Value: aws.String(ruleIDs[1]),
-		}, {
-			Name:  aws.String("RuleID"),
+		},
+		{
+			Name:  aws.String("AnalysisID"),
 			Value: aws.String(ruleIDs[2]),
+		},
+		{
+			Name:  aws.String("AnalysisType"),
+			Value: aws.String("Rule"),
 		},
 	}
 )
@@ -195,6 +200,7 @@ func setupRuleIDEvents() error {
 			{
 				Dimensions: []*cloudwatch.Dimension{
 					ruleDimensions[0],
+					ruleDimensions[3],
 				},
 				MetricName: aws.String("AlertsCreated"),
 				Timestamp:  alertsCreatedSmall.Timestamp,
@@ -204,6 +210,7 @@ func setupRuleIDEvents() error {
 			{
 				Dimensions: []*cloudwatch.Dimension{
 					ruleDimensions[1],
+					ruleDimensions[3],
 				},
 				MetricName: aws.String("AlertsCreated"),
 				Timestamp:  alertsCreatedMedium.Timestamp,
@@ -213,6 +220,7 @@ func setupRuleIDEvents() error {
 			{
 				Dimensions: []*cloudwatch.Dimension{
 					ruleDimensions[2],
+					ruleDimensions[3],
 				},
 				MetricName: aws.String("AlertsCreated"),
 				Timestamp:  alertsCreatedLarge.Timestamp,

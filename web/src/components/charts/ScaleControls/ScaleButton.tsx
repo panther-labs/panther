@@ -15,30 +15,29 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 import React from 'react';
-import { Flex } from 'pouncejs';
-import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
-import { SeriesData } from 'Generated/schema';
+import { AbstractButton } from 'pouncejs';
 
-interface EventsByLatencyProps {
-  events: SeriesData;
+interface ScaleButtonProps {
+  title: string;
+  selected: boolean;
+  onClick: () => void;
 }
 
-const EventsByLatency: React.FC<EventsByLatencyProps> = ({ events: { timestamps, series } }) => {
-  // Transforming milliseconds to seconds
-  const timeseriesData = React.useMemo(
-    () => ({
-      timestamps,
-      series: series.map(serie => ({ ...serie, values: serie.values.map(value => value / 1000) })),
-    }),
-    [timestamps, series]
-  );
+const ScaleButton: React.FC<ScaleButtonProps> = ({ title, selected, onClick }) => {
   return (
-    <Flex data-testid="events-by-latency" height="100%">
-      <TimeSeriesChart data={timeseriesData} units="sec" zoomable />
-    </Flex>
+    <AbstractButton
+      borderRadius="pill"
+      py={1}
+      px={4}
+      fontSize="small"
+      backgroundColor={selected ? 'blue-400' : 'transparent'}
+      _hover={!selected && { backgroundColor: 'navyblue-300' }}
+      onClick={onClick}
+    >
+      {title}
+    </AbstractButton>
   );
 };
 
-export default React.memo(EventsByLatency);
+export default ScaleButton;

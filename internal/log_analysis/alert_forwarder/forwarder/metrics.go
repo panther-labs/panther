@@ -30,9 +30,10 @@ var (
 		},
 		{
 			"AnalysisType",
+			"AnalysisID",
 		},
 		{
-			"RuleID",
+			"AnalysisType",
 		},
 	}, []metrics.Metric{
 		{

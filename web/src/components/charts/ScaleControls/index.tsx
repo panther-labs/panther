@@ -16,29 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { Flex } from 'pouncejs';
-import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
-import { SeriesData } from 'Generated/schema';
-
-interface EventsByLatencyProps {
-  events: SeriesData;
-}
-
-const EventsByLatency: React.FC<EventsByLatencyProps> = ({ events: { timestamps, series } }) => {
-  // Transforming milliseconds to seconds
-  const timeseriesData = React.useMemo(
-    () => ({
-      timestamps,
-      series: series.map(serie => ({ ...serie, values: serie.values.map(value => value / 1000) })),
-    }),
-    [timestamps, series]
-  );
-  return (
-    <Flex data-testid="events-by-latency" height="100%">
-      <TimeSeriesChart data={timeseriesData} units="sec" zoomable />
-    </Flex>
-  );
-};
-
-export default React.memo(EventsByLatency);
+export { default } from './ScaleControls';

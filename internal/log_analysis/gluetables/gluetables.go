@@ -103,10 +103,11 @@ func CreateOrUpdateGlueTablesForLogType(glueClient glueiface.GlueAPI, logType,
 	return CreateOrUpdateGlueTables(glueClient, bucket, logTable)
 }
 
-// CreateOrUpdateGlueTables, given a log meta data table, creates a log and rule table in the glue catalog
+// CreateOrUpdateGlueTables, given a log meta data table, creates all tables related to this log table in the glue catalog.
 func CreateOrUpdateGlueTables(glueClient glueiface.GlueAPI, bucket string,
 	logTable *awsglue.GlueTableMetadata) (*TablesForLogType, error) {
 
+	// Create the log table
 	err := logTable.CreateOrUpdateTable(glueClient, bucket)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not create glue log table for %s.%s",
@@ -121,6 +122,7 @@ func CreateOrUpdateGlueTables(glueClient glueiface.GlueAPI, bucket string,
 			ruleTable.DatabaseName(), ruleTable.TableName())
 	}
 
+	// the corresponding rule errors table shares the same structure as the log table + some columns
 	ruleErrorTable := logTable.RuleErrorTable()
 	err = ruleErrorTable.CreateOrUpdateTable(glueClient, bucket)
 	if err != nil {
