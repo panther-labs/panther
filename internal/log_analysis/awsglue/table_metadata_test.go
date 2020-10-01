@@ -263,7 +263,7 @@ func TestSyncPartitionsPartitionDoesntExistAndHasData(t *testing.T) {
 	for partitionTime := today; !partitionTime.After(endToday); partitionTime = partitionTime.Add(time.Hour) {
 		expectedListPageInput := s3.ListObjectsV2Input{
 			Bucket:  aws.String(metadataTestBucket),
-			Prefix:  aws.String(metadataTestTablePrefix + GlueTableHourly.PartitionS3PathFromTime(partitionTime)),
+			Prefix:  aws.String(metadataTestTablePrefix + GlueTableHourly.PartitionPathS3(partitionTime)),
 			MaxKeys: aws.Int64(1),
 		}
 		glueClient.On("GetPartition", mock.Anything).Return(testGetPartitionOutput, entityNotFoundError)
