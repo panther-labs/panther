@@ -55,5 +55,5 @@ type SpectrumEvent struct {
 	OriginTLSStatus                pantherlog.String `json:"OriginTlsStatus" description:"The state of the TLS session from Spectrum to the origin; UNKNOWN | OK | INTERNAL_ERROR | INVALID_CONFIG | INVALID_SNI | HANDSHAKE_FAILED | KEYLESS_RPC"`
 	ProxyProtocol                  pantherlog.String `json:"ProxyProtocol" description:"Which form of proxy protocol is applied to the given connection; off | v1 | v2 | simple"`
 	Status                         pantherlog.Int64  `json:"Status" description:"A code indicating reason for connection closure"`
-	Timestamp                      pantherlog.Time   `json:"Timestamp" validate:"required" panther:"event_time" tcodec:"cloudflare" description:"Timestamp at which the event took place"`
+	Timestamp                      pantherlog.Time   `json:"Timestamp" validate:"required" event_time:"true" tcodec:"cloudflare" description:"Timestamp at which the event took place"`
 }
