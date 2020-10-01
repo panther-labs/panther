@@ -21,7 +21,7 @@ import { Form, Formik } from 'formik';
 import { Box } from 'pouncejs';
 import * as Yup from 'yup';
 import SubmitButton from 'Components/buttons/SubmitButton';
-import ErrorReportingSection from './ErrorReportingSection';
+import AnalyticsConsentSection from './AnalyticsConsentSection';
 
 interface AnalyticsConsentFormValues {
   errorReportingConsent: boolean;
@@ -51,7 +51,7 @@ const AnalyticsConsentForm: React.FC<AnalyticsConsentFormProps> = ({ onSubmit })
     >
       <Form>
         <Box mb={10}>
-          <ErrorReportingSection />
+          <AnalyticsConsentSection />
         </Box>
         <SubmitButton fullWidth allowPristineSubmission>
           Save

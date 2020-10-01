@@ -22,7 +22,7 @@ import { Box, Flex, Heading } from 'pouncejs';
 import * as Yup from 'yup';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
-import { ErrorReportingSection } from 'Components/forms/AnalyticsConsentForm';
+import { AnalyticsConsentSection } from 'Components/forms/AnalyticsConsentForm';
 
 interface CompanyInformationFormValues {
   displayName: string;
@@ -80,7 +80,7 @@ export const CompanyInformationForm: React.FC<CompanyInformationFormProps> = ({
           <Heading as="h2" size="x-small" mb={4}>
             Preferences
           </Heading>
-          <ErrorReportingSection />
+          <AnalyticsConsentSection />
         </Box>
         <SubmitButton fullWidth>Save</SubmitButton>
       </Form>

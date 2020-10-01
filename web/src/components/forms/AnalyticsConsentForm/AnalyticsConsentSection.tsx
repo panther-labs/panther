@@ -22,7 +22,7 @@ import { Box, FormHelperText, Link } from 'pouncejs';
 import { PRIVACY_DOC_URL } from 'Source/constants';
 import FormikSwitch from 'Components/fields/Switch';
 
-const ErrorReportingSection: React.FC = () => {
+const AnalyticsConsentSection: React.FC = () => {
   return (
     <Box as="fieldset">
       <Field
@@ -51,4 +51,4 @@ const ErrorReportingSection: React.FC = () => {
   );
 };
 
-export default ErrorReportingSection;
+export default AnalyticsConsentSection;

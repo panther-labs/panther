@@ -17,4 +17,4 @@
  */
 
 export { default } from './ProductAnalyticsConsentForm';
-export { default as ErrorReportingSection } from './ProductReportingSection';
+export { default as ProductReportingSection } from './ProductReportingSection';
