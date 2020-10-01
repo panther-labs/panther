@@ -1351,6 +1351,7 @@ Resources:
             "alertsBySeverity": $ctx.result.alertsBySeverity.seriesData,
             "eventsLatency": $ctx.result.eventsLatency.seriesData,
             "totalAlertsDelta": $ctx.result.totalAlertsDelta.singleValue,
+            "alertsByRuleID": $ctx.result.alertsByRuleID.singleValue,
             "fromDate": $ctx.result.fromDate,
             "toDate": $ctx.result.toDate,
             "intervalMinutes": $ctx.result.intervalMinutes
