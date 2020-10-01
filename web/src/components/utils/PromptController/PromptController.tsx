@@ -28,12 +28,16 @@ const PromptController: React.FC = () => {
   useGetGeneralSettingsConsents({
     onCompleted: data => {
       const shouldShowConsentModal = data.generalSettings.errorReportingConsent === null;
+      const shouldShowProductAnalyticsConsentModal = data.generalSettings.analyticsConsent === null;
       if (shouldShowConsentModal) {
         // Show analytics consent modal
         showModal({ modal: MODALS.ANALYTICS_CONSENT });
 
         // Welcome the first user while singing Katy Perry
         shootFireworks();
+      } else if (shouldShowProductAnalyticsConsentModal) {
+        // This will only trigger when an account is upgraded to v1.10 'analyticsConsent' is null
+        showModal({ modal: MODALS.PRODUCT_ANALYTICS_CONSENT });
       }
     },
   });

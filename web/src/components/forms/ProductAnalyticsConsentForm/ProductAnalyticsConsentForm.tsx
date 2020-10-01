@@ -21,37 +21,34 @@ import { Form, Formik } from 'formik';
 import { Box } from 'pouncejs';
 import * as Yup from 'yup';
 import SubmitButton from 'Components/buttons/SubmitButton';
-import ErrorReportingSection from './ErrorReportingSection';
+import ProductReportingSection from './ProductReportingSection';
 
-interface AnalyticsConsentFormValues {
-  errorReportingConsent: boolean;
+interface ProductAnalyticsConsentFormValues {
   analyticsConsent: boolean;
 }
 
 interface AnalyticsConsentFormProps {
-  onSubmit: (values: AnalyticsConsentFormValues) => Promise<any>;
+  onSubmit: (values: ProductAnalyticsConsentFormValues) => Promise<any>;
 }
 
 const validationSchema = Yup.object().shape({
-  errorReportingConsent: Yup.boolean().required(),
   analyticsConsent: Yup.boolean().required(),
 });
 
 const initialValues = {
-  errorReportingConsent: true,
   analyticsConsent: true,
 };
 
-const AnalyticsConsentForm: React.FC<AnalyticsConsentFormProps> = ({ onSubmit }) => {
+const ProductAnalyticsConsentForm: React.FC<AnalyticsConsentFormProps> = ({ onSubmit }) => {
   return (
-    <Formik<AnalyticsConsentFormValues>
+    <Formik<ProductAnalyticsConsentFormValues>
       initialValues={initialValues}
       validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
       <Form>
         <Box mb={10}>
-          <ErrorReportingSection />
+          <ProductReportingSection />
         </Box>
         <SubmitButton fullWidth allowPristineSubmission>
           Save
@@ -61,4 +58,4 @@ const AnalyticsConsentForm: React.FC<AnalyticsConsentFormProps> = ({ onSubmit })
   );
 };
 
-export default AnalyticsConsentForm;
+export default ProductAnalyticsConsentForm;

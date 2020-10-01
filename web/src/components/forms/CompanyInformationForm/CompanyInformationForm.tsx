@@ -28,6 +28,7 @@ interface CompanyInformationFormValues {
   displayName: string;
   email: string;
   errorReportingConsent: boolean;
+  analyticsConsent: boolean;
 }
 
 interface CompanyInformationFormProps {
@@ -39,6 +40,7 @@ const validationSchema = Yup.object({
   displayName: Yup.string().required(),
   email: Yup.string().email().required(),
   errorReportingConsent: Yup.boolean().required(),
+  analyticsConsent: Yup.boolean().required(),
 });
 
 export const CompanyInformationForm: React.FC<CompanyInformationFormProps> = ({

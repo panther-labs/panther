@@ -29,6 +29,7 @@ import DeleteDestinationModal from 'Components/modals/DeleteDestinationModal';
 import DeleteRuleModal from 'Components/modals/DeleteRuleModal';
 import NetworkErrorModal from 'Components/modals/NetworkErrorModal';
 import AnalyticsConsentModal from 'Components/modals/AnalyticsConsentModal';
+import ProductAnalyticsConsentModal from 'Components/modals/ProductAnalyticsConsentModal';
 import DeleteTestModal from 'Components/modals/DeleteTestModal';
 import DeleteGlobalPythonModuleModal from 'Components/modals/DeleteGlobalPythonModuleModal';
 import ProfileSettingsModal from 'Components/modals/ProfileSettingsModal';
@@ -64,6 +65,9 @@ const ModalManager: React.FC = () => {
       break;
     case MODALS.ANALYTICS_CONSENT:
       Component = AnalyticsConsentModal;
+      break;
+    case MODALS.PRODUCT_ANALYTICS_CONSENT:
+      Component = ProductAnalyticsConsentModal;
       break;
     case MODALS.DELETE_TEST:
       Component = DeleteTestModal;

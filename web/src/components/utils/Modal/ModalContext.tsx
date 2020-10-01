@@ -44,6 +44,7 @@ export enum MODALS {
   DELETE_DESTINATION = 'DELETE_DESTINATION',
   NETWORK_ERROR = 'NETWORK_ERROR',
   ANALYTICS_CONSENT = 'ANALYTICS_CONSENT',
+  PRODUCT_ANALYTICS_CONSENT = 'PRODUCT_ANALYTICS_CONSENT',
 }
 
 type OmitControlledProps<T> = Omit<T, 'open' | 'onClose'>;
@@ -163,6 +164,14 @@ interface ShowAnalyticsConsentModalAction {
   };
 }
 
+/* Show only product analytics consent options action */
+interface ShowProductAnalyticsConsentModalAction {
+  type: typeof SHOW_MODAL;
+  payload: {
+    modal: MODALS.PRODUCT_ANALYTICS_CONSENT;
+  };
+}
+
 /* The available actions that can be dispatched */
 type ModalStateAction =
   | ShowDeleteComplianceSourceModalAction
@@ -177,6 +186,7 @@ type ModalStateAction =
   | ShowDeleteDestinationModalAction
   | ShowNetworkErrorModalAction
   | ShowAnalyticsConsentModalAction
+  | ShowProductAnalyticsConsentModalAction
   | HideModalAction;
 
 /* initial state of the reducer */

@@ -24,11 +24,7 @@ import { ANALYTICS_CONSENT_STORAGE_KEY } from 'Source/constants';
 // TODO: Pending backend to work
 const mixpanelPublicToken = process.env.MIXPANEL_PUBLIC_TOKEN;
 
-const envCheck =
-  mixpanelPublicToken &&
-  // TODO: Pending backend to work
-  storage.local.read<boolean>(ANALYTICS_CONSENT_STORAGE_KEY) &&
-  process.env.NODE_ENV === 'production';
+const envCheck = mixpanelPublicToken && storage.local.read<boolean>(ANALYTICS_CONSENT_STORAGE_KEY);
 
 const evaluateTracking = (...args) => {
   if (envCheck) {

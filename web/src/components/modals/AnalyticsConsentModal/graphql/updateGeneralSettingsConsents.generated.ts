@@ -28,7 +28,10 @@ export type UpdateGeneralSettingsConsentsVariables = {
 };
 
 export type UpdateGeneralSettingsConsents = {
-  updateGeneralSettings: Pick<Types.GeneralSettings, 'email' | 'errorReportingConsent'>;
+  updateGeneralSettings: Pick<
+    Types.GeneralSettings,
+    'email' | 'errorReportingConsent' | 'analyticsConsent'
+  >;
 };
 
 export const UpdateGeneralSettingsConsentsDocument = gql`
@@ -36,6 +39,7 @@ export const UpdateGeneralSettingsConsentsDocument = gql`
     updateGeneralSettings(input: $input) {
       email
       errorReportingConsent
+      analyticsConsent
     }
   }
 `;
