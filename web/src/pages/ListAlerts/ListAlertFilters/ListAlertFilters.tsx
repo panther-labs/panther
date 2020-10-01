@@ -78,7 +78,7 @@ const ListAlertFilters: React.FC = () => {
         onSubmit={onInlineFiltersChange}
       >
         <Form>
-          <FormikAutosave threshold={500} />
+          <FormikAutosave threshold={200} />
           <Flex spacing={4}>
             <Box width={300}>
               <Field
