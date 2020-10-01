@@ -22,15 +22,13 @@ import storage from 'Helpers/storage';
 import { ANALYTICS_CONSENT_STORAGE_KEY } from 'Source/constants';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 
-const mixpanelPublicToken = process.env.MIXPANEL_PUBLIC_TOKEN;
-
-const envCheck = mixpanelPublicToken && storage.local.read<boolean>(ANALYTICS_CONSENT_STORAGE_KEY);
-
 const evaluateTracking = (...args) => {
-  if (envCheck) {
-    mx.init(mixpanelPublicToken);
-    mx.track(...args);
+  const mixpanelPublicToken = process.env.MIXPANEL_PUBLIC_TOKEN;
+  if (!mixpanelPublicToken || storage.local.read<boolean>(ANALYTICS_CONSENT_STORAGE_KEY) !== true) {
+    return;
   }
+  mx.init(mixpanelPublicToken);
+  mx.track(...args);
 };
 
 export enum PageViewEnum {
