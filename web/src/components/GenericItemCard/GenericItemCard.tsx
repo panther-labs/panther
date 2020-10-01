@@ -25,7 +25,7 @@ interface GenericItemCardLogoProps {
 }
 
 interface GenericItemCardValueProps {
-  label: string;
+  label?: string;
   value: string | number | React.ReactElement;
 }
 
@@ -100,16 +100,18 @@ const GenericItemCardValue: React.FC<GenericItemCardValueProps> = ({ label, valu
 
   return (
     <Box as="dl" mt={4}>
-      <Box
-        as="dt"
-        aria-labelledby={id}
-        color="gray-300"
-        fontSize="2x-small"
-        mb="1px"
-        fontWeight="medium"
-      >
-        {label}
-      </Box>
+      {label && (
+        <Box
+          as="dt"
+          aria-labelledby={id}
+          color="gray-300"
+          fontSize="2x-small"
+          mb="1px"
+          fontWeight="medium"
+        >
+          {label}
+        </Box>
+      )}
       <Box as="dd" aria-labelledby={id} fontSize="medium" opacity={value ? 1 : 0.3}>
         {value || 'Not Set'}
       </Box>
