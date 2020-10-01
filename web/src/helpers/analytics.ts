@@ -56,6 +56,7 @@ export const trackPageView = ({ page }: TrackPageViewProps) => {
 export enum EventEnum {
   SignedIn = 'Signed in successfully',
   AddedRule = 'Added Rule',
+  AddedPolicy = 'Added Policy',
   AddedDestination = 'Added Destination',
   PickedDestination = 'Picked Destination to create',
 }
@@ -63,6 +64,7 @@ export enum EventEnum {
 export enum SrcEnum {
   Destinations = 'destinations',
   Rules = 'rules',
+  Policies = 'policies',
   Auth = 'auth',
 }
 
@@ -74,6 +76,11 @@ interface SignInEvent {
 interface AddedRuleEvent {
   event: EventEnum.AddedRule;
   src: SrcEnum.Rules;
+}
+
+interface AddedPolicyEvent {
+  event: EventEnum.AddedPolicy;
+  src: SrcEnum.Policies;
 }
 
 interface AddedDestinationEvent {
@@ -88,7 +95,12 @@ interface PickedDestinationEvent {
   ctx: DestinationTypeEnum;
 }
 
-type TrackEvent = AddedDestinationEvent | SignInEvent | AddedRuleEvent | PickedDestinationEvent;
+type TrackEvent =
+  | AddedDestinationEvent
+  | SignInEvent
+  | AddedRuleEvent
+  | AddedPolicyEvent
+  | PickedDestinationEvent;
 
 export const trackEvent = (payload: TrackEvent) => {
   evaluateTracking(payload.event, {
