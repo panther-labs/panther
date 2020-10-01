@@ -20,6 +20,7 @@ import { DestinationTypeEnum } from 'Generated/schema';
 import mx from 'mixpanel-browser';
 import storage from 'Helpers/storage';
 import { ANALYTICS_CONSENT_STORAGE_KEY } from 'Source/constants';
+import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 
 // TODO: Pending backend to work
 const mixpanelPublicToken = process.env.MIXPANEL_PUBLIC_TOKEN;
@@ -62,6 +63,7 @@ export enum EventEnum {
   PickedDestination = 'Picked Destination to create',
   PickedLogSource = 'Picked Log Source to created',
   InvitedUser = 'Invited user',
+  UpdatedAlertStatus = 'Updated Alert Status',
 }
 
 export enum SrcEnum {
@@ -70,6 +72,7 @@ export enum SrcEnum {
   Policies = 'policies',
   Auth = 'auth',
   Users = 'users',
+  Alerts = 'alerts',
   LogSources = 'log sources',
 }
 
@@ -119,6 +122,12 @@ interface InvitedUserEvent {
   src: SrcEnum.Users;
 }
 
+interface UpdatedAlertStatus {
+  event: EventEnum.UpdatedAlertStatus;
+  src: SrcEnum.Alerts;
+  data: Pick<AlertSummaryFull, 'status' | 'severity'>;
+}
+
 type TrackEvent =
   | AddedDestinationEvent
   | SignInEvent
@@ -127,13 +136,15 @@ type TrackEvent =
   | AddedLogSourceEvent
   | PickedDestinationEvent
   | PickedLogSourceEvent
-  | InvitedUserEvent;
+  | InvitedUserEvent
+  | UpdatedAlertStatus;
 
 export const trackEvent = (payload: TrackEvent) => {
   evaluateTracking(payload.event, {
     type: 'event',
     src: payload.src,
     ctx: 'ctx' in payload ? payload.ctx : null,
+    ...('data' in payload ? payload.data : null),
   });
 };
 
