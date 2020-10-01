@@ -74,6 +74,11 @@ func GenerateLogViews(tables []*awsglue.GlueTableMetadata) (sqlStatements []stri
 		return nil, err
 	}
 	sqlStatements = append(sqlStatements, sqlStatement)
+	sqlStatement, err = generateViewAllRuleErrors(tables)
+	if err != nil {
+		return nil, err
+	}
+	sqlStatements = append(sqlStatements, sqlStatement)
 	// add future views here
 	return sqlStatements, nil
 }
@@ -93,6 +98,18 @@ func generateViewAllRuleMatches(tables []*awsglue.GlueTableMetadata) (sql string
 		ruleTables = append(ruleTables, ruleTable)
 	}
 	return generateViewAllHelper("all_rule_matches", ruleTables, awsglue.RuleMatchColumns)
+}
+
+// generateViewAllRuleErrors creates a view over all log sources in rule error db the using "panther" fields
+func generateViewAllRuleErrors(tables []*awsglue.GlueTableMetadata) (sql string, err error) {
+	// the rule match tables share the same structure as the logs with some extra columns
+	var ruleErrorTables []*awsglue.GlueTableMetadata
+	for _, table := range tables {
+		ruleTable := awsglue.NewGlueTableMetadata(
+			models.RuleErrors, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
+		ruleErrorTables = append(ruleErrorTables, ruleTable)
+	}
+	return generateViewAllHelper("all_rule_errors", ruleErrorTables, awsglue.RuleErrorColumns)
 }
 
 func generateViewAllHelper(viewName string, tables []*awsglue.GlueTableMetadata, extraColumns []awsglue.Column) (sql string, err error) {

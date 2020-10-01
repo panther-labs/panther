@@ -21,6 +21,7 @@ package aws
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -33,15 +34,42 @@ import (
 func TestEcsClusterList(t *testing.T) {
 	mockSvc := awstest.BuildMockEcsSvc([]string{"ListClustersPages"})
 
-	out := listClusters(mockSvc)
+	out, marker, err := listClusters(mockSvc, nil)
 	assert.NotEmpty(t, out)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestEcsClusterListIterator(t *testing.T) {
+	var clusters []*string
+	var marker *string
+
+	cont := ecsClusterIterator(awstest.ExampleListClusters, &clusters, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, clusters, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = ecsClusterIterator(awstest.ExampleListClustersContinue, &clusters, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, clusters, 1+i*2)
+	}
+
+	cont = ecsClusterIterator(awstest.ExampleListClustersContinue, &clusters, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, clusters, 101)
 }
 
 func TestEcsClusterListError(t *testing.T) {
 	mockSvc := awstest.BuildMockEcsSvcError([]string{"ListClustersPages"})
 
-	out := listClusters(mockSvc)
+	out, marker, err := listClusters(mockSvc, nil)
 	assert.Nil(t, out)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }
 
 func TestEcsClusterDescribe(t *testing.T) {
@@ -78,11 +106,12 @@ func TestEcsClusterDescribeError(t *testing.T) {
 func TestEcsClusterBuildSnapshot(t *testing.T) {
 	mockSvc := awstest.BuildMockEcsSvcAll()
 
-	clusterSnapshot := buildEcsClusterSnapshot(
+	clusterSnapshot, err := buildEcsClusterSnapshot(
 		mockSvc,
 		awstest.ExampleListClusters.ClusterArns[0],
 	)
 
+	assert.NoError(t, err)
 	assert.NotEmpty(t, clusterSnapshot.ARN)
 	assert.Equal(t, "Value1", *clusterSnapshot.Tags["Key1"])
 }
@@ -90,12 +119,13 @@ func TestEcsClusterBuildSnapshot(t *testing.T) {
 func TestEcsClusterBuildSnapshotErrors(t *testing.T) {
 	mockSvc := awstest.BuildMockEcsSvcAllError()
 
-	certSnapshot := buildEcsClusterSnapshot(
+	certSnapshot, err := buildEcsClusterSnapshot(
 		mockSvc,
 		awstest.ExampleListClusters.ClusterArns[0],
 	)
 
 	assert.Nil(t, certSnapshot)
+	assert.Error(t, err)
 }
 
 func TestEcsClusterPoller(t *testing.T) {
@@ -103,34 +133,64 @@ func TestEcsClusterPoller(t *testing.T) {
 
 	EcsClientFunc = awstest.SetupMockEcs
 
-	resources, err := PollEcsClusters(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollEcsClusters(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, *awstest.ExampleClusterArn, string(resources[0].ID))
 	assert.NotEmpty(t, resources)
+	assert.Nil(t, marker)
 }
 
 func TestEcsClusterPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockEcsForSetup = awstest.BuildMockEcsSvcAllError()
 
 	EcsClientFunc = awstest.SetupMockEcs
 
-	resources, err := PollEcsClusters(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollEcsClusters(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	assert.Error(t, err)
 	for _, event := range resources {
 		assert.Nil(t, event.Attributes)
 	}
+	assert.Nil(t, marker)
+}
+
+// Test paging through DescribeServices with 10 ServiceArns at a time
+func TestEcsClusterDescribeServices(t *testing.T) {
+	mockSvc := awstest.BuildMockEcsSvc([]string{"ListServicesPages"})
+	mockSvc.On("DescribeServices", &ecs.DescribeServicesInput{
+		Cluster:  awstest.ExampleClusterMultiSvcArn,
+		Include:  []*string{aws.String("TAGS")},
+		Services: awstest.ExampleListServicesMultiSvc.ServiceArns[0:10],
+	}).
+		Return(
+			awstest.ExampleEcsDescribeServicesOutput,
+			nil,
+		)
+	mockSvc.On("DescribeServices", &ecs.DescribeServicesInput{
+		Cluster:  awstest.ExampleClusterMultiSvcArn,
+		Include:  []*string{aws.String("TAGS")},
+		Services: awstest.ExampleListServicesMultiSvc.ServiceArns[10:12],
+	}).
+		Return(
+			awstest.ExampleEcsDescribeServicesOutput,
+			nil,
+		)
+	out, err := getClusterServices(mockSvc, awstest.ExampleClusterMultiSvcArn)
+	mockSvc.AssertExpectations(t)
+	require.NoError(t, err)
+	assert.NotEmpty(t, out)
 }

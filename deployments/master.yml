@@ -124,6 +124,12 @@ Parameters:
     MinValue: 256 # 128 is too small, risks OOM errors
     MaxValue: 3008
     Default: 1024
+  LogProcessorSQSDelaySeconds:
+    Type: Number
+    Description: The number of seconds to delay events into the log processor queue
+    Default: 5
+    MinValue: 0 # no delay, poor aggregation
+    MaxValue: 20 # this is the max time we can long poll sqs
   LogSubscriptionPrincipals:
     Type: CommaDelimitedList
     Description: Comma-separated list of AWS principal ARNs which will be authorized to subscribe to processed log data S3 notifications
@@ -148,7 +154,7 @@ Parameters:
 Mappings:
   Constants:
     Panther:
-      Version: 1.7.1
+      Version: v1.9.0-RC1
 
 Conditions:
   RegistryProvided: !Not [!Equals [!Ref ImageRegistry, '']]
@@ -326,6 +332,7 @@ Resources:
         InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         LogProcessorLambdaMemorySize: !Ref LogProcessorLambdaMemorySize
+        LogProcessorSQSDelaySeconds: !Ref LogProcessorSQSDelaySeconds
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
         ProcessedDataTopicArn: !GetAtt Bootstrap.Outputs.ProcessedDataTopicArn
         PythonLayerVersionArn: !GetAtt BootstrapGateway.Outputs.PythonLayerVersionArn
@@ -373,6 +380,7 @@ Resources:
     DependsOn: [CloudSecurity, Core, LogAnalysis]
     Properties:
       TemplateURL: web_server.yml
+      TimeoutInMinutes: 20 # if something goes wrong, the ECS service will get stuck in a retry loop for 4 hours
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AnalysisApiEndpoint: !GetAtt BootstrapGateway.Outputs.AnalysisApiEndpoint
@@ -395,9 +403,7 @@ Resources:
               - !Sub 349240696275.dkr.ecr.${AWS::Region}.amazonaws.com/panther-community
             tag: !FindInMap [Constants, Panther, Version]
         InitialAnalysisPackUrls: !Join [',', !Ref InitialAnalysisPackUrls]
-        PantherVersion: !Sub
-          - v${version} # has to be prefixed with 'v' for docs link in web app to work
-          - version: !FindInMap [Constants, Panther, Version]
+        PantherVersion: !FindInMap [Constants, Panther, Version] # has to be prefixed with 'v' for docs link in web app to work
         SecurityGroup: !GetAtt Bootstrap.Outputs.WebSecurityGroup
         SubnetOneId: !GetAtt Bootstrap.Outputs.SubnetOneId
         SubnetTwoId: !GetAtt Bootstrap.Outputs.SubnetTwoId

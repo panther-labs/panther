@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/redshift"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -32,15 +33,42 @@ import (
 func TestRedshiftClusterDescribe(t *testing.T) {
 	mockSvc := awstest.BuildMockRedshiftSvc([]string{"DescribeClustersPages"})
 
-	out := describeClusters(mockSvc)
+	out, marker, err := describeClusters(mockSvc, nil)
 	assert.NotEmpty(t, out)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestRedshiftClusterListIterator(t *testing.T) {
+	var clusters []*redshift.Cluster
+	var marker *string
+
+	cont := redshiftClusterIterator(awstest.ExampleDescribeClustersOutput, &clusters, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, clusters, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = redshiftClusterIterator(awstest.ExampleDescribeClustersOutputContinue, &clusters, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, clusters, 1+i*2)
+	}
+
+	cont = redshiftClusterIterator(awstest.ExampleDescribeClustersOutputContinue, &clusters, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, clusters, 101)
 }
 
 func TestRedshiftClusterDescribeError(t *testing.T) {
 	mockSvc := awstest.BuildMockRedshiftSvcError([]string{"DescribeClustersPages"})
 
-	out := describeClusters(mockSvc)
+	out, marker, err := describeClusters(mockSvc, nil)
 	assert.Nil(t, out)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }
 
 func TestRedshiftClusterDescribeLoggingStatus(t *testing.T) {
@@ -62,11 +90,12 @@ func TestRedshiftClusterDescribeLoggingStatusError(t *testing.T) {
 func TestRedshiftClusterBuildSnapshot(t *testing.T) {
 	mockSvc := awstest.BuildMockRedshiftSvcAll()
 
-	clusterSnapshot := buildRedshiftClusterSnapshot(
+	clusterSnapshot, err := buildRedshiftClusterSnapshot(
 		mockSvc,
 		awstest.ExampleDescribeClustersOutput.Clusters[0],
 	)
 
+	assert.NoError(t, err)
 	assert.NotEmpty(t, clusterSnapshot.LoggingStatus)
 	assert.NotEmpty(t, clusterSnapshot.GenericAWSResource)
 }
@@ -74,14 +103,13 @@ func TestRedshiftClusterBuildSnapshot(t *testing.T) {
 func TestRedshiftCLusterBuildSnapshotErrors(t *testing.T) {
 	mockSvc := awstest.BuildMockRedshiftSvcAllError()
 
-	clusterSnapshot := buildRedshiftClusterSnapshot(
+	clusterSnapshot, err := buildRedshiftClusterSnapshot(
 		mockSvc,
 		awstest.ExampleDescribeClustersOutput.Clusters[0],
 	)
 
-	assert.NotEmpty(t, clusterSnapshot.GenericAWSResource)
-	assert.NotNil(t, clusterSnapshot.VpcId)
-	assert.Nil(t, clusterSnapshot.LoggingStatus)
+	assert.Error(t, err)
+	assert.Nil(t, clusterSnapshot)
 }
 
 func TestRedshiftClusterPoller(t *testing.T) {
@@ -89,15 +117,14 @@ func TestRedshiftClusterPoller(t *testing.T) {
 
 	RedshiftClientFunc = awstest.SetupMockRedshift
 
-	resources, err := PollRedshiftClusters(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollRedshiftClusters(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
 	assert.NotEmpty(t, resources)
 	cluster := resources[0].Attributes.(*awsmodels.RedshiftCluster)
 	assert.Equal(t, aws.String("awsuser"), cluster.MasterUsername)
@@ -105,23 +132,25 @@ func TestRedshiftClusterPoller(t *testing.T) {
 	assert.Equal(t, aws.Int64(5439), cluster.Endpoint.Port)
 	assert.Equal(t, aws.String("LEADER"), cluster.ClusterNodes[0].NodeRole)
 	assert.False(t, *cluster.EnhancedVpcRouting)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestRedshiftClusterPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockRedshiftForSetup = awstest.BuildMockRedshiftSvcAllError()
 
 	RedshiftClientFunc = awstest.SetupMockRedshift
 
-	resources, err := PollRDSInstances(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollRDSInstances(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
-	for _, event := range resources {
-		assert.Nil(t, event.Attributes)
-	}
+	assert.Empty(t, resources)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }

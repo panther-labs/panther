@@ -26,16 +26,15 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/sns/snsiface"
-	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 var (
 	policyURLPrefix = os.Getenv("POLICY_URL_PREFIX")
+	appDomainURL    = os.Getenv("APP_DOMAIN_URL")
 	alertURLPrefix  = os.Getenv("ALERT_URL_PREFIX")
 )
 
@@ -53,7 +52,7 @@ type PostInput struct {
 
 // HTTPWrapperiface is the interface for our wrapper around Golang's http client
 type HTTPWrapperiface interface {
-	post(*PostInput) *AlertDeliveryError
+	post(*PostInput) *AlertDeliveryResponse
 }
 
 // HTTPiface is an interface for http.Client to simplify unit testing.
@@ -63,25 +62,24 @@ type HTTPiface interface {
 
 // API is the interface for output delivery that can be used for mocks in tests.
 type API interface {
-	Slack(*alertmodels.Alert, *outputmodels.SlackConfig) *AlertDeliveryError
-	PagerDuty(*alertmodels.Alert, *outputmodels.PagerDutyConfig) *AlertDeliveryError
-	Github(*alertmodels.Alert, *outputmodels.GithubConfig) *AlertDeliveryError
-	Jira(*alertmodels.Alert, *outputmodels.JiraConfig) *AlertDeliveryError
-	Opsgenie(*alertmodels.Alert, *outputmodels.OpsgenieConfig) *AlertDeliveryError
-	MsTeams(*alertmodels.Alert, *outputmodels.MsTeamsConfig) *AlertDeliveryError
-	Sqs(*alertmodels.Alert, *outputmodels.SqsConfig) *AlertDeliveryError
-	Sns(*alertmodels.Alert, *outputmodels.SnsConfig) *AlertDeliveryError
-	Asana(*alertmodels.Alert, *outputmodels.AsanaConfig) *AlertDeliveryError
-	CustomWebhook(*alertmodels.Alert, *outputmodels.CustomWebhookConfig) *AlertDeliveryError
+	Slack(*alertModels.Alert, *outputModels.SlackConfig) *AlertDeliveryResponse
+	PagerDuty(*alertModels.Alert, *outputModels.PagerDutyConfig) *AlertDeliveryResponse
+	Github(*alertModels.Alert, *outputModels.GithubConfig) *AlertDeliveryResponse
+	Jira(*alertModels.Alert, *outputModels.JiraConfig) *AlertDeliveryResponse
+	Opsgenie(*alertModels.Alert, *outputModels.OpsgenieConfig) *AlertDeliveryResponse
+	MsTeams(*alertModels.Alert, *outputModels.MsTeamsConfig) *AlertDeliveryResponse
+	Sqs(*alertModels.Alert, *outputModels.SqsConfig) *AlertDeliveryResponse
+	Sns(*alertModels.Alert, *outputModels.SnsConfig) *AlertDeliveryResponse
+	Asana(*alertModels.Alert, *outputModels.AsanaConfig) *AlertDeliveryResponse
+	CustomWebhook(*alertModels.Alert, *outputModels.CustomWebhookConfig) *AlertDeliveryResponse
 }
 
 // OutputClient encapsulates the clients that allow sending alerts to multiple outputs
 type OutputClient struct {
-	session     *session.Session
+	// WARNING: This is shared by concurrent goroutines.
+	// Do not mutate any fields in the goroutines, and do not use maps without proper locking.
+	session     *session.Session // safe for concurrent reads, not writes
 	httpWrapper HTTPWrapperiface
-	// Map from region -> client
-	sqsClients map[string]sqsiface.SQSAPI
-	snsClients map[string]snsiface.SNSAPI
 }
 
 // OutputClient must satisfy the API interface.
@@ -92,9 +90,6 @@ func New(sess *session.Session) *OutputClient {
 	return &OutputClient{
 		session:     sess,
 		httpWrapper: &HTTPWrapper{httpClient: &http.Client{}},
-		// TODO Lazy initialization of clients
-		sqsClients: make(map[string]sqsiface.SQSAPI),
-		snsClients: make(map[string]snsiface.SNSAPI),
 	}
 }
 
@@ -143,7 +138,7 @@ type Notification struct {
 	Version *string `json:"version"`
 }
 
-func generateNotificationFromAlert(alert *alertmodels.Alert) Notification {
+func generateNotificationFromAlert(alert *alertModels.Alert) Notification {
 	notification := Notification{
 		ID:          alert.AnalysisID,
 		AlertID:     alert.AlertID,
@@ -162,14 +157,14 @@ func generateNotificationFromAlert(alert *alertmodels.Alert) Notification {
 	return notification
 }
 
-func generateAlertMessage(alert *alertmodels.Alert) string {
-	if alert.Type == alertmodels.RuleType {
+func generateAlertMessage(alert *alertModels.Alert) string {
+	if alert.Type == alertModels.RuleType {
 		return getDisplayName(alert) + " triggered"
 	}
 	return getDisplayName(alert) + " failed on new resources"
 }
 
-func generateDetailedAlertMessage(alert *alertmodels.Alert) string {
+func generateDetailedAlertMessage(alert *alertModels.Alert) string {
 	return fmt.Sprintf(
 		detailedMessageTemplate,
 		generateAlertMessage(alert),
@@ -180,25 +175,31 @@ func generateDetailedAlertMessage(alert *alertmodels.Alert) string {
 	)
 }
 
-func generateAlertTitle(alert *alertmodels.Alert) string {
+func generateAlertTitle(alert *alertModels.Alert) string {
+	if alert.IsResent {
+		return "[Re-sent]: " + *alert.Title
+	}
 	if alert.Title != nil {
 		return "New Alert: " + *alert.Title
 	}
-	if alert.Type == alertmodels.RuleType {
+	if alert.Type == alertModels.RuleType {
 		return "New Alert: " + getDisplayName(alert)
 	}
 	return "Policy Failure: " + getDisplayName(alert)
 }
 
-func getDisplayName(alert *alertmodels.Alert) string {
+func getDisplayName(alert *alertModels.Alert) string {
 	if aws.StringValue(alert.AnalysisName) != "" {
 		return *alert.AnalysisName
 	}
 	return alert.AnalysisID
 }
 
-func generateURL(alert *alertmodels.Alert) string {
-	if alert.Type == alertmodels.RuleType {
+func generateURL(alert *alertModels.Alert) string {
+	if alert.IsTest {
+		return appDomainURL
+	}
+	if alert.Type == alertModels.RuleType {
 		return alertURLPrefix + *alert.AlertID
 	}
 	return policyURLPrefix + alert.AnalysisID

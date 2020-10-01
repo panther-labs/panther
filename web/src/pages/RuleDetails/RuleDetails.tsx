@@ -57,6 +57,7 @@ const RuleDetailsPage = () => {
     fetchMore,
     variables,
   } = useListAlertsForRule({
+    fetchPolicy: 'cache-and-network',
     variables: {
       input: {
         ruleId: match.params.id,

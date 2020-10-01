@@ -22,25 +22,26 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 func TestSendSqs(t *testing.T) {
 	client := &testutils.SqsMock{}
-	outputClient := &OutputClient{sqsClients: map[string]sqsiface.SQSAPI{"us-west-2": client}}
+	outputClient := &OutputClient{}
 
-	sqsOutputConfig := &outputmodels.SqsConfig{
+	sqsOutputConfig := &outputModels.SqsConfig{
 		QueueURL: "https://sqs.us-west-2.amazonaws.com/123456789012/test-output",
 	}
-	alert := &alertmodels.Alert{
+	alert := &alertModels.Alert{
 		AnalysisName:        aws.String("policyName"),
 		AnalysisID:          "policyId",
 		AnalysisDescription: aws.String("policyDescription"),
@@ -65,8 +66,18 @@ func TestSendSqs(t *testing.T) {
 		MessageBody: &expectedSerializedSqsMessage,
 	}
 
-	client.On("SendMessage", expectedSqsSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
+	client.On("SendMessage", expectedSqsSendMessageInput).Return(&sqs.SendMessageOutput{MessageId: aws.String("messageId")}, nil)
+	getSqsClient = func(*session.Session, string) sqsiface.SQSAPI {
+		return client
+	}
+
 	result := outputClient.Sqs(alert, sqsOutputConfig)
-	assert.Nil(t, result)
+	assert.NotNil(t, result)
+	assert.Equal(t, &AlertDeliveryResponse{
+		Message:    "messageId",
+		StatusCode: 200,
+		Success:    true,
+		Permanent:  false,
+	}, result)
 	client.AssertExpectations(t)
 }

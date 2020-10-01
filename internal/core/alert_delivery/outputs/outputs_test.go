@@ -25,7 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	alertModel "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	alertModel "github.com/panther-labs/panther/api/lambda/delivery/models"
 )
 
 func init() {
@@ -38,9 +38,9 @@ type mockHTTPWrapper struct {
 	mock.Mock
 }
 
-func (m *mockHTTPWrapper) post(postInput *PostInput) *AlertDeliveryError {
+func (m *mockHTTPWrapper) post(postInput *PostInput) *AlertDeliveryResponse {
 	args := m.Called(postInput)
-	return args.Get(0).(*AlertDeliveryError)
+	return args.Get(0).(*AlertDeliveryResponse)
 }
 
 func TestGenerateAlertTitleReturnGivenTitle(t *testing.T) {

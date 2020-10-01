@@ -24,21 +24,14 @@ import (
 	"bufio"
 	"io/ioutil"
 	"os"
-	"reflect"
 	"strings"
 	"testing"
-	"time"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/omitempty"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
@@ -199,158 +192,4 @@ func CheckPantherMultiline(t *testing.T, logs string, parser parsers.LogParser, 
 func NewRawMessage(jsonString string) *jsoniter.RawMessage {
 	rawMsg := (jsoniter.RawMessage)(jsonString)
 	return &rawMsg
-}
-
-// CheckRegisteredParser checks a registered log type parser
-func CheckRegisteredParser(t *testing.T, logType, input string, expect ...string) {
-	t.Helper()
-	entry := logtypes.DefaultRegistry().Get(logType)
-	if !assert.NotNil(t, entry, "logtype %q not registered", logType) {
-		return
-	}
-	p, err := entry.NewParser(nil)
-	require.NoError(t, err, "failed to create log parser")
-	results, err := p.ParseLog(input)
-	require.NoError(t, err)
-	if len(expect) == 0 {
-		require.Nil(t, results)
-		return
-	}
-	schema := entry.Schema()
-	indicators := pantherlog.FieldSetFromType(reflect.TypeOf(schema))
-	require.NotNil(t, results)
-	require.Equal(t, len(expect), len(results), "Invalid number of patherlog results produced by parser")
-	for i, result := range results {
-		expect := expect[i]
-		CheckParserResults(t, expect, result, indicators...)
-	}
-}
-
-// CheckLogParser checks a log type parser
-func CheckLogParser(t *testing.T, p parsers.Interface, input string, expect ...string) {
-	t.Helper()
-	results, err := p.ParseLog(input)
-	require.NoError(t, err)
-	if len(expect) == 0 {
-		require.Nil(t, results)
-		return
-	}
-	require.NotNil(t, results)
-	require.Equal(t, len(expect), len(results), "Invalid number of patherlog results produced by parser")
-	for i, result := range results {
-		expect := expect[i]
-		CheckParserResults(t, expect, result)
-	}
-}
-
-func jsonAPI() jsoniter.API {
-	api := jsoniter.Config{
-		EscapeHTML:             true,
-		SortMapKeys:            true,
-		ValidateJsonRawMessage: true,
-	}.Froze()
-	api.RegisterExtension(omitempty.New("json"))
-	//api.RegisterExtension(&tcodec.Extension{})
-	return api
-}
-
-// Checks that `actual` is a parser result matching `expect`
-// If expect.RowID is empty it checks if actual has non-empty RowID
-// If expect.EventTime is zero it checks if actual.EventTime equals actual.ParseTime
-// If expect.ParseTime is zero it checks if actual.ParseTime is non-zero
-// Otherwise equality is checked strictly
-func CheckParserResults(t *testing.T, want string, actual *pantherlog.Result, indicators ...pantherlog.FieldID) {
-	t.Helper()
-	logType := jsoniter.Get([]byte(want), pantherlog.FieldLogTypeJSON).ToString()
-	require.Equal(t, logType, actual.PantherLogType)
-	expect := pantherlog.Result{}
-	if indicators == nil {
-		indicators = pantherlog.FieldSetFromJSON([]byte(want))
-	}
-	require.NoError(t, UnmarshalResultJSON([]byte(want), &expect, indicators))
-	//require.Equal(t, -1, bytes.IndexByte(actual.JSON, '\n'), "Result JSON contains newlines")
-	var expectAny map[string]interface{}
-	require.NoError(t, jsoniter.UnmarshalFromString(want, &expectAny))
-	var actualAny map[string]interface{}
-	data, err := jsonAPI().Marshal(actual)
-	require.NoError(t, err)
-	require.NoError(t, jsoniter.Unmarshal(data, &actualAny))
-	if expect.PantherParseTime.IsZero() {
-		require.False(t, actual.PantherParseTime.IsZero(), "zero parse time")
-	} else {
-		EqualTimestamp(t, expect.PantherParseTime, actual.PantherParseTime, "invalid parse time")
-	}
-	if expect.PantherEventTime.IsZero() {
-		EqualTimestamp(t, actual.PantherParseTime, actual.PantherEventTime, "event time not equal to parse time")
-	} else {
-		EqualTimestamp(t, expect.PantherEventTime, actual.PantherEventTime, "invalid event time")
-	}
-	if len(expect.PantherRowID) == 0 {
-		require.NotEmpty(t, actual.PantherRowID)
-	} else {
-		require.Equal(t, expect.PantherRowID, actual.PantherRowID)
-	}
-	// The following dance ensures that produced JSON matches values from `actual` result
-
-	require.Equal(t, actual.PantherEventTime.UTC().Format(time.RFC3339Nano), actualAny["p_event_time"], "Invalid JSON event time")
-	require.Equal(t, actual.PantherParseTime.UTC().Format(time.RFC3339Nano), actualAny["p_parse_time"], "Invalid JSON parse time")
-	require.Equal(t, actual.PantherRowID, actualAny["p_row_id"], "Invalid JSON row id")
-	// Since these values are checked to be valid we assign them to expect to check the rest of the JSON values
-	expectAny["p_event_time"] = actualAny["p_event_time"]
-	expectAny["p_parse_time"] = actualAny["p_parse_time"]
-	expectAny["p_row_id"] = actualAny["p_row_id"]
-	// By now expect JSON and actual JSON must be equal
-	expectJSON, err := jsoniter.MarshalToString(expectAny)
-	require.NoError(t, err)
-	actualJSON, err := jsoniter.MarshalToString(actualAny)
-	require.NoError(t, err)
-	require.JSONEq(t, expectJSON, actualJSON)
-}
-
-func EqualTimestamp(t *testing.T, expect, actual time.Time, msgAndArgs ...interface{}) {
-	t.Helper()
-	require.False(t, actual.IsZero(), "zero timestamp")
-	require.Equal(t, expect.UTC().Format(time.RFC3339Nano), actual.UTC().Format(time.RFC3339Nano), msgAndArgs...)
-}
-
-// UnmarshalResultJSON unmarshals a result from JSON
-// The parsing is inefficient. It's purpose is to be used in tests to verify output results.
-func UnmarshalResultJSON(data []byte, r *pantherlog.Result, indicators pantherlog.FieldSet) error {
-	tmp := struct {
-		LogType     string      `json:"p_log_type"`
-		EventTime   tcodec.Time `json:"p_event_time" tcodec:"rfc3339"`
-		ParseTime   tcodec.Time `json:"p_parse_time" tcodec:"rfc3339"`
-		RowID       string      `json:"p_row_id"`
-		SourceID    string      `json:"p_source_id"`
-		SourceLabel string      `json:"p_source_label"`
-	}{}
-	if err := jsoniter.Unmarshal(data, &tmp); err != nil {
-		return err
-	}
-	values := pantherlog.BlankValueBuffer()
-	for _, kind := range indicators {
-		fieldName := pantherlog.FieldNameJSON(kind)
-		any := jsoniter.Get(data, fieldName)
-		if any == nil || any.ValueType() == jsoniter.InvalidValue {
-			continue
-		}
-		var v []string
-		any.ToVal(&v)
-		if v != nil {
-			values.WriteValues(kind, v...)
-		}
-	}
-	*r = pantherlog.Result{
-		CoreFields: pantherlog.CoreFields{
-			PantherLogType:     tmp.LogType,
-			PantherRowID:       tmp.RowID,
-			PantherEventTime:   tmp.EventTime,
-			PantherParseTime:   tmp.ParseTime,
-			PantherSourceID:    tmp.SourceID,
-			PantherSourceLabel: tmp.SourceLabel,
-		},
-	}
-	values.WriteValuesTo(r)
-	values.Recycle()
-	return nil
 }

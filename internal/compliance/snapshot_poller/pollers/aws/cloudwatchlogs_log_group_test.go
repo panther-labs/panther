@@ -21,6 +21,7 @@ package aws
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -31,41 +32,69 @@ import (
 func TestCloudWatchLogsLogGroupsDescribe(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudWatchLogsSvc([]string{"DescribeLogGroupsPages"})
 
-	out, err := describeLogGroups(mockSvc)
+	out, marker, err := describeLogGroups(mockSvc, nil)
 	require.NoError(t, err)
+	assert.Nil(t, marker)
 	assert.NotEmpty(t, out)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestCloudWatchLogsLogGroupListIterator(t *testing.T) {
+	var logGroups []*cloudwatchlogs.LogGroup
+	var marker *string
+
+	cont := loggroupIterator(awstest.ExampleDescribeLogGroups, &logGroups, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, logGroups, 2)
+
+	for i := 2; i < 5; i++ {
+		cont = loggroupIterator(awstest.ExampleDescribeLogGroupsContinue, &logGroups, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, logGroups, i*2)
+	}
+
+	cont = loggroupIterator(awstest.ExampleDescribeLogGroupsContinue, &logGroups, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, logGroups, 10)
 }
 
 func TestCloudWatchLogsLogGroupsDescribeError(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudWatchLogsSvcError([]string{"DescribeLogGroupsPages"})
 
-	out, err := describeLogGroups(mockSvc)
+	out, marker, err := describeLogGroups(mockSvc, nil)
 	require.Error(t, err)
+	assert.Nil(t, marker)
 	assert.Nil(t, out)
 }
 
 func TestCloudWatchLogsLogGroupsListTags(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudWatchLogsSvc([]string{"ListTagsLogGroup"})
 
-	out := listTagsLogGroup(mockSvc, awstest.ExampleDescribeLogGroups.LogGroups[0].LogGroupName)
+	out, err := listTagsLogGroup(mockSvc, awstest.ExampleDescribeLogGroups.LogGroups[0].LogGroupName)
+	assert.NoError(t, err)
 	assert.NotEmpty(t, out)
 }
 
 func TestCloudWatchLogsLogGroupsListTagsError(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudWatchLogsSvcError([]string{"ListTagsLogGroup"})
 
-	out := listTagsLogGroup(mockSvc, awstest.ExampleDescribeLogGroups.LogGroups[0].LogGroupName)
+	out, err := listTagsLogGroup(mockSvc, awstest.ExampleDescribeLogGroups.LogGroups[0].LogGroupName)
+	assert.Error(t, err)
 	assert.Nil(t, out)
 }
 
 func TestBuildCloudWatchLogsLogGroupSnapshot(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudWatchLogsSvcAll()
 
-	certSnapshot := buildCloudWatchLogsLogGroupSnapshot(
+	certSnapshot, err := buildCloudWatchLogsLogGroupSnapshot(
 		mockSvc,
 		awstest.ExampleDescribeLogGroups.LogGroups[0],
 	)
 
+	assert.NoError(t, err)
 	assert.NotNil(t, certSnapshot.ARN)
 	assert.NotNil(t, certSnapshot.StoredBytes)
 	assert.Equal(t, "LogGroup-1", *certSnapshot.Name)
@@ -76,32 +105,35 @@ func TestCloudWatchLogsLogGroupPoller(t *testing.T) {
 
 	CloudWatchLogsClientFunc = awstest.SetupMockCloudWatchLogs
 
-	resources, err := PollCloudWatchLogsLogGroups(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollCloudWatchLogsLogGroups(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
 	require.NoError(t, err)
+	assert.Nil(t, marker)
 	assert.NotEmpty(t, resources)
 }
 
 func TestCloudWatchLogsLogGroupPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockCloudWatchLogsForSetup = awstest.BuildMockCloudWatchLogsSvcAllError()
 
 	AcmClientFunc = awstest.SetupMockAcm
 
-	resources, err := PollCloudWatchLogsLogGroups(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollCloudWatchLogsLogGroups(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
 	require.Error(t, err)
+	assert.Nil(t, marker)
 	for _, event := range resources {
 		assert.Nil(t, event.Attributes)
 	}

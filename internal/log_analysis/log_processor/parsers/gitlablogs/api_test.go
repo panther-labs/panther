@@ -108,9 +108,12 @@ func TestGitLabAPIType(t *testing.T) {
 func TestGitLabAPISamples(t *testing.T) {
 	samples := testutil.MustReadFileJSONLines("testdata/apilog_samples.jsonl")
 	parser := (&APIParser{}).New()
+	railsParser := (&ProductionParser{}).New()
 	for i, sample := range samples {
 		_, err := parser.Parse(sample)
 		assert.NoErrorf(t, err, "failed to parse line %d", i)
+		_, err = railsParser.Parse(sample)
+		assert.Errorf(t, err, "line %d matches Production", i)
 	}
 }
 
@@ -119,4 +122,8 @@ func checkGitLabAPI(t *testing.T, log string, expectedEvent *API) {
 	parser := (&APIParser{}).New()
 	events, err := parser.Parse(log)
 	testutil.EqualPantherLog(t, expectedEvent.Log(), events, err)
+	parserFail := (&ProductionParser{}).New()
+	nilEvents, err := parserFail.Parse(log)
+	require.Error(t, err)
+	require.Nil(t, nilEvents)
 }

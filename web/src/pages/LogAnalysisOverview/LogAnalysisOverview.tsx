@@ -22,18 +22,22 @@ import withSEO from 'Hoc/withSEO';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { extractErrorMessage, getCurrentDate, subtractDays } from 'Helpers/utils';
 import Panel from 'Components/Panel';
-import EventsByLogType from 'Pages/LogAnalysisOverview/EventsByLogType';
 import AlertsTable from 'Pages/LogAnalysisOverview/AlertsTable';
+import { PageViewEnum } from 'Helpers/analytics';
+import useTrackPageView from 'Hooks/useTrackPageView';
 import LogAnalysisOverviewPageSkeleton from './Skeleton';
 import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
 import AlertsBySeverity from './AlertsBySeverity';
 import AlertSummary from './AlertSummary';
+import LogTypeCharts from './LogTypeCharts';
 import { useGetTopAlerts } from './graphql/getTopAlerts.generated';
 
 export const intervalMinutes = 60;
 export const defaultPastDays = 3;
 
 const LogAnalysisOverview: React.FC = () => {
+  useTrackPageView(PageViewEnum.LogAnalysisOverview);
+
   const [fromDate, toDate] = React.useMemo(() => {
     const utcnow = getCurrentDate();
     return [subtractDays(utcnow, defaultPastDays), utcnow];
@@ -43,7 +47,7 @@ const LogAnalysisOverview: React.FC = () => {
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
-        metricNames: ['eventsProcessed', 'totalAlertsDelta', 'alertsBySeverity'],
+        metricNames: ['eventsProcessed', 'totalAlertsDelta', 'alertsBySeverity', 'eventsLatency'],
         fromDate,
         toDate,
         intervalMinutes,
@@ -69,15 +73,15 @@ const LogAnalysisOverview: React.FC = () => {
     );
   }
 
-  const { alertsBySeverity, totalAlertsDelta, eventsProcessed } = data.getLogAnalysisMetrics;
+  const { alertsBySeverity, totalAlertsDelta, eventsProcessed, eventsLatency } = data.getLogAnalysisMetrics; // prettier-ignore
   const alertItems = alerts?.alerts.alertSummaries || [];
 
   return (
     <Box as="article" mb={6}>
       <SimpleGrid columns={1} spacingX={3} spacingY={2} as="section" mb={5}>
         <Panel title="Real-time Alerts">
-          <Box height={200}>
-            <Flex direction="row" width="100%">
+          <Box height={272}>
+            <Flex direction="row" width="100%" height="100%">
               <AlertSummary data={totalAlertsDelta} />
               <AlertsBySeverity alerts={alertsBySeverity} />
             </Flex>
@@ -85,11 +89,7 @@ const LogAnalysisOverview: React.FC = () => {
         </Panel>
       </SimpleGrid>
       <SimpleGrid columns={1} spacingX={3} spacingY={2} my={5}>
-        <Panel title="Events by Log Type">
-          <Box height={200}>
-            <EventsByLogType events={eventsProcessed} />
-          </Box>
-        </Panel>
+        <LogTypeCharts eventsProcessed={eventsProcessed} eventsLatency={eventsLatency} />
       </SimpleGrid>
       <SimpleGrid columns={1} spacingX={3} spacingY={2}>
         <Panel title="Recent High Severity Alerts">

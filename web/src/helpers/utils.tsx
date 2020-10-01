@@ -373,3 +373,54 @@ export const subtractDays = (date: string, days: number) => {
 export const formatNumber = (num: number): string => {
   return new Intl.NumberFormat().format(num);
 };
+
+/**
+ *
+ * Downloads the data  as a file
+ *
+ * @param data The data to save. Can be JSON, string, CSV, etc.
+ * @param filename The name to save it under, along  with the extension. i.e. file.csv
+ *
+ */
+export const downloadData = (data: string, filename: string) => {
+  const extension = filename.split('.')[1];
+  const blob = new Blob([data], {
+    type: `text/${extension};charset=utf-8`,
+  });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+
+  window.URL.revokeObjectURL(url);
+};
+
+/**
+ * Converts a word to its plural form
+ *
+ * @returns {String} pluralized word
+ *
+ * @example
+ * toPlural('example'); // => 'examples'
+ * toPlural('example', 10); // => 'examples'
+ * toPlural('example', 1); // => 'example'
+ * toPlural('example', 'examplez', 10); // => 'examplez'
+ * toPlural('example', 'examplez', 1); // => 'example'
+ */
+function toPlural(word: string): string;
+function toPlural(word: string, count: number): string;
+function toPlural(word: string, pluralForm: string, count: number): string;
+function toPlural(word: string, pluralFormOrCount?: number | string, count?: number) {
+  const plrl = typeof pluralFormOrCount === 'string' ? pluralFormOrCount : undefined;
+  const cnt = typeof pluralFormOrCount === 'number' ? pluralFormOrCount : count;
+
+  const pluralForm = plrl || `${word}s`;
+
+  return cnt === 1 ? word : pluralForm;
+}
+
+export default toPlural;

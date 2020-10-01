@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -103,7 +104,7 @@ func putMetricFilterGroup(logGroup, runtime string) error {
 }
 
 // For metric/filter names, use the Lambda function name as a prefix
-// "/aws/lambda/panther-alert-delivery" => "panther-alert-delivery"
+// "/aws/lambda/panther-alert-delivery-api" => "panther-alert-delivery-api"
 func lambdaNameFromLogGroup(logGroupName string) string {
 	split := strings.Split(logGroupName, "/")
 	return split[len(split)-1]
@@ -153,7 +154,8 @@ func deleteMetricFilterGroup(physicalID string) error {
 		})
 
 		if err != nil {
-			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == cloudwatchlogs.ErrCodeResourceNotFoundException {
+			var awsErr awserr.Error
+			if errors.As(err, &awsErr) && awsErr.Code() == cloudwatchlogs.ErrCodeResourceNotFoundException {
 				zap.L().Info("metric filter has already been deleted")
 				continue
 			}

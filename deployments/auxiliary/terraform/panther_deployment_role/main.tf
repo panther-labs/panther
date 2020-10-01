@@ -14,10 +14,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
-
 resource "aws_iam_role" "deployment" {
-  name        = "PantherDeploymentRole"
+  name        = var.deployment_role_name
   description = "IAM role for deploying Panther"
 
   assume_role_policy = jsonencode({
@@ -26,13 +24,23 @@ resource "aws_iam_role" "deployment" {
       {
         Effect : "Allow",
         Principal : {
-          AWS : "arn:${var.aws_partition}:iam::${var.aws_account_id}:root"
+          AWS : var.assume_role_principal == "" ? "arn:${var.aws_partition}:iam::${var.aws_account_id}:root" : var.assume_role_principal
         }
         Action : "sts:AssumeRole",
         Condition : {
           Bool : { "aws:SecureTransport" : true }
         }
-      }
+      },
+      {
+        Effect : "Allow",
+        Principal : {
+          Service : "cloudformation.amazonaws.com"
+        }
+        Action : "sts:AssumeRole",
+        Condition : {
+          Bool : { "aws:SecureTransport" : true }
+        }
+      },
     ]
   })
 
@@ -44,204 +52,207 @@ resource "aws_iam_role" "deployment" {
 resource "aws_iam_policy" "deployment" {
   name = "PantherDeployment"
 
-  policy = jsonencode({
-    Version : "2012-10-17",
-    Statement : [
-      {
-        Effect : "Allow",
-        Action : [
-          "acm:*",
-          "apigateway:*",
-          "application-autoscaling:DeleteScalingPolicy",
-          "application-autoscaling:DeregisterScalableTarget",
-          "application-autoscaling:DescribeScalingPolicies",
-          "application-autoscaling:DescribeScalableTargets",
-          "application-autoscaling:PutScalingPolicy",
-          "application-autoscaling:RegisterScalableTarget",
-          "appsync:*",
-          "athena:*",
-          "cloudformation:Describe*",
-          "cloudformation:List*",
-          "cloudtrail:DescribeTrails",
-          "cloudtrail:CreateTrail",
-          "cloudwatch:*",
-          "cognito-idp:*",
-          "dynamodb:List*",
-          "ec2:AllocateAddress",
-          "ec2:AssociateRouteTable",
-          "ec2:AssociateSubnetCidrBlock",
-          "ec2:AssociateVpcCidrBlock",
-          "ec2:AuthorizeSecurityGroupEgress",
-          "ec2:AuthorizeSecurityGroupIngress",
-          "ec2:AttachInternetGateway",
-          "ec2:CreateFlowLogs",
-          "ec2:CreateInternetGateway",
-          "ec2:CreateNatGateway",
-          "ec2:CreateRoute",
-          "ec2:CreateRouteTable",
-          "ec2:CreateSecurityGroup",
-          "ec2:CreateSubnet",
-          "ec2:CreateTags",
-          "ec2:CreateVpc",
-          "ec2:DeleteFlowLogs",
-          "ec2:DeleteInternetGateway",
-          "ec2:DeleteNatGateway",
-          "ec2:DeleteRoute",
-          "ec2:DeleteRouteTable",
-          "ec2:DeleteSecurityGroup",
-          "ec2:DeleteSubnet",
-          "ec2:DeleteTags",
-          "ec2:DeleteVpc",
-          "ec2:Describe*",
-          "ec2:DetachInternetGateway",
-          "ec2:DisassociateAddress",
-          "ec2:DisassociateRouteTable",
-          "ec2:DisassociateSubnetCidrBlock",
-          "ec2:ModifySubnetAttribute",
-          "ec2:ModifyVpcAttribute",
-          "ec2:ReplaceRoute",
-          "ec2:ReplaceRouteTableAssociation",
-          "ec2:RevokeSecurityGroupEgress",
-          "ec2:RevokeSecurityGroupIngress",
-          "ec2:UpdateSecurityGroupRuleDescriptionsEgress",
-          "ec2:UpdateSecurityGroupRuleDescriptionsIngress",
-          "elasticfilesystem:CreateAccessPoint",
-          "elasticfilesystem:CreateFileSystem",
-          "elasticfilesystem:DescribeAccessPoints",
-          "elasticfilesystem:DescribeFileSystems",
-          "elasticfilesystem:DescribeFileSystemPolicy",
-          "elasticfilesystem:DescribeLifecycleConfiguration",
-          "elasticfilesystem:DescribeMountTargets",
-          "elasticfilesystem:PutLifecycleConfiguration",
-          "elasticfilesystem:PutFileSystemPolicy",
-          "elasticfilesystem:ListTagsForResource",
-          "elasticfilesystem:TagResource",
-          "elasticfilesystem:UntagResource",
-          "elasticloadbalancing:*",
-          "ecr:GetAuthorizationToken",
-          "ecs:*",
-          "events:*",
-          "firehose:DescribeDeliveryStream",
-          "firehose:CreateDeliveryStream",
-          "firehose:DeleteDeliveryStream",
-          "firehose:ListDeliveryStreams",
-          "glue:*",
-          "guardduty:CreatePublishingDestination",
-          "guardduty:ListDetectors",
-          "kms:CreateKey",
-          "kms:List*",
-          "lambda:*EventSourceMapping",
-          "lambda:List*",
-          "logs:*",
-          "s3:ListAllMyBuckets",
-          "sns:List*",
-          "sqs:List*",
-          "states:CreateStateMachine",
-          "states:TagResource",
-          "states:UntagResource",
-        ],
-        Resource : "*"
-      },
-      {
-        Effect : "Allow",
-        Action : [
-          "cloudtrail:AddTags",
-          "cloudtrail:DeleteTrail",
-          "cloudtrail:PutEventSelectors",
-          "cloudtrail:StartLogging",
-          "cloudtrail:StopLogging",
-          "cloudtrail:UpdateTrail",
-        ],
-        Resource : "arn:${var.aws_partition}:cloudtrail:*:${var.aws_account_id}:trail/panther-cloudtrail-*"
-      },
-      {
-        Effect : "Allow",
-        Action : "cloudformation:*",
-        Resource : [
-          "arn:${var.aws_partition}:cloudformation:*:${var.aws_account_id}:stack/panther*",
-          "arn:${var.aws_partition}:cloudformation:*:${var.aws_account_id}:stackset/panther*",
-          "arn:${var.aws_partition}:cloudformation:*:aws:transform/Serverless-2016-10-31",
-        ]
-      },
-      {
-        Effect : "Allow",
-        Action : "dynamodb:*",
-        Resource : "arn:${var.aws_partition}:dynamodb:*:${var.aws_account_id}:table/panther-*"
-      },
-      {
-        Effect : "Allow",
-        Action : "ecr:*",
-        Resource : "arn:${var.aws_partition}:ecr:*:${var.aws_account_id}:repository/panther-*"
-      },
-      {
-        Effect : "Allow",
-        Action : "execute-api:Invoke",
-        Resource : "arn:${var.aws_partition}:execute-api:*:${var.aws_account_id}:*"
-      },
-      {
-        Effect : "Allow",
-        Action : "firehose:*",
-        Resource : "arn:${var.aws_partition}:firehose:*:${var.aws_account_id}:deliverystream/panther-*"
-      },
-      {
-        Effect : "Allow",
-        Action : "iam:*",
-        Resource : [
-          "arn:${var.aws_partition}:iam::${var.aws_account_id}:role/AWSServiceRole*",
-          "arn:${var.aws_partition}:iam::${var.aws_account_id}:role/aws-service-role/*",
-          "arn:${var.aws_partition}:iam::${var.aws_account_id}:role/panther-*",
-          "arn:${var.aws_partition}:iam::${var.aws_account_id}:role/Panther-*",
-          "arn:${var.aws_partition}:iam::${var.aws_account_id}:server-certificate/panther/*"
-        ]
-      },
-      {
-        Effect : "Allow",
-        Action : "firehose:*",
-        Resource : "arn:${var.aws_partition}:firehose:*:${var.aws_account_id}:deliverystream/panther-*",
-      },
-      {
-        Effect : "Allow",
-        Action : "kms:*",
-        Resource : [
-          "arn:${var.aws_partition}:kms:*:${var.aws_account_id}:alias/panther-*",
-          "arn:${var.aws_partition}:kms:*:${var.aws_account_id}:key/*"
-        ]
-      },
-      {
-        Effect : "Allow",
-        Action : "lambda:*",
-        Resource : [
-          "arn:${var.aws_partition}:lambda:*:${var.aws_account_id}:event-source-mapping:*",
-          "arn:${var.aws_partition}:lambda:*:${var.aws_account_id}:function:panther-*",
-          "arn:${var.aws_partition}:lambda:*:${var.aws_account_id}:layer:panther-*",
-        ]
-      },
-      {
-        Effect : "Allow",
-        Action : "s3:*",
-        Resource : "arn:${var.aws_partition}:s3:::panther-*"
-      },
-      {
-        Effect : "Allow",
-        Action : "sns:*",
-        Resource : "arn:${var.aws_partition}:sns:*:${var.aws_account_id}:panther-*",
-      },
-      {
-        Effect : "Allow",
-        Action : "sqs:*",
-        Resource : "arn:${var.aws_partition}:sqs:*:${var.aws_account_id}:panther-*",
-      },
-      {
-        Effect : "Allow",
-        Action : "states:*",
-        Resource : [
-          "arn:${var.aws_partition}:states:*:${var.aws_account_id}:activity:panther-*",
-          "arn:${var.aws_partition}:states:*:${var.aws_account_id}:execution:panther-*:*",
-          "arn:${var.aws_partition}:states:*:${var.aws_account_id}:stateMachine:panther-*",
-        ]
-      }
-    ]
-  })
+  # DO NOT EDIT - policy is automatically copied from CloudFormation by 'mage fmt'
+  policy = <<EOT
+{
+  "Statement": [
+    {
+      "Action": [
+        "acm:*",
+        "apigateway:*",
+        "application-autoscaling:DeleteScalingPolicy",
+        "application-autoscaling:DeregisterScalableTarget",
+        "application-autoscaling:DescribeScalingPolicies",
+        "application-autoscaling:DescribeScalableTargets",
+        "application-autoscaling:PutScalingPolicy",
+        "application-autoscaling:RegisterScalableTarget",
+        "appsync:*",
+        "athena:*",
+        "cloudformation:Describe*",
+        "cloudformation:List*",
+        "cloudtrail:DescribeTrails",
+        "cloudtrail:CreateTrail",
+        "cloudwatch:*",
+        "cognito-idp:*",
+        "dynamodb:List*",
+        "ec2:AllocateAddress",
+        "ec2:AssociateRouteTable",
+        "ec2:AssociateSubnetCidrBlock",
+        "ec2:AssociateVpcCidrBlock",
+        "ec2:AuthorizeSecurityGroupEgress",
+        "ec2:AuthorizeSecurityGroupIngress",
+        "ec2:AttachInternetGateway",
+        "ec2:CreateFlowLogs",
+        "ec2:CreateInternetGateway",
+        "ec2:CreateNatGateway",
+        "ec2:CreateRoute",
+        "ec2:CreateRouteTable",
+        "ec2:CreateSecurityGroup",
+        "ec2:CreateSubnet",
+        "ec2:CreateTags",
+        "ec2:CreateVpc",
+        "ec2:DeleteFlowLogs",
+        "ec2:DeleteInternetGateway",
+        "ec2:DeleteNatGateway",
+        "ec2:DeleteRoute",
+        "ec2:DeleteRouteTable",
+        "ec2:DeleteSecurityGroup",
+        "ec2:DeleteSubnet",
+        "ec2:DeleteTags",
+        "ec2:DeleteVpc",
+        "ec2:Describe*",
+        "ec2:DetachInternetGateway",
+        "ec2:DisassociateAddress",
+        "ec2:DisassociateRouteTable",
+        "ec2:DisassociateSubnetCidrBlock",
+        "ec2:ModifySubnetAttribute",
+        "ec2:ModifyVpcAttribute",
+        "ec2:ReleaseAddress",
+        "ec2:ReplaceRoute",
+        "ec2:ReplaceRouteTableAssociation",
+        "ec2:RevokeSecurityGroupEgress",
+        "ec2:RevokeSecurityGroupIngress",
+        "ec2:UpdateSecurityGroupRuleDescriptionsEgress",
+        "ec2:UpdateSecurityGroupRuleDescriptionsIngress",
+        "elasticfilesystem:CreateAccessPoint",
+        "elasticfilesystem:CreateFileSystem",
+        "elasticfilesystem:CreateMountTarget",
+        "elasticfilesystem:DeleteAccessPoint",
+        "elasticfilesystem:DeleteFileSystem",
+        "elasticfilesystem:DeleteMountTarget",
+        "elasticfilesystem:DescribeAccessPoints",
+        "elasticfilesystem:DescribeFileSystems",
+        "elasticfilesystem:DescribeFileSystemPolicy",
+        "elasticfilesystem:DescribeLifecycleConfiguration",
+        "elasticfilesystem:DescribeMountTargets",
+        "elasticfilesystem:PutLifecycleConfiguration",
+        "elasticfilesystem:PutFileSystemPolicy",
+        "elasticfilesystem:ListTagsForResource",
+        "elasticfilesystem:TagResource",
+        "elasticfilesystem:UntagResource",
+        "elasticloadbalancing:*",
+        "ecr:GetAuthorizationToken",
+        "ecs:*",
+        "events:*",
+        "firehose:DescribeDeliveryStream",
+        "firehose:CreateDeliveryStream",
+        "firehose:DeleteDeliveryStream",
+        "firehose:ListDeliveryStreams",
+        "glue:*",
+        "guardduty:CreatePublishingDestination",
+        "guardduty:ListDetectors",
+        "kms:CreateKey",
+        "kms:List*",
+        "lambda:*EventSourceMapping",
+        "lambda:List*",
+        "logs:*",
+        "s3:ListAllMyBuckets",
+        "sns:List*",
+        "sqs:List*",
+        "states:CreateStateMachine",
+        "states:TagResource",
+        "states:UntagResource"
+      ],
+      "Effect": "Allow",
+      "Resource": "*"
+    },
+    {
+      "Action": [
+        "cloudtrail:AddTags",
+        "cloudtrail:DeleteTrail",
+        "cloudtrail:PutEventSelectors",
+        "cloudtrail:StartLogging",
+        "cloudtrail:StopLogging",
+        "cloudtrail:UpdateTrail"
+      ],
+      "Effect": "Allow",
+      "Resource": "arn:${var.aws_partition}:cloudtrail:*:${var.aws_account_id}:trail/panther-cloudtrail-*"
+    },
+    {
+      "Action": "cloudformation:*",
+      "Effect": "Allow",
+      "Resource": [
+        "arn:${var.aws_partition}:cloudformation:*:${var.aws_account_id}:stack/panther*",
+        "arn:${var.aws_partition}:cloudformation:*:${var.aws_account_id}:stackset/panther*",
+        "arn:${var.aws_partition}:cloudformation:*:aws:transform/Serverless-2016-10-31"
+      ]
+    },
+    {
+      "Action": "dynamodb:*",
+      "Effect": "Allow",
+      "Resource": "arn:${var.aws_partition}:dynamodb:*:${var.aws_account_id}:table/panther-*"
+    },
+    {
+      "Action": "ecr:*",
+      "Effect": "Allow",
+      "Resource": "arn:${var.aws_partition}:ecr:*:${var.aws_account_id}:repository/panther-*"
+    },
+    {
+      "Action": "execute-api:Invoke",
+      "Effect": "Allow",
+      "Resource": "arn:${var.aws_partition}:execute-api:*:${var.aws_account_id}:*"
+    },
+    {
+      "Action": "firehose:*",
+      "Effect": "Allow",
+      "Resource": "arn:${var.aws_partition}:firehose:*:${var.aws_account_id}:deliverystream/panther-*"
+    },
+    {
+      "Action": "iam:*",
+      "Effect": "Allow",
+      "Resource": [
+        "arn:${var.aws_partition}:iam::${var.aws_account_id}:role/AWSServiceRole*",
+        "arn:${var.aws_partition}:iam::${var.aws_account_id}:role/aws-service-role/*",
+        "arn:${var.aws_partition}:iam::${var.aws_account_id}:role/panther-*",
+        "arn:${var.aws_partition}:iam::${var.aws_account_id}:role/Panther*",
+        "arn:${var.aws_partition}:iam::${var.aws_account_id}:server-certificate/panther/*"
+      ]
+    },
+    {
+      "Action": "kms:*",
+      "Effect": "Allow",
+      "Resource": [
+        "arn:${var.aws_partition}:kms:*:${var.aws_account_id}:alias/panther-*",
+        "arn:${var.aws_partition}:kms:*:${var.aws_account_id}:key/*"
+      ]
+    },
+    {
+      "Action": "lambda:*",
+      "Effect": "Allow",
+      "Resource": [
+        "arn:${var.aws_partition}:lambda:*:${var.aws_account_id}:event-source-mapping:*",
+        "arn:${var.aws_partition}:lambda:*:${var.aws_account_id}:function:panther-*",
+        "arn:${var.aws_partition}:lambda:*:${var.aws_account_id}:layer:panther-*"
+      ]
+    },
+    {
+      "Action": "s3:*",
+      "Effect": "Allow",
+      "Resource": "arn:${var.aws_partition}:s3:::panther-*"
+    },
+    {
+      "Action": "sns:*",
+      "Effect": "Allow",
+      "Resource": "arn:${var.aws_partition}:sns:*:${var.aws_account_id}:panther-*"
+    },
+    {
+      "Action": "sqs:*",
+      "Effect": "Allow",
+      "Resource": "arn:${var.aws_partition}:sqs:*:${var.aws_account_id}:panther-*"
+    },
+    {
+      "Action": "states:*",
+      "Effect": "Allow",
+      "Resource": [
+        "arn:${var.aws_partition}:states:*:${var.aws_account_id}:activity:panther-*",
+        "arn:${var.aws_partition}:states:*:${var.aws_account_id}:execution:panther-*:*",
+        "arn:${var.aws_partition}:states:*:${var.aws_account_id}:stateMachine:panther-*"
+      ]
+    }
+  ],
+  "Version": "2012-10-17"
+}
+EOT
 }
 
 resource "aws_iam_role_policy_attachment" "deployment" {

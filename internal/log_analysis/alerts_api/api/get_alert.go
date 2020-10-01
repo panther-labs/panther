@@ -32,6 +32,7 @@ import (
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	logprocessormodels "github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
+	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
@@ -90,7 +91,7 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 		return nil, err
 	}
 
-	alertSummary := alertItemToAlertSummary(alertItem)
+	alertSummary := utils.AlertItemToSummary(alertItem)
 
 	result = &models.Alert{
 		AlertSummary:           *alertSummary,
@@ -100,18 +101,6 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 
 	gatewayapi.ReplaceMapSliceNils(result)
 	return result, nil
-}
-
-// Method required for backwards compatibility
-// In case the alert title is empty, return custom title
-func getAlertTitle(alert *table.AlertItem) *string {
-	if alert.Title != nil {
-		return alert.Title
-	}
-	if alert.RuleDisplayName != nil {
-		return alert.RuleDisplayName
-	}
-	return &alert.RuleID
 }
 
 // This method returns events from a specific log type that are associated to a given alert.
@@ -160,9 +149,15 @@ func getEventsForLogType(
 			Prefix: aws.String(partitionPrefix),
 		}
 
-		// if we are in the same partition, set the cursor
-		if token != nil && strings.HasPrefix(token.S3ObjectKey, partitionPrefix) {
-			listRequest.StartAfter = aws.String(token.S3ObjectKey)
+		// if we are paginating and in the same partition, set the cursor
+		if token != nil {
+			if strings.HasPrefix(token.S3ObjectKey, partitionPrefix) {
+				listRequest.StartAfter = aws.String(token.S3ObjectKey)
+			}
+		} else { // not starting from a pagination token
+			// objects have a creation time as prefix we can use to speed listing,
+			// for example: '20200914T021539Z-0e54cab2-80a6-4c27-b622-55ad4d355175.json.gz'
+			listRequest.StartAfter = aws.String(partitionPrefix + alert.CreationTime.Format("20060102T150405Z"))
 		}
 
 		var paginationError error

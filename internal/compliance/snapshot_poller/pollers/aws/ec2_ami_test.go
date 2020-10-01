@@ -32,30 +32,25 @@ import (
 // Unit Tests
 
 func TestEC2DescribeImages(t *testing.T) {
-	mockSvc := awstest.BuildMockEC2Svc([]string{"DescribeImages"})
-	ec2Amis = make(map[string][]*string)
-	ec2Amis[defaultRegion] = []*string{awstest.ExampleAmi.ImageId}
+	mockSvc := awstest.BuildMockEC2Svc([]string{"DescribeImages", "DescribeInstancesPages"})
 
-	out, err := describeImages(mockSvc, defaultRegion)
+	out, marker, err := describeImages(mockSvc, awstest.ExampleRegion)
 	assert.NotEmpty(t, out)
+	assert.Nil(t, marker)
 	assert.NoError(t, err)
 }
 
 func TestEC2DescribeImagesError(t *testing.T) {
-	mockSvc := awstest.BuildMockEC2SvcError([]string{"DescribeImages"})
+	mockSvc := awstest.BuildMockEC2SvcError([]string{"DescribeImages", "DescribeInstancesPages"})
 
-	out, err := describeImages(mockSvc, defaultRegion)
+	out, marker, err := describeImages(mockSvc, awstest.ExampleRegion)
 	assert.Error(t, err)
+	assert.Nil(t, marker)
 	assert.Nil(t, out)
 }
 
 func TestEC2BuildAmiSnapshot(t *testing.T) {
-	mockSvc := awstest.BuildMockEC2SvcAll()
-
-	ec2Snapshot := buildEc2AmiSnapshot(
-		mockSvc,
-		awstest.ExampleAmi,
-	)
+	ec2Snapshot := buildEc2AmiSnapshot(awstest.ExampleAmi)
 
 	assert.Equal(t, ec2Snapshot.ID, aws.String("ari-abc234"))
 	assert.Equal(t, ec2Snapshot.ImageType, aws.String("ramdisk"))
@@ -66,31 +61,34 @@ func TestEC2PollAmis(t *testing.T) {
 
 	EC2ClientFunc = awstest.SetupMockEC2
 
-	resources, err := PollEc2Amis(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollEc2Amis(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
 	require.NoError(t, err)
+	assert.Nil(t, marker)
 	assert.NotEmpty(t, resources)
 }
 
 func TestEC2PollAmiError(t *testing.T) {
+	resetCache()
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAllError()
 
 	EC2ClientFunc = awstest.SetupMockEC2
 
-	resources, err := PollEc2Amis(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollEc2Amis(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
 	require.Error(t, err)
+	assert.Nil(t, marker)
 	assert.Empty(t, resources)
 }

@@ -34,10 +34,11 @@ const SettingsNavigation: React.FC = () => {
           <NavLink icon="organization" to={urls.settings.users()} label="Users" />
           <NavLink icon="output" to={urls.settings.destinations.list()} label="Destinations" />
           <NavLink
-            icon="wrench"
+            icon="source-code"
             to={urls.settings.globalPythonModules.list()}
             label="Global Modules"
           />
+          <NavLink icon="multiple-upload" to={urls.settings.bulkUploader()} label="Bulk Uploader" />
         </FadeInTrail>
       </Flex>
     </Box>

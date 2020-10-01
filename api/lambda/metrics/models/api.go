@@ -41,8 +41,10 @@ type GetMetricsInput struct {
 // GetMetricsOutput contains data points for a number of metrics over the specified time frame
 type GetMetricsOutput struct {
 	EventsProcessed  *MetricResult `json:"eventsProcessed,omitempty"`
+	EventsLatency    *MetricResult `json:"eventsLatency,omitempty"`
 	TotalAlertsDelta *MetricResult `json:"totalAlertsDelta,omitempty"`
 	AlertsBySeverity *MetricResult `json:"alertsBySeverity,omitempty"`
+	AlertsByRuleID   *MetricResult `json:"alertsByRuleID,omitempty"`
 	FromDate         time.Time     `json:"fromDate"`
 	ToDate           time.Time     `json:"toDate"`
 	IntervalMinutes  int64         `json:"intervalMinutes"`

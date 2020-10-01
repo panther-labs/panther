@@ -17,9 +17,10 @@
  */
 
 import React from 'react';
-import { Box, FadeIn, SimpleGrid } from 'pouncejs';
+import { Box, Card, FadeIn, SimpleGrid, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
 import Panel from 'Components/Panel';
 import TablePlaceholder from 'Components/TablePlaceholder';
+import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
 
 const ComplianceOverviewPageSkeleton: React.FC = () => {
   return (
@@ -33,11 +34,31 @@ const ComplianceOverviewPageSkeleton: React.FC = () => {
           </Panel>
         </SimpleGrid>
         <SimpleGrid columns={1} spacingX={3} spacingY={2} mb={3}>
-          <Panel title="Events by Log Type">
-            <Box height={200}>
-              <TablePlaceholder />
-            </Box>
-          </Panel>
+          <Card as="section">
+            <Tabs>
+              <Box position="relative" pl={2} pr={4}>
+                <TabList>
+                  <BorderedTab>Events by Log Type</BorderedTab>
+                  <BorderedTab>Data Latency by Log Type</BorderedTab>
+                </TabList>
+                <BorderTabDivider />
+              </Box>
+              <Box p={6}>
+                <TabPanels>
+                  <TabPanel unmountWhenInactive lazy>
+                    <Box height={200}>
+                      <TablePlaceholder />
+                    </Box>
+                  </TabPanel>
+                  <TabPanel unmountWhenInactive lazy>
+                    <Box height={200}>
+                      <TablePlaceholder />
+                    </Box>
+                  </TabPanel>
+                </TabPanels>
+              </Box>
+            </Tabs>
+          </Card>
         </SimpleGrid>
         <SimpleGrid columns={1} spacingX={3} spacingY={2}>
           <Panel title="Recent High Severity Alerts">

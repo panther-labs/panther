@@ -17,12 +17,13 @@
  */
 
 import React from 'react';
-import { useSnackbar } from 'pouncejs';
+import { Box, useSnackbar } from 'pouncejs';
 import { DestinationConfigInput, DestinationInput, DestinationTypeEnum } from 'Generated/schema';
 import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm';
 import DestinationFormSwitcher from 'Components/forms/DestinationFormSwitcher';
 import { capitalize, extractErrorMessage } from 'Helpers/utils';
 import { useWizardContext, WizardPanel } from 'Components/Wizard';
+import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { useAddDestination } from './graphql/addDestination.generated';
 import { WizardData } from '../CreateDestinationWizard';
 
@@ -38,7 +39,7 @@ const initialValues: Omit<DestinationInput, 'outputType'> = {
       userName: '',
       apiKey: '',
       assigneeId: '',
-      issueType: null,
+      issueType: '',
     },
     opsgenie: { apiKey: '' },
     slack: { webhookURL: '' },
@@ -64,9 +65,11 @@ const ConfigureDestinationPanel: React.FC = () => {
   const [addDestination] = useAddDestination({
     onCompleted: data => {
       updateData({ destination: data.addDestination });
+      trackEvent({ event: EventEnum.AddedDestination, src: SrcEnum.Destinations, ctx: selectedDestinationType }); // prettier-ignore
       goToNextStep();
     },
     onError: error => {
+      trackError({ event: TrackErrorEnum.FailedToAddDestination, src: SrcEnum.Destinations, ctx: selectedDestinationType, data: error }); // prettier-ignore
       pushSnackbar({
         variant: 'error',
         title:
@@ -115,7 +118,7 @@ const ConfigureDestinationPanel: React.FC = () => {
       : selectedDestinationType
   );
   return (
-    <React.Fragment>
+    <Box maxWidth={700} mx="auto">
       <WizardPanel.Heading
         title={`Configure Your ${destinationDisplayName} Destination`}
         subtitle="Fill out the form below to configure your Destination"
@@ -124,7 +127,7 @@ const ConfigureDestinationPanel: React.FC = () => {
         initialValues={{ ...initialValues, outputType: selectedDestinationType }}
         onSubmit={handleSubmit}
       />
-    </React.Fragment>
+    </Box>
   );
 };
 

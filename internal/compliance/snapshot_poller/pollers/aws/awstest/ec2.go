@@ -158,6 +158,18 @@ var (
 		},
 	}
 
+	ExampleDescribeInstancesOutputContinue = &ec2.DescribeInstancesOutput{
+		Reservations: []*ec2.Reservation{
+			{
+				Instances: []*ec2.Instance{
+					ExampleInstance,
+					ExampleInstance,
+				},
+			},
+		},
+		NextToken: aws.String("1"),
+	}
+
 	ExampleDescribeVolumesOutput = &ec2.DescribeVolumesOutput{
 		Volumes: []*ec2.Volume{
 			{
@@ -182,6 +194,13 @@ var (
 				VolumeType:       aws.String("gp2"),
 			},
 		},
+	}
+	ExampleDescribeVolumesOutputContinue = &ec2.DescribeVolumesOutput{
+		Volumes: []*ec2.Volume{
+			ExampleDescribeVolumesOutput.Volumes[0],
+			ExampleDescribeVolumesOutput.Volumes[0],
+		},
+		NextToken: aws.String("1"),
 	}
 
 	ExampleDescribeImagesOutput = &ec2.DescribeImagesOutput{
@@ -275,6 +294,14 @@ var (
 		},
 	}
 
+	ExampleDescribeVpcsOutputContinue = &ec2.DescribeVpcsOutput{
+		Vpcs: []*ec2.Vpc{
+			ExampleVpc,
+			ExampleVpc,
+		},
+		NextToken: aws.String("1"),
+	}
+
 	ExampleDescribeSecurityGroupsOutput = &ec2.DescribeSecurityGroupsOutput{
 		SecurityGroups: []*ec2.SecurityGroup{
 			{
@@ -291,6 +318,13 @@ var (
 				VpcId:               aws.String("vpc-6aa60b12"),
 			},
 		},
+	}
+	ExampleDescribeSecurityGroupsOutputContinue = &ec2.DescribeSecurityGroupsOutput{
+		SecurityGroups: []*ec2.SecurityGroup{
+			ExampleDescribeSecurityGroupsOutput.SecurityGroups[0],
+			ExampleDescribeSecurityGroupsOutput.SecurityGroups[0],
+		},
+		NextToken: aws.String("1"),
 	}
 
 	ExampleDescribeNetworkAclsOutput = &ec2.DescribeNetworkAclsOutput{
@@ -318,6 +352,14 @@ var (
 				VpcId:        aws.String("vpc-6aa60b12"),
 			},
 		},
+	}
+
+	ExampleDescribeNetworkAclsOutputContinue = &ec2.DescribeNetworkAclsOutput{
+		NetworkAcls: []*ec2.NetworkAcl{
+			ExampleDescribeNetworkAclsOutput.NetworkAcls[0],
+			ExampleDescribeNetworkAclsOutput.NetworkAcls[0],
+		},
+		NextToken: aws.String("1"),
 	}
 
 	ExampleDescribeFlowLogsOutput = &ec2.DescribeFlowLogsOutput{
@@ -563,7 +605,7 @@ var (
 // EC2 mock
 
 // SetupMockEC2 is used to override the EC2 Client initializer
-func SetupMockEC2(sess *session.Session, cfg *aws.Config) interface{} {
+func SetupMockEC2(_ *session.Session, _ *aws.Config) interface{} {
 	return MockEC2ForSetup
 }
 

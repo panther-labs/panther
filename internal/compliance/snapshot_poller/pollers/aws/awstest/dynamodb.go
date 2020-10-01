@@ -96,6 +96,14 @@ var (
 		},
 	}
 
+	ExampleListTablesOutputContinue = &dynamodb.ListTablesOutput{
+		TableNames: []*string{
+			ExampleTableName,
+			ExampleTableName,
+		},
+		LastEvaluatedTableName: ExampleTableName,
+	}
+
 	ExampleListTagsOfResource = &dynamodb.ListTagsOfResourceOutput{
 		Tags: []*dynamodb.Tag{
 			{
@@ -162,7 +170,7 @@ var (
 // DynamoDB mock
 
 // SetupMockDynamoDB is used to override the DynamoDB Client initializer
-func SetupMockDynamoDB(sess *session.Session, cfg *aws.Config) interface{} {
+func SetupMockDynamoDB(_ *session.Session, _ *aws.Config) interface{} {
 	return MockDynamoDBForSetup
 }
 

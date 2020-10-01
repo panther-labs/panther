@@ -19,7 +19,7 @@
 import React from 'react';
 import { FastField, useFormikContext, Field } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
-import { Flex, Box, SimpleGrid, FormHelperText, Link, FormError } from 'pouncejs';
+import { Flex, Box, SimpleGrid, FormHelperText, Link, FormError, useSnackbar } from 'pouncejs';
 import { SeverityEnum } from 'Generated/schema';
 import { capitalize, minutesToString } from 'Helpers/utils';
 import FormikTextArea from 'Components/fields/TextArea';
@@ -27,12 +27,13 @@ import FormikSwitch from 'Components/fields/Switch';
 import FormikCombobox from 'Components/fields/ComboBox';
 import FormikNumberInput from 'Components/fields/NumberInput';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
-import { LOG_TYPES, RESOURCE_TYPES } from 'Source/constants';
+import { RESOURCE_TYPES } from 'Source/constants';
 import { RuleFormValues } from 'Components/forms/RuleForm';
 import { PolicyFormValues } from 'Components/forms/PolicyForm';
 import Panel from 'Components/Panel';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
+import { useListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
 import useListAvailableDestinations from '../useListAvailableDestinations';
 
 interface BaseRuleFormCoreSectionProps {
@@ -44,9 +45,16 @@ const severityItemToString = (severity: string) => capitalize(severity.toLowerCa
 const dedupPeriodMinutesOptions = [15, 30, 60, 180, 720, 1440];
 
 const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type }) => {
+  const isPolicy = type === 'policy';
+
   // Read the values from the "parent" form. We expect a formik to be declared in the upper scope
   // since this is a "partial" form. If no Formik context is found this will error out intentionally
   const { values, initialValues } = useFormikContext<RuleFormValues | PolicyFormValues>();
+  const { pushSnackbar } = useSnackbar();
+  const { data } = useListAvailableLogTypes({
+    skip: isPolicy,
+    onError: () => pushSnackbar({ title: "Couldn't fetch your available log types" }),
+  });
 
   const tagAdditionValidation = React.useMemo(() => (tag: string) => !values.tags.includes(tag), [
     values.tags,
@@ -101,7 +109,6 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
     availableOutputIds,
   ]);
 
-  const isPolicy = type === 'policy';
   return (
     <Panel
       title={isPolicy ? 'Policy Settings' : 'Rule Settings'}
@@ -227,13 +234,13 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
         </Box>
         {!isPolicy && (
           <React.Fragment>
-            <FastField
+            <Field
               as={FormikMultiCombobox}
               searchable
               label="* Log Types"
               name="logTypes"
-              items={LOG_TYPES}
-              placeholder="Where should the rule apply?"
+              items={data?.listAvailableLogTypes.logTypes ?? []}
+              placeholder="Where should the rule appoly?"
             />
             <FastField
               as={FormikCombobox}

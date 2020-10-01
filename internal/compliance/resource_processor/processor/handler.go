@@ -241,13 +241,13 @@ func (r *batchResults) analyze(resources resourceMap, policies policyMap) error 
 			// Every failed policy, if not suppressed, will trigger the remediation flow
 			complianceNotification := &alertmodels.ComplianceNotification{
 				OutputIds:       policy.OutputIds,
-				ResourceID:      aws.String(string(resource.ID)),
-				PolicyID:        aws.String(string(policy.ID)),
-				PolicyVersionID: aws.String(string(policy.VersionID)),
-				Timestamp:       aws.Time(time.Now()),
+				ResourceID:      string(resource.ID),
+				PolicyID:        string(policy.ID),
+				PolicyVersionID: string(policy.VersionID),
+				Timestamp:       time.Now(),
 
 				// We only need to send an alert to the user if the status is newly FAILing
-				ShouldAlert: aws.Bool(status != compliancemodels.StatusFAIL),
+				ShouldAlert: status != compliancemodels.StatusFAIL,
 			}
 			var sqsMessageBody string
 			if sqsMessageBody, err = jsoniter.MarshalToString(complianceNotification); err != nil {

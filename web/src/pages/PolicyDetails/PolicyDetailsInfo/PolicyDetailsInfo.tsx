@@ -38,8 +38,8 @@ import urls from 'Source/urls';
 import JsonViewer from 'Components/JsonViewer';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
-import SeverityBadge from 'Components/SeverityBadge';
-import StatusBadge from 'Components/StatusBadge';
+import SeverityBadge from 'Components/badges/SeverityBadge';
+import StatusBadge from 'Components/badges/StatusBadge';
 
 interface ResourceDetailsInfoProps {
   policy?: PolicyDetails;
@@ -172,14 +172,13 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
         </Card>
         <Card variant="dark" as="section" p={4}>
           <SimpleGrid columns={2} spacing={5} fontSize="small-medium">
-            <Flex spacing={5}>
-              <Flex direction="column" spacing={2} color="navyblue-100" flexShrink={0}>
-                <Box aria-describedby="tags-list">Tags</Box>
-                <Box aria-describedby="ignore-patterns-list">Ignore Pattens</Box>
-              </Flex>
-              <Flex direction="column" spacing={2}>
+            <Box>
+              <SimpleGrid gap={2} columns={8} spacing={2}>
+                <Box gridColumn="1/3" color="navyblue-100" aria-describedby="tags-list">
+                  Tags
+                </Box>
                 {policy.tags.length > 0 ? (
-                  <Box id="tags-list">
+                  <Box gridColumn="3/8" id="tags-list">
                     {policy.tags.map((tag, index) => (
                       <Link
                         key={tag}
@@ -192,34 +191,42 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
                     ))}
                   </Box>
                 ) : (
-                  <Box fontStyle="italic" color="navyblue-100" id="tags-list">
+                  <Box fontStyle="italic" color="navyblue-100" gridColumn="3/8" id="tags-list">
                     This policy has no tags
                   </Box>
                 )}
+
+                <Box gridColumn="1/3" color="navyblue-100" aria-describedby="ignore-patterns-list">
+                  Ignore Pattens
+                </Box>
                 {policy.suppressions.length > 0 ? (
-                  <Box id="ignore-patterns-list">
-                    {policy.suppressions.map(
-                      (suppression, index) =>
-                        `${suppression}${index !== policy.suppressions.length - 1 ? ', ' : null}`
-                    )}
+                  <Box gridColumn="3/8" id="ignore-patterns-list">
+                    {policy.suppressions?.length > 0 ? policy.suppressions.join(', ') : null}
                   </Box>
                 ) : (
-                  <Box id="ignore-patterns-list">
+                  <Box gridColumn="3/8" id="ignore-patterns-list">
                     No particular resource is ignored for this policy
                   </Box>
                 )}
-              </Flex>
-            </Flex>
-            <Flex spacing={60}>
-              <Flex direction="column" color="navyblue-100" spacing={2}>
-                <Box aria-describedby="created-at">Created</Box>
-                <Box aria-describedby="updated-at">Modified</Box>
-              </Flex>
-              <Flex direction="column" spacing={2}>
-                <Box id="created-at">{formatDatetime(policy.createdAt)}</Box>
-                <Box id="updated-at">{formatDatetime(policy.lastModified)}</Box>
-              </Flex>
-            </Flex>
+              </SimpleGrid>
+            </Box>
+            <Box>
+              <SimpleGrid gap={2} columns={8} spacing={2}>
+                <Box gridColumn="1/3" color="navyblue-100" aria-describedby="created-at">
+                  Created
+                </Box>
+                <Box gridColumn="3/8" id="created-at">
+                  {formatDatetime(policy.createdAt)}
+                </Box>
+
+                <Box gridColumn="1/3" color="navyblue-100" aria-describedby="updated-at">
+                  Modified
+                </Box>
+                <Box gridColumn="3/8" id="updated-at">
+                  {formatDatetime(policy.lastModified)}
+                </Box>
+              </SimpleGrid>
+            </Box>
           </SimpleGrid>
         </Card>
       </Card>

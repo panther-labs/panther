@@ -17,20 +17,21 @@
  */
 
 import React from 'react';
+import { Link as RRLink } from 'react-router-dom';
+import urls from 'Source/urls';
 import { SeverityEnum, ListRulesInput } from 'Generated/schema';
 import GenerateFiltersGroup from 'Components/utils/GenerateFiltersGroup';
 import { capitalize } from 'Helpers/utils';
-import { LOG_TYPES } from 'Source/constants';
 import FormikCombobox from 'Components/fields/ComboBox';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import FormikTextInput from 'Components/fields/TextInput';
-import { Box, Button, Card, Collapse, Flex } from 'pouncejs';
-import CreateButton from 'Pages/ListRules/CreateButton';
+import { Box, Button, Card, Collapse, Flex, useSnackbar } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import isEmpty from 'lodash/isEmpty';
 import pick from 'lodash/pick';
 import Breadcrumbs from 'Components/Breadcrumbs';
+import { useListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
 
 const severityOptions = Object.values(SeverityEnum);
 
@@ -46,7 +47,7 @@ export const filters = {
     component: FormikMultiCombobox,
     props: {
       searchable: true,
-      items: LOG_TYPES,
+      items: [],
       label: 'Log Types',
       placeholder: 'Start typing logs...',
     },
@@ -97,6 +98,10 @@ const ListRulesActions: React.FC = () => {
   const { requestParams, updateRequestParamsAndResetPaging } = useRequestParamsWithPagination<
     ListRulesInput
   >();
+  const { pushSnackbar } = useSnackbar();
+  const { data } = useListAvailableLogTypes({
+    onError: () => pushSnackbar({ title: "Couldn't fetch your available log types" }),
+  });
 
   const filterKeys = Object.keys(filters) as (keyof ListRulesInput)[];
   const filtersCount = filterKeys.filter(key => !isEmpty(requestParams[key])).length;
@@ -115,6 +120,9 @@ const ListRulesActions: React.FC = () => {
     [requestParams]
   );
 
+  // FIXME: I know this sucks, but we plan to refactor all this logic in the upcoming release
+  filters.logTypes.props.items = data?.listAvailableLogTypes.logTypes ?? [];
+
   return (
     <React.Fragment>
       <Breadcrumbs.Actions>
@@ -128,7 +136,9 @@ const ListRulesActions: React.FC = () => {
             >
               Filter Options {filtersCount ? `(${filtersCount})` : ''}
             </Button>
-            <CreateButton />
+            <Button as={RRLink} to={urls.logAnalysis.rules.create()}>
+              Create New Rule
+            </Button>
           </Flex>
         </Flex>
       </Breadcrumbs.Actions>

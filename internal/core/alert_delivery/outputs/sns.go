@@ -21,14 +21,15 @@ package outputs
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sns/snsiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	outputmodels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	alertmodels "github.com/panther-labs/panther/internal/core/alert_delivery/models"
+	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
 type snsMessage struct {
@@ -37,15 +38,23 @@ type snsMessage struct {
 	EmailMessage string `json:"email"`
 }
 
+// Tests can replace this with a mock implementation
+var getSnsClient = buildSnsClient
+
 // Sns sends an alert to an SNS Topic.
 // nolint: dupl
-func (client *OutputClient) Sns(alert *alertmodels.Alert, config *outputmodels.SnsConfig) *AlertDeliveryError {
+func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.SnsConfig) *AlertDeliveryResponse {
 	notification := generateNotificationFromAlert(alert)
 	serializedDefaultMessage, err := jsoniter.MarshalToString(notification)
 	if err != nil {
 		errorMsg := "Failed to serialize default message"
 		zap.L().Error(errorMsg, zap.Error(errors.WithStack(err)))
-		return &AlertDeliveryError{Message: errorMsg, Permanent: true}
+		return &AlertDeliveryResponse{
+			StatusCode: 500,
+			Message:    errorMsg,
+			Permanent:  true,
+			Success:    false,
+		}
 	}
 
 	outputMessage := &snsMessage{
@@ -57,7 +66,12 @@ func (client *OutputClient) Sns(alert *alertmodels.Alert, config *outputmodels.S
 	if err != nil {
 		errorMsg := "Failed to serialize message"
 		zap.L().Error(errorMsg, zap.Error(errors.WithStack(err)))
-		return &AlertDeliveryError{Message: errorMsg, Permanent: true}
+		return &AlertDeliveryResponse{
+			StatusCode: 500,
+			Message:    errorMsg,
+			Permanent:  true,
+			Success:    false,
+		}
 	}
 
 	snsMessageInput := &sns.PublishInput{
@@ -68,32 +82,55 @@ func (client *OutputClient) Sns(alert *alertmodels.Alert, config *outputmodels.S
 		MessageStructure: aws.String("json"),
 	}
 
-	snsClient, err := client.getSnsClient(config.TopicArn)
+	snsClient, err := getSnsClient(client.session, config.TopicArn)
 	if err != nil {
 		errorMsg := "Failed to create SNS client for topic"
 		zap.L().Error(errorMsg, zap.Error(errors.WithStack(err)))
-		return &AlertDeliveryError{Message: errorMsg, Permanent: true}
+		return &AlertDeliveryResponse{
+			StatusCode: 500,
+			Message:    errorMsg,
+			Permanent:  true,
+			Success:    false,
+		}
 	}
 
-	_, err = snsClient.Publish(snsMessageInput)
+	response, err := snsClient.Publish(snsMessageInput)
 	if err != nil {
-		errorMsg := "Failed to send message to SNS topic"
-		zap.L().Error(errorMsg, zap.Error(errors.WithStack(err)))
-		return &AlertDeliveryError{Message: errorMsg}
+		zap.L().Error("Failed to send message to SNS topic", zap.Error(err))
+		return getAlertResponseFromSNSError(err)
 	}
-	return nil
+
+	if response == nil {
+		return &AlertDeliveryResponse{
+			StatusCode: 500,
+			Message:    "sns response was nil",
+			Permanent:  false,
+			Success:    false,
+		}
+	}
+
+	if response.MessageId == nil {
+		return &AlertDeliveryResponse{
+			StatusCode: 500,
+			Message:    "sns messageId was nil",
+			Permanent:  false,
+			Success:    false,
+		}
+	}
+
+	return &AlertDeliveryResponse{
+		StatusCode: 200,
+		Message:    aws.StringValue(response.MessageId),
+		Permanent:  false,
+		Success:    true,
+	}
 }
 
-func (client *OutputClient) getSnsClient(topicArn string) (snsiface.SNSAPI, error) {
+func buildSnsClient(awsSession *session.Session, topicArn string) (snsiface.SNSAPI, error) {
 	parsedArn, err := arn.Parse(topicArn)
 	if err != nil {
 		zap.L().Error("failed to parse topic ARN", zap.Error(err))
 		return nil, err
 	}
-	snsClient, ok := client.snsClients[parsedArn.Region]
-	if !ok {
-		snsClient = sns.New(client.session, aws.NewConfig().WithRegion(parsedArn.Region))
-		client.snsClients[parsedArn.Region] = snsClient
-	}
-	return snsClient, nil
+	return sns.New(awsSession, aws.NewConfig().WithRegion(parsedArn.Region)), nil
 }

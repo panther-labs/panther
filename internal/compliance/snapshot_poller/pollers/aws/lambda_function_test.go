@@ -21,6 +21,7 @@ package aws
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -31,15 +32,42 @@ import (
 func TestLambdaFunctionsList(t *testing.T) {
 	mockSvc := awstest.BuildMockLambdaSvc([]string{"ListFunctionsPages"})
 
-	out := listFunctions(mockSvc)
+	out, marker, err := listFunctions(mockSvc, nil)
 	assert.NotEmpty(t, out)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestFunctionListIterator(t *testing.T) {
+	var functions []*lambda.FunctionConfiguration
+	var marker *string
+
+	cont := functionIterator(awstest.ExampleListFunctions, &functions, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, functions, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = functionIterator(awstest.ExampleListFunctionsContinue, &functions, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, functions, 1+i*2)
+	}
+
+	cont = functionIterator(awstest.ExampleListFunctionsContinue, &functions, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, functions, 101)
 }
 
 func TestLambdaFunctionsListError(t *testing.T) {
 	mockSvc := awstest.BuildMockLambdaSvcError([]string{"ListFunctionsPages"})
 
-	out := listFunctions(mockSvc)
+	out, marker, err := listFunctions(mockSvc, nil)
 	assert.Nil(t, out)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }
 
 func TestLambdaFunctionListTags(t *testing.T) {
@@ -77,11 +105,12 @@ func TestLambdaFunctionGetPolicyError(t *testing.T) {
 func TestBuildLambdaFunctionSnapshot(t *testing.T) {
 	mockSvc := awstest.BuildMockLambdaSvcAll()
 
-	lambdaSnapshot := buildLambdaFunctionSnapshot(
+	lambdaSnapshot, err := buildLambdaFunctionSnapshot(
 		mockSvc,
 		awstest.ExampleListFunctions.Functions[0],
 	)
 
+	assert.NoError(t, err)
 	assert.NotEmpty(t, lambdaSnapshot.Tags)
 	assert.NotEmpty(t, lambdaSnapshot.Policy)
 	assert.Equal(t, "arn:aws:lambda:us-west-2:123456789012:function:ExampleFunction", *lambdaSnapshot.ARN)
@@ -91,14 +120,13 @@ func TestBuildLambdaFunctionSnapshot(t *testing.T) {
 func TestBuildLambdaFunctionSnapshotErrors(t *testing.T) {
 	mockSvc := awstest.BuildMockLambdaSvcAllError()
 
-	lambdaSnapshot := buildLambdaFunctionSnapshot(
+	lambdaSnapshot, err := buildLambdaFunctionSnapshot(
 		mockSvc,
 		awstest.ExampleListFunctions.Functions[0],
 	)
 
-	assert.NotNil(t, lambdaSnapshot)
-	assert.Nil(t, lambdaSnapshot.Policy)
-	assert.Nil(t, lambdaSnapshot.Tags)
+	assert.Error(t, err)
+	assert.Nil(t, lambdaSnapshot)
 }
 
 func TestLambdaFunctionPoller(t *testing.T) {
@@ -106,33 +134,36 @@ func TestLambdaFunctionPoller(t *testing.T) {
 
 	LambdaClientFunc = awstest.SetupMockLambda
 
-	resources, err := PollLambdaFunctions(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollLambdaFunctions(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
 	assert.NotEmpty(t, resources)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
 }
 
 func TestLambdaFunctionPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockLambdaForSetup = awstest.BuildMockLambdaSvcAllError()
 
 	LambdaClientFunc = awstest.SetupMockLambda
 
-	resources, err := PollLambdaFunctions(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollLambdaFunctions(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
 	for _, event := range resources {
 		assert.Nil(t, event.Attributes)
 	}
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }

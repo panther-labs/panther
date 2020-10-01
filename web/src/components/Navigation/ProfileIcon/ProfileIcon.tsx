@@ -84,7 +84,7 @@ const ProfileIcon: React.FC = () => {
             {getUserInitials(userInfo).toUpperCase()}
           </DropdownButton>
           <DropdownMenu alignment="right" transform="translate(65px, -65px)">
-            <Box p={6} width={240} backgroundColor="navyblue-400" fontSize="medium">
+            <Box p={6} minWidth={240} backgroundColor="navyblue-400" fontSize="medium">
               <Text>{getUserDisplayName(userInfo)}</Text>
               <Link external href={`mailto:${userInfo.email}`}>
                 {userInfo.email}

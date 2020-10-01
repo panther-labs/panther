@@ -27,12 +27,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/omitempty"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/pkg/box"
 	"github.com/panther-labs/panther/pkg/unbox"
@@ -88,7 +88,7 @@ func TestNewResultBuilder(t *testing.T) {
 	result, err := b.BuildResult("TestEvent", &event)
 	require.NoError(t, err)
 	require.Equal(t, "TestEvent", result.PantherLogType)
-	testutil.EqualTimestamp(t, now, result.PantherParseTime)
+	logtesting.EqualTimestamp(t, now, result.PantherParseTime)
 	// Ensure event time is zero time
 	require.Equal(t, time.Time{}, result.PantherEventTime)
 	require.Equal(t, rowID, result.PantherRowID)
@@ -136,7 +136,7 @@ func TestOldResults(t *testing.T) {
 	api := buildAPI()
 	result := event.Result()
 	require.Equal(t, "Foo", result.PantherLogType)
-	testutil.EqualTimestamp(t, now, result.PantherParseTime)
+	logtesting.EqualTimestamp(t, now, result.PantherParseTime)
 	// Ensure event time is zero time
 	//require.Equal(t, time.Time{}, result.PantherEventTime)
 	require.Equal(t, rowID, result.PantherRowID)

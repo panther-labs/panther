@@ -16,7 +16,7 @@
 
 from unittest import TestCase, mock
 
-from ..src import EventMatch
+from ..src import EngineResult
 from ..src.engine import Engine
 
 
@@ -62,7 +62,7 @@ class TestEngine(TestCase):
         result = engine.analyze('log', {})
 
         expected_event_matches = [
-            EventMatch(
+            EngineResult(
                 rule_id='rule_id_1',
                 rule_version='version',
                 log_type='log',
@@ -86,7 +86,7 @@ class TestEngine(TestCase):
             }, {
                 'id': 'rule_id_2',
                 'resourceTypes': ['log'],
-                'body': 'def rule(event):\n\traise Exception()',
+                'body': 'def rule(event):\n\traise Exception("Found an issue")',
                 'versionId': 'version'
             }, {
                 'id': 'rule_id_3',
@@ -99,7 +99,7 @@ class TestEngine(TestCase):
         result = engine.analyze('log', {})
 
         expected_event_matches = [
-            EventMatch(
+            EngineResult(
                 rule_id='rule_id_1',
                 rule_version='version',
                 log_type='log',
@@ -107,7 +107,17 @@ class TestEngine(TestCase):
                 event={},
                 dedup_period_mins=60
             ),
-            EventMatch(
+            EngineResult(
+                rule_id='rule_id_2',
+                rule_version='version',
+                log_type='log',
+                dedup='Exception',
+                event={},
+                dedup_period_mins=1440,
+                error_message="Exception('Found an issue')",
+                title="Exception('Found an issue')"
+            ),
+            EngineResult(
                 rule_id='rule_id_3',
                 rule_version='version',
                 log_type='log',

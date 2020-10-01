@@ -20,7 +20,7 @@ import React from 'react';
 import { Box, Link, Table, Icon } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
-import SeverityBadge from 'Components/SeverityBadge';
+import SeverityBadge from 'Components/badges/SeverityBadge';
 import { ListAlerts } from 'Pages/ListAlerts/graphql/listAlerts.generated';
 import { ListAlertsInput, ListAlertsSortFieldsEnum, SortDirEnum } from 'Generated/schema';
 import { shortenId, formatDatetime } from 'Helpers/utils';

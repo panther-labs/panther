@@ -31,15 +31,29 @@ const (
 )
 
 // post sends a JSON body to an endpoint.
-func (client *HTTPWrapper) post(input *PostInput) *AlertDeliveryError {
+func (client *HTTPWrapper) post(input *PostInput) *AlertDeliveryResponse {
 	payload, err := jsoniter.Marshal(input.body)
+
+	// If there was an error marshaling the input
 	if err != nil {
-		return &AlertDeliveryError{Message: "json marshal error: " + err.Error(), Permanent: true}
+		return &AlertDeliveryResponse{
+			StatusCode: 500, // Internal server error
+			Success:    false,
+			Message:    "json marshal error: " + err.Error(),
+			Permanent:  true,
+		}
 	}
 
 	request, err := http.NewRequest("POST", input.url, bytes.NewBuffer(payload))
+
+	// If there was an error creating the request
 	if err != nil {
-		return &AlertDeliveryError{Message: "http request error: " + err.Error(), Permanent: true}
+		return &AlertDeliveryResponse{
+			StatusCode: 500, // Internal server error
+			Success:    false,
+			Message:    "http request error: " + err.Error(),
+			Permanent:  true,
+		}
 	}
 
 	request.Header.Set("Content-Type", "application/json")
@@ -51,16 +65,35 @@ func (client *HTTPWrapper) post(input *PostInput) *AlertDeliveryError {
 	}
 
 	response, err := client.httpClient.Do(request)
+
+	// If there was an error sending the request
 	if err != nil {
-		return &AlertDeliveryError{Message: "network error: " + err.Error()}
+		return &AlertDeliveryResponse{
+			StatusCode: 500, // Internal server error
+			Success:    false,
+			Message:    "network error: " + err.Error(),
+			Permanent:  false,
+		}
 	}
+
 	defer response.Body.Close()
 
+	body, _ := ioutil.ReadAll(response.Body)
+
+	// If the client response status code is not acceptable
 	if response.StatusCode < 200 || response.StatusCode > 299 {
-		body, _ := ioutil.ReadAll(response.Body)
-		return &AlertDeliveryError{
-			Message: "request failed: " + response.Status + ": " + string(body)}
+		return &AlertDeliveryResponse{
+			StatusCode: response.StatusCode,
+			Success:    false,
+			Message:    "request failed: " + response.Status + ": " + string(body),
+			Permanent:  false,
+		}
 	}
 
-	return nil
+	return &AlertDeliveryResponse{
+		StatusCode: response.StatusCode,
+		Success:    true,
+		Message:    string(body),
+		Permanent:  false,
+	}
 }

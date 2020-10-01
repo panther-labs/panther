@@ -19,12 +19,14 @@ package process
  */
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 )
 
 var (
@@ -43,15 +45,14 @@ func TestIntegrationSyncPartitions(t *testing.T) {
 	if !integrationTest {
 		t.Skip()
 	}
-
 	// this assumes the self onboarding was enables (default true)
-	syncEvent := &SyncEvent{
-		Sync:     true,
+	err := InvokeBackgroundSync(context.Background(), lambdaClient, &SyncEvent{
 		LogTypes: []string{"AWS.VPCFlow"},
-	}
-	err := Sync(syncEvent, time.Now().Add(time.Hour))
-	require.NoError(t, err)
-
-	err = InvokeSyncGluePartitions(lambdaClient, syncEvent.LogTypes)
+		DatabaseNames: []string{
+			awsglue.LogProcessingDatabaseName,
+			awsglue.RuleErrorsDatabaseName,
+			awsglue.RuleMatchDatabaseName,
+		},
+	})
 	require.NoError(t, err)
 }

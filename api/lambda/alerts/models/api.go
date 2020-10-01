@@ -22,9 +22,10 @@ import "time"
 
 // LambdaInput is the request structure for the alerts-api Lambda function.
 type LambdaInput struct {
-	GetAlert          *GetAlertInput          `json:"getAlert"`
-	ListAlerts        *ListAlertsInput        `json:"listAlerts"`
-	UpdateAlertStatus *UpdateAlertStatusInput `json:"updateAlertStatus"`
+	GetAlert            *GetAlertInput            `json:"getAlert"`
+	ListAlerts          *ListAlertsInput          `json:"listAlerts"`
+	UpdateAlertStatus   *UpdateAlertStatusInput   `json:"updateAlertStatus"`
+	UpdateAlertDelivery *UpdateAlertDeliveryInput `json:"updateAlertDelivery"`
 }
 
 // GetAlertInput retrieves details for a single alert.
@@ -90,7 +91,7 @@ type ListAlertsInput struct {
 	AlertIDContains *string    `json:"alertIdContains"`
 	EventCountMin   *int       `json:"eventCountMin" validate:"omitempty,min=0"`
 	EventCountMax   *int       `json:"eventCountMax" validate:"omitempty,min=1"`
-
+	LogTypes        []string   `json:"logTypes" validate:"omitempty,dive,required"`
 	// Sorting
 	SortDir *string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
 }
@@ -115,8 +116,43 @@ type UpdateAlertStatusInput struct {
 	UserID *string `json:"userId" validate:"uuid4"`
 }
 
-// UpdateAlertStatusOutput the returne alert summary after an update
+// UpdateAlertDeliveryInput updates an alert by its ID
+// {
+//     "updateAlertDelivery": {
+//         "alertId": "84c3e4b27c702a1c31e6eb412fc377f6",
+//         "deliveryResponses": [
+//           {
+//             "outputId": "1f54cf4a-ec56-44c2-83bc-8b742600f307"
+//             "message": "gateway timeout",
+//             "statusCode": 504,
+//             "success": false,
+//             "dispatchedAt": "2020-06-17T15:49:40Z",
+//           }
+//         ]
+//     }
+// }
+type UpdateAlertDeliveryInput struct {
+	// ID of the alert to update
+	AlertID string `json:"alertId" validate:"hexadecimal,len=32"` // AlertID is an MD5 hash
+
+	// Variables that we allow updating (will be appended)
+	DeliveryResponses []*DeliveryResponse `json:"deliveryResponses"`
+}
+
+// DeliveryResponse holds the delivery response for data stored in DDB
+type DeliveryResponse struct {
+	OutputID     string    `json:"outputId" validate:"required,uuid4"`
+	Message      string    `json:"message"`
+	StatusCode   int       `json:"statusCode"`
+	Success      bool      `json:"success"`
+	DispatchedAt time.Time `json:"dispatchedAt"`
+}
+
+// UpdateAlertStatusOutput is an alias for an alert summary
 type UpdateAlertStatusOutput = AlertSummary
+
+// UpdateAlertDeliveryOutput is an alias for an alert summary
+type UpdateAlertDeliveryOutput = AlertSummary
 
 // Constants defined for alert statuses
 const (
@@ -146,19 +182,21 @@ type ListAlertsOutput struct {
 
 // AlertSummary contains summary information for an alert
 type AlertSummary struct {
-	AlertID           *string    `json:"alertId" validate:"required"`
-	RuleID            *string    `json:"ruleId" validate:"required"`
-	RuleDisplayName   *string    `json:"ruleDisplayName,omitempty"`
-	RuleVersion       *string    `json:"ruleVersion" validate:"required"`
-	DedupString       *string    `json:"dedupString,omitempty"`
-	CreationTime      *time.Time `json:"creationTime" validate:"required"`
-	UpdateTime        *time.Time `json:"updateTime" validate:"required"`
-	EventsMatched     *int       `json:"eventsMatched" validate:"required"`
-	Severity          *string    `json:"severity" validate:"required"`
-	Status            string     `json:"status,omitempty"`
-	Title             *string    `json:"title" validate:"required"`
-	LastUpdatedBy     string     `json:"lastUpdatedBy,omitempty"`
-	LastUpdatedByTime time.Time  `json:"lastUpdatedByTime,omitempty"`
+	AlertID           *string             `json:"alertId" validate:"required"`
+	RuleID            *string             `json:"ruleId" validate:"required"`
+	RuleDisplayName   *string             `json:"ruleDisplayName,omitempty"`
+	RuleVersion       *string             `json:"ruleVersion" validate:"required"`
+	DedupString       *string             `json:"dedupString,omitempty"`
+	DeliveryResponses []*DeliveryResponse `json:"deliveryResponses" validate:"required"`
+	LogTypes          []string            `json:"logTypes" validate:"required"`
+	CreationTime      *time.Time          `json:"creationTime" validate:"required"`
+	UpdateTime        *time.Time          `json:"updateTime" validate:"required"`
+	EventsMatched     *int                `json:"eventsMatched" validate:"required"`
+	Severity          *string             `json:"severity" validate:"required"`
+	Status            string              `json:"status,omitempty"`
+	Title             *string             `json:"title" validate:"required"`
+	LastUpdatedBy     string              `json:"lastUpdatedBy,omitempty"`
+	LastUpdatedByTime time.Time           `json:"lastUpdatedByTime,omitempty"`
 }
 
 // Alert contains the details of an alert

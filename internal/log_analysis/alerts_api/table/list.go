@@ -228,6 +228,7 @@ func (table *AlertsTable) applyFilters(builder *expression.Builder, input *model
 	filterBySeverity(&filter, input)
 	filterByStatus(&filter, input)
 	filterByEventCount(&filter, input)
+	filterByLogType(&filter, input)
 
 	// Finally, overwrite the existing condition filter on the builder
 	*builder = builder.WithFilter(filter)
@@ -283,9 +284,24 @@ func filterByStatus(filter *expression.ConditionBuilder, input *models.ListAlert
 	}
 }
 
-// filterByTitleContains - fiters by a name that contains a string (case insensitive)
+// filterByLogType - filters by list of log types
+func filterByLogType(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
+	if len(input.LogTypes) > 0 {
+		// Start with the first known key
+		multiFilter := expression.Name(LogTypesKey).Contains(input.LogTypes[0])
+
+		// Then add or conditions starting at a new slice from the second index
+		for _, logType := range input.LogTypes[1:] {
+			multiFilter = multiFilter.Or(expression.Name(LogTypesKey).Contains(logType))
+		}
+
+		*filter = filter.And(multiFilter)
+	}
+}
+
+// filterByTitleContains - filters by a name that contains a string (case insensitive)
 func filterByTitleContains(input *models.ListAlertsInput, alert *AlertItem) *AlertItem {
-	if alert != nil && input.NameContains != nil && !strings.Contains(
+	if alert != nil && input.NameContains != nil && alert.Title != nil && !strings.Contains(
 		strings.ToLower(*alert.Title),
 		strings.ToLower(*input.NameContains),
 	) {
@@ -295,7 +311,7 @@ func filterByTitleContains(input *models.ListAlertsInput, alert *AlertItem) *Ale
 	return alert
 }
 
-// filterByRuleIDContains - fiters by a name that contains a string (case insensitive)
+// filterByRuleIDContains - filters by a name that contains a string (case insensitive)
 func filterByRuleIDContains(input *models.ListAlertsInput, alert *AlertItem) *AlertItem {
 	if alert != nil && input.RuleIDContains != nil && !strings.Contains(
 		strings.ToLower(alert.RuleID),
@@ -307,7 +323,7 @@ func filterByRuleIDContains(input *models.ListAlertsInput, alert *AlertItem) *Al
 	return alert
 }
 
-// filterByAlertIDContains - fiters by a name that contains a string (case insensitive)
+// filterByAlertIDContains - filters by a name that contains a string (case insensitive)
 func filterByAlertIDContains(input *models.ListAlertsInput, alert *AlertItem) *AlertItem {
 	if alert != nil && input.AlertIDContains != nil && !strings.Contains(
 		strings.ToLower(alert.AlertID),
@@ -319,7 +335,7 @@ func filterByAlertIDContains(input *models.ListAlertsInput, alert *AlertItem) *A
 	return alert
 }
 
-// filterByEventCount - fiters by an eventCount defined by a range of two numbers
+// filterByEventCount - filters by an eventCount defined by a range of two numbers
 func filterByEventCount(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
 	// We are allowing either Min -or- Max to work together or independently
 	if input.EventCountMax != nil && input.EventCountMin != nil {

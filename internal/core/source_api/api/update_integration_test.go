@@ -83,12 +83,12 @@ func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 	mockClient.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
 
 	// create the tables
-	mockGlue.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, nil).Twice()
+	mockGlue.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, nil).Times(3)
 	// create/replace the view
 	mockGlue.On("GetTable", mock.Anything).Return(&glue.GetTableOutput{}, nil).Times(len(registry.AvailableLogTypes()))
 	mockAthena.On("StartQueryExecution", mock.Anything).Return(&athena.StartQueryExecutionOutput{
 		QueryExecutionId: aws.String("test-query-1234"),
-	}, nil).Twice()
+	}, nil).Times(3)
 	mockAthena.On("GetQueryExecution", mock.Anything).Return(&athena.GetQueryExecutionOutput{
 		QueryExecution: &athena.QueryExecution{
 			QueryExecutionId: aws.String("test-query-1234"),
@@ -96,8 +96,8 @@ func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 				State: aws.String(athena.QueryExecutionStateSucceeded),
 			},
 		},
-	}, nil).Twice()
-	mockAthena.On("GetQueryResults", mock.Anything).Return(&athena.GetQueryResultsOutput{}, nil).Twice()
+	}, nil).Times(3)
+	mockAthena.On("GetQueryResults", mock.Anything).Return(&athena.GetQueryResultsOutput{}, nil).Times(3)
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
 		S3Bucket: "test-bucket-1",

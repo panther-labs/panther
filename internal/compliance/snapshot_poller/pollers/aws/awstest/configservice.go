@@ -94,7 +94,7 @@ var (
 )
 
 // SetupMockConfigService is used to override the ConfigService client initializer
-func SetupMockConfigService(sess *session.Session, cfg *aws.Config) interface{} {
+func SetupMockConfigService(_ *session.Session, _ *aws.Config) interface{} {
 	return MockConfigServiceForSetup
 }
 

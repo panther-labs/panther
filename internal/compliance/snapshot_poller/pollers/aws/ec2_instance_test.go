@@ -22,6 +22,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -32,41 +33,66 @@ import (
 func TestEC2DescribeInstances(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2Svc([]string{"DescribeInstancesPages"})
 
-	out, err := describeInstances(mockSvc)
+	out, marker, err := describeInstances(mockSvc, nil)
 	require.NoError(t, err)
+	assert.Nil(t, marker)
 	assert.NotEmpty(t, out)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestEc2InstanceListIterator(t *testing.T) {
+	var instances []*ec2.Instance
+	var marker *string
+
+	cont := ec2InstanceIterator(awstest.ExampleDescribeInstancesOutput, &instances, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, instances, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = ec2InstanceIterator(awstest.ExampleDescribeInstancesOutputContinue, &instances, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, instances, 1+i*2)
+	}
+
+	cont = ec2InstanceIterator(awstest.ExampleDescribeInstancesOutputContinue, &instances, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, instances, 101)
 }
 
 func TestEC2DescribeInstancesError(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2SvcError([]string{"DescribeInstancesPages"})
 
-	out, err := describeInstances(mockSvc)
+	out, marker, err := describeInstances(mockSvc, nil)
 	require.Error(t, err)
+	assert.Nil(t, marker)
 	assert.Nil(t, out)
 }
 
 func TestEC2BuildInstanceSnapshot(t *testing.T) {
-	mockSvc := awstest.BuildMockEC2SvcAll()
-
-	ec2Snapshot := buildEc2InstanceSnapshot(mockSvc, awstest.ExampleInstance)
+	ec2Snapshot := buildEc2InstanceSnapshot(awstest.ExampleInstance)
 	assert.NotEmpty(t, ec2Snapshot.SecurityGroups)
 	assert.NotEmpty(t, ec2Snapshot.BlockDeviceMappings)
 }
 
 func TestEC2PollInstances(t *testing.T) {
+	resetCache()
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAll()
 
 	EC2ClientFunc = awstest.SetupMockEC2
 
-	resources, err := PollEc2Instances(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollEc2Instances(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
 	require.NoError(t, err)
+	assert.Nil(t, marker)
 	assert.Regexp(
 		t,
 		regexp.MustCompile(`arn:aws:ec2:.*:123456789012:instance/instance-aabbcc123`),
@@ -76,18 +102,20 @@ func TestEC2PollInstances(t *testing.T) {
 }
 
 func TestEC2PollInstancesError(t *testing.T) {
+	resetCache()
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAllError()
 
 	EC2ClientFunc = awstest.SetupMockEC2
 
-	resources, err := PollEc2Instances(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollEc2Instances(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
 	require.Error(t, err)
+	assert.Nil(t, marker)
 	assert.Empty(t, resources)
 }

@@ -21,7 +21,7 @@ from typing import Any, Dict, Optional, List
 
 # pylint: disable=too-many-instance-attributes
 @dataclass
-class EventMatch:
+class EngineResult:
     """Represents an event that matched a rule"""
     rule_id: str
     rule_version: str
@@ -29,6 +29,8 @@ class EventMatch:
     dedup: str
     dedup_period_mins: int
     event: Dict[str, Any]
+    # error_message will be populated only if the rule threw an exception
+    error_message: Optional[str] = None
     rule_tags: List[str] = field(default_factory=list)
     rule_reports: Dict[str, List[str]] = field(default_factory=dict)
     title: Optional[str] = None
@@ -48,6 +50,7 @@ class OutputGroupingKey:
     rule_id: str
     log_type: str
     dedup: str
+    is_rule_error: bool = False
 
     def table_name(self) -> str:
         """ Output the name of the Glue table name for this log type"""

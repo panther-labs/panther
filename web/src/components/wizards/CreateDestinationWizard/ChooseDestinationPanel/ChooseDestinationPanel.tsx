@@ -17,8 +17,9 @@
  */
 
 import React from 'react';
-import { SimpleGrid } from 'pouncejs';
+import { Box, SimpleGrid } from 'pouncejs';
 import { DESTINATIONS } from 'Source/constants';
+import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
 import { useWizardContext, WizardPanel } from 'Components/Wizard';
 import DestinationCard from './DestinationCard';
 import { WizardData } from '../CreateDestinationWizard';
@@ -28,7 +29,7 @@ const destinationConfigs = Object.values(DESTINATIONS);
 export const ChooseDestinationPanel: React.FC = () => {
   const { goToNextStep, setData } = useWizardContext<WizardData>();
   return (
-    <React.Fragment>
+    <Box maxWidth={700} mx="auto">
       <WizardPanel.Heading
         title="Select an Alert Destination"
         subtitle="Add a new destination below to deliver alerts to a specific application for further triage"
@@ -40,13 +41,14 @@ export const ChooseDestinationPanel: React.FC = () => {
             logo={destinationConfig.logo}
             title={destinationConfig.title}
             onClick={() => {
+              trackEvent({ event: EventEnum.PickedDestination, src: SrcEnum.Destinations, ctx: destinationConfig.type }); // prettier-ignore
               setData({ selectedDestinationType: destinationConfig.type });
               goToNextStep();
             }}
           />
         ))}
       </SimpleGrid>
-    </React.Fragment>
+    </Box>
   );
 };
 

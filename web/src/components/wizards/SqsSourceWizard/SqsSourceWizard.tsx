@@ -17,19 +17,17 @@
  */
 
 import React from 'react';
-import { LOG_TYPES } from 'Source/constants';
 import { Form, Formik } from 'formik';
 import * as Yup from 'yup';
 import { FetchResult } from '@apollo/client';
-import { Wizard, WizardPanel } from 'Components/Wizard';
+import { Wizard } from 'Components/Wizard';
 import { yupIntegrationLabelValidation } from 'Helpers/utils';
-import SuccessPanel from './SuccessPanel';
 import SqsSourceConfigurationPanel from './SqsSourceConfigurationPanel';
+import ValidationPanel from './ValidationPanel';
 
 interface SqsLogSourceWizardProps {
   initialValues: SqsLogSourceWizardValues;
   onSubmit: (values: SqsLogSourceWizardValues) => Promise<FetchResult<any>>;
-  externalErrorMessage?: string;
 }
 
 export interface SqsLogSourceWizardValues {
@@ -44,67 +42,29 @@ export interface SqsLogSourceWizardValues {
 
 const validationSchema = Yup.object().shape<SqsLogSourceWizardValues>({
   integrationLabel: yupIntegrationLabelValidation,
-  logTypes: Yup.array()
-    .of(Yup.string().oneOf((LOG_TYPES as unknown) as string[]))
-    .required(),
+  logTypes: Yup.array().of(Yup.string()).required(),
   allowedPrincipalArns: Yup.array().of(Yup.string()),
   allowedSourceArns: Yup.array().of(Yup.string()),
 });
 
-const initialStatus = {};
-
-const SqsSourceWizard: React.FC<SqsLogSourceWizardProps> = ({
-  initialValues,
-  onSubmit,
-  externalErrorMessage,
-}) => {
+const SqsSourceWizard: React.FC<SqsLogSourceWizardProps> = ({ initialValues, onSubmit }) => {
   return (
     <Formik<SqsLogSourceWizardValues>
       enableReinitialize
       initialValues={initialValues}
-      initialStatus={initialStatus}
       validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
-      {({ values, isValid, dirty, status, setStatus }) => {
-        // We want to reset the error message whenever the user goes back to a previous screen.
-        // That's why we handle it through status in order to manipulate it internally
-        React.useEffect(() => {
-          setStatus({
-            ...status,
-            errorMessage: externalErrorMessage,
-          });
-        }, [externalErrorMessage]);
-
-        return (
-          <Form>
-            <Wizard>
-              <Wizard.Step title="Configure">
-                <WizardPanel>
-                  <SqsSourceConfigurationPanel />
-                  <WizardPanel.Actions>
-                    <WizardPanel.ActionNext
-                      disabled={
-                        (!values.logTypes.length && !values.integrationLabel) || !isValid || !dirty
-                      }
-                    >
-                      Continue Setup
-                    </WizardPanel.ActionNext>
-                  </WizardPanel.Actions>
-                </WizardPanel>
-              </Wizard.Step>
-              <Wizard.Step title="Done">
-                <WizardPanel>
-                  <SuccessPanel />
-                  <WizardPanel.Actions>
-                    <WizardPanel.ActionPrev />
-                  </WizardPanel.Actions>
-                </WizardPanel>
-              </Wizard.Step>
-            </Wizard>
-          </Form>
-        );
-      }}
+      <Form>
+        <Wizard>
+          <Wizard.Step title="Configure">
+            <SqsSourceConfigurationPanel />
+          </Wizard.Step>
+          <Wizard.Step title="Done">
+            <ValidationPanel />
+          </Wizard.Step>
+        </Wizard>
+      </Form>
     </Formik>
   );
 };

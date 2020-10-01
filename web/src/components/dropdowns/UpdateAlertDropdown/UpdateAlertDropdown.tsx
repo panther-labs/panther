@@ -29,7 +29,7 @@ import {
   IconButton,
 } from 'pouncejs';
 import { AlertStatusesEnum } from 'Generated/schema';
-import AlertStatusBadge from 'Components/AlertStatusBadge';
+import AlertStatusBadge from 'Components/badges/AlertStatusBadge';
 import { extractErrorMessage, formatDatetime, getUserDisplayName, capitalize } from 'Helpers/utils';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 import { useListUsers } from 'Pages/Users/graphql/listUsers.generated';
@@ -94,7 +94,12 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
     onCompleted: data => {
       pushSnackbar({
         variant: 'success',
-        title: `Alert set to ${capitalize(data.updateAlertStatus.status.toLowerCase())}`,
+        title: `Alert set to ${capitalize(
+          (data.updateAlertStatus.status === AlertStatusesEnum.Closed
+            ? 'INVALID'
+            : data.updateAlertStatus.status
+          ).toLowerCase()
+        )}`,
       });
     },
     onError: error => {
@@ -142,7 +147,7 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
               }
             >
               <Flex minWidth={85} spacing={2} justify="space-between" align="center">
-                <Box>{statusKey}</Box>
+                <Box>{statusKey === 'Closed' ? 'Invalid' : statusKey}</Box>
                 {alert.status === statusVal && <Icon size="x-small" type="check" />}
               </Flex>
             </DropdownItem>

@@ -22,13 +22,14 @@ import GenerateFiltersGroup from 'Components/utils/GenerateFiltersGroup';
 import { capitalize, formatTime } from 'Helpers/utils';
 import FormikTextInput from 'Components/fields/TextInput';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
-import { Box, Button, Card, Collapse, Flex } from 'pouncejs';
+import { Box, Button, Card, Collapse, Flex, useSnackbar } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import isEmpty from 'lodash/isEmpty';
 import isNumber from 'lodash/isNumber';
 import pick from 'lodash/pick';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import Breadcrumbs from 'Components/Breadcrumbs';
+import { useListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
 
 const severityOptions = Object.values(SeverityEnum);
 const statusOptions = Object.values(AlertStatusesEnum);
@@ -48,8 +49,18 @@ export const filters = {
     props: {
       label: 'Status',
       items: statusOptions,
-      itemToString: (status: AlertStatusesEnum) => capitalize(status.toLowerCase()),
+      itemToString: (status: AlertStatusesEnum) =>
+        capitalize((status === AlertStatusesEnum.Closed ? 'INVALID' : status).toLowerCase()),
       placeholder: 'Choose a status...',
+    },
+  },
+  logTypes: {
+    component: FormikMultiCombobox,
+    props: {
+      searchable: true,
+      items: [],
+      label: 'Log Types',
+      placeholder: 'Start typing logs...',
     },
   },
   nameContains: {
@@ -125,6 +136,7 @@ export type ListAlertsFiltersValues = Pick<
   ListAlertsInput,
   | 'severity'
   | 'status'
+  | 'logTypes'
   | 'nameContains'
   | 'createdAtAfter'
   | 'createdAtBefore'
@@ -171,6 +183,11 @@ const ListAlertsActions: React.FC<ListAlertsActionsProps> = ({ showActions }) =>
     ListAlertsInput
   >();
 
+  const { pushSnackbar } = useSnackbar();
+  const { data } = useListAvailableLogTypes({
+    onError: () => pushSnackbar({ title: "Couldn't fetch your available log types" }),
+  });
+
   // Get all of the keys we can filter by
   const filterKeys = Object.keys(filters) as (keyof ListAlertsInput)[];
   // Define a partial which will filter out URL params against our keys
@@ -193,6 +210,9 @@ const ListAlertsActions: React.FC<ListAlertsActionsProps> = ({ showActions }) =>
     () => preProcessDate(pick(requestParams, filterKeys) as ListAlertsFiltersValues),
     [requestParams]
   );
+
+  // FIXME: I know this sucks, but we plan to refactor all this logic in the upcoming release
+  filters.logTypes.props.items = data?.listAvailableLogTypes.logTypes ?? [];
 
   return (
     <React.Fragment>

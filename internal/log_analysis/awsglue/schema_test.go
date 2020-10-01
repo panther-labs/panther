@@ -26,6 +26,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
 type TestCustomSimpleType int
@@ -127,9 +129,10 @@ func TestInferJsonColumns(t *testing.T) {
 		StructField       TestStruct   `description:"test field"`
 		NestedStructField NestedStruct `description:"test field"`
 
-		CustomTypeField   TestCustomSimpleType `description:"test field"`
-		CustomSliceField  TestCustomSliceType  `description:"test field"`
-		CustomStructField TestCustomStructType `description:"test field"`
+		CustomTypeField        TestCustomSimpleType   `description:"test field"`
+		SliceOfCustomTypeField []TestCustomSimpleType `description:"test field"`
+		CustomSliceField       TestCustomSliceType    `description:"test field"`
+		CustomStructField      TestCustomStructType   `description:"test field"`
 	}{
 		BoolField: true,
 
@@ -172,6 +175,7 @@ func TestInferJsonColumns(t *testing.T) {
 		NestedStructField: NestedStruct{
 			C: &TestStruct{}, // test with ptrs
 		},
+		SliceOfCustomTypeField: []TestCustomSimpleType{},
 	}
 
 	// adjust for native int expected results
@@ -228,6 +232,7 @@ func TestInferJsonColumns(t *testing.T) {
 		{Name: "StructField", Type: "struct<Field1:string,Field2:int,at_sign_remap:string>", Comment: "test field"},
 		{Name: "NestedStructField", Type: "struct<InheritedField:string,A:struct<Field1:string,Field2:int,at_sign_remap:string>,B:struct<Field1:string,Field2:int,at_sign_remap:string>,C:struct<Field1:string,Field2:int,at_sign_remap:string>>", Comment: "test field"}, // nolint
 		{Name: "CustomTypeField", Type: "foo", Comment: "test field"},
+		{Name: "SliceOfCustomTypeField", Type: "array<foo>", Comment: "test field"},
 		{Name: "CustomSliceField", Type: "baz", Comment: "test field"},
 		{Name: "CustomStructField", Type: "bar", Comment: "test field"},
 	}
@@ -277,6 +282,21 @@ func TestComposeStructs(t *testing.T) {
 		{Name: "Foo", Type: "string", Comment: "this is Foo field and it is awesome"},
 		{Name: "at_sign_remap", Type: "string", Comment: "this is Remap field and it's naughty"},
 		{Name: "Bar", Type: "string", Comment: "test field"},
+	}
+	expectedStructFieldNames := []string{}
+	require.Equal(t, expectedColumns, cols)
+	require.Equal(t, expectedStructFieldNames, structFieldNames)
+}
+
+func TestInferJSONColumns_MapToRawMessage(t *testing.T) {
+	type Struct struct {
+		Map map[string]pantherlog.RawMessage `description:"some description"`
+	}
+
+	cols, structFieldNames := InferJSONColumns(Struct{}, GlueMappings...)
+
+	expectedColumns := []Column{
+		{Name: "Map", Type: MapOf("string", "string"), Comment: "some description"},
 	}
 	expectedStructFieldNames := []string{}
 	require.Equal(t, expectedColumns, cols)

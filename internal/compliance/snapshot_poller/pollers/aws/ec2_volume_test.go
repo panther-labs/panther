@@ -21,6 +21,7 @@ package aws
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -31,30 +32,59 @@ import (
 func TestEC2DescribeVolumes(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2Svc([]string{"DescribeVolumesPages"})
 
-	out := describeVolumes(mockSvc)
+	out, marker, err := describeVolumes(mockSvc, nil)
 	assert.NotEmpty(t, out)
+	assert.Nil(t, marker)
+	assert.NoError(t, err)
+}
+
+// Test the iterator works on consecutive pages but stops at max page size
+func TestEc2VolumeListIterator(t *testing.T) {
+	var volumes []*ec2.Volume
+	var marker *string
+
+	cont := ec2VolumeIterator(awstest.ExampleDescribeVolumesOutput, &volumes, &marker)
+	assert.True(t, cont)
+	assert.Nil(t, marker)
+	assert.Len(t, volumes, 1)
+
+	for i := 1; i < 50; i++ {
+		cont = ec2VolumeIterator(awstest.ExampleDescribeVolumesOutputContinue, &volumes, &marker)
+		assert.True(t, cont)
+		assert.NotNil(t, marker)
+		assert.Len(t, volumes, 1+i*2)
+	}
+
+	cont = ec2VolumeIterator(awstest.ExampleDescribeVolumesOutputContinue, &volumes, &marker)
+	assert.False(t, cont)
+	assert.NotNil(t, marker)
+	assert.Len(t, volumes, 101)
 }
 
 func TestEC2DescribeVolumesError(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2SvcError([]string{"DescribeVolumesPages"})
 
-	out := describeVolumes(mockSvc)
+	out, marker, err := describeVolumes(mockSvc, nil)
 	assert.Nil(t, out)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
 }
 
 func TestEC2DescribeSnapshots(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2Svc([]string{"DescribeSnapshotsPages"})
 
-	out := describeSnapshots(mockSvc, awstest.ExampleVolumeId)
+	out, err := describeSnapshots(mockSvc, awstest.ExampleVolumeId)
 	assert.NotEmpty(t, out)
 	assert.Len(t, out, 1)
+	assert.NoError(t, err)
 }
 
 func TestEC2DescribeSnapshotsError(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2SvcError([]string{"DescribeSnapshotsPages"})
 
-	out := describeSnapshots(mockSvc, awstest.ExampleVolumeId)
+	out, err := describeSnapshots(mockSvc, awstest.ExampleVolumeId)
 	assert.Nil(t, out)
+	assert.Error(t, err)
 }
 
 func TestEC2DescribeSnapshotAttribute(t *testing.T) {
@@ -77,47 +107,53 @@ func TestEC2DescribeSnapshotAttributeError(t *testing.T) {
 func TestBuildEc2VolumeSnapshot(t *testing.T) {
 	mockSvc := awstest.BuildMockEC2SvcAll()
 
-	volumeSnapshot := buildEc2VolumeSnapshot(
+	volumeSnapshot, err := buildEc2VolumeSnapshot(
 		mockSvc,
 		awstest.ExampleDescribeVolumesOutput.Volumes[0],
 	)
 
+	require.NotNil(t, volumeSnapshot)
+	assert.NoError(t, err)
 	assert.NotNil(t, volumeSnapshot.AvailabilityZone)
 	assert.NotEmpty(t, volumeSnapshot.Attachments)
 }
 
 func TestEc2VolumePoller(t *testing.T) {
+	resetCache()
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAll()
 
 	EC2ClientFunc = awstest.SetupMockEC2
 
-	resources, err := PollEc2Volumes(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollEc2Volumes(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.NotEmpty(t, resources)
+	assert.Nil(t, marker)
 }
 
 func TestEc2VolumePollerError(t *testing.T) {
+	resetCache()
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAllError()
 
 	EC2ClientFunc = awstest.SetupMockEC2
 
-	resources, err := PollEc2Volumes(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollEc2Volumes(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
+	assert.Error(t, err)
 	for _, event := range resources {
 		assert.Nil(t, event.Attributes)
 	}
+	assert.Nil(t, marker)
 }

@@ -43,18 +43,14 @@ var (
 
 // PutIntegration adds a set of new integrations in a batch.
 func (api API) PutIntegration(input *models.PutIntegrationInput) (newIntegration *models.SourceIntegration, err error) {
-	defer func() {
-		if err != nil {
-			zap.L().Error("failed to put integration", zap.Error(err))
-		}
-	}()
-
 	if err := api.validateIntegration(input); err != nil {
+		zap.L().Error("failed to put integration", zap.Error(err))
 		return nil, err
 	}
 
 	// Filter out existing integrations
 	if err := api.integrationAlreadyExists(input); err != nil {
+		zap.L().Error("failed to put integration", zap.Error(err))
 		return nil, err
 	}
 
@@ -66,25 +62,26 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (newIntegration
 	// First creating table - this action is idempotent. In case we succeed here and
 	// fail at a later stage, in case of retry this will succeed again.
 	if err = createTables(newIntegration); err != nil {
-		err = errors.Wrap(err, "Failed to create Glue tables")
+		zap.L().Error("failed to create Glue tables", zap.Error(err))
 		return nil, putIntegrationInternalError
 	}
 
 	// Try to setupExternalResources
 	if err := setupExternalResources(newIntegration); err != nil {
-		return nil, err
+		zap.L().Error("failed to setup external integration", zap.Error(err))
+		return nil, putIntegrationInternalError
 	}
 
 	// Write to DynamoDB
 	if err = dynamoClient.PutItem(item); err != nil {
-		err = errors.Wrap(err, "Failed to store source integration in DDB")
+		zap.L().Error("failed to store source integration in DDB", zap.Error(err))
 		return nil, putIntegrationInternalError
 	}
 
 	if input.IntegrationType == models.IntegrationTypeAWSScan {
 		err = api.FullScan(&models.FullScanInput{Integrations: []*models.SourceIntegrationMetadata{&newIntegration.SourceIntegrationMetadata}})
 		if err != nil {
-			err = errors.Wrap(err, "failed to trigger scanning of resources")
+			zap.L().Error("failed to trigger scanning of resources", zap.Error(err))
 			return nil, putIntegrationInternalError
 		}
 	}
@@ -135,7 +132,7 @@ func (api API) validateIntegration(input *models.PutIntegrationInput) error {
 			zap.String("reason", reason),
 			zap.Any("input", input))
 		return &genericapi.InvalidInputError{
-			Message: fmt.Sprintf("source %s did not pass configuration check because of %s",
+			Message: fmt.Sprintf("Source %s did not pass configuration check. %s",
 				input.IntegrationLabel, reason),
 		}
 	}
@@ -273,15 +270,11 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 	}
 }
 
-func createTables(integration *models.SourceIntegration) (err error) {
-	switch integration.IntegrationType {
-	case models.IntegrationTypeAWS3:
-		err = addGlueTables(integration.LogTypes)
-	case models.IntegrationTypeSqs:
-		err = addGlueTables(integration.SqsConfig.LogTypes)
-	}
-	if err != nil {
-		return errors.Wrap(err, "failed to create Glue tables")
+func createTables(integration *models.SourceIntegration) error {
+	if integration.IsLogAnalysisIntegration() {
+		if err := addGlueTables(integration.RequiredLogTypes()); err != nil {
+			return errors.Wrap(err, "failed to create Glue tables")
+		}
 	}
 	return nil
 }

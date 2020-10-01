@@ -66,9 +66,10 @@ type ResourcePollerInput struct {
 	AuthSource          *string
 	AuthSourceParsedARN arn.ARN
 	IntegrationID       *string
-	Regions             []*string
+	Region              *string
 	Timestamp           *strfmt.DateTime
+	NextPageToken       *string
 }
 
 // ResourcePoller represents a function to poll a specific AWS resource.
-type ResourcePoller func(input *ResourcePollerInput) ([]*resourcesapimodels.AddResourceEntry, error)
+type ResourcePoller func(input *ResourcePollerInput) ([]*resourcesapimodels.AddResourceEntry, *string, error)

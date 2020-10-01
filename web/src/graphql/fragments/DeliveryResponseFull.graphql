@@ -1,0 +1,7 @@
+fragment DeliveryResponseFull on DeliveryResponse {
+  outputId
+  statusCode
+  message
+  success
+  dispatchedAt
+}

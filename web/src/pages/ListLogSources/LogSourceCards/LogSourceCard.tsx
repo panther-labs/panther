@@ -23,8 +23,8 @@ import GenericItemCard from 'Components/GenericItemCard';
 import { LogIntegration } from 'Generated/schema';
 import { PANTHER_USER_ID } from 'Source/constants';
 import urls from 'Source/urls';
+import SourceHealthBadge from 'Components/badges/SourceHealthBadge';
 import LogSourceCardOptions from './LogSourceCardOptions';
-import LogSourceCardHealthBadge from './LogSourceCardHealthBadge';
 
 interface LogSourceCardProps {
   source: LogIntegration;
@@ -34,6 +34,33 @@ interface LogSourceCardProps {
 
 const LogSourceCard: React.FC<LogSourceCardProps> = ({ source, children, logo }) => {
   const isCreatedByPanther = source.createdBy === PANTHER_USER_ID;
+  const { health: sourceHealth } = source;
+
+  const sourceType = React.useMemo(() => {
+    switch (source.__typename) {
+      case 'SqsLogSourceIntegration':
+        return 'sqs';
+      case 'S3LogIntegration':
+        return 's3';
+      default:
+        throw new Error(`Unknown source health item`);
+    }
+  }, [source]);
+
+  const healthMetrics = React.useMemo(() => {
+    switch (sourceHealth.__typename) {
+      case 'SqsLogIntegrationHealth':
+        return [sourceHealth.sqsStatus];
+      case 'S3LogIntegrationHealth':
+        return [
+          sourceHealth.processingRoleStatus,
+          sourceHealth.s3BucketStatus,
+          sourceHealth.kmsKeyStatus,
+        ];
+      default:
+        throw new Error(`Unknown source health item`);
+    }
+  }, [sourceHealth]);
 
   return (
     <GenericItemCard>
@@ -42,7 +69,7 @@ const LogSourceCard: React.FC<LogSourceCardProps> = ({ source, children, logo })
       <GenericItemCard.Body>
         <Link
           as={RRLink}
-          to={urls.logAnalysis.sources.edit(source.integrationId, 'sqs')}
+          to={urls.logAnalysis.sources.edit(source.integrationId, sourceType)}
           cursor="pointer"
         >
           <GenericItemCard.Heading>{source.integrationLabel}</GenericItemCard.Heading>
@@ -50,7 +77,7 @@ const LogSourceCard: React.FC<LogSourceCardProps> = ({ source, children, logo })
         <GenericItemCard.ValuesGroup>
           {children}
           <Flex ml="auto" mr={0} align="flex-end">
-            <LogSourceCardHealthBadge logSourceHealth={source.health} />
+            <SourceHealthBadge healthMetrics={healthMetrics} />
           </Flex>
         </GenericItemCard.ValuesGroup>
       </GenericItemCard.Body>

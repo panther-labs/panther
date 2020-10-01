@@ -133,7 +133,8 @@ func testCloudTrailBuild(t *testing.T) {
 		},
 	}
 
-	trails := buildCloudTrails(mockSvc, awstest.ExampleTrail.HomeRegion)
+	trails, err := buildCloudTrails(mockSvc, awstest.ExampleTrail.HomeRegion)
+	assert.NoError(t, err)
 	assert.Equal(t, expected, trails)
 }
 
@@ -143,31 +144,39 @@ func TestCloudTrailBuildEmpty(t *testing.T) {
 		On("DescribeTrails", mock.Anything).
 		Return(&cloudtrail.DescribeTrailsOutput{}, nil)
 
-	trails := buildCloudTrails(mockSvc, awstest.ExampleTrail.HomeRegion)
+	trails, err := buildCloudTrails(mockSvc, awstest.ExampleTrail.HomeRegion)
+	assert.NoError(t, err)
 	assert.Empty(t, trails)
 }
 
 func TestCloudTrailBuildError(t *testing.T) {
 	mockSvc := awstest.BuildMockCloudTrailSvcError([]string{"DescribeTrails"})
 
-	trails := buildCloudTrails(mockSvc, awstest.ExampleTrail.HomeRegion)
+	trails, err := buildCloudTrails(mockSvc, awstest.ExampleTrail.HomeRegion)
+	assert.Error(t, err)
 	assert.Empty(t, trails)
+}
+
+func GetServiceRegionsTest(_ *awsmodels.ResourcePollerInput, _ string) (regions []*string, err error) {
+	return []*string{aws.String("us-west-2")}, nil
 }
 
 func TestCloudTrailPoller(t *testing.T) {
 	awstest.MockCloudTrailForSetup = awstest.BuildMockCloudTrailSvcAll()
 
 	CloudTrailClientFunc = awstest.SetupMockCloudTrail
+	GetServiceRegionsFunc = GetServiceRegionsTest
 
-	resources, err := PollCloudTrails(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollCloudTrails(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
 	require.NoError(t, err)
+	assert.Nil(t, marker)
 	assert.NotEmpty(t, resources)
 
 	assert.IsType(t, &awsmodels.CloudTrail{}, resources[0].Attributes)
@@ -179,23 +188,26 @@ func TestCloudTrailPoller(t *testing.T) {
 }
 
 func TestCloudTrailPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockCloudTrailForSetup = awstest.BuildMockCloudTrailSvcError([]string{"DescribeTrails"})
 
 	CloudTrailClientFunc = awstest.SetupMockCloudTrail
 
-	resources, err := PollCloudTrails(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollCloudTrails(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
-	assert.Len(t, resources, 1)
+	require.Error(t, err)
+	assert.Nil(t, marker)
+	assert.Len(t, resources, 0)
 }
 
 func TestCloudTrailPollerPartialError(t *testing.T) {
+	resetCache()
 	mockCloudTrailSvc := awstest.BuildMockCloudTrailSvc([]string{
 		"DescribeTrails",
 		"GetTrailStatus",
@@ -213,26 +225,21 @@ func TestCloudTrailPollerPartialError(t *testing.T) {
 	CloudTrailClientFunc = awstest.SetupMockCloudTrail
 	S3ClientFunc = awstest.SetupMockS3
 
-	resources, err := PollCloudTrails(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollCloudTrails(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
-	require.NoError(t, err)
-	// 1 event + meta
-	assert.Len(t, resources, 2)
-
-	snapshot, ok := resources[0].Attributes.(*awsmodels.CloudTrail)
-	require.True(t, ok)
-
-	assert.Nil(t, snapshot.EventSelectors)
-	assert.True(t, *snapshot.IncludeGlobalServiceEvents)
+	assert.Error(t, err)
+	assert.Nil(t, resources)
+	assert.Nil(t, marker)
 }
 
 func TestCloudTrailPollerEmpty(t *testing.T) {
+	resetCache()
 	mockCloudTrailSvc := &awstest.MockCloudTrail{}
 	mockCloudTrailSvc.
 		On("DescribeTrails", mock.Anything).
@@ -241,15 +248,16 @@ func TestCloudTrailPollerEmpty(t *testing.T) {
 
 	CloudTrailClientFunc = awstest.SetupMockCloudTrail
 
-	resources, err := PollCloudTrails(&awsmodels.ResourcePollerInput{
+	resources, marker, err := PollCloudTrails(&awsmodels.ResourcePollerInput{
 		AuthSource:          &awstest.ExampleAuthSource,
 		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
 		IntegrationID:       awstest.ExampleIntegrationID,
-		Regions:             awstest.ExampleRegions,
+		Region:              awstest.ExampleRegion,
 		Timestamp:           &awstest.ExampleTime,
 	})
 
 	require.NoError(t, err)
 	require.Len(t, resources, 1)
+	assert.Nil(t, marker)
 	assert.Len(t, resources[0].Attributes.(*awsmodels.CloudTrailMeta).Trails, 0)
 }

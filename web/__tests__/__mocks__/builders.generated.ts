@@ -40,10 +40,14 @@ import {
   DeletePolicyInputItem,
   DeleteRuleInput,
   DeleteRuleInputItem,
+  DeliverAlertInput,
+  DeliveryResponse,
   Destination,
   DestinationConfig,
   DestinationConfigInput,
   DestinationInput,
+  FloatSeries,
+  FloatSeriesData,
   GeneralSettings,
   GetAlertInput,
   GetComplianceIntegrationTemplateInput,
@@ -101,6 +105,7 @@ import {
   S3LogIntegrationHealth,
   ScannedResources,
   ScannedResourceStats,
+  SendTestAlertInput,
   Series,
   SeriesData,
   SingleValue,
@@ -247,11 +252,14 @@ export const buildAlertDetails = (overrides: Partial<AlertDetails> = {}): AlertD
     __typename: 'AlertDetails',
     alertId: 'alertId' in overrides ? overrides.alertId : '2c5aa76d-eb43-49f0-a65c-50e4daa756a4',
     creationTime: 'creationTime' in overrides ? overrides.creationTime : '2020-10-28T02:06:29.865Z',
+    deliveryResponses:
+      'deliveryResponses' in overrides ? overrides.deliveryResponses : [buildDeliveryResponse()],
     eventsMatched: 'eventsMatched' in overrides ? overrides.eventsMatched : 516,
     ruleId: 'ruleId' in overrides ? overrides.ruleId : '9ad2c6da-417d-414f-a3e5-7959acdeaa9e',
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
     status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Closed,
     title: 'title' in overrides ? overrides.title : 'Steel',
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Books'],
     lastUpdatedBy:
       'lastUpdatedBy' in overrides
         ? overrides.lastUpdatedBy
@@ -271,11 +279,14 @@ export const buildAlertSummary = (overrides: Partial<AlertSummary> = {}): AlertS
     __typename: 'AlertSummary',
     alertId: 'alertId' in overrides ? overrides.alertId : 'f67b8f04-5fac-404a-93a4-38db29f258ba',
     creationTime: 'creationTime' in overrides ? overrides.creationTime : '2020-08-08T12:15:31.121Z',
+    deliveryResponses:
+      'deliveryResponses' in overrides ? overrides.deliveryResponses : [buildDeliveryResponse()],
     eventsMatched: 'eventsMatched' in overrides ? overrides.eventsMatched : 670,
     ruleId: 'ruleId' in overrides ? overrides.ruleId : '6eb9c948-5a13-4955-bd91-b98801b55bed',
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Medium,
     status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Triaged,
     title: 'title' in overrides ? overrides.title : 'indexing',
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Costa Rica'],
     lastUpdatedBy:
       'lastUpdatedBy' in overrides
         ? overrides.lastUpdatedBy
@@ -439,6 +450,29 @@ export const buildDeleteRuleInputItem = (
   };
 };
 
+export const buildDeliverAlertInput = (
+  overrides: Partial<DeliverAlertInput> = {}
+): DeliverAlertInput => {
+  return {
+    alertId: 'alertId' in overrides ? overrides.alertId : '30b3fadd-7760-4b10-8f08-4d180b56cbc8',
+    outputIds:
+      'outputIds' in overrides ? overrides.outputIds : ['ce7260ff-2562-4f2d-b5db-362c013dec73'],
+  };
+};
+
+export const buildDeliveryResponse = (
+  overrides: Partial<DeliveryResponse> = {}
+): DeliveryResponse => {
+  return {
+    __typename: 'DeliveryResponse',
+    outputId: 'outputId' in overrides ? overrides.outputId : 'bb9f4174-594c-4dc0-9308-f4c28c0e29eb',
+    message: 'message' in overrides ? overrides.message : 'Delaware',
+    statusCode: 'statusCode' in overrides ? overrides.statusCode : 319,
+    success: 'success' in overrides ? overrides.success : true,
+    dispatchedAt: 'dispatchedAt' in overrides ? overrides.dispatchedAt : '2020-09-25T00:14:42.514Z',
+  };
+};
+
 export const buildDestination = (overrides: Partial<Destination> = {}): Destination => {
   return {
     __typename: 'Destination',
@@ -509,6 +543,22 @@ export const buildDestinationInput = (
   };
 };
 
+export const buildFloatSeries = (overrides: Partial<FloatSeries> = {}): FloatSeries => {
+  return {
+    __typename: 'FloatSeries',
+    label: 'label' in overrides ? overrides.label : 'functionalities',
+    values: 'values' in overrides ? overrides.values : [5.25],
+  };
+};
+
+export const buildFloatSeriesData = (overrides: Partial<FloatSeriesData> = {}): FloatSeriesData => {
+  return {
+    __typename: 'FloatSeriesData',
+    timestamps: 'timestamps' in overrides ? overrides.timestamps : ['2020-04-22T20:42:06.736Z'],
+    series: 'series' in overrides ? overrides.series : [buildFloatSeries()],
+  };
+};
+
 export const buildGeneralSettings = (overrides: Partial<GeneralSettings> = {}): GeneralSettings => {
   return {
     __typename: 'GeneralSettings',
@@ -516,6 +566,7 @@ export const buildGeneralSettings = (overrides: Partial<GeneralSettings> = {}): 
     email: 'email' in overrides ? overrides.email : 'tertiary',
     errorReportingConsent:
       'errorReportingConsent' in overrides ? overrides.errorReportingConsent : false,
+    analyticsConsent: 'analyticsConsent' in overrides ? overrides.analyticsConsent : true,
   };
 };
 
@@ -623,7 +674,8 @@ export const buildIntegrationItemHealthStatus = (
   return {
     __typename: 'IntegrationItemHealthStatus',
     healthy: 'healthy' in overrides ? overrides.healthy : false,
-    errorMessage: 'errorMessage' in overrides ? overrides.errorMessage : 'Nebraska',
+    message: 'message' in overrides ? overrides.message : 'Home Loan Account',
+    rawErrorMessage: 'rawErrorMessage' in overrides ? overrides.rawErrorMessage : 'Markets',
   };
 };
 
@@ -685,6 +737,7 @@ export const buildListAlertsInput = (overrides: Partial<ListAlertsInput> = {}): 
     status: 'status' in overrides ? overrides.status : [AlertStatusesEnum.Open],
     eventCountMin: 'eventCountMin' in overrides ? overrides.eventCountMin : 694,
     eventCountMax: 'eventCountMax' in overrides ? overrides.eventCountMax : 911,
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Awesome Wooden Mouse'],
     sortBy: 'sortBy' in overrides ? overrides.sortBy : ListAlertsSortFieldsEnum.CreatedAt,
     sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Descending,
   };
@@ -846,6 +899,7 @@ export const buildLogAnalysisMetricsResponse = (
     eventsProcessed: 'eventsProcessed' in overrides ? overrides.eventsProcessed : buildSeriesData(),
     alertsBySeverity:
       'alertsBySeverity' in overrides ? overrides.alertsBySeverity : buildSeriesData(),
+    eventsLatency: 'eventsLatency' in overrides ? overrides.eventsLatency : buildFloatSeriesData(),
     totalAlertsDelta:
       'totalAlertsDelta' in overrides ? overrides.totalAlertsDelta : [buildSingleValue()],
     fromDate: 'fromDate' in overrides ? overrides.fromDate : '2020-06-15T22:39:08.690Z',
@@ -1222,6 +1276,15 @@ export const buildScannedResourceStats = (
   };
 };
 
+export const buildSendTestAlertInput = (
+  overrides: Partial<SendTestAlertInput> = {}
+): SendTestAlertInput => {
+  return {
+    outputIds:
+      'outputIds' in overrides ? overrides.outputIds : ['900d0911-ac12-4720-a1a9-89d6f1995c9f'],
+  };
+};
+
 export const buildSeries = (overrides: Partial<Series> = {}): Series => {
   return {
     __typename: 'Series',
@@ -1407,6 +1470,7 @@ export const buildUpdateGeneralSettingsInput = (
     email: 'email' in overrides ? overrides.email : 'olive',
     errorReportingConsent:
       'errorReportingConsent' in overrides ? overrides.errorReportingConsent : true,
+    analyticsConsent: 'analyticsConsent' in overrides ? overrides.analyticsConsent : false,
   };
 };
 
@@ -1509,6 +1573,9 @@ export const buildUploadPoliciesResponse = (
     totalRules: 'totalRules' in overrides ? overrides.totalRules : 916,
     newRules: 'newRules' in overrides ? overrides.newRules : 898,
     modifiedRules: 'modifiedRules' in overrides ? overrides.modifiedRules : 463,
+    totalGlobals: 'totalGlobals' in overrides ? overrides.totalGlobals : 491,
+    newGlobals: 'newGlobals' in overrides ? overrides.newGlobals : 544,
+    modifiedGlobals: 'modifiedGlobals' in overrides ? overrides.modifiedGlobals : 197,
   };
 };
 

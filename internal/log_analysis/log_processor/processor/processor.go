@@ -21,19 +21,19 @@ package processor
 import (
 	"bufio"
 	"io"
-	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/metrics"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
@@ -58,7 +58,7 @@ var (
 // and forwarding the logs to the appropriate destination. Any errors will cause Lambda invocation to fail
 func Process(dataStreams chan *common.DataStream, destination destinations.Destination) error {
 	factory := func(r *common.DataStream) *Processor {
-		return NewProcessor(r, registry.Default())
+		return MustBuildProcessor(r, registry.Default())
 	}
 	return process(dataStreams, destination, factory)
 }
@@ -134,27 +134,22 @@ func (p *Processor) run(outputChan chan *parsers.Result) error {
 }
 
 func (p *Processor) processLogLine(line string, outputChan chan *parsers.Result) {
-	classificationResult := p.classifyLogLine(line)
-	if classificationResult.LogType == nil { // unable to classify, no error, keep parsing (best effort, will be logged)
+	result, err := p.classifier.Classify(line)
+	// A classifier returns an error when it cannot classify a non-empty log line
+	if err != nil {
+		// make easy to troubleshoot but do not add log line (even partial) to avoid leaking data into CW
+		p.operation.LogWarn(errors.New("failed to classify log line"),
+			zap.Uint64("lineNum", p.classifier.Stats().LogLineCount),
+			zap.String("sourceId", p.input.Source.IntegrationID),
+			zap.String("sourceLabel", p.input.Source.IntegrationLabel),
+			zap.String("s3Bucket", p.input.S3Bucket),
+			zap.String("s3ObjectKey", p.input.S3ObjectKey),
+		)
 		return
 	}
-	p.sendEvents(classificationResult, outputChan)
-}
-
-func (p *Processor) classifyLogLine(line string) *classification.ClassifierResult {
-	result := p.classifier.Classify(line)
-	if result.LogType == nil && len(strings.TrimSpace(line)) != 0 { // only if line is not empty do we log (often we get trailing \n's)
-		if p.input.Hints.S3 != nil { // make easy to troubleshoot but do not add log line (even partial) to avoid leaking data into CW
-			p.operation.LogWarn(errors.New("failed to classify log line"),
-				zap.Uint64("lineNum", p.classifier.Stats().LogLineCount),
-				zap.String("bucket", p.input.Hints.S3.Bucket),
-				zap.String("key", p.input.Hints.S3.Key))
-		}
+	if result == nil {
+		return
 	}
-	return result
-}
-
-func (p *Processor) sendEvents(result *classification.ClassifierResult, outputChan chan *parsers.Result) {
 	for _, event := range result.Events {
 		outputChan <- event
 	}
@@ -184,54 +179,40 @@ type Processor struct {
 	operation  *oplog.Operation
 }
 
-func NewProcessor(input *common.DataStream, registry *logtypes.Registry) *Processor {
-	entries := registry.Entries(input.LogTypes...)
-
-	parsers := make(map[string]parsers.Interface, len(entries))
-	for _, entry := range entries {
-		logType := entry.String()
-		parser, err := entry.NewParser(nil)
-		if err != nil {
-			panic(errors.Wrapf(err, "failed to create a parser for %q", logType))
-		}
-		parsers[logType] = newSourceFieldsParser(input.SourceID, input.SourceLabel, parser)
-	}
-
-	return &Processor{
-		input:      input,
-		classifier: classification.NewClassifier(parsers),
-		operation:  common.OpLogManager.Start(operationName),
-	}
-}
-
-func newSourceFieldsParser(id, label string, parser parsers.Interface) parsers.Interface {
-	return &sourceFieldsParser{
-		Interface:   parser,
-		SourceID:    id,
-		SourceLabel: label,
-	}
-}
-
-type sourceFieldsParser struct {
-	parsers.Interface
-	SourceID    string
-	SourceLabel string
-}
-
-func (p *sourceFieldsParser) ParseLog(log string) ([]*pantherlog.Result, error) {
-	results, err := p.Interface.ParseLog(log)
+func MustBuildProcessor(input *common.DataStream, registry *logtypes.Registry) *Processor {
+	proc, err := BuildProcessor(input, registry)
 	if err != nil {
-		return nil, err
+		zap.L().Error("invalid build log processor for source",
+			zap.String("sourceId", input.Source.IntegrationID),
+			zap.String("sourceLabel", input.Source.IntegrationLabel),
+			zap.Error(err))
+		panic(err)
 	}
-	for _, result := range results {
-		if result.EventIncludesPantherFields {
-			if event, ok := result.Event.(parsers.PantherSourceSetter); ok {
-				event.SetPantherSource(p.SourceID, p.SourceLabel)
-				continue
-			}
+	return proc
+}
+
+func BuildProcessor(input *common.DataStream, registry *logtypes.Registry) (*Processor, error) {
+	switch src := input.Source; src.IntegrationType {
+	case models.IntegrationTypeSqs:
+		return &Processor{
+			operation: common.OpLogManager.Start(operationName),
+			input:     input,
+			classifier: &sources.SQSClassifier{
+				Registry:   registry,
+				LoadSource: sources.LoadSource,
+			},
+		}, nil
+	case models.IntegrationTypeAWS3:
+		c, err := sources.BuildClassifier(src, registry)
+		if err != nil {
+			return nil, err
 		}
-		result.PantherSourceID = p.SourceID
-		result.PantherSourceLabel = p.SourceLabel
+		return &Processor{
+			operation:  common.OpLogManager.Start(operationName),
+			input:      input,
+			classifier: c,
+		}, nil
+	default:
+		return nil, errors.Errorf("invalid source type %s", src.IntegrationType)
 	}
-	return results, nil
 }

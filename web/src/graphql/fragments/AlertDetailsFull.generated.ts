@@ -18,6 +18,7 @@
 
 import * as Types from '../../../__generated__/schema';
 
+import { DeliveryResponseFull } from './DeliveryResponseFull.generated';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 
@@ -34,9 +35,10 @@ export type AlertDetailsFull = Pick<
   | 'dedupString'
   | 'severity'
   | 'status'
+  | 'logTypes'
   | 'lastUpdatedBy'
   | 'lastUpdatedByTime'
->;
+> & { deliveryResponses: Array<Types.Maybe<DeliveryResponseFull>> };
 
 export const AlertDetailsFull = gql`
   fragment AlertDetailsFull on AlertDetails {
@@ -44,6 +46,9 @@ export const AlertDetailsFull = gql`
     ruleId
     title
     creationTime
+    deliveryResponses {
+      ...DeliveryResponseFull
+    }
     eventsMatched
     updateTime
     eventsLastEvaluatedKey
@@ -51,7 +56,9 @@ export const AlertDetailsFull = gql`
     dedupString
     severity
     status
+    logTypes
     lastUpdatedBy
     lastUpdatedByTime
   }
+  ${DeliveryResponseFull}
 `;
