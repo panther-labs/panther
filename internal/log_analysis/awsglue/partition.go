@@ -68,7 +68,7 @@ func (gp *GluePartition) GetGlueTableMetadata() *GlueTableMetadata {
 }
 
 func GetPartitionPrefix(datatype models.DataType, logType string, timebin GlueTableTimebin, time time.Time) string {
-	return getTablePrefix(datatype, GetTableName(logType)) + timebin.PartitionS3PathFromTime(time)
+	return getTablePrefix(datatype, GetTableName(logType)) + timebin.PartitionPathS3(time)
 }
 
 func (gp *GluePartition) GetPartitionLocation() string {

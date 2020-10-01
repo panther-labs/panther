@@ -41,62 +41,21 @@ type UpdateGlueTablesProperties struct {
 	ProcessedDataBucket string `validate:"required"`
 }
 
-func customUpdateGlueTables(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
-	const resourceID = "custom:glue:update-tables"
+func customUpdateGlueTables(ctx context.Context, event cfn.Event) (string, map[string]interface{}, error) {
 	switch event.RequestType {
 	case cfn.RequestCreate, cfn.RequestUpdate:
+		// It's important to always return this physicalResourceID
+		const physicalResourceID = "custom:glue:update-tables"
 		var props UpdateGlueTablesProperties
 		if err := parseProperties(event.ResourceProperties, &props); err != nil {
-			return resourceID, nil, err
+			zap.L().Error("failed to parse resource properties", zap.Error(err))
+			return physicalResourceID, nil, err
 		}
-
-		// ensure databases are all there
-		for pantherDatabase, pantherDatabaseDescription := range awsglue.PantherDatabases {
-			zap.L().Info("creating database", zap.String("database", pantherDatabase))
-			if _, err := awsglue.CreateDatabase(glueClient, pantherDatabase, pantherDatabaseDescription); err != nil {
-				if awsutils.IsAnyError(err, glue.ErrCodeAlreadyExistsException) {
-					zap.L().Info("database exists", zap.String("database", pantherDatabase))
-				} else {
-					return "", nil, errors.Wrapf(err, "failed creating database %s", pantherDatabase)
-				}
-			}
+		if err := updateGlueTables(ctx, &props); err != nil {
+			zap.L().Error("failed to update glue tables", zap.Error(err))
+			return physicalResourceID, nil, err
 		}
-
-		// update schemas for tables that are deployed
-		deployedLogTables, err := gluetables.DeployedLogTables(glueClient)
-		if err != nil {
-			return "", nil, err
-		}
-		logTypes := make([]string, len(deployedLogTables))
-		for i, logTable := range deployedLogTables {
-			zap.L().Info("updating table", zap.String("database", logTable.DatabaseName()), zap.String("table", logTable.TableName()))
-
-			// update catalog
-			_, err := gluetables.CreateOrUpdateGlueTables(glueClient, props.ProcessedDataBucket, logTable)
-			if err != nil {
-				return "", nil, err
-			}
-
-			// collect the log types
-			logTypes[i] = logTable.LogType()
-		}
-
-		// update the views with the new tables
-		err = athenaviews.CreateOrReplaceViews(glueClient, athenaClient)
-		if err != nil {
-			return "", nil, errors.Wrap(err, "failed creating views")
-		}
-
-		// sync partitions via recursive lambda to avoid blocking the deployment
-		if len(logTypes) > 0 {
-			err = process.InvokeSyncGluePartitions(lambdaClient, logTypes)
-			if err != nil {
-				return "", nil, errors.Wrap(err, "failed invoking sync")
-			}
-		}
-
-		return resourceID, nil, nil
-
+		return physicalResourceID, nil, nil
 	case cfn.RequestDelete:
 		for pantherDatabase := range awsglue.PantherDatabases {
 			zap.L().Info("deleting database", zap.String("database", pantherDatabase))
@@ -110,8 +69,65 @@ func customUpdateGlueTables(_ context.Context, event cfn.Event) (string, map[str
 			}
 		}
 		return event.PhysicalResourceID, nil, nil
-
 	default:
 		return "", nil, fmt.Errorf("unknown request type %s", event.RequestType)
 	}
+}
+
+func updateGlueTables(ctx context.Context, props *UpdateGlueTablesProperties) error {
+	// ensure databases are all there
+	for pantherDatabase, pantherDatabaseDescription := range awsglue.PantherDatabases {
+		zap.L().Info("creating database", zap.String("database", pantherDatabase))
+		if _, err := awsglue.CreateDatabase(glueClient, pantherDatabase, pantherDatabaseDescription); err != nil {
+			if awsutils.IsAnyError(err, glue.ErrCodeAlreadyExistsException) {
+				zap.L().Info("database exists", zap.String("database", pantherDatabase))
+			} else {
+				return errors.Wrapf(err, "failed creating database %s", pantherDatabase)
+			}
+		}
+	}
+
+	// update schemas for tables that are deployed
+	deployedLogTables, err := gluetables.DeployedLogTables(glueClient)
+	if err != nil {
+		return err
+	}
+	logTypes := make([]string, len(deployedLogTables))
+	for i, logTable := range deployedLogTables {
+		zap.L().Info("updating table", zap.String("database", logTable.DatabaseName()), zap.String("table", logTable.TableName()))
+
+		// update catalog
+		// NOTE: This function updates all tables, not only the log tables
+		_, err := gluetables.CreateOrUpdateGlueTables(glueClient, props.ProcessedDataBucket, logTable)
+		if err != nil {
+			return err
+		}
+
+		// collect the log types
+		logTypes[i] = logTable.LogType()
+	}
+
+	// update the views with the new tables
+	err = athenaviews.CreateOrReplaceViews(glueClient, athenaClient)
+	if err != nil {
+		return errors.Wrap(err, "failed creating views")
+	}
+
+	// sync partitions via recursive lambda to avoid blocking the deployment
+	if len(logTypes) > 0 {
+		err = process.InvokeBackgroundSync(ctx, lambdaClient, &process.SyncEvent{
+			DatabaseNames: []string{
+				awsglue.LogProcessingDatabaseName,
+				awsglue.RuleMatchDatabaseName,
+				awsglue.RuleErrorsDatabaseName,
+			},
+			LogTypes: logTypes,
+			DryRun:   false,
+		})
+		if err != nil {
+			return errors.Wrap(err, "failed invoking sync")
+		}
+	}
+
+	return nil
 }

@@ -21,10 +21,13 @@ package main
 import (
 	"context"
 	"flag"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/panther-labs/panther/cmd/opstools"
@@ -33,8 +36,10 @@ import (
 )
 
 func main() {
-	opstools.SetUsage("syncs AWS Glue partition schemas to match the schema of the table they belong to")
+	opstools.SetUsage("scans S3 for missing AWS Glue partitions and recovers them")
 	opts := struct {
+		End            *string
+		Start          *string
 		DryRun         *bool
 		Debug          *bool
 		Region         *string
@@ -43,7 +48,9 @@ func main() {
 		MaxRetries     *int
 		Prefix         *string
 	}{
-		DryRun:         flag.Bool("dry-run", false, "Scan for partitions to sync without applying any modifications"),
+		Start:          flag.String("start", "", "Recover partitions after this date YYYY-MM-DD"),
+		End:            flag.String("end", "", "Recover partitions until this date YYYY-MM-DD"),
+		DryRun:         flag.Bool("dry-run", false, "Scan for missing partitions without without applying any changes"),
 		Debug:          flag.Bool("debug", false, "Enable additional logging"),
 		Region:         flag.String("region", "", "Set the AWS region to run on"),
 		MaxRetries:     flag.Int("max-retries", 12, "Max retries for AWS requests"),
@@ -54,6 +61,21 @@ func main() {
 	flag.Parse()
 
 	log := opstools.MustBuildLogger(*opts.Debug)
+	var start, end time.Time
+	if opt := *opts.Start; opt != "" {
+		tm, err := parseDate(opt)
+		if err != nil {
+			log.Fatalf("failed to parse %q flag: %s", "start", err)
+		}
+		start = tm
+	}
+	if opt := *opts.End; opt != "" {
+		tm, err := parseDate(opt)
+		if err != nil {
+			log.Fatalf("failed to parse %q flag: %s", "end", err)
+		}
+		end = tm
+	}
 
 	var matchPrefix string
 	if optPrefix := *opts.Prefix; optPrefix != "" {
@@ -66,41 +88,56 @@ func main() {
 		HTTPClient: opstools.NewHTTPClient(*opts.MaxConnections, 0),
 	})
 	if err != nil {
-		log.Fatalf("failed to start AWS session: %s", err)
+		log.Fatalf("failed to build AWS session: %s", err)
 	}
 	glueAPI := glue.New(sess)
-	group, ctx := errgroup.WithContext(context.Background())
-	tasks := []gluetasks.SyncDatabaseTables{
+	s3API := s3.New(sess)
+	ctx := context.Background()
+	tasks := []gluetasks.RecoverDatabaseTables{
 		{
 			DatabaseName: awsglue.LogProcessingDatabaseName,
+			Start:        start,
+			End:          end,
 			DryRun:       *opts.DryRun,
 			MatchPrefix:  matchPrefix,
 			NumWorkers:   *opts.NumWorkers,
 		},
 		{
-			DatabaseName:         awsglue.RuleErrorsDatabaseName,
-			AfterTableCreateTime: true,
-			DryRun:               *opts.DryRun,
-			MatchPrefix:          matchPrefix,
-			NumWorkers:           *opts.NumWorkers,
+			DatabaseName: awsglue.RuleErrorsDatabaseName,
+			Start:        start,
+			End:          end,
+			DryRun:       *opts.DryRun,
+			MatchPrefix:  matchPrefix,
+			NumWorkers:   *opts.NumWorkers,
 		},
 		{
-			DatabaseName:         awsglue.RuleMatchDatabaseName,
-			AfterTableCreateTime: true,
-			DryRun:               *opts.DryRun,
-			MatchPrefix:          matchPrefix,
-			NumWorkers:           *opts.NumWorkers,
+			DatabaseName: awsglue.RuleMatchDatabaseName,
+			Start:        start,
+			End:          end,
+			DryRun:       *opts.DryRun,
+			MatchPrefix:  matchPrefix,
+			NumWorkers:   *opts.NumWorkers,
 		},
 	}
-	log.Info("sync started")
+	group, ctx := errgroup.WithContext(ctx)
+	log.Info("recover started")
 	for i := range tasks {
 		task := &tasks[i]
 		group.Go(func() error {
-			return task.Run(ctx, glueAPI, log.Desugar())
+			return task.Run(ctx, glueAPI, s3API, log.Desugar())
 		})
 	}
 	if err := group.Wait(); err != nil {
-		log.Fatalf("sync failed: %s", err)
+		log.Errorf("recover failed: %s", err)
 	}
-	log.Info("sync complete")
+	log.Info("recover finished")
+}
+
+func parseDate(input string) (time.Time, error) {
+	const layoutDate = "2006-01-02"
+	tm, err := time.Parse(layoutDate, input)
+	if err != nil {
+		return time.Time{}, errors.Wrapf(err, "failed to parse %q as date (YYYY-MM-DD)", input)
+	}
+	return tm, nil
 }

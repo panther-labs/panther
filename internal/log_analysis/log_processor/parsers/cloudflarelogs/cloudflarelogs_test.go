@@ -1,3 +1,5 @@
+package cloudflarelogs_test
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,29 +18,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { Flex } from 'pouncejs';
-import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
-import { SeriesData } from 'Generated/schema';
+import (
+	"testing"
 
-interface EventsByLatencyProps {
-  events: SeriesData;
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
+)
+
+func TestCloudflareLogParsers(t *testing.T) {
+	logtesting.RunTestsFromYAML(t, registry.Default(), "./testdata/cloudflare_tests.yml")
 }
-
-const EventsByLatency: React.FC<EventsByLatencyProps> = ({ events: { timestamps, series } }) => {
-  // Transforming milliseconds to seconds
-  const timeseriesData = React.useMemo(
-    () => ({
-      timestamps,
-      series: series.map(serie => ({ ...serie, values: serie.values.map(value => value / 1000) })),
-    }),
-    [timestamps, series]
-  );
-  return (
-    <Flex data-testid="events-by-latency" height="100%">
-      <TimeSeriesChart data={timeseriesData} units="sec" zoomable />
-    </Flex>
-  );
-};
-
-export default React.memo(EventsByLatency);

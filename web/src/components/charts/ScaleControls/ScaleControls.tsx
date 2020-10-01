@@ -18,27 +18,29 @@
 
 import React from 'react';
 import { Flex } from 'pouncejs';
-import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
-import { SeriesData } from 'Generated/schema';
+import { EChartOption } from 'echarts';
+import ScaleButton from 'Components/charts/ScaleControls/ScaleButton';
 
-interface EventsByLatencyProps {
-  events: SeriesData;
+interface ScaleControlsProps {
+  scaleType: string;
+  onSelection: (option: EChartOption.BasicComponents.CartesianAxis.Type) => void;
 }
 
-const EventsByLatency: React.FC<EventsByLatencyProps> = ({ events: { timestamps, series } }) => {
-  // Transforming milliseconds to seconds
-  const timeseriesData = React.useMemo(
-    () => ({
-      timestamps,
-      series: series.map(serie => ({ ...serie, values: serie.values.map(value => value / 1000) })),
-    }),
-    [timestamps, series]
-  );
+const ScaleControls: React.FC<ScaleControlsProps> = ({ scaleType = 'value', onSelection }) => {
   return (
-    <Flex data-testid="events-by-latency" height="100%">
-      <TimeSeriesChart data={timeseriesData} units="sec" zoomable />
+    <Flex spacing={2}>
+      <ScaleButton
+        title="Linear"
+        selected={scaleType === 'value'}
+        onClick={() => onSelection('value')}
+      />
+      <ScaleButton
+        title="Logarithmic"
+        selected={scaleType === 'log'}
+        onClick={() => onSelection('log')}
+      />
     </Flex>
   );
 };
 
-export default React.memo(EventsByLatency);
+export default ScaleControls;

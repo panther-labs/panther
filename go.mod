@@ -15,6 +15,7 @@ require (
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/google/uuid v1.1.2
+	github.com/hashicorp/go-cleanhttp v0.5.1
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/influxdata/go-syslog/v3 v3.0.0
 	github.com/joho/godotenv v1.3.0
@@ -26,7 +27,9 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.6.1
 	github.com/tidwall/gjson v1.6.1
+	go.uber.org/multierr v1.5.0
 	go.uber.org/zap v1.16.0
+	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	golang.org/x/tools v0.0.0-20200729183129-03a346b9e509
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0
