@@ -23,12 +23,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/eks"
 	"github.com/aws/aws-sdk-go/service/eks/eksiface"
-	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
+	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
 )
 
@@ -50,9 +50,9 @@ func getEksClient(pollerResourceInput *awsmodels.ResourcePollerInput, region str
 
 // PollEKSCluster polls a single EKS cluster resource
 func PollEKSCluster(
-	pollerInput      *awsmodels.ResourcePollerInput,
+	pollerInput *awsmodels.ResourcePollerInput,
 	parsedResourceID *utils.ParsedResourceID,
-	scanRequest      *pollermodels.ScanEntry,
+	scanRequest *pollermodels.ScanEntry,
 ) (interface{}, error) {
 
 	client, err := getEksClient(pollerInput, parsedResourceID.Region)
@@ -203,20 +203,20 @@ func getEKSNodegroups(eksSvc eksiface.EKSAPI, clusterName *string) ([]*awsmodels
 				ARN:  curNodegroup.NodegroupArn,
 				Tags: curNodegroup.Tags,
 			},
-			AmiType:         curNodegroup.AmiType,
-			DiskSize:        curNodegroup.DiskSize,
-			Health:          curNodegroup.Health,
-			InstanceTypes:   curNodegroup.InstanceTypes,
-			LaunchTemplate:  curNodegroup.LaunchTemplate,
-			NodegroupArn:    curNodegroup.NodegroupArn,
-			NodegroupName:   curNodegroup.NodegroupName,
-			NodeRole:        curNodegroup.NodeRole,
-			ReleaseVersion:  curNodegroup.ReleaseVersion,
-			RemoteAccess:    curNodegroup.RemoteAccess,
-			Resources:       curNodegroup.Resources,
-			ScalingConfig:   curNodegroup.ScalingConfig,
-			Subnets:         curNodegroup.Subnets,
-			Version:         curNodegroup.Version,
+			AmiType:        curNodegroup.AmiType,
+			DiskSize:       curNodegroup.DiskSize,
+			Health:         curNodegroup.Health,
+			InstanceTypes:  curNodegroup.InstanceTypes,
+			LaunchTemplate: curNodegroup.LaunchTemplate,
+			NodegroupArn:   curNodegroup.NodegroupArn,
+			NodegroupName:  curNodegroup.NodegroupName,
+			NodeRole:       curNodegroup.NodeRole,
+			ReleaseVersion: curNodegroup.ReleaseVersion,
+			RemoteAccess:   curNodegroup.RemoteAccess,
+			Resources:      curNodegroup.Resources,
+			ScalingConfig:  curNodegroup.ScalingConfig,
+			Subnets:        curNodegroup.Subnets,
+			Version:        curNodegroup.Version,
 			// Normalized name for CreatedAt
 			TimeCreated: utils.DateTimeFormat(aws.TimeValue(curNodegroup.CreatedAt)),
 		})

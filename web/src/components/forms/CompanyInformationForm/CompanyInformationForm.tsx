@@ -22,12 +22,13 @@ import { Box, Flex, Heading } from 'pouncejs';
 import * as Yup from 'yup';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikTextInput from 'Components/fields/TextInput';
-import { ErrorReportingSection } from 'Components/forms/AnalyticsConsentForm';
+import { AnalyticsConsentSection } from 'Components/forms/AnalyticsConsentForm';
 
 interface CompanyInformationFormValues {
   displayName: string;
   email: string;
   errorReportingConsent: boolean;
+  analyticsConsent: boolean;
 }
 
 interface CompanyInformationFormProps {
@@ -39,6 +40,7 @@ const validationSchema = Yup.object({
   displayName: Yup.string().required(),
   email: Yup.string().email().required(),
   errorReportingConsent: Yup.boolean().required(),
+  analyticsConsent: Yup.boolean().required(),
 });
 
 export const CompanyInformationForm: React.FC<CompanyInformationFormProps> = ({
@@ -78,7 +80,7 @@ export const CompanyInformationForm: React.FC<CompanyInformationFormProps> = ({
           <Heading as="h2" size="x-small" mb={4}>
             Preferences
           </Heading>
-          <ErrorReportingSection />
+          <AnalyticsConsentSection showErrorConsent showProductAnalyticsConsent />
         </Box>
         <SubmitButton fullWidth>Save</SubmitButton>
       </Form>

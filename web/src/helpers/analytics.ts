@@ -20,21 +20,23 @@ import { DestinationTypeEnum } from 'Generated/schema';
 import mx from 'mixpanel-browser';
 import storage from 'Helpers/storage';
 import { ANALYTICS_CONSENT_STORAGE_KEY } from 'Source/constants';
-
-// TODO: Pending backend to work
-const mixpanelPublicToken = process.env.MIXPANEL_PUBLIC_TOKEN;
-
-const envCheck =
-  mixpanelPublicToken &&
-  // TODO: Pending backend to work
-  storage.local.read<boolean>(ANALYTICS_CONSENT_STORAGE_KEY) &&
-  process.env.NODE_ENV === 'production';
+import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
+import { logError } from 'Helpers/loggers';
 
 const evaluateTracking = (...args) => {
-  if (envCheck) {
-    mx.init(mixpanelPublicToken);
-    mx.track(...args);
+  const mixpanelPublicToken = process.env.MIXPANEL_PUBLIC_TOKEN;
+  if (!mixpanelPublicToken || storage.local.read<boolean>(ANALYTICS_CONSENT_STORAGE_KEY) !== true) {
+    return;
   }
+  window.requestIdleCallback(() => {
+    try {
+      mx.init(mixpanelPublicToken);
+      mx.track(...args);
+    } catch (e) {
+      // Reporting to sentry
+      logError(e);
+    }
+  });
 };
 
 export enum PageViewEnum {
@@ -60,15 +62,26 @@ export const trackPageView = ({ page }: TrackPageViewProps) => {
 export enum EventEnum {
   SignedIn = 'Signed in successfully',
   AddedRule = 'Added Rule',
+  AddedPolicy = 'Added Policy',
+  AddedLogSource = 'Added Log Source',
   AddedDestination = 'Added Destination',
   PickedDestination = 'Picked Destination to create',
+  PickedLogSource = 'Picked Log Source to created',
+  InvitedUser = 'Invited user',
+  UpdatedAlertStatus = 'Updated Alert Status',
 }
 
 export enum SrcEnum {
   Destinations = 'destinations',
   Rules = 'rules',
+  Policies = 'policies',
   Auth = 'auth',
+  Users = 'users',
+  Alerts = 'alerts',
+  LogSources = 'log sources',
 }
+
+type LogSources = 'S3' | 'SQS';
 
 interface SignInEvent {
   event: EventEnum.SignedIn;
@@ -78,6 +91,11 @@ interface SignInEvent {
 interface AddedRuleEvent {
   event: EventEnum.AddedRule;
   src: SrcEnum.Rules;
+}
+
+interface AddedPolicyEvent {
+  event: EventEnum.AddedPolicy;
+  src: SrcEnum.Policies;
 }
 
 interface AddedDestinationEvent {
@@ -92,13 +110,46 @@ interface PickedDestinationEvent {
   ctx: DestinationTypeEnum;
 }
 
-type TrackEvent = AddedDestinationEvent | SignInEvent | AddedRuleEvent | PickedDestinationEvent;
+interface PickedLogSourceEvent {
+  event: EventEnum.PickedLogSource;
+  src: SrcEnum.LogSources;
+  ctx: LogSources;
+}
+
+interface AddedLogSourceEvent {
+  event: EventEnum.AddedLogSource;
+  src: SrcEnum.LogSources;
+  ctx: LogSources;
+}
+
+interface InvitedUserEvent {
+  event: EventEnum.InvitedUser;
+  src: SrcEnum.Users;
+}
+
+interface UpdatedAlertStatus {
+  event: EventEnum.UpdatedAlertStatus;
+  src: SrcEnum.Alerts;
+  data: Pick<AlertSummaryFull, 'status' | 'severity'>;
+}
+
+type TrackEvent =
+  | AddedDestinationEvent
+  | SignInEvent
+  | AddedRuleEvent
+  | AddedPolicyEvent
+  | AddedLogSourceEvent
+  | PickedDestinationEvent
+  | PickedLogSourceEvent
+  | InvitedUserEvent
+  | UpdatedAlertStatus;
 
 export const trackEvent = (payload: TrackEvent) => {
   evaluateTracking(payload.event, {
     type: 'event',
     src: payload.src,
     ctx: 'ctx' in payload ? payload.ctx : null,
+    ...('data' in payload ? payload.data : null),
   });
 };
 

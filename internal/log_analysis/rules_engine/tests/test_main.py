@@ -33,7 +33,7 @@ _ENV_VARIABLES_MOCK = {
     'NOTIFICATIONS_TOPIC': 'sns_topic',
     'ANALYSIS_API_PATH': 'path'
 }
-with mock.patch.dict(os.environ, _ENV_VARIABLES_MOCK),\
+with mock.patch.dict(os.environ, _ENV_VARIABLES_MOCK), \
      mock.patch.object(boto3, 'client', side_effect=mock_to_return), \
      mock.patch.object(SigV4Auth, 'add_auth'), \
      mock.patch.object(requests, 'get', return_value=_RESPONSE_MOCK):
@@ -96,6 +96,59 @@ class TestMainDirectAnalysis(TestCase):
                         }]
                     }
                 ]
+        }
+        self.assertEqual(expected_response, lambda_handler(payload, None))
+
+    def test_dedup_exception_fails_test(self) -> None:
+        """If rule dedup() raises an exception while testing a rule (not normal analysis), we should fail the test"""
+        payload = {
+            'rules': [{
+                'id': 'rule_id',
+                'body': "def rule(event):\n\treturn True\ndef dedup(event):\n\traise Exception('dedup error')"
+            }],
+            'events': [{
+                'id': 'event_id',
+                'data': 'data'
+            }]
+        }
+        expected_response = {
+            'events':
+                [{
+                    'id': 'event_id',
+                    'matched': [],
+                    'notMatched': [],
+                    'errored': [{
+                        'id': 'rule_id',
+                        'message': 'Exception: dedup error'
+                    }]
+                }]
+        }
+        self.assertEqual(expected_response, lambda_handler(payload, None))
+
+    def test_title_exception_fails_test(self) -> None:
+        """If rule title() raises an exception while testing a rule (not normal analysis), we should fail the test"""
+        payload = {
+            'rules': [{
+                'id': 'rule_id',
+                'body': "def rule(event):\n\treturn True\ndef title(event):\n\traise Exception('title error')"
+            }],
+            'events': [{
+                'id': 'event_id',
+                'data': 'data'
+            }]
+        }
+
+        expected_response = {
+            'events':
+                [{
+                    'id': 'event_id',
+                    'matched': [],
+                    'notMatched': [],
+                    'errored': [{
+                        'id': 'rule_id',
+                        'message': 'Exception: title error'
+                    }]
+                }]
         }
         self.assertEqual(expected_response, lambda_handler(payload, None))
 

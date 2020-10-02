@@ -19,6 +19,7 @@
 import React from 'react';
 import withSEO from 'Hoc/withSEO';
 import SqsSourceWizard from 'Components/wizards/SqsSourceWizard';
+import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
 import { useAddSqsLogSource } from './graphql/addSqsLogSource.generated';
 
 const initialValues = {
@@ -38,6 +39,8 @@ const CreateSqsLogSource: React.FC = () => {
         },
       });
     },
+    onCompleted: () =>
+      trackEvent({ event: EventEnum.AddedLogSource, src: SrcEnum.LogSources, ctx: 'SQS' }),
   });
 
   return (

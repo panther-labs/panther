@@ -20,6 +20,7 @@ import React from 'react';
 import withSEO from 'Hoc/withSEO';
 import useRouter from 'Hooks/useRouter';
 import Page404 from 'Pages/404';
+import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
 import CreateS3LogSource from './CreateS3LogSource';
 import CreateSqsSource from './CreateSqsLogSource';
 
@@ -32,8 +33,10 @@ const CreateLogSource: React.FC = () => {
 
   switch (type) {
     case 'S3':
+      trackEvent({ event: EventEnum.PickedLogSource, src: SrcEnum.LogSources, ctx: 'S3' });
       return <CreateS3LogSource />;
     case 'SQS':
+      trackEvent({ event: EventEnum.PickedLogSource, src: SrcEnum.LogSources, ctx: 'SQS' });
       return <CreateSqsSource />;
     default:
       return <Page404 />;

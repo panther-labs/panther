@@ -15,5 +15,5 @@
 - [ ] Make sure all of the significant logic is covered by tests
 - [ ] Make sure your changes are accessible (addition of aria-attributes & correct HTML semantics)
 - [ ] Make sure you reference the related design document if it exists
-- [x] Make sure the changes are responsive (appearing decently on devices)
-- [x] ~~Make sure telemetry is added (analytics & errors)~~
+- [ ] Make sure telemetry is added (analytics & errors)
+- [x] ~~Make sure the changes are responsive (appearing decently on devices)~~

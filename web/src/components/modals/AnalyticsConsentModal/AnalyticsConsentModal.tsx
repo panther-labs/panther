@@ -22,7 +22,17 @@ import AnalyticsConsentForm from 'Components/forms/AnalyticsConsentForm';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useUpdateGeneralSettingsConsents } from './graphql/updateGeneralSettingsConsents.generated';
 
-const AnalyticsConsentModal: React.FC<ModalProps> = ({ onClose, ...rest }) => {
+export interface AnalyticsConsentModalProps extends ModalProps {
+  showErrorConsent: boolean;
+  showProductAnalyticsConsent: boolean;
+}
+
+const AnalyticsConsentModal: React.FC<AnalyticsConsentModalProps> = ({
+  onClose,
+  showErrorConsent = true,
+  showProductAnalyticsConsent = true,
+  ...rest
+}) => {
   const { pushSnackbar } = useSnackbar();
   const [
     saveConsentPreferences,
@@ -45,14 +55,15 @@ const AnalyticsConsentModal: React.FC<ModalProps> = ({ onClose, ...rest }) => {
   return (
     <Modal
       onClose={() => {}}
-      title="Welcome to Panther!"
+      title={showErrorConsent ? 'Welcome to Panther!' : 'Help us improve Panther!'}
       aria-describedby="modal-subtitle"
       {...rest}
     >
       <Box width={500} px={10}>
         <Text fontSize="medium" mb={8} id="modal-subtitle">
-          We know you {"'"}re excited to begin securing your organization, but first, we need your
-          consent on a couple of things
+          {showErrorConsent
+            ? "We know you 're excited to begin securing your organization, but first, we need your consent on a couple of things"
+            : 'There a couple of things that need your review before continuing.'}
         </Text>
         {updateGeneralPreferencesError ? (
           <Alert
@@ -62,6 +73,8 @@ const AnalyticsConsentModal: React.FC<ModalProps> = ({ onClose, ...rest }) => {
           />
         ) : (
           <AnalyticsConsentForm
+            showErrorConsent={showErrorConsent}
+            showProductAnalyticsConsent={showProductAnalyticsConsent}
             onSubmit={values =>
               saveConsentPreferences({
                 variables: {
