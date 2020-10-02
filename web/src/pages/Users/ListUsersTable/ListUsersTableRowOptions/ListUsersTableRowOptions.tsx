@@ -38,7 +38,7 @@ const ListUsersTableRowOptions: React.FC<ListUsersTableRowOptionsProps> = ({ use
         as={IconButton}
         icon="more"
         variant="ghost"
-        size="small"
+        size="medium"
         aria-label="User Options"
       />
       <DropdownMenu>

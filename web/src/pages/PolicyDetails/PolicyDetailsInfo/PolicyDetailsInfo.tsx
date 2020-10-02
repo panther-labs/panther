@@ -121,7 +121,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
               <Box as="li">
                 <Badge color="violet-400">
                   AUTO REMEDIATIATABLE
-                  <Icon size="small" type="check" my={-1} ml={2} p="2px" />
+                  <Icon size="medium" type="check" my={-1} ml={2} p="2px" />
                 </Badge>
               </Box>
             </Tooltip>
