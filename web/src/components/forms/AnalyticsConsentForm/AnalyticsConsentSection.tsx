@@ -59,7 +59,7 @@ const AnalyticsConsentSection: React.FC<AnalyticsConsentSectionProps> = ({
           </FormHelperText>
         </Box>
       )}
-      <FormHelperText mt={4} id="analytics-consent-helper-text">
+      <FormHelperText mt={4} id="analytics-consent-link-helper-text">
         You can read more info about our security privacy
         <Link external textDecoration="underline" ml={1} href={PRIVACY_DOC_URL}>
           here
