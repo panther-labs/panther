@@ -53,8 +53,9 @@ type EksCluster struct {
 // EksNodegroup contains all the information about an EKS Service, for embedding into the EksCluster resource
 type EksNodegroup struct {
 	// Generic resource fields
+	//
+	// This is not a full resource, but it does have an ARN and Tags.
 	GenericAWSResource
-	GenericResource
 
 	// Fields embedded from eks.Service
 	AmiType                       *string
@@ -79,8 +80,9 @@ type EksNodegroup struct {
 // EksFargateProfile contains all the information about an EKS Fargate Profile, for embedding into the EksCluster resource
 type EksFargateProfile struct {
 	// Generic resource fields
+	//
+	// This is not a full resource, but it does have an ARN and Tags.
 	GenericAWSResource
-	GenericResource
 
 	// Fields embedded from eks.FargateProfile
 	FargateProfileArn     *string

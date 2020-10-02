@@ -81,7 +81,7 @@ func TestEksClusterDescribe(t *testing.T) {
 
 func TestEksClusterDescribeDoesNotExist(t *testing.T) {
     mockSvc := &awstest.MockEks{}
-    //mockSvc := awstest.BuildMockEksSvcError([]string{"DescribeCluster"})
+
     mockSvc.On("DescribeCluster", mock.Anything).
         Return(
             &eks.DescribeClusterOutput{

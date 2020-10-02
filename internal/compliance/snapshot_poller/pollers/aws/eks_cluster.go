@@ -86,6 +86,7 @@ func listEKSClusters(eksSvc eksiface.EKSAPI, nextMarker *string) (clusters []*st
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "EKS.ListClustersPages")
 	}
+
 	return
 }
 
@@ -111,7 +112,7 @@ func describeEKSCluster(eksSvc eksiface.EKSAPI, clusterName *string) (*eks.Clust
 
 // getEKSFargateProfiles enumerates and then describes all Fargate Profiles of a cluster
 func getEKSFargateProfiles(eksSvc eksiface.EKSAPI, clusterName *string) ([]*awsmodels.EksFargateProfile, error) {
-	// Enumerate tasks
+	// Enumerate fargate profiles
 	var fargateProfileNames []*string
 	err := eksSvc.ListFargateProfilesPages(&eks.ListFargateProfilesInput{ClusterName: clusterName},
 		func(page *eks.ListFargateProfilesOutput, lastPage bool) bool {
@@ -146,7 +147,7 @@ func getEKSFargateProfiles(eksSvc eksiface.EKSAPI, clusterName *string) ([]*awsm
 		profile := *rawFargateProfile.FargateProfile
 
 		fargateProfiles = append(fargateProfiles, &awsmodels.EksFargateProfile{
-			GenericAWSResource: awsmodels.GenericAWSResource{
+			GenericAWSResource:  awsmodels.GenericAWSResource{
 				ARN:  profile.FargateProfileArn,
 				Tags: profile.Tags,
 			},
@@ -237,14 +238,15 @@ func buildEksClusterSnapshot(eksSvc eksiface.EKSAPI, clusterName *string) (*awsm
 	}
 
 	eksCluster := &awsmodels.EksCluster{
-		GenericAWSResource: awsmodels.GenericAWSResource{
+		GenericAWSResource:   awsmodels.GenericAWSResource{
 			ARN:  details.Arn,
 			Name: details.Name,
 			Tags: details.Tags,
 		},
-		GenericResource: awsmodels.GenericResource{
+		GenericResource:      awsmodels.GenericResource{
 			ResourceID:   details.Arn,
 			ResourceType: aws.String(awsmodels.EksClusterSchema),
+			TimeCreated:  utils.DateTimeFormat(aws.TimeValue(details.CreatedAt)),
 		},
 		CertificateAuthority: details.CertificateAuthority,
 		EncryptionConfig:     details.EncryptionConfig,
@@ -274,8 +276,6 @@ func buildEksClusterSnapshot(eksSvc eksiface.EKSAPI, clusterName *string) (*awsm
 
 // PollEksCluster gathers information on each EKS Cluster for an AWS account.
 func PollEksClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
-	zap.L().Debug("starting EKS Cluster resource poller")
-
 	eksSvc, err := getEksClient(pollerInput, *pollerInput.Region)
 	if err != nil {
 		return nil, nil, err
@@ -283,6 +283,7 @@ func PollEksClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 
 	// Start with generating a list of all clusters
 	clusters, marker, err := listEKSClusters(eksSvc, pollerInput.NextPageToken)
+
 	if err != nil {
 		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}

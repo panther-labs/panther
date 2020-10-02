@@ -29,10 +29,6 @@ import (
     "github.com/stretchr/testify/mock"
 )
 
-type MockCertificate struct {
-    Data string
-}
-
 // Example Eks API return values
 var (
     ExampleEksClusterName        = aws.String("example-cluster")
@@ -152,7 +148,6 @@ var (
             Logging:              &eks.Logging{ClusterLogging: ExampleLogSetup},
             Name:                 ExampleEksClusterName,
             PlatformVersion:      aws.String("example-cluster-platform-version"),
-            // ResourcesVpcConfig:   ExampleResourceVpcConfig[0],
             ResourcesVpcConfig:   &eks.VpcConfigResponse{
                 ClusterSecurityGroupId: aws.String("example-cluster-security-group-id"),
                 EndpointPrivateAccess:  aws.Bool(true),
@@ -181,10 +176,6 @@ var (
         "ListNodegroupsPages": func(svc *MockEks) {
             svc.On("ListNodegroupsPages", mock.Anything).
                 Return(nil)
-        },
-        "ListFargateProfiles": func(svc *MockEks){
-            svc.On("ListFargateProfiles", mock.Anything).
-                Return(ExampleListFargateProfilesMulti, nil)
         },
         "ListFargateProfilesPages": func(svc *MockEks) {
             svc.On("ListFargateProfilesPages", mock.Anything).
@@ -317,11 +308,6 @@ func (m *MockEks) ListFargateProfilesPages(
 
     args := m.Called(in)
     if args.Error(0) != nil {
-        return args.Error(0)
-    }
-    // Return appropriate ListFargateProfile output based on input ClusterARN
-    if in.ClusterName == ExampleEksClusterName {
-        paginationFunction(ExampleListFargateProfilesMulti, true)
         return args.Error(0)
     }
     paginationFunction(ExampleListFargateProfile, true)
