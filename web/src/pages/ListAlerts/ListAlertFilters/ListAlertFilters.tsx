@@ -19,12 +19,19 @@
 import React from 'react';
 import { Form, Formik, FastField } from 'formik';
 import { Box, Flex } from 'pouncejs';
-import { ListAlertsInput, SeverityEnum, AlertStatusesEnum } from 'Generated/schema';
+import {
+  ListAlertsInput,
+  SeverityEnum,
+  AlertStatusesEnum,
+  SortDirEnum,
+  ListAlertsSortFieldsEnum,
+} from 'Generated/schema';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import { capitalize } from 'Helpers/utils';
 import pick from 'lodash/pick';
 import FormikAutosave from 'Components/utils/Autosave';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
+import FormikCombobox from 'Components/fields/ComboBox';
 import FormikTextInput from 'Components/fields/TextInput';
 
 export type ListAlertsInlineFiltersValues = Pick<
@@ -44,13 +51,68 @@ const filters = [
   'nameContains',
   'sortBy',
   'sortDir',
+  'eventCountMin',
+  'eventCountMax',
 ] as (keyof ListAlertsInput)[];
 
 const defaultValues = {
   nameContains: '',
+  sorting: undefined,
   severity: [],
   status: [],
 };
+
+const sortingOpts = [
+  {
+    opt: 'Most Recent',
+    resolution: {
+      sortBy: 'createdAt' as ListAlertsSortFieldsEnum,
+      sortDir: 'descending' as SortDirEnum,
+    },
+  },
+  {
+    opt: 'Oldest',
+    resolution: {
+      sortBy: 'createdAt' as ListAlertsSortFieldsEnum,
+      sortDir: 'ascending' as SortDirEnum,
+    },
+  },
+];
+
+/**
+ * Since sorting is not responding to some ListAlertsInput key we shall exctract
+ * this information from `sortBy` and `sortDir` parameters in order to align the
+ * combobox values.
+ */
+const extractSortingOpts = params => {
+  const { sorting, ...rest } = params;
+  const sortingParams = sortingOpts.reduce((prev, curr) => {
+    if (curr.opt === sorting) {
+      return { ...curr.resolution };
+    }
+    return prev;
+  }, {});
+
+  return {
+    ...rest,
+    ...sortingParams,
+  };
+};
+
+const wrapSortingOptions = params => {
+  const { sortBy, sortDir, ...rest } = params;
+  const sortingParams = sortingOpts.reduce((prev, curr) => {
+    if (curr.resolution.sortBy === sortBy && curr.resolution.sortDir === sortDir) {
+      return { sorting: curr.opt };
+    }
+    return prev;
+  }, {});
+  return {
+    ...sortingParams,
+    ...rest,
+  };
+};
+
 const ListAlertFilters: React.FC = () => {
   const { requestParams, updateRequestParams } = useRequestParamsWithoutPagination<
     ListAlertsInput
@@ -61,27 +123,28 @@ const ListAlertFilters: React.FC = () => {
       ({
         ...defaultValues,
         ...pick(requestParams, filters),
+        ...wrapSortingOptions(requestParams),
       } as ListAlertsInlineFiltersValues),
     [requestParams]
   );
 
   const onInlineFiltersChange = React.useCallback(
     (values: ListAlertsInlineFiltersValues) => {
-      updateRequestParams(values);
+      updateRequestParams(extractSortingOpts(values));
     },
     [requestParams, updateRequestParams]
   );
 
   return (
-    <Flex justify="flex-end">
+    <Flex justify="flex-end" align="center">
       <Formik<ListAlertsInlineFiltersValues>
         initialValues={initialFilterValues}
         onSubmit={onInlineFiltersChange}
       >
         <Form>
           <FormikAutosave threshold={200} />
-          <Flex spacing={4}>
-            <Box width={300}>
+          <Flex spacing={4} align="center">
+            <Box width={220}>
               <FastField
                 name="nameContains"
                 icon="search"
@@ -90,22 +153,49 @@ const ListAlertFilters: React.FC = () => {
                 label="Filter Alerts by text"
               />
             </Box>
-            <Box>
+            <Box width={160}>
+              <FastField
+                name="eventCountMin"
+                as={FormikTextInput}
+                min={0}
+                label="Event Count (min)"
+              />
+            </Box>
+            <Box width={160}>
+              <FastField
+                min={1}
+                type="number"
+                name="eventCountMax"
+                as={FormikTextInput}
+                label="Event Count (max)"
+              />
+            </Box>
+            <Box width={160}>
               <FastField
                 name="severity"
+                type="number"
                 as={FormikMultiCombobox}
                 items={severityOptions}
                 itemToString={filterItemToString}
                 label="Severity"
               />
             </Box>
-            <Box>
+            <Box maxWidth={160}>
               <FastField
                 name="status"
                 as={FormikMultiCombobox}
                 items={statusOptions}
                 itemToString={filterItemToString}
                 label="Status"
+              />
+            </Box>
+            <Box>
+              <FastField
+                name="sorting"
+                as={FormikCombobox}
+                items={sortingOpts.map(sortingOption => sortingOption.opt)}
+                itemToString={filterItemToString}
+                label="Sort By"
               />
             </Box>
           </Flex>
