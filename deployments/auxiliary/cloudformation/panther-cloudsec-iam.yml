@@ -18,7 +18,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: IAM roles for an account being scanned by Panther.
 
 Metadata:
-  Version: v1.0.2
+  Version: v1.0.1
 
 Mappings:
   # DO NOT EDIT PantherParameters section. Panther application relies on the exact format (including comments)
