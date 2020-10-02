@@ -35,13 +35,7 @@ const EventsByLatency: React.FC<EventsByLatencyProps> = ({ events: { timestamps,
     [timestamps, series]
   );
   return (
-    <Flex
-      data-testid="events-by-latency"
-      height="100%"
-      pt={4}
-      px={4}
-      backgroundColor="navyblue-500"
-    >
+    <Flex data-testid="events-by-latency" height="100%">
       <TimeSeriesChart data={timeseriesData} units="sec" zoomable />
     </Flex>
   );

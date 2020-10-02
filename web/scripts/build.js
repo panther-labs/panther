@@ -24,5 +24,7 @@ process.env.NODE_ENV = 'production';
 
 // Add all the sentry-related ENV vars to process.env
 loadDotEnvVars('web/.env.sentry');
+// Add all the analytics-related ENV vars to process.env
+loadDotEnvVars('web/.env.analytics');
 
 spawn('node_modules/.bin/webpack', ['--config', 'web/webpack.config.js'], { stdio: 'inherit' });

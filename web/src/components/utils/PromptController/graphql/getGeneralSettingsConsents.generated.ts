@@ -26,7 +26,10 @@ import * as ApolloReactHooks from '@apollo/client';
 export type GetGeneralSettingsConsentsVariables = {};
 
 export type GetGeneralSettingsConsents = {
-  generalSettings: Pick<Types.GeneralSettings, 'displayName' | 'email' | 'errorReportingConsent'>;
+  generalSettings: Pick<
+    Types.GeneralSettings,
+    'displayName' | 'email' | 'errorReportingConsent' | 'analyticsConsent'
+  >;
 };
 
 export const GetGeneralSettingsConsentsDocument = gql`
@@ -35,6 +38,7 @@ export const GetGeneralSettingsConsentsDocument = gql`
       displayName
       email
       errorReportingConsent
+      analyticsConsent
     }
   }
 `;

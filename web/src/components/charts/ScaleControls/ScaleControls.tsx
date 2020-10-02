@@ -17,28 +17,30 @@
  */
 
 import React from 'react';
-import { Field } from 'formik';
-import { Box, FormHelperText, Link } from 'pouncejs';
-import { PRIVACY_DOC_URL } from 'Source/constants';
-import FormikSwitch from 'Components/fields/Switch';
+import { Flex } from 'pouncejs';
+import { EChartOption } from 'echarts';
+import ScaleButton from 'Components/charts/ScaleControls/ScaleButton';
 
-const ErrorReportingSection: React.FC = () => {
+interface ScaleControlsProps {
+  scaleType: string;
+  onSelection: (option: EChartOption.BasicComponents.CartesianAxis.Type) => void;
+}
+
+const ScaleControls: React.FC<ScaleControlsProps> = ({ scaleType = 'value', onSelection }) => {
   return (
-    <Box as="fieldset">
-      <Field
-        as={FormikSwitch}
-        name="errorReportingConsent"
-        label="Report Web Application Errors"
-        aria-describedby="error-reporting-section-helper"
+    <Flex spacing={2}>
+      <ScaleButton
+        title="Linear"
+        selected={scaleType === 'value'}
+        onClick={() => onSelection('value')}
       />
-      <FormHelperText mt={2} id="error-reporting-section-helper">
-        Send anonymized runtime exception reports <br /> to improve Panther{"'"}s reliability.
-        <Link external textDecoration="underline" ml={1} href={PRIVACY_DOC_URL}>
-          Read more
-        </Link>
-      </FormHelperText>
-    </Box>
+      <ScaleButton
+        title="Logarithmic"
+        selected={scaleType === 'log'}
+        onClick={() => onSelection('log')}
+      />
+    </Flex>
   );
 };
 
-export default ErrorReportingSection;
+export default ScaleControls;

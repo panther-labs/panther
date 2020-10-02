@@ -21,25 +21,42 @@ import { Form, Formik } from 'formik';
 import { Box } from 'pouncejs';
 import * as Yup from 'yup';
 import SubmitButton from 'Components/buttons/SubmitButton';
-import ErrorReportingSection from './ErrorReportingSection';
+import AnalyticsConsentSection from './AnalyticsConsentSection';
 
 interface AnalyticsConsentFormValues {
-  errorReportingConsent: boolean;
+  errorReportingConsent?: boolean;
+  analyticsConsent?: boolean;
 }
 
 interface AnalyticsConsentFormProps {
+  showErrorConsent: boolean;
+  showProductAnalyticsConsent: boolean;
   onSubmit: (values: AnalyticsConsentFormValues) => Promise<any>;
 }
 
-const validationSchema = Yup.object().shape({
-  errorReportingConsent: Yup.boolean().required(),
-});
+const AnalyticsConsentForm: React.FC<AnalyticsConsentFormProps> = ({
+  showErrorConsent,
+  showProductAnalyticsConsent,
+  onSubmit,
+}) => {
+  const validationSchema = Yup.object().shape({
+    errorReportingConsent: showErrorConsent ? Yup.boolean().required() : null,
+    analyticsConsent: showProductAnalyticsConsent ? Yup.boolean().required() : null,
+  });
 
-const initialValues = {
-  errorReportingConsent: true,
-};
+  // We initialize values conditionally based on if we give users
+  // the ability to change them
+  const initialValues = React.useMemo(() => {
+    const val = {} as AnalyticsConsentFormValues;
+    if (showProductAnalyticsConsent) {
+      val.analyticsConsent = true;
+    }
+    if (showErrorConsent) {
+      val.errorReportingConsent = true;
+    }
+    return val;
+  }, [showErrorConsent, showProductAnalyticsConsent]);
 
-const AnalyticsConsentForm: React.FC<AnalyticsConsentFormProps> = ({ onSubmit }) => {
   return (
     <Formik<AnalyticsConsentFormValues>
       initialValues={initialValues}
@@ -48,7 +65,10 @@ const AnalyticsConsentForm: React.FC<AnalyticsConsentFormProps> = ({ onSubmit })
     >
       <Form>
         <Box mb={10}>
-          <ErrorReportingSection />
+          <AnalyticsConsentSection
+            showErrorConsent={showErrorConsent}
+            showProductAnalyticsConsent={showProductAnalyticsConsent}
+          />
         </Box>
         <SubmitButton fullWidth allowPristineSubmission>
           Save

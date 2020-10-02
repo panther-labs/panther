@@ -167,7 +167,11 @@ func getAlertsByRuleID(input *models.GetMetricsInput, output *models.GetMetricsO
 		Namespace:  aws.String(input.Namespace),
 		Dimensions: []*cloudwatch.DimensionFilter{
 			{
-				Name: aws.String("RuleID"),
+				Name:  aws.String("AnalysisType"),
+				Value: aws.String("Rule"),
+			},
+			{
+				Name: aws.String("AnalysisID"),
 			},
 		},
 	}, func(page *cloudwatch.ListMetricsOutput, _ bool) bool {
@@ -190,7 +194,7 @@ func getAlertsByRuleID(input *models.GetMetricsInput, output *models.GetMetricsO
 	for i, metric := range listMetricsResponse {
 		queries = append(queries, &cloudwatch.MetricDataQuery{
 			Id:    aws.String("query" + strconv.Itoa(i)),
-			Label: aws.String(aws.StringValue(metric.Dimensions[0].Value)),
+			Label: aws.String(aws.StringValue(metric.Dimensions[1].Value)), // AnalysisID dimension
 			MetricStat: &cloudwatch.MetricStat{
 				Metric: metric,
 				Period: aws.Int64(input.IntervalMinutes * 60), // number of seconds, must be multiple of 60

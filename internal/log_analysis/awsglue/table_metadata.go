@@ -259,7 +259,7 @@ func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, b
 
 // Based on Timebin(), return an S3 prefix for objects of this table
 func (gm *GlueTableMetadata) GetPartitionPrefix(t time.Time) string {
-	return gm.Prefix() + gm.timebin.PartitionS3PathFromTime(t)
+	return gm.Prefix() + gm.timebin.PartitionPathS3(t)
 }
 
 // SyncPartitions updates a table's partitions using the latest table schema. Used when schemas change.

@@ -111,16 +111,21 @@ class Rule:
 
         self._default_dedup_string = 'defaultDedupString:{}'.format(self.rule_id)
 
-    def run(self, event: Dict[str, Any]) -> RuleResult:
-        """Analyze a log line with this rule and return True, False, or an error."""
+    def run(self, event: Dict[str, Any], raise_title_dedup: bool = False) -> RuleResult:
+        """
+        Analyze a log line with this rule and return True, False, or an error.
+        :param event: The event to run the rule against
+        :param raise_title_dedup: Whether to raise exceptions from title() and dedup() or use default values
+        """
 
         dedup_string: Optional[str] = None
         title: Optional[str] = None
         try:
             rule_result = self._run_command(self._module.rule, event, bool)
             if rule_result:
-                title = self._get_title(event)
-                dedup_string = self._get_dedup(event, title)
+                use_default_on_exception = not raise_title_dedup
+                title = self._get_title(event, use_default_on_exception)
+                dedup_string = self._get_dedup(event, title, use_default_on_exception)
         except Exception as err:  # pylint: disable=broad-except
             return RuleResult(exception=err)
         return RuleResult(matched=rule_result, dedup_string=dedup_string, title=title)
@@ -128,53 +133,59 @@ class Rule:
     # Returns the dedup string for this rule match
     # If the rule match had a custom title, use the title as a deduplication string
     # If no title and no dedup function is defined, return the default dedup string.
-    def _get_dedup(self, event: Dict[str, Any], title: Optional[str]) -> str:
+    def _get_dedup(self, event: Dict[str, Any], title: Optional[str], use_default_on_exception: bool = True) -> str:
         if not self._has_dedup:
             if title:
                 # If no dedup function is defined but the rule had a title, use the title as dedup string
                 return title
             # If no dedup function defined, return default dedup string
             return self._default_dedup_string
+
         try:
             dedup_string = self._run_command(self._module.dedup, event, str)
         except Exception as err:  # pylint: disable=broad-except
-            self.logger.warning('dedup method raised exception. Defaulting dedup string to "%s". Exception: %s', self.rule_id, err)
+            if use_default_on_exception:
+                self.logger.warning('dedup method raised exception. Defaulting dedup string to "%s". Exception: %s', self.rule_id, err)
+                return self._default_dedup_string
+            raise
+
+        if not dedup_string:
+            # If dedup string is None or empty, return the default dedup string
             return self._default_dedup_string
 
-        if dedup_string:
-            if len(dedup_string) > MAX_DEDUP_STRING_SIZE:
-                # If dedup_string exceeds max size, truncate it
-                self.logger.warning(
-                    'maximum dedup string size is [%d] characters. Dedup string for rule with ID '
-                    '[%s] is [%d] characters. Truncating.', MAX_DEDUP_STRING_SIZE, self.rule_id, len(dedup_string)
-                )
-                num_characters_to_keep = MAX_DEDUP_STRING_SIZE - len(TRUNCATED_STRING_SUFFIX)
-                return dedup_string[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
-            return dedup_string
-        # If dedup string was the empty string, return default dedup string
-        return self._default_dedup_string
+        if len(dedup_string) > MAX_DEDUP_STRING_SIZE:
+            # If dedup_string exceeds max size, truncate it
+            self.logger.warning(
+                'maximum dedup string size is [%d] characters. Dedup string for rule with ID '
+                '[%s] is [%d] characters. Truncating.', MAX_DEDUP_STRING_SIZE, self.rule_id, len(dedup_string)
+            )
+            num_characters_to_keep = MAX_DEDUP_STRING_SIZE - len(TRUNCATED_STRING_SUFFIX)
+            return dedup_string[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
 
-    def _get_title(self, event: Dict[str, Any]) -> Optional[str]:
+        return dedup_string
+
+    def _get_title(self, event: Dict[str, Any], use_default_on_exception: bool = True) -> Optional[str]:
         if not self._has_title:
             return None
+
         try:
             title_string = self._run_command(self._module.title, event, str)
         except Exception as err:  # pylint: disable=broad-except
-            self.logger.warning('title method raised exception. Using default. Exception: %s', err)
-            return None
+            if use_default_on_exception:
+                self.logger.warning('title method raised exception. Using default. Exception: %s', err)
+                return None
+            raise
 
-        if title_string:
-            if len(title_string) > MAX_TITLE_SIZE:
-                # If title exceeds max size, truncate it
-                self.logger.warning(
-                    'maximum title string size is [%d] characters. Title for rule with ID '
-                    '[%s] is [%d] characters. Truncating.', MAX_TITLE_SIZE, self.rule_id, len(title_string)
-                )
-                num_characters_to_keep = MAX_TITLE_SIZE - len(TRUNCATED_STRING_SUFFIX)
-                return title_string[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
-            return title_string
-        # If title is empty string, return None
-        return None
+        if len(title_string) > MAX_TITLE_SIZE:
+            # If title exceeds max size, truncate it
+            self.logger.warning(
+                'maximum title string size is [%d] characters. Title for rule with ID '
+                '[%s] is [%d] characters. Truncating.', MAX_TITLE_SIZE, self.rule_id, len(title_string)
+            )
+            num_characters_to_keep = MAX_TITLE_SIZE - len(TRUNCATED_STRING_SUFFIX)
+            return title_string[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
+
+        return title_string
 
     def _store_rule(self) -> None:
         """Stores rule to disk."""
@@ -203,7 +214,7 @@ class Rule:
         result = function(event)
         if not isinstance(result, expected_type):
             raise Exception(
-                'rule [{}] fuction [{}] returned [{}], expected [{}]'.format(
+                'rule [{}] function [{}] returned [{}], expected [{}]'.format(
                     self.rule_id, function.__name__,
                     type(result).__name__, expected_type.__name__
                 )

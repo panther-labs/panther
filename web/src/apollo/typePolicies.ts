@@ -18,7 +18,7 @@
 
 import { Query, ResolversParentTypes } from 'Generated/schema';
 import storage from 'Helpers/storage';
-import { ERROR_REPORTING_CONSENT_STORAGE_KEY } from 'Source/constants';
+import { ERROR_REPORTING_CONSENT_STORAGE_KEY, ANALYTICS_CONSENT_STORAGE_KEY } from 'Source/constants'; // prettier-ignore
 import {
   Reference,
   FieldPolicy,
@@ -133,6 +133,12 @@ const typePolicies: TypePolicies = {
       errorReportingConsent: {
         merge(_, incoming) {
           storage.local.write(ERROR_REPORTING_CONSENT_STORAGE_KEY, incoming);
+          return incoming;
+        },
+      },
+      analyticsConsent: {
+        merge(_, incoming) {
+          storage.local.write(ANALYTICS_CONSENT_STORAGE_KEY, incoming);
           return incoming;
         },
       },

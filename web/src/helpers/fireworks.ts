@@ -16,9 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// @ts-ignore
-const requestIdleCallback = window.requestIdleCallback || (cb => cb());
-
 // Cause baby you're a firework, come on show em what you're worth
 // https://www.youtube.com/watch?v=QGJuMBdaqIw
 const shootFireworks = ({ duration = 3500 }: { duration?: number } = {}) => {
@@ -36,7 +33,7 @@ const shootFireworks = ({ duration = 3500 }: { duration?: number } = {}) => {
         });
       };
 
-      requestIdleCallback(() => {
+      window.requestIdleCallback(() => {
         const interval = setInterval(() => {
           requestAnimationFrame(() => shootRandomFirework('left'));
           requestAnimationFrame(() => shootRandomFirework('right'));

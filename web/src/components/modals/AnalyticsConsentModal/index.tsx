@@ -17,3 +17,4 @@
  */
 
 export { default } from './AnalyticsConsentModal';
+export * from './AnalyticsConsentModal';

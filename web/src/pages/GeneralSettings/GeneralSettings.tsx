@@ -68,7 +68,7 @@ const GeneralSettingsPage: React.FC = () => {
     );
   }
 
-  const { displayName, email, errorReportingConsent } = getGeneralSettingsData.generalSettings;
+  const { displayName, email, errorReportingConsent, analyticsConsent } = getGeneralSettingsData.generalSettings; // prettier-ignore
   return (
     <SimpleGrid columns={3} spacing={5}>
       <Box as="article">
@@ -79,6 +79,7 @@ const GeneralSettingsPage: React.FC = () => {
                 displayName,
                 email,
                 errorReportingConsent,
+                analyticsConsent,
               }}
               onSubmit={values => updateGeneralSettings({ variables: { input: values } })}
             />

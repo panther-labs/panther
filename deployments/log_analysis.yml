@@ -698,8 +698,10 @@ Resources:
             - Effect: Allow
               Action:
                 - glue:GetTable
+                - glue:GetTables
                 - glue:CreatePartition
                 - glue:GetPartition
+                - glue:GetPartitions
                 - glue:UpdatePartition
               Resource:
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
