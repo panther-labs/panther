@@ -66,3 +66,6 @@ Yup.addMethod(Yup.array, 'unique', function method(this, message = 'No duplicate
     return true;
   });
 });
+
+// Overriding requestIdleCallback because Safari is not supporting it
+window.requestIdleCallback = window.requestIdleCallback || (cb => cb());

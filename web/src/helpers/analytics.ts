@@ -28,13 +28,15 @@ const evaluateTracking = (...args) => {
   if (!mixpanelPublicToken || storage.local.read<boolean>(ANALYTICS_CONSENT_STORAGE_KEY) !== true) {
     return;
   }
-  try {
-    mx.init(mixpanelPublicToken);
-    mx.track(...args);
-  } catch (e) {
-    // Reporting to sentry
-    logError(e);
-  }
+  window.requestIdleCallback(() => {
+    try {
+      mx.init(mixpanelPublicToken);
+      mx.track(...args);
+    } catch (e) {
+      // Reporting to sentry
+      logError(e);
+    }
+  });
 };
 
 export enum PageViewEnum {
