@@ -28,8 +28,7 @@ const PromptController: React.FC = () => {
   useGetGeneralSettingsConsents({
     onCompleted: data => {
       const shouldShowErrorConsent = data.generalSettings.errorReportingConsent === null;
-      const shouldShowProductAnalyticsConsent =
-        true || data.generalSettings.analyticsConsent === null;
+      const shouldShowProductAnalyticsConsent = data.generalSettings.analyticsConsent === null;
       const shouldShowConsentModal = shouldShowErrorConsent || shouldShowProductAnalyticsConsent;
       if (shouldShowConsentModal) {
         // Show analytics consent modal
