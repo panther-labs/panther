@@ -18,6 +18,7 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.1
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/influxdata/go-syslog/v3 v3.0.0
+	github.com/itchyny/timefmt-go v0.1.1
 	github.com/joho/godotenv v1.3.0
 	github.com/json-iterator/go v1.1.10
 	github.com/kelseyhightower/envconfig v1.4.0
