@@ -33,9 +33,9 @@ const Page500: React.FC = () => {
         This would normally be an internal server error, but we are fully serverless. Feel free to
         laugh.
       </Text>
-      <Button as={RRLink} to="/">
-        Back to somewhere stable
-      </Button>
+      <RRLink to="/">
+        <Button as="div">Back to somewhere stable</Button>
+      </RRLink>
     </Flex>
   );
 };

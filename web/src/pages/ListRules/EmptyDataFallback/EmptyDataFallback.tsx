@@ -32,9 +32,9 @@ const ListRulesPageEmptyDataFallback: React.FC = () => {
       <Text color="gray-300" textAlign="center" mb={8}>
         Writing rules will allow you to get alerts about suspicious activity in your system
       </Text>
-      <Button as={RRLink} to={urls.logAnalysis.rules.create()}>
-        Create New Rule
-      </Button>
+      <RRLink to={urls.logAnalysis.rules.create()}>
+        <Button as="div">Create New Rule</Button>
+      </RRLink>
     </Flex>
   );
 };

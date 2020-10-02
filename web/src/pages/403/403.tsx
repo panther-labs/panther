@@ -37,9 +37,9 @@ const Page403: React.FC = () => {
       <Text fontSize="medium" color="gray-300" mb={10}>
         ( Sarum... Your administrator has restricted your powers )
       </Text>
-      <Button as={RRLink} to="/">
-        Back to Shire
-      </Button>
+      <RRLink to="/">
+        <Button as="div">Back to Shire</Button>
+      </RRLink>
     </Flex>
   );
 };

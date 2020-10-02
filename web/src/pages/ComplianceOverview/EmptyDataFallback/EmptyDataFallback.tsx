@@ -33,9 +33,9 @@ const ComplianceEmptyDataFallback: React.FC = () => (
         You don{"'"}t seem to have any Cloud Security sources connected to our system. <br />
         When you do, a high level overview of your system{"'"}s health will appear here.
       </Text>
-      <Button as={RRLink} to={urls.compliance.sources.create()}>
-        Add your first source
-      </Button>
+      <RRLink to={urls.compliance.sources.create()}>
+        <Button as="div">Add your first source</Button>
+      </RRLink>
     </Flex>
   </FadeIn>
 );

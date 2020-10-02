@@ -154,9 +154,9 @@ const ListPoliciesActions: React.FC = () => {
           >
             Filter Options {filtersCount ? `(${filtersCount})` : ''}
           </Button>
-          <Button as={RRLink} to={urls.compliance.policies.create()}>
-            Create New Policy
-          </Button>
+          <RRLink to={urls.compliance.policies.create()}>
+            <Button as="div">Create New Policy</Button>
+          </RRLink>
         </Flex>
       </Breadcrumbs.Actions>
       <Collapse open={areFiltersVisible}>

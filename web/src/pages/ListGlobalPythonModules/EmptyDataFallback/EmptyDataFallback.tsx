@@ -31,9 +31,9 @@ const EmptyDataFallback: React.FC = () => (
     <Text color="gray-300" textAlign="center" mb={8}>
       Python modules allow you to define re-usable code elements for your rules and policies
     </Text>
-    <Button as={RRLink} to={urls.settings.globalPythonModules.create()}>
-      Create a Global Python Module
-    </Button>
+    <RRLink to={urls.settings.globalPythonModules.create()}>
+      <Button as="div">Create a Global Python Module</Button>
+    </RRLink>
   </Flex>
 );
 

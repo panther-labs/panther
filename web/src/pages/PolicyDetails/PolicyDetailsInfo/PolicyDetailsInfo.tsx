@@ -51,9 +51,9 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
   return (
     <React.Fragment>
       <Flex spacing={4} mb={6} justify="flex-end">
-        <Button as={RRLink} to={urls.compliance.policies.edit(policy.id)}>
-          Edit
-        </Button>
+        <RRLink to={urls.compliance.policies.edit(policy.id)}>
+          <Button as="div">Edit</Button>
+        </RRLink>
         <Button
           variantColor="red"
           onClick={() =>

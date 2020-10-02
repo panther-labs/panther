@@ -58,9 +58,11 @@ const ListComplianceSources = () => {
       <Panel
         title="Connected Accounts"
         actions={
-          <Button icon="add" as={RRLink} to={urls.compliance.sources.create()}>
-            Add Account
-          </Button>
+          <RRLink to={urls.compliance.sources.create()}>
+            <Button as="div" icon="add">
+              Add Account
+            </Button>
+          </RRLink>
         }
       >
         <ErrorBoundary>

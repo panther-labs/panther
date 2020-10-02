@@ -33,9 +33,9 @@ const ListPoliciesPageEmptyDataFallback: React.FC = () => {
       <Text color="gray-300" textAlign="center" mb={8}>
         Writing policies is the only way to secure your infrastructure against misconfigurations
       </Text>
-      <Button as={RRLink} to={urls.compliance.policies.create()}>
-        Create New Policy
-      </Button>
+      <RRLink to={urls.compliance.policies.create()}>
+        <Button as="div">Create New Policy</Button>
+      </RRLink>
     </Flex>
   );
 };

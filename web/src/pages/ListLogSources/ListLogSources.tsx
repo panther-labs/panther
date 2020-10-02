@@ -62,9 +62,11 @@ const ListLogSources = () => {
       <Panel
         title="Log Sources"
         actions={
-          <Button icon="add" as={RRLink} to={urls.logAnalysis.sources.create()}>
-            Add Source
-          </Button>
+          <RRLink to={urls.logAnalysis.sources.create()}>
+            <Button as="div" icon="add">
+              Add Source
+            </Button>
+          </RRLink>
         }
       >
         <ErrorBoundary>

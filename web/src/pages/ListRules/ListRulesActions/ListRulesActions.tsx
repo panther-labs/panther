@@ -136,9 +136,9 @@ const ListRulesActions: React.FC = () => {
             >
               Filter Options {filtersCount ? `(${filtersCount})` : ''}
             </Button>
-            <Button as={RRLink} to={urls.logAnalysis.rules.create()}>
-              Create New Rule
-            </Button>
+            <RRLink to={urls.logAnalysis.rules.create()}>
+              <Button as="div">Create New Rule</Button>
+            </RRLink>
           </Flex>
         </Flex>
       </Breadcrumbs.Actions>

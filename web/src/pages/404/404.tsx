@@ -32,9 +32,9 @@ const Page404: React.FC = () => {
       <Text color="gray-300" mb={10}>
         ( You definitely are though )
       </Text>
-      <Button as={RRLink} to="/">
-        Back to Home
-      </Button>
+      <RRLink to="/">
+        <Button as="div">Back to Home</Button>
+      </RRLink>
     </Flex>
   );
 };

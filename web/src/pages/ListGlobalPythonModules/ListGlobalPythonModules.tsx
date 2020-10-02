@@ -62,9 +62,9 @@ const ListGlobalPythonModules = () => {
     <Panel
       title="Python Modules"
       actions={
-        <Button as={RRLink} to={urls.settings.globalPythonModules.create()}>
-          Create New Python Module
-        </Button>
+        <RRLink to={urls.settings.globalPythonModules.create()}>
+          <Button as="div">Create New Python Module</Button>
+        </RRLink>
       }
     >
       <ErrorBoundary>
