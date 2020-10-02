@@ -36,7 +36,7 @@ const AnalyticsConsentSection: React.FC = () => {
           mt={4}
           as={FormikSwitch}
           name="analyticsConsent"
-          label="Report Product Analytics"
+          label="Send Product Analytics"
           aria-describedby="product-reporting-section-helper"
         />
         <FormHelperText mt={4} id="error-reporting-section-helper">
