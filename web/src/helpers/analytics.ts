@@ -27,8 +27,12 @@ const evaluateTracking = (...args) => {
   if (!mixpanelPublicToken || storage.local.read<boolean>(ANALYTICS_CONSENT_STORAGE_KEY) !== true) {
     return;
   }
-  mx.init(mixpanelPublicToken);
-  mx.track(...args);
+  try {
+    mx.init(mixpanelPublicToken);
+    mx.track(...args);
+  } catch (e) {
+    // not many things to do here
+  }
 };
 
 export enum PageViewEnum {

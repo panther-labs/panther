@@ -44,9 +44,16 @@ const AnalyticsConsentSection: React.FC<AnalyticsConsentSectionProps> = ({
         as={FormikSwitch}
         name="analyticsConsent"
         label="Send Product Analytics"
-        aria-describedby="product-reporting-section-helper"
+        aria-describedby="product-analytics-section-helper"
       />
-      <FormHelperText mt={4} id="error-reporting-section-helper">
+      <FormHelperText
+        mt={4}
+        id={
+          hideErrorReporting
+            ? 'product-analytics-section-helper'
+            : 'analytics-consent-section-helper'
+        }
+      >
         {hideErrorReporting
           ? `Send anonymized product analytics${(<br />)}to help us improve Panther.`
           : `Send anonymized runtime exceptions & product analytics${(
