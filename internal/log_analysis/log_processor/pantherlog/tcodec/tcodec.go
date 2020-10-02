@@ -19,9 +19,7 @@ package tcodec
  */
 
 import (
-	"io"
 	"reflect"
-	"strconv"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
@@ -110,109 +108,6 @@ func (codec *joinCodec) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
 }
 func (codec *joinCodec) DecodeTime(iter *jsoniter.Iterator) time.Time {
 	return codec.decode.DecodeTime(iter)
-}
-
-// UnixSeconds reads a timestamp from seconds since UNIX epoch.
-// Fractions of a second can be set using the fractional part of a float.
-// Precision is kept up to Microseconds to avoid float64 precision issues.
-func UnixSeconds(sec float64) time.Time {
-	// We lose nanosecond precision to microsecond to have stable results with float64 values.
-	const usec = float64(time.Second / time.Microsecond)
-	const precision = int64(time.Microsecond)
-	return time.Unix(0, int64(sec*usec)*precision)
-}
-
-// UnixSecondsCodec decodes/encodes a timestamp from seconds since UNIX epoch.
-// Fractions of a second can be set using the fractional part of a float.
-// Precision is kept up to Microseconds to avoid float64 precision issues.
-func UnixSecondsCodec() TimeCodec {
-	return &unixSecondsCodec{}
-}
-
-type unixSecondsCodec struct{}
-
-func (*unixSecondsCodec) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
-	if tm.IsZero() {
-		stream.WriteNil()
-		return
-	}
-	tm = tm.Truncate(time.Microsecond)
-	unixSeconds := time.Duration(tm.UnixNano()).Seconds()
-	stream.WriteFloat64(unixSeconds)
-}
-
-func (*unixSecondsCodec) DecodeTime(iter *jsoniter.Iterator) (tm time.Time) {
-	switch iter.WhatIsNext() {
-	case jsoniter.NumberValue:
-		f := iter.ReadFloat64()
-		return UnixSeconds(f)
-	case jsoniter.NilValue:
-		iter.ReadNil()
-		return
-	case jsoniter.StringValue:
-		s := iter.ReadString()
-		if s == "" {
-			return
-		}
-		f, err := strconv.ParseFloat(s, 64)
-		if err != nil {
-			iter.ReportError("ReadUnixSeconds", err.Error())
-			return
-		}
-		return UnixSeconds(f)
-	default:
-		iter.Skip()
-		iter.ReportError("ReadUnixSeconds", `invalid JSON value`)
-		return
-	}
-}
-
-// UnixMilliseconds reads a timestamp from milliseconds since UNIX epoch.
-func UnixMilliseconds(n int64) time.Time {
-	return time.Unix(0, n*int64(time.Millisecond))
-}
-
-// UnixMillisecondsCodec decodes/encodes a timestamps in UNIX millisecond epoch.
-// It decodes both string and number JSON values and encodes always to number.
-func UnixMillisecondsCodec() TimeCodec {
-	return &unixMillisecondsCodec{}
-}
-
-type unixMillisecondsCodec struct{}
-
-func (*unixMillisecondsCodec) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
-	if tm.IsZero() {
-		stream.WriteNil()
-		return
-	}
-	msec := tm.UnixNano() / int64(time.Millisecond)
-	stream.WriteInt64(msec)
-}
-
-func (*unixMillisecondsCodec) DecodeTime(iter *jsoniter.Iterator) (tm time.Time) {
-	switch iter.WhatIsNext() {
-	case jsoniter.NumberValue:
-		msec := iter.ReadInt64()
-		return UnixMilliseconds(msec)
-	case jsoniter.NilValue:
-		iter.ReadNil()
-		return
-	case jsoniter.StringValue:
-		s := iter.ReadString()
-		if s == "" {
-			return
-		}
-		msec, err := strconv.ParseInt(s, 10, 64)
-		if err != nil {
-			iter.ReportError("ReadUnixMilliseconds", err.Error())
-			return
-		}
-		return UnixMilliseconds(msec)
-	default:
-		iter.Skip()
-		iter.ReportError("ReadUnixMilliseconds", `invalid JSON value`)
-		return
-	}
 }
 
 // LayoutCodec uses a time layout to decode/encode a timestamp from a JSON value.
@@ -381,7 +276,7 @@ func (d *tryDecoder) DecodeTime(iter *jsoniter.Iterator) time.Time {
 			child.Error = nil
 		}
 		tm := dec.DecodeTime(child)
-		if child.Error == nil || child.Error == io.EOF {
+		if child.Error == nil {
 			child.Pool().ReturnIterator(child)
 			return tm
 		}
