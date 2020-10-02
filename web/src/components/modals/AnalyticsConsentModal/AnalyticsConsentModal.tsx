@@ -23,12 +23,14 @@ import { extractErrorMessage } from 'Helpers/utils';
 import { useUpdateGeneralSettingsConsents } from './graphql/updateGeneralSettingsConsents.generated';
 
 export interface AnalyticsConsentModalProps extends ModalProps {
-  hideErrorReporting: boolean;
+  showErrorConsent: boolean;
+  showProductAnalyticsConsent: boolean;
 }
 
 const AnalyticsConsentModal: React.FC<AnalyticsConsentModalProps> = ({
   onClose,
-  hideErrorReporting = false,
+  showErrorConsent = true,
+  showProductAnalyticsConsent = true,
   ...rest
 }) => {
   const { pushSnackbar } = useSnackbar();
@@ -53,15 +55,15 @@ const AnalyticsConsentModal: React.FC<AnalyticsConsentModalProps> = ({
   return (
     <Modal
       onClose={() => {}}
-      title={hideErrorReporting ? 'Help us improve Panther!' : 'Welcome to Panther!'}
+      title={showErrorConsent ? 'Welcome to Panther!' : 'Help us improve Panther!'}
       aria-describedby="modal-subtitle"
       {...rest}
     >
       <Box width={500} px={10}>
         <Text fontSize="medium" mb={8} id="modal-subtitle">
-          {hideErrorReporting
-            ? 'There a couple of things that need your review before continuing.'
-            : "We know you 're excited to begin securing your organization, but first, we need your consent on a couple of things"}
+          {showErrorConsent
+            ? "We know you 're excited to begin securing your organization, but first, we need your consent on a couple of things"
+            : 'There a couple of things that need your review before continuing.'}
         </Text>
         {updateGeneralPreferencesError ? (
           <Alert
@@ -71,7 +73,8 @@ const AnalyticsConsentModal: React.FC<AnalyticsConsentModalProps> = ({
           />
         ) : (
           <AnalyticsConsentForm
-            hideErrorReporting={hideErrorReporting}
+            showErrorConsent={showErrorConsent}
+            showProductAnalyticsConsent={showProductAnalyticsConsent}
             onSubmit={values =>
               saveConsentPreferences({
                 variables: {

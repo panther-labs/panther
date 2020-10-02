@@ -80,7 +80,7 @@ export const CompanyInformationForm: React.FC<CompanyInformationFormProps> = ({
           <Heading as="h2" size="x-small" mb={4}>
             Preferences
           </Heading>
-          <AnalyticsConsentSection />
+          <AnalyticsConsentSection showErrorConsent showProductAnalyticsConsent />
         </Box>
         <SubmitButton fullWidth>Save</SubmitButton>
       </Form>

@@ -29,7 +29,8 @@ interface AnalyticsConsentFormValues {
 }
 
 interface AnalyticsConsentFormProps {
-  hideErrorReporting: boolean;
+  showErrorConsent: boolean;
+  showProductAnalyticsConsent: boolean;
   onSubmit: (values: AnalyticsConsentFormValues) => Promise<any>;
 }
 
@@ -39,22 +40,26 @@ const initialValues = {
 };
 
 const AnalyticsConsentForm: React.FC<AnalyticsConsentFormProps> = ({
-  hideErrorReporting,
+  showErrorConsent,
+  showProductAnalyticsConsent,
   onSubmit,
 }) => {
   const validationSchema = Yup.object().shape({
-    errorReportingConsent: hideErrorReporting ? null : Yup.boolean().required(),
-    analyticsConsent: Yup.boolean().required(),
+    errorReportingConsent: showErrorConsent ? Yup.boolean().required() : null,
+    analyticsConsent: showProductAnalyticsConsent ? Yup.boolean().required() : null,
   });
   return (
     <Formik<AnalyticsConsentFormValues>
-      initialValues={hideErrorReporting ? { analyticsConsent: true } : initialValues}
+      initialValues={showErrorConsent ? initialValues : { analyticsConsent: true }}
       validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
       <Form>
         <Box mb={10}>
-          <AnalyticsConsentSection hideErrorReporting={hideErrorReporting} />
+          <AnalyticsConsentSection
+            showErrorConsent={showErrorConsent}
+            showProductAnalyticsConsent={showProductAnalyticsConsent}
+          />
         </Box>
         <SubmitButton fullWidth allowPristineSubmission>
           Save

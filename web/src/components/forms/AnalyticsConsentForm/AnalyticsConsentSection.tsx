@@ -23,14 +23,16 @@ import { PRIVACY_DOC_URL } from 'Source/constants';
 import FormikSwitch from 'Components/fields/Switch';
 
 interface AnalyticsConsentSectionProps {
-  hideErrorReporting?: boolean;
+  showErrorConsent: boolean;
+  showProductAnalyticsConsent: boolean;
 }
 const AnalyticsConsentSection: React.FC<AnalyticsConsentSectionProps> = ({
-  hideErrorReporting,
+  showErrorConsent,
+  showProductAnalyticsConsent,
 }) => {
   return (
     <Box as="fieldset">
-      {!hideErrorReporting && (
+      {showErrorConsent && (
         <Box mb={4}>
           <Field
             as={FormikSwitch}
@@ -38,30 +40,31 @@ const AnalyticsConsentSection: React.FC<AnalyticsConsentSectionProps> = ({
             label="Report Web Application Errors"
             aria-describedby="error-reporting-section-helper"
           />
+          <FormHelperText id="error-reporting-section-helper-text">
+            Send anonymized runtime exception reports <br /> to improve Panther{"'"}s reliability.
+          </FormHelperText>
         </Box>
       )}
-      <Field
-        as={FormikSwitch}
-        name="analyticsConsent"
-        label="Send Product Analytics"
-        aria-describedby="product-analytics-section-helper"
-      />
-      <FormHelperText
-        mt={4}
-        id={
-          hideErrorReporting
-            ? 'product-analytics-section-helper'
-            : 'analytics-consent-section-helper'
-        }
-      >
-        {hideErrorReporting
-          ? `Send anonymized product analytics${(<br />)}to help us improve Panther.`
-          : `Send anonymized runtime exceptions & product analytics${(
-              <br />
-            )}to improve Panther's reliability.`}
+      {showProductAnalyticsConsent && (
+        <Box mb={4}>
+          <Field
+            as={FormikSwitch}
+            name="analyticsConsent"
+            label="Send Product Analytics"
+            aria-describedby="product-analytics-section-helper"
+          />
+          <FormHelperText mt={0} id="product-analytics-section-helper-text">
+            Send anonymized product analytics to help us <br />
+            improve Panther.
+          </FormHelperText>
+        </Box>
+      )}
+      <FormHelperText mt={4} id="analytics-consent-helper-text">
+        You can read more info about our security privacy
         <Link external textDecoration="underline" ml={1} href={PRIVACY_DOC_URL}>
-          Read more
+          here
         </Link>
+        .
       </FormHelperText>
     </Box>
   );
