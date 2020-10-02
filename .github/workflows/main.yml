@@ -94,6 +94,7 @@ jobs:
         run: |
           LATEST_RELEASE_BRANCH=$(git branch -r --list "origin/release*" | sort -V -r | head -n 1 | xargs)
           git checkout -b $HEAD $LATEST_RELEASE_BRANCH
+          echo "LATEST_RELEASE_BRANCH=$LATEST_RELEASE_BRANCH" >> $GITHUB_ENV
           git cherry-pick ${{ github.event.pull_request.merge_commit_sha }} || true
           CONFLICTS=$(git diff --name-only --diff-filter=U)
           git add -A .
@@ -108,5 +109,5 @@ jobs:
         with:
           repo: ${{ github.repository }}
           head: ${{ env.HEAD }}
-          base: release
+          base: ${{ env.LATEST_RELEASE_BRANCH }}
           token: ${{ secrets.PR_SYNC_TOKEN }}
