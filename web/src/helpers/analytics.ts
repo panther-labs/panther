@@ -21,6 +21,7 @@ import mx from 'mixpanel-browser';
 import storage from 'Helpers/storage';
 import { ANALYTICS_CONSENT_STORAGE_KEY } from 'Source/constants';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
+import { logError } from 'Helpers/loggers';
 
 const evaluateTracking = (...args) => {
   const mixpanelPublicToken = process.env.MIXPANEL_PUBLIC_TOKEN;
@@ -31,7 +32,8 @@ const evaluateTracking = (...args) => {
     mx.init(mixpanelPublicToken);
     mx.track(...args);
   } catch (e) {
-    // not many things to do here
+    // Reporting to sentry
+    logError(e);
   }
 };
 
