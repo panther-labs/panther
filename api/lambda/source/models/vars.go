@@ -25,8 +25,6 @@ const (
 	IntegrationTypeAWS3 = "aws-s3"
 	// IntegrationTypeSqs is integration type for pulling data from an SQS queue.
 	IntegrationTypeSqs = "aws-sqs"
-	// IntegrationTypeEks is integration type for importing data from customer EKS clusters
-	IntegrationEks = "aws-eks"
 
 	// StatusError is the string set in the database when an error occurs in a scan.
 	StatusError = "error"

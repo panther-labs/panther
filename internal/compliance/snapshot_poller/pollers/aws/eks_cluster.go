@@ -20,16 +20,15 @@ package aws
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/eks"
 	"github.com/aws/aws-sdk-go/service/eks/eksiface"
+	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
-	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
 )
 
@@ -51,12 +50,12 @@ func getEksClient(pollerResourceInput *awsmodels.ResourcePollerInput, region str
 
 // PollEKSCluster polls a single EKS cluster resource
 func PollEKSCluster(
-	pollerInput *awsmodels.ResourcePollerInput,
-	resourceARN arn.ARN,
-	scanRequest *pollermodels.ScanEntry,
+	pollerInput      *awsmodels.ResourcePollerInput,
+	parsedResourceID *utils.ParsedResourceID,
+	scanRequest      *pollermodels.ScanEntry,
 ) (interface{}, error) {
 
-	client, err := getEksClient(pollerInput, resourceARN.Region)
+	client, err := getEksClient(pollerInput, parsedResourceID.Region)
 	if err != nil {
 		return nil, err
 	}
@@ -68,14 +67,15 @@ func PollEKSCluster(
 	if snapshot == nil {
 		return nil, nil
 	}
-	snapshot.Region = aws.String(resourceARN.Region)
-	snapshot.AccountID = aws.String(resourceARN.AccountID)
+	snapshot.Region = aws.String(parsedResourceID.Region)
+	snapshot.AccountID = aws.String(parsedResourceID.AccountID)
 
 	return snapshot, nil
 }
 
 // listEKSClusters returns all EKS clusters in the account
 func listEKSClusters(eksSvc eksiface.EKSAPI, nextMarker *string) (clusters []*string, marker *string, err error) {
+	zap.L().Debug("Started listEKSClusters")
 	err = eksSvc.ListClustersPages(&eks.ListClustersInput{
 		NextToken:  nextMarker,
 		MaxResults: aws.Int64(int64(defaultBatchSize)),
@@ -101,17 +101,16 @@ func describeEKSCluster(eksSvc eksiface.EKSAPI, clusterName *string) (*eks.Clust
 		Name: clusterName,
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "EKS.DescribeClusters: %s", aws.StringValue(clusterName))
+		return nil, errors.Wrapf(err, "EKS.DescribeCluster: %s", aws.StringValue(clusterName))
 	}
 
-	// Unlike describeECSCluster, we can only make an API call to describe a single cluster
-	// Thus, we do not need to check then length of the returned output
+	// This only attempts to describe a single cluster so we do not need checks on length
 
 	return out.Cluster, nil
 }
 
-// getEKSFargateProfile enumerates and then describes all Fargate Profiles of a cluster
-func getEKSFargateProfile(eksSvc eksiface.EKSAPI, clusterName *string) ([]*awsmodels.EksFargateProfile, error) {
+// getEKSFargateProfiles enumerates and then describes all Fargate Profiles of a cluster
+func getEKSFargateProfiles(eksSvc eksiface.EKSAPI, clusterName *string) ([]*awsmodels.EksFargateProfile, error) {
 	// Enumerate tasks
 	var fargateProfileNames []*string
 	err := eksSvc.ListFargateProfilesPages(&eks.ListFargateProfilesInput{ClusterName: clusterName},
@@ -121,7 +120,7 @@ func getEKSFargateProfile(eksSvc eksiface.EKSAPI, clusterName *string) ([]*awsmo
 		})
 
 	if err != nil {
-		return nil, errors.Wrapf(err, "EKS.ListTasksPages: %s", aws.StringValue(clusterName))
+		return nil, errors.Wrapf(err, "EKS.ListFargateProfilesPages: %s", aws.StringValue(clusterName))
 	}
 
 	// If there are no fargate profiles stop here
@@ -132,8 +131,8 @@ func getEKSFargateProfile(eksSvc eksiface.EKSAPI, clusterName *string) ([]*awsmo
 	// Describe fargate profiles
 	fargateProfiles := make([]*awsmodels.EksFargateProfile, 0, len(fargateProfileNames))
 
-	// Slightly different from the ECS Clusters since we have to make a call to describe each FargateProfile
-	// rather than batching them all together.
+	// The AWS API only allows calls to describe one profile at a time, so we iterate through
+	// each profile returned by the ListFargateProfiles API call and describe it
 	for _, fargateProfile := range fargateProfileNames {
 		rawFargateProfile, err := eksSvc.DescribeFargateProfile(&eks.DescribeFargateProfileInput{
 			ClusterName:        clusterName,
@@ -149,7 +148,7 @@ func getEKSFargateProfile(eksSvc eksiface.EKSAPI, clusterName *string) ([]*awsmo
 		fargateProfiles = append(fargateProfiles, &awsmodels.EksFargateProfile{
 			GenericAWSResource: awsmodels.GenericAWSResource{
 				ARN:  profile.FargateProfileArn,
-				Tags: utils.ParseTagSlice(profile.Tags),
+				Tags: profile.Tags,
 			},
 			FargateProfileArn:   profile.FargateProfileArn,
 			FargateProfileName:  fargateProfile,
@@ -201,22 +200,22 @@ func getEKSNodegroups(eksSvc eksiface.EKSAPI, clusterName *string) ([]*awsmodels
 		nodegroupResults = append(nodegroupResults, &awsmodels.EksNodegroup{
 			GenericAWSResource: awsmodels.GenericAWSResource{
 				ARN:  curNodegroup.NodegroupArn,
-				Tags: utils.ParseTagSlice(curNodegroup.Tags),
+				Tags: curNodegroup.Tags,
 			},
-			AmiType:        curNodegroup.AmiType,
-			DiskSize:       curNodegroup.DiskSize,
-			Health:         curNodegroup.Health,
-			InstanceTypes:  curNodegroup.InstanceTypes,
-			LaunchTemplate: curNodegroup.LaunchTemplate,
-			NodegroupArn:   curNodegroup.NodegroupArn,
-			NodegroupName:  curNodegroup.NodegroupName,
-			NodeRole:       curNodegroup.NodeRole,
-			ReleaseVersion: curNodegroup.ReleaseVersion,
-			RemoteAccess:   curNodegroup.RemoteAccess,
-			Resources:      curNodegroup.Resources,
-			ScalingConfig:  curNodegroup.ScalingConfig,
-			Subnets:        curNodegroup.Subnets,
-			Version:        curNodegroup.Version,
+			AmiType:         curNodegroup.AmiType,
+			DiskSize:        curNodegroup.DiskSize,
+			Health:          curNodegroup.Health,
+			InstanceTypes:   curNodegroup.InstanceTypes,
+			LaunchTemplate:  curNodegroup.LaunchTemplate,
+			NodegroupArn:    curNodegroup.NodegroupArn,
+			NodegroupName:   curNodegroup.NodegroupName,
+			NodeRole:        curNodegroup.NodeRole,
+			ReleaseVersion:  curNodegroup.ReleaseVersion,
+			RemoteAccess:    curNodegroup.RemoteAccess,
+			Resources:       curNodegroup.Resources,
+			ScalingConfig:   curNodegroup.ScalingConfig,
+			Subnets:         curNodegroup.Subnets,
+			Version:         curNodegroup.Version,
 			// Normalized name for CreatedAt
 			TimeCreated: utils.DateTimeFormat(aws.TimeValue(curNodegroup.CreatedAt)),
 		})
@@ -232,8 +231,8 @@ func buildEksClusterSnapshot(eksSvc eksiface.EKSAPI, clusterName *string) (*awsm
 	}
 
 	details, err := describeEKSCluster(eksSvc, clusterName)
-	// Can details ever be nil without an error?
-	if err != nil || details == nil {
+
+	if err != nil {
 		return nil, err
 	}
 
@@ -241,7 +240,7 @@ func buildEksClusterSnapshot(eksSvc eksiface.EKSAPI, clusterName *string) (*awsm
 		GenericAWSResource: awsmodels.GenericAWSResource{
 			ARN:  details.Arn,
 			Name: details.Name,
-			Tags: utils.ParseTagSlice(details.Tags),
+			Tags: details.Tags,
 		},
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   details.Arn,
@@ -259,9 +258,10 @@ func buildEksClusterSnapshot(eksSvc eksiface.EKSAPI, clusterName *string) (*awsm
 		Version:              details.Version,
 	}
 
-	eksCluster.FargateProfile, err = getEKSFargateProfile(eksSvc, details.Name)
+	eksCluster.FargateProfile, err = getEKSFargateProfiles(eksSvc, details.Name)
 	if err != nil {
-		return nil, err
+		zap.L().Warn("Error with IAM Permissions - Use the AWS Console or CloudFormation to update the Panther" +
+			"Audit Role policy to include the eks:ListFargateProfiles and eks:DescribeFargateProfile permissions")
 	}
 
 	eksCluster.NodeGroup, err = getEKSNodegroups(eksSvc, details.Name)
@@ -275,7 +275,6 @@ func buildEksClusterSnapshot(eksSvc eksiface.EKSAPI, clusterName *string) (*awsm
 // PollEksCluster gathers information on each EKS Cluster for an AWS account.
 func PollEksClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting EKS Cluster resource poller")
-	eksClusterSnapshots := make(map[string]*awsmodels.EksCluster)
 
 	eksSvc, err := getEksClient(pollerInput, *pollerInput.Region)
 	if err != nil {
@@ -288,9 +287,9 @@ func PollEksClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
-	resources := make([]*apimodels.AddResourceEntry, 0, len(eksClusterSnapshots))
-	for _, clusterArn := range clusters {
-		eksClusterSnapshot, err := buildEksClusterSnapshot(eksSvc, clusterArn)
+	resources := make([]*apimodels.AddResourceEntry, 0, len(clusters))
+	for _, clusterName := range clusters {
+		eksClusterSnapshot, err := buildEksClusterSnapshot(eksSvc, clusterName)
 		if err != nil {
 			return nil, nil, err
 		}

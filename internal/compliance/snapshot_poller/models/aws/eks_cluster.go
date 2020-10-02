@@ -34,64 +34,62 @@ type EksCluster struct {
 	GenericResource
 
 	// Fields embedded from eks.Cluster
-	CertificateAuthority *eks.Certificate
-	EncryptionConfig     []*eks.EncryptionConfig
-	Endpoint             *string
-	Identity             *eks.Identity
-	Logging              *eks.Logging
-	PlatformVersion      *string
-	ResourcesVpcConfig   *eks.VpcConfigResponse
-	RoleArn              *string
-	Status               *string
-	Version              *string
+	CertificateAuthority              *eks.Certificate
+	EncryptionConfig                  []*eks.EncryptionConfig
+	Endpoint                          *string
+	Identity                          *eks.Identity
+	Logging                           *eks.Logging
+	PlatformVersion                   *string
+	ResourcesVpcConfig                *eks.VpcConfigResponse
+	RoleArn                           *string
+	Status                            *string
+	Version                           *string
 
 	// Additional fields
-	NodeGroup      []*EksNodegroup
-	FargateProfile []*EksFargateProfile
+	NodeGroup         []*EksNodegroup
+	FargateProfile    []*EksFargateProfile
 }
 
 // EksNodegroup contains all the information about an EKS Service, for embedding into the EksCluster resource
 type EksNodegroup struct {
 	// Generic resource fields
-	//
-	// This is not a full resource, but it does have an ARN, Tags, and a name.
 	GenericAWSResource
+	GenericResource
 
 	// Fields embedded from eks.Service
-	AmiType        *string
-	DiskSize       *int64
-	Health         *eks.NodegroupHealth
-	InstanceTypes  []*string
-	LaunchTemplate *eks.LaunchTemplateSpecification
-	NodegroupArn   *string
-	NodegroupName  *string
-	NodeRole       *string
-	ReleaseVersion *string
-	RemoteAccess   *eks.RemoteAccessConfig
-	Resources      *eks.NodegroupResources
-	ScalingConfig  *eks.NodegroupScalingConfig
-	Subnets        []*string
-	Version        *string
+	AmiType                       *string
+	DiskSize                      *int64
+	Health                        *eks.NodegroupHealth
+	InstanceTypes                 []*string
+	LaunchTemplate                *eks.LaunchTemplateSpecification
+	NodegroupArn                  *string
+	NodegroupName                 *string
+	NodeRole                      *string
+	ReleaseVersion                *string
+	RemoteAccess                  *eks.RemoteAccessConfig
+	Resources                     *eks.NodegroupResources
+	ScalingConfig                 *eks.NodegroupScalingConfig
+	Subnets                       []*string
+	Version                       *string
 
 	// Normalized name for CreatedAt
-	TimeCreated *strfmt.DateTime
+	TimeCreated                   *strfmt.DateTime
 }
 
 // EksFargateProfile contains all the information about an EKS Fargate Profile, for embedding into the EksCluster resource
 type EksFargateProfile struct {
 	// Generic resource fields
-	//
-	// This is not a full resource, but it does have an ARN and Tags.
 	GenericAWSResource
+	GenericResource
 
 	// Fields embedded from eks.FargateProfile
-	FargateProfileArn   *string
-	FargateProfileName  *string
-	PodExecutionRoleArn *string
-	Selectors           []*eks.FargateProfileSelector
-	Status              *string
-	Subnets             []*string
+	FargateProfileArn     *string
+	FargateProfileName    *string
+	PodExecutionRoleArn   *string
+	Selectors             []*eks.FargateProfileSelector
+	Status                *string
+	Subnets               []*string
 
 	// Normalized name for CreatedAt
-	TimeCreated *strfmt.DateTime
+	TimeCreated           *strfmt.DateTime
 }
