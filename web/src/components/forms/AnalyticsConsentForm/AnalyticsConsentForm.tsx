@@ -25,7 +25,7 @@ import AnalyticsConsentSection from './AnalyticsConsentSection';
 
 interface AnalyticsConsentFormValues {
   errorReportingConsent?: boolean;
-  analyticsConsent: boolean;
+  analyticsConsent?: boolean;
 }
 
 interface AnalyticsConsentFormProps {
@@ -33,11 +33,6 @@ interface AnalyticsConsentFormProps {
   showProductAnalyticsConsent: boolean;
   onSubmit: (values: AnalyticsConsentFormValues) => Promise<any>;
 }
-
-const initialValues = {
-  errorReportingConsent: true,
-  analyticsConsent: true,
-};
 
 const AnalyticsConsentForm: React.FC<AnalyticsConsentFormProps> = ({
   showErrorConsent,
@@ -48,9 +43,23 @@ const AnalyticsConsentForm: React.FC<AnalyticsConsentFormProps> = ({
     errorReportingConsent: showErrorConsent ? Yup.boolean().required() : null,
     analyticsConsent: showProductAnalyticsConsent ? Yup.boolean().required() : null,
   });
+
+  // We initialize values conditionally based on if we give users
+  // the ability to change them
+  const initialValues = React.useMemo(() => {
+    const val = {} as AnalyticsConsentFormValues;
+    if (showProductAnalyticsConsent) {
+      val.analyticsConsent = true;
+    }
+    if (showErrorConsent) {
+      val.errorReportingConsent = true;
+    }
+    return val;
+  }, [showErrorConsent, showProductAnalyticsConsent]);
+
   return (
     <Formik<AnalyticsConsentFormValues>
-      initialValues={showErrorConsent ? initialValues : { analyticsConsent: true }}
+      initialValues={initialValues}
       validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
