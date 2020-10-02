@@ -29,11 +29,12 @@ import (
 
 func TestNewExtension(t *testing.T) {
 	type T struct {
-		TimeRFC3339 time.Time `json:"t_rfc,omitempty" tcodec:"rfc3339"`
-		TimeUnixMS  time.Time `json:"t_unix_ms,omitempty" tcodec:"unix_ms"`
-		TimeUnix    time.Time `json:"t_unix,omitempty" tcodec:"unix"`
-		TimeCustom  time.Time `json:"t_custom,omitempty" tcodec:"layout=2006-01-02"`
-		Time        time.Time `json:"t,omitempty"`
+		TimeRFC3339  time.Time `json:"t_rfc,omitempty" tcodec:"rfc3339"`
+		TimeUnixMS   time.Time `json:"t_unix_ms,omitempty" tcodec:"unix_ms"`
+		TimeUnix     time.Time `json:"t_unix,omitempty" tcodec:"unix"`
+		TimeCustom   time.Time `json:"t_custom,omitempty" tcodec:"layout=2006-01-02"`
+		TimeStrftime time.Time `json:"t_strftime,omitempty" tcodec:"strftime=%Y-%m-%dT%H:%M:%S.%f%Z"`
+		Time         time.Time `json:"t,omitempty"`
 	}
 	ext := &Extension{}
 	api := jsoniter.Config{}.Froze()
@@ -43,6 +44,7 @@ func TestNewExtension(t *testing.T) {
 	input := fmt.Sprintf(`{
 		"t_rfc": "%s",
 		"t_custom": "%s",
+		"t_strftime": "2020-10-01T14:32:54.569000MST",
 		"t_unix": "%f",
 		"t_unix_ms": "%d"
 	}`,
@@ -56,6 +58,9 @@ func TestNewExtension(t *testing.T) {
 	require.NoError(t, err)
 	expect := tm.Format(time.RFC3339Nano)
 	require.Equal(t, tm.Format("2006-01-02"), actual.TimeCustom.UTC().Format("2006-01-02"), "custom")
+
+	require.Equal(t, expect, actual.TimeRFC3339.UTC().Format(time.RFC3339Nano), "rfc3339")
+	require.Equal(t, "2020-10-01T14:32:54.569Z", actual.TimeStrftime.Format(time.RFC3339Nano), "strftime")
 	require.Equal(t, expect, actual.TimeRFC3339.UTC().Format(time.RFC3339Nano), "rfc3339")
 	require.Equal(t, expect, actual.TimeUnix.UTC().Format(time.RFC3339Nano), "unix")
 	require.Equal(t, expect, actual.TimeUnixMS.UTC().Format(time.RFC3339Nano), "unix_ms")
