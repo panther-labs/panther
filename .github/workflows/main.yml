@@ -92,7 +92,8 @@ jobs:
 
       - name: Bootstrap a PR branch
         run: |
-          git checkout -b $HEAD origin/release
+          LATEST_RELEASE_BRANCH=$(git branch -r --list "origin/release*" | sort -V -r | head -n 1 | xargs)
+          git checkout -b $HEAD $LATEST_RELEASE_BRANCH
           git cherry-pick ${{ github.event.pull_request.merge_commit_sha }} || true
           CONFLICTS=$(git diff --name-only --diff-filter=U)
           git add -A .
