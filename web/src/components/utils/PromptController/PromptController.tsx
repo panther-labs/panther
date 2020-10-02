@@ -37,7 +37,7 @@ const PromptController: React.FC = () => {
         shootFireworks();
       } else if (shouldShowProductAnalyticsConsentModal) {
         // This will only trigger when an account is upgraded to v1.10 'analyticsConsent' is null
-        showModal({ modal: MODALS.PRODUCT_ANALYTICS_CONSENT });
+        showModal({ modal: MODALS.ANALYTICS_CONSENT, props: { hideErrorReporting: true } });
       }
     },
   });

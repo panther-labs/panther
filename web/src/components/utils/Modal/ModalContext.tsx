@@ -26,6 +26,7 @@ import { DeleteDestinationModalProps } from 'Components/modals/DeleteDestination
 import { DeleteRuleModalProps } from 'Components/modals/DeleteRuleModal';
 import { DeleteTestModalProps } from 'Components/modals/DeleteTestModal';
 import { DeleteGlobalPythonModuleModalProps } from 'Components/modals/DeleteGlobalPythonModuleModal';
+import { AnalyticsConsentModalProps } from 'Components/modals/AnalyticsConsentModal';
 
 const SHOW_MODAL = 'SHOW_MODAL';
 const HIDE_MODAL = 'HIDE_MODAL';
@@ -44,7 +45,6 @@ export enum MODALS {
   DELETE_DESTINATION = 'DELETE_DESTINATION',
   NETWORK_ERROR = 'NETWORK_ERROR',
   ANALYTICS_CONSENT = 'ANALYTICS_CONSENT',
-  PRODUCT_ANALYTICS_CONSENT = 'PRODUCT_ANALYTICS_CONSENT',
 }
 
 type OmitControlledProps<T> = Omit<T, 'open' | 'onClose'>;
@@ -161,14 +161,7 @@ interface ShowAnalyticsConsentModalAction {
   type: typeof SHOW_MODAL;
   payload: {
     modal: MODALS.ANALYTICS_CONSENT;
-  };
-}
-
-/* Show only product analytics consent options action */
-interface ShowProductAnalyticsConsentModalAction {
-  type: typeof SHOW_MODAL;
-  payload: {
-    modal: MODALS.PRODUCT_ANALYTICS_CONSENT;
+    props?: OmitControlledProps<AnalyticsConsentModalProps>;
   };
 }
 
@@ -186,7 +179,6 @@ type ModalStateAction =
   | ShowDeleteDestinationModalAction
   | ShowNetworkErrorModalAction
   | ShowAnalyticsConsentModalAction
-  | ShowProductAnalyticsConsentModalAction
   | HideModalAction;
 
 /* initial state of the reducer */

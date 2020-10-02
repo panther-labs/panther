@@ -22,31 +22,40 @@ import { Box, FormHelperText, Link } from 'pouncejs';
 import { PRIVACY_DOC_URL } from 'Source/constants';
 import FormikSwitch from 'Components/fields/Switch';
 
-const AnalyticsConsentSection: React.FC = () => {
+interface AnalyticsConsentSectionProps {
+  hideErrorReporting?: boolean;
+}
+const AnalyticsConsentSection: React.FC<AnalyticsConsentSectionProps> = ({
+  hideErrorReporting,
+}) => {
   return (
     <Box as="fieldset">
+      {!hideErrorReporting && (
+        <Box mb={4}>
+          <Field
+            as={FormikSwitch}
+            name="errorReportingConsent"
+            label="Report Web Application Errors"
+            aria-describedby="error-reporting-section-helper"
+          />
+        </Box>
+      )}
       <Field
         as={FormikSwitch}
-        name="errorReportingConsent"
-        label="Report Web Application Errors"
-        aria-describedby="error-reporting-section-helper"
+        name="analyticsConsent"
+        label="Send Product Analytics"
+        aria-describedby="product-reporting-section-helper"
       />
-      <Box mt={4}>
-        <Field
-          mt={4}
-          as={FormikSwitch}
-          name="analyticsConsent"
-          label="Send Product Analytics"
-          aria-describedby="product-reporting-section-helper"
-        />
-        <FormHelperText mt={4} id="error-reporting-section-helper">
-          Send anonymized runtime exceptions & product analytics <br /> to improve Panther{"'"}s
-          reliability.
-          <Link external textDecoration="underline" ml={1} href={PRIVACY_DOC_URL}>
-            Read more
-          </Link>
-        </FormHelperText>
-      </Box>
+      <FormHelperText mt={4} id="error-reporting-section-helper">
+        {hideErrorReporting
+          ? `Send anonymized product analytics${(<br />)}to help us improve Panther.`
+          : `Send anonymized runtime exceptions & product analytics${(
+              <br />
+            )}to improve Panther's reliability.`}
+        <Link external textDecoration="underline" ml={1} href={PRIVACY_DOC_URL}>
+          Read more
+        </Link>
+      </FormHelperText>
     </Box>
   );
 };
