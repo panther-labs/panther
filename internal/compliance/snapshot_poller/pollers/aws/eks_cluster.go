@@ -147,7 +147,7 @@ func getEKSFargateProfiles(eksSvc eksiface.EKSAPI, clusterName *string) ([]*awsm
 		profile := *rawFargateProfile.FargateProfile
 
 		fargateProfiles = append(fargateProfiles, &awsmodels.EksFargateProfile{
-			GenericAWSResource:  awsmodels.GenericAWSResource{
+			GenericAWSResource: awsmodels.GenericAWSResource{
 				ARN:  profile.FargateProfileArn,
 				Tags: profile.Tags,
 			},
@@ -238,12 +238,12 @@ func buildEksClusterSnapshot(eksSvc eksiface.EKSAPI, clusterName *string) (*awsm
 	}
 
 	eksCluster := &awsmodels.EksCluster{
-		GenericAWSResource:   awsmodels.GenericAWSResource{
+		GenericAWSResource: awsmodels.GenericAWSResource{
 			ARN:  details.Arn,
 			Name: details.Name,
 			Tags: details.Tags,
 		},
-		GenericResource:      awsmodels.GenericResource{
+		GenericResource: awsmodels.GenericResource{
 			ResourceID:   details.Arn,
 			ResourceType: aws.String(awsmodels.EksClusterSchema),
 			TimeCreated:  utils.DateTimeFormat(aws.TimeValue(details.CreatedAt)),
