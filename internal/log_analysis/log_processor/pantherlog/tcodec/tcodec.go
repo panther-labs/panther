@@ -22,6 +22,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/itchyny/timefmt-go"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -129,6 +130,41 @@ func (layout layoutCodec) DecodeTime(iter *jsoniter.Iterator) time.Time {
 			return time.Time{}
 		}
 		tm, err := time.Parse(string(layout), s)
+		if err != nil {
+			iter.ReportError(`DecodeTime`, err.Error())
+		}
+		return tm
+	case jsoniter.NilValue:
+		iter.ReadNil()
+		return time.Time{}
+	default:
+		iter.Skip()
+		iter.ReportError(`DecodeTime`, `invalid JSON value`)
+		return time.Time{}
+	}
+}
+
+// StrftimeCodec uses strftime format to decode/encode a timestamp from a JSON string.
+// https://strftime.org/
+// https://linux.die.net/man/3/strftime
+func StrftimeCodec(format string) TimeCodec {
+	return strftimeCodec(format)
+}
+
+type strftimeCodec string
+
+func (format strftimeCodec) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
+	stream.WriteString(timefmt.Format(tm, string(format)))
+}
+
+func (format strftimeCodec) DecodeTime(iter *jsoniter.Iterator) time.Time {
+	switch iter.WhatIsNext() {
+	case jsoniter.StringValue:
+		s := iter.ReadString()
+		if s == "" {
+			return time.Time{}
+		}
+		tm, err := timefmt.Parse(s, string(format))
 		if err != nil {
 			iter.ReportError(`DecodeTime`, err.Error())
 		}
