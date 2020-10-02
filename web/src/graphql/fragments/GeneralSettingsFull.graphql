@@ -2,4 +2,5 @@ fragment GeneralSettingsFull on GeneralSettings {
   displayName
   email
   errorReportingConsent
+  analyticsConsent
 }

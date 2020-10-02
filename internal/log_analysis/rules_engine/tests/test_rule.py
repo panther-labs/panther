@@ -111,8 +111,8 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(expected_rule, rule.run({}))
 
     def test_restrict_dedup_size(self) -> None:
-        rule_body = 'def rule(event):\n\treturn True\ndef dedup(event):\n\treturn "".join("a" for i in range({}))'.\
-            format(MAX_DEDUP_STRING_SIZE+1)
+        rule_body = 'def rule(event):\n\treturn True\ndef dedup(event):\n\treturn "".join("a" for i in range({}))'. \
+            format(MAX_DEDUP_STRING_SIZE + 1)
         rule = Rule({'id': 'test_restrict_dedup_size', 'body': rule_body, 'versionId': 'versionId'})
 
         expected_dedup_string_prefix = ''.join('a' for _ in range(MAX_DEDUP_STRING_SIZE - len(TRUNCATED_STRING_SUFFIX)))
@@ -123,7 +123,7 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         rule_body = 'def rule(event):\n\treturn True\n' \
                     'def dedup(event):\n\treturn "test"\n' \
                     'def title(event):\n\treturn "".join("a" for i in range({}))'. \
-            format(MAX_TITLE_SIZE+1)
+            format(MAX_TITLE_SIZE + 1)
         rule = Rule({'id': 'test_restrict_title_size', 'body': rule_body, 'versionId': 'versionId'})
 
         expected_title_string_prefix = ''.join('a' for _ in range(MAX_TITLE_SIZE - len(TRUNCATED_STRING_SUFFIX)))
@@ -199,5 +199,5 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         rule_body = 'def rule(event):\n\treturn True\ndef title(event):\n\treturn ""'
         rule = Rule({'id': 'test_rule_title_returns_empty_string', 'body': rule_body, 'versionId': 'versionId'})
 
-        expected_result = RuleResult(matched=True, dedup_string='defaultDedupString:test_rule_title_returns_empty_string')
-        self.assertEqual(rule.run({}), expected_result)
+        expected_result = RuleResult(matched=True, dedup_string='defaultDedupString:test_rule_title_returns_empty_string', title='')
+        self.assertEqual(expected_result, rule.run({}))
