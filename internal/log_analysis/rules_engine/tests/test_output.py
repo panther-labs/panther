@@ -314,7 +314,7 @@ class TestMatchedEventsBuffer(TestCase):
     def test_add_overflows_buffer(self) -> None:
         buffer = MatchedEventsBuffer()
         # Reducing max_bytes so that it will cause the overflow condition to trigger earlier
-        buffer.max_bytes = 50
+        buffer.max_bytes = 20
         event_match = EngineResult(
             rule_id='rule_id',
             rule_version='rule_version',

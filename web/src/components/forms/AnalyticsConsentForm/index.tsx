@@ -17,4 +17,4 @@
  */
 
 export { default } from './AnalyticsConsentForm';
-export { default as ErrorReportingSection } from './ErrorReportingSection';
+export { default as AnalyticsConsentSection } from './AnalyticsConsentSection';

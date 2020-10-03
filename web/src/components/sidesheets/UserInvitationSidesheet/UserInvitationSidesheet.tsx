@@ -28,6 +28,7 @@ import {
 import React from 'react';
 import { extractErrorMessage } from 'Helpers/utils';
 import UserForm from 'Components/forms/UserForm';
+import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
 import { useInviteUser } from './graphql/inviteUser.generated';
 
 const initialValues = {
@@ -48,6 +49,7 @@ const UserInvitationSidesheet: React.FC<SideSheetProps> = props => {
     },
     onCompleted: () => {
       props.onClose();
+      trackEvent({ event: EventEnum.InvitedUser, src: SrcEnum.Users });
       pushSnackbar({ variant: 'success', title: 'User invited successfully' });
     },
     onError: error => pushSnackbar({ variant: 'error', title: extractErrorMessage(error) }),

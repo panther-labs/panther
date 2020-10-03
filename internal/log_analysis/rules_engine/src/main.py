@@ -76,7 +76,7 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
             # If rule was invalid, no need to try to run it
 
         else:
-            rule_result = test_rule.run(event['data'])
+            rule_result = test_rule.run(event['data'], raise_title_dedup=True)
             if rule_result.exception:
                 result['errored'] = [
                     {

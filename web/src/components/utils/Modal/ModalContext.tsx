@@ -26,6 +26,7 @@ import { DeleteDestinationModalProps } from 'Components/modals/DeleteDestination
 import { DeleteRuleModalProps } from 'Components/modals/DeleteRuleModal';
 import { DeleteTestModalProps } from 'Components/modals/DeleteTestModal';
 import { DeleteGlobalPythonModuleModalProps } from 'Components/modals/DeleteGlobalPythonModuleModal';
+import { AnalyticsConsentModalProps } from 'Components/modals/AnalyticsConsentModal';
 
 const SHOW_MODAL = 'SHOW_MODAL';
 const HIDE_MODAL = 'HIDE_MODAL';
@@ -160,6 +161,7 @@ interface ShowAnalyticsConsentModalAction {
   type: typeof SHOW_MODAL;
   payload: {
     modal: MODALS.ANALYTICS_CONSENT;
+    props?: OmitControlledProps<AnalyticsConsentModalProps>;
   };
 }
 
