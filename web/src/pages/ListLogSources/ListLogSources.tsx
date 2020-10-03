@@ -32,7 +32,7 @@ import Skeleton from './Skeleton';
 import ListDestinationsCards from './ListLogSourceCards';
 
 const ListLogSources = () => {
-  useTrackPageView(PageViewEnum.ListAlerts);
+  useTrackPageView(PageViewEnum.ListLogSources);
 
   const { loading, error, data } = useListLogSources();
 
