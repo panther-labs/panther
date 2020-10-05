@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Alert, Box, Flex, SimpleGrid } from 'pouncejs';
+import { Alert, Box, SimpleGrid } from 'pouncejs';
 import withSEO from 'Hoc/withSEO';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { extractErrorMessage, getCurrentDate, subtractDays } from 'Helpers/utils';
@@ -25,10 +25,9 @@ import Panel from 'Components/Panel';
 import AlertsTable from 'Pages/LogAnalysisOverview/AlertsTable';
 import { PageViewEnum } from 'Helpers/analytics';
 import useTrackPageView from 'Hooks/useTrackPageView';
+import AlertsCharts from 'Pages/LogAnalysisOverview/AlertsCharts';
 import LogAnalysisOverviewPageSkeleton from './Skeleton';
 import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
-import AlertsBySeverity from './AlertsBySeverity';
-import AlertSummary from './AlertSummary';
 import LogTypeCharts from './LogTypeCharts';
 import { useGetTopAlerts } from './graphql/getTopAlerts.generated';
 
@@ -47,7 +46,13 @@ const LogAnalysisOverview: React.FC = () => {
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
-        metricNames: ['eventsProcessed', 'totalAlertsDelta', 'alertsBySeverity', 'eventsLatency'],
+        metricNames: [
+          'eventsProcessed',
+          'totalAlertsDelta',
+          'alertsBySeverity',
+          'eventsLatency',
+          'alertsByRuleID',
+        ],
         fromDate,
         toDate,
         intervalMinutes,
@@ -73,20 +78,17 @@ const LogAnalysisOverview: React.FC = () => {
     );
   }
 
-  const { alertsBySeverity, totalAlertsDelta, eventsProcessed, eventsLatency } = data.getLogAnalysisMetrics; // prettier-ignore
+  const { alertsBySeverity, totalAlertsDelta, eventsProcessed, eventsLatency, alertsByRuleID } = data.getLogAnalysisMetrics; // prettier-ignore
   const alertItems = alerts?.alerts.alertSummaries || [];
 
   return (
     <Box as="article" mb={6}>
       <SimpleGrid columns={1} spacingX={3} spacingY={2} as="section" mb={5}>
-        <Panel title="Real-time Alerts">
-          <Box height={272}>
-            <Flex direction="row" width="100%" height="100%">
-              <AlertSummary data={totalAlertsDelta} />
-              <AlertsBySeverity alerts={alertsBySeverity} />
-            </Flex>
-          </Box>
-        </Panel>
+        <AlertsCharts
+          totalAlertsDelta={totalAlertsDelta}
+          alertsBySeverity={alertsBySeverity}
+          alertsByRuleID={alertsByRuleID}
+        />
       </SimpleGrid>
       <SimpleGrid columns={1} spacingX={3} spacingY={2} my={5}>
         <LogTypeCharts eventsProcessed={eventsProcessed} eventsLatency={eventsLatency} />
