@@ -33,11 +33,11 @@ import (
 
 const (
 	// Use the commit from the latest tagged release of https://github.com/golang/tools/releases
-	goimportsVersion = "03a346b" // gopls/v0.4.4
+	goimportsVersion = "c9b80dc" // gopls/v0.5.0
 
-	golangciVersion  = "1.30.0"
+	golangciVersion  = "1.31.0"
 	swaggerVersion   = "0.25.0"
-	terraformVersion = "0.13.2"
+	terraformVersion = "0.13.4"
 )
 
 var log = logger.Build("[setup]")

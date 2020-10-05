@@ -128,7 +128,7 @@ func TestResultEncoder(t *testing.T) {
 	assert := require.New(t)
 	assert.NoError(err)
 	type T struct {
-		Time     time.Time `json:"tm" panther:"event_time"`
+		Time     time.Time `json:"tm" event_time:"true"`
 		RemoteIP string    `json:"remote_ip" panther:"ip"`
 		LocalIP  string    `json:"local_ip" panther:"ip"`
 	}

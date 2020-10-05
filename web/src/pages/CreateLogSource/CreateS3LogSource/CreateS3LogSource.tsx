@@ -19,6 +19,7 @@
 import React from 'react';
 import withSEO from 'Hoc/withSEO';
 import S3LogSourceWizard from 'Components/wizards/S3LogSourceWizard';
+import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
 import { useAddS3LogSource } from './graphql/addS3LogSource.generated';
 
 const initialValues = {
@@ -40,6 +41,8 @@ const CreateS3LogSource: React.FC = () => {
         },
       });
     },
+    onCompleted: () =>
+      trackEvent({ event: EventEnum.AddedLogSource, src: SrcEnum.LogSources, ctx: 'S3' }),
   });
 
   return (
