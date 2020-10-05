@@ -50,11 +50,7 @@ const GlobalPythonModuleItem: React.FC<GlobalItemProps> = ({ globalPythonModule 
       <Flex align="flex-start" justify="space-between">
         <Box>
           <Heading as="h4" size="x-small">
-            <Link
-              as={RRLink}
-              to={urls.settings.globalPythonModules.edit(globalPythonModule.id)}
-              py={1}
-            >
+            <Link as={RRLink} to={urls.settings.globalPythonModules.edit(globalPythonModule.id)}>
               {globalPythonModule.id}
             </Link>
           </Heading>
@@ -67,7 +63,7 @@ const GlobalPythonModuleItem: React.FC<GlobalItemProps> = ({ globalPythonModule 
             as={IconButton}
             icon="more"
             variant="ghost"
-            size="small"
+            size="medium"
             aria-label="Global Python Module Options"
           />
           <DropdownMenu>

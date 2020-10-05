@@ -16,36 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { Flex, Icon, Text } from 'pouncejs';
-
-interface DifferenceTextProps {
-  diff: number;
-}
-
-const DifferenceText: React.FC<DifferenceTextProps> = ({ diff }) => {
-  if (diff === 0) {
-    return (
-      <Text pt={2} fontWeight="bold">
-        {diff}
-      </Text>
-    );
-  }
-  if (diff > 0) {
-    return (
-      <Flex pt={2}>
-        <Icon type="caret-down" size="medium" color="green-400" />
-        <Text fontWeight="bold">{diff}</Text>
-      </Flex>
-    );
-  }
-
-  return (
-    <Flex pt={2}>
-      <Icon type="caret-up" size="medium" color="red-300" />
-      <Text fontWeight="bold">{-diff}</Text>
-    </Flex>
-  );
-};
-
-export default DifferenceText;
+export { default } from './LinkButton';

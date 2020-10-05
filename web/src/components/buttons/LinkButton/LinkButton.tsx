@@ -17,35 +17,35 @@
  */
 
 import React from 'react';
-import { Flex, Icon, Text } from 'pouncejs';
+import { ButtonProps, Button, Box } from 'pouncejs';
+import { Link as RRLink, LinkProps as RRLinkProps } from 'react-router-dom';
 
-interface DifferenceTextProps {
-  diff: number;
-}
+type ButtonWithoutAs = Omit<ButtonProps, 'as'>;
+type ToProp = Pick<RRLinkProps, 'to'>;
 
-const DifferenceText: React.FC<DifferenceTextProps> = ({ diff }) => {
-  if (diff === 0) {
-    return (
-      <Text pt={2} fontWeight="bold">
-        {diff}
-      </Text>
-    );
-  }
-  if (diff > 0) {
-    return (
-      <Flex pt={2}>
-        <Icon type="caret-down" size="medium" color="green-400" />
-        <Text fontWeight="bold">{diff}</Text>
-      </Flex>
-    );
-  }
+export type LinkButtonProps = ButtonWithoutAs & ToProp & { external?: boolean };
+
+const LinkButton: React.FC<LinkButtonProps> = ({ external, to, children, ...rest }) => {
+  const linkProps = external
+    ? { target: '_blank', rel: 'noopener noreferrer', href: to, as: 'a' as React.ElementType }
+    : { to, as: RRLink };
 
   return (
-    <Flex pt={2}>
-      <Icon type="caret-up" size="medium" color="red-300" />
-      <Text fontWeight="bold">{-diff}</Text>
-    </Flex>
+    <Box
+      {...linkProps}
+      sx={{
+        '& > span': {
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+      }}
+    >
+      <Button as="span" {...rest}>
+        {children}
+      </Button>
+    </Box>
   );
 };
 
-export default DifferenceText;
+export default LinkButton;

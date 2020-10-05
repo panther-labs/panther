@@ -130,7 +130,7 @@ const AlertDeliveryTable: React.FC<AlertDeliveryTableProps> = ({
                         icon="refresh"
                         variant="ghost"
                         variantColor="navyblue"
-                        size="small"
+                        size="medium"
                         aria-label="Retry delivery"
                         onClick={() => onAlertDeliveryRetry(mostRecentDelivery.outputId)}
                       />

@@ -24,6 +24,7 @@ import { pantherConfig } from 'Source/config';
 import { useWizardContext, WizardPanel } from 'Components/Wizard';
 import lightningIllustration from 'Assets/illustrations/lightning.svg';
 import cogsIllustration from 'Assets/illustrations/cogs.svg';
+import LinkButton from 'Components/buttons/LinkButton';
 import { useGetComplianceCfnTemplate } from './graphql/getComplianceCfnTemplate.generated';
 import { ComplianceSourceWizardValues } from '../ComplianceSourceWizard';
 
@@ -76,11 +77,9 @@ const StackDeployment: React.FC = () => {
                 </Box>
               )}
             </Text>
-            <a href={cfnConsoleLink} target="_blank" rel="noopener noreferrer">
-              <Button as="div" variantColor="teal">
-                Launch Console
-              </Button>
-            </a>
+            <LinkButton external to={cfnConsoleLink} variantColor="teal">
+              Launch Console
+            </LinkButton>
           </Flex>
         </Card>
         <Card variant="dark" p={6}>

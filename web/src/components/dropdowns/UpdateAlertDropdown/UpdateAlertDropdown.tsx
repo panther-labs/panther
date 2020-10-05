@@ -130,8 +130,6 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
       <Dropdown>
         <DropdownButton as={Box} display="inline-flex">
           <IconButton
-            // @ts-ignore
-            p="1px"
             variant="outline"
             variantColor="navyblue"
             icon="caret-down"
