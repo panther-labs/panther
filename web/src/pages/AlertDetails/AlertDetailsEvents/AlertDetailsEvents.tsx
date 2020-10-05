@@ -62,7 +62,7 @@ const AlertDetailsEvents: React.FC<AlertDetailsEventsProps> = ({ alert, fetchMor
               </Box>
             }
           >
-            <Icon type="info" size="small" />
+            <Icon type="info" size="medium" />
           </Tooltip>
         </Flex>
         <PaginationControls

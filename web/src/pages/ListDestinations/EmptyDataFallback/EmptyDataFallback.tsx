@@ -18,9 +18,9 @@
 
 import React from 'react';
 import DestinationImg from 'Assets/illustrations/destination.svg';
-import { Box, Button, Flex, Heading, Link, Text } from 'pouncejs';
-import { Link as RRLink } from 'react-router-dom';
+import { Box, Flex, Heading, Text } from 'pouncejs';
 import urls from 'Source/urls';
+import LinkButton from 'Components/buttons/LinkButton';
 
 const DestinationsPageEmptyDataFallback: React.FC = () => {
   return (
@@ -33,11 +33,9 @@ const DestinationsPageEmptyDataFallback: React.FC = () => {
         You don{"'"}t seem to have any destinations setup yet. <br />
         Adding destinations will help you get notified when irregularities occur.
       </Text>
-      <Link as={RRLink} to={urls.settings.destinations.create()}>
-        <Button as="div" icon="add">
-          Add your first Destination
-        </Button>
-      </Link>
+      <LinkButton to={urls.settings.destinations.create()} icon="add">
+        Add your first Destination
+      </LinkButton>
     </Flex>
   );
 };

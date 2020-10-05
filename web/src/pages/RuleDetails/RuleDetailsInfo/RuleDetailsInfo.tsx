@@ -27,6 +27,7 @@ import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import StatusBadge from 'Components/badges/StatusBadge';
+import LinkButton from 'Components/buttons/LinkButton';
 
 interface ResourceDetailsInfoProps {
   rule?: RuleDetails;
@@ -38,9 +39,7 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
   return (
     <React.Fragment>
       <Flex spacing={4} mb={6} justify="flex-end">
-        <Button as={RRLink} to={urls.logAnalysis.rules.edit(rule.id)}>
-          Edit
-        </Button>
+        <LinkButton to={urls.logAnalysis.rules.edit(rule.id)}>Edit</LinkButton>
         <Button
           variantColor="red"
           onClick={() =>

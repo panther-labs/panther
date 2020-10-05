@@ -71,7 +71,7 @@ const ResourcesDetailsTable: React.FC<ResourcesDetailsTableProps> = ({ policies 
               </Box>
             </Table.Cell>
             <Table.Cell align="right">
-              <Box my={-1}>
+              <Box my={-2}>
                 <ResourceDetailsTableRowOptions complianceItem={policy} />
               </Box>
             </Table.Cell>
