@@ -38,6 +38,10 @@ export type ListAlertsInlineFiltersValues = Pick<
   ListAlertsInput,
   'severity' | 'status' | 'nameContains' | 'sortBy' | 'sortDir'
 >;
+export type SortingOptions = {
+  opt: string;
+  resolution: ListAlertsInput;
+}[];
 
 const severityOptions = Object.values(SeverityEnum);
 const statusOptions = Object.values(AlertStatusesEnum);
@@ -62,7 +66,7 @@ const defaultValues = {
   status: [],
 };
 
-const sortingOpts = [
+const sortingOpts: SortingOptions = [
   {
     opt: 'Most Recent',
     resolution: {
@@ -86,29 +90,21 @@ const sortingOpts = [
  */
 const extractSortingOpts = params => {
   const { sorting, ...rest } = params;
-  const sortingParams = sortingOpts.reduce((prev, curr) => {
-    if (curr.opt === sorting) {
-      return { ...curr.resolution };
-    }
-    return prev;
-  }, {});
-
+  const sortingParams = sortingOpts.find(param => param.opt === sorting);
   return {
     ...rest,
-    ...sortingParams,
+    ...(sortingParams ? { ...sortingParams.resolution } : {}),
   };
 };
 
 const wrapSortingOptions = params => {
   const { sortBy, sortDir, ...rest } = params;
-  const sortingParams = sortingOpts.reduce((prev, curr) => {
-    if (curr.resolution.sortBy === sortBy && curr.resolution.sortDir === sortDir) {
-      return { sorting: curr.opt };
-    }
-    return prev;
-  }, {});
+  const option = sortingOpts.find(
+    param => param.resolution.sortBy === sortBy && param.resolution.sortDir === sortDir
+  );
+
   return {
-    ...sortingParams,
+    ...(option ? { sorting: option.opt } : {}),
     ...rest,
   };
 };
@@ -122,24 +118,18 @@ const ListAlertFilters: React.FC = () => {
     () =>
       ({
         ...defaultValues,
-        ...pick(requestParams, filters),
-        ...wrapSortingOptions(requestParams),
+        ...wrapSortingOptions(pick(requestParams, filters)),
       } as ListAlertsInlineFiltersValues),
     [requestParams]
-  );
-
-  const onInlineFiltersChange = React.useCallback(
-    (values: ListAlertsInlineFiltersValues) => {
-      updateRequestParams(extractSortingOpts(values));
-    },
-    [requestParams, updateRequestParams]
   );
 
   return (
     <Flex justify="flex-end" align="center">
       <Formik<ListAlertsInlineFiltersValues>
         initialValues={initialFilterValues}
-        onSubmit={onInlineFiltersChange}
+        onSubmit={(values: ListAlertsInlineFiltersValues) => {
+          updateRequestParams(extractSortingOpts(values));
+        }}
       >
         <Form>
           <FormikAutosave threshold={200} />
@@ -153,34 +143,34 @@ const ListAlertFilters: React.FC = () => {
                 label="Filter Alerts by text"
               />
             </Box>
-            <Box width={160}>
+            <Box width={110}>
               <FastField
                 name="eventCountMin"
                 as={FormikTextInput}
+                type="number"
                 min={0}
-                label="Event Count (min)"
+                label="Max Events"
               />
             </Box>
-            <Box width={160}>
+            <Box width={110}>
               <FastField
                 min={1}
                 type="number"
                 name="eventCountMax"
                 as={FormikTextInput}
-                label="Event Count (max)"
+                label="Min Events"
               />
             </Box>
-            <Box width={160}>
+            <Box width={112}>
               <FastField
                 name="severity"
-                type="number"
                 as={FormikMultiCombobox}
                 items={severityOptions}
                 itemToString={filterItemToString}
                 label="Severity"
               />
             </Box>
-            <Box maxWidth={160}>
+            <Box maxWidth={112}>
               <FastField
                 name="status"
                 as={FormikMultiCombobox}

@@ -23,7 +23,6 @@ import { Flex } from 'pouncejs';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 
 import pickBy from 'lodash/pickBy';
-import identity from 'lodash/identity';
 import isEmpty from 'lodash/isEmpty';
 import pick from 'lodash/pick';
 
@@ -41,7 +40,8 @@ export type ListAlertsFiltersValues = Pick<
 const ALL_TYPES = 'All types';
 const filterKeys = ['logTypes', 'createdAtAfter', 'createdAtBefore'];
 
-const sanitizeLogTypes = (logTypes = []) => {
+const sanitizeLogTypes = logTypes => {
+  // Sanitize values coming from the URL as array and from the component as string.
   if (Array.isArray(logTypes)) {
     return logTypes.filter(type => type === 'ALL_TYPES');
   }
@@ -53,9 +53,7 @@ const ListAlertBreadcrumbFilters: React.FC = () => {
     fetchPolicy: 'cache-first',
   });
 
-  const { requestParams, updateRequestParams } = useRequestParamsWithoutPagination<
-    ListAlertsInput
-  >();
+  const { requestParams, setRequestParams } = useRequestParamsWithoutPagination<ListAlertsInput>();
 
   const availableLogTypes = React.useMemo(
     () =>
@@ -78,12 +76,12 @@ const ListAlertBreadcrumbFilters: React.FC = () => {
       const { logTypes, ...rest } = values;
       const sanitizedLogTypes = sanitizeLogTypes(logTypes);
       const params = pickBy(
-        { ...rest, logTypes: sanitizedLogTypes },
-        param => !isEmpty(identity(param))
+        { ...requestParams, ...rest, logTypes: sanitizedLogTypes },
+        param => !isEmpty(param)
       );
-      updateRequestParams({ ...requestParams, ...params });
+      setRequestParams(params);
     },
-    [requestParams, updateRequestParams]
+    [requestParams, setRequestParams]
   );
 
   return (
@@ -101,7 +99,6 @@ const ListAlertBreadcrumbFilters: React.FC = () => {
                   as={FormikCombobox}
                   variant="solid"
                   label="Log Type"
-                  searchable
                   name="logTypes"
                   items={availableLogTypes}
                 />
