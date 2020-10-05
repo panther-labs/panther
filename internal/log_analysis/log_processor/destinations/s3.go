@@ -344,7 +344,7 @@ func newS3EventBufferSet(jsonAPI jsoniter.API) *s3EventBufferSet {
 
 func (bs *s3EventBufferSet) writeEvent(event *parsers.Result, maxBufferSize, maxTotalSize int) (buf *s3EventBuffer, err error) {
 	// HERE BE DRAGONS
-	// We need to first serialize the event to JSON for events that only set the event time via `panther:"event_time"` tag.
+	// We need to first serialize the event to JSON for events that only set the event time via `event_time:"true"` tag.
 	// This includes custom logs and other simple struct-based events.
 	stream := bs.stream
 	stream.Reset(nil)

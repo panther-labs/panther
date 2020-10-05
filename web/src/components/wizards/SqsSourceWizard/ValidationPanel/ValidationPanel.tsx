@@ -22,11 +22,11 @@ import { useFormikContext } from 'formik';
 import FailureStatus from 'Assets/statuses/failure.svg';
 import WaitingStatus from 'Assets/statuses/waiting.svg';
 import SuccessStatus from 'Assets/statuses/success.svg';
-import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import { useWizardContext, WizardPanel } from 'Components/Wizard';
 import { copyTextToClipboard, extractErrorMessage } from 'Helpers/utils';
 import { ApolloError } from '@apollo/client';
+import LinkButton from 'Components/buttons/LinkButton';
 import { AddSqsLogSourceMutationResult } from 'Pages/CreateLogSource/CreateSqsLogSource/graphql/addSqsLogSource.generated';
 import { UpdateSqsLogSourceMutationResult } from 'Pages/EditSqsLogSource/graphql/updateSqsLogSource.generated';
 import { SqsLogSourceWizardValues } from '../SqsSourceWizard';
@@ -92,9 +92,7 @@ const ValidationPanel: React.FC = () => {
           </AbstractButton>
           <WizardPanel.Actions>
             <Flex direction="column" spacing={4}>
-              <RRLink to={urls.compliance.sources.list()}>
-                <Button as="div">Finish Setup</Button>
-              </RRLink>
+              <LinkButton to={urls.compliance.sources.list()}>Finish Setup</LinkButton>
               {!initialValues.integrationId && (
                 <Link
                   as={AbstractButton}

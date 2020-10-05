@@ -54,7 +54,7 @@ const ListUsersTable: React.FC<ListUsersTableProps> = ({ users }) => {
               </Box>
             </Table.Cell>
             <Table.Cell>
-              <Box my={-1}>
+              <Box my={-2}>
                 <ListUsersTableRowOptions user={user} />
               </Box>
             </Table.Cell>

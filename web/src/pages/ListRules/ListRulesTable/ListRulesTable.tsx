@@ -115,7 +115,7 @@ const ListRulesTable: React.FC<ListRulesTableProps> = ({ items, onSort, sortBy, 
             </Table.Cell>
             <Table.Cell align="right">{formatDatetime(rule.lastModified)}</Table.Cell>
             <Table.Cell>
-              <Box my={-1}>
+              <Box my={-2}>
                 <ListRulesTableRowOptions rule={rule} />
               </Box>
             </Table.Cell>

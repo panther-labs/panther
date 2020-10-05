@@ -1,0 +1,190 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`GenericItemCard renders a step 1`] = `
+.panther-19 {
+  background-color: #1d2a3f;
+  border-radius: 4px;
+  padding: 20px;
+}
+
+.panther-18 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  position: relative;
+  height: 100%;
+}
+
+.panther-0 {
+  max-width: 100%;
+  margin-right: 20px;
+}
+
+.panther-17 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.panther-16 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-flex-wrap: wrap;
+  -webkit-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+}
+
+.panther-16>*:not(:last-child) {
+  margin-right: 32px;
+}
+
+.panther-3 {
+  margin-top: 16px;
+}
+
+.panther-1 {
+  color: #bdbdbd;
+  font-size: 0.563rem;
+  margin-bottom: 1px;
+  font-weight: 500;
+}
+
+.panther-2 {
+  font-size: 0.875rem;
+  opacity: 1;
+}
+
+.panther-7 {
+  -webkit-flex-basis: 100%;
+  -ms-flex-preferred-size: 100%;
+  flex-basis: 100%;
+  height: 0;
+}
+
+
+
+.panther-13 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: flex-end;
+  -webkit-box-align: flex-end;
+  -ms-flex-align: flex-end;
+  align-items: flex-end;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+<div>
+  <section
+    class="panther-19"
+  >
+    <div
+      class="panther-18"
+    >
+      <img
+        alt="Logo"
+        class="panther-0"
+        height="20"
+        src="test-file-stub"
+        width="20"
+      />
+      <div
+        class="panther-17"
+      >
+        <div
+          class="panther-16"
+        >
+          <dl
+            class="panther-3"
+          >
+            <dt
+              aria-labelledby="test-labelstring-value"
+              class="panther-1"
+            >
+              Test label
+            </dt>
+            <dd
+              aria-labelledby="test-labelstring-value"
+              class="panther-2"
+            >
+              String value
+            </dd>
+          </dl>
+          <dl
+            class="panther-3"
+          >
+            <dt
+              aria-labelledby="test-labelanother-value"
+              class="panther-1"
+            >
+              Test label
+            </dt>
+            <dd
+              aria-labelledby="test-labelanother-value"
+              class="panther-2"
+            >
+              Another value
+            </dd>
+          </dl>
+          <div
+            class="panther-7"
+          />
+          <dl
+            class="panther-3"
+          >
+            <dt
+              aria-labelledby="test-tailormade-componentobject-object"
+              class="panther-1"
+            >
+              Test tailormade component
+            </dt>
+            <dd
+              aria-labelledby="test-tailormade-componentobject-object"
+              class="panther-2"
+            >
+              <div
+                class="panther-9"
+              >
+                Cool right
+              </div>
+            </dd>
+          </dl>
+          <div
+            class="panther-13"
+          >
+            <div
+              class="panther-9"
+            >
+              Test custom children
+            </div>
+          </div>
+          <dl
+            class="panther-3"
+          >
+            <dd
+              aria-labelledby="undefinedwithout-label"
+              class="panther-2"
+            >
+              without label
+            </dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+`;

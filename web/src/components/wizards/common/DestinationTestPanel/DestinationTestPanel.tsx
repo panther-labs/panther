@@ -24,6 +24,7 @@ import urls from 'Source/urls';
 import SuccessStatus from 'Assets/statuses/success.svg';
 import FailureStatus from 'Assets/statuses/failure.svg';
 import NotificationStatus from 'Assets/statuses/notification.svg';
+import LinkButton from 'Components/buttons/LinkButton';
 import { extractErrorMessage } from 'Helpers/utils';
 import { DeliveryResponseFull } from 'Source/graphql/fragments/DeliveryResponseFull.generated';
 import { WizardData as CreateWizardData } from '../../CreateDestinationWizard';
@@ -79,14 +80,15 @@ const DestinationTestPanel: React.FC = () => {
             alt="Test Alert failed to receive"
             src={FailureStatus}
           />
-          <Text mb={5}>
+          <Text>
             If you don{"'"}t feel like it right now, you can always change the configuration later
           </Text>
-          <Link as={RRLink} mb={6} to={urls.settings.destinations.edit(destination.outputId)}>
-            <Button as="div" onClick={goToPrevStep}>
-              Back to Configuration
-            </Button>
-          </Link>
+          <LinkButton
+            to={urls.settings.destinations.edit(destination.outputId)}
+            onClick={goToPrevStep}
+          >
+            Back to Configuration
+          </LinkButton>
           <Link as={RRLink} variant="discreet" to={urls.settings.destinations.list()}>
             Skip Testing
           </Link>
@@ -109,10 +111,8 @@ const DestinationTestPanel: React.FC = () => {
             alt="Test Alert received"
             src={NotificationStatus}
           />
-          <Text mb={5}>Signed, sealed, and delivered. You are good to go!</Text>
-          <Link as={RRLink} mb={6} to={urls.settings.destinations.list()}>
-            <Button as="div">Finish Setup</Button>
-          </Link>
+          <Text>Signed, sealed, and delivered. You are good to go!</Text>
+          <LinkButton to={urls.settings.destinations.list()}>Finish Setup</LinkButton>
           <Link as={AbstractButton} variant="discreet" onClick={reset}>
             Add Another
           </Link>

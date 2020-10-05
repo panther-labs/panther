@@ -79,7 +79,7 @@ const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ onSuccess }) =>
           <Flex direction="column" spacing={5}>
             <Card variant="dark" p={3}>
               <Flex align="center">
-                <Icon type="alert-circle" size="small" color="blue-400" />
+                <Icon type="alert-circle" size="medium" color="blue-400" />
                 <Text fontSize="medium" ml={2}>
                   Updating your password will log you out of all devices you are logged in!
                 </Text>
