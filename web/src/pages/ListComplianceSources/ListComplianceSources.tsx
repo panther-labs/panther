@@ -17,12 +17,12 @@
  */
 
 import React from 'react';
-import { Alert, Box, Button } from 'pouncejs';
+import { Alert, Box } from 'pouncejs';
 import { extractErrorMessage } from 'Helpers/utils';
 import Panel from 'Components/Panel';
-import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import LinkButton from 'Components/buttons/LinkButton';
 import withSEO from 'Hoc/withSEO';
 import { useListComplianceSources } from './graphql/listComplianceSources.generated';
 import EmptyDataFallback from './EmptyDataFallback';
@@ -58,11 +58,9 @@ const ListComplianceSources = () => {
       <Panel
         title="Connected Accounts"
         actions={
-          <RRLink to={urls.compliance.sources.create()}>
-            <Button as="div" icon="add">
-              Add Account
-            </Button>
-          </RRLink>
+          <LinkButton to={urls.compliance.sources.create()} icon="add">
+            Add Account
+          </LinkButton>
         }
       >
         <ErrorBoundary>

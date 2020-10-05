@@ -17,10 +17,10 @@
  */
 
 import React from 'react';
-import { Box, Button, FadeIn, Flex, Heading, Text } from 'pouncejs';
+import { Box, FadeIn, Flex, Heading, Text } from 'pouncejs';
 import EmptyDataImg from 'Assets/illustrations/empty-box.svg';
-import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
+import LinkButton from 'Components/buttons/LinkButton';
 
 const ComplianceEmptyDataFallback: React.FC = () => (
   <FadeIn>
@@ -33,9 +33,7 @@ const ComplianceEmptyDataFallback: React.FC = () => (
         You don{"'"}t seem to have any Cloud Security sources connected to our system. <br />
         When you do, a high level overview of your system{"'"}s health will appear here.
       </Text>
-      <RRLink to={urls.compliance.sources.create()}>
-        <Button as="div">Add your first source</Button>
-      </RRLink>
+      <LinkButton to={urls.compliance.sources.create()}>Add your first source</LinkButton>
     </Flex>
   </FadeIn>
 );

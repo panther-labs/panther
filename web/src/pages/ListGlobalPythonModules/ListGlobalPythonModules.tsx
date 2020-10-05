@@ -17,13 +17,13 @@
  */
 
 import React from 'react';
-import { Alert, Button, SimpleGrid } from 'pouncejs';
-import { Link as RRLink } from 'react-router-dom';
+import { Alert, SimpleGrid } from 'pouncejs';
 import urls from 'Source/urls';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { convertObjArrayValuesToCsv, encodeParams, extractErrorMessage } from 'Helpers/utils';
 import withSEO from 'Hoc/withSEO';
 import Panel from 'Components/Panel';
+import LinkButton from 'Components/buttons/LinkButton';
 import { useListGlobalPythonModules } from './graphql/listGlobalPythonModules.generated';
 import EmptyDataFallback from './EmptyDataFallback';
 import GlobalPythonModuleItem from './GlobalPythonModuleItem';
@@ -62,9 +62,9 @@ const ListGlobalPythonModules = () => {
     <Panel
       title="Python Modules"
       actions={
-        <RRLink to={urls.settings.globalPythonModules.create()}>
-          <Button as="div">Create New Python Module</Button>
-        </RRLink>
+        <LinkButton to={urls.settings.globalPythonModules.create()}>
+          Create New Python Module
+        </LinkButton>
       }
     >
       <ErrorBoundary>

@@ -17,7 +17,6 @@
  */
 
 import React from 'react';
-import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import { RESOURCE_TYPES } from 'Source/constants';
 import { ComplianceStatusEnum, SeverityEnum, ListPoliciesInput } from 'Generated/schema';
@@ -32,6 +31,7 @@ import ErrorBoundary from 'Components/ErrorBoundary';
 import isEmpty from 'lodash/isEmpty';
 import pick from 'lodash/pick';
 import Breadcrumbs from 'Components/Breadcrumbs';
+import LinkButton from 'Components/buttons/LinkButton';
 
 const severityOptions = Object.values(SeverityEnum);
 const statusOptions = Object.values(ComplianceStatusEnum);
@@ -154,9 +154,7 @@ const ListPoliciesActions: React.FC = () => {
           >
             Filter Options {filtersCount ? `(${filtersCount})` : ''}
           </Button>
-          <RRLink to={urls.compliance.policies.create()}>
-            <Button as="div">Create New Policy</Button>
-          </RRLink>
+          <LinkButton to={urls.compliance.policies.create()}>Create New Policy</LinkButton>
         </Flex>
       </Breadcrumbs.Actions>
       <Collapse open={areFiltersVisible}>

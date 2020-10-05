@@ -40,6 +40,7 @@ import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import StatusBadge from 'Components/badges/StatusBadge';
+import LinkButton from 'Components/buttons/LinkButton';
 
 interface ResourceDetailsInfoProps {
   policy?: PolicyDetails;
@@ -51,9 +52,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
   return (
     <React.Fragment>
       <Flex spacing={4} mb={6} justify="flex-end">
-        <RRLink to={urls.compliance.policies.edit(policy.id)}>
-          <Button as="div">Edit</Button>
-        </RRLink>
+        <LinkButton to={urls.compliance.policies.edit(policy.id)}>Edit</LinkButton>
         <Button
           variantColor="red"
           onClick={() =>

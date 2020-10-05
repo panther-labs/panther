@@ -17,11 +17,12 @@
  */
 
 import React from 'react';
-import { Alert, Box, useSnackbar, Flex, Heading, Card, SimpleGrid, Button, Link } from 'pouncejs';
+import { Alert, Box, useSnackbar, Flex, Heading, Card, SimpleGrid } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { pantherConfig } from 'Source/config';
 import { extractErrorMessage } from 'Helpers/utils';
 import CompanyInformationForm from 'Components/forms/CompanyInformationForm';
+import LinkButton from 'Components/buttons/LinkButton';
 import withSEO from 'Hoc/withSEO';
 import { useGetGeneralSettings } from './graphql/getGeneralSettings.generated';
 import { useUpdateGeneralSettings } from './graphql/updateGeneralSettings.generated';
@@ -98,11 +99,14 @@ const GeneralSettingsPage: React.FC = () => {
                 </Box>
                 <Box fontWeight="medium">Community</Box>
               </Box>
-              <Link external href="https://runpanther.io/pricing/">
-                <Button as="div" variantColor="navyblue" variant="outline">
-                  Change
-                </Button>
-              </Link>
+              <LinkButton
+                external
+                to="https://runpanther.io/pricing/"
+                variantColor="navyblue"
+                variant="outline"
+              >
+                Change
+              </LinkButton>
             </Flex>
             <Box as="section">
               <Box color="navyblue-100" fontSize="small" mb={1}>

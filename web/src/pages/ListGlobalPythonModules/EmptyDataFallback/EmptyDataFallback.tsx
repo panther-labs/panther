@@ -17,10 +17,10 @@
  */
 
 import React from 'react';
-import { Box, Button, Flex, Heading, Text } from 'pouncejs';
+import { Box, Flex, Heading, Text } from 'pouncejs';
 import EmptyDataImg from 'Assets/illustrations/empty-box.svg';
-import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
+import LinkButton from 'Components/buttons/LinkButton';
 
 const EmptyDataFallback: React.FC = () => (
   <Flex height="100%" width="100%" justify="center" align="center" direction="column">
@@ -31,9 +31,9 @@ const EmptyDataFallback: React.FC = () => (
     <Text color="gray-300" textAlign="center" mb={8}>
       Python modules allow you to define re-usable code elements for your rules and policies
     </Text>
-    <RRLink to={urls.settings.globalPythonModules.create()}>
-      <Button as="div">Create a Global Python Module</Button>
-    </RRLink>
+    <LinkButton to={urls.settings.globalPythonModules.create()}>
+      Create a Global Python Module
+    </LinkButton>
   </Flex>
 );
 

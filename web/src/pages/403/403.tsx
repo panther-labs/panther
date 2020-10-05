@@ -17,11 +17,11 @@
  */
 
 import React from 'react';
-import { Box, Button, Flex, Heading, Text } from 'pouncejs';
+import { Box, Flex, Heading, Text } from 'pouncejs';
 import useAuth from 'Hooks/useAuth';
-import { Link as RRLink } from 'react-router-dom';
 import AccessDeniedImg from 'Assets/illustrations/authentication.svg';
 import withSEO from 'Hoc/withSEO';
+import LinkButton from 'Components/buttons/LinkButton';
 
 const Page403: React.FC = () => {
   const { userInfo } = useAuth();
@@ -37,9 +37,7 @@ const Page403: React.FC = () => {
       <Text fontSize="medium" color="gray-300" mb={10}>
         ( Sarum... Your administrator has restricted your powers )
       </Text>
-      <RRLink to="/">
-        <Button as="div">Back to Shire</Button>
-      </RRLink>
+      <LinkButton to="/">Back to Shire</LinkButton>
     </Flex>
   );
 };

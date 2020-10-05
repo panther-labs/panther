@@ -17,9 +17,9 @@
  */
 
 import React from 'react';
-import { Box, Flex, Heading, Text, Button } from 'pouncejs';
+import { Box, Flex, Heading, Text } from 'pouncejs';
 import EmptyNotepadImg from 'Assets/illustrations/empty-notepad.svg';
-import { Link as RRLink } from 'react-router-dom';
+import LinkButton from 'Components/buttons/LinkButton';
 import urls from 'Source/urls';
 
 const ListPoliciesPageEmptyDataFallback: React.FC = () => {
@@ -33,9 +33,7 @@ const ListPoliciesPageEmptyDataFallback: React.FC = () => {
       <Text color="gray-300" textAlign="center" mb={8}>
         Writing policies is the only way to secure your infrastructure against misconfigurations
       </Text>
-      <RRLink to={urls.compliance.policies.create()}>
-        <Button as="div">Create New Policy</Button>
-      </RRLink>
+      <LinkButton to={urls.compliance.policies.create()}>Create New Policy</LinkButton>
     </Flex>
   );
 };
