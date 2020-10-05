@@ -24,6 +24,7 @@ import { useWizardContext, WizardPanel } from 'Components/Wizard';
 import { pantherConfig } from 'Source/config';
 import lightningIllustration from 'Assets/illustrations/lightning.svg';
 import cogsIllustration from 'Assets/illustrations/cogs.svg';
+import LinkButton from 'Components/buttons/LinkButton';
 import { useGetLogCfnTemplate } from './graphql/getLogCfnTemplate.generated';
 import { S3LogSourceWizardValues } from '../S3LogSourceWizard';
 
@@ -79,11 +80,9 @@ const StackDeployment: React.FC = () => {
                 </Box>
               )}
             </Text>
-            <a href={cfnConsoleLink} target="_blank" rel="noopener noreferrer">
-              <Button as="div" variantColor="teal">
-                Launch Console
-              </Button>
-            </a>
+            <LinkButton external to={cfnConsoleLink} variantColor="teal">
+              Launch Console
+            </LinkButton>
           </Flex>
         </Card>
         <Card variant="dark" p={6}>

@@ -44,7 +44,7 @@ const ResourceDetailsAttributes: React.FC<ResourceDetailsAttributesProps> = ({ r
         <Flex align={open ? 'flex-start' : 'center'} spacing={open ? 7 : 2}>
           <IconButton
             variant="ghost"
-            size="small"
+            size="medium"
             active={open}
             variantColor="navyblue"
             icon={open ? 'caret-up' : 'caret-down'}

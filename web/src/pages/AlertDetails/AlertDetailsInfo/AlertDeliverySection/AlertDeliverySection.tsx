@@ -92,7 +92,7 @@ const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
   if (!deliveryResponses.length || !enhancedAndSortedAlertDeliveries.length) {
     return (
       <Flex align="warning" spacing={4}>
-        <Icon type="info" size="small" color="blue-400" />
+        <Icon type="info" size="medium" color="blue-400" />
         <Text fontWeight="medium">Delivery information could not be retrieved</Text>
       </Flex>
     );
@@ -104,12 +104,12 @@ const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
       <Flex justify="space-between">
         {isMostRecentDeliverySuccessful ? (
           <Flex align="center" spacing={4}>
-            <Icon type="check-circle" size="small" color="green-400" />
+            <Icon type="check-circle" size="medium" color="green-400" />
             <Text fontWeight="medium">Alert was delivered successfully</Text>
           </Flex>
         ) : (
           <Flex align="center" spacing={4}>
-            <Icon type="alert-circle" size="small" color="red-300" />
+            <Icon type="alert-circle" size="medium" color="red-300" />
             <Text fontWeight="medium" color="red-300">
               Alert delivery failed
             </Text>

@@ -152,8 +152,10 @@ exports[`AlertDetailsBanner renders 1`] = `
 }
 
 .panther-7 {
-  padding: 1px;
   outline: none;
+  line-height: 1;
+  height: 24px;
+  width: 24px;
   -webkit-transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
   transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
   border-radius: 99999px;
@@ -183,13 +185,13 @@ exports[`AlertDetailsBanner renders 1`] = `
 }
 
 .panther-6 {
-  display: block;
+  display: inline-block;
   vertical-align: sub;
   -webkit-flex-shrink: 0;
   -ms-flex-negative: 0;
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   color: currentColor;
 }
 

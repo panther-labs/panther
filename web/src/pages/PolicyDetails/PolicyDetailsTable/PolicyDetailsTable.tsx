@@ -70,7 +70,7 @@ const PolicyDetailsTable: React.FC<PolicyDetailsTableProps> = ({ items }) => {
             </Table.Cell>
             <Table.Cell align="right">{formatDatetime(resource.lastUpdated)}</Table.Cell>
             <Table.Cell align="right">
-              <Box my={-1}>
+              <Box my={-2}>
                 <PolicyDetailsTableRowOptions complianceItem={resource} />
               </Box>
             </Table.Cell>
