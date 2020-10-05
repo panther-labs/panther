@@ -76,13 +76,11 @@ const AlertsCharts: React.FC<LogTypeChartsProps> = ({
         <Box p={6}>
           <TabPanels>
             <TabPanel unmountWhenInactive lazy>
-              <Box height={289} py={5} pl={4} backgroundColor="navyblue-500">
-                <Box height={272}>
-                  <Flex direction="row" width="100%" height="100%">
-                    <AlertSummary data={totalAlertsDelta} />
-                    <AlertsBySeverity alerts={alertsBySeverity} />
-                  </Flex>
-                </Box>
+              <Box height={272}>
+                <Flex direction="row" width="100%" height="100%">
+                  <AlertSummary data={totalAlertsDelta} />
+                  <AlertsBySeverity alerts={alertsBySeverity} />
+                </Flex>
               </Box>
             </TabPanel>
             <TabPanel unmountWhenInactive lazy>
