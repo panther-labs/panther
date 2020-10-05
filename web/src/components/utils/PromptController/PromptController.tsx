@@ -27,13 +27,23 @@ const PromptController: React.FC = () => {
   // We are intentionally over-fetching, in order to proactively add this data to the cache
   useGetGeneralSettingsConsents({
     onCompleted: data => {
-      const shouldShowConsentModal = data.generalSettings.errorReportingConsent === null;
+      const shouldShowErrorConsent = data.generalSettings.errorReportingConsent === null;
+      const shouldShowProductAnalyticsConsent = data.generalSettings.analyticsConsent === null;
+      const shouldShowConsentModal = shouldShowErrorConsent || shouldShowProductAnalyticsConsent;
       if (shouldShowConsentModal) {
         // Show analytics consent modal
-        showModal({ modal: MODALS.ANALYTICS_CONSENT });
+        showModal({
+          modal: MODALS.ANALYTICS_CONSENT,
+          props: {
+            showErrorConsent: shouldShowErrorConsent,
+            showProductAnalyticsConsent: shouldShowProductAnalyticsConsent,
+          },
+        });
 
         // Welcome the first user while singing Katy Perry
-        shootFireworks();
+        if (shouldShowErrorConsent) {
+          shootFireworks();
+        }
       }
     },
   });

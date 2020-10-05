@@ -82,6 +82,7 @@ func testCfnLint() error {
 		// nolint:lll
 		// However this property is valid: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ecs-service-networkconfiguration.html#cfn-ecs-service-networkconfiguration-awsvpcconfiguration
 		"-i", "E3002",
+		"-i", "W3002", // warns about templates which require packaging; ours all do
 		"--"}
 	args = append(args, templates...)
 	if err := sh.RunV(util.PipPath("cfn-lint"), args...); err != nil {

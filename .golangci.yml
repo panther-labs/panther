@@ -37,7 +37,7 @@ linters:
     - whitespace
 
   # don't enable:
-  # Formatting (we check for that separately)
+  # Formatting (we autofmt in CI)
   # - gofmt
   # - goimports
   #

@@ -23,7 +23,7 @@ import gql from 'graphql-tag';
 
 export type GeneralSettingsFull = Pick<
   Types.GeneralSettings,
-  'displayName' | 'email' | 'errorReportingConsent'
+  'displayName' | 'email' | 'errorReportingConsent' | 'analyticsConsent'
 >;
 
 export const GeneralSettingsFull = gql`
@@ -31,5 +31,6 @@ export const GeneralSettingsFull = gql`
     displayName
     email
     errorReportingConsent
+    analyticsConsent
   }
 `;
