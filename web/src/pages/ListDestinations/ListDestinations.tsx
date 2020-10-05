@@ -17,12 +17,12 @@
  */
 
 import React from 'react';
-import { Alert, Box, Button, FadeIn, Link } from 'pouncejs';
+import { Alert, Box, FadeIn } from 'pouncejs';
 import withSEO from 'Hoc/withSEO';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
 import Panel from 'Components/Panel';
-import { Link as RRLink } from 'react-router-dom';
+import LinkButton from 'Components/buttons/LinkButton';
 import urls from 'Source/urls';
 import { useListDestinationsAndDefaults } from './graphql/listDestinationsAndDefaults.generated';
 import DestinationsPageSkeleton from './Skeleton';
@@ -59,11 +59,9 @@ const ListDestinations = () => {
         <Panel
           title="Destinations"
           actions={
-            <Link as={RRLink} to={urls.settings.destinations.create()}>
-              <Button as="div" icon="add">
-                Add Destination
-              </Button>
-            </Link>
+            <LinkButton to={urls.settings.destinations.create()} icon="add">
+              Add Destination
+            </LinkButton>
           }
         >
           <FadeIn>

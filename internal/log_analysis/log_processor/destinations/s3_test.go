@@ -112,7 +112,7 @@ type testEvent struct {
 }
 
 type fooEvent struct {
-	Time time.Time   `json:"ts" tcodec:"rfc3339" panther:"event_time" description:"ts"`
+	Time time.Time   `json:"ts" tcodec:"rfc3339" event_time:"true" description:"ts"`
 	Foo  null.String `json:"foo" description:"foo"`
 }
 
@@ -273,7 +273,7 @@ func TestSendDataIfTotalMemSizeLimitHasBeenReached(t *testing.T) {
 	destination := newS3Destination()
 	eventChannel := make(chan *parsers.Result, 2)
 
-	// Use 1 result with `panther:"event_time"` struct tag
+	// Use 1 result with `event_time:"true"` struct tag
 	testResult1 := newTestResult(nil)
 	// Use 1 result with embedded panther log
 	testResult2 := newSimpleTestEvent().Result()

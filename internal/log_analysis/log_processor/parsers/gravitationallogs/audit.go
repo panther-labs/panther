@@ -56,7 +56,7 @@ type TeleportAudit struct {
 	//   * github.create - A user was created via github
 	Event pantherlog.String `json:"event" validate:"required" description:"Event type"`
 	Code  pantherlog.String `json:"code" validate:"required" description:"Event code"`
-	Time  pantherlog.Time   `json:"time" tcodec:"rfc3339" validate:"required" panther:"event_time" description:"Event timestamp"`
+	Time  pantherlog.Time   `json:"time" tcodec:"rfc3339" validate:"required" event_time:"true" description:"Event timestamp"`
 	UID   pantherlog.String `json:"uid" validate:"required" description:"Event unique id"`
 
 	User      pantherlog.String `json:"user" description:"Teleport user name (event type is 'user.login')"`

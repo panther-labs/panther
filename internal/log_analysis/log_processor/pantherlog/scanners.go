@@ -161,3 +161,23 @@ func ScanNetworkAddress(w ValueWriter, input string) {
 	}
 	ScanHostname(w, input)
 }
+
+// MultiScanner scans a value with multiple scanners
+func MultiScanner(scanners ...ValueScanner) ValueScanner {
+	switch len(scanners) {
+	case 0:
+		return nil
+	case 1:
+		return scanners[0]
+	default:
+		return multiScanner(scanners)
+	}
+}
+
+type multiScanner []ValueScanner
+
+func (m multiScanner) ScanValues(w ValueWriter, input string) {
+	for _, scanner := range m {
+		scanner.ScanValues(w, input)
+	}
+}

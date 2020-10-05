@@ -40,7 +40,7 @@ import (
 
 type testEvent struct {
 	Name      string                  `json:"@name"`
-	Timestamp time.Time               `json:"ts" tcodec:"unix_ms" panther:"event_time"`
+	Timestamp time.Time               `json:"ts" tcodec:"unix_ms" event_time:"true"`
 	IP        string                  `json:"ip" panther:"ip"`
 	Domain    null.String             `json:"domain" panther:"domain"`
 	Host      null.String             `json:"hostname" panther:"hostname"`
