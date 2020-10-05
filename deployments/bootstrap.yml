@@ -141,6 +141,7 @@ Conditions:
   ConfigureLogSubscriptions: !Not [!Equals [!Select [0, !Ref LogSubscriptionPrincipals], '']]
   EnableAccessLogs: !Equals [!Ref EnableS3AccessLogs, true]
   ExternalAccessLogs: !Not [!Equals [!Ref AccessLogsBucket, '']]
+  NotExternalAccessLogs: !Equals [!Ref AccessLogsBucket, '']
   ReplicateData: !Not [!Equals [!Ref DataReplicationBucket, '']]
   TracingEnabled: !Not [!Equals [!Ref TracingMode, '']]
   UseCustomDomain: !Not [!Equals [!Ref CustomDomain, '']]
@@ -150,7 +151,7 @@ Conditions:
 
 Resources:
   ########## S3 Buckets ##########
-  AuditLogs: # Panther self-auditing: S3 access logs, flow logs, etc
+  AuditLogs: # Panther self-auditing: S3 access logs (but NOT data processing related!), flow logs, etc
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
@@ -255,6 +256,57 @@ Resources:
             Principal: '*'
             Action: s3:GetObject
             Resource: !Sub arn:${AWS::Partition}:s3:::${AuditLogs}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+
+  # Here we store s3 access logs from buckets related to data processing. The reason we put the logs here
+  # instead of the AuditLogs bucket, is because the AuditLog bucket can be "self" monitored by Panther
+  # and if we have data processing related s3 access logs we create a positive feedback loop where we
+  # wrote to a bucket involved with data processing, which creates an access log, which triggers Panther
+  # log processing, which triggers an s3 access log ... positive feedback loop.
+  DataProcessingS3AccessLogs:
+    Condition: NotExternalAccessLogs # only needed if Panther is tracking access logs
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      AccessControl: LogDeliveryWrite
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          # Keep access logs for 1 year, permanently delete 30 days after they expire
+          - ExpirationInDays: 365
+            NoncurrentVersionExpirationInDays: 30
+            Status: Enabled
+      LoggingConfiguration: !If
+        - EnableAccessLogs
+        - DestinationBucketName: !Ref 'AWS::NoValue'
+          LogFilePrefix: self/
+        - !Ref AWS::NoValue
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+
+  DataProcessingS3AccessLogsBucketPolicy:
+    Condition: NotExternalAccessLogs # only needed if Panther is tracking access logs
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref DataProcessingS3AccessLogs
+      PolicyDocument:
+        Statement:
+          - Sid: ForceSSL
+            Effect: Deny
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub arn:${AWS::Partition}:s3:::${DataProcessingS3AccessLogs}/*
             Condition:
               Bool:
                 aws:SecureTransport: false
@@ -400,7 +452,8 @@ Resources:
     Properties:
       LoggingConfiguration: !If
         - EnableAccessLogs
-        - DestinationBucketName: !If [ExternalAccessLogs, !Ref AccessLogsBucket, !Ref AuditLogs]
+        - DestinationBucketName:
+            !If [ExternalAccessLogs, !Ref AccessLogsBucket, !Ref DataProcessingS3AccessLogs]
           LogFilePrefix: !Sub panther-processed-data-${AWS::AccountId}-${AWS::Region}/
         - !Ref AWS::NoValue
       ReplicationConfiguration: !If
