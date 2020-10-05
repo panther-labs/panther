@@ -66,7 +66,7 @@ const Upload: React.FC<UploadProps> = ({ onFilesDropped }) => {
               <Text fontSize="small">or</Text>
               <input data-testid="input-upload" {...getInputProps()} />
               <Box mt={2}>
-                <Button size="small">Select file</Button>
+                <Button size="medium">Select file</Button>
               </Box>
             </Box>
           )}

@@ -40,6 +40,7 @@ import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import StatusBadge from 'Components/badges/StatusBadge';
+import LinkButton from 'Components/buttons/LinkButton';
 
 interface ResourceDetailsInfoProps {
   policy?: PolicyDetails;
@@ -51,9 +52,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
   return (
     <React.Fragment>
       <Flex spacing={4} mb={6} justify="flex-end">
-        <Button as={RRLink} to={urls.compliance.policies.edit(policy.id)}>
-          Edit
-        </Button>
+        <LinkButton to={urls.compliance.policies.edit(policy.id)}>Edit</LinkButton>
         <Button
           variantColor="red"
           onClick={() =>
@@ -121,7 +120,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
               <Box as="li">
                 <Badge color="violet-400">
                   AUTO REMEDIATIATABLE
-                  <Icon size="small" type="check" my={-1} ml={2} p="2px" />
+                  <Icon size="medium" type="check" my={-1} ml={2} p="2px" />
                 </Badge>
               </Box>
             </Tooltip>

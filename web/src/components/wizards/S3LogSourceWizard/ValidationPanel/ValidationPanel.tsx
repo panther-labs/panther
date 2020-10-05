@@ -22,8 +22,8 @@ import { useFormikContext } from 'formik';
 import FailureStatus from 'Assets/statuses/failure.svg';
 import WaitingStatus from 'Assets/statuses/waiting.svg';
 import SuccessStatus from 'Assets/statuses/success.svg';
-import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
+import LinkButton from 'Components/buttons/LinkButton';
 import { useWizardContext, WizardPanel } from 'Components/Wizard';
 import { extractErrorMessage } from 'Helpers/utils';
 import { ApolloError } from '@apollo/client';
@@ -87,9 +87,7 @@ const ValidationPanel: React.FC = () => {
           )}
           <WizardPanel.Actions>
             <Flex direction="column" spacing={4}>
-              <RRLink to={urls.logAnalysis.sources.list()}>
-                <Button as="div">Finish Setup</Button>
-              </RRLink>
+              <LinkButton to={urls.logAnalysis.sources.list()}>Finish Setup</LinkButton>
               {!initialValues.integrationId && (
                 <Link
                   as={AbstractButton}

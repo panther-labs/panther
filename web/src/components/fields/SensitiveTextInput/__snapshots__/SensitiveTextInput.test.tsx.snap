@@ -129,7 +129,6 @@ exports[`SensitiveTextInput renders 1`] = `
   padding-right: 16px;
   color: #bdbdbd;
   top: 0;
-  left: 0;
   position: absolute;
   transform-origin: center left;
   -webkit-transform: translate(6px, 4px) scale(0.65);
@@ -352,7 +351,6 @@ exports[`SensitiveTextInput renders without masked values on demand 1`] = `
   padding-right: 16px;
   color: #bdbdbd;
   top: 0;
-  left: 0;
   position: absolute;
   transform-origin: center left;
   -webkit-transform: translate(0, 14px) scale(1);

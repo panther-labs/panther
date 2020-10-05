@@ -16,4 +16,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './RuleDetailsAlertsTable';
+import React from 'react';
+import { useFormikContext } from 'formik';
+import debounce from 'lodash/debounce';
+
+export interface AutosaveProps {
+  threshold?: number;
+}
+
+const FormikAutosave: React.FC<AutosaveProps> = ({ threshold = 0 }) => {
+  const { submitForm, values } = useFormikContext();
+
+  const debouncedSubmit = React.useCallback(
+    debounce(() => {
+      submitForm();
+    }, threshold),
+    [threshold, submitForm]
+  );
+
+  React.useEffect(() => {
+    debouncedSubmit();
+  }, [debouncedSubmit, values]);
+
+  return null;
+};
+
+export default FormikAutosave;
