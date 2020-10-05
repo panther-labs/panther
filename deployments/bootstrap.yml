@@ -264,8 +264,8 @@ Resources:
   # instead of the AuditLogs bucket, is because the AuditLog bucket can be "self" monitored by Panther
   # and if we have data processing related s3 access logs we create a positive feedback loop where we
   # wrote to a bucket involved with data processing, which creates an access log, which triggers Panther
-  # log processing, which triggers an s3 access log ... positive feedback loop.
-  DataProcessingS3AccessLogs:
+  # log processing, which triggers an s3 access log ...
+  UnmonitoredAuditLogs:
     Condition: NotExternalAccessLogs # only needed if Panther is tracking access logs
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
@@ -295,18 +295,18 @@ Resources:
       VersioningConfiguration:
         Status: Enabled
 
-  DataProcessingS3AccessLogsBucketPolicy:
+  UnmonitoredAuditLogsBucketPolicy:
     Condition: NotExternalAccessLogs # only needed if Panther is tracking access logs
     Type: AWS::S3::BucketPolicy
     Properties:
-      Bucket: !Ref DataProcessingS3AccessLogs
+      Bucket: !Ref UnmonitoredAuditLogs
       PolicyDocument:
         Statement:
           - Sid: ForceSSL
             Effect: Deny
             Principal: '*'
             Action: s3:GetObject
-            Resource: !Sub arn:${AWS::Partition}:s3:::${DataProcessingS3AccessLogs}/*
+            Resource: !Sub arn:${AWS::Partition}:s3:::${UnmonitoredAuditLogs}/*
             Condition:
               Bool:
                 aws:SecureTransport: false
@@ -453,7 +453,7 @@ Resources:
       LoggingConfiguration: !If
         - EnableAccessLogs
         - DestinationBucketName:
-            !If [ExternalAccessLogs, !Ref AccessLogsBucket, !Ref DataProcessingS3AccessLogs]
+            !If [ExternalAccessLogs, !Ref AccessLogsBucket, !Ref UnmonitoredAuditLogs]
           LogFilePrefix: !Sub panther-processed-data-${AWS::AccountId}-${AWS::Region}/
         - !Ref AWS::NoValue
       ReplicationConfiguration: !If
