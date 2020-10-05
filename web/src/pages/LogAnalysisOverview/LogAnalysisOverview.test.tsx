@@ -39,7 +39,13 @@ describe('Log Analysis Overview', () => {
     const getLogAnalysisMetrics = buildLogAnalysisMetricsResponse();
     const mockedFromDate = utils.subtractDays(mockedToDate, defaultPastDays);
     const getLogAnalysisMetricsInput = buildLogAnalysisMetricsInput({
-      metricNames: ['eventsProcessed', 'totalAlertsDelta', 'alertsBySeverity', 'eventsLatency'],
+      metricNames: [
+        'eventsProcessed',
+        'totalAlertsDelta',
+        'alertsBySeverity',
+        'eventsLatency',
+        'alertsByRuleID',
+      ],
       fromDate: mockedFromDate,
       toDate: mockedToDate,
       intervalMinutes,
@@ -91,10 +97,15 @@ describe('Log Analysis Overview', () => {
     expect(alertsChart).toBeInTheDocument();
     expect(eventChart).toBeInTheDocument();
 
-    // Checking tab click works and renders Data Latency chart
+    // Checking tab click works and renders Data Latency tab
     const latencyChartTabButton = getByText('Data Latency by Log Type');
     fireEvent.click(latencyChartTabButton);
     const latencyChart = getByTestId('events-by-latency');
     expect(latencyChart).toBeInTheDocument();
+    // Checking tab click works and renders Most Active rules tab
+    const mostActiveRulesTabButton = getByText('Most Active Rules');
+    fireEvent.click(mostActiveRulesTabButton);
+    const mostActiveRulesChart = getByTestId('most-active-rules-chart');
+    expect(mostActiveRulesChart).toBeInTheDocument();
   });
 });

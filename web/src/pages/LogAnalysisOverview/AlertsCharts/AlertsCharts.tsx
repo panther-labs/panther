@@ -17,12 +17,12 @@
  */
 
 import React from 'react';
-import { Box, Card, Flex, TabList, TabPanel, TabPanels, Tabs, Theme } from 'pouncejs';
+import { Box, Card, Flex, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
 import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
 import { SeriesData, SingleValue } from 'Generated/schema';
 import AlertSummary from 'Pages/LogAnalysisOverview/AlertSummary';
 import AlertsBySeverity from 'Pages/LogAnalysisOverview/AlertsBySeverity/AlertsBySeverity';
-import BarChart, { Spacing, Formatters } from 'Components/charts/BarChart/BarChart';
+import MostActiveRules from 'Pages/LogAnalysisOverview/MostActiveRules/MostActiveRules';
 
 interface LogTypeChartsProps {
   totalAlertsDelta: SingleValue[];
@@ -30,46 +30,18 @@ interface LogTypeChartsProps {
   alertsByRuleID: SingleValue[];
 }
 
-// The spacing properties for displaying the alertsByRuleID chart
-const spacing: Spacing = {
-  grid: { left: '20%', bottom: 0, top: 0, right: 200 },
-  barConfig: { barGap: '-100%', barWidth: 24 },
-};
-
-// Default color values for alertsByRuleID
-const BarColors: (keyof Theme['colors'])[] = [
-  'cyan-400',
-  'magenta-500',
-  'yellow-500',
-  'red-300',
-  'blue-500',
-];
-
-// Formatter for series label on alertsByRuleID chart
-const formatters: Formatters = {
-  seriesLabelFormatter: params => `${params.value} Alerts`,
-};
-
 const AlertsCharts: React.FC<LogTypeChartsProps> = ({
   totalAlertsDelta,
   alertsBySeverity,
   alertsByRuleID,
 }) => {
-  const reversedData = alertsByRuleID
-    // Displaying only 5 bars, this list is sorted so top alertsByRuleID should first
-    .slice(0, 5)
-    // Adding fixed colors to bars for visual reasons
-    .map((bar, i) => ({ ...bar, color: BarColors[i] }))
-    // need to reverse order for echarts to display bigger first
-    .reverse();
-
   return (
     <Card as="section">
       <Tabs>
         <Box position="relative" pl={2} pr={4}>
           <TabList>
             <BorderedTab>Real-Time Alerts</BorderedTab>
-            <BorderedTab>Most Active Alerts</BorderedTab>
+            <BorderedTab>Most Active Rules</BorderedTab>
           </TabList>
           <BorderTabDivider />
         </Box>
@@ -84,14 +56,7 @@ const AlertsCharts: React.FC<LogTypeChartsProps> = ({
               </Box>
             </TabPanel>
             <TabPanel unmountWhenInactive lazy>
-              <Box height={217} py={5} pl={4} backgroundColor="navyblue-500">
-                <BarChart
-                  data={reversedData}
-                  formatters={formatters}
-                  spacing={spacing}
-                  alignment="horizontal"
-                />
-              </Box>
+              <MostActiveRules alertsByRuleID={alertsByRuleID} />
             </TabPanel>
           </TabPanels>
         </Box>
