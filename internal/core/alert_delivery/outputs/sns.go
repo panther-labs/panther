@@ -75,8 +75,7 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 	}
 
 	title := generateAlertTitle(alert)
-	titleLength := len(title)
-	if titleLength > 100 {
+	if len(title) > 100 {
 		title = title[0:100]
 	}
 
