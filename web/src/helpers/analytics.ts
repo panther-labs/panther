@@ -21,7 +21,7 @@ import mx from 'mixpanel-browser';
 import storage from 'Helpers/storage';
 import { ANALYTICS_CONSENT_STORAGE_KEY } from 'Source/constants';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
-import { logError } from 'Helpers/loggers';
+import { logError } from 'Helpers/errors';
 
 const evaluateTracking = (...args) => {
   const mixpanelPublicToken = process.env.MIXPANEL_PUBLIC_TOKEN;
