@@ -17,7 +17,6 @@
  */
 
 import { DestinationTypeEnum } from 'Generated/schema';
-import mx from 'mixpanel-browser';
 import storage from 'Helpers/storage';
 import { ANALYTICS_CONSENT_STORAGE_KEY } from 'Source/constants';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
@@ -28,14 +27,20 @@ const evaluateTracking = (...args) => {
   if (!mixpanelPublicToken || storage.local.read<boolean>(ANALYTICS_CONSENT_STORAGE_KEY) !== true) {
     return;
   }
-  window.requestIdleCallback(() => {
-    try {
-      mx.init(mixpanelPublicToken);
-      mx.track(...args);
-    } catch (e) {
-      // Reporting to sentry
-      logError(e);
-    }
+
+  import(/* webpackChunkName: "mixpanel" */ 'mixpanel-browser').then(mx => {
+    // We don't wanna initialize before any tracking occurs so we don't have to un-necessarily
+    // download the mixpanel chunk at the user's device. `init` method is idempotent, meaning that
+    // no matter how many times we call it, it won't override anything.
+    window.requestIdleCallback(() => {
+      try {
+        mx.init(mixpanelPublicToken);
+        mx.track(...args);
+      } catch (e) {
+        // Reporting to sentry
+        logError(e);
+      }
+    });
   });
 };
 
