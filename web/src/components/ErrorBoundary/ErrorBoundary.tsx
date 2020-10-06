@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { logError } from 'Helpers/loggers';
+import { logError } from 'Helpers/errors';
 import { Card, Text, Flex } from 'pouncejs';
 
 interface ErrorBoundaryProps {
