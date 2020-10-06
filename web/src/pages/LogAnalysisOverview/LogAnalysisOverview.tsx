@@ -26,12 +26,15 @@ import { PageViewEnum } from 'Helpers/analytics';
 import useTrackPageView from 'Hooks/useTrackPageView';
 import AlertCard from 'Components/cards/AlertCard/AlertCard';
 import AlertsCharts from 'Pages/LogAnalysisOverview/AlertsCharts';
-import LogAnalysisOverviewPageSkeleton from './Skeleton';
-import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
-import LogTypeCharts from './LogTypeCharts';
+import DateRangerPicker from 'Pages/LogAnalysisOverview/LogAnalysisOverviewBreadcrumbFilters';
+import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
+import { LogAnalysisMetricsInput } from 'Generated/schema';
 import { useGetTopAlerts } from './graphql/getTopAlerts.generated';
+import LogTypeCharts from './LogTypeCharts';
+import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
+import LogAnalysisOverviewPageSkeleton from './Skeleton';
 
-export const intervalMinutes = 60;
+export const intervalMinutes = 180;
 export const defaultPastDays = 3;
 
 const LogAnalysisOverview: React.FC = () => {
@@ -41,6 +44,17 @@ const LogAnalysisOverview: React.FC = () => {
     const utcnow = getCurrentDate();
     return [subtractDays(utcnow, defaultPastDays), utcnow];
   }, []);
+
+  const initialValues = React.useMemo(
+    () => ({
+      intervalMinutes,
+      fromDate,
+      toDate,
+    }),
+    [intervalMinutes, fromDate, toDate]
+  );
+
+  const { requestParams } = useRequestParamsWithoutPagination<LogAnalysisMetricsInput>();
 
   const { data, loading, error } = useGetLogAnalysisMetrics({
     fetchPolicy: 'cache-and-network',
@@ -56,6 +70,7 @@ const LogAnalysisOverview: React.FC = () => {
         fromDate,
         toDate,
         intervalMinutes,
+        ...requestParams,
       },
     },
   });
@@ -83,6 +98,7 @@ const LogAnalysisOverview: React.FC = () => {
 
   return (
     <Box as="article" mb={6}>
+      <DateRangerPicker initialValues={initialValues} />
       <SimpleGrid columns={1} spacingX={3} spacingY={2} as="section" mb={5}>
         <AlertsCharts
           totalAlertsDelta={totalAlertsDelta}
