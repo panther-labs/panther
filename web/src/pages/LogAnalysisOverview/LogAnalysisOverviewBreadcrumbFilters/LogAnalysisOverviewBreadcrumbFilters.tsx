@@ -79,9 +79,10 @@ const LogAnalysisOverviewBreadcrumbFilters: React.FC<LogAnalysisOverviewBreadcru
         >
           <Form>
             <FormikAutosave threshold={50} />
-            <Flex spacing={4}>
+            <Flex spacing={4} maxWidth={440}>
               <Field
                 as={FormikCombobox}
+                maxWidth={150}
                 variant="solid"
                 label="Interval"
                 name="intervalMinutes"
