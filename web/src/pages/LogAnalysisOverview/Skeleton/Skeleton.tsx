@@ -26,7 +26,7 @@ const LogAnalysisOverviewPageSkeleton: React.FC = () => {
   return (
     <Box as="article" mb={6}>
       <FadeIn duration={400}>
-        <TabsSkeleton tabs={[{ label: 'Real-time Alerts' }, { label: 'Most Active Rules' }]} />
+        <TabsSkeleton tabs={[{ label: 'Real-Time Alerts' }, { label: 'Most Active Rules' }]} />
         <TabsSkeleton
           tabs={[{ label: 'Events by Log Type' }, { label: 'Data Latency by Log Type' }]}
         />
