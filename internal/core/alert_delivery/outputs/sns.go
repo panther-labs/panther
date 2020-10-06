@@ -74,11 +74,17 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 		}
 	}
 
+	title := generateAlertTitle(alert)
+	titleLength := len(title)
+	if titleLength > 100 {
+		title = title[0:100]
+	}
+
 	snsMessageInput := &sns.PublishInput{
 		TopicArn: aws.String(config.TopicArn),
 		Message:  aws.String(serializedMessage),
 		// Subject is optional in case the topic is subscribed to Email
-		Subject:          aws.String(generateAlertTitle(alert)),
+		Subject:          aws.String(title),
 		MessageStructure: aws.String("json"),
 	}
 
