@@ -25,11 +25,10 @@ from datetime import datetime
 from io import BytesIO
 from typing import Dict, List, Optional
 
-import boto3
-
 from . import AlertInfo, EngineResult, OutputGroupingKey
 from .alert_merger import MatchingGroupInfo, update_get_alert_info
 from .logging import get_logger
+from .aws_clients import S3_CLIENT, SNS_CLIENT
 
 # Format of the S3 objects containing the events that matched a rule
 _RULE_MATCHES_KEY_FORMAT = 'rules/{}/year={:d}/month={:02d}/day={:02d}/hour={:02d}/rule_id={}/{}-{}.json.gz'
@@ -41,10 +40,6 @@ _S3_KEY_DATE_FORMAT = '%Y%m%dT%H%M%SZ'
 _DATE_FORMAT = '%Y-%m-%d %H:%M:%S.%f000'
 _S3_BUCKET = os.environ['S3_BUCKET']
 _SNS_TOPIC_ARN = os.environ['NOTIFICATIONS_TOPIC']
-
-# AWS Clients
-_S3_CLIENT = boto3.client('s3')
-_SNS_CLIENT = boto3.client('sns')
 
 _LOGGER = get_logger()
 
@@ -165,13 +160,13 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EngineResu
 
     byte_size = data_stream.getbuffer().nbytes
     # Write data to S3
-    _S3_CLIENT.put_object(Bucket=_S3_BUCKET, ContentType='gzip', Body=data_stream, Key=object_key)
+    S3_CLIENT.put_object(Bucket=_S3_BUCKET, ContentType='gzip', Body=data_stream, Key=object_key)
 
     # Send notification to SNS topic
     notification = _s3_put_object_notification(_S3_BUCKET, object_key, byte_size)
 
     # MessageAttributes are required so that subscribers to SNS topic can filter events in the subscription
-    _SNS_CLIENT.publish(
+    SNS_CLIENT.publish(
         TopicArn=_SNS_TOPIC_ARN,
         Message=json.dumps(notification),
         MessageAttributes={
