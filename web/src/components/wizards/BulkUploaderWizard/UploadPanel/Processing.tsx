@@ -50,7 +50,7 @@ const ProcessingUploader: React.FC<ProcessingUploaderProps> = ({ onAbort }) => {
             </Flex>
           </Flex>
           <Box mt={4}>
-            <Button onClick={onAbort} size="small" variant="outline" variantColor="navyblue">
+            <Button onClick={onAbort} size="medium" variant="outline" variantColor="navyblue">
               Cancel
             </Button>
           </Box>

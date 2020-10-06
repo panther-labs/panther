@@ -44,7 +44,7 @@ const ListRulesTableRowOptions: React.FC<ListPoliciesTableRowOptionsProps> = ({ 
         as={IconButton}
         icon="more"
         variant="ghost"
-        size="small"
+        size="medium"
         aria-label="Rule Options"
       />
       <DropdownMenu>

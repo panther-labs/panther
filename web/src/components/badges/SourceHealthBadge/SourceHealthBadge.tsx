@@ -37,7 +37,7 @@ const SourceHealthBadge: React.FC<SourceHealthBadgeProps> = ({ healthMetrics }) 
             <Icon
               mt="-2px" // we need that due to some alignment needs with `rawErrorMessage`
               aria-labelledby={id}
-              size="small"
+              size="medium"
               type={healthMetric.healthy ? 'check' : 'remove'}
               color={healthMetric.healthy ? 'green-400' : 'red-300'}
               aria-label={healthMetric.healthy ? 'Passing' : 'Failing'}

@@ -727,6 +727,7 @@ export const buildListAlertsInput = (overrides: Partial<ListAlertsInput> = {}): 
     exclusiveStartKey:
       'exclusiveStartKey' in overrides ? overrides.exclusiveStartKey : 'Throughway',
     severity: 'severity' in overrides ? overrides.severity : [SeverityEnum.Low],
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Awesome Wooden Mouse'],
     nameContains: 'nameContains' in overrides ? overrides.nameContains : 'Island',
     createdAtBefore:
       'createdAtBefore' in overrides ? overrides.createdAtBefore : '2020-05-22T12:33:45.819Z',
@@ -737,7 +738,6 @@ export const buildListAlertsInput = (overrides: Partial<ListAlertsInput> = {}): 
     status: 'status' in overrides ? overrides.status : [AlertStatusesEnum.Open],
     eventCountMin: 'eventCountMin' in overrides ? overrides.eventCountMin : 694,
     eventCountMax: 'eventCountMax' in overrides ? overrides.eventCountMax : 911,
-    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Awesome Wooden Mouse'],
     sortBy: 'sortBy' in overrides ? overrides.sortBy : ListAlertsSortFieldsEnum.CreatedAt,
     sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Descending,
   };

@@ -17,14 +17,14 @@
  */
 
 import React from 'react';
-import { Alert, Box, SimpleGrid } from 'pouncejs';
+import { Alert, Box, SimpleGrid, Flex } from 'pouncejs';
 import withSEO from 'Hoc/withSEO';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { extractErrorMessage, getCurrentDate, subtractDays } from 'Helpers/utils';
 import Panel from 'Components/Panel';
-import AlertsTable from 'Pages/LogAnalysisOverview/AlertsTable';
 import { PageViewEnum } from 'Helpers/analytics';
 import useTrackPageView from 'Hooks/useTrackPageView';
+import AlertCard from 'Components/cards/AlertCard/AlertCard';
 import AlertsCharts from 'Pages/LogAnalysisOverview/AlertsCharts';
 import LogAnalysisOverviewPageSkeleton from './Skeleton';
 import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
@@ -95,7 +95,15 @@ const LogAnalysisOverview: React.FC = () => {
       </SimpleGrid>
       <SimpleGrid columns={1} spacingX={3} spacingY={2}>
         <Panel title="Recent High Severity Alerts">
-          {loadingAlerts ? <TablePlaceholder /> : <AlertsTable items={alertItems} />}
+          {loadingAlerts ? (
+            <TablePlaceholder />
+          ) : (
+            <Flex direction="column" spacing={2}>
+              {alertItems.map(alert => (
+                <AlertCard key={alert.alertId} alert={alert} />
+              ))}
+            </Flex>
+          )}
         </Panel>
       </SimpleGrid>
     </Box>

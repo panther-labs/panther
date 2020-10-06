@@ -19,7 +19,7 @@
 import React from 'react';
 
 import useRouter from 'Hooks/useRouter';
-import { Alert, Box } from 'pouncejs';
+import { Alert, Box, Flex } from 'pouncejs';
 import Panel from 'Components/Panel';
 import { extractErrorMessage } from 'Helpers/utils';
 import withSEO from 'Hoc/withSEO';
@@ -28,12 +28,11 @@ import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import ListAlertsPageEmptyDataFallback from 'Pages/ListAlerts/EmptyDataFallback/EmptyDataFallback';
-
+import AlertCard from 'Components/cards/AlertCard/AlertCard';
 import RuleDetailsPageSkeleton from './Skeleton';
 import RuleDetailsInfo from './RuleDetailsInfo';
 import { useRuleDetails } from './graphql/ruleDetails.generated';
 import { useListAlertsForRule } from './graphql/listAlertsForRule.generated';
-import RuleDetailsAlertsTable from './RuleDetailsAlertsTable';
 
 const RuleDetailsPage = () => {
   const { match } = useRouter<{ id: string }>();
@@ -130,7 +129,11 @@ const RuleDetailsPage = () => {
         <Panel title="Alerts">
           <ErrorBoundary>
             {hasAnyAlerts && (
-              <RuleDetailsAlertsTable alerts={listAlertsData.alerts.alertSummaries} />
+              <Flex direction="column" spacing={2}>
+                {listAlertsData.alerts.alertSummaries.map(alert => (
+                  <AlertCard key={alert.alertId} alert={alert} />
+                ))}
+              </Flex>
             )}
             {!hasAnyAlerts && <ListAlertsPageEmptyDataFallback />}
             {hasMoreAlerts && hasAnyAlerts && (

@@ -53,7 +53,7 @@ const NavLink: React.FC<NavLinkProps> = ({ icon, label, to }) => {
         transition="background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms"
         truncated
       >
-        <Icon type={icon} size="small" mr={4} />
+        <Icon type={icon} size="medium" mr={4} />
         {label}
       </Box>
     </Box>
