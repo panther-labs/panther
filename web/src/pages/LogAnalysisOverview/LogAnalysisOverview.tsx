@@ -26,9 +26,9 @@ import { PageViewEnum } from 'Helpers/analytics';
 import useTrackPageView from 'Hooks/useTrackPageView';
 import AlertCard from 'Components/cards/AlertCard/AlertCard';
 import AlertsCharts from 'Pages/LogAnalysisOverview/AlertsCharts';
-import DateRangerPicker from 'Pages/LogAnalysisOverview/LogAnalysisOverviewBreadcrumbFilters';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import { LogAnalysisMetricsInput } from 'Generated/schema';
+import LogAnalysisOverviewBreadcrumbFilters from './LogAnalysisOverviewBreadcrumbFilters';
 import { useGetTopAlerts } from './graphql/getTopAlerts.generated';
 import LogTypeCharts from './LogTypeCharts';
 import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
@@ -98,7 +98,7 @@ const LogAnalysisOverview: React.FC = () => {
 
   return (
     <Box as="article" mb={6}>
-      <DateRangerPicker initialValues={initialValues} />
+      <LogAnalysisOverviewBreadcrumbFilters initialValues={initialValues} />
       <SimpleGrid columns={1} spacingX={3} spacingY={2} as="section" mb={5}>
         <AlertsCharts
           totalAlertsDelta={totalAlertsDelta}
