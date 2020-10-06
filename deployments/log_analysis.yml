@@ -675,6 +675,7 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
+          PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
       Events:
         Queue:
           Type: SQS

@@ -289,7 +289,6 @@ Resources:
         InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         OutputsKeyId: !GetAtt Bootstrap.Outputs.OutputsEncryptionKeyId
-        ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
         TracingMode: !Ref TracingMode
         UserPoolId: !GetAtt Bootstrap.Outputs.UserPoolId
