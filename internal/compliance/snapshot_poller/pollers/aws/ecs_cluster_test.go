@@ -194,3 +194,30 @@ func TestEcsClusterDescribeServices(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEmpty(t, out)
 }
+
+// Test paging through DescribeTasks with 100 TaskArns at a time
+func TestEcsClusterDescribeTasks(t *testing.T) {
+	mockSvc := awstest.BuildMockEcsSvc([]string{"ListTasksPages"})
+	mockSvc.On("DescribeTasks", &ecs.DescribeTasksInput{
+		Cluster: awstest.ExampleClusterMultiTaskArn,
+		Include: []*string{aws.String("TAGS")},
+		Tasks:   awstest.ExampleListTasksMultiTasks.TaskArns[0:100],
+	}).
+		Return(
+			awstest.ExampleEcsDescribeTasksOutput,
+			nil,
+		)
+	mockSvc.On("DescribeTasks", &ecs.DescribeTasksInput{
+		Cluster: awstest.ExampleClusterMultiTaskArn,
+		Include: []*string{aws.String("TAGS")},
+		Tasks:   awstest.ExampleListTasksMultiTasks.TaskArns[100:120],
+	}).
+		Return(
+			awstest.ExampleEcsDescribeTasksOutput,
+			nil,
+		)
+	out, err := getClusterTasks(mockSvc, awstest.ExampleClusterMultiTaskArn)
+	mockSvc.AssertExpectations(t)
+	require.NoError(t, err)
+	assert.NotEmpty(t, out)
+}

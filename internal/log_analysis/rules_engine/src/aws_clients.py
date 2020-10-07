@@ -14,22 +14,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from unittest import mock
+import boto3
+from botocore.config import Config
 
-S3_MOCK = mock.MagicMock()
-DDB_MOCK = mock.MagicMock()
-SNS_MOCK = mock.MagicMock()
+# https://boto3.amazonaws.com/v1/documentation/api/latest/guide/retries.html
+_BOTO_CONFIG = Config(retries={'max_attempts': 10, 'mode': 'standard'})
 
-
-# pylint: disable=unused-argument
-def mock_to_return(value: str, **kwargs: int) -> mock.MagicMock:
-    if value == 'sns':
-        return SNS_MOCK
-
-    if value == 's3':
-        return S3_MOCK
-
-    if value == 'dynamodb':
-        return DDB_MOCK
-
-    raise Exception('Unexpected value {}'.format(value))
+# AWS Clients
+S3_CLIENT = boto3.client('s3', config=_BOTO_CONFIG)
+SNS_CLIENT = boto3.client('sns', config=_BOTO_CONFIG)
+DDB_CLIENT = boto3.client('dynamodb', config=_BOTO_CONFIG)

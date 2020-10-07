@@ -22,9 +22,7 @@ const { loadDotEnvVars } = require('./utils');
 // Mark the Node environment as production in order to load the webpack configuration
 process.env.NODE_ENV = 'production';
 
-// Add all the sentry-related ENV vars to process.env
-loadDotEnvVars('web/.env.sentry');
-// Add all the analytics-related ENV vars to process.env
-loadDotEnvVars('web/.env.analytics');
+// Add all the telemetry-related ENV vars to process.env
+loadDotEnvVars('web/.env.telemetry');
 
 spawn('node_modules/.bin/webpack', ['--config', 'web/webpack.config.js'], { stdio: 'inherit' });

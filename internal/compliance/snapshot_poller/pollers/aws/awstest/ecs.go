@@ -31,10 +31,11 @@ import (
 
 // Example ECS API return values
 var (
-	ExampleEcsClusterArn         = aws.String("arn:aws:ecs:us-west-2:123456789012:cluster/example-cluster")
-	ExampleEcsClusterMultiSvcArn = aws.String("arn:aws:ecs:us-west-2:123456789012:cluster/example-cluster-multi-service")
-	ExampleTaskArn               = aws.String("arn:aws:ecs:us-west-2:123456789012:task/1111-2222")
-	ExampleServiceArn            = aws.String("arn:aws:ecs:us-west-2:123456789012:service/example-service")
+	ExampleEcsClusterArn          = aws.String("arn:aws:ecs:us-west-2:123456789012:cluster/example-cluster")
+	ExampleEcsClusterMultiSvcArn  = aws.String("arn:aws:ecs:us-west-2:123456789012:cluster/example-cluster-multi-service")
+	ExampleEcsClusterMultiTaskArn = aws.String("arn:aws:ecs:us-west-2:123456789012:cluster/example-cluster-multi-task")
+	ExampleTaskArn             = aws.String("arn:aws:ecs:us-west-2:123456789012:task/1111-2222")
+	ExampleServiceArn          = aws.String("arn:aws:ecs:us-west-2:123456789012:service/example-service")
 
 	ExampleListClusters = &ecs.ListClustersOutput{
 		ClusterArns: []*string{
@@ -56,27 +57,18 @@ var (
 		},
 	}
 
+	ExampleListTasksMultiTasks = &ecs.ListTasksOutput{
+		TaskArns: []*string{},
+	}
+
 	ExampleListServices = &ecs.ListServicesOutput{
 		ServiceArns: []*string{
 			ExampleServiceArn,
 		},
 	}
 
-	ExampleEcsListServicesMultiSvc = &ecs.ListServicesOutput{
-		ServiceArns: []*string{
-			ExampleServiceArn,
-			ExampleServiceArn,
-			ExampleServiceArn,
-			ExampleServiceArn,
-			ExampleServiceArn,
-			ExampleServiceArn,
-			ExampleServiceArn,
-			ExampleServiceArn,
-			ExampleServiceArn,
-			ExampleServiceArn,
-			ExampleServiceArn,
-			ExampleServiceArn,
-		},
+	ExampleListServicesMultiSvc = &ecs.ListServicesOutput{
+		ServiceArns: []*string{},
 	}
 
 	ExampleEcsDescribeClustersOutput = &ecs.DescribeClustersOutput{
@@ -246,6 +238,16 @@ var (
 	MockEcsForSetup = &MockEcs{}
 )
 
+// initialize globals
+func init() {
+	for i := 0; i < 120; i++ {
+		ExampleListTasksMultiTasks.TaskArns = append(ExampleListTasksMultiTasks.TaskArns, ExampleTaskArn)
+	}
+	for i := 0; i < 12; i++ {
+		ExampleListServicesMultiSvc.ServiceArns = append(ExampleListServicesMultiSvc.ServiceArns, ExampleServiceArn)
+	}
+}
+
 // ECS mock
 
 // SetupMockEcs is used to override the ECS Client initializer
@@ -281,7 +283,7 @@ func BuildMockEcsSvcError(funcs []string) (mockSvc *MockEcs) {
 	return
 }
 
-// BuildEcsServiceSvcAll builds and returns a MockEcs struct
+// BuildMockEcsSvcAll builds and returns a MockEcs struct
 //
 // Additionally, the appropriate calls to On and Return are made for all possible function calls
 func BuildMockEcsSvcAll() (mockSvc *MockEcs) {
@@ -343,6 +345,11 @@ func (m *MockEcs) ListTasksPages(
 	if args.Error(0) != nil {
 		return args.Error(0)
 	}
+	// Return appropriate ListTasks output based on input ClusterARN
+	if in.Cluster == ExampleClusterMultiTaskArn {
+		paginationFunction(ExampleListTasksMultiTasks, true)
+		return args.Error(0)
+	}
 	paginationFunction(ExampleListTasks, true)
 	return args.Error(0)
 }
@@ -364,5 +371,10 @@ func (m *MockEcs) DescribeServices(in *ecs.DescribeServicesInput) (*ecs.Describe
 
 func (m *MockEcs) DescribeTasks(in *ecs.DescribeTasksInput) (*ecs.DescribeTasksOutput, error) {
 	args := m.Called(in)
+	// API only allows describing 100 tasks at a time.
+	// Return error if input has more than 100 TaskArns.
+	if len(in.Tasks) > 100 {
+		return nil, errors.New("ECS.DescribeTasks error: Too many task ARNS passed to DescribeTasks")
+	}
 	return args.Get(0).(*ecs.DescribeTasksOutput), args.Error(1)
 }
