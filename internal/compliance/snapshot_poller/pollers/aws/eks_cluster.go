@@ -267,7 +267,7 @@ func buildEksClusterSnapshot(eksSvc eksiface.EKSAPI, clusterName *string) (*awsm
 			zap.L().Warn("Error with IAM Permissions - Use the AWS Console or CloudFormation to update the Panther" +
 				"Audit Role policy to include the eks:ListFargateProfiles and eks:DescribeFargateProfile permissions")
 		} else {
-			return nil, nil
+			return nil, err
 		}
 	}
 
