@@ -45,19 +45,19 @@ func TestEcsClusterListIterator(t *testing.T) {
 	var clusters []*string
 	var marker *string
 
-	cont := ecsClusterIterator(awstest.ExampleListClusters, &clusters, &marker)
+	cont := ecsClusterIterator(awstest.ExampleEcsListClusters, &clusters, &marker)
 	assert.True(t, cont)
 	assert.Nil(t, marker)
 	assert.Len(t, clusters, 1)
 
 	for i := 1; i < 50; i++ {
-		cont = ecsClusterIterator(awstest.ExampleListClustersContinue, &clusters, &marker)
+		cont = ecsClusterIterator(awstest.ExampleEcsListClustersContinue, &clusters, &marker)
 		assert.True(t, cont)
 		assert.NotNil(t, marker)
 		assert.Len(t, clusters, 1+i*2)
 	}
 
-	cont = ecsClusterIterator(awstest.ExampleListClustersContinue, &clusters, &marker)
+	cont = ecsClusterIterator(awstest.ExampleEcsListClustersContinue, &clusters, &marker)
 	assert.False(t, cont)
 	assert.NotNil(t, marker)
 	assert.Len(t, clusters, 101)
@@ -108,7 +108,7 @@ func TestEcsClusterBuildSnapshot(t *testing.T) {
 
 	clusterSnapshot, err := buildEcsClusterSnapshot(
 		mockSvc,
-		awstest.ExampleListClusters.ClusterArns[0],
+		awstest.ExampleEcsListClusters.ClusterArns[0],
 	)
 
 	assert.NoError(t, err)
@@ -121,7 +121,7 @@ func TestEcsClusterBuildSnapshotErrors(t *testing.T) {
 
 	certSnapshot, err := buildEcsClusterSnapshot(
 		mockSvc,
-		awstest.ExampleListClusters.ClusterArns[0],
+		awstest.ExampleEcsListClusters.ClusterArns[0],
 	)
 
 	assert.Nil(t, certSnapshot)
@@ -199,24 +199,24 @@ func TestEcsClusterDescribeServices(t *testing.T) {
 func TestEcsClusterDescribeTasks(t *testing.T) {
 	mockSvc := awstest.BuildMockEcsSvc([]string{"ListTasksPages"})
 	mockSvc.On("DescribeTasks", &ecs.DescribeTasksInput{
-		Cluster: awstest.ExampleClusterMultiTaskArn,
+		Cluster: awstest.ExampleEcsClusterMultiTaskArn,
 		Include: []*string{aws.String("TAGS")},
-		Tasks:   awstest.ExampleListTasksMultiTasks.TaskArns[0:100],
+		Tasks:   awstest.ExampleEcsListTasksMultiTasks.TaskArns[0:100],
 	}).
 		Return(
 			awstest.ExampleEcsDescribeTasksOutput,
 			nil,
 		)
 	mockSvc.On("DescribeTasks", &ecs.DescribeTasksInput{
-		Cluster: awstest.ExampleClusterMultiTaskArn,
+		Cluster: awstest.ExampleEcsClusterMultiTaskArn,
 		Include: []*string{aws.String("TAGS")},
-		Tasks:   awstest.ExampleListTasksMultiTasks.TaskArns[100:120],
+		Tasks:   awstest.ExampleEcsListTasksMultiTasks.TaskArns[100:120],
 	}).
 		Return(
 			awstest.ExampleEcsDescribeTasksOutput,
 			nil,
 		)
-	out, err := getClusterTasks(mockSvc, awstest.ExampleClusterMultiTaskArn)
+	out, err := getECSClusterTasks(mockSvc, awstest.ExampleEcsClusterMultiTaskArn)
 	mockSvc.AssertExpectations(t)
 	require.NoError(t, err)
 	assert.NotEmpty(t, out)
