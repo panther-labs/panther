@@ -20,12 +20,10 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
-import boto3
-
 from . import AlertInfo
+from .aws_clients import DDB_CLIENT
 
 _DDB_TABLE_NAME = os.environ['ALERTS_DEDUP_TABLE']
-_DDB_CLIENT = boto3.client('dynamodb')
 
 # DDB Table attributes and keys
 _PARTITION_KEY_NAME = 'partitionKey'
@@ -76,7 +74,7 @@ def update_get_alert_info(info: MatchingGroupInfo) -> AlertInfo:
     it will also create a new alertId with the appropriate alertCreationTime. """
     try:
         return _update_get_conditional(info)
-    except _DDB_CLIENT.exceptions.ConditionalCheckFailedException:
+    except DDB_CLIENT.exceptions.ConditionalCheckFailedException:
         # If conditional update failed on Condition, the event needs to be merged
         return _update_get(info)
 
@@ -151,7 +149,7 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
     if group_info.is_rule_error:
         expression_attribute_values[':12'] = {'S': 'RULE_ERROR'}
 
-    response = _DDB_CLIENT.update_item(
+    response = DDB_CLIENT.update_item(
         TableName=_DDB_TABLE_NAME,
         Key={_PARTITION_KEY_NAME: {
             'S': _generate_dedup_key(group_info.rule_id, group_info.dedup, group_info.is_rule_error)
@@ -174,7 +172,7 @@ def _update_get(group_info: MatchingGroupInfo) -> AlertInfo:
     2. Alert Update Time - it sets it to given time
     """
 
-    response = _DDB_CLIENT.update_item(
+    response = DDB_CLIENT.update_item(
         TableName=_DDB_TABLE_NAME,
         Key={_PARTITION_KEY_NAME: {
             'S': _generate_dedup_key(group_info.rule_id, group_info.dedup, group_info.is_rule_error)
