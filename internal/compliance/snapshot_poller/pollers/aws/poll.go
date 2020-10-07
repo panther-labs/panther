@@ -106,7 +106,7 @@ var (
 		awsmodels.Ec2NetworkAclSchema:       {"EC2NetworkACL", PollEc2NetworkAcls},
 		awsmodels.Ec2SecurityGroupSchema:    {"EC2SecurityGroup", PollEc2SecurityGroups},
 		awsmodels.Ec2VolumeSchema:           {"EC2Volume", PollEc2Volumes},
-		awsmodels.Ec2VpcSchema:              {"EC2VasPC", PollEc2Vpcs},
+		awsmodels.Ec2VpcSchema:              {"EC2VPC", PollEc2Vpcs},
 		awsmodels.EcsClusterSchema:          {"ECSCluster", PollEcsClusters},
 		awsmodels.EksClusterSchema:          {"EKSCluster", PollEksClusters},
 		awsmodels.Elbv2LoadBalancerSchema:   {"ELBV2LoadBalancer", PollElbv2ApplicationLoadBalancers},

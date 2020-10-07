@@ -20,6 +20,7 @@ package aws
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/eks"
 	"github.com/aws/aws-sdk-go/service/eks/eksiface"
@@ -75,7 +76,6 @@ func PollEKSCluster(
 
 // listEKSClusters returns all EKS clusters in the account
 func listEKSClusters(eksSvc eksiface.EKSAPI, nextMarker *string) (clusters []*string, marker *string, err error) {
-	zap.L().Debug("Started listEKSClusters")
 	err = eksSvc.ListClustersPages(&eks.ListClustersInput{
 		NextToken:  nextMarker,
 		MaxResults: aws.Int64(int64(defaultBatchSize)),
@@ -262,8 +262,13 @@ func buildEksClusterSnapshot(eksSvc eksiface.EKSAPI, clusterName *string) (*awsm
 
 	eksCluster.FargateProfile, err = getEKSFargateProfiles(eksSvc, details.Name)
 	if err != nil {
-		zap.L().Warn("Error with IAM Permissions - Use the AWS Console or CloudFormation to update the Panther" +
-			"Audit Role policy to include the eks:ListFargateProfiles and eks:DescribeFargateProfile permissions")
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == eks.ErrorCodeAccessDenied {
+			zap.L().Warn("Error with IAM Permissions - Use the AWS Console or CloudFormation to update the Panther" +
+				"Audit Role policy to include the eks:ListFargateProfiles and eks:DescribeFargateProfile permissions")
+		} else {
+			return nil, nil
+		}
 	}
 
 	eksCluster.NodeGroup, err = getEKSNodegroups(eksSvc, details.Name)
