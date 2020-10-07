@@ -5,6 +5,11 @@ executors:
   panther-buildpack:
     docker:
       - image: pantherlabs/panther-buildpack:1.8.0
+        # The images are public, but DockerHub requires authenticated pulls for
+        # higher rate limits. https://circleci.com/docs/2.0/private-images/
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
 
 # Command definitions which can be re-used across multiple jobs
 commands:
