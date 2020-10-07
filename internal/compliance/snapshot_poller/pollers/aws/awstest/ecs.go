@@ -34,8 +34,8 @@ var (
 	ExampleEcsClusterArn          = aws.String("arn:aws:ecs:us-west-2:123456789012:cluster/example-cluster")
 	ExampleEcsClusterMultiSvcArn  = aws.String("arn:aws:ecs:us-west-2:123456789012:cluster/example-cluster-multi-service")
 	ExampleEcsClusterMultiTaskArn = aws.String("arn:aws:ecs:us-west-2:123456789012:cluster/example-cluster-multi-task")
-	ExampleTaskArn             = aws.String("arn:aws:ecs:us-west-2:123456789012:task/1111-2222")
-	ExampleServiceArn          = aws.String("arn:aws:ecs:us-west-2:123456789012:service/example-service")
+	ExampleTaskArn                = aws.String("arn:aws:ecs:us-west-2:123456789012:task/1111-2222")
+	ExampleServiceArn             = aws.String("arn:aws:ecs:us-west-2:123456789012:service/example-service")
 
 	ExampleListClusters = &ecs.ListClustersOutput{
 		ClusterArns: []*string{
