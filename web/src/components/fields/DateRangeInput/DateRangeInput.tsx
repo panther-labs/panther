@@ -19,19 +19,20 @@
 import React from 'react';
 import { Box, FormError, DateRangeInput, DateRangeInputProps } from 'pouncejs';
 import { formatTime } from 'Helpers/utils';
+import isEmpty from 'lodash/isEmpty';
 import { useField } from 'formik';
 
-export interface FieldDateRangeInputProps {
+export interface FieldDateRangeInputProps
+  extends Omit<DateRangeInputProps, 'name' | 'iconAlignment' | 'iconProps' | 'value' | 'onChange'> {
   nameStart: string;
   nameEnd: string;
 }
 
 const dateFormatter = formatTime('YYYY-MM-DDTHH:mm:ss[Z]');
 
-const FormikTextInput: React.FC<Omit<DateRangeInputProps, 'name'> & FieldDateRangeInputProps> = ({
+const FormikDateRangeInput: React.FC<FieldDateRangeInputProps> = ({
   nameStart,
   nameEnd,
-  onChange,
   ...rest
 }) => {
   const [, metaStart, helpersStart] = useField(nameStart);
@@ -47,24 +48,43 @@ const FormikTextInput: React.FC<Omit<DateRangeInputProps, 'name'> & FieldDateRan
 
   const errorElementId = isInvalid ? `${nameStart}-${nameEnd}-error` : undefined;
 
-  const value = React.useMemo(() => [valueStart, valueEnd], [valueStart, valueEnd]);
+  const value = React.useMemo(() => {
+    return [valueStart, valueEnd];
+  }, [valueStart, valueEnd]);
+
   const onRangeChange = React.useCallback(
     ([start, end]) => {
       setValueStart(dateFormatter(start));
-      setValueStart(dateFormatter(end));
+      setValueEnd(dateFormatter(end));
     },
     [setValueStart, setValueEnd]
   );
+  const error = React.useMemo(() => {
+    if (!isEmpty(errorStart)) {
+      return errorStart;
+    }
+    if (!isEmpty(errorEnd)) {
+      return errorEnd;
+    }
+    return null;
+  }, [isInvalid]);
+
   return (
     <Box>
-      <DateRangeInput invalid={isInvalid} {...rest} value={value} onChange={onRangeChange} />
-      {isInvalid && (
+      <DateRangeInput
+        name={`${nameStart}-${nameEnd}`}
+        invalid={isInvalid}
+        {...rest}
+        value={value}
+        onChange={onRangeChange}
+      />
+      {isInvalid && error && (
         <FormError mt={2} id={errorElementId}>
-          {errorStart || errorEnd}
+          {error}
         </FormError>
       )}
     </Box>
   );
 };
 
-export default FormikTextInput;
+export default FormikDateRangeInput;

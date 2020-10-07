@@ -17,10 +17,10 @@
  */
 
 import React from 'react';
-import { Box, Button, Flex, Heading, Text } from 'pouncejs';
+import { Box, Flex, Heading, Text } from 'pouncejs';
 import BlankCanvasImg from 'Assets/illustrations/blank-canvas.svg';
 import urls from 'Source/urls';
-import { Link as RRLink } from 'react-router-dom';
+import LinkButton from 'Components/buttons/LinkButton';
 
 const ListResourcesPageEmptyDataFallback: React.FC = () => {
   return (
@@ -32,9 +32,7 @@ const ListResourcesPageEmptyDataFallback: React.FC = () => {
       <Text color="gray-300" textAlign="center" mb={8}>
         You don{"'"}t have any resources connected to your Panther account
       </Text>
-      <Button as={RRLink} to={urls.compliance.sources.create()}>
-        Get started
-      </Button>
+      <LinkButton to={urls.compliance.sources.create()}>Get started</LinkButton>
     </Flex>
   );
 };

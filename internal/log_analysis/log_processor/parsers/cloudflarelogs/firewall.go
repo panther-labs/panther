@@ -42,7 +42,7 @@ type FirewallEvent struct {
 	ClientRequestQuery     pantherlog.String                `json:"ClientRequestQuery" description:"The query-string was requested by the visitor"`
 	ClientRequestScheme    pantherlog.String                `json:"ClientRequestScheme" description:"The url scheme requested by the visitor"`
 	ClientRequestUserAgent pantherlog.String                `json:"ClientRequestUserAgent" description:"Visitor's user-agent string"`
-	Datetime               pantherlog.Time                  `json:"Datetime" validate:"required" panther:"event_time" tcodec:"cloudflare" description:"The date and time the event occurred at the edge"`
+	Datetime               pantherlog.Time                  `json:"Datetime" validate:"required" event_time:"true" tcodec:"cloudflare" description:"The date and time the event occurred at the edge"`
 	EdgeColoCode           pantherlog.String                `json:"EdgeColoCode" description:"The airport code of the Cloudflare datacenter that served this request"`
 	EdgeResponseStatus     pantherlog.Int16                 `json:"EdgeResponseStatus" description:"HTTP response status code returned to browser"`
 	Kind                   pantherlog.String                `json:"Kind" description:"The kind of event, currently only possible values are: firewall"`

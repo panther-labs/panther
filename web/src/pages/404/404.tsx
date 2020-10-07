@@ -17,10 +17,10 @@
  */
 
 import React from 'react';
-import { Flex, Heading, Text, Button, Box } from 'pouncejs';
-import { Link as RRLink } from 'react-router-dom';
+import { Flex, Heading, Text, Box } from 'pouncejs';
 import NotFoundImg from 'Assets/illustrations/not-found.svg';
 import withSEO from 'Hoc/withSEO';
+import LinkButton from 'Components/buttons/LinkButton';
 
 const Page404: React.FC = () => {
   return (
@@ -32,9 +32,7 @@ const Page404: React.FC = () => {
       <Text color="gray-300" mb={10}>
         ( You definitely are though )
       </Text>
-      <Button as={RRLink} to="/">
-        Back to Home
-      </Button>
+      <LinkButton to="/">Back to Home</LinkButton>
     </Flex>
   );
 };

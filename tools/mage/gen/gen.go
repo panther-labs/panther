@@ -79,7 +79,7 @@ func swaggerClients() error {
 
 	// This import has to be fixed, see below
 	clientImport := regexp.MustCompile(
-		`"github.com/panther-labs/panther/api/gateway/[a-z]+/client/operations"`)
+		`"github\.com/panther-labs/panther/api/gateway/[a-z]+/client/operations"`)
 
 	for _, spec := range specs {
 		dir := filepath.Dir(spec)

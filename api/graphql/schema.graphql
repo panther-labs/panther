@@ -96,6 +96,7 @@ input ListAlertsInput {
   pageSize: Int # defaults to `25`
   exclusiveStartKey: String
   severity: [SeverityEnum]
+  logTypes: [String!]
   nameContains: String
   createdAtBefore: AWSDateTime
   createdAtAfter: AWSDateTime
@@ -104,7 +105,6 @@ input ListAlertsInput {
   status: [AlertStatusesEnum]
   eventCountMin: Int
   eventCountMax: Int
-  logTypes: [String!]
   sortBy: ListAlertsSortFieldsEnum # defaults to `createdAt`
   sortDir: SortDirEnum # defaults to `descending` (always on `createdAt` field)
 }

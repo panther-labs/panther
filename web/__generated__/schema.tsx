@@ -457,6 +457,7 @@ export type ListAlertsInput = {
   pageSize?: Maybe<Scalars['Int']>;
   exclusiveStartKey?: Maybe<Scalars['String']>;
   severity?: Maybe<Array<Maybe<SeverityEnum>>>;
+  logTypes?: Maybe<Array<Scalars['String']>>;
   nameContains?: Maybe<Scalars['String']>;
   createdAtBefore?: Maybe<Scalars['AWSDateTime']>;
   createdAtAfter?: Maybe<Scalars['AWSDateTime']>;
@@ -465,7 +466,6 @@ export type ListAlertsInput = {
   status?: Maybe<Array<Maybe<AlertStatusesEnum>>>;
   eventCountMin?: Maybe<Scalars['Int']>;
   eventCountMax?: Maybe<Scalars['Int']>;
-  logTypes?: Maybe<Array<Scalars['String']>>;
   sortBy?: Maybe<ListAlertsSortFieldsEnum>;
   sortDir?: Maybe<SortDirEnum>;
 };

@@ -21,7 +21,8 @@ DDB_MOCK = mock.MagicMock()
 SNS_MOCK = mock.MagicMock()
 
 
-def mock_to_return(value: str) -> mock.MagicMock:
+# pylint: disable=unused-argument
+def mock_to_return(value: str, **kwargs: int) -> mock.MagicMock:
     if value == 'sns':
         return SNS_MOCK
 

@@ -17,11 +17,11 @@
  */
 
 import React from 'react';
-import { Alert, Box, Button } from 'pouncejs';
+import { Alert, Box } from 'pouncejs';
 import Panel from 'Components/Panel';
-import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import LinkButton from 'Components/buttons/LinkButton';
 import { extractErrorMessage } from 'Helpers/utils';
 import withSEO from 'Hoc/withSEO';
 import useTrackPageView from 'Hooks/useTrackPageView';
@@ -32,7 +32,7 @@ import Skeleton from './Skeleton';
 import ListDestinationsCards from './ListLogSourceCards';
 
 const ListLogSources = () => {
-  useTrackPageView(PageViewEnum.ListAlerts);
+  useTrackPageView(PageViewEnum.ListLogSources);
 
   const { loading, error, data } = useListLogSources();
 
@@ -62,9 +62,9 @@ const ListLogSources = () => {
       <Panel
         title="Log Sources"
         actions={
-          <Button icon="add" as={RRLink} to={urls.logAnalysis.sources.create()}>
+          <LinkButton to={urls.logAnalysis.sources.create()} icon="add">
             Add Source
-          </Button>
+          </LinkButton>
         }
       >
         <ErrorBoundary>

@@ -122,7 +122,7 @@ const ListPoliciesTable: React.FC<ListPoliciesTableProps> = ({
               {formatDatetime(policy.lastModified)}
             </Table.Cell>
             <Table.Cell align="right">
-              <Box my={-1}>
+              <Box my={-2}>
                 <ListPoliciesTableRowOptions policy={policy} />
               </Box>
             </Table.Cell>

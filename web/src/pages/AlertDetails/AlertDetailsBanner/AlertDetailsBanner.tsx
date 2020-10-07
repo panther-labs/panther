@@ -49,7 +49,7 @@ const AlertDetailsBanner: React.FC<AlertDetailsBannerProps> = ({ alert }) => {
               </Flex>
             }
           >
-            <Icon type="info" size="small" verticalAlign="unset" ml={2} />
+            <Icon type="info" size="medium" verticalAlign="unset" ml={2} />
           </Tooltip>
         </Heading>
         <Flex spacing={2} as="ul" flexShrink={0} ml="auto">

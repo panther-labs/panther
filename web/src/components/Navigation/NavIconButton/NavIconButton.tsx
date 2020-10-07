@@ -29,11 +29,13 @@ const NavIconButton: React.FC<NavIconButtonProps> = ({ icon, active, tooltipLabe
     <IconButton
       {...rest}
       variant="ghost"
+      size="medium"
       icon={icon}
       active={active}
       aria-label={tooltipLabel}
       // @ts-ignore
-      p="9px"
+      width={40}
+      height={40}
     />
   </Tooltip>
 );
