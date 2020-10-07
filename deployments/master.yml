@@ -154,7 +154,7 @@ Parameters:
 Mappings:
   Constants:
     Panther:
-      Version: v1.9.0-RC1
+      Version: v1.9.0
 
 Conditions:
   RegistryProvided: !Not [!Equals [!Ref ImageRegistry, '']]
