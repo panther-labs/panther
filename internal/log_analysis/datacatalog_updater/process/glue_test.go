@@ -27,7 +27,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
@@ -65,7 +64,7 @@ var (
 func getEvent(t *testing.T, s3Keys ...string) events.SQSEvent {
 	result := events.SQSEvent{Records: []events.SQSMessage{}}
 	for _, s3Key := range s3Keys {
-		s3Notification := models.NewS3ObjectPutNotification("bucket", s3Key, 0)
+		s3Notification := NewS3ObjectPutNotification("bucket", s3Key, 0)
 		serialized, err := jsoniter.MarshalToString(s3Notification)
 		require.NoError(t, err)
 		event := events.SQSMessage{

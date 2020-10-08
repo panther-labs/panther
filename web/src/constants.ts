@@ -81,6 +81,7 @@ export const RESOURCE_TYPES = [
   'AWS.EC2.Volume',
   'AWS.EC2.VPC',
   'AWS.ECS.Cluster',
+  'AWS.EKS.Cluster',
   'AWS.ELBV2.ApplicationLoadBalancer',
   'AWS.GuardDuty.Detector',
   'AWS.IAM.Group',

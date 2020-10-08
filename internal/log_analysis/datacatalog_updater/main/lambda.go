@@ -19,45 +19,14 @@ package main
  */
 
 import (
-	"context"
-
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-lambda-go/lambdacontext"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
-	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
 // The panther-datacatalog-updater lambda is responsible for managing Glue partitions as data is created.
 
-func handle(ctx context.Context, event *process.DataCatalogEvent) (err error) {
-	lc, logger := lambdalogger.ConfigureGlobal(ctx, nil)
-	operation := common.OpLogManager.Start(lc.InvokedFunctionArn, common.OpLogLambdaServiceDim).WithMemUsed(lambdacontext.MemoryLimitInMB)
-	defer func() {
-		operation.Stop().Log(err,
-			zap.Int("sqsMessageCount", len(event.Records)))
-	}()
-
-	// This lambda handles 3 type of events:
-	switch {
-	// 1. A SyncDatabase event to trigger a full database sync (used by custom resource manager)
-	case event.SyncDatabaseEvent != nil:
-		ctx = lambdalogger.Context(ctx, logger)
-		err = process.HandleSyncEvent(ctx, event.SyncDatabaseEvent)
-	// 2. A SyncTablePartitions event to trigger a single table sync (triggered recursively by sync database events)
-	case event.SyncTablePartitions != nil:
-		ctx = lambdalogger.Context(ctx, logger)
-		err = process.HandleSyncTableEvent(ctx, event.SyncTablePartitions)
-	// 3. An SQS message notifying about new data written and possibly needing a new partition to be added
-	default:
-		err = process.SQS(event.SQSEvent)
-	}
-	return
-}
-
 func main() {
 	process.Setup()
-	lambda.Start(handle)
+	lambda.Start(process.Handle)
 }

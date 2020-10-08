@@ -89,10 +89,6 @@ Parameters:
     Description: KMS key for encrypting alert outputs
     # Example: "484fb80c-4ae5-40d0-b22a-bdd5d0953b3e"
     AllowedPattern: '^[0-9a-f-]{36}$'
-  ProcessedDataBucket:
-    Type: String
-    Description: Name of the S3 bucket which stores processed logs
-    AllowedPattern: '^[a-z0-9.-]{3,63}$'
   SqsKeyId:
     Type: String
     Description: KMS key for encrypting SQS queues
@@ -795,10 +791,10 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
+          DATA_CATALOG_UPDATER_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-datacatalog-updater-queue
           SNAPSHOT_POLLERS_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-snapshot-queue
           LOG_PROCESSOR_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-input-data-notifications-queue
           LOG_PROCESSOR_QUEUE_ARN: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-input-data-notifications-queue
-          PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
           TABLE_NAME: !Ref IntegrationsTable
           ACCOUNT_ID: !Ref AWS::AccountId
           INPUT_DATA_ROLE_ARN: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/PantherInputDataLogProcessingRole-${AWS::Region}
@@ -836,6 +832,11 @@ Resources:
                 - sqs:SendMessage
                 - sqs:SendMessageBatch
               Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-snapshot-queue
+            - Effect: Allow
+              Action:
+                - sqs:SendMessage
+                - sqs:SendMessageBatch
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-datacatalog-updater-queue
             - Effect: Allow
               Action:
                 - kms:Decrypt
