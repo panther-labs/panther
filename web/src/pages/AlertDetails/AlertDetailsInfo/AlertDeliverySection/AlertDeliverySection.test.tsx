@@ -29,7 +29,10 @@ import AlertDeliverySection from './index';
 
 describe('AlertDeliveryTable', () => {
   it('renders the correct message on successful alert delivery', () => {
-    const deliveryResponses = [buildDeliveryResponse({ success: true })];
+    const deliveryResponses = [
+      buildDeliveryResponse({ success: false, dispatchedAt: '2020-10-08T12:00:00.000000000Z' }),
+      buildDeliveryResponse({ success: true, dispatchedAt: '2020-10-08T12:00:00.000000001Z' }),
+    ];
     const alert = buildAlertDetails({ deliveryResponses });
     const destination = buildDestination({ outputId: alert.deliveryResponses[0].outputId });
 
@@ -42,7 +45,10 @@ describe('AlertDeliveryTable', () => {
   });
 
   it('renders the correct message on failed alert delivery', () => {
-    const deliveryResponses = [buildDeliveryResponse({ success: false })];
+    const deliveryResponses = [
+      buildDeliveryResponse({ success: true, dispatchedAt: '2020-10-08T12:00:00.000000000Z' }),
+      buildDeliveryResponse({ success: false, dispatchedAt: '2020-10-08T12:00:00.000000001Z' }),
+    ];
     const alert = buildAlertDetails({ deliveryResponses });
     const destination = buildDestination({ outputId: alert.deliveryResponses[0].outputId });
 

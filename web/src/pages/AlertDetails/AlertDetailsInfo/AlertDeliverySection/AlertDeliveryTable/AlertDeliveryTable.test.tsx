@@ -40,6 +40,7 @@ describe('AlertDeliveryTable', () => {
       <AlertDeliveryTable
         alertDeliveries={[enhancedAlertDelivery]}
         onAlertDeliveryRetry={() => {}}
+        isResending={false}
       />
     );
 
@@ -59,6 +60,7 @@ describe('AlertDeliveryTable', () => {
       <AlertDeliveryTable
         alertDeliveries={[enhancedAlertDelivery]}
         onAlertDeliveryRetry={() => {}}
+        isResending={false}
       />
     );
 
@@ -75,6 +77,7 @@ describe('AlertDeliveryTable', () => {
       <AlertDeliveryTable
         alertDeliveries={[enhancedAlertDelivery]}
         onAlertDeliveryRetry={onAlertDeliveryRetry}
+        isResending={false}
       />
     );
 
@@ -91,6 +94,7 @@ describe('AlertDeliveryTable', () => {
       <AlertDeliveryTable
         alertDeliveries={[enhancedAlertDelivery]}
         onAlertDeliveryRetry={() => {}}
+        isResending={false}
       />
     );
 
@@ -108,6 +112,7 @@ describe('AlertDeliveryTable', () => {
       <AlertDeliveryTable
         alertDeliveries={[enhancedSuccessfulAlertDelivery, enhancedFailedAlertDelivery]}
         onAlertDeliveryRetry={() => {}}
+        isResending={false}
       />
     );
 
