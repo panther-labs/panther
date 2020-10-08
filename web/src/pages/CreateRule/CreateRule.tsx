@@ -58,8 +58,7 @@ const CreateRulePage: React.FC = () => {
       trackEvent({ event: EventEnum.AddedRule, src: SrcEnum.Rules });
       history.push(urls.logAnalysis.rules.details(data.addRule.id));
     },
-    onError: err =>
-      trackError({ event: TrackErrorEnum.FailedToAddRule, src: SrcEnum.Rules, data: err }),
+    onError: () => trackError({ event: TrackErrorEnum.FailedToAddRule, src: SrcEnum.Rules }),
   });
 
   const handleSubmit = React.useCallback(
