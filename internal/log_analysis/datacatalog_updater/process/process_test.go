@@ -35,7 +35,7 @@ func TestProcessSuccess(t *testing.T) {
 	mockGlueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 	mockGlueClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once()
 
-	assert.NoError(t, SQS(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
+	assert.NoError(t, handleSQSEvent(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
 	mockGlueClient.AssertExpectations(t)
 }
 
@@ -47,9 +47,9 @@ func TestProcessSuccessAlreadyCreatedPartition(t *testing.T) {
 	mockGlueClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once()
 
 	// First object should invoke Glue API
-	assert.NoError(t, SQS(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
+	assert.NoError(t, handleSQSEvent(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
 	// Second object is in the same partition as the first one. It shouldn't invoke the Glue API since the partition is already created.
-	assert.NoError(t, SQS(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/new_item.json.gz")))
+	assert.NoError(t, handleSQSEvent(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/new_item.json.gz")))
 	mockGlueClient.AssertExpectations(t)
 }
 
@@ -65,9 +65,9 @@ func TestProcessSuccessDontPopulateCacheOnFailure(t *testing.T) {
 	mockGlueClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once()
 
 	// First invocation fails
-	assert.Error(t, SQS(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
+	assert.Error(t, handleSQSEvent(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
 	// Second invocation succeeds
-	assert.NoError(t, SQS(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
+	assert.NoError(t, handleSQSEvent(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
 	mockGlueClient.AssertExpectations(t)
 }
 
@@ -77,14 +77,14 @@ func TestProcessGlueFailure(t *testing.T) {
 	mockGlueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 	mockGlueClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, errors.New("error")).Once()
 
-	assert.Error(t, SQS(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
+	assert.Error(t, handleSQSEvent(getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
 	mockGlueClient.AssertExpectations(t)
 }
 
 func TestProcessInvalidS3Key(t *testing.T) {
 	initProcessTest()
 	//Invalid keys should just be ignored
-	assert.NoError(t, SQS(getEvent(t, "test")))
+	assert.NoError(t, handleSQSEvent(getEvent(t, "test")))
 }
 
 // initProcessTest is run at the start of each test to create new mocks and reset state

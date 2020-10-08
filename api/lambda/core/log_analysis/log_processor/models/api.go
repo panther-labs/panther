@@ -18,40 +18,6 @@ package models
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "github.com/aws/aws-lambda-go/events"
-
-// S3Notification is sent when new data is available in S3
-type S3Notification struct {
-	// https://docs.aws.amazon.com/AmazonS3/latest/dev/notification-content-structure.html
-	Records []events.S3EventRecord
-}
-
-func NewS3ObjectPutNotification(bucket, key string, nbytes int) *S3Notification {
-	const (
-		eventVersion = "2.0"
-		eventSource  = "aws:s3"
-		eventName    = "ObjectCreated:Put"
-	)
-	return &S3Notification{
-		Records: []events.S3EventRecord{
-			{
-				EventVersion: eventVersion,
-				EventSource:  eventSource,
-				EventName:    eventName,
-				S3: events.S3Entity{
-					Bucket: events.S3Bucket{
-						Name: bucket,
-					},
-					Object: events.S3Object{
-						Key:  key,
-						Size: int64(nbytes),
-					},
-				},
-			},
-		},
-	}
-}
-
 // The type of data that are stored in the Panther
 type DataType string
 

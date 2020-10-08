@@ -37,6 +37,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -281,7 +282,7 @@ func (destination *S3Destination) sendSNSNotification(key string, buffer *s3Even
 			zap.String("topicArn", destination.snsTopicArn))
 	}()
 
-	s3Notification := models.NewS3ObjectPutNotification(destination.s3Bucket, key, buffer.bytes)
+	s3Notification := process.NewS3ObjectPutNotification(destination.s3Bucket, key, buffer.bytes)
 
 	marshalledNotification, err := jsoniter.MarshalToString(s3Notification)
 	if err != nil {

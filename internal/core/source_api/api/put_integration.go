@@ -33,6 +33,7 @@ import (
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	awspoller "github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws"
+	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
@@ -271,10 +272,12 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 }
 
 func createTables(integration *models.SourceIntegration) error {
-	if integration.IsLogAnalysisIntegration() {
-		if err := addGlueTables(integration.RequiredLogTypes()); err != nil {
-			return errors.Wrap(err, "failed to create Glue tables")
-		}
+	if !integration.IsLogAnalysisIntegration() {
+		return nil
 	}
-	return nil
+
+	m := process.CreateTablesMessage{
+		LogTypes: integration.RequiredLogTypes(),
+	}
+	return m.Send(sqsClient, env.DataCatalogUpdaterQueueURL)
 }
