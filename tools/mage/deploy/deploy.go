@@ -423,7 +423,6 @@ func deployCoreStack(settings *PantherConfig, outputs map[string]string) error {
 		"InputDataTopicArn":          outputs["InputDataTopicArn"],
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
 		"OutputsKeyId":               outputs["OutputsEncryptionKeyId"],
-		"ProcessedDataBucket":        outputs["ProcessedDataBucket"],
 		"SqsKeyId":                   outputs["QueueEncryptionKeyId"],
 		"TracingMode":                settings.Monitoring.TracingMode,
 		"UserPoolId":                 outputs["UserPoolId"],
