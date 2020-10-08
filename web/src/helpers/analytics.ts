@@ -164,21 +164,17 @@ export enum TrackErrorEnum {
   FailedMfa = 'Failed MFA',
 }
 
-interface ErrorEvent {
-  data: any;
-}
-
-interface AddDestinationError extends ErrorEvent {
+interface AddDestinationError {
   event: TrackErrorEnum.FailedToAddDestination;
   src: SrcEnum.Destinations;
   ctx: DestinationTypeEnum;
 }
 
-interface AddRuleError extends ErrorEvent {
+interface AddRuleError {
   event: TrackErrorEnum.FailedToAddRule;
   src: SrcEnum.Rules;
 }
-interface MfaError extends ErrorEvent {
+interface MfaError {
   event: TrackErrorEnum.FailedMfa;
   src: SrcEnum.Auth;
 }
@@ -190,6 +186,5 @@ export const trackError = (payload: TrackError) => {
     type: 'error',
     src: payload.src,
     ctx: 'ctx' in payload ? payload.ctx : null,
-    data: 'data' in payload ? payload.data : null,
   });
 };
