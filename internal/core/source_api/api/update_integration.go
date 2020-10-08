@@ -26,6 +26,7 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/core/source_api/ddb"
+	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -73,14 +74,17 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 	}
 
 	if err := normalizeIntegration(existingIntegrationItem, input); err != nil {
+		zap.L().Error("failed to normalize integration", zap.Error(err))
 		return nil, err
 	}
 
 	if err := updateTables(existingIntegrationItem.IntegrationType, input); err != nil {
+		zap.L().Error("failed to update tables", zap.Error(err))
 		return nil, updateIntegrationInternalError
 	}
 
 	if err := dynamoClient.PutItem(existingIntegrationItem); err != nil {
+		zap.L().Error("failed to put item in ddb", zap.Error(err))
 		return nil, updateIntegrationInternalError
 	}
 
@@ -161,13 +165,19 @@ func getItem(integrationID string) (*ddb.Integration, error) {
 	return item, nil
 }
 
-func updateTables(integrationType string, input *models.UpdateIntegrationSettingsInput) (err error) {
+func updateTables(integrationType string, input *models.UpdateIntegrationSettingsInput) error {
+	var logtypes []string
 	switch integrationType {
 	case models.IntegrationTypeAWS3:
-		err = addGlueTables(input.LogTypes)
+		logtypes = input.LogTypes
 	case models.IntegrationTypeSqs:
-		err = addGlueTables(input.SqsConfig.LogTypes)
+		logtypes = input.SqsConfig.LogTypes
 	}
+
+	m := process.CreateTablesMessage{
+		LogTypes: logtypes,
+	}
+	err := m.Send(sqsClient, env.DataCatalogUpdaterQueueURL)
 	if err != nil {
 		return errors.Wrap(err, "failed to create Glue tables")
 	}

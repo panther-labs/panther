@@ -21,6 +21,8 @@ package process
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/athena"
+	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/aws/aws-sdk-go/service/lambda"
@@ -34,11 +36,13 @@ const (
 
 var (
 	config = struct {
-		SyncWorkersPerTable int `default:"10" split_words:"true"`
+		SyncWorkersPerTable int    `default:"10" split_words:"true"`
+		ProcessedDataBucket string `split_words:"true"`
 	}{}
 	awsSession   *session.Session
 	glueClient   glueiface.GlueAPI
 	lambdaClient lambdaiface.LambdaAPI
+	athenaClient athenaiface.AthenaAPI
 )
 
 func Setup() {
@@ -46,4 +50,5 @@ func Setup() {
 	awsSession = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries)))
 	glueClient = glue.New(awsSession)
 	lambdaClient = lambda.New(awsSession)
+	athenaClient = athena.New(awsSession)
 }

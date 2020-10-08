@@ -23,22 +23,23 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/core/source_api/ddb"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 func TestUpdateIntegrationSettingsAwsScanType(t *testing.T) {
 	mockClient := &testutils.DynamoDBMock{}
 	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
+	mockSQS := &testutils.SqsMock{}
+	sqsClient = mockSQS
+
 	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
 	getResponse := &dynamodb.GetItemOutput{Item: map[string]*dynamodb.AttributeValue{
@@ -47,6 +48,7 @@ func TestUpdateIntegrationSettingsAwsScanType(t *testing.T) {
 	}}
 	mockClient.On("GetItem", mock.Anything).Return(getResponse, nil)
 	mockClient.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
+	mockSQS.On("SendMessage", mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
 		IntegrationID:    testIntegrationID,
@@ -70,10 +72,6 @@ func TestUpdateIntegrationSettingsAwsScanType(t *testing.T) {
 func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 	mockClient := &testutils.DynamoDBMock{}
 	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
-	mockGlue := &testutils.GlueMock{}
-	glueClient = mockGlue
-	mockAthena := &testutils.AthenaMock{}
-	athenaClient = mockAthena
 
 	getResponse := &dynamodb.GetItemOutput{Item: map[string]*dynamodb.AttributeValue{
 		"integrationId":   {S: aws.String(testIntegrationID)},
@@ -81,23 +79,6 @@ func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 	}}
 	mockClient.On("GetItem", mock.Anything).Return(getResponse, nil)
 	mockClient.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
-
-	// create the tables
-	mockGlue.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, nil).Times(3)
-	// create/replace the view
-	mockGlue.On("GetTable", mock.Anything).Return(&glue.GetTableOutput{}, nil).Times(len(registry.AvailableLogTypes()))
-	mockAthena.On("StartQueryExecution", mock.Anything).Return(&athena.StartQueryExecutionOutput{
-		QueryExecutionId: aws.String("test-query-1234"),
-	}, nil).Times(3)
-	mockAthena.On("GetQueryExecution", mock.Anything).Return(&athena.GetQueryExecutionOutput{
-		QueryExecution: &athena.QueryExecution{
-			QueryExecutionId: aws.String("test-query-1234"),
-			Status: &athena.QueryExecutionStatus{
-				State: aws.String(athena.QueryExecutionStateSucceeded),
-			},
-		},
-	}, nil).Times(3)
-	mockAthena.On("GetQueryResults", mock.Anything).Return(&athena.GetQueryResultsOutput{}, nil).Times(3)
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
 		S3Bucket: "test-bucket-1",
