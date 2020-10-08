@@ -28,6 +28,45 @@ import '@testing-library/jest-dom';
 // https://github.com/jest-community/jest-extended#api
 import 'jest-extended';
 
+// This mocks sentry module for all tests
+const MockedSentryScope = { setExtras: jest.fn(), setTag: jest.fn() };
+jest.mock('@sentry/browser', () => {
+  const original = jest.requireActual('@sentry/browser');
+  return {
+    ...original,
+    init: jest.fn(),
+    withScope(callback): any {
+      return callback(MockedSentryScope);
+    },
+    captureException: jest.fn(),
+  };
+});
+
+// This mocks mixpanel module for all tests
+jest.mock('mixpanel-browser', () => {
+  const original = jest.requireActual('mixpanel-browser');
+  const { PageViewEnum, EventEnum, TrackErrorEnum } = jest.requireActual('Helpers/analytics');
+  return {
+    ...original,
+    init: jest.fn(),
+    // This is extra check for checking events & types passed are correct
+    track: jest.fn((eventName: string, data: any) => {
+      const possibleEventValues = [
+        ...Object.values(PageViewEnum),
+        ...Object.values(EventEnum),
+        ...Object.values(TrackErrorEnum),
+      ];
+      if (!possibleEventValues.includes(eventName)) {
+        // eslint-disable-next-line no-console
+        console.error("Passed event name to track that's is not valid");
+      } else if (!['pageview', 'error', 'event'].includes(data.type)) {
+        // eslint-disable-next-line no-console
+        console.error(`Passed type to track is not valid: ${data.type}`);
+      }
+    }),
+  };
+});
+
 window.alert = () => {};
 window.scrollTo = () => {};
 
@@ -91,11 +130,25 @@ beforeAll(() => {
 });
 
 /**
- * Make sure that localStorage & sessionStorage are clean before each test
+ * Make sure that localStorage & sessionStorage and mocks are clean before each test
  */
-afterEach(() => {
+beforeEach(done => {
+  // It important clearAllMocks to happen before updating local storage
+  jest.clearAllMocks();
   localStorage.clear();
   sessionStorage.clear();
+
+  // Keys are hardcoded since getting values from constants fails to run the test suite
+  localStorage.setItem('panther.generalSettings.errorReportingConsent', 'true');
+  localStorage.setItem('panther.generalSettings.analyticsConsent', 'true');
+
+  // Any console.error should fail the test
+  jest.spyOn(global.console, 'error').mockImplementation((...args) => {
+    if (typeof args[0] !== 'string' || !args[0].includes('was not wrapped in act')) {
+      done.fail(args[0]);
+    }
+  });
+  done();
 });
 
 /**
