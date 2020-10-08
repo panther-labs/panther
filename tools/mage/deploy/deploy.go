@@ -337,6 +337,10 @@ func deployBootstrapStack(settings *PantherConfig) (map[string]string, error) {
 		"DeployFromSource":              "true",
 		"EnableS3AccessLogs":            strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
 		"LoadBalancerSecurityGroupCidr": settings.Infra.LoadBalancerSecurityGroupCidr,
+		"VpcID":                         settings.Infra.VpcID,
+		"SecurityGroupID":               settings.Infra.SecurityGroupID,
+		"SubnetOneIPRange":              settings.Infra.SubnetOneIPRange,
+		"SubnetTwoIPRange":              settings.Infra.SubnetTwoIPRange,
 		"LogSubscriptionPrincipals":     strings.Join(settings.Setup.LogSubscriptions.PrincipalARNs, ","),
 		"TracingMode":                   settings.Monitoring.TracingMode,
 	})

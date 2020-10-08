@@ -36,6 +36,10 @@ type PantherConfig struct {
 type Infra struct {
 	BaseLayerVersionArns          string   `yaml:"BaseLayerVersionArns"`
 	LoadBalancerSecurityGroupCidr string   `yaml:"LoadBalancerSecurityGroupCidr"`
+	VpcID                         string   `yaml:"VpcID"`
+	SecurityGroupID               string   `yaml:"SecurityGroupID"`
+	SubnetOneIPRange              string   `yaml:"SubnetOneIPRange"`
+	SubnetTwoIPRange              string   `yaml:"SubnetTwoIPRange"`
 	LogProcessorLambdaMemorySize  int      `yaml:"LogProcessorLambdaMemorySize"`
 	LogProcessorSQSDelaySeconds   int      `yaml:"LogProcessorSQSDelaySeconds"`
 	PipLayer                      []string `yaml:"PipLayer"`
