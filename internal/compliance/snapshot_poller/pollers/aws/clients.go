@@ -35,6 +35,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/ecs"
+	"github.com/aws/aws-sdk-go/service/eks"
 	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/aws/aws-sdk-go/service/guardduty"
 	"github.com/aws/aws-sdk-go/service/iam"
@@ -84,6 +85,7 @@ var (
 		awsmodels.Ec2VolumeSchema:           ec2.ServiceName,
 		awsmodels.Ec2VpcSchema:              ec2.ServiceName,
 		awsmodels.EcsClusterSchema:          ecs.ServiceName,
+		awsmodels.EksClusterSchema:          eks.ServiceName,
 		awsmodels.Elbv2LoadBalancerSchema:   elbv2.ServiceName,
 		awsmodels.GuardDutySchema:           guardduty.ServiceName,
 		awsmodels.IAMGroupSchema:            iam.ServiceName,
