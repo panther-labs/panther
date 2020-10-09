@@ -19,7 +19,7 @@
 import React from 'react';
 import { Alert, Box, Card } from 'pouncejs';
 import { convertObjArrayValuesToCsv, extractErrorMessage, encodeParams } from 'Helpers/utils';
-import { ListRulesInput, SortDirEnum, ListRulesSortFieldsEnum } from 'Generated/schema';
+import { ListRulesInput } from 'Generated/schema';
 import { TableControlsPagination } from 'Components/utils/TableControls';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import isEmpty from 'lodash/isEmpty';
@@ -27,7 +27,8 @@ import ErrorBoundary from 'Components/ErrorBoundary';
 import withSEO from 'Hoc/withSEO';
 import useTrackPageView from 'Hooks/useTrackPageView';
 import { PageViewEnum } from 'Helpers/analytics';
-import ListRulesTable from './ListRulesTable';
+import Panel from 'Components/Panel';
+import RuleCard from 'Components/cards/RuleCard';
 import ListRulesActions from './ListRulesActions';
 import ListRulesPageSkeleton from './Skeleton';
 import ListRulesPageEmptyDataFallback from './EmptyDataFallback';
@@ -35,11 +36,7 @@ import { useListRules } from './graphql/listRules.generated';
 
 const ListRules = () => {
   useTrackPageView(PageViewEnum.ListRules);
-  const {
-    requestParams,
-    updateRequestParamsAndResetPaging,
-    updatePagingParams,
-  } = useRequestParamsWithPagination<ListRulesInput>();
+  const { requestParams, updatePagingParams } = useRequestParamsWithPagination<ListRulesInput>();
 
   const { loading, error, data } = useListRules({
     fetchPolicy: 'cache-and-network',
@@ -79,14 +76,13 @@ const ListRules = () => {
     <React.Fragment>
       <ListRulesActions />
       <ErrorBoundary>
-        <Card as="section" px={8} py={4} position="relative">
-          <ListRulesTable
-            items={ruleItems}
-            onSort={updateRequestParamsAndResetPaging}
-            sortBy={requestParams.sortBy || ListRulesSortFieldsEnum.Id}
-            sortDir={requestParams.sortDir || SortDirEnum.Ascending}
-          />
-        </Card>
+        <Panel title="Rules">
+          <Card as="section" position="relative">
+            {ruleItems.map(rule => (
+              <RuleCard rule={rule} key={rule.id}></RuleCard>
+            ))}
+          </Card>
+        </Panel>
       </ErrorBoundary>
       <Box my={5}>
         <TableControlsPagination

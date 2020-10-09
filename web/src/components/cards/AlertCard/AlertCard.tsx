@@ -51,7 +51,7 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
                 aria-label="Link to Rule"
                 to={urls.logAnalysis.rules.details(alert.ruleId)}
               >
-                <Button variantColor="navyblue" as="div" size="small">
+                <Button variantColor="navyblue" size="medium">
                   View Rule
                 </Button>
               </Link>
