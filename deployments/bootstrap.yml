@@ -77,7 +77,7 @@ Parameters:
   SecurityGroupID:
     Type: String
     Description: An existing SecurityGroup to deploy Panther into
-    AllowedPattern: '^sg-[0-9a-f]{10,}$'
+    AllowedPattern: '^(sg-[0-9a-f]{10,})?$'
   SubnetOneIPRange:
     Type: String
     Description: A valid & available IP range in the existing VPC you plan to deploy Panther into.
@@ -93,7 +93,7 @@ Parameters:
   VpcID:
     Type: String
     Description: An existing VPC to deploy Panther into
-    AllowedPattern: '^vpc-[0-9a-f]{10,}$'
+    AllowedPattern: '^(vpc-[0-9a-f]{10,})?$'
 
 Mappings:
   SubnetConfig:
