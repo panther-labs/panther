@@ -147,17 +147,17 @@ Parameters:
     AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):lambda:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:layer:\S+:\d+)?$'
   SecurityGroupID:
     Type: String
-    Description: Specify a SecurityGroup to deploy Panther into
+    Description: An existing SecurityGroup to deploy Panther into. Only takes affect if VpcID is specified.
     Default: ''
     AllowedPattern: '^(sg-[0-9a-f]{10,})?$'
   SubnetOneIPRange:
     Type: String
-    Description: Specify a SecurityGroup to deploy Panther into
+    Description: A valid & available IP range in the existing VPC you plan to deploy Panther into. Only takes affect if VpcID is specified.
     Default: '172.31.250.0/26'
     AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
   SubnetTwoIPRange:
     Type: String
-    Description: Specify a SecurityGroup to deploy Panther into
+    Description: A second valid & available IP range in the existing VPC you plan to deploy Panther into, for multiple AZ redundancy. Only takes affect if VpcID is specified.
     Default: '172.31.251.0/26'
     AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
   TracingMode:
@@ -167,7 +167,7 @@ Parameters:
     Default: ''
   VpcID:
     Type: String
-    Description: Specify a VPC to deploy Panther into
+    Description: An existing VPC to deploy the Panther loadbalancer into. If you set this option, you must also specify SecurityGroupID, SubnetOneIPRange, and SubnetTwoIPRange.
     Default: ''
     AllowedPattern: '^(vpc-[0-9a-f]{10,})?$'
 

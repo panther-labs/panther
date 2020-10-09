@@ -76,15 +76,15 @@ Parameters:
     Description: The list of Principal ARNs to allow read access to the ProcessedDataBucket and subscribe access to ProcessedDataTopicArn
   SecurityGroupID:
     Type: String
-    Description: Specify a SecurityGroup to deploy Panther into
+    Description: An existing SecurityGroup to deploy Panther into
     AllowedPattern: '^sg-[0-9a-f]{10,}$'
   SubnetOneIPRange:
     Type: String
-    Description: Specify a SecurityGroup to deploy Panther into
+    Description: A valid & available IP range in the existing VPC you plan to deploy Panther into.
     AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
   SubnetTwoIPRange:
     Type: String
-    Description: Specify a SecurityGroup to deploy Panther into
+    Description: A second valid & available IP range in the existing VPC you plan to deploy Panther into, for multiple AZ redundancy.
     AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
   TracingMode:
     Type: String
@@ -92,7 +92,7 @@ Parameters:
     AllowedValues: ['', Active, PassThrough]
   VpcID:
     Type: String
-    Description: Specify a VPC to deploy Panther into
+    Description: An existing VPC to deploy Panther into
     AllowedPattern: '^vpc-[0-9a-f]{10,}$'
 
 Mappings:
@@ -762,6 +762,9 @@ Resources:
 
   # We define a public subnet so that we can access our web server from a public IP. The empty
   # string in !GetAZs is equivalent to AWS::Region
+  #
+  # These subnets are labelled Public for historical reasons, but will not actually be public if a
+  # private VPC is specified.
   PublicSubnetOne:
     Type: AWS::EC2::Subnet
     Properties:
@@ -875,6 +878,8 @@ Resources:
         - Key: Name
           Value: panther-web-lb-sg
 
+  # This load balancer is labelled Public for historical reasons, but is not actually public if a
+  # private VPC is specified.
   PublicLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     DependsOn: AuditLogsBucketPolicy
