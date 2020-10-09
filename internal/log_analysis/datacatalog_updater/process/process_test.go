@@ -22,11 +22,46 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/glue"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/pkg/testutils"
+)
+
+var (
+	mockGlueClient *testutils.GlueMock
+
+	// dummy data for columns
+	testColumns = []*glue.Column{
+		{
+			Name: aws.String("col"),
+			Type: aws.String("int"),
+		},
+	}
+
+	// the important thing here is that this of type JSON
+	testStorageDescriptor = &glue.StorageDescriptor{
+		Columns:  testColumns,
+		Location: aws.String("s3://testbucket/logs/table"),
+		SerdeInfo: &glue.SerDeInfo{
+			SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
+			Parameters: map[string]*string{
+				"serialization.format": aws.String("1"),
+				"case.insensitive":     aws.String("TRUE"),
+			},
+		},
+	}
+
+	testGetTableOutput = &glue.GetTableOutput{
+		Table: &glue.TableData{
+			StorageDescriptor: testStorageDescriptor,
+		},
+	}
 )
 
 func TestProcessSuccess(t *testing.T) {
@@ -92,4 +127,18 @@ func initProcessTest() {
 	partitionPrefixCache = make(map[string]struct{})
 	mockGlueClient = &testutils.GlueMock{}
 	glueClient = mockGlueClient
+}
+
+func getEvent(t *testing.T, s3Keys ...string) events.SQSEvent {
+	result := events.SQSEvent{Records: []events.SQSMessage{}}
+	for _, s3Key := range s3Keys {
+		s3Notification := NewS3ObjectPutNotification("bucket", s3Key, 0)
+		serialized, err := jsoniter.MarshalToString(s3Notification)
+		require.NoError(t, err)
+		event := events.SQSMessage{
+			Body: serialized,
+		}
+		result.Records = append(result.Records, event)
+	}
+	return result
 }

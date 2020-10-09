@@ -415,7 +415,6 @@ func deployCoreStack(settings *PantherConfig, outputs map[string]string) error {
 		"AnalysisApiId":              outputs["AnalysisApiId"],
 		"AnalysisVersionsBucket":     outputs["AnalysisVersionsBucket"],
 		"AppDomainURL":               outputs["LoadBalancerUrl"],
-		"AthenaResultsBucket":        outputs["AthenaResultsBucket"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CompanyDisplayName":         settings.Setup.Company.DisplayName,
 		"CompanyEmail":               settings.Setup.Company.Email,

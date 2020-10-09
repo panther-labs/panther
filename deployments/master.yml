@@ -301,7 +301,6 @@ Resources:
         AnalysisApiId: !GetAtt BootstrapGateway.Outputs.AnalysisApiId
         AnalysisVersionsBucket: !GetAtt Bootstrap.Outputs.AnalysisVersionsBucket
         AppDomainURL: !GetAtt Bootstrap.Outputs.LoadBalancerUrl
-        AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         CompanyDisplayName: !Ref CompanyDisplayName
         CompanyEmail: !Ref FirstUserEmail
