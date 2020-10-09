@@ -20,6 +20,7 @@ package process
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
@@ -28,6 +29,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/panther-labs/panther/pkg/awsretry"
 )
 
 const (
@@ -47,7 +49,8 @@ var (
 
 func Setup() {
 	envconfig.MustProcess("", &config)
-	awsSession = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries)))
+	awsSession = session.Must(session.NewSession(request.WithRetryer(aws.NewConfig().WithMaxRetries(maxRetries),
+		awsretry.NewConnectionErrRetryer(maxRetries))))
 	glueClient = glue.New(awsSession)
 	lambdaClient = lambda.New(awsSession)
 	athenaClient = athena.New(awsSession)
