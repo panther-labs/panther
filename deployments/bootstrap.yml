@@ -93,7 +93,7 @@ Parameters:
   VpcID:
     Type: String
     Description: An existing VPC to deploy Panther into
-    AllowedPattern: '(^vpc-[0-9a-f]{10,})?$'
+    AllowedPattern: '^(vpc-[0-9a-f]{10,})?$'
 
 Mappings:
   SubnetConfig:
