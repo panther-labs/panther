@@ -135,7 +135,7 @@ func validateFlags() {
 		/*
 		  default to our dlq naming convention where:
 		    - a queue is <queue prefix>-queue
-		    - the associated dlq is <queue prefix>-<queue>-dlq
+		    - the associated dlq is <queue prefix>-queue-dlq
 		*/
 		if strings.HasSuffix(*TOQ, ".fifo") { // these must end in fifo
 			baseQueueName := strings.Split(*TOQ, ".")[0]
