@@ -135,14 +135,13 @@ func validateFlags() {
 		/*
 		  default to our dlq naming convention where:
 		    - a queue is <queue prefix>-queue
-		    - the associated dlq is <queue prefix>-dlq
+		    - the associated dlq is <queue prefix>-<queue>-dlq
 		*/
-		queuePrefix := strings.Replace(*TOQ, "-queue", "", 1)
 		if strings.HasSuffix(*TOQ, ".fifo") { // these must end in fifo
-			baseQueueName := strings.Split(queuePrefix, ".")[0]
+			baseQueueName := strings.Split(*TOQ, ".")[0]
 			*FROMQ = baseQueueName + "-dlq.fifo"
 		} else {
-			*FROMQ = queuePrefix + "-dlq"
+			*FROMQ = *TOQ + "-dlq"
 		}
 
 		if *VERBOSE || *INTERACTIVE {
