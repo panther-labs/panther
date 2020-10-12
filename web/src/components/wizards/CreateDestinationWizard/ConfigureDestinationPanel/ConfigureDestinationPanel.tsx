@@ -69,7 +69,7 @@ const ConfigureDestinationPanel: React.FC = () => {
       goToNextStep();
     },
     onError: error => {
-      trackError({ event: TrackErrorEnum.FailedToAddDestination, src: SrcEnum.Destinations, ctx: selectedDestinationType, data: error }); // prettier-ignore
+      trackError({ event: TrackErrorEnum.FailedToAddDestination, src: SrcEnum.Destinations, ctx: selectedDestinationType }); // prettier-ignore
       pushSnackbar({
         variant: 'error',
         title:

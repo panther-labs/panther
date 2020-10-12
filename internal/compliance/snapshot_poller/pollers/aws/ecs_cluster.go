@@ -74,8 +74,8 @@ func PollECSCluster(
 	return snapshot, nil
 }
 
-// listClusters returns all ECS clusters in the account
-func listClusters(ecsSvc ecsiface.ECSAPI, nextMarker *string) (clusters []*string, marker *string, err error) {
+// listECSClusters returns all ECS clusters in the account
+func listECSClusters(ecsSvc ecsiface.ECSAPI, nextMarker *string) (clusters []*string, marker *string, err error) {
 	err = ecsSvc.ListClustersPages(&ecs.ListClustersInput{
 		NextToken:  nextMarker,
 		MaxResults: aws.Int64(int64(defaultBatchSize)),
@@ -95,8 +95,8 @@ func ecsClusterIterator(page *ecs.ListClustersOutput, clusters *[]*string, marke
 	return len(*clusters) < defaultBatchSize
 }
 
-// describeCluster provides detailed information for a given ECS cluster
-func describeCluster(ecsSvc ecsiface.ECSAPI, arn *string) (*ecs.Cluster, error) {
+// describeECSCluster provides detailed information for a given ECS cluster
+func describeECSCluster(ecsSvc ecsiface.ECSAPI, arn *string) (*ecs.Cluster, error) {
 	out, err := ecsSvc.DescribeClusters(&ecs.DescribeClustersInput{
 		Clusters: []*string{arn},
 		Include:  []*string{aws.String("TAGS")},
@@ -125,8 +125,8 @@ func describeCluster(ecsSvc ecsiface.ECSAPI, arn *string) (*ecs.Cluster, error) 
 	return out.Clusters[0], nil
 }
 
-// getClusterTasks enumerates and then describes all active tasks of a cluster
-func getClusterTasks(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmodels.EcsTask, error) {
+// getECSClusterTasks enumerates and then describes all active tasks of a cluster
+func getECSClusterTasks(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmodels.EcsTask, error) {
 	// Enumerate tasks
 	var taskArns []*string
 	err := ecsSvc.ListTasksPages(&ecs.ListTasksInput{Cluster: clusterArn},
@@ -217,8 +217,8 @@ func getClusterTasks(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmodels.E
 	return tasks, nil
 }
 
-// getClusterServices enumerates and then describes all active services of a cluster
-func getClusterServices(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmodels.EcsService, error) {
+// getECSClusterServices enumerates and then describes all active services of a cluster
+func getECSClusterServices(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmodels.EcsService, error) {
 	// Enumerate services
 	var serviceArns []*string
 	err := ecsSvc.ListServicesPages(&ecs.ListServicesInput{Cluster: clusterArn},
@@ -309,7 +309,7 @@ func buildEcsClusterSnapshot(ecsSvc ecsiface.ECSAPI, clusterArn *string) (*awsmo
 		return nil, nil
 	}
 
-	details, err := describeCluster(ecsSvc, clusterArn)
+	details, err := describeECSCluster(ecsSvc, clusterArn)
 	// Can details ever be nil without an error?
 	if err != nil || details == nil {
 		return nil, err
@@ -338,12 +338,12 @@ func buildEcsClusterSnapshot(ecsSvc ecsiface.ECSAPI, clusterArn *string) (*awsmo
 		Status:                            details.Status,
 	}
 
-	ecsCluster.Tasks, err = getClusterTasks(ecsSvc, details.ClusterArn)
+	ecsCluster.Tasks, err = getECSClusterTasks(ecsSvc, details.ClusterArn)
 	if err != nil {
 		return nil, err
 	}
 
-	ecsCluster.Services, err = getClusterServices(ecsSvc, details.ClusterArn)
+	ecsCluster.Services, err = getECSClusterServices(ecsSvc, details.ClusterArn)
 	if err != nil {
 		return nil, err
 	}
@@ -362,7 +362,7 @@ func PollEcsClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 	}
 
 	// Start with generating a list of all clusters
-	clusters, marker, err := listClusters(ecsSvc, pollerInput.NextPageToken)
+	clusters, marker, err := listECSClusters(ecsSvc, pollerInput.NextPageToken)
 	if err != nil {
 		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}

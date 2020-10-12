@@ -40,10 +40,6 @@ Parameters:
     Description: Panther App Domain used as a link for the customer in the password reset email
     # Example: "web-115120885.us-west-2.elb.amazonaws.com" or "app.example.com"
     AllowedPattern: '^[a-z0-9.-]+\.[a-z]{2,}$'
-  AthenaResultsBucket:
-    Type: String
-    Description: Name of the S3 bucket created to hold Athena results
-    AllowedPattern: '^[a-z0-9.-]{3,63}$'
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
@@ -89,10 +85,6 @@ Parameters:
     Description: KMS key for encrypting alert outputs
     # Example: "484fb80c-4ae5-40d0-b22a-bdd5d0953b3e"
     AllowedPattern: '^[0-9a-f-]{36}$'
-  ProcessedDataBucket:
-    Type: String
-    Description: Name of the S3 bucket which stores processed logs
-    AllowedPattern: '^[a-z0-9.-]{3,63}$'
   SqsKeyId:
     Type: String
     Description: KMS key for encrypting SQS queues
@@ -795,10 +787,10 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
+          DATA_CATALOG_UPDATER_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-datacatalog-updater-queue
           SNAPSHOT_POLLERS_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-snapshot-queue
           LOG_PROCESSOR_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-input-data-notifications-queue
           LOG_PROCESSOR_QUEUE_ARN: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-input-data-notifications-queue
-          PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
           TABLE_NAME: !Ref IntegrationsTable
           ACCOUNT_ID: !Ref AWS::AccountId
           INPUT_DATA_ROLE_ARN: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/PantherInputDataLogProcessingRole-${AWS::Region}
@@ -838,6 +830,11 @@ Resources:
               Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-snapshot-queue
             - Effect: Allow
               Action:
+                - sqs:SendMessage
+                - sqs:SendMessageBatch
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-datacatalog-updater-queue
+            - Effect: Allow
+              Action:
                 - kms:Decrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
@@ -863,37 +860,6 @@ Resources:
             - Effect: Allow
               Action: s3:GetObject
               Resource: arn:aws:s3:::panther-public-cloudformation-templates/*
-        - Id: CreateGlueTables # to create tables for new log sources
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - glue:CreateTable
-                - glue:GetTable
-                - glue:UpdateTable
-              Resource:
-                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
-                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
-                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
-        - Id: AthenaPermissions # to create views over Glue tables
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - athena:StartQueryExecution
-                - athena:StopQueryExecution
-                - athena:GetQuery*
-              Resource: '*'
-        - Id: AthenaResultsPermissions # athena writes results to S3
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - s3:GetBucketLocation
-                - s3:List*
-                - s3:GetObject
-                - s3:PutObject
-              Resource: !Sub arn:aws:s3:::${AthenaResultsBucket}*
         - Id: CreateSqsQueues # Allows Lambda to manage SQS source queues - these are SQS queues users send data to for log analysis
           Version: 2012-10-17
           Statement:

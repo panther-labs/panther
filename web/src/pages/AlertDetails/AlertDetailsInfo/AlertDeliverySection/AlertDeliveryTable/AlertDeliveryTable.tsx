@@ -29,11 +29,13 @@ interface AlertDeliveryTableProps {
   alertDeliveries: (AlertDetails['alert']['deliveryResponses'][0] &
     Pick<Destination, 'displayName' | 'outputType'>)[];
   onAlertDeliveryRetry: (outputId: string) => void;
+  isResending: boolean;
 }
 
 const AlertDeliveryTable: React.FC<AlertDeliveryTableProps> = ({
   alertDeliveries,
   onAlertDeliveryRetry,
+  isResending,
 }) => {
   const [expandedDestination, setExpandedDestination] = React.useState<string>(null);
 
@@ -128,6 +130,7 @@ const AlertDeliveryTable: React.FC<AlertDeliveryTableProps> = ({
                       <IconButton
                         title="Retry delivery"
                         icon="refresh"
+                        disabled={isResending}
                         variant="ghost"
                         variantColor="navyblue"
                         size="medium"

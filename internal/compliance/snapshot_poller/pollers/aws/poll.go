@@ -88,6 +88,7 @@ var (
 	IndividualResourcePollers = map[string]func(
 		input *awsmodels.ResourcePollerInput, id *utils.ParsedResourceID, entry *pollermodels.ScanEntry) (interface{}, error){
 		awsmodels.ConfigServiceSchema:  PollConfigService,
+		awsmodels.EksClusterSchema:     PollEKSCluster,
 		awsmodels.GuardDutySchema:      PollGuardDutyDetector,
 		awsmodels.PasswordPolicySchema: PollPasswordPolicyResource,
 	}
@@ -107,6 +108,7 @@ var (
 		awsmodels.Ec2VolumeSchema:           {"EC2Volume", PollEc2Volumes},
 		awsmodels.Ec2VpcSchema:              {"EC2VPC", PollEc2Vpcs},
 		awsmodels.EcsClusterSchema:          {"ECSCluster", PollEcsClusters},
+		awsmodels.EksClusterSchema:          {"EKSCluster", PollEksClusters},
 		awsmodels.Elbv2LoadBalancerSchema:   {"ELBV2LoadBalancer", PollElbv2ApplicationLoadBalancers},
 		awsmodels.GuardDutySchema:           {"GuardDutyDetector", PollGuardDutyDetectors},
 		awsmodels.IAMGroupSchema:            {"IAMGroups", PollIamGroups},
