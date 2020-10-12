@@ -125,7 +125,6 @@ func getSelfIntegrations(accountID string) (*models.SourceIntegration, *models.S
 	var cloudSecSource, logSource *models.SourceIntegration
 	for _, integration := range listOutput {
 		if integration.AWSAccountID == accountID &&
-			integration.IntegrationLabel == cloudSecLabel &&
 			integration.IntegrationType == models.IntegrationTypeAWSScan {
 
 			cloudSecSource = integration
