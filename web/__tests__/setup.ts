@@ -45,25 +45,10 @@ jest.mock('@sentry/browser', () => {
 // This mocks mixpanel module for all tests
 jest.mock('mixpanel-browser', () => {
   const original = jest.requireActual('mixpanel-browser');
-  const { PageViewEnum, EventEnum, TrackErrorEnum } = jest.requireActual('Helpers/analytics');
   return {
     ...original,
     init: jest.fn(),
-    // This is extra check for checking events & types passed are correct
-    track: jest.fn((eventName: string, data: any) => {
-      const possibleEventValues = [
-        ...Object.values(PageViewEnum),
-        ...Object.values(EventEnum),
-        ...Object.values(TrackErrorEnum),
-      ];
-      if (!possibleEventValues.includes(eventName)) {
-        // eslint-disable-next-line no-console
-        console.error("Passed event name to track that's is not valid");
-      } else if (!['pageview', 'error', 'event'].includes(data.type)) {
-        // eslint-disable-next-line no-console
-        console.error(`Passed type to track is not valid: ${data.type}`);
-      }
-    }),
+    track: jest.fn(),
   };
 });
 

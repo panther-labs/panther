@@ -63,6 +63,7 @@ describe('Mixpanel Reporting', () => {
       expect(mixpanel.init).toHaveBeenCalledTimes(3);
       expect(mixpanel.track).toHaveBeenCalledTimes(3);
     });
+
     it('should report error on Sentry when mx throws', async () => {
       const mxError = Error('Mixpanel error');
       mixpanel.init.mockImplementationOnce(() => {
