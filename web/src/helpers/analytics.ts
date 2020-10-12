@@ -18,7 +18,7 @@
 
 import { DestinationTypeEnum } from 'Generated/schema';
 import storage from 'Helpers/storage';
-import { ANALYTICS_CONSENT_STORAGE_KEY } from 'Source/constants';
+import { ANALYTICS_CONSENT_STORAGE_KEY, STABLE_PANTHER_VERSION } from 'Source/constants';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 import { logError } from 'Helpers/errors';
 
@@ -35,7 +35,8 @@ const evaluateTracking = (...args) => {
     window.requestIdleCallback(() => {
       try {
         mx.init(mixpanelPublicToken);
-        mx.track(...args);
+        const [eventName, meta] = args;
+        mx.track(eventName, { ...meta, version: STABLE_PANTHER_VERSION });
       } catch (e) {
         // Reporting to sentry
         logError(e);
