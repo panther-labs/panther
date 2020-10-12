@@ -48,20 +48,29 @@ const TestComponent: React.FC<TestProps> = ({ onClick }) => {
 describe('Mixpanel Reporting', () => {
   describe('test with enabled analytics', () => {
     it('should report data', async () => {
-      const error = Error('Dummy Error');
       const onClick = () => {
         trackEvent({ event: EventEnum.SignedIn, src: SrcEnum.Auth });
-        trackError({ event: TrackErrorEnum.FailedMfa, src: SrcEnum.Auth, data: error });
+        trackError({ event: TrackErrorEnum.FailedMfa, src: SrcEnum.Auth });
       };
       const { getByText } = render(<TestComponent onClick={() => onClick()} />);
-
+      await waitMs(50);
+      expect(mixpanel.track).toHaveBeenCalledWith(PageViewEnum.LogAnalysisOverview, { type: 'pageview' }); // prettier-ignore
       const btn = getByText('Button click');
 
       fireEvent.click(btn);
       await waitMs(50);
       expect(localStorage.getItem(ANALYTICS_CONSENT_STORAGE_KEY)).toBeTruthy();
       expect(mixpanel.init).toHaveBeenCalledTimes(3);
+
       expect(mixpanel.track).toHaveBeenCalledTimes(3);
+      expect(mixpanel.track).toHaveBeenNthCalledWith(2, EventEnum.SignedIn, {
+        type: 'event',
+        src: SrcEnum.Auth,
+      });
+      expect(mixpanel.track).toHaveBeenNthCalledWith(3, TrackErrorEnum.FailedMfa, {
+        type: 'error',
+        src: SrcEnum.Auth,
+      });
     });
 
     it('should report error on Sentry when mx throws', async () => {
@@ -97,10 +106,9 @@ describe('Mixpanel Reporting', () => {
   describe('tests with disabled analytics', () => {
     it('should NOT report data', async () => {
       localStorage.setItem(ANALYTICS_CONSENT_STORAGE_KEY, 'false');
-      const error = Error('Dummy Error');
       const onClick = () => {
         trackEvent({ event: EventEnum.SignedIn, src: SrcEnum.Auth });
-        trackError({ event: TrackErrorEnum.FailedMfa, src: SrcEnum.Auth, data: error });
+        trackError({ event: TrackErrorEnum.FailedMfa, src: SrcEnum.Auth });
       };
       const { getByText } = render(<TestComponent onClick={() => onClick()} />);
 

@@ -153,8 +153,8 @@ export const trackEvent = (payload: TrackEvent) => {
   evaluateTracking(payload.event, {
     type: 'event',
     src: payload.src,
-    ctx: 'ctx' in payload ? payload.ctx : null,
-    ...('data' in payload ? payload.data : null),
+    ctx: 'ctx' in payload ? payload.ctx : undefined,
+    ...('data' in payload ? payload.data : undefined),
   });
 };
 
@@ -185,6 +185,6 @@ export const trackError = (payload: TrackError) => {
   evaluateTracking(payload.event, {
     type: 'error',
     src: payload.src,
-    ctx: 'ctx' in payload ? payload.ctx : null,
+    ctx: 'ctx' in payload ? payload.ctx : undefined,
   });
 };
