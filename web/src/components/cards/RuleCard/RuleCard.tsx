@@ -18,7 +18,7 @@
 
 import React from 'react';
 import GenericItemCard from 'Components/GenericItemCard';
-import { Flex, Link, Box, SimpleGrid } from 'pouncejs';
+import { Flex, Link, SimpleGrid } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import StatusBadge from 'Components/badges/StatusBadge';
@@ -65,18 +65,12 @@ const RuleCard: React.FC<RuleCardProps> = ({ rule }) => {
           </GenericItemCard.ValuesGroup>
           <GenericItemCard.ValuesGroup>
             <Flex ml="auto" mr={0} align="flex-end" spacing={2}>
-              <Box px={2}>
-                <GenericItemCard.Value
-                  label="Threshold"
-                  value={rule?.threshold ? rule?.threshold.toLocaleString() : '0'}
-                />
-              </Box>
-              <Box px={2}>
-                <GenericItemCard.Value
-                  label="Time Created"
-                  value={formatDatetime(rule.createdAt)}
-                />
-              </Box>
+              <GenericItemCard.Value
+                label="Threshold"
+                value={rule?.threshold ? rule?.threshold.toLocaleString() : '0'}
+              />
+              <GenericItemCard.Value label="Time Created" value={formatDatetime(rule.createdAt)} />
+
               <StatusBadge
                 status={rule.enabled ? 'ENABLED' : ComplianceStatusEnum.Error}
                 disabled={!rule.enabled}
