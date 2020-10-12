@@ -15,7 +15,7 @@ type Mutation {
   addSqsLogIntegration(input: AddSqsLogIntegrationInput!): SqsLogSourceIntegration!
   addPolicy(input: AddPolicyInput!): PolicyDetails
   addRule(input: AddRuleInput!): RuleDetails
-    testRule(input: TestPolicyInput): TestRuleResponse
+  testRule(input: TestPolicyInput): TestRuleResponse
   addGlobalPythonModule(input: AddGlobalPythonModuleInput!): GlobalPythonModule!
   deleteDestination(id: ID!): Boolean
   deleteComplianceIntegration(id: ID!): Boolean

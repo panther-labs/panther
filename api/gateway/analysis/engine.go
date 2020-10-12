@@ -87,10 +87,10 @@ type RulesEngineOutput struct {
 //nolint:maligned
 type RuleResult struct {
 	ID           string `json:"id"`
-	RuleID       string `json:"rule_id"`
+	RuleID       string `json:"ruleId"`
 	Matched      bool   `json:"matched"`
-	TitleOutput  string `json:"title_output"`
-	DedupOutput  string `json:"dedup_output"`
+	TitleOutput  string `json:"titleOutput"`
+	DedupOutput  string `json:"dedupOutput"`
 	Errored      bool   `json:"errored"`
-	ErrorMessage string `json:"error_message"`
+	ErrorMessage string `json:"errorMessage"`
 }

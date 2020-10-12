@@ -50,12 +50,12 @@ class TestMainDirectAnalysis(TestCase):
                 [
                     {
                         'id': 'event_id',
-                        'rule_id': 'rule_id',
+                        'ruleId': 'rule_id',
                         'matched': True,
-                        'dedup_output': 'defaultDedupString:rule_id',
-                        'title_output': None,
+                        'dedupOutput': 'defaultDedupString:rule_id',
+                        'titleOutput': None,
                         'errored': False,
-                        'error_message': None,
+                        'errorMessage': None,
                     }
                 ]
         }
@@ -69,12 +69,12 @@ class TestMainDirectAnalysis(TestCase):
                 [
                     {
                         'id': 'event_id',
-                        'rule_id': 'rule_id',
+                        'ruleId': 'rule_id',
                         'matched': False,
-                        'dedup_output': None,
-                        'title_output': None,
+                        'dedupOutput': None,
+                        'titleOutput': None,
                         'errored': False,
-                        'error_message': None,
+                        'errorMessage': None,
                     }
                 ]
         }
@@ -96,12 +96,12 @@ class TestMainDirectAnalysis(TestCase):
                 [
                     {
                         'id': 'event_id',
-                        'rule_id': 'rule_id',
+                        'ruleId': 'rule_id',
                         'matched': None,
-                        'dedup_output': None,
-                        'title_output': None,
+                        'dedupOutput': None,
+                        'titleOutput': None,
                         'errored': True,
-                        'error_message': 'Exception: Failure message',
+                        'errorMessage': 'Exception: Failure message',
                     }
                 ]
         }
@@ -114,10 +114,10 @@ class TestMainDirectAnalysis(TestCase):
                 [
                     {
                         'id': 'event_id',
-                        'rule_id': 'rule_id',
+                        'ruleId': 'rule_id',
                         'matched': False,
                         'errored': True,
-                        'error_message': 'ModuleNotFoundError: No module named \'stuff\'',
+                        'errorMessage': 'ModuleNotFoundError: No module named \'stuff\'',
                     }
                 ]
         }
@@ -139,13 +139,13 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
-                        'dedup_output': None,
-                        'error_message': 'Exception: dedup error',
+                        'dedupOutput': None,
+                        'errorMessage': 'Exception: dedup error',
                         'errored': True,
                         'id': 'event_id',
                         'matched': None,
-                        'rule_id': 'rule_id',
-                        'title_output': None
+                        'ruleId': 'rule_id',
+                        'titleOutput': None
                     }
                 ]
         }
@@ -169,13 +169,13 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
-                        'dedup_output': None,
-                        'error_message': 'Exception: title error',
+                        'dedupOutput': None,
+                        'errorMessage': 'Exception: title error',
                         'errored': True,
                         'id': 'event_id',
                         'matched': None,
-                        'rule_id': 'rule_id',
-                        'title_output': None
+                        'ruleId': 'rule_id',
+                        'titleOutput': None
                     }
                 ]
         }
