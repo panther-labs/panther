@@ -284,7 +284,7 @@ type RuleSummary {
   id: ID!
   threshold: Int
   lastModified: AWSDateTime
-  createdAt: AWSDateTime
+  createdAt: AWSDateTime!
   logTypes: [String]
   severity: SeverityEnum
   tags: [String]
