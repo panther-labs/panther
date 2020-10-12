@@ -1,13 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`RuleCard renders 1`] = `
-.panther-30 {
+.panther-28 {
   background-color: #1d2a3f;
   border-radius: 4px;
   padding: 20px;
 }
 
-.panther-29 {
+.panther-27 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -16,7 +16,7 @@ exports[`RuleCard renders 1`] = `
   height: 100%;
 }
 
-.panther-28 {
+.panther-26 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -122,7 +122,7 @@ exports[`RuleCard renders 1`] = `
   color: currentColor;
 }
 
-.panther-27 {
+.panther-25 {
   display: grid;
   grid-gap: 8px;
   grid-template-columns: repeat(2, 1fr);
@@ -205,7 +205,7 @@ exports[`RuleCard renders 1`] = `
   font-size: 0.75rem;
 }
 
-.panther-25 {
+.panther-23 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -218,20 +218,15 @@ exports[`RuleCard renders 1`] = `
   margin-right: 0;
 }
 
-.panther-25>*:not(:last-child) {
+.panther-23>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-17 {
-  padding-left: 8px;
-  padding-right: 8px;
-}
-
-.panther-23 {
+.panther-21 {
   opacity: 0.5;
 }
 
-.panther-22 {
+.panther-20 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -260,7 +255,7 @@ exports[`RuleCard renders 1`] = `
   background-color: #4f4f4f;
 }
 
-.panther-24 {
+.panther-22 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -293,13 +288,13 @@ exports[`RuleCard renders 1`] = `
 
 <div>
   <section
-    class="panther-30"
+    class="panther-28"
   >
     <div
-      class="panther-29"
+      class="panther-27"
     >
       <div
-        class="panther-28"
+        class="panther-26"
       >
         <div
           class="panther-5"
@@ -341,7 +336,7 @@ exports[`RuleCard renders 1`] = `
           </div>
         </div>
         <div
-          class="panther-27"
+          class="panther-25"
         >
           <div
             class="panther-13"
@@ -382,54 +377,46 @@ exports[`RuleCard renders 1`] = `
             class="panther-13"
           >
             <div
-              class="panther-25"
+              class="panther-23"
             >
-              <div
-                class="panther-17"
+              <dl
+                class="panther-12"
               >
-                <dl
-                  class="panther-12"
+                <dt
+                  aria-labelledby="threshold550"
+                  class="panther-6"
                 >
-                  <dt
-                    aria-labelledby="threshold550"
-                    class="panther-6"
-                  >
-                    Threshold
-                  </dt>
-                  <dd
-                    aria-labelledby="threshold550"
-                    class="panther-11"
-                  >
-                    550
-                  </dd>
-                </dl>
-              </div>
-              <div
-                class="panther-17"
+                  Threshold
+                </dt>
+                <dd
+                  aria-labelledby="threshold550"
+                  class="panther-11"
+                >
+                  550
+                </dd>
+              </dl>
+              <dl
+                class="panther-12"
               >
-                <dl
-                  class="panther-12"
+                <dt
+                  aria-labelledby="time-created2020-09-24-1209-gmt3"
+                  class="panther-6"
                 >
-                  <dt
-                    aria-labelledby="time-created2020-09-24-1209-gmt3"
-                    class="panther-6"
-                  >
-                    Time Created
-                  </dt>
-                  <dd
-                    aria-labelledby="time-created2020-09-24-1209-gmt3"
-                    class="panther-11"
-                  >
-                    2020-09-24 12:09 GMT+3
-                  </dd>
-                </dl>
-              </div>
+                  Time Created
+                </dt>
+                <dd
+                  aria-labelledby="time-created2020-09-24-1209-gmt3"
+                  class="panther-11"
+                >
+                  2020-09-24 12:09 GMT+3
+                </dd>
+              </dl>
               <div
-                class="panther-23"
+                class="panther-21"
               >
                 <div
                   aria-atomic="true"
-                  class="panther-22"
+                  class="panther-20"
                   role="status"
                 >
                   DISABLED
@@ -437,7 +424,7 @@ exports[`RuleCard renders 1`] = `
               </div>
               <div
                 aria-atomic="true"
-                class="panther-24"
+                class="panther-22"
                 role="status"
               >
                 INFO
@@ -452,13 +439,13 @@ exports[`RuleCard renders 1`] = `
 `;
 
 exports[`RuleCard renders an expanded dropdown 1`] = `
-.panther-30 {
+.panther-28 {
   background-color: #1d2a3f;
   border-radius: 4px;
   padding: 20px;
 }
 
-.panther-29 {
+.panther-27 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -467,7 +454,7 @@ exports[`RuleCard renders an expanded dropdown 1`] = `
   height: 100%;
 }
 
-.panther-28 {
+.panther-26 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -573,7 +560,7 @@ exports[`RuleCard renders an expanded dropdown 1`] = `
   color: currentColor;
 }
 
-.panther-27 {
+.panther-25 {
   display: grid;
   grid-gap: 8px;
   grid-template-columns: repeat(2, 1fr);
@@ -656,7 +643,7 @@ exports[`RuleCard renders an expanded dropdown 1`] = `
   font-size: 0.75rem;
 }
 
-.panther-25 {
+.panther-23 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -669,20 +656,15 @@ exports[`RuleCard renders an expanded dropdown 1`] = `
   margin-right: 0;
 }
 
-.panther-25>*:not(:last-child) {
+.panther-23>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-17 {
-  padding-left: 8px;
-  padding-right: 8px;
-}
-
-.panther-23 {
+.panther-21 {
   opacity: 0.5;
 }
 
-.panther-22 {
+.panther-20 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -711,7 +693,7 @@ exports[`RuleCard renders an expanded dropdown 1`] = `
   background-color: #4f4f4f;
 }
 
-.panther-24 {
+.panther-22 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -744,13 +726,13 @@ exports[`RuleCard renders an expanded dropdown 1`] = `
 
 <div>
   <section
-    class="panther-30"
+    class="panther-28"
   >
     <div
-      class="panther-29"
+      class="panther-27"
     >
       <div
-        class="panther-28"
+        class="panther-26"
       >
         <div
           class="panther-5"
@@ -792,7 +774,7 @@ exports[`RuleCard renders an expanded dropdown 1`] = `
           </div>
         </div>
         <div
-          class="panther-27"
+          class="panther-25"
         >
           <div
             class="panther-13"
@@ -833,54 +815,46 @@ exports[`RuleCard renders an expanded dropdown 1`] = `
             class="panther-13"
           >
             <div
-              class="panther-25"
+              class="panther-23"
             >
-              <div
-                class="panther-17"
+              <dl
+                class="panther-12"
               >
-                <dl
-                  class="panther-12"
+                <dt
+                  aria-labelledby="threshold550"
+                  class="panther-6"
                 >
-                  <dt
-                    aria-labelledby="threshold550"
-                    class="panther-6"
-                  >
-                    Threshold
-                  </dt>
-                  <dd
-                    aria-labelledby="threshold550"
-                    class="panther-11"
-                  >
-                    550
-                  </dd>
-                </dl>
-              </div>
-              <div
-                class="panther-17"
+                  Threshold
+                </dt>
+                <dd
+                  aria-labelledby="threshold550"
+                  class="panther-11"
+                >
+                  550
+                </dd>
+              </dl>
+              <dl
+                class="panther-12"
               >
-                <dl
-                  class="panther-12"
+                <dt
+                  aria-labelledby="time-created2020-09-24-1209-gmt3"
+                  class="panther-6"
                 >
-                  <dt
-                    aria-labelledby="time-created2020-09-24-1209-gmt3"
-                    class="panther-6"
-                  >
-                    Time Created
-                  </dt>
-                  <dd
-                    aria-labelledby="time-created2020-09-24-1209-gmt3"
-                    class="panther-11"
-                  >
-                    2020-09-24 12:09 GMT+3
-                  </dd>
-                </dl>
-              </div>
+                  Time Created
+                </dt>
+                <dd
+                  aria-labelledby="time-created2020-09-24-1209-gmt3"
+                  class="panther-11"
+                >
+                  2020-09-24 12:09 GMT+3
+                </dd>
+              </dl>
               <div
-                class="panther-23"
+                class="panther-21"
               >
                 <div
                   aria-atomic="true"
-                  class="panther-22"
+                  class="panther-20"
                   role="status"
                 >
                   DISABLED
@@ -888,7 +862,7 @@ exports[`RuleCard renders an expanded dropdown 1`] = `
               </div>
               <div
                 aria-atomic="true"
-                class="panther-24"
+                class="panther-22"
                 role="status"
               >
                 INFO

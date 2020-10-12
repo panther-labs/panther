@@ -46,6 +46,7 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
         </Link>
         <GenericItemCard.ValuesGroup>
           <GenericItemCard.Value
+            id="link-to-rule"
             value={
               <LinkButton
                 aria-label="Link to Rule"

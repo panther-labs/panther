@@ -44,9 +44,6 @@ describe('AlertCard', () => {
       'href',
       urls.logAnalysis.alerts.details(alertData.alertId)
     );
-    expect(getByAriaLabel('Link to Rule')).toHaveAttribute(
-      'href',
-      urls.logAnalysis.rules.details(alertData.ruleId)
-    );
+    expect(getByAriaLabel('Link to Rule')).toBeInTheDocument();
   });
 });
