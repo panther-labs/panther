@@ -20,7 +20,7 @@ import { renderHook } from 'test-utils';
 import useTrackPageView from 'Hooks/useTrackPageView';
 import { PageViewEnum, trackPageView } from 'Helpers/analytics';
 
-jest.mock('Helpers/Analytics');
+jest.mock('Helpers/analytics');
 
 describe('useTrackPageView hook tests', () => {
   it('should call trackPageView only once', async () => {

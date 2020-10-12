@@ -16,7 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import { createSerializer } from 'jest-emotion';
-import { getAppTemplateParams } from '../scripts/utils';
 
 // extends the basic `expect` function, by adding additional DOM assertions such as
 // `.toHaveAttribute`, `.toHaveTextContent` etc.
@@ -27,6 +26,10 @@ import '@testing-library/jest-dom';
 // whether a mock has been called before another mock
 // https://github.com/jest-community/jest-extended#api
 import 'jest-extended';
+import {
+  ANALYTICS_CONSENT_STORAGE_KEY,
+  ERROR_REPORTING_CONSENT_STORAGE_KEY,
+} from 'Source/constants';
 
 // This mocks sentry module for all tests
 const MockedSentryScope = { setExtras: jest.fn(), setTag: jest.fn() };
@@ -80,18 +83,6 @@ if (window.URL.revokeObjectURL === undefined) {
 }
 
 /**
- * Mock the server-side EJS-injected AWS configuration.
- * See `web/public/index.ejs`
- */
-const { PANTHER_CONFIG } = getAppTemplateParams();
-
-const scriptTag = document.createElement('script');
-scriptTag.id = '__PANTHER_CONFIG__';
-scriptTag.type = 'application/json';
-scriptTag.innerHTML = JSON.stringify(PANTHER_CONFIG);
-document.body.appendChild(scriptTag);
-
-/**
  * Make sure that mock style tags exist to help with emotion bugs + mock console.error to "hide"
  * act  warnings
  */
@@ -123,9 +114,8 @@ beforeEach(() => {
   localStorage.clear();
   sessionStorage.clear();
 
-  // Keys are hardcoded since getting values from constants fails to run the test suite
-  localStorage.setItem('panther.generalSettings.errorReportingConsent', 'true');
-  localStorage.setItem('panther.generalSettings.analyticsConsent', 'true');
+  localStorage.setItem(ERROR_REPORTING_CONSENT_STORAGE_KEY, 'true');
+  localStorage.setItem(ANALYTICS_CONSENT_STORAGE_KEY, 'true');
 });
 
 /**
