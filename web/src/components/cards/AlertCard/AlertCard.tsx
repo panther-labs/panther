@@ -17,11 +17,12 @@
  */
 
 import GenericItemCard from 'Components/GenericItemCard';
-import { Flex, Link, Button } from 'pouncejs';
+import { Flex, Link } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import React from 'react';
 import urls from 'Source/urls';
+import LinkButton from 'Components/buttons/LinkButton';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 import { formatDatetime } from 'Helpers/utils';
 import BulletedLogType from 'Components/BulletedLogType';
@@ -46,15 +47,14 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
         <GenericItemCard.ValuesGroup>
           <GenericItemCard.Value
             value={
-              <Link
-                as={RRLink}
+              <LinkButton
                 aria-label="Link to Rule"
                 to={urls.logAnalysis.rules.details(alert.ruleId)}
+                variantColor="navyblue"
+                size="medium"
               >
-                <Button variantColor="navyblue" size="medium">
-                  View Rule
-                </Button>
-              </Link>
+                View Rule
+              </LinkButton>
             }
           />
 
