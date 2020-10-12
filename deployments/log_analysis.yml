@@ -700,6 +700,8 @@ Resources:
               Action:
                 - glue:GetTable
                 - glue:GetTables
+                - glue:CreateTable
+                - glue:UpdateTable
                 - glue:CreatePartition
                 - glue:GetPartition
                 - glue:GetPartitions
@@ -708,6 +710,25 @@ Resources:
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
+        - Id: AthenaPermissions # to create views over Glue tables
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - athena:StartQueryExecution
+                - athena:StopQueryExecution
+                - athena:GetQuery*
+              Resource: '*'
+        - Id: AthenaResultsPermissions # athena writes results to S3
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetBucketLocation
+                - s3:List*
+                - s3:GetObject
+                - s3:PutObject
+              Resource: !Sub arn:aws:s3:::${AthenaResultsBucket}*
         - Id: ProbeS3 # used in sync
           Version: 2012-10-17
           Statement:

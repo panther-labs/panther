@@ -338,7 +338,11 @@ func deployBootstrapStack(settings *PantherConfig) (map[string]string, error) {
 		"EnableS3AccessLogs":            strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
 		"LoadBalancerSecurityGroupCidr": settings.Infra.LoadBalancerSecurityGroupCidr,
 		"LogSubscriptionPrincipals":     strings.Join(settings.Setup.LogSubscriptions.PrincipalARNs, ","),
+		"SecurityGroupID":               settings.Infra.SecurityGroupID,
+		"SubnetOneIPRange":              settings.Infra.SubnetOneIPRange,
+		"SubnetTwoIPRange":              settings.Infra.SubnetTwoIPRange,
 		"TracingMode":                   settings.Monitoring.TracingMode,
+		"VpcID":                         settings.Infra.VpcID,
 	})
 }
 
@@ -411,7 +415,6 @@ func deployCoreStack(settings *PantherConfig, outputs map[string]string) error {
 		"AnalysisApiId":              outputs["AnalysisApiId"],
 		"AnalysisVersionsBucket":     outputs["AnalysisVersionsBucket"],
 		"AppDomainURL":               outputs["LoadBalancerUrl"],
-		"AthenaResultsBucket":        outputs["AthenaResultsBucket"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CompanyDisplayName":         settings.Setup.Company.DisplayName,
 		"CompanyEmail":               settings.Setup.Company.Email,
@@ -423,7 +426,6 @@ func deployCoreStack(settings *PantherConfig, outputs map[string]string) error {
 		"InputDataTopicArn":          outputs["InputDataTopicArn"],
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
 		"OutputsKeyId":               outputs["OutputsEncryptionKeyId"],
-		"ProcessedDataBucket":        outputs["ProcessedDataBucket"],
 		"SqsKeyId":                   outputs["QueueEncryptionKeyId"],
 		"TracingMode":                settings.Monitoring.TracingMode,
 		"UserPoolId":                 outputs["UserPoolId"],
