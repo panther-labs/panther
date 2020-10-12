@@ -40,6 +40,10 @@ type Infra struct {
 	LogProcessorSQSDelaySeconds   int      `yaml:"LogProcessorSQSDelaySeconds"`
 	PipLayer                      []string `yaml:"PipLayer"`
 	PythonLayerVersionArn         string   `yaml:"PythonLayerVersionArn"`
+	SecurityGroupID               string   `yaml:"SecurityGroupID"`
+	SubnetOneIPRange              string   `yaml:"SubnetOneIPRange"`
+	SubnetTwoIPRange              string   `yaml:"SubnetTwoIPRange"`
+	VpcID                         string   `yaml:"VpcID"`
 }
 
 type Monitoring struct {
