@@ -65,10 +65,10 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
             results.append(
                 {
                     'id': event['id'],
-                    'rule_id': raw_rule['id'],
+                    'ruleId': raw_rule['id'],
                     'matched': False,
                     'errored': True,
-                    'error_message': '{}: {}'.format(type(rule_exception).__name__, rule_exception),
+                    'errorMessage': '{}: {}'.format(type(rule_exception).__name__, rule_exception),
                 }
             )
             # If rule was invalid, no need to try to run it
@@ -78,12 +78,12 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
             results.append(
                 {
                     'id': event['id'],
-                    'rule_id': raw_rule['id'],
+                    'ruleId': raw_rule['id'],
                     'matched': rule_result.matched,
-                    'title_output': rule_result.title,
-                    'dedup_output': rule_result.dedup_string,
+                    'titleOutput': rule_result.title,
+                    'dedupOutput': rule_result.dedup_string,
                     'errored': rule_result.exception is not None,
-                    'error_message':
+                    'errorMessage':
                         '{}: {}'.format(type(rule_result.exception).__name__, rule_result.exception) if rule_result.exception else None,
                 }
             )
