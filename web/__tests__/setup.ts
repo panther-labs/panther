@@ -117,7 +117,7 @@ beforeAll(() => {
 /**
  * Make sure that localStorage & sessionStorage and mocks are clean before each test
  */
-beforeEach(done => {
+beforeEach(() => {
   // It important clearAllMocks to happen before updating local storage
   jest.clearAllMocks();
   localStorage.clear();
@@ -126,14 +126,6 @@ beforeEach(done => {
   // Keys are hardcoded since getting values from constants fails to run the test suite
   localStorage.setItem('panther.generalSettings.errorReportingConsent', 'true');
   localStorage.setItem('panther.generalSettings.analyticsConsent', 'true');
-
-  // Any console.error should fail the test
-  jest.spyOn(global.console, 'error').mockImplementation((...args) => {
-    if (typeof args[0] !== 'string' || !args[0].includes('was not wrapped in act')) {
-      done.fail(args[0]);
-    }
-  });
-  done();
 });
 
 /**
