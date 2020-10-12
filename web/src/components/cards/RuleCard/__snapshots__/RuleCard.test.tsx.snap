@@ -411,16 +411,16 @@ exports[`RuleCard renders 1`] = `
                   class="panther-12"
                 >
                   <dt
-                    aria-labelledby="time-created2020-10-09-2006-gmt3"
+                    aria-labelledby="time-created2020-09-24-1209-gmt3"
                     class="panther-6"
                   >
                     Time Created
                   </dt>
                   <dd
-                    aria-labelledby="time-created2020-10-09-2006-gmt3"
+                    aria-labelledby="time-created2020-09-24-1209-gmt3"
                     class="panther-11"
                   >
-                    2020-10-09 20:06 GMT+3
+                    2020-09-24 12:09 GMT+3
                   </dd>
                 </dl>
               </div>
@@ -862,16 +862,16 @@ exports[`RuleCard renders an expanded dropdown 1`] = `
                   class="panther-12"
                 >
                   <dt
-                    aria-labelledby="time-created2020-10-09-2006-gmt3"
+                    aria-labelledby="time-created2020-09-24-1209-gmt3"
                     class="panther-6"
                   >
                     Time Created
                   </dt>
                   <dd
-                    aria-labelledby="time-created2020-10-09-2006-gmt3"
+                    aria-labelledby="time-created2020-09-24-1209-gmt3"
                     class="panther-11"
                   >
-                    2020-10-09 20:06 GMT+3
+                    2020-09-24 12:09 GMT+3
                   </dd>
                 </dl>
               </div>
