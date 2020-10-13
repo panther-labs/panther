@@ -1207,12 +1207,15 @@ export const buildRuleResult = (overrides: Partial<RuleResult> = {}): RuleResult
   return {
     __typename: 'RuleResult',
     id: 'id' in overrides ? overrides.id : 'Global',
-    rule_id: 'rule_id' in overrides ? overrides.rule_id : 'SDD',
+    ruleId: 'ruleId' in overrides ? overrides.ruleId : 'workforce',
     matched: 'matched' in overrides ? overrides.matched : false,
-    title_output: 'title_output' in overrides ? overrides.title_output : 'Corporate',
-    dedup_output: 'dedup_output' in overrides ? overrides.dedup_output : 'ROI',
+    ruleError: 'ruleError' in overrides ? overrides.ruleError : 'leverage',
+    titleOutput: 'titleOutput' in overrides ? overrides.titleOutput : 'Somali Shilling',
+    titleError: 'titleError' in overrides ? overrides.titleError : 'Aruban Guilder',
+    dedupOutput: 'dedupOutput' in overrides ? overrides.dedupOutput : 'Plastic',
+    dedupError: 'dedupError' in overrides ? overrides.dedupError : 'synergies',
+    genericError: 'genericError' in overrides ? overrides.genericError : 'Inverse',
     errored: 'errored' in overrides ? overrides.errored : true,
-    error_message: 'error_message' in overrides ? overrides.error_message : 'array',
   };
 };
 
@@ -1465,10 +1468,7 @@ export const buildTestRuleResponse = (
   return {
     __typename: 'TestRuleResponse',
     testSummary: 'testSummary' in overrides ? overrides.testSummary : true,
-    testsPassed: 'testsPassed' in overrides ? overrides.testsPassed : [buildRuleResult()],
-    testsFailed: 'testsFailed' in overrides ? overrides.testsFailed : ['parse'],
-    testsErrored:
-      'testsErrored' in overrides ? overrides.testsErrored : [buildPolicyUnitTestError()],
+    results: 'results' in overrides ? overrides.results : [buildRuleResult()],
   };
 };
 

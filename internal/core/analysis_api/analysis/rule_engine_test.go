@@ -49,13 +49,12 @@ func TestRuleEngine_TestRule(t *testing.T) {
 		Payload: mustMarshal(analysis.RulesEngineOutput{
 			Results: []analysis.RuleResult{
 				{
-					ID:           "0",
-					RuleID:       testRuleID,
-					Matched:      true,
-					Errored:      false,
-					ErrorMessage: "",
-					TitleOutput:  "alert-title",
-					DedupOutput:  "alert-dedup",
+					ID:          "0",
+					RuleID:      testRuleID,
+					Matched:     true,
+					Errored:     false,
+					TitleOutput: "alert-title",
+					DedupOutput: "alert-dedup",
 				},
 			},
 		}),
@@ -75,10 +74,10 @@ def rule(e):
 	return True
 
 def title(e):
-	return 'rule-title'
+	return 'alert-title'
 
 def dedup(e):
-	return 'dedup-string'
+	return 'alert-dedup'
 `,
 		ResourceTypes: []string{"Resource.Type"},
 		Tests: []*models.UnitTest{
@@ -95,18 +94,17 @@ def dedup(e):
 	lambdaClient.AssertExpectations(t)
 
 	expected := &models.TestRuleResult{
-		TestSummary:  true,
-		TestsErrored: models.TestsErrored{},
-		TestsFailed:  models.TestsFailed{},
-		TestsPassed: []*models.RulePassResult{
+		TestSummary: true,
+		Results: []*models.RuleResult{
 			{
 				ID:           "0",
 				RuleID:       testRuleID,
+				TestName:     "This will be True",
 				Matched:      true,
 				TitleOutput:  "alert-title",
 				DedupOutput:  "alert-dedup",
 				Errored:      false,
-				ErrorMessage: "",
+				GenericError: "",
 			},
 		},
 	}

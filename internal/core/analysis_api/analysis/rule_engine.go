@@ -80,11 +80,10 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (*models.TestRuleResult, 
 
 	// Translate rule engine output to test results.
 	testResult := &models.TestRuleResult{
-		TestsErrored: models.TestsErrored{},
-		TestsFailed:  models.TestsFailed{},
-		TestsPassed:  []*models.RulePassResult{},
+		TestSummary: true,
+		Results:     make([]*models.RuleResult, len(engineOutput.Results)),
 	}
-	for _, result := range engineOutput.Results {
+	for i, result := range engineOutput.Results {
 		// Determine which test case this result corresponds to.
 		testIndex, err := strconv.Atoi(result.ID)
 		if err != nil {
@@ -92,26 +91,22 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (*models.TestRuleResult, 
 		}
 		test := rule.Tests[testIndex]
 
-		if result.Errored {
-			testResult.TestsErrored = append(testResult.TestsErrored, &models.TestErrorResult{
-				ErrorMessage: result.ErrorMessage,
-				Name:         string(test.Name),
-			})
-		} else if (result.Matched && bool(test.ExpectedResult)) || (!result.Matched && !bool(test.ExpectedResult)) {
-			testResult.TestsPassed = append(testResult.TestsPassed, &models.RulePassResult{
-				DedupOutput:  result.DedupOutput,
-				ErrorMessage: result.ErrorMessage,
-				Errored:      result.Errored,
-				ID:           result.ID,
-				Matched:      result.Matched,
-				RuleID:       result.RuleID,
-				TitleOutput:  result.TitleOutput,
-			})
-		} else {
-			testResult.TestsFailed = append(testResult.TestsFailed, string(test.Name))
+		testResult.TestSummary = testResult.TestSummary && !result.Errored
+
+		testResult.Results[i] = &models.RuleResult{
+			ID:           result.ID,
+			RuleID:       result.RuleID,
+			TestName:     string(test.Name),
+			Matched:      result.Matched,
+			RuleError:    result.RuleError,
+			DedupOutput:  result.DedupOutput,
+			DedupError:   result.DedupError,
+			TitleOutput:  result.TitleOutput,
+			TitleError:   result.TitleError,
+			GenericError: result.GenericError,
+			Errored:      result.Errored,
 		}
 	}
-	testResult.TestSummary = len(testResult.TestsFailed) == 0 && len(testResult.TestsErrored) == 0
 	return testResult, nil
 }
 

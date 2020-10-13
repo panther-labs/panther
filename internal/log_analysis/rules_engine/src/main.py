@@ -53,40 +53,33 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
     raw_rule = request['rules'][0]
     # The rule during direct invocation doesn't have a version
     raw_rule['versionId'] = 'default'
-    rule_exception: Optional[Exception] = None
+    init_exception: Optional[Exception] = None
     try:
         test_rule = Rule(raw_rule)
     except Exception as err:  # pylint: disable=broad-except
-        rule_exception = err
+        init_exception = err
 
+    format_exception = lambda exc: '{}: {}'.format(type(exc).__name__, exc) if exc else exc
     results = []
     for event in request['events']:
-        if rule_exception:
-            results.append(
-                {
-                    'id': event['id'],
-                    'ruleId': raw_rule['id'],
-                    'matched': False,
-                    'errored': True,
-                    'errorMessage': '{}: {}'.format(type(rule_exception).__name__, rule_exception),
-                }
-            )
-            # If rule was invalid, no need to try to run it
+        if init_exception:
+            results.append({'id': event['id'], 'ruleId': raw_rule['id'], 'errored': True, 'genericError': format_exception(init_exception)})
+            continue
 
-        else:
-            rule_result = test_rule.run(event['data'], raise_title_dedup=True)
-            results.append(
-                {
-                    'id': event['id'],
-                    'ruleId': raw_rule['id'],
-                    'matched': rule_result.matched,
-                    'titleOutput': rule_result.title,
-                    'dedupOutput': rule_result.dedup_string,
-                    'errored': rule_result.exception is not None,
-                    'errorMessage':
-                        '{}: {}'.format(type(rule_result.exception).__name__, rule_result.exception) if rule_result.exception else None,
-                }
-            )
+        rule_result = test_rule.run(event['data'], raise_title_dedup=True)
+        results.append(
+            {
+                'id': event['id'],
+                'ruleId': raw_rule['id'],
+                'errored': rule_result.errored,
+                'matched': rule_result.matched,
+                'ruleError': format_exception(rule_result.rule_exception),
+                'titleOutput': format_exception(rule_result.title_output),
+                'titleError': format_exception(rule_result.title_exception),
+                'dedupOutput': format_exception(rule_result.dedup_output),
+                'dedupError': format_exception(rule_result.dedup_exception),
+            }
+        )
 
     response: Dict[str, Any] = {'results': results}
     return response

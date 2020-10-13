@@ -89,8 +89,11 @@ type RuleResult struct {
 	ID           string `json:"id"`
 	RuleID       string `json:"ruleId"`
 	Matched      bool   `json:"matched"`
+	RuleError    string `json:"ruleError"`
 	TitleOutput  string `json:"titleOutput"`
+	TitleError   string `json:"titleError"`
 	DedupOutput  string `json:"dedupOutput"`
+	DedupError   string `json:"dedupError"`
 	Errored      bool   `json:"errored"`
-	ErrorMessage string `json:"errorMessage"`
+	GenericError string `json:"genericError"`
 }

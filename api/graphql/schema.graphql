@@ -941,19 +941,20 @@ type TestPolicyResponse {
 
 type RuleResult  {
     id: String
-    rule_id: String
-    matched: Boolean
-    title_output: String
-    dedup_output: String
+    ruleId: String
+    matched: Boolean  # The output of the rule() function rule's python script
+    ruleError: String
+    titleOutput: String
+    titleError: String
+    dedupOutput: String
+    dedupError: String
+    genericError: String # General error in the Python script (e.g. import error, indentation, etc)
     errored: Boolean
-    error_message: String
 }
 
 type TestRuleResponse {
     testSummary: Boolean # True if all tests passed
-    testsPassed: [RuleResult] # List of test names that passed
-    testsFailed: [String] # List of test names that failed
-    testsErrored: [PolicyUnitTestError] # List of test names that raised an error along with the message
+    results: [RuleResult]
 }
 
 type ResourceSummary {
