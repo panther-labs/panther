@@ -83,7 +83,10 @@ func ValidatePantherVersion(sess *session.Session, log *zap.SugaredLogger, maste
 	if err != nil {
 		log.Fatal(err)
 	}
-	outputs := awscfn.StackOutputs(cfnClient, log, bootstrapStack)
+	outputs, err := awscfn.StackOutputs(cfnClient, bootstrapStack)
+	if err != nil {
+		log.Fatal(err)
+	}
 	var dataBucket string
 	if dataBucket = outputs["ProcessedDataBucket"]; dataBucket == "" {
 		log.Fatalf("could not find processed data bucket in %s outputs", bootstrapStack)
