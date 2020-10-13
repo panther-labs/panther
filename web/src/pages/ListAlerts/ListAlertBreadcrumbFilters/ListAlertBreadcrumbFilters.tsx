@@ -37,10 +37,9 @@ export type ListAlertsFiltersValues = Pick<
   'logTypes' | 'createdAtAfter' | 'createdAtBefore'
 >;
 
-const ALL_TYPES = 'All types';
-const filterKeys = ['logTypes', 'createdAtAfter', 'createdAtBefore'];
+export const ALL_TYPES = 'All types';
 
-const sanitizeLogTypes = logTypes => {
+export const sanitizeLogTypes = logTypes => {
   // Sanitize values coming from the URL as array and from the component as string.
   if (Array.isArray(logTypes)) {
     return logTypes.filter(type => type === 'ALL_TYPES');
@@ -48,6 +47,7 @@ const sanitizeLogTypes = logTypes => {
   return logTypes !== ALL_TYPES ? [logTypes] : [];
 };
 
+const filterKeys = ['logTypes', 'createdAtAfter', 'createdAtBefore'];
 const ListAlertBreadcrumbFilters: React.FC = () => {
   const { data, loading: logTypesLoading, error: logTypesError } = useListAvailableLogTypes({
     fetchPolicy: 'cache-first',

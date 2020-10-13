@@ -19,15 +19,8 @@
 import React from 'react';
 import { Form, Formik, FastField } from 'formik';
 import { Box, Flex } from 'pouncejs';
-import {
-  ListAlertsInput,
-  SeverityEnum,
-  AlertStatusesEnum,
-  SortDirEnum,
-  ListAlertsSortFieldsEnum,
-} from 'Generated/schema';
+import { ListAlertsInput, SortDirEnum, ListAlertsSortFieldsEnum } from 'Generated/schema';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
-import { capitalize } from 'Helpers/utils';
 import pick from 'lodash/pick';
 import FormikAutosave from 'Components/utils/Autosave';
 import FormikCombobox from 'Components/fields/ComboBox';
@@ -35,13 +28,11 @@ import FormikTextInput from 'Components/fields/TextInput';
 import DropdownFilters from './DropdownFilters';
 
 export type ListAlertsInlineFiltersValues = Pick<ListAlertsInput, 'sortBy' | 'sortDir'>;
+
 export type SortingOptions = {
   opt: string;
   resolution: ListAlertsInput;
 }[];
-
-const filterItemToString = (item: SeverityEnum | AlertStatusesEnum) =>
-  capitalize(item.toLowerCase());
 
 const filters = ['nameContains', 'sortBy', 'sortDir'] as (keyof ListAlertsInput)[];
 
@@ -132,7 +123,6 @@ const ListAlertFilters: React.FC = () => {
                 name="sorting"
                 as={FormikCombobox}
                 items={sortingOpts.map(sortingOption => sortingOption.opt)}
-                itemToString={filterItemToString}
                 label="Sort By"
               />
             </Box>

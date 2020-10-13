@@ -19,11 +19,14 @@
 import React from 'react';
 import { Form, Formik, FastField } from 'formik';
 import { Box, SimpleGrid, Button, Dropdown, DropdownButton, DropdownMenu } from 'pouncejs';
+
 import { ListAlertsInput, SeverityEnum, AlertStatusesEnum } from 'Generated/schema';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import { capitalize } from 'Helpers/utils';
 import isEmpty from 'lodash/isEmpty';
+import pick from 'lodash/pick';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
+import TextButton from 'Components/buttons/TextButton';
 import FormikTextInput from 'Components/fields/TextInput';
 
 export type ListAlertsDropdownFiltersValues = Pick<
@@ -38,7 +41,6 @@ const statusOptions = Object.values(AlertStatusesEnum);
 const severityOptions = Object.values(SeverityEnum);
 
 const defaultValues = {
-  sorting: undefined,
   severity: [],
   status: [],
 };
@@ -71,7 +73,7 @@ const DropdownFilters: React.FC = () => {
         Filters {filtersCount ? `(${filtersCount})` : ''}
       </DropdownButton>
       <DropdownMenu>
-        <Box p={6} backgroundColor="navyblue-400" minWidth={425}>
+        <Box p={6} pb={4} backgroundColor="navyblue-400" minWidth={425}>
           <Formik<ListAlertsDropdownFiltersValues>
             onSubmit={(values: ListAlertsDropdownFiltersValues) => {
               updateRequestParams(values);
@@ -115,6 +117,16 @@ const DropdownFilters: React.FC = () => {
               </SimpleGrid>
               <Box textAlign="center" pb={4}>
                 <Button type="submit">Apply Filters</Button>
+              </Box>
+              <Box textAlign="center">
+                <TextButton
+                  role="button"
+                  onClick={() => {
+                    updateRequestParams(pick(defaultValues, 'severity', 'status'));
+                  }}
+                >
+                  Clear All Filters
+                </TextButton>
               </Box>
             </Form>
           </Formik>
