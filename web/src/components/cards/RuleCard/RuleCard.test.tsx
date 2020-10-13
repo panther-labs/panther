@@ -16,34 +16,32 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { buildAlertSummary, render } from 'test-utils';
 import React from 'react';
-import { AlertStatusesEnum, SeverityEnum } from 'Generated/schema';
+import { buildRuleSummary, render } from 'test-utils';
+import { SeverityEnum } from 'Generated/schema';
 import urls from 'Source/urls';
-import AlertCard from './index';
+import RuleCard from './index';
 
-describe('AlertCard', () => {
+describe('RuleCard', () => {
   it('displays the correct Alert data in the card', async () => {
-    const alertData = buildAlertSummary();
+    const ruleData = buildRuleSummary();
 
-    const { getByText, getByAriaLabel } = render(<AlertCard alert={alertData} />);
+    const { getByText } = render(<RuleCard rule={ruleData} />);
 
-    expect(getByText(alertData.title)).toBeInTheDocument();
-    expect(getByText('View Rule')).toBeInTheDocument();
-    expect(getByText('Events')).toBeInTheDocument();
+    expect(getByText(ruleData.displayName)).toBeInTheDocument();
+    expect(getByText('Threshold')).toBeInTheDocument();
     expect(getByText('Time Created')).toBeInTheDocument();
-    expect(getByText(SeverityEnum.Medium)).toBeInTheDocument();
-    expect(getByText(AlertStatusesEnum.Triaged)).toBeInTheDocument();
-    expect(getByAriaLabel('Change Alert Status')).toBeInTheDocument();
+    expect(getByText(SeverityEnum.Info)).toBeInTheDocument();
+    expect(getByText('DISABLED')).toBeInTheDocument();
   });
 
   it('should check links are valid', async () => {
-    const alertData = buildAlertSummary();
-    const { getByAriaLabel } = render(<AlertCard alert={alertData} />);
-    expect(getByAriaLabel('Link to Alert')).toHaveAttribute(
+    const ruleData = buildRuleSummary();
+
+    const { getByAriaLabel } = render(<RuleCard rule={ruleData} />);
+    expect(getByAriaLabel('Link to Rule')).toHaveAttribute(
       'href',
-      urls.logAnalysis.alerts.details(alertData.alertId)
+      urls.logAnalysis.rules.details(ruleData.id)
     );
-    expect(getByAriaLabel('Link to Rule')).toBeInTheDocument();
   });
 });
