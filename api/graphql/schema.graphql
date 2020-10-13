@@ -222,7 +222,7 @@ input ListRulesInput {
   enabled: Boolean
   logTypes: String # Comma-separated string
   severity: SeverityEnum
-  tags: String # Comma-separated string
+  tags: [String]
   # Sorting
   sortBy: ListRulesSortFieldsEnum # defaults to `id`
   sortDir: SortDirEnum # defaults to `ascending`
@@ -284,7 +284,7 @@ type RuleSummary {
   id: ID!
   threshold: Int
   lastModified: AWSDateTime
-  createdAt: AWSDateTime!
+  createdAt: AWSDateTime
   logTypes: [String]
   severity: SeverityEnum
   tags: [String]

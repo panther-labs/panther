@@ -566,7 +566,7 @@ export type ListRulesInput = {
   enabled?: Maybe<Scalars['Boolean']>;
   logTypes?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
-  tags?: Maybe<Scalars['String']>;
+  tags?: Maybe<Array<Maybe<Scalars['String']>>>;
   sortBy?: Maybe<ListRulesSortFieldsEnum>;
   sortDir?: Maybe<SortDirEnum>;
   pageSize?: Maybe<Scalars['Int']>;
