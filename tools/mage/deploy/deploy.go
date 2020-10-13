@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/blang/semver"
 	"github.com/magefile/mage/sh"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
@@ -139,9 +140,26 @@ func PreCheck(checkForOldVersion bool) error {
 		if err != nil {
 			log.Warnf("failed to describe stack %s: %v", cfnstacks.Bootstrap, err)
 		}
-		if bootstrapVersion != "" && bootstrapVersion < "v1.4.0" {
+		bVersion, err := semver.ParseTolerant(bootstrapVersion)
+		if err != nil {
+			return fmt.Errorf("failed to parse bootstrap version %s: %v", bootstrapVersion, err)
+		}
+
+		oldVersionString := "v1.4.0"
+		oldVersion, err := semver.ParseTolerant(oldVersionString)
+		if err != nil {
+			return fmt.Errorf("failed to parse old version %s: %v", oldVersionString, err)
+		}
+
+		repoVersion := util.RepoVersion()
+		rVersion, err := semver.ParseTolerant(repoVersion)
+		if err != nil {
+			return fmt.Errorf("failed to parse repo version %s: %v", repoVersion, err)
+		}
+
+		if bVersion.LTE(oldVersion) {
 			return fmt.Errorf("trying to upgrade from %s to %s will not work - upgrade to v1.5.1 first",
-				bootstrapVersion, util.RepoVersion())
+				bootstrapVersion, rVersion)
 		}
 	}
 
