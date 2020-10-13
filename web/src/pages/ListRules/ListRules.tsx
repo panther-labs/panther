@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Alert, Box, Card } from 'pouncejs';
+import { Alert, Box, Card, Flex } from 'pouncejs';
 import { convertObjArrayValuesToCsv, extractErrorMessage, encodeParams } from 'Helpers/utils';
 import { ListRulesInput } from 'Generated/schema';
 import { TableControlsPagination } from 'Components/utils/TableControls';
@@ -78,9 +78,13 @@ const ListRules = () => {
       <ErrorBoundary>
         <Panel title="Rules">
           <Card as="section" position="relative">
-            {ruleItems.map(rule => (
-              <RuleCard rule={rule} key={rule.id}></RuleCard>
-            ))}
+            <Box position="relative">
+              <Flex direction="column" spacing={2}>
+                {ruleItems.map(rule => (
+                  <RuleCard rule={rule} key={rule.id}></RuleCard>
+                ))}
+              </Flex>
+            </Box>
           </Card>
         </Panel>
       </ErrorBoundary>
