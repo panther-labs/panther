@@ -29,10 +29,11 @@ import useTrackPageView from 'Hooks/useTrackPageView';
 import { PageViewEnum } from 'Helpers/analytics';
 import Panel from 'Components/Panel';
 import RuleCard from 'Components/cards/RuleCard';
-import ListRulesActions from './ListRulesActions';
+import ListRulesActions from './ListRulesBreadcrumbFilters';
 import ListRulesPageSkeleton from './Skeleton';
 import ListRulesPageEmptyDataFallback from './EmptyDataFallback';
 import { useListRules } from './graphql/listRules.generated';
+import ListRulesFilters from './ListRulesFilters';
 
 const ListRules = () => {
   useTrackPageView(PageViewEnum.ListRules);
@@ -76,7 +77,7 @@ const ListRules = () => {
     <React.Fragment>
       <ListRulesActions />
       <ErrorBoundary>
-        <Panel title="Rules">
+        <Panel title="Rules" actions={<ListRulesFilters />}>
           <Card as="section" position="relative">
             <Box position="relative">
               <Flex direction="column" spacing={2}>
