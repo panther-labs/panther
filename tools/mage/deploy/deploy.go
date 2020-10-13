@@ -157,7 +157,7 @@ func PreCheck(checkForOldVersion bool) error {
 			return fmt.Errorf("failed to parse repo version %s: %v", repoVersion, err)
 		}
 
-		if bVersion.LTE(oldVersion) {
+		if bVersion.LT(oldVersion) {
 			return fmt.Errorf("trying to upgrade from %s to %s will not work - upgrade to v1.5.1 first",
 				bVersion, rVersion)
 		}
