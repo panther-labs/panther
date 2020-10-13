@@ -45,9 +45,6 @@ const RuleCard: React.FC<RuleCardProps> = ({ rule }) => {
           >
             <GenericItemCard.Heading>{rule.displayName || rule.id}</GenericItemCard.Heading>
           </Link>
-          <Flex ml="auto" mr={0} align="flex-end">
-            <RuleCardOptions rule={rule} />
-          </Flex>
         </Flex>
 
         <SimpleGrid gap={2} columns={2}>
@@ -76,6 +73,7 @@ const RuleCard: React.FC<RuleCardProps> = ({ rule }) => {
                 disabled={!rule.enabled}
               />
               <SeverityBadge severity={rule.severity} />
+              <RuleCardOptions rule={rule} />
             </Flex>
           </GenericItemCard.ValuesGroup>
         </SimpleGrid>

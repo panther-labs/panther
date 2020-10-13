@@ -24,6 +24,7 @@ import {
   DropdownLink,
   DropdownMenu,
   IconButton,
+  Box,
 } from 'pouncejs';
 import { RuleSummary } from 'Generated/schema';
 import urls from 'Source/urls';
@@ -40,13 +41,15 @@ const ListRulesTableRowOptions: React.FC<ListPoliciesTableRowOptionsProps> = ({ 
 
   return (
     <Dropdown>
-      <DropdownButton
-        as={IconButton}
-        icon="more"
-        variant="ghost"
-        size="medium"
-        aria-label="Rule Options"
-      />
+      <DropdownButton as={Box} display="inline-flex">
+        <IconButton
+          variant="outline"
+          variantColor="navyblue"
+          icon="caret-down"
+          size="small"
+          aria-label="Change Alert Status"
+        />
+      </DropdownButton>
       <DropdownMenu>
         <DropdownLink as={RRLink} to={urls.logAnalysis.rules.edit(rule.id)}>
           Edit
