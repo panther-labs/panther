@@ -39,10 +39,41 @@ DEFAULT_RULE_DEDUP_PERIOD_MINS = 60
 @dataclass
 class RuleResult:
     """Class containing the result of running a rule"""
-    exception: Optional[Exception] = None
-    matched: Optional[bool] = None
-    dedup_string: Optional[str] = None
-    title: Optional[str] = None
+
+    matched: Optional[bool] = None  # rule output
+    rule_exception: Optional[Exception] = None
+
+    dedup_output: Optional[str] = None
+    dedup_exception: Optional[Exception] = None
+
+    title_output: Optional[str] = None
+    title_exception: Optional[Exception] = None
+
+    @property
+    def errored(self) -> bool:
+        """Returns whether the rule evaluation raised an error"""
+        return bool(self.exception)
+
+    @property
+    def exception(self) -> Optional[Exception]:
+        """Returns any exception raised by one of the rule functions """
+        return self.rule_exception or self.title_exception or self.dedup_exception
+
+    @property
+    def exception_pretty(self) -> str:
+        """Returns the exception as a string, prefixed by the function that raised it"""
+        if self.rule_exception:
+            prefix = 'rule()'
+            exception = self.rule_exception
+        elif self.title_exception:
+            prefix = 'title()'
+            exception = self.title_exception
+        elif self.dedup_exception:
+            prefix = 'dedup()'
+            exception = self.dedup_exception
+        else:
+            raise NotImplementedError()
+        return '{}: {}: {}'.format(prefix, type(exception).__name__, exception)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -117,18 +148,24 @@ class Rule:
         :param event: The event to run the rule against
         :param raise_title_dedup: Whether to raise exceptions from title() and dedup() or use default values
         """
-
-        dedup_string: Optional[str] = None
-        title: Optional[str] = None
+        dedup_string, title = None, None
         try:
             rule_result = self._run_command(self._module.rule, event, bool)
-            if rule_result:
-                use_default_on_exception = not raise_title_dedup
-                title = self._get_title(event, use_default_on_exception)
-                dedup_string = self._get_dedup(event, title, use_default_on_exception)
         except Exception as err:  # pylint: disable=broad-except
-            return RuleResult(exception=err)
-        return RuleResult(matched=rule_result, dedup_string=dedup_string, title=title)
+            return RuleResult(rule_exception=err)
+
+        if rule_result:
+            use_default_on_exception = not raise_title_dedup
+            try:
+                title = self._get_title(event, use_default_on_exception)
+            except Exception as err:  # pylint: disable=broad-except
+                return RuleResult(title_exception=err)
+            try:
+                dedup_string = self._get_dedup(event, title, use_default_on_exception)
+            except Exception as err:  # pylint: disable=broad-except
+                return RuleResult(dedup_exception=err)
+
+        return RuleResult(matched=rule_result, dedup_output=dedup_string, title_output=title)
 
     # Returns the dedup string for this rule match
     # If the rule match had a custom title, use the title as a deduplication string

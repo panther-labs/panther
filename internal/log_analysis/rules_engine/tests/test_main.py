@@ -101,7 +101,7 @@ class TestMainDirectAnalysis(TestCase):
                         'dedupOutput': None,
                         'titleOutput': None,
                         'errored': True,
-                        'errorMessage': 'Exception: Failure message',
+                        'errorMessage': 'rule(): Exception: Failure message',
                     }
                 ]
         }
@@ -140,7 +140,7 @@ class TestMainDirectAnalysis(TestCase):
                 [
                     {
                         'dedupOutput': None,
-                        'errorMessage': 'Exception: dedup error',
+                        'errorMessage': 'dedup(): Exception: dedup error',
                         'errored': True,
                         'id': 'event_id',
                         'matched': None,
@@ -170,7 +170,7 @@ class TestMainDirectAnalysis(TestCase):
                 [
                     {
                         'dedupOutput': None,
-                        'errorMessage': 'Exception: title error',
+                        'errorMessage': 'title(): Exception: title error',
                         'errored': True,
                         'id': 'event_id',
                         'matched': None,

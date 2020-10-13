@@ -80,11 +80,10 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
                     'id': event['id'],
                     'ruleId': raw_rule['id'],
                     'matched': rule_result.matched,
-                    'titleOutput': rule_result.title,
-                    'dedupOutput': rule_result.dedup_string,
-                    'errored': rule_result.exception is not None,
-                    'errorMessage':
-                        '{}: {}'.format(type(rule_result.exception).__name__, rule_result.exception) if rule_result.exception else None,
+                    'titleOutput': rule_result.title_output,
+                    'dedupOutput': rule_result.dedup_output,
+                    'errored': rule_result.errored,
+                    'errorMessage': rule_result.exception_pretty if rule_result.errored else None
                 }
             )
 

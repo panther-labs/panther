@@ -50,7 +50,7 @@ class Engine:
             result = rule.run(event)
             if result.exception:
                 # TODO(kostaspap): remove error logging once error reporting notification system is in place
-                self.logger.error('failed to run rule %s %s %s', rule.rule_id, type(result).__name__, repr(result.exception))
+                self.logger.error('failed to run rule %s %s %s', rule.rule_id, type(result).__name__, result.exception_pretty)
                 error_type = type(result.exception).__name__
                 rule_error = EngineResult(
                     rule_id=rule.rule_id,
@@ -61,8 +61,8 @@ class Engine:
                     dedup=error_type,
                     dedup_period_mins=1440,  # one day
                     event=event,
-                    title=repr(result.exception),
-                    error_message=repr(result.exception)
+                    title=result.exception_pretty,
+                    error_message=result.exception_pretty
                 )
                 engine_results.append(rule_error)
             elif result.matched:
@@ -72,10 +72,10 @@ class Engine:
                     rule_tags=rule.rule_tags,
                     rule_reports=rule.rule_reports,
                     log_type=log_type,
-                    dedup=result.dedup_string,  # type: ignore
+                    dedup=result.dedup_output,  # type: ignore
                     dedup_period_mins=rule.rule_dedup_period_mins,
                     event=event,
-                    title=result.title
+                    title=result.title_output
                 )
                 engine_results.append(match)
 
