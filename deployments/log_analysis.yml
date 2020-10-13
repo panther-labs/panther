@@ -102,7 +102,7 @@ Mappings:
       Timeout: 60
     AlertsForwarder:
       Memory: 128
-      Timeout: 30
+      Timeout: 60
     LogProcessor:
       # Memory is a parameter above
       Timeout: 900 # max!
