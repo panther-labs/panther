@@ -41,12 +41,12 @@ const LogTypeCharts: React.FC<LogTypeChartsProps> = ({ eventsProcessed, eventsLa
         </Box>
         <Box p={6}>
           <TabPanels>
-            <TabPanel unmountWhenInactive lazy>
+            <TabPanel lazy>
               <Box height={289} py={5} pl={4} backgroundColor="navyblue-500">
                 <EventsByLogType events={eventsProcessed} />
               </Box>
             </TabPanel>
-            <TabPanel unmountWhenInactive lazy>
+            <TabPanel lazy>
               <Box height={289} py={5} pl={4} backgroundColor="navyblue-500">
                 <EventsByLatency events={eventsLatency} />
               </Box>

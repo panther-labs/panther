@@ -47,7 +47,7 @@ const AlertsCharts: React.FC<LogTypeChartsProps> = ({
         </Box>
         <Box p={6}>
           <TabPanels>
-            <TabPanel unmountWhenInactive lazy>
+            <TabPanel lazy>
               <Box height={272}>
                 <Flex direction="row" width="100%" height="100%">
                   <AlertSummary data={totalAlertsDelta} />
@@ -55,7 +55,7 @@ const AlertsCharts: React.FC<LogTypeChartsProps> = ({
                 </Flex>
               </Box>
             </TabPanel>
-            <TabPanel unmountWhenInactive lazy>
+            <TabPanel lazy>
               <MostActiveRules alertsByRuleID={alertsByRuleID} />
             </TabPanel>
           </TabPanels>
