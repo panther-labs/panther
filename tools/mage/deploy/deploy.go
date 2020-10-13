@@ -159,7 +159,7 @@ func PreCheck(checkForOldVersion bool) error {
 
 		if bVersion.LTE(oldVersion) {
 			return fmt.Errorf("trying to upgrade from %s to %s will not work - upgrade to v1.5.1 first",
-				bootstrapVersion, rVersion)
+				bVersion, rVersion)
 		}
 	}
 
