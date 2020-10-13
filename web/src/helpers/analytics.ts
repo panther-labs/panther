@@ -19,7 +19,7 @@
 import { DestinationTypeEnum } from 'Generated/schema';
 import mx from 'mixpanel-browser';
 import storage from 'Helpers/storage';
-import { ANALYTICS_CONSENT_STORAGE_KEY } from 'Source/constants';
+import { ANALYTICS_CONSENT_STORAGE_KEY, STABLE_PANTHER_VERSION } from 'Source/constants';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 import { logError } from 'Helpers/loggers';
 
@@ -28,6 +28,7 @@ const evaluateTracking = (...args) => {
   if (!mixpanelPublicToken || storage.local.read<boolean>(ANALYTICS_CONSENT_STORAGE_KEY) !== true) {
     return;
   }
+<<<<<<< HEAD
   window.requestIdleCallback(() => {
     try {
       mx.init(mixpanelPublicToken);
@@ -36,6 +37,23 @@ const evaluateTracking = (...args) => {
       // Reporting to sentry
       logError(e);
     }
+=======
+
+  import(/* webpackChunkName: "mixpanel" */ 'mixpanel-browser').then(mx => {
+    // We don't wanna initialize before any tracking occurs so we don't have to un-necessarily
+    // download the mixpanel chunk at the user's device. `init` method is idempotent, meaning that
+    // no matter how many times we call it, it won't override anything.
+    window.requestIdleCallback(() => {
+      try {
+        mx.init(mixpanelPublicToken);
+        const [eventName, meta] = args;
+        mx.track(eventName, { ...meta, version: STABLE_PANTHER_VERSION });
+      } catch (e) {
+        // Reporting to sentry
+        logError(e);
+      }
+    });
+>>>>>>> 94305e1b... Add version to all tracking events (#1720)
   });
 };
 
