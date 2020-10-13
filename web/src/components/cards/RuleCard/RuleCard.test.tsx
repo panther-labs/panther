@@ -17,27 +17,12 @@
  */
 
 import React from 'react';
-import { buildRuleSummary, render, fireEvent } from 'test-utils';
+import { buildRuleSummary, render } from 'test-utils';
 import { SeverityEnum } from 'Generated/schema';
 import urls from 'Source/urls';
 import RuleCard from './index';
 
 describe('RuleCard', () => {
-  it('renders', async () => {
-    const ruleData = buildRuleSummary();
-
-    const { container } = render(<RuleCard rule={ruleData} />);
-    expect(container).toMatchSnapshot();
-  });
-
-  it('renders an expanded dropdown', async () => {
-    const ruleData = buildRuleSummary();
-
-    const { container, getByAriaLabel } = render(<RuleCard rule={ruleData} />);
-    fireEvent.click(getByAriaLabel('Rule Options'));
-    expect(container).toMatchSnapshot();
-  });
-
   it('displays the correct Alert data in the card', async () => {
     const ruleData = buildRuleSummary();
 
