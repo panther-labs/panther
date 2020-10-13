@@ -25,6 +25,7 @@ import * as Sentry from '@sentry/browser';
 import {
   ANALYTICS_CONSENT_STORAGE_KEY,
   ERROR_REPORTING_CONSENT_STORAGE_KEY,
+  STABLE_PANTHER_VERSION,
 } from 'Source/constants';
 import {
   EventEnum,
@@ -54,7 +55,10 @@ describe('Mixpanel Reporting', () => {
       };
       const { getByText } = render(<TestComponent onClick={() => onClick()} />);
       await waitMs(50);
-      expect(mixpanel.track).toHaveBeenCalledWith(PageViewEnum.LogAnalysisOverview, { type: 'pageview' }); // prettier-ignore
+      expect(mixpanel.track).toHaveBeenCalledWith(PageViewEnum.LogAnalysisOverview, {
+        type: 'pageview',
+        version: STABLE_PANTHER_VERSION,
+      });
       const btn = getByText('Button click');
 
       fireEvent.click(btn);
@@ -66,10 +70,12 @@ describe('Mixpanel Reporting', () => {
       expect(mixpanel.track).toHaveBeenNthCalledWith(2, EventEnum.SignedIn, {
         type: 'event',
         src: SrcEnum.Auth,
+        version: STABLE_PANTHER_VERSION,
       });
       expect(mixpanel.track).toHaveBeenNthCalledWith(3, TrackErrorEnum.FailedMfa, {
         type: 'error',
         src: SrcEnum.Auth,
+        version: STABLE_PANTHER_VERSION,
       });
     });
 
