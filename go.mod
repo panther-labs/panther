@@ -5,7 +5,6 @@ go 1.15
 require (
 	github.com/aws/aws-lambda-go v1.19.1
 	github.com/aws/aws-sdk-go v1.35.2
-	github.com/blang/semver v3.5.1+incompatible
 	github.com/cenkalti/backoff/v4 v4.0.2
 	github.com/fatih/structtag v1.2.0
 	github.com/go-openapi/errors v0.19.7
