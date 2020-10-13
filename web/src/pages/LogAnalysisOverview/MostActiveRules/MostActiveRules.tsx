@@ -35,19 +35,23 @@ interface MostActiveRulesProps {
 }
 
 const MostActiveRules: React.FC<MostActiveRulesProps> = ({ alertsByRuleID }) => {
-  const reversedData = alertsByRuleID
-    // Displaying only 5 bars, this list is sorted so top alertsByRuleID should first
-    .slice(0, 5)
-    // Adding fixed colors to bars for visual reasons
-    .map((bar, i) => ({ ...bar, color: barColors[i] }))
-    // need to reverse order for echarts to display bigger first
-    .reverse();
+  const reversedData = React.useMemo(
+    () =>
+      alertsByRuleID
+        // Displaying only 5 bars, this list is sorted so top alertsByRuleID should first
+        .slice(0, 5)
+        // Adding fixed colors to bars for visual reasons
+        .map((bar, i) => ({ ...bar, color: barColors[i] }))
+        // need to reverse order for echarts to display bigger first
+        .reverse(),
+    [alertsByRuleID, barColors]
+  );
   return (
     <Box
       data-testid="most-active-rules-chart"
       height={217}
-      py={6}
-      pl={6}
+      p={6}
+      pr={0}
       backgroundColor="navyblue-500"
     >
       <BarChart

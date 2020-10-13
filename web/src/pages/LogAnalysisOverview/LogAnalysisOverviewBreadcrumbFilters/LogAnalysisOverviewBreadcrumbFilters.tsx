@@ -19,7 +19,7 @@
 import React from 'react';
 import { Field, Form, Formik } from 'formik';
 import { LogAnalysisMetricsInput } from 'Generated/schema';
-import { Flex } from 'pouncejs';
+import { Flex, Box } from 'pouncejs';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 
 import pickBy from 'lodash/pickBy';
@@ -80,15 +80,16 @@ const LogAnalysisOverviewBreadcrumbFilters: React.FC<LogAnalysisOverviewBreadcru
           <Form>
             <FormikAutosave threshold={50} />
             <Flex spacing={4} maxWidth={440}>
-              <Field
-                as={FormikCombobox}
-                maxWidth={150}
-                variant="solid"
-                label="Interval"
-                name="intervalMinutes"
-                items={intervalMinutesOptions}
-                itemToString={minutesToString}
-              />
+              <Box width={150}>
+                <Field
+                  as={FormikCombobox}
+                  variant="solid"
+                  label="Interval"
+                  name="intervalMinutes"
+                  items={intervalMinutesOptions}
+                  itemToString={minutesToString}
+                />
+              </Box>
               <FormikDateRangeInput
                 alignment="right"
                 withPresets
