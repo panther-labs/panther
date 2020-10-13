@@ -19,27 +19,16 @@
 import React from 'react';
 import { Box, Theme } from 'pouncejs';
 import { SingleValue } from 'Generated/schema';
-import BarChart, { Formatters, Spacing } from 'Components/charts/BarChart/BarChart';
-
-// The spacing properties for displaying the alertsByRuleID chart
-const spacing: Spacing = {
-  grid: { left: '20%', bottom: 0, top: 0, right: 200 },
-  barConfig: { barGap: '-100%', barWidth: 24 },
-};
+import BarChart from 'Components/charts/BarChart';
 
 // Default color values for alertsByRuleID
-const BarColors: (keyof Theme['colors'])[] = [
+const barColors: (keyof Theme['colors'])[] = [
   'cyan-400',
   'magenta-500',
   'yellow-500',
   'red-300',
   'blue-500',
 ];
-
-// Formatter for series label on alertsByRuleID chart
-const formatters: Formatters = {
-  seriesLabelFormatter: params => `${params.value} Alerts`,
-};
 
 interface MostActiveRulesProps {
   alertsByRuleID: SingleValue[];
@@ -50,7 +39,7 @@ const MostActiveRules: React.FC<MostActiveRulesProps> = ({ alertsByRuleID }) => 
     // Displaying only 5 bars, this list is sorted so top alertsByRuleID should first
     .slice(0, 5)
     // Adding fixed colors to bars for visual reasons
-    .map((bar, i) => ({ ...bar, color: BarColors[i] }))
+    .map((bar, i) => ({ ...bar, color: barColors[i] }))
     // need to reverse order for echarts to display bigger first
     .reverse();
   return (
@@ -62,9 +51,9 @@ const MostActiveRules: React.FC<MostActiveRulesProps> = ({ alertsByRuleID }) => 
       backgroundColor="navyblue-500"
     >
       <BarChart
+        cardWidth="full"
         data={reversedData}
-        formatters={formatters}
-        spacing={spacing}
+        formatSeriesLabel={params => `${params.value} Alerts`}
         alignment="horizontal"
       />
     </Box>

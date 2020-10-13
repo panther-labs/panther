@@ -65,14 +65,9 @@ interface FormatterParams {
   value: number;
 }
 
-export interface Formatters {
-  /**
-   * @param FormatterParams
-   * This formatter will change how the the series label
-   * ON the chart will be displayed
-   */
-  seriesLabelFormatter?: (params: FormatterParams) => string;
-}
+type FormatSeriesLabelFunc = (params: FormatterParams) => string;
+
+type CardWidthType = 'half' | 'full';
 
 interface BarChartProps {
   /**
@@ -80,26 +75,32 @@ interface BarChartProps {
    */
   data: Data[];
   /**
-   * The `spacing` property is optional and when provided it alters the default position
-   * and alignments for grid and barConfig
-   * @default {}
+   * `formatSeriesLabel` is a function that should change how the label for series
+   * are displayed
    */
-  spacing?: Spacing;
-  /**
-   * `formatters` is an object of possible formatters that can be used in to modify how
-   * specific attributes and values are displayed
-   * @default {}
-   */
-  formatters?: Formatters;
+  formatSeriesLabel?: FormatSeriesLabelFunc;
   /**
    * `alignment` property is string that can take the values of 'horizontal'
    * and 'vertical'. It defines how the bars will be displayed
    * @default 'vertical'
    */
   alignment?: 'horizontal' | 'vertical';
+  /**
+   * `cardWidth` property is string that can take the values of 'half'
+   * and 'full'. It defines what's the parent width, where card is the
+   * main component of pages
+   * @default 'half'
+   */
+  cardWidth?: CardWidthType;
 }
 
-const getDefaultSpacing = (isHorizontal: boolean): Spacing => {
+const getSpacing = (cardWidth: CardWidthType, isHorizontal: boolean): Spacing => {
+  if (cardWidth === 'full') {
+    return {
+      grid: { left: '20%', bottom: 0, top: 0, right: 200 },
+      barConfig: { barGap: '-100%', barWidth: 24 },
+    };
+  }
   return {
     grid: {
       left: 100,
@@ -115,8 +116,8 @@ const getDefaultSpacing = (isHorizontal: boolean): Spacing => {
 };
 
 const BarChart: React.FC<BarChartProps> = ({
-  spacing = {},
-  formatters = {},
+  cardWidth = 'half',
+  formatSeriesLabel,
   data,
   alignment = 'vertical',
 }) => {
@@ -130,12 +131,8 @@ const BarChart: React.FC<BarChartProps> = ({
    * function and overriding those passed as prop
    */
   const chartSpacing = React.useMemo(() => {
-    const defaultSpacing = getDefaultSpacing(isHorizontal);
-    return {
-      grid: { ...defaultSpacing.grid, ...spacing.grid },
-      barConfig: { ...defaultSpacing.barConfig, ...spacing.barConfig },
-    };
-  }, [spacing, getDefaultSpacing, isHorizontal]);
+    return getSpacing(cardWidth, isHorizontal);
+  }, [getSpacing, isHorizontal, cardWidth]);
 
   React.useEffect(() => {
     // We are not allowed to put async function directly in useEffect. Instead, we should define
@@ -175,7 +172,7 @@ const BarChart: React.FC<BarChartProps> = ({
             position: isHorizontal ? 'right' : 'top',
             color: theme.colors['gray-50'],
             // if seriesLabelFormatter is undefined, echarts resolves to default
-            formatter: formatters.seriesLabelFormatter,
+            formatter: formatSeriesLabel,
           },
           itemStyle: {
             color: theme.colors[e.color],
