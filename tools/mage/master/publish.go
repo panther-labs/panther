@@ -39,7 +39,7 @@ import (
 // Publish a new Panther release (Panther team only)
 func Publish() error {
 	log := logger.Build("[master:publish]")
-	if err := deploy.PreCheck(false); err != nil {
+	if err := deploy.PreCheck(); err != nil {
 		return err
 	}
 
