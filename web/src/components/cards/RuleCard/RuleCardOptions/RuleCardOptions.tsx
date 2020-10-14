@@ -41,13 +41,13 @@ const ListRulesTableRowOptions: React.FC<ListPoliciesTableRowOptionsProps> = ({ 
 
   return (
     <Dropdown>
-      <DropdownButton as={Box} display="inline-flex">
+      <DropdownButton as={Box}>
         <IconButton
           variant="outline"
           variantColor="navyblue"
           icon="caret-down"
           size="small"
-          aria-label="Change Alert Status"
+          aria-label="Rule Options"
         />
       </DropdownButton>
       <DropdownMenu>
