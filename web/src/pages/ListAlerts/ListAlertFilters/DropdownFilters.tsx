@@ -24,7 +24,6 @@ import { ListAlertsInput, SeverityEnum, AlertStatusesEnum } from 'Generated/sche
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import { capitalize } from 'Helpers/utils';
 import isEmpty from 'lodash/isEmpty';
-import pick from 'lodash/pick';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import TextButton from 'Components/buttons/TextButton';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -119,7 +118,7 @@ const DropdownFilters: React.FC = () => {
                 <TextButton
                   role="button"
                   onClick={() => {
-                    updateRequestParams(pick(defaultValues, 'severity', 'status'));
+                    updateRequestParams(defaultValues);
                   }}
                 >
                   Clear All Filters
