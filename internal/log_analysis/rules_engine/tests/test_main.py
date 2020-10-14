@@ -71,7 +71,7 @@ class TestMainDirectAnalysis(TestCase):
                 [
                     {
                         'dedupError': None,
-                        'dedupOutput': 'defaultDedupString:rule_id',
+                        'dedupOutput': None,
                         'errored': False,
                         'id': 'event_id',
                         'matched': False,
@@ -100,7 +100,7 @@ class TestMainDirectAnalysis(TestCase):
                 [
                     {
                         'dedupError': None,
-                        'dedupOutput': 'defaultDedupString:rule_id',
+                        'dedupOutput': None,
                         'errored': True,
                         'id': 'event_id',
                         'matched': None,
@@ -126,7 +126,7 @@ class TestMainDirectAnalysis(TestCase):
         }
         self.assertEqual(expected_response, lambda_handler(payload, None))
 
-    def test_dedup_exception_fails_test(self) -> None:
+    def test_direct_analysis_dedup_exception_fails_test(self) -> None:
         """If rule dedup() raises an exception while testing a rule (not normal analysis), we should fail the test"""
         payload = {
             'rules': [{
@@ -157,7 +157,7 @@ class TestMainDirectAnalysis(TestCase):
 
         self.assertEqual(expected_response, lambda_handler(payload, None))
 
-    def test_title_exception_fails_test(self) -> None:
+    def test_direct_analysis_title_exception_fails_test(self) -> None:
         """If rule title() raises an exception while testing a rule (not normal analysis), we should fail the test"""
         payload = {
             'rules': [{
